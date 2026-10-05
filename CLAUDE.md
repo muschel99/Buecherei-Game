@@ -37,11 +37,11 @@ scenes/            Szenen (.tscn)
   effects/         Effekte (z. B. Staubpartikel)
   ui/              Oberfläche (HUD, Pausenmenü, Katalog, Stil-Anzeige)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
-  autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager)
+  autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack)
   interaction/     Interaktionssystem (Interactable)
-  building/        Gestaltungsmodus (BuildMode, PlacedFurniture, Vorschau)
+  building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, SurfaceData, StyleTags)
-  rooms/           Raum-Logik (Room: Möbel, Wandfarbe, Boden, Speichern)
+  rooms/           Raum-Logik (Room, PaintableWall, PaintableFloor: Möbel, Wände, Boden, Speichern)
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
@@ -52,24 +52,33 @@ assets/
   shaders/         Shader (Platzhalter-Muster, Raster)
   audio/music/     Musik
   audio/sfx/       Geräusche
-  ui/              Oberflächen-Theme
+  ui/              Oberflächen-Theme, icons/ = Symbole (Farbroller, Teppich)
 docs/              Dokumentation
 ```
 
 ## Technische Konventionen
 - Physik-Ebenen: 1 = `world`, 2 = `interactable`, 3 = `player`, 4 = `furniture`,
-  5 = `build_blocker` (Sperrzonen für den Gestaltungsmodus, z. B. vor der Eingangstür).
+  5 = `build_blocker` (Sperrzonen für den Gestaltungsmodus, z. B. vor der Eingangstür),
+  6 = `placement_surface` (Ablageflächen).
+- **Jede Interaktion in der Spielwelt läuft über E.**
+- **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
+  `MenuStack.open(self)` an und hat `close_from_escape()`. Esc schließt immer zuerst das
+  Oberste; nur wenn nichts offen ist, öffnet sich das Pausenmenü.
 - Interaktive Objekte bekommen einen `Interactable`-Knoten (Area3D, `scripts/interaction/interactable.gd`)
   und reagieren auf dessen Signal `interacted`.
 - Möbel-Szenen haben einen Knoten `Model` (austauschbare Optik) und einen `Body`
   (StaticBody3D mit Kollision). Fußpunkt auf Höhe 0, Vorderseite zeigt nach +Z.
-  Regale bekommen eine Kollisionsform pro Brett, damit Deko hineingestellt werden kann.
+  Regale bekommen eine Kollisionsform pro Brett. Ablageflächen sind `PlacementSurface`-Knoten
+  (Ursprung = Oberkante). Dinge zum Aufhängen: Ursprung hinten in der Mitte.
+- `FurnitureData.placement`: wohin ein Objekt darf (Boden, Ablagefläche, Wand, Tür).
 - Möbel im Raum sind `PlacedFurniture`-Knoten (unter `Furniture` im Raum) mit einem
   Datenblatt (`FurnitureData`); das Modell wird daraus erzeugt.
 - Neue Möbel/Oberflächen = neues Datenblatt in `data/furniture/` bzw. `data/surfaces/`, kein Code.
 - Speichern: Knoten in der Gruppe `persist` mit `save_key`, `get_save_data()` und
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
+- Wandfarben und Böden sind stilneutral; nur Möbel und Deko zählen zum Stil.
 - Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `interact`,
-  `pause`, `toggle_build_mode`, `build_place`, `build_cancel`, `build_rotate`, `build_rotate_back`,
-  `build_toggle_grid`, `build_delete`, `build_catalog`, `toggle_style_debug`.
+  `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
+  `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete`,
+  `build_paint_all` (Umschalt).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).

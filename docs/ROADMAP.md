@@ -4,6 +4,7 @@
 |-----|------------------------------------------|---------------|
 | 1   | Grundgerüst und erster Raum              | fertig        |
 | 2   | Gestaltungsmodus                         | fertig        |
+| 2b  | Gestaltungsmodus verbessern              | fertig        |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -28,14 +29,29 @@
 - [x] Schneller laufen mit Umschalt (sanfter Übergang)
 - [x] Möbel als Daten (`FurnitureData`, Ordner `data/furniture/`) – neue Möbel ohne Code
 - [x] 23 Platzhalter-Möbel in drei Stilen und acht Kategorien (inkl. Theke mit Kasse und Stehlampe)
-- [x] Gestaltungsmodus mit Taste B in der Ego-Perspektive, Katalog unten mit Reitern
-- [x] Halbdurchsichtige Vorschau (grün/rot), Raster mit G, Drehen mit R/Mausrad, Eingang bleibt frei
+- [x] Gestaltungsmodus in der Ego-Perspektive, Katalog unten mit Reitern (Taste seit 2b: Tab)
+- [x] Halbdurchsichtige Vorschau (grün/rot), Raster mit G, Drehen, Eingang bleibt frei
 - [x] Deko auf Tischen und Regalbrettern; was auf einem Möbel steht, wandert beim Verschieben mit
 - [x] Möbel aufheben, neu platzieren und mit Entf entfernen
 - [x] 8 Wandfarben und 5 Böden als Daten (`SurfaceData`, Ordner `data/surfaces/`)
-- [x] Stil-Anteile berechnen, Testanzeige mit F3
+- [x] Stil-Anteile berechnen und anzeigen
 - [x] Einrichtung automatisch speichern und beim Start laden (`SaveManager`, erweiterbar)
 - [x] Tastenhilfe im Gestaltungsmodus
+
+## Etappe 2b – Gestaltungsmodus verbessern
+- [x] Gestaltungsmodus mit Tab öffnen und schließen; Esc schließt ihn (Gehaltenes geht zurück)
+- [x] Allgemeine Esc-Regel: erst das Offene schließen, sonst Pausenmenü (`MenuStack`)
+- [x] Katalog-Zustand (Mauszeiger, Umsehen mit rechter Maustaste, Möbel anklicken)
+      und Platzier-Zustand (Vorschau folgt dem Blick) mit automatischem Wechsel
+- [x] Drehen nur mit dem Mausrad; frei als Standard, G = Einrasten (12,5-cm-Raster, 15°-Schritte)
+- [x] Vorderseite zeigt zum Spieler, Drehung bleibt relativ zum Blick
+- [x] Ablageflächen-System (`PlacementSurface`): Tische, Regale, Sitzflächen, Armlehnen, Fensterbank
+- [x] Aufhängen an Wand und Tür; Datenfeld „placement“ (Boden, Ablagefläche, Wand, Tür)
+- [x] Neue Deko: Kissen, Wolldecke, Teddybär, Türkranz, Wandbild (Bücherstapel gab es schon)
+- [x] Wände in Abschnitten streichen, Böden in Feldern legen (Klick, Ziehen, Umschalt + Klick)
+- [x] Farbroller- und Teppich-Symbol in der Bildmitte
+- [x] Wandfarben und Böden stilneutral; Stilanzeige automatisch oben im Gestaltungsmodus (F3 entfällt)
+- [x] Lichtschalter schaltet alle Lampen im Raum
 
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)
