@@ -108,6 +108,17 @@ func get_dependents(item: PlacedFurniture) -> Array[PlacedFurniture]:
 	return result
 
 
+## Alle Lampen im Raum, die sich schalten lassen (für den Lichtschalter).
+## Als Lampe zählt jedes Möbelstück, dessen Modell set_on() und is_on hat.
+func get_lamps() -> Array[Node]:
+	var lamps: Array[Node] = []
+	for item in get_placed_furniture():
+		var model := item.get_model()
+		if model and model.has_method("set_on"):
+			lamps.append(model)
+	return lamps
+
+
 ## Liegt dieser Punkt (in Weltkoordinaten) innerhalb der Raumfläche?
 func is_inside_build_area(world_position: Vector3) -> bool:
 	var local := to_local(world_position)

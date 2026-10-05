@@ -1,0 +1,52 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/light_switch.gd" id="1_as71g"]
+[ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="2_yhbwn"]
+[ext_resource type="Material" path="res://assets/materials/candle_wax.tres" id="3_y7ye5"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="4_tqgds"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_0elb6"]
+size = Vector3(0.08, 0.12, 0.01)
+
+[sub_resource type="BoxMesh" id="BoxMesh_a4njr"]
+size = Vector3(0.03, 0.05, 0.012)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4v77w"]
+size = Vector3(0.08, 0.12, 0.02)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4lt6s"]
+size = Vector3(0.2, 0.24, 0.12)
+
+[node name="LightSwitch" type="Node3D" unique_id=1863170131]
+script = ExtResource("1_as71g")
+
+[node name="Model" type="Node3D" parent="." unique_id=1368723002]
+
+[node name="Plate" type="MeshInstance3D" parent="Model" unique_id=758331010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.005)
+material_override = ExtResource("2_yhbwn")
+mesh = SubResource("BoxMesh_0elb6")
+
+[node name="Rocker" type="MeshInstance3D" parent="Model" unique_id=1367119020]
+transform = Transform3D(1, 0, 0, 0, 0.99026805, -0.1391731, 0, 0.1391731, 0.99026805, 0, 0, 0.014)
+material_override = ExtResource("3_y7ye5")
+mesh = SubResource("BoxMesh_a4njr")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=377788281]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=335401784]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
+shape = SubResource("BoxShape3D_4v77w")
+
+[node name="Interactable" type="Area3D" parent="." unique_id=1957897500]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_tqgds")
+prompt_text = "Licht im Raum schalten"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=1085607639]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.06)
+shape = SubResource("BoxShape3D_4lt6s")
+
+[connection signal="interacted" from="Interactable" to="." method="_on_interactable_interacted"]
