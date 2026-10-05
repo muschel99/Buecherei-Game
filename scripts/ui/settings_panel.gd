@@ -24,8 +24,14 @@ func _ready() -> void:
 	_back_button.pressed.connect(func() -> void: back_requested.emit())
 
 
-## Beim Öffnen: Werte auffrischen und den Zurück-Knopf auswählen.
+## Beim Öffnen: Werte auffrischen (z. B. nach F3) und den Zurück-Knopf auswählen.
 func open() -> void:
+	for child in _rows.get_children():
+		_rows.remove_child(child)
+		child.queue_free()
+	_resolution_button = null
+	_window_mode_button = null
+	_build()
 	show()
 	_refresh_resolution()
 	_back_button.grab_focus()

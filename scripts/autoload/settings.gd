@@ -29,7 +29,16 @@ const DEFINITIONS: Array[Dictionary] = [
 		"type": "resolution", "default": "1600x900"},
 	{"key": "display/vsync", "section": "Bildschirm", "label": "VSync",
 		"type": "toggle", "default": true},
+	{"key": "display/max_fps", "section": "Bildschirm", "label": "Bildrate begrenzen",
+		"type": "choice", "options": ["30", "60", "120", "unbegrenzt"], "default": 1},
+	{"key": "graphics/quality", "section": "Grafik", "label": "Grafikqualität",
+		"type": "choice", "options": ["Niedrig", "Mittel", "Hoch"], "default": 1},
+	{"key": "graphics/show_fps", "section": "Grafik", "label": "Bilder pro Sekunde anzeigen (F3)",
+		"type": "toggle", "default": false},
 ]
+
+## Bildraten zur Auswahl "Bildrate begrenzen" (0 = unbegrenzt).
+const MAX_FPS_OPTIONS: Array[int] = [30, 60, 120, 0]
 
 var _values := {}
 
@@ -85,6 +94,41 @@ func _apply(key: String) -> void:
 		"display/vsync":
 			var vsync := DisplayServer.VSYNC_ENABLED if get_value(key) else DisplayServer.VSYNC_DISABLED
 			DisplayServer.window_set_vsync_mode(vsync)
+		"display/max_fps":
+			apply_frame_limit()
+		"graphics/quality":
+			_apply_graphics_quality()
+
+
+## Bildrate begrenzen. Im Pausenmenü zusätzlich auf GameConfig.paused_max_fps.
+func apply_frame_limit() -> void:
+	var limit := MAX_FPS_OPTIONS[clampi(int(get_value("display/max_fps")), 0, MAX_FPS_OPTIONS.size() - 1)]
+	if get_tree().paused and GameConfig.paused_max_fps > 0:
+		limit = GameConfig.paused_max_fps if limit == 0 else mini(limit, GameConfig.paused_max_fps)
+	Engine.max_fps = limit
+
+
+## Werte der gewählten Grafikstufe (siehe GameConfig.graphics_presets).
+func get_graphics_preset() -> Dictionary:
+	var level := clampi(int(get_value("graphics/quality")), 0, GameConfig.graphics_presets.size() - 1)
+	return GameConfig.graphics_presets[level]
+
+
+## Alles, was nicht zu einer bestimmten Szene gehört: Schattenauflösung, Kantenglättung,
+## 3D-Auflösung. Umgebung (SSAO, Nebel …) und Lampen reagieren selbst auf setting_changed.
+func _apply_graphics_quality() -> void:
+	var preset := get_graphics_preset()
+	var viewport := get_tree().root
+	var size: int = preset.shadow_size
+	RenderingServer.directional_shadow_atlas_set_size(size, true)
+	viewport.positional_shadow_atlas_size = size
+	var filter: int = [RenderingServer.SHADOW_QUALITY_HARD, RenderingServer.SHADOW_QUALITY_SOFT_LOW,
+		RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM][clampi(preset.soft_shadows, 0, 2)]
+	RenderingServer.directional_soft_shadow_filter_set_quality(filter)
+	RenderingServer.positional_soft_shadow_filter_set_quality(filter)
+	viewport.msaa_3d = {0: Viewport.MSAA_DISABLED, 2: Viewport.MSAA_2X, 4: Viewport.MSAA_4X}.get(int(preset.msaa), Viewport.MSAA_DISABLED)
+	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if preset.fxaa else Viewport.SCREEN_SPACE_AA_DISABLED
+	viewport.scaling_3d_scale = preset.render_scale
 
 
 ## Vollbild nutzt die Auflösung des Bildschirms; im Fenster gilt die gewählte Auflösung.

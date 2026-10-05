@@ -130,6 +130,13 @@ text = "X"
 [node name="ActionRemove" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Im Gestaltungsmodus: Objekt entfernen"
 
+[node name="KeyFps" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "F3"
+
+[node name="ActionFps" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Bilder pro Sekunde anzeigen"
+
 [node name="Key4" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "Esc"
