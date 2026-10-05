@@ -310,8 +310,8 @@ func _delete_target() -> void:
 func _rotate(direction: float) -> void:
 	if _tool != Tool.PLACE_NEW and _tool != Tool.MOVE:
 		return
-	if _preview.data and _preview.data.is_hanging():
-		return  # Aufgehängtes richtet sich nach der Wand
+	if _preview.data and _preview.data.is_wall_mounted():
+		return  # An Wand oder Tür richtet es sich nach der Fläche aus
 	var step := GameConfig.rotation_step_grid if grid_enabled else GameConfig.rotation_step_free
 	_rotation_offset = fposmod(_rotation_offset + step * direction, 360.0)
 
@@ -454,7 +454,10 @@ func _update_placement() -> void:
 	var hang_kind := Room.HangKind.NONE
 	if not hit.is_empty():
 		hang_kind = _room.get_hang_kind(hit.collider)
-	if not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
+	if not hit.is_empty() and hang_kind == Room.HangKind.CEILING and data.allows(hang_kind) \
+			and hit.normal.y < -0.5:
+		problem = _place_on_ceiling(hit)
+	elif not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
 			and absf(hit.normal.y) < 0.5:
 		problem = _place_on_wall(hit)
 	elif not hit.is_empty() and hit.normal.y > -0.5 and \
@@ -463,9 +466,13 @@ func _update_placement() -> void:
 	else:
 		_preview.visible = false
 		_update_grid_visibility()
-		var where := "eine Wand" if data.allows(FurnitureData.PLACE_WALL) else "die Tür"
-		if not data.is_hanging():
-			where = "den Boden oder eine Ablage"
+		var where := "den Boden oder eine Ablage"
+		if data.allows(FurnitureData.PLACE_CEILING):
+			where = "die Decke"
+		elif data.allows(FurnitureData.PLACE_WALL):
+			where = "eine Wand"
+		elif data.allows(FurnitureData.PLACE_DOOR):
+			where = "die Tür"
 		_set_status("Schau auf %s, um %s zu platzieren." % [where, data.display_name], true)
 		return
 
@@ -478,7 +485,7 @@ func _update_placement() -> void:
 
 	var price_text := "%d %s" % [data.price, GameConfig.currency_name]
 	if _placement_ok:
-		var rotate_hint := "" if data.is_hanging() else " · Mausrad: drehen"
+		var rotate_hint := "" if data.is_wall_mounted() else " · Mausrad: drehen"
 		_set_status("%s (%s) – Linksklick: platzieren%s · Rechtsklick: zurücklegen" % [data.display_name, price_text, rotate_hint])
 	else:
 		_set_status("%s – %s" % [data.display_name, problem], true)
@@ -549,6 +556,22 @@ func _place_on_wall(hit: Dictionary) -> String:
 	_placement_on_floor = false
 	# Vor der Eingangstür darf etwas hängen – die Sperrzone gilt nur für den Boden
 	return _find_overlap(normal, false)
+
+
+## Deckenlampen: Der Aufhängepunkt (Ursprung) liegt an der Decke, die Lampe hängt nach unten.
+## Drehen mit dem Mausrad geht wie bei stehenden Möbeln.
+func _place_on_ceiling(hit: Dictionary) -> String:
+	var point: Vector3 = hit.position
+	if grid_enabled:
+		var cell := GameConfig.grid_cell_size
+		point.x = snappedf(point.x, cell)
+		point.z = snappedf(point.z, cell)
+	point.y -= 0.002
+	_placement_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(_placement_yaw_degrees())), point)
+	_placement_on_floor = false
+	if not _room.is_inside_build_area(point):
+		return "Das muss im Raum hängen."
+	return _find_overlap(Vector3.DOWN, false)
 
 
 ## Prüft, ob die Vorschau etwas anderes berührt (leer = frei).

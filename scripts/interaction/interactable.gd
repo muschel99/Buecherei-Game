@@ -15,6 +15,9 @@ signal interacted(interactor: Node)
 @export var prompt_text: String = "Benutzen"
 ## Ausgeschaltete Interactables werden ignoriert.
 @export var is_enabled: bool = true
+## Größere Reichweite (GameConfig.long_interaction_distance), z. B. für Deckenlampen,
+## die man vom Boden aus nicht so gut erreicht.
+@export var long_reach: bool = false
 
 const INTERACTABLE_LAYER := 2  # Physik-Ebene "interactable"
 

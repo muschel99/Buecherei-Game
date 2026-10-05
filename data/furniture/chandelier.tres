@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_og7mo"]
+
+[resource]
+script = ExtResource("1_og7mo")
+id = "chandelier"
+display_name = "Kronleuchter, Messing"
+description = "Sechs Kerzenlichter auf einem Messingring. An die Decke hängen, mit E schalten."
+category = 4
+price = 320
+styles = 4
+scene_path = "res://scenes/furniture/chandelier.tscn"
+footprint = Vector2i(6, 6)
+placement = 16

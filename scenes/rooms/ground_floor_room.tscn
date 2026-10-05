@@ -63,6 +63,9 @@ size = Vector3(4.5, 0.1, 0.02)
 [sub_resource type="BoxShape3D" id="BoxShape3D_entrance"]
 size = Vector3(1.4, 2, 1.2)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_beam"]
+size = Vector3(6, 0.18, 0.16)
+
 [sub_resource type="BoxShape3D" id="BoxShape3D_sill"]
 size = Vector3(2.4, 0.03, 0.18)
 
@@ -129,6 +132,16 @@ material_override = ExtResource("4_wood_dark")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.91, 1.6)
 mesh = SubResource("BoxMesh_beam")
 material_override = ExtResource("4_wood_dark")
+
+[node name="BeamCollision" type="StaticBody3D" parent="Structure"]
+
+[node name="Beam1" type="CollisionShape3D" parent="Structure/BeamCollision"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.91, -1.6)
+shape = SubResource("BoxShape3D_beam")
+
+[node name="Beam2" type="CollisionShape3D" parent="Structure/BeamCollision"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.91, 1.6)
+shape = SubResource("BoxShape3D_beam")
 
 [node name="SkirtingLeft" type="MeshInstance3D" parent="Structure"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.99, 0.05, 0)

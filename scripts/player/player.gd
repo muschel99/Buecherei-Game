@@ -30,7 +30,10 @@ func _ready() -> void:
 	# Werte aus der zentralen Konfiguration übernehmen
 	head.position.y = GameConfig.eye_height
 	camera.fov = GameConfig.camera_fov
-	interaction_ray.target_position = Vector3(0, 0, -GameConfig.interaction_distance)
+	# Der Strahl reicht so weit wie die größte Reichweite; ob ein Ziel nah genug ist,
+	# wird danach je nach Objekt geprüft (siehe _update_interaction_target)
+	var reach := maxf(GameConfig.interaction_distance, GameConfig.long_interaction_distance)
+	interaction_ray.target_position = Vector3(0, 0, -reach)
 	_current_max_speed = GameConfig.walk_speed
 	# Mauszeiger im Spiel "fangen" (unsichtbar, bleibt im Fenster)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -109,7 +112,10 @@ func _update_interaction_target() -> void:
 	if interaction_enabled and interaction_ray.is_colliding():
 		var hit := interaction_ray.get_collider()
 		if hit is Interactable and hit.is_enabled:
-			new_target = hit
+			var distance := camera.global_position.distance_to(interaction_ray.get_collision_point())
+			var reach := GameConfig.long_interaction_distance if hit.long_reach else GameConfig.interaction_distance
+			if distance <= reach:
+				new_target = hit
 
 	if new_target != _current_target:
 		# Dezente Hervorhebung wandert mit dem anvisierten Objekt

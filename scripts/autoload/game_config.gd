@@ -43,6 +43,8 @@ var head_bob_frequency: float = 4.5
 
 ## Bis zu dieser Entfernung (in Metern) kann man Dinge mit E benutzen.
 var interaction_distance: float = 2.5
+## Größere Reichweite für schwer erreichbare Dinge wie Deckenlampen (in Metern).
+var long_interaction_distance: float = 4.0
 ## Dauer, in der eine Lampe sanft an- oder ausgeht (in Sekunden).
 var light_fade_time: float = 0.35
 ## Dauer, in der eine Kerzen- oder Laternenflamme erlischt bzw. aufflammt (in Sekunden).

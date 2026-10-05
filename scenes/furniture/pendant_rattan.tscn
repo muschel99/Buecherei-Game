@@ -1,0 +1,104 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/light_source.gd" id="1_j071b"]
+[ext_resource type="Material" path="res://assets/materials/rattan.tres" id="2_i1qqk"]
+[ext_resource type="Material" path="res://assets/materials/fabric_linen.tres" id="3_kbmdi"]
+[ext_resource type="Material" path="res://assets/materials/wood_light.tres" id="4_elw05"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="5_yucmq"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_eih5m"]
+top_radius = 0.06
+bottom_radius = 0.06
+height = 0.02
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_k4vwl"]
+top_radius = 0.005
+bottom_radius = 0.005
+height = 0.55
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_3kikh"]
+radius = 0.24
+height = 0.48
+
+[sub_resource type="TorusMesh" id="TorusMesh_2pivs"]
+inner_radius = 0.23
+outer_radius = 0.25
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n0lkl"]
+albedo_color = Color(1, 0.86, 0.66, 1)
+emission_enabled = true
+emission = Color(1, 0.86, 0.66, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_0car8"]
+radius = 0.05
+height = 0.1
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_ma1ei"]
+height = 0.97
+radius = 0.25
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pqmge"]
+size = Vector3(0.6, 0.5, 0.6)
+
+[node name="PendantRattan" type="Node3D" unique_id=1853813962]
+script = ExtResource("1_j071b")
+prompt_turn_on = "Lampe einschalten"
+prompt_turn_off = "Lampe ausschalten"
+
+[node name="Model" type="Node3D" parent="." unique_id=1494044685]
+
+[node name="Canopy" type="MeshInstance3D" parent="Model" unique_id=1411791811]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
+material_override = ExtResource("2_i1qqk")
+mesh = SubResource("CylinderMesh_eih5m")
+
+[node name="Cord" type="MeshInstance3D" parent="Model" unique_id=470913462]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.29, 0)
+material_override = ExtResource("3_kbmdi")
+mesh = SubResource("CylinderMesh_k4vwl")
+
+[node name="Shade" type="MeshInstance3D" parent="Model" unique_id=296157632]
+transform = Transform3D(1, 0, 0, 0, 0.8, 0, 0, 0, 1, 0, -0.76, 0)
+material_override = ExtResource("2_i1qqk")
+cast_shadow = 0
+mesh = SubResource("SphereMesh_3kikh")
+
+[node name="Band" type="MeshInstance3D" parent="Model" unique_id=1751325519]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.76, 0)
+material_override = ExtResource("4_elw05")
+mesh = SubResource("TorusMesh_2pivs")
+
+[node name="Bulb" type="MeshInstance3D" parent="Model" unique_id=686247854]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.93, 0)
+material_override = SubResource("StandardMaterial3D_n0lkl")
+cast_shadow = 0
+mesh = SubResource("SphereMesh_0car8")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=1039554415]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1807073847]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.485, 0)
+shape = SubResource("CylinderShape3D_ma1ei")
+
+[node name="Light" type="OmniLight3D" parent="." unique_id=1097926547]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+light_color = Color(1, 0.78, 0.55, 1)
+light_energy = 0.9
+shadow_enabled = true
+shadow_blur = 2.0
+omni_range = 6.5
+
+[node name="Interactable" type="Area3D" parent="." unique_id=390899207]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_yucmq")
+prompt_text = "Lampe ausschalten"
+long_reach = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=1874732037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.76, 0)
+shape = SubResource("BoxShape3D_pqmge")

@@ -39,9 +39,11 @@ signal layout_changed
 ]
 ## Hier darf man etwas an die Tür hängen (z. B. einen Türkranz).
 @onready var _hang_doors: Array[Node] = [$Door/DoorLeaf]
+## Hier darf man etwas an die Decke hängen (z. B. Deckenlampen).
+@onready var _hang_ceilings: Array[Node] = [$Structure/Ceiling]
 
 ## Wohin etwas gehängt werden kann (gleiche Werte wie FurnitureData.placement).
-enum HangKind { NONE = 0, WALL = 4, DOOR = 8 }
+enum HangKind { NONE = 0, WALL = 4, DOOR = 8, CEILING = 16 }
 
 var _next_uid: int = 1
 
@@ -130,12 +132,14 @@ func is_inside_build_area(world_position: Vector3) -> bool:
 	return build_area.has_point(Vector2(local.x, local.z))
 
 
-## Ist der getroffene Kollisionskörper eine Wand oder die Tür dieses Raums?
+## Ist der getroffene Kollisionskörper eine Wand, die Tür oder die Decke dieses Raums?
 func get_hang_kind(collider: Object) -> HangKind:
 	if _hang_walls.has(collider):
 		return HangKind.WALL
 	if _hang_doors.has(collider):
 		return HangKind.DOOR
+	if _hang_ceilings.has(collider):
+		return HangKind.CEILING
 	return HangKind.NONE
 
 
