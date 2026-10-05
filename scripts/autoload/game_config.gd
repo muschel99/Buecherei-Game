@@ -1,0 +1,89 @@
+extends Node
+## Zentrale Spiel-Einstellungen.
+##
+## Dieses Script ist ein "Autoload": Godot lädt es beim Spielstart automatisch,
+## und jedes andere Script kann darauf zugreifen, z. B. mit GameConfig.walk_speed.
+## Hier kannst du Werte gefahrlos ändern, um das Spielgefühl anzupassen.
+
+
+# --- Spielfigur: Bewegung ---
+
+## Laufgeschwindigkeit in Metern pro Sekunde (gemütliches Schlendern ≈ 2.5).
+var walk_speed: float = 2.6
+## Laufgeschwindigkeit beim schnellen Laufen (Umschalttaste gedrückt halten).
+var sprint_speed: float = 4.4
+## Wie sanft zwischen normalem und schnellem Laufen gewechselt wird
+## (Meter pro Sekunde, um die sich das Tempo pro Sekunde ändern darf; kleiner = sanfter).
+var sprint_blend_rate: float = 3.5
+## Wie schnell die Figur auf volle Geschwindigkeit kommt (höher = direkter).
+var acceleration: float = 9.0
+## Wie schnell die Figur wieder stehen bleibt (höher = abrupter).
+var deceleration: float = 11.0
+## Augenhöhe der Kamera über dem Boden in Metern.
+var eye_height: float = 1.6
+
+
+# --- Spielfigur: Kamera und Maus ---
+
+## Mausempfindlichkeit in Grad pro Pixel Mausbewegung.
+var mouse_sensitivity: float = 0.12
+## true = Maus nach oben schaut nach unten (wie in Flugsimulatoren).
+var invert_mouse_y: bool = false
+## Wie weit man maximal nach oben/unten schauen kann (in Grad).
+var max_look_angle: float = 85.0
+## Sichtfeld der Kamera in Grad (größer = mehr Weitwinkel).
+var camera_fov: float = 72.0
+## Stärke des sanften Kopfwippens beim Laufen in Metern (0 = aus).
+var head_bob_amount: float = 0.02
+## Tempo des Kopfwippens (höher = schnellere Schritte).
+var head_bob_frequency: float = 4.5
+
+
+# --- Interaktion ---
+
+## Bis zu dieser Entfernung (in Metern) kann man Dinge mit E benutzen.
+var interaction_distance: float = 2.5
+## Dauer, in der eine Lampe sanft an- oder ausgeht (in Sekunden).
+var light_fade_time: float = 0.35
+
+
+# --- Gestaltungsmodus (Etappe 2) ---
+
+## Kantenlänge eines Rasterfelds in Metern. Möbel rasten auf diesem Raster ein.
+var grid_cell_size: float = 0.25
+## Ist das Raster beim Start des Spiels eingeschaltet? (Umschalten mit G)
+var grid_enabled_at_start: bool = true
+## Drehschritt in Grad, wenn das Raster an ist.
+var rotation_step_grid: float = 90.0
+## Drehschritt in Grad, wenn das Raster aus ist (freies Platzieren).
+var rotation_step_free: float = 15.0
+## Bis zu dieser Entfernung (in Metern) kann man im Gestaltungsmodus Möbel platzieren.
+var build_reach: float = 9.0
+## Deckkraft der Möbel-Vorschau (0 = unsichtbar, 1 = voll sichtbar).
+var preview_opacity: float = 0.45
+## Farbe der Vorschau, wenn das Möbel an diese Stelle passt.
+var preview_color_valid: Color = Color(0.45, 0.9, 0.5)
+## Farbe der Vorschau, wenn das Möbel hier nicht stehen kann.
+var preview_color_invalid: Color = Color(1.0, 0.35, 0.3)
+## Name der Währung, wie er im Katalog angezeigt wird.
+var currency_name: String = "Taler"
+
+
+# --- Speichern ---
+
+## Datei, in der die Einrichtung gespeichert wird ("user://" = Benutzerdatenordner von Godot).
+var save_file_path: String = "user://savegame.json"
+## So viele Sekunden nach einer Änderung wird automatisch gespeichert.
+var autosave_delay: float = 1.5
+
+
+# --- Menü und Fenster ---
+
+## Spiel automatisch pausieren, wenn das Spielfenster in den Hintergrund rückt.
+var pause_on_focus_loss: bool = true
+
+
+# --- Spätere Etappen ---
+# Hier kommen nach und nach weitere Werte dazu, z. B.:
+# Tageslänge (Etappe 5), Leihgebühren (Etappe 5),
+# Freischaltintervalle (Etappe 8).

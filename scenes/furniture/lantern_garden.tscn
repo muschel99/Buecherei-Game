@@ -1,0 +1,115 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="1_rnhi4"]
+[ext_resource type="Material" path="res://assets/materials/glass.tres" id="2_bxnq8"]
+[ext_resource type="Material" path="res://assets/materials/candle_wax.tres" id="3_2bex7"]
+[ext_resource type="Material" path="res://assets/materials/flame.tres" id="4_ye2ow"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_m0xxg"]
+size = Vector3(0.16, 0.02, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_r4403"]
+size = Vector3(0.14, 0.18, 0.14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2sqxu"]
+size = Vector3(0.012, 0.18, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2m5pb"]
+size = Vector3(0.012, 0.18, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_61341"]
+size = Vector3(0.012, 0.18, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_e55aq"]
+size = Vector3(0.012, 0.18, 0.012)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_y01lt"]
+top_radius = 0.0
+bottom_radius = 0.11
+height = 0.07
+radial_segments = 24
+
+[sub_resource type="TorusMesh" id="TorusMesh_8re2k"]
+inner_radius = 0.035
+outer_radius = 0.045
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_yqemc"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.07
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_msink"]
+radius = 0.012
+height = 0.024
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h4682"]
+size = Vector3(0.16, 0.32, 0.16)
+
+[node name="LanternGarden" type="Node3D" unique_id=27586930]
+
+[node name="Model" type="Node3D" parent="." unique_id=1482195665]
+
+[node name="Base" type="MeshInstance3D" parent="Model" unique_id=1929192868]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+material_override = ExtResource("1_rnhi4")
+mesh = SubResource("BoxMesh_m0xxg")
+
+[node name="Glass" type="MeshInstance3D" parent="Model" unique_id=567106262]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0)
+material_override = ExtResource("2_bxnq8")
+mesh = SubResource("BoxMesh_r4403")
+
+[node name="Post2" type="MeshInstance3D" parent="Model" unique_id=952978396]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07, 0.11, -0.07)
+material_override = ExtResource("1_rnhi4")
+mesh = SubResource("BoxMesh_2sqxu")
+
+[node name="Post3" type="MeshInstance3D" parent="Model" unique_id=920226394]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.11, -0.07)
+material_override = ExtResource("1_rnhi4")
+mesh = SubResource("BoxMesh_2m5pb")
+
+[node name="Post4" type="MeshInstance3D" parent="Model" unique_id=1919767744]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07, 0.11, 0.07)
+material_override = ExtResource("1_rnhi4")
+mesh = SubResource("BoxMesh_61341")
+
+[node name="Post5" type="MeshInstance3D" parent="Model" unique_id=22615]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.11, 0.07)
+material_override = ExtResource("1_rnhi4")
+mesh = SubResource("BoxMesh_e55aq")
+
+[node name="Roof" type="MeshInstance3D" parent="Model" unique_id=1050077158]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.235, 0)
+material_override = ExtResource("1_rnhi4")
+mesh = SubResource("CylinderMesh_y01lt")
+
+[node name="Handle" type="MeshInstance3D" parent="Model" unique_id=696261527]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.29, 0)
+material_override = ExtResource("1_rnhi4")
+mesh = SubResource("TorusMesh_8re2k")
+
+[node name="Candle" type="MeshInstance3D" parent="Model" unique_id=1688854779]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.055, 0)
+material_override = ExtResource("3_2bex7")
+mesh = SubResource("CylinderMesh_yqemc")
+
+[node name="Flame" type="MeshInstance3D" parent="Model" unique_id=1122937448]
+transform = Transform3D(1, 0, 0, 0, 1.8, 0, 0, 0, 1, 0, 0.1, 0)
+material_override = ExtResource("4_ye2ow")
+mesh = SubResource("SphereMesh_msink")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=1312369912]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1898035558]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+shape = SubResource("BoxShape3D_h4682")
+
+[node name="Light" type="OmniLight3D" parent="." unique_id=275115097]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
+light_color = Color(1, 0.72, 0.42, 1)
+light_energy = 0.5
+omni_range = 2.5

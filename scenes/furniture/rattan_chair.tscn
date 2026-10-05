@@ -1,0 +1,73 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/rattan.tres" id="1_l7e40"]
+[ext_resource type="Material" path="res://assets/materials/fabric_linen.tres" id="2_rpujh"]
+[ext_resource type="Material" path="res://assets/materials/leaf_green.tres" id="3_n5oy5"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_30ukf"]
+top_radius = 0.34
+bottom_radius = 0.26
+height = 0.4
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_w7ldb"]
+top_radius = 0.3
+bottom_radius = 0.31
+height = 0.08
+radial_segments = 24
+
+[sub_resource type="BoxMesh" id="BoxMesh_00yg2"]
+size = Vector3(0.7, 0.55, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3f7fm"]
+size = Vector3(0.08, 0.2, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tvb3t"]
+size = Vector3(0.08, 0.2, 0.55)
+
+[sub_resource type="BoxMesh" id="BoxMesh_t8xqc"]
+size = Vector3(0.5, 0.3, 0.07)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_8r6hw"]
+height = 0.95
+radius = 0.36
+
+[node name="RattanChair" type="Node3D" unique_id=447717464]
+
+[node name="Model" type="Node3D" parent="." unique_id=249490452]
+
+[node name="Base" type="MeshInstance3D" parent="Model" unique_id=657049765]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0.02)
+material_override = ExtResource("1_l7e40")
+mesh = SubResource("CylinderMesh_30ukf")
+
+[node name="Cushion" type="MeshInstance3D" parent="Model" unique_id=1719076616]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.44, 0.04)
+material_override = ExtResource("2_rpujh")
+mesh = SubResource("CylinderMesh_w7ldb")
+
+[node name="Back" type="MeshInstance3D" parent="Model" unique_id=1686526384]
+transform = Transform3D(1, 0, 0, 0, 0.9781476, 0.2079117, 0, -0.2079117, 0.9781476, 0, 0.66, -0.3)
+material_override = ExtResource("1_l7e40")
+mesh = SubResource("BoxMesh_00yg2")
+
+[node name="ArmLeft" type="MeshInstance3D" parent="Model" unique_id=1694244872]
+transform = Transform3D(0.99026805, -0.1391731, 0, 0.1391731, 0.99026805, 0, 0, 0, 1, -0.33, 0.5, 0)
+material_override = ExtResource("1_l7e40")
+mesh = SubResource("BoxMesh_3f7fm")
+
+[node name="ArmRight" type="MeshInstance3D" parent="Model" unique_id=1187670949]
+transform = Transform3D(0.99026805, 0.1391731, 0, -0.1391731, 0.99026805, 0, 0, 0, 1, 0.33, 0.5, 0)
+material_override = ExtResource("1_l7e40")
+mesh = SubResource("BoxMesh_tvb3t")
+
+[node name="BackCushion" type="MeshInstance3D" parent="Model" unique_id=469676484]
+transform = Transform3D(1, 0, 0, 0, 0.9781476, 0.2079117, 0, -0.2079117, 0.9781476, 0, 0.66, -0.24)
+material_override = ExtResource("3_n5oy5")
+mesh = SubResource("BoxMesh_t8xqc")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=946659931]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1761463432]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.475, 0)
+shape = SubResource("CylinderShape3D_8r6hw")

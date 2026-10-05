@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SurfaceData" format=3]
+
+[ext_resource type="Material" path="res://assets/materials/surfaces/wall_fog_grey.tres" id="1_cta5j"]
+[ext_resource type="Script" path="res://scripts/data/surface_data.gd" id="2_acsyr"]
+
+[resource]
+script = ExtResource("2_acsyr")
+id = "wall_fog_grey"
+display_name = "Nebelgrau"
+price = 50
+styles = 2
+material = ExtResource("1_cta5j")
+preview_color = Color(0.66, 0.67, 0.67, 1)

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_7bhsq"]
+
+[resource]
+script = ExtResource("1_7bhsq")
+id = "lamp_globe"
+display_name = "Kugel-Stehleuchte"
+description = "Weiche Lichtkugel. Mit E ein- und ausschalten."
+category = 4
+price = 95
+styles = 2
+scene_path = "res://scenes/furniture/lamp_globe.tscn"
+footprint = Vector2i(2, 2)

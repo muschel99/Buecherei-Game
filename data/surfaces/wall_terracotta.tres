@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SurfaceData" format=3]
+
+[ext_resource type="Material" path="res://assets/materials/surfaces/wall_terracotta.tres" id="1_in4k8"]
+[ext_resource type="Script" path="res://scripts/data/surface_data.gd" id="2_u86jb"]
+
+[resource]
+script = ExtResource("2_u86jb")
+id = "wall_terracotta"
+display_name = "Terrakotta"
+price = 60
+styles = 1
+material = ExtResource("1_in4k8")
+preview_color = Color(0.74, 0.47, 0.36, 1)

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SurfaceData" format=3]
+
+[ext_resource type="Material" path="res://assets/materials/surfaces/wall_bordeaux.tres" id="1_aghqe"]
+[ext_resource type="Script" path="res://scripts/data/surface_data.gd" id="2_kghrj"]
+
+[resource]
+script = ExtResource("2_kghrj")
+id = "wall_bordeaux"
+display_name = "Bordeaux"
+price = 70
+styles = 4
+material = ExtResource("1_aghqe")
+preview_color = Color(0.38, 0.13, 0.15, 1)

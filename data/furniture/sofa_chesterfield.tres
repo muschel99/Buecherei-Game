@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_576c1"]
+
+[resource]
+script = ExtResource("1_576c1")
+id = "sofa_chesterfield"
+display_name = "Chesterfield-Sofa"
+description = "Gestepptes Leder mit Messingfüßen."
+category = 1
+price = 380
+styles = 4
+scene_path = "res://scenes/furniture/sofa_chesterfield.tscn"
+footprint = Vector2i(8, 4)

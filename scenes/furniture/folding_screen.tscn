@@ -1,0 +1,87 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="1_0aoaw"]
+[ext_resource type="Material" path="res://assets/materials/fabric_burgundy.tres" id="2_xmkj6"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_qk4l2"]
+size = Vector3(0.5, 1.7, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_l1lg8"]
+size = Vector3(0.42, 1.4, 0.035)
+
+[sub_resource type="BoxMesh" id="BoxMesh_snacn"]
+size = Vector3(0.5, 1.7, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kxeu2"]
+size = Vector3(0.42, 1.4, 0.035)
+
+[sub_resource type="BoxMesh" id="BoxMesh_aa06f"]
+size = Vector3(0.5, 1.7, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_f8j04"]
+size = Vector3(0.42, 1.4, 0.035)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qibua"]
+size = Vector3(0.5, 1.75, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_yw0a8"]
+size = Vector3(0.5, 1.75, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_vv58y"]
+size = Vector3(0.5, 1.75, 0.04)
+
+[node name="FoldingScreen" type="Node3D" unique_id=325606466]
+
+[node name="Model" type="Node3D" parent="." unique_id=1183142405]
+
+[node name="Panel1" type="Node3D" parent="Model" unique_id=350591829]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -0.465, 0, 0.125)
+
+[node name="Frame" type="MeshInstance3D" parent="Model/Panel1" unique_id=1940815336]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+material_override = ExtResource("1_0aoaw")
+mesh = SubResource("BoxMesh_qk4l2")
+
+[node name="Fabric" type="MeshInstance3D" parent="Model/Panel1" unique_id=422319642]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+material_override = ExtResource("2_xmkj6")
+mesh = SubResource("BoxMesh_l1lg8")
+
+[node name="Panel2" type="Node3D" parent="Model" unique_id=1959361859]
+
+[node name="Frame" type="MeshInstance3D" parent="Model/Panel2" unique_id=309794564]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+material_override = ExtResource("1_0aoaw")
+mesh = SubResource("BoxMesh_snacn")
+
+[node name="Fabric" type="MeshInstance3D" parent="Model/Panel2" unique_id=1359535362]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+material_override = ExtResource("2_xmkj6")
+mesh = SubResource("BoxMesh_kxeu2")
+
+[node name="Panel3" type="Node3D" parent="Model" unique_id=1204004357]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0.465, 0, 0.125)
+
+[node name="Frame" type="MeshInstance3D" parent="Model/Panel3" unique_id=1628155337]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+material_override = ExtResource("1_0aoaw")
+mesh = SubResource("BoxMesh_aa06f")
+
+[node name="Fabric" type="MeshInstance3D" parent="Model/Panel3" unique_id=139994977]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+material_override = ExtResource("2_xmkj6")
+mesh = SubResource("BoxMesh_f8j04")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=1690757150]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1142968136]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -0.465, 0.875, 0.125)
+shape = SubResource("BoxShape3D_qibua")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Body" unique_id=312268900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+shape = SubResource("BoxShape3D_yw0a8")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="Body" unique_id=1903294875]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0.465, 0.875, 0.125)
+shape = SubResource("BoxShape3D_vv58y")

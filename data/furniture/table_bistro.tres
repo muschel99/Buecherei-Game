@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_51oyk"]
+
+[resource]
+script = ExtResource("1_51oyk")
+id = "table_bistro"
+display_name = "Runder Bistrotisch"
+description = "Klein, rund und weiß."
+category = 2
+price = 90
+styles = 2
+scene_path = "res://scenes/furniture/table_bistro.tscn"
+footprint = Vector2i(3, 3)
+has_surface = true
