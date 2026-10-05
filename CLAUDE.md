@@ -37,7 +37,7 @@ scenes/            Szenen (.tscn)
   effects/         Effekte (z. B. Staubpartikel)
   ui/              Oberfläche (HUD, Pausenmenü, Katalog, Stil-Anzeige)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
-  autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack)
+  autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, SurfaceData, StyleTags)
@@ -73,7 +73,11 @@ docs/              Dokumentation
 - `FurnitureData.placement`: wohin ein Objekt darf (Boden, Ablagefläche, Wand, Tür, Decke).
   Deckenobjekte: Ursprung oben am Aufhängepunkt.
 - Raster: `GameConfig.grid_cell_size` = 1/9 m; Boden/Decke in Abschnitten von 3 x 3 Feldern.
-  Raummaße sollen Vielfache von 1/3 m sein.
+  Raummaße (Breite, Tiefe) sollen Vielfache von 1/3 m sein. Raumhöhe: `GameConfig.room_height`.
+- **Oberflächen/Menüs:** Projekt nutzt Stretch-Modus `canvas_items` + `expand` (Basis 1600 x 900).
+  Neue Menüs immer mit Anchors und Containern bauen, dann passen sie sich automatisch an.
+- Spieler-Einstellungen gehören in `Settings.DEFINITIONS` (`scripts/autoload/settings.gd`),
+  nicht in GameConfig; der Einstellungsbereich im Pausenmenü baut sich daraus selbst.
 - Alles, was Licht abgibt, bekommt `LightSource` (Art ELECTRIC oder FLAME) + Interactable.
 - Sitzmöbel: Knoten `Seating` mit `SeatPoint`-Markern (Blickrichtung +Z) + Interactable.
 - Hervorhebung immer über `FurnitureUtils.get_highlight_material()` (dezent, Stärke in GameConfig).
@@ -83,7 +87,8 @@ docs/              Dokumentation
 - Speichern: Knoten in der Gruppe `persist` mit `save_key`, `get_save_data()` und
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
 - Stil-Merkmale sind überall freiwillig; ohne Stil-Merkmal = stilneutral, zählt nicht mit.
-- Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `interact`,
+- Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `jump`,
+  `crouch`, `interact`,
   `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
   `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete`,
   `build_paint_all` (Umschalt).
