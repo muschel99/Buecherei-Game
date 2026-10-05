@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/surface_pattern.gdshader" id="1_mw3to"]
+
+[resource]
+resource_name = "Dunkles Parkett"
+render_priority = 0
+shader = ExtResource("1_mw3to")
+shader_parameter/base_color = Color(0.25, 0.15, 0.09, 1)
+shader_parameter/second_color = Color(0.31, 0.19, 0.11, 1)
+shader_parameter/pattern = 1
+shader_parameter/tile_size = 0.12
+shader_parameter/mottling = 0.1
+shader_parameter/roughness_value = 0.55

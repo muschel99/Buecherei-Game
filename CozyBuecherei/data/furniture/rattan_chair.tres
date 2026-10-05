@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_srhup"]
+
+[resource]
+script = ExtResource("1_srhup")
+id = "rattan_chair"
+display_name = "Korbsessel"
+description = "Geflochten, mit Leinenkissen."
+category = 1
+price = 120
+styles = 1
+scene_path = "res://scenes/furniture/rattan_chair.tscn"
+footprint = Vector2i(3, 3)

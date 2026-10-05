@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="1_b3cx1"]
+[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="2_0vm3v"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_tyopi"]
+top_radius = 0.35
+bottom_radius = 0.35
+height = 0.03
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_u7jib"]
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.7
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7y12u"]
+top_radius = 0.22
+bottom_radius = 0.24
+height = 0.025
+radial_segments = 24
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_5posa"]
+height = 0.75
+radius = 0.35
+
+[node name="TableBistro" type="Node3D" unique_id=1676703214]
+
+[node name="Model" type="Node3D" parent="." unique_id=1270045131]
+
+[node name="Top" type="MeshInstance3D" parent="Model" unique_id=939061379]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.735, 0)
+material_override = ExtResource("1_b3cx1")
+mesh = SubResource("CylinderMesh_tyopi")
+
+[node name="Pole" type="MeshInstance3D" parent="Model" unique_id=1750092375]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.37, 0)
+material_override = ExtResource("2_0vm3v")
+mesh = SubResource("CylinderMesh_u7jib")
+
+[node name="Foot" type="MeshInstance3D" parent="Model" unique_id=1736232137]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0125, 0)
+material_override = ExtResource("2_0vm3v")
+mesh = SubResource("CylinderMesh_7y12u")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=149626390]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=618795005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, 0)
+shape = SubResource("CylinderShape3D_5posa")

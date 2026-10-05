@@ -8,12 +8,14 @@
 [ext_resource type="Material" path="res://assets/materials/glass.tres" id="6_glass"]
 [ext_resource type="Material" path="res://assets/materials/door_paint.tres" id="7_door_paint"]
 [ext_resource type="Material" path="res://assets/materials/brass.tres" id="8_brass"]
-[ext_resource type="PackedScene" path="res://scenes/furniture/bookshelf.tscn" id="9_bookshelf"]
-[ext_resource type="PackedScene" path="res://scenes/furniture/armchair.tscn" id="10_armchair"]
-[ext_resource type="PackedScene" path="res://scenes/furniture/table.tscn" id="11_table"]
-[ext_resource type="PackedScene" path="res://scenes/furniture/counter.tscn" id="12_counter"]
-[ext_resource type="PackedScene" path="res://scenes/objects/floor_lamp.tscn" id="13_floor_lamp"]
+[ext_resource type="Resource" path="res://data/furniture/bookshelf_oak.tres" id="9_bookshelf"]
+[ext_resource type="Resource" path="res://data/furniture/armchair_velvet.tres" id="10_armchair"]
+[ext_resource type="Resource" path="res://data/furniture/table_oak.tres" id="11_table"]
+[ext_resource type="Resource" path="res://data/furniture/counter_register.tres" id="12_counter"]
+[ext_resource type="Resource" path="res://data/furniture/floor_lamp_brass.tres" id="13_floor_lamp"]
 [ext_resource type="PackedScene" path="res://scenes/effects/dust_motes.tscn" id="14_dust"]
+[ext_resource type="Script" path="res://scripts/rooms/room.gd" id="15_room"]
+[ext_resource type="Script" path="res://scripts/building/placed_furniture.gd" id="16_placed"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_horizontal"]
 size = Vector3(2.4, 0.06, 0.22)
@@ -55,7 +57,11 @@ size = Vector3(6, 0.1, 0.02)
 [sub_resource type="BoxMesh" id="BoxMesh_skirting_front"]
 size = Vector3(4.5, 0.1, 0.02)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_entrance"]
+size = Vector3(1.4, 2, 1.2)
+
 [node name="GroundFloorRoom" type="Node3D"]
+script = ExtResource("15_room")
 
 [node name="Structure" type="Node3D" parent="."]
 
@@ -216,23 +222,44 @@ material_override = ExtResource("5_paint_white")
 
 [node name="Furniture" type="Node3D" parent="."]
 
-[node name="BookshelfA" parent="Furniture" instance=ExtResource("9_bookshelf")]
+[node name="BookshelfA" type="Node3D" parent="Furniture"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -2.78, 0, 0.6)
+script = ExtResource("16_placed")
+data = ExtResource("9_bookshelf")
 
-[node name="BookshelfB" parent="Furniture" instance=ExtResource("9_bookshelf")]
+[node name="BookshelfB" type="Node3D" parent="Furniture"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -2.78, 0, 2)
+script = ExtResource("16_placed")
+data = ExtResource("9_bookshelf")
 
-[node name="Armchair" parent="Furniture" instance=ExtResource("10_armchair")]
+[node name="Armchair" type="Node3D" parent="Furniture"]
 transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -2.3, 0, -3.25)
+script = ExtResource("16_placed")
+data = ExtResource("10_armchair")
 
-[node name="Table" parent="Furniture" instance=ExtResource("11_table")]
+[node name="Table" type="Node3D" parent="Furniture"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0, 0.3)
+script = ExtResource("16_placed")
+data = ExtResource("11_table")
 
-[node name="Counter" parent="Furniture" instance=ExtResource("12_counter")]
+[node name="Counter" type="Node3D" parent="Furniture"]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.7, 0, 2.7)
+script = ExtResource("16_placed")
+data = ExtResource("12_counter")
 
-[node name="FloorLamp" parent="Furniture" instance=ExtResource("13_floor_lamp")]
+[node name="FloorLamp" type="Node3D" parent="Furniture"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7, 0, -2.4)
+script = ExtResource("16_placed")
+data = ExtResource("13_floor_lamp")
+
+[node name="EntranceKeepClear" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, -3.4)
+collision_layer = 16
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EntranceKeepClear"]
+shape = SubResource("BoxShape3D_entrance")
 
 [node name="WindowDust" parent="." instance=ExtResource("14_dust")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.95, 1.2, -3.45)

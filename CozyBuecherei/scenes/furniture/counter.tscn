@@ -17,32 +17,39 @@ size = Vector3(2, 0.05, 0.65)
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
 size = Vector3(2, 1, 0.65)
 
-[node name="Counter" type="Node3D"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_d8k5h"]
+size = Vector3(0.4, 0.26, 0.38)
 
-[node name="Model" type="Node3D" parent="."]
+[node name="Counter" type="Node3D" unique_id=767750479]
 
-[node name="Cabinet" type="MeshInstance3D" parent="Model"]
+[node name="Model" type="Node3D" parent="." unique_id=850529860]
+
+[node name="Cabinet" type="MeshInstance3D" parent="Model" unique_id=1400203919]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.475, 0)
-mesh = SubResource("BoxMesh_0")
 material_override = ExtResource("mat_wood_dark")
+mesh = SubResource("BoxMesh_0")
 
-[node name="FrontPanel" type="MeshInstance3D" parent="Model"]
+[node name="FrontPanel" type="MeshInstance3D" parent="Model" unique_id=613137347]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.285)
-mesh = SubResource("BoxMesh_1")
 material_override = ExtResource("mat_door_paint")
+mesh = SubResource("BoxMesh_1")
 
-[node name="Top" type="MeshInstance3D" parent="Model"]
+[node name="Top" type="MeshInstance3D" parent="Model" unique_id=1557047369]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.975, 0.02)
-mesh = SubResource("BoxMesh_2")
 material_override = ExtResource("mat_wood_light")
+mesh = SubResource("BoxMesh_2")
 
-[node name="Body" type="StaticBody3D" parent="."]
+[node name="Body" type="StaticBody3D" parent="." unique_id=600231097]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=160630831]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.02)
 shape = SubResource("BoxShape3D_body")
 
-[node name="Modules" type="Node3D" parent="."]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Body" unique_id=764582128]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.13, -0.08)
+shape = SubResource("BoxShape3D_d8k5h")
 
-[node name="CashRegister" parent="Modules" instance=ExtResource("cash_register")]
+[node name="Modules" type="Node3D" parent="." unique_id=412668264]
+
+[node name="CashRegister" type="Node3D" parent="Modules" unique_id=905558602 instance=ExtResource("cash_register")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.5, 1, -0.08)

@@ -6,6 +6,10 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="4_pause_menu"]
 [ext_resource type="Material" path="res://assets/materials/cobblestone.tres" id="5_cobblestone"]
 [ext_resource type="Material" path="res://assets/materials/brick.tres" id="6_brick"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="7_main"]
+[ext_resource type="Script" path="res://scripts/building/build_mode.gd" id="8_build_mode"]
+[ext_resource type="PackedScene" path="res://scenes/ui/build_ui.tscn" id="9_build_ui"]
+[ext_resource type="PackedScene" path="res://scenes/ui/style_debug.tscn" id="10_style_debug"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -49,6 +53,7 @@ size = Vector2(40, 40)
 size = Vector3(40, 6, 1)
 
 [node name="Main" type="Node3D"]
+script = ExtResource("7_main")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_cozy")
@@ -79,7 +84,18 @@ material_override = ExtResource("6_brick")
 [node name="Player" parent="." instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0, 2.6)
 
+[node name="BuildMode" type="Node" parent="."]
+script = ExtResource("8_build_mode")
+player_path = NodePath("../Player")
+room_path = NodePath("../GroundFloorRoom")
+
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
+
+[node name="BuildUI" parent="." instance=ExtResource("9_build_ui")]
+build_mode_path = NodePath("../BuildMode")
+
+[node name="StyleDebug" parent="." instance=ExtResource("10_style_debug")]
+room_path = NodePath("../GroundFloorRoom")
 
 [node name="PauseMenu" parent="." instance=ExtResource("4_pause_menu")]
 

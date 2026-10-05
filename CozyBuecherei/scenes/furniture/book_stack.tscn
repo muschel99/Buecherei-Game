@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/fabric_burgundy.tres" id="1_nb4x3"]
+[ext_resource type="Material" path="res://assets/materials/leather_green.tres" id="2_g87mj"]
+[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="3_bwh2j"]
+[ext_resource type="Material" path="res://assets/materials/fabric_linen.tres" id="4_sjuti"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_16npr"]
+size = Vector3(0.2, 0.035, 0.14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_qumq1"]
+size = Vector3(0.185, 0.041, 0.132)
+
+[sub_resource type="BoxMesh" id="BoxMesh_n0jpu"]
+size = Vector3(0.17, 0.035, 0.124)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1d6bg"]
+size = Vector3(0.155, 0.041, 0.116)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5svki"]
+size = Vector3(0.21, 0.152, 0.16)
+
+[node name="BookStack" type="Node3D" unique_id=146431791]
+
+[node name="Model" type="Node3D" parent="." unique_id=625347779]
+
+[node name="Book1" type="MeshInstance3D" parent="Model" unique_id=626471595]
+transform = Transform3D(0.99026805, 0, -0.1391731, 0, 1, 0, 0.1391731, 0, 0.99026805, 0, 0.0175, 0)
+material_override = ExtResource("1_nb4x3")
+mesh = SubResource("BoxMesh_16npr")
+
+[node name="Book2" type="MeshInstance3D" parent="Model" unique_id=333108944]
+transform = Transform3D(0.99939084, 0, -0.034899496, 0, 1, 0, 0.034899496, 0, 0.99939084, 0.005, 0.0555, 0)
+material_override = ExtResource("2_g87mj")
+mesh = SubResource("BoxMesh_qumq1")
+
+[node name="Book3" type="MeshInstance3D" parent="Model" unique_id=539027522]
+transform = Transform3D(0.9975641, 0, 0.06975647, 0, 1, 0, -0.06975647, 0, 0.9975641, 0, 0.0935, 0)
+material_override = ExtResource("3_bwh2j")
+mesh = SubResource("BoxMesh_n0jpu")
+
+[node name="Book4" type="MeshInstance3D" parent="Model" unique_id=823513604]
+transform = Transform3D(0.9848077, 0, 0.17364818, 0, 1, 0, -0.17364818, 0, 0.9848077, 0.005, 0.1315, 0)
+material_override = ExtResource("4_sjuti")
+mesh = SubResource("BoxMesh_1d6bg")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=305284918]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=624003255]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.076, 0)
+shape = SubResource("BoxShape3D_5svki")

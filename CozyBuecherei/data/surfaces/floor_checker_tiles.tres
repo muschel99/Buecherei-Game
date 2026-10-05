@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SurfaceData" format=3]
+
+[ext_resource type="Material" path="res://assets/materials/surfaces/floor_checker_tiles.tres" id="1_f0ee3"]
+[ext_resource type="Script" path="res://scripts/data/surface_data.gd" id="2_d8sj5"]
+
+[resource]
+script = ExtResource("2_d8sj5")
+id = "floor_checker_tiles"
+display_name = "Schachbrettfliesen"
+kind = 1
+price = 160
+styles = 4
+material = ExtResource("1_f0ee3")
+preview_color = Color(0.85, 0.82, 0.74, 1)

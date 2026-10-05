@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/concrete.tres" id="1_02dcd"]
+[ext_resource type="Material" path="res://assets/materials/leaf_dark.tres" id="2_qbahb"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_vkeaw"]
+size = Vector3(0.12, 0.1, 0.12)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_k7qnx"]
+radius = 0.035
+height = 0.24
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_vm6b7"]
+radius = 0.022
+height = 0.1
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jmsmk"]
+size = Vector3(0.12, 0.32, 0.12)
+
+[node name="PlantCactus" type="Node3D" unique_id=2012277264]
+
+[node name="Model" type="Node3D" parent="." unique_id=870621178]
+
+[node name="Pot" type="MeshInstance3D" parent="Model" unique_id=1770788077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+material_override = ExtResource("1_02dcd")
+mesh = SubResource("BoxMesh_vkeaw")
+
+[node name="Trunk" type="MeshInstance3D" parent="Model" unique_id=2072368926]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+material_override = ExtResource("2_qbahb")
+mesh = SubResource("CapsuleMesh_k7qnx")
+
+[node name="Arm" type="MeshInstance3D" parent="Model" unique_id=442314821]
+transform = Transform3D(0.81915206, 0.57357645, 0, -0.57357645, 0.81915206, 0, 0, 0, 1, 0.045, 0.22, 0)
+material_override = ExtResource("2_qbahb")
+mesh = SubResource("CapsuleMesh_vm6b7")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=826042740]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=265455566]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+shape = SubResource("BoxShape3D_jmsmk")

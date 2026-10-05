@@ -1,0 +1,77 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="1_py7ml"]
+[ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="2_1jf1j"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_tury5"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.44
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ya2vp"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.44
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0c0lq"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.44
+radial_segments = 24
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_yokru"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.44
+radial_segments = 24
+
+[sub_resource type="BoxMesh" id="BoxMesh_bj28a"]
+size = Vector3(0.46, 0.05, 0.44)
+
+[sub_resource type="BoxMesh" id="BoxMesh_imqb3"]
+size = Vector3(0.46, 0.4, 0.05)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0ago0"]
+size = Vector3(0.48, 0.9, 0.48)
+
+[node name="ChairShell" type="Node3D" unique_id=899518346]
+
+[node name="Model" type="Node3D" parent="." unique_id=19753275]
+
+[node name="Leg0" type="MeshInstance3D" parent="Model" unique_id=1375638477]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.19, 0.22, 0.17)
+material_override = ExtResource("1_py7ml")
+mesh = SubResource("CylinderMesh_tury5")
+
+[node name="Leg1" type="MeshInstance3D" parent="Model" unique_id=1461731537]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.19, 0.22, 0.17)
+material_override = ExtResource("1_py7ml")
+mesh = SubResource("CylinderMesh_ya2vp")
+
+[node name="Leg2" type="MeshInstance3D" parent="Model" unique_id=1501051902]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.19, 0.22, -0.17)
+material_override = ExtResource("1_py7ml")
+mesh = SubResource("CylinderMesh_0c0lq")
+
+[node name="Leg3" type="MeshInstance3D" parent="Model" unique_id=995085037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.19, 0.22, -0.17)
+material_override = ExtResource("1_py7ml")
+mesh = SubResource("CylinderMesh_yokru")
+
+[node name="Seat" type="MeshInstance3D" parent="Model" unique_id=2069178765]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.46, 0)
+material_override = ExtResource("2_1jf1j")
+mesh = SubResource("BoxMesh_bj28a")
+
+[node name="Backrest" type="MeshInstance3D" parent="Model" unique_id=918996616]
+transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.17364818, 0, -0.17364818, 0.9848077, 0, 0.68, -0.21)
+material_override = ExtResource("2_1jf1j")
+mesh = SubResource("BoxMesh_imqb3")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=1766005844]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1315768052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("BoxShape3D_0ago0")

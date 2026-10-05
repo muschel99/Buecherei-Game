@@ -1,0 +1,147 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/build_ui.gd" id="1_build_ui"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_catalog"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+bg_color = Color(0.17, 0.12, 0.09, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.42, 0.28, 0.5)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_help"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+bg_color = Color(0.1, 0.07, 0.05, 0.5)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="BuildUI" type="CanvasLayer"]
+process_mode = 3
+layer = 2
+script = ExtResource("1_build_ui")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="StatusLabel" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 1.0
+anchor_right = 0.95
+anchor_bottom = 1.0
+offset_top = -232.0
+offset_bottom = -200.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.96, 0.88, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/shadow_outline_size = 4
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="CatalogPanel" type="PanelContainer" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.04
+anchor_top = 1.0
+anchor_right = 0.96
+anchor_bottom = 1.0
+offset_top = -190.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_catalog")
+
+[node name="VBox" type="VBoxContainer" parent="Root/CatalogPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Root/CatalogPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TabRow" type="HBoxContainer" parent="Root/CatalogPanel/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="CatalogHint" type="Label" parent="Root/CatalogPanel/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.78, 0.68, 0.8)
+theme_override_font_sizes/font_size = 14
+text = "Tab – Katalog bedienen"
+
+[node name="ItemScroll" type="ScrollContainer" parent="Root/CatalogPanel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 108)
+layout_mode = 2
+vertical_scroll_mode = 0
+
+[node name="ItemRow" type="HBoxContainer" parent="Root/CatalogPanel/VBox/ItemScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HelpPanel" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -120.0
+offset_right = -16.0
+offset_bottom = -120.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_help")
+
+[node name="VBox" type="VBoxContainer" parent="Root/HelpPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Root/HelpPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.9)
+theme_override_font_sizes/font_size = 15
+text = "Gestaltungsmodus"
+
+[node name="HelpGrid" type="GridContainer" parent="Root/HelpPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 3
+columns = 2

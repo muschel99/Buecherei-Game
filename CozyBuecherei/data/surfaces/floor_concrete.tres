@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SurfaceData" format=3]
+
+[ext_resource type="Material" path="res://assets/materials/surfaces/floor_concrete.tres" id="1_vuuw2"]
+[ext_resource type="Script" path="res://scripts/data/surface_data.gd" id="2_p75ls"]
+
+[resource]
+script = ExtResource("2_p75ls")
+id = "floor_concrete"
+display_name = "Betonboden"
+kind = 1
+price = 110
+styles = 2
+material = ExtResource("1_vuuw2")
+preview_color = Color(0.55, 0.55, 0.53, 1)

@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/surface_pattern.gdshader" id="1_406k0"]
+
+[resource]
+resource_name = "Betonboden"
+render_priority = 0
+shader = ExtResource("1_406k0")
+shader_parameter/base_color = Color(0.55, 0.55, 0.53, 1)
+shader_parameter/second_color = Color(0.55, 0.55, 0.53, 1)
+shader_parameter/pattern = 0
+shader_parameter/tile_size = 0.5
+shader_parameter/mottling = 0.35
+shader_parameter/roughness_value = 0.9

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_a5yh7"]
+
+[resource]
+script = ExtResource("1_a5yh7")
+id = "candelabra"
+display_name = "Kerzenleuchter"
+description = "Drei Kerzen auf Messing."
+price = 30
+styles = 4
+scene_path = "res://scenes/furniture/candelabra.tscn"
+can_stand_on_surfaces = true

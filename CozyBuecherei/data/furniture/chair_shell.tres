@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_fixqm"]
+
+[resource]
+script = ExtResource("1_fixqm")
+id = "chair_shell"
+display_name = "Schalenstuhl"
+description = "Weiße Schale, schwarze Beine."
+category = 1
+price = 60
+styles = 2
+scene_path = "res://scenes/furniture/chair_shell.tscn"
+footprint = Vector2i(2, 2)

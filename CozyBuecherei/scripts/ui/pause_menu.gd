@@ -66,4 +66,5 @@ func _on_back_button_pressed() -> void:
 
 
 func _on_quit_button_pressed() -> void:
-	get_tree().quit()
+	# Vor dem Beenden die Einrichtung speichern
+	SaveManager.quit_game()
