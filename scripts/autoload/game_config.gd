@@ -75,6 +75,11 @@ var preview_opacity: float = 0.45
 var preview_color_valid: Color = Color(0.45, 0.9, 0.5)
 ## Farbe der Vorschau, wenn das Möbel hier nicht stehen kann.
 var preview_color_invalid: Color = Color(1.0, 0.35, 0.3)
+## Hervorhebung von Objekten (im Gestaltungsmodus und bei allem, was man mit E benutzen kann):
+## Aufhellung des ganzen Objekts (0 = keine, 0.3 = deutlich).
+var highlight_brightness: float = 0.06
+## Heller Schimmer am Rand des Objekts (0 = kein Rand, 1 = sehr hell).
+var highlight_rim_strength: float = 0.45
 ## Name der Währung, wie er im Katalog angezeigt wird.
 var currency_name: String = "Taler"
 

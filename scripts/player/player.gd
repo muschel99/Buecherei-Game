@@ -112,6 +112,9 @@ func _update_interaction_target() -> void:
 			new_target = hit
 
 	if new_target != _current_target:
+		# Dezente Hervorhebung wandert mit dem anvisierten Objekt
+		FurnitureUtils.set_interactable_highlighted(_current_target, false)
+		FurnitureUtils.set_interactable_highlighted(new_target, true)
 		_current_target = new_target
 		interaction_target_changed.emit(_current_target)
 

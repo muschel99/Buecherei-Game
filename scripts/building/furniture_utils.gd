@@ -13,7 +13,7 @@ const SURFACE_LAYER_BIT := 32
 ## Rastergröße für Ersatz-Kisten im Editor (dort gibt es GameConfig noch nicht).
 const _FALLBACK_CELL := 0.25
 
-static var _highlight_material: StandardMaterial3D
+static var _highlight_material: ShaderMaterial
 
 
 ## Erzeugt das 3D-Modell eines Möbelstücks aus seinem Datenblatt.
@@ -85,14 +85,25 @@ static func set_override(root: Node, material: Material) -> void:
 		node.material_override = material
 
 
-## Gemeinsames Material für "Maus zeigt auf dieses Möbelstück".
-static func get_highlight_material() -> StandardMaterial3D:
+## Gemeinsames Material für die dezente Hervorhebung (Stärke in GameConfig).
+static func get_highlight_material() -> ShaderMaterial:
 	if _highlight_material == null:
-		_highlight_material = StandardMaterial3D.new()
-		_highlight_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		_highlight_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		_highlight_material.albedo_color = Color(1.0, 0.85, 0.5, 0.22)
+		_highlight_material = ShaderMaterial.new()
+		_highlight_material.shader = load("res://assets/shaders/highlight.gdshader")
+		_highlight_material.set_shader_parameter("brightness", GameConfig.highlight_brightness)
+		_highlight_material.set_shader_parameter("rim_strength", GameConfig.highlight_rim_strength)
 	return _highlight_material
+
+
+## Hebt das Objekt hervor, zu dem ein Interactable gehört (oder nimmt die Hervorhebung weg).
+static func set_interactable_highlighted(interactable: Node, highlighted: bool) -> void:
+	if not is_instance_valid(interactable):
+		return
+	var item := find_placed_furniture(interactable)
+	if item:
+		item.set_highlighted(highlighted)
+	elif interactable.get_parent():
+		set_overlay(interactable.get_parent(), get_highlight_material() if highlighted else null)
 
 
 ## Macht aus einem Modell eine reine Vorschau: keine Kollision, kein Licht, kein Schatten.
