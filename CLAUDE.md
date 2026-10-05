@@ -33,7 +33,7 @@ scenes/            Szenen (.tscn)
   player/          Spielfigur
   rooms/           Räume des Hauses
   furniture/       Möbel (je eine Szene, Modell austauschbar)
-  objects/         Interaktive Objekte (z. B. Stehlampe)
+  objects/         Interaktive Objekte (Stehlampe; Scripts: LightSource, Seating, Lichtschalter)
   effects/         Effekte (z. B. Staubpartikel)
   ui/              Oberfläche (HUD, Pausenmenü, Katalog, Stil-Anzeige)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
@@ -41,7 +41,7 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, SurfaceData, StyleTags)
-  rooms/           Raum-Logik (Room, PaintableWall, PaintableFloor: Möbel, Wände, Boden, Speichern)
+  rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
@@ -70,13 +70,19 @@ docs/              Dokumentation
   (StaticBody3D mit Kollision). Fußpunkt auf Höhe 0, Vorderseite zeigt nach +Z.
   Regale bekommen eine Kollisionsform pro Brett. Ablageflächen sind `PlacementSurface`-Knoten
   (Ursprung = Oberkante). Dinge zum Aufhängen: Ursprung hinten in der Mitte.
-- `FurnitureData.placement`: wohin ein Objekt darf (Boden, Ablagefläche, Wand, Tür).
+- `FurnitureData.placement`: wohin ein Objekt darf (Boden, Ablagefläche, Wand, Tür, Decke).
+  Deckenobjekte: Ursprung oben am Aufhängepunkt.
+- Raster: `GameConfig.grid_cell_size` = 1/9 m; Boden/Decke in Abschnitten von 3 x 3 Feldern.
+  Raummaße sollen Vielfache von 1/3 m sein.
+- Alles, was Licht abgibt, bekommt `LightSource` (Art ELECTRIC oder FLAME) + Interactable.
+- Sitzmöbel: Knoten `Seating` mit `SeatPoint`-Markern (Blickrichtung +Z) + Interactable.
+- Hervorhebung immer über `FurnitureUtils.get_highlight_material()` (dezent, Stärke in GameConfig).
 - Möbel im Raum sind `PlacedFurniture`-Knoten (unter `Furniture` im Raum) mit einem
   Datenblatt (`FurnitureData`); das Modell wird daraus erzeugt.
 - Neue Möbel/Oberflächen = neues Datenblatt in `data/furniture/` bzw. `data/surfaces/`, kein Code.
 - Speichern: Knoten in der Gruppe `persist` mit `save_key`, `get_save_data()` und
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
-- Wandfarben und Böden sind stilneutral; nur Möbel und Deko zählen zum Stil.
+- Stil-Merkmale sind überall freiwillig; ohne Stil-Merkmal = stilneutral, zählt nicht mit.
 - Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `interact`,
   `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
   `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete`,
