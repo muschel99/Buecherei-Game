@@ -21,6 +21,8 @@ signal grid_changed(enabled: bool)
 signal selection_changed(selected: Resource)
 ## Katalog-Zustand (true) oder Platzier-Zustand (false).
 signal catalog_state_changed(in_catalog: bool)
+## Symbol in der Bildmitte: "" = normaler Punkt, "roller" = Farbroller, "carpet" = Teppich.
+signal cursor_icon_changed(icon: String)
 
 enum Tool { NONE, PLACE_NEW, MOVE, PAINT }
 
@@ -57,6 +59,10 @@ var _placement_transform := Transform3D.IDENTITY
 var _placement_support: PlacedFurniture = null
 var _placement_on_floor := true
 var _status_text := ""
+# Streichen: Maustaste gehalten und zuletzt gestrichene Stelle (für Ziehen)
+var _paint_held := false
+var _last_painted := ""
+var _cursor_icon := ""
 var _flash_until_msec := 0
 
 
@@ -94,6 +100,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_rotate(-1.0)
 	elif event.is_action_pressed("build_place"):
 		_on_primary_click()
+	elif event.is_action_released("build_place"):
+		_paint_held = false
 	elif event.is_action_pressed("build_cancel"):
 		_on_secondary_pressed()
 	elif event.is_action_released("build_cancel"):
@@ -112,7 +120,7 @@ func _physics_process(_delta: float) -> void:
 		Tool.PLACE_NEW, Tool.MOVE:
 			_update_placement()
 		Tool.PAINT:
-			_update_paint_hint()
+			_update_paint()
 
 
 # --- Öffnen und Schließen ---
@@ -203,10 +211,9 @@ func _on_primary_click() -> void:
 				_flash_status("%s umgestellt." % _moving_item.data.display_name)
 				_finish_move()
 		Tool.PAINT:
-			if not _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT).is_empty():
-				_room.apply_surface(_selected_surface)
-				var what := "Wände sind jetzt" if _selected_surface.kind == SurfaceData.Kind.WALL else "Der Boden ist jetzt"
-				_flash_status("%s „%s“." % [what, _selected_surface.display_name])
+			_paint_held = true
+			_last_painted = ""
+			_paint_at_target(Input.is_action_pressed("build_paint_all"))
 
 
 ## Rechte Maustaste: im Platzier-Zustand zurücklegen, im Katalog-Zustand umsehen.
@@ -271,6 +278,8 @@ func _cancel_tool() -> void:
 ## Zurück in den Katalog-Zustand.
 func _clear_tool() -> void:
 	_tool = Tool.NONE
+	_paint_held = false
+	_set_cursor_icon("")
 	_selected_data = null
 	_selected_surface = null
 	_preview.clear()
@@ -344,9 +353,68 @@ func _set_hovered(item: PlacedFurniture) -> void:
 		_hovered.set_highlighted(true)
 
 
-func _update_paint_hint() -> void:
-	var where := "die Wände zu streichen" if _selected_surface.kind == SurfaceData.Kind.WALL else "den Boden zu verlegen"
-	_set_status("%s: Klicke in den Raum, um %s. Rechtsklick: zurück zum Katalog." % [_selected_surface.display_name, where])
+## Streichen: Ziel suchen, Symbol zeigen und beim Ziehen mit gedrückter Maustaste weiterstreichen.
+func _update_paint() -> void:
+	var target := _find_paint_target()
+	var is_wall := _selected_surface.kind == SurfaceData.Kind.WALL
+	if target.is_empty():
+		_set_cursor_icon("")
+	else:
+		_set_cursor_icon("roller" if is_wall else "carpet")
+	if _paint_held and not target.is_empty():
+		_paint_at_target(false)
+	var what := "Wandabschnitt streichen" if is_wall else "Bodenfeld belegen"
+	var all := "ganze Wand" if is_wall else "ganzer Boden"
+	if target.is_empty():
+		var where := "eine Wand" if is_wall else "den Boden"
+		_set_status("%s: Schau aus der Nähe auf %s. Rechtsklick: zurück zum Katalog." % [_selected_surface.display_name, where])
+	else:
+		_set_status("%s – Linksklick: %s (gedrückt halten und ziehen: mehrere) · Umschalt + Klick: %s · Rechtsklick: zurück" % [_selected_surface.display_name, what, all])
+
+
+## Wohin zeige ich? Ergebnis: { "wall": …, "index": … } bei Wänden, { "cell": … } beim Boden,
+## leer, wenn dort nichts Passendes ist oder es zu weit weg ist.
+func _find_paint_target() -> Dictionary:
+	var hit := _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT, GameConfig.paint_reach)
+	if hit.is_empty():
+		return {}
+	if _selected_surface.kind == SurfaceData.Kind.WALL:
+		if absf(hit.normal.y) > 0.5:
+			return {}
+		return _room.find_wall_segment(hit.position)
+	if hit.normal.y < 0.7:
+		return {}
+	var cell := _room.find_floor_cell(hit.position)
+	return {} if cell < 0 else {"cell": cell}
+
+
+## Streicht dort, wohin ich schaue (whole = ganze Wand bzw. ganzer Boden).
+func _paint_at_target(whole: bool) -> void:
+	var target := _find_paint_target()
+	if target.is_empty():
+		return
+	var key := str(target.get("wall", "floor")) + ":" + str(target.get("index", target.get("cell")))
+	if key == _last_painted:
+		return  # diese Stelle wurde gerade schon gestrichen
+	_last_painted = key
+	if target.has("wall"):
+		if whole:
+			_room.paint_wall(target.wall, _selected_surface)
+			_paint_held = false
+		else:
+			_room.paint_wall_segment(target.wall, target.index, _selected_surface)
+	else:
+		if whole:
+			_room.paint_floor(_selected_surface)
+			_paint_held = false
+		else:
+			_room.paint_floor_cell(target.cell, _selected_surface)
+
+
+func _set_cursor_icon(icon: String) -> void:
+	if icon != _cursor_icon:
+		_cursor_icon = icon
+		cursor_icon_changed.emit(icon)
 
 
 ## Drehung in der Welt (Grad): Blickrichtung + eigene Drehung, beim Einrasten in 15°-Schritten.
@@ -573,10 +641,10 @@ func _update_grid_visibility() -> void:
 
 # --- Hilfsfunktionen ---
 
-func _ray_from_camera(mask: int) -> Dictionary:
+func _ray_from_camera(mask: int, reach: float = GameConfig.build_reach) -> Dictionary:
 	var camera := _player.camera
 	var from := camera.global_position
-	var to := from - camera.global_basis.z * GameConfig.build_reach
+	var to := from - camera.global_basis.z * reach
 	return _ray(from, to, mask)
 
 

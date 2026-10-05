@@ -8,6 +8,5 @@ script = ExtResource("2_43yy6")
 id = "wall_forest_green"
 display_name = "Tannengrün"
 price = 70
-styles = 4
 material = ExtResource("1_k31ai")
 preview_color = Color(0.17, 0.27, 0.21, 1)

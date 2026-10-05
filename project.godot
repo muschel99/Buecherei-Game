@@ -122,6 +122,7 @@ build_paint_all={
 3d_physics/layer_3="player"
 3d_physics/layer_4="furniture"
 3d_physics/layer_5="build_blocker"
+3d_physics/layer_6="placement_surface"
 
 [rendering]
 

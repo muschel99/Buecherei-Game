@@ -8,7 +8,12 @@ const FADE_TIME := 0.15
 const CROSSHAIR_IDLE_ALPHA := 0.45
 const CROSSHAIR_ACTIVE_SCALE := 1.6
 
+## Platzhalter-Symbole für den Gestaltungsmodus (im Inspektor austauschbar).
+@export var paint_roller_icon: Texture2D
+@export var carpet_icon: Texture2D
+
 @onready var _crosshair: Panel = $Crosshair
+@onready var _cursor_icon: TextureRect = $CursorIcon
 @onready var _prompt_label: Label = $PromptLabel
 
 var _target: Interactable = null
@@ -44,7 +49,20 @@ func _on_player_interaction_target_changed(target: Interactable) -> void:
 ## Im Katalog-Zustand des Gestaltungsmodus ist der Mauszeiger sichtbar – dann
 ## wird der Punkt in der Bildmitte nicht gebraucht.
 func _on_build_mode_catalog_state_changed(in_catalog: bool) -> void:
-	_crosshair.visible = not in_catalog
+	_crosshair.visible = not in_catalog and not _cursor_icon.visible
+
+
+## Beim Streichen: Farbroller (Wand) oder Teppich (Boden) statt des Punkts.
+func _on_build_mode_cursor_icon_changed(icon: String) -> void:
+	match icon:
+		"roller":
+			_cursor_icon.texture = paint_roller_icon
+		"carpet":
+			_cursor_icon.texture = carpet_icon
+		_:
+			_cursor_icon.texture = null
+	_cursor_icon.visible = _cursor_icon.texture != null
+	_crosshair.visible = not _cursor_icon.visible
 
 
 ## Liefert den Tastennamen einer Aktion (z. B. "E"), damit der Hinweis

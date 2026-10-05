@@ -95,7 +95,7 @@ func _show_tab(index: int) -> void:
 	else:
 		for surface in Catalog.get_surfaces_of_kind(tab[2]):
 			var subtitle := "%d %s" % [surface.price, GameConfig.currency_name]
-			var card := _create_card(surface.display_name, subtitle, surface.styles, "", surface.preview_color)
+			var card := _create_card(surface.display_name, subtitle, 0, "", surface.preview_color)
 			card.pressed.connect(_build_mode.select_surface.bind(surface))
 			_add_card(surface, card)
 

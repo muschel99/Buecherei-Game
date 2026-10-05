@@ -17,6 +17,8 @@
 [ext_resource type="Script" path="res://scripts/rooms/room.gd" id="15_room"]
 [ext_resource type="Script" path="res://scripts/building/placed_furniture.gd" id="16_placed"]
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="17_surface"]
+[ext_resource type="Script" path="res://scripts/rooms/paintable_wall.gd" id="18_wall"]
+[ext_resource type="Script" path="res://scripts/rooms/paintable_floor.gd" id="19_floor"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_horizontal"]
 size = Vector3(2.4, 0.06, 0.22)
@@ -147,6 +149,31 @@ material_override = ExtResource("4_wood_dark")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.75, 0.05, -3.99)
 mesh = SubResource("BoxMesh_skirting_front")
 material_override = ExtResource("4_wood_dark")
+
+[node name="Walls" type="Node3D" parent="."]
+
+[node name="Left" type="Node3D" parent="Walls"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -3, 0, 4)
+script = ExtResource("18_wall")
+length = 8.0
+
+[node name="Right" type="Node3D" parent="Walls"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 3, 0, -4)
+script = ExtResource("18_wall")
+length = 8.0
+
+[node name="Back" type="Node3D" parent="Walls"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 3, 0, 4)
+script = ExtResource("18_wall")
+
+[node name="Front" type="Node3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -4)
+script = ExtResource("18_wall")
+openings = Array[Rect2]([Rect2(1, 0.8, 2.4, 1.6), Rect2(4.5, 0, 1, 2.1)])
+
+[node name="FloorCovering" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -4)
+script = ExtResource("19_floor")
 
 [node name="Window" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 1.6, -4.1)

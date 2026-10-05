@@ -8,6 +8,5 @@ script = ExtResource("2_7n1ig")
 id = "wall_lime_white"
 display_name = "Kalkweiß"
 price = 50
-styles = 2
 material = ExtResource("1_ifjfl")
 preview_color = Color(0.93, 0.92, 0.89, 1)

@@ -8,6 +8,5 @@ script = ExtResource("2_ruhkp")
 id = "floor_oak_planks"
 display_name = "Eichendielen"
 kind = 1
-styles = 5
 material = ExtResource("1_j6db7")
 preview_color = Color(0.46, 0.32, 0.21, 1)

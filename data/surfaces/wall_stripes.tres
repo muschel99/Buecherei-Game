@@ -8,6 +8,5 @@ script = ExtResource("2_gji2q")
 id = "wall_stripes"
 display_name = "Streifentapete"
 price = 90
-styles = 4
 material = ExtResource("1_x6e2d")
 preview_color = Color(0.3, 0.33, 0.24, 1)
