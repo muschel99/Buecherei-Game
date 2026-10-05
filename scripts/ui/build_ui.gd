@@ -178,7 +178,7 @@ func _build_help() -> void:
 		["Rechte Maustaste", "Halten: umsehen · Klick: zurücklegen"],
 		["Mausrad", "Drehen"],
 		["G", ""],  # Text kommt aus _on_grid_changed
-		["Entf", "Entfernen"],
+		["X", "Entfernen"],
 		["Umschalt + Klick", "Ganze Wand · Boden/Decke füllen"],
 	]
 	for entry in entries:
