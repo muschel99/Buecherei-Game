@@ -4,6 +4,9 @@
 [ext_resource type="Material" path="res://assets/materials/leather_brown.tres" id="2_kj5e8"]
 [ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="3_fm1jv"]
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="4_kj5e8"]
+[ext_resource type="Script" path="res://scripts/objects/seating.gd" id="5_yu1y5"]
+[ext_resource type="Script" path="res://scripts/objects/seat_point.gd" id="6_7re86"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="7_sxwlg"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_7jh3o"]
 top_radius = 0.03
@@ -115,6 +118,9 @@ size = Vector3(0.2, 0.03, 0.85)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_8g2aj"]
 size = Vector3(0.2, 0.03, 0.85)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wopgd"]
+size = Vector3(1.6, 0.5, 0.66)
 
 [node name="SofaChesterfield" type="Node3D" unique_id=1285629705]
 
@@ -259,3 +265,29 @@ script = ExtResource("4_kj5e8")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/ArmRight" unique_id=465460140]
 shape = SubResource("BoxShape3D_8g2aj")
+
+[node name="Seating" type="Node3D" parent="." unique_id=1052106162]
+script = ExtResource("5_yu1y5")
+
+[node name="Seat1" type="Marker3D" parent="Seating" unique_id=1171054715]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.54, 0.08)
+script = ExtResource("6_7re86")
+
+[node name="Seat2" type="Marker3D" parent="Seating" unique_id=17699919]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.54, 0.08)
+script = ExtResource("6_7re86")
+
+[node name="Seat3" type="Marker3D" parent="Seating" unique_id=604231970]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.54, 0.08)
+script = ExtResource("6_7re86")
+
+[node name="Interactable" type="Area3D" parent="Seating" unique_id=1202660326]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_sxwlg")
+prompt_text = "Hinsetzen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Seating/Interactable" unique_id=1530522496]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0.05)
+shape = SubResource("BoxShape3D_wopgd")

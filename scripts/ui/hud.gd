@@ -18,6 +18,7 @@ const CROSSHAIR_ACTIVE_SCALE := 1.6
 @onready var _prompt_label: Label = $PromptLabel
 
 var _target: Interactable = null
+var _seated := false
 var _tween: Tween
 
 
@@ -30,8 +31,19 @@ func _process(_delta: float) -> void:
 	# Im Pausenmenü ausblenden (dieser Knoten läuft auch bei Pause weiter)
 	visible = not get_tree().paused
 	# Text laufend aktualisieren, da er sich ändern kann (z. B. "einschalten" -> "ausschalten")
-	if is_instance_valid(_target):
+	if _seated:
+		_prompt_label.text = "%s oder Laufen – Aufstehen" % _get_key_name("interact")
+	elif is_instance_valid(_target):
 		_prompt_label.text = "%s – %s" % [_get_key_name("interact"), _target.prompt_text]
+
+
+## Im Sitzen dezent zeigen, wie man wieder aufsteht.
+func _on_player_seated_changed(seated: bool) -> void:
+	_seated = seated
+	if _tween:
+		_tween.kill()
+	_tween = create_tween().set_trans(Tween.TRANS_SINE)
+	_tween.tween_property(_prompt_label, "modulate:a", 0.7 if seated else 0.0, FADE_TIME)
 
 
 func _on_player_interaction_target_changed(target: Interactable) -> void:

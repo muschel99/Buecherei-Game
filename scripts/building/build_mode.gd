@@ -131,6 +131,8 @@ func set_active(active: bool) -> void:
 	is_active = active
 	_player.interaction_enabled = not active
 	if active:
+		if _player.is_seated():
+			_player.stand_up()  # Zum Gestalten erst aufstehen
 		MenuStack.open(self)
 		_set_status("Wähle unten etwas aus dem Katalog oder klicke ein Möbelstück an, um es zu verschieben.")
 	else:

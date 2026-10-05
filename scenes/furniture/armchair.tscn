@@ -1,6 +1,9 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="3_tx478"]
+[ext_resource type="Script" path="res://scripts/objects/seating.gd" id="4_4tpu7"]
+[ext_resource type="Script" path="res://scripts/objects/seat_point.gd" id="5_ujbtv"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="6_k3ob7"]
 [ext_resource type="Material" path="res://assets/materials/fabric_green.tres" id="mat_fabric_green"]
 [ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="mat_wood_dark"]
 
@@ -51,6 +54,9 @@ size = Vector3(0.14, 0.03, 0.8)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bygmd"]
 size = Vector3(0.14, 0.03, 0.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tjpec"]
+size = Vector3(0.62, 0.5, 0.66)
 
 [node name="Armchair" type="Node3D" unique_id=586709427]
 
@@ -150,3 +156,21 @@ script = ExtResource("3_tx478")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/ArmRight" unique_id=2082017164]
 shape = SubResource("BoxShape3D_bygmd")
+
+[node name="Seating" type="Node3D" parent="." unique_id=1050967311]
+script = ExtResource("4_4tpu7")
+
+[node name="Seat1" type="Marker3D" parent="Seating" unique_id=681348290]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0.07)
+script = ExtResource("5_ujbtv")
+
+[node name="Interactable" type="Area3D" parent="Seating" unique_id=1575357294]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("6_k3ob7")
+prompt_text = "Hinsetzen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Seating/Interactable" unique_id=386123731]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.05)
+shape = SubResource("BoxShape3D_tjpec")

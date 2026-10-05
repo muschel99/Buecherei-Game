@@ -21,6 +21,10 @@ var acceleration: float = 9.0
 var deceleration: float = 11.0
 ## Augenhöhe der Kamera über dem Boden in Metern.
 var eye_height: float = 1.6
+## Augenhöhe im Sitzen, gemessen über der Sitzfläche (in Metern).
+var seated_eye_height: float = 0.72
+## Wie lange das Hinsetzen bzw. Aufstehen dauert (in Sekunden).
+var sit_transition_time: float = 0.6
 
 
 # --- Spielfigur: Kamera und Maus ---
