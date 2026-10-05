@@ -24,8 +24,11 @@ var eye_height: float = 1.6
 
 # --- Spielfigur: Springen und Hocken ---
 
-## Wie hoch die Figur springt (in Metern). Klein = sanfter, gemütlicher Hüpfer.
-var jump_height: float = 0.4
+## Wie hoch die Figur springt (in Metern). 0.8 reicht für Sessel, Sofa und Tisch.
+var jump_height: float = 0.8
+## Schwerkraft in der Luft im Verhältnis zur normalen (kleiner = weicher, schwebender Sprung).
+## Gilt beim Springen und Fallen, damit sich beides gemütlich anfühlt.
+var air_gravity_scale: float = 0.7
 ## Augenhöhe in der Hocke (in Metern über dem Boden).
 var crouch_eye_height: float = 1.0
 ## Körperhöhe in der Hocke (in Metern) – so niedrig kann man sich bücken.

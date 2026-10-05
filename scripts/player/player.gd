@@ -91,7 +91,8 @@ func _physics_process(delta: float) -> void:
 ## Sanfter Sprung: Die Startgeschwindigkeit ergibt genau die gewünschte Sprunghöhe.
 func _jump() -> void:
 	if Input.is_action_just_pressed("jump") and is_on_floor() and not _is_crouching:
-		velocity.y = sqrt(2.0 * _gravity * GameConfig.jump_height)
+		# Startgeschwindigkeit so, dass genau die gewünschte Höhe erreicht wird
+		velocity.y = sqrt(2.0 * _gravity * GameConfig.air_gravity_scale * GameConfig.jump_height)
 
 
 ## Hocken, solange Strg gedrückt ist. Aufstehen nur, wenn über einem genug Platz ist.
@@ -198,7 +199,7 @@ func _look_around(mouse_delta: Vector2) -> void:
 
 func _apply_gravity(delta: float) -> void:
 	if not is_on_floor():
-		velocity.y -= _gravity * delta
+		velocity.y -= _gravity * GameConfig.air_gravity_scale * delta
 
 
 ## Sanftes Laufen: Die Geschwindigkeit wird weich hoch- und heruntergeregelt.
