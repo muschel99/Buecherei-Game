@@ -1,0 +1,89 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/fabric_green.tres" id="mat_fabric_green"]
+[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="mat_wood_dark"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_0"]
+size = Vector3(0.05, 0.08, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.05, 0.08, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(0.05, 0.08, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(0.05, 0.08, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+size = Vector3(0.85, 0.25, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5"]
+size = Vector3(0.58, 0.12, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+size = Vector3(0.85, 0.62, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+size = Vector3(0.14, 0.32, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8"]
+size = Vector3(0.14, 0.32, 0.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(0.85, 0.95, 0.8)
+
+[node name="Armchair" type="Node3D"]
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="LegFrontLeft" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.36, 0.04, 0.33)
+mesh = SubResource("BoxMesh_0")
+material_override = ExtResource("mat_wood_dark")
+
+[node name="LegFrontRight" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.36, 0.04, 0.33)
+mesh = SubResource("BoxMesh_1")
+material_override = ExtResource("mat_wood_dark")
+
+[node name="LegBackLeft" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.36, 0.04, -0.33)
+mesh = SubResource("BoxMesh_2")
+material_override = ExtResource("mat_wood_dark")
+
+[node name="LegBackRight" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.36, 0.04, -0.33)
+mesh = SubResource("BoxMesh_3")
+material_override = ExtResource("mat_wood_dark")
+
+[node name="Base" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.205, 0)
+mesh = SubResource("BoxMesh_4")
+material_override = ExtResource("mat_fabric_green")
+
+[node name="Cushion" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.39, 0.07)
+mesh = SubResource("BoxMesh_5")
+material_override = ExtResource("mat_fabric_green")
+
+[node name="Backrest" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.64, -0.31)
+mesh = SubResource("BoxMesh_6")
+material_override = ExtResource("mat_fabric_green")
+
+[node name="ArmLeft" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.355, 0.49, 0)
+mesh = SubResource("BoxMesh_7")
+material_override = ExtResource("mat_fabric_green")
+
+[node name="ArmRight" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.355, 0.49, 0)
+mesh = SubResource("BoxMesh_8")
+material_override = ExtResource("mat_fabric_green")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.475, 0)
+shape = SubResource("BoxShape3D_body")

@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "FabricGreen"
+albedo_color = Color(0.26, 0.35, 0.25, 1)
+roughness = 1.0
