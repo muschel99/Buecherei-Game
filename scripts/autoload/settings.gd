@@ -71,6 +71,12 @@ func is_fullscreen() -> bool:
 	return int(get_value("display/window_mode")) == 1
 
 
+## Läuft das Spiel im Godot-Editor eingebettet (Reiter "Game")? Dann bestimmt der Editor
+## Größe und Lage des Spielbilds – Vollbild und Auflösung wirken nur im eigenen Fenster.
+func is_embedded() -> bool:
+	return Engine.is_embedded_in_editor()
+
+
 ## Setzt eine Einstellung im Spiel um.
 func _apply(key: String) -> void:
 	match key:
@@ -86,11 +92,21 @@ func _apply(key: String) -> void:
 func _apply_window() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
+	# Im Editor eingebettet: Fenster nicht anfassen. Würde das Spiel hier Größe oder Lage
+	# ändern, passten Spielbild und Mausposition nicht mehr zusammen.
+	if is_embedded():
+		return
 	var window := get_window()
 	if is_fullscreen():
 		window.mode = Window.MODE_FULLSCREEN
 		return
+	var was_fullscreen := window.mode != Window.MODE_WINDOWED
 	window.mode = Window.MODE_WINDOWED
+	if was_fullscreen:
+		# Manche Fenstermanager (z. B. unter Linux) übernehmen die Größe erst,
+		# wenn der Wechsel aus dem Vollbild abgeschlossen ist
+		await get_tree().process_frame
+		await get_tree().process_frame
 	var parts := str(get_value("display/resolution")).split("x")
 	if parts.size() != 2:
 		return
@@ -99,7 +115,8 @@ func _apply_window() -> void:
 	if screen != Vector2i.ZERO:
 		size = size.min(screen)
 	window.size = size
-	# Fenster mittig auf den Bildschirm setzen
+	# Fenster mittig auf den Bildschirm setzen (unter Wayland legt das System die Lage
+	# selbst fest, dann wird dieser Wunsch einfach ignoriert)
 	var screen_position := DisplayServer.screen_get_position()
 	window.position = screen_position + (screen - size) / 2
 
