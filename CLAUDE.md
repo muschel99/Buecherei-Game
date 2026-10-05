@@ -6,6 +6,8 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
 ## Über die Entwicklerin
 - Absolute Anfängerin: hat noch nie programmiert und noch nie mit einer Spiele-Engine gearbeitet.
 - Kommunikation auf Deutsch, in einfachen Worten.
+- Arbeitet mit **Fedora Linux** (Anleitungen für Terminal und Dateimanager entsprechend).
+- Testet auf dem eigenen PC; Claude arbeitet im Browser und kann Godot dort nicht sehen.
 
 ## So arbeiten wir zusammen
 - **Engine:** Godot 4 (aktuelle stabile Version, Standard-Version ohne .NET). **Sprache:** GDScript.
