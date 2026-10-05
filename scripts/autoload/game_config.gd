@@ -45,6 +45,10 @@ var head_bob_frequency: float = 4.5
 var interaction_distance: float = 2.5
 ## Dauer, in der eine Lampe sanft an- oder ausgeht (in Sekunden).
 var light_fade_time: float = 0.35
+## Dauer, in der eine Kerzen- oder Laternenflamme erlischt bzw. aufflammt (in Sekunden).
+var flame_fade_time: float = 0.6
+## Soll der Lichtschalter auch Kerzen und Laternen mitschalten? (Standard: nur elektrische Lampen)
+var light_switch_includes_flames: bool = false
 
 
 # --- Gestaltungsmodus (Etappe 2) ---

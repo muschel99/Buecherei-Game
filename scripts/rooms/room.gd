@@ -113,15 +113,15 @@ func get_dependents(item: PlacedFurniture) -> Array[PlacedFurniture]:
 	return result
 
 
-## Alle Lampen im Raum, die sich schalten lassen (für den Lichtschalter).
-## Als Lampe zählt jedes Möbelstück, dessen Modell set_on() und is_on hat.
-func get_lamps() -> Array[Node]:
-	var lamps: Array[Node] = []
+## Alle Lichtquellen im Raum, die der Lichtschalter schaltet: elektrische Lampen –
+## und Kerzen/Laternen nur, wenn GameConfig.light_switch_includes_flames an ist.
+func get_switchable_lights() -> Array[LightSource]:
+	var lights: Array[LightSource] = []
 	for item in get_placed_furniture():
-		var model := item.get_model()
-		if model and model.has_method("set_on"):
-			lamps.append(model)
-	return lamps
+		var source := item.get_model() as LightSource
+		if source and (source.is_electric() or GameConfig.light_switch_includes_flames):
+			lights.append(source)
+	return lights
 
 
 ## Liegt dieser Punkt (in Weltkoordinaten) innerhalb der Raumfläche?
