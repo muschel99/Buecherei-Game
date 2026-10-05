@@ -33,14 +33,21 @@ scenes/            Szenen (.tscn)
   furniture/       Möbel (je eine Szene, Modell austauschbar)
   objects/         Interaktive Objekte (z. B. Stehlampe)
   effects/         Effekte (z. B. Staubpartikel)
-  ui/              Oberfläche (HUD, Pausenmenü)
+  ui/              Oberfläche (HUD, Pausenmenü, Katalog, Stil-Anzeige)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
-  autoload/        Global verfügbare Scripts (GameConfig)
+  autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager)
   interaction/     Interaktionssystem (Interactable)
+  building/        Gestaltungsmodus (BuildMode, PlacedFurniture, Vorschau)
+  data/            Datenformate (FurnitureData, SurfaceData, StyleTags)
+  rooms/           Raum-Logik (Room: Möbel, Wandfarbe, Boden, Speichern)
+data/
+  furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
+  surfaces/        Datenblätter der Wandfarben und Böden (.tres)
 assets/
   models/          Eigene 3D-Modelle (.glb)
   textures/        Texturen
-  materials/       Gemeinsame Materialien (.tres)
+  materials/       Gemeinsame Materialien (.tres), surfaces/ = Wand- und Bodenmaterialien
+  shaders/         Shader (Platzhalter-Muster, Raster)
   audio/music/     Musik
   audio/sfx/       Geräusche
   ui/              Oberflächen-Theme
@@ -48,10 +55,19 @@ docs/              Dokumentation
 ```
 
 ## Technische Konventionen
-- Physik-Ebenen: 1 = `world`, 2 = `interactable`, 3 = `player`.
+- Physik-Ebenen: 1 = `world`, 2 = `interactable`, 3 = `player`, 4 = `furniture`,
+  5 = `build_blocker` (Sperrzonen für den Gestaltungsmodus, z. B. vor der Eingangstür).
 - Interaktive Objekte bekommen einen `Interactable`-Knoten (Area3D, `scripts/interaction/interactable.gd`)
   und reagieren auf dessen Signal `interacted`.
 - Möbel-Szenen haben einen Knoten `Model` (austauschbare Optik) und einen `Body`
-  (StaticBody3D mit Kollision).
-- Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `interact`, `pause`.
+  (StaticBody3D mit Kollision). Fußpunkt auf Höhe 0, Vorderseite zeigt nach +Z.
+  Regale bekommen eine Kollisionsform pro Brett, damit Deko hineingestellt werden kann.
+- Möbel im Raum sind `PlacedFurniture`-Knoten (unter `Furniture` im Raum) mit einem
+  Datenblatt (`FurnitureData`); das Modell wird daraus erzeugt.
+- Neue Möbel/Oberflächen = neues Datenblatt in `data/furniture/` bzw. `data/surfaces/`, kein Code.
+- Speichern: Knoten in der Gruppe `persist` mit `save_key`, `get_save_data()` und
+  `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
+- Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `interact`,
+  `pause`, `toggle_build_mode`, `build_place`, `build_cancel`, `build_rotate`, `build_rotate_back`,
+  `build_toggle_grid`, `build_delete`, `build_catalog`, `toggle_style_debug`.
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).

@@ -3,7 +3,7 @@
 | Nr. | Etappe                                   | Status        |
 |-----|------------------------------------------|---------------|
 | 1   | Grundgerüst und erster Raum              | fertig        |
-| 2   | Gestaltungsmodus                         | offen         |
+| 2   | Gestaltungsmodus                         | fertig        |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -25,10 +25,17 @@
 - [x] Pausenmenü mit Esc (Weiter, Steuerung, Beenden)
 
 ## Etappe 2 – Gestaltungsmodus
-- Taste zum Umschalten in den Gestaltungsmodus
-- Möbel auswählen, verschieben, drehen, platzieren (mit Raster/Einrasten)
-- Wände streichen, Böden tauschen
-- Speichern der Einrichtung
+- [x] Schneller laufen mit Umschalt (sanfter Übergang)
+- [x] Möbel als Daten (`FurnitureData`, Ordner `data/furniture/`) – neue Möbel ohne Code
+- [x] 23 Platzhalter-Möbel in drei Stilen und acht Kategorien (inkl. Theke mit Kasse und Stehlampe)
+- [x] Gestaltungsmodus mit Taste B in der Ego-Perspektive, Katalog unten mit Reitern
+- [x] Halbdurchsichtige Vorschau (grün/rot), Raster mit G, Drehen mit R/Mausrad, Eingang bleibt frei
+- [x] Deko auf Tischen und Regalbrettern; was auf einem Möbel steht, wandert beim Verschieben mit
+- [x] Möbel aufheben, neu platzieren und mit Entf entfernen
+- [x] 8 Wandfarben und 5 Böden als Daten (`SurfaceData`, Ordner `data/surfaces/`)
+- [x] Stil-Anteile berechnen, Testanzeige mit F3
+- [x] Einrichtung automatisch speichern und beim Start laden (`SaveManager`, erweiterbar)
+- [x] Tastenhilfe im Gestaltungsmodus
 
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)
@@ -42,7 +49,7 @@
 - Tag mit Öffnen-Schild, Pause und Vorspulen
 
 ## Etappe 6 – Stilsystem und Besuchervielfalt
-- Stil-Merkmale an Möbeln (Botanisch, Modern, Dark Academia)
+- Stil-Merkmale an Möbeln (Botanisch, Modern, Dark Academia) – Grundlage seit Etappe 2 vorhanden
 - Vorherrschender Stil beeinflusst Besucher und Musik
 
 ## Etappe 7 – Café

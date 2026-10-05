@@ -11,7 +11,9 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - **Ästhetik:** gemütlich, nicht kitschig. Inspiriert von Miniatur-Book-Nooks, in Richtung
   Paralives oder Garden Life. Stimmung entsteht vor allem über warmes, weiches Licht.
 - **Gestaltung:** Möbel und Raumteiler frei platzieren, Wände streichen, Böden tauschen.
-  Kein freier Wandbau.
+  Kein freier Wandbau. Gestaltet wird in der Ego-Perspektive (Taste B), Möbel rasten auf einem
+  25-cm-Raster ein (abschaltbar). Deko kann auch auf Tischen und Regalbrettern stehen.
+  Der Eingangsbereich vor der Tür bleibt frei.
 - **Stile:** Zum Start drei Stile: *Botanisch*, *Modern*, *Dark Academia*. Möbel tragen
   Stil-Merkmale. Der vorherrschende Stil bestimmt, welche Besucher kommen und welche Musik läuft.
 
@@ -39,10 +41,22 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 | Taste          | Aktion                                  |
 |----------------|-----------------------------------------|
 | W A S D        | Laufen                                  |
+| Umschalt       | Schneller laufen (gedrückt halten)      |
 | Maus           | Umsehen                                 |
 | E              | Interagieren (Objekt in der Bildmitte)  |
+| B              | Gestaltungsmodus an/aus                 |
+| F3             | Stil-Anzeige (Testanzeige)              |
 | Esc            | Pausenmenü                              |
-| (folgt)        | Gestaltungsmodus (ab Etappe 2)          |
+
+### Im Gestaltungsmodus
+| Taste          | Aktion                                                  |
+|----------------|---------------------------------------------------------|
+| Tab            | Katalog bedienen (Maus frei) / zurück zum Umsehen       |
+| Linksklick     | Platzieren / platziertes Möbelstück aufheben            |
+| R / Mausrad    | Drehen                                                  |
+| Rechtsklick    | Abbrechen (aufgehobenes Möbel kehrt an seinen Platz zurück) |
+| G              | Raster an/aus (aus = frei platzieren)                   |
+| Entf           | Möbelstück entfernen                                    |
 
 ## Das Haus
 - Altes englisches Reihenhaus in einer schmalen Gasse.
