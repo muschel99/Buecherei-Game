@@ -32,7 +32,8 @@ const _CATEGORY_NAMES := {
 @export var category: Category = Category.DECO
 ## Preis in Talern (wird ab Etappe 5 abgezogen).
 @export var price: int = 0
-## Stil-Merkmale: eines oder mehrere Häkchen setzen.
+## Stil-Merkmale: eines oder mehrere Häkchen setzen. Ohne Häkchen ist das Objekt
+## stilneutral und zählt nicht zur Stilberechnung (z. B. Lichtschalter, Kasse).
 @export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
 ## Die Szene (.tscn) oder das 3D-Modell (.glb) des Möbelstücks.
 @export_file("*.tscn", "*.scn", "*.glb", "*.gltf") var scene_path: String = ""

@@ -9,6 +9,5 @@ display_name = "Theke mit Kasse"
 description = "Hier werden später Bücher abgestempelt."
 category = 3
 price = 300
-styles = 4
 scene_path = "res://scenes/furniture/counter.tscn"
 footprint = Vector2i(18, 7)
