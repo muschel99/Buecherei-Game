@@ -278,12 +278,11 @@ func _load_floor(save_data: Dictionary) -> void:
 	var floor_data = save_data.get("floor")
 	if floor_data is Dictionary:
 		var cells := _decompress(floor_data.get("cells", []))
-		# Nur übernehmen, wenn die Feldgröße seit dem Speichern gleich geblieben ist
-		if int(floor_data.get("columns", 0)) == _floor.columns and cells.size() == _floor.cell_ids.size():
-			for index in cells.size():
-				if Catalog.get_surface(cells[index]):
-					_floor.cell_ids[index] = cells[index]
-			_floor.rebuild()
+		var old_columns := int(floor_data.get("columns", 0))
+		var old_rows := int(floor_data.get("rows", 0))
+		if old_columns > 0 and cells.size() == old_columns * old_rows:
+			# Klappt auch, wenn sich die Abschnittsgröße seit dem Speichern geändert hat
+			_floor.load_resized(cells, old_columns, old_rows)
 	elif floor_data is String:
 		_paint_everything(floor_data)  # Spielstand aus Etappe 2
 

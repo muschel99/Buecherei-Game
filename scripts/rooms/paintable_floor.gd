@@ -1,10 +1,11 @@
 class_name PaintableFloor
 extends MeshInstance3D
-## Ein Boden, der in kleinen quadratischen Feldern belegt werden kann.
+## Ein Boden, der in quadratischen Abschnitten belegt werden kann.
 ##
 ## Der Knoten liegt an der Ecke des Bodens mit den kleinsten x- und z-Werten.
-## Feldgröße: GameConfig.floor_section_size. Felder mit gleichem Belag werden zu
-## größeren Flächen zusammengefasst, damit das Spiel flüssig bleibt.
+## Ein Abschnitt ist GameConfig.floor_section_cells Rasterfelder breit (Standard 3 x 3).
+## Abschnitte mit gleichem Belag werden zu größeren Flächen zusammengefasst,
+## damit das Spiel flüssig bleibt.
 
 ## Größe des Bodens in Metern (x = Breite, y = Tiefe).
 @export var size: Vector2 = Vector2(6.0, 8.0)
@@ -16,11 +17,11 @@ const OFFSET := 0.003
 var cell_ids: Array[String] = []
 var columns: int = 1
 var rows: int = 1
-var _cell_size: float = 0.125
+var _cell_size: float = 1.0 / 3.0
 
 
 func _ready() -> void:
-	_cell_size = GameConfig.floor_section_size
+	_cell_size = GameConfig.grid_cell_size * GameConfig.floor_section_cells
 	columns = maxi(1, roundi(size.x / _cell_size))
 	rows = maxi(1, roundi(size.y / _cell_size))
 	cell_ids.resize(columns * rows)
@@ -45,6 +46,19 @@ func get_cell_center(index: int) -> Vector3:
 	var column := index % columns
 	var row := index / columns
 	return to_global(Vector3((column + 0.5) * _cell_size, 0.0, (row + 0.5) * _cell_size))
+
+
+## Übernimmt Felder aus einem Spielstand mit anderer Feldeinteilung: Jeder neue
+## Abschnitt bekommt den Belag, der früher in seiner Mitte lag.
+func load_resized(old_ids: Array[String], old_columns: int, old_rows: int) -> void:
+	for row in rows:
+		for column in columns:
+			var old_column := clampi(int((column + 0.5) * old_columns / columns), 0, old_columns - 1)
+			var old_row := clampi(int((row + 0.5) * old_rows / rows), 0, old_rows - 1)
+			var id := old_ids[old_row * old_columns + old_column]
+			if Catalog.get_surface(id):
+				cell_ids[row * columns + column] = id
+	rebuild()
 
 
 ## Belegt mehrere Felder und baut die Fläche danach einmal neu.

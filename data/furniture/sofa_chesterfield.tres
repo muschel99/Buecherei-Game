@@ -11,4 +11,4 @@ category = 1
 price = 380
 styles = 4
 scene_path = "res://scenes/furniture/sofa_chesterfield.tscn"
-footprint = Vector2i(16, 7)
+footprint = Vector2i(18, 8)
