@@ -2,6 +2,7 @@
 
 [ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="1_py7ml"]
 [ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="2_1jf1j"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="3_1jf1j"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_tury5"]
 top_radius = 0.012
@@ -33,8 +34,14 @@ size = Vector3(0.46, 0.05, 0.44)
 [sub_resource type="BoxMesh" id="BoxMesh_imqb3"]
 size = Vector3(0.46, 0.4, 0.05)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_0ago0"]
-size = Vector3(0.48, 0.9, 0.48)
+[sub_resource type="BoxShape3D" id="BoxShape3D_tury5"]
+size = Vector3(0.48, 0.485, 0.48)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ya2vp"]
+size = Vector3(0.48, 0.42, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0c0lq"]
+size = Vector3(0.44, 0.03, 0.38)
 
 [node name="ChairShell" type="Node3D" unique_id=899518346]
 
@@ -72,6 +79,22 @@ mesh = SubResource("BoxMesh_imqb3")
 
 [node name="Body" type="StaticBody3D" parent="." unique_id=1766005844]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1315768052]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
-shape = SubResource("BoxShape3D_0ago0")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=583461905]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2425, 0)
+shape = SubResource("BoxShape3D_tury5")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Body" unique_id=791180565]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.69, -0.21)
+shape = SubResource("BoxShape3D_ya2vp")
+
+[node name="Surfaces" type="Node3D" parent="." unique_id=100377351]
+
+[node name="Seat" type="Area3D" parent="Surfaces" unique_id=661064200]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.485, 0.02)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_1jf1j")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Seat" unique_id=1928635504]
+shape = SubResource("BoxShape3D_0c0lq")

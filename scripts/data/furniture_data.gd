@@ -43,10 +43,27 @@ const _CATEGORY_NAMES := {
 @export var is_unlocked: bool = true
 
 @export_group("Platzierung")
-## Darf auf Tischen, Regalbrettern und anderen Ablageflächen stehen (z. B. Deko).
-@export var can_stand_on_surfaces: bool = false
-## Bietet selbst eine Ablagefläche, auf die Deko gestellt werden kann (z. B. Tisch, Regal).
-@export var has_surface: bool = false
+## Wo darf es hin? Ein oder mehrere Häkchen:
+## Boden, Ablagefläche (Tisch, Regalbrett, Sitzfläche, Fensterbank …), Wand, Tür.
+## Welche Ablageflächen ein Möbelstück selbst anbietet, steht in seiner Szene
+## (Knoten vom Typ PlacementSurface).
+@export_flags("Boden:1", "Ablagefläche:2", "Wand:4", "Tür:8") var placement: int = PLACE_FLOOR
+
+## Werte für "placement"
+const PLACE_FLOOR := 1
+const PLACE_SURFACE := 2
+const PLACE_WALL := 4
+const PLACE_DOOR := 8
+
+
+## Darf es dorthin? (z. B. allows(PLACE_WALL))
+func allows(where: int) -> bool:
+	return (placement & where) != 0
+
+
+## Wird es aufgehängt (an Wand oder Tür)?
+func is_hanging() -> bool:
+	return allows(PLACE_WALL) or allows(PLACE_DOOR)
 
 
 ## Eindeutiger Name (aus dem Feld "id" oder ersatzweise dem Dateinamen).

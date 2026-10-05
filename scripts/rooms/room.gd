@@ -29,6 +29,18 @@ signal layout_changed
 	$Structure/WallFront/DoorHole,
 ]
 @onready var _floor_parts: Array[CSGPrimitive3D] = [$Structure/Floor]
+## Hier darf man etwas aufhängen (Wandbilder, Lichtschalter …).
+@onready var _hang_walls: Array[Node] = [
+	$Structure/WallLeft,
+	$Structure/WallRight,
+	$Structure/WallBack,
+	$Structure/WallFront,
+]
+## Hier darf man etwas an die Tür hängen (z. B. einen Türkranz).
+@onready var _hang_doors: Array[Node] = [$Door/DoorLeaf]
+
+## Wohin etwas gehängt werden kann (gleiche Werte wie FurnitureData.placement).
+enum HangKind { NONE = 0, WALL = 4, DOOR = 8 }
 
 var wall_surface_id: String = ""
 var floor_surface_id: String = ""
@@ -105,6 +117,15 @@ func get_dependents(item: PlacedFurniture) -> Array[PlacedFurniture]:
 func is_inside_build_area(world_position: Vector3) -> bool:
 	var local := to_local(world_position)
 	return build_area.has_point(Vector2(local.x, local.z))
+
+
+## Ist der getroffene Kollisionskörper eine Wand oder die Tür dieses Raums?
+func get_hang_kind(collider: Object) -> HangKind:
+	if _hang_walls.has(collider):
+		return HangKind.WALL
+	if _hang_doors.has(collider):
+		return HangKind.DOOR
+	return HangKind.NONE
 
 
 ## Anteil jedes Stils an allen Möbeln im Raum (siehe StyleTags.calculate_shares).

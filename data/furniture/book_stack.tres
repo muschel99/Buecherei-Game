@@ -6,9 +6,8 @@
 script = ExtResource("1_dlhwe")
 id = "book_stack"
 display_name = "Bücherstapel"
-description = "Ein paar alte Bände übereinander."
+description = "Ein paar alte Bände – auch für die Armlehne."
 price = 15
 styles = 4
 scene_path = "res://scenes/furniture/book_stack.tscn"
-footprint = Vector2i(2, 2)
-can_stand_on_surfaces = true
+placement = 3

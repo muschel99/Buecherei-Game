@@ -172,7 +172,7 @@ func _build_help() -> void:
 	var entries := [
 		["Tab / Esc", "Gestaltungsmodus schließen"],
 		["Linksklick", "Auswählen / aufheben / platzieren"],
-		["Rechte Maust.", "Halten: umsehen · Klick: zurücklegen"],
+		["Rechte Maustaste", "Halten: umsehen · Klick: zurücklegen"],
 		["Mausrad", "Drehen"],
 		["G", ""],  # Text kommt aus _on_grid_changed
 		["Entf", "Entfernen"],

@@ -2,6 +2,7 @@
 
 [ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="1_qv8oo"]
 [ext_resource type="Material" path="res://assets/materials/wood_light.tres" id="2_g42hs"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="3_g42hs"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_l7skx"]
 size = Vector3(0.03, 1.8, 0.03)
@@ -55,6 +56,21 @@ size = Vector3(1.45, 0.03, 0.35)
 size = Vector3(1.45, 0.03, 0.35)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3q6vl"]
+size = Vector3(1.45, 0.03, 0.35)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_l7skx"]
+size = Vector3(1.45, 0.03, 0.35)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tjcpq"]
+size = Vector3(1.45, 0.03, 0.35)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_mt8od"]
+size = Vector3(1.45, 0.03, 0.35)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_or86q"]
+size = Vector3(1.45, 0.03, 0.35)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_o1a1w"]
 size = Vector3(1.45, 0.03, 0.35)
 
 [node name="DividerShelf" type="Node3D" unique_id=398023252]
@@ -143,3 +159,55 @@ shape = SubResource("BoxShape3D_a42nd")
 [node name="CollisionShape3D9" type="CollisionShape3D" parent="Body" unique_id=277589900]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.74, 0)
 shape = SubResource("BoxShape3D_3q6vl")
+
+[node name="Surfaces" type="Node3D" parent="." unique_id=1587381344]
+
+[node name="Shelf1" type="Area3D" parent="Surfaces" unique_id=128474763]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_g42hs")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf1" unique_id=1878393632]
+shape = SubResource("BoxShape3D_l7skx")
+
+[node name="Shelf2" type="Area3D" parent="Surfaces" unique_id=568261332]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.495, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_g42hs")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf2" unique_id=1731148494]
+shape = SubResource("BoxShape3D_tjcpq")
+
+[node name="Shelf3" type="Area3D" parent="Surfaces" unique_id=1087268342]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.915, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_g42hs")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf3" unique_id=46839721]
+shape = SubResource("BoxShape3D_mt8od")
+
+[node name="Shelf4" type="Area3D" parent="Surfaces" unique_id=315741657]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.335, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_g42hs")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf4" unique_id=1427495440]
+shape = SubResource("BoxShape3D_or86q")
+
+[node name="Shelf5" type="Area3D" parent="Surfaces" unique_id=1524928001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.755, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_g42hs")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf5" unique_id=861846758]
+shape = SubResource("BoxShape3D_o1a1w")

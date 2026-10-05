@@ -11,5 +11,4 @@ category = 2
 price = 260
 styles = 4
 scene_path = "res://scenes/furniture/desk_leather.tscn"
-footprint = Vector2i(10, 6)
-has_surface = true
+footprint = Vector2i(10, 5)

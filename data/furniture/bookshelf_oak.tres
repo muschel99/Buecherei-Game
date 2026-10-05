@@ -12,4 +12,3 @@ price = 160
 styles = 4
 scene_path = "res://scenes/furniture/bookshelf.tscn"
 footprint = Vector2i(10, 4)
-has_surface = true

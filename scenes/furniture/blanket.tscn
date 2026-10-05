@@ -1,0 +1,74 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/fabric_burgundy.tres" id="1_scqfw"]
+[ext_resource type="Material" path="res://assets/materials/leather_green.tres" id="2_m2n8b"]
+[ext_resource type="Material" path="res://assets/materials/fabric_linen.tres" id="3_xrkqq"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_6lb1m"]
+size = Vector3(0.45, 0.03, 0.32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2mk8q"]
+size = Vector3(0.45, 0.03, 0.32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6ub3u"]
+size = Vector3(0.45, 0.03, 0.32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3wsw2"]
+size = Vector3(0.02, 0.092, 0.322)
+
+[sub_resource type="BoxMesh" id="BoxMesh_n43ix"]
+size = Vector3(0.02, 0.092, 0.322)
+
+[sub_resource type="BoxMesh" id="BoxMesh_02wdo"]
+size = Vector3(0.02, 0.092, 0.322)
+
+[sub_resource type="BoxMesh" id="BoxMesh_02bl3"]
+size = Vector3(0.02, 0.092, 0.322)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h47uy"]
+size = Vector3(0.45, 0.09, 0.32)
+
+[node name="Blanket" type="Node3D" unique_id=813380854]
+
+[node name="Model" type="Node3D" parent="." unique_id=1999273345]
+
+[node name="Layer1" type="MeshInstance3D" parent="Model" unique_id=1614846868]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
+material_override = ExtResource("1_scqfw")
+mesh = SubResource("BoxMesh_6lb1m")
+
+[node name="Layer2" type="MeshInstance3D" parent="Model" unique_id=765811436]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.045, 0)
+material_override = ExtResource("2_m2n8b")
+mesh = SubResource("BoxMesh_2mk8q")
+
+[node name="Layer3" type="MeshInstance3D" parent="Model" unique_id=75070490]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 0)
+material_override = ExtResource("1_scqfw")
+mesh = SubResource("BoxMesh_6ub3u")
+
+[node name="Stripe1" type="MeshInstance3D" parent="Model" unique_id=503654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.17, 0.045, 0)
+material_override = ExtResource("3_xrkqq")
+mesh = SubResource("BoxMesh_3wsw2")
+
+[node name="Stripe2" type="MeshInstance3D" parent="Model" unique_id=1698639985]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.057, 0.045, 0)
+material_override = ExtResource("3_xrkqq")
+mesh = SubResource("BoxMesh_n43ix")
+
+[node name="Stripe3" type="MeshInstance3D" parent="Model" unique_id=2031926286]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.056, 0.045, 0)
+material_override = ExtResource("3_xrkqq")
+mesh = SubResource("BoxMesh_02wdo")
+
+[node name="Stripe4" type="MeshInstance3D" parent="Model" unique_id=863543136]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.169, 0.045, 0)
+material_override = ExtResource("3_xrkqq")
+mesh = SubResource("BoxMesh_02bl3")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=1481776693]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=710974837]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.045, 0)
+shape = SubResource("BoxShape3D_h47uy")

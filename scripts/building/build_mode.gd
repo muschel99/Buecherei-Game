@@ -194,7 +194,8 @@ func _on_primary_click() -> void:
 		Tool.PLACE_NEW:
 			if _placement_ok:
 				_room.add_furniture(_selected_data, _placement_transform, _placement_support)
-				_flash_status("%s aufgestellt." % _selected_data.display_name)
+				var verb := "aufgehängt" if _selected_data.is_hanging() else "aufgestellt"
+				_flash_status("%s %s." % [_selected_data.display_name, verb])
 				_clear_tool()
 		Tool.MOVE:
 			if _placement_ok:
@@ -300,6 +301,8 @@ func _delete_target() -> void:
 func _rotate(direction: float) -> void:
 	if _tool != Tool.PLACE_NEW and _tool != Tool.MOVE:
 		return
+	if _preview.data and _preview.data.is_hanging():
+		return  # Aufgehängtes richtet sich nach der Wand
 	var step := GameConfig.rotation_step_grid if grid_enabled else GameConfig.rotation_step_free
 	_rotation_offset = fposmod(_rotation_offset + step * direction, 360.0)
 
@@ -364,79 +367,130 @@ func _update_placement() -> void:
 	_placement_visible = false
 	_placement_ok = false
 	_placement_support = null
+	_placement_on_floor = false
 
-	var hit := _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT)
-	if hit.is_empty() or hit.normal.y < -0.5:
+	# Ablageflächen sind nur für Dinge sichtbar, die darauf stehen dürfen
+	var mask := FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT
+	if data.allows(FurnitureData.PLACE_SURFACE):
+		mask |= FurnitureUtils.SURFACE_LAYER_BIT
+	var hit := _ray_from_camera(mask)
+
+	var problem := ""
+	var hang_kind := Room.HangKind.NONE
+	if not hit.is_empty():
+		hang_kind = _room.get_hang_kind(hit.collider)
+	if not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
+			and absf(hit.normal.y) < 0.5:
+		problem = _place_on_wall(hit)
+	elif not hit.is_empty() and hit.normal.y > -0.5 and \
+			(data.allows(FurnitureData.PLACE_FLOOR) or data.allows(FurnitureData.PLACE_SURFACE)):
+		problem = _place_standing(hit)
+	else:
 		_preview.visible = false
 		_update_grid_visibility()
-		_set_status("Schau auf den Boden oder eine Ablage, um %s hinzustellen." % data.display_name, true)
+		var where := "eine Wand" if data.allows(FurnitureData.PLACE_WALL) else "die Tür"
+		if not data.is_hanging():
+			where = "den Boden oder eine Ablage"
+		_set_status("Schau auf %s, um %s zu platzieren." % [where, data.display_name], true)
 		return
 
-	var yaw := _placement_yaw_degrees()
-	var point: Vector3 = hit.position
-	var normal: Vector3 = hit.normal
-	var half := _rotated_half_size(data, yaw)
-
-	# Zeigt man auf eine Wand oder eine Möbelseite, rückt die Vorschau davor
-	if absf(normal.y) < 0.5:
-		var flat := Vector3(normal.x, 0.0, normal.z).normalized()
-		var reach := absf(flat.x) * half.x + absf(flat.z) * half.y
-		point += flat * (reach + 0.01)
-
-	# Höhe bestimmen: von oben nach unten auf die nächste Fläche schauen
-	var start_height: float = hit.position.y + 0.1
-	var down := _find_ground(point, start_height, data)
-	# Auf dem Boden rastet das Möbelstück im Raster ein (wenn Einrasten an ist). Auf Tischen
-	# und Regalbrettern nicht, denn deren Fächer passen selten genau zum Raster des Raums.
-	if grid_enabled and FurnitureUtils.find_placed_furniture(down.get("collider")) == null:
-		point = _snap_to_grid(point, data, yaw)
-		down = _find_ground(point, start_height, data)
-
-	var surface_normal := Vector3.UP
-	point.y = _room.floor_height
-	if not down.is_empty():
-		point.y = down.position.y
-		surface_normal = down.normal
-		_placement_support = FurnitureUtils.find_placed_furniture(down.collider)
-
-	_placement_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(yaw)), point)
-	_placement_on_floor = _placement_support == null
 	_placement_visible = true
 	_preview.global_transform = _placement_transform
 	_preview.visible = true
-
-	var problem := _find_problem(surface_normal)
 	_placement_ok = problem.is_empty()
 	_preview.set_valid(_placement_ok)
 	_update_grid_visibility()
 
 	var price_text := "%d %s" % [data.price, GameConfig.currency_name]
 	if _placement_ok:
-		_set_status("%s (%s) – Linksklick: platzieren · Mausrad: drehen · Rechtsklick: zurücklegen" % [data.display_name, price_text])
+		var rotate_hint := "" if data.is_hanging() else " · Mausrad: drehen"
+		_set_status("%s (%s) – Linksklick: platzieren%s · Rechtsklick: zurücklegen" % [data.display_name, price_text, rotate_hint])
 	else:
 		_set_status("%s – %s" % [data.display_name, problem], true)
 
 
-## Liefert einen Grund, warum das Möbelstück hier nicht passt (leer = passt).
-func _find_problem(surface_normal: Vector3) -> String:
-	if not _room.is_inside_build_area(_placement_transform.origin):
+## Stehende Dinge: auf dem Boden oder auf einer Ablagefläche.
+## Setzt _placement_transform und liefert einen Grund, falls es nicht passt.
+func _place_standing(hit: Dictionary) -> String:
+	var data := _preview.data
+	var yaw := _placement_yaw_degrees()
+	var point: Vector3 = hit.position
+	var normal: Vector3 = hit.normal
+
+	# Zeigt man auf eine Wand oder eine Möbelseite, rückt die Vorschau davor
+	if absf(normal.y) < 0.5:
+		var half := _rotated_half_size(data, yaw)
+		var flat := Vector3(normal.x, 0.0, normal.z).normalized()
+		var reach := absf(flat.x) * half.x + absf(flat.z) * half.y
+		point += flat * (reach + 0.01)
+
+	# Von oben nach unten schauen: Worauf würde es stehen?
+	var start_height: float = hit.position.y + 0.1
+	var ground := _find_ground(point, start_height, data)
+	# Auf dem Boden rastet es ein (wenn Einrasten an ist). Auf Ablagen nicht,
+	# denn deren Fächer passen selten genau zum Raster des Raums.
+	if grid_enabled and not ground.get("collider") is PlacementSurface:
+		point = _snap_to_grid(point, data, yaw)
+		ground = _find_ground(point, start_height, data)
+
+	var surface_normal := Vector3.UP
+	point.y = _room.floor_height
+	var on_surface := false
+	if not ground.is_empty():
+		surface_normal = ground.normal
+		if ground.collider is PlacementSurface:
+			on_surface = true
+			point.y = (ground.collider as PlacementSurface).get_surface_height()
+			_placement_support = FurnitureUtils.find_placed_furniture(ground.collider)
+		else:
+			point.y = ground.position.y
+	_placement_on_floor = not on_surface
+	_placement_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(yaw)), point)
+
+	if not _room.is_inside_build_area(point):
 		return "Das muss im Raum stehen."
+	if not on_surface and not data.allows(FurnitureData.PLACE_FLOOR):
+		return "Das gehört auf eine Ablage (Tisch, Regal, Sessel, Fensterbank)."
 	if surface_normal.y < 0.7:
 		return "Hier steht es nicht gerade."
-	if _placement_support:
-		if not _placement_support.data.has_surface:
-			return "Darauf kann man nichts abstellen."
+	return _find_overlap(Vector3.UP, true)
 
+
+## Hängende Dinge: an der Wand oder an der Tür. Die Rückseite liegt an der Fläche.
+func _place_on_wall(hit: Dictionary) -> String:
+	var normal: Vector3 = Vector3(hit.normal.x, 0.0, hit.normal.z).normalized()
+	var point: Vector3 = hit.position
+	if grid_enabled:
+		var cell := GameConfig.grid_cell_size
+		point.y = snappedf(point.y, cell)
+		# entlang der Wand einrasten
+		if absf(normal.x) > absf(normal.z):
+			point.z = snappedf(point.z, cell)
+		else:
+			point.x = snappedf(point.x, cell)
+	point += normal * 0.002
+	var yaw := atan2(normal.x, normal.z)
+	_placement_transform = Transform3D(Basis(Vector3.UP, yaw), point)
+	_placement_on_floor = false
+	# Vor der Eingangstür darf etwas hängen – die Sperrzone gilt nur für den Boden
+	return _find_overlap(normal, false)
+
+
+## Prüft, ob die Vorschau etwas anderes berührt (leer = frei).
+## lift: in diese Richtung wird etwas abgerückt, damit bloßes Anliegen erlaubt ist.
+func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
 	var space := _player.get_world_3d().direct_space_state
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.collision_mask = FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.PLAYER_LAYER_BIT \
-		| FurnitureUtils.FURNITURE_LAYER_BIT | FurnitureUtils.BUILD_BLOCKER_LAYER_BIT
+		| FurnitureUtils.FURNITURE_LAYER_BIT
+	if check_entrance:
+		query.collision_mask |= FurnitureUtils.BUILD_BLOCKER_LAYER_BIT
 	query.collide_with_areas = true
+	_preview.global_transform = _placement_transform
 	var shapes := _preview.get_shapes()
 	for i in shapes.size():
 		query.shape = _preview.get_shrunk_shape(i)
-		# Etwas anheben, damit das Aufstehen auf Boden oder Tisch nicht als Überschneidung zählt
-		query.transform = shapes[i].global_transform.translated(Vector3.UP * FurniturePreview.SHRINK)
+		query.transform = shapes[i].global_transform.translated(lift * FurniturePreview.SHRINK)
 		for result in space.intersect_shape(query, 4):
 			var other: Object = result.collider
 			if other is Area3D:
@@ -444,17 +498,17 @@ func _find_problem(surface_normal: Vector3) -> String:
 			if other is Player:
 				return "Du stehst im Weg – geh ein Stück zur Seite."
 			if FurnitureUtils.find_placed_furniture(other):
-				return "Hier steht schon etwas."
+				return "Hier ist schon etwas."
 			return "Zu nah an der Wand."
 	return ""
 
 
-## Schaut senkrecht nach unten: Worauf würde das Möbelstück hier stehen?
-## Möbel ohne "can_stand_on_surfaces" sehen dabei nur den Boden.
+## Schaut senkrecht nach unten: Worauf würde das Ding hier stehen?
+## Ablageflächen zählen nur für Dinge, die dort stehen dürfen.
 func _find_ground(point: Vector3, start_height: float, data: FurnitureData) -> Dictionary:
 	var mask := FurnitureUtils.WORLD_LAYER_BIT
-	if data.can_stand_on_surfaces:
-		mask |= FurnitureUtils.FURNITURE_LAYER_BIT
+	if data.allows(FurnitureData.PLACE_SURFACE):
+		mask |= FurnitureUtils.SURFACE_LAYER_BIT
 	var from := Vector3(point.x, start_height, point.z)
 	return _ray(from, Vector3(point.x, _room.floor_height - 1.0, point.z), mask)
 
@@ -528,6 +582,8 @@ func _ray_from_camera(mask: int) -> Dictionary:
 
 func _ray(from: Vector3, to: Vector3, mask: int) -> Dictionary:
 	var query := PhysicsRayQueryParameters3D.create(from, to, mask, [_player.get_rid()])
+	# Ablageflächen sind Area3D-Knoten und werden nur so gefunden
+	query.collide_with_areas = (mask & FurnitureUtils.SURFACE_LAYER_BIT) != 0
 	return _player.get_world_3d().direct_space_state.intersect_ray(query)
 
 

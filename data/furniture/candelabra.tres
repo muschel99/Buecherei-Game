@@ -10,5 +10,5 @@ description = "Drei Kerzen auf Messing."
 price = 30
 styles = 4
 scene_path = "res://scenes/furniture/candelabra.tscn"
-footprint = Vector2i(2, 2)
-can_stand_on_surfaces = true
+footprint = Vector2i(2, 1)
+placement = 3
