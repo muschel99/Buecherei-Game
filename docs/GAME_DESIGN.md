@@ -46,17 +46,19 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 |----------------|------------------------------------------------|
 | W A S D        | Laufen                                         |
 | Umschalt       | Schneller laufen (gedrückt halten)             |
-| Leertaste      | Springen (sanft); im Sitzen: aufstehen         |
+| Leertaste      | Springen (etwa 0,8 m hoch, weich); im Sitzen: aufstehen |
 | Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
 | E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen … |
 | Tab            | Gestaltungsmodus öffnen/schließen              |
+| F3             | Bilder pro Sekunde anzeigen/ausblenden         |
 | Esc            | Schließt, was offen ist – sonst Pausenmenü     |
 
 ### Im Gestaltungsmodus
 Zwei Zustände:
 - **Katalog-Zustand:** Mauszeiger sichtbar. Im Katalog stöbern und auswählen, platzierte Möbel
   anklicken (= aufheben). Laufen mit WASD geht weiter, Umsehen mit gehaltener rechter Maustaste.
+  Nach dem Umsehen erscheint der Mauszeiger genau dort wieder, wo man die Taste gedrückt hat.
 - **Platzier-Zustand:** Sobald etwas ausgewählt oder aufgehoben ist, verschwindet der Mauszeiger
   und die Vorschau folgt dem Blick. Nach dem Platzieren oder Zurücklegen geht es automatisch
   zurück in den Katalog-Zustand.
@@ -71,7 +73,7 @@ Zwei Zustände:
 | Rechtsklick              | Zurücklegen / Auswahl beenden (im Platzier-Zustand)            |
 | Mausrad                  | Drehen                                                         |
 | G                        | Einrasten an/aus (Raster 1/9 m ≈ 11,1 cm und 15°-Schritte)      |
-| Entf                     | Möbelstück entfernen                                           |
+| X                        | Gehaltenes oder anvisiertes Objekt entfernen (Neues aus dem Katalog geht einfach zurück) |
 
 ### Gestaltungsregeln
 - Standard: frei platzieren und stufenlos drehen. Mit G rastet alles am Raster ein.
@@ -123,7 +125,14 @@ Zwei Zustände:
 
 ## Einstellungen
 - Im Pausenmenü unter „Einstellungen“: Fenster oder Vollbild, Auflösung (gängige Auflösungen
-  inklusive Ultrawide), VSync. Gespeichert in einer eigenen Datei, getrennt vom Spielstand.
+  inklusive Ultrawide), VSync (Standard: an), Bildrate begrenzen (30, 60, 120 oder unbegrenzt;
+  Standard: 60). Gespeichert in einer eigenen Datei, getrennt vom Spielstand.
+- Grafikqualität Niedrig, Mittel (Standard) oder Hoch. Die Werte jeder Stufe stehen in
+  `GameConfig.graphics_presets` (Schatten, Umgebungslicht, Nebel, Kantenglättung, Staub …).
+- Sparsame Schatten für ruhige Leistung: Nur wichtige Lampen werfen Schatten (Sonne, Stehlampe;
+  auf „Hoch“ auch Deckenlampen). Kleine Lichter wie Kerzen und Laternen haben keine eigenen Schatten.
+- Im Pausenmenü läuft das Spiel mit höchstens 30 Bildern pro Sekunde, damit der Rechner ruht.
+- Bilder pro Sekunde anzeigen: in den Einstellungen oder mit F3.
 - Alle Menüs und Anzeigen passen sich an jede Auflösung und jedes Seitenverhältnis an.
 - Später dazu: Lautstärke, Mausempfindlichkeit, Tageslänge.
 - Weitere Räume und Obergeschoss werden später freigeschaltet.

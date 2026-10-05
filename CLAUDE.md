@@ -79,6 +79,9 @@ docs/              Dokumentation
 - Spieler-Einstellungen gehören in `Settings.DEFINITIONS` (`scripts/autoload/settings.gd`),
   nicht in GameConfig; der Einstellungsbereich im Pausenmenü baut sich daraus selbst.
 - Alles, was Licht abgibt, bekommt `LightSource` (Art ELECTRIC oder FLAME) + Interactable.
+  `shadow_importance` legt fest, ob die Lampe Schatten werfen darf (NONE, IMPORTANT, OPTIONAL
+  = nur auf „Hoch“). Kleine Lichter (Kerzen) ohne Schatten.
+- Grafikstufen (Niedrig/Mittel/Hoch) stehen in `GameConfig.graphics_presets`.
 - Sitzmöbel: Knoten `Seating` mit `SeatPoint`-Markern (Blickrichtung +Z) + Interactable.
 - Hervorhebung immer über `FurnitureUtils.get_highlight_material()` (dezent, Stärke in GameConfig).
 - Möbel im Raum sind `PlacedFurniture`-Knoten (unter `Furniture` im Raum) mit einem
@@ -90,6 +93,6 @@ docs/              Dokumentation
 - Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `jump`,
   `crouch`, `interact`,
   `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
-  `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete`,
-  `build_paint_all` (Umschalt).
+  `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete` (X),
+  `build_paint_all` (Umschalt), `toggle_fps` (F3).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).
