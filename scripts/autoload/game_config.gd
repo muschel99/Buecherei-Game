@@ -70,6 +70,14 @@ var flame_fade_time: float = 0.6
 var light_switch_includes_flames: bool = false
 
 
+# --- Raum ---
+
+## Raumhöhe vom Boden bis zur Decke in Metern (vorher 3,0 m). Wände, Decke, Wandabschnitte
+## und Deckenbelag passen sich beim Start daran an. Am besten ein Vielfaches von 1/3 m nahe
+## dem Wunschwert wählen – muss aber nicht.
+var room_height: float = 3.2
+
+
 # --- Gestaltungsmodus (Etappe 2) ---
 
 ## Kantenlänge eines Rasterfelds in Metern. Mit eingeschaltetem Einrasten (G)
