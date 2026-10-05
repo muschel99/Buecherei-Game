@@ -15,6 +15,7 @@ const HINT_COLOR := Color(0.85, 0.78, 0.68, 0.8)
 @onready var _back_button: Button = %SettingsBackButton
 
 var _resolution_button: OptionButton
+var _window_mode_button: OptionButton
 var _resolution_hint: Label
 
 
@@ -64,6 +65,8 @@ func _create_control(definition: Dictionary) -> Control:
 			for option in definition.options:
 				choice.add_item(option)
 			choice.select(int(Settings.get_value(key)))
+			if key == "display/window_mode":
+				_window_mode_button = choice
 			choice.item_selected.connect(func(index: int) -> void:
 				Settings.set_value(key, index)
 				_refresh_resolution())
@@ -90,6 +93,7 @@ func _sized(control: Control) -> Control:
 
 
 ## Auflösungsliste füllen; im Vollbild gilt die Bildschirmauflösung.
+## Läuft das Spiel im Editor eingebettet, sind Anzeige und Auflösung gesperrt.
 func _refresh_resolution() -> void:
 	if _resolution_button == null:
 		return
@@ -100,5 +104,12 @@ func _refresh_resolution() -> void:
 		_resolution_button.add_item(options[i])
 		if options[i] == current:
 			_resolution_button.select(i)
-	_resolution_button.disabled = Settings.is_fullscreen()
-	_resolution_hint.text = "Im Vollbild wird die Auflösung des Bildschirms verwendet." if Settings.is_fullscreen() else ""
+	_resolution_button.disabled = Settings.is_fullscreen() or Settings.is_embedded()
+	if _window_mode_button:
+		_window_mode_button.disabled = Settings.is_embedded()
+	if Settings.is_embedded():
+		_resolution_hint.text = "Das Spiel läuft im Godot-Editor eingebettet. Vollbild und Auflösung\nwirken nur, wenn das Spiel in einem eigenen Fenster läuft."
+	elif Settings.is_fullscreen():
+		_resolution_hint.text = "Im Vollbild wird die Auflösung des Bildschirms verwendet."
+	else:
+		_resolution_hint.text = ""
