@@ -210,6 +210,14 @@ func paint_grid_cell(index: int, surface: SurfaceData) -> void:
 	layout_changed.emit()
 
 
+## Füllwerkzeug für Boden und Decke: füllt alle zusammenhängenden Abschnitte mit
+## demselben Belag wie der angeklickte (siehe PaintableGrid.get_connected_cells).
+func fill_grid(start_index: int, surface: SurfaceData) -> void:
+	var grid := _grids[surface.kind] as PaintableGrid
+	grid.paint_cells(grid.get_connected_cells(start_index), surface)
+	layout_changed.emit()
+
+
 ## Gestaltet den ganzen Boden bzw. die ganze Decke.
 func paint_grid(surface: SurfaceData) -> void:
 	(_grids[surface.kind] as PaintableGrid).paint_all(surface)

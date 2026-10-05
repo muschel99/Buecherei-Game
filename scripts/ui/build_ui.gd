@@ -179,7 +179,7 @@ func _build_help() -> void:
 		["Mausrad", "Drehen"],
 		["G", ""],  # Text kommt aus _on_grid_changed
 		["Entf", "Entfernen"],
-		["Umschalt + Klick", "Ganze Wand / Boden / Decke"],
+		["Umschalt + Klick", "Ganze Wand · Boden/Decke füllen"],
 	]
 	for entry in entries:
 		_help_grid.add_child(_small_label(entry[0], 14, KEY_COLOR))

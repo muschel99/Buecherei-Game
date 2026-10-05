@@ -358,8 +358,8 @@ func _set_hovered(item: PlacedFurniture) -> void:
 ## Texte und Symbole je Art der Oberfläche
 const _PAINT_TEXTS := {
 	SurfaceData.Kind.WALL: {"icon": "roller", "one": "Wandabschnitt streichen", "all": "ganze Wand", "where": "eine Wand"},
-	SurfaceData.Kind.FLOOR: {"icon": "carpet", "one": "Bodenabschnitt belegen", "all": "ganzer Boden", "where": "den Boden"},
-	SurfaceData.Kind.CEILING: {"icon": "ceiling", "one": "Deckenabschnitt gestalten", "all": "ganze Decke", "where": "die Decke"},
+	SurfaceData.Kind.FLOOR: {"icon": "carpet", "one": "Bodenabschnitt belegen", "all": "Fläche füllen", "where": "den Boden"},
+	SurfaceData.Kind.CEILING: {"icon": "ceiling", "one": "Deckenabschnitt gestalten", "all": "Fläche füllen", "where": "die Decke"},
 }
 
 
@@ -397,7 +397,8 @@ func _find_paint_target() -> Dictionary:
 	return {} if cell < 0 else {"cell": cell}
 
 
-## Gestaltet die Stelle, auf die ich schaue (whole = ganze Wand / ganzer Boden / ganze Decke).
+## Gestaltet die Stelle, auf die ich schaue. whole = ganze Wand bzw. bei Boden und Decke
+## das Füllwerkzeug (alle zusammenhängenden Abschnitte mit gleichem Belag).
 func _paint_at_target(whole: bool) -> void:
 	var target := _find_paint_target()
 	if target.is_empty():
@@ -414,7 +415,7 @@ func _paint_at_target(whole: bool) -> void:
 			_room.paint_wall_segment(target.wall, target.index, _selected_surface)
 	else:
 		if whole:
-			_room.paint_grid(_selected_surface)
+			_room.fill_grid(target.cell, _selected_surface)
 			_paint_held = false
 		else:
 			_room.paint_grid_cell(target.cell, _selected_surface)
