@@ -3,7 +3,8 @@ extends CharacterBody3D
 ## Die Spielfigur in Ego-Perspektive.
 ##
 ## Laufen mit WASD (mit Umschalt schneller), Umsehen mit der Maus, Interagieren mit E.
-## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E oder einer Bewegungstaste.
+## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
+## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
 ## Alle Einstellwerte (Tempo, Mausempfindlichkeit ...) stehen in GameConfig.
 
 ## Wird gesendet, wenn sich das anvisierte interaktive Objekt ändert
@@ -24,6 +25,10 @@ var _head_bob_time: float = 0.0
 var _seat: SeatPoint = null
 var _stand_position := Vector3.ZERO
 var _sit_tween: Tween
+# Hocken: aktueller Zustand, Körperform und Höhe im Stehen
+var _is_crouching := false
+var _capsule: CapsuleShape3D
+var _stand_body_height: float = 1.7
 ## Aktuelles Höchsttempo: gleitet weich zwischen walk_speed und sprint_speed hin und her.
 var _current_max_speed: float = 0.0
 ## Im Gestaltungsmodus wird das Interagieren mit E abgeschaltet.
@@ -43,6 +48,10 @@ func _ready() -> void:
 	var reach := maxf(GameConfig.interaction_distance, GameConfig.long_interaction_distance)
 	interaction_ray.target_position = Vector3(0, 0, -reach)
 	_current_max_speed = GameConfig.walk_speed
+	# Eigene Kopie der Körperform, damit sie sich beim Hocken verkleinern lässt
+	_capsule = _collision.shape.duplicate()
+	_collision.shape = _capsule
+	_stand_body_height = _capsule.height
 	# Mauszeiger im Spiel "fangen" (unsichtbar, bleibt im Fenster)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -50,7 +59,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look_around(event.relative)
-	elif event.is_action_pressed("interact") and is_seated():
+	elif (event.is_action_pressed("interact") or event.is_action_pressed("jump")) and is_seated():
 		stand_up()
 	elif event.is_action_pressed("interact") and interaction_enabled:
 		_try_interact()
@@ -70,9 +79,56 @@ func _physics_process(delta: float) -> void:
 		_update_interaction_target()
 		return
 	_apply_gravity(delta)
+	_update_crouch(delta)
+	_jump()
 	_move(delta)
 	_update_head_bob(delta)
 	_update_interaction_target()
+
+
+# --- Springen und Hocken ---
+
+## Sanfter Sprung: Die Startgeschwindigkeit ergibt genau die gewünschte Sprunghöhe.
+func _jump() -> void:
+	if Input.is_action_just_pressed("jump") and is_on_floor() and not _is_crouching:
+		velocity.y = sqrt(2.0 * _gravity * GameConfig.jump_height)
+
+
+## Hocken, solange Strg gedrückt ist. Aufstehen nur, wenn über einem genug Platz ist.
+func _update_crouch(delta: float) -> void:
+	var wants_crouch := Input.is_action_pressed("crouch")
+	if wants_crouch and not _is_crouching:
+		_set_body_height(GameConfig.crouch_body_height)
+		_is_crouching = true
+	elif not wants_crouch and _is_crouching and _has_room_to_stand():
+		_set_body_height(_stand_body_height)
+		_is_crouching = false
+	# Kamera gleitet sanft auf die passende Augenhöhe
+	var target_eye := GameConfig.crouch_eye_height if _is_crouching else GameConfig.eye_height
+	head.position.y = move_toward(head.position.y, target_eye, GameConfig.crouch_transition_speed * delta)
+
+
+func is_crouching() -> bool:
+	return _is_crouching
+
+
+## Ändert die Körperhöhe; die Füße bleiben dabei auf dem Boden.
+func _set_body_height(body_height: float) -> void:
+	_capsule.height = body_height
+	_collision.position.y = body_height / 2.0
+
+
+## Ist über der hockenden Figur genug Platz zum Aufstehen?
+func _has_room_to_stand() -> bool:
+	var standing := CapsuleShape3D.new()
+	standing.radius = _capsule.radius - 0.02
+	standing.height = _stand_body_height - 0.04
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = standing
+	query.transform = Transform3D(Basis.IDENTITY, global_position + Vector3.UP * (_stand_body_height / 2.0 + 0.02))
+	query.collision_mask = collision_mask
+	query.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
 # --- Sitzen ---
@@ -153,7 +209,9 @@ func _move(delta: float) -> void:
 
 	# Schnell laufen, solange die Umschalttaste gedrückt ist – mit sanftem Übergang
 	var wanted_speed := GameConfig.walk_speed
-	if Input.is_action_pressed("sprint") and input != Vector2.ZERO:
+	if _is_crouching:
+		wanted_speed = GameConfig.crouch_speed
+	elif Input.is_action_pressed("sprint") and input != Vector2.ZERO:
 		wanted_speed = GameConfig.sprint_speed
 	_current_max_speed = move_toward(_current_max_speed, wanted_speed, GameConfig.sprint_blend_rate * delta)
 	var target_velocity := direction * _current_max_speed

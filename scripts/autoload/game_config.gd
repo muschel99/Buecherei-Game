@@ -21,6 +21,19 @@ var acceleration: float = 9.0
 var deceleration: float = 11.0
 ## Augenhöhe der Kamera über dem Boden in Metern.
 var eye_height: float = 1.6
+
+# --- Spielfigur: Springen und Hocken ---
+
+## Wie hoch die Figur springt (in Metern). Klein = sanfter, gemütlicher Hüpfer.
+var jump_height: float = 0.4
+## Augenhöhe in der Hocke (in Metern über dem Boden).
+var crouch_eye_height: float = 1.0
+## Körperhöhe in der Hocke (in Metern) – so niedrig kann man sich bücken.
+var crouch_body_height: float = 1.15
+## Laufgeschwindigkeit in der Hocke (Meter pro Sekunde).
+var crouch_speed: float = 1.3
+## Wie schnell sich die Kamera beim Hocken senkt und hebt (Meter pro Sekunde).
+var crouch_transition_speed: float = 3.0
 ## Augenhöhe im Sitzen, gemessen über der Sitzfläche (in Metern).
 var seated_eye_height: float = 0.72
 ## Wie lange das Hinsetzen bzw. Aufstehen dauert (in Sekunden).

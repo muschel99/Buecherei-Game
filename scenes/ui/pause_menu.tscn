@@ -84,6 +84,20 @@ text = "Umschalt"
 [node name="ActionSprint" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Schneller laufen (gedrückt halten)"
 
+[node name="KeyJump" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Leertaste"
+
+[node name="ActionJump" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Springen (im Sitzen: aufstehen)"
+
+[node name="KeyCrouch" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Strg (halten)"
+
+[node name="ActionCrouch" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Hocken"
+
 [node name="Key2" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "Maus"

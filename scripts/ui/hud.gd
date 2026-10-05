@@ -32,7 +32,7 @@ func _process(_delta: float) -> void:
 	visible = not get_tree().paused
 	# Text laufend aktualisieren, da er sich ändern kann (z. B. "einschalten" -> "ausschalten")
 	if _seated:
-		_prompt_label.text = "%s oder Laufen – Aufstehen" % _get_key_name("interact")
+		_prompt_label.text = "%s, Leertaste oder Laufen – Aufstehen" % _get_key_name("interact")
 	elif is_instance_valid(_target):
 		_prompt_label.text = "%s – %s" % [_get_key_name("interact"), _target.prompt_text]
 
