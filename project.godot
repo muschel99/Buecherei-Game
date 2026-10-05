@@ -22,11 +22,14 @@ GameConfig="*res://scripts/autoload/game_config.gd"
 Catalog="*res://scripts/autoload/catalog.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 MenuStack="*res://scripts/autoload/menu_stack.gd"
+Settings="*res://scripts/autoload/settings.gd"
 
 [display]
 
 window/size/viewport_width=1600
 window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [gui]
 

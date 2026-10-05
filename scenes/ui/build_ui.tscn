@@ -73,7 +73,7 @@ anchor_left = 0.04
 anchor_top = 1.0
 anchor_right = 0.96
 anchor_bottom = 1.0
-offset_top = -190.0
+offset_top = -196.0
 offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -102,7 +102,7 @@ text = "Tab – Katalog bedienen"
 
 [node name="ItemScroll" type="ScrollContainer" parent="Root/CatalogPanel/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 108)
+custom_minimum_size = Vector2(0, 114)
 layout_mode = 2
 vertical_scroll_mode = 0
 

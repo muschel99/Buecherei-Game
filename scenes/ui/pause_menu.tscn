@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/settings_panel.tscn" id="2_settings"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 process_mode = 3
@@ -42,6 +43,9 @@ text = "Weiter"
 
 [node name="ControlsButton" type="Button" parent="MainPanel/VBox"]
 text = "Steuerung"
+
+[node name="SettingsButton" type="Button" parent="MainPanel/VBox"]
+text = "Einstellungen"
 
 [node name="QuitButton" type="Button" parent="MainPanel/VBox"]
 text = "Beenden"
@@ -130,7 +134,12 @@ text = "Schließt, was offen ist – sonst Pausenmenü"
 unique_name_in_owner = true
 text = "Zurück"
 
+[node name="SettingsPanel" parent="." instance=ExtResource("2_settings")]
+visible = false
+
 [connection signal="pressed" from="MainPanel/VBox/ResumeButton" to="." method="_on_resume_button_pressed"]
 [connection signal="pressed" from="MainPanel/VBox/ControlsButton" to="." method="_on_controls_button_pressed"]
+[connection signal="pressed" from="MainPanel/VBox/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="back_requested" from="SettingsPanel" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="MainPanel/VBox/QuitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="pressed" from="ControlsPanel/VBox/BackButton" to="." method="_on_back_button_pressed"]
