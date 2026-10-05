@@ -3,6 +3,7 @@
 [ext_resource type="Material" path="res://assets/materials/brass.tres" id="1_ukq5u"]
 [ext_resource type="Material" path="res://assets/materials/leather_brown.tres" id="2_kj5e8"]
 [ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="3_fm1jv"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="4_kj5e8"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_7jh3o"]
 top_radius = 0.03
@@ -94,8 +95,26 @@ height = 0.024
 radial_segments = 16
 rings = 8
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_6egyf"]
-size = Vector3(1.94, 0.86, 0.85)
+[sub_resource type="BoxShape3D" id="BoxShape3D_fm1jv"]
+size = Vector3(1.94, 0.54, 0.85)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7jh3o"]
+size = Vector3(1.9, 0.42, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_yu1y5"]
+size = Vector3(0.22, 0.79, 0.85)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7re86"]
+size = Vector3(0.22, 0.79, 0.85)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sxwlg"]
+size = Vector3(1.5, 0.03, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xurgd"]
+size = Vector3(0.2, 0.03, 0.85)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8g2aj"]
+size = Vector3(0.2, 0.03, 0.85)
 
 [node name="SofaChesterfield" type="Node3D" unique_id=1285629705]
 
@@ -193,6 +212,50 @@ mesh = SubResource("SphereMesh_hunra")
 
 [node name="Body" type="StaticBody3D" parent="." unique_id=64863634]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1364271327]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.43, 0)
-shape = SubResource("BoxShape3D_6egyf")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1392702816]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.27, 0)
+shape = SubResource("BoxShape3D_fm1jv")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Body" unique_id=875690055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.63, -0.325)
+shape = SubResource("BoxShape3D_7jh3o")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="Body" unique_id=1709726714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 0.395, 0)
+shape = SubResource("BoxShape3D_yu1y5")
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="Body" unique_id=1593929573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.86, 0.395, 0)
+shape = SubResource("BoxShape3D_7re86")
+
+[node name="Surfaces" type="Node3D" parent="." unique_id=1537604740]
+
+[node name="Seat" type="Area3D" parent="Surfaces" unique_id=1944369081]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.54, 0.08)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_kj5e8")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Seat" unique_id=1192518057]
+shape = SubResource("BoxShape3D_sxwlg")
+
+[node name="ArmLeft" type="Area3D" parent="Surfaces" unique_id=676055569]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 0.79, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_kj5e8")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/ArmLeft" unique_id=878105193]
+shape = SubResource("BoxShape3D_xurgd")
+
+[node name="ArmRight" type="Area3D" parent="Surfaces" unique_id=1709371758]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.86, 0.79, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_kj5e8")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/ArmRight" unique_id=465460140]
+shape = SubResource("BoxShape3D_8g2aj")

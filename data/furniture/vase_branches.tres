@@ -10,4 +10,5 @@ description = "Schlicht und weiß."
 price = 25
 styles = 2
 scene_path = "res://scenes/furniture/vase_branches.tscn"
-can_stand_on_surfaces = true
+footprint = Vector2i(1, 1)
+placement = 3

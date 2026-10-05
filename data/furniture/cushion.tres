@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_6bwip"]
+
+[resource]
+script = ExtResource("1_6bwip")
+id = "cushion"
+display_name = "Kissen, salbeigrün"
+description = "Für Sessel, Sofa und Fensterbank."
+price = 20
+styles = 1
+scene_path = "res://scenes/furniture/cushion.tscn"
+footprint = Vector2i(3, 3)
+placement = 3

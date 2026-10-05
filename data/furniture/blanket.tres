@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_1h768"]
+
+[resource]
+script = ExtResource("1_1h768")
+id = "blanket"
+display_name = "Karierte Wolldecke"
+description = "Ordentlich gefaltet, für Sessel und Sofa."
+price = 35
+styles = 4
+scene_path = "res://scenes/furniture/blanket.tscn"
+footprint = Vector2i(4, 3)
+placement = 3

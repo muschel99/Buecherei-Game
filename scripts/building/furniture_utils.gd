@@ -8,6 +8,7 @@ const WORLD_LAYER_BIT := 1
 const PLAYER_LAYER_BIT := 4
 const FURNITURE_LAYER_BIT := 8
 const BUILD_BLOCKER_LAYER_BIT := 16
+const SURFACE_LAYER_BIT := 32
 
 ## Rastergröße für Ersatz-Kisten im Editor (dort gibt es GameConfig noch nicht).
 const _FALLBACK_CELL := 0.25
@@ -51,6 +52,15 @@ static func find_body_shapes(root: Node) -> Array[CollisionShape3D]:
 		for node in body.find_children("*", "CollisionShape3D", true, false):
 			if not node.disabled and node.shape:
 				result.append(node)
+	return result
+
+
+## Alle Ablageflächen (PlacementSurface) unterhalb von root.
+static func find_surfaces(root: Node) -> Array[PlacementSurface]:
+	var result: Array[PlacementSurface] = []
+	for node in root.find_children("*", "Area3D", true, false):
+		if node is PlacementSurface:
+			result.append(node)
 	return result
 
 

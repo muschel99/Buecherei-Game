@@ -49,14 +49,22 @@ var light_fade_time: float = 0.35
 
 # --- Gestaltungsmodus (Etappe 2) ---
 
-## Kantenlänge eines Rasterfelds in Metern. Möbel rasten auf diesem Raster ein.
-var grid_cell_size: float = 0.25
-## Ist das Raster beim Start des Spiels eingeschaltet? (Umschalten mit G)
-var grid_enabled_at_start: bool = true
-## Drehschritt in Grad, wenn das Raster an ist.
-var rotation_step_grid: float = 90.0
-## Drehschritt in Grad, wenn das Raster aus ist (freies Platzieren).
-var rotation_step_free: float = 15.0
+## Kantenlänge eines Rasterfelds in Metern. Mit eingeschaltetem Einrasten (G)
+## rasten Möbel auf diesem Raster ein. 0.125 = 8 Felder pro Meter.
+var grid_cell_size: float = 0.125
+## Ist das Einrasten beim Start des Spiels eingeschaltet? (Umschalten mit G)
+var grid_enabled_at_start: bool = false
+## Drehschritt in Grad pro Mausrad-Raste, wenn das Einrasten an ist.
+var rotation_step_grid: float = 15.0
+## Drehschritt in Grad pro Mausrad-Raste beim freien Platzieren (klein = fast stufenlos).
+var rotation_step_free: float = 5.0
+## Breite eines Wandabschnitts in Metern (jeder Abschnitt wird einzeln gestrichen).
+var wall_segment_width: float = 1.0
+## Kantenlänge eines Bodenfelds in Metern (jedes Feld wird einzeln belegt).
+## Standard: so fein wie das Raster. Größer (z. B. 0.5) = schneller ganze Flächen legen.
+var floor_section_size: float = 0.125
+## Bis zu dieser Entfernung (in Metern) erscheint beim Streichen der Farbroller bzw. Teppich.
+var paint_reach: float = 6.0
 ## Bis zu dieser Entfernung (in Metern) kann man im Gestaltungsmodus Möbel platzieren.
 var build_reach: float = 9.0
 ## Deckkraft der Möbel-Vorschau (0 = unsichtbar, 1 = voll sichtbar).

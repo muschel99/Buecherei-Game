@@ -11,4 +11,4 @@ category = 1
 price = 120
 styles = 1
 scene_path = "res://scenes/furniture/rattan_chair.tscn"
-footprint = Vector2i(3, 3)
+footprint = Vector2i(6, 6)

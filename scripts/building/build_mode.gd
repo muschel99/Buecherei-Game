@@ -3,17 +3,26 @@ extends Node
 ## Der Gestaltungsmodus: Möbel platzieren, verschieben, drehen, entfernen,
 ## Wände streichen und Böden tauschen – alles in der Ego-Perspektive.
 ##
-## Ein- und ausschalten mit B. Die Oberfläche (Katalog, Tastenhilfe) steckt in
-## BuildUI und meldet sich über Signale, wenn etwas im Katalog gewählt wird.
+## Öffnen und schließen mit Tab, schließen auch mit Esc.
+## Zwei Zustände:
+## - Katalog-Zustand: Mauszeiger sichtbar. Im Katalog wählen, ein platziertes
+##   Möbelstück anklicken (= aufheben). Rechte Maustaste halten = umsehen.
+## - Platzier-Zustand: Mauszeiger weg, die Vorschau folgt dem Blick.
+##   Linksklick platziert, Rechtsklick legt zurück – danach wieder Katalog-Zustand.
+## Die Oberfläche (Katalog, Tastenhilfe) steckt in BuildUI.
 
 ## Wird gesendet, wenn der Gestaltungsmodus an- oder ausgeht.
 signal active_changed(active: bool)
 ## Neuer Hinweistext für die Statuszeile.
 signal status_changed(text: String, is_warning: bool)
-## Raster an/aus.
+## Einrasten an/aus.
 signal grid_changed(enabled: bool)
 ## Das gewählte Katalog-Element hat sich geändert (null = nichts gewählt).
 signal selection_changed(selected: Resource)
+## Katalog-Zustand (true) oder Platzier-Zustand (false).
+signal catalog_state_changed(in_catalog: bool)
+## Symbol in der Bildmitte: "" = normaler Punkt, "roller" = Farbroller, "carpet" = Teppich.
+signal cursor_icon_changed(icon: String)
 
 enum Tool { NONE, PLACE_NEW, MOVE, PAINT }
 
@@ -25,15 +34,19 @@ enum Tool { NONE, PLACE_NEW, MOVE, PAINT }
 @onready var _room: Room = get_node(room_path)
 
 var is_active: bool = false
-var grid_enabled: bool = true
+var grid_enabled: bool = false
 
 var _tool: Tool = Tool.NONE
 var _selected_data: FurnitureData = null
 var _selected_surface: SurfaceData = null
 var _moving_item: PlacedFurniture = null
 var _moving_extras: Array[PlacedFurniture] = []
-var _rotation_degrees: float = 0.0
+## Drehung des Objekts relativ zur Blickrichtung (0 = Vorderseite zeigt zu mir).
+var _rotation_offset: float = 0.0
 var _hovered: PlacedFurniture = null
+## Rechte Maustaste im Katalog-Zustand gedrückt = umsehen
+var _is_looking := false
+var _cursor_position_before_look := Vector2.ZERO
 
 var _preview: FurniturePreview
 var _grid: MeshInstance3D
@@ -46,6 +59,10 @@ var _placement_transform := Transform3D.IDENTITY
 var _placement_support: PlacedFurniture = null
 var _placement_on_floor := true
 var _status_text := ""
+# Streichen: Maustaste gehalten und zuletzt gestrichene Stelle (für Ziehen)
+var _paint_held := false
+var _last_painted := ""
+var _cursor_icon := ""
 var _flash_until_msec := 0
 
 
@@ -58,6 +75,11 @@ func _ready() -> void:
 	_create_grid()
 
 
+## Ist gerade der Katalog-Zustand aktiv (nichts in der Hand)?
+func is_in_catalog_state() -> bool:
+	return is_active and _tool == Tool.NONE
+
+
 # --- Eingabe ---
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -68,9 +90,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_active:
 		return
 
-	if event.is_action_pressed("build_catalog"):
-		_toggle_catalog_cursor()
-	elif event.is_action_pressed("build_toggle_grid"):
+	if event.is_action_pressed("build_toggle_grid"):
 		_set_grid_enabled(not grid_enabled)
 	elif event.is_action_pressed("build_delete"):
 		_delete_target()
@@ -78,12 +98,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_rotate(1.0)
 	elif event.is_action_pressed("build_rotate_back"):
 		_rotate(-1.0)
-	elif Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-		return  # Maus ist frei (Katalog): Klicks gehören der Oberfläche
 	elif event.is_action_pressed("build_place"):
 		_on_primary_click()
+	elif event.is_action_released("build_place"):
+		_paint_held = false
 	elif event.is_action_pressed("build_cancel"):
-		_cancel_tool()
+		_on_secondary_pressed()
+	elif event.is_action_released("build_cancel"):
+		_stop_looking()
 	else:
 		return
 	get_viewport().set_input_as_handled()
@@ -98,10 +120,10 @@ func _physics_process(_delta: float) -> void:
 		Tool.PLACE_NEW, Tool.MOVE:
 			_update_placement()
 		Tool.PAINT:
-			_update_paint_hint()
+			_update_paint()
 
 
-# --- Ein- und Ausschalten ---
+# --- Öffnen und Schließen ---
 
 func set_active(active: bool) -> void:
 	if active == is_active:
@@ -109,16 +131,38 @@ func set_active(active: bool) -> void:
 	is_active = active
 	_player.interaction_enabled = not active
 	if active:
-		# Zum Start ist die Maus frei, damit man gleich im Katalog wählen kann
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		_set_status("Wähle unten etwas aus dem Katalog – oder klicke in den Raum, um dich umzusehen.")
+		MenuStack.open(self)
+		_set_status("Wähle unten etwas aus dem Katalog oder klicke ein Möbelstück an, um es zu verschieben.")
 	else:
+		MenuStack.close(self)
 		_cancel_tool()
 		_set_hovered(null)
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		_is_looking = false
 		SaveManager.request_save()
+	_apply_mouse_mode()
 	_update_grid_visibility()
 	active_changed.emit(active)
+	catalog_state_changed.emit(is_in_catalog_state())
+
+
+## Esc: Gestaltungsmodus schließen (wird vom MenuStack aufgerufen).
+## Was gerade in der Hand ist, wird zurückgelegt.
+func close_from_escape() -> void:
+	set_active(false)
+
+
+## Nach dem Pausenmenü: passenden Mauszustand wiederherstellen.
+func restore_mouse_mode() -> void:
+	_is_looking = false
+	_apply_mouse_mode()
+
+
+## Katalog-Zustand = Mauszeiger sichtbar, sonst gefangen (zum Umsehen).
+func _apply_mouse_mode() -> void:
+	if is_active and _tool == Tool.NONE and not _is_looking:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 ## Wird von der Katalog-Oberfläche aufgerufen.
@@ -126,10 +170,9 @@ func select_furniture(data: FurnitureData) -> void:
 	_cancel_tool()
 	_selected_data = data
 	_tool = Tool.PLACE_NEW
+	_rotation_offset = 0.0  # Vorderseite zeigt zu mir
 	_preview.setup(data)
-	if grid_enabled:
-		_rotation_degrees = snappedf(_rotation_degrees, 90.0)
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_enter_placing_state()
 	selection_changed.emit(data)
 
 
@@ -138,15 +181,15 @@ func select_surface(surface: SurfaceData) -> void:
 	_cancel_tool()
 	_selected_surface = surface
 	_tool = Tool.PAINT
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_enter_placing_state()
 	selection_changed.emit(surface)
 
 
-func _toggle_catalog_cursor() -> void:
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	else:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+func _enter_placing_state() -> void:
+	_set_hovered(null)
+	_is_looking = false
+	_apply_mouse_mode()
+	catalog_state_changed.emit(false)
 
 
 # --- Aktionen ---
@@ -159,16 +202,38 @@ func _on_primary_click() -> void:
 		Tool.PLACE_NEW:
 			if _placement_ok:
 				_room.add_furniture(_selected_data, _placement_transform, _placement_support)
-				_flash_status("%s aufgestellt. Klicke erneut für ein weiteres – Rechtsklick beendet." % _selected_data.display_name)
+				var verb := "aufgehängt" if _selected_data.is_hanging() else "aufgestellt"
+				_flash_status("%s %s." % [_selected_data.display_name, verb])
+				_clear_tool()
 		Tool.MOVE:
 			if _placement_ok:
 				_room.move_furniture(_moving_item, _placement_transform, _placement_support)
+				_flash_status("%s umgestellt." % _moving_item.data.display_name)
 				_finish_move()
 		Tool.PAINT:
-			if not _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT).is_empty():
-				_room.apply_surface(_selected_surface)
-				var what := "Wände sind jetzt" if _selected_surface.kind == SurfaceData.Kind.WALL else "Der Boden ist jetzt"
-				_flash_status("%s „%s“." % [what, _selected_surface.display_name])
+			_paint_held = true
+			_last_painted = ""
+			_paint_at_target(Input.is_action_pressed("build_paint_all"))
+
+
+## Rechte Maustaste: im Platzier-Zustand zurücklegen, im Katalog-Zustand umsehen.
+func _on_secondary_pressed() -> void:
+	if _tool != Tool.NONE:
+		_cancel_tool()
+		return
+	_is_looking = true
+	_cursor_position_before_look = get_viewport().get_mouse_position()
+	_set_hovered(null)
+	_apply_mouse_mode()
+
+
+func _stop_looking() -> void:
+	if not _is_looking:
+		return
+	_is_looking = false
+	_apply_mouse_mode()
+	# Mauszeiger dort wieder erscheinen lassen, wo er vor dem Umsehen war
+	Input.warp_mouse(_cursor_position_before_look)
 
 
 ## Hebt ein platziertes Möbelstück auf, um es neu zu platzieren.
@@ -183,11 +248,11 @@ func _pick_up(item: PlacedFurniture) -> void:
 	for piece: PlacedFurniture in [item] + _moving_extras:
 		piece.set_collision_enabled(false)
 		piece.visible = false
-	_rotation_degrees = rad_to_deg(item.rotation.y)
-	if grid_enabled:
-		_rotation_degrees = snappedf(_rotation_degrees, 90.0)
+	# Die bisherige Ausrichtung bleibt relativ zu meinem Blick erhalten
+	_rotation_offset = rad_to_deg(item.rotation.y) - _player_yaw_degrees()
 	_preview.setup(item.data, extras)
 	_tool = Tool.MOVE
+	_enter_placing_state()
 	selection_changed.emit(null)
 
 
@@ -202,23 +267,28 @@ func _finish_move() -> void:
 	_clear_tool()
 
 
-## Rechtsklick: Auswahl aufheben bzw. aufgehobenes Möbelstück an den alten Platz zurück.
+## Rechtsklick/Esc: Auswahl aufheben bzw. aufgehobenes Möbelstück an den alten Platz zurück.
 func _cancel_tool() -> void:
 	if _tool == Tool.MOVE:
 		_finish_move()  # Transform wurde nicht geändert = alter Platz
-	else:
+	elif _tool != Tool.NONE:
 		_clear_tool()
 
 
+## Zurück in den Katalog-Zustand.
 func _clear_tool() -> void:
 	_tool = Tool.NONE
+	_paint_held = false
+	_set_cursor_icon("")
 	_selected_data = null
 	_selected_surface = null
 	_preview.clear()
 	_preview.visible = false
 	_placement_visible = false
 	_update_grid_visibility()
+	_apply_mouse_mode()
 	selection_changed.emit(null)
+	catalog_state_changed.emit(is_in_catalog_state())
 
 
 func _delete_target() -> void:
@@ -240,32 +310,37 @@ func _delete_target() -> void:
 func _rotate(direction: float) -> void:
 	if _tool != Tool.PLACE_NEW and _tool != Tool.MOVE:
 		return
+	if _preview.data and _preview.data.is_hanging():
+		return  # Aufgehängtes richtet sich nach der Wand
 	var step := GameConfig.rotation_step_grid if grid_enabled else GameConfig.rotation_step_free
-	_rotation_degrees = fposmod(_rotation_degrees + step * direction, 360.0)
+	_rotation_offset = fposmod(_rotation_offset + step * direction, 360.0)
 
 
 func _set_grid_enabled(enabled: bool) -> void:
 	grid_enabled = enabled
-	if enabled:
-		_rotation_degrees = fposmod(snappedf(_rotation_degrees, 90.0), 360.0)
 	_update_grid_visibility()
 	grid_changed.emit(enabled)
-	_flash_status("Raster eingeschaltet." if enabled else "Raster ausgeschaltet – freies Platzieren.")
+	_flash_status("Einrasten eingeschaltet (Raster und 15°-Schritte)." if enabled else "Einrasten ausgeschaltet – frei platzieren.")
 
 
 # --- Zeigen und Prüfen ---
 
-## Ohne Auswahl: Möbelstück unter dem Fadenkreuz hervorheben.
+## Katalog-Zustand: Möbelstück unter dem Mauszeiger hervorheben.
 func _update_hover() -> void:
-	var hit := _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT)
 	var item: PlacedFurniture = null
-	if not hit.is_empty():
-		item = FurnitureUtils.find_placed_furniture(hit.collider)
+	if not _is_looking and get_viewport().gui_get_hovered_control() == null:
+		var mouse := get_viewport().get_mouse_position()
+		var camera := _player.camera
+		var from := camera.project_ray_origin(mouse)
+		var to := from + camera.project_ray_normal(mouse) * GameConfig.build_reach
+		var hit := _ray(from, to, FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT)
+		if not hit.is_empty():
+			item = FurnitureUtils.find_placed_furniture(hit.collider)
 	_set_hovered(item)
 	if item:
-		_set_status("%s – Linksklick: verschieben · Entf: entfernen" % item.data.display_name)
-	elif Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		_set_status("Zeige auf ein Möbelstück, um es zu verschieben – oder öffne mit Tab den Katalog.")
+		_set_status("%s – Linksklick: aufheben · Entf: entfernen" % item.data.display_name)
+	elif not _is_looking:
+		_set_status("Wähle unten etwas aus dem Katalog oder klicke ein Möbelstück an. Rechte Maustaste halten: umsehen.")
 
 
 func _set_hovered(item: PlacedFurniture) -> void:
@@ -278,9 +353,80 @@ func _set_hovered(item: PlacedFurniture) -> void:
 		_hovered.set_highlighted(true)
 
 
-func _update_paint_hint() -> void:
-	var where := "die Wände zu streichen" if _selected_surface.kind == SurfaceData.Kind.WALL else "den Boden zu verlegen"
-	_set_status("%s: Klicke in den Raum, um %s. Rechtsklick: beenden." % [_selected_surface.display_name, where])
+## Streichen: Ziel suchen, Symbol zeigen und beim Ziehen mit gedrückter Maustaste weiterstreichen.
+func _update_paint() -> void:
+	var target := _find_paint_target()
+	var is_wall := _selected_surface.kind == SurfaceData.Kind.WALL
+	if target.is_empty():
+		_set_cursor_icon("")
+	else:
+		_set_cursor_icon("roller" if is_wall else "carpet")
+	if _paint_held and not target.is_empty():
+		_paint_at_target(false)
+	var what := "Wandabschnitt streichen" if is_wall else "Bodenfeld belegen"
+	var all := "ganze Wand" if is_wall else "ganzer Boden"
+	if target.is_empty():
+		var where := "eine Wand" if is_wall else "den Boden"
+		_set_status("%s: Schau aus der Nähe auf %s. Rechtsklick: zurück zum Katalog." % [_selected_surface.display_name, where])
+	else:
+		_set_status("%s – Linksklick: %s (gedrückt halten und ziehen: mehrere) · Umschalt + Klick: %s · Rechtsklick: zurück" % [_selected_surface.display_name, what, all])
+
+
+## Wohin zeige ich? Ergebnis: { "wall": …, "index": … } bei Wänden, { "cell": … } beim Boden,
+## leer, wenn dort nichts Passendes ist oder es zu weit weg ist.
+func _find_paint_target() -> Dictionary:
+	var hit := _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT, GameConfig.paint_reach)
+	if hit.is_empty():
+		return {}
+	if _selected_surface.kind == SurfaceData.Kind.WALL:
+		if absf(hit.normal.y) > 0.5:
+			return {}
+		return _room.find_wall_segment(hit.position)
+	if hit.normal.y < 0.7:
+		return {}
+	var cell := _room.find_floor_cell(hit.position)
+	return {} if cell < 0 else {"cell": cell}
+
+
+## Streicht dort, wohin ich schaue (whole = ganze Wand bzw. ganzer Boden).
+func _paint_at_target(whole: bool) -> void:
+	var target := _find_paint_target()
+	if target.is_empty():
+		return
+	var key := str(target.get("wall", "floor")) + ":" + str(target.get("index", target.get("cell")))
+	if key == _last_painted:
+		return  # diese Stelle wurde gerade schon gestrichen
+	_last_painted = key
+	if target.has("wall"):
+		if whole:
+			_room.paint_wall(target.wall, _selected_surface)
+			_paint_held = false
+		else:
+			_room.paint_wall_segment(target.wall, target.index, _selected_surface)
+	else:
+		if whole:
+			_room.paint_floor(_selected_surface)
+			_paint_held = false
+		else:
+			_room.paint_floor_cell(target.cell, _selected_surface)
+
+
+func _set_cursor_icon(icon: String) -> void:
+	if icon != _cursor_icon:
+		_cursor_icon = icon
+		cursor_icon_changed.emit(icon)
+
+
+## Drehung in der Welt (Grad): Blickrichtung + eigene Drehung, beim Einrasten in 15°-Schritten.
+func _placement_yaw_degrees() -> float:
+	var yaw := _player_yaw_degrees() + _rotation_offset
+	if grid_enabled:
+		yaw = snappedf(yaw, GameConfig.rotation_step_grid)
+	return fposmod(yaw, 360.0)
+
+
+func _player_yaw_degrees() -> float:
+	return rad_to_deg(_player.rotation.y)
 
 
 ## Berechnet, wo die Vorschau steht und ob das Möbelstück dort passt.
@@ -289,81 +435,130 @@ func _update_placement() -> void:
 	_placement_visible = false
 	_placement_ok = false
 	_placement_support = null
+	_placement_on_floor = false
 
-	var hit := _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT)
-	if hit.is_empty() or hit.normal.y < -0.5:
+	# Ablageflächen sind nur für Dinge sichtbar, die darauf stehen dürfen
+	var mask := FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT
+	if data.allows(FurnitureData.PLACE_SURFACE):
+		mask |= FurnitureUtils.SURFACE_LAYER_BIT
+	var hit := _ray_from_camera(mask)
+
+	var problem := ""
+	var hang_kind := Room.HangKind.NONE
+	if not hit.is_empty():
+		hang_kind = _room.get_hang_kind(hit.collider)
+	if not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
+			and absf(hit.normal.y) < 0.5:
+		problem = _place_on_wall(hit)
+	elif not hit.is_empty() and hit.normal.y > -0.5 and \
+			(data.allows(FurnitureData.PLACE_FLOOR) or data.allows(FurnitureData.PLACE_SURFACE)):
+		problem = _place_standing(hit)
+	else:
 		_preview.visible = false
 		_update_grid_visibility()
-		_set_status("Schau auf den Boden oder eine Ablage, um %s hinzustellen." % data.display_name, true)
+		var where := "eine Wand" if data.allows(FurnitureData.PLACE_WALL) else "die Tür"
+		if not data.is_hanging():
+			where = "den Boden oder eine Ablage"
+		_set_status("Schau auf %s, um %s zu platzieren." % [where, data.display_name], true)
 		return
 
-	var point: Vector3 = hit.position
-	var normal: Vector3 = hit.normal
-	var half := _rotated_half_size(data)
-
-	# Zeigt man auf eine Wand oder eine Möbelseite, rückt die Vorschau davor
-	if absf(normal.y) < 0.5:
-		var flat := Vector3(normal.x, 0.0, normal.z).normalized()
-		var reach := absf(flat.x) * half.x + absf(flat.z) * half.y
-		point += flat * (reach + 0.01)
-
-	# Höhe bestimmen: von oben nach unten auf die nächste Fläche schauen
-	var start_height: float = hit.position.y + 0.1
-	var down := _find_ground(point, start_height, data)
-	# Auf dem Boden rastet das Möbelstück im Raster ein. Auf Tischen und Regalbrettern
-	# nicht, denn deren Fächer passen selten genau zum Raster des Raums.
-	if grid_enabled and FurnitureUtils.find_placed_furniture(down.get("collider")) == null:
-		var cells := _rotated_cells(data)
-		point.x = _snap_axis(point.x, cells.x)
-		point.z = _snap_axis(point.z, cells.y)
-		down = _find_ground(point, start_height, data)
-
-	var surface_normal := Vector3.UP
-	point.y = _room.floor_height
-	if not down.is_empty():
-		point.y = down.position.y
-		surface_normal = down.normal
-		_placement_support = FurnitureUtils.find_placed_furniture(down.collider)
-
-	_placement_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(_rotation_degrees)), point)
-	_placement_on_floor = _placement_support == null
 	_placement_visible = true
 	_preview.global_transform = _placement_transform
 	_preview.visible = true
-
-	var problem := _find_problem(surface_normal)
 	_placement_ok = problem.is_empty()
 	_preview.set_valid(_placement_ok)
 	_update_grid_visibility()
 
 	var price_text := "%d %s" % [data.price, GameConfig.currency_name]
 	if _placement_ok:
-		_set_status("%s (%s) – Linksklick: platzieren · R/Mausrad: drehen · Rechtsklick: abbrechen" % [data.display_name, price_text])
+		var rotate_hint := "" if data.is_hanging() else " · Mausrad: drehen"
+		_set_status("%s (%s) – Linksklick: platzieren%s · Rechtsklick: zurücklegen" % [data.display_name, price_text, rotate_hint])
 	else:
 		_set_status("%s – %s" % [data.display_name, problem], true)
 
 
-## Liefert einen Grund, warum das Möbelstück hier nicht passt (leer = passt).
-func _find_problem(surface_normal: Vector3) -> String:
+## Stehende Dinge: auf dem Boden oder auf einer Ablagefläche.
+## Setzt _placement_transform und liefert einen Grund, falls es nicht passt.
+func _place_standing(hit: Dictionary) -> String:
 	var data := _preview.data
-	if not _room.is_inside_build_area(_placement_transform.origin):
+	var yaw := _placement_yaw_degrees()
+	var point: Vector3 = hit.position
+	var normal: Vector3 = hit.normal
+
+	# Zeigt man auf eine Wand oder eine Möbelseite, rückt die Vorschau davor
+	if absf(normal.y) < 0.5:
+		var half := _rotated_half_size(data, yaw)
+		var flat := Vector3(normal.x, 0.0, normal.z).normalized()
+		var reach := absf(flat.x) * half.x + absf(flat.z) * half.y
+		point += flat * (reach + 0.01)
+
+	# Von oben nach unten schauen: Worauf würde es stehen?
+	var start_height: float = hit.position.y + 0.1
+	var ground := _find_ground(point, start_height, data)
+	# Auf dem Boden rastet es ein (wenn Einrasten an ist). Auf Ablagen nicht,
+	# denn deren Fächer passen selten genau zum Raster des Raums.
+	if grid_enabled and not ground.get("collider") is PlacementSurface:
+		point = _snap_to_grid(point, data, yaw)
+		ground = _find_ground(point, start_height, data)
+
+	var surface_normal := Vector3.UP
+	point.y = _room.floor_height
+	var on_surface := false
+	if not ground.is_empty():
+		surface_normal = ground.normal
+		if ground.collider is PlacementSurface:
+			on_surface = true
+			point.y = (ground.collider as PlacementSurface).get_surface_height()
+			_placement_support = FurnitureUtils.find_placed_furniture(ground.collider)
+		else:
+			point.y = ground.position.y
+	_placement_on_floor = not on_surface
+	_placement_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(yaw)), point)
+
+	if not _room.is_inside_build_area(point):
 		return "Das muss im Raum stehen."
+	if not on_surface and not data.allows(FurnitureData.PLACE_FLOOR):
+		return "Das gehört auf eine Ablage (Tisch, Regal, Sessel, Fensterbank)."
 	if surface_normal.y < 0.7:
 		return "Hier steht es nicht gerade."
-	if _placement_support:
-		if not _placement_support.data.has_surface:
-			return "Darauf kann man nichts abstellen."
+	return _find_overlap(Vector3.UP, true)
 
+
+## Hängende Dinge: an der Wand oder an der Tür. Die Rückseite liegt an der Fläche.
+func _place_on_wall(hit: Dictionary) -> String:
+	var normal: Vector3 = Vector3(hit.normal.x, 0.0, hit.normal.z).normalized()
+	var point: Vector3 = hit.position
+	if grid_enabled:
+		var cell := GameConfig.grid_cell_size
+		point.y = snappedf(point.y, cell)
+		# entlang der Wand einrasten
+		if absf(normal.x) > absf(normal.z):
+			point.z = snappedf(point.z, cell)
+		else:
+			point.x = snappedf(point.x, cell)
+	point += normal * 0.002
+	var yaw := atan2(normal.x, normal.z)
+	_placement_transform = Transform3D(Basis(Vector3.UP, yaw), point)
+	_placement_on_floor = false
+	# Vor der Eingangstür darf etwas hängen – die Sperrzone gilt nur für den Boden
+	return _find_overlap(normal, false)
+
+
+## Prüft, ob die Vorschau etwas anderes berührt (leer = frei).
+## lift: in diese Richtung wird etwas abgerückt, damit bloßes Anliegen erlaubt ist.
+func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
 	var space := _player.get_world_3d().direct_space_state
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.collision_mask = FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.PLAYER_LAYER_BIT \
-		| FurnitureUtils.FURNITURE_LAYER_BIT | FurnitureUtils.BUILD_BLOCKER_LAYER_BIT
+		| FurnitureUtils.FURNITURE_LAYER_BIT
+	if check_entrance:
+		query.collision_mask |= FurnitureUtils.BUILD_BLOCKER_LAYER_BIT
 	query.collide_with_areas = true
+	_preview.global_transform = _placement_transform
 	var shapes := _preview.get_shapes()
 	for i in shapes.size():
 		query.shape = _preview.get_shrunk_shape(i)
-		# Etwas anheben, damit das Aufstehen auf Boden oder Tisch nicht als Überschneidung zählt
-		query.transform = shapes[i].global_transform.translated(Vector3.UP * FurniturePreview.SHRINK)
+		query.transform = shapes[i].global_transform.translated(lift * FurniturePreview.SHRINK)
 		for result in space.intersect_shape(query, 4):
 			var other: Object = result.collider
 			if other is Area3D:
@@ -371,33 +566,40 @@ func _find_problem(surface_normal: Vector3) -> String:
 			if other is Player:
 				return "Du stehst im Weg – geh ein Stück zur Seite."
 			if FurnitureUtils.find_placed_furniture(other):
-				return "Hier steht schon etwas."
+				return "Hier ist schon etwas."
 			return "Zu nah an der Wand."
 	return ""
 
 
-## Schaut senkrecht nach unten: Worauf würde das Möbelstück hier stehen?
-## Möbel ohne "can_stand_on_surfaces" sehen dabei nur den Boden.
+## Schaut senkrecht nach unten: Worauf würde das Ding hier stehen?
+## Ablageflächen zählen nur für Dinge, die dort stehen dürfen.
 func _find_ground(point: Vector3, start_height: float, data: FurnitureData) -> Dictionary:
 	var mask := FurnitureUtils.WORLD_LAYER_BIT
-	if data.can_stand_on_surfaces:
-		mask |= FurnitureUtils.FURNITURE_LAYER_BIT
+	if data.allows(FurnitureData.PLACE_SURFACE):
+		mask |= FurnitureUtils.SURFACE_LAYER_BIT
 	var from := Vector3(point.x, start_height, point.z)
 	return _ray(from, Vector3(point.x, _room.floor_height - 1.0, point.z), mask)
 
 
 # --- Raster ---
 
-## Grundfläche in Rasterfeldern nach dem Drehen (bei 90°/270° vertauscht).
-func _rotated_cells(data: FurnitureData) -> Vector2i:
-	var quarter := int(roundf(_rotation_degrees / 90.0)) % 2
-	return Vector2i(data.footprint.y, data.footprint.x) if quarter == 1 else data.footprint
+## Rastet die Position ein. Steht das Möbelstück gerade (Vielfaches von 90°), liegen
+## seine Kanten genau auf Rasterlinien; bei schrägen Winkeln rastet nur die Mitte ein.
+func _snap_to_grid(point: Vector3, data: FurnitureData, yaw: float) -> Vector3:
+	var quarter := roundf(yaw / 90.0)
+	if absf(yaw - quarter * 90.0) > 0.5:
+		var cell := GameConfig.grid_cell_size
+		return Vector3(snappedf(point.x, cell), point.y, snappedf(point.z, cell))
+	var cells := data.footprint
+	if int(quarter) % 2 == 1:
+		cells = Vector2i(cells.y, cells.x)
+	return Vector3(_snap_axis(point.x, cells.x), point.y, _snap_axis(point.z, cells.y))
 
 
 ## Halbe Grundfläche in Metern (x, z) nach dem Drehen.
-func _rotated_half_size(data: FurnitureData) -> Vector2:
+func _rotated_half_size(data: FurnitureData, yaw: float) -> Vector2:
 	var size := data.get_footprint_size()
-	var angle := deg_to_rad(_rotation_degrees)
+	var angle := deg_to_rad(yaw)
 	var c := absf(cos(angle))
 	var s := absf(sin(angle))
 	return Vector2(size.x * c + size.y * s, size.x * s + size.y * c) / 2.0
@@ -439,15 +641,17 @@ func _update_grid_visibility() -> void:
 
 # --- Hilfsfunktionen ---
 
-func _ray_from_camera(mask: int) -> Dictionary:
+func _ray_from_camera(mask: int, reach: float = GameConfig.build_reach) -> Dictionary:
 	var camera := _player.camera
 	var from := camera.global_position
-	var to := from - camera.global_basis.z * GameConfig.build_reach
+	var to := from - camera.global_basis.z * reach
 	return _ray(from, to, mask)
 
 
 func _ray(from: Vector3, to: Vector3, mask: int) -> Dictionary:
 	var query := PhysicsRayQueryParameters3D.create(from, to, mask, [_player.get_rid()])
+	# Ablageflächen sind Area3D-Knoten und werden nur so gefunden
+	query.collide_with_areas = (mask & FurnitureUtils.SURFACE_LAYER_BIT) != 0
 	return _player.get_world_3d().direct_space_state.intersect_ray(query)
 
 

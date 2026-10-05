@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_antmg"]
+
+[resource]
+script = ExtResource("1_antmg")
+id = "wreath"
+display_name = "Türkranz"
+description = "Grüner Kranz für Tür oder Wand."
+price = 40
+styles = 1
+scene_path = "res://scenes/furniture/wreath.tscn"
+footprint = Vector2i(4, 1)
+placement = 12

@@ -9,6 +9,5 @@ id = "floor_light_planks"
 display_name = "Helle Dielen"
 kind = 1
 price = 120
-styles = 1
 material = ExtResource("1_uf4wq")
 preview_color = Color(0.74, 0.6, 0.43, 1)

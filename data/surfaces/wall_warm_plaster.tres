@@ -7,6 +7,5 @@
 script = ExtResource("2_ehsqm")
 id = "wall_warm_plaster"
 display_name = "Warmer Putz"
-styles = 5
 material = ExtResource("1_sswhe")
 preview_color = Color(0.86, 0.77, 0.64, 1)

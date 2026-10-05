@@ -54,10 +54,10 @@ func _process(_delta: float) -> void:
 	visible = _build_mode.is_active and not get_tree().paused
 	if not visible:
 		return
-	# Katalog etwas abdunkeln, solange die Maus zum Umsehen "gefangen" ist
-	var catalog_usable := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
-	_catalog_panel.modulate.a = 1.0 if catalog_usable else 0.75
-	_catalog_hint.text = "Tab – zurück zum Umsehen" if catalog_usable else "Tab – Katalog bedienen (Maus frei)"
+	# Im Platzier-Zustand ist der Katalog nur dezent zu sehen
+	var in_catalog := _build_mode.is_in_catalog_state()
+	_catalog_panel.modulate.a = 1.0 if in_catalog else 0.6
+	_catalog_hint.text = "Rechte Maustaste halten: umsehen" if in_catalog else "Rechtsklick: zurück zum Katalog"
 
 
 # --- Katalog ---
@@ -95,7 +95,7 @@ func _show_tab(index: int) -> void:
 	else:
 		for surface in Catalog.get_surfaces_of_kind(tab[2]):
 			var subtitle := "%d %s" % [surface.price, GameConfig.currency_name]
-			var card := _create_card(surface.display_name, subtitle, surface.styles, "", surface.preview_color)
+			var card := _create_card(surface.display_name, subtitle, 0, "", surface.preview_color)
 			card.pressed.connect(_build_mode.select_surface.bind(surface))
 			_add_card(surface, card)
 
@@ -170,14 +170,13 @@ func _make_selected_style() -> StyleBoxFlat:
 
 func _build_help() -> void:
 	var entries := [
-		["B", "Gestaltungsmodus beenden"],
-		["Tab", "Katalog bedienen / Maus fangen"],
-		["Linksklick", "Platzieren / Möbel aufheben"],
-		["R / Mausrad", "Drehen"],
-		["Rechtsklick", "Abbrechen"],
+		["Tab / Esc", "Gestaltungsmodus schließen"],
+		["Linksklick", "Auswählen / aufheben / platzieren"],
+		["Rechte Maustaste", "Halten: umsehen · Klick: zurücklegen"],
+		["Mausrad", "Drehen"],
 		["G", ""],  # Text kommt aus _on_grid_changed
 		["Entf", "Entfernen"],
-		["F3", "Stil-Anzeige (Test)"],
+		["Umschalt + Klick", "Ganze Wand / ganzer Boden"],
 	]
 	for entry in entries:
 		_help_grid.add_child(_small_label(entry[0], 14, KEY_COLOR))
@@ -209,7 +208,7 @@ func _on_status_changed(text: String, is_warning: bool) -> void:
 
 
 func _on_grid_changed(enabled: bool) -> void:
-	_grid_help_label.text = "Raster an/aus (jetzt: %s)" % ("an" if enabled else "aus")
+	_grid_help_label.text = "Einrasten an/aus (jetzt: %s)" % ("an" if enabled else "aus")
 
 
 func _on_selection_changed(selected: Resource) -> void:

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_dy4oa"]
+
+[resource]
+script = ExtResource("1_dy4oa")
+id = "light_switch"
+display_name = "Lichtschalter"
+description = "An die Wand hängen. Mit E alle Lampen im Raum schalten."
+category = 4
+price = 12
+scene_path = "res://scenes/furniture/light_switch.tscn"
+footprint = Vector2i(1, 1)
+placement = 4

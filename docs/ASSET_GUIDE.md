@@ -38,12 +38,23 @@ Ein neues Datenblatt dort = ein neues Möbelstück im Katalog.
 | Price                 | Preis in Talern (wird ab Etappe 5 abgezogen)                              |
 | Styles                | Häkchen bei Botanisch, Modern und/oder Dark Academia                      |
 | Scene Path            | Die Szene (`.tscn`) oder das Modell (`.glb`) – mit dem Ordner-Symbol auswählen |
-| Footprint             | Grundfläche in Rasterfeldern: x = Breite, y = Tiefe. 1 Feld = 0,25 m, 4 Felder = 1 m |
+| Footprint             | Grundfläche in Rasterfeldern: x = Breite, y = Tiefe. 1 Feld = 0,125 m, 8 Felder = 1 m |
 | Is Unlocked           | Häkchen = erscheint im Katalog                                            |
-| Can Stand On Surfaces | Häkchen = darf auch auf Tischen und Regalbrettern stehen (für Deko)       |
-| Has Surface           | Häkchen = andere Deko darf darauf gestellt werden (Tische, Regale)        |
+| Placement             | Wo darf es hin? Häkchen bei Boden, Ablagefläche, Wand und/oder Tür        |
 
 4. Mit **Strg+S** speichern und das Spiel starten (F5). Das Möbelstück ist im Katalog.
+
+**Ablageflächen festlegen:** Ob man Deko auf ein Möbelstück stellen kann, bestimmt seine Szene.
+Jede Ablagefläche ist ein Knoten vom Typ **PlacementSurface** (z. B. unter dem Knoten `Surfaces`):
+1. Szene öffnen, Rechtsklick auf den obersten Knoten → **Kind-Knoten hinzufügen** → `PlacementSurface`.
+2. Den Knoten genau auf die Oberkante der Fläche schieben (z. B. die Tischplatte).
+3. Ihm eine **CollisionShape3D** mit einer flachen **BoxShape3D** geben, so groß wie die Fläche
+   (Höhe ca. 0,03 m).
+Ein Möbelstück darf beliebig viele Ablageflächen haben (Sitzfläche, beide Armlehnen …).
+Am einfachsten schaust du dir eine fertige Szene an, z. B. `scenes/furniture/armchair.tscn`.
+
+**Dinge zum Aufhängen** (Wandbild, Türkranz, Lichtschalter): Hier liegt der Ursprung der Szene
+hinten in der Mitte (dort, wo es die Wand berührt), die Vorderseite zeigt nach +Z.
 
 **Eine neue Möbel-Szene bauen:** Am einfachsten eine vorhandene Szene in `scenes/furniture/`
 duplizieren und die Optik unter `Model` austauschen (siehe nächster Abschnitt).
@@ -57,8 +68,9 @@ Für Regale ist eine eigene Szene besser, damit jedes Regalbrett eine eigene Kol
 
 ## Eigene Wandfarben und Böden
 Wandfarben und Böden funktionieren genauso – ihre Datenblätter liegen in `data/surfaces/`.
-Felder: Id, Display Name, **Kind** (Wall = Wandfarbe, Floor = Boden), Price, Styles,
+Felder: Id, Display Name, **Kind** (Wall = Wandfarbe, Floor = Boden), Price,
 **Material** (das Aussehen) und **Preview Color** (Farbe des Feldes im Katalog).
+Wandfarben und Böden sind stilneutral und haben deshalb keine Stil-Häkchen.
 
 So nutzt du eine eigene Textur:
 1. Bild (z. B. `oak_planks.png`) nach `assets/textures/` kopieren.
@@ -97,3 +109,10 @@ Doppelklicke ein Material, dann siehst du rechts im **Inspektor** die Eigenschaf
 
 Wände und Boden nutzen „Triplanar“-Mapping: Texturen werden automatisch gleichmäßig
 über die Fläche gelegt. Die Kachelgröße stellst du unter **UV1 > Scale** ein.
+
+## Eigene Symbole für den Gestaltungsmodus
+Beim Streichen erscheint statt des Punkts ein Farbroller (Wand) bzw. ein eingerollter Teppich
+(Boden). Die Platzhalter liegen in `assets/ui/icons/` (`paint_roller.svg`, `carpet_roll.svg`).
+Zum Austauschen: eigenes Bild (.png oder .svg, ca. 64 × 64 Pixel) in den Ordner kopieren, dann
+`scenes/ui/hud.tscn` öffnen, den obersten Knoten `HUD` anklicken und im Inspektor bei
+**Paint Roller Icon** bzw. **Carpet Icon** dein Bild hineinziehen.

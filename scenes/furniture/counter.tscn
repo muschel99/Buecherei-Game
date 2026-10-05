@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="5_t0h0b"]
 [ext_resource type="PackedScene" path="res://scenes/furniture/cash_register.tscn" id="cash_register"]
 [ext_resource type="Material" path="res://assets/materials/door_paint.tres" id="mat_door_paint"]
 [ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="mat_wood_dark"]
@@ -19,6 +20,9 @@ size = Vector3(2, 1, 0.65)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_d8k5h"]
 size = Vector3(0.4, 0.26, 0.38)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_igu70"]
+size = Vector3(2, 0.03, 0.65)
 
 [node name="Counter" type="Node3D" unique_id=767750479]
 
@@ -53,3 +57,15 @@ shape = SubResource("BoxShape3D_d8k5h")
 
 [node name="CashRegister" type="Node3D" parent="Modules" unique_id=905558602 instance=ExtResource("cash_register")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.5, 1, -0.08)
+
+[node name="Surfaces" type="Node3D" parent="." unique_id=1575451325]
+
+[node name="Top" type="Area3D" parent="Surfaces" unique_id=972760100]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.02)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_t0h0b")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Top" unique_id=357714166]
+shape = SubResource("BoxShape3D_igu70")

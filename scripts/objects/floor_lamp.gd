@@ -33,7 +33,14 @@ func _ready() -> void:
 
 
 func _on_interactable_interacted(_interactor: Node) -> void:
-	is_on = not is_on
+	set_on(not is_on)
+
+
+## Schaltet die Lampe an oder aus (wird auch vom Lichtschalter benutzt).
+func set_on(value: bool) -> void:
+	if value == is_on:
+		return
+	is_on = value
 	_apply_state(true)
 
 

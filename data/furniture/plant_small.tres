@@ -6,9 +6,9 @@
 script = ExtResource("1_k6nsd")
 id = "plant_small"
 display_name = "Kleine Topfpflanze"
-description = "Passt auf Tische und Regalbretter."
+description = "Passt auf Tische, Regale und die Fensterbank."
 category = 5
 price = 18
 styles = 1
 scene_path = "res://scenes/furniture/plant_small.tscn"
-can_stand_on_surfaces = true
+placement = 3

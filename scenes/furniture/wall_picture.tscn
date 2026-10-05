@@ -1,0 +1,60 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="1_xpeed"]
+[ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="2_wyqyv"]
+[ext_resource type="Material" path="res://assets/materials/terracotta.tres" id="3_0f86f"]
+[ext_resource type="Material" path="res://assets/materials/leaf_green.tres" id="4_bxxru"]
+[ext_resource type="Material" path="res://assets/materials/concrete.tres" id="5_553so"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_18pxb"]
+size = Vector3(0.5, 0.4, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_26jif"]
+size = Vector3(0.44, 0.34, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4u4xd"]
+size = Vector3(0.16, 0.2, 0.004)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8nxov"]
+size = Vector3(0.12, 0.12, 0.004)
+
+[sub_resource type="BoxMesh" id="BoxMesh_60dvm"]
+size = Vector3(0.3, 0.02, 0.004)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4j25a"]
+size = Vector3(0.5, 0.4, 0.03)
+
+[node name="WallPicture" type="Node3D" unique_id=969475570]
+
+[node name="Model" type="Node3D" parent="." unique_id=479846952]
+
+[node name="Frame" type="MeshInstance3D" parent="Model" unique_id=1611372212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.015)
+material_override = ExtResource("1_xpeed")
+mesh = SubResource("BoxMesh_18pxb")
+
+[node name="Canvas" type="MeshInstance3D" parent="Model" unique_id=231167122]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.031)
+material_override = ExtResource("2_wyqyv")
+mesh = SubResource("BoxMesh_26jif")
+
+[node name="ShapeA" type="MeshInstance3D" parent="Model" unique_id=2046251166]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, 0.03, 0.035)
+material_override = ExtResource("3_0f86f")
+mesh = SubResource("BoxMesh_4u4xd")
+
+[node name="ShapeB" type="MeshInstance3D" parent="Model" unique_id=1597967350]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, -0.06, 0.036)
+material_override = ExtResource("4_bxxru")
+mesh = SubResource("BoxMesh_8nxov")
+
+[node name="ShapeC" type="MeshInstance3D" parent="Model" unique_id=362364407]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03, -0.11, 0.037)
+material_override = ExtResource("5_553so")
+mesh = SubResource("BoxMesh_60dvm")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=688578233]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1465575272]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.015)
+shape = SubResource("BoxShape3D_4j25a")

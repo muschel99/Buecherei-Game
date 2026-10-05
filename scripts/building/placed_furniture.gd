@@ -21,6 +21,7 @@ var support_uid: int = 0
 
 var _model: Node3D = null
 var _bodies: Array[StaticBody3D] = []
+var _surfaces: Array[PlacementSurface] = []
 
 
 func _ready() -> void:
@@ -32,10 +33,13 @@ func get_model() -> Node3D:
 	return _model
 
 
-## Schaltet die Kollision ein oder aus (aus = beim Verschieben "in der Hand").
+## Schaltet die Kollision und die Ablageflächen ein oder aus
+## (aus = beim Verschieben "in der Hand").
 func set_collision_enabled(enabled: bool) -> void:
 	for body in _bodies:
 		body.collision_layer = FurnitureUtils.FURNITURE_LAYER_BIT if enabled else 0
+	for surface in _surfaces:
+		surface.collision_layer = FurnitureUtils.SURFACE_LAYER_BIT if enabled else 0
 
 
 ## Leichtes Aufleuchten, wenn man im Gestaltungsmodus darauf zeigt.
@@ -50,6 +54,7 @@ func _rebuild_model() -> void:
 		_model.queue_free()
 		_model = null
 	_bodies.clear()
+	_surfaces.clear()
 	if data == null:
 		return
 
@@ -64,3 +69,4 @@ func _rebuild_model() -> void:
 	for body in _bodies:
 		body.collision_layer = FurnitureUtils.FURNITURE_LAYER_BIT
 		body.collision_mask = 0
+	_surfaces = FurnitureUtils.find_surfaces(_model)

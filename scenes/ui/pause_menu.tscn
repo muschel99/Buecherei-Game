@@ -100,24 +100,17 @@ text = "Interagieren"
 
 [node name="KeyBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "B"
+text = "Tab"
 
 [node name="ActionBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Gestaltungsmodus an/aus"
-
-[node name="KeyDebug" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "F3"
-
-[node name="ActionDebug" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Stil-Anzeige (Test)"
+text = "Gestaltungsmodus öffnen/schließen"
 
 [node name="Key4" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "Esc"
 
 [node name="Action4" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Pausenmenü"
+text = "Schließt, was offen ist – sonst Pausenmenü"
 
 [node name="BackButton" type="Button" parent="ControlsPanel/VBox"]
 unique_name_in_owner = true

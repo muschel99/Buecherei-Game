@@ -3,6 +3,7 @@
 [ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="1_l4ilj"]
 [ext_resource type="Material" path="res://assets/materials/leather_green.tres" id="2_4yhxm"]
 [ext_resource type="Material" path="res://assets/materials/brass.tres" id="3_et72o"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="4_4yhxm"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_68me4"]
 size = Vector3(1.2, 0.04, 0.6)
@@ -75,6 +76,9 @@ size = Vector3(0.46, 0.4, 0.02)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_iwj5k"]
 size = Vector3(1.2, 0.76, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_et72o"]
+size = Vector3(1.2, 0.03, 0.6)
 
 [node name="DeskLeather" type="Node3D" unique_id=968216080]
 
@@ -170,3 +174,15 @@ mesh = SubResource("BoxMesh_rt51x")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1207402370]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.38, 0)
 shape = SubResource("BoxShape3D_iwj5k")
+
+[node name="Surfaces" type="Node3D" parent="." unique_id=2081213216]
+
+[node name="Top" type="Area3D" parent="Surfaces" unique_id=200837367]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.76, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_4yhxm")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Top" unique_id=1903158694]
+shape = SubResource("BoxShape3D_et72o")

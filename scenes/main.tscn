@@ -9,7 +9,7 @@
 [ext_resource type="Script" path="res://scripts/main.gd" id="7_main"]
 [ext_resource type="Script" path="res://scripts/building/build_mode.gd" id="8_build_mode"]
 [ext_resource type="PackedScene" path="res://scenes/ui/build_ui.tscn" id="9_build_ui"]
-[ext_resource type="PackedScene" path="res://scenes/ui/style_debug.tscn" id="10_style_debug"]
+[ext_resource type="PackedScene" path="res://scenes/ui/style_meter.tscn" id="10_style_meter"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -94,9 +94,12 @@ room_path = NodePath("../GroundFloorRoom")
 [node name="BuildUI" parent="." instance=ExtResource("9_build_ui")]
 build_mode_path = NodePath("../BuildMode")
 
-[node name="StyleDebug" parent="." instance=ExtResource("10_style_debug")]
+[node name="StyleMeter" parent="." instance=ExtResource("10_style_meter")]
 room_path = NodePath("../GroundFloorRoom")
+build_mode_path = NodePath("../BuildMode")
 
 [node name="PauseMenu" parent="." instance=ExtResource("4_pause_menu")]
 
 [connection signal="interaction_target_changed" from="Player" to="HUD" method="_on_player_interaction_target_changed"]
+[connection signal="catalog_state_changed" from="BuildMode" to="HUD" method="_on_build_mode_catalog_state_changed"]
+[connection signal="cursor_icon_changed" from="BuildMode" to="HUD" method="_on_build_mode_cursor_icon_changed"]

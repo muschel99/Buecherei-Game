@@ -3,6 +3,7 @@ extends Resource
 ## Datenblatt für eine Wandfarbe oder einen Bodenbelag.
 ##
 ## Jede Datei in data/surfaces/ (Endung .tres) ist ein solches Datenblatt.
+## Wandfarben und Böden sind stilneutral: Sie zählen nicht zur Stilberechnung.
 ## Das Aussehen steckt im Feld "material": Dort kann ein einfaches Material
 ## mit Farbe oder ein Material mit eigener Textur stehen.
 ## Anleitung: docs/ASSET_GUIDE.md, Abschnitt "Eigene Wandfarben und Böden".
@@ -18,8 +19,6 @@ enum Kind { WALL, FLOOR }
 @export var kind: Kind = Kind.WALL
 ## Preis in Talern für den ganzen Raum (wird ab Etappe 5 abgezogen).
 @export var price: int = 0
-## Stil-Merkmale: eines oder mehrere Häkchen setzen.
-@export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
 ## Das Material, das auf Wände bzw. Boden gelegt wird.
 @export var material: Material
 ## Farbe des Farbfelds im Katalog.

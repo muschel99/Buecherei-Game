@@ -8,6 +8,5 @@ script = ExtResource("2_acsyr")
 id = "wall_fog_grey"
 display_name = "Nebelgrau"
 price = 50
-styles = 2
 material = ExtResource("1_cta5j")
 preview_color = Color(0.66, 0.67, 0.67, 1)

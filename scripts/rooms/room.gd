@@ -19,19 +19,26 @@ signal layout_changed
 @export var floor_height: float = 0.0
 
 @onready var furniture_root: Node3D = $Furniture
-## Alle Teile, die beim Streichen die Wandfarbe bekommen (inkl. Fenster- und Türlaibung).
-@onready var _wall_parts: Array[CSGPrimitive3D] = [
+## Die Wände, die in Abschnitten gestrichen werden können.
+@onready var _walls: Array[PaintableWall] = [$Walls/Left, $Walls/Right, $Walls/Back, $Walls/Front]
+## Der Boden, der in Feldern belegt werden kann.
+@onready var _floor: PaintableFloor = $FloorCovering
+## Fenster- und Türlaibung: bekommen die Farbe des Wandabschnitts, in dem sie liegen.
+@onready var _reveals: Array[CSGPrimitive3D] = [$Structure/WallFront/WindowHole, $Structure/WallFront/DoorHole]
+@onready var _reveal_wall: PaintableWall = $Walls/Front
+## Hier darf man etwas aufhängen (Wandbilder, Lichtschalter …).
+@onready var _hang_walls: Array[Node] = [
 	$Structure/WallLeft,
 	$Structure/WallRight,
 	$Structure/WallBack,
-	$Structure/WallFront/Wall,
-	$Structure/WallFront/WindowHole,
-	$Structure/WallFront/DoorHole,
+	$Structure/WallFront,
 ]
-@onready var _floor_parts: Array[CSGPrimitive3D] = [$Structure/Floor]
+## Hier darf man etwas an die Tür hängen (z. B. einen Türkranz).
+@onready var _hang_doors: Array[Node] = [$Door/DoorLeaf]
 
-var wall_surface_id: String = ""
-var floor_surface_id: String = ""
+## Wohin etwas gehängt werden kann (gleiche Werte wie FurnitureData.placement).
+enum HangKind { NONE = 0, WALL = 4, DOOR = 8 }
+
 var _next_uid: int = 1
 
 
@@ -39,8 +46,8 @@ func _ready() -> void:
 	add_to_group(SaveManager.PERSIST_GROUP)
 	for item in get_placed_furniture():
 		_assign_uid(item)
-	_apply_surface_id(default_wall_id)
-	_apply_surface_id(default_floor_id)
+	_paint_everything(default_wall_id)
+	_paint_everything(default_floor_id)
 	layout_changed.connect(SaveManager.request_save)
 
 
@@ -101,10 +108,30 @@ func get_dependents(item: PlacedFurniture) -> Array[PlacedFurniture]:
 	return result
 
 
+## Alle Lampen im Raum, die sich schalten lassen (für den Lichtschalter).
+## Als Lampe zählt jedes Möbelstück, dessen Modell set_on() und is_on hat.
+func get_lamps() -> Array[Node]:
+	var lamps: Array[Node] = []
+	for item in get_placed_furniture():
+		var model := item.get_model()
+		if model and model.has_method("set_on"):
+			lamps.append(model)
+	return lamps
+
+
 ## Liegt dieser Punkt (in Weltkoordinaten) innerhalb der Raumfläche?
 func is_inside_build_area(world_position: Vector3) -> bool:
 	var local := to_local(world_position)
 	return build_area.has_point(Vector2(local.x, local.z))
+
+
+## Ist der getroffene Kollisionskörper eine Wand oder die Tür dieses Raums?
+func get_hang_kind(collider: Object) -> HangKind:
+	if _hang_walls.has(collider):
+		return HangKind.WALL
+	if _hang_doors.has(collider):
+		return HangKind.DOOR
+	return HangKind.NONE
 
 
 ## Anteil jedes Stils an allen Möbeln im Raum (siehe StyleTags.calculate_shares).
@@ -118,27 +145,71 @@ func get_style_shares() -> Dictionary:
 
 # --- Wände und Boden ---
 
-## Streicht alle Wände bzw. tauscht den ganzen Boden.
-func apply_surface(surface: SurfaceData) -> void:
-	if surface.material == null:
-		push_warning("Oberfläche '%s' hat kein Material." % surface.display_name)
-		return
-	var parts := _wall_parts if surface.kind == SurfaceData.Kind.WALL else _floor_parts
-	for part in parts:
-		part.material = surface.material
-	if surface.kind == SurfaceData.Kind.WALL:
-		wall_surface_id = surface.get_id()
-	else:
-		floor_surface_id = surface.get_id()
+## Welcher Wandabschnitt liegt an diesem Punkt? Ergebnis: { "wall": PaintableWall,
+## "index": Nummer } – oder leer, wenn der Punkt auf keiner streichbaren Wand liegt.
+func find_wall_segment(world_point: Vector3) -> Dictionary:
+	for wall in _walls:
+		var index := wall.get_segment_at(world_point)
+		if index >= 0:
+			return {"wall": wall, "index": index}
+	return {}
+
+
+## Welches Bodenfeld liegt an diesem Punkt? (-1 = keins)
+func find_floor_cell(world_point: Vector3) -> int:
+	return _floor.get_cell_at(world_point)
+
+
+## Streicht einen Wandabschnitt.
+func paint_wall_segment(wall: PaintableWall, index: int, surface: SurfaceData) -> void:
+	wall.paint_segment(index, surface)
+	_update_reveals()
 	layout_changed.emit()
 
 
-func _apply_surface_id(id: String) -> void:
+## Streicht eine ganze Wand.
+func paint_wall(wall: PaintableWall, surface: SurfaceData) -> void:
+	for index in wall.get_segment_count():
+		wall.paint_segment(index, surface)
+	_update_reveals()
+	layout_changed.emit()
+
+
+## Belegt ein Bodenfeld.
+func paint_floor_cell(index: int, surface: SurfaceData) -> void:
+	_floor.paint_cells([index], surface)
+	layout_changed.emit()
+
+
+## Belegt den ganzen Boden.
+func paint_floor(surface: SurfaceData) -> void:
+	_floor.paint_all(surface)
+	layout_changed.emit()
+
+
+## Streicht alle Wände bzw. belegt den ganzen Boden (je nach Art der Oberfläche).
+func _paint_everything(id: String) -> void:
 	var surface := Catalog.get_surface(id)
-	if surface:
-		apply_surface(surface)
-	elif not id.is_empty():
-		push_warning("Raum: Oberfläche '%s' nicht im Katalog gefunden." % id)
+	if surface == null:
+		if not id.is_empty():
+			push_warning("Raum: Oberfläche '%s' nicht im Katalog gefunden." % id)
+		return
+	if surface.kind == SurfaceData.Kind.WALL:
+		for wall in _walls:
+			for index in wall.get_segment_count():
+				wall.paint_segment(index, surface)
+		_update_reveals()
+	else:
+		_floor.paint_all(surface)
+
+
+## Fenster- und Türlaibung in der Farbe des Abschnitts streichen, in dem sie liegen.
+func _update_reveals() -> void:
+	for reveal in _reveals:
+		var x := _reveal_wall.to_local(reveal.global_position).x
+		var surface := Catalog.get_surface(_reveal_wall.segment_ids[_reveal_wall.get_segment_index_at_x(x)])
+		if surface:
+			reveal.material = surface.material
 
 
 # --- Speichern und Laden ---
@@ -155,9 +226,16 @@ func get_save_data() -> Dictionary:
 			"rotation_y": item.rotation.y,
 			"support_uid": item.support_uid,
 		})
+	var walls := {}
+	for wall in _walls:
+		walls[wall.name] = wall.segment_ids.duplicate()
 	return {
-		"wall": wall_surface_id,
-		"floor": floor_surface_id,
+		"walls": walls,
+		"floor": {
+			"columns": _floor.columns,
+			"rows": _floor.rows,
+			"cells": _compress(_floor.cell_ids),
+		},
 		"furniture": furniture,
 	}
 
@@ -174,9 +252,61 @@ func load_save_data(save_data: Dictionary) -> void:
 			if entry is Dictionary:
 				_load_furniture_entry(entry)
 
-	_apply_surface_id(str(save_data.get("wall", default_wall_id)))
-	_apply_surface_id(str(save_data.get("floor", default_floor_id)))
+	_load_walls(save_data)
+	_load_floor(save_data)
 	layout_changed.emit()
+
+
+func _load_walls(save_data: Dictionary) -> void:
+	_paint_everything(default_wall_id)
+	var walls = save_data.get("walls")
+	if walls is Dictionary:
+		for wall in _walls:
+			var ids = walls.get(wall.name)
+			if ids is Array:
+				for index in mini(ids.size(), wall.get_segment_count()):
+					var surface := Catalog.get_surface(str(ids[index]))
+					if surface:
+						wall.paint_segment(index, surface)
+	elif save_data.get("wall") is String:
+		_paint_everything(save_data["wall"])  # Spielstand aus Etappe 2
+	_update_reveals()
+
+
+func _load_floor(save_data: Dictionary) -> void:
+	_paint_everything(default_floor_id)
+	var floor_data = save_data.get("floor")
+	if floor_data is Dictionary:
+		var cells := _decompress(floor_data.get("cells", []))
+		# Nur übernehmen, wenn die Feldgröße seit dem Speichern gleich geblieben ist
+		if int(floor_data.get("columns", 0)) == _floor.columns and cells.size() == _floor.cell_ids.size():
+			for index in cells.size():
+				if Catalog.get_surface(cells[index]):
+					_floor.cell_ids[index] = cells[index]
+			_floor.rebuild()
+	elif floor_data is String:
+		_paint_everything(floor_data)  # Spielstand aus Etappe 2
+
+
+## Fasst gleiche Felder hintereinander zusammen: ["a","a","b"] -> [["a", 2], ["b", 1]].
+## So bleibt die Speicherdatei klein.
+func _compress(ids: Array[String]) -> Array:
+	var result := []
+	for id in ids:
+		if not result.is_empty() and result.back()[0] == id:
+			result.back()[1] += 1
+		else:
+			result.append([id, 1])
+	return result
+
+
+func _decompress(runs: Array) -> Array[String]:
+	var result: Array[String] = []
+	for run in runs:
+		if run is Array and run.size() == 2:
+			for i in int(run[1]):
+				result.append(str(run[0]))
+	return result
 
 
 func _load_furniture_entry(entry: Dictionary) -> void:

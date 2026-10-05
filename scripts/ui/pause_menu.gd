@@ -1,6 +1,8 @@
 extends CanvasLayer
-## Pausenmenü: öffnet sich mit Esc.
+## Pausenmenü: öffnet sich mit Esc – aber nur, wenn nichts anderes offen ist.
 ##
+## Esc schließt immer zuerst das, was gerade offen ist (Gestaltungsmodus, Menüs …,
+## siehe MenuStack). Erst wenn nichts offen ist, öffnet Esc dieses Menü.
 ## Hält das Spiel an, gibt die Maus frei und bietet Weiter, Steuerung und Beenden.
 ## Dieser Knoten läuft auch bei pausiertem Spiel weiter (Process Mode "Always").
 
@@ -17,12 +19,12 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("pause"):
 		return
-	if not visible:
-		open()
-	elif _controls_panel.visible:
+	if visible and _controls_panel.visible:
 		_show_main_panel()  # Esc in der Tastenübersicht = zurück
-	else:
+	elif visible:
 		resume()
+	elif not MenuStack.close_top():
+		open()  # Nichts anderes war offen
 	get_viewport().set_input_as_handled()
 
 
@@ -42,7 +44,8 @@ func open() -> void:
 func resume() -> void:
 	hide()
 	get_tree().paused = false
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	# Maus so einstellen, wie es das gerade Geöffnete braucht (z. B. Katalog = Mauszeiger sichtbar)
+	MenuStack.restore_mouse_mode()
 
 
 func _show_main_panel() -> void:

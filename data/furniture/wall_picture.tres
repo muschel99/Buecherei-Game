@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_kps2q"]
+
+[resource]
+script = ExtResource("1_kps2q")
+id = "wall_picture"
+display_name = "Wandbild, abstrakt"
+description = "Farbflächen in schwarzem Rahmen."
+price = 55
+styles = 2
+scene_path = "res://scenes/furniture/wall_picture.tscn"
+footprint = Vector2i(4, 1)
+placement = 4

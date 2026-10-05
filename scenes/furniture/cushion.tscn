@@ -1,0 +1,36 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/leaf_green.tres" id="1_30ysk"]
+[ext_resource type="Material" path="res://assets/materials/fabric_linen.tres" id="2_6bkeu"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_snwr6"]
+radius = 0.2
+height = 0.4
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxMesh" id="BoxMesh_j4x0x"]
+size = Vector3(0.36, 0.01, 0.36)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_41ihv"]
+size = Vector3(0.36, 0.12, 0.36)
+
+[node name="Cushion" type="Node3D" unique_id=1107182675]
+
+[node name="Model" type="Node3D" parent="." unique_id=1200759854]
+
+[node name="Pillow" type="MeshInstance3D" parent="Model" unique_id=1508953475]
+transform = Transform3D(1, 0, 0, 0, 0.3, 0, 0, 0, 1, 0, 0.06, 0)
+material_override = ExtResource("1_30ysk")
+mesh = SubResource("SphereMesh_snwr6")
+
+[node name="Seam" type="MeshInstance3D" parent="Model" unique_id=701199485]
+transform = Transform3D(0.70710677, 0, 0.70710677, 0, 1, 0, -0.70710677, 0, 0.70710677, 0, 0.06, 0)
+material_override = ExtResource("2_6bkeu")
+mesh = SubResource("BoxMesh_j4x0x")
+
+[node name="Body" type="StaticBody3D" parent="." unique_id=1878181734]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1040939935]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("BoxShape3D_41ihv")

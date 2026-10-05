@@ -11,5 +11,4 @@ category = 0
 price = 140
 styles = 2
 scene_path = "res://scenes/furniture/shelf_cube_white.tscn"
-footprint = Vector2i(4, 2)
-has_surface = true
+footprint = Vector2i(8, 4)
