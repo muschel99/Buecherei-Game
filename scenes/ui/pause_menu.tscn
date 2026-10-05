@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/settings_panel.tscn" id="2_settings"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 process_mode = 3
@@ -43,6 +44,9 @@ text = "Weiter"
 [node name="ControlsButton" type="Button" parent="MainPanel/VBox"]
 text = "Steuerung"
 
+[node name="SettingsButton" type="Button" parent="MainPanel/VBox"]
+text = "Einstellungen"
+
 [node name="QuitButton" type="Button" parent="MainPanel/VBox"]
 text = "Beenden"
 
@@ -84,6 +88,20 @@ text = "Umschalt"
 [node name="ActionSprint" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Schneller laufen (gedrückt halten)"
 
+[node name="KeyJump" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Leertaste"
+
+[node name="ActionJump" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Springen (im Sitzen: aufstehen)"
+
+[node name="KeyCrouch" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Strg (halten)"
+
+[node name="ActionCrouch" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Hocken"
+
 [node name="Key2" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "Maus"
@@ -116,7 +134,12 @@ text = "Schließt, was offen ist – sonst Pausenmenü"
 unique_name_in_owner = true
 text = "Zurück"
 
+[node name="SettingsPanel" parent="." instance=ExtResource("2_settings")]
+visible = false
+
 [connection signal="pressed" from="MainPanel/VBox/ResumeButton" to="." method="_on_resume_button_pressed"]
 [connection signal="pressed" from="MainPanel/VBox/ControlsButton" to="." method="_on_controls_button_pressed"]
+[connection signal="pressed" from="MainPanel/VBox/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="back_requested" from="SettingsPanel" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="MainPanel/VBox/QuitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="pressed" from="ControlsPanel/VBox/BackButton" to="." method="_on_back_button_pressed"]

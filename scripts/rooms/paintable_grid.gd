@@ -71,7 +71,36 @@ func paint_cells(indices: Array[int], surface: SurfaceData) -> void:
 	rebuild()
 
 
-## Belegt den ganzen Boden.
+## Füllwerkzeug (wie der Farbeimer in Paint): Alle Abschnitte, die mit dem Startabschnitt
+## zusammenhängen und denselben Belag haben. Nur direkte Nachbarn zählen (vorne, hinten,
+## links, rechts – nicht diagonal). Grenzen sind die Wände und Abschnitte mit anderem Belag.
+func get_connected_cells(start: int) -> Array[int]:
+	var id := cell_ids[start]
+	var result: Array[int] = []
+	var visited := {start: true}
+	var to_check: Array[int] = [start]
+	while not to_check.is_empty():
+		var index: int = to_check.pop_back()
+		result.append(index)
+		var column := index % columns
+		var row := index / columns
+		var neighbours: Array[int] = []
+		if column > 0:
+			neighbours.append(index - 1)
+		if column < columns - 1:
+			neighbours.append(index + 1)
+		if row > 0:
+			neighbours.append(index - columns)
+		if row < rows - 1:
+			neighbours.append(index + columns)
+		for next in neighbours:
+			if not visited.has(next) and cell_ids[next] == id:
+				visited[next] = true
+				to_check.append(next)
+	return result
+
+
+## Belegt die ganze Fläche.
 func paint_all(surface: SurfaceData) -> void:
 	cell_ids.fill(surface.get_id())
 	rebuild()

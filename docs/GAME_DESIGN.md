@@ -46,6 +46,8 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 |----------------|------------------------------------------------|
 | W A S D        | Laufen                                         |
 | Umschalt       | Schneller laufen (gedrückt halten)             |
+| Leertaste      | Springen (sanft); im Sitzen: aufstehen         |
+| Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
 | E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen … |
 | Tab            | Gestaltungsmodus öffnen/schließen              |
@@ -64,7 +66,7 @@ Zwei Zustände:
 | Tab / Esc                | Gestaltungsmodus schließen (Gehaltenes geht zurück)            |
 | Linksklick               | Auswählen / aufheben / platzieren / Abschnitt streichen         |
 | Linksklick halten + ziehen | Mehrere Wand-, Boden- oder Deckenabschnitte nacheinander     |
-| Umschalt + Linksklick    | Ganze Wand / ganzer Boden / ganze Decke                        |
+| Umschalt + Linksklick    | Wand: ganze Wand · Boden/Decke: Füllwerkzeug (wie Farbeimer)   |
 | Rechte Maustaste halten  | Umsehen (im Katalog-Zustand)                                   |
 | Rechtsklick              | Zurücklegen / Auswahl beenden (im Platzier-Zustand)            |
 | Mausrad                  | Drehen                                                         |
@@ -82,6 +84,10 @@ Zwei Zustände:
 - Wände werden in senkrechten Abschnitten gestrichen (Standard 1 m breit). Boden und Decke werden
   in Abschnitten von 3 x 3 Rasterfeldern (1/3 m) gestaltet; der Raum (6 x 8 m) geht darin ohne
   Rest auf (18 x 24 Abschnitte).
+- Füllwerkzeug (Umschalt + Klick bei Boden und Decke): füllt alle zusammenhängenden Abschnitte
+  mit demselben Belag wie der angeklickte – wie der Farbeimer in Paint. Grenzen sind Wände und
+  Abschnitte mit anderem Belag; nur direkte Nachbarn zählen, nicht diagonale. Ohne Grenze wird
+  der ganze Raum gefüllt.
 - Hervorhebung: Worauf man im Gestaltungsmodus zeigt und was man mit E benutzen kann, wird
   dezent aufgehellt (feiner heller Rand) – das Objekt bleibt gut erkennbar.
 
@@ -111,5 +117,13 @@ Zwei Zustände:
 
 ## Das Haus
 - Altes englisches Reihenhaus in einer schmalen Gasse.
-- Erster Raum (Erdgeschoss, Straßenseite): ca. 6 x 8 Meter, großes Fenster und Eingangstür zur Gasse.
+- Erster Raum (Erdgeschoss, Straßenseite): 6 x 8 Meter, 3,2 Meter hoch (Raumhöhe in GameConfig),
+  großes Fenster (0,8 bis 2,6 m) und Eingangstür (2,2 m) zur Gasse. Die Decke ist zu Beginn
+  schlicht; Balken gibt es als Deckenvariante.
+
+## Einstellungen
+- Im Pausenmenü unter „Einstellungen“: Fenster oder Vollbild, Auflösung (gängige Auflösungen
+  inklusive Ultrawide), VSync. Gespeichert in einer eigenen Datei, getrennt vom Spielstand.
+- Alle Menüs und Anzeigen passen sich an jede Auflösung und jedes Seitenverhältnis an.
+- Später dazu: Lautstärke, Mausempfindlichkeit, Tageslänge.
 - Weitere Räume und Obergeschoss werden später freigeschaltet.

@@ -9,7 +9,7 @@ const KEY_COLOR := Color(0.96, 0.78, 0.48)
 const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.8)
 const WARNING_COLOR := Color(1.0, 0.68, 0.55)
 const TEXT_COLOR := Color(1.0, 0.96, 0.88)
-const CARD_SIZE := Vector2(196, 94)
+const CARD_SIZE := Vector2(206, 100)
 
 ## Pfad zum Gestaltungsmodus (im Inspektor der Hauptszene eingetragen).
 @export var build_mode_path: NodePath
@@ -135,19 +135,19 @@ func _create_card(title: String, subtitle: String, styles: int, tooltip: String,
 		color_field.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(color_field)
 
-	var title_label := _small_label(title, 15, TEXT_COLOR)
+	var title_label := _small_label(title, 16, TEXT_COLOR)
 	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_label.max_lines_visible = 2 if swatch.a <= 0.0 else 1
 	box.add_child(title_label)
-	box.add_child(_small_label(subtitle, 13, MUTED_COLOR))
+	box.add_child(_small_label(subtitle, 14, MUTED_COLOR))
 
 	var style_row := HBoxContainer.new()
 	style_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	style_row.add_theme_constant_override("separation", 8)
 	for style in StyleTags.to_list(styles):
-		style_row.add_child(_small_label("● " + StyleTags.get_display_name(style), 12, StyleTags.get_color(style)))
+		style_row.add_child(_small_label("● " + StyleTags.get_display_name(style), 13, StyleTags.get_color(style)))
 	if styles == 0:
-		style_row.add_child(_small_label("○ stilneutral", 12, MUTED_COLOR))
+		style_row.add_child(_small_label("○ stilneutral", 13, MUTED_COLOR))
 	box.add_child(style_row)
 	return card
 
@@ -179,7 +179,7 @@ func _build_help() -> void:
 		["Mausrad", "Drehen"],
 		["G", ""],  # Text kommt aus _on_grid_changed
 		["Entf", "Entfernen"],
-		["Umschalt + Klick", "Ganze Wand / Boden / Decke"],
+		["Umschalt + Klick", "Ganze Wand · Boden/Decke füllen"],
 	]
 	for entry in entries:
 		_help_grid.add_child(_small_label(entry[0], 14, KEY_COLOR))

@@ -49,6 +49,7 @@ var _next_uid: int = 1
 
 
 func _ready() -> void:
+	_apply_room_height(GameConfig.room_height)
 	add_to_group(SaveManager.PERSIST_GROUP)
 	for item in get_placed_furniture():
 		_assign_uid(item)
@@ -56,6 +57,18 @@ func _ready() -> void:
 	_paint_everything(default_floor_id)
 	_paint_everything(default_ceiling_id)
 	layout_changed.connect(SaveManager.request_save)
+
+
+## Passt Wände, Decke, Deckenbelag und Raumlicht an die Raumhöhe an.
+## (Die Wandabschnitte zum Streichen lesen die Höhe selbst, siehe PaintableWall.)
+func _apply_room_height(height: float) -> void:
+	for wall: CSGBox3D in [$Structure/WallLeft, $Structure/WallRight, $Structure/WallBack, $Structure/WallFront/Wall]:
+		wall.size.y = height
+		wall.position.y = height / 2.0
+	var ceiling: CSGBox3D = $Structure/Ceiling
+	ceiling.position.y = height + ceiling.size.y / 2.0
+	($CeilingCovering as Node3D).position.y = height
+	($FillLight as Node3D).position.y = height - 0.5
 
 
 # --- Möbel ---
@@ -210,6 +223,14 @@ func paint_grid_cell(index: int, surface: SurfaceData) -> void:
 	layout_changed.emit()
 
 
+## Füllwerkzeug für Boden und Decke: füllt alle zusammenhängenden Abschnitte mit
+## demselben Belag wie der angeklickte (siehe PaintableGrid.get_connected_cells).
+func fill_grid(start_index: int, surface: SurfaceData) -> void:
+	var grid := _grids[surface.kind] as PaintableGrid
+	grid.paint_cells(grid.get_connected_cells(start_index), surface)
+	layout_changed.emit()
+
+
 ## Gestaltet den ganzen Boden bzw. die ganze Decke.
 func paint_grid(surface: SurfaceData) -> void:
 	(_grids[surface.kind] as PaintableGrid).paint_all(surface)
@@ -351,6 +372,9 @@ func _load_furniture_entry(entry: Dictionary) -> void:
 	if position_values is Array and position_values.size() == 3:
 		item.position = Vector3(position_values[0], position_values[1], position_values[2])
 	item.rotation.y = float(entry.get("rotation_y", 0.0))
+	# Dinge an der Decke wandern mit, falls sich die Raumhöhe geändert hat
+	if data.placement == FurnitureData.PLACE_CEILING:
+		item.position.y = GameConfig.room_height - 0.002
 	item.uid = int(entry.get("uid", 0))
 	item.support_uid = int(entry.get("support_uid", 0))
 	furniture_root.add_child(item, true)

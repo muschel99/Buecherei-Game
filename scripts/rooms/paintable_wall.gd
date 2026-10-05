@@ -9,8 +9,8 @@ extends Node3D
 
 ## Länge der Wand in Metern.
 @export var length: float = 6.0
-## Höhe der Wand (Boden bis Decke) in Metern.
-@export var height: float = 3.0
+## Höhe der Wand (Boden bis Decke) in Metern. 0 = Raumhöhe aus GameConfig.room_height.
+@export var height: float = 0.0
 ## Öffnungen wie Fenster und Tür, gemessen vom Wandanfang (x) und vom Boden (y).
 @export var openings: Array[Rect2] = []
 
@@ -24,6 +24,8 @@ var _segment_parts: Array = []  # je Abschnitt: Array[MeshInstance3D]
 
 
 func _ready() -> void:
+	if height <= 0.0:
+		height = GameConfig.room_height
 	var count := maxi(1, roundi(length / GameConfig.wall_segment_width))
 	_segment_width = length / count
 	for i in count:

@@ -6,6 +6,7 @@
 | 2   | Gestaltungsmodus                         | fertig        |
 | 2b  | Gestaltungsmodus verbessern              | fertig        |
 | 2c  | Feinschliff Gestaltung                   | fertig        |
+| 2d  | Ergänzungen: Steuerung, Füllwerkzeug, Bildschirm | fertig |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -65,6 +66,17 @@
 - [x] Gemeinsames Lichtsystem (`LightSource`): alles, was leuchtet, ist mit E schaltbar;
       Flammen erlöschen sanft; Lichtschalter optional auch für Kerzen und Laternen
 - [x] Hinsetzen mit E, Sitzplätze je Sitzmöbel (`Seating`, `SeatPoint`)
+
+## Etappe 2d – Ergänzungen: Steuerung, Füllwerkzeug, Bildschirm
+- [x] Springen (Leertaste) und Hocken (Strg halten), im Sitzen aufstehen mit Leertaste;
+      Werte in GameConfig
+- [x] Deckenbalken aus dem Grundraum entfernt (Deckenvariante „Holzbalken“ bleibt;
+      platzierbare Balken folgen später)
+- [x] Füllwerkzeug für Boden und Decke wie der Farbeimer in Paint (Umschalt + Klick)
+- [x] Bildschirmeinstellungen im Pausenmenü (Fenster/Vollbild, Auflösung, VSync), gespeichert;
+      alle Menüs passen sich an jede Auflösung und jedes Seitenverhältnis an
+- [x] Raumhöhe 3,2 m (vorher 3,0 m) in GameConfig; Fenster und Tür höher;
+      Deckenobjekte aus alten Spielständen wandern mit
 
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)
