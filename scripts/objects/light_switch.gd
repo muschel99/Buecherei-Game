@@ -2,8 +2,8 @@ extends Node3D
 ## Lichtschalter: schaltet mit E alle Lampen im selben Raum.
 ##
 ## Ist mindestens eine Lampe an, gehen alle aus – sonst gehen alle an.
-## Als Lampe zählt alles, was eine Funktion set_on() und eine Variable is_on hat
-## (z. B. die Stehlampe, scripts/objects/floor_lamp.gd).
+## Geschaltet werden elektrische Lichtquellen (LightSource). Kerzen und Laternen nur,
+## wenn GameConfig.light_switch_includes_flames eingeschaltet ist.
 
 @onready var _interactable: Interactable = $Interactable
 
@@ -26,7 +26,7 @@ func _on_interactable_interacted(_interactor: Node) -> void:
 		lamp.set_on(turn_on)
 
 
-func _any_on(lamps: Array[Node]) -> bool:
+func _any_on(lamps: Array[LightSource]) -> bool:
 	for lamp in lamps:
 		if lamp.is_on:
 			return true
@@ -34,10 +34,10 @@ func _any_on(lamps: Array[Node]) -> bool:
 
 
 ## Sucht den Raum, in dem der Schalter hängt, und fragt ihn nach seinen Lampen.
-func _find_lamps() -> Array[Node]:
+func _find_lamps() -> Array[LightSource]:
 	var node: Node = get_parent()
 	while node and not node is Room:
 		node = node.get_parent()
 	if node == null:
 		return []
-	return (node as Room).get_lamps()
+	return (node as Room).get_switchable_lights()

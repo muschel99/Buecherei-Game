@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/surface_pattern.gdshader" id="1_7jtk1"]
+
+[resource]
+resource_name = "Taubenblau"
+render_priority = 0
+shader = ExtResource("1_7jtk1")
+shader_parameter/base_color = Color(0.66, 0.72, 0.78, 1)
+shader_parameter/second_color = Color(0.66, 0.72, 0.78, 1)
+shader_parameter/pattern = 0
+shader_parameter/tile_size = 0.5
+shader_parameter/mottling = 0.08
+shader_parameter/roughness_value = 0.95

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_1sfqo"]
+
+[resource]
+script = ExtResource("1_1sfqo")
+id = "pendant_rattan"
+display_name = "Rattan-Hängelampe"
+description = "Runder Korbschirm, wirft ein warmes Muster. An die Decke hängen, mit E schalten."
+category = 4
+price = 130
+styles = 1
+scene_path = "res://scenes/furniture/pendant_rattan.tscn"
+footprint = Vector2i(5, 5)
+placement = 16

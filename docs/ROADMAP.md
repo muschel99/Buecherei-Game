@@ -5,6 +5,7 @@
 | 1   | Grundgerüst und erster Raum              | fertig        |
 | 2   | Gestaltungsmodus                         | fertig        |
 | 2b  | Gestaltungsmodus verbessern              | fertig        |
+| 2c  | Feinschliff Gestaltung                   | fertig        |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -52,6 +53,18 @@
 - [x] Farbroller- und Teppich-Symbol in der Bildmitte
 - [x] Wandfarben und Böden stilneutral; Stilanzeige automatisch oben im Gestaltungsmodus (F3 entfällt)
 - [x] Lichtschalter schaltet alle Lampen im Raum
+
+## Etappe 2c – Feinschliff Gestaltung
+- [x] Böden in Abschnitten aus 3 x 3 Rasterfeldern; Raster jetzt 1/9 m, damit der Raum
+      (6 x 8 m) ohne Rest aufgeht (18 x 24 Abschnitte); alte Spielstände werden umgerechnet
+- [x] Decke gestalten wie den Boden; 7 Platzhalter (Farben, Holzdecke, Holzbalken, Kassetten);
+      Deckenroller-Symbol
+- [x] Stil-Merkmale überall freiwillig, stilneutrale Objekte zählen nicht; Oberflächen mit Stil zählen mit
+- [x] Dezente Hervorhebung (Aufhellung mit feinem Rand), auch für E-Objekte; Stärke in GameConfig
+- [x] Decke als Platzierungsort; Deckenlampen für alle drei Stile, größere Reichweite für E
+- [x] Gemeinsames Lichtsystem (`LightSource`): alles, was leuchtet, ist mit E schaltbar;
+      Flammen erlöschen sanft; Lichtschalter optional auch für Kerzen und Laternen
+- [x] Hinsetzen mit E, Sitzplätze je Sitzmöbel (`Seating`, `SeatPoint`)
 
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)

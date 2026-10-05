@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Platzhalter-Symbol: Farbroller an einer langen Stange für die Decke (austauschbar) -->
+  <line x1="6" y1="6" x2="58" y2="6" stroke="#c9b48f" stroke-width="3" stroke-dasharray="5 4"/>
+  <rect x="12" y="11" width="40" height="13" rx="5" fill="#f4e7d0" stroke="#2b1d14" stroke-width="3"/>
+  <path d="M32 24 V30" stroke="#2b1d14" stroke-width="3"/>
+  <rect x="28" y="30" width="8" height="30" rx="3" fill="#9a6440" stroke="#2b1d14" stroke-width="3"/>
+</svg>

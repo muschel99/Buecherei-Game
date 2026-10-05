@@ -1,8 +1,10 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://scripts/objects/light_source.gd" id="1_7q5jb"]
 [ext_resource type="Material" path="res://assets/materials/brass.tres" id="1_pes21"]
 [ext_resource type="Material" path="res://assets/materials/candle_wax.tres" id="2_aithf"]
 [ext_resource type="Material" path="res://assets/materials/flame.tres" id="3_7q5jb"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="5_rpj7a"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_rpj7a"]
 top_radius = 0.06
@@ -76,7 +78,14 @@ rings = 8
 [sub_resource type="BoxShape3D" id="BoxShape3D_ui3hb"]
 size = Vector3(0.24, 0.38, 0.08)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_3h4px"]
+size = Vector3(0.34, 0.5, 0.22)
+
 [node name="Candelabra" type="Node3D" unique_id=1198166354]
+script = ExtResource("1_7q5jb")
+kind = 1
+prompt_turn_on = "Kerzen anzünden"
+prompt_turn_off = "Kerzen löschen"
 
 [node name="Model" type="Node3D" parent="." unique_id=1083436443]
 
@@ -151,3 +160,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.36, 0)
 light_color = Color(1, 0.72, 0.42, 1)
 light_energy = 0.45
 omni_range = 2.2
+
+[node name="Interactable" type="Area3D" parent="." unique_id=863528694]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_rpj7a")
+prompt_text = "Kerzen löschen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=839787098]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+shape = SubResource("BoxShape3D_3h4px")

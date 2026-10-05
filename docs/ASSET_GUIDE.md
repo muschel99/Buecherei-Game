@@ -36,11 +36,11 @@ Ein neues Datenblatt dort = ein neues Möbelstück im Katalog.
 | Description           | Kurzer Text, erscheint, wenn die Maus über der Karte steht                |
 | Category              | Reiter im Katalog (Regale, Sitzmöbel, Tische, Theke, Beleuchtung …)       |
 | Price                 | Preis in Talern (wird ab Etappe 5 abgezogen)                              |
-| Styles                | Häkchen bei Botanisch, Modern und/oder Dark Academia                      |
+| Styles                | Häkchen bei Botanisch, Modern und/oder Dark Academia – ohne Häkchen = stilneutral |
 | Scene Path            | Die Szene (`.tscn`) oder das Modell (`.glb`) – mit dem Ordner-Symbol auswählen |
-| Footprint             | Grundfläche in Rasterfeldern: x = Breite, y = Tiefe. 1 Feld = 0,125 m, 8 Felder = 1 m |
+| Footprint             | Grundfläche in Rasterfeldern: x = Breite, y = Tiefe. 1 Feld = 1/9 m (≈ 11,1 cm), 9 Felder = 1 m |
 | Is Unlocked           | Häkchen = erscheint im Katalog                                            |
-| Placement             | Wo darf es hin? Häkchen bei Boden, Ablagefläche, Wand und/oder Tür        |
+| Placement             | Wo darf es hin? Häkchen bei Boden, Ablagefläche, Wand, Tür und/oder Decke |
 
 4. Mit **Strg+S** speichern und das Spiel starten (F5). Das Möbelstück ist im Katalog.
 
@@ -61,16 +61,30 @@ duplizieren und die Optik unter `Model` austauschen (siehe nächster Abschnitt).
 Wichtig: Der Fußpunkt (Höhe 0) ist der Boden, die Vorderseite zeigt in Richtung **+Z**
 (im Editor: die blaue Pfeilrichtung).
 
+**Lampen und Kerzen:** Damit sich etwas mit E an- und ausschalten lässt, an den obersten Knoten
+der Szene das Script `scripts/objects/light_source.gd` hängen und einen `Interactable`-Knoten mit
+Kollisionsform hinzufügen. Im Inspektor bei **Kind** „Electric“ (Lampe) oder „Flame“ (Kerze,
+Laterne) wählen. Lichter und leuchtende Teile (Materialien mit „Emission“) findet das Script
+selbst. Deckenlampen: Ursprung oben am Aufhängepunkt, die Lampe hängt nach unten; beim
+Interactable das Häkchen **Long Reach** setzen.
+
+**Sitzmöbel:** Einen Knoten `Seating` (Script `scripts/objects/seating.gd`) hinzufügen. Darunter für
+jeden Sitzplatz einen `Marker3D` mit dem Script `scripts/objects/seat_point.gd` mitten auf die
+Sitzfläche setzen (blaue Pfeilrichtung = nach vorn) und einen `Interactable` über der Sitzfläche.
+Beispiel: `scenes/furniture/sofa_chesterfield.tscn` (drei Sitzplätze).
+
 **Nur eine .glb-Datei?** Geht auch: Bei „Scene Path“ direkt die `.glb`-Datei auswählen.
 Das Spiel legt dann automatisch eine Kollisions-Kiste in Größe des Modells an.
 Für Regale ist eine eigene Szene besser, damit jedes Regalbrett eine eigene Kollision bekommt
 (sonst kann man keine Deko hineinstellen).
 
-## Eigene Wandfarben und Böden
-Wandfarben und Böden funktionieren genauso – ihre Datenblätter liegen in `data/surfaces/`.
-Felder: Id, Display Name, **Kind** (Wall = Wandfarbe, Floor = Boden), Price,
-**Material** (das Aussehen) und **Preview Color** (Farbe des Feldes im Katalog).
-Wandfarben und Böden sind stilneutral und haben deshalb keine Stil-Häkchen.
+## Eigene Wandfarben, Böden und Decken
+Wandfarben, Böden und Decken funktionieren genauso – ihre Datenblätter liegen in `data/surfaces/`.
+Felder: Id, Display Name, **Kind** (Wall = Wandfarbe, Floor = Boden, Ceiling = Decke), Price,
+**Styles** (freiwillig – ohne Häkchen stilneutral), **Material** (das Aussehen) und
+**Preview Color** (Farbe des Feldes im Katalog).
+Die bisherigen Oberflächen sind alle stilneutral. Für ein besonderes Design (z. B. eine
+Dark-Academia-Holzvertäfelung) einfach die passenden Stil-Häkchen setzen – dann zählt es mit.
 
 So nutzt du eine eigene Textur:
 1. Bild (z. B. `oak_planks.png`) nach `assets/textures/` kopieren.
@@ -83,7 +97,7 @@ So nutzt du eine eigene Textur:
 4. Ein vorhandenes Datenblatt in `data/surfaces/` duplizieren, Id und Namen ändern und
    bei **Material** dein neues Material hineinziehen. Fertig.
 
-Die Platzhalter-Muster (Dielen, Schachbrett, Streifen) kommen aus dem Shader
+Die Platzhalter-Muster (Dielen, Schachbrett, Streifen, Kassetten) kommen aus dem Shader
 `assets/shaders/surface_pattern.gdshader`. Bei diesen Materialien kannst du im Inspektor unter
 **Shader Parameters** Farben, Muster und Größe verändern.
 
@@ -111,8 +125,9 @@ Wände und Boden nutzen „Triplanar“-Mapping: Texturen werden automatisch gle
 über die Fläche gelegt. Die Kachelgröße stellst du unter **UV1 > Scale** ein.
 
 ## Eigene Symbole für den Gestaltungsmodus
-Beim Streichen erscheint statt des Punkts ein Farbroller (Wand) bzw. ein eingerollter Teppich
-(Boden). Die Platzhalter liegen in `assets/ui/icons/` (`paint_roller.svg`, `carpet_roll.svg`).
+Beim Gestalten erscheint statt des Punkts ein Farbroller (Wand), ein eingerollter Teppich
+(Boden) bzw. ein Roller an einer Stange (Decke). Die Platzhalter liegen in `assets/ui/icons/`
+(`paint_roller.svg`, `carpet_roll.svg`, `ceiling_roller.svg`).
 Zum Austauschen: eigenes Bild (.png oder .svg, ca. 64 × 64 Pixel) in den Ordner kopieren, dann
 `scenes/ui/hud.tscn` öffnen, den obersten Knoten `HUD` anklicken und im Inspektor bei
-**Paint Roller Icon** bzw. **Carpet Icon** dein Bild hineinziehen.
+**Paint Roller Icon**, **Carpet Icon** bzw. **Ceiling Icon** dein Bild hineinziehen.

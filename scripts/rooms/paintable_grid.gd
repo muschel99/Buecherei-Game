@@ -1,26 +1,29 @@
-class_name PaintableFloor
+class_name PaintableGrid
 extends MeshInstance3D
-## Ein Boden, der in kleinen quadratischen Feldern belegt werden kann.
+## Ein Boden oder eine Decke, die in quadratischen Abschnitten gestaltet werden kann.
 ##
-## Der Knoten liegt an der Ecke des Bodens mit den kleinsten x- und z-Werten.
-## Feldgröße: GameConfig.floor_section_size. Felder mit gleichem Belag werden zu
-## größeren Flächen zusammengefasst, damit das Spiel flüssig bleibt.
+## Der Knoten liegt an der Ecke mit den kleinsten x- und z-Werten, auf Höhe der Fläche.
+## Ein Abschnitt ist GameConfig.floor_section_cells Rasterfelder breit (Standard 3 x 3).
+## Abschnitte mit gleichem Belag werden zu größeren Flächen zusammengefasst,
+## damit das Spiel flüssig bleibt.
 
-## Größe des Bodens in Metern (x = Breite, y = Tiefe).
+## Größe der Fläche in Metern (x = Breite, y = Tiefe).
 @export var size: Vector2 = Vector2(6.0, 8.0)
+## An = Decke (Fläche zeigt nach unten), aus = Boden (Fläche zeigt nach oben).
+@export var faces_down: bool = false
 
-## So weit liegt der Belag über dem eigentlichen Boden (verhindert Flackern).
+## So weit liegt der Belag vor der eigentlichen Fläche (verhindert Flackern).
 const OFFSET := 0.003
 
 ## Oberfläche (id) je Feld, Zeile für Zeile.
 var cell_ids: Array[String] = []
 var columns: int = 1
 var rows: int = 1
-var _cell_size: float = 0.125
+var _cell_size: float = 1.0 / 3.0
 
 
 func _ready() -> void:
-	_cell_size = GameConfig.floor_section_size
+	_cell_size = GameConfig.grid_cell_size * GameConfig.floor_section_cells
 	columns = maxi(1, roundi(size.x / _cell_size))
 	rows = maxi(1, roundi(size.y / _cell_size))
 	cell_ids.resize(columns * rows)
@@ -45,6 +48,19 @@ func get_cell_center(index: int) -> Vector3:
 	var column := index % columns
 	var row := index / columns
 	return to_global(Vector3((column + 0.5) * _cell_size, 0.0, (row + 0.5) * _cell_size))
+
+
+## Übernimmt Felder aus einem Spielstand mit anderer Feldeinteilung: Jeder neue
+## Abschnitt bekommt den Belag, der früher in seiner Mitte lag.
+func load_resized(old_ids: Array[String], old_columns: int, old_rows: int) -> void:
+	for row in rows:
+		for column in columns:
+			var old_column := clampi(int((column + 0.5) * old_columns / columns), 0, old_columns - 1)
+			var old_row := clampi(int((row + 0.5) * old_rows / rows), 0, old_rows - 1)
+			var id := old_ids[old_row * old_columns + old_column]
+			if Catalog.get_surface(id):
+				cell_ids[row * columns + column] = id
+	rebuild()
 
 
 ## Belegt mehrere Felder und baut die Fläche danach einmal neu.
@@ -95,11 +111,14 @@ func _add_strip(tool: SurfaceTool, start: int, end: int, row: int) -> void:
 	var x1 := end * _cell_size
 	var z0 := row * _cell_size
 	var z1 := (row + 1) * _cell_size
-	var corners := [Vector3(x0, OFFSET, z0), Vector3(x1, OFFSET, z0), Vector3(x1, OFFSET, z1), Vector3(x0, OFFSET, z1)]
-	# Godot zeigt Dreiecke von der Seite, von der aus die Ecken im Uhrzeigersinn liegen
-	for i in [0, 1, 2, 0, 2, 3]:
+	var y := -OFFSET if faces_down else OFFSET
+	var corners := [Vector3(x0, y, z0), Vector3(x1, y, z0), Vector3(x1, y, z1), Vector3(x0, y, z1)]
+	# Godot zeigt Dreiecke von der Seite, von der aus die Ecken im Uhrzeigersinn liegen.
+	# Die Decke wird von unten angeschaut, deshalb dort die umgekehrte Reihenfolge.
+	var order := [0, 2, 1, 0, 3, 2] if faces_down else [0, 1, 2, 0, 2, 3]
+	for i in order:
 		var corner: Vector3 = corners[i]
 		var world := to_global(corner)
-		tool.set_normal(Vector3.UP)
+		tool.set_normal(Vector3.DOWN if faces_down else Vector3.UP)
 		tool.set_uv(Vector2(world.x, world.z))
 		tool.add_vertex(corner)

@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/surface_pattern.gdshader" id="1_6mqcj"]
+
+[resource]
+resource_name = "Holzdecke"
+render_priority = 0
+shader = ExtResource("1_6mqcj")
+shader_parameter/base_color = Color(0.6, 0.44, 0.29, 1)
+shader_parameter/second_color = Color(0.54, 0.38, 0.24, 1)
+shader_parameter/pattern = 1
+shader_parameter/tile_size = 0.16
+shader_parameter/plank_length = 2.4
+shader_parameter/mottling = 0.08
+shader_parameter/roughness_value = 0.75

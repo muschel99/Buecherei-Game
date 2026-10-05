@@ -11,4 +11,4 @@ category = 2
 price = 120
 styles = 1
 scene_path = "res://scenes/furniture/table.tscn"
-footprint = Vector2i(12, 7)
+footprint = Vector2i(14, 8)

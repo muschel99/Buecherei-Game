@@ -47,7 +47,7 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | W A S D        | Laufen                                         |
 | Umschalt       | Schneller laufen (gedrückt halten)             |
 | Maus           | Umsehen                                        |
-| E              | Interagieren (Objekt in der Bildmitte)         |
+| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen … |
 | Tab            | Gestaltungsmodus öffnen/schließen              |
 | Esc            | Schließt, was offen ist – sonst Pausenmenü     |
 
@@ -63,27 +63,51 @@ Zwei Zustände:
 |--------------------------|----------------------------------------------------------------|
 | Tab / Esc                | Gestaltungsmodus schließen (Gehaltenes geht zurück)            |
 | Linksklick               | Auswählen / aufheben / platzieren / Abschnitt streichen         |
-| Linksklick halten + ziehen | Mehrere Wandabschnitte bzw. Bodenfelder nacheinander          |
-| Umschalt + Linksklick    | Ganze Wand streichen / ganzen Boden legen                      |
+| Linksklick halten + ziehen | Mehrere Wand-, Boden- oder Deckenabschnitte nacheinander     |
+| Umschalt + Linksklick    | Ganze Wand / ganzer Boden / ganze Decke                        |
 | Rechte Maustaste halten  | Umsehen (im Katalog-Zustand)                                   |
 | Rechtsklick              | Zurücklegen / Auswahl beenden (im Platzier-Zustand)            |
 | Mausrad                  | Drehen                                                         |
-| G                        | Einrasten an/aus (Raster 12,5 cm und 15°-Schritte)              |
+| G                        | Einrasten an/aus (Raster 1/9 m ≈ 11,1 cm und 15°-Schritte)      |
 | Entf                     | Möbelstück entfernen                                           |
 
 ### Gestaltungsregeln
 - Standard: frei platzieren und stufenlos drehen. Mit G rastet alles am Raster ein.
 - Ein ausgewähltes Objekt zeigt mit der Vorderseite zum Spieler; eine Drehung mit dem Mausrad
   bleibt relativ zur Blickrichtung erhalten, bis es platziert ist.
-- Jedes Objekt legt fest, wo es hindarf: Boden, Ablagefläche, Wand, Tür.
+- Jedes Objekt legt fest, wo es hindarf: Boden, Ablagefläche, Wand, Tür, Decke.
   Jedes Möbelstück legt fest, welche Ablageflächen es hat (Tische, Regalbretter, Sitzflächen,
   Armlehnen). Auch die Fensterbank ist eine Ablagefläche.
 - Was auf einem Möbelstück steht, wandert beim Verschieben mit.
-- Wände werden in senkrechten Abschnitten gestrichen (Standard 1 m breit), Böden in Feldern.
-- Wandfarben und Böden sind stilneutral. Nur Möbel und Deko bestimmen den Stil. Die Stil-Anteile
-  stehen oben im Bild, solange der Gestaltungsmodus offen ist.
-- Ein Lichtschalter an der Wand schaltet alle Lampen im Raum: Ist mindestens eine an, gehen alle
-  aus, sonst alle an.
+- Wände werden in senkrechten Abschnitten gestrichen (Standard 1 m breit). Boden und Decke werden
+  in Abschnitten von 3 x 3 Rasterfeldern (1/3 m) gestaltet; der Raum (6 x 8 m) geht darin ohne
+  Rest auf (18 x 24 Abschnitte).
+- Hervorhebung: Worauf man im Gestaltungsmodus zeigt und was man mit E benutzen kann, wird
+  dezent aufgehellt (feiner heller Rand) – das Objekt bleibt gut erkennbar.
+
+### Stil
+- Stil-Merkmale sind bei allen Objekten freiwillig: Möbel, Deko, Wandfarben, Böden, Decken und
+  später Fenster und Türen. Ohne Stil-Merkmal ist ein Objekt stilneutral und zählt nicht mit.
+- Bei Möbeln und Deko sind Stil-Merkmale die Regel. Stilneutral sind schlichte, praktische Dinge
+  (Lichtschalter, Kasse/Theke, später z. B. das Tablet).
+- Die bisherigen Wandfarben, Böden und Decken sind stilneutral. Besondere Designs (z. B. eine
+  Dark-Academia-Holzvertäfelung) bekommen später Stil-Merkmale; jede verwendete Oberfläche mit
+  Stil zählt dann wie ein Möbelstück.
+- Die Stil-Anteile stehen oben im Bild, solange der Gestaltungsmodus offen ist.
+
+### Licht
+- Alle Lichtquellen lassen sich mit E schalten (gemeinsames System `LightSource`).
+- Elektrische Lampen (Steh-, Kugel- und Deckenlampen) blenden sanft auf und ab.
+  Kerzen und Laternen werden einzeln angezündet und gelöscht; die Flamme erlischt sanft.
+- Ein Lichtschalter an der Wand schaltet alle elektrischen Lampen im Raum: Ist mindestens eine an,
+  gehen alle aus, sonst alle an. Auf Wunsch auch Kerzen und Laternen (Option in GameConfig).
+- Deckenlampen hängen an der Decke und lassen sich aus etwas größerer Entfernung schalten.
+
+### Sitzen
+- E auf ein Sitzmöbel: Man setzt sich, die Kamera gleitet sanft auf Sitzhöhe. Umsehen geht weiter,
+  aufstehen mit E oder einer Bewegungstaste.
+- Jedes Sitzmöbel hat eigene Sitzplätze (das Sofa drei). Sie merken sich, ob sie besetzt sind –
+  später setzen sich dort auch Besucher hin.
 
 ## Das Haus
 - Altes englisches Reihenhaus in einer schmalen Gasse.

@@ -11,4 +11,5 @@ category = 5
 price = 18
 styles = 1
 scene_path = "res://scenes/furniture/plant_small.tscn"
+footprint = Vector2i(2, 2)
 placement = 3

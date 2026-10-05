@@ -11,12 +11,14 @@ const CROSSHAIR_ACTIVE_SCALE := 1.6
 ## Platzhalter-Symbole für den Gestaltungsmodus (im Inspektor austauschbar).
 @export var paint_roller_icon: Texture2D
 @export var carpet_icon: Texture2D
+@export var ceiling_icon: Texture2D
 
 @onready var _crosshair: Panel = $Crosshair
 @onready var _cursor_icon: TextureRect = $CursorIcon
 @onready var _prompt_label: Label = $PromptLabel
 
 var _target: Interactable = null
+var _seated := false
 var _tween: Tween
 
 
@@ -29,8 +31,19 @@ func _process(_delta: float) -> void:
 	# Im Pausenmenü ausblenden (dieser Knoten läuft auch bei Pause weiter)
 	visible = not get_tree().paused
 	# Text laufend aktualisieren, da er sich ändern kann (z. B. "einschalten" -> "ausschalten")
-	if is_instance_valid(_target):
+	if _seated:
+		_prompt_label.text = "%s oder Laufen – Aufstehen" % _get_key_name("interact")
+	elif is_instance_valid(_target):
 		_prompt_label.text = "%s – %s" % [_get_key_name("interact"), _target.prompt_text]
+
+
+## Im Sitzen dezent zeigen, wie man wieder aufsteht.
+func _on_player_seated_changed(seated: bool) -> void:
+	_seated = seated
+	if _tween:
+		_tween.kill()
+	_tween = create_tween().set_trans(Tween.TRANS_SINE)
+	_tween.tween_property(_prompt_label, "modulate:a", 0.7 if seated else 0.0, FADE_TIME)
 
 
 func _on_player_interaction_target_changed(target: Interactable) -> void:
@@ -52,13 +65,15 @@ func _on_build_mode_catalog_state_changed(in_catalog: bool) -> void:
 	_crosshair.visible = not in_catalog and not _cursor_icon.visible
 
 
-## Beim Streichen: Farbroller (Wand) oder Teppich (Boden) statt des Punkts.
+## Beim Gestalten: Farbroller (Wand), Teppich (Boden) oder Deckenroller statt des Punkts.
 func _on_build_mode_cursor_icon_changed(icon: String) -> void:
 	match icon:
 		"roller":
 			_cursor_icon.texture = paint_roller_icon
 		"carpet":
 			_cursor_icon.texture = carpet_icon
+		"ceiling":
+			_cursor_icon.texture = ceiling_icon
 		_:
 			_cursor_icon.texture = null
 	_cursor_icon.visible = _cursor_icon.texture != null

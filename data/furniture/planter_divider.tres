@@ -11,4 +11,4 @@ category = 7
 price = 180
 styles = 1
 scene_path = "res://scenes/furniture/planter_divider.tscn"
-footprint = Vector2i(12, 3)
+footprint = Vector2i(14, 3)

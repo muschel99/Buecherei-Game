@@ -38,6 +38,7 @@ func _ready() -> void:
 		_tabs.append([FurnitureData.get_category_display_name(category), "furniture", category])
 	_tabs.append(["Wandfarbe", "surface", SurfaceData.Kind.WALL])
 	_tabs.append(["Boden", "surface", SurfaceData.Kind.FLOOR])
+	_tabs.append(["Decke", "surface", SurfaceData.Kind.CEILING])
 	_build_tab_buttons()
 	_build_help()
 	_show_tab(0)
@@ -95,7 +96,7 @@ func _show_tab(index: int) -> void:
 	else:
 		for surface in Catalog.get_surfaces_of_kind(tab[2]):
 			var subtitle := "%d %s" % [surface.price, GameConfig.currency_name]
-			var card := _create_card(surface.display_name, subtitle, 0, "", surface.preview_color)
+			var card := _create_card(surface.display_name, subtitle, surface.styles, "", surface.preview_color)
 			card.pressed.connect(_build_mode.select_surface.bind(surface))
 			_add_card(surface, card)
 
@@ -145,6 +146,8 @@ func _create_card(title: String, subtitle: String, styles: int, tooltip: String,
 	style_row.add_theme_constant_override("separation", 8)
 	for style in StyleTags.to_list(styles):
 		style_row.add_child(_small_label("● " + StyleTags.get_display_name(style), 12, StyleTags.get_color(style)))
+	if styles == 0:
+		style_row.add_child(_small_label("○ stilneutral", 12, MUTED_COLOR))
 	box.add_child(style_row)
 	return card
 
@@ -176,7 +179,7 @@ func _build_help() -> void:
 		["Mausrad", "Drehen"],
 		["G", ""],  # Text kommt aus _on_grid_changed
 		["Entf", "Entfernen"],
-		["Umschalt + Klick", "Ganze Wand / ganzer Boden"],
+		["Umschalt + Klick", "Ganze Wand / Boden / Decke"],
 	]
 	for entry in entries:
 		_help_grid.add_child(_small_label(entry[0], 14, KEY_COLOR))

@@ -4,6 +4,9 @@
 [ext_resource type="Material" path="res://assets/materials/fabric_linen.tres" id="2_rpujh"]
 [ext_resource type="Material" path="res://assets/materials/leaf_green.tres" id="3_n5oy5"]
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="4_rpujh"]
+[ext_resource type="Script" path="res://scripts/objects/seating.gd" id="5_w7ldb"]
+[ext_resource type="Script" path="res://scripts/objects/seat_point.gd" id="6_00yg2"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="7_3f7fm"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_30ukf"]
 top_radius = 0.34
@@ -44,6 +47,9 @@ size = Vector3(0.08, 0.2, 0.55)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3f7fm"]
 size = Vector3(0.42, 0.03, 0.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tvb3t"]
+size = Vector3(0.6, 0.5, 0.6)
 
 [node name="RattanChair" type="Node3D" unique_id=447717464]
 
@@ -108,3 +114,21 @@ script = ExtResource("4_rpujh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Seat" unique_id=2056491944]
 shape = SubResource("BoxShape3D_3f7fm")
+
+[node name="Seating" type="Node3D" parent="." unique_id=1185965052]
+script = ExtResource("5_w7ldb")
+
+[node name="Seat1" type="Marker3D" parent="Seating" unique_id=1531036445]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0.06)
+script = ExtResource("6_00yg2")
+
+[node name="Interactable" type="Area3D" parent="Seating" unique_id=1222542]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_3f7fm")
+prompt_text = "Hinsetzen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Seating/Interactable" unique_id=1924158935]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0.04)
+shape = SubResource("BoxShape3D_tvb3t")

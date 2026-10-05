@@ -131,6 +131,8 @@ func set_active(active: bool) -> void:
 	is_active = active
 	_player.interaction_enabled = not active
 	if active:
+		if _player.is_seated():
+			_player.stand_up()  # Zum Gestalten erst aufstehen
 		MenuStack.open(self)
 		_set_status("Wähle unten etwas aus dem Katalog oder klicke ein Möbelstück an, um es zu verschieben.")
 	else:
@@ -310,8 +312,8 @@ func _delete_target() -> void:
 func _rotate(direction: float) -> void:
 	if _tool != Tool.PLACE_NEW and _tool != Tool.MOVE:
 		return
-	if _preview.data and _preview.data.is_hanging():
-		return  # Aufgehängtes richtet sich nach der Wand
+	if _preview.data and _preview.data.is_wall_mounted():
+		return  # An Wand oder Tür richtet es sich nach der Fläche aus
 	var step := GameConfig.rotation_step_grid if grid_enabled else GameConfig.rotation_step_free
 	_rotation_offset = fposmod(_rotation_offset + step * direction, 360.0)
 
@@ -353,49 +355,56 @@ func _set_hovered(item: PlacedFurniture) -> void:
 		_hovered.set_highlighted(true)
 
 
-## Streichen: Ziel suchen, Symbol zeigen und beim Ziehen mit gedrückter Maustaste weiterstreichen.
+## Texte und Symbole je Art der Oberfläche
+const _PAINT_TEXTS := {
+	SurfaceData.Kind.WALL: {"icon": "roller", "one": "Wandabschnitt streichen", "all": "ganze Wand", "where": "eine Wand"},
+	SurfaceData.Kind.FLOOR: {"icon": "carpet", "one": "Bodenabschnitt belegen", "all": "ganzer Boden", "where": "den Boden"},
+	SurfaceData.Kind.CEILING: {"icon": "ceiling", "one": "Deckenabschnitt gestalten", "all": "ganze Decke", "where": "die Decke"},
+}
+
+
+## Gestalten: Ziel suchen, Symbol zeigen und beim Ziehen mit gedrückter Maustaste weitermachen.
 func _update_paint() -> void:
 	var target := _find_paint_target()
-	var is_wall := _selected_surface.kind == SurfaceData.Kind.WALL
-	if target.is_empty():
-		_set_cursor_icon("")
-	else:
-		_set_cursor_icon("roller" if is_wall else "carpet")
+	var texts: Dictionary = _PAINT_TEXTS[_selected_surface.kind]
+	_set_cursor_icon("" if target.is_empty() else texts.icon)
 	if _paint_held and not target.is_empty():
 		_paint_at_target(false)
-	var what := "Wandabschnitt streichen" if is_wall else "Bodenfeld belegen"
-	var all := "ganze Wand" if is_wall else "ganzer Boden"
 	if target.is_empty():
-		var where := "eine Wand" if is_wall else "den Boden"
-		_set_status("%s: Schau aus der Nähe auf %s. Rechtsklick: zurück zum Katalog." % [_selected_surface.display_name, where])
+		_set_status("%s: Schau aus der Nähe auf %s. Rechtsklick: zurück zum Katalog." % [_selected_surface.display_name, texts.where])
 	else:
-		_set_status("%s – Linksklick: %s (gedrückt halten und ziehen: mehrere) · Umschalt + Klick: %s · Rechtsklick: zurück" % [_selected_surface.display_name, what, all])
+		_set_status("%s – Linksklick: %s (gedrückt halten und ziehen: mehrere) · Umschalt + Klick: %s · Rechtsklick: zurück" % [_selected_surface.display_name, texts.one, texts.all])
 
 
-## Wohin zeige ich? Ergebnis: { "wall": …, "index": … } bei Wänden, { "cell": … } beim Boden,
-## leer, wenn dort nichts Passendes ist oder es zu weit weg ist.
+## Wohin zeige ich? Ergebnis: { "wall": …, "index": … } bei Wänden, { "cell": … } bei
+## Boden und Decke – leer, wenn dort nichts Passendes ist oder es zu weit weg ist.
 func _find_paint_target() -> Dictionary:
 	var hit := _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT, GameConfig.paint_reach)
 	if hit.is_empty():
 		return {}
-	if _selected_surface.kind == SurfaceData.Kind.WALL:
-		if absf(hit.normal.y) > 0.5:
-			return {}
-		return _room.find_wall_segment(hit.position)
-	if hit.normal.y < 0.7:
-		return {}
-	var cell := _room.find_floor_cell(hit.position)
+	match _selected_surface.kind:
+		SurfaceData.Kind.WALL:
+			if absf(hit.normal.y) > 0.5:
+				return {}
+			return _room.find_wall_segment(hit.position)
+		SurfaceData.Kind.FLOOR:
+			if hit.normal.y < 0.7:
+				return {}
+		SurfaceData.Kind.CEILING:
+			if hit.normal.y > -0.7:
+				return {}
+	var cell := _room.find_grid_cell(_selected_surface.kind, hit.position)
 	return {} if cell < 0 else {"cell": cell}
 
 
-## Streicht dort, wohin ich schaue (whole = ganze Wand bzw. ganzer Boden).
+## Gestaltet die Stelle, auf die ich schaue (whole = ganze Wand / ganzer Boden / ganze Decke).
 func _paint_at_target(whole: bool) -> void:
 	var target := _find_paint_target()
 	if target.is_empty():
 		return
-	var key := str(target.get("wall", "floor")) + ":" + str(target.get("index", target.get("cell")))
+	var key := str(target.get("wall", "grid")) + ":" + str(target.get("index", target.get("cell")))
 	if key == _last_painted:
-		return  # diese Stelle wurde gerade schon gestrichen
+		return  # diese Stelle wurde gerade schon gestaltet
 	_last_painted = key
 	if target.has("wall"):
 		if whole:
@@ -405,10 +414,10 @@ func _paint_at_target(whole: bool) -> void:
 			_room.paint_wall_segment(target.wall, target.index, _selected_surface)
 	else:
 		if whole:
-			_room.paint_floor(_selected_surface)
+			_room.paint_grid(_selected_surface)
 			_paint_held = false
 		else:
-			_room.paint_floor_cell(target.cell, _selected_surface)
+			_room.paint_grid_cell(target.cell, _selected_surface)
 
 
 func _set_cursor_icon(icon: String) -> void:
@@ -447,7 +456,10 @@ func _update_placement() -> void:
 	var hang_kind := Room.HangKind.NONE
 	if not hit.is_empty():
 		hang_kind = _room.get_hang_kind(hit.collider)
-	if not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
+	if not hit.is_empty() and hang_kind == Room.HangKind.CEILING and data.allows(hang_kind) \
+			and hit.normal.y < -0.5:
+		problem = _place_on_ceiling(hit)
+	elif not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
 			and absf(hit.normal.y) < 0.5:
 		problem = _place_on_wall(hit)
 	elif not hit.is_empty() and hit.normal.y > -0.5 and \
@@ -456,9 +468,13 @@ func _update_placement() -> void:
 	else:
 		_preview.visible = false
 		_update_grid_visibility()
-		var where := "eine Wand" if data.allows(FurnitureData.PLACE_WALL) else "die Tür"
-		if not data.is_hanging():
-			where = "den Boden oder eine Ablage"
+		var where := "den Boden oder eine Ablage"
+		if data.allows(FurnitureData.PLACE_CEILING):
+			where = "die Decke"
+		elif data.allows(FurnitureData.PLACE_WALL):
+			where = "eine Wand"
+		elif data.allows(FurnitureData.PLACE_DOOR):
+			where = "die Tür"
 		_set_status("Schau auf %s, um %s zu platzieren." % [where, data.display_name], true)
 		return
 
@@ -471,7 +487,7 @@ func _update_placement() -> void:
 
 	var price_text := "%d %s" % [data.price, GameConfig.currency_name]
 	if _placement_ok:
-		var rotate_hint := "" if data.is_hanging() else " · Mausrad: drehen"
+		var rotate_hint := "" if data.is_wall_mounted() else " · Mausrad: drehen"
 		_set_status("%s (%s) – Linksklick: platzieren%s · Rechtsklick: zurücklegen" % [data.display_name, price_text, rotate_hint])
 	else:
 		_set_status("%s – %s" % [data.display_name, problem], true)
@@ -542,6 +558,22 @@ func _place_on_wall(hit: Dictionary) -> String:
 	_placement_on_floor = false
 	# Vor der Eingangstür darf etwas hängen – die Sperrzone gilt nur für den Boden
 	return _find_overlap(normal, false)
+
+
+## Deckenlampen: Der Aufhängepunkt (Ursprung) liegt an der Decke, die Lampe hängt nach unten.
+## Drehen mit dem Mausrad geht wie bei stehenden Möbeln.
+func _place_on_ceiling(hit: Dictionary) -> String:
+	var point: Vector3 = hit.position
+	if grid_enabled:
+		var cell := GameConfig.grid_cell_size
+		point.x = snappedf(point.x, cell)
+		point.z = snappedf(point.z, cell)
+	point.y -= 0.002
+	_placement_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(_placement_yaw_degrees())), point)
+	_placement_on_floor = false
+	if not _room.is_inside_build_area(point):
+		return "Das muss im Raum hängen."
+	return _find_overlap(Vector3.DOWN, false)
 
 
 ## Prüft, ob die Vorschau etwas anderes berührt (leer = frei).

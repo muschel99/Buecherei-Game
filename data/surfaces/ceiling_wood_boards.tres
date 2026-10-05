@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SurfaceData" format=3]
+
+[ext_resource type="Material" path="res://assets/materials/surfaces/ceiling_wood_boards.tres" id="1_p14fl"]
+[ext_resource type="Script" path="res://scripts/data/surface_data.gd" id="2_tbt0s"]
+
+[resource]
+script = ExtResource("2_tbt0s")
+id = "ceiling_wood_boards"
+display_name = "Holzdecke"
+kind = 2
+price = 120
+material = ExtResource("1_p14fl")
+preview_color = Color(0.6, 0.44, 0.29, 1)

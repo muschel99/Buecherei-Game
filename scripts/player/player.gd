@@ -3,19 +3,27 @@ extends CharacterBody3D
 ## Die Spielfigur in Ego-Perspektive.
 ##
 ## Laufen mit WASD (mit Umschalt schneller), Umsehen mit der Maus, Interagieren mit E.
+## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E oder einer Bewegungstaste.
 ## Alle Einstellwerte (Tempo, Mausempfindlichkeit ...) stehen in GameConfig.
 
 ## Wird gesendet, wenn sich das anvisierte interaktive Objekt ändert
 ## (null = gerade nichts Interaktives in der Bildmitte).
 signal interaction_target_changed(target: Interactable)
+## Wird gesendet, wenn sich die Figur hinsetzt (true) oder aufsteht (false).
+signal seated_changed(seated: bool)
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
+@onready var _collision: CollisionShape3D = $CollisionShape3D
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _current_target: Interactable = null
 var _head_bob_time: float = 0.0
+# Sitzen: aktueller Sitzplatz, Stehposition davor und laufende Bewegung
+var _seat: SeatPoint = null
+var _stand_position := Vector3.ZERO
+var _sit_tween: Tween
 ## Aktuelles Höchsttempo: gleitet weich zwischen walk_speed und sprint_speed hin und her.
 var _current_max_speed: float = 0.0
 ## Im Gestaltungsmodus wird das Interagieren mit E abgeschaltet.
@@ -30,7 +38,10 @@ func _ready() -> void:
 	# Werte aus der zentralen Konfiguration übernehmen
 	head.position.y = GameConfig.eye_height
 	camera.fov = GameConfig.camera_fov
-	interaction_ray.target_position = Vector3(0, 0, -GameConfig.interaction_distance)
+	# Der Strahl reicht so weit wie die größte Reichweite; ob ein Ziel nah genug ist,
+	# wird danach je nach Objekt geprüft (siehe _update_interaction_target)
+	var reach := maxf(GameConfig.interaction_distance, GameConfig.long_interaction_distance)
+	interaction_ray.target_position = Vector3(0, 0, -reach)
 	_current_max_speed = GameConfig.walk_speed
 	# Mauszeiger im Spiel "fangen" (unsichtbar, bleibt im Fenster)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -39,6 +50,8 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look_around(event.relative)
+	elif event.is_action_pressed("interact") and is_seated():
+		stand_up()
 	elif event.is_action_pressed("interact") and interaction_enabled:
 		_try_interact()
 	elif event is InputEventMouseButton and event.pressed and not MenuStack.has_open():
@@ -48,10 +61,73 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _seat or (_sit_tween and _sit_tween.is_running()):
+		# Im Sitzen (und während des Hinsetzens/Aufstehens) nicht laufen
+		if _seat and not (_sit_tween and _sit_tween.is_running()) \
+				and Input.get_vector("move_left", "move_right", "move_forward", "move_back") != Vector2.ZERO:
+			stand_up()
+		camera.position.y = lerpf(camera.position.y, 0.0, 10.0 * delta)
+		_update_interaction_target()
+		return
 	_apply_gravity(delta)
 	_move(delta)
 	_update_head_bob(delta)
 	_update_interaction_target()
+
+
+# --- Sitzen ---
+
+func is_seated() -> bool:
+	return _seat != null
+
+
+## Der Punkt, auf den die Figur gerade schaut (oder ein Punkt 2 m voraus).
+func get_aim_point() -> Vector3:
+	if interaction_ray.is_colliding():
+		return interaction_ray.get_collision_point()
+	return camera.global_position - camera.global_basis.z * 2.0
+
+
+## Setzt sich auf einen Sitzplatz: Die Kamera gleitet sanft auf Sitzhöhe.
+func sit_down(seat: SeatPoint) -> void:
+	if _seat or not seat.is_free():
+		return
+	_seat = seat
+	seat.occupant = self
+	_stand_position = global_position
+	velocity = Vector3.ZERO
+	_collision.disabled = true
+	# Blick in Richtung der Vorderseite des Sitzmöbels (die Figur schaut entlang -Z)
+	var forward := seat.global_basis.z
+	var target_yaw := atan2(-forward.x, -forward.z)
+	var start_yaw := rotation.y
+	var end_yaw := start_yaw + wrapf(target_yaw - start_yaw, -PI, PI)
+	_move_body(seat.global_position, end_yaw, GameConfig.seated_eye_height)
+	# Blick sanft geradeaus richten (leicht nach unten, wie man eben sitzt)
+	_sit_tween.tween_property(head, "rotation:x", deg_to_rad(-8.0), GameConfig.sit_transition_time)
+	_update_interaction_target()
+	seated_changed.emit(true)
+
+
+## Steht wieder auf und geht an die Stelle zurück, an der man vorher stand.
+func stand_up() -> void:
+	if not _seat:
+		return
+	_seat.occupant = null
+	_seat = null
+	_move_body(_stand_position, rotation.y, GameConfig.eye_height)
+	_sit_tween.finished.connect(func() -> void: _collision.disabled = false)
+	seated_changed.emit(false)
+
+
+func _move_body(target_position: Vector3, target_yaw: float, eye: float) -> void:
+	if _sit_tween:
+		_sit_tween.kill()
+	var duration := GameConfig.sit_transition_time
+	_sit_tween = create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_sit_tween.tween_property(self, "global_position", target_position, duration)
+	_sit_tween.tween_property(self, "rotation:y", target_yaw, duration)
+	_sit_tween.tween_property(head, "position:y", eye, duration)
 
 
 ## Dreht die Figur (links/rechts) und den Kopf (hoch/runter) mit der Maus.
@@ -106,12 +182,18 @@ func _update_head_bob(delta: float) -> void:
 ## Prüft, ob in der Bildmitte ein interaktives Objekt ist.
 func _update_interaction_target() -> void:
 	var new_target: Interactable = null
-	if interaction_enabled and interaction_ray.is_colliding():
+	if interaction_enabled and not is_seated() and interaction_ray.is_colliding():
 		var hit := interaction_ray.get_collider()
 		if hit is Interactable and hit.is_enabled:
-			new_target = hit
+			var distance := camera.global_position.distance_to(interaction_ray.get_collision_point())
+			var reach := GameConfig.long_interaction_distance if hit.long_reach else GameConfig.interaction_distance
+			if distance <= reach:
+				new_target = hit
 
 	if new_target != _current_target:
+		# Dezente Hervorhebung wandert mit dem anvisierten Objekt
+		FurnitureUtils.set_interactable_highlighted(_current_target, false)
+		FurnitureUtils.set_interactable_highlighted(new_target, true)
 		_current_target = new_target
 		interaction_target_changed.emit(_current_target)
 

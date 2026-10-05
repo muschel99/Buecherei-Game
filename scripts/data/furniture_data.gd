@@ -32,28 +32,30 @@ const _CATEGORY_NAMES := {
 @export var category: Category = Category.DECO
 ## Preis in Talern (wird ab Etappe 5 abgezogen).
 @export var price: int = 0
-## Stil-Merkmale: eines oder mehrere Häkchen setzen.
+## Stil-Merkmale: eines oder mehrere Häkchen setzen. Ohne Häkchen ist das Objekt
+## stilneutral und zählt nicht zur Stilberechnung (z. B. Lichtschalter, Kasse).
 @export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
 ## Die Szene (.tscn) oder das 3D-Modell (.glb) des Möbelstücks.
 @export_file("*.tscn", "*.scn", "*.glb", "*.gltf") var scene_path: String = ""
 ## Grundfläche in Rasterfeldern (Breite x Tiefe). Ein Feld ist
-## GameConfig.grid_cell_size groß (Standard 0,125 m), 8 Felder = 1 Meter.
+## GameConfig.grid_cell_size groß (Standard 1/9 m ≈ 11,1 cm), 9 Felder = 1 Meter.
 @export var footprint: Vector2i = Vector2i(2, 2)
 ## Erscheint das Möbelstück schon im Katalog?
 @export var is_unlocked: bool = true
 
 @export_group("Platzierung")
 ## Wo darf es hin? Ein oder mehrere Häkchen:
-## Boden, Ablagefläche (Tisch, Regalbrett, Sitzfläche, Fensterbank …), Wand, Tür.
+## Boden, Ablagefläche (Tisch, Regalbrett, Sitzfläche, Fensterbank …), Wand, Tür, Decke.
 ## Welche Ablageflächen ein Möbelstück selbst anbietet, steht in seiner Szene
 ## (Knoten vom Typ PlacementSurface).
-@export_flags("Boden:1", "Ablagefläche:2", "Wand:4", "Tür:8") var placement: int = PLACE_FLOOR
+@export_flags("Boden:1", "Ablagefläche:2", "Wand:4", "Tür:8", "Decke:16") var placement: int = PLACE_FLOOR
 
 ## Werte für "placement"
 const PLACE_FLOOR := 1
 const PLACE_SURFACE := 2
 const PLACE_WALL := 4
 const PLACE_DOOR := 8
+const PLACE_CEILING := 16
 
 
 ## Darf es dorthin? (z. B. allows(PLACE_WALL))
@@ -61,9 +63,14 @@ func allows(where: int) -> bool:
 	return (placement & where) != 0
 
 
-## Wird es aufgehängt (an Wand oder Tür)?
-func is_hanging() -> bool:
+## Wird es an Wand oder Tür gehängt? (richtet sich dann nach der Fläche aus)
+func is_wall_mounted() -> bool:
 	return allows(PLACE_WALL) or allows(PLACE_DOOR)
+
+
+## Wird es aufgehängt (an Wand, Tür oder Decke)?
+func is_hanging() -> bool:
+	return is_wall_mounted() or allows(PLACE_CEILING)
 
 
 ## Eindeutiger Name (aus dem Feld "id" oder ersatzweise dem Dateinamen).

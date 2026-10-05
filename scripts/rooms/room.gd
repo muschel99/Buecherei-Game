@@ -10,9 +10,10 @@ signal layout_changed
 
 ## Eindeutiger Name dieses Raums im Spielstand.
 @export var save_key: String = "ground_floor_room"
-## Wandfarbe und Boden beim allerersten Start (ids aus data/surfaces/).
+## Wandfarbe, Boden und Decke beim allerersten Start (ids aus data/surfaces/).
 @export var default_wall_id: String = "wall_warm_plaster"
 @export var default_floor_id: String = "floor_oak_planks"
+@export var default_ceiling_id: String = "ceiling_warm_white"
 ## Innenfläche des Raums (x und z in Metern), in der Möbel stehen dürfen.
 @export var build_area: Rect2 = Rect2(-3.0, -4.0, 6.0, 8.0)
 ## Höhe des Fußbodens.
@@ -21,8 +22,11 @@ signal layout_changed
 @onready var furniture_root: Node3D = $Furniture
 ## Die Wände, die in Abschnitten gestrichen werden können.
 @onready var _walls: Array[PaintableWall] = [$Walls/Left, $Walls/Right, $Walls/Back, $Walls/Front]
-## Der Boden, der in Feldern belegt werden kann.
-@onready var _floor: PaintableFloor = $FloorCovering
+## Boden und Decke, die in Abschnitten gestaltet werden können.
+@onready var _grids := {
+	SurfaceData.Kind.FLOOR: $FloorCovering as PaintableGrid,
+	SurfaceData.Kind.CEILING: $CeilingCovering as PaintableGrid,
+}
 ## Fenster- und Türlaibung: bekommen die Farbe des Wandabschnitts, in dem sie liegen.
 @onready var _reveals: Array[CSGPrimitive3D] = [$Structure/WallFront/WindowHole, $Structure/WallFront/DoorHole]
 @onready var _reveal_wall: PaintableWall = $Walls/Front
@@ -35,9 +39,11 @@ signal layout_changed
 ]
 ## Hier darf man etwas an die Tür hängen (z. B. einen Türkranz).
 @onready var _hang_doors: Array[Node] = [$Door/DoorLeaf]
+## Hier darf man etwas an die Decke hängen (z. B. Deckenlampen).
+@onready var _hang_ceilings: Array[Node] = [$Structure/Ceiling]
 
 ## Wohin etwas gehängt werden kann (gleiche Werte wie FurnitureData.placement).
-enum HangKind { NONE = 0, WALL = 4, DOOR = 8 }
+enum HangKind { NONE = 0, WALL = 4, DOOR = 8, CEILING = 16 }
 
 var _next_uid: int = 1
 
@@ -48,6 +54,7 @@ func _ready() -> void:
 		_assign_uid(item)
 	_paint_everything(default_wall_id)
 	_paint_everything(default_floor_id)
+	_paint_everything(default_ceiling_id)
 	layout_changed.connect(SaveManager.request_save)
 
 
@@ -108,15 +115,15 @@ func get_dependents(item: PlacedFurniture) -> Array[PlacedFurniture]:
 	return result
 
 
-## Alle Lampen im Raum, die sich schalten lassen (für den Lichtschalter).
-## Als Lampe zählt jedes Möbelstück, dessen Modell set_on() und is_on hat.
-func get_lamps() -> Array[Node]:
-	var lamps: Array[Node] = []
+## Alle Lichtquellen im Raum, die der Lichtschalter schaltet: elektrische Lampen –
+## und Kerzen/Laternen nur, wenn GameConfig.light_switch_includes_flames an ist.
+func get_switchable_lights() -> Array[LightSource]:
+	var lights: Array[LightSource] = []
 	for item in get_placed_furniture():
-		var model := item.get_model()
-		if model and model.has_method("set_on"):
-			lamps.append(model)
-	return lamps
+		var source := item.get_model() as LightSource
+		if source and (source.is_electric() or GameConfig.light_switch_includes_flames):
+			lights.append(source)
+	return lights
 
 
 ## Liegt dieser Punkt (in Weltkoordinaten) innerhalb der Raumfläche?
@@ -125,22 +132,44 @@ func is_inside_build_area(world_position: Vector3) -> bool:
 	return build_area.has_point(Vector2(local.x, local.z))
 
 
-## Ist der getroffene Kollisionskörper eine Wand oder die Tür dieses Raums?
+## Ist der getroffene Kollisionskörper eine Wand, die Tür oder die Decke dieses Raums?
 func get_hang_kind(collider: Object) -> HangKind:
 	if _hang_walls.has(collider):
 		return HangKind.WALL
 	if _hang_doors.has(collider):
 		return HangKind.DOOR
+	if _hang_ceilings.has(collider):
+		return HangKind.CEILING
 	return HangKind.NONE
 
 
-## Anteil jedes Stils an allen Möbeln im Raum (siehe StyleTags.calculate_shares).
+## Anteil jedes Stils im Raum (siehe StyleTags.calculate_shares).
+## Stilneutrale Dinge (ohne Stil-Merkmal) zählen nicht mit.
 func get_style_shares() -> Dictionary:
 	var flags_list: Array[int] = []
 	for item in get_placed_furniture():
 		if item.data:
 			flags_list.append(item.data.styles)
+	# Wandfarben, Böden und Decken: jede verwendete Oberfläche mit Stil zählt einmal
+	for id in _get_used_surface_ids():
+		var surface := Catalog.get_surface(id)
+		if surface:
+			flags_list.append(surface.styles)
 	return StyleTags.calculate_shares(flags_list)
+
+
+## Alle Oberflächen (ids), die gerade irgendwo im Raum zu sehen sind.
+func _get_used_surface_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var all_ids: Array[String] = []
+	for wall in _walls:
+		all_ids.append_array(wall.segment_ids)
+	for grid: PaintableGrid in _grids.values():
+		all_ids.append_array(grid.cell_ids)
+	for id in all_ids:
+		if not id.is_empty() and not ids.has(id):
+			ids.append(id)
+	return ids
 
 
 # --- Wände und Boden ---
@@ -155,9 +184,9 @@ func find_wall_segment(world_point: Vector3) -> Dictionary:
 	return {}
 
 
-## Welches Bodenfeld liegt an diesem Punkt? (-1 = keins)
-func find_floor_cell(world_point: Vector3) -> int:
-	return _floor.get_cell_at(world_point)
+## Welcher Boden- bzw. Deckenabschnitt liegt an diesem Punkt? (-1 = keiner)
+func find_grid_cell(kind: SurfaceData.Kind, world_point: Vector3) -> int:
+	return (_grids[kind] as PaintableGrid).get_cell_at(world_point)
 
 
 ## Streicht einen Wandabschnitt.
@@ -175,19 +204,19 @@ func paint_wall(wall: PaintableWall, surface: SurfaceData) -> void:
 	layout_changed.emit()
 
 
-## Belegt ein Bodenfeld.
-func paint_floor_cell(index: int, surface: SurfaceData) -> void:
-	_floor.paint_cells([index], surface)
+## Gestaltet einen Boden- bzw. Deckenabschnitt (je nach Art der Oberfläche).
+func paint_grid_cell(index: int, surface: SurfaceData) -> void:
+	(_grids[surface.kind] as PaintableGrid).paint_cells([index], surface)
 	layout_changed.emit()
 
 
-## Belegt den ganzen Boden.
-func paint_floor(surface: SurfaceData) -> void:
-	_floor.paint_all(surface)
+## Gestaltet den ganzen Boden bzw. die ganze Decke.
+func paint_grid(surface: SurfaceData) -> void:
+	(_grids[surface.kind] as PaintableGrid).paint_all(surface)
 	layout_changed.emit()
 
 
-## Streicht alle Wände bzw. belegt den ganzen Boden (je nach Art der Oberfläche).
+## Streicht alle Wände bzw. gestaltet den ganzen Boden / die ganze Decke.
 func _paint_everything(id: String) -> void:
 	var surface := Catalog.get_surface(id)
 	if surface == null:
@@ -200,7 +229,7 @@ func _paint_everything(id: String) -> void:
 				wall.paint_segment(index, surface)
 		_update_reveals()
 	else:
-		_floor.paint_all(surface)
+		(_grids[surface.kind] as PaintableGrid).paint_all(surface)
 
 
 ## Fenster- und Türlaibung in der Farbe des Abschnitts streichen, in dem sie liegen.
@@ -231,11 +260,8 @@ func get_save_data() -> Dictionary:
 		walls[wall.name] = wall.segment_ids.duplicate()
 	return {
 		"walls": walls,
-		"floor": {
-			"columns": _floor.columns,
-			"rows": _floor.rows,
-			"cells": _compress(_floor.cell_ids),
-		},
+		"floor": _grid_save_data(_grids[SurfaceData.Kind.FLOOR]),
+		"ceiling": _grid_save_data(_grids[SurfaceData.Kind.CEILING]),
 		"furniture": furniture,
 	}
 
@@ -253,7 +279,8 @@ func load_save_data(save_data: Dictionary) -> void:
 				_load_furniture_entry(entry)
 
 	_load_walls(save_data)
-	_load_floor(save_data)
+	_load_grid(save_data.get("floor"), _grids[SurfaceData.Kind.FLOOR], default_floor_id)
+	_load_grid(save_data.get("ceiling"), _grids[SurfaceData.Kind.CEILING], default_ceiling_id)
 	layout_changed.emit()
 
 
@@ -273,19 +300,21 @@ func _load_walls(save_data: Dictionary) -> void:
 	_update_reveals()
 
 
-func _load_floor(save_data: Dictionary) -> void:
-	_paint_everything(default_floor_id)
-	var floor_data = save_data.get("floor")
-	if floor_data is Dictionary:
-		var cells := _decompress(floor_data.get("cells", []))
-		# Nur übernehmen, wenn die Feldgröße seit dem Speichern gleich geblieben ist
-		if int(floor_data.get("columns", 0)) == _floor.columns and cells.size() == _floor.cell_ids.size():
-			for index in cells.size():
-				if Catalog.get_surface(cells[index]):
-					_floor.cell_ids[index] = cells[index]
-			_floor.rebuild()
-	elif floor_data is String:
-		_paint_everything(floor_data)  # Spielstand aus Etappe 2
+func _grid_save_data(grid: PaintableGrid) -> Dictionary:
+	return {"columns": grid.columns, "rows": grid.rows, "cells": _compress(grid.cell_ids)}
+
+
+func _load_grid(grid_data, grid: PaintableGrid, default_id: String) -> void:
+	_paint_everything(default_id)
+	if grid_data is Dictionary:
+		var cells := _decompress(grid_data.get("cells", []))
+		var old_columns := int(grid_data.get("columns", 0))
+		var old_rows := int(grid_data.get("rows", 0))
+		if old_columns > 0 and cells.size() == old_columns * old_rows:
+			# Klappt auch, wenn sich die Abschnittsgröße seit dem Speichern geändert hat
+			grid.load_resized(cells, old_columns, old_rows)
+	elif grid_data is String:
+		_paint_everything(grid_data)  # Spielstand aus Etappe 2
 
 
 ## Fasst gleiche Felder hintereinander zusammen: ["a","a","b"] -> [["a", 2], ["b", 1]].

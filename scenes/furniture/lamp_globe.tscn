@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/objects/floor_lamp.gd" id="1_wpypi"]
+[ext_resource type="Script" path="res://scripts/objects/light_source.gd" id="1_wpypi"]
 [ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="2_sg3el"]
 [ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="3_8pmsy"]
 
@@ -51,8 +51,8 @@ size = Vector3(0.5, 1.7, 0.5)
 
 [node name="LampGlobe" type="Node3D" unique_id=393455049]
 script = ExtResource("1_wpypi")
-light_energy = 1.4
-shade_glow = 1.2
+prompt_turn_on = "Lampe einschalten"
+prompt_turn_off = "Lampe ausschalten"
 
 [node name="Model" type="Node3D" parent="." unique_id=529791403]
 

@@ -1,24 +1,28 @@
 class_name SurfaceData
 extends Resource
-## Datenblatt für eine Wandfarbe oder einen Bodenbelag.
+## Datenblatt für eine Wandfarbe, einen Bodenbelag oder eine Decke.
 ##
 ## Jede Datei in data/surfaces/ (Endung .tres) ist ein solches Datenblatt.
-## Wandfarben und Böden sind stilneutral: Sie zählen nicht zur Stilberechnung.
+## Stil-Merkmale sind freiwillig: Ohne Häkchen ist die Oberfläche stilneutral und zählt
+## nicht zur Stilberechnung. Besondere Designs (z. B. eine Holzvertäfelung) bekommen
+## Häkchen und zählen dann mit – jede verwendete Oberfläche wie ein Möbelstück.
 ## Das Aussehen steckt im Feld "material": Dort kann ein einfaches Material
 ## mit Farbe oder ein Material mit eigener Textur stehen.
 ## Anleitung: docs/ASSET_GUIDE.md, Abschnitt "Eigene Wandfarben und Böden".
 
-enum Kind { WALL, FLOOR }
+enum Kind { WALL, FLOOR, CEILING }
 
 ## Eindeutiger Name ohne Leer- und Sonderzeichen, z. B. "wall_sage_green".
 ## Bleibt das Feld leer, wird der Dateiname verwendet.
 @export var id: String = ""
 ## Name im Katalog, z. B. "Salbeigrün".
 @export var display_name: String = "Neue Oberfläche"
-## Wand oder Boden?
+## Wand, Boden oder Decke?
 @export var kind: Kind = Kind.WALL
 ## Preis in Talern für den ganzen Raum (wird ab Etappe 5 abgezogen).
 @export var price: int = 0
+## Stil-Merkmale (freiwillig). Keine Häkchen = stilneutral.
+@export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
 ## Das Material, das auf Wände bzw. Boden gelegt wird.
 @export var material: Material
 ## Farbe des Farbfelds im Katalog.

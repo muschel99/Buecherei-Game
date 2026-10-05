@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="Texture2D" path="res://assets/ui/icons/paint_roller.svg" id="2_roller"]
 [ext_resource type="Texture2D" path="res://assets/ui/icons/carpet_roll.svg" id="3_carpet"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/ceiling_roller.svg" id="4_ceiling"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dot"]
 bg_color = Color(1, 0.96, 0.88, 1)
@@ -18,6 +19,7 @@ process_mode = 3
 script = ExtResource("1_hud")
 paint_roller_icon = ExtResource("2_roller")
 carpet_icon = ExtResource("3_carpet")
+ceiling_icon = ExtResource("4_ceiling")
 
 [node name="Crosshair" type="Panel" parent="."]
 anchors_preset = 8
