@@ -234,8 +234,11 @@ func _stop_looking() -> void:
 		return
 	_is_looking = false
 	_apply_mouse_mode()
-	# Mauszeiger dort wieder erscheinen lassen, wo er vor dem Umsehen war
-	Input.warp_mouse(_cursor_position_before_look)
+	# Mauszeiger dort wieder erscheinen lassen, wo er vor dem Umsehen war.
+	# Gespeichert ist die Position im Spielbild (wegen der Skalierung für verschiedene
+	# Auflösungen nicht gleich Fensterpixel) – warp_mouse erwartet aber Fensterpixel.
+	var window_position := get_tree().root.get_final_transform() * _cursor_position_before_look
+	Input.warp_mouse(window_position)
 
 
 ## Hebt ein platziertes Möbelstück auf, um es neu zu platzieren.
