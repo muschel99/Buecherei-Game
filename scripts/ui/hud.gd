@@ -11,6 +11,7 @@ const CROSSHAIR_ACTIVE_SCALE := 1.6
 ## Platzhalter-Symbole für den Gestaltungsmodus (im Inspektor austauschbar).
 @export var paint_roller_icon: Texture2D
 @export var carpet_icon: Texture2D
+@export var ceiling_icon: Texture2D
 
 @onready var _crosshair: Panel = $Crosshair
 @onready var _cursor_icon: TextureRect = $CursorIcon
@@ -52,13 +53,15 @@ func _on_build_mode_catalog_state_changed(in_catalog: bool) -> void:
 	_crosshair.visible = not in_catalog and not _cursor_icon.visible
 
 
-## Beim Streichen: Farbroller (Wand) oder Teppich (Boden) statt des Punkts.
+## Beim Gestalten: Farbroller (Wand), Teppich (Boden) oder Deckenroller statt des Punkts.
 func _on_build_mode_cursor_icon_changed(icon: String) -> void:
 	match icon:
 		"roller":
 			_cursor_icon.texture = paint_roller_icon
 		"carpet":
 			_cursor_icon.texture = carpet_icon
+		"ceiling":
+			_cursor_icon.texture = ceiling_icon
 		_:
 			_cursor_icon.texture = null
 	_cursor_icon.visible = _cursor_icon.texture != null

@@ -353,49 +353,56 @@ func _set_hovered(item: PlacedFurniture) -> void:
 		_hovered.set_highlighted(true)
 
 
-## Streichen: Ziel suchen, Symbol zeigen und beim Ziehen mit gedrückter Maustaste weiterstreichen.
+## Texte und Symbole je Art der Oberfläche
+const _PAINT_TEXTS := {
+	SurfaceData.Kind.WALL: {"icon": "roller", "one": "Wandabschnitt streichen", "all": "ganze Wand", "where": "eine Wand"},
+	SurfaceData.Kind.FLOOR: {"icon": "carpet", "one": "Bodenabschnitt belegen", "all": "ganzer Boden", "where": "den Boden"},
+	SurfaceData.Kind.CEILING: {"icon": "ceiling", "one": "Deckenabschnitt gestalten", "all": "ganze Decke", "where": "die Decke"},
+}
+
+
+## Gestalten: Ziel suchen, Symbol zeigen und beim Ziehen mit gedrückter Maustaste weitermachen.
 func _update_paint() -> void:
 	var target := _find_paint_target()
-	var is_wall := _selected_surface.kind == SurfaceData.Kind.WALL
-	if target.is_empty():
-		_set_cursor_icon("")
-	else:
-		_set_cursor_icon("roller" if is_wall else "carpet")
+	var texts: Dictionary = _PAINT_TEXTS[_selected_surface.kind]
+	_set_cursor_icon("" if target.is_empty() else texts.icon)
 	if _paint_held and not target.is_empty():
 		_paint_at_target(false)
-	var what := "Wandabschnitt streichen" if is_wall else "Bodenfeld belegen"
-	var all := "ganze Wand" if is_wall else "ganzer Boden"
 	if target.is_empty():
-		var where := "eine Wand" if is_wall else "den Boden"
-		_set_status("%s: Schau aus der Nähe auf %s. Rechtsklick: zurück zum Katalog." % [_selected_surface.display_name, where])
+		_set_status("%s: Schau aus der Nähe auf %s. Rechtsklick: zurück zum Katalog." % [_selected_surface.display_name, texts.where])
 	else:
-		_set_status("%s – Linksklick: %s (gedrückt halten und ziehen: mehrere) · Umschalt + Klick: %s · Rechtsklick: zurück" % [_selected_surface.display_name, what, all])
+		_set_status("%s – Linksklick: %s (gedrückt halten und ziehen: mehrere) · Umschalt + Klick: %s · Rechtsklick: zurück" % [_selected_surface.display_name, texts.one, texts.all])
 
 
-## Wohin zeige ich? Ergebnis: { "wall": …, "index": … } bei Wänden, { "cell": … } beim Boden,
-## leer, wenn dort nichts Passendes ist oder es zu weit weg ist.
+## Wohin zeige ich? Ergebnis: { "wall": …, "index": … } bei Wänden, { "cell": … } bei
+## Boden und Decke – leer, wenn dort nichts Passendes ist oder es zu weit weg ist.
 func _find_paint_target() -> Dictionary:
 	var hit := _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT, GameConfig.paint_reach)
 	if hit.is_empty():
 		return {}
-	if _selected_surface.kind == SurfaceData.Kind.WALL:
-		if absf(hit.normal.y) > 0.5:
-			return {}
-		return _room.find_wall_segment(hit.position)
-	if hit.normal.y < 0.7:
-		return {}
-	var cell := _room.find_floor_cell(hit.position)
+	match _selected_surface.kind:
+		SurfaceData.Kind.WALL:
+			if absf(hit.normal.y) > 0.5:
+				return {}
+			return _room.find_wall_segment(hit.position)
+		SurfaceData.Kind.FLOOR:
+			if hit.normal.y < 0.7:
+				return {}
+		SurfaceData.Kind.CEILING:
+			if hit.normal.y > -0.7:
+				return {}
+	var cell := _room.find_grid_cell(_selected_surface.kind, hit.position)
 	return {} if cell < 0 else {"cell": cell}
 
 
-## Streicht dort, wohin ich schaue (whole = ganze Wand bzw. ganzer Boden).
+## Gestaltet die Stelle, auf die ich schaue (whole = ganze Wand / ganzer Boden / ganze Decke).
 func _paint_at_target(whole: bool) -> void:
 	var target := _find_paint_target()
 	if target.is_empty():
 		return
-	var key := str(target.get("wall", "floor")) + ":" + str(target.get("index", target.get("cell")))
+	var key := str(target.get("wall", "grid")) + ":" + str(target.get("index", target.get("cell")))
 	if key == _last_painted:
-		return  # diese Stelle wurde gerade schon gestrichen
+		return  # diese Stelle wurde gerade schon gestaltet
 	_last_painted = key
 	if target.has("wall"):
 		if whole:
@@ -405,10 +412,10 @@ func _paint_at_target(whole: bool) -> void:
 			_room.paint_wall_segment(target.wall, target.index, _selected_surface)
 	else:
 		if whole:
-			_room.paint_floor(_selected_surface)
+			_room.paint_grid(_selected_surface)
 			_paint_held = false
 		else:
-			_room.paint_floor_cell(target.cell, _selected_surface)
+			_room.paint_grid_cell(target.cell, _selected_surface)
 
 
 func _set_cursor_icon(icon: String) -> void:

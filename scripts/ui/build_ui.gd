@@ -38,6 +38,7 @@ func _ready() -> void:
 		_tabs.append([FurnitureData.get_category_display_name(category), "furniture", category])
 	_tabs.append(["Wandfarbe", "surface", SurfaceData.Kind.WALL])
 	_tabs.append(["Boden", "surface", SurfaceData.Kind.FLOOR])
+	_tabs.append(["Decke", "surface", SurfaceData.Kind.CEILING])
 	_build_tab_buttons()
 	_build_help()
 	_show_tab(0)
@@ -176,7 +177,7 @@ func _build_help() -> void:
 		["Mausrad", "Drehen"],
 		["G", ""],  # Text kommt aus _on_grid_changed
 		["Entf", "Entfernen"],
-		["Umschalt + Klick", "Ganze Wand / ganzer Boden"],
+		["Umschalt + Klick", "Ganze Wand / Boden / Decke"],
 	]
 	for entry in entries:
 		_help_grid.add_child(_small_label(entry[0], 14, KEY_COLOR))

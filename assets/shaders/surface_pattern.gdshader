@@ -7,9 +7,13 @@ shader_type spatial;
 uniform vec4 base_color : source_color = vec4(0.8, 0.75, 0.65, 1.0);
 uniform vec4 second_color : source_color = vec4(0.7, 0.62, 0.52, 1.0);
 // Welches Muster?
-uniform int pattern : hint_enum("Einfarbig", "Dielen", "Schachbrett", "Streifen") = 0;
+uniform int pattern : hint_enum("Einfarbig", "Dielen", "Schachbrett", "Streifen", "Kassetten") = 0;
 // Dielen: Brettbreite, Schachbrett: Feldgröße, Streifen: Streifenbreite (in Metern)
 uniform float tile_size = 0.5;
+// Anteil des zweiten Farbstreifens (nur Streifen; 0.5 = gleich breit, 0.2 = schmale Balken)
+uniform float stripe_ratio : hint_range(0.05, 0.95) = 0.5;
+// Breite des Rahmens um jede Kassette (nur Kassetten, in Metern)
+uniform float frame_width = 0.06;
 // Länge eines Bretts (nur Dielen)
 uniform float plank_length = 1.6;
 // Fugen zwischen Brettern bzw. Fliesen
@@ -81,8 +85,19 @@ void fragment() {
 		vec2 d = min(f, 1.0 - f) * tile_size;
 		joint = joint_mask(min(d.x, d.y));
 	} else if (pattern == 3) {
-		// Senkrechte Streifen (z. B. Tapete)
-		color = mix(base_color.rgb, second_color.rgb, mod(floor(uv.x / tile_size), 2.0));
+		// Streifen (z. B. Tapete oder Holzbalken an der Decke)
+		float stripe = 1.0 - step(stripe_ratio, fract(uv.x / (tile_size * 2.0)));
+		color = mix(base_color.rgb, second_color.rgb, stripe);
+	} else if (pattern == 4) {
+		// Kassetten: helle Rahmen, vertiefte Felder mit leichtem Schatten am Rand
+		vec2 f = fract(uv / tile_size);
+		vec2 d = min(f, 1.0 - f) * tile_size;
+		float edge = min(d.x, d.y);
+		float frame = 1.0 - smoothstep(frame_width * 0.9, frame_width, edge);
+		color = mix(second_color.rgb, base_color.rgb, frame);
+		float shadow = smoothstep(frame_width, frame_width * 1.2, edge) * (1.0 - smoothstep(frame_width * 1.2, frame_width * 1.8, edge));
+		color *= 1.0 - shadow * 0.3;
+		joint = joint_mask(edge);
 	}
 
 	if (mottling > 0.0) {

@@ -1,16 +1,18 @@
-class_name PaintableFloor
+class_name PaintableGrid
 extends MeshInstance3D
-## Ein Boden, der in quadratischen Abschnitten belegt werden kann.
+## Ein Boden oder eine Decke, die in quadratischen Abschnitten gestaltet werden kann.
 ##
-## Der Knoten liegt an der Ecke des Bodens mit den kleinsten x- und z-Werten.
+## Der Knoten liegt an der Ecke mit den kleinsten x- und z-Werten, auf Höhe der Fläche.
 ## Ein Abschnitt ist GameConfig.floor_section_cells Rasterfelder breit (Standard 3 x 3).
 ## Abschnitte mit gleichem Belag werden zu größeren Flächen zusammengefasst,
 ## damit das Spiel flüssig bleibt.
 
-## Größe des Bodens in Metern (x = Breite, y = Tiefe).
+## Größe der Fläche in Metern (x = Breite, y = Tiefe).
 @export var size: Vector2 = Vector2(6.0, 8.0)
+## An = Decke (Fläche zeigt nach unten), aus = Boden (Fläche zeigt nach oben).
+@export var faces_down: bool = false
 
-## So weit liegt der Belag über dem eigentlichen Boden (verhindert Flackern).
+## So weit liegt der Belag vor der eigentlichen Fläche (verhindert Flackern).
 const OFFSET := 0.003
 
 ## Oberfläche (id) je Feld, Zeile für Zeile.
@@ -109,11 +111,14 @@ func _add_strip(tool: SurfaceTool, start: int, end: int, row: int) -> void:
 	var x1 := end * _cell_size
 	var z0 := row * _cell_size
 	var z1 := (row + 1) * _cell_size
-	var corners := [Vector3(x0, OFFSET, z0), Vector3(x1, OFFSET, z0), Vector3(x1, OFFSET, z1), Vector3(x0, OFFSET, z1)]
-	# Godot zeigt Dreiecke von der Seite, von der aus die Ecken im Uhrzeigersinn liegen
-	for i in [0, 1, 2, 0, 2, 3]:
+	var y := -OFFSET if faces_down else OFFSET
+	var corners := [Vector3(x0, y, z0), Vector3(x1, y, z0), Vector3(x1, y, z1), Vector3(x0, y, z1)]
+	# Godot zeigt Dreiecke von der Seite, von der aus die Ecken im Uhrzeigersinn liegen.
+	# Die Decke wird von unten angeschaut, deshalb dort die umgekehrte Reihenfolge.
+	var order := [0, 2, 1, 0, 3, 2] if faces_down else [0, 1, 2, 0, 2, 3]
+	for i in order:
 		var corner: Vector3 = corners[i]
 		var world := to_global(corner)
-		tool.set_normal(Vector3.UP)
+		tool.set_normal(Vector3.DOWN if faces_down else Vector3.UP)
 		tool.set_uv(Vector2(world.x, world.z))
 		tool.add_vertex(corner)
