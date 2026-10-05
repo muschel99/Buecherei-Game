@@ -11,5 +11,5 @@ category = 0
 price = 110
 styles = 1
 scene_path = "res://scenes/furniture/ladder_shelf.tscn"
-footprint = Vector2i(3, 2)
+footprint = Vector2i(6, 4)
 has_surface = true

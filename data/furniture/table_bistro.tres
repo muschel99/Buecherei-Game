@@ -11,5 +11,5 @@ category = 2
 price = 90
 styles = 2
 scene_path = "res://scenes/furniture/table_bistro.tscn"
-footprint = Vector2i(3, 3)
+footprint = Vector2i(6, 6)
 has_surface = true

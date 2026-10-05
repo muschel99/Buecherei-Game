@@ -100,3 +100,4 @@ room_path = NodePath("../GroundFloorRoom")
 [node name="PauseMenu" parent="." instance=ExtResource("4_pause_menu")]
 
 [connection signal="interaction_target_changed" from="Player" to="HUD" method="_on_player_interaction_target_changed"]
+[connection signal="catalog_state_changed" from="BuildMode" to="HUD" method="_on_build_mode_catalog_state_changed"]

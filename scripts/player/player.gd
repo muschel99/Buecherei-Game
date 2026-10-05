@@ -41,8 +41,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_look_around(event.relative)
 	elif event.is_action_pressed("interact") and interaction_enabled:
 		_try_interact()
-	elif event is InputEventMouseButton and event.pressed:
-		# Falls die Maus frei ist (z. B. nach einem Fensterwechsel): per Klick wieder fangen
+	elif event is InputEventMouseButton and event.pressed and not MenuStack.has_open():
+		# Falls die Maus frei ist (z. B. nach einem Fensterwechsel): per Klick wieder fangen.
+		# Ist etwas offen (z. B. der Katalog), gehört der Mauszeiger dorthin.
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 

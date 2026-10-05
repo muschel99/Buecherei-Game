@@ -11,4 +11,5 @@ category = 4
 price = 45
 styles = 1
 scene_path = "res://scenes/furniture/lantern_garden.tscn"
+footprint = Vector2i(2, 2)
 can_stand_on_surfaces = true

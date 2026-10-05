@@ -11,5 +11,5 @@ category = 3
 price = 300
 styles = 4
 scene_path = "res://scenes/furniture/counter.tscn"
-footprint = Vector2i(8, 3)
+footprint = Vector2i(16, 6)
 has_surface = true

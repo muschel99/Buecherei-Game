@@ -37,8 +37,8 @@ const _CATEGORY_NAMES := {
 ## Die Szene (.tscn) oder das 3D-Modell (.glb) des Möbelstücks.
 @export_file("*.tscn", "*.scn", "*.glb", "*.gltf") var scene_path: String = ""
 ## Grundfläche in Rasterfeldern (Breite x Tiefe). Ein Feld ist
-## GameConfig.grid_cell_size groß (Standard 0,25 m), 4 Felder = 1 Meter.
-@export var footprint: Vector2i = Vector2i(1, 1)
+## GameConfig.grid_cell_size groß (Standard 0,125 m), 8 Felder = 1 Meter.
+@export var footprint: Vector2i = Vector2i(2, 2)
 ## Erscheint das Möbelstück schon im Katalog?
 @export var is_unlocked: bool = true
 

@@ -41,6 +41,12 @@ func _on_player_interaction_target_changed(target: Interactable) -> void:
 	_tween.tween_property(_prompt_label, "modulate:a", 1.0 if is_active else 0.0, FADE_TIME)
 
 
+## Im Katalog-Zustand des Gestaltungsmodus ist der Mauszeiger sichtbar – dann
+## wird der Punkt in der Bildmitte nicht gebraucht.
+func _on_build_mode_catalog_state_changed(in_catalog: bool) -> void:
+	_crosshair.visible = not in_catalog
+
+
 ## Liefert den Tastennamen einer Aktion (z. B. "E"), damit der Hinweis
 ## auch nach einer späteren Tastenänderung stimmt.
 func _get_key_name(action: StringName) -> String:
