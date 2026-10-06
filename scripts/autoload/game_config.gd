@@ -158,7 +158,9 @@ var autosave_delay: float = 1.5
 ##   sun_shadow_size Schattenauflösung der Sonne in Pixeln (Fensterlicht)
 ##   soft_shadows    Weichheit der Schattenkanten 0 = hart, 1 = sehr niedrig, 2 = niedrig, 3 = mittel
 ##   lamp_shadows    0 = Lampen ohne Schatten, 1 = nur wichtige Lampen (Steh- und Tischlampen),
-##                   2 = auch Deckenlampen. Kerzen und Laternen werfen nie eigene Schatten.
+##                   2 = auch Deckenlampen. Nie Schatten: Kerzen, Laternen, Kronleuchter und
+##                   Rattan-Hängelampe (ihr Licht sitzt zwischen vielen Teilen – deren Schatten
+##                   sähen seltsam aus). Einstellung je Lampe: LightSource.shadow_importance.
 ##   cube_shadows    Lampenschatten in voller Qualität (6 statt 2 Durchgänge je Lampe)
 ##   sun_cascades    Schattenstufen der Sonne: 2 (schneller) oder 4 (schärfer in der Nähe).
 ##                   Die Übergänge werden immer weich überblendet (sonst Linie im Fensterlicht).

@@ -142,7 +142,7 @@ size = Vector3(0.8, 0.5, 0.8)
 
 [node name="Chandelier" type="Node3D" unique_id=2116531310]
 script = ExtResource("1_84gdd")
-shadow_importance = 2
+shadow_importance = 0
 prompt_turn_on = "Lampe einschalten"
 prompt_turn_off = "Lampe ausschalten"
 
@@ -279,7 +279,6 @@ shape = SubResource("CylinderShape3D_divxl")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.55, 0)
 light_color = Color(1, 0.78, 0.55, 1)
 light_energy = 1.2
-shadow_enabled = true
 shadow_blur = 2.0
 omni_range = 6.5
 
