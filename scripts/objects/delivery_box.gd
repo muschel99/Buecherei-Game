@@ -59,4 +59,9 @@ static func describe_contents(entries: Array) -> String:
 		var item_name: String = resource.display_name if resource else id
 		var count := int(entry.get("count", 1))
 		parts.append(item_name if count <= 1 else "%s ×%d" % [item_name, count])
+	# Bei großen Lieferungen nur die ersten drei nennen, damit der Hinweis kurz bleibt
+	if parts.size() > 3:
+		var more := parts.size() - 3
+		parts.resize(3)
+		parts.append("und %d weitere" % more if more > 1 else "und 1 weiteres")
 	return ", ".join(parts)

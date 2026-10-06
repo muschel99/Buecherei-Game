@@ -266,9 +266,13 @@ func _create_preview(item: Resource) -> Control:
 	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Schwache Referenz: Ist die Karte schon wieder weg (z. B. Kategorie gewechselt), bevor
+	# das Foto fertig ist, wird es einfach nicht mehr eingesetzt
+	var picture_ref: WeakRef = weakref(picture)
 	_thumbnails.request(item, func(texture: Texture2D) -> void:
-		if is_instance_valid(picture):
-			picture.texture = texture)
+		var target := picture_ref.get_ref() as TextureRect
+		if target:
+			target.texture = texture)
 	return picture
 
 
