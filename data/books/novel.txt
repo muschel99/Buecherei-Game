@@ -1,0 +1,62 @@
+# Bücher im Genre: Roman
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Ein Sommer am Leuchtturm | lighthouse
+The Bookshop on Bramble Lane | book
+Die Teestube am Ende der Gasse | teacup
+Letters from Lavender Cottage | letter
+Das Haus mit den blauen Fensterläden | house
+Beneath the Old Pear Tree | tree
+Die Schneiderin von Wenmouth | heart
+A Year of Quiet Sundays | sun
+Zwei Tassen Tee und ein Neuanfang | teacup
+The Crumpet Shop at Fennick Quay | bread
+Wo die Kirschbäume blühen | flower
+Postcards to Matilda | letter
+Der Gärtner von nebenan | plant
+The Lantern Keeper's Daughter | lantern
+Sieben Tage Sonnenschein | sun
+Moonlight over Marrowby | moon
+Das Café der zweiten Chancen | cake
+Summer at Saltwater Bay | wave
+Die Melodie vom Dachboden | music
+A Bicycle Built for Old Friends | bicycle
+Heimkommen im Herbst | leaf
+The Knitting Circle of Kettlebridge | heart
+Das blaue Fahrrad von Tante Lou | bicycle
+Snowfall on Primrose Row | snowflake
+Die Bücherfrau vom Hafen | boat
+Starlight and Strawberry Jam | stars
+Ein Garten für Ada | flower
+The Clockmaker's Promise | clock
+Briefe unter der Linde | letter
+Where the River Bends Softly | wave
+Das kleine Glück am Wochenmarkt | apple
+The Kindness of Primrose Row | house
+Kerzenschein in der Rosengasse | candle
+A Cottage Full of Cats | cat
+Die Leuchtturmwärterin von Hollowmere | lighthouse
+Second Chances at Shellcombe | shell
+Ein Koffer voller Sommer | sun
+The Garden Gate at Hollowmere | tree
+Wolken über dem Weizenfeld | cloud
+Tea for Three on Tuesdays | teapot
+Das Haus der hundert Uhren | clock
+Everything Blooms at Brambleford | tulip
+Die Fähre nach Hause | boat
+The Quilt of Many Summers | heart
+Pfannkuchen am Sonntagmorgen | cake
+A Song for Elsie | music
+Die Sterne über Thornwick | stars
+The Last Train to Little Wexley | train
+Morgenlicht in der Backstube | bread
+Home Is Where the Kettle Sings | teapot

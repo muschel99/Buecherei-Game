@@ -1,0 +1,62 @@
+# Bücher im Genre: Klassiker
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Die Töchter von Harrowgate Hall | house
+Letters from Larkspur Manor | letter
+Ein Winter in Elmsworth | snowflake
+The Gentle Heart of Miss Thornbury | heart
+Die Pächter von Saltmarsh Court | tree
+A Summer at Fennimore Park | sun
+Der Graf von Wintermere | crown
+The Heirs of Wendlebury Abbey | castle
+Anmut und Geduld | feather
+Lady Ravensworth Returns | crown
+Die Abende auf Larkspur Manor | candle
+The Captain's Garden | anchor
+Eleanor Vane und das Erbe | key
+A Tale of Two Teacups | teacup
+Die Gäste von Fennimore Park | teapot
+The Gentle Voyage Home | boat
+Briefe aus Wendlebury | letter
+The Vicar of Bramblewood | book
+Die Schwestern Aldridge | flower
+Of Meadows and Manners | flower
+Der Hauslehrer von Elmsworth | book
+The Count of Lavender Hill | crown
+Sehnsucht nach Saltmarsh | wave
+Miss Pemberley-Fox Takes the Train | train
+Das Tagebuch der Lady Ashcombe | feather
+The Orchard at Highcliff | apple
+Ein Ball in Harrowgate | music
+The Lighthouse of Saint Brannock | lighthouse
+Pflicht und Hoffnung | heart
+The Clockmaker of Dunmore | clock
+Die Reise der Kapitänin Dorrington | compass
+A Garden Party in June | flower
+Der Brief im Rosenholzkasten | letter
+The Governess of Larkspur Manor | glasses
+Heimkehr nach Elmsworth | house
+The Duchess and the Dovecote | bird
+Erinnerungen an Fennimore | leaf
+Northward to Wendlebury | compass
+Die Bibliothek von Ashby Hall | book
+The Sisters of Seabrook | shell
+Ein Herbst voller Briefe | leaf
+The Admiral's Tea Party | teapot
+Das Porträt im Treppenhaus | palette
+A Lantern in the Window | lantern
+Die Schneiderin von Saltmarsh | heart
+The Poet of Primrose Lane | feather
+Hoffnung auf Wendlebury Abbey | castle
+The Kindly Squire of Elmsworth | crown
+Unter den Ulmen von Elmsworth | tree
+The Rose of Larkspur | flower

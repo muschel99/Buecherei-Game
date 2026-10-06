@@ -1,0 +1,62 @@
+# Bücher im Genre: Sachbuch
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Die kleine Geschichte des Regenschirms | umbrella
+Why Clouds Wander Slowly | cloud
+Alles über Leuchttürme | lighthouse
+Fifty Things to Know About Snails | snail
+Die Welt der Teekannen | teapot
+A Year with Hedgehogs | hedgehog
+Wie Brücken die Welt verbinden | map
+How Clocks Learned to Tick | clock
+Das große Buch der Wolken | cloud
+A Short History of the Pencil | brush
+Bienen und warum wir sie lieben | bee
+Everything About Owls | owl
+Die Sprache der Vögel | bird
+The Curious World of Buttons | magnifier
+Sterne gucken für Anfänger | telescope
+How Bread Rises | bread
+Das Abc der Muscheln | shell
+A Field Guide to Kindness | heart
+Kleine Wunder der Physik | magnifier
+The Story of Postage Stamps | letter
+Warum Katzen gern auf Büchern liegen | cat
+Maps and the People Who Drew Them | map
+Die Geschichte der Eisenbahn | train
+Why the Weather Changes Its Mind | sun
+Das Leben im Bienenstock | bee
+Lighthouses of the Northern Coast | lighthouse
+Wie Schiffe schwimmen | boat
+The Science of Snowflakes | snowflake
+Alles über Füchse | fox
+Small Inventions That Changed Everything | magnifier
+Die Welt in einem Wassertropfen | wave
+The Quiet Genius of Moss | leaf
+Uhren, Zahnräder und Zeit | hourglass
+A Pocket Guide to the Night Sky | moon
+Das Wissen der Wale | whale
+Why the Sea Is Salty | wave
+Gute Gewohnheiten für jeden Tag | sun
+The Joy of Collecting Stones | mountain
+Von Brillen und Linsen | glasses
+How Bees Talk to Each Other | bee
+Die Welt der Schmetterlinge | butterfly
+The History of Hot Air Balloons | balloon
+Kompass, Karte und Kurs | compass
+Rainbows Explained | rainbow
+Die Kunst des Briefeschreibens | letter
+A Year in the Life of a Tree | tree
+Das Teebuch für Neugierige | teacup
+Planets of Our Neighbourhood | planet
+Wie Pflanzen wachsen | plant
+The Wonderful World of Kites | kite

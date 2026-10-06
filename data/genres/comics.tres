@@ -12,3 +12,5 @@ styles = 2
 price = 45
 is_unlocked = false
 sort_order = 160
+cover_font = 2
+cover_styles = Array[String](["comic"])

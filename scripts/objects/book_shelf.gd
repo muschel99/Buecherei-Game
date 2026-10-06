@@ -101,6 +101,11 @@ func accepts(book_genre_id: String) -> bool:
 	return genre_id == MIXED or (has_genre() and genre_id == book_genre_id)
 
 
+## Alle Bücher im Regal.
+func get_books() -> Array[Book]:
+	return books
+
+
 ## Wie viele Bücher dieses Genres stehen hier? (für den Bestand)
 func count_books(of_genre_id: String) -> int:
 	var count := 0
@@ -240,17 +245,17 @@ func put_carried() -> int:
 
 ## Zeigt Beispielbücher (für das Vorschaubild im Shop; nicht im Bestand).
 func show_sample_books() -> void:
-	var genres := Catalog.get_all_genres().filter(func(genre: GenreData) -> bool: return genre.is_unlocked)
-	if genres.is_empty() or _rows.is_empty():
+	var titles: Array[BookData] = []
+	for genre in Catalog.get_all_genres():
+		if genre.is_unlocked:
+			titles.append_array(Catalog.get_books_of_genre(genre.get_id()))
+	if titles.is_empty() or _rows.is_empty():
 		return
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
 	var samples: Array[Book] = []
 	var wanted := roundi(get_free_estimate() * 0.75)
 	for i in wanted:
-		var book := Book.new()
-		book.genre_id = genres[(i * genres.size()) / maxi(wanted, 1)].get_id()
-		book.look = rng.randi()
+		var book := Book.create_from(titles[(i * 7) % titles.size()])
+		book.look = i * 7919
 		samples.append(book)
 	add_books(samples, false)
 

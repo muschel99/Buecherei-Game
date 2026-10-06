@@ -1,0 +1,62 @@
+# Bücher im Genre: Krimi
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Das Rätsel der verschwundenen Teekanne | teapot
+The Case of the Curious Cat | cat
+Miss Hartigan und der falsche Schlüssel | key
+The Missing Marmalade Mystery | magnifier
+Ein Fall für Pfarrer Ambrose | magnifier
+The Vicarage Garden Puzzle | flower
+Spurensuche im Teesalon | teacup
+The Mystery of the Midnight Bell | clock
+Der Dieb der Kirschtorte | cake
+The Clue in the Cookie Jar | magnifier
+Inspektorin Fenwick ermittelt | glasses
+The Riddle of Rosebud Lane | flower
+Wer hat die Kirchenglocke versteckt? | magnifier
+The Lost Letter of Larkmoor | letter
+Das Geheimnis im Gewächshaus | plant
+The Case of the Borrowed Bicycle | bicycle
+Ein Rätsel auf Schloss Ravenscourt | castle
+The Puzzle of the Painted Door | brush
+Kommissar Oakley und der Gartenzwerg | mushroom
+The Mystery at Marrowby Market | apple
+Die Spur der Pfotenabdrücke | dog
+The Case of the Wandering Clock | clock
+Detective Moss and the Silver Spoon | magnifier
+Das Rätsel vom Bahnsteig vier | train
+The Secret of the Sealed Envelope | letter
+Lady Agatha und das Kreuzworträtsel | glasses
+The Hollowmere Hat Mystery | magnifier
+Verwirrung im Blumenladen | tulip
+The Curious Case of the Garden Gnome | mushroom
+Ein Fall für zwei Teetassen | teacup
+The Lighthouse Lantern Riddle | lighthouse
+Die verschwundene Brieftaube | bird
+The Mystery of the Missing Scones | cake
+Der Schlüssel unter der Fußmatte | key
+The Case of the Chattering Parrot | bird
+Rätselhafte Tage in Ashcombe | magnifier
+The Puzzling Pie Contest | cake
+Das Geheimnis der alten Landkarte | map
+The Case of the Vanishing Violin | music
+Miss Pemberton löst jeden Fall | glasses
+The Mystery of the Moonlit Garden | moon
+Spuren im Schnee von Kettlebridge | snowflake
+The Bookshop Detective of Ashcombe | book
+Das Rätsel der singenden Kanne | teapot
+The Clue of the Copper Kettle | teapot
+Ein Krimi zum Kaffeekranz | teacup
+The Case of the Curious Compass | compass
+Die Detektive vom Dorfplatz | magnifier
+The Secret in the Station Clock | clock
+Constable Rudd und die Erdbeertorte | cake

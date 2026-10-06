@@ -291,8 +291,9 @@ func _create_offer_card(item: Resource) -> Button:
 		if status.is_empty():
 			status = "Einmal kaufen, immer nutzen"
 	elif item is GenreData:
-		var owned := BookStock.count_total(item.get_id())
-		status = "Du hast %d Bücher" % owned if owned > 0 else "Klicken: in den Warenkorb"
+		# Sammlung: wie viele Titel des Genres kenne ich schon?
+		var catalog := Catalog.get_books_of_genre(item.get_id()).size()
+		status = "Sammlung: %d von %d Titeln" % [BookStock.get_discovered_count(item.get_id()), catalog]
 	else:
 		var owned := Inventory.get_count(item.get_id()) + _count_in_room(item.get_id())
 		status = "Hast du schon: %d" % owned if owned > 0 else "Klicken: in den Warenkorb"

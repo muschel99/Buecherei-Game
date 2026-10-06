@@ -1,0 +1,62 @@
+# Bücher im Genre: Reisen
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Unterwegs in den Highlands | mountain
+By Train Through the Lake District | train
+Zu Fuß durch Cornwall | map
+Seven Days in Little Harbours | boat
+Mit dem Nachtzug nach Norden | train
+Lighthouses of the Atlantic Coast | lighthouse
+Ein Koffer, zwölf Länder | compass
+Island Hopping for Beginners | island
+Das Fahrrad und die Bretagne | bicycle
+Tea Rooms of England | teacup
+Mit dem Hausboot durch die Kanäle | boat
+Postcards from Portugal | letter
+Unter Segeln nach Irland | boat
+Mountain Huts and Hot Chocolate | mountain
+Reisetagebuch: Schottland | map
+Slow Travel, Happy Heart | heart
+Kleine Häfen im Westen | anchor
+The Village Markets of France | apple
+Wanderwege am Meer | wave
+A Balloon over the Valley | balloon
+Norwegens Fjorde | mountain
+Seaside Towns Worth Loving | shell
+Mit Kindern in den Bergen | mountain
+The Little Guide to Big Cities | map
+Inselsommer | island
+Coastal Walks of Wales | wave
+Unterwegs mit dem Zelt | pine
+Bookshops of the World | book
+Auf der Spur der Leuchttürme | lighthouse
+Train Journeys for Dreamers | train
+Mit dem Rad an der Donau | bicycle
+The Gardens of Kew and Beyond | flower
+Ferien auf dem Bauernhof | house
+Snowy Villages of the Alps | snowflake
+Picknickplätze mit Aussicht | sun
+A Tour of Tiny Islands | island
+Die schönsten Cafés am Wasser | teacup
+Nights Under the Northern Lights | stars
+Wandern mit Hund | dog
+The Kite Festival Road Trip | kite
+Leise Orte in Europa | compass
+Harbours at Sunset | anchor
+Das Wolkenhotel | cloud
+Little Cottages by the Sea | house
+Brücken, Burgen und Bäckereien | castle
+The Camper Van Year | map
+Inseln im Morgenlicht | island
+Island Lighthouses of Scotland | lighthouse
+Sonnenaufgang am Gipfel | sun
+Walking the Old Pilgrim Paths | compass
