@@ -114,7 +114,7 @@ theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "E"
 
 [node name="Action3" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Benutzen: Lampen, Tür, Sitzen, Kartons auspacken, Tablet (Shop)"
+text = "Benutzen: Lampen, Tür, Sitzen, Kartons, Tablet, Regale, Rückgabekasten"
 
 [node name="KeyBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
@@ -136,6 +136,13 @@ text = "F3"
 
 [node name="ActionFps" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Bilder pro Sekunde anzeigen"
+
+[node name="KeyTestBooks" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "F9"
+
+[node name="ActionTestBooks" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Test: Bücher in den Rückgabekasten legen"
 
 [node name="Key4" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

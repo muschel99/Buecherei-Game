@@ -110,6 +110,59 @@ Die Platzhalter-Muster (Dielen, Schachbrett, Streifen, Kassetten) kommen aus dem
 `assets/shaders/surface_pattern.gdshader`. Bei diesen Materialien kannst du im Inspektor unter
 **Shader Parameters** Farben, Muster und Größe verändern.
 
+## Bücher und Genres
+
+### Ein Genre ändern oder ein neues anlegen (ohne Code)
+Jedes Genre ist ein Datenblatt in `data/genres/` (z. B. `crime.tres` für Krimi).
+1. Im **Dateisystem**-Fenster den Ordner `data/genres/` öffnen und ein Datenblatt anklicken
+   (für ein neues Genre: Rechtsklick → **Duplizieren…**, z. B. `poetry_modern.tres`).
+2. Rechts im **Inspektor** stehen die Felder:
+
+| Feld              | Bedeutung                                                                    |
+|-------------------|------------------------------------------------------------------------------|
+| Id                | Eindeutiger Name, z. B. `crime`. Später nicht mehr ändern (Spielstand!)      |
+| Display Name      | Name im Spiel, z. B. „Krimi“ – **hier umbenennen**                           |
+| Description       | Kurzer Text im Shop                                                          |
+| Spine Colors      | Farben der Buchrücken (mehrere; jedes Buch nimmt eine, leicht abgewandelt)   |
+| Styles            | Passender Stil (freiwillig)                                                  |
+| Price             | Preis eines Bücherpakets in Talern                                           |
+| Is Unlocked       | Häkchen = freigeschaltet (im Shop und im Regal-Menü)                         |
+| Sort Order        | Reihenfolge in Listen (kleiner = weiter vorn)                                |
+| Title Words Path  | Wortliste für die Titel – leer = `data/book_titles/<Id>.txt`                 |
+
+3. **Strg+S** speichern. Wie viele Bücher in einem Paket stecken und wie viele Bücher es zum
+   Start gibt, steht in `scripts/autoload/game_config.gd` (`books_per_package`,
+   `start_books_per_genre`).
+
+### Buchtitel ergänzen
+Die Titel werden aus Wortlisten zusammengesetzt: eine Textdatei je Genre in
+`data/book_titles/` (z. B. `crime.txt`). Öffnen kannst du sie in Godot mit Doppelklick oder in
+jedem Texteditor. Oben in jeder Datei steht kurz, wie sie aufgebaut ist:
+- Unter `[Vorlagen]` stehen Satzmuster, z. B. `Mord {Wo}`.
+- `{Wo}` wird durch eine zufällige Zeile aus der Liste `[Wo]` ersetzt, z. B. `im Pfarrgarten`.
+- Neue Zeile = neuer Eintrag. Neue Liste = neue Überschrift in eckigen Klammern.
+Bitte nur erfundene Titel verwenden. Hinweis für später: Beim Exportieren des fertigen Spiels
+müssen `.txt`-Dateien im Export-Dialog unter „Ressourcen → Filter“ mit `*.txt` eingeschlossen werden.
+
+### Ein Bücherregal bauen
+Ein Regal bekommt Bücher, wenn seine Szene einen Knoten `BookShelf`
+(Script `scripts/objects/book_shelf.gd`) hat. Vorlage: `scenes/furniture/bookshelf.tscn`.
+- Darunter je Fach ein `Marker3D` mit dem Script `scripts/objects/book_row.gd`. Der Marker liegt
+  **mitten auf dem Regalbrett** (Mitte der Breite und Tiefe, genau auf der Oberkante). Im
+  Inspektor: **Width** (nutzbare Breite), **Height** (lichte Höhe bis zum nächsten Brett),
+  **Depth** (Tiefe des Bretts). Befüllt wird in der Reihenfolge im Szenenbaum.
+- Ein `Marker3D` namens `SignPoint`: Dort hängt das Genre-Schild (vorn, mittig).
+- Ein `Interactable` mit Kollisionsform, die nicht über das Regal hinausragt.
+- Bretter mit Büchern sollten keine Ablagefläche (`PlacementSurface`) haben, sonst stehen Deko
+  und Bücher übereinander. Das obere Brett darf eine haben.
+- Eigene Buch-Modelle sind nicht nötig: Bücher sind gestreckte Würfel mit dem Shader
+  `assets/shaders/book_spine.gdshader`. Farbe der Seiten und Bänder kann man dort ändern.
+
+### Rückgabekasten
+Szene `scenes/furniture/return_box.tscn`: Die Optik unter `Model` kann ersetzt werden.
+Der Knoten `Contents` (Script `return_box.gd`) mit `StackPoint` (wo der Bücherstapel im Fenster
+liegt) und `Interactable` muss bleiben.
+
 ## Ein Möbelstück durch ein eigenes Modell ersetzen
 Jede Möbel-Szene (z. B. `scenes/furniture/armchair.tscn`) hat diesen Aufbau:
 ```

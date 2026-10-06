@@ -34,25 +34,28 @@ scenes/            Szenen (.tscn)
   rooms/           Räume des Hauses
   furniture/       Möbel (je eine Szene, Modell austauschbar)
   objects/         Interaktive Objekte (Stehlampe, Lieferkarton; Scripts: LightSource, Seating,
-                   Lichtschalter, Tür, Tablet)
+                   Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox)
   effects/         Effekte (z. B. Staubpartikel)
-  ui/              Oberfläche (HUD, Pausenmenü, Inventar, Shop, Hinweise, Stil-Anzeige)
+  ui/              Oberfläche (HUD, Pausenmenü, Inventar, Shop, Hinweise, Stil-Anzeige,
+                   Regal-Menü, Trage-Anzeige)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
-                   Wallet, Inventory)
+                   Wallet, Inventory, BookStock)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
-  data/            Datenformate (FurnitureData, SurfaceData, StyleTags)
+  data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, Book, BookTitles)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
+  genres/          Datenblätter der Buch-Genres (.tres)
+  book_titles/     Wortlisten für erfundene Buchtitel (.txt, eine je Genre)
 assets/
   models/          Eigene 3D-Modelle (.glb)
   textures/        Texturen
   materials/       Gemeinsame Materialien (.tres), surfaces/ = Wand- und Bodenmaterialien
-  shaders/         Shader (Platzhalter-Muster, Raster)
+  shaders/         Shader (Platzhalter-Muster, Raster, Buchrücken)
   audio/music/     Musik
   audio/sfx/       Geräusche
   ui/              Oberflächen-Theme, icons/ = Symbole (Farbroller, Teppich)
@@ -107,7 +110,8 @@ docs/              Dokumentation
   `SurfaceData.owned_at_start` = von Anfang an vorhanden.
 - **Shop:** `ShopWindow` (Gruppe `shop_window`, `open_shop()`); Bestellungen gehen an den
   `DeliveryManager` (Gruppe `delivery_manager`, `place_order(inhalt)`), Inhalt als Liste von
-  `{ "kind": "furniture"/"surface", "id": …, "count": … }`.
+  `{ "kind": "furniture"/"surface"/"books", "id": …, "count": … }` (bei "books": id = Genre,
+  count = Zahl der Bücherpakete). Reiter: Kaufen, Verkaufen, Bestand.
 - Lieferung: ein Karton pro Objekt (`DeliveryManager.split_contents`); Kartons stehen in Stapeln
   (`_stacks`), Lieferort = Marker3D `Outside/Deliveries`. Der E-Zielbereich eines Kartons darf
   nicht über ihn hinausragen (sonst trifft man beim Stapel den falschen).
@@ -125,7 +129,22 @@ docs/              Dokumentation
   `crouch`, `interact`,
   `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
   `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete` (X),
-  `build_paint_all` (Umschalt), `toggle_fps` (F3).
+  `build_paint_all` (Umschalt), `toggle_fps` (F3), `debug_fill_return_box` (F9, Testtaste).
 - Möbel-Knoten in Szenen können ihre Nummer (`uid`) und ihr Trägermöbel (`support_uid`) fest
   eintragen (z. B. Tablet auf der Theke).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).
+- **Bücher:** Neues Genre = neues Datenblatt in `data/genres/` + Wortliste
+  `data/book_titles/<id>.txt` (kein Code). Bücher (`Book`) sind keine Knoten, sondern Daten;
+  der Bestand (`BookStock`) kennt Lager und Getragenes (`carried`), zählt Regale
+  (Gruppe `book_shelves`) und Rückgabekästen (Gruppe `return_boxes`) mit.
+  Freigeschaltet: `BookStock.is_genre_unlocked(id)` / `unlock_genre(id)`.
+- Bücher bewegen sich immer in Gruppen und nie mit Zeitdruck (Gemütlichkeit vor Arbeit).
+- Bücherregale: Knoten `BookShelf` mit `BookRow`-Fächern (Ursprung = Mitte der Brett-Oberkante),
+  optional `SignPoint` (Genre-Schild) und `Interactable`. Alle Bücher eines Regals sind ein
+  MultiMesh (Aussehen aus `Book.look` über `BookLook`) – nie einzelne Knoten je Buch.
+- Möbel mit Inhalt (Regal, Rückgabekasten): Knoten in der Gruppe `PlacedFurniture.CONTENTS_GROUP`
+  mit `get_contents_data()`, `load_contents_data()`, `release_contents()` – der Raum speichert
+  den Inhalt mit dem Möbelstück, beim Wegräumen (X) geht er ins Lager.
+- Startgeschenke fürs Inventar: `GameConfig.start_furniture_gifts` (jedes nur einmal, auch in
+  älteren Spielständen).
+- Testtasten sind über GameConfig abschaltbar (z. B. `debug_return_box_key`).

@@ -12,7 +12,7 @@
 | 2g  | Fensterlicht und Filter                  | fertig        |
 | 2h  | Kronleuchter, Kartons und Baumodus       | fertig        |
 | 2i  | Kartons einsammeln und Lager-Animation   | fertig        |
-| 3   | Bücher und Regale                        | offen         |
+| 3   | Bücher und Regale                        | fertig        |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -152,28 +152,55 @@ dass Etappe 5 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den
       wiederverwendbar für alles, was ins Lager geht (später z. B. Bücher)
 
 ## Etappe 3 – Bücher und Regale
-- Bücher als Daten (Titel, Genre, Zustand)
-- Regale befüllen, Bücher einsortieren
+Leitgedanke: Einsortieren soll befriedigend sein, aber nie mühsam – Bücher bewegt man immer
+in Gruppen, ohne Zeitdruck.
+- [x] Genres als Daten (`GenreData`, Ordner `data/genres/`): Name, Farbpalette der Buchrücken,
+      Stil (freiwillig), Paketpreis, freigeschaltet; 5 frei, 11 angelegt und gesperrt
+- [x] Bücher als Daten (`Book`: Titel, Genre, Zustand – vorerst immer gut)
+- [x] Erfundene, zum Genre passende Titel aus Wortlisten (`data/book_titles/`, eine Textdatei
+      je Genre, `BookTitles`)
+- [x] Bücherbestand getrennt vom Möbel-Inventar (`BookStock`): Lager, Regale,
+      Rückgabekasten, getragene Bücher; Startbücher (`GameConfig.start_books_per_genre`)
+- [x] Shop: Bereich „Bücher“ mit Bücherpaketen je Genre (`GameConfig.books_per_package`);
+      ein Karton pro Paket, Lager-Anzeige mit Bücherstapel in Genre-Farben (`BookIcons`)
+- [x] Tablet: Reiter „Bestand“ (im Regal, im Lager, unterwegs, gesamt)
+- [x] Regale mit Buchfächern (`BookShelf`, `BookRow`); Bücher als MultiMesh mit eigenem
+      Shader (Höhe, Dicke, Farbton, Bänder, Titelschild verschieden)
+- [x] Regal-Menü (`ShelfMenu`): Genre oder „Gemischt“, aus dem Lager auffüllen, alles
+      zurück ins Lager; Bücher gleiten nacheinander hinein und heraus
+- [x] Genre-Schild am Regal (Platzhalter)
+- [x] Regal verschieben: Bücher bleiben drin (auch in der Vorschau); mit X wegräumen:
+      Bücher gehen ins Lager
+- [x] Rückgabekasten (Startgeschenk, im Shop unter Theke); Testtaste F9
+      (`GameConfig.debug_return_box_key`)
+- [x] Bücher tragen: alle aus dem Kasten auf einmal, Anzeige unten (`CarryIndicator`);
+      E am Regal räumt alle passenden ein, der Rest bleibt in der Hand
+- [x] Alles wird gespeichert (Bestand, Regalinhalte, Schilder, Kasten, Getragenes);
+      ältere Spielstände bekommen Startbücher und den Rückgabekasten einmalig dazu
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
+- Besucher nehmen Bücher aus Regalen (`BookShelf.remove_books`) und werfen sie in den
+  Rückgabekasten (`ReturnBox.add_books`); dann die Testtaste F9 abschalten
 
 ## Etappe 5 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
   Verkaufen, Lieferung
 - Einnahmen: Leseausweise, Abstempeln, Leihgebühren, Mitgliedschaften (über `Wallet.earn`)
+- Beschädigte Bücher und Reparatur (Feld `Book.condition` ist schon vorhanden)
 - Tag mit Öffnen-Schild, Pause und Vorspulen; Tagesabrechnung aus den Buchungen
 - Preise und Startgeld ausbalancieren
 
 ## Etappe 6 – Stilsystem und Besuchervielfalt
 - Stil-Merkmale an Möbeln (Botanisch, Modern, Dark Academia) – Grundlage seit Etappe 2 vorhanden
+- Genres tragen schon einen passenden Stil (Datenblatt) – kann später mitzählen
 - Vorherrschender Stil beeinflusst Besucher und Musik
 
 ## Etappe 7 – Café
 - Café-Module an der Theke anbauen
 
 ## Etappe 8 – Erweiterungen und Freischaltungen
-- Weitere Räume, Obergeschoss, Genres freischalten, Renovieren
+- Weitere Räume, Obergeschoss, Genres freischalten (`BookStock.unlock_genre`), Renovieren
 - Neue Möbel im Shop freischalten (Datenblatt-Feld `is_unlocked`)
 
 ## Etappe 9 – Atmosphäre und Sound
