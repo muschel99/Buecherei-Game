@@ -38,10 +38,17 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   - *Verkaufen:* Möbel aus dem Inventar (nicht die im Raum) bringen die Hälfte des Preises
     zurück (Anteil in GameConfig). Oberflächen behält man.
   - Das Tablet gehört fest zur Bücherei: Es steht nicht im Shop und lässt sich nicht verkaufen.
-- **Lieferung:** Kurz nach der Bestellung (10 Sekunden, GameConfig) steht ein Karton pro
-  Bestellung draußen neben der Eingangstür, und ein dezenter Hinweis erscheint:
-  „Deine Lieferung ist da“. E auf den Karton: Der Inhalt wandert direkt ins Inventar, der
-  Karton hebt sich, dreht sich und schrumpft sanft weg. Nichts tragen, nichts einsortieren.
+- **Lieferung:** Kurz nach der Bestellung (10 Sekunden, GameConfig) stehen die Kartons draußen
+  neben der Eingangstür – **ein Karton pro Objekt** (drei Stühle und eine Lampe = vier Kartons) –,
+  und ein dezenter Hinweis erscheint: „Deine Lieferung ist da“.
+  - Die Kartons stapeln sich ordentlich: erst nebeneinander an der Hauswand (4 Stapel), dann
+    bis zu 3 übereinander, dann eine Reihe davor. Jeder steht leicht schief, keiner steckt im
+    anderen. Auch mehrere Bestellungen stapeln sich so weiter; neue Kartons füllen Lücken.
+  - E auf einen Karton: Der Inhalt wandert direkt ins Inventar, der Karton hebt sich, dreht
+    sich und schrumpft sanft weg. Wird ein unterer Karton eingesammelt, rutschen die oberen nach.
+  - Der Lieferort ist ein verschiebbarer Punkt (`Outside/Deliveries` in der Hauptszene);
+    Richtung der Stapel im Inspektor, Stapelhöhe und -anzahl in GameConfig.
+  - Nichts tragen, nichts einsortieren.
 - Geld, Inventar, Bestellungen unterwegs und noch nicht abgeholte Kartons werden mit der
   Einrichtung gespeichert.
 
@@ -60,7 +67,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   „Alle“ und die Unterkategorien, die es dort gerade gibt, daneben der Stil-Filter
   „Alle Stile“, Botanisch, Modern, Dark Academia, Neutral (= ohne Stil-Merkmal).
   Leere Unterkategorien werden nicht gezeigt; sie erscheinen von selbst, sobald es
-  passende Objekte gibt. Bei schmalen Bildschirmen rutschen die Schaltflächen in eine
+  passende Objekte gibt (im Gestaltungsmodus: sobald dort etwas im Inventar liegt). Bei schmalen Bildschirmen rutschen die Schaltflächen in eine
   zweite Zeile.
 - Beim Wechsel der Kategorie springt die Unterkategorie auf „Alle“, der Stil bleibt.
 
@@ -102,9 +109,12 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Esc            | Schließt, was offen ist – sonst Pausenmenü     |
 
 ### Im Gestaltungsmodus
-Unten erscheint das **Inventar**: nur Dinge, die mir gehören, mit Anzahl (×2). Stehen alle
-Exemplare im Raum, ist die Karte ausgegraut (×0). Platzieren nimmt eins aus dem Inventar;
-Aufheben und Wegräumen (X) legen es zurück – samt allem, was darauf steht.
+Unten erscheint das **Inventar**: nur Dinge, die gerade im Inventar liegen, mit Anzahl (×2).
+Was ganz im Raum steht, erscheint dort nicht (so bleibt es auch bei sehr vielen Objekten
+übersichtlich); Wandfarben, Böden und Decken, die mir gehören, sind immer da. Ist ein Reiter
+leer, steht dort freundlich: „Hier ist noch nichts. Im Shop am Tablet findest du mehr.“
+Platzieren nimmt eins aus dem Inventar; Aufheben und Wegräumen (X) legen es zurück – samt
+allem, was darauf steht.
 
 Zwei Zustände:
 - **Katalog-Zustand:** Mauszeiger sichtbar. Im Inventar stöbern und auswählen, platzierte Möbel
@@ -184,8 +194,14 @@ Zwei Zustände:
   Standard: 60). Gespeichert in einer eigenen Datei, getrennt vom Spielstand.
 - Grafikqualität Niedrig, Mittel (Standard) oder Hoch. Die Werte jeder Stufe stehen in
   `GameConfig.graphics_presets` (Schatten, Umgebungslicht, Nebel, Kantenglättung, Staub …).
-- Sparsame Schatten für ruhige Leistung: Nur wichtige Lampen werfen Schatten (Sonne, Stehlampe;
-  auf „Hoch“ auch Deckenlampen). Kleine Lichter wie Kerzen und Laternen haben keine eigenen Schatten.
+- Sparsame Schatten für ruhige Leistung: Nur wichtige Lampen werfen Schatten.
+  - Sonne: immer.
+  - Steh- und Kugelleuchte: ab „Mittel“ (der Schirm der Stehlampe wirft den gemütlichen
+    Lichtkegel nach oben und unten).
+  - Schlichte Pendelleuchte: nur auf „Hoch“.
+  - Nie: Kerzen, Laternen, Kronleuchter und Rattan-Hängelampe. Ihr Licht sitzt zwischen vielen
+    kleinen Teilen (Arme, Kerzen, Ring, Geflecht), deren Schatten seltsame Streifen und Ringe an
+    Wände und Decke werfen würden; ihr Licht bleibt trotzdem genauso warm.
 - Fensterlicht: Die Sonne verteilt ihre Schatten auf Stufen (Kaskaden) – nah fein, fern gröber.
   Die Übergänge werden weich überblendet, damit keine Linie im Fensterlicht entsteht.
   Niedrig nutzt 2 Stufen, Mittel und Hoch 4. Schattenweite der Sonne: 20 m (GameConfig).

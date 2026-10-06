@@ -10,6 +10,7 @@
 | 2e  | Steuerung und Leistung                   | fertig        |
 | 2f  | Inventar, Shop und Lieferung             | fertig        |
 | 2g  | Fensterlicht und Filter                  | fertig        |
+| 2h  | Kronleuchter, Kartons und Baumodus       | fertig        |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -124,6 +125,18 @@ dass Etappe 5 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den
 - [x] Filter im Shop und im Gestaltungsmodus: Unterkategorie und Stil (Botanisch, Modern,
       Dark Academia, Neutral) als kleine Schaltflächen über der Liste, umbrechend bei
       schmalen Bildschirmen (`FilterBar`)
+
+## Etappe 2h – Kronleuchter, Kartons und Baumodus
+- [x] Kronleuchter und Rattan-Hängelampe werfen in keiner Grafikstufe Schatten mehr
+      (vorher seltsame Bänder und Ringe an Wänden und Decke); Licht bleibt gleich warm.
+      Alle Lampen geprüft (Übersicht in GAME_DESIGN, Abschnitt Einstellungen)
+- [x] Ein Karton pro Objekt; ordentlich gestapelt (nebeneinander, bis 3 hoch, dann eine Reihe
+      davor), leicht schief, ohne Überschneidung; auch über mehrere Bestellungen
+- [x] Unterer Karton eingesammelt: die oberen rutschen sanft nach
+- [x] Lieferort als verschiebbarer Punkt (Marker3D `Outside/Deliveries`), Werte in GameConfig
+- [x] Alle Kartons mit Stapel und Drehung gespeichert; alte Sammelkartons werden zu Einzelkartons
+- [x] Gestaltungsmodus zeigt nur, was im Inventar liegt (keine ausgegrauten Karten mehr);
+      Filter nur mit belegten Unterkategorien; freundlicher Hinweis bei leerem Reiter
 
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)
