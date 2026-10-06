@@ -124,22 +124,22 @@ operation = 2
 size = Vector3(1, 2.2, 0.4)
 
 [node name="SkirtingLeft" type="MeshInstance3D" parent="Structure"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.99, 0.05, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.9995, -2.99, 0.05, 0)
 mesh = SubResource("BoxMesh_skirting_long")
 material_override = ExtResource("4_wood_dark")
 
 [node name="SkirtingRight" type="MeshInstance3D" parent="Structure"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.99, 0.05, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.99975, 2.99, 0.05, -0.001)
 mesh = SubResource("BoxMesh_skirting_long")
 material_override = ExtResource("4_wood_dark")
 
 [node name="SkirtingBack" type="MeshInstance3D" parent="Structure"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3.99)
+transform = Transform3D(0.999333, 0, 0, 0, 0.96, 0, 0, 0, 1, 0, 0.05, 3.99)
 mesh = SubResource("BoxMesh_skirting_back")
 material_override = ExtResource("4_wood_dark")
 
 [node name="SkirtingFront" type="MeshInstance3D" parent="Structure"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.75, 0.05, -3.99)
+transform = Transform3D(0.999111, 0, 0, 0, 0.96, 0, 0, 0, 1, -0.75, 0.05, -3.99)
 mesh = SubResource("BoxMesh_skirting_front")
 material_override = ExtResource("4_wood_dark")
 
@@ -177,17 +177,17 @@ faces_down = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 1.7, -4.1)
 
 [node name="FrameTop" type="MeshInstance3D" parent="Window"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.87, 0)
+transform = Transform3D(0.996666, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.87, 0)
 mesh = SubResource("BoxMesh_frame_horizontal")
 material_override = ExtResource("5_paint_white")
 
 [node name="FrameLeft" type="MeshInstance3D" parent="Window"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.17, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 0.996667, 0, 0, 0, 0.981818, -1.17, -0.001, 0)
 mesh = SubResource("BoxMesh_frame_vertical")
 material_override = ExtResource("5_paint_white")
 
 [node name="FrameRight" type="MeshInstance3D" parent="Window"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.17, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 0.996667, 0, 0, 0, 0.981818, 1.17, -0.001, 0)
 mesh = SubResource("BoxMesh_frame_vertical")
 material_override = ExtResource("5_paint_white")
 
@@ -197,25 +197,27 @@ mesh = SubResource("BoxMesh_sill")
 material_override = ExtResource("5_paint_white")
 
 [node name="Muntin1" type="MeshInstance3D" parent="Window"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 0.996667, 0, 0, 0, 0.933333, -0.6, -0.001, 0)
 mesh = SubResource("BoxMesh_muntin_vertical")
 material_override = ExtResource("5_paint_white")
 
 [node name="Muntin2" type="MeshInstance3D" parent="Window"]
+transform = Transform3D(1, 0, 0, 0, 0.996667, 0, 0, 0, 0.933333, 0, -0.001, 0)
 mesh = SubResource("BoxMesh_muntin_vertical")
 material_override = ExtResource("5_paint_white")
 
 [node name="Muntin3" type="MeshInstance3D" parent="Window"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 0.996667, 0, 0, 0, 0.933333, 0.6, -0.001, 0)
 mesh = SubResource("BoxMesh_muntin_vertical")
 material_override = ExtResource("5_paint_white")
 
 [node name="MuntinHorizontal" type="MeshInstance3D" parent="Window"]
+transform = Transform3D(0.996666, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("BoxMesh_muntin_horizontal")
 material_override = ExtResource("5_paint_white")
 
 [node name="Glass" type="MeshInstance3D" parent="Window"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.03)
+transform = Transform3D(0.998333, 0, 0, 0, 0.998889, 0, 0, 0, 1, 0, -0.001, -0.03)
 cast_shadow = 0
 mesh = SubResource("BoxMesh_glass")
 material_override = ExtResource("6_glass")
@@ -255,17 +257,17 @@ prompt_text = "Tür öffnen"
 shape = SubResource("BoxShape3D_door_interact")
 
 [node name="TrimLeft" type="MeshInstance3D" parent="Door"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.54, 1.14, 0.12)
+transform = Transform3D(1, 0, 0, 0, 0.997369, 0, 0, 0, 0.95, -0.54, 1.141, 0.121)
 mesh = SubResource("BoxMesh_door_trim_vertical")
 material_override = ExtResource("5_paint_white")
 
 [node name="TrimRight" type="MeshInstance3D" parent="Door"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.54, 1.14, 0.12)
+transform = Transform3D(1, 0, 0, 0, 0.999123, 0, 0, 0, 1, 0.54, 1.139, 0.12)
 mesh = SubResource("BoxMesh_door_trim_vertical")
 material_override = ExtResource("5_paint_white")
 
 [node name="TrimTop" type="MeshInstance3D" parent="Door"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.24, 0.12)
+transform = Transform3D(0.996552, 0, 0, 0, 1, 0, 0, 0, 0.85, 0, 2.24, 0.121)
 mesh = SubResource("BoxMesh_door_trim_top")
 material_override = ExtResource("5_paint_white")
 

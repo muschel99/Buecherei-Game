@@ -162,12 +162,12 @@ material_override = ExtResource("2_kj5e8")
 mesh = SubResource("BoxMesh_wopgd")
 
 [node name="Back" type="MeshInstance3D" parent="Model" unique_id=950179898]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.63, -0.325)
+transform = Transform3D(0.99579, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.63, -0.325)
 material_override = ExtResource("2_kj5e8")
 mesh = SubResource("BoxMesh_gbit6")
 
 [node name="ArmLeft" type="MeshInstance3D" parent="Model" unique_id=1915146462]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 0.52, 0)
+transform = Transform3D(0.988889, 0, 0, 0, 1, 0, 0, 0, 0.995294, -0.859, 0.52, 0)
 material_override = ExtResource("2_kj5e8")
 mesh = SubResource("BoxMesh_rc6lx")
 
@@ -177,7 +177,7 @@ material_override = ExtResource("2_kj5e8")
 mesh = SubResource("CylinderMesh_m8mda")
 
 [node name="ArmRight" type="MeshInstance3D" parent="Model" unique_id=1252870057]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.86, 0.52, 0)
+transform = Transform3D(0.988889, 0, 0, 0, 1, 0, 0, 0, 0.995294, 0.859, 0.52, 0)
 material_override = ExtResource("2_kj5e8")
 mesh = SubResource("BoxMesh_ju80k")
 

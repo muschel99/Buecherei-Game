@@ -44,7 +44,7 @@ material_override = ExtResource("3_0f86f")
 mesh = SubResource("BoxMesh_4u4xd")
 
 [node name="ShapeB" type="MeshInstance3D" parent="Model" unique_id=1597967350]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, -0.06, 0.036)
+transform = Transform3D(1, 0, 0, 0, 0.983333, 0, 0, 0, 1, 0.1, -0.059, 0.036)
 material_override = ExtResource("4_bxxru")
 mesh = SubResource("BoxMesh_8nxov")
 
