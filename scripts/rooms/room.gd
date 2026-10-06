@@ -39,7 +39,7 @@ signal layout_changed
 	$Structure/WallFront,
 ]
 ## Hier darf man etwas an die Tür hängen (z. B. einen Türkranz).
-@onready var _hang_doors: Array[Node] = [$Door/DoorLeaf]
+@onready var _hang_doors: Array[Node] = [$Door/Hinge/DoorLeaf]
 ## Hier darf man etwas an die Decke hängen (z. B. Deckenlampen).
 @onready var _hang_ceilings: Array[Node] = [$Structure/Ceiling]
 

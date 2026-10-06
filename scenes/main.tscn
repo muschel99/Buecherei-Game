@@ -11,6 +11,9 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/build_ui.tscn" id="9_build_ui"]
 [ext_resource type="PackedScene" path="res://scenes/ui/style_meter.tscn" id="10_style_meter"]
 [ext_resource type="PackedScene" path="res://scenes/ui/fps_counter.tscn" id="11_fps"]
+[ext_resource type="Material" path="res://assets/materials/sidewalk.tres" id="12_sidewalk"]
+[ext_resource type="Material" path="res://assets/materials/curb_stone.tres" id="13_curb"]
+[ext_resource type="Material" path="res://assets/materials/wall_plaster.tres" id="14_plaster"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -53,6 +56,30 @@ size = Vector2(40, 40)
 [sub_resource type="BoxMesh" id="BoxMesh_houses"]
 size = Vector3(40, 6, 1)
 
+[sub_resource type="BoxMesh" id="BoxMesh_sidewalk"]
+size = Vector3(12, 0.12, 2.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sidewalk"]
+size = Vector3(12, 0.12, 2.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_curb"]
+size = Vector3(12, 0.14, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_neighbor"]
+size = Vector3(6, 7, 8.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_neighbor"]
+size = Vector3(6, 7, 8.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_upper_facade"]
+size = Vector3(6.4, 3.6, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bound_side"]
+size = Vector3(0.2, 3, 2.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bound_front"]
+size = Vector3(12, 3, 0.2)
+
 [node name="Main" type="Node3D"]
 script = ExtResource("7_main")
 
@@ -71,7 +98,7 @@ directional_shadow_max_distance = 25.0
 [node name="Outside" type="Node3D" parent="."]
 
 [node name="Street" type="MeshInstance3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, -10)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.12, -10)
 mesh = SubResource("PlaneMesh_street")
 material_override = ExtResource("5_cobblestone")
 
@@ -79,6 +106,60 @@ material_override = ExtResource("5_cobblestone")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -20)
 mesh = SubResource("BoxMesh_houses")
 material_override = ExtResource("6_brick")
+
+[node name="Sidewalk" type="StaticBody3D" parent="Outside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -5.4)
+
+[node name="Mesh" type="MeshInstance3D" parent="Outside/Sidewalk"]
+mesh = SubResource("BoxMesh_sidewalk")
+material_override = ExtResource("12_sidewalk")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/Sidewalk"]
+shape = SubResource("BoxShape3D_sidewalk")
+
+[node name="Curb" type="MeshInstance3D" parent="Outside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -6.56)
+mesh = SubResource("BoxMesh_curb")
+material_override = ExtResource("13_curb")
+
+[node name="NeighborLeft" type="StaticBody3D" parent="Outside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 3.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Outside/NeighborLeft"]
+mesh = SubResource("BoxMesh_neighbor")
+material_override = ExtResource("6_brick")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/NeighborLeft"]
+shape = SubResource("BoxShape3D_neighbor")
+
+[node name="NeighborRight" type="StaticBody3D" parent="Outside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 3.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Outside/NeighborRight"]
+mesh = SubResource("BoxMesh_neighbor")
+material_override = ExtResource("6_brick")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/NeighborRight"]
+shape = SubResource("BoxShape3D_neighbor")
+
+[node name="UpperFacade" type="MeshInstance3D" parent="Outside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, -4.1)
+mesh = SubResource("BoxMesh_upper_facade")
+material_override = ExtResource("14_plaster")
+
+[node name="Bounds" type="StaticBody3D" parent="Outside"]
+
+[node name="Left" type="CollisionShape3D" parent="Outside/Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.1, 1.5, -5.5)
+shape = SubResource("BoxShape3D_bound_side")
+
+[node name="Right" type="CollisionShape3D" parent="Outside/Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.1, 1.5, -5.5)
+shape = SubResource("BoxShape3D_bound_side")
+
+[node name="Front" type="CollisionShape3D" parent="Outside/Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6.7)
+shape = SubResource("BoxShape3D_bound_front")
 
 [node name="GroundFloorRoom" parent="." instance=ExtResource("1_room")]
 

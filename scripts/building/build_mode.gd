@@ -148,6 +148,8 @@ func set_active(active: bool) -> void:
 	if active:
 		if _player.is_seated():
 			_player.stand_up()  # Zum Gestalten erst aufstehen
+		# Türen schließen sich – an ihnen hängt man Dinge auf, und der Raum ist wieder zu
+		get_tree().call_group("doors", "close_instantly")
 		MenuStack.open(self)
 		_set_status("Wähle unten etwas aus dem Inventar oder klicke ein Möbelstück an, um es zu verschieben.")
 	else:

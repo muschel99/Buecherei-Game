@@ -71,6 +71,10 @@ var light_fade_time: float = 0.35
 var flame_fade_time: float = 0.6
 ## Soll der Lichtschalter auch Kerzen und Laternen mitschalten? (Standard: nur elektrische Lampen)
 var light_switch_includes_flames: bool = false
+## So weit öffnet sich die Eingangstür (in Grad).
+var door_open_angle: float = 90.0
+## So lange dauert das Öffnen bzw. Schließen der Tür (in Sekunden).
+var door_open_time: float = 0.9
 
 
 # --- Raum ---
