@@ -135,7 +135,8 @@ Wände und Boden nutzen „Triplanar“-Mapping: Texturen werden automatisch gle
 
 ## Eigene Symbole für den Gestaltungsmodus
 Beim Gestalten erscheint statt des Punkts ein Farbroller (Wand), ein eingerollter Teppich
-(Boden) bzw. ein Roller an einer Stange (Decke). Die Platzhalter liegen in `assets/ui/icons/`
+(Boden) bzw. ein Roller an einer Stange (Decke). Das Lager-Symbol unten rechts (Häuschen) ist
+`storage.svg`. Die Platzhalter liegen in `assets/ui/icons/`
 (`paint_roller.svg`, `carpet_roll.svg`, `ceiling_roller.svg`).
 Zum Austauschen: eigenes Bild (.png oder .svg, ca. 64 × 64 Pixel) in den Ordner kopieren, dann
 `scenes/ui/hud.tscn` öffnen, den obersten Knoten `HUD` anklicken und im Inspektor bei

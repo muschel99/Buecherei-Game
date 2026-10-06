@@ -1,0 +1,64 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/storage_indicator.gd" id="1_storage"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/storage.svg" id="2_icon"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_storage"]
+bg_color = Color(0.17, 0.12, 0.09, 0.55)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.96, 0.78, 0.48, 0.35)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+
+[node name="StorageIndicator" type="CanvasLayer"]
+layer = 3
+script = ExtResource("1_storage")
+storage_texture = ExtResource("2_icon")
+
+[node name="Corner" type="Control" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -128.0
+offset_top = -190.0
+offset_right = -28.0
+offset_bottom = -28.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Storage" type="Panel" parent="Corner"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 20.0
+offset_top = 102.0
+offset_right = 80.0
+offset_bottom = 162.0
+pivot_offset = Vector2(30, 30)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_storage")
+
+[node name="StorageIcon" type="TextureRect" parent="Corner/Storage"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = 49.0
+offset_bottom = 48.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Items" type="Control" parent="Corner"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 100.0
+offset_bottom = 162.0
+mouse_filter = 2

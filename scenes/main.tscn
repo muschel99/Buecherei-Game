@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://scripts/shop/delivery_manager.gd" id="15_deliveries"]
 [ext_resource type="PackedScene" path="res://scenes/ui/notice.tscn" id="16_notice"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shop_window.tscn" id="17_shop"]
+[ext_resource type="PackedScene" path="res://scenes/ui/storage_indicator.tscn" id="18_storage"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -196,6 +197,8 @@ player_path = NodePath("../Player")
 [node name="FpsCounter" parent="." instance=ExtResource("11_fps")]
 
 [node name="Notice" parent="." instance=ExtResource("16_notice")]
+
+[node name="StorageIndicator" parent="." instance=ExtResource("18_storage")]
 
 [connection signal="interaction_target_changed" from="Player" to="HUD" method="_on_player_interaction_target_changed"]
 [connection signal="catalog_state_changed" from="BuildMode" to="HUD" method="_on_build_mode_catalog_state_changed"]

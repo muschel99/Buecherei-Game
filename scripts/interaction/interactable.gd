@@ -7,6 +7,10 @@ extends Area3D
 ## 2. Gib dem Interactable eine CollisionShape3D, die das Objekt umschließt.
 ## 3. Trage im Inspektor bei "Prompt Text" den Hinweis ein (z. B. "Lampe einschalten").
 ## 4. Verbinde das Signal "interacted" mit einer Funktion deines Objekts.
+##
+## Man muss nicht genau den Interactable-Bereich treffen: Schaut man auf den festen Körper
+## des Objekts (z. B. von oben auf einen Karton oder von hinten auf einen Sessel), findet
+## find_for() das passende Interactable desselben Objekts (siehe Spielfigur).
 
 ## Wird gesendet, wenn die Spielfigur E drückt, während sie das Objekt ansieht.
 signal interacted(interactor: Node)
@@ -28,6 +32,35 @@ func _ready() -> void:
 	set_collision_layer_value(INTERACTABLE_LAYER, true)
 	collision_mask = 0
 	monitoring = false
+
+
+## Wenn der Blick einen festen Körper trifft (Kollision eines Möbels, Kartons, Türblatts):
+## das Interactable, das zu diesem Objekt gehört – oder null.
+## Gesucht wird von dem getroffenen Körper aus nach oben, aber nur innerhalb des Objekts
+## (Halt an PlacedFurniture und am Raum). Hat das Objekt mehrere (z. B. drei Sofaplätze),
+## gilt das, das dem getroffenen Punkt am nächsten liegt.
+static func find_for(collider: Node, hit_point: Vector3) -> Interactable:
+	var node := collider.get_parent() if collider else null
+	var depth := 0
+	while node and depth < 4 and not node is PlacedFurniture and not node is Room and not node is Window:
+		var best: Interactable = null
+		var best_distance := INF
+		for child in node.get_children():
+			# direkt darunter oder eine Ebene tiefer (z. B. Seating/Interactable)
+			var candidates: Array = [child]
+			if not child is CollisionObject3D:
+				candidates.append_array(child.get_children())
+			for candidate in candidates:
+				if candidate is Interactable and candidate.is_enabled:
+					var distance: float = candidate.global_position.distance_to(hit_point)
+					if distance < best_distance:
+						best = candidate
+						best_distance = distance
+		if best:
+			return best
+		node = node.get_parent()
+		depth += 1
+	return null
 
 
 ## Wird von der Spielfigur aufgerufen.

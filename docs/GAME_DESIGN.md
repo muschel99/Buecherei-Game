@@ -44,8 +44,16 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   - Die Kartons stapeln sich ordentlich: erst nebeneinander an der Hauswand (4 Stapel), dann
     bis zu 3 übereinander, dann eine Reihe davor. Jeder steht leicht schief, keiner steckt im
     anderen. Auch mehrere Bestellungen stapeln sich so weiter; neue Kartons füllen Lücken.
-  - E auf einen Karton: Der Inhalt wandert direkt ins Inventar, der Karton hebt sich, dreht
-    sich und schrumpft sanft weg. Wird ein unterer Karton eingesammelt, rutschen die oberen nach.
+  - E auf einen Karton – von jeder Seite und auch von oben: Der Inhalt wandert direkt ins
+    Inventar, der Karton hebt sich, dreht sich und schrumpft sanft weg. Wird ein unterer Karton
+    eingesammelt, rutschen die oberen nach. Es reagiert immer der Karton, den man ansieht.
+  - **Lager-Anzeige** statt Text: Unten rechts erscheint dezent ein kleines Lager-Symbol
+    (Häuschen). Darüber ploppt das Bild des Objekts mit einem kleinen „+“ auf, rutscht ein
+    kurzes Stück hinein, und das Lager-Symbol federt kurz auf wie eine Blase. Danach blendet es
+    nach ein paar Sekunden sanft aus. Mehrere Dinge erscheinen nacheinander (Abstand 0,7 s,
+    GameConfig) – das Einsammeln selbst geht sofort, man muss nie warten. Die Bilder entstehen
+    automatisch aus den 3D-Modellen (auch für eigene Modelle). Das System ist wiederverwendbar,
+    z. B. später für Bücher.
   - Der Lieferort ist ein verschiebbarer Punkt (`Outside/Deliveries` in der Hauptszene);
     Richtung der Stapel im Inspektor, Stapelhöhe und -anzahl in GameConfig.
   - Nichts tragen, nichts einsortieren.
@@ -92,7 +100,9 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - Später ein Spiegel, aus dem kleine Wesen heimlich Bücher ausleihen.
 
 ## Steuerung
-**Grundregel:** Jede Interaktion in der Spielwelt läuft über die Taste E.
+**Grundregel:** Jede Interaktion in der Spielwelt läuft über die Taste E. Man muss dafür nicht
+eine bestimmte Stelle treffen: Wer auf irgendeinen Teil eines Objekts schaut (von vorn, der
+Seite, hinten oder oben), kann es benutzen.
 Esc schließt immer zuerst das, was gerade offen ist (Gestaltungsmodus, Shop, Menüs).
 Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 

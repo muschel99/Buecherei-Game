@@ -63,7 +63,12 @@ func unpack() -> void:
 			Inventory.add_surface(id)
 		else:
 			Inventory.add_furniture(id, int(entry.get("count", 1)))
-	Notice.post(self, "Ausgepackt: %s – liegt jetzt im Inventar." % describe_contents(contents))
+	# Beiläufig unten rechts zeigen, was ins Lager geht (statt eines Textes)
+	for entry in contents:
+		var item: Resource = Catalog.get_surface(str(entry.get("id"))) if entry.get("kind") == "surface" \
+			else Catalog.get_furniture(str(entry.get("id")))
+		if item:
+			StorageIndicator.add_item(self, item, 1 if entry.get("kind") == "surface" else int(entry.get("count", 1)))
 	unpacked.emit(self)
 	# Kleine Animation: Der Karton plustert sich kurz auf, hebt sich, dreht sich und
 	# schrumpft dabei zu nichts – alles zusammen dauert GameConfig.unpack_time.
@@ -77,20 +82,3 @@ func unpack() -> void:
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	tween.tween_property(self, "rotation:y", rotation.y + PI * 0.5, duration)
 	tween.chain().tween_callback(queue_free)
-
-
-## Kurze Beschreibung des Inhalts, z. B. "Ohrensessel ×2, Kalkweiß".
-static func describe_contents(entries: Array) -> String:
-	var parts: Array[String] = []
-	for entry in entries:
-		var id := str(entry.get("id", ""))
-		var resource: Resource = Catalog.get_surface(id) if entry.get("kind") == "surface" else Catalog.get_furniture(id)
-		var item_name: String = resource.display_name if resource else id
-		var count := int(entry.get("count", 1))
-		parts.append(item_name if count <= 1 else "%s ×%d" % [item_name, count])
-	# Bei großen Lieferungen nur die ersten drei nennen, damit der Hinweis kurz bleibt
-	if parts.size() > 3:
-		var more := parts.size() - 3
-		parts.resize(3)
-		parts.append("und %d weitere" % more if more > 1 else "und 1 weiteres")
-	return ", ".join(parts)

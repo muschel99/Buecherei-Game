@@ -11,6 +11,7 @@
 | 2f  | Inventar, Shop und Lieferung             | fertig        |
 | 2g  | Fensterlicht und Filter                  | fertig        |
 | 2h  | Kronleuchter, Kartons und Baumodus       | fertig        |
+| 2i  | Kartons einsammeln und Lager-Animation   | fertig        |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -137,6 +138,18 @@ dass Etappe 5 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den
 - [x] Alle Kartons mit Stapel und Drehung gespeichert; alte Sammelkartons werden zu Einzelkartons
 - [x] Gestaltungsmodus zeigt nur, was im Inventar liegt (keine ausgegrauten Karten mehr);
       Filter nur mit belegten Unterkategorien; freundlicher Hinweis bei leerem Reiter
+
+## Etappe 2i – Kartons einsammeln und Lager-Animation
+- [x] Kartons von allen Seiten anwählbar, auch von oben; bei Stapeln reagiert immer der
+      angesehene Karton. Ursache: Der E-Bereich endete genau auf Deckelhöhe, der feste Karton
+      „gewann“. Lösung im Interaktionssystem: Trifft der Blick den festen Körper eines Objekts,
+      gilt dessen E-Bereich (`Interactable.find_for`)
+- [x] Alle E-Objekte geprüft; Sessel, Korbsessel und Sofa sind jetzt auch von hinten anwählbar
+- [x] Lager-Anzeige unten rechts statt Schriftzug (`StorageIndicator`): Symbol ploppt auf,
+      rutscht ins Lager, Lager federt kurz; Warteschlange mit 0,7 s Abstand (GameConfig);
+      blendet danach aus
+- [x] Symbole automatisch aus den 3D-Modellen (SubViewport, zwischengespeichert);
+      wiederverwendbar für alles, was ins Lager geht (später z. B. Bücher)
 
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)
