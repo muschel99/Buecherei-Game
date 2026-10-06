@@ -251,11 +251,16 @@ func _update_interaction_target() -> void:
 	var new_target: Interactable = null
 	if interaction_enabled and not is_seated() and interaction_ray.is_colliding():
 		var hit := interaction_ray.get_collider()
-		if hit is Interactable and hit.is_enabled:
-			var distance := camera.global_position.distance_to(interaction_ray.get_collision_point())
-			var reach := GameConfig.long_interaction_distance if hit.long_reach else GameConfig.interaction_distance
+		var point := interaction_ray.get_collision_point()
+		# Fester Körper getroffen (z. B. Kartondeckel von oben)? Dann zählt sein Interactable.
+		var target: Interactable = hit as Interactable
+		if target == null and hit is Node:
+			target = Interactable.find_for(hit, point)
+		if target and target.is_enabled:
+			var distance := camera.global_position.distance_to(point)
+			var reach := GameConfig.long_interaction_distance if target.long_reach else GameConfig.interaction_distance
 			if distance <= reach:
-				new_target = hit
+				new_target = target
 
 	if new_target != _current_target:
 		# Dezente Hervorhebung wandert mit dem anvisierten Objekt
