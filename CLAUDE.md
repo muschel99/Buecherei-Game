@@ -101,13 +101,18 @@ docs/              Dokumentation
   (Etappe 5 baut darauf auf). Anzeige als Text: `Wallet.format(betrag)`.
 - **Inventar** (`Inventory`): Möbel mit Anzahl (`add_furniture`, `take_furniture`), Oberflächen
   einmal besessen (`add_surface`, `owns_surface`). Was im Raum steht, zählt der Raum
-  (`Room.count_placed`). Der Gestaltungsmodus zeigt nur Eigenes.
+  (`Room.count_placed`). Der Gestaltungsmodus zeigt nur, was im Inventar liegt (Anzahl ≥ 1).
 - `FurnitureData.is_essential` = gehört fest zur Bücherei (Tablet): nicht kaufbar, nicht
   verkaufbar; `Room.ensure_essentials()` stellt es zurück, falls es fehlt.
   `SurfaceData.owned_at_start` = von Anfang an vorhanden.
 - **Shop:** `ShopWindow` (Gruppe `shop_window`, `open_shop()`); Bestellungen gehen an den
   `DeliveryManager` (Gruppe `delivery_manager`, `place_order(inhalt)`), Inhalt als Liste von
   `{ "kind": "furniture"/"surface", "id": …, "count": … }`.
+- Lieferung: ein Karton pro Objekt (`DeliveryManager.split_contents`); Kartons stehen in Stapeln
+  (`_stacks`), Lieferort = Marker3D `Outside/Deliveries`. Der E-Zielbereich eines Kartons darf
+  nicht über ihn hinausragen (sonst trifft man beim Stapel den falschen).
+- Lampen mit Licht zwischen vielen kleinen Teilen (Kronleuchter, Geflecht) bekommen
+  `shadow_importance = NONE`.
 - Dezente Hinweise oben im Bild: `Notice.post(self, "Text")`.
 - Türen (`Door`, Gruppe `doors`): Teile, die mitschwingen, unter dem Knoten `Hinge`.
 - Die Spielfigur kann man anhalten: `player.movement_enabled = false` (z. B. im Shop).

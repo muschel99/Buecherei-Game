@@ -22,7 +22,7 @@ size = Vector3(0.13, 0.08, 0.004)
 size = Vector3(0.5, 0.36, 0.42)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
-size = Vector3(0.62, 0.5, 0.54)
+size = Vector3(0.54, 0.36, 0.46)
 
 [node name="DeliveryBox" type="Node3D"]
 script = ExtResource("1_box")
@@ -68,5 +68,5 @@ script = ExtResource("5_interactable")
 prompt_text = "Lieferung auspacken"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0)
 shape = SubResource("BoxShape3D_interact")
