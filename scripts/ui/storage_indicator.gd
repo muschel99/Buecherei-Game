@@ -8,8 +8,8 @@ extends CanvasLayer
 ## Kommen mehrere Dinge kurz hintereinander, stehen sie in einer Warteschlange und erscheinen
 ## nacheinander (Abstand GameConfig.storage_icon_interval). Das Spiel wartet nie darauf.
 ##
-## Von überall aus aufrufen (wiederverwendbar, z. B. später auch für Bücher):
-##   StorageIndicator.add_item(self, datenblatt)   # FurnitureData oder SurfaceData
+## Von überall aus aufrufen (wiederverwendbar, z. B. auch für Bücher):
+##   StorageIndicator.add_item(self, datenblatt)   # FurnitureData, SurfaceData oder GenreData
 ##   StorageIndicator.add_icon(self, bild)         # ein beliebiges Texture2D
 ## Die Bilder der Möbel entstehen automatisch aus den 3D-Modellen (ThumbnailRenderer) und
 ## werden zwischengespeichert; Wandfarben und Böden bekommen ein Farbfeld.
@@ -43,7 +43,8 @@ var _bounce_tween: Tween
 static var _swatches := {}  # Oberflächen-id -> Farbfeld
 
 
-## Meldet ein Ding, das ins Lager geht (FurnitureData oder SurfaceData).
+## Meldet ein Ding, das ins Lager geht (FurnitureData, SurfaceData oder GenreData –
+## bei einem Genre erscheint ein kleiner Bücherstapel in seinen Farben).
 static func add_item(sender: Node, item: Resource, count: int = 1) -> void:
 	for i in count:
 		sender.get_tree().call_group(GROUP, "enqueue", item)
@@ -93,6 +94,8 @@ func _icon_for(entry: Variant) -> Texture2D:
 		return entry
 	if entry is SurfaceData:
 		return _swatch(entry)
+	if entry is GenreData:
+		return BookIcons.get_stack_icon(entry)
 	if entry is FurnitureData:
 		var ready_image := ThumbnailRenderer.get_cached(entry)
 		if ready_image:

@@ -53,7 +53,8 @@ func _ready() -> void:
 
 
 ## Nimmt eine Bestellung an. contents: Liste von
-## { "kind": "furniture" oder "surface", "id": "...", "count": Anzahl }.
+## { "kind": "furniture", "surface" oder "books", "id": "...", "count": Anzahl }.
+## Bei "books" ist die id das Genre und count die Zahl der Bücherpakete.
 func place_order(contents: Array) -> void:
 	if contents.is_empty():
 		return
@@ -84,7 +85,7 @@ func _deliver(contents: Array) -> void:
 
 
 ## Teilt einen Inhalt in einzelne Objekte auf: [Stuhl ×3, Lampe] -> [Stuhl], [Stuhl],
-## [Stuhl], [Lampe]. Jedes Ergebnis ist der Inhalt eines Kartons.
+## [Stuhl], [Lampe]. Jedes Ergebnis ist der Inhalt eines Kartons (ein Bücherpaket = ein Karton).
 static func split_contents(contents: Array) -> Array:
 	var result := []
 	for entry in contents:

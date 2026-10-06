@@ -1,14 +1,15 @@
 class_name ShopWindow
 extends CanvasLayer
-## Der Shop am Tablet auf der Theke: Möbel, Deko, Wandfarben, Böden und Decken kaufen
-## und Dinge aus dem Inventar verkaufen.
+## Der Shop am Tablet auf der Theke: Bücher, Möbel, Deko, Wandfarben, Böden und Decken
+## kaufen, Dinge aus dem Inventar verkaufen und den Bücherbestand ansehen.
 ##
 ## - Reiter "Kaufen": alles Freigeschaltete nach Kategorien, mit Vorschau, Preis und Stil.
-##   Ein Klick legt es in den Warenkorb (Möbel auch mehrfach). "Bestellen" bezahlt
-##   (Wallet) und gibt die Bestellung an den Lieferdienst (DeliveryManager) – kurz darauf
-##   steht ein Karton vor der Tür.
+##   Ein Klick legt es in den Warenkorb (Möbel und Bücherpakete auch mehrfach). "Bestellen"
+##   bezahlt (Wallet) und gibt die Bestellung an den Lieferdienst (DeliveryManager) – kurz
+##   darauf stehen die Kartons vor der Tür. Bücherpakete gibt es je freigeschaltetem Genre.
 ## - Reiter "Verkaufen": Möbel aus dem Inventar (nicht die im Raum) gegen einen Teil des
 ##   Preises (GameConfig.sell_price_share).
+## - Reiter "Bestand": wie viele Bücher je Genre ich habe – im Regal, im Lager, unterwegs.
 ## Öffnen: E am Tablet. Schließen: Esc oder "Schließen" (Esc-Regel über MenuStack).
 ## Solange der Shop offen ist, ist der Mauszeiger sichtbar und die Spielfigur steht still.
 
@@ -19,6 +20,10 @@ const TEXT_COLOR := Color(1.0, 0.96, 0.88)
 const SOFT_WARNING_COLOR := Color(1.0, 0.8, 0.62)
 const CARD_SIZE := Vector2(196, 262)
 const PREVIEW_SIZE := Vector2(176, 118)
+## Die drei Reiter oben
+const VIEW_BUY := "buy"
+const VIEW_SELL := "sell"
+const VIEW_STOCK := "stock"
 
 ## Pfad zur Spielfigur (im Inspektor der Hauptszene eingetragen).
 @export var player_path: NodePath
@@ -26,6 +31,7 @@ const PREVIEW_SIZE := Vector2(176, 118)
 @onready var _player: Player = get_node(player_path)
 @onready var _buy_tab_button: Button = %BuyTabButton
 @onready var _sell_tab_button: Button = %SellTabButton
+@onready var _stock_tab_button: Button = %StockTabButton
 @onready var _close_button: Button = %CloseButton
 @onready var _money_label: Label = %MoneyLabel
 @onready var _buy_view: Control = %BuyView
@@ -41,14 +47,19 @@ const PREVIEW_SIZE := Vector2(176, 118)
 @onready var _sell_list: VBoxContainer = %SellList
 @onready var _sell_info: Label = %SellInfo
 @onready var _sell_message: Label = %SellMessage
+@onready var _stock_view: Control = %StockView
+@onready var _stock_grid: GridContainer = %StockGrid
+@onready var _stock_message: Label = %StockMessage
+@onready var _store_carried_button: Button = %StoreCarriedButton
 
 var is_open: bool = false
 
-## Kategorien links: [Anzeigename, "furniture" oder "surface", Kategorie bzw. Art]
+## Kategorien links: [Anzeigename, "books", "furniture" oder "surface", Kategorie bzw. Art]
 var _categories: Array = []
 var _category_buttons: Array[Button] = []
 var _current_category: int = 0
-## Warenkorb: Einträge { "kind": "furniture"/"surface", "id": "...", "count": Anzahl }
+## Warenkorb: Einträge { "kind": "furniture"/"surface"/"books", "id": "...", "count": Anzahl }
+## (bei "books": id = Genre, count = Zahl der Bücherpakete)
 var _cart: Array[Dictionary] = []
 var _order_text := ""
 var _thumbnails: ThumbnailRenderer
@@ -63,9 +74,10 @@ func _ready() -> void:
 	_thumbnails.name = "Thumbnails"
 	add_child(_thumbnails)
 	_selected_style = _make_selected_style()
-	for button: Button in [_buy_tab_button, _sell_tab_button]:
+	for button: Button in [_buy_tab_button, _sell_tab_button, _stock_tab_button]:
 		button.add_theme_stylebox_override("pressed", _selected_style)
 		button.add_theme_stylebox_override("hover_pressed", _selected_style)
+	_categories.append(["Bücher", "books", null])
 	for category in FurnitureData.Category.values():
 		_categories.append([FurnitureData.get_category_display_name(category), "furniture", category])
 	_categories.append(["Wandfarben", "surface", SurfaceData.Kind.WALL])
@@ -73,13 +85,17 @@ func _ready() -> void:
 	_categories.append(["Decken", "surface", SurfaceData.Kind.CEILING])
 	_build_category_buttons()
 
-	_buy_tab_button.pressed.connect(_show_view.bind(true))
-	_sell_tab_button.pressed.connect(_show_view.bind(false))
+	_buy_tab_button.pressed.connect(_show_view.bind(VIEW_BUY))
+	_sell_tab_button.pressed.connect(_show_view.bind(VIEW_SELL))
+	_stock_tab_button.pressed.connect(_show_view.bind(VIEW_STOCK))
+	_store_carried_button.pressed.connect(_on_store_carried_pressed)
 	_close_button.pressed.connect(close)
 	_order_button.pressed.connect(_on_order_pressed)
 	_filter_bar.changed.connect(_on_filter_changed)
 	Wallet.money_changed.connect(func(_money: int, _change: int) -> void: _queue_refresh())
 	Inventory.changed.connect(_queue_refresh)
+	BookStock.changed.connect(_queue_refresh)
+	BookStock.carried_changed.connect(_queue_refresh)
 	_sell_info.text = ("Du bekommst %d %% des Preises zurück.\n\nVerkaufen kannst du alles, was im " \
 		+ "Inventar liegt. Was im Raum steht, räumst du vorher im Gestaltungsmodus (Tab) mit X " \
 		+ "ins Inventar. Wandfarben, Böden und Decken behältst du für immer.") \
@@ -104,7 +120,8 @@ func open_shop() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_order_text = ""
 	_sell_message.text = ""
-	_show_view(true)
+	_stock_message.text = ""
+	_show_view(VIEW_BUY)
 
 
 func close() -> void:
@@ -128,12 +145,14 @@ func restore_mouse_mode() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
-## true = Reiter "Kaufen", false = "Verkaufen".
-func _show_view(buy: bool) -> void:
-	_buy_tab_button.set_pressed_no_signal(buy)
-	_sell_tab_button.set_pressed_no_signal(not buy)
-	_buy_view.visible = buy
-	_sell_view.visible = not buy
+## Zeigt einen Reiter: VIEW_BUY ("Kaufen"), VIEW_SELL ("Verkaufen") oder VIEW_STOCK ("Bestand").
+func _show_view(view: String) -> void:
+	_buy_tab_button.set_pressed_no_signal(view == VIEW_BUY)
+	_sell_tab_button.set_pressed_no_signal(view == VIEW_SELL)
+	_stock_tab_button.set_pressed_no_signal(view == VIEW_STOCK)
+	_buy_view.visible = view == VIEW_BUY
+	_sell_view.visible = view == VIEW_SELL
+	_stock_view.visible = view == VIEW_STOCK
 	_refresh()
 
 
@@ -151,8 +170,10 @@ func _refresh() -> void:
 	if _buy_view.visible:
 		_show_category(_current_category)
 		_refresh_cart()
-	else:
+	elif _sell_view.visible:
 		_refresh_sell_list()
+	else:
+		_refresh_stock()
 
 
 # --- Kaufen: Kategorien und Angebote ---
@@ -195,7 +216,9 @@ func get_visible_offers(index: int) -> Array[Resource]:
 func get_offers(index: int) -> Array[Resource]:
 	var category: Array = _categories[index]
 	var result: Array[Resource] = []
-	if category[1] == "furniture":
+	if category[1] == "books":
+		result.append_array(BookStock.get_unlocked_genres())
+	elif category[1] == "furniture":
 		for data in Catalog.get_furniture_in_category(category[2]):
 			if not data.is_essential:
 				result.append(data)
@@ -232,7 +255,7 @@ func _create_offer_card(item: Resource) -> Button:
 	var card := Button.new()
 	card.custom_minimum_size = CARD_SIZE
 	card.focus_mode = Control.FOCUS_NONE
-	card.tooltip_text = item.description if item is FurnitureData else ""
+	card.tooltip_text = item.description if item is FurnitureData or item is GenreData else ""
 	card.pressed.connect(add_to_cart.bind(item))
 
 	var box := VBoxContainer.new()
@@ -242,7 +265,10 @@ func _create_offer_card(item: Resource) -> Button:
 	card.add_child(box)
 	box.add_child(_create_preview(item))
 
-	var title := _small_label(item.display_name, 16, TEXT_COLOR)
+	var title_text: String = item.display_name
+	if item is GenreData:
+		title_text = "%s – Paket mit %d Büchern" % [item.display_name, GameConfig.books_per_package]
+	var title := _small_label(title_text, 16, TEXT_COLOR)
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.max_lines_visible = 2
 	title.custom_minimum_size.y = 42
@@ -264,6 +290,9 @@ func _create_offer_card(item: Resource) -> Button:
 		card.modulate.a = 0.55 if card.disabled else 1.0
 		if status.is_empty():
 			status = "Einmal kaufen, immer nutzen"
+	elif item is GenreData:
+		var owned := BookStock.count_total(item.get_id())
+		status = "Du hast %d Bücher" % owned if owned > 0 else "Klicken: in den Warenkorb"
 	else:
 		var owned := Inventory.get_count(item.get_id()) + _count_in_room(item.get_id())
 		status = "Hast du schon: %d" % owned if owned > 0 else "Klicken: in den Warenkorb"
@@ -276,8 +305,17 @@ func _create_offer_card(item: Resource) -> Button:
 	return card
 
 
-## Vorschau: ein Foto des Möbelstücks bzw. ein Farbfeld der Oberfläche.
+## Vorschau: ein Foto des Möbelstücks, ein Farbfeld der Oberfläche bzw. ein Bücherstapel.
 func _create_preview(item: Resource) -> Control:
+	if item is GenreData:
+		var stack := TextureRect.new()
+		stack.texture = BookIcons.get_stack_icon(item)
+		stack.custom_minimum_size = PREVIEW_SIZE
+		stack.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		stack.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		stack.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		return stack
 	if item is SurfaceData:
 		var swatch := ColorRect.new()
 		swatch.color = item.preview_color
@@ -301,13 +339,17 @@ func _create_preview(item: Resource) -> Control:
 
 # --- Warenkorb ---
 
-## Legt etwas in den Warenkorb (Möbel auch mehrfach, Oberflächen einmal).
+## Legt etwas in den Warenkorb (Möbel und Bücherpakete auch mehrfach, Oberflächen einmal).
 func add_to_cart(item: Resource) -> void:
-	var kind := "surface" if item is SurfaceData else "furniture"
+	var kind := "furniture"
+	if item is SurfaceData:
+		kind = "surface"
+	elif item is GenreData:
+		kind = "books"
 	var entry := _find_cart_entry(kind, item.get_id())
 	if entry.is_empty():
 		_cart.append({"kind": kind, "id": item.get_id(), "count": 1})
-	elif kind == "furniture":
+	elif kind != "surface":
 		entry.count += 1
 	_order_text = ""
 	_refresh()
@@ -367,7 +409,7 @@ func _create_cart_row(entry: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	block.add_child(row)
-	if entry.kind == "furniture":
+	if entry.kind != "surface":
 		row.add_child(_small_button("−", _change_cart_count.bind(entry, -1)))
 		var count := _small_label(str(entry.count), 15, TEXT_COLOR)
 		count.custom_minimum_size.x = 22
@@ -449,6 +491,69 @@ func sell(data: FurnitureData) -> void:
 	_sell_message.text = "%s verkauft – du bekommst %s." % [data.display_name, Wallet.format(price)]
 
 
+# --- Bestand ---
+
+const STOCK_COLUMNS := ["Genre", "Im Regal", "Im Lager", "Unterwegs", "Gesamt"]
+
+
+## Die Bestandsliste: je Genre, wie viele Bücher im Regal, im Lager und unterwegs
+## (getragen oder im Rückgabekasten) sind.
+func _refresh_stock() -> void:
+	for child in _stock_grid.get_children():
+		_stock_grid.remove_child(child)
+		child.queue_free()
+	_stock_grid.columns = STOCK_COLUMNS.size()
+	for i in STOCK_COLUMNS.size():
+		_add_stock_cell(STOCK_COLUMNS[i], MUTED_COLOR, i > 0)
+	var sums := [0, 0, 0, 0]
+	for entry in BookStock.get_overview():
+		var genre: GenreData = entry.genre
+		var name_row := HBoxContainer.new()
+		name_row.add_theme_constant_override("separation", 8)
+		name_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var icon := TextureRect.new()
+		icon.texture = BookIcons.get_stack_icon(genre)
+		icon.custom_minimum_size = Vector2(28, 28)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		name_row.add_child(icon)
+		name_row.add_child(_small_label(genre.display_name, 17, TEXT_COLOR))
+		_stock_grid.add_child(name_row)
+		var values := [entry.shelves, entry.stored, entry.elsewhere, entry.total]
+		for i in values.size():
+			sums[i] += values[i]
+			_add_stock_cell(str(values[i]), KEY_COLOR if i == 3 else TEXT_COLOR, true)
+	_add_stock_cell("Zusammen", MUTED_COLOR, false)
+	for i in sums.size():
+		_add_stock_cell(str(sums[i]), KEY_COLOR, true)
+
+	var carried := BookStock.carried.size()
+	_store_carried_button.visible = carried > 0
+	_store_carried_button.text = "Getragene Bücher ins Lager legen (%d)" % carried
+
+
+func _add_stock_cell(text: String, color: Color, is_number: bool) -> void:
+	var label := _small_label(text, 17, color)
+	if is_number:
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		label.custom_minimum_size.x = 96
+	else:
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_stock_grid.add_child(label)
+
+
+func _on_store_carried_pressed() -> void:
+	# Je Genre ein kleiner Bücherstapel in der Lager-Anzeige
+	for genre_id in BookStock.get_carried_counts():
+		var genre := Catalog.get_genre(genre_id)
+		if genre:
+			StorageIndicator.add_item(self, genre)
+	var count := BookStock.store_carried()
+	if count > 0:
+		_stock_message.text = "%d %s ins Lager gelegt." % [count, "Buch" if count == 1 else "Bücher"]
+
+
 # --- Hilfsfunktionen ---
 
 func _find_cart_entry(kind: String, id: String) -> Dictionary:
@@ -461,6 +566,8 @@ func _find_cart_entry(kind: String, id: String) -> Dictionary:
 func _resource_of(entry: Dictionary) -> Resource:
 	if entry.kind == "surface":
 		return Catalog.get_surface(entry.id)
+	if entry.kind == "books":
+		return Catalog.get_genre(entry.id)
 	return Catalog.get_furniture(entry.id)
 
 
@@ -471,6 +578,8 @@ func _price_of(entry: Dictionary) -> int:
 
 func _name_of(entry: Dictionary) -> String:
 	var resource := _resource_of(entry)
+	if resource is GenreData:
+		return "Bücherpaket %s (je %d Bücher)" % [resource.display_name, GameConfig.books_per_package]
 	return resource.display_name if resource else str(entry.id)
 
 

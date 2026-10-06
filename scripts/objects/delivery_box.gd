@@ -5,7 +5,9 @@ extends Node3D
 ## Wo er steht und wie er gestapelt wird, bestimmt der Lieferdienst (DeliveryManager).
 ##
 ## Den Inhalt trägt der Lieferdienst (DeliveryManager) ein, als Liste von Einträgen
-## { "kind": "furniture" oder "surface", "id": "...", "count": Anzahl }.
+## { "kind": "furniture", "surface" oder "books", "id": "...", "count": Anzahl }.
+## Ein Bücherpaket ("books", id = Genre) bringt GameConfig.books_per_package neue Bücher
+## in den Bücherbestand (BookStock) – getrennt vom Möbel-Inventar.
 
 ## Wird gesendet, sobald der Karton ausgepackt ist (der Inhalt liegt dann im Inventar).
 signal unpacked(box: DeliveryBox)
@@ -59,16 +61,31 @@ func unpack() -> void:
 	_body.collision_layer = 0
 	for entry in contents:
 		var id := str(entry.get("id", ""))
-		if entry.get("kind") == "surface":
-			Inventory.add_surface(id)
-		else:
-			Inventory.add_furniture(id, int(entry.get("count", 1)))
+		var count := int(entry.get("count", 1))
+		match entry.get("kind"):
+			"surface":
+				Inventory.add_surface(id)
+			"books":
+				BookStock.add_new_books(id, count * GameConfig.books_per_package)
+			_:
+				Inventory.add_furniture(id, count)
 	# Beiläufig unten rechts zeigen, was ins Lager geht (statt eines Textes)
 	for entry in contents:
-		var item: Resource = Catalog.get_surface(str(entry.get("id"))) if entry.get("kind") == "surface" \
-			else Catalog.get_furniture(str(entry.get("id")))
-		if item:
-			StorageIndicator.add_item(self, item, 1 if entry.get("kind") == "surface" else int(entry.get("count", 1)))
+		var id := str(entry.get("id"))
+		match entry.get("kind"):
+			"surface":
+				var surface := Catalog.get_surface(id)
+				if surface:
+					StorageIndicator.add_item(self, surface)
+			"books":
+				# Ein Bücherstapel in den Genre-Farben je Paket
+				var genre := Catalog.get_genre(id)
+				if genre:
+					StorageIndicator.add_item(self, genre, int(entry.get("count", 1)))
+			_:
+				var furniture := Catalog.get_furniture(id)
+				if furniture:
+					StorageIndicator.add_item(self, furniture, int(entry.get("count", 1)))
 	unpacked.emit(self)
 	# Kleine Animation: Der Karton plustert sich kurz auf, hebt sich, dreht sich und
 	# schrumpft dabei zu nichts – alles zusammen dauert GameConfig.unpack_time.
