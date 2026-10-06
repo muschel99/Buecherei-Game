@@ -1,0 +1,67 @@
+# Wortliste für erfundene Buchtitel – Genre: Science-Fiction
+#
+# So funktioniert es:
+# - Unter [Vorlagen] stehen Satzmuster für Titel.
+# - Jedes {Name} in einer Vorlage wird durch einen zufälligen Eintrag aus der Liste [Name] ersetzt.
+# - Neue Einträge: einfach eine neue Zeile unter die passende Liste schreiben.
+# - Neue Liste: eine neue Überschrift in eckigen Klammern, z. B. [Farbe], und in einer
+#   Vorlage {Farbe} benutzen.
+# - Zeilen mit # am Anfang sind Kommentare und werden ignoriert.
+# Bitte nur erfundene Titel – keine echten Bücher.
+
+[Vorlagen]
+{Was} von {Planet}
+Station {Station}
+Signal aus {Ort}
+Die letzte Fähre nach {Planet}
+{Zahl} Lichtjahre bis {Planet}
+Der Gärtner von {Planet}
+{Name} und die {Maschine}
+Funkstille über {Planet}
+
+[Was]
+Die Gärten
+Das Echo
+Die Sternenkarte
+Die Kolonie
+Das Archiv
+Die Bibliothek
+
+[Planet]
+Kepler-9
+Tessaron
+Vega Minor
+Halcyon
+Orpheon
+Nimbus-4
+
+[Station]
+Lyra
+Morgenrot
+Aster
+Polaris Drei
+Kardamom
+
+[Ort]
+dem Nebelring
+der Tiefe
+dem Asteroidengürtel
+der Mondbasis
+
+[Zahl]
+Zwölf
+Vierhundert
+Drei
+Elf
+
+[Name]
+Kapitänin Ivo
+Rhea
+Juno Park
+Navigator Teague
+
+[Maschine]
+höfliche Maschine
+singende Antenne
+vergessene Raumsonde
+Teekanne aus der Zukunft

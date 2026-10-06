@@ -147,6 +147,37 @@ var storage_hide_delay: float = 2.5
 var notice_time: float = 4.0
 
 
+# --- Bücher und Regale (Etappe 3) ---
+
+## So viele Bücher stecken in einem Bücherpaket aus dem Shop (der Preis steht im Genre-Datenblatt).
+var books_per_package: int = 10
+## So viele Bücher je freigeschaltetem Genre liegen beim allerersten Start im Lager.
+var start_books_per_genre: int = 12
+## Das besitze ich zum Start zusätzlich im Inventar (id aus data/furniture/ -> Anzahl).
+## Kommt auch in ältere Spielstände, aber nur einmal.
+var start_furniture_gifts: Dictionary = {"return_box": 1}
+## Ein Buch gleitet in so vielen Sekunden ins Regal (bzw. heraus).
+var book_slide_time: float = 0.35
+## Abstand zwischen zwei Büchern, die nacheinander ins Regal gleiten (in Sekunden).
+## Kleiner = schneller hintereinander. Viele Bücher auf einmal werden automatisch schneller.
+var book_slide_interval: float = 0.035
+## So lange dauert das Einräumen höchstens, egal wie viele Bücher es sind (in Sekunden).
+var book_slide_max_total: float = 2.5
+## Buchgrößen im Regal in Metern: Höhe, Dicke (Rücken) und Tiefe – jeweils von bis.
+## Jedes Buch bekommt feste Werte dazwischen (passend zur Fachhöhe).
+var book_height_range: Vector2 = Vector2(0.19, 0.31)
+var book_thickness_range: Vector2 = Vector2(0.022, 0.048)
+var book_depth_range: Vector2 = Vector2(0.15, 0.21)
+## Wie stark der Farbton der Buchrücken schwankt (0 = alle Bücher eines Genres gleich).
+var book_color_variation: float = 1.0
+
+## Testtaste (F9): legt ein paar zufällige Bücher in den Rückgabekasten, solange es noch
+## keine Besucher gibt. Zum Abschalten auf false setzen.
+var debug_return_box_key: bool = true
+## So viele Bücher legt die Testtaste auf einmal hinein.
+var debug_return_box_books: int = 7
+
+
 # --- Speichern ---
 
 ## Datei, in der die Einrichtung gespeichert wird ("user://" = Benutzerdatenordner von Godot).

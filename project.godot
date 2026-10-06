@@ -25,6 +25,7 @@ MenuStack="*res://scripts/autoload/menu_stack.gd"
 Settings="*res://scripts/autoload/settings.gd"
 Wallet="*res://scripts/autoload/wallet.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
+BookStock="*res://scripts/autoload/book_stock.gd"
 
 [display]
 

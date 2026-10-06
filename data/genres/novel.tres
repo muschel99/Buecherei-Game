@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "novel"
+display_name = "Roman"
+description = "Geschichten über Menschen, Liebe und das Leben."
+spine_colors = Array[Color]([Color(0.62, 0.33, 0.34, 1), Color(0.76, 0.5, 0.4, 1), Color(0.82, 0.74, 0.6, 1), Color(0.4, 0.5, 0.6, 1), Color(0.5, 0.38, 0.5, 1)])
+styles = 0
+price = 40
+is_unlocked = true
+sort_order = 10

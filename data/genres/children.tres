@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "children"
+display_name = "Kinderbuch"
+description = "Bunte Geschichten zum Vorlesen."
+spine_colors = Array[Color]([Color(0.92, 0.74, 0.26, 1), Color(0.45, 0.67, 0.85, 1), Color(0.82, 0.32, 0.26, 1), Color(0.46, 0.69, 0.36, 1)])
+styles = 0
+price = 35
+is_unlocked = true
+sort_order = 50

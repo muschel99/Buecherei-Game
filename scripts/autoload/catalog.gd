@@ -1,15 +1,18 @@
 extends Node
-## Katalog aller Möbel, Wandfarben und Böden (alles, was es im Spiel gibt).
+## Katalog aller Möbel, Wandfarben, Böden und Buch-Genres (alles, was es im Spiel gibt).
 ## Was man davon besitzt, steht im Inventar (Inventory), was man kaufen kann, im Shop.
 ##
 ## Dieses Autoload liest beim Spielstart alle Datenblätter aus den Ordnern
-## data/furniture/ und data/surfaces/ ein. Im Code: Catalog.get_furniture("armchair_velvet").
+## data/furniture/, data/surfaces/ und data/genres/ ein.
+## Im Code: Catalog.get_furniture("armchair_velvet"), Catalog.get_genre("crime").
 
 const FURNITURE_FOLDER := "res://data/furniture/"
 const SURFACE_FOLDER := "res://data/surfaces/"
+const GENRE_FOLDER := "res://data/genres/"
 
 var _furniture: Dictionary = {}  # id -> FurnitureData
 var _surfaces: Dictionary = {}  # id -> SurfaceData
+var _genres: Dictionary = {}  # id -> GenreData
 
 
 func _ready() -> void:
@@ -19,7 +22,10 @@ func _ready() -> void:
 	for resource in _load_folder(SURFACE_FOLDER):
 		if resource is SurfaceData:
 			_register(_surfaces, resource.get_id(), resource)
-	print("Katalog geladen: %d Möbel, %d Oberflächen" % [_furniture.size(), _surfaces.size()])
+	for resource in _load_folder(GENRE_FOLDER):
+		if resource is GenreData:
+			_register(_genres, resource.get_id(), resource)
+	print("Katalog geladen: %d Möbel, %d Oberflächen, %d Genres" % [_furniture.size(), _surfaces.size(), _genres.size()])
 
 
 ## Liefert das Möbel-Datenblatt mit dieser id (oder null, wenn es keins gibt).
@@ -29,6 +35,23 @@ func get_furniture(id: String) -> FurnitureData:
 
 func get_surface(id: String) -> SurfaceData:
 	return _surfaces.get(id)
+
+
+## Liefert das Genre-Datenblatt mit dieser id (oder null).
+func get_genre(id: String) -> GenreData:
+	return _genres.get(id)
+
+
+## Alle Genres (auch gesperrte), sortiert nach "Sort Order" und Name.
+## Welche freigeschaltet sind, weiß BookStock (BookStock.get_unlocked_genres()).
+func get_all_genres() -> Array[GenreData]:
+	var result: Array[GenreData] = []
+	result.assign(_genres.values())
+	result.sort_custom(func(a: GenreData, b: GenreData) -> bool:
+		if a.sort_order != b.sort_order:
+			return a.sort_order < b.sort_order
+		return a.display_name < b.display_name)
+	return result
 
 
 ## Alle Möbel-Datenblätter (auch gesperrte), sortiert nach Preis und Name.

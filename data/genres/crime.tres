@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "crime"
+display_name = "Krimi"
+description = "Spannende Fälle, Nebel und eine Tasse Tee zum Mitraten."
+spine_colors = Array[Color]([Color(0.45, 0.13, 0.12, 1), Color(0.17, 0.16, 0.18, 1), Color(0.7, 0.56, 0.22, 1), Color(0.27, 0.31, 0.37, 1)])
+styles = 0
+price = 40
+is_unlocked = true
+sort_order = 20

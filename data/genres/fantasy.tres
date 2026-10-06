@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "fantasy"
+display_name = "Fantasy"
+description = "Drachen, Zauberwälder und ferne Reiche."
+spine_colors = Array[Color]([Color(0.35, 0.22, 0.45, 1), Color(0.15, 0.38, 0.3, 1), Color(0.15, 0.19, 0.38, 1), Color(0.58, 0.42, 0.22, 1)])
+styles = 0
+price = 40
+is_unlocked = true
+sort_order = 30

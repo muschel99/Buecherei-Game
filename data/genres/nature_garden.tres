@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "nature_garden"
+display_name = "Natur und Garten"
+description = "Alles über Pflanzen, Beete und Waldspaziergänge."
+spine_colors = Array[Color]([Color(0.35, 0.45, 0.25, 1), Color(0.5, 0.62, 0.32, 1), Color(0.72, 0.45, 0.32, 1), Color(0.45, 0.34, 0.24, 1)])
+styles = 1
+price = 45
+is_unlocked = false
+sort_order = 80

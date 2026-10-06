@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "nonfiction"
+display_name = "Sachbuch"
+description = "Wissenswertes über die Welt und kleine Dinge."
+spine_colors = Array[Color]([Color(0.2, 0.44, 0.47, 1), Color(0.8, 0.49, 0.22, 1), Color(0.68, 0.68, 0.66, 1), Color(0.18, 0.24, 0.36, 1)])
+styles = 0
+price = 40
+is_unlocked = true
+sort_order = 40

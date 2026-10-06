@@ -1,0 +1,84 @@
+# Wortliste für erfundene Buchtitel – Genre: Krimi
+#
+# So funktioniert es:
+# - Unter [Vorlagen] stehen Satzmuster für Titel.
+# - Jedes {Name} in einer Vorlage wird durch einen zufälligen Eintrag aus der Liste [Name] ersetzt.
+# - Neue Einträge: einfach eine neue Zeile unter die passende Liste schreiben.
+# - Neue Liste: eine neue Überschrift in eckigen Klammern, z. B. [Farbe], und in einer
+#   Vorlage {Farbe} benutzen.
+# - Zeilen mit # am Anfang sind Kommentare und werden ignoriert.
+# Bitte nur erfundene Titel – keine echten Bücher.
+
+[Vorlagen]
+Mord {Wo}
+{Ding} von {Ort}
+Ein Fall für {Ermittler}
+{Ermittler} und {Ding_klein}
+Schatten über {Ort}
+Tod {Wo}
+{Zahl} Verdächtige und eine Teekanne
+Gift im {Gift}
+Die letzte Teestunde von {Ort}
+Nebel über {Ort}
+{Zahl} Tassen Tee und ein Geheimnis
+
+[Wo]
+im Pfarrgarten
+auf Schloss Ravenscourt
+in der Teestube
+am Bahnsteig vier
+im Nebel von Larkmoor
+in der Dorfbibliothek
+beim Erntefest
+im Rosenbeet
+auf der letzten Fähre
+hinter der Kirchenmauer
+
+[Ding]
+Die Tote
+Das Schweigen
+Der Schlüssel
+Die verschwundene Teekanne
+Das Testament
+Der stumme Zeuge
+Die Taschenuhr
+Das Rätsel
+
+[Ding_klein]
+der falsche Butler
+die vertauschte Tasse
+das verschwundene Kochbuch
+der Mann ohne Hut
+die rote Handschuh-Spur
+
+[Ort]
+Ashcombe
+Little Wexley
+Hollowmere
+Kettlebridge
+St. Brannock
+Marrowby
+Fenwick Green
+Lower Pembly
+
+[Ermittler]
+Inspektorin Fenwick
+Kommissar Oakley
+Constable Rudd
+Lady Agatha Bell
+Pfarrer Ambrose
+Mrs. Hartigan
+Detective Moss
+
+[Zahl]
+Drei
+Fünf
+Sieben
+Zwölf
+
+[Gift]
+Kräutergarten
+Pflaumenkuchen
+Gewächshaus
+Sherryglas
+Teeservice
