@@ -138,6 +138,11 @@ var delivery_stacks_per_row: int = 4
 var delivery_stack_height: int = 3
 ## Kartons stehen leicht schief, damit es natürlich aussieht: größte Drehung in Grad.
 var delivery_box_turn: float = 8.0
+## Lager-Anzeige unten rechts: Abstand zwischen zwei Symbolen, wenn mehrere Dinge kurz
+## hintereinander ins Lager gehen (in Sekunden). Kleiner = schneller hintereinander.
+var storage_icon_interval: float = 0.7
+## So lange bleibt das Lager-Symbol nach dem letzten Einlagern sichtbar (in Sekunden).
+var storage_hide_delay: float = 2.5
 ## So lange bleibt ein Hinweis wie "Deine Lieferung ist da" zu sehen (in Sekunden).
 var notice_time: float = 4.0
 
