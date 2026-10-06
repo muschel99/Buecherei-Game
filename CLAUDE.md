@@ -114,6 +114,11 @@ docs/              Dokumentation
 - Lampen mit Licht zwischen vielen kleinen Teilen (Kronleuchter, Geflecht) bekommen
   `shadow_importance = NONE`.
 - Dezente Hinweise oben im Bild: `Notice.post(self, "Text")`.
+- Was ins Lager (Inventar) geht, zeigt beiläufig die Lager-Anzeige unten rechts:
+  `StorageIndicator.add_item(self, datenblatt)` bzw. `add_icon(self, bild)` (mit Warteschlange).
+  Vorschaubilder von Modellen: `ThumbnailRenderer` (zwischengespeichert).
+- Interaktion: Trifft der Blick den festen Körper eines Objekts, gilt dessen Interactable
+  (`Interactable.find_for`) – E-Bereiche müssen den Körper also nicht umschließen.
 - Türen (`Door`, Gruppe `doors`): Teile, die mitschwingen, unter dem Knoten `Hinge`.
 - Die Spielfigur kann man anhalten: `player.movement_enabled = false` (z. B. im Shop).
 - Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `jump`,
