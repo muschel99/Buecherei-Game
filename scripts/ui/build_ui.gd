@@ -1,10 +1,11 @@
 extends CanvasLayer
 ## Oberfläche des Gestaltungsmodus: Inventar unten, Tastenhilfe am Rand, Statuszeile.
 ##
-## Die Karten zeigen nur, was mir gehört (Inventory): Möbel mit Anzahl (×2), Wandfarben,
-## Böden und Decken ohne Anzahl (unbegrenzt). Stehen alle Exemplare im Raum, ist die Karte
-## ausgegraut (×0). Ein Klick auf eine Karte meldet die Auswahl an den Gestaltungsmodus
-## (BuildMode). Neues gibt es im Shop.
+## Die Karten zeigen nur, was gerade im Inventar liegt: Möbel mit Anzahl (×2), Wandfarben,
+## Böden und Decken ohne Anzahl (unbegrenzt). Was ganz im Raum steht, erscheint hier nicht –
+## so bleibt die Liste übersichtlich, auch wenn es später sehr viele Objekte gibt.
+## Ein Klick auf eine Karte meldet die Auswahl an den Gestaltungsmodus (BuildMode).
+## Neues gibt es im Shop.
 
 const KEY_COLOR := Color(0.96, 0.78, 0.48)
 const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.8)
@@ -100,17 +101,13 @@ func _show_tab(index: int) -> void:
 	var owned := get_owned_items(index)
 	# Filter: nur die Unterkategorien anbieten, die es hier wirklich gibt
 	_filter_bar.setup(FilterBar.present_subcategories(tab[2], owned) if tab[1] == "furniture" else [])
+	_filter_bar.visible = not owned.is_empty()  # ohne Inhalt keine Filter
 	if tab[1] == "furniture":
-		var room := _build_mode.get_room()
 		for data: FurnitureData in owned:
 			if not _filter_bar.matches(data):
 				continue
 			var count := Inventory.get_count(data.get_id())
-			var placed := room.count_placed(data.get_id())
-			var subtitle := _size_text(data) if count > 0 else "alle im Raum (%d)" % placed
-			var card := _create_card(data.display_name, subtitle, data.styles, data.description, Color(0, 0, 0, 0), count)
-			card.disabled = count <= 0
-			card.modulate.a = 1.0 if count > 0 else 0.45
+			var card := _create_card(data.display_name, _size_text(data), data.styles, data.description, Color(0, 0, 0, 0), count)
 			card.pressed.connect(_build_mode.select_furniture.bind(data))
 			_add_card(data, card)
 	else:
@@ -123,7 +120,7 @@ func _show_tab(index: int) -> void:
 
 	if _cards.is_empty():
 		var empty := Label.new()
-		empty.text = "Davon ist gerade nichts im Inventar. Neues gibt es im Shop – am Tablet auf der Theke."
+		empty.text = "Hier ist noch nichts. Im Shop am Tablet findest du mehr."
 		if not owned.is_empty():
 			empty.text = "Dazu passt hier gerade nichts – probier einen anderen Filter."
 		empty.add_theme_color_override("font_color", MUTED_COLOR)
@@ -133,15 +130,14 @@ func _show_tab(index: int) -> void:
 	_item_scroll.set_deferred("scroll_horizontal", scroll if same_tab else 0)
 
 
-## Alles Eigene in diesem Reiter (ungefiltert): Möbel, die im Inventar liegen oder im Raum
-## stehen (dann ×0, ausgegraut), bzw. die Oberflächen, die mir gehören.
+## Alles Eigene in diesem Reiter (ungefiltert): Möbel, die im Inventar liegen (mindestens
+## eins), bzw. die Oberflächen, die mir gehören.
 func get_owned_items(index: int) -> Array[Resource]:
 	var tab: Array = _tabs[index]
 	var result: Array[Resource] = []
 	if tab[1] == "furniture":
-		var room := _build_mode.get_room()
-		for data in Catalog.get_all_furniture():
-			if data.category == tab[2] and (Inventory.get_count(data.get_id()) > 0 or room.count_placed(data.get_id()) > 0):
+		for data in Inventory.get_stored_furniture():
+			if data.category == tab[2]:
 				result.append(data)
 	else:
 		result.append_array(Inventory.get_owned_surfaces(tab[2]))
