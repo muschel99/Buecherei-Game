@@ -1,9 +1,10 @@
 extends CanvasLayer
-## Oberfläche des Gestaltungsmodus: Katalog unten, Tastenhilfe am Rand, Statuszeile.
+## Oberfläche des Gestaltungsmodus: Inventar unten, Tastenhilfe am Rand, Statuszeile.
 ##
-## Die Karten im Katalog werden automatisch aus dem Katalog (data/furniture/ und
-## data/surfaces/) erzeugt. Ein Klick auf eine Karte meldet die Auswahl an den
-## Gestaltungsmodus (BuildMode).
+## Die Karten zeigen nur, was mir gehört (Inventory): Möbel mit Anzahl (×2), Wandfarben,
+## Böden und Decken ohne Anzahl (unbegrenzt). Stehen alle Exemplare im Raum, ist die Karte
+## ausgegraut (×0). Ein Klick auf eine Karte meldet die Auswahl an den Gestaltungsmodus
+## (BuildMode). Neues gibt es im Shop.
 
 const KEY_COLOR := Color(0.96, 0.78, 0.48)
 const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.8)
@@ -29,6 +30,8 @@ var _tab_buttons: Array[Button] = []
 var _cards := {}  # Datenblatt -> Karte (Button)
 var _grid_help_label: Label
 var _selected_style: StyleBoxFlat
+var _current_tab: int = 0
+var _refresh_queued := false
 
 
 func _ready() -> void:
@@ -48,6 +51,9 @@ func _ready() -> void:
 	_build_mode.grid_changed.connect(_on_grid_changed)
 	_build_mode.selection_changed.connect(_on_selection_changed)
 	_on_grid_changed(_build_mode.grid_enabled)
+	# Anzahlen neu zeigen, wenn sich Inventar oder Einrichtung ändern
+	Inventory.changed.connect(_queue_refresh)
+	_build_mode.get_room().layout_changed.connect(_queue_refresh)
 
 
 func _process(_delta: float) -> void:
@@ -78,33 +84,61 @@ func _build_tab_buttons() -> void:
 
 
 func _show_tab(index: int) -> void:
+	var same_tab := index == _current_tab
+	var scroll := _item_scroll.scroll_horizontal
+	_current_tab = index
 	for i in _tab_buttons.size():
 		_tab_buttons[i].set_pressed_no_signal(i == index)
 	for child in _item_row.get_children():
 		_item_row.remove_child(child)
 		child.queue_free()
 	_cards.clear()
-	_item_scroll.scroll_horizontal = 0
 
 	var tab: Array = _tabs[index]
 	if tab[1] == "furniture":
-		for data in Catalog.get_furniture_in_category(tab[2]):
-			var subtitle := "%d %s · %s" % [data.price, GameConfig.currency_name, _size_text(data)]
-			var card := _create_card(data.display_name, subtitle, data.styles, data.description)
+		var room := _build_mode.get_room()
+		for data in Catalog.get_all_furniture():
+			if data.category != tab[2]:
+				continue
+			# Zu sehen ist, was im Inventar liegt oder im Raum steht (dann ×0, ausgegraut)
+			var count := Inventory.get_count(data.get_id())
+			var placed := room.count_placed(data.get_id())
+			if count <= 0 and placed <= 0:
+				continue
+			var subtitle := _size_text(data) if count > 0 else "alle im Raum (%d)" % placed
+			var card := _create_card(data.display_name, subtitle, data.styles, data.description, Color(0, 0, 0, 0), count)
+			card.disabled = count <= 0
+			card.modulate.a = 1.0 if count > 0 else 0.45
 			card.pressed.connect(_build_mode.select_furniture.bind(data))
 			_add_card(data, card)
 	else:
-		for surface in Catalog.get_surfaces_of_kind(tab[2]):
-			var subtitle := "%d %s" % [surface.price, GameConfig.currency_name]
-			var card := _create_card(surface.display_name, subtitle, surface.styles, "", surface.preview_color)
+		for surface in Inventory.get_owned_surfaces(tab[2]):
+			var card := _create_card(surface.display_name, "unbegrenzt", surface.styles, "", surface.preview_color)
 			card.pressed.connect(_build_mode.select_surface.bind(surface))
 			_add_card(surface, card)
 
 	if _cards.is_empty():
 		var empty := Label.new()
-		empty.text = "Hier gibt es noch nichts."
+		empty.text = "Davon ist gerade nichts im Inventar. Neues gibt es im Shop – am Tablet auf der Theke."
 		empty.add_theme_color_override("font_color", MUTED_COLOR)
 		_item_row.add_child(empty)
+	_on_selection_changed(_build_mode.get_selected())
+	# Beim Aktualisieren desselben Reiters bleibt die Liste, wo sie war
+	_item_scroll.set_deferred("scroll_horizontal", scroll if same_tab else 0)
+
+
+## Inventar oder Einrichtung haben sich geändert: Karten neu aufbauen (einmal pro Bild).
+func _queue_refresh() -> void:
+	if _refresh_queued:
+		return
+	_refresh_queued = true
+	_refresh.call_deferred()
+
+
+func _refresh() -> void:
+	_refresh_queued = false
+	_show_tab(_current_tab)
+
 
 
 func _add_card(data: Resource, card: Button) -> void:
@@ -112,8 +146,9 @@ func _add_card(data: Resource, card: Button) -> void:
 	_cards[data] = card
 
 
-## Eine Karte im Katalog: Name, Preis, Stile und optional ein Farbfeld.
-func _create_card(title: String, subtitle: String, styles: int, tooltip: String, swatch := Color(0, 0, 0, 0)) -> Button:
+## Eine Karte im Inventar: Name, Anzahl (count, -1 = ohne), Zusatzzeile, Stile und
+## optional ein Farbfeld.
+func _create_card(title: String, subtitle: String, styles: int, tooltip: String, swatch := Color(0, 0, 0, 0), count := -1) -> Button:
 	var card := Button.new()
 	card.custom_minimum_size = CARD_SIZE
 	card.toggle_mode = true
@@ -135,10 +170,19 @@ func _create_card(title: String, subtitle: String, styles: int, tooltip: String,
 		color_field.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(color_field)
 
+	# Name und daneben die Anzahl (z. B. "×2")
+	var title_row := HBoxContainer.new()
+	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(title_row)
 	var title_label := _small_label(title, 16, TEXT_COLOR)
 	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_label.max_lines_visible = 2 if swatch.a <= 0.0 else 1
-	box.add_child(title_label)
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(title_label)
+	if count >= 0:
+		var badge := _small_label("×%d" % count, 17, KEY_COLOR if count > 0 else MUTED_COLOR)
+		badge.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		title_row.add_child(badge)
 	box.add_child(_small_label(subtitle, 14, MUTED_COLOR))
 
 	var style_row := HBoxContainer.new()
@@ -178,7 +222,7 @@ func _build_help() -> void:
 		["Rechte Maustaste", "Halten: umsehen · Klick: zurücklegen"],
 		["Mausrad", "Drehen"],
 		["G", ""],  # Text kommt aus _on_grid_changed
-		["X", "Entfernen"],
+		["X", "Ins Inventar legen"],
 		["Umschalt + Klick", "Ganze Wand · Boden/Decke füllen"],
 	]
 	for entry in entries:

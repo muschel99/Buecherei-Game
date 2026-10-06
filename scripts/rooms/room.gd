@@ -3,6 +3,7 @@ extends Node3D
 ## Ein Raum des Hauses: verwaltet seine Möbel, Wandfarbe und Boden.
 ##
 ## Der Gestaltungsmodus fügt hier Möbel hinzu, verschiebt und entfernt sie.
+## (Ob etwas im Inventar ist, regelt der Gestaltungsmodus mit Inventory.)
 ## Der Raum merkt sich alles im Spielstand (Gruppe "persist", siehe SaveManager).
 
 ## Wird gesendet, wenn sich Möbel, Wandfarbe oder Boden ändern.
@@ -80,6 +81,15 @@ func get_placed_furniture() -> Array[PlacedFurniture]:
 		if child is PlacedFurniture:
 			result.append(child)
 	return result
+
+
+## Wie viele Möbel mit dieser id stehen gerade im Raum?
+func count_placed(id: String) -> int:
+	var count := 0
+	for item in get_placed_furniture():
+		if item.data and item.data.get_id() == id:
+			count += 1
+	return count
 
 
 ## Stellt ein neues Möbelstück in den Raum (Transform = Position und Drehung in der Welt).
@@ -302,6 +312,9 @@ func load_save_data(save_data: Dictionary) -> void:
 	_load_walls(save_data)
 	_load_grid(save_data.get("floor"), _grids[SurfaceData.Kind.FLOOR], default_floor_id)
 	_load_grid(save_data.get("ceiling"), _grids[SurfaceData.Kind.CEILING], default_ceiling_id)
+	# Was im Raum zu sehen ist, gehört mir (wichtig für Spielstände von vor dem Inventar)
+	for id in _get_used_surface_ids():
+		Inventory.add_surface(id)
 	layout_changed.emit()
 
 

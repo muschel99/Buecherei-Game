@@ -1,5 +1,6 @@
 extends Node
-## Katalog aller Möbel, Wandfarben und Böden.
+## Katalog aller Möbel, Wandfarben und Böden (alles, was es im Spiel gibt).
+## Was man davon besitzt, steht im Inventar (Inventory), was man kaufen kann, im Shop.
 ##
 ## Dieses Autoload liest beim Spielstart alle Datenblätter aus den Ordnern
 ## data/furniture/ und data/surfaces/ ein. Im Code: Catalog.get_furniture("armchair_velvet").
@@ -28,6 +29,22 @@ func get_furniture(id: String) -> FurnitureData:
 
 func get_surface(id: String) -> SurfaceData:
 	return _surfaces.get(id)
+
+
+## Alle Möbel-Datenblätter (auch gesperrte), sortiert nach Preis und Name.
+func get_all_furniture() -> Array[FurnitureData]:
+	var result: Array[FurnitureData] = []
+	result.assign(_furniture.values())
+	result.sort_custom(_sort_by_price_then_name)
+	return result
+
+
+## Alle Oberflächen-Datenblätter (auch gesperrte), sortiert nach Preis und Name.
+func get_all_surfaces() -> Array[SurfaceData]:
+	var result: Array[SurfaceData] = []
+	result.assign(_surfaces.values())
+	result.sort_custom(_sort_by_price_then_name)
+	return result
 
 
 ## Alle freigeschalteten Möbel einer Kategorie, sortiert nach Preis und Name.

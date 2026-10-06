@@ -1,11 +1,14 @@
 class_name BuildMode
 extends Node
-## Der Gestaltungsmodus: Möbel platzieren, verschieben, drehen, entfernen,
+## Der Gestaltungsmodus: Möbel platzieren, verschieben, drehen, wegräumen,
 ## Wände streichen und Böden tauschen – alles in der Ego-Perspektive.
+##
+## Unten erscheint das Inventar (Inventory): nur Dinge, die mir gehören. Platzieren nimmt
+## eins aus dem Inventar, Aufheben und Wegräumen (X) legen es wieder hinein.
 ##
 ## Öffnen und schließen mit Tab, schließen auch mit Esc.
 ## Zwei Zustände:
-## - Katalog-Zustand: Mauszeiger sichtbar. Im Katalog wählen, ein platziertes
+## - Katalog-Zustand: Mauszeiger sichtbar. Im Inventar wählen, ein platziertes
 ##   Möbelstück anklicken (= aufheben). Rechte Maustaste halten = umsehen.
 ## - Platzier-Zustand: Mauszeiger weg, die Vorschau folgt dem Blick.
 ##   Linksklick platziert, Rechtsklick legt zurück – danach wieder Katalog-Zustand.
@@ -75,6 +78,18 @@ func _ready() -> void:
 	_create_grid()
 
 
+## Der Raum, der gerade gestaltet wird.
+func get_room() -> Room:
+	return _room
+
+
+## Das gerade gewählte Inventar-Element (Möbel-Datenblatt, Oberfläche oder null).
+func get_selected() -> Resource:
+	if _selected_data:
+		return _selected_data
+	return _selected_surface
+
+
 ## Ist gerade der Katalog-Zustand aktiv (nichts in der Hand)?
 func is_in_catalog_state() -> bool:
 	return is_active and _tool == Tool.NONE
@@ -134,7 +149,7 @@ func set_active(active: bool) -> void:
 		if _player.is_seated():
 			_player.stand_up()  # Zum Gestalten erst aufstehen
 		MenuStack.open(self)
-		_set_status("Wähle unten etwas aus dem Katalog oder klicke ein Möbelstück an, um es zu verschieben.")
+		_set_status("Wähle unten etwas aus dem Inventar oder klicke ein Möbelstück an, um es zu verschieben.")
 	else:
 		MenuStack.close(self)
 		_cancel_tool()
@@ -170,6 +185,9 @@ func _apply_mouse_mode() -> void:
 ## Wird von der Katalog-Oberfläche aufgerufen.
 func select_furniture(data: FurnitureData) -> void:
 	_cancel_tool()
+	if Inventory.get_count(data.get_id()) <= 0:
+		_flash_status("%s: Im Inventar ist gerade keins mehr – alle stehen schon im Raum." % data.display_name)
+		return
 	_selected_data = data
 	_tool = Tool.PLACE_NEW
 	_rotation_offset = 0.0  # Vorderseite zeigt zu mir
@@ -202,13 +220,14 @@ func _on_primary_click() -> void:
 			if _hovered:
 				_pick_up(_hovered)
 		Tool.PLACE_NEW:
-			if _placement_ok:
+			if _placement_ok and Inventory.take_furniture(_selected_data.get_id()):
 				_room.add_furniture(_selected_data, _placement_transform, _placement_support)
 				var verb := "aufgehängt" if _selected_data.is_hanging() else "aufgestellt"
 				_flash_status("%s %s." % [_selected_data.display_name, verb])
 				_clear_tool()
 		Tool.MOVE:
 			if _placement_ok:
+				Inventory.take_furniture(_moving_item.data.get_id())  # aus der Hand wieder in den Raum
 				_room.move_furniture(_moving_item, _placement_transform, _placement_support)
 				_flash_status("%s umgestellt." % _moving_item.data.display_name)
 				_finish_move()
@@ -242,8 +261,10 @@ func _stop_looking() -> void:
 
 
 ## Hebt ein platziertes Möbelstück auf, um es neu zu platzieren.
+## In der Hand zählt es zum Inventar (die Anzahl steigt um eins).
 func _pick_up(item: PlacedFurniture) -> void:
 	_set_hovered(null)
+	Inventory.add_furniture(item.data.get_id())
 	_moving_item = item
 	_moving_extras = _room.get_dependents(item)
 	var extras: Array[Dictionary] = []
@@ -275,7 +296,10 @@ func _finish_move() -> void:
 ## Rechtsklick/Esc: Auswahl aufheben bzw. aufgehobenes Möbelstück an den alten Platz zurück.
 func _cancel_tool() -> void:
 	if _tool == Tool.MOVE:
-		_finish_move()  # Transform wurde nicht geändert = alter Platz
+		# Zurück an den alten Platz (die Position wurde nicht geändert) – also wieder aus
+		# dem Inventar heraus
+		Inventory.take_furniture(_moving_item.data.get_id())
+		_finish_move()
 	elif _tool != Tool.NONE:
 		_clear_tool()
 
@@ -296,26 +320,40 @@ func _clear_tool() -> void:
 	catalog_state_changed.emit(is_in_catalog_state())
 
 
-## Taste X: Was ich in der Hand halte bzw. worauf der Mauszeiger zeigt, entfernen.
+## Taste X: Was ich in der Hand halte bzw. worauf der Mauszeiger zeigt, wegräumen.
+## Es kommt ins Inventar – samt allem, was darauf steht.
 func _delete_target() -> void:
 	if _tool == Tool.PLACE_NEW:
-		# Neu ausgewählt und noch nicht aufgestellt: einfach zurück in den Katalog
+		# Neu ausgewählt und noch nicht aufgestellt: einfach zurück ins Inventar
 		var item_name := _selected_data.display_name
 		_clear_tool()
-		_flash_status("%s zurück in den Katalog gelegt." % item_name)
+		_flash_status("%s zurück ins Inventar gelegt." % item_name)
 	elif _tool == Tool.MOVE:
+		# Das Möbelstück selbst zählt schon zum Inventar (seit dem Aufheben)
 		var item := _moving_item
-		var item_name := item.data.display_name
 		_moving_item = null
 		_moving_extras.clear()
-		_room.remove_furniture(item)
+		_store_in_inventory(item, false)
 		_clear_tool()
-		_flash_status("%s entfernt." % item_name)
 	elif _tool == Tool.NONE and _hovered:
 		var item := _hovered
 		_set_hovered(null)
-		_flash_status("%s entfernt." % item.data.display_name)
-		_room.remove_furniture(item)
+		_store_in_inventory(item, true)
+
+
+## Räumt ein Möbelstück und alles, was darauf steht, ins Inventar.
+func _store_in_inventory(item: PlacedFurniture, include_item: bool) -> void:
+	var dependents := _room.get_dependents(item)
+	if include_item:
+		Inventory.add_furniture(item.data.get_id())
+	for dependent in dependents:
+		Inventory.add_furniture(dependent.data.get_id())
+	var text := "%s ins Inventar gelegt." % item.data.display_name
+	if not dependents.is_empty():
+		var parts := "1 Teil" if dependents.size() == 1 else "%d Teile" % dependents.size()
+		text = "%s und %s darauf ins Inventar gelegt." % [item.data.display_name, parts]
+	_room.remove_furniture(item)
+	_flash_status(text)
 
 
 func _rotate(direction: float) -> void:
@@ -349,9 +387,9 @@ func _update_hover() -> void:
 			item = FurnitureUtils.find_placed_furniture(hit.collider)
 	_set_hovered(item)
 	if item:
-		_set_status("%s – Linksklick: aufheben · X: entfernen" % item.data.display_name)
+		_set_status("%s – Linksklick: aufheben · X: ins Inventar" % item.data.display_name)
 	elif not _is_looking:
-		_set_status("Wähle unten etwas aus dem Katalog oder klicke ein Möbelstück an. Rechte Maustaste halten: umsehen.")
+		_set_status("Wähle unten etwas aus dem Inventar oder klicke ein Möbelstück an. Rechte Maustaste halten: umsehen.")
 
 
 func _set_hovered(item: PlacedFurniture) -> void:
@@ -495,10 +533,13 @@ func _update_placement() -> void:
 	_preview.set_valid(_placement_ok)
 	_update_grid_visibility()
 
-	var price_text := "%d %s" % [data.price, GameConfig.currency_name]
 	if _placement_ok:
 		var rotate_hint := "" if data.is_wall_mounted() else " · Mausrad: drehen"
-		_set_status("%s (%s) – Linksklick: platzieren%s · Rechtsklick: zurücklegen" % [data.display_name, price_text, rotate_hint])
+		var name_text := data.display_name
+		if _tool == Tool.PLACE_NEW:
+			name_text += " (×%d im Inventar)" % Inventory.get_count(data.get_id())
+		var back_hint := "zurück an den alten Platz · X: ins Inventar" if _tool == Tool.MOVE else "zurücklegen"
+		_set_status("%s – Linksklick: platzieren%s · Rechtsklick: %s" % [name_text, rotate_hint, back_hint])
 	else:
 		_set_status("%s – %s" % [data.display_name, problem], true)
 

@@ -9,3 +9,4 @@ id = "wall_warm_plaster"
 display_name = "Warmer Putz"
 material = ExtResource("1_sswhe")
 preview_color = Color(0.86, 0.77, 0.64, 1)
+owned_at_start = true

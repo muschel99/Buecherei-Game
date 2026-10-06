@@ -128,7 +128,7 @@ theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "X"
 
 [node name="ActionRemove" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Im Gestaltungsmodus: Objekt entfernen"
+text = "Im Gestaltungsmodus: Objekt ins Inventar legen"
 
 [node name="KeyFps" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
