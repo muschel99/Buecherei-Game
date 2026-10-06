@@ -12,3 +12,4 @@ styles = 2
 scene_path = "res://scenes/furniture/vase_branches.tscn"
 footprint = Vector2i(1, 1)
 placement = 3
+subcategory = "plant"

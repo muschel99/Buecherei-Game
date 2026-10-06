@@ -31,6 +31,7 @@ const PREVIEW_SIZE := Vector2(176, 118)
 @onready var _buy_view: Control = %BuyView
 @onready var _sell_view: Control = %SellView
 @onready var _category_list: VBoxContainer = %CategoryList
+@onready var _filter_bar: FilterBar = %FilterBar
 @onready var _item_scroll: ScrollContainer = %ItemScroll
 @onready var _item_flow: HFlowContainer = %ItemFlow
 @onready var _cart_list: VBoxContainer = %CartList
@@ -76,6 +77,7 @@ func _ready() -> void:
 	_sell_tab_button.pressed.connect(_show_view.bind(false))
 	_close_button.pressed.connect(close)
 	_order_button.pressed.connect(_on_order_pressed)
+	_filter_bar.changed.connect(_on_filter_changed)
 	Wallet.money_changed.connect(func(_money: int, _change: int) -> void: _queue_refresh())
 	Inventory.changed.connect(_queue_refresh)
 	_sell_info.text = ("Du bekommst %d %% des Preises zurück.\n\nVerkaufen kannst du alles, was im " \
@@ -175,6 +177,20 @@ func _on_category_pressed(index: int) -> void:
 	_show_category(index)
 
 
+func _on_filter_changed() -> void:
+	_item_scroll.scroll_vertical = 0
+	_show_category(_current_category)
+
+
+## Was in dieser Kategorie zu den gewählten Filtern passt.
+func get_visible_offers(index: int) -> Array[Resource]:
+	var result: Array[Resource] = []
+	for item in get_offers(index):
+		if _filter_bar.matches(item):
+			result.append(item)
+	return result
+
+
 ## Alles, was es in dieser Kategorie zu kaufen gibt.
 func get_offers(index: int) -> Array[Resource]:
 	var category: Array = _categories[index]
@@ -196,11 +212,18 @@ func _show_category(index: int) -> void:
 	for child in _item_flow.get_children():
 		_item_flow.remove_child(child)
 		child.queue_free()
-	var offers := get_offers(index)
+	# Filter: nur die Unterkategorien anbieten, die es hier wirklich gibt
+	var all_offers := get_offers(index)
+	var category: Array = _categories[index]
+	var subcategories := FilterBar.present_subcategories(category[2], all_offers) if category[1] == "furniture" else []
+	_filter_bar.setup(subcategories)
+	var offers := get_visible_offers(index)
 	for item in offers:
 		_item_flow.add_child(_create_offer_card(item))
-	if offers.is_empty():
+	if all_offers.is_empty():
 		_item_flow.add_child(_small_label("Hier gibt es gerade nichts zu kaufen.", 16, MUTED_COLOR))
+	elif offers.is_empty():
+		_item_flow.add_child(_small_label("Dazu passt hier gerade nichts – probier einen anderen Filter.", 16, MUTED_COLOR))
 	_item_scroll.set_deferred("scroll_vertical", scroll)
 
 

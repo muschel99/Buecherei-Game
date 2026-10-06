@@ -12,3 +12,4 @@ styles = 1
 scene_path = "res://scenes/furniture/wreath.tscn"
 footprint = Vector2i(4, 1)
 placement = 12
+subcategory = "picture"

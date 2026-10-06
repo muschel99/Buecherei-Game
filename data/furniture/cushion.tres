@@ -12,3 +12,4 @@ styles = 1
 scene_path = "res://scenes/furniture/cushion.tscn"
 footprint = Vector2i(3, 3)
 placement = 3
+subcategory = "textile"

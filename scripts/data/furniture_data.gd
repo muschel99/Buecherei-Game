@@ -1,3 +1,4 @@
+@tool
 class_name FurnitureData
 extends Resource
 ## Datenblatt für ein Möbelstück oder Deko-Objekt.
@@ -8,7 +9,8 @@ extends Resource
 ## Anleitung: docs/ASSET_GUIDE.md, Abschnitt "Ein neues Möbelstück anlegen".
 
 ## Kategorien im Katalog (Reihenfolge = Reihenfolge der Reiter).
-enum Category { SHELF, SEATING, TABLE, COUNTER, LIGHTING, PLANT, DECO, DIVIDER }
+## (Pflanzen sind seit "Fensterlicht und Filter" eine Unterkategorie von Deko.)
+enum Category { SHELF, SEATING, TABLE, COUNTER, LIGHTING, DECO, DIVIDER }
 
 const _CATEGORY_NAMES := {
 	Category.SHELF: "Regale",
@@ -16,9 +18,27 @@ const _CATEGORY_NAMES := {
 	Category.TABLE: "Tische",
 	Category.COUNTER: "Theke",
 	Category.LIGHTING: "Beleuchtung",
-	Category.PLANT: "Pflanzen",
 	Category.DECO: "Deko",
 	Category.DIVIDER: "Raumteiler",
+}
+
+## Unterkategorien je Kategorie – sie erscheinen als Filter über der Liste in Shop und
+## Inventar (in dieser Reihenfolge, nur wenn es dort etwas gibt).
+## Neue Unterkategorie: einfach ein Paar ["id", "Anzeigename"] in die passende Zeile
+## schreiben. Die id ist kurz, englisch, ohne Leerzeichen; im Datenblatt wählt man sie
+## dann im Feld "Subcategory" aus.
+const SUBCATEGORIES := {
+	Category.SHELF: [["bookshelf", "Bücherregale"], ["wall_shelf", "Wandregale"], ["display_case", "Vitrinen"]],
+	Category.SEATING: [["armchair", "Sessel"], ["sofa", "Sofas"], ["chair", "Stühle"], ["stool", "Hocker"]],
+	Category.TABLE: [["side_table", "Beistelltische"], ["coffee_table", "Couchtische"], ["desk", "Schreibtische"],
+		["dining_table", "Esstische"]],
+	Category.COUNTER: [],
+	Category.LIGHTING: [["table_lamp", "Tischlampen"], ["floor_lamp", "Stehlampen"], ["ceiling_lamp", "Deckenlampen"],
+		["wall_lamp", "Wandlampen"], ["candle", "Kerzen und Laternen"], ["switch", "Lichtschalter"]],
+	Category.DECO: [["plant", "Pflanzen"], ["rug", "Teppiche"], ["picture", "Bilder und Wandschmuck"],
+		["figure", "Figuren"], ["textile", "Textilien"], ["storage", "Aufbewahrung und Organisation"],
+		["books", "Bücher"]],
+	Category.DIVIDER: [],
 }
 
 ## Eindeutiger Name ohne Leer- und Sonderzeichen, z. B. "armchair_velvet".
@@ -29,7 +49,13 @@ const _CATEGORY_NAMES := {
 @export var display_name: String = "Neues Möbelstück"
 ## Kurze Beschreibung (erscheint im Katalog, wenn die Maus darüber steht).
 @export_multiline var description: String = ""
-@export var category: Category = Category.DECO
+@export var category: Category = Category.DECO:
+	set(value):
+		category = value
+		notify_property_list_changed()  # Auswahl der Unterkategorien im Inspektor anpassen
+## Unterkategorie (für die Filter), passend zur Kategorie – siehe SUBCATEGORIES oben.
+## Leer = keine; dann erscheint es nur unter "Alle".
+@export var subcategory: String = ""
 ## Preis in Talern im Shop. Beim Verkaufen gibt es einen Teil davon zurück
 ## (GameConfig.sell_price_share).
 @export var price: int = 0
@@ -85,6 +111,28 @@ func get_id() -> String:
 	if not id.is_empty():
 		return id
 	return resource_path.get_file().get_basename()
+
+
+## Anzeigename der Unterkategorie (leer, wenn keine gewählt ist).
+func get_subcategory_name() -> String:
+	return get_subcategory_display_name(category, subcategory)
+
+
+static func get_subcategory_display_name(of_category: Category, id: String) -> String:
+	for entry in SUBCATEGORIES.get(of_category, []):
+		if entry[0] == id:
+			return entry[1]
+	return ""
+
+
+## Im Inspektor: Feld "Subcategory" als Auswahlliste mit den Unterkategorien der Kategorie.
+func _validate_property(property: Dictionary) -> void:
+	if property.name == "subcategory":
+		var ids: Array[String] = [""]
+		for entry in SUBCATEGORIES.get(category, []):
+			ids.append(entry[0])
+		property.hint = PROPERTY_HINT_ENUM
+		property.hint_string = ",".join(ids)
 
 
 func get_category_name() -> String:

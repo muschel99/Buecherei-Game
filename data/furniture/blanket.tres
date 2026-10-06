@@ -12,3 +12,4 @@ styles = 4
 scene_path = "res://scenes/furniture/blanket.tscn"
 footprint = Vector2i(4, 3)
 placement = 3
+subcategory = "textile"

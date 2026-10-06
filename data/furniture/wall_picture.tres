@@ -12,3 +12,4 @@ styles = 2
 scene_path = "res://scenes/furniture/wall_picture.tscn"
 footprint = Vector2i(4, 1)
 placement = 4
+subcategory = "picture"

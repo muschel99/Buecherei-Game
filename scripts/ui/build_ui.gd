@@ -20,6 +20,7 @@ const CARD_SIZE := Vector2(206, 100)
 @onready var _tab_row: HBoxContainer = %TabRow
 @onready var _item_row: HBoxContainer = %ItemRow
 @onready var _item_scroll: ScrollContainer = %ItemScroll
+@onready var _filter_bar: FilterBar = %FilterBar
 @onready var _catalog_hint: Label = %CatalogHint
 @onready var _status_label: Label = %StatusLabel
 @onready var _help_grid: GridContainer = %HelpGrid
@@ -53,6 +54,7 @@ func _ready() -> void:
 	_on_grid_changed(_build_mode.grid_enabled)
 	# Anzahlen neu zeigen, wenn sich Inventar oder Einrichtung ändern
 	Inventory.changed.connect(_queue_refresh)
+	_filter_bar.changed.connect(_on_filter_changed)
 	_build_mode.get_room().layout_changed.connect(_queue_refresh)
 
 
@@ -95,16 +97,16 @@ func _show_tab(index: int) -> void:
 	_cards.clear()
 
 	var tab: Array = _tabs[index]
+	var owned := get_owned_items(index)
+	# Filter: nur die Unterkategorien anbieten, die es hier wirklich gibt
+	_filter_bar.setup(FilterBar.present_subcategories(tab[2], owned) if tab[1] == "furniture" else [])
 	if tab[1] == "furniture":
 		var room := _build_mode.get_room()
-		for data in Catalog.get_all_furniture():
-			if data.category != tab[2]:
+		for data: FurnitureData in owned:
+			if not _filter_bar.matches(data):
 				continue
-			# Zu sehen ist, was im Inventar liegt oder im Raum steht (dann ×0, ausgegraut)
 			var count := Inventory.get_count(data.get_id())
 			var placed := room.count_placed(data.get_id())
-			if count <= 0 and placed <= 0:
-				continue
 			var subtitle := _size_text(data) if count > 0 else "alle im Raum (%d)" % placed
 			var card := _create_card(data.display_name, subtitle, data.styles, data.description, Color(0, 0, 0, 0), count)
 			card.disabled = count <= 0
@@ -112,7 +114,9 @@ func _show_tab(index: int) -> void:
 			card.pressed.connect(_build_mode.select_furniture.bind(data))
 			_add_card(data, card)
 	else:
-		for surface in Inventory.get_owned_surfaces(tab[2]):
+		for surface: SurfaceData in owned:
+			if not _filter_bar.matches(surface):
+				continue
 			var card := _create_card(surface.display_name, "unbegrenzt", surface.styles, "", surface.preview_color)
 			card.pressed.connect(_build_mode.select_surface.bind(surface))
 			_add_card(surface, card)
@@ -120,11 +124,33 @@ func _show_tab(index: int) -> void:
 	if _cards.is_empty():
 		var empty := Label.new()
 		empty.text = "Davon ist gerade nichts im Inventar. Neues gibt es im Shop – am Tablet auf der Theke."
+		if not owned.is_empty():
+			empty.text = "Dazu passt hier gerade nichts – probier einen anderen Filter."
 		empty.add_theme_color_override("font_color", MUTED_COLOR)
 		_item_row.add_child(empty)
 	_on_selection_changed(_build_mode.get_selected())
 	# Beim Aktualisieren desselben Reiters bleibt die Liste, wo sie war
 	_item_scroll.set_deferred("scroll_horizontal", scroll if same_tab else 0)
+
+
+## Alles Eigene in diesem Reiter (ungefiltert): Möbel, die im Inventar liegen oder im Raum
+## stehen (dann ×0, ausgegraut), bzw. die Oberflächen, die mir gehören.
+func get_owned_items(index: int) -> Array[Resource]:
+	var tab: Array = _tabs[index]
+	var result: Array[Resource] = []
+	if tab[1] == "furniture":
+		var room := _build_mode.get_room()
+		for data in Catalog.get_all_furniture():
+			if data.category == tab[2] and (Inventory.get_count(data.get_id()) > 0 or room.count_placed(data.get_id()) > 0):
+				result.append(data)
+	else:
+		result.append_array(Inventory.get_owned_surfaces(tab[2]))
+	return result
+
+
+func _on_filter_changed() -> void:
+	_item_scroll.scroll_horizontal = 0
+	_show_tab(_current_tab)
 
 
 ## Inventar oder Einrichtung haben sich geändert: Karten neu aufbauen (einmal pro Bild).
