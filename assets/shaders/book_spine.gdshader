@@ -12,6 +12,9 @@ uniform sampler2D spine_atlas : source_color, filter_linear_mipmap_anisotropic, 
 // Nur für ein einzelnes Buch (z. B. in der Hand): Bild des Covers auf dem vorderen Einband
 uniform sampler2D cover_texture : source_color, filter_linear_mipmap, repeat_disable;
 uniform bool use_cover = false;
+// Für ein einzelnes Buch (ohne MultiMesh): Einbandfarbe und Lage des Rückens im Atlas
+uniform vec3 single_color : source_color = vec3(0.5, 0.4, 0.3);
+uniform vec4 single_spine_rect = vec4(0.0);
 uniform vec3 page_color : source_color = vec3(0.9, 0.86, 0.76);
 uniform float roughness_value = 0.78;
 uniform float highlight_strength = 0.18;
@@ -21,11 +24,11 @@ varying vec4 spine_rect;
 
 void vertex() {
 	local_pos = VERTEX;
-	spine_rect = INSTANCE_CUSTOM;
+	spine_rect = use_cover ? single_spine_rect : INSTANCE_CUSTOM;
 }
 
 void fragment() {
-	vec3 base = COLOR.rgb;
+	vec3 base = use_cover ? single_color : COLOR.rgb;
 	vec3 col = base;
 	if (local_pos.z > 0.499) {
 		// Buchrücken aus dem Atlas
@@ -47,7 +50,7 @@ void fragment() {
 		bool inside = abs(local_pos.x) < 0.42 && local_pos.z < 0.46;
 		col = inside ? page_color * 0.94 : base;
 	}
-	if (COLOR.a < 0.99) {
+	if (!use_cover && COLOR.a < 0.99) {
 		col = mix(col, vec3(1.0, 0.96, 0.86), highlight_strength);
 		EMISSION = col * 0.12;
 	}

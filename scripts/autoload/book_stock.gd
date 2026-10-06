@@ -144,7 +144,7 @@ func get_all_owned_books() -> Array[Book]:
 	for shelf in get_tree().get_nodes_in_group(SHELF_GROUP):
 		result.append_array(shelf.get_books())
 	for box in get_tree().get_nodes_in_group(RETURN_BOX_GROUP):
-		result.append_array(box.books)
+		result.append_array(box.get_books())
 	return result
 
 

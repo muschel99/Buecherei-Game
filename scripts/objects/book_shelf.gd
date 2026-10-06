@@ -1,20 +1,25 @@
 class_name BookShelf
 extends Node3D
-## Ein Bücherregal: Bücher stehen in Fächern (BookRow), die Rücken zeigen nach vorn.
+## Ein Bücherregal: Bücher stehen auf Brettern (BookRow), die Rücken zeigen nach vorn.
 ##
 ## So baut man ein Bücherregal (siehe scenes/furniture/bookshelf.tscn):
 ## - In der Möbel-Szene einen Knoten mit diesem Script anlegen ("BookShelf").
-## - Darunter für jedes Fach einen BookRow-Knoten (Reihenfolge = Reihenfolge beim Befüllen).
+## - Darunter für jedes Brett einen BookRow-Knoten (Reihenfolge = Reihenfolge beim Befüllen).
 ## - Optional ein Marker3D "SignPoint": Dort hängt das Genre-Schild (Mitte, vorn).
-## - Ein Interactable "Interactable" mit Kollisionsform: E öffnet das Regal-Menü bzw.
-##   räumt getragene Bücher ein.
+## - Ein Interactable "Interactable" mit Kollisionsform.
+##
+## Bedienung (alles mit E):
+## - E tippen auf ein Buch (leere Hände): dieses Buch in die Hand nehmen.
+## - E tippen, während ich Bücher trage: das Buch obenauf genau dort einstellen, wo ich
+##   hinschaue – die Nachbarn rücken zur Seite (Vorschau schwebt vor dem Regal).
+## - E halten: alle getragenen Bücher einräumen, die passen – sonst das Regal-Menü öffnen
+##   (Genre wählen, aus dem Lager auffüllen, sortieren, alles zurück ins Lager).
+## Jedes Brett hat seine eigene Reihe; ist ein Brett voll, passt dort nichts mehr hinein.
 ##
 ## Leistung: Alle Bücher eines Regals werden in einem einzigen Rutsch gezeichnet
-## (MultiMesh). Jedes Buch ist ein gestreckter Würfel mit eigener Farbe – so bleiben auch
-## hunderte Bücher im Raum leicht für den PC.
-## Das Regal merkt sich sein Genre und seine Bücher; gespeichert wird beides mit dem Raum
-## (PlacedFurniture.get_contents_data). Wird das Regal mit X weggeräumt, gehen die Bücher
-## ins Lager (release_contents).
+## (MultiMesh); die Buchrücken kommen aus einem gemeinsamen Bild (BookArt).
+## Genre und Bücher werden mit dem Regal im Raum gespeichert (PlacedFurniture). Wird das
+## Regal mit X weggeräumt, gehen die Bücher ins Lager (release_contents).
 
 ## Wird gesendet, wenn sich Bücher oder Genre ändern.
 signal contents_changed
@@ -23,25 +28,24 @@ signal contents_changed
 const MIXED := "mixed"
 ## So weit vor dem Regal beginnt ein Buch, das hineingleitet (in Metern).
 const SLIDE_DISTANCE := 0.26
-## So lange rücken Bücher zusammen, wenn eine Lücke entsteht (in Sekunden).
-const MOVE_TIME := 0.3
+## So lange rücken Bücher zur Seite oder zusammen (in Sekunden).
+const MOVE_TIME := 0.22
 ## Größe des Genre-Schilds (Breite, Höhe in Metern).
 const SIGN_SIZE := Vector2(0.3, 0.075)
 const SIGN_TEXT_COLOR := Color(0.98, 0.94, 0.84)
+## Kleiner Abstand zwischen zwei Büchern (in Metern, dazu je Buch ein Hauch Zufall)
+const BOOK_GAP := 0.0015
 
 ## Genre dieses Regals: "" = noch keins gewählt, MIXED = Gemischt, sonst die Genre-id.
 var genre_id: String = ""
-## Alle Bücher im Regal (in Reihenfolge: Fach für Fach, von links nach rechts).
-var books: Array[Book] = []
 
 var _rows: Array[BookRow] = []
-var _targets: Array[Transform3D] = []  # Endlage je Buch (gleiche Reihenfolge wie books)
-var _looks: Dictionary = {}  # Book -> { "size", "color", "custom" }
-var _index: Dictionary = {}  # Book -> Nummer im MultiMesh
-var _row_index := 0  # Schreibmarke: Fach und Stelle, an die das nächste Buch kommt
-var _row_x := 0.0
+var _row_books: Array = []  # je Brett eine Liste von Büchern (links nach rechts)
+var _targets: Dictionary = {}  # Book -> Endlage (Transform im Regal)
 var _anims: Dictionary = {}  # Book -> { "from", "start", "time", "appear" }
 var _leaving: Array[Dictionary] = []  # Bücher, die gerade herausgleiten
+var _order: Array[Book] = []  # Reihenfolge im MultiMesh
+var _index: Dictionary = {}  # Book -> Nummer im MultiMesh
 var _clock := 0.0
 var _multimesh: MultiMesh
 var _sign_plate: MeshInstance3D
@@ -49,12 +53,22 @@ var _sign_label: Label3D
 var _interactable: Interactable
 var _is_live := false  # steht wirklich im Raum (nicht Vorschau oder Foto)
 
+# Was ich gerade anschaue
+var _hover_book: Book = null
+## Vorschau beim Einstellen: Brett, Stelle, Buch (schwebt vor der Lücke)
+var _gap_row := -1
+var _gap_index := -1
+var _ghost: Book = null
+var _ghost_transform := Transform3D()
+var _aim_problem := ""
+
 
 func _ready() -> void:
 	add_to_group(PlacedFurniture.CONTENTS_GROUP)
 	for child in get_children():
 		if child is BookRow:
 			_rows.append(child)
+			_row_books.append([])
 	var books_instance := MultiMeshInstance3D.new()
 	books_instance.name = "Books"
 	_multimesh = BookLook.create_multimesh()
@@ -62,18 +76,22 @@ func _ready() -> void:
 	books_instance.material_override = BookLook.get_material()
 	add_child(books_instance)
 	_create_sign()
-	_reset_cursor()
+	set_process(false)
 	# Sobald alle Buchrücken gezeichnet sind, die Bücher damit zeigen
 	BookArt.atlas_ready.connect(_refresh_instances)
-	set_process(false)
 
 	_interactable = get_node_or_null("Interactable") as Interactable
 	_is_live = FurnitureUtils.find_placed_furniture(self) != null
 	if _is_live:
 		add_to_group(BookStock.SHELF_GROUP)
-		BookStock.carried_changed.connect(_update_prompt)
+		BookStock.carried_changed.connect(_on_carried_changed)
 		if _interactable:
-			_interactable.interacted.connect(_on_interacted)
+			_interactable.supports_hold = true
+			_interactable.highlight_owner = false
+			_interactable.interacted.connect(_on_tapped)
+			_interactable.held.connect(_on_held)
+			_interactable.aimed.connect(_on_aimed)
+			_interactable.aim_ended.connect(_on_aim_ended)
 	_update_prompt()
 
 
@@ -83,6 +101,14 @@ func _ready() -> void:
 func get_display_name() -> String:
 	var item := FurnitureUtils.find_placed_furniture(self)
 	return item.data.display_name if item and item.data else "Bücherregal"
+
+
+## Alle Bücher im Regal (Brett für Brett, von links nach rechts).
+func get_books() -> Array[Book]:
+	var result: Array[Book] = []
+	for list: Array in _row_books:
+		result.append_array(list)
+	return result
 
 
 ## Hat das Regal schon ein Genre (oder "Gemischt")?
@@ -98,20 +124,15 @@ func get_genre_name() -> String:
 	return genre.display_name if genre else ""
 
 
-## Passt ein Buch dieses Genres hierher? ("Gemischt" nimmt alles.)
+## Passt ein Buch dieses Genres hierher? ("Gemischt" und Regale ohne Genre nehmen alles.)
 func accepts(book_genre_id: String) -> bool:
-	return genre_id == MIXED or (has_genre() and genre_id == book_genre_id)
-
-
-## Alle Bücher im Regal.
-func get_books() -> Array[Book]:
-	return books
+	return not has_genre() or genre_id == MIXED or genre_id == book_genre_id
 
 
 ## Wie viele Bücher dieses Genres stehen hier? (für den Bestand)
 func count_books(of_genre_id: String) -> int:
 	var count := 0
-	for book in books:
+	for book in get_books():
 		if book.genre_id == of_genre_id:
 			count += 1
 	return count
@@ -119,13 +140,11 @@ func count_books(of_genre_id: String) -> int:
 
 ## Für wie viele Bücher ist ungefähr noch Platz? (Bücher sind verschieden dick.)
 func get_free_estimate() -> int:
-	if _row_index >= _rows.size():
-		return 0
-	var free_width := _rows[_row_index].width / 2.0 - _row_x
-	for i in range(_row_index + 1, _rows.size()):
-		free_width += _rows[i].width
+	var free_width := 0.0
+	for r in _rows.size():
+		free_width += maxf(_rows[r].width - _row_used(r), 0.0)
 	var range_t := GameConfig.book_thickness_range
-	var average := range_t.x + (range_t.y - range_t.x) / 2.4 + 0.0025
+	var average := range_t.x + (range_t.y - range_t.x) / 2.4 + BOOK_GAP + 0.0015
 	return maxi(0, floori(free_width / average))
 
 
@@ -145,7 +164,7 @@ func count_matching_carried() -> int:
 func set_genre(new_genre_id: String) -> int:
 	genre_id = new_genre_id
 	var mismatched: Array[Book] = []
-	for book in books:
+	for book in get_books():
 		if not accepts(book.genre_id):
 			mismatched.append(book)
 	remove_books(mismatched)
@@ -155,24 +174,26 @@ func set_genre(new_genre_id: String) -> int:
 	return mismatched.size()
 
 
-## Stellt Bücher ins Regal, so viele hineinpassen – sie gleiten nacheinander hinein.
-## Liefert die Bücher, für die kein Platz mehr war.
+## Stellt Bücher ins Regal: jedes auf das erste Brett, auf dem noch Platz ist (hinten an).
+## Sie gleiten nacheinander hinein. Liefert die Bücher, für die kein Platz mehr war.
 func add_books(new_books: Array, animate: bool = true) -> Array[Book]:
 	var rest: Array[Book] = []
 	var interval := 0.0
 	if animate and not new_books.is_empty():
 		interval = minf(GameConfig.book_slide_interval, GameConfig.book_slide_max_total / new_books.size())
 	var placed := 0
+	var touched := {}
 	for book: Book in new_books:
-		var target: Variant = _place_next(book)
-		if target == null:
+		var row := _first_row_with_space(book)
+		if row < 0:
 			rest.append(book)
 			continue
-		books.append(book)
-		_targets.append(target)
+		_row_books[row].append(book)
+		touched[row] = true
+		_layout_row(row, false)
 		if animate:
 			# Startet etwas kleiner vor dem Regal und gleitet an seinen Platz
-			var start: Transform3D = target
+			var start: Transform3D = _targets[book]
 			start.basis = start.basis * Basis.from_scale(Vector3.ONE * 0.7)
 			start.origin += Vector3(0.0, 0.03, SLIDE_DISTANCE)
 			_anims[book] = {"from": start, "start": _clock + placed * interval,
@@ -191,25 +212,30 @@ func remove_books(to_remove: Array, animate: bool = true) -> void:
 		return
 	var step := minf(GameConfig.book_slide_interval, GameConfig.book_slide_max_total / to_remove.size()) * 0.6
 	var count := 0
+	var touched := {}
 	for book: Book in to_remove:
-		var index := books.find(book)
-		if index < 0:
+		var row := _row_of(book)
+		if row < 0:
 			continue
 		if animate:
-			var look := _look(book)
-			_leaving.append({"transform": _current_transform(book, index), "color": look.color,
-				"custom": look.custom, "start": _clock + count * step, "time": GameConfig.book_slide_time})
+			_leaving.append({"transform": _current_transform(book), "color": BookLook.get_color(book),
+				"book": book, "start": _clock + count * step, "time": GameConfig.book_slide_time})
 			count += 1
+		_row_books[row].erase(book)
+		_targets.erase(book)
 		_anims.erase(book)
-		books.remove_at(index)
-		_targets.remove_at(index)
-	_relayout(animate)
+		if book == _hover_book:
+			_hover_book = null
+		touched[row] = true
+	for row in touched:
+		_layout_row(row, animate)
 	_refresh_instances()
 	_changed()
 
 
 ## Füllt das Regal aus dem Lager: mit Büchern seines Genres – bei "Gemischt" gleichmäßig
-## aus allen Genres im Lager (nach Genre gruppiert). Liefert, wie viele es waren.
+## aus allen Genres im Lager (nach Genre gruppiert, innerhalb nach Titel sortiert).
+## Liefert, wie viele es waren.
 func fill_from_storage() -> int:
 	if not has_genre():
 		return 0
@@ -218,9 +244,9 @@ func fill_from_storage() -> int:
 	if genre_id == MIXED:
 		var shares := _mixed_shares(wanted)
 		for id in shares:
-			taken.append_array(BookStock.take_books(id, shares[id]))
+			taken.append_array(_sorted_by_title(BookStock.take_books(id, shares[id])))
 	else:
-		taken = BookStock.take_books(genre_id, wanted)
+		taken = _sorted_by_title(BookStock.take_books(genre_id, wanted))
 	var rest := add_books(taken)
 	BookStock.put_back_first(rest)
 	return taken.size() - rest.size()
@@ -228,7 +254,7 @@ func fill_from_storage() -> int:
 
 ## Legt alle Bücher zurück ins Lager (sie gleiten heraus). Liefert, wie viele es waren.
 func return_all_to_storage() -> int:
-	var all := books.duplicate()
+	var all := get_books()
 	remove_books(all)
 	_send_to_storage(all)
 	return all.size()
@@ -237,12 +263,44 @@ func return_all_to_storage() -> int:
 ## Räumt die getragenen Bücher ein, die hierher passen. Was nicht passt (anderes Genre
 ## oder kein Platz), trage ich weiter. Liefert, wie viele eingeräumt wurden.
 func put_carried() -> int:
-	if not has_genre():
-		return 0
-	var taken := BookStock.take_carried("" if genre_id == MIXED else genre_id)
+	var taken := BookStock.take_carried("" if not has_genre() or genre_id == MIXED else genre_id)
 	var rest := add_books(taken)
-	BookStock.carry(rest)
+	BookStock.return_to_hand(rest)
 	return taken.size() - rest.size()
+
+
+## Sortiert alle Bücher nach Genre und Titel (die Bücher rücken sanft an ihre neuen Plätze).
+func sort_books() -> void:
+	var all := get_books()
+	var genre_order := {}
+	for genre in Catalog.get_all_genres():
+		genre_order[genre.get_id()] = genre_order.size()
+	all.sort_custom(func(a: Book, b: Book) -> bool:
+		var ga := int(genre_order.get(a.genre_id, 999))
+		var gb := int(genre_order.get(b.genre_id, 999))
+		if ga != gb:
+			return ga < gb
+		return a.title.naturalnocasecmp_to(b.title) < 0)
+	var old: Dictionary = {}
+	for book in all:
+		old[book] = _current_transform(book)
+	for list: Array in _row_books:
+		list.clear()
+	var overflow: Array[Book] = []
+	for book in all:
+		var row := _first_row_with_space(book)
+		if row < 0:
+			overflow.append(book)
+			continue
+		_row_books[row].append(book)
+	_targets.clear()
+	for r in _rows.size():
+		_layout_row(r, false)
+	for book in _targets:
+		_anims[book] = {"from": old[book], "start": _clock, "time": MOVE_TIME * 2.0, "appear": false}
+	_send_to_storage(overflow)
+	_refresh_instances()
+	_changed()
 
 
 ## Zeigt Beispielbücher (für das Vorschaubild im Shop; nicht im Bestand).
@@ -262,29 +320,86 @@ func show_sample_books() -> void:
 	add_books(samples, false)
 
 
+## Übernimmt Genre und Bücher eines anderen Regals (nur zum Anzeigen, z. B. die Vorschau
+## beim Verschieben im Gestaltungsmodus).
+func copy_contents_from(other: BookShelf) -> void:
+	genre_id = other.genre_id
+	for r in mini(_rows.size(), other._row_books.size()):
+		_row_books[r] = other._row_books[r].duplicate()
+		_layout_row(r, false)
+	_refresh_instances()
+
+
+# --- Einzelne Bücher ---
+
+## Nimmt ein bestimmtes Buch aus dem Regal in die Hand.
+func take_book(book: Book) -> void:
+	if _row_of(book) < 0:
+		return
+	remove_books([book])
+	BookStock.carry([book])
+
+
+## Stellt das Buch obenauf in der Hand an eine bestimmte Stelle (Brett, Position).
+## Liefert false, wenn es dort nicht hinpasst.
+func insert_active_book(row: int, index: int) -> bool:
+	var book := BookStock.get_active_book()
+	if book == null or row < 0 or row >= _rows.size() or not accepts(book.genre_id) \
+			or not _row_fits(row, _book_width(book)):
+		return false
+	var start: Transform3D = _ghost_transform if _ghost == book else Transform3D()
+	BookStock.take_active()
+	_clear_gap()
+	_row_books[row].insert(clampi(index, 0, _row_books[row].size()), book)
+	_layout_row(row, true)
+	if start != Transform3D():
+		_anims[book] = {"from": start, "start": _clock, "time": MOVE_TIME * 1.3, "appear": false}
+	_refresh_instances()
+	_changed()
+	return true
+
+
 # --- Speichern (über PlacedFurniture) ---
 
 func get_contents_data() -> Dictionary:
-	return {"genre": genre_id, "books": Book.list_to_save_data(books)}
+	var rows := []
+	for list: Array in _row_books:
+		rows.append(Book.list_to_save_data(list))
+	return {"genre": genre_id, "rows": rows}
 
 
 func load_contents_data(data: Dictionary) -> void:
 	genre_id = str(data.get("genre", ""))
-	books.clear()
+	for list: Array in _row_books:
+		list.clear()
 	_targets.clear()
 	_anims.clear()
 	_leaving.clear()
-	_reset_cursor()
+	var overflow: Array[Book] = []
+	var rows = data.get("rows")
+	if rows is Array:
+		for r in rows.size():
+			for book in Book.list_from_save_data(rows[r]):
+				if r < _rows.size() and _row_fits(r, _book_width(book)):
+					_row_books[r].append(book)
+				else:
+					overflow.append(book)
+		for r in _rows.size():
+			_layout_row(r, false)
+		_refresh_instances()
+	# Ältere Spielstände: alle Bücher in einer Liste – der Reihe nach einräumen
+	overflow.append_array(Book.list_from_save_data(data.get("books")))
 	# Passt etwas nicht mehr (z. B. weil das Regal umgebaut wurde), kommt es ins Lager
-	BookStock.store_books(add_books(Book.list_from_save_data(data.get("books")), false))
+	BookStock.store_books(add_books(overflow, false))
 	_update_sign()
 	_update_prompt()
 
 
 ## Das Regal wird weggeräumt (Taste X): Alle Bücher gehen zurück ins Lager.
 func release_contents() -> void:
-	var all := books.duplicate()
-	books.clear()
+	var all := get_books()
+	for list: Array in _row_books:
+		list.clear()
 	_targets.clear()
 	_anims.clear()
 	_send_to_storage(all)
@@ -292,77 +407,254 @@ func release_contents() -> void:
 
 # --- Anordnung ---
 
-## Setzt die Schreibmarke an den Anfang des ersten Fachs.
-func _reset_cursor() -> void:
-	_row_index = 0
-	_row_x = -_rows[0].width / 2.0 if not _rows.is_empty() else 0.0
+func _book_width(book: Book) -> float:
+	return book.data.size.x + BOOK_GAP + _jitter(book, 8) * 0.0025
 
 
-## Nächster freier Platz für dieses Buch (Transform im Regal) – oder null, wenn es voll ist.
-func _place_next(book: Book) -> Variant:
-	var size: Vector3 = _look(book).size
-	while _row_index < _rows.size():
-		var row := _rows[_row_index]
-		if _row_x + size.x <= row.width / 2.0 + 0.0001:
-			var placed := _book_transform(row, book, size)
-			_row_x += size.x + _jitter(book, 8) * 0.003 + 0.001
-			return placed
-		_row_index += 1
-		if _row_index < _rows.size():
-			_row_x = -_rows[_row_index].width / 2.0
-	return null
+## Wie viel Breite die Bücher eines Bretts belegen.
+func _row_used(row: int) -> float:
+	var used := 0.0
+	for book: Book in _row_books[row]:
+		used += _book_width(book)
+	return used
 
 
-## Lage eines Buchs im Fach: vorn bündig (mit einem Hauch Abweichung), leicht gedreht.
-func _book_transform(row: BookRow, book: Book, size: Vector3) -> Transform3D:
+func _row_fits(row: int, width: float) -> bool:
+	return _row_used(row) + width <= _rows[row].width + 0.0001
+
+
+func _first_row_with_space(book: Book) -> int:
+	for r in _rows.size():
+		if _row_fits(r, _book_width(book)):
+			return r
+	return -1
+
+
+func _row_of(book: Book) -> int:
+	for r in _row_books.size():
+		if _row_books[r].has(book):
+			return r
+	return -1
+
+
+## Ordnet ein Brett neu an (mit Lücke für die Vorschau, falls eine offen ist).
+## animate: Bücher, die ihren Platz wechseln, rücken sanft.
+func _layout_row(row: int, animate: bool) -> void:
+	var shelf_row := _rows[row]
+	var list: Array = _row_books[row]
+	var x := -shelf_row.width / 2.0
+	for i in list.size() + 1:
+		if row == _gap_row and i == _gap_index and _ghost:
+			_ghost_transform = _book_transform(shelf_row, _ghost, x)
+			_ghost_transform.origin += Vector3(0.0, 0.01, GameConfig.book_insert_preview_pull)
+			x += _book_width(_ghost)
+		if i >= list.size():
+			break
+		var book: Book = list[i]
+		var target := _book_transform(shelf_row, book, x)
+		if animate and _targets.has(book) and not _anims.has(book) \
+				and not (_targets[book] as Transform3D).is_equal_approx(target):
+			_anims[book] = {"from": _current_transform(book), "start": _clock, "time": MOVE_TIME, "appear": false}
+		_targets[book] = target
+		x += _book_width(book)
+
+
+## Lage eines Buchs auf dem Brett: linke Kante bei x, vorn bündig (mit einem Hauch
+## Abweichung), ganz leicht gedreht.
+func _book_transform(row: BookRow, book: Book, x: float) -> Transform3D:
+	var size := book.data.size
 	var height := minf(size.y, row.height - 0.015)
 	var depth := minf(size.z, row.depth - 0.01)
 	var inset := _jitter(book, 16) * 0.012
-	var yaw := (_jitter(book, 24) - 0.5) * deg_to_rad(2.0)
-	var origin := Vector3(_row_x + size.x / 2.0, height / 2.0, row.depth / 2.0 - depth / 2.0 - inset)
+	var yaw := (_jitter(book, 24) - 0.5) * deg_to_rad(1.6)
+	var origin := Vector3(x + size.x / 2.0, height / 2.0, row.depth / 2.0 - depth / 2.0 - inset)
 	var local := Transform3D(Basis(Vector3.UP, yaw) * Basis.from_scale(Vector3(size.x, height, depth)), origin)
 	return row.transform * local
 
 
-## Eine feste Zahl zwischen 0 und 1 aus dem Aussehen des Buchs (für kleine Abweichungen).
+## Eine feste Zahl zwischen 0 und 1 je Exemplar (für kleine Abweichungen).
 func _jitter(book: Book, shift: int) -> float:
 	return float((book.look >> shift) & 255) / 255.0
 
 
-## Ordnet alle Bücher neu an (z. B. nachdem welche herausgenommen wurden).
-## animate: Bücher, die ihren Platz wechseln, rücken sanft nach.
-func _relayout(animate: bool) -> void:
-	var old: Dictionary = {}
-	for i in books.size():
-		old[books[i]] = _current_transform(books[i], i)
-	_reset_cursor()
-	_targets.clear()
-	var overflow: Array[Book] = []
-	for book in books.duplicate():
-		var target: Variant = _place_next(book)
-		if target == null:
-			overflow.append(book)
-			books.erase(book)
-			_anims.erase(book)
+# --- Zielen: welches Buch, welche Stelle? ---
+
+## Das Buch, das der Blickstrahl (in der Welt) zuerst trifft – oder null.
+func _pick_book(from: Vector3, direction: Vector3) -> Book:
+	var to_local := global_transform.affine_inverse()
+	var origin := to_local * from
+	var dir := to_local.basis * direction
+	var best: Book = null
+	var best_distance := INF
+	for book in _targets:
+		var inverse := (_targets[book] as Transform3D).affine_inverse()
+		var distance := _ray_box(inverse * origin, inverse.basis * dir)
+		if distance < best_distance:
+			best_distance = distance
+			best = book
+	return best
+
+
+## Abstand, bei dem ein Strahl den Würfel -0.5 bis 0.5 trifft (INF = gar nicht).
+static func _ray_box(origin: Vector3, dir: Vector3) -> float:
+	var t_min := -INF
+	var t_max := INF
+	for axis in 3:
+		if absf(dir[axis]) < 0.000001:
+			if origin[axis] < -0.5 or origin[axis] > 0.5:
+				return INF
 			continue
-		_targets.append(target)
-		if animate and not _anims.has(book) and not (old[book] as Transform3D).is_equal_approx(target):
-			_anims[book] = {"from": old[book], "start": _clock + 0.08, "time": MOVE_TIME, "appear": false}
-	_send_to_storage(overflow)
+		var t1 := (-0.5 - origin[axis]) / dir[axis]
+		var t2 := (0.5 - origin[axis]) / dir[axis]
+		t_min = maxf(t_min, minf(t1, t2))
+		t_max = minf(t_max, maxf(t1, t2))
+	if t_max < maxf(t_min, 0.0):
+		return INF
+	return maxf(t_min, 0.0)
+
+
+## Wo ein Buch eingestellt würde: { "row": Brett, "index": Stelle } – leer, wenn der Blick
+## kein Brett trifft. Gemessen wird an der Vorderkante der Bretter.
+func _find_slot(from: Vector3, direction: Vector3) -> Dictionary:
+	var best := {}
+	var best_distance := INF
+	for r in _rows.size():
+		var row := _rows[r]
+		var to_row := (global_transform * row.transform).affine_inverse()
+		var origin := to_row * from
+		var dir := to_row.basis * direction
+		var plane_z := row.depth / 2.0 - 0.03
+		if absf(dir.z) < 0.0001:
+			continue
+		var t := (plane_z - origin.z) / dir.z
+		if t <= 0.0 or t >= best_distance:
+			continue
+		var hit := origin + dir * t
+		if hit.y < -0.01 or hit.y > row.height or absf(hit.x) > row.width / 2.0 + 0.03:
+			continue
+		# Stelle: hinter allen Büchern, deren Mitte links vom Blickpunkt liegt
+		var index := 0
+		var x := -row.width / 2.0
+		for book: Book in _row_books[r]:
+			var width := _book_width(book)
+			if x + width / 2.0 < hit.x:
+				index += 1
+			x += width
+		best = {"row": r, "index": index}
+		best_distance = t
+	return best
+
+
+func _on_aimed(from: Vector3, direction: Vector3) -> void:
+	var active := BookStock.get_active_book()
+	if active == null:
+		_clear_gap()
+		_set_hover(_pick_book(from, direction))
+		return
+	_set_hover(null)
+	var slot := _find_slot(from, direction)
+	_aim_problem = ""
+	if slot.is_empty():
+		_clear_gap()
+	elif not accepts(active.genre_id):
+		_aim_problem = "„%s“ passt nicht in dieses Regal (%s)" % [active.title, get_genre_name()]
+		_clear_gap()
+	elif not _row_fits(slot.row, _book_width(active)):
+		_aim_problem = "Auf diesem Brett ist kein Platz mehr"
+		_clear_gap()
+	else:
+		_set_gap(slot.row, slot.index, active)
+	_update_prompt()
+
+
+func _on_aim_ended() -> void:
+	_set_hover(null)
+	_clear_gap()
+	_aim_problem = ""
+	_update_prompt()
+
+
+## Hebt ein Buch hervor (es rutscht ein Stück heraus) und zeigt seine Infokarte.
+func _set_hover(book: Book) -> void:
+	if book == _hover_book:
+		return
+	_hover_book = book
+	if book:
+		BookInfoCard.show_book(self, book)
+	else:
+		BookInfoCard.hide_card(self)
+	_update_prompt()
+	_refresh_instances()
+
+
+## Öffnet eine Lücke für das Buch obenauf (die Nachbarn rücken zur Seite).
+func _set_gap(row: int, index: int, book: Book) -> void:
+	if row == _gap_row and index == _gap_index and book == _ghost:
+		return
+	var old_row := _gap_row
+	_gap_row = row
+	_gap_index = index
+	_ghost = book
+	if old_row >= 0 and old_row != row:
+		_layout_row(old_row, true)
+	_layout_row(row, true)
+	_refresh_instances()
+
+
+func _clear_gap() -> void:
+	if _gap_row < 0 and _ghost == null:
+		return
+	var old_row := _gap_row
+	_gap_row = -1
+	_gap_index = -1
+	_ghost = null
+	if old_row >= 0:
+		_layout_row(old_row, true)
+	_refresh_instances()
+
+
+func _on_tapped(_interactor: Node) -> void:
+	var active := BookStock.get_active_book()
+	if active:
+		# Buch obenauf an die markierte Stelle stellen
+		if _ghost == active and _gap_row >= 0:
+			insert_active_book(_gap_row, _gap_index)
+		elif not _aim_problem.is_empty():
+			Notice.post(self, _aim_problem)
+		return
+	if _hover_book:
+		var book := _hover_book
+		_set_hover(null)
+		take_book(book)
+		return
+	_open_menu()
+
+
+func _on_held(_interactor: Node) -> void:
+	if count_matching_carried() > 0 and put_carried() > 0:
+		return
+	_open_menu()
+
+
+func _open_menu() -> void:
+	_set_hover(null)
+	_clear_gap()
+	get_tree().call_group(ShelfMenu.GROUP, "open_for", self)
+
+
+func _on_carried_changed() -> void:
+	if _ghost and not BookStock.carried.has(_ghost):
+		_clear_gap()
+	_update_prompt()
 
 
 # --- Zeichnen und Animation ---
 
-func _look(book: Book) -> Dictionary:
-	if not _looks.has(book):
-		_looks[book] = {"size": BookLook.get_size(book), "color": BookLook.get_color(book),
-			"custom": BookLook.get_custom(book)}
-	return _looks[book]
-
-
 ## Wo das Buch gerade zu sehen ist (mitten in der Animation oder an seinem Platz).
-func _current_transform(book: Book, index: int) -> Transform3D:
-	var target := _targets[index]
+func _current_transform(book: Book) -> Transform3D:
+	var target: Transform3D = _targets.get(book, Transform3D())
+	if book == _hover_book:
+		target.origin += Vector3(0.0, 0.0, GameConfig.book_hover_pull)
 	if not _anims.has(book):
 		return target
 	var anim: Dictionary = _anims[book]
@@ -374,25 +666,35 @@ func _current_transform(book: Book, index: int) -> Transform3D:
 	return (anim.from as Transform3D).interpolate_with(target, eased)
 
 
-## Überträgt alle Bücher ins MultiMesh (Anzahl, Lage, Farbe, Verzierung).
+## Überträgt alle Bücher ins MultiMesh (Anzahl, Lage, Farbe, Buchrücken).
 func _refresh_instances() -> void:
-	var count := books.size() + _leaving.size()
+	_order = get_books()
+	var count := _order.size() + _leaving.size() + (1 if _ghost else 0)
 	if _multimesh.instance_count != count:
 		_multimesh.instance_count = count
 	_index.clear()
-	for i in books.size():
-		var book := books[i]
-		var look := _look(book)
+	for i in _order.size():
+		var book := _order[i]
 		_index[book] = i
-		_multimesh.set_instance_transform(i, _current_transform(book, i))
-		_multimesh.set_instance_color(i, look.color)
-		_multimesh.set_instance_custom_data(i, look.custom)
+		var color := BookLook.get_color(book)
+		if book == _hover_book:
+			color.a = 0.5  # hervorgehoben (siehe Shader)
+		_multimesh.set_instance_transform(i, _current_transform(book))
+		_multimesh.set_instance_color(i, color)
+		_multimesh.set_instance_custom_data(i, BookLook.get_custom(book))
 	for j in _leaving.size():
 		var leaving := _leaving[j]
-		var index := books.size() + j
+		var index := _order.size() + j
 		_multimesh.set_instance_transform(index, _leaving_transform(leaving))
 		_multimesh.set_instance_color(index, leaving.color)
-		_multimesh.set_instance_custom_data(index, leaving.custom)
+		_multimesh.set_instance_custom_data(index, BookLook.get_custom(leaving.book))
+	if _ghost:
+		var index := count - 1
+		var color := BookLook.get_color(_ghost)
+		color.a = 0.5
+		_multimesh.set_instance_transform(index, _ghost_transform)
+		_multimesh.set_instance_color(index, color)
+		_multimesh.set_instance_custom_data(index, BookLook.get_custom(_ghost))
 	set_process(not _anims.is_empty() or not _leaving.is_empty())
 
 
@@ -415,14 +717,13 @@ func _process(delta: float) -> void:
 			_anims.erase(book)
 			continue
 		var anim: Dictionary = _anims[book]
-		var finished: bool = _clock >= anim.start + anim.time
-		if finished:
+		if _clock >= anim.start + anim.time:
 			_anims.erase(book)
-		_multimesh.set_instance_transform(index, _current_transform(book, index))
+		_multimesh.set_instance_transform(index, _current_transform(book))
 	var leaving_done := true
 	for j in _leaving.size():
 		var leaving := _leaving[j]
-		_multimesh.set_instance_transform(books.size() + j, _leaving_transform(leaving))
+		_multimesh.set_instance_transform(_order.size() + j, _leaving_transform(leaving))
 		if _clock < leaving.start + leaving.time:
 			leaving_done = false
 	if leaving_done and not _leaving.is_empty():
@@ -481,24 +782,28 @@ func _update_sign() -> void:
 	_sign_label.pixel_size = minf(0.0011, SIGN_SIZE.x * 0.88 / maxf(text_width, 1.0))
 
 
-## Hinweistext unten in der Bildmitte (nach "E – ").
+## Hinweise unten in der Bildmitte: "E – …" (tippen) und "E halten – …".
 func _update_prompt() -> void:
 	if _interactable == null:
 		return
-	var matching := count_matching_carried() if has_genre() else 0
-	if matching > 0:
-		_interactable.prompt_text = "%d getragene %s einräumen" % [matching, "Buch" if matching == 1 else "Bücher"]
-	elif not has_genre():
-		_interactable.prompt_text = "Bücherregal einräumen"
+	var matching := count_matching_carried()
+	var active := BookStock.get_active_book() if _is_live else null
+	if active:
+		if not _aim_problem.is_empty():
+			_interactable.prompt_text = _aim_problem
+		elif _ghost:
+			_interactable.prompt_text = "„%s“ hier einstellen" % active.title
+		else:
+			_interactable.prompt_text = "Auf ein Brett schauen, um „%s“ einzustellen" % active.title
+		_interactable.hold_prompt_text = "alle passenden einräumen (%d)" % matching if matching > 0 else "Regal-Menü"
+	elif _hover_book:
+		_interactable.prompt_text = "„%s“ nehmen" % _hover_book.title
+		_interactable.hold_prompt_text = "Regal-Menü"
 	else:
-		_interactable.prompt_text = "Regal: %s (%d %s)" % [get_genre_name(), books.size(), "Buch" if books.size() == 1 else "Bücher"]
-
-
-func _on_interacted(_interactor: Node) -> void:
-	# Trage ich passende Bücher, werden sie gleich eingeräumt – sonst öffnet sich das Menü
-	if count_matching_carried() > 0 and put_carried() > 0:
-		return
-	get_tree().call_group(ShelfMenu.GROUP, "open_for", self)
+		var count := get_books().size()
+		_interactable.prompt_text = "Regal-Menü" if count == 0 or not has_genre() \
+			else "Regal: %s (%d %s)" % [get_genre_name(), count, "Buch" if count == 1 else "Bücher"]
+		_interactable.hold_prompt_text = "Regal-Menü" if count > 0 and has_genre() else ""
 
 
 # --- Hilfsfunktionen ---
@@ -525,6 +830,11 @@ func _mixed_shares(wanted: int) -> Dictionary:
 			if remaining <= 0:
 				break
 	return shares
+
+
+static func _sorted_by_title(list: Array[Book]) -> Array[Book]:
+	list.sort_custom(func(a: Book, b: Book) -> bool: return a.title.naturalnocasecmp_to(b.title) < 0)
+	return list
 
 
 ## Bücher ins Lager – mit einem kleinen Bücherstapel je Genre in der Lager-Anzeige.

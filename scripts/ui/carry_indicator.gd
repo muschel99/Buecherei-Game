@@ -1,7 +1,7 @@
 class_name CarryIndicator
 extends CanvasLayer
-## Dezente Anzeige unten in der Mitte: welche Bücher ich gerade trage,
-## z. B. "Du trägst 7 Bücher: 3 Krimi, 4 Fantasy" – mit einem kleinen Bücherstapel je Genre.
+## Dezente Anzeige unten in der Mitte: welches Buch obenauf liegt und welche Bücher ich
+## trage, z. B. "Du trägst 7 Bücher: 3 Krimi, 4 Fantasy" – mit einem Bücherstapel je Genre.
 ## Erscheint nur, wenn ich etwas trage, und nicht, solange ein Menü offen ist.
 
 const FADE_TIME := 0.25
@@ -48,7 +48,11 @@ func _update_text() -> void:
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		_icons.add_child(icon)
-	_label.text = "Du trägst %d %s: %s" % [count, "Buch" if count == 1 else "Bücher", BookStock.describe_counts(counts)]
+	var active := BookStock.get_active_book()
+	_label.text = "Obenauf: „%s“" % active.title if active else ""
+	_label.text += "\nDu trägst %d %s: %s" % [count, "Buch" if count == 1 else "Bücher", BookStock.describe_counts(counts)]
+	if count > 1:
+		_label.text += " · Mausrad: anderes Buch obenauf"
 	_center.call_deferred()
 
 

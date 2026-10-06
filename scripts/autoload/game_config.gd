@@ -71,6 +71,9 @@ var light_fade_time: float = 0.35
 var flame_fade_time: float = 0.6
 ## Soll der Lichtschalter auch Kerzen und Laternen mitschalten? (Standard: nur elektrische Lampen)
 var light_switch_includes_flames: bool = false
+## So lange muss man E gedrückt halten für die "große" Aktion (z. B. am Regal: alle
+## passenden Bücher einräumen bzw. Regal-Menü öffnen), in Sekunden. Kurz tippen = einzeln.
+var interact_hold_time: float = 0.45
 ## So weit öffnet sich die Eingangstür (in Grad).
 var door_open_angle: float = 90.0
 ## So lange dauert das Öffnen bzw. Schließen der Tür (in Sekunden).
@@ -170,6 +173,11 @@ var book_thickness_range: Vector2 = Vector2(0.022, 0.048)
 var book_depth_range: Vector2 = Vector2(0.15, 0.21)
 ## Wie stark der Farbton der Buchrücken schwankt (0 = alle Bücher eines Genres gleich).
 var book_color_variation: float = 1.0
+
+## Das angeschaute Buch rutscht ein Stück aus dem Regal (in Metern).
+var book_hover_pull: float = 0.015
+## So weit vor dem Regal schwebt das Buch, das ich gleich einstelle (in Metern).
+var book_insert_preview_pull: float = 0.06
 
 ## Testtaste (F9): legt ein paar zufällige Bücher in den Rückgabekasten, solange es noch
 ## keine Besucher gibt. Zum Abschalten auf false setzen.

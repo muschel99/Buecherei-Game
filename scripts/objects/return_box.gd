@@ -59,6 +59,11 @@ func take_all() -> Array[Book]:
 	return all
 
 
+## Alle Bücher im Kasten.
+func get_books() -> Array[Book]:
+	return books
+
+
 ## Wie viele Bücher dieses Genres liegen im Kasten? (für den Bestand)
 func count_books(genre_id: String) -> int:
 	var count := 0

@@ -163,7 +163,7 @@ func _refresh() -> void:
 		return
 	_panel.reset_size()  # wieder genau so hoch wie der Inhalt
 	_title.text = shelf.get_display_name()
-	var count := shelf.books.size()
+	var count := shelf.get_books().size()
 	_info.text = "%d %s im Regal · Platz für etwa %d weitere" % [count, "Buch" if count == 1 else "Bücher",
 		shelf.get_free_estimate()]
 
