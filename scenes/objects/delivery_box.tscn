@@ -1,0 +1,72 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/delivery_box.gd" id="1_box"]
+[ext_resource type="Material" path="res://assets/materials/cardboard.tres" id="2_cardboard"]
+[ext_resource type="Material" path="res://assets/materials/packing_tape.tres" id="3_tape"]
+[ext_resource type="Material" path="res://assets/materials/paint_white.tres" id="4_label"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="5_interactable"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_box"]
+size = Vector3(0.5, 0.36, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tape_top"]
+size = Vector3(0.08, 0.006, 0.43)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tape_side"]
+size = Vector3(0.08, 0.1, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_label"]
+size = Vector3(0.13, 0.08, 0.004)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_box"]
+size = Vector3(0.5, 0.36, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
+size = Vector3(0.62, 0.5, 0.54)
+
+[node name="DeliveryBox" type="Node3D"]
+script = ExtResource("1_box")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Box" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0)
+mesh = SubResource("BoxMesh_box")
+material_override = ExtResource("2_cardboard")
+
+[node name="TapeTop" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.362, 0)
+mesh = SubResource("BoxMesh_tape_top")
+material_override = ExtResource("3_tape")
+
+[node name="TapeFront" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, 0.212)
+mesh = SubResource("BoxMesh_tape_side")
+material_override = ExtResource("3_tape")
+
+[node name="TapeBack" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, -0.212)
+mesh = SubResource("BoxMesh_tape_side")
+material_override = ExtResource("3_tape")
+
+[node name="ShippingLabel" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.13, 0.15, 0.211)
+mesh = SubResource("BoxMesh_label")
+material_override = ExtResource("4_label")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0)
+shape = SubResource("BoxShape3D_box")
+
+[node name="Interactable" type="Area3D" parent="."]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_interactable")
+prompt_text = "Lieferung auspacken"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+shape = SubResource("BoxShape3D_interact")

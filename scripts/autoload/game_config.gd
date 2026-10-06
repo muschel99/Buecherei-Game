@@ -126,6 +126,14 @@ var highlight_rim_strength: float = 0.45
 var currency_name: String = "Taler"
 ## Kontostand beim allerersten Start (neues Spiel).
 var start_money: int = 500
+## Anteil des Preises, den man beim Verkaufen zurückbekommt (0.5 = 50 %).
+var sell_price_share: float = 0.5
+## So viele Sekunden nach dem Bestellen steht der Karton vor der Tür.
+var delivery_time: float = 10.0
+## So lange dauert das Auspacken eines Kartons (die kleine Animation, in Sekunden).
+var unpack_time: float = 0.7
+## So lange bleibt ein Hinweis wie "Deine Lieferung ist da" zu sehen (in Sekunden).
+var notice_time: float = 4.0
 
 
 # --- Speichern ---

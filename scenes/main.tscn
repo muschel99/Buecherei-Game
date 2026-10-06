@@ -14,6 +14,8 @@
 [ext_resource type="Material" path="res://assets/materials/sidewalk.tres" id="12_sidewalk"]
 [ext_resource type="Material" path="res://assets/materials/curb_stone.tres" id="13_curb"]
 [ext_resource type="Material" path="res://assets/materials/wall_plaster.tres" id="14_plaster"]
+[ext_resource type="Script" path="res://scripts/shop/delivery_manager.gd" id="15_deliveries"]
+[ext_resource type="PackedScene" path="res://scenes/ui/notice.tscn" id="16_notice"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -161,6 +163,10 @@ shape = SubResource("BoxShape3D_bound_side")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6.7)
 shape = SubResource("BoxShape3D_bound_front")
 
+[node name="Deliveries" type="Node3D" parent="Outside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05, 0, -4.68)
+script = ExtResource("15_deliveries")
+
 [node name="GroundFloorRoom" parent="." instance=ExtResource("1_room")]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
@@ -183,6 +189,8 @@ build_mode_path = NodePath("../BuildMode")
 [node name="PauseMenu" parent="." instance=ExtResource("4_pause_menu")]
 
 [node name="FpsCounter" parent="." instance=ExtResource("11_fps")]
+
+[node name="Notice" parent="." instance=ExtResource("16_notice")]
 
 [connection signal="interaction_target_changed" from="Player" to="HUD" method="_on_player_interaction_target_changed"]
 [connection signal="catalog_state_changed" from="BuildMode" to="HUD" method="_on_build_mode_catalog_state_changed"]
