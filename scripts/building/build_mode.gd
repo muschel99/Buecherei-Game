@@ -99,6 +99,9 @@ func is_in_catalog_state() -> bool:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_build_mode"):
+		# Ist gerade etwas anderes offen (z. B. der Shop), bleibt der Gestaltungsmodus zu
+		if not is_active and MenuStack.has_open():
+			return
 		set_active(not is_active)
 		get_viewport().set_input_as_handled()
 		return

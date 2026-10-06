@@ -16,6 +16,7 @@
 [ext_resource type="Material" path="res://assets/materials/wall_plaster.tres" id="14_plaster"]
 [ext_resource type="Script" path="res://scripts/shop/delivery_manager.gd" id="15_deliveries"]
 [ext_resource type="PackedScene" path="res://scenes/ui/notice.tscn" id="16_notice"]
+[ext_resource type="PackedScene" path="res://scenes/ui/shop_window.tscn" id="17_shop"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -185,6 +186,9 @@ build_mode_path = NodePath("../BuildMode")
 [node name="StyleMeter" parent="." instance=ExtResource("10_style_meter")]
 room_path = NodePath("../GroundFloorRoom")
 build_mode_path = NodePath("../BuildMode")
+
+[node name="ShopWindow" parent="." instance=ExtResource("17_shop")]
+player_path = NodePath("../Player")
 
 [node name="PauseMenu" parent="." instance=ExtResource("4_pause_menu")]
 

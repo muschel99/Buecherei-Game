@@ -38,6 +38,9 @@ const _CATEGORY_NAMES := {
 @export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
 ## Die Szene (.tscn) oder das 3D-Modell (.glb) des Möbelstücks.
 @export_file("*.tscn", "*.scn", "*.glb", "*.gltf") var scene_path: String = ""
+## Eigenes Vorschaubild für den Shop (freiwillig). Leer = das Spiel fotografiert das
+## Modell selbst.
+@export var icon: Texture2D
 ## Grundfläche in Rasterfeldern (Breite x Tiefe). Ein Feld ist
 ## GameConfig.grid_cell_size groß (Standard 1/9 m ≈ 11,1 cm), 9 Felder = 1 Meter.
 @export var footprint: Vector2i = Vector2i(2, 2)
@@ -90,6 +93,11 @@ func get_category_name() -> String:
 
 static func get_category_display_name(value: Category) -> String:
 	return _CATEGORY_NAMES.get(value, "?")
+
+
+## Was man beim Verkaufen zurückbekommt (Anteil GameConfig.sell_price_share des Preises).
+func get_sell_price() -> int:
+	return maxi(0, roundi(price * GameConfig.sell_price_share))
 
 
 ## Grundfläche in Metern (Breite, Tiefe).

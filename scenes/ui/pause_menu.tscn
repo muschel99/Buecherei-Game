@@ -114,14 +114,14 @@ theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "E"
 
 [node name="Action3" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Interagieren"
+text = "Benutzen: Lampen, Tür, Sitzen, Kartons auspacken, Tablet (Shop)"
 
 [node name="KeyBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "Tab"
 
 [node name="ActionBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Gestaltungsmodus öffnen/schließen"
+text = "Gestaltungsmodus (Inventar) öffnen/schließen"
 
 [node name="KeyRemove" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

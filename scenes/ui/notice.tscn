@@ -20,7 +20,7 @@ corner_radius_bottom_left = 12
 
 [node name="Notice" type="CanvasLayer"]
 process_mode = 3
-layer = 4
+layer = 7
 script = ExtResource("1_notice")
 
 [node name="Panel" type="PanelContainer" parent="."]

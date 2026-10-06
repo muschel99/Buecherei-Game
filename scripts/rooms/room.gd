@@ -47,6 +47,9 @@ signal layout_changed
 enum HangKind { NONE = 0, WALL = 4, DOOR = 8, CEILING = 16 }
 
 var _next_uid: int = 1
+## Wo Unverzichtbares (z. B. das Tablet) ursprünglich steht – falls es in einem Spielstand
+## fehlt, kommt es dorthin zurück. id -> { "support_id": …, "transform": … }
+var _essential_spots: Dictionary = {}
 
 
 func _ready() -> void:
@@ -54,6 +57,7 @@ func _ready() -> void:
 	add_to_group(SaveManager.PERSIST_GROUP)
 	for item in get_placed_furniture():
 		_assign_uid(item)
+	_remember_essential_spots()
 	_paint_everything(default_wall_id)
 	_paint_everything(default_floor_id)
 	_paint_everything(default_ceiling_id)
@@ -136,6 +140,49 @@ func get_dependents(item: PlacedFurniture) -> Array[PlacedFurniture]:
 				result.append(other)
 				to_check.append(other)
 	return result
+
+
+## Unverzichtbares (FurnitureData.is_essential, z. B. das Tablet mit dem Shop) darf nie
+## verloren gehen. Fehlt es im Raum und im Inventar (etwa bei einem Spielstand von vor dem
+## Shop), wird es wieder an seinen Platz gestellt – oder ins Inventar gelegt, falls das
+## Möbelstück fehlt, auf dem es stand. Wird nach dem Laden des Spielstands aufgerufen.
+func ensure_essentials() -> void:
+	for data in Catalog.get_all_furniture():
+		var id := data.get_id()
+		if not data.is_essential or count_placed(id) > 0 or Inventory.get_count(id) > 0:
+			continue
+		var spot: Dictionary = _essential_spots.get(id, {})
+		var support := _find_placed(str(spot.get("support_id", "")))
+		if spot.is_empty() or (not str(spot.support_id).is_empty() and support == null):
+			Inventory.add_furniture(id)
+			continue
+		var world: Transform3D = spot.transform
+		if support:
+			world = support.global_transform * world
+		add_furniture(data, world, support)
+
+
+func _remember_essential_spots() -> void:
+	for item in get_placed_furniture():
+		if item.data == null or not item.data.is_essential:
+			continue
+		var support: PlacedFurniture = null
+		for other in get_placed_furniture():
+			if other.uid == item.support_uid and item.support_uid > 0:
+				support = other
+		if support:
+			_essential_spots[item.data.get_id()] = {"support_id": support.data.get_id(),
+				"transform": support.global_transform.affine_inverse() * item.global_transform}
+		else:
+			_essential_spots[item.data.get_id()] = {"support_id": "", "transform": item.global_transform}
+
+
+## Das erste Möbelstück mit dieser id im Raum (oder null).
+func _find_placed(id: String) -> PlacedFurniture:
+	for item in get_placed_furniture():
+		if item.data and item.data.get_id() == id:
+			return item
+	return null
 
 
 ## Alle Lichtquellen im Raum, die der Lichtschalter schaltet: elektrische Lampen –

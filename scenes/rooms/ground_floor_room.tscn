@@ -21,6 +21,7 @@
 [ext_resource type="Script" path="res://scripts/rooms/paintable_grid.gd" id="19_floor"]
 [ext_resource type="Script" path="res://scripts/objects/door.gd" id="20_door"]
 [ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="21_interactable"]
+[ext_resource type="Resource" path="res://data/furniture/tablet.tres" id="22_tablet"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_horizontal"]
 size = Vector3(2.4, 0.06, 0.22)
@@ -294,11 +295,19 @@ data = ExtResource("11_table")
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.7, 0, 2.7)
 script = ExtResource("16_placed")
 data = ExtResource("12_counter")
+uid = 5
 
 [node name="FloorLamp" type="Node3D" parent="Furniture"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7, 0, -2.4)
 script = ExtResource("16_placed")
 data = ExtResource("13_floor_lamp")
+
+[node name="Tablet" type="Node3D" parent="Furniture"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 1, 2.77)
+script = ExtResource("16_placed")
+data = ExtResource("22_tablet")
+uid = 7
+support_uid = 5
 
 [node name="WindowSillSurface" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.835, -3.91)
