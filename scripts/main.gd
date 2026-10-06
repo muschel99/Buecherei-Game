@@ -17,6 +17,8 @@ func _ready() -> void:
 	SaveManager.load_game()
 	# Das Tablet mit dem Shop darf nie fehlen (auch nicht in älteren Spielständen)
 	($GroundFloorRoom as Room).ensure_essentials()
+	# Startgeschenke (z. B. ein Rückgabekasten) kommen einmal ins Inventar
+	BookStock.give_start_gifts()
 
 
 func _on_setting_changed(key: String, _value: Variant) -> void:

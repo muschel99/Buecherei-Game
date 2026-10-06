@@ -93,6 +93,10 @@ func _photograph(data: FurnitureData) -> Texture2D:
 	var model := FurnitureUtils.instantiate_model(data)
 	_stage.add_child(model)
 	FurnitureUtils.make_preview_only(model)
+	# Bücherregale bekommen fürs Foto ein paar Beispielbücher
+	for node in model.find_children("*", "", true, false):
+		if node is BookShelf:
+			node.show_sample_books()
 	var bounds := FurnitureUtils.get_local_aabb(model)
 	var center := bounds.get_center()
 	var radius := maxf(bounds.size.length() / 2.0, 0.05)

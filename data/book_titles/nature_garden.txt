@@ -1,0 +1,73 @@
+# Wortliste für erfundene Buchtitel – Genre: Natur und Garten
+#
+# So funktioniert es:
+# - Unter [Vorlagen] stehen Satzmuster für Titel.
+# - Jedes {Name} in einer Vorlage wird durch einen zufälligen Eintrag aus der Liste [Name] ersetzt.
+# - Neue Einträge: einfach eine neue Zeile unter die passende Liste schreiben.
+# - Neue Liste: eine neue Überschrift in eckigen Klammern, z. B. [Farbe], und in einer
+#   Vorlage {Farbe} benutzen.
+# - Zeilen mit # am Anfang sind Kommentare und werden ignoriert.
+# Bitte nur erfundene Titel – keine echten Bücher.
+
+[Vorlagen]
+Der {Adj} Garten
+{Pflanzen} {Wo}
+Gärtnern {Wie}
+Ein Jahr {Jahr}
+Was im {Ort} wächst
+Das kleine Buch der {Sammlung}
+Spaziergänge {Spaziergang}
+
+[Adj]
+stille
+wilde
+duftende
+kleine
+verwunschene
+summende
+
+[Pflanzen]
+Kräuter
+Rosen
+Farne
+Tomaten
+Wildblumen
+Kürbisse
+
+[Wo]
+im Topf
+am Zaun
+auf dem Balkon
+unter Obstbäumen
+im Schatten
+
+[Wie]
+mit Geduld
+für Ungeduldige
+im Schatten
+ohne Garten
+mit Regenwasser
+
+[Jahr]
+im Gemüsebeet
+unter Eichen
+am Gartenteich
+im Kräuterbeet
+
+[Ort]
+Hinterhof
+Wald
+Gewächshaus
+Fensterkasten
+
+[Sammlung]
+Wildkräuter
+Gartenvögel
+Moose
+Pilze
+Bienen
+
+[Spaziergang]
+durch Hecken und Wiesen
+am Waldrand
+im Morgennebel

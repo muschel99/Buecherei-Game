@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "comics"
+display_name = "Comics und Graphic Novels"
+description = "Bildergeschichten für alle Altersstufen."
+spine_colors = Array[Color]([Color(0.82, 0.2, 0.18, 1), Color(0.2, 0.4, 0.74, 1), Color(0.94, 0.8, 0.2, 1), Color(0.14, 0.14, 0.16, 1)])
+styles = 2
+price = 45
+is_unlocked = false
+sort_order = 160

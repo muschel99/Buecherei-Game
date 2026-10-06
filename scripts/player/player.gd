@@ -254,7 +254,9 @@ func _update_interaction_target() -> void:
 		var point := interaction_ray.get_collision_point()
 		# Fester Körper getroffen (z. B. Kartondeckel von oben)? Dann zählt sein Interactable.
 		var target: Interactable = hit as Interactable
-		if target == null and hit is Node:
+		if hit is Node and not hit.is_inside_tree():
+			target = null  # gerade weggeräumt (z. B. beim Laden)
+		elif target == null and hit is Node:
 			target = Interactable.find_for(hit, point)
 		if target and target.is_enabled:
 			var distance := camera.global_position.distance_to(point)

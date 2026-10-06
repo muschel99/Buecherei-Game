@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_return"]
+
+[resource]
+script = ExtResource("1_return")
+id = "return_box"
+display_name = "Rückgabekasten"
+description = "Hier werfen Besucher ihre ausgeliehenen Bücher ein. Mit E nimmst du alle auf einmal heraus."
+price = 90
+scene_path = "res://scenes/furniture/return_box.tscn"
+footprint = Vector2i(5, 4)
+category = 3

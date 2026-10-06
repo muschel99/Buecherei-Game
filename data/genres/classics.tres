@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "classics"
+display_name = "Klassiker"
+description = "Ehrwürdige Geschichten in Leinen gebunden."
+spine_colors = Array[Color]([Color(0.4, 0.12, 0.1, 1), Color(0.18, 0.3, 0.2, 1), Color(0.15, 0.18, 0.3, 1), Color(0.58, 0.44, 0.3, 1)])
+styles = 4
+price = 55
+is_unlocked = false
+sort_order = 60

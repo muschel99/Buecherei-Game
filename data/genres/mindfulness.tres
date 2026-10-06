@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "mindfulness"
+display_name = "Achtsamkeit"
+description = "Langsam werden, durchatmen, Tee trinken."
+spine_colors = Array[Color]([Color(0.62, 0.7, 0.6, 1), Color(0.66, 0.76, 0.82, 1), Color(0.84, 0.76, 0.62, 1), Color(0.86, 0.7, 0.68, 1)])
+styles = 1
+price = 40
+is_unlocked = false
+sort_order = 150

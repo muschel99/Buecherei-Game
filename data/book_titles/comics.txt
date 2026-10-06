@@ -1,0 +1,59 @@
+# Wortliste für erfundene Buchtitel – Genre: Comics und Graphic Novels
+#
+# So funktioniert es:
+# - Unter [Vorlagen] stehen Satzmuster für Titel.
+# - Jedes {Name} in einer Vorlage wird durch einen zufälligen Eintrag aus der Liste [Name] ersetzt.
+# - Neue Einträge: einfach eine neue Zeile unter die passende Liste schreiben.
+# - Neue Liste: eine neue Überschrift in eckigen Klammern, z. B. [Farbe], und in einer
+#   Vorlage {Farbe} benutzen.
+# - Zeilen mit # am Anfang sind Kommentare und werden ignoriert.
+# Bitte nur erfundene Titel – keine echten Bücher.
+
+[Vorlagen]
+{Held}: {Abenteuer}
+Die Abenteuer von {Name}
+{Name} gegen {Gegner}
+{Held}, Band {Band}
+Nachtschicht in {Ort}
+
+[Held]
+Kapitän Pfote
+Nebelkatze
+Professor Kringel
+Die Turbo-Oma
+Lumi aus dem All
+Ritter Kunibert Krümel
+
+[Abenteuer]
+Die Insel der Socken
+Der verlorene Keks
+Angriff der Gartenzwerge
+Ein Fall für zwei Pfoten
+Das Geheimnis der Bibliothek
+Chaos im Kuchenladen
+
+[Name]
+Nebelkatze
+Kapitän Pfote
+Fips und Fax
+Lumi
+
+[Gegner]
+die Staubsauger-Armee
+den grauen Montag
+die Gartenzwerge
+Doktor Schnupfen
+
+[Band]
+1
+2
+3
+4
+5
+6
+7
+
+[Ort]
+Kettlebridge
+der Stadtbibliothek
+Mondstadt

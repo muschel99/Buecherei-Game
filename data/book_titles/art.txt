@@ -1,0 +1,62 @@
+# Wortliste für erfundene Buchtitel – Genre: Kunst
+#
+# So funktioniert es:
+# - Unter [Vorlagen] stehen Satzmuster für Titel.
+# - Jedes {Name} in einer Vorlage wird durch einen zufälligen Eintrag aus der Liste [Name] ersetzt.
+# - Neue Einträge: einfach eine neue Zeile unter die passende Liste schreiben.
+# - Neue Liste: eine neue Überschrift in eckigen Klammern, z. B. [Farbe], und in einer
+#   Vorlage {Farbe} benutzen.
+# - Zeilen mit # am Anfang sind Kommentare und werden ignoriert.
+# Bitte nur erfundene Titel – keine echten Bücher.
+
+[Vorlagen]
+Die Kunst {Gen}
+Malen mit {Material}
+Licht und {Licht}
+Eine Geschichte {Gen2}
+{Zahl} Bilder, die man gesehen haben könnte
+Skizzenbuch: {Motiv}
+Farben {Farben}
+
+[Gen]
+des Aquarells
+der leisen Farben
+des Skizzierens
+der Linie
+des Stilllebens
+
+[Material]
+Kohle
+Wasserfarben
+Ölkreide
+Tusche
+Bleistift
+
+[Licht]
+Schatten
+Leinwand
+Farbe
+Stille
+
+[Gen2]
+des Pinsels
+der Farbe Blau
+der Bilderrahmen
+des Selbstporträts
+
+[Zahl]
+Fünfzig
+Hundert
+Zwanzig
+
+[Motiv]
+Teetassen
+Hafenboote
+Hinterhöfe
+Gesichter
+
+[Farben]
+des Herbstes
+am Meer
+im Atelier
+der Nacht

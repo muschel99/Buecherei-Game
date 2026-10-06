@@ -1,0 +1,66 @@
+# Wortliste für erfundene Buchtitel – Genre: Kochen und Backen
+#
+# So funktioniert es:
+# - Unter [Vorlagen] stehen Satzmuster für Titel.
+# - Jedes {Name} in einer Vorlage wird durch einen zufälligen Eintrag aus der Liste [Name] ersetzt.
+# - Neue Einträge: einfach eine neue Zeile unter die passende Liste schreiben.
+# - Neue Liste: eine neue Überschrift in eckigen Klammern, z. B. [Farbe], und in einer
+#   Vorlage {Farbe} benutzen.
+# - Zeilen mit # am Anfang sind Kommentare und werden ignoriert.
+# Bitte nur erfundene Titel – keine echten Bücher.
+
+[Vorlagen]
+{Essen} für {Anlass}
+Aus {Woher}
+{Buch}
+Einfach {Einfach}
+Backen {Wie}
+Die Küche {Wo}
+
+[Essen]
+Suppen
+Kuchen
+Scones
+Eintöpfe
+Kekse
+Marmeladen
+Pasteten
+
+[Anlass]
+graue Tage
+Sonntagnachmittage
+Unentschlossene
+lange Winterabende
+Gartenfeste
+den Lesekreis
+
+[Woher]
+Omas Kupfertopf
+der Dorfbäckerei
+dem Gewächshaus
+der Teestube
+
+[Buch]
+Das kleine Scone-Buch
+Das Teekuchen-Kochbuch
+Löffel, Mehl und Butter
+Zimt in allen Ecken
+Brot aus dem Steinofen
+
+[Einfach]
+Suppe
+Kuchen
+Frühstück
+Picknick
+
+[Wie]
+mit Kindern
+ohne Eile
+für zwei
+am Sonntag
+
+[Wo]
+am Meer
+im Cottage
+unter dem Dach
+im Herbst

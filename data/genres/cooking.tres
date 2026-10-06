@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "cooking"
+display_name = "Kochen und Backen"
+description = "Rezepte für Suppe, Kuchen und Sonntagsfrühstück."
+spine_colors = Array[Color]([Color(0.8, 0.32, 0.24, 1), Color(0.92, 0.8, 0.42, 1), Color(0.62, 0.72, 0.42, 1), Color(0.9, 0.84, 0.72, 1)])
+styles = 0
+price = 45
+is_unlocked = false
+sort_order = 110

@@ -86,6 +86,15 @@ toggle_mode = true
 theme_override_font_sizes/font_size = 18
 text = "Verkaufen"
 
+[node name="StockTabButton" type="Button" parent="Window/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 18
+text = "Bestand"
+
 [node name="Spacer" type="Control" parent="Window/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -233,6 +242,68 @@ theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 
 [node name="SellMessage" type="Label" parent="Window/VBox/SellView/SellInfoPanel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="StockView" type="HBoxContainer" parent="Window/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="StockScroll" type="ScrollContainer" parent="Window/VBox/StockView"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+
+[node name="StockGrid" type="GridContainer" parent="Window/VBox/StockView/StockScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 18
+theme_override_constants/v_separation = 8
+columns = 5
+
+[node name="StockInfoPanel" type="PanelContainer" parent="Window/VBox/StockView"]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_side")
+
+[node name="VBox" type="VBoxContainer" parent="Window/VBox/StockView/StockInfoPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StockTitle" type="Label" parent="Window/VBox/StockView/StockInfoPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Bücherbestand"
+
+[node name="StockInfo" type="Label" parent="Window/VBox/StockView/StockInfoPanel/VBox"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.78, 0.68, 0.9)
+theme_override_font_sizes/font_size = 15
+text = "Im Regal: steht in einem Bücherregal.
+Im Lager: wartet darauf, eingeräumt zu werden.
+Unterwegs: trägst du gerade oder liegt im Rückgabekasten.
+
+Neue Bücher gibt es unter „Kaufen“ → „Bücher“. Einräumen: Schau ein Regal an und drücke E."
+autowrap_mode = 3
+
+[node name="StoreCarriedButton" type="Button" parent="Window/VBox/StockView/StockInfoPanel/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = "Getragene Bücher ins Lager legen"
+
+[node name="StockMessage" type="Label" parent="Window/VBox/StockView/StockInfoPanel/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2

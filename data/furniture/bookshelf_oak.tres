@@ -6,7 +6,7 @@
 script = ExtResource("1_naf6f")
 id = "bookshelf_oak"
 display_name = "Bücherregal, dunkle Eiche"
-description = "Klassisches Regal voller alter Bücher."
+description = "Klassisches Regal mit vier Fächern für Bücher."
 price = 160
 styles = 4
 scene_path = "res://scenes/furniture/bookshelf.tscn"

@@ -121,9 +121,12 @@ func move_furniture(item: PlacedFurniture, world_transform: Transform3D, support
 
 
 ## Entfernt ein Möbelstück samt allem, was darauf steht.
+## Inhalte (z. B. die Bücher eines Regals) gehen dabei ins Lager.
 func remove_furniture(item: PlacedFurniture) -> void:
 	for dependent in get_dependents(item):
+		dependent.release_contents()
 		_free_furniture(dependent)
+	item.release_contents()
 	_free_furniture(item)
 	layout_changed.emit()
 
@@ -326,13 +329,18 @@ func get_save_data() -> Dictionary:
 	for item in get_placed_furniture():
 		if item.data == null:
 			continue
-		furniture.append({
+		var entry := {
 			"uid": item.uid,
 			"id": item.data.get_id(),
 			"position": [item.position.x, item.position.y, item.position.z],
 			"rotation_y": item.rotation.y,
 			"support_uid": item.support_uid,
-		})
+		}
+		# Was darin ist (z. B. Genre und Bücher eines Regals, Bücher im Rückgabekasten)
+		var contents := item.get_contents_data()
+		if not contents.is_empty():
+			entry["contents"] = contents
+		furniture.append(entry)
 	var walls := {}
 	for wall in _walls:
 		walls[wall.name] = wall.segment_ids.duplicate()
@@ -439,6 +447,8 @@ func _load_furniture_entry(entry: Dictionary) -> void:
 	item.support_uid = int(entry.get("support_uid", 0))
 	furniture_root.add_child(item, true)
 	_assign_uid(item)
+	if entry.get("contents") is Dictionary:
+		item.load_contents_data(entry["contents"])
 
 
 func _assign_uid(item: PlacedFurniture) -> void:

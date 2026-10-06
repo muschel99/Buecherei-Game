@@ -1,0 +1,61 @@
+# Wortliste für erfundene Buchtitel – Genre: Sachbuch
+#
+# So funktioniert es:
+# - Unter [Vorlagen] stehen Satzmuster für Titel.
+# - Jedes {Name} in einer Vorlage wird durch einen zufälligen Eintrag aus der Liste [Name] ersetzt.
+# - Neue Einträge: einfach eine neue Zeile unter die passende Liste schreiben.
+# - Neue Liste: eine neue Überschrift in eckigen Klammern, z. B. [Farbe], und in einer
+#   Vorlage {Farbe} benutzen.
+# - Zeilen mit # am Anfang sind Kommentare und werden ignoriert.
+# Bitte nur erfundene Titel – keine echten Bücher.
+
+[Vorlagen]
+Die kleine Geschichte {Gen}
+Warum {Frage}
+{Zahl} Dinge, die man über {Thema} wissen sollte
+Alles über {Thema}
+Eine kurze Reise durch die Welt {Gen}
+Handbuch für {Gruppe}
+Das Geheimnis {Gen}
+{Thema} – ein Lexikon
+
+[Gen]
+des Regenschirms
+der Teekanne
+des Bleistifts
+der Briefmarke
+des Knopfes
+der Laterne
+des Leuchtturms
+der Strickjacke
+
+[Frage]
+Wolken so langsam wandern
+Brot so gut duftet
+Katzen gern auf Bücher liegen
+Moos im Schatten wächst
+Regen auf Dächern so beruhigt
+Eulen nachts wach sind
+
+[Zahl]
+Dreißig
+Hundert
+Fünfzig
+Zwölf
+
+[Thema]
+Schnecken
+Leuchttürme
+Uhren
+Moos
+Eichhörnchen
+Brücken
+Wolken
+Teesorten
+
+[Gruppe]
+neugierige Köpfe
+Sammler alter Knöpfe
+Wolkengucker
+Hobby-Uhrmacher
+Spaziergänger

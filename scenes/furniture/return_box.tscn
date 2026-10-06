@@ -1,0 +1,135 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/door_paint.tres" id="1_paint"]
+[ext_resource type="Material" path="res://assets/materials/brass.tres" id="2_brass"]
+[ext_resource type="Material" path="res://assets/materials/glass.tres" id="3_glass"]
+[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="4_black"]
+[ext_resource type="Script" path="res://scripts/objects/return_box.gd" id="5_box"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="6_interactable"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_side"]
+size = Vector3(0.03, 0.95, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_back"]
+size = Vector3(0.46, 0.95, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_top"]
+size = Vector3(0.56, 0.04, 0.46)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lower_front"]
+size = Vector3(0.46, 0.5, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_upper_front"]
+size = Vector3(0.46, 0.13, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_window"]
+size = Vector3(0.46, 0.32, 0.01)
+
+[sub_resource type="BoxMesh" id="BoxMesh_shelf"]
+size = Vector3(0.46, 0.02, 0.36)
+
+[sub_resource type="BoxMesh" id="BoxMesh_plinth"]
+size = Vector3(0.54, 0.05, 0.44)
+
+[sub_resource type="BoxMesh" id="BoxMesh_slot_plate"]
+size = Vector3(0.3, 0.07, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_slot"]
+size = Vector3(0.24, 0.022, 0.004)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(0.52, 0.97, 0.44)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
+size = Vector3(0.5, 0.95, 0.42)
+
+[node name="ReturnBox" type="Node3D"]
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Plinth" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, 0)
+material_override = ExtResource("4_black")
+mesh = SubResource("BoxMesh_plinth")
+
+[node name="SideLeft" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.245, 0.495, 0)
+material_override = ExtResource("1_paint")
+mesh = SubResource("BoxMesh_side")
+
+[node name="SideRight" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.245, 0.495, 0)
+material_override = ExtResource("1_paint")
+mesh = SubResource("BoxMesh_side")
+
+[node name="Back" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.495, -0.195)
+material_override = ExtResource("1_paint")
+mesh = SubResource("BoxMesh_back")
+
+[node name="Top" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.99, 0)
+material_override = ExtResource("1_paint")
+mesh = SubResource("BoxMesh_top")
+
+[node name="LowerFront" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.27, 0.195)
+material_override = ExtResource("1_paint")
+mesh = SubResource("BoxMesh_lower_front")
+
+[node name="InnerShelf" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.51, 0)
+material_override = ExtResource("4_black")
+mesh = SubResource("BoxMesh_shelf")
+
+[node name="Window" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.68, 0.2)
+material_override = ExtResource("3_glass")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_window")
+
+[node name="UpperFront" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.905, 0.195)
+material_override = ExtResource("1_paint")
+mesh = SubResource("BoxMesh_upper_front")
+
+[node name="SlotPlate" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.905, 0.213)
+material_override = ExtResource("2_brass")
+mesh = SubResource("BoxMesh_slot_plate")
+
+[node name="Slot" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.905, 0.218)
+material_override = ExtResource("4_black")
+mesh = SubResource("BoxMesh_slot")
+
+[node name="Label" type="Label3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.36, 0.212)
+pixel_size = 0.0011
+double_sided = false
+modulate = Color(0.93, 0.82, 0.55, 1)
+text = "Rückgabe"
+font_size = 48
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.485, 0)
+shape = SubResource("BoxShape3D_body")
+
+[node name="Contents" type="Node3D" parent="."]
+script = ExtResource("5_box")
+
+[node name="StackPoint" type="Marker3D" parent="Contents"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.52, 0.01)
+
+[node name="Interactable" type="Area3D" parent="Contents"]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("6_interactable")
+prompt_text = "Rückgabekasten (leer)"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Contents/Interactable"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.485, 0)
+shape = SubResource("BoxShape3D_interact")

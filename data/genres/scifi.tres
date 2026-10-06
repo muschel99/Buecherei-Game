@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "scifi"
+display_name = "Science-Fiction"
+description = "Sternenreisen, Raumstationen und ferne Zukunft."
+spine_colors = Array[Color]([Color(0.3, 0.42, 0.56, 1), Color(0.66, 0.7, 0.74, 1), Color(0.2, 0.55, 0.55, 1), Color(0.22, 0.24, 0.28, 1)])
+styles = 2
+price = 45
+is_unlocked = false
+sort_order = 100

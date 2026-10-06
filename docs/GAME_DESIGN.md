@@ -79,15 +79,71 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   zweite Zeile.
 - Beim Wechsel der Kategorie springt die Unterkategorie auf „Alle“, der Stil bleibt.
 
+### Bücher und Regale (seit Etappe 3)
+Grundsatz: Einsortieren soll befriedigend sein, aber nie mühsam. Bücher werden immer in
+Gruppen bewegt (ein Klick, ein E), nie einzeln. Kein Zeitdruck, keine Strafe.
+
+- **Genres** sind Daten (`data/genres/`, ein Datenblatt je Genre): Name, Farbpalette der
+  Buchrücken, passender Stil (freiwillig, zählt noch nicht zur Stilberechnung), Preis eines
+  Bücherpakets, freigeschaltet ja/nein. Umbenennen, hinzufügen und freischalten geht ohne Code.
+  - Zum Start frei: Roman, Krimi, Fantasy, Sachbuch, Kinderbuch.
+  - Angelegt, aber gesperrt (Freischaltung in Etappe 8): Klassiker, Lyrik, Natur und Garten,
+    Philosophie, Science-Fiction, Kochen und Backen, Reisen, Kunst, Geschichte, Achtsamkeit,
+    Comics und Graphic Novels.
+- **Buch:** Titel, Genre und Zustand (vorerst immer „gut“; beschädigte Bücher kommen in Etappe 5).
+  Die Titel sind erfunden und passen zum Genre („Mord im Pfarrgarten“, „Die Krone von Eldmoor“).
+  Sie entstehen aus Wortlisten in `data/book_titles/` (eine Textdatei je Genre, leicht zu ergänzen).
+- **Bücherbestand** (getrennt vom Möbel-Inventar): Jedes Buch ist im Lager, in einem Regal,
+  im Rückgabekasten oder in meinen Händen. Zum Start liegen 12 Bücher je freiem Genre im
+  Lager (GameConfig).
+- **Bücher kaufen:** Im Shop gibt es ganz oben den Bereich „Bücher“ mit einem Bücherpaket je
+  freigeschaltetem Genre (10 Bücher, Anzahl in GameConfig, Preis im Genre-Datenblatt: 35–55 Taler).
+  Jedes Paket kommt als eigener Karton vor die Tür; E packt die Bücher ins Lager. Die
+  Lager-Anzeige zeigt dabei einen kleinen Bücherstapel in den Farben des Genres.
+- **Bestand am Tablet:** Reiter „Bestand“ – je Genre, wie viele Bücher im Regal, im Lager und
+  unterwegs (getragen oder im Rückgabekasten) sind, dazu die Summe.
+- **Regale einräumen:** Bücherregale haben Fächer für Bücher (das obere Brett bleibt Ablage
+  für Deko). E am Regal öffnet ein kleines Menü am rechten Rand:
+  - Genre des Regals wählen oder „Gemischt“ (dort passt alles). Bücher, die nach einem Wechsel
+    nicht mehr passen, gleiten heraus und gehen ins Lager.
+  - „Aus dem Lager auffüllen“: Die passenden Bücher gleiten nacheinander ins Regal (das
+    Einräumen dauert höchstens 2,5 Sekunden, egal wie viele es sind). Gemischte Regale werden
+    gleichmäßig aus allen Genres befüllt, nach Genre gruppiert.
+  - „Alle Bücher zurück ins Lager“.
+  - Trage ich Bücher, kann ich sie hier einräumen oder ins Lager legen.
+  - Schließen mit Esc, E oder „Schließen“.
+- Am Regal hängt ein kleines **Genre-Schild** (Platzhalter) in der Genre-Farbe.
+- **Aussehen:** Buchrücken in den Farben ihres Genres, jedes Buch etwas anders hoch, dick und
+  getönt, manche mit hellen oder dunklen Bändern oder einem Titelschild; oben sieht man die
+  hellen Seiten. Lücken im Regal rücken sanft zusammen.
+- **Leistung:** Alle Bücher eines Regals werden in einem einzigen Rutsch gezeichnet (MultiMesh).
+  So bleiben auch hunderte Bücher im Raum leicht für den PC.
+- **Gestalten:** Verschiebt man ein Regal, bleiben die Bücher darin (auch in der Vorschau
+  sichtbar). Räumt man es mit X weg, gehen seine Bücher ins Lager.
+
+### Rückgabekasten (seit Etappe 3)
+- Ein Kasten mit Einwurfschlitz und kleinem Fenster (Kategorie Theke), frei platzierbar, z. B.
+  neben der Tür oder an der Theke. Zum Start liegt einer im Inventar, weitere gibt es im Shop.
+- Später werfen Besucher dort ihre ausgeliehenen Bücher ein. Bis dahin legt die Testtaste **F9**
+  ein paar zufällige Bücher hinein (abschaltbar in GameConfig: `debug_return_box_key`).
+- E am Kasten: Ich nehme alle Bücher auf einmal heraus. Unten in der Mitte steht dezent, was ich
+  trage („Du trägst 7 Bücher: 3 Krimi, 4 Fantasy“), mit kleinen Bücherstapeln je Genre.
+- E an einem Regal: Alle getragenen Bücher, die zum Genre passen, werden auf einmal eingeräumt
+  (in „Gemischt“ passt alles); den Rest trage ich weiter. Passt nichts, öffnet sich das Menü.
+- Keine Eile: Bücher dürfen beliebig lange im Kasten liegen oder getragen werden.
+- Gespeichert werden Bestand, Regalinhalte, Genre-Schilder, Inhalt des Rückgabekastens und
+  die getragenen Bücher.
+
 ### Später (Etappe 5)
 - Leihgebühren über Leseausweise (Buch abstempeln statt Wechselgeld).
 - Mitgliedschaften.
 - Café als zusätzliche Einnahmequelle.
-- Bücher können kaputtgehen (Reparatur).
-- Genres werden nach und nach freigeschaltet.
+- Bücher können kaputtgehen (Reparatur) – der Zustand ist im Buch schon vorgesehen.
+- Genres werden nach und nach freigeschaltet (Etappe 8, `BookStock.unlock_genre`).
 
 ## Theke
-- Modular: Kasse von Anfang an, dazu das Tablet mit dem Shop.
+- Modular: Kasse von Anfang an, dazu das Tablet mit dem Shop und dem Bücherbestand.
+- Der Rückgabekasten gehört zur Kategorie Theke.
 - Café-Elemente (z. B. Kaffeemaschine, Kuchenvitrine) später daneben anbaubar.
 - Der gesamte Thekenblock ist frei platzierbar.
 
@@ -103,7 +159,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 **Grundregel:** Jede Interaktion in der Spielwelt läuft über die Taste E. Man muss dafür nicht
 eine bestimmte Stelle treffen: Wer auf irgendeinen Teil eines Objekts schaut (von vorn, der
 Seite, hinten oder oben), kann es benutzen.
-Esc schließt immer zuerst das, was gerade offen ist (Gestaltungsmodus, Shop, Menüs).
+Esc schließt immer zuerst das, was gerade offen ist (Gestaltungsmodus, Shop, Regal-Menü, Menüs).
 Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 
 | Taste          | Aktion                                         |
@@ -113,9 +169,10 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Leertaste      | Springen (etwa 0,8 m hoch, weich); im Sitzen: aufstehen |
 | Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
-| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen |
+| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen, Regal-Menü öffnen bzw. getragene Bücher einräumen, Rückgabekasten leeren |
 | Tab            | Gestaltungsmodus (Inventar) öffnen/schließen   |
 | F3             | Bilder pro Sekunde anzeigen/ausblenden         |
+| F9             | Test: zufällige Bücher in den Rückgabekasten (bis es Besucher gibt) |
 | Esc            | Schließt, was offen ist – sonst Pausenmenü     |
 
 ### Im Gestaltungsmodus

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GenreData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/genre_data.gd" id="1_genre"]
+
+[resource]
+script = ExtResource("1_genre")
+id = "travel"
+display_name = "Reisen"
+description = "Fernweh zwischen zwei Buchdeckeln."
+spine_colors = Array[Color]([Color(0.2, 0.42, 0.62, 1), Color(0.84, 0.74, 0.54, 1), Color(0.86, 0.52, 0.28, 1), Color(0.3, 0.66, 0.66, 1)])
+styles = 0
+price = 45
+is_unlocked = false
+sort_order = 120

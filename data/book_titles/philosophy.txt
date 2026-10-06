@@ -1,0 +1,58 @@
+# Wortliste für erfundene Buchtitel – Genre: Philosophie
+#
+# So funktioniert es:
+# - Unter [Vorlagen] stehen Satzmuster für Titel.
+# - Jedes {Name} in einer Vorlage wird durch einen zufälligen Eintrag aus der Liste [Name] ersetzt.
+# - Neue Einträge: einfach eine neue Zeile unter die passende Liste schreiben.
+# - Neue Liste: eine neue Überschrift in eckigen Klammern, z. B. [Farbe], und in einer
+#   Vorlage {Farbe} benutzen.
+# - Zeilen mit # am Anfang sind Kommentare und werden ignoriert.
+# Bitte nur erfundene Titel – keine echten Bücher.
+
+[Vorlagen]
+Über {Thema}
+Kleine Philosophie {Gen}
+{Frage}
+Gespräche mit {Wem}
+Gedanken {Wann}
+Vom {Vom}
+
+[Thema]
+das Warten
+die Langeweile
+das Glück kleiner Dinge
+das Zuhören
+die Kunst, nichts zu verpassen
+das Erinnern
+
+[Gen]
+des Teetrinkens
+der Pause
+des Spazierengehens
+der Gelassenheit
+des Regens
+
+[Frage]
+Kann man Zeit verschenken?
+Was ist ein guter Nachmittag?
+Warum sammeln wir Dinge?
+Ist ein leeres Blatt Papier traurig?
+Wohin gehen Gedanken im Schlaf?
+
+[Wem]
+einer Katze
+dem Leuchtturmwärter
+meinem Bücherregal
+einem Stein
+
+[Wann]
+am Fenster
+vor dem Einschlafen
+an Regentagen
+beim Abwasch
+
+[Vom]
+Wert der Langsamkeit
+Sinn der Umwege
+Glück des Zufalls
+Mut zur Pause
