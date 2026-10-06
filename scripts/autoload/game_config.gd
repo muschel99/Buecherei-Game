@@ -114,8 +114,14 @@ var preview_color_invalid: Color = Color(1.0, 0.35, 0.3)
 var highlight_brightness: float = 0.06
 ## Heller Schimmer am Rand des Objekts (0 = kein Rand, 1 = sehr hell).
 var highlight_rim_strength: float = 0.45
-## Name der Währung, wie er im Katalog angezeigt wird.
+
+
+# --- Geld, Shop und Lieferung ---
+
+## Name der Währung, wie er im Spiel angezeigt wird.
 var currency_name: String = "Taler"
+## Kontostand beim allerersten Start (neues Spiel).
+var start_money: int = 500
 
 
 # --- Speichern ---

@@ -23,6 +23,7 @@ Catalog="*res://scripts/autoload/catalog.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 MenuStack="*res://scripts/autoload/menu_stack.gd"
 Settings="*res://scripts/autoload/settings.gd"
+Wallet="*res://scripts/autoload/wallet.gd"
 
 [display]
 
