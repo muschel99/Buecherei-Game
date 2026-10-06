@@ -5,7 +5,8 @@ extends RefCounted
 ## Alles steht im Titel (BookData) – so sehen alle Exemplare eines Titels gleich aus,
 ## auch nach dem Laden. Die Spannweiten stehen in GameConfig
 ## (book_height_range, book_thickness_range, book_depth_range, book_color_variation).
-## Gemeinsames Material für alle Bücher: get_material() (Shader book_spine.gdshader).
+## Gemeinsames Material für alle Bücher: get_material() (Shader book_spine.gdshader,
+## Buchrücken aus dem Atlas von BookArt).
 
 static var _material: ShaderMaterial
 static var _mesh: BoxMesh
@@ -21,16 +22,9 @@ static func get_color(book: Book) -> Color:
 	return book.data.cover_color
 
 
-## Verzierung des Rückens für den Shader: r = Bänder (0 / 0.5 / 1), g = Titelschild (0 / 1).
+## Wo der Buchrücken im Atlas liegt (für den Shader, siehe BookArt.get_spine_uv).
 static func get_custom(book: Book) -> Color:
-	match book.data.style:
-		"classic":
-			return Color(0.5, 0.0, 0.0, 0.0)
-		"band", "pattern":
-			return Color(0.0, 1.0, 0.0, 0.0)
-		"comic":
-			return Color(1.0, 0.0, 0.0, 0.0)
-	return Color(0.0, 0.0, 0.0, 0.0)
+	return BookArt.get_spine_uv(book.data)
 
 
 ## Ein Würfel der Größe 1 – jedes Buch ist dieser Würfel, auf seine Größe gestreckt.
@@ -46,7 +40,15 @@ static func get_material() -> ShaderMaterial:
 	if _material == null:
 		_material = ShaderMaterial.new()
 		_material.shader = load("res://assets/shaders/book_spine.gdshader")
+		_material.set_shader_parameter("spine_atlas", BookArt.get_spine_atlas())
 	return _material
+
+
+## Eigenes Material für ein einzelnes Buch mit Cover-Bild (z. B. das Buch in der Hand).
+static func create_cover_material() -> ShaderMaterial:
+	var material := get_material().duplicate() as ShaderMaterial
+	material.set_shader_parameter("use_cover", true)
+	return material
 
 
 ## Ein neues MultiMesh für viele Bücher (Farbe und Verzierung je Buch).

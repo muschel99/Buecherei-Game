@@ -106,6 +106,8 @@ func _make_colors(rng: RandomNumberGenerator, genre: GenreData) -> void:
 	match style:
 		"classic":
 			accent_color = GOLD if rng.randf() < 0.7 else paper_color
+			if cover_color.get_luminance() > 0.45:
+				accent_color = cover_color.darkened(0.6)  # heller Einband: dunkle Schrift
 		"comic":
 			cover_color.s = clampf(cover_color.s + 0.2, 0.0, 1.0)
 			cover_color.v = clampf(cover_color.v + 0.15, 0.3, 1.0)

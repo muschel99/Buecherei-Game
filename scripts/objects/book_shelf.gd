@@ -63,6 +63,8 @@ func _ready() -> void:
 	add_child(books_instance)
 	_create_sign()
 	_reset_cursor()
+	# Sobald alle Buchrücken gezeichnet sind, die Bücher damit zeigen
+	BookArt.atlas_ready.connect(_refresh_instances)
 	set_process(false)
 
 	_interactable = get_node_or_null("Interactable") as Interactable

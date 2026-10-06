@@ -31,6 +31,7 @@ func _ready() -> void:
 	if point:
 		stack.transform = point.transform
 	add_child(stack)
+	BookArt.atlas_ready.connect(_update)
 	_interactable = get_node_or_null("Interactable") as Interactable
 	_is_live = FurnitureUtils.find_placed_furniture(self) != null
 	if _is_live:
