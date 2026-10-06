@@ -165,7 +165,7 @@ shape = SubResource("BoxShape3D_bound_side")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6.7)
 shape = SubResource("BoxShape3D_bound_front")
 
-[node name="Deliveries" type="Node3D" parent="Outside"]
+[node name="Deliveries" type="Marker3D" parent="Outside"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05, 0, -4.68)
 script = ExtResource("15_deliveries")
 
