@@ -8,6 +8,7 @@
 | 2c  | Feinschliff Gestaltung                   | fertig        |
 | 2d  | Ergänzungen: Steuerung, Füllwerkzeug, Bildschirm | fertig |
 | 2e  | Steuerung und Leistung                   | fertig        |
+| 2f  | Inventar, Shop und Lieferung             | fertig        |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -91,6 +92,25 @@
 - [x] Nur wichtige Lampen werfen Schatten (`LightSource.shadow_importance`), Kerzen nie
 - [x] Bilder-pro-Sekunde-Anzeige (F3 oder Einstellungen); alle Einstellungen gespeichert
 
+## Etappe 2f – Inventar, Shop und Lieferung
+Greift Teilen von Etappe 5 vor: Geld, Kaufen und Verkaufen sind schon da und so gebaut,
+dass Etappe 5 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den Datenblättern).
+- [x] Zentrales Geld-System (`Wallet`): Startgeld 500 Taler (`GameConfig.start_money`),
+      dezente Anzeige oben links, jede Buchung mit kurzem Grund
+- [x] Gestaltungsmodus wird zum Inventar (`Inventory`): nur Eigenes, mit Anzahl (×2);
+      bei ×0 ausgegraut; Platzieren nimmt eins heraus, Aufheben und X legen es zurück
+- [x] Möbel im Raum gehören zum Start; schlichte Startfarben und ein Boden
+      (Datenblatt-Häkchen `owned_at_start`); Oberflächen einmal kaufen, unbegrenzt nutzen
+- [x] Tablet auf der Theke (gehört fest zur Bücherei, `is_essential`): E öffnet den Shop
+- [x] Shop „Kaufen“: alles Freigeschaltete nach Kategorien mit Vorschaubild, Preis und Stil;
+      Warenkorb, Bestellen; reicht das Geld nicht, ein freundlicher Hinweis ohne Strafe
+- [x] Shop „Verkaufen“: Möbel aus dem Inventar für 50 % (`GameConfig.sell_price_share`)
+- [x] Lieferung: nach 10 s (`GameConfig.delivery_time`) ein Karton pro Bestellung vor der Tür,
+      Hinweis „Deine Lieferung ist da“; E packt ihn mit kleiner Animation ins Inventar aus
+- [x] Eingangstür mit E öffnen und schließen (Türschmuck schwingt mit); Gehweg vor der Tür
+- [x] Geld, Inventar, Bestellungen unterwegs und Kartons werden gespeichert;
+      ältere Spielstände funktionieren weiter (Tablet und Wandfarben werden ergänzt)
+
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)
 - Regale befüllen, Bücher einsortieren
@@ -99,8 +119,11 @@
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
 
 ## Etappe 5 – Wirtschaft und Tagesablauf
-- Leseausweise, Abstempeln, Leihgebühren, Mitgliedschaften
-- Tag mit Öffnen-Schild, Pause und Vorspulen
+- Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
+  Verkaufen, Lieferung
+- Einnahmen: Leseausweise, Abstempeln, Leihgebühren, Mitgliedschaften (über `Wallet.earn`)
+- Tag mit Öffnen-Schild, Pause und Vorspulen; Tagesabrechnung aus den Buchungen
+- Preise und Startgeld ausbalancieren
 
 ## Etappe 6 – Stilsystem und Besuchervielfalt
 - Stil-Merkmale an Möbeln (Botanisch, Modern, Dark Academia) – Grundlage seit Etappe 2 vorhanden
@@ -111,6 +134,7 @@
 
 ## Etappe 8 – Erweiterungen und Freischaltungen
 - Weitere Räume, Obergeschoss, Genres freischalten, Renovieren
+- Neue Möbel im Shop freischalten (Datenblatt-Feld `is_unlocked`)
 
 ## Etappe 9 – Atmosphäre und Sound
 - Musik je Stil, Geräusche, Tageszeit-Licht
@@ -119,7 +143,9 @@
 - Kleine unerklärliche Ereignisse, der Spiegel und seine Wesen
 
 ## Etappe 11 – Gasse, Fassade und Jahreszeiten
-- Die Gasse vor dem Haus, Fassade gestalten, Jahreszeiten
+- Die Gasse vor dem Haus (bisher: ein Stück Gehweg als Platzhalter), Fassade gestalten,
+  Jahreszeiten
+- Vielleicht ein Lieferbote, der die Kartons bringt (bisher erscheinen sie einfach)
 
 ## Etappe 12 – Feinschliff
 - Menüs, Einstellungen, Speichern/Laden, Balancing

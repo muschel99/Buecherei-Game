@@ -33,15 +33,18 @@ scenes/            Szenen (.tscn)
   player/          Spielfigur
   rooms/           Räume des Hauses
   furniture/       Möbel (je eine Szene, Modell austauschbar)
-  objects/         Interaktive Objekte (Stehlampe; Scripts: LightSource, Seating, Lichtschalter)
+  objects/         Interaktive Objekte (Stehlampe, Lieferkarton; Scripts: LightSource, Seating,
+                   Lichtschalter, Tür, Tablet)
   effects/         Effekte (z. B. Staubpartikel)
-  ui/              Oberfläche (HUD, Pausenmenü, Katalog, Stil-Anzeige)
+  ui/              Oberfläche (HUD, Pausenmenü, Inventar, Shop, Hinweise, Stil-Anzeige)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
-  autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings)
+  autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
+                   Wallet, Inventory)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, SurfaceData, StyleTags)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
+  shop/            Lieferdienst (DeliveryManager)
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
@@ -90,9 +93,25 @@ docs/              Dokumentation
 - Speichern: Knoten in der Gruppe `persist` mit `save_key`, `get_save_data()` und
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
 - Stil-Merkmale sind überall freiwillig; ohne Stil-Merkmal = stilneutral, zählt nicht mit.
+- **Geld** ändert sich nur über `Wallet.spend(betrag, grund)` / `Wallet.earn(betrag, grund)`
+  (Etappe 5 baut darauf auf). Anzeige als Text: `Wallet.format(betrag)`.
+- **Inventar** (`Inventory`): Möbel mit Anzahl (`add_furniture`, `take_furniture`), Oberflächen
+  einmal besessen (`add_surface`, `owns_surface`). Was im Raum steht, zählt der Raum
+  (`Room.count_placed`). Der Gestaltungsmodus zeigt nur Eigenes.
+- `FurnitureData.is_essential` = gehört fest zur Bücherei (Tablet): nicht kaufbar, nicht
+  verkaufbar; `Room.ensure_essentials()` stellt es zurück, falls es fehlt.
+  `SurfaceData.owned_at_start` = von Anfang an vorhanden.
+- **Shop:** `ShopWindow` (Gruppe `shop_window`, `open_shop()`); Bestellungen gehen an den
+  `DeliveryManager` (Gruppe `delivery_manager`, `place_order(inhalt)`), Inhalt als Liste von
+  `{ "kind": "furniture"/"surface", "id": …, "count": … }`.
+- Dezente Hinweise oben im Bild: `Notice.post(self, "Text")`.
+- Türen (`Door`, Gruppe `doors`): Teile, die mitschwingen, unter dem Knoten `Hinge`.
+- Die Spielfigur kann man anhalten: `player.movement_enabled = false` (z. B. im Shop).
 - Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `jump`,
   `crouch`, `interact`,
   `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
   `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete` (X),
   `build_paint_all` (Umschalt), `toggle_fps` (F3).
+- Möbel-Knoten in Szenen können ihre Nummer (`uid`) und ihr Trägermöbel (`support_uid`) fest
+  eintragen (z. B. Tablet auf der Theke).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).
