@@ -45,6 +45,25 @@ func setup(new_data: FurnitureData, extras: Array[Dictionary] = []) -> void:
 		_prepare(extra_model)
 
 
+## Zeigt in der Vorschau, was im Möbelstück steckt (z. B. die Bücher eines Regals),
+## damit man beim Verschieben sieht, dass sie mitwandern.
+func show_contents_of(item: PlacedFurniture) -> void:
+	if _model == null or item.get_model() == null:
+		return
+	var original := _find_shelf(item.get_model())
+	var copy := _find_shelf(_model)
+	if original and copy:
+		copy.genre_id = original.genre_id
+		copy.add_books(original.books, false)
+
+
+static func _find_shelf(root: Node) -> BookShelf:
+	for node in root.find_children("*", "", true, false):
+		if node is BookShelf:
+			return node
+	return null
+
+
 func clear() -> void:
 	for child in get_children():
 		remove_child(child)

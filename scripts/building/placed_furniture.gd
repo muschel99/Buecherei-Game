@@ -14,6 +14,10 @@ extends Node3D
 		if is_node_ready():
 			_rebuild_model()
 
+## Gruppe für Teile eines Modells, die etwas enthalten (z. B. Bücher im Regal, Rückgabekasten).
+## Solche Knoten haben get_contents_data(), load_contents_data(daten) und release_contents().
+const CONTENTS_GROUP := "furniture_contents"
+
 ## Laufende Nummer im Raum (für den Spielstand, wird automatisch vergeben).
 ## Wird mit der Szene gespeichert, aber nicht im Inspektor gezeigt.
 @export_storage var uid: int = 0
@@ -41,6 +45,39 @@ func set_collision_enabled(enabled: bool) -> void:
 		body.collision_layer = FurnitureUtils.FURNITURE_LAYER_BIT if enabled else 0
 	for surface in _surfaces:
 		surface.collision_layer = FurnitureUtils.SURFACE_LAYER_BIT if enabled else 0
+
+
+## Inhalte des Möbelstücks für den Spielstand (z. B. Genre und Bücher eines Regals).
+## Leer, wenn es nichts enthält.
+func get_contents_data() -> Dictionary:
+	var result := {}
+	for node in get_content_nodes():
+		result[str(_model.get_path_to(node))] = node.get_contents_data()
+	return result
+
+
+## Stellt die Inhalte aus dem Spielstand wieder her.
+func load_contents_data(data: Dictionary) -> void:
+	for node in get_content_nodes():
+		var key := str(_model.get_path_to(node))
+		if data.get(key) is Dictionary:
+			node.load_contents_data(data[key])
+
+
+## Das Möbelstück wird weggeräumt: Inhalte (z. B. Bücher) gehen ins Lager.
+func release_contents() -> void:
+	for node in get_content_nodes():
+		node.release_contents()
+
+
+## Alle Teile des Modells, die etwas enthalten (Gruppe CONTENTS_GROUP).
+func get_content_nodes() -> Array[Node]:
+	var result: Array[Node] = []
+	if _model:
+		for node in _model.find_children("*", "", true, false):
+			if node.is_in_group(CONTENTS_GROUP):
+				result.append(node)
+	return result
 
 
 ## Leichtes Aufleuchten, wenn man im Gestaltungsmodus darauf zeigt.

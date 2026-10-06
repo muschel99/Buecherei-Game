@@ -282,6 +282,7 @@ func _pick_up(item: PlacedFurniture) -> void:
 	# Die bisherige Ausrichtung bleibt relativ zu meinem Blick erhalten
 	_rotation_offset = rad_to_deg(item.rotation.y) - _player_yaw_degrees()
 	_preview.setup(item.data, extras)
+	_preview.show_contents_of(item)  # z. B. die Bücher im Regal wandern sichtbar mit
 	_tool = Tool.MOVE
 	_enter_placing_state()
 	selection_changed.emit(null)

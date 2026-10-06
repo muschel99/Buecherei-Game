@@ -1,10 +1,10 @@
 [gd_scene format=3]
 
 [ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="1_d4wef"]
-[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="2_qk8qk"]
-[ext_resource type="Material" path="res://assets/materials/concrete.tres" id="3_ydp3s"]
-[ext_resource type="Material" path="res://assets/materials/brass.tres" id="4_d1p8p"]
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="5_qk8qk"]
+[ext_resource type="Script" path="res://scripts/objects/book_shelf.gd" id="6_shelf"]
+[ext_resource type="Script" path="res://scripts/objects/book_row.gd" id="7_row"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="8_interactable"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_02vgu"]
 size = Vector3(0.025, 1.5, 0.38)
@@ -33,21 +33,6 @@ size = Vector3(0.02, 1.5, 0.38)
 [sub_resource type="BoxMesh" id="BoxMesh_ehd35"]
 size = Vector3(0.02, 1.5, 0.38)
 
-[sub_resource type="BoxMesh" id="BoxMesh_wgb23"]
-size = Vector3(0.035, 0.24, 0.2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_ad1uo"]
-size = Vector3(0.035, 0.26, 0.2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_eap3k"]
-size = Vector3(0.035, 0.24, 0.2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_s318k"]
-size = Vector3(0.035, 0.26, 0.2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_u7qos"]
-size = Vector3(0.035, 0.24, 0.2)
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_4cd8x"]
 size = Vector3(0.96, 0.025, 0.38)
 
@@ -75,20 +60,11 @@ size = Vector3(0.025, 1.5, 0.38)
 [sub_resource type="BoxShape3D" id="BoxShape3D_a0nfq"]
 size = Vector3(0.96, 1.5, 0.01)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_y3f4n"]
-size = Vector3(0.2, 0.27, 0.2)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ydp3s"]
-size = Vector3(0.91, 0.03, 0.36)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_d1p8p"]
-size = Vector3(0.91, 0.03, 0.36)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_02vgu"]
-size = Vector3(0.91, 0.03, 0.36)
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_wuf1j"]
 size = Vector3(0.96, 0.03, 0.38)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
+size = Vector3(0.93, 1.5, 0.36)
 
 [node name="ShelfCubeWhite" type="Node3D" unique_id=450669138]
 
@@ -139,31 +115,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.16, 0.75, 0)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_ehd35")
 
-[node name="Book1" type="MeshInstance3D" parent="Model" unique_id=1336484896]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.155, -0.04)
-material_override = ExtResource("2_qk8qk")
-mesh = SubResource("BoxMesh_wgb23")
-
-[node name="Book2" type="MeshInstance3D" parent="Model" unique_id=297582088]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.36, 0.155, -0.04)
-material_override = ExtResource("3_ydp3s")
-mesh = SubResource("BoxMesh_ad1uo")
-
-[node name="Book3" type="MeshInstance3D" parent="Model" unique_id=1926768765]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.32, 0.155, -0.04)
-material_override = ExtResource("4_d1p8p")
-mesh = SubResource("BoxMesh_eap3k")
-
-[node name="Book4" type="MeshInstance3D" parent="Model" unique_id=573953386]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.28, 0.155, -0.04)
-material_override = ExtResource("2_qk8qk")
-mesh = SubResource("BoxMesh_s318k")
-
-[node name="Book5" type="MeshInstance3D" parent="Model" unique_id=326545675]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24, 0.155, -0.04)
-material_override = ExtResource("3_ydp3s")
-mesh = SubResource("BoxMesh_u7qos")
-
 [node name="Body" type="StaticBody3D" parent="." unique_id=1626088116]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=171723919]
@@ -202,41 +153,7 @@ shape = SubResource("BoxShape3D_c0ch2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, -0.185)
 shape = SubResource("BoxShape3D_a0nfq")
 
-[node name="CollisionShape3D10" type="CollisionShape3D" parent="Body" unique_id=98459523]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.32, 0.16, -0.04)
-shape = SubResource("BoxShape3D_y3f4n")
-
 [node name="Surfaces" type="Node3D" parent="." unique_id=567870693]
-
-[node name="Shelf1" type="Area3D" parent="Surfaces" unique_id=96007373]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, 0.005)
-collision_layer = 32
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_qk8qk")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf1" unique_id=172813815]
-shape = SubResource("BoxShape3D_ydp3s")
-
-[node name="Shelf2" type="Area3D" parent="Surfaces" unique_id=2013361913]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5125, 0.005)
-collision_layer = 32
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_qk8qk")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf2" unique_id=1402811793]
-shape = SubResource("BoxShape3D_d1p8p")
-
-[node name="Shelf3" type="Area3D" parent="Surfaces" unique_id=901606974]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0125, 0.005)
-collision_layer = 32
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_qk8qk")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf3" unique_id=627037692]
-shape = SubResource("BoxShape3D_02vgu")
 
 [node name="Top" type="Area3D" parent="Surfaces" unique_id=598120029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
@@ -247,3 +164,83 @@ script = ExtResource("5_qk8qk")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Top" unique_id=1975501639]
 shape = SubResource("BoxShape3D_wuf1j")
+
+[node name="BookShelf" type="Node3D" parent="."]
+script = ExtResource("6_shelf")
+
+[node name="Row1" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3125, 1.0125, 0.005)
+script = ExtResource("7_row")
+width = 0.27
+height = 0.45
+depth = 0.36
+
+[node name="Row2" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 1.0125, 0.005)
+script = ExtResource("7_row")
+width = 0.29
+height = 0.45
+depth = 0.36
+
+[node name="Row3" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3125, 1.0125, 0.005)
+script = ExtResource("7_row")
+width = 0.27
+height = 0.45
+depth = 0.36
+
+[node name="Row4" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3125, 0.5125, 0.005)
+script = ExtResource("7_row")
+width = 0.27
+height = 0.46
+depth = 0.36
+
+[node name="Row5" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.5125, 0.005)
+script = ExtResource("7_row")
+width = 0.29
+height = 0.46
+depth = 0.36
+
+[node name="Row6" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3125, 0.5125, 0.005)
+script = ExtResource("7_row")
+width = 0.27
+height = 0.46
+depth = 0.36
+
+[node name="Row7" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3125, 0.025, 0.005)
+script = ExtResource("7_row")
+width = 0.27
+height = 0.45
+depth = 0.36
+
+[node name="Row8" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.025, 0.005)
+script = ExtResource("7_row")
+width = 0.29
+height = 0.45
+depth = 0.36
+
+[node name="Row9" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3125, 0.025, 0.005)
+script = ExtResource("7_row")
+width = 0.27
+height = 0.45
+depth = 0.36
+
+[node name="SignPoint" type="Marker3D" parent="BookShelf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4625, 0.195)
+
+[node name="Interactable" type="Area3D" parent="BookShelf"]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("8_interactable")
+prompt_text = "Bücherregal einräumen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BookShelf/Interactable"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.76, 0.005)
+shape = SubResource("BoxShape3D_interact")
