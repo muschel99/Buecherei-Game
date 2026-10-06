@@ -120,10 +120,10 @@ func _apply_graphics_quality() -> void:
 	var preset := get_graphics_preset()
 	var viewport := get_tree().root
 	var size: int = preset.shadow_size
-	RenderingServer.directional_shadow_atlas_set_size(size, true)
+	RenderingServer.directional_shadow_atlas_set_size(int(preset.get("sun_shadow_size", size)), true)
 	viewport.positional_shadow_atlas_size = size
-	var filter: int = [RenderingServer.SHADOW_QUALITY_HARD, RenderingServer.SHADOW_QUALITY_SOFT_LOW,
-		RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM][clampi(preset.soft_shadows, 0, 2)]
+	var filter: int = [RenderingServer.SHADOW_QUALITY_HARD, RenderingServer.SHADOW_QUALITY_SOFT_VERY_LOW,
+		RenderingServer.SHADOW_QUALITY_SOFT_LOW, RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM][clampi(preset.soft_shadows, 0, 3)]
 	RenderingServer.directional_soft_shadow_filter_set_quality(filter)
 	RenderingServer.positional_soft_shadow_filter_set_quality(filter)
 	viewport.msaa_3d = {0: Viewport.MSAA_DISABLED, 2: Viewport.MSAA_2X, 4: Viewport.MSAA_4X}.get(int(preset.msaa), Viewport.MSAA_DISABLED)

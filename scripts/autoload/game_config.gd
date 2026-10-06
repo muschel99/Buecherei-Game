@@ -154,24 +154,33 @@ var autosave_delay: float = 1.5
 ##   volumetric_fog  Lichtstrahlen im Staub (z. B. am Fenster)
 ##   fog_volume_size Genauigkeit der Lichtstrahlen (kleiner = schneller)
 ##   msaa            Kantenglättung 0 / 2 / 4 (teurer), fxaa = einfache, günstige Glättung
-##   shadow_size     Schattenauflösung in Pixeln (größer = schärfer, teurer)
-##   soft_shadows    Weichheit der Schattenkanten 0 = hart, 1 = niedrig, 2 = mittel
+##   shadow_size     Schattenauflösung der Lampen in Pixeln (größer = schärfer, teurer)
+##   sun_shadow_size Schattenauflösung der Sonne in Pixeln (Fensterlicht)
+##   soft_shadows    Weichheit der Schattenkanten 0 = hart, 1 = sehr niedrig, 2 = niedrig, 3 = mittel
 ##   lamp_shadows    0 = Lampen ohne Schatten, 1 = nur wichtige Lampen (Steh- und Tischlampen),
 ##                   2 = auch Deckenlampen. Kerzen und Laternen werfen nie eigene Schatten.
 ##   cube_shadows    Lampenschatten in voller Qualität (6 statt 2 Durchgänge je Lampe)
+##   sun_cascades    Schattenstufen der Sonne: 2 (schneller) oder 4 (schärfer in der Nähe).
+##                   Die Übergänge werden immer weich überblendet (sonst Linie im Fensterlicht).
 ##   dust_amount     Anteil der Staubteilchen im Lichtstrahl (1 = alle)
 ##   render_scale    Auflösung der 3D-Ansicht (1 = voll, 0.8 = etwas weicher, schneller)
 var graphics_presets: Array[Dictionary] = [
 	{"ssao": false, "ssao_half_size": true, "ssil": false, "volumetric_fog": false, "fog_volume_size": 48,
-		"msaa": 0, "fxaa": true, "shadow_size": 1024, "soft_shadows": 0, "lamp_shadows": 0,
-		"cube_shadows": false, "dust_amount": 0.5, "render_scale": 0.8},
+		"msaa": 0, "fxaa": true, "shadow_size": 1024, "sun_shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 0,
+		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8},
 	{"ssao": true, "ssao_half_size": true, "ssil": false, "volumetric_fog": true, "fog_volume_size": 48,
-		"msaa": 0, "fxaa": true, "shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 1,
-		"cube_shadows": false, "dust_amount": 1.0, "render_scale": 1.0},
+		"msaa": 0, "fxaa": true, "shadow_size": 2048, "sun_shadow_size": 2048, "soft_shadows": 2, "lamp_shadows": 1,
+		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0},
 	{"ssao": true, "ssao_half_size": false, "ssil": true, "volumetric_fog": true, "fog_volume_size": 64,
-		"msaa": 2, "fxaa": false, "shadow_size": 4096, "soft_shadows": 2, "lamp_shadows": 2,
-		"cube_shadows": true, "dust_amount": 1.0, "render_scale": 1.0},
+		"msaa": 2, "fxaa": false, "shadow_size": 4096, "sun_shadow_size": 4096, "soft_shadows": 3, "lamp_shadows": 2,
+		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0},
 ]
+## Bis zu dieser Entfernung (in Metern) wirft die Sonne Schatten. Der Raum ist 8 m tief –
+## 20 m reichen auch für den Blick von der Gasse. Kleiner = schärfere Schatten in der Nähe.
+var sun_shadow_distance: float = 20.0
+## Bei 2 Schattenstufen (Grafikstufe Niedrig): Grenze zwischen feiner und grober Stufe als
+## Anteil der Schattenweite (0.3 = nach 6 m). So liegt das Fensterlicht meist in der feinen.
+var sun_two_cascade_split: float = 0.3
 ## Höchstens so viele Bilder pro Sekunde, solange das Pausenmenü offen ist (spart Strom).
 var paused_max_fps: int = 30
 

@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/build_ui.gd" id="1_build_ui"]
+[ext_resource type="Script" path="res://scripts/ui/filter_bar.gd" id="2_filter"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_catalog"]
 content_margin_left = 14.0
@@ -43,18 +44,23 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="StatusLabel" type="Label" parent="Root"]
-unique_name_in_owner = true
+[node name="BottomBox" type="VBoxContainer" parent="Root"]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.05
+anchor_left = 0.04
 anchor_top = 1.0
-anchor_right = 0.95
+anchor_right = 0.96
 anchor_bottom = 1.0
-offset_top = -232.0
-offset_bottom = -200.0
+offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="StatusLabel" type="Label" parent="Root/BottomBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.96, 0.88, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
@@ -65,48 +71,44 @@ theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="CatalogPanel" type="PanelContainer" parent="Root"]
+[node name="CatalogPanel" type="PanelContainer" parent="Root/BottomBox"]
 unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.04
-anchor_top = 1.0
-anchor_right = 0.96
-anchor_bottom = 1.0
-offset_top = -196.0
-offset_bottom = -14.0
-grow_horizontal = 2
-grow_vertical = 0
+layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_catalog")
 
-[node name="VBox" type="VBoxContainer" parent="Root/CatalogPanel"]
+[node name="VBox" type="VBoxContainer" parent="Root/BottomBox/CatalogPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Header" type="HBoxContainer" parent="Root/CatalogPanel/VBox"]
+[node name="Header" type="HBoxContainer" parent="Root/BottomBox/CatalogPanel/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="TabRow" type="HBoxContainer" parent="Root/CatalogPanel/VBox/Header"]
+[node name="TabRow" type="HBoxContainer" parent="Root/BottomBox/CatalogPanel/VBox/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="CatalogHint" type="Label" parent="Root/CatalogPanel/VBox/Header"]
+[node name="CatalogHint" type="Label" parent="Root/BottomBox/CatalogPanel/VBox/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.78, 0.68, 0.8)
 theme_override_font_sizes/font_size = 14
 text = "Tab – Katalog bedienen"
 
-[node name="ItemScroll" type="ScrollContainer" parent="Root/CatalogPanel/VBox"]
+[node name="FilterBar" type="VBoxContainer" parent="Root/BottomBox/CatalogPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_filter")
+
+[node name="ItemScroll" type="ScrollContainer" parent="Root/BottomBox/CatalogPanel/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 114)
 layout_mode = 2
 vertical_scroll_mode = 0
 
-[node name="ItemRow" type="HBoxContainer" parent="Root/CatalogPanel/VBox/ItemScroll"]
+[node name="ItemRow" type="HBoxContainer" parent="Root/BottomBox/CatalogPanel/VBox/ItemScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
