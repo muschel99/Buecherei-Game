@@ -24,8 +24,11 @@ var eye_height: float = 1.6
 
 # --- Spielfigur: Springen und Hocken ---
 
-## Wie hoch die Figur springt (in Metern). Klein = sanfter, gemütlicher Hüpfer.
-var jump_height: float = 0.4
+## Wie hoch die Figur springt (in Metern). 0.8 reicht für Sessel, Sofa und Tisch.
+var jump_height: float = 0.8
+## Schwerkraft in der Luft im Verhältnis zur normalen (kleiner = weicher, schwebender Sprung).
+## Gilt beim Springen und Fallen, damit sich beides gemütlich anfühlt.
+var air_gravity_scale: float = 0.7
 ## Augenhöhe in der Hocke (in Metern über dem Boden).
 var crouch_eye_height: float = 1.0
 ## Körperhöhe in der Hocke (in Metern) – so niedrig kann man sich bücken.
@@ -121,6 +124,38 @@ var currency_name: String = "Taler"
 var save_file_path: String = "user://savegame.json"
 ## So viele Sekunden nach einer Änderung wird automatisch gespeichert.
 var autosave_delay: float = 1.5
+
+
+# --- Grafikstufen (Leistung) ---
+
+## Was die Grafikstufen Niedrig (0), Mittel (1) und Hoch (2) einschalten.
+## Welche Stufe gilt, wählt man im Spiel unter Esc → Einstellungen → Grafik.
+##   ssao            Umgebungsverdeckung (weiche Schatten in Ecken)
+##   ssao_half_size  SSAO in halber Auflösung berechnen (spart viel, sieht fast gleich aus)
+##   ssil            Indirektes Licht (Licht wird von Flächen zurückgeworfen) – sehr teuer
+##   volumetric_fog  Lichtstrahlen im Staub (z. B. am Fenster)
+##   fog_volume_size Genauigkeit der Lichtstrahlen (kleiner = schneller)
+##   msaa            Kantenglättung 0 / 2 / 4 (teurer), fxaa = einfache, günstige Glättung
+##   shadow_size     Schattenauflösung in Pixeln (größer = schärfer, teurer)
+##   soft_shadows    Weichheit der Schattenkanten 0 = hart, 1 = niedrig, 2 = mittel
+##   lamp_shadows    0 = Lampen ohne Schatten, 1 = nur wichtige Lampen (Steh- und Tischlampen),
+##                   2 = auch Deckenlampen. Kerzen und Laternen werfen nie eigene Schatten.
+##   cube_shadows    Lampenschatten in voller Qualität (6 statt 2 Durchgänge je Lampe)
+##   dust_amount     Anteil der Staubteilchen im Lichtstrahl (1 = alle)
+##   render_scale    Auflösung der 3D-Ansicht (1 = voll, 0.8 = etwas weicher, schneller)
+var graphics_presets: Array[Dictionary] = [
+	{"ssao": false, "ssao_half_size": true, "ssil": false, "volumetric_fog": false, "fog_volume_size": 48,
+		"msaa": 0, "fxaa": true, "shadow_size": 1024, "soft_shadows": 0, "lamp_shadows": 0,
+		"cube_shadows": false, "dust_amount": 0.5, "render_scale": 0.8},
+	{"ssao": true, "ssao_half_size": true, "ssil": false, "volumetric_fog": true, "fog_volume_size": 48,
+		"msaa": 0, "fxaa": true, "shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 1,
+		"cube_shadows": false, "dust_amount": 1.0, "render_scale": 1.0},
+	{"ssao": true, "ssao_half_size": false, "ssil": true, "volumetric_fog": true, "fog_volume_size": 64,
+		"msaa": 2, "fxaa": false, "shadow_size": 4096, "soft_shadows": 2, "lamp_shadows": 2,
+		"cube_shadows": true, "dust_amount": 1.0, "render_scale": 1.0},
+]
+## Höchstens so viele Bilder pro Sekunde, solange das Pausenmenü offen ist (spart Strom).
+var paused_max_fps: int = 30
 
 
 # --- Menü und Fenster ---

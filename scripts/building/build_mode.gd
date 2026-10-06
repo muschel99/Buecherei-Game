@@ -234,8 +234,11 @@ func _stop_looking() -> void:
 		return
 	_is_looking = false
 	_apply_mouse_mode()
-	# Mauszeiger dort wieder erscheinen lassen, wo er vor dem Umsehen war
-	Input.warp_mouse(_cursor_position_before_look)
+	# Mauszeiger dort wieder erscheinen lassen, wo er vor dem Umsehen war.
+	# Gespeichert ist die Position im Spielbild (wegen der Skalierung für verschiedene
+	# Auflösungen nicht gleich Fensterpixel) – warp_mouse erwartet aber Fensterpixel.
+	var window_position := get_tree().root.get_final_transform() * _cursor_position_before_look
+	Input.warp_mouse(window_position)
 
 
 ## Hebt ein platziertes Möbelstück auf, um es neu zu platzieren.
@@ -293,8 +296,14 @@ func _clear_tool() -> void:
 	catalog_state_changed.emit(is_in_catalog_state())
 
 
+## Taste X: Was ich in der Hand halte bzw. worauf der Mauszeiger zeigt, entfernen.
 func _delete_target() -> void:
-	if _tool == Tool.MOVE:
+	if _tool == Tool.PLACE_NEW:
+		# Neu ausgewählt und noch nicht aufgestellt: einfach zurück in den Katalog
+		var item_name := _selected_data.display_name
+		_clear_tool()
+		_flash_status("%s zurück in den Katalog gelegt." % item_name)
+	elif _tool == Tool.MOVE:
 		var item := _moving_item
 		var item_name := item.data.display_name
 		_moving_item = null
@@ -340,7 +349,7 @@ func _update_hover() -> void:
 			item = FurnitureUtils.find_placed_furniture(hit.collider)
 	_set_hovered(item)
 	if item:
-		_set_status("%s – Linksklick: aufheben · Entf: entfernen" % item.data.display_name)
+		_set_status("%s – Linksklick: aufheben · X: entfernen" % item.data.display_name)
 	elif not _is_looking:
 		_set_status("Wähle unten etwas aus dem Katalog oder klicke ein Möbelstück an. Rechte Maustaste halten: umsehen.")
 

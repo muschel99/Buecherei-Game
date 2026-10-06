@@ -25,8 +25,18 @@ enum Kind {
 ## Hinweistext zum Ausschalten (leer = Standardtext).
 @export var prompt_turn_off: String = ""
 
+enum ShadowImportance {
+	NONE,  ## Wirft nie Schatten
+	IMPORTANT,  ## Wirft ab Grafikstufe "Mittel" Schatten (z. B. Stehlampen)
+	OPTIONAL,  ## Wirft nur bei Grafikstufe "Hoch" Schatten (z. B. Deckenlampen)
+}
+## Wie wichtig die Schatten dieser Lampe sind (Schatten kosten viel Rechenleistung).
+## Lichter, die in der Szene ohne Schatten angelegt sind (Kerzen), bleiben immer ohne.
+@export var shadow_importance: ShadowImportance = ShadowImportance.IMPORTANT
+
 var _lights: Array[Light3D] = []
 var _light_energy: Array[float] = []
+var _light_has_shadow: Array[bool] = []
 var _glow_meshes: Array[MeshInstance3D] = []
 var _glow_materials: Array[StandardMaterial3D] = []
 var _glow_energy: Array[float] = []
@@ -40,6 +50,7 @@ func _ready() -> void:
 	for node in find_children("*", "Light3D", true, false):
 		_lights.append(node)
 		_light_energy.append(node.light_energy)
+		_light_has_shadow.append(node.shadow_enabled)
 	for node in find_children("*", "MeshInstance3D", true, false):
 		var material := node.material_override as StandardMaterial3D
 		if material and material.emission_enabled:
@@ -57,6 +68,27 @@ func _ready() -> void:
 				_interactable.interacted.connect(_on_interactable_interacted)
 			break
 	_apply_state(false)
+	_apply_shadow_quality()
+	Settings.setting_changed.connect(_on_setting_changed)
+
+
+func _on_setting_changed(key: String, _value: Variant) -> void:
+	if key == "graphics/quality":
+		_apply_shadow_quality()
+
+
+## Schatten je nach Grafikstufe: nur wichtige Lampen, und günstigere Schattenart.
+func _apply_shadow_quality() -> void:
+	var preset := Settings.get_graphics_preset()
+	var level: int = preset.lamp_shadows
+	var allowed := shadow_importance != ShadowImportance.NONE and int(shadow_importance) <= level
+	for i in _lights.size():
+		_lights[i].shadow_enabled = _light_has_shadow[i] and allowed
+		if _lights[i] is OmniLight3D:
+			# Würfel = 6 Durchgänge je Lampe, Doppel-Paraboloid = 2 (etwas ungenauer)
+			# (der einfache Renderer "Compatibility" kennt nur Würfel-Schatten)
+			var cube: bool = preset.cube_shadows or RenderingServer.get_current_rendering_method() == "gl_compatibility"
+			_lights[i].omni_shadow_mode = OmniLight3D.SHADOW_CUBE if cube else OmniLight3D.SHADOW_DUAL_PARABOLOID
 
 
 ## Elektrische Lampe? (nur die schaltet der Lichtschalter, siehe GameConfig)

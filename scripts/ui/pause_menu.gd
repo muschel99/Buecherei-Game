@@ -40,12 +40,14 @@ func open() -> void:
 	show()
 	_show_main_panel()
 	get_tree().paused = true
+	Settings.apply_frame_limit()  # im Pausenmenü weniger Bilder pro Sekunde (spart Strom)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func resume() -> void:
 	hide()
 	get_tree().paused = false
+	Settings.apply_frame_limit()
 	# Maus so einstellen, wie es das gerade Geöffnete braucht (z. B. Katalog = Mauszeiger sichtbar)
 	MenuStack.restore_mouse_mode()
 

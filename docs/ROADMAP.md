@@ -7,6 +7,7 @@
 | 2b  | Gestaltungsmodus verbessern              | fertig        |
 | 2c  | Feinschliff Gestaltung                   | fertig        |
 | 2d  | Ergänzungen: Steuerung, Füllwerkzeug, Bildschirm | fertig |
+| 2e  | Steuerung und Leistung                   | fertig        |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -77,6 +78,18 @@
       alle Menüs passen sich an jede Auflösung und jedes Seitenverhältnis an
 - [x] Raumhöhe 3,2 m (vorher 3,0 m) in GameConfig; Fenster und Tür höher;
       Deckenobjekte aus alten Spielständen wandern mit
+
+## Etappe 2e – Steuerung und Leistung
+- [x] Höher und weicher springen (etwa 0,8 m, sanftere Schwerkraft in der Luft; Werte in GameConfig);
+      auf Möbel springen und wieder herunter
+- [x] Im Gestaltungsmodus mit X entfernen (statt Entf); Tastenhilfe und Pausenmenü angepasst
+- [x] Mauszeiger erscheint nach dem Umsehen (rechte Maustaste) genau an der alten Stelle –
+      in jeder Auflösung, im Fenster und im Vollbild
+- [x] Leistung: Bildrate begrenzen (30/60/120/unbegrenzt, Standard 60), VSync standardmäßig an,
+      im Pausenmenü höchstens 30 Bilder pro Sekunde
+- [x] Grafikqualität Niedrig/Mittel/Hoch (`GameConfig.graphics_presets`)
+- [x] Nur wichtige Lampen werfen Schatten (`LightSource.shadow_importance`), Kerzen nie
+- [x] Bilder-pro-Sekunde-Anzeige (F3 oder Einstellungen); alle Einstellungen gespeichert
 
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)

@@ -45,6 +45,7 @@ size = Vector3(0.6, 0.5, 0.6)
 
 [node name="PendantRattan" type="Node3D" unique_id=1853813962]
 script = ExtResource("1_j071b")
+shadow_importance = 2
 prompt_turn_on = "Lampe einschalten"
 prompt_turn_off = "Lampe ausschalten"
 
