@@ -96,7 +96,8 @@ light_energy = 2.2
 light_angular_distance = 0.5
 shadow_enabled = true
 shadow_blur = 1.5
-directional_shadow_max_distance = 25.0
+directional_shadow_blend_splits = true
+directional_shadow_max_distance = 20.0
 
 [node name="Outside" type="Node3D" parent="."]
 
