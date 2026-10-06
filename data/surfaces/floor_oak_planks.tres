@@ -10,3 +10,4 @@ display_name = "Eichendielen"
 kind = 1
 material = ExtResource("1_j6db7")
 preview_color = Color(0.46, 0.32, 0.21, 1)
+owned_at_start = true

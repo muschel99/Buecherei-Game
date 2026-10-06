@@ -15,9 +15,10 @@ extends Node3D
 			_rebuild_model()
 
 ## Laufende Nummer im Raum (für den Spielstand, wird automatisch vergeben).
-var uid: int = 0
+## Wird mit der Szene gespeichert, aber nicht im Inspektor gezeigt.
+@export_storage var uid: int = 0
 ## Nummer des Möbelstücks, auf dem dieses steht (0 = steht auf dem Boden).
-var support_uid: int = 0
+@export_storage var support_uid: int = 0
 
 var _model: Node3D = null
 var _bodies: Array[StaticBody3D] = []

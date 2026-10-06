@@ -71,6 +71,10 @@ var light_fade_time: float = 0.35
 var flame_fade_time: float = 0.6
 ## Soll der Lichtschalter auch Kerzen und Laternen mitschalten? (Standard: nur elektrische Lampen)
 var light_switch_includes_flames: bool = false
+## So weit öffnet sich die Eingangstür (in Grad).
+var door_open_angle: float = 90.0
+## So lange dauert das Öffnen bzw. Schließen der Tür (in Sekunden).
+var door_open_time: float = 0.9
 
 
 # --- Raum ---
@@ -114,8 +118,22 @@ var preview_color_invalid: Color = Color(1.0, 0.35, 0.3)
 var highlight_brightness: float = 0.06
 ## Heller Schimmer am Rand des Objekts (0 = kein Rand, 1 = sehr hell).
 var highlight_rim_strength: float = 0.45
-## Name der Währung, wie er im Katalog angezeigt wird.
+
+
+# --- Geld, Shop und Lieferung ---
+
+## Name der Währung, wie er im Spiel angezeigt wird.
 var currency_name: String = "Taler"
+## Kontostand beim allerersten Start (neues Spiel).
+var start_money: int = 500
+## Anteil des Preises, den man beim Verkaufen zurückbekommt (0.5 = 50 %).
+var sell_price_share: float = 0.5
+## So viele Sekunden nach dem Bestellen steht der Karton vor der Tür.
+var delivery_time: float = 10.0
+## So lange dauert das Auspacken eines Kartons (die kleine Animation, in Sekunden).
+var unpack_time: float = 0.7
+## So lange bleibt ein Hinweis wie "Deine Lieferung ist da" zu sehen (in Sekunden).
+var notice_time: float = 4.0
 
 
 # --- Speichern ---

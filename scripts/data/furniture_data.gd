@@ -3,7 +3,7 @@ extends Resource
 ## Datenblatt für ein Möbelstück oder Deko-Objekt.
 ##
 ## Jede Datei in data/furniture/ (Endung .tres) ist ein solches Datenblatt.
-## Der Katalog im Gestaltungsmodus liest diesen Ordner automatisch ein:
+## Der Katalog liest diesen Ordner automatisch ein (Shop und Inventar bauen darauf auf):
 ## Neue Möbel brauchen also keinen neuen Code, nur ein neues Datenblatt.
 ## Anleitung: docs/ASSET_GUIDE.md, Abschnitt "Ein neues Möbelstück anlegen".
 
@@ -30,18 +30,25 @@ const _CATEGORY_NAMES := {
 ## Kurze Beschreibung (erscheint im Katalog, wenn die Maus darüber steht).
 @export_multiline var description: String = ""
 @export var category: Category = Category.DECO
-## Preis in Talern (wird ab Etappe 5 abgezogen).
+## Preis in Talern im Shop. Beim Verkaufen gibt es einen Teil davon zurück
+## (GameConfig.sell_price_share).
 @export var price: int = 0
 ## Stil-Merkmale: eines oder mehrere Häkchen setzen. Ohne Häkchen ist das Objekt
 ## stilneutral und zählt nicht zur Stilberechnung (z. B. Lichtschalter, Kasse).
 @export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
 ## Die Szene (.tscn) oder das 3D-Modell (.glb) des Möbelstücks.
 @export_file("*.tscn", "*.scn", "*.glb", "*.gltf") var scene_path: String = ""
+## Eigenes Vorschaubild für den Shop (freiwillig). Leer = das Spiel fotografiert das
+## Modell selbst.
+@export var icon: Texture2D
 ## Grundfläche in Rasterfeldern (Breite x Tiefe). Ein Feld ist
 ## GameConfig.grid_cell_size groß (Standard 1/9 m ≈ 11,1 cm), 9 Felder = 1 Meter.
 @export var footprint: Vector2i = Vector2i(2, 2)
-## Erscheint das Möbelstück schon im Katalog?
+## Erscheint das Möbelstück schon im Shop?
 @export var is_unlocked: bool = true
+## Gehört fest zur Bücherei (z. B. das Tablet mit dem Shop): Es steht nicht im Shop und
+## lässt sich nicht verkaufen – nur verschieben oder ins Inventar legen.
+@export var is_essential: bool = false
 
 @export_group("Platzierung")
 ## Wo darf es hin? Ein oder mehrere Häkchen:
@@ -86,6 +93,11 @@ func get_category_name() -> String:
 
 static func get_category_display_name(value: Category) -> String:
 	return _CATEGORY_NAMES.get(value, "?")
+
+
+## Was man beim Verkaufen zurückbekommt (Anteil GameConfig.sell_price_share des Preises).
+func get_sell_price() -> int:
+	return maxi(0, roundi(price * GameConfig.sell_price_share))
 
 
 ## Grundfläche in Metern (Breite, Tiefe).

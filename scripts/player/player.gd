@@ -31,6 +31,8 @@ var _capsule: CapsuleShape3D
 var _stand_body_height: float = 1.7
 ## Aktuelles Höchsttempo: gleitet weich zwischen walk_speed und sprint_speed hin und her.
 var _current_max_speed: float = 0.0
+## Laufen, Springen und Hocken (z. B. aus, solange der Shop offen ist).
+var movement_enabled: bool = true
 ## Im Gestaltungsmodus wird das Interagieren mit E abgeschaltet.
 var interaction_enabled: bool = true:
 	set(value):
@@ -90,14 +92,14 @@ func _physics_process(delta: float) -> void:
 
 ## Sanfter Sprung: Die Startgeschwindigkeit ergibt genau die gewünschte Sprunghöhe.
 func _jump() -> void:
-	if Input.is_action_just_pressed("jump") and is_on_floor() and not _is_crouching:
+	if movement_enabled and Input.is_action_just_pressed("jump") and is_on_floor() and not _is_crouching:
 		# Startgeschwindigkeit so, dass genau die gewünschte Höhe erreicht wird
 		velocity.y = sqrt(2.0 * _gravity * GameConfig.air_gravity_scale * GameConfig.jump_height)
 
 
 ## Hocken, solange Strg gedrückt ist. Aufstehen nur, wenn über einem genug Platz ist.
 func _update_crouch(delta: float) -> void:
-	var wants_crouch := Input.is_action_pressed("crouch")
+	var wants_crouch := Input.is_action_pressed("crouch") and movement_enabled
 	if wants_crouch and not _is_crouching:
 		_set_body_height(GameConfig.crouch_body_height)
 		_is_crouching = true
@@ -205,6 +207,8 @@ func _apply_gravity(delta: float) -> void:
 ## Sanftes Laufen: Die Geschwindigkeit wird weich hoch- und heruntergeregelt.
 func _move(delta: float) -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if not movement_enabled:
+		input = Vector2.ZERO
 	# Eingabe in Blickrichtung der Figur umrechnen
 	var direction := transform.basis * Vector3(input.x, 0.0, input.y)
 
@@ -240,6 +244,10 @@ func _update_head_bob(delta: float) -> void:
 
 ## Prüft, ob in der Bildmitte ein interaktives Objekt ist.
 func _update_interaction_target() -> void:
+	# Wurde das anvisierte Objekt inzwischen gelöscht (z. B. weggeräumt), vergessen wir es
+	if not is_same(_current_target, null) and not is_instance_valid(_current_target):
+		_current_target = null
+		interaction_target_changed.emit(null)
 	var new_target: Interactable = null
 	if interaction_enabled and not is_seated() and interaction_ray.is_colliding():
 		var hit := interaction_ray.get_collider()

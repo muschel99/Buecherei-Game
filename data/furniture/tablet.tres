@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_tablet"]
+
+[resource]
+script = ExtResource("1_tablet")
+id = "tablet"
+display_name = "Tablet (Shop)"
+description = "Steht auf der Theke. Mit E öffnest du den Shop."
+category = 3
+scene_path = "res://scenes/furniture/tablet.tscn"
+footprint = Vector2i(3, 2)
+placement = 2
+is_essential = true

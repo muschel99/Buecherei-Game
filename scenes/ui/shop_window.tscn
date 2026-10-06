@@ -1,0 +1,229 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/shop_window.gd" id="1_shop"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_window"]
+content_margin_left = 22.0
+content_margin_top = 16.0
+content_margin_right = 22.0
+content_margin_bottom = 18.0
+bg_color = Color(0.17, 0.12, 0.09, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.42, 0.28, 0.6)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_side"]
+content_margin_left = 14.0
+content_margin_top = 12.0
+content_margin_right = 14.0
+content_margin_bottom = 14.0
+bg_color = Color(0.24, 0.17, 0.12, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="ShopWindow" type="CanvasLayer"]
+process_mode = 3
+layer = 6
+script = ExtResource("1_shop")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.05, 0.03, 0.45)
+
+[node name="Window" type="PanelContainer" parent="."]
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.06
+anchor_right = 0.95
+anchor_bottom = 0.94
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_window")
+
+[node name="VBox" type="VBoxContainer" parent="Window"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="Window/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Window/VBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Shop"
+
+[node name="BuyTabButton" type="Button" parent="Window/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 18
+text = "Kaufen"
+
+[node name="SellTabButton" type="Button" parent="Window/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 18
+text = "Verkaufen"
+
+[node name="Spacer" type="Control" parent="Window/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MoneyLabel" type="Label" parent="Window/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 18
+text = "Kontostand: 500 Taler"
+
+[node name="CloseButton" type="Button" parent="Window/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+text = "Schließen (Esc)"
+
+[node name="BuyView" type="HBoxContainer" parent="Window/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="CategoryScroll" type="ScrollContainer" parent="Window/VBox/BuyView"]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="CategoryList" type="VBoxContainer" parent="Window/VBox/BuyView/CategoryScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="ItemScroll" type="ScrollContainer" parent="Window/VBox/BuyView"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemFlow" type="HFlowContainer" parent="Window/VBox/BuyView/ItemScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+
+[node name="CartPanel" type="PanelContainer" parent="Window/VBox/BuyView"]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_side")
+
+[node name="VBox" type="VBoxContainer" parent="Window/VBox/BuyView/CartPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="CartTitle" type="Label" parent="Window/VBox/BuyView/CartPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Warenkorb"
+
+[node name="CartScroll" type="ScrollContainer" parent="Window/VBox/BuyView/CartPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="CartList" type="VBoxContainer" parent="Window/VBox/BuyView/CartPanel/VBox/CartScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="TotalLabel" type="Label" parent="Window/VBox/BuyView/CartPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "Summe: 0 Taler"
+
+[node name="CartMessage" type="Label" parent="Window/VBox/BuyView/CartPanel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.78, 0.68, 0.9)
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="OrderButton" type="Button" parent="Window/VBox/BuyView/CartPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Bestellen"
+
+[node name="SellView" type="HBoxContainer" parent="Window/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="SellScroll" type="ScrollContainer" parent="Window/VBox/SellView"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+
+[node name="SellList" type="VBoxContainer" parent="Window/VBox/SellView/SellScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SellInfoPanel" type="PanelContainer" parent="Window/VBox/SellView"]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_side")
+
+[node name="VBox" type="VBoxContainer" parent="Window/VBox/SellView/SellInfoPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SellTitle" type="Label" parent="Window/VBox/SellView/SellInfoPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Verkaufen"
+
+[node name="SellInfo" type="Label" parent="Window/VBox/SellView/SellInfoPanel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.78, 0.68, 0.9)
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="SellMessage" type="Label" parent="Window/VBox/SellView/SellInfoPanel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3

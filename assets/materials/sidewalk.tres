@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/surface_pattern.gdshader" id="1_pattern"]
+
+[resource]
+resource_name = "Gehwegplatten"
+render_priority = 0
+shader = ExtResource("1_pattern")
+shader_parameter/base_color = Color(0.6, 0.57, 0.52, 1)
+shader_parameter/second_color = Color(0.56, 0.53, 0.49, 1)
+shader_parameter/pattern = 2
+shader_parameter/tile_size = 0.6
+shader_parameter/joint_width = 0.008
+shader_parameter/joint_color = Color(0.36, 0.34, 0.31, 1)
+shader_parameter/mottling = 0.12
+shader_parameter/roughness_value = 0.92

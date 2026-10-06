@@ -3,6 +3,7 @@ extends Node3D
 ## Ein Raum des Hauses: verwaltet seine Möbel, Wandfarbe und Boden.
 ##
 ## Der Gestaltungsmodus fügt hier Möbel hinzu, verschiebt und entfernt sie.
+## (Ob etwas im Inventar ist, regelt der Gestaltungsmodus mit Inventory.)
 ## Der Raum merkt sich alles im Spielstand (Gruppe "persist", siehe SaveManager).
 
 ## Wird gesendet, wenn sich Möbel, Wandfarbe oder Boden ändern.
@@ -38,7 +39,7 @@ signal layout_changed
 	$Structure/WallFront,
 ]
 ## Hier darf man etwas an die Tür hängen (z. B. einen Türkranz).
-@onready var _hang_doors: Array[Node] = [$Door/DoorLeaf]
+@onready var _hang_doors: Array[Node] = [$Door/Hinge/DoorLeaf]
 ## Hier darf man etwas an die Decke hängen (z. B. Deckenlampen).
 @onready var _hang_ceilings: Array[Node] = [$Structure/Ceiling]
 
@@ -46,6 +47,9 @@ signal layout_changed
 enum HangKind { NONE = 0, WALL = 4, DOOR = 8, CEILING = 16 }
 
 var _next_uid: int = 1
+## Wo Unverzichtbares (z. B. das Tablet) ursprünglich steht – falls es in einem Spielstand
+## fehlt, kommt es dorthin zurück. id -> { "support_id": …, "transform": … }
+var _essential_spots: Dictionary = {}
 
 
 func _ready() -> void:
@@ -53,6 +57,7 @@ func _ready() -> void:
 	add_to_group(SaveManager.PERSIST_GROUP)
 	for item in get_placed_furniture():
 		_assign_uid(item)
+	_remember_essential_spots()
 	_paint_everything(default_wall_id)
 	_paint_everything(default_floor_id)
 	_paint_everything(default_ceiling_id)
@@ -80,6 +85,15 @@ func get_placed_furniture() -> Array[PlacedFurniture]:
 		if child is PlacedFurniture:
 			result.append(child)
 	return result
+
+
+## Wie viele Möbel mit dieser id stehen gerade im Raum?
+func count_placed(id: String) -> int:
+	var count := 0
+	for item in get_placed_furniture():
+		if item.data and item.data.get_id() == id:
+			count += 1
+	return count
 
 
 ## Stellt ein neues Möbelstück in den Raum (Transform = Position und Drehung in der Welt).
@@ -126,6 +140,49 @@ func get_dependents(item: PlacedFurniture) -> Array[PlacedFurniture]:
 				result.append(other)
 				to_check.append(other)
 	return result
+
+
+## Unverzichtbares (FurnitureData.is_essential, z. B. das Tablet mit dem Shop) darf nie
+## verloren gehen. Fehlt es im Raum und im Inventar (etwa bei einem Spielstand von vor dem
+## Shop), wird es wieder an seinen Platz gestellt – oder ins Inventar gelegt, falls das
+## Möbelstück fehlt, auf dem es stand. Wird nach dem Laden des Spielstands aufgerufen.
+func ensure_essentials() -> void:
+	for data in Catalog.get_all_furniture():
+		var id := data.get_id()
+		if not data.is_essential or count_placed(id) > 0 or Inventory.get_count(id) > 0:
+			continue
+		var spot: Dictionary = _essential_spots.get(id, {})
+		var support := _find_placed(str(spot.get("support_id", "")))
+		if spot.is_empty() or (not str(spot.support_id).is_empty() and support == null):
+			Inventory.add_furniture(id)
+			continue
+		var world: Transform3D = spot.transform
+		if support:
+			world = support.global_transform * world
+		add_furniture(data, world, support)
+
+
+func _remember_essential_spots() -> void:
+	for item in get_placed_furniture():
+		if item.data == null or not item.data.is_essential:
+			continue
+		var support: PlacedFurniture = null
+		for other in get_placed_furniture():
+			if other.uid == item.support_uid and item.support_uid > 0:
+				support = other
+		if support:
+			_essential_spots[item.data.get_id()] = {"support_id": support.data.get_id(),
+				"transform": support.global_transform.affine_inverse() * item.global_transform}
+		else:
+			_essential_spots[item.data.get_id()] = {"support_id": "", "transform": item.global_transform}
+
+
+## Das erste Möbelstück mit dieser id im Raum (oder null).
+func _find_placed(id: String) -> PlacedFurniture:
+	for item in get_placed_furniture():
+		if item.data and item.data.get_id() == id:
+			return item
+	return null
 
 
 ## Alle Lichtquellen im Raum, die der Lichtschalter schaltet: elektrische Lampen –
@@ -302,6 +359,9 @@ func load_save_data(save_data: Dictionary) -> void:
 	_load_walls(save_data)
 	_load_grid(save_data.get("floor"), _grids[SurfaceData.Kind.FLOOR], default_floor_id)
 	_load_grid(save_data.get("ceiling"), _grids[SurfaceData.Kind.CEILING], default_ceiling_id)
+	# Was im Raum zu sehen ist, gehört mir (wichtig für Spielstände von vor dem Inventar)
+	for id in _get_used_surface_ids():
+		Inventory.add_surface(id)
 	layout_changed.emit()
 
 

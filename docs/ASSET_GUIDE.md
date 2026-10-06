@@ -21,7 +21,7 @@ Jedes Möbelstück im Katalog besteht aus zwei Teilen:
 - einem **Datenblatt** in `data/furniture/` (Name, Preis, Stil usw.), z. B. `table_bistro.tres`.
 
 Der Katalog liest den Ordner `data/furniture/` beim Spielstart automatisch ein.
-Ein neues Datenblatt dort = ein neues Möbelstück im Katalog.
+Ein neues Datenblatt dort = ein neues Möbelstück im Shop (kaufen, dann liegt es im Inventar).
 
 **Am einfachsten: ein vorhandenes Datenblatt kopieren**
 1. Im **Dateisystem**-Fenster (unten links) den Ordner `data/furniture/` öffnen.
@@ -35,14 +35,16 @@ Ein neues Datenblatt dort = ein neues Möbelstück im Katalog.
 | Display Name          | Name im Katalog, z. B. „Marmortisch“                                       |
 | Description           | Kurzer Text, erscheint, wenn die Maus über der Karte steht                |
 | Category              | Reiter im Katalog (Regale, Sitzmöbel, Tische, Theke, Beleuchtung …)       |
-| Price                 | Preis in Talern (wird ab Etappe 5 abgezogen)                              |
+| Price                 | Preis in Talern im Shop (beim Verkaufen gibt es die Hälfte zurück)        |
 | Styles                | Häkchen bei Botanisch, Modern und/oder Dark Academia – ohne Häkchen = stilneutral |
 | Scene Path            | Die Szene (`.tscn`) oder das Modell (`.glb`) – mit dem Ordner-Symbol auswählen |
 | Footprint             | Grundfläche in Rasterfeldern: x = Breite, y = Tiefe. 1 Feld = 1/9 m (≈ 11,1 cm), 9 Felder = 1 m |
-| Is Unlocked           | Häkchen = erscheint im Katalog                                            |
+| Icon                  | Eigenes Vorschaubild für den Shop (freiwillig) – leer = das Spiel fotografiert das Modell selbst |
+| Is Unlocked           | Häkchen = erscheint im Shop                                               |
+| Is Essential          | Gehört fest zur Bücherei (wie das Tablet): nicht im Shop, nicht verkaufbar |
 | Placement             | Wo darf es hin? Häkchen bei Boden, Ablagefläche, Wand, Tür und/oder Decke |
 
-4. Mit **Strg+S** speichern und das Spiel starten (F5). Das Möbelstück ist im Katalog.
+4. Mit **Strg+S** speichern und das Spiel starten (F5). Das Möbelstück steht im Shop.
 
 **Ablageflächen festlegen:** Ob man Deko auf ein Möbelstück stellen kann, bestimmt seine Szene.
 Jede Ablagefläche ist ein Knoten vom Typ **PlacementSurface** (z. B. unter dem Knoten `Surfaces`):
@@ -82,7 +84,8 @@ Für Regale ist eine eigene Szene besser, damit jedes Regalbrett eine eigene Kol
 Wandfarben, Böden und Decken funktionieren genauso – ihre Datenblätter liegen in `data/surfaces/`.
 Felder: Id, Display Name, **Kind** (Wall = Wandfarbe, Floor = Boden, Ceiling = Decke), Price,
 **Styles** (freiwillig – ohne Häkchen stilneutral), **Material** (das Aussehen) und
-**Preview Color** (Farbe des Feldes im Katalog).
+**Preview Color** (Farbe des Feldes im Shop und im Inventar) und **Owned At Start**
+(Häkchen = von Anfang an vorhanden, muss nicht gekauft werden).
 Die bisherigen Oberflächen sind alle stilneutral. Für ein besonderes Design (z. B. eine
 Dark-Academia-Holzvertäfelung) einfach die passenden Stil-Häkchen setzen – dann zählt es mit.
 

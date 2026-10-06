@@ -19,6 +19,9 @@
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="17_surface"]
 [ext_resource type="Script" path="res://scripts/rooms/paintable_wall.gd" id="18_wall"]
 [ext_resource type="Script" path="res://scripts/rooms/paintable_grid.gd" id="19_floor"]
+[ext_resource type="Script" path="res://scripts/objects/door.gd" id="20_door"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="21_interactable"]
+[ext_resource type="Resource" path="res://data/furniture/tablet.tres" id="22_tablet"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_horizontal"]
 size = Vector3(2.4, 0.06, 0.22)
@@ -56,6 +59,9 @@ size = Vector3(6, 0.1, 0.02)
 
 [sub_resource type="BoxMesh" id="BoxMesh_skirting_front"]
 size = Vector3(4.5, 0.1, 0.02)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_door_interact"]
+size = Vector3(1, 2.2, 0.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_entrance"]
 size = Vector3(1.4, 2, 1.2)
@@ -216,17 +222,37 @@ material_override = ExtResource("6_glass")
 
 [node name="Door" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -4.1)
+script = ExtResource("20_door")
 
-[node name="DoorLeaf" type="CSGBox3D" parent="Door"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.09, 0.02)
+[node name="Hinge" type="Node3D" parent="Door"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.49, 0, 0.045)
+
+[node name="DoorLeaf" type="CSGBox3D" parent="Door/Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.49, 1.09, -0.025)
 use_collision = true
 size = Vector3(0.98, 2.18, 0.05)
 material = ExtResource("7_door_paint")
 
-[node name="Knob" type="MeshInstance3D" parent="Door"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.37, 1, 0.07)
+[node name="Knob" type="MeshInstance3D" parent="Door/Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 1, 0.025)
 mesh = SubResource("SphereMesh_knob")
 material_override = ExtResource("8_brass")
+
+[node name="KnobOutside" type="MeshInstance3D" parent="Door/Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 1, -0.075)
+mesh = SubResource("SphereMesh_knob")
+material_override = ExtResource("8_brass")
+
+[node name="Interactable" type="Area3D" parent="Door/Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.49, 1.09, -0.025)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("21_interactable")
+prompt_text = "Tür öffnen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Door/Hinge/Interactable"]
+shape = SubResource("BoxShape3D_door_interact")
 
 [node name="TrimLeft" type="MeshInstance3D" parent="Door"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.54, 1.14, 0.12)
@@ -269,11 +295,19 @@ data = ExtResource("11_table")
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.7, 0, 2.7)
 script = ExtResource("16_placed")
 data = ExtResource("12_counter")
+uid = 5
 
 [node name="FloorLamp" type="Node3D" parent="Furniture"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7, 0, -2.4)
 script = ExtResource("16_placed")
 data = ExtResource("13_floor_lamp")
+
+[node name="Tablet" type="Node3D" parent="Furniture"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 1, 2.77)
+script = ExtResource("16_placed")
+data = ExtResource("22_tablet")
+uid = 7
+support_uid = 5
 
 [node name="WindowSillSurface" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.835, -3.91)

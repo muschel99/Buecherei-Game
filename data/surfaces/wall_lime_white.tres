@@ -10,3 +10,4 @@ display_name = "Kalkweiß"
 price = 50
 material = ExtResource("1_ifjfl")
 preview_color = Color(0.93, 0.92, 0.89, 1)
+owned_at_start = true

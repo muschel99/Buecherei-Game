@@ -1,0 +1,79 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/shop_tablet.gd" id="1_tablet"]
+[ext_resource type="Material" path="res://assets/materials/register_metal.tres" id="2_metal"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="3_interactable"]
+
+[sub_resource type="StandardMaterial3D" id="Screen"]
+albedo_color = Color(0.12, 0.1, 0.08, 1)
+emission_enabled = true
+emission = Color(1, 0.86, 0.62, 1)
+emission_energy_multiplier = 0.9
+roughness = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Case"]
+albedo_color = Color(0.16, 0.15, 0.14, 1)
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_case"]
+size = Vector3(0.27, 0.19, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_screen"]
+size = Vector3(0.24, 0.16, 0.002)
+
+[sub_resource type="BoxMesh" id="BoxMesh_foot"]
+size = Vector3(0.12, 0.012, 0.11)
+
+[sub_resource type="BoxMesh" id="BoxMesh_arm"]
+size = Vector3(0.04, 0.1, 0.012)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(0.27, 0.2, 0.14)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
+size = Vector3(0.4, 0.34, 0.3)
+
+[node name="Tablet" type="Node3D"]
+script = ExtResource("1_tablet")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Foot" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.006, -0.01)
+mesh = SubResource("BoxMesh_foot")
+material_override = ExtResource("2_metal")
+
+[node name="Arm" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 0.9396926, -0.34202015, 0, 0.34202015, 0.9396926, 0, 0.055, -0.035)
+mesh = SubResource("BoxMesh_arm")
+material_override = ExtResource("2_metal")
+
+[node name="Case" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 0.9063078, -0.42261827, 0, 0.42261827, 0.9063078, 0, 0.13, -0.01)
+mesh = SubResource("BoxMesh_case")
+material_override = SubResource("Case")
+
+[node name="Screen" type="MeshInstance3D" parent="Model/Case"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.007)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_screen")
+material_override = SubResource("Screen")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.01)
+shape = SubResource("BoxShape3D_body")
+
+[node name="Interactable" type="Area3D" parent="."]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_interactable")
+prompt_text = "Shop öffnen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
+shape = SubResource("BoxShape3D_interact")
+
+[connection signal="interacted" from="Interactable" to="." method="_on_interactable_interacted"]

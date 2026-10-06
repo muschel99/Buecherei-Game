@@ -13,11 +13,38 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - **Gestaltung:** Möbel und Raumteiler frei platzieren, Wände streichen, Böden tauschen.
   Kein freier Wandbau. Gestaltet wird in der Ego-Perspektive (Taste Tab), frei oder mit
   Einrasten. Deko kann auf Ablageflächen stehen oder an Wand und Tür hängen.
-  Der Eingangsbereich vor der Tür bleibt frei.
+  Der Eingangsbereich vor der Tür bleibt frei. Gestaltet wird mit dem, was man besitzt
+  (Inventar); Neues kauft man im Shop.
 - **Stile:** Zum Start drei Stile: *Botanisch*, *Modern*, *Dark Academia*. Möbel tragen
   Stil-Merkmale. Der vorherrschende Stil bestimmt, welche Besucher kommen und welche Musik läuft.
 
 ## Bücherei-Wirtschaft
+
+### Geld, Inventar, Shop und Lieferung (seit Etappe 2f)
+- **Geld:** Ein zentraler Kontostand (Taler), zum Start 500 Taler. Er steht dezent oben links;
+  Einnahmen und Ausgaben erscheinen kurz darunter (+80 / −320).
+- **Inventar:** Alles, was mir gehört und gerade nicht im Raum steht. Möbel und Deko werden
+  gezählt (z. B. „Bücherregal ×2“). Die Möbel, die zum Start im Raum stehen, gehören mir.
+  Wandfarben, Böden und Decken kauft man einmal und kann sie danach unbegrenzt verwenden;
+  ein paar schlichte Farben (Warmer Putz, Kalkweiß, Nebelgrau), ein Boden (Eichendielen) und
+  zwei Decken sind von Anfang an da.
+- **Shop am Tablet:** Auf der Theke steht ein Tablet. E öffnet den Shop (Mauszeiger sichtbar,
+  Esc schließt ihn, die Figur steht solange still).
+  - *Kaufen:* alle freigeschalteten Möbel, Deko, Wandfarben, Böden und Decken nach Kategorien,
+    mit kleinem Vorschaubild, Preis und Stil-Merkmalen. Ein Klick legt etwas in den Warenkorb
+    (Möbel auch mehrfach, Oberflächen einmal); „Bestellen“ bezahlt.
+    Reicht das Geld nicht, steht dort freundlich, wie viel fehlt – ohne Strafe.
+  - *Verkaufen:* Möbel aus dem Inventar (nicht die im Raum) bringen die Hälfte des Preises
+    zurück (Anteil in GameConfig). Oberflächen behält man.
+  - Das Tablet gehört fest zur Bücherei: Es steht nicht im Shop und lässt sich nicht verkaufen.
+- **Lieferung:** Kurz nach der Bestellung (10 Sekunden, GameConfig) steht ein Karton pro
+  Bestellung draußen neben der Eingangstür, und ein dezenter Hinweis erscheint:
+  „Deine Lieferung ist da“. E auf den Karton: Der Inhalt wandert direkt ins Inventar, der
+  Karton hebt sich, dreht sich und schrumpft sanft weg. Nichts tragen, nichts einsortieren.
+- Geld, Inventar, Bestellungen unterwegs und noch nicht abgeholte Kartons werden mit der
+  Einrichtung gespeichert.
+
+### Später (Etappe 5)
 - Leihgebühren über Leseausweise (Buch abstempeln statt Wechselgeld).
 - Mitgliedschaften.
 - Café als zusätzliche Einnahmequelle.
@@ -25,7 +52,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - Genres werden nach und nach freigeschaltet.
 
 ## Theke
-- Modular: Kasse von Anfang an.
+- Modular: Kasse von Anfang an, dazu das Tablet mit dem Shop.
 - Café-Elemente (z. B. Kaffeemaschine, Kuchenvitrine) später daneben anbaubar.
 - Der gesamte Thekenblock ist frei platzierbar.
 
@@ -39,7 +66,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 
 ## Steuerung
 **Grundregel:** Jede Interaktion in der Spielwelt läuft über die Taste E.
-Esc schließt immer zuerst das, was gerade offen ist (Gestaltungsmodus, Menüs, später der Shop).
+Esc schließt immer zuerst das, was gerade offen ist (Gestaltungsmodus, Shop, Menüs).
 Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 
 | Taste          | Aktion                                         |
@@ -49,15 +76,19 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Leertaste      | Springen (etwa 0,8 m hoch, weich); im Sitzen: aufstehen |
 | Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
-| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen … |
-| Tab            | Gestaltungsmodus öffnen/schließen              |
+| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen |
+| Tab            | Gestaltungsmodus (Inventar) öffnen/schließen   |
 | F3             | Bilder pro Sekunde anzeigen/ausblenden         |
 | Esc            | Schließt, was offen ist – sonst Pausenmenü     |
 
 ### Im Gestaltungsmodus
+Unten erscheint das **Inventar**: nur Dinge, die mir gehören, mit Anzahl (×2). Stehen alle
+Exemplare im Raum, ist die Karte ausgegraut (×0). Platzieren nimmt eins aus dem Inventar;
+Aufheben und Wegräumen (X) legen es zurück – samt allem, was darauf steht.
+
 Zwei Zustände:
-- **Katalog-Zustand:** Mauszeiger sichtbar. Im Katalog stöbern und auswählen, platzierte Möbel
-  anklicken (= aufheben). Laufen mit WASD geht weiter, Umsehen mit gehaltener rechter Maustaste.
+- **Katalog-Zustand:** Mauszeiger sichtbar. Im Inventar stöbern und auswählen, platzierte Möbel
+  anklicken (= aufheben, die Anzahl steigt um eins). Laufen mit WASD geht weiter, Umsehen mit gehaltener rechter Maustaste.
   Nach dem Umsehen erscheint der Mauszeiger genau dort wieder, wo man die Taste gedrückt hat.
 - **Platzier-Zustand:** Sobald etwas ausgewählt oder aufgehoben ist, verschwindet der Mauszeiger
   und die Vorschau folgt dem Blick. Nach dem Platzieren oder Zurücklegen geht es automatisch
@@ -70,10 +101,10 @@ Zwei Zustände:
 | Linksklick halten + ziehen | Mehrere Wand-, Boden- oder Deckenabschnitte nacheinander     |
 | Umschalt + Linksklick    | Wand: ganze Wand · Boden/Decke: Füllwerkzeug (wie Farbeimer)   |
 | Rechte Maustaste halten  | Umsehen (im Katalog-Zustand)                                   |
-| Rechtsklick              | Zurücklegen / Auswahl beenden (im Platzier-Zustand)            |
+| Rechtsklick              | Auswahl beenden bzw. Aufgehobenes zurück an den alten Platz    |
 | Mausrad                  | Drehen                                                         |
 | G                        | Einrasten an/aus (Raster 1/9 m ≈ 11,1 cm und 15°-Schritte)      |
-| X                        | Gehaltenes oder anvisiertes Objekt entfernen (Neues aus dem Katalog geht einfach zurück) |
+| X                        | Gehaltenes oder anvisiertes Objekt ins Inventar legen          |
 
 ### Gestaltungsregeln
 - Standard: frei platzieren und stufenlos drehen. Mit G rastet alles am Raster ein.
@@ -122,6 +153,10 @@ Zwei Zustände:
 - Erster Raum (Erdgeschoss, Straßenseite): 6 x 8 Meter, 3,2 Meter hoch (Raumhöhe in GameConfig),
   großes Fenster (0,8 bis 2,6 m) und Eingangstür (2,2 m) zur Gasse. Die Decke ist zu Beginn
   schlicht; Balken gibt es als Deckenvariante.
+- Die Eingangstür öffnet sich mit E sanft nach innen; was an ihr hängt (z. B. ein Türkranz),
+  schwingt mit. Beim Gestalten ist sie geschlossen.
+- Vor der Tür liegt ein Stück Gehweg der Gasse (Platzhalter) mit Bordstein; links und rechts
+  stehen die Nachbarhäuser. Hier kommen die Lieferkartons an.
 
 ## Einstellungen
 - Im Pausenmenü unter „Einstellungen“: Fenster oder Vollbild, Auflösung (gängige Auflösungen

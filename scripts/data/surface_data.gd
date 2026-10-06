@@ -19,7 +19,7 @@ enum Kind { WALL, FLOOR, CEILING }
 @export var display_name: String = "Neue Oberfläche"
 ## Wand, Boden oder Decke?
 @export var kind: Kind = Kind.WALL
-## Preis in Talern für den ganzen Raum (wird ab Etappe 5 abgezogen).
+## Preis in Talern. Einmal im Shop gekauft, kann man sie unbegrenzt verwenden.
 @export var price: int = 0
 ## Stil-Merkmale (freiwillig). Keine Häkchen = stilneutral.
 @export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
@@ -27,8 +27,11 @@ enum Kind { WALL, FLOOR, CEILING }
 @export var material: Material
 ## Farbe des Farbfelds im Katalog.
 @export var preview_color: Color = Color(0.8, 0.75, 0.65)
-## Erscheint die Oberfläche schon im Katalog?
+## Erscheint die Oberfläche schon im Shop?
 @export var is_unlocked: bool = true
+## Von Anfang an vorhanden (muss nicht gekauft werden)? Für ein paar schlichte Farben und
+## den Startboden.
+@export var owned_at_start: bool = false
 
 
 func get_id() -> String:

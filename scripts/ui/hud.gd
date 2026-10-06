@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Anzeige über dem Spielbild: Punkt in der Bildmitte und Hinweistext.
+## Anzeige über dem Spielbild: Punkt in der Bildmitte, Hinweistext und Kontostand.
 ##
 ## Bekommt von der Spielfigur über das Signal "interaction_target_changed"
 ## mitgeteilt, welches interaktive Objekt gerade anvisiert wird.
@@ -16,15 +16,21 @@ const CROSSHAIR_ACTIVE_SCALE := 1.6
 @onready var _crosshair: Panel = $Crosshair
 @onready var _cursor_icon: TextureRect = $CursorIcon
 @onready var _prompt_label: Label = $PromptLabel
+@onready var _money_label: Label = %MoneyLabel
+@onready var _money_change_label: Label = %MoneyChangeLabel
 
 var _target: Interactable = null
 var _seated := false
 var _tween: Tween
+var _money_tween: Tween
 
 
 func _ready() -> void:
 	_crosshair.modulate.a = CROSSHAIR_IDLE_ALPHA
 	_prompt_label.modulate.a = 0.0
+	_money_change_label.modulate.a = 0.0
+	_money_label.text = Wallet.format(Wallet.money)
+	Wallet.money_changed.connect(_on_money_changed)
 
 
 func _process(_delta: float) -> void:
@@ -35,6 +41,20 @@ func _process(_delta: float) -> void:
 		_prompt_label.text = "%s, Leertaste oder Laufen – Aufstehen" % _get_key_name("interact")
 	elif is_instance_valid(_target):
 		_prompt_label.text = "%s – %s" % [_get_key_name("interact"), _target.prompt_text]
+
+
+## Kontostand aktualisieren; Einnahmen und Ausgaben erscheinen kurz darunter (+80 / −320).
+func _on_money_changed(money: int, change: int) -> void:
+	_money_label.text = Wallet.format(money)
+	if change == 0:
+		return
+	_money_change_label.text = ("+" if change > 0 else "−") + Wallet.format(absi(change))
+	if _money_tween:
+		_money_tween.kill()
+	_money_change_label.modulate.a = 1.0
+	_money_tween = create_tween()
+	_money_tween.tween_interval(1.6)
+	_money_tween.tween_property(_money_change_label, "modulate:a", 0.0, 0.8)
 
 
 ## Im Sitzen dezent zeigen, wie man wieder aufsteht.

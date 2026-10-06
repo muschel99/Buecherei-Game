@@ -14,6 +14,8 @@ func _ready() -> void:
 	Settings.setting_changed.connect(_on_setting_changed)
 	# Alle Knoten der Szene sind jetzt bereit – also können sie ihre Daten übernehmen
 	SaveManager.load_game()
+	# Das Tablet mit dem Shop darf nie fehlen (auch nicht in älteren Spielständen)
+	($GroundFloorRoom as Room).ensure_essentials()
 
 
 func _on_setting_changed(key: String, _value: Variant) -> void:
