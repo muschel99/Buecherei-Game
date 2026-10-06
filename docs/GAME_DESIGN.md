@@ -31,7 +31,8 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - **Shop am Tablet:** Auf der Theke steht ein Tablet. E öffnet den Shop (Mauszeiger sichtbar,
   Esc schließt ihn, die Figur steht solange still).
   - *Kaufen:* alle freigeschalteten Möbel, Deko, Wandfarben, Böden und Decken nach Kategorien,
-    mit kleinem Vorschaubild, Preis und Stil-Merkmalen. Ein Klick legt etwas in den Warenkorb
+    mit kleinem Vorschaubild, Preis und Stil-Merkmalen. Über der Liste helfen Filter beim Suchen
+    (siehe „Filter“). Ein Klick legt etwas in den Warenkorb
     (Möbel auch mehrfach, Oberflächen einmal); „Bestellen“ bezahlt.
     Reicht das Geld nicht, steht dort freundlich, wie viel fehlt – ohne Strafe.
   - *Verkaufen:* Möbel aus dem Inventar (nicht die im Raum) bringen die Hälfte des Preises
@@ -43,6 +44,25 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   Karton hebt sich, dreht sich und schrumpft sanft weg. Nichts tragen, nichts einsortieren.
 - Geld, Inventar, Bestellungen unterwegs und noch nicht abgeholte Kartons werden mit der
   Einrichtung gespeichert.
+
+### Kategorien und Filter (seit Etappe 2g)
+- Kategorien (Reiter): Regale, Sitzmöbel, Tische, Theke, Beleuchtung, Deko, Raumteiler sowie
+  Wandfarben, Böden und Decken.
+- Unterkategorien:
+  - Regale: Bücherregale, Wandregale, Vitrinen
+  - Sitzmöbel: Sessel, Sofas, Stühle, Hocker
+  - Tische: Beistelltische, Couchtische, Schreibtische, Esstische
+  - Beleuchtung: Tischlampen, Stehlampen, Deckenlampen, Wandlampen, Kerzen und Laternen,
+    Lichtschalter
+  - Deko: Pflanzen, Teppiche, Bilder und Wandschmuck, Figuren, Textilien (Kissen, Decken),
+    Aufbewahrung und Organisation, Bücher
+- Im Shop und im Gestaltungsmodus stehen über der Liste kleine Filter-Schaltflächen:
+  „Alle“ und die Unterkategorien, die es dort gerade gibt, daneben der Stil-Filter
+  „Alle Stile“, Botanisch, Modern, Dark Academia, Neutral (= ohne Stil-Merkmal).
+  Leere Unterkategorien werden nicht gezeigt; sie erscheinen von selbst, sobald es
+  passende Objekte gibt. Bei schmalen Bildschirmen rutschen die Schaltflächen in eine
+  zweite Zeile.
+- Beim Wechsel der Kategorie springt die Unterkategorie auf „Alle“, der Stil bleibt.
 
 ### Später (Etappe 5)
 - Leihgebühren über Leseausweise (Buch abstempeln statt Wechselgeld).
@@ -166,6 +186,9 @@ Zwei Zustände:
   `GameConfig.graphics_presets` (Schatten, Umgebungslicht, Nebel, Kantenglättung, Staub …).
 - Sparsame Schatten für ruhige Leistung: Nur wichtige Lampen werfen Schatten (Sonne, Stehlampe;
   auf „Hoch“ auch Deckenlampen). Kleine Lichter wie Kerzen und Laternen haben keine eigenen Schatten.
+- Fensterlicht: Die Sonne verteilt ihre Schatten auf Stufen (Kaskaden) – nah fein, fern gröber.
+  Die Übergänge werden weich überblendet, damit keine Linie im Fensterlicht entsteht.
+  Niedrig nutzt 2 Stufen, Mittel und Hoch 4. Schattenweite der Sonne: 20 m (GameConfig).
 - Im Pausenmenü läuft das Spiel mit höchstens 30 Bildern pro Sekunde, damit der Rechner ruht.
 - Bilder pro Sekunde anzeigen: in den Einstellungen oder mit F3.
 - Alle Menüs und Anzeigen passen sich an jede Auflösung und jedes Seitenverhältnis an.

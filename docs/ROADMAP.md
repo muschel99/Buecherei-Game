@@ -9,6 +9,7 @@
 | 2d  | Ergänzungen: Steuerung, Füllwerkzeug, Bildschirm | fertig |
 | 2e  | Steuerung und Leistung                   | fertig        |
 | 2f  | Inventar, Shop und Lieferung             | fertig        |
+| 2g  | Fensterlicht und Filter                  | fertig        |
 | 3   | Bücher und Regale                        | offen         |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -110,6 +111,19 @@ dass Etappe 5 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den
 - [x] Eingangstür mit E öffnen und schließen (Türschmuck schwingt mit); Gehweg vor der Tür
 - [x] Geld, Inventar, Bestellungen unterwegs und Kartons werden gespeichert;
       ältere Spielstände funktionieren weiter (Tablet und Wandfarben werden ergänzt)
+
+## Etappe 2g – Fensterlicht und Filter
+- [x] Grafikfehler behoben: keine wandernde Linie mehr im Fensterlicht. Ursache waren die
+      Schattenstufen (Kaskaden) der Sonne; ihre Übergänge werden jetzt weich überblendet.
+      Schattenweite der Sonne 20 m (`GameConfig.sun_shadow_distance`); Grafikstufe Niedrig
+      mit 2 statt 4 Stufen (schneller), Mittel und Hoch wie bisher
+- [x] Unterkategorien im Datenformat (`FurnitureData.subcategory`, Liste in
+      `FurnitureData.SUBCATEGORIES` – neue Unterkategorie = eine Zeile); alle Objekte zugeordnet
+- [x] Pflanzen sind jetzt eine Unterkategorie von Deko (ein Reiter weniger);
+      der Kerzenleuchter gehört zur Beleuchtung
+- [x] Filter im Shop und im Gestaltungsmodus: Unterkategorie und Stil (Botanisch, Modern,
+      Dark Academia, Neutral) als kleine Schaltflächen über der Liste, umbrechend bei
+      schmalen Bildschirmen (`FilterBar`)
 
 ## Etappe 3 – Bücher und Regale
 - Bücher als Daten (Titel, Genre, Zustand)

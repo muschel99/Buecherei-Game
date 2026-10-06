@@ -35,6 +35,7 @@ Ein neues Datenblatt dort = ein neues Möbelstück im Shop (kaufen, dann liegt e
 | Display Name          | Name im Katalog, z. B. „Marmortisch“                                       |
 | Description           | Kurzer Text, erscheint, wenn die Maus über der Karte steht                |
 | Category              | Reiter im Katalog (Regale, Sitzmöbel, Tische, Theke, Beleuchtung …)       |
+| Subcategory           | Unterkategorie für die Filter, z. B. `armchair` (Sessel) – Auswahlliste passend zur Kategorie |
 | Price                 | Preis in Talern im Shop (beim Verkaufen gibt es die Hälfte zurück)        |
 | Styles                | Häkchen bei Botanisch, Modern und/oder Dark Academia – ohne Häkchen = stilneutral |
 | Scene Path            | Die Szene (`.tscn`) oder das Modell (`.glb`) – mit dem Ordner-Symbol auswählen |
@@ -45,6 +46,11 @@ Ein neues Datenblatt dort = ein neues Möbelstück im Shop (kaufen, dann liegt e
 | Placement             | Wo darf es hin? Häkchen bei Boden, Ablagefläche, Wand, Tür und/oder Decke |
 
 4. Mit **Strg+S** speichern und das Spiel starten (F5). Das Möbelstück steht im Shop.
+
+**Eine neue Unterkategorie anlegen** (z. B. „Leselampen“): In `scripts/data/furniture_data.gd`
+ganz oben bei `SUBCATEGORIES` in der Zeile der Kategorie ein Paar ergänzen, z. B.
+`["reading_lamp", "Leselampen"]` (erst eine kurze englische id, dann der Name im Spiel).
+Danach steht sie im Datenblatt bei **Subcategory** zur Auswahl und erscheint als Filter.
 
 **Ablageflächen festlegen:** Ob man Deko auf ein Möbelstück stellen kann, bestimmt seine Szene.
 Jede Ablagefläche ist ein Knoten vom Typ **PlacementSurface** (z. B. unter dem Knoten `Surfaces`):

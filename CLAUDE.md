@@ -90,6 +90,10 @@ docs/              Dokumentation
 - Möbel im Raum sind `PlacedFurniture`-Knoten (unter `Furniture` im Raum) mit einem
   Datenblatt (`FurnitureData`); das Modell wird daraus erzeugt.
 - Neue Möbel/Oberflächen = neues Datenblatt in `data/furniture/` bzw. `data/surfaces/`, kein Code.
+- Unterkategorien: `FurnitureData.SUBCATEGORIES` (je Kategorie Paare `[id, Name]`), im Datenblatt
+  `subcategory`. Filter über Listen: `FilterBar` (`setup(...)`, `matches(objekt)`).
+- Sonnenschatten: Kaskaden mit weicher Überblendung (`main.gd`, Werte in GameConfig); ohne
+  Überblendung entsteht eine wandernde Linie im Fensterlicht.
 - Speichern: Knoten in der Gruppe `persist` mit `save_key`, `get_save_data()` und
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
 - Stil-Merkmale sind überall freiwillig; ohne Stil-Merkmal = stilneutral, zählt nicht mit.
