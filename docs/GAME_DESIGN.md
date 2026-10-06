@@ -79,60 +79,100 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   zweite Zeile.
 - Beim Wechsel der Kategorie springt die Unterkategorie auf „Alle“, der Stil bleibt.
 
-### Bücher und Regale (seit Etappe 3)
-Grundsatz: Einsortieren soll befriedigend sein, aber nie mühsam. Bücher werden immer in
-Gruppen bewegt (ein Klick, ein E), nie einzeln. Kein Zeitdruck, keine Strafe.
+### Bücher und Regale (seit Etappe 3, echte Bücher seit 3b)
+Grundsatz: Einsortieren soll befriedigend sein, aber nie mühsam. Man **kann** jedes Buch
+einzeln an seinen Platz stellen, **muss** es aber nie: Auffüllen, Einräumen und Sortieren
+gehen jederzeit mit einem Klick bzw. einem langen E. Kein Zeitdruck, keine Strafe.
 
 - **Genres** sind Daten (`data/genres/`, ein Datenblatt je Genre): Name, Farbpalette der
-  Buchrücken, passender Stil (freiwillig, zählt noch nicht zur Stilberechnung), Preis eines
-  Bücherpakets, freigeschaltet ja/nein. Umbenennen, hinzufügen und freischalten geht ohne Code.
+  Einbände, passender Stil (freiwillig, zählt noch nicht zur Stilberechnung), Preis eines
+  Bücherpakets, freigeschaltet ja/nein, Schriftart und passende Cover-Gestaltungen.
+  Umbenennen, hinzufügen und freischalten geht ohne Code.
   - Zum Start frei: Roman, Krimi, Fantasy, Sachbuch, Kinderbuch.
   - Angelegt, aber gesperrt (Freischaltung in Etappe 8): Klassiker, Lyrik, Natur und Garten,
     Philosophie, Science-Fiction, Kochen und Backen, Reisen, Kunst, Geschichte, Achtsamkeit,
     Comics und Graphic Novels.
-- **Buch:** Titel, Genre und Zustand (vorerst immer „gut“; beschädigte Bücher kommen in Etappe 5).
-  Die Titel sind erfunden und passen zum Genre („Mord im Pfarrgarten“, „Die Krone von Eldmoor“).
-  Sie entstehen aus Wortlisten in `data/book_titles/` (eine Textdatei je Genre, leicht zu ergänzen).
+- **Echte Bücher:** Jedes Genre hat 50 feste Titel (zusammen 800), deutsch und englisch, alle
+  erfunden und gemütlich – nichts Düsteres, auch die Krimis sind gemütliche Rätsel
+  („Das Rätsel der verschwundenen Teekanne“, „The Case of the Curious Cat“). Sie stehen in
+  `data/books/<genre>.txt` (eine Zeile pro Buch: Titel | Motiv) und lassen sich leicht ergänzen.
+- Jeder Titel hat eine erfundene Autorin bzw. einen erfundenen Autor, eine feste Größe
+  (zufällig, aber immer gleich), Farben, eine **Gestaltung** und ein **Motiv**, das zum
+  Titel passt (Leuchtturm, Teekanne, Fuchs, Drache … 71 Motive):
+  - classic: Einband mit feinem Doppelrahmen und Goldschrift (Klassiker, Geschichte, Fantasy)
+  - picture: großes Bild vor zweifarbigem Hintergrund (Kinderbuch, Reisen, Natur)
+  - minimal: helles Papier, farbiger Streifen, große Schrift (Sachbuch, Philosophie, Lyrik)
+  - pattern: Muster (Punkte, Streifen, Karos, Wellen) mit hellem Titelschild (Kochen, Kunst)
+  - band: Bild oben, helles Titelfeld unten (Krimi, Roman)
+  - comic: kräftige Farben, Rasterpunkte und Strahlenkranz (Comics)
+  Schriften kommen vom eigenen PC (mit Serifen, ohne Serifen oder verspielt, je Genre).
+- **Cover und Buchrücken:** Der Rücken (mit Titel, Bändern und kleinem Motiv) ist im Regal zu
+  sehen. Das Cover sieht man, wenn man ein Buch im Regal anschaut (kleine Karte neben der
+  Bildmitte mit Cover, Titel, Autor und Genre) und wenn man es in der Hand hält.
+- Von einem Titel kann es mehrere Exemplare geben; alle sehen gleich aus. Jedes Exemplar hat
+  einen Zustand (vorerst immer „gut“; beschädigte Bücher kommen in Etappe 5).
+- **Sammlung:** Bücherpakete bringen zuerst Titel, die ich noch nicht kenne – man weiß nie
+  genau, was als Nächstes kommt. Beim Auspacken freut sich ein Hinweis mit
+  („Krimi: 7 neue Titel für deine Sammlung!“). Erst wenn alle 50 Titel eines Genres entdeckt
+  sind, kommen doppelte (die mit den wenigsten Exemplaren zuerst). Grundlage für das spätere
+  Freischalten einzelner Bücher (Etappe 8).
 - **Bücherbestand** (getrennt vom Möbel-Inventar): Jedes Buch ist im Lager, in einem Regal,
-  im Rückgabekasten oder in meinen Händen. Zum Start liegen 12 Bücher je freiem Genre im
-  Lager (GameConfig).
+  im Rückgabekasten oder in meinen Händen. Zum Start liegen 12 verschiedene Titel je freiem
+  Genre im Lager (GameConfig).
 - **Bücher kaufen:** Im Shop gibt es ganz oben den Bereich „Bücher“ mit einem Bücherpaket je
-  freigeschaltetem Genre (10 Bücher, Anzahl in GameConfig, Preis im Genre-Datenblatt: 35–55 Taler).
-  Jedes Paket kommt als eigener Karton vor die Tür; E packt die Bücher ins Lager. Die
-  Lager-Anzeige zeigt dabei einen kleinen Bücherstapel in den Farben des Genres.
-- **Bestand am Tablet:** Reiter „Bestand“ – je Genre, wie viele Bücher im Regal, im Lager und
-  unterwegs (getragen oder im Rückgabekasten) sind, dazu die Summe.
-- **Regale einräumen:** Bücherregale haben Fächer für Bücher (das obere Brett bleibt Ablage
-  für Deko). E am Regal öffnet ein kleines Menü am rechten Rand:
-  - Genre des Regals wählen oder „Gemischt“ (dort passt alles). Bücher, die nach einem Wechsel
-    nicht mehr passen, gleiten heraus und gehen ins Lager.
-  - „Aus dem Lager auffüllen“: Die passenden Bücher gleiten nacheinander ins Regal (das
-    Einräumen dauert höchstens 2,5 Sekunden, egal wie viele es sind). Gemischte Regale werden
+  freigeschaltetem Genre (10 Bücher, Anzahl in GameConfig, Preis im Genre-Datenblatt: 35–55 Taler)
+  und dem Sammelstand („Sammlung: 12 von 50 Titeln“). Jedes Paket kommt als eigener Karton vor
+  die Tür; E packt die Bücher ins Lager (Lager-Anzeige mit Bücherstapel in Genre-Farben).
+- **Tablet:**
+  - Reiter „Bestand“: je Genre im Regal, im Lager, unterwegs (getragen oder im
+    Rückgabekasten), gesamt und Sammlung (entdeckte Titel / alle Titel).
+  - Reiter „Sammlung“: je Genre alle 50 Titel als Cover-Kacheln, unentdeckte als „?“; darunter,
+    wo die Exemplare sind. Ein Klick auf ein Buch im Lager legt es obenauf in die Hand.
+- **Regale:** Bücherregale haben Bretter für Bücher (das obere Brett bleibt Ablage für Deko).
+  Jedes Brett hat seine eigene Reihe; ist es voll, passt dort nichts mehr hinein.
+  - **Buch anschauen:** Es rutscht ein Stück heraus und leuchtet sanft; daneben erscheint die
+    kleine Karte mit Cover, Titel, Autor und Genre.
+  - **E tippen auf ein Buch** (leere Hände): genau dieses Buch nehmen – auch aus der Mitte
+    eines vollen Bretts. Die Nachbarn rücken zusammen.
+  - **Mit Büchern in der Hand:** Wohin ich schaue, öffnet sich eine Lücke – die Nachbarn
+    rücken zur Seite, das Buch obenauf schwebt davor. **E tippen** stellt es genau dort ein.
+    Passt es nicht (anderes Genre, Brett voll), steht der Grund im Hinweis.
+  - **E halten** (ein kleiner Ring füllt sich): alle getragenen Bücher, die passen, auf einmal
+    einräumen – trage ich nichts Passendes, öffnet sich das Regal-Menü.
+  - Regale ohne Genre und „Gemischt“-Regale nehmen jedes Buch.
+- **Regal-Menü** (E halten, oder E auf ein leeres Regal), klein am rechten Rand:
+  - Genre des Regals wählen oder „Gemischt“. Bücher, die nach einem Wechsel nicht mehr passen,
+    gleiten heraus und gehen ins Lager.
+  - „Aus dem Lager auffüllen“: Die passenden Bücher gleiten nacheinander ins Regal (höchstens
+    2,5 Sekunden, egal wie viele), je Genre nach Titel sortiert. Gemischte Regale werden
     gleichmäßig aus allen Genres befüllt, nach Genre gruppiert.
-  - „Alle Bücher zurück ins Lager“.
-  - Trage ich Bücher, kann ich sie hier einräumen oder ins Lager legen.
+  - „Buch aus dem Lager wählen …“: Cover-Kacheln der passenden Bücher im Lager; ein Klick legt
+    das Buch obenauf in die Hand, dann stellt man es mit E an die gewünschte Stelle.
+  - „Nach Genre und Titel sortieren“: Die Bücher rücken sanft an ihre neuen Plätze.
+  - „Alle Bücher zurück ins Lager“; getragene Bücher einräumen oder ins Lager legen.
   - Schließen mit Esc, E oder „Schließen“.
 - Am Regal hängt ein kleines **Genre-Schild** (Platzhalter) in der Genre-Farbe.
-- **Aussehen:** Buchrücken in den Farben ihres Genres, jedes Buch etwas anders hoch, dick und
-  getönt, manche mit hellen oder dunklen Bändern oder einem Titelschild; oben sieht man die
-  hellen Seiten. Lücken im Regal rücken sanft zusammen.
-- **Leistung:** Alle Bücher eines Regals werden in einem einzigen Rutsch gezeichnet (MultiMesh).
+- **Leistung:** Alle Bücher eines Regals werden in einem einzigen Rutsch gezeichnet (MultiMesh);
+  die Buchrücken kommen aus einem gemeinsamen Bild, das beim Start einmal gezeichnet wird.
   So bleiben auch hunderte Bücher im Raum leicht für den PC.
 - **Gestalten:** Verschiebt man ein Regal, bleiben die Bücher darin (auch in der Vorschau
   sichtbar). Räumt man es mit X weg, gehen seine Bücher ins Lager.
 
-### Rückgabekasten (seit Etappe 3)
-- Ein Kasten mit Einwurfschlitz und kleinem Fenster (Kategorie Theke), frei platzierbar, z. B.
-  neben der Tür oder an der Theke. Zum Start liegt einer im Inventar, weitere gibt es im Shop.
+### Bücher in der Hand und Rückgabekasten (seit Etappe 3)
+- Was ich trage, steht dezent unten in der Mitte („Obenauf: „…“ · Du trägst 7 Bücher:
+  3 Krimi, 4 Fantasy“). Das Buch obenauf sieht man unten rechts mit seinem Cover, darunter
+  angedeutet die anderen. Das **Mausrad** wechselt, welches Buch obenauf liegt.
+- **Rückgabekasten:** Kasten mit Einwurfschlitz und kleinem Fenster (Kategorie Theke), frei
+  platzierbar, z. B. neben der Tür oder an der Theke. Zum Start liegt einer im Inventar,
+  weitere gibt es im Shop.
 - Später werfen Besucher dort ihre ausgeliehenen Bücher ein. Bis dahin legt die Testtaste **F9**
-  ein paar zufällige Bücher hinein (abschaltbar in GameConfig: `debug_return_box_key`).
-- E am Kasten: Ich nehme alle Bücher auf einmal heraus. Unten in der Mitte steht dezent, was ich
-  trage („Du trägst 7 Bücher: 3 Krimi, 4 Fantasy“), mit kleinen Bücherstapeln je Genre.
-- E an einem Regal: Alle getragenen Bücher, die zum Genre passen, werden auf einmal eingeräumt
-  (in „Gemischt“ passt alles); den Rest trage ich weiter. Passt nichts, öffnet sich das Menü.
+  ein paar Bücher bereits entdeckter Titel hinein (abschaltbar in GameConfig:
+  `debug_return_box_key`).
+- E am Kasten: Ich nehme alle Bücher auf einmal heraus. Dann am Regal: einzeln mit E tippen
+  oder alle passenden mit E halten. Was nicht passt, trage ich weiter.
 - Keine Eile: Bücher dürfen beliebig lange im Kasten liegen oder getragen werden.
-- Gespeichert werden Bestand, Regalinhalte, Genre-Schilder, Inhalt des Rückgabekastens und
-  die getragenen Bücher.
+- Gespeichert werden Bestand, Sammlung, Regalinhalte (Brett für Brett), Genre-Schilder, Inhalt
+  des Rückgabekastens, die getragenen Bücher und welches obenauf liegt.
 
 ### Später (Etappe 5)
 - Leihgebühren über Leseausweise (Buch abstempeln statt Wechselgeld).
@@ -169,7 +209,9 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Leertaste      | Springen (etwa 0,8 m hoch, weich); im Sitzen: aufstehen |
 | Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
-| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen, Regal-Menü öffnen bzw. getragene Bücher einräumen, Rückgabekasten leeren |
+| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen, Rückgabekasten leeren; am Regal: angeschautes Buch nehmen bzw. Buch obenauf an der markierten Stelle einstellen |
+| E halten       | Am Regal: alle getragenen Bücher, die passen, einräumen – sonst Regal-Menü |
+| Mausrad        | Beim Tragen: anderes Buch obenauf                |
 | Tab            | Gestaltungsmodus (Inventar) öffnen/schließen   |
 | F3             | Bilder pro Sekunde anzeigen/ausblenden         |
 | F9             | Test: zufällige Bücher in den Rückgabekasten (bis es Besucher gibt) |

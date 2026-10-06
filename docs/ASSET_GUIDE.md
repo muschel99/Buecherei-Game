@@ -128,21 +128,47 @@ Jedes Genre ist ein Datenblatt in `data/genres/` (z. B. `crime.tres` für Krimi)
 | Price             | Preis eines Bücherpakets in Talern                                           |
 | Is Unlocked       | Häkchen = freigeschaltet (im Shop und im Regal-Menü)                         |
 | Sort Order        | Reihenfolge in Listen (kleiner = weiter vorn)                                |
-| Title Words Path  | Wortliste für die Titel – leer = `data/book_titles/<Id>.txt`                 |
+| Books Path        | Bücherliste des Genres – leer = `data/books/<Id>.txt`                        |
+| Cover Font        | Schriftart der Titel: Serif (klassisch), Sans (modern), Playful (verspielt)  |
+| Cover Styles      | Passende Gestaltungen, z. B. `classic`, `picture` (mehrfach = häufiger)      |
 
 3. **Strg+S** speichern. Wie viele Bücher in einem Paket stecken und wie viele Bücher es zum
    Start gibt, steht in `scripts/autoload/game_config.gd` (`books_per_package`,
    `start_books_per_genre`).
 
-### Buchtitel ergänzen
-Die Titel werden aus Wortlisten zusammengesetzt: eine Textdatei je Genre in
-`data/book_titles/` (z. B. `crime.txt`). Öffnen kannst du sie in Godot mit Doppelklick oder in
-jedem Texteditor. Oben in jeder Datei steht kurz, wie sie aufgebaut ist:
-- Unter `[Vorlagen]` stehen Satzmuster, z. B. `Mord {Wo}`.
-- `{Wo}` wird durch eine zufällige Zeile aus der Liste `[Wo]` ersetzt, z. B. `im Pfarrgarten`.
-- Neue Zeile = neuer Eintrag. Neue Liste = neue Überschrift in eckigen Klammern.
-Bitte nur erfundene Titel verwenden. Hinweis für später: Beim Exportieren des fertigen Spiels
-müssen `.txt`-Dateien im Export-Dialog unter „Ressourcen → Filter“ mit `*.txt` eingeschlossen werden.
+### Bücher ergänzen
+Jedes Genre hat eine Bücherliste in `data/books/` (z. B. `crime.txt` für Krimi). Öffnen kannst
+du sie in Godot mit Doppelklick oder in jedem Texteditor. Eine Zeile pro Buch:
+
+```
+Das Rätsel der verschwundenen Teekanne | teapot
+```
+
+- Vor dem Strich steht der Titel, dahinter das **Motiv** (das kleine Bild auf Cover und Rücken).
+- Optional dahinter: `| Gestaltung | Autor`, z. B. `Mein Buch | moon | classic | Ada Wren`.
+  Gestaltungen: `classic`, `picture`, `minimal`, `pattern`, `band`, `comic`.
+  Leer = passend zum Genre (Feld **Cover Styles** im Genre-Datenblatt). Ohne Autor wird ein
+  erfundener Name gewählt.
+- Neues Buch = neue Zeile. **Titel bitte nachträglich nicht ändern** – der Titel ist der Name
+  des Buchs im Spielstand (wird er doch geändert, bleibt das alte Buch mit altem Titel erhalten).
+- Bitte nur erfundene, gemütliche Titel verwenden (deutsch oder englisch).
+- Größe und Farben entstehen automatisch aus dem Titel (Spannweiten in `game_config.gd`:
+  `book_height_range`, `book_thickness_range`, `book_depth_range`, `book_color_variation`).
+- Hinweis für später: Beim Exportieren des fertigen Spiels müssen `.txt`-Dateien im
+  Export-Dialog unter „Ressourcen → Filter“ mit `*.txt` eingeschlossen werden.
+
+**Alle Motive** (Name so in die Liste schreiben):
+`anchor`, `apple`, `balloon`, `bee`, `bicycle`, `bird`, `boat`, `book`, `bowl`, `bread`, `brush`, `butterfly`, `cactus`, `cake`, `candle`, `castle`, `cat`, `clock`, `cloud`, `compass`, `crown`, `dog`, `dragon`, `feather`, `fish`, `flower`, `fox`, `glasses`, `heart`, `hedgehog`, `hourglass`, `house`, `island`, `key`, `kite`, `lantern`, `leaf`, `lemon`, `letter`, `lighthouse`, `magnifier`, `map`, `moon`, `mountain`, `mushroom`, `music`, `owl`, `palette`, `pine`, `planet`, `plant`, `rabbit`, `rainbow`, `rocket`, `scroll`, `shell`, `snail`, `snowflake`, `sparkle`, `star`, `stars`, `sun`, `teacup`, `teapot`, `telescope`, `train`, `tree`, `tulip`, `umbrella`, `wave`, `whale`
+
+Ein neues Motiv zeichnen: In `scripts/ui/book_motifs.gd` eine Funktion `_motif_<name>`
+nach dem Vorbild der anderen ergänzen (Koordinaten von 0 bis 1). Danach kann der Name in
+den Bücherlisten benutzt werden.
+
+**Schriften:** Die Titel nutzen Schriften, die auf dem PC installiert sind (z. B. Noto Serif,
+DejaVu Serif; ohne Serifen: Noto Sans, Cantarell; verspielt: Nunito, Comfortaa – fehlt eine,
+nimmt Godot eine ähnliche). Welche Art ein Genre benutzt, steht im Genre-Datenblatt bei
+**Cover Font** (Serif, Sans, Playful). Die Listen der Schriftnamen stehen oben in
+`scripts/autoload/book_art.gd`.
 
 ### Ein Bücherregal bauen
 Ein Regal bekommt Bücher, wenn seine Szene einen Knoten `BookShelf`
@@ -156,7 +182,10 @@ Ein Regal bekommt Bücher, wenn seine Szene einen Knoten `BookShelf`
 - Bretter mit Büchern sollten keine Ablagefläche (`PlacementSurface`) haben, sonst stehen Deko
   und Bücher übereinander. Das obere Brett darf eine haben.
 - Eigene Buch-Modelle sind nicht nötig: Bücher sind gestreckte Würfel mit dem Shader
-  `assets/shaders/book_spine.gdshader`. Farbe der Seiten und Bänder kann man dort ändern.
+  `assets/shaders/book_spine.gdshader` (Rücken aus dem Atlas, den `BookArt` beim Start
+  zeichnet). Die Farbe der Seiten kann man dort ändern.
+- Flächen zweier Teile nie genau in derselben Ebene enden lassen (sonst flimmert die Kante,
+  „Z-Fighting“) – die kleinere Fläche lieber 2 mm nach innen setzen.
 
 ### Rückgabekasten
 Szene `scenes/furniture/return_box.tscn`: Die Optik unter `Model` kann ersetzt werden.

@@ -34,23 +34,25 @@ scenes/            Szenen (.tscn)
   rooms/           Räume des Hauses
   furniture/       Möbel (je eine Szene, Modell austauschbar)
   objects/         Interaktive Objekte (Stehlampe, Lieferkarton; Scripts: LightSource, Seating,
-                   Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox)
+                   Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox;
+                   player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
   ui/              Oberfläche (HUD, Pausenmenü, Inventar, Shop, Hinweise, Stil-Anzeige,
-                   Regal-Menü, Trage-Anzeige)
+                   Regal-Menü, Trage-Anzeige, Buch-Infokarte, Bücherauswahl;
+                   Scripts BookCover und BookMotifs zeichnen Cover und Buchrücken)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
-                   Wallet, Inventory, BookStock)
+                   Wallet, Inventory, BookStock, BookArt)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
-  data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, Book, BookTitles)
+  data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, BookData, Book)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
   genres/          Datenblätter der Buch-Genres (.tres)
-  book_titles/     Wortlisten für erfundene Buchtitel (.txt, eine je Genre)
+  books/           Bücherlisten (.txt, eine je Genre, eine Zeile pro Buch: Titel | Motiv)
 assets/
   models/          Eigene 3D-Modelle (.glb)
   textures/        Texturen
@@ -129,19 +131,34 @@ docs/              Dokumentation
   `crouch`, `interact`,
   `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
   `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete` (X),
-  `build_paint_all` (Umschalt), `toggle_fps` (F3), `debug_fill_return_box` (F9, Testtaste).
+  `build_paint_all` (Umschalt), `toggle_fps` (F3), `debug_fill_return_box` (F9, Testtaste),
+  `book_next`/`book_previous` (Mausrad, Buch obenauf wechseln).
 - Möbel-Knoten in Szenen können ihre Nummer (`uid`) und ihr Trägermöbel (`support_uid`) fest
   eintragen (z. B. Tablet auf der Theke).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).
-- **Bücher:** Neues Genre = neues Datenblatt in `data/genres/` + Wortliste
-  `data/book_titles/<id>.txt` (kein Code). Bücher (`Book`) sind keine Knoten, sondern Daten;
-  der Bestand (`BookStock`) kennt Lager und Getragenes (`carried`), zählt Regale
-  (Gruppe `book_shelves`) und Rückgabekästen (Gruppe `return_boxes`) mit.
+- **Bücher:** Neues Genre = neues Datenblatt in `data/genres/` + Bücherliste
+  `data/books/<id>.txt` (kein Code). Neues Buch = neue Zeile `Titel | Motiv` (Motive:
+  `BookMotifs`, Liste in docs/ASSET_GUIDE.md). Titel sind gemütlich, erfunden, nie düster.
+  Ein Titel ist `BookData` (Katalog, `Catalog.get_book(id)`, id = "genre/titel-slug"),
+  ein Exemplar ist `Book` (`book.data`, Zustand). Bücher sind keine Knoten, sondern Daten;
+  der Bestand (`BookStock`) kennt Lager, Getragenes (`carried`, Buch obenauf:
+  `get_active_book()`) und die Sammlung (`is_discovered`), zählt Regale (Gruppe
+  `book_shelves`) und Rückgabekästen (Gruppe `return_boxes`) mit.
   Freigeschaltet: `BookStock.is_genre_unlocked(id)` / `unlock_genre(id)`.
-- Bücher bewegen sich immer in Gruppen und nie mit Zeitdruck (Gemütlichkeit vor Arbeit).
+- Bücher: einzeln möglich, aber nie nötig – alles Einzelne hat eine Sammel-Variante (Auffüllen,
+  alle einräumen, sortieren); nie Zeitdruck (Gemütlichkeit vor Arbeit).
+- Cover und Buchrücken zeichnet `BookCover` (Gestaltungen in `BookData.STYLES`); `BookArt`
+  macht daraus den Atlas aller Rücken (Regale) und Cover-Bilder (`request_cover`).
+- **E tippen / E halten:** Ein Interactable mit `supports_hold` unterscheidet kurz (Signal
+  `interacted`, beim Loslassen) und lang (Signal `held`, `GameConfig.interact_hold_time`).
+  `aimed(from, richtung)` meldet jedes Bild den Blick (z. B. welches Buch im Regal);
+  `hold_prompt_text` = zweite Hinweiszeile; `highlight_owner = false` = Objekt hebt selbst hervor.
 - Bücherregale: Knoten `BookShelf` mit `BookRow`-Fächern (Ursprung = Mitte der Brett-Oberkante),
-  optional `SignPoint` (Genre-Schild) und `Interactable`. Alle Bücher eines Regals sind ein
-  MultiMesh (Aussehen aus `Book.look` über `BookLook`) – nie einzelne Knoten je Buch.
+  optional `SignPoint` (Genre-Schild) und `Interactable`. Jedes Brett hat seine eigene Reihe.
+  Alle Bücher eines Regals sind ein MultiMesh (Shader `book_spine.gdshader`, Rücken aus dem
+  Atlas) – nie einzelne Knoten je Buch.
+- Z-Fighting vermeiden: Teile eines Modells nie mit Flächen genau in derselben Ebene
+  enden lassen (gleiche Richtung, überlappend) – die kleinere Fläche 2 mm nach innen setzen.
 - Möbel mit Inhalt (Regal, Rückgabekasten): Knoten in der Gruppe `PlacedFurniture.CONTENTS_GROUP`
   mit `get_contents_data()`, `load_contents_data()`, `release_contents()` – der Raum speichert
   den Inhalt mit dem Möbelstück, beim Wegräumen (X) geht er ins Lager.
