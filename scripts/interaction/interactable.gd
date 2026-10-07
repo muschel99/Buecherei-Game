@@ -5,8 +5,12 @@ extends Area3D
 ## So machst du ein Objekt interaktiv:
 ## 1. Füge dem Objekt einen Kind-Knoten vom Typ "Interactable" hinzu.
 ## 2. Gib dem Interactable eine CollisionShape3D, die das Objekt umschließt.
-## 3. Trage im Inspektor bei "Prompt Text" den Hinweis ein (z. B. "Lampe einschalten").
+## 3. Trage im Inspektor bei "Prompt Text" ein kurzes Wort ein (z. B. "Öffnen"). Es erscheint
+##    neben dem E-Symbol unter der Bildmitte (je nach Einstellung "Hinweise").
 ## 4. Verbinde das Signal "interacted" mit einer Funktion deines Objekts.
+## Bücher und Ähnliches nutzen zusätzlich die Maustasten: Signale "clicked" (links, z. B.
+## Buch nehmen) und "right_clicked" (rechts, z. B. Buch abstellen), Wörter in click_text
+## und right_click_text.
 ##
 ## Man muss nicht genau den Interactable-Bereich treffen: Schaut man auf den festen Körper
 ## des Objekts (z. B. von oben auf einen Karton oder von hinten auf einen Sessel), findet
@@ -17,16 +21,24 @@ extends Area3D
 signal interacted(interactor: Node)
 ## Nur bei supports_hold: E wurde gedrückt gehalten (GameConfig.interact_hold_time).
 signal held(interactor: Node)
+## Linke Maustaste, während die Spielfigur das Objekt ansieht (z. B. ein Buch nehmen).
+signal clicked(interactor: Node)
+## Rechte Maustaste, während die Spielfigur das Objekt ansieht (z. B. ein Buch abstellen).
+signal right_clicked(interactor: Node)
 ## Wird jedes Bild gesendet, solange die Spielfigur das Objekt ansieht – mit Blickstrahl
 ## (Start und Richtung in der Welt). So kann ein Regal z. B. das angeschaute Buch finden.
 signal aimed(from: Vector3, direction: Vector3)
 ## Die Spielfigur schaut nicht mehr hin.
 signal aim_ended
 
-## Hinweistext, der unten in der Bildmitte erscheint (nach "E – ").
+## Kurzes Wort neben dem E-Symbol unter der Bildmitte (z. B. "Öffnen"), leer = kein E-Symbol.
 @export var prompt_text: String = "Benutzen"
-## Zweiter Hinweis für langes Drücken (nach "E halten – "), leer = keiner.
+## Wort für langes Drücken (E-Symbol mit Ring), leer = keins.
 @export var hold_prompt_text: String = ""
+## Wort neben dem Symbol der linken Maustaste (z. B. "Nehmen"), leer = keins.
+@export var click_text: String = ""
+## Wort neben dem Symbol der rechten Maustaste (z. B. "Abstellen"), leer = keins.
+@export var right_click_text: String = ""
 ## Kann man E auch gedrückt halten (z. B. Regal: tippen = ein Buch, halten = alle)?
 ## Dann zählt ein kurzes Tippen erst beim Loslassen.
 @export var supports_hold: bool = false
@@ -89,6 +101,18 @@ func interact(interactor: Node) -> void:
 func hold(interactor: Node) -> void:
 	if is_enabled:
 		held.emit(interactor)
+
+
+## Linke Maustaste (von der Spielfigur aufgerufen).
+func click(interactor: Node) -> void:
+	if is_enabled:
+		clicked.emit(interactor)
+
+
+## Rechte Maustaste (von der Spielfigur aufgerufen).
+func right_click(interactor: Node) -> void:
+	if is_enabled:
+		right_clicked.emit(interactor)
 
 
 ## Wird von der Spielfigur jedes Bild aufgerufen, solange sie hinschaut.

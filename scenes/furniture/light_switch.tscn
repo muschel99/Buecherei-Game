@@ -43,7 +43,7 @@ collision_layer = 2
 collision_mask = 0
 monitoring = false
 script = ExtResource("4_tqgds")
-prompt_text = "Licht im Raum schalten"
+prompt_text = "Licht"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=1085607639]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.06)

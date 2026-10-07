@@ -171,7 +171,7 @@ collision_layer = 2
 collision_mask = 0
 monitoring = false
 script = ExtResource("5_interactable")
-prompt_text = "Bücherregal einräumen"
+prompt_text = "Menü"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="BookShelf/Interactable"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.01, 0)

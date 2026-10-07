@@ -15,7 +15,7 @@ func _ready() -> void:
 	for node in get_children():
 		if node is Interactable:
 			_interactable = node
-			_interactable.prompt_text = "Hinsetzen"
+			_interactable.prompt_text = "Sitzen"
 			_interactable.interacted.connect(_on_interactable_interacted)
 
 
@@ -35,7 +35,7 @@ func get_free_seats() -> Array[SeatPoint]:
 
 func _process(_delta: float) -> void:
 	if _interactable:
-		_interactable.prompt_text = "Hinsetzen" if not get_free_seats().is_empty() else "Besetzt"
+		_interactable.prompt_text = "Sitzen" if not get_free_seats().is_empty() else ""
 
 
 func _on_interactable_interacted(interactor: Node) -> void:

@@ -56,8 +56,8 @@ size = Vector3(0.26, 0.4, 0.26)
 [node name="LanternGarden" type="Node3D" unique_id=27586930]
 script = ExtResource("1_2bex7")
 kind = 1
-prompt_turn_on = "Laterne anzünden"
-prompt_turn_off = "Laterne löschen"
+prompt_turn_on = "Anzünden"
+prompt_turn_off = "Löschen"
 
 [node name="Model" type="Node3D" parent="." unique_id=1482195665]
 
@@ -128,7 +128,7 @@ collision_layer = 2
 collision_mask = 0
 monitoring = false
 script = ExtResource("6_ye2ow")
-prompt_text = "Laterne löschen"
+prompt_text = "Löschen"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=719970425]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.17, 0)

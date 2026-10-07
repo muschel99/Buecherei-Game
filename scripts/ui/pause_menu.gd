@@ -16,6 +16,17 @@ extends CanvasLayer
 
 func _ready() -> void:
 	hide()
+	# Tastenhilfe: Zahlen aus GameConfig, Testtasten nur, solange sie eingeschaltet sind
+	var grid := $ControlsPanel/VBox/KeyGrid
+	(grid.get_node("ActionTake") as Label).text = \
+		"Buch nehmen (Regal, Rückgabekasten) – bis zu %d tragen" % GameConfig.max_carried_books
+	(grid.get_node("ActionTestMoney") as Label).text = \
+		"Test: %s dazu" % Wallet.format(GameConfig.debug_money_amount)
+	for node_name in ["KeyTestBooks", "ActionTestBooks", "KeyTestMoney", "ActionTestMoney"]:
+		grid.get_node(node_name).visible = GameConfig.debug_keys_enabled
+	# Etwas kleinere Schrift, damit die ganze Liste gut aufs Bild passt
+	for label in grid.get_children():
+		(label as Label).add_theme_font_size_override("font_size", 17)
 
 
 func _unhandled_input(event: InputEvent) -> void:

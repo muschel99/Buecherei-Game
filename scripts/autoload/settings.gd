@@ -35,7 +35,14 @@ const DEFINITIONS: Array[Dictionary] = [
 		"type": "choice", "options": ["Niedrig", "Mittel", "Hoch"], "default": 1},
 	{"key": "graphics/show_fps", "section": "Grafik", "label": "Bilder pro Sekunde anzeigen (F3)",
 		"type": "toggle", "default": false},
+	{"key": "interface/hints", "section": "Oberfläche", "label": "Hinweise",
+		"type": "choice", "options": ["Aus", "Nur Symbole", "Symbol mit Wort"], "default": 2},
 ]
+
+## Werte der Einstellung "Hinweise" (Tastensymbole unter der Bildmitte).
+const HINTS_OFF := 0
+const HINTS_ICONS := 1
+const HINTS_WORDS := 2
 
 ## Bildraten zur Auswahl "Bildrate begrenzen" (0 = unbegrenzt).
 const MAX_FPS_OPTIONS: Array[int] = [30, 60, 120, 0]

@@ -26,7 +26,7 @@ var _move_tween: Tween
 
 func _ready() -> void:
 	_interactable.interacted.connect(_on_interacted)
-	_interactable.prompt_text = "Lieferung auspacken"
+	_interactable.prompt_text = "Auspacken"
 
 
 func _on_interacted(_interactor: Node) -> void:

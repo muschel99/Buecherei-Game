@@ -192,7 +192,7 @@ func _update_prompt() -> void:
 	var turn_on := prompt_turn_on
 	var turn_off := prompt_turn_off
 	if turn_on.is_empty():
-		turn_on = "Anzünden" if kind == Kind.FLAME else "Licht einschalten"
+		turn_on = "Anzünden" if kind == Kind.FLAME else "An"
 	if turn_off.is_empty():
-		turn_off = "Löschen" if kind == Kind.FLAME else "Licht ausschalten"
+		turn_off = "Löschen" if kind == Kind.FLAME else "Aus"
 	_interactable.prompt_text = turn_off if is_on else turn_on

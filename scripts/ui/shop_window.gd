@@ -567,11 +567,6 @@ func _add_stock_cell(text: String, color: Color, is_number: bool) -> void:
 
 
 func _on_store_carried_pressed() -> void:
-	# Je Genre ein kleiner Bücherstapel in der Lager-Anzeige
-	for genre_id in BookStock.get_carried_counts():
-		var genre := Catalog.get_genre(genre_id)
-		if genre:
-			StorageIndicator.add_item(self, genre)
 	var count := BookStock.store_carried()
 	if count > 0:
 		_stock_message.text = "%d %s ins Lager gelegt." % [count, "Buch" if count == 1 else "Bücher"]
@@ -650,11 +645,13 @@ func _refresh_collection() -> void:
 
 ## Ein Buch aus dem Lager obenauf in die Hand nehmen.
 func _on_collection_book_chosen(data: BookData) -> void:
+	if BookStock.is_hand_full():
+		_collection_header.text = "Deine Hände sind voll (%d Bücher)." % BookStock.carried.size()
+		return
 	for book in BookStock.get_stored_books(data.genre_id):
 		if book.data == data and BookStock.take_stored_book(book):
 			BookStock.carry([book])
 			close()
-			Notice.post(self, "„%s“ liegt obenauf in deiner Hand – schau auf eine Stelle im Regal und drücke E." % data.title)
 			return
 
 

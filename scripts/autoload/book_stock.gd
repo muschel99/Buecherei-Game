@@ -6,7 +6,8 @@ extends Node
 ## - in einem Regal (BookShelf, gespeichert mit dem Regal im Raum),
 ## - im Rückgabekasten (ReturnBox, ebenfalls mit dem Raum gespeichert),
 ## - oder in meinen Händen (carried, hier gespeichert). Eins davon liegt obenauf und ist
-##   "aktiv" – das stelle ich mit E einzeln ins Regal (Mausrad wechselt).
+##   "aktiv" – das stelle ich mit der rechten Maustaste einzeln ins Regal (Mausrad
+##   wechselt). Ich trage höchstens GameConfig.max_carried_books Bücher.
 ## Außerdem merkt sich der Bestand
 ## - die Sammlung: welche Titel ich schon entdeckt habe (Bücherpakete bringen bevorzugt neue),
 ## - welche Genres freigeschaltet sind.
@@ -17,6 +18,9 @@ extends Node
 signal changed
 ## Wird gesendet, wenn sich ändert, was ich trage (oder welches Buch obenauf liegt).
 signal carried_changed
+## Wird gesendet, wenn ich noch ein Buch nehmen möchte, die Hände aber voll sind
+## (der Stapel in der Hand wackelt dann kurz – ganz ohne Text).
+signal hands_full
 
 ## Gruppen der Regale und Rückgabekästen im Raum (zum Zählen).
 const SHELF_GROUP := "book_shelves"
@@ -251,13 +255,38 @@ func put_back_first(books: Array) -> void:
 # --- Tragen ---
 
 ## Ich nehme Bücher in die Hand (z. B. aus dem Rückgabekasten). Das zuletzt genommene
-## liegt obenauf.
-func carry(books: Array) -> void:
-	if books.is_empty():
-		return
-	carried.append_array(books)
-	active_index = carried.size() - 1
-	_carried_changed()
+## liegt obenauf. Es passen höchstens GameConfig.max_carried_books in die Hände: Liefert die
+## Bücher, die nicht mehr passen (der Aufrufer behält sie).
+func carry(books: Array) -> Array[Book]:
+	var rest: Array[Book] = []
+	var space := get_free_hand_space()
+	for book: Book in books:
+		if space > 0:
+			carried.append(book)
+			space -= 1
+		else:
+			rest.append(book)
+	if rest.size() < books.size():
+		active_index = carried.size() - 1
+		_carried_changed()
+	if not rest.is_empty():
+		hands_full.emit()
+	return rest
+
+
+## Für wie viele Bücher habe ich noch Platz in den Händen?
+func get_free_hand_space() -> int:
+	return maxi(0, GameConfig.max_carried_books - carried.size())
+
+
+## Sind die Hände voll? (Dann wackelt der Stapel kurz – siehe show_hands_full.)
+func is_hand_full() -> bool:
+	return get_free_hand_space() <= 0
+
+
+## Zeigt (ohne Text), dass nichts mehr in die Hände passt: Der Stapel wackelt kurz.
+func show_hands_full() -> void:
+	hands_full.emit()
 
 
 ## Das Buch, das obenauf liegt (oder null, wenn ich nichts trage).
@@ -327,9 +356,16 @@ func describe_counts(counts: Dictionary) -> String:
 	return ", ".join(parts)
 
 
-## Legt alles Getragene ins Lager.
+## Legt alles Getragene ins Lager (mit einem kleinen Bücherstapel je Genre in der
+## Lager-Anzeige unten rechts).
 func store_carried() -> int:
 	var books := carried.duplicate()
+	if books.is_empty():
+		return 0
+	for genre_id in get_carried_counts():
+		var genre := Catalog.get_genre(genre_id)
+		if genre:
+			StorageIndicator.add_item(self, genre)
 	carried.clear()
 	active_index = 0
 	_add_to_storage(books)

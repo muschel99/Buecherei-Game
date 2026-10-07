@@ -8,12 +8,13 @@ extends Node3D
 ## - Optional ein Marker3D "SignPoint": Dort hängt das Genre-Schild (Mitte, vorn).
 ## - Ein Interactable "Interactable" mit Kollisionsform.
 ##
-## Bedienung (alles mit E):
-## - E tippen auf ein Buch (leere Hände): dieses Buch in die Hand nehmen.
-## - E tippen, während ich Bücher trage: das Buch obenauf genau dort einstellen, wo ich
+## Bedienung:
+## - Linksklick auf ein Buch: dieses Buch in die Hand nehmen (obenauf auf den Stapel).
+## - Rechtsklick, während ich Bücher trage: das Buch obenauf genau dort einstellen, wo ich
 ##   hinschaue – die Nachbarn rücken zur Seite (Vorschau schwebt vor dem Regal).
-## - E halten: alle getragenen Bücher einräumen, die passen – sonst das Regal-Menü öffnen
-##   (Genre wählen, aus dem Lager auffüllen, sortieren, alles zurück ins Lager).
+## - E tippen: Regal-Menü (Genre wählen, aus dem Lager auffüllen, sortieren, alles zurück
+##   ins Lager).
+## - E halten: alle getragenen Bücher einräumen, die hierher passen.
 ## Jedes Brett hat seine eigene Reihe; ist ein Brett voll, passt dort nichts mehr hinein.
 ##
 ## Leistung: Alle Bücher eines Regals werden in einem einzigen Rutsch gezeichnet
@@ -90,6 +91,8 @@ func _ready() -> void:
 			_interactable.highlight_owner = false
 			_interactable.interacted.connect(_on_tapped)
 			_interactable.held.connect(_on_held)
+			_interactable.clicked.connect(_on_clicked)
+			_interactable.right_clicked.connect(_on_right_clicked)
 			_interactable.aimed.connect(_on_aimed)
 			_interactable.aim_ended.connect(_on_aim_ended)
 	_update_prompt()
@@ -332,12 +335,17 @@ func copy_contents_from(other: BookShelf) -> void:
 
 # --- Einzelne Bücher ---
 
-## Nimmt ein bestimmtes Buch aus dem Regal in die Hand.
-func take_book(book: Book) -> void:
+## Nimmt ein bestimmtes Buch aus dem Regal in die Hand. Sind die Hände schon voll,
+## wackelt nur kurz der Stapel (liefert dann false).
+func take_book(book: Book) -> bool:
 	if _row_of(book) < 0:
-		return
+		return false
+	if BookStock.is_hand_full():
+		BookStock.show_hands_full()
+		return false
 	remove_books([book])
 	BookStock.carry([book])
+	return true
 
 
 ## Stellt das Buch obenauf in der Hand an eine bestimmte Stelle (Brett, Position).
@@ -546,12 +554,13 @@ func _find_slot(from: Vector3, direction: Vector3) -> Dictionary:
 
 
 func _on_aimed(from: Vector3, direction: Vector3) -> void:
+	_set_hover(_pick_book(from, direction))
 	var active := BookStock.get_active_book()
-	if active == null:
+	if active == null or _hover_book:
+		# Ein Buch angeschaut: das kann ich nehmen (Linksklick) – keine Lücke öffnen
 		_clear_gap()
-		_set_hover(_pick_book(from, direction))
+		_update_prompt()
 		return
-	_set_hover(null)
 	var slot := _find_slot(from, direction)
 	_aim_problem = ""
 	if slot.is_empty():
@@ -613,27 +622,30 @@ func _clear_gap() -> void:
 	_refresh_instances()
 
 
+## E tippen: Regal-Menü.
 func _on_tapped(_interactor: Node) -> void:
-	var active := BookStock.get_active_book()
-	if active:
-		# Buch obenauf an die markierte Stelle stellen
-		if _ghost == active and _gap_row >= 0:
-			insert_active_book(_gap_row, _gap_index)
-		elif not _aim_problem.is_empty():
-			Notice.post(self, _aim_problem)
-		return
+	_open_menu()
+
+
+## E halten: alle getragenen Bücher einräumen, die hierher passen.
+func _on_held(_interactor: Node) -> void:
+	if count_matching_carried() > 0:
+		put_carried()
+
+
+## Linksklick: das angeschaute Buch nehmen.
+func _on_clicked(_interactor: Node) -> void:
 	if _hover_book:
 		var book := _hover_book
-		_set_hover(null)
-		take_book(book)
-		return
-	_open_menu()
+		if take_book(book):
+			_set_hover(null)
 
 
-func _on_held(_interactor: Node) -> void:
-	if count_matching_carried() > 0 and put_carried() > 0:
-		return
-	_open_menu()
+## Rechtsklick: das Buch obenauf an die markierte Stelle stellen.
+func _on_right_clicked(_interactor: Node) -> void:
+	var active := BookStock.get_active_book()
+	if active and _ghost == active and _gap_row >= 0:
+		insert_active_book(_gap_row, _gap_index)
 
 
 func _open_menu() -> void:
@@ -653,7 +665,7 @@ func _on_carried_changed() -> void:
 ## Wo das Buch gerade zu sehen ist (mitten in der Animation oder an seinem Platz).
 func _current_transform(book: Book) -> Transform3D:
 	var target: Transform3D = _targets.get(book, Transform3D())
-	if book == _hover_book:
+	if book == _hover_book and _ghost == null:
 		target.origin += Vector3(0.0, 0.0, GameConfig.book_hover_pull)
 	if not _anims.has(book):
 		return target
@@ -782,28 +794,19 @@ func _update_sign() -> void:
 	_sign_label.pixel_size = minf(0.0011, SIGN_SIZE.x * 0.88 / maxf(text_width, 1.0))
 
 
-## Hinweise unten in der Bildmitte: "E – …" (tippen) und "E halten – …".
+## Tastensymbole unter der Bildmitte (je ein kurzes Wort): Linksklick = Nehmen,
+## Rechtsklick = Abstellen, E halten = Einräumen, E tippen = Menü.
 func _update_prompt() -> void:
 	if _interactable == null:
 		return
-	var matching := count_matching_carried()
-	var active := BookStock.get_active_book() if _is_live else null
-	if active:
-		if not _aim_problem.is_empty():
-			_interactable.prompt_text = _aim_problem
-		elif _ghost:
-			_interactable.prompt_text = "„%s“ hier einstellen" % active.title
-		else:
-			_interactable.prompt_text = "Auf ein Brett schauen, um „%s“ einzustellen" % active.title
-		_interactable.hold_prompt_text = "alle passenden einräumen (%d)" % matching if matching > 0 else "Regal-Menü"
-	elif _hover_book:
-		_interactable.prompt_text = "„%s“ nehmen" % _hover_book.title
-		_interactable.hold_prompt_text = "Regal-Menü"
-	else:
-		var count := get_books().size()
-		_interactable.prompt_text = "Regal-Menü" if count == 0 or not has_genre() \
-			else "Regal: %s (%d %s)" % [get_genre_name(), count, "Buch" if count == 1 else "Bücher"]
-		_interactable.hold_prompt_text = "Regal-Menü" if count > 0 and has_genre() else ""
+	var matching := count_matching_carried() if _is_live else 0
+	var carrying := _is_live and not BookStock.carried.is_empty()
+	_interactable.supports_hold = matching > 0
+	_interactable.hold_prompt_text = "Einräumen" if matching > 0 else ""
+	_interactable.right_click_text = "Abstellen" if _ghost else ""
+	_interactable.click_text = "Nehmen" if _hover_book else ""
+	# Das Menü-Symbol nur, wenn sonst nichts zu tun ist (so bleibt es bei höchstens zwei Symbolen)
+	_interactable.prompt_text = "Menü" if not carrying or (_ghost == null and matching == 0) else ""
 
 
 # --- Hilfsfunktionen ---
