@@ -71,9 +71,18 @@ docs/              Dokumentation
   6 = `placement_surface` (Ablageflächen).
 - **Jede Interaktion in der Spielwelt läuft über E.** Ausnahme Bücher (die Maus ist für Bücher
   da): Rechtsklick nimmt ein Buch, Linksklick legt das Buch obenauf ab, Linksklick halten am
-  Regal räumt alle passenden ein (Interactable-Signale `take_requested`, `place_requested`,
-  `place_all_requested`; nur im Spiel bei gefangener Maus, nie im Gestaltungsmodus oder in
-  Menüs). Das Regal-Menü öffnet sich mit **E halten**, nicht mit E tippen.
+  Regal räumt alle passenden ein, Mausrad dreht das Buch vor dem freien Ablegen
+  (Interactable-Signale `take_requested`, `place_requested`, `place_all_requested`; nur im
+  Spiel bei gefangener Maus, nie im Gestaltungsmodus oder in Menüs).
+- **E blättert:** Hat das angeschaute Objekt keine eigene E-Aktion
+  (`Interactable.reacts_to_interact()` = `prompt_text` nicht leer), blättert E durch die
+  Bücher in der Hand (`BookStock.cycle_active`, Umschalt + E rückwärts). Objekte mit E-Aktion
+  haben immer Vorrang.
+- **Menüs von Objekten öffnet R** (Aktion `open_menu`): Interactable mit `menu_text` (Wort neben
+  dem R-Symbol, leer = kein Menü) und Signal `menu_requested`. Kurzer Druck, kein Halten, nie E –
+  so öffnet sich nie aus Versehen ein Menü. Bisher: Regal-Menü (schließt mit R oder Esc).
+- **Jede Aktion hat nur einen Weg** (z. B. getragene Bücher einräumen = Linksklick halten am
+  Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü).
 - **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
   `MenuStack.open(self)` an und hat `close_from_escape()`. Esc schließt immer zuerst das
   Oberste; nur wenn nichts offen ist, öffnet sich das Pausenmenü.
@@ -89,6 +98,8 @@ docs/              Dokumentation
   Raummaße (Breite, Tiefe) sollen Vielfache von 1/3 m sein. Raumhöhe: `GameConfig.room_height`.
 - **Oberflächen/Menüs:** Projekt nutzt Stretch-Modus `canvas_items` + `expand` (Basis 1600 x 900).
   Neue Menüs immer mit Anchors und Containern bauen, dann passen sie sich automatisch an.
+  Menüs, deren Inhalt wachsen kann, dürfen nie höher als das Bild werden: Mittelteil in einen
+  ScrollContainer, Überschrift und „Schließen“ fest (Beispiel: `ShelfMenu._fit_to_screen`).
 - Spieler-Einstellungen gehören in `Settings.DEFINITIONS` (`scripts/autoload/settings.gd`),
   nicht in GameConfig; der Einstellungsbereich im Pausenmenü baut sich daraus selbst.
 - Alles, was Licht abgibt, bekommt `LightSource` (Art ELECTRIC oder FLAME) + Interactable.
@@ -137,10 +148,11 @@ docs/              Dokumentation
   `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
   `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete` (X),
   `build_paint_all` (Umschalt), `toggle_fps` (F3), `debug_fill_return_box` (F9, Testtaste),
-  `debug_add_money` (F10, Testtaste), `book_next`/`book_previous` (Mausrad, Buch obenauf
-  wechseln), `book_take` (rechte Maustaste), `book_place` (linke Maustaste; halten am Regal
-  = alle einräumen),
-  `store_books` (Q halten: alle getragenen Bücher ins Lager).
+  `debug_add_money` (F10, Testtaste), `book_rotate`/`book_rotate_back` (Mausrad, Buch obenauf
+  vor dem Ablegen drehen), `book_take` (rechte Maustaste), `book_place` (linke Maustaste;
+  halten am Regal = alle einräumen),
+  `store_books` (Q halten: alle getragenen Bücher ins Lager), `open_menu` (R: Menü des
+  angeschauten Objekts, z. B. Regal-Menü).
 - Möbel-Knoten in Szenen können ihre Nummer (`uid`) und ihr Trägermöbel (`support_uid`) fest
   eintragen (z. B. Tablet auf der Theke).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).
@@ -160,7 +172,8 @@ docs/              Dokumentation
   macht daraus den Atlas aller Rücken (Regale), Cover-Bilder (`request_cover`) und einen
   Cover-Atlas für ausgelegte Bücher (`retain_cover` / `release_cover`, Feld per `get_cover_slot`).
 - **E tippen / E halten:** Ein Interactable mit `supports_hold` unterscheidet kurz (Signal
-  `interacted`, beim Loslassen) und lang (Signal `held`, `GameConfig.interact_hold_time`).
+  `interacted`, beim Loslassen) und lang (Signal `held`, `GameConfig.interact_hold_time`) –
+  gerade nutzt das kein Objekt (Menüs öffnen mit R, nicht mit E halten).
   Genauso Linksklick: `handles_placing` = das Objekt nimmt Bücher selbst an (Signal
   `place_requested`); mit `supports_place_all` zählt Halten als „alle einräumen“
   (`place_all_requested`, `GameConfig.place_all_hold_time`). Ein kurzer Druck ist nie Halten
@@ -170,10 +183,11 @@ docs/              Dokumentation
   `highlight_owner = false` = Objekt hebt selbst hervor.
 - **Weniger Text:** Unter der Bildmitte nur kleine Tastensymbole mit höchstens einem Wort
   (`KeyHints`, `KeyHintIcon`). Die Wörter kommen aus dem Interactable: `prompt_text` (E),
-  `hold_prompt_text` (E halten, Ring ums Symbol), `take_text` (rechte Maustaste, „Nehmen“)
-  – immer **ein** kurzes Wort („Öffnen“, „Sitzen“, „An“), leer = kein Symbol. Hinweise beim
-  Tragen (Ablegen, Einräumen, Lager) zeigt die Trage-Anzeige unten (`CarryIndicator`,
-  `show_hints`, Ring um Q beim Halten). Keine Sätze im Spielbild; Erklärungen gehören in die Tastenhilfe
+  `hold_prompt_text` (E halten, Ring ums Symbol), `take_text` (rechte Maustaste, „Nehmen“),
+  `menu_text` (R, „Menü“) – immer **ein** kurzes Wort („Öffnen“, „Sitzen“, „An“), leer = kein
+  Symbol. Hinweise beim Tragen (Ablegen, Einräumen, Drehen, Blättern, Lager) zeigt die
+  Trage-Anzeige unten (`CarryIndicator`, `show_hints`, Ring um Q beim Halten); „Drehen“ nur,
+  wo das Mausrad wirkt (`LooseBooks.can_turn()`), „Blättern“ nur, wenn E nichts anderes tut. Keine Sätze im Spielbild; Erklärungen gehören in die Tastenhilfe
   im Pausenmenü. Spieler-Einstellung „Hinweise“: `Settings` `interface/hints`.
 - Bücherregale: Knoten `BookShelf` mit `BookRow`-Fächern (Ursprung = Mitte der Brett-Oberkante)
   und einem `Interactable` **ohne eigene Kollisionsform** (getroffen wird der Körper des
@@ -196,6 +210,10 @@ docs/              Dokumentation
   `place(buch, lage, support_uid, pose)`, `remove(eintrag)` – keine Spieler-Logik darin
   nötig. Alle Bücher eines Raums sind **ein** MultiMesh (Shader `book_loose.gdshader`, Cover
   aus dem Cover-Atlas) – nie einzelne Knoten je Buch; Zielsuche nur in der Nähe.
+  Drehen vor dem Ablegen: `LooseBooks.turn_degrees` (relativ zum Blick bzw. zum Buch darunter,
+  nach dem Ablegen 0), `turn_active_book(±1)`, Schritt `GameConfig.book_turn_step`; angelehnt
+  höchstens `GameConfig.loose_book_lean_max_turn`; aufrecht in Reihen und im Regal nie. Die
+  Drehung steckt in der gespeicherten Lage (kein eigenes Feld).
   Der Raum verschiebt sie mit ihrem Möbelstück (`move_with`) und gibt sie beim Wegräumen (X)
   ins Lager (`release_on`); gespeichert unter `loose_books` im Raum. Ausgelegte Bücher haben
   keine Kollision: Der Gestaltungsmodus prüft sie extra (`overlaps_shape`), die Spielfigur

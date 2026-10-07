@@ -138,7 +138,7 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Lücken. Ein feines Raster (1 cm, `GameConfig.shelf_grid_step`) hält alles ordentlich.
   Die Maus ist für Bücher da, E für das Menü (seit Etappe 3d):
   - **Buch anschauen:** Es rutscht ein Stück heraus und leuchtet sanft; nach kurzem Hinsehen
-    erscheint die kleine Karte. Unter dem Fadenkreuz: Maus rechts „Nehmen“, E mit Ring „Menü“.
+    erscheint die kleine Karte. Unter dem Fadenkreuz: Maus rechts „Nehmen“, R „Menü“.
   - **Rechtsklick auf ein Buch:** genau dieses Buch nehmen (auch aus der Mitte) – es kommt
     obenauf auf den Stapel in der Hand. Die anderen bleiben stehen, wo sie sind.
   - **Mit Büchern in der Hand:** Wohin ich schaue, steht eine halbdurchsichtige Vorschau des
@@ -152,11 +152,14 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
     Plätze von links nach rechts, zuerst auf Etagen mit genau ihrem Genre, dann auf gemischten.
     Was nirgends passt, bleibt in der Hand. Ein kurzer Klick zählt erst beim Loslassen; solange
     der Ring läuft, wird nichts abgestellt.
-  - **E halten** (Ring um das E-Symbol, `GameConfig.interact_hold_time`): Regal-Menü. Kurzes
-    Antippen von E tut am Regal bewusst nichts – so landet man nie aus Versehen im Menü.
+  - **R** (kurzer Druck, ohne Halten und ohne Ring): Regal-Menü (seit Etappe 3e). R ist
+    bewusst eine eigene, ruhige Taste – so öffnet sich nie aus Versehen ein Menü. E öffnet am
+    Regal nichts, sondern blättert durch die Bücher in der Hand.
   - **Genre pro Etage:** Jedes Brett hat sein eigenes Genre oder „Gemischt“, z. B. oben
     „Gemischt“, darunter „Krimi“ und „Kinderbuch“. Etagen ohne Genre nehmen jedes Buch.
-- **Regal-Menü** (E halten am Regal), klein am rechten Rand:
+- **Regal-Menü** (R am Regal), klein am rechten Rand. Es ist nie höher als das Bild: Bei vielen
+  Genres oder Etagen lässt sich der Mittelteil scrollen; Überschrift, Rückmeldung und
+  „Schließen“ bleiben immer sichtbar (bei jeder Auflösung). In Etappe 3f wird es neu gebaut.
   - „Alle Etagen gleich“: ein Genre (oder „Gemischt“) für das ganze Regal mit einem Klick.
   - „Etagen“: alle Etagen untereinander („Etage 1 (oben)“, „Etage 2“ …; beim Würfelregal z. B.
     „Etage 2 links“), je eine Auswahlliste. Bücher, die nach einem Wechsel nicht mehr passen,
@@ -168,8 +171,10 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
     das Buch obenauf in die Hand, dann stellt man es mit Linksklick an die gewünschte Stelle.
   - „Nach Genre und Titel sortieren“: Nur die Bücher rücken sanft an ihre neuen Plätze (dicht
     an dicht von links, jedes auf eine passende Etage); Deko bleibt stehen.
-  - „Alle Bücher zurück ins Lager“; getragene Bücher einräumen oder ins Lager legen.
-  - Schließen mit Esc, E oder „Schließen“.
+  - „Alle Bücher zurück ins Lager“.
+  - Getragene Bücher räumt man nicht im Menü ein (dafür: Linksklick halten am Regal) und legt
+    sie dort auch nicht ins Lager (dafür: Q halten) – jede Aktion hat nur einen Weg.
+  - Schließen mit Esc, R oder „Schließen“.
 - **Genre ohne Schild:** Schaue ich ein Regal an, erscheint unten in der Bildmitte nur das
   Genre-Wort der Etage, auf die ich schaue (z. B. „Krimi“), in ruhiger Serifenschrift; es
   blendet sanft ein und aus.
@@ -185,16 +190,21 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 - **Gestalten:** Verschiebt man ein Regal, bleiben Bücher und Deko darin (auch in der Vorschau
   sichtbar). Räumt man es mit X weg, gehen seine Bücher ins Lager und die Deko ins Inventar.
 
-### Bücher in der Hand und Rückgabekasten (seit Etappe 3, neue Steuerung seit 3c/3d)
+### Bücher in der Hand und Rückgabekasten (seit Etappe 3, neue Steuerung seit 3c/3d/3e)
 - Ich trage höchstens **7 Bücher** (`GameConfig.max_carried_books`). Das Buch obenauf sieht man
   unten rechts mit seinem Cover, dahinter die anderen als kleiner Stapel mit echten
   Buchrücken. Sind die Hände voll und ich möchte noch eins nehmen, wackelt der Stapel kurz –
   ohne Text.
 - **Tragehinweise:** Solange ich Bücher trage, steht klein am unteren Rand neben dem
   Stapel-Symbol (mit der Zahl): Maus links „Ablegen“, am passenden Regal Maus links mit Ring
-  „Einräumen“, Q mit Ring „Lager“ (je nach Einstellung „Hinweise“). Ohne Bücher verschwinden
-  sie. Beim Halten füllt sich der Ring um das jeweilige Symbol.
-- Das **Mausrad** wechselt, welches Buch obenauf liegt.
+  „Einräumen“, Mausrad „Drehen“ (nur dort, wo das Drehen wirkt), E „Blättern“ (nur bei mehreren
+  Büchern und wenn E gerade nichts anderes tut), Q mit Ring „Lager“ (je nach Einstellung
+  „Hinweise“). Ohne Bücher verschwinden sie. Beim Halten füllt sich der Ring um das Symbol.
+- **E blättert** (seit Etappe 3e): E tippen legt das nächste Buch obenauf, **Umschalt + E**
+  das vorige. Schaue ich etwas an, das selbst auf E reagiert (Lampe, Lichtschalter, Tür,
+  Karton, Sitz, Tablet, Rückgabekasten mit Büchern), hat diese Aktion Vorrang. Am Regal, an
+  ausgelegten Büchern oder ohne Ziel blättert E.
+- Das **Mausrad** dreht das Buch obenauf vor dem freien Ablegen (siehe „Bücher als Deko“).
 - **Q halten:** Alle getragenen Bücher kommen ins Lager.
 - **Rückgabekasten:** Kasten mit Einwurfschlitz und kleinem Fenster (Kategorie Theke), frei
   platzierbar, z. B. neben der Tür oder an der Theke. Zum Start liegt einer im Inventar,
@@ -222,6 +232,17 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   - Schaue ich auf eine **Buchstütze** oder ein **aufrecht stehendes Buch**, stellt sich das
     Buch aufrecht direkt daneben, der Rücken zeigt nach vorn – so entstehen kleine Buchreihen
     auf Tischen und der Theke.
+- **Drehen mit dem Mausrad** (seit Etappe 3e): Vor dem Ablegen dreht das Mausrad das Buch
+  obenauf um die Hochachse – genauso wie Möbel im Gestaltungsmodus; die Vorschau zeigt die
+  Drehung. So liegt ein Buch z. B. quer oder mit dem Buchrücken zu mir, und Stapel lassen sich
+  aus unterschiedlich gedrehten Büchern bauen. Die leichte Zufallsschräge kommt dazu.
+  - Die Drehung gilt relativ zu meiner Blickrichtung (auf einem Stapel relativ zum Buch
+    darunter) und bleibt erhalten, bis ich das Buch ablege; danach beginnt das nächste wieder
+    gerade. Schrittweite: `GameConfig.book_turn_step` (z. B. 5 = fast stufenlos).
+  - An die Wand gelehnte Bücher lassen sich ein Stück zur Seite drehen (höchstens
+    `GameConfig.loose_book_lean_max_turn`), damit das Cover sichtbar bleibt.
+  - Im Regal und in Reihen aufrecht stehender Bücher bleibt der Buchrücken vorn – dort hat das
+    Mausrad keine Wirkung.
 - **Rechtsklick** auf ein ausgelegtes Buch nimmt es wieder in die Hand; was darauf lag,
   rutscht nach.
 - Ausgelegte Bücher gehören zu meinem Bestand („ausgelegt“). Verschiebe ich ein Möbelstück im
@@ -238,9 +259,9 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 
 ### Speichern der Bücher
 - Gespeichert werden Bestand, Sammlung, Regalinhalte (jedes Buch mit seiner Lage auf dem
-  Brett), das Genre jeder Etage, Deko in den Regalen, ausgelegte Bücher (Lage, Haltung,
-  Möbelstück darunter), Inhalt des Rückgabekastens, die getragenen Bücher und welches obenauf
-  liegt.
+  Brett), das Genre jeder Etage, Deko in den Regalen, ausgelegte Bücher (Lage samt gewählter
+  Drehung, Haltung, Möbelstück darunter), Inhalt des Rückgabekastens, die getragenen Bücher
+  und welches obenauf liegt.
 - Ältere Spielstände laden weiter: Bücher ohne Lage stehen dicht von links, das bisherige
   Regal-Genre gilt für alle Etagen, ausgelegte Bücher gibt es dort noch keine.
 
@@ -275,10 +296,14 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 eine bestimmte Stelle treffen: Wer auf irgendeinen Teil eines Objekts schaut (von vorn, der
 Seite, hinten oder oben), kann es benutzen. Ausnahme Bücher (seit Etappe 3d): Rechtsklick
 nimmt ein Buch, Linksklick legt das Buch obenauf ab (ins Regal oder frei auf Tisch, Boden …),
-Linksklick halten am Regal räumt alle passenden ein (nur im Spiel; im Gestaltungsmodus bleibt
-die Maus wie bisher).
+Linksklick halten am Regal räumt alle passenden ein, das Mausrad dreht das Buch vor dem
+Ablegen (nur im Spiel; im Gestaltungsmodus bleibt die Maus wie bisher). Hat das angeschaute
+Objekt keine eigene E-Aktion, blättert E durch die Bücher in der Hand. Menüs von Objekten
+(bisher das Regal-Menü) öffnet die eigene, ruhige Taste R – so öffnet sich nie aus Versehen
+ein Menü.
 Schaut man auf etwas Interaktives, erscheint unter der Bildmitte nur ein kleines, weiches
-Tastensymbol (abgerundetes E, Q oder eine Maus) mit höchstens einem Wort daneben („Nehmen“,
+Tastensymbol (abgerundetes E, R, Q oder eine Maus, auch mit hellem Mausrad) mit höchstens
+einem Wort daneben („Nehmen“,
 „Öffnen“, „Sitzen“). Halte-Aktionen haben einen feinen Ring um ihr Symbol, der sich beim
 Halten füllt. In den Einstellungen unter „Hinweise“: Aus, Nur Symbole oder Symbol mit Wort
 (Standard).
@@ -293,11 +318,12 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
 | E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen, Bücher aus dem Rückgabekasten nehmen |
-| E halten       | Am Regal: Regal-Menü (E tippen tut am Regal nichts) |
+| E beim Tragen  | Anderes Buch obenauf (Umschalt + E: zurück) – wenn das Angeschaute nichts mit E macht |
+| R              | Am Regal: Regal-Menü (noch einmal R oder Esc schließt es) |
 | Rechtsklick    | Buch nehmen (Regal, Tisch, Boden, Rückgabekasten) – bis zu 7 tragen |
 | Linksklick     | Buch obenauf genau dort ablegen, wo ich hinschaue (Regal, Tisch, Boden …) |
 | Linksklick halten | Am Regal: alle getragenen Bücher einräumen, die zu den Etagen passen |
-| Mausrad        | Beim Tragen: anderes Buch obenauf                |
+| Mausrad        | Beim Tragen: Buch vor dem Ablegen drehen (flach oder angelehnt) |
 | Q halten       | Alle getragenen Bücher ins Lager legen         |
 | Tab            | Gestaltungsmodus (Inventar) öffnen/schließen   |
 | F3             | Bilder pro Sekunde anzeigen/ausblenden         |
