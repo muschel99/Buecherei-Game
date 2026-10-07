@@ -37,6 +37,7 @@ const STACK_REACH := 0.6
 ## Mit dem Mausrad gewählte Drehung (Grad) für das nächste Buch, das ich ablege.
 ## Gilt relativ zu meiner Blickrichtung (bzw. zum Buch darunter); nach dem Ablegen wieder 0.
 var turn_degrees: float = 0.0
+var _carried_count := 0  # wie viele Bücher ich zuletzt trug (um Ablegen zu erkennen)
 
 var _entries: Array[LooseBook] = []
 var _multimesh: MultiMesh
@@ -89,6 +90,7 @@ func _ready() -> void:
 	BookArt.atlas_ready.connect(_queue_refresh)
 	BookArt.cover_atlas_changed.connect(_queue_refresh)
 	BookStock.carried_changed.connect(_on_carried_changed)
+	_carried_count = BookStock.carried.size()
 	set_process(false)
 
 
@@ -159,8 +161,13 @@ func remove(entry: LooseBook) -> Book:
 
 
 ## Wohin ein Buch käme, wenn man vom Punkt "from" in Richtung "direction" schaut (siehe _plan).
-func find_spot(from: Vector3, direction: Vector3, book: Book) -> Dictionary:
-	return _compute_plan(from, direction, book)
+## "turn": Drehung um die Hochachse in Grad (wie das Mausrad der Spielfigur).
+func find_spot(from: Vector3, direction: Vector3, book: Book, turn: float = 0.0) -> Dictionary:
+	var player_turn := turn_degrees
+	turn_degrees = turn
+	var plan := _compute_plan(from, direction, book)
+	turn_degrees = player_turn
+	return plan
 
 
 # --- Mit Möbeln ---
@@ -287,10 +294,12 @@ func take_book(entry: LooseBook) -> bool:
 	return book != null
 
 
-## Hände leer: Die Drehung gilt nicht mehr.
+## Ein Buch hat die Hand verlassen (frei abgelegt, ins Regal gestellt, ins Lager): Das nächste
+## beginnt wieder gerade. (Blättern mit E behält die Drehung.)
 func _on_carried_changed() -> void:
-	if BookStock.carried.is_empty():
+	if BookStock.carried.size() < _carried_count:
 		turn_degrees = 0.0
+	_carried_count = BookStock.carried.size()
 
 
 func _on_aimed(from: Vector3, direction: Vector3) -> void:
@@ -421,7 +430,9 @@ func _plan_on_entry(book: Book, entry: LooseBook, local_point: Vector3, directio
 	var wall := get_world_3d().direct_space_state.intersect_ray(query)
 	if not wall.is_empty():
 		wall_normal = Vector3(wall.normal.x, 0.0, wall.normal.z).normalized()
-		wall_point = wall.position
+		# Mitte des Buchs senkrecht auf die Wand (der Strahl selbst läuft bei gedrehten Büchern
+		# schräg und träfe die Wand seitlich versetzt)
+		wall_point = entry_world.origin - wall_normal * wall_normal.dot(entry_world.origin - wall.position)
 	var along := wall_normal.cross(Vector3.UP).normalized()  # entlang der Wand
 	if along.dot(entry_world.basis.z) < 0.0:
 		along = -along
@@ -574,31 +585,26 @@ func _overlapping(world: Transform3D, floor_height: float, reach_above: float = 
 		var other_top := other.origin.y + _vertical_half(other)
 		if other_top < floor_height + 0.002 or other_bottom > my_top + reach_above:
 			continue
-		if _footprints_overlap(world, other):
+		if _footprints_overlap(world, other) and (reach_above > 0.0 or _boxes_overlap(world, other)):
 			result.append(entry)
 	return result
 
 
-## Überschneiden sich die Grundrisse (von oben gesehen) zweier Bücher? (Trennachsen-Test)
+## Überschneiden sich die Grundrisse (von oben gesehen) zweier Bücher? Trennachsen-Test mit
+## dem Schatten des ganzen Buchs – auch ein angelehntes Buch reicht oben ein Stück nach hinten.
+## Die Kanten des Schattens laufen entlang der (von oben gesehenen) Buchachsen.
 static func _footprints_overlap(a: Transform3D, b: Transform3D) -> bool:
-	var corners_a := _footprint(a)
-	var corners_b := _footprint(b)
-	for corners in [corners_a, corners_b]:
-		for i in 4:
-			var edge: Vector2 = corners[(i + 1) % 4] - corners[i]
-			var axis := Vector2(-edge.y, edge.x).normalized()
-			var min_a := INF
-			var max_a := -INF
-			for c: Vector2 in corners_a:
-				min_a = minf(min_a, axis.dot(c))
-				max_a = maxf(max_a, axis.dot(c))
-			var min_b := INF
-			var max_b := -INF
-			for c: Vector2 in corners_b:
-				min_b = minf(min_b, axis.dot(c))
-				max_b = maxf(max_b, axis.dot(c))
-			if max_a <= min_b + 0.002 or max_b <= min_a + 0.002:
-				return false
+	var axes: Array[Vector2] = []
+	for t: Transform3D in [a, b]:
+		for v: Vector3 in [t.basis.x, t.basis.y, t.basis.z]:
+			var flat := Vector2(v.x, v.z)
+			if flat.length_squared() > 1e-8:
+				axes.append(Vector2(-flat.y, flat.x).normalized())
+	var between := Vector2(b.origin.x - a.origin.x, b.origin.z - a.origin.z)
+	for axis in axes:
+		var axis_3d := Vector3(axis.x, 0.0, axis.y)
+		if absf(between.dot(axis)) >= _half_extent(a.basis, axis_3d) + _half_extent(b.basis, axis_3d) - 0.002:
+			return false
 	return true
 
 
@@ -623,17 +629,6 @@ static func _boxes_overlap(a: Transform3D, b: Transform3D) -> bool:
 		if absf(between.dot(n)) >= reach_a + reach_b:
 			return false
 	return true
-
-
-## Die vier Ecken des Grundrisses eines Buchs (x, z), aus seiner Lage in der Welt.
-static func _footprint(t: Transform3D) -> Array[Vector2]:
-	# Die beiden waagerechtesten Achsen des gestreckten Würfels bilden den Grundriss
-	var axes: Array[Vector3] = [t.basis.x, t.basis.y, t.basis.z]
-	axes.sort_custom(func(p: Vector3, q: Vector3) -> bool: return absf(p.normalized().y) < absf(q.normalized().y))
-	var u := Vector2(axes[0].x, axes[0].z) / 2.0
-	var v := Vector2(axes[1].x, axes[1].z) / 2.0
-	var c := Vector2(t.origin.x, t.origin.z)
-	return [c - u - v, c + u - v, c + u + v, c - u + v]
 
 
 ## Halbe Höhe eines Buchs (Lage in der Welt) – wie weit es nach oben und unten reicht.

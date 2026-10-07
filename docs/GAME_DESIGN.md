@@ -237,8 +237,9 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Drehung. So liegt ein Buch z. B. quer oder mit dem Buchrücken zu mir, und Stapel lassen sich
   aus unterschiedlich gedrehten Büchern bauen. Die leichte Zufallsschräge kommt dazu.
   - Die Drehung gilt relativ zu meiner Blickrichtung (auf einem Stapel relativ zum Buch
-    darunter) und bleibt erhalten, bis ich das Buch ablege; danach beginnt das nächste wieder
-    gerade. Schrittweite: `GameConfig.book_turn_step` (z. B. 5 = fast stufenlos).
+    darunter) und bleibt erhalten, bis ich ein Buch ablege (frei, ins Regal oder ins Lager);
+    danach beginnt das nächste wieder gerade. Blättern mit E behält die Drehung.
+    Schrittweite: `GameConfig.book_turn_step` (z. B. 5 = fast stufenlos).
   - An die Wand gelehnte Bücher lassen sich ein Stück zur Seite drehen (höchstens
     `GameConfig.loose_book_lean_max_turn`), damit das Cover sichtbar bleibt.
   - Im Regal und in Reihen aufrecht stehender Bücher bleibt der Buchrücken vorn – dort hat das

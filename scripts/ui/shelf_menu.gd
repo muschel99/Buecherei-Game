@@ -70,7 +70,8 @@ func _process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# R schließt das Menü wieder (aber nicht derselbe Tastendruck, der es geöffnet hat)
-	if is_open and event.is_action_pressed("open_menu") and Engine.get_process_frames() != _opened_frame:
+	if is_open and event.is_action_pressed("open_menu") and Engine.get_process_frames() != _opened_frame \
+			and not get_tree().paused:
 		close()
 		get_viewport().set_input_as_handled()
 
@@ -90,6 +91,7 @@ func open_for(target: BookShelf) -> void:
 	_player.interaction_enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_message.text = ""
+	_message.visible = false
 	_queue_refresh()
 
 
@@ -259,6 +261,8 @@ func _fit_to_screen() -> void:
 	if absf(wanted - _body_scroll.custom_minimum_size.y) > 0.5:
 		_body_scroll.custom_minimum_size.y = wanted
 		_panel.reset_size()
+	elif _panel.size.y > _panel.get_combined_minimum_size().y + 0.5:
+		_panel.reset_size()  # z. B. Rückmeldung ausgeblendet: kein leerer Streifen unten
 
 
 ## Genres, aus denen hier Bücher passen und die im Lager liegen.
