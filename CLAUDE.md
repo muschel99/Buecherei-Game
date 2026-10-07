@@ -80,7 +80,12 @@ docs/              Dokumentation
   haben immer Vorrang.
 - **Menüs von Objekten öffnet R** (Aktion `open_menu`): Interactable mit `menu_text` (Wort neben
   dem R-Symbol, leer = kein Menü) und Signal `menu_requested`. Kurzer Druck, kein Halten, nie E –
-  so öffnet sich nie aus Versehen ein Menü. Bisher: Regal-Menü (schließt mit R oder Esc).
+  so öffnet sich nie aus Versehen ein Menü. Bisher: Regal-Menü (schließt mit R, Esc oder Kreuz).
+- **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet/Shop), nutzt die
+  gemeinsame Vorlage `TabletFrame` (Gehäuse + Bildschirm, Farben `TabletFrame.TEXT_COLOR` …,
+  `make_label`, `make_close_button` = Kreuz oben rechts). Knöpfe sind Symbol-Knöpfe
+  (`TabletIconButton`, gezeichnete Symbole, Tooltip mit einem Wort) statt langer Textzeilen.
+  Tooltips und aufklappende Listen haben ihren Stil im Theme (`assets/ui/cozy_theme.tres`).
 - **Jede Aktion hat nur einen Weg** (z. B. getragene Bücher einräumen = Linksklick halten am
   Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü).
 - **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
@@ -98,8 +103,9 @@ docs/              Dokumentation
   Raummaße (Breite, Tiefe) sollen Vielfache von 1/3 m sein. Raumhöhe: `GameConfig.room_height`.
 - **Oberflächen/Menüs:** Projekt nutzt Stretch-Modus `canvas_items` + `expand` (Basis 1600 x 900).
   Neue Menüs immer mit Anchors und Containern bauen, dann passen sie sich automatisch an.
-  Menüs, deren Inhalt wachsen kann, dürfen nie höher als das Bild werden: Mittelteil in einen
-  ScrollContainer, Überschrift und „Schließen“ fest (Beispiel: `ShelfMenu._fit_to_screen`).
+  Menüs, deren Inhalt wachsen kann, dürfen nie höher als das Bild werden: feste Höhe über
+  Anchors (Anteil der Bildhöhe), wachsender Teil in einen ScrollContainer, Kopf und
+  „Schließen“ fest (Beispiel: `ShelfMenu`).
 - Spieler-Einstellungen gehören in `Settings.DEFINITIONS` (`scripts/autoload/settings.gd`),
   nicht in GameConfig; der Einstellungsbereich im Pausenmenü baut sich daraus selbst.
 - Alles, was Licht abgibt, bekommt `LightSource` (Art ELECTRIC oder FLAME) + Interactable.
@@ -197,10 +203,18 @@ docs/              Dokumentation
   steht (Möbel mit `support_uid` = Regal), kommen keine Bücher hin. Alle Bücher eines Regals
   sind ein MultiMesh (Shader `book_spine.gdshader`, Rücken aus dem Atlas) – nie einzelne
   Knoten je Buch. Das Genre zeigt beim Anschauen `GenreCaption.show_text(self, "Krimi")`.
-- Regaletagen: Jedes Brett hat ein eigenes Genre (`BookShelf.row_genres`, "" = Gemischt;
-  `get_row_genre(row)`, `set_row_genre(row, id)`, `row_accepts(row, genre)`; `set_genre(id)` =
-  alle Etagen gleich). Auffüllen, Einräumen und Sortieren beachten die Etagen; was nirgends
-  passt, bleibt in der Hand. Ältere Spielstände: das alte Regal-Genre gilt für alle Etagen.
+- **Fächer** (nie „Etage“ sagen): Jedes Brett (`BookRow`) ist ein Fach mit eigenem Genre
+  (`BookShelf.row_genres`, "" = noch keins, `MIXED` = Gemischt; `get_row_genre(row)`,
+  `set_row_genre(row, id)`, `row_accepts(row, genre)`; `set_genre(id)` = alle Fächer gleich).
+  Namen „Fach 1“, „Fach 2“ … in Lesereihenfolge von oben links nach unten rechts
+  (`get_fach_order()`, `get_row_label(row)`), unabhängig von der Reihenfolge in der Szene.
+  Auffüllen, Einräumen und Sortieren beachten die Fächer; was nirgends passt, bleibt in der
+  Hand. Linksklick halten: `put_carried_at(row, x)` ab dem angeschauten Fach und der Stelle,
+  Rest in die nächstgelegenen passenden Fächer; Auffüllen füllt von oben nach unten.
+  Sortierarten: `BookShelf.SORT_MODES` (+ `_sort_key`), gewählte Art `sort_mode` wird mit dem
+  Regal gespeichert ("sort"). Fach hervorheben: `highlight_rows([…])` (Shader
+  `fach_highlight.gdshader`, Stärke in GameConfig). Ältere Spielstände: das alte Regal-Genre
+  gilt für alle Fächer, Sortierart Genre und Titel.
 - **Ausgelegte Bücher** (frei in der Welt, z. B. auf Tischen): ein `LooseBooks`-Knoten je Raum
   (`room.loose_books`), jedes Buch ein `LooseBook` (Exemplar, Lage, `support_uid` = Möbel
   darunter, `pose` FLAT/UPRIGHT/LEANING/OPEN – OPEN „aufgeschlagen“ ist vorgesehen, aber noch
