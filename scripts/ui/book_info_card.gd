@@ -86,7 +86,7 @@ func hide_for(sender: Object) -> void:
 		_fade(0.0)
 
 
-## Neues Buch obenauf in der Hand (genommen oder mit dem Mausrad gewechselt): kurz zeigen.
+## Neues Buch obenauf in der Hand (genommen oder mit E durchgeblättert): kurz zeigen.
 func _on_carried_changed() -> void:
 	var active := BookStock.get_active_book()
 	if active == _last_active:

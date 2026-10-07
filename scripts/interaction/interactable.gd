@@ -107,6 +107,12 @@ static func find_for(collider: Node, hit_point: Vector3) -> Interactable:
 	return null
 
 
+## Hat dieses Objekt gerade eine eigene E-Aktion (Wort neben dem E-Symbol)? Sonst blättert E
+## durch die Bücher in der Hand (siehe Spielfigur).
+func reacts_to_interact() -> bool:
+	return is_enabled and (not prompt_text.is_empty() or (supports_hold and not hold_prompt_text.is_empty()))
+
+
 ## Wird von der Spielfigur aufgerufen.
 func interact(interactor: Node) -> void:
 	if is_enabled:

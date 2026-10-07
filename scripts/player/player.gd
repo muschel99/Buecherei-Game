@@ -3,6 +3,8 @@ extends CharacterBody3D
 ## Die Spielfigur in Ego-Perspektive.
 ##
 ## Laufen mit WASD (mit Umschalt schneller), Umsehen mit der Maus, Interagieren mit E.
+## Hat das angeschaute Objekt keine E-Aktion, blättert E durch die Bücher in der Hand
+## (Umschalt + E rückwärts) – Lampe, Tür, Karton, Sitz, Tablet usw. haben Vorrang.
 ## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
 ## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
 ## R öffnet das Menü des angeschauten Objekts (z. B. Regal-Menü, Interactable.menu_requested).
@@ -96,7 +98,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif (event.is_action_pressed("interact") or event.is_action_pressed("jump")) and is_seated():
 		stand_up()
 	elif event.is_action_pressed("interact") and interaction_enabled:
-		_start_interact()
+		_start_interact(event is InputEventWithModifiers and event.shift_pressed)
 	elif event.is_action_released("interact"):
 		_finish_interact()
 	elif (event.is_action_pressed("book_rotate") or event.is_action_pressed("book_rotate_back")) \
@@ -357,8 +359,11 @@ func _update_interaction_target() -> void:
 
 
 ## E gedrückt: sofort benutzen – oder bei Objekten mit "halten" erst abwarten.
-func _start_interact() -> void:
-	if not is_instance_valid(_current_target):
+## Hat das angeschaute Objekt keine eigene E-Aktion (z. B. Regal, Boden, ausgelegtes Buch),
+## blättert E durch die Bücher in der Hand (mit Umschalt rückwärts).
+func _start_interact(backwards: bool = false) -> void:
+	if not is_instance_valid(_current_target) or not _current_target.reacts_to_interact():
+		BookStock.cycle_active(-1 if backwards else 1)
 		return
 	if _current_target.supports_hold:
 		_hold_target = _current_target
