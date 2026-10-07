@@ -44,6 +44,7 @@ var _hold_done := false
 var _store_hold_time := -1.0
 # Linke Maustaste am Regal gedrückt halten (alle einräumen): Ziel, Zeit, schon ausgelöst?
 var _place_target: Interactable = null
+var _world_placer: LooseBooks = null
 var _place_hold_time := 0.0
 var _place_hold_done := false
 var _head_bob_time: float = 0.0
@@ -316,6 +317,15 @@ func _update_interaction_target() -> void:
 			var reach := GameConfig.long_interaction_distance if target.long_reach else GameConfig.interaction_distance
 			if distance <= reach:
 				new_target = target
+	# Ausgelegte Bücher (ohne Kollision): Liegt eins näher auf dem Blickstrahl, zählt es
+	var loose := _get_world_placer()
+	var from := camera.global_position
+	var direction := -camera.global_basis.z
+	if loose and interaction_enabled and not is_seated():
+		var physics_distance := from.distance_to(interaction_ray.get_collision_point()) \
+			if interaction_ray.is_colliding() else INF
+		if loose.pick_distance(from, direction, GameConfig.interaction_distance) < physics_distance:
+			new_target = loose.get_interactable()
 
 	if new_target != _current_target:
 		# Dezente Hervorhebung wandert mit dem anvisierten Objekt (wenn das Objekt das möchte)
@@ -329,7 +339,14 @@ func _update_interaction_target() -> void:
 		interaction_target_changed.emit(_current_target)
 	# Wohin genau ich schaue (z. B. welches Buch im Regal)
 	if _current_target:
-		_current_target.update_aim(camera.global_position, -camera.global_basis.z)
+		_current_target.update_aim(from, direction)
+	# Trage ich Bücher und schaue nicht auf ein Regal: Vorschau zum freien Ablegen
+	if loose:
+		var placing_target := is_instance_valid(_current_target) and _current_target.handles_placing \
+			and _current_target != loose.get_interactable()
+		var active := not BookStock.carried.is_empty() and interaction_enabled and not is_seated() \
+			and not placing_target
+		loose.update_world_aim(active, from, direction)
 
 
 ## E gedrückt: sofort benutzen – oder bei Objekten mit "halten" erst abwarten.
@@ -436,9 +453,16 @@ func _cancel_place_hold() -> void:
 
 ## Kein Regal im Blick: Das Buch obenauf kommt frei in die Welt (Tisch, Boden …).
 func _place_in_world() -> void:
-	var placer := get_tree().get_first_node_in_group(WORLD_PLACER_GROUP)
+	var placer := _get_world_placer()
 	if placer:
 		placer.place_active_book(self)
+
+
+## Der Knoten, der Bücher frei in der Welt ablegt (LooseBooks des Raums) – oder null.
+func _get_world_placer() -> LooseBooks:
+	if not is_instance_valid(_world_placer):
+		_world_placer = get_tree().get_first_node_in_group(WORLD_PLACER_GROUP) as LooseBooks
+	return _world_placer
 
 
 ## Q gehalten: Ist die Zeit um, kommen alle getragenen Bücher ins Lager.

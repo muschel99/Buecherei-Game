@@ -46,6 +46,9 @@ signal layout_changed
 ## Wohin etwas gehängt werden kann (gleiche Werte wie FurnitureData.placement).
 enum HangKind { NONE = 0, WALL = 4, DOOR = 8, CEILING = 16 }
 
+## Bücher, die in diesem Raum frei herumliegen (auf Tischen, dem Boden …), siehe LooseBooks.
+var loose_books: LooseBooks
+
 var _next_uid: int = 1
 ## Wo Unverzichtbares (z. B. das Tablet) ursprünglich steht – falls es in einem Spielstand
 ## fehlt, kommt es dorthin zurück. id -> { "support_id": …, "transform": … }
@@ -53,6 +56,9 @@ var _essential_spots: Dictionary = {}
 
 
 func _ready() -> void:
+	loose_books = LooseBooks.new()
+	loose_books.name = "LooseBooks"
+	add_child(loose_books)
 	_apply_room_height(GameConfig.room_height)
 	add_to_group(SaveManager.PERSIST_GROUP)
 	for item in get_placed_furniture():
@@ -109,26 +115,46 @@ func add_furniture(data: FurnitureData, world_transform: Transform3D, support: P
 	return item
 
 
-## Verschiebt ein Möbelstück. Was darauf steht (z. B. eine Vase auf dem Tisch), wandert mit.
+## Verschiebt ein Möbelstück. Was darauf steht (z. B. eine Vase auf dem Tisch) und Bücher,
+## die darauf liegen, wandern mit.
 func move_furniture(item: PlacedFurniture, world_transform: Transform3D, support: PlacedFurniture) -> void:
 	var old_inverse := item.global_transform.affine_inverse()
-	for dependent in get_dependents(item):
+	var dependents := get_dependents(item)
+	for dependent in dependents:
 		var relative := old_inverse * dependent.global_transform
 		dependent.global_transform = world_transform * relative
+	loose_books.move_with(get_uids(item, dependents), world_transform * old_inverse)
 	item.global_transform = world_transform
 	item.support_uid = support.uid if support else 0
 	layout_changed.emit()
 
 
 ## Entfernt ein Möbelstück samt allem, was darauf steht.
-## Inhalte (z. B. die Bücher eines Regals) gehen dabei ins Lager.
+## Inhalte (z. B. die Bücher eines Regals) und Bücher, die darauf liegen, gehen dabei ins Lager.
 func remove_furniture(item: PlacedFurniture) -> void:
-	for dependent in get_dependents(item):
+	var dependents := get_dependents(item)
+	var books := loose_books.release_on(get_uids(item, dependents))
+	BookStock.store_books(books)
+	var shown := {}
+	for book in books:
+		var genre := book.get_genre()
+		if genre and not shown.has(genre):
+			shown[genre] = true
+			StorageIndicator.add_item(self, genre)
+	for dependent in dependents:
 		dependent.release_contents()
 		_free_furniture(dependent)
 	item.release_contents()
 	_free_furniture(item)
 	layout_changed.emit()
+
+
+## Die Nummern eines Möbelstücks und aller Dinge darauf (für die ausgelegten Bücher).
+func get_uids(item: PlacedFurniture, dependents: Array[PlacedFurniture]) -> Array[int]:
+	var uids: Array[int] = [item.uid]
+	for dependent in dependents:
+		uids.append(dependent.uid)
+	return uids
 
 
 ## Alles, was (auch indirekt) auf diesem Möbelstück steht.
@@ -349,6 +375,7 @@ func get_save_data() -> Dictionary:
 		"floor": _grid_save_data(_grids[SurfaceData.Kind.FLOOR]),
 		"ceiling": _grid_save_data(_grids[SurfaceData.Kind.CEILING]),
 		"furniture": furniture,
+		"loose_books": loose_books.get_save_data(),
 	}
 
 
@@ -364,6 +391,8 @@ func load_save_data(save_data: Dictionary) -> void:
 			if entry is Dictionary:
 				_load_furniture_entry(entry)
 
+	# Ausgelegte Bücher (ältere Spielstände haben keine)
+	loose_books.load_save_data(save_data.get("loose_books", []))
 	_load_walls(save_data)
 	_load_grid(save_data.get("floor"), _grids[SurfaceData.Kind.FLOOR], default_floor_id)
 	_load_grid(save_data.get("ceiling"), _grids[SurfaceData.Kind.CEILING], default_ceiling_id)

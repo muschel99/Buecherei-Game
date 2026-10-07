@@ -188,6 +188,17 @@ var book_info_delay: float = 0.5
 ## (z. B. nach dem Nehmen oder Wechseln mit dem Mausrad).
 var book_info_hand_time: float = 2.5
 
+## Bücher frei ablegen (Tisch, Theke, Boden …): So weit (in Grad) liegt ein Buch zufällig
+## schräg, damit es natürlich wirkt.
+var loose_book_yaw_jitter: float = 6.0
+## So viele Bücher passen höchstens übereinander auf einen Stapel.
+var loose_book_stack_max: int = 10
+## So weit lehnt ein Buch an der Wand nach hinten (in Grad).
+var loose_book_lean_angle: float = 10.0
+## Schaue ich auf eine Wand oder Möbelseite, wird bis so weit darunter (in Metern) ein Boden
+## oder eine Ablage gesucht, auf die das Buch kommt.
+var loose_book_ground_reach: float = 0.8
+
 ## Das angeschaute Buch rutscht ein Stück aus dem Regal (in Metern).
 var book_hover_pull: float = 0.015
 ## So weit vor dem Regal schwebt die Vorschau, wenn das Buch zwischen andere geschoben wird

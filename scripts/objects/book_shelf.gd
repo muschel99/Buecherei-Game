@@ -93,7 +93,7 @@ var _plan: Dictionary = {}
 var _ghost: MeshInstance3D
 var _ghost_material: ShaderMaterial
 var _ghost_transform := Transform3D()
-var _ghost_shake := -1.0  # Rechtsklick, obwohl es nicht passt: Vorschau schüttelt kurz
+var _ghost_shake := -1.0  # Linksklick, obwohl es nicht passt: Vorschau schüttelt kurz
 
 
 func _ready() -> void:
@@ -1146,7 +1146,7 @@ func _process(delta: float) -> void:
 		set_process(false)
 
 
-## Die Vorschau schüttelt sich kurz hin und her (Rechtsklick, obwohl das Buch nicht passt).
+## Die Vorschau schüttelt sich kurz hin und her (Linksklick, obwohl das Buch nicht passt).
 func _update_ghost_shake(delta: float) -> void:
 	if _ghost_shake < 0.0:
 		return

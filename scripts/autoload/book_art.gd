@@ -10,10 +10,15 @@ extends Node
 ##   Bücher leicht für den PC (ein Zeichenaufruf je Regal, siehe BookShelf).
 ## - Cover-Bilder: request_cover(titel, callback) zeichnet das Cover eines Titels als Bild
 ##   (z. B. für das Buch in der Hand) und merkt es sich.
+## - Cover-Atlas: Ausgelegte Bücher (LooseBooks) zeigen ihr Cover oben. Damit alle in einem
+##   Rutsch gezeichnet werden können, kommen ihre Cover in ein gemeinsames Bild
+##   (retain_cover / release_cover, get_cover_slot, get_cover_atlas).
 ## Im Code: BookArt.get_spine_atlas(), BookArt.get_spine_uv(titel), BookArt.get_title_font(titel)
 
 ## Wird gesendet, sobald der Buchrücken-Atlas fertig gezeichnet ist.
 signal atlas_ready
+## Wird gesendet, wenn ein neues Cover im Cover-Atlas angekommen ist.
+signal cover_atlas_changed
 
 ## Größe eines Feldes im Atlas (Breite, Höhe in Pixeln). Der Buchrücken wird darin im
 ## passenden Seitenverhältnis gezeichnet.
@@ -24,6 +29,11 @@ const ATLAS_WIDTH := 4096
 const COVER_WIDTH := 256
 ## So viele Cover-Bilder werden gemerkt.
 const COVER_CACHE_SIZE := 48
+## Cover-Atlas für ausgelegte Bücher: Felder (Spalten, Zeilen) und Größe eines Feldes (Pixel).
+## So viele verschiedene Titel können gleichzeitig ausgelegt ihr Cover zeigen – weitere
+## zeigen einen schlichten Einband in ihrer Farbe. (Höchstens 127, siehe book_loose.gdshader.)
+const COVER_ATLAS_GRID := Vector2i(16, 7)
+const COVER_ATLAS_CELL := Vector2i(96, 192)
 
 const _SERIF := ["Noto Serif", "DejaVu Serif", "Liberation Serif", "FreeSerif", "Georgia", "serif"]
 const _SANS := ["Noto Sans", "Inter", "Cantarell", "DejaVu Sans", "Liberation Sans", "Arial", "sans-serif"]
@@ -41,6 +51,13 @@ var _cover_queue: Array = []  # [BookData, Callable]
 var _cover_busy := false
 var _cover_viewport: SubViewport
 var _cover_view: BookCover
+var _cover_atlas: ImageTexture
+var _cover_atlas_image: Image
+var _cover_slots := {}  # BookData.id -> Feld im Cover-Atlas
+var _cover_slot_users := {}  # BookData.id -> wie viele ausgelegte Bücher dieses Cover zeigen
+var _cover_slot_ready := {}  # BookData.id -> true, sobald das Cover im Atlas steht
+var _free_cover_slots: Array[int] = []
+var _cover_atlas_dirty := false
 
 
 func _ready() -> void:
@@ -211,3 +228,74 @@ func _remember_cover(id: String, texture: Texture2D) -> void:
 	_cover_order.append(id)
 	while _cover_order.size() > COVER_CACHE_SIZE:
 		_covers.erase(_cover_order.pop_front())
+
+
+# --- Cover-Atlas für ausgelegte Bücher ---
+
+## Das gemeinsame Bild mit den Covern ausgelegter Bücher (für book_loose.gdshader).
+func get_cover_atlas() -> Texture2D:
+	if _cover_atlas == null:
+		var size := COVER_ATLAS_GRID * COVER_ATLAS_CELL
+		_cover_atlas_image = Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
+		_cover_atlas_image.fill(Color(0.5, 0.45, 0.4))
+		var with_mipmaps := _cover_atlas_image.duplicate() as Image
+		with_mipmaps.generate_mipmaps()
+		_cover_atlas = ImageTexture.create_from_image(with_mipmaps)
+		for slot in range(COVER_ATLAS_GRID.x * COVER_ATLAS_GRID.y - 1, -1, -1):
+			_free_cover_slots.append(slot)
+	return _cover_atlas
+
+
+## Feld des Titels im Cover-Atlas – oder -1 (noch nicht gezeichnet bzw. kein Platz mehr).
+func get_cover_slot(book: BookData) -> int:
+	return int(_cover_slots.get(book.id, -1)) if _cover_slot_ready.has(book.id) else -1
+
+
+## Ein ausgelegtes Buch möchte sein Cover zeigen (zu jedem retain gehört ein release).
+func retain_cover(book: BookData) -> void:
+	get_cover_atlas()
+	_cover_slot_users[book.id] = int(_cover_slot_users.get(book.id, 0)) + 1
+	if _cover_slots.has(book.id) or _free_cover_slots.is_empty():
+		return
+	var slot: int = _free_cover_slots.pop_back()
+	_cover_slots[book.id] = slot
+	request_cover(book, func(texture: Texture2D) -> void:
+		if texture and _cover_slots.get(book.id, -1) == slot:
+			_draw_into_cover_atlas(slot, texture.get_image())
+			_cover_slot_ready[book.id] = true)
+
+
+## Ein ausgelegtes Buch braucht sein Cover nicht mehr (z. B. wieder aufgenommen).
+func release_cover(book: BookData) -> void:
+	var users := int(_cover_slot_users.get(book.id, 0)) - 1
+	if users > 0:
+		_cover_slot_users[book.id] = users
+		return
+	_cover_slot_users.erase(book.id)
+	if _cover_slots.has(book.id):
+		_free_cover_slots.append(_cover_slots[book.id])
+		_cover_slots.erase(book.id)
+		_cover_slot_ready.erase(book.id)
+
+
+func _draw_into_cover_atlas(slot: int, cover: Image) -> void:
+	if cover == null or cover.is_empty():
+		return
+	var image := cover.duplicate() as Image
+	image.clear_mipmaps()
+	image.convert(Image.FORMAT_RGBA8)
+	image.resize(COVER_ATLAS_CELL.x, COVER_ATLAS_CELL.y, Image.INTERPOLATE_BILINEAR)
+	var position := Vector2i(slot % COVER_ATLAS_GRID.x, slot / COVER_ATLAS_GRID.x) * COVER_ATLAS_CELL
+	_cover_atlas_image.blit_rect(image, Rect2i(Vector2i.ZERO, COVER_ATLAS_CELL), position)
+	# Erst am Ende des Bildes übertragen (kommen mehrere Cover, nur einmal)
+	if not _cover_atlas_dirty:
+		_cover_atlas_dirty = true
+		_upload_cover_atlas.call_deferred()
+
+
+func _upload_cover_atlas() -> void:
+	_cover_atlas_dirty = false
+	var with_mipmaps := _cover_atlas_image.duplicate() as Image
+	with_mipmaps.generate_mipmaps()
+	_cover_atlas.update(with_mipmaps)
+	cover_atlas_changed.emit()
