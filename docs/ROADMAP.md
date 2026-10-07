@@ -15,6 +15,8 @@
 | 3   | Bücher und Regale                        | fertig        |
 | 3b  | Echte Bücher: Cover, Sammlung, einzeln einräumen | fertig |
 | 3c  | Freies Einräumen, Deko im Regal und weniger Text | fertig |
+| 3d  | Regalsteuerung, Etagen-Genres und Bücher als Deko | in Arbeit |
+| 3e  | Tablet mit Apps und Lagerübersicht       | vorgemerkt    |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -237,6 +239,21 @@ Leitgedanke: mehr Freiheit beim Einräumen, weniger Text auf dem Bildschirm.
       Spielstände laden weiter (Bücher ohne Lage stehen dicht von links)
 - Noch offen für später: Bücher frei auf Tische oder die Theke legen (bisher nur Regale und
   Rückgabekasten)
+
+## Etappe 3d – Regalsteuerung, Etagen-Genres und Bücher als Deko
+Leitgedanke: Die Maus ist für Bücher da, E für alles andere – und Bücher dürfen überall liegen.
+- [x] Neue Maussteuerung: Rechtsklick nimmt ein Buch, Linksklick legt das Buch obenauf ab,
+      Linksklick halten am Regal räumt alle passenden ein, E halten am Regal öffnet das
+      Regal-Menü (E tippen nicht mehr); Haltezeiten getrennt in GameConfig
+- [ ] Hinweise beim Tragen klein am unteren Rand (Ablegen, Einräumen, Lager)
+- [ ] Eigenes Genre pro Regaletage, Schnellauswahl „Alle Etagen gleich“
+- [ ] Bücher frei in der Welt ablegen (Tische, Theke, Fensterbank, Sitzmöbel, Boden), flach
+      mit Cover nach oben, kleine Stapel; wiederverwendbar für spätere Besucher
+- [ ] Speichern von Etagen-Genres und ausgelegten Büchern; alte Spielstände laden weiter
+
+## Etappe 3e – Tablet mit Apps und Lagerübersicht (vorgemerkt)
+- Noch nicht begonnen. Idee: Das Tablet bekommt Apps (z. B. Shop, Bestand, Sammlung) und eine
+  übersichtliche Lagerübersicht.
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke

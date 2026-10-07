@@ -19,7 +19,7 @@ func _ready() -> void:
 	# Tastenhilfe: Zahlen aus GameConfig, Testtasten nur, solange sie eingeschaltet sind
 	var grid := $ControlsPanel/VBox/KeyGrid
 	(grid.get_node("ActionTake") as Label).text = \
-		"Buch nehmen (Regal, Rückgabekasten) – bis zu %d tragen" % GameConfig.max_carried_books
+		"Buch nehmen (Regal, Tisch, Rückgabekasten …) – bis zu %d tragen" % GameConfig.max_carried_books
 	(grid.get_node("ActionTestMoney") as Label).text = \
 		"Test: %s dazu" % Wallet.format(GameConfig.debug_money_amount)
 	for node_name in ["KeyTestBooks", "ActionTestBooks", "KeyTestMoney", "ActionTestMoney"]:

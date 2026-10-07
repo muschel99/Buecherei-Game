@@ -71,9 +71,11 @@ var light_fade_time: float = 0.35
 var flame_fade_time: float = 0.6
 ## Soll der Lichtschalter auch Kerzen und Laternen mitschalten? (Standard: nur elektrische Lampen)
 var light_switch_includes_flames: bool = false
-## So lange muss man E gedrückt halten für die "große" Aktion (z. B. am Regal: alle
-## passenden Bücher einräumen), in Sekunden. Kurz tippen = Regal-Menü.
+## So lange muss man E gedrückt halten (z. B. am Regal: Regal-Menü öffnen), in Sekunden.
 var interact_hold_time: float = 0.45
+## So lange muss man die linke Maustaste gedrückt halten, um am Regal alle passenden
+## getragenen Bücher einzuräumen (in Sekunden). Kürzer = ein Buch abstellen.
+var place_all_hold_time: float = 0.5
 ## So weit öffnet sich die Eingangstür (in Grad).
 var door_open_angle: float = 90.0
 ## So lange dauert das Öffnen bzw. Schließen der Tür (in Sekunden).

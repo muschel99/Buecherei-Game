@@ -6,9 +6,13 @@ extends CharacterBody3D
 ## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
 ## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
 ## Manche Objekte (z. B. Regale) unterscheiden E tippen und E halten (Interactable.supports_hold).
-## Bücher: Linksklick nimmt das angeschaute Buch, Rechtsklick stellt das Buch obenauf genau
-## dort ab, wo ich hinschaue (Interactable-Signale clicked / right_clicked). Das Mausrad
-## wechselt das Buch obenauf, Q halten legt alle getragenen Bücher ins Lager.
+## Bücher (nur mit der Maus, alles andere bleibt bei E):
+## - Rechtsklick nimmt das angeschaute Buch (Interactable.take_requested).
+## - Linksklick legt das Buch obenauf genau dort ab, wo ich hinschaue: ins Regal
+##   (Interactable.place_requested) oder frei in die Welt (WORLD_PLACER_GROUP).
+## - Linksklick halten am Regal räumt alle passenden ein (place_all_requested, mit Ring,
+##   GameConfig.place_all_hold_time). Ein kurzer Klick zählt erst beim Loslassen.
+## - Mausrad wechselt das Buch obenauf, Q halten legt alle getragenen Bücher ins Lager.
 ## Klicks zählen nur, solange der Mauszeiger gefangen ist (sonst fängt ein Klick ihn wieder).
 ## Alle Einstellwerte (Tempo, Mausempfindlichkeit ...) stehen in GameConfig.
 
@@ -18,8 +22,12 @@ signal interaction_target_changed(target: Interactable)
 ## Wird gesendet, wenn sich die Figur hinsetzt (true) oder aufsteht (false).
 signal seated_changed(seated: bool)
 ## Fortschritt beim Gedrückthalten (0 bis 1); -1 = nichts wird gehalten.
-## action: "interact" (E am Objekt) oder "store_books" (Q: alle Bücher ins Lager).
+## action: "interact" (E am Objekt), "place_all" (linke Maustaste am Regal: alle einräumen)
+## oder "store_books" (Q: alle Bücher ins Lager).
 signal hold_progress_changed(progress: float, action: StringName)
+
+## Gruppe des Knotens, der Bücher frei in der Welt ablegt (Tische, Boden …), siehe LooseBooks.
+const WORLD_PLACER_GROUP := "world_book_placer"
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -34,6 +42,10 @@ var _hold_time := 0.0
 var _hold_done := false
 # Q gedrückt halten (alle getragenen Bücher ins Lager): gehaltene Zeit, -1 = nicht gehalten
 var _store_hold_time := -1.0
+# Linke Maustaste am Regal gedrückt halten (alle einräumen): Ziel, Zeit, schon ausgelöst?
+var _place_target: Interactable = null
+var _place_hold_time := 0.0
+var _place_hold_done := false
 var _head_bob_time: float = 0.0
 # Sitzen: aktueller Sitzplatz, Stehposition davor und laufende Bewegung
 var _seat: SeatPoint = null
@@ -93,10 +105,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Ist etwas offen (z. B. der Katalog), gehört der Mauszeiger dorthin.
 		if not MenuStack.has_open():
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	elif event.is_action_pressed("book_take") and _can_click():
-		_current_target.click(self)
-	elif event.is_action_pressed("book_place") and _can_click():
-		_current_target.right_click(self)
+	elif event.is_action_pressed("book_take") and _can_use_mouse():
+		if is_instance_valid(_current_target):
+			_current_target.request_take(self)
+	elif event.is_action_pressed("book_place") and _can_use_mouse():
+		_start_place()
+	elif event.is_action_released("book_place"):
+		_finish_place()
 	elif event.is_action_pressed("store_books") and interaction_enabled and not BookStock.carried.is_empty():
 		_store_hold_time = 0.0
 	elif event.is_action_released("store_books"):
@@ -122,6 +137,7 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_update_hold(delta)
+	_update_place_hold(delta)
 	_update_store_hold(delta)
 
 
@@ -361,10 +377,68 @@ func _cancel_hold() -> void:
 	_hold_time = 0.0
 
 
-## Mausklick auf das angeschaute Objekt? Nur im Spiel (Maus gefangen, nicht im Sitzen).
-func _can_click() -> bool:
-	return interaction_enabled and not is_seated() and is_instance_valid(_current_target) \
-		and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+## Maustasten für Bücher? Nur im Spiel (Maus gefangen, nicht im Sitzen, kein Menü, nicht
+## im Gestaltungsmodus – dort ist interaction_enabled aus).
+func _can_use_mouse() -> bool:
+	return interaction_enabled and not is_seated() and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+
+
+# --- Bücher ablegen (linke Maustaste) ---
+
+## Linke Maustaste gedrückt: das Buch obenauf ablegen – am Regal (mit "alle einräumen")
+## erst abwarten, ob gehalten wird. Während der Ring läuft, wird noch nichts abgestellt.
+func _start_place() -> void:
+	if BookStock.carried.is_empty():
+		return
+	var target := _current_target if is_instance_valid(_current_target) and _current_target.handles_placing else null
+	if target == null:
+		_place_in_world()
+	elif target.supports_place_all:
+		_place_target = target
+		_place_hold_time = 0.0
+		_place_hold_done = false
+	else:
+		target.request_place(self)
+
+
+## Linke Maustaste losgelassen: War es nur ein kurzer Klick, wird jetzt ein Buch abgestellt.
+func _finish_place() -> void:
+	if _place_target and not _place_hold_done and is_instance_valid(_place_target) \
+			and _place_target == _current_target and interaction_enabled:
+		_place_target.request_place(self)
+	_cancel_place_hold()
+
+
+## Zählt die gehaltene Zeit; ist der Ring voll, werden alle passenden Bücher eingeräumt.
+func _update_place_hold(delta: float) -> void:
+	if _place_target == null or _place_hold_done:
+		return
+	if not is_instance_valid(_place_target) or _place_target != _current_target or not interaction_enabled \
+			or not _place_target.supports_place_all:
+		_cancel_place_hold()
+		return
+	_place_hold_time += delta
+	var progress := clampf(_place_hold_time / maxf(GameConfig.place_all_hold_time, 0.01), 0.0, 1.0)
+	hold_progress_changed.emit(progress, &"place_all")
+	if progress >= 1.0:
+		_place_hold_done = true
+		hold_progress_changed.emit(-1.0, &"place_all")
+		_place_target.request_place_all(self)
+
+
+func _cancel_place_hold() -> void:
+	if _place_target != null and not _place_hold_done:
+		hold_progress_changed.emit(-1.0, &"place_all")
+	_place_target = null
+	_place_hold_done = false
+	_place_hold_time = 0.0
+
+
+## Kein Regal im Blick: Das Buch obenauf kommt frei in die Welt (Tisch, Boden …).
+func _place_in_world() -> void:
+	var placer := get_tree().get_first_node_in_group(WORLD_PLACER_GROUP)
+	if placer:
+		placer.place_active_book(self)
 
 
 ## Q gehalten: Ist die Zeit um, kommen alle getragenen Bücher ins Lager.

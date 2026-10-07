@@ -67,10 +67,8 @@ func _current_hints() -> Array:
 	if not is_instance_valid(_target):
 		return []
 	var hints := []
-	if not _target.click_text.is_empty():
-		hints.append({"input": "click", "word": _target.click_text})
-	if not _target.right_click_text.is_empty():
-		hints.append({"input": "right_click", "word": _target.right_click_text})
+	if not _target.take_text.is_empty():
+		hints.append({"input": "take", "word": _target.take_text})
 	if _target.supports_hold and not _target.hold_prompt_text.is_empty():
 		hints.append({"input": "interact_hold", "word": _target.hold_prompt_text})
 	if not _target.prompt_text.is_empty():
@@ -98,7 +96,7 @@ func _on_player_hold_progress_changed(progress: float, action: StringName = &"in
 	if action == &"store_books":
 		_storing = progress >= 0.0
 		_key_hints.show_hints(_current_hints())
-	var input := "store_hold" if action == &"store_books" else "interact_hold"
+	var input: String = {&"store_books": "store_hold", &"place_all": "place_all"}.get(action, "interact_hold")
 	var on_icon := _key_hints.set_hold_progress(input, progress)
 	_hold_ring.progress = -1.0 if on_icon else progress
 
