@@ -179,6 +179,13 @@ var max_carried_books: int = 7
 ## So lange Q gedrückt halten, um alle getragenen Bücher ins Lager zu legen (in Sekunden).
 var store_books_hold_time: float = 0.6
 
+## So lange (in Sekunden) muss ich ein Buch anschauen, bis seine kleine Infokarte erscheint
+## (nicht bei jedem flüchtigen Blick).
+var book_info_delay: float = 0.5
+## So lange (in Sekunden) zeigt die Infokarte ein neues Buch obenauf in meiner Hand
+## (z. B. nach dem Nehmen oder Wechseln mit dem Mausrad).
+var book_info_hand_time: float = 2.5
+
 ## Das angeschaute Buch rutscht ein Stück aus dem Regal (in Metern).
 var book_hover_pull: float = 0.015
 ## So weit vor dem Regal schwebt die Vorschau, wenn das Buch zwischen andere geschoben wird

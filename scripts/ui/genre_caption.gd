@@ -20,11 +20,13 @@ var _sender: Object = null
 
 
 static func show_text(sender: Node, text: String) -> void:
-	sender.get_tree().call_group(GROUP, "show_for", sender, text)
+	if sender.is_inside_tree():
+		sender.get_tree().call_group(GROUP, "show_for", sender, text)
 
 
 static func hide_text(sender: Node) -> void:
-	sender.get_tree().call_group(GROUP, "hide_for", sender)
+	if sender.is_inside_tree():
+		sender.get_tree().call_group(GROUP, "hide_for", sender)
 
 
 func _ready() -> void:
@@ -57,6 +59,10 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	# Im Pausenmenü und in Menüs ausblenden
 	visible = not get_tree().paused and not MenuStack.has_open()
+	# Das Regal wurde weggeräumt, während ich hinschaute: Schriftzug ausblenden
+	if not is_same(_sender, null) and (not is_instance_valid(_sender) or not (_sender as Node).is_inside_tree()):
+		_sender = null
+		_fade(0.0, FADE_OUT_TIME)
 
 
 func show_for(sender: Object, text: String) -> void:

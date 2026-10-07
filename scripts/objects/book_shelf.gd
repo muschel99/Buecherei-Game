@@ -254,6 +254,7 @@ func remove_books(to_remove: Array, animate: bool = true) -> void:
 		_anims.erase(book)
 		if book == _hover_book:
 			_hover_book = null
+			BookInfoCard.hide_card(self)
 	_refresh_instances()
 	_changed()
 
@@ -923,8 +924,8 @@ func _on_held(_interactor: Node) -> void:
 
 ## Linksklick: das angeschaute Buch nehmen.
 func _on_clicked(_interactor: Node) -> void:
-	if _hover_book and take_book(_hover_book):
-		_set_hover(null)
+	if _hover_book:
+		take_book(_hover_book)
 
 
 ## Rechtsklick: das Buch obenauf dorthin stellen, wo die Vorschau steht. Passt es nicht,

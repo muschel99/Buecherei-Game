@@ -154,7 +154,7 @@ func set_active(active: bool) -> void:
 		# Türen schließen sich – an ihnen hängt man Dinge auf, und der Raum ist wieder zu
 		get_tree().call_group("doors", "close_instantly")
 		MenuStack.open(self)
-		_set_status("Wähle unten etwas aus dem Inventar oder klicke ein Möbelstück an, um es zu verschieben.")
+		_set_status("")
 	else:
 		MenuStack.close(self)
 		_cancel_tool()
@@ -191,7 +191,7 @@ func _apply_mouse_mode() -> void:
 func select_furniture(data: FurnitureData) -> void:
 	_cancel_tool()
 	if Inventory.get_count(data.get_id()) <= 0:
-		_flash_status("%s: Im Inventar ist gerade keins mehr – alle stehen schon im Raum." % data.display_name)
+		_flash_status("%s: keins mehr im Inventar." % data.display_name)
 		return
 	_selected_data = data
 	_tool = Tool.PLACE_NEW
@@ -375,7 +375,7 @@ func _set_grid_enabled(enabled: bool) -> void:
 	grid_enabled = enabled
 	_update_grid_visibility()
 	grid_changed.emit(enabled)
-	_flash_status("Einrasten eingeschaltet (Raster und 15°-Schritte)." if enabled else "Einrasten ausgeschaltet – frei platzieren.")
+	_flash_status("Einrasten an" if enabled else "Einrasten aus")
 
 
 # --- Zeigen und Prüfen ---
@@ -393,9 +393,9 @@ func _update_hover() -> void:
 			item = FurnitureUtils.find_placed_furniture(hit.collider)
 	_set_hovered(item)
 	if item:
-		_set_status("%s – Linksklick: aufheben · X: ins Inventar" % item.data.display_name)
+		_set_status(item.data.display_name)
 	elif not _is_looking:
-		_set_status("Wähle unten etwas aus dem Inventar oder klicke ein Möbelstück an. Rechte Maustaste halten: umsehen.")
+		_set_status("")
 
 
 func _set_hovered(item: PlacedFurniture) -> void:
@@ -424,9 +424,9 @@ func _update_paint() -> void:
 	if _paint_held and not target.is_empty():
 		_paint_at_target(false)
 	if target.is_empty():
-		_set_status("%s: Schau aus der Nähe auf %s. Rechtsklick: zurück zum Katalog." % [_selected_surface.display_name, texts.where])
+		_set_status("%s – %s anschauen" % [_selected_surface.display_name, texts.where])
 	else:
-		_set_status("%s – Linksklick: %s (gedrückt halten und ziehen: mehrere) · Umschalt + Klick: %s · Rechtsklick: zurück" % [_selected_surface.display_name, texts.one, texts.all])
+		_set_status(_selected_surface.display_name)
 
 
 ## Wohin zeige ich? Ergebnis: { "wall": …, "index": … } bei Wänden, { "cell": … } bei
@@ -529,7 +529,7 @@ func _update_placement() -> void:
 			where = "eine Wand"
 		elif data.allows(FurnitureData.PLACE_DOOR):
 			where = "die Tür"
-		_set_status("Schau auf %s, um %s zu platzieren." % [where, data.display_name], true)
+		_set_status("%s – %s anschauen" % [data.display_name, where], true)
 		return
 
 	_placement_visible = true
@@ -540,12 +540,11 @@ func _update_placement() -> void:
 	_update_grid_visibility()
 
 	if _placement_ok:
-		var rotate_hint := "" if data.is_wall_mounted() else " · Mausrad: drehen"
+		# Nur der Name (die Tasten stehen in der Tastenhilfe rechts)
 		var name_text := data.display_name
 		if _tool == Tool.PLACE_NEW:
-			name_text += " (×%d im Inventar)" % Inventory.get_count(data.get_id())
-		var back_hint := "zurück an den alten Platz · X: ins Inventar" if _tool == Tool.MOVE else "zurücklegen"
-		_set_status("%s – Linksklick: platzieren%s · Rechtsklick: %s" % [name_text, rotate_hint, back_hint])
+			name_text += " ×%d" % Inventory.get_count(data.get_id())
+		_set_status(name_text)
 	else:
 		_set_status("%s – %s" % [data.display_name, problem], true)
 

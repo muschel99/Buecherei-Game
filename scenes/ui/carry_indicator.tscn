@@ -3,15 +3,15 @@
 [ext_resource type="Script" path="res://scripts/ui/carry_indicator.gd" id="1_carry"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 16.0
-content_margin_bottom = 6.0
-bg_color = Color(0.1, 0.07, 0.05, 0.42)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 10.0
+content_margin_bottom = 3.0
+bg_color = Color(0.1, 0.07, 0.05, 0.34)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="CarryIndicator" type="CanvasLayer"]
 process_mode = 3
@@ -24,9 +24,10 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_top = -64.0
-offset_bottom = -26.0
-grow_horizontal = 2
+offset_left = 250.0
+offset_top = -62.0
+offset_right = 310.0
+offset_bottom = -30.0
 grow_vertical = 0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
@@ -34,18 +35,22 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 [node name="HBox" type="HBoxContainer" parent="Panel"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 5
 
-[node name="Icons" type="HBoxContainer" parent="Panel/HBox"]
+[node name="Icon" type="TextureRect" parent="Panel/HBox"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(22, 22)
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 2
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
 
-[node name="Label" type="Label" parent="Panel/HBox"]
+[node name="Count" type="Label" parent="Panel/HBox"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.92)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.4)
 theme_override_font_sizes/font_size = 16
-text = "Du trägst 0 Bücher"
+text = "0"

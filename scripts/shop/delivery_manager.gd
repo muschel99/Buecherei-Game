@@ -74,10 +74,7 @@ func _process(delta: float) -> void:
 ## Eine Bestellung kommt an: ein Karton pro Objekt, kurz nacheinander.
 func _deliver(contents: Array) -> void:
 	var singles := split_contents(contents)
-	var text := "Deine Lieferung ist da – der Karton steht vor der Tür."
-	if singles.size() > 1:
-		text = "Deine Lieferung ist da – %d Kartons stehen vor der Tür." % singles.size()
-	Notice.post(self, text)
+	Notice.post(self, "Lieferung ist da" if singles.size() == 1 else "Lieferung ist da (%d Kartons)" % singles.size())
 	for i in singles.size():
 		var box := _add_box(singles[i], randf_range(-1.0, 1.0), true, i * SPAWN_STAGGER)
 		delivery_arrived.emit(box)
