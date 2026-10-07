@@ -226,7 +226,8 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   rutscht nach.
 - Ausgelegte Bücher gehören zu meinem Bestand („ausgelegt“). Verschiebe ich ein Möbelstück im
   Gestaltungsmodus, wandern die Bücher darauf mit; räume ich es mit X weg, gehen sie zurück
-  ins Lager.
+  ins Lager. Mitten auf ausgelegte Bücher lässt sich kein Möbelstück stellen („Hier liegen
+  Bücher.“). Steht eine Buchstütze im Bücherregal, räumt dort das Regal selbst ein.
 - Wiederverwendbar: Das System (`LooseBooks`, ein Knoten je Raum) ist so gebaut, dass später
   auch Besucher Bücher auf Tischen liegen lassen können, die man dann einsammelt. Im
   Datenformat (`LooseBook`) ist der Zustand „aufgeschlagen“ schon vorgesehen (noch nicht

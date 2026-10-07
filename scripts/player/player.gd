@@ -322,9 +322,8 @@ func _update_interaction_target() -> void:
 	var from := camera.global_position
 	var direction := -camera.global_basis.z
 	if loose and interaction_enabled and not is_seated():
-		var physics_distance := from.distance_to(interaction_ray.get_collision_point()) \
-			if interaction_ray.is_colliding() else INF
-		if loose.pick_distance(from, direction, GameConfig.interaction_distance) < physics_distance:
+		var pick := loose.pick_distance(from, direction, GameConfig.interaction_distance)
+		if pick < INF and pick < _solid_distance(from, direction):
 			new_target = loose.get_interactable()
 
 	if new_target != _current_target:
@@ -372,7 +371,8 @@ func _finish_interact() -> void:
 func _update_hold(delta: float) -> void:
 	if _hold_target == null:
 		return
-	if not is_instance_valid(_hold_target) or _hold_target != _current_target or not interaction_enabled:
+	if not is_instance_valid(_hold_target) or _hold_target != _current_target or not interaction_enabled \
+			or not Input.is_action_pressed("interact"):
 		_cancel_hold()
 		return
 	if _hold_done:
@@ -431,7 +431,7 @@ func _update_place_hold(delta: float) -> void:
 	if _place_target == null or _place_hold_done:
 		return
 	if not is_instance_valid(_place_target) or _place_target != _current_target or not interaction_enabled \
-			or not _place_target.supports_place_all:
+			or not _place_target.supports_place_all or not Input.is_action_pressed("book_place"):
 		_cancel_place_hold()
 		return
 	_place_hold_time += delta
@@ -458,6 +458,20 @@ func _place_in_world() -> void:
 		placer.place_active_book(self)
 
 
+## Abstand bis zum ersten festen Körper auf dem Blickstrahl. E-Bereiche zählen nicht mit:
+## Ein Buch auf dem Sofa liegt z. B. mitten im Bereich zum Hinsetzen.
+func _solid_distance(from: Vector3, direction: Vector3) -> float:
+	if not interaction_ray.is_colliding():
+		return INF
+	if not interaction_ray.get_collider() is Area3D:
+		return from.distance_to(interaction_ray.get_collision_point())
+	var to := from + direction * interaction_ray.target_position.length()
+	var query := PhysicsRayQueryParameters3D.create(from, to, interaction_ray.collision_mask, [get_rid()])
+	query.collide_with_areas = false
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return from.distance_to(hit.position) if not hit.is_empty() else INF
+
+
 ## Der Knoten, der Bücher frei in der Welt ablegt (LooseBooks des Raums) – oder null.
 func _get_world_placer() -> LooseBooks:
 	if not is_instance_valid(_world_placer):
@@ -469,7 +483,7 @@ func _get_world_placer() -> LooseBooks:
 func _update_store_hold(delta: float) -> void:
 	if _store_hold_time < 0.0:
 		return
-	if not interaction_enabled or BookStock.carried.is_empty():
+	if not interaction_enabled or BookStock.carried.is_empty() or not Input.is_action_pressed("store_books"):
 		_cancel_store_hold()
 		return
 	_store_hold_time += delta

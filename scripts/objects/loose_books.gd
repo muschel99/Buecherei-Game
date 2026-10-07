@@ -26,6 +26,10 @@ signal changed
 const GROUP := "loose_book_layers"
 ## Kleiner Abstand über einer Fläche, damit nichts flimmert (in Metern)
 const LIFT := 0.0015
+## So groß darf die Lücke zwischen zwei Büchern höchstens sein, damit sie als gestapelt gelten
+const STACK_GAP := 0.01
+## Bis zu dieser Höhe über der Ablage wird nach Büchern eines Stapels gesucht (in Metern)
+const STACK_REACH := 0.6
 
 var _entries: Array[LooseBook] = []
 var _multimesh: MultiMesh
@@ -123,6 +127,7 @@ func place(book: Book, local_transform: Transform3D, support_uid: int,
 		pose: LooseBook.Pose = LooseBook.Pose.FLAT) -> LooseBook:
 	var entry := LooseBook.create(book, local_transform, support_uid, pose)
 	_entries.append(entry)
+	_origins_dirty = true
 	BookArt.retain_cover(book.data)
 	_queue_refresh()
 	_changed()
@@ -134,6 +139,7 @@ func remove(entry: LooseBook) -> Book:
 	if not _entries.has(entry):
 		return null
 	_entries.erase(entry)
+	_origins_dirty = true  # sofort: _settle_above sucht gleich in der Nähe
 	BookArt.release_cover(entry.book.data)
 	if entry == _hover:
 		_hover = null
@@ -173,6 +179,32 @@ func release_on(uids: Array[int]) -> Array[Book]:
 		if uids.has(entry.support_uid):
 			released.append(remove(entry))
 	return released
+
+
+## Gestaltungsmodus: Liegt ein ausgelegtes Buch in dieser Form (Kollisionsform eines Möbelstücks,
+## Lage in der Welt)? Dann darf das Möbelstück dort nicht hin. Gerechnet wird mit dem Quader
+## um die Form herum.
+func overlaps_shape(shape: Shape3D, shape_transform: Transform3D) -> bool:
+	var box: AABB
+	if shape is BoxShape3D:
+		box = AABB(-(shape as BoxShape3D).size / 2.0, (shape as BoxShape3D).size)
+	else:
+		var mesh := shape.get_debug_mesh() if shape else null
+		if mesh == null:
+			return false
+		box = mesh.get_aabb()
+	var shape_world := Transform3D(shape_transform.basis * Basis.from_scale(box.size),
+		shape_transform * box.get_center())
+	var reach := (shape_world.basis.x.length() + shape_world.basis.y.length() + shape_world.basis.z.length()) / 2.0 + 0.35
+	for entry in _entries:
+		if entry.hidden:
+			continue
+		var world := global_transform * entry.transform
+		if world.origin.distance_to(shape_world.origin) > reach:
+			continue
+		if _boxes_overlap(shape_world, world):
+			return true
+	return false
 
 
 ## Bücher auf diesen Möbeln aus- bzw. wieder einblenden (während das Möbelstück im
@@ -284,7 +316,7 @@ func _compute_plan(from: Vector3, direction: Vector3, book: Book) -> Dictionary:
 		return _plan_leaning(book, point, normal, direction)  # Wand
 	# Seite eines Möbelstücks: flach davor auf den Boden bzw. die Ablage darunter
 	var flat_normal := Vector3(normal.x, 0.0, normal.z).normalized()
-	var ground := _find_ground(point + flat_normal * (book.data.size.z / 2.0 + 0.02))
+	var ground := _find_ground(point + flat_normal * (maxf(book.data.size.y, book.data.size.z) / 2.0 + 0.02))
 	if ground.is_empty():
 		return {}  # nichts darunter (z. B. hoch oben an einem Schrank): keine Vorschau
 	return _plan_flat(book, ground.point, ground.height, ground.support_uid, direction)
@@ -302,15 +334,23 @@ func _plan_flat(book: Book, world_point: Vector3, surface_height: float, support
 	var origin := Vector3(world_point.x, surface_height + size.x / 2.0 + LIFT, world_point.z)
 	var world := Transform3D(basis, origin)
 	var ok := _room == null or _room.is_inside_build_area(origin)
-	# Liegen schon Bücher an dieser Stelle? Dann obendrauf (nie ineinander)
-	var below := _overlapping(world, surface_height)
+	# Liegen schon Bücher an dieser Stelle? Dann obendrauf (nie ineinander). Zum Stapel gehört
+	# nur, was lückenlos aufeinander liegt – nicht z. B. ein Buch auf dem Brett darüber.
 	var top := surface_height
-	for entry in below:
+	var stacked := 0
+	var ceiling := INF  # Unterkante des nächsten Buchs darüber, das nicht zum Stapel gehört
+	for entry in _sorted_by_bottom(_overlapping(world, surface_height, STACK_REACH)):
+		var entry_world := global_transform * entry.transform
+		var half := _vertical_half(entry_world)
+		var entry_bottom := entry_world.origin.y - half
+		if entry_bottom > top + STACK_GAP:
+			ceiling = entry_bottom
+			break
 		if not entry.is_flat():
 			ok = false  # auf ein aufrechtes Buch kann man nichts legen
-		var entry_world := global_transform * entry.transform
-		top = maxf(top, entry_world.origin.y + _vertical_half(entry_world))
-	if below.size() >= GameConfig.loose_book_stack_max:
+		top = maxf(top, entry_world.origin.y + half)
+		stacked += 1
+	if stacked >= GameConfig.loose_book_stack_max or top + size.x + LIFT > ceiling:
 		ok = false
 	world.origin.y = top + size.x / 2.0 + LIFT
 	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
@@ -357,6 +397,9 @@ func _plan_beside_bookend(book: Book, bookend: PlacedFurniture, world_point: Vec
 	var local_origin := Vector3(edge + side * (size.x / 2.0 + 0.002), size.y / 2.0 + LIFT, box.end.z - size.z / 2.0)
 	var basis := model.global_basis.orthonormalized() * Basis.from_scale(size)
 	var world := Transform3D(basis, model.global_transform * local_origin)
+	# Steht die Buchstütze im Bücherregal, räumt das Regal selbst ein (keine Vorschau)
+	if _find_ground(world.origin - Vector3.UP * (size.y / 2.0)).is_empty():
+		return {}
 	return _plan_in_row(book, world, 0.0, bookend.support_uid, side)
 
 
@@ -389,6 +432,12 @@ func _plan_in_row(book: Book, neighbor: Transform3D, side: float, support_uid: i
 			furthest = maxf(furthest, (entry_world.origin - world.origin).dot(axis * step_side) + entry_world.basis.x.length() / 2.0)
 		world.origin += axis * step_side * (furthest + size.x / 2.0 + 0.002)
 	var ok := (_room == null or _room.is_inside_build_area(world.origin)) and _overlapping(world, bottom).is_empty()
+	# Steht es noch auf derselben Ablage (nicht über die Tischkante hinaus gerückt)?
+	var ground := _find_ground(Vector3(world.origin.x, bottom, world.origin.z))
+	if ground.is_empty() or absf(ground.height - bottom) > STACK_GAP:
+		ok = false
+	else:
+		support_uid = ground.support_uid
 	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
 		"support_uid": support_uid, "pose": LooseBook.Pose.UPRIGHT}
 
@@ -450,8 +499,10 @@ static func _flat_basis(forward: Vector3, size: Vector3) -> Basis:
 
 
 ## Welche ausgelegten Bücher überschneiden sich mit diesem Buch (Lage in der Welt)?
-## Nur Bücher, die über "floor_height" liegen (nicht die auf einer anderen Ebene darunter).
-func _overlapping(world: Transform3D, floor_height: float) -> Array[LooseBook]:
+## Nur Bücher, die über "floor_height" liegen (nicht die auf einer anderen Ebene darunter) und
+## höchstens "reach_above" über der Oberkante beginnen (0 = nur echte Überschneidungen; zum
+## Stapeln größer, damit der ganze Stapel darüber gefunden wird).
+func _overlapping(world: Transform3D, floor_height: float, reach_above: float = 0.0) -> Array[LooseBook]:
 	var result: Array[LooseBook] = []
 	var my_top := world.origin.y + _vertical_half(world)
 	for entry in _nearby(global_transform.affine_inverse() * world.origin):
@@ -460,7 +511,7 @@ func _overlapping(world: Transform3D, floor_height: float) -> Array[LooseBook]:
 		var other := global_transform * entry.transform
 		var other_bottom := other.origin.y - _vertical_half(other)
 		var other_top := other.origin.y + _vertical_half(other)
-		if other_top < floor_height + 0.002 or other_bottom > my_top + 0.5:
+		if other_top < floor_height + 0.002 or other_bottom > my_top + reach_above:
 			continue
 		if _footprints_overlap(world, other):
 			result.append(entry)
@@ -490,6 +541,29 @@ static func _footprints_overlap(a: Transform3D, b: Transform3D) -> bool:
 	return true
 
 
+## Überschneiden sich zwei Quader (Würfel der Größe 1, gestreckt und gedreht)? Trennachsen-Test
+## im Raum: 3 + 3 Kantenrichtungen und ihre 9 Kreuzprodukte.
+static func _boxes_overlap(a: Transform3D, b: Transform3D) -> bool:
+	var axes_a: Array[Vector3] = [a.basis.x, a.basis.y, a.basis.z]
+	var axes_b: Array[Vector3] = [b.basis.x, b.basis.y, b.basis.z]
+	var tests: Array[Vector3] = []
+	for v in axes_a + axes_b:
+		tests.append(v)
+	for u in axes_a:
+		for v in axes_b:
+			tests.append(u.cross(v))
+	var between := b.origin - a.origin
+	for axis in tests:
+		if axis.length_squared() < 1e-10:
+			continue
+		var n := axis.normalized()
+		var reach_a := (absf(axes_a[0].dot(n)) + absf(axes_a[1].dot(n)) + absf(axes_a[2].dot(n))) / 2.0
+		var reach_b := (absf(axes_b[0].dot(n)) + absf(axes_b[1].dot(n)) + absf(axes_b[2].dot(n))) / 2.0
+		if absf(between.dot(n)) >= reach_a + reach_b:
+			return false
+	return true
+
+
 ## Die vier Ecken des Grundrisses eines Buchs (x, z), aus seiner Lage in der Welt.
 static func _footprint(t: Transform3D) -> Array[Vector2]:
 	# Die beiden waagerechtesten Achsen des gestreckten Würfels bilden den Grundriss
@@ -506,31 +580,78 @@ static func _vertical_half(t: Transform3D) -> float:
 	return (absf(t.basis.x.y) + absf(t.basis.y.y) + absf(t.basis.z.y)) / 2.0
 
 
-## Unterkante des Stapels, zu dem dieses liegende Buch gehört (die Fläche darunter).
+## Unterkante des Stapels, zu dem dieses liegende Buch gehört (die Fläche darunter): von Buch
+## zu Buch nach unten, solange sie lückenlos aufeinander liegen.
 func _bottom_of_stack(entry: LooseBook) -> float:
+	var current := entry
 	var world := global_transform * entry.transform
 	var bottom := world.origin.y - _vertical_half(world)
-	for other in _nearby(entry.transform.origin):
-		if other == entry or not other.is_flat() or other.support_uid != entry.support_uid:
-			continue
-		var other_world := global_transform * other.transform
-		if _footprints_overlap(world, other_world):
-			bottom = minf(bottom, other_world.origin.y - _vertical_half(other_world))
+	for i in GameConfig.loose_book_stack_max + 1:
+		var below: LooseBook = null
+		for other in _nearby(current.transform.origin):
+			if other == current or not other.is_flat() or other.hidden:
+				continue
+			var other_world := global_transform * other.transform
+			var other_top := other_world.origin.y + _vertical_half(other_world)
+			if absf(bottom - other_top) <= STACK_GAP and _footprints_overlap(world, other_world):
+				below = other
+				world = other_world
+				bottom = other_world.origin.y - _vertical_half(other_world)
+				break
+		if below == null:
+			break
+		current = below
 	return bottom - LIFT
 
 
-## Ein Buch aus einem Stapel genommen: Was darüber lag, rutscht um seine Dicke nach unten.
+## Bücher von unten nach oben sortiert (nach ihrer Unterkante).
+func _sorted_by_bottom(entries: Array[LooseBook]) -> Array[LooseBook]:
+	var bottoms := {}
+	for entry in entries:
+		var world := global_transform * entry.transform
+		bottoms[entry] = world.origin.y - _vertical_half(world)
+	entries.sort_custom(func(a: LooseBook, b: LooseBook) -> bool: return bottoms[a] < bottoms[b])
+	return entries
+
+
+## Ein Buch aus einem Stapel genommen: Was darauf lag (und darauf …), rutscht um seine Dicke
+## nach unten. Bücher, die noch auf einem anderen Buch aufliegen, bleiben liegen.
 func _settle_above(removed: LooseBook) -> void:
 	if not removed.is_flat():
 		return
-	var world := global_transform * removed.transform
-	var thickness := _vertical_half(world) * 2.0 + LIFT
+	var removed_world := global_transform * removed.transform
+	var thickness := _vertical_half(removed_world) * 2.0 + LIFT
+	# Bücher in der Nähe mit ihrer bisherigen Lage, von unten nach oben
+	var others: Array[LooseBook] = []
+	var worlds := {}
 	for other in _nearby(removed.transform.origin):
-		if not other.is_flat():
-			continue
-		var other_world := global_transform * other.transform
-		if other_world.origin.y > world.origin.y and _footprints_overlap(world, other_world):
+		if other != removed and other.is_flat():
+			others.append(other)
+			worlds[other] = global_transform * other.transform
+	others = _sorted_by_bottom(others)
+	var lowered := {}
+	for other in others:
+		var other_world: Transform3D = worlds[other]
+		var other_bottom := other_world.origin.y - _vertical_half(other_world)
+		var on_lowered := _rests_on(other_world, other_bottom, removed_world)
+		var on_fixed := false
+		for below in others:
+			if below == other:
+				break  # nur, was darunter liegt (Liste ist sortiert)
+			if _rests_on(other_world, other_bottom, worlds[below]):
+				if lowered.has(below):
+					on_lowered = true
+				else:
+					on_fixed = true
+		if on_lowered and not on_fixed:
 			other.transform.origin.y -= thickness
+			lowered[other] = true
+
+
+## Liegt ein Buch (Lage "world", Unterkante "bottom") auf dem Buch mit der Lage "below"?
+static func _rests_on(world: Transform3D, bottom: float, below: Transform3D) -> bool:
+	return absf(bottom - (below.origin.y + _vertical_half(below))) <= STACK_GAP \
+		and _footprints_overlap(world, below)
 
 
 ## Das ausgelegte Buch auf dem Blickstrahl: { "entry", "distance", "local_point" } – oder leer.
@@ -585,7 +706,7 @@ func _nearby(local_point: Vector3) -> Array[LooseBook]:
 
 ## Mittelpunkte aller Bücher (wird nach jeder Änderung neu gesammelt).
 func _get_origins() -> PackedVector3Array:
-	if _origins_dirty:
+	if _origins_dirty or _origins.size() != _entries.size():
 		_origins.resize(_entries.size())
 		for i in _entries.size():
 			_origins[i] = _entries[i].transform.origin

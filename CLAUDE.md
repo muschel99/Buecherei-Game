@@ -197,7 +197,10 @@ docs/              Dokumentation
   nötig. Alle Bücher eines Raums sind **ein** MultiMesh (Shader `book_loose.gdshader`, Cover
   aus dem Cover-Atlas) – nie einzelne Knoten je Buch; Zielsuche nur in der Nähe.
   Der Raum verschiebt sie mit ihrem Möbelstück (`move_with`) und gibt sie beim Wegräumen (X)
-  ins Lager (`release_on`); gespeichert unter `loose_books` im Raum.
+  ins Lager (`release_on`); gespeichert unter `loose_books` im Raum. Ausgelegte Bücher haben
+  keine Kollision: Der Gestaltungsmodus prüft sie extra (`overlaps_shape`), die Spielfigur
+  über `pick_distance` (verglichen mit dem ersten festen Körper, nicht mit E-Bereichen).
+  Stapel = Bücher, die lückenlos aufeinander liegen (`LooseBooks.STACK_GAP`).
 - Bücher tragen: höchstens `GameConfig.max_carried_books`; `BookStock.carry(liste)` liefert,
   was nicht mehr passt; volle Hände ohne Text zeigen: `BookStock.show_hands_full()`
   (der Stapel in der Hand wackelt).
