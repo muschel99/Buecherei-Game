@@ -5,7 +5,6 @@ extends Node3D
 ## So baut man ein Bücherregal (siehe scenes/furniture/bookshelf.tscn):
 ## - In der Möbel-Szene einen Knoten mit diesem Script anlegen ("BookShelf").
 ## - Darunter für jedes Brett einen BookRow-Knoten (Reihenfolge = Reihenfolge beim Befüllen).
-## - Optional ein Marker3D "SignPoint": Dort hängt das Genre-Schild (Mitte, vorn).
 ## - Ein Interactable "Interactable" – ohne eigene Kollisionsform: Man trifft das Regal über
 ##   seinen festen Körper (Interactable.find_for), so bleibt Deko im Regal erreichbar.
 ## Jedes Brett bekommt automatisch eine Ablagefläche (PlacementSurface) für kleine Deko.
@@ -23,6 +22,8 @@ extends Node3D
 ## - E tippen: Regal-Menü (Genre wählen, aus dem Lager auffüllen, sortieren, alles zurück
 ##   ins Lager).
 ## - E halten: alle getragenen Bücher einräumen, die hierher passen.
+## Schaue ich ein Regal an, steht sein Genre als ruhiger Schriftzug unten in der Bildmitte
+## (GenreCaption) – Schilder am Regal gibt es nicht.
 ## Automatisches Einräumen (E halten, Auffüllen, Sortieren) füllt freie Plätze von links
 ## nach rechts, Brett für Brett.
 ##
@@ -47,9 +48,6 @@ const MIXED := "mixed"
 const SLIDE_DISTANCE := 0.26
 ## So lange rücken Bücher zur Seite oder zusammen (in Sekunden).
 const MOVE_TIME := 0.22
-## Größe des Genre-Schilds (Breite, Höhe in Metern).
-const SIGN_SIZE := Vector2(0.3, 0.075)
-const SIGN_TEXT_COLOR := Color(0.98, 0.94, 0.84)
 ## Kleiner Abstand zwischen zwei Büchern (in Metern, dazu je Buch ein Hauch Zufall)
 const BOOK_GAP := 0.0015
 ## Rechenungenauigkeit beim Vergleichen von Lagen (in Metern)
@@ -70,8 +68,6 @@ var _order: Array[Book] = []  # Reihenfolge im MultiMesh
 var _index: Dictionary = {}  # Book -> Nummer im MultiMesh
 var _clock := 0.0
 var _multimesh: MultiMesh
-var _sign_plate: MeshInstance3D
-var _sign_label: Label3D
 var _interactable: Interactable
 var _is_live := false  # steht wirklich im Raum (nicht Vorschau oder Foto)
 var _room: Room = null
@@ -101,7 +97,6 @@ func _ready() -> void:
 	books_instance.multimesh = _multimesh
 	books_instance.material_override = BookLook.get_material()
 	add_child(books_instance)
-	_create_sign()
 	set_process(false)
 	# Sobald alle Buchrücken gezeichnet sind, die Bücher damit zeigen
 	BookArt.atlas_ready.connect(_refresh_instances)
@@ -205,7 +200,6 @@ func set_genre(new_genre_id: String) -> int:
 			mismatched.append(book)
 	remove_books(mismatched)
 	_send_to_storage(mismatched)
-	_update_sign()
 	_changed()
 	return mismatched.size()
 
@@ -500,7 +494,6 @@ func load_contents_data(data: Dictionary) -> void:
 	# Passt etwas nicht mehr (z. B. weil das Regal umgebaut wurde), kommt es an eine
 	# andere freie Stelle – oder ins Lager
 	BookStock.store_books(add_books(overflow, false))
-	_update_sign()
 	_update_prompt()
 
 
@@ -840,6 +833,10 @@ func _find_aim(from: Vector3, direction: Vector3) -> Dictionary:
 
 
 func _on_aimed(from: Vector3, direction: Vector3) -> void:
+	if has_genre():
+		GenreCaption.show_text(self, get_genre_name())
+	else:
+		GenreCaption.hide_text(self)
 	_set_hover(_pick_book(from, direction))
 	var active := BookStock.get_active_book()
 	var aim := _find_aim(from, direction) if active else {}
@@ -848,6 +845,7 @@ func _on_aimed(from: Vector3, direction: Vector3) -> void:
 
 
 func _on_aim_ended() -> void:
+	GenreCaption.hide_text(self)
 	_set_hover(null)
 	_set_plan({})
 	_update_prompt()
@@ -1043,54 +1041,7 @@ func _update_ghost_shake(delta: float) -> void:
 		_ghost_shake = -1.0
 
 
-# --- Schild und Hinweis ---
-
-## Das kleine Genre-Schild vorn am Regal (Platzhalter: Brettchen mit Schrift).
-func _create_sign() -> void:
-	var point := get_node_or_null("SignPoint") as Node3D
-	if point == null:
-		return
-	_sign_plate = MeshInstance3D.new()
-	_sign_plate.name = "SignPlate"
-	var plate := BoxMesh.new()
-	plate.size = Vector3(SIGN_SIZE.x, SIGN_SIZE.y, 0.008)
-	_sign_plate.mesh = plate
-	var material := StandardMaterial3D.new()
-	material.roughness = 0.7
-	_sign_plate.material_override = material
-	_sign_plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	point.add_child(_sign_plate)
-	_sign_label = Label3D.new()
-	_sign_label.name = "SignLabel"
-	_sign_label.position = Vector3(0.0, 0.0, 0.0055)
-	_sign_label.double_sided = false
-	_sign_label.font_size = 48
-	_sign_label.outline_size = 0
-	_sign_label.modulate = SIGN_TEXT_COLOR
-	_sign_label.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	point.add_child(_sign_label)
-	_update_sign()
-
-
-func _update_sign() -> void:
-	if _sign_plate == null:
-		return
-	var visible_sign := has_genre()
-	_sign_plate.visible = visible_sign
-	_sign_label.visible = visible_sign
-	if not visible_sign:
-		return
-	var genre := Catalog.get_genre(genre_id)
-	var color := genre.get_main_color().darkened(0.15) if genre else Color(0.42, 0.33, 0.26)
-	# Helle Genre-Farben bekommen dunkle Schrift, damit man sie gut lesen kann
-	_sign_label.modulate = Color(0.16, 0.12, 0.1) if color.get_luminance() > 0.55 else SIGN_TEXT_COLOR
-	(_sign_plate.material_override as StandardMaterial3D).albedo_color = color
-	_sign_label.text = get_genre_name()
-	# Lange Namen etwas kleiner schreiben, damit sie aufs Schild passen
-	var font := _sign_label.font if _sign_label.font else ThemeDB.fallback_font
-	var text_width := font.get_string_size(_sign_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, _sign_label.font_size).x
-	_sign_label.pixel_size = minf(0.0011, SIGN_SIZE.x * 0.88 / maxf(text_width, 1.0))
-
+# --- Hinweise ---
 
 ## Tastensymbole unter der Bildmitte (höchstens zwei, je ein kurzes Wort):
 ## Rechtsklick = Abstellen, Linksklick = Nehmen, E halten = Einräumen, E tippen = Menü.

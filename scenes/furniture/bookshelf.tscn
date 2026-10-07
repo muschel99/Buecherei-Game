@@ -160,9 +160,6 @@ width = 1.1
 height = 0.42
 depth = 0.36
 
-[node name="SignPoint" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.94, 0.212)
-
 [node name="Interactable" type="Area3D" parent="BookShelf"]
 collision_layer = 2
 collision_mask = 0
