@@ -185,7 +185,7 @@ var store_books_hold_time: float = 0.6
 ## (nicht bei jedem flüchtigen Blick).
 var book_info_delay: float = 0.5
 ## So lange (in Sekunden) zeigt die Infokarte ein neues Buch obenauf in meiner Hand
-## (z. B. nach dem Nehmen oder Wechseln mit dem Mausrad).
+## (z. B. nach dem Nehmen oder Blättern mit E).
 var book_info_hand_time: float = 2.5
 
 ## Bücher frei ablegen (Tisch, Theke, Boden …): So weit (in Grad) liegt ein Buch zufällig
@@ -195,6 +195,12 @@ var loose_book_yaw_jitter: float = 6.0
 var loose_book_stack_max: int = 10
 ## So weit lehnt ein Buch an der Wand nach hinten (in Grad).
 var loose_book_lean_angle: float = 10.0
+## Drehen mit dem Mausrad vor dem Ablegen: Schritt in Grad pro Mausrad-Raste
+## (z. B. 5 = fast stufenlos, 90 = nur gerade Lagen).
+var book_turn_step: float = 15.0
+## An die Wand gelehnte Bücher lassen sich höchstens so weit (in Grad) zur Seite drehen –
+## weiter wäre das Cover nicht mehr zu sehen.
+var loose_book_lean_max_turn: float = 30.0
 ## Schaue ich auf eine Wand oder Möbelseite, wird bis so weit darunter (in Metern) ein Boden
 ## oder eine Ablage gesucht, auf die das Buch kommt.
 var loose_book_ground_reach: float = 0.8

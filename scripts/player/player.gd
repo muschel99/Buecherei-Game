@@ -12,7 +12,8 @@ extends CharacterBody3D
 ##   (Interactable.place_requested) oder frei in die Welt (WORLD_PLACER_GROUP).
 ## - Linksklick halten am Regal räumt alle passenden ein (place_all_requested, mit Ring,
 ##   GameConfig.place_all_hold_time). Ein kurzer Klick zählt erst beim Loslassen.
-## - Mausrad wechselt das Buch obenauf, Q halten legt alle getragenen Bücher ins Lager.
+## - Mausrad dreht das Buch obenauf vor dem freien Ablegen (LooseBooks.turn_active_book).
+## - Q halten legt alle getragenen Bücher ins Lager.
 ## Klicks zählen nur, solange der Mauszeiger gefangen ist (sonst fängt ein Klick ihn wieder).
 ## Alle Einstellwerte (Tempo, Mausempfindlichkeit ...) stehen in GameConfig.
 
@@ -98,9 +99,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_interact()
 	elif event.is_action_released("interact"):
 		_finish_interact()
-	elif (event.is_action_pressed("book_next") or event.is_action_pressed("book_previous")) \
-			and interaction_enabled and BookStock.carried.size() > 1:
-		BookStock.cycle_active(1 if event.is_action_pressed("book_next") else -1)
+	elif (event.is_action_pressed("book_rotate") or event.is_action_pressed("book_rotate_back")) \
+			and _can_use_mouse() and not BookStock.carried.is_empty():
+		# Mausrad: das Buch obenauf vor dem Ablegen drehen (nur frei in der Welt, nicht im Regal)
+		var placer := _get_world_placer()
+		if placer:
+			placer.turn_active_book(1.0 if event.is_action_pressed("book_rotate") else -1.0)
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		# Falls die Maus frei ist (z. B. nach einem Fensterwechsel): per Klick wieder fangen.
 		# Ist etwas offen (z. B. der Katalog), gehört der Mauszeiger dorthin.
