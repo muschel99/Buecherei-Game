@@ -15,7 +15,7 @@
 | 3   | Bücher und Regale                        | fertig        |
 | 3b  | Echte Bücher: Cover, Sammlung, einzeln einräumen | fertig |
 | 3c  | Freies Einräumen, Deko im Regal und weniger Text | fertig |
-| 3d  | Regalsteuerung, Etagen-Genres und Bücher als Deko | in Arbeit |
+| 3d  | Regalsteuerung, Etagen-Genres und Bücher als Deko | fertig |
 | 3e  | Tablet mit Apps und Lagerübersicht       | vorgemerkt    |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -238,18 +238,36 @@ Leitgedanke: mehr Freiheit beim Einräumen, weniger Text auf dem Bildschirm.
 - [x] Freie Buchpositionen, Deko im Regal und getragene Bücher werden gespeichert; ältere
       Spielstände laden weiter (Bücher ohne Lage stehen dicht von links)
 - Noch offen für später: Bücher frei auf Tische oder die Theke legen (bisher nur Regale und
-  Rückgabekasten)
+  Rückgabekasten) – erledigt in Etappe 3d
 
 ## Etappe 3d – Regalsteuerung, Etagen-Genres und Bücher als Deko
 Leitgedanke: Die Maus ist für Bücher da, E für alles andere – und Bücher dürfen überall liegen.
-- [x] Neue Maussteuerung: Rechtsklick nimmt ein Buch, Linksklick legt das Buch obenauf ab,
-      Linksklick halten am Regal räumt alle passenden ein, E halten am Regal öffnet das
-      Regal-Menü (E tippen nicht mehr); Haltezeiten getrennt in GameConfig
-- [x] Hinweise beim Tragen klein am unteren Rand (Ablegen, Einräumen, Lager)
-- [x] Eigenes Genre pro Regaletage, Schnellauswahl „Alle Etagen gleich“
-- [x] Bücher frei in der Welt ablegen (Tische, Theke, Fensterbank, Sitzmöbel, Boden), flach
-      mit Cover nach oben, kleine Stapel; wiederverwendbar für spätere Besucher
-- [ ] Speichern von Etagen-Genres und ausgelegten Büchern; alte Spielstände laden weiter
+- [x] Neue Maussteuerung: Rechtsklick nimmt ein Buch (Regal, Tisch, Boden, Rückgabekasten),
+      Linksklick legt das Buch obenauf genau dort ab, Linksklick halten am Regal räumt alle
+      passenden ein, E halten am Regal öffnet das Regal-Menü (E tippen nicht mehr);
+      Haltezeiten getrennt in GameConfig (`interact_hold_time`, `place_all_hold_time`,
+      `store_books_hold_time`); ein kurzer Klick zählt nie als Halten und umgekehrt
+- [x] Alles andere (Kartons, Lampen, Sitzen, Tür, Tablet, Rückgabekasten) bleibt bei E;
+      Gestaltungsmodus unverändert
+- [x] Hinweise beim Tragen klein am unteren Rand neben dem Stapel-Symbol (Ablegen, Einräumen,
+      Lager, Ring um Q beim Halten); beim Anschauen: Buch „Nehmen“ (Maus rechts), Regal
+      „Menü“ (E mit Halte-Ring); Tastenhilfe im Pausenmenü aktualisiert
+- [x] Eigenes Genre pro Regaletage (oder „Gemischt“); Regal-Menü zeigt alle Etagen mit eigener
+      Auswahl und der Schnellauswahl „Alle Etagen gleich“; Auffüllen, Einräumen und Sortieren
+      beachten die Etagen; der Schriftzug zeigt das Genre der angeschauten Etage
+- [x] Bücher frei in der Welt ablegen (Tische, Theke, Fensterbank, Sitzmöbel, Boden, jede
+      Ablagefläche): flach mit Cover nach oben, nach Blickrichtung ausgerichtet, leicht schräg;
+      Buch auf Buch = kleiner, versetzter Stapel (höchstens `GameConfig.loose_book_stack_max`)
+- [x] Aufrecht hinstellen ohne neue Taste: Linksklick an eine Wand = angelehnt (Cover nach
+      vorn), neben eine Buchstütze oder ein stehendes Buch = aufrecht in einer Reihe
+- [x] Ausgelegte Bücher gehören zum Bestand („Ausgelegt“ im Shop-Reiter Bestand), wandern mit
+      ihrem Möbelstück mit und kommen ins Lager, wenn es mit X weggeräumt wird
+- [x] Wiederverwendbares System für später (Besucher): `LooseBooks.place` / `remove` /
+      `find_spot`; Zustand „aufgeschlagen“ ist im Datenformat vorgesehen (`LooseBook.Pose.OPEN`)
+- [x] Leistung: alle ausgelegten Bücher eines Raums in einem einzigen Zeichenaufruf (MultiMesh
+      mit Cover-Atlas), Zielsuche nur in der Nähe
+- [x] Speichern von Etagen-Genres und ausgelegten Büchern; alte Spielstände laden weiter
+      (bisheriges Regal-Genre gilt für alle Etagen, keine ausgelegten Bücher)
 
 ## Etappe 3e – Tablet mit Apps und Lagerübersicht (vorgemerkt)
 - Noch nicht begonnen. Idee: Das Tablet bekommt Apps (z. B. Shop, Bestand, Sammlung) und eine
