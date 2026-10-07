@@ -9,7 +9,8 @@ extends CanvasLayer
 ##   darauf stehen die Kartons vor der Tür. Bücherpakete gibt es je freigeschaltetem Genre.
 ## - Reiter "Verkaufen": Möbel aus dem Inventar (nicht die im Raum) gegen einen Teil des
 ##   Preises (GameConfig.sell_price_share).
-## - Reiter "Bestand": wie viele Bücher je Genre ich habe – im Regal, im Lager, unterwegs.
+## - Reiter "Bestand": wie viele Bücher je Genre ich habe – im Regal, im Lager, ausgelegt,
+##   unterwegs.
 ## - Reiter "Sammlung": alle Titel eines Genres mit Cover; unentdeckte als "?". Ein Klick auf
 ##   ein Buch im Lager legt es obenauf in die Hand.
 ## Öffnen: E am Tablet. Schließen: Esc oder "Schließen" (Esc-Regel über MenuStack).
@@ -512,11 +513,11 @@ func sell(data: FurnitureData) -> void:
 
 # --- Bestand ---
 
-const STOCK_COLUMNS := ["Genre", "Im Regal", "Im Lager", "Unterwegs", "Gesamt", "Sammlung"]
+const STOCK_COLUMNS := ["Genre", "Im Regal", "Im Lager", "Ausgelegt", "Unterwegs", "Gesamt", "Sammlung"]
 
 
-## Die Bestandsliste: je Genre, wie viele Bücher im Regal, im Lager und unterwegs
-## (getragen oder im Rückgabekasten) sind.
+## Die Bestandsliste: je Genre, wie viele Bücher im Regal, im Lager, ausgelegt (auf Tischen,
+## dem Boden …) und unterwegs (getragen oder im Rückgabekasten) sind.
 func _refresh_stock() -> void:
 	for child in _stock_grid.get_children():
 		_stock_grid.remove_child(child)
@@ -524,7 +525,7 @@ func _refresh_stock() -> void:
 	_stock_grid.columns = STOCK_COLUMNS.size()
 	for i in STOCK_COLUMNS.size():
 		_add_stock_cell(STOCK_COLUMNS[i], MUTED_COLOR, i > 0)
-	var sums := [0, 0, 0, 0, 0, 0]
+	var sums := [0, 0, 0, 0, 0, 0, 0]
 	for entry in BookStock.get_overview():
 		var genre: GenreData = entry.genre
 		var name_row := HBoxContainer.new()
@@ -539,17 +540,17 @@ func _refresh_stock() -> void:
 		name_row.add_child(icon)
 		name_row.add_child(_small_label(genre.display_name, 17, TEXT_COLOR))
 		_stock_grid.add_child(name_row)
-		var values := [entry.shelves, entry.stored, entry.elsewhere, entry.total]
+		var values := [entry.shelves, entry.stored, entry.loose, entry.elsewhere, entry.total]
 		for i in values.size():
 			sums[i] += values[i]
-			_add_stock_cell(str(values[i]), KEY_COLOR if i == 3 else TEXT_COLOR, true)
+			_add_stock_cell(str(values[i]), KEY_COLOR if i == 4 else TEXT_COLOR, true)
 		_add_stock_cell("%d / %d" % [entry.discovered, entry.catalog], MUTED_COLOR, true)
-		sums[4] += entry.discovered
-		sums[5] += entry.catalog
+		sums[5] += entry.discovered
+		sums[6] += entry.catalog
 	_add_stock_cell("Zusammen", MUTED_COLOR, false)
-	for i in 4:
+	for i in 5:
 		_add_stock_cell(str(sums[i]), KEY_COLOR, true)
-	_add_stock_cell("%d / %d" % [sums[4], sums[5]], KEY_COLOR, true)
+	_add_stock_cell("%d / %d" % [sums[5], sums[6]], KEY_COLOR, true)
 
 	var carried := BookStock.carried.size()
 	_store_carried_button.visible = carried > 0
@@ -614,6 +615,10 @@ func _refresh_collection() -> void:
 	var total := {}
 	var stored := {}
 	var shelved := {}
+	var loose := {}
+	for layer in get_tree().get_nodes_in_group(BookStock.LOOSE_GROUP):
+		for book: Book in layer.get_books():
+			loose[book.data.id] = int(loose.get(book.data.id, 0)) + 1
 	for book in BookStock.get_all_owned_books():
 		total[book.data.id] = int(total.get(book.data.id, 0)) + 1
 	for book in BookStock.get_stored_books(_collection_genre):
@@ -626,12 +631,15 @@ func _refresh_collection() -> void:
 		var known := BookStock.is_discovered(data.id)
 		var in_storage := int(stored.get(data.id, 0))
 		var on_shelf := int(shelved.get(data.id, 0))
-		var elsewhere := int(total.get(data.id, 0)) - in_storage - on_shelf
+		var laid_out := int(loose.get(data.id, 0))
+		var elsewhere := int(total.get(data.id, 0)) - in_storage - on_shelf - laid_out
 		var notes: Array[String] = []
 		if in_storage > 0:
 			notes.append("%d im Lager" % in_storage)
 		if on_shelf > 0:
 			notes.append("%d im Regal" % on_shelf)
+		if laid_out > 0:
+			notes.append("%d ausgelegt" % laid_out)
 		if elsewhere > 0:
 			notes.append("%d unterwegs" % elsewhere)
 		if known and notes.is_empty():

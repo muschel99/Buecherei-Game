@@ -299,9 +299,10 @@ theme_override_colors/font_color = Color(0.85, 0.78, 0.68, 0.9)
 theme_override_font_sizes/font_size = 15
 text = "Im Regal: steht in einem Bücherregal.
 Im Lager: wartet darauf, eingeräumt zu werden.
+Ausgelegt: liegt frei auf einem Tisch, der Theke, dem Boden …
 Unterwegs: trägst du gerade oder liegt im Rückgabekasten.
 
-Neue Bücher gibt es unter „Kaufen“ → „Bücher“. Am Regal: E tippen = ein Buch nehmen oder einstellen, E halten = alle passenden einräumen bzw. Regal-Menü."
+Neue Bücher gibt es unter „Kaufen“ → „Bücher“. Rechtsklick nimmt ein Buch, Linksklick legt es ab; am Regal räumt Linksklick halten alle passenden ein, E halten öffnet das Regal-Menü."
 autowrap_mode = 3
 
 [node name="StoreCarriedButton" type="Button" parent="Window/VBox/StockView/StockInfoPanel/VBox"]

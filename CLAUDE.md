@@ -34,8 +34,8 @@ scenes/            Szenen (.tscn)
   rooms/           Räume des Hauses
   furniture/       Möbel (je eine Szene, Modell austauschbar)
   objects/         Interaktive Objekte (Stehlampe, Lieferkarton; Scripts: LightSource, Seating,
-                   Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox;
-                   player/: HeldBook = Buch in der Hand)
+                   Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox,
+                   LooseBooks = ausgelegte Bücher; player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
   ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Shop, Hinweise,
                    Stil-Anzeige, Regal-Menü, Trage-Anzeige, Buch-Infokarte, Genre-Schriftzug,
@@ -45,7 +45,8 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
                    Wallet, Inventory, BookStock, BookArt, DebugKeys)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
-  data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, BookData, Book)
+  data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, BookData, Book,
+                   LooseBook)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
 data/
@@ -68,9 +69,11 @@ docs/              Dokumentation
 - Physik-Ebenen: 1 = `world`, 2 = `interactable`, 3 = `player`, 4 = `furniture`,
   5 = `build_blocker` (Sperrzonen für den Gestaltungsmodus, z. B. vor der Eingangstür),
   6 = `placement_surface` (Ablageflächen).
-- **Jede Interaktion in der Spielwelt läuft über E.** Ausnahme Bücher: Linksklick nimmt,
-  Rechtsklick stellt ab (Interactable-Signale `clicked` / `right_clicked`; nur im Spiel bei
-  gefangener Maus, nie im Gestaltungsmodus oder in Menüs).
+- **Jede Interaktion in der Spielwelt läuft über E.** Ausnahme Bücher (die Maus ist für Bücher
+  da): Rechtsklick nimmt ein Buch, Linksklick legt das Buch obenauf ab, Linksklick halten am
+  Regal räumt alle passenden ein (Interactable-Signale `take_requested`, `place_requested`,
+  `place_all_requested`; nur im Spiel bei gefangener Maus, nie im Gestaltungsmodus oder in
+  Menüs). Das Regal-Menü öffnet sich mit **E halten**, nicht mit E tippen.
 - **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
   `MenuStack.open(self)` an und hat `close_from_escape()`. Esc schließt immer zuerst das
   Oberste; nur wenn nichts offen ist, öffnet sich das Pausenmenü.
@@ -135,7 +138,8 @@ docs/              Dokumentation
   `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete` (X),
   `build_paint_all` (Umschalt), `toggle_fps` (F3), `debug_fill_return_box` (F9, Testtaste),
   `debug_add_money` (F10, Testtaste), `book_next`/`book_previous` (Mausrad, Buch obenauf
-  wechseln), `book_take` (linke Maustaste), `book_place` (rechte Maustaste),
+  wechseln), `book_take` (rechte Maustaste), `book_place` (linke Maustaste; halten am Regal
+  = alle einräumen),
   `store_books` (Q halten: alle getragenen Bücher ins Lager).
 - Möbel-Knoten in Szenen können ihre Nummer (`uid`) und ihr Trägermöbel (`support_uid`) fest
   eintragen (z. B. Tablet auf der Theke).
@@ -147,21 +151,29 @@ docs/              Dokumentation
   ein Exemplar ist `Book` (`book.data`, Zustand). Bücher sind keine Knoten, sondern Daten;
   der Bestand (`BookStock`) kennt Lager, Getragenes (`carried`, Buch obenauf:
   `get_active_book()`) und die Sammlung (`is_discovered`), zählt Regale (Gruppe
-  `book_shelves`) und Rückgabekästen (Gruppe `return_boxes`) mit.
+  `book_shelves`), Rückgabekästen (Gruppe `return_boxes`) und ausgelegte Bücher (Gruppe
+  `LooseBooks.GROUP`) mit.
   Freigeschaltet: `BookStock.is_genre_unlocked(id)` / `unlock_genre(id)`.
 - Bücher: einzeln möglich, aber nie nötig – alles Einzelne hat eine Sammel-Variante (Auffüllen,
   alle einräumen, sortieren); nie Zeitdruck (Gemütlichkeit vor Arbeit).
 - Cover und Buchrücken zeichnet `BookCover` (Gestaltungen in `BookData.STYLES`); `BookArt`
-  macht daraus den Atlas aller Rücken (Regale) und Cover-Bilder (`request_cover`).
+  macht daraus den Atlas aller Rücken (Regale), Cover-Bilder (`request_cover`) und einen
+  Cover-Atlas für ausgelegte Bücher (`retain_cover` / `release_cover`, Feld per `get_cover_slot`).
 - **E tippen / E halten:** Ein Interactable mit `supports_hold` unterscheidet kurz (Signal
   `interacted`, beim Loslassen) und lang (Signal `held`, `GameConfig.interact_hold_time`).
+  Genauso Linksklick: `handles_placing` = das Objekt nimmt Bücher selbst an (Signal
+  `place_requested`); mit `supports_place_all` zählt Halten als „alle einräumen“
+  (`place_all_requested`, `GameConfig.place_all_hold_time`). Ein kurzer Druck ist nie Halten
+  und umgekehrt; während der Ring läuft, passiert nichts anderes. Q halten:
+  `GameConfig.store_books_hold_time`.
   `aimed(from, richtung)` meldet jedes Bild den Blick (z. B. welches Buch im Regal);
   `highlight_owner = false` = Objekt hebt selbst hervor.
 - **Weniger Text:** Unter der Bildmitte nur kleine Tastensymbole mit höchstens einem Wort
   (`KeyHints`, `KeyHintIcon`). Die Wörter kommen aus dem Interactable: `prompt_text` (E),
-  `hold_prompt_text` (E halten, Ring ums Symbol), `click_text` (linke Maustaste),
-  `right_click_text` (rechte Maustaste) – immer **ein** kurzes Wort („Öffnen“, „Sitzen“,
-  „An“), leer = kein Symbol. Keine Sätze im Spielbild; Erklärungen gehören in die Tastenhilfe
+  `hold_prompt_text` (E halten, Ring ums Symbol), `take_text` (rechte Maustaste, „Nehmen“)
+  – immer **ein** kurzes Wort („Öffnen“, „Sitzen“, „An“), leer = kein Symbol. Hinweise beim
+  Tragen (Ablegen, Einräumen, Lager) zeigt die Trage-Anzeige unten (`CarryIndicator`,
+  `show_hints`, Ring um Q beim Halten). Keine Sätze im Spielbild; Erklärungen gehören in die Tastenhilfe
   im Pausenmenü. Spieler-Einstellung „Hinweise“: `Settings` `interface/hints`.
 - Bücherregale: Knoten `BookShelf` mit `BookRow`-Fächern (Ursprung = Mitte der Brett-Oberkante)
   und einem `Interactable` **ohne eigene Kollisionsform** (getroffen wird der Körper des
@@ -171,6 +183,24 @@ docs/              Dokumentation
   steht (Möbel mit `support_uid` = Regal), kommen keine Bücher hin. Alle Bücher eines Regals
   sind ein MultiMesh (Shader `book_spine.gdshader`, Rücken aus dem Atlas) – nie einzelne
   Knoten je Buch. Das Genre zeigt beim Anschauen `GenreCaption.show_text(self, "Krimi")`.
+- Regaletagen: Jedes Brett hat ein eigenes Genre (`BookShelf.row_genres`, "" = Gemischt;
+  `get_row_genre(row)`, `set_row_genre(row, id)`, `row_accepts(row, genre)`; `set_genre(id)` =
+  alle Etagen gleich). Auffüllen, Einräumen und Sortieren beachten die Etagen; was nirgends
+  passt, bleibt in der Hand. Ältere Spielstände: das alte Regal-Genre gilt für alle Etagen.
+- **Ausgelegte Bücher** (frei in der Welt, z. B. auf Tischen): ein `LooseBooks`-Knoten je Raum
+  (`room.loose_books`), jedes Buch ein `LooseBook` (Exemplar, Lage, `support_uid` = Möbel
+  darunter, `pose` FLAT/UPRIGHT/LEANING/OPEN – OPEN „aufgeschlagen“ ist vorgesehen, aber noch
+  nicht umgesetzt). Ablegen geht überall, wo Deko hindarf (Ablageflächen, Boden), flach mit
+  Cover oben; an Wänden angelehnt, neben Buchstützen (Unterkategorie `bookend`) oder
+  stehenden Büchern aufrecht. Für spätere Besucher: `find_spot(from, richtung, buch)`,
+  `place(buch, lage, support_uid, pose)`, `remove(eintrag)` – keine Spieler-Logik darin
+  nötig. Alle Bücher eines Raums sind **ein** MultiMesh (Shader `book_loose.gdshader`, Cover
+  aus dem Cover-Atlas) – nie einzelne Knoten je Buch; Zielsuche nur in der Nähe.
+  Der Raum verschiebt sie mit ihrem Möbelstück (`move_with`) und gibt sie beim Wegräumen (X)
+  ins Lager (`release_on`); gespeichert unter `loose_books` im Raum. Ausgelegte Bücher haben
+  keine Kollision: Der Gestaltungsmodus prüft sie extra (`overlaps_shape`), die Spielfigur
+  über `pick_distance` (verglichen mit dem ersten festen Körper, nicht mit E-Bereichen).
+  Stapel = Bücher, die lückenlos aufeinander liegen (`LooseBooks.STACK_GAP`).
 - Bücher tragen: höchstens `GameConfig.max_carried_books`; `BookStock.carry(liste)` liefert,
   was nicht mehr passt; volle Hände ohne Text zeigen: `BookStock.show_hands_full()`
   (der Stapel in der Hand wackelt).

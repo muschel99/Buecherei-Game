@@ -116,33 +116,33 @@ text = "E"
 [node name="Action3" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Benutzen: Lampen, Tür, Sitzen, Kartons, Tablet (Shop)"
 
-[node name="KeyShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "E am Regal"
-
-[node name="ActionShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Regal-Menü: Genre, auffüllen, sortieren, Buch wählen"
-
-[node name="KeyHold" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "E halten am Regal"
-
-[node name="ActionHold" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Alle getragenen Bücher einräumen, die passen"
-
 [node name="KeyTake" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "Linksklick"
-
-[node name="ActionTake" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Buch nehmen (Regal, Rückgabekasten) – bis zu 7 tragen"
-
-[node name="KeyPlace" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "Rechtsklick"
 
+[node name="ActionTake" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Buch nehmen (Regal, Tisch, Rückgabekasten …) – bis zu 7 tragen"
+
+[node name="KeyPlace" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Linksklick"
+
 [node name="ActionPlace" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Buch obenauf genau dort ins Regal stellen, wo du hinschaust"
+text = "Buch obenauf genau dort ablegen, wo du hinschaust"
+
+[node name="KeyHold" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Linksklick halten am Regal"
+
+[node name="ActionHold" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Alle getragenen Bücher einräumen, die zu den Etagen passen"
+
+[node name="KeyShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "E halten am Regal"
+
+[node name="ActionShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Regal-Menü: Genres der Etagen, auffüllen, sortieren, Buch wählen"
 
 [node name="KeyWheel" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

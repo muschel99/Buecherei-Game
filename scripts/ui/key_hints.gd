@@ -1,18 +1,23 @@
 class_name KeyHints
 extends HBoxContainer
 ## Die Hinweise unter der Bildmitte: kleine Tastensymbole, höchstens mit einem kurzen Wort
-## daneben (z. B. [E] Öffnen, [Maus links] Nehmen). Keine Sätze – ausführliche Erklärungen
-## stehen in der Tastenhilfe im Pausenmenü.
+## daneben (z. B. [E] Öffnen, [Maus rechts] Nehmen). Keine Sätze – ausführliche Erklärungen
+## stehen in der Tastenhilfe im Pausenmenü. Das HUD nutzt zwei davon: unter der Bildmitte
+## (was das angeschaute Objekt kann) und unten neben dem Bücherstapel (Tragehinweise).
 ##
 ## show_hints(liste): Jeder Eintrag ist ein Dictionary { "input": …, "word": … }.
 ##   "input": "interact" (E tippen), "interact_hold" (E halten, mit Ring),
-##            "click" (linke Maustaste), "right_click" (rechte Maustaste),
-##            "store_hold" (Q halten, mit Ring)
+##            "take" (Buch nehmen, Maustaste der Aktion "book_take"),
+##            "place" (Buch ablegen, Maustaste der Aktion "book_place"),
+##            "place_all" (Ablegen-Taste halten, mit Ring), "store_hold" (Q halten, mit Ring)
 ## Wie viel zu sehen ist, stellt der Spieler im Pausenmenü unter Einstellungen → "Hinweise"
 ## ein (Aus, Nur Symbole, Symbol mit Wort; siehe Settings).
 
 const WORD_COLOR := Color(1.0, 0.96, 0.88, 0.95)
 const FADE_TIME := 0.15
+
+## Kleinere Schrift und enger (für die Tragehinweise am unteren Rand).
+var compact: bool = false
 
 var _shown: Array = []
 var _mode_shown := -1
@@ -27,19 +32,26 @@ func _init() -> void:
 	modulate.a = 0.0
 
 
-## Zeigt diese Hinweise (eine leere Liste blendet sie aus).
-func show_hints(hints: Array) -> void:
+## Zeigt diese Hinweise (eine leere Liste blendet sie aus). Liefert true, wenn sich etwas
+## geändert hat.
+func show_hints(hints: Array) -> bool:
 	var mode := int(Settings.get_value("interface/hints"))
 	var wanted: Array = [] if mode == Settings.HINTS_OFF else hints
 	if wanted == _shown and mode == _mode_shown:
-		return
+		return false
 	_mode_shown = mode
 	_shown = wanted.duplicate(true)
 	if _shown.is_empty():
 		_fade(0.0)  # die alten Symbole blenden sanft aus
-		return
+		return true
 	_rebuild(mode == Settings.HINTS_WORDS)
 	_fade(1.0)
+	return true
+
+
+## Sind gerade Symbole zu sehen?
+func is_showing() -> bool:
+	return not _shown.is_empty()
 
 
 ## Fortschritt beim Gedrückthalten (Ring um das Symbol). Liefert false, wenn das Symbol gerade
@@ -64,19 +76,19 @@ func _rebuild(with_words: bool) -> void:
 		var input: String = hint.get("input", "interact")
 		var item := HBoxContainer.new()
 		item.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		item.add_theme_constant_override("separation", 4)
+		item.add_theme_constant_override("separation", 2 if compact else 4)
 		var icon := KeyHintIcon.new()
 		match input:
-			"click":
-				icon.kind = KeyHintIcon.Kind.MOUSE_LEFT
-			"right_click":
-				icon.kind = KeyHintIcon.Kind.MOUSE_RIGHT
+			"take":
+				_setup_icon(icon, "book_take", false)
+			"place":
+				_setup_icon(icon, "book_place", false)
+			"place_all":
+				_setup_icon(icon, "book_place", true)
 			"store_hold":
-				icon.key_text = _key_name("store_books")
-				icon.is_hold = true
+				_setup_icon(icon, "store_books", true)
 			_:
-				icon.key_text = _key_name("interact")
-				icon.is_hold = input == "interact_hold"
+				_setup_icon(icon, "interact", input == "interact_hold")
 		item.add_child(icon)
 		_icons[input] = icon
 		var word: String = hint.get("word", "")
@@ -84,7 +96,7 @@ func _rebuild(with_words: bool) -> void:
 			var label := Label.new()
 			label.text = word
 			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			label.add_theme_font_size_override("font_size", 16)
+			label.add_theme_font_size_override("font_size", 14 if compact else 16)
 			label.add_theme_color_override("font_color", WORD_COLOR)
 			label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 			label.add_theme_constant_override("shadow_offset_x", 1)
@@ -99,6 +111,19 @@ func _fade(alpha: float) -> void:
 		_tween.kill()
 	_tween = create_tween().set_trans(Tween.TRANS_SINE)
 	_tween.tween_property(self, "modulate:a", alpha, FADE_TIME)
+
+
+## Symbol passend zur Taste einer Aktion: Maus links/rechts oder eine Taste mit Buchstaben.
+## So stimmen die Symbole auch, wenn die Tasten später anders belegt werden.
+static func _setup_icon(icon: KeyHintIcon, action: StringName, hold: bool) -> void:
+	icon.is_hold = hold
+	for event in InputMap.action_get_events(action):
+		if event is InputEventMouseButton:
+			icon.kind = KeyHintIcon.Kind.MOUSE_RIGHT if event.button_index == MOUSE_BUTTON_RIGHT \
+				else KeyHintIcon.Kind.MOUSE_LEFT
+			return
+	icon.kind = KeyHintIcon.Kind.KEY
+	icon.key_text = _key_name(action)
 
 
 ## Tastenname einer Aktion (z. B. "E"), damit das Symbol auch nach einer Tastenänderung stimmt.

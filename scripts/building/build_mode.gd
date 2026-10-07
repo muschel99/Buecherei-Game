@@ -279,6 +279,8 @@ func _pick_up(item: PlacedFurniture) -> void:
 	for piece: PlacedFurniture in [item] + _moving_extras:
 		piece.set_collision_enabled(false)
 		piece.visible = false
+	# Bücher, die darauf liegen, verschwinden solange (sie wandern beim Abstellen mit)
+	_room.loose_books.set_hidden_on(_room.get_uids(item, _moving_extras), true)
 	# Die bisherige Ausrichtung bleibt relativ zu meinem Blick erhalten
 	_rotation_offset = rad_to_deg(item.rotation.y) - _player_yaw_degrees()
 	_preview.setup(item.data, extras)
@@ -294,6 +296,8 @@ func _finish_move() -> void:
 		if is_instance_valid(piece):
 			piece.set_collision_enabled(true)
 			piece.visible = true
+	if is_instance_valid(_moving_item):
+		_room.loose_books.set_hidden_on(_room.get_uids(_moving_item, _moving_extras), false)
 	_moving_item = null
 	_moving_extras.clear()
 	_clear_tool()
@@ -677,6 +681,9 @@ func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
 			if FurnitureUtils.find_placed_furniture(other):
 				return "Hier ist schon etwas."
 			return "Zu nah an der Wand."
+		# Ausgelegte Bücher haben keine Kollision – sie werden extra geprüft
+		if _room.loose_books and _room.loose_books.overlaps_shape(query.shape, query.transform):
+			return "Hier liegen Bücher."
 	return ""
 
 

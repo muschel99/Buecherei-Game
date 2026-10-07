@@ -5,9 +5,10 @@ extends Node
 ## - im Lager (hier gespeichert, nach Genre sortiert),
 ## - in einem Regal (BookShelf, gespeichert mit dem Regal im Raum),
 ## - im Rückgabekasten (ReturnBox, ebenfalls mit dem Raum gespeichert),
+## - ausgelegt: frei auf einem Tisch, der Theke, dem Boden … (LooseBooks, mit dem Raum gespeichert),
 ## - oder in meinen Händen (carried, hier gespeichert). Eins davon liegt obenauf und ist
-##   "aktiv" – das stelle ich mit der rechten Maustaste einzeln ins Regal (Mausrad
-##   wechselt). Ich trage höchstens GameConfig.max_carried_books Bücher.
+##   "aktiv" – das lege ich mit der linken Maustaste einzeln ab, ins Regal oder frei in die
+##   Welt (Mausrad wechselt). Ich trage höchstens GameConfig.max_carried_books Bücher.
 ## Außerdem merkt sich der Bestand
 ## - die Sammlung: welche Titel ich schon entdeckt habe (Bücherpakete bringen bevorzugt neue),
 ## - welche Genres freigeschaltet sind.
@@ -25,6 +26,8 @@ signal hands_full
 ## Gruppen der Regale und Rückgabekästen im Raum (zum Zählen).
 const SHELF_GROUP := "book_shelves"
 const RETURN_BOX_GROUP := "return_boxes"
+## Gruppe der Knoten mit ausgelegten Büchern (LooseBooks, einer je Raum).
+const LOOSE_GROUP := "loose_book_layers"
 
 ## Name im Spielstand.
 var save_key: String = "books"
@@ -140,6 +143,8 @@ func get_all_owned_books() -> Array[Book]:
 		result.append_array(shelf.get_books())
 	for box in get_tree().get_nodes_in_group(RETURN_BOX_GROUP):
 		result.append_array(box.get_books())
+	for layer in get_tree().get_nodes_in_group(LOOSE_GROUP):
+		result.append_array(layer.get_books())
 	return result
 
 
@@ -331,6 +336,22 @@ func take_carried(genre_id: String, limit: int = -1) -> Array[Book]:
 	return result
 
 
+## Gibt die getragenen Bücher ab, für die die Bedingung gilt (z. B. "passt in dieses Regal").
+func take_carried_where(condition: Callable) -> Array[Book]:
+	var result: Array[Book] = []
+	var kept: Array[Book] = []
+	for book in carried:
+		if condition.call(book):
+			result.append(book)
+		else:
+			kept.append(book)
+	if not result.is_empty():
+		carried = kept
+		active_index = clampi(active_index, 0, maxi(carried.size() - 1, 0))
+		_carried_changed()
+	return result
+
+
 ## Legt Bücher zurück in die Hand, ohne das Buch obenauf zu wechseln
 ## (z. B. die, die doch nicht ins Regal gepasst haben).
 func return_to_hand(books: Array) -> void:
@@ -392,9 +413,17 @@ func count_in_return_boxes(genre_id: String) -> int:
 	return count
 
 
+## Wie viele Bücher dieses Genres liegen ausgelegt herum (Tische, Theke, Boden …)?
+func count_loose(genre_id: String) -> int:
+	var count := 0
+	for layer in get_tree().get_nodes_in_group(LOOSE_GROUP):
+		count += layer.count_books(genre_id)
+	return count
+
+
 ## Übersicht je Genre für die Bestandsliste am Tablet: Liste von
-## { "genre": GenreData, "shelves": …, "stored": …, "elsewhere": …, "total": …,
-##   "discovered": …, "catalog": … }.
+## { "genre": GenreData, "shelves": …, "stored": …, "loose": …, "elsewhere": …, "total": …,
+##   "discovered": …, "catalog": … }. "loose" = ausgelegt.
 ## "elsewhere" = getragen oder im Rückgabekasten; "discovered"/"catalog" = Sammlung
 ## (entdeckte Titel / Titel im Genre). Gesperrte Genres erscheinen nur, wenn ich davon
 ## Bücher habe.
@@ -406,9 +435,10 @@ func get_overview() -> Array[Dictionary]:
 		var shelves := count_in_shelves(id)
 		var stored := get_stored_count(id)
 		var elsewhere := int(carried_counts.get(id, 0)) + count_in_return_boxes(id)
-		var total := shelves + stored + elsewhere
+		var loose := count_loose(id)
+		var total := shelves + stored + loose + elsewhere
 		if total > 0 or is_genre_unlocked(id):
-			result.append({"genre": genre, "shelves": shelves, "stored": stored, "elsewhere": elsewhere,
+			result.append({"genre": genre, "shelves": shelves, "stored": stored, "loose": loose, "elsewhere": elsewhere,
 				"total": total, "discovered": get_discovered_count(id),
 				"catalog": Catalog.get_books_of_genre(id).size()})
 	return result
@@ -417,7 +447,7 @@ func get_overview() -> Array[Dictionary]:
 ## Alle Bücher dieses Genres, die mir gehören (überall).
 func count_total(genre_id: String) -> int:
 	return get_stored_count(genre_id) + count_in_shelves(genre_id) + count_in_return_boxes(genre_id) \
-		+ int(get_carried_counts().get(genre_id, 0))
+		+ count_loose(genre_id) + int(get_carried_counts().get(genre_id, 0))
 
 
 # --- Startgeschenke ---

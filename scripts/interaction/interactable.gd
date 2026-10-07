@@ -8,9 +8,12 @@ extends Area3D
 ## 3. Trage im Inspektor bei "Prompt Text" ein kurzes Wort ein (z. B. "Öffnen"). Es erscheint
 ##    neben dem E-Symbol unter der Bildmitte (je nach Einstellung "Hinweise").
 ## 4. Verbinde das Signal "interacted" mit einer Funktion deines Objekts.
-## Bücher und Ähnliches nutzen zusätzlich die Maustasten: Signale "clicked" (links, z. B.
-## Buch nehmen) und "right_clicked" (rechts, z. B. Buch abstellen), Wörter in click_text
-## und right_click_text.
+## Bücher nutzen zusätzlich die Maustasten (Tasten siehe Aktionen "book_take"/"book_place"):
+## - Signal "take_requested": ein Buch nehmen (rechte Maustaste), Wort in take_text.
+## - Signal "place_requested": das Buch obenauf abstellen (linke Maustaste kurz) – nur bei
+##   Objekten mit handles_placing (z. B. Regal); sonst legt es die Spielfigur frei in die Welt.
+## - Signal "place_all_requested": alle passenden Bücher einräumen (linke Maustaste halten) –
+##   nur bei supports_place_all.
 ##
 ## Man muss nicht genau den Interactable-Bereich treffen: Schaut man auf den festen Körper
 ## des Objekts (z. B. von oben auf einen Karton oder von hinten auf einen Sessel), findet
@@ -21,10 +24,12 @@ extends Area3D
 signal interacted(interactor: Node)
 ## Nur bei supports_hold: E wurde gedrückt gehalten (GameConfig.interact_hold_time).
 signal held(interactor: Node)
-## Linke Maustaste, während die Spielfigur das Objekt ansieht (z. B. ein Buch nehmen).
-signal clicked(interactor: Node)
-## Rechte Maustaste, während die Spielfigur das Objekt ansieht (z. B. ein Buch abstellen).
-signal right_clicked(interactor: Node)
+## Ein Buch nehmen (rechte Maustaste), während die Spielfigur das Objekt ansieht.
+signal take_requested(interactor: Node)
+## Das Buch obenauf hier abstellen (linke Maustaste kurz) – nur bei handles_placing.
+signal place_requested(interactor: Node)
+## Alle passenden Bücher hier einräumen (linke Maustaste gehalten) – nur bei supports_place_all.
+signal place_all_requested(interactor: Node)
 ## Wird jedes Bild gesendet, solange die Spielfigur das Objekt ansieht – mit Blickstrahl
 ## (Start und Richtung in der Welt). So kann ein Regal z. B. das angeschaute Buch finden.
 signal aimed(from: Vector3, direction: Vector3)
@@ -35,13 +40,17 @@ signal aim_ended
 @export var prompt_text: String = "Benutzen"
 ## Wort für langes Drücken (E-Symbol mit Ring), leer = keins.
 @export var hold_prompt_text: String = ""
-## Wort neben dem Symbol der linken Maustaste (z. B. "Nehmen"), leer = keins.
-@export var click_text: String = ""
-## Wort neben dem Symbol der rechten Maustaste (z. B. "Abstellen"), leer = keins.
-@export var right_click_text: String = ""
-## Kann man E auch gedrückt halten (z. B. Regal: tippen = ein Buch, halten = alle)?
+## Wort neben dem Symbol fürs Buch-Nehmen (rechte Maustaste, z. B. "Nehmen"), leer = keins.
+@export var take_text: String = ""
+## Kann man E auch gedrückt halten (z. B. Regal: halten = Regal-Menü)?
 ## Dann zählt ein kurzes Tippen erst beim Loslassen.
 @export var supports_hold: bool = false
+## Nimmt dieses Objekt Bücher selbst entgegen (linke Maustaste, z. B. Regal)? Sonst legt die
+## Spielfigur das Buch frei in die Welt (LooseBooks).
+@export var handles_placing: bool = false
+## Kann man die linke Maustaste gedrückt halten, um alle passenden Bücher einzuräumen?
+## Dann zählt ein kurzer Klick erst beim Loslassen.
+@export var supports_place_all: bool = false
 ## Soll das ganze Objekt aufleuchten, wenn man es ansieht? (Regale heben stattdessen das
 ## angeschaute Buch hervor.)
 @export var highlight_owner: bool = true
@@ -103,16 +112,22 @@ func hold(interactor: Node) -> void:
 		held.emit(interactor)
 
 
-## Linke Maustaste (von der Spielfigur aufgerufen).
-func click(interactor: Node) -> void:
+## Buch nehmen (von der Spielfigur aufgerufen).
+func request_take(interactor: Node) -> void:
 	if is_enabled:
-		clicked.emit(interactor)
+		take_requested.emit(interactor)
 
 
-## Rechte Maustaste (von der Spielfigur aufgerufen).
-func right_click(interactor: Node) -> void:
+## Buch obenauf abstellen (von der Spielfigur aufgerufen).
+func request_place(interactor: Node) -> void:
 	if is_enabled:
-		right_clicked.emit(interactor)
+		place_requested.emit(interactor)
+
+
+## Alle passenden Bücher einräumen (von der Spielfigur aufgerufen, linke Maustaste gehalten).
+func request_place_all(interactor: Node) -> void:
+	if is_enabled:
+		place_all_requested.emit(interactor)
 
 
 ## Wird von der Spielfigur jedes Bild aufgerufen, solange sie hinschaut.

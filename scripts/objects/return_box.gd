@@ -3,8 +3,8 @@ extends Node3D
 ## Der Rückgabekasten: Hier werfen (später) die Besucher ihre ausgeliehenen Bücher ein.
 ##
 ## E nimmt so viele Bücher heraus, wie in meine Hände passen (GameConfig.max_carried_books),
-## Linksklick nimmt eins. Ich trage sie dann (BookStock.carried) und räume sie an einem
-## passenden Regal ein (E halten). Kein Zeitdruck: Die Bücher dürfen beliebig lange im Kasten
+## Rechtsklick nimmt eins. Ich trage sie dann (BookStock.carried) und räume sie an einem
+## passenden Regal ein (linke Maustaste halten). Kein Zeitdruck: Die Bücher dürfen beliebig lange im Kasten
 ## liegen.
 ## Bis es Besucher gibt, legt die Testtaste F9 ein paar zufällige Bücher hinein
 ## (siehe DebugKeys).
@@ -39,7 +39,7 @@ func _ready() -> void:
 		add_to_group(BookStock.RETURN_BOX_GROUP)
 		if _interactable:
 			_interactable.interacted.connect(_on_interacted)
-			_interactable.clicked.connect(_on_clicked)
+			_interactable.take_requested.connect(_on_take_requested)
 	_update()
 
 
@@ -92,8 +92,8 @@ func _on_interacted(_interactor: Node) -> void:
 	_take_into_hands(BookStock.get_free_hand_space())
 
 
-## Linksklick: ein Buch.
-func _on_clicked(_interactor: Node) -> void:
+## Rechtsklick (Buch nehmen): ein Buch.
+func _on_take_requested(_interactor: Node) -> void:
 	_take_into_hands(1)
 
 
@@ -125,7 +125,7 @@ func _update() -> void:
 	if _interactable:
 		# Leer: keine Symbole (man sieht durchs Fenster, dass nichts drin liegt)
 		_interactable.prompt_text = "" if books.is_empty() else "Leeren"
-		_interactable.click_text = "" if books.is_empty() else "Nehmen"
+		_interactable.take_text = "" if books.is_empty() else "Nehmen"
 
 
 # --- Speichern (über PlacedFurniture) ---

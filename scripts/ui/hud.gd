@@ -4,7 +4,9 @@ extends CanvasLayer
 ## Bekommt von der Spielfigur über das Signal "interaction_target_changed"
 ## mitgeteilt, welches interaktive Objekt gerade anvisiert wird. Statt Sätzen erscheinen
 ## darunter nur kleine Tastensymbole mit höchstens einem Wort (KeyHints), z. B. [E] Öffnen.
-## Halte-Aktionen (E halten, Q halten) zeigen einen Ring um ihr Symbol.
+## Halte-Aktionen (E halten, Q halten, Linksklick halten) zeigen einen Ring um ihr Symbol.
+## Trage ich Bücher, stehen die Tragehinweise (Ablegen, Einräumen, Lager) klein unten neben
+## dem Bücherstapel (CarryIndicator) – nicht mitten im Bild.
 
 const FADE_TIME := 0.15
 const CROSSHAIR_IDLE_ALPHA := 0.45
@@ -24,7 +26,7 @@ var _target: Interactable = null
 var _hold_ring: HoldRing
 var _key_hints: KeyHints
 var _seated := false
-var _storing := false  # Q wird gerade gehalten (alle Bücher ins Lager)
+var _carry_indicator: CarryIndicator
 var _tween: Tween
 var _money_tween: Tween
 
@@ -56,26 +58,42 @@ func _process(_delta: float) -> void:
 	visible = not get_tree().paused
 	# Laufend aktualisieren, da sich die Wörter ändern können (z. B. Licht an -> aus)
 	_key_hints.show_hints(_current_hints())
+	var carry := _get_carry_indicator()
+	if carry:
+		carry.show_hints(_carry_hints())
 
 
 ## Welche Tastensymbole gerade passen (mit je einem kurzen Wort).
 func _current_hints() -> Array:
-	if _storing:
-		return [{"input": "store_hold", "word": "Ins Lager"}]
 	if _seated:
 		return [{"input": "interact", "word": "Aufstehen"}]
 	if not is_instance_valid(_target):
 		return []
 	var hints := []
-	if not _target.click_text.is_empty():
-		hints.append({"input": "click", "word": _target.click_text})
-	if not _target.right_click_text.is_empty():
-		hints.append({"input": "right_click", "word": _target.right_click_text})
+	if not _target.take_text.is_empty():
+		hints.append({"input": "take", "word": _target.take_text})
 	if _target.supports_hold and not _target.hold_prompt_text.is_empty():
 		hints.append({"input": "interact_hold", "word": _target.hold_prompt_text})
 	if not _target.prompt_text.is_empty():
 		hints.append({"input": "interact", "word": _target.prompt_text})
 	return hints
+
+
+## Tragehinweise unten neben dem Bücherstapel (nur, wenn ich Bücher trage).
+func _carry_hints() -> Array:
+	if BookStock.carried.is_empty() or _seated:
+		return []
+	var hints := [{"input": "place", "word": "Ablegen"}]
+	if is_instance_valid(_target) and _target.supports_place_all:
+		hints.append({"input": "place_all", "word": "Einräumen"})
+	hints.append({"input": "store_hold", "word": "Lager"})
+	return hints
+
+
+func _get_carry_indicator() -> CarryIndicator:
+	if not is_instance_valid(_carry_indicator):
+		_carry_indicator = get_tree().get_first_node_in_group(CarryIndicator.GROUP) as CarryIndicator
+	return _carry_indicator
 
 
 ## Kontostand aktualisieren; Einnahmen und Ausgaben erscheinen kurz darunter (+80 / −320).
@@ -95,11 +113,14 @@ func _on_money_changed(money: int, change: int) -> void:
 ## Fortschritt beim Gedrückthalten von E bzw. Q (-1 = Ring ausblenden). Der Ring liegt um
 ## das passende Tastensymbol – sind die Hinweise aus, um die Bildmitte.
 func _on_player_hold_progress_changed(progress: float, action: StringName = &"interact") -> void:
-	if action == &"store_books":
-		_storing = progress >= 0.0
-		_key_hints.show_hints(_current_hints())
-	var input := "store_hold" if action == &"store_books" else "interact_hold"
-	var on_icon := _key_hints.set_hold_progress(input, progress)
+	var on_icon := false
+	if action == &"interact":
+		on_icon = _key_hints.set_hold_progress("interact_hold", progress)
+	else:
+		# Q halten und Linksklick halten: Ring um das Symbol in den Tragehinweisen
+		var carry := _get_carry_indicator()
+		var input := "store_hold" if action == &"store_books" else "place_all"
+		on_icon = carry != null and carry.set_hold_progress(input, progress)
 	_hold_ring.progress = -1.0 if on_icon else progress
 
 
