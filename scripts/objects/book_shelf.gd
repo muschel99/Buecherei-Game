@@ -20,7 +20,7 @@ extends Node3D
 ##   hinschaue. Vorher zeigt eine halbdurchsichtige Vorschau, wo es hinkommt; passt es nicht
 ##   (kein Platz, falsches Genre), ist die Vorschau dezent rötlich.
 ## - Linksklick halten (Ring): alle getragenen Bücher einräumen, die hierher passen.
-## - R: Regal-Menü (Genre je Etage wählen, aus dem Lager auffüllen, sortieren, alles zurück
+## - R: Regal-Menü (Genre je Fach wählen, aus dem Lager auffüllen, sortieren, alles zurück
 ##   ins Lager) – eine eigene, ruhige Taste, damit sich das Menü nie aus Versehen öffnet.
 ## - E blättert hier (wie überall ohne eigene E-Aktion) durch die Bücher in der Hand.
 ## Schaue ich ein Regal an, steht sein Genre als ruhiger Schriftzug unten in der Bildmitte
@@ -56,7 +56,7 @@ const EPSILON := 0.0001
 ## So viel Luft bleibt zwischen Deko und Büchern (in Metern)
 const DECO_MARGIN := 0.003
 
-## Genre je Brett (Etage), gleiche Reihenfolge wie die Bretter:
+## Genre je Brett (Fach), gleiche Reihenfolge wie die Bretter:
 ## "" = noch keins gewählt (nimmt alles), MIXED = Gemischt, sonst die Genre-id.
 var row_genres: Array[String] = []
 ## Genre des ganzen Regals: das gemeinsame Genre aller Bretter – "" wenn sie verschieden sind
@@ -154,7 +154,7 @@ func get_books() -> Array[Book]:
 	return result
 
 
-## Hat mindestens eine Etage schon ein Genre (oder "Gemischt")?
+## Hat mindestens ein Fach schon ein Genre (oder "Gemischt")?
 func has_genre() -> bool:
 	for id in row_genres:
 		if not id.is_empty():
@@ -170,54 +170,49 @@ static func genre_display_name(id: String) -> String:
 	return genre.display_name if genre else ""
 
 
-## Anzeigename des Genres des ganzen Regals (leer, wenn die Etagen verschieden sind).
+## Anzeigename des Genres des ganzen Regals (leer, wenn die Fächer verschieden sind).
 func get_genre_name() -> String:
 	return genre_display_name(genre_id)
 
 
-## Wie viele Etagen (Bretter) hat das Regal?
+## Wie viele Fächer (Bretter) hat das Regal?
 func get_row_count() -> int:
 	return _rows.size()
 
 
-## Genre einer Etage ("" = noch keins, MIXED = Gemischt).
+## Genre eines Fachs ("" = noch keins, MIXED = Gemischt).
 func get_row_genre(row: int) -> String:
 	return row_genres[row] if row >= 0 and row < row_genres.size() else ""
 
 
-## Kurzer Name einer Etage für das Menü, z. B. "Etage 1" oder "Etage 2 links" (Würfelregal).
+## Kurzer Name eines Fachs für das Menü: "Fach 1", "Fach 2" … – durchnummeriert von oben
+## links nach unten rechts (wie man liest), egal in welcher Reihenfolge die Bretter in der
+## Szene stehen.
 func get_row_label(row: int) -> String:
-	# Etagen = verschiedene Höhen von oben nach unten; mehrere Fächer auf einer Höhe:
-	# von links nach rechts
-	var heights: Array[float] = []
-	for r in _rows:
-		var height := snappedf(r.position.y, 0.01)
-		if not heights.has(height):
-			heights.append(height)
-	heights.sort()
-	heights.reverse()
-	var height := snappedf(_rows[row].position.y, 0.01)
-	var level := heights.find(height) + 1
-	var same: Array[BookRow] = []
-	for r in _rows:
-		if is_equal_approx(snappedf(r.position.y, 0.01), height):
-			same.append(r)
-	if same.size() <= 1:
-		return "Etage %d (oben)" % level if level == 1 else "Etage %d" % level
-	same.sort_custom(func(a: BookRow, b: BookRow) -> bool: return a.position.x < b.position.x)
-	var index := same.find(_rows[row])
-	var sides := ["links", "Mitte", "rechts"] if same.size() == 3 else ["links", "rechts"]
-	var side: String = sides[index] if same.size() <= 3 else "Fach %d" % (index + 1)
-	return "Etage %d %s" % [level, side]
+	return "Fach %d" % (get_fach_order().find(row) + 1)
 
 
-## Passt ein Buch dieses Genres auf diese Etage? ("Gemischt" und Etagen ohne Genre nehmen alles.)
+## Die Fächer in Lesereihenfolge: von oben nach unten, auf gleicher Höhe von links nach rechts.
+func get_fach_order() -> Array[int]:
+	var order: Array[int] = []
+	for r in _rows.size():
+		order.append(r)
+	order.sort_custom(func(a: int, b: int) -> bool:
+		var ya := snappedf(_rows[a].position.y, 0.01)
+		var yb := snappedf(_rows[b].position.y, 0.01)
+		if not is_equal_approx(ya, yb):
+			return ya > yb
+		return _rows[a].position.x < _rows[b].position.x)
+	return order
+
+
+## Passt ein Buch dieses Genres in dieses Fach? ("Gemischt" und Fächer ohne Genre nehmen alles.)
 func row_accepts(row: int, book_genre_id: String) -> bool:
 	var id := get_row_genre(row)
 	return id.is_empty() or id == MIXED or id == book_genre_id
 
 
-## Passt ein Buch dieses Genres auf irgendeine Etage dieses Regals?
+## Passt ein Buch dieses Genres in irgendein Fach dieses Regals?
 func accepts(book_genre_id: String) -> bool:
 	for r in _rows.size():
 		if row_accepts(r, book_genre_id):
@@ -234,7 +229,7 @@ func count_books(of_genre_id: String) -> int:
 	return count
 
 
-## Für wie viele Bücher ist ungefähr noch Platz (row = nur diese Etage)? Bücher sind
+## Für wie viele Bücher ist ungefähr noch Platz (row = nur dieses Fach)? Bücher sind
 ## verschieden dick, daher nur ungefähr.
 func get_free_estimate(only_row: int = -1) -> int:
 	var free_width := 0.0
@@ -262,7 +257,7 @@ func count_matching_carried() -> int:
 
 # --- Ändern ---
 
-## Gibt allen Etagen dasselbe Genre (MIXED = Gemischt). Bücher, die nicht mehr passen, gleiten
+## Gibt allen Fächern dasselbe Genre (MIXED = Gemischt). Bücher, die nicht mehr passen, gleiten
 ## heraus und gehen ins Lager. Liefert, wie viele das waren.
 func set_genre(new_genre_id: String) -> int:
 	for r in row_genres.size():
@@ -270,7 +265,7 @@ func set_genre(new_genre_id: String) -> int:
 	return _remove_mismatched()
 
 
-## Wählt das Genre einer Etage. Bücher dieser Etage, die nicht mehr passen, gehen ins Lager.
+## Wählt das Genre eines Fachs. Bücher dieses Fachs, die nicht mehr passen, gehen ins Lager.
 ## Liefert, wie viele das waren.
 func set_row_genre(row: int, new_genre_id: String) -> int:
 	if row < 0 or row >= row_genres.size():
@@ -291,9 +286,9 @@ func _remove_mismatched() -> int:
 	return mismatched.size()
 
 
-## Stellt Bücher ins Regal: jedes an die erste freie Stelle einer passenden Etage (zuerst
-## Etagen mit genau seinem Genre, dann "Gemischt"; von links nach rechts – Deko bleibt, wo
-## sie ist). only_row: nur auf diese Etage. Sie gleiten nacheinander hinein.
+## Stellt Bücher ins Regal: jedes an die erste freie Stelle eines passenden Fachs (zuerst
+## Fächer mit genau seinem Genre, dann "Gemischt"; von links nach rechts – Deko bleibt, wo
+## sie ist). only_row: nur in dieses Fach. Sie gleiten nacheinander hinein.
 ## Liefert die Bücher, für die kein Platz mehr war.
 func add_books(new_books: Array, animate: bool = true, only_row: int = -1) -> Array[Book]:
 	var rest: Array[Book] = []
@@ -347,12 +342,12 @@ func remove_books(to_remove: Array, animate: bool = true) -> void:
 	_changed()
 
 
-## Füllt das Regal aus dem Lager, Etage für Etage: jede mit Büchern ihres Genres –
+## Füllt das Regal aus dem Lager, Fach für Fach: jede mit Büchern ihres Genres –
 ## "Gemischt" gleichmäßig aus allen Genres im Lager (nach Genre gruppiert, innerhalb nach
-## Titel sortiert). Etagen ohne Genre bleiben leer. Liefert, wie viele es waren.
+## Titel sortiert). Fächer ohne Genre bleiben leer. Liefert, wie viele es waren.
 func fill_from_storage() -> int:
 	var count := 0
-	# Erst die Etagen mit festem Genre, dann die gemischten
+	# Erst die Fächer mit festem Genre, dann die gemischten
 	for pass_mixed in [false, true]:
 		for r in _rows.size():
 			var id := get_row_genre(r)
@@ -392,7 +387,7 @@ func put_carried() -> int:
 
 
 ## Sortiert die Bücher nach Genre und Titel – sie rücken sanft an ihre neuen Plätze, von
-## links nach rechts ohne Lücken, jede auf eine Etage mit passendem Genre. Deko bleibt
+## links nach rechts ohne Lücken, jedes in ein Fach mit passendem Genre. Deko bleibt
 ## stehen, wo sie ist.
 func sort_books() -> void:
 	var all := get_books()
@@ -561,7 +556,7 @@ func get_contents_data() -> Dictionary:
 
 
 func load_contents_data(data: Dictionary) -> void:
-	# Genre je Etage – ältere Spielstände kennen nur ein Genre für das ganze Regal
+	# Genre je Fach – ältere Spielstände kennen nur ein Genre für das ganze Regal
 	var saved_rows = data.get("row_genres")
 	for r in row_genres.size():
 		if saved_rows is Array and r < saved_rows.size():
@@ -757,9 +752,9 @@ func _fits_at(row: int, book: Book, left: float) -> bool:
 	return true
 
 
-## Erste freie Stelle für ein Buch: zuerst auf Etagen mit genau seinem Genre, dann auf
+## Erste freie Stelle für ein Buch: zuerst in Fächern mit genau seinem Genre, dann in
 ## gemischten (bzw. noch ohne Genre); Brett für Brett, in jedem Abschnitt von links nach
-## rechts, bündig an den Nachbarn links. only_row: nur diese Etage. Leer, wenn es nirgends passt.
+## rechts, bündig an den Nachbarn links. only_row: nur dieses Fach. Leer, wenn es nirgends passt.
 func _find_free_spot(book: Book, only_row: int = -1) -> Dictionary:
 	var width := _book_width(book)
 	var rows: Array[int] = []
@@ -948,7 +943,7 @@ func _find_aim(from: Vector3, direction: Vector3) -> Dictionary:
 func _on_aimed(from: Vector3, direction: Vector3) -> void:
 	_set_hover(_pick_book(from, direction))
 	var aim := _find_aim(from, direction)
-	# Schriftzug: Genre der Etage, auf die ich schaue (bzw. des angeschauten Buchs)
+	# Schriftzug: Genre des Fachs, auf das ich schaue (bzw. des angeschauten Buchs)
 	var row: int = _row_of(_hover_book) if _hover_book else aim.get("row", -1)
 	var row_genre := get_row_genre(row)
 	if row_genre.is_empty():

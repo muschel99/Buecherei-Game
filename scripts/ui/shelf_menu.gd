@@ -2,15 +2,15 @@ class_name ShelfMenu
 extends CanvasLayer
 ## Das kleine Regal-Menü (R an einem Bücherregal).
 ##
-## Hier wählt man für jede Etage, welches Genre dorthin gehört (oder "Gemischt") – oder mit
-## "Alle Etagen gleich" für das ganze Regal auf einmal. Man füllt es mit einem Klick aus dem
+## Hier wählt man für jedes Fach, welches Genre dorthin gehört (oder "Gemischt") – oder mit
+## "Alle Fächer gleich" für das ganze Regal auf einmal. Man füllt es mit einem Klick aus dem
 ## Lager, sortiert es oder legt alle Bücher zurück ins Lager. "Buch aus dem Lager wählen…"
 ## zeigt die Cover der passenden Bücher im Lager – ein Klick legt das Buch obenauf in die Hand,
 ## dann stellt man es mit der linken Maustaste an genau die Stelle, die man möchte.
 ## Getragene Bücher räumt man nicht hier ein, sondern mit Linksklick halten am Regal; ins
 ## Lager legt man sie mit Q halten (jede Aktion hat nur einen Weg).
 ## Das Menü steht rechts am Rand – so sieht man in der Mitte, wie die Bücher ins Regal gleiten.
-## Es ist nie höher als das Bild: Wird der Inhalt zu lang (viele Genres oder Etagen), lässt
+## Es ist nie höher als das Bild: Wird der Inhalt zu lang (viele Genres oder Fächer), lässt
 ## sich der Mittelteil scrollen; Überschrift und "Schließen" bleiben immer sichtbar.
 ## Schließen: Esc, R oder "Schließen" (Esc-Regel über MenuStack). Solange es offen ist, ist der
 ## Mauszeiger sichtbar und die Spielfigur steht still.
@@ -122,17 +122,17 @@ func restore_mouse_mode() -> void:
 
 # --- Aktionen ---
 
-## "Alle Etagen gleich": ein Genre für das ganze Regal.
+## "Alle Fächer gleich": ein Genre für das ganze Regal.
 func choose_genre(genre_id: String) -> void:
 	if shelf == null or genre_id == shelf.genre_id:
 		return
 	var returned := shelf.set_genre(genre_id)
-	_message.text = "Alle Etagen: %s." % shelf.get_genre_name()
+	_message.text = "Alle Fächer: %s." % shelf.get_genre_name()
 	_add_returned_note(returned)
 	_queue_refresh()
 
 
-## Genre einer einzelnen Etage.
+## Genre eines einzelnen Fachs.
 func choose_row_genre(row: int, genre_id: String) -> void:
 	if shelf == null or genre_id == shelf.get_row_genre(row):
 		return
@@ -310,12 +310,12 @@ func _refresh_picker() -> void:
 	_picker.show_entries(entries, "Im Lager liegt gerade nichts davon.")
 
 
-## Je Etage eine Zeile: Name der Etage und eine Auswahlliste mit "Gemischt" und den Genres.
+## Je Fach eine Zeile (Lesereihenfolge): Name des Fachs und eine Auswahlliste mit "Gemischt" und den Genres.
 func _refresh_rows(genres: Array[GenreData]) -> void:
 	for child in _rows_box.get_children():
 		_rows_box.remove_child(child)
 		child.queue_free()
-	for r in shelf.get_row_count():
+	for r in shelf.get_fach_order():
 		var line := HBoxContainer.new()
 		line.add_theme_constant_override("separation", 10)
 		var label := _label(shelf.get_row_label(r), 15, TEXT_COLOR)
@@ -429,12 +429,12 @@ func _build() -> void:
 	_body.add_theme_constant_override("separation", 10)
 	_body_scroll.add_child(_body)
 
-	_body.add_child(_label("Alle Etagen gleich", 16, KEY_COLOR))
+	_body.add_child(_label("Alle Fächer gleich", 16, KEY_COLOR))
 	_genre_flow = HFlowContainer.new()
 	_genre_flow.add_theme_constant_override("h_separation", 6)
 	_genre_flow.add_theme_constant_override("v_separation", 6)
 	_body.add_child(_genre_flow)
-	_body.add_child(_label("Etagen", 16, KEY_COLOR))
+	_body.add_child(_label("Fächer", 16, KEY_COLOR))
 	_rows_box = VBoxContainer.new()
 	_rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_rows_box.add_theme_constant_override("separation", 6)
