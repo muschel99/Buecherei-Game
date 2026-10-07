@@ -6,7 +6,7 @@ extends Node3D
 ## sie mit E an einem passenden Regal einräumen. Kein Zeitdruck: Die Bücher dürfen
 ## beliebig lange im Kasten liegen.
 ## Bis es Besucher gibt, legt die Testtaste F9 ein paar zufällige Bücher hinein
-## (GameConfig.debug_return_box_key, siehe BookStock).
+## (siehe DebugKeys).
 ## Durch das Fenster sieht man einen kleinen Stapel der Bücher (Platzhalter).
 ## Der Inhalt wird mit dem Raum gespeichert (PlacedFurniture.get_contents_data).
 

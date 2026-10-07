@@ -14,6 +14,7 @@
 | 2i  | Kartons einsammeln und Lager-Animation   | fertig        |
 | 3   | Bücher und Regale                        | fertig        |
 | 3b  | Echte Bücher: Cover, Sammlung, einzeln einräumen | fertig |
+| 3c  | Freies Einräumen, Deko im Regal und weniger Text | in Arbeit |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -202,6 +203,18 @@ muss aber nie – Auffüllen, Einräumen und Sortieren gehen weiter mit einem Kl
 - [x] Buch obenauf mit Cover in der Hand (unten rechts), Mausrad wechselt
 - [x] Regal-Menü: Buch aus dem Lager wählen (Cover-Kacheln), nach Genre und Titel sortieren
 - [x] Tablet: Reiter „Sammlung“ (alle Titel, unentdeckte als „?“), Spalte „Sammlung“ im Bestand
+
+## Etappe 3c – Freies Einräumen, Deko im Regal und weniger Text
+Leitgedanke: mehr Freiheit beim Einräumen, weniger Text auf dem Bildschirm.
+- [x] Testtaste F10: 500 Taler Testgeld (`GameConfig.debug_money_amount`); alle Testtasten
+      (F9, F10) zentral abschaltbar (`GameConfig.debug_keys_enabled`, Autoload `DebugKeys`)
+- [ ] Neue Steuerung für Bücher: bis zu 7 tragen, Linksklick nehmen, Rechtsklick abstellen,
+      E halten alle passenden einräumen, E tippen Regal-Menü, Q halten alles ins Lager
+- [ ] Bücher frei auf jedes Regalbrett stellen (feines Raster, Einrasten, Vorschau)
+- [ ] Kleine Deko auf Regalbrettern neben den Büchern, neue Deko (z. B. Buchstützen)
+- [ ] Genre-Schilder entfallen: Genre als ruhiger Schriftzug beim Anschauen
+- [ ] Weniger Text: Tastensymbol mit einem Wort, Einstellung „Hinweise“, kleinere Infokarte
+- [ ] Freie Buchpositionen, Deko im Regal und getragene Bücher werden gespeichert
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke

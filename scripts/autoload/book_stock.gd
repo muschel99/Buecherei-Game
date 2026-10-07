@@ -46,21 +46,13 @@ func _ready() -> void:
 		_add_to_storage(_create_books(genre.get_id(), GameConfig.start_books_per_genre))
 
 
-## Testtaste F9 (Aktion "debug_fill_return_box"): legt ein paar zufällige Bücher in den
-## Rückgabekasten, solange es noch keine Besucher gibt. Abschalten: in GameConfig
-## debug_return_box_key = false setzen.
-func _unhandled_input(event: InputEvent) -> void:
-	if GameConfig.debug_return_box_key and event.is_action_pressed("debug_fill_return_box"):
-		fill_return_box_for_testing()
-		get_viewport().set_input_as_handled()
-
-
-## Legt GameConfig.debug_return_box_books Bücher in einen Rückgabekasten – Titel, die ich
-## schon entdeckt habe (so verrät der Test keine neuen Titel der Sammlung).
+## Testtaste F9 (siehe DebugKeys): legt GameConfig.debug_return_box_books Bücher in einen
+## Rückgabekasten – Titel, die ich schon entdeckt habe (so verrät der Test keine neuen Titel
+## der Sammlung).
 func fill_return_box_for_testing() -> void:
 	var boxes := get_tree().get_nodes_in_group(RETURN_BOX_GROUP)
 	if boxes.is_empty():
-		Notice.post(self, "Test (F9): Stell zuerst einen Rückgabekasten auf (Tab → Theke).")
+		Notice.post(self, "Test (F9): erst einen Rückgabekasten aufstellen")
 		return
 	var titles: Array[BookData] = []
 	for genre in get_unlocked_genres():
@@ -71,7 +63,6 @@ func fill_return_box_for_testing() -> void:
 	for i in GameConfig.debug_return_box_books:
 		books.append(Book.create_from(titles.pick_random()))
 	boxes.pick_random().add_books(books)
-	Notice.post(self, "Test (F9): %d Bücher liegen im Rückgabekasten." % books.size())
 
 
 # --- Genres ---

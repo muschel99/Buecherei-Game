@@ -179,12 +179,6 @@ var book_hover_pull: float = 0.015
 ## So weit vor dem Regal schwebt das Buch, das ich gleich einstelle (in Metern).
 var book_insert_preview_pull: float = 0.06
 
-## Testtaste (F9): legt ein paar zufällige Bücher in den Rückgabekasten, solange es noch
-## keine Besucher gibt. Zum Abschalten auf false setzen.
-var debug_return_box_key: bool = true
-## So viele Bücher legt die Testtaste auf einmal hinein.
-var debug_return_box_books: int = 7
-
 
 # --- Speichern ---
 
@@ -241,6 +235,17 @@ var paused_max_fps: int = 30
 
 ## Spiel automatisch pausieren, wenn das Spielfenster in den Hintergrund rückt.
 var pause_on_focus_loss: bool = true
+
+
+# --- Testtasten (nur zum Ausprobieren) ---
+
+## Schaltet alle Testtasten auf einmal ein oder aus (F9 = Bücher in den Rückgabekasten,
+## F10 = Testgeld). Für die fertige Version auf false setzen.
+var debug_keys_enabled: bool = true
+## So viele Bücher legt die Testtaste F9 auf einmal in den Rückgabekasten.
+var debug_return_box_books: int = 7
+## So viel Geld gibt die Testtaste F10 bei jedem Drücken.
+var debug_money_amount: int = 500
 
 
 # --- Spätere Etappen ---
