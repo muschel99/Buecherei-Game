@@ -9,14 +9,14 @@ extends Node3D
 
 
 func _process(_delta: float) -> void:
-	# Hinweistext passend zum aktuellen Zustand der Lampen
+	# Kurzes Wort passend zum aktuellen Zustand der Lampen (ohne Lampe: kein Symbol)
 	var lamps := _find_lamps()
 	if lamps.is_empty():
-		_interactable.prompt_text = "Lichtschalter (keine Lampe im Raum)"
+		_interactable.prompt_text = ""
 	elif _any_on(lamps):
-		_interactable.prompt_text = "Licht im Raum ausschalten"
+		_interactable.prompt_text = "Aus"
 	else:
-		_interactable.prompt_text = "Licht im Raum einschalten"
+		_interactable.prompt_text = "An"
 
 
 func _on_interactable_interacted(_interactor: Node) -> void:

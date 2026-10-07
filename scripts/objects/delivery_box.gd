@@ -26,7 +26,7 @@ var _move_tween: Tween
 
 func _ready() -> void:
 	_interactable.interacted.connect(_on_interacted)
-	_interactable.prompt_text = "Lieferung auspacken"
+	_interactable.prompt_text = "Auspacken"
 
 
 func _on_interacted(_interactor: Node) -> void:
@@ -72,8 +72,8 @@ func unpack() -> void:
 				var fresh := BookStock.get_discovered_count(id) - known
 				var genre := Catalog.get_genre(id)
 				if fresh > 0 and genre:
-					Notice.post(self, "%s: %d %s für deine Sammlung!" % [genre.display_name, fresh,
-						"neuer Titel" if fresh == 1 else "neue Titel"])
+					Notice.post(self, "%d %s · %s" % [fresh, "neuer Titel" if fresh == 1 else "neue Titel",
+						genre.display_name])
 			_:
 				Inventory.add_furniture(id, count)
 	# Beiläufig unten rechts zeigen, was ins Lager geht (statt eines Textes)

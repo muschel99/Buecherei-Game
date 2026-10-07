@@ -75,7 +75,7 @@ func _set_angle(angle: float) -> void:
 
 
 func _update_prompt() -> void:
-	_interactable.prompt_text = "Tür schließen" if is_open else "Tür öffnen"
+	_interactable.prompt_text = "Schließen" if is_open else "Öffnen"
 
 
 ## Alle Möbel, die bei geschlossener Tür am Türblatt hängen.

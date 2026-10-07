@@ -37,12 +37,12 @@ scenes/            Szenen (.tscn)
                    Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox;
                    player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
-  ui/              Oberfläche (HUD, Pausenmenü, Inventar, Shop, Hinweise, Stil-Anzeige,
-                   Regal-Menü, Trage-Anzeige, Buch-Infokarte, Bücherauswahl;
-                   Scripts BookCover und BookMotifs zeichnen Cover und Buchrücken)
+  ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Shop, Hinweise,
+                   Stil-Anzeige, Regal-Menü, Trage-Anzeige, Buch-Infokarte, Genre-Schriftzug,
+                   Bücherauswahl; Scripts BookCover und BookMotifs zeichnen Cover und Buchrücken)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
-                   Wallet, Inventory, BookStock, BookArt)
+                   Wallet, Inventory, BookStock, BookArt, DebugKeys)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, BookData, Book)
@@ -57,7 +57,7 @@ assets/
   models/          Eigene 3D-Modelle (.glb)
   textures/        Texturen
   materials/       Gemeinsame Materialien (.tres), surfaces/ = Wand- und Bodenmaterialien
-  shaders/         Shader (Platzhalter-Muster, Raster, Buchrücken)
+  shaders/         Shader (Platzhalter-Muster, Raster, Buchrücken, Buch-Vorschau)
   audio/music/     Musik
   audio/sfx/       Geräusche
   ui/              Oberflächen-Theme, icons/ = Symbole (Farbroller, Teppich)
@@ -68,7 +68,9 @@ docs/              Dokumentation
 - Physik-Ebenen: 1 = `world`, 2 = `interactable`, 3 = `player`, 4 = `furniture`,
   5 = `build_blocker` (Sperrzonen für den Gestaltungsmodus, z. B. vor der Eingangstür),
   6 = `placement_surface` (Ablageflächen).
-- **Jede Interaktion in der Spielwelt läuft über E.**
+- **Jede Interaktion in der Spielwelt läuft über E.** Ausnahme Bücher: Linksklick nimmt,
+  Rechtsklick stellt ab (Interactable-Signale `clicked` / `right_clicked`; nur im Spiel bei
+  gefangener Maus, nie im Gestaltungsmodus oder in Menüs).
 - **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
   `MenuStack.open(self)` an und hat `close_from_escape()`. Esc schließt immer zuerst das
   Oberste; nur wenn nichts offen ist, öffnet sich das Pausenmenü.
@@ -132,7 +134,9 @@ docs/              Dokumentation
   `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
   `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete` (X),
   `build_paint_all` (Umschalt), `toggle_fps` (F3), `debug_fill_return_box` (F9, Testtaste),
-  `book_next`/`book_previous` (Mausrad, Buch obenauf wechseln).
+  `debug_add_money` (F10, Testtaste), `book_next`/`book_previous` (Mausrad, Buch obenauf
+  wechseln), `book_take` (linke Maustaste), `book_place` (rechte Maustaste),
+  `store_books` (Q halten: alle getragenen Bücher ins Lager).
 - Möbel-Knoten in Szenen können ihre Nummer (`uid`) und ihr Trägermöbel (`support_uid`) fest
   eintragen (z. B. Tablet auf der Theke).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).
@@ -152,11 +156,24 @@ docs/              Dokumentation
 - **E tippen / E halten:** Ein Interactable mit `supports_hold` unterscheidet kurz (Signal
   `interacted`, beim Loslassen) und lang (Signal `held`, `GameConfig.interact_hold_time`).
   `aimed(from, richtung)` meldet jedes Bild den Blick (z. B. welches Buch im Regal);
-  `hold_prompt_text` = zweite Hinweiszeile; `highlight_owner = false` = Objekt hebt selbst hervor.
-- Bücherregale: Knoten `BookShelf` mit `BookRow`-Fächern (Ursprung = Mitte der Brett-Oberkante),
-  optional `SignPoint` (Genre-Schild) und `Interactable`. Jedes Brett hat seine eigene Reihe.
-  Alle Bücher eines Regals sind ein MultiMesh (Shader `book_spine.gdshader`, Rücken aus dem
-  Atlas) – nie einzelne Knoten je Buch.
+  `highlight_owner = false` = Objekt hebt selbst hervor.
+- **Weniger Text:** Unter der Bildmitte nur kleine Tastensymbole mit höchstens einem Wort
+  (`KeyHints`, `KeyHintIcon`). Die Wörter kommen aus dem Interactable: `prompt_text` (E),
+  `hold_prompt_text` (E halten, Ring ums Symbol), `click_text` (linke Maustaste),
+  `right_click_text` (rechte Maustaste) – immer **ein** kurzes Wort („Öffnen“, „Sitzen“,
+  „An“), leer = kein Symbol. Keine Sätze im Spielbild; Erklärungen gehören in die Tastenhilfe
+  im Pausenmenü. Spieler-Einstellung „Hinweise“: `Settings` `interface/hints`.
+- Bücherregale: Knoten `BookShelf` mit `BookRow`-Fächern (Ursprung = Mitte der Brett-Oberkante)
+  und einem `Interactable` **ohne eigene Kollisionsform** (getroffen wird der Körper des
+  Regals, so bleibt Deko im Regal erreichbar). Jedes Brett bekommt automatisch eine
+  Ablagefläche für Deko (`PlacementSurface.max_height` = Fachhöhe). Jedes Buch hat eine freie
+  Lage auf seinem Brett (linke Kante, feines Raster `GameConfig.shelf_grid_step`); wo Deko
+  steht (Möbel mit `support_uid` = Regal), kommen keine Bücher hin. Alle Bücher eines Regals
+  sind ein MultiMesh (Shader `book_spine.gdshader`, Rücken aus dem Atlas) – nie einzelne
+  Knoten je Buch. Das Genre zeigt beim Anschauen `GenreCaption.show_text(self, "Krimi")`.
+- Bücher tragen: höchstens `GameConfig.max_carried_books`; `BookStock.carry(liste)` liefert,
+  was nicht mehr passt; volle Hände ohne Text zeigen: `BookStock.show_hands_full()`
+  (der Stapel in der Hand wackelt).
 - Z-Fighting vermeiden: Teile eines Modells nie mit Flächen genau in derselben Ebene
   enden lassen (gleiche Richtung, überlappend) – die kleinere Fläche 2 mm nach innen setzen.
 - Möbel mit Inhalt (Regal, Rückgabekasten): Knoten in der Gruppe `PlacedFurniture.CONTENTS_GROUP`
@@ -164,4 +181,5 @@ docs/              Dokumentation
   den Inhalt mit dem Möbelstück, beim Wegräumen (X) geht er ins Lager.
 - Startgeschenke fürs Inventar: `GameConfig.start_furniture_gifts` (jedes nur einmal, auch in
   älteren Spielständen).
-- Testtasten sind über GameConfig abschaltbar (z. B. `debug_return_box_key`).
+- Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
+  `GameConfig.debug_keys_enabled = false`.

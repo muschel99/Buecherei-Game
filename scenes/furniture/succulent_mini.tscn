@@ -1,0 +1,52 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/terracotta.tres" id="1"]
+[ext_resource type="Material" path="res://assets/materials/leaf_green.tres" id="2"]
+[ext_resource type="Material" path="res://assets/materials/leaf_dark.tres" id="3"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.04
+bottom_radius = 0.032
+height = 0.06
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_2"]
+radius = 0.038
+height = 0.05
+radial_segments = 16
+rings = 8
+
+[sub_resource type="SphereMesh" id="SphereMesh_3"]
+radius = 0.018
+height = 0.03
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_4"]
+radius = 0.042
+height = 0.115
+
+[node name="SucculentMini" type="Node3D"]
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Pot" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+material_override = ExtResource("1")
+mesh = SubResource("CylinderMesh_1")
+
+[node name="Leaves" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.072, 0)
+material_override = ExtResource("2")
+mesh = SubResource("SphereMesh_2")
+
+[node name="Bud" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.008, 0.096, -0.004)
+material_override = ExtResource("3")
+mesh = SubResource("SphereMesh_3")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0575, 0)
+shape = SubResource("CylinderShape3D_4")

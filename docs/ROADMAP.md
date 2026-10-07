@@ -14,6 +14,7 @@
 | 2i  | Kartons einsammeln und Lager-Animation   | fertig        |
 | 3   | Bücher und Regale                        | fertig        |
 | 3b  | Echte Bücher: Cover, Sammlung, einzeln einräumen | fertig |
+| 3c  | Freies Einräumen, Deko im Regal und weniger Text | fertig |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -169,11 +170,11 @@ in Gruppen, ohne Zeitdruck.
       Shader (Höhe, Dicke, Farbton, Bänder, Titelschild verschieden)
 - [x] Regal-Menü (`ShelfMenu`): Genre oder „Gemischt“, aus dem Lager auffüllen, alles
       zurück ins Lager; Bücher gleiten nacheinander hinein und heraus
-- [x] Genre-Schild am Regal (Platzhalter)
+- [x] Genre-Schild am Regal (Platzhalter; seit 3c ersetzt durch einen Schriftzug beim Anschauen)
 - [x] Regal verschieben: Bücher bleiben drin (auch in der Vorschau); mit X wegräumen:
       Bücher gehen ins Lager
 - [x] Rückgabekasten (Startgeschenk, im Shop unter Theke); Testtaste F9
-      (`GameConfig.debug_return_box_key`)
+      (seit 3c zentral abschaltbar: `GameConfig.debug_keys_enabled`)
 - [x] Bücher tragen: alle aus dem Kasten auf einmal, Anzeige unten (`CarryIndicator`);
       E am Regal räumt alle passenden ein, der Rest bleibt in der Hand
 - [x] Alles wird gespeichert (Bestand, Regalinhalte, Schilder, Kasten, Getragenes);
@@ -203,10 +204,44 @@ muss aber nie – Auffüllen, Einräumen und Sortieren gehen weiter mit einem Kl
 - [x] Regal-Menü: Buch aus dem Lager wählen (Cover-Kacheln), nach Genre und Titel sortieren
 - [x] Tablet: Reiter „Sammlung“ (alle Titel, unentdeckte als „?“), Spalte „Sammlung“ im Bestand
 
+## Etappe 3c – Freies Einräumen, Deko im Regal und weniger Text
+Leitgedanke: mehr Freiheit beim Einräumen, weniger Text auf dem Bildschirm.
+- [x] Testtaste F10: 500 Taler Testgeld (`GameConfig.debug_money_amount`); alle Testtasten
+      (F9, F10) zentral abschaltbar (`GameConfig.debug_keys_enabled`, Autoload `DebugKeys`)
+- [x] Neue Steuerung für Bücher: bis zu 7 tragen (`GameConfig.max_carried_books`),
+      Linksklick nimmt das angeschaute Buch (Regal, Rückgabekasten), Rechtsklick stellt das
+      Buch obenauf ab, E halten räumt alle passenden ein, E tippen öffnet das Regal-Menü,
+      Mausrad wechselt das Buch obenauf, Q halten legt alles ins Lager; Klicks nur im Spiel
+      (nicht im Gestaltungsmodus oder in Menüs)
+- [x] Volle Hände ohne Text: Der Stapel in der Hand wackelt kurz; in der Hand ein kleiner
+      Stapel aus echten Buchrücken
+- [x] Rückgabekasten: E nimmt so viele, wie in die Hände passen, Linksklick eins
+- [x] Bücher frei auf jedes Regalbrett stellen: feines Raster (1 cm), Einrasten an Nachbarn,
+      Deko und Seitenwand, zwischen Bücher schieben (Nachbarn rücken nur so weit wie nötig);
+      halbdurchsichtige Vorschau, dezent rötlich, wenn es nicht passt (Shader `book_ghost`)
+- [x] Auffüllen, E halten und Sortieren füllen freie Plätze und lassen Deko stehen
+- [x] Kleine Deko auf Regalbrettern (jedes Brett hat automatisch eine Ablagefläche,
+      `PlacementSurface.max_height` = Fachhöhe); Bücher und Deko überschneiden sich nie
+- [x] Neue Regal-Deko im Shop: Buchstützen (Holz, Beton), Mini-Sukkulente, Bilderrahmen zum
+      Hinstellen, kleiner Globus, Kerze im Glas, kleine Vase mit Lavendel; Unterkategorie
+      „Buchstützen“
+- [x] Genre-Schilder entfallen: Genre als ruhiger Schriftzug unten in der Bildmitte
+      (`GenreCaption`), blendet sanft ein und aus
+- [x] Weniger Text: kleine Tastensymbole mit höchstens einem Wort (`KeyHints`), Ring um das
+      Symbol bei Halte-Aktionen, Einstellung „Hinweise“ (Aus, Nur Symbole, Symbol mit Wort);
+      alle Hinweise im Spiel auf ein Wort gekürzt; Tastenhilfe im Pausenmenü erweitert
+- [x] Buch-Infokarte kleiner, erst nach kurzem Anschauen (`GameConfig.book_info_delay`) oder
+      kurz für das Buch in der Hand; „Du trägst …“ entfällt (kleines Stapel-Symbol mit Zahl)
+- [x] Gestaltungsmodus und Hinweise oben gekürzt (Statuszeile nur Name oder Problem)
+- [x] Freie Buchpositionen, Deko im Regal und getragene Bücher werden gespeichert; ältere
+      Spielstände laden weiter (Bücher ohne Lage stehen dicht von links)
+- Noch offen für später: Bücher frei auf Tische oder die Theke legen (bisher nur Regale und
+  Rückgabekasten)
+
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
 - Besucher nehmen Bücher aus Regalen (`BookShelf.remove_books`) und werfen sie in den
-  Rückgabekasten (`ReturnBox.add_books`); dann die Testtaste F9 abschalten
+  Rückgabekasten (`ReturnBox.add_books`); dann die Testtasten abschalten (`GameConfig.debug_keys_enabled`)
 
 ## Etappe 5 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

@@ -127,7 +127,7 @@ collision_layer = 2
 collision_mask = 0
 monitoring = false
 script = ExtResource("7_3f7fm")
-prompt_text = "Hinsetzen"
+prompt_text = "Sitzen"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Seating/Interactable" unique_id=1924158935]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0.04)

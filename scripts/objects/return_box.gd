@@ -2,11 +2,12 @@ class_name ReturnBox
 extends Node3D
 ## Der Rückgabekasten: Hier werfen (später) die Besucher ihre ausgeliehenen Bücher ein.
 ##
-## E nimmt alle Bücher auf einmal heraus – ich trage sie dann (BookStock.carried) und kann
-## sie mit E an einem passenden Regal einräumen. Kein Zeitdruck: Die Bücher dürfen
-## beliebig lange im Kasten liegen.
+## E nimmt so viele Bücher heraus, wie in meine Hände passen (GameConfig.max_carried_books),
+## Linksklick nimmt eins. Ich trage sie dann (BookStock.carried) und räume sie an einem
+## passenden Regal ein (E halten). Kein Zeitdruck: Die Bücher dürfen beliebig lange im Kasten
+## liegen.
 ## Bis es Besucher gibt, legt die Testtaste F9 ein paar zufällige Bücher hinein
-## (GameConfig.debug_return_box_key, siehe BookStock).
+## (siehe DebugKeys).
 ## Durch das Fenster sieht man einen kleinen Stapel der Bücher (Platzhalter).
 ## Der Inhalt wird mit dem Raum gespeichert (PlacedFurniture.get_contents_data).
 
@@ -38,6 +39,7 @@ func _ready() -> void:
 		add_to_group(BookStock.RETURN_BOX_GROUP)
 		if _interactable:
 			_interactable.interacted.connect(_on_interacted)
+			_interactable.clicked.connect(_on_clicked)
 	_update()
 
 
@@ -47,6 +49,18 @@ func add_books(new_books: Array) -> void:
 	_update()
 	if _is_live:
 		SaveManager.request_save()
+
+
+## Nimmt bis zu "amount" Bücher heraus (die obersten zuerst).
+func take_some(amount: int) -> Array[Book]:
+	var taken: Array[Book] = []
+	while taken.size() < amount and not books.is_empty():
+		taken.append(books.pop_back())
+	if not taken.is_empty():
+		_update()
+		if _is_live:
+			SaveManager.request_save()
+	return taken
 
 
 ## Nimmt alle Bücher heraus.
@@ -73,14 +87,26 @@ func count_books(genre_id: String) -> int:
 	return count
 
 
+## E: so viele Bücher, wie in die Hände passen.
 func _on_interacted(_interactor: Node) -> void:
+	_take_into_hands(BookStock.get_free_hand_space())
+
+
+## Linksklick: ein Buch.
+func _on_clicked(_interactor: Node) -> void:
+	_take_into_hands(1)
+
+
+func _take_into_hands(amount: int) -> void:
 	if books.is_empty():
-		Notice.post(self, "Der Rückgabekasten ist leer.")
 		return
-	BookStock.carry(take_all())
+	if amount <= 0:
+		BookStock.show_hands_full()
+		return
+	BookStock.carry(take_some(amount))
 
 
-## Stapel im Fenster und Hinweistext aktualisieren.
+## Stapel im Fenster und Tastensymbole aktualisieren.
 func _update() -> void:
 	var visible_count := mini(books.size(), MAX_VISIBLE)
 	_multimesh.instance_count = visible_count
@@ -97,10 +123,9 @@ func _update() -> void:
 		_multimesh.set_instance_custom_data(i, BookLook.get_custom(book))
 		height += thickness
 	if _interactable:
-		if books.is_empty():
-			_interactable.prompt_text = "Rückgabekasten (leer)"
-		else:
-			_interactable.prompt_text = "Rückgabekasten leeren (%d %s)" % [books.size(), "Buch" if books.size() == 1 else "Bücher"]
+		# Leer: keine Symbole (man sieht durchs Fenster, dass nichts drin liegt)
+		_interactable.prompt_text = "" if books.is_empty() else "Leeren"
+		_interactable.click_text = "" if books.is_empty() else "Nehmen"
 
 
 # --- Speichern (über PlacedFurniture) ---

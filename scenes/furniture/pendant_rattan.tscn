@@ -46,8 +46,8 @@ size = Vector3(0.6, 0.5, 0.6)
 [node name="PendantRattan" type="Node3D" unique_id=1853813962]
 script = ExtResource("1_j071b")
 shadow_importance = 0
-prompt_turn_on = "Lampe einschalten"
-prompt_turn_off = "Lampe ausschalten"
+prompt_turn_on = "An"
+prompt_turn_off = "Aus"
 
 [node name="Model" type="Node3D" parent="." unique_id=1494044685]
 
@@ -96,7 +96,7 @@ collision_layer = 2
 collision_mask = 0
 monitoring = false
 script = ExtResource("5_yucmq")
-prompt_text = "Lampe ausschalten"
+prompt_text = "Aus"
 long_reach = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=1874732037]

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = "globe_small"
+display_name = "Kleiner Globus"
+description = "Für Fernweh zwischen den Reiseromanen."
+price = 24
+styles = 4
+scene_path = "res://scenes/furniture/globe_small.tscn"
+footprint = Vector2i(2, 2)
+placement = 3
+subcategory = "figure"

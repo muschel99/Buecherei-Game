@@ -15,6 +15,7 @@ var _material: StandardMaterial3D
 var _model: Node3D = null
 var _shapes: Array[CollisionShape3D] = []
 var _shrunk_shapes: Array[Shape3D] = []
+var _model_box := AABB()
 
 
 func _init() -> void:
@@ -37,6 +38,7 @@ func setup(new_data: FurnitureData, extras: Array[Dictionary] = []) -> void:
 	_shapes = FurnitureUtils.find_body_shapes(_model)
 	for collision in _shapes:
 		_shrunk_shapes.append(FurnitureUtils.shrink_shape(collision.shape, SHRINK))
+	_model_box = FurnitureUtils.get_local_aabb(_model)
 
 	for extra in extras:
 		var extra_model := FurnitureUtils.instantiate_model(extra["data"])
@@ -77,6 +79,15 @@ func set_valid(valid: bool) -> void:
 	var color := GameConfig.preview_color_valid if valid else GameConfig.preview_color_invalid
 	color.a = GameConfig.preview_opacity
 	_material.albedo_color = color
+
+
+## Die acht Ecken des umgebenden Quaders des Möbelstücks (ohne Mitwanderndes), in der Welt
+## (z. B. um zu prüfen, ob Deko ins Regalfach passt).
+func get_world_corners() -> PackedVector3Array:
+	var corners := PackedVector3Array()
+	for i in 8:
+		corners.append(global_transform * _model_box.get_endpoint(i))
+	return corners
 
 
 ## Kollisionsformen des Möbelstücks (für die Platzprüfung).

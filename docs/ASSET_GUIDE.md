@@ -177,15 +177,25 @@ Ein Regal bekommt Bücher, wenn seine Szene einen Knoten `BookShelf`
   **mitten auf dem Regalbrett** (Mitte der Breite und Tiefe, genau auf der Oberkante). Im
   Inspektor: **Width** (nutzbare Breite), **Height** (lichte Höhe bis zum nächsten Brett),
   **Depth** (Tiefe des Bretts). Befüllt wird in der Reihenfolge im Szenenbaum.
-- Ein `Marker3D` namens `SignPoint`: Dort hängt das Genre-Schild (vorn, mittig).
-- Ein `Interactable` mit Kollisionsform, die nicht über das Regal hinausragt.
-- Bretter mit Büchern sollten keine Ablagefläche (`PlacementSurface`) haben, sonst stehen Deko
-  und Bücher übereinander. Das obere Brett darf eine haben.
+- Ein `Interactable` **ohne** Kollisionsform: Man trifft das Regal über seinen festen Körper
+  (`Body`). So bleibt Deko im Regal (z. B. eine Kerze) mit E erreichbar.
+- Bretter mit Büchern brauchen keine eigene Ablagefläche: Das Regal legt für jedes Fach
+  automatisch eine an (so hoch, wie **Height** angibt) – darauf passt kleine Deko neben die
+  Bücher. Das obere Brett (über allen Fächern) darf eine normale `PlacementSurface` haben.
+- Ein Genre-Schild gibt es nicht mehr: Das Genre erscheint als Schriftzug, wenn man das Regal
+  anschaut.
 - Eigene Buch-Modelle sind nicht nötig: Bücher sind gestreckte Würfel mit dem Shader
   `assets/shaders/book_spine.gdshader` (Rücken aus dem Atlas, den `BookArt` beim Start
   zeichnet). Die Farbe der Seiten kann man dort ändern.
 - Flächen zweier Teile nie genau in derselben Ebene enden lassen (sonst flimmert die Kante,
   „Z-Fighting“) – die kleinere Fläche lieber 2 mm nach innen setzen.
+
+### Kleine Deko für Regale
+Jede Deko mit Häkchen bei **Ablagefläche** passt auf Regalbretter, wenn sie niedriger ist als das
+Fach (z. B. unter 0,42 m). Breite und Tiefe bestimmt der umgebende Quader des Modells – danach
+richten sich die Bücher. Beispiele zum Abschauen: `bookend_wood.tscn`, `bookend_concrete.tscn`
+(Unterkategorie „Buchstützen“), `succulent_mini.tscn`, `photo_frame.tscn`, `globe_small.tscn`,
+`candle_jar.tscn` (Kerze mit `LightSource`, ohne Schatten), `vase_lavender.tscn`.
 
 ### Rückgabekasten
 Szene `scenes/furniture/return_box.tscn`: Die Optik unter `Model` kann ersetzt werden.

@@ -72,7 +72,7 @@ var flame_fade_time: float = 0.6
 ## Soll der Lichtschalter auch Kerzen und Laternen mitschalten? (Standard: nur elektrische Lampen)
 var light_switch_includes_flames: bool = false
 ## So lange muss man E gedrückt halten für die "große" Aktion (z. B. am Regal: alle
-## passenden Bücher einräumen bzw. Regal-Menü öffnen), in Sekunden. Kurz tippen = einzeln.
+## passenden Bücher einräumen), in Sekunden. Kurz tippen = Regal-Menü.
 var interact_hold_time: float = 0.45
 ## So weit öffnet sich die Eingangstür (in Grad).
 var door_open_angle: float = 90.0
@@ -174,16 +174,28 @@ var book_depth_range: Vector2 = Vector2(0.15, 0.21)
 ## Wie stark der Farbton der Buchrücken schwankt (0 = alle Bücher eines Genres gleich).
 var book_color_variation: float = 1.0
 
+## So viele Bücher kann ich höchstens gleichzeitig tragen.
+var max_carried_books: int = 7
+## So lange Q gedrückt halten, um alle getragenen Bücher ins Lager zu legen (in Sekunden).
+var store_books_hold_time: float = 0.6
+
+## So lange (in Sekunden) muss ich ein Buch anschauen, bis seine kleine Infokarte erscheint
+## (nicht bei jedem flüchtigen Blick).
+var book_info_delay: float = 0.5
+## So lange (in Sekunden) zeigt die Infokarte ein neues Buch obenauf in meiner Hand
+## (z. B. nach dem Nehmen oder Wechseln mit dem Mausrad).
+var book_info_hand_time: float = 2.5
+
 ## Das angeschaute Buch rutscht ein Stück aus dem Regal (in Metern).
 var book_hover_pull: float = 0.015
-## So weit vor dem Regal schwebt das Buch, das ich gleich einstelle (in Metern).
+## So weit vor dem Regal schwebt die Vorschau, wenn das Buch zwischen andere geschoben wird
+## (in Metern). An einer freien Stelle steht die Vorschau genau dort, wo das Buch hinkommt.
 var book_insert_preview_pull: float = 0.06
-
-## Testtaste (F9): legt ein paar zufällige Bücher in den Rückgabekasten, solange es noch
-## keine Besucher gibt. Zum Abschalten auf false setzen.
-var debug_return_box_key: bool = true
-## So viele Bücher legt die Testtaste auf einmal hinein.
-var debug_return_box_books: int = 7
+## Feines Raster auf jedem Regalbrett: Bücher werden in diesen Schritten abgestellt (in Metern).
+var shelf_grid_step: float = 0.01
+## Steht ein Buch näher als das an einem Nachbarn (Buch, Deko, Seitenwand), rückt es bündig
+## heran (in Metern).
+var shelf_snap_distance: float = 0.025
 
 
 # --- Speichern ---
@@ -241,6 +253,17 @@ var paused_max_fps: int = 30
 
 ## Spiel automatisch pausieren, wenn das Spielfenster in den Hintergrund rückt.
 var pause_on_focus_loss: bool = true
+
+
+# --- Testtasten (nur zum Ausprobieren) ---
+
+## Schaltet alle Testtasten auf einmal ein oder aus (F9 = Bücher in den Rückgabekasten,
+## F10 = Testgeld). Für die fertige Version auf false setzen.
+var debug_keys_enabled: bool = true
+## So viele Bücher legt die Testtaste F9 auf einmal in den Rückgabekasten.
+var debug_return_box_books: int = 7
+## So viel Geld gibt die Testtaste F10 bei jedem Drücken.
+var debug_money_amount: int = 500
 
 
 # --- Spätere Etappen ---

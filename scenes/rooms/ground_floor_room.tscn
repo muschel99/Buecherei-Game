@@ -251,7 +251,7 @@ collision_layer = 2
 collision_mask = 0
 monitoring = false
 script = ExtResource("21_interactable")
-prompt_text = "Tür öffnen"
+prompt_text = "Öffnen"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Door/Hinge/Interactable"]
 shape = SubResource("BoxShape3D_door_interact")

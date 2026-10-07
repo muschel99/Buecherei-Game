@@ -37,7 +37,7 @@ const SUBCATEGORIES := {
 		["wall_lamp", "Wandlampen"], ["candle", "Kerzen und Laternen"], ["switch", "Lichtschalter"]],
 	Category.DECO: [["plant", "Pflanzen"], ["rug", "Teppiche"], ["picture", "Bilder und Wandschmuck"],
 		["figure", "Figuren"], ["textile", "Textilien"], ["storage", "Aufbewahrung und Organisation"],
-		["books", "Bücher"]],
+		["books", "Bücher"], ["bookend", "Buchstützen"]],
 	Category.DIVIDER: [],
 }
 

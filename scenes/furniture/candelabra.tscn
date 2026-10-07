@@ -84,8 +84,8 @@ size = Vector3(0.34, 0.5, 0.22)
 [node name="Candelabra" type="Node3D" unique_id=1198166354]
 script = ExtResource("1_7q5jb")
 kind = 1
-prompt_turn_on = "Kerzen anzünden"
-prompt_turn_off = "Kerzen löschen"
+prompt_turn_on = "Anzünden"
+prompt_turn_off = "Löschen"
 
 [node name="Model" type="Node3D" parent="." unique_id=1083436443]
 
@@ -166,7 +166,7 @@ collision_layer = 2
 collision_mask = 0
 monitoring = false
 script = ExtResource("5_rpj7a")
-prompt_text = "Kerzen löschen"
+prompt_text = "Löschen"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=839787098]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)

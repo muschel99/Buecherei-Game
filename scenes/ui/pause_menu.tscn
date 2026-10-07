@@ -71,7 +71,7 @@ horizontal_alignment = 1
 
 [node name="KeyGrid" type="GridContainer" parent="ControlsPanel/VBox"]
 theme_override_constants/h_separation = 40
-theme_override_constants/v_separation = 10
+theme_override_constants/v_separation = 5
 columns = 2
 
 [node name="Key1" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
@@ -114,14 +114,35 @@ theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "E"
 
 [node name="Action3" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Benutzen: Lampen, Tür, Sitzen, Kartons, Tablet, Rückgabekasten; am Regal: ein Buch nehmen oder einstellen"
+text = "Benutzen: Lampen, Tür, Sitzen, Kartons, Tablet (Shop)"
+
+[node name="KeyShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "E am Regal"
+
+[node name="ActionShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Regal-Menü: Genre, auffüllen, sortieren, Buch wählen"
 
 [node name="KeyHold" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "E halten"
+text = "E halten am Regal"
 
 [node name="ActionHold" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Am Regal: alle passenden Bücher einräumen bzw. Regal-Menü"
+text = "Alle getragenen Bücher einräumen, die passen"
+
+[node name="KeyTake" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Linksklick"
+
+[node name="ActionTake" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Buch nehmen (Regal, Rückgabekasten) – bis zu 7 tragen"
+
+[node name="KeyPlace" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Rechtsklick"
+
+[node name="ActionPlace" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Buch obenauf genau dort ins Regal stellen, wo du hinschaust"
 
 [node name="KeyWheel" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
@@ -129,6 +150,20 @@ text = "Mausrad"
 
 [node name="ActionWheel" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Beim Tragen: anderes Buch obenauf"
+
+[node name="KeyStore" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Q halten"
+
+[node name="ActionStore" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Alle getragenen Bücher ins Lager legen"
+
+[node name="KeyReturnBox" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "E am Rückgabekasten"
+
+[node name="ActionReturnBox" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "So viele Bücher nehmen, wie in die Hände passen"
 
 [node name="KeyBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
@@ -157,6 +192,13 @@ text = "F9"
 
 [node name="ActionTestBooks" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Test: Bücher in den Rückgabekasten legen"
+
+[node name="KeyTestMoney" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "F10"
+
+[node name="ActionTestMoney" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Test: 500 Taler dazu"
 
 [node name="Key4" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

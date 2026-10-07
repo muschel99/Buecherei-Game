@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = "bookend_wood"
+display_name = "Buchstütze, dunkles Holz"
+description = "Hält Bücher im Regal aufrecht. Passt auf jedes Regalbrett."
+price = 14
+styles = 4
+scene_path = "res://scenes/furniture/bookend_wood.tscn"
+footprint = Vector2i(1, 1)
+placement = 3
+subcategory = "bookend"

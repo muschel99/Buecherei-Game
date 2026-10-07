@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = "candle_jar"
+display_name = "Kerze im Glas"
+description = "Ein kleines, warmes Licht fürs Regal."
+price = 10
+scene_path = "res://scenes/furniture/candle_jar.tscn"
+footprint = Vector2i(1, 1)
+placement = 3
+category = 4
+subcategory = "candle"

@@ -143,8 +143,8 @@ size = Vector3(0.8, 0.5, 0.8)
 [node name="Chandelier" type="Node3D" unique_id=2116531310]
 script = ExtResource("1_84gdd")
 shadow_importance = 0
-prompt_turn_on = "Lampe einschalten"
-prompt_turn_off = "Lampe ausschalten"
+prompt_turn_on = "An"
+prompt_turn_off = "Aus"
 
 [node name="Model" type="Node3D" parent="." unique_id=1356201241]
 
@@ -287,7 +287,7 @@ collision_layer = 2
 collision_mask = 0
 monitoring = false
 script = ExtResource("4_8i7tv")
-prompt_text = "Lampe ausschalten"
+prompt_text = "Aus"
 long_reach = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=749273687]

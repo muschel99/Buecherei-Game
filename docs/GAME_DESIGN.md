@@ -40,7 +40,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   - Das Tablet gehört fest zur Bücherei: Es steht nicht im Shop und lässt sich nicht verkaufen.
 - **Lieferung:** Kurz nach der Bestellung (10 Sekunden, GameConfig) stehen die Kartons draußen
   neben der Eingangstür – **ein Karton pro Objekt** (drei Stühle und eine Lampe = vier Kartons) –,
-  und ein dezenter Hinweis erscheint: „Deine Lieferung ist da“.
+  und ein dezenter Hinweis erscheint: „Lieferung ist da“.
   - Die Kartons stapeln sich ordentlich: erst nebeneinander an der Hauswand (4 Stapel), dann
     bis zu 3 übereinander, dann eine Reihe davor. Jeder steht leicht schief, keiner steckt im
     anderen. Auch mehrere Bestellungen stapeln sich so weiter; neue Kartons füllen Lücken.
@@ -79,10 +79,12 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   zweite Zeile.
 - Beim Wechsel der Kategorie springt die Unterkategorie auf „Alle“, der Stil bleibt.
 
-### Bücher und Regale (seit Etappe 3, echte Bücher seit 3b)
+### Bücher und Regale (seit Etappe 3, echte Bücher seit 3b, freies Einräumen seit 3c)
 Grundsatz: Einsortieren soll befriedigend sein, aber nie mühsam. Man **kann** jedes Buch
 einzeln an seinen Platz stellen, **muss** es aber nie: Auffüllen, Einräumen und Sortieren
 gehen jederzeit mit einem Klick bzw. einem langen E. Kein Zeitdruck, keine Strafe.
+Möglichst wenig Text auf dem Bildschirm: kleine Tastensymbole statt Sätzen, ausführliche
+Erklärungen nur in der Tastenhilfe im Pausenmenü.
 
 - **Genres** sind Daten (`data/genres/`, ein Datenblatt je Genre): Name, Farbpalette der
   Einbände, passender Stil (freiwillig, zählt noch nicht zur Stilberechnung), Preis eines
@@ -107,13 +109,15 @@ gehen jederzeit mit einem Klick bzw. einem langen E. Kein Zeitdruck, keine Straf
   - comic: kräftige Farben, Rasterpunkte und Strahlenkranz (Comics)
   Schriften kommen vom eigenen PC (mit Serifen, ohne Serifen oder verspielt, je Genre).
 - **Cover und Buchrücken:** Der Rücken (mit Titel, Bändern und kleinem Motiv) ist im Regal zu
-  sehen. Das Cover sieht man, wenn man ein Buch im Regal anschaut (kleine Karte neben der
-  Bildmitte mit Cover, Titel, Autor und Genre) und wenn man es in der Hand hält.
+  sehen. Das Cover sieht man, wenn man ein Buch im Regal kurz länger anschaut (etwa 0,5 s,
+  `GameConfig.book_info_delay`: kleine, dezente Karte neben der Bildmitte mit Cover, Titel,
+  Autor und Genre – nicht bei jedem flüchtigen Blick) und wenn man es in der Hand hält
+  (das Buch obenauf mit Cover; nach dem Nehmen oder Wechseln zeigt die Karte es kurz).
 - Von einem Titel kann es mehrere Exemplare geben; alle sehen gleich aus. Jedes Exemplar hat
   einen Zustand (vorerst immer „gut“; beschädigte Bücher kommen in Etappe 5).
 - **Sammlung:** Bücherpakete bringen zuerst Titel, die ich noch nicht kenne – man weiß nie
-  genau, was als Nächstes kommt. Beim Auspacken freut sich ein Hinweis mit
-  („Krimi: 7 neue Titel für deine Sammlung!“). Erst wenn alle 50 Titel eines Genres entdeckt
+  genau, was als Nächstes kommt. Beim Auspacken freut sich ein kurzer Hinweis mit
+  („7 neue Titel · Krimi“). Erst wenn alle 50 Titel eines Genres entdeckt
   sind, kommen doppelte (die mit den wenigsten Exemplaren zuerst). Grundlage für das spätere
   Freischalten einzelner Bücher (Etappe 8).
 - **Bücherbestand** (getrennt vom Möbel-Inventar): Jedes Buch ist im Lager, in einem Regal,
@@ -128,51 +132,74 @@ gehen jederzeit mit einem Klick bzw. einem langen E. Kein Zeitdruck, keine Straf
     Rückgabekasten), gesamt und Sammlung (entdeckte Titel / alle Titel).
   - Reiter „Sammlung“: je Genre alle 50 Titel als Cover-Kacheln, unentdeckte als „?“; darunter,
     wo die Exemplare sind. Ein Klick auf ein Buch im Lager legt es obenauf in die Hand.
-- **Regale:** Bücherregale haben Bretter für Bücher (das obere Brett bleibt Ablage für Deko).
-  Jedes Brett hat seine eigene Reihe; ist es voll, passt dort nichts mehr hinein.
-  - **Buch anschauen:** Es rutscht ein Stück heraus und leuchtet sanft; daneben erscheint die
-    kleine Karte mit Cover, Titel, Autor und Genre.
-  - **E tippen auf ein Buch** (leere Hände): genau dieses Buch nehmen – auch aus der Mitte
-    eines vollen Bretts. Die Nachbarn rücken zusammen.
-  - **Mit Büchern in der Hand:** Wohin ich schaue, öffnet sich eine Lücke – die Nachbarn
-    rücken zur Seite, das Buch obenauf schwebt davor. **E tippen** stellt es genau dort ein.
-    Passt es nicht (anderes Genre, Brett voll), steht der Grund im Hinweis.
-  - **E halten** (ein kleiner Ring füllt sich): alle getragenen Bücher, die passen, auf einmal
-    einräumen – trage ich nichts Passendes, öffnet sich das Regal-Menü.
+- **Regale:** Bücherregale haben Bretter für Bücher und Deko (das obere Brett bleibt Ablage
+  für Deko). Jedes Buch steht **frei** auf seinem Brett – links, rechts, in der Mitte, mit
+  Lücken. Ein feines Raster (1 cm, `GameConfig.shelf_grid_step`) hält alles ordentlich.
+  - **Buch anschauen:** Es rutscht ein Stück heraus und leuchtet sanft; nach kurzem Hinsehen
+    erscheint die kleine Karte.
+  - **Linksklick auf ein Buch:** genau dieses Buch nehmen (auch aus der Mitte) – es kommt
+    obenauf auf den Stapel in der Hand. Die anderen bleiben stehen, wo sie sind.
+  - **Mit Büchern in der Hand:** Wohin ich schaue, steht eine halbdurchsichtige Vorschau des
+    Buchs obenauf. **Rechtsklick** stellt es genau dort ab. Nah an einem anderen Buch, an Deko
+    oder an der Seitenwand rastet es bündig ein (`GameConfig.shelf_snap_distance`). Schaue
+    ich zwischen zwei Bücher, schwebt die Vorschau davor; beim Abstellen rücken die Nachbarn
+    nur so weit zur Seite wie nötig. Passt es nicht (kein Platz, anderes Genre), ist die
+    Vorschau dezent rötlich und schüttelt sich beim Rechtsklick kurz – ganz ohne Text.
+  - **E halten** (ein kleiner Ring um das E-Symbol füllt sich): alle getragenen Bücher, die
+    passen, auf einmal einräumen – sie füllen freie Plätze von links nach rechts, Brett für
+    Brett, und lassen Deko stehen.
+  - **E tippen:** Regal-Menü.
   - Regale ohne Genre und „Gemischt“-Regale nehmen jedes Buch.
-- **Regal-Menü** (E halten, oder E auf ein leeres Regal), klein am rechten Rand:
+- **Regal-Menü** (E tippen am Regal), klein am rechten Rand:
   - Genre des Regals wählen oder „Gemischt“. Bücher, die nach einem Wechsel nicht mehr passen,
     gleiten heraus und gehen ins Lager.
-  - „Aus dem Lager auffüllen“: Die passenden Bücher gleiten nacheinander ins Regal (höchstens
-    2,5 Sekunden, egal wie viele), je Genre nach Titel sortiert. Gemischte Regale werden
-    gleichmäßig aus allen Genres befüllt, nach Genre gruppiert.
+  - „Aus dem Lager auffüllen“: Die passenden Bücher gleiten nacheinander in die freien Plätze
+    (höchstens 2,5 Sekunden, egal wie viele), je Genre nach Titel sortiert. Gemischte Regale
+    werden gleichmäßig aus allen Genres befüllt, nach Genre gruppiert.
   - „Buch aus dem Lager wählen …“: Cover-Kacheln der passenden Bücher im Lager; ein Klick legt
-    das Buch obenauf in die Hand, dann stellt man es mit E an die gewünschte Stelle.
-  - „Nach Genre und Titel sortieren“: Die Bücher rücken sanft an ihre neuen Plätze.
+    das Buch obenauf in die Hand, dann stellt man es mit Rechtsklick an die gewünschte Stelle.
+  - „Nach Genre und Titel sortieren“: Nur die Bücher rücken sanft an ihre neuen Plätze (dicht
+    an dicht von links); Deko bleibt stehen.
   - „Alle Bücher zurück ins Lager“; getragene Bücher einräumen oder ins Lager legen.
   - Schließen mit Esc, E oder „Schließen“.
-- Am Regal hängt ein kleines **Genre-Schild** (Platzhalter) in der Genre-Farbe.
+- **Genre ohne Schild:** Schaue ich ein Regal an, erscheint unten in der Bildmitte nur das
+  Genre-Wort (z. B. „Krimi“) in ruhiger Serifenschrift und blendet sanft ein und aus.
+- **Deko im Regal:** Im Gestaltungsmodus lässt sich kleine Deko frei entlang der Regalbretter
+  stellen (kleine Pflanzen, Kerzen, Figuren, Bilderrahmen, Vasen, Buchstützen …). Nur, was in
+  der Höhe ins Fach passt, und nur an freie Stellen: Bücher und Deko überschneiden sich nie.
+  Für Regale gibt es im Shop Buchstützen (Holz, Beton), eine Mini-Sukkulente, einen
+  Bilderrahmen zum Hinstellen, einen kleinen Globus, eine Kerze im Glas und eine kleine Vase
+  mit Lavendel.
 - **Leistung:** Alle Bücher eines Regals werden in einem einzigen Rutsch gezeichnet (MultiMesh);
   die Buchrücken kommen aus einem gemeinsamen Bild, das beim Start einmal gezeichnet wird.
   So bleiben auch hunderte Bücher im Raum leicht für den PC.
-- **Gestalten:** Verschiebt man ein Regal, bleiben die Bücher darin (auch in der Vorschau
-  sichtbar). Räumt man es mit X weg, gehen seine Bücher ins Lager.
+- **Gestalten:** Verschiebt man ein Regal, bleiben Bücher und Deko darin (auch in der Vorschau
+  sichtbar). Räumt man es mit X weg, gehen seine Bücher ins Lager und die Deko ins Inventar.
 
-### Bücher in der Hand und Rückgabekasten (seit Etappe 3)
-- Was ich trage, steht dezent unten in der Mitte („Obenauf: „…“ · Du trägst 7 Bücher:
-  3 Krimi, 4 Fantasy“). Das Buch obenauf sieht man unten rechts mit seinem Cover, darunter
-  angedeutet die anderen. Das **Mausrad** wechselt, welches Buch obenauf liegt.
+### Bücher in der Hand und Rückgabekasten (seit Etappe 3, neue Steuerung seit 3c)
+- Ich trage höchstens **7 Bücher** (`GameConfig.max_carried_books`). Das Buch obenauf sieht man
+  unten rechts mit seinem Cover, dahinter die anderen als kleiner Stapel mit echten
+  Buchrücken; daneben ein kleines Stapel-Symbol mit der Zahl. Sind die Hände voll und ich
+  möchte noch eins nehmen, wackelt der Stapel kurz – ohne Text.
+- Das **Mausrad** wechselt, welches Buch obenauf liegt.
+- **Q halten:** Alle getragenen Bücher kommen ins Lager (Ring um das Q-Symbol).
 - **Rückgabekasten:** Kasten mit Einwurfschlitz und kleinem Fenster (Kategorie Theke), frei
   platzierbar, z. B. neben der Tür oder an der Theke. Zum Start liegt einer im Inventar,
   weitere gibt es im Shop.
 - Später werfen Besucher dort ihre ausgeliehenen Bücher ein. Bis dahin legt die Testtaste **F9**
-  ein paar Bücher bereits entdeckter Titel hinein (abschaltbar in GameConfig:
-  `debug_return_box_key`).
-- E am Kasten: Ich nehme alle Bücher auf einmal heraus. Dann am Regal: einzeln mit E tippen
-  oder alle passenden mit E halten. Was nicht passt, trage ich weiter.
+  ein paar Bücher bereits entdeckter Titel hinein.
+- E am Kasten: so viele Bücher nehmen, wie in die Hände passen; Linksklick: eines. Dann am
+  Regal: einzeln mit Rechtsklick abstellen oder alle passenden mit E halten. Was nicht passt,
+  trage ich weiter.
 - Keine Eile: Bücher dürfen beliebig lange im Kasten liegen oder getragen werden.
-- Gespeichert werden Bestand, Sammlung, Regalinhalte (Brett für Brett), Genre-Schilder, Inhalt
-  des Rückgabekastens, die getragenen Bücher und welches obenauf liegt.
+- Gespeichert werden Bestand, Sammlung, Regalinhalte (jedes Buch mit seiner Lage auf dem
+  Brett), Deko in den Regalen, Inhalt des Rückgabekastens, die getragenen Bücher und welches
+  obenauf liegt. Ältere Spielstände laden weiter (Bücher ohne Lage stehen dicht von links).
+
+### Testtasten (bis es Besucher und Einnahmen gibt)
+- **F9:** ein paar Bücher in den Rückgabekasten. **F10:** 500 Taler Testgeld
+  (`GameConfig.debug_money_amount`).
+- Beide lassen sich zentral abschalten: `GameConfig.debug_keys_enabled = false`.
 
 ### Später (Etappe 5)
 - Leihgebühren über Leseausweise (Buch abstempeln statt Wechselgeld).
@@ -198,7 +225,13 @@ gehen jederzeit mit einem Klick bzw. einem langen E. Kein Zeitdruck, keine Straf
 ## Steuerung
 **Grundregel:** Jede Interaktion in der Spielwelt läuft über die Taste E. Man muss dafür nicht
 eine bestimmte Stelle treffen: Wer auf irgendeinen Teil eines Objekts schaut (von vorn, der
-Seite, hinten oder oben), kann es benutzen.
+Seite, hinten oder oben), kann es benutzen. Bücher nimmt man mit der linken und stellt sie
+mit der rechten Maustaste ab (nur im Spiel; im Gestaltungsmodus bleibt die Maus wie bisher).
+Schaut man auf etwas Interaktives, erscheint unter der Bildmitte nur ein kleines, weiches
+Tastensymbol (abgerundetes E, Q oder eine Maus) mit höchstens einem Wort daneben („Nehmen“,
+„Öffnen“, „Sitzen“). Halte-Aktionen haben einen feinen Ring um ihr Symbol, der sich beim
+Halten füllt. In den Einstellungen unter „Hinweise“: Aus, Nur Symbole oder Symbol mit Wort
+(Standard).
 Esc schließt immer zuerst das, was gerade offen ist (Gestaltungsmodus, Shop, Regal-Menü, Menüs).
 Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 
@@ -209,12 +242,16 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Leertaste      | Springen (etwa 0,8 m hoch, weich); im Sitzen: aufstehen |
 | Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
-| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen, Rückgabekasten leeren; am Regal: angeschautes Buch nehmen bzw. Buch obenauf an der markierten Stelle einstellen |
-| E halten       | Am Regal: alle getragenen Bücher, die passen, einräumen – sonst Regal-Menü |
+| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen, Bücher aus dem Rückgabekasten nehmen; am Regal: Regal-Menü |
+| E halten       | Am Regal: alle getragenen Bücher, die passen, einräumen |
+| Linksklick     | Buch nehmen (Regal, Rückgabekasten) – bis zu 7 tragen |
+| Rechtsklick    | Buch obenauf genau dort ins Regal stellen, wo ich hinschaue |
 | Mausrad        | Beim Tragen: anderes Buch obenauf                |
+| Q halten       | Alle getragenen Bücher ins Lager legen         |
 | Tab            | Gestaltungsmodus (Inventar) öffnen/schließen   |
 | F3             | Bilder pro Sekunde anzeigen/ausblenden         |
 | F9             | Test: zufällige Bücher in den Rückgabekasten (bis es Besucher gibt) |
+| F10            | Test: 500 Taler dazu                           |
 | Esc            | Schließt, was offen ist – sonst Pausenmenü     |
 
 ### Im Gestaltungsmodus
@@ -232,6 +269,9 @@ Zwei Zustände:
 - **Platzier-Zustand:** Sobald etwas ausgewählt oder aufgehoben ist, verschwindet der Mauszeiger
   und die Vorschau folgt dem Blick. Nach dem Platzieren oder Zurücklegen geht es automatisch
   zurück in den Katalog-Zustand.
+- Die Statuszeile unten zeigt nur kurz den Namen (z. B. „Kleiner Globus ×1“) oder, warum es
+  gerade nicht passt („Zu hoch für dieses Fach.“, „Hier stehen Bücher.“). Die Tasten stehen in
+  der Tastenhilfe rechts.
 
 | Taste                    | Aktion                                                         |
 |--------------------------|----------------------------------------------------------------|
@@ -316,6 +356,8 @@ Zwei Zustände:
   Niedrig nutzt 2 Stufen, Mittel und Hoch 4. Schattenweite der Sonne: 20 m (GameConfig).
 - Im Pausenmenü läuft das Spiel mit höchstens 30 Bildern pro Sekunde, damit der Rechner ruht.
 - Bilder pro Sekunde anzeigen: in den Einstellungen oder mit F3.
+- Hinweise (Tastensymbole unter der Bildmitte): Aus, Nur Symbole oder Symbol mit Wort
+  (Standard).
 - Alle Menüs und Anzeigen passen sich an jede Auflösung und jedes Seitenverhältnis an.
 - Später dazu: Lautstärke, Mausempfindlichkeit, Tageslänge.
 - Weitere Räume und Obergeschoss werden später freigeschaltet.

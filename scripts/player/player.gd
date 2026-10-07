@@ -6,7 +6,10 @@ extends CharacterBody3D
 ## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
 ## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
 ## Manche Objekte (z. B. Regale) unterscheiden E tippen und E halten (Interactable.supports_hold).
-## Trage ich Bücher, wechselt das Mausrad das Buch obenauf (das ich als Nächstes einstelle).
+## Bücher: Linksklick nimmt das angeschaute Buch, Rechtsklick stellt das Buch obenauf genau
+## dort ab, wo ich hinschaue (Interactable-Signale clicked / right_clicked). Das Mausrad
+## wechselt das Buch obenauf, Q halten legt alle getragenen Bücher ins Lager.
+## Klicks zählen nur, solange der Mauszeiger gefangen ist (sonst fängt ein Klick ihn wieder).
 ## Alle Einstellwerte (Tempo, Mausempfindlichkeit ...) stehen in GameConfig.
 
 ## Wird gesendet, wenn sich das anvisierte interaktive Objekt ändert
@@ -14,8 +17,9 @@ extends CharacterBody3D
 signal interaction_target_changed(target: Interactable)
 ## Wird gesendet, wenn sich die Figur hinsetzt (true) oder aufsteht (false).
 signal seated_changed(seated: bool)
-## Fortschritt beim Gedrückthalten von E (0 bis 1); -1 = nichts wird gehalten.
-signal hold_progress_changed(progress: float)
+## Fortschritt beim Gedrückthalten (0 bis 1); -1 = nichts wird gehalten.
+## action: "interact" (E am Objekt) oder "store_books" (Q: alle Bücher ins Lager).
+signal hold_progress_changed(progress: float, action: StringName)
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -28,6 +32,8 @@ var _current_target: Interactable = null
 var _hold_target: Interactable = null
 var _hold_time := 0.0
 var _hold_done := false
+# Q gedrückt halten (alle getragenen Bücher ins Lager): gehaltene Zeit, -1 = nicht gehalten
+var _store_hold_time := -1.0
 var _head_bob_time: float = 0.0
 # Sitzen: aktueller Sitzplatz, Stehposition davor und laufende Bewegung
 var _seat: SeatPoint = null
@@ -82,10 +88,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif (event.is_action_pressed("book_next") or event.is_action_pressed("book_previous")) \
 			and interaction_enabled and BookStock.carried.size() > 1:
 		BookStock.cycle_active(1 if event.is_action_pressed("book_next") else -1)
-	elif event is InputEventMouseButton and event.pressed and not MenuStack.has_open():
+	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		# Falls die Maus frei ist (z. B. nach einem Fensterwechsel): per Klick wieder fangen.
 		# Ist etwas offen (z. B. der Katalog), gehört der Mauszeiger dorthin.
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		if not MenuStack.has_open():
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	elif event.is_action_pressed("book_take") and _can_click():
+		_current_target.click(self)
+	elif event.is_action_pressed("book_place") and _can_click():
+		_current_target.right_click(self)
+	elif event.is_action_pressed("store_books") and interaction_enabled and not BookStock.carried.is_empty():
+		_store_hold_time = 0.0
+	elif event.is_action_released("store_books"):
+		_cancel_store_hold()
 
 
 func _physics_process(delta: float) -> void:
@@ -107,6 +122,7 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_update_hold(delta)
+	_update_store_hold(delta)
 
 
 # --- Springen und Hocken ---
@@ -330,16 +346,43 @@ func _update_hold(delta: float) -> void:
 		return
 	_hold_time += delta
 	var progress := clampf(_hold_time / maxf(GameConfig.interact_hold_time, 0.01), 0.0, 1.0)
-	hold_progress_changed.emit(progress)
+	hold_progress_changed.emit(progress, &"interact")
 	if progress >= 1.0:
 		_hold_done = true
-		hold_progress_changed.emit(-1.0)
+		hold_progress_changed.emit(-1.0, &"interact")
 		_hold_target.hold(self)
 
 
 func _cancel_hold() -> void:
 	if _hold_target != null:
-		hold_progress_changed.emit(-1.0)
+		hold_progress_changed.emit(-1.0, &"interact")
 	_hold_target = null
 	_hold_done = false
 	_hold_time = 0.0
+
+
+## Mausklick auf das angeschaute Objekt? Nur im Spiel (Maus gefangen, nicht im Sitzen).
+func _can_click() -> bool:
+	return interaction_enabled and not is_seated() and is_instance_valid(_current_target) \
+		and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+
+
+## Q gehalten: Ist die Zeit um, kommen alle getragenen Bücher ins Lager.
+func _update_store_hold(delta: float) -> void:
+	if _store_hold_time < 0.0:
+		return
+	if not interaction_enabled or BookStock.carried.is_empty():
+		_cancel_store_hold()
+		return
+	_store_hold_time += delta
+	var progress := clampf(_store_hold_time / maxf(GameConfig.store_books_hold_time, 0.01), 0.0, 1.0)
+	hold_progress_changed.emit(progress, &"store_books")
+	if progress >= 1.0:
+		_cancel_store_hold()
+		BookStock.store_carried()
+
+
+func _cancel_store_hold() -> void:
+	if _store_hold_time >= 0.0:
+		hold_progress_changed.emit(-1.0, &"store_books")
+	_store_hold_time = -1.0

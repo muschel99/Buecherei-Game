@@ -1,12 +1,12 @@
 class_name ShelfMenu
 extends CanvasLayer
-## Das kleine Regal-Menü (E an einem Bücherregal).
+## Das kleine Regal-Menü (E tippen an einem Bücherregal).
 ##
 ## Hier wählt man, welches Genre in das Regal gehört (oder "Gemischt"), füllt es mit einem
 ## Klick aus dem Lager, sortiert es oder legt alle Bücher zurück ins Lager. Trägt man Bücher,
 ## kann man sie hier auch einräumen oder ins Lager legen. "Buch aus dem Lager wählen…" zeigt
 ## die Cover der passenden Bücher im Lager – ein Klick legt das Buch obenauf in die Hand,
-## dann stellt man es mit E an genau die Stelle, die man möchte.
+## dann stellt man es mit der rechten Maustaste an genau die Stelle, die man möchte.
 ## Das Menü steht rechts am Rand – so sieht man in der Mitte, wie die Bücher ins Regal gleiten.
 ## Schließen: Esc, E oder "Schließen" (Esc-Regel über MenuStack). Solange es offen ist, ist der
 ## Mauszeiger sichtbar und die Spielfigur steht still.
@@ -163,21 +163,21 @@ func open_picker() -> void:
 	_refresh_picker()
 
 
-## Ein Buch aus dem Lager obenauf in die Hand nehmen – dann kann ich es mit E einstellen.
+## Ein Buch aus dem Lager obenauf in die Hand nehmen – dann kann ich es mit der rechten
+## Maustaste genau dort abstellen, wo ich hinschaue.
 func choose_book(data: BookData) -> void:
+	if BookStock.is_hand_full():
+		_picker_title.text = "Deine Hände sind voll (%d Bücher)." % BookStock.carried.size()
+		BookStock.show_hands_full()
+		return
 	for book in BookStock.get_stored_books(data.genre_id):
 		if book.data == data and BookStock.take_stored_book(book):
 			BookStock.carry([book])
 			close()
-			Notice.post(self, "„%s“ liegt obenauf in deiner Hand – schau auf eine Stelle im Regal und drücke E." % data.title)
 			return
 
 
 func store_carried() -> void:
-	for genre_id in BookStock.get_carried_counts():
-		var genre := Catalog.get_genre(genre_id)
-		if genre:
-			StorageIndicator.add_item(self, genre)
 	var count := BookStock.store_carried()
 	_message.text = "%d getragene %s ins Lager gelegt." % [count, "Buch" if count == 1 else "Bücher"]
 	_queue_refresh()

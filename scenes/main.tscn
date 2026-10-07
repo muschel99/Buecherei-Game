@@ -21,6 +21,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/shelf_menu.tscn" id="19_shelf_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/carry_indicator.tscn" id="20_carry"]
 [ext_resource type="Script" path="res://scripts/ui/book_info_card.gd" id="21_book_card"]
+[ext_resource type="Script" path="res://scripts/ui/genre_caption.gd" id="22_genre_caption"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -200,6 +201,10 @@ player_path = NodePath("../Player")
 [node name="BookInfoCard" type="CanvasLayer" parent="."]
 process_mode = 3
 script = ExtResource("21_book_card")
+
+[node name="GenreCaption" type="CanvasLayer" parent="."]
+process_mode = 3
+script = ExtResource("22_genre_caption")
 
 [node name="ShelfMenu" parent="." instance=ExtResource("19_shelf_menu")]
 player_path = NodePath("../Player")

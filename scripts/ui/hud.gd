@@ -1,8 +1,10 @@
 extends CanvasLayer
-## Anzeige über dem Spielbild: Punkt in der Bildmitte, Hinweistext und Kontostand.
+## Anzeige über dem Spielbild: Punkt in der Bildmitte, Tastensymbole darunter und Kontostand.
 ##
 ## Bekommt von der Spielfigur über das Signal "interaction_target_changed"
-## mitgeteilt, welches interaktive Objekt gerade anvisiert wird.
+## mitgeteilt, welches interaktive Objekt gerade anvisiert wird. Statt Sätzen erscheinen
+## darunter nur kleine Tastensymbole mit höchstens einem Wort (KeyHints), z. B. [E] Öffnen.
+## Halte-Aktionen (E halten, Q halten) zeigen einen Ring um ihr Symbol.
 
 const FADE_TIME := 0.15
 const CROSSHAIR_IDLE_ALPHA := 0.45
@@ -15,20 +17,20 @@ const CROSSHAIR_ACTIVE_SCALE := 1.6
 
 @onready var _crosshair: Panel = $Crosshair
 @onready var _cursor_icon: TextureRect = $CursorIcon
-@onready var _prompt_label: Label = $PromptLabel
 @onready var _money_label: Label = %MoneyLabel
 @onready var _money_change_label: Label = %MoneyChangeLabel
 
 var _target: Interactable = null
 var _hold_ring: HoldRing
+var _key_hints: KeyHints
 var _seated := false
+var _storing := false  # Q wird gerade gehalten (alle Bücher ins Lager)
 var _tween: Tween
 var _money_tween: Tween
 
 
 func _ready() -> void:
 	_crosshair.modulate.a = CROSSHAIR_IDLE_ALPHA
-	_prompt_label.modulate.a = 0.0
 	_money_change_label.modulate.a = 0.0
 	_money_label.text = Wallet.format(Wallet.money)
 	Wallet.money_changed.connect(_on_money_changed)
@@ -38,20 +40,42 @@ func _ready() -> void:
 	_hold_ring.size = Vector2(40, 40)
 	_hold_ring.position -= _hold_ring.size / 2.0
 	add_child(_hold_ring)
+	# Tastensymbole unter der Bildmitte
+	_key_hints = KeyHints.new()
+	_key_hints.anchor_left = 0.0
+	_key_hints.anchor_right = 1.0
+	_key_hints.anchor_top = 0.5
+	_key_hints.anchor_bottom = 0.5
+	_key_hints.offset_top = 16.0
+	_key_hints.offset_bottom = 56.0
+	add_child(_key_hints)
 
 
 func _process(_delta: float) -> void:
 	# Im Pausenmenü ausblenden (dieser Knoten läuft auch bei Pause weiter)
 	visible = not get_tree().paused
-	# Text laufend aktualisieren, da er sich ändern kann (z. B. "einschalten" -> "ausschalten")
+	# Laufend aktualisieren, da sich die Wörter ändern können (z. B. Licht an -> aus)
+	_key_hints.show_hints(_current_hints())
+
+
+## Welche Tastensymbole gerade passen (mit je einem kurzen Wort).
+func _current_hints() -> Array:
+	if _storing:
+		return [{"input": "store_hold", "word": "Ins Lager"}]
 	if _seated:
-		_prompt_label.text = "%s, Leertaste oder Laufen – Aufstehen" % _get_key_name("interact")
-	elif is_instance_valid(_target):
-		var key := _get_key_name("interact")
-		_prompt_label.text = "%s – %s" % [key, _target.prompt_text]
-		# Zweite Zeile für langes Drücken (z. B. am Regal)
-		if not _target.hold_prompt_text.is_empty():
-			_prompt_label.text += "\n%s halten – %s" % [key, _target.hold_prompt_text]
+		return [{"input": "interact", "word": "Aufstehen"}]
+	if not is_instance_valid(_target):
+		return []
+	var hints := []
+	if not _target.click_text.is_empty():
+		hints.append({"input": "click", "word": _target.click_text})
+	if not _target.right_click_text.is_empty():
+		hints.append({"input": "right_click", "word": _target.right_click_text})
+	if _target.supports_hold and not _target.hold_prompt_text.is_empty():
+		hints.append({"input": "interact_hold", "word": _target.hold_prompt_text})
+	if not _target.prompt_text.is_empty():
+		hints.append({"input": "interact", "word": _target.prompt_text})
+	return hints
 
 
 ## Kontostand aktualisieren; Einnahmen und Ausgaben erscheinen kurz darunter (+80 / −320).
@@ -68,18 +92,20 @@ func _on_money_changed(money: int, change: int) -> void:
 	_money_tween.tween_property(_money_change_label, "modulate:a", 0.0, 0.8)
 
 
-## Fortschritt beim Gedrückthalten von E (-1 = Ring ausblenden).
-func _on_player_hold_progress_changed(progress: float) -> void:
-	_hold_ring.progress = progress
+## Fortschritt beim Gedrückthalten von E bzw. Q (-1 = Ring ausblenden). Der Ring liegt um
+## das passende Tastensymbol – sind die Hinweise aus, um die Bildmitte.
+func _on_player_hold_progress_changed(progress: float, action: StringName = &"interact") -> void:
+	if action == &"store_books":
+		_storing = progress >= 0.0
+		_key_hints.show_hints(_current_hints())
+	var input := "store_hold" if action == &"store_books" else "interact_hold"
+	var on_icon := _key_hints.set_hold_progress(input, progress)
+	_hold_ring.progress = -1.0 if on_icon else progress
 
 
 ## Im Sitzen dezent zeigen, wie man wieder aufsteht.
 func _on_player_seated_changed(seated: bool) -> void:
 	_seated = seated
-	if _tween:
-		_tween.kill()
-	_tween = create_tween().set_trans(Tween.TRANS_SINE)
-	_tween.tween_property(_prompt_label, "modulate:a", 0.7 if seated else 0.0, FADE_TIME)
 
 
 func _on_player_interaction_target_changed(target: Interactable) -> void:
@@ -92,7 +118,6 @@ func _on_player_interaction_target_changed(target: Interactable) -> void:
 	var crosshair_scale := Vector2.ONE * (CROSSHAIR_ACTIVE_SCALE if is_active else 1.0)
 	_tween.tween_property(_crosshair, "scale", crosshair_scale, FADE_TIME)
 	_tween.tween_property(_crosshair, "modulate:a", 1.0 if is_active else CROSSHAIR_IDLE_ALPHA, FADE_TIME)
-	_tween.tween_property(_prompt_label, "modulate:a", 1.0 if is_active else 0.0, FADE_TIME)
 
 
 ## Im Katalog-Zustand des Gestaltungsmodus ist der Mauszeiger sichtbar – dann
@@ -114,12 +139,3 @@ func _on_build_mode_cursor_icon_changed(icon: String) -> void:
 			_cursor_icon.texture = null
 	_cursor_icon.visible = _cursor_icon.texture != null
 	_crosshair.visible = not _cursor_icon.visible
-
-
-## Liefert den Tastennamen einer Aktion (z. B. "E"), damit der Hinweis
-## auch nach einer späteren Tastenänderung stimmt.
-func _get_key_name(action: StringName) -> String:
-	for event in InputMap.action_get_events(action):
-		if event is InputEventKey:
-			return event.as_text_physical_keycode()
-	return "?"
