@@ -253,6 +253,11 @@ func place_active_book(_interactor: Node = null) -> bool:
 	return true
 
 
+## Wirkt das Mausrad gerade (Vorschau flach oder angelehnt)? Für den Hinweis "Drehen".
+func can_turn() -> bool:
+	return not _plan.is_empty() and _plan.pose in [LooseBook.Pose.FLAT, LooseBook.Pose.OPEN, LooseBook.Pose.LEANING]
+
+
 ## Mausrad: das Buch obenauf vor dem Ablegen drehen (direction +1 / -1). Nur, wenn die
 ## Vorschau flach liegt oder angelehnt ist – im Regal und in Reihen bleibt der Rücken vorn.
 ## Liefert true, wenn sich etwas gedreht hat.

@@ -5,8 +5,8 @@ extends CanvasLayer
 ## mitgeteilt, welches interaktive Objekt gerade anvisiert wird. Statt Sätzen erscheinen
 ## darunter nur kleine Tastensymbole mit höchstens einem Wort (KeyHints), z. B. [E] Öffnen.
 ## Halte-Aktionen (E halten, Q halten, Linksklick halten) zeigen einen Ring um ihr Symbol.
-## Trage ich Bücher, stehen die Tragehinweise (Ablegen, Einräumen, Lager) klein unten neben
-## dem Bücherstapel (CarryIndicator) – nicht mitten im Bild.
+## Trage ich Bücher, stehen die Tragehinweise (Ablegen, Einräumen, Drehen, Blättern, Lager)
+## klein unten neben dem Bücherstapel (CarryIndicator) – nicht mitten im Bild.
 
 const FADE_TIME := 0.15
 const CROSSHAIR_IDLE_ALPHA := 0.45
@@ -27,6 +27,7 @@ var _hold_ring: HoldRing
 var _key_hints: KeyHints
 var _seated := false
 var _carry_indicator: CarryIndicator
+var _world_placer: LooseBooks
 var _tween: Tween
 var _money_tween: Tween
 
@@ -81,15 +82,28 @@ func _current_hints() -> Array:
 	return hints
 
 
-## Tragehinweise unten neben dem Bücherstapel (nur, wenn ich Bücher trage).
+## Tragehinweise unten neben dem Bücherstapel (nur, wenn ich Bücher trage). Drehen nur, wo
+## das Mausrad wirkt (frei ablegen), Blättern nur bei mehreren Büchern und wenn E nicht
+## gerade etwas anderes tut.
 func _carry_hints() -> Array:
 	if BookStock.carried.is_empty() or _seated:
 		return []
 	var hints := [{"input": "place", "word": "Ablegen"}]
 	if is_instance_valid(_target) and _target.supports_place_all:
 		hints.append({"input": "place_all", "word": "Einräumen"})
+	var placer := _get_world_placer()
+	if placer and placer.can_turn():
+		hints.append({"input": "rotate", "word": "Drehen"})
+	if BookStock.carried.size() > 1 and not (is_instance_valid(_target) and _target.reacts_to_interact()):
+		hints.append({"input": "cycle", "word": "Blättern"})
 	hints.append({"input": "store_hold", "word": "Lager"})
 	return hints
+
+
+func _get_world_placer() -> LooseBooks:
+	if not is_instance_valid(_world_placer):
+		_world_placer = get_tree().get_first_node_in_group(Player.WORLD_PLACER_GROUP) as LooseBooks
+	return _world_placer
 
 
 func _get_carry_indicator() -> CarryIndicator:
