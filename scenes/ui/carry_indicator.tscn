@@ -24,10 +24,10 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = 250.0
-offset_top = -62.0
-offset_right = 310.0
-offset_bottom = -30.0
+offset_left = 150.0
+offset_top = -66.0
+offset_right = 210.0
+offset_bottom = -24.0
 grow_vertical = 0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
@@ -35,7 +35,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 [node name="HBox" type="HBoxContainer" parent="Panel"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 5
+theme_override_constants/separation = 8
 
 [node name="Icon" type="TextureRect" parent="Panel/HBox"]
 unique_name_in_owner = true

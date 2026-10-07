@@ -16,6 +16,9 @@ extends HBoxContainer
 const WORD_COLOR := Color(1.0, 0.96, 0.88, 0.95)
 const FADE_TIME := 0.15
 
+## Kleinere Schrift und enger (für die Tragehinweise am unteren Rand).
+var compact: bool = false
+
 var _shown: Array = []
 var _mode_shown := -1
 var _icons: Dictionary = {}  # input -> KeyHintIcon
@@ -29,19 +32,26 @@ func _init() -> void:
 	modulate.a = 0.0
 
 
-## Zeigt diese Hinweise (eine leere Liste blendet sie aus).
-func show_hints(hints: Array) -> void:
+## Zeigt diese Hinweise (eine leere Liste blendet sie aus). Liefert true, wenn sich etwas
+## geändert hat.
+func show_hints(hints: Array) -> bool:
 	var mode := int(Settings.get_value("interface/hints"))
 	var wanted: Array = [] if mode == Settings.HINTS_OFF else hints
 	if wanted == _shown and mode == _mode_shown:
-		return
+		return false
 	_mode_shown = mode
 	_shown = wanted.duplicate(true)
 	if _shown.is_empty():
 		_fade(0.0)  # die alten Symbole blenden sanft aus
-		return
+		return true
 	_rebuild(mode == Settings.HINTS_WORDS)
 	_fade(1.0)
+	return true
+
+
+## Sind gerade Symbole zu sehen?
+func is_showing() -> bool:
+	return not _shown.is_empty()
 
 
 ## Fortschritt beim Gedrückthalten (Ring um das Symbol). Liefert false, wenn das Symbol gerade
@@ -66,7 +76,7 @@ func _rebuild(with_words: bool) -> void:
 		var input: String = hint.get("input", "interact")
 		var item := HBoxContainer.new()
 		item.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		item.add_theme_constant_override("separation", 4)
+		item.add_theme_constant_override("separation", 2 if compact else 4)
 		var icon := KeyHintIcon.new()
 		match input:
 			"take":
@@ -86,7 +96,7 @@ func _rebuild(with_words: bool) -> void:
 			var label := Label.new()
 			label.text = word
 			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			label.add_theme_font_size_override("font_size", 16)
+			label.add_theme_font_size_override("font_size", 14 if compact else 16)
 			label.add_theme_color_override("font_color", WORD_COLOR)
 			label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 			label.add_theme_constant_override("shadow_offset_x", 1)

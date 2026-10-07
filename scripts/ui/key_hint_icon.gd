@@ -12,6 +12,8 @@ const FILL_COLOR := Color(0.12, 0.09, 0.07, 0.42)
 const LINE_COLOR := Color(1.0, 0.96, 0.88, 0.92)
 const RING_COLOR := Color(1.0, 0.96, 0.88, 0.32)
 const PROGRESS_COLOR := Color(1.0, 0.86, 0.6)
+## Farbe der gemeinten Maustaste (warm, damit man links und rechts gut unterscheidet)
+const BUTTON_COLOR := Color(1.0, 0.8, 0.5)
 
 var kind: Kind = Kind.KEY
 ## Buchstabe auf der Taste (nur bei Kind.KEY).
@@ -61,9 +63,9 @@ func _draw() -> void:
 
 ## Eine kleine Maus: Körper mit Trennlinie, die gemeinte Taste ist hell gefüllt.
 func _draw_mouse(center: Vector2, left: bool) -> void:
-	var body := Rect2(center - Vector2(8.0, 11.5), Vector2(16.0, 23.0))
-	var radius := 7.5
-	var split_y := body.position.y + 9.0
+	var body := Rect2(center - Vector2(9.0, 12.5), Vector2(18.0, 25.0))
+	var radius := 8.5
+	var split_y := body.position.y + 10.0
 	# Die gemeinte Taste (oben links oder rechts, mit abgerundeter Ecke)
 	var points := PackedVector2Array()
 	if left:
@@ -84,6 +86,6 @@ func _draw_mouse(center: Vector2, left: bool) -> void:
 		points.append(Vector2(center.x, split_y))
 	_box.set_corner_radius_all(int(radius))
 	draw_style_box(_box, body)
-	draw_colored_polygon(points, Color(LINE_COLOR, 0.85))
+	draw_colored_polygon(points, BUTTON_COLOR)
 	draw_line(Vector2(body.position.x + 1.0, split_y), Vector2(body.end.x - 1.0, split_y), LINE_COLOR, 1.5, true)
 	draw_line(Vector2(center.x, body.position.y + 1.0), Vector2(center.x, split_y), LINE_COLOR, 1.5, true)
