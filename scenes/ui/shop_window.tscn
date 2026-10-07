@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" path="res://scripts/ui/shop_window.gd" id="1_shop"]
 [ext_resource type="Script" path="res://scripts/ui/filter_bar.gd" id="2_filter"]
+[ext_resource type="Script" path="res://scripts/ui/tablet_frame.gd" id="3_tablet"]
+[ext_resource type="Script" path="res://scripts/ui/tablet_icon_button.gd" id="4_icon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_window"]
 content_margin_left = 22.0
@@ -54,6 +56,7 @@ anchor_bottom = 0.94
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_window")
+script = ExtResource("3_tablet")
 
 [node name="VBox" type="VBoxContainer" parent="Window"]
 layout_mode = 2
@@ -121,7 +124,8 @@ layout_mode = 2
 size_flags_vertical = 4
 focus_mode = 0
 theme_override_font_sizes/font_size = 18
-text = "Schließen (Esc)"
+tooltip_text = "Schließen (Esc)"
+script = ExtResource("4_icon")
 
 [node name="BuyView" type="HBoxContainer" parent="Window/VBox"]
 unique_name_in_owner = true
