@@ -14,14 +14,15 @@ extends Node3D
 ## Kommt ein Buch nah an ein anderes (GameConfig.shelf_snap_distance), rückt es bündig heran.
 ## Schiebe ich es zwischen zwei Bücher, rücken die Nachbarn zur Seite, wenn Platz ist.
 ##
-## Bedienung (Bücher mit der Maus, das Menü mit E):
+## Bedienung (Bücher mit der Maus, das Menü mit R):
 ## - Rechtsklick auf ein Buch: dieses Buch in die Hand nehmen (obenauf auf den Stapel).
 ## - Linksklick, während ich Bücher trage: das Buch obenauf genau dort abstellen, wo ich
 ##   hinschaue. Vorher zeigt eine halbdurchsichtige Vorschau, wo es hinkommt; passt es nicht
 ##   (kein Platz, falsches Genre), ist die Vorschau dezent rötlich.
 ## - Linksklick halten (Ring): alle getragenen Bücher einräumen, die hierher passen.
-## - E halten (Ring): Regal-Menü (Genre wählen, aus dem Lager auffüllen, sortieren, alles
-##   zurück ins Lager). E kurz tippen tut hier nichts – so landet man nie aus Versehen im Menü.
+## - R: Regal-Menü (Genre je Etage wählen, aus dem Lager auffüllen, sortieren, alles zurück
+##   ins Lager) – eine eigene, ruhige Taste, damit sich das Menü nie aus Versehen öffnet.
+## - E blättert hier (wie überall ohne eigene E-Aktion) durch die Bücher in der Hand.
 ## Schaue ich ein Regal an, steht sein Genre als ruhiger Schriftzug unten in der Bildmitte
 ## (GenreCaption) – Schilder am Regal gibt es nicht.
 ## Automatisches Einräumen (Linksklick halten, Auffüllen, Sortieren) füllt freie Plätze von links
@@ -125,11 +126,10 @@ func _ready() -> void:
 			_room.layout_changed.connect(_forget_blocked)
 		if _interactable:
 			_interactable.highlight_owner = false
-			_interactable.supports_hold = true  # E halten = Regal-Menü (E tippen tut nichts)
 			_interactable.handles_placing = true
-			_interactable.prompt_text = ""
-			_interactable.hold_prompt_text = "Menü"
-			_interactable.held.connect(_on_held)
+			_interactable.prompt_text = ""  # E blättert hier durch die Bücher in der Hand
+			_interactable.menu_text = "Menü"  # R = Regal-Menü
+			_interactable.menu_requested.connect(_on_menu_requested)
 			_interactable.take_requested.connect(_on_take_requested)
 			_interactable.place_requested.connect(_on_place_requested)
 			_interactable.place_all_requested.connect(_on_place_all_requested)
@@ -1026,9 +1026,8 @@ func _create_ghost() -> void:
 	add_child(_ghost)
 
 
-## E halten: Regal-Menü. (E kurz tippen tut am Regal bewusst nichts – so landet man nicht
-## aus Versehen im Menü.)
-func _on_held(_interactor: Node) -> void:
+## R: Regal-Menü.
+func _on_menu_requested(_interactor: Node) -> void:
 	_open_menu()
 
 
@@ -1160,7 +1159,7 @@ func _update_ghost_shake(delta: float) -> void:
 
 # --- Hinweise ---
 
-## Tastensymbole unter der Bildmitte: Nehmen (beim angeschauten Buch) und E halten = Menü.
+## Tastensymbole unter der Bildmitte: Nehmen (beim angeschauten Buch) und R = Menü.
 ## Ablegen und Einräumen zeigen die Tragehinweise unten (siehe CarryIndicator).
 func _update_prompt() -> void:
 	if _interactable == null:

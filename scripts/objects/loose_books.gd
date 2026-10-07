@@ -13,6 +13,9 @@ extends Node3D
 ## Bedienung (die Spielfigur meldet Blick und Klicks):
 ## - Linksklick mit Büchern in der Hand: das Buch obenauf dorthin legen, wo ich hinschaue –
 ##   flach mit dem Cover nach oben, leicht schräg. Auf ein liegendes Buch: kleiner Stapel.
+## - Mausrad: das Buch vorher um die Hochachse drehen (turn_degrees, relativ zur Blickrichtung
+##   bzw. zum Buch darunter). Angelehnte Bücher nur ein Stück (GameConfig), aufrecht stehende
+##   in Reihen gar nicht (Rücken bleibt vorn).
 ##   An eine Wand: aufrecht angelehnt (Cover nach vorn). Neben eine Buchstütze oder ein
 ##   aufrechtes Buch: aufrecht daneben (Rücken nach vorn). Eine halbdurchsichtige Vorschau
 ##   zeigt vorher, wohin es kommt (rötlich, wenn es dort nicht geht).
@@ -30,6 +33,11 @@ const LIFT := 0.0015
 const STACK_GAP := 0.01
 ## Bis zu dieser Höhe über der Ablage wird nach Büchern eines Stapels gesucht (in Metern)
 const STACK_REACH := 0.6
+
+## Mit dem Mausrad gewählte Drehung (Grad) für das nächste Buch, das ich ablege.
+## Gilt relativ zu meiner Blickrichtung (bzw. zum Buch darunter); nach dem Ablegen wieder 0.
+var turn_degrees: float = 0.0
+var _carried_count := 0  # wie viele Bücher ich zuletzt trug (um Ablegen zu erkennen)
 
 var _entries: Array[LooseBook] = []
 var _multimesh: MultiMesh
@@ -81,6 +89,8 @@ func _ready() -> void:
 	_interactable.place_requested.connect(func(_interactor: Node) -> void: place_active_book())
 	BookArt.atlas_ready.connect(_queue_refresh)
 	BookArt.cover_atlas_changed.connect(_queue_refresh)
+	BookStock.carried_changed.connect(_on_carried_changed)
+	_carried_count = BookStock.carried.size()
 	set_process(false)
 
 
@@ -151,8 +161,13 @@ func remove(entry: LooseBook) -> Book:
 
 
 ## Wohin ein Buch käme, wenn man vom Punkt "from" in Richtung "direction" schaut (siehe _plan).
-func find_spot(from: Vector3, direction: Vector3, book: Book) -> Dictionary:
-	return _compute_plan(from, direction, book)
+## "turn": Drehung um die Hochachse in Grad (wie das Mausrad der Spielfigur).
+func find_spot(from: Vector3, direction: Vector3, book: Book, turn: float = 0.0) -> Dictionary:
+	var player_turn := turn_degrees
+	turn_degrees = turn
+	var plan := _compute_plan(from, direction, book)
+	turn_degrees = player_turn
+	return plan
 
 
 # --- Mit Möbeln ---
@@ -241,6 +256,30 @@ func place_active_book(_interactor: Node = null) -> bool:
 	_set_plan({})
 	var book := BookStock.take_active()
 	place(book, plan.transform, plan.support_uid, plan.pose)
+	turn_degrees = 0.0  # das nächste Buch beginnt wieder gerade
+	return true
+
+
+## Wirkt das Mausrad gerade (Vorschau flach oder angelehnt)? Für den Hinweis "Drehen".
+func can_turn() -> bool:
+	return not _plan.is_empty() and _plan.pose in [LooseBook.Pose.FLAT, LooseBook.Pose.OPEN, LooseBook.Pose.LEANING]
+
+
+## Mausrad: das Buch obenauf vor dem Ablegen drehen (direction +1 / -1). Nur, wenn die
+## Vorschau flach liegt oder angelehnt ist – im Regal und in Reihen bleibt der Rücken vorn.
+## Liefert true, wenn sich etwas gedreht hat.
+func turn_active_book(direction: float) -> bool:
+	if _plan.is_empty():
+		return false
+	var step := GameConfig.book_turn_step * direction
+	match _plan.pose:
+		LooseBook.Pose.FLAT, LooseBook.Pose.OPEN:
+			turn_degrees = fposmod(turn_degrees + step, 360.0)
+		LooseBook.Pose.LEANING:
+			var limit := GameConfig.loose_book_lean_max_turn
+			turn_degrees = fposmod(clampf(_lean_turn() + step, -limit, limit), 360.0)
+		_:
+			return false
 	return true
 
 
@@ -253,6 +292,14 @@ func take_book(entry: LooseBook) -> bool:
 	if book:
 		BookStock.carry([book])
 	return book != null
+
+
+## Ein Buch hat die Hand verlassen (frei abgelegt, ins Regal gestellt, ins Lager): Das nächste
+## beginnt wieder gerade. (Blättern mit E behält die Drehung.)
+func _on_carried_changed() -> void:
+	if BookStock.carried.size() < _carried_count:
+		turn_degrees = 0.0
+	_carried_count = BookStock.carried.size()
 
 
 func _on_aimed(from: Vector3, direction: Vector3) -> void:
@@ -330,6 +377,7 @@ func _plan_flat(book: Book, world_point: Vector3, surface_height: float, support
 	var forward := forward_override if forward_override != Vector3.ZERO else Vector3(direction.x, 0.0, direction.z)
 	forward = forward.normalized() if forward.length() > 0.01 else Vector3.FORWARD
 	forward = forward.rotated(Vector3.UP, (_jitter(book, 0) - 0.5) * 2.0 * deg_to_rad(GameConfig.loose_book_yaw_jitter))
+	forward = forward.rotated(Vector3.UP, deg_to_rad(turn_degrees))  # mit dem Mausrad gedreht
 	var basis := _flat_basis(forward, size)
 	var origin := Vector3(world_point.x, surface_height + size.x / 2.0 + LIFT, world_point.z)
 	var world := Transform3D(basis, origin)
@@ -370,16 +418,28 @@ func _plan_on_entry(book: Book, entry: LooseBook, local_point: Vector3, directio
 		# Daneben in die Reihe – auf der Seite, auf die ich schaue
 		var side := 1.0 if local_point.x >= 0.0 else -1.0
 		return _plan_in_row(book, entry_world, side, entry.support_uid, side)
-	# An die Wand gelehnt: daneben an dieselbe Wand (auf der Seite, auf die ich schaue)
-	var cover_normal := entry_world.basis.x.normalized()
-	var wall_normal := Vector3(cover_normal.x, 0.0, cover_normal.z).normalized()
-	var along := entry_world.basis.z.normalized()
+	# An die Wand gelehnt: daneben an dieselbe Wand (auf der Seite, auf die ich schaue).
+	# Die Wand selbst suchen (das Buch kann zur Seite gedreht sein, sein Cover zeigt dann
+	# nicht genau von der Wand weg).
+	var cover := entry_world.basis.x.normalized()
+	var cover_flat := Vector3(cover.x, 0.0, cover.z).normalized()
+	var wall_normal := cover_flat
+	var wall_point := entry_world.origin - cover_flat * (_half_extent(entry_world.basis, cover_flat) + 0.003)
+	var query := PhysicsRayQueryParameters3D.create(entry_world.origin, entry_world.origin - cover_flat * 0.5,
+		FurnitureUtils.WORLD_LAYER_BIT)
+	var wall := get_world_3d().direct_space_state.intersect_ray(query)
+	if not wall.is_empty():
+		wall_normal = Vector3(wall.normal.x, 0.0, wall.normal.z).normalized()
+		# Mitte des Buchs senkrecht auf die Wand (der Strahl selbst läuft bei gedrehten Büchern
+		# schräg und träfe die Wand seitlich versetzt)
+		wall_point = entry_world.origin - wall_normal * wall_normal.dot(entry_world.origin - wall.position)
+	var along := wall_normal.cross(Vector3.UP).normalized()  # entlang der Wand
+	if along.dot(entry_world.basis.z) < 0.0:
+		along = -along
 	var side_sign := 1.0 if local_point.z >= 0.0 else -1.0
-	var angle := deg_to_rad(GameConfig.loose_book_lean_angle)
-	var back := cos(angle) * entry_world.basis.x.length() / 2.0 + sin(angle) * entry_world.basis.y.length() / 2.0 + 0.003
-	var offset := entry_world.basis.z.length() / 2.0 + book.data.size.z / 2.0 + 0.02
-	var wall_point := entry_world.origin - wall_normal * back + along * side_sign * offset
-	return _plan_leaning(book, wall_point, wall_normal, direction)
+	var new_basis := _leaning_basis(book.data.size, wall_normal, _lean_turn())
+	var offset := _half_extent(entry_world.basis, along) + _half_extent(new_basis, along) + 0.02
+	return _plan_leaning(book, wall_point + along * side_sign * offset, wall_normal, direction)
 
 
 ## Aufrecht neben einer Buchstütze: Rücken nach vorn, bündig an ihrer Seite (der Seite, auf
@@ -448,19 +508,31 @@ func _plan_leaning(book: Book, wall_point: Vector3, wall_normal: Vector3, direct
 	var ground := _find_ground(wall_point + n * 0.05)
 	if ground.is_empty():
 		return {}  # zu hoch an der Wand: keine Vorschau (sonst schwebt beim Umsehen ständig eine)
-	var size := book.data.size
+	var basis := _leaning_basis(book.data.size, n, _lean_turn())
+	# So weit vor die Wand und über den Boden, dass das Buch gerade anliegt bzw. aufsteht
+	var base := Vector3(wall_point.x, ground.height, wall_point.z)
+	var origin := base + n * (_half_extent(basis, n) + 0.003) + Vector3.UP * (_vertical_half_of(basis) + LIFT)
+	var world := Transform3D(basis, origin)
+	var ok := (_room == null or _room.is_inside_build_area(origin)) and _overlapping(world, ground.height).is_empty()
+	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
+		"support_uid": ground.support_uid, "pose": LooseBook.Pose.LEANING}
+
+
+## Lage eines angelehnten Buchs (mit Buchgröße): Cover zeigt von der Wand weg (Wandnormale n),
+## oben nach hinten gekippt; "turn" (Grad) dreht es zusätzlich um die Hochachse.
+static func _leaning_basis(size: Vector3, n: Vector3, turn: float) -> Basis:
 	var angle := deg_to_rad(GameConfig.loose_book_lean_angle)
 	var up := Vector3.UP
 	var cover := n * cos(angle) + up * sin(angle)
 	var top := up * cos(angle) - n * sin(angle)
 	var basis := Basis(cover * size.x, top * size.y, cover.cross(top).normalized() * size.z)
-	var base := Vector3(wall_point.x, ground.height, wall_point.z)
-	var origin := base + n * (cos(angle) * size.x / 2.0 + sin(angle) * size.y / 2.0 + 0.003) \
-		+ up * (sin(angle) * size.x / 2.0 + cos(angle) * size.y / 2.0 + LIFT)
-	var world := Transform3D(basis, origin)
-	var ok := (_room == null or _room.is_inside_build_area(origin)) and _overlapping(world, ground.height).is_empty()
-	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
-		"support_uid": ground.support_uid, "pose": LooseBook.Pose.LEANING}
+	return Basis(up, deg_to_rad(turn)) * basis
+
+
+## Die mit dem Mausrad gewählte Drehung für angelehnte Bücher (begrenzt, Grad).
+func _lean_turn() -> float:
+	var limit := GameConfig.loose_book_lean_max_turn
+	return clampf(wrapf(turn_degrees, -180.0, 180.0), -limit, limit)
 
 
 ## Eine Vorschau an der Stelle, die nicht geht (rötlich).
@@ -513,31 +585,26 @@ func _overlapping(world: Transform3D, floor_height: float, reach_above: float = 
 		var other_top := other.origin.y + _vertical_half(other)
 		if other_top < floor_height + 0.002 or other_bottom > my_top + reach_above:
 			continue
-		if _footprints_overlap(world, other):
+		if _footprints_overlap(world, other) and (reach_above > 0.0 or _boxes_overlap(world, other)):
 			result.append(entry)
 	return result
 
 
-## Überschneiden sich die Grundrisse (von oben gesehen) zweier Bücher? (Trennachsen-Test)
+## Überschneiden sich die Grundrisse (von oben gesehen) zweier Bücher? Trennachsen-Test mit
+## dem Schatten des ganzen Buchs – auch ein angelehntes Buch reicht oben ein Stück nach hinten.
+## Die Kanten des Schattens laufen entlang der (von oben gesehenen) Buchachsen.
 static func _footprints_overlap(a: Transform3D, b: Transform3D) -> bool:
-	var corners_a := _footprint(a)
-	var corners_b := _footprint(b)
-	for corners in [corners_a, corners_b]:
-		for i in 4:
-			var edge: Vector2 = corners[(i + 1) % 4] - corners[i]
-			var axis := Vector2(-edge.y, edge.x).normalized()
-			var min_a := INF
-			var max_a := -INF
-			for c: Vector2 in corners_a:
-				min_a = minf(min_a, axis.dot(c))
-				max_a = maxf(max_a, axis.dot(c))
-			var min_b := INF
-			var max_b := -INF
-			for c: Vector2 in corners_b:
-				min_b = minf(min_b, axis.dot(c))
-				max_b = maxf(max_b, axis.dot(c))
-			if max_a <= min_b + 0.002 or max_b <= min_a + 0.002:
-				return false
+	var axes: Array[Vector2] = []
+	for t: Transform3D in [a, b]:
+		for v: Vector3 in [t.basis.x, t.basis.y, t.basis.z]:
+			var flat := Vector2(v.x, v.z)
+			if flat.length_squared() > 1e-8:
+				axes.append(Vector2(-flat.y, flat.x).normalized())
+	var between := Vector2(b.origin.x - a.origin.x, b.origin.z - a.origin.z)
+	for axis in axes:
+		var axis_3d := Vector3(axis.x, 0.0, axis.y)
+		if absf(between.dot(axis)) >= _half_extent(a.basis, axis_3d) + _half_extent(b.basis, axis_3d) - 0.002:
+			return false
 	return true
 
 
@@ -564,20 +631,18 @@ static func _boxes_overlap(a: Transform3D, b: Transform3D) -> bool:
 	return true
 
 
-## Die vier Ecken des Grundrisses eines Buchs (x, z), aus seiner Lage in der Welt.
-static func _footprint(t: Transform3D) -> Array[Vector2]:
-	# Die beiden waagerechtesten Achsen des gestreckten Würfels bilden den Grundriss
-	var axes: Array[Vector3] = [t.basis.x, t.basis.y, t.basis.z]
-	axes.sort_custom(func(p: Vector3, q: Vector3) -> bool: return absf(p.normalized().y) < absf(q.normalized().y))
-	var u := Vector2(axes[0].x, axes[0].z) / 2.0
-	var v := Vector2(axes[1].x, axes[1].z) / 2.0
-	var c := Vector2(t.origin.x, t.origin.z)
-	return [c - u - v, c + u - v, c + u + v, c - u + v]
-
-
 ## Halbe Höhe eines Buchs (Lage in der Welt) – wie weit es nach oben und unten reicht.
 static func _vertical_half(t: Transform3D) -> float:
-	return (absf(t.basis.x.y) + absf(t.basis.y.y) + absf(t.basis.z.y)) / 2.0
+	return _vertical_half_of(t.basis)
+
+
+static func _vertical_half_of(basis: Basis) -> float:
+	return (absf(basis.x.y) + absf(basis.y.y) + absf(basis.z.y)) / 2.0
+
+
+## Wie weit ein Buch (Basis mit Buchgröße) von seiner Mitte aus in Richtung "axis" reicht.
+static func _half_extent(basis: Basis, axis: Vector3) -> float:
+	return (absf(basis.x.dot(axis)) + absf(basis.y.dot(axis)) + absf(basis.z.dot(axis))) / 2.0
 
 
 ## Unterkante des Stapels, zu dem dieses liegende Buch gehört (die Fläche darunter): von Buch

@@ -8,7 +8,7 @@ extends Node
 ## - ausgelegt: frei auf einem Tisch, der Theke, dem Boden … (LooseBooks, mit dem Raum gespeichert),
 ## - oder in meinen Händen (carried, hier gespeichert). Eins davon liegt obenauf und ist
 ##   "aktiv" – das lege ich mit der linken Maustaste einzeln ab, ins Regal oder frei in die
-##   Welt (Mausrad wechselt). Ich trage höchstens GameConfig.max_carried_books Bücher.
+##   Welt (E blättert). Ich trage höchstens GameConfig.max_carried_books Bücher.
 ## Außerdem merkt sich der Bestand
 ## - die Sammlung: welche Titel ich schon entdeckt habe (Bücherpakete bringen bevorzugt neue),
 ## - welche Genres freigeschaltet sind.
@@ -302,7 +302,7 @@ func get_active_book() -> Book:
 	return carried[active_index]
 
 
-## Wechselt das Buch obenauf (Mausrad): direction +1 = nächstes, -1 = vorheriges.
+## Wechselt das Buch obenauf (E blättert, Umschalt + E rückwärts): +1 = nächstes, -1 = vorheriges.
 func cycle_active(direction: int) -> void:
 	if carried.size() < 2:
 		return

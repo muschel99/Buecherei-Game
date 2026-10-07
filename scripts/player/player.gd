@@ -3,16 +3,19 @@ extends CharacterBody3D
 ## Die Spielfigur in Ego-Perspektive.
 ##
 ## Laufen mit WASD (mit Umschalt schneller), Umsehen mit der Maus, Interagieren mit E.
+## Hat das angeschaute Objekt keine E-Aktion, blättert E durch die Bücher in der Hand
+## (Umschalt + E rückwärts) – Lampe, Tür, Karton, Sitz, Tablet usw. haben Vorrang.
 ## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
 ## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
-## Manche Objekte (z. B. Regale) unterscheiden E tippen und E halten (Interactable.supports_hold).
+## R öffnet das Menü des angeschauten Objekts (z. B. Regal-Menü, Interactable.menu_requested).
 ## Bücher (nur mit der Maus, alles andere bleibt bei E):
 ## - Rechtsklick nimmt das angeschaute Buch (Interactable.take_requested).
 ## - Linksklick legt das Buch obenauf genau dort ab, wo ich hinschaue: ins Regal
 ##   (Interactable.place_requested) oder frei in die Welt (WORLD_PLACER_GROUP).
 ## - Linksklick halten am Regal räumt alle passenden ein (place_all_requested, mit Ring,
 ##   GameConfig.place_all_hold_time). Ein kurzer Klick zählt erst beim Loslassen.
-## - Mausrad wechselt das Buch obenauf, Q halten legt alle getragenen Bücher ins Lager.
+## - Mausrad dreht das Buch obenauf vor dem freien Ablegen (LooseBooks.turn_active_book).
+## - Q halten legt alle getragenen Bücher ins Lager.
 ## Klicks zählen nur, solange der Mauszeiger gefangen ist (sonst fängt ein Klick ihn wieder).
 ## Alle Einstellwerte (Tempo, Mausempfindlichkeit ...) stehen in GameConfig.
 
@@ -95,12 +98,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif (event.is_action_pressed("interact") or event.is_action_pressed("jump")) and is_seated():
 		stand_up()
 	elif event.is_action_pressed("interact") and interaction_enabled:
-		_start_interact()
+		_start_interact(event is InputEventWithModifiers and event.shift_pressed)
 	elif event.is_action_released("interact"):
 		_finish_interact()
-	elif (event.is_action_pressed("book_next") or event.is_action_pressed("book_previous")) \
-			and interaction_enabled and BookStock.carried.size() > 1:
-		BookStock.cycle_active(1 if event.is_action_pressed("book_next") else -1)
+	elif (event.is_action_pressed("book_rotate") or event.is_action_pressed("book_rotate_back")) \
+			and _can_use_mouse() and not BookStock.carried.is_empty():
+		# Mausrad: das Buch obenauf vor dem Ablegen drehen (nur frei in der Welt, nicht im Regal)
+		var placer := _get_world_placer()
+		if placer:
+			placer.turn_active_book(1.0 if event.is_action_pressed("book_rotate") else -1.0)
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		# Falls die Maus frei ist (z. B. nach einem Fensterwechsel): per Klick wieder fangen.
 		# Ist etwas offen (z. B. der Katalog), gehört der Mauszeiger dorthin.
@@ -113,6 +119,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_place()
 	elif event.is_action_released("book_place"):
 		_finish_place()
+	elif event.is_action_pressed("open_menu") and interaction_enabled and not is_seated():
+		# R: Menü des angeschauten Objekts (z. B. Regal-Menü) – sonst passiert nichts
+		if is_instance_valid(_current_target):
+			_current_target.request_menu(self)
 	elif event.is_action_pressed("store_books") and interaction_enabled and not BookStock.carried.is_empty():
 		_store_hold_time = 0.0
 	elif event.is_action_released("store_books"):
@@ -349,8 +359,11 @@ func _update_interaction_target() -> void:
 
 
 ## E gedrückt: sofort benutzen – oder bei Objekten mit "halten" erst abwarten.
-func _start_interact() -> void:
-	if not is_instance_valid(_current_target):
+## Hat das angeschaute Objekt keine eigene E-Aktion (z. B. Regal, Boden, ausgelegtes Buch),
+## blättert E durch die Bücher in der Hand (mit Umschalt rückwärts).
+func _start_interact(backwards: bool = false) -> void:
+	if not is_instance_valid(_current_target) or not _current_target.reacts_to_interact():
+		BookStock.cycle_active(-1 if backwards else 1)
 		return
 	if _current_target.supports_hold:
 		_hold_target = _current_target

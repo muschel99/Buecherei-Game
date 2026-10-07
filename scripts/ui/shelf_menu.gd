@@ -1,21 +1,26 @@
 class_name ShelfMenu
 extends CanvasLayer
-## Das kleine Regal-Menü (E halten an einem Bücherregal).
+## Das kleine Regal-Menü (R an einem Bücherregal).
 ##
 ## Hier wählt man für jede Etage, welches Genre dorthin gehört (oder "Gemischt") – oder mit
 ## "Alle Etagen gleich" für das ganze Regal auf einmal. Man füllt es mit einem Klick aus dem
-## Lager, sortiert es oder legt alle Bücher zurück ins Lager. Trägt man Bücher, kann man sie
-## hier auch einräumen oder ins Lager legen. "Buch aus dem Lager wählen…" zeigt die Cover der
-## passenden Bücher im Lager – ein Klick legt das Buch obenauf in die Hand, dann stellt man
-## es mit der linken Maustaste an genau die Stelle, die man möchte.
+## Lager, sortiert es oder legt alle Bücher zurück ins Lager. "Buch aus dem Lager wählen…"
+## zeigt die Cover der passenden Bücher im Lager – ein Klick legt das Buch obenauf in die Hand,
+## dann stellt man es mit der linken Maustaste an genau die Stelle, die man möchte.
+## Getragene Bücher räumt man nicht hier ein, sondern mit Linksklick halten am Regal; ins
+## Lager legt man sie mit Q halten (jede Aktion hat nur einen Weg).
 ## Das Menü steht rechts am Rand – so sieht man in der Mitte, wie die Bücher ins Regal gleiten.
-## Schließen: Esc, E oder "Schließen" (Esc-Regel über MenuStack). Solange es offen ist, ist der
+## Es ist nie höher als das Bild: Wird der Inhalt zu lang (viele Genres oder Etagen), lässt
+## sich der Mittelteil scrollen; Überschrift und "Schließen" bleiben immer sichtbar.
+## Schließen: Esc, R oder "Schließen" (Esc-Regel über MenuStack). Solange es offen ist, ist der
 ## Mauszeiger sichtbar und die Spielfigur steht still.
 
 const GROUP := "shelf_menu"
 const KEY_COLOR := Color(0.96, 0.78, 0.48)
 const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.85)
 const TEXT_COLOR := Color(1.0, 0.96, 0.88)
+## Abstand des Menüs zum oberen und unteren Bildrand (Anteil der Bildhöhe)
+const SCREEN_MARGIN := 0.05
 
 ## Pfad zur Spielfigur (im Inspektor der Hauptszene eingetragen).
 @export var player_path: NodePath
@@ -29,12 +34,11 @@ var _panel: PanelContainer
 var _title: Label
 var _info: Label
 var _genre_flow: HFlowContainer
-var _rows_scroll: ScrollContainer
+var _body_scroll: ScrollContainer
+var _body: VBoxContainer
 var _rows_box: VBoxContainer
 var _fill_button: Button
 var _return_button: Button
-var _carried_button: Button
-var _store_carried_button: Button
 var _pick_button: Button
 var _sort_button: Button
 var _picker_panel: PanelContainer
@@ -60,18 +64,21 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	# Im Pausenmenü ausblenden (dieser Knoten läuft auch bei Pause weiter)
 	visible = is_open and not get_tree().paused
+	if visible:
+		_fit_to_screen()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# E schließt das Menü wieder (aber nicht derselbe Tastendruck, der es geöffnet hat)
-	if is_open and event.is_action_pressed("interact") and Engine.get_process_frames() != _opened_frame:
+	# R schließt das Menü wieder (aber nicht derselbe Tastendruck, der es geöffnet hat)
+	if is_open and event.is_action_pressed("open_menu") and Engine.get_process_frames() != _opened_frame \
+			and not get_tree().paused:
 		close()
 		get_viewport().set_input_as_handled()
 
 
 # --- Öffnen und Schließen ---
 
-## Wird vom Regal aufgerufen (E).
+## Wird vom Regal aufgerufen (R).
 func open_for(target: BookShelf) -> void:
 	if is_open:
 		return
@@ -84,6 +91,7 @@ func open_for(target: BookShelf) -> void:
 	_player.interaction_enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_message.text = ""
+	_message.visible = false
 	_queue_refresh()
 
 
@@ -157,15 +165,6 @@ func return_all() -> void:
 	_queue_refresh()
 
 
-func put_carried() -> void:
-	if shelf == null:
-		return
-	var count := shelf.put_carried()
-	_message.text = "%d getragene %s eingeräumt." % [count, "Buch" if count == 1 else "Bücher"] if count > 0 \
-		else "Hier ist kein Platz mehr."
-	_queue_refresh()
-
-
 func sort_shelf() -> void:
 	if shelf == null:
 		return
@@ -193,12 +192,6 @@ func choose_book(data: BookData) -> void:
 			BookStock.carry([book])
 			close()
 			return
-
-
-func store_carried() -> void:
-	var count := BookStock.store_carried()
-	_message.text = "%d getragene %s ins Lager gelegt." % [count, "Buch" if count == 1 else "Bücher"]
-	_queue_refresh()
 
 
 # --- Anzeige ---
@@ -252,13 +245,24 @@ func _refresh() -> void:
 		else "Buch aus dem Lager wählen (keine passenden im Lager)"
 	if _picker_panel.visible:
 		_refresh_picker()
+	_fit_to_screen()
 
-	var carried := BookStock.carried.size()
-	var matching := shelf.count_matching_carried() if shelf.has_genre() else 0
-	_carried_button.visible = matching > 0
-	_carried_button.text = "Getragene einräumen (%d passen)" % matching
-	_store_carried_button.visible = carried > 0
-	_store_carried_button.text = "Getragene Bücher ins Lager legen (%d)" % carried
+
+## Das Menü passt immer ins Bild: Der Mittelteil ist so hoch wie sein Inhalt, aber nie höher
+## als der Platz zwischen oberem und unterem Bildrand – sonst lässt er sich scrollen.
+## (Läuft jedes Bild, solange das Menü offen ist – so passt es auch nach einer Änderung der
+## Fenstergröße und sobald umgebrochene Texte ihre richtige Höhe kennen.)
+func _fit_to_screen() -> void:
+	_message.visible = not _message.text.is_empty()
+	var view_height := get_viewport().get_visible_rect().size.y
+	var available := view_height * (1.0 - 2.0 * SCREEN_MARGIN)
+	var fixed := _panel.get_combined_minimum_size().y - _body_scroll.custom_minimum_size.y
+	var wanted := clampf(_body.get_combined_minimum_size().y, 60.0, maxf(available - fixed, 60.0))
+	if absf(wanted - _body_scroll.custom_minimum_size.y) > 0.5:
+		_body_scroll.custom_minimum_size.y = wanted
+		_panel.reset_size()
+	elif _panel.size.y > _panel.get_combined_minimum_size().y + 0.5:
+		_panel.reset_size()  # z. B. Rückmeldung ausgeblendet: kein leerer Streifen unten
 
 
 ## Genres, aus denen hier Bücher passen und die im Lager liegen.
@@ -338,8 +342,6 @@ func _refresh_rows(genres: Array[GenreData]) -> void:
 		choice.item_selected.connect(func(index: int) -> void: choose_row_genre(r, ids[index]))
 		line.add_child(choice)
 		_rows_box.add_child(line)
-	# Viele Etagen (z. B. Würfelregal): Liste scrollt, damit das Menü aufs Bild passt
-	_rows_scroll.custom_minimum_size.y = minf(shelf.get_row_count() * 48.0, 240.0)
 
 
 ## Wie viele Bücher, die hierher passen, liegen im Lager?
@@ -392,9 +394,10 @@ func _build() -> void:
 	panel.anchor_right = 0.97
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.custom_minimum_size.x = 470
-	# Oben fest, nach unten so hoch wie der Inhalt
-	panel.anchor_top = 0.12
-	panel.anchor_bottom = 0.12
+	# Oben fest, nach unten so hoch wie der Inhalt (höchstens bis kurz vor den unteren Rand,
+	# siehe _fit_to_screen)
+	panel.anchor_top = SCREEN_MARGIN
+	panel.anchor_bottom = SCREEN_MARGIN
 	panel.grow_vertical = Control.GROW_DIRECTION_END
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.17, 0.12, 0.09, 0.94)
@@ -416,36 +419,40 @@ func _build() -> void:
 	box.add_child(_title)
 	_info = _label("", 15, MUTED_COLOR)
 	box.add_child(_info)
-	box.add_child(_label("Alle Etagen gleich", 16, KEY_COLOR))
+
+	# Mittelteil: scrollt, wenn er nicht aufs Bild passt
+	_body_scroll = ScrollContainer.new()
+	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(_body_scroll)
+	_body = VBoxContainer.new()
+	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body.add_theme_constant_override("separation", 10)
+	_body_scroll.add_child(_body)
+
+	_body.add_child(_label("Alle Etagen gleich", 16, KEY_COLOR))
 	_genre_flow = HFlowContainer.new()
 	_genre_flow.add_theme_constant_override("h_separation", 6)
 	_genre_flow.add_theme_constant_override("v_separation", 6)
-	box.add_child(_genre_flow)
-	box.add_child(_label("Etagen", 16, KEY_COLOR))
-	_rows_scroll = ScrollContainer.new()
-	_rows_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	box.add_child(_rows_scroll)
+	_body.add_child(_genre_flow)
+	_body.add_child(_label("Etagen", 16, KEY_COLOR))
 	_rows_box = VBoxContainer.new()
 	_rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_rows_box.add_theme_constant_override("separation", 6)
-	_rows_scroll.add_child(_rows_box)
+	_body.add_child(_rows_box)
 
 	var gap := Control.new()
 	gap.custom_minimum_size.y = 4
-	box.add_child(gap)
+	_body.add_child(gap)
 	_fill_button = _button(fill)
-	box.add_child(_fill_button)
-	_carried_button = _button(put_carried)
-	box.add_child(_carried_button)
+	_body.add_child(_fill_button)
 	_pick_button = _button(open_picker)
-	box.add_child(_pick_button)
+	_body.add_child(_pick_button)
 	_sort_button = _button(sort_shelf)
 	_sort_button.text = "Nach Genre und Titel sortieren"
-	box.add_child(_sort_button)
+	_body.add_child(_sort_button)
 	_return_button = _button(return_all)
-	box.add_child(_return_button)
-	_store_carried_button = _button(store_carried)
-	box.add_child(_store_carried_button)
+	_body.add_child(_return_button)
+	# Rückmeldung (z. B. "12 Bücher eingeräumt.") fest unter dem Mittelteil, nie weggescrollt
 	_message = _label("", 15, KEY_COLOR)
 	box.add_child(_message)
 

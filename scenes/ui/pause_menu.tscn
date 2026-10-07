@@ -139,7 +139,7 @@ text = "Alle getragenen Bücher einräumen, die zu den Etagen passen"
 
 [node name="KeyShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "E halten am Regal"
+text = "R am Regal"
 
 [node name="ActionShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Regal-Menü: Genres der Etagen, auffüllen, sortieren, Buch wählen"
@@ -149,7 +149,14 @@ theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "Mausrad"
 
 [node name="ActionWheel" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Beim Tragen: anderes Buch obenauf"
+text = "Beim Tragen: Buch vor dem Ablegen drehen (flach oder angelehnt)"
+
+[node name="KeyCycle" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "E beim Tragen"
+
+[node name="ActionCycle" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Anderes Buch obenauf (Umschalt + E: zurück), wenn das Angeschaute nichts mit E macht"
 
 [node name="KeyStore" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

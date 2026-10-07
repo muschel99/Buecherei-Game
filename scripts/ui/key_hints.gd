@@ -9,7 +9,10 @@ extends HBoxContainer
 ##   "input": "interact" (E tippen), "interact_hold" (E halten, mit Ring),
 ##            "take" (Buch nehmen, Maustaste der Aktion "book_take"),
 ##            "place" (Buch ablegen, Maustaste der Aktion "book_place"),
-##            "place_all" (Ablegen-Taste halten, mit Ring), "store_hold" (Q halten, mit Ring)
+##            "place_all" (Ablegen-Taste halten, mit Ring), "store_hold" (Q halten, mit Ring),
+##            "menu" (Menü öffnen, Taste der Aktion "open_menu", R),
+##            "rotate" (Buch drehen, Mausrad der Aktion "book_rotate"),
+##            "cycle" (durch die Bücher in der Hand blättern, E)
 ## Wie viel zu sehen ist, stellt der Spieler im Pausenmenü unter Einstellungen → "Hinweise"
 ## ein (Aus, Nur Symbole, Symbol mit Wort; siehe Settings).
 
@@ -87,6 +90,12 @@ func _rebuild(with_words: bool) -> void:
 				_setup_icon(icon, "book_place", true)
 			"store_hold":
 				_setup_icon(icon, "store_books", true)
+			"menu":
+				_setup_icon(icon, "open_menu", false)
+			"rotate":
+				_setup_icon(icon, "book_rotate", false)
+			"cycle":
+				_setup_icon(icon, "interact", false)
 			_:
 				_setup_icon(icon, "interact", input == "interact_hold")
 		item.add_child(icon)
@@ -113,14 +122,20 @@ func _fade(alpha: float) -> void:
 	_tween.tween_property(self, "modulate:a", alpha, FADE_TIME)
 
 
-## Symbol passend zur Taste einer Aktion: Maus links/rechts oder eine Taste mit Buchstaben.
+## Symbol passend zur Taste einer Aktion: Maus links/rechts, Mausrad oder eine Taste mit
+## Buchstaben.
 ## So stimmen die Symbole auch, wenn die Tasten später anders belegt werden.
 static func _setup_icon(icon: KeyHintIcon, action: StringName, hold: bool) -> void:
 	icon.is_hold = hold
 	for event in InputMap.action_get_events(action):
 		if event is InputEventMouseButton:
-			icon.kind = KeyHintIcon.Kind.MOUSE_RIGHT if event.button_index == MOUSE_BUTTON_RIGHT \
-				else KeyHintIcon.Kind.MOUSE_LEFT
+			match event.button_index:
+				MOUSE_BUTTON_RIGHT:
+					icon.kind = KeyHintIcon.Kind.MOUSE_RIGHT
+				MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN:
+					icon.kind = KeyHintIcon.Kind.MOUSE_WHEEL
+				_:
+					icon.kind = KeyHintIcon.Kind.MOUSE_LEFT
 			return
 	icon.kind = KeyHintIcon.Kind.KEY
 	icon.key_text = _key_name(action)

@@ -2,10 +2,10 @@ class_name KeyHintIcon
 extends Control
 ## Ein kleines, weiches Tastensymbol für die Hinweise unter der Bildmitte:
 ## eine abgerundete Taste mit Buchstaben (z. B. "E", "Q") oder eine Maus, bei der die linke
-## bzw. rechte Taste hell ist. Halte-Aktionen haben einen feinen Ring, der sich beim
+## bzw. rechte Taste oder das Mausrad hell ist. Halte-Aktionen haben einen feinen Ring, der sich beim
 ## Gedrückthalten füllt (progress).
 
-enum Kind { KEY, MOUSE_LEFT, MOUSE_RIGHT }
+enum Kind { KEY, MOUSE_LEFT, MOUSE_RIGHT, MOUSE_WHEEL }
 
 const ICON_SIZE := 38.0
 const FILL_COLOR := Color(0.12, 0.09, 0.07, 0.42)
@@ -53,6 +53,8 @@ func _draw() -> void:
 			var baseline := center.y + (ascent - descent) / 2.0
 			draw_string(font, Vector2(rect.position.x, baseline), key_text, HORIZONTAL_ALIGNMENT_CENTER,
 				rect.size.x, font_size, LINE_COLOR)
+		Kind.MOUSE_WHEEL:
+			_draw_mouse_wheel(center)
 		_:
 			_draw_mouse(center, kind == Kind.MOUSE_LEFT)
 	if is_hold:
@@ -89,3 +91,19 @@ func _draw_mouse(center: Vector2, left: bool) -> void:
 	draw_colored_polygon(points, BUTTON_COLOR)
 	draw_line(Vector2(body.position.x + 1.0, split_y), Vector2(body.end.x - 1.0, split_y), LINE_COLOR, 1.5, true)
 	draw_line(Vector2(center.x, body.position.y + 1.0), Vector2(center.x, split_y), LINE_COLOR, 1.5, true)
+
+
+## Eine kleine Maus, bei der das Mausrad hell ist (z. B. "Drehen").
+func _draw_mouse_wheel(center: Vector2) -> void:
+	var body := Rect2(center - Vector2(9.0, 12.5), Vector2(18.0, 25.0))
+	var split_y := body.position.y + 10.0
+	_box.set_corner_radius_all(8)
+	draw_style_box(_box, body)
+	draw_line(Vector2(body.position.x + 1.0, split_y), Vector2(body.end.x - 1.0, split_y), LINE_COLOR, 1.5, true)
+	# Das Rad: ein kleiner, heller Steg zwischen den beiden Tasten
+	var wheel := Rect2(Vector2(center.x - 2.5, body.position.y + 3.0), Vector2(5.0, 10.5))
+	var wheel_box := StyleBoxFlat.new()
+	wheel_box.bg_color = BUTTON_COLOR
+	wheel_box.set_corner_radius_all(3)
+	wheel_box.anti_aliasing = true
+	draw_style_box(wheel_box, wheel)

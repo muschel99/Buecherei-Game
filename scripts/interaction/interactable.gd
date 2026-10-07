@@ -14,6 +14,9 @@ extends Area3D
 ##   Objekten mit handles_placing (z. B. Regal); sonst legt es die Spielfigur frei in die Welt.
 ## - Signal "place_all_requested": alle passenden Bücher einräumen (linke Maustaste halten) –
 ##   nur bei supports_place_all.
+## Ein Menü zum Objekt (z. B. Regal-Menü) öffnet die Taste der Aktion "open_menu" (R):
+## Signal "menu_requested", Wort in menu_text (leer = kein Menü). Bewusst eine eigene Taste,
+## damit sich nie aus Versehen ein Menü öffnet.
 ##
 ## Man muss nicht genau den Interactable-Bereich treffen: Schaut man auf den festen Körper
 ## des Objekts (z. B. von oben auf einen Karton oder von hinten auf einen Sessel), findet
@@ -30,6 +33,8 @@ signal take_requested(interactor: Node)
 signal place_requested(interactor: Node)
 ## Alle passenden Bücher hier einräumen (linke Maustaste gehalten) – nur bei supports_place_all.
 signal place_all_requested(interactor: Node)
+## Das Menü dieses Objekts öffnen (R) – nur, wenn menu_text nicht leer ist.
+signal menu_requested(interactor: Node)
 ## Wird jedes Bild gesendet, solange die Spielfigur das Objekt ansieht – mit Blickstrahl
 ## (Start und Richtung in der Welt). So kann ein Regal z. B. das angeschaute Buch finden.
 signal aimed(from: Vector3, direction: Vector3)
@@ -42,8 +47,10 @@ signal aim_ended
 @export var hold_prompt_text: String = ""
 ## Wort neben dem Symbol fürs Buch-Nehmen (rechte Maustaste, z. B. "Nehmen"), leer = keins.
 @export var take_text: String = ""
-## Kann man E auch gedrückt halten (z. B. Regal: halten = Regal-Menü)?
-## Dann zählt ein kurzes Tippen erst beim Loslassen.
+## Wort neben dem R-Symbol (z. B. "Menü"), leer = dieses Objekt hat kein Menü.
+@export var menu_text: String = ""
+## Kann man E auch gedrückt halten (halten = eigene, lange Aktion)?
+## Dann zählt ein kurzes Tippen erst beim Loslassen. (Gerade nutzt das kein Objekt.)
 @export var supports_hold: bool = false
 ## Nimmt dieses Objekt Bücher selbst entgegen (linke Maustaste, z. B. Regal)? Sonst legt die
 ## Spielfigur das Buch frei in die Welt (LooseBooks).
@@ -100,6 +107,12 @@ static func find_for(collider: Node, hit_point: Vector3) -> Interactable:
 	return null
 
 
+## Hat dieses Objekt gerade eine eigene E-Aktion (Wort neben dem E-Symbol)? Sonst blättert E
+## durch die Bücher in der Hand (siehe Spielfigur).
+func reacts_to_interact() -> bool:
+	return is_enabled and (not prompt_text.is_empty() or (supports_hold and not hold_prompt_text.is_empty()))
+
+
 ## Wird von der Spielfigur aufgerufen.
 func interact(interactor: Node) -> void:
 	if is_enabled:
@@ -128,6 +141,12 @@ func request_place(interactor: Node) -> void:
 func request_place_all(interactor: Node) -> void:
 	if is_enabled:
 		place_all_requested.emit(interactor)
+
+
+## Menü öffnen (von der Spielfigur aufgerufen, Taste R).
+func request_menu(interactor: Node) -> void:
+	if is_enabled and not menu_text.is_empty():
+		menu_requested.emit(interactor)
 
 
 ## Wird von der Spielfigur jedes Bild aufgerufen, solange sie hinschaut.
