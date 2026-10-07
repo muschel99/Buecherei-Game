@@ -1,6 +1,6 @@
 class_name ShelfMenu
 extends CanvasLayer
-## Das kleine Regal-Menü (E halten an einem Bücherregal).
+## Das kleine Regal-Menü (R an einem Bücherregal).
 ##
 ## Hier wählt man für jede Etage, welches Genre dorthin gehört (oder "Gemischt") – oder mit
 ## "Alle Etagen gleich" für das ganze Regal auf einmal. Man füllt es mit einem Klick aus dem
@@ -9,7 +9,7 @@ extends CanvasLayer
 ## passenden Bücher im Lager – ein Klick legt das Buch obenauf in die Hand, dann stellt man
 ## es mit der linken Maustaste an genau die Stelle, die man möchte.
 ## Das Menü steht rechts am Rand – so sieht man in der Mitte, wie die Bücher ins Regal gleiten.
-## Schließen: Esc, E oder "Schließen" (Esc-Regel über MenuStack). Solange es offen ist, ist der
+## Schließen: Esc, R oder "Schließen" (Esc-Regel über MenuStack). Solange es offen ist, ist der
 ## Mauszeiger sichtbar und die Spielfigur steht still.
 
 const GROUP := "shelf_menu"
@@ -63,15 +63,15 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# E schließt das Menü wieder (aber nicht derselbe Tastendruck, der es geöffnet hat)
-	if is_open and event.is_action_pressed("interact") and Engine.get_process_frames() != _opened_frame:
+	# R schließt das Menü wieder (aber nicht derselbe Tastendruck, der es geöffnet hat)
+	if is_open and event.is_action_pressed("open_menu") and Engine.get_process_frames() != _opened_frame:
 		close()
 		get_viewport().set_input_as_handled()
 
 
 # --- Öffnen und Schließen ---
 
-## Wird vom Regal aufgerufen (E).
+## Wird vom Regal aufgerufen (R).
 func open_for(target: BookShelf) -> void:
 	if is_open:
 		return

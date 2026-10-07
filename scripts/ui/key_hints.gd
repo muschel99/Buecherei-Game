@@ -9,7 +9,8 @@ extends HBoxContainer
 ##   "input": "interact" (E tippen), "interact_hold" (E halten, mit Ring),
 ##            "take" (Buch nehmen, Maustaste der Aktion "book_take"),
 ##            "place" (Buch ablegen, Maustaste der Aktion "book_place"),
-##            "place_all" (Ablegen-Taste halten, mit Ring), "store_hold" (Q halten, mit Ring)
+##            "place_all" (Ablegen-Taste halten, mit Ring), "store_hold" (Q halten, mit Ring),
+##            "menu" (Menü öffnen, Taste der Aktion "open_menu", R)
 ## Wie viel zu sehen ist, stellt der Spieler im Pausenmenü unter Einstellungen → "Hinweise"
 ## ein (Aus, Nur Symbole, Symbol mit Wort; siehe Settings).
 
@@ -87,6 +88,8 @@ func _rebuild(with_words: bool) -> void:
 				_setup_icon(icon, "book_place", true)
 			"store_hold":
 				_setup_icon(icon, "store_books", true)
+			"menu":
+				_setup_icon(icon, "open_menu", false)
 			_:
 				_setup_icon(icon, "interact", input == "interact_hold")
 		item.add_child(icon)

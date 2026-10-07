@@ -302,7 +302,7 @@ Im Lager: wartet darauf, eingeräumt zu werden.
 Ausgelegt: liegt frei auf einem Tisch, der Theke, dem Boden …
 Unterwegs: trägst du gerade oder liegt im Rückgabekasten.
 
-Neue Bücher gibt es unter „Kaufen“ → „Bücher“. Rechtsklick nimmt ein Buch, Linksklick legt es ab; am Regal räumt Linksklick halten alle passenden ein, E halten öffnet das Regal-Menü."
+Neue Bücher gibt es unter „Kaufen“ → „Bücher“. Rechtsklick nimmt ein Buch, Linksklick legt es ab; am Regal räumt Linksklick halten alle passenden ein, R öffnet das Regal-Menü."
 autowrap_mode = 3
 
 [node name="StoreCarriedButton" type="Button" parent="Window/VBox/StockView/StockInfoPanel/VBox"]

@@ -72,6 +72,8 @@ func _current_hints() -> Array:
 	var hints := []
 	if not _target.take_text.is_empty():
 		hints.append({"input": "take", "word": _target.take_text})
+	if not _target.menu_text.is_empty():
+		hints.append({"input": "menu", "word": _target.menu_text})
 	if _target.supports_hold and not _target.hold_prompt_text.is_empty():
 		hints.append({"input": "interact_hold", "word": _target.hold_prompt_text})
 	if not _target.prompt_text.is_empty():

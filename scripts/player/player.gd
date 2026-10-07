@@ -5,7 +5,7 @@ extends CharacterBody3D
 ## Laufen mit WASD (mit Umschalt schneller), Umsehen mit der Maus, Interagieren mit E.
 ## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
 ## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
-## Manche Objekte (z. B. Regale) unterscheiden E tippen und E halten (Interactable.supports_hold).
+## R öffnet das Menü des angeschauten Objekts (z. B. Regal-Menü, Interactable.menu_requested).
 ## Bücher (nur mit der Maus, alles andere bleibt bei E):
 ## - Rechtsklick nimmt das angeschaute Buch (Interactable.take_requested).
 ## - Linksklick legt das Buch obenauf genau dort ab, wo ich hinschaue: ins Regal
@@ -117,6 +117,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_place()
 	elif event.is_action_released("book_place"):
 		_finish_place()
+	elif event.is_action_pressed("open_menu") and interaction_enabled and not is_seated():
+		# R: Menü des angeschauten Objekts (z. B. Regal-Menü) – sonst passiert nichts
+		if is_instance_valid(_current_target):
+			_current_target.request_menu(self)
 	elif event.is_action_pressed("store_books") and interaction_enabled and not BookStock.carried.is_empty():
 		_store_hold_time = 0.0
 	elif event.is_action_released("store_books"):
