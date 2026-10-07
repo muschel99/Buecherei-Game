@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/wood_light.tres" id="1"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.13, 0.17, 0.014)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2"]
+albedo_color = Color(0.55, 0.68, 0.66, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(0.1, 0.14, 0.004)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4"]
+albedo_color = Color(0.95, 0.84, 0.55, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_5"]
+size = Vector3(0.03, 0.03, 0.002)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6"]
+size = Vector3(0.13, 0.17, 0.05)
+
+[node name="PhotoFrame" type="Node3D"]
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Frame" type="Node3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 0.9848, 0.1736, 0, -0.1736, 0.9848, 0, 0, 0.008)
+
+[node name="Border" type="MeshInstance3D" parent="Model/Frame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.085, 0)
+material_override = ExtResource("1")
+mesh = SubResource("BoxMesh_1")
+
+[node name="Picture" type="MeshInstance3D" parent="Model/Frame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.085, 0.008)
+material_override = SubResource("StandardMaterial3D_2")
+mesh = SubResource("BoxMesh_3")
+
+[node name="Sun" type="MeshInstance3D" parent="Model/Frame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.025, 0.12, 0.0105)
+material_override = SubResource("StandardMaterial3D_4")
+mesh = SubResource("BoxMesh_5")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.085, 0)
+shape = SubResource("BoxShape3D_6")

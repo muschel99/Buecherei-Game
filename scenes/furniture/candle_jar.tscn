@@ -1,0 +1,79 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/candle_wax.tres" id="1"]
+[ext_resource type="Material" path="res://assets/materials/flame.tres" id="2"]
+[ext_resource type="Material" path="res://assets/materials/glass.tres" id="3"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/objects/light_source.gd" id="5"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.029
+bottom_radius = 0.029
+height = 0.05
+radial_segments = 24
+
+[sub_resource type="SphereMesh" id="SphereMesh_2"]
+radius = 0.007
+height = 0.014
+radial_segments = 12
+rings = 6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.08
+radial_segments = 24
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_4"]
+radius = 0.036
+height = 0.08
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5"]
+size = Vector3(0.08, 0.1, 0.08)
+
+[node name="CandleJar" type="Node3D"]
+script = ExtResource("5")
+kind = 1
+shadow_importance = 0
+prompt_turn_on = "Anzünden"
+prompt_turn_off = "Löschen"
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Wax" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.027, 0)
+material_override = ExtResource("1")
+mesh = SubResource("CylinderMesh_1")
+
+[node name="Flame" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1.8, 0, 0, 0, 1, 0, 0.064, 0)
+material_override = ExtResource("2")
+mesh = SubResource("SphereMesh_2")
+
+[node name="Glass" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = ExtResource("3")
+mesh = SubResource("CylinderMesh_3")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+shape = SubResource("CylinderShape3D_4")
+
+[node name="Light" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+light_color = Color(1, 0.72, 0.42, 1)
+light_energy = 0.25
+omni_range = 1.5
+
+[node name="Interactable" type="Area3D" parent="."]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("4")
+prompt_text = "Löschen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+shape = SubResource("BoxShape3D_5")

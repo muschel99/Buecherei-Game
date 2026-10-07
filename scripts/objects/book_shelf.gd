@@ -6,7 +6,9 @@ extends Node3D
 ## - In der Möbel-Szene einen Knoten mit diesem Script anlegen ("BookShelf").
 ## - Darunter für jedes Brett einen BookRow-Knoten (Reihenfolge = Reihenfolge beim Befüllen).
 ## - Optional ein Marker3D "SignPoint": Dort hängt das Genre-Schild (Mitte, vorn).
-## - Ein Interactable "Interactable" mit Kollisionsform.
+## - Ein Interactable "Interactable" – ohne eigene Kollisionsform: Man trifft das Regal über
+##   seinen festen Körper (Interactable.find_for), so bleibt Deko im Regal erreichbar.
+## Jedes Brett bekommt automatisch eine Ablagefläche (PlacementSurface) für kleine Deko.
 ##
 ## Jedes Buch steht an einer freien Stelle seines Bretts (linke Kante _x, feines Raster
 ## GameConfig.shelf_grid_step) – auch rechts beginnend, in der Mitte oder mit Lücken.
@@ -23,6 +25,12 @@ extends Node3D
 ## - E halten: alle getragenen Bücher einräumen, die hierher passen.
 ## Automatisches Einräumen (E halten, Auffüllen, Sortieren) füllt freie Plätze von links
 ## nach rechts, Brett für Brett.
+##
+## Deko im Regal: Im Gestaltungsmodus lässt sich kleine Deko auf die Bretter stellen (nur,
+## was in der Höhe ins Fach passt, und nur an freie Stellen). Deko ist ein eigenes
+## Möbelstück, das auf dem Regal steht (support_uid) – es wandert beim Verschieben mit und
+## geht beim Wegräumen ins Inventar. Wo Deko steht, kommen keine Bücher hin; Sortieren und
+## Auffüllen lassen sie stehen, wo sie ist.
 ##
 ## Leistung: Alle Bücher eines Regals werden in einem einzigen Rutsch gezeichnet
 ## (MultiMesh); die Buchrücken kommen aus einem gemeinsamen Bild (BookArt).
@@ -46,6 +54,8 @@ const SIGN_TEXT_COLOR := Color(0.98, 0.94, 0.84)
 const BOOK_GAP := 0.0015
 ## Rechenungenauigkeit beim Vergleichen von Lagen (in Metern)
 const EPSILON := 0.0001
+## So viel Luft bleibt zwischen Deko und Büchern (in Metern)
+const DECO_MARGIN := 0.003
 
 ## Genre dieses Regals: "" = noch keins gewählt, MIXED = Gemischt, sonst die Genre-id.
 var genre_id: String = ""
@@ -64,6 +74,9 @@ var _sign_plate: MeshInstance3D
 var _sign_label: Label3D
 var _interactable: Interactable
 var _is_live := false  # steht wirklich im Raum (nicht Vorschau oder Foto)
+var _room: Room = null
+var _surfaces: Array[PlacementSurface] = []  # je Brett eine Ablagefläche für Deko
+var _blocked_cache: Array = []  # je Brett die Bereiche mit Deko (leer = neu berechnen)
 
 # Was ich gerade anschaue
 var _hover_book: Book = null
@@ -98,6 +111,11 @@ func _ready() -> void:
 	if _is_live:
 		add_to_group(BookStock.SHELF_GROUP)
 		BookStock.carried_changed.connect(_on_carried_changed)
+		_create_row_surfaces()
+		_room = _find_room()
+		if _room:
+			# Deko aufgestellt, verschoben oder weggeräumt: Bereiche neu berechnen
+			_room.layout_changed.connect(_forget_blocked)
 		if _interactable:
 			_interactable.highlight_owner = false
 			_interactable.interacted.connect(_on_tapped)
@@ -341,6 +359,52 @@ func copy_contents_from(other: BookShelf) -> void:
 	_refresh_instances()
 
 
+# --- Deko im Regal ---
+
+## Das Bücherregal, zu dem eine Ablagefläche gehört (ein Brett) – oder null.
+static func find_for_surface(surface: Node) -> BookShelf:
+	var row := surface.get_parent() if surface else null
+	if row is BookRow and row.get_parent() is BookShelf:
+		return row.get_parent()
+	return null
+
+
+## Gestaltungsmodus: Darf Deko mit diesen Eckpunkten (in der Welt) auf diesem Brett stehen?
+## Nur, wenn dort keine Bücher stehen.
+func is_free_for_deco(surface: PlacementSurface, corners: PackedVector3Array) -> bool:
+	var row := _surfaces.find(surface)
+	if row < 0:
+		return true
+	var span := _span_on_row(row, corners)
+	span = Vector2(span.x - DECO_MARGIN, span.y + DECO_MARGIN)
+	for book: Book in _row_books[row]:
+		if span.x < _x[book] + _book_width(book) - EPSILON and span.y > _x[book] + EPSILON:
+			return false
+	return true
+
+
+## Jedes Brett bekommt eine Ablagefläche für Deko (so hoch, wie das Fach Platz bietet).
+func _create_row_surfaces() -> void:
+	for row in _rows:
+		var surface := PlacementSurface.new()
+		surface.name = "DecoSurface"
+		surface.max_height = row.height
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(row.width, 0.03, row.depth)
+		shape.shape = box
+		surface.add_child(shape)
+		row.add_child(surface)
+		_surfaces.append(surface)
+
+
+func _find_room() -> Room:
+	var node := get_parent()
+	while node and not node is Room:
+		node = node.get_parent()
+	return node as Room
+
+
 # --- Einzelne Bücher ---
 
 ## Nimmt ein bestimmtes Buch aus dem Regal in die Hand. Sind die Hände schon voll,
@@ -493,9 +557,64 @@ func _row_of(book: Book) -> int:
 	return -1
 
 
-## Bereiche eines Bretts, auf denen nichts stehen darf (z. B. Deko), als (von, bis).
-func _get_blocked(_row: int) -> Array[Vector2]:
-	return []
+## Bereiche eines Bretts, auf denen Deko steht (von, bis) – dort kommen keine Bücher hin.
+func _get_blocked(row: int) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	if not _is_live:
+		return result
+	if _blocked_cache.is_empty():
+		_update_blocked()
+	result.assign(_blocked_cache[row])
+	return result
+
+
+## Sucht die Deko auf den Brettern: alles, was im Raum auf diesem Regal steht.
+func _update_blocked() -> void:
+	_blocked_cache.clear()
+	for r in _rows.size():
+		_blocked_cache.append([])
+	var item := FurnitureUtils.find_placed_furniture(self)
+	if item == null or _room == null:
+		return
+	for other in _room.get_dependents(item):
+		var row := _row_at(other.global_position)
+		if row < 0 or other.get_model() == null:
+			continue
+		var span := _span_on_row(row, _corners_of(other.get_model()))
+		_blocked_cache[row].append(Vector2(span.x - DECO_MARGIN, span.y + DECO_MARGIN))
+
+
+func _forget_blocked() -> void:
+	_blocked_cache.clear()
+
+
+## Auf welchem Brett steht dieser Punkt (in der Welt)? -1 = auf keinem.
+func _row_at(world_position: Vector3) -> int:
+	for r in _rows.size():
+		var row := _rows[r]
+		var local := row.global_transform.affine_inverse() * world_position
+		if absf(local.y) < 0.03 and absf(local.x) <= row.width / 2.0 + 0.05 and absf(local.z) <= row.depth / 2.0 + 0.05:
+			return r
+	return -1
+
+
+## Von wo bis wo (entlang des Bretts, Brettmitte = 0) reichen diese Punkte (in der Welt)?
+func _span_on_row(row: int, corners: PackedVector3Array) -> Vector2:
+	var to_row := _rows[row].global_transform.affine_inverse()
+	var span := Vector2(INF, -INF)
+	for corner in corners:
+		var x := (to_row * corner).x
+		span = Vector2(minf(span.x, x), maxf(span.y, x))
+	return span
+
+
+## Die acht Ecken des umgebenden Quaders eines Modells (in der Welt).
+static func _corners_of(model: Node3D) -> PackedVector3Array:
+	var box := FurnitureUtils.get_local_aabb(model)
+	var corners := PackedVector3Array()
+	for i in 8:
+		corners.append(model.global_transform * box.get_endpoint(i))
+	return corners
 
 
 ## Die freien Abschnitte eines Bretts zwischen Seitenwänden und Deko, als (von, bis).

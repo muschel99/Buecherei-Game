@@ -1,0 +1,99 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/paint_white.tres" id="1"]
+[ext_resource type="Material" path="res://assets/materials/leaf_green.tres" id="2"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.022
+bottom_radius = 0.03
+height = 0.09
+radial_segments = 24
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2"]
+albedo_color = Color(0.58, 0.48, 0.74, 1)
+roughness = 0.9
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
+top_radius = 0.0025
+bottom_radius = 0.0025
+height = 0.1
+radial_segments = 8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_4"]
+radius = 0.007
+height = 0.045
+radial_segments = 8
+rings = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5"]
+top_radius = 0.0025
+bottom_radius = 0.0025
+height = 0.1
+radial_segments = 8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_6"]
+radius = 0.007
+height = 0.045
+radial_segments = 8
+rings = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7"]
+top_radius = 0.0025
+bottom_radius = 0.0025
+height = 0.1
+radial_segments = 8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_8"]
+radius = 0.007
+height = 0.045
+radial_segments = 8
+rings = 4
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_9"]
+radius = 0.032
+height = 0.23
+
+[node name="VaseLavender" type="Node3D"]
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Vase" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.045, 0)
+material_override = ExtResource("1")
+mesh = SubResource("CylinderMesh_1")
+
+[node name="Stem1" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(0.9928, -0.1197, 0, 0.1197, 0.9928, 0, 0, 0, 1, -0.012, 0.13, 0)
+material_override = ExtResource("2")
+mesh = SubResource("CylinderMesh_3")
+
+[node name="Blossom1" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(0.9928, -0.1197, 0, 0.1197, 0.9928, 0, 0, 0, 1, -0.018, 0.1976, 0)
+material_override = SubResource("StandardMaterial3D_2")
+mesh = SubResource("CapsuleMesh_4")
+
+[node name="Stem2" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0.006)
+material_override = ExtResource("2")
+mesh = SubResource("CylinderMesh_5")
+
+[node name="Blossom2" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.198, 0.006)
+material_override = SubResource("StandardMaterial3D_2")
+mesh = SubResource("CapsuleMesh_6")
+
+[node name="Stem3" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(0.9902, 0.1395, 0, -0.1395, 0.9902, 0, 0, 0, 1, 0.012, 0.13, -0.004)
+material_override = ExtResource("2")
+mesh = SubResource("CylinderMesh_7")
+
+[node name="Blossom3" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(0.9902, 0.1395, 0, -0.1395, 0.9902, 0, 0, 0, 1, 0.019, 0.1975, -0.004)
+material_override = SubResource("StandardMaterial3D_2")
+mesh = SubResource("CapsuleMesh_8")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.115, 0)
+shape = SubResource("CylinderShape3D_9")

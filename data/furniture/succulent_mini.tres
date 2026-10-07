@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = "succulent_mini"
+display_name = "Mini-Sukkulente"
+description = "Ein winziges Grün für zwischen die Bücher."
+price = 9
+styles = 1
+scene_path = "res://scenes/furniture/succulent_mini.tscn"
+footprint = Vector2i(1, 1)
+placement = 3
+subcategory = "plant"
