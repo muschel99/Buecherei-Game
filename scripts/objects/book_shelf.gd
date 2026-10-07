@@ -19,14 +19,14 @@ extends Node3D
 ## - Linksklick, während ich Bücher trage: das Buch obenauf genau dort abstellen, wo ich
 ##   hinschaue. Vorher zeigt eine halbdurchsichtige Vorschau, wo es hinkommt; passt es nicht
 ##   (kein Platz, falsches Genre), ist die Vorschau dezent rötlich.
-## - Linksklick halten (Ring): alle getragenen Bücher einräumen, die hierher passen.
+## - Linksklick halten (Ring): alle getragenen Bücher einräumen, die hierher passen – ab dem
+##   Fach und der Stelle, auf die ich schaue; der Rest in die nächstgelegenen passenden Fächer.
 ## - R: Regal-Menü (Genre je Fach wählen, aus dem Lager auffüllen, sortieren, alles zurück
 ##   ins Lager) – eine eigene, ruhige Taste, damit sich das Menü nie aus Versehen öffnet.
 ## - E blättert hier (wie überall ohne eigene E-Aktion) durch die Bücher in der Hand.
 ## Schaue ich ein Regal an, steht sein Genre als ruhiger Schriftzug unten in der Bildmitte
 ## (GenreCaption) – Schilder am Regal gibt es nicht.
-## Automatisches Einräumen (Linksklick halten, Auffüllen, Sortieren) füllt freie Plätze von links
-## nach rechts, Brett für Brett.
+## Auffüllen und Sortieren füllen freie Plätze von links nach rechts, Fach für Fach.
 ##
 ## Deko im Regal: Im Gestaltungsmodus lässt sich kleine Deko auf die Bretter stellen (nur,
 ## was in der Höhe ins Fach passt, und nur an freie Stellen). Deko ist ein eigenes
@@ -91,6 +91,8 @@ var _hover_book: Book = null
 ## Wo das Buch obenauf hinkäme: { "book", "row", "left", "moves" (Book -> neue linke Kante),
 ## "ok" } – leer, wenn ich auf kein Brett schaue.
 var _plan: Dictionary = {}
+# Wohin ich gerade auf die Bretter schaue: { "row", "x" } (leer = kein Brett)
+var _aim: Dictionary = {}
 var _ghost: MeshInstance3D
 var _ghost_material: ShaderMaterial
 var _ghost_transform := Transform3D()
@@ -303,17 +305,21 @@ func add_books(new_books: Array, animate: bool = true, only_row: int = -1) -> Ar
 			continue
 		_put(book, spot.row, spot.left)
 		if animate:
-			# Startet etwas kleiner vor dem Regal und gleitet an seinen Platz
-			var start: Transform3D = _targets[book]
-			start.basis = start.basis * Basis.from_scale(Vector3.ONE * 0.7)
-			start.origin += Vector3(0.0, 0.03, SLIDE_DISTANCE)
-			_anims[book] = {"from": start, "start": _clock + placed * interval,
-				"time": GameConfig.book_slide_time, "appear": true}
+			_slide_in(book, placed * interval)
 		placed += 1
 	_refresh_instances()
 	if placed > 0:
 		_changed()
 	return rest
+
+
+## Ein Buch, das gerade an seinen Platz gestellt wurde, startet etwas kleiner vor dem Regal
+## und gleitet hinein (nach "delay" Sekunden).
+func _slide_in(book: Book, delay: float) -> void:
+	var start: Transform3D = _targets[book]
+	start.basis = start.basis * Basis.from_scale(Vector3.ONE * 0.7)
+	start.origin += Vector3(0.0, 0.03, SLIDE_DISTANCE)
+	_anims[book] = {"from": start, "start": _clock + delay, "time": GameConfig.book_slide_time, "appear": true}
 
 
 ## Nimmt Bücher aus dem Regal: Sie gleiten heraus, die übrigen bleiben stehen, wo sie sind.
@@ -384,6 +390,113 @@ func put_carried() -> int:
 	var rest := add_books(taken)
 	BookStock.return_to_hand(rest)
 	return taken.size() - rest.size()
+
+
+## Linksklick halten: Räumt die getragenen Bücher ab der Stelle ein, auf die ich schaue
+## (Fach "row", Stelle aim_x, Brettmitte = 0). Von dort füllen sie die freien Plätze dieses
+## Fachs – erst nach rechts, dann nach links. Was dort nicht hinpasst (Platz oder Genre), kommt
+## in die nächstgelegenen anderen Fächer mit passendem Genre; was nirgends passt, trage ich
+## weiter. Liefert, wie viele eingeräumt wurden.
+func put_carried_at(row: int, aim_x: float) -> int:
+	if row < 0 or row >= _rows.size():
+		return put_carried()
+	var taken := BookStock.take_carried_where(func(book: Book) -> bool: return accepts(book.genre_id))
+	if taken.is_empty():
+		return 0
+	var others := _rows_by_distance(row)
+	var interval := minf(GameConfig.book_slide_interval, GameConfig.book_slide_max_total / taken.size())
+	var start := NAN  # Startstelle im angeschauten Fach (linke Kante des ersten Buchs)
+	var rest: Array[Book] = []
+	var placed := 0
+	for book in taken:
+		var spot := {}
+		if row_accepts(row, book.genre_id):
+			if is_nan(start):
+				start = _start_at(row, aim_x, _book_width(book))
+			spot = _spot_near(row, book, start)
+		for r in others:
+			if not spot.is_empty():
+				break
+			if row_accepts(r, book.genre_id):
+				spot = _find_free_spot(book, r)
+		if spot.is_empty():
+			rest.append(book)
+			continue
+		_put(book, spot.row, spot.left)
+		_slide_in(book, placed * interval)
+		placed += 1
+	_refresh_instances()
+	if placed > 0:
+		_changed()
+	BookStock.return_to_hand(rest)
+	return placed
+
+
+## Die anderen Fächer, das nächstgelegene zuerst (gemessen von Brettmitte zu Brettmitte;
+## bei gleichem Abstand zuerst das in Lesereihenfolge frühere).
+func _rows_by_distance(row: int) -> Array[int]:
+	var order := get_fach_order()
+	var result: Array[int] = []
+	for r in order:
+		if r != row:
+			result.append(r)
+	var here := _rows[row].position
+	result.sort_custom(func(a: int, b: int) -> bool:
+		var da := _rows[a].position.distance_to(here)
+		var db := _rows[b].position.distance_to(here)
+		if not is_equal_approx(da, db):
+			return da < db
+		return order.find(a) < order.find(b))
+	return result
+
+
+## Wo das erste Buch beim Einräumen ab aim_x beginnt: auf dem feinen Raster, nah am linken
+## Nachbarn bündig, und so weit innen, dass es in die freie Lücke passt.
+func _start_at(row: int, aim_x: float, width: float) -> float:
+	var start := snappedf(aim_x - width / 2.0, maxf(GameConfig.shelf_grid_step, 0.001))
+	for gap in _free_gaps(row):
+		if start + width / 2.0 >= gap.x - EPSILON and start + width / 2.0 <= gap.y + EPSILON:
+			if start - gap.x <= GameConfig.shelf_snap_distance:
+				start = gap.x
+			if gap.y - gap.x >= width - EPSILON:
+				start = clampf(start, gap.x, gap.y - width)
+	return start
+
+
+## Freier Platz für ein Buch in diesem Fach, möglichst nah an "start": zuerst rechts davon
+## (nächste freie Stelle), wenn rechts nichts mehr frei ist, links davon (bündig von rechts).
+func _spot_near(row: int, book: Book, start: float) -> Dictionary:
+	var width := _book_width(book)
+	var best_right := INF
+	var best_left := -INF
+	for gap in _free_gaps(row):
+		if gap.y - gap.x < width - EPSILON:
+			continue
+		var right := maxf(gap.x, start)
+		if right + width <= gap.y + EPSILON:
+			best_right = minf(best_right, right)
+		var left := minf(gap.y, start) - width
+		if left >= gap.x - EPSILON:
+			best_left = maxf(best_left, left)
+	if best_right < INF:
+		return {"row": row, "left": best_right}
+	if best_left > -INF:
+		return {"row": row, "left": best_left}
+	return {}
+
+
+## Die freien Lücken eines Fachs (von, bis), ohne Deko und ohne Bücher.
+func _free_gaps(row: int) -> Array[Vector2]:
+	var gaps: Array[Vector2] = []
+	for segment in _segments(row):
+		var cursor := segment.x
+		for other in _books_in(row, segment):
+			if _x[other] > cursor + EPSILON:
+				gaps.append(Vector2(cursor, _x[other]))
+			cursor = maxf(cursor, _x[other] + _book_width(other))
+		if segment.y > cursor + EPSILON:
+			gaps.append(Vector2(cursor, segment.y))
+	return gaps
 
 
 ## Sortiert die Bücher nach Genre und Titel – sie rücken sanft an ihre neuen Plätze, von
@@ -943,6 +1056,7 @@ func _find_aim(from: Vector3, direction: Vector3) -> Dictionary:
 func _on_aimed(from: Vector3, direction: Vector3) -> void:
 	_set_hover(_pick_book(from, direction))
 	var aim := _find_aim(from, direction)
+	_aim = aim
 	# Schriftzug: Genre des Fachs, auf das ich schaue (bzw. des angeschauten Buchs)
 	var row: int = _row_of(_hover_book) if _hover_book else aim.get("row", -1)
 	var row_genre := get_row_genre(row)
@@ -956,6 +1070,7 @@ func _on_aimed(from: Vector3, direction: Vector3) -> void:
 
 
 func _on_aim_ended() -> void:
+	_aim = {}
 	GenreCaption.hide_text(self)
 	_set_hover(null)
 	_set_plan({})
@@ -1042,10 +1157,14 @@ func _on_place_requested(_interactor: Node) -> void:
 		set_process(true)
 
 
-## Linke Maustaste gehalten: alle getragenen Bücher einräumen, die hierher passen.
+## Linke Maustaste gehalten: alle getragenen Bücher einräumen, die hierher passen – ab dem
+## Fach und der Stelle, auf die ich schaue.
 func _on_place_all_requested(_interactor: Node) -> void:
 	if count_matching_carried() > 0:
-		put_carried()
+		if _aim.is_empty():
+			put_carried()
+		else:
+			put_carried_at(_aim.row, _aim.x)
 
 
 func _open_menu() -> void:
