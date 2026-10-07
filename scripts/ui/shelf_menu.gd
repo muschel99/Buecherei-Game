@@ -16,6 +16,9 @@ extends CanvasLayer
 ## nicht ins Lager (Q halten) – jede Aktion hat nur einen Weg.
 ## Das Tablet ist immer gleich groß (fast so hoch wie das Bild) und passt so bei jeder Auflösung;
 ## wird die Fächerliste zu lang, lässt sie sich scrollen.
+## Fahre ich über die Auswahlliste eines Fachs oder klappe sie auf, leuchtet genau dieses Fach im
+## Regal dezent auf (BookShelf.highlight_rows). Damit ich das sehe, rückt die Ansicht beim Öffnen
+## sanft zur Seite (und zoomt bei Bedarf etwas heraus), sodass das Regal neben dem Tablet bleibt.
 ## Schließen: Kreuz oben rechts, Esc oder R (Esc-Regel über MenuStack). Solange es offen ist,
 ## ist der Mauszeiger sichtbar und die Spielfigur steht still.
 
@@ -60,6 +63,12 @@ var _opened_frame := -1
 var _refresh_queued := false
 var _row_style: StyleBoxFlat
 var _dots: Dictionary = {}  # Farbe -> kleines Punkt-Bild für die Auswahllisten
+# Hervorgehobene Fächer: unter der Maus bzw. deren Liste gerade aufgeklappt ist
+var _hover_rows: Array[int] = []
+var _open_rows: Array[int] = []
+# Ansicht: ursprüngliches Blickfeld und die laufende Bewegung
+var _base_fov := -1.0
+var _view_tween: Tween
 
 
 func _ready() -> void:
@@ -103,6 +112,7 @@ func open_for(target: BookShelf) -> void:
 	_show_main()
 	_rebuild_rows()
 	_queue_refresh()
+	_frame_shelf()
 
 
 func close() -> void:
@@ -111,9 +121,14 @@ func close() -> void:
 	is_open = false
 	hide()
 	_sort_popup.hide()
-	if is_instance_valid(shelf) and shelf.contents_changed.is_connected(_queue_refresh):
-		shelf.contents_changed.disconnect(_queue_refresh)
+	_hover_rows.clear()
+	_open_rows.clear()
+	if is_instance_valid(shelf):
+		shelf.highlight_rows([])
+		if shelf.contents_changed.is_connected(_queue_refresh):
+			shelf.contents_changed.disconnect(_queue_refresh)
 	shelf = null
+	_restore_view()
 	MenuStack.close(self)
 	_player.movement_enabled = true
 	_player.interaction_enabled = true
@@ -289,6 +304,7 @@ func _rebuild_rows() -> void:
 		var row := r
 		choice.item_selected.connect(func(index: int) -> void:
 			choose_row_genre(row, str(choice.get_item_metadata(index))))
+		_watch_choice(choice, [row])
 		box.add_child(choice)
 		_row_choices[r] = choice
 		_rows_box.add_child(line)
@@ -467,6 +483,7 @@ func _build_main(screen: VBoxContainer) -> void:
 	_all_choice = _make_choice()
 	_all_choice.item_selected.connect(func(index: int) -> void:
 		choose_genre(str(_all_choice.get_item_metadata(index))))
+	_watch_choice(_all_choice, [])  # leer = alle Fächer
 	all_line.add_child(_all_choice)
 
 	_rows_scroll = ScrollContainer.new()
@@ -503,6 +520,112 @@ func _build_picker(screen: VBoxContainer) -> void:
 	_picker = BookPicker.new()
 	_picker.book_chosen.connect(choose_book)
 	_picker_view.add_child(_picker)
+
+
+# --- Fach hervorheben ---
+
+## Maus über der Auswahlliste oder Liste aufgeklappt: diese Fächer hervorheben
+## (rows leer = alle Fächer, für "Alle Fächer gleich").
+func _watch_choice(choice: OptionButton, rows: Array[int]) -> void:
+	choice.mouse_entered.connect(func() -> void:
+		_hover_rows = _rows_or_all(rows)
+		_update_highlight())
+	choice.mouse_exited.connect(func() -> void:
+		_hover_rows = []
+		_update_highlight())
+	choice.get_popup().about_to_popup.connect(func() -> void:
+		_open_rows = _rows_or_all(rows)
+		_update_highlight())
+	choice.get_popup().popup_hide.connect(func() -> void:
+		_open_rows = []
+		_update_highlight())
+
+
+func _rows_or_all(rows: Array[int]) -> Array[int]:
+	if not rows.is_empty() or shelf == null:
+		return rows
+	return shelf.get_fach_order()
+
+
+func _update_highlight() -> void:
+	if is_open and is_instance_valid(shelf):
+		shelf.highlight_rows(_open_rows if not _open_rows.is_empty() else _hover_rows)
+
+
+# --- Ansicht: das Regal bleibt neben dem Tablet sichtbar ---
+
+## Rückt die Ansicht sanft so zur Seite, dass das Regal links neben dem Tablet zu sehen ist.
+## Ist es dafür zu breit (oder stehe ich sehr nah davor), zoomt die Ansicht etwas heraus
+## (höchstens bis GameConfig.shelf_menu_max_fov). Die Spielfigur selbst bewegt sich nicht.
+func _frame_shelf() -> void:
+	var camera := _player.camera
+	# Gleitet die Ansicht gerade noch zurück, gilt weiter das gemerkte Blickfeld
+	var restoring := _view_tween != null and _view_tween.is_running()
+	if _view_tween:
+		_view_tween.kill()
+	if _base_fov < 0.0 or not restoring:
+		_base_fov = camera.fov
+	camera.fov = _base_fov
+	camera.h_offset = 0.0
+	var item := FurnitureUtils.find_placed_furniture(shelf)
+	var model := item.get_model() if item else null
+	if model == null:
+		return
+	var view := get_viewport().get_visible_rect().size
+	var margin := view.x * 0.03
+	var avail_left := margin
+	var avail_right := view.x * (1.0 - RIGHT_MARGIN) - maxf(TABLET_WIDTH, _panel.size.x) - margin
+	# Wo das Regal gerade im Bild ist (Ecken seines Modells, in Bildpunkten)
+	var box := FurnitureUtils.get_local_aabb(model)
+	var left := INF
+	var right := -INF
+	var left_depth := 1.0
+	var right_depth := 1.0
+	var forward := -camera.global_basis.z
+	for i in 8:
+		var corner := model.global_transform * box.get_endpoint(i)
+		if camera.is_position_behind(corner):
+			continue
+		var x := camera.unproject_position(corner).x
+		var depth := maxf((corner - camera.global_position).dot(forward), 0.05)
+		if x < left:
+			left = x
+			left_depth = depth
+		if x > right:
+			right = x
+			right_depth = depth
+	if left == INF or right <= avail_right:
+		return  # das Regal ist schon frei (oder gar nicht zu sehen)
+	# Zu breit für den freien Platz? Dann etwas herauszoomen (um die Bildmitte)
+	var half_tan := tan(deg_to_rad(_base_fov) / 2.0)
+	var shrink := clampf((avail_right - avail_left) / maxf(right - left, 1.0), 0.0, 1.0)
+	var new_half_tan := minf(half_tan / maxf(shrink, 0.01), tan(deg_to_rad(GameConfig.shelf_menu_max_fov) / 2.0))
+	var factor := half_tan / new_half_tan
+	var center := view.x / 2.0
+	left = center + (left - center) * factor
+	right = center + (right - center) * factor
+	# Dann so weit zur Seite, dass der rechte Rand neben dem Tablet liegt (links nicht hinaus)
+	var shift := maxf(right - avail_right, 0.0)
+	shift = minf(shift, maxf(left - avail_left, 0.0))
+	var aspect := view.x / view.y
+	# Bildpunkte -> Meter in der Tiefe des rechten Rands (dort muss es passen)
+	var meters := shift / view.x * 2.0 * right_depth * new_half_tan * aspect
+	var new_fov := rad_to_deg(2.0 * atan(new_half_tan))
+	_view_tween = create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_view_tween.tween_property(camera, "fov", new_fov, GameConfig.shelf_menu_view_time)
+	_view_tween.tween_property(camera, "h_offset", meters, GameConfig.shelf_menu_view_time)
+
+
+## Beim Schließen gleitet die Ansicht zurück.
+func _restore_view() -> void:
+	if _base_fov < 0.0:
+		return
+	var camera := _player.camera
+	if _view_tween:
+		_view_tween.kill()
+	_view_tween = create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_view_tween.tween_property(camera, "fov", _base_fov, GameConfig.shelf_menu_view_time)
+	_view_tween.tween_property(camera, "h_offset", 0.0, GameConfig.shelf_menu_view_time)
 
 
 func _icon_button(kind: TabletIconButton.Icon, action: Callable) -> TabletIconButton:

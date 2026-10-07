@@ -105,7 +105,9 @@ var _aim: Dictionary = {}
 var _ghost: MeshInstance3D
 var _ghost_material: ShaderMaterial
 var _ghost_transform := Transform3D()
-var _ghost_shake := -1.0  # Linksklick, obwohl es nicht passt: Vorschau schüttelt kurz
+var _ghost_shake := -1.0
+var _highlights: Dictionary = {}  # Fach -> Kasten zum Hervorheben (siehe highlight_rows)
+var _highlight_tween: Tween  # Linksklick, obwohl es nicht passt: Vorschau schüttelt kurz
 
 
 func _ready() -> void:
@@ -600,6 +602,56 @@ func copy_contents_from(other: BookShelf) -> void:
 		for book: Book in other._row_books[r]:
 			_put(book, r, other._x[book])
 	_refresh_instances()
+
+
+# --- Fach hervorheben (Regal-Menü) ---
+
+## Hebt diese Fächer dezent hervor (leere Liste = keins). Die Kästen entstehen erst, wenn sie
+## gebraucht werden, und blenden sanft ein.
+func highlight_rows(rows: Array[int]) -> void:
+	for r in _highlights:
+		(_highlights[r] as MeshInstance3D).visible = rows.has(r)
+	var shown := false
+	for r in rows:
+		if r < 0 or r >= _rows.size():
+			continue
+		if not _highlights.has(r):
+			_highlights[r] = _create_highlight(_rows[r])
+		var box: MeshInstance3D = _highlights[r]
+		if not box.visible:
+			box.visible = true
+		shown = true
+	if shown:
+		if _highlight_tween:
+			_highlight_tween.kill()
+		for r in rows:
+			if _highlights.has(r):
+				(_highlights[r].material_override as ShaderMaterial).set_shader_parameter("strength", 0.0)
+		_highlight_tween = create_tween()
+		_highlight_tween.tween_method(func(value: float) -> void:
+			for r in _highlights:
+				(_highlights[r].material_override as ShaderMaterial).set_shader_parameter("strength", value),
+			0.0, 1.0, 0.12)
+
+
+func _create_highlight(row: BookRow) -> MeshInstance3D:
+	var size := Vector3(row.width + 0.012, maxf(row.height - 0.008, 0.02), row.depth + 0.012)
+	var box := MeshInstance3D.new()
+	box.name = "FachHighlight"
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	box.mesh = mesh
+	box.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var material := ShaderMaterial.new()
+	material.shader = load("res://assets/shaders/fach_highlight.gdshader")
+	material.set_shader_parameter("half_size", size / 2.0)
+	material.set_shader_parameter("fill", GameConfig.fach_highlight_fill)
+	material.set_shader_parameter("edge", GameConfig.fach_highlight_edge)
+	box.material_override = material
+	box.transform = row.transform * Transform3D(Basis.IDENTITY, Vector3(0.0, size.y / 2.0 + 0.004, 0.0))
+	box.visible = false
+	add_child(box)
+	return box
 
 
 # --- Deko im Regal ---
