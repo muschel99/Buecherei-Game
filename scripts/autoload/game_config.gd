@@ -181,8 +181,14 @@ var store_books_hold_time: float = 0.6
 
 ## Das angeschaute Buch rutscht ein Stück aus dem Regal (in Metern).
 var book_hover_pull: float = 0.015
-## So weit vor dem Regal schwebt das Buch, das ich gleich einstelle (in Metern).
+## So weit vor dem Regal schwebt die Vorschau, wenn das Buch zwischen andere geschoben wird
+## (in Metern). An einer freien Stelle steht die Vorschau genau dort, wo das Buch hinkommt.
 var book_insert_preview_pull: float = 0.06
+## Feines Raster auf jedem Regalbrett: Bücher werden in diesen Schritten abgestellt (in Metern).
+var shelf_grid_step: float = 0.01
+## Steht ein Buch näher als das an einem Nachbarn (Buch, Deko, Seitenwand), rückt es bündig
+## heran (in Metern).
+var shelf_snap_distance: float = 0.025
 
 
 # --- Speichern ---
