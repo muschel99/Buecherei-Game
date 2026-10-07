@@ -16,7 +16,9 @@
 | 3b  | Echte Bücher: Cover, Sammlung, einzeln einräumen | fertig |
 | 3c  | Freies Einräumen, Deko im Regal und weniger Text | fertig |
 | 3d  | Regalsteuerung, Etagen-Genres und Bücher als Deko | fertig |
-| 3e  | Tablet mit Apps und Lagerübersicht       | vorgemerkt    |
+| 3e  | Bücher drehen, Stapel blättern und Regal-Menü mit R | in Arbeit |
+| 3f  | Regal-Menü als Tablet und Fächer         | vorgemerkt    |
+| 3g  | Tablet mit Apps und Lagerübersicht       | vorgemerkt    |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -269,7 +271,22 @@ Leitgedanke: Die Maus ist für Bücher da, E für alles andere – und Bücher d
 - [x] Speichern von Etagen-Genres und ausgelegten Büchern; alte Spielstände laden weiter
       (bisheriges Regal-Genre gilt für alle Etagen, keine ausgelegten Bücher)
 
-## Etappe 3e – Tablet mit Apps und Lagerübersicht (vorgemerkt)
+## Etappe 3e – Bücher drehen, Stapel blättern und Regal-Menü mit R
+Leitgedanke: Jede Aktion hat genau einen Weg, und kein Menü öffnet sich aus Versehen.
+- [ ] Mausrad dreht das Buch obenauf vor dem Ablegen um die Hochachse (wie Möbel im
+      Gestaltungsmodus); Vorschau zeigt die Drehung; Schrittweite in GameConfig
+- [ ] E tippen blättert durch den Stapel in der Hand (Umschalt + E rückwärts); was selbst auf E
+      reagiert (Lampe, Tür, Karton, Sitz, Tablet …), hat Vorrang
+- [ ] R öffnet das Regal-Menü (kurzer Druck, ohne Halten); E halten am Regal entfällt
+- [ ] Regal-Menü entschlackt (ohne „Getragene einräumen“ und „Getragene Bücher ins Lager
+      legen“) und bei jeder Auflösung vollständig sichtbar
+- [ ] Hinweise: Mausrad „Drehen“, E „Blättern“, am Regal R „Menü“; Tastenhilfe aktualisiert
+- [ ] Drehung ausgelegter Bücher wird gespeichert; alte Spielstände laden weiter
+
+## Etappe 3f – Regal-Menü als Tablet und Fächer (vorgemerkt)
+- Noch nicht begonnen. Das Regal-Menü wird komplett neu gebaut.
+
+## Etappe 3g – Tablet mit Apps und Lagerübersicht (vorgemerkt)
 - Noch nicht begonnen. Idee: Das Tablet bekommt Apps (z. B. Shop, Bestand, Sammlung) und eine
   übersichtliche Lagerübersicht.
 
