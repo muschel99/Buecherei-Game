@@ -55,10 +55,19 @@ const BOOK_GAP := 0.0015
 const EPSILON := 0.0001
 ## So viel Luft bleibt zwischen Deko und Büchern (in Metern)
 const DECO_MARGIN := 0.003
+## Sortierarten (Kennung, Name im Menü). Neue Art: hier eintragen und in _sort_key ergänzen.
+const SORT_MODES := [
+	["genre_title", "Nach Genre und Titel"],
+	["title", "Nach Titel"],
+	["author", "Nach Autor"],
+	["color", "Nach Farbe"],
+]
 
 ## Genre je Brett (Fach), gleiche Reihenfolge wie die Bretter:
 ## "" = noch keins gewählt (nimmt alles), MIXED = Gemischt, sonst die Genre-id.
 var row_genres: Array[String] = []
+## Zuletzt gewählte Sortierart (siehe SORT_MODES), wird mit dem Regal gespeichert.
+var sort_mode: String = "genre_title"
 ## Genre des ganzen Regals: das gemeinsame Genre aller Bretter – "" wenn sie verschieden sind
 ## (nur lesen; zum Ändern set_genre bzw. set_row_genre).
 var genre_id: String:
@@ -499,20 +508,25 @@ func _free_gaps(row: int) -> Array[Vector2]:
 	return gaps
 
 
-## Sortiert die Bücher nach Genre und Titel – sie rücken sanft an ihre neuen Plätze, von
-## links nach rechts ohne Lücken, jedes in ein Fach mit passendem Genre. Deko bleibt
-## stehen, wo sie ist.
-func sort_books() -> void:
+## Sortiert die Bücher (mode: siehe SORT_MODES; leer = zuletzt gewählte Art) – sie rücken
+## sanft an ihre neuen Plätze, von links nach rechts ohne Lücken, jedes in ein Fach mit
+## passendem Genre. Deko bleibt stehen, wo sie ist. Die Art wird gemerkt.
+func sort_books(mode: String = "") -> void:
+	if not mode.is_empty() and SORT_MODES.any(func(entry: Array) -> bool: return entry[0] == mode):
+		sort_mode = mode
 	var all := get_books()
-	var genre_order := {}
-	for genre in Catalog.get_all_genres():
-		genre_order[genre.get_id()] = genre_order.size()
+	var keys := {}
+	for book in all:
+		keys[book] = _sort_key(book)
 	all.sort_custom(func(a: Book, b: Book) -> bool:
-		var ga := int(genre_order.get(a.genre_id, 999))
-		var gb := int(genre_order.get(b.genre_id, 999))
-		if ga != gb:
-			return ga < gb
-		return a.title.naturalnocasecmp_to(b.title) < 0)
+		var ka: Array = keys[a]
+		var kb: Array = keys[b]
+		for i in ka.size():
+			if ka[i] != kb[i]:
+				if ka[i] is String:
+					return (ka[i] as String).naturalnocasecmp_to(kb[i]) < 0
+				return ka[i] < kb[i]
+		return false)
 	var old: Dictionary = {}
 	for book in all:
 		old[book] = _current_transform(book)
@@ -529,6 +543,33 @@ func sort_books() -> void:
 	_send_to_storage(overflow)
 	_refresh_instances()
 	_changed()
+
+
+## Wonach ein Buch bei der aktuellen Sortierart eingeordnet wird (Liste: erst nach dem ersten
+## Wert, bei Gleichstand nach dem nächsten).
+func _sort_key(book: Book) -> Array:
+	match sort_mode:
+		"title":
+			return [book.title, book.data.author]
+		"author":
+			return [book.data.author, book.title]
+		"color":
+			# Nach Farbton im Farbkreis; fast graue Einbände (Schwarz, Weiß, Grau) ans Ende,
+			# von dunkel nach hell
+			var color := BookLook.get_color(book)
+			var hue := color.h if color.s >= 0.15 else 2.0 + color.v
+			return [snappedf(hue, 0.001), book.title]
+		_:
+			return [_genre_rank(book.genre_id), book.title]
+
+
+func _genre_rank(id: String) -> int:
+	var rank := 0
+	for genre in Catalog.get_all_genres():
+		if genre.get_id() == id:
+			return rank
+		rank += 1
+	return 999
 
 
 ## Zeigt Beispielbücher (für das Vorschaubild im Shop; nicht im Bestand).
@@ -553,6 +594,7 @@ func show_sample_books() -> void:
 func copy_contents_from(other: BookShelf) -> void:
 	for r in mini(row_genres.size(), other.row_genres.size()):
 		row_genres[r] = other.row_genres[r]
+	sort_mode = other.sort_mode
 	_clear_rows()
 	for r in mini(_rows.size(), other._row_books.size()):
 		for book: Book in other._row_books[r]:
@@ -665,7 +707,7 @@ func get_contents_data() -> Dictionary:
 			saved.append(entry)
 		rows.append(saved)
 	# "genre" bleibt für ältere Spielversionen mit drin (gemeinsames Genre oder "")
-	return {"genre": genre_id, "row_genres": row_genres.duplicate(), "rows": rows}
+	return {"genre": genre_id, "row_genres": row_genres.duplicate(), "rows": rows, "sort": sort_mode}
 
 
 func load_contents_data(data: Dictionary) -> void:
@@ -676,6 +718,10 @@ func load_contents_data(data: Dictionary) -> void:
 			row_genres[r] = str(saved_rows[r])
 		else:
 			row_genres[r] = str(data.get("genre", ""))
+	# Sortierart – ältere Spielstände kennen sie nicht (dann wie früher: Genre und Titel)
+	var saved_sort := str(data.get("sort", "genre_title"))
+	sort_mode = saved_sort if SORT_MODES.any(func(entry: Array) -> bool: return entry[0] == saved_sort) \
+		else "genre_title"
 	_clear_rows()
 	_anims.clear()
 	_leaving.clear()
