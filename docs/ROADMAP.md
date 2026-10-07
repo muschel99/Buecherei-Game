@@ -308,7 +308,7 @@ Leitgedanke: Wenige klare Aktionen statt vieler Wege – und das Regal bleibt im
       Titel, Titel, Autor oder Farbe), Alle ins Lager; immer gleich groß, bei allen
       Auflösungen ganz sichtbar
 - [x] Fach im Regal dezent hervorheben, wenn ich im Menü sein Auswahlfeld anfahre oder
-      aufklappe; die Ansicht rückt beim Öffnen zur Seite (zoomt bei Bedarf etwas heraus), sodass
+      aufklappe; die Ansicht dreht sich beim Öffnen etwas (zoomt bei Bedarf heraus), sodass
       das Tablet das Regal nicht verdeckt
 - [x] Gewählte Sortierart wird gespeichert; alte Spielstände laden weiter
 

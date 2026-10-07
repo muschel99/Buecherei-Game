@@ -524,9 +524,11 @@ func sort_books(mode: String = "") -> void:
 		var ka: Array = keys[a]
 		var kb: Array = keys[b]
 		for i in ka.size():
-			if ka[i] != kb[i]:
-				if ka[i] is String:
-					return (ka[i] as String).naturalnocasecmp_to(kb[i]) < 0
+			if ka[i] is String:
+				var order := (ka[i] as String).naturalnocasecmp_to(kb[i])
+				if order != 0:
+					return order < 0
+			elif ka[i] != kb[i]:
 				return ka[i] < kb[i]
 		return false)
 	var old: Dictionary = {}
@@ -554,7 +556,10 @@ func _sort_key(book: Book) -> Array:
 		"title":
 			return [book.title, book.data.author]
 		"author":
-			return [book.data.author, book.title]
+			# Nach Nachnamen (wie in Büchereien), dann Vorname und Titel
+			var names := book.data.author.split(" ", false)
+			var surname: String = names[-1] if not names.is_empty() else ""
+			return [surname, book.data.author, book.title]
 		"color":
 			# Nach Farbton im Farbkreis; fast graue Einbände (Schwarz, Weiß, Grau) ans Ende,
 			# von dunkel nach hell
@@ -609,6 +614,11 @@ func copy_contents_from(other: BookShelf) -> void:
 ## Hebt diese Fächer dezent hervor (leere Liste = keins). Die Kästen entstehen erst, wenn sie
 ## gebraucht werden, und blenden sanft ein.
 func highlight_rows(rows: Array[int]) -> void:
+	var was_visible: Array[int] = []
+	var newly: Array[int] = []
+	for r in _highlights:
+		if (_highlights[r] as MeshInstance3D).visible:
+			was_visible.append(r)
 	for r in _highlights:
 		(_highlights[r] as MeshInstance3D).visible = rows.has(r)
 	var shown := false
@@ -618,18 +628,20 @@ func highlight_rows(rows: Array[int]) -> void:
 		if not _highlights.has(r):
 			_highlights[r] = _create_highlight(_rows[r])
 		var box: MeshInstance3D = _highlights[r]
-		if not box.visible:
-			box.visible = true
+		if not was_visible.has(r):
+			newly.append(r)  # nur neu hinzukommende blenden ein (kein Flackern)
+		box.visible = true
 		shown = true
-	if shown:
+	if shown and not newly.is_empty():
 		if _highlight_tween:
 			_highlight_tween.kill()
-		for r in rows:
-			if _highlights.has(r):
-				(_highlights[r].material_override as ShaderMaterial).set_shader_parameter("strength", 0.0)
+		# Was schon leuchtet, bleibt ganz hell; nur Neues blendet sanft ein
+		for r in _highlights:
+			(_highlights[r].material_override as ShaderMaterial).set_shader_parameter("strength",
+				0.0 if newly.has(r) else 1.0)
 		_highlight_tween = create_tween()
 		_highlight_tween.tween_method(func(value: float) -> void:
-			for r in _highlights:
+			for r in newly:
 				(_highlights[r].material_override as ShaderMaterial).set_shader_parameter("strength", value),
 			0.0, 1.0, 0.12)
 

@@ -121,8 +121,8 @@ func close() -> void:
 	is_open = false
 	hide()
 	_sort_popup.hide()
-	_hover_rows.clear()
-	_open_rows.clear()
+	_hover_rows = []
+	_open_rows = []
 	if is_instance_valid(shelf):
 		shelf.highlight_rows([])
 		if shelf.contents_changed.is_connected(_queue_refresh):
@@ -208,8 +208,8 @@ func open_sort_popup() -> void:
 	for i in _sort_popup.item_count:
 		_sort_popup.set_item_checked(i, BookShelf.SORT_MODES[i][0] == shelf.sort_mode)
 	# Direkt unter dem Knopf (so rechnet Godot es auch bei seinen Auswahllisten)
-	var scale := _sort_button.get_global_transform_with_canvas().get_scale().y
-	var below := _sort_button.get_screen_position() + Vector2(0.0, (_sort_button.size.y + 4.0) * scale)
+	var canvas_scale := _sort_button.get_global_transform_with_canvas().get_scale().y
+	var below := _sort_button.get_screen_position() + Vector2(0.0, (_sort_button.size.y + 4.0) * canvas_scale)
 	_sort_popup.reset_size()
 	_sort_popup.popup(Rect2i(Vector2i(below), Vector2i.ZERO))
 
@@ -232,6 +232,7 @@ func _show_main() -> void:
 func choose_book(data: BookData) -> void:
 	if BookStock.is_hand_full():
 		_message.text = "Deine Hände sind voll."
+		_message.visible = true
 		BookStock.show_hands_full()
 		return
 	for book in BookStock.get_stored_books(data.genre_id):
@@ -268,9 +269,13 @@ func _refresh() -> void:
 	else:
 		_fill_button.tooltip_text = "Auffüllen (%d im Lager)" % available
 	var choosable := _choosable_genres()
-	_pick_button.disabled = choosable.is_empty()
-	_pick_button.tooltip_text = "Buch aus dem Lager" if not choosable.is_empty() \
-		else "Buch aus dem Lager – nichts Passendes da"
+	_pick_button.disabled = choosable.is_empty() or BookStock.is_hand_full()
+	if BookStock.is_hand_full():
+		_pick_button.tooltip_text = "Buch aus dem Lager – Hände voll"
+	elif choosable.is_empty():
+		_pick_button.tooltip_text = "Buch aus dem Lager – nichts Passendes da"
+	else:
+		_pick_button.tooltip_text = "Buch aus dem Lager"
 	_sort_button.disabled = count < 2
 	_return_button.disabled = count == 0
 	_message.visible = not _message.text.is_empty()
@@ -543,7 +548,7 @@ func _watch_choice(choice: OptionButton, rows: Array[int]) -> void:
 
 func _rows_or_all(rows: Array[int]) -> Array[int]:
 	if not rows.is_empty() or shelf == null:
-		return rows
+		return rows.duplicate()
 	return shelf.get_fach_order()
 
 
@@ -554,9 +559,10 @@ func _update_highlight() -> void:
 
 # --- Ansicht: das Regal bleibt neben dem Tablet sichtbar ---
 
-## Rückt die Ansicht sanft so zur Seite, dass das Regal links neben dem Tablet zu sehen ist.
-## Ist es dafür zu breit (oder stehe ich sehr nah davor), zoomt die Ansicht etwas heraus
-## (höchstens bis GameConfig.shelf_menu_max_fov). Die Spielfigur selbst bewegt sich nicht.
+## Dreht die Ansicht sanft ein Stück nach rechts, sodass das Regal links neben dem Tablet zu
+## sehen ist. Ist es dafür zu breit (oder stehe ich sehr nah davor), zoomt die Ansicht etwas
+## heraus (höchstens bis GameConfig.shelf_menu_max_fov). Die Kamera bleibt an ihrem Platz
+## (nur gedreht – so schaut man nie durch eine Wand), die Spielfigur bewegt sich nicht.
 func _frame_shelf() -> void:
 	var camera := _player.camera
 	# Gleitet die Ansicht gerade noch zurück, gilt weiter das gemerkte Blickfeld
@@ -566,7 +572,7 @@ func _frame_shelf() -> void:
 	if _base_fov < 0.0 or not restoring:
 		_base_fov = camera.fov
 	camera.fov = _base_fov
-	camera.h_offset = 0.0
+	camera.rotation.y = 0.0
 	var item := FurnitureUtils.find_placed_furniture(shelf)
 	var model := item.get_model() if item else null
 	if model == null:
@@ -579,41 +585,43 @@ func _frame_shelf() -> void:
 	var box := FurnitureUtils.get_local_aabb(model)
 	var left := INF
 	var right := -INF
-	var left_depth := 1.0
-	var right_depth := 1.0
-	var forward := -camera.global_basis.z
 	for i in 8:
 		var corner := model.global_transform * box.get_endpoint(i)
 		if camera.is_position_behind(corner):
 			continue
 		var x := camera.unproject_position(corner).x
-		var depth := maxf((corner - camera.global_position).dot(forward), 0.05)
-		if x < left:
-			left = x
-			left_depth = depth
-		if x > right:
-			right = x
-			right_depth = depth
+		left = minf(left, x)
+		right = maxf(right, x)
 	if left == INF or right <= avail_right:
 		return  # das Regal ist schon frei (oder gar nicht zu sehen)
-	# Zu breit für den freien Platz? Dann etwas herauszoomen (um die Bildmitte)
-	var half_tan := tan(deg_to_rad(_base_fov) / 2.0)
-	var shrink := clampf((avail_right - avail_left) / maxf(right - left, 1.0), 0.0, 1.0)
-	var new_half_tan := minf(half_tan / maxf(shrink, 0.01), tan(deg_to_rad(GameConfig.shelf_menu_max_fov) / 2.0))
-	var factor := half_tan / new_half_tan
+	# Mit Winkeln rechnen (die Kamera dreht sich nur, dann bleiben die Winkel genau):
+	# Winkel der beiden Regalränder zur Blickrichtung (rechts = positiv)
 	var center := view.x / 2.0
-	left = center + (left - center) * factor
-	right = center + (right - center) * factor
-	# Dann so weit zur Seite, dass der rechte Rand neben dem Tablet liegt (links nicht hinaus)
-	var shift := maxf(right - avail_right, 0.0)
-	shift = minf(shift, maxf(left - avail_left, 0.0))
 	var aspect := view.x / view.y
-	# Bildpunkte -> Meter in der Tiefe des rechten Rands (dort muss es passen)
-	var meters := shift / view.x * 2.0 * right_depth * new_half_tan * aspect
+	var base_tan := tan(deg_to_rad(_base_fov) / 2.0)
+	var angle_left := atan((left - center) / center * base_tan * aspect)
+	var angle_right := atan((right - center) / center * base_tan * aspect)
+	# Zu breit für den freien Platz? Dann so wenig wie nötig herauszoomen (schrittweise suchen)
+	var max_tan := tan(deg_to_rad(GameConfig.shelf_menu_max_fov) / 2.0)
+	var new_half_tan := base_tan
+	for i in 40:
+		if _screen_angle(avail_right, center, new_half_tan * aspect) - _screen_angle(avail_left, center, new_half_tan * aspect) \
+				>= angle_right - angle_left or new_half_tan >= max_tan:
+			break
+		new_half_tan = minf(new_half_tan * 1.02, max_tan)
+	# So weit nach rechts drehen, dass der rechte Rand neben dem Tablet liegt (links nicht hinaus)
+	var turn := maxf(angle_right - _screen_angle(avail_right, center, new_half_tan * aspect), 0.0)
+	turn = minf(turn, maxf(angle_left - _screen_angle(avail_left, center, new_half_tan * aspect), 0.0))
 	var new_fov := rad_to_deg(2.0 * atan(new_half_tan))
 	_view_tween = create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_view_tween.tween_property(camera, "fov", new_fov, GameConfig.shelf_menu_view_time)
-	_view_tween.tween_property(camera, "h_offset", meters, GameConfig.shelf_menu_view_time)
+	_view_tween.tween_property(camera, "rotation:y", -turn, GameConfig.shelf_menu_view_time)
+
+
+## Winkel (zur Blickrichtung) einer Stelle x im Bild bei diesem Blickfeld (half_tan_x = tan der
+## halben Bildbreite).
+static func _screen_angle(x: float, center: float, half_tan_x: float) -> float:
+	return atan((x - center) / center * half_tan_x)
 
 
 ## Beim Schließen gleitet die Ansicht zurück.
@@ -625,7 +633,7 @@ func _restore_view() -> void:
 		_view_tween.kill()
 	_view_tween = create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_view_tween.tween_property(camera, "fov", _base_fov, GameConfig.shelf_menu_view_time)
-	_view_tween.tween_property(camera, "h_offset", 0.0, GameConfig.shelf_menu_view_time)
+	_view_tween.tween_property(camera, "rotation:y", 0.0, GameConfig.shelf_menu_view_time)
 
 
 func _icon_button(kind: TabletIconButton.Icon, action: Callable) -> TabletIconButton:

@@ -188,9 +188,11 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   - **Fach hervorheben:** Fahre ich über die Auswahlliste eines Fachs oder klappe sie auf,
     leuchtet genau dieses Fach im Regal dezent weiß (wie Möbel im Gestaltungsmodus); bei „Alle
     Fächer gleich“ alle Fächer.
-  - **Das Regal bleibt sichtbar:** Beim Öffnen rückt die Ansicht sanft zur Seite (und zoomt
-    bei Bedarf etwas heraus, höchstens bis `GameConfig.shelf_menu_max_fov`), sodass das Regal
-    links neben dem Tablet ganz zu sehen ist. Beim Schließen gleitet sie zurück.
+  - **Das Regal bleibt sichtbar:** Beim Öffnen dreht sich die Ansicht sanft ein Stück nach
+    rechts (und zoomt bei Bedarf etwas heraus, höchstens bis `GameConfig.shelf_menu_max_fov`),
+    sodass das Regal links neben dem Tablet ganz zu sehen ist; die Kamera bleibt dabei an
+    ihrem Platz. Beim Schließen gleitet sie zurück. Steht man sehr nah (unter 1 m) vor einem
+    breiten Regal, kann sein äußerster Rand knapp hinter dem Tablet liegen.
   - Getragene Bücher räumt man nicht im Menü ein (dafür: Linksklick halten am Regal) und legt
     sie dort auch nicht ins Lager (dafür: Q halten) – jede Aktion hat nur einen Weg.
   - Schließen mit dem kleinen Kreuz oben rechts (wie im Browser), Esc oder R.

@@ -128,7 +128,7 @@ var fach_highlight_fill: float = 0.07
 var fach_highlight_edge: float = 0.5
 ## Regal-Menü: So weit (in Grad) darf die Ansicht höchstens herauszoomen, damit das ganze
 ## Regal neben das Tablet passt; so lange (in Sekunden) gleitet die Ansicht dorthin.
-var shelf_menu_max_fov: float = 95.0
+var shelf_menu_max_fov: float = 100.0
 var shelf_menu_view_time: float = 0.35
 
 
