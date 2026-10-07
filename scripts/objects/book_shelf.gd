@@ -55,8 +55,19 @@ const EPSILON := 0.0001
 ## So viel Luft bleibt zwischen Deko und Büchern (in Metern)
 const DECO_MARGIN := 0.003
 
-## Genre dieses Regals: "" = noch keins gewählt, MIXED = Gemischt, sonst die Genre-id.
-var genre_id: String = ""
+## Genre je Brett (Etage), gleiche Reihenfolge wie die Bretter:
+## "" = noch keins gewählt (nimmt alles), MIXED = Gemischt, sonst die Genre-id.
+var row_genres: Array[String] = []
+## Genre des ganzen Regals: das gemeinsame Genre aller Bretter – "" wenn sie verschieden sind
+## (nur lesen; zum Ändern set_genre bzw. set_row_genre).
+var genre_id: String:
+	get:
+		if row_genres.is_empty():
+			return ""
+		for id in row_genres:
+			if id != row_genres[0]:
+				return ""
+		return row_genres[0]
 
 var _rows: Array[BookRow] = []
 var _row_books: Array = []  # je Brett die Bücher, von links nach rechts
@@ -91,6 +102,7 @@ func _ready() -> void:
 		if child is BookRow:
 			_rows.append(child)
 			_row_books.append([])
+			row_genres.append("")
 	var books_instance := MultiMeshInstance3D.new()
 	books_instance.name = "Books"
 	_multimesh = BookLook.create_multimesh()
@@ -142,22 +154,75 @@ func get_books() -> Array[Book]:
 	return result
 
 
-## Hat das Regal schon ein Genre (oder "Gemischt")?
+## Hat mindestens eine Etage schon ein Genre (oder "Gemischt")?
 func has_genre() -> bool:
-	return not genre_id.is_empty()
+	for id in row_genres:
+		if not id.is_empty():
+			return true
+	return false
 
 
-## Anzeigename des Genres: "Gemischt", z. B. "Krimi" – oder "" (noch keins gewählt).
-func get_genre_name() -> String:
-	if genre_id == MIXED:
+## Anzeigename eines Genres: "Gemischt", z. B. "Krimi" – oder "" (noch keins gewählt).
+static func genre_display_name(id: String) -> String:
+	if id == MIXED:
 		return "Gemischt"
-	var genre := Catalog.get_genre(genre_id)
+	var genre := Catalog.get_genre(id)
 	return genre.display_name if genre else ""
 
 
-## Passt ein Buch dieses Genres hierher? ("Gemischt" und Regale ohne Genre nehmen alles.)
+## Anzeigename des Genres des ganzen Regals (leer, wenn die Etagen verschieden sind).
+func get_genre_name() -> String:
+	return genre_display_name(genre_id)
+
+
+## Wie viele Etagen (Bretter) hat das Regal?
+func get_row_count() -> int:
+	return _rows.size()
+
+
+## Genre einer Etage ("" = noch keins, MIXED = Gemischt).
+func get_row_genre(row: int) -> String:
+	return row_genres[row] if row >= 0 and row < row_genres.size() else ""
+
+
+## Kurzer Name einer Etage für das Menü, z. B. "Etage 1" oder "Etage 2 links" (Würfelregal).
+func get_row_label(row: int) -> String:
+	# Etagen = verschiedene Höhen von oben nach unten; mehrere Fächer auf einer Höhe:
+	# von links nach rechts
+	var heights: Array[float] = []
+	for r in _rows:
+		var height := snappedf(r.position.y, 0.01)
+		if not heights.has(height):
+			heights.append(height)
+	heights.sort()
+	heights.reverse()
+	var height := snappedf(_rows[row].position.y, 0.01)
+	var level := heights.find(height) + 1
+	var same: Array[BookRow] = []
+	for r in _rows:
+		if is_equal_approx(snappedf(r.position.y, 0.01), height):
+			same.append(r)
+	if same.size() <= 1:
+		return "Etage %d (oben)" % level if level == 1 else "Etage %d" % level
+	same.sort_custom(func(a: BookRow, b: BookRow) -> bool: return a.position.x < b.position.x)
+	var index := same.find(_rows[row])
+	var sides := ["links", "Mitte", "rechts"] if same.size() == 3 else ["links", "rechts"]
+	var side: String = sides[index] if same.size() <= 3 else "Fach %d" % (index + 1)
+	return "Etage %d %s" % [level, side]
+
+
+## Passt ein Buch dieses Genres auf diese Etage? ("Gemischt" und Etagen ohne Genre nehmen alles.)
+func row_accepts(row: int, book_genre_id: String) -> bool:
+	var id := get_row_genre(row)
+	return id.is_empty() or id == MIXED or id == book_genre_id
+
+
+## Passt ein Buch dieses Genres auf irgendeine Etage dieses Regals?
 func accepts(book_genre_id: String) -> bool:
-	return not has_genre() or genre_id == MIXED or genre_id == book_genre_id
+	for r in _rows.size():
+		if row_accepts(r, book_genre_id):
+			return true
+	return false
 
 
 ## Wie viele Bücher dieses Genres stehen hier? (für den Bestand)
@@ -169,10 +234,13 @@ func count_books(of_genre_id: String) -> int:
 	return count
 
 
-## Für wie viele Bücher ist ungefähr noch Platz? (Bücher sind verschieden dick.)
-func get_free_estimate() -> int:
+## Für wie viele Bücher ist ungefähr noch Platz (row = nur diese Etage)? Bücher sind
+## verschieden dick, daher nur ungefähr.
+func get_free_estimate(only_row: int = -1) -> int:
 	var free_width := 0.0
 	for r in _rows.size():
+		if only_row >= 0 and r != only_row:
+			continue
 		for segment in _segments(r):
 			var used := 0.0
 			for book in _books_in(r, segment):
@@ -194,31 +262,47 @@ func count_matching_carried() -> int:
 
 # --- Ändern ---
 
-## Wählt das Genre (MIXED = Gemischt). Bücher, die nicht mehr passen, gleiten heraus
-## und gehen ins Lager. Liefert, wie viele das waren.
+## Gibt allen Etagen dasselbe Genre (MIXED = Gemischt). Bücher, die nicht mehr passen, gleiten
+## heraus und gehen ins Lager. Liefert, wie viele das waren.
 func set_genre(new_genre_id: String) -> int:
-	genre_id = new_genre_id
+	for r in row_genres.size():
+		row_genres[r] = new_genre_id
+	return _remove_mismatched()
+
+
+## Wählt das Genre einer Etage. Bücher dieser Etage, die nicht mehr passen, gehen ins Lager.
+## Liefert, wie viele das waren.
+func set_row_genre(row: int, new_genre_id: String) -> int:
+	if row < 0 or row >= row_genres.size():
+		return 0
+	row_genres[row] = new_genre_id
+	return _remove_mismatched()
+
+
+func _remove_mismatched() -> int:
 	var mismatched: Array[Book] = []
-	for book in get_books():
-		if not accepts(book.genre_id):
-			mismatched.append(book)
+	for r in _rows.size():
+		for book: Book in _row_books[r]:
+			if not row_accepts(r, book.genre_id):
+				mismatched.append(book)
 	remove_books(mismatched)
 	_send_to_storage(mismatched)
 	_changed()
 	return mismatched.size()
 
 
-## Stellt Bücher ins Regal: jedes an die erste freie Stelle, in die es passt (Brett für
-## Brett, von links nach rechts – Deko bleibt, wo sie ist). Sie gleiten nacheinander hinein.
+## Stellt Bücher ins Regal: jedes an die erste freie Stelle einer passenden Etage (zuerst
+## Etagen mit genau seinem Genre, dann "Gemischt"; von links nach rechts – Deko bleibt, wo
+## sie ist). only_row: nur auf diese Etage. Sie gleiten nacheinander hinein.
 ## Liefert die Bücher, für die kein Platz mehr war.
-func add_books(new_books: Array, animate: bool = true) -> Array[Book]:
+func add_books(new_books: Array, animate: bool = true, only_row: int = -1) -> Array[Book]:
 	var rest: Array[Book] = []
 	var interval := 0.0
 	if animate and not new_books.is_empty():
 		interval = minf(GameConfig.book_slide_interval, GameConfig.book_slide_max_total / new_books.size())
 	var placed := 0
 	for book: Book in new_books:
-		var spot := _find_free_spot(book)
+		var spot := _find_free_spot(book, only_row)
 		if spot.is_empty():
 			rest.append(book)
 			continue
@@ -263,23 +347,31 @@ func remove_books(to_remove: Array, animate: bool = true) -> void:
 	_changed()
 
 
-## Füllt das Regal aus dem Lager: mit Büchern seines Genres – bei "Gemischt" gleichmäßig
-## aus allen Genres im Lager (nach Genre gruppiert, innerhalb nach Titel sortiert).
-## Liefert, wie viele es waren.
+## Füllt das Regal aus dem Lager, Etage für Etage: jede mit Büchern ihres Genres –
+## "Gemischt" gleichmäßig aus allen Genres im Lager (nach Genre gruppiert, innerhalb nach
+## Titel sortiert). Etagen ohne Genre bleiben leer. Liefert, wie viele es waren.
 func fill_from_storage() -> int:
-	if not has_genre():
-		return 0
-	var wanted := get_free_estimate() + 3  # ein paar mehr; was nicht passt, geht zurück
-	var taken: Array[Book] = []
-	if genre_id == MIXED:
-		var shares := _mixed_shares(wanted)
-		for id in shares:
-			taken.append_array(_sorted_by_title(BookStock.take_books(id, shares[id])))
-	else:
-		taken = _sorted_by_title(BookStock.take_books(genre_id, wanted))
-	var rest := add_books(taken)
-	BookStock.put_back_first(rest)
-	return taken.size() - rest.size()
+	var count := 0
+	# Erst die Etagen mit festem Genre, dann die gemischten
+	for pass_mixed in [false, true]:
+		for r in _rows.size():
+			var id := get_row_genre(r)
+			if id.is_empty() or (id == MIXED) != pass_mixed:
+				continue
+			var wanted := get_free_estimate(r) + 2  # ein paar mehr; was nicht passt, geht zurück
+			if wanted <= 2:
+				continue
+			var taken: Array[Book] = []
+			if id == MIXED:
+				var shares := _mixed_shares(wanted)
+				for genre in shares:
+					taken.append_array(_sorted_by_title(BookStock.take_books(genre, shares[genre])))
+			else:
+				taken = _sorted_by_title(BookStock.take_books(id, wanted))
+			var rest := add_books(taken, true, r)
+			BookStock.put_back_first(rest)
+			count += taken.size() - rest.size()
+	return count
 
 
 ## Legt alle Bücher zurück ins Lager (sie gleiten heraus). Liefert, wie viele es waren.
@@ -293,14 +385,15 @@ func return_all_to_storage() -> int:
 ## Räumt die getragenen Bücher ein, die hierher passen. Was nicht passt (anderes Genre
 ## oder kein Platz), trage ich weiter. Liefert, wie viele eingeräumt wurden.
 func put_carried() -> int:
-	var taken := BookStock.take_carried("" if not has_genre() or genre_id == MIXED else genre_id)
+	var taken := BookStock.take_carried_where(func(book: Book) -> bool: return accepts(book.genre_id))
 	var rest := add_books(taken)
 	BookStock.return_to_hand(rest)
 	return taken.size() - rest.size()
 
 
 ## Sortiert die Bücher nach Genre und Titel – sie rücken sanft an ihre neuen Plätze, von
-## links nach rechts ohne Lücken. Deko bleibt stehen, wo sie ist.
+## links nach rechts ohne Lücken, jede auf eine Etage mit passendem Genre. Deko bleibt
+## stehen, wo sie ist.
 func sort_books() -> void:
 	var all := get_books()
 	var genre_order := {}
@@ -350,7 +443,8 @@ func show_sample_books() -> void:
 ## Übernimmt Genre und Bücher eines anderen Regals (nur zum Anzeigen, z. B. die Vorschau
 ## beim Verschieben im Gestaltungsmodus).
 func copy_contents_from(other: BookShelf) -> void:
-	genre_id = other.genre_id
+	for r in mini(row_genres.size(), other.row_genres.size()):
+		row_genres[r] = other.row_genres[r]
 	_clear_rows()
 	for r in mini(_rows.size(), other._row_books.size()):
 		for book: Book in other._row_books[r]:
@@ -462,11 +556,18 @@ func get_contents_data() -> Dictionary:
 			entry["x"] = snappedf(_x[book], 0.0001)
 			saved.append(entry)
 		rows.append(saved)
-	return {"genre": genre_id, "rows": rows}
+	# "genre" bleibt für ältere Spielversionen mit drin (gemeinsames Genre oder "")
+	return {"genre": genre_id, "row_genres": row_genres.duplicate(), "rows": rows}
 
 
 func load_contents_data(data: Dictionary) -> void:
-	genre_id = str(data.get("genre", ""))
+	# Genre je Etage – ältere Spielstände kennen nur ein Genre für das ganze Regal
+	var saved_rows = data.get("row_genres")
+	for r in row_genres.size():
+		if saved_rows is Array and r < saved_rows.size():
+			row_genres[r] = str(saved_rows[r])
+		else:
+			row_genres[r] = str(data.get("genre", ""))
 	_clear_rows()
 	_anims.clear()
 	_leaving.clear()
@@ -656,11 +757,18 @@ func _fits_at(row: int, book: Book, left: float) -> bool:
 	return true
 
 
-## Erste freie Stelle für ein Buch: Brett für Brett, in jedem Abschnitt von links nach rechts,
-## bündig an den Nachbarn links. Leer, wenn es nirgends passt.
-func _find_free_spot(book: Book) -> Dictionary:
+## Erste freie Stelle für ein Buch: zuerst auf Etagen mit genau seinem Genre, dann auf
+## gemischten (bzw. noch ohne Genre); Brett für Brett, in jedem Abschnitt von links nach
+## rechts, bündig an den Nachbarn links. only_row: nur diese Etage. Leer, wenn es nirgends passt.
+func _find_free_spot(book: Book, only_row: int = -1) -> Dictionary:
 	var width := _book_width(book)
-	for r in _rows.size():
+	var rows: Array[int] = []
+	for exact in [true, false]:
+		for r in _rows.size():
+			if (only_row < 0 or r == only_row) and row_accepts(r, book.genre_id) \
+					and (get_row_genre(r) == book.genre_id) == exact:
+				rows.append(r)
+	for r in rows:
 		for segment in _segments(r):
 			var cursor := segment.x
 			for other in _books_in(r, segment):
@@ -684,7 +792,7 @@ func _plan_for(row: int, book: Book, aim_x: float) -> Dictionary:
 	if segment == Vector2.ZERO:
 		return plan
 	plan.left = clampf(desired, segment.x, maxf(segment.x, segment.y - width))
-	if not accepts(book.genre_id):
+	if not row_accepts(row, book.genre_id):
 		return plan
 	var books := _books_in(row, segment)
 	var used := 0.0
@@ -838,14 +946,17 @@ func _find_aim(from: Vector3, direction: Vector3) -> Dictionary:
 
 
 func _on_aimed(from: Vector3, direction: Vector3) -> void:
-	if has_genre():
-		GenreCaption.show_text(self, get_genre_name())
-	else:
-		GenreCaption.hide_text(self)
 	_set_hover(_pick_book(from, direction))
+	var aim := _find_aim(from, direction)
+	# Schriftzug: Genre der Etage, auf die ich schaue (bzw. des angeschauten Buchs)
+	var row: int = _row_of(_hover_book) if _hover_book else aim.get("row", -1)
+	var row_genre := get_row_genre(row)
+	if row_genre.is_empty():
+		GenreCaption.hide_text(self)
+	else:
+		GenreCaption.show_text(self, genre_display_name(row_genre))
 	var active := BookStock.get_active_book()
-	var aim := _find_aim(from, direction) if active else {}
-	_set_plan({} if aim.is_empty() else _plan_for(aim.row, active, aim.x))
+	_set_plan({} if aim.is_empty() or active == null else _plan_for(aim.row, active, aim.x))
 	_update_prompt()
 
 

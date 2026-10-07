@@ -246,7 +246,7 @@ Leitgedanke: Die Maus ist für Bücher da, E für alles andere – und Bücher d
       Linksklick halten am Regal räumt alle passenden ein, E halten am Regal öffnet das
       Regal-Menü (E tippen nicht mehr); Haltezeiten getrennt in GameConfig
 - [x] Hinweise beim Tragen klein am unteren Rand (Ablegen, Einräumen, Lager)
-- [ ] Eigenes Genre pro Regaletage, Schnellauswahl „Alle Etagen gleich“
+- [x] Eigenes Genre pro Regaletage, Schnellauswahl „Alle Etagen gleich“
 - [ ] Bücher frei in der Welt ablegen (Tische, Theke, Fensterbank, Sitzmöbel, Boden), flach
       mit Cover nach oben, kleine Stapel; wiederverwendbar für spätere Besucher
 - [ ] Speichern von Etagen-Genres und ausgelegten Büchern; alte Spielstände laden weiter

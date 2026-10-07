@@ -331,6 +331,22 @@ func take_carried(genre_id: String, limit: int = -1) -> Array[Book]:
 	return result
 
 
+## Gibt die getragenen Bücher ab, für die die Bedingung gilt (z. B. "passt in dieses Regal").
+func take_carried_where(condition: Callable) -> Array[Book]:
+	var result: Array[Book] = []
+	var kept: Array[Book] = []
+	for book in carried:
+		if condition.call(book):
+			result.append(book)
+		else:
+			kept.append(book)
+	if not result.is_empty():
+		carried = kept
+		active_index = clampi(active_index, 0, maxi(carried.size() - 1, 0))
+		_carried_changed()
+	return result
+
+
 ## Legt Bücher zurück in die Hand, ohne das Buch obenauf zu wechseln
 ## (z. B. die, die doch nicht ins Regal gepasst haben).
 func return_to_hand(books: Array) -> void:

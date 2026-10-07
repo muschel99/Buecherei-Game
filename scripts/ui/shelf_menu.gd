@@ -1,12 +1,13 @@
 class_name ShelfMenu
 extends CanvasLayer
-## Das kleine Regal-Menü (E tippen an einem Bücherregal).
+## Das kleine Regal-Menü (E halten an einem Bücherregal).
 ##
-## Hier wählt man, welches Genre in das Regal gehört (oder "Gemischt"), füllt es mit einem
-## Klick aus dem Lager, sortiert es oder legt alle Bücher zurück ins Lager. Trägt man Bücher,
-## kann man sie hier auch einräumen oder ins Lager legen. "Buch aus dem Lager wählen…" zeigt
-## die Cover der passenden Bücher im Lager – ein Klick legt das Buch obenauf in die Hand,
-## dann stellt man es mit der rechten Maustaste an genau die Stelle, die man möchte.
+## Hier wählt man für jede Etage, welches Genre dorthin gehört (oder "Gemischt") – oder mit
+## "Alle Etagen gleich" für das ganze Regal auf einmal. Man füllt es mit einem Klick aus dem
+## Lager, sortiert es oder legt alle Bücher zurück ins Lager. Trägt man Bücher, kann man sie
+## hier auch einräumen oder ins Lager legen. "Buch aus dem Lager wählen…" zeigt die Cover der
+## passenden Bücher im Lager – ein Klick legt das Buch obenauf in die Hand, dann stellt man
+## es mit der linken Maustaste an genau die Stelle, die man möchte.
 ## Das Menü steht rechts am Rand – so sieht man in der Mitte, wie die Bücher ins Regal gleiten.
 ## Schließen: Esc, E oder "Schließen" (Esc-Regel über MenuStack). Solange es offen ist, ist der
 ## Mauszeiger sichtbar und die Spielfigur steht still.
@@ -28,6 +29,8 @@ var _panel: PanelContainer
 var _title: Label
 var _info: Label
 var _genre_flow: HFlowContainer
+var _rows_scroll: ScrollContainer
+var _rows_box: VBoxContainer
 var _fill_button: Button
 var _return_button: Button
 var _carried_button: Button
@@ -111,15 +114,30 @@ func restore_mouse_mode() -> void:
 
 # --- Aktionen ---
 
+## "Alle Etagen gleich": ein Genre für das ganze Regal.
 func choose_genre(genre_id: String) -> void:
 	if shelf == null or genre_id == shelf.genre_id:
 		return
 	var returned := shelf.set_genre(genre_id)
-	_message.text = "Dieses Regal ist jetzt für %s." % shelf.get_genre_name()
+	_message.text = "Alle Etagen: %s." % shelf.get_genre_name()
+	_add_returned_note(returned)
+	_queue_refresh()
+
+
+## Genre einer einzelnen Etage.
+func choose_row_genre(row: int, genre_id: String) -> void:
+	if shelf == null or genre_id == shelf.get_row_genre(row):
+		return
+	var returned := shelf.set_row_genre(row, genre_id)
+	_message.text = "%s: %s." % [shelf.get_row_label(row), BookShelf.genre_display_name(genre_id)]
+	_add_returned_note(returned)
+	_queue_refresh()
+
+
+func _add_returned_note(returned: int) -> void:
 	if returned > 0:
 		_message.text += " %d %s nicht dazu und %s wieder im Lager." % [returned,
 			"Buch passte" if returned == 1 else "Bücher passten", "liegt" if returned == 1 else "liegen"]
-	_queue_refresh()
 
 
 func fill() -> void:
@@ -208,11 +226,13 @@ func _refresh() -> void:
 		child.queue_free()
 	_genre_flow.add_child(_genre_button(BookShelf.MIXED, "Gemischt", MUTED_COLOR))
 	var genres := BookStock.get_unlocked_genres()
-	var current := Catalog.get_genre(shelf.genre_id)
-	if current and not genres.has(current):
-		genres.append(current)
+	for r in shelf.get_row_count():
+		var current := Catalog.get_genre(shelf.get_row_genre(r))
+		if current and not genres.has(current):
+			genres.append(current)  # gesperrtes Genre, das schon gewählt ist
 	for genre in genres:
 		_genre_flow.add_child(_genre_button(genre.get_id(), genre.display_name, genre.get_main_color().lightened(0.5)))
+	_refresh_rows(genres)
 
 	# Auffüllen: wie viele passende Bücher liegen im Lager?
 	var available := _available_in_storage()
@@ -286,13 +306,55 @@ func _refresh_picker() -> void:
 	_picker.show_entries(entries, "Im Lager liegt gerade nichts davon.")
 
 
+## Je Etage eine Zeile: Name der Etage und eine Auswahlliste mit "Gemischt" und den Genres.
+func _refresh_rows(genres: Array[GenreData]) -> void:
+	for child in _rows_box.get_children():
+		_rows_box.remove_child(child)
+		child.queue_free()
+	for r in shelf.get_row_count():
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation", 10)
+		var label := _label(shelf.get_row_label(r), 15, TEXT_COLOR)
+		label.custom_minimum_size.x = 140
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		line.add_child(label)
+		var choice := OptionButton.new()
+		choice.focus_mode = Control.FOCUS_NONE
+		choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		choice.add_theme_font_size_override("font_size", 15)
+		choice.fit_to_longest_item = false
+		var ids: Array[String] = []
+		var current := shelf.get_row_genre(r)
+		if current.is_empty():
+			choice.add_item("Noch kein Genre")
+			choice.set_item_disabled(0, true)
+			ids.append("")
+		choice.add_item("◐ Gemischt")
+		ids.append(BookShelf.MIXED)
+		for genre in genres:
+			choice.add_item("● " + genre.display_name)
+			ids.append(genre.get_id())
+		choice.selected = maxi(ids.find(current), 0)
+		choice.item_selected.connect(func(index: int) -> void: choose_row_genre(r, ids[index]))
+		line.add_child(choice)
+		_rows_box.add_child(line)
+	# Viele Etagen (z. B. Würfelregal): Liste scrollt, damit das Menü aufs Bild passt
+	_rows_scroll.custom_minimum_size.y = minf(shelf.get_row_count() * 48.0, 240.0)
+
+
 ## Wie viele Bücher, die hierher passen, liegen im Lager?
 func _available_in_storage() -> int:
-	if not shelf.has_genre():
-		return 0
-	if shelf.genre_id == BookShelf.MIXED or not shelf.has_genre():
-		return BookStock.get_stored_total()
-	return BookStock.get_stored_count(shelf.genre_id)
+	var genres := {}
+	for r in shelf.get_row_count():
+		var id := shelf.get_row_genre(r)
+		if id == BookShelf.MIXED:
+			return BookStock.get_stored_total()
+		if not id.is_empty():
+			genres[id] = true
+	var count := 0
+	for id in genres:
+		count += BookStock.get_stored_count(id)
+	return count
 
 
 ## Genre-Knopf (pressed = ausgewählt). Ohne action wählt er das Genre des Regals.
@@ -354,11 +416,19 @@ func _build() -> void:
 	box.add_child(_title)
 	_info = _label("", 15, MUTED_COLOR)
 	box.add_child(_info)
-	box.add_child(_label("Genre dieses Regals", 16, KEY_COLOR))
+	box.add_child(_label("Alle Etagen gleich", 16, KEY_COLOR))
 	_genre_flow = HFlowContainer.new()
 	_genre_flow.add_theme_constant_override("h_separation", 6)
 	_genre_flow.add_theme_constant_override("v_separation", 6)
 	box.add_child(_genre_flow)
+	box.add_child(_label("Etagen", 16, KEY_COLOR))
+	_rows_scroll = ScrollContainer.new()
+	_rows_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(_rows_scroll)
+	_rows_box = VBoxContainer.new()
+	_rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_rows_box.add_theme_constant_override("separation", 6)
+	_rows_scroll.add_child(_rows_box)
 
 	var gap := Control.new()
 	gap.custom_minimum_size.y = 4
@@ -408,7 +478,7 @@ func _build_picker(style: StyleBoxFlat) -> void:
 	back.text = "Zurück"
 	back.custom_minimum_size.x = 130
 	header.add_child(back)
-	box.add_child(_label("Klick auf ein Buch: Es liegt dann obenauf in deiner Hand. Schau auf die Stelle im Regal, an die es soll, und drücke E.", 14, MUTED_COLOR))
+	box.add_child(_label("Klick auf ein Buch: Es liegt dann obenauf in deiner Hand. Schau auf die Stelle im Regal, an die es soll, und klicke mit der linken Maustaste.", 14, MUTED_COLOR))
 	_picker_genres = HFlowContainer.new()
 	_picker_genres.add_theme_constant_override("h_separation", 6)
 	_picker_genres.add_theme_constant_override("v_separation", 6)
