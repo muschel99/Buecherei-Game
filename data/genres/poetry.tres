@@ -12,3 +12,5 @@ styles = 0
 price = 45
 is_unlocked = false
 sort_order = 70
+cover_font = 0
+cover_styles = Array[String](["minimal", "pattern", "minimal", "classic"])

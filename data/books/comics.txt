@@ -1,0 +1,62 @@
+# Bücher im Genre: Comics und Graphic Novels
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Kapitän Pfote: Die Insel der Socken | island
+Nebelkatze, Band 1 | cat
+Professor Kringel und der Zeitkeks | clock
+Die Turbo-Oma | bicycle
+Lumi aus dem All | rocket
+Ritter Kunibert Krümel | crown
+The Adventures of Biscuit and Bean | dog
+Moonlight Mail Carriers | moon
+Fips und Fax retten den Sommer | sun
+Snail Mail Express | snail
+Lumi und die Sternenkatze | cat
+Der Gartenzwerg-Aufstand | mushroom
+Pfannkuchen-Patrouille | cake
+Kapitän Pfote: Ein Fall für zwei Pfoten | dog
+The Library Cat Is Very Polite | cat
+Nebelkatze, Band 2 | cat
+Hedgehog Heroes | hedgehog
+Mission Kuchenladen | cake
+The Owl Detective Agency | owl
+Professor Kringel erfindet den Regenbogen | rainbow
+Bunnies in Orbit | rabbit
+Die Wolkenpiraten | cloud
+Dragon & Daisy | dragon
+Kapitän Pfote: Angriff der Gartenzwerge | mushroom
+The Teapot Knights | teapot
+Lumi und der Mondhase | moon
+The Bicycle Club of Brambleford | bicycle
+Nebelkatze, Band 3 | cat
+The Kite Squad | kite
+Fritzi Fuchs und die Wunderlampe | fox
+Robot & Radish | leaf
+Chaos im Kuchenladen | cake
+Wally the Whale's Big Day | whale
+Die Turbo-Oma fährt Zug | train
+Pinguinpost | bird
+Das Geheimnis der Bibliothek | key
+Captain Crumpet | crown
+Nebelkatze, Band 4 | cat
+Beekeepers in Training | bee
+Professor Kringels Ballonfahrt | balloon
+Little Lighthouse Heroes | lighthouse
+Fips und Fax im Weltall | planet
+The Great Sandwich Quest | bread
+Ritter Kunibert und der Drache | dragon
+Moon Muffins | moon
+Die Schneckenpost | snail
+The Bubble Tea Brigade | teacup
+Lumi rettet den Sternenhimmel | stars
+Nebelkatze, Band 5 | cat
+Happy Island Holidays | island

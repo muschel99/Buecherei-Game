@@ -114,7 +114,21 @@ theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "E"
 
 [node name="Action3" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Benutzen: Lampen, Tür, Sitzen, Kartons, Tablet, Regale, Rückgabekasten"
+text = "Benutzen: Lampen, Tür, Sitzen, Kartons, Tablet, Rückgabekasten; am Regal: ein Buch nehmen oder einstellen"
+
+[node name="KeyHold" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "E halten"
+
+[node name="ActionHold" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Am Regal: alle passenden Bücher einräumen bzw. Regal-Menü"
+
+[node name="KeyWheel" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Mausrad"
+
+[node name="ActionWheel" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Beim Tragen: anderes Buch obenauf"
 
 [node name="KeyBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

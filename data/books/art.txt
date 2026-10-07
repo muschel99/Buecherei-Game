@@ -1,0 +1,62 @@
+# Bücher im Genre: Kunst
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Die Kunst des Aquarells | palette
+Painting with Morning Light | brush
+Malen mit Kohle und Kreide | brush
+The Colour of Calm | palette
+Skizzenbuch: Hafenboote | boat
+Fifty Ways to Draw a Cat | cat
+Licht und Leinwand | palette
+The Joy of Little Sketches | brush
+Farben des Herbstes | leaf
+Portraits of Kind Strangers | heart
+Stillleben mit Teetasse | teacup
+Blue: A Love Letter to a Colour | wave
+Tusche und Papier | feather
+Drawing Birds in Motion | bird
+Kunst im Kleinen | magnifier
+The Studio by the Sea | brush
+Mosaike und Muster | sparkle
+Watercolour Gardens | flower
+Die Geschichte der Farbe Blau | palette
+Hand Lettering for Happy Notes | feather
+Malen, wie die Wolken ziehen | cloud
+Pottery for Patient Hands | teacup
+Bilder von Licht und Sonne | sun
+The Art of the Bookbinder | book
+Origami: Paper Animals | bird
+Linoldruck für Anfänger | brush
+Sketching the Countryside | tree
+Das Museum der kleinen Dinge | key
+Colours of the Coast | shell
+Kunst mit Kindern | palette
+The Embroidery Garden | flower
+Farbenlehre für Neugierige | rainbow
+Illustrated Moons | moon
+Holz, Ton und Leinen | brush
+The Gentle Sculptor | heart
+Zeichnen im Café | teacup
+A Gallery of Cats | cat
+Pinsel, Papier, Pause | brush
+Little Landscapes | mountain
+Die Werkstatt der Glasmalerin | sparkle
+Stained Glass Stories | sparkle
+Kalligrafie mit Herz | feather
+The Patterns of Nature | leaf
+Bunte Fenster | house
+Drawing Flowers Step by Step | tulip
+Die Farbe der Zitrone | lemon
+Ink Sketches of Old Towns | castle
+Mit Kreide auf dem Gehweg | rainbow
+The Little Book of Doodles | star
+Ein Bild für jeden Tag | palette

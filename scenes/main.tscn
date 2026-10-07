@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/storage_indicator.tscn" id="18_storage"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shelf_menu.tscn" id="19_shelf_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/carry_indicator.tscn" id="20_carry"]
+[ext_resource type="Script" path="res://scripts/ui/book_info_card.gd" id="21_book_card"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -125,7 +126,7 @@ material_override = ExtResource("12_sidewalk")
 shape = SubResource("BoxShape3D_sidewalk")
 
 [node name="Curb" type="MeshInstance3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -6.56)
+transform = Transform3D(0.999667, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -6.56)
 mesh = SubResource("BoxMesh_curb")
 material_override = ExtResource("13_curb")
 
@@ -196,6 +197,10 @@ player_path = NodePath("../Player")
 
 [node name="CarryIndicator" parent="." instance=ExtResource("20_carry")]
 
+[node name="BookInfoCard" type="CanvasLayer" parent="."]
+process_mode = 3
+script = ExtResource("21_book_card")
+
 [node name="ShelfMenu" parent="." instance=ExtResource("19_shelf_menu")]
 player_path = NodePath("../Player")
 
@@ -211,3 +216,4 @@ player_path = NodePath("../Player")
 [connection signal="catalog_state_changed" from="BuildMode" to="HUD" method="_on_build_mode_catalog_state_changed"]
 [connection signal="cursor_icon_changed" from="BuildMode" to="HUD" method="_on_build_mode_cursor_icon_changed"]
 [connection signal="seated_changed" from="Player" to="HUD" method="_on_player_seated_changed"]
+[connection signal="hold_progress_changed" from="Player" to="HUD" method="_on_player_hold_progress_changed"]

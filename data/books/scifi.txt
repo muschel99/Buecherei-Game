@@ -1,0 +1,62 @@
+# Bücher im Genre: Science-Fiction
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Die Gärten von Kepler-9 | planet
+The Friendly Robot of Station Lyra | rocket
+Station Morgenrot | rocket
+Signals from a Kind Star | star
+Die letzte Fähre nach Halcyon | rocket
+The Librarian of Orpheon | book
+Zwölf Lichtjahre bis nach Hause | stars
+The Greenhouse Ship | plant
+Funkspruch aus der Tiefe des Alls | telescope
+Tea on the Moon Base | teacup
+Rhea und die höfliche Maschine | clock
+The Comet Collector | star
+Das Archiv von Tessaron | book
+Nimbus-4 Is Calling | planet
+The Astronaut's Garden | flower
+Kapitänin Ivo und der Sternenwal | whale
+A Map of Gentle Planets | map
+Die Bibliothek im Orbit | book
+The Orbiting Orchard | apple
+Sterne über Vega Minor | stars
+The Planet Where It Rains Softly | cloud
+Polaris Drei ruft an | telescope
+Home Is a Small Blue Dot | planet
+Der Gärtner vom Mars | plant
+The Lighthouse Between the Stars | lighthouse
+Zeitreise zum Frühstück | hourglass
+The Moon Bakery | bread
+Die Kolonie am Kraterrand | planet
+Starlight Postal Service | letter
+Das freundliche Raumschiff | rocket
+The Telescope in the Attic | telescope
+Unter den Ringen von Halcyon | planet
+Junos Reise zu den Sternen | rocket
+The Space Station Café | teacup
+Ein Hund im All | dog
+Small Steps on Big Moons | moon
+Die Uhr, die vorwärts träumte | clock
+The Robot Who Learned to Paint | palette
+Asteroid Garden | leaf
+Nachricht von Kepler-9 | letter
+The Kind Invasion of Daisies | flower
+Die Wolkenstadt auf Nimbus | cloud
+Signal from the Snail Galaxy | snail
+Willkommen auf Orpheon | planet
+The Stargazer's Daughter | telescope
+Die Mondlicht-Bibliothek | moon
+The Slow Ship to Somewhere Nice | rocket
+Das Echo der Sterne | stars
+The Night the Planets Waved | planet
+Sternenkarten für Anfänger | map

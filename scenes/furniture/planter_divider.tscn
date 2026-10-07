@@ -138,7 +138,7 @@ material_override = ExtResource("1_tnx36")
 mesh = SubResource("BoxMesh_wglsr")
 
 [node name="Soil" type="MeshInstance3D" parent="Model" unique_id=305697632]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.395, 0)
+transform = Transform3D(1, 0, 0, 0, 0.8, 0, 0, 0, 1, 0, 0.394, 0)
 material_override = ExtResource("2_66326")
 mesh = SubResource("BoxMesh_gnimd")
 

@@ -1,0 +1,62 @@
+# Bücher im Genre: Natur und Garten
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Der stille Garten | flower
+Herbs on the Windowsill | plant
+Wildblumen im Schatten | flower
+Gärtnern ohne Garten | plant
+The Joy of Growing Tomatoes | apple
+Ein Jahr im Gemüsebeet | leaf
+Das kleine Buch der Pilze | mushroom
+A Meadow in a Teacup | teacup
+Moose, Farne und Flechten | leaf
+The Hedgehog-Friendly Garden | hedgehog
+Bienenweide für den Balkon | bee
+Trees of the Old Woods | tree
+Kürbisse für Ungeduldige | apple
+The Birdwatcher's Notebook | bird
+Spaziergänge am Waldrand | pine
+Roses for Beginners | flower
+Der Garten im Topf | plant
+A Year of Garden Birds | bird
+Kakteen lieben lernen | cactus
+The Little Book of Seeds | leaf
+Mein Kräuterbeet | plant
+Butterflies in the Backyard | butterfly
+Der Obstgarten im Lauf des Jahres | apple
+Gardening by Moonlight | moon
+Im Wald zu Hause | pine
+The Pond and Its Friends | fish
+Blühende Balkone | tulip
+Wildflower Walks | flower
+Das Jahr der Eiche | tree
+Compost, Worms and Wonder | leaf
+Tulpen, Tulpen, Tulpen | tulip
+The Shade Garden | pine
+Gartenvögel erkennen | bird
+Bees, Blossoms and Berries | bee
+Wiesen voller Leben | butterfly
+A Cottage Garden Year | house
+Pilze sammeln mit Freude | mushroom
+The Patient Gardener | plant
+Unter alten Linden | tree
+Growing Lemons Indoors | lemon
+Der Igel im Laubhaufen | hedgehog
+Frost Flowers and Winter Gardens | snowflake
+Das Gewächshaus-Buch | plant
+Mountain Meadows | mountain
+Schnecken im Salat – na und? | snail
+The Rain Garden | cloud
+Sonnenblumen bis zum Himmel | sun
+Mossy Stones and Fern Hollows | leaf
+Die Hecke als Zuhause | bird
+Apple Trees for Small Gardens | apple

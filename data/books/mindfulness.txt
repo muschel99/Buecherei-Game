@@ -1,0 +1,62 @@
+# Bücher im Genre: Achtsamkeit
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Zehn Minuten Stille | hourglass
+Slow Mornings with Tea | teacup
+Langsam ankommen | leaf
+The Art of Taking Breaks | teapot
+Atmen wie ein Baum | tree
+Five Minutes of Birdsong | bird
+Die Kunst, Kerzen anzuzünden | candle
+A Calm Cup of Tea | teacup
+Ein Jahr voller kleiner Momente | sun
+Breathe Like the Waves | wave
+Der Fensterplatz | house
+Gentle Evenings | moon
+Kleine Pausen für große Tage | clock
+The Comfort of Blankets | heart
+Spaziergänge für die Seele | pine
+Notes to My Sunday Self | letter
+Achtsam durch den Garten | flower
+A Pocketful of Calm | shell
+Morgenlicht und Tagebuch | book
+The Joy of Doing Less | feather
+Ruhe im Regen | umbrella
+Starry Night Breathing | stars
+Ein freier Nachmittag | sun
+Kind Words for Tired Days | heart
+Die Kunst, Regen zu hören | cloud
+Slow Stitches | heart
+Wolken beobachten | cloud
+The Little Book of Gratitude | sparkle
+Kerzenschein-Rituale | candle
+Moments by the Lake | wave
+Achtsam backen | bread
+The Quiet Garden Within | flower
+Barfuß im Gras | leaf
+Sunrise Habits | sun
+Tee, Decke, Buch | teacup
+Be Gentle, Little Heart | heart
+Die Ruhe der Berge | mountain
+Simple Joys of Saturday | sparkle
+Atempausen | feather
+The Kindness Journal | book
+Langsam spazieren | map
+Listening to Snow | snowflake
+Ein Herz für Pausen | heart
+Small Rituals for Big Feelings | candle
+Stille im Wald | pine
+The Mindful Kitchen | bowl
+Sterne zählen statt Schafe | stars
+The Sunday Reset | sun
+Gelassen wie eine Katze | cat
+Soft Light, Slow Days | lantern

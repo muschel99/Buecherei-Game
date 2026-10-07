@@ -1,0 +1,62 @@
+# Bücher im Genre: Kochen und Backen
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Suppen für graue Tage | bowl
+Scones for the Undecided | cake
+Aus Omas Kupfertopf | bowl
+The Little Scone Book | cake
+Kuchen für Sonntagnachmittage | cake
+Bread from the Stone Oven | bread
+Zimt in allen Ecken | cake
+Jam Jars and Jelly Days | apple
+Einfach Picknick | apple
+The Teatime Baking Book | teapot
+Eintöpfe für lange Winterabende | bowl
+Lemon Cakes and Sunny Mornings | lemon
+Kekse aus der Dorfbäckerei | cake
+Soup for the Whole Village | bowl
+Marmelade wie früher | apple
+The Pancake Diaries | cake
+Frühstück für zwei | teacup
+Pies from the Cottage Kitchen | cake
+Gemüse aus dem eigenen Garten | leaf
+A Year of Breakfasts | sun
+Backen mit Kindern | cake
+The Herb Kitchen | plant
+Die Teestunde zu Hause | teapot
+Cozy Kitchen Classics | bowl
+Brot, Butter und Honig | bread
+Sandwiches for Long Walks | bread
+Aus der Küche am Meer | fish
+The Apple Pie Almanac | apple
+Plätzchen für die Adventszeit | star
+Warm Bowls for Cold Evenings | bowl
+Das Zitronenbuch | lemon
+Cupcakes for Every Occasion | cake
+Die Honigküche | bee
+The Lazy Sunday Cookbook | teacup
+Kräuter, Kerne und Körner | leaf
+Ein-Topf-Wunder | bowl
+Tartes und Törtchen | cake
+The Breakfast Club of Brambleford | teacup
+Kochen für Freunde | heart
+Muffins, Muffins, Muffins | cake
+Feast of the Orchard | apple
+Die Picknickdecke | sun
+Biscuits and Banter | cake
+Die grüne Küche | leaf
+Cocoa for Snowy Days | snowflake
+Wintergebäck aus dem Norden | snowflake
+The Fish Kitchen of Saltwater Bay | fish
+Tee und Gebäck | teapot
+Hearty Pies and Happy Hearts | heart
+Das Brotbackbuch für Anfänger | bread

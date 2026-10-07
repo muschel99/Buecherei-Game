@@ -1,0 +1,62 @@
+# Bücher im Genre: Kinderbuch
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Igel Isidor kann nicht einschlafen | hedgehog
+Pip and the Rainbow Dragon | dragon
+Die Maus Mathilda backt einen Kuchen | cake
+Bo Finds a Friend | dog
+Lotte und das Wolkenschaf | cloud
+The Bear Who Loved Honey Too Much | bee
+Gute Nacht, kleiner Stern | star
+Fritzi's Big Balloon Day | balloon
+Ole baut ein Baumhaus | tree
+The Snail Who Wanted to Race | snail
+Die Eule Ottilie zählt die Sterne | owl
+Juna and the Singing Watering Can | flower
+Wo ist der rote Gummistiefel? | umbrella
+The Little Train That Waited | train
+Klara und der Riese Krümel | mountain
+A Kite for Mats | kite
+Der Dachs Dietrich geht auf Reisen | map
+The Puddle Monster Is Friendly | cloud
+Ein Tag mit der kleinen Lokomotive | train
+Benny Bunny's Carrot Garden | rabbit
+Das Schaf Wolke will fliegen | cloud
+The Fox Who Shared His Cake | fox
+Die Schnecke Schnell | snail
+Ten Little Ducks at the Pond | bird
+Mondi, der Mondhase | rabbit
+The Owl Who Woke Up Early | owl
+Pauli putzt die Sterne | stars
+A House for Hedgehog | hedgehog
+Der Wal, der Hallo sagte | whale
+Bumble and the Big Blue Flower | bee
+Lene und der Laternenumzug | lantern
+The Cat Who Wore a Crown | cat
+Das große Buch vom Pfützenspringen | umbrella
+Teddy's Teatime | teacup
+Kiki und der Kuchenberg | cake
+The Rocket in the Back Garden | rocket
+Wer wohnt im Pilzhaus? | mushroom
+Polly Paints the Moon | moon
+Der Bär, der keinen Winterschlaf wollte | snowflake
+The Little Lighthouse Who Glowed | lighthouse
+Finn findet eine Schatzkarte | map
+Sunny Saturday at the Farm | sun
+Die Gießkanne, die singen konnte | flower
+Goodnight, Busy Bees | bee
+Mia und der Morgenvogel | bird
+The Whale and the Paper Boat | boat
+Herr Fuchs lädt zum Tee | fox
+One Hundred Hugs | heart
+Kleiner Drache Feuerfunk | dragon
+The Bunny Who Loved Books | book

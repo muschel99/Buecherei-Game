@@ -1,10 +1,12 @@
 extends Node
-## Katalog aller Möbel, Wandfarben, Böden und Buch-Genres (alles, was es im Spiel gibt).
+## Katalog aller Möbel, Wandfarben, Böden, Buch-Genres und Buchtitel (alles, was es im Spiel gibt).
 ## Was man davon besitzt, steht im Inventar (Inventory), was man kaufen kann, im Shop.
 ##
 ## Dieses Autoload liest beim Spielstart alle Datenblätter aus den Ordnern
-## data/furniture/, data/surfaces/ und data/genres/ ein.
-## Im Code: Catalog.get_furniture("armchair_velvet"), Catalog.get_genre("crime").
+## data/furniture/, data/surfaces/ und data/genres/ ein, dazu die Bücherlisten der Genres
+## (data/books/<genre>.txt, eine Zeile pro Buch).
+## Im Code: Catalog.get_furniture("armchair_velvet"), Catalog.get_genre("crime"),
+## Catalog.get_book("crime/the-case-of-the-curious-cat").
 
 const FURNITURE_FOLDER := "res://data/furniture/"
 const SURFACE_FOLDER := "res://data/surfaces/"
@@ -13,6 +15,8 @@ const GENRE_FOLDER := "res://data/genres/"
 var _furniture: Dictionary = {}  # id -> FurnitureData
 var _surfaces: Dictionary = {}  # id -> SurfaceData
 var _genres: Dictionary = {}  # id -> GenreData
+var _books: Dictionary = {}  # id -> BookData
+var _books_by_genre: Dictionary = {}  # genre_id -> Array[BookData] (Reihenfolge wie in der Liste)
 
 
 func _ready() -> void:
@@ -25,7 +29,10 @@ func _ready() -> void:
 	for resource in _load_folder(GENRE_FOLDER):
 		if resource is GenreData:
 			_register(_genres, resource.get_id(), resource)
-	print("Katalog geladen: %d Möbel, %d Oberflächen, %d Genres" % [_furniture.size(), _surfaces.size(), _genres.size()])
+	for genre in get_all_genres():
+		_load_books(genre)
+	print("Katalog geladen: %d Möbel, %d Oberflächen, %d Genres, %d Bücher" % [_furniture.size(),
+		_surfaces.size(), _genres.size(), _books.size()])
 
 
 ## Liefert das Möbel-Datenblatt mit dieser id (oder null, wenn es keins gibt).
@@ -88,6 +95,63 @@ func get_surfaces_of_kind(kind: SurfaceData.Kind) -> Array[SurfaceData]:
 			result.append(data)
 	result.sort_custom(_sort_by_price_then_name)
 	return result
+
+
+## Liefert den Buchtitel mit dieser id (oder null).
+func get_book(id: String) -> BookData:
+	return _books.get(id)
+
+
+## Alle Buchtitel eines Genres (Reihenfolge wie in der Bücherliste).
+func get_books_of_genre(genre_id: String) -> Array[BookData]:
+	var result: Array[BookData] = []
+	result.assign(_books_by_genre.get(genre_id, []))
+	return result
+
+
+## Alle Buchtitel (Genre für Genre).
+func get_all_books() -> Array[BookData]:
+	var result: Array[BookData] = []
+	for genre in get_all_genres():
+		result.append_array(get_books_of_genre(genre.get_id()))
+	return result
+
+
+## Nimmt einen Titel auf, der nicht (mehr) in einer Bücherliste steht – z. B. aus einem
+## Spielstand, nachdem eine Zeile gelöscht wurde. So geht kein Buch verloren.
+func register_custom_book(data: BookData) -> void:
+	if _books.has(data.id):
+		return
+	data.is_custom = true
+	_books[data.id] = data
+
+
+## Liest die Bücherliste eines Genres: eine Zeile pro Buch, "Titel | Motiv | Gestaltung | Autor".
+func _load_books(genre: GenreData) -> void:
+	var path := genre.get_books_path()
+	var list: Array[BookData] = []
+	_books_by_genre[genre.get_id()] = list
+	if not FileAccess.file_exists(path):
+		push_warning("Katalog: Bücherliste '%s' fehlt – das Genre %s hat noch keine Bücher." % [path, genre.display_name])
+		return
+	for raw_line in FileAccess.get_file_as_string(path).split("\n"):
+		var line := raw_line.strip_edges()
+		if line.is_empty() or line.begins_with("#"):
+			continue
+		var parts := line.split("|")
+		var cells: Array[String] = []
+		for part in parts:
+			cells.append(part.strip_edges())
+		while cells.size() < 4:
+			cells.append("")
+		if cells[0].is_empty():
+			continue
+		var data := BookData.create(genre, cells[0], cells[1], cells[2], cells[3])
+		if _books.has(data.id):
+			push_warning("Katalog: Das Buch '%s' steht doppelt in %s." % [cells[0], path])
+			continue
+		_books[data.id] = data
+		list.append(data)
 
 
 func _sort_by_price_then_name(a: Resource, b: Resource) -> bool:

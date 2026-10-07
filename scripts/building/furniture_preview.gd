@@ -53,8 +53,7 @@ func show_contents_of(item: PlacedFurniture) -> void:
 	var original := _find_shelf(item.get_model())
 	var copy := _find_shelf(_model)
 	if original and copy:
-		copy.genre_id = original.genre_id
-		copy.add_books(original.books, false)
+		copy.copy_contents_from(original)
 
 
 static func _find_shelf(root: Node) -> BookShelf:

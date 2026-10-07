@@ -13,10 +13,26 @@ extends Area3D
 ## find_for() das passende Interactable desselben Objekts (siehe Spielfigur).
 
 ## Wird gesendet, wenn die Spielfigur E drückt, während sie das Objekt ansieht.
+## (Bei supports_hold: wenn E kurz getippt wurde.)
 signal interacted(interactor: Node)
+## Nur bei supports_hold: E wurde gedrückt gehalten (GameConfig.interact_hold_time).
+signal held(interactor: Node)
+## Wird jedes Bild gesendet, solange die Spielfigur das Objekt ansieht – mit Blickstrahl
+## (Start und Richtung in der Welt). So kann ein Regal z. B. das angeschaute Buch finden.
+signal aimed(from: Vector3, direction: Vector3)
+## Die Spielfigur schaut nicht mehr hin.
+signal aim_ended
 
 ## Hinweistext, der unten in der Bildmitte erscheint (nach "E – ").
 @export var prompt_text: String = "Benutzen"
+## Zweiter Hinweis für langes Drücken (nach "E halten – "), leer = keiner.
+@export var hold_prompt_text: String = ""
+## Kann man E auch gedrückt halten (z. B. Regal: tippen = ein Buch, halten = alle)?
+## Dann zählt ein kurzes Tippen erst beim Loslassen.
+@export var supports_hold: bool = false
+## Soll das ganze Objekt aufleuchten, wenn man es ansieht? (Regale heben stattdessen das
+## angeschaute Buch hervor.)
+@export var highlight_owner: bool = true
 ## Ausgeschaltete Interactables werden ignoriert.
 @export var is_enabled: bool = true
 ## Größere Reichweite (GameConfig.long_interaction_distance), z. B. für Deckenlampen,
@@ -67,3 +83,20 @@ static func find_for(collider: Node, hit_point: Vector3) -> Interactable:
 func interact(interactor: Node) -> void:
 	if is_enabled:
 		interacted.emit(interactor)
+
+
+## Wird von der Spielfigur aufgerufen, wenn E lange genug gehalten wurde.
+func hold(interactor: Node) -> void:
+	if is_enabled:
+		held.emit(interactor)
+
+
+## Wird von der Spielfigur jedes Bild aufgerufen, solange sie hinschaut.
+func update_aim(from: Vector3, direction: Vector3) -> void:
+	if is_enabled:
+		aimed.emit(from, direction)
+
+
+## Wird von der Spielfigur aufgerufen, wenn sie wegschaut.
+func end_aim() -> void:
+	aim_ended.emit()

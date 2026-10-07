@@ -1,0 +1,62 @@
+# Bücher im Genre: Fantasy
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Der Drache, der Tee liebte | dragon
+The Keeper of the Moon Lantern | lantern
+Die gläserne Eule von Eldmoor | owl
+A Map of Whispering Woods | map
+Das Lied der sieben Monde | moon
+The Little Dragon of Mossbridge | dragon
+Die Hüterin der Sternenbrücke | stars
+The Cloud Castle of Caer Ilvane | castle
+Der Mondschmied von Varyndel | moon
+The Wizard Who Baked Bread | bread
+Die Laternenträgerin | lantern
+Wings over Thornwick | bird
+Das Silbertor im Nebelwald | key
+The Unicorn's Garden | flower
+Die Bibliothek unter dem Berg | book
+A Spell for Sunny Weather | sun
+Das Wolkenschiff | boat
+The Fox Who Kept Secrets | fox
+Die Feder des Phönix | feather
+Starlight Academy for Kind Witches | sparkle
+Der Zauberer von Mirrowmere | sparkle
+The Snail Who Crossed the Kingdom | snail
+Die Krone aus Bernstein | crown
+The Apprentice of Ember Hill | dragon
+Im Reich der Pilzleute | mushroom
+The Lighthouse at the Edge of Dreams | lighthouse
+Die singenden Steine von Aldenfell | mountain
+A Kingdom of Kites | kite
+Der Schlüssel zum Wolkentor | key
+The Owl Who Read the Stars | owl
+Die Reise nach Mirrowmere | compass
+The Clockwork Hedgehog | hedgehog
+Das Geheimnis der Glasharfe | music
+Moss and Moonbeams | moon
+Die Hüterin des Zauberwalds | tree
+The Lantern of a Thousand Lights | lantern
+Elowen und der Sternenleser | telescope
+The Dragon Who Couldn't Roar | dragon
+Der verzauberte Teegarten | teacup
+The Island That Drifted Away | island
+Das Buch der freundlichen Zauber | book
+A Crown of Wildflowers | crown
+Die Brücke aus Mondlicht | moon
+The Fox and the Firefly Queen | fox
+Der kleine Riese von Thornwick | mountain
+The Whale Who Sang to the Stars | whale
+Das Tal der tausend Lichter | sparkle
+The Floating Tower of Aldenfell | castle
+Die Drachenflüsterin | dragon
+The Last Star Keeper | star

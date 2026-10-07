@@ -31,6 +31,7 @@ func _ready() -> void:
 	if point:
 		stack.transform = point.transform
 	add_child(stack)
+	BookArt.atlas_ready.connect(_update)
 	_interactable = get_node_or_null("Interactable") as Interactable
 	_is_live = FurnitureUtils.find_placed_furniture(self) != null
 	if _is_live:
@@ -56,6 +57,11 @@ func take_all() -> Array[Book]:
 	if _is_live:
 		SaveManager.request_save()
 	return all
+
+
+## Alle Bücher im Kasten.
+func get_books() -> Array[Book]:
+	return books
 
 
 ## Wie viele Bücher dieses Genres liegen im Kasten? (für den Bestand)

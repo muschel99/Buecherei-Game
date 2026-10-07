@@ -1,0 +1,62 @@
+# Bücher im Genre: Lyrik
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Moos und Morgenlicht | leaf
+Small Poems for Rainy Days | cloud
+Das Flüstern der Birken | tree
+Salt and Sea Glass | shell
+Kreide und Kerzenwachs | candle
+Tau auf Spinnweben | sparkle
+Verses for the First Snow | snowflake
+Wo die Möwen schlafen | bird
+Die Farbe von Novemberluft | leaf
+Lullabies for Lighthouses | lighthouse
+Gedichte vom Fensterplatz | house
+A Handful of Stars | stars
+Leise Lieder | music
+Poems from the Tea Garden | teacup
+Ein Herbarium aus Worten | flower
+Songs of the Little Harbour | boat
+Zwischen Teetasse und Mond | moon
+Paper Boats and Pockets | boat
+Sonntagsverse | sun
+The Quiet Hours of Teatime | clock
+Lichter am Abend | lantern
+Rhymes for Wandering Feet | map
+Gedichte für Regentage | umbrella
+Honey, Bees and Clover | bee
+Wolkenzeilen | cloud
+The Moon Keeps a Diary | moon
+Federleicht | feather
+Poems to Read Under Blankets | book
+Sternenstaub und Sonntagskuchen | stars
+Morning Songs for Sleepy Gardens | flower
+Am Rand des Meeres | wave
+Little Verses for Kind Hearts | heart
+Vogelstimmen im März | bird
+Lanterns on the Water | lantern
+Ein Jahr in Strophen | leaf
+Seashell Sonnets | shell
+Der Wind kennt meinen Namen | kite
+A Window Full of Sky | cloud
+Gedichte aus dem Gewächshaus | plant
+Snow Globes and Sonnets | snowflake
+Das Lächeln der Laterne | lantern
+Odes to Ordinary Things | teacup
+Nachtfalter und Mondschein | butterfly
+The Gentle Art of Rhyme | feather
+Kleine Gedichte für große Tage | sun
+Butterfly Haiku | butterfly
+Wiesenlieder | flower
+Poems for the Kettle | teapot
+Zwischen den Zeilen wächst Gras | leaf
+The Orchard Sings | apple

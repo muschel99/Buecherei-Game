@@ -3,8 +3,10 @@ extends CanvasLayer
 ## Das kleine Regal-Menü (E an einem Bücherregal).
 ##
 ## Hier wählt man, welches Genre in das Regal gehört (oder "Gemischt"), füllt es mit einem
-## Klick aus dem Lager oder legt alle Bücher zurück ins Lager. Trägt man Bücher, kann man
-## sie hier auch einräumen oder ins Lager legen.
+## Klick aus dem Lager, sortiert es oder legt alle Bücher zurück ins Lager. Trägt man Bücher,
+## kann man sie hier auch einräumen oder ins Lager legen. "Buch aus dem Lager wählen…" zeigt
+## die Cover der passenden Bücher im Lager – ein Klick legt das Buch obenauf in die Hand,
+## dann stellt man es mit E an genau die Stelle, die man möchte.
 ## Das Menü steht rechts am Rand – so sieht man in der Mitte, wie die Bücher ins Regal gleiten.
 ## Schließen: Esc, E oder "Schließen" (Esc-Regel über MenuStack). Solange es offen ist, ist der
 ## Mauszeiger sichtbar und die Spielfigur steht still.
@@ -30,6 +32,13 @@ var _fill_button: Button
 var _return_button: Button
 var _carried_button: Button
 var _store_carried_button: Button
+var _pick_button: Button
+var _sort_button: Button
+var _picker_panel: PanelContainer
+var _picker_title: Label
+var _picker_genres: HFlowContainer
+var _picker: BookPicker
+var _picker_genre := ""
 var _message: Label
 var _opened_frame := -1
 var _refresh_queued := false
@@ -80,6 +89,7 @@ func close() -> void:
 		return
 	is_open = false
 	hide()
+	_picker_panel.hide()
 	if is_instance_valid(shelf) and shelf.contents_changed.is_connected(_queue_refresh):
 		shelf.contents_changed.disconnect(_queue_refresh)
 	shelf = null
@@ -138,6 +148,31 @@ func put_carried() -> void:
 	_queue_refresh()
 
 
+func sort_shelf() -> void:
+	if shelf == null:
+		return
+	shelf.sort_books()
+	_message.text = "Sortiert – nach Genre und Titel."
+	_queue_refresh()
+
+
+## Öffnet die Auswahl "Buch aus dem Lager wählen".
+func open_picker() -> void:
+	_picker_genre = ""
+	_picker_panel.show()
+	_refresh_picker()
+
+
+## Ein Buch aus dem Lager obenauf in die Hand nehmen – dann kann ich es mit E einstellen.
+func choose_book(data: BookData) -> void:
+	for book in BookStock.get_stored_books(data.genre_id):
+		if book.data == data and BookStock.take_stored_book(book):
+			BookStock.carry([book])
+			close()
+			Notice.post(self, "„%s“ liegt obenauf in deiner Hand – schau auf eine Stelle im Regal und drücke E." % data.title)
+			return
+
+
 func store_carried() -> void:
 	for genre_id in BookStock.get_carried_counts():
 		var genre := Catalog.get_genre(genre_id)
@@ -163,7 +198,7 @@ func _refresh() -> void:
 		return
 	_panel.reset_size()  # wieder genau so hoch wie der Inhalt
 	_title.text = shelf.get_display_name()
-	var count := shelf.books.size()
+	var count := shelf.get_books().size()
 	_info.text = "%d %s im Regal · Platz für etwa %d weitere" % [count, "Buch" if count == 1 else "Bücher",
 		shelf.get_free_estimate()]
 
@@ -190,6 +225,13 @@ func _refresh() -> void:
 		_fill_button.text = "Aus dem Lager auffüllen (%d im Lager)" % available
 	_return_button.disabled = count == 0
 	_return_button.text = "Alle Bücher zurück ins Lager"
+	_sort_button.disabled = count < 2
+	var choosable := _choosable_genres()
+	_pick_button.disabled = choosable.is_empty()
+	_pick_button.text = "Buch aus dem Lager wählen …" if not choosable.is_empty() \
+		else "Buch aus dem Lager wählen (keine passenden im Lager)"
+	if _picker_panel.visible:
+		_refresh_picker()
 
 	var carried := BookStock.carried.size()
 	var matching := shelf.count_matching_carried() if shelf.has_genre() else 0
@@ -199,21 +241,68 @@ func _refresh() -> void:
 	_store_carried_button.text = "Getragene Bücher ins Lager legen (%d)" % carried
 
 
+## Genres, aus denen hier Bücher passen und die im Lager liegen.
+func _choosable_genres() -> Array[GenreData]:
+	var result: Array[GenreData] = []
+	for genre in Catalog.get_all_genres():
+		if shelf.accepts(genre.get_id()) and BookStock.get_stored_count(genre.get_id()) > 0:
+			result.append(genre)
+	return result
+
+
+func _pick_genre(genre_id: String) -> void:
+	_picker_genre = genre_id
+	_refresh_picker.call_deferred()
+
+
+## Die Auswahl neu zeigen: Genre-Knöpfe und die Cover der Titel im Lager.
+func _refresh_picker() -> void:
+	var genres := _choosable_genres()
+	if genres.is_empty():
+		_picker_panel.hide()
+		return
+	var ids := genres.map(func(genre: GenreData) -> String: return genre.get_id())
+	if not ids.has(_picker_genre):
+		_picker_genre = ids[0]
+	for child in _picker_genres.get_children():
+		_picker_genres.remove_child(child)
+		child.queue_free()
+	if genres.size() > 1:
+		for genre in genres:
+			_picker_genres.add_child(_genre_button(genre.get_id(), genre.display_name,
+				genre.get_main_color().lightened(0.5), genre.get_id() == _picker_genre, _pick_genre.bind(genre.get_id())))
+	# Gleiche Titel zusammenfassen ("×2 im Lager")
+	var counts := {}
+	var titles: Array[BookData] = []
+	for book in BookStock.get_stored_books(_picker_genre):
+		if not counts.has(book.data):
+			titles.append(book.data)
+		counts[book.data] = int(counts.get(book.data, 0)) + 1
+	var entries := []
+	for data in titles:
+		entries.append({"data": data, "note": "×%d im Lager" % counts[data] if counts[data] > 1 else "im Lager"})
+	var genre := Catalog.get_genre(_picker_genre)
+	_picker_title.text = "Buch aus dem Lager wählen – %s (%d)" % [genre.display_name if genre else "", titles.size()]
+	_picker.show_entries(entries, "Im Lager liegt gerade nichts davon.")
+
+
 ## Wie viele Bücher, die hierher passen, liegen im Lager?
 func _available_in_storage() -> int:
 	if not shelf.has_genre():
 		return 0
-	if shelf.genre_id == BookShelf.MIXED:
+	if shelf.genre_id == BookShelf.MIXED or not shelf.has_genre():
 		return BookStock.get_stored_total()
 	return BookStock.get_stored_count(shelf.genre_id)
 
 
-func _genre_button(genre_id: String, text: String, color: Color) -> Button:
+## Genre-Knopf (pressed = ausgewählt). Ohne action wählt er das Genre des Regals.
+func _genre_button(genre_id: String, text: String, color: Color, pressed: Variant = null,
+		action: Callable = Callable()) -> Button:
 	var button := Button.new()
 	button.text = "● " + text if genre_id != BookShelf.MIXED else "◐ " + text
 	button.toggle_mode = true
 	button.focus_mode = Control.FOCUS_NONE
-	button.button_pressed = shelf.genre_id == genre_id
+	button.button_pressed = pressed if pressed != null else shelf.genre_id == genre_id
 	button.add_theme_font_size_override("font_size", 15)
 	button.add_theme_color_override("font_color", color)
 	button.add_theme_color_override("font_pressed_color", color)
@@ -223,7 +312,7 @@ func _genre_button(genre_id: String, text: String, color: Color) -> Button:
 	button.add_theme_stylebox_override("hover", _selected_style if button.button_pressed else _normal_style)
 	button.add_theme_stylebox_override("pressed", _selected_style)
 	button.add_theme_stylebox_override("hover_pressed", _selected_style)
-	button.pressed.connect(choose_genre.bind(genre_id))
+	button.pressed.connect(action if action.is_valid() else choose_genre.bind(genre_id))
 	return button
 
 
@@ -278,6 +367,11 @@ func _build() -> void:
 	box.add_child(_fill_button)
 	_carried_button = _button(put_carried)
 	box.add_child(_carried_button)
+	_pick_button = _button(open_picker)
+	box.add_child(_pick_button)
+	_sort_button = _button(sort_shelf)
+	_sort_button.text = "Nach Genre und Titel sortieren"
+	box.add_child(_sort_button)
 	_return_button = _button(return_all)
 	box.add_child(_return_button)
 	_store_carried_button = _button(store_carried)
@@ -288,6 +382,40 @@ func _build() -> void:
 	var close_button := _button(close)
 	close_button.text = "Schließen (Esc)"
 	box.add_child(close_button)
+	_build_picker(style)
+
+
+## Die Auswahl "Buch aus dem Lager wählen" (links neben dem Menü).
+func _build_picker(style: StyleBoxFlat) -> void:
+	_picker_panel = PanelContainer.new()
+	_picker_panel.name = "Picker"
+	_picker_panel.anchor_left = 0.03
+	_picker_panel.anchor_right = 0.66
+	_picker_panel.anchor_top = 0.08
+	_picker_panel.anchor_bottom = 0.92
+	_picker_panel.add_theme_stylebox_override("panel", style)
+	_picker_panel.hide()
+	add_child(_picker_panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	_picker_panel.add_child(box)
+	var header := HBoxContainer.new()
+	box.add_child(header)
+	_picker_title = _label("", 20, TEXT_COLOR)
+	_picker_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(_picker_title)
+	var back := _button(func() -> void: _picker_panel.hide())
+	back.text = "Zurück"
+	back.custom_minimum_size.x = 130
+	header.add_child(back)
+	box.add_child(_label("Klick auf ein Buch: Es liegt dann obenauf in deiner Hand. Schau auf die Stelle im Regal, an die es soll, und drücke E.", 14, MUTED_COLOR))
+	_picker_genres = HFlowContainer.new()
+	_picker_genres.add_theme_constant_override("h_separation", 6)
+	_picker_genres.add_theme_constant_override("v_separation", 6)
+	box.add_child(_picker_genres)
+	_picker = BookPicker.new()
+	_picker.book_chosen.connect(choose_book)
+	box.add_child(_picker)
 
 
 func _label(text: String, font_size: int, color: Color) -> Label:

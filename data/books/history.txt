@@ -1,0 +1,62 @@
+# Bücher im Genre: Geschichte
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Als der Tee nach England kam | teapot
+A Short History of Lighthouses | lighthouse
+Die Geschichte der Teestube | teacup
+How the Post Found Its Way | letter
+Als die Laternen angezündet wurden | lantern
+Little Wexley im 18. Jahrhundert | house
+Von Kutschen und Kanälen | boat
+The Age of Sailing Ships | boat
+Die Geschichte der Bibliotheken | book
+Kings, Queens and Cake | crown
+Chronik eines alten Hauses | house
+The Story of the Village Bakery | bread
+Von Mönchen und Manuskripten | scroll
+Clocks Through the Ages | clock
+Die erste Eisenbahn | train
+The History of Gardens | flower
+Händler und Häfen | anchor
+A History of Maps | map
+Burgen und ihre Bewohner | castle
+The Invention of Paper | scroll
+Das Jahr der Weltausstellung | sparkle
+Hot Air Balloons and Brave Dreamers | balloon
+Als das Dorf eine Uhr bekam | clock
+The Story of the Bicycle | bicycle
+Alte Handwerke neu entdeckt | brush
+Explorers and Their Notebooks | compass
+Die Geschichte des Buchdrucks | book
+Markets Through the Centuries | apple
+Von Rittern und Rüben | crown
+The Lantern Makers | lantern
+Leuchttürme und ihre Wärter | lighthouse
+A History of Tea Parties | teapot
+Die Reise der Gewürze | compass
+Stars and the Ancient Sky Watchers | telescope
+Kleine Geschichte der Brille | glasses
+The Days of Steam | train
+Das alte Rathaus erzählt | clock
+Seafarers of the North | whale
+Wie die Kartoffel nach Europa kam | leaf
+The Royal Gardens | crown
+Römerstraßen und Wanderwege | map
+Letters Across the Centuries | letter
+Die Geschichte des Fahrrads | bicycle
+The Hourglass and Other Old Timekeepers | hourglass
+Schatzkarten und Seefahrer | map
+A Thousand Years of Bread | bread
+Das Leben auf der Burg | castle
+The Story of Writing | feather
+Mühlen am Fluss | wave
+How People Celebrated Long Ago | music

@@ -5,6 +5,8 @@ extends CharacterBody3D
 ## Laufen mit WASD (mit Umschalt schneller), Umsehen mit der Maus, Interagieren mit E.
 ## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
 ## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
+## Manche Objekte (z. B. Regale) unterscheiden E tippen und E halten (Interactable.supports_hold).
+## Trage ich Bücher, wechselt das Mausrad das Buch obenauf (das ich als Nächstes einstelle).
 ## Alle Einstellwerte (Tempo, Mausempfindlichkeit ...) stehen in GameConfig.
 
 ## Wird gesendet, wenn sich das anvisierte interaktive Objekt ändert
@@ -12,6 +14,8 @@ extends CharacterBody3D
 signal interaction_target_changed(target: Interactable)
 ## Wird gesendet, wenn sich die Figur hinsetzt (true) oder aufsteht (false).
 signal seated_changed(seated: bool)
+## Fortschritt beim Gedrückthalten von E (0 bis 1); -1 = nichts wird gehalten.
+signal hold_progress_changed(progress: float)
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -20,6 +24,10 @@ signal seated_changed(seated: bool)
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _current_target: Interactable = null
+# E gedrückt halten: Ziel, gehaltene Zeit und ob die lange Aktion schon ausgelöst wurde
+var _hold_target: Interactable = null
+var _hold_time := 0.0
+var _hold_done := false
 var _head_bob_time: float = 0.0
 # Sitzen: aktueller Sitzplatz, Stehposition davor und laufende Bewegung
 var _seat: SeatPoint = null
@@ -54,6 +62,10 @@ func _ready() -> void:
 	_capsule = _collision.shape.duplicate()
 	_collision.shape = _capsule
 	_stand_body_height = _capsule.height
+	# Das Buch obenauf in der Hand (unten rechts im Bild)
+	var held := HeldBook.new()
+	held.name = "HeldBook"
+	camera.add_child(held)
 	# Mauszeiger im Spiel "fangen" (unsichtbar, bleibt im Fenster)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -64,7 +76,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif (event.is_action_pressed("interact") or event.is_action_pressed("jump")) and is_seated():
 		stand_up()
 	elif event.is_action_pressed("interact") and interaction_enabled:
-		_try_interact()
+		_start_interact()
+	elif event.is_action_released("interact"):
+		_finish_interact()
+	elif (event.is_action_pressed("book_next") or event.is_action_pressed("book_previous")) \
+			and interaction_enabled and BookStock.carried.size() > 1:
+		BookStock.cycle_active(1 if event.is_action_pressed("book_next") else -1)
 	elif event is InputEventMouseButton and event.pressed and not MenuStack.has_open():
 		# Falls die Maus frei ist (z. B. nach einem Fensterwechsel): per Klick wieder fangen.
 		# Ist etwas offen (z. B. der Katalog), gehört der Mauszeiger dorthin.
@@ -86,6 +103,10 @@ func _physics_process(delta: float) -> void:
 	_move(delta)
 	_update_head_bob(delta)
 	_update_interaction_target()
+
+
+func _process(delta: float) -> void:
+	_update_hold(delta)
 
 
 # --- Springen und Hocken ---
@@ -265,13 +286,60 @@ func _update_interaction_target() -> void:
 				new_target = target
 
 	if new_target != _current_target:
-		# Dezente Hervorhebung wandert mit dem anvisierten Objekt
-		FurnitureUtils.set_interactable_highlighted(_current_target, false)
-		FurnitureUtils.set_interactable_highlighted(new_target, true)
+		# Dezente Hervorhebung wandert mit dem anvisierten Objekt (wenn das Objekt das möchte)
+		if is_instance_valid(_current_target):
+			_current_target.end_aim()
+			if _current_target.highlight_owner:
+				FurnitureUtils.set_interactable_highlighted(_current_target, false)
+		if new_target and new_target.highlight_owner:
+			FurnitureUtils.set_interactable_highlighted(new_target, true)
 		_current_target = new_target
 		interaction_target_changed.emit(_current_target)
+	# Wohin genau ich schaue (z. B. welches Buch im Regal)
+	if _current_target:
+		_current_target.update_aim(camera.global_position, -camera.global_basis.z)
 
 
-func _try_interact() -> void:
-	if is_instance_valid(_current_target):
+## E gedrückt: sofort benutzen – oder bei Objekten mit "halten" erst abwarten.
+func _start_interact() -> void:
+	if not is_instance_valid(_current_target):
+		return
+	if _current_target.supports_hold:
+		_hold_target = _current_target
+		_hold_time = 0.0
+		_hold_done = false
+	else:
 		_current_target.interact(self)
+
+
+## E losgelassen: Wurde nur kurz getippt, zählt es jetzt als normales Benutzen.
+func _finish_interact() -> void:
+	if _hold_target and not _hold_done and is_instance_valid(_hold_target) and _hold_target == _current_target:
+		_hold_target.interact(self)
+	_cancel_hold()
+
+
+## Zählt die gehaltene Zeit; reicht sie, wird die lange Aktion ausgelöst.
+func _update_hold(delta: float) -> void:
+	if _hold_target == null:
+		return
+	if not is_instance_valid(_hold_target) or _hold_target != _current_target or not interaction_enabled:
+		_cancel_hold()
+		return
+	if _hold_done:
+		return
+	_hold_time += delta
+	var progress := clampf(_hold_time / maxf(GameConfig.interact_hold_time, 0.01), 0.0, 1.0)
+	hold_progress_changed.emit(progress)
+	if progress >= 1.0:
+		_hold_done = true
+		hold_progress_changed.emit(-1.0)
+		_hold_target.hold(self)
+
+
+func _cancel_hold() -> void:
+	if _hold_target != null:
+		hold_progress_changed.emit(-1.0)
+	_hold_target = null
+	_hold_done = false
+	_hold_time = 0.0

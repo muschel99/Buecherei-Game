@@ -5,7 +5,7 @@ extends Resource
 ##
 ## Jede Datei in data/genres/ (Endung .tres) ist ein solches Datenblatt.
 ## Der Katalog liest den Ordner beim Spielstart automatisch ein – ein neues Genre braucht
-## also keinen Code, nur ein neues Datenblatt (und am besten eine Wortliste für die Titel).
+## also keinen Code, nur ein neues Datenblatt und eine Bücherliste (data/books/<id>.txt).
 ## - Umbenennen: einfach "Display Name" ändern (die id bleibt gleich).
 ## - Freischalten: Häkchen bei "Is Unlocked" setzen (im Spiel später auch über
 ##   BookStock.unlock_genre("id"), z. B. in Etappe 8).
@@ -31,9 +31,19 @@ extends Resource
 @export var is_unlocked: bool = true
 ## Reihenfolge in Listen (kleiner = weiter vorn).
 @export var sort_order: int = 100
-## Textdatei mit den Wortlisten für erfundene Buchtitel.
-## Leer = data/book_titles/<id>.txt
-@export_file("*.txt") var title_words_path: String = ""
+## Textdatei mit den Büchern dieses Genres (eine Zeile pro Buch: Titel | Motiv).
+## Leer = data/books/<id>.txt
+@export_file("*.txt") var books_path: String = ""
+
+@export_group("Cover")
+## Schriftart für Titel auf Cover und Buchrücken.
+enum CoverFont { SERIF, SANS, PLAYFUL }
+@export var cover_font: CoverFont = CoverFont.SERIF
+## Gestaltungen, die zu diesem Genre passen (eine davon bekommt jedes Buch, sofern in der
+## Bücherliste keine eigene steht): classic (Rahmen, edel), picture (großes Bild),
+## minimal (hell, schlicht), pattern (Muster mit Schild), band (Bild oben, Titelfeld unten),
+## comic (bunt, kräftig). Mehrfach nennen = häufiger.
+@export var cover_styles: Array[String] = ["classic", "picture", "band"]
 
 
 ## Eindeutiger Name (aus dem Feld "id" oder ersatzweise dem Dateinamen).
@@ -48,8 +58,8 @@ func get_main_color() -> Color:
 	return spine_colors[0] if not spine_colors.is_empty() else Color(0.55, 0.4, 0.3)
 
 
-## Pfad der Wortliste für die Titel.
-func get_title_words_path() -> String:
-	if not title_words_path.is_empty():
-		return title_words_path
-	return "res://data/book_titles/%s.txt" % get_id()
+## Pfad der Bücherliste.
+func get_books_path() -> String:
+	if not books_path.is_empty():
+		return books_path
+	return "res://data/books/%s.txt" % get_id()

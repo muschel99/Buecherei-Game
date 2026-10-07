@@ -35,17 +35,17 @@ mesh = SubResource("BoxMesh_box")
 material_override = ExtResource("2_cardboard")
 
 [node name="TapeTop" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.362, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.990698, 0, 0.362, 0)
 mesh = SubResource("BoxMesh_tape_top")
 material_override = ExtResource("3_tape")
 
 [node name="TapeFront" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, 0.212)
+transform = Transform3D(0.95, 0, 0, 0, 0.98, 0, 0, 0, 1, 0, 0.309, 0.212)
 mesh = SubResource("BoxMesh_tape_side")
 material_override = ExtResource("3_tape")
 
 [node name="TapeBack" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, -0.212)
+transform = Transform3D(0.95, 0, 0, 0, 0.98, 0, 0, 0, 1, 0, 0.309, -0.212)
 mesh = SubResource("BoxMesh_tape_side")
 material_override = ExtResource("3_tape")
 

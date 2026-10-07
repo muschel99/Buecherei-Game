@@ -13,6 +13,7 @@
 | 2h  | Kronleuchter, Kartons und Baumodus       | fertig        |
 | 2i  | Kartons einsammeln und Lager-Animation   | fertig        |
 | 3   | Bücher und Regale                        | fertig        |
+| 3b  | Echte Bücher: Cover, Sammlung, einzeln einräumen | fertig |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -157,8 +158,8 @@ in Gruppen, ohne Zeitdruck.
 - [x] Genres als Daten (`GenreData`, Ordner `data/genres/`): Name, Farbpalette der Buchrücken,
       Stil (freiwillig), Paketpreis, freigeschaltet; 5 frei, 11 angelegt und gesperrt
 - [x] Bücher als Daten (`Book`: Titel, Genre, Zustand – vorerst immer gut)
-- [x] Erfundene, zum Genre passende Titel aus Wortlisten (`data/book_titles/`, eine Textdatei
-      je Genre, `BookTitles`)
+- [x] Erfundene, zum Genre passende Titel aus Wortlisten (seit 3b ersetzt durch feste
+      Bücherlisten in `data/books/`)
 - [x] Bücherbestand getrennt vom Möbel-Inventar (`BookStock`): Lager, Regale,
       Rückgabekasten, getragene Bücher; Startbücher (`GameConfig.start_books_per_genre`)
 - [x] Shop: Bereich „Bücher“ mit Bücherpaketen je Genre (`GameConfig.books_per_package`);
@@ -177,6 +178,30 @@ in Gruppen, ohne Zeitdruck.
       E am Regal räumt alle passenden ein, der Rest bleibt in der Hand
 - [x] Alles wird gespeichert (Bestand, Regalinhalte, Schilder, Kasten, Getragenes);
       ältere Spielstände bekommen Startbücher und den Rückgabekasten einmalig dazu
+
+## Etappe 3b – Echte Bücher: Cover, Sammlung, einzeln einräumen
+Leitgedanke: Jedes Buch hat Charakter. Man kann jedes einzeln an seinen Platz stellen,
+muss aber nie – Auffüllen, Einräumen und Sortieren gehen weiter mit einem Klick.
+- [x] Kein Flimmern (Z-Fighting) mehr an Regalstreben und Möbelkanten: Wo zwei Flächen genau
+      aufeinanderlagen, liegt die kleinere jetzt 2 mm innen (alle Möbel, Fenster, Türrahmen,
+      Fußleisten, Gehweg und Karton geprüft)
+- [x] 800 echte Titel (16 Genres × 50), deutsch und englisch, gemütlich und erfunden;
+      Bücherlisten in `data/books/<genre>.txt` (Titel | Motiv), Titel als Katalog (`BookData`)
+- [x] Jeder Titel: erfundener Autor, feste Größe, Farben, Gestaltung, passendes Motiv
+- [x] Cover und Buchrücken aus Farben, Schrift und Formen (`BookCover`): sechs Gestaltungen
+      (classic, picture, minimal, pattern, band, comic), 71 Motive (`BookMotifs`),
+      Schriften vom eigenen PC je Genre (`GenreData.cover_font`)
+- [x] Echte Buchrücken im Regal über ein gemeinsames Bild aller Rücken (`BookArt`-Atlas),
+      weiterhin ein Zeichenaufruf je Regal
+- [x] Sammlung: entdeckte Titel; Pakete bringen zuerst neue Titel, Hinweis beim Auspacken;
+      ältere Spielstände bekommen für ihre Bücher passende echte Titel
+- [x] Regale mit eigener Reihe je Brett; Buch anschauen = Infokarte mit Cover
+- [x] E tippen: einzelnes Buch nehmen (auch aus der Mitte) bzw. an die markierte Stelle
+      einstellen (Lücke öffnet sich, Vorschau schwebt davor); E halten: alle passenden
+      einräumen bzw. Regal-Menü (`Interactable.supports_hold`, Ring um die Bildmitte)
+- [x] Buch obenauf mit Cover in der Hand (unten rechts), Mausrad wechselt
+- [x] Regal-Menü: Buch aus dem Lager wählen (Cover-Kacheln), nach Genre und Titel sortieren
+- [x] Tablet: Reiter „Sammlung“ (alle Titel, unentdeckte als „?“), Spalte „Sammlung“ im Bestand
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
@@ -201,6 +226,8 @@ in Gruppen, ohne Zeitdruck.
 
 ## Etappe 8 – Erweiterungen und Freischaltungen
 - Weitere Räume, Obergeschoss, Genres freischalten (`BookStock.unlock_genre`), Renovieren
+- Einzelne Bücher nach und nach freischalten und sammeln (Grundlage: Sammlung in BookStock,
+  `is_discovered`, `mark_discovered`; Pakete wählen bisher automatisch neue Titel)
 - Neue Möbel im Shop freischalten (Datenblatt-Feld `is_unlocked`)
 
 ## Etappe 9 – Atmosphäre und Sound

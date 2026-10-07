@@ -20,6 +20,7 @@ const CROSSHAIR_ACTIVE_SCALE := 1.6
 @onready var _money_change_label: Label = %MoneyChangeLabel
 
 var _target: Interactable = null
+var _hold_ring: HoldRing
 var _seated := false
 var _tween: Tween
 var _money_tween: Tween
@@ -31,6 +32,12 @@ func _ready() -> void:
 	_money_change_label.modulate.a = 0.0
 	_money_label.text = Wallet.format(Wallet.money)
 	Wallet.money_changed.connect(_on_money_changed)
+	# Ring um die Bildmitte beim Gedrückthalten von E
+	_hold_ring = HoldRing.new()
+	_hold_ring.set_anchors_preset(Control.PRESET_CENTER)
+	_hold_ring.size = Vector2(40, 40)
+	_hold_ring.position -= _hold_ring.size / 2.0
+	add_child(_hold_ring)
 
 
 func _process(_delta: float) -> void:
@@ -40,7 +47,11 @@ func _process(_delta: float) -> void:
 	if _seated:
 		_prompt_label.text = "%s, Leertaste oder Laufen – Aufstehen" % _get_key_name("interact")
 	elif is_instance_valid(_target):
-		_prompt_label.text = "%s – %s" % [_get_key_name("interact"), _target.prompt_text]
+		var key := _get_key_name("interact")
+		_prompt_label.text = "%s – %s" % [key, _target.prompt_text]
+		# Zweite Zeile für langes Drücken (z. B. am Regal)
+		if not _target.hold_prompt_text.is_empty():
+			_prompt_label.text += "\n%s halten – %s" % [key, _target.hold_prompt_text]
 
 
 ## Kontostand aktualisieren; Einnahmen und Ausgaben erscheinen kurz darunter (+80 / −320).
@@ -55,6 +66,11 @@ func _on_money_changed(money: int, change: int) -> void:
 	_money_tween = create_tween()
 	_money_tween.tween_interval(1.6)
 	_money_tween.tween_property(_money_change_label, "modulate:a", 0.0, 0.8)
+
+
+## Fortschritt beim Gedrückthalten von E (-1 = Ring ausblenden).
+func _on_player_hold_progress_changed(progress: float) -> void:
+	_hold_ring.progress = progress
 
 
 ## Im Sitzen dezent zeigen, wie man wieder aufsteht.

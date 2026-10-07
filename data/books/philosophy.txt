@@ -1,0 +1,62 @@
+# Bücher im Genre: Philosophie
+#
+# Eine Zeile pro Buch:   Titel | Motiv
+# Optional dahinter:     | Gestaltung | Autor
+#   Motiv:      das kleine Bild auf Cover und Buchrücken (Liste der Motive: docs/ASSET_GUIDE.md).
+#               Leer lassen = nur Schrift.
+#   Gestaltung: classic, picture, minimal, pattern, band oder comic. Leer = passend zum Genre.
+#   Autor:      leer = ein erfundener Name wird automatisch gewählt.
+# Neues Buch: einfach eine neue Zeile anhängen. Titel nachträglich bitte nicht mehr ändern
+# (der Titel ist der Name des Buchs im Spielstand).
+# Zeilen mit # am Anfang sind Kommentare. Bitte nur erfundene, gemütliche Titel.
+
+Über das Warten | hourglass
+Kleine Philosophie des Teetrinkens | teacup
+A Small Essay on Kindness | heart
+Kann man Zeit verschenken? | clock
+What Makes a Good Afternoon | sun
+Gespräche mit meiner Katze | cat
+The Wisdom of Slow Rivers | wave
+Vom Glück der Umwege | compass
+Thoughts by the Window | glasses
+Über das Zuhören | bird
+The Art of Wondering | stars
+Der Sinn der Pause | hourglass
+Little Questions, Big Skies | cloud
+Gedanken beim Abwasch | teapot
+A Philosophy of Gardens | flower
+Was ist ein Zuhause? | house
+On Walking Slowly | map
+Das Glück der kleinen Dinge | shell
+The Patience of Trees | tree
+Wohin gehen Gedanken im Schlaf? | moon
+Letters to a Curious Friend | letter
+Vom Wert der Langsamkeit | snail
+The Lantern Within | lantern
+Über Freundschaft | heart
+Why We Collect Things | key
+Gespräche mit einem Leuchtturmwärter | lighthouse
+On Rainy Mornings | umbrella
+Der Mut zur Muße | feather
+The Comfort of Routine | clock
+Fragen an die Sterne | stars
+A Small Book About Hope | sun
+Über das Staunen | sparkle
+Thinking with a Cup of Tea | teacup
+Die Kunst, nichts zu verpassen | glasses
+The Kind Philosopher | owl
+Vom Teilen | cake
+Thoughts on Beginnings | leaf
+Das Gute am Gewöhnlichen | bread
+Meditations for Gardeners | plant
+Gedanken über Wolken | cloud
+The Happiness of Pebbles | shell
+Was uns Bücher lehren | book
+On the Joy of Being Bored | kite
+Die Weisheit der Eule | owl
+Small Thoughts for Long Evenings | candle
+Über das Ankommen | train
+The Philosophy of Puddles | umbrella
+Vom Sinn der Gastfreundschaft | teapot
+Why Stars Seem Friendly | star
+Das Leben als Spaziergang | compass

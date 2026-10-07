@@ -66,7 +66,14 @@ func unpack() -> void:
 			"surface":
 				Inventory.add_surface(id)
 			"books":
+				# Neue Titel für die Sammlung? Dann freut sich ein kleiner Hinweis mit
+				var known := BookStock.get_discovered_count(id)
 				BookStock.add_new_books(id, count * GameConfig.books_per_package)
+				var fresh := BookStock.get_discovered_count(id) - known
+				var genre := Catalog.get_genre(id)
+				if fresh > 0 and genre:
+					Notice.post(self, "%s: %d %s für deine Sammlung!" % [genre.display_name, fresh,
+						"neuer Titel" if fresh == 1 else "neue Titel"])
 			_:
 				Inventory.add_furniture(id, count)
 	# Beiläufig unten rechts zeigen, was ins Lager geht (statt eines Textes)

@@ -10,6 +10,8 @@ extends CanvasLayer
 ## - Reiter "Verkaufen": Möbel aus dem Inventar (nicht die im Raum) gegen einen Teil des
 ##   Preises (GameConfig.sell_price_share).
 ## - Reiter "Bestand": wie viele Bücher je Genre ich habe – im Regal, im Lager, unterwegs.
+## - Reiter "Sammlung": alle Titel eines Genres mit Cover; unentdeckte als "?". Ein Klick auf
+##   ein Buch im Lager legt es obenauf in die Hand.
 ## Öffnen: E am Tablet. Schließen: Esc oder "Schließen" (Esc-Regel über MenuStack).
 ## Solange der Shop offen ist, ist der Mauszeiger sichtbar und die Spielfigur steht still.
 
@@ -24,6 +26,7 @@ const PREVIEW_SIZE := Vector2(176, 118)
 const VIEW_BUY := "buy"
 const VIEW_SELL := "sell"
 const VIEW_STOCK := "stock"
+const VIEW_COLLECTION := "collection"
 
 ## Pfad zur Spielfigur (im Inspektor der Hauptszene eingetragen).
 @export var player_path: NodePath
@@ -32,6 +35,7 @@ const VIEW_STOCK := "stock"
 @onready var _buy_tab_button: Button = %BuyTabButton
 @onready var _sell_tab_button: Button = %SellTabButton
 @onready var _stock_tab_button: Button = %StockTabButton
+@onready var _collection_tab_button: Button = %CollectionTabButton
 @onready var _close_button: Button = %CloseButton
 @onready var _money_label: Label = %MoneyLabel
 @onready var _buy_view: Control = %BuyView
@@ -51,6 +55,10 @@ const VIEW_STOCK := "stock"
 @onready var _stock_grid: GridContainer = %StockGrid
 @onready var _stock_message: Label = %StockMessage
 @onready var _store_carried_button: Button = %StoreCarriedButton
+@onready var _collection_view: Control = %CollectionView
+@onready var _collection_genre_list: VBoxContainer = %CollectionGenreList
+@onready var _collection_column: VBoxContainer = %CollectionColumn
+@onready var _collection_header: Label = %CollectionHeader
 
 var is_open: bool = false
 
@@ -65,6 +73,8 @@ var _order_text := ""
 var _thumbnails: ThumbnailRenderer
 var _selected_style: StyleBoxFlat
 var _refresh_queued := false
+var _collection_picker: BookPicker
+var _collection_genre := ""
 
 
 func _ready() -> void:
@@ -74,7 +84,7 @@ func _ready() -> void:
 	_thumbnails.name = "Thumbnails"
 	add_child(_thumbnails)
 	_selected_style = _make_selected_style()
-	for button: Button in [_buy_tab_button, _sell_tab_button, _stock_tab_button]:
+	for button: Button in [_buy_tab_button, _sell_tab_button, _stock_tab_button, _collection_tab_button]:
 		button.add_theme_stylebox_override("pressed", _selected_style)
 		button.add_theme_stylebox_override("hover_pressed", _selected_style)
 	_categories.append(["Bücher", "books", null])
@@ -88,6 +98,10 @@ func _ready() -> void:
 	_buy_tab_button.pressed.connect(_show_view.bind(VIEW_BUY))
 	_sell_tab_button.pressed.connect(_show_view.bind(VIEW_SELL))
 	_stock_tab_button.pressed.connect(_show_view.bind(VIEW_STOCK))
+	_collection_tab_button.pressed.connect(_show_view.bind(VIEW_COLLECTION))
+	_collection_picker = BookPicker.new()
+	_collection_picker.book_chosen.connect(_on_collection_book_chosen)
+	_collection_column.add_child(_collection_picker)
 	_store_carried_button.pressed.connect(_on_store_carried_pressed)
 	_close_button.pressed.connect(close)
 	_order_button.pressed.connect(_on_order_pressed)
@@ -150,6 +164,8 @@ func _show_view(view: String) -> void:
 	_buy_tab_button.set_pressed_no_signal(view == VIEW_BUY)
 	_sell_tab_button.set_pressed_no_signal(view == VIEW_SELL)
 	_stock_tab_button.set_pressed_no_signal(view == VIEW_STOCK)
+	_collection_tab_button.set_pressed_no_signal(view == VIEW_COLLECTION)
+	_collection_view.visible = view == VIEW_COLLECTION
 	_buy_view.visible = view == VIEW_BUY
 	_sell_view.visible = view == VIEW_SELL
 	_stock_view.visible = view == VIEW_STOCK
@@ -172,8 +188,10 @@ func _refresh() -> void:
 		_refresh_cart()
 	elif _sell_view.visible:
 		_refresh_sell_list()
-	else:
+	elif _stock_view.visible:
 		_refresh_stock()
+	else:
+		_refresh_collection()
 
 
 # --- Kaufen: Kategorien und Angebote ---
@@ -291,8 +309,9 @@ func _create_offer_card(item: Resource) -> Button:
 		if status.is_empty():
 			status = "Einmal kaufen, immer nutzen"
 	elif item is GenreData:
-		var owned := BookStock.count_total(item.get_id())
-		status = "Du hast %d Bücher" % owned if owned > 0 else "Klicken: in den Warenkorb"
+		# Sammlung: wie viele Titel des Genres kenne ich schon?
+		var catalog := Catalog.get_books_of_genre(item.get_id()).size()
+		status = "Sammlung: %d von %d Titeln" % [BookStock.get_discovered_count(item.get_id()), catalog]
 	else:
 		var owned := Inventory.get_count(item.get_id()) + _count_in_room(item.get_id())
 		status = "Hast du schon: %d" % owned if owned > 0 else "Klicken: in den Warenkorb"
@@ -493,7 +512,7 @@ func sell(data: FurnitureData) -> void:
 
 # --- Bestand ---
 
-const STOCK_COLUMNS := ["Genre", "Im Regal", "Im Lager", "Unterwegs", "Gesamt"]
+const STOCK_COLUMNS := ["Genre", "Im Regal", "Im Lager", "Unterwegs", "Gesamt", "Sammlung"]
 
 
 ## Die Bestandsliste: je Genre, wie viele Bücher im Regal, im Lager und unterwegs
@@ -505,7 +524,7 @@ func _refresh_stock() -> void:
 	_stock_grid.columns = STOCK_COLUMNS.size()
 	for i in STOCK_COLUMNS.size():
 		_add_stock_cell(STOCK_COLUMNS[i], MUTED_COLOR, i > 0)
-	var sums := [0, 0, 0, 0]
+	var sums := [0, 0, 0, 0, 0, 0]
 	for entry in BookStock.get_overview():
 		var genre: GenreData = entry.genre
 		var name_row := HBoxContainer.new()
@@ -524,9 +543,13 @@ func _refresh_stock() -> void:
 		for i in values.size():
 			sums[i] += values[i]
 			_add_stock_cell(str(values[i]), KEY_COLOR if i == 3 else TEXT_COLOR, true)
+		_add_stock_cell("%d / %d" % [entry.discovered, entry.catalog], MUTED_COLOR, true)
+		sums[4] += entry.discovered
+		sums[5] += entry.catalog
 	_add_stock_cell("Zusammen", MUTED_COLOR, false)
-	for i in sums.size():
+	for i in 4:
 		_add_stock_cell(str(sums[i]), KEY_COLOR, true)
+	_add_stock_cell("%d / %d" % [sums[4], sums[5]], KEY_COLOR, true)
 
 	var carried := BookStock.carried.size()
 	_store_carried_button.visible = carried > 0
@@ -552,6 +575,87 @@ func _on_store_carried_pressed() -> void:
 	var count := BookStock.store_carried()
 	if count > 0:
 		_stock_message.text = "%d %s ins Lager gelegt." % [count, "Buch" if count == 1 else "Bücher"]
+
+
+# --- Sammlung ---
+
+## Genres in der Sammlung: freigeschaltete und alle, von denen ich schon Titel kenne.
+func _collection_genres() -> Array[GenreData]:
+	var result: Array[GenreData] = []
+	for genre in Catalog.get_all_genres():
+		if BookStock.is_genre_unlocked(genre.get_id()) or BookStock.get_discovered_count(genre.get_id()) > 0:
+			result.append(genre)
+	return result
+
+
+func _refresh_collection() -> void:
+	var genres := _collection_genres()
+	if genres.is_empty():
+		return
+	var ids := genres.map(func(genre: GenreData) -> String: return genre.get_id())
+	if not ids.has(_collection_genre):
+		_collection_genre = ids[0]
+	# Genre-Knöpfe links mit Sammelstand
+	for child in _collection_genre_list.get_children():
+		_collection_genre_list.remove_child(child)
+		child.queue_free()
+	for genre in genres:
+		var id := genre.get_id()
+		var button := Button.new()
+		button.toggle_mode = true
+		button.focus_mode = Control.FOCUS_NONE
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.text = "%s  %d/%d" % [genre.display_name, BookStock.get_discovered_count(id),
+			Catalog.get_books_of_genre(id).size()]
+		button.add_theme_font_size_override("font_size", 16)
+		button.add_theme_stylebox_override("pressed", _selected_style)
+		button.add_theme_stylebox_override("hover_pressed", _selected_style)
+		button.set_pressed_no_signal(id == _collection_genre)
+		button.pressed.connect(func() -> void:
+			_collection_genre = id
+			_queue_refresh())
+		_collection_genre_list.add_child(button)
+	# Wo stehen meine Exemplare? Je Titel-id gezählt: insgesamt, im Lager, im Regal
+	var total := {}
+	var stored := {}
+	var shelved := {}
+	for book in BookStock.get_all_owned_books():
+		total[book.data.id] = int(total.get(book.data.id, 0)) + 1
+	for book in BookStock.get_stored_books(_collection_genre):
+		stored[book.data.id] = int(stored.get(book.data.id, 0)) + 1
+	for shelf in get_tree().get_nodes_in_group(BookStock.SHELF_GROUP):
+		for book: Book in shelf.get_books():
+			shelved[book.data.id] = int(shelved.get(book.data.id, 0)) + 1
+	var entries := []
+	for data in Catalog.get_books_of_genre(_collection_genre):
+		var known := BookStock.is_discovered(data.id)
+		var in_storage := int(stored.get(data.id, 0))
+		var on_shelf := int(shelved.get(data.id, 0))
+		var elsewhere := int(total.get(data.id, 0)) - in_storage - on_shelf
+		var notes: Array[String] = []
+		if in_storage > 0:
+			notes.append("%d im Lager" % in_storage)
+		if on_shelf > 0:
+			notes.append("%d im Regal" % on_shelf)
+		if elsewhere > 0:
+			notes.append("%d unterwegs" % elsewhere)
+		if known and notes.is_empty():
+			notes.append("gerade keins da")
+		entries.append({"data": data, "known": known, "note": " · ".join(notes), "enabled": in_storage > 0})
+	var genre := Catalog.get_genre(_collection_genre)
+	_collection_header.text = "%s: %d von %d Titeln entdeckt" % [genre.display_name,
+		BookStock.get_discovered_count(_collection_genre), entries.size()]
+	_collection_picker.show_entries(entries)
+
+
+## Ein Buch aus dem Lager obenauf in die Hand nehmen.
+func _on_collection_book_chosen(data: BookData) -> void:
+	for book in BookStock.get_stored_books(data.genre_id):
+		if book.data == data and BookStock.take_stored_book(book):
+			BookStock.carry([book])
+			close()
+			Notice.post(self, "„%s“ liegt obenauf in deiner Hand – schau auf eine Stelle im Regal und drücke E." % data.title)
+			return
 
 
 # --- Hilfsfunktionen ---

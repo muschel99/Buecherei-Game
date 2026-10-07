@@ -72,22 +72,22 @@ material_override = ExtResource("2_bxnq8")
 mesh = SubResource("BoxMesh_r4403")
 
 [node name="Post2" type="MeshInstance3D" parent="Model" unique_id=952978396]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07, 0.11, -0.07)
+transform = Transform3D(1, 0, 0, 0, 0.977778, 0, 0, 0, 1, -0.07, 0.11, -0.07)
 material_override = ExtResource("1_rnhi4")
 mesh = SubResource("BoxMesh_2sqxu")
 
 [node name="Post3" type="MeshInstance3D" parent="Model" unique_id=920226394]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.11, -0.07)
+transform = Transform3D(1, 0, 0, 0, 0.977778, 0, 0, 0, 1, 0.07, 0.11, -0.07)
 material_override = ExtResource("1_rnhi4")
 mesh = SubResource("BoxMesh_2m5pb")
 
 [node name="Post4" type="MeshInstance3D" parent="Model" unique_id=1919767744]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07, 0.11, 0.07)
+transform = Transform3D(1, 0, 0, 0, 0.977778, 0, 0, 0, 1, -0.07, 0.11, 0.07)
 material_override = ExtResource("1_rnhi4")
 mesh = SubResource("BoxMesh_61341")
 
 [node name="Post5" type="MeshInstance3D" parent="Model" unique_id=22615]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.11, 0.07)
+transform = Transform3D(1, 0, 0, 0, 0.977778, 0, 0, 0, 1, 0.07, 0.11, 0.07)
 material_override = ExtResource("1_rnhi4")
 mesh = SubResource("BoxMesh_e55aq")
 

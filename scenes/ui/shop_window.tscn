@@ -95,6 +95,15 @@ toggle_mode = true
 theme_override_font_sizes/font_size = 18
 text = "Bestand"
 
+[node name="CollectionTabButton" type="Button" parent="Window/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 18
+text = "Sammlung"
+
 [node name="Spacer" type="Control" parent="Window/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -292,7 +301,7 @@ text = "Im Regal: steht in einem Bücherregal.
 Im Lager: wartet darauf, eingeräumt zu werden.
 Unterwegs: trägst du gerade oder liegt im Rückgabekasten.
 
-Neue Bücher gibt es unter „Kaufen“ → „Bücher“. Einräumen: Schau ein Regal an und drücke E."
+Neue Bücher gibt es unter „Kaufen“ → „Bücher“. Am Regal: E tippen = ein Buch nehmen oder einstellen, E halten = alle passenden einräumen bzw. Regal-Menü."
 autowrap_mode = 3
 
 [node name="StoreCarriedButton" type="Button" parent="Window/VBox/StockView/StockInfoPanel/VBox"]
@@ -309,4 +318,42 @@ custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="CollectionView" type="HBoxContainer" parent="Window/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="CollectionGenreScroll" type="ScrollContainer" parent="Window/VBox/CollectionView"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="CollectionGenreList" type="VBoxContainer" parent="Window/VBox/CollectionView/CollectionGenreScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="CollectionColumn" type="VBoxContainer" parent="Window/VBox/CollectionView"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="CollectionHeader" type="Label" parent="Window/VBox/CollectionView/CollectionColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Sammlung"
+
+[node name="CollectionHint" type="Label" parent="Window/VBox/CollectionView/CollectionColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.78, 0.68, 0.9)
+theme_override_font_sizes/font_size = 15
+text = "Jedes Bücherpaket bringt zuerst Titel, die du noch nicht kennst. Klick auf ein Buch, das im Lager liegt: Es liegt dann obenauf in deiner Hand."
 autowrap_mode = 3

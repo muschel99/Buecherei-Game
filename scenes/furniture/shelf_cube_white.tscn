@@ -71,47 +71,47 @@ size = Vector3(0.93, 1.5, 0.36)
 [node name="Model" type="Node3D" parent="." unique_id=1550652801]
 
 [node name="SideLeft" type="MeshInstance3D" parent="Model" unique_id=1553062665]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4675, 0.75, 0)
+transform = Transform3D(1, 0, 0, 0, 0.994666, 0, 0, 0, 0.994737, -0.4675, 0.75, 0.001)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_02vgu")
 
 [node name="SideRight" type="MeshInstance3D" parent="Model" unique_id=1416696757]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4675, 0.75, 0)
+transform = Transform3D(1, 0, 0, 0, 0.994666, 0, 0, 0, 0.994737, 0.4675, 0.75, 0.001)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_wuf1j")
 
 [node name="Back" type="MeshInstance3D" parent="Model" unique_id=1951508606]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, -0.185)
+transform = Transform3D(0.995833, 0, 0, 0, 0.997333, 0, 0, 0, 1, 0, 0.75, -0.185)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_0hnqd")
 
 [node name="Board0" type="MeshInstance3D" parent="Model" unique_id=1201077116]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0125, 0)
+transform = Transform3D(0.991666, 0, 0, 0, 1, 0, 0, 0, 0.984211, 0, 0.0125, 0.001)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_cysmk")
 
 [node name="Board1" type="MeshInstance3D" parent="Model" unique_id=472141457]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+transform = Transform3D(0.991666, 0, 0, 0, 1, 0, 0, 0, 0.984211, 0, 0.5, 0.001)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_5macm")
 
 [node name="Board2" type="MeshInstance3D" parent="Model" unique_id=1303053276]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+transform = Transform3D(0.991666, 0, 0, 0, 1, 0, 0, 0, 0.984211, 0, 1, 0.001)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_2t2e2")
 
 [node name="Board3" type="MeshInstance3D" parent="Model" unique_id=172516604]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4875, 0)
+transform = Transform3D(0.991666, 0, 0, 0, 1, 0, 0, 0, 0.984211, 0, 1.4875, 0.001)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_rkoa7")
 
 [node name="Divider1" type="MeshInstance3D" parent="Model" unique_id=1353993177]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.16, 0.75, 0)
+transform = Transform3D(1, 0, 0, 0, 0.994666, 0, 0, 0, 0.994737, -0.16, 0.75, 0.001)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_y7cnl")
 
 [node name="Divider2" type="MeshInstance3D" parent="Model" unique_id=1589917169]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.16, 0.75, 0)
+transform = Transform3D(1, 0, 0, 0, 0.994666, 0, 0, 0, 0.994737, 0.16, 0.75, 0.001)
 material_override = ExtResource("1_d4wef")
 mesh = SubResource("BoxMesh_ehd35")
 
