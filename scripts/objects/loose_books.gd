@@ -198,8 +198,8 @@ func release_on(uids: Array[int]) -> Array[Book]:
 
 ## Gestaltungsmodus: Liegt ein ausgelegtes Buch in dieser Form (Kollisionsform eines Möbelstücks,
 ## Lage in der Welt)? Dann darf das Möbelstück dort nicht hin. Gerechnet wird mit dem Quader
-## um die Form herum.
-func overlaps_shape(shape: Shape3D, shape_transform: Transform3D) -> bool:
+## um die Form herum, an jeder Seite um "margin" (Meter) kleiner – bloßes Berühren ist erlaubt.
+func overlaps_shape(shape: Shape3D, shape_transform: Transform3D, margin: float = 0.0) -> bool:
 	var box: AABB
 	if shape is BoxShape3D:
 		box = AABB(-(shape as BoxShape3D).size / 2.0, (shape as BoxShape3D).size)
@@ -208,6 +208,9 @@ func overlaps_shape(shape: Shape3D, shape_transform: Transform3D) -> bool:
 		if mesh == null:
 			return false
 		box = mesh.get_aabb()
+	box = box.grow(-margin)
+	if box.size.x <= 0.0 or box.size.y <= 0.0 or box.size.z <= 0.0:
+		return false
 	var shape_world := Transform3D(shape_transform.basis * Basis.from_scale(box.size),
 		shape_transform * box.get_center())
 	var reach := (shape_world.basis.x.length() + shape_world.basis.y.length() + shape_world.basis.z.length()) / 2.0 + 0.35

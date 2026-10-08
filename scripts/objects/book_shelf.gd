@@ -19,14 +19,14 @@ extends Node3D
 ## - Linksklick, während ich Bücher trage: das Buch obenauf genau dort abstellen, wo ich
 ##   hinschaue. Vorher zeigt eine halbdurchsichtige Vorschau, wo es hinkommt; passt es nicht
 ##   (kein Platz, falsches Genre), ist die Vorschau dezent rötlich.
-## - Linksklick halten (Ring): alle getragenen Bücher einräumen, die hierher passen.
-## - R: Regal-Menü (Genre je Etage wählen, aus dem Lager auffüllen, sortieren, alles zurück
+## - Linksklick halten (Ring): alle getragenen Bücher einräumen, die hierher passen – ab dem
+##   Fach und der Stelle, auf die ich schaue; der Rest in die nächstgelegenen passenden Fächer.
+## - R: Regal-Menü (Genre je Fach wählen, aus dem Lager auffüllen, sortieren, alles zurück
 ##   ins Lager) – eine eigene, ruhige Taste, damit sich das Menü nie aus Versehen öffnet.
 ## - E blättert hier (wie überall ohne eigene E-Aktion) durch die Bücher in der Hand.
 ## Schaue ich ein Regal an, steht sein Genre als ruhiger Schriftzug unten in der Bildmitte
 ## (GenreCaption) – Schilder am Regal gibt es nicht.
-## Automatisches Einräumen (Linksklick halten, Auffüllen, Sortieren) füllt freie Plätze von links
-## nach rechts, Brett für Brett.
+## Auffüllen und Sortieren füllen freie Plätze von links nach rechts, Fach für Fach.
 ##
 ## Deko im Regal: Im Gestaltungsmodus lässt sich kleine Deko auf die Bretter stellen (nur,
 ## was in der Höhe ins Fach passt, und nur an freie Stellen). Deko ist ein eigenes
@@ -55,10 +55,19 @@ const BOOK_GAP := 0.0015
 const EPSILON := 0.0001
 ## So viel Luft bleibt zwischen Deko und Büchern (in Metern)
 const DECO_MARGIN := 0.003
+## Sortierarten (Kennung, Name im Menü). Neue Art: hier eintragen und in _sort_key ergänzen.
+const SORT_MODES := [
+	["genre_title", "Nach Genre und Titel"],
+	["title", "Nach Titel"],
+	["author", "Nach Autor"],
+	["color", "Nach Farbe"],
+]
 
-## Genre je Brett (Etage), gleiche Reihenfolge wie die Bretter:
+## Genre je Brett (Fach), gleiche Reihenfolge wie die Bretter:
 ## "" = noch keins gewählt (nimmt alles), MIXED = Gemischt, sonst die Genre-id.
 var row_genres: Array[String] = []
+## Zuletzt gewählte Sortierart (siehe SORT_MODES), wird mit dem Regal gespeichert.
+var sort_mode: String = "genre_title"
 ## Genre des ganzen Regals: das gemeinsame Genre aller Bretter – "" wenn sie verschieden sind
 ## (nur lesen; zum Ändern set_genre bzw. set_row_genre).
 var genre_id: String:
@@ -91,10 +100,14 @@ var _hover_book: Book = null
 ## Wo das Buch obenauf hinkäme: { "book", "row", "left", "moves" (Book -> neue linke Kante),
 ## "ok" } – leer, wenn ich auf kein Brett schaue.
 var _plan: Dictionary = {}
+# Wohin ich gerade auf die Bretter schaue: { "row", "x" } (leer = kein Brett)
+var _aim: Dictionary = {}
 var _ghost: MeshInstance3D
 var _ghost_material: ShaderMaterial
 var _ghost_transform := Transform3D()
-var _ghost_shake := -1.0  # Linksklick, obwohl es nicht passt: Vorschau schüttelt kurz
+var _ghost_shake := -1.0
+var _highlights: Dictionary = {}  # Fach -> Kasten zum Hervorheben (siehe highlight_rows)
+var _highlight_tween: Tween  # Linksklick, obwohl es nicht passt: Vorschau schüttelt kurz
 
 
 func _ready() -> void:
@@ -154,7 +167,7 @@ func get_books() -> Array[Book]:
 	return result
 
 
-## Hat mindestens eine Etage schon ein Genre (oder "Gemischt")?
+## Hat mindestens ein Fach schon ein Genre (oder "Gemischt")?
 func has_genre() -> bool:
 	for id in row_genres:
 		if not id.is_empty():
@@ -170,54 +183,49 @@ static func genre_display_name(id: String) -> String:
 	return genre.display_name if genre else ""
 
 
-## Anzeigename des Genres des ganzen Regals (leer, wenn die Etagen verschieden sind).
+## Anzeigename des Genres des ganzen Regals (leer, wenn die Fächer verschieden sind).
 func get_genre_name() -> String:
 	return genre_display_name(genre_id)
 
 
-## Wie viele Etagen (Bretter) hat das Regal?
+## Wie viele Fächer (Bretter) hat das Regal?
 func get_row_count() -> int:
 	return _rows.size()
 
 
-## Genre einer Etage ("" = noch keins, MIXED = Gemischt).
+## Genre eines Fachs ("" = noch keins, MIXED = Gemischt).
 func get_row_genre(row: int) -> String:
 	return row_genres[row] if row >= 0 and row < row_genres.size() else ""
 
 
-## Kurzer Name einer Etage für das Menü, z. B. "Etage 1" oder "Etage 2 links" (Würfelregal).
+## Kurzer Name eines Fachs für das Menü: "Fach 1", "Fach 2" … – durchnummeriert von oben
+## links nach unten rechts (wie man liest), egal in welcher Reihenfolge die Bretter in der
+## Szene stehen.
 func get_row_label(row: int) -> String:
-	# Etagen = verschiedene Höhen von oben nach unten; mehrere Fächer auf einer Höhe:
-	# von links nach rechts
-	var heights: Array[float] = []
-	for r in _rows:
-		var height := snappedf(r.position.y, 0.01)
-		if not heights.has(height):
-			heights.append(height)
-	heights.sort()
-	heights.reverse()
-	var height := snappedf(_rows[row].position.y, 0.01)
-	var level := heights.find(height) + 1
-	var same: Array[BookRow] = []
-	for r in _rows:
-		if is_equal_approx(snappedf(r.position.y, 0.01), height):
-			same.append(r)
-	if same.size() <= 1:
-		return "Etage %d (oben)" % level if level == 1 else "Etage %d" % level
-	same.sort_custom(func(a: BookRow, b: BookRow) -> bool: return a.position.x < b.position.x)
-	var index := same.find(_rows[row])
-	var sides := ["links", "Mitte", "rechts"] if same.size() == 3 else ["links", "rechts"]
-	var side: String = sides[index] if same.size() <= 3 else "Fach %d" % (index + 1)
-	return "Etage %d %s" % [level, side]
+	return "Fach %d" % (get_fach_order().find(row) + 1)
 
 
-## Passt ein Buch dieses Genres auf diese Etage? ("Gemischt" und Etagen ohne Genre nehmen alles.)
+## Die Fächer in Lesereihenfolge: von oben nach unten, auf gleicher Höhe von links nach rechts.
+func get_fach_order() -> Array[int]:
+	var order: Array[int] = []
+	for r in _rows.size():
+		order.append(r)
+	order.sort_custom(func(a: int, b: int) -> bool:
+		var ya := snappedf(_rows[a].position.y, 0.01)
+		var yb := snappedf(_rows[b].position.y, 0.01)
+		if not is_equal_approx(ya, yb):
+			return ya > yb
+		return _rows[a].position.x < _rows[b].position.x)
+	return order
+
+
+## Passt ein Buch dieses Genres in dieses Fach? ("Gemischt" und Fächer ohne Genre nehmen alles.)
 func row_accepts(row: int, book_genre_id: String) -> bool:
 	var id := get_row_genre(row)
 	return id.is_empty() or id == MIXED or id == book_genre_id
 
 
-## Passt ein Buch dieses Genres auf irgendeine Etage dieses Regals?
+## Passt ein Buch dieses Genres in irgendein Fach dieses Regals?
 func accepts(book_genre_id: String) -> bool:
 	for r in _rows.size():
 		if row_accepts(r, book_genre_id):
@@ -234,7 +242,7 @@ func count_books(of_genre_id: String) -> int:
 	return count
 
 
-## Für wie viele Bücher ist ungefähr noch Platz (row = nur diese Etage)? Bücher sind
+## Für wie viele Bücher ist ungefähr noch Platz (row = nur dieses Fach)? Bücher sind
 ## verschieden dick, daher nur ungefähr.
 func get_free_estimate(only_row: int = -1) -> int:
 	var free_width := 0.0
@@ -262,7 +270,7 @@ func count_matching_carried() -> int:
 
 # --- Ändern ---
 
-## Gibt allen Etagen dasselbe Genre (MIXED = Gemischt). Bücher, die nicht mehr passen, gleiten
+## Gibt allen Fächern dasselbe Genre (MIXED = Gemischt). Bücher, die nicht mehr passen, gleiten
 ## heraus und gehen ins Lager. Liefert, wie viele das waren.
 func set_genre(new_genre_id: String) -> int:
 	for r in row_genres.size():
@@ -270,7 +278,7 @@ func set_genre(new_genre_id: String) -> int:
 	return _remove_mismatched()
 
 
-## Wählt das Genre einer Etage. Bücher dieser Etage, die nicht mehr passen, gehen ins Lager.
+## Wählt das Genre eines Fachs. Bücher dieses Fachs, die nicht mehr passen, gehen ins Lager.
 ## Liefert, wie viele das waren.
 func set_row_genre(row: int, new_genre_id: String) -> int:
 	if row < 0 or row >= row_genres.size():
@@ -291,9 +299,9 @@ func _remove_mismatched() -> int:
 	return mismatched.size()
 
 
-## Stellt Bücher ins Regal: jedes an die erste freie Stelle einer passenden Etage (zuerst
-## Etagen mit genau seinem Genre, dann "Gemischt"; von links nach rechts – Deko bleibt, wo
-## sie ist). only_row: nur auf diese Etage. Sie gleiten nacheinander hinein.
+## Stellt Bücher ins Regal: jedes an die erste freie Stelle eines passenden Fachs (zuerst
+## Fächer mit genau seinem Genre, dann "Gemischt"; von links nach rechts – Deko bleibt, wo
+## sie ist). only_row: nur in dieses Fach. Sie gleiten nacheinander hinein.
 ## Liefert die Bücher, für die kein Platz mehr war.
 func add_books(new_books: Array, animate: bool = true, only_row: int = -1) -> Array[Book]:
 	var rest: Array[Book] = []
@@ -308,17 +316,21 @@ func add_books(new_books: Array, animate: bool = true, only_row: int = -1) -> Ar
 			continue
 		_put(book, spot.row, spot.left)
 		if animate:
-			# Startet etwas kleiner vor dem Regal und gleitet an seinen Platz
-			var start: Transform3D = _targets[book]
-			start.basis = start.basis * Basis.from_scale(Vector3.ONE * 0.7)
-			start.origin += Vector3(0.0, 0.03, SLIDE_DISTANCE)
-			_anims[book] = {"from": start, "start": _clock + placed * interval,
-				"time": GameConfig.book_slide_time, "appear": true}
+			_slide_in(book, placed * interval)
 		placed += 1
 	_refresh_instances()
 	if placed > 0:
 		_changed()
 	return rest
+
+
+## Ein Buch, das gerade an seinen Platz gestellt wurde, startet etwas kleiner vor dem Regal
+## und gleitet hinein (nach "delay" Sekunden).
+func _slide_in(book: Book, delay: float) -> void:
+	var start: Transform3D = _targets[book]
+	start.basis = start.basis * Basis.from_scale(Vector3.ONE * 0.7)
+	start.origin += Vector3(0.0, 0.03, SLIDE_DISTANCE)
+	_anims[book] = {"from": start, "start": _clock + delay, "time": GameConfig.book_slide_time, "appear": true}
 
 
 ## Nimmt Bücher aus dem Regal: Sie gleiten heraus, die übrigen bleiben stehen, wo sie sind.
@@ -347,12 +359,12 @@ func remove_books(to_remove: Array, animate: bool = true) -> void:
 	_changed()
 
 
-## Füllt das Regal aus dem Lager, Etage für Etage: jede mit Büchern ihres Genres –
+## Füllt das Regal aus dem Lager, Fach für Fach: jede mit Büchern ihres Genres –
 ## "Gemischt" gleichmäßig aus allen Genres im Lager (nach Genre gruppiert, innerhalb nach
-## Titel sortiert). Etagen ohne Genre bleiben leer. Liefert, wie viele es waren.
+## Titel sortiert). Fächer ohne Genre bleiben leer. Liefert, wie viele es waren.
 func fill_from_storage() -> int:
 	var count := 0
-	# Erst die Etagen mit festem Genre, dann die gemischten
+	# Erst die Fächer mit festem Genre, dann die gemischten
 	for pass_mixed in [false, true]:
 		for r in _rows.size():
 			var id := get_row_genre(r)
@@ -391,20 +403,134 @@ func put_carried() -> int:
 	return taken.size() - rest.size()
 
 
-## Sortiert die Bücher nach Genre und Titel – sie rücken sanft an ihre neuen Plätze, von
-## links nach rechts ohne Lücken, jede auf eine Etage mit passendem Genre. Deko bleibt
-## stehen, wo sie ist.
-func sort_books() -> void:
+## Linksklick halten: Räumt die getragenen Bücher ab der Stelle ein, auf die ich schaue
+## (Fach "row", Stelle aim_x, Brettmitte = 0). Von dort füllen sie die freien Plätze dieses
+## Fachs – erst nach rechts, dann nach links. Was dort nicht hinpasst (Platz oder Genre), kommt
+## in die nächstgelegenen anderen Fächer mit passendem Genre; was nirgends passt, trage ich
+## weiter. Liefert, wie viele eingeräumt wurden.
+func put_carried_at(row: int, aim_x: float) -> int:
+	if row < 0 or row >= _rows.size():
+		return put_carried()
+	var taken := BookStock.take_carried_where(func(book: Book) -> bool: return accepts(book.genre_id))
+	if taken.is_empty():
+		return 0
+	var others := _rows_by_distance(row)
+	var interval := minf(GameConfig.book_slide_interval, GameConfig.book_slide_max_total / taken.size())
+	var start := NAN  # Startstelle im angeschauten Fach (linke Kante des ersten Buchs)
+	var rest: Array[Book] = []
+	var placed := 0
+	for book in taken:
+		var spot := {}
+		if row_accepts(row, book.genre_id):
+			if is_nan(start):
+				start = _start_at(row, aim_x, _book_width(book))
+			spot = _spot_near(row, book, start)
+		for r in others:
+			if not spot.is_empty():
+				break
+			if row_accepts(r, book.genre_id):
+				spot = _find_free_spot(book, r)
+		if spot.is_empty():
+			rest.append(book)
+			continue
+		_put(book, spot.row, spot.left)
+		_slide_in(book, placed * interval)
+		placed += 1
+	_refresh_instances()
+	if placed > 0:
+		_changed()
+	BookStock.return_to_hand(rest)
+	return placed
+
+
+## Die anderen Fächer, das nächstgelegene zuerst (gemessen von Brettmitte zu Brettmitte;
+## bei gleichem Abstand zuerst das in Lesereihenfolge frühere).
+func _rows_by_distance(row: int) -> Array[int]:
+	var order := get_fach_order()
+	var result: Array[int] = []
+	for r in order:
+		if r != row:
+			result.append(r)
+	var here := _rows[row].position
+	result.sort_custom(func(a: int, b: int) -> bool:
+		var da := _rows[a].position.distance_to(here)
+		var db := _rows[b].position.distance_to(here)
+		if not is_equal_approx(da, db):
+			return da < db
+		return order.find(a) < order.find(b))
+	return result
+
+
+## Wo das erste Buch beim Einräumen ab aim_x beginnt: auf dem feinen Raster, nah am linken
+## Nachbarn bündig, und so weit innen, dass es in die freie Lücke passt.
+func _start_at(row: int, aim_x: float, width: float) -> float:
+	var start := snappedf(aim_x - width / 2.0, maxf(GameConfig.shelf_grid_step, 0.001))
+	for gap in _free_gaps(row):
+		if start + width / 2.0 >= gap.x - EPSILON and start + width / 2.0 <= gap.y + EPSILON:
+			if start - gap.x <= GameConfig.shelf_snap_distance:
+				start = gap.x
+			if gap.y - gap.x >= width - EPSILON:
+				start = clampf(start, gap.x, gap.y - width)
+	return start
+
+
+## Freier Platz für ein Buch in diesem Fach, möglichst nah an "start": zuerst rechts davon
+## (nächste freie Stelle), wenn rechts nichts mehr frei ist, links davon (bündig von rechts).
+func _spot_near(row: int, book: Book, start: float) -> Dictionary:
+	var width := _book_width(book)
+	var best_right := INF
+	var best_left := -INF
+	for gap in _free_gaps(row):
+		if gap.y - gap.x < width - EPSILON:
+			continue
+		var right := maxf(gap.x, start)
+		if right + width <= gap.y + EPSILON:
+			best_right = minf(best_right, right)
+		var left := minf(gap.y, start) - width
+		if left >= gap.x - EPSILON:
+			best_left = maxf(best_left, left)
+	if best_right < INF:
+		return {"row": row, "left": best_right}
+	if best_left > -INF:
+		return {"row": row, "left": best_left}
+	return {}
+
+
+## Die freien Lücken eines Fachs (von, bis), ohne Deko und ohne Bücher.
+func _free_gaps(row: int) -> Array[Vector2]:
+	var gaps: Array[Vector2] = []
+	for segment in _segments(row):
+		var cursor := segment.x
+		for other in _books_in(row, segment):
+			if _x[other] > cursor + EPSILON:
+				gaps.append(Vector2(cursor, _x[other]))
+			cursor = maxf(cursor, _x[other] + _book_width(other))
+		if segment.y > cursor + EPSILON:
+			gaps.append(Vector2(cursor, segment.y))
+	return gaps
+
+
+## Sortiert die Bücher (mode: siehe SORT_MODES; leer = zuletzt gewählte Art) – sie rücken
+## sanft an ihre neuen Plätze, von links nach rechts ohne Lücken, jedes in ein Fach mit
+## passendem Genre. Deko bleibt stehen, wo sie ist. Die Art wird gemerkt.
+func sort_books(mode: String = "") -> void:
+	if not mode.is_empty() and SORT_MODES.any(func(entry: Array) -> bool: return entry[0] == mode):
+		sort_mode = mode
 	var all := get_books()
-	var genre_order := {}
-	for genre in Catalog.get_all_genres():
-		genre_order[genre.get_id()] = genre_order.size()
+	var keys := {}
+	for book in all:
+		keys[book] = _sort_key(book)
 	all.sort_custom(func(a: Book, b: Book) -> bool:
-		var ga := int(genre_order.get(a.genre_id, 999))
-		var gb := int(genre_order.get(b.genre_id, 999))
-		if ga != gb:
-			return ga < gb
-		return a.title.naturalnocasecmp_to(b.title) < 0)
+		var ka: Array = keys[a]
+		var kb: Array = keys[b]
+		for i in ka.size():
+			if ka[i] is String:
+				var order := (ka[i] as String).naturalnocasecmp_to(kb[i])
+				if order != 0:
+					return order < 0
+			elif ka[i] != kb[i]:
+				return ka[i] < kb[i]
+		return false)
 	var old: Dictionary = {}
 	for book in all:
 		old[book] = _current_transform(book)
@@ -421,6 +547,36 @@ func sort_books() -> void:
 	_send_to_storage(overflow)
 	_refresh_instances()
 	_changed()
+
+
+## Wonach ein Buch bei der aktuellen Sortierart eingeordnet wird (Liste: erst nach dem ersten
+## Wert, bei Gleichstand nach dem nächsten).
+func _sort_key(book: Book) -> Array:
+	match sort_mode:
+		"title":
+			return [book.title, book.data.author]
+		"author":
+			# Nach Nachnamen (wie in Büchereien), dann Vorname und Titel
+			var names := book.data.author.split(" ", false)
+			var surname: String = names[-1] if not names.is_empty() else ""
+			return [surname, book.data.author, book.title]
+		"color":
+			# Nach Farbton im Farbkreis; fast graue Einbände (Schwarz, Weiß, Grau) ans Ende,
+			# von dunkel nach hell
+			var color := BookLook.get_color(book)
+			var hue := color.h if color.s >= 0.15 else 2.0 + color.v
+			return [snappedf(hue, 0.001), book.title]
+		_:
+			return [_genre_rank(book.genre_id), book.title]
+
+
+func _genre_rank(id: String) -> int:
+	var rank := 0
+	for genre in Catalog.get_all_genres():
+		if genre.get_id() == id:
+			return rank
+		rank += 1
+	return 999
 
 
 ## Zeigt Beispielbücher (für das Vorschaubild im Shop; nicht im Bestand).
@@ -445,11 +601,69 @@ func show_sample_books() -> void:
 func copy_contents_from(other: BookShelf) -> void:
 	for r in mini(row_genres.size(), other.row_genres.size()):
 		row_genres[r] = other.row_genres[r]
+	sort_mode = other.sort_mode
 	_clear_rows()
 	for r in mini(_rows.size(), other._row_books.size()):
 		for book: Book in other._row_books[r]:
 			_put(book, r, other._x[book])
 	_refresh_instances()
+
+
+# --- Fach hervorheben (Regal-Menü) ---
+
+## Hebt diese Fächer dezent hervor (leere Liste = keins). Die Kästen entstehen erst, wenn sie
+## gebraucht werden, und blenden sanft ein.
+func highlight_rows(rows: Array[int]) -> void:
+	var was_visible: Array[int] = []
+	var newly: Array[int] = []
+	for r in _highlights:
+		if (_highlights[r] as MeshInstance3D).visible:
+			was_visible.append(r)
+	for r in _highlights:
+		(_highlights[r] as MeshInstance3D).visible = rows.has(r)
+	var shown := false
+	for r in rows:
+		if r < 0 or r >= _rows.size():
+			continue
+		if not _highlights.has(r):
+			_highlights[r] = _create_highlight(_rows[r])
+		var box: MeshInstance3D = _highlights[r]
+		if not was_visible.has(r):
+			newly.append(r)  # nur neu hinzukommende blenden ein (kein Flackern)
+		box.visible = true
+		shown = true
+	if shown and not newly.is_empty():
+		if _highlight_tween:
+			_highlight_tween.kill()
+		# Was schon leuchtet, bleibt ganz hell; nur Neues blendet sanft ein
+		for r in _highlights:
+			(_highlights[r].material_override as ShaderMaterial).set_shader_parameter("strength",
+				0.0 if newly.has(r) else 1.0)
+		_highlight_tween = create_tween()
+		_highlight_tween.tween_method(func(value: float) -> void:
+			for r in newly:
+				(_highlights[r].material_override as ShaderMaterial).set_shader_parameter("strength", value),
+			0.0, 1.0, 0.12)
+
+
+func _create_highlight(row: BookRow) -> MeshInstance3D:
+	var size := Vector3(row.width + 0.012, maxf(row.height - 0.008, 0.02), row.depth + 0.012)
+	var box := MeshInstance3D.new()
+	box.name = "FachHighlight"
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	box.mesh = mesh
+	box.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var material := ShaderMaterial.new()
+	material.shader = load("res://assets/shaders/fach_highlight.gdshader")
+	material.set_shader_parameter("half_size", size / 2.0)
+	material.set_shader_parameter("fill", GameConfig.fach_highlight_fill)
+	material.set_shader_parameter("edge", GameConfig.fach_highlight_edge)
+	box.material_override = material
+	box.transform = row.transform * Transform3D(Basis.IDENTITY, Vector3(0.0, size.y / 2.0 + 0.004, 0.0))
+	box.visible = false
+	add_child(box)
+	return box
 
 
 # --- Deko im Regal ---
@@ -557,17 +771,21 @@ func get_contents_data() -> Dictionary:
 			saved.append(entry)
 		rows.append(saved)
 	# "genre" bleibt für ältere Spielversionen mit drin (gemeinsames Genre oder "")
-	return {"genre": genre_id, "row_genres": row_genres.duplicate(), "rows": rows}
+	return {"genre": genre_id, "row_genres": row_genres.duplicate(), "rows": rows, "sort": sort_mode}
 
 
 func load_contents_data(data: Dictionary) -> void:
-	# Genre je Etage – ältere Spielstände kennen nur ein Genre für das ganze Regal
+	# Genre je Fach – ältere Spielstände kennen nur ein Genre für das ganze Regal
 	var saved_rows = data.get("row_genres")
 	for r in row_genres.size():
 		if saved_rows is Array and r < saved_rows.size():
 			row_genres[r] = str(saved_rows[r])
 		else:
 			row_genres[r] = str(data.get("genre", ""))
+	# Sortierart – ältere Spielstände kennen sie nicht (dann wie früher: Genre und Titel)
+	var saved_sort := str(data.get("sort", "genre_title"))
+	sort_mode = saved_sort if SORT_MODES.any(func(entry: Array) -> bool: return entry[0] == saved_sort) \
+		else "genre_title"
 	_clear_rows()
 	_anims.clear()
 	_leaving.clear()
@@ -757,9 +975,9 @@ func _fits_at(row: int, book: Book, left: float) -> bool:
 	return true
 
 
-## Erste freie Stelle für ein Buch: zuerst auf Etagen mit genau seinem Genre, dann auf
+## Erste freie Stelle für ein Buch: zuerst in Fächern mit genau seinem Genre, dann in
 ## gemischten (bzw. noch ohne Genre); Brett für Brett, in jedem Abschnitt von links nach
-## rechts, bündig an den Nachbarn links. only_row: nur diese Etage. Leer, wenn es nirgends passt.
+## rechts, bündig an den Nachbarn links. only_row: nur dieses Fach. Leer, wenn es nirgends passt.
 func _find_free_spot(book: Book, only_row: int = -1) -> Dictionary:
 	var width := _book_width(book)
 	var rows: Array[int] = []
@@ -948,7 +1166,8 @@ func _find_aim(from: Vector3, direction: Vector3) -> Dictionary:
 func _on_aimed(from: Vector3, direction: Vector3) -> void:
 	_set_hover(_pick_book(from, direction))
 	var aim := _find_aim(from, direction)
-	# Schriftzug: Genre der Etage, auf die ich schaue (bzw. des angeschauten Buchs)
+	_aim = aim
+	# Schriftzug: Genre des Fachs, auf das ich schaue (bzw. des angeschauten Buchs)
 	var row: int = _row_of(_hover_book) if _hover_book else aim.get("row", -1)
 	var row_genre := get_row_genre(row)
 	if row_genre.is_empty():
@@ -961,6 +1180,7 @@ func _on_aimed(from: Vector3, direction: Vector3) -> void:
 
 
 func _on_aim_ended() -> void:
+	_aim = {}
 	GenreCaption.hide_text(self)
 	_set_hover(null)
 	_set_plan({})
@@ -1047,10 +1267,14 @@ func _on_place_requested(_interactor: Node) -> void:
 		set_process(true)
 
 
-## Linke Maustaste gehalten: alle getragenen Bücher einräumen, die hierher passen.
+## Linke Maustaste gehalten: alle getragenen Bücher einräumen, die hierher passen – ab dem
+## Fach und der Stelle, auf die ich schaue.
 func _on_place_all_requested(_interactor: Node) -> void:
 	if count_matching_carried() > 0:
-		put_carried()
+		if _aim.is_empty():
+			put_carried()
+		else:
+			put_carried_at(_aim.row, _aim.x)
 
 
 func _open_menu() -> void:

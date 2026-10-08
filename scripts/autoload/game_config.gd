@@ -123,6 +123,13 @@ var preview_color_invalid: Color = Color(1.0, 0.35, 0.3)
 var highlight_brightness: float = 0.06
 ## Heller Schimmer am Rand des Objekts (0 = kein Rand, 1 = sehr hell).
 var highlight_rim_strength: float = 0.45
+## Regal-Menü: Ein Fach, dessen Auswahl ich anfahre, leuchtet so hell auf (Fläche, Kanten).
+var fach_highlight_fill: float = 0.07
+var fach_highlight_edge: float = 0.5
+## Regal-Menü: So weit (in Grad) darf die Ansicht höchstens herauszoomen, damit das ganze
+## Regal neben das Tablet passt; so lange (in Sekunden) gleitet die Ansicht dorthin.
+var shelf_menu_max_fov: float = 100.0
+var shelf_menu_view_time: float = 0.35
 
 
 # --- Geld, Shop und Lieferung ---

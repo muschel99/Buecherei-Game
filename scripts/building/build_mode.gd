@@ -681,8 +681,9 @@ func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
 			if FurnitureUtils.find_placed_furniture(other):
 				return "Hier ist schon etwas."
 			return "Zu nah an der Wand."
-		# Ausgelegte Bücher haben keine Kollision – sie werden extra geprüft
-		if _room.loose_books and _room.loose_books.overlaps_shape(query.shape, query.transform):
+		# Ausgelegte Bücher haben keine Kollision – sie werden extra geprüft, mit der echten Form
+		# (nicht verkleinert und angehoben: sonst rutscht ein dünnes Buch am Boden darunter durch)
+		if _room.loose_books and _room.loose_books.overlaps_shape(shapes[i].shape, shapes[i].global_transform, 0.003):
 			return "Hier liegen Bücher."
 	return ""
 

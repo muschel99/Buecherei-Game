@@ -17,7 +17,7 @@
 | 3c  | Freies Einräumen, Deko im Regal und weniger Text | fertig |
 | 3d  | Regalsteuerung, Etagen-Genres und Bücher als Deko | fertig |
 | 3e  | Bücher drehen, Stapel blättern und Regal-Menü mit R | fertig |
-| 3f  | Regal-Menü als Tablet und Fächer         | vorgemerkt    |
+| 3f  | Regal-Menü als Tablet und Fächer         | fertig        |
 | 3g  | Tablet mit Apps und Lagerübersicht       | vorgemerkt    |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
@@ -293,8 +293,24 @@ Leitgedanke: Jede Aktion hat genau einen Weg, und kein Menü öffnet sich aus Ve
 - Noch offen für später: Im Shop-Reiter „Bestand“ gibt es weiter den Knopf „Getragene Bücher
   ins Lager legen“ (gleiche Aktion wie Q halten) – beim Neubau des Tablets (Etappe 3g) prüfen
 
-## Etappe 3f – Regal-Menü als Tablet und Fächer (vorgemerkt)
-- Noch nicht begonnen. Das Regal-Menü wird komplett neu gebaut.
+## Etappe 3f – Regal-Menü als Tablet und Fächer
+Leitgedanke: Wenige klare Aktionen statt vieler Wege – und das Regal bleibt im Blick.
+- [x] „Fach“ statt „Etage“: Fächer von oben links nach unten rechts durchnummeriert (Fach 1,
+      Fach 2 …), überall umbenannt; Schnellauswahl „Alle Fächer gleich“
+- [x] Linksklick halten räumt ab dem angeschauten Fach und der angeschauten Stelle ein (erst
+      nach rechts, dann nach links), der Rest in die nächstgelegenen Fächer mit passendem
+      Genre; Auffüllen aus dem Lager füllt weiter von oben nach unten
+- [x] Gemeinsame Tablet-Vorlage (`TabletFrame`: Gehäuse, Bildschirm, Kreuz zum Schließen;
+      `TabletIconButton`: gezeichnete Symbol-Knöpfe mit Tooltip) für Regal-Menü und
+      Theken-Tablet; Tooltips und aufklappende Listen im warmen Stil
+- [x] Regal-Menü neu als Tablet am rechten Bildrand: Genre je Fach, Buch aus dem Lager wählen
+      (Cover-Kacheln auf dem Tablet), Auffüllen, Sortieren über ein Filtersymbol (nach Genre und
+      Titel, Titel, Autor oder Farbe), Alle ins Lager; immer gleich groß, bei allen
+      Auflösungen ganz sichtbar
+- [x] Fach im Regal dezent hervorheben, wenn ich im Menü sein Auswahlfeld anfahre oder
+      aufklappe; die Ansicht dreht sich beim Öffnen etwas (zoomt bei Bedarf heraus), sodass
+      das Tablet das Regal nicht verdeckt
+- [x] Gewählte Sortierart wird gespeichert; alte Spielstände laden weiter
 
 ## Etappe 3g – Tablet mit Apps und Lagerübersicht (vorgemerkt)
 - Noch nicht begonnen. Idee: Das Tablet bekommt Apps (z. B. Shop, Bestand, Sammlung) und eine

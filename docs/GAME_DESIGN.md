@@ -29,7 +29,9 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   ein paar schlichte Farben (Warmer Putz, Kalkweiß, Nebelgrau), ein Boden (Eichendielen) und
   zwei Decken sind von Anfang an da.
 - **Shop am Tablet:** Auf der Theke steht ein Tablet. E öffnet den Shop (Mauszeiger sichtbar,
-  Esc schließt ihn, die Figur steht solange still).
+  Esc oder das kleine Kreuz oben rechts schließt ihn, die Figur steht solange still). Der Shop
+  erscheint als Tablet – in derselben Gestaltung wie das Regal-Menü (gemeinsame Vorlage
+  `TabletFrame`, seit Etappe 3f); in Etappe 3g wird daraus ein Tablet mit Apps.
   - *Kaufen:* alle freigeschalteten Möbel, Deko, Wandfarben, Böden und Decken nach Kategorien,
     mit kleinem Vorschaubild, Preis und Stil-Merkmalen. Über der Liste helfen Filter beim Suchen
     (siehe „Filter“). Ein Klick legt etwas in den Warenkorb
@@ -145,38 +147,57 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
     Buchs obenauf. **Linksklick** stellt es genau dort ab. Nah an einem anderen Buch, an Deko
     oder an der Seitenwand rastet es bündig ein (`GameConfig.shelf_snap_distance`). Schaue
     ich zwischen zwei Bücher, schwebt die Vorschau davor; beim Abstellen rücken die Nachbarn
-    nur so weit zur Seite wie nötig. Passt es nicht (kein Platz, anderes Genre der Etage),
+    nur so weit zur Seite wie nötig. Passt es nicht (kein Platz, anderes Genre des Fachs),
     ist die Vorschau dezent rötlich und schüttelt sich beim Klick kurz – ganz ohne Text.
   - **Linksklick halten** (ein Ring füllt sich, `GameConfig.place_all_hold_time`): alle
-    getragenen Bücher, die zu den Etagen passen, auf einmal einräumen – sie füllen freie
-    Plätze von links nach rechts, zuerst auf Etagen mit genau ihrem Genre, dann auf gemischten.
-    Was nirgends passt, bleibt in der Hand. Ein kurzer Klick zählt erst beim Loslassen; solange
+    getragenen Bücher, die in die Fächer passen, auf einmal einräumen – **dort, wo ich
+    hinschaue** (seit Etappe 3f): Sie beginnen in dem Fach und an der Stelle, auf die ich
+    schaue, und füllen von dort die freien Plätze dieses Fachs (erst nach rechts, dann nach
+    links). Was dort nicht hinpasst (Platz oder Genre), kommt in die nächstgelegenen anderen
+    Fächer mit passendem Genre. Was nirgends passt, bleibt in der Hand. Ein kurzer Klick zählt erst beim Loslassen; solange
     der Ring läuft, wird nichts abgestellt.
   - **R** (kurzer Druck, ohne Halten und ohne Ring): Regal-Menü (seit Etappe 3e). R ist
     bewusst eine eigene, ruhige Taste – so öffnet sich nie aus Versehen ein Menü. E öffnet am
     Regal nichts, sondern blättert durch die Bücher in der Hand.
-  - **Genre pro Etage:** Jedes Brett hat sein eigenes Genre oder „Gemischt“, z. B. oben
-    „Gemischt“, darunter „Krimi“ und „Kinderbuch“. Etagen ohne Genre nehmen jedes Buch.
-- **Regal-Menü** (R am Regal), klein am rechten Rand. Es ist nie höher als das Bild: Bei vielen
-  Genres oder Etagen lässt sich der Mittelteil scrollen; Überschrift, Rückmeldung und
-  „Schließen“ bleiben immer sichtbar (bei jeder Auflösung). In Etappe 3f wird es neu gebaut.
-  - „Alle Etagen gleich“: ein Genre (oder „Gemischt“) für das ganze Regal mit einem Klick.
-  - „Etagen“: alle Etagen untereinander („Etage 1 (oben)“, „Etage 2“ …; beim Würfelregal z. B.
-    „Etage 2 links“), je eine Auswahlliste. Bücher, die nach einem Wechsel nicht mehr passen,
-    gleiten heraus und gehen ins Lager.
-  - „Aus dem Lager auffüllen“: Jede Etage bekommt passende Bücher aus dem Lager; sie gleiten
-    nacheinander in die freien Plätze (höchstens 2,5 Sekunden), je Genre nach Titel sortiert.
-    Gemischte Etagen werden gleichmäßig aus allen Genres befüllt, Etagen ohne Genre bleiben leer.
-  - „Buch aus dem Lager wählen …“: Cover-Kacheln der passenden Bücher im Lager; ein Klick legt
-    das Buch obenauf in die Hand, dann stellt man es mit Linksklick an die gewünschte Stelle.
-  - „Nach Genre und Titel sortieren“: Nur die Bücher rücken sanft an ihre neuen Plätze (dicht
-    an dicht von links, jedes auf eine passende Etage); Deko bleibt stehen.
-  - „Alle Bücher zurück ins Lager“.
+  - **Fächer** (seit Etappe 3f statt „Etagen“ – ein Würfelregal hat mehrere Fächer pro Reihe):
+    Sie sind von oben links nach unten rechts durchnummeriert (Fach 1, Fach 2 …). Jedes Fach
+    hat sein eigenes Genre oder „Gemischt“, z. B. oben „Gemischt“, darunter „Krimi“ und
+    „Kinderbuch“. Fächer ohne Genre nehmen jedes Buch.
+- **Regal-Menü als Tablet** (R am Regal, seit Etappe 3f): Es erscheint als Tablet, groß und gut
+  lesbar am rechten Bildrand – in derselben Gestaltung wie das Tablet an der Theke (gemeinsame
+  Vorlage `TabletFrame`). Es ist immer gleich groß und bei jeder Auflösung ganz zu sehen; eine
+  lange Fächerliste lässt sich scrollen. Bewusst schlicht: wenige klare Aktionen.
+  - Oben eine Leiste mit **Symbol-Knöpfen** statt langer Textzeilen; fährt die Maus darüber,
+    erscheint kurz ein Tooltip mit einem Wort:
+    - **Buch aus dem Lager:** Cover-Kacheln der passenden Bücher im Lager direkt auf dem
+      Tablet (Pfeil zurück); ein Klick legt das Buch obenauf in die Hand, dann stellt man es
+      mit Linksklick an die gewünschte Stelle.
+    - **Auffüllen:** Jedes Fach bekommt passende Bücher aus dem Lager, von oben nach unten;
+      sie gleiten nacheinander in die freien Plätze (höchstens 2,5 Sekunden), je Genre nach
+      Titel sortiert. Gemischte Fächer werden gleichmäßig aus allen Genres befüllt, Fächer
+      ohne Genre bleiben leer.
+    - **Sortieren** (Filtersymbol): Ein Klick öffnet eine kleine Auswahl – nach Genre und
+      Titel, nach Titel, nach Autor oder nach Farbe. Die Bücher rücken sanft an ihre neuen
+      Plätze (dicht an dicht von links, jedes in ein passendes Fach); Deko bleibt stehen. Das
+      Regal merkt sich die gewählte Art (wird gespeichert).
+    - **Alle ins Lager:** alle Bücher des Regals zurück ins Lager.
+  - Darunter **„Fächer“**: „Alle Fächer gleich“ (ein Genre oder „Gemischt“ für das ganze
+    Regal; sind die Fächer verschieden, steht dort „Verschieden“) und alle Fächer
+    untereinander, jedes mit einer Auswahlliste für sein Genre. Bücher, die nach einem
+    Wechsel nicht mehr passen, gleiten heraus und gehen ins Lager.
+  - **Fach hervorheben:** Fahre ich über die Auswahlliste eines Fachs oder klappe sie auf,
+    leuchtet genau dieses Fach im Regal dezent weiß (wie Möbel im Gestaltungsmodus); bei „Alle
+    Fächer gleich“ alle Fächer.
+  - **Das Regal bleibt sichtbar:** Beim Öffnen dreht sich die Ansicht sanft ein Stück nach
+    rechts (und zoomt bei Bedarf etwas heraus, höchstens bis `GameConfig.shelf_menu_max_fov`),
+    sodass das Regal links neben dem Tablet ganz zu sehen ist; die Kamera bleibt dabei an
+    ihrem Platz. Beim Schließen gleitet sie zurück. Steht man sehr nah (unter 1 m) vor einem
+    breiten Regal, kann sein äußerster Rand knapp hinter dem Tablet liegen.
   - Getragene Bücher räumt man nicht im Menü ein (dafür: Linksklick halten am Regal) und legt
     sie dort auch nicht ins Lager (dafür: Q halten) – jede Aktion hat nur einen Weg.
-  - Schließen mit Esc, R oder „Schließen“.
+  - Schließen mit dem kleinen Kreuz oben rechts (wie im Browser), Esc oder R.
 - **Genre ohne Schild:** Schaue ich ein Regal an, erscheint unten in der Bildmitte nur das
-  Genre-Wort der Etage, auf die ich schaue (z. B. „Krimi“), in ruhiger Serifenschrift; es
+  Genre-Wort des Fachs, auf das ich schaue (z. B. „Krimi“), in ruhiger Serifenschrift; es
   blendet sanft ein und aus.
 - **Deko im Regal:** Im Gestaltungsmodus lässt sich kleine Deko frei entlang der Regalbretter
   stellen (kleine Pflanzen, Kerzen, Figuren, Bilderrahmen, Vasen, Buchstützen …). Nur, was in
@@ -260,11 +281,12 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 
 ### Speichern der Bücher
 - Gespeichert werden Bestand, Sammlung, Regalinhalte (jedes Buch mit seiner Lage auf dem
-  Brett), das Genre jeder Etage, Deko in den Regalen, ausgelegte Bücher (Lage samt gewählter
+  Brett), das Genre jedes Fachs, die gewählte Sortierart jedes Regals, Deko in den Regalen, ausgelegte Bücher (Lage samt gewählter
   Drehung, Haltung, Möbelstück darunter), Inhalt des Rückgabekastens, die getragenen Bücher
   und welches obenauf liegt.
 - Ältere Spielstände laden weiter: Bücher ohne Lage stehen dicht von links, das bisherige
-  Regal-Genre gilt für alle Etagen, ausgelegte Bücher gibt es dort noch keine.
+  Regal-Genre gilt für alle Fächer, ausgelegte Bücher gibt es dort noch keine, sortiert wird
+  dort nach Genre und Titel.
 
 ### Testtasten (bis es Besucher und Einnahmen gibt)
 - **F9:** ein paar Bücher in den Rückgabekasten. **F10:** 500 Taler Testgeld
@@ -320,10 +342,10 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Maus           | Umsehen                                        |
 | E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Shop am Tablet öffnen, Bücher aus dem Rückgabekasten nehmen |
 | E beim Tragen  | Anderes Buch obenauf (Umschalt + E: zurück) – wenn das Angeschaute nichts mit E macht |
-| R              | Am Regal: Regal-Menü (noch einmal R oder Esc schließt es) |
+| R              | Am Regal: Regal-Menü als Tablet (noch einmal R, Esc oder das Kreuz schließt es) |
 | Rechtsklick    | Buch nehmen (Regal, Tisch, Boden, Rückgabekasten) – bis zu 7 tragen |
 | Linksklick     | Buch obenauf genau dort ablegen, wo ich hinschaue (Regal, Tisch, Boden …) |
-| Linksklick halten | Am Regal: alle getragenen Bücher einräumen, die zu den Etagen passen |
+| Linksklick halten | Am Regal: alle passenden Bücher einräumen – ab dem Fach und der Stelle, auf die ich schaue |
 | Mausrad        | Beim Tragen: Buch vor dem Ablegen drehen (flach oder angelehnt) |
 | Q halten       | Alle getragenen Bücher ins Lager legen         |
 | Tab            | Gestaltungsmodus (Inventar) öffnen/schließen   |
