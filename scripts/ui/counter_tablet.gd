@@ -43,7 +43,6 @@ var _money_label: Label
 var _home_view: Control
 var _app_area: Control
 var _refresh_queued := false
-var _wobble_tweens: Dictionary = {}  # Control -> Tween
 
 
 func _ready() -> void:
@@ -179,14 +178,16 @@ func wobble(control: Control = null) -> void:
 	for target: Control in [control, _carried_box]:
 		if target == null or not target.is_inside_tree():
 			continue
-		if _wobble_tweens.has(target) and (_wobble_tweens[target] as Tween).is_valid():
-			(_wobble_tweens[target] as Tween).kill()
+		var old: Tween = target.get_meta(&"wobble_tween", null)
+		if old and old.is_valid():
+			old.kill()
 		target.pivot_offset = target.size / 2.0
 		target.rotation = 0.0
-		var tween := create_tween()
+		# Am Knopf selbst angelegt: verschwindet der Knopf (Neuaufbau), endet auch das Wackeln
+		var tween := target.create_tween()
 		for angle in [0.12, -0.1, 0.07, -0.04, 0.0]:
 			tween.tween_property(target, "rotation", angle, 0.06)
-		_wobble_tweens[target] = tween
+		target.set_meta(&"wobble_tween", tween)
 	BookStock.show_hands_full()
 
 

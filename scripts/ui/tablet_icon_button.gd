@@ -49,7 +49,7 @@ func _ready() -> void:
 	if tooltip_text.is_empty():
 		tooltip_text = DEFAULT_TIPS.get(icon_kind, "")
 	var radius := int(custom_minimum_size.x / 2.0)
-	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
 		var box := StyleBoxFlat.new()
 		box.set_corner_radius_all(radius)
 		box.anti_aliasing = true
@@ -58,7 +58,7 @@ func _ready() -> void:
 				box.bg_color = Color(1.0, 0.95, 0.85, 0.07)
 			"hover":
 				box.bg_color = Color(1.0, 0.95, 0.85, 0.16)
-			"pressed":
+			"pressed", "hover_pressed":
 				box.bg_color = Color(1.0, 0.85, 0.6, 0.24)
 			"disabled":
 				box.bg_color = Color(1.0, 0.95, 0.85, 0.03)

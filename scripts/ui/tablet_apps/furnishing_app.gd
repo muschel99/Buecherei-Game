@@ -110,12 +110,16 @@ func show_category(index: int) -> void:
 
 func _on_category_pressed(index: int) -> void:
 	_item_scroll.scroll_vertical = 0
-	show_category(index)
+	_current_category = index
+	for i in _category_buttons.size():
+		_category_buttons[i].set_pressed_no_signal(i == index)
+	request_refresh()
 
 
+## Der Filter-Knopf wird beim Neuaufbau ersetzt – darum erst am Ende des Bilds.
 func _on_filter_changed() -> void:
 	_item_scroll.scroll_vertical = 0
-	show_category(_current_category)
+	request_refresh()
 
 
 # --- Verkaufen ---

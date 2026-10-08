@@ -72,7 +72,11 @@ func make_choice_button(text: String, action: Callable) -> Button:
 	var selected := TabletFrame.make_panel_style(Color(0.45, 0.31, 0.2, 1.0), 8, 8.0)
 	selected.border_color = TabletFrame.KEY_COLOR
 	selected.set_border_width_all(2)
-	selected.content_margin_left = 14
+	# Gleiche Innenabstände wie im Theme, damit der Text beim Auswählen nicht springt
+	selected.content_margin_left = 24
+	selected.content_margin_right = 24
+	selected.content_margin_top = 10
+	selected.content_margin_bottom = 10
 	button.add_theme_stylebox_override("pressed", selected)
 	button.add_theme_stylebox_override("hover_pressed", selected)
 	button.pressed.connect(action)
