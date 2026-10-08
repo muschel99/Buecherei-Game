@@ -118,6 +118,11 @@ func count_books(genre_id: String) -> int:
 	return count
 
 
+## Das ausgelegte Buch, das gerade angeschaut wird (oder null).
+func get_hovered() -> LooseBook:
+	return _hover
+
+
 ## Das Ziel für die Spielfigur, wenn sie ein ausgelegtes Buch anschaut.
 func get_interactable() -> Interactable:
 	return _interactable

@@ -1248,7 +1248,7 @@ func _create_ghost() -> void:
 
 ## R: Regal-Menü.
 func _on_menu_requested(_interactor: Node) -> void:
-	_open_menu()
+	open_menu()
 
 
 ## Buch nehmen (rechte Maustaste): das angeschaute Buch.
@@ -1277,7 +1277,8 @@ func _on_place_all_requested(_interactor: Node) -> void:
 			put_carried_at(_aim.row, _aim.x)
 
 
-func _open_menu() -> void:
+## Öffnet das Regal-Menü für dieses Regal (R – auch, wenn ich Deko darin anschaue).
+func open_menu() -> void:
 	_set_hover(null)
 	_set_plan({})
 	get_tree().call_group(ShelfMenu.GROUP, "open_for", self)

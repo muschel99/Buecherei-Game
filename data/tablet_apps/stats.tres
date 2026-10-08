@@ -4,10 +4,9 @@
 
 [resource]
 script = ExtResource("1_app")
-id = "books"
-display_name = "Bücherladen"
-tagline = "Bücherpakete je Genre"
-symbol = 8
-color = Color(0.62, 0.3, 0.24, 1)
-scene_path = "res://scenes/ui/tablet_apps/books_app.tscn"
-order = 20
+id = "stats"
+display_name = "Statistik"
+symbol = 5
+color = Color(0.34, 0.42, 0.52, 1)
+scene_path = "res://scenes/ui/tablet_apps/stats_app.tscn"
+order = 40

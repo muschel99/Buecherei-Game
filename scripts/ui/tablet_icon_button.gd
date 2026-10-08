@@ -6,7 +6,7 @@ extends Button
 ## Die Symbole sind einfache Formen (keine Bilddateien) – austauschbar: einfach "icon" mit
 ## einem eigenen Bild setzen, dann wird das Bild statt der Form gezeigt.
 
-enum Icon { CLOSE, BACK, PICK, FILL, SORT, STORE, HOME, BUY, SELL, TAKE, PLUS, MINUS, EXPAND, COLLAPSE }
+enum Icon { CLOSE, BACK, PICK, FILL, SORT, STORE, HOME, BUY, SELL, PLUS, MINUS, EXPAND, COLLAPSE, NEXT, CONTENTS }
 
 const DEFAULT_TIPS := {
 	Icon.CLOSE: "Schließen",
@@ -18,14 +18,15 @@ const DEFAULT_TIPS := {
 	Icon.HOME: "Startbildschirm",
 	Icon.BUY: "Kaufen",
 	Icon.SELL: "Verkaufen",
-	Icon.TAKE: "In die Hand",
 	Icon.PLUS: "Mehr",
 	Icon.MINUS: "Weniger",
-	Icon.EXPAND: "Titel zeigen",
-	Icon.COLLAPSE: "Titel ausblenden",
+	Icon.EXPAND: "Aufklappen",
+	Icon.COLLAPSE: "Zuklappen",
+	Icon.NEXT: "Weiter",
+	Icon.CONTENTS: "Inhalt",
 }
 ## Kleine Knöpfe (Kreuz, Pfeile, Plus, Minus …): 34 Pixel, die anderen 46
-const SMALL_ICONS := [Icon.CLOSE, Icon.BACK, Icon.HOME, Icon.PLUS, Icon.MINUS, Icon.EXPAND, Icon.COLLAPSE]
+const SMALL_ICONS := [Icon.CLOSE, Icon.BACK, Icon.HOME, Icon.PLUS, Icon.MINUS, Icon.EXPAND, Icon.COLLAPSE, Icon.NEXT]
 const LINE_COLOR := Color(1.0, 0.94, 0.84, 0.92)
 const HOVER_COLOR := Color(0.96, 0.78, 0.48)
 const DISABLED_COLOR := Color(0.85, 0.78, 0.68, 0.3)
@@ -140,16 +141,20 @@ func _draw() -> void:
 			var tip := c + Vector2(10, -12)
 			draw_line(tip, tip + Vector2(0, 10), color, w, true)
 			draw_polyline(PackedVector2Array([tip + Vector2(-3.5, 3.5), tip, tip + Vector2(3.5, 3.5)]), color, w, true)
-		Icon.TAKE:
-			# Ein Buch, darunter eine offene Hand (Schale)
-			_draw_rect_outline(Rect2(c + Vector2(-6, -13), Vector2(12, 14)), color, w)
-			draw_line(c + Vector2(-3, -12), c + Vector2(-3, 0), color, 1.5, true)
-			draw_arc(c + Vector2(0, 2), 11.0, 0.25 * PI, 0.75 * PI, 16, color, w, true)
 		Icon.PLUS, Icon.MINUS:
 			var r := 6.0
 			draw_line(c + Vector2(-r, 0), c + Vector2(r, 0), color, w, true)
 			if icon_kind == Icon.PLUS:
 				draw_line(c + Vector2(0, -r), c + Vector2(0, r), color, w, true)
+		Icon.NEXT:
+			var r := 6.0
+			draw_polyline(PackedVector2Array([c + Vector2(-r * 0.5, -r), c + Vector2(r * 0.6, 0), c + Vector2(-r * 0.5, r)]), color, w, true)
+		Icon.CONTENTS:
+			# Inhaltsverzeichnis: drei Zeilen mit Punkt davor
+			for i in 3:
+				var y := -7.0 + i * 7.0
+				draw_circle(c + Vector2(-9, y), 1.6, color)
+				draw_line(c + Vector2(-5, y), c + Vector2(10, y), color, w, true)
 		Icon.EXPAND, Icon.COLLAPSE:
 			var r := 6.0
 			var dy := 2.5 if icon_kind == Icon.EXPAND else -2.5

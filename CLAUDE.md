@@ -55,6 +55,7 @@ data/
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
   genres/          Datenblätter der Buch-Genres (.tres)
   books/           Bücherlisten (.txt, eine je Genre, eine Zeile pro Buch: Titel | Motiv)
+  tips/            Texte der App „Tipps & Tricks“ (tips.txt, Aufbau oben in der Datei)
   tablet_apps/     Datenblätter der Tablet-Apps (.tres) – werden automatisch auf den Startbildschirm geladen
 assets/
   models/          Eigene 3D-Modelle (.glb)
@@ -83,20 +84,27 @@ docs/              Dokumentation
 - **Menüs von Objekten öffnet R** (Aktion `open_menu`): Interactable mit `menu_text` (Wort neben
   dem R-Symbol, leer = kein Menü) und Signal `menu_requested`. Kurzer Druck, kein Halten, nie E –
   so öffnet sich nie aus Versehen ein Menü. Bisher: Regal-Menü (schließt mit R, Esc oder Kreuz).
-- **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet/Shop), nutzt die
+  **R geht überall:** Hat das Angeschaute kein Menü (`Interactable.has_menu()`), öffnet R
+  dasselbe Menü ohne Regal (`ShelfMenu.open_for(null)`): Regal-Teile ausgegraut, Bücherauswahl
+  aktiv. Bücher aus dem Lager in die Hand nimmt man **nur** dort (Menü bleibt offen, bis die
+  Hände voll sind). Code im ShelfMenu muss immer mit `shelf == null` klarkommen.
+- **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit Apps), nutzt die
   gemeinsame Vorlage `TabletFrame` (Gehäuse + Bildschirm, Farben `TabletFrame.TEXT_COLOR` …,
   `make_label`, `make_close_button` = Kreuz oben rechts). Knöpfe sind Symbol-Knöpfe
   (`TabletIconButton`, gezeichnete Symbole, Tooltip mit einem Wort) statt langer Textzeilen.
   Tooltips und aufklappende Listen haben ihren Stil im Theme (`assets/ui/cozy_theme.tres`).
 - **Theken-Tablet** (`CounterTablet`, Gruppe `counter_tablet`, `open_tablet()`, `open_app(id)`,
-  `go_home()`): Startbildschirm mit App-Symbolen, Leiste mit Home, Kontostand, getragenen
-  Büchern, Kreuz. Esc schließt immer das ganze Tablet; Öffnen startet immer auf dem
+  `go_home()`): Startbildschirm mit App-Symbolen, Leiste mit Home, Logo + Name (+ Untertitel)
+  der App, Kontostand, Kreuz. Esc schließt immer das ganze Tablet; Öffnen startet immer auf dem
   Startbildschirm. **Neue App = neue Szene** in `scenes/ui/tablet_apps/` (Wurzel-Script erbt von
   `TabletApp`: `app_opened()`, `refresh()`, Bausteine `make_label` …; `request_refresh()` statt
   direkt neu aufbauen, wenn ein Knopf sich selbst ersetzen würde) **+ Datenblatt**
-  `data/tablet_apps/<id>.tres` (`TabletAppData`: Name, Symbol oder eigenes Bild, Farbe,
-  Reihenfolge) – kein Code am Startbildschirm. Einkaufs-Apps erben von `ShopApp` (Warenkorb,
-  Angebotskarten). Volle Hände im Tablet: `tablet.wobble(knopf)` (ohne Text).
+  `data/tablet_apps/<id>.tres` (`TabletAppData`: Name = bei Läden der Ladenname, `tagline`,
+  Symbol oder eigenes Bild, Farbe, Reihenfolge; neue Symbole hinten an das Enum anhängen) – kein
+  Code am Startbildschirm. Einkaufs-Apps erben von `ShopApp` (Warenkorb, Angebotskarten).
+  Apps: Nest & Nook (furnishing), Bücherladen (books), Lager (storage, nur Übersicht +
+  Sammlung), Statistik (stats; neue Werte über Gruppe `stat_sources` mit `get_stats()`),
+  Tipps & Tricks (tips; Texte in `data/tips/tips.txt`).
 - **Jede Aktion hat nur einen Weg** (z. B. getragene Bücher einräumen = Linksklick halten am
   Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü).
 - **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
@@ -143,12 +151,12 @@ docs/              Dokumentation
 - `FurnitureData.is_essential` = gehört fest zur Bücherei (Tablet): nicht kaufbar, nicht
   verkaufbar; `Room.ensure_essentials()` stellt es zurück, falls es fehlt.
   `SurfaceData.owned_at_start` = von Anfang an vorhanden.
-- **Einkaufen:** Apps „Einrichtung“ (Möbel, Deko, Oberflächen; Kaufen/Verkaufen) und „Bücher“
-  (Pakete) am Theken-Tablet; Bestellungen gehen an den `DeliveryManager` (Gruppe
+- **Einkaufen:** Läden „Nest & Nook“ (Möbel, Deko, Oberflächen; Kaufen/Verkaufen) und
+  „Bücherladen“ (Pakete) am Theken-Tablet; Bestellungen gehen an den `DeliveryManager` (Gruppe
   `delivery_manager`, `place_order(inhalt)`), Inhalt als Liste von
   `{ "kind": "furniture"/"surface"/"books", "id": …, "count": … }` (bei "books": id = Genre,
-  count = Zahl der Bücherpakete). Bücher aus dem Lager in die Hand: App „Bestand“
-  (`BookStock.take_books` + `carry`, Rest mit `put_back_first` zurück).
+  count = Zahl der Bücherpakete). Bücher aus dem Lager in die Hand: nur im R-Menü
+  (`BookStock.take_stored_book` + `carry`).
 - Lieferung: ein Karton pro Objekt (`DeliveryManager.split_contents`); Kartons stehen in Stapeln
   (`_stacks`), Lieferort = Marker3D `Outside/Deliveries`. Der E-Zielbereich eines Kartons darf
   nicht über ihn hinausragen (sonst trifft man beim Stapel den falschen).

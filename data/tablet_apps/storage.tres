@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_app")
-id = "collection"
-display_name = "Sammlung"
-symbol = 3
-color = Color(0.3, 0.4, 0.56, 1)
-scene_path = "res://scenes/ui/tablet_apps/collection_app.tscn"
-order = 40
+id = "storage"
+display_name = "Lager"
+symbol = 2
+color = Color(0.68, 0.5, 0.25, 1)
+scene_path = "res://scenes/ui/tablet_apps/storage_app.tscn"
+order = 30

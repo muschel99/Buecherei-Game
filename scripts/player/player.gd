@@ -7,7 +7,9 @@ extends CharacterBody3D
 ## (Umschalt + E rückwärts) – Lampe, Tür, Karton, Sitz, Tablet usw. haben Vorrang.
 ## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
 ## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
-## R öffnet das Menü des angeschauten Objekts (z. B. Regal-Menü, Interactable.menu_requested).
+## R öffnet das Menü des angeschauten Objekts (Regal-Menü, Interactable.menu_requested) – auch
+## für Deko und Bücher, die in einem Regal stehen; sonst dasselbe Menü ohne Regal
+## (ShelfMenu.open_for(null)). R geht auch im Sitzen.
 ## Bücher (nur mit der Maus, alles andere bleibt bei E):
 ## - Rechtsklick nimmt das angeschaute Buch (Interactable.take_requested).
 ## - Linksklick legt das Buch obenauf genau dort ab, wo ich hinschaue: ins Regal
@@ -95,7 +97,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look_around(event.relative)
-	elif (event.is_action_pressed("interact") or event.is_action_pressed("jump")) and is_seated():
+	elif (event.is_action_pressed("interact") or event.is_action_pressed("jump")) and is_seated() and movement_enabled:
 		stand_up()
 	elif event.is_action_pressed("interact") and interaction_enabled:
 		_start_interact(event is InputEventWithModifiers and event.shift_pressed)
@@ -119,20 +121,50 @@ func _unhandled_input(event: InputEvent) -> void:
 		_start_place()
 	elif event.is_action_released("book_place"):
 		_finish_place()
-	elif event.is_action_pressed("open_menu") and interaction_enabled and not is_seated():
-		# R: Menü des angeschauten Objekts (z. B. Regal-Menü) – sonst passiert nichts
-		if is_instance_valid(_current_target):
+	elif event.is_action_pressed("open_menu") and interaction_enabled:
+		# R (auch im Sitzen): Menü des angeschauten Objekts (Regal-Menü); steht das Angeschaute
+		# in einem Regal (Deko, ausgelegtes Buch), das Menü dieses Regals – sonst dasselbe Menü
+		# ohne Regal (Bücher aus dem Lager wählen geht überall, Regal-Teile sind ausgegraut)
+		if is_instance_valid(_current_target) and _current_target.has_menu():
 			_current_target.request_menu(self)
+		else:
+			var shelf := _shelf_holding_target()
+			if shelf:
+				shelf.open_menu()
+			else:
+				get_tree().call_group(ShelfMenu.GROUP, "open_for", null)
 	elif event.is_action_pressed("store_books") and interaction_enabled and not BookStock.carried.is_empty():
 		_store_hold_time = 0.0
 	elif event.is_action_released("store_books"):
 		_cancel_store_hold()
 
 
+## Steht das angeschaute Ding (Deko oder ein ausgelegtes Buch) auf einem Brett eines Regals?
+## Dann liefert es dieses Regal (für R), sonst null.
+func _shelf_holding_target() -> BookShelf:
+	if not is_instance_valid(_current_target):
+		return null
+	var support_uid := 0
+	var loose := _current_target.get_parent() as LooseBooks
+	if loose and loose.get_hovered():
+		support_uid = loose.get_hovered().support_uid
+	else:
+		var item := FurnitureUtils.find_placed_furniture(_current_target)
+		if item:
+			support_uid = item.support_uid
+	if support_uid <= 0:
+		return null
+	for shelf: BookShelf in get_tree().get_nodes_in_group(BookStock.SHELF_GROUP):
+		var holder := FurnitureUtils.find_placed_furniture(shelf)
+		if holder and holder.uid == support_uid:
+			return shelf
+	return null
+
+
 func _physics_process(delta: float) -> void:
 	if _seat or (_sit_tween and _sit_tween.is_running()):
 		# Im Sitzen (und während des Hinsetzens/Aufstehens) nicht laufen
-		if _seat and not (_sit_tween and _sit_tween.is_running()) \
+		if _seat and not (_sit_tween and _sit_tween.is_running()) and movement_enabled \
 				and Input.get_vector("move_left", "move_right", "move_forward", "move_back") != Vector2.ZERO:
 			stand_up()
 		camera.position.y = lerpf(camera.position.y, 0.0, 10.0 * delta)

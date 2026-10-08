@@ -9,6 +9,8 @@ extends ScrollContainer
 ##   "note":    kleiner Text unter dem Titel, z. B. "×2 im Lager"
 ##   "enabled": false = nicht anklickbar (ausgegraut)
 ## Ein Klick auf eine Kachel sendet book_chosen(data).
+## interactive = false: nur zum Anschauen (z. B. die Sammlung in der Lager-App) – keine Kachel
+## ist anklickbar, aber auch keine ausgegraut.
 
 signal book_chosen(data: BookData)
 
@@ -16,6 +18,9 @@ const CARD_WIDTH := 112.0
 const COVER_WIDTH := 92.0
 const TEXT_COLOR := Color(1.0, 0.96, 0.88)
 const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.85)
+
+## false = nur zum Anschauen (keine Kachel anklickbar, nichts ausgegraut).
+var interactive := true
 
 var _flow: HFlowContainer
 var _normal_style: StyleBoxFlat
@@ -59,7 +64,9 @@ func _create_card(entry: Dictionary) -> Button:
 	card.add_theme_stylebox_override("hover", _hover_style)
 	card.add_theme_stylebox_override("pressed", _hover_style)
 	card.add_theme_stylebox_override("disabled", _normal_style)
-	card.disabled = not entry.get("enabled", true) or not known
+	card.disabled = not entry.get("enabled", true) or not known or not interactive
+	if not interactive:
+		card.add_theme_stylebox_override("hover", _normal_style)
 	if not card.disabled:
 		card.pressed.connect(func() -> void: book_chosen.emit(data))
 	var box := VBoxContainer.new()
@@ -105,7 +112,7 @@ func _create_card(entry: Dictionary) -> Button:
 		note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		note_label.custom_minimum_size = Vector2(COVER_WIDTH, 0)
 		box.add_child(note_label)
-	if card.disabled and known:
+	if card.disabled and known and interactive:
 		card.modulate.a = 0.75
 	# Kachel hoch genug für Cover, bis zu drei Titelzeilen und den kleinen Text
 	card.custom_minimum_size.y = cover_height + 92.0

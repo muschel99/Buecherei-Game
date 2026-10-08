@@ -3,9 +3,9 @@ extends CanvasLayer
 ## Das Tablet auf der Theke (E am Tablet): ein echtes kleines Tablet mit Startbildschirm und Apps,
 ## in derselben Gestaltung wie das Regal-Menü (TabletFrame).
 ##
-## - Oben eine schmale Leiste: links das Home-Symbol (in einer App) und der Name der App,
-##   rechts dezent die getragenen Bücher (Stapel-Symbol mit Zahl), der Kontostand und das
-##   Kreuz zum Schließen.
+## - Oben eine schmale Leiste: links das Home-Symbol (in einer App), das kleine Logo und der
+##   Name der App (bei Läden der Ladenname mit kurzem Untertitel), rechts dezent der Kontostand
+##   und das Kreuz zum Schließen.
 ## - Startbildschirm: große App-Symbole mit Namen auf ruhigem Hintergrund (TabletWallpaper).
 ##   Ein Klick öffnet die App, das Home-Symbol führt zurück.
 ## - Esc und das Kreuz schließen immer das ganze Tablet (Esc-Regel über MenuStack). Beim
@@ -35,10 +35,9 @@ var _current: TabletApp = null
 var _current_id := ""
 var _frame: TabletFrame
 var _home_button: TabletIconButton
+var _app_logo: TabletAppIcon
 var _app_title: Label
-var _carried_box: HBoxContainer
-var _carried_icon: TextureRect
-var _carried_label: Label
+var _app_tagline: Label
 var _money_label: Label
 var _home_view: Control
 var _app_area: Control
@@ -58,7 +57,6 @@ func _ready() -> void:
 	Wallet.money_changed.connect(func(_money: int, _change: int) -> void: _queue_refresh())
 	Inventory.changed.connect(_queue_refresh)
 	BookStock.changed.connect(_queue_refresh)
-	BookStock.carried_changed.connect(_queue_refresh)
 
 
 func _process(_delta: float) -> void:
@@ -78,6 +76,14 @@ static func load_apps() -> Array[TabletAppData]:
 	result.sort_custom(func(a: TabletAppData, b: TabletAppData) -> bool:
 		return a.order < b.order if a.order != b.order else a.display_name < b.display_name)
 	return result
+
+
+## Name einer App aus ihrem Datenblatt (z. B. der Ladenname "Nest & Nook" für "furnishing").
+static func get_app_name(id: String) -> String:
+	for app in load_apps():
+		if app.id == id:
+			return app.display_name
+	return id
 
 
 func get_apps() -> Array[TabletAppData]:
@@ -131,7 +137,9 @@ func go_home() -> void:
 	_app_area.hide()
 	_home_view.show()
 	_home_button.hide()
+	_app_logo.hide()
 	_app_title.text = ""
+	_app_tagline.text = ""
 
 
 ## Öffnet eine App (id aus ihrem Datenblatt). Liefert die App (oder null).
@@ -162,7 +170,10 @@ func open_app(id: String) -> TabletApp:
 	_app_area.show()
 	_current.show()
 	_home_button.show()
+	_app_logo.setup(data)
+	_app_logo.show()
 	_app_title.text = data.display_name
+	_app_tagline.text = data.tagline
 	_current.app_opened()
 	_current.refresh()
 	return _current
@@ -170,25 +181,6 @@ func open_app(id: String) -> TabletApp:
 
 func get_current_app_id() -> String:
 	return _current_id
-
-
-## Ein sanftes, kurzes Wackeln (z. B. "Hände voll" – ganz ohne Text). Wackelt außerdem
-## das Stapel-Symbol oben in der Leiste.
-func wobble(control: Control = null) -> void:
-	for target: Control in [control, _carried_box]:
-		if target == null or not target.is_inside_tree():
-			continue
-		var old: Tween = target.get_meta(&"wobble_tween", null)
-		if old and old.is_valid():
-			old.kill()
-		target.pivot_offset = target.size / 2.0
-		target.rotation = 0.0
-		# Am Knopf selbst angelegt: verschwindet der Knopf (Neuaufbau), endet auch das Wackeln
-		var tween := target.create_tween()
-		for angle in [0.12, -0.1, 0.07, -0.04, 0.0]:
-			tween.tween_property(target, "rotation", angle, 0.06)
-		target.set_meta(&"wobble_tween", tween)
-	BookStock.show_hands_full()
 
 
 # --- Anzeige ---
@@ -210,15 +202,6 @@ func _refresh() -> void:
 	if not is_open:
 		return
 	_money_label.text = Wallet.format(Wallet.money)
-	var carried := BookStock.carried.size()
-	_carried_label.text = "%d / %d" % [carried, GameConfig.max_carried_books]
-	# Stapel-Symbol im Genre des Buchs obenauf (mit leeren Händen blass)
-	var active := BookStock.get_active_book()
-	var genres := Catalog.get_all_genres()
-	var genre: GenreData = active.get_genre() if active else (genres[0] if not genres.is_empty() else null)
-	_carried_icon.texture = BookIcons.get_stack_icon(genre) if genre else null
-	_carried_box.modulate.a = 1.0 if carried > 0 else 0.45
-	_carried_box.tooltip_text = "In der Hand"
 	if _current:
 		_current.refresh()
 
@@ -251,28 +234,28 @@ func _build() -> void:
 	_home_button.icon_kind = TabletIconButton.Icon.HOME
 	_home_button.pressed.connect(go_home)
 	bar.add_child(_home_button)
+	# Kleines Logo der App, Name und (bei Läden) ein kurzer Untertitel
+	_app_logo = TabletAppIcon.new()
+	_app_logo.compact = true
+	_app_logo.custom_minimum_size = Vector2(38, 38)
+	_app_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_app_logo.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_app_logo.hide()
+	bar.add_child(_app_logo)
+	var names := HBoxContainer.new()
+	names.add_theme_constant_override("separation", 12)
+	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.add_child(names)
 	_app_title = TabletFrame.make_label("", 22, TabletFrame.TEXT_COLOR)
 	_app_title.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_app_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_app_title.custom_minimum_size.x = 0
 	_app_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bar.add_child(_app_title)
-	_carried_box = HBoxContainer.new()
-	_carried_box.add_theme_constant_override("separation", 6)
-	_carried_box.mouse_filter = Control.MOUSE_FILTER_PASS
-	bar.add_child(_carried_box)
-	_carried_icon = TextureRect.new()
-	_carried_icon.custom_minimum_size = Vector2(26, 26)
-	_carried_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_carried_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_carried_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_carried_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_carried_box.add_child(_carried_icon)
-	_carried_label = TabletFrame.make_label("", 16, TabletFrame.MUTED_COLOR)
-	_carried_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_carried_label.custom_minimum_size.x = 0
-	_carried_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_carried_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_carried_box.add_child(_carried_label)
+	names.add_child(_app_title)
+	_app_tagline = TabletFrame.make_label("", 16, TabletFrame.MUTED_COLOR)
+	_app_tagline.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_app_tagline.custom_minimum_size.x = 0
+	_app_tagline.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	names.add_child(_app_tagline)
 	_money_label = TabletFrame.make_label("", 17, TabletFrame.KEY_COLOR)
 	_money_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_money_label.custom_minimum_size.x = 0
@@ -299,7 +282,9 @@ func _build() -> void:
 	grid.alignment = FlowContainer.ALIGNMENT_CENTER
 	grid.add_theme_constant_override("h_separation", 36)
 	grid.add_theme_constant_override("v_separation", 24)
-	grid.custom_minimum_size.x = 4.0 * (TabletAppIcon.TILE_SIZE + 40.0) + 3.0 * 36.0
+	# Bis zu fünf Apps nebeneinander, mehr laufen in die nächste Reihe
+	var columns := clampi(_apps.size(), 1, 5)
+	grid.custom_minimum_size.x = columns * (TabletAppIcon.TILE_SIZE + 40.0) + (columns - 1) * 36.0
 	center.add_child(grid)
 	for app in _apps:
 		var icon := TabletAppIcon.new()

@@ -1,6 +1,6 @@
 class_name ShopApp
 extends TabletApp
-## Gemeinsame Grundlage der Einkaufs-Apps auf dem Theken-Tablet ("Einrichtung" und "Bücher"):
+## Gemeinsame Grundlage der Einkaufs-Apps auf dem Theken-Tablet ("Nest & Nook" und "Bücherladen"; die Namen stehen in den Datenblättern data/tablet_apps/):
 ## Angebotskarten mit Vorschau, Name, Stilen und Preis, dazu ein Warenkorb mit "Bestellen".
 ## Bestellen bezahlt (Wallet) und gibt die Bestellung an den Lieferdienst (DeliveryManager) –
 ## kurz darauf stehen die Kartons vor der Tür. Jede App hat ihren eigenen Warenkorb.

@@ -143,6 +143,11 @@ func request_place_all(interactor: Node) -> void:
 		place_all_requested.emit(interactor)
 
 
+## Hat das Objekt ein eigenes Menü (Taste R)?
+func has_menu() -> bool:
+	return is_enabled and not menu_text.is_empty()
+
+
 ## Menü öffnen (von der Spielfigur aufgerufen, Taste R).
 func request_menu(interactor: Node) -> void:
 	if is_enabled and not menu_text.is_empty():
