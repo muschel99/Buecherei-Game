@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_6bwip")
+books_can_lie = true
 id = "cushion"
 display_name = "Kissen, salbeigrün"
 description = "Für Sessel, Sofa und Fensterbank."

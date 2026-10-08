@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_1h768")
+books_can_lie = true
 id = "blanket"
 display_name = "Karierte Wolldecke"
 description = "Ordentlich gefaltet, für Sessel und Sofa."

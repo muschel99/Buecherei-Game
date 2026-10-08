@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_576c1")
+books_can_lean = true
 id = "sofa_chesterfield"
 display_name = "Chesterfield-Sofa"
 description = "Gestepptes Leder mit Messingfüßen."

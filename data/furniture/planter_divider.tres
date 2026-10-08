@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_pktrt")
+books_can_lean = true
 id = "planter_divider"
 display_name = "Pflanzenwand"
 description = "Pflanzkasten mit Rankgitter."

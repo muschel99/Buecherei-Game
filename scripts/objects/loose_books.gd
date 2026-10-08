@@ -365,14 +365,23 @@ func _compute_plan(from: Vector3, direction: Vector3, book: Book) -> Dictionary:
 		return _plan_flat(book, point, (collider as PlacementSurface).get_surface_height(),
 			item.uid if item else 0, direction)
 	var furniture := FurnitureUtils.find_placed_furniture(collider)
+	var stand := BookStand.find_in(furniture)
+	if stand:
+		return _plan_in_stand(book, stand, furniture)  # Buch-Aufsteller
 	if furniture and furniture.data and furniture.data.subcategory == "bookend":
 		return _plan_beside_bookend(book, furniture, point)
 	if normal.y > 0.7:
 		if furniture == null:
 			return _plan_flat(book, point, point.y, 0, direction)  # Boden
+		if furniture.data and furniture.data.books_can_lie:
+			return _plan_flat(book, point, point.y, furniture.uid, direction)  # Polster (Kissen, Decke)
 		return _invalid_plan(book, point, direction)  # z. B. oben auf einer Lampe
 	if absf(normal.y) < 0.4 and furniture == null:
 		return _plan_leaning(book, point, normal, direction)  # Wand
+	if absf(normal.y) < 0.4 and furniture.data and furniture.data.books_can_lean:
+		# Lehne, großer Blumentopf …: angelehnt wie an der Wand; ist das Möbelstück dort
+		# niedriger als das Buch, liegt das Buch an seiner Oberkante an
+		return _plan_leaning(book, point, normal, direction, _top_of(collider, point, normal))
 	# Seite eines Möbelstücks: flach auf den Boden bzw. die Ablage darunter, genau dort, wo ich
 	# hinschaue – ragt es dabei in das Möbelstück hinein, ist die Vorschau rot (kein Abprallen)
 	var flat_normal := Vector3(normal.x, 0.0, normal.z).normalized()
@@ -423,6 +432,12 @@ func _plan_flat(book: Book, world_point: Vector3, surface_height: float, support
 ## Auf ein ausgelegtes Buch: flach darauf (Stapel) bzw. aufrecht daneben.
 func _plan_on_entry(book: Book, entry: LooseBook, local_point: Vector3, direction: Vector3) -> Dictionary:
 	var entry_world := global_transform * entry.transform
+	if entry.pose == LooseBook.Pose.DISPLAYED:
+		# Ein Buch im Aufsteller: Der ist schon belegt (rot, nichts passiert)
+		return {"book": book, "ok": false, "transform": entry.transform, "support_uid": entry.support_uid,
+			"pose": LooseBook.Pose.DISPLAYED}
+	if entry.is_flat() and absf(local_point.x) < 0.45:
+		return _plan_against_stack(book, entry, local_point, direction)  # Seite eines Stapels
 	if entry.is_flat():
 		# Leicht versetzt auf den Stapel, ungefähr gleich ausgerichtet
 		var forward := entry_world.basis.y.normalized()
@@ -455,6 +470,60 @@ func _plan_on_entry(book: Book, entry: LooseBook, local_point: Vector3, directio
 	var new_basis := _leaning_basis(book.data.size, wall_normal, _lean_turn())
 	var offset := _half_extent(entry_world.basis, along) + _half_extent(new_basis, along) + 0.02
 	return _plan_leaning(book, wall_point + along * side_sign * offset, wall_normal, direction)
+
+
+## In einen Buch-Aufsteller: genau ein Buch, nach hinten geneigt, Cover nach vorn. Ist er schon
+## belegt oder stößt das Buch irgendwo an (z. B. das Regalbrett darüber), ist die Vorschau rot.
+func _plan_in_stand(book: Book, stand: BookStand, item: PlacedFurniture) -> Dictionary:
+	var world := stand.get_book_transform(book.data.size)
+	var occupied := false
+	for entry in _entries:
+		if entry.support_uid == item.uid and not entry.hidden:
+			occupied = true
+	var ok := not occupied and (_room == null or _room.is_inside_build_area(world.origin)) \
+		and not _blocked_by_solid(world, [stand.get_body_rid()])
+	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
+		"support_uid": item.uid, "pose": LooseBook.Pose.DISPLAYED}
+
+
+## An die Seite eines liegenden Stapels gelehnt (wie leicht heruntergerutscht): steht auf
+## derselben Ablage, liegt oben an der Kante des Stapels an.
+func _plan_against_stack(book: Book, entry: LooseBook, local_point: Vector3, direction: Vector3) -> Dictionary:
+	var entry_world := global_transform * entry.transform
+	# Welche Seite des Buchs schaue ich an? (lokal: y = Oberkante, z = Rücken; x = Cover oben)
+	var local_normal := Vector3(0.0, signf(local_point.y), 0.0) if absf(local_point.y) >= absf(local_point.z) \
+		else Vector3(0.0, 0.0, signf(local_point.z))
+	var normal := entry_world.basis.orthonormalized() * local_normal
+	var n := Vector3(normal.x, 0.0, normal.z)
+	if n.length() < 0.1:
+		return {}
+	n = n.normalized()
+	# Der ganze Stapel: so weit hinaus, wie das am weitesten vorstehende Buch reicht
+	var bottom := _bottom_of_stack(entry)
+	var hit_point := entry_world * local_point
+	var plane := -INF
+	var top := bottom
+	for other in _stack_from(bottom, entry_world):
+		var other_world := global_transform * other.transform
+		plane = maxf(plane, n.dot(other_world.origin - hit_point) + _half_extent(other_world.basis, n))
+		top = maxf(top, other_world.origin.y + _vertical_half(other_world))
+	var wall_point := hit_point + n * maxf(plane, 0.0)
+	return _plan_leaning(book, Vector3(wall_point.x, bottom + 0.01, wall_point.z), n, direction, top)
+
+
+## Die Bücher eines Stapels, der bei "bottom" beginnt (lückenlos übereinander, über "world").
+func _stack_from(bottom: float, world: Transform3D) -> Array[LooseBook]:
+	var result: Array[LooseBook] = []
+	var top := bottom
+	for entry in _sorted_by_bottom(_overlapping(world, bottom, STACK_REACH)):
+		var entry_world := global_transform * entry.transform
+		var half := _vertical_half(entry_world)
+		if entry_world.origin.y - half > top + STACK_GAP:
+			break
+		if entry.is_flat():
+			result.append(entry)
+			top = maxf(top, entry_world.origin.y + half)
+	return result
 
 
 ## Aufrecht neben einer Buchstütze: Rücken nach vorn, bündig an ihrer Seite (der Seite, auf
@@ -519,20 +588,61 @@ func _plan_in_row(book: Book, neighbor: Transform3D, side: float, support_uid: i
 
 
 ## An eine Wand gelehnt: steht auf dem Boden bzw. der Ablage davor, Cover zeigt in den Raum.
-func _plan_leaning(book: Book, wall_point: Vector3, wall_normal: Vector3, direction: Vector3) -> Dictionary:
+## top: Oberkante dessen, woran es lehnt (Höhe in der Welt; INF = Wand, höher als jedes Buch).
+func _plan_leaning(book: Book, wall_point: Vector3, wall_normal: Vector3, direction: Vector3,
+		top: float = INF) -> Dictionary:
 	var n := Vector3(wall_normal.x, 0.0, wall_normal.z).normalized()
 	var ground := _find_ground(wall_point + n * 0.05)
 	if ground.is_empty():
 		return {}  # zu hoch an der Wand: keine Vorschau (sonst schwebt beim Umsehen ständig eine)
 	var basis := _leaning_basis(book.data.size, n, _lean_turn())
-	# So weit vor die Wand und über den Boden, dass das Buch gerade anliegt bzw. aufsteht
+	# So weit vor die Wand und über den Boden, dass das Buch gerade anliegt bzw. aufsteht –
+	# bei etwas Niedrigerem (Armlehne, Bücherstapel) liegt es an dessen Oberkante an
 	var base := Vector3(wall_point.x, ground.height, wall_point.z)
-	var origin := base + n * (_half_extent(basis, n) + 0.003) + Vector3.UP * (_vertical_half_of(basis) + LIFT)
+	var reach := _lean_reach(basis, n, top - ground.height - LIFT)
+	var origin := base + n * (reach + 0.003) + Vector3.UP * (_vertical_half_of(basis) + LIFT)
 	var world := Transform3D(basis, origin)
 	var ok := (_room == null or _room.is_inside_build_area(origin)) and _overlapping(world, ground.height).is_empty() \
 		and not _blocked_by_solid(world)
 	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
 		"support_uid": ground.support_uid, "pose": LooseBook.Pose.LEANING}
+
+
+## Wie weit ragt ein angelehntes Buch (Lage basis, Mitte = 0) in Richtung der Wand (-n) – nur
+## bis zur Höhe contact_height über seiner Unterkante gezählt (dort liegt es an; darüber ist
+## nichts mehr, woran es stoßen könnte). INF = ganz (wie an einer Wand).
+static func _lean_reach(basis: Basis, n: Vector3, contact_height: float) -> float:
+	var bottom := -_vertical_half_of(basis)
+	var limit := bottom + maxf(contact_height, 0.0)
+	var corners: Array[Vector3] = []
+	for i in 8:
+		corners.append(basis.x * ((i & 1) - 0.5) + basis.y * (((i >> 1) & 1) - 0.5) + basis.z * (((i >> 2) & 1) - 0.5))
+	var reach := -INF
+	for c in corners:
+		if c.y <= limit:
+			reach = maxf(reach, c.dot(-n))
+	# Kanten, die die Höhe "limit" kreuzen: dort ein Punkt mehr
+	for i in 8:
+		for bit in [1, 2, 4]:
+			var j: int = i | bit
+			if j == i:
+				continue
+			var a := corners[i]
+			var b := corners[j]
+			if (a.y - limit) * (b.y - limit) < 0.0:
+				var t := (limit - a.y) / (b.y - a.y)
+				reach = maxf(reach, a.lerp(b, t).dot(-n))
+	return reach if reach > -INF else _half_extent(basis, n)
+
+
+## Oberkante eines Möbelstücks (seines Körpers "collider") direkt hinter der Stelle, auf die ich
+## schaue (INF, wenn sie nicht zu finden ist).
+func _top_of(collider: Object, point: Vector3, normal: Vector3) -> float:
+	var inside := point - Vector3(normal.x, 0.0, normal.z).normalized() * 0.01
+	var query := PhysicsRayQueryParameters3D.create(inside + Vector3.UP * 3.0, inside,
+		FurnitureUtils.FURNITURE_LAYER_BIT)
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return hit.position.y if not hit.is_empty() and hit.collider == collider else INF
 
 
 ## Lage eines angelehnten Buchs (mit Buchgröße): Cover zeigt von der Wand weg (Wandnormale n),
@@ -563,7 +673,8 @@ func _invalid_plan(book: Book, world_point: Vector3, direction: Vector3) -> Dict
 ## Möbel, Deko, Wände, Boden? Das Buch wird dafür an jeder Seite um SOLID_MARGIN kleiner
 ## geprüft: Aufliegen und Anlehnen ist erlaubt, Hineinragen nie. Eine Regel für alles, was ich
 ## ablege (flach, aufrecht, angelehnt).
-func _blocked_by_solid(world: Transform3D) -> bool:
+## exclude: Körper, die es berühren darf (z. B. der Aufsteller, in dem es liegt).
+func _blocked_by_solid(world: Transform3D, exclude: Array[RID] = []) -> bool:
 	var size := Vector3(world.basis.x.length(), world.basis.y.length(), world.basis.z.length())
 	if _solid_box == null:
 		_solid_box = BoxShape3D.new()  # eine Form für alle Prüfungen (nicht jedes Bild neu)
@@ -573,6 +684,7 @@ func _blocked_by_solid(world: Transform3D) -> bool:
 	query.transform = Transform3D(world.basis.orthonormalized(), world.origin)
 	query.collision_mask = FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT
 	query.collide_with_areas = false
+	query.exclude = exclude
 	return not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
@@ -593,8 +705,11 @@ func _find_ground(world_point: Vector3) -> Dictionary:
 		var item := FurnitureUtils.find_placed_furniture(hit.collider)
 		return {"point": hit.position, "height": (hit.collider as PlacementSurface).get_surface_height(),
 			"support_uid": item.uid if item else 0}
-	if FurnitureUtils.find_placed_furniture(hit.collider):
-		return {}  # auf Möbeln nur dort, wo eine Ablagefläche ist
+	var item := FurnitureUtils.find_placed_furniture(hit.collider)
+	if item:
+		if item.data and item.data.books_can_lie:
+			return {"point": hit.position, "height": hit.position.y, "support_uid": item.uid}  # Polster
+		return {}  # auf Möbeln sonst nur dort, wo eine Ablagefläche ist
 	return {"point": hit.position, "height": hit.position.y, "support_uid": 0}
 
 
