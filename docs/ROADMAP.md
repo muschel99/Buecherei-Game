@@ -23,6 +23,7 @@
 | 3i  | Fach-Automodus und Platzierungs-Fehler   | fertig        |
 | 3j  | Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller | fertig |
 | 3k  | Tür, Buchmenü und Buchstützen           | fertig        |
+| 3l  | Fassaden-App und fester Rückgabekasten   | in Arbeit     |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -411,6 +412,18 @@ Leitgedanke: Kleine Stolpersteine aus dem Weg räumen – Tür, Bücherauswahl, 
 - [x] R-Menü: Cover-Kacheln dezent in der Farbe ihres Genres hinterlegt
 - [x] Buchstützen: Bücher rasten an der Buchstütze ein, die Buchstütze nicht an Büchern
 - [x] Speichern prüfen (ausgelegte Bücher, Buchstützen); alte Spielstände laden weiter
+
+## Etappe 3l – Fassaden-App und fester Rückgabekasten
+Leitgedanke: Ein einziger, fester Rückgabekasten in der Hauswand – angepasst statt aufgestellt.
+- [ ] Neue Tablet-App „Fassade“ (erweiterbar für Wandfarbe außen, Schild, Fenster …)
+- [ ] Genau ein fester Rückgabekasten in der Wand neben der Eingangstür: außen Einwurf,
+      innen Entnahme; nicht kaufbar, nicht verkaufbar, nicht mehr im Inventar
+- [ ] Alte Spielstände: aufgestellte Rückgabekästen verschwinden, ihre Bücher wandern in den
+      festen Kasten (was nicht passt, ins Lager)
+- [ ] Optik des Einwurfs in der Fassaden-App wählen (Platzhalter-Varianten, erweiterbar)
+- [ ] Innen mit E herausnehmen wie bisher; F9 legt zum Testen Bücher hinein
+- [ ] Platz für 50 Bücher (GameConfig), immer geschlossen, dezente Anzeige der Anzahl
+- [ ] Speichern: Inhalt und gewählte Variante; alte Spielstände laden weiter
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
