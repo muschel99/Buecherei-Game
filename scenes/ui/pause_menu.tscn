@@ -139,10 +139,10 @@ text = "Alle passenden Bücher einräumen – ab dem Fach und der Stelle, auf di
 
 [node name="KeyShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "R am Regal"
+text = "R"
 
 [node name="ActionShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Regal-Menü: Genre je Fach, Buch aus dem Lager, auffüllen, sortieren"
+text = "Bücher-Menü (überall): Bücher aus dem Lager nehmen – am Regal auch Genre je Fach, auffüllen, sortieren"
 
 [node name="KeyWheel" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

@@ -78,6 +78,14 @@ static func load_apps() -> Array[TabletAppData]:
 	return result
 
 
+## Name einer App aus ihrem Datenblatt (z. B. der Ladenname "Nest & Nook" für "furnishing").
+static func get_app_name(id: String) -> String:
+	for app in load_apps():
+		if app.id == id:
+			return app.display_name
+	return id
+
+
 func get_apps() -> Array[TabletAppData]:
 	return _apps
 

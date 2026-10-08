@@ -5,7 +5,10 @@
 #   == Überschrift             beginnt eine neue Seite in diesem Thema
 #   Text …                     der Text der Seite; eine leere Zeile beginnt einen neuen Absatz
 #   <E>                        Tasten in spitzen Klammern erscheinen hervorgehoben
-# Zeilen, die mit # beginnen, sind Notizen und erscheinen nicht im Spiel.
+# Zeilen, die mit # beginnen, sind Notizen und erscheinen nicht im Spiel. Text darf darum nicht
+# mit # oder = beginnen.
+# Ladennamen (z. B. „Nest & Nook“) stehen hier als normaler Text – ändert sich ein Name im
+# Datenblatt (data/tablet_apps/), hier bitte mitändern.
 # Die Reihenfolge hier ist die Reihenfolge im Büchlein. Wenig Text pro Seite – lieber eine
 # Seite mehr.
 # Symbole: keys (Tasten), books (Bücher), shelf (Regal), deco (Pflanze), furniture (Sessel),

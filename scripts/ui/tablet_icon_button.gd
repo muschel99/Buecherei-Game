@@ -26,7 +26,7 @@ const DEFAULT_TIPS := {
 	Icon.CONTENTS: "Inhalt",
 }
 ## Kleine Knöpfe (Kreuz, Pfeile, Plus, Minus …): 34 Pixel, die anderen 46
-const SMALL_ICONS := [Icon.CLOSE, Icon.BACK, Icon.HOME, Icon.PLUS, Icon.MINUS, Icon.EXPAND, Icon.COLLAPSE]
+const SMALL_ICONS := [Icon.CLOSE, Icon.BACK, Icon.HOME, Icon.PLUS, Icon.MINUS, Icon.EXPAND, Icon.COLLAPSE, Icon.NEXT]
 const LINE_COLOR := Color(1.0, 0.94, 0.84, 0.92)
 const HOVER_COLOR := Color(0.96, 0.78, 0.48)
 const DISABLED_COLOR := Color(0.85, 0.78, 0.68, 0.3)

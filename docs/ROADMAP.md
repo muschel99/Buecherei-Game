@@ -19,7 +19,7 @@
 | 3e  | Bücher drehen, Stapel blättern und Regal-Menü mit R | fertig |
 | 3f  | Regal-Menü als Tablet und Fächer         | fertig        |
 | 3g  | Tablet mit Apps und Lagerübersicht       | fertig        |
-| 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | in Arbeit |
+| 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | fertig |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -337,20 +337,29 @@ aus dem Lager in die Hand.
 ## Etappe 3h – Shop-Namen, Lager mit Sammlung, R-Menü überall
 Leitgedanke: Das Tablet ist zum Schauen und Einkaufen da, Bücher nehme ich über das R-Menü –
 und das gibt es überall.
-- [ ] App „Lager“ statt „Bestand“ und „Sammlung“: je Genre Lager, Regal, ausgelegt mit
-      Symbolen und Zahlen; aufgeklappt die Sammlung des Genres (Cover-Kacheln, unentdeckte als
-      „?“); nur zur Übersicht, Bücher nehmen geht hier nicht mehr
-- [ ] Shops mit Namen und kleinem Logo: Einrichtung = „Nest & Nook“, Bücher = „Bücherladen“
-      (Platzhalter, Name an einer Stelle änderbar); Ladenname dezent oben in der App
-- [ ] Bücher nehmen nur über das R-Menü; es bleibt beim Nehmen offen, bis die Hand mit sieben
-      Büchern voll ist (oder ich es mit Esc/Kreuz schließe)
-- [ ] R öffnet das Menü überall: am Regal mit allen Regal-Teilen, sonst sind diese dezent
-      ausgegraut, die Bücherauswahl geht immer
-- [ ] App „Statistik“: ein paar ruhige Zahlen (Bücher insgesamt und je Genre, im Regal,
-      ausgelegt); später leicht um neue Werte zu ergänzen
-- [ ] App „Tipps & Tricks“ als kleines Büchlein: Inhaltsverzeichnis, Seiten zum Blättern,
-      Themen und Tipps in einer Datei
-- [ ] Nichts Neues zu speichern; alte Spielstände laden weiter
+- [x] App „Lager“ statt „Bestand“ und „Sammlung“: je Genre Lager, Regal, ausgelegt, unterwegs
+      mit Symbolen und Zahlen, darunter der Sammelstand; aufgeklappt die Sammlung des Genres
+      (Cover-Kacheln, unentdeckte als „?“, wo meine Exemplare sind); nur zur Übersicht
+- [x] Shops mit Namen und kleinem Logo: Einrichtung = „Nest & Nook“ (Haus mit Herz),
+      Bücher = „Bücherladen“ (Platzhalter; Name nur im Datenblatt `data/tablet_apps/books.tres`);
+      oben in der Leiste Logo, Ladenname und kurzer Untertitel
+- [x] Bücher nehmen nur über das R-Menü (am Theken-Tablet nicht mehr); es bleibt beim Nehmen
+      offen, bis die Hand mit sieben Büchern voll ist (oder Esc, R, Kreuz); oben ein kleiner
+      Stapel mit der Zahl der getragenen Bücher
+- [x] R öffnet das Menü überall (auch im Sitzen): am Regal (auch mit Blick auf Deko darin) mit
+      allen Regal-Teilen, sonst sind diese dezent ausgegraut („Kein Regal im Blick“), die
+      Bücherauswahl geht immer (dann alle Genres); im Gestaltungsmodus, am Theken-Tablet und
+      in der Pause öffnet R nichts
+- [x] App „Statistik“: große Zahlen (Bücher insgesamt, im Regal, ausgelegt, im Lager, Titel
+      entdeckt) und schlichte Balken je Genre; neue Werte später über die Gruppe
+      `stat_sources` (`get_stats()`), fehlende Werte erscheinen nicht
+- [x] App „Tipps & Tricks“ als kleines Büchlein: Inhaltsverzeichnis mit Symbolen und
+      Seitenzahlen, Seiten zum Blättern, zurück ins Inhaltsverzeichnis; Texte in
+      `data/tips/tips.txt` (leicht zu ergänzen und umzusortieren)
+- [x] Tastenhilfe im Pausenmenü: R = Bücher-Menü überall
+- [x] Nichts Neues zu speichern; alte Spielstände laden weiter
+- Ideen für später: schönerer Name für den Bücherladen, Statistik mit Besuchern, Ausleihen,
+  Kaffee und Kuchen (Etappen 4, 5, 7)
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke

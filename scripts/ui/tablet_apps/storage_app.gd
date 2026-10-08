@@ -96,7 +96,7 @@ func _create_genre_row(entry: Dictionary) -> Control:
 	names.add_child(found)
 	_add_counts(row, [entry.stored, entry.shelves, entry.loose, entry.elsewhere], TabletFrame.TEXT_COLOR)
 	var fold := make_icon_button(TabletIconButton.Icon.COLLAPSE if is_expanded(id) else TabletIconButton.Icon.EXPAND,
-		toggle_collection.bind(id), "Sammlung ausblenden" if is_expanded(id) else "Sammlung zeigen")
+		toggle_collection.bind(id))
 	fold.name = "Fold"
 	fold.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(fold)

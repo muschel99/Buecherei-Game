@@ -14,7 +14,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   Kein freier Wandbau. Gestaltet wird in der Ego-Perspektive (Taste Tab), frei oder mit
   Einrasten. Deko kann auf Ablageflächen stehen oder an Wand und Tür hängen.
   Der Eingangsbereich vor der Tür bleibt frei. Gestaltet wird mit dem, was man besitzt
-  (Inventar); Neues kauft man am Theken-Tablet (App „Einrichtung“).
+  (Inventar); Neues kauft man am Theken-Tablet (Laden „Nest & Nook“).
 - **Stile:** Zum Start drei Stile: *Botanisch*, *Modern*, *Dark Academia*. Möbel tragen
   Stil-Merkmale. Der vorherrschende Stil bestimmt, welche Besucher kommen und welche Musik läuft.
 
@@ -28,12 +28,16 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   Wandfarben, Böden und Decken kauft man einmal und kann sie danach unbegrenzt verwenden;
   ein paar schlichte Farben (Warmer Putz, Kalkweiß, Nebelgrau), ein Boden (Eichendielen) und
   zwei Decken sind von Anfang an da.
-- **Theken-Tablet mit Apps** (seit Etappe 3g): Auf der Theke steht ein Tablet. E öffnet es
-  (Mauszeiger sichtbar, die Figur steht solange still) – als echte Tablet-Ansicht in derselben
-  Gestaltung wie das Regal-Menü (gemeinsame Vorlage `TabletFrame`).
+- **Theken-Tablet mit Apps** (seit Etappe 3g, neu aufgeteilt in 3h): Auf der Theke steht ein
+  Tablet. E öffnet es (Mauszeiger sichtbar, die Figur steht solange still) – als echte
+  Tablet-Ansicht in derselben Gestaltung wie das Regal-Menü (gemeinsame Vorlage `TabletFrame`).
+  Das Tablet ist zum Schauen und Einkaufen da; Bücher nimmt man über das R-Menü (siehe
+  „Regal-Menü“).
   - **Startbildschirm:** große, freundliche App-Symbole mit Namen auf einem ruhigen,
-    gemütlichen Hintergrund. Oben eine schmale Leiste: dezent der Kontostand und ein kleines
-    Stapel-Symbol mit der Zahl der Bücher in meinen Händen (z. B. „4 / 7“).
+    gemütlichen Hintergrund: Nest & Nook, Bücherladen, Lager, Statistik, Tipps & Tricks.
+    Oben eine schmale Leiste mit dezent dem Kontostand. In einer App zeigt die Leiste ihr
+    kleines Logo und ihren Namen – bei Läden den Ladennamen mit kurzem Untertitel, damit es
+    sich wie ein richtiger Laden anfühlt.
   - Ein Klick auf ein Symbol öffnet die App; das **Home-Symbol** oben links führt zurück. Das
     **Kreuz** oben rechts und **Esc** schließen immer das ganze Tablet (nicht nur die App).
     Beim nächsten Öffnen startet es wieder auf dem Startbildschirm.
@@ -41,8 +45,11 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     wenig Text, bei jeder Auflösung ganz sichtbar.
   - **Neue Apps** (z. B. später Vorbestellungen, Besucher, Einstellungen) sind leicht: eine
     kleine Szene in `scenes/ui/tablet_apps/` und ein Datenblatt in `data/tablet_apps/` – der
-    Startbildschirm zeigt sie von selbst (Reihenfolge, Name, Farbe und Symbol im Datenblatt).
-  - **App „Einrichtung“:** oben links zwei Symbole – Kaufen (Tasche) und Verkaufen (Münze).
+    Startbildschirm zeigt sie von selbst (Reihenfolge, Name, Untertitel, Farbe und Symbol im
+    Datenblatt). **Ladennamen ändern:** nur `display_name` im Datenblatt (z. B.
+    `data/tablet_apps/books.tres` für den Bücherladen) – das ist die einzige Stelle.
+  - **Laden „Nest & Nook“** (Möbel, Deko & Farben; App „furnishing“, Logo: kleines Haus mit
+    Herz): oben links zwei Symbole – Kaufen (Tasche) und Verkaufen (Münze).
     - *Kaufen:* alle freigeschalteten Möbel, Deko, Wandfarben, Böden und Decken nach
       Kategorien, mit kleinem Vorschaubild, Preis und Stil-Merkmalen. Über der Liste helfen
       Filter beim Suchen (siehe „Filter“). Ein Klick legt etwas in den Warenkorb (Möbel auch
@@ -50,9 +57,25 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
       das Geld nicht, steht dort freundlich, wie viel fehlt – ohne Strafe.
     - *Verkaufen:* Möbel aus dem Inventar (nicht die im Raum) bringen die Hälfte des Preises
       zurück (Anteil in GameConfig). Oberflächen behält man.
-  - **App „Bücher“:** Bücherpakete je Genre kaufen (siehe „Bücher kaufen“), mit eigenem
-    Warenkorb.
-  - **App „Bestand“** und **App „Sammlung“:** siehe „Bücher“ unten.
+  - **„Bücherladen“** (Platzhaltername, ein schönerer gemütlicher Name kommt später; App
+    „books“, Logo: Einkaufstasche mit Buch): Bücherpakete je Genre kaufen (siehe „Bücher
+    kaufen“), mit eigenem Warenkorb.
+  - **App „Lager“:** Übersicht über alle Bücher mit der Sammlung, siehe „Bücher“ unten.
+  - **App „Statistik“** (seit Etappe 3h): ein ruhiger Überblick zum gelegentlichen
+    Reinschauen, bewusst kein Dashboard: ein paar große Zahlen (Bücher insgesamt, im Regal,
+    ausgelegt, im Lager, Titel entdeckt) und schlichte Balken „Bücher je Genre“ in einer
+    warmen Farbe. Später kommen Werte dazu, die es noch nicht gibt (Besucher, ausgeliehene
+    Bücher je Genre, Kaffee und Kuchen …): Jedes System meldet sie selbst (Gruppe
+    `stat_sources`, `get_stats()`); was es noch nicht gibt, erscheint einfach nicht.
+  - **App „Tipps & Tricks“** (seit Etappe 3h): ein kleines, gemütliches Büchlein auf
+    cremefarbenem Papier. Zuerst das Inhaltsverzeichnis (Themen mit kleinem Symbol, Pünktchen
+    und Seitenzahl: Steuerung, Bücher einräumen, Regale und Fächer, Dekorieren, Einrichten und
+    Stile, Einkaufen und Lieferung). Ein Klick schlägt das Thema auf; mit den Pfeilen neben
+    dem Büchlein blättert man vor und zurück (über alle Themen hinweg, sanft überblendet), das
+    Symbol oben links führt zurück ins Inhaltsverzeichnis. Wenig Text pro Seite, Tasten als
+    kleine Kappen, unten ein zartes Symbol des Themas und die Seitenzahl. Alle Texte stehen in
+    `data/tips/tips.txt` (Aufbau oben in der Datei: `= Thema | Symbol`, `== Überschrift`,
+    Text, `<E>` für Tasten) – dort ergänzen, umschreiben oder umsortieren, ohne Code.
   - Das Tablet gehört fest zur Bücherei: Es ist nicht zu kaufen und lässt sich nicht verkaufen.
 - **Lieferung:** Kurz nach der Bestellung (10 Sekunden, GameConfig) stehen die Kartons draußen
   neben der Eingangstür – **ein Karton pro Objekt** (drei Stühle und eine Lampe = vier Kartons) –,
@@ -87,7 +110,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     Lichtschalter
   - Deko: Pflanzen, Teppiche, Bilder und Wandschmuck, Figuren, Textilien (Kissen, Decken),
     Aufbewahrung und Organisation, Bücher
-- In der App „Einrichtung“ und im Gestaltungsmodus stehen über der Liste kleine Filter-Schaltflächen:
+- Bei „Nest & Nook“ und im Gestaltungsmodus stehen über der Liste kleine Filter-Schaltflächen:
   „Alle“ und die Unterkategorien, die es dort gerade gibt, daneben der Stil-Filter
   „Alle Stile“, Botanisch, Modern, Dark Academia, Neutral (= ohne Stil-Merkmal).
   Leere Unterkategorien werden nicht gezeigt; sie erscheinen von selbst, sobald es
@@ -139,30 +162,20 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 - **Bücherbestand** (getrennt vom Möbel-Inventar): Jedes Buch ist im Lager, in einem Regal,
   im Rückgabekasten oder in meinen Händen. Zum Start liegen 12 verschiedene Titel je freiem
   Genre im Lager (GameConfig).
-- **Bücher kaufen:** Am Theken-Tablet gibt es die App „Bücher“ mit einem Bücherpaket je
+- **Bücher kaufen:** Am Theken-Tablet gibt es den „Bücherladen“ mit einem Bücherpaket je
   freigeschaltetem Genre (10 Bücher, Anzahl in GameConfig, Preis im Genre-Datenblatt: 35–55 Taler)
   und dem Sammelstand („Sammlung: 12 von 50 Titeln“). Jedes Paket kommt als eigener Karton vor
   die Tür; E packt die Bücher ins Lager (Lager-Anzeige mit Bücherstapel in Genre-Farben).
-- **App „Bestand“ (Lagerübersicht, seit Etappe 3g):** je Genre auf einen Blick, wie viele
-  Bücher ich habe und wo sie sind – mit kleinen Symbolen und Zahlen statt Text: Kiste = im
-  Lager, Regal = im Regal, liegendes Buch = ausgelegt, Pfeile = unterwegs (in der Hand oder im
-  Rückgabekasten). Oben die Summe aller Bücher.
-  - **Bücher in die Hand nehmen:** Mit − und + wähle ich, wie viele (1 bis 7, höchstens so
-    viele, wie noch in meine Hand passen und im Lager liegen), dann ein Klick auf das
-    Hand-Symbol. Die Bücher liegen danach auf meinem Stapel in der Hand – ich lege sie wie
-    gewohnt ab oder räume sie ein. Das geht überall, auch ohne Regal in der Nähe (z. B. um
-    Bücher direkt auf der Theke auszulegen).
-  - **Einzelne Titel:** Der Pfeil rechts klappt ein Genre auf und zeigt die Titel im Lager als
-    Cover-Kacheln (wie „Buch aus dem Lager“ im Regal-Menü); ein Klick nimmt genau dieses Buch.
-  - Das Tablet bleibt nach dem Nehmen offen, damit ich in Ruhe weitere Bücher wählen kann; die
-    Zahl oben in der Leiste zeigt, wie viele ich trage. Sind die Hände voll, ist das
-    Hand-Symbol ausgegraut, und ein Klick lässt nur das Stapel-Symbol sanft wackeln – ganz
-    ohne Text.
-  - Getragene Bücher zurück ins Lager: Q halten (kein eigener Knopf – jede Aktion hat nur einen
-    Weg).
-- **App „Sammlung“:** je Genre alle 50 Titel als Cover-Kacheln, unentdeckte als „?“; darunter,
-  wo die Exemplare sind. Ein Klick auf ein Buch im Lager legt es obenauf in die Hand (das
-  Tablet bleibt offen).
+- **App „Lager“** (seit Etappe 3h, vorher „Bestand“ und „Sammlung“): je Genre auf einen Blick,
+  wie viele Bücher ich habe und wo sie sind – mit kleinen Symbolen und Zahlen statt Text:
+  Kiste = im Lager, Regal = im Regal, liegendes Buch = ausgelegt, Pfeile = unterwegs (in der
+  Hand oder im Rückgabekasten). Unter dem Genre klein, wie viele Titel ich schon entdeckt habe.
+  Oben die Summe aller Bücher.
+  - **Sammlung:** Der Pfeil rechts klappt ein Genre auf und zeigt seine Sammlung: alle 50
+    Titel als Cover-Kacheln, unentdeckte als „?“, darunter klein, wo meine Exemplare gerade
+    sind („2 im Lager · 1 im Regal“).
+  - Nur zum Schauen: Bücher in die Hand nehmen geht hier nicht (dafür gibt es das R-Menü,
+    überall). Getragene Bücher zurück ins Lager: Q halten.
 - **Regale:** Bücherregale haben Bretter für Bücher und Deko (das obere Brett bleibt Ablage
   für Deko). Jedes Buch steht **frei** auf seinem Brett – links, rechts, in der Mitte, mit
   Lücken. Ein feines Raster (1 cm, `GameConfig.shelf_grid_step`) hält alles ordentlich.
@@ -184,13 +197,29 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
     links). Was dort nicht hinpasst (Platz oder Genre), kommt in die nächstgelegenen anderen
     Fächer mit passendem Genre. Was nirgends passt, bleibt in der Hand. Ein kurzer Klick zählt erst beim Loslassen; solange
     der Ring läuft, wird nichts abgestellt.
-  - **R** (kurzer Druck, ohne Halten und ohne Ring): Regal-Menü (seit Etappe 3e). R ist
-    bewusst eine eigene, ruhige Taste – so öffnet sich nie aus Versehen ein Menü. E öffnet am
-    Regal nichts, sondern blättert durch die Bücher in der Hand.
+  - **R** (kurzer Druck, ohne Halten und ohne Ring): Regal-Menü (seit Etappe 3e; seit 3h
+    überall, siehe unten). R ist bewusst eine eigene, ruhige Taste – so öffnet sich nie aus
+    Versehen ein Menü. E öffnet am Regal nichts, sondern blättert durch die Bücher in der Hand.
   - **Fächer** (seit Etappe 3f statt „Etagen“ – ein Würfelregal hat mehrere Fächer pro Reihe):
     Sie sind von oben links nach unten rechts durchnummeriert (Fach 1, Fach 2 …). Jedes Fach
     hat sein eigenes Genre oder „Gemischt“, z. B. oben „Gemischt“, darunter „Krimi“ und
     „Kinderbuch“. Fächer ohne Genre nehmen jedes Buch.
+- **R-Menü überall** (seit Etappe 3h): R öffnet das Menü immer, egal wohin ich schaue – so kann
+  ich Bücher aus dem Lager holen, ohne vor einem Regal zu stehen (z. B. zum Dekorieren). Es
+  ist dasselbe Menü; es erkennt nur, worauf ich schaue:
+  - Schaue ich ein Regal an – oder Deko bzw. ein Buch, das darin steht –, gehört es zu diesem
+    Regal (alles unten Beschriebene).
+  - Schaue ich kein Regal an, steht oben „Bücher“ und „Kein Regal im Blick“; die Regal-Teile
+    (Genre je Fach, „Alle Fächer gleich“, Auffüllen, Sortieren, Alle ins Lager) sind dezent
+    ausgegraut und nicht anklickbar (Tooltip „Nur am Regal“). Die Ansicht dreht sich nicht.
+  - Die **Bücherauswahl** ist immer da: ohne Regal mit allen Genres im Lager, am Regal mit den
+    Genres, die in seine Fächer passen.
+  - **Mehrere Bücher nacheinander:** Nach einem Klick auf ein Cover bleibt das Menü offen; es
+    schließt sich erst, wenn die Hände mit sieben Büchern voll sind (oder mit Esc, R oder dem
+    Kreuz). Oben rechts zeigt ein kleiner Stapel, wie viele Bücher ich trage („3 / 7“).
+  - Bücher aus dem Lager nimmt man nur hier (nicht am Theken-Tablet).
+  - R geht auch im Sitzen; solange das Menü offen ist, stehe ich nicht aus Versehen auf. Im
+    Gestaltungsmodus, am offenen Theken-Tablet und in der Pause öffnet R nichts.
 - **Regal-Menü als Tablet** (R am Regal, seit Etappe 3f): Es erscheint als Tablet, groß und gut
   lesbar am rechten Bildrand – in derselben Gestaltung wie das Tablet an der Theke (gemeinsame
   Vorlage `TabletFrame`). Es ist immer gleich groß und bei jeder Auflösung ganz zu sehen; eine
@@ -329,8 +358,8 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 - Genres werden nach und nach freigeschaltet (Etappe 8, `BookStock.unlock_genre`).
 
 ## Theke
-- Modular: Kasse von Anfang an, dazu das Tablet mit seinen Apps (Einrichtung, Bücher, Bestand,
-  Sammlung).
+- Modular: Kasse von Anfang an, dazu das Tablet mit seinen Apps (Nest & Nook, Bücherladen,
+  Lager, Statistik, Tipps & Tricks).
 - Der Rückgabekasten gehört zur Kategorie Theke.
 - Café-Elemente (z. B. Kaffeemaschine, Kuchenvitrine) später daneben anbaubar.
 - Der gesamte Thekenblock ist frei platzierbar.
@@ -350,9 +379,9 @@ Seite, hinten oder oben), kann es benutzen. Ausnahme Bücher (seit Etappe 3d): R
 nimmt ein Buch, Linksklick legt das Buch obenauf ab (ins Regal oder frei auf Tisch, Boden …),
 Linksklick halten am Regal räumt alle passenden ein, das Mausrad dreht das Buch vor dem
 Ablegen (nur im Spiel; im Gestaltungsmodus bleibt die Maus wie bisher). Hat das angeschaute
-Objekt keine eigene E-Aktion, blättert E durch die Bücher in der Hand. Menüs von Objekten
-(bisher das Regal-Menü) öffnet die eigene, ruhige Taste R – so öffnet sich nie aus Versehen
-ein Menü.
+Objekt keine eigene E-Aktion, blättert E durch die Bücher in der Hand. Das Regal-Menü öffnet
+die eigene, ruhige Taste R – so öffnet sich nie aus Versehen ein Menü; seit Etappe 3h geht R
+überall (ohne Regal im Blick nur mit der Bücherauswahl).
 Schaut man auf etwas Interaktives, erscheint unter der Bildmitte nur ein kleines, weiches
 Tastensymbol (abgerundetes E, R, Q oder eine Maus, auch mit hellem Mausrad) mit höchstens
 einem Wort daneben („Nehmen“,
@@ -371,7 +400,7 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Maus           | Umsehen                                        |
 | E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Theken-Tablet öffnen, Bücher aus dem Rückgabekasten nehmen |
 | E beim Tragen  | Anderes Buch obenauf (Umschalt + E: zurück) – wenn das Angeschaute nichts mit E macht |
-| R              | Am Regal: Regal-Menü als Tablet (noch einmal R, Esc oder das Kreuz schließt es) |
+| R              | Bücher-Menü als Tablet, überall: Bücher aus dem Lager nehmen; am Regal auch Genre je Fach, auffüllen, sortieren (noch einmal R, Esc oder das Kreuz schließt es) |
 | Rechtsklick    | Buch nehmen (Regal, Tisch, Boden, Rückgabekasten) – bis zu 7 tragen |
 | Linksklick     | Buch obenauf genau dort ablegen, wo ich hinschaue (Regal, Tisch, Boden …) |
 | Linksklick halten | Am Regal: alle passenden Bücher einräumen – ab dem Fach und der Stelle, auf die ich schaue |
@@ -387,7 +416,7 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 Unten erscheint das **Inventar**: nur Dinge, die gerade im Inventar liegen, mit Anzahl (×2).
 Was ganz im Raum steht, erscheint dort nicht (so bleibt es auch bei sehr vielen Objekten
 übersichtlich); Wandfarben, Böden und Decken, die mir gehören, sind immer da. Ist ein Reiter
-leer, steht dort freundlich: „Hier ist noch nichts. Am Theken-Tablet (Einrichtung) findest du mehr.“
+leer, steht dort freundlich: „Hier ist noch nichts. Bei „Nest & Nook“ am Theken-Tablet findest du mehr.“
 Platzieren nimmt eins aus dem Inventar; Aufheben und Wegräumen (X) legen es zurück – samt
 allem, was darauf steht.
 

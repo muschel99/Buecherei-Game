@@ -9,7 +9,7 @@ extends Control
 ## Gestaltung wie im Regal-Menü: Farben und Bausteine aus TabletFrame, Symbol-Knöpfe
 ## (TabletIconButton) mit kurzem Tooltip, wenig Text.
 
-## Das Tablet, auf dem die App läuft (für Spielfigur, Vorschaubilder, Wackeln …).
+## Das Tablet, auf dem die App läuft (für Spielfigur, Vorschaubilder …).
 var tablet: CounterTablet
 
 

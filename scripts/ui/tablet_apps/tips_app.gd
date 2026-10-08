@@ -32,6 +32,7 @@ var _contents_button: TabletIconButton
 var _prev_button: TabletIconButton
 var _next_button: TabletIconButton
 var _paper: PanelContainer
+var _paper_scroll: ScrollContainer
 var _content: VBoxContainer
 var _turn_tween: Tween
 
@@ -127,6 +128,7 @@ static func load_tips(path: String) -> Array[Dictionary]:
 
 func _show_current() -> void:
 	clear(_content)
+	_paper_scroll.scroll_vertical = 0
 	_content.modulate.a = 1.0 if not (_turn_tween and _turn_tween.is_running()) else _content.modulate.a
 	if current_page < 0 or pages.is_empty():
 		_show_contents_page()
@@ -318,9 +320,15 @@ func _build() -> void:
 	paper_style.content_margin_bottom = 22
 	_paper.add_theme_stylebox_override("panel", paper_style)
 	middle.add_child(_paper)
+	# Wird eine Seite einmal länger als das Papier, lässt sie sich scrollen
+	_paper_scroll = ScrollContainer.new()
+	_paper_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_paper.add_child(_paper_scroll)
 	_content = VBoxContainer.new()
+	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.add_theme_constant_override("separation", 14)
-	_paper.add_child(_content)
+	_paper_scroll.add_child(_content)
 	_next_button = make_icon_button(TabletIconButton.Icon.NEXT, next_page, "Weiterblättern")
 	_next_button.name = "NextButton"
 	_next_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
