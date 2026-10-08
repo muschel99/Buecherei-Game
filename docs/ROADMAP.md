@@ -20,6 +20,7 @@
 | 3f  | Regal-Menü als Tablet und Fächer         | fertig        |
 | 3g  | Tablet mit Apps und Lagerübersicht       | fertig        |
 | 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | fertig |
+| 3i  | Fach-Automodus und Platzierungs-Fehler   | in Arbeit     |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -360,6 +361,19 @@ und das gibt es überall.
 - [x] Nichts Neues zu speichern; alte Spielstände laden weiter
 - Ideen für später: schönerer Name für den Bücherladen, Statistik mit Besuchern, Ausleihen,
   Kaffee und Kuchen (Etappen 4, 5, 7)
+
+## Etappe 3i – Fach-Automodus und Platzierungs-Fehler
+Leitgedanke: Bücher einfach hineinstellen, ohne vorher etwas festzulegen – und beim Ablegen
+keine Grafikfehler und keine halb versenkten Bücher.
+- [ ] Tickbox „Auto“ je Fach (vor dem Genre-Dropdown): Das Fach übernimmt sein Genre aus den
+      Büchern darin (alle gleich → dieses Genre, verschiedene → „Gemischt“, leer → nimmt alles);
+      Standard für alle Fächer; Genre von Hand wählen schaltet „Auto“ aus
+- [ ] Dieselbe Kombi bei „Alle Fächer gleich“
+- [ ] Vorschau beim Ablegen ruhig und gleichmäßig (kein Flackern, keine Streifen)
+- [ ] Einheitliche Kollision: Ein Buch darf nirgends in ein anderes Objekt hineinragen – sonst
+      ist die Vorschau rot und das Ablegen gesperrt (Wackeln wie bisher)
+- [ ] Fach-Genre samt „Auto“ wird gespeichert; alte Spielstände laden weiter (Fächer ohne
+      gespeicherten Wert gelten als „Auto“)
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
