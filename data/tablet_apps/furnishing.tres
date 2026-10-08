@@ -5,8 +5,9 @@
 [resource]
 script = ExtResource("1_app")
 id = "furnishing"
-display_name = "Einrichtung"
-symbol = 0
+display_name = "Nest & Nook"
+tagline = "Möbel, Deko & Farben"
+symbol = 7
 color = Color(0.33, 0.47, 0.36, 1)
 scene_path = "res://scenes/ui/tablet_apps/furnishing_app.tscn"
 order = 10

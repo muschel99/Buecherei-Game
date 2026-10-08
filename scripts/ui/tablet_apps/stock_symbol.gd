@@ -1,6 +1,6 @@
 class_name StockSymbol
 extends Control
-## Kleines gezeichnetes Symbol für die Bestand-App: wo Bücher gerade sind.
+## Kleines gezeichnetes Symbol für die Lager-App: wo Bücher gerade sind.
 ## STORAGE = Kiste (Lager), SHELF = Regal, LOOSE = ausgelegtes Buch, AWAY = unterwegs
 ## (in der Hand oder im Rückgabekasten). Mit Tooltip (ein Wort).
 

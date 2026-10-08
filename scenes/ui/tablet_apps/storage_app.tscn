@@ -1,8 +1,8 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/tablet_apps/stock_app.gd" id="1_app"]
+[ext_resource type="Script" path="res://scripts/ui/tablet_apps/storage_app.gd" id="1_app"]
 
-[node name="StockApp" type="Control"]
+[node name="StorageApp" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

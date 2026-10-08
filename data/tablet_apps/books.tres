@@ -5,8 +5,9 @@
 [resource]
 script = ExtResource("1_app")
 id = "books"
-display_name = "Bücher"
-symbol = 1
+display_name = "Bücherladen"
+tagline = "Bücherpakete je Genre"
+symbol = 8
 color = Color(0.62, 0.3, 0.24, 1)
 scene_path = "res://scenes/ui/tablet_apps/books_app.tscn"
 order = 20

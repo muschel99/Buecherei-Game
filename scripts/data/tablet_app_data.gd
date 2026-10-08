@@ -7,12 +7,16 @@ extends Resource
 ## Kein Code am Startbildschirm nötig.
 
 ## Wie das große Symbol auf dem Startbildschirm aussieht (gezeichnet, siehe TabletAppIcon).
-enum Symbol { FURNISHING, BOOKS, STOCK, COLLECTION, GENERIC }
+## Neue Symbole immer hinten anhängen (die Datenblätter speichern die Nummer).
+enum Symbol { FURNISHING, BOOKS, STOCK, COLLECTION, GENERIC, STATS, TIPS, NEST, BOOKSHOP }
 
-## Eindeutige Kennung (z. B. "stock").
+## Eindeutige Kennung (z. B. "storage").
 @export var id: String = ""
-## Name unter dem Symbol (kurz, ein Wort).
+## Name unter dem Symbol und oben in der Leiste (bei Läden der Ladenname, z. B. "Nest & Nook").
+## Hier ändern – das ist die einzige Stelle.
 @export var display_name: String = ""
+## Kurzer Untertitel, dezent neben dem Namen in der Leiste (z. B. "Möbel & Deko"; leer = keiner).
+@export var tagline: String = ""
 ## Gezeichnetes Symbol …
 @export var symbol: Symbol = Symbol.GENERIC
 ## … oder ein eigenes Bild (wenn gesetzt, wird es statt des gezeichneten Symbols gezeigt).

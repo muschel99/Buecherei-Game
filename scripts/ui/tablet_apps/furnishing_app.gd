@@ -1,5 +1,5 @@
 extends ShopApp
-## App "Einrichtung" auf dem Theken-Tablet: Möbel, Deko, Wandfarben, Böden und Decken kaufen
+## Laden "Nest & Nook" (App "furnishing") auf dem Theken-Tablet: Möbel, Deko, Wandfarben, Böden und Decken kaufen
 ## (nach Kategorien, mit Filtern und Warenkorb) und Dinge aus dem Inventar verkaufen.
 ## Oben links zwei Symbol-Knöpfe: Kaufen (Tasche) und Verkaufen (Münze).
 

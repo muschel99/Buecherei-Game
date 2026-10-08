@@ -1,5 +1,5 @@
 extends ShopApp
-## App "Bücher" auf dem Theken-Tablet: Bücherpakete je freigeschaltetem Genre kaufen (wie
+## Laden "Bücherladen" (App "books") auf dem Theken-Tablet: Bücherpakete je freigeschaltetem Genre kaufen (wie
 ## bisher im Shop). Ein Klick auf ein Paket legt es in den Warenkorb, "Bestellen" schickt es
 ## los – kurz darauf steht der Karton vor der Tür.
 

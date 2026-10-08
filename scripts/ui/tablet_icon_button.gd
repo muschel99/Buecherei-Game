@@ -6,7 +6,7 @@ extends Button
 ## Die Symbole sind einfache Formen (keine Bilddateien) – austauschbar: einfach "icon" mit
 ## einem eigenen Bild setzen, dann wird das Bild statt der Form gezeigt.
 
-enum Icon { CLOSE, BACK, PICK, FILL, SORT, STORE, HOME, BUY, SELL, TAKE, PLUS, MINUS, EXPAND, COLLAPSE }
+enum Icon { CLOSE, BACK, PICK, FILL, SORT, STORE, HOME, BUY, SELL, PLUS, MINUS, EXPAND, COLLAPSE }
 
 const DEFAULT_TIPS := {
 	Icon.CLOSE: "Schließen",
@@ -18,11 +18,10 @@ const DEFAULT_TIPS := {
 	Icon.HOME: "Startbildschirm",
 	Icon.BUY: "Kaufen",
 	Icon.SELL: "Verkaufen",
-	Icon.TAKE: "In die Hand",
 	Icon.PLUS: "Mehr",
 	Icon.MINUS: "Weniger",
-	Icon.EXPAND: "Titel zeigen",
-	Icon.COLLAPSE: "Titel ausblenden",
+	Icon.EXPAND: "Aufklappen",
+	Icon.COLLAPSE: "Zuklappen",
 }
 ## Kleine Knöpfe (Kreuz, Pfeile, Plus, Minus …): 34 Pixel, die anderen 46
 const SMALL_ICONS := [Icon.CLOSE, Icon.BACK, Icon.HOME, Icon.PLUS, Icon.MINUS, Icon.EXPAND, Icon.COLLAPSE]
@@ -140,11 +139,6 @@ func _draw() -> void:
 			var tip := c + Vector2(10, -12)
 			draw_line(tip, tip + Vector2(0, 10), color, w, true)
 			draw_polyline(PackedVector2Array([tip + Vector2(-3.5, 3.5), tip, tip + Vector2(3.5, 3.5)]), color, w, true)
-		Icon.TAKE:
-			# Ein Buch, darunter eine offene Hand (Schale)
-			_draw_rect_outline(Rect2(c + Vector2(-6, -13), Vector2(12, 14)), color, w)
-			draw_line(c + Vector2(-3, -12), c + Vector2(-3, 0), color, 1.5, true)
-			draw_arc(c + Vector2(0, 2), 11.0, 0.25 * PI, 0.75 * PI, 16, color, w, true)
 		Icon.PLUS, Icon.MINUS:
 			var r := 6.0
 			draw_line(c + Vector2(-r, 0), c + Vector2(r, 0), color, w, true)
