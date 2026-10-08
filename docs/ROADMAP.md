@@ -21,6 +21,7 @@
 | 3g  | Tablet mit Apps und Lagerübersicht       | fertig        |
 | 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | fertig |
 | 3i  | Fach-Automodus und Platzierungs-Fehler   | fertig        |
+| 3j  | Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller | in Arbeit |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -380,6 +381,21 @@ keine Grafikfehler und keine halb versenkten Bücher.
 - [x] Fach-Genre samt „Auto“ wird gespeichert („row_auto“); alte Spielstände laden weiter
       (Fächer ohne gespeichertes Genre gelten als „Auto“, Fächer mit gewähltem Genre bleiben
       dabei)
+
+## Etappe 3j – Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller
+Leitgedanke: Bücher schön präsentieren – angelehnt, auf Polstern, im Aufsteller – und eine
+Vorschau, die überall gleich aussieht.
+- [ ] Gemeinsame „Blaupause“ für Bücher und Möbel: unbeleuchtet, dezentes Blau, nur leicht
+      durchsichtig (keine Hell-Dunkel-Kante an Lichtinseln), rot bei gesperrten Stellen; in allen
+      drei Grafikstufen gleich
+- [ ] Bücher anlehnen an: Bücherstapel, Rücken- und Armlehnen von Sofas, Lehnen von Sesseln und
+      Stühlen, große Blumentöpfe, Rückwand auf Regalbrettern – wie an der Wand; nie frei
+      hochkant, nie an kleiner Deko
+- [ ] Bücher flach auf Sofakissen und Sofadecke
+- [ ] Neues Objekt „Buch-Aufsteller“ bei Nest & Nook: Deko, hält genau ein Buch (Linksklick
+      hinein, Rechtsklick heraus); Buch zählt als „ausgelegt“, wandert mit, geht mit X ins Lager
+- [ ] Speichern: angelehnte Bücher, Bücher auf Polstern und Aufsteller mit Buch; alte
+      Spielstände laden weiter
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
