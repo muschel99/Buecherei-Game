@@ -22,6 +22,7 @@
 | 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | fertig |
 | 3i  | Fach-Automodus und Platzierungs-Fehler   | fertig        |
 | 3j  | Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller | fertig |
+| 3k  | Tür, Buchmenü und Buchstützen           | in Arbeit     |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -399,6 +400,17 @@ Vorschau, die überall gleich aussieht.
       „ausgelegt“, wandert mit, geht mit X ins Lager; auch im Bücherregal
 - [x] Speichern: angelehnte Bücher, Bücher auf Polstern und Aufsteller mit Buch; alte
       Spielstände laden weiter
+
+## Etappe 3k – Tür, Buchmenü und Buchstützen
+Leitgedanke: Kleine Stolpersteine aus dem Weg räumen – Tür, Bücherauswahl, Buchstützen.
+- [ ] Eine offene Tür bleibt offen, wenn der Gestaltungsmodus angeht (man kommt weiter durch)
+- [ ] Keine Bücher im Schwenkbereich der Tür (Vorschau rot, wie bei Möbeln)
+- [ ] R-Menü: genommene Bücher bleiben sichtbar (ausgegraut, Handsymbol); noch ein Klick legt
+      sie zurück ins Lager
+- [ ] R-Menü: Kategorie „Alle Bücher“
+- [ ] R-Menü: Cover-Kacheln dezent in der Farbe ihres Genres hinterlegt
+- [ ] Buchstützen: Bücher rasten an der Buchstütze ein, die Buchstütze nicht an Büchern
+- [ ] Speichern prüfen (ausgelegte Bücher, Buchstützen); alte Spielstände laden weiter
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
