@@ -18,7 +18,7 @@
 | 3d  | Regalsteuerung, Etagen-Genres und Bücher als Deko | fertig |
 | 3e  | Bücher drehen, Stapel blättern und Regal-Menü mit R | fertig |
 | 3f  | Regal-Menü als Tablet und Fächer         | fertig        |
-| 3g  | Tablet mit Apps und Lagerübersicht       | vorgemerkt    |
+| 3g  | Tablet mit Apps und Lagerübersicht       | in Arbeit     |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -312,9 +312,20 @@ Leitgedanke: Wenige klare Aktionen statt vieler Wege – und das Regal bleibt im
       das Tablet das Regal nicht verdeckt
 - [x] Gewählte Sortierart wird gespeichert; alte Spielstände laden weiter
 
-## Etappe 3g – Tablet mit Apps und Lagerübersicht (vorgemerkt)
-- Noch nicht begonnen. Idee: Das Tablet bekommt Apps (z. B. Shop, Bestand, Sammlung) und eine
-  übersichtliche Lagerübersicht.
+## Etappe 3g – Tablet mit Apps und Lagerübersicht
+Leitgedanke: Das Theken-Tablet fühlt sich wie ein echtes Tablet an – und Bücher kommen direkt
+aus dem Lager in die Hand.
+- [ ] Theken-Tablet mit Startbildschirm: große App-Symbole mit Namen auf ruhigem Hintergrund,
+      schmale Leiste mit Kontostand; Home-Symbol zurück, Kreuz und Esc schließen das ganze
+      Tablet; beim Öffnen immer der Startbildschirm
+- [ ] Apps als eigene kleine Szenen mit Datenblatt (neue App = neue Szene + Datenblatt)
+- [ ] App „Einrichtung“: Möbel, Deko, Wandfarben, Böden, Decken kaufen und verkaufen
+      (Warenkorb, Filter)
+- [ ] App „Bücher“: Bücherpakete je Genre kaufen
+- [ ] App „Sammlung“: alle Titel je Genre, unentdeckte als „?“
+- [ ] App „Bestand“: je Genre Lager, Regal, ausgelegt mit Symbolen und Zahlen; 1 bis 7 Bücher
+      oder einzelne Titel (Cover-Kacheln) direkt aus dem Lager in die Hand nehmen
+- [ ] Bücher aus der Bestand-App werden wie andere getragene Bücher gespeichert
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
