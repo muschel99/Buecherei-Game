@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://scripts/shop/delivery_manager.gd" id="15_deliveries"]
 [ext_resource type="PackedScene" path="res://scenes/ui/notice.tscn" id="16_notice"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shop_window.tscn" id="17_shop"]
+[ext_resource type="PackedScene" path="res://scenes/ui/counter_tablet.tscn" id="30_counter_tablet"]
 [ext_resource type="PackedScene" path="res://scenes/ui/storage_indicator.tscn" id="18_storage"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shelf_menu.tscn" id="19_shelf_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/carry_indicator.tscn" id="20_carry"]
@@ -194,6 +195,9 @@ room_path = NodePath("../GroundFloorRoom")
 build_mode_path = NodePath("../BuildMode")
 
 [node name="ShopWindow" parent="." instance=ExtResource("17_shop")]
+player_path = NodePath("../Player")
+
+[node name="CounterTablet" parent="." instance=ExtResource("30_counter_tablet")]
 player_path = NodePath("../Player")
 
 [node name="CarryIndicator" parent="." instance=ExtResource("20_carry")]

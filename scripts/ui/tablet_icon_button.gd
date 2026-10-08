@@ -6,7 +6,7 @@ extends Button
 ## Die Symbole sind einfache Formen (keine Bilddateien) – austauschbar: einfach "icon" mit
 ## einem eigenen Bild setzen, dann wird das Bild statt der Form gezeigt.
 
-enum Icon { CLOSE, BACK, PICK, FILL, SORT, STORE }
+enum Icon { CLOSE, BACK, PICK, FILL, SORT, STORE, HOME, BUY, SELL, TAKE, PLUS, MINUS, EXPAND, COLLAPSE }
 
 const DEFAULT_TIPS := {
 	Icon.CLOSE: "Schließen",
@@ -15,7 +15,17 @@ const DEFAULT_TIPS := {
 	Icon.FILL: "Auffüllen",
 	Icon.SORT: "Sortieren",
 	Icon.STORE: "Alle ins Lager",
+	Icon.HOME: "Startbildschirm",
+	Icon.BUY: "Kaufen",
+	Icon.SELL: "Verkaufen",
+	Icon.TAKE: "In die Hand",
+	Icon.PLUS: "Mehr",
+	Icon.MINUS: "Weniger",
+	Icon.EXPAND: "Titel zeigen",
+	Icon.COLLAPSE: "Titel ausblenden",
 }
+## Kleine Knöpfe (Kreuz, Pfeile, Plus, Minus …): 34 Pixel, die anderen 46
+const SMALL_ICONS := [Icon.CLOSE, Icon.BACK, Icon.HOME, Icon.PLUS, Icon.MINUS, Icon.EXPAND, Icon.COLLAPSE]
 const LINE_COLOR := Color(1.0, 0.94, 0.84, 0.92)
 const HOVER_COLOR := Color(0.96, 0.78, 0.48)
 const DISABLED_COLOR := Color(0.85, 0.78, 0.68, 0.3)
@@ -60,14 +70,14 @@ func _ready() -> void:
 
 
 func _update_size() -> void:
-	var side := 34.0 if icon_kind == Icon.CLOSE or icon_kind == Icon.BACK else 46.0
+	var side := 34.0 if SMALL_ICONS.has(icon_kind) else 46.0
 	custom_minimum_size = Vector2(side, side)
 
 
 func _draw() -> void:
 	if icon != null:
 		return  # eigenes Bild: zeigt der Button selbst
-	var color := DISABLED_COLOR if disabled else (HOVER_COLOR if is_hovered() else LINE_COLOR)
+	var color := DISABLED_COLOR if disabled else (HOVER_COLOR if is_hovered() or button_pressed else LINE_COLOR)
 	var c := size / 2.0
 	var w := 2.0
 	match icon_kind:
@@ -113,6 +123,37 @@ func _draw() -> void:
 			var top := c + Vector2(0, -13)
 			draw_line(top, top + Vector2(0, 11), color, w, true)
 			draw_polyline(PackedVector2Array([top + Vector2(-4, 7), top + Vector2(0, 11), top + Vector2(4, 7)]), color, w, true)
+		Icon.HOME:
+			# Kleines Haus
+			draw_polyline(PackedVector2Array([c + Vector2(-8, -1), c + Vector2(0, -8), c + Vector2(8, -1)]), color, w, true)
+			draw_polyline(PackedVector2Array([c + Vector2(-6, -2), c + Vector2(-6, 7), c + Vector2(6, 7), c + Vector2(6, -2)]), color, w, true)
+			_draw_rect_outline(Rect2(c + Vector2(-1.8, 2), Vector2(3.6, 5)), color, 1.5)
+		Icon.BUY:
+			# Einkaufstasche
+			var bag := Rect2(c + Vector2(-10, -5), Vector2(20, 16))
+			_draw_rect_outline(bag, color, w)
+			draw_arc(c + Vector2(0, -5), 5.0, PI, TAU, 12, color, w, true)
+		Icon.SELL:
+			# Münze mit Pfeil nach oben (Geld zurück)
+			draw_arc(c + Vector2(-3, 2), 8.5, 0.0, TAU, 28, color, w, true)
+			draw_line(c + Vector2(-3, -2), c + Vector2(-3, 6), color, 1.5, true)
+			var tip := c + Vector2(10, -12)
+			draw_line(tip, tip + Vector2(0, 10), color, w, true)
+			draw_polyline(PackedVector2Array([tip + Vector2(-3.5, 3.5), tip, tip + Vector2(3.5, 3.5)]), color, w, true)
+		Icon.TAKE:
+			# Ein Buch, darunter eine offene Hand (Schale)
+			_draw_rect_outline(Rect2(c + Vector2(-6, -13), Vector2(12, 14)), color, w)
+			draw_line(c + Vector2(-3, -12), c + Vector2(-3, 0), color, 1.5, true)
+			draw_arc(c + Vector2(0, 2), 11.0, 0.25 * PI, 0.75 * PI, 16, color, w, true)
+		Icon.PLUS, Icon.MINUS:
+			var r := 6.0
+			draw_line(c + Vector2(-r, 0), c + Vector2(r, 0), color, w, true)
+			if icon_kind == Icon.PLUS:
+				draw_line(c + Vector2(0, -r), c + Vector2(0, r), color, w, true)
+		Icon.EXPAND, Icon.COLLAPSE:
+			var r := 6.0
+			var dy := 2.5 if icon_kind == Icon.EXPAND else -2.5
+			draw_polyline(PackedVector2Array([c + Vector2(-r, -dy), c + Vector2(0, dy), c + Vector2(r, -dy)]), color, w, true)
 
 
 func _draw_rect_outline(rect: Rect2, color: Color, width: float) -> void:

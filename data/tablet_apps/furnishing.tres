@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TabletAppData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/tablet_app_data.gd" id="1_app"]
+
+[resource]
+script = ExtResource("1_app")
+id = "furnishing"
+display_name = "Einrichtung"
+symbol = 0
+color = Color(0.33, 0.47, 0.36, 1)
+scene_path = "res://scenes/ui/tablet_apps/furnishing_app.tscn"
+order = 10
