@@ -112,6 +112,9 @@ var floor_section_cells: int = 3
 var paint_reach: float = 6.0
 ## Bis zu dieser Entfernung (in Metern) kann man im Gestaltungsmodus Möbel platzieren.
 var build_reach: float = 9.0
+## Wie stark die Cover-Kacheln in der Bücherauswahl in der Farbe ihres Genres hinterlegt sind
+## (0 = gar nicht, 1 = ganz in der Genre-Farbe).
+var book_picker_tint: float = 0.3
 ## Deckkraft der Vorschau ("Blaupause") beim Platzieren von Möbeln und Büchern
 ## (0 = unsichtbar, 1 = voll sichtbar). Nicht zu niedrig: sonst scheint Licht und Schatten von
 ## dahinter durch und die Vorschau sieht an Lichtinseln halb hell, halb dunkel aus.
