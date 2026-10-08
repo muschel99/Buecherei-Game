@@ -104,6 +104,8 @@ func load_save_data(data: Dictionary) -> void:
 			var amount := int(furniture[id])
 			if amount > 0 and Catalog.get_furniture(str(id)):
 				_furniture[str(id)] = amount
+			elif amount > 0 and str(id) == ReturnBox.LEGACY_FURNITURE_ID:
+				ReturnBox.refund_legacy(amount, false)  # alter Spielstand: Kasten ist jetzt fest eingebaut
 	# Oberflächen kommen dazu (die Startfarben und alles, was schon im Raum zu sehen ist,
 	# bleiben erhalten – auch wenn der Spielstand älter ist als dieses Inventar)
 	var surfaces = data.get("surfaces")

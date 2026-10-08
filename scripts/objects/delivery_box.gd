@@ -75,7 +75,10 @@ func unpack() -> void:
 					Notice.post(self, "%d %s · %s" % [fresh, "neuer Titel" if fresh == 1 else "neue Titel",
 						genre.display_name])
 			_:
-				Inventory.add_furniture(id, count)
+				if Catalog.get_furniture(id) == null and id == ReturnBox.LEGACY_FURNITURE_ID:
+					ReturnBox.refund_legacy(count, true)  # alter Spielstand: bestellt, gibt es nicht mehr
+				else:
+					Inventory.add_furniture(id, count)
 	# Beiläufig unten rechts zeigen, was ins Lager geht (statt eines Textes)
 	for entry in contents:
 		var id := str(entry.get("id"))

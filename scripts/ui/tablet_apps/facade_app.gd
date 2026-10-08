@@ -39,8 +39,14 @@ func _ready() -> void:
 func app_opened() -> void:
 	# Ändert sich der Rückgabekasten (Bücher kommen dazu), zeigt die App es gleich
 	var box := ReturnBox.find(get_tree())
-	if box and not box.changed.is_connected(request_refresh):
-		box.changed.connect(request_refresh)
+	if box and not box.changed.is_connected(_on_box_changed):
+		box.changed.connect(_on_box_changed)
+
+
+## Nur neu aufbauen, solange die App zu sehen ist (beim Öffnen baut sie sich ohnehin neu auf).
+func _on_box_changed() -> void:
+	if tablet and tablet.is_open and is_visible_in_tree():
+		request_refresh()
 
 
 func refresh() -> void:

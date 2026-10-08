@@ -86,7 +86,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     Text, `<E>` für Tasten) – dort ergänzen, umschreiben oder umsortieren, ohne Code.
   - Das Tablet gehört fest zur Bücherei: Es ist nicht zu kaufen und lässt sich nicht verkaufen.
 - **Lieferung:** Kurz nach der Bestellung (10 Sekunden, GameConfig) stehen die Kartons draußen
-  neben der Eingangstür – **ein Karton pro Objekt** (drei Stühle und eine Lampe = vier Kartons) –,
+  vor dem Schaufenster, links vom Einwurf des Rückgabekastens (der bleibt frei) – **ein Karton pro Objekt** (drei Stühle und eine Lampe = vier Kartons) –,
   und ein dezenter Hinweis erscheint: „Lieferung ist da“.
   - Die Kartons stapeln sich ordentlich: erst nebeneinander an der Hauswand (4 Stapel), dann
     bis zu 3 übereinander, dann eine Reihe davor. Jeder steht leicht schief, keiner steckt im
@@ -336,6 +336,8 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   halten. Was nicht passt, trage ich weiter.
 - Ältere Spielstände: Ein früher aufgestellter Rückgabekasten verschwindet (auch aus Inventar
   und Shop); seine Bücher wandern in den festen Kasten, was dort nicht mehr passt, ins Lager.
+  Kästen, die noch im Inventar lagen, werden zum Verkaufspreis erstattet, bestellte (noch im
+  Karton) zum vollen Preis.
 - Keine Eile: Bücher dürfen beliebig lange im Kasten liegen oder getragen werden.
 
 ### Bücher als Deko: frei ablegen (seit Etappe 3d)

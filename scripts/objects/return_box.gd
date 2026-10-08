@@ -24,6 +24,8 @@ signal changed
 ## So hieß der frühere, frei aufstellbare Rückgabekasten (Möbel-id) – nur für alte Spielstände
 ## (siehe Room._load_furniture_entry).
 const LEGACY_FURNITURE_ID := "return_box"
+## Was der frühere Kasten im Shop kostete (für Erstattungen in alten Spielständen)
+const LEGACY_PRICE := 90
 ## Knoten im Raum mit den möglichen Orten (Marker3D, Name = Kennung des Orts)
 const SPOTS_NODE := "ReturnBoxSpots"
 const DEFAULT_SPOT := "BesideDoor"
@@ -134,6 +136,14 @@ func count_books(genre_id: String) -> int:
 	return count
 
 
+## Alter Spielstand: Frühere Rückgabekästen im Inventar (Verkaufspreis) oder noch in einem
+## Lieferkarton (voller Preis, bezahlt, aber nie angekommen) gibt es nicht mehr – das Geld
+## kommt zurück.
+static func refund_legacy(count: int, full_price: bool) -> void:
+	var each := LEGACY_PRICE if full_price else roundi(LEGACY_PRICE * GameConfig.sell_price_share)
+	Wallet.earn(each * count, "Rückgabekasten erstattet")
+
+
 ## Bücher aus einem früheren, aufgestellten Rückgabekasten (alter Spielstand): Sie kommen
 ## hier hinein; was nicht mehr passt, geht ins Lager.
 func receive_legacy_books(old_books: Array) -> void:
@@ -182,6 +192,8 @@ func move_to_spot(id: String) -> void:
 
 func _build_slot_model(data: ReturnSlotData) -> void:
 	if _slot_model:
+		# Erst aus dem Baum nehmen, damit nie zwei Einwürfe gleichzeitig darin hängen
+		_slot_model.get_parent().remove_child(_slot_model)
 		_slot_model.queue_free()
 		_slot_model = null
 	if _slot_point == null or data.scene_path.is_empty() or not ResourceLoader.exists(data.scene_path):
