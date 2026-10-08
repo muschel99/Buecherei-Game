@@ -35,7 +35,8 @@ scenes/            Szenen (.tscn)
   furniture/       Möbel (je eine Szene, Modell austauschbar)
   objects/         Interaktive Objekte (Stehlampe, Lieferkarton; Scripts: LightSource, Seating,
                    Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox,
-                   LooseBooks = ausgelegte Bücher; player/: HeldBook = Buch in der Hand)
+                   LooseBooks = ausgelegte Bücher, BookStand = Buch-Aufsteller;
+                   player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
   ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Theken-Tablet, Hinweise,
                    Stil-Anzeige, Regal-Menü, Trage-Anzeige, Buch-Infokarte, Genre-Schriftzug,
@@ -264,6 +265,11 @@ docs/              Dokumentation
   `set_blueprint_valid()` (Shader `blueprint.gdshader`: unshaded, ruhiges Blau, Deckkraft
   `GameConfig.preview_opacity`, leicht zur Kamera versetzt – kein Z-Fighting, keine Lichtkante).
   Stapel = Bücher, die lückenlos aufeinander liegen (`LooseBooks.STACK_GAP`).
+  Anlehnen an Möbel nur mit `FurnitureData.books_can_lean` (Lehnen, große Töpfe), flach auf
+  Möbeln ohne Ablagefläche nur mit `books_can_lie` (Polster) – nie an kleiner Deko, nie frei
+  hochkant. **Buch-Aufsteller:** Knoten `BookStand` (+ Marker `BookSpot`) in einer Möbel-Szene;
+  das Buch darin ist ein ausgelegtes Buch mit Haltung `DISPLAYED` und `support_uid` = Aufsteller
+  (genau eins je Aufsteller).
 - Bücher tragen: höchstens `GameConfig.max_carried_books`; `BookStock.carry(liste)` liefert,
   was nicht mehr passt; volle Hände ohne Text zeigen: `BookStock.show_hands_full()`
   (der Stapel in der Hand wackelt).
