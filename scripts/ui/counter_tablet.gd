@@ -192,6 +192,11 @@ func wobble(control: Control = null) -> void:
 
 # --- Anzeige ---
 
+## Alles neu zeigen – erst am Ende des Bilds (einmal, auch wenn viel auf einmal passiert).
+func queue_refresh() -> void:
+	_queue_refresh()
+
+
 func _queue_refresh() -> void:
 	if _refresh_queued or not is_open:
 		return

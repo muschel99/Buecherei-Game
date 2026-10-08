@@ -49,7 +49,7 @@ func get_amount(genre_id: String) -> int:
 
 func change_amount(genre_id: String, change: int) -> void:
 	_amounts[genre_id] = clampi(get_amount(genre_id) + change, 1, maxi(max_take(genre_id), 1))
-	refresh()
+	request_refresh()
 
 
 ## Nimmt die gewählte Anzahl Bücher dieses Genres aus dem Lager in die Hand. Liefert, wie
@@ -80,7 +80,7 @@ func take_title(data: BookData) -> bool:
 
 func toggle_titles(genre_id: String) -> void:
 	_expanded[genre_id] = not _expanded.get(genre_id, false)
-	refresh()
+	request_refresh()
 
 
 func refresh() -> void:

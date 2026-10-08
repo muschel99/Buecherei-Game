@@ -45,7 +45,7 @@ func get_genres() -> Array[GenreData]:
 
 func show_genre(id: String) -> void:
 	_genre = id
-	refresh()
+	request_refresh()
 
 
 func refresh() -> void:

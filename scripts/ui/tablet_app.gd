@@ -28,6 +28,15 @@ func refresh() -> void:
 	pass
 
 
+## Neu anzeigen, aber erst am Ende des Bilds – so wird kein Knopf entfernt, während sein
+## Klick noch verarbeitet wird.
+func request_refresh() -> void:
+	if tablet and tablet.is_open:
+		tablet.queue_refresh()
+	else:
+		refresh()
+
+
 # --- Kleine Bausteine für alle Apps ---
 
 func make_label(text: String, font_size: int = 17, color: Color = TabletFrame.TEXT_COLOR) -> Label:

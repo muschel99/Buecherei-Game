@@ -40,7 +40,7 @@ func add_to_cart(item: Resource) -> void:
 	elif kind != "surface":
 		entry.count += 1
 	_order_text = ""
-	refresh()
+	request_refresh()
 
 
 func _change_cart_count(entry: Dictionary, change: int) -> void:
@@ -48,7 +48,7 @@ func _change_cart_count(entry: Dictionary, change: int) -> void:
 	if entry.count <= 0:
 		cart.erase(entry)
 	_order_text = ""
-	refresh()
+	request_refresh()
 
 
 func get_cart_total() -> int:
@@ -63,12 +63,12 @@ func order() -> void:
 	var total := get_cart_total()
 	var deliveries := _get_deliveries()
 	if cart.is_empty() or deliveries == null or not Wallet.spend(total, "Einkauf am Tablet"):
-		refresh()
+		request_refresh()
 		return
 	deliveries.place_order(cart)
 	cart.clear()
 	_order_text = "Danke! In etwa %d Sekunden steht der Karton vor der Tür." % roundi(GameConfig.delivery_time)
-	refresh()
+	request_refresh()
 
 
 ## Baut den Warenkorb (rechte Spalte) in "parent".
