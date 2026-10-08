@@ -4,7 +4,7 @@ extends Node
 ## Ein Buch-Exemplar (Book) ist immer an genau einem Ort:
 ## - im Lager (hier gespeichert, nach Genre sortiert),
 ## - in einem Regal (BookShelf, gespeichert mit dem Regal im Raum),
-## - im Rückgabekasten (ReturnBox, ebenfalls mit dem Raum gespeichert),
+## - im Rückgabekasten (ReturnBox, fest in der Wand, speichert sich selbst),
 ## - ausgelegt: frei auf einem Tisch, der Theke, dem Boden … (LooseBooks, mit dem Raum gespeichert),
 ## - oder in meinen Händen (carried, hier gespeichert). Eins davon liegt obenauf und ist
 ##   "aktiv" – das lege ich mit der linken Maustaste einzeln ab, ins Regal oder frei in die
@@ -53,13 +53,15 @@ func _ready() -> void:
 		_add_to_storage(_create_books(genre.get_id(), GameConfig.start_books_per_genre))
 
 
-## Testtaste F9 (siehe DebugKeys): legt GameConfig.debug_return_box_books Bücher in einen
+## Testtaste F9 (siehe DebugKeys): legt GameConfig.debug_return_box_books Bücher in den
 ## Rückgabekasten – Titel, die ich schon entdeckt habe (so verrät der Test keine neuen Titel
-## der Sammlung).
+## der Sammlung). Ist er voll, kommt nichts mehr hinein.
 func fill_return_box_for_testing() -> void:
-	var boxes := get_tree().get_nodes_in_group(RETURN_BOX_GROUP)
-	if boxes.is_empty():
-		Notice.post(self, "Test (F9): erst einen Rückgabekasten aufstellen")
+	var box := ReturnBox.find(get_tree())
+	if box == null:
+		return
+	if box.is_full():
+		Notice.post(self, "Test (F9): Der Rückgabekasten ist voll")
 		return
 	var titles: Array[BookData] = []
 	for genre in get_unlocked_genres():
@@ -69,7 +71,7 @@ func fill_return_box_for_testing() -> void:
 	var books: Array[Book] = []
 	for i in GameConfig.debug_return_box_books:
 		books.append(Book.create_from(titles.pick_random()))
-	boxes.pick_random().add_books(books)
+	box.add_books(books)  # was nicht mehr passt, verfällt (es sind nur Testbücher)
 
 
 # --- Genres ---

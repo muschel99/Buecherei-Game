@@ -696,7 +696,9 @@ func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
 		for result in space.intersect_shape(query, 4):
 			var other: Object = result.collider
 			if other is Area3D:
-				return "Bitte den Eingang frei lassen."
+				return str(other.get_meta("keep_clear_text", "Bitte den Eingang frei lassen."))
+			if ReturnBox.is_part(other):
+				return "Hier ist der Rückgabekasten."
 			if other is Player:
 				return "Du stehst im Weg – geh ein Stück zur Seite."
 			if FurnitureUtils.find_placed_furniture(other):

@@ -171,8 +171,9 @@ var books_per_package: int = 10
 ## So viele Bücher je freigeschaltetem Genre liegen beim allerersten Start im Lager.
 var start_books_per_genre: int = 12
 ## Das besitze ich zum Start zusätzlich im Inventar (id aus data/furniture/ -> Anzahl).
-## Kommt auch in ältere Spielstände, aber nur einmal.
-var start_furniture_gifts: Dictionary = {"return_box": 1}
+## Kommt auch in ältere Spielstände, aber nur einmal. (Der Rückgabekasten ist seit Etappe 3l
+## fest in der Wand eingebaut und kein Geschenk mehr.)
+var start_furniture_gifts: Dictionary = {}
 ## Ein Buch gleitet in so vielen Sekunden ins Regal (bzw. heraus).
 var book_slide_time: float = 0.35
 ## Abstand zwischen zwei Büchern, die nacheinander ins Regal gleiten (in Sekunden).
@@ -287,6 +288,14 @@ var paused_max_fps: int = 30
 
 ## Spiel automatisch pausieren, wenn das Spielfenster in den Hintergrund rückt.
 var pause_on_focus_loss: bool = true
+
+
+# --- Rückgabekasten ---
+
+## So viele Bücher passen in den Rückgabekasten. Ist er voll, nimmt er nichts mehr an.
+var return_box_capacity: int = 50
+## Einwurf-Variante zum Start (id aus data/return_slots/).
+var return_box_default_slot: String = "slot_plain"
 
 
 # --- Testtasten (nur zum Ausprobieren) ---
