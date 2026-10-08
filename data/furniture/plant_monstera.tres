@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_gunr5")
+books_can_lean = true
 id = "plant_monstera"
 display_name = "Monstera im Topf"
 description = "Große Blätter im Terrakottatopf."

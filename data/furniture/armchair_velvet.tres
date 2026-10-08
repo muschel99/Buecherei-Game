@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_hm3ik")
+books_can_lean = true
 id = "armchair_velvet"
 display_name = "Ohrensessel, grüner Samt"
 description = "Zum Versinken mit einem guten Buch."

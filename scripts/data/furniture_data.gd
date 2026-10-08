@@ -83,6 +83,13 @@ const SUBCATEGORIES := {
 ## (Knoten vom Typ PlacementSurface).
 @export_flags("Boden:1", "Ablagefläche:2", "Wand:4", "Tür:8", "Decke:16") var placement: int = PLACE_FLOOR
 
+@export_group("Bücher")
+## Bücher lassen sich daran anlehnen (wie an eine Wand): Lehnen von Sofas, Sesseln und Stühlen,
+## große Blumentöpfe. Nie bei kleiner Deko (Figuren, kleine Vasen …).
+@export var books_can_lean: bool = false
+## Bücher lassen sich flach obendrauf legen, auch ohne Ablagefläche (Polster: Kissen, Decke).
+@export var books_can_lie: bool = false
+
 ## Werte für "placement"
 const PLACE_FLOOR := 1
 const PLACE_SURFACE := 2

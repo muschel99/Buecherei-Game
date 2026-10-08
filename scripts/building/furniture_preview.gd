@@ -2,7 +2,7 @@ class_name FurniturePreview
 extends Node3D
 ## Die halbdurchsichtige Vorschau eines Möbelstücks im Gestaltungsmodus.
 ##
-## Grün = passt, Rot = passt nicht. Die Vorschau hat selbst keine Kollision,
+## Blaupause (FurnitureUtils.make_blueprint_material): Blau = passt, Rot = passt nicht. Die Vorschau hat selbst keine Kollision,
 ## kennt aber die Kollisionsformen des Möbelstücks, damit der Gestaltungsmodus
 ## prüfen kann, ob an der gewünschten Stelle Platz ist.
 
@@ -11,7 +11,7 @@ const SHRINK := 0.02
 
 var data: FurnitureData = null
 
-var _material: StandardMaterial3D
+var _material: ShaderMaterial
 var _model: Node3D = null
 var _shapes: Array[CollisionShape3D] = []
 var _shrunk_shapes: Array[Shape3D] = []
@@ -19,10 +19,7 @@ var _model_box := AABB()
 
 
 func _init() -> void:
-	_material = StandardMaterial3D.new()
-	_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_material.render_priority = 1
+	_material = FurnitureUtils.make_blueprint_material()
 	set_valid(true)
 
 
@@ -76,9 +73,7 @@ func clear() -> void:
 
 
 func set_valid(valid: bool) -> void:
-	var color := GameConfig.preview_color_valid if valid else GameConfig.preview_color_invalid
-	color.a = GameConfig.preview_opacity
-	_material.albedo_color = color
+	FurnitureUtils.set_blueprint_valid(_material, valid)
 
 
 ## Die acht Ecken des umgebenden Quaders des Möbelstücks (ohne Mitwanderndes), in der Welt

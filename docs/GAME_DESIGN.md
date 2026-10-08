@@ -315,9 +315,12 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   andere Ablageflächen. **Linksklick** legt das Buch obenauf genau dorthin, wo ich hinschaue;
   vorher zeigt eine halbdurchsichtige Vorschau, wo es hinkommt (rötlich, wenn es dort nicht
   geht).
-- **Ruhige Vorschau** (seit Etappe 3i): Die Vorschau sieht auf jeder Oberfläche gleichmäßig aus –
-  ohne Licht und Schatten der Szene (eine eigene, sanfte Schattierung gibt ihr Form) und ein
-  paar Millimeter zur Kamera hin gezeichnet, damit sie nie flackert oder gestreift aussieht.
+- **Blaupause** (seit Etappe 3i ruhig, seit 3j für Bücher und Möbel gleich): Die Vorschau ist
+  eine „Blaupause“ in ruhigem Blau (rot, wenn es dort nicht geht) – unbeleuchtet, also ohne
+  Licht und Schatten der Szene, und nur leicht durchsichtig (`GameConfig.preview_opacity`), damit
+  auch an der Grenze einer Lichtinsel kein Hell und Dunkel von dahinter durchscheint. Ein hellerer
+  Rand und bei Büchern feine Kanten zeigen die Form. Sie wird ein paar Millimeter zur Kamera hin
+  gezeichnet, damit sie nie flackert. In allen drei Grafikstufen gleich.
 - **Eine Regel für alles** (seit Etappe 3i): Ein Buch darf nie in ein anderes Objekt
   hineinragen – Möbel, Deko, Wände. Überschneidet sich die Vorschau mit etwas, ist sie rötlich,
   und ein Klick lässt sie nur kurz wackeln. Aufliegen und Anlehnen ist erlaubt. Das gilt flach,
@@ -332,9 +335,36 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 - **Aufrecht, ganz ohne neue Taste:**
   - Schaue ich auf eine **Wand** (z. B. hinter dem Tisch oder am Boden), lehnt das Buch dort
     an, das Cover zeigt in den Raum (`GameConfig.loose_book_lean_angle`).
+  - **Anlehnen an mehr Stellen** (seit Etappe 3j), genauso wie an der Wand: an die Rücken- und
+    Armlehnen von Sofas, die Lehnen von Sesseln und Stühlen und an große Blumentöpfe (im
+    Datenblatt `books_can_lean`). Das Buch steht dabei auf dem, was darunter ist (Sitzfläche,
+    Boden, Tisch). Ist die Lehne niedriger als das Buch (z. B. eine Armlehne), liegt das Buch an
+    ihrer Oberkante an.
+  - **An einen Bücherstapel** (seit Etappe 3j): Schaue ich auf die Seite eines liegenden
+    Stapels, lehnt das Buch daneben – wie leicht heruntergerutscht, oben an der Kante des
+    Stapels. (Schaue ich von oben darauf, kommt es wie bisher obendrauf.)
+  - An kleiner Deko (Figuren, kleine Vasen …) und an Lampen lehnt nichts an; dort ist die
+    Vorschau rot. Frei hochkant hinstellen geht nie – zum Präsentieren gibt es den Aufsteller.
+  - Im Bücherregal stehen Bücher in Reihen (das Regal räumt selbst ein); Anlehnen an seine
+    Rückwand gibt es dort (noch) nicht.
   - Schaue ich auf eine **Buchstütze** oder ein **aufrecht stehendes Buch**, stellt sich das
     Buch aufrecht direkt daneben, der Rücken zeigt nach vorn – so entstehen kleine Buchreihen
     auf Tischen und der Theke.
+- **Flach auf Polster** (seit Etappe 3j): Auch auf Sofakissen und eine Sofadecke lassen sich
+  Bücher flach legen (im Datenblatt `books_can_lie`), wie auf einen Tisch – Cover oben, leicht
+  schräg, Stapel möglich.
+- **Buch-Aufsteller** (seit Etappe 3j, bei Nest & Nook, 18 Taler): ein schlichter dreieckiger
+  Aufsteller aus hellem Holz (Platzhalter). Als Deko darf er überall hin, wo Deko hindarf:
+  Theke, Fensterbank, Tisch, Boden, Bücherregal und andere Regale.
+  - **Linksklick** auf den Aufsteller (mit Buch in der Hand): Das Buch obenauf legt sich nach
+    hinten geneigt hinein, Cover nach vorn (die Vorschau zeigt es vorher).
+  - **Rechtsklick** auf das Buch: wieder in die Hand (obenauf).
+  - Ein Aufsteller hält genau ein Buch; ist er belegt, ist die Vorschau rot und ein Klick lässt
+    sie nur kurz wackeln. Passt das Buch nicht (z. B. Regalbrett darüber zu niedrig), auch rot.
+  - Das Buch zählt zum Bestand als „ausgelegt“. Verschiebe ich den Aufsteller (oder das
+    Möbelstück, auf dem er steht), wandert es mit; räume ich ihn mit X weg, geht es ins Lager.
+  - Für eigene Modelle: Szene mit dem Knoten `BookStand` und dem Marker `BookSpot` (hintere
+    Unterkante des Buchs, +Z nach vorn), Neigung `lean_angle`.
 - **Drehen mit dem Mausrad** (seit Etappe 3e): Vor dem Ablegen dreht das Mausrad das Buch
   obenauf um die Hochachse – genauso wie Möbel im Gestaltungsmodus; die Vorschau zeigt die
   Drehung. So liegt ein Buch z. B. quer oder mit dem Buchrücken zu mir, und Stapel lassen sich

@@ -1,0 +1,74 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/wood_light.tres" id="1_wood"]
+[ext_resource type="Script" path="res://scripts/objects/book_stand.gd" id="2_stand"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(0.12, 0.012, 0.145)
+
+[sub_resource type="BoxMesh" id="BoxMesh_board"]
+size = Vector3(0.12, 0.17, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lip"]
+size = Vector3(0.12, 0.018, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_strut"]
+size = Vector3(0.008, 0.158, 0.008)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_base"]
+size = Vector3(0.12, 0.012, 0.145)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lip"]
+size = Vector3(0.12, 0.018, 0.008)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_board"]
+size = Vector3(0.12, 0.17, 0.008)
+
+[node name="BookStand" type="Node3D"]
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Base" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.006, -0.0125)
+material_override = ExtResource("1_wood")
+mesh = SubResource("BoxMesh_base")
+
+[node name="Board" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 0.93969, 0.34202, 0, -0.34202, 0.93969, 0, 0.0898, -0.0447)
+material_override = ExtResource("1_wood")
+mesh = SubResource("BoxMesh_board")
+
+[node name="Lip" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.021, 0.045)
+material_override = ExtResource("1_wood")
+mesh = SubResource("BoxMesh_lip")
+
+[node name="StrutLeft" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.091, -0.078)
+material_override = ExtResource("1_wood")
+mesh = SubResource("BoxMesh_strut")
+
+[node name="StrutRight" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.091, -0.078)
+material_override = ExtResource("1_wood")
+mesh = SubResource("BoxMesh_strut")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionBase" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.006, -0.0125)
+shape = SubResource("BoxShape3D_base")
+
+[node name="CollisionLip" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.021, 0.045)
+shape = SubResource("BoxShape3D_lip")
+
+[node name="CollisionBoard" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 0.93969, 0.34202, 0, -0.34202, 0.93969, 0, 0.0898, -0.0447)
+shape = SubResource("BoxShape3D_board")
+
+[node name="BookStand" type="Node3D" parent="."]
+script = ExtResource("2_stand")
+
+[node name="BookSpot" type="Marker3D" parent="BookStand"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, -0.01)

@@ -85,6 +85,25 @@ static func set_override(root: Node, material: Material) -> void:
 		node.material_override = material
 
 
+## Neues Material für eine "Blaupause" (Vorschau beim Platzieren von Büchern und Möbeln):
+## unbeleuchtet, ruhiges Blau, nur leicht durchsichtig (Farben und Deckkraft in GameConfig).
+## box_edges = feine helle Kanten (für Bücher). Passt / passt nicht: set_blueprint_valid.
+static func make_blueprint_material(box_edges: bool = false) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = load("res://assets/shaders/blueprint.gdshader")
+	material.render_priority = 1
+	material.set_shader_parameter("valid_color", GameConfig.preview_color_valid)
+	material.set_shader_parameter("invalid_color", GameConfig.preview_color_invalid)
+	material.set_shader_parameter("opacity", GameConfig.preview_opacity)
+	material.set_shader_parameter("box_edges", box_edges)
+	return material
+
+
+## Blaupause blau (passt) oder rot (gesperrt).
+static func set_blueprint_valid(material: ShaderMaterial, valid: bool) -> void:
+	material.set_shader_parameter("tint", 0.0 if valid else 1.0)
+
+
 ## Gemeinsames Material für die dezente Hervorhebung (Stärke in GameConfig).
 static func get_highlight_material() -> ShaderMaterial:
 	if _highlight_material == null:

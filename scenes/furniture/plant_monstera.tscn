@@ -90,8 +90,12 @@ height = 0.70000005
 radial_segments = 24
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_mjbgi"]
-height = 1.1
+height = 0.8
 radius = 0.2
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_pot"]
+height = 0.3
+radius = 0.16
 
 [node name="PlantMonstera" type="Node3D" unique_id=1727863453]
 
@@ -170,5 +174,9 @@ mesh = SubResource("CylinderMesh_j8oa7")
 [node name="Body" type="StaticBody3D" parent="." unique_id=534856521]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=1512549624]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
 shape = SubResource("CylinderShape3D_mjbgi")
+
+[node name="CollisionPot" type="CollisionShape3D" parent="Body" unique_id=1512549625]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+shape = SubResource("CylinderShape3D_pot")

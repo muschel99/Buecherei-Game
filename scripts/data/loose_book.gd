@@ -14,9 +14,11 @@ enum Pose {
 	UPRIGHT,  ## aufrecht, Rücken nach vorn (z. B. neben einer Buchstütze)
 	LEANING,  ## aufrecht an eine Wand gelehnt, Cover nach vorn
 	OPEN,  ## aufgeschlagen (vorgesehen für später – wird vorerst wie FLAT gezeigt)
+	DISPLAYED,  ## in einem Buch-Aufsteller präsentiert (BookStand), Cover nach vorn
 }
 
-const _POSE_IDS := {Pose.FLAT: "flat", Pose.UPRIGHT: "upright", Pose.LEANING: "leaning", Pose.OPEN: "open"}
+const _POSE_IDS := {Pose.FLAT: "flat", Pose.UPRIGHT: "upright", Pose.LEANING: "leaning", Pose.OPEN: "open",
+	Pose.DISPLAYED: "displayed"}
 
 ## Das Exemplar.
 var book: Book

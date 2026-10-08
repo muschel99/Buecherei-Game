@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_fixqm")
+books_can_lean = true
 id = "chair_shell"
 display_name = "Schalenstuhl"
 description = "Weiße Schale, schwarze Beine."

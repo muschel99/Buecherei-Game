@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_srhup")
+books_can_lean = true
 id = "rattan_chair"
 display_name = "Korbsessel"
 description = "Geflochten, mit Leinenkissen."

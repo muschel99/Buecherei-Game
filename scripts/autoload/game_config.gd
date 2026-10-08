@@ -112,12 +112,14 @@ var floor_section_cells: int = 3
 var paint_reach: float = 6.0
 ## Bis zu dieser Entfernung (in Metern) kann man im Gestaltungsmodus Möbel platzieren.
 var build_reach: float = 9.0
-## Deckkraft der Möbel-Vorschau (0 = unsichtbar, 1 = voll sichtbar).
-var preview_opacity: float = 0.45
-## Farbe der Vorschau, wenn das Möbel an diese Stelle passt.
-var preview_color_valid: Color = Color(0.45, 0.9, 0.5)
-## Farbe der Vorschau, wenn das Möbel hier nicht stehen kann.
-var preview_color_invalid: Color = Color(1.0, 0.35, 0.3)
+## Deckkraft der Vorschau ("Blaupause") beim Platzieren von Möbeln und Büchern
+## (0 = unsichtbar, 1 = voll sichtbar). Nicht zu niedrig: sonst scheint Licht und Schatten von
+## dahinter durch und die Vorschau sieht an Lichtinseln halb hell, halb dunkel aus.
+var preview_opacity: float = 0.88
+## Farbe der Vorschau, wenn das Möbel bzw. Buch an diese Stelle passt (ruhiges Blau).
+var preview_color_valid: Color = Color(0.45, 0.65, 0.95)
+## Farbe der Vorschau, wenn es hier nicht stehen kann.
+var preview_color_invalid: Color = Color(0.95, 0.4, 0.35)
 ## Hervorhebung von Objekten (im Gestaltungsmodus und bei allem, was man mit E benutzen kann):
 ## Aufhellung des ganzen Objekts (0 = keine, 0.3 = deutlich).
 var highlight_brightness: float = 0.06

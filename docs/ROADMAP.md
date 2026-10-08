@@ -21,6 +21,7 @@
 | 3g  | Tablet mit Apps und Lagerübersicht       | fertig        |
 | 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | fertig |
 | 3i  | Fach-Automodus und Platzierungs-Fehler   | fertig        |
+| 3j  | Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller | fertig |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -380,6 +381,24 @@ keine Grafikfehler und keine halb versenkten Bücher.
 - [x] Fach-Genre samt „Auto“ wird gespeichert („row_auto“); alte Spielstände laden weiter
       (Fächer ohne gespeichertes Genre gelten als „Auto“, Fächer mit gewähltem Genre bleiben
       dabei)
+
+## Etappe 3j – Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller
+Leitgedanke: Bücher schön präsentieren – angelehnt, auf Polstern, im Aufsteller – und eine
+Vorschau, die überall gleich aussieht.
+- [x] Gemeinsame „Blaupause“ für Bücher und Möbel (`blueprint.gdshader`): unbeleuchtet, ruhiges
+      Blau, Deckkraft 0,88 (keine Hell-Dunkel-Kante an Lichtinseln), heller Rand und feine
+      Buchkanten, rot bei gesperrten Stellen; in allen drei Grafikstufen geprüft
+- [x] Bücher anlehnen an: Bücherstapel (Seite), Rücken- und Armlehnen von Sofas, Lehnen von
+      Sesseln und Stühlen, große Blumentöpfe (`FurnitureData.books_can_lean`) – wie an der Wand,
+      an niedrigeren Lehnen an deren Oberkante; nie frei hochkant, nie an kleiner Deko
+- [ ] Anlehnen an die Rückwand im Bücherregal: noch offen (dort räumt das Regal in Reihen ein;
+      bräuchte eine eigene Lösung im Regal)
+- [x] Bücher flach auf Sofakissen und Sofadecke (`FurnitureData.books_can_lie`)
+- [x] Neues Objekt „Buch-Aufsteller“ bei Nest & Nook (Deko, 18 Taler): hält genau ein Buch
+      (Haltung „präsentiert“), Linksklick hinein, Rechtsklick heraus, belegt = rot; Buch zählt als
+      „ausgelegt“, wandert mit, geht mit X ins Lager; auch im Bücherregal
+- [x] Speichern: angelehnte Bücher, Bücher auf Polstern und Aufsteller mit Buch; alte
+      Spielstände laden weiter
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
