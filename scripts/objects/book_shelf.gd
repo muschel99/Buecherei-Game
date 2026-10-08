@@ -63,21 +63,28 @@ const SORT_MODES := [
 	["color", "Nach Farbe"],
 ]
 
-## Genre je Brett (Fach), gleiche Reihenfolge wie die Bretter:
-## "" = noch keins gewählt (nimmt alles), MIXED = Gemischt, sonst die Genre-id.
+## Von Hand gewähltes Genre je Brett (Fach), gleiche Reihenfolge wie die Bretter:
+## "" = keins (nimmt alles), MIXED = Gemischt, sonst die Genre-id. Gilt nur, wenn das Fach
+## nicht auf "Auto" steht (siehe row_auto).
 var row_genres: Array[String] = []
+## "Auto" je Fach (Standard): Das Fach nimmt jedes Buch an und übernimmt sein Genre aus den
+## Büchern darin – alle gleich = dieses Genre, verschiedene = Gemischt, leer = keins.
+var row_auto: Array[bool] = []
+# Während des Sortierens: das Genre je Fach von vorher (siehe _placing_tier)
+var _genre_snapshot: Array[String] = []
 ## Zuletzt gewählte Sortierart (siehe SORT_MODES), wird mit dem Regal gespeichert.
 var sort_mode: String = "genre_title"
-## Genre des ganzen Regals: das gemeinsame Genre aller Bretter – "" wenn sie verschieden sind
-## (nur lesen; zum Ändern set_genre bzw. set_row_genre).
+## Genre des ganzen Regals: das gemeinsame Genre aller Fächer (bei "Auto" das erkannte) – ""
+## wenn sie verschieden sind (nur lesen; zum Ändern set_genre bzw. set_row_genre).
 var genre_id: String:
 	get:
-		if row_genres.is_empty():
+		if _rows.is_empty():
 			return ""
-		for id in row_genres:
-			if id != row_genres[0]:
+		var first := get_row_genre(0)
+		for r in _rows.size():
+			if get_row_genre(r) != first:
 				return ""
-		return row_genres[0]
+		return first
 
 var _rows: Array[BookRow] = []
 var _row_books: Array = []  # je Brett die Bücher, von links nach rechts
@@ -117,6 +124,7 @@ func _ready() -> void:
 			_rows.append(child)
 			_row_books.append([])
 			row_genres.append("")
+			row_auto.append(true)
 	var books_instance := MultiMeshInstance3D.new()
 	books_instance.name = "Books"
 	_multimesh = BookLook.create_multimesh()
@@ -167,10 +175,10 @@ func get_books() -> Array[Book]:
 	return result
 
 
-## Hat mindestens ein Fach schon ein Genre (oder "Gemischt")?
+## Hat mindestens ein Fach schon ein Genre (oder "Gemischt") – von Hand oder erkannt?
 func has_genre() -> bool:
-	for id in row_genres:
-		if not id.is_empty():
+	for r in _rows.size():
+		if not get_row_genre(r).is_empty():
 			return true
 	return false
 
@@ -193,9 +201,35 @@ func get_row_count() -> int:
 	return _rows.size()
 
 
-## Genre eines Fachs ("" = noch keins, MIXED = Gemischt).
+## Genre eines Fachs ("" = keins, MIXED = Gemischt). Bei "Auto" das aus den Büchern erkannte.
 func get_row_genre(row: int) -> String:
-	return row_genres[row] if row >= 0 and row < row_genres.size() else ""
+	if row < 0 or row >= row_genres.size():
+		return ""
+	return detect_row_genre(row) if is_row_auto(row) else row_genres[row]
+
+
+## Steht das Fach auf "Auto"?
+func is_row_auto(row: int) -> bool:
+	return row >= 0 and row < row_auto.size() and row_auto[row]
+
+
+## Stehen alle Fächer auf "Auto"?
+func is_all_auto() -> bool:
+	return not row_auto.is_empty() and not row_auto.has(false)
+
+
+## Das Genre, das die Bücher in diesem Fach ergeben: alle gleich = dieses Genre,
+## verschiedene = MIXED, leer = "".
+func detect_row_genre(row: int) -> String:
+	if row < 0 or row >= _row_books.size():
+		return ""
+	var found := ""
+	for book: Book in _row_books[row]:
+		if found.is_empty():
+			found = book.genre_id
+		elif book.genre_id != found:
+			return MIXED
+	return found
 
 
 ## Kurzer Name eines Fachs für das Menü: "Fach 1", "Fach 2" … – durchnummeriert von oben
@@ -219,8 +253,11 @@ func get_fach_order() -> Array[int]:
 	return order
 
 
-## Passt ein Buch dieses Genres in dieses Fach? ("Gemischt" und Fächer ohne Genre nehmen alles.)
+## Passt ein Buch dieses Genres in dieses Fach? ("Auto", "Gemischt" und Fächer ohne Genre
+## nehmen alles.)
 func row_accepts(row: int, book_genre_id: String) -> bool:
+	if is_row_auto(row):
+		return true
 	var id := get_row_genre(row)
 	return id.is_empty() or id == MIXED or id == book_genre_id
 
@@ -270,21 +307,44 @@ func count_matching_carried() -> int:
 
 # --- Ändern ---
 
-## Gibt allen Fächern dasselbe Genre (MIXED = Gemischt). Bücher, die nicht mehr passen, gleiten
-## heraus und gehen ins Lager. Liefert, wie viele das waren.
+## Gibt allen Fächern von Hand dasselbe Genre (MIXED = Gemischt; "Auto" geht aus). Bücher, die
+## nicht mehr passen, gleiten heraus und gehen ins Lager. Liefert, wie viele das waren.
 func set_genre(new_genre_id: String) -> int:
 	for r in row_genres.size():
 		row_genres[r] = new_genre_id
+		row_auto[r] = false
 	return _remove_mismatched()
 
 
-## Wählt das Genre eines Fachs. Bücher dieses Fachs, die nicht mehr passen, gehen ins Lager.
-## Liefert, wie viele das waren.
+## Wählt das Genre eines Fachs von Hand ("Auto" geht aus). Bücher dieses Fachs, die nicht mehr
+## passen, gehen ins Lager. Liefert, wie viele das waren.
 func set_row_genre(row: int, new_genre_id: String) -> int:
 	if row < 0 or row >= row_genres.size():
 		return 0
 	row_genres[row] = new_genre_id
+	row_auto[row] = false
 	return _remove_mismatched()
+
+
+## Schaltet "Auto" für ein Fach ein oder aus. Aus: Das Fach bleibt bei dem Genre, das es gerade
+## hat (so ändert sich nichts Sichtbares). Bücher müssen dabei nie heraus.
+func set_row_auto(row: int, auto: bool) -> void:
+	if row < 0 or row >= row_auto.size() or row_auto[row] == auto:
+		return
+	if not auto:
+		row_genres[row] = detect_row_genre(row)
+	row_auto[row] = auto
+	_changed()
+
+
+## "Auto" für alle Fächer ein oder aus.
+func set_all_auto(auto: bool) -> void:
+	for r in row_auto.size():
+		if row_auto[r] != auto:
+			if not auto:
+				row_genres[r] = detect_row_genre(r)
+			row_auto[r] = auto
+	_changed()
 
 
 func _remove_mismatched() -> int:
@@ -359,9 +419,10 @@ func remove_books(to_remove: Array, animate: bool = true) -> void:
 	_changed()
 
 
-## Füllt das Regal aus dem Lager, Fach für Fach: jede mit Büchern ihres Genres –
-## "Gemischt" gleichmäßig aus allen Genres im Lager (nach Genre gruppiert, innerhalb nach
-## Titel sortiert). Fächer ohne Genre bleiben leer. Liefert, wie viele es waren.
+## Füllt das Regal aus dem Lager, Fach für Fach: jede mit Büchern ihres Genres (bei "Auto" das
+## erkannte) – "Gemischt" gleichmäßig aus allen Genres im Lager bzw. bei "Auto" aus den Genres,
+## die schon darin stehen (nach Genre gruppiert, innerhalb nach Titel sortiert). Fächer ohne
+## Genre (auch leere "Auto"-Fächer) bleiben leer. Liefert, wie viele es waren.
 func fill_from_storage() -> int:
 	var count := 0
 	# Erst die Fächer mit festem Genre, dann die gemischten
@@ -375,7 +436,8 @@ func fill_from_storage() -> int:
 				continue
 			var taken: Array[Book] = []
 			if id == MIXED:
-				var shares := _mixed_shares(wanted)
+				# "Auto" und gemischt: nur mit den Genres, die schon darin stehen
+				var shares := _mixed_shares(wanted, genres_in_row(r) if is_row_auto(r) else [])
 				for genre in shares:
 					taken.append_array(_sorted_by_title(BookStock.take_books(genre, shares[genre])))
 			else:
@@ -425,11 +487,12 @@ func put_carried_at(row: int, aim_x: float) -> int:
 			if is_nan(start):
 				start = _start_at(row, aim_x, _book_width(book))
 			spot = _spot_near(row, book, start)
-		for r in others:
-			if not spot.is_empty():
-				break
-			if row_accepts(r, book.genre_id):
-				spot = _find_free_spot(book, r)
+		for tier in 3:
+			for r in others:
+				if not spot.is_empty():
+					break
+				if row_accepts(r, book.genre_id) and _placing_tier(r, book.genre_id) == tier:
+					spot = _find_free_spot(book, r)
 		if spot.is_empty():
 			rest.append(book)
 			continue
@@ -534,6 +597,11 @@ func sort_books(mode: String = "") -> void:
 	var old: Dictionary = {}
 	for book in all:
 		old[book] = _current_transform(book)
+	# Auto-Fächer behalten beim Sortieren ihr Genre (sonst wären sie kurz alle leer und alles
+	# käme durcheinander)
+	_genre_snapshot.clear()
+	for r in _rows.size():
+		_genre_snapshot.append(get_row_genre(r))
 	_clear_rows()
 	var overflow: Array[Book] = []
 	for book in all:
@@ -542,6 +610,7 @@ func sort_books(mode: String = "") -> void:
 			overflow.append(book)
 			continue
 		_put(book, spot.row, spot.left)
+	_genre_snapshot.clear()
 	for book in _targets:
 		_anims[book] = {"from": old[book], "start": _clock, "time": MOVE_TIME * 2.0, "appear": false}
 	_send_to_storage(overflow)
@@ -601,6 +670,7 @@ func show_sample_books() -> void:
 func copy_contents_from(other: BookShelf) -> void:
 	for r in mini(row_genres.size(), other.row_genres.size()):
 		row_genres[r] = other.row_genres[r]
+		row_auto[r] = other.row_auto[r]
 	sort_mode = other.sort_mode
 	_clear_rows()
 	for r in mini(_rows.size(), other._row_books.size()):
@@ -771,17 +841,27 @@ func get_contents_data() -> Dictionary:
 			saved.append(entry)
 		rows.append(saved)
 	# "genre" bleibt für ältere Spielversionen mit drin (gemeinsames Genre oder "")
-	return {"genre": genre_id, "row_genres": row_genres.duplicate(), "rows": rows, "sort": sort_mode}
+	return {"genre": genre_id, "row_genres": row_genres.duplicate(), "row_auto": row_auto.duplicate(),
+		"rows": rows, "sort": sort_mode}
 
 
 func load_contents_data(data: Dictionary) -> void:
 	# Genre je Fach – ältere Spielstände kennen nur ein Genre für das ganze Regal
 	var saved_rows = data.get("row_genres")
+	var saved_auto = data.get("row_auto")
 	for r in row_genres.size():
 		if saved_rows is Array and r < saved_rows.size():
 			row_genres[r] = str(saved_rows[r])
+		elif saved_rows is Array:
+			row_genres[r] = ""  # ein Fach, das es beim Speichern noch nicht gab: Auto
 		else:
 			row_genres[r] = str(data.get("genre", ""))
+		# "Auto" – ältere Spielstände kennen es nicht: Fächer ohne Genre gelten als "Auto",
+		# Fächer mit gewähltem Genre bleiben dabei
+		if saved_auto is Array and r < saved_auto.size():
+			row_auto[r] = bool(saved_auto[r])
+		else:
+			row_auto[r] = row_genres[r].is_empty()
 	# Sortierart – ältere Spielstände kennen sie nicht (dann wie früher: Genre und Titel)
 	var saved_sort := str(data.get("sort", "genre_title"))
 	sort_mode = saved_sort if SORT_MODES.any(func(entry: Array) -> bool: return entry[0] == saved_sort) \
@@ -975,16 +1055,25 @@ func _fits_at(row: int, book: Book, left: float) -> bool:
 	return true
 
 
+## Reihenfolge beim Einräumen: 0 = Fach mit genau diesem Genre, 1 = gemischt oder noch ohne
+## Genre, 2 = Auto-Fach mit einem anderen Genre (das danach "Gemischt" wird).
+func _placing_tier(row: int, book_genre_id: String) -> int:
+	var id: String = _genre_snapshot[row] if row < _genre_snapshot.size() else get_row_genre(row)
+	if id == book_genre_id:
+		return 0
+	return 1 if id.is_empty() or id == MIXED else 2
+
+
 ## Erste freie Stelle für ein Buch: zuerst in Fächern mit genau seinem Genre, dann in
-## gemischten (bzw. noch ohne Genre); Brett für Brett, in jedem Abschnitt von links nach
+## gemischten (bzw. noch ohne Genre), zuletzt in Auto-Fächern mit anderem Genre; Brett für Brett, in jedem Abschnitt von links nach
 ## rechts, bündig an den Nachbarn links. only_row: nur dieses Fach. Leer, wenn es nirgends passt.
 func _find_free_spot(book: Book, only_row: int = -1) -> Dictionary:
 	var width := _book_width(book)
 	var rows: Array[int] = []
-	for exact in [true, false]:
+	for tier in 3:
 		for r in _rows.size():
 			if (only_row < 0 or r == only_row) and row_accepts(r, book.genre_id) \
-					and (get_row_genre(r) == book.genre_id) == exact:
+					and _placing_tier(r, book.genre_id) == tier:
 				rows.append(r)
 	for r in rows:
 		for segment in _segments(r):
@@ -1396,13 +1485,22 @@ func _update_prompt() -> void:
 
 # --- Hilfsfunktionen ---
 
+## Die Genres, die in diesem Fach stehen.
+func genres_in_row(row: int) -> Array:
+	var result := []
+	for book: Book in _row_books[row]:
+		if not result.has(book.genre_id):
+			result.append(book.genre_id)
+	return result
+
+
 ## Wie viele Bücher je Genre bei einem gemischten Regal aus dem Lager kommen:
-## möglichst gleichmäßig verteilt, Genre-Reihenfolge wie im Katalog.
-func _mixed_shares(wanted: int) -> Dictionary:
+## möglichst gleichmäßig verteilt, Genre-Reihenfolge wie im Katalog (only_genres: nur diese).
+func _mixed_shares(wanted: int, only_genres: Array = []) -> Dictionary:
 	var shares := {}
 	var open: Array[String] = []
 	for genre in Catalog.get_all_genres():
-		if BookStock.get_stored_count(genre.get_id()) > 0:
+		if (only_genres.is_empty() or only_genres.has(genre.get_id())) and BookStock.get_stored_count(genre.get_id()) > 0:
 			open.append(genre.get_id())
 			shares[genre.get_id()] = 0
 	var remaining := wanted

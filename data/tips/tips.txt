@@ -58,7 +58,9 @@ Halte <Q>, und alles, was du trägst, geht zurück ins Lager.
 
 = Regale und Fächer | shelf
 == Jedes Fach sein Genre
-Schau ein Regal an und drücke <R>. Dort gibst du jedem Fach ein Genre – oder „Gemischt“.
+Stell einfach Bücher hinein: Steht ein Fach auf „Auto“, nimmt es sein Genre von den Büchern darin.
+
+Möchtest du es festlegen, drück am Regal <R> und wähl für das Fach ein Genre – oder „Gemischt“.
 
 Fährst du über ein Fach im Menü, leuchtet es im Regal sanft auf.
 

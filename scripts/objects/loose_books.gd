@@ -33,6 +33,9 @@ const LIFT := 0.0015
 const STACK_GAP := 0.01
 ## Bis zu dieser Höhe über der Ablage wird nach Büchern eines Stapels gesucht (in Metern)
 const STACK_REACH := 0.6
+## Um so viel kleiner (je Seite, in Metern) wird das Buch geprüft, wenn es um andere Objekte
+## geht – bloßes Berühren (aufliegen, anlehnen) ist erlaubt, Hineinragen nicht.
+const SOLID_MARGIN := 0.003
 
 ## Mit dem Mausrad gewählte Drehung (Grad) für das nächste Buch, das ich ablege.
 ## Gilt relativ zu meiner Blickrichtung (bzw. zum Buch darunter); nach dem Ablegen wieder 0.
@@ -45,6 +48,7 @@ var _material: ShaderMaterial
 var _room: Room
 var _interactable: Interactable
 var _hover: LooseBook = null
+var _solid_box: BoxShape3D
 ## Wohin das Buch obenauf käme: { "book", "ok", "transform", "support_uid", "pose" } – leer,
 ## wenn ich auf nichts Passendes schaue.
 var _plan: Dictionary = {}
@@ -369,9 +373,10 @@ func _compute_plan(from: Vector3, direction: Vector3, book: Book) -> Dictionary:
 		return _invalid_plan(book, point, direction)  # z. B. oben auf einer Lampe
 	if absf(normal.y) < 0.4 and furniture == null:
 		return _plan_leaning(book, point, normal, direction)  # Wand
-	# Seite eines Möbelstücks: flach davor auf den Boden bzw. die Ablage darunter
+	# Seite eines Möbelstücks: flach auf den Boden bzw. die Ablage darunter, genau dort, wo ich
+	# hinschaue – ragt es dabei in das Möbelstück hinein, ist die Vorschau rot (kein Abprallen)
 	var flat_normal := Vector3(normal.x, 0.0, normal.z).normalized()
-	var ground := _find_ground(point + flat_normal * (maxf(book.data.size.y, book.data.size.z) / 2.0 + 0.02))
+	var ground := _find_ground(point + flat_normal * 0.01)
 	if ground.is_empty():
 		return {}  # nichts darunter (z. B. hoch oben an einem Schrank): keine Vorschau
 	return _plan_flat(book, ground.point, ground.height, ground.support_uid, direction)
@@ -409,6 +414,8 @@ func _plan_flat(book: Book, world_point: Vector3, surface_height: float, support
 	if stacked >= GameConfig.loose_book_stack_max or top + size.x + LIFT > ceiling:
 		ok = false
 	world.origin.y = top + size.x / 2.0 + LIFT
+	if ok and _blocked_by_solid(world):
+		ok = false
 	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
 		"support_uid": support_uid, "pose": LooseBook.Pose.FLAT}
 
@@ -499,7 +506,8 @@ func _plan_in_row(book: Book, neighbor: Transform3D, side: float, support_uid: i
 			var entry_world := global_transform * entry.transform
 			furthest = maxf(furthest, (entry_world.origin - world.origin).dot(axis * step_side) + entry_world.basis.x.length() / 2.0)
 		world.origin += axis * step_side * (furthest + size.x / 2.0 + 0.002)
-	var ok := (_room == null or _room.is_inside_build_area(world.origin)) and _overlapping(world, bottom).is_empty()
+	var ok := (_room == null or _room.is_inside_build_area(world.origin)) and _overlapping(world, bottom).is_empty() \
+		and not _blocked_by_solid(world)
 	# Steht es noch auf derselben Ablage (nicht über die Tischkante hinaus gerückt)?
 	var ground := _find_ground(Vector3(world.origin.x, bottom, world.origin.z))
 	if ground.is_empty() or absf(ground.height - bottom) > STACK_GAP:
@@ -521,7 +529,8 @@ func _plan_leaning(book: Book, wall_point: Vector3, wall_normal: Vector3, direct
 	var base := Vector3(wall_point.x, ground.height, wall_point.z)
 	var origin := base + n * (_half_extent(basis, n) + 0.003) + Vector3.UP * (_vertical_half_of(basis) + LIFT)
 	var world := Transform3D(basis, origin)
-	var ok := (_room == null or _room.is_inside_build_area(origin)) and _overlapping(world, ground.height).is_empty()
+	var ok := (_room == null or _room.is_inside_build_area(origin)) and _overlapping(world, ground.height).is_empty() \
+		and not _blocked_by_solid(world)
 	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
 		"support_uid": ground.support_uid, "pose": LooseBook.Pose.LEANING}
 
@@ -548,6 +557,23 @@ func _invalid_plan(book: Book, world_point: Vector3, direction: Vector3) -> Dict
 	var plan := _plan_flat(book, world_point, world_point.y, 0, direction)
 	plan.ok = false
 	return plan
+
+
+## Ragt ein Buch (Lage in der Welt, mit Buchgröße in der Basis) in ein anderes Objekt hinein –
+## Möbel, Deko, Wände, Boden? Das Buch wird dafür an jeder Seite um SOLID_MARGIN kleiner
+## geprüft: Aufliegen und Anlehnen ist erlaubt, Hineinragen nie. Eine Regel für alles, was ich
+## ablege (flach, aufrecht, angelehnt).
+func _blocked_by_solid(world: Transform3D) -> bool:
+	var size := Vector3(world.basis.x.length(), world.basis.y.length(), world.basis.z.length())
+	if _solid_box == null:
+		_solid_box = BoxShape3D.new()  # eine Form für alle Prüfungen (nicht jedes Bild neu)
+	_solid_box.size = (size - Vector3.ONE * SOLID_MARGIN * 2.0).max(Vector3.ONE * 0.001)
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = _solid_box
+	query.transform = Transform3D(world.basis.orthonormalized(), world.origin)
+	query.collision_mask = FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT
+	query.collide_with_areas = false
+	return not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
 ## Boden oder Ablage senkrecht unter einem Punkt: { "point", "height", "support_uid" } – leer,

@@ -62,9 +62,11 @@ var _sort_button: TabletIconButton
 var _return_button: TabletIconButton
 var _sort_popup: PopupMenu
 var _all_choice: OptionButton
+var _all_auto: CheckBox
 var _rows_scroll: ScrollContainer
 var _rows_box: VBoxContainer
 var _row_choices: Dictionary = {}  # Fach (row) -> OptionButton
+var _row_autos: Dictionary = {}  # Fach (row) -> CheckBox "Auto"
 var _picker_title: Label
 var _picker_genre_choice: OptionButton
 var _picker: BookPicker
@@ -166,7 +168,7 @@ func restore_mouse_mode() -> void:
 
 ## "Alle Fächer gleich": ein Genre für das ganze Regal.
 func choose_genre(genre_id: String) -> void:
-	if shelf == null or genre_id.is_empty():
+	if shelf == null or genre_id.is_empty() or (genre_id == shelf.genre_id and not shelf.row_auto.has(true)):
 		return
 	var returned := shelf.set_genre(genre_id)
 	_message.text = "Alle Fächer: %s." % BookShelf.genre_display_name(genre_id)
@@ -174,9 +176,27 @@ func choose_genre(genre_id: String) -> void:
 	_queue_refresh()
 
 
-## Genre eines einzelnen Fachs.
+## "Auto" für alle Fächer ein- oder ausschalten.
+func choose_all_auto(auto: bool) -> void:
+	if shelf == null:
+		return
+	shelf.set_all_auto(auto)
+	_message.text = "Alle Fächer: %s." % ("Auto" if auto else "festgelegt")
+	_queue_refresh()
+
+
+## "Auto" für ein Fach ein- oder ausschalten (aus = es bleibt beim Genre, das es gerade hat).
+func choose_row_auto(row: int, auto: bool) -> void:
+	if shelf == null:
+		return
+	shelf.set_row_auto(row, auto)
+	_message.text = "%s: %s." % [shelf.get_row_label(row), "Auto" if auto else "festgelegt"]
+	_queue_refresh()
+
+
+## Genre eines einzelnen Fachs von Hand ("Auto" geht dabei aus).
 func choose_row_genre(row: int, genre_id: String) -> void:
-	if shelf == null or genre_id == shelf.get_row_genre(row):
+	if shelf == null or (genre_id == shelf.get_row_genre(row) and not shelf.is_row_auto(row)):
 		return
 	var returned := shelf.set_row_genre(row, genre_id)
 	_message.text = "%s: %s." % [shelf.get_row_label(row), BookShelf.genre_display_name(genre_id)]
@@ -292,7 +312,7 @@ func _refresh() -> void:
 	var available := _available_in_storage()
 	_fill_button.disabled = not shelf.has_genre() or available == 0 or shelf.get_free_estimate() == 0
 	if not shelf.has_genre():
-		_fill_button.tooltip_text = "Auffüllen – erst ein Genre wählen"
+		_fill_button.tooltip_text = "Auffüllen – erst Bücher oder Genre"
 	elif available == 0:
 		_fill_button.tooltip_text = "Auffüllen – nichts Passendes im Lager"
 	else:
@@ -302,12 +322,17 @@ func _refresh() -> void:
 	_return_button.disabled = count == 0
 	_return_button.tooltip_text = TabletIconButton.DEFAULT_TIPS[TabletIconButton.Icon.STORE]
 	_all_choice.disabled = false
+	_all_auto.disabled = false
 
 	# Genres der Fächer (die Liste selbst baut _rebuild_rows, hier nur die Auswahl)
 	var genres := _genre_choices()
-	_fill_choice(_all_choice, genres, shelf.genre_id, true)
+	_all_auto.set_pressed_no_signal(shelf.is_all_auto())
+	var all_empty := "Verschieden" if shelf.has_genre() else ("Noch leer" if shelf.is_all_auto() else "Noch kein Genre")
+	_fill_choice(_all_choice, genres, shelf.genre_id, all_empty)
 	for r in _row_choices:
-		_fill_choice(_row_choices[r], genres, shelf.get_row_genre(r), false)
+		(_row_autos[r] as CheckBox).set_pressed_no_signal(shelf.is_row_auto(r))
+		_fill_choice(_row_choices[r], genres, shelf.get_row_genre(r),
+			"Noch leer" if shelf.is_row_auto(r) else "Noch kein Genre")
 
 
 ## Kein Regal im Blick: Regal-Teile dezent ausgegraut und nicht anklickbar.
@@ -320,6 +345,8 @@ func _refresh_without_shelf() -> void:
 	_all_choice.disabled = true
 	_all_choice.clear()
 	_all_choice.add_item("Nur am Regal")
+	_all_auto.disabled = true
+	_all_auto.set_pressed_no_signal(true)
 	_shelf_section.modulate.a = 0.45
 
 
@@ -353,6 +380,7 @@ func _rebuild_rows() -> void:
 		_rows_box.remove_child(child)
 		child.queue_free()
 	_row_choices.clear()
+	_row_autos.clear()
 	if shelf == null:
 		return
 	for r in shelf.get_fach_order():
@@ -365,8 +393,13 @@ func _rebuild_rows() -> void:
 		label.custom_minimum_size.x = 80
 		label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		box.add_child(label)
-		var choice := _make_choice()
 		var row := r
+		var auto := _make_auto_box()
+		auto.toggled.connect(func(on: bool) -> void: choose_row_auto(row, on))
+		_watch_hover(auto, [row])
+		box.add_child(auto)
+		_row_autos[r] = auto
+		var choice := _make_choice()
 		choice.item_selected.connect(func(index: int) -> void:
 			choose_row_genre(row, str(choice.get_item_metadata(index))))
 		_watch_choice(choice, [row])
@@ -377,15 +410,14 @@ func _rebuild_rows() -> void:
 
 
 ## Füllt eine Auswahlliste: "Gemischt" und die freigeschalteten Genres (+ das gewählte, falls
-## gesperrt). Ohne Genre: ein grauer Eintrag "Noch kein Genre" (bzw. bei "Alle Fächer gleich":
-## "Verschieden", wenn die Fächer unterschiedlich sind).
-func _fill_choice(choice: OptionButton, genres: Array[GenreData], current: String, for_all: bool) -> void:
+## gesperrt). Ohne Genre: ein grauer Eintrag empty_text ("Noch leer" bei "Auto", "Noch kein
+## Genre", bei "Alle Fächer gleich" auch "Verschieden", wenn die Fächer unterschiedlich sind).
+func _fill_choice(choice: OptionButton, genres: Array[GenreData], current: String, empty_text: String) -> void:
 	if choice.get_popup().visible:
 		return  # nicht umbauen, während die Liste aufgeklappt ist
 	choice.clear()
 	if current.is_empty():
-		var different := for_all and shelf.has_genre()
-		choice.add_item("Verschieden" if different else "Noch kein Genre")
+		choice.add_item(empty_text)
 		choice.set_item_metadata(0, "")
 		choice.set_item_disabled(0, true)
 	choice.add_icon_item(_dot(MUTED_COLOR, true), "Gemischt")
@@ -457,9 +489,12 @@ func _available_in_storage() -> int:
 	var genres := {}
 	for r in shelf.get_row_count():
 		var id := shelf.get_row_genre(r)
-		if id == BookShelf.MIXED:
+		if id == BookShelf.MIXED and shelf.is_row_auto(r):
+			for present in shelf.genres_in_row(r):
+				genres[present] = true  # gemischtes Auto-Fach: nur Genres, die schon darin stehen
+		elif id == BookShelf.MIXED:
 			return BookStock.get_stored_total()
-		if not id.is_empty():
+		elif not id.is_empty():
 			genres[id] = true
 	var count := 0
 	for id in genres:
@@ -576,6 +611,10 @@ func _build_main(screen: VBoxContainer) -> void:
 	var all_label := TabletFrame.make_label("Alle Fächer gleich", 17, TEXT_COLOR)
 	all_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	all_line.add_child(all_label)
+	_all_auto = _make_auto_box()
+	_all_auto.toggled.connect(choose_all_auto)
+	_watch_hover(_all_auto, [])
+	all_line.add_child(_all_auto)
 	_all_choice = _make_choice()
 	_all_choice.item_selected.connect(func(index: int) -> void:
 		choose_genre(str(_all_choice.get_item_metadata(index))))
@@ -623,17 +662,22 @@ func _build_picker(screen: VBoxContainer) -> void:
 ## Maus über der Auswahlliste oder Liste aufgeklappt: diese Fächer hervorheben
 ## (rows leer = alle Fächer, für "Alle Fächer gleich").
 func _watch_choice(choice: OptionButton, rows: Array[int]) -> void:
-	choice.mouse_entered.connect(func() -> void:
-		_hover_rows = _rows_or_all(rows)
-		_update_highlight())
-	choice.mouse_exited.connect(func() -> void:
-		_hover_rows = []
-		_update_highlight())
+	_watch_hover(choice, rows)
 	choice.get_popup().about_to_popup.connect(func() -> void:
 		_open_rows = _rows_or_all(rows)
 		_update_highlight())
 	choice.get_popup().popup_hide.connect(func() -> void:
 		_open_rows = []
+		_update_highlight())
+
+
+## Maus über einem Bedienelement eines Fachs (Auswahlliste, Tickbox "Auto"): Fach hervorheben.
+func _watch_hover(control: Control, rows: Array[int]) -> void:
+	control.mouse_entered.connect(func() -> void:
+		_hover_rows = _rows_or_all(rows)
+		_update_highlight())
+	control.mouse_exited.connect(func() -> void:
+		_hover_rows = []
 		_update_highlight())
 
 
@@ -735,11 +779,34 @@ func _icon_button(kind: TabletIconButton.Icon, action: Callable) -> TabletIconBu
 	return button
 
 
+## Tickbox "Auto": Das Fach übernimmt sein Genre aus den Büchern darin.
+func _make_auto_box() -> CheckBox:
+	var box := CheckBox.new()
+	box.text = "Auto"
+	box.focus_mode = Control.FOCUS_NONE
+	box.tooltip_text = "Genre aus den Büchern"
+	box.add_theme_font_size_override("font_size", 16)
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
+		box.add_theme_color_override(state, TEXT_COLOR)
+	box.add_theme_color_override("font_disabled_color", MUTED_COLOR)
+	# Schlicht, ohne eigenen Kasten (nur beim Darüberfahren ein Hauch Hintergrund)
+	var hover := TabletFrame.make_panel_style(Color(1.0, 0.95, 0.85, 0.08), 8, 6.0)
+	for state in ["normal", "pressed", "disabled", "focus"]:
+		var empty := StyleBoxEmpty.new()
+		empty.set_content_margin_all(6.0)
+		box.add_theme_stylebox_override(state, empty)
+	box.add_theme_stylebox_override("hover", hover)
+	box.add_theme_stylebox_override("hover_pressed", hover)
+	return box
+
+
 func _make_choice() -> OptionButton:
 	var choice := OptionButton.new()
 	choice.focus_mode = Control.FOCUS_NONE
 	choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choice.fit_to_longest_item = false
+	# Auch dasselbe Genre noch einmal wählen zählt (legt ein Auto-Fach auf dieses Genre fest)
+	choice.allow_reselect = true
 	choice.add_theme_font_size_override("font_size", 17)
 	choice.get_popup().add_theme_font_size_override("font_size", 17)
 	return choice

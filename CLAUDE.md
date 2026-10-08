@@ -227,6 +227,10 @@ docs/              Dokumentation
 - **Fächer** (nie „Etage“ sagen): Jedes Brett (`BookRow`) ist ein Fach mit eigenem Genre
   (`BookShelf.row_genres`, "" = noch keins, `MIXED` = Gemischt; `get_row_genre(row)`,
   `set_row_genre(row, id)`, `row_accepts(row, genre)`; `set_genre(id)` = alle Fächer gleich).
+  **Automodus** (Standard): `row_auto[row]` – das Fach nimmt alles an, `get_row_genre` liefert
+  dann das erkannte Genre (`detect_row_genre`); `set_row_genre`/`set_genre` schalten Auto aus,
+  `set_row_auto`/`set_all_auto`. Immer `get_row_genre`/`row_accepts` benutzen, nie
+  `row_genres` direkt lesen. Gespeichert als "row_auto"; ohne Wert: Auto, wenn kein Genre.
   Namen „Fach 1“, „Fach 2“ … in Lesereihenfolge von oben links nach unten rechts
   (`get_fach_order()`, `get_row_label(row)`), unabhängig von der Reihenfolge in der Szene.
   Auffüllen, Einräumen und Sortieren beachten die Fächer; was nirgends passt, bleibt in der
@@ -253,6 +257,10 @@ docs/              Dokumentation
   ins Lager (`release_on`); gespeichert unter `loose_books` im Raum. Ausgelegte Bücher haben
   keine Kollision: Der Gestaltungsmodus prüft sie extra (`overlaps_shape`), die Spielfigur
   über `pick_distance` (verglichen mit dem ersten festen Körper, nicht mit E-Bereichen).
+  Ablegen: Ein Buch darf nie in ein Objekt hineinragen (`_blocked_by_solid`, Kollisionsformen
+  der Ebenen world + furniture, um `SOLID_MARGIN` kleiner) – sonst rot. Kollisionsformen von
+  Möbeln sollen darum zur sichtbaren Form passen und oben genau mit ihren Ablageflächen enden.
+  Vorschau-Shader `book_ghost.gdshader`: unshaded, leicht zur Kamera versetzt (kein Z-Fighting).
   Stapel = Bücher, die lückenlos aufeinander liegen (`LooseBooks.STACK_GAP`).
 - Bücher tragen: höchstens `GameConfig.max_carried_books`; `BookStock.carry(liste)` liefert,
   was nicht mehr passt; volle Hände ohne Text zeigen: `BookStock.show_hands_full()`
