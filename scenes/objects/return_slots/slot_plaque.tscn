@@ -1,0 +1,55 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/brass.tres" id="1_brass"]
+[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="2_black"]
+[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="3_wood"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_board"]
+size = Vector3(0.38, 0.3, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_plate"]
+size = Vector3(0.28, 0.06, 0.006)
+
+[sub_resource type="BoxMesh" id="BoxMesh_slot"]
+size = Vector3(0.22, 0.02, 0.004)
+
+[sub_resource type="BoxMesh" id="BoxMesh_trim"]
+size = Vector3(0.38, 0.016, 0.026)
+
+[node name="SlotPlaque" type="Node3D"]
+
+[node name="Board" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0.01)
+material_override = ExtResource("3_wood")
+mesh = SubResource("BoxMesh_board")
+
+[node name="TrimTop" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.04, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.188, 0.013)
+material_override = ExtResource("3_wood")
+mesh = SubResource("BoxMesh_trim")
+
+[node name="Plate" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.023)
+material_override = ExtResource("1_brass")
+mesh = SubResource("BoxMesh_plate")
+
+[node name="Slot" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0265)
+material_override = ExtResource("2_black")
+mesh = SubResource("BoxMesh_slot")
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0.0205)
+pixel_size = 0.001
+double_sided = false
+modulate = Color(0.93, 0.82, 0.55, 1)
+text = "Rückgabe"
+font_size = 48
+
+[node name="SubLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.075, 0.0205)
+pixel_size = 0.0007
+double_sided = false
+modulate = Color(0.93, 0.82, 0.55, 0.85)
+text = "auch nach Ladenschluss"
+font_size = 32

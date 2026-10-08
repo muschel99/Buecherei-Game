@@ -97,13 +97,14 @@ func _fade(alpha: float) -> void:
 class BookGlyph:
 	extends Control
 
+	var color := CountBadge.TEXT_COLOR
+
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	func _draw() -> void:
 		var factor := minf(size.x, size.y) / 22.0
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2(factor, factor))
-		var color := CountBadge.TEXT_COLOR
 		draw_rect(Rect2(3, 5, 4.5, 14), color)
 		draw_rect(Rect2(8.5, 3, 4.5, 16), color)
 		draw_colored_polygon(PackedVector2Array([Vector2(14, 19), Vector2(17.5, 5), Vector2(21, 6),
