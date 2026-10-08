@@ -1,7 +1,11 @@
 class_name ShelfMenu
 extends CanvasLayer
-## Das Regal-Menü (R an einem Bücherregal) – als Tablet am rechten Bildrand (TabletFrame, wie
-## das Tablet an der Theke).
+## Das Regal-Menü (R) – als Tablet am rechten Bildrand (TabletFrame, wie das Tablet an der Theke).
+##
+## R öffnet es überall: Schaue ich ein Regal an, gehört es zu diesem Regal (open_for(regal)).
+## Schaue ich kein Regal an, ist es dasselbe Menü ohne Regal (open_for(null)): Die Regal-Teile
+## (Genre je Fach, "Alle Fächer gleich", Auffüllen, Sortieren, alles ins Lager) sind dann dezent
+## ausgegraut, die Bücherauswahl geht immer – z. B. um Bücher zum Dekorieren zu holen.
 ##
 ## Bewusst schlicht, wenige klare Aktionen:
 ## - Oben eine Leiste mit Symbol-Knöpfen (Tooltip beim Darüberfahren): Buch aus dem Lager
@@ -11,7 +15,10 @@ extends CanvasLayer
 ##   nach unten rechts) mit einer Auswahlliste für sein Genre oder "Gemischt".
 ## - "Buch aus dem Lager wählen" zeigt die Cover der passenden Bücher im Lager auf dem Tablet –
 ##   ein Klick legt das Buch obenauf in die Hand, dann stellt man es mit der linken Maustaste an
-##   genau die Stelle, die man möchte.
+##   genau die Stelle, die man möchte. Das Menü bleibt dabei offen (so kann ich nacheinander
+##   mehrere Bücher nehmen) und schließt sich erst, wenn die Hände voll sind. Oben rechts zeigt
+##   ein kleiner Stapel, wie viele Bücher ich trage.
+## Bücher nimmt man nur hier aus dem Lager (nicht am Theken-Tablet).
 ## Getragene Bücher räumt man nicht hier ein (Linksklick halten am Regal) und legt sie hier auch
 ## nicht ins Lager (Q halten) – jede Aktion hat nur einen Weg.
 ## Das Tablet ist immer gleich groß (fast so hoch wie das Bild) und passt so bei jeder Auflösung;
@@ -43,6 +50,10 @@ var shelf: BookShelf = null
 var _panel: TabletFrame
 var _title: Label
 var _info: Label
+var _carried_box: HBoxContainer
+var _carried_icon: TextureRect
+var _carried_label: Label
+var _shelf_section: VBoxContainer
 var _main_view: VBoxContainer
 var _picker_view: VBoxContainer
 var _pick_button: TabletIconButton
@@ -69,6 +80,7 @@ var _open_rows: Array[int] = []
 # Ansicht: ursprüngliches Blickfeld und die laufende Bewegung
 var _base_fov := -1.0
 var _view_tween: Tween
+var _framed := false  # wurde die Ansicht diesmal zur Seite gedreht?
 
 
 func _ready() -> void:
@@ -96,14 +108,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # --- Öffnen und Schließen ---
 
-## Wird vom Regal aufgerufen (R).
+## Öffnet das Menü: vom Regal aufgerufen (R) mit diesem Regal, sonst von der Spielfigur mit
+## null (kein Regal im Blick – nur die Bücherauswahl ist dann aktiv).
 func open_for(target: BookShelf) -> void:
 	if is_open:
 		return
 	shelf = target
 	is_open = true
 	_opened_frame = Engine.get_process_frames()
-	shelf.contents_changed.connect(_queue_refresh)
+	if shelf:
+		shelf.contents_changed.connect(_queue_refresh)
 	MenuStack.open(self)
 	_player.movement_enabled = false
 	_player.interaction_enabled = false
@@ -112,7 +126,8 @@ func open_for(target: BookShelf) -> void:
 	_show_main()
 	_rebuild_rows()
 	_queue_refresh()
-	_frame_shelf()
+	if shelf:
+		_frame_shelf()
 
 
 func close() -> void:
@@ -128,7 +143,9 @@ func close() -> void:
 		if shelf.contents_changed.is_connected(_queue_refresh):
 			shelf.contents_changed.disconnect(_queue_refresh)
 	shelf = null
-	_restore_view()
+	if _framed:
+		_restore_view()
+	_framed = false
 	MenuStack.close(self)
 	_player.movement_enabled = true
 	_player.interaction_enabled = true
@@ -228,17 +245,18 @@ func _show_main() -> void:
 
 
 ## Ein Buch aus dem Lager obenauf in die Hand nehmen – dann kann ich es mit der linken
-## Maustaste genau dort abstellen, wo ich hinschaue.
+## Maustaste genau dort abstellen, wo ich hinschaue. Das Menü bleibt offen, bis die Hände
+## voll sind (so kann ich mehrere Bücher nacheinander nehmen).
 func choose_book(data: BookData) -> void:
 	if BookStock.is_hand_full():
-		_message.text = "Deine Hände sind voll."
-		_message.visible = true
 		BookStock.show_hands_full()
+		close()
 		return
 	for book in BookStock.get_stored_books(data.genre_id):
 		if book.data == data and BookStock.take_stored_book(book):
 			BookStock.carry([book])
-			close()
+			if BookStock.is_hand_full():
+				close()
 			return
 
 
@@ -253,8 +271,19 @@ func _queue_refresh() -> void:
 
 func _refresh() -> void:
 	_refresh_queued = false
-	if not is_open or not is_instance_valid(shelf):
+	if not is_open:
 		return
+	if shelf != null and not is_instance_valid(shelf):
+		shelf = null  # das Regal ist inzwischen weg: weiter ohne Regal
+	_refresh_carried()
+	_refresh_picker_button()
+	_message.visible = not _message.text.is_empty()
+	if _picker_view.visible:
+		_refresh_picker()
+	if shelf == null:
+		_refresh_without_shelf()
+		return
+	_shelf_section.modulate.a = 1.0
 	_title.text = shelf.get_display_name()
 	var count := shelf.get_books().size()
 	_info.text = "%d %s · Platz für etwa %d" % [count, "Buch" if count == 1 else "Bücher", shelf.get_free_estimate()]
@@ -268,6 +297,34 @@ func _refresh() -> void:
 		_fill_button.tooltip_text = "Auffüllen – nichts Passendes im Lager"
 	else:
 		_fill_button.tooltip_text = "Auffüllen (%d im Lager)" % available
+	_sort_button.disabled = count < 2
+	_sort_button.tooltip_text = TabletIconButton.DEFAULT_TIPS[TabletIconButton.Icon.SORT]
+	_return_button.disabled = count == 0
+	_return_button.tooltip_text = TabletIconButton.DEFAULT_TIPS[TabletIconButton.Icon.STORE]
+	_all_choice.disabled = false
+
+	# Genres der Fächer (die Liste selbst baut _rebuild_rows, hier nur die Auswahl)
+	var genres := _genre_choices()
+	_fill_choice(_all_choice, genres, shelf.genre_id, true)
+	for r in _row_choices:
+		_fill_choice(_row_choices[r], genres, shelf.get_row_genre(r), false)
+
+
+## Kein Regal im Blick: Regal-Teile dezent ausgegraut und nicht anklickbar.
+func _refresh_without_shelf() -> void:
+	_title.text = "Bücher"
+	_info.text = "Kein Regal im Blick"
+	for button: TabletIconButton in [_fill_button, _sort_button, _return_button]:
+		button.disabled = true
+		button.tooltip_text = "Nur am Regal"
+	_all_choice.disabled = true
+	_all_choice.clear()
+	_all_choice.add_item("Nur am Regal")
+	_shelf_section.modulate.a = 0.45
+
+
+## "Buch aus dem Lager": ausgegraut, wenn die Hände voll sind oder nichts Passendes im Lager liegt.
+func _refresh_picker_button() -> void:
 	var choosable := _choosable_genres()
 	_pick_button.disabled = choosable.is_empty() or BookStock.is_hand_full()
 	if BookStock.is_hand_full():
@@ -276,25 +333,28 @@ func _refresh() -> void:
 		_pick_button.tooltip_text = "Buch aus dem Lager – nichts Passendes da"
 	else:
 		_pick_button.tooltip_text = "Buch aus dem Lager"
-	_sort_button.disabled = count < 2
-	_return_button.disabled = count == 0
-	_message.visible = not _message.text.is_empty()
 
-	# Genres der Fächer (die Liste selbst baut _rebuild_rows, hier nur die Auswahl)
-	var genres := _genre_choices()
-	_fill_choice(_all_choice, genres, shelf.genre_id, true)
-	for r in _row_choices:
-		_fill_choice(_row_choices[r], genres, shelf.get_row_genre(r), false)
-	if _picker_view.visible:
-		_refresh_picker()
+
+## Oben rechts: wie viele Bücher ich trage (Stapel im Genre des Buchs obenauf).
+func _refresh_carried() -> void:
+	var carried := BookStock.carried.size()
+	_carried_label.text = "%d / %d" % [carried, GameConfig.max_carried_books]
+	var active := BookStock.get_active_book()
+	var genres := Catalog.get_all_genres()
+	var genre: GenreData = active.get_genre() if active else (genres[0] if not genres.is_empty() else null)
+	_carried_icon.texture = BookIcons.get_stack_icon(genre) if genre else null
+	_carried_box.modulate.a = 1.0 if carried > 0 else 0.45
 
 
 ## Je Fach eine Zeile (Lesereihenfolge): "Fach 1" und eine Auswahlliste für sein Genre.
+## Ohne Regal bleibt die Liste leer.
 func _rebuild_rows() -> void:
 	for child in _rows_box.get_children():
 		_rows_box.remove_child(child)
 		child.queue_free()
 	_row_choices.clear()
+	if shelf == null:
+		return
 	for r in shelf.get_fach_order():
 		var line := PanelContainer.new()
 		line.add_theme_stylebox_override("panel", _row_style)
@@ -340,6 +400,8 @@ func _fill_choice(choice: OptionButton, genres: Array[GenreData], current: Strin
 
 func _genre_choices() -> Array[GenreData]:
 	var genres := BookStock.get_unlocked_genres()
+	if shelf == null:
+		return genres
 	for r in shelf.get_row_count():
 		var current := Catalog.get_genre(shelf.get_row_genre(r))
 		if current and not genres.has(current):
@@ -347,11 +409,11 @@ func _genre_choices() -> Array[GenreData]:
 	return genres
 
 
-## Genres, aus denen hier Bücher passen und die im Lager liegen.
+## Genres, aus denen hier Bücher passen und die im Lager liegen (ohne Regal: alle im Lager).
 func _choosable_genres() -> Array[GenreData]:
 	var result: Array[GenreData] = []
 	for genre in Catalog.get_all_genres():
-		if shelf.accepts(genre.get_id()) and BookStock.get_stored_count(genre.get_id()) > 0:
+		if (shelf == null or shelf.accepts(genre.get_id())) and BookStock.get_stored_count(genre.get_id()) > 0:
 			result.append(genre)
 	return result
 
@@ -384,7 +446,10 @@ func _refresh_picker() -> void:
 	var genre := Catalog.get_genre(_picker_genre)
 	_picker_title.text = "Buch aus dem Lager (%d)" % titles.size() if genres.size() > 1 \
 		else "%s aus dem Lager (%d)" % [genre.display_name if genre else "Buch", titles.size()]
+	# Nach dem Nehmen an derselben Stelle weiterschauen
+	var scroll := _picker.scroll_vertical
 	_picker.show_entries(entries, "Im Lager liegt gerade nichts davon.")
+	_picker.set_deferred("scroll_vertical", scroll)
 
 
 ## Wie viele Bücher, die hierher passen, liegen im Lager?
@@ -438,6 +503,27 @@ func _build() -> void:
 	titles.add_child(_title)
 	_info = TabletFrame.make_label("", 15, MUTED_COLOR)
 	titles.add_child(_info)
+	# Getragene Bücher (Stapel mit Zahl), dann das Kreuz
+	_carried_box = HBoxContainer.new()
+	_carried_box.name = "Carried"
+	_carried_box.add_theme_constant_override("separation", 6)
+	_carried_box.tooltip_text = "In der Hand"
+	_carried_box.mouse_filter = Control.MOUSE_FILTER_PASS
+	_carried_box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	header.add_child(_carried_box)
+	_carried_icon = TextureRect.new()
+	_carried_icon.custom_minimum_size = Vector2(28, 28)
+	_carried_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_carried_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_carried_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_carried_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_carried_box.add_child(_carried_icon)
+	_carried_label = TabletFrame.make_label("", 16, MUTED_COLOR)
+	_carried_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_carried_label.custom_minimum_size.x = 0
+	_carried_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_carried_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_carried_box.add_child(_carried_label)
 	var close_button := TabletFrame.make_close_button()
 	close_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	close_button.pressed.connect(close)
@@ -477,11 +563,16 @@ func _build_main(screen: VBoxContainer) -> void:
 	_sort_popup.id_pressed.connect(func(id: int) -> void: sort_shelf(BookShelf.SORT_MODES[id][0]))
 	add_child(_sort_popup)
 
-	# Fächer
-	_main_view.add_child(TabletFrame.make_label("Fächer", 18, KEY_COLOR))
+	# Fächer (ohne Regal dezent ausgegraut)
+	_shelf_section = VBoxContainer.new()
+	_shelf_section.name = "ShelfSection"
+	_shelf_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_shelf_section.add_theme_constant_override("separation", 12)
+	_main_view.add_child(_shelf_section)
+	_shelf_section.add_child(TabletFrame.make_label("Fächer", 18, KEY_COLOR))
 	var all_line := HBoxContainer.new()
 	all_line.add_theme_constant_override("separation", 12)
-	_main_view.add_child(all_line)
+	_shelf_section.add_child(all_line)
 	var all_label := TabletFrame.make_label("Alle Fächer gleich", 17, TEXT_COLOR)
 	all_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	all_line.add_child(all_label)
@@ -494,7 +585,7 @@ func _build_main(screen: VBoxContainer) -> void:
 	_rows_scroll = ScrollContainer.new()
 	_rows_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_rows_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_main_view.add_child(_rows_scroll)
+	_shelf_section.add_child(_rows_scroll)
 	_rows_box = VBoxContainer.new()
 	_rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_rows_box.add_theme_constant_override("separation", 6)
@@ -573,6 +664,7 @@ func _frame_shelf() -> void:
 		_base_fov = camera.fov
 	camera.fov = _base_fov
 	camera.rotation.y = 0.0
+	_framed = true
 	var item := FurnitureUtils.find_placed_furniture(shelf)
 	var model := item.get_model() if item else null
 	if model == null:

@@ -7,7 +7,8 @@ extends CharacterBody3D
 ## (Umschalt + E rückwärts) – Lampe, Tür, Karton, Sitz, Tablet usw. haben Vorrang.
 ## Springen mit der Leertaste, Hocken solange Strg gedrückt ist.
 ## Hinsetzen: E auf ein Sitzmöbel; aufstehen mit E, Leertaste oder einer Bewegungstaste.
-## R öffnet das Menü des angeschauten Objekts (z. B. Regal-Menü, Interactable.menu_requested).
+## R öffnet das Menü des angeschauten Objekts (Regal-Menü, Interactable.menu_requested) – schaue
+## ich nichts mit Menü an, dasselbe Menü ohne Regal (ShelfMenu.open_for(null)).
 ## Bücher (nur mit der Maus, alles andere bleibt bei E):
 ## - Rechtsklick nimmt das angeschaute Buch (Interactable.take_requested).
 ## - Linksklick legt das Buch obenauf genau dort ab, wo ich hinschaue: ins Regal
@@ -120,9 +121,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_released("book_place"):
 		_finish_place()
 	elif event.is_action_pressed("open_menu") and interaction_enabled and not is_seated():
-		# R: Menü des angeschauten Objekts (z. B. Regal-Menü) – sonst passiert nichts
-		if is_instance_valid(_current_target):
+		# R: Menü des angeschauten Objekts (Regal-Menü) – sonst dasselbe Menü ohne Regal
+		# (Bücher aus dem Lager wählen geht überall, die Regal-Teile sind dann ausgegraut)
+		if is_instance_valid(_current_target) and _current_target.has_menu():
 			_current_target.request_menu(self)
+		else:
+			get_tree().call_group(ShelfMenu.GROUP, "open_for", null)
 	elif event.is_action_pressed("store_books") and interaction_enabled and not BookStock.carried.is_empty():
 		_store_hold_time = 0.0
 	elif event.is_action_released("store_books"):
