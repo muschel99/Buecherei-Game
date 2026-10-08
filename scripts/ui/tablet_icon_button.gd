@@ -6,7 +6,7 @@ extends Button
 ## Die Symbole sind einfache Formen (keine Bilddateien) – austauschbar: einfach "icon" mit
 ## einem eigenen Bild setzen, dann wird das Bild statt der Form gezeigt.
 
-enum Icon { CLOSE, BACK, PICK, FILL, SORT, STORE, HOME, BUY, SELL, PLUS, MINUS, EXPAND, COLLAPSE }
+enum Icon { CLOSE, BACK, PICK, FILL, SORT, STORE, HOME, BUY, SELL, PLUS, MINUS, EXPAND, COLLAPSE, NEXT, CONTENTS }
 
 const DEFAULT_TIPS := {
 	Icon.CLOSE: "Schließen",
@@ -22,6 +22,8 @@ const DEFAULT_TIPS := {
 	Icon.MINUS: "Weniger",
 	Icon.EXPAND: "Aufklappen",
 	Icon.COLLAPSE: "Zuklappen",
+	Icon.NEXT: "Weiter",
+	Icon.CONTENTS: "Inhalt",
 }
 ## Kleine Knöpfe (Kreuz, Pfeile, Plus, Minus …): 34 Pixel, die anderen 46
 const SMALL_ICONS := [Icon.CLOSE, Icon.BACK, Icon.HOME, Icon.PLUS, Icon.MINUS, Icon.EXPAND, Icon.COLLAPSE]
@@ -144,6 +146,15 @@ func _draw() -> void:
 			draw_line(c + Vector2(-r, 0), c + Vector2(r, 0), color, w, true)
 			if icon_kind == Icon.PLUS:
 				draw_line(c + Vector2(0, -r), c + Vector2(0, r), color, w, true)
+		Icon.NEXT:
+			var r := 6.0
+			draw_polyline(PackedVector2Array([c + Vector2(-r * 0.5, -r), c + Vector2(r * 0.6, 0), c + Vector2(-r * 0.5, r)]), color, w, true)
+		Icon.CONTENTS:
+			# Inhaltsverzeichnis: drei Zeilen mit Punkt davor
+			for i in 3:
+				var y := -7.0 + i * 7.0
+				draw_circle(c + Vector2(-9, y), 1.6, color)
+				draw_line(c + Vector2(-5, y), c + Vector2(10, y), color, w, true)
 		Icon.EXPAND, Icon.COLLAPSE:
 			var r := 6.0
 			var dy := 2.5 if icon_kind == Icon.EXPAND else -2.5

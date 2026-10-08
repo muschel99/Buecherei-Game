@@ -1,0 +1,124 @@
+# Tipps & Tricks – das kleine Büchlein am Theken-Tablet
+#
+# So ist diese Datei aufgebaut (einfach hier ändern, ergänzen oder umsortieren):
+#   = Thema | Symbol          beginnt ein neues Thema im Inhaltsverzeichnis
+#   == Überschrift             beginnt eine neue Seite in diesem Thema
+#   Text …                     der Text der Seite; eine leere Zeile beginnt einen neuen Absatz
+#   <E>                        Tasten in spitzen Klammern erscheinen hervorgehoben
+# Zeilen, die mit # beginnen, sind Notizen und erscheinen nicht im Spiel.
+# Die Reihenfolge hier ist die Reihenfolge im Büchlein. Wenig Text pro Seite – lieber eine
+# Seite mehr.
+# Symbole: keys (Tasten), books (Bücher), shelf (Regal), deco (Pflanze), furniture (Sessel),
+#          palette (Farbe), shop (Karton), heart (Herz), lamp (Lampe), star (Stern)
+
+= Steuerung | keys
+== Unterwegs in der Bücherei
+Mit <W> <A> <S> <D> läufst du, mit der Maus schaust du dich um.
+
+Halte <Umschalt>, wenn du es eilig hast – aber hier hat niemand Eile.
+
+== Hüpfen und Hocken
+Mit der <Leertaste> hüpfst du ein kleines Stück hoch.
+
+Halte <Strg>, um in die Hocke zu gehen – praktisch für die unteren Fächer.
+
+== Eine Taste für fast alles
+Schaust du etwas an, mit dem man etwas tun kann, erscheint unter der Bildmitte ein kleines Symbol.
+
+Mit <E> schaltest du Lampen, öffnest Türen, setzt dich hin oder packst Kartons aus.
+
+== Pause machen
+<Esc> schließt immer zuerst, was gerade offen ist.
+
+Ist nichts offen, öffnet sich das Pausenmenü – mit allen Tasten auf einen Blick.
+
+= Bücher einräumen | books
+== Bücher in die Hand
+Mit einem <Rechtsklick> nimmst du ein Buch – aus dem Regal, vom Tisch oder aus dem Rückgabekasten.
+
+Bis zu sieben Bücher passen in deine Hände.
+
+== Aus dem Lager holen
+Drücke <R>, egal wo du stehst: Dort wählst du Bücher aus dem Lager über ihre Cover.
+
+Das Menü bleibt offen, bis deine Hände voll sind.
+
+== Genau an die richtige Stelle
+Ein <Linksklick> stellt das oberste Buch genau dorthin, wo du hinschaust.
+
+Mit <E> blätterst du durch die Bücher in deiner Hand.
+
+== Alles auf einmal
+Halte am Regal die linke Maustaste gedrückt: Alle passenden Bücher wandern ins Regal – ab der Stelle, auf die du schaust.
+
+Halte <Q>, und alles, was du trägst, geht zurück ins Lager.
+
+= Regale und Fächer | shelf
+== Jedes Fach sein Genre
+Schau ein Regal an und drücke <R>. Dort gibst du jedem Fach ein Genre – oder „Gemischt“.
+
+Fährst du über ein Fach im Menü, leuchtet es im Regal sanft auf.
+
+== Auffüllen und Sortieren
+Im Regal-Menü füllt ein Klick das Regal mit passenden Büchern aus dem Lager.
+
+Über das Filtersymbol wählst du, wonach sortiert wird – nach Titel, Autor oder Farbe.
+
+= Dekorieren | deco
+== Bücher als Deko
+Bücher dürfen überall liegen: auf Tischen, auf der Theke, sogar auf dem Boden.
+
+Mit dem <Mausrad> drehst du ein Buch, bevor du es ablegst.
+
+== Angelehnt und aufrecht
+An einer Wand oder neben einer Buchstütze stellt sich ein Buch von selbst auf.
+
+Leg mehrere Bücher übereinander, und schon hast du einen kleinen Stapel.
+
+== Kleine Dinge im Regal
+Pflanzen, Kerzen und Bilderrahmen passen auch auf die Regalbretter.
+
+Wo Deko steht, bleibt Platz frei – die Bücher rücken einfach daneben.
+
+= Einrichten und Stile | furniture
+== Der Gestaltungsmodus
+Mit <Tab> öffnest du den Gestaltungsmodus. Unten siehst du alles, was in deinem Inventar liegt.
+
+Ein Klick wählt etwas aus, ein weiterer Klick stellt es hin.
+
+== Drehen und Einrasten
+Mit dem <Mausrad> drehst du ein Möbelstück.
+
+<G> schaltet das Raster ein – dann steht alles schön ordentlich.
+
+== Wegräumen
+Mit <X> legst du ein Möbelstück zurück ins Inventar – mit allem, was darauf steht.
+
+== Wände und Böden
+Wandfarben und Böden streichst du Stück für Stück mit einem Klick.
+
+Mit <Umschalt> und Klick bekommt gleich die ganze Wand ihre neue Farbe.
+
+== Stile
+Viele Möbel haben einen Stil: Botanisch, Modern oder Dark Academia.
+
+Später bestimmt der Stil deiner Bücherei, wer dich besuchen kommt.
+
+= Einkaufen und Lieferung | shop
+== Am Theken-Tablet
+Drücke <E> am Tablet auf der Theke. Bei „Nest & Nook“ gibt es Möbel, Deko und Farben, im Bücherladen neue Bücherpakete.
+
+== Der Warenkorb
+Ein Klick auf ein Angebot legt es in den Warenkorb. „Bestellen“ schickt alles los.
+
+Was du nicht mehr brauchst, kannst du bei „Nest & Nook“ wieder verkaufen.
+
+== Die Lieferung
+Kurz nach der Bestellung stehen Kartons draußen vor der Tür.
+
+Schau einen Karton an und drücke <E> – sein Inhalt wandert in dein Inventar.
+
+== Das Lager im Blick
+Die App „Lager“ zeigt, wie viele Bücher du hast und wo sie gerade sind.
+
+Klappst du ein Genre auf, siehst du deine Sammlung – und welche Titel noch zu entdecken sind.
