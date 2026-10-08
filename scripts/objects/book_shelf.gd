@@ -55,6 +55,8 @@ const BOOK_GAP := 0.0015
 const EPSILON := 0.0001
 ## So viel Luft bleibt zwischen Deko und Büchern (in Metern)
 const DECO_MARGIN := 0.003
+## An Buchstützen lehnen sich Bücher bündig an: nur ein Hauch Luft (in Metern)
+const BOOKEND_MARGIN := 0.001
 ## Sortierarten (Kennung, Name im Menü). Neue Art: hier eintragen und in _sort_key ergänzen.
 const SORT_MODES := [
 	["genre_title", "Nach Genre und Titel"],
@@ -738,6 +740,30 @@ func _create_highlight(row: BookRow) -> MeshInstance3D:
 
 # --- Deko im Regal ---
 
+## Luft zwischen dieser Deko und den Büchern: An Buchstützen stehen Bücher bündig.
+static func deco_margin(data: FurnitureData) -> float:
+	return BOOKEND_MARGIN if is_bookend(data) else DECO_MARGIN
+
+
+static func is_bookend(data: FurnitureData) -> bool:
+	return data != null and data.subcategory == "bookend"
+
+
+## Das Bücherregal, auf dessen Brett dieses Möbelstück steht – oder null.
+static func holding(item: PlacedFurniture) -> BookShelf:
+	if item == null or item.support_uid == 0:
+		return null
+	for shelf in item.get_tree().get_nodes_in_group(BookStock.SHELF_GROUP):
+		var owner_item := FurnitureUtils.find_placed_furniture(shelf)
+		if owner_item and owner_item.uid == item.support_uid:
+			return shelf
+	return null
+
+
+func get_interactable() -> Interactable:
+	return _interactable
+
+
 ## Das Bücherregal, zu dem eine Ablagefläche gehört (ein Brett) – oder null.
 static func find_for_surface(surface: Node) -> BookShelf:
 	var row := surface.get_parent() if surface else null
@@ -746,8 +772,6 @@ static func find_for_surface(surface: Node) -> BookShelf:
 	return null
 
 
-## Gestaltungsmodus: Darf Deko mit diesen Eckpunkten (in der Welt) auf diesem Brett stehen?
-## Nur, wenn dort keine Bücher stehen.
 ## Ist auf dem Brett unter "base" (Punkt in der Welt) dort Platz, wo diese Ecken liegen (keine
 ## Bücher des Regals im Weg)? Z. B. für ein Buch in einem Aufsteller im Regal.
 func is_free_at(base: Vector3, corners: PackedVector3Array) -> bool:
@@ -755,12 +779,16 @@ func is_free_at(base: Vector3, corners: PackedVector3Array) -> bool:
 	return row < 0 or is_free_for_deco(_surfaces[row], corners)
 
 
-func is_free_for_deco(surface: PlacementSurface, corners: PackedVector3Array) -> bool:
+## Gestaltungsmodus: Darf Deko mit diesen Eckpunkten (in der Welt) auf diesem Brett stehen?
+## Nur, wenn dort keine Bücher stehen. margin = Luft zu den Büchern (siehe deco_margin).
+## Die Deko rastet dabei nirgends ein – sie steht genau dort, wo ich hinschaue.
+func is_free_for_deco(surface: PlacementSurface, corners: PackedVector3Array,
+		margin: float = DECO_MARGIN) -> bool:
 	var row := _surfaces.find(surface)
 	if row < 0:
 		return true
 	var span := _span_on_row(row, corners)
-	span = Vector2(span.x - DECO_MARGIN, span.y + DECO_MARGIN)
+	span = Vector2(span.x - margin, span.y + margin)
 	for book: Book in _row_books[row]:
 		if span.x < _x[book] + _book_width(book) - EPSILON and span.y > _x[book] + EPSILON:
 			return false
@@ -986,7 +1014,8 @@ func _update_blocked() -> void:
 		if row < 0 or other.get_model() == null:
 			continue
 		var span := _span_on_row(row, _corners_of(other.get_model()))
-		_blocked_cache[row].append(Vector2(span.x - DECO_MARGIN, span.y + DECO_MARGIN))
+		var margin := deco_margin(other.data)
+		_blocked_cache[row].append(Vector2(span.x - margin, span.y + margin))
 	# Ausgelegte Bücher auf dieser Deko (z. B. ein Buch im Aufsteller, breiter als er) – auch dort
 	# kommen keine Bücher des Regals hin
 	if _room.loose_books == null:

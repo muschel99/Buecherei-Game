@@ -621,7 +621,7 @@ func _check_surface_fit(surface: PlacementSurface) -> String:
 		if top - surface.get_surface_height() > surface.max_height + 0.002:
 			return "Zu hoch für dieses Fach."
 	var shelf := BookShelf.find_for_surface(surface)
-	if shelf and not shelf.is_free_for_deco(surface, corners):
+	if shelf and not shelf.is_free_for_deco(surface, corners, BookShelf.deco_margin(_preview.data)):
 		return "Hier stehen Bücher."
 	return ""
 

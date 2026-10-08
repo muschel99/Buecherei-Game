@@ -362,9 +362,16 @@ func _compute_plan(from: Vector3, direction: Vector3, book: Book) -> Dictionary:
 	var collider: Object = hit.collider
 	var normal: Vector3 = hit.normal
 	var point: Vector3 = hit.position
+	if collider is PlacementSurface and BookShelf.find_for_surface(collider):
+		return {}  # Regalbretter: dort stellt das Regal selbst ein
+	# Gleich neben einer Buchstütze (auf Tisch oder Boden): aufrecht und bündig daran
+	if normal.y > 0.7:
+		var bookend := _bookend_near(point)
+		if bookend:
+			var beside := _plan_beside_bookend(book, bookend, point)
+			if not beside.is_empty():
+				return beside
 	if collider is PlacementSurface:
-		if BookShelf.find_for_surface(collider):
-			return {}  # Regalbretter: dort stellt das Regal selbst ein
 		var item := FurnitureUtils.find_placed_furniture(collider)
 		return _plan_flat(book, point, (collider as PlacementSurface).get_surface_height(),
 			item.uid if item else 0, direction)
@@ -638,13 +645,38 @@ func _plan_beside_bookend(book: Book, bookend: PlacedFurniture, world_point: Vec
 	var size := book.data.size
 	var edge := box.end.x if side > 0.0 else box.position.x
 	# Lage im Koordinatensystem der Buchstütze: aufrecht, Rücken zeigt nach vorn (+Z)
-	var local_origin := Vector3(edge + side * (size.x / 2.0 + 0.002), size.y / 2.0 + LIFT, box.end.z - size.z / 2.0)
+	var local_origin := Vector3(edge + side * (size.x / 2.0 + BookShelf.BOOKEND_MARGIN), size.y / 2.0 + LIFT,
+		box.end.z - size.z / 2.0)
 	var basis := model.global_basis.orthonormalized() * Basis.from_scale(size)
 	var world := Transform3D(basis, model.global_transform * local_origin)
 	# Steht die Buchstütze im Bücherregal, räumt das Regal selbst ein (keine Vorschau)
 	if _find_ground(world.origin - Vector3.UP * (size.y / 2.0)).is_empty():
 		return {}
 	return _plan_in_row(book, world, 0.0, bookend.support_uid, side)
+
+
+## Die Buchstütze, neben der dieser Punkt (auf derselben Ablage bzw. dem Boden) liegt – höchstens
+## GameConfig.bookend_snap_distance seitlich von ihr – oder null.
+func _bookend_near(world_point: Vector3) -> PlacedFurniture:
+	if _room == null:
+		return null
+	var best: PlacedFurniture = null
+	var best_distance := GameConfig.bookend_snap_distance
+	for item in _room.get_placed_furniture():
+		if not BookShelf.is_bookend(item.data) or item.get_model() == null:
+			continue
+		if item.global_position.distance_to(world_point) > 0.5:
+			continue  # nur in der Nähe suchen
+		var model := item.get_model()
+		var box := FurnitureUtils.get_local_aabb(model)
+		var local := model.global_transform.affine_inverse() * world_point
+		if absf(local.y - box.position.y) > 0.02 or local.z < box.position.z or local.z > box.end.z:
+			continue  # nicht auf ihrer Ebene oder nicht neben ihr
+		var distance := maxf(box.position.x - local.x, local.x - box.end.x)
+		if distance >= 0.0 and distance <= best_distance:
+			best = item
+			best_distance = distance
+	return best
 
 
 ## Aufrecht in einer Reihe: neben "neighbor" (side = +1/-1 entlang der Buchdicke) bzw. genau

@@ -13,7 +13,8 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - **Gestaltung:** Möbel und Raumteiler frei platzieren, Wände streichen, Böden tauschen.
   Kein freier Wandbau. Gestaltet wird in der Ego-Perspektive (Taste Tab), frei oder mit
   Einrasten. Deko kann auf Ablageflächen stehen oder an Wand und Tür hängen.
-  Der Eingangsbereich vor der Tür bleibt frei. Gestaltet wird mit dem, was man besitzt
+  Der Eingangsbereich vor der Tür bleibt frei – für Möbel und (seit Etappe 3k) auch für
+  ausgelegte Bücher. Gestaltet wird mit dem, was man besitzt
   (Inventar); Neues kauft man am Theken-Tablet (Laden „Nest & Nook“).
 - **Stile:** Zum Start drei Stile: *Botanisch*, *Modern*, *Dark Academia*. Möbel tragen
   Stil-Merkmale. Der vorherrschende Stil bestimmt, welche Besucher kommen und welche Musik läuft.
@@ -219,7 +220,17 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
     (Genre je Fach, „Alle Fächer gleich“, Auffüllen, Sortieren, Alle ins Lager) sind dezent
     ausgegraut und nicht anklickbar (Tooltip „Nur am Regal“). Die Ansicht dreht sich nicht.
   - Die **Bücherauswahl** ist immer da: ohne Regal mit allen Genres im Lager, am Regal mit den
-    Genres, die in seine Fächer passen.
+    Genres, die in seine Fächer passen. Sie beginnt mit **„Alle Bücher“** (alle Genres
+    zusammen, nach Genre und Titel geordnet); in der Liste darunter wählt man ein einzelnes
+    Genre (seit Etappe 3k).
+  - Jede Cover-Kachel ist **dezent in der Farbe ihres Genres** hinterlegt (Farbe aus dem
+    Genre-Datenblatt, Stärke `GameConfig.book_picker_tint`) – so sieht man in „Alle Bücher“
+    auf einen Blick, was wozu gehört.
+  - **Genommene Bücher bleiben sichtbar** (seit Etappe 3k): Ein Buch, das ich gerade in die
+    Hand genommen habe, verschwindet nicht aus der Übersicht, sondern wird leicht ausgegraut
+    und bekommt ein kleines Handsymbol. Ein Klick auf diese Kachel legt es zurück ins Lager,
+    die Markierung verschwindet. Das gilt für die Bücher, die ich im offenen Menü genommen
+    habe.
   - **Mehrere Bücher nacheinander:** Nach einem Klick auf ein Cover bleibt das Menü offen; es
     schließt sich erst, wenn die Hände mit sieben Büchern voll sind (oder mit Esc, R oder dem
     Kreuz). Oben rechts zeigt ein kleiner Stapel, wie viele Bücher ich trage („3 / 7“).
@@ -350,6 +361,13 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   - Schaue ich auf eine **Buchstütze** oder ein **aufrecht stehendes Buch**, stellt sich das
     Buch aufrecht direkt daneben, der Rücken zeigt nach vorn – so entstehen kleine Buchreihen
     auf Tischen und der Theke.
+  - **Buchstützen** (seit Etappe 3k): Bücher rasten an der Buchstütze ein, nicht umgekehrt.
+    Ziele ich knapp neben eine Buchstütze (höchstens `GameConfig.bookend_snap_distance`, 5 cm),
+    steht das Buch aufrecht und bündig an ihr (nur ein Hauch Luft). Im Bücherregal stehen
+    Bücher ebenso bündig an der Buchstütze; schaue ich mit einem Buch in der Hand direkt auf
+    eine Buchstütze im Regal, stellt das Regal das Buch an die Seite, auf die ich schaue. Die
+    Buchstütze selbst rastet im Gestaltungsmodus nie an Büchern ein – sie steht genau dort, wo
+    ich hinschaue, und darf bündig neben Bücher.
 - **Flach auf Polster** (seit Etappe 3j): Auch auf Sofakissen und eine Sofadecke lassen sich
   Bücher flach legen (im Datenblatt `books_can_lie`), wie auf einen Tisch – Cover oben, leicht
   schräg, Stapel möglich.
@@ -383,6 +401,8 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Gestaltungsmodus, wandern die Bücher darauf mit; räume ich es mit X weg, gehen sie zurück
   ins Lager. Mitten auf ausgelegte Bücher lässt sich kein Möbelstück stellen („Hier liegen
   Bücher.“). Steht eine Buchstütze im Bücherregal, räumt dort das Regal selbst ein.
+  Ausgelegte Bücher und Buchstützen werden gespeichert wie bisher; ältere Spielstände laden
+  unverändert.
 - Wiederverwendbar: Das System (`LooseBooks`, ein Knoten je Raum) ist so gebaut, dass später
   auch Besucher Bücher auf Tischen liegen lassen können, die man dann einsammelt. Im
   Datenformat (`LooseBook`) ist der Zustand „aufgeschlagen“ schon vorgesehen (noch nicht
@@ -546,7 +566,11 @@ Zwei Zustände:
   großes Fenster (0,8 bis 2,6 m) und Eingangstür (2,2 m) zur Gasse. Die Decke ist zu Beginn
   schlicht; Balken gibt es als Deckenvariante.
 - Die Eingangstür öffnet sich mit E sanft nach innen; was an ihr hängt (z. B. ein Türkranz),
-  schwingt mit. Beim Gestalten ist sie geschlossen.
+  schwingt mit. Seit Etappe 3k bleibt eine offene Tür auch im Gestaltungsmodus offen, damit
+  ich hindurchgehen kann; an die offene Tür hängt man nichts (Vorschau rot), und was an ihr
+  hängt, lässt sich erst bei geschlossener Tür verschieben oder wegräumen.
+- Der Schwenkbereich der Tür bleibt frei: Dort lassen sich weder Möbel noch Bücher abstellen
+  (Vorschau rot, wie gewohnt).
 - Vor der Tür liegt ein Stück Gehweg der Gasse (Platzhalter) mit Bordstein; links und rechts
   stehen die Nachbarhäuser. Hier kommen die Lieferkartons an.
 

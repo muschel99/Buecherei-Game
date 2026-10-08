@@ -227,6 +227,9 @@ var shelf_grid_step: float = 0.01
 ## Steht ein Buch näher als das an einem Nachbarn (Buch, Deko, Seitenwand), rückt es bündig
 ## heran (in Metern).
 var shelf_snap_distance: float = 0.025
+## Stelle ich ein Buch so nah neben eine Buchstütze (auf Tisch, Boden …), steht es aufrecht
+## und bündig daran (in Metern). Die Buchstütze selbst rastet nie an Büchern ein.
+var bookend_snap_distance: float = 0.05
 
 
 # --- Speichern ---

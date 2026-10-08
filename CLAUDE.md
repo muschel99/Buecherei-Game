@@ -89,6 +89,10 @@ docs/              Dokumentation
   dasselbe Menü ohne Regal (`ShelfMenu.open_for(null)`): Regal-Teile ausgegraut, Bücherauswahl
   aktiv. Bücher aus dem Lager in die Hand nimmt man **nur** dort (Menü bleibt offen, bis die
   Hände voll sind). Code im ShelfMenu muss immer mit `shelf == null` klarkommen.
+  Bücherauswahl: erst „Alle Bücher“ (`ShelfMenu.ALL_GENRES`), dann die Genres; Kacheln dezent
+  in Genre-Farbe (`BookPicker`-Eintrag `tint`, Stärke `GameConfig.book_picker_tint`); im
+  offenen Menü genommene Bücher bleiben als Kachel mit Handsymbol (`held`), ein Klick
+  (`entry_chosen`) legt sie zurück ins Lager (`ShelfMenu.return_book`).
 - **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit Apps), nutzt die
   gemeinsame Vorlage `TabletFrame` (Gehäuse + Bildschirm, Farben `TabletFrame.TEXT_COLOR` …,
   `make_label`, `make_close_button` = Kreuz oben rechts). Knöpfe sind Symbol-Knöpfe
@@ -169,7 +173,11 @@ docs/              Dokumentation
   Vorschaubilder von Modellen: `ThumbnailRenderer` (zwischengespeichert).
 - Interaktion: Trifft der Blick den festen Körper eines Objekts, gilt dessen Interactable
   (`Interactable.find_for`) – E-Bereiche müssen den Körper also nicht umschließen.
-- Türen (`Door`, Gruppe `doors`): Teile, die mitschwingen, unter dem Knoten `Hinge`.
+- Türen (`Door`, Gruppe `doors`): Teile, die mitschwingen, unter dem Knoten `Hinge`. Eine offene
+  Tür bleibt im Gestaltungsmodus offen; an die offene Tür hängt man nichts, was an ihr hängt,
+  wird erst bei geschlossener Tür bewegt (`Door.is_swinging(item)`, `is_leaf(collider)`).
+  Der Schwenkbereich ist eine Sperrzone (Ebene `build_blocker`) – auch für ausgelegte Bücher
+  (`LooseBooks._blocked_for_placing`).
 - Die Spielfigur kann man anhalten: `player.movement_enabled = false` (z. B. im Shop).
 - Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `jump`,
   `crouch`, `interact`,
@@ -265,6 +273,12 @@ docs/              Dokumentation
   `set_blueprint_valid()` (Shader `blueprint.gdshader`: unshaded, ruhiges Blau, Deckkraft
   `GameConfig.preview_opacity`, leicht zur Kamera versetzt – kein Z-Fighting, keine Lichtkante).
   Stapel = Bücher, die lückenlos aufeinander liegen (`LooseBooks.STACK_GAP`).
+  **Buchstützen** (Unterkategorie `bookend`, `BookShelf.is_bookend(data)`): Bücher rasten an
+  ihnen ein, nie umgekehrt – Deko rastet im Gestaltungsmodus nie an Büchern ein. Luft zu Büchern
+  `BookShelf.deco_margin(data)` (Buchstütze `BOOKEND_MARGIN`, sonst `DECO_MARGIN`); frei
+  ausgelegt knapp daneben (`GameConfig.bookend_snap_distance`) steht ein Buch aufrecht daran;
+  Blick auf eine Buchstütze im Regal zählt als Blick aufs Regal (`Interactable.find_for`,
+  `BookShelf.holding(item)`).
   Anlehnen an Möbel nur mit `FurnitureData.books_can_lean` (Lehnen, große Töpfe), flach auf
   Möbeln ohne Ablagefläche nur mit `books_can_lie` (Polster) – nie an kleiner Deko, nie frei
   hochkant. **Buch-Aufsteller:** Knoten `BookStand` (+ Marker `BookSpot`) in einer Möbel-Szene;
