@@ -1,6 +1,6 @@
 class_name TabletFrame
 extends PanelContainer
-## Gemeinsame Vorlage für alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit Shop):
+## Gemeinsame Vorlage für alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit seinen Apps):
 ## ein dunkler Rahmen mit runden Ecken und kleiner Kamera oben, darin der warme Bildschirm.
 ##
 ## So benutzt man sie: einen PanelContainer-Knoten mit diesem Script anlegen (in einer Szene

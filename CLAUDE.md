@@ -37,16 +37,17 @@ scenes/            Szenen (.tscn)
                    Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox,
                    LooseBooks = ausgelegte Bücher; player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
-  ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Shop, Hinweise,
+  ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Theken-Tablet, Hinweise,
                    Stil-Anzeige, Regal-Menü, Trage-Anzeige, Buch-Infokarte, Genre-Schriftzug,
                    Bücherauswahl; Scripts BookCover und BookMotifs zeichnen Cover und Buchrücken)
+    tablet_apps/   Apps des Theken-Tablets (je eine kleine Szene)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
                    Wallet, Inventory, BookStock, BookArt, DebugKeys)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, BookData, Book,
-                   LooseBook)
+                   LooseBook, TabletAppData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
 data/
@@ -54,6 +55,7 @@ data/
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
   genres/          Datenblätter der Buch-Genres (.tres)
   books/           Bücherlisten (.txt, eine je Genre, eine Zeile pro Buch: Titel | Motiv)
+  tablet_apps/     Datenblätter der Tablet-Apps (.tres) – werden automatisch auf den Startbildschirm geladen
 assets/
   models/          Eigene 3D-Modelle (.glb)
   textures/        Texturen
@@ -86,6 +88,15 @@ docs/              Dokumentation
   `make_label`, `make_close_button` = Kreuz oben rechts). Knöpfe sind Symbol-Knöpfe
   (`TabletIconButton`, gezeichnete Symbole, Tooltip mit einem Wort) statt langer Textzeilen.
   Tooltips und aufklappende Listen haben ihren Stil im Theme (`assets/ui/cozy_theme.tres`).
+- **Theken-Tablet** (`CounterTablet`, Gruppe `counter_tablet`, `open_tablet()`, `open_app(id)`,
+  `go_home()`): Startbildschirm mit App-Symbolen, Leiste mit Home, Kontostand, getragenen
+  Büchern, Kreuz. Esc schließt immer das ganze Tablet; Öffnen startet immer auf dem
+  Startbildschirm. **Neue App = neue Szene** in `scenes/ui/tablet_apps/` (Wurzel-Script erbt von
+  `TabletApp`: `app_opened()`, `refresh()`, Bausteine `make_label` …; `request_refresh()` statt
+  direkt neu aufbauen, wenn ein Knopf sich selbst ersetzen würde) **+ Datenblatt**
+  `data/tablet_apps/<id>.tres` (`TabletAppData`: Name, Symbol oder eigenes Bild, Farbe,
+  Reihenfolge) – kein Code am Startbildschirm. Einkaufs-Apps erben von `ShopApp` (Warenkorb,
+  Angebotskarten). Volle Hände im Tablet: `tablet.wobble(knopf)` (ohne Text).
 - **Jede Aktion hat nur einen Weg** (z. B. getragene Bücher einräumen = Linksklick halten am
   Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü).
 - **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
@@ -132,10 +143,12 @@ docs/              Dokumentation
 - `FurnitureData.is_essential` = gehört fest zur Bücherei (Tablet): nicht kaufbar, nicht
   verkaufbar; `Room.ensure_essentials()` stellt es zurück, falls es fehlt.
   `SurfaceData.owned_at_start` = von Anfang an vorhanden.
-- **Shop:** `ShopWindow` (Gruppe `shop_window`, `open_shop()`); Bestellungen gehen an den
-  `DeliveryManager` (Gruppe `delivery_manager`, `place_order(inhalt)`), Inhalt als Liste von
+- **Einkaufen:** Apps „Einrichtung“ (Möbel, Deko, Oberflächen; Kaufen/Verkaufen) und „Bücher“
+  (Pakete) am Theken-Tablet; Bestellungen gehen an den `DeliveryManager` (Gruppe
+  `delivery_manager`, `place_order(inhalt)`), Inhalt als Liste von
   `{ "kind": "furniture"/"surface"/"books", "id": …, "count": … }` (bei "books": id = Genre,
-  count = Zahl der Bücherpakete). Reiter: Kaufen, Verkaufen, Bestand.
+  count = Zahl der Bücherpakete). Bücher aus dem Lager in die Hand: App „Bestand“
+  (`BookStock.take_books` + `carry`, Rest mit `put_back_first` zurück).
 - Lieferung: ein Karton pro Objekt (`DeliveryManager.split_contents`); Kartons stehen in Stapeln
   (`_stacks`), Lieferort = Marker3D `Outside/Deliveries`. Der E-Zielbereich eines Kartons darf
   nicht über ihn hinausragen (sonst trifft man beim Stapel den falschen).

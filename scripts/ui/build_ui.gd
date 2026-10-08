@@ -120,7 +120,7 @@ func _show_tab(index: int) -> void:
 
 	if _cards.is_empty():
 		var empty := Label.new()
-		empty.text = "Hier ist noch nichts. Im Shop am Tablet findest du mehr."
+		empty.text = "Hier ist noch nichts. Am Theken-Tablet (Einrichtung) findest du mehr."
 		if not owned.is_empty():
 			empty.text = "Dazu passt hier gerade nichts – probier einen anderen Filter."
 		empty.add_theme_color_override("font_color", MUTED_COLOR)
