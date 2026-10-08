@@ -369,8 +369,8 @@ func _compute_plan(from: Vector3, direction: Vector3, book: Book) -> Dictionary:
 		var bookend := _bookend_near(point)
 		if bookend:
 			var beside := _plan_beside_bookend(book, bookend, point)
-			if not beside.is_empty():
-				return beside
+			if not beside.is_empty() and beside.ok:
+				return beside  # sonst wie gewohnt (z. B. flach), wenn dort kein Platz ist
 	if collider is PlacementSurface:
 		var item := FurnitureUtils.find_placed_furniture(collider)
 		return _plan_flat(book, point, (collider as PlacementSurface).get_surface_height(),
@@ -802,10 +802,6 @@ func _invalid_plan(book: Book, world_point: Vector3, direction: Vector3) -> Dict
 	return plan
 
 
-## Ragt ein Buch (Lage in der Welt, mit Buchgröße in der Basis) in ein anderes Objekt hinein –
-## Möbel, Deko, Wände, Boden? Das Buch wird dafür an jeder Seite um SOLID_MARGIN kleiner
-## geprüft: Aufliegen und Anlehnen ist erlaubt, Hineinragen nie. Eine Regel für alles, was ich
-## ablege (flach, aufrecht, angelehnt).
 ## Darf ein Buch hier nicht hin? Es ragt in etwas hinein (_blocked_by_solid) oder liegt in einem
 ## Bereich, der frei bleiben muss – z. B. dort, wo die Eingangstür aufschwingt (Physik-Ebene
 ## build_blocker, dieselben Bereiche wie für Möbel).
@@ -825,6 +821,10 @@ func _blocked_for_placing(world: Transform3D, exclude: Array[RID] = []) -> bool:
 	return not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
+## Ragt ein Buch (Lage in der Welt, mit Buchgröße in der Basis) in ein anderes Objekt hinein –
+## Möbel, Deko, Wände, Boden? Das Buch wird dafür an jeder Seite um SOLID_MARGIN kleiner
+## geprüft: Aufliegen und Anlehnen ist erlaubt, Hineinragen nie. Eine Regel für alles, was ich
+## ablege (flach, aufrecht, angelehnt).
 ## exclude: Körper, die es berühren darf (z. B. der Aufsteller, in dem es liegt).
 func _blocked_by_solid(world: Transform3D, exclude: Array[RID] = []) -> bool:
 	var size := Vector3(world.basis.x.length(), world.basis.y.length(), world.basis.z.length())

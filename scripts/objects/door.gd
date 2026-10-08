@@ -75,9 +75,15 @@ func _set_angle(angle: float) -> void:
 		_hung_items.clear()
 
 
-## Hängt dieses Möbelstück gerade an der offenen Tür (schwingt mit)?
+## Hängt dieses Möbelstück gerade an der offenen Tür (schwingt mit)? Auch, solange die Tür
+## noch zugeht – erst wenn sie ganz zu ist, hängt es wieder still.
 func is_swinging(item: PlacedFurniture) -> bool:
-	return is_open and _hung_items.has(item)
+	return _hung_items.has(item)
+
+
+## Ist die Tür offen oder noch in Bewegung (nicht ganz zu)?
+func is_ajar() -> bool:
+	return is_open or not is_zero_approx(_hinge.rotation.y)
 
 
 ## Gehört dieser Körper zum Türblatt?

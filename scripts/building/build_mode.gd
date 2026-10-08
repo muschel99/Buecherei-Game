@@ -670,11 +670,11 @@ func _is_on_open_door(item: PlacedFurniture) -> bool:
 	return false
 
 
-## Ist das Türblatt "collider" gerade offen?
+## Ist das Türblatt "collider" gerade offen (oder noch nicht ganz zu)?
 func _door_is_open(collider: Object) -> bool:
 	for door in get_tree().get_nodes_in_group("doors"):
 		if door.has_method("is_leaf") and door.is_leaf(collider):
-			return door.is_open
+			return door.is_ajar()
 	return false
 
 

@@ -749,14 +749,15 @@ static func is_bookend(data: FurnitureData) -> bool:
 	return data != null and data.subcategory == "bookend"
 
 
-## Das Bücherregal, auf dessen Brett dieses Möbelstück steht – oder null.
+## Das Bücherregal, in dessen Fach (auf einem Brett mit Büchern) dieses Möbelstück steht –
+## oder null (auch oben auf dem Regal: das ist kein Fach).
 static func holding(item: PlacedFurniture) -> BookShelf:
 	if item == null or item.support_uid == 0:
 		return null
-	for shelf in item.get_tree().get_nodes_in_group(BookStock.SHELF_GROUP):
+	for shelf: BookShelf in item.get_tree().get_nodes_in_group(BookStock.SHELF_GROUP):
 		var owner_item := FurnitureUtils.find_placed_furniture(shelf)
 		if owner_item and owner_item.uid == item.support_uid:
-			return shelf
+			return shelf if shelf._row_at(item.global_position) >= 0 else null
 	return null
 
 

@@ -476,10 +476,13 @@ func _choosable_genres() -> Array[GenreData]:
 ## (ausgegraut mit Handsymbol).
 func _refresh_picker() -> void:
 	var held := _held_here()
-	var genres := _choosable_genres()
-	for book in held:
-		var genre := book.get_genre()
-		if genre and not genres.has(genre) and (shelf == null or shelf.accepts(genre.get_id())):
+	# Genres mit Büchern im Lager oder in der Hand – immer in der Reihenfolge des Katalogs,
+	# so springt nichts, wenn das letzte Buch eines Genres in die Hand wandert
+	var choosable := _choosable_genres()
+	var held_genres := held.map(func(book: Book) -> GenreData: return book.get_genre())
+	var genres: Array[GenreData] = []
+	for genre in Catalog.get_all_genres():
+		if choosable.has(genre) or (held_genres.has(genre) and (shelf == null or shelf.accepts(genre.get_id()))):
 			genres.append(genre)
 	if genres.is_empty():
 		_show_main()

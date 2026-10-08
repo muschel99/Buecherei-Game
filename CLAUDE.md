@@ -92,7 +92,9 @@ docs/              Dokumentation
   Bücherauswahl: erst „Alle Bücher“ (`ShelfMenu.ALL_GENRES`), dann die Genres; Kacheln dezent
   in Genre-Farbe (`BookPicker`-Eintrag `tint`, Stärke `GameConfig.book_picker_tint`); im
   offenen Menü genommene Bücher bleiben als Kachel mit Handsymbol (`held`), ein Klick
-  (`entry_chosen`) legt sie zurück ins Lager (`ShelfMenu.return_book`).
+  (`entry_chosen`) legt sie zurück ins Lager (`ShelfMenu.return_book`) – bewusste Ausnahme
+  von „nur ein Weg“ (macht nur den eigenen Griff ins Lager rückgängig; volle Hände schließen
+  das Menü, das letzte Buch geht dann mit Q ins Lager).
 - **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit Apps), nutzt die
   gemeinsame Vorlage `TabletFrame` (Gehäuse + Bildschirm, Farben `TabletFrame.TEXT_COLOR` …,
   `make_label`, `make_close_button` = Kreuz oben rechts). Knöpfe sind Symbol-Knöpfe
@@ -111,7 +113,8 @@ docs/              Dokumentation
   Sammlung), Statistik (stats; neue Werte über Gruppe `stat_sources` mit `get_stats()`),
   Tipps & Tricks (tips; Texte in `data/tips/tips.txt`).
 - **Jede Aktion hat nur einen Weg** (z. B. getragene Bücher einräumen = Linksklick halten am
-  Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü).
+  Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü). Einzige Ausnahme:
+  Ein im R-Menü gerade genommenes Buch legt ein Klick auf seine Kachel zurück.
 - **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
   `MenuStack.open(self)` an und hat `close_from_escape()`. Esc schließt immer zuerst das
   Oberste; nur wenn nichts offen ist, öffnet sich das Pausenmenü.
