@@ -20,7 +20,7 @@
 | 3f  | Regal-Menü als Tablet und Fächer         | fertig        |
 | 3g  | Tablet mit Apps und Lagerübersicht       | fertig        |
 | 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | fertig |
-| 3i  | Fach-Automodus und Platzierungs-Fehler   | in Arbeit     |
+| 3i  | Fach-Automodus und Platzierungs-Fehler   | fertig        |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -365,15 +365,21 @@ und das gibt es überall.
 ## Etappe 3i – Fach-Automodus und Platzierungs-Fehler
 Leitgedanke: Bücher einfach hineinstellen, ohne vorher etwas festzulegen – und beim Ablegen
 keine Grafikfehler und keine halb versenkten Bücher.
-- [ ] Tickbox „Auto“ je Fach (vor dem Genre-Dropdown): Das Fach übernimmt sein Genre aus den
-      Büchern darin (alle gleich → dieses Genre, verschiedene → „Gemischt“, leer → nimmt alles);
-      Standard für alle Fächer; Genre von Hand wählen schaltet „Auto“ aus
-- [ ] Dieselbe Kombi bei „Alle Fächer gleich“
-- [ ] Vorschau beim Ablegen ruhig und gleichmäßig (kein Flackern, keine Streifen)
-- [ ] Einheitliche Kollision: Ein Buch darf nirgends in ein anderes Objekt hineinragen – sonst
-      ist die Vorschau rot und das Ablegen gesperrt (Wackeln wie bisher)
-- [ ] Fach-Genre samt „Auto“ wird gespeichert; alte Spielstände laden weiter (Fächer ohne
-      gespeicherten Wert gelten als „Auto“)
+- [x] Tickbox „Auto“ je Fach (vor dem Genre-Dropdown): Das Fach nimmt jedes Buch an und
+      übernimmt sein Genre aus den Büchern darin (alle gleich → dieses Genre, verschiedene →
+      „Gemischt“, leer → keins); das Dropdown zeigt das erkannte Genre („Noch leer“); Standard
+      für alle Fächer; Genre von Hand wählen schaltet „Auto“ aus, Haken weg lässt das Fach beim
+      aktuellen Genre; Auffüllen nutzt das erkannte Genre
+- [x] Dieselbe Kombi bei „Alle Fächer gleich“
+- [x] Vorschau beim Ablegen ruhig und gleichmäßig: ohne Licht und Schatten der Szene, ein paar
+      Millimeter zur Kamera hin gezeichnet (kein Flackern, keine Streifen)
+- [x] Einheitliche Kollision: Ein Buch darf nirgends in ein anderes Objekt hineinragen (Prüfung
+      mit den Kollisionsformen, Aufliegen und Anlehnen erlaubt) – sonst ist die Vorschau rot und
+      das Ablegen gesperrt (Wackeln wie bisher); kein Abprallen mehr an Möbelseiten;
+      Leiterregal mit passender Kollision (Seitenholme statt unsichtbarer Rückwand)
+- [x] Fach-Genre samt „Auto“ wird gespeichert („row_auto“); alte Spielstände laden weiter
+      (Fächer ohne gespeichertes Genre gelten als „Auto“, Fächer mit gewähltem Genre bleiben
+      dabei)
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke

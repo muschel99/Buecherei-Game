@@ -204,6 +204,12 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
     Sie sind von oben links nach unten rechts durchnummeriert (Fach 1, Fach 2 …). Jedes Fach
     hat sein eigenes Genre oder „Gemischt“, z. B. oben „Gemischt“, darunter „Krimi“ und
     „Kinderbuch“. Fächer ohne Genre nehmen jedes Buch.
+  - **Automodus** (seit Etappe 3i, Standard für alle Fächer, auch für leere und neue): Steht
+    ein Fach auf „Auto“, nimmt es jedes Buch an und übernimmt sein Genre aus den Büchern darin –
+    alle vom selben Genre → dieses Genre, verschiedene → „Gemischt“, leer → kein Genre. So
+    stelle ich einfach Bücher hinein, ohne vorher etwas festzulegen. Wähle ich ein Genre von
+    Hand, ist das Fach darauf festgelegt (nimmt nur Bücher dieses Genres an, auch wenn es leer
+    ist). Auto ist kein Genre, sondern ein eigener Schalter (siehe Regal-Menü).
 - **R-Menü überall** (seit Etappe 3h): R öffnet das Menü immer, egal wohin ich schaue – so kann
   ich Bücher aus dem Lager holen, ohne vor einem Regal zu stehen (z. B. zum Dekorieren). Es
   ist dasselbe Menü; es erkennt nur, worauf ich schaue:
@@ -232,17 +238,26 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
     - **Auffüllen:** Jedes Fach bekommt passende Bücher aus dem Lager, von oben nach unten;
       sie gleiten nacheinander in die freien Plätze (höchstens 2,5 Sekunden), je Genre nach
       Titel sortiert. Gemischte Fächer werden gleichmäßig aus allen Genres befüllt, Fächer
-      ohne Genre bleiben leer.
+      ohne Genre bleiben leer. Bei „Auto“ zählt das erkannte Genre: Ein Auto-Fach mit Krimis
+      bekommt Krimis, ein gemischtes Auto-Fach nur Bücher der Genres, die schon darin stehen;
+      leere Auto-Fächer bleiben leer.
     - **Sortieren** (Filtersymbol): Ein Klick öffnet eine kleine Auswahl – nach Genre und
       Titel, nach Titel, nach Autor oder nach Farbe. Die Bücher rücken sanft an ihre neuen
       Plätze (dicht an dicht von links, jedes in ein passendes Fach); Deko bleibt stehen. Das
       Regal merkt sich die gewählte Art (wird gespeichert).
     - **Alle ins Lager:** alle Bücher des Regals zurück ins Lager.
-  - Darunter **„Fächer“**: „Alle Fächer gleich“ (ein Genre oder „Gemischt“ für das ganze
-    Regal; sind die Fächer verschieden, steht dort „Verschieden“) und alle Fächer
-    untereinander, jedes mit einer Auswahlliste für sein Genre. Bücher, die nach einem
-    Wechsel nicht mehr passen, gleiten heraus und gehen ins Lager.
-  - **Fach hervorheben:** Fahre ich über die Auswahlliste eines Fachs oder klappe sie auf,
+  - Darunter **„Fächer“**: „Alle Fächer gleich“ und alle Fächer untereinander. Jede Zeile:
+    Fachname, die Tickbox **„Auto“** (seit Etappe 3i), dann die Auswahlliste für das Genre
+    („Gemischt“, Roman, Krimi, Fantasy …).
+    - Ist „Auto“ angehakt, zeigt die Auswahlliste das erkannte Genre (leer: „Noch leer“) und
+      folgt den Büchern, die hineinkommen oder herausgehen.
+    - Die Auswahlliste bleibt immer anklickbar: Wähle ich von Hand ein Genre, geht „Auto“
+      aus und das Fach ist festgelegt. Hake ich „Auto“ wieder an, gilt wieder das Genre aus den
+      Büchern. Nehme ich den Haken weg, bleibt das Fach bei dem Genre, das es gerade hat.
+    - „Alle Fächer gleich“ hat dieselbe Kombi und setzt alle Fächer auf einmal (sind die
+      Fächer verschieden, steht dort „Verschieden“).
+    - Bücher, die nach einem Wechsel nicht mehr passen, gleiten heraus und gehen ins Lager.
+  - **Fach hervorheben:** Fahre ich über die Auswahlliste oder die Tickbox eines Fachs oder klappe die Liste auf,
     leuchtet genau dieses Fach im Regal dezent weiß (wie Möbel im Gestaltungsmodus); bei „Alle
     Fächer gleich“ alle Fächer.
   - **Das Regal bleibt sichtbar:** Beim Öffnen dreht sich die Ansicht sanft ein Stück nach
@@ -300,6 +315,16 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   andere Ablageflächen. **Linksklick** legt das Buch obenauf genau dorthin, wo ich hinschaue;
   vorher zeigt eine halbdurchsichtige Vorschau, wo es hinkommt (rötlich, wenn es dort nicht
   geht).
+- **Ruhige Vorschau** (seit Etappe 3i): Die Vorschau sieht auf jeder Oberfläche gleichmäßig aus –
+  ohne Licht und Schatten der Szene (eine eigene, sanfte Schattierung gibt ihr Form) und ein
+  paar Millimeter zur Kamera hin gezeichnet, damit sie nie flackert oder gestreift aussieht.
+- **Eine Regel für alles** (seit Etappe 3i): Ein Buch darf nie in ein anderes Objekt
+  hineinragen – Möbel, Deko, Wände. Überschneidet sich die Vorschau mit etwas, ist sie rötlich,
+  und ein Klick lässt sie nur kurz wackeln. Aufliegen und Anlehnen ist erlaubt. Das gilt flach,
+  aufrecht und angelehnt gleich; die Vorschau liegt immer dort, wo ich hinschaue (sie springt
+  nicht mehr vor ein Möbelstück). Geprüft wird mit den Kollisionsformen der Möbel – darum
+  sollen sie zur sichtbaren Form passen (z. B. Leiterregal: die zwei Seitenholme statt einer
+  unsichtbaren Rückwand).
 - **Flach:** Standardmäßig liegt das Buch flach mit dem Cover nach oben (man sieht das echte
   Cover), ausgerichtet nach meiner Blickrichtung und minimal schräg. Auf ein liegendes Buch
   gelegt, entsteht ein kleiner, leicht versetzter Stapel (höchstens
