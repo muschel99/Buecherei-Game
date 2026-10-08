@@ -19,6 +19,7 @@
 | 3e  | Bücher drehen, Stapel blättern und Regal-Menü mit R | fertig |
 | 3f  | Regal-Menü als Tablet und Fächer         | fertig        |
 | 3g  | Tablet mit Apps und Lagerübersicht       | fertig        |
+| 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | in Arbeit |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -332,6 +333,24 @@ aus dem Lager in die Hand.
 - [x] Bücher aus der Bestand-App werden wie andere getragene Bücher gespeichert; alte
       Spielstände laden weiter
 - Ideen für spätere Apps: Vorbestellungen, Besucher, Einstellungen
+
+## Etappe 3h – Shop-Namen, Lager mit Sammlung, R-Menü überall
+Leitgedanke: Das Tablet ist zum Schauen und Einkaufen da, Bücher nehme ich über das R-Menü –
+und das gibt es überall.
+- [ ] App „Lager“ statt „Bestand“ und „Sammlung“: je Genre Lager, Regal, ausgelegt mit
+      Symbolen und Zahlen; aufgeklappt die Sammlung des Genres (Cover-Kacheln, unentdeckte als
+      „?“); nur zur Übersicht, Bücher nehmen geht hier nicht mehr
+- [ ] Shops mit Namen und kleinem Logo: Einrichtung = „Nest & Nook“, Bücher = „Bücherladen“
+      (Platzhalter, Name an einer Stelle änderbar); Ladenname dezent oben in der App
+- [ ] Bücher nehmen nur über das R-Menü; es bleibt beim Nehmen offen, bis die Hand mit sieben
+      Büchern voll ist (oder ich es mit Esc/Kreuz schließe)
+- [ ] R öffnet das Menü überall: am Regal mit allen Regal-Teilen, sonst sind diese dezent
+      ausgegraut, die Bücherauswahl geht immer
+- [ ] App „Statistik“: ein paar ruhige Zahlen (Bücher insgesamt und je Genre, im Regal,
+      ausgelegt); später leicht um neue Werte zu ergänzen
+- [ ] App „Tipps & Tricks“ als kleines Büchlein: Inhaltsverzeichnis, Seiten zum Blättern,
+      Themen und Tipps in einer Datei
+- [ ] Nichts Neues zu speichern; alte Spielstände laden weiter
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
