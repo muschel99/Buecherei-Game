@@ -35,7 +35,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   Das Tablet ist zum Schauen und Einkaufen da; Bücher nimmt man über das R-Menü (siehe
   „Regal-Menü“).
   - **Startbildschirm:** große, freundliche App-Symbole mit Namen auf einem ruhigen,
-    gemütlichen Hintergrund: Nest & Nook, Bücherladen, Lager, Statistik, Tipps & Tricks.
+    gemütlichen Hintergrund: Nest & Nook, Bücherladen, Lager, Fassade, Statistik, Tipps & Tricks.
     Oben eine schmale Leiste mit dezent dem Kontostand. In einer App zeigt die Leiste ihr
     kleines Logo und ihren Namen – bei Läden den Ladennamen mit kurzem Untertitel, damit es
     sich wie ein richtiger Laden anfühlt.
@@ -68,6 +68,13 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     warmen Farbe. Später kommen Werte dazu, die es noch nicht gibt (Besucher, ausgeliehene
     Bücher je Genre, Kaffee und Kuchen …): Jedes System meldet sie selbst (Gruppe
     `stat_sources`, `get_stats()`); was es noch nicht gibt, erscheint einfach nicht.
+  - **App „Fassade“** (seit Etappe 3l, Symbol: Hausfront): Hier wird die Hausfront gestaltet.
+    Die App besteht aus Abschnitten (je ein Kasten mit Überschrift); bisher gibt es einen, den
+    **Rückgabekasten**: oben rechts dezent ein Buchsymbol mit „12 / 50“ (wie viele Bücher
+    darin liegen), darunter die Einwurf-Varianten als Karten mit Vorschaubild (vor einem Stück
+    Hauswand). Ein Klick wählt den Einwurf; der gewählte ist hervorgehoben (Rahmen, Häkchen).
+    Später kommen weitere Abschnitte dazu, z. B. Wandfarbe außen, Schild, Fenster (im Code:
+    eine Funktion je Abschnitt, eingetragen in `SECTIONS`).
   - **App „Tipps & Tricks“** (seit Etappe 3h): ein kleines, gemütliches Büchlein auf
     cremefarbenem Papier. Zuerst das Inhaltsverzeichnis (Themen mit kleinem Symbol, Pünktchen
     und Seitenzahl: Steuerung, Bücher einräumen, Regale und Fächer, Dekorieren, Einrichten und
@@ -310,14 +317,25 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   ausgelegten Büchern oder ohne Ziel blättert E.
 - Das **Mausrad** dreht das Buch obenauf vor dem freien Ablegen (siehe „Bücher als Deko“).
 - **Q halten:** Alle getragenen Bücher kommen ins Lager.
-- **Rückgabekasten:** Kasten mit Einwurfschlitz und kleinem Fenster (Kategorie Theke), frei
-  platzierbar, z. B. neben der Tür oder an der Theke. Zum Start liegt einer im Inventar,
-  weitere gibt es im Shop.
-- Später werfen Besucher dort ihre ausgeliehenen Bücher ein. Bis dahin legt die Testtaste **F9**
-  ein paar Bücher bereits entdeckter Titel hinein.
-- E am Kasten: so viele Bücher nehmen, wie in die Hände passen; Rechtsklick: eines. Dann am
-  Regal: einzeln mit Linksklick abstellen oder alle passenden mit Linksklick halten. Was nicht
-  passt, trage ich weiter.
+- **Rückgabekasten** (seit Etappe 3l fest eingebaut): Es gibt genau einen, von Anfang an – fest
+  in der Hauswand links neben der Eingangstür, wie ein Briefkasten-Einwurf. Außen sitzt der
+  Einwurf, innen eine Klappe zum Herausnehmen. Er wird nicht aufgestellt, nicht gekauft und
+  nicht verkauft; davor bleibt ein kleiner Bereich frei (Möbel und Bücher, Vorschau rot).
+  - Wie der Einwurf außen aussieht, wähle ich in der App „Fassade“ (bisher drei Platzhalter:
+    schlichter Schlitz, Klappe, Holzschild). Der Ort bleibt vorerst fest; weitere Orte und
+    Varianten lassen sich später ergänzen (Varianten: Datenblatt in `data/return_slots/`).
+  - Platz für **50 Bücher** (`GameConfig.return_box_capacity`). Ist er voll, nimmt er nichts
+    mehr an (später regelt das der Kundenverkehr).
+  - Er ist immer geschlossen; die Bücher darin sieht man nicht. Schaue ich die Klappe innen
+    an, zeigt eine kleine Anzeige neben der Bildmitte ein Buchsymbol mit der Zahl (voll: in
+    der Hinweisfarbe).
+- Später werfen Besucher von außen ihre ausgeliehenen Bücher ein – auch bei geschlossenem
+  Laden. Bis dahin legt die Testtaste **F9** ein paar Bücher bereits entdeckter Titel hinein.
+- E an der Klappe (innen): so viele Bücher nehmen, wie in die Hände passen (7); Rechtsklick:
+  eines. Dann am Regal: einzeln mit Linksklick abstellen oder alle passenden mit Linksklick
+  halten. Was nicht passt, trage ich weiter.
+- Ältere Spielstände: Ein früher aufgestellter Rückgabekasten verschwindet (auch aus Inventar
+  und Shop); seine Bücher wandern in den festen Kasten, was dort nicht mehr passt, ins Lager.
 - Keine Eile: Bücher dürfen beliebig lange im Kasten liegen oder getragen werden.
 
 ### Bücher als Deko: frei ablegen (seit Etappe 3d)
@@ -414,8 +432,8 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 ### Speichern der Bücher
 - Gespeichert werden Bestand, Sammlung, Regalinhalte (jedes Buch mit seiner Lage auf dem
   Brett), das Genre jedes Fachs, die gewählte Sortierart jedes Regals, Deko in den Regalen, ausgelegte Bücher (Lage samt gewählter
-  Drehung, Haltung, Möbelstück darunter), Inhalt des Rückgabekastens, die getragenen Bücher
-  und welches obenauf liegt.
+  Drehung, Haltung, Möbelstück darunter), Inhalt des Rückgabekastens (welche Bücher) samt
+  gewähltem Einwurf, die getragenen Bücher und welches obenauf liegt.
 - Ältere Spielstände laden weiter: Bücher ohne Lage stehen dicht von links, das bisherige
   Regal-Genre gilt für alle Fächer, ausgelegte Bücher gibt es dort noch keine, sortiert wird
   dort nach Genre und Titel.
@@ -434,8 +452,8 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 
 ## Theke
 - Modular: Kasse von Anfang an, dazu das Tablet mit seinen Apps (Nest & Nook, Bücherladen,
-  Lager, Statistik, Tipps & Tricks).
-- Der Rückgabekasten gehört zur Kategorie Theke.
+  Lager, Fassade, Statistik, Tipps & Tricks).
+- Der Rückgabekasten sitzt seit Etappe 3l fest in der Hauswand neben der Tür (siehe oben).
 - Café-Elemente (z. B. Kaffeemaschine, Kuchenvitrine) später daneben anbaubar.
 - Der gesamte Thekenblock ist frei platzierbar.
 
@@ -473,7 +491,7 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Leertaste      | Springen (etwa 0,8 m hoch, weich); im Sitzen: aufstehen |
 | Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
-| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Theken-Tablet öffnen, Bücher aus dem Rückgabekasten nehmen |
+| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Theken-Tablet öffnen, Bücher aus dem Rückgabekasten nehmen (Klappe innen neben der Tür) |
 | E beim Tragen  | Anderes Buch obenauf (Umschalt + E: zurück) – wenn das Angeschaute nichts mit E macht |
 | R              | Bücher-Menü als Tablet, überall: Bücher aus dem Lager nehmen; am Regal auch Genre je Fach, auffüllen, sortieren (noch einmal R, Esc oder das Kreuz schließt es) |
 | Rechtsklick    | Buch nehmen (Regal, Tisch, Boden, Rückgabekasten) – bis zu 7 tragen |

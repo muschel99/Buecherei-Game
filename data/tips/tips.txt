@@ -58,6 +58,11 @@ Halte am Regal die linke Maustaste gedrückt: Alle passenden Bücher wandern ins
 
 Halte <Q>, und alles, was du trägst, geht zurück ins Lager.
 
+== Der Rückgabekasten
+Neben der Eingangstür ist der Rückgabekasten in die Wand eingebaut. Innen nimmst du mit <E> so viele Bücher heraus, wie in deine Hände passen.
+
+Wie der Einwurf außen aussieht, wählst du am Theken-Tablet in der App „Fassade“.
+
 = Regale und Fächer | shelf
 == Jedes Fach sein Genre
 Stell einfach Bücher hinein: Steht ein Fach auf „Auto“, nimmt es sein Genre von den Büchern darin.

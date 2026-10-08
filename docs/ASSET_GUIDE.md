@@ -197,10 +197,22 @@ richten sich die Bücher. Beispiele zum Abschauen: `bookend_wood.tscn`, `bookend
 (Unterkategorie „Buchstützen“), `succulent_mini.tscn`, `photo_frame.tscn`, `globe_small.tscn`,
 `candle_jar.tscn` (Kerze mit `LightSource`, ohne Schatten), `vase_lavender.tscn`.
 
-### Rückgabekasten
-Szene `scenes/furniture/return_box.tscn`: Die Optik unter `Model` kann ersetzt werden.
-Der Knoten `Contents` (Script `return_box.gd`) mit `StackPoint` (wo der Bücherstapel im Fenster
-liegt) und `Interactable` muss bleiben.
+### Rückgabekasten (fest in der Hauswand)
+Szene `scenes/objects/return_box.tscn` (Ursprung = Mitte der Wand am Boden, +Z zeigt in den
+Raum, die Wand ist 20 cm dick):
+- `Inside` = die Klappe innen (nur Optik, darf durch ein eigenes Modell ersetzt werden).
+- `SlotPoint` = wo außen der Einwurf sitzt (die gewählte Variante kommt dort hinein).
+- `Body` (Kollision der Klappe), `Interactable` (E/Rechtsklick), `KeepClear` (Bereich davor,
+  der frei bleibt) und `DropPoint` (wo später Besucher davor stehen) müssen bleiben.
+
+**Neuer Einwurf (ohne Code):**
+1. Eine kleine Szene in `scenes/objects/return_slots/` bauen (Beispiele: `slot_plain.tscn`,
+   `slot_flap.tscn`, `slot_plaque.tscn`): Vorderseite zeigt nach +Z (zur Straße), Ursprung
+   hinten in der Mitte (dort, wo es an der Hauswand anliegt). Nur Optik, keine Kollision.
+2. Ein Datenblatt in `data/return_slots/` anlegen (am einfachsten eines kopieren): `id`,
+   `display_name` (Name in der App „Fassade“), `scene_path`, `order` (Reihenfolge), freiwillig
+   `icon` (eigenes Vorschaubild, sonst wird das Modell fotografiert).
+3. Fertig – die App „Fassade“ zeigt die neue Variante von selbst.
 
 ## Ein Möbelstück durch ein eigenes Modell ersetzen
 Jede Möbel-Szene (z. B. `scenes/furniture/armchair.tscn`) hat diesen Aufbau:

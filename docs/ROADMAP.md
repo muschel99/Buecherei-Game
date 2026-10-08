@@ -23,7 +23,7 @@
 | 3i  | Fach-Automodus und Platzierungs-Fehler   | fertig        |
 | 3j  | Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller | fertig |
 | 3k  | Tür, Buchmenü und Buchstützen           | fertig        |
-| 3l  | Fassaden-App und fester Rückgabekasten   | in Arbeit     |
+| 3l  | Fassaden-App und fester Rückgabekasten   | fertig        |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -415,15 +415,15 @@ Leitgedanke: Kleine Stolpersteine aus dem Weg räumen – Tür, Bücherauswahl, 
 
 ## Etappe 3l – Fassaden-App und fester Rückgabekasten
 Leitgedanke: Ein einziger, fester Rückgabekasten in der Hauswand – angepasst statt aufgestellt.
-- [ ] Neue Tablet-App „Fassade“ (erweiterbar für Wandfarbe außen, Schild, Fenster …)
-- [ ] Genau ein fester Rückgabekasten in der Wand neben der Eingangstür: außen Einwurf,
+- [x] Neue Tablet-App „Fassade“ (erweiterbar für Wandfarbe außen, Schild, Fenster …)
+- [x] Genau ein fester Rückgabekasten in der Wand neben der Eingangstür: außen Einwurf,
       innen Entnahme; nicht kaufbar, nicht verkaufbar, nicht mehr im Inventar
-- [ ] Alte Spielstände: aufgestellte Rückgabekästen verschwinden, ihre Bücher wandern in den
+- [x] Alte Spielstände: aufgestellte Rückgabekästen verschwinden, ihre Bücher wandern in den
       festen Kasten (was nicht passt, ins Lager)
-- [ ] Optik des Einwurfs in der Fassaden-App wählen (Platzhalter-Varianten, erweiterbar)
-- [ ] Innen mit E herausnehmen wie bisher; F9 legt zum Testen Bücher hinein
-- [ ] Platz für 50 Bücher (GameConfig), immer geschlossen, dezente Anzeige der Anzahl
-- [ ] Speichern: Inhalt und gewählte Variante; alte Spielstände laden weiter
+- [x] Optik des Einwurfs in der Fassaden-App wählen (Platzhalter-Varianten, erweiterbar)
+- [x] Innen mit E herausnehmen wie bisher; F9 legt zum Testen Bücher hinein
+- [x] Platz für 50 Bücher (GameConfig), immer geschlossen, dezente Anzeige der Anzahl
+- [x] Speichern: Inhalt und gewählte Variante; alte Spielstände laden weiter
 
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
@@ -459,8 +459,8 @@ Leitgedanke: Ein einziger, fester Rückgabekasten in der Hauswand – angepasst 
 - Kleine unerklärliche Ereignisse, der Spiegel und seine Wesen
 
 ## Etappe 11 – Gasse, Fassade und Jahreszeiten
-- Die Gasse vor dem Haus (bisher: ein Stück Gehweg als Platzhalter), Fassade gestalten,
-  Jahreszeiten
+- Die Gasse vor dem Haus (bisher: ein Stück Gehweg als Platzhalter), Fassade gestalten
+  (in der App „Fassade“ aus Etappe 3l, z. B. Wandfarbe außen, Schild, Fenster), Jahreszeiten
 - Vielleicht ein Lieferbote, der die Kartons bringt (bisher erscheinen sie einfach)
 
 ## Etappe 12 – Feinschliff
