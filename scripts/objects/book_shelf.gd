@@ -748,6 +748,13 @@ static func find_for_surface(surface: Node) -> BookShelf:
 
 ## Gestaltungsmodus: Darf Deko mit diesen Eckpunkten (in der Welt) auf diesem Brett stehen?
 ## Nur, wenn dort keine Bücher stehen.
+## Ist auf dem Brett unter "base" (Punkt in der Welt) dort Platz, wo diese Ecken liegen (keine
+## Bücher des Regals im Weg)? Z. B. für ein Buch in einem Aufsteller im Regal.
+func is_free_at(base: Vector3, corners: PackedVector3Array) -> bool:
+	var row := _row_at(base)
+	return row < 0 or is_free_for_deco(_surfaces[row], corners)
+
+
 func is_free_for_deco(surface: PlacementSurface, corners: PackedVector3Array) -> bool:
 	var row := _surfaces.find(surface)
 	if row < 0:
@@ -973,11 +980,34 @@ func _update_blocked() -> void:
 	var item := FurnitureUtils.find_placed_furniture(self)
 	if item == null or _room == null:
 		return
-	for other in _room.get_dependents(item):
+	var dependents := _room.get_dependents(item)
+	for other in dependents:
 		var row := _row_at(other.global_position)
 		if row < 0 or other.get_model() == null:
 			continue
 		var span := _span_on_row(row, _corners_of(other.get_model()))
+		_blocked_cache[row].append(Vector2(span.x - DECO_MARGIN, span.y + DECO_MARGIN))
+	# Ausgelegte Bücher auf dieser Deko (z. B. ein Buch im Aufsteller, breiter als er) – auch dort
+	# kommen keine Bücher des Regals hin
+	if _room.loose_books == null:
+		return
+	if not _room.loose_books.changed.is_connected(_forget_blocked):
+		_room.loose_books.changed.connect(_forget_blocked)
+	var uids := {item.uid: true}
+	for other in dependents:
+		uids[other.uid] = true
+	for entry in _room.loose_books.get_entries():
+		if entry.hidden or not uids.has(entry.support_uid):
+			continue
+		var holder: PlacedFurniture = null
+		for other in dependents:
+			if other.uid == entry.support_uid:
+				holder = other
+		var world := _room.loose_books.global_transform * entry.transform
+		var row := _row_at(holder.global_position if holder else world.origin)
+		if row < 0:
+			continue
+		var span := _span_on_row(row, LooseBooks._box_corners(world))
 		_blocked_cache[row].append(Vector2(span.x - DECO_MARGIN, span.y + DECO_MARGIN))
 
 
