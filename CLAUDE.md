@@ -260,7 +260,9 @@ docs/              Dokumentation
   Ablegen: Ein Buch darf nie in ein Objekt hineinragen (`_blocked_by_solid`, Kollisionsformen
   der Ebenen world + furniture, um `SOLID_MARGIN` kleiner) – sonst rot. Kollisionsformen von
   Möbeln sollen darum zur sichtbaren Form passen und oben genau mit ihren Ablageflächen enden.
-  Vorschau-Shader `book_ghost.gdshader`: unshaded, leicht zur Kamera versetzt (kein Z-Fighting).
+  Vorschau ("Blaupause") für Bücher und Möbel: `FurnitureUtils.make_blueprint_material()` +
+  `set_blueprint_valid()` (Shader `blueprint.gdshader`: unshaded, ruhiges Blau, Deckkraft
+  `GameConfig.preview_opacity`, leicht zur Kamera versetzt – kein Z-Fighting, keine Lichtkante).
   Stapel = Bücher, die lückenlos aufeinander liegen (`LooseBooks.STACK_GAP`).
 - Bücher tragen: höchstens `GameConfig.max_carried_books`; `BookStock.carry(liste)` liefert,
   was nicht mehr passt; volle Hände ohne Text zeigen: `BookStock.show_hands_full()`

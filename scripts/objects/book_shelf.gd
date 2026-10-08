@@ -1314,9 +1314,7 @@ func _set_plan(plan: Dictionary) -> void:
 	else:
 		_ghost_transform.origin += Vector3(0.0, 0.0, 0.002)
 	if book != old_book or plan.ok != old_ok or not _ghost.visible:
-		_ghost_material.set_shader_parameter("base_color", BookLook.get_color(book))
-		_ghost_material.set_shader_parameter("spine_rect", BookLook.get_custom(book))
-		_ghost_material.set_shader_parameter("tint", 0.0 if plan.ok else 1.0)
+		FurnitureUtils.set_blueprint_valid(_ghost_material, plan.ok)
 	_ghost.transform = _ghost_transform
 	_ghost.visible = true
 	if old_book == null or has_moves != had_moves:
@@ -1328,9 +1326,7 @@ func _create_ghost() -> void:
 	_ghost.name = "Preview"
 	_ghost.mesh = BookLook.get_mesh()
 	_ghost.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_ghost_material = ShaderMaterial.new()
-	_ghost_material.shader = load("res://assets/shaders/book_ghost.gdshader")
-	_ghost_material.set_shader_parameter("spine_atlas", BookArt.get_spine_atlas())
+	_ghost_material = FurnitureUtils.make_blueprint_material(true)
 	_ghost.material_override = _ghost_material
 	add_child(_ghost)
 
