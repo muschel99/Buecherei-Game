@@ -48,6 +48,7 @@ var _material: ShaderMaterial
 var _room: Room
 var _interactable: Interactable
 var _hover: LooseBook = null
+var _solid_box: BoxShape3D
 ## Wohin das Buch obenauf käme: { "book", "ok", "transform", "support_uid", "pose" } – leer,
 ## wenn ich auf nichts Passendes schaue.
 var _plan: Dictionary = {}
@@ -564,10 +565,11 @@ func _invalid_plan(book: Book, world_point: Vector3, direction: Vector3) -> Dict
 ## ablege (flach, aufrecht, angelehnt).
 func _blocked_by_solid(world: Transform3D) -> bool:
 	var size := Vector3(world.basis.x.length(), world.basis.y.length(), world.basis.z.length())
-	var box := BoxShape3D.new()
-	box.size = (size - Vector3.ONE * SOLID_MARGIN * 2.0).max(Vector3.ONE * 0.001)
+	if _solid_box == null:
+		_solid_box = BoxShape3D.new()  # eine Form für alle Prüfungen (nicht jedes Bild neu)
+	_solid_box.size = (size - Vector3.ONE * SOLID_MARGIN * 2.0).max(Vector3.ONE * 0.001)
 	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = box
+	query.shape = _solid_box
 	query.transform = Transform3D(world.basis.orthonormalized(), world.origin)
 	query.collision_mask = FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT
 	query.collide_with_areas = false

@@ -168,7 +168,7 @@ func restore_mouse_mode() -> void:
 
 ## "Alle Fächer gleich": ein Genre für das ganze Regal.
 func choose_genre(genre_id: String) -> void:
-	if shelf == null or genre_id.is_empty():
+	if shelf == null or genre_id.is_empty() or (genre_id == shelf.genre_id and not shelf.row_auto.has(true)):
 		return
 	var returned := shelf.set_genre(genre_id)
 	_message.text = "Alle Fächer: %s." % BookShelf.genre_display_name(genre_id)
@@ -312,7 +312,7 @@ func _refresh() -> void:
 	var available := _available_in_storage()
 	_fill_button.disabled = not shelf.has_genre() or available == 0 or shelf.get_free_estimate() == 0
 	if not shelf.has_genre():
-		_fill_button.tooltip_text = "Auffüllen – erst ein Genre wählen"
+		_fill_button.tooltip_text = "Auffüllen – erst Bücher oder Genre"
 	elif available == 0:
 		_fill_button.tooltip_text = "Auffüllen – nichts Passendes im Lager"
 	else:
@@ -489,9 +489,12 @@ func _available_in_storage() -> int:
 	var genres := {}
 	for r in shelf.get_row_count():
 		var id := shelf.get_row_genre(r)
-		if id == BookShelf.MIXED:
+		if id == BookShelf.MIXED and shelf.is_row_auto(r):
+			for present in shelf.genres_in_row(r):
+				genres[present] = true  # gemischtes Auto-Fach: nur Genres, die schon darin stehen
+		elif id == BookShelf.MIXED:
 			return BookStock.get_stored_total()
-		if not id.is_empty():
+		elif not id.is_empty():
 			genres[id] = true
 	var count := 0
 	for id in genres:
@@ -802,6 +805,8 @@ func _make_choice() -> OptionButton:
 	choice.focus_mode = Control.FOCUS_NONE
 	choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choice.fit_to_longest_item = false
+	# Auch dasselbe Genre noch einmal wählen zählt (legt ein Auto-Fach auf dieses Genre fest)
+	choice.allow_reselect = true
 	choice.add_theme_font_size_override("font_size", 17)
 	choice.get_popup().add_theme_font_size_override("font_size", 17)
 	return choice
