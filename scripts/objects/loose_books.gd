@@ -430,7 +430,7 @@ func _plan_flat(book: Book, world_point: Vector3, surface_height: float, support
 	if stacked >= GameConfig.loose_book_stack_max or top + size.x + LIFT > ceiling:
 		ok = false
 	world.origin.y = top + size.x / 2.0 + LIFT
-	if ok and _blocked_by_solid(world):
+	if ok and _blocked_for_placing(world):
 		ok = false
 	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
 		"support_uid": support_uid, "pose": LooseBook.Pose.FLAT}
@@ -507,7 +507,7 @@ func _plan_in_stand(book: Book, stand: BookStand, item: PlacedFurniture) -> Dict
 		if entry.support_uid == item.uid and not entry.hidden:
 			occupied = true
 	var ok := not occupied and (_room == null or _room.is_inside_build_area(world.origin)) \
-		and not _blocked_by_solid(world, [stand.get_body_rid()]) \
+		and not _blocked_for_placing(world, [stand.get_body_rid()]) \
 		and _overlapping(world, world.origin.y - _vertical_half(world)).is_empty() \
 		and _shelf_is_free(item, world)
 	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
@@ -676,7 +676,7 @@ func _plan_in_row(book: Book, neighbor: Transform3D, side: float, support_uid: i
 			furthest = maxf(furthest, (entry_world.origin - world.origin).dot(axis * step_side) + entry_world.basis.x.length() / 2.0)
 		world.origin += axis * step_side * (furthest + size.x / 2.0 + 0.002)
 	var ok := (_room == null or _room.is_inside_build_area(world.origin)) and _overlapping(world, bottom).is_empty() \
-		and not _blocked_by_solid(world)
+		and not _blocked_for_placing(world)
 	# Steht es noch auf derselben Ablage (nicht über die Tischkante hinaus gerückt)?
 	var ground := _find_ground(Vector3(world.origin.x, bottom, world.origin.z))
 	if ground.is_empty() or absf(ground.height - bottom) > STACK_GAP:
@@ -704,7 +704,7 @@ func _plan_leaning(book: Book, wall_point: Vector3, wall_normal: Vector3, direct
 	var origin := base + n * (reach + 0.003) + Vector3.UP * (_vertical_half_of(basis) + LIFT)
 	var world := Transform3D(basis, origin)
 	var ok := (_room == null or _room.is_inside_build_area(origin)) and _overlapping(world, ground.height).is_empty() \
-		and not _blocked_by_solid(world) and contact >= 0.02  # an fast nichts kann es nicht lehnen
+		and not _blocked_for_placing(world) and contact >= 0.02  # an fast nichts kann es nicht lehnen
 	return {"book": book, "ok": ok, "transform": global_transform.affine_inverse() * world,
 		"support_uid": ground.support_uid, "pose": LooseBook.Pose.LEANING}
 
@@ -774,6 +774,25 @@ func _invalid_plan(book: Book, world_point: Vector3, direction: Vector3) -> Dict
 ## Möbel, Deko, Wände, Boden? Das Buch wird dafür an jeder Seite um SOLID_MARGIN kleiner
 ## geprüft: Aufliegen und Anlehnen ist erlaubt, Hineinragen nie. Eine Regel für alles, was ich
 ## ablege (flach, aufrecht, angelehnt).
+## Darf ein Buch hier nicht hin? Es ragt in etwas hinein (_blocked_by_solid) oder liegt in einem
+## Bereich, der frei bleiben muss – z. B. dort, wo die Eingangstür aufschwingt (Physik-Ebene
+## build_blocker, dieselben Bereiche wie für Möbel).
+func _blocked_for_placing(world: Transform3D, exclude: Array[RID] = []) -> bool:
+	if _blocked_by_solid(world, exclude):
+		return true
+	var size := Vector3(world.basis.x.length(), world.basis.y.length(), world.basis.z.length())
+	if _solid_box == null:
+		_solid_box = BoxShape3D.new()
+	_solid_box.size = size
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = _solid_box
+	query.transform = Transform3D(world.basis.orthonormalized(), world.origin)
+	query.collision_mask = FurnitureUtils.BUILD_BLOCKER_LAYER_BIT
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	return not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
 ## exclude: Körper, die es berühren darf (z. B. der Aufsteller, in dem es liegt).
 func _blocked_by_solid(world: Transform3D, exclude: Array[RID] = []) -> bool:
 	var size := Vector3(world.basis.x.length(), world.basis.y.length(), world.basis.z.length())
