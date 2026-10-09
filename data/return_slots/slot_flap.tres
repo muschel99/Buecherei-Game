@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ReturnSlotData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/return_slot_data.gd" id="1_slot"]
+
+[resource]
+script = ExtResource("1_slot")
+id = "slot_flap"
+display_name = "Klappe"
+scene_path = "res://scenes/objects/return_slots/slot_flap.tscn"
+order = 20

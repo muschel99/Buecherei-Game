@@ -8,11 +8,15 @@ extends ScrollContainer
 ##   "known":   false = noch nicht entdeckt (Kachel mit "?")
 ##   "note":    kleiner Text unter dem Titel, z. B. "×2 im Lager"
 ##   "enabled": false = nicht anklickbar (ausgegraut)
-## Ein Klick auf eine Kachel sendet book_chosen(data).
+##   "tint":    Farbe, mit der die Kachel dezent hinterlegt wird (z. B. die Farbe des Genres)
+##   "held":    true = dieses Buch ist gerade in der Hand: ausgegraut mit kleinem Handsymbol,
+##              aber anklickbar (z. B. um es zurück ins Lager zu legen)
+## Ein Klick auf eine Kachel sendet book_chosen(data) und entry_chosen(eintrag).
 ## interactive = false: nur zum Anschauen (z. B. die Sammlung in der Lager-App) – keine Kachel
 ## ist anklickbar, aber auch keine ausgegraut.
 
 signal book_chosen(data: BookData)
+signal entry_chosen(entry: Dictionary)
 
 const CARD_WIDTH := 112.0
 const COVER_WIDTH := 92.0
@@ -60,15 +64,24 @@ func _create_card(entry: Dictionary) -> Button:
 	var card := Button.new()
 	card.focus_mode = Control.FOCUS_NONE
 	card.custom_minimum_size = Vector2(CARD_WIDTH, 0)
-	card.add_theme_stylebox_override("normal", _normal_style)
-	card.add_theme_stylebox_override("hover", _hover_style)
-	card.add_theme_stylebox_override("pressed", _hover_style)
-	card.add_theme_stylebox_override("disabled", _normal_style)
+	var normal := _normal_style
+	var hover := _hover_style
+	if entry.has("tint"):
+		# Dezent in der Farbe des Genres hinterlegt (Stärke in GameConfig)
+		var share := GameConfig.book_picker_tint
+		normal = _make_style(Color(_normal_style.bg_color.lerp(entry.tint, share), _normal_style.bg_color.a))
+		hover = _make_style(Color(_hover_style.bg_color.lerp(entry.tint, share), _hover_style.bg_color.a))
+	card.add_theme_stylebox_override("normal", normal)
+	card.add_theme_stylebox_override("hover", hover)
+	card.add_theme_stylebox_override("pressed", hover)
+	card.add_theme_stylebox_override("disabled", normal)
 	card.disabled = not entry.get("enabled", true) or not known or not interactive
 	if not interactive:
-		card.add_theme_stylebox_override("hover", _normal_style)
+		card.add_theme_stylebox_override("hover", normal)
 	if not card.disabled:
-		card.pressed.connect(func() -> void: book_chosen.emit(data))
+		card.pressed.connect(func() -> void:
+			book_chosen.emit(data)
+			entry_chosen.emit(entry))
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_theme_constant_override("separation", 3)
@@ -114,6 +127,13 @@ func _create_card(entry: Dictionary) -> Button:
 		box.add_child(note_label)
 	if card.disabled and known and interactive:
 		card.modulate.a = 0.75
+	if entry.get("held", false):
+		# In der Hand: ausgegraut, darüber ein kleines Handsymbol
+		box.modulate = Color(1, 1, 1, 0.45)
+		var badge := HandBadge.new()
+		badge.position = Vector2(CARD_WIDTH - 34.0, 4.0)
+		card.add_child(badge)
+		card.tooltip_text = "In der Hand – Klick legt es zurück ins Lager"
 	# Kachel hoch genug für Cover, bis zu drei Titelzeilen und den kleinen Text
 	card.custom_minimum_size.y = cover_height + 92.0
 	return card
@@ -133,3 +153,29 @@ func _make_style(color: Color) -> StyleBoxFlat:
 	style.bg_color = color
 	style.set_corner_radius_all(8)
 	return style
+
+
+## Kleines rundes Abzeichen mit einer Hand (das Buch ist gerade in der Hand).
+class HandBadge:
+	extends Control
+
+	const SIZE := 30.0
+	const BACK_COLOR := Color(0.2, 0.14, 0.1, 0.92)
+	const LINE_COLOR := Color(0.96, 0.78, 0.48)
+
+	func _init() -> void:
+		custom_minimum_size = Vector2(SIZE, SIZE)
+		size = Vector2(SIZE, SIZE)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var c := Vector2(SIZE, SIZE) / 2.0
+		draw_circle(c, SIZE / 2.0, BACK_COLOR)
+		draw_arc(c, SIZE / 2.0 - 1.0, 0.0, TAU, 32, Color(LINE_COLOR, 0.6), 1.5, true)
+		# Handfläche und vier Finger, dazu der Daumen
+		var palm := Rect2(c + Vector2(-5.0, -1.0), Vector2(10.0, 8.0))
+		draw_rect(palm, LINE_COLOR)
+		for i in 4:
+			var x := -4.5 + i * 3.0
+			draw_line(c + Vector2(x, 0.0), c + Vector2(x, -8.0 + absf(i - 1.5) * 1.2), LINE_COLOR, 2.2, true)
+		draw_line(c + Vector2(-5.0, 4.0), c + Vector2(-8.5, 0.5), LINE_COLOR, 2.2, true)

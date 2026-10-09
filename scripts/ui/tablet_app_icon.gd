@@ -144,6 +144,14 @@ func _draw_symbol(c: Vector2, symbol: TabletAppData.Symbol) -> void:
 			for i in 3:
 				draw_line(c + Vector2(-22, -6 + i * 8), c + Vector2(-7, -8 + i * 8), LINE_COLOR, 2.0, true)
 			_star(c + Vector2(15, 0), 8.0)
+		TabletAppData.Symbol.FACADE:
+			# Fassade: Hausfront mit Giebel, Tür, Fenster und dem Einwurf neben der Tür
+			draw_polyline(PackedVector2Array([c + Vector2(-26, 24), c + Vector2(-26, -8), c + Vector2(0, -28),
+				c + Vector2(26, -8), c + Vector2(26, 24), c + Vector2(-26, 24)]), LINE_COLOR, w, true)
+			draw_polyline(PackedVector2Array([c + Vector2(4, 24), c + Vector2(4, 2), c + Vector2(17, 2),
+				c + Vector2(17, 24)]), LINE_COLOR, w, true)
+			draw_rect(Rect2(c + Vector2(-18, -2), Vector2(14, 12)), LINE_COLOR, false, 2.5)
+			draw_line(c + Vector2(-16, 17), c + Vector2(-6, 17), LINE_COLOR, 3.0, true)
 		_:
 			draw_circle(c, 18.0, LINE_COLOR)
 

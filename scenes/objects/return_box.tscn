@@ -1,0 +1,86 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/return_box.gd" id="1_box"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="2_interactable"]
+[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="3_wood"]
+[ext_resource type="Material" path="res://assets/materials/door_paint.tres" id="4_paint"]
+[ext_resource type="Material" path="res://assets/materials/brass.tres" id="5_brass"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_frame"]
+size = Vector3(0.44, 0.54, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hatch"]
+size = Vector3(0.38, 0.46, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_handle"]
+size = Vector3(0.12, 0.018, 0.018)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(0.44, 0.54, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
+size = Vector3(0.44, 0.54, 0.06)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_keep_clear"]
+size = Vector3(0.7, 1.2, 0.6)
+
+[node name="ReturnBox" type="Node3D"]
+script = ExtResource("1_box")
+
+[node name="Inside" type="Node3D" parent="."]
+
+[node name="Frame" type="MeshInstance3D" parent="Inside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0.11)
+material_override = ExtResource("3_wood")
+mesh = SubResource("BoxMesh_frame")
+
+[node name="Hatch" type="MeshInstance3D" parent="Inside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0.126)
+material_override = ExtResource("4_paint")
+mesh = SubResource("BoxMesh_hatch")
+
+[node name="Handle" type="MeshInstance3D" parent="Inside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.12, 0.141)
+material_override = ExtResource("5_brass")
+mesh = SubResource("BoxMesh_handle")
+
+[node name="Label" type="Label3D" parent="Inside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.82, 0.1335)
+pixel_size = 0.0011
+double_sided = false
+modulate = Color(0.93, 0.82, 0.55, 1)
+text = "Rückgabe"
+font_size = 48
+
+[node name="SlotPoint" type="Marker3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1, -0.1)
+
+[node name="DropPoint" type="Marker3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -0.6)
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0.12)
+shape = SubResource("BoxShape3D_body")
+
+[node name="Interactable" type="Area3D" parent="."]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_interactable")
+prompt_text = ""
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0.13)
+shape = SubResource("BoxShape3D_interact")
+
+[node name="KeepClear" type="Area3D" parent="."]
+collision_layer = 16
+collision_mask = 0
+monitoring = false
+metadata/keep_clear_text = "Vor dem Rückgabekasten bitte frei lassen."
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="KeepClear"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.45)
+shape = SubResource("BoxShape3D_keep_clear")

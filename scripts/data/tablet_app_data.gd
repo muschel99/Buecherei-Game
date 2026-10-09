@@ -8,7 +8,7 @@ extends Resource
 
 ## Wie das große Symbol auf dem Startbildschirm aussieht (gezeichnet, siehe TabletAppIcon).
 ## Neue Symbole immer hinten anhängen (die Datenblätter speichern die Nummer).
-enum Symbol { FURNISHING, BOOKS, STOCK, COLLECTION, GENERIC, STATS, TIPS, NEST, BOOKSHOP }
+enum Symbol { FURNISHING, BOOKS, STOCK, COLLECTION, GENERIC, STATS, TIPS, NEST, BOOKSHOP, FACADE }
 
 ## Eindeutige Kennung (z. B. "storage").
 @export var id: String = ""

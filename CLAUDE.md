@@ -33,14 +33,16 @@ scenes/            Szenen (.tscn)
   player/          Spielfigur
   rooms/           Räume des Hauses
   furniture/       Möbel (je eine Szene, Modell austauschbar)
-  objects/         Interaktive Objekte (Stehlampe, Lieferkarton; Scripts: LightSource, Seating,
+  objects/         Interaktive Objekte (Stehlampe, Lieferkarton, Rückgabekasten in der Wand,
+                   return_slots/ = Einwurf-Varianten; Scripts: LightSource, Seating,
                    Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox,
                    LooseBooks = ausgelegte Bücher, BookStand = Buch-Aufsteller;
                    player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
   ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Theken-Tablet, Hinweise,
                    Stil-Anzeige, Regal-Menü, Trage-Anzeige, Buch-Infokarte, Genre-Schriftzug,
-                   Bücherauswahl; Scripts BookCover und BookMotifs zeichnen Cover und Buchrücken)
+                   Bücherauswahl, Zähl-Anzeige CountBadge; Scripts BookCover und BookMotifs zeichnen
+                   Cover und Buchrücken)
     tablet_apps/   Apps des Theken-Tablets (je eine kleine Szene)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
@@ -48,7 +50,7 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, BookData, Book,
-                   LooseBook, TabletAppData)
+                   LooseBook, TabletAppData, ReturnSlotData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
 data/
@@ -58,6 +60,7 @@ data/
   books/           Bücherlisten (.txt, eine je Genre, eine Zeile pro Buch: Titel | Motiv)
   tips/            Texte der App „Tipps & Tricks“ (tips.txt, Aufbau oben in der Datei)
   tablet_apps/     Datenblätter der Tablet-Apps (.tres) – werden automatisch auf den Startbildschirm geladen
+  return_slots/    Datenblätter der Einwurf-Varianten des Rückgabekastens (.tres, App „Fassade“)
 assets/
   models/          Eigene 3D-Modelle (.glb)
   textures/        Texturen
@@ -89,6 +92,12 @@ docs/              Dokumentation
   dasselbe Menü ohne Regal (`ShelfMenu.open_for(null)`): Regal-Teile ausgegraut, Bücherauswahl
   aktiv. Bücher aus dem Lager in die Hand nimmt man **nur** dort (Menü bleibt offen, bis die
   Hände voll sind). Code im ShelfMenu muss immer mit `shelf == null` klarkommen.
+  Bücherauswahl: erst „Alle Bücher“ (`ShelfMenu.ALL_GENRES`), dann die Genres; Kacheln dezent
+  in Genre-Farbe (`BookPicker`-Eintrag `tint`, Stärke `GameConfig.book_picker_tint`); im
+  offenen Menü genommene Bücher bleiben als Kachel mit Handsymbol (`held`), ein Klick
+  (`entry_chosen`) legt sie zurück ins Lager (`ShelfMenu.return_book`) – bewusste Ausnahme
+  von „nur ein Weg“ (macht nur den eigenen Griff ins Lager rückgängig; volle Hände schließen
+  das Menü, das letzte Buch geht dann mit Q ins Lager).
 - **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit Apps), nutzt die
   gemeinsame Vorlage `TabletFrame` (Gehäuse + Bildschirm, Farben `TabletFrame.TEXT_COLOR` …,
   `make_label`, `make_close_button` = Kreuz oben rechts). Knöpfe sind Symbol-Knöpfe
@@ -104,10 +113,13 @@ docs/              Dokumentation
   Symbol oder eigenes Bild, Farbe, Reihenfolge; neue Symbole hinten an das Enum anhängen) – kein
   Code am Startbildschirm. Einkaufs-Apps erben von `ShopApp` (Warenkorb, Angebotskarten).
   Apps: Nest & Nook (furnishing), Bücherladen (books), Lager (storage, nur Übersicht +
-  Sammlung), Statistik (stats; neue Werte über Gruppe `stat_sources` mit `get_stats()`),
-  Tipps & Tricks (tips; Texte in `data/tips/tips.txt`).
+  Sammlung), Fassade (facade; Abschnitte: neue Fassaden-Einstellung = Funktion mit
+  `make_section()` + Eintrag in `SECTIONS`, Auswahlkarten `make_option_card()`), Statistik
+  (stats; neue Werte über Gruppe `stat_sources` mit `get_stats()`), Tipps & Tricks (tips;
+  Texte in `data/tips/tips.txt`).
 - **Jede Aktion hat nur einen Weg** (z. B. getragene Bücher einräumen = Linksklick halten am
-  Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü).
+  Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü). Einzige Ausnahme:
+  Ein im R-Menü gerade genommenes Buch legt ein Klick auf seine Kachel zurück.
 - **Esc-Regel:** Was sich öffnen lässt (Gestaltungsmodus, Menüs, später Shop), meldet sich mit
   `MenuStack.open(self)` an und hat `close_from_escape()`. Esc schließt immer zuerst das
   Oberste; nur wenn nichts offen ist, öffnet sich das Pausenmenü.
@@ -169,7 +181,11 @@ docs/              Dokumentation
   Vorschaubilder von Modellen: `ThumbnailRenderer` (zwischengespeichert).
 - Interaktion: Trifft der Blick den festen Körper eines Objekts, gilt dessen Interactable
   (`Interactable.find_for`) – E-Bereiche müssen den Körper also nicht umschließen.
-- Türen (`Door`, Gruppe `doors`): Teile, die mitschwingen, unter dem Knoten `Hinge`.
+- Türen (`Door`, Gruppe `doors`): Teile, die mitschwingen, unter dem Knoten `Hinge`. Eine offene
+  Tür bleibt im Gestaltungsmodus offen; an die offene Tür hängt man nichts, was an ihr hängt,
+  wird erst bei geschlossener Tür bewegt (`Door.is_swinging(item)`, `is_leaf(collider)`).
+  Der Schwenkbereich ist eine Sperrzone (Ebene `build_blocker`) – auch für ausgelegte Bücher
+  (`LooseBooks._blocked_for_placing`).
 - Die Spielfigur kann man anhalten: `player.movement_enabled = false` (z. B. im Shop).
 - Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `jump`,
   `crouch`, `interact`,
@@ -191,7 +207,7 @@ docs/              Dokumentation
   ein Exemplar ist `Book` (`book.data`, Zustand). Bücher sind keine Knoten, sondern Daten;
   der Bestand (`BookStock`) kennt Lager, Getragenes (`carried`, Buch obenauf:
   `get_active_book()`) und die Sammlung (`is_discovered`), zählt Regale (Gruppe
-  `book_shelves`), Rückgabekästen (Gruppe `return_boxes`) und ausgelegte Bücher (Gruppe
+  `book_shelves`), den Rückgabekasten (Gruppe `return_boxes`) und ausgelegte Bücher (Gruppe
   `LooseBooks.GROUP`) mit.
   Freigeschaltet: `BookStock.is_genre_unlocked(id)` / `unlock_genre(id)`.
 - Bücher: einzeln möglich, aber nie nötig – alles Einzelne hat eine Sammel-Variante (Auffüllen,
@@ -265,6 +281,12 @@ docs/              Dokumentation
   `set_blueprint_valid()` (Shader `blueprint.gdshader`: unshaded, ruhiges Blau, Deckkraft
   `GameConfig.preview_opacity`, leicht zur Kamera versetzt – kein Z-Fighting, keine Lichtkante).
   Stapel = Bücher, die lückenlos aufeinander liegen (`LooseBooks.STACK_GAP`).
+  **Buchstützen** (Unterkategorie `bookend`, `BookShelf.is_bookend(data)`): Bücher rasten an
+  ihnen ein, nie umgekehrt – Deko rastet im Gestaltungsmodus nie an Büchern ein. Luft zu Büchern
+  `BookShelf.deco_margin(data)` (Buchstütze `BOOKEND_MARGIN`, sonst `DECO_MARGIN`); frei
+  ausgelegt knapp daneben (`GameConfig.bookend_snap_distance`) steht ein Buch aufrecht daran;
+  Blick auf eine Buchstütze im Regal zählt als Blick aufs Regal (`Interactable.find_for`,
+  `BookShelf.holding(item)`).
   Anlehnen an Möbel nur mit `FurnitureData.books_can_lean` (Lehnen, große Töpfe), flach auf
   Möbeln ohne Ablagefläche nur mit `books_can_lie` (Polster) – nie an kleiner Deko, nie frei
   hochkant. **Buch-Aufsteller:** Knoten `BookStand` (+ Marker `BookSpot`) in einer Möbel-Szene;
@@ -275,7 +297,19 @@ docs/              Dokumentation
   (der Stapel in der Hand wackelt).
 - Z-Fighting vermeiden: Teile eines Modells nie mit Flächen genau in derselben Ebene
   enden lassen (gleiche Richtung, überlappend) – die kleinere Fläche 2 mm nach innen setzen.
-- Möbel mit Inhalt (Regal, Rückgabekasten): Knoten in der Gruppe `PlacedFurniture.CONTENTS_GROUP`
+- **Rückgabekasten** (`ReturnBox`, `scenes/objects/return_box.tscn`): genau einer, fest in der
+  Hauswand neben der Tür (Knoten im Raum, kein Möbel; Ort = Marker unter `ReturnBoxSpots`,
+  `move_to_spot`). `ReturnBox.find(get_tree())`, `add_books(liste)` liefert, was nicht passt
+  (`GameConfig.return_box_capacity`), `take_some`/`take_all`, `set_slot(id)` = Einwurf-Variante
+  (`ReturnSlotData`, `Catalog.get_return_slot`), Signal `changed`. Speichert sich selbst
+  (Schlüssel "return_box": Bücher, Einwurf, Ort). Immer geschlossen; Anzahl beim Anschauen
+  über `CountBadge.show_count(self, n, voll)`. Alte Spielstände: Möbel-id "return_box" →
+  `Room._migrate_legacy_return_box` (Bücher in den festen Kasten, Rest ins Lager).
+- Sperrzonen (Ebene `build_blocker`) können ihren Hinweis als Metadaten tragen
+  (`keep_clear_text`, z. B. „Vor dem Rückgabekasten bitte frei lassen.“).
+- Vorschaubilder beliebiger Szenen: `ThumbnailRenderer.request_scene(key, pfad, icon, callback,
+  wand_größe)` (mit Stück Hauswand dahinter, fast von vorn).
+- Möbel mit Inhalt (Regal): Knoten in der Gruppe `PlacedFurniture.CONTENTS_GROUP`
   mit `get_contents_data()`, `load_contents_data()`, `release_contents()` – der Raum speichert
   den Inhalt mit dem Möbelstück, beim Wegräumen (X) geht er ins Lager.
 - Startgeschenke fürs Inventar: `GameConfig.start_furniture_gifts` (jedes nur einmal, auch in

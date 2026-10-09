@@ -151,8 +151,7 @@ func set_active(active: bool) -> void:
 	if active:
 		if _player.is_seated():
 			_player.stand_up()  # Zum Gestalten erst aufstehen
-		# Türen schließen sich – an ihnen hängt man Dinge auf, und der Raum ist wieder zu
-		get_tree().call_group("doors", "close_instantly")
+		# Offene Türen bleiben offen, damit man weiter hinein- und hinausgehen kann
 		MenuStack.open(self)
 		_set_status("")
 	else:
@@ -395,6 +394,10 @@ func _update_hover() -> void:
 		var hit := _ray(from, to, FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT)
 		if not hit.is_empty():
 			item = FurnitureUtils.find_placed_furniture(hit.collider)
+	if item and _is_on_open_door(item):
+		_set_hovered(null)
+		_set_status("%s – hängt an der offenen Tür" % item.data.display_name)
+		return
 	_set_hovered(item)
 	if item:
 		_set_status(item.data.display_name)
@@ -520,6 +523,8 @@ func _update_placement() -> void:
 	elif not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
 			and absf(hit.normal.y) < 0.5:
 		problem = _place_on_wall(hit)
+		if hang_kind == Room.HangKind.DOOR and _door_is_open(hit.collider):
+			problem = "Die Tür ist offen – an eine offene Tür hängt man nichts."
 	elif not hit.is_empty() and hit.normal.y > -0.5 and \
 			(data.allows(FurnitureData.PLACE_FLOOR) or data.allows(FurnitureData.PLACE_SURFACE)):
 		problem = _place_standing(hit)
@@ -616,7 +621,7 @@ func _check_surface_fit(surface: PlacementSurface) -> String:
 		if top - surface.get_surface_height() > surface.max_height + 0.002:
 			return "Zu hoch für dieses Fach."
 	var shelf := BookShelf.find_for_surface(surface)
-	if shelf and not shelf.is_free_for_deco(surface, corners):
+	if shelf and not shelf.is_free_for_deco(surface, corners, BookShelf.deco_margin(_preview.data)):
 		return "Hier stehen Bücher."
 	return ""
 
@@ -657,6 +662,22 @@ func _place_on_ceiling(hit: Dictionary) -> String:
 	return _find_overlap(Vector3.DOWN, false)
 
 
+## Hängt dieses Möbelstück an einer offenen Tür (schwingt mit)? Dann bleibt es, wo es ist.
+func _is_on_open_door(item: PlacedFurniture) -> bool:
+	for door in get_tree().get_nodes_in_group("doors"):
+		if door.has_method("is_swinging") and door.is_swinging(item):
+			return true
+	return false
+
+
+## Ist das Türblatt "collider" gerade offen (oder noch nicht ganz zu)?
+func _door_is_open(collider: Object) -> bool:
+	for door in get_tree().get_nodes_in_group("doors"):
+		if door.has_method("is_leaf") and door.is_leaf(collider):
+			return door.is_ajar()
+	return false
+
+
 ## Prüft, ob die Vorschau etwas anderes berührt (leer = frei).
 ## lift: in diese Richtung wird etwas abgerückt, damit bloßes Anliegen erlaubt ist.
 func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
@@ -675,7 +696,9 @@ func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
 		for result in space.intersect_shape(query, 4):
 			var other: Object = result.collider
 			if other is Area3D:
-				return "Bitte den Eingang frei lassen."
+				return str(other.get_meta("keep_clear_text", "Bitte den Eingang frei lassen."))
+			if ReturnBox.is_part(other):
+				return "Hier ist der Rückgabekasten."
 			if other is Player:
 				return "Du stehst im Weg – geh ein Stück zur Seite."
 			if FurnitureUtils.find_placed_furniture(other):

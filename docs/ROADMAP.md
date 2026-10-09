@@ -22,6 +22,8 @@
 | 3h  | Shop-Namen, Lager mit Sammlung, R-Menü überall | fertig |
 | 3i  | Fach-Automodus und Platzierungs-Fehler   | fertig        |
 | 3j  | Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller | fertig |
+| 3k  | Tür, Buchmenü und Buchstützen           | fertig        |
+| 3l  | Fassaden-App und fester Rückgabekasten   | fertig        |
 | 4   | Besucher                                 | offen         |
 | 5   | Wirtschaft und Tagesablauf               | offen         |
 | 6   | Stilsystem und Besuchervielfalt          | offen         |
@@ -400,6 +402,29 @@ Vorschau, die überall gleich aussieht.
 - [x] Speichern: angelehnte Bücher, Bücher auf Polstern und Aufsteller mit Buch; alte
       Spielstände laden weiter
 
+## Etappe 3k – Tür, Buchmenü und Buchstützen
+Leitgedanke: Kleine Stolpersteine aus dem Weg räumen – Tür, Bücherauswahl, Buchstützen.
+- [x] Eine offene Tür bleibt offen, wenn der Gestaltungsmodus angeht (man kommt weiter durch)
+- [x] Keine Bücher im Schwenkbereich der Tür (Vorschau rot, wie bei Möbeln)
+- [x] R-Menü: genommene Bücher bleiben sichtbar (ausgegraut, Handsymbol); noch ein Klick legt
+      sie zurück ins Lager
+- [x] R-Menü: Kategorie „Alle Bücher“
+- [x] R-Menü: Cover-Kacheln dezent in der Farbe ihres Genres hinterlegt
+- [x] Buchstützen: Bücher rasten an der Buchstütze ein, die Buchstütze nicht an Büchern
+- [x] Speichern prüfen (ausgelegte Bücher, Buchstützen); alte Spielstände laden weiter
+
+## Etappe 3l – Fassaden-App und fester Rückgabekasten
+Leitgedanke: Ein einziger, fester Rückgabekasten in der Hauswand – angepasst statt aufgestellt.
+- [x] Neue Tablet-App „Fassade“ (erweiterbar für Wandfarbe außen, Schild, Fenster …)
+- [x] Genau ein fester Rückgabekasten in der Wand neben der Eingangstür: außen Einwurf,
+      innen Entnahme; nicht kaufbar, nicht verkaufbar, nicht mehr im Inventar
+- [x] Alte Spielstände: aufgestellte Rückgabekästen verschwinden, ihre Bücher wandern in den
+      festen Kasten (was nicht passt, ins Lager)
+- [x] Optik des Einwurfs in der Fassaden-App wählen (Platzhalter-Varianten, erweiterbar)
+- [x] Innen mit E herausnehmen wie bisher; F9 legt zum Testen Bücher hinein
+- [x] Platz für 50 Bücher (GameConfig), immer geschlossen, dezente Anzeige der Anzahl
+- [x] Speichern: Inhalt und gewählte Variante; alte Spielstände laden weiter
+
 ## Etappe 4 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
 - Besucher nehmen Bücher aus Regalen (`BookShelf.remove_books`) und werfen sie in den
@@ -434,8 +459,8 @@ Vorschau, die überall gleich aussieht.
 - Kleine unerklärliche Ereignisse, der Spiegel und seine Wesen
 
 ## Etappe 11 – Gasse, Fassade und Jahreszeiten
-- Die Gasse vor dem Haus (bisher: ein Stück Gehweg als Platzhalter), Fassade gestalten,
-  Jahreszeiten
+- Die Gasse vor dem Haus (bisher: ein Stück Gehweg als Platzhalter), Fassade gestalten
+  (in der App „Fassade“ aus Etappe 3l, z. B. Wandfarbe außen, Schild, Fenster), Jahreszeiten
 - Vielleicht ein Lieferbote, der die Kartons bringt (bisher erscheinen sie einfach)
 
 ## Etappe 12 – Feinschliff

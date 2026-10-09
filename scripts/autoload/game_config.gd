@@ -112,6 +112,9 @@ var floor_section_cells: int = 3
 var paint_reach: float = 6.0
 ## Bis zu dieser Entfernung (in Metern) kann man im Gestaltungsmodus Möbel platzieren.
 var build_reach: float = 9.0
+## Wie stark die Cover-Kacheln in der Bücherauswahl in der Farbe ihres Genres hinterlegt sind
+## (0 = gar nicht, 1 = ganz in der Genre-Farbe).
+var book_picker_tint: float = 0.3
 ## Deckkraft der Vorschau ("Blaupause") beim Platzieren von Möbeln und Büchern
 ## (0 = unsichtbar, 1 = voll sichtbar). Nicht zu niedrig: sonst scheint Licht und Schatten von
 ## dahinter durch und die Vorschau sieht an Lichtinseln halb hell, halb dunkel aus.
@@ -168,8 +171,9 @@ var books_per_package: int = 10
 ## So viele Bücher je freigeschaltetem Genre liegen beim allerersten Start im Lager.
 var start_books_per_genre: int = 12
 ## Das besitze ich zum Start zusätzlich im Inventar (id aus data/furniture/ -> Anzahl).
-## Kommt auch in ältere Spielstände, aber nur einmal.
-var start_furniture_gifts: Dictionary = {"return_box": 1}
+## Kommt auch in ältere Spielstände, aber nur einmal. (Der Rückgabekasten ist seit Etappe 3l
+## fest in der Wand eingebaut und kein Geschenk mehr.)
+var start_furniture_gifts: Dictionary = {}
 ## Ein Buch gleitet in so vielen Sekunden ins Regal (bzw. heraus).
 var book_slide_time: float = 0.35
 ## Abstand zwischen zwei Büchern, die nacheinander ins Regal gleiten (in Sekunden).
@@ -224,6 +228,9 @@ var shelf_grid_step: float = 0.01
 ## Steht ein Buch näher als das an einem Nachbarn (Buch, Deko, Seitenwand), rückt es bündig
 ## heran (in Metern).
 var shelf_snap_distance: float = 0.025
+## Stelle ich ein Buch so nah neben eine Buchstütze (auf Tisch, Boden …), steht es aufrecht
+## und bündig daran (in Metern). Die Buchstütze selbst rastet nie an Büchern ein.
+var bookend_snap_distance: float = 0.05
 
 
 # --- Speichern ---
@@ -281,6 +288,14 @@ var paused_max_fps: int = 30
 
 ## Spiel automatisch pausieren, wenn das Spielfenster in den Hintergrund rückt.
 var pause_on_focus_loss: bool = true
+
+
+# --- Rückgabekasten ---
+
+## So viele Bücher passen in den Rückgabekasten. Ist er voll, nimmt er nichts mehr an.
+var return_box_capacity: int = 50
+## Einwurf-Variante zum Start (id aus data/return_slots/).
+var return_box_default_slot: String = "slot_plain"
 
 
 # --- Testtasten (nur zum Ausprobieren) ---

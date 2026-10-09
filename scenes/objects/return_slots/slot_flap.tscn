@@ -1,0 +1,65 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/brass.tres" id="1_brass"]
+[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="2_black"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_plate"]
+size = Vector3(0.34, 0.13, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_slot"]
+size = Vector3(0.26, 0.03, 0.004)
+
+[sub_resource type="BoxMesh" id="BoxMesh_flap"]
+size = Vector3(0.28, 0.05, 0.006)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hinge"]
+top_radius = 0.006
+bottom_radius = 0.006
+height = 0.29
+radial_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_screw"]
+top_radius = 0.006
+bottom_radius = 0.006
+height = 0.004
+radial_segments = 12
+
+[node name="SlotFlap" type="Node3D"]
+
+[node name="Plate" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.004)
+material_override = ExtResource("2_black")
+mesh = SubResource("BoxMesh_plate")
+
+[node name="Slot" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.012, 0.009)
+material_override = ExtResource("2_black")
+mesh = SubResource("BoxMesh_slot")
+
+[node name="Hinge" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.016, 0.014)
+material_override = ExtResource("1_brass")
+mesh = SubResource("CylinderMesh_hinge")
+
+[node name="Flap" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9848, -0.1736, 0, 0.1736, 0.9848, 0, -0.008, 0.017)
+material_override = ExtResource("1_brass")
+mesh = SubResource("BoxMesh_flap")
+
+[node name="ScrewLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.155, 0.045, 0.009)
+material_override = ExtResource("1_brass")
+mesh = SubResource("CylinderMesh_screw")
+
+[node name="ScrewRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.155, 0.045, 0.009)
+material_override = ExtResource("1_brass")
+mesh = SubResource("CylinderMesh_screw")
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.053, 0.0085)
+pixel_size = 0.0008
+double_sided = false
+modulate = Color(0.93, 0.82, 0.55, 1)
+text = "Bücher"
+font_size = 40

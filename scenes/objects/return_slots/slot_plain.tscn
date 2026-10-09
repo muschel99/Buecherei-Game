@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/materials/brass.tres" id="1_brass"]
+[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="2_black"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_plate"]
+size = Vector3(0.3, 0.08, 0.008)
+
+[sub_resource type="BoxMesh" id="BoxMesh_slot"]
+size = Vector3(0.24, 0.022, 0.004)
+
+[node name="SlotPlain" type="Node3D"]
+
+[node name="Plate" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.004)
+material_override = ExtResource("1_brass")
+mesh = SubResource("BoxMesh_plate")
+
+[node name="Slot" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.009)
+material_override = ExtResource("2_black")
+mesh = SubResource("BoxMesh_slot")
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 0.002)
+pixel_size = 0.0009
+double_sided = false
+modulate = Color(0.22, 0.17, 0.12, 1)
+text = "Bücher-Rückgabe"
+font_size = 40

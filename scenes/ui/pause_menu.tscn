@@ -142,7 +142,7 @@ theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "R"
 
 [node name="ActionShelf" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Bücher-Menü (überall): Bücher aus dem Lager nehmen – am Regal auch Genre je Fach, auffüllen, sortieren"
+text = "Bücher-Menü (überall): Bücher aus dem Lager nehmen (noch ein Klick legt sie zurück) – am Regal auch Genre je Fach, auffüllen, sortieren"
 
 [node name="KeyWheel" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
@@ -170,7 +170,7 @@ theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
 text = "E am Rückgabekasten"
 
 [node name="ActionReturnBox" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "So viele Bücher nehmen, wie in die Hände passen"
+text = "Innen neben der Eingangstür: so viele Bücher nehmen, wie in die Hände passen"
 
 [node name="KeyBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

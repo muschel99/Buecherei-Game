@@ -8,7 +8,8 @@ extends Node3D
 ##
 ## Dinge, die an der Tür hängen (z. B. ein Türkranz), schwingen mit. Dafür wird nur ihr
 ## Modell bewegt – ihre gespeicherte Position bleibt die bei geschlossener Tür.
-## Beim Öffnen des Gestaltungsmodus schließt sich die Tür (dort hängt man Dinge auf).
+## Eine offene Tür bleibt auch im Gestaltungsmodus offen (man kommt weiter durch); solange sie
+## offen ist, hängt man dort nichts auf und nimmt nichts ab (siehe is_swinging).
 
 ## Öffnungsrichtung: 1 = Klinkenseite schwingt nach +Z (in den Raum), -1 = nach -Z.
 @export var open_direction: float = 1.0
@@ -72,6 +73,22 @@ func _set_angle(angle: float) -> void:
 			if is_instance_valid(item) and item.get_model():
 				item.get_model().transform = Transform3D.IDENTITY
 		_hung_items.clear()
+
+
+## Hängt dieses Möbelstück gerade an der offenen Tür (schwingt mit)? Auch, solange die Tür
+## noch zugeht – erst wenn sie ganz zu ist, hängt es wieder still.
+func is_swinging(item: PlacedFurniture) -> bool:
+	return _hung_items.has(item)
+
+
+## Ist die Tür offen oder noch in Bewegung (nicht ganz zu)?
+func is_ajar() -> bool:
+	return is_open or not is_zero_approx(_hinge.rotation.y)
+
+
+## Gehört dieser Körper zum Türblatt?
+func is_leaf(collider: Object) -> bool:
+	return collider == _leaf
 
 
 func _update_prompt() -> void:

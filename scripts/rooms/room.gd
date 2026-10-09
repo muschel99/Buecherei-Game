@@ -362,7 +362,7 @@ func get_save_data() -> Dictionary:
 			"rotation_y": item.rotation.y,
 			"support_uid": item.support_uid,
 		}
-		# Was darin ist (z. B. Genre und Bücher eines Regals, Bücher im Rückgabekasten)
+		# Was darin ist (z. B. Genre und Bücher eines Regals)
 		var contents := item.get_contents_data()
 		if not contents.is_empty():
 			entry["contents"] = contents
@@ -459,6 +459,9 @@ func _decompress(runs: Array) -> Array[String]:
 func _load_furniture_entry(entry: Dictionary) -> void:
 	var id := str(entry.get("id", ""))
 	var data := Catalog.get_furniture(id)
+	if data == null and id == ReturnBox.LEGACY_FURNITURE_ID:
+		_migrate_legacy_return_box(entry)
+		return
 	if data == null:
 		push_warning("Spielstand: Möbel '%s' gibt es nicht mehr – wird übersprungen." % id)
 		return
@@ -478,6 +481,18 @@ func _load_furniture_entry(entry: Dictionary) -> void:
 	_assign_uid(item)
 	if entry.get("contents") is Dictionary:
 		item.load_contents_data(entry["contents"])
+
+
+## Alter Spielstand (vor Etappe 3l): Ein aufgestellter Rückgabekasten wird nicht mehr
+## aufgebaut – seine Bücher wandern in den festen Kasten in der Wand (was nicht passt, ins Lager).
+func _migrate_legacy_return_box(entry: Dictionary) -> void:
+	var contents = entry.get("contents")
+	var old_books := Book.list_from_save_data(contents.get("books") if contents is Dictionary else null)
+	var box := ReturnBox.find(get_tree())
+	if box:
+		box.receive_legacy_books(old_books)
+	else:
+		BookStock.store_books(old_books)
 
 
 func _assign_uid(item: PlacedFurniture) -> void:

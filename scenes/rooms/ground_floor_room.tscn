@@ -22,6 +22,7 @@
 [ext_resource type="Script" path="res://scripts/objects/door.gd" id="20_door"]
 [ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="21_interactable"]
 [ext_resource type="Resource" path="res://data/furniture/tablet.tres" id="22_tablet"]
+[ext_resource type="PackedScene" path="res://scenes/objects/return_box.tscn" id="23_return_box"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_horizontal"]
 size = Vector3(2.4, 0.06, 0.22)
@@ -270,6 +271,14 @@ material_override = ExtResource("5_paint_white")
 transform = Transform3D(0.996552, 0, 0, 0, 1, 0, 0, 0, 0.85, 0, 2.24, 0.121)
 mesh = SubResource("BoxMesh_door_trim_top")
 material_override = ExtResource("5_paint_white")
+
+[node name="ReturnBoxSpots" type="Node3D" parent="."]
+
+[node name="BesideDoor" type="Marker3D" parent="ReturnBoxSpots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -4.1)
+
+[node name="ReturnBox" parent="." instance=ExtResource("23_return_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -4.1)
 
 [node name="Furniture" type="Node3D" parent="."]
 

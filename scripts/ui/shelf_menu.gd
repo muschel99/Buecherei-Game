@@ -71,6 +71,10 @@ var _picker_title: Label
 var _picker_genre_choice: OptionButton
 var _picker: BookPicker
 var _picker_genre := ""
+## In der Bücherauswahl: "Alle Bücher" statt eines Genres
+const ALL_GENRES := "*"
+# Bücher, die ich in diesem Menü aus dem Lager genommen habe (bleiben als "in der Hand" sichtbar)
+var _taken_here: Array[Book] = []
 var _message: Label
 var _opened_frame := -1
 var _refresh_queued := false
@@ -125,6 +129,7 @@ func open_for(target: BookShelf) -> void:
 	_player.interaction_enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_message.text = ""
+	_taken_here.clear()
 	_show_main()
 	_rebuild_rows()
 	_queue_refresh()
@@ -253,7 +258,7 @@ func open_sort_popup() -> void:
 
 ## Zeigt die Auswahl "Buch aus dem Lager wählen" auf dem Tablet.
 func open_picker() -> void:
-	_picker_genre = ""
+	_picker_genre = ALL_GENRES
 	_main_view.hide()
 	_picker_view.show()
 	_refresh_picker()
@@ -275,9 +280,25 @@ func choose_book(data: BookData) -> void:
 	for book in BookStock.get_stored_books(data.genre_id):
 		if book.data == data and BookStock.take_stored_book(book):
 			BookStock.carry([book])
+			_taken_here.append(book)
 			if BookStock.is_hand_full():
 				close()
 			return
+
+
+## Ein Buch, das ich hier genommen habe, wieder zurück ins Lager legen (Klick auf die Kachel
+## mit dem Handsymbol) – so lässt sich die Auswahl direkt im Menü korrigieren.
+func return_book(book: Book) -> void:
+	var back := BookStock.take_carried_where(func(carried: Book) -> bool: return carried == book)
+	BookStock.store_books(back)
+	_taken_here.erase(book)
+
+
+func _on_entry_chosen(entry: Dictionary) -> void:
+	if entry.get("held", false):
+		return_book(entry.book)
+	else:
+		choose_book(entry.data)
 
 
 # --- Anzeige ---
@@ -450,38 +471,78 @@ func _choosable_genres() -> Array[GenreData]:
 	return result
 
 
-## Die Auswahl neu zeigen: Genre-Liste und die Cover der Titel im Lager.
+## Die Auswahl neu zeigen: "Alle Bücher" und die Genres, darunter die Cover der Titel im Lager
+## (dezent in der Farbe ihres Genres) und die Bücher, die ich hier schon genommen habe
+## (ausgegraut mit Handsymbol).
 func _refresh_picker() -> void:
-	var genres := _choosable_genres()
+	var held := _held_here()
+	# Genres mit Büchern im Lager oder in der Hand – immer in der Reihenfolge des Katalogs,
+	# so springt nichts, wenn das letzte Buch eines Genres in die Hand wandert
+	var choosable := _choosable_genres()
+	var held_genres := held.map(func(book: Book) -> GenreData: return book.get_genre())
+	var genres: Array[GenreData] = []
+	for genre in Catalog.get_all_genres():
+		if choosable.has(genre) or (held_genres.has(genre) and (shelf == null or shelf.accepts(genre.get_id()))):
+			genres.append(genre)
 	if genres.is_empty():
 		_show_main()
 		return
 	var ids: Array = genres.map(func(genre: GenreData) -> String: return genre.get_id())
-	if not ids.has(_picker_genre):
-		_picker_genre = ids[0]
+	if _picker_genre != ALL_GENRES and not ids.has(_picker_genre):
+		_picker_genre = ALL_GENRES
 	_picker_genre_choice.clear()
+	_picker_genre_choice.add_item("Alle Bücher")
+	_picker_genre_choice.set_item_metadata(0, ALL_GENRES)
 	for genre in genres:
 		_picker_genre_choice.add_icon_item(_dot(genre.get_main_color().lightened(0.35), false), genre.display_name)
 		_picker_genre_choice.set_item_metadata(_picker_genre_choice.item_count - 1, genre.get_id())
-	_picker_genre_choice.select(ids.find(_picker_genre))
-	_picker_genre_choice.visible = genres.size() > 1
-	# Gleiche Titel zusammenfassen ("×2 im Lager")
+	_picker_genre_choice.select(0 if _picker_genre == ALL_GENRES else ids.find(_picker_genre) + 1)
+	var shown: Array = ids if _picker_genre == ALL_GENRES else [_picker_genre]
+	# Gleiche Titel im Lager zusammenfassen ("×2 im Lager")
 	var counts := {}
 	var titles: Array[BookData] = []
-	for book in BookStock.get_stored_books(_picker_genre):
-		if not counts.has(book.data):
+	for id in shown:
+		for book in BookStock.get_stored_books(id):
+			if not counts.has(book.data):
+				titles.append(book.data)
+			counts[book.data] = int(counts.get(book.data, 0)) + 1
+	var held_shown := held.filter(func(book: Book) -> bool: return shown.has(book.genre_id))
+	for book in held_shown:
+		if not titles.has(book.data):
 			titles.append(book.data)
-		counts[book.data] = int(counts.get(book.data, 0)) + 1
+	# Feste Reihenfolge (Genre, dann Titel) – so springt nichts, wenn ein Buch genommen wird
+	titles.sort_custom(func(a: BookData, b: BookData) -> bool:
+		if a.genre_id != b.genre_id:
+			return ids.find(a.genre_id) < ids.find(b.genre_id)
+		return a.title.naturalnocasecmp_to(b.title) < 0)
 	var entries := []
 	for data in titles:
-		entries.append({"data": data, "note": "×%d im Lager" % counts[data] if counts[data] > 1 else "im Lager"})
+		var genre := Catalog.get_genre(data.genre_id)
+		var tint := genre.get_main_color() if genre else Color(0.5, 0.4, 0.3)
+		var count := int(counts.get(data, 0))
+		if count > 0:
+			entries.append({"data": data, "tint": tint,
+				"note": "×%d im Lager" % count if count > 1 else "im Lager"})
+		for book in held_shown:
+			if book.data == data:
+				entries.append({"data": data, "tint": tint, "held": true, "book": book, "note": "in der Hand"})
+	var stored_titles := titles.filter(func(data: BookData) -> bool: return counts.has(data)).size()
 	var genre := Catalog.get_genre(_picker_genre)
-	_picker_title.text = "Buch aus dem Lager (%d)" % titles.size() if genres.size() > 1 \
-		else "%s aus dem Lager (%d)" % [genre.display_name if genre else "Buch", titles.size()]
+	_picker_title.text = "Buch aus dem Lager (%d)" % stored_titles if genre == null \
+		else "%s aus dem Lager (%d)" % [genre.display_name, stored_titles]
 	# Nach dem Nehmen an derselben Stelle weiterschauen
 	var scroll := _picker.scroll_vertical
 	_picker.show_entries(entries, "Im Lager liegt gerade nichts davon.")
 	_picker.set_deferred("scroll_vertical", scroll)
+
+
+## Die Bücher, die ich in diesem Menü genommen habe und noch trage.
+func _held_here() -> Array[Book]:
+	var result: Array[Book] = []
+	for book in _taken_here:
+		if BookStock.carried.has(book):
+			result.append(book)
+	return result
 
 
 ## Wie viele Bücher, die hierher passen, liegen im Lager?
@@ -651,9 +712,9 @@ func _build_picker(screen: VBoxContainer) -> void:
 		_picker_genre = str(_picker_genre_choice.get_item_metadata(index))
 		_refresh_picker.call_deferred())
 	_picker_view.add_child(_picker_genre_choice)
-	_picker_view.add_child(TabletFrame.make_label("Klick auf ein Buch: Es liegt dann obenauf in deiner Hand.", 15, MUTED_COLOR))
+	_picker_view.add_child(TabletFrame.make_label("Klick auf ein Buch: Es liegt dann obenauf in deiner Hand. Noch ein Klick legt es zurück.", 15, MUTED_COLOR))
 	_picker = BookPicker.new()
-	_picker.book_chosen.connect(choose_book)
+	_picker.entry_chosen.connect(_on_entry_chosen)
 	_picker_view.add_child(_picker)
 
 

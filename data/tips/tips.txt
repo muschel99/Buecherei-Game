@@ -46,6 +46,8 @@ Drücke <R>, egal wo du stehst: Dort wählst du Bücher aus dem Lager über ihre
 
 Das Menü bleibt offen, bis deine Hände voll sind.
 
+Bücher in deiner Hand tragen dort ein kleines Handsymbol. Ein Klick darauf legt sie zurück ins Lager.
+
 == Genau an die richtige Stelle
 Ein <Linksklick> stellt das oberste Buch genau dorthin, wo du hinschaust.
 
@@ -55,6 +57,11 @@ Mit <E> blätterst du durch die Bücher in deiner Hand.
 Halte am Regal die linke Maustaste gedrückt: Alle passenden Bücher wandern ins Regal – ab der Stelle, auf die du schaust.
 
 Halte <Q>, und alles, was du trägst, geht zurück ins Lager.
+
+== Der Rückgabekasten
+Neben der Eingangstür ist der Rückgabekasten in die Wand eingebaut. Innen nimmst du mit <E> so viele Bücher heraus, wie in deine Hände passen.
+
+Wie der Einwurf außen aussieht, wählst du am Theken-Tablet in der App „Fassade“.
 
 = Regale und Fächer | shelf
 == Jedes Fach sein Genre
@@ -76,7 +83,7 @@ Bücher dürfen überall liegen: auf Tischen, auf der Theke, sogar auf dem Boden
 Mit dem <Mausrad> drehst du ein Buch, bevor du es ablegst.
 
 == Angelehnt und aufrecht
-An einer Wand oder neben einer Buchstütze stellt sich ein Buch von selbst auf.
+An einer Wand oder neben einer Buchstütze stellt sich ein Buch von selbst auf – an der Buchstütze ganz bündig.
 
 Leg mehrere Bücher übereinander, und schon hast du einen kleinen Stapel.
 

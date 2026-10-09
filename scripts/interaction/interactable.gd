@@ -84,6 +84,12 @@ func _ready() -> void:
 ## (Halt an PlacedFurniture und am Raum). Hat das Objekt mehrere (z. B. drei Sofaplätze),
 ## gilt das, das dem getroffenen Punkt am nächsten liegt.
 static func find_for(collider: Node, hit_point: Vector3) -> Interactable:
+	# Buchstütze im Regal: Es zählt das Regal – so stellt man Bücher bündig daneben
+	var item := FurnitureUtils.find_placed_furniture(collider) if collider else null
+	if item and BookShelf.is_bookend(item.data):
+		var shelf := BookShelf.holding(item)
+		if shelf and shelf.get_interactable() and shelf.get_interactable().is_enabled:
+			return shelf.get_interactable()
 	var node := collider.get_parent() if collider else null
 	var depth := 0
 	while node and depth < 4 and not node is PlacedFurniture and not node is Room and not node is Window:

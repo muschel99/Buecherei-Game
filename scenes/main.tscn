@@ -22,6 +22,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/carry_indicator.tscn" id="20_carry"]
 [ext_resource type="Script" path="res://scripts/ui/book_info_card.gd" id="21_book_card"]
 [ext_resource type="Script" path="res://scripts/ui/genre_caption.gd" id="22_genre_caption"]
+[ext_resource type="Script" path="res://scripts/ui/count_badge.gd" id="23_count_badge"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -171,7 +172,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6.7)
 shape = SubResource("BoxShape3D_bound_front")
 
 [node name="Deliveries" type="Marker3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05, 0, -4.68)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0, -4.68)
 script = ExtResource("15_deliveries")
 
 [node name="GroundFloorRoom" parent="." instance=ExtResource("1_room")]
@@ -205,6 +206,10 @@ script = ExtResource("21_book_card")
 [node name="GenreCaption" type="CanvasLayer" parent="."]
 process_mode = 3
 script = ExtResource("22_genre_caption")
+
+[node name="CountBadge" type="CanvasLayer" parent="."]
+process_mode = 3
+script = ExtResource("23_count_badge")
 
 [node name="ShelfMenu" parent="." instance=ExtResource("19_shelf_menu")]
 player_path = NodePath("../Player")

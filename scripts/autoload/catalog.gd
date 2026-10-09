@@ -11,10 +11,12 @@ extends Node
 const FURNITURE_FOLDER := "res://data/furniture/"
 const SURFACE_FOLDER := "res://data/surfaces/"
 const GENRE_FOLDER := "res://data/genres/"
+const RETURN_SLOT_FOLDER := "res://data/return_slots/"
 
 var _furniture: Dictionary = {}  # id -> FurnitureData
 var _surfaces: Dictionary = {}  # id -> SurfaceData
 var _genres: Dictionary = {}  # id -> GenreData
+var _return_slots: Dictionary = {}  # id -> ReturnSlotData (Einwurf-Varianten des Rückgabekastens)
 var _books: Dictionary = {}  # id -> BookData
 var _books_by_genre: Dictionary = {}  # genre_id -> Array[BookData] (Reihenfolge wie in der Liste)
 
@@ -29,6 +31,9 @@ func _ready() -> void:
 	for resource in _load_folder(GENRE_FOLDER):
 		if resource is GenreData:
 			_register(_genres, resource.get_id(), resource)
+	for resource in _load_folder(RETURN_SLOT_FOLDER):
+		if resource is ReturnSlotData:
+			_register(_return_slots, resource.get_id(), resource)
 	for genre in get_all_genres():
 		_load_books(genre)
 	print("Katalog geladen: %d Möbel, %d Oberflächen, %d Genres, %d Bücher" % [_furniture.size(),
@@ -57,6 +62,22 @@ func get_all_genres() -> Array[GenreData]:
 	result.sort_custom(func(a: GenreData, b: GenreData) -> bool:
 		if a.sort_order != b.sort_order:
 			return a.sort_order < b.sort_order
+		return a.display_name < b.display_name)
+	return result
+
+
+## Einwurf-Variante des Rückgabekastens mit dieser id (oder null).
+func get_return_slot(id: String) -> ReturnSlotData:
+	return _return_slots.get(id)
+
+
+## Alle Einwurf-Varianten, sortiert nach "Order" und Name.
+func get_all_return_slots() -> Array[ReturnSlotData]:
+	var result: Array[ReturnSlotData] = []
+	result.assign(_return_slots.values())
+	result.sort_custom(func(a: ReturnSlotData, b: ReturnSlotData) -> bool:
+		if a.order != b.order:
+			return a.order < b.order
 		return a.display_name < b.display_name)
 	return result
 
