@@ -32,6 +32,7 @@
 [ext_resource type="Script" path="res://scripts/ui/genre_caption.gd" id="22_genre_caption"]
 [ext_resource type="Script" path="res://scripts/ui/count_badge.gd" id="23_count_badge"]
 [ext_resource type="Script" path="res://scripts/rooms/upper_floors.gd" id="24_upper_floors"]
+[ext_resource type="PackedScene" path="res://scenes/world/entrance_steps.tscn" id="25_steps"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -111,6 +112,7 @@ directional_shadow_blend_splits = true
 directional_shadow_max_distance = 20.0
 
 [node name="Outside" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
 [node name="Street" type="MeshInstance3D" parent="Outside"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.12, -10)
@@ -178,8 +180,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 1.5, 4.3)
 shape = SubResource("BoxShape3D_bound_back")
 
 [node name="Deliveries" type="Marker3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0, -4.7)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0, -4.7)
 script = ExtResource("15_deliveries")
+stack_direction = Vector3(1, 0, 0)
+
+[node name="EntranceSteps" parent="." instance=ExtResource("25_steps")]
+transform = Transform3D(-0.7071068, 0, -0.7071068, 0, 1, 0, 0.7071068, 0, -0.7071068, -2.1414214, 0, -3.1414214)
 
 [node name="GroundFloorRoom" parent="." instance=ExtResource("1_room")]
 
