@@ -142,18 +142,25 @@ var opposite_sidewalk_width: float = 2.1
 var street_width: float = 5.1
 ## So viel tiefer als der Gehweg liegt die Fahrbahn (Höhe des Bordsteins).
 var curb_height: float = 0.12
-## So lang sind die Seitenstraßen, in die die Straße an beiden Enden abbiegt (bis zum Haus,
-## das sie abschließt). Laufen kann man nur bis kurz hinter die Ecke (side_street_walkable).
-var side_street_length: float = 9.0
-var side_street_walkable: float = 2.0
 ## Welches Straßenende geradeaus weiterläuft (seit Etappe 4e; das andere biegt ab):
 ## "east" = die Seite, wo die Nachbarhäuser bündig neben der Bücherei stehen (Standard),
 ## "west" = die Seite mit der Gasse und den zurückversetzten Häusern.
 var straight_street_end: String = "east"
-## Am geraden Ende: Bis zur unsichtbaren Grenze kommt man (sie steht quer über Straße und
-## Gehwegen, wo die Nachbarhäuser enden). Dahinter läuft die Straße so viele Meter sichtbar
-## weiter (mit Häusern auf beiden Seiten) und knickt erst dann ab.
-var straight_street_length: float = 30.0
+## Am geraden Ende (seit Etappe 4f): So viele Meter hinter dem Ende der festen Nachbarhäuser
+## steht die unsichtbare Grenze quer über Straße und Gehwegen (bis dahin kann man laufen).
+var straight_bound_offset: float = 6.0
+## Am geraden Ende: So viele Meter läuft die Straße hinter der Grenze sichtbar weiter (mit
+## Häusern auf beiden Seiten), dann steht quer ein Haus und sie knickt in eine Seitenstraße ab.
+## Zusammen mit straight_side_street_length so gewählt, dass man von der Grenze aus gerade eben
+## nicht um den Knick schauen kann (das Ende der Seitenstraße bleibt immer verdeckt).
+var straight_street_length: float = 20.0
+## Am geraden Ende: so lang ist die Seitenstraße hinter dem Knick (von den Hausfronten
+## gegenüber bis zu den Häusern, die sie abschließen).
+var straight_side_street_length: float = 12.0
+## Am abbiegenden Ende: so lang ist die Seitenstraße (bis zum Haus, das sie abschließt).
+## Laufen kann man nur bis kurz hinter die Ecke (side_street_walkable).
+var side_street_length: float = 9.0
+var side_street_walkable: float = 2.0
 
 ## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
 var alley_width: float = 2.8

@@ -104,6 +104,8 @@ func _freeze_player(main: Node) -> void:
 func _hide_interface(root: Node) -> void:
 	for child in root.get_children():
 		if child is CanvasLayer:
+			# Anhalten, sonst blendet sich z. B. das HUD selbst wieder ein
+			child.process_mode = Node.PROCESS_MODE_DISABLED
 			(child as CanvasLayer).visible = false
 		else:
 			_hide_interface(child)

@@ -13,7 +13,7 @@ extends Node3D
 ## - EINE ebene Bodenkollision für alles draußen (die Fahrbahn liegt nur optisch tiefer –
 ##   so stolpert die Spielfigur nie über einen Bordstein),
 ## - unsichtbare, weiche Grenzen: in der Seitenstraße kurz hinter der Ecke, am geraden Ende
-##   quer über Straße und Gehwege (wo die Nachbarhäuser enden),
+##   quer über Straße und Gehwege (GameConfig.straight_bound_offset hinter den Nachbarhäusern),
 ## - unsichtbare Start- und Endpunkte für spätere Autos, Radfahrer und Fußgänger
 ##   (Knoten "TrafficPoints", Gruppe "traffic_points"; noch fährt und läuft dort niemand).
 
@@ -40,7 +40,8 @@ func _build_surfaces() -> void:
 	var curb := StreetLayout.curb_z()
 	var far := StreetLayout.far_curb_z()
 	var opposite := StreetLayout.opposite_front_z()
-	var end := StreetLayout.side_street_end_z()
+	var end_e := StreetLayout.side_street_end_z(1)
+	var end_w := StreetLayout.side_street_end_z(-1)
 	var east := StreetLayout.east_road()
 	var west := StreetLayout.west_road()
 	var east_x := StreetLayout.east_end_x()
@@ -56,29 +57,29 @@ func _build_surfaces() -> void:
 	_rect(walk, west_x, east_x, curb + s, front, 0.0)
 	_rect(walk, west_x, west.x - s, curb, curb + s, 0.0)
 	_rect(walk, east.y + s, east_x, curb, curb + s, 0.0)
-	_rect(walk, east.y + s, east_x, end, curb, 0.0)  # um die Ecke in die Seitenstraße
-	_rect(walk, west_x, west.x - s, end, curb, 0.0)
+	_rect(walk, east.y + s, east_x, end_e, curb, 0.0)  # um die Ecke in die Seitenstraße
+	_rect(walk, west_x, west.x - s, end_w, curb, 0.0)
 	_rect(stone, west.x - s, east.y + s, curb, curb + s, 0.0)
-	_rect(stone, east.y, east.y + s, end, curb, 0.0)
-	_rect(stone, west.x - s, west.x, end, curb, 0.0)
+	_rect(stone, east.y, east.y + s, end_e, curb, 0.0)
+	_rect(stone, west.x - s, west.x, end_w, curb, 0.0)
 	# Gehweg gegenüber (läuft um die Ecken der Häuserreihe herum)
 	_rect(walk, west.y + s, east.x - s, opposite, far - s, 0.0)
-	_rect(walk, row.y, east.x - s, end, opposite, 0.0)
-	_rect(walk, west.y + s, row.x, end, opposite, 0.0)
+	_rect(walk, row.y, east.x - s, end_e, opposite, 0.0)
+	_rect(walk, west.y + s, row.x, end_w, opposite, 0.0)
 	_rect(stone, west.y, east.x, far - s, far, 0.0)
-	_rect(stone, east.x - s, east.x, end, far - s, 0.0)
-	_rect(stone, west.y, west.y + s, end, far - s, 0.0)
+	_rect(stone, east.x - s, east.x, end_e, far - s, 0.0)
+	_rect(stone, west.y, west.y + s, end_w, far - s, 0.0)
 	# Bordsteinkanten (senkrecht, zur Fahrbahn hin)
 	stone.add_wall(Vector2(west.x, curb), Vector2(east.y, curb), road_y, 0.0, Vector3.FORWARD, white)
-	stone.add_wall(Vector2(east.y, end), Vector2(east.y, curb), road_y, 0.0, Vector3.LEFT, white)
-	stone.add_wall(Vector2(west.x, end), Vector2(west.x, curb), road_y, 0.0, Vector3.RIGHT, white)
+	stone.add_wall(Vector2(east.y, end_e), Vector2(east.y, curb), road_y, 0.0, Vector3.LEFT, white)
+	stone.add_wall(Vector2(west.x, end_w), Vector2(west.x, curb), road_y, 0.0, Vector3.RIGHT, white)
 	stone.add_wall(Vector2(west.y, far), Vector2(east.x, far), road_y, 0.0, Vector3.BACK, white)
-	stone.add_wall(Vector2(east.x, end), Vector2(east.x, far), road_y, 0.0, Vector3.RIGHT, white)
-	stone.add_wall(Vector2(west.y, end), Vector2(west.y, far), road_y, 0.0, Vector3.LEFT, white)
+	stone.add_wall(Vector2(east.x, end_e), Vector2(east.x, far), road_y, 0.0, Vector3.RIGHT, white)
+	stone.add_wall(Vector2(west.y, end_w), Vector2(west.y, far), road_y, 0.0, Vector3.LEFT, white)
 	# Fahrbahn: gerade Strecke und die beiden Seitenstraßen
 	_rect(road, west.x, east.y, far, curb, road_y)
-	_rect(road, east.x, east.y, end, far, road_y)
-	_rect(road, west.x, west.y, end, far, road_y)
+	_rect(road, east.x, east.y, end_e, far, road_y)
+	_rect(road, west.x, west.y, end_w, far, road_y)
 	for part in [[walk, "Sidewalks", sidewalk_material], [stone, "Curbs", curb_material], [road, "Road", road_material]]:
 		var mesh: MeshInstance3D = (part[0] as WorldMesh).make_instance(part[1], part[2], false)
 		if mesh:
@@ -95,7 +96,7 @@ func _rect(builder: WorldMesh, x0: float, x1: float, z0: float, z1: float, y: fl
 func _build_ground_collision() -> void:
 	var x0 := StreetLayout.west_end_x() - 2.0
 	var x1 := StreetLayout.east_end_x() + 2.0
-	var z0 := StreetLayout.side_street_end_z() - 2.0
+	var z0 := StreetLayout.deepest_end_z() - 2.0
 	var z1 := StreetLayout.alley_end_z() + 2.0
 	var body := StaticBody3D.new()
 	body.name = "Ground"
@@ -162,19 +163,20 @@ func _build_traffic_points() -> void:
 	var root := Node3D.new()
 	root.name = "TrafficPoints"
 	add_child(root)
-	var end := StreetLayout.side_street_end_z() + 1.0
+	var end_e := StreetLayout.side_street_end_z(1) + 1.0
+	var end_w := StreetLayout.side_street_end_z(-1) + 1.0
 	var road_y := -GameConfig.curb_height
 	var east := StreetLayout.east_road()
 	var west := StreetLayout.west_road()
 	var points := {
-		"CarWest": ["car", Vector3((west.x + west.y) / 2.0, road_y, end)],
-		"CarEast": ["car", Vector3((east.x + east.y) / 2.0, road_y, end)],
-		"BikeWest": ["bike", Vector3(west.x + 0.6, road_y, end)],
-		"BikeEast": ["bike", Vector3(east.y - 0.6, road_y, end)],
-		"WalkerWestNear": ["walker", Vector3(StreetLayout.west_end_x() + 0.8, 0.0, end)],
-		"WalkerEastNear": ["walker", Vector3(StreetLayout.east_end_x() - 0.8, 0.0, end)],
-		"WalkerWestFar": ["walker", Vector3(StreetLayout.opposite_row().x - 0.6, 0.0, end)],
-		"WalkerEastFar": ["walker", Vector3(StreetLayout.opposite_row().y + 0.6, 0.0, end)],
+		"CarWest": ["car", Vector3((west.x + west.y) / 2.0, road_y, end_w)],
+		"CarEast": ["car", Vector3((east.x + east.y) / 2.0, road_y, end_e)],
+		"BikeWest": ["bike", Vector3(west.x + 0.6, road_y, end_w)],
+		"BikeEast": ["bike", Vector3(east.y - 0.6, road_y, end_e)],
+		"WalkerWestNear": ["walker", Vector3(StreetLayout.west_end_x() + 0.8, 0.0, end_w)],
+		"WalkerEastNear": ["walker", Vector3(StreetLayout.east_end_x() - 0.8, 0.0, end_e)],
+		"WalkerWestFar": ["walker", Vector3(StreetLayout.opposite_row().x - 0.6, 0.0, end_w)],
+		"WalkerEastFar": ["walker", Vector3(StreetLayout.opposite_row().y + 0.6, 0.0, end_e)],
 	}
 	for point_name in points:
 		var marker := Marker3D.new()

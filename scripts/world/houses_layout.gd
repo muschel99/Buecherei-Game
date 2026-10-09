@@ -6,7 +6,8 @@ extends RefCounted
 ##
 ## Reihen:
 ## - Bücherei-Seite: die festen Nachbarn (GameConfig.neighbor_house_types und
-##   alley_house_types), am geraden Straßenende weitere Häuser hinter der Grenze bis zum Knick.
+##   alley_house_types), am geraden Straßenende weitere Häuser bis zum Knick (fest bis zur
+##   Grenze, dahinter nur Kulisse).
 ## - Gegenüber: Reihenhäuser über die ganze Länge, das besondere Haus
 ##   (GameConfig.opposite_feature_house) möglichst genau gegenüber der Ladentür.
 ## - An beiden Knicks: Häuser entlang der Seitenstraße und quer an ihrem Ende.
@@ -67,14 +68,19 @@ static func _library_row(houses: Array[Dictionary]) -> void:
 		house.wall_color = NEIGHBOR_COLORS[houses.find(house) % NEIGHBOR_COLORS.size()]
 
 
-## Am geraden Ende: Häuser auf der Bücherei-Seite hinter der Grenze bis zum Knick.
+## Am geraden Ende: Häuser auf der Bücherei-Seite von den festen Nachbarn bis zum Knick
+## (fest bis zur Grenze, dahinter nur Kulisse).
 static func _straight_row(houses: Array[Dictionary]) -> void:
+	var start := houses.size()
 	if StreetLayout.is_straight(1):
-		_fill(houses, "StraightEnd", "Street", Vector2(StreetLayout.straight_bound_x(), StreetLayout.HOUSE_FRONT),
+		_fill(houses, "StraightEnd", "Street", Vector2(StreetLayout.neighbor_row_end_x(), StreetLayout.HOUSE_FRONT),
 			Vector2(StreetLayout.east_end_x(), StreetLayout.HOUSE_FRONT), PI, STREET_COLORS, 3, false)
 	else:
 		_fill(houses, "StraightEnd", "Street", Vector2(StreetLayout.west_end_x(), StreetLayout.recess_z()),
-			Vector2(StreetLayout.straight_bound_x(), StreetLayout.recess_z()), PI, STREET_COLORS, 3, false)
+			Vector2(StreetLayout.alley_row_end_x(), StreetLayout.recess_z()), PI, STREET_COLORS, 3, false)
+	for i in range(start, houses.size()):
+		var half := HouseTypes.width_of(houses[i].type) / 2.0
+		houses[i].solid = _reachable(houses[i].position.x - half, houses[i].position.x + half)
 
 
 ## Gegenüber: Reihenhäuser (Vorderseite +Z), das besondere Haus vor der Ladentür.
@@ -107,18 +113,19 @@ static func _opposite_row(houses: Array[Dictionary]) -> void:
 ## An beiden Knicks: entlang der Seitenstraße (Vorderseite zur Seitenstraße) und quer an
 ## ihrem Ende. Fest nur dort, wo man hinkommt (an der abbiegenden Seite).
 static func _side_streets(houses: Array[Dictionary]) -> void:
-	var end_z := StreetLayout.side_street_end_z()
+	var end_e := StreetLayout.side_street_end_z(1)
+	var end_w := StreetLayout.side_street_end_z(-1)
 	var east := StreetLayout.east_end_x()
 	var west := StreetLayout.west_end_x()
 	var west_front := StreetLayout.recess_z()
-	_fill(houses, "SideStreets", "EastSide", Vector2(east, StreetLayout.HOUSE_FRONT), Vector2(east, end_z),
+	_fill(houses, "SideStreets", "EastSide", Vector2(east, StreetLayout.HOUSE_FRONT), Vector2(east, end_e),
 		-PI / 2.0, FAR_COLORS, 0, not StreetLayout.is_straight(1))
-	_fill(houses, "SideStreets", "WestSide", Vector2(west, end_z), Vector2(west, west_front),
+	_fill(houses, "SideStreets", "WestSide", Vector2(west, end_w), Vector2(west, west_front),
 		PI / 2.0, FAR_COLORS, 1, not StreetLayout.is_straight(-1))
 	var row := StreetLayout.opposite_row()
-	_fill(houses, "SideStreets", "EastEnd", Vector2(row.y - CLOSURE_BEHIND, end_z), Vector2(east, end_z),
+	_fill(houses, "SideStreets", "EastEnd", Vector2(row.y - CLOSURE_BEHIND, end_e), Vector2(east, end_e),
 		0.0, FAR_COLORS, 2, false)
-	_fill(houses, "SideStreets", "WestEnd", Vector2(west, end_z), Vector2(row.x + CLOSURE_BEHIND, end_z),
+	_fill(houses, "SideStreets", "WestEnd", Vector2(west, end_w), Vector2(row.x + CLOSURE_BEHIND, end_w),
 		0.0, FAR_COLORS, 0, false)
 
 

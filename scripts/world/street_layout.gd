@@ -109,10 +109,12 @@ static func is_straight(side: int) -> bool:
 	return GameConfig.straight_street_end == ("east" if side > 0 else "west")
 
 
-## Am geraden Ende: Lage der Grenze quer über die Straße (x) und wie weit sie reicht (z: von
-## der Hausfront bis zu den Häusern gegenüber).
+## Am geraden Ende: Lage der Grenze quer über die Straße (x) – straight_bound_offset hinter
+## dem Ende der festen Nachbarhäuser. Sie reicht von der Hausfront bis zu den Häusern gegenüber.
 static func straight_bound_x() -> float:
-	return neighbor_row_end_x() if is_straight(1) else alley_row_end_x()
+	if is_straight(1):
+		return neighbor_row_end_x() + GameConfig.straight_bound_offset
+	return alley_row_end_x() - GameConfig.straight_bound_offset
 
 
 static func straight_side() -> int:
@@ -120,13 +122,17 @@ static func straight_side() -> int:
 
 
 ## Ende der Häuserreihe auf der Bücherei-Seite (x): Dort steht quer ein Haus, und die Straße
-## biegt davor ab. Am geraden Ende liegt dieser Knick straight_street_length weiter draußen.
+## biegt davor ab. Am geraden Ende liegt dieser Knick straight_street_length hinter der Grenze.
 static func east_end_x() -> float:
-	return neighbor_row_end_x() + (GameConfig.straight_street_length if is_straight(1) else 0.0)
+	if is_straight(1):
+		return straight_bound_x() + GameConfig.straight_street_length
+	return neighbor_row_end_x()
 
 
 static func west_end_x() -> float:
-	return alley_row_end_x() - (GameConfig.straight_street_length if is_straight(-1) else 0.0)
+	if is_straight(-1):
+		return straight_bound_x() - GameConfig.straight_street_length
+	return alley_row_end_x()
 
 
 ## Fahrbahn der Seitenstraßen: von - bis (x). Außen läuft der Gehweg weiter.
@@ -146,15 +152,23 @@ static func opposite_row() -> Vector2:
 		east_road().x - GameConfig.opposite_sidewalk_width)
 
 
-## Hier enden die Seitenstraßen (quer steht ein Haus) und so weit darf man hinein (z).
-static func side_street_end_z() -> float:
+## Hier endet die Seitenstraße einer Seite (quer stehen Häuser) (z). side: 1 = Osten, -1 = Westen.
+static func side_street_end_z(side: int) -> float:
+	if is_straight(side):
+		return opposite_front_z() - GameConfig.straight_side_street_length
 	return opposite_front_z() - GameConfig.side_street_length
 
 
+## So weit darf man in die abbiegende Seitenstraße hinein (z).
 static func side_street_limit_z() -> float:
 	return far_curb_z() - GameConfig.side_street_walkable
 
 
+## Die tiefere der beiden Seitenstraßen endet hier (z) – für Boden und Kollision.
+static func deepest_end_z() -> float:
+	return minf(side_street_end_z(1), side_street_end_z(-1))
+
+
 ## Vorderseite des Torhauses am Ende der abbiegenden Seitenstraße (z).
 static func gatehouse_front_z() -> float:
-	return side_street_end_z()
+	return side_street_end_z(-straight_side())
