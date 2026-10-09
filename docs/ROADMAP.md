@@ -28,6 +28,7 @@
 | 4a  | Eckladen-Grundriss, feste Theke und Rückgabekasten | fertig |
 | 4b  | Reparatur Eckladen (Schräge, Fassade, Fenster, Vorplatz, Licht) | fertig |
 | 4c  | Eckladen sauber nachbessern (Gehrung, Gehweg, Obergeschoss) | fertig |
+| 4d  | Straße, Gasse, Platz und Eingangstreppe  | in Arbeit     |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -497,6 +498,18 @@ festen Blickwinkeln geprüft (Godot ohne Bildschirm gestartet).
       Deckenstreifen in der Fassade zu sehen ist; die Decke im Laden bleibt, wie sie ist
 - [x] Glatte Schattenkanten: Die „breite Sonnenscheibe“ (`light_angular_distance`) ist aus; der
       normale weiche Filter glättet die Kanten und ist günstiger zu berechnen
+
+### Etappe 4d – Straße, Gasse, Platz und Eingangstreppe
+Leitgedanke: Die Bücherei bekommt ihre Umgebung (Straße, Häuserreihen, Gasse, kleiner Platz),
+liegt erhöht über ein paar Stufen, und zwei Kleinigkeiten im Laden werden besser.
+- [ ] Bodenleiste an der schrägen Eingangswand (links und rechts der Tür)
+- [ ] Tiefere innere Fensterbänke (Wert in GameConfig), Deko und Bücher passen darauf
+- [ ] Laden etwa 0,5 m über dem Gehweg, Podest mit umlaufenden Stufen vor der Tür, Sockel
+- [ ] Einspurige Straße mit Gehwegen, Enden verschwinden hinter Häusern, Start- und
+      Endpunkte für späteren Verkehr; gegenüber eine Häuserreihe als Kulisse
+- [ ] Bücherei-Seite: Haus, Haus, Bücherei, Gasse, Haus, Haus; Häuser hinter der Gasse
+      zurückversetzt, davor ein kleiner gepflasterter Platz; Gasse mit austauschbarem Ende
+- [ ] Leistung geprüft (alle drei Grafikstufen), Selbstkontrolle mit Testbildern
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
