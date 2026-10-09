@@ -27,6 +27,7 @@
 | 4   | Außenwelt                                | in Arbeit     |
 | 4a  | Eckladen-Grundriss, feste Theke und Rückgabekasten | fertig |
 | 4b  | Reparatur Eckladen (Schräge, Fassade, Fenster, Vorplatz, Licht) | fertig |
+| 4c  | Eckladen sauber nachbessern           | in Arbeit     |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -467,6 +468,17 @@ Leitgedanke: die Fehler aus 4a an der neuen Raumform sauber beheben, sonst nicht
       Eingangswand; man tritt bequem hinaus und wieder hinein
 - [x] „Deckenlicht ohne Lampe“ entfernt: das war ein verstecktes Hilfslicht (FillLight) knapp
       unter der Decke; der Raum wird jetzt vom Umgebungslicht und vom Fensterlicht erhellt
+
+### Etappe 4c – Eckladen sauber nachbessern
+Leitgedanke: die restlichen Fehler am Eckladen beheben und das Haus von außen vollständig
+machen (mit Obergeschoss), sonst nichts am Spiel ändern. Diesmal mit Testbildern geprüft.
+- [ ] Linkes Fenster von innen durchsichtig; alle Öffnungen (Fenster, Tür, Rückgabekasten)
+      geprüft: Wandloch, streichbare Innenfläche und Rahmen liegen genau übereinander
+- [ ] Schräge Wand auf Gehrung: keine vorstehenden Kanten an den Ecken, innen und außen bündig
+- [ ] Zacken an Dachkante und Vorplatz entfernt
+- [ ] Gehweg ohne Löcher: bündig am Haus, auf gleicher Höhe, nirgends hinunterfallen
+- [ ] Obergeschoss als geschlossene Außenhülle mit Fenster-Platzhaltern und schlichtem Dach
+      (Anzahl und Höhe in GameConfig, vorerst nicht betretbar)
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
