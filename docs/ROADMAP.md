@@ -27,7 +27,7 @@
 | 4   | Außenwelt                                | in Arbeit     |
 | 4a  | Eckladen-Grundriss, feste Theke und Rückgabekasten | fertig |
 | 4b  | Reparatur Eckladen (Schräge, Fassade, Fenster, Vorplatz, Licht) | fertig |
-| 4c  | Eckladen sauber nachbessern           | in Arbeit     |
+| 4c  | Eckladen sauber nachbessern (Gehrung, Gehweg, Obergeschoss) | fertig |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -471,14 +471,32 @@ Leitgedanke: die Fehler aus 4a an der neuen Raumform sauber beheben, sonst nicht
 
 ### Etappe 4c – Eckladen sauber nachbessern
 Leitgedanke: die restlichen Fehler am Eckladen beheben und das Haus von außen vollständig
-machen (mit Obergeschoss), sonst nichts am Spiel ändern. Diesmal mit Testbildern geprüft.
-- [ ] Linkes Fenster von innen durchsichtig; alle Öffnungen (Fenster, Tür, Rückgabekasten)
-      geprüft: Wandloch, streichbare Innenfläche und Rahmen liegen genau übereinander
-- [ ] Schräge Wand auf Gehrung: keine vorstehenden Kanten an den Ecken, innen und außen bündig
-- [ ] Zacken an Dachkante und Vorplatz entfernt
-- [ ] Gehweg ohne Löcher: bündig am Haus, auf gleicher Höhe, nirgends hinunterfallen
-- [ ] Obergeschoss als geschlossene Außenhülle mit Fenster-Platzhaltern und schlichtem Dach
-      (Anzahl und Höhe in GameConfig, vorerst nicht betretbar)
+machen (mit Obergeschoss), sonst nichts am Spiel ändern. Diesmal vorab mit Testbildern aus
+festen Blickwinkeln geprüft (Godot ohne Bildschirm gestartet).
+- [x] Linkes Fenster von innen durchsichtig: Die streichbare Innenfläche der linken Wand hatte
+      keine Aussparung (`openings`) und lag vor dem Fenster. Alle Öffnungen geprüft: Wandloch,
+      Innenfläche und Rahmen liegen genau übereinander; der Türrahmen steckte ganz in der Wand
+      und ist jetzt von beiden Seiten sichtbar; der Rückgabekasten braucht kein Loch (er sitzt
+      innen und außen auf der Wand)
+- [x] Schräge Wand auf Gehrung: Vordere, linke und schräge Wand sind hochgezogene Grundrisse
+      (Trapeze, CSGPolygon3D) statt gerader Quader; vorher ragte die schräge Wand an beiden
+      Enden 15 cm über. Boden- und Deckenplatte enden genau an der Außenkante
+- [x] Zacken entfernt: Boden- und Deckenbelag werden genau an der Schräge abgeschnitten
+      (`PaintableGrid`); vorher ragten Ecken der Belagfelder als Dreiecke durch die Wand
+      (Deckenbelag an der Dachkante, Bodenbelag an der Tür)
+- [x] Gehweg ohne Löcher: eine einzige Gehwegfläche (vor dem Haus, vor der Schräge, links neben
+      dem Haus) auf Höhe des Ladenbodens, bündig an der Hauswand; Bordstein und unsichtbare
+      Wand hinten links. Die alte, zu kurze Vorplatz-Platte ist entfernt. Mit Teststrahlen
+      geprüft: an keinem von 42.200 Punkten (5-cm-Raster) fehlt fester Boden
+- [x] Obergeschoss als geschlossene Außenhülle mit demselben Grundriss inklusive Schräge,
+      Fenster-Platzhaltern (`scenes/objects/upper_window.tscn`) und schlichtem Walmdach
+      (`scripts/rooms/upper_floors.gd`, Knoten „UpperFloors“ in der Hauptszene); Anzahl und Höhe
+      in GameConfig (`upper_floor_count` = 1, `upper_floor_height` = 3,0 m), vorerst nicht
+      betretbar, jedes Geschoss ein eigener Knoten für das spätere Freischalten. Die
+      Außenwände des Ladens reichen bis zur Oberkante der Deckenplatte, damit kein heller
+      Deckenstreifen in der Fassade zu sehen ist; die Decke im Laden bleibt, wie sie ist
+- [x] Glatte Schattenkanten: Die „breite Sonnenscheibe“ (`light_angular_distance`) ist aus; der
+      normale weiche Filter glättet die Kanten und ist günstiger zu berechnen
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke

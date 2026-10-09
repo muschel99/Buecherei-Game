@@ -604,12 +604,27 @@ Zwei Zustände:
   Eckposition ist bewusst gewählt: Der Laden soll sich später nach hinten und oben erweitern
   lassen, ohne dass Nachbarhäuser im Weg stehen.
   Die Schräge verläuft durchgehend vom Boden bis zur Decke: auch Boden und Decke sind in der
-  Ecke abgeschrägt (seit Etappe 4b), sodass der Raum ein sauberes Fünfeck ist. Von außen ist
-  der Laden eine geschlossene, flache Hülle in einer Ladenhöhe (spätere Etagen bleiben möglich).
+  Ecke abgeschrägt (seit Etappe 4b), sodass der Raum ein sauberes Fünfeck ist. Boden- und
+  Deckenbelag enden genau an der Schräge (seit Etappe 4c; vorher ragten Ecken der Belagfelder
+  als kleine Zacken durch die Wand nach draußen).
+- Die vordere, die linke und die schräge Wand stoßen auf Gehrung zusammen wie bei einem
+  Bilderrahmen (seit Etappe 4c): Von außen ist die Hauswand eine durchgehende, glatte Fläche
+  mit zwei sauberen Knicken, ohne vorstehende Kanten – über die volle Hausfläche.
+- **Obergeschoss (seit Etappe 4c):** Von außen sieht das Haus wie ein richtiges englisches
+  Eckhaus aus: Über dem Laden steht ein Obergeschoss mit derselben Grundfläche (inklusive der
+  Schräge), mit einfachen Fenster-Platzhaltern (über der Tür eins, vorn zwei, links drei) und
+  einem schlichten Walmdach mit weißer Traufkante, das rundherum gleich geneigt ist und oben
+  flach endet. Die Fassade ist flach und glatt; das Aussehen gestalte ich später. Betreten
+  kann man vorerst nur das Erdgeschoss – das Obergeschoss ist eine geschlossene Hülle. Es ist
+  so gebaut, dass es später als freischaltbare Etage ausgebaut werden kann. Anzahl und Höhe
+  der Obergeschosse stehen in GameConfig (`upper_floor_count` = 1, `upper_floor_height` = 3,0 m).
+  Die Decke im Laden bleibt, wie sie ist.
 - In der unteren (vorderen) und in der linken Wand sitzt je ein großes englisches
   Sprossenfenster (0,8 bis 2,6 m): ein Gitter aus vielen kleinen Scheiben, als einfacher
   Platzhalter mit angedeuteter Form. Der Rahmen steht auf beiden Seiten etwas vor der Wand und
-  ist von innen und außen sichtbar; durch das Glas schaut man von beiden Seiten hindurch.
+  ist von innen und außen sichtbar; durch das Glas schaut man von beiden Seiten hindurch (seit
+  Etappe 4c auch beim linken Fenster von innen). Auch der Türrahmen ist seit Etappe 4c von
+  beiden Seiten zu sehen (vorher steckte er ganz in der Wand).
 - Die Eingangstür ist eine klassische Ladentür mit Sprossenfenster im oberen Teil, verglasten
   Seitenteilen und einem Oberlicht rundherum. Fenster und Tür sind eigene, leicht
   austauschbare Platzhalter-Szenen (`scenes/objects/shop_window.tscn`, `shop_door.tscn`).
@@ -621,11 +636,13 @@ Zwei Zustände:
   hängt, lässt sich erst bei geschlossener Tür verschieben oder wegräumen.
 - Der Schwenkbereich der Tür bleibt frei: Dort lassen sich weder Möbel noch Bücher abstellen
   (Vorschau rot, wie gewohnt).
-- Vor der schrägen Eingangstür liegt ein sauberer, begehbarer Vorplatz (Platzhalter), bündig
-  mit dem Innenboden – man tritt geradeaus hinaus und wieder hinein. Daran schließt ein Stück
-  Gehweg mit Bordstein an. Rechts steht noch ein Nachbarhaus; links (vor dem neuen Fenster) ist
-  Platz geschaffen – die Gestaltung der Gasse rund um die Ecke folgt in einem späteren
-  4er-Schritt. Hier kommen die Lieferkartons an.
+- Draußen liegt ein lückenloser Gehweg (seit Etappe 4c eine einzige Fläche): vor dem Haus,
+  vor der schrägen Eingangstür und links neben dem Haus (vor dem linken Fenster). Er liegt auf
+  derselben Höhe wie der Ladenboden – ohne Stufe tritt man hinaus und wieder hinein – und endet
+  genau an der Hauswand: keine Spalten, keine Löcher, nirgends kann man hinunterfallen. Vorn
+  und links hinten schließt ein Bordstein ab. Rechts steht noch ein Nachbarhaus; die
+  Gestaltung der Gasse rund um die Ecke folgt in einem späteren 4er-Schritt. Hier kommen die
+  Lieferkartons an.
 - **Speichern und alte Spielstände:** Grundriss, Theken-Position und -Stil, der Rückgabekasten
   und die drei Start-Objekte werden wie gewohnt gespeichert. Weil sich die Raumform mit
   Etappe 4a grundlegend geändert hat, wurde die Speicher-Version erhöht (`SaveManager`, jetzt
@@ -649,6 +666,9 @@ Zwei Zustände:
 - Fensterlicht: Die Sonne verteilt ihre Schatten auf Stufen (Kaskaden) – nah fein, fern gröber.
   Die Übergänge werden weich überblendet, damit keine Linie im Fensterlicht entsteht.
   Niedrig nutzt 2 Stufen, Mittel und Hoch 4. Schattenweite der Sonne: 20 m (GameConfig).
+  Die Schattenkanten der Sonne macht ein einfacher weicher Filter glatt (seit Etappe 4c). Ein
+  aufwendigeres Verfahren mit „breiter Sonnenscheibe“ ist bewusst aus: Es kostete mehr Leistung
+  und zeigte an langen geraden Kanten (Dachkante, Fenster) gezackte Treppenlinien.
 - Im Pausenmenü läuft das Spiel mit höchstens 30 Bildern pro Sekunde, damit der Rechner ruht.
 - Bilder pro Sekunde anzeigen: in den Einstellungen oder mit F3.
 - Hinweise (Tastensymbole unter der Bildmitte): Aus, Nur Symbole oder Symbol mit Wort
