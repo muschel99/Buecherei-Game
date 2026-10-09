@@ -25,6 +25,25 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
   und Sounds leicht austauschbar sind (siehe `docs/ASSET_GUIDE.md`).
 - **Git:** Nach jedem funktionierenden Schritt ein Commit mit verständlicher deutscher Nachricht.
 - **Fehlermeldungen:** Erst kurz erklären, was die Meldung bedeutet, dann beheben.
+- **Screenshots und Selbstkontrolle (feste Regel seit Etappe 4f):** Bei jeder sichtbaren
+  Änderung startet Claude Godot ohne Bildschirm, macht Testbilder aus festen Blickwinkeln,
+  schaut sie selbst an und bessert nach, bis es stimmt – erst dann meldet Claude „fertig“.
+  Die wichtigsten Bilder schickt Claude am Ende mit (SendUserFile). So geht's:
+  1. Einmal je Chat: `tools/setup_godot.sh` (lädt Godot 4.6 nach /tmp/godot, verlinkt es als
+     `godot`, installiert Software-Vulkan „lavapipe“, importiert das Projekt; ca. 1 Minute).
+  2. Bilder: `tools/screenshots.sh <gruppe>` (startet Godot über `xvfb-run` mit Forward+ und
+     lädt `scenes/tools/screenshot_tour.tscn`; etwa 10–15 s je Bild). Gruppen und Blickpunkte:
+     `tools/screenshots.sh --list`. Weitere Angaben: `--only=a,b` (nur diese Blickpunkte),
+     `--cam=x,y,z:tx,ty,tz` (freier Blickpunkt: Kamera : Ziel), `--scene=res://…` (andere
+     Szene, z. B. ein einzelnes Haus), `--tag=vorher` (Zusatz im Dateinamen für
+     Vorher/Nachher), `--hud` (Oberfläche mit aufnehmen), `--fov=…`.
+  3. Die Bilder landen in `screenshots/` im Projekt (nicht in Git), Name
+     `<gruppe>-<blickpunkt>[-tag].png`; ansehen mit dem Read-Werkzeug.
+  4. Neue feste Blickwinkel: `scripts/tools/screenshot_views.gd` (je Gruppe eine Funktion,
+     Lage aus StreetLayout, Augenhöhe `eye()`), dann in `all_sets()`/`get_set()` eintragen.
+  Bei Grenzen und Wegen zusätzlich prüfen: Lauftest mit Physik (Spielfigur per
+  `move_and_slide` auf die Grenze zulaufen lassen) und bei Kulissen Sichtstrahlen in der
+  Draufsicht (trifft jeder Blick ein Haus?).
 
 ## Projektstruktur
 ```
@@ -76,7 +95,10 @@ assets/
   audio/sfx/       Geräusche
   ui/              Oberflächen-Theme, icons/ = Symbole (Farbroller, Teppich)
 docs/              Dokumentation
+tools/             Shell-Skripte für Claude im Browser-Container (setup_godot.sh, screenshots.sh)
+screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
+(Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
 
 ## Technische Konventionen
 - Physik-Ebenen: 1 = `world`, 2 = `interactable`, 3 = `player`, 4 = `furniture`,
@@ -174,13 +196,21 @@ docs/              Dokumentation
   `StreetLayout` (statische Funktionen, z. B. `ground_y()`, `curb_z()`, `recess_z()`,
   `east_end_x()`, `straight_bound_x()`, `is_straight(seite)`), Maße nur in GameConfig. Ein
   Straßenende biegt ab, das andere läuft geradeaus (`GameConfig.straight_street_end`, Grenze
-  quer bei `straight_bound_x()`, Knick nach `straight_street_length`). `EntranceSteps` (Podest
+  quer bei `straight_bound_x()` = `straight_bound_offset` hinter den festen Nachbarn, Knick
+  `straight_street_length` hinter der Grenze, Seitenstraße dort `straight_side_street_length`
+  lang – so gewählt, dass man von der Grenze aus nie ihr Ende sieht).
+  Das abbiegende Ende (seit Etappe 4f) führt durch ein **Torhaus** (`GatehouseFacade`, Haustyp
+  `GameConfig.gatehouse_type`, Kollision nur die Pfeiler): Die Straße läuft entlang
+  `StreetLayout.gate_path()` durch den Bogen und in einer Kurve weiter (Werte `gate_…` in
+  GameConfig, seitlicher Versatz `gate_offset`, positiv = Innenseite der Kurve); die Grenze
+  liegt im Bogen (`Street.GATE_BOUND_INSIDE`), Häuser entlang der Kurve baut
+  `HousesLayout._gate_street` (Gruppe `GateStreet`). `EntranceSteps` (Podest
   + Stufen, nie breiter als die schräge Wand, unsichtbare Rampe als Kollision) liegt auf
   Ladenboden-Höhe. Kulisse baut `WorldMesh` (Vierecke/Quader mit Vertex-Farben); Kulissen-
   Szenen nutzen statt des Platzhalters ein Kind „Model“, wenn vorhanden. Draußen wird nichts
   gespeichert.
 - **Häuser (seit Etappe 4e):** Jedes Haus ist ein fester Knoten in `scenes/world/houses.tscn`
-  (Gruppen LibraryRow, Opposite, StraightEnd, SideStreets), Instanz eines Haustyps
+  (Gruppen LibraryRow, Opposite, StraightEnd, SideStreets, GateStreet), Instanz eines Haustyps
   `scenes/world/houses/<id>.tscn` (Wurzel `HouseFacade`, @tool, feste Maße width/depth/
   eaves_height; je Haus nur Farben, `casts_shadow`, `solid`). Neu erzeugen nur über
   `scenes/world/tools/generate_houses.tscn` (Planung `HousesLayout`, Typen-Maße `HouseTypes`;
