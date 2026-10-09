@@ -222,10 +222,3 @@ shape = SubResource("BoxShape3D_entrance")
 
 [node name="WindowDust" parent="." instance=ExtResource("14_dust")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 1.2, -3.5)
-
-[node name="FillLight" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 2.7, 2)
-light_color = Color(1, 0.8, 0.6, 1)
-light_energy = 0.55
-light_specular = 0.0
-omni_range = 7.5

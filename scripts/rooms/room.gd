@@ -78,7 +78,7 @@ func _ready() -> void:
 	layout_changed.connect(SaveManager.request_save)
 
 
-## Passt Wände, Decke, Deckenbelag und Raumlicht an die Raumhöhe an.
+## Passt Wände, Decke und Deckenbelag an die Raumhöhe an.
 ## (Die Wandabschnitte zum Streichen lesen die Höhe selbst, siehe PaintableWall.)
 func _apply_room_height(height: float) -> void:
 	for wall: CSGBox3D in [$Structure/WallRight, $Structure/WallBack, $Structure/WallFront/Wall,
@@ -88,7 +88,6 @@ func _apply_room_height(height: float) -> void:
 	var ceiling: CSGBox3D = $Structure/Ceiling
 	ceiling.position.y = height + ceiling.size.y / 2.0
 	($CeilingCovering as Node3D).position.y = height
-	($FillLight as Node3D).position.y = height - 0.5
 
 
 # --- Möbel ---
