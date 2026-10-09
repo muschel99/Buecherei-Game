@@ -29,6 +29,7 @@
 | 4b  | Reparatur Eckladen (Schräge, Fassade, Fenster, Vorplatz, Licht) | fertig |
 | 4c  | Eckladen sauber nachbessern (Gehrung, Gehweg, Obergeschoss) | fertig |
 | 4d  | Straße, Gasse, Platz und Eingangstreppe  | fertig        |
+| 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | in Arbeit |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -525,6 +526,18 @@ liegt erhöht über ein paar Stufen, und zwei Kleinigkeiten im Laden werden bess
       und seitlich, Fensterbänke, Bodenleiste) und Lauftests an allen Grenzen
 - [x] Nachtrag: Gasse und Platz durchgehend mit den großen Gehwegplatten (keine kleinen
       Pflastersteine, kein eigener Gehweg in der Gasse); nur die Straße bleibt glatt
+
+### Etappe 4e – Breitere Straße, ein gerades Straßenende und austauschbare Häuser
+Leitgedanke: Die Straße wird großzügiger, ein Ende läuft geradeaus weiter, und jedes Haus
+lässt sich einzeln gegen ein eigenes Modell tauschen – mit Vorlagen in echter Größe.
+- [ ] Gehwege etwa 30 % breiter, Fahrbahn etwa 50 % breiter; alles passt sich an (mit
+      Teststrahlen geprüft: keine Überlappung, nirgends fehlt Boden)
+- [ ] Nur noch ein Ende biegt ab, das andere läuft geradeaus weiter (Schalter in GameConfig);
+      Grenze quer über die Straße, dahinter sichtbar weitere Häuser bis zu einem Knick
+- [ ] Jedes Haus ein eigener Knoten in `scenes/world/houses.tscn` (im Editor sichtbar),
+      Haustypen als eigene Szenen in `scenes/world/houses/`; Wohnhaus, Pub und Modegeschäft
+- [ ] Vorlagen-Modelle (.glb, echte Größe) für alle Haustypen und Möbel
+- [ ] Anleitung „Außenwelt“ in docs/ASSET_GUIDE.md
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
