@@ -518,11 +518,13 @@ liegt erhöht über ein paar Stufen, und zwei Kleinigkeiten im Laden werden bess
       Verkehr (`TrafficPoints`); gegenüber englische Reihenhäuser (`HouseFacade`, `Houses`)
 - [x] Bücherei-Seite: Haus, Haus, Bücherei, Gasse, Haus, Haus; Häuser hinter der Gasse
       zurückversetzt, davor ein kleiner gepflasterter Platz (`Plaza`); Gasse (`Alley`) mit
-      Gehweg, Hofmauern und austauschbarem Ende (`AlleyEnd`). Lage aller Teile: `StreetLayout`,
+      Hofmauern und austauschbarem Ende (`AlleyEnd`). Lage aller Teile: `StreetLayout`,
       alle Maße in GameConfig
 - [x] Leistung geprüft (alle drei Grafikstufen: rund 20–30 Zeichenaufrufe mehr), Selbstkontrolle
       mit Testbildern aus festen Blickwinkeln (Straße, Häuserreihe, Platz, Gasse, Treppe vorn
       und seitlich, Fensterbänke, Bodenleiste) und Lauftests an allen Grenzen
+- [x] Nachtrag: Gasse und Platz durchgehend mit den großen Gehwegplatten (keine kleinen
+      Pflastersteine, kein eigener Gehweg in der Gasse); nur die Straße bleibt glatt
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke

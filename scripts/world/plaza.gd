@@ -3,10 +3,10 @@ extends Node3D
 ## Der kleine gepflasterte Platz vor der abgeschrägten Ecke und dem Eingang der Gasse
 ## (seit Etappe 4d). Er entsteht, weil die Häuser hinter der Gasse zurückversetzt stehen:
 ## von der Schräge bis zum Ende der Häuserreihe, zwischen Gehweg und Hausfronten.
-## Bewusst leer und kompakt. Liegt (wie alles unter "Outside") auf Gehweg-Höhe.
+## Bewusst leer und kompakt; dieselben großen Platten wie auf dem Gehweg. Liegt (wie alles unter "Outside") auf Gehweg-Höhe.
 ## Laufen: Die Bodenkollision baut die Straße (Street) für alles draußen.
 
-@export var material: Material = preload("res://assets/materials/plaza_paving.tres")
+@export var material: Material = preload("res://assets/materials/sidewalk.tres")
 
 
 func _ready() -> void:

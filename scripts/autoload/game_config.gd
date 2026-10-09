@@ -150,8 +150,6 @@ var side_street_walkable: float = 2.0
 ## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
 var alley_width: float = 2.8
 var alley_depth: float = 11.0
-## Schmaler Gehweg in der Gasse (an der Bücherei-Seite).
-var alley_sidewalk_width: float = 0.8
 
 ## Breiten der Nachbarhäuser auf der Bücherei-Seite, von der Bücherei nach außen gezählt:
 ## links der Bücherei (von der Straße aus gesehen) und hinter der Gasse. Die Häuser hinter der

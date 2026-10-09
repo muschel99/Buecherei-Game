@@ -664,8 +664,8 @@ Zwei Zustände:
   ihrer Vorderwand; die beiden hinter der Gasse sind zurückversetzt – ihre Vorderkante liegt
   genau dort, wo die schräge Wand auf die Seitenwand an der Gasse trifft. Davor entsteht ein
   kleiner gepflasterter Platz vor der abgeschrägten Ecke und dem Gasseneingang; er bleibt leer
-  und kompakt. Die Gasse ist schmal (2,8 m) mit einem schmalen Gehweg an der Bücherei-Seite und
-  etwa 11 m begehbar; an ihrem Ende steht als austauschbarer Platzhalter eine Mauer mit einem
+  und kompakt. Gehwege, Platz und Gasse sind durchgehend mit denselben großen Platten belegt
+  (ohne Stufe dazwischen); nur die Straße hat eine glatte Fahrbahn. Die Gasse ist schmal (2,8 m) und etwa 11 m begehbar; an ihrem Ende steht als austauschbarer Platzhalter eine Mauer mit einem
   Holztor, dahinter ein Haus. Hinter der Bücherei begrenzt eine niedrige Hofmauer die Gasse –
   nur ein Platzhalter, damit die Bücherei später nach hinten und oben wachsen kann. Alle
   Nachbarhäuser sind nicht betretbare Platzhalter, ungefähr so hoch wie die Bücherei mit

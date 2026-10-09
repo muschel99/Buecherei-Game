@@ -2,8 +2,9 @@ class_name Alley
 extends Node3D
 ## Die schmale Gasse neben der Bücherei (seit Etappe 4d), an der Seite mit der Schräge
 ## (Seitenwand mit dem Fenster). Sie beginnt am kleinen Platz und führt etwa
-## GameConfig.alley_depth Meter nach hinten; Breite GameConfig.alley_width, an der
-## Bücherei-Seite ein schmaler Gehweg (GameConfig.alley_sidewalk_width).
+## GameConfig.alley_depth Meter nach hinten; Breite GameConfig.alley_width. Sie ist
+## durchgehend mit denselben großen Platten belegt wie Gehweg und Platz (keine Stufe, kein
+## Bordstein) – nur die Straße hat eine glatte Fahrbahn.
 ##
 ## Rechts (Bücherei-Seite) begrenzt sie die Hauswand der Bücherei und dahinter eine niedrige
 ## Hofmauer, links das Nachbarhaus und dahinter ebenfalls eine Hofmauer. Die Hofmauer hinter
@@ -13,15 +14,11 @@ extends Node3D
 ## dahinter kommt man nicht.
 ## Liegt (wie alles unter "Outside") auf Gehweg-Höhe.
 
-## Wie tief die Fahrgasse unter dem Gehweg liegt (nur optisch).
-const LANE_DROP := 0.06
 const YARD_WALL_HEIGHT := 2.2
 const YARD_WALL_THICKNESS := 0.3
 
 @export var end_scene: PackedScene = preload("res://scenes/world/alley_end.tscn")
-@export var lane_material: Material = preload("res://assets/materials/cobblestone.tres")
-@export var sidewalk_material: Material = preload("res://assets/materials/sidewalk.tres")
-@export var curb_material: Material = preload("res://assets/materials/curb_stone.tres")
+@export var paving_material: Material = preload("res://assets/materials/sidewalk.tres")
 @export var wall_material: Material = preload("res://assets/materials/outdoor_colors.tres")
 @export var yard_wall_color: Color = Color(0.52, 0.31, 0.25)
 
@@ -29,22 +26,12 @@ const YARD_WALL_THICKNESS := 0.3
 func _ready() -> void:
 	var library_x := StreetLayout.HOUSE_LEFT
 	var far_x := StreetLayout.alley_far_x()
-	var walk_x := library_x - GameConfig.alley_sidewalk_width
 	var start := StreetLayout.recess_z()
 	var end := StreetLayout.alley_end_z()
-	var lane := WorldMesh.new()
-	var walk := WorldMesh.new()
-	var stone := WorldMesh.new()
-	lane.add_quad(Vector3(far_x, -LANE_DROP, start), Vector3(walk_x, -LANE_DROP, start),
-		Vector3(walk_x, -LANE_DROP, end), Vector3(far_x, -LANE_DROP, end), Vector3.UP, Color.WHITE)
-	walk.add_quad(Vector3(walk_x, 0.0, start), Vector3(library_x, 0.0, start),
-		Vector3(library_x, 0.0, end), Vector3(walk_x, 0.0, end), Vector3.UP, Color.WHITE)
-	# Kanten: Bordstein am Gehweg und kleine Stufe vom Platz in die Gasse
-	stone.add_wall(Vector2(walk_x, start), Vector2(walk_x, end), -LANE_DROP, 0.0, Vector3.LEFT, Color.WHITE)
-	stone.add_wall(Vector2(far_x, start), Vector2(walk_x, start), -LANE_DROP, 0.0, Vector3.FORWARD, Color.WHITE)
-	add_child(lane.make_instance("Lane", lane_material, false))
-	add_child(walk.make_instance("Sidewalk", sidewalk_material, false))
-	add_child(stone.make_instance("Curb", curb_material, false))
+	var paving := WorldMesh.new()
+	paving.add_quad(Vector3(far_x, 0.0, start), Vector3(library_x, 0.0, start),
+		Vector3(library_x, 0.0, end), Vector3(far_x, 0.0, end), Vector3.UP, Color.WHITE)
+	add_child(paving.make_instance("Paving", paving_material, false))
 	_build_yard_walls(library_x, far_x, end)
 	if end_scene:
 		var closing := end_scene.instantiate() as Node3D
