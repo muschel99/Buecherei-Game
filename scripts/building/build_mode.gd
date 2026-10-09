@@ -44,6 +44,9 @@ var _selected_data: FurnitureData = null
 var _selected_surface: SurfaceData = null
 var _moving_item: PlacedFurniture = null
 var _moving_extras: Array[PlacedFurniture] = []
+## Ist das gerade verschobene Möbelstück fest verbaut (z. B. die Theke)? Dann zählt es nie
+## zum Inventar und lässt sich nicht wegräumen.
+var _moving_is_fixed: bool = false
 ## Drehung des Objekts relativ zur Blickrichtung (0 = Vorderseite zeigt zu mir).
 var _rotation_offset: float = 0.0
 var _hovered: PlacedFurniture = null
@@ -231,7 +234,8 @@ func _on_primary_click() -> void:
 				_clear_tool()
 		Tool.MOVE:
 			if _placement_ok:
-				Inventory.take_furniture(_moving_item.data.get_id())  # aus der Hand wieder in den Raum
+				if not _moving_is_fixed:
+					Inventory.take_furniture(_moving_item.data.get_id())  # aus der Hand wieder in den Raum
 				_room.move_furniture(_moving_item, _placement_transform, _placement_support)
 				_flash_status("%s umgestellt." % _moving_item.data.display_name)
 				_finish_move()
@@ -268,7 +272,10 @@ func _stop_looking() -> void:
 ## In der Hand zählt es zum Inventar (die Anzahl steigt um eins).
 func _pick_up(item: PlacedFurniture) -> void:
 	_set_hovered(null)
-	Inventory.add_furniture(item.data.get_id())
+	# Feste Möbel (z. B. die Theke) lassen sich verschieben, kommen dabei aber nie ins Inventar
+	_moving_is_fixed = item.data.is_fixed
+	if not _moving_is_fixed:
+		Inventory.add_furniture(item.data.get_id())
 	_moving_item = item
 	_moving_extras = _room.get_dependents(item)
 	var extras: Array[Dictionary] = []
@@ -306,8 +313,9 @@ func _finish_move() -> void:
 func _cancel_tool() -> void:
 	if _tool == Tool.MOVE:
 		# Zurück an den alten Platz (die Position wurde nicht geändert) – also wieder aus
-		# dem Inventar heraus
-		Inventory.take_furniture(_moving_item.data.get_id())
+		# dem Inventar heraus (feste Möbel lagen nie im Inventar)
+		if not _moving_is_fixed:
+			Inventory.take_furniture(_moving_item.data.get_id())
 		_finish_move()
 	elif _tool != Tool.NONE:
 		_clear_tool()
@@ -317,6 +325,7 @@ func _cancel_tool() -> void:
 func _clear_tool() -> void:
 	_tool = Tool.NONE
 	_paint_held = false
+	_moving_is_fixed = false
 	_set_cursor_icon("")
 	_selected_data = null
 	_selected_surface = null
@@ -338,6 +347,10 @@ func _delete_target() -> void:
 		_clear_tool()
 		_flash_status("%s zurück ins Inventar gelegt." % item_name)
 	elif _tool == Tool.MOVE:
+		# Feste Möbel (z. B. die Theke) lassen sich nicht wegräumen – sie bleiben in der Hand
+		if _moving_is_fixed:
+			_flash_status("%s gehört fest zum Laden – nur verschieben." % _moving_item.data.display_name)
+			return
 		# Das Möbelstück selbst zählt schon zum Inventar (seit dem Aufheben)
 		var item := _moving_item
 		_moving_item = null
@@ -345,6 +358,9 @@ func _delete_target() -> void:
 		_store_in_inventory(item, false)
 		_clear_tool()
 	elif _tool == Tool.NONE and _hovered:
+		if _hovered.data.is_fixed:
+			_flash_status("%s gehört fest zum Laden – nur verschieben." % _hovered.data.display_name)
+			return
 		var item := _hovered
 		_set_hovered(null)
 		_store_in_inventory(item, true)

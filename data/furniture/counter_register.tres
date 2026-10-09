@@ -6,8 +6,10 @@
 script = ExtResource("1_dlqdj")
 id = "counter_register"
 display_name = "Theke mit Kasse"
-description = "Hier werden später Bücher abgestempelt."
+description = "Gehört fest zum Laden. Den Stil wählst du am Tablet in der App „Fassade“."
 price = 300
+is_essential = true
+is_fixed = true
 scene_path = "res://scenes/furniture/counter.tscn"
 footprint = Vector2i(18, 7)
 category = 3
