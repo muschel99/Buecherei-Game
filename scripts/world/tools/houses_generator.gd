@@ -16,7 +16,8 @@ const HEADER := """; Alle Nachbarhäuser (seit Etappe 4e jedes Haus ein eigener 
 ; im Editor anklickbar, verschiebbar und austauschbar. Jedes Haus ist eine Szene aus
 ; scenes/world/houses/ (ein Haustyp). Liegt unter "Outside" (y = 0 = Gehweg).
 ; Gruppen: LibraryRow = Nachbarn der Bücherei, Opposite = gegenüber, StraightEnd = hinter der
-; Grenze am geraden Straßenende, SideStreets = an den Knicks.
+; Grenze am geraden Straßenende, SideStreets = an den Knicks, GateStreet = Torhaus am abbiegenden
+; Ende und die Häuser entlang der Kurve dahinter.
 """
 
 

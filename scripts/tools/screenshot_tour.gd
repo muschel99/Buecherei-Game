@@ -14,6 +14,7 @@ extends Node
 ##   --tag=<wort>       Zusatz im Dateinamen, z. B. "vorher" -> street_end-bound_road-vorher.png
 ##   --fov=<grad>       Bildwinkel (Standard: wie die Spielfigur)
 ##   --hud              Oberfläche (HUD) mit aufnehmen
+##   --scene=res://…    andere Szene statt der Hauptszene laden (z. B. ein einzelnes Haus)
 ##   --list             nur die Gruppen und Blickpunkte auflisten
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
 
@@ -34,7 +35,7 @@ func _ready() -> void:
 			print("%s: %s" % [set_name, ", ".join(ScreenshotViews.get_set(set_name).keys())])
 		get_tree().quit()
 		return
-	var main: Node = (load(MAIN_SCENE) as PackedScene).instantiate()
+	var main: Node = (load(String(_args.get("scene", MAIN_SCENE))) as PackedScene).instantiate()
 	add_child(main)
 	_freeze_player(main)
 	_camera = Camera3D.new()

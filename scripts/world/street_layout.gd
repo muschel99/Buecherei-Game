@@ -12,6 +12,7 @@ extends RefCounted
 ##     ----- Platz ---------- ⟋
 ##     ========= Gehweg ===============================
 ##     ========= Fahrbahn (ein Ende biegt ab, das andere läuft geradeaus weiter) ===
+##     (am abbiegenden Ende führt die Seitenstraße durch den Bogen eines Torhauses)
 ##     ========= Gehweg gegenüber ======================
 ##           Reihenhäuser gegenüber
 
@@ -159,16 +160,89 @@ static func side_street_end_z(side: int) -> float:
 	return opposite_front_z() - GameConfig.side_street_length
 
 
-## So weit darf man in die abbiegende Seitenstraße hinein (z).
-static func side_street_limit_z() -> float:
-	return far_curb_z() - GameConfig.side_street_walkable
-
-
 ## Die tiefere der beiden Seitenstraßen endet hier (z) – für Boden und Kollision.
 static func deepest_end_z() -> float:
 	return minf(side_street_end_z(1), side_street_end_z(-1))
 
 
+## --- Abbiegendes Ende mit Torhaus (seit Etappe 4f) ---
+
+## Seite des abbiegenden Endes: 1 = Osten, -1 = Westen.
+static func turning_side() -> int:
+	return -straight_side()
+
+
+## Fahrbahn der abbiegenden Seitenstraße (x von – bis) und ihre Mitte.
+static func turning_road() -> Vector2:
+	return east_road() if turning_side() > 0 else west_road()
+
+
+static func turning_road_center_x() -> float:
+	var road := turning_road()
+	return (road.x + road.y) / 2.0
+
+
 ## Vorderseite des Torhauses am Ende der abbiegenden Seitenstraße (z).
 static func gatehouse_front_z() -> float:
-	return side_street_end_z(-straight_side())
+	return side_street_end_z(turning_side())
+
+
+## Lichte Breite des Bogens und Tiefe der Durchfahrt (aus der Szene des Torhauses).
+static func gate_passage_width() -> float:
+	return float(HouseTypes.value_of(GameConfig.gatehouse_type, "passage_width", 6.5))
+
+
+static func gate_depth() -> float:
+	return HouseTypes.depth_of(GameConfig.gatehouse_type)
+
+
+## In diese Richtung (x) biegt die Straße hinter dem Torhaus ab: zur Stadtmitte hin.
+static func gate_turn_sign() -> float:
+	return -float(turning_side())
+
+
+## Mittellinie der Straße ab der Vorderseite des Torhauses: durch den Bogen, ein Stück
+## geradeaus, in einer Kurve zur Stadtmitte hin und noch ein Stück weiter. Liste von
+## { "pos": Vector2 (x, z), "dir": Vector2 (Fahrtrichtung), "s": Meter ab dem Torhaus }.
+static func gate_path(step: float = 0.5) -> Array[Dictionary]:
+	var points: Array[Dictionary] = []
+	var pos := Vector2(turning_road_center_x(), gatehouse_front_z())
+	var dir := Vector2(0.0, -1.0)
+	var radius := GameConfig.gate_curve_radius
+	var turn := gate_turn_sign() / radius  # Drehung je Meter in der Kurve
+	# Abschnitte: Durchfahrt, gerade bis zur Kurve, Kurve, gerade bis zum Ende – jeder mit
+	# eigenen Punkten, damit genau am Ende der Durchfahrt und an der Kurve ein Punkt liegt
+	var parts := [
+		[gate_depth(), 0.0],
+		[GameConfig.gate_road_before_curve, 0.0],
+		[deg_to_rad(GameConfig.gate_curve_angle) * radius, turn],
+		[GameConfig.gate_road_after_curve, 0.0],
+	]
+	var s := 0.0
+	points.append({"pos": pos, "dir": dir, "s": s})
+	for part in parts:
+		var length: float = part[0]
+		if length <= 0.001:
+			continue
+		var count := ceili(length / step)
+		var ds := length / count
+		for i in count:
+			var angle: float = part[1] * ds
+			# Sehne in der mittleren Richtung des Schritts (genau auf dem Kreisbogen)
+			var chord := ds if absf(angle) < 0.0001 else 2.0 * sin(angle / 2.0) / (angle / ds)
+			pos += dir.rotated(angle / 2.0) * chord
+			dir = dir.rotated(angle)
+			s += ds
+			points.append({"pos": pos, "dir": dir, "s": s})
+	return points
+
+
+## Seitlicher Versatz von der Mittellinie: positiv = zur Innenseite der Kurve.
+static func gate_offset(point: Dictionary, offset: float) -> Vector2:
+	var dir: Vector2 = point.dir
+	return point.pos + Vector2(-dir.y, dir.x) * offset * gate_turn_sign()
+
+
+## Abstand der Hausfronten hinter dem Torhaus von der Straßenmitte.
+static func gate_facade_offset() -> float:
+	return GameConfig.street_width / 2.0 + GameConfig.gate_sidewalk_width

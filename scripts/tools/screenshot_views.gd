@@ -74,30 +74,35 @@ static func straight_end() -> Dictionary:
 	return views
 
 
-## Am abbiegenden Ende: Einblick in die Seitenstraße und auf das Torhaus mit Durchfahrt.
+## Am abbiegenden Ende: Einblick in die Seitenstraße und auf das Torhaus mit Durchfahrt; direkt
+## am Bogen (so nah, wie die Spielfigur kommt) mittig, an beiden Seiten und schräg durch den
+## Bogen.
 static func turning_end() -> Dictionary:
-	var side := -float(StreetLayout.straight_side())
-	var road := StreetLayout.east_road() if side > 0.0 else StreetLayout.west_road()
-	var road_mid := (road.x + road.y) / 2.0
+	var side := float(StreetLayout.turning_side())
+	var road := StreetLayout.turning_road()
+	var road_mid := StreetLayout.turning_road_center_x()
 	var curb := StreetLayout.curb_z()
 	var far := StreetLayout.far_curb_z()
-	var limit := StreetLayout.side_street_limit_z()
 	var gate := StreetLayout.gatehouse_front_z()
+	var half := StreetLayout.gate_passage_width() / 2.0
+	var at := gate - 0.15
 	var y := eye()
 	return {
 		"from_street": look(road_mid - side * 9.0, (curb + far) / 2.0, side, -0.6),
 		"corner": look(road_mid - side * 3.0, curb + 1.0, side * 0.6, -1.0),
 		"side_road": look(road_mid, far - 1.0, 0.0, -1.0),
-		"at_limit_road": look(road_mid, limit + 0.62, 0.0, -1.0),
-		"at_limit_left": look(road.x - 1.2, limit + 0.62, 0.15, -1.0),
-		"at_limit_right": look(road.y + 1.2, limit + 0.62, -0.15, -1.0),
-		"at_limit_up": look(road_mid, limit + 0.62, 0.0, -1.0, 0.5),
-		"gate_close": {"pos": Vector3(road_mid - side * 6.0, y + 1.5, gate + 5.0),
-			"target": Vector3(road_mid, y + 1.0, gate)},
+		"side_road_walk": look(road.x - 1.3, far - 0.5, 0.25, -1.0),
+		"before_gate": look(road_mid + side * 0.8, gate + 5.0, 0.0, -1.0, 0.12),
+		"at_gate": look(road_mid, at, 0.0, -1.0),
+		"at_gate_left": look(road_mid - half + 0.35, at, 0.55, -1.0),
+		"at_gate_right": look(road_mid + half - 0.35, at, -0.55, -1.0),
+		"at_gate_up": look(road_mid, at, 0.0, -1.0, 0.7),
+		"gate_close": {"pos": Vector3(road_mid - side * 4.0, y + 0.3, gate + 7.5),
+			"target": Vector3(road_mid, y + 2.5, gate)},
 		"aerial": {"pos": Vector3(road_mid - side * 14.0, 24.0, gate + 14.0),
 			"target": Vector3(road_mid + side * 2.0, 0.0, gate - 4.0)},
-		"aerial_behind": {"pos": Vector3(road_mid + side * 10.0, 30.0, gate - 26.0),
-			"target": Vector3(road_mid, 0.0, gate)},
+		"aerial_behind": {"pos": Vector3(road_mid - side * 6.0, 32.0, gate - 34.0),
+			"target": Vector3(road_mid - side * 4.0, 0.0, gate - 8.0)},
 	}
 
 

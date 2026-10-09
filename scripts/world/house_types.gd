@@ -27,6 +27,11 @@ static func depth_of(id: String) -> float:
 	return float(_value(id, "depth", 8.0))
 
 
+## Beliebige Eigenschaft eines Haustyps (z. B. "passage_width" beim Torhaus).
+static func value_of(id: String, property: String, fallback: Variant) -> Variant:
+	return _value(id, property, fallback)
+
+
 ## Wert einer Eigenschaft direkt aus der gespeicherten Szene (ohne sie zu bauen).
 static func _value(id: String, property: String, fallback: Variant) -> Variant:
 	var key := id + ":" + property

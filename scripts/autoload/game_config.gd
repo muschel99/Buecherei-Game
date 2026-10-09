@@ -157,10 +157,21 @@ var straight_street_length: float = 20.0
 ## Am geraden Ende: so lang ist die Seitenstraße hinter dem Knick (von den Hausfronten
 ## gegenüber bis zu den Häusern, die sie abschließen).
 var straight_side_street_length: float = 12.0
-## Am abbiegenden Ende: so lang ist die Seitenstraße (bis zum Haus, das sie abschließt).
-## Laufen kann man nur bis kurz hinter die Ecke (side_street_walkable).
-var side_street_length: float = 9.0
-var side_street_walkable: float = 2.0
+## Am abbiegenden Ende (seit Etappe 4f): so lang ist die Seitenstraße von den Hausfronten
+## gegenüber bis zum Torhaus (8 m = so tief wie die Häuser gegenüber, dann schließt das Torhaus
+## bündig an ihre Rückseite an). Laufen kann man bis an den Bogen des Torhauses.
+var side_street_length: float = 8.0
+## Torhaus am abbiegenden Ende: Haustyp (Szene scenes/world/houses/<id>.tscn, Breite und
+## Bogen siehe dort). Hinter dem Bogen läuft die Straße noch so viele Meter geradeaus, biegt
+## dann in einer Kurve (Radius in der Straßenmitte, Winkel in Grad) zur Stadtmitte hin ab und
+## läuft danach noch ein Stück weiter bis zu quer stehenden Häusern. Gehwege hinter dem Bogen:
+## gate_sidewalk_width (unter dem Bogen sind sie schmaler, so breit, wie der Bogen erlaubt).
+var gatehouse_type: String = "gatehouse"
+var gate_road_before_curve: float = 1.5
+var gate_curve_radius: float = 9.0
+var gate_curve_angle: float = 90.0
+var gate_road_after_curve: float = 6.0
+var gate_sidewalk_width: float = 1.6
 
 ## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
 var alley_width: float = 2.8
