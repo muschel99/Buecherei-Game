@@ -135,11 +135,11 @@ var entrance_podium_depth: float = 0.7
 var plinth_proud: float = 0.03
 
 ## Gehweg vor der Bücherei (von der Hauswand bis zur Bordsteinkante).
-var sidewalk_width: float = 2.0
+var sidewalk_width: float = 2.6
 ## Gehweg auf der gegenüberliegenden Straßenseite.
-var opposite_sidewalk_width: float = 1.6
-## Fahrbahn: eine Spur, ein Auto breit.
-var street_width: float = 3.4
+var opposite_sidewalk_width: float = 2.1
+## Fahrbahn (seit Etappe 4e etwa 50 % breiter als vorher, Gehwege etwa 30 %).
+var street_width: float = 5.1
 ## So viel tiefer als der Gehweg liegt die Fahrbahn (Höhe des Bordsteins).
 var curb_height: float = 0.12
 ## So lang sind die Seitenstraßen, in die die Straße an beiden Enden abbiegt (bis zum Haus,
@@ -164,7 +164,7 @@ var neighbor_house_depth: float = 8.4
 var neighbor_house_heights: Array[float] = [6.6, 7.2, 6.9, 6.4]
 ## Häuserreihe gegenüber (englische Reihenhäuser): so viele Häuser passen zwischen die
 ## beiden Seitenstraßen; Höhen wechseln der Reihe nach.
-var opposite_house_count: int = 4
+var opposite_house_count: int = 2
 var opposite_house_depth: float = 7.5
 var opposite_house_heights: Array[float] = [6.2, 7.0, 6.6, 7.4, 5.9]
 ## Häuser, die die Seitenstraßen säumen und abschließen (reine Kulisse).
