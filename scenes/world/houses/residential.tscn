@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+; Haustyp "residential" (Etappe 4e): Wohnhaus (5,4 m): Tür in der Mitte mit Vordach, drei Fensterachsen.
+; Feste Maße (Inspektor: Gruppe "Maße"), Tiefe 8,0 m. Ursprung unten in der Mitte der
+; Vorderseite, Vorderseite nach +Z, das Haus reicht nach -Z. Eigenes Modell: Kind-Knoten
+; "Model" anlegen – dann verschwindet der Platzhalter, die Kollision bleibt.
+; Alle Häuser dieses Typs stehen in scenes/world/houses.tscn.
+
+[ext_resource type="Script" path="res://scripts/world/house_facade.gd" id="1_house"]
+
+[node name="Residential" type="Node3D"]
+script = ExtResource("1_house")
+width = 5.4
+eaves_height = 7.0
+door_side = 2
+window_columns = 3
+porch = true
+chimney = true
+depth = 8.0

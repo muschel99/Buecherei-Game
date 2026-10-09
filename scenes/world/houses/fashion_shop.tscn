@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+; Haustyp "fashion_shop" (Etappe 4e): Modegeschäft (5,4 m): Ladenfront mit Schaufenstern, Tür an der Seite, Markise.
+; Feste Maße (Inspektor: Gruppe "Maße"), Tiefe 8,0 m. Ursprung unten in der Mitte der
+; Vorderseite, Vorderseite nach +Z, das Haus reicht nach -Z. Eigenes Modell: Kind-Knoten
+; "Model" anlegen – dann verschwindet der Platzhalter, die Kollision bleibt.
+; Alle Häuser dieses Typs stehen in scenes/world/houses.tscn.
+
+[ext_resource type="Script" path="res://scripts/world/house_facade.gd" id="1_house"]
+
+[node name="FashionShop" type="Node3D"]
+script = ExtResource("1_house")
+width = 5.4
+eaves_height = 6.8
+door_side = -1
+ground_floor = 1
+awning = true
+chimney = false
+accent_color = Color(0.55, 0.22, 0.3, 1)
+depth = 8.0

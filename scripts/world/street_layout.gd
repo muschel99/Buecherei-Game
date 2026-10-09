@@ -92,15 +92,15 @@ static func alley_end_z() -> float:
 ## hinter der Gasse.
 static func neighbor_row_end_x() -> float:
 	var x := HOUSE_RIGHT
-	for width in GameConfig.neighbor_house_widths:
-		x += width
+	for id in GameConfig.neighbor_house_types:
+		x += HouseTypes.width_of(id)
 	return x
 
 
 static func alley_row_end_x() -> float:
 	var x := alley_far_x()
-	for width in GameConfig.alley_house_widths:
-		x -= width
+	for id in GameConfig.alley_house_types:
+		x -= HouseTypes.width_of(id)
 	return x
 
 

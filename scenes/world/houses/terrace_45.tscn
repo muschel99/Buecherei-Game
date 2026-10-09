@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+; Haustyp "terrace_45" (Etappe 4e): Reihenhaus, schmal (4,5 m).
+; Feste Maße (Inspektor: Gruppe "Maße"), Tiefe 8,0 m. Ursprung unten in der Mitte der
+; Vorderseite, Vorderseite nach +Z, das Haus reicht nach -Z. Eigenes Modell: Kind-Knoten
+; "Model" anlegen – dann verschwindet der Platzhalter, die Kollision bleibt.
+; Alle Häuser dieses Typs stehen in scenes/world/houses.tscn.
+
+[ext_resource type="Script" path="res://scripts/world/house_facade.gd" id="1_house"]
+
+[node name="Terrace45" type="Node3D"]
+script = ExtResource("1_house")
+width = 4.5
+eaves_height = 6.4
+door_side = 1
+chimney = true
+depth = 8.0

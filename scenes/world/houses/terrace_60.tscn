@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3]
+
+; Haustyp "terrace_60" (Etappe 4e): Reihenhaus, sehr breit (6,0 m).
+; Feste Maße (Inspektor: Gruppe "Maße"), Tiefe 8,0 m. Ursprung unten in der Mitte der
+; Vorderseite, Vorderseite nach +Z, das Haus reicht nach -Z. Eigenes Modell: Kind-Knoten
+; "Model" anlegen – dann verschwindet der Platzhalter, die Kollision bleibt.
+; Alle Häuser dieses Typs stehen in scenes/world/houses.tscn.
+
+[ext_resource type="Script" path="res://scripts/world/house_facade.gd" id="1_house"]
+
+[node name="Terrace60" type="Node3D"]
+script = ExtResource("1_house")
+width = 6.0
+eaves_height = 6.6
+door_side = -1
+chimney = true
+window_columns = 3
+depth = 8.0
