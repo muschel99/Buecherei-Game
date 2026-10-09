@@ -141,7 +141,15 @@ var _body: StaticBody3D
 
 
 func _ready() -> void:
+	# Kommt ein eigenes Modell ("Model") dazu oder fällt weg, Platzhalter neu bauen (auch im Editor)
+	child_entered_tree.connect(_on_child_changed)
+	child_exiting_tree.connect(_on_child_changed)
 	_rebuild()
+
+
+func _on_child_changed(child: Node) -> void:
+	if child.name == "Model":
+		_queue_rebuild()
 
 
 func _queue_rebuild() -> void:
@@ -154,15 +162,16 @@ func _queue_rebuild() -> void:
 ## Baut Platzhalter und Kollision (neu).
 func _rebuild() -> void:
 	_rebuild_queued = false
-	if _placeholder:
-		_placeholder.queue_free()
-		_placeholder = null
-	if _body:
-		_body.queue_free()
-		_body = null
+	for old: Node in [_placeholder, _body]:
+		if old:
+			remove_child(old)
+			old.queue_free()
+	_placeholder = null
+	_body = null
 	if solid:
 		_build_collision()
-	if get_node_or_null("Model") == null:
+	var model := get_node_or_null("Model")
+	if model == null or model.is_queued_for_deletion():
 		_placeholder = MeshInstance3D.new()
 		_placeholder.name = "Placeholder"
 		_placeholder.mesh = _get_mesh()
