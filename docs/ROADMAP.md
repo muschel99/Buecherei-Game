@@ -30,7 +30,7 @@
 | 4c  | Eckladen sauber nachbessern (Gehrung, Gehweg, Obergeschoss) | fertig |
 | 4d  | Straße, Gasse, Platz und Eingangstreppe  | fertig        |
 | 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | fertig |
-| 4f  | Grenze am geraden Straßenende und Torhaus mit Durchfahrt | in Arbeit |
+| 4f  | Grenze am geraden Straßenende und Torhaus mit Durchfahrt | fertig |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -552,14 +552,34 @@ lässt sich einzeln gegen ein eigenes Modell tauschen – mit Vorlagen in echter
 Leitgedanke: Feinschliff an beiden Straßenenden – am geraden Ende weiter laufen dürfen und den
 Knick näher heranholen, am abbiegenden Ende statt einer Hauswand ein Torhaus mit Durchfahrt.
 Dazu eine feste Arbeitsregel: Testbilder aus festen Blickwinkeln bei jeder sichtbaren Änderung.
-- [ ] Gerades Straßenende: Grenze weiter nach hinten, Straße dahinter kürzer (beides in
-      GameConfig); mit Testbildern direkt an der Grenze geprüft (Fahrbahn, beide Gehwege,
-      geradeaus und schräg)
-- [ ] Abbiegendes Ende: Torhaus mit Durchfahrt (gemauerter Rundbogen, Schild-Band,
-      Fachwerk-Obergeschoss, Gaube mit Sprossenfenster) als eigener Haustyp mit Vorlage; die
-      Straße läuft durch den Bogen und biegt dahinter in einer sanften Kurve ab; Grenze am Bogen
-- [ ] Arbeitsregel „Screenshots und Selbstkontrolle“ in CLAUDE.md, Werkzeug
-      `tools/screenshots.sh` (Blickpunkte in `scripts/tools/screenshot_views.gd`)
+- [x] Gerades Straßenende: Die Grenze steht jetzt 6 m hinter den festen Nachbarhäusern
+      (`GameConfig.straight_bound_offset`), die Häuser bis dorthin sind fest. Dahinter läuft
+      die Straße nur noch 20 m bis zum Knick (`straight_street_length`, vorher 30 m ab den
+      Nachbarhäusern); die Seitenstraße dort ist 12 m lang (`straight_side_street_length`),
+      sodass man ihr Ende nie sieht. Geprüft mit Testbildern direkt an der Grenze (Fahrbahn,
+      beide Gehwege, geradeaus und schräg), Sichtstrahlen von 101 Punkten in alle Richtungen
+      (nirgends ins Leere, nie bis ans Ende der Seitenstraße, gut 3 m Reserve) und einem
+      Lauftest mit Physik (die Figur bleibt überall an der Grenze stehen)
+- [x] Abbiegendes Ende: Torhaus mit Durchfahrt statt Hauswand – neuer Haustyp „gatehouse“
+      (`scenes/world/houses/gatehouse.tscn`, Script `GatehouseFacade`): gemauerter Rundbogen
+      mit Bogen-, Schluss-, Kämpfer- und Ecksteinen, gewölbte Durchfahrt, Band für ein Schild,
+      Fachwerk-Obergeschoss mit zwei Sprossenfenstern, mittige Gaube mit Sprossenfenster.
+      Platzhalter nur, solange kein Knoten „Model“ darin liegt; Kollision nur an den Pfeilern
+- [x] Die Straße läuft mit Pflaster und Bordsteinen durch den Bogen (darunter schmale Gehwege)
+      und biegt dahinter in einer sanften Kurve zur Stadtmitte hin ab
+      (`StreetLayout.gate_path()`, Werte `gate_…` in GameConfig); Kulissen-Häuser entlang der
+      Kurve und quer am Ende (Gruppe `GateStreet` in houses.tscn). Die Seitenstraße ist bis an
+      den Bogen begehbar (`side_street_length` = 8 m, das Torhaus schließt bündig an die
+      Häuser gegenüber an); die Grenze liegt im Bogen. Geprüft: Testbilder (am Bogen mittig,
+      seitlich, schräg, nach oben, aus der Seitenstraße, von oben), Sichtstrahlen von 617
+      Punkten, Lauftest mit Physik; beide Einstellungen von `straight_street_end` getestet
+- [x] Vorlage `assets/models/templates/houses/gatehouse.glb` und Anleitung in
+      docs/ASSET_GUIDE.md („Das Torhaus durch ein eigenes Modell ersetzen“: Öffnung des Bogens
+      frei lassen)
+- [x] Arbeitsregel „Screenshots und Selbstkontrolle“ in CLAUDE.md mit Werkzeug:
+      `tools/setup_godot.sh` (Godot im Container einrichten), `tools/screenshots.sh`
+      (Testbilder ohne Bildschirm, Szene `scenes/tools/screenshot_tour.tscn`, feste
+      Blickwinkel in `scripts/tools/screenshot_views.gd`, Bilder in `screenshots/`)
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
