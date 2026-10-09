@@ -26,6 +26,7 @@
 | 3l  | Fassaden-App und fester Rückgabekasten   | fertig        |
 | 4   | Außenwelt                                | in Arbeit     |
 | 4a  | Eckladen-Grundriss, feste Theke und Rückgabekasten | fertig |
+| 4b  | Reparatur Eckladen (Schräge, Fassade, Fenster, Vorplatz, Licht) | fertig |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -448,7 +449,24 @@ die Gestaltung der Gasse und Fassade folgt in weiteren Unterschritten.
 - [x] Speicher-Version auf 2 erhöht: alte Spielstände passen nicht zur neuen Raumform und
       werden ignoriert (es beginnt ein frisches Spiel)
 - Noch offen für später (weitere 4er-Schritte): Gasse und Gehweg rund um die Ecke, offene
-  linke/rechte Seite für die Erweiterung, Feinschliff der kleinen Schwelle vor der Schräge
+  linke/rechte Seite für die Erweiterung
+
+### Etappe 4b – Reparatur Eckladen
+Leitgedanke: die Fehler aus 4a an der neuen Raumform sauber beheben, sonst nichts ändern.
+- [x] Schräge Ecke durchgehend vom Boden bis zur Decke: Boden und Decke folgen jetzt der
+      Schräge (CSG-Eckabschnitt, `PaintableGrid.cut_corner`), vorher ragte oben die Decke und
+      unten der Boden als rechteckige Ecke hinaus
+- [x] Außenhülle rundherum geschlossen und flach: der rechteckige Fassadenaufsatz (angedeutete
+      zweite Etage) ist entfernt, der Laden ist ein sauberer Eckbau in einer Ladenhöhe
+      (spätere Etagen bleiben möglich)
+- [x] Beide Fenster von innen und außen vollständig sichtbar (der Rahmen steckte vorher ganz
+      in der Wand) und von beiden Seiten durchsichtig
+- [x] Z-Fighting in den Fenstern behoben (Glas, Rahmen und Sprossen liegen in verschiedenen
+      Tiefen, nie in derselben Ebene)
+- [x] Vorplatz an die Schräge angepasst: ein sauberer, begehbarer Streifen vor der schrägen
+      Eingangswand; man tritt bequem hinaus und wieder hinein
+- [x] „Deckenlicht ohne Lampe“ entfernt: das war ein verstecktes Hilfslicht (FillLight) knapp
+      unter der Decke; der Raum wird jetzt vom Umgebungslicht und vom Fensterlicht erhellt
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
