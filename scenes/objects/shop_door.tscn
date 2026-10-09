@@ -1,0 +1,176 @@
+[gd_scene load_steps=20 format=3]
+
+; Klassische englische Ladentür (Platzhalter).
+; - Türblatt mit Sprossenfenster im oberen Teil (öffnet mit E, schwingt nach innen).
+; - rundherum schmale, verglaste Seitenteile und ein Oberlicht (Sprossenfenster um die Tür).
+; Zum Austauschen gegen ein eigenes Modell: Der Ursprung liegt am Boden in der Mitte der
+; Türöffnung, +Z zeigt in den Raum, +X läuft an der Wand entlang. Die Öffnung ist 1,4 m breit
+; und 2,6 m hoch und passt in das Loch in der schrägen Wand (CSG-Aussparung "DoorHole").
+; Aufbau wie von Door erwartet: Knoten "Hinge" (Drehachse), darunter "DoorLeaf" (Türblatt mit
+; Kollision) und "Interactable".
+
+[ext_resource type="Script" path="res://scripts/objects/door.gd" id="1_door"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="2_interactable"]
+[ext_resource type="Material" path="res://assets/materials/paint_white.tres" id="3_paint"]
+[ext_resource type="Material" path="res://assets/materials/glass.tres" id="4_glass"]
+[ext_resource type="Material" path="res://assets/materials/door_paint.tres" id="5_leaf"]
+[ext_resource type="Material" path="res://assets/materials/brass.tres" id="6_brass"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_frame_v"]
+size = Vector3(0.1, 2.72, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_frame_top"]
+size = Vector3(1.74, 0.1, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_mullion"]
+size = Vector3(0.06, 2.2, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_transom_bar"]
+size = Vector3(1.4, 0.06, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side_glass"]
+size = Vector3(0.18, 2.1, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side_muntin"]
+size = Vector3(0.18, 0.03, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_transom_glass"]
+size = Vector3(1.36, 0.34, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_transom_muntin"]
+size = Vector3(0.03, 0.34, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_leaf_glass"]
+size = Vector3(0.72, 1.0, 0.012)
+
+[sub_resource type="BoxMesh" id="BoxMesh_leaf_muntin_v"]
+size = Vector3(0.03, 1.0, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_leaf_muntin_h"]
+size = Vector3(0.72, 0.03, 0.04)
+
+[sub_resource type="SphereMesh" id="SphereMesh_knob"]
+radius = 0.035
+height = 0.07
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
+size = Vector3(1.0, 2.2, 0.2)
+
+[node name="ShopDoor" type="Node3D"]
+script = ExtResource("1_door")
+
+[node name="FrameLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.77, 1.36, 0)
+mesh = SubResource("BoxMesh_frame_v")
+material_override = ExtResource("3_paint")
+
+[node name="FrameRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.77, 1.36, 0)
+mesh = SubResource("BoxMesh_frame_v")
+material_override = ExtResource("3_paint")
+
+[node name="FrameTop" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.67, 0)
+mesh = SubResource("BoxMesh_frame_top")
+material_override = ExtResource("3_paint")
+
+[node name="MullionLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1.1, 0)
+mesh = SubResource("BoxMesh_mullion")
+material_override = ExtResource("3_paint")
+
+[node name="MullionRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.1, 0)
+mesh = SubResource("BoxMesh_mullion")
+material_override = ExtResource("3_paint")
+
+[node name="TransomBar" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+mesh = SubResource("BoxMesh_transom_bar")
+material_override = ExtResource("3_paint")
+
+[node name="SideGlassLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 1.1, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_side_glass")
+material_override = ExtResource("4_glass")
+
+[node name="SideGlassRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 1.1, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_side_glass")
+material_override = ExtResource("4_glass")
+
+[node name="SideMuntinLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 1.1, 0.01)
+mesh = SubResource("BoxMesh_side_muntin")
+material_override = ExtResource("3_paint")
+
+[node name="SideMuntinRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 1.1, 0.01)
+mesh = SubResource("BoxMesh_side_muntin")
+material_override = ExtResource("3_paint")
+
+[node name="TransomGlass" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_transom_glass")
+material_override = ExtResource("4_glass")
+
+[node name="TransomMuntin" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0.01)
+mesh = SubResource("BoxMesh_transom_muntin")
+material_override = ExtResource("3_paint")
+
+[node name="Hinge" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+
+[node name="DoorLeaf" type="CSGCombiner3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1.09, 0)
+use_collision = true
+
+[node name="Panel" type="CSGBox3D" parent="Hinge/DoorLeaf"]
+size = Vector3(0.98, 2.18, 0.05)
+material = ExtResource("5_leaf")
+
+[node name="WindowHole" type="CSGBox3D" parent="Hinge/DoorLeaf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0)
+operation = 2
+size = Vector3(0.72, 1.0, 0.12)
+
+[node name="LeafGlass" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1.57, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_leaf_glass")
+material_override = ExtResource("4_glass")
+
+[node name="LeafMuntinV" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1.57, 0.01)
+mesh = SubResource("BoxMesh_leaf_muntin_v")
+material_override = ExtResource("3_paint")
+
+[node name="LeafMuntinH" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1.57, 0.01)
+mesh = SubResource("BoxMesh_leaf_muntin_h")
+material_override = ExtResource("3_paint")
+
+[node name="Knob" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 1.0, 0.04)
+mesh = SubResource("SphereMesh_knob")
+material_override = ExtResource("6_brass")
+
+[node name="KnobOutside" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 1.0, -0.04)
+mesh = SubResource("SphereMesh_knob")
+material_override = ExtResource("6_brass")
+
+[node name="Interactable" type="Area3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1.1, 0)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_interactable")
+prompt_text = "Öffnen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hinge/Interactable"]
+shape = SubResource("BoxShape3D_interact")

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FurnitureData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_deco"]
+
+[resource]
+script = ExtResource("1_deco")
+id = "deco_shelf_light"
+display_name = "Deko-Regal, helles Holz"
+description = "Offenes Regal zum Dekorieren – nicht für Bücher gedacht."
+price = 120
+scene_path = "res://scenes/furniture/deco_shelf.tscn"
+footprint = Vector2i(8, 3)
+category = 0
+subcategory = "deco_shelf"

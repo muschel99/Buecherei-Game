@@ -28,7 +28,8 @@ const _CATEGORY_NAMES := {
 ## schreiben. Die id ist kurz, englisch, ohne Leerzeichen; im Datenblatt wählt man sie
 ## dann im Feld "Subcategory" aus.
 const SUBCATEGORIES := {
-	Category.SHELF: [["bookshelf", "Bücherregale"], ["wall_shelf", "Wandregale"], ["display_case", "Vitrinen"]],
+	Category.SHELF: [["bookshelf", "Bücherregale"], ["deco_shelf", "Deko-Regale"], ["wall_shelf", "Wandregale"],
+		["display_case", "Vitrinen"]],
 	Category.SEATING: [["armchair", "Sessel"], ["sofa", "Sofas"], ["chair", "Stühle"], ["stool", "Hocker"]],
 	Category.TABLE: [["side_table", "Beistelltische"], ["coffee_table", "Couchtische"], ["desk", "Schreibtische"],
 		["dining_table", "Esstische"]],
