@@ -1,2 +1,5 @@
 # Von Godot automatisch erzeugte Dateien (werden auf jedem PC neu angelegt)
 .godot/
+
+# Testbilder von tools/screenshots.sh (nur zur Kontrolle, nicht ins Projekt)
+screenshots/

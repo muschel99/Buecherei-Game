@@ -153,3 +153,8 @@ static func side_street_end_z() -> float:
 
 static func side_street_limit_z() -> float:
 	return far_curb_z() - GameConfig.side_street_walkable
+
+
+## Vorderseite des Torhauses am Ende der abbiegenden Seitenstraße (z).
+static func gatehouse_front_z() -> float:
+	return side_street_end_z()

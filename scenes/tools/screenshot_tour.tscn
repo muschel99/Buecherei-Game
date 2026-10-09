@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+; Testbilder aus festen Blickwinkeln (Etappe 4f). Wird von tools/screenshots.sh gestartet
+; (Godot ohne sichtbaren Bildschirm). Blickpunkte: scripts/tools/screenshot_views.gd.
+
+[ext_resource type="Script" path="res://scripts/tools/screenshot_tour.gd" id="1_tour"]
+
+[node name="ScreenshotTour" type="Node"]
+script = ExtResource("1_tour")

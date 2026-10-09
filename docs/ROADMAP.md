@@ -30,6 +30,7 @@
 | 4c  | Eckladen sauber nachbessern (Gehrung, Gehweg, Obergeschoss) | fertig |
 | 4d  | Straße, Gasse, Platz und Eingangstreppe  | fertig        |
 | 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | fertig |
+| 4f  | Grenze am geraden Straßenende und Torhaus mit Durchfahrt | in Arbeit |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -546,6 +547,19 @@ lässt sich einzeln gegen ein eigenes Modell tauschen – mit Vorlagen in echter
       Treppe in `assets/models/templates/` (erzeugt von `export_templates.tscn`; geprüft: gleiche
       Größe und Lage wie im Spiel)
 - [x] Anleitung „Außenwelt“ und „Vorlagen zum Modellieren“ in docs/ASSET_GUIDE.md
+
+### Etappe 4f – Grenze am geraden Straßenende und Torhaus mit Durchfahrt
+Leitgedanke: Feinschliff an beiden Straßenenden – am geraden Ende weiter laufen dürfen und den
+Knick näher heranholen, am abbiegenden Ende statt einer Hauswand ein Torhaus mit Durchfahrt.
+Dazu eine feste Arbeitsregel: Testbilder aus festen Blickwinkeln bei jeder sichtbaren Änderung.
+- [ ] Gerades Straßenende: Grenze weiter nach hinten, Straße dahinter kürzer (beides in
+      GameConfig); mit Testbildern direkt an der Grenze geprüft (Fahrbahn, beide Gehwege,
+      geradeaus und schräg)
+- [ ] Abbiegendes Ende: Torhaus mit Durchfahrt (gemauerter Rundbogen, Schild-Band,
+      Fachwerk-Obergeschoss, Gaube mit Sprossenfenster) als eigener Haustyp mit Vorlage; die
+      Straße läuft durch den Bogen und biegt dahinter in einer sanften Kurve ab; Grenze am Bogen
+- [ ] Arbeitsregel „Screenshots und Selbstkontrolle“ in CLAUDE.md, Werkzeug
+      `tools/screenshots.sh` (Blickpunkte in `scripts/tools/screenshot_views.gd`)
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
