@@ -276,7 +276,8 @@ unsichtbare Kollision (damit man nicht hindurchläuft) bleibt.
 - `scenes/world/houses.tscn` – **alle Häuser**, jedes als eigener Knoten. Öffne die Szene mit
   Doppelklick: Du siehst alle Häuser und kannst jedes anklicken und verschieben. Sie sind in
   Gruppen sortiert: `LibraryRow` (Nachbarn der Bücherei), `Opposite` (gegenüber),
-  `StraightEnd` (hinter der Grenze am geraden Straßenende), `SideStreets` (an den Knicks).
+  `StraightEnd` (bis zum Knick am geraden Straßenende), `SideStreets` (an den Knicks),
+  `GateStreet` (das Torhaus am abbiegenden Ende und die Häuser entlang der Kurve dahinter).
 - `scenes/world/houses/` – die **Haustypen**. Jedes Haus in `houses.tscn` ist ein Exemplar
   eines dieser Typen. Gleiche Häuser nutzen dieselbe Szene (das spart Rechenleistung).
 - `scenes/world/alley_end.tscn` – Mauer mit Tor am Ende der Gasse (mit Haus dahinter).
@@ -297,9 +298,46 @@ First, vorn und hinten steht es 20 cm über.
 | `residential.tscn`   | Wohnhaus (gegenüber der Ladentür)            | 5,4 m  | 7,0 m     | 8 m   |
 | `pub.tscn`           | Restaurant / Pub (erstes Haus hinter der Gasse, am Platz) | 5,6 m | 7,2 m | 8 m |
 | `fashion_shop.tscn`  | Modegeschäft (direkt neben der Bücherei)     | 5,4 m  | 6,8 m     | 8 m   |
+| `gatehouse.tscn`     | Torhaus mit Durchfahrt (am abbiegenden Ende, siehe unten) | 10,4 m | 8,8 m | 6 m |
 
 Die Kollision ist ein Kasten so groß wie Breite × Traufhöhe × Tiefe. Dein Modell darf darüber
 hinausragen (Dach, Schornstein, Markise); unten sollte es die Grundfläche ausfüllen.
+
+### Das Torhaus durch ein eigenes Modell ersetzen
+Am abbiegenden Straßenende steht quer über der Seitenstraße ein **Torhaus**: unten ein
+gemauerter Rundbogen über der Fahrbahn, darüber ein Band für ein Schild, ein Obergeschoss in
+Fachwerk und eine Gaube mit Sprossenfenster. Die Straße läuft durch den Bogen hindurch und
+biegt dahinter in einer Kurve ab. Szene: `scenes/world/houses/gatehouse.tscn`,
+Vorlage: `templates/houses/gatehouse.glb`.
+
+**Wichtig: Dein Modell muss die Öffnung des Bogens frei lassen.** Die Straße darunter
+(Fahrbahn, Bordsteine, schmale Gehwege) baut das Spiel selbst – dein Modell besteht nur aus
+dem Haus um die Durchfahrt herum (Pfeiler, Bogen, Gewölbe innen, Obergeschoss, Dach).
+Modelliere also keinen Boden in die Durchfahrt und nichts, was in die Öffnung hineinragt.
+
+Maße (Ursprung unten in der Mitte der Vorderseite, Vorderseite +Z, wie bei allen Häusern):
+- Gesamt: 10,4 m breit, 6 m tief (von 0 bis -6 m), Traufe 8,8 m, First 11,2 m.
+- **Öffnung:** 6,5 m breit (von x = -3,25 bis +3,25), senkrecht bis 2,0 m hoch, darüber ein
+  Halbkreis – der Scheitel liegt bei 5,25 m. Sie geht ganz durch (von vorn bis hinten).
+  In der Vorlage siehst du die Öffnung genau so; lass die Wände der Durchfahrt (innen) an
+  derselben Stelle, dann passt die Straße.
+- Die beiden Pfeiler links und rechts (je 1,95 m breit) sind fest: Dort kann man nicht
+  hindurchlaufen. Die Durchfahrt selbst ist frei; eine unsichtbare Grenze im Bogen hält die
+  Spielfigur auf (sie bleibt knapp unter dem Bogen stehen).
+- Die rechte und linke Kante verschwinden hinter den Nachbarhäusern, die Rückseite sieht man
+  im Spiel nicht – dort darf dein Modell schlicht sein.
+
+So geht's:
+1. `scenes/world/houses/gatehouse.tscn` doppelklicken.
+2. Dein `.glb` aus `assets/models/` auf den obersten Knoten `Gatehouse` ziehen und den neuen
+   Knoten in **Model** umbenennen (**F2**). Nichts verschieben.
+3. **Strg+S**. Der Platzhalter verschwindet, die Straße läuft durch deinen Bogen.
+Ist dein Bogen breiter oder schmaler: Im Inspektor unter **Durchfahrt** die **Passage Width**
+(lichte Breite) anpassen – die schmalen Gehwege unter dem Bogen und die Grenze passen sich
+beim nächsten Start von selbst an. Änderst du Breite oder Tiefe des ganzen Torhauses (unter
+**Maße**), stelle danach die Häuser neu auf (siehe „Häuser neu aufstellen“). Die Straße hinter dem Bogen (Kurve, Länge, Breite der
+Gehwege) stellst du in `game_config.gd` ein (`gate_curve_radius`, `gate_curve_angle`,
+`gate_road_before_curve`, `gate_road_after_curve`, `gate_sidewalk_width`).
 
 ### Alle Häuser eines Typs ersetzen
 1. Im Dateisystem-Fenster `scenes/world/houses/` öffnen und den Haustyp doppelklicken
@@ -327,6 +365,7 @@ Inspektor unter **Dieses Haus** Wand-, Tür- und Akzentfarbe wählen.
 ### Häuser neu aufstellen
 Die Lage der Häuser wurde einmal aus der Straße berechnet und fest in `houses.tscn`
 geschrieben. Änderst du in `game_config.gd` etwas an der Straße (Breiten, gerades Ende,
+Grenze und Länge dahinter, Torhaus und Kurve,
 Haustypen der Nachbarn in `neighbor_house_types` / `alley_house_types`, das Haus gegenüber
 in `opposite_feature_house`, die Reihenhaus-Typen in `terrace_house_types`), stelle die
 Häuser neu auf:
