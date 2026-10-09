@@ -636,13 +636,51 @@ Zwei Zustände:
   hängt, lässt sich erst bei geschlossener Tür verschieben oder wegräumen.
 - Der Schwenkbereich der Tür bleibt frei: Dort lassen sich weder Möbel noch Bücher abstellen
   (Vorschau rot, wie gewohnt).
-- Draußen liegt ein lückenloser Gehweg (seit Etappe 4c eine einzige Fläche): vor dem Haus,
-  vor der schrägen Eingangstür und links neben dem Haus (vor dem linken Fenster). Er liegt auf
-  derselben Höhe wie der Ladenboden – ohne Stufe tritt man hinaus und wieder hinein – und endet
-  genau an der Hauswand: keine Spalten, keine Löcher, nirgends kann man hinunterfallen. Vorn
-  und links hinten schließt ein Bordstein ab. Rechts steht noch ein Nachbarhaus; die
-  Gestaltung der Gasse rund um die Ecke folgt in einem späteren 4er-Schritt. Hier kommen die
-  Lieferkartons an.
+- **Bodenleiste und Fensterbänke (seit Etappe 4d):** Auch an der schrägen Eingangswand läuft
+  innen eine Bodenleiste, links und rechts der Tür; sie endet am Türrahmen und trifft in den
+  Ecken auf Gehrung auf die Leisten der Nachbarwände. Die inneren Fensterbänke beider Fenster
+  sind tiefer (`GameConfig.window_sill_depth` = 0,32 m ab der Scheibe, gut 25 cm Ablage) –
+  dort stehen Deko und Bücher. Das Fenster selbst ist gleich groß geblieben.
+- **Erhöhter Laden und Eingangstreppe (seit Etappe 4d):** Der Ladenboden liegt 0,5 m über dem
+  Gehweg (`GameConfig.shop_floor_rise`). Vor der schrägen Wand steht ein Podest mit drei
+  flachen Stufen, die pyramidenförmig vorn und an beiden Seiten herumlaufen. Die ganze Treppe
+  ist genau so breit wie die schräge Wand, nie breiter; vorn sind die Stufen tiefer als an den
+  Seiten. Hinauf und hinunter geht es weich über eine unsichtbare Rampe, die genau über die
+  Stufenkanten läuft. Vom Podest aus erreicht man bequem den Einwurf des Rückgabekastens.
+  Unten am Haus läuft ein Sockel (3 cm vorstehend), der zeigt, dass der Laden höher liegt.
+  Innen hat sich nichts verändert: Statt den Laden anzuheben, liegt draußen alles tiefer –
+  Möbel, Bücher und Deko bleiben genau an ihrem Platz.
+- **Die Straße (seit Etappe 4d):** Vor der Bücherei liegt eine schmale, gerade Straße, eine
+  Fahrspur breit, mit Gehwegen und Bordsteinen auf beiden Seiten. An beiden Enden biegt sie vor
+  einem quer stehenden Haus in eine Seitenstraße ab und verschwindet so hinter den Häusern. Ich
+  kann auf der Straße und den Gehwegen laufen, aber nicht über die Enden hinaus: Kurz hinter
+  den Ecken halten mich weiche, unsichtbare Grenzen auf. Gegenüber steht eine Zeile englischer
+  Reihenhäuser als Kulisse (Fenster, Türen, Dächer, Schornsteine als Platzhalter), abwechselnd
+  in Farbe und Höhe. In den Seitenstraßen liegen außer Sicht unsichtbare Start- und Endpunkte
+  für spätere Autos, Radfahrer und Fußgänger – noch fährt und läuft dort niemand.
+- **Häuserreihe, Gasse und Platz (seit Etappe 4d):** Auf der Bücherei-Seite stehen von der
+  Straße aus gesehen: Haus, Haus, Bücherei, Gasse, Haus, Haus. Die Gasse liegt an der Seite mit
+  der Schräge (vor dem linken Fenster). Die beiden Häuser neben der Bücherei stehen bündig mit
+  ihrer Vorderwand; die beiden hinter der Gasse sind zurückversetzt – ihre Vorderkante liegt
+  genau dort, wo die schräge Wand auf die Seitenwand an der Gasse trifft. Davor entsteht ein
+  kleiner gepflasterter Platz vor der abgeschrägten Ecke und dem Gasseneingang; er bleibt leer
+  und kompakt. Die Gasse ist schmal (2,8 m) mit einem schmalen Gehweg an der Bücherei-Seite und
+  etwa 11 m begehbar; an ihrem Ende steht als austauschbarer Platzhalter eine Mauer mit einem
+  Holztor, dahinter ein Haus. Hinter der Bücherei begrenzt eine niedrige Hofmauer die Gasse –
+  nur ein Platzhalter, damit die Bücherei später nach hinten und oben wachsen kann. Alle
+  Nachbarhäuser sind nicht betretbare Platzhalter, ungefähr so hoch wie die Bücherei mit
+  Obergeschoss. Alle Maße (Straßen-, Gehweg- und Gassenbreite, Gassentiefe, Hausbreiten,
+  Höhen) stehen in GameConfig; Straße, Häuser, Gasse, Platz, Gassenende und Treppe sind
+  eigene, austauschbare Szenen (`scenes/world/`).
+- **Leistung draußen:** Die Kulisse ist bewusst schlicht: Jedes Haus ist ein einziges Mesh mit
+  einem gemeinsamen Material (Farben direkt im Mesh), Gehwege, Fahrbahn und Bordsteine sind je
+  ein Mesh, der Boden ist eine einzige Kollisionsfläche. Die Häuser gegenüber und an den
+  Seitenstraßen werfen keine Schatten (sie würden sonst das Fensterlicht verdecken), die
+  Nachbarhäuser neben der Bücherei nur in der Nähe. Insgesamt kostet die Außenwelt je nach
+  Blick nur etwa 20 bis 30 Zeichenaufrufe mehr (rund 5–7 %), auf allen drei Grafikstufen.
+- Die Lieferkartons stehen auf dem Gehweg vor dem rechten Fenster und stapeln sich nach
+  rechts, weg von der Treppe. Die Außenwelt muss nicht gespeichert werden; die
+  Ladeneinrichtung bleibt wie gewohnt gespeichert.
 - **Speichern und alte Spielstände:** Grundriss, Theken-Position und -Stil, der Rückgabekasten
   und die drei Start-Objekte werden wie gewohnt gespeichert. Weil sich die Raumform mit
   Etappe 4a grundlegend geändert hat, wurde die Speicher-Version erhöht (`SaveManager`, jetzt

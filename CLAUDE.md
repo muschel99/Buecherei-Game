@@ -40,6 +40,7 @@ scenes/            Szenen (.tscn)
                    LooseBooks = ausgelegte Bücher, BookStand = Buch-Aufsteller, Counter = Theke;
                    player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
+  world/           Außenwelt (Straße, Häuser, Platz, Gasse, Gassenende, Eingangstreppe)
   ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Theken-Tablet, Hinweise,
                    Stil-Anzeige, Regal-Menü, Trage-Anzeige, Buch-Infokarte, Genre-Schriftzug,
                    Bücherauswahl, Zähl-Anzeige CountBadge; Scripts BookCover und BookMotifs zeichnen
@@ -54,6 +55,8 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
                    LooseBook, TabletAppData, ReturnSlotData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
+  world/           Außenwelt (StreetLayout, WorldMesh, Street, Houses, HouseFacade, Plaza, Alley,
+                   AlleyEnd, EntranceSteps; Szenen in scenes/world/)
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
@@ -157,8 +160,23 @@ docs/              Dokumentation
   Obergeschosse als geschlossene Hülle mit Fenster-Platzhaltern (`scenes/objects/upper_window.tscn`)
   und das Walmdach; Anzahl/Höhe: `GameConfig.upper_floor_count`, `upper_floor_height`; je
   Geschoss ein Knoten `Floor1`, `Floor2` … (später freischaltbar, `get_floor(i)`, `get_floor_base(i)`).
-  Draußen ist der Gehweg eine einzige Fläche (`Outside/Sidewalk`, CSGPolygon3D mit Kollision,
-  Oberkante 0 = Ladenboden), die genau an der Außenkante der Hauswand endet.
+  `UpperFloors` baut seit Etappe 4d auch den Sockel unten am Haus (`plinth_sides`; rechts
+  schließt das Nachbarhaus an).
+- **Draußen (seit Etappe 4d):** Der Ladenboden bleibt auf 0; draußen liegt alles
+  `GameConfig.shop_floor_rise` tiefer. `Outside` liegt auf Gehweg-Höhe (main.gd setzt y), darunter
+  bauen sich aus GameConfig: `Street` (Fahrbahn, Gehwege, Bordsteine, Seitenstraßen, EINE ebene
+  Bodenkollision – die Fahrbahn liegt nur optisch tiefer –, weiche Grenzen, `TrafficPoints` mit
+  Gruppe `traffic_points` und Metadaten `kind` = car/bike/walker für späteren Verkehr),
+  `Houses` (alle Nachbarhäuser aus `scenes/world/house_facade.tscn`), `Plaza`, `Alley` (mit
+  `scenes/world/alley_end.tscn`). Lage aller Teile nur über `StreetLayout` (statische
+  Funktionen, z. B. `ground_y()`, `curb_z()`, `recess_z()`, `east_end_x()`), Maße nur in
+  GameConfig. `EntranceSteps` (Podest + Stufen, nie breiter als die schräge Wand, unsichtbare
+  Rampe als Kollision) liegt auf Ladenboden-Höhe. Kulisse baut `WorldMesh` (Vierecke/Quader mit
+  Vertex-Farben, ein Material `outdoor_colors.tres` je Mesh); Kulissen-Szenen nutzen statt des
+  Platzhalters ein Kind „Model“, wenn vorhanden. Häuser gegenüber/an den Seitenstraßen ohne
+  Schatten, Nachbarn nur bis `GameConfig.house_shadow_distance`. Draußen wird nichts gespeichert.
+- Fensterbänke: `ShopWindow` (Script der Fenster-Szene) formt Bank, Ablage und Kollision
+  (`SillBody`: Bank, Glas, Seitenrahmen) aus `GameConfig.window_sill_depth`.
 - Sonnenschatten ohne `light_angular_distance` (PCSS zeigte Treppenkanten); weich macht sie
   `shadow_blur` mit dem Filter der Grafikstufe.
 - **Oberflächen/Menüs:** Projekt nutzt Stretch-Modus `canvas_items` + `expand` (Basis 1600 x 900).
