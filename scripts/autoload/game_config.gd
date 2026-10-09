@@ -146,6 +146,14 @@ var curb_height: float = 0.12
 ## das sie abschließt). Laufen kann man nur bis kurz hinter die Ecke (side_street_walkable).
 var side_street_length: float = 9.0
 var side_street_walkable: float = 2.0
+## Welches Straßenende geradeaus weiterläuft (seit Etappe 4e; das andere biegt ab):
+## "east" = die Seite, wo die Nachbarhäuser bündig neben der Bücherei stehen (Standard),
+## "west" = die Seite mit der Gasse und den zurückversetzten Häusern.
+var straight_street_end: String = "east"
+## Am geraden Ende: Bis zur unsichtbaren Grenze kommt man (sie steht quer über Straße und
+## Gehwegen, wo die Nachbarhäuser enden). Dahinter läuft die Straße so viele Meter sichtbar
+## weiter (mit Häusern auf beiden Seiten) und knickt erst dann ab.
+var straight_street_length: float = 30.0
 
 ## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
 var alley_width: float = 2.8
@@ -162,9 +170,9 @@ var neighbor_house_depth: float = 8.4
 ## Traufhöhen (über dem Gehweg) der Nachbarhäuser – etwa so hoch wie die Bücherei mit
 ## Obergeschoss. Die Liste wird der Reihe nach für alle Häuser benutzt.
 var neighbor_house_heights: Array[float] = [6.6, 7.2, 6.9, 6.4]
-## Häuserreihe gegenüber (englische Reihenhäuser): so viele Häuser passen zwischen die
-## beiden Seitenstraßen; Höhen wechseln der Reihe nach.
-var opposite_house_count: int = 2
+## Häuserreihe gegenüber (englische Reihenhäuser): ungefähre Breite eines Hauses (so viele
+## Häuser, wie gut passen); Höhen wechseln der Reihe nach.
+var opposite_house_width: float = 5.0
 var opposite_house_depth: float = 7.5
 var opposite_house_heights: Array[float] = [6.2, 7.0, 6.6, 7.4, 5.9]
 ## Häuser, die die Seitenstraßen säumen und abschließen (reine Kulisse).

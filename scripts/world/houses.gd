@@ -78,7 +78,7 @@ func _add_neighbor(node_name: String, x: float, front_z: float, width: float, in
 ## Reihenhäuser gegenüber: Vorderseite zur Straße (+Z), gleich breit zwischen den Seitenstraßen.
 func _build_opposite_row() -> void:
 	var row := StreetLayout.opposite_row()
-	var count := maxi(1, GameConfig.opposite_house_count)
+	var count := maxi(1, roundi((row.y - row.x) / maxf(1.0, GameConfig.opposite_house_width)))
 	var width := (row.y - row.x) / count
 	var heights := GameConfig.opposite_house_heights
 	for i in count:
@@ -91,6 +91,7 @@ func _build_opposite_row() -> void:
 		house.door_side = 1 if i % 2 == 0 else -1
 		house.chimney = i % 2 == 1
 		house.casts_shadow = false  # sonst läge die Bücherei im Schatten (Sonne steht dahinter)
+		house.solid = _reachable(row.x + width * i, row.x + width * (i + 1))
 		add_child(house)
 
 
@@ -105,6 +106,13 @@ func _build_side_streets() -> void:
 		Vector2(StreetLayout.west_end_x(), StreetLayout.recess_z()), PI / 2.0, depth, true)
 	# Quer am Ende der Seitenstraßen (über Fahrbahn und beide Gehwege; ein Stück weiter
 	# hinter die Häuser gegenüber, damit man nirgends ins Leere schaut)
+	# Am geraden Ende: Häuser auf der Bücherei-Seite hinter der Grenze bis zum Knick
+	if StreetLayout.is_straight(1):
+		_add_row("EastStreet", Vector2(StreetLayout.straight_bound_x(), StreetLayout.HOUSE_FRONT),
+			Vector2(StreetLayout.east_end_x(), StreetLayout.HOUSE_FRONT), PI, depth, false)
+	else:
+		_add_row("WestStreet", Vector2(StreetLayout.west_end_x(), StreetLayout.recess_z()),
+			Vector2(StreetLayout.straight_bound_x(), StreetLayout.recess_z()), PI, depth, false)
 	var behind := GameConfig.end_house_width
 	_add_row("EastEnd", Vector2(StreetLayout.opposite_row().y - behind, end_z),
 		Vector2(StreetLayout.east_end_x(), end_z), 0.0, depth, false)
@@ -130,6 +138,12 @@ func _add_row(prefix: String, a: Vector2, b: Vector2, yaw: float, depth: float, 
 		house.casts_shadow = false
 		house.solid = solid
 		add_child(house)
+
+
+## Liegt ein Haus (von x0 bis x1) dort, wo man hinkommt (vor der Grenze am geraden Ende)?
+func _reachable(x0: float, x1: float) -> bool:
+	var bound := StreetLayout.straight_bound_x()
+	return x0 < bound + 0.5 if StreetLayout.is_straight(1) else x1 > bound - 0.5
 
 
 ## Neues Haus (noch nicht eingefügt: Es baut sich beim Einfügen – also erst die Werte setzen,
