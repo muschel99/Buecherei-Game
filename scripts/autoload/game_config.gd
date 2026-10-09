@@ -97,6 +97,14 @@ var room_height: float = 3.2
 ## stark, solltest du die Wand dort entsprechend anpassen.
 var corner_cut: float = 2.0
 
+## Obergeschosse über dem Laden (seit Etappe 4c): So viele Etagen hat das Haus über dem
+## Erdgeschoss. Vorerst sind sie nur eine geschlossene Außenhülle mit Fenster-Platzhaltern
+## (nicht betretbar); später lassen sie sich als Etage freischalten. 0 = Dach direkt über dem
+## Laden. Gebaut werden sie von scripts/rooms/upper_floors.gd.
+var upper_floor_count: int = 1
+## Höhe eines Obergeschosses in Metern (vom eigenen Fußboden bis zum nächsten, also mit Decke).
+var upper_floor_height: float = 3.0
+
 
 # --- Gestaltungsmodus (Etappe 2) ---
 

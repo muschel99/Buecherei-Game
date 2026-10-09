@@ -5,6 +5,8 @@
 ; Streifen vor dem Haus, der Platz vor der schrägen Eingangswand und der Streifen links neben dem
 ; Haus. Ihr Grundriss endet genau an der Außenkante der Hauswand. Unsichtbare Wände ("Bounds")
 ; halten die Spielfigur auf dem Gehweg.
+; Über dem Laden: "UpperFloors" baut beim Start die Obergeschosse (vorerst geschlossene Hülle)
+; und das Dach (Anzahl und Höhe in GameConfig, siehe scripts/rooms/upper_floors.gd).
 
 [ext_resource type="PackedScene" path="res://scenes/rooms/ground_floor_room.tscn" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
@@ -29,6 +31,7 @@
 [ext_resource type="Script" path="res://scripts/ui/book_info_card.gd" id="21_book_card"]
 [ext_resource type="Script" path="res://scripts/ui/genre_caption.gd" id="22_genre_caption"]
 [ext_resource type="Script" path="res://scripts/ui/count_badge.gd" id="23_count_badge"]
+[ext_resource type="Script" path="res://scripts/rooms/upper_floors.gd" id="24_upper_floors"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -180,6 +183,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0, -4.7)
 script = ExtResource("15_deliveries")
 
 [node name="GroundFloorRoom" parent="." instance=ExtResource("1_room")]
+
+[node name="UpperFloors" type="Node3D" parent="."]
+script = ExtResource("24_upper_floors")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0, 2.6)

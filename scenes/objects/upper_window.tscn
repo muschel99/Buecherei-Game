@@ -1,0 +1,75 @@
+[gd_scene format=3]
+
+; Fenster-Platzhalter für die Obergeschosse (seit Etappe 4c).
+; Die Obergeschosse sind vorerst eine geschlossene Hülle (nicht betretbar). Dieses Fenster ist
+; darum kein Loch, sondern liegt flach außen auf der Wand: dunkle Scheibe, weißer Rahmen,
+; Sprossenkreuz und Fensterbank. Alles steht nur nach außen vor.
+;
+; Zum Austauschen gegen ein eigenes Modell: Der Ursprung liegt auf der Außenseite der Wand in der
+; Mitte des Fensters, +Z zeigt ins Haus (wie bei shop_window.tscn), +X läuft an der Wand
+; entlang. Die Scheibe ist 0,9 m breit und 1,4 m hoch. Wo die Fenster sitzen, legt
+; scripts/rooms/upper_floors.gd fest.
+; Teile in verschiedenen Tiefen (nie genau in derselben Ebene), damit nichts flimmert.
+
+[ext_resource type="Material" path="res://assets/materials/paint_white.tres" id="1_paint"]
+[ext_resource type="Material" path="res://assets/materials/window_pane_dark.tres" id="2_pane"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_pane"]
+size = Vector3(0.9, 1.4, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_frame_v"]
+size = Vector3(0.07, 1.4, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_frame_h"]
+size = Vector3(1.04, 0.07, 0.048)
+
+[sub_resource type="BoxMesh" id="BoxMesh_muntin_v"]
+size = Vector3(0.035, 1.4, 0.025)
+
+[sub_resource type="BoxMesh" id="BoxMesh_muntin_h"]
+size = Vector3(0.9, 0.035, 0.022)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sill"]
+size = Vector3(1.12, 0.05, 0.1)
+
+[node name="UpperWindow" type="Node3D"]
+
+[node name="Pane" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.01)
+mesh = SubResource("BoxMesh_pane")
+material_override = ExtResource("2_pane")
+
+[node name="FrameLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.485, 0, -0.025)
+mesh = SubResource("BoxMesh_frame_v")
+material_override = ExtResource("1_paint")
+
+[node name="FrameRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.485, 0, -0.025)
+mesh = SubResource("BoxMesh_frame_v")
+material_override = ExtResource("1_paint")
+
+[node name="FrameTop" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.735, -0.024)
+mesh = SubResource("BoxMesh_frame_h")
+material_override = ExtResource("1_paint")
+
+[node name="FrameBottom" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.735, -0.024)
+mesh = SubResource("BoxMesh_frame_h")
+material_override = ExtResource("1_paint")
+
+[node name="MuntinV" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.0325)
+mesh = SubResource("BoxMesh_muntin_v")
+material_override = ExtResource("1_paint")
+
+[node name="MuntinH" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.031)
+mesh = SubResource("BoxMesh_muntin_h")
+material_override = ExtResource("1_paint")
+
+[node name="Sill" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.795, -0.05)
+mesh = SubResource("BoxMesh_sill")
+material_override = ExtResource("1_paint")
