@@ -170,8 +170,9 @@ var opposite_house_heights: Array[float] = [6.2, 7.0, 6.6, 7.4, 5.9]
 ## Häuser, die die Seitenstraßen säumen und abschließen (reine Kulisse).
 var end_house_width: float = 5.0
 var end_house_height: float = 6.8
-## Ab dieser Entfernung (von der Bücherei-Tür) werfen Häuser keinen Schatten mehr
-## (spart Rechenleistung; die Häuser gegenüber würden sonst das Fensterlicht verdecken).
+## Nachbarhäuser auf der Bücherei-Seite werfen nur bis zu dieser Entfernung (von der
+## Bücherei-Tür) Schatten – das spart Rechenleistung. Die Häuser gegenüber und an den
+## Seitenstraßen werfen nie Schatten (sie würden sonst das Fensterlicht verdecken).
 var house_shadow_distance: float = 14.0
 
 

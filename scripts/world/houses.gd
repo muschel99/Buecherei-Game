@@ -3,6 +3,9 @@ extends Node3D
 ## Stellt die Nachbarhäuser auf (seit Etappe 4d) – reine Kulisse aus Platzhaltern
 ## (scenes/world/house_facade.tscn). Wo genau, ergibt sich aus StreetLayout und GameConfig.
 ##
+## - Auf der Bücherei-Seite (von der Straße aus gesehen): Haus, Haus, Bücherei, Gasse, Haus,
+##   Haus. Die beiden Häuser rechts der Bücherei (+X) stehen bündig mit ihrer Vorderwand, die
+##   beiden hinter der Gasse (-X) zurückversetzt (davor liegt der kleine Platz).
 ## - Gegenüber: eine Zeile englischer Reihenhäuser, abwechselnd in Farbe und Höhe.
 ## - An den Enden der Straße: Häuser entlang der Seitenstraßen und quer an deren Ende, damit
 ##   die Straße hinter Häusern verschwindet.
@@ -20,6 +23,10 @@ extends Node3D
 	Color(0.18, 0.28, 0.42), Color(0.5, 0.12, 0.14), Color(0.16, 0.32, 0.24),
 	Color(0.08, 0.08, 0.09), Color(0.62, 0.5, 0.2),
 ]
+## Wandfarben der Nachbarhäuser auf der Bücherei-Seite, der Reihe nach.
+@export var neighbor_colors: Array[Color] = [
+	Color(0.5, 0.29, 0.23), Color(0.74, 0.8, 0.78), Color(0.84, 0.76, 0.62), Color(0.58, 0.34, 0.27),
+]
 ## Wandfarben der Häuser an den Seitenstraßen (weit weg, eher gedeckt).
 @export var far_colors: Array[Color] = [Color(0.6, 0.42, 0.34), Color(0.78, 0.74, 0.66), Color(0.52, 0.33, 0.27)]
 
@@ -27,8 +34,45 @@ var _count := 0
 
 
 func _ready() -> void:
+	_build_library_row()
 	_build_opposite_row()
 	_build_side_streets()
+
+
+## Nachbarhäuser links und rechts der Bücherei (Vorderseite zur Straße, also nach -Z).
+func _build_library_row() -> void:
+	var heights := GameConfig.neighbor_house_heights
+	var index := 0
+	# Rechts der Bücherei (+X, von der Straße aus links): bündig mit ihrer Vorderwand
+	var x := StreetLayout.HOUSE_RIGHT
+	for width in GameConfig.neighbor_house_widths:
+		_add_neighbor("Neighbor%d" % (index + 1), x + width / 2.0, StreetLayout.HOUSE_FRONT, width, index, heights)
+		x += width
+		index += 1
+	# Hinter der Gasse (-X): zurückversetzt bis dorthin, wo die Schräge auf die Gassenwand trifft
+	x = StreetLayout.alley_far_x()
+	for width in GameConfig.alley_house_widths:
+		_add_neighbor("Neighbor%d" % (index + 1), x - width / 2.0, StreetLayout.recess_z(), width, index, heights)
+		x -= width
+		index += 1
+
+
+func _add_neighbor(node_name: String, x: float, front_z: float, width: float, index: int, heights: Array[float]) -> void:
+	var house := _make_house(node_name, Vector3(x, 0.0, front_z), PI)
+	house.width = width
+	house.depth = GameConfig.neighbor_house_depth
+	house.eaves_height = heights[index % heights.size()] if not heights.is_empty() else 6.8
+	house.wall_color = neighbor_colors[index % neighbor_colors.size()]
+	house.door_color = door_colors[(index + 1) % door_colors.size()]
+	# Türen jeweils an der Seite weg von der Bücherei
+	house.door_side = -1 if x > 0.0 else 1
+	house.chimney = index % 2 == 0
+	# Sockel so hoch wie der der Bücherei, damit das Band durchläuft
+	house.plinth_height = GameConfig.shop_floor_rise
+	house.plinth_proud = GameConfig.plinth_proud
+	var distance := Vector2(x, front_z).distance_to(Vector2(StreetLayout.door_center().x, StreetLayout.door_center().z))
+	house.casts_shadow = distance <= GameConfig.house_shadow_distance
+	add_child(house)
 
 
 ## Reihenhäuser gegenüber: Vorderseite zur Straße (+Z), gleich breit zwischen den Seitenstraßen.
