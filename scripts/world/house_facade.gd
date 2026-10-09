@@ -36,7 +36,7 @@ extends Node3D
 @export var trim_color: Color = Color(0.93, 0.91, 0.86)
 @export var door_color: Color = Color(0.18, 0.28, 0.42)
 @export var roof_color: Color = Color(0.3, 0.31, 0.34)
-@export var plinth_color: Color = Color(0.36, 0.34, 0.32)
+@export var plinth_color: Color = Color(0.38, 0.36, 0.34)
 @export var glass_color: Color = Color(0.3, 0.34, 0.38)
 
 @export var material: Material = preload("res://assets/materials/outdoor_colors.tres")

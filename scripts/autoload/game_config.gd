@@ -123,10 +123,12 @@ var shop_floor_rise: float = 0.5
 ## Zahl der Stufen vor dem Podest (das Podest selbst ist die oberste Stufe). Alle Stufen
 ## sind gleich hoch: shop_floor_rise / (entrance_step_count + 1).
 var entrance_step_count: int = 3
-## Tiefe jeder Stufe (Auftritt).
+## Tiefe jeder Stufe vorn (Auftritt).
 var entrance_step_depth: float = 0.28
-## Breite des Podests entlang der schrägen Wand (die Stufen laufen außen herum).
-var entrance_podium_width: float = 2.6
+## Breite jeder Stufe an den beiden Seiten. Die ganze Treppe ist genau so breit wie die
+## schräge Wand; das Podest ist darum so breit wie die Wand minus die seitlichen Stufen
+## (bei 3 Stufen à 0,2 m: etwa 1,8 m – breiter als der Türrahmen).
+var entrance_side_step_depth: float = 0.2
 ## Tiefe des Podests vor der Tür.
 var entrance_podium_depth: float = 0.7
 ## So weit steht der Sockel des Hauses unten vor der Wand.

@@ -57,6 +57,11 @@ static func door_center() -> Vector3:
 	return Vector3((HOUSE_LEFT + diagonal_front_x()) / 2.0, 0.0, (recess_z() + HOUSE_FRONT) / 2.0)
 
 
+## Breite der schrägen Wand außen (von Ecke zu Ecke).
+static func diagonal_width() -> float:
+	return (HOUSE_LEFT - diagonal_front_x()) * -sqrt(2.0)
+
+
 static func door_outward() -> Vector3:
 	return Vector3(-1.0, 0.0, -1.0).normalized()
 
