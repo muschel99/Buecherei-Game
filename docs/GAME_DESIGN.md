@@ -603,25 +603,29 @@ Zwei Zustände:
   legt fest, welcher Bereich bebaubar ist – die abgeschnittene Ecke bleibt frei. Die
   Eckposition ist bewusst gewählt: Der Laden soll sich später nach hinten und oben erweitern
   lassen, ohne dass Nachbarhäuser im Weg stehen.
+  Die Schräge verläuft durchgehend vom Boden bis zur Decke: auch Boden und Decke sind in der
+  Ecke abgeschrägt (seit Etappe 4b), sodass der Raum ein sauberes Fünfeck ist. Von außen ist
+  der Laden eine geschlossene, flache Hülle in einer Ladenhöhe (spätere Etagen bleiben möglich).
 - In der unteren (vorderen) und in der linken Wand sitzt je ein großes englisches
   Sprossenfenster (0,8 bis 2,6 m): ein Gitter aus vielen kleinen Scheiben, als einfacher
-  Platzhalter mit angedeuteter Form. Durch das Glas schaut man wie bisher hinaus.
+  Platzhalter mit angedeuteter Form. Der Rahmen steht auf beiden Seiten etwas vor der Wand und
+  ist von innen und außen sichtbar; durch das Glas schaut man von beiden Seiten hindurch.
 - Die Eingangstür ist eine klassische Ladentür mit Sprossenfenster im oberen Teil, verglasten
   Seitenteilen und einem Oberlicht rundherum. Fenster und Tür sind eigene, leicht
   austauschbare Platzhalter-Szenen (`scenes/objects/shop_window.tscn`, `shop_door.tscn`).
-- Die Decke ist zu Beginn schlicht; Balken gibt es als Deckenvariante. Boden und Decke sind
-  weiter volle Rechtecke, darum bleibt vor der schrägen Wand eine kleine überdachte Schwelle
-  stehen – ein bewusster Platzhalter, der beim Gestalten der Außenwelt verfeinert wird.
+- Die Decke ist zu Beginn schlicht; Balken gibt es als Deckenvariante. Das Licht im Raum kommt
+  vom Umgebungslicht (Himmel) und durch die Fenster; eigene Lampen kaufe ich bei „Nest & Nook“.
 - Die Eingangstür öffnet sich mit E sanft nach innen; was an ihr hängt (z. B. ein Türkranz),
   schwingt mit. Seit Etappe 3k bleibt eine offene Tür auch im Gestaltungsmodus offen, damit
   ich hindurchgehen kann; an die offene Tür hängt man nichts (Vorschau rot), und was an ihr
   hängt, lässt sich erst bei geschlossener Tür verschieben oder wegräumen.
 - Der Schwenkbereich der Tür bleibt frei: Dort lassen sich weder Möbel noch Bücher abstellen
   (Vorschau rot, wie gewohnt).
-- Vor der Tür liegt ein Stück Gehweg der Gasse (Platzhalter) mit Bordstein. Rechts steht noch
-  ein Nachbarhaus; links (vor dem neuen Fenster) ist für Etappe 4a Platz geschaffen – die
-  Gestaltung der Gasse rund um die Ecke folgt in einem späteren 4er-Schritt. Hier kommen die
-  Lieferkartons an.
+- Vor der schrägen Eingangstür liegt ein sauberer, begehbarer Vorplatz (Platzhalter), bündig
+  mit dem Innenboden – man tritt geradeaus hinaus und wieder hinein. Daran schließt ein Stück
+  Gehweg mit Bordstein an. Rechts steht noch ein Nachbarhaus; links (vor dem neuen Fenster) ist
+  Platz geschaffen – die Gestaltung der Gasse rund um die Ecke folgt in einem späteren
+  4er-Schritt. Hier kommen die Lieferkartons an.
 - **Speichern und alte Spielstände:** Grundriss, Theken-Position und -Stil, der Rückgabekasten
   und die drei Start-Objekte werden wie gewohnt gespeichert. Weil sich die Raumform mit
   Etappe 4a grundlegend geändert hat, wurde die Speicher-Version erhöht (`SaveManager`, jetzt

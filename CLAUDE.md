@@ -140,9 +140,13 @@ docs/              Dokumentation
   frei. Die schräge Wand ist eine eigene `PaintableWall` (`Walls/Diagonal`) + CSG-Wand
   (`Structure/WallDiagonal` mit `DoorHole`). Fenster (`Walls/Front`, `Walls/Left` mit
   `WindowHole`) und Tür sind eigene, austauschbare Szenen (`scenes/objects/shop_window.tscn`,
-  `shop_door.tscn`). Boden und Decke bleiben volle Rechtecke (kleine Schwelle vor der Schräge).
+  `shop_door.tscn`). Seit Etappe 4b sind auch Boden und Decke in der Ecke abgeschrägt
+  (`Structure/Floor` und `Structure/Ceiling` sind CSG-Container mit einem `CornerCut`-Abschnitt;
+  der Belag spart die Ecke über `PaintableGrid.cut_corner` aus), der Raum ist also ein sauberes
+  Fünfeck; vor der Tür liegt außen ein Vorplatz (`Outside/Doorstep` in main.tscn).
   Transform-Basen der schrägen Knoten müssen rechtshändig sein (+Z in den Raum), sonst liegen
-  Farbflächen/Modelle falsch herum.
+  Farbflächen/Modelle falsch herum. Der Raum hat kein künstliches Füll-Licht mehr; Licht kommt
+  vom Umgebungslicht und den Fenstern.
 - **Oberflächen/Menüs:** Projekt nutzt Stretch-Modus `canvas_items` + `expand` (Basis 1600 x 900).
   Neue Menüs immer mit Anchors und Containern bauen, dann passen sie sich automatisch an.
   Menüs, deren Inhalt wachsen kann, dürfen nie höher als das Bild werden: feste Höhe über

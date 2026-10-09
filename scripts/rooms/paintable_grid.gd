@@ -11,6 +11,10 @@ extends MeshInstance3D
 @export var size: Vector2 = Vector2(6.0, 8.0)
 ## An = Decke (Fläche zeigt nach unten), aus = Boden (Fläche zeigt nach oben).
 @export var faces_down: bool = false
+## Eckladen (seit Etappe 4b): Felder in der Ecke mit den kleinsten x/z (dem Ursprung) werden
+## ausgespart, wenn das an ist – dann folgt der Belag der schrägen Eingangswand. Mass der
+## Schräge: GameConfig.corner_cut.
+@export var cut_corner: bool = false
 
 ## So weit liegt der Belag vor der eigentlichen Fläche (verhindert Flackern).
 const OFFSET := 0.003
@@ -20,6 +24,8 @@ var cell_ids: Array[String] = []
 var columns: int = 1
 var rows: int = 1
 var _cell_size: float = 1.0 / 3.0
+## Mass der abgeschrägten Ecke (0 = keine Schräge).
+var _corner_cut: float = 0.0
 
 
 func _ready() -> void:
@@ -28,10 +34,19 @@ func _ready() -> void:
 	rows = maxi(1, roundi(size.y / _cell_size))
 	cell_ids.resize(columns * rows)
 	cell_ids.fill("")
+	if cut_corner:
+		_corner_cut = GameConfig.corner_cut
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
-## Welches Feld liegt an diesem Punkt? (-1 = außerhalb)
+## Liegt dieses Feld in der ausgesparten (abgeschrägten) Ecke? (Feldmitte jenseits der Schräge)
+func _is_cut(column: int, row: int) -> bool:
+	if _corner_cut <= 0.0:
+		return false
+	return ((column + 0.5) + (row + 0.5)) * _cell_size < _corner_cut
+
+
+## Welches Feld liegt an diesem Punkt? (-1 = außerhalb oder in der abgeschrägten Ecke)
 func get_cell_at(world_point: Vector3) -> int:
 	var local := to_local(world_point)
 	if absf(local.y) > 0.05:
@@ -39,6 +54,8 @@ func get_cell_at(world_point: Vector3) -> int:
 	var column := int(floorf(local.x / _cell_size))
 	var row := int(floorf(local.z / _cell_size))
 	if column < 0 or column >= columns or row < 0 or row >= rows:
+		return -1
+	if _is_cut(column, row):
 		return -1
 	return row * columns + column
 
@@ -94,7 +111,7 @@ func get_connected_cells(start: int) -> Array[int]:
 		if row < rows - 1:
 			neighbours.append(index + columns)
 		for next in neighbours:
-			if not visited.has(next) and cell_ids[next] == id:
+			if not visited.has(next) and cell_ids[next] == id and not _is_cut(next % columns, next / columns):
 				visited[next] = true
 				to_check.append(next)
 	return result
@@ -113,9 +130,13 @@ func rebuild() -> void:
 	for row in rows:
 		var start := 0
 		while start < columns:
+			# Ausgesparte Eckfelder (abgeschrägte Ecke) überspringen – sie bekommen keinen Belag
+			if _is_cut(start, row):
+				start += 1
+				continue
 			var id := cell_ids[row * columns + start]
 			var end := start + 1
-			while end < columns and cell_ids[row * columns + end] == id:
+			while end < columns and not _is_cut(end, row) and cell_ids[row * columns + end] == id:
 				end += 1
 			var surface := Catalog.get_surface(id)
 			if surface and surface.material:
