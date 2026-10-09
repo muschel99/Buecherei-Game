@@ -13,11 +13,14 @@ extends MeshInstance3D
 @export var faces_down: bool = false
 ## Eckladen (seit Etappe 4b): Felder in der Ecke mit den kleinsten x/z (dem Ursprung) werden
 ## ausgespart, wenn das an ist – dann folgt der Belag der schrägen Eingangswand. Mass der
-## Schräge: GameConfig.corner_cut.
+## Schräge: GameConfig.corner_cut. Felder, durch die die Schräge läuft, werden seit Etappe 4c
+## genau an der Schräge abgeschnitten (vorher ragten ihre Ecken durch die Wand nach draußen).
 @export var cut_corner: bool = false
 
 ## So weit liegt der Belag vor der eigentlichen Fläche (verhindert Flackern).
 const OFFSET := 0.003
+## Rechen-Spielraum beim Vergleich mit der Schräge (in Metern).
+const CUT_EPSILON := 0.0001
 
 ## Oberfläche (id) je Feld, Zeile für Zeile.
 var cell_ids: Array[String] = []
@@ -39,11 +42,19 @@ func _ready() -> void:
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
-## Liegt dieses Feld in der ausgesparten (abgeschrägten) Ecke? (Feldmitte jenseits der Schräge)
+## Liegt dieses Feld ganz in der ausgesparten (abgeschrägten) Ecke?
+## (Die Schräge ist die Linie x + z = corner_cut, gemessen ab dem Ursprung des Knotens.)
 func _is_cut(column: int, row: int) -> bool:
 	if _corner_cut <= 0.0:
 		return false
-	return ((column + 0.5) + (row + 0.5)) * _cell_size < _corner_cut
+	return (column + row + 2) * _cell_size <= _corner_cut + CUT_EPSILON
+
+
+## Läuft die Schräge durch dieses Feld? Dann bekommt es nur den Teil vor der Schräge.
+func _is_partly_cut(column: int, row: int) -> bool:
+	if _corner_cut <= 0.0 or _is_cut(column, row):
+		return false
+	return (column + row) * _cell_size < _corner_cut - CUT_EPSILON
 
 
 ## Welches Feld liegt an diesem Punkt? (-1 = außerhalb oder in der abgeschrägten Ecke)
@@ -55,7 +66,7 @@ func get_cell_at(world_point: Vector3) -> int:
 	var row := int(floorf(local.z / _cell_size))
 	if column < 0 or column >= columns or row < 0 or row >= rows:
 		return -1
-	if _is_cut(column, row):
+	if _is_cut(column, row) or local.x + local.z < _corner_cut:
 		return -1
 	return row * columns + column
 
@@ -135,8 +146,11 @@ func rebuild() -> void:
 				start += 1
 				continue
 			var id := cell_ids[row * columns + start]
+			# Ein Feld an der Schräge wird einzeln (abgeschnitten) gebaut
+			var partly := _is_partly_cut(start, row)
 			var end := start + 1
-			while end < columns and not _is_cut(end, row) and cell_ids[row * columns + end] == id:
+			while not partly and end < columns and not _is_cut(end, row) \
+					and not _is_partly_cut(end, row) and cell_ids[row * columns + end] == id:
 				end += 1
 			var surface := Catalog.get_surface(id)
 			if surface and surface.material:
@@ -155,20 +169,43 @@ func rebuild() -> void:
 	mesh = new_mesh
 
 
-## Fügt einen Streifen aus Feldern als zwei Dreiecke hinzu.
+## Fügt einen Streifen aus Feldern hinzu (an der Schräge abgeschnitten, falls nötig).
 func _add_strip(tool: SurfaceTool, start: int, end: int, row: int) -> void:
 	var x0 := start * _cell_size
 	var x1 := end * _cell_size
 	var z0 := row * _cell_size
 	var z1 := (row + 1) * _cell_size
+	var outline: Array[Vector2] = [Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]
+	if _corner_cut > 0.0:
+		outline = _clip_at_corner(outline)
+	if outline.size() < 3:
+		return
 	var y := -OFFSET if faces_down else OFFSET
-	var corners := [Vector3(x0, y, z0), Vector3(x1, y, z0), Vector3(x1, y, z1), Vector3(x0, y, z1)]
+	# Als Fächer aus Dreiecken um die erste Ecke.
 	# Godot zeigt Dreiecke von der Seite, von der aus die Ecken im Uhrzeigersinn liegen.
 	# Die Decke wird von unten angeschaut, deshalb dort die umgekehrte Reihenfolge.
-	var order := [0, 2, 1, 0, 3, 2] if faces_down else [0, 1, 2, 0, 2, 3]
-	for i in order:
-		var corner: Vector3 = corners[i]
-		var world := to_global(corner)
-		tool.set_normal(Vector3.DOWN if faces_down else Vector3.UP)
-		tool.set_uv(Vector2(world.x, world.z))
-		tool.add_vertex(corner)
+	for i in range(1, outline.size() - 1):
+		var triangle := [outline[0], outline[i + 1], outline[i]] if faces_down \
+			else [outline[0], outline[i], outline[i + 1]]
+		for point: Vector2 in triangle:
+			var corner := Vector3(point.x, y, point.y)
+			var world := to_global(corner)
+			tool.set_normal(Vector3.DOWN if faces_down else Vector3.UP)
+			tool.set_uv(Vector2(world.x, world.z))
+			tool.add_vertex(corner)
+
+
+## Schneidet ein Vieleck an der Schräge ab: Übrig bleibt nur der Teil im Raum (x + z ≥ Mass).
+func _clip_at_corner(outline: Array[Vector2]) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	for i in outline.size():
+		var a := outline[i]
+		var b := outline[(i + 1) % outline.size()]
+		var side_a := a.x + a.y - _corner_cut
+		var side_b := b.x + b.y - _corner_cut
+		if side_a >= 0.0:
+			result.append(a)
+		# Die Kante kreuzt die Schräge: Schnittpunkt dazunehmen
+		if (side_a >= 0.0) != (side_b >= 0.0):
+			result.append(a.lerp(b, side_a / (side_a - side_b)))
+	return result
