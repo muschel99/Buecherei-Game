@@ -85,8 +85,8 @@ func _apply_room_height(height: float) -> void:
 			$Structure/WallLeft/Wall, $Structure/WallDiagonal/Wall]:
 		wall.size.y = height
 		wall.position.y = height / 2.0
-	var ceiling: CSGBox3D = $Structure/Ceiling
-	ceiling.position.y = height + ceiling.size.y / 2.0
+	# Die Decke ist ein CSG-Container (abgeschrägte Ecke): sein Ursprung liegt an der Unterkante.
+	($Structure/Ceiling as Node3D).position.y = height
 	($CeilingCovering as Node3D).position.y = height
 
 
