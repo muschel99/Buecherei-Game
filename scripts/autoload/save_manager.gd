@@ -13,7 +13,11 @@ extends Node
 
 const PERSIST_GROUP := "persist"
 ## Version des Speicherformats (hochzählen, wenn sich das Format grundlegend ändert).
-const SAVE_VERSION := 1
+## Etappe 4a: Der Laden wurde zum Eckladen umgebaut und startet fast leer – alte Spielstände
+## (Version 1) passen nicht mehr zur neuen Raumform und werden deshalb ignoriert (siehe
+## load_game). Es beginnt dann ein frisches Spiel; die alte Datei wird beim nächsten
+## Speichern einfach überschrieben.
+const SAVE_VERSION := 2
 
 var _autosave_timer: Timer
 var _is_loading := false
@@ -77,6 +81,13 @@ func load_game() -> void:
 	var save_data = JSON.parse_string(text)
 	if not save_data is Dictionary or not save_data.get("nodes") is Dictionary:
 		push_warning("Spielstand ist beschädigt und wird ignoriert: %s" % GameConfig.save_file_path)
+		return
+
+	# Passt der Spielstand nicht mehr zum aktuellen Format (z. B. ein alter Rechteck-Laden von
+	# vor dem Eckladen-Umbau), wird er ignoriert – es beginnt ein frisches Spiel.
+	var version := int(save_data.get("version", 1))
+	if version != SAVE_VERSION:
+		push_warning("Spielstand hat eine ältere Version (%d statt %d) und wird ignoriert – es beginnt ein frisches Spiel." % [version, SAVE_VERSION])
 		return
 
 	_is_loading = true

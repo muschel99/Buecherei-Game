@@ -133,7 +133,7 @@ mesh = SubResource("BoxMesh_curb")
 material_override = ExtResource("13_curb")
 
 [node name="NeighborLeft" type="StaticBody3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 3.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 3.5, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Outside/NeighborLeft"]
 mesh = SubResource("BoxMesh_neighbor")
@@ -172,7 +172,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6.7)
 shape = SubResource("BoxShape3D_bound_front")
 
 [node name="Deliveries" type="Marker3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0, -4.68)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0, -4.7)
 script = ExtResource("15_deliveries")
 
 [node name="GroundFloorRoom" parent="." instance=ExtResource("1_room")]

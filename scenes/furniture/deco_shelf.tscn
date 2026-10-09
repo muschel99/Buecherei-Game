@@ -1,0 +1,134 @@
+[gd_scene load_steps=10 format=3]
+
+; Deko-Regal (Platzhalter): ein offenes Standregal aus hellem Holz – bewusst KEIN Bücherregal.
+; Hier lassen sich keine Bücher einräumen (es hat keine BookShelf-/BookRow-Knoten); es dient
+; nur zum Dekorieren. Jedes Brett ist eine Ablagefläche (PlacementSurface) für Deko.
+; Ursprung am Boden in der Mitte, Vorderseite +Z. Modell leicht gegen ein eigenes austauschbar.
+
+[ext_resource type="Material" path="res://assets/materials/wood_light.tres" id="1_wood"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="2_surface"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_side"]
+size = Vector3(0.04, 1.4, 0.32)
+
+[sub_resource type="BoxMesh" id="BoxMesh_back"]
+size = Vector3(0.9, 1.4, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_board"]
+size = Vector3(0.86, 0.03, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_side"]
+size = Vector3(0.04, 1.4, 0.32)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_back"]
+size = Vector3(0.9, 1.4, 0.02)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_board"]
+size = Vector3(0.86, 0.03, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_surface"]
+size = Vector3(0.86, 0.03, 0.3)
+
+[node name="DecoShelf" type="Node3D"]
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="SideLeft" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0.7, 0)
+mesh = SubResource("BoxMesh_side")
+material_override = ExtResource("1_wood")
+
+[node name="SideRight" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.7, 0)
+mesh = SubResource("BoxMesh_side")
+material_override = ExtResource("1_wood")
+
+[node name="Back" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, -0.15)
+mesh = SubResource("BoxMesh_back")
+material_override = ExtResource("1_wood")
+
+[node name="BoardBase" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+mesh = SubResource("BoxMesh_board")
+material_override = ExtResource("1_wood")
+
+[node name="Board1" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_board")
+material_override = ExtResource("1_wood")
+
+[node name="Board2" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+mesh = SubResource("BoxMesh_board")
+material_override = ExtResource("1_wood")
+
+[node name="BoardTop" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.38, 0)
+mesh = SubResource("BoxMesh_board")
+material_override = ExtResource("1_wood")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="SideLeft" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0.7, 0)
+shape = SubResource("BoxShape3D_side")
+
+[node name="SideRight" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.7, 0)
+shape = SubResource("BoxShape3D_side")
+
+[node name="Back" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, -0.15)
+shape = SubResource("BoxShape3D_back")
+
+[node name="BoardBase" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+shape = SubResource("BoxShape3D_board")
+
+[node name="Board1" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_board")
+
+[node name="Board2" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+shape = SubResource("BoxShape3D_board")
+
+[node name="BoardTop" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.38, 0)
+shape = SubResource("BoxShape3D_board")
+
+[node name="Surfaces" type="Node3D" parent="."]
+
+[node name="Base" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.065, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_surface")
+max_height = 0.4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Base"]
+shape = SubResource("BoxShape3D_surface")
+
+[node name="Shelf1" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.515, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_surface")
+max_height = 0.4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf1"]
+shape = SubResource("BoxShape3D_surface")
+
+[node name="Shelf2" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.965, 0)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_surface")
+max_height = 0.4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Shelf2"]
+shape = SubResource("BoxShape3D_surface")

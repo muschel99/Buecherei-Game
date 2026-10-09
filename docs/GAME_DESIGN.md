@@ -26,6 +26,9 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   Einnahmen und Ausgaben erscheinen kurz darunter (+80 / −320).
 - **Inventar:** Alles, was mir gehört und gerade nicht im Raum steht. Möbel und Deko werden
   gezählt (z. B. „Bücherregal ×2“). Die Möbel, die zum Start im Raum stehen, gehören mir.
+  Seit Etappe 4a startet der Laden fast leer (ich soll ihn selbst einrichten): Es stehen nur
+  noch drei Platzhalter da – die feste Theke (mit dem Tablet darauf), ein Sessel und ein
+  Deko-Regal. Alles Weitere kaufe ich am Tablet.
   Wandfarben, Böden und Decken kauft man einmal und kann sie danach unbegrenzt verwenden;
   ein paar schlichte Farben (Warmer Putz, Kalkweiß, Nebelgrau), ein Boden (Eichendielen) und
   zwei Decken sind von Anfang an da.
@@ -69,10 +72,12 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     Bücher je Genre, Kaffee und Kuchen …): Jedes System meldet sie selbst (Gruppe
     `stat_sources`, `get_stats()`); was es noch nicht gibt, erscheint einfach nicht.
   - **App „Fassade“** (seit Etappe 3l, Symbol: Hausfront): Hier wird die Hausfront gestaltet.
-    Die App besteht aus Abschnitten (je ein Kasten mit Überschrift); bisher gibt es einen, den
-    **Rückgabekasten**: oben rechts dezent ein Buchsymbol mit „12 / 50“ (wie viele Bücher
-    darin liegen), darunter die Einwurf-Varianten als Karten mit Vorschaubild (vor einem Stück
-    Hauswand). Ein Klick wählt den Einwurf; der gewählte ist hervorgehoben (Rahmen, Häkchen).
+    Die App besteht aus Abschnitten (je ein Kasten mit Überschrift):
+    - **Rückgabekasten**: oben rechts dezent ein Buchsymbol mit „12 / 50“ (wie viele Bücher
+      darin liegen), darunter die Einwurf-Varianten als Karten mit Vorschaubild (vor einem
+      Stück Hauswand). Ein Klick wählt den Einwurf; der gewählte ist hervorgehoben.
+    - **Theke** (seit Etappe 4a): die Stilvarianten der Theke als Auswahlkarten (schlichtes
+      Holz, dunkles Holz, hell lackiert). Ein Klick färbt die Theke im Laden sofort um.
     Später kommen weitere Abschnitte dazu, z. B. Wandfarbe außen, Schild, Fenster (im Code:
     eine Funktion je Abschnitt, eingetragen in `SECTIONS`).
   - **App „Tipps & Tricks“** (seit Etappe 3h): ein kleines, gemütliches Büchlein auf
@@ -86,7 +91,8 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     Text, `<E>` für Tasten) – dort ergänzen, umschreiben oder umsortieren, ohne Code.
   - Das Tablet gehört fest zur Bücherei: Es ist nicht zu kaufen und lässt sich nicht verkaufen.
 - **Lieferung:** Kurz nach der Bestellung (10 Sekunden, GameConfig) stehen die Kartons draußen
-  vor dem Schaufenster, links vom Einwurf des Rückgabekastens (der bleibt frei) – **ein Karton pro Objekt** (drei Stühle und eine Lampe = vier Kartons) –,
+  vor dem vorderen Schaufenster (abseits der Eingangstür, damit der Eingang frei bleibt) –
+  **ein Karton pro Objekt** (drei Stühle und eine Lampe = vier Kartons) –,
   und ein dezenter Hinweis erscheint: „Lieferung ist da“.
   - Die Kartons stapeln sich ordentlich: erst nebeneinander an der Hauswand (4 Stapel), dann
     bis zu 3 übereinander, dann eine Reihe davor. Jeder steht leicht schief, keiner steckt im
@@ -111,7 +117,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - Kategorien (Reiter): Regale, Sitzmöbel, Tische, Theke, Beleuchtung, Deko, Raumteiler sowie
   Wandfarben, Böden und Decken.
 - Unterkategorien:
-  - Regale: Bücherregale, Wandregale, Vitrinen
+  - Regale: Bücherregale, Deko-Regale (nur zum Dekorieren, keine Bücher), Wandregale, Vitrinen
   - Sitzmöbel: Sessel, Sofas, Stühle, Hocker
   - Tische: Beistelltische, Couchtische, Schreibtische, Esstische
   - Beleuchtung: Tischlampen, Stehlampen, Deckenlampen, Wandlampen, Kerzen und Laternen,
@@ -138,7 +144,7 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Bücherpakets, freigeschaltet ja/nein, Schriftart und passende Cover-Gestaltungen.
   Umbenennen, hinzufügen und freischalten geht ohne Code.
   - Zum Start frei: Roman, Krimi, Fantasy, Sachbuch, Kinderbuch.
-  - Angelegt, aber gesperrt (Freischaltung in Etappe 8): Klassiker, Lyrik, Natur und Garten,
+  - Angelegt, aber gesperrt (Freischaltung in Etappe 9): Klassiker, Lyrik, Natur und Garten,
     Philosophie, Science-Fiction, Kochen und Backen, Reisen, Kunst, Geschichte, Achtsamkeit,
     Comics und Graphic Novels.
 - **Echte Bücher:** Jedes Genre hat 50 feste Titel (zusammen 800), deutsch und englisch, alle
@@ -161,12 +167,12 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Autor und Genre – nicht bei jedem flüchtigen Blick) und wenn man es in der Hand hält
   (das Buch obenauf mit Cover; nach dem Nehmen oder Wechseln zeigt die Karte es kurz).
 - Von einem Titel kann es mehrere Exemplare geben; alle sehen gleich aus. Jedes Exemplar hat
-  einen Zustand (vorerst immer „gut“; beschädigte Bücher kommen in Etappe 5).
+  einen Zustand (vorerst immer „gut“; beschädigte Bücher kommen in Etappe 6).
 - **Sammlung:** Bücherpakete bringen zuerst Titel, die ich noch nicht kenne – man weiß nie
   genau, was als Nächstes kommt. Beim Auspacken freut sich ein kurzer Hinweis mit
   („7 neue Titel · Krimi“). Erst wenn alle 50 Titel eines Genres entdeckt
   sind, kommen doppelte (die mit den wenigsten Exemplaren zuerst). Grundlage für das spätere
-  Freischalten einzelner Bücher (Etappe 8).
+  Freischalten einzelner Bücher (Etappe 9).
 - **Bücherbestand** (getrennt vom Möbel-Inventar): Jedes Buch ist im Lager, in einem Regal,
   im Rückgabekasten oder in meinen Händen. Zum Start liegen 12 verschiedene Titel je freiem
   Genre im Lager (GameConfig).
@@ -317,8 +323,9 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   ausgelegten Büchern oder ohne Ziel blättert E.
 - Das **Mausrad** dreht das Buch obenauf vor dem freien Ablegen (siehe „Bücher als Deko“).
 - **Q halten:** Alle getragenen Bücher kommen ins Lager.
-- **Rückgabekasten** (seit Etappe 3l fest eingebaut): Es gibt genau einen, von Anfang an – fest
-  in der Hauswand links neben der Eingangstür, wie ein Briefkasten-Einwurf. Außen sitzt der
+- **Rückgabekasten** (seit Etappe 3l fest eingebaut, seit 4a in der schrägen Eingangswand): Es
+  gibt genau einen, von Anfang an – fest in der schrägen Eingangswand rechts neben der Tür, wie
+  ein Briefkasten-Einwurf. Außen sitzt der
   Einwurf, innen eine Klappe zum Herausnehmen. Er wird nicht aufgestellt, nicht gekauft und
   nicht verkauft; davor bleibt ein kleiner Bereich frei (Möbel und Bücher, Vorschau rot).
   - Wie der Einwurf außen aussieht, wähle ich in der App „Fassade“ (bisher drei Platzhalter:
@@ -445,19 +452,27 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   (`GameConfig.debug_money_amount`).
 - Beide lassen sich zentral abschalten: `GameConfig.debug_keys_enabled = false`.
 
-### Später (Etappe 5)
+### Später (Etappe 6)
 - Leihgebühren über Leseausweise (Buch abstempeln statt Wechselgeld).
 - Mitgliedschaften.
 - Café als zusätzliche Einnahmequelle.
 - Bücher können kaputtgehen (Reparatur) – der Zustand ist im Buch schon vorgesehen.
-- Genres werden nach und nach freigeschaltet (Etappe 8, `BookStock.unlock_genre`).
+- Genres werden nach und nach freigeschaltet (Etappe 9, `BookStock.unlock_genre`).
 
 ## Theke
+- Gehört seit Etappe 4a **fest zum Laden**: nicht kaufbar, nicht verkaufbar und nicht im
+  Inventar (`is_essential` + `is_fixed`). Im Gestaltungsmodus lässt sie sich frei verschieben,
+  aber nicht wegräumen (X verweigert sie freundlich).
 - Modular: Kasse von Anfang an, dazu das Tablet mit seinen Apps (Nest & Nook, Bücherladen,
-  Lager, Fassade, Statistik, Tipps & Tricks).
-- Der Rückgabekasten sitzt seit Etappe 3l fest in der Hauswand neben der Tür (siehe oben).
-- Café-Elemente (z. B. Kaffeemaschine, Kuchenvitrine) später daneben anbaubar.
-- Der gesamte Thekenblock ist frei platzierbar.
+  Lager, Fassade, Statistik, Tipps & Tricks). Die Struktur für weitere Theken-Module (z. B.
+  Backshop-Auslage, Kaffeeautomat) ist vorgesehen (Knoten „Modules“ in der Theken-Szene,
+  `CounterStyle.modules`) – umgesetzt ist davon noch nichts.
+- **Stil der Theke:** Über das Tablet in der App „Fassade“ wähle ich eine von mehreren
+  Platzhalter-Varianten (schlichtes Holz, dunkles Holz, hell lackiert) – kein Kaufen nötig.
+  Der Stil liegt zentral im Autoload `CounterStyle` und lässt sich leicht auch an anderer
+  Stelle aufrufen (z. B. später direkt beim Anschauen der Theke).
+- Der Rückgabekasten sitzt seit Etappe 4a fest in der schrägen Eingangswand, rechts neben der
+  Tür (siehe oben).
 
 ## Tagesablauf
 - Verkürzter Tag: 20 bis 30 Minuten Echtzeit pro Spieltag.
@@ -581,18 +596,37 @@ Zwei Zustände:
   später setzen sich dort auch Besucher hin.
 
 ## Das Haus
-- Altes englisches Reihenhaus in einer schmalen Gasse.
-- Erster Raum (Erdgeschoss, Straßenseite): 6 x 8 Meter, 3,2 Meter hoch (Raumhöhe in GameConfig),
-  großes Fenster (0,8 bis 2,6 m) und Eingangstür (2,2 m) zur Gasse. Die Decke ist zu Beginn
-  schlicht; Balken gibt es als Deckenvariante.
+- Altes englisches Eckhaus an einer Straßenecke (seit Etappe 4a). Der erste Raum ist ein
+  Eckladen im Londoner Stil: ein Rechteck von 6 x 8 Metern, 3,2 Meter hoch (Raumhöhe in
+  GameConfig), bei dem die vordere linke Ecke abgeschrägt ist. In dieser schrägen Wand sitzt
+  mittig die Eingangstür. Das Mass der Schräge steht in `GameConfig.corner_cut` (2,0 m) und
+  legt fest, welcher Bereich bebaubar ist – die abgeschnittene Ecke bleibt frei. Die
+  Eckposition ist bewusst gewählt: Der Laden soll sich später nach hinten und oben erweitern
+  lassen, ohne dass Nachbarhäuser im Weg stehen.
+- In der unteren (vorderen) und in der linken Wand sitzt je ein großes englisches
+  Sprossenfenster (0,8 bis 2,6 m): ein Gitter aus vielen kleinen Scheiben, als einfacher
+  Platzhalter mit angedeuteter Form. Durch das Glas schaut man wie bisher hinaus.
+- Die Eingangstür ist eine klassische Ladentür mit Sprossenfenster im oberen Teil, verglasten
+  Seitenteilen und einem Oberlicht rundherum. Fenster und Tür sind eigene, leicht
+  austauschbare Platzhalter-Szenen (`scenes/objects/shop_window.tscn`, `shop_door.tscn`).
+- Die Decke ist zu Beginn schlicht; Balken gibt es als Deckenvariante. Boden und Decke sind
+  weiter volle Rechtecke, darum bleibt vor der schrägen Wand eine kleine überdachte Schwelle
+  stehen – ein bewusster Platzhalter, der beim Gestalten der Außenwelt verfeinert wird.
 - Die Eingangstür öffnet sich mit E sanft nach innen; was an ihr hängt (z. B. ein Türkranz),
   schwingt mit. Seit Etappe 3k bleibt eine offene Tür auch im Gestaltungsmodus offen, damit
   ich hindurchgehen kann; an die offene Tür hängt man nichts (Vorschau rot), und was an ihr
   hängt, lässt sich erst bei geschlossener Tür verschieben oder wegräumen.
 - Der Schwenkbereich der Tür bleibt frei: Dort lassen sich weder Möbel noch Bücher abstellen
   (Vorschau rot, wie gewohnt).
-- Vor der Tür liegt ein Stück Gehweg der Gasse (Platzhalter) mit Bordstein; links und rechts
-  stehen die Nachbarhäuser. Hier kommen die Lieferkartons an.
+- Vor der Tür liegt ein Stück Gehweg der Gasse (Platzhalter) mit Bordstein. Rechts steht noch
+  ein Nachbarhaus; links (vor dem neuen Fenster) ist für Etappe 4a Platz geschaffen – die
+  Gestaltung der Gasse rund um die Ecke folgt in einem späteren 4er-Schritt. Hier kommen die
+  Lieferkartons an.
+- **Speichern und alte Spielstände:** Grundriss, Theken-Position und -Stil, der Rückgabekasten
+  und die drei Start-Objekte werden wie gewohnt gespeichert. Weil sich die Raumform mit
+  Etappe 4a grundlegend geändert hat, wurde die Speicher-Version erhöht (`SaveManager`, jetzt
+  Version 2): Ein alter Spielstand (Version 1) passt nicht mehr und wird beim Laden ignoriert –
+  es beginnt automatisch ein frisches Spiel, ohne dass ich etwas löschen muss.
 
 ## Einstellungen
 - Im Pausenmenü unter „Einstellungen“: Fenster oder Vollbild, Auflösung (gängige Auflösungen

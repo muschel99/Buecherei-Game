@@ -27,6 +27,7 @@ Settings="*res://scripts/autoload/settings.gd"
 Wallet="*res://scripts/autoload/wallet.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
 BookStock="*res://scripts/autoload/book_stock.gd"
+CounterStyle="*res://scripts/autoload/counter_style.gd"
 DebugKeys="*res://scripts/autoload/debug_keys.gd"
 
 [display]

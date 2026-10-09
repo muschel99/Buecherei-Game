@@ -10,7 +10,7 @@ extends TabletApp
 ## beim Einwurf baut make_option_card() (Vorschaubild, Name, ausgewählt hervorgehoben).
 
 ## Die Abschnitte (Namen der Funktionen, die sie bauen), von oben nach unten.
-const SECTIONS := ["_build_return_box_section"]
+const SECTIONS := ["_build_return_box_section", "_build_counter_section"]
 const CARD_SIZE := Vector2(190, 178)
 const PREVIEW_SIZE := Vector2(170, 112)
 
@@ -64,7 +64,7 @@ func _build_return_box_section() -> void:
 	var box := ReturnBox.find(get_tree())
 	if box == null:
 		return
-	var content := make_section("Rückgabekasten", "Fest in der Hauswand neben der Eingangstür",
+	var content := make_section("Rückgabekasten", "Fest in der schrägen Eingangswand, rechts neben der Tür",
 		_make_count(box.get_books().size(), box.get_capacity(), box.is_full()))
 	content.add_child(make_label("Einwurf", 15, TabletFrame.MUTED_COLOR))
 	var cards := HFlowContainer.new()
@@ -85,6 +85,44 @@ func choose_slot(id: String) -> void:
 	if box:
 		box.set_slot(id)
 	request_refresh()
+
+
+# --- Abschnitt: Theke ---
+
+func _build_counter_section() -> void:
+	var content := make_section("Theke", "Stil der festen Theke im Laden")
+	content.add_child(make_label("Stil", 15, TabletFrame.MUTED_COLOR))
+	var cards := HFlowContainer.new()
+	cards.add_theme_constant_override("h_separation", 12)
+	cards.add_theme_constant_override("v_separation", 12)
+	content.add_child(cards)
+	for style in CounterStyle.get_all_styles():
+		var id: String = style["id"]
+		var card := make_option_card(style["name"], id == CounterStyle.style_id, choose_counter_style.bind(id))
+		card.name = id
+		var preview := card.get_node("Box/Preview") as TextureRect
+		preview.stretch_mode = TextureRect.STRETCH_SCALE
+		preview.texture = _counter_swatch(style)
+		cards.add_child(card)
+
+
+## Stil der Theke wählen (Kennung einer CounterStyle-Variante).
+func choose_counter_style(id: String) -> void:
+	CounterStyle.set_style(id)
+	request_refresh()
+
+
+## Kleines Vorschaubild einer Theken-Variante: drei waagerechte Farbbänder (Platte, Front, Korpus).
+func _counter_swatch(style: Dictionary) -> Texture2D:
+	var image := Image.create(32, 48, false, Image.FORMAT_RGBA8)
+	image.fill(style["cabinet"])
+	for y in range(0, 16):
+		for x in range(32):
+			image.set_pixel(x, y, style["top"])
+	for y in range(16, 30):
+		for x in range(32):
+			image.set_pixel(x, y, style["panel"])
+	return ImageTexture.create_from_image(image)
 
 
 ## Buchsymbol und "12 / 50" (voll: in der Hinweisfarbe).

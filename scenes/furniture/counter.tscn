@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="5_t0h0b"]
+[ext_resource type="Script" path="res://scripts/objects/counter.gd" id="6_counter"]
 [ext_resource type="PackedScene" path="res://scenes/furniture/cash_register.tscn" id="cash_register"]
 [ext_resource type="Material" path="res://assets/materials/door_paint.tres" id="mat_door_paint"]
 [ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="mat_wood_dark"]
@@ -25,6 +26,7 @@ size = Vector3(0.4, 0.26, 0.38)
 size = Vector3(2, 0.03, 0.65)
 
 [node name="Counter" type="Node3D" unique_id=767750479]
+script = ExtResource("6_counter")
 
 [node name="Model" type="Node3D" parent="." unique_id=850529860]
 

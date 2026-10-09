@@ -21,22 +21,27 @@ signal layout_changed
 @export var floor_height: float = 0.0
 
 @onready var furniture_root: Node3D = $Furniture
-## Die Wände, die in Abschnitten gestrichen werden können.
-@onready var _walls: Array[PaintableWall] = [$Walls/Left, $Walls/Right, $Walls/Back, $Walls/Front]
+## Die Wände, die in Abschnitten gestrichen werden können (inkl. der schrägen Eingangswand).
+@onready var _walls: Array[PaintableWall] = [$Walls/Left, $Walls/Right, $Walls/Back, $Walls/Front, $Walls/Diagonal]
 ## Boden und Decke, die in Abschnitten gestaltet werden können.
 @onready var _grids := {
 	SurfaceData.Kind.FLOOR: $FloorCovering as PaintableGrid,
 	SurfaceData.Kind.CEILING: $CeilingCovering as PaintableGrid,
 }
 ## Fenster- und Türlaibung: bekommen die Farbe des Wandabschnitts, in dem sie liegen.
-@onready var _reveals: Array[CSGPrimitive3D] = [$Structure/WallFront/WindowHole, $Structure/WallFront/DoorHole]
-@onready var _reveal_wall: PaintableWall = $Walls/Front
+## Jeder Eintrag: { "node": CSG-Aussparung, "wall": die Wand, zu der sie gehört }.
+@onready var _reveals: Array = [
+	{"node": $Structure/WallFront/WindowHole, "wall": $Walls/Front},
+	{"node": $Structure/WallLeft/WindowHole, "wall": $Walls/Left},
+	{"node": $Structure/WallDiagonal/DoorHole, "wall": $Walls/Diagonal},
+]
 ## Hier darf man etwas aufhängen (Wandbilder, Lichtschalter …).
 @onready var _hang_walls: Array[Node] = [
 	$Structure/WallLeft,
 	$Structure/WallRight,
 	$Structure/WallBack,
 	$Structure/WallFront,
+	$Structure/WallDiagonal,
 ]
 ## Hier darf man etwas an die Tür hängen (z. B. einen Türkranz).
 @onready var _hang_doors: Array[Node] = [$Door/Hinge/DoorLeaf]
@@ -50,6 +55,8 @@ enum HangKind { NONE = 0, WALL = 4, DOOR = 8, CEILING = 16 }
 var loose_books: LooseBooks
 
 var _next_uid: int = 1
+## Mass der abgeschrägten vorderen linken Ecke (aus GameConfig.corner_cut); die Ecke bleibt frei.
+var _corner_cut: float = 0.0
 ## Wo Unverzichtbares (z. B. das Tablet) ursprünglich steht – falls es in einem Spielstand
 ## fehlt, kommt es dorthin zurück. id -> { "support_id": …, "transform": … }
 var _essential_spots: Dictionary = {}
@@ -59,6 +66,7 @@ func _ready() -> void:
 	loose_books = LooseBooks.new()
 	loose_books.name = "LooseBooks"
 	add_child(loose_books)
+	_corner_cut = GameConfig.corner_cut
 	_apply_room_height(GameConfig.room_height)
 	add_to_group(SaveManager.PERSIST_GROUP)
 	for item in get_placed_furniture():
@@ -73,7 +81,8 @@ func _ready() -> void:
 ## Passt Wände, Decke, Deckenbelag und Raumlicht an die Raumhöhe an.
 ## (Die Wandabschnitte zum Streichen lesen die Höhe selbst, siehe PaintableWall.)
 func _apply_room_height(height: float) -> void:
-	for wall: CSGBox3D in [$Structure/WallLeft, $Structure/WallRight, $Structure/WallBack, $Structure/WallFront/Wall]:
+	for wall: CSGBox3D in [$Structure/WallRight, $Structure/WallBack, $Structure/WallFront/Wall,
+			$Structure/WallLeft/Wall, $Structure/WallDiagonal/Wall]:
 		wall.size.y = height
 		wall.position.y = height / 2.0
 	var ceiling: CSGBox3D = $Structure/Ceiling
@@ -225,10 +234,16 @@ func get_switchable_lights() -> Array[LightSource]:
 	return lights
 
 
-## Liegt dieser Punkt (in Weltkoordinaten) innerhalb der Raumfläche?
+## Liegt dieser Punkt (in Weltkoordinaten) innerhalb der Raumfläche? Die abgeschrägte vordere
+## linke Ecke (schräge Eingangswand) zählt nicht dazu – dort lässt sich nichts aufstellen.
 func is_inside_build_area(world_position: Vector3) -> bool:
 	var local := to_local(world_position)
-	return build_area.has_point(Vector2(local.x, local.z))
+	if not build_area.has_point(Vector2(local.x, local.z)):
+		return false
+	# Abgeschnittene Ecke: der Dreiecks-Bereich an der Ecke mit den kleinsten x/z bleibt frei.
+	var along_x := local.x - build_area.position.x
+	var along_z := local.z - build_area.position.y
+	return along_x + along_z >= _corner_cut
 
 
 ## Ist der getroffene Kollisionskörper eine Wand, die Tür oder die Decke dieses Raums?
@@ -341,9 +356,11 @@ func _paint_everything(id: String) -> void:
 
 ## Fenster- und Türlaibung in der Farbe des Abschnitts streichen, in dem sie liegen.
 func _update_reveals() -> void:
-	for reveal in _reveals:
-		var x := _reveal_wall.to_local(reveal.global_position).x
-		var surface := Catalog.get_surface(_reveal_wall.segment_ids[_reveal_wall.get_segment_index_at_x(x)])
+	for entry in _reveals:
+		var wall: PaintableWall = entry["wall"]
+		var reveal: CSGPrimitive3D = entry["node"]
+		var x := wall.to_local(reveal.global_position).x
+		var surface := Catalog.get_surface(wall.segment_ids[wall.get_segment_index_at_x(x)])
 		if surface:
 			reveal.material = surface.material
 

@@ -89,6 +89,14 @@ var door_open_time: float = 0.9
 ## dem Wunschwert wählen – muss aber nicht.
 var room_height: float = 3.2
 
+## Eckladen (seit Etappe 4a): So weit (in Metern) ist die vordere linke Ecke abgeschrägt –
+## dort sitzt die schräge Eingangswand mit der Ladentür. Dieser Wert legt fest, welcher
+## Bereich im Raum bebaubar ist: die abgeschnittene Ecke bleibt frei (dort lässt sich nichts
+## aufstellen). Die sichtbare Wand, die Fenster und die Tür sind in
+## scenes/rooms/ground_floor_room.tscn für genau diesen Wert (2,0 m) gebaut – änderst du ihn
+## stark, solltest du die Wand dort entsprechend anpassen.
+var corner_cut: float = 2.0
+
 
 # --- Gestaltungsmodus (Etappe 2) ---
 
@@ -288,6 +296,13 @@ var paused_max_fps: int = 30
 
 ## Spiel automatisch pausieren, wenn das Spielfenster in den Hintergrund rückt.
 var pause_on_focus_loss: bool = true
+
+
+# --- Theke ---
+
+## Stil der Theke beim allerersten Start (id aus CounterStyle.STYLES). Den Stil wechsle ich
+## im Spiel über das Theken-Tablet in der App "Fassade".
+var counter_default_style: String = "wood_warm"
 
 
 # --- Rückgabekasten ---

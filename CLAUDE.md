@@ -34,9 +34,10 @@ scenes/            Szenen (.tscn)
   rooms/           Räume des Hauses
   furniture/       Möbel (je eine Szene, Modell austauschbar)
   objects/         Interaktive Objekte (Stehlampe, Lieferkarton, Rückgabekasten in der Wand,
+                   Sprossenfenster shop_window, Ladentür shop_door,
                    return_slots/ = Einwurf-Varianten; Scripts: LightSource, Seating,
                    Lichtschalter, Tür, Tablet, BookShelf, BookRow, BookLook, ReturnBox,
-                   LooseBooks = ausgelegte Bücher, BookStand = Buch-Aufsteller;
+                   LooseBooks = ausgelegte Bücher, BookStand = Buch-Aufsteller, Counter = Theke;
                    player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
   ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Theken-Tablet, Hinweise,
@@ -46,7 +47,7 @@ scenes/            Szenen (.tscn)
     tablet_apps/   Apps des Theken-Tablets (je eine kleine Szene)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
-                   Wallet, Inventory, BookStock, BookArt, DebugKeys)
+                   Wallet, Inventory, BookStock, BookArt, CounterStyle, DebugKeys)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, BookData, Book,
@@ -133,6 +134,15 @@ docs/              Dokumentation
   Deckenobjekte: Ursprung oben am Aufhängepunkt.
 - Raster: `GameConfig.grid_cell_size` = 1/9 m; Boden/Decke in Abschnitten von 3 x 3 Feldern.
   Raummaße (Breite, Tiefe) sollen Vielfache von 1/3 m sein. Raumhöhe: `GameConfig.room_height`.
+- **Eckladen (seit Etappe 4a):** Der erste Raum ist ein Rechteck (innen 6 x 8 m) mit
+  abgeschrägter vorderer linker Ecke (schräge Eingangswand, Tür mittig). Mass der Schräge:
+  `GameConfig.corner_cut` (2,0 m); `Room.is_inside_build_area` lässt die abgeschnittene Ecke
+  frei. Die schräge Wand ist eine eigene `PaintableWall` (`Walls/Diagonal`) + CSG-Wand
+  (`Structure/WallDiagonal` mit `DoorHole`). Fenster (`Walls/Front`, `Walls/Left` mit
+  `WindowHole`) und Tür sind eigene, austauschbare Szenen (`scenes/objects/shop_window.tscn`,
+  `shop_door.tscn`). Boden und Decke bleiben volle Rechtecke (kleine Schwelle vor der Schräge).
+  Transform-Basen der schrägen Knoten müssen rechtshändig sein (+Z in den Raum), sonst liegen
+  Farbflächen/Modelle falsch herum.
 - **Oberflächen/Menüs:** Projekt nutzt Stretch-Modus `canvas_items` + `expand` (Basis 1600 x 900).
   Neue Menüs immer mit Anchors und Containern bauen, dann passen sie sich automatisch an.
   Menüs, deren Inhalt wachsen kann, dürfen nie höher als das Bild werden: feste Höhe über
@@ -157,13 +167,26 @@ docs/              Dokumentation
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
 - Stil-Merkmale sind überall freiwillig; ohne Stil-Merkmal = stilneutral, zählt nicht mit.
 - **Geld** ändert sich nur über `Wallet.spend(betrag, grund)` / `Wallet.earn(betrag, grund)`
-  (Etappe 5 baut darauf auf). Anzeige als Text: `Wallet.format(betrag)`.
+  (Etappe 6 baut darauf auf). Anzeige als Text: `Wallet.format(betrag)`.
 - **Inventar** (`Inventory`): Möbel mit Anzahl (`add_furniture`, `take_furniture`), Oberflächen
   einmal besessen (`add_surface`, `owns_surface`). Was im Raum steht, zählt der Raum
   (`Room.count_placed`). Der Gestaltungsmodus zeigt nur, was im Inventar liegt (Anzahl ≥ 1).
 - `FurnitureData.is_essential` = gehört fest zur Bücherei (Tablet): nicht kaufbar, nicht
   verkaufbar; `Room.ensure_essentials()` stellt es zurück, falls es fehlt.
   `SurfaceData.owned_at_start` = von Anfang an vorhanden.
+- `FurnitureData.is_fixed` (seit Etappe 4a) = fest verbaut (z. B. die Theke): im
+  Gestaltungsmodus verschiebbar, aber nicht wegräumbar (X verweigert) und nie im Inventar
+  (`BuildMode` prüft `is_fixed` beim Aufheben, Verschieben und Wegräumen). Sinnvoll mit
+  `is_essential` zusammen.
+- **Theke** (`scenes/furniture/counter.tscn`, Script `Counter`): fest verbaut
+  (is_essential + is_fixed). Ihr Stil (Farben) liegt zentral im Autoload `CounterStyle`
+  (STYLES, `set_style`, `get_style`, Signal `changed`, gespeichert, Gruppe `persist`); die
+  Theke hört auf `changed` und färbt sich. Stilauswahl in der App „Fassade“, aber bewusst
+  von überall aufrufbar. Module (Backshop, Kaffee) hängen unter dem Knoten `Modules` –
+  Struktur steht bereit, noch nichts umgesetzt.
+- **Deko-Regal** (`deco_shelf_light`, Szene `deco_shelf.tscn`, Unterkategorie `deco_shelf`):
+  ein Regal ohne `BookShelf`/`BookRow`, darum lassen sich dort keine Bücher einräumen – nur
+  Ablageflächen zum Dekorieren. Bücherregale (mit BookShelf) gibt es weiter im Shop.
 - **Einkaufen:** Läden „Nest & Nook“ (Möbel, Deko, Oberflächen; Kaufen/Verkaufen) und
   „Bücherladen“ (Pakete) am Theken-Tablet; Bestellungen gehen an den `DeliveryManager` (Gruppe
   `delivery_manager`, `place_order(inhalt)`), Inhalt als Liste von
