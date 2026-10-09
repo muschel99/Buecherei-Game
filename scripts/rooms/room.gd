@@ -81,10 +81,14 @@ func _ready() -> void:
 ## Passt Wände, Decke und Deckenbelag an die Raumhöhe an.
 ## (Die Wandabschnitte zum Streichen lesen die Höhe selbst, siehe PaintableWall.)
 func _apply_room_height(height: float) -> void:
-	for wall: CSGBox3D in [$Structure/WallRight, $Structure/WallBack, $Structure/WallFront/Wall,
-			$Structure/WallLeft/Wall, $Structure/WallDiagonal/Wall]:
+	for wall: CSGBox3D in [$Structure/WallRight, $Structure/WallBack]:
 		wall.size.y = height
 		wall.position.y = height / 2.0
+	# Die Wände an der Schräge sind hochgezogene Grundrisse (Gehrung an den Ecken): Ihre
+	# Höhe ist die Tiefe des Hochziehens, der Fuß liegt schon auf dem Boden.
+	for wall: CSGPolygon3D in [$Structure/WallFront/Wall, $Structure/WallLeft/Wall,
+			$Structure/WallDiagonal/Wall]:
+		wall.depth = height
 	# Die Decke ist ein CSG-Container (abgeschrägte Ecke): sein Ursprung liegt an der Unterkante.
 	($Structure/Ceiling as Node3D).position.y = height
 	($CeilingCovering as Node3D).position.y = height
