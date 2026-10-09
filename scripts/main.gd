@@ -42,6 +42,10 @@ func _apply_graphics_quality() -> void:
 ## an der Kamera fein, weiter weg gröber. Ohne Überblendung sieht man dort, wo eine Stufe in
 ## die nächste übergeht, eine Linie im Fensterlicht, die beim Laufen mitwandert. Deshalb
 ## werden die Übergänge weich überblendet.
+## Die Schattenkanten macht der normale weiche Filter (Sun: shadow_blur) weich. Eine "breite
+## Sonnenscheibe" (light_angular_distance > 0) bleibt bewusst aus (seit Etappe 4c): Sie ist
+## teurer und zeigte an langen geraden Kanten (Dachkante, Fenstersturz, Fensterlicht am Boden)
+## eine Treppenlinie.
 func _apply_sun_shadows(preset: Dictionary) -> void:
 	var two := int(preset.get("sun_cascades", 4)) <= 2
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if two \
