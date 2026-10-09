@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+; Erzeugt die Vorlagen-Modelle (.glb, echte Größe) für alle Haustypen und Möbel in
+; assets/models/templates/ (Etappe 4e). Diese Szene öffnen und mit F6 starten – sie beendet
+; sich von selbst. Siehe docs/ASSET_GUIDE.md, Abschnitt „Vorlagen zum Modellieren“.
+
+[ext_resource type="Script" path="res://scripts/world/tools/templates_exporter.gd" id="1_export"]
+
+[node name="ExportTemplates" type="Node"]
+script = ExtResource("1_export")
