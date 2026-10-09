@@ -223,7 +223,7 @@ transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.70710
 [node name="Furniture" type="Node3D" parent="."]
 
 [node name="Armchair" type="Node3D" parent="Furniture"]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -2.4, 0, 0.5)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -2.2888889, 0, 0.5)
 script = ExtResource("16_placed")
 data = ExtResource("10_armchair")
 

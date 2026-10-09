@@ -105,6 +105,12 @@ var upper_floor_count: int = 1
 ## Höhe eines Obergeschosses in Metern (vom eigenen Fußboden bis zum nächsten, also mit Decke).
 var upper_floor_height: float = 3.0
 
+## Tiefe der inneren Fensterbänke (seit Etappe 4d) in Metern, gemessen von der Scheibe bis
+## zur vorderen Kante. Die Wand ist 0,2 m dick, die Scheibe sitzt in der Mitte: Bei 0,32 m
+## ragt die Fensterbank also 0,22 m in den Raum. Davon sind gut 25 cm Ablage für Deko und
+## Bücher. Das Fenster selbst bleibt gleich groß.
+var window_sill_depth: float = 0.32
+
 
 # --- Gestaltungsmodus (Etappe 2) ---
 
