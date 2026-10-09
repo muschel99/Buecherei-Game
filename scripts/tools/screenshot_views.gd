@@ -46,10 +46,12 @@ static func overview() -> Dictionary:
 	var y := eye()
 	return {
 		"street_east": look(0.0, curb + 0.8, 1.0, 0.0),
-		"street_west": look(0.0, curb + 0.8, -1.0, 0.0),
+		"street_west": look(2.0, curb + 0.8, -1.0, 0.0),
 		"library_front": look(-2.0, StreetLayout.opposite_front_z() + 0.8, 0.3, 1.0, 0.15),
 		"aerial_east": {"pos": Vector3(-6.0, 22.0, road_mid - 14.0), "target": Vector3(StreetLayout.straight_bound_x() + 6.0, 0.0, road_mid)},
 		"aerial_west": {"pos": Vector3(4.0, 22.0, road_mid - 14.0), "target": Vector3(StreetLayout.west_end_x(), 0.0, road_mid - 6.0)},
+		"aerial_gate": {"pos": Vector3(StreetLayout.turning_road_center_x() - StreetLayout.turning_side() * 16.0, 20.0, road_mid + 4.0),
+			"target": Vector3(StreetLayout.turning_road_center_x(), 2.0, StreetLayout.gatehouse_front_z() - 6.0)},
 		"high_street": {"pos": Vector3(0.0, y + 6.0, road_mid), "target": Vector3(-30.0, y, road_mid)},
 	}
 
