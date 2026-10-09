@@ -153,6 +153,7 @@ material_override = ExtResource("4_wood_dark")
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -3, 0, 4)
 script = ExtResource("18_wall")
 length = 6.0
+openings = Array[Rect2]([Rect2(1.8, 0.8, 2.4, 1.8)])
 
 [node name="Right" type="Node3D" parent="Walls"]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 3, 0, -4)

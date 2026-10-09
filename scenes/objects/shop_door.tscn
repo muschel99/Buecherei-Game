@@ -6,6 +6,9 @@
 ; Zum Austauschen gegen ein eigenes Modell: Der Ursprung liegt am Boden in der Mitte der
 ; Türöffnung, +Z zeigt in den Raum, +X läuft an der Wand entlang. Die Öffnung ist 1,4 m breit
 ; und 2,6 m hoch und passt in das Loch in der schrägen Wand (CSG-Aussparung "DoorHole").
+; Der Rahmen (Etappe 4c) liegt halb im Loch und halb auf der Wand und steht auf beiden Seiten
+; 3 cm vor der Wand (Tiefe 0,26 m, die Wand ist 0,20 m dick) – vorher steckte er ganz in der
+; Wand und war unsichtbar.
 ; Aufbau wie von Door erwartet: Knoten "Hinge" (Drehachse), darunter "DoorLeaf" (Türblatt mit
 ; Kollision) und "Interactable".
 
@@ -17,10 +20,10 @@
 [ext_resource type="Material" path="res://assets/materials/brass.tres" id="6_brass"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_v"]
-size = Vector3(0.1, 2.72, 0.16)
+size = Vector3(0.1, 2.67, 0.26)
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_top"]
-size = Vector3(1.74, 0.1, 0.16)
+size = Vector3(1.36, 0.098, 0.256)
 
 [sub_resource type="BoxMesh" id="BoxMesh_mullion"]
 size = Vector3(0.06, 2.2, 0.12)
@@ -60,17 +63,17 @@ size = Vector3(1.0, 2.2, 0.2)
 script = ExtResource("1_door")
 
 [node name="FrameLeft" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.77, 1.36, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.72, 1.335, 0)
 mesh = SubResource("BoxMesh_frame_v")
 material_override = ExtResource("3_paint")
 
 [node name="FrameRight" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.77, 1.36, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.72, 1.335, 0)
 mesh = SubResource("BoxMesh_frame_v")
 material_override = ExtResource("3_paint")
 
 [node name="FrameTop" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.67, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.619, 0)
 mesh = SubResource("BoxMesh_frame_top")
 material_override = ExtResource("3_paint")
 
