@@ -1,9 +1,228 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 
-; Alle Nachbarhäuser (Etappe 4d), aufgestellt von scripts/world/houses.gd aus Platzhaltern
-; (scenes/world/house_facade.tscn). Liegt unter "Outside" (y = 0 = Gehweg).
+; Alle Nachbarhäuser (seit Etappe 4e jedes Haus ein eigener Knoten). Erzeugt von
+; scenes/world/tools/generate_houses.tscn (Lage aus StreetLayout und GameConfig) – danach frei
+; im Editor anklickbar, verschiebbar und austauschbar. Jedes Haus ist eine Szene aus
+; scenes/world/houses/ (ein Haustyp). Liegt unter "Outside" (y = 0 = Gehweg).
+; Gruppen: LibraryRow = Nachbarn der Bücherei, Opposite = gegenüber, StraightEnd = hinter der
+; Grenze am geraden Straßenende, SideStreets = an den Knicks.
 
-[ext_resource type="Script" path="res://scripts/world/houses.gd" id="1_houses"]
+[ext_resource type="PackedScene" path="res://scenes/world/houses/fashion_shop.tscn" id="1_jl76p"]
+[ext_resource type="PackedScene" path="res://scenes/world/houses/terrace_55.tscn" id="2_51l1e"]
+[ext_resource type="PackedScene" path="res://scenes/world/houses/pub.tscn" id="3_ycjy1"]
+[ext_resource type="PackedScene" path="res://scenes/world/houses/terrace_50.tscn" id="4_b4vo6"]
+[ext_resource type="PackedScene" path="res://scenes/world/houses/terrace_45.tscn" id="5_8miuw"]
+[ext_resource type="PackedScene" path="res://scenes/world/houses/terrace_60.tscn" id="6_ndida"]
+[ext_resource type="PackedScene" path="res://scenes/world/houses/residential.tscn" id="7_img60"]
 
-[node name="Houses" type="Node3D"]
-script = ExtResource("1_houses")
+[node name="Houses" type="Node3D" unique_id=1902622304]
+
+[node name="LibraryRow" type="Node3D" parent="." unique_id=293608127]
+
+[node name="Neighbor1" parent="LibraryRow" unique_id=911958915 instance=ExtResource("1_jl76p")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 5.9, 0, -4.2)
+wall_color = Color(0.9, 0.86, 0.8, 1)
+door_color = Color(0.5, 0.12, 0.14, 1)
+
+[node name="Neighbor2" parent="LibraryRow" unique_id=1179294129 instance=ExtResource("2_51l1e")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 11.35, 0, -4.2)
+wall_color = Color(0.74, 0.8, 0.78, 1)
+door_color = Color(0.16, 0.32, 0.24, 1)
+
+[node name="Neighbor3" parent="LibraryRow" unique_id=1179691336 instance=ExtResource("3_ycjy1")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -8.8, 0, -2.0828428)
+wall_color = Color(0.84, 0.76, 0.62, 1)
+door_color = Color(0.08, 0.08, 0.09, 1)
+
+[node name="Neighbor4" parent="LibraryRow" unique_id=1050953129 instance=ExtResource("4_b4vo6")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -14.1, 0, -2.0828428)
+wall_color = Color(0.58, 0.34, 0.27, 1)
+door_color = Color(0.62, 0.5, 0.2, 1)
+
+[node name="StraightEnd" type="Node3D" parent="." unique_id=1816427185]
+
+[node name="Street1" parent="StraightEnd" unique_id=1920730677 instance=ExtResource("4_b4vo6")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 16.6, 0, -4.2)
+wall_color = Color(0.5, 0.27, 0.22, 1)
+door_color = Color(0.5, 0.12, 0.14, 1)
+casts_shadow = false
+solid = false
+
+[node name="Street2" parent="StraightEnd" unique_id=1255474269 instance=ExtResource("5_8miuw")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 21.35, 0, -4.1959996)
+wall_color = Color(0.72, 0.78, 0.66, 1)
+door_color = Color(0.16, 0.32, 0.24, 1)
+casts_shadow = false
+solid = false
+
+[node name="Street3" parent="StraightEnd" unique_id=1591643525 instance=ExtResource("2_51l1e")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 26.349998, 0, -4.2)
+wall_color = Color(0.9, 0.84, 0.76, 1)
+door_color = Color(0.08, 0.08, 0.09, 1)
+casts_shadow = false
+solid = false
+
+[node name="Street4" parent="StraightEnd" unique_id=818745229 instance=ExtResource("6_ndida")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 32.1, 0, -4.1959996)
+door_color = Color(0.62, 0.5, 0.2, 1)
+casts_shadow = false
+solid = false
+
+[node name="Street5" parent="StraightEnd" unique_id=2000393231 instance=ExtResource("5_8miuw")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 37.35, 0, -4.2)
+wall_color = Color(0.86, 0.82, 0.72, 1)
+casts_shadow = false
+solid = false
+
+[node name="Street6" parent="StraightEnd" unique_id=267700273 instance=ExtResource("5_8miuw")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 41.85, 0, -4.1959996)
+wall_color = Color(0.62, 0.72, 0.76, 1)
+door_color = Color(0.5, 0.12, 0.14, 1)
+casts_shadow = false
+solid = false
+
+[node name="Opposite" type="Node3D" parent="." unique_id=1685054336]
+
+[node name="Opposite1" parent="Opposite" unique_id=468139152 instance=ExtResource("7_img60")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.0999994, 0, -14)
+door_color = Color(0.5, 0.12, 0.14, 1)
+casts_shadow = false
+
+[node name="Opposite2" parent="Opposite" unique_id=1818076762 instance=ExtResource("6_ndida")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5571437, 0, -14.004)
+wall_color = Color(0.86, 0.82, 0.72, 1)
+door_color = Color(0.16, 0.32, 0.24, 1)
+casts_shadow = false
+
+[node name="Opposite3" parent="Opposite" unique_id=853923527 instance=ExtResource("4_b4vo6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.0142865, 0, -14)
+wall_color = Color(0.62, 0.72, 0.76, 1)
+door_color = Color(0.08, 0.08, 0.09, 1)
+casts_shadow = false
+
+[node name="Opposite4" parent="Opposite" unique_id=717860233 instance=ExtResource("5_8miuw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.72143, 0, -14.004)
+wall_color = Color(0.5, 0.27, 0.22, 1)
+door_color = Color(0.62, 0.5, 0.2, 1)
+casts_shadow = false
+
+[node name="Opposite5" parent="Opposite" unique_id=480170345 instance=ExtResource("2_51l1e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.678574, 0, -14)
+wall_color = Color(0.72, 0.78, 0.66, 1)
+casts_shadow = false
+
+[node name="Opposite6" parent="Opposite" unique_id=1276177513 instance=ExtResource("6_ndida")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.385717, 0, -14.004)
+wall_color = Color(0.9, 0.84, 0.76, 1)
+door_color = Color(0.5, 0.12, 0.14, 1)
+casts_shadow = false
+solid = false
+
+[node name="Opposite7" parent="Opposite" unique_id=1091385814 instance=ExtResource("5_8miuw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.592861, 0, -14)
+door_color = Color(0.16, 0.32, 0.24, 1)
+casts_shadow = false
+solid = false
+
+[node name="Opposite8" parent="Opposite" unique_id=1399151555 instance=ExtResource("5_8miuw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.050003, 0, -14.004)
+wall_color = Color(0.86, 0.82, 0.72, 1)
+door_color = Color(0.08, 0.08, 0.09, 1)
+casts_shadow = false
+solid = false
+
+[node name="SideStreets" type="Node3D" parent="." unique_id=131828734]
+
+[node name="EastSide1" parent="SideStreets" unique_id=592814645 instance=ExtResource("2_51l1e")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 44.1, 0, -6.95)
+wall_color = Color(0.6, 0.42, 0.34, 1)
+door_color = Color(0.5, 0.12, 0.14, 1)
+casts_shadow = false
+solid = false
+
+[node name="EastSide2" parent="SideStreets" unique_id=1722881962 instance=ExtResource("5_8miuw")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 44.104, 0, -11.883333)
+wall_color = Color(0.78, 0.74, 0.66, 1)
+door_color = Color(0.16, 0.32, 0.24, 1)
+casts_shadow = false
+solid = false
+
+[node name="EastSide3" parent="SideStreets" unique_id=2070758422 instance=ExtResource("5_8miuw")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 44.1, 0, -16.316666)
+wall_color = Color(0.52, 0.33, 0.27, 1)
+door_color = Color(0.08, 0.08, 0.09, 1)
+casts_shadow = false
+solid = false
+
+[node name="EastSide4" parent="SideStreets" unique_id=189480964 instance=ExtResource("5_8miuw")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 44.104, 0, -20.75)
+wall_color = Color(0.6, 0.42, 0.34, 1)
+door_color = Color(0.62, 0.5, 0.2, 1)
+casts_shadow = false
+solid = false
+
+[node name="WestSide1" parent="SideStreets" unique_id=1129853455 instance=ExtResource("6_ndida")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -16.6, 0, -20)
+wall_color = Color(0.78, 0.74, 0.66, 1)
+door_color = Color(0.5, 0.12, 0.14, 1)
+casts_shadow = false
+
+[node name="WestSide2" parent="SideStreets" unique_id=501375629 instance=ExtResource("6_ndida")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -16.604, 0, -14.027615)
+wall_color = Color(0.52, 0.33, 0.27, 1)
+door_color = Color(0.16, 0.32, 0.24, 1)
+casts_shadow = false
+
+[node name="WestSide3" parent="SideStreets" unique_id=826087822 instance=ExtResource("5_8miuw")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -16.6, 0, -8.805229)
+wall_color = Color(0.6, 0.42, 0.34, 1)
+door_color = Color(0.08, 0.08, 0.09, 1)
+casts_shadow = false
+
+[node name="WestSide4" parent="SideStreets" unique_id=134909875 instance=ExtResource("5_8miuw")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -16.604, 0, -4.332844)
+wall_color = Color(0.78, 0.74, 0.66, 1)
+door_color = Color(0.62, 0.5, 0.2, 1)
+casts_shadow = false
+
+[node name="EastEnd1" parent="SideStreets" unique_id=1363480334 instance=ExtResource("6_ndida")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.300003, 0, -23)
+wall_color = Color(0.52, 0.33, 0.27, 1)
+door_color = Color(0.5, 0.12, 0.14, 1)
+casts_shadow = false
+solid = false
+
+[node name="EastEnd2" parent="SideStreets" unique_id=1636593965 instance=ExtResource("2_51l1e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36.95, 0, -23.004)
+wall_color = Color(0.6, 0.42, 0.34, 1)
+door_color = Color(0.16, 0.32, 0.24, 1)
+casts_shadow = false
+solid = false
+
+[node name="EastEnd3" parent="SideStreets" unique_id=1669924868 instance=ExtResource("5_8miuw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41.85, 0, -23)
+wall_color = Color(0.78, 0.74, 0.66, 1)
+door_color = Color(0.08, 0.08, 0.09, 1)
+casts_shadow = false
+solid = false
+
+[node name="WestEnd1" parent="SideStreets" unique_id=592132279 instance=ExtResource("6_ndida")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.6, 0, -23)
+wall_color = Color(0.6, 0.42, 0.34, 1)
+door_color = Color(0.5, 0.12, 0.14, 1)
+casts_shadow = false
+solid = false
+
+[node name="WestEnd2" parent="SideStreets" unique_id=1299767687 instance=ExtResource("2_51l1e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.95, 0, -23.004)
+wall_color = Color(0.78, 0.74, 0.66, 1)
+door_color = Color(0.16, 0.32, 0.24, 1)
+casts_shadow = false
+solid = false
+
+[node name="WestEnd3" parent="SideStreets" unique_id=248103631 instance=ExtResource("5_8miuw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.0499992, 0, -23)
+wall_color = Color(0.52, 0.33, 0.27, 1)
+door_color = Color(0.08, 0.08, 0.09, 1)
+casts_shadow = false
+solid = false

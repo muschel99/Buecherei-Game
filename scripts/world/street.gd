@@ -1,8 +1,10 @@
 class_name Street
 extends Node3D
 ## Die Straße vor der Bücherei (seit Etappe 4d): eine schmale, gerade Fahrbahn (ein Auto
-## breit) mit Gehwegen auf beiden Seiten. An beiden Enden biegt sie vor einem quer stehenden
-## Haus in eine Seitenstraße ab und verschwindet so hinter den Häusern.
+## breit) mit Gehwegen auf beiden Seiten. Ein Ende biegt vor einem quer stehenden Haus in eine
+## Seitenstraße ab; das andere läuft geradeaus weiter (GameConfig.straight_street_end) und
+## knickt erst weit hinter einer unsichtbaren Grenze ab – so verschwindet die Straße an beiden
+## Enden hinter Häusern.
 ## Maße: GameConfig (sidewalk_width, street_width, curb_height …), Lage: StreetLayout.
 ##
 ## Dieser Knoten liegt (wie alles unter "Outside") auf Gehweg-Höhe: y = 0 ist der Gehweg.
@@ -10,7 +12,8 @@ extends Node3D
 ## - Gehwege (Plattenmuster), Bordsteine und Fahrbahn als wenige, einfache Meshes,
 ## - EINE ebene Bodenkollision für alles draußen (die Fahrbahn liegt nur optisch tiefer –
 ##   so stolpert die Spielfigur nie über einen Bordstein),
-## - unsichtbare, weiche Grenzen in den Seitenstraßen (kurz hinter der Ecke),
+## - unsichtbare, weiche Grenzen: in der Seitenstraße kurz hinter der Ecke, am geraden Ende
+##   quer über Straße und Gehwege (wo die Nachbarhäuser enden),
 ## - unsichtbare Start- und Endpunkte für spätere Autos, Radfahrer und Fußgänger
 ##   (Knoten "TrafficPoints", Gruppe "traffic_points"; noch fährt und läuft dort niemand).
 
@@ -107,8 +110,9 @@ func _build_ground_collision() -> void:
 	add_child(body)
 
 
-## Weiche Grenzen quer über die Seitenstraßen: abgerundet (Zylinder an den Enden), so gleitet
-## die Spielfigur sanft daran entlang statt hart anzustoßen.
+## Weiche Grenzen: abgerundet (Zylinder an den Enden), so gleitet die Spielfigur sanft daran
+## entlang statt hart anzustoßen. Am abbiegenden Ende quer über die Seitenstraße, am geraden
+## Ende quer über Straße und Gehwege.
 func _build_bounds() -> void:
 	var body := StaticBody3D.new()
 	body.name = "Bounds"
@@ -116,8 +120,20 @@ func _build_bounds() -> void:
 	body.collision_mask = 0
 	add_child(body)
 	var limit := StreetLayout.side_street_limit_z()
-	_add_bound(body, Vector2(StreetLayout.opposite_row().y - 0.5, limit), Vector2(StreetLayout.east_end_x(), limit))
-	_add_bound(body, Vector2(StreetLayout.west_end_x(), limit), Vector2(StreetLayout.opposite_row().x + 0.5, limit))
+	if StreetLayout.is_straight(1):
+		_add_straight_bound(body, StreetLayout.HOUSE_FRONT)
+	else:
+		_add_bound(body, Vector2(StreetLayout.opposite_row().y - 0.5, limit), Vector2(StreetLayout.east_end_x(), limit))
+	if StreetLayout.is_straight(-1):
+		_add_straight_bound(body, StreetLayout.recess_z())
+	else:
+		_add_bound(body, Vector2(StreetLayout.west_end_x(), limit), Vector2(StreetLayout.opposite_row().x + 0.5, limit))
+
+
+## Grenze am geraden Ende: von der Hausfront (front_z) bis in die Häuser gegenüber.
+func _add_straight_bound(body: StaticBody3D, front_z: float) -> void:
+	var x := StreetLayout.straight_bound_x()
+	_add_bound(body, Vector2(x, front_z + 0.5), Vector2(x, StreetLayout.opposite_front_z() - 0.5))
 
 
 func _add_bound(body: StaticBody3D, a: Vector2, b: Vector2) -> void:

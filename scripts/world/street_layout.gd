@@ -11,7 +11,7 @@ extends RefCounted
 ##     (zurückversetzt)        ⟋ Tür
 ##     ----- Platz ---------- ⟋
 ##     ========= Gehweg ===============================
-##     ========= Fahrbahn (biegt an beiden Enden ab) ===
+##     ========= Fahrbahn (ein Ende biegt ab, das andere läuft geradeaus weiter) ===
 ##     ========= Gehweg gegenüber ======================
 ##           Reihenhäuser gegenüber
 
@@ -88,20 +88,45 @@ static func alley_end_z() -> float:
 	return recess_z() + GameConfig.alley_depth
 
 
-## Ende der Häuserreihe auf der Bücherei-Seite (x): Dort steht quer ein Haus, und die Straße
-## biegt davor ab.
-static func east_end_x() -> float:
+## Wo die Nachbarhäuser neben der Bücherei enden (x): rechts (+X) bündig, links (-X)
+## hinter der Gasse.
+static func neighbor_row_end_x() -> float:
 	var x := HOUSE_RIGHT
-	for width in GameConfig.neighbor_house_widths:
-		x += width
+	for id in GameConfig.neighbor_house_types:
+		x += HouseTypes.width_of(id)
 	return x
+
+
+static func alley_row_end_x() -> float:
+	var x := alley_far_x()
+	for id in GameConfig.alley_house_types:
+		x -= HouseTypes.width_of(id)
+	return x
+
+
+## Läuft dieses Straßenende geradeaus weiter? side: 1 = Osten (+X), -1 = Westen (-X).
+static func is_straight(side: int) -> bool:
+	return GameConfig.straight_street_end == ("east" if side > 0 else "west")
+
+
+## Am geraden Ende: Lage der Grenze quer über die Straße (x) und wie weit sie reicht (z: von
+## der Hausfront bis zu den Häusern gegenüber).
+static func straight_bound_x() -> float:
+	return neighbor_row_end_x() if is_straight(1) else alley_row_end_x()
+
+
+static func straight_side() -> int:
+	return 1 if is_straight(1) else -1
+
+
+## Ende der Häuserreihe auf der Bücherei-Seite (x): Dort steht quer ein Haus, und die Straße
+## biegt davor ab. Am geraden Ende liegt dieser Knick straight_street_length weiter draußen.
+static func east_end_x() -> float:
+	return neighbor_row_end_x() + (GameConfig.straight_street_length if is_straight(1) else 0.0)
 
 
 static func west_end_x() -> float:
-	var x := alley_far_x()
-	for width in GameConfig.alley_house_widths:
-		x -= width
-	return x
+	return alley_row_end_x() - (GameConfig.straight_street_length if is_straight(-1) else 0.0)
 
 
 ## Fahrbahn der Seitenstraßen: von - bis (x). Außen läuft der Gehweg weiter.

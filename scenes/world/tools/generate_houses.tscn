@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+; Erzeuger für scenes/world/houses.tscn (Etappe 4e). Diese Szene öffnen und mit F6 starten –
+; sie stellt alle Häuser neu auf (Lage aus StreetLayout und GameConfig) und beendet sich.
+; Achtung: eigene Änderungen in houses.tscn werden dabei überschrieben.
+
+[ext_resource type="Script" path="res://scripts/world/tools/houses_generator.gd" id="1_gen"]
+
+[node name="GenerateHouses" type="Node"]
+script = ExtResource("1_gen")

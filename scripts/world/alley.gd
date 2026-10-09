@@ -49,7 +49,8 @@ func _build_yard_walls(library_x: float, far_x: float, end: float) -> void:
 	body.collision_mask = 0
 	add_child(body)
 	var library_back := StreetLayout.HOUSE_BACK
-	var neighbor_back := StreetLayout.recess_z() + GameConfig.neighbor_house_depth
+	var first_house: String = GameConfig.alley_house_types[0] if not GameConfig.alley_house_types.is_empty() else ""
+	var neighbor_back := StreetLayout.recess_z() + (HouseTypes.depth_of(first_house) if first_house != "" else 0.0)
 	var t := YARD_WALL_THICKNESS
 	var h := YARD_WALL_HEIGHT
 	_add_wall(builder, body, Vector3(library_x, 0.0, library_back), Vector3(library_x + t, h, end))

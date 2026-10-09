@@ -135,41 +135,43 @@ var entrance_podium_depth: float = 0.7
 var plinth_proud: float = 0.03
 
 ## Gehweg vor der Bücherei (von der Hauswand bis zur Bordsteinkante).
-var sidewalk_width: float = 2.0
+var sidewalk_width: float = 2.6
 ## Gehweg auf der gegenüberliegenden Straßenseite.
-var opposite_sidewalk_width: float = 1.6
-## Fahrbahn: eine Spur, ein Auto breit.
-var street_width: float = 3.4
+var opposite_sidewalk_width: float = 2.1
+## Fahrbahn (seit Etappe 4e etwa 50 % breiter als vorher, Gehwege etwa 30 %).
+var street_width: float = 5.1
 ## So viel tiefer als der Gehweg liegt die Fahrbahn (Höhe des Bordsteins).
 var curb_height: float = 0.12
 ## So lang sind die Seitenstraßen, in die die Straße an beiden Enden abbiegt (bis zum Haus,
 ## das sie abschließt). Laufen kann man nur bis kurz hinter die Ecke (side_street_walkable).
 var side_street_length: float = 9.0
 var side_street_walkable: float = 2.0
+## Welches Straßenende geradeaus weiterläuft (seit Etappe 4e; das andere biegt ab):
+## "east" = die Seite, wo die Nachbarhäuser bündig neben der Bücherei stehen (Standard),
+## "west" = die Seite mit der Gasse und den zurückversetzten Häusern.
+var straight_street_end: String = "east"
+## Am geraden Ende: Bis zur unsichtbaren Grenze kommt man (sie steht quer über Straße und
+## Gehwegen, wo die Nachbarhäuser enden). Dahinter läuft die Straße so viele Meter sichtbar
+## weiter (mit Häusern auf beiden Seiten) und knickt erst dann ab.
+var straight_street_length: float = 30.0
 
 ## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
 var alley_width: float = 2.8
 var alley_depth: float = 11.0
 
-## Breiten der Nachbarhäuser auf der Bücherei-Seite, von der Bücherei nach außen gezählt:
-## links der Bücherei (von der Straße aus gesehen) und hinter der Gasse. Die Häuser hinter der
-## Gasse stehen zurückversetzt – ihre Vorderkante liegt genau dort, wo die schräge Wand auf
-## die Seitenwand an der Gasse trifft (ergibt sich aus corner_cut).
-var neighbor_house_widths: Array[float] = [5.2, 5.6]
-var alley_house_widths: Array[float] = [5.4, 5.2]
-## Tiefe der Nachbarhäuser (von vorn nach hinten).
-var neighbor_house_depth: float = 8.4
-## Traufhöhen (über dem Gehweg) der Nachbarhäuser – etwa so hoch wie die Bücherei mit
-## Obergeschoss. Die Liste wird der Reihe nach für alle Häuser benutzt.
-var neighbor_house_heights: Array[float] = [6.6, 7.2, 6.9, 6.4]
-## Häuserreihe gegenüber (englische Reihenhäuser): so viele Häuser passen zwischen die
-## beiden Seitenstraßen; Höhen wechseln der Reihe nach.
-var opposite_house_count: int = 4
-var opposite_house_depth: float = 7.5
-var opposite_house_heights: Array[float] = [6.2, 7.0, 6.6, 7.4, 5.9]
-## Häuser, die die Seitenstraßen säumen und abschließen (reine Kulisse).
-var end_house_width: float = 5.0
-var end_house_height: float = 6.8
+## Häuser (seit Etappe 4e): Jedes Haus ist ein Haustyp = eine Szene mit festen Maßen in
+## scenes/world/houses/<id>.tscn (z. B. "terrace_50", "pub"). Die Häuser selbst stehen fest in
+## scenes/world/houses.tscn – nach Änderungen hier neu erzeugen (siehe docs/ASSET_GUIDE.md,
+## Abschnitt „Außenwelt“).
+## Nachbarhäuser auf der Bücherei-Seite, von der Bücherei nach außen gezählt: neben der
+## Bücherei (bündig mit ihrer Vorderwand) und hinter der Gasse (zurückversetzt – ihre
+## Vorderkante liegt genau dort, wo die schräge Wand auf die Seitenwand an der Gasse trifft).
+var neighbor_house_types: Array[String] = ["fashion_shop", "terrace_55"]
+var alley_house_types: Array[String] = ["pub", "terrace_50"]
+## Dieses Haus steht gegenüber, möglichst genau vor der Ladentür der Bücherei ("" = keins).
+var opposite_feature_house: String = "residential"
+## Aus diesen Reihenhaus-Typen werden alle übrigen Häuserreihen lückenlos zusammengesetzt.
+var terrace_house_types: Array[String] = ["terrace_50", "terrace_45", "terrace_55", "terrace_60"]
 ## Nachbarhäuser auf der Bücherei-Seite werfen nur bis zu dieser Entfernung (von der
 ## Bücherei-Tür) Schatten – das spart Rechenleistung. Die Häuser gegenüber und an den
 ## Seitenstraßen werfen nie Schatten (sie würden sonst das Fensterlicht verdecken).

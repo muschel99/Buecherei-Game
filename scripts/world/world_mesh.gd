@@ -1,3 +1,4 @@
+@tool
 class_name WorldMesh
 extends RefCounted
 ## Kleiner Baukasten für die Kulisse draußen (seit Etappe 4d): sammelt Vierecke und Quader
@@ -74,6 +75,14 @@ func add_wall(a: Vector2, b: Vector2, y0: float, y1: float, outward: Vector3, co
 
 func is_empty() -> bool:
 	return _empty
+
+
+## Fertiges Mesh (leer = null) – z. B. um es für mehrere Knoten zu teilen.
+func commit(material: Material) -> ArrayMesh:
+	if _empty:
+		return null
+	_tool.set_material(material)
+	return _tool.commit()
 
 
 ## Fertiges Mesh als Knoten (leer = null).

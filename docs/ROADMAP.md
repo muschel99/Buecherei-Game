@@ -29,6 +29,7 @@
 | 4b  | Reparatur Eckladen (Schräge, Fassade, Fenster, Vorplatz, Licht) | fertig |
 | 4c  | Eckladen sauber nachbessern (Gehrung, Gehweg, Obergeschoss) | fertig |
 | 4d  | Straße, Gasse, Platz und Eingangstreppe  | fertig        |
+| 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | fertig |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -525,6 +526,26 @@ liegt erhöht über ein paar Stufen, und zwei Kleinigkeiten im Laden werden bess
       und seitlich, Fensterbänke, Bodenleiste) und Lauftests an allen Grenzen
 - [x] Nachtrag: Gasse und Platz durchgehend mit den großen Gehwegplatten (keine kleinen
       Pflastersteine, kein eigener Gehweg in der Gasse); nur die Straße bleibt glatt
+
+### Etappe 4e – Breitere Straße, ein gerades Straßenende und austauschbare Häuser
+Leitgedanke: Die Straße wird großzügiger, ein Ende läuft geradeaus weiter, und jedes Haus
+lässt sich einzeln gegen ein eigenes Modell tauschen – mit Vorlagen in echter Größe.
+- [x] Gehwege etwa 30 % breiter (2,6 m und 2,1 m), Fahrbahn etwa 50 % breiter (5,1 m); alles
+      passt sich über StreetLayout an. Mit Teststrahlen geprüft (10-cm-Raster über alle
+      erreichbaren Stellen): keine Löcher, keine doppelten Flächen, kein Schlupfloch
+- [x] Nur noch ein Ende biegt ab, das andere läuft geradeaus weiter
+      (`GameConfig.straight_street_end`, Standard „east“ = Seite der bündigen Nachbarn);
+      weiche Grenze quer über Straße und Gehwege, dahinter 30 m Straße mit Häusern bis zum
+      Knick (`straight_street_length`). Mit Testbildern von der Grenze aus geprüft (für beide
+      Einstellungen): nirgends ein Blick um den Knick oder ins Leere
+- [x] Jedes Haus ein eigener Knoten in `scenes/world/houses.tscn` (im Editor sichtbar; erzeugt
+      von `scenes/world/tools/generate_houses.tscn`), Haustypen als eigene Szenen in
+      `scenes/world/houses/` (feste Maße, gemeinsames Mesh, Farben je Haus per Shader).
+      Modegeschäft neben der Bücherei, Pub hinter der Gasse am Platz, Wohnhaus gegenüber der Tür
+- [x] Vorlagen-Modelle (.glb, echte Größe) für alle Haustypen, alle Möbel, Gassenende und
+      Treppe in `assets/models/templates/` (erzeugt von `export_templates.tscn`; geprüft: gleiche
+      Größe und Lage wie im Spiel)
+- [x] Anleitung „Außenwelt“ und „Vorlagen zum Modellieren“ in docs/ASSET_GUIDE.md
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
