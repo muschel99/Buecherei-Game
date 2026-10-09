@@ -80,8 +80,11 @@ size = Vector3(6, 7, 8.4)
 [sub_resource type="BoxShape3D" id="BoxShape3D_neighbor"]
 size = Vector3(6, 7, 8.4)
 
-[sub_resource type="BoxMesh" id="BoxMesh_upper_facade"]
-size = Vector3(6.4, 3.6, 0.2)
+[sub_resource type="BoxMesh" id="BoxMesh_doorstep"]
+size = Vector3(2.6, 0.12, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_doorstep"]
+size = Vector3(2.6, 0.12, 1.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bound_side"]
 size = Vector3(0.2, 3, 2.6)
@@ -152,10 +155,15 @@ material_override = ExtResource("6_brick")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/NeighborRight"]
 shape = SubResource("BoxShape3D_neighbor")
 
-[node name="UpperFacade" type="MeshInstance3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, -4.1)
-mesh = SubResource("BoxMesh_upper_facade")
-material_override = ExtResource("14_plaster")
+[node name="Doorstep" type="StaticBody3D" parent="Outside"]
+transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -2.565, -0.06, -3.565)
+
+[node name="Mesh" type="MeshInstance3D" parent="Outside/Doorstep"]
+mesh = SubResource("BoxMesh_doorstep")
+material_override = ExtResource("12_sidewalk")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/Doorstep"]
+shape = SubResource("BoxShape3D_doorstep")
 
 [node name="Bounds" type="StaticBody3D" parent="Outside"]
 
