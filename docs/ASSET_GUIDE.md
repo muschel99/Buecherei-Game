@@ -7,6 +7,7 @@ Sie sind so gebaut, dass du sie später leicht durch eigene Dateien ersetzen kan
 | Art             | Ordner                  | Formate             |
 |-----------------|-------------------------|---------------------|
 | 3D-Modelle      | `assets/models/`        | `.glb` (empfohlen)  |
+| Vorlagen        | `assets/models/templates/` | `.glb` (nur zum Modellieren, siehe unten) |
 | Texturen        | `assets/textures/`      | `.png`, `.jpg`      |
 | Materialien     | `assets/materials/`     | `.tres` (Godot)     |
 | Musik           | `assets/audio/music/`   | `.ogg`              |
@@ -227,6 +228,130 @@ Armchair        (Wurzel-Knoten)
 4. Passe bei Bedarf Größe und Position an. Der Boden ist bei Höhe 0.
 5. Passe im Knoten `Body > CollisionShape3D` die Kiste grob an die neue Form an.
 6. Speichern mit **Strg+S**. Alle Exemplare im Raum ändern sich automatisch.
+
+## Vorlagen zum Modellieren
+Für jedes Möbelstück, jeden Haustyp, das Gassenende und die Eingangstreppe gibt es eine
+schlichte **Vorlage** als `.glb`-Datei – in echter Größe (1 Einheit = 1 Meter) und genau so
+gelegen wie im Spiel. Darauf (oder daneben) modellierst du dein eigenes Modell; dann passt es
+später ohne Verschieben oder Skalieren.
+
+| Was            | Ordner                                   | Dateiname                     |
+|----------------|------------------------------------------|-------------------------------|
+| Möbel und Deko | `assets/models/templates/furniture/`     | Id des Möbelstücks, z. B. `armchair_velvet.glb` |
+| Häuser         | `assets/models/templates/houses/`        | Haustyp, z. B. `pub.glb`      |
+| Gassenende, Treppe | `assets/models/templates/world/`     | `alley_end.glb`, `entrance_steps.glb` |
+
+Der Ordner `templates` enthält eine leere Datei `.gdignore`: Godot zeigt ihn darum im
+Dateisystem-Fenster nicht an und lädt die Vorlagen nicht ins Spiel. Du öffnest sie über den
+Dateimanager: `~/Buecherei-Game/assets/models/templates/`.
+
+**In Blender:**
+1. **Datei → Importieren → glTF 2.0 (.glb/.gltf)** und die Vorlage wählen.
+2. Nicht verschieben, drehen oder skalieren: Der Ursprung (Nullpunkt) ist derselbe wie im Spiel.
+   Die Vorderseite zeigt in Blender nach **-Y** – das ist die Seite, die du in der
+   **Vorderansicht** (Ziffernblock **1**) siehst. Der Boden liegt auf Höhe 0.
+3. Dein Modell darüber bauen. Danach die Vorlage löschen (oder ausblenden und beim Export
+   nur dein Modell auswählen).
+4. **Datei → Exportieren → glTF 2.0**, Format **glTF Binary (.glb)**, Einstellung „+Y Up“ an
+   lassen (Standard). Speichern in `~/Buecherei-Game/assets/models/` (nicht in `templates`).
+
+**In Nomad Sculpt:** Über das Datei-Menü die `.glb` importieren, darauf modellieren, die
+Vorlage löschen und als `.glb` exportieren. Danach die Datei nach `assets/models/` kopieren.
+
+Die Vorlagen neu erzeugen (z. B. nach neuen Möbeln oder geänderten Haus-Maßen): In Godot die
+Szene `scenes/world/tools/export_templates.tscn` öffnen und mit **F6** starten. Das Fenster
+schließt sich nach ein paar Sekunden von selbst.
+
+**Für Möbel:** Vorlage `templates/furniture/<id>.glb` nehmen, Modell bauen, dann wie im
+Abschnitt „Ein Möbelstück durch ein eigenes Modell ersetzen“ unter `Model` einsetzen. Weil die
+Vorlage genau so liegt wie die Szene, muss am Knoten `Model` nichts verschoben werden.
+
+## Außenwelt: Häuser, Gassenende und Eingangstreppe
+Draußen besteht alles aus Platzhaltern, die du einzeln durch eigene Modelle ersetzen kannst.
+Für alle gilt: Man legt in der Szene einen Kind-Knoten **„Model“** an (genau so geschrieben)
+und zieht dein `.glb` hinein. Sobald es „Model“ gibt, verschwindet der Platzhalter; die
+unsichtbare Kollision (damit man nicht hindurchläuft) bleibt.
+
+### Wo steht was?
+- `scenes/world/houses.tscn` – **alle Häuser**, jedes als eigener Knoten. Öffne die Szene mit
+  Doppelklick: Du siehst alle Häuser und kannst jedes anklicken und verschieben. Sie sind in
+  Gruppen sortiert: `LibraryRow` (Nachbarn der Bücherei), `Opposite` (gegenüber),
+  `StraightEnd` (hinter der Grenze am geraden Straßenende), `SideStreets` (an den Knicks).
+- `scenes/world/houses/` – die **Haustypen**. Jedes Haus in `houses.tscn` ist ein Exemplar
+  eines dieser Typen. Gleiche Häuser nutzen dieselbe Szene (das spart Rechenleistung).
+- `scenes/world/alley_end.tscn` – Mauer mit Tor am Ende der Gasse (mit Haus dahinter).
+- `scenes/world/entrance_steps.tscn` – Podest mit Stufen vor der Ladentür.
+
+### Die Haustypen und ihre Maße
+Alle Häuser: **Ursprung unten in der Mitte der Vorderseite** (auf Gehweg-Höhe), die
+**Vorderseite zeigt nach +Z** (im Editor die blaue Pfeilrichtung), das Haus reicht 8 m nach
+hinten (-Z). Die Traufe ist die Unterkante des Dachs; darüber steigt das Dach 2 m bis zum
+First, vorn und hinten steht es 20 cm über.
+
+| Haustyp (Datei)      | Rolle                                        | Breite | Traufhöhe | Tiefe |
+|----------------------|----------------------------------------------|--------|-----------|-------|
+| `terrace_45.tscn`    | Reihenhaus, schmal                           | 4,5 m  | 6,4 m     | 8 m   |
+| `terrace_50.tscn`    | Reihenhaus                                   | 5,0 m  | 6,9 m     | 8 m   |
+| `terrace_55.tscn`    | Reihenhaus, breit                            | 5,5 m  | 7,2 m     | 8 m   |
+| `terrace_60.tscn`    | Reihenhaus, sehr breit                       | 6,0 m  | 6,6 m     | 8 m   |
+| `residential.tscn`   | Wohnhaus (gegenüber der Ladentür)            | 5,4 m  | 7,0 m     | 8 m   |
+| `pub.tscn`           | Restaurant / Pub (erstes Haus hinter der Gasse, am Platz) | 5,6 m | 7,2 m | 8 m |
+| `fashion_shop.tscn`  | Modegeschäft (direkt neben der Bücherei)     | 5,4 m  | 6,8 m     | 8 m   |
+
+Die Kollision ist ein Kasten so groß wie Breite × Traufhöhe × Tiefe. Dein Modell darf darüber
+hinausragen (Dach, Schornstein, Markise); unten sollte es die Grundfläche ausfüllen.
+
+### Alle Häuser eines Typs ersetzen
+1. Im Dateisystem-Fenster `scenes/world/houses/` öffnen und den Haustyp doppelklicken
+   (z. B. `pub.tscn`).
+2. Dein `.glb` aus `assets/models/` auf den obersten Knoten ziehen. Es erscheint als Kind.
+3. Den neuen Knoten umbenennen in **Model** (Rechtsklick → Umbenennen oder **F2**).
+4. Nichts verschieben – wenn du auf der Vorlage modelliert hast, sitzt es schon richtig.
+5. **Strg+S**. Alle Häuser dieses Typs zeigen jetzt dein Modell (auch in `houses.tscn`).
+
+### Nur ein einzelnes Haus ersetzen
+1. Den Haustyp duplizieren: Im Dateisystem-Fenster Rechtsklick auf z. B. `terrace_50.tscn` →
+   **Duplizieren…** → neuer Name, z. B. `my_bakery.tscn`.
+2. Die neue Szene öffnen und dein Modell wie oben als **Model** einsetzen. Passen die Maße
+   nicht ganz, im Inspektor beim obersten Knoten unter **Maße** Breite, Tiefe und Traufhöhe
+   an dein Modell anpassen (die Kollision passt sich an). **Strg+S**.
+3. `scenes/world/houses.tscn` öffnen und das Haus anklicken, das ersetzt werden soll.
+   Im Inspektor unter **Transform** Rechtsklick auf **Position** → **Kopieren**.
+4. Deine neue Szene aus dem Dateisystem auf dieselbe Gruppe im Szenenbaum ziehen (z. B.
+   `Opposite`). Beim neuen Knoten Rechtsklick auf **Position** → **Einfügen**; genauso
+   **Rotation** übernehmen.
+5. Das alte Haus anklicken und mit **Entf** löschen. **Strg+S**.
+Tipp: Auch die Farben eines einzelnen Hauses lassen sich so ändern – Haus anklicken, im
+Inspektor unter **Dieses Haus** Wand-, Tür- und Akzentfarbe wählen.
+
+### Häuser neu aufstellen
+Die Lage der Häuser wurde einmal aus der Straße berechnet und fest in `houses.tscn`
+geschrieben. Änderst du in `game_config.gd` etwas an der Straße (Breiten, gerades Ende,
+Haustypen der Nachbarn in `neighbor_house_types` / `alley_house_types`, das Haus gegenüber
+in `opposite_feature_house`, die Reihenhaus-Typen in `terrace_house_types`), stelle die
+Häuser neu auf:
+1. Godot: `scenes/world/tools/generate_houses.tscn` öffnen und mit **F6** starten.
+2. Das Fenster schließt sich von selbst; unten in der Ausgabe steht „Häuser neu erzeugt“.
+3. Fragt Godot, ob `houses.tscn` neu geladen werden soll: **Neu laden**.
+**Achtung:** Dabei werden eigene Änderungen in `houses.tscn` (verschobene, getauschte oder
+umgefärbte Häuser) überschrieben. Eigene Modelle in den Haustyp-Szenen bleiben erhalten.
+
+### Gassenende ersetzen
+Szene `scenes/world/alley_end.tscn`. **Ursprung** unten in der Mitte der Gasse an ihrem Ende,
+die **Vorderseite zeigt in die Gasse (-Z)**, also zur Spielfigur hin. Die Mauer ist 3,4 m breit
+(Gassenbreite 2,8 m + je 0,3 m), 2,6 m hoch und 0,3 m dick (sie liegt von 0 bis +0,3 m hinter
+dem Ursprung). Ein eigenes Model ersetzt Mauer, Tor **und** das Haus dahinter – dein Modell
+darf also gern auch eine Hauswand dahinter zeigen. Die feste Mauer-Kollision bleibt.
+Vorlage: `templates/world/alley_end.glb` (ohne das Haus dahinter).
+
+### Eingangstreppe ersetzen
+Szene `scenes/world/entrance_steps.tscn`. **Ursprung** außen auf der Hauswand in der Mitte der
+Tür, auf Höhe des Ladenbodens; **+Z zeigt von der Wand weg nach draußen**. Die Treppe ist so
+breit wie die schräge Wand (2,99 m) und reicht 1,54 m nach vorn (Podest 0,7 m + drei Stufen à
+0,28 m; an den Seiten je drei Stufen à 0,2 m). Sie geht vom Ladenboden (0) 0,5 m hinunter bis
+zum Gehweg (-0,5 m), vier gleich hohe Absätze à 12,5 cm. Die unsichtbare Rampe zum Laufen
+bleibt; dein Modell sollte deshalb ungefähr diese Form haben.
+Vorlage: `templates/world/entrance_steps.glb`.
 
 ## Farben und Texturen von Wänden und Böden
 Die Materialien liegen in `assets/materials/` (z. B. `wall_plaster.tres`, `floor_wood.tres`).

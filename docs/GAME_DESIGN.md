@@ -650,14 +650,19 @@ Zwei Zustände:
   Unten am Haus läuft ein Sockel (3 cm vorstehend), der zeigt, dass der Laden höher liegt.
   Innen hat sich nichts verändert: Statt den Laden anzuheben, liegt draußen alles tiefer –
   Möbel, Bücher und Deko bleiben genau an ihrem Platz.
-- **Die Straße (seit Etappe 4d):** Vor der Bücherei liegt eine schmale, gerade Straße, eine
-  Fahrspur breit, mit Gehwegen und Bordsteinen auf beiden Seiten. An beiden Enden biegt sie vor
-  einem quer stehenden Haus in eine Seitenstraße ab und verschwindet so hinter den Häusern. Ich
-  kann auf der Straße und den Gehwegen laufen, aber nicht über die Enden hinaus: Kurz hinter
-  den Ecken halten mich weiche, unsichtbare Grenzen auf. Gegenüber steht eine Zeile englischer
-  Reihenhäuser als Kulisse (Fenster, Türen, Dächer, Schornsteine als Platzhalter), abwechselnd
-  in Farbe und Höhe. In den Seitenstraßen liegen außer Sicht unsichtbare Start- und Endpunkte
-  für spätere Autos, Radfahrer und Fußgänger – noch fährt und läuft dort niemand.
+- **Die Straße (seit Etappe 4d, großzügiger seit Etappe 4e):** Vor der Bücherei liegt eine
+  gerade Straße mit Gehwegen und Bordsteinen auf beiden Seiten (Gehweg vor der Bücherei 2,6 m,
+  gegenüber 2,1 m, Fahrbahn 5,1 m – Werte in GameConfig). Ein Ende biegt vor einem quer
+  stehenden Haus in eine Seitenstraße ab; dort hält mich kurz hinter der Ecke eine weiche,
+  unsichtbare Grenze auf. Das andere Ende läuft geradeaus weiter (Schalter
+  `GameConfig.straight_street_end`, Standard: die Seite, wo die Nachbarhäuser bündig neben der
+  Bücherei stehen): Dort steht die Grenze quer über Straße und Gehwegen, wo die Nachbarhäuser
+  enden. Dahinter sieht man die Straße mit Häusern auf beiden Seiten noch ein gutes Stück
+  (`GameConfig.straight_street_length` = 30 m) weiterlaufen, bis sie vor einem quer stehenden
+  Haus abknickt – von keiner Stelle, die ich erreiche, sieht man um den Knick herum oder ins
+  Leere. Gegenüber steht eine Zeile englischer Reihenhäuser als Kulisse, abwechselnd in Farbe
+  und Höhe. In den Seitenstraßen liegen außer Sicht unsichtbare Start- und Endpunkte für
+  spätere Autos, Radfahrer und Fußgänger – noch fährt und läuft dort niemand.
 - **Häuserreihe, Gasse und Platz (seit Etappe 4d):** Auf der Bücherei-Seite stehen von der
   Straße aus gesehen: Haus, Haus, Bücherei, Gasse, Haus, Haus. Die Gasse liegt an der Seite mit
   der Schräge (vor dem linken Fenster). Die beiden Häuser neben der Bücherei stehen bündig mit
@@ -669,12 +674,31 @@ Zwei Zustände:
   Holztor, dahinter ein Haus. Hinter der Bücherei begrenzt eine niedrige Hofmauer die Gasse –
   nur ein Platzhalter, damit die Bücherei später nach hinten und oben wachsen kann. Alle
   Nachbarhäuser sind nicht betretbare Platzhalter, ungefähr so hoch wie die Bücherei mit
-  Obergeschoss. Alle Maße (Straßen-, Gehweg- und Gassenbreite, Gassentiefe, Hausbreiten,
-  Höhen) stehen in GameConfig; Straße, Häuser, Gasse, Platz, Gassenende und Treppe sind
-  eigene, austauschbare Szenen (`scenes/world/`).
-- **Leistung draußen:** Die Kulisse ist bewusst schlicht: Jedes Haus ist ein einziges Mesh mit
-  einem gemeinsamen Material (Farben direkt im Mesh), Gehwege, Fahrbahn und Bordsteine sind je
-  ein Mesh, der Boden ist eine einzige Kollisionsfläche. Die Häuser gegenüber und an den
+  Obergeschoss. Alle Maße (Straßen-, Gehweg- und Gassenbreite, Gassentiefe, Länge des geraden
+  Endes) stehen in GameConfig; Straße, Gasse, Platz, Gassenende und Treppe sind eigene,
+  austauschbare Szenen (`scenes/world/`).
+- **Häuser zum Austauschen (seit Etappe 4e):** Jedes Haus steht als eigener Knoten fest in
+  `scenes/world/houses.tscn` – im Godot-Editor sichtbar, anklickbar und verschiebbar. Jedes
+  Haus gehört zu einem Haustyp mit festen Maßen; jeder Typ ist eine eigene Szene in
+  `scenes/world/houses/` (vier Reihenhaus-Breiten von 4,5 bis 6,0 m, Wohnhaus, Restaurant/Pub,
+  Modegeschäft; alle 8 m tief). Gleiche Häuser nutzen dieselbe Szene und damit dasselbe Mesh,
+  nur die Farben unterscheiden sich je Haus. Liegt in einer Typ-Szene ein eigenes Modell
+  („Model“), ersetzt es den Platzhalter in allen Häusern dieses Typs; die Kollision bleibt.
+  Drei Häuser haben eine eigene Rolle: Das **Modegeschäft** steht direkt neben der Bücherei
+  (bündig, auf der Seite des geraden Straßenendes) mit Schaufenstern und Markise, das
+  **Restaurant/Pub** steht als erstes Haus hinter der Gasse am kleinen Platz (Ladenfront mit
+  großen Fenstern und grünem Schild), das **Wohnhaus** (Tür mit Vordach in der Mitte) steht
+  gegenüber, genau vor der Ladentür der Bücherei. Alle anderen sind Reihenhäuser in den
+  bisherigen Farben. Erzeugt wird `houses.tscn` einmal aus StreetLayout und GameConfig (Szene
+  `scenes/world/tools/generate_houses.tscn`, mit F6 starten) – danach ist sie fest.
+- **Vorlagen zum Modellieren (seit Etappe 4e):** Für jeden Haustyp, jedes Möbelstück, das
+  Gassenende und die Eingangstreppe liegt eine schlichte Vorlage als `.glb` in echter Größe in
+  `assets/models/templates/` (genau so groß und so gelegen wie im Spiel). Darauf modelliere ich
+  in Nomad Sculpt oder Blender meine eigenen Modelle (Anleitung: docs/ASSET_GUIDE.md).
+- **Leistung draußen:** Die Kulisse ist bewusst schlicht: Jedes Haus ist ein einziges Mesh,
+  gleiche Häuser teilen sich Mesh und Material (die Farben je Haus kosten nichts extra),
+  Gehwege, Fahrbahn und Bordsteine sind je ein Mesh, der Boden ist eine einzige
+  Kollisionsfläche. Häuser, die man nicht erreicht, haben keine Kollision. Die Häuser gegenüber und an den
   Seitenstraßen werfen keine Schatten (sie würden sonst das Fensterlicht verdecken), die
   Nachbarhäuser neben der Bücherei nur in der Nähe. Insgesamt kostet die Außenwelt je nach
   Blick nur etwa 20 bis 30 Zeichenaufrufe mehr (rund 5–7 %), auf allen drei Grafikstufen.

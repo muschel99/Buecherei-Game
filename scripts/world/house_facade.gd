@@ -141,15 +141,24 @@ var _body: StaticBody3D
 
 
 func _ready() -> void:
-	# Kommt ein eigenes Modell ("Model") dazu oder fällt weg, Platzhalter neu bauen (auch im Editor)
+	# Kommt ein eigenes Modell ("Model") dazu, fällt weg oder wird ein Kind in "Model"
+	# umbenannt: Platzhalter neu bauen (auch im Editor)
 	child_entered_tree.connect(_on_child_changed)
 	child_exiting_tree.connect(_on_child_changed)
+	for child in get_children():
+		_watch_name(child)
 	_rebuild()
 
 
 func _on_child_changed(child: Node) -> void:
+	_watch_name(child)
 	if child.name == "Model":
 		_queue_rebuild()
+
+
+func _watch_name(child: Node) -> void:
+	if not child.renamed.is_connected(_queue_rebuild):
+		child.renamed.connect(_queue_rebuild)
 
 
 func _queue_rebuild() -> void:

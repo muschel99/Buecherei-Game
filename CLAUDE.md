@@ -40,7 +40,8 @@ scenes/            Szenen (.tscn)
                    LooseBooks = ausgelegte Bücher, BookStand = Buch-Aufsteller, Counter = Theke;
                    player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
-  world/           Außenwelt (Straße, Häuser, Platz, Gasse, Gassenende, Eingangstreppe)
+  world/           Außenwelt (Straße, houses.tscn = alle Häuser, houses/ = Haustypen, Platz,
+                   Gasse, Gassenende, Eingangstreppe, tools/ = Erzeuger-Szenen)
   ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Theken-Tablet, Hinweise,
                    Stil-Anzeige, Regal-Menü, Trage-Anzeige, Buch-Infokarte, Genre-Schriftzug,
                    Bücherauswahl, Zähl-Anzeige CountBadge; Scripts BookCover und BookMotifs zeichnen
@@ -55,8 +56,9 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
                    LooseBook, TabletAppData, ReturnSlotData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
-  world/           Außenwelt (StreetLayout, WorldMesh, Street, Houses, HouseFacade, Plaza, Alley,
-                   AlleyEnd, EntranceSteps; Szenen in scenes/world/)
+  world/           Außenwelt (StreetLayout, WorldMesh, Street, HouseFacade, HouseTypes, HousesLayout,
+                   Plaza, Alley, AlleyEnd, EntranceSteps; tools/ = Erzeuger für houses.tscn
+                   und die Vorlagen; Szenen in scenes/world/)
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
@@ -66,7 +68,7 @@ data/
   tablet_apps/     Datenblätter der Tablet-Apps (.tres) – werden automatisch auf den Startbildschirm geladen
   return_slots/    Datenblätter der Einwurf-Varianten des Rückgabekastens (.tres, App „Fassade“)
 assets/
-  models/          Eigene 3D-Modelle (.glb)
+  models/          Eigene 3D-Modelle (.glb), templates/ = Vorlagen in echter Größe zum Modellieren
   textures/        Texturen
   materials/       Gemeinsame Materialien (.tres), surfaces/ = Wand- und Bodenmaterialien
   shaders/         Shader (Platzhalter-Muster, Raster, Buchrücken, Buch-Vorschau)
@@ -167,14 +169,32 @@ docs/              Dokumentation
   bauen sich aus GameConfig: `Street` (Fahrbahn, Gehwege, Bordsteine, Seitenstraßen, EINE ebene
   Bodenkollision – die Fahrbahn liegt nur optisch tiefer –, weiche Grenzen, `TrafficPoints` mit
   Gruppe `traffic_points` und Metadaten `kind` = car/bike/walker für späteren Verkehr),
-  `Houses` (alle Nachbarhäuser aus `scenes/world/house_facade.tscn`), `Plaza`, `Alley` (mit
-  `scenes/world/alley_end.tscn`). Lage aller Teile nur über `StreetLayout` (statische
-  Funktionen, z. B. `ground_y()`, `curb_z()`, `recess_z()`, `east_end_x()`), Maße nur in
-  GameConfig. `EntranceSteps` (Podest + Stufen, nie breiter als die schräge Wand, unsichtbare
-  Rampe als Kollision) liegt auf Ladenboden-Höhe. Kulisse baut `WorldMesh` (Vierecke/Quader mit
-  Vertex-Farben, ein Material `outdoor_colors.tres` je Mesh); Kulissen-Szenen nutzen statt des
-  Platzhalters ein Kind „Model“, wenn vorhanden. Häuser gegenüber/an den Seitenstraßen ohne
-  Schatten, Nachbarn nur bis `GameConfig.house_shadow_distance`. Draußen wird nichts gespeichert.
+  `Houses` (feste Szene `scenes/world/houses.tscn`, siehe unten), `Plaza`, `Alley` (mit
+  `scenes/world/alley_end.tscn`). Lage aller Teile nur über
+  `StreetLayout` (statische Funktionen, z. B. `ground_y()`, `curb_z()`, `recess_z()`,
+  `east_end_x()`, `straight_bound_x()`, `is_straight(seite)`), Maße nur in GameConfig. Ein
+  Straßenende biegt ab, das andere läuft geradeaus (`GameConfig.straight_street_end`, Grenze
+  quer bei `straight_bound_x()`, Knick nach `straight_street_length`). `EntranceSteps` (Podest
+  + Stufen, nie breiter als die schräge Wand, unsichtbare Rampe als Kollision) liegt auf
+  Ladenboden-Höhe. Kulisse baut `WorldMesh` (Vierecke/Quader mit Vertex-Farben); Kulissen-
+  Szenen nutzen statt des Platzhalters ein Kind „Model“, wenn vorhanden. Draußen wird nichts
+  gespeichert.
+- **Häuser (seit Etappe 4e):** Jedes Haus ist ein fester Knoten in `scenes/world/houses.tscn`
+  (Gruppen LibraryRow, Opposite, StraightEnd, SideStreets), Instanz eines Haustyps
+  `scenes/world/houses/<id>.tscn` (Wurzel `HouseFacade`, @tool, feste Maße width/depth/
+  eaves_height; je Haus nur Farben, `casts_shadow`, `solid`). Neu erzeugen nur über
+  `scenes/world/tools/generate_houses.tscn` (Planung `HousesLayout`, Typen-Maße `HouseTypes`;
+  GameConfig: `neighbor_house_types`, `alley_house_types`, `opposite_feature_house`,
+  `terrace_house_types`) – überschreibt Handänderungen. Gleiche Maße = ein gemeinsames Mesh
+  (Cache in HouseFacade), Material `house_facade.tres`: Alpha der Vertex-Farbe wählt die Farbe
+  (1 fest, 0,75 Wand, 0,5 Tür, 0,25 Akzent), Farben je Haus als `instance uniform`
+  (`set_instance_shader_parameter`). Häuser gegenüber/hinter der Grenze/an den Seitenstraßen
+  ohne Schatten, Nachbarn nur bis `GameConfig.house_shadow_distance`; Kollision nur, wo man
+  hinkommt. Reihen werden lückenlos gefüllt: Nachbarn überlappen um wenige cm, jedes zweite
+  Haus steht 4 mm zurück (kein Z-Fighting).
+- **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`
+  (echte Größe, Ursprung/Vorderseite wie die Szene; Ordner mit `.gdignore`), erzeugt von
+  `scenes/world/tools/export_templates.tscn`. Neue Möbel/Haustypen → Vorlagen neu erzeugen.
 - Fensterbänke: `ShopWindow` (Script der Fenster-Szene) formt Bank, Ablage und Kollision
   (`SillBody`: Bank, Glas, Seitenrahmen) aus `GameConfig.window_sill_depth`.
 - Sonnenschatten ohne `light_angular_distance` (PCSS zeigte Treppenkanten); weich macht sie
