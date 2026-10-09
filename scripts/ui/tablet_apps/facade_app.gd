@@ -64,7 +64,7 @@ func _build_return_box_section() -> void:
 	var box := ReturnBox.find(get_tree())
 	if box == null:
 		return
-	var content := make_section("Rückgabekasten", "Fest in der Hauswand neben der Eingangstür",
+	var content := make_section("Rückgabekasten", "Fest in der schrägen Eingangswand, rechts neben der Tür",
 		_make_count(box.get_books().size(), box.get_capacity(), box.is_full()))
 	content.add_child(make_label("Einwurf", 15, TabletFrame.MUTED_COLOR))
 	var cards := HFlowContainer.new()

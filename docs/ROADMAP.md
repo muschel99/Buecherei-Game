@@ -24,15 +24,17 @@
 | 3j  | Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller | fertig |
 | 3k  | Tür, Buchmenü und Buchstützen           | fertig        |
 | 3l  | Fassaden-App und fester Rückgabekasten   | fertig        |
-| 4   | Besucher                                 | offen         |
-| 5   | Wirtschaft und Tagesablauf               | offen         |
-| 6   | Stilsystem und Besuchervielfalt          | offen         |
-| 7   | Café                                     | offen         |
-| 8   | Erweiterungen und Freischaltungen        | offen         |
-| 9   | Atmosphäre und Sound                     | offen         |
-| 10  | Story und Spiegel                        | offen         |
-| 11  | Gasse, Fassade und Jahreszeiten          | offen         |
-| 12  | Feinschliff                              | offen         |
+| 4   | Außenwelt                                | in Arbeit     |
+| 4a  | Eckladen-Grundriss, feste Theke und Rückgabekasten | fertig |
+| 5   | Besucher                                 | offen         |
+| 6   | Wirtschaft und Tagesablauf               | offen         |
+| 7   | Stilsystem und Besuchervielfalt          | offen         |
+| 8   | Café                                     | offen         |
+| 9   | Erweiterungen und Freischaltungen        | offen         |
+| 10  | Atmosphäre und Sound                     | offen         |
+| 11  | Story und Spiegel                        | offen         |
+| 12  | Gasse, Fassade und Jahreszeiten          | offen         |
+| 13  | Feinschliff                              | offen         |
 
 ## Etappe 1 – Grundgerüst und erster Raum
 - [x] Godot-4-Projekt mit Ordnerstruktur
@@ -107,8 +109,8 @@
 - [x] Bilder-pro-Sekunde-Anzeige (F3 oder Einstellungen); alle Einstellungen gespeichert
 
 ## Etappe 2f – Inventar, Shop und Lieferung
-Greift Teilen von Etappe 5 vor: Geld, Kaufen und Verkaufen sind schon da und so gebaut,
-dass Etappe 5 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den Datenblättern).
+Greift Teilen von Etappe 6 vor: Geld, Kaufen und Verkaufen sind schon da und so gebaut,
+dass Etappe 6 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den Datenblättern).
 - [x] Zentrales Geld-System (`Wallet`): Startgeld 500 Taler (`GameConfig.start_money`),
       dezente Anzeige oben links, jede Buchung mit kurzem Grund
 - [x] Gestaltungsmodus wird zum Inventar (`Inventory`): nur Eigenes, mit Anzahl (×2);
@@ -363,7 +365,7 @@ und das gibt es überall.
 - [x] Tastenhilfe im Pausenmenü: R = Bücher-Menü überall
 - [x] Nichts Neues zu speichern; alte Spielstände laden weiter
 - Ideen für später: schönerer Name für den Bücherladen, Statistik mit Besuchern, Ausleihen,
-  Kaffee und Kuchen (Etappen 4, 5, 7)
+  Kaffee und Kuchen (Etappen 5, 6, 8)
 
 ## Etappe 3i – Fach-Automodus und Platzierungs-Fehler
 Leitgedanke: Bücher einfach hineinstellen, ohne vorher etwas festzulegen – und beim Ablegen
@@ -425,12 +427,35 @@ Leitgedanke: Ein einziger, fester Rückgabekasten in der Hauswand – angepasst 
 - [x] Platz für 50 Bücher (GameConfig), immer geschlossen, dezente Anzeige der Anzahl
 - [x] Speichern: Inhalt und gewählte Variante; alte Spielstände laden weiter
 
-## Etappe 4 – Besucher
+## Etappe 4 – Außenwelt
+Leitgedanke: Aus dem rechteckigen Testraum wird ein echter kleiner Eckladen im Londoner Stil;
+die Gestaltung der Gasse und Fassade folgt in weiteren Unterschritten.
+
+### Etappe 4a – Eckladen-Grundriss, feste Theke und Rückgabekasten
+- [x] Neuer Grundriss: vordere linke Ecke abgeschrägt, schräge Eingangswand mit mittiger
+      Ladentür; Mass der Schräge in `GameConfig.corner_cut` (die Ecke bleibt unbebaubar)
+- [x] Je ein englisches Sprossenfenster in der unteren und der linken Wand; eigene,
+      austauschbare Platzhalter-Szenen (`scenes/objects/shop_window.tscn` und
+      `scenes/objects/shop_door.tscn` mit Sprossenfenster, Seitenteilen und Oberlicht)
+- [x] Fester Rückgabekasten rückt in die schräge Eingangswand, rechts neben die Tür
+- [x] Startraum fast leer: nur noch Theke, Sessel und Deko-Regal (+ Tablet auf der Theke)
+- [x] Deko-Regal (neues Möbel, Unterkategorie „Deko-Regale“): bewusst kein Bücherregal –
+      es dient nur zum Dekorieren; Bücherregale gibt es weiter im Shop zu kaufen
+- [x] Theke gehört fest zum Laden (`is_essential` + neues Feld `is_fixed`): nicht kaufbar,
+      nicht verkaufbar, nicht im Inventar; frei verschiebbar, aber nicht wegräumbar
+- [x] Theken-Stil über die App „Fassade“ wählbar (Autoload `CounterStyle`, drei Platzhalter-
+      Varianten); Struktur für spätere Theken-Module (Backshop, Kaffee) vorgesehen
+- [x] Speicher-Version auf 2 erhöht: alte Spielstände passen nicht zur neuen Raumform und
+      werden ignoriert (es beginnt ein frisches Spiel)
+- Noch offen für später (weitere 4er-Schritte): Gasse und Gehweg rund um die Ecke, offene
+  linke/rechte Seite für die Erweiterung, Feinschliff der kleinen Schwelle vor der Schräge
+
+## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
 - Besucher nehmen Bücher aus Regalen (`BookShelf.remove_books`) und werfen sie in den
   Rückgabekasten (`ReturnBox.add_books`); dann die Testtasten abschalten (`GameConfig.debug_keys_enabled`)
 
-## Etappe 5 – Wirtschaft und Tagesablauf
+## Etappe 6 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
   Verkaufen, Lieferung
 - Einnahmen: Leseausweise, Abstempeln, Leihgebühren, Mitgliedschaften (über `Wallet.earn`)
@@ -438,30 +463,31 @@ Leitgedanke: Ein einziger, fester Rückgabekasten in der Hauswand – angepasst 
 - Tag mit Öffnen-Schild, Pause und Vorspulen; Tagesabrechnung aus den Buchungen
 - Preise und Startgeld ausbalancieren
 
-## Etappe 6 – Stilsystem und Besuchervielfalt
+## Etappe 7 – Stilsystem und Besuchervielfalt
 - Stil-Merkmale an Möbeln (Botanisch, Modern, Dark Academia) – Grundlage seit Etappe 2 vorhanden
 - Genres tragen schon einen passenden Stil (Datenblatt) – kann später mitzählen
 - Vorherrschender Stil beeinflusst Besucher und Musik
 
-## Etappe 7 – Café
-- Café-Module an der Theke anbauen
+## Etappe 8 – Café
+- Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)
 
-## Etappe 8 – Erweiterungen und Freischaltungen
+## Etappe 9 – Erweiterungen und Freischaltungen
 - Weitere Räume, Obergeschoss, Genres freischalten (`BookStock.unlock_genre`), Renovieren
 - Einzelne Bücher nach und nach freischalten und sammeln (Grundlage: Sammlung in BookStock,
   `is_discovered`, `mark_discovered`; Pakete wählen bisher automatisch neue Titel)
 - Neue Möbel im Shop freischalten (Datenblatt-Feld `is_unlocked`)
 
-## Etappe 9 – Atmosphäre und Sound
+## Etappe 10 – Atmosphäre und Sound
 - Musik je Stil, Geräusche, Tageszeit-Licht
 
-## Etappe 10 – Story und Spiegel
+## Etappe 11 – Story und Spiegel
 - Kleine unerklärliche Ereignisse, der Spiegel und seine Wesen
 
-## Etappe 11 – Gasse, Fassade und Jahreszeiten
+## Etappe 12 – Gasse, Fassade und Jahreszeiten
 - Die Gasse vor dem Haus (bisher: ein Stück Gehweg als Platzhalter), Fassade gestalten
   (in der App „Fassade“ aus Etappe 3l, z. B. Wandfarbe außen, Schild, Fenster), Jahreszeiten
+  – baut auf der Außenwelt aus Etappe 4 auf
 - Vielleicht ein Lieferbote, der die Kartons bringt (bisher erscheinen sie einfach)
 
-## Etappe 12 – Feinschliff
+## Etappe 13 – Feinschliff
 - Menüs, Einstellungen, Speichern/Laden, Balancing
