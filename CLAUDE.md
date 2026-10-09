@@ -142,11 +142,25 @@ docs/              Dokumentation
   `WindowHole`) und Tür sind eigene, austauschbare Szenen (`scenes/objects/shop_window.tscn`,
   `shop_door.tscn`). Seit Etappe 4b sind auch Boden und Decke in der Ecke abgeschrägt
   (`Structure/Floor` und `Structure/Ceiling` sind CSG-Container mit einem `CornerCut`-Abschnitt;
-  der Belag spart die Ecke über `PaintableGrid.cut_corner` aus), der Raum ist also ein sauberes
-  Fünfeck; vor der Tür liegt außen ein Vorplatz (`Outside/Doorstep` in main.tscn).
+  der Belag spart die Ecke über `PaintableGrid.cut_corner` aus und schneidet Felder genau an
+  der Schräge ab), der Raum ist also ein sauberes Fünfeck.
   Transform-Basen der schrägen Knoten müssen rechtshändig sein (+Z in den Raum), sonst liegen
   Farbflächen/Modelle falsch herum. Der Raum hat kein künstliches Füll-Licht mehr; Licht kommt
   vom Umgebungslicht und den Fenstern.
+- **Hülle des Hauses (seit Etappe 4c):** Vordere, linke und schräge Wand (`Structure/Wall…/Wall`)
+  sind `CSGPolygon3D`-Grundrisse (Trapeze, nach oben hochgezogen, `depth` = Höhe) und stoßen auf
+  Gehrung zusammen; Außenecken der Schräge (-3,2 | -2,0828) und (-1,0828 | -4,2). Alle
+  Außenwände reichen bis zur Oberkante der Deckenplatte (Raumhöhe + 0,2 m, `Room._apply_room_height`),
+  die Deckenplatte liegt innen zwischen den Wänden. Jede Öffnung braucht drei passende Teile:
+  CSG-Loch, Aussparung in der `PaintableWall` (`openings`) und Rahmen der Szene.
+  Darüber baut `UpperFloors` (`scripts/rooms/upper_floors.gd`, Knoten in main.tscn) die
+  Obergeschosse als geschlossene Hülle mit Fenster-Platzhaltern (`scenes/objects/upper_window.tscn`)
+  und das Walmdach; Anzahl/Höhe: `GameConfig.upper_floor_count`, `upper_floor_height`; je
+  Geschoss ein Knoten `Floor1`, `Floor2` … (später freischaltbar, `get_floor(i)`, `get_floor_base(i)`).
+  Draußen ist der Gehweg eine einzige Fläche (`Outside/Sidewalk`, CSGPolygon3D mit Kollision,
+  Oberkante 0 = Ladenboden), die genau an der Außenkante der Hauswand endet.
+- Sonnenschatten ohne `light_angular_distance` (PCSS zeigte Treppenkanten); weich macht sie
+  `shadow_blur` mit dem Filter der Grafikstufe.
 - **Oberflächen/Menüs:** Projekt nutzt Stretch-Modus `canvas_items` + `expand` (Basis 1600 x 900).
   Neue Menüs immer mit Anchors und Containern bauen, dann passen sie sich automatisch an.
   Menüs, deren Inhalt wachsen kann, dürfen nie höher als das Bild werden: feste Höhe über

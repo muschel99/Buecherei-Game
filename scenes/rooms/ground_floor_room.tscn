@@ -5,9 +5,14 @@
 ; daneben steckt der feste Rückgabekasten. In der unteren (vorderen) und in der linken Wand
 ; sitzt je ein Sprossenfenster. Das Mass der Schräge steht in GameConfig.corner_cut (2,0 m) –
 ; dieser Wert legt fest, welcher Bereich bebaubar ist (die Ecke bleibt frei).
-; Hinweis: Boden und Decke sind weiter volle Rechtecke; vor der Schräge bleibt darum eine
-; kleine überdachte "Schwelle" stehen (bewusster Platzhalter, wird beim Gestalten der
-; Aussenwelt verfeinert).
+; Seit Etappe 4b folgen Boden und Decke der Schräge (CSG-Abschnitt "CornerCut").
+; Seit Etappe 4c stoßen die vordere, die linke und die schräge Wand auf Gehrung zusammen (wie
+; bei einem Bilderrahmen): Ihre Grundrisse ("Wall", CSGPolygon3D, nach oben hochgezogen) sind
+; Trapeze, deren schräge Enden genau aufeinander treffen. Eckpunkte bei Wanddicke 0,2 m und
+; Schräge 2,0 m: innen (-3 | -2) und (-1 | -4), außen (-3,2 | -2,0828) und (-1,0828 | -4,2).
+; Die Außenwände reichen (seit Etappe 4c) bis zur Oberkante der Deckenplatte (Raumhöhe + 0,2 m);
+; die Deckenplatte liegt innen zwischen den Wänden. So läuft die Hauswand außen glatt bis zum
+; Obergeschoss (scripts/rooms/upper_floors.gd) durch.
 
 [ext_resource type="Material" path="res://assets/materials/floor_wood.tres" id="1_floor"]
 [ext_resource type="Material" path="res://assets/materials/wall_plaster.tres" id="2_wall"]
@@ -55,7 +60,7 @@ size = Vector3(6.4, 0.2, 8.4)
 material = ExtResource("1_floor")
 
 [node name="CornerCut" type="CSGBox3D" parent="Structure/Floor"]
-transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -4.0555, 0, -4.0555)
+transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -4.0556349, 0, -4.0556349)
 operation = 2
 size = Vector3(10, 2, 4)
 
@@ -65,33 +70,34 @@ use_collision = true
 
 [node name="Slab" type="CSGBox3D" parent="Structure/Ceiling"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
-size = Vector3(6.4, 0.2, 8.4)
+size = Vector3(6, 0.2, 8)
 material = ExtResource("3_ceiling")
 
 [node name="CornerCut" type="CSGBox3D" parent="Structure/Ceiling"]
-transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -4.0555, 0.1, -4.0555)
+transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -3.9142136, 0.1, -3.9142136)
 operation = 2
 size = Vector3(10, 2, 4)
 
 [node name="WallRight" type="CSGBox3D" parent="Structure"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1, 1.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1, 1.7, 0)
 use_collision = true
-size = Vector3(0.2, 3.2, 8)
+size = Vector3(0.2, 3.4, 8)
 material = ExtResource("2_wall")
 
 [node name="WallBack" type="CSGBox3D" parent="Structure"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 4.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 4.1)
 use_collision = true
-size = Vector3(6.4, 3.2, 0.2)
+size = Vector3(6.4, 3.4, 0.2)
 material = ExtResource("2_wall")
 
 [node name="WallFront" type="CSGCombiner3D" parent="Structure"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.1)
 use_collision = true
 
-[node name="Wall" type="CSGBox3D" parent="Structure/WallFront"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 1.6, 0)
-size = Vector3(4.2, 3.2, 0.2)
+[node name="Wall" type="CSGPolygon3D" parent="Structure/WallFront"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+polygon = PackedVector2Array(-1, 0.1, 3.2, 0.1, 3.2, -0.1, -1.0828427, -0.1)
+depth = 3.4
 material = ExtResource("2_wall")
 
 [node name="WindowHole" type="CSGBox3D" parent="Structure/WallFront"]
@@ -103,9 +109,10 @@ size = Vector3(2.4, 1.8, 0.4)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.1, 0, 0)
 use_collision = true
 
-[node name="Wall" type="CSGBox3D" parent="Structure/WallLeft"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 1.0)
-size = Vector3(0.2, 3.2, 6.0)
+[node name="Wall" type="CSGPolygon3D" parent="Structure/WallLeft"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+polygon = PackedVector2Array(0.1, -2, 0.1, 4, -0.1, 4, -0.1, -2.0828427)
+depth = 3.4
 material = ExtResource("2_wall")
 
 [node name="WindowHole" type="CSGBox3D" parent="Structure/WallLeft"]
@@ -117,9 +124,10 @@ size = Vector3(0.4, 1.8, 2.4)
 transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -2.0707, 0, -3.0707)
 use_collision = true
 
-[node name="Wall" type="CSGBox3D" parent="Structure/WallDiagonal"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
-size = Vector3(3.3, 3.2, 0.2)
+[node name="Wall" type="CSGPolygon3D" parent="Structure/WallDiagonal"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+polygon = PackedVector2Array(-1.4142136, 0.1, 1.4142136, 0.1, 1.4970563, -0.1, -1.4970563, -0.1)
+depth = 3.4
 material = ExtResource("2_wall")
 
 [node name="DoorHole" type="CSGBox3D" parent="Structure/WallDiagonal"]
@@ -153,6 +161,7 @@ material_override = ExtResource("4_wood_dark")
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -3, 0, 4)
 script = ExtResource("18_wall")
 length = 6.0
+openings = Array[Rect2]([Rect2(1.8, 0.8, 2.4, 1.8)])
 
 [node name="Right" type="Node3D" parent="Walls"]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 3, 0, -4)
