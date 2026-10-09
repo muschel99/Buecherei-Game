@@ -1,27 +1,24 @@
 [gd_scene format=3]
 
-; Hauptszene. Draußen (Knoten "Outside"): Seit Etappe 4c ist der Gehweg EINE lückenlose Fläche
-; ("Sidewalk", CSGPolygon3D mit Kollision, Oberkante auf Höhe 0 = Höhe des Ladenbodens): der
-; Streifen vor dem Haus, der Platz vor der schrägen Eingangswand und der Streifen links neben dem
-; Haus. Ihr Grundriss endet genau an der Außenkante der Hauswand. Unsichtbare Wände ("Bounds")
-; halten die Spielfigur auf dem Gehweg.
-; Über dem Laden: "UpperFloors" baut beim Start die Obergeschosse (vorerst geschlossene Hülle)
-; und das Dach (Anzahl und Höhe in GameConfig, siehe scripts/rooms/upper_floors.gd).
+; Hauptszene. Draußen (Knoten "Outside", seit Etappe 4d): Der Knoten liegt auf Gehweg-Höhe –
+; GameConfig.shop_floor_rise unter dem Ladenboden (main.gd setzt die Höhe beim Start). Darunter
+; bauen sich beim Start aus GameConfig: "Street" (Fahrbahn, Gehwege, Seitenstraßen, eine ebene
+; Bodenkollision, weiche Grenzen, Punkte für späteren Verkehr), "Houses" (alle Nachbarhäuser
+; als Platzhalter), "Plaza" (Platz vor der Schräge) und "Alley" (Gasse mit Abschluss). Lage
+; aller Teile: scripts/world/street_layout.gd. "Deliveries" ist der Lieferort der Kartons.
+; "EntranceSteps" (Podest mit Stufen vor der Tür) liegt auf Höhe des Ladenbodens.
+; Über dem Laden: "UpperFloors" baut beim Start die Obergeschosse (vorerst geschlossene Hülle),
+; das Dach und unten den Sockel (Anzahl und Höhe in GameConfig, siehe scripts/rooms/upper_floors.gd).
 
 [ext_resource type="PackedScene" path="res://scenes/rooms/ground_floor_room.tscn" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="3_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="4_pause_menu"]
-[ext_resource type="Material" path="res://assets/materials/cobblestone.tres" id="5_cobblestone"]
-[ext_resource type="Material" path="res://assets/materials/brick.tres" id="6_brick"]
 [ext_resource type="Script" path="res://scripts/main.gd" id="7_main"]
 [ext_resource type="Script" path="res://scripts/building/build_mode.gd" id="8_build_mode"]
 [ext_resource type="PackedScene" path="res://scenes/ui/build_ui.tscn" id="9_build_ui"]
 [ext_resource type="PackedScene" path="res://scenes/ui/style_meter.tscn" id="10_style_meter"]
 [ext_resource type="PackedScene" path="res://scenes/ui/fps_counter.tscn" id="11_fps"]
-[ext_resource type="Material" path="res://assets/materials/sidewalk.tres" id="12_sidewalk"]
-[ext_resource type="Material" path="res://assets/materials/curb_stone.tres" id="13_curb"]
-[ext_resource type="Material" path="res://assets/materials/wall_plaster.tres" id="14_plaster"]
 [ext_resource type="Script" path="res://scripts/shop/delivery_manager.gd" id="15_deliveries"]
 [ext_resource type="PackedScene" path="res://scenes/ui/notice.tscn" id="16_notice"]
 [ext_resource type="PackedScene" path="res://scenes/ui/counter_tablet.tscn" id="30_counter_tablet"]
@@ -32,6 +29,11 @@
 [ext_resource type="Script" path="res://scripts/ui/genre_caption.gd" id="22_genre_caption"]
 [ext_resource type="Script" path="res://scripts/ui/count_badge.gd" id="23_count_badge"]
 [ext_resource type="Script" path="res://scripts/rooms/upper_floors.gd" id="24_upper_floors"]
+[ext_resource type="PackedScene" path="res://scenes/world/entrance_steps.tscn" id="25_steps"]
+[ext_resource type="PackedScene" path="res://scenes/world/street.tscn" id="26_street"]
+[ext_resource type="PackedScene" path="res://scenes/world/houses.tscn" id="27_houses"]
+[ext_resource type="PackedScene" path="res://scenes/world/plaza.tscn" id="28_plaza"]
+[ext_resource type="PackedScene" path="res://scenes/world/alley.tscn" id="29_alley"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -68,33 +70,6 @@ adjustment_enabled = true
 adjustment_contrast = 1.05
 adjustment_saturation = 1.08
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_street"]
-size = Vector2(40, 40)
-
-[sub_resource type="BoxMesh" id="BoxMesh_houses"]
-size = Vector3(40, 6, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_curb"]
-size = Vector3(12, 0.14, 0.16)
-
-[sub_resource type="BoxMesh" id="BoxMesh_curb_back"]
-size = Vector3(2.8, 0.14, 0.16)
-
-[sub_resource type="BoxMesh" id="BoxMesh_neighbor"]
-size = Vector3(6, 7, 8.4)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_neighbor"]
-size = Vector3(6, 7, 8.4)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_bound_side"]
-size = Vector3(0.2, 3, 2.6)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_bound_front"]
-size = Vector3(12, 3, 0.2)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_bound_back"]
-size = Vector3(2.8, 3, 0.2)
-
 [node name="Main" type="Node3D"]
 script = ExtResource("7_main")
 
@@ -111,75 +86,23 @@ directional_shadow_blend_splits = true
 directional_shadow_max_distance = 20.0
 
 [node name="Outside" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="Street" type="MeshInstance3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.12, -10)
-mesh = SubResource("PlaneMesh_street")
-material_override = ExtResource("5_cobblestone")
+[node name="Street" parent="Outside" instance=ExtResource("26_street")]
 
-[node name="OppositeHouses" type="MeshInstance3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -20)
-mesh = SubResource("BoxMesh_houses")
-material_override = ExtResource("6_brick")
+[node name="Houses" parent="Outside" instance=ExtResource("27_houses")]
 
-[node name="Sidewalk" type="CSGPolygon3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, -0.12, 0)
-use_collision = true
-polygon = PackedVector2Array(-6, -6.6, 6, -6.6, 6, -4.2, -1.0828427, -4.2, -3.2, -2.0828427, -3.2, 4.2, -6, 4.2)
-depth = 0.12
-material = ExtResource("12_sidewalk")
+[node name="Plaza" parent="Outside" instance=ExtResource("28_plaza")]
 
-[node name="Curb" type="MeshInstance3D" parent="Outside"]
-transform = Transform3D(0.999667, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -6.56)
-mesh = SubResource("BoxMesh_curb")
-material_override = ExtResource("13_curb")
-
-[node name="CurbBackLeft" type="MeshInstance3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, -0.06, 4.28)
-mesh = SubResource("BoxMesh_curb_back")
-material_override = ExtResource("13_curb")
-
-[node name="NeighborLeft" type="StaticBody3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 3.5, 0)
-
-[node name="Mesh" type="MeshInstance3D" parent="Outside/NeighborLeft"]
-mesh = SubResource("BoxMesh_neighbor")
-material_override = ExtResource("6_brick")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/NeighborLeft"]
-shape = SubResource("BoxShape3D_neighbor")
-
-[node name="NeighborRight" type="StaticBody3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 3.5, 0)
-
-[node name="Mesh" type="MeshInstance3D" parent="Outside/NeighborRight"]
-mesh = SubResource("BoxMesh_neighbor")
-material_override = ExtResource("6_brick")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/NeighborRight"]
-shape = SubResource("BoxShape3D_neighbor")
-
-[node name="Bounds" type="StaticBody3D" parent="Outside"]
-
-[node name="Left" type="CollisionShape3D" parent="Outside/Bounds"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.1, 1.5, -5.5)
-shape = SubResource("BoxShape3D_bound_side")
-
-[node name="Right" type="CollisionShape3D" parent="Outside/Bounds"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.1, 1.5, -5.5)
-shape = SubResource("BoxShape3D_bound_side")
-
-[node name="Front" type="CollisionShape3D" parent="Outside/Bounds"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6.7)
-shape = SubResource("BoxShape3D_bound_front")
-
-[node name="BackLeft" type="CollisionShape3D" parent="Outside/Bounds"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 1.5, 4.3)
-shape = SubResource("BoxShape3D_bound_back")
+[node name="Alley" parent="Outside" instance=ExtResource("29_alley")]
 
 [node name="Deliveries" type="Marker3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0, -4.7)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0, -4.7)
 script = ExtResource("15_deliveries")
+stack_direction = Vector3(1, 0, 0)
+
+[node name="EntranceSteps" parent="." instance=ExtResource("25_steps")]
+transform = Transform3D(-0.7071068, 0, -0.7071068, 0, 1, 0, 0.7071068, 0, -0.7071068, -2.1414214, 0, -3.1414214)
 
 [node name="GroundFloorRoom" parent="." instance=ExtResource("1_room")]
 

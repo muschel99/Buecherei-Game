@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=17 format=3]
 
 ; Klassisches englisches Sprossenfenster (Platzhalter).
 ; Ein großes, rechteckiges Fenster, durch Sprossen in viele kleine, gleichmäßige Scheiben
@@ -13,11 +13,17 @@
 ; Zum Austauschen gegen ein eigenes Modell: Der Ursprung liegt in der Mitte der Fensteröffnung,
 ; +Z zeigt in den Raum. Die verglaste Fläche ist 2,4 m breit und 1,8 m hoch und passt genau in
 ; das Loch in der Wand (CSG-Aussparung "WindowHole" im Raum). Die Fensterbank ("Sill") ist
-; zugleich eine Ablagefläche (PlacementSurface) für Deko.
+; zugleich eine Ablagefläche (PlacementSurface) für Deko und Bücher. Seit Etappe 4d ist sie
+; tiefer: Ihre Tiefe (von der Scheibe bis zur vorderen Kante) steht in
+; GameConfig.window_sill_depth, das Script scripts/objects/shop_window.gd passt Bank, Ablage
+; und Kollision beim Start daran an. Innen sitzt nur noch eine schmale Leiste unter der Scheibe,
+; der untere Rahmen liegt außen. "SillBody" ist die feste Kollision von Bank, Glas und
+; Seitenrahmen (damit nichts hineinragt und niemand durchs Fenster läuft).
 
 [ext_resource type="Material" path="res://assets/materials/paint_white.tres" id="1_paint"]
 [ext_resource type="Material" path="res://assets/materials/glass.tres" id="2_glass"]
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="3_surface"]
+[ext_resource type="Script" path="res://scripts/objects/shop_window.gd" id="4_window"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_h"]
 size = Vector3(2.64, 0.12, 0.3)
@@ -34,13 +40,29 @@ size = Vector3(0.04, 1.8, 0.1)
 [sub_resource type="BoxMesh" id="BoxMesh_muntin_h"]
 size = Vector3(2.4, 0.04, 0.08)
 
+[sub_resource type="BoxMesh" id="BoxMesh_frame_bottom"]
+size = Vector3(2.64, 0.12, 0.142)
+
+[sub_resource type="BoxMesh" id="BoxMesh_inner_rail"]
+size = Vector3(2.28, 0.04, 0.04)
+
 [sub_resource type="BoxMesh" id="BoxMesh_sill"]
-size = Vector3(2.7, 0.06, 0.32)
+size = Vector3(2.7, 0.05, 0.32)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_sill"]
-size = Vector3(2.4, 0.03, 0.26)
+size = Vector3(2.26, 0.03, 0.26)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sill_body"]
+size = Vector3(2.7, 0.05, 0.32)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_glass_body"]
+size = Vector3(2.4, 1.8, 0.06)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_side_body"]
+size = Vector3(0.12, 1.92, 0.3)
 
 [node name="ShopWindow" type="Node3D"]
+script = ExtResource("4_window")
 
 [node name="FrameTop" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -48,8 +70,8 @@ mesh = SubResource("BoxMesh_frame_h")
 material_override = ExtResource("1_paint")
 
 [node name="FrameBottom" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.9, 0)
-mesh = SubResource("BoxMesh_frame_h")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.9, -0.079)
+mesh = SubResource("BoxMesh_frame_bottom")
 material_override = ExtResource("1_paint")
 
 [node name="FrameLeft" type="MeshInstance3D" parent="."]
@@ -93,13 +115,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
 mesh = SubResource("BoxMesh_muntin_h")
 material_override = ExtResource("1_paint")
 
+[node name="InnerRail" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.878, 0.028)
+mesh = SubResource("BoxMesh_inner_rail")
+material_override = ExtResource("1_paint")
+
 [node name="Sill" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.96, 0.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.923, 0.16)
 mesh = SubResource("BoxMesh_sill")
 material_override = ExtResource("1_paint")
 
 [node name="SillSurface" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.915, 0.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.898, 0.18)
 collision_layer = 32
 collision_mask = 0
 monitoring = false
@@ -107,3 +134,22 @@ script = ExtResource("3_surface")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SillSurface"]
 shape = SubResource("BoxShape3D_sill")
+
+[node name="SillBody" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="Sill" type="CollisionShape3D" parent="SillBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.923, 0.16)
+shape = SubResource("BoxShape3D_sill_body")
+
+[node name="Glass" type="CollisionShape3D" parent="SillBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.02)
+shape = SubResource("BoxShape3D_glass_body")
+
+[node name="SideLeft" type="CollisionShape3D" parent="SillBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0, 0)
+shape = SubResource("BoxShape3D_side_body")
+
+[node name="SideRight" type="CollisionShape3D" parent="SillBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 0)
+shape = SubResource("BoxShape3D_side_body")

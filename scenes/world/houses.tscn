@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+; Alle Nachbarhäuser (Etappe 4d), aufgestellt von scripts/world/houses.gd aus Platzhaltern
+; (scenes/world/house_facade.tscn). Liegt unter "Outside" (y = 0 = Gehweg).
+
+[ext_resource type="Script" path="res://scripts/world/houses.gd" id="1_houses"]
+
+[node name="Houses" type="Node3D"]
+script = ExtResource("1_houses")

@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+; Kleiner gepflasterter Platz vor der Schräge und dem Gasseneingang (Etappe 4d), gebaut von
+; scripts/world/plaza.gd. Liegt unter "Outside" (y = 0 = Gehweg).
+
+[ext_resource type="Script" path="res://scripts/world/plaza.gd" id="1_plaza"]
+
+[node name="Plaza" type="Node3D"]
+script = ExtResource("1_plaza")

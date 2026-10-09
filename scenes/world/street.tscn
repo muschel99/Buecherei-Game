@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+; Straße mit Gehwegen, Bordsteinen und Seitenstraßen (Etappe 4d), gebaut von
+; scripts/world/street.gd. Liegt unter "Outside" (y = 0 = Gehweg). Maße in GameConfig.
+
+[ext_resource type="Script" path="res://scripts/world/street.gd" id="1_street"]
+
+[node name="Street" type="Node3D"]
+script = ExtResource("1_street")

@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+; Schmale Gasse neben der Bücherei (Etappe 4d), gebaut von scripts/world/alley.gd.
+; Liegt unter "Outside" (y = 0 = Gehweg). Maße in GameConfig (alley_…). Der Abschluss am
+; Ende ist eine eigene, austauschbare Szene (scenes/world/alley_end.tscn).
+
+[ext_resource type="Script" path="res://scripts/world/alley.gd" id="1_alley"]
+
+[node name="Alley" type="Node3D"]
+script = ExtResource("1_alley")

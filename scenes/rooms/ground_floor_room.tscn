@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=20 format=3]
 
 ; Eckladen-Grundriss (seit Etappe 4a): Der Laden ist ein Rechteck (innen 6 x 8 m), bei dem die
 ; vordere linke Ecke abgeschrägt ist. In der schrägen Wand sitzt mittig die Ladentür; rechts
@@ -34,14 +34,8 @@
 [sub_resource type="BoxMesh" id="BoxMesh_skirting_z8"]
 size = Vector3(0.02, 0.1, 8)
 
-[sub_resource type="BoxMesh" id="BoxMesh_skirting_z6"]
-size = Vector3(0.02, 0.1, 6)
-
 [sub_resource type="BoxMesh" id="BoxMesh_skirting_x6"]
 size = Vector3(6, 0.1, 0.02)
-
-[sub_resource type="BoxMesh" id="BoxMesh_skirting_x4"]
-size = Vector3(4, 0.1, 0.02)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_entrance"]
 size = Vector3(1.4, 2, 1.2)
@@ -140,20 +134,34 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.99, 0.05, 0)
 mesh = SubResource("BoxMesh_skirting_z8")
 material_override = ExtResource("4_wood_dark")
 
-[node name="SkirtingLeft" type="MeshInstance3D" parent="Structure"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.99, 0.05, 1.0)
-mesh = SubResource("BoxMesh_skirting_z6")
-material_override = ExtResource("4_wood_dark")
+[node name="SkirtingLeft" type="CSGPolygon3D" parent="Structure"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+polygon = PackedVector2Array(-3, -2, -3, 4, -2.98, 4, -2.98, -1.9917157)
+depth = 0.1
+material = ExtResource("4_wood_dark")
 
 [node name="SkirtingBack" type="MeshInstance3D" parent="Structure"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3.99)
 mesh = SubResource("BoxMesh_skirting_x6")
 material_override = ExtResource("4_wood_dark")
 
-[node name="SkirtingFront" type="MeshInstance3D" parent="Structure"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.05, -3.99)
-mesh = SubResource("BoxMesh_skirting_x4")
-material_override = ExtResource("4_wood_dark")
+[node name="SkirtingFront" type="CSGPolygon3D" parent="Structure"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+polygon = PackedVector2Array(-1, -4, 3, -4, 3, -3.98, -0.9917157, -3.98)
+depth = 0.1
+material = ExtResource("4_wood_dark")
+
+[node name="SkirtingDiagonalLeft" type="CSGPolygon3D" parent="Structure"]
+transform = Transform3D(0.7071068, 0.7071068, 0, 0, 0, -1, -0.7071068, 0.7071068, 0, -2.0707, 0, -3.0707)
+polygon = PackedVector2Array(-1.4142136, 0.1, -0.77, 0.1, -0.77, 0.12, -1.4059293, 0.12)
+depth = 0.1
+material = ExtResource("4_wood_dark")
+
+[node name="SkirtingDiagonalRight" type="CSGPolygon3D" parent="Structure"]
+transform = Transform3D(0.7071068, 0.7071068, 0, 0, 0, -1, -0.7071068, 0.7071068, 0, -2.0707, 0, -3.0707)
+polygon = PackedVector2Array(0.77, 0.1, 1.4142136, 0.1, 1.4059293, 0.12, 0.77, 0.12)
+depth = 0.1
+material = ExtResource("4_wood_dark")
 
 [node name="Walls" type="Node3D" parent="."]
 
@@ -215,7 +223,7 @@ transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.70710
 [node name="Furniture" type="Node3D" parent="."]
 
 [node name="Armchair" type="Node3D" parent="Furniture"]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -2.4, 0, 0.5)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -2.2888889, 0, 0.5)
 script = ExtResource("16_placed")
 data = ExtResource("10_armchair")
 

@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+; Platzhalter-Nachbarhaus (Etappe 4d), gebaut von scripts/world/house_facade.gd.
+; Ursprung unten in der Mitte der Vorderseite, Vorderseite nach +Z. Maße und Farben stellt
+; scripts/world/houses.gd für jedes Haus ein. Eigenes Modell: Kind-Knoten "Model".
+
+[ext_resource type="Script" path="res://scripts/world/house_facade.gd" id="1_house"]
+
+[node name="HouseFacade" type="Node3D"]
+script = ExtResource("1_house")

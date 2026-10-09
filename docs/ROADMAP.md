@@ -28,6 +28,7 @@
 | 4a  | Eckladen-Grundriss, feste Theke und Rückgabekasten | fertig |
 | 4b  | Reparatur Eckladen (Schräge, Fassade, Fenster, Vorplatz, Licht) | fertig |
 | 4c  | Eckladen sauber nachbessern (Gehrung, Gehweg, Obergeschoss) | fertig |
+| 4d  | Straße, Gasse, Platz und Eingangstreppe  | fertig        |
 | 5   | Besucher                                 | offen         |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
@@ -497,6 +498,33 @@ festen Blickwinkeln geprüft (Godot ohne Bildschirm gestartet).
       Deckenstreifen in der Fassade zu sehen ist; die Decke im Laden bleibt, wie sie ist
 - [x] Glatte Schattenkanten: Die „breite Sonnenscheibe“ (`light_angular_distance`) ist aus; der
       normale weiche Filter glättet die Kanten und ist günstiger zu berechnen
+
+### Etappe 4d – Straße, Gasse, Platz und Eingangstreppe
+Leitgedanke: Die Bücherei bekommt ihre Umgebung (Straße, Häuserreihen, Gasse, kleiner Platz),
+liegt erhöht über ein paar Stufen, und zwei Kleinigkeiten im Laden werden besser.
+- [x] Bodenleiste an der schrägen Eingangswand, links und rechts der Tür: endet am Türrahmen,
+      in den Ecken auf Gehrung (auch die Leisten der Nachbarwände haben jetzt schräge Enden)
+- [x] Tiefere innere Fensterbänke (`GameConfig.window_sill_depth` = 0,32 m ab der Scheibe),
+      gebaut vom neuen Script `ShopWindow`; Bank, Glas und Seitenrahmen haben eine feste
+      Kollision. Geprüft: Deko und Bücher passen auf beide Bänke. Der Start-Sessel steht eine
+      Rasterzelle weiter vorn, damit er nicht unter die Bank ragt
+- [x] Laden 0,5 m über dem Gehweg (`GameConfig.shop_floor_rise`): draußen liegt alles tiefer,
+      innen bleibt alles, wie es ist. Podest mit drei umlaufenden Stufen (`EntranceSteps`,
+      nie breiter als die schräge Wand), unsichtbare Rampe zum weichen Laufen (von vorn und
+      beiden Seiten getestet), Sockel ums Haus (`UpperFloors`). Lieferkartons stapeln sich weg
+      von der Treppe
+- [x] Einspurige Straße mit Gehwegen und Bordsteinen (`Street`), Enden biegen vor quer
+      stehenden Häusern in Seitenstraßen ab, weiche unsichtbare Grenzen, Punkte für späteren
+      Verkehr (`TrafficPoints`); gegenüber englische Reihenhäuser (`HouseFacade`, `Houses`)
+- [x] Bücherei-Seite: Haus, Haus, Bücherei, Gasse, Haus, Haus; Häuser hinter der Gasse
+      zurückversetzt, davor ein kleiner gepflasterter Platz (`Plaza`); Gasse (`Alley`) mit
+      Hofmauern und austauschbarem Ende (`AlleyEnd`). Lage aller Teile: `StreetLayout`,
+      alle Maße in GameConfig
+- [x] Leistung geprüft (alle drei Grafikstufen: rund 20–30 Zeichenaufrufe mehr), Selbstkontrolle
+      mit Testbildern aus festen Blickwinkeln (Straße, Häuserreihe, Platz, Gasse, Treppe vorn
+      und seitlich, Fensterbänke, Bodenleiste) und Lauftests an allen Grenzen
+- [x] Nachtrag: Gasse und Platz durchgehend mit den großen Gehwegplatten (keine kleinen
+      Pflastersteine, kein eigener Gehweg in der Gasse); nur die Straße bleibt glatt
 
 ## Etappe 5 – Besucher
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke

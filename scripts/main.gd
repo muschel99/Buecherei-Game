@@ -11,6 +11,8 @@ var _dust_amount: int = 0
 
 func _ready() -> void:
 	_dust_amount = _dust.amount
+	# Draußen liegt alles tiefer als der Ladenboden (Etappe 4d, GameConfig.shop_floor_rise)
+	($Outside as Node3D).position.y = StreetLayout.ground_y()
 	_apply_graphics_quality()
 	Settings.setting_changed.connect(_on_setting_changed)
 	# Alle Knoten der Szene sind jetzt bereit – also können sie ihre Daten übernehmen

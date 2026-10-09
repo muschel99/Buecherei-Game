@@ -1,6 +1,8 @@
 class_name UpperFloors
 extends Node3D
-## Die Obergeschosse und das Dach über dem Laden (seit Etappe 4c).
+## Die Obergeschosse und das Dach über dem Laden (seit Etappe 4c) – und unten der Sockel
+## des Hauses (seit Etappe 4d: der Ladenboden liegt höher als der Gehweg, dazwischen sieht man
+## den Sockel; Höhe GameConfig.shop_floor_rise, Überstand GameConfig.plinth_proud).
 ##
 ## Vorerst ist jedes Obergeschoss nur eine geschlossene Außenhülle mit Fenster-Platzhaltern –
 ## man kann es nicht betreten. Anzahl und Höhe stehen in GameConfig (upper_floor_count,
@@ -45,6 +47,11 @@ extends Node3D
 @export var trim_material: Material = preload("res://assets/materials/paint_white.tres")
 @export var roof_material: Material = preload("res://assets/materials/roof_slate.tres")
 
+@export_group("Sockel")
+## An diesen Seiten läuft unten der Sockel (rechts schließt das Nachbarhaus an, dort nicht).
+@export var plinth_sides := PackedStringArray(["diagonal", "front", "left", "back"])
+@export var plinth_material: Material = preload("res://assets/materials/plinth_stone.tres")
+
 ## Namen der Seiten des Grundrisses in der Reihenfolge der Ecken (siehe _outline).
 const SIDE_NAMES := ["diagonal", "front", "right", "back", "left"]
 
@@ -54,6 +61,9 @@ func _ready() -> void:
 	for index in GameConfig.upper_floor_count:
 		add_child(_build_floor(index, outline))
 	add_child(_build_roof(outline))
+	var plinth := _build_plinth(outline)
+	if plinth:
+		add_child(plinth)
 
 
 ## Höhe des Fußbodens eines Obergeschosses (0 = erstes Obergeschoss).
@@ -157,6 +167,54 @@ func _build_roof(outline: PackedVector2Array) -> Node3D:
 	roof.add_child(_make_mesh("Trim", trim, trim_material))
 	roof.add_child(_make_mesh("Slopes", slopes, roof_material))
 	return roof
+
+
+## Sockel: ein schmaler Streifen, der unten etwas vor der Hauswand steht – vom Gehweg bis zur
+## Höhe des Ladenbodens. An der schrägen Wand liegt seine Oberkante 2 mm tiefer, denn dort
+## liegt das Podest der Treppe genau auf Höhe des Ladenbodens darüber (sonst flimmert es).
+func _build_plinth(outline: PackedVector2Array) -> MeshInstance3D:
+	var rise := GameConfig.shop_floor_rise
+	var proud := GameConfig.plinth_proud
+	if rise <= 0.0 or proud <= 0.0:
+		return null
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var count := outline.size()
+	for i in count:
+		if not SIDE_NAMES[i] in plinth_sides:
+			continue
+		var a := outline[i]
+		var b := outline[(i + 1) % count]
+		var start := _plinth_corner(outline, i, SIDE_NAMES[(i - 1 + count) % count] in plinth_sides, true)
+		var finish := _plinth_corner(outline, i, SIDE_NAMES[(i + 1) % count] in plinth_sides, false)
+		var top := -0.002 if SIDE_NAMES[i] == "diagonal" else 0.0
+		var outward := _outward(a, b)
+		_add_quad(tool, _at(start, -rise), _at(finish, -rise), _at(finish, top), _at(start, top), outward)
+		_add_quad(tool, _at(a, top), _at(b, top), _at(finish, top), _at(start, top), Vector3.UP)
+	var mesh := _make_mesh("Plinth", tool, plinth_material)
+	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF  # nur ein schmaler Streifen
+	return mesh
+
+
+## Ecke des Sockels an Seite i (Anfang oder Ende): auf Gehrung, wenn die Nachbarseite auch
+## einen Sockel hat, sonst gerade abgeschnitten (dort schließt ein Nachbarhaus an).
+func _plinth_corner(outline: PackedVector2Array, i: int, neighbor_has_plinth: bool, at_start: bool) -> Vector2:
+	var count := outline.size()
+	var a := outline[i]
+	var b := outline[(i + 1) % count]
+	var corner := a if at_start else b
+	var n := _outward(a, b)
+	var normal := Vector2(n.x, n.z)
+	var proud := GameConfig.plinth_proud
+	if not neighbor_has_plinth:
+		return corner + normal * proud
+	var other: Vector3
+	if at_start:
+		other = _outward(outline[(i - 1 + count) % count], a)
+	else:
+		other = _outward(b, outline[(i + 2) % count])
+	var other_normal := Vector2(other.x, other.z)
+	return corner + (normal + other_normal) * proud / (1.0 + normal.dot(other_normal))
 
 
 ## Punkt des Grundrisses in einer bestimmten Höhe.

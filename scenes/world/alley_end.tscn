@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+; Abschluss am Ende der Gasse (Etappe 4d, Platzhalter): Backsteinmauer mit Holztor und ein
+; Haus dahinter, gebaut von scripts/world/alley_end.gd. Ursprung unten in der Mitte der Gasse
+; an ihrem Ende, Vorderseite in die Gasse (-Z). Eigenes Modell: Kind-Knoten "Model".
+
+[ext_resource type="Script" path="res://scripts/world/alley_end.gd" id="1_end"]
+
+[node name="AlleyEnd" type="Node3D"]
+script = ExtResource("1_end")

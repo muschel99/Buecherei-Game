@@ -105,6 +105,76 @@ var upper_floor_count: int = 1
 ## Höhe eines Obergeschosses in Metern (vom eigenen Fußboden bis zum nächsten, also mit Decke).
 var upper_floor_height: float = 3.0
 
+## Tiefe der inneren Fensterbänke (seit Etappe 4d) in Metern, gemessen von der Scheibe bis
+## zur vorderen Kante. Die Wand ist 0,2 m dick, die Scheibe sitzt in der Mitte: Bei 0,32 m
+## ragt die Fensterbank also 0,22 m in den Raum. Davon sind gut 25 cm Ablage für Deko und
+## Bücher. Das Fenster selbst bleibt gleich groß.
+var window_sill_depth: float = 0.32
+
+
+# --- Draußen: Straße, Gasse, Platz und Eingangstreppe (Etappe 4d) ---
+# Alle Maße in Metern. Gebaut wird alles beim Start von den Scripts in scripts/world/
+# (Übersicht der Lage: StreetLayout). Der Ladenboden bleibt auf Höhe 0 – stattdessen liegt
+# draußen alles um shop_floor_rise tiefer. So bleiben Möbel, Bücher und Deko genau an ihrem
+# Platz, und der Raum ist innen unverändert.
+
+## So viel höher als der Gehweg liegt der Ladenboden.
+var shop_floor_rise: float = 0.5
+## Zahl der Stufen vor dem Podest (das Podest selbst ist die oberste Stufe). Alle Stufen
+## sind gleich hoch: shop_floor_rise / (entrance_step_count + 1).
+var entrance_step_count: int = 3
+## Tiefe jeder Stufe vorn (Auftritt).
+var entrance_step_depth: float = 0.28
+## Breite jeder Stufe an den beiden Seiten. Die ganze Treppe ist genau so breit wie die
+## schräge Wand; das Podest ist darum so breit wie die Wand minus die seitlichen Stufen
+## (bei 3 Stufen à 0,2 m: etwa 1,8 m – breiter als der Türrahmen).
+var entrance_side_step_depth: float = 0.2
+## Tiefe des Podests vor der Tür.
+var entrance_podium_depth: float = 0.7
+## So weit steht der Sockel des Hauses unten vor der Wand.
+var plinth_proud: float = 0.03
+
+## Gehweg vor der Bücherei (von der Hauswand bis zur Bordsteinkante).
+var sidewalk_width: float = 2.0
+## Gehweg auf der gegenüberliegenden Straßenseite.
+var opposite_sidewalk_width: float = 1.6
+## Fahrbahn: eine Spur, ein Auto breit.
+var street_width: float = 3.4
+## So viel tiefer als der Gehweg liegt die Fahrbahn (Höhe des Bordsteins).
+var curb_height: float = 0.12
+## So lang sind die Seitenstraßen, in die die Straße an beiden Enden abbiegt (bis zum Haus,
+## das sie abschließt). Laufen kann man nur bis kurz hinter die Ecke (side_street_walkable).
+var side_street_length: float = 9.0
+var side_street_walkable: float = 2.0
+
+## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
+var alley_width: float = 2.8
+var alley_depth: float = 11.0
+
+## Breiten der Nachbarhäuser auf der Bücherei-Seite, von der Bücherei nach außen gezählt:
+## links der Bücherei (von der Straße aus gesehen) und hinter der Gasse. Die Häuser hinter der
+## Gasse stehen zurückversetzt – ihre Vorderkante liegt genau dort, wo die schräge Wand auf
+## die Seitenwand an der Gasse trifft (ergibt sich aus corner_cut).
+var neighbor_house_widths: Array[float] = [5.2, 5.6]
+var alley_house_widths: Array[float] = [5.4, 5.2]
+## Tiefe der Nachbarhäuser (von vorn nach hinten).
+var neighbor_house_depth: float = 8.4
+## Traufhöhen (über dem Gehweg) der Nachbarhäuser – etwa so hoch wie die Bücherei mit
+## Obergeschoss. Die Liste wird der Reihe nach für alle Häuser benutzt.
+var neighbor_house_heights: Array[float] = [6.6, 7.2, 6.9, 6.4]
+## Häuserreihe gegenüber (englische Reihenhäuser): so viele Häuser passen zwischen die
+## beiden Seitenstraßen; Höhen wechseln der Reihe nach.
+var opposite_house_count: int = 4
+var opposite_house_depth: float = 7.5
+var opposite_house_heights: Array[float] = [6.2, 7.0, 6.6, 7.4, 5.9]
+## Häuser, die die Seitenstraßen säumen und abschließen (reine Kulisse).
+var end_house_width: float = 5.0
+var end_house_height: float = 6.8
+## Nachbarhäuser auf der Bücherei-Seite werfen nur bis zu dieser Entfernung (von der
+## Bücherei-Tür) Schatten – das spart Rechenleistung. Die Häuser gegenüber und an den
+## Seitenstraßen werfen nie Schatten (sie würden sonst das Fensterlicht verdecken).
+var house_shadow_distance: float = 14.0
+
 
 # --- Gestaltungsmodus (Etappe 2) ---
 

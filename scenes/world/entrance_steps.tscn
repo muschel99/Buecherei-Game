@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+; Podest mit Stufen vor der Ladentür (Etappe 4d), gebaut von scripts/world/entrance_steps.gd.
+; Ursprung außen auf der Hauswand in der Türmitte, auf Höhe des Ladenbodens; +Z nach draußen.
+; Maße in GameConfig (entrance_…, shop_floor_rise). Eigenes Modell: Kind-Knoten "Model".
+
+[ext_resource type="Script" path="res://scripts/world/entrance_steps.gd" id="1_steps"]
+
+[node name="EntranceSteps" type="Node3D"]
+script = ExtResource("1_steps")
