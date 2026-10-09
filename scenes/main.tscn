@@ -1,5 +1,11 @@
 [gd_scene format=3]
 
+; Hauptszene. Draußen (Knoten "Outside"): Seit Etappe 4c ist der Gehweg EINE lückenlose Fläche
+; ("Sidewalk", CSGPolygon3D mit Kollision, Oberkante auf Höhe 0 = Höhe des Ladenbodens): der
+; Streifen vor dem Haus, der Platz vor der schrägen Eingangswand und der Streifen links neben dem
+; Haus. Ihr Grundriss endet genau an der Außenkante der Hauswand. Unsichtbare Wände ("Bounds")
+; halten die Spielfigur auf dem Gehweg.
+
 [ext_resource type="PackedScene" path="res://scenes/rooms/ground_floor_room.tscn" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="3_hud"]
@@ -65,14 +71,11 @@ size = Vector2(40, 40)
 [sub_resource type="BoxMesh" id="BoxMesh_houses"]
 size = Vector3(40, 6, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_sidewalk"]
-size = Vector3(12, 0.12, 2.4)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_sidewalk"]
-size = Vector3(12, 0.12, 2.4)
-
 [sub_resource type="BoxMesh" id="BoxMesh_curb"]
 size = Vector3(12, 0.14, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_curb_back"]
+size = Vector3(2.8, 0.14, 0.16)
 
 [sub_resource type="BoxMesh" id="BoxMesh_neighbor"]
 size = Vector3(6, 7, 8.4)
@@ -80,17 +83,14 @@ size = Vector3(6, 7, 8.4)
 [sub_resource type="BoxShape3D" id="BoxShape3D_neighbor"]
 size = Vector3(6, 7, 8.4)
 
-[sub_resource type="BoxMesh" id="BoxMesh_doorstep"]
-size = Vector3(2.6, 0.12, 1.2)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_doorstep"]
-size = Vector3(2.6, 0.12, 1.2)
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_bound_side"]
 size = Vector3(0.2, 3, 2.6)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bound_front"]
 size = Vector3(12, 3, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bound_back"]
+size = Vector3(2.8, 3, 0.2)
 
 [node name="Main" type="Node3D"]
 script = ExtResource("7_main")
@@ -120,19 +120,21 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -20)
 mesh = SubResource("BoxMesh_houses")
 material_override = ExtResource("6_brick")
 
-[node name="Sidewalk" type="StaticBody3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -5.4)
-
-[node name="Mesh" type="MeshInstance3D" parent="Outside/Sidewalk"]
-mesh = SubResource("BoxMesh_sidewalk")
-material_override = ExtResource("12_sidewalk")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/Sidewalk"]
-shape = SubResource("BoxShape3D_sidewalk")
+[node name="Sidewalk" type="CSGPolygon3D" parent="Outside"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, -0.12, 0)
+use_collision = true
+polygon = PackedVector2Array(-6, -6.6, 6, -6.6, 6, -4.2, -1.0828427, -4.2, -3.2, -2.0828427, -3.2, 4.2, -6, 4.2)
+depth = 0.12
+material = ExtResource("12_sidewalk")
 
 [node name="Curb" type="MeshInstance3D" parent="Outside"]
 transform = Transform3D(0.999667, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -6.56)
 mesh = SubResource("BoxMesh_curb")
+material_override = ExtResource("13_curb")
+
+[node name="CurbBackLeft" type="MeshInstance3D" parent="Outside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, -0.06, 4.28)
+mesh = SubResource("BoxMesh_curb_back")
 material_override = ExtResource("13_curb")
 
 [node name="NeighborLeft" type="StaticBody3D" parent="Outside"]
@@ -155,16 +157,6 @@ material_override = ExtResource("6_brick")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/NeighborRight"]
 shape = SubResource("BoxShape3D_neighbor")
 
-[node name="Doorstep" type="StaticBody3D" parent="Outside"]
-transform = Transform3D(0.7071068, 0, 0.7071068, 0, 1, 0, -0.7071068, 0, 0.7071068, -2.565, -0.06, -3.565)
-
-[node name="Mesh" type="MeshInstance3D" parent="Outside/Doorstep"]
-mesh = SubResource("BoxMesh_doorstep")
-material_override = ExtResource("12_sidewalk")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Outside/Doorstep"]
-shape = SubResource("BoxShape3D_doorstep")
-
 [node name="Bounds" type="StaticBody3D" parent="Outside"]
 
 [node name="Left" type="CollisionShape3D" parent="Outside/Bounds"]
@@ -178,6 +170,10 @@ shape = SubResource("BoxShape3D_bound_side")
 [node name="Front" type="CollisionShape3D" parent="Outside/Bounds"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6.7)
 shape = SubResource("BoxShape3D_bound_front")
+
+[node name="BackLeft" type="CollisionShape3D" parent="Outside/Bounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 1.5, 4.3)
+shape = SubResource("BoxShape3D_bound_back")
 
 [node name="Deliveries" type="Marker3D" parent="Outside"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0, -4.7)
