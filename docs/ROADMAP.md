@@ -641,6 +641,9 @@ ist austauschbar.
       Zwirbel“ in verspielter, größerer Schrift mit Faden-Kringel, Ausleger-Schild,
       Hängekorb, Blumenkästen, links Hortensie, rechts Olivenbäumchen und Kreidetafel;
       Puppen und Kleidung als austauschbare Platzhalter (`scenes/world/props/`, ShopProp)
+- [x] Teil 1c – Ausleger-Schild und Hängekorb höher (über dem Ladengesims), Name mittig;
+      alle Schilder sind Bilder zum selbst Gestalten (`assets/textures/signs/`, Startbilder
+      werden nie überschrieben)
 - [ ] Teil 2 – Reihenhäuser (4 Breiten) und Wohnhaus
 - [ ] Teil 3 – Pub, Eckhäuser, Torhaus
 - [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),

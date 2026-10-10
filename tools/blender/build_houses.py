@@ -244,9 +244,11 @@ def _recessed_door(b, half, transom, head, jz):
     b.box((-0.15, 0.86, t1), (0.15, 0.89, t1 + 0.012), GOLD)
     b.sphere(V(x1 - fw - 0.06, 1.0, dz + 0.04), 0.03, GOLD, rings=4, segments=8)
     b.sphere(V(x1 - fw - 0.06, 1.0, t0 - 0.04), 0.03, GOLD, rings=4, segments=8)
-    # Kleines Schild an der Scheibe: "Geöffnet"
-    b.box((-0.13, 1.45, t1 - 0.02), (0.13, 1.56, t1 - 0.012), Mat("plain", color=(0.93, 0.9, 0.82)))
-    b.playful_text("Geöffnet", 0.0, 1.475, t1 - 0.012, 0.045, 0.002, JOINERY, font_path=S.PLAYFUL_FONT, seed=3, bounce=0.05, tilt=3)
+    # Kleines Schild an der Scheibe: "Geöffnet" (eigenes Bild, siehe SIGNS)
+    cw, ch = OPEN_SIGN
+    b.box((-cw / 2, 1.45, t1 - 0.02), (cw / 2, 1.45 + ch, t1 - 0.012), Mat("plain", color=(0.93, 0.9, 0.82)), skip=("front",))
+    b.poly([V(-cw / 2, 1.45, t1 - 0.012), V(cw / 2, 1.45, t1 - 0.012), V(cw / 2, 1.45 + ch, t1 - 0.012), V(-cw / 2, 1.45 + ch, t1 - 0.012)],
+           Mat("plain", sign="open"), uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
 
 
 # --- Ladenraum ---
@@ -533,19 +535,11 @@ def fashion_shop(type_id="fashion_shop"):
         b.box((lo_x - 0.02, fascia_lo - 0.18, 0), (hi_x + 0.02, fascia_hi + 0.05, 0.26), JOINERY, skip=("back",))
         b.box((lo_x + 0.02, fascia_lo - 0.34, 0), (hi_x - 0.02, fascia_lo - 0.18, 0.21), JOINERY, skip=("back",))
         b.cylinder(V(lo_x + 0.02, fascia_lo + 0.12, 0.2), 0.08, hi_x - lo_x - 0.04, GOLD, segments=10, caps=(True, True), axis="x")
-    # Schild mit Goldrand und verspielter Schrift (hüpfende Buchstaben, Faden-Kringel, Nadel)
-    b.box((-w + pil, fascia_lo, 0), (w - pil, fascia_hi, 0.2), JOINERY, skip=("back",))
-    for y0, y1 in ((fascia_lo + 0.035, fascia_lo + 0.05), (fascia_hi - 0.05, fascia_hi - 0.035)):
-        b.box((-w + pil + 0.06, y0, 0.2), (w - pil - 0.06, y1, 0.21), GOLD, skip=("back",))
-    for x in (-w + pil + 0.06, w - pil - 0.075):
-        b.box((x, fascia_lo + 0.035, 0.2), (x + 0.015, fascia_hi - 0.035, 0.21), GOLD, skip=("back",))
-    text_w = b.playful_text("Zwirn und Zwirbel", -0.22, fascia_lo + 0.12, 0.2, 0.3, 0.022, GOLD,
-                            font_path=S.PLAYFUL_FONT, seed=7, bounce=0.07, tilt=5, first_scale=1.3)
-    tail_x = -0.22 + text_w / 2 + 0.03
-    P.thread_spiral(b, (tail_x, fascia_lo + 0.12), 0.1, 1.6, GOLD, 0.21, thickness=0.008)
-    b.beam(V(tail_x + 0.22, fascia_lo + 0.1, 0.212), V(tail_x + 0.36, fascia_lo + 0.38, 0.212), 0.016, 0.01, GOLD)
-    b.tube([V(tail_x + 0.03, fascia_lo + 0.09, 0.212), V(tail_x + 0.14, fascia_lo + 0.07, 0.212), V(tail_x + 0.24, fascia_lo + 0.13, 0.212),
-            V(tail_x + 0.33, fascia_lo + 0.33, 0.212)], 0.006, GOLD, segments=4)
+    # Ladenschild: die Vorderseite zeigt ein Bild (assets/textures/signs/fashion_shop_fascia.png,
+    # Startbild = fascia_design) – zum selbst Gestalten austauschbar
+    b.box((-w + pil, fascia_lo, 0), (w - pil, fascia_hi, 0.2), JOINERY, skip=("back", "front"))
+    b.poly([V(-w + pil, fascia_lo, 0.2), V(w - pil, fascia_lo, 0.2), V(w - pil, fascia_hi, 0.2), V(-w + pil, fascia_hi, 0.2)],
+           Mat("plain", sign="fascia"), uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
     # Gesims über dem Schild
     b.extrude_x([(0, fascia_hi), (0, shop_top), (0.3, shop_top), (0.3, fascia_hi + 0.1), (0.22, fascia_hi + 0.05), (0.2, fascia_hi)],
                 -w - 0.03, w + 0.03, JOINERY)
@@ -583,10 +577,11 @@ def fashion_shop(type_id="fashion_shop"):
     # --- Vor dem Laden: links Hortensie, rechts Olivenbäumchen und Kreidetafel ---
     P.hydrangea_tub(b, -(door_half + 0.5), 0.42, seed=21)
     P.olive_tree(b, door_half + 0.46, 0.38, seed=22)
-    P.chalkboard(b, 1.78, 0.5, ["Neu:", "Herbst-", "mode"], seed=23, facing=-12)
-    # Ausleger-Schild rechts (zur Bücherei hin), Hängekorb links – jeweils an der Säule
-    P.projecting_sign(b, w - pil / 2, 2.55, 0.16, JOINERY, Mat("plain", color=(0.82, 0.52, 0.56)), seed=24)
-    P.hanging_basket(b, -(w - pil / 2), 2.62, 0.16, 0.55, seed=25)
+    P.chalkboard(b, 1.78, 0.5, Mat("plain", sign="chalkboard"), facing=-12)
+    # Ausleger-Schild rechts (zur Bücherei hin), Hängekorb links – über dem Ladengesims an den
+    # Eckquadern, also oberhalb der Markisen
+    P.projecting_sign(b, w - 0.2, 4.32, 0.035, JOINERY, Mat("plain", sign="hanging"))
+    P.hanging_basket(b, -(w - 0.2), 4.38, 0.035, 0.55, seed=25)
     return b, _fashion_props()
 
 
@@ -651,20 +646,131 @@ def write_interior_scene(type_id, props):
         f.write("\n".join(lines))
 
 
+# --- Schilder zum selbst Gestalten ---
+# Jedes Schild ist eine Fläche mit eigenem Bild: assets/textures/signs/<typ>_<name>.png
+# (Material assets/materials/signs/<typ>_<name>.tres). Fehlt das Bild, rendert das Script ein
+# Startbild aus der Gestaltung unten. Vorhandene Bilder werden NIE überschrieben (eigene
+# Gestaltung bleibt) – außer mit --reset-signs.
+FASCIA = (4.76, 0.51)
+OPEN_SIGN = (0.26, 0.11)
+NAVY = (0.1, 0.13, 0.21)
+
+
+def _fascia_design(b):
+    """Startbild des Ladenschilds: Marineblau, Goldrand, verspielte Schrift mit Faden-Kringel
+    und Nadel – Schrift samt Verzierung genau in der Mitte."""
+    fw, fh = FASCIA
+    board = Mat("paint", color=NAVY)
+    b.box((-fw / 2, -fh / 2, -0.02), (fw / 2, fh / 2, 0.0), board)
+    for y0 in (-fh / 2 + 0.035, fh / 2 - 0.05):
+        b.box((-fw / 2 + 0.06, y0, 0.0), (fw / 2 - 0.06, y0 + 0.015, 0.01), GOLD)
+    for x in (-fw / 2 + 0.06, fw / 2 - 0.075):
+        b.box((x, -fh / 2 + 0.035, 0.0), (x + 0.015, fh / 2 - 0.035, 0.01), GOLD)
+    start = len(b.faces)
+    text_w = b.playful_text("Zwirn und Zwirbel", 0.0, 0.0, 0.0, 0.3, 0.022, GOLD,
+                            font_path=S.PLAYFUL_FONT, seed=7, bounce=0.07, tilt=5, first_scale=1.3)
+    tail_x = text_w / 2 + 0.03
+    P.thread_spiral(b, (tail_x, 0.01), 0.1, 1.6, GOLD, 0.012, thickness=0.008)
+    b.beam(V(tail_x + 0.22, -0.01, 0.012), V(tail_x + 0.36, 0.27, 0.012), 0.016, 0.01, GOLD)
+    b.tube([V(tail_x + 0.03, -0.02, 0.012), V(tail_x + 0.14, -0.04, 0.012), V(tail_x + 0.24, 0.02, 0.012),
+            V(tail_x + 0.33, 0.22, 0.012)], 0.006, GOLD, segments=4)
+    b.recenter(start, 0.0, 0.0)
+
+
+def _open_design(b):
+    cw, ch = OPEN_SIGN
+    b.box((-cw / 2, -ch / 2, -0.01), (cw / 2, ch / 2, 0.0), Mat("plain", color=(0.93, 0.9, 0.82)))
+    start = len(b.faces)
+    b.playful_text("Geöffnet", 0.0, 0.0, 0.0, 0.05, 0.002, Mat("paint", color=NAVY), font_path=S.PLAYFUL_FONT,
+                   seed=3, bounce=0.05, tilt=3)
+    b.recenter(start, 0.0, 0.0)
+
+
+SIGNS = {
+    "fashion_shop": {
+        # Name: (Breite, Höhe in Metern, Bildbreite in Pixeln, Gestaltung)
+        "fascia": (FASCIA[0], FASCIA[1], 2048, _fascia_design),
+        "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512,
+                    lambda b: P.hanging_sign_design(b, Mat("paint", color=NAVY), Mat("plain", color=(0.82, 0.52, 0.56)))),
+        "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Neu:", "Herbst-", "mode"], 23)),
+        "open": (OPEN_SIGN[0], OPEN_SIGN[1], 360, _open_design),
+    },
+}
+SIGN_TEX_DIR = os.path.join(S.ROOT, "assets", "textures", "signs")
+SIGN_MAT_DIR = os.path.join(S.ROOT, "assets", "materials", "signs")
+
+
+def prepare_signs(type_id, reset=False):
+    """Startbilder rendern (nur wenn sie fehlen) und Godot-Materialien anlegen. Liefert
+    {Name: res-Pfad des Materials} für die Importeinstellungen."""
+    out = {}
+    os.makedirs(SIGN_TEX_DIR, exist_ok=True)
+    os.makedirs(SIGN_MAT_DIR, exist_ok=True)
+    for name, (width, height, pixels, design) in SIGNS.get(type_id, {}).items():
+        base = "%s_%s" % (type_id, name)
+        png = os.path.join(SIGN_TEX_DIR, base + ".png")
+        if reset or not os.path.exists(png):
+            bpy.ops.wm.read_factory_settings(use_empty=True)
+            b = S.Builder(base)
+            design(b)
+            S.to_blender(b, {})
+            _sign_lighting()
+            S.render_ortho(png, width, height, pixels)
+            print("Startbild:", png)
+        tres = os.path.join(SIGN_MAT_DIR, base + ".tres")
+        if not os.path.exists(tres):
+            with open(tres, "w") as f:
+                f.write("""[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/signs/%s.png" id="1_image"]
+
+[resource]
+resource_name = "sign_%s"
+albedo_texture = ExtResource("1_image")
+roughness = 0.6
+texture_filter = 5
+""" % (base, name))
+        out[name] = "res://assets/materials/signs/%s.tres" % base
+    return out
+
+
+def _sign_lighting():
+    """Weiches, gleichmäßiges Licht für die Startbilder (Farben bleiben, wie sie sind)."""
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = 32
+    scene.cycles.use_denoising = False
+    scene.view_settings.view_transform = "Standard"
+    world = bpy.data.worlds.new("Flat")
+    scene.world = world
+    world.use_nodes = True
+    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.8, 0.78, 0.74, 1)
+    world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.9
+    sun_data = bpy.data.lights.new("Sun", "SUN")
+    sun_data.energy = 1.2
+    sun_data.angle = math.radians(20)
+    sun = bpy.data.objects.new("Sun", sun_data)
+    sun.rotation_euler = (math.radians(60), 0, math.radians(-30))
+    scene.collection.objects.link(sun)
+
+
 HOUSES = {
     "fashion_shop": (fashion_shop, {"wall": (0.9, 0.86, 0.8), "door": (0.1, 0.13, 0.21), "accent": (0.17, 0.2, 0.3)}),
 }
 
 
-def build(type_id, render):
+def build(type_id, render, reset_signs=False):
     func, preview_colors = HOUSES[type_id]
+    signs = prepare_signs(type_id, reset_signs)
+    S.SIGN_PREFIX = type_id + "_"
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.preferences.filepaths.save_version = 0
     result = func()
     b, props = result if isinstance(result, tuple) else (result, [])
     glb = os.path.join(S.ROOT, "assets", "models", "houses", type_id + ".glb")
     tris = S.write_glb(b, glb)
-    S.write_import_settings(glb)
+    S.write_import_settings(glb, signs)
     print("%s: %d Dreiecke -> %s" % (type_id, tris, glb))
     if props:
         write_interior_scene(type_id, props)
@@ -757,7 +863,7 @@ def main():
     if not names or names == ["all"]:
         names = list(HOUSES)
     for name in names:
-        build(name, render)
+        build(name, render, "--reset-signs" in argv)
 
 
 main()

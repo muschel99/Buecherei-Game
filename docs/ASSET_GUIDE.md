@@ -409,6 +409,30 @@ Blender gebaut – so bleiben alle Häuser gleich in Maßstab, Materialien und D
   `houses.tscn` ändern. Möchtest du ein Haus ganz selbst modellieren, gilt der nächste
   Abschnitt („Alle Häuser eines Typs ersetzen“) – dann mit deinen eigenen Materialien.
 
+### Schilder selbst gestalten (seit Etappe 4g)
+Alle Schilder an den Stil-Häusern sind **Bilder** (PNG) – du kannst sie selbst malen oder
+gestalten (z. B. in Krita, GIMP, Procreate oder auf Papier und eingescannt). Für jedes Schild
+gibt es ein Startbild, das genau so groß ist, wie es sein muss:
+
+| Bild (`assets/textures/signs/`) | Wo | Größe am Haus | Startbild (Pixel) |
+|---|---|---|---|
+| `fashion_shop_fascia.png` | Ladenschild über den Schaufenstern | 4,76 × 0,51 m | 2048 × 219 |
+| `fashion_shop_hanging.png` | Ausleger-Schild (beide Seiten gleich) | 0,60 × 0,56 m, oben Bogen | 512 × 478 |
+| `fashion_shop_chalkboard.png` | Kreidetafel vor dem Laden | 0,42 × 0,70 m | 360 × 600 |
+| `fashion_shop_open.png` | „Geöffnet“-Kärtchen in der Tür | 0,26 × 0,11 m | 360 × 152 |
+
+So geht's:
+1. Das Startbild öffnen und darüber malen – oder ein neues Bild im **gleichen
+   Seitenverhältnis** anlegen (gern größer, z. B. doppelt so viele Pixel, dann wird es schärfer).
+2. Unter **genau demselben Namen** in `assets/textures/signs/` speichern (das alte ersetzen).
+3. Godot öffnen – das Bild wird von selbst neu geladen und hängt sofort am Haus.
+- Beim Ausleger-Schild ist oben ein Bogen: Was im Bild außerhalb des Bogens liegt (die grauen
+  Ecken oben), sieht man nicht. Das Bild erscheint auf beiden Seiten lesbar.
+- Deine Bilder werden **nie** überschrieben, auch nicht, wenn Claude das Haus neu baut. Nur
+  wenn ein Bild fehlt, legt das Bau-Script wieder ein Startbild an.
+- Etwas glänzender oder matter: das Material in `assets/materials/signs/` anklicken, im
+  Inspektor **Roughness** (0 = glänzend, 1 = matt).
+
 ### Puppen und Kleidung im Laden (seit Etappe 4g)
 Im Modegeschäft stehen Schneiderpuppen und hängen Kleider – vorerst **Platzhalter**. Jedes
 Stück ist eine eigene kleine Szene in `scenes/world/props/`:

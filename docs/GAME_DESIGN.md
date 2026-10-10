@@ -756,8 +756,9 @@ Zwei Zustände:
   Etappe 4g als erstes fertiges Stil-Modell **„Zwirn und Zwirbel“**, leicht vintage:
   marineblaue Ladenfront mit verspielter, hüpfender Goldschrift und einem Faden-Kringel mit
   Nadel, zwei gestreifte Markisen, Tür mit großer Scheibe in einer kleinen Nische („Geöffnet“-
-  Schild), an der Säule zur Bücherei hin ein Ausleger-Schild (quer zur Fassade, Garnrolle mit
-  Nadel), an der anderen Säule ein Hängekorb. Vor dem Laden links eine Hortensie in einer
+  Schild), über dem Ladengesims (oberhalb der Markisen) zur Bücherei hin ein Ausleger-Schild (quer zur
+  Fassade, Garnrolle mit Nadel), auf der anderen Seite ein Hängekorb. Alle Schilder
+  (Ladenschild, Ausleger-Schild, Kreidetafel, „Geöffnet“) sind Bilder, die ich selbst gestalte. Vor dem Laden links eine Hortensie in einer
   Zinkwanne, rechts ein Olivenbäumchen im hohen Topf und eine Kreidetafel („Neu: Herbstmode“) –
   man läuft nicht hindurch, Passanten gehen darum herum. Darüber Sandstein mit Eckquadern,
   drei weiße Schiebefenster mit Vorhängen und Blumenkästen, Zahnschnitt-Gesims, Ziergiebel mit

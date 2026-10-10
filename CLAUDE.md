@@ -313,6 +313,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Szenen `scenes/world/props/` mit Script `ShopProp` (Akzentfarbe je Stück, keine Schatten,
   `visible_distance`); Aufstellung je Laden `scenes/world/houses/<typ>_interior.tscn`
   (vom Bau-Script geschrieben). Innenräume leuchten über Material-Glow, keine Lampen-Lichter.
+  **Schilder = Bilder der Entwicklerin:** Schild-Flächen mit `Mat(..., sign="name")` und
+  `poly(..., uvs=…)` (0..1) → glb-Material `sign_<name>` → `assets/materials/signs/<typ>_<name>.tres`
+  → Bild `assets/textures/signs/<typ>_<name>.png`. Startbild aus der Gestaltung in
+  `SIGNS` (build_houses.py), nur wenn das Bild fehlt – vorhandene Bilder NIE überschreiben
+  (`--reset-signs` nur auf ausdrücklichen Wunsch).
 - `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
   und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`

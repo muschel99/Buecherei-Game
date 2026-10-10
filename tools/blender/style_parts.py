@@ -126,25 +126,40 @@ def olive_tree(b, x, z, seed):
     b.colliders.append(((x - 0.24, 0, z - 0.24), (x + 0.24, 1.0, z + 0.24)))
 
 
-def chalkboard(b, x, z, lines, seed, facing=0.0):
-    """Klapp-Kreidetafel (A-Aufsteller) mit Schrift auf der Vorderseite."""
+CHALKBOARD_SIZE = (0.42, 0.7)
+
+
+def chalkboard(b, x, z, sign_mat, facing=0.0):
+    """Klapp-Kreidetafel (A-Aufsteller). Die Tafel vorn zeigt ein Bild (Schild sign_mat, Größe
+    CHALKBOARD_SIZE), hinten ist sie leer."""
     b.push(b.move(x, 0, z) @ b.turn_y(facing))
     w, h = 0.5, 0.8
+    bw, bh = CHALKBOARD_SIZE
     lean = math.radians(12)
     for side in (1, -1):
-        b.push(b.turn_y(0 if side > 0 else 180) @ S.Matrix.Translation((0, 0, 0.0)) @ S.Matrix.Rotation(-lean, 4, "X"))
-        # Rahmen und Tafel (leicht nach hinten geneigt, Fuß vorn)
+        b.push(b.turn_y(0 if side > 0 else 180) @ S.Matrix.Rotation(-lean, 4, "X"))
         b.box((-w / 2, 0, 0.17), (w / 2, h, 0.2), TIMBER)
-        b.box((-w / 2 + 0.04, 0.05, 0.2), (w / 2 - 0.04, h - 0.05, 0.205), SLATE_BOARD, skip=("back",))
+        y0 = (h - bh) / 2
         if side > 0:
-            y = h - 0.2
-            for k, line in enumerate(lines):
-                b.playful_text(line, 0.0, y, 0.205, 0.075 if k else 0.06, 0.002, CHALK, seed=seed + k, bounce=0.05,
-                               tilt=4, font_path=S.PLAYFUL_FONT)
-                y -= 0.13
+            b.box((-bw / 2, y0, 0.2), (bw / 2, y0 + bh, 0.203), SLATE_BOARD, skip=("back", "front"))
+            b.poly([V(-bw / 2, y0, 0.203), V(bw / 2, y0, 0.203), V(bw / 2, y0 + bh, 0.203), V(-bw / 2, y0 + bh, 0.203)],
+                   sign_mat, uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
+        else:
+            b.box((-bw / 2, y0, 0.2), (bw / 2, y0 + bh, 0.203), SLATE_BOARD, skip=("back",))
         b.pop()
     b.pop()
     b.colliders.append(((x - 0.3, 0, z - 0.3), (x + 0.3, 0.85, z + 0.3)))
+
+
+def chalkboard_design(b, lines, seed):
+    """Startbild der Kreidetafel: Schiefer mit Kreideschrift (Mitte = Ursprung)."""
+    bw, bh = CHALKBOARD_SIZE
+    b.box((-bw / 2 - 0.05, -bh / 2 - 0.05, -0.02), (bw / 2 + 0.05, bh / 2 + 0.05, 0.0), SLATE_BOARD)
+    y = bh / 2 - 0.2
+    for k, line in enumerate(lines):
+        b.playful_text(line, 0.0, y, 0.0, 0.075 if k else 0.06, 0.002, CHALK, seed=seed + k, bounce=0.05,
+                       tilt=4, font_path=S.PLAYFUL_FONT)
+        y -= 0.13
 
 
 def hanging_basket(b, x, y_bracket, z_wall, reach, seed):
@@ -194,9 +209,23 @@ def thread_spiral(b, start, radius, turns, mat, plane_z, thickness=0.01, directi
     return pts
 
 
-def projecting_sign(b, x, y_bracket, z_wall, board_mat, accent_mat, seed):
-    """Ausleger-Schild quer zur Fassade (Ebene x = konstant): Schmiedeeisen-Arm mit Schnecke,
-    Holzschild mit Goldrand, darauf eine Garnrolle mit Nadel und Faden (beidseitig)."""
+HANGING_SIGN = (0.6, 0.56)
+
+
+def _arch_outline(width, height):
+    """Umriss des Ausleger-Schilds (u, v) um die Mitte: unten gerade, oben ein flacher Bogen."""
+    hw, hh = width / 2, height / 2
+    arc = []
+    for k in range(13):
+        a = math.pi * k / 12
+        arc.append((hw * math.cos(a), hh - 0.1 + 0.1 * math.sin(a)))
+    return [(-hw, -hh), (hw, -hh)] + arc
+
+
+def projecting_sign(b, x, y_bracket, z_wall, edge_mat, sign_mat):
+    """Ausleger-Schild quer zur Fassade (Ebene x = konstant): Schmiedeeisen-Arm mit Schnecken,
+    Holzschild; beide Seiten zeigen das Bild sign_mat (Größe HANGING_SIGN, lesbar von beiden
+    Seiten)."""
     reach = 0.95
     b.box((x - 0.05, y_bracket - 0.5, z_wall), (x + 0.05, y_bracket + 0.06, z_wall + 0.025), IRON)
     b.tube([V(x, y_bracket, z_wall), V(x, y_bracket, z_wall + reach)], 0.018, IRON, segments=6)
@@ -205,37 +234,52 @@ def projecting_sign(b, x, y_bracket, z_wall, board_mat, accent_mat, seed):
            0.013, IRON, segments=5)
     _scroll(b, x, y_bracket - 0.14, z_wall + 0.2, 0.1, turns=1.8)
     _scroll(b, x, y_bracket - 0.06, z_wall + 0.48, 0.05, turns=1.4)
-    # Schild: Bogen oben, hängt an zwei Ringen
-    z0, z1 = z_wall + 0.3, z_wall + 0.9
-    top, bottom = y_bracket - 0.12, y_bracket - 0.7
-    for zr in (z0 + 0.06, z1 - 0.06):
-        b.tube([V(x, y_bracket - 0.015, zr), V(x, top + 0.05, zr)], 0.006, IRON, segments=4)
-    outline = []
-    for k in range(13):
-        a = math.pi * k / 12
-        outline.append(((z0 + z1) / 2 - math.cos(a) * (z1 - z0) / 2, top - 0.12 + math.sin(a) * 0.1))
-    outline = [(z1, bottom), (z1, top - 0.12)] + outline[::-1][1:-1] + [(z0, top - 0.12), (z0, bottom)]
+    width, height = HANGING_SIGN
+    cz = z_wall + 0.3 + width / 2
+    cy = y_bracket - 0.1 - height / 2
+    for zr in (cz - width / 2 + 0.06, cz + width / 2 - 0.06):
+        b.tube([V(x, y_bracket - 0.015, zr), V(x, cy + height / 2 - 0.02, zr)], 0.006, IRON, segments=4)
+    outline = _arch_outline(width, height)
     t = 0.035
-    # Platte in der Ebene x: Oberseite zeigt nach +x
-    pts = [V(x + t / 2, yy, zz) for zz, yy in outline]
-    b.slab(list(reversed(pts)), t, board_mat)
+    # +x-Seite: rechts im Bild = -z; -x-Seite: rechts im Bild = +z
     for side in (1, -1):
-        xs = x + side * (t / 2 + 0.006)
-        ring = [V(xs, yy, zz) for zz, yy in outline] + [V(xs, outline[0][1], outline[0][0])]
-        inset = []
-        cz = (z0 + z1) / 2
-        cy = (top + bottom) / 2 - 0.03
-        for p in ring:
-            inset.append(V(xs, cy + (p.y - cy) * 0.88, cz + (p.z - cz) * 0.9))
-        b.tube(inset, 0.007, GOLD, segments=4, caps=False)
-        # Motiv: Garnrolle (in Akzentfarbe), Nadel, Faden-Kringel
-        b.push(b.move(xs, cy, cz) @ b.turn_y(90 * side))
-        b.box((-0.1, -0.13, 0), (0.1, -0.1, 0.02), TIMBER)
-        b.box((-0.1, 0.1, 0), (0.1, 0.13, 0.02), TIMBER)
-        b.box((-0.08, -0.1, 0.0), (0.08, 0.1, 0.03), accent_mat)
-        for k in range(5):
-            yy = -0.08 + k * 0.04
-            b.box((-0.08, yy, 0.03), (0.08, yy + 0.008, 0.034), accent_mat)
-        b.beam(V(0.06, -0.16, 0.035), V(0.2, 0.15, 0.035), 0.012, 0.008, GOLD)
-        thread_spiral(b, (0.08, 0.0), 0.06, 1.3, accent_mat, 0.04, thickness=0.006)
-        b.pop()
+        xs = x + side * t / 2
+        pts = [V(xs, cy + v, cz - side * u) for u, v in outline]
+        uvs = [((u + width / 2) / width, (v + height / 2) / height) for u, v in outline]
+        for tri_idx in _fan_indices(len(pts)):
+            tri = [pts[i] for i in tri_idx]
+            tuv = [uvs[i] for i in tri_idx]
+            b.poly(tri, sign_mat, uvs=tuv) if (tri[1] - tri[0]).cross(tri[2] - tri[0]).x * side > 0 else \
+                b.poly(tri[::-1], sign_mat, uvs=tuv[::-1])
+    ring = [(cz - u, cy + v) for u, v in outline]
+    for i in range(len(ring)):
+        z0, y0 = ring[i]
+        z1, y1 = ring[(i + 1) % len(ring)]
+        quad = [V(x - t / 2, y0, z0), V(x - t / 2, y1, z1), V(x + t / 2, y1, z1), V(x + t / 2, y0, z0)]
+        n = (quad[1] - quad[0]).cross(quad[2] - quad[0])
+        out = V(0, y0 + y1 - 2 * cy, z0 + z1 - 2 * cz)
+        b.poly(quad if n.dot(out) > 0 else quad[::-1], edge_mat)
+
+
+def _fan_indices(n):
+    """Dreiecke eines konvexen Vielecks (Fächer um die Mitte der Unterkante)."""
+    return [(0, i, i + 1) for i in range(1, n - 1)]
+
+
+def hanging_sign_design(b, board_mat, accent_mat):
+    """Startbild des Ausleger-Schilds (Mitte = Ursprung): Holz, Goldrand, Garnrolle, Nadel, Faden."""
+    width, height = HANGING_SIGN
+    b.box((-width / 2 - 0.05, -height / 2 - 0.05, -0.03), (width / 2 + 0.05, height / 2 + 0.05, -0.02),
+          Mat("plain", color=(0.5, 0.5, 0.5)))
+    outline = _arch_outline(width, height)
+    b.slab([V(u, v, 0) for u, v in outline], 0.02, board_mat)
+    inset = [V(u * 0.88, v * 0.9 - 0.01, 0.005) for u, v in outline] + [V(outline[0][0] * 0.88, outline[0][1] * 0.9 - 0.01, 0.005)]
+    b.tube(inset, 0.007, GOLD, segments=4, caps=False)
+    b.box((-0.1, -0.13, 0), (0.1, -0.1, 0.02), TIMBER)
+    b.box((-0.1, 0.1, 0), (0.1, 0.13, 0.02), TIMBER)
+    b.box((-0.08, -0.1, 0.0), (0.08, 0.1, 0.03), accent_mat)
+    for k in range(5):
+        yy = -0.08 + k * 0.04
+        b.box((-0.08, yy, 0.03), (0.08, yy + 0.008, 0.034), accent_mat)
+    b.beam(V(0.06, -0.16, 0.035), V(0.2, 0.15, 0.035), 0.012, 0.008, GOLD)
+    thread_spiral(b, (0.08, 0.0), 0.06, 1.3, accent_mat, 0.04, thickness=0.006)

@@ -43,6 +43,8 @@ GLOW_STRENGTH = 1.5
 # Prüfmodus: Rückseiten leuchten pink. Godot zeichnet nur Vorderseiten – jede pinke Stelle
 # im Kontrollbild wäre im Spiel ein Loch (man sieht hindurch).
 SHOW_BACKFACES = False
+# Schild-Bilder heißen assets/textures/signs/<Haustyp>_<Schild>.png (setzt das Bau-Script)
+SIGN_PREFIX = ""
 
 
 def srgb_to_linear(c):
@@ -67,8 +69,11 @@ class Mat:
     glow = leichtes Leuchten 0..1 (z. B. beleuchtetes Schaufenster), steht im Alpha der
     Vertex-Farbe (1 - glow)."""
 
-    def __init__(self, layer, role="fixed", color=(1.0, 1.0, 1.0), glass=False, glow=0.0):
+    def __init__(self, layer, role="fixed", color=(1.0, 1.0, 1.0), glass=False, glow=0.0, sign=None):
         assert layer in LAYERS, layer
+        # sign = Name eines Schilds: Fläche zeigt ein eigenes Bild (assets/textures/signs/),
+        # Texturkoordinaten 0..1 kommen von poly(..., uvs=…)
+        self.sign = sign
         self.layer = layer
         self.role = role
         self.color = tuple(color)
@@ -78,6 +83,8 @@ class Mat:
     def key(self):
         if self.glass:
             return "glass"
+        if self.sign:
+            return "sign_" + self.sign
         glow = "_g%02d" % round(self.glow * 99) if self.glow > 0 else ""
         if self.role != "fixed":
             return "%s_%s%s" % (self.layer, self.role, glow)
@@ -116,7 +123,7 @@ class Builder:
 
     # --- Grundflächen ---
 
-    def poly(self, pts, mat, normals=None, both=False):
+    def poly(self, pts, mat, normals=None, both=False, uvs=None):
         """Ein ebenes, konvexes Vieleck (Punkte gegen den Uhrzeigersinn von außen gesehen).
         both = auch die Rückseite (knapp dahinter), für dünne Dinge wie Tuch oder Blätter."""
         if both:
@@ -141,7 +148,7 @@ class Builder:
             normals = [(rot @ Vector(m)).normalized() for m in normals]
         else:
             normals = [n] * len(pts)
-        self.faces.append({"pts": pts, "normals": normals, "n": n, "mat": mat})
+        self.faces.append({"pts": pts, "normals": normals, "n": n, "mat": mat, "uvs": uvs})
 
     def quad(self, a, b, c, d, mat):
         self.poly([a, b, c, d], mat)
@@ -460,6 +467,17 @@ class Builder:
 
     # --- Ausgabe ---
 
+    def recenter(self, start, center_x=None, center_y=None):
+        """Flächen ab Nummer start so verschieben, dass ihr Umriss mittig bei center_x/center_y
+        liegt (z. B. eine Schrift samt Verzierung genau in die Mitte eines Schilds)."""
+        pts = [p for f in self.faces[start:] for p in f["pts"]]
+        if not pts:
+            return
+        dx = 0.0 if center_x is None else center_x - (min(p.x for p in pts) + max(p.x for p in pts)) / 2
+        dy = 0.0 if center_y is None else center_y - (min(p.y for p in pts) + max(p.y for p in pts)) / 2
+        for f in self.faces[start:]:
+            f["pts"] = [p + Vector((dx, dy, 0)) for p in f["pts"]]
+
     def triangles(self):
         """Alle Flächen als Dreiecke mit Daten je Ecke (für den Exporter)."""
         out = {"house": [], "glass": []}
@@ -467,9 +485,9 @@ class Builder:
             mat = face["mat"]
             info = LAYERS[mat.layer]
             tile = info["tile_size"]
-            uv_of = [_planar_uv(p, face["n"], tile) for p in face["pts"]]
+            uv_of = face.get("uvs") or [_planar_uv(p, face["n"], tile) for p in face["pts"]]
             color = srgb_to_linear(mat.color) if mat.role == "fixed" else (1.0, 1.0, 1.0)
-            target = out["glass" if mat.glass else "house"]
+            target = out.setdefault(mat.key() if mat.sign else ("glass" if mat.glass else "house"), [])
             pts = face["pts"]
             for i in range(1, len(pts) - 1):
                 for k in (0, i, i + 1):
@@ -566,7 +584,7 @@ def write_glb(builder, path):
 
     primitives = []
     materials = []
-    for mat_name in ("house", "glass"):
+    for mat_name in ["house", "glass"] + sorted(k for k in tris if k.startswith("sign_")):
         verts = tris[mat_name]
         if not verts:
             continue
@@ -610,6 +628,8 @@ def write_glb(builder, path):
         indices = add(index_data, 5125, len(index_list), "SCALAR", target=34963)
         if mat_name == "house":
             materials.append({"name": "house", "pbrMetallicRoughness": {"baseColorFactor": [0.8, 0.8, 0.8, 1.0], "metallicFactor": 0.0, "roughnessFactor": 0.8}})
+        elif mat_name.startswith("sign_"):
+            materials.append({"name": mat_name, "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 0.6}})
         else:
             materials.append({"name": "glass", "alphaMode": "BLEND", "pbrMetallicRoughness": {"baseColorFactor": [0.15, 0.18, 0.2, 0.3], "metallicFactor": 0.0, "roughnessFactor": 0.05}})
         primitives.append({"attributes": attributes, "indices": indices, "material": len(materials) - 1})
@@ -658,15 +678,25 @@ def write_glb(builder, path):
     return sum(len(v) for v in tris.values()) // 3
 
 
-def write_import_settings(glb_path):
-    """Godot-Importeinstellungen für ein neues Modell: Material "house" wird zum gemeinsamen
-    Stil-Material, "glass" zum Schaufensterglas; keine automatischen Detailstufen (LOD)."""
+def write_import_settings(glb_path, signs=None):
+    """Godot-Importeinstellungen: Material "house" wird zum gemeinsamen Stil-Material, "glass"
+    zum Schaufensterglas, "sign_<name>" zu den Schild-Materialien (signs = {Name: res-Pfad});
+    keine automatischen Detailstufen (LOD). Eine vorhandene Datei behält ihre übrigen Werte."""
     path = glb_path + ".import"
+    mapping = {"glass": "res://assets/materials/house_glass.tres", "house": "res://assets/materials/house_style.tres"}
+    for name, res_path in (signs or {}).items():
+        mapping["sign_" + name] = res_path
+    entries = ",\n".join('"%s": {\n"use_external/enabled": true,\n"use_external/path": "%s"\n}' % (k, v)
+                          for k, v in sorted(mapping.items()))
+    block = '_subresources={\n"materials": {\n%s\n}\n}\n' % entries
     if os.path.exists(path):
-        return
-    res = "res://" + os.path.relpath(glb_path, ROOT).replace(os.sep, "/")
-    with open(path, "w") as f:
-        f.write("""[remap]
+        text = open(path).read()
+        a = text.index("_subresources=")
+        b2 = text.find("\ngltf/", a)
+        text = text[:a] + block + (text[b2 + 1:] if b2 >= 0 else "")
+    else:
+        res = "res://" + os.path.relpath(glb_path, ROOT).replace(os.sep, "/")
+        text = """[remap]
 
 importer="scene"
 importer_version=1
@@ -679,19 +709,9 @@ source_file="%s"
 [params]
 
 meshes/generate_lods=false
-_subresources={
-"materials": {
-"glass": {
-"use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass.tres"
-},
-"house": {
-"use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_style.tres"
-}
-}
-}
-""" % res)
+%s""" % (res, block)
+    with open(path, "w") as f:
+        f.write(text)
 
 
 # --- Blender-Objekt mit Vorschau-Materialien (sieht aus wie im Spiel) ---
@@ -729,6 +749,17 @@ def preview_material(mat, role_colors):
     nodes = nt.nodes
     links = nt.links
     bsdf = nodes["Principled BSDF"]
+    if mat.sign:
+        tex = nodes.new("ShaderNodeTexImage")
+        img_path = os.path.join(ROOT, "assets", "textures", "signs", SIGN_PREFIX + mat.sign + ".png")
+        if os.path.exists(img_path):
+            tex.image = bpy.data.images.load(img_path, check_existing=True)
+        uvn = nodes.new("ShaderNodeUVMap")
+        uvn.uv_map = "UVMap"
+        links.new(uvn.outputs["UV"], tex.inputs["Vector"])
+        links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+        bsdf.inputs["Roughness"].default_value = 0.6
+        return m
     if mat.glass:
         bsdf.inputs["Base Color"].default_value = (0.85, 0.9, 0.9, 1)
         bsdf.inputs["Roughness"].default_value = 0.04
@@ -745,8 +776,12 @@ def preview_material(mat, role_colors):
     frac.operation = "FRACTION"
     links.new(uv.outputs["UV"], frac.inputs[0])
     mapping = nodes.new("ShaderNodeMapping")
-    mapping.inputs["Scale"].default_value = (1.0 / GRID_X, 1.0 / GRID_Y, 1)
-    mapping.inputs["Location"].default_value = (cell_x / GRID_X, cell_y / GRID_Y, 0)
+    # Ein paar Pixel Rand je Feld auslassen, sonst rutscht beim Filtern ein Streifen vom
+    # Nachbarfeld mit hinein (nur in Blender; Godot nutzt getrennte Ebenen)
+    ix = 2.0 / (_TABLE["layer_size"] * GRID_X)
+    iy = 2.0 / (_TABLE["layer_size"] * GRID_Y)
+    mapping.inputs["Scale"].default_value = (1.0 / GRID_X - 2 * ix, 1.0 / GRID_Y - 2 * iy, 1)
+    mapping.inputs["Location"].default_value = (cell_x / GRID_X + ix, cell_y / GRID_Y + iy, 0)
     links.new(frac.outputs[0], mapping.inputs["Vector"])
     tex = nodes.new("ShaderNodeTexImage")
     tex.image = _atlas("albedo")
@@ -816,8 +851,8 @@ def to_blender(builder, role_colors, collection=None):
             continue
         f.material_index = slots[key]
         info = LAYERS[mat.layer]
-        for loop, p, n in zip(f.loops, face["pts"], face["normals"]):
-            u, v = _planar_uv(p, face["n"], info["tile_size"])
+        face_uvs = face.get("uvs") or [_planar_uv(p, face["n"], info["tile_size"]) for p in face["pts"]]
+        for loop, p, n, (u, v) in zip(f.loops, face["pts"], face["normals"], face_uvs):
             loop[uv].uv = (u, v)
             loop[uv2].uv = (info["index"], ROLES[mat.role])
             loop_normals.append((n.x, -n.z, n.y))
@@ -877,6 +912,25 @@ def render_view(path, cam_godot, target_godot, lens=35):
     t = Vector((target_godot[0], -target_godot[2], target_godot[1]))
     cam.location = c
     cam.rotation_euler = (t - c).to_track_quat("-Z", "Y").to_euler()
+    scene.camera = cam
+    scene.render.filepath = path
+    bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(cam)
+
+
+def render_ortho(path, width, height, pixels_wide):
+    """Bild genau von vorn (Blick nach -z in Godot-Koordinaten) auf den Bereich width x height
+    um den Ursprung – für die Startbilder der Schilder."""
+    scene = bpy.context.scene
+    scene.render.resolution_x = pixels_wide
+    scene.render.resolution_y = max(8, int(round(pixels_wide * height / width)))
+    cam_data = bpy.data.cameras.new("Ortho")
+    cam_data.type = "ORTHO"
+    cam_data.ortho_scale = max(width, height)
+    cam = bpy.data.objects.new("Ortho", cam_data)
+    scene.collection.objects.link(cam)
+    cam.location = (0, -3, 0)
+    cam.rotation_euler = (math.radians(90), 0, 0)
     scene.camera = cam
     scene.render.filepath = path
     bpy.ops.render.render(write_still=True)
