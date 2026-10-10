@@ -15,9 +15,9 @@ const HEADER := """; Alle Nachbarhäuser (seit Etappe 4e jedes Haus ein eigener 
 ; scenes/world/tools/generate_houses.tscn (Lage aus StreetLayout und GameConfig) – danach frei
 ; im Editor anklickbar, verschiebbar und austauschbar. Jedes Haus ist eine Szene aus
 ; scenes/world/houses/ (ein Haustyp). Liegt unter "Outside" (y = 0 = Gehweg).
-; Gruppen: LibraryRow = Nachbarn der Bücherei, Opposite = gegenüber, StraightEnd = hinter der
-; Grenze am geraden Straßenende, SideStreets = an den Knicks, GateStreet = Torhaus am abbiegenden
-; Ende und die Häuser entlang der Kurve dahinter.
+; Gruppen: LibraryRow = Nachbarn der Bücherei, Opposite = gegenüber, StraightEnd = bis zur
+; Grenze und um die runde Kurve am geraden Straßenende, GateStreet = sanfte Kurve, Torhaus und die
+; Häuser dahinter am anderen Ende (seit Etappe 4f).
 """
 
 
@@ -41,6 +41,9 @@ func _ready() -> void:
 		node.door_color = house.door_color
 		node.casts_shadow = house.casts_shadow
 		node.solid = house.solid
+		# Weitere Einstellungen nur für dieses Haus (z. B. Fenster in der Seitenwand)
+		for key in house.get("props", {}):
+			node.set(key, house.props[key])
 		groups[house.group].add_child(node)
 		node.owner = root
 		count += 1

@@ -15,8 +15,8 @@ func _ready() -> void:
 	var points := PackedVector2Array([
 		Vector2(StreetLayout.diagonal_front_x(), front),
 		Vector2(StreetLayout.HOUSE_LEFT, back),
-		Vector2(StreetLayout.west_end_x(), back),
-		Vector2(StreetLayout.west_end_x(), front),
+		Vector2(StreetLayout.alley_row_end_x(), back),
+		Vector2(StreetLayout.alley_row_end_x(), front),
 	])
 	var builder := WorldMesh.new()
 	builder.add_floor(points, 0.0, Color.WHITE)

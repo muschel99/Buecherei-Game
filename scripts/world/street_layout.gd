@@ -11,8 +11,8 @@ extends RefCounted
 ##     (zurückversetzt)        ⟋ Tür
 ##     ----- Platz ---------- ⟋
 ##     ========= Gehweg ===============================
-##     ========= Fahrbahn (ein Ende biegt ab, das andere läuft geradeaus weiter) ===
-##     (am abbiegenden Ende führt die Seitenstraße durch den Bogen eines Torhauses)
+##     ========= Fahrbahn: rechts weit geradeaus, dann rund um 90° zur Bücherei-Seite;
+##               links eine sanfte Kurve weg von der Bücherei bis zu einem Torhaus (seit 4f)
 ##     ========= Gehweg gegenüber ======================
 ##           Reihenhäuser gegenüber
 
@@ -122,104 +122,79 @@ static func straight_side() -> int:
 	return 1 if is_straight(1) else -1
 
 
-## Ende der Häuserreihe auf der Bücherei-Seite (x): Dort steht quer ein Haus, und die Straße
-## biegt davor ab. Am geraden Ende liegt dieser Knick straight_street_length hinter der Grenze.
-static func east_end_x() -> float:
-	if is_straight(1):
-		return straight_bound_x() + GameConfig.straight_street_length
-	return neighbor_row_end_x()
+## --- Die beiden Straßenenden (seit Etappe 4f als Mittellinie mit Kurven) ---
+## Jedes Ende ist ein Weg ab dem Ende des geraden Mittelstücks: end_path(side). Seitlicher
+## Versatz von der Mittellinie mit end_offset(): positiv = Bücherei-Seite, negativ = Seite
+## gegenüber (bleibt auch in den Kurven auf derselben Straßenseite).
+##   Gerades Ende: ein Stück hinter der Grenze eine runde 90°-Kurve zur Bücherei-Seite hin,
+##   danach die Seitenstraße bis zu quer stehenden Häusern.
+##   Abbiegendes Ende: eine sanfte Kurve (gate_bend_angle) von der Bücherei-Seite weg, dann
+##   geradeaus bis zum Torhaus, durch den Bogen, dahinter eine Kurve in dieselbe Richtung.
 
-
-static func west_end_x() -> float:
-	if is_straight(-1):
-		return straight_bound_x() - GameConfig.straight_street_length
-	return alley_row_end_x()
-
-
-## Fahrbahn der Seitenstraßen: von - bis (x). Außen läuft der Gehweg weiter.
-static func east_road() -> Vector2:
-	var outer := east_end_x() - GameConfig.sidewalk_width
-	return Vector2(outer - GameConfig.street_width, outer)
-
-
-static func west_road() -> Vector2:
-	var outer := west_end_x() + GameConfig.sidewalk_width
-	return Vector2(outer, outer + GameConfig.street_width)
-
-
-## Häuserreihe gegenüber: von - bis (x), zwischen den Gehwegen der Seitenstraßen.
-static func opposite_row() -> Vector2:
-	return Vector2(west_road().y + GameConfig.opposite_sidewalk_width,
-		east_road().x - GameConfig.opposite_sidewalk_width)
-
-
-## Hier endet die Seitenstraße einer Seite (quer stehen Häuser) (z). side: 1 = Osten, -1 = Westen.
-static func side_street_end_z(side: int) -> float:
-	if is_straight(side):
-		return opposite_front_z() - GameConfig.straight_side_street_length
-	return opposite_front_z() - GameConfig.side_street_length
-
-
-## Die tiefere der beiden Seitenstraßen endet hier (z) – für Boden und Kollision.
-static func deepest_end_z() -> float:
-	return minf(side_street_end_z(1), side_street_end_z(-1))
-
-
-## --- Abbiegendes Ende mit Torhaus (seit Etappe 4f) ---
-
-## Seite des abbiegenden Endes: 1 = Osten, -1 = Westen.
+## Seite des abbiegenden Endes (mit Torhaus): 1 = Osten, -1 = Westen.
 static func turning_side() -> int:
 	return -straight_side()
 
 
-## Fahrbahn der abbiegenden Seitenstraße (x von – bis) und ihre Mitte.
-static func turning_road() -> Vector2:
-	return east_road() if turning_side() > 0 else west_road()
+## Mittellinie der Fahrbahn auf dem geraden Mittelstück (z).
+static func road_center_z() -> float:
+	return (curb_z() + far_curb_z()) / 2.0
 
 
-static func turning_road_center_x() -> float:
-	var road := turning_road()
-	return (road.x + road.y) / 2.0
+## Abstand der Hausfronten von der Straßenmitte: Bücherei-Seite und gegenüber.
+static func library_facade_offset() -> float:
+	return GameConfig.street_width / 2.0 + GameConfig.sidewalk_width
 
 
-## Vorderseite des Torhauses am Ende der abbiegenden Seitenstraße (z).
-static func gatehouse_front_z() -> float:
-	return side_street_end_z(turning_side())
+static func opposite_facade_offset() -> float:
+	return GameConfig.street_width / 2.0 + GameConfig.opposite_sidewalk_width
 
 
-## Lichte Breite des Bogens und Tiefe der Durchfahrt (aus der Szene des Torhauses).
-static func gate_passage_width() -> float:
-	return float(HouseTypes.value_of(GameConfig.gatehouse_type, "passage_width", 6.5))
+## Ende der festen Häuser auf der Bücherei-Seite (x): rechts die bündigen Nachbarn, links die
+## Häuser hinter der Gasse.
+static func row_end_x(side: int) -> float:
+	return neighbor_row_end_x() if side > 0 else alley_row_end_x()
 
 
-static func gate_depth() -> float:
-	return HouseTypes.depth_of(GameConfig.gatehouse_type)
+## Hier beginnt der Weg eines Straßenendes (x auf der Mittellinie): am geraden Ende
+## straight_street_length hinter der Grenze, am abbiegenden gate_bend_offset hinter den
+## festen Nachbarhäusern.
+static func end_start_x(side: int) -> float:
+	if is_straight(side):
+		return straight_bound_x() + side * GameConfig.straight_street_length
+	return row_end_x(side) + side * GameConfig.gate_bend_offset
 
 
-## In diese Richtung (x) biegt die Straße hinter dem Torhaus ab: zur Stadtmitte hin.
-static func gate_turn_sign() -> float:
-	return -float(turning_side())
-
-
-## Mittellinie der Straße ab der Vorderseite des Torhauses: durch den Bogen, ein Stück
-## geradeaus, in einer Kurve zur Stadtmitte hin und noch ein Stück weiter. Liste von
-## { "pos": Vector2 (x, z), "dir": Vector2 (Fahrtrichtung), "s": Meter ab dem Torhaus }.
-static func gate_path(step: float = 0.5) -> Array[Dictionary]:
-	var points: Array[Dictionary] = []
-	var pos := Vector2(turning_road_center_x(), gatehouse_front_z())
-	var dir := Vector2(0.0, -1.0)
-	var radius := GameConfig.gate_curve_radius
-	var turn := gate_turn_sign() / radius  # Drehung je Meter in der Kurve
-	# Abschnitte: Durchfahrt, gerade bis zur Kurve, Kurve, gerade bis zum Ende – jeder mit
-	# eigenen Punkten, damit genau am Ende der Durchfahrt und an der Kurve ein Punkt liegt
-	var parts := [
-		[gate_depth(), 0.0],
-		[GameConfig.gate_road_before_curve, 0.0],
-		[deg_to_rad(GameConfig.gate_curve_angle) * radius, turn],
-		[GameConfig.gate_road_after_curve, 0.0],
+## Abschnitte eines Endes: [Länge, Drehung je Meter (positiv = nach rechts), Name].
+static func _end_parts(side: int) -> Array:
+	if is_straight(side):
+		var radius := GameConfig.straight_curve_radius
+		return [
+			[deg_to_rad(90.0) * radius, side / radius, "curve"],
+			[GameConfig.straight_side_street_length, 0.0, "side_street"],
+		]
+	var bend := GameConfig.gate_bend_radius
+	var curve := GameConfig.gate_curve_radius
+	return [
+		[deg_to_rad(GameConfig.gate_bend_angle) * bend, -side / bend, "bend"],
+		[GameConfig.gate_approach_length, 0.0, "approach"],
+		[gate_depth(), 0.0, "passage"],
+		[GameConfig.gate_road_before_curve, 0.0, "behind"],
+		[deg_to_rad(GameConfig.gate_curve_angle) * curve, -side / curve, "behind"],
+		[GameConfig.gate_road_after_curve, 0.0, "behind"],
 	]
+
+
+## Mittellinie eines Straßenendes. Liste von { "pos": Vector2 (x, z), "dir": Vector2
+## (Fahrtrichtung), "s": Meter ab dem Anfang, "part": Abschnitt (curve, side_street, bend,
+## approach, passage, behind) }. Genau an jedem Abschnittswechsel liegt ein Punkt.
+static func end_path(side: int, step: float = 0.5) -> Array[Dictionary]:
+	var points: Array[Dictionary] = []
+	var pos := Vector2(end_start_x(side), road_center_z())
+	var dir := Vector2(float(side), 0.0)
 	var s := 0.0
-	points.append({"pos": pos, "dir": dir, "s": s})
+	var parts := _end_parts(side)
+	points.append({"pos": pos, "dir": dir, "s": s, "part": parts[0][2]})
 	for part in parts:
 		var length: float = part[0]
 		if length <= 0.001:
@@ -233,14 +208,53 @@ static func gate_path(step: float = 0.5) -> Array[Dictionary]:
 			pos += dir.rotated(angle / 2.0) * chord
 			dir = dir.rotated(angle)
 			s += ds
-			points.append({"pos": pos, "dir": dir, "s": s})
+			points.append({"pos": pos, "dir": dir, "s": s, "part": part[2]})
 	return points
 
 
-## Seitlicher Versatz von der Mittellinie: positiv = zur Innenseite der Kurve.
-static func gate_offset(point: Dictionary, offset: float) -> Vector2:
+## Punkt neben der Mittellinie: positiv = Bücherei-Seite, negativ = gegenüber.
+static func end_offset(point: Dictionary, offset: float, side: int) -> Vector2:
 	var dir: Vector2 = point.dir
-	return point.pos + Vector2(-dir.y, dir.x) * offset * gate_turn_sign()
+	return point.pos + Vector2(-dir.y, dir.x) * offset * float(side)
+
+
+## Wo der Weg in einen Abschnitt übergeht (Meter ab dem Anfang).
+static func end_part_start(side: int, part: String) -> float:
+	var s := 0.0
+	for item in _end_parts(side):
+		if item[2] == part:
+			return s
+		s += item[0]
+	return s
+
+
+## Schnittpunkt zweier Geraden (Punkt + Richtung).
+static func line_intersection(p: Vector2, d: Vector2, q: Vector2, e: Vector2) -> Vector2:
+	var den := d.cross(e)
+	if absf(den) < 0.00001:
+		return p
+	return p + d * ((q - p).cross(e) / den)
+
+
+## --- Torhaus am abbiegenden Ende ---
+
+## Lichte Breite des Bogens und Tiefe der Durchfahrt (aus der Szene des Torhauses).
+static func gate_passage_width() -> float:
+	return float(HouseTypes.value_of(GameConfig.gatehouse_type, "passage_width", 6.5))
+
+
+static func gate_depth() -> float:
+	return HouseTypes.depth_of(GameConfig.gatehouse_type)
+
+
+## Vorderseite des Torhauses: Punkt auf der Mittellinie und Richtung durch den Bogen.
+static func gatehouse_front() -> Dictionary:
+	var side := turning_side()
+	var front_s := end_part_start(side, "passage")
+	for point in end_path(side):
+		if absf(point.s - front_s) < 0.001:
+			return point
+	return end_path(side).back()
 
 
 ## Abstand der Hausfronten hinter dem Torhaus von der Straßenmitte.

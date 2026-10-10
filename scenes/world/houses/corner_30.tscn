@@ -1,0 +1,23 @@
+[gd_scene load_steps=2 format=3]
+
+; Haustyp "corner_30" (Etappe 4f): Eckhaus mit abgeschrägter Ecke innen in der sanften 30°-Kurve
+; vor dem Torhaus. Vorderseite 6,0 m, dann knickt die Front an der 2,2 m breiten Abschrägung
+; (kleine Ladentür mit Schild) um 30° nach hinten und läuft als Seitenfassade 5,0 m weiter
+; (gemessen ab der gedachten Ecke). Hinten gerade, 8 m tief. Ursprung unten in der Mitte der
+; Vorderseite, Vorderseite nach +Z, die Ecke liegt rechts (+X).
+; Eigenes Modell: Kind-Knoten "Model" anlegen – dann verschwindet der Platzhalter, die
+; Kollision bleibt. Vorlage: assets/models/templates/houses/corner_30.glb.
+
+[ext_resource type="Script" path="res://scripts/world/corner_house_facade.gd" id="1_corner"]
+
+[node name="Corner30" type="Node3D"]
+script = ExtResource("1_corner")
+corner_angle = 30.0
+chamfer_width = 2.2
+side_length = 5.0
+width = 6.0
+depth = 8.0
+eaves_height = 7.0
+roof_rise = 1.6
+chimney = false
+accent_color = Color(0.2, 0.3, 0.45, 1)

@@ -10,7 +10,7 @@ extends RefCounted
 
 
 static func all_sets() -> PackedStringArray:
-	return PackedStringArray(["overview", "straight_end", "turning_end", "shop"])
+	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop"])
 
 
 static func get_set(set_name: String) -> Dictionary:
@@ -21,6 +21,8 @@ static func get_set(set_name: String) -> Dictionary:
 			return straight_end()
 		"turning_end":
 			return turning_end()
+		"corners":
+			return corners()
 		"shop":
 			return shop()
 	push_error("Unbekannte Gruppe von Blickpunkten: " + set_name)
@@ -49,9 +51,8 @@ static func overview() -> Dictionary:
 		"street_west": look(2.0, curb + 0.8, -1.0, 0.0),
 		"library_front": look(-2.0, StreetLayout.opposite_front_z() + 0.8, 0.3, 1.0, 0.15),
 		"aerial_east": {"pos": Vector3(-6.0, 22.0, road_mid - 14.0), "target": Vector3(StreetLayout.straight_bound_x() + 6.0, 0.0, road_mid)},
-		"aerial_west": {"pos": Vector3(4.0, 22.0, road_mid - 14.0), "target": Vector3(StreetLayout.west_end_x(), 0.0, road_mid - 6.0)},
-		"aerial_gate": {"pos": Vector3(StreetLayout.turning_road_center_x() - StreetLayout.turning_side() * 16.0, 20.0, road_mid + 4.0),
-			"target": Vector3(StreetLayout.turning_road_center_x(), 2.0, StreetLayout.gatehouse_front_z() - 6.0)},
+		"aerial_west": {"pos": Vector3(4.0, 22.0, road_mid - 14.0), "target": Vector3(StreetLayout.end_start_x(-1), 0.0, road_mid - 6.0)},
+		"aerial_gate": {"pos": _ground3(_gate_point(-14.0, 0.0), 22.0), "target": _ground3(_gate_point(4.0, 0.0), 2.0)},
 		"high_street": {"pos": Vector3(0.0, y + 6.0, road_mid), "target": Vector3(-30.0, y, road_mid)},
 	}
 
@@ -61,7 +62,7 @@ static func overview() -> Dictionary:
 static func straight_end() -> Dictionary:
 	var side := float(StreetLayout.straight_side())
 	var x := StreetLayout.straight_bound_x() - side * 0.62
-	var near_walk := StreetLayout.HOUSE_FRONT - 0.32 if side > 0.0 else StreetLayout.recess_z() - 0.32
+	var near_walk := StreetLayout.HOUSE_FRONT - 0.32
 	var road := StreetLayout.curb_z() - GameConfig.street_width / 2.0
 	var far_walk := StreetLayout.opposite_front_z() + 0.32
 	var views := {}
@@ -76,36 +77,82 @@ static func straight_end() -> Dictionary:
 	return views
 
 
-## Am abbiegenden Ende: Einblick in die Seitenstraße und auf das Torhaus mit Durchfahrt; direkt
-## am Bogen (so nah, wie die Spielfigur kommt) mittig, an beiden Seiten und schräg durch den
-## Bogen.
+## Am abbiegenden Ende: der Blick von der Ladentür zum Torhaus (soll zu etwa 80 % frei
+## sein), durch die sanfte Kurve, direkt am Bogen (so nah, wie die Spielfigur kommt) mittig,
+## an beiden Seiten und schräg durch den Bogen, und von oben.
 static func turning_end() -> Dictionary:
-	var side := float(StreetLayout.turning_side())
-	var road := StreetLayout.turning_road()
-	var road_mid := StreetLayout.turning_road_center_x()
-	var curb := StreetLayout.curb_z()
-	var far := StreetLayout.far_curb_z()
-	var gate := StreetLayout.gatehouse_front_z()
+	var door := StreetLayout.door_center()
+	var out := StreetLayout.door_outward()
 	var half := StreetLayout.gate_passage_width() / 2.0
-	var at := gate - 0.15
+	var gate := _gate_point(0.0, 0.0)
 	var y := eye()
+	var at := -0.15
 	return {
-		"from_street": look(road_mid - side * 9.0, (curb + far) / 2.0, side, -0.6),
-		"corner": look(road_mid - side * 3.0, curb + 1.0, side * 0.6, -1.0),
-		"side_road": look(road_mid, far - 1.0, 0.0, -1.0),
-		"side_road_walk": look(road.x - 1.3, far - 0.5, 0.25, -1.0),
-		"before_gate": look(road_mid + side * 0.8, gate + 5.0, 0.0, -1.0, 0.12),
-		"at_gate": look(road_mid, at, 0.0, -1.0),
-		"at_gate_left": look(road_mid - half + 0.35, at, 0.55, -1.0),
-		"at_gate_right": look(road_mid + half - 0.35, at, -0.55, -1.0),
-		"at_gate_up": look(road_mid, at, 0.0, -1.0, 0.7),
-		"gate_close": {"pos": Vector3(road_mid - side * 4.0, y + 0.3, gate + 7.5),
-			"target": Vector3(road_mid, y + 2.5, gate)},
-		"aerial": {"pos": Vector3(road_mid - side * 14.0, 24.0, gate + 14.0),
-			"target": Vector3(road_mid + side * 2.0, 0.0, gate - 4.0)},
-		"aerial_behind": {"pos": Vector3(road_mid - side * 6.0, 32.0, gate - 34.0),
-			"target": Vector3(road_mid - side * 4.0, 0.0, gate - 8.0)},
+		"door_view": {"pos": Vector3(door.x + out.x * 0.6, 1.6, door.z + out.z * 0.6), "target": _ground3(gate, y + 2.5)},
+		"plaza_view": {"pos": _ground3(Vector2(StreetLayout.alley_row_end_x() + 3.0, StreetLayout.HOUSE_FRONT - 0.6), y),
+			"target": _ground3(gate, y + 2.0)},
+		"bend": _look_at(_gate_point(-StreetLayout.end_part_start(StreetLayout.turning_side(), "passage") + 2.0, 1.5), gate),
+		"approach": _look_at(_gate_point(-9.0, 0.0), gate),
+		"approach_walk": _look_at(_gate_point(-8.0, -3.6), _gate_point(0.0, 1.0)),
+		"before_gate": _look_at(_gate_point(-5.0, 0.8), _gate_point(0.0, 0.8), 0.12),
+		"at_gate": _look_at(_gate_point(at, 0.0), _gate_point(10.0, 0.0)),
+		"at_gate_left": _look_at(_gate_point(at, half - 0.35), _gate_point(10.0, -half)),
+		"at_gate_right": _look_at(_gate_point(at, -half + 0.35), _gate_point(10.0, half)),
+		"at_gate_up": _look_at(_gate_point(at, 0.0), _gate_point(10.0, 0.0), 0.7),
+		"gate_close": {"pos": _ground3(_gate_point(-7.5, 3.0), y + 0.3), "target": _ground3(gate, y + 2.5)},
+		"aerial": {"pos": _ground3(_gate_point(-26.0, 12.0), 26.0), "target": _ground3(_gate_point(-6.0, 0.0), 0.0)},
+		"aerial_behind": {"pos": _ground3(_gate_point(30.0, 4.0), 32.0), "target": _ground3(_gate_point(4.0, 0.0), 0.0)},
 	}
+
+
+## Die beiden Eckhäuser mit abgeschrägter Ecke (innen in den Kurven).
+static func corners() -> Dictionary:
+	var side := StreetLayout.straight_side()
+	var bound := StreetLayout.straight_bound_x()
+	var start := StreetLayout.end_start_x(side)
+	var y := eye()
+	var corner := Vector2(start + side * 3.0, StreetLayout.HOUSE_FRONT + 1.0)
+	return {
+		"straight_from_bound": look(bound - side * 0.62, StreetLayout.opposite_front_z() + 0.4, side, 0.75, 0.1),
+		"straight_close": {"pos": Vector3(start + side * 2.0, y + 1.0, StreetLayout.opposite_front_z() + 1.0),
+			"target": Vector3(corner.x, y + 1.5, corner.y)},
+		"straight_aerial": {"pos": Vector3(start - side * 10.0, 22.0, StreetLayout.opposite_front_z() - 8.0),
+			"target": Vector3(start + side * 6.0, 0.0, StreetLayout.HOUSE_FRONT + 4.0)},
+		"gate_corner": _look_at(_gate_point(-StreetLayout.end_part_start(StreetLayout.turning_side(), "passage") - 6.0, 3.6),
+			_gate_point(-StreetLayout.end_part_start(StreetLayout.turning_side(), "passage") + 3.0, -6.0), 0.12),
+	}
+
+
+## Punkt am abbiegenden Ende, gemessen ab der Vorderseite des Torhauses: "along" Meter in
+## Fahrtrichtung (negativ = davor), "across" Meter zur Seite (positiv = Bücherei-Seite).
+## Vor der sanften Kurve geht es auf dem geraden Mittelstück weiter.
+static func _gate_point(along: float, across: float) -> Vector2:
+	var side := StreetLayout.turning_side()
+	var front := StreetLayout.gatehouse_front()
+	var target_s: float = front.s + along
+	var path := StreetLayout.end_path(side)
+	if target_s <= 0.0:
+		var start: Dictionary = path[0]
+		var moved := {"pos": (start.pos as Vector2) + (start.dir as Vector2) * target_s, "dir": start.dir}
+		return StreetLayout.end_offset(moved, across, side)
+	var best: Dictionary = path[0]
+	for point in path:
+		if absf(point.s - target_s) < absf(best.s - target_s):
+			best = point
+	var extra: float = target_s - best.s
+	var shifted := {"pos": (best.pos as Vector2) + (best.dir as Vector2) * extra, "dir": best.dir}
+	return StreetLayout.end_offset(shifted, across, side)
+
+
+static func _ground3(point: Vector2, height: float) -> Vector3:
+	return Vector3(point.x, height, point.y)
+
+
+## Blickpunkt in Augenhöhe von a nach b (x, z).
+static func _look_at(a: Vector2, b: Vector2, pitch: float = 0.0) -> Dictionary:
+	var y := eye()
+	var dist := a.distance_to(b)
+	return {"pos": Vector3(a.x, y, a.y), "target": Vector3(b.x, y + pitch * dist, b.y)}
 
 
 ## Im Laden: ein paar Blicke für Änderungen innen.
