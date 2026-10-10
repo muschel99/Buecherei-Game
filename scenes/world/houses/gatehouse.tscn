@@ -1,0 +1,29 @@
+[gd_scene load_steps=2 format=3]
+
+; Haustyp "gatehouse" (Etappe 4f): Torhaus mit Durchfahrt am Ende der abbiegenden Seitenstraße.
+; Unten ein gemauerter Rundbogen über der Fahrbahn, darüber ein Band für ein Schild, ein
+; Fachwerk-Obergeschoss und eine mittige Gaube mit Sprossenfenster. Feste Maße (Inspektor:
+; Gruppen "Maße" und "Durchfahrt"). Ursprung unten in der Mitte der Vorderseite, Vorderseite
+; nach +Z, die Durchfahrt reicht nach -Z. Eigenes Modell: Kind-Knoten "Model" anlegen – dann
+; verschwindet der Platzhalter. WICHTIG: Das eigene Modell muss die Öffnung des Bogens frei
+; lassen (Breite passage_width, Scheitel arch_spring + passage_width / 2), die Straße darunter
+; baut das Spiel. Kollision: nur die beiden Pfeiler links und rechts.
+; Wo es steht: scenes/world/houses.tscn (Gruppe GateStreet).
+
+[ext_resource type="Script" path="res://scripts/world/gatehouse_facade.gd" id="1_gate"]
+
+[node name="Gatehouse" type="Node3D"]
+script = ExtResource("1_gate")
+passage_width = 6.5
+arch_spring = 2.0
+masonry_height = 5.8
+sign_band_height = 0.5
+jetty = 0.25
+width = 10.4
+depth = 6.0
+eaves_height = 8.8
+roof_rise = 2.4
+chimney = false
+wall_color = Color(0.56, 0.36, 0.28, 1)
+door_color = Color(0.26, 0.18, 0.13, 1)
+accent_color = Color(0.16, 0.3, 0.22, 1)

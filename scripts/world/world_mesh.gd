@@ -10,6 +10,10 @@ extends RefCounted
 ##   builder.add_box(Vector3(-1, 0, -1), Vector3(1, 2, 1), Color.WHITE)
 ##   add_child(builder.make_instance("Model", material))
 
+## Alles, was ab jetzt hinzukommt, wird so verschoben/gedreht (z. B. für eine schräge
+## Fassade: Teile in "Fassaden-Koordinaten" bauen, x entlang der Wand, +z nach draußen).
+var xform := Transform3D.IDENTITY
+
 var _tool := SurfaceTool.new()
 var _empty := true
 
@@ -26,6 +30,11 @@ func add_quad(a: Vector3, b: Vector3, c: Vector3, d: Vector3, normal: Vector3, c
 
 ## Dreieck, sichtbar in Richtung "normal" (die Reihenfolge der Ecken wird passend gedreht).
 func add_triangle(a: Vector3, b: Vector3, c: Vector3, normal: Vector3, color: Color) -> void:
+	if xform != Transform3D.IDENTITY:
+		a = xform * a
+		b = xform * b
+		c = xform * c
+		normal = (xform.basis * normal).normalized()
 	var corners := [a, b, c] if (b - a).cross(c - a).dot(normal) < 0.0 else [a, c, b]
 	for corner: Vector3 in corners:
 		_tool.set_normal(normal)

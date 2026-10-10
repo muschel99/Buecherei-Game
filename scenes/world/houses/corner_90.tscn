@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3]
+
+; Haustyp "corner_90" (Etappe 4f): Eckhaus mit abgeschrägter Ecke innen in der runden 90°-Kurve
+; am geraden Straßenende. Zwei Straßenfassaden (Vorderseite 6,0 m, Seite 7,0 m bis zur gedachten
+; Ecke), die Ecke 2,2 m schräg abgeschnitten (dort eine kleine Ladentür mit Schild). Ursprung
+; unten in der Mitte der Vorderseite, Vorderseite nach +Z, die Ecke liegt rechts (+X).
+; Eigenes Modell: Kind-Knoten "Model" anlegen – dann verschwindet der Platzhalter, die
+; Kollision bleibt. Vorlage: assets/models/templates/houses/corner_90.glb.
+
+[ext_resource type="Script" path="res://scripts/world/corner_house_facade.gd" id="1_corner"]
+
+[node name="Corner90" type="Node3D"]
+script = ExtResource("1_corner")
+corner_angle = 90.0
+chamfer_width = 2.2
+side_length = 7.0
+width = 6.0
+depth = 7.0
+eaves_height = 6.8
+roof_rise = 1.6
+chimney = false
+accent_color = Color(0.42, 0.2, 0.22, 1)

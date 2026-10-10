@@ -72,6 +72,12 @@ enum GroundFloor {
 	set(value):
 		porch = value
 		_queue_rebuild()
+## Fenster auch in einer Seitenwand (seit Etappe 4f, für Häuser am Ende einer Reihe, deren
+## Seitenwand man sieht): 0 = keine, -1 = links (-X), 1 = rechts (+X), 2 = beide.
+@export var side_windows: int = 0:
+	set(value):
+		side_windows = value
+		_queue_rebuild()
 @export var chimney: bool = true:
 	set(value):
 		chimney = value
@@ -220,6 +226,7 @@ func _get_mesh() -> Mesh:
 		var builder := WorldMesh.new()
 		_build_body(builder)
 		_build_front(builder)
+		_build_side_windows(builder)
 		_build_roof(builder)
 		_mesh_cache[key] = builder.commit(material)
 	return _mesh_cache[key]
@@ -227,7 +234,7 @@ func _get_mesh() -> Mesh:
 
 func _mesh_key() -> String:
 	return str([width, depth, eaves_height, roof_rise, storeys, window_columns, door_side,
-		ground_floor, awning, porch, chimney, plinth_height, plinth_proud, material])
+		ground_floor, awning, porch, chimney, plinth_height, plinth_proud, material, side_windows])
 
 
 ## Das reine Mesh des Platzhalters (z. B. für die Vorlagen zum Modellieren).
@@ -252,6 +259,23 @@ func _build_body(builder: WorldMesh) -> void:
 		# An der Tür ist der Sockel unterbrochen
 		builder.add_box(low, Vector3(door.x, high.y, high.z), PLINTH, skip)
 		builder.add_box(Vector3(door.y, 0.0, 0.0), high, PLINTH, skip)
+
+
+## Fenster in den Seitenwänden (side_windows): je Geschoss gleichmäßig über die Tiefe verteilt.
+## Gebaut in "Wand-Koordinaten" (x entlang der Wand, +z nach draußen, siehe WorldMesh.xform).
+func _build_side_windows(builder: WorldMesh) -> void:
+	var storey_height := eaves_height / maxf(1.0, storeys)
+	var columns := maxi(1, floori((depth - 1.0) / 2.2))
+	for side in [-1, 1]:
+		if side_windows != side and side_windows != 2:
+			continue
+		var along := Vector3(0.0, 0.0, -side)
+		builder.xform = Transform3D(Basis(along, Vector3.UP, Vector3(side, 0.0, 0.0)), Vector3(side * width / 2.0, 0.0, -depth / 2.0))
+		for storey in storeys:
+			var center_y := storey * storey_height + storey_height * 0.5 + (0.1 if storey == 0 else 0.0)
+			for column in columns:
+				_add_window(builder, -depth / 2.0 + depth * (column + 0.5) / columns, center_y)
+	builder.xform = Transform3D.IDENTITY
 
 
 ## Fenster und Tür auf der Vorderseite (flach aufgesetzt, leicht vorstehend).
