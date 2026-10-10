@@ -41,6 +41,16 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
      `<gruppe>-<blickpunkt>[-tag].png`; ansehen mit dem Read-Werkzeug.
   4. Neue feste Blickwinkel: `scripts/tools/screenshot_views.gd` (je Gruppe eine Funktion,
      Lage aus StreetLayout, Augenhöhe `eye()`), dann in `all_sets()`/`get_set()` eintragen.
+  Straßenleben (seit Etappe 5a): `--simulate=<sek>` spult vor, `--seed=<zahl>` macht es
+  wiederholbar, `--deliver=<n>` bestellt eine Testlieferung (Lieferwagen), `--focus=<meter>`
+  (+ `--focus_vehicle`) zeigt die nächste Figur bzw. das nächste Fahrzeug aus der Nähe, `--stats`
+  gibt Zeichenaufrufe aus, `--quality=0|1|2` wählt die Grafikstufe, `--no_street_life` zum
+  Vergleich; Gruppe `street_life`. Prüfwerkzeug ohne Bilder:
+  `godot --headless --path . res://scenes/tools/street_life_check.tscn -- --seconds=60 --seed=1`
+  (Erscheinen/Verschwinden im Blickfeld muss 0 sein, keine Überschneidungen, niemand in Häusern
+  oder festgefahren; Autos, die vor der Spielfigur auf der Fahrbahn warten, sind richtig).
+  Der Spielstand im Container (`~/.local/share/godot/app_userdata/Cozy Bücherei/`) sammelt bei
+  Testläufen Kartons – vor Tests löschen.
   Bei Grenzen und Wegen zusätzlich prüfen: Lauftest mit Physik (Spielfigur per
   `move_and_slide` auf die Grenze zulaufen lassen; vorübergehende Test-Szene, danach löschen)
   und bei Kulissen die Draufsicht mit `python3 tools/plan_check.py` (liest
@@ -64,6 +74,8 @@ scenes/            Szenen (.tscn)
                    LooseBooks = ausgelegte Bücher, BookStand = Buch-Aufsteller, Counter = Theke;
                    player/: HeldBook = Buch in der Hand)
   effects/         Effekte (z. B. Staubpartikel)
+  street_life/     Leben auf der Straße (Passant, Fahrrad, Auto, Lieferwagen – je Szene mit
+                   Body + austauschbarem Model)
   world/           Außenwelt (Straße, houses.tscn = alle Häuser, houses/ = Haustypen, Platz,
                    Gasse, Gassenende, Eingangstreppe, tools/ = Erzeuger-Szenen)
   ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Theken-Tablet, Hinweise,
@@ -80,6 +92,8 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
                    LooseBook, TabletAppData, ReturnSlotData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
+  street_life/     Straßenleben (StreetLife, StreetPaths, StreetRoute, Passerby, StreetVehicle,
+                   DeliveryVan, StreetObstacle, StreetShapes, Platzhalter-Modelle)
   world/           Außenwelt (StreetLayout, WorldMesh, Street, HouseFacade, GatehouseFacade,
                    CornerHouseFacade, HouseTypes, HousesLayout,
                    Plaza, Alley, AlleyEnd, EntranceSteps; tools/ = Erzeuger für houses.tscn
@@ -109,7 +123,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ## Technische Konventionen
 - Physik-Ebenen: 1 = `world`, 2 = `interactable`, 3 = `player`, 4 = `furniture`,
   5 = `build_blocker` (Sperrzonen für den Gestaltungsmodus, z. B. vor der Eingangstür),
-  6 = `placement_surface` (Ablageflächen).
+  6 = `placement_surface` (Ablageflächen), 7 = `street_life` (Passanten und Fahrzeuge; die
+  Spielfigur stößt daran, Maske 73), 8 = `sight_blocker` (verdeckt nur die Sicht: Häuser ohne
+  feste Kollision, über dem Torbogen – für die Sichtprüfung des Straßenlebens).
 - **Jede Interaktion in der Spielwelt läuft über E.** Ausnahme Bücher (die Maus ist für Bücher
   da): Rechtsklick nimmt ein Buch, Linksklick legt das Buch obenauf ab, Linksklick halten am
   Regal räumt alle passenden ein, Mausrad dreht das Buch vor dem freien Ablegen
@@ -430,6 +446,34 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   hochkant. **Buch-Aufsteller:** Knoten `BookStand` (+ Marker `BookSpot`) in einer Möbel-Szene;
   das Buch darin ist ein ausgelegtes Buch mit Haltung `DISPLAYED` und `support_uid` = Aufsteller
   (genau eins je Aufsteller).
+- **Leben auf der Straße (seit Etappe 5a):** `StreetLife` (Knoten `Outside/StreetLife`, Gruppe
+  `street_life`) verwaltet Passanten (`Passerby`), Fahrräder und Autos (`StreetVehicle`) und den
+  Lieferwagen (`DeliveryVan`); alle Werte in GameConfig (Abschnitt „Leben auf der Straße“),
+  Menge über `StreetLife.activity()` (später Tageszeit). **Grundregel: niemand erscheint oder
+  verschwindet sichtbar** – nur an Punkten der Gruppe `Street.TRAFFIC_GROUP` (Metadaten `kind`,
+  `place` = east/west/alley/opposite_alley) und nur, wenn `StreetLife.is_visible_spot()` false
+  ist (Bild mit Rand `street_view_margin` + Sichtstrahl gegen Ebenen world/sight_blocker; Körper
+  mit Metadaten `see_through` wie die Fensterbank-Kollision zählen nicht). Neue Häuser/Kulissen
+  brauchen darum eine Kollision oder einen Sichtblocker. Alle folgen der Mittellinie der Straße
+  (`StreetPaths.centerline()`, ein `StreetRoute`: s wächst zum abbiegenden Ende, lat > 0 =
+  Bücherei-Seite) mit erlaubtem Streifen je Punkt (Gehwege `sidewalk_route(seite)`, Fahrbahn,
+  Überqueren); die Gehwege misst `StreetLife` beim Start an den Häusern aus. Gassen und
+  Schaufenster sind kurze eigene `StreetRoute`s. Passanten: Schritte (walk, cross, stand, leave)
+  plant `StreetLife._plan_walker`; Ausweichen über Bereiche auf dem Streifen (links ausweichen),
+  `blocks_move` = nie näher an jemanden. Feste Hindernisse draußen: `StreetObstacle`-Kreise
+  (Gruppe `street_obstacles`, z. B. von `EntranceSteps`). Fahrzeuge: Linksverkehr
+  (`StreetPaths.lane_offset`), bremsen nur für Menschen, die auf der Fahrbahn sind
+  (`Passerby.body_on_road`); je Richtung startet nur, wer niemanden einholt
+  (`direction_free`). Alles ist beim Start gebaut (Vorrat), Platzhalter aus `StreetShapes`
+  (ein Material `street_figure.tres`, Alpha der Vertex-Farbe wie bei den Häusern),
+  Schatten je Grafikstufe (`street_shadow_distance`), weit weg vereinfacht
+  (`street_detail_distance`). Für Besucher (nächster Schritt): Signal `passing_library`,
+  Punkt `StreetPaths.library_entrance()`. Draußen wird nichts gespeichert.
+- **Lieferwagen:** Fällige Bestellungen warten im `DeliveryManager` (`_due`), `StreetLife.send_van`
+  holt sie ab (`_van_load`, wird als Bestellung mit Restzeit 0 gespeichert); der Wagen ruft je
+  Karton `DeliveryManager.unload_one(tür)` (PLACED/BLOCKED/EMPTY; nie dorthin, wo jemand steht,
+  `StreetLife.blocking_points`). Ohne Straßenleben liefert der DeliveryManager direkt. Kartons
+  höchstens `DeliveryManager.MAX_ROWS` (2) Reihen tief, damit der Gehweg frei bleibt.
 - Bücher tragen: höchstens `GameConfig.max_carried_books`; `BookStock.carry(liste)` liefert,
   was nicht mehr passt; volle Hände ohne Text zeigen: `BookStock.show_hands_full()`
   (der Stapel in der Hand wackelt).

@@ -86,7 +86,7 @@ var _wait := 0.0
 var _anim_player: AnimationPlayer
 var _model: Node3D
 var _body: AnimatableBody3D
-var _shadows := true
+var _shadows := -1
 var _old_lat := 0.0
 var _blocked_time := 0.0
 
@@ -109,8 +109,8 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 		_model.call("randomize_look", rng)
 	var size := rng.randf_range(GameConfig.passerby_height_range.x, GameConfig.passerby_height_range.y)
 	scale = Vector3.ONE * size
-	_shadows = true
-	set_shadows(false)
+	_shadows = -1
+	set_shadows(0)
 	set_detail_distance(GameConfig.street_detail_distance)
 
 
@@ -124,15 +124,16 @@ func set_active(enabled: bool) -> void:
 			shape.set_deferred("disabled", not enabled)
 
 
-## Schatten nur in der Nähe (StreetLife schaltet je nach Entfernung und Grafikstufe).
-func set_shadows(enabled: bool) -> void:
-	if enabled == _shadows or _model == null:
+## Schatten nur in der Nähe (StreetLife schaltet je nach Entfernung und Grafikstufe):
+## 0 = keiner, 1 = einfach, 2 = genau (siehe PasserbyPlaceholder; eigene Figuren: an/aus).
+func set_shadows(level: int) -> void:
+	if level == _shadows or _model == null:
 		return
-	_shadows = enabled
+	_shadows = level
 	if _model.has_method("set_shadows"):
-		_model.call("set_shadows", enabled)
+		_model.call("set_shadows", level)
 	else:
-		var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if enabled else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if level > 0 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		for part: GeometryInstance3D in _model.find_children("*", "GeometryInstance3D", true, false):
 			part.cast_shadow = mode
 
@@ -317,10 +318,14 @@ func _step_cross(delta: float) -> void:
 			var lat := move_toward(_lat, far_curb, speed_pref * delta)
 			var s_next := _s + _dir * 0.25 * delta
 			if life.blocks_move(self, _route.point_at(s_next, lat)):
-				s_next = _s + _dir * speed_pref * 0.6 * delta
+				# Seitlich ausweichen: erst in Laufrichtung, sonst in die andere
 				lat = _lat
-				if life.blocks_move(self, _route.point_at(s_next, lat)):
-					s_next = _s
+				s_next = _s
+				for way: int in [_dir, -_dir]:
+					var try_s: float = _s + way * speed_pref * 0.6 * delta
+					if not life.blocks_move(self, _route.point_at(try_s, lat)):
+						s_next = try_s
+						break
 			_lat = lat
 			_s = s_next
 			_anim_state = &"walk"

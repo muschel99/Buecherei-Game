@@ -10,8 +10,9 @@ extends Node3D
 ## ersetzen (Anleitung: docs/ASSET_GUIDE.md, „Eigene Passanten“). Die Figur steht mit den
 ## Füßen auf y = 0 und schaut nach +Z.
 ##
-## Leistung: Nah sind es sieben Teile, ab GameConfig.street_detail_distance zeigt die Figur nur
-## noch ein einziges, vereinfachtes Teil ohne Bewegung (Sichtweite, visibility_range).
+## Leistung: Nah sind es sechs Teile, ab GameConfig.street_detail_distance zeigt die Figur nur
+## noch ein einziges, vereinfachtes Teil ohne Bewegung (Sichtweite, visibility_range). Den
+## Schatten wirft je nach Grafikstufe dasselbe einfache Teil (unsichtbar) oder alle Teile.
 
 const SKIN_COLORS: Array[Color] = [
 	Color(0.96, 0.8, 0.68), Color(0.88, 0.68, 0.52), Color(0.72, 0.5, 0.36),
@@ -51,6 +52,7 @@ var _arms: Array[Node3D] = []
 var _legs: Array[Node3D] = []
 var _near: Array[GeometryInstance3D] = []
 var _far: MeshInstance3D
+var _shadow: MeshInstance3D
 var _phase := 0.0
 var _time := 0.0
 var _swing := 0.0
@@ -137,6 +139,15 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 		_add_leg(far, bottom, shoes, 8)
 	_far = _mesh_instance(self, "Far", far)
 	_far.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# Einfacher Schatten: dasselbe Teil, unsichtbar, nur als Schattenwerfer (set_shadows)
+	_shadow = MeshInstance3D.new()
+	_shadow.name = "ShadowOnly"
+	_shadow.mesh = _far.mesh
+	_shadow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	_shadow.visible = false
+	add_child(_shadow)
+	for part in _near:
+		part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	set_detail_distance(_detail_distance)
 
 
@@ -149,10 +160,14 @@ func set_detail_distance(distance: float) -> void:
 		_far.visibility_range_begin = distance
 
 
-func set_shadows(enabled: bool) -> void:
-	var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if enabled else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+## Schatten: 0 = keiner, 1 = einfach (ein unsichtbares Teil in Grundhaltung wirft ihn – spart
+## viele Zeichenaufrufe), 2 = genau (Arme und Beine bewegen sich auch im Schatten).
+func set_shadows(level: int) -> void:
+	var detailed := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if level >= 2 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for part in _near:
-		part.cast_shadow = mode
+		part.cast_shadow = detailed
+	if _shadow:
+		_shadow.visible = level == 1
 
 
 ## Bewegung je Bild: state = "walk", "idle", "look" (Umschauen) oder "browse" (ins Schaufenster

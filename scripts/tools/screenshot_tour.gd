@@ -22,6 +22,9 @@ extends Node
 ##   --focus=<abstand>  statt der Blickpunkte: Nahaufnahme des Passanten, der dem Ziel des ersten
 ##                      Blickpunkts am nächsten ist (aus so vielen Metern, schräg von vorn)
 ##   --focus_vehicle    dasselbe für das nächste Fahrzeug (Fahrrad, Auto, Lieferwagen)
+##   --stats            je Bild die Zeichenaufrufe und Objekte ausgeben (Leistung)
+##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
+##   --no_street_life   ohne Straßenleben (zum Vergleich)
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
 
 const MAIN_SCENE := "res://scenes/main.tscn"
@@ -32,10 +35,16 @@ const SETTLE_FRAMES := 12
 
 var _args := {}
 var _camera: Camera3D
+var _old_quality: Variant = null
 
 
 func _ready() -> void:
 	_args = _parse_args()
+	if _args.has("no_street_life"):
+		GameConfig.street_life_enabled = false
+	if _args.has("quality"):
+		_old_quality = Settings.get_value("graphics/quality")
+		Settings.set_value("graphics/quality", int(_args.quality))
 	if _args.has("list"):
 		for set_name in ScreenshotViews.all_sets():
 			print("%s: %s" % [set_name, ", ".join(ScreenshotViews.get_set(set_name).keys())])
@@ -77,6 +86,11 @@ func _run() -> void:
 		_camera.look_at(view.target, Vector3.UP)
 		_camera.fov = float(view.get("fov", _camera.fov))
 		await _wait_frames(SETTLE_FRAMES)
+		if _args.has("stats"):
+			print("Zeichenaufrufe %s: %d, Objekte: %d, Dreiecke: %d" % [view_name,
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME),
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)])
 		var image := get_viewport().get_texture().get_image()
 		var file := "%s-%s" % [_args.get("set", "free"), view_name]
 		if _args.has("tag"):
@@ -84,6 +98,8 @@ func _run() -> void:
 		var path := out_dir.path_join(file + ".png")
 		image.save_png(path)
 		print("Bild gespeichert: ", path)
+	if _old_quality != null:
+		Settings.set_value("graphics/quality", _old_quality)
 	get_tree().quit()
 
 

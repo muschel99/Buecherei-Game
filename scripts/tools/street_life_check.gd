@@ -27,7 +27,7 @@ var _report := {
 	"appeared": 0, "vanished": 0, "appear_in_view": [], "vanish_in_view": [],
 	"appear_open": 0, "vanish_open": 0, "places": {},
 	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "vehicle_close": [],
-	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {},
+	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {}, "crossing": 0, "browsing": 0, "alley": 0,
 }
 var _track := {}  # Passant -> [letzte Stelle, Zeit seit Bewegung]
 var _spot_name := ""
@@ -171,6 +171,14 @@ func _measure() -> void:
 	var walkers := _life.get_walkers()
 	var player := _life.player_pos()
 	var space := _main.get_world_3d().direct_space_state
+	for walker in walkers:
+		if walker.on_road:
+			_report.crossing += 1
+		var action := walker.get_action()
+		if action.get("anim", &"") == &"browse":
+			_report.browsing += 1
+		if action.has("alley"):
+			_report.alley += 1
 	for i in walkers.size():
 		var a := walkers[i]
 		for j in range(i + 1, walkers.size()):
@@ -193,8 +201,13 @@ func _measure() -> void:
 		query.collision_mask = StreetLife.SIGHT_MASK
 		for hit in space.intersect_shape(query, 4):
 			var collider := hit.collider as Node
-			if collider and collider.name != "Bounds":
-				_report.solid.append("%s in %s bei %s (%s): %s" % [a.name, collider.name, a.pos, _spot_name, a.debug_text()])
+			# Hüpfende Kartons zählen nicht: Das Werkzeug spult im Zeitraffer, das Hüpfen läuft in
+			# echter Zeit (im Spiel landet ein Karton nie auf jemandem, siehe DeliveryManager)
+			var box := collider.get_parent() as DeliveryBox if collider else null
+			if collider and collider.name != "Bounds" and not (box and box.is_moving()):
+				_report.solid.append("%s in %s bei %s (%s): %s" % [a.name, collider.get_path(), a.pos, _spot_name, a.debug_text()] + " | nah: %s, Karton bei %s" % [
+					_life.obstacles_near(a, 1.0).map(func(o): return "%s@%s" % [o.kind, o.pos]),
+					_life.to_local((collider as Node3D).global_position)])
 		# Hängt jemand fest?
 		var track: Array = _track.get(a, [a.pos, 0.0])
 		if a.pos.distance_to(track[0]) > 0.4:
@@ -242,6 +255,8 @@ func _print_report() -> void:
 		print("  SICHTBAR: ", line)
 	print("Orte (+ erscheinen, - verschwinden): ", _report.places)
 	print("Fahrzeuge losgefahren: ", _report.vehicles)
+	print("Messungen mit Passanten beim Überqueren: %d, vor einem Schaufenster: %d, in einer Gasse: %d" % [
+		_report.crossing, _report.browsing, _report.alley])
 	print("Kleinster Abstand zwischen Passanten: %.2f m, zur Spielfigur: %.2f m" % [_report.min_walker_gap, _report.min_player_gap])
 	for key in ["overlap", "player_bump", "solid", "stuck", "vehicle_close"]:
 		var list: Array = _report[key]

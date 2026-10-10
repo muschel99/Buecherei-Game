@@ -454,19 +454,21 @@ var autosave_delay: float = 1.5
 ##   render_scale    Auflösung der 3D-Ansicht (1 = voll, 0.8 = etwas weicher, schneller)
 ##   street_shadow_distance  Passanten und Fahrzeuge werfen nur bis zu dieser Entfernung
 ##                   Schatten (Meter, 0 = nie; seit Etappe 5a)
+##   street_shadow_detail  Bis zu dieser Entfernung (Meter) werfen Passanten Schatten mit bewegten
+##                   Armen und Beinen, weiter weg einen einfachen in Grundhaltung (viel günstiger)
 var graphics_presets: Array[Dictionary] = [
 	{"ssao": false, "ssao_half_size": true, "ssil": false, "volumetric_fog": false, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 1024, "sun_shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 0,
 		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8,
-		"street_shadow_distance": 0.0},
+		"street_shadow_distance": 0.0, "street_shadow_detail": 0.0},
 	{"ssao": true, "ssao_half_size": true, "ssil": false, "volumetric_fog": true, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 2048, "sun_shadow_size": 2048, "soft_shadows": 2, "lamp_shadows": 1,
 		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
-		"street_shadow_distance": 12.0},
+		"street_shadow_distance": 12.0, "street_shadow_detail": 0.0},
 	{"ssao": true, "ssao_half_size": false, "ssil": true, "volumetric_fog": true, "fog_volume_size": 64,
 		"msaa": 2, "fxaa": false, "shadow_size": 4096, "sun_shadow_size": 4096, "soft_shadows": 3, "lamp_shadows": 2,
 		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
-		"street_shadow_distance": 20.0},
+		"street_shadow_distance": 20.0, "street_shadow_detail": 8.0},
 ]
 ## Bis zu dieser Entfernung (in Metern) wirft die Sonne Schatten. Der Raum ist 8 m tief –
 ## 20 m reichen auch für den Blick von der Gasse. Kleiner = schärfere Schatten in der Nähe.

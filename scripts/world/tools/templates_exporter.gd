@@ -19,12 +19,22 @@ var _count := 0
 
 
 func _ready() -> void:
-	for folder in ["houses", "furniture", "world"]:
+	for folder in ["houses", "furniture", "world", "street_life"]:
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(ROOT + folder))
 	_ensure_gdignore()
-	await _export_houses()
-	await _export_furniture()
-	await _export_world()
+	# Ohne Bildschirm auch nur ein Teil: -- --only=street_life (bzw. houses, furniture, world)
+	var only := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			only = arg.trim_prefix("--only=")
+	if only in ["", "houses"]:
+		await _export_houses()
+	if only in ["", "furniture"]:
+		await _export_furniture()
+	if only in ["", "world"]:
+		await _export_world()
+	if only in ["", "street_life"]:
+		await _export_street_life()
 	print("Vorlagen erzeugt: %d Dateien in %s" % [_count, ROOT])
 	get_tree().quit()
 
@@ -128,6 +138,50 @@ func _export_world() -> void:
 		_add_mesh(root, mesh.mesh, mesh.transform, preload("res://assets/materials/curb_stone.tres"))
 	_save(root, ROOT + "world/entrance_steps.glb")
 	steps.queue_free()
+
+
+## Straßenleben (seit Etappe 5a): Lieferwagen, Auto, Fahrrad und Passant – der Platzhalter in
+## echter Größe, Vorderseite nach +Z, Räder bzw. Füße auf y = 0. Beim Lieferwagen ist die Tür
+## dabei (geschlossen); die Farben stehen in den Vertex-Farben.
+func _export_street_life() -> void:
+	for item in [["delivery_van", GameConfig.delivery_van_scene, GameConfig.delivery_van_color],
+			["car", GameConfig.car_scene, Color(0.55, 0.68, 0.62)], ["cyclist", GameConfig.bike_scene, Color(0.3, 0.45, 0.55)],
+			["passerby", "res://scenes/street_life/passerby.tscn", Color.WHITE]]:
+		var instance := (load(item[1]) as PackedScene).instantiate() as Node3D
+		add_child(instance)
+		await get_tree().process_frame
+		var model := instance.get_node_or_null("Model")
+		if model and model.has_method("build"):
+			model.call("build", RandomNumberGenerator.new(), item[2])
+		await get_tree().process_frame
+		var root := Node3D.new()
+		root.name = item[0]
+		for mesh: MeshInstance3D in instance.find_children("*", "MeshInstance3D", true, false):
+			if mesh.mesh == null or mesh.name == "Far":
+				continue
+			var local := instance.global_transform.affine_inverse() * mesh.global_transform
+			_add_mesh(root, _resolve_tint(mesh.mesh, item[2]), local, null)
+		_save(root, ROOT + "street_life/" + item[0] + ".glb")
+		instance.queue_free()
+
+
+## Ersetzt im Mesh die Farb-Kennungen (Alpha, siehe street_figure.gdshader) durch echte Farben.
+func _resolve_tint(mesh: Mesh, tint: Color) -> ArrayMesh:
+	var arrays := mesh.surface_get_arrays(0)
+	var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	for i in colors.size():
+		var c := colors[i]
+		var base := Color(c.r, c.g, c.b)
+		colors[i] = tint * base if c.a > 0.6 and c.a < 0.9 else base
+		colors[i].a = 1.0
+	arrays[Mesh.ARRAY_COLOR] = colors
+	var result := ArrayMesh.new()
+	result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var material := StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.vertex_color_is_srgb = true
+	result.surface_set_material(0, material)
+	return result
 
 
 ## Runde Grundformen mit weniger Flächen (Vorlagen sollen schlicht sein).

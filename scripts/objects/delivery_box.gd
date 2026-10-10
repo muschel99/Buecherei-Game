@@ -50,6 +50,11 @@ func move_to(target: Transform3D, duration: float, delay: float = 0.0, bounce: b
 		step.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
+## Bewegt sich der Karton gerade (Hüpfen vom Lieferwagen, Nachrutschen)?
+func is_moving() -> bool:
+	return _move_tween != null and _move_tween.is_running()
+
+
 ## Der Karton hüpft in einem kleinen Bogen von "from" (Position, im Koordinatensystem des
 ## Lieferorts – z. B. die Tür des Lieferwagens) an seinen Platz (seit Etappe 5a).
 func hop_from(from: Vector3, target: Transform3D, duration: float, height: float = 0.7) -> void:

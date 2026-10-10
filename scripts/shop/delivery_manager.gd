@@ -127,8 +127,9 @@ func _street_life() -> StreetLife:
 func unload_one(from: Vector3) -> int:
 	if _van_load.is_empty():
 		return UNLOAD_EMPTY
-	var key = _free_stack_avoiding(_blocking_points())
-	if key == null:
+	var points := _blocking_points()
+	var key = _free_stack_avoiding(points)
+	if key == null or _crosses_someone(from, global_transform * _slot_origin(key), points):
 		return UNLOAD_BLOCKED
 	var contents: Array = _van_load.pop_front()
 	var box := _add_box(contents, randf_range(-1.0, 1.0), false, 0.0, key)
@@ -140,6 +141,15 @@ func unload_one(from: Vector3) -> int:
 	delivery_arrived.emit(box)
 	SaveManager.request_save()
 	return UNLOAD_PLACED
+
+
+## Wo Kartons stehen (je Stapel ein Punkt, global) – auch für Kartons, die gerade noch vom
+## Lieferwagen herüberhüpfen (Passanten gehen um die Plätze herum, StreetLife).
+func get_box_spots() -> Array[Vector3]:
+	var spots: Array[Vector3] = []
+	for key in _sorted_stack_keys():
+		spots.append(global_transform * _slot_origin(key))
+	return spots
 
 
 ## Hat der Lieferwagen noch etwas geladen?
@@ -154,6 +164,18 @@ func _blocking_points() -> Array[Vector3]:
 	if life:
 		points = life.blocking_points()
 	return points
+
+
+## Geht gerade jemand zwischen Wagentür und Platz hindurch? (Dann hüpft der Karton noch nicht.)
+func _crosses_someone(from: Vector3, to: Vector3, points: Array[Vector3]) -> bool:
+	var a := Vector2(from.x, from.z)
+	var b := Vector2(to.x, to.z)
+	for p in points:
+		var q := Vector2(p.x, p.z)
+		var t := clampf((q - a).dot(b - a) / maxf(0.0001, a.distance_squared_to(b)), 0.0, 1.0)
+		if q.distance_to(a.lerp(b, t)) < BLOCK_DISTANCE:
+			return true
+	return false
 
 
 ## Der nächste freie Platz, an dem niemand steht (null = alle besetzt).

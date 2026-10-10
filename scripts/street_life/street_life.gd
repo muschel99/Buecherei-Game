@@ -354,15 +354,8 @@ func _box_positions() -> Array[Vector2]:
 	var manager := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
 	if manager == null:
 		return result
-	for box in manager.get_boxes():
-		var p := _to_local2(box.global_position)
-		var known := false
-		for other in result:
-			if other.distance_squared_to(p) < 0.04:
-				known = true
-				break
-		if not known:
-			result.append(p)
+	for spot in manager.get_box_spots():
+		result.append(_to_local2(spot))
 	return result
 
 
@@ -616,7 +609,7 @@ func _launch(plan: Dictionary) -> void:
 	var actions: Array[Dictionary] = []
 	actions.assign(plan.actions)
 	walker.begin(plan.start, actions, plan.face)
-	walker.set_shadows(false)
+	walker.set_shadows(0)
 	appeared.emit(walker, walker.pos)
 
 
@@ -937,10 +930,12 @@ func _update_detail() -> void:
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
-	var shadow_distance := float(Settings.get_graphics_preset().get("street_shadow_distance", 15.0))
+	var preset := Settings.get_graphics_preset()
+	var shadow_distance := float(preset.get("street_shadow_distance", 15.0))
+	var detail_distance := float(preset.get("street_shadow_detail", 0.0))
 	for walker in _walkers:
 		var distance := camera.global_position.distance_to(walker.global_position)
-		walker.set_shadows(distance < shadow_distance)
+		walker.set_shadows(0 if distance >= shadow_distance else (2 if distance < detail_distance else 1))
 	for vehicle in _vehicles:
 		var distance := camera.global_position.distance_to(vehicle.global_position)
-		vehicle.set_shadows(distance < shadow_distance * 1.5)
+		vehicle.set_shadows(distance < shadow_distance)

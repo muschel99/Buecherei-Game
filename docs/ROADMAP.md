@@ -32,7 +32,7 @@
 | 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | fertig |
 | 4f  | Grenze am geraden Straßenende und Torhaus mit Durchfahrt | fertig |
 | 5   | Besucher                                 | in Arbeit     |
-| 5a  | Leben auf der Straße                     | in Arbeit     |
+| 5a  | Leben auf der Straße                     | fertig        |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
 | 8   | Café                                     | offen         |
@@ -630,25 +630,52 @@ kommen Besucher herein (weitere Unterschritte).
 Leitgedanke: Passanten, Fahrräder, ein, zwei Autos und ein kleiner Lieferwagen machen die
 Straße lebendig – ruhig und gemütlich, keine volle Innenstadt. Grundregel: Niemand erscheint
 oder verschwindet sichtbar.
-- [ ] Feste Orte zum Erscheinen und Verschwinden außer Sicht (Straßenenden hinter der Kurve
-      und hinter dem Torhaus, Ende der Gassen) + Prüfung im Spiel, dass der Ort gerade nicht
-      im Blickfeld liegt (sonst wartet das Erscheinen bzw. die Figur läuft weiter)
-- [ ] Passanten auf beiden Gehwegen, in beide Richtungen, verschiedenes Tempo; weichen
-      einander, der Spielfigur, der Treppe und den Kartons aus
-- [ ] Passanten überqueren manchmal die Straße, bleiben vor Schaufenstern stehen (Modegeschäft,
-      Pub, Bücherei) und kommen aus den Gassen oder verschwinden darin
-- [ ] Wege so gebaut, dass ein Passant später in die Bücherei gehen kann (nächster Schritt)
-- [ ] Austauschbare Platzhalter-Figur, vorbereitet für eigene Figuren mit Animationen
-      (Gehen, Stehen, Umschauen) + Anleitung in docs/ASSET_GUIDE.md
-- [ ] Fahrradfahrer fahren durch, in beide Richtungen
-- [ ] Ein, zwei Autos fahren gelegentlich durch und bremsen für Fußgänger auf der Straße und
-      für die Spielfigur
-- [ ] Kleiner, rundlicher Lieferwagen bringt die Kartons (hält vor der Bücherei, stellt die
-      Kartons einzeln ab, fährt weiter); wartet oder weicht aus, wenn der Platz besetzt ist;
-      Bestellungen während der Fahrt kommen bei der nächsten Fahrt. Vorlage zum Modellieren
-- [ ] Alle Werte in GameConfig (ruhiger Startwert), später von der Tageszeit abhängig
-- [ ] Leistung in allen drei Grafikstufen (weit weg ohne Schatten und vereinfacht, kein
-      Zuckeln beim Erscheinen); gespeichert wird draußen nur die laufende Lieferung
+- [x] Feste Orte zum Erscheinen und Verschwinden außer Sicht (TrafficPoints an beiden
+      Straßenenden hinter den Kurven, neu: je ein Punkt vor dem Tor am Ende beider Gassen) und
+      bei jedem Erscheinen/Verschwinden eine Sichtprüfung (im Bild mit Rand und nicht von Häusern
+      verdeckt; Häuser ohne feste Kollision haben dafür einen unsichtbaren Sichtblocker, neue
+      Physik-Ebene `sight_blocker`; durch Fenster und den Torbogen sieht man hindurch). Ist der
+      Ort zu sehen, wartet das Erscheinen; wer verschwinden will, geht ein Stück weiter oder
+      wartet am Gassentor. Geprüft mit dem neuen Prüfwerkzeug `scenes/tools/street_life_check.tscn`
+      (15 erreichbare Stellen, Kamera rundherum, je 60–80 s vorgespult, mehrere Zufallsläufe:
+      jeweils über 100 Mal erschienen und verschwunden, 0 Mal im Blickfeld) und Testbildern
+      von den Grenzen, dem Torbogen und den Enden der Gassen
+- [x] Passanten auf beiden Gehwegen, in beide Richtungen, verschiedenes Tempo; sie weichen
+      einander aus (links, wie in England), ebenso der Spielfigur, der Treppe und den Kartons,
+      laufen nie in die Spielfigur und drehen um, wenn sie lange den Weg versperrt. Die Gehwege
+      werden beim Start mit der Physik an die Häuser angepasst (Kurven, Eckhäuser, Torbogen).
+      Geprüft: keine Überschneidungen, niemand in Häusern, niemand hängt fest; Lauftest mit
+      Physik (die Spielfigur gleitet an Passanten vorbei bzw. kommt immer frei zurück)
+- [x] Passanten überqueren manchmal die Straße (Bordstein, umschauen, warten, hinüber),
+      bleiben vor Schaufenstern stehen (Modegeschäft, Pub, Bücherei; weitere Punkte unter
+      `Outside/StreetLife/WindowSpots`) und kommen aus den Gassen oder verschwinden darin
+- [x] Für den nächsten Schritt vorbereitet: Signal `StreetLife.passing_library`, wenn ein Passant
+      vor der Bücherei vorbeikommt, und ein fester Punkt vor der Treppe
+      (`StreetPaths.library_entrance()`)
+- [x] Austauschbare Platzhalter-Figur (`scenes/street_life/passerby.tscn`: Kopf mit Frisur,
+      Körper, Arme, Beine, Laufbewegung, eigene Farben und Größen), vorbereitet für eigene
+      Figuren mit AnimationPlayer (Gehen, Stehen, Umschauen, Schaufenster); Anleitung in
+      docs/ASSET_GUIDE.md („Eigene Passanten“)
+- [x] Fahrradfahrer fahren durch, in beide Richtungen, ohne anzuhalten (langsam außen um
+      Hindernisse herum) – austauschbare Szene mit tretender Platzhalter-Figur
+- [x] Höchstens zwei Autos (Linksverkehr), bremsen weich für Fußgänger auf der Fahrbahn und
+      die Spielfigur; unter dem Torbogen langsam; niemand muss überholen
+- [x] Kleiner, rundlicher Lieferwagen bringt die Kartons: kommt vom geraden Ende, hält vor der
+      Bücherei, Schiebetür auf, die Kartons hüpfen einzeln an ihren Platz (nicht dorthin, wo
+      jemand steht; sonst wartet er), fährt weiter und verschwindet hinter dem Torhaus.
+      Bestellungen während der Fahrt kommen bei der nächsten Fahrt; was im Wagen ist, wird
+      gespeichert (getestet: speichern, laden, Kartons kommen). Kartons höchstens zwei Reihen
+      tief (der Gehweg bleibt frei). Vorlagen in echter Größe:
+      `assets/models/templates/street_life/` (Lieferwagen, Auto, Fahrrad, Passant)
+- [x] Alle Werte in GameConfig (Abschnitt „Leben auf der Straße“, ruhige Startwerte,
+      `street_activity` für alles zusammen); später von der Tageszeit abhängig über
+      `StreetLife.activity()`
+- [x] Leistung: alle Figuren beim Start gebaut (nur ein- und ausblenden), ein gemeinsames
+      Material, Schatten nur in der Nähe (je Grafikstufe; auf Mittel ein einfacher Schatten in
+      Grundhaltung), weit weg vereinfacht. Gemessen: Niedrig etwa 11–16, Mittel 15–26, Hoch
+      35–42 Zeichenaufrufe mehr (rund 5–10 %)
+- [x] Testbilder-Werkzeug erweitert: `--simulate`, `--seed`, `--deliver`, `--focus`, `--stats`,
+      `--quality`, Blickpunkt-Gruppe `street_life`
 
 ## Etappe 6 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

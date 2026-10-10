@@ -136,7 +136,7 @@ Ein Klick auf ein Angebot legt es in den Warenkorb. „Bestellen“ schickt alle
 Was du nicht mehr brauchst, kannst du bei „Nest & Nook“ wieder verkaufen.
 
 == Die Lieferung
-Kurz nach der Bestellung stehen Kartons draußen vor der Tür.
+Kurz nach der Bestellung bringt ein kleiner Lieferwagen die Kartons vor die Tür.
 
 Schau einen Karton an und drücke <E> – sein Inhalt wandert in dein Inventar.
 

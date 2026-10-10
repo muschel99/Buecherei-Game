@@ -185,6 +185,9 @@ func _wanted_speed() -> float:
 				swerve = around
 				if person:
 					limit = minf(limit, PASS_SPEED + along * 0.4)  # an Menschen langsam vorbei
+				if absf(lage.y - _lat) < half:
+					# Noch nicht weit genug zur Seite: so bremsen, dass es vorher reicht
+					limit = minf(limit, sqrt(2.0 * BRAKE * maxf(0.0, along - 0.6)))
 				continue
 		var stop := maxf(0.0, along - STOP_GAP)
 		var their: float = obstacle.get("speed", 0.0)

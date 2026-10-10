@@ -16,6 +16,9 @@ enum State { DRIVE_IN, OPEN, UNLOAD, CLOSE, DRIVE_OUT }
 @export var door_point: Vector3 = Vector3(0.88, 1.0, -0.1)
 ## So lange gleitet die Tür auf bzw. zu (Sekunden).
 @export var door_time: float = 0.7
+## Eigenes Modell: Ein Teil namens "Door" gleitet beim Öffnen so weit nach hinten (Meter) und
+## ein klein wenig nach außen.
+@export var door_slide: float = 0.78
 
 var _state := State.DRIVE_IN
 var _stop_s := 0.0
@@ -91,6 +94,25 @@ func step(delta: float) -> void:
 			super.step(delta)
 
 
+var _door: Node3D
+var _door_closed := Vector3.ZERO
+var _door_tween: Tween
+
+
 func _open_door(open: bool, duration: float) -> void:
-	if _model and _model.has_method("open_door"):
+	if _model == null:
+		return
+	if _model.has_method("open_door"):
 		_model.call("open_door", open, duration)
+		return
+	# Eigenes Modell: das Teil "Door" (falls vorhanden) gleitet nach hinten
+	if _door == null:
+		_door = _model.find_child("Door", true, false) as Node3D
+		if _door == null:
+			return
+		_door_closed = _door.position
+	if _door_tween:
+		_door_tween.kill()
+	var target := _door_closed + (Vector3(0.07, 0.0, -door_slide) if open else Vector3.ZERO)
+	_door_tween = create_tween()
+	_door_tween.tween_property(_door, "position", target, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
