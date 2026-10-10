@@ -151,7 +151,7 @@ def build(name):
     S.to_blender(b, {"accent": PREVIEW_ACCENT})
     blend = os.path.join(S.ROOT, "assets", "models", "source", "props", name + ".blend")
     os.makedirs(os.path.dirname(blend), exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True)
+    bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True, compress=True)
 
 
 if __name__ == "__main__":

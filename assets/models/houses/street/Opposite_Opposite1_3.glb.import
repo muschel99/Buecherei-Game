@@ -43,12 +43,10 @@ _subresources={
 "materials": {
 "glass": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_glass.tres",
 "use_external/path": "res://assets/materials/house_glass.tres"
 },
 "house": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_style.tres",
 "use_external/path": "res://assets/materials/house_style.tres"
 }
 }

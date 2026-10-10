@@ -349,7 +349,7 @@ def main():
         return
     write_tscn(text, built)
     blend = os.path.join(S.ROOT, "assets", "models", "source", "street.blend")
-    bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True)
+    bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True, compress=True)
     print("Fertig: %d Häuser" % len(built))
 
 

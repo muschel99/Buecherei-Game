@@ -1142,7 +1142,7 @@ def build(type_id, render, reset_signs=False):
         _check(type_id)
     elif render:
         _render(type_id)
-    bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True)
+    bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True, compress=True)
 
 
 def _place_props_preview(props):
