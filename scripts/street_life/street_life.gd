@@ -34,6 +34,8 @@ signal vanished(who: Node3D, spot: Vector2)
 
 const GROUP := "street_life"
 const OBSTACLE_GROUP := "street_obstacles"
+## Abstand der Wege zu Schaufenstern von festen Hindernissen (Körpermitte, m)
+const WINDOW_CLEARANCE := 0.45
 ## Spielfigur: Radius (wie ihre Kollision) und Abstand, den Passanten mindestens halten.
 const PLAYER_RADIUS := 0.3
 const PLAYER_GAP := 0.03
@@ -262,6 +264,27 @@ func _add_window(spot: Vector2, face: Vector2, spread: float) -> void:
 	var lage := centerline.project(spot)
 	_windows.append({"pos": spot, "face": face, "s": lage.x, "side": 1 if lage.y > 0.0 else -1,
 		"spread": spread})
+
+
+## Platz vor einem Schaufenster, dessen Hin- und Rückweg nicht durch feste Hindernisse
+## (Kübel, Stufen …) führt (seit Etappe 4g); Vector2.INF, wenn keiner frei ist.
+func _free_window_spot(spot: Dictionary, side: int, cursor: float, dir: int, comfort: float) -> Vector2:
+	for attempt in 8:
+		var at: Vector2 = spot.pos + Vector2(-spot.face.y, spot.face.x) * _rng.randf_range(-1.0, 1.0) * float(spot.spread)
+		var lane_before := _ahead(centerline.project(at).x - dir * 1.2, cursor, dir)
+		var from := _lane_point(side, lane_before, comfort)
+		var to := _lane_point(side, lane_before + dir * 2.4, comfort)
+		if _clear_of_static(from, at) and _clear_of_static(at, to):
+			return at
+	return Vector2.INF
+
+
+func _clear_of_static(a: Vector2, b: Vector2) -> bool:
+	for obstacle in _static_obstacles:
+		var closest := Geometry2D.get_closest_point_to_segment(obstacle.pos, a, b)
+		if closest.distance_to(obstacle.pos) < float(obstacle.radius) + WINDOW_CLEARANCE:
+			return false
+	return true
 
 
 func _collect_static_obstacles() -> void:
@@ -721,7 +744,9 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 				if side != int(event.spot.side):
 					continue
 				var spot: Dictionary = event.spot
-				var at: Vector2 = spot.pos + Vector2(-spot.face.y, spot.face.x) * _rng.randf_range(-1.0, 1.0) * float(spot.spread)
+				var at := _free_window_spot(spot, side, cursor, dir, comfort)
+				if at == Vector2.INF:
+					continue
 				var lane_before := _ahead(centerline.project(at).x - dir * 1.2, cursor, dir)
 				actions.append({"type": "walk", "route": sidewalks[side], "to": lane_before})
 				cursor = lane_before + dir * 2.4

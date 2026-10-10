@@ -29,6 +29,7 @@ import zlib
 sys.path.insert(0, os.path.dirname(__file__))
 import style_lib as S  # noqa: E402
 import style_parts as P  # noqa: E402
+import street_houses as H  # noqa: E402
 from style_lib import Mat, V  # noqa: E402
 
 # --- Gemeinsame Materialien (Ebene, Rolle, feste Farbe in sRGB) ---
@@ -36,7 +37,8 @@ WALL_STONE = Mat("stone", "wall")
 BRICK = Mat("brick", color=(0.6, 0.33, 0.25))
 TRIM = Mat("stone_trim")
 JOINERY = Mat("paint", "door")
-WHITE = Mat("paint", color=(0.93, 0.92, 0.88))
+# Kein reines Weiß (sticht zu sehr hervor): Creme
+WHITE = Mat("paint", color=(0.86, 0.84, 0.78))
 SLATE = Mat("slate")
 RIDGE = Mat("terracotta", color=(1, 1, 1))
 LEAD = Mat("metal")
@@ -148,11 +150,12 @@ def sash_window(b, x, y0, w, h, reveal, panes=(2, 2), curtains=True, z=0.0):
     x0, x1 = x - w / 2, x + w / 2
     y1 = y0 + h
     zg = -reveal + 0.02
-    b.quad(V(x0, y0, zg), V(x1, y0, zg), V(x1, y1, zg), V(x0, y1, zg), DARK_GLASS)
-    if curtains:
-        cw = w * 0.24
-        for cx0, cx1 in ((x0, x0 + cw), (x1 - cw, x1)):
-            b.quad(V(cx0, y0 + 0.05, zg + 0.008), V(cx1, y0 + 0.05, zg + 0.008), V(cx1, y1, zg + 0.008), V(cx0, y1, zg + 0.008), CURTAIN)
+    # Echtes Glas, dahinter Vorhänge bzw. ein kleiner, dämmriger Raum (wie bei den Wohnhäusern)
+    b.quad(V(x0, y0, zg), V(x1, y0, zg), V(x1, y1, zg), V(x0, y1, zg), CLEAR_GLASS)
+    import random
+    rnd = random.Random(int(abs(x) * 100 + y0 * 1000 + z * 10))
+    kind = rnd.choice(["nets", "nets", "closed", "blind"]) if curtains else "dim"
+    H.backdrop(b, kind, x0 + 0.04, x1 - 0.04, y0 + 0.04, y1 - 0.04, zg, (x0 - 0.12, x1 + 0.12, y0 - 0.5, y1 + 0.3, 0.6), rnd)
     f = 0.055
     zf0, zf1 = zg - 0.01, zg + 0.06
     b.box((x0, y0, zf0), (x0 + f, y1, zf1), WHITE, skip=("back",))

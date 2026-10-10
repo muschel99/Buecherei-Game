@@ -101,6 +101,8 @@ class Builder:
         # dem Haus): landen als eigener Knoten "…-colonly" in der .glb – Godot macht daraus
         # eine unsichtbare Kollision
         self.colliders = []
+        # Schräge Kollisionen (z. B. Rampe über Stufen): Listen von Dreiecken
+        self.ramps = []
         self.xf = Matrix.Identity(4)
         self._stack = []
 
@@ -149,6 +151,29 @@ class Builder:
         else:
             normals = [n] * len(pts)
         self.faces.append({"pts": pts, "normals": normals, "n": n, "mat": mat, "uvs": uvs})
+
+    def face(self, pts, mat, outward):
+        """Ebenes Vieleck (auch konkav), dessen Vorderseite in Richtung outward zeigt –
+        die Reihenfolge der Punkte ist egal."""
+        pts = [Vector(p) for p in pts]
+        n = Vector((0, 0, 0))
+        for i, a in enumerate(pts):
+            b2 = pts[(i + 1) % len(pts)]
+            n += Vector(((a.y - b2.y) * (a.z + b2.z), (a.z - b2.z) * (a.x + b2.x), (a.x - b2.x) * (a.y + b2.y)))
+        if n.dot(Vector(outward)) < 0:
+            pts.reverse()
+        for tri in triangulate(pts):
+            self.poly(tri, mat)
+
+    def ramp(self, x0, x1, z_low, z_high, height):
+        """Unsichtbare Rampe als Kollision (über Stufen gehen statt hängen bleiben): steigt von
+        z_low (Höhe 0) bis z_high (Höhe height), zwischen x0 und x1."""
+        a, b2 = Vector((x0, 0, z_low)), Vector((x1, 0, z_low))
+        c, d = Vector((x1, height, z_high)), Vector((x0, height, z_high))
+        e, f = Vector((x0, 0, z_high)), Vector((x1, 0, z_high))
+        m = self.xf
+        tris = [(a, b2, c), (a, c, d), (d, e, a), (b2, f, c), (d, c, f), (d, f, e)]
+        self.ramps.append([[m @ p for p in t] for t in tris])
 
     def quad(self, a, b, c, d, mat):
         self.poly([a, b, c, d], mat)
@@ -651,6 +676,19 @@ def write_glb(builder, path):
         acc = add(bytes(pos), 5126, count, "VEC3", minmax=([x0, y0, z0], [x1, y1, z1]))
         meshes.append({"name": "Prop%d" % number, "primitives": [{"attributes": {"POSITION": acc}}]})
         nodes.append({"name": "Prop%d-colonly" % number, "mesh": len(meshes) - 1})
+    for number, ramp_tris in enumerate(builder.ramps, start=1):
+        pos = bytearray()
+        lo = [1e9] * 3
+        hi = [-1e9] * 3
+        for t in ramp_tris:
+            for p in t:
+                pos += struct.pack("<3f", p.x, p.y, p.z)
+                for i in range(3):
+                    lo[i] = min(lo[i], p[i])
+                    hi[i] = max(hi[i], p[i])
+        acc = add(bytes(pos), 5126, len(ramp_tris) * 3, "VEC3", minmax=(lo, hi))
+        meshes.append({"name": "Ramp%d" % number, "primitives": [{"attributes": {"POSITION": acc}}]})
+        nodes.append({"name": "Ramp%d-colonly" % number, "mesh": len(meshes) - 1})
     while len(chunks) % 4:
         chunks += b"\0"
     doc = {

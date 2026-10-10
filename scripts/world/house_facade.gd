@@ -121,6 +121,12 @@ enum GroundFloor {
 	set(value):
 		accent_color = value
 		_apply_colors()
+## Eigenes Modell nur für dieses eine Haus (seit Etappe 4g, Teil 2b; gesetzt von
+## tools/blender/build_street.py). Leer = das Modell des Haustyps ("Model").
+@export var unique_model: PackedScene:
+	set(value):
+		unique_model = value
+		_queue_rebuild()
 ## Wandmaterial bei Stil-Modellen (Backstein, Sandstein, Putz, Rauputz); "Auto" wählt nach der
 ## Wandfarbe, "As Built" lässt es so, wie das Modell gebaut ist.
 @export var wall_material: WallMaterial = WallMaterial.AUTO:
@@ -172,6 +178,7 @@ static var _mesh_cache := {}
 var _rebuild_queued := false
 var _placeholder: MeshInstance3D
 var _body: StaticBody3D
+var _unique: Node3D
 
 
 func _ready() -> void:
@@ -205,21 +212,37 @@ func _queue_rebuild() -> void:
 ## Baut Platzhalter und Kollision (neu).
 func _rebuild() -> void:
 	_rebuild_queued = false
-	for old: Node in [_placeholder, _body]:
+	for old: Node in [_placeholder, _body, _unique]:
 		if old:
 			remove_child(old)
 			old.queue_free()
 	_placeholder = null
 	_body = null
+	_unique = null
 	_build_collision()
 	var model := get_node_or_null("Model")
+	if unique_model:
+		# Eigenes Modell dieses Hauses: das Modell des Haustyps nur verstecken (es gehört zur
+		# Typ-Szene), seine Kollisionen im Spiel entfernen
+		if model:
+			model.visible = false
+			if not Engine.is_editor_hint():
+				for body in model.find_children("*", "StaticBody3D", true, false):
+					body.queue_free()
+		_unique = unique_model.instantiate()
+		_unique.name = "UniqueModel"
+		add_child(_unique)
+		model = _unique
+	elif model:
+		model.visible = true
 	if model == null or model.is_queued_for_deletion():
 		_placeholder = MeshInstance3D.new()
 		_placeholder.name = "Placeholder"
 		_placeholder.mesh = _get_mesh()
 		add_child(_placeholder)
 	elif not Engine.is_editor_hint():
-		model = _use_side_window_variant(model)
+		if model != _unique:
+			model = _use_side_window_variant(model)
 		for body: StaticBody3D in model.find_children("*", "StaticBody3D", true, false):
 			if solid:
 				_add_street_obstacle(body)
@@ -273,7 +296,7 @@ func _apply_colors() -> void:
 	var targets: Array[Node] = []
 	if _placeholder:
 		targets.append(_placeholder)
-	var model := get_node_or_null("Model")
+	var model: Node = _unique if _unique else get_node_or_null("Model")
 	if model and not model.is_queued_for_deletion():
 		targets.append_array(model.find_children("*", "GeometryInstance3D", true, false))
 	var layer := _wall_layer()

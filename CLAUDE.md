@@ -322,7 +322,15 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `wall_layer` eine andere Ebene (Shader rechnet die Texturkoordinaten über `tile_layers` um).
   Ändern sich Ebenen in layers.json, die Listen in `house_style.tres` (roughness/metallic/
   tile_layers) mit anpassen. Seitenfenster bei Modellen: Variante `<typ>_side_left/right/both.glb`
-  (HouseFacade tauscht sie zur Laufzeit ein).
+  (HouseFacade tauscht sie zur Laufzeit ein). **Seit Teil 2b jedes Wohnhaus einzeln:**
+  `tools/blender/build_street.py` liest houses.tscn, baut je Reihenhaus/Wohnhaus ein Modell aus
+  einer Beschreibung (`street_houses.build_house(spec)`; feste Wünsche in `SPECIAL`, sonst
+  Zufall mit Samen aus dem Hausnamen) und trägt `unique_model`, Farben und
+  `wall_material = AS_BUILT` in houses.tscn ein (HouseFacade versteckt dann das Typ-Modell,
+  Knoten "UniqueModel"). Fensterrahmen + Tür = Rolle door, Läden/Blumenkästen = accent;
+  kein reines Weiß (Creme). Hinter jedem Glas immer etwas (`street_houses.backdrop`); Räume
+  (Wohnzimmer/Küche) nur vereinzelt. Stufen vor Türen mit `Builder.ramp` (Kollision zum
+  Darüberlaufen), feste Teile vor dem Haus als `colliders`.
   **Schilder = Bilder der Entwicklerin:** Schild-Flächen mit `Mat(..., sign="name")` und
   `poly(..., uvs=…)` (0..1) → glb-Material `sign_<name>` → `assets/materials/signs/<typ>_<name>.tres`
   → Bild `assets/textures/signs/<typ>_<name>.png`. Startbild aus der Gestaltung in

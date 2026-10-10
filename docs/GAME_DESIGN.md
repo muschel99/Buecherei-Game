@@ -751,7 +751,16 @@ Zwei Zustände:
   beiden Eckhäuser mit abgeschrägter Ecke). Gleiche Häuser nutzen dieselbe Szene und damit dasselbe Mesh,
   nur die Farben unterscheiden sich je Haus. Liegt in einer Typ-Szene ein eigenes Modell
   („Model“), ersetzt es den Platzhalter in allen Häusern dieses Typs; die Kollision bleibt.
-  Seit Etappe 4g sind die Reihenhäuser und das Wohnhaus Stil-Modelle: Schiebefenster mit
+  Seit Etappe 4g (Teil 2b) hat **jedes Wohnhaus sein eigenes Modell**, keins gleicht dem
+  anderen: zwei oder drei Geschosse, Satteldach, Giebel zur Straße, Mansarddach oder Brüstung
+  mit Balustrade; Backstein, Sandstein, Putz oder feiner Rauputz, einzelne Fachwerkhäuser mit
+  vorkragendem Obergeschoss und Fensterläden; verschiedene Traufen, Fensterstürze, Eckquader
+  und Gesimse; Fenster in verschiedenen Breiten und Sprossen, mit echtem Glas – dahinter
+  Vorhänge, Gardinen, Rollos und vereinzelt ein Wohnzimmer oder eine Küche, leicht beleuchtet.
+  Fenster und Tür eines Hauses haben dieselbe gedeckte Farbe (Braun, Grau, Grün, Blau). Dazu
+  hier und da zwei kleine Stufen vor der Tür (man läuft weich darüber), ein Erker, ein kleiner
+  Balkon, Efeu, Blumenkästen und ein zurückgesetztes Haus mit Vorgarten und Eisenzaun.
+  Vorher (Teil 2) waren die Reihenhäuser Stil-Modelle je Haustyp: Schiebefenster mit
   Steinstürzen, Haustüren mit Oberlicht und Messingklopfer, Blumenkästen, einzelne Häuser mit
   Erker, georgianischer Brüstung, Gaube oder (das Wohnhaus) einem Vordach auf Säulen; rote
   und braune Häuser sind aus Backstein, helle verputzt oder mit Rauputz – so wirkt die Straße

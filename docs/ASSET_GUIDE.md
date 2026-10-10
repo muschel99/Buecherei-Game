@@ -433,6 +433,19 @@ So geht's:
 - Etwas glänzender oder matter: das Material in `assets/materials/signs/` anklicken, im
   Inspektor **Roughness** (0 = glänzend, 1 = matt).
 
+### Jedes Haus einzeln (seit Etappe 4g, Teil 2b)
+Jedes Reihenhaus und das Wohnhaus hat ein **eigenes Modell**:
+`assets/models/houses/street/<Gruppe>_<Name>.glb` (z. B. `Opposite_Opposite1_3.glb`). In
+`houses.tscn` steht es beim Haus unter **Dieses Haus → Unique Model** (leer = Modell des
+Haustyps). Die ganze Straße zum Anschauen in Blender: `assets/models/source/street.blend`.
+- Gebaut werden sie mit `blender -b --factory-startup --python tools/blender/build_street.py`.
+  Welche Häuser etwas Besonderes haben (Fachwerk, Vorgarten, Balkon …), steht oben im Script
+  unter `SPECIAL`; alle anderen mischt der Zufall – bei jedem Bau gleich.
+- **Farben** stehen weiter je Haus in `houses.tscn`: Wall Color (Wand), Door Color (Fenster
+  und Tür), Accent Color (Läden, Blumenkästen). Das Wandmaterial ist „As Built“ (wie gebaut).
+- Achtung: Stellst du die Häuser neu auf (`generate_houses.tscn`), danach `build_street.py`
+  noch einmal laufen lassen – sonst zeigen die Häuser wieder ihr Typ-Modell.
+
 ### Wandmaterial je Haus (seit Etappe 4g)
 Bei den Stil-Häusern wählst du für jedes Haus in `houses.tscn` im Inspektor unter
 **Dieses Haus → Wall Material**: *Auto* (Standard: rote und braune Wandfarben werden

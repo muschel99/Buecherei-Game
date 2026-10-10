@@ -501,17 +501,18 @@ func _boards() -> Layer:
 	return layer
 
 
-## Rauputz (Kieselputz), einfärbbar.
+## Rauputz (feiner Kratzputz), einfärbbar.
 func _roughcast() -> Layer:
 	var layer := Layer.new()
-	var fine := _field(160, 2, 131)
-	var grit := _field(64, 2, 132)
+	# Feines Korn (wenige Millimeter) statt grober Kiesel – ruhig, nur von nah als Putz erkennbar
+	var fine := _field(256, 2, 131)
+	var grit := _field(128, 2, 132)
 	var mottle := _field(6, 3, 133)
 	for i in SIZE * SIZE:
-		var bump := smoothstep(0.45, 0.8, grit[i]) * 0.6 + fine[i] * 0.4
-		var tone := (0.85 + 0.15 * bump) * (0.92 + 0.1 * mottle[i])
+		var bump := smoothstep(0.5, 0.85, grit[i]) * 0.5 + fine[i] * 0.5
+		var tone := (0.93 + 0.07 * bump) * (0.94 + 0.08 * mottle[i])
 		layer.set_px(i, Color(tone, tone, tone, 1.0), bump)
-	layer.normal_strength = 2.5
+	layer.normal_strength = 1.0
 	return layer
 
 

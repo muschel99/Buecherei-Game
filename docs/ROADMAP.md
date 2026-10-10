@@ -648,6 +648,14 @@ ist austauschbar.
       mit Stürzen, Haustür mit Oberlicht, Erker, georgianische Brüstung, Gaube, Vordach mit
       Säulen, Blumenkästen, Töpfe); Wandmaterial je Haus (Auto: rot/braun = Backstein, hell =
       Putz, jedes dritte Rauputz); Seitenfenster-Variante für Endhäuser
+- [x] Teil 2b – Jedes Wohnhaus einzeln (Rückmeldung): eigenes Modell je Haus
+      (`tools/blender/build_street.py`, Baukasten `street_houses.py`): verschiedene Höhen,
+      Dachformen (Satteldach, Giebel zur Straße, Mansarddach, Brüstung mit Balustrade),
+      Fachwerk (auch vorkragend, mit Läden), Traufen, Stürze, Eckquader, Gesimse, Fensterbreiten
+      und Sprossen; echtes Glas mit Vorhängen, Gardinen, Rollos und vereinzelt Wohnzimmer/Küche;
+      Fenster und Tür je Haus in Braun, Grau, Grün oder Blau; Sockel nicht mehr vor der Tür;
+      Stufen mit Rampe, Erker, Balkone, Vorgarten mit Eisenzaun, Efeu; feinerer Rauputz;
+      Schaufenster-Gucker meiden Kübel und Stufen
 - [ ] Teil 3 – Pub, Eckhäuser, Torhaus
 - [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
       Gassenende, Straße mit Kopfsteinpflaster
