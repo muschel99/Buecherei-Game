@@ -10,20 +10,19 @@ extends RefCounted
 ## - Gegenüber: Reihenhäuser über das gerade Mittelstück, das besondere Haus
 ##   (GameConfig.opposite_feature_house) möglichst genau gegenüber der Ladentür.
 ## - Gerades Ende (Gruppe StraightEnd): innen in der runden 90°-Kurve ein Eckhaus mit
-##   abgeschrägter Ecke (GameConfig.straight_corner_house), außen Häuser, die der Kurve folgen,
-##   die Seitenstraße entlang und quer an ihrem Ende. Fest bis zur Grenze, dahinter Kulisse.
+##   abgeschrägter Ecke (GameConfig.straight_corner_house), außen Häuser, die der Kurve folgen
+##   und ein Stück in die Seitenstraße. Fest bis zur Grenze, dahinter Kulisse.
 ## - Abbiegendes Ende (Gruppe GateStreet): innen in der sanften Kurve ein Eckhaus
 ##   (GameConfig.gate_corner_house), außen Häuser entlang der Kurve, beide Straßenseiten bis
 ##   zum Torhaus (alles fest, man kommt bis an den Bogen), dahinter die Kulisse entlang der
 ##   Kurve hinter dem Bogen.
+## Häuser, die man von keiner erreichbaren Stelle aus sieht, werden nicht gebaut (seit 4f;
+## prüfen mit tools/plan_check.py unseen).
 ## Jede Reihe wird lückenlos mit Reihenhaus-Typen gefüllt. Weil die Typen feste Breiten haben,
 ## überlappen sich Nachbarn dabei um wenige Zentimeter (unsichtbar); jedes zweite Haus steht
 ## 4 mm zurück, damit sich keine Flächen genau überdecken (kein Flimmern).
 
 const STAGGER := 0.004
-## So weit über die Straßenränder hinaus reichen die Häuser quer am Ende eines Straßenendes,
-## damit man nirgends ins Leere schaut.
-const CLOSURE_BEHIND := 6.0
 
 ## Wandfarben (der Reihe nach): Backstein und Putz in hellen Tönen
 const STREET_COLORS: Array[Color] = [
@@ -74,13 +73,26 @@ static func _library_row(houses: Array[Dictionary]) -> void:
 
 
 ## Gegenüber: Reihenhäuser (Vorderseite +Z) über das gerade Mittelstück, das besondere Haus
-## vor der Ladentür.
+## vor der Ladentür; seit Etappe 4f unterbrochen von einer kleinen Gasse.
 static func _opposite_row(houses: Array[Dictionary]) -> void:
 	var ends := [_opposite_row_end(-1), _opposite_row_end(1)]
 	var row := Vector2(minf(ends[0], ends[1]), maxf(ends[0], ends[1]))
+	var parts: Array[Vector2] = [row]
+	var alley := StreetLayout.opposite_alley()
+	if alley != Vector2.ZERO and alley.x > row.x and alley.y < row.y:
+		parts = [Vector2(row.x, alley.x), Vector2(alley.y, row.y)]
+	var door_x := StreetLayout.door_center().x
+	for i in parts.size():
+		var part := parts[i]
+		var feature := GameConfig.opposite_feature_house if door_x > part.x and door_x < part.y else ""
+		_opposite_part(houses, part, feature, i)
+
+
+## Ein Stück der Reihe gegenüber (von – bis x), auf Wunsch mit dem besonderen Haus darin.
+static func _opposite_part(houses: Array[Dictionary], part: Vector2, feature: String, index: int) -> void:
 	var z := StreetLayout.opposite_front_z()
-	var feature := GameConfig.opposite_feature_house
-	var types := _choose(row.y - row.x - (HouseTypes.width_of(feature) if feature != "" else 0.0), 11)
+	var length := part.y - part.x
+	var types := _choose(length - (HouseTypes.width_of(feature) if feature != "" else 0.0), 11 + index * 5)
 	if feature != "":
 		# An die Stelle, an der es der Ladentür am nächsten steht
 		var best := 0
@@ -88,14 +100,15 @@ static func _opposite_row(houses: Array[Dictionary]) -> void:
 		for slot in types.size() + 1:
 			var trial := types.duplicate()
 			trial.insert(slot, feature)
-			var centers := _centers(trial, row.y - row.x)
-			var distance := absf(row.x + centers[slot] - StreetLayout.door_center().x)
+			var centers := _centers(trial, length)
+			var distance := absf(part.x + centers[slot] - StreetLayout.door_center().x)
 			if distance < best_distance:
 				best_distance = distance
 				best = slot
 		types.insert(best, feature)
 	var start := houses.size()
-	_place(houses, "Opposite", "Opposite", types, Vector2(row.x, z), Vector2(row.y, z), 0.0, STREET_COLORS, 0)
+	_place(houses, "Opposite", "Opposite%d_" % (index + 1), types, Vector2(part.x, z), Vector2(part.y, z), 0.0,
+		STREET_COLORS, index * 2)
 	for i in range(start, houses.size()):
 		var house := houses[i]
 		var half := HouseTypes.width_of(house.type) / 2.0
@@ -111,13 +124,10 @@ static func _opposite_row_end(side: int) -> float:
 
 
 ## Gerades Ende: Bücherei-Seite bis zum Eckhaus (fest bis zur Grenze), Eckhaus innen in der
-## Kurve, Seitenstraße innen, außen die Häuser entlang der Kurve, quer am Ende.
+## Kurve, außen die Häuser entlang der Kurve.
 static func _straight_end(houses: Array[Dictionary], side: int) -> void:
 	var group := "StraightEnd"
 	var path := StreetLayout.end_path(side)
-	var last: Dictionary = path.back()
-	var dir: Vector2 = last.dir
-	var lib := StreetLayout.library_facade_offset()
 	var opp := StreetLayout.opposite_facade_offset()
 	var corner := _corner_placement(side)
 	var start := houses.size()
@@ -128,16 +138,13 @@ static func _straight_end(houses: Array[Dictionary], side: int) -> void:
 		houses[i].solid = _reachable(houses[i].position.x - half, houses[i].position.x + half)
 	_expose_gable(houses, start, side)
 	_add_corner(houses, group, corner, false)
-	# Innen die Seitenstraße entlang (bis knapp in die Häuser quer am Ende)
-	var inner_end := StreetLayout.end_offset(last, lib, side) + dir * 0.6
-	_fill(houses, group, "Inner", corner.side_end, inner_end, _facing(-_library_normal(dir, side)), FAR_COLORS, 1, false)
-	# Außen: Häuser folgen der Kurve
+	# Außen: Häuser folgen der Kurve in die Seitenstraße. Innen in der Seitenstraße und quer an
+	# ihrem Ende stehen bewusst keine Häuser – die sieht man von nirgends (geprüft mit
+	# tools/plan_check.py unseen); die Seitenstraße ist nur so lang, wie man hineinsieht.
 	var outer := PackedVector2Array()
 	for point in path:
 		outer.append(StreetLayout.end_offset(point, -opp, side))
-	outer.append(outer[outer.size() - 1] + dir * 0.6)
 	_fill_curve(houses, group, "Outer", outer, path, FAR_COLORS, 0, false)
-	_add_closure(houses, group, last, side, lib, opp)
 
 
 ## Abbiegendes Ende: Eckhaus innen in der sanften Kurve, beide Straßenseiten bis zum Torhaus
@@ -177,24 +184,16 @@ static func _gate_end(houses: Array[Dictionary], side: int) -> void:
 	for point in path:
 		if point.s >= back_s - 0.001:
 			behind.append(point)
-	var last: Dictionary = path.back()
 	var offset := StreetLayout.gate_facade_offset()
-	for edge in [[-1.0, "Outer", 1], [1.0, "Inner", 2]]:
+	# Die Kurve hinter dem Bogen biegt zur Seite gegenüber ab: dort ist ihre Innenseite – die
+	# Häuser innen reichen nur bis zum Ende der Kurve, außen bis zum Ende der Straße. Quer am Ende
+	# stehen keine Häuser: So weit sieht man durch den Bogen nicht.
+	for edge in [[-1.0, "BehindInner", 1, false], [1.0, "BehindOuter", 2, true]]:
 		var line := PackedVector2Array()
 		for point in behind:
-			line.append(StreetLayout.end_offset(point, edge[0] * offset, side))
-		line.append(line[line.size() - 1] + (last.dir as Vector2) * 0.6)
+			if edge[3] or point.part == "behind":
+				line.append(StreetLayout.end_offset(point, edge[0] * offset, side))
 		_fill_curve(houses, group, edge[1], line, behind, FAR_COLORS, edge[2], false)
-	_add_closure(houses, group, last, side, offset, offset)
-
-
-## Quer am Ende eines Weges: Häuser von gegenüber bis zur Bücherei-Seite, je CLOSURE_BEHIND
-## über die Straßenränder hinaus, Vorderseite zurück zur Straße.
-static func _add_closure(houses: Array[Dictionary], group: String, last: Dictionary, side: int, lib: float, opp: float) -> void:
-	var dir: Vector2 = last.dir
-	var a := StreetLayout.end_offset(last, -opp - CLOSURE_BEHIND, side) + dir * 0.4
-	var b := StreetLayout.end_offset(last, lib + CLOSURE_BEHIND, side) + dir * 0.4
-	_fill(houses, group, "End", a, b, _facing(-dir), FAR_COLORS, 0, false)
 
 
 ## Hinter der Gasse stehen die festen Nachbarn zurückversetzt; das erste Haus danach steht wieder

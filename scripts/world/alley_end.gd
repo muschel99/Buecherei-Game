@@ -8,6 +8,8 @@ extends Node3D
 ## Vorderseite zeigt in die Gasse (-Z). Eigenes Modell: Kind-Knoten "Model" anlegen – dann
 ## baut das Script keinen Platzhalter (die Kollision der Mauer bleibt).
 
+## Breite der Gasse (0 = GameConfig.alley_width, die Gasse neben der Bücherei).
+@export var width: float = 0.0
 @export var wall_height: float = 2.6
 @export var wall_color: Color = Color(0.5, 0.3, 0.24)
 @export var gate_color: Color = Color(0.32, 0.22, 0.15)
@@ -22,7 +24,8 @@ const GATE_HEIGHT := 2.0
 
 
 func _ready() -> void:
-	var half := GameConfig.alley_width / 2.0 + THICKNESS
+	var alley_width := width if width > 0.0 else GameConfig.alley_width
+	var half := alley_width / 2.0 + THICKNESS
 	var body := StaticBody3D.new()
 	body.name = "Body"
 	body.collision_layer = 1  # Ebene "world"
@@ -54,7 +57,7 @@ func _ready() -> void:
 		house.name = "HouseBehind"
 		house.position = Vector3(0.0, 0.0, 3.0)
 		house.rotation.y = PI  # Vorderseite zur Gasse
-		house.width = GameConfig.alley_width + 6.0
+		house.width = alley_width + 6.0
 		house.depth = 6.0
 		house.eaves_height = 6.4
 		house.wall_color = Color(0.74, 0.7, 0.62)

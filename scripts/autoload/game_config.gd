@@ -157,7 +157,7 @@ var straight_bound_offset: float = 6.0
 ## Ende der Seitenstraße bleibt immer verdeckt).
 var straight_street_length: float = 8.0
 var straight_curve_radius: float = 8.0
-var straight_side_street_length: float = 14.0
+var straight_side_street_length: float = 8.0
 var straight_corner_house: String = "corner_90"
 ## Am abbiegenden Ende (seit Etappe 4f): Die Straße läuft geradeaus weiter und macht
 ## gate_bend_offset Meter hinter den festen Nachbarhäusern eine sanfte Kurve (Winkel in Grad,
@@ -168,7 +168,7 @@ var straight_corner_house: String = "corner_90"
 var gate_bend_offset: float = 9.5
 var gate_bend_angle: float = 30.0
 var gate_bend_radius: float = 12.0
-var gate_approach_length: float = 14.0
+var gate_approach_length: float = 4.0
 var gate_corner_house: String = "corner_30"
 ## Torhaus am abbiegenden Ende: Haustyp (Szene scenes/world/houses/<id>.tscn, Breite und
 ## Bogen siehe dort). Hinter dem Bogen läuft die Straße noch so viele Meter geradeaus, biegt
@@ -185,6 +185,12 @@ var gate_sidewalk_width: float = 1.6
 ## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
 var alley_width: float = 2.8
 var alley_depth: float = 11.0
+## Kleine Gasse in der Häuserreihe gegenüber (seit Etappe 4f), damit die lange Front nicht so
+## einheitlich wirkt: Mitte (x, 0 = Mitte der Bücherei, + = Richtung gerades Straßenende),
+## Breite und Tiefe (8 m = bis zur Rückseite der Häuser; dort Mauer mit Tor). Breite 0 = keine.
+var opposite_alley_x: float = 4.2
+var opposite_alley_width: float = 1.8
+var opposite_alley_depth: float = 8.0
 
 ## Häuser (seit Etappe 4e): Jedes Haus ist ein Haustyp = eine Szene mit festen Maßen in
 ## scenes/world/houses/<id>.tscn (z. B. "terrace_50", "pub"). Die Häuser selbst stehen fest in

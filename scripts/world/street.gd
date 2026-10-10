@@ -103,7 +103,7 @@ func _walk_outer(part: String, edge: float) -> float:
 	match part:
 		"passage":
 			return StreetLayout.gate_passage_width() / 2.0
-		"behind":
+		"behind", "behind_end":
 			return StreetLayout.gate_facade_offset() + WALK_EXTRA
 	var facade := StreetLayout.library_facade_offset() if edge > 0.0 else StreetLayout.opposite_facade_offset()
 	var radius := INF
@@ -131,7 +131,7 @@ func _rect(builder: WorldMesh, x0: float, x1: float, z0: float, z1: float, y: fl
 
 
 ## Ein großer, flacher Boden für alles, wo man draußen hinkommt (Straße bis zur Grenze und bis
-## zum Torhaus, Gehwege, Platz, Gasse).
+## zum Torhaus, Gehwege, Platz, beide Gassen).
 func _build_ground_collision() -> void:
 	var points := PackedVector2Array([
 		Vector2(StreetLayout.straight_bound_x(), StreetLayout.opposite_front_z()),
@@ -139,6 +139,9 @@ func _build_ground_collision() -> void:
 		Vector2(StreetLayout.alley_far_x(), StreetLayout.alley_end_z()),
 		Vector2(StreetLayout.HOUSE_RIGHT, StreetLayout.alley_end_z()),
 	])
+	var alley := StreetLayout.opposite_alley()
+	if alley != Vector2.ZERO:
+		points.append(Vector2(alley.x, StreetLayout.opposite_alley_end_z()))
 	var side := StreetLayout.turning_side()
 	for point in StreetLayout.end_path(side):
 		if point.part in ["bend", "approach", "passage"]:
@@ -218,7 +221,7 @@ func _build_traffic_points() -> void:
 		var last: Dictionary = StreetLayout.end_path(side).back()
 		var near := half + GameConfig.sidewalk_width / 2.0
 		var far := half + GameConfig.opposite_sidewalk_width / 2.0
-		if last.part == "behind":
+		if last.part in ["behind", "behind_end"]:
 			near = half + GameConfig.gate_sidewalk_width / 2.0
 			far = near
 		# Auto in der Mitte, Rad am Rand gegenüber, Fußgänger auf beiden Gehwegen
