@@ -283,11 +283,19 @@ func _add_street_obstacle(body: StaticBody3D) -> void:
 		bounds.position = faces[0]
 		for point in faces:
 			bounds = bounds.expand(point)
-		var obstacle := StreetObstacle.new()
-		obstacle.name = "StreetObstacle"
-		obstacle.radius = maxf(bounds.size.x, bounds.size.z) / 2.0
-		shape_node.add_child(obstacle)
-		obstacle.position = bounds.get_center() * Vector3(1.0, 0.0, 1.0)
+		# Lange Teile (Zaun, Fahrrad, Blumentreppe) als Reihe kleiner Kreise – ein einziger
+		# großer Kreis würde den ganzen Gehweg sperren
+		var long_side := maxf(bounds.size.x, bounds.size.z)
+		var short_side := maxf(minf(bounds.size.x, bounds.size.z), 0.2)
+		var count := maxi(1, ceili(long_side / short_side))
+		var along := Vector3(1.0, 0.0, 0.0) if bounds.size.x >= bounds.size.z else Vector3(0.0, 0.0, 1.0)
+		for k in count:
+			var obstacle := StreetObstacle.new()
+			obstacle.name = "StreetObstacle"
+			obstacle.radius = short_side / 2.0 if count > 1 else long_side / 2.0
+			shape_node.add_child(obstacle)
+			var offset := (float(k) + 0.5) / count - 0.5
+			obstacle.position = (bounds.get_center() + along * offset * long_side) * Vector3(1.0, 0.0, 1.0)
 
 
 ## Farben und Schatten an den Platzhalter bzw. das eigene Modell geben (kostet nichts extra:

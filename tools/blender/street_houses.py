@@ -84,7 +84,7 @@ def sash(b, x, y0, w, h, reveal, panes, frame=JOINERY, z=0.0):
     return zg
 
 
-def backdrop(b, kind, x0, x1, y0, y1, zg, room, rnd):
+def backdrop(b, kind, x0, x1, y0, y1, zg, room, rnd, floor=0):
     """Was hinter dem Glas ist. room = (rx0, rx1, floor_y, ceil_y, depth) – Platz für einen Raum.
     kind: closed (Vorhang zu), nets (Gardine unten, Raum dahinter), blind (Rollo halb unten),
     dim (nur Seitenvorhänge, dämmriger Raum), living (Wohnzimmer), kitchen (Küche)."""
@@ -98,7 +98,8 @@ def backdrop(b, kind, x0, x1, y0, y1, zg, room, rnd):
     if kind in ("living", "kitchen"):
         (_living_room if kind == "living" else _kitchen)(b, rx0, rx1, fy, cy, z - 0.01, depth, rnd)
     else:
-        _shallow_room(b, rx0, rx1, max(fy, y0 - 0.3), min(cy, y1 + 0.3), z - 0.01, 0.7, rnd, glow=0.05 if kind == "dim" else 0.12)
+        _shallow_room(b, rx0, rx1, max(fy, y0 - 0.3), min(cy, y1 + 0.3), z - 0.01, 0.7, rnd, glow=0.05 if kind == "dim" else 0.12,
+                      floor=floor)
     # Seitenvorhänge
     cw = w * rnd.uniform(0.16, 0.24)
     for a0, a1 in ((x0, x0 + cw), (x1 - cw, x1)):
@@ -133,18 +134,71 @@ def _room_shell(b, rx0, rx1, fy, cy, z, depth, wall_color, glow):
             "right": Mat("render", color=wall_color, glow=glow)})
 
 
-def _shallow_room(b, rx0, rx1, fy, cy, z, depth, rnd, glow=0.12):
-    """Kleiner, dämmriger Raum hinter Gardine/Rollo: Wand, Bild, Lampenschirm."""
+def _shallow_room(b, rx0, rx1, fy, cy, z, depth, rnd, glow=0.12, floor=0):
+    """Kleiner Raum hinter Gardine/Rollo. Was man an der Wand sieht, wechselt: Bild, Regal,
+    Uhr, Spiegel, Pflanze, Lampe – oder nichts. Oben (von der Straße aus) oft nur die Decke
+    mit einer Lampe."""
     color = rnd.choice(ROOM_WALLS)
     _room_shell(b, rx0, rx1, fy, cy, z, depth, color, glow)
-    cx = (rx0 + rx1) / 2 + rnd.uniform(-0.2, 0.2)
+    cx = (rx0 + rx1) / 2 + rnd.uniform(-0.25, 0.25)
     zb = z - depth + 0.01
+    choices = ["picture", "shelf", "clock", "mirror", "plant", "lamp", "nothing"]
+    weights = [2, 3, 1, 1, 2, 2, 2] if floor == 0 else [1, 1, 1, 0, 1, 1, 2]
+    if floor > 0:
+        choices.append("ceiling")
+        weights.append(5)
+    content = rnd.choices(choices, weights=weights)[0]
     my = fy + (cy - fy) * 0.6
-    b.box((cx - 0.2, my - 0.15, zb), (cx + 0.2, my + 0.15, zb + 0.025), Mat("timber", glow=glow))
-    b.box((cx - 0.16, my - 0.11, zb + 0.025), (cx + 0.16, my + 0.11, zb + 0.03), Mat("plain", color=rnd.choice(CURTAINS), glow=glow))
-    if rnd.random() < 0.6:
+    if content == "picture":
+        pw, ph = rnd.uniform(0.25, 0.45), rnd.uniform(0.2, 0.35)
+        b.box((cx - pw, my - ph, zb), (cx + pw, my + ph, zb + 0.025), Mat("timber", glow=glow))
+        b.box((cx - pw + 0.04, my - ph + 0.04, zb + 0.025), (cx + pw - 0.04, my + ph - 0.04, zb + 0.03), Mat("plain", color=rnd.choice(CURTAINS), glow=glow))
+    elif content == "shelf":
+        for y in (my - 0.3, my + 0.1):
+            b.box((cx - 0.45, y, zb), (cx + 0.45, y + 0.025, zb + 0.22), Mat("timber", glow=glow))
+            x = cx - 0.4
+            while x < cx + 0.35:
+                t = rnd.uniform(0.03, 0.06)
+                hgt = rnd.uniform(0.18, 0.26)
+                if rnd.random() < 0.2:
+                    b.cylinder(V(x + 0.05, y + 0.025, zb + 0.1), 0.05, 0.16, Mat("plain", color=rnd.choice(CURTAINS), glow=glow), segments=8)
+                    x += 0.12
+                else:
+                    b.box((x, y + 0.025, zb + 0.03), (x + t, y + 0.025 + hgt, zb + 0.19), Mat("plain", color=rnd.choice(CURTAINS), glow=glow))
+                    x += t + 0.005
+    elif content == "clock":
+        b.cylinder(V(cx, my, zb), 0.16, 0.03, Mat("timber", glow=glow), segments=16, axis="z", caps=(True, True))
+        b.cylinder(V(cx, my, zb + 0.03), 0.13, 0.008, Mat("plain", color=(0.94, 0.92, 0.86), glow=glow), segments=16, axis="z", caps=(True, True))
+    elif content == "mirror":
+        b.box((cx - 0.25, my - 0.4, zb), (cx + 0.25, my + 0.4, zb + 0.03), GOLD)
+        b.box((cx - 0.21, my - 0.36, zb + 0.03), (cx + 0.21, my + 0.36, zb + 0.035), Mat("plain", color=(0.7, 0.74, 0.76), glow=glow + 0.05))
+    elif content == "plant":
+        b.cylinder(V(cx, fy, z - 0.35), 0.14, 0.32, Mat("terracotta", glow=glow * 0.5), segments=10)
+        b.sphere(V(cx, fy + 0.6, z - 0.35), 0.3, Mat("foliage", color=(0.3, 0.44, 0.22), glow=glow * 0.5), rings=5, segments=10, jitter=0.15, seed=rnd.randrange(999))
+    elif content == "lamp":
         lx = rx0 + 0.25 if rnd.random() < 0.5 else rx1 - 0.25
         b.cylinder(V(lx, fy + 1.0, zb + 0.3), 0.16, 0.22, Mat("plain", color=(1.0, 0.86, 0.62), glow=0.9), segments=10, radius_top=0.1, caps=(True, True))
+    elif content == "ceiling":
+        # Hängelampe und Stuckrosette – mehr sieht man von unten nicht
+        lz = z - depth * 0.5
+        b.cylinder(V(cx, cy - 0.005, lz), 0.18, 0.005, Mat("plain", color=(0.94, 0.92, 0.86), glow=glow), segments=14)
+        b.tube([V(cx, cy, lz), V(cx, cy - 0.4, lz)], 0.006, LEAD, segments=4)
+        b.cylinder(V(cx, cy - 0.55, lz), 0.17, 0.16, Mat("plain", color=rnd.choice(CURTAINS)), segments=12, radius_top=0.08, caps=(True, True))
+        b.sphere(V(cx, cy - 0.56, lz), 0.05, Mat("plain", color=(1.0, 0.88, 0.66), glow=1.0), rings=3, segments=6)
+
+
+def _inner_door(b, x, fy, z0, z1, facing, ceiling_y):
+    """Innentür an einer Seitenwand eines Raums (facing = +1: Wand links, Tür zeigt nach +x)."""
+    h = min(2.05, ceiling_y - fy - 0.15)
+    door = Mat("paint", color=(0.86, 0.84, 0.78), glow=0.1)
+    x_in = x + facing * 0.02
+    lo, hi = sorted((x, x_in))
+    b.box((lo, fy, z0 - 0.08), (hi, fy + h + 0.08, z1 + 0.08), Mat("paint", color=(0.8, 0.78, 0.72), glow=0.1))
+    lo2, hi2 = sorted((x_in, x_in + facing * 0.015))
+    b.box((lo2, fy, z0), (hi2, fy + h, z1), door)
+    for py0, py1 in ((0.25, 0.9), (1.05, h - 0.15)):
+        b.box((lo2 + (0.0 if facing > 0 else -0.008), fy + py0, z0 + 0.1), (hi2 + (0.008 if facing > 0 else 0.0), fy + py1, z1 - 0.1), door)
+    b.sphere(V(x_in + facing * 0.05, fy + 1.0, z1 - 0.12), 0.025, GOLD, rings=3, segments=6)
 
 
 def _living_room(b, rx0, rx1, fy, cy, z, depth, rnd):
@@ -176,6 +230,7 @@ def _living_room(b, rx0, rx1, fy, cy, z, depth, rnd):
             hgt = rnd.uniform(0.22, 0.32)
             b.box((sx + 0.32, y, zz), (sx + 0.35, y + hgt, zz + t), Mat("plain", color=rnd.choice(CURTAINS), glow=0.08))
             zz += t + 0.004
+    _inner_door(b, rx1, fy, zb + 1.3, zb + 2.15, -1, cy)
     b.cylinder(V(rx0 + 0.6, fy, z - 0.45), 0.15, 0.3, Mat("terracotta", glow=0.05), segments=10)
     b.sphere(V(rx0 + 0.6, fy + 0.55, z - 0.45), 0.25, Mat("foliage", color=(0.3, 0.44, 0.22), glow=0.06), rings=5, segments=10, jitter=0.15, seed=rnd.randrange(999))
 
@@ -208,12 +263,15 @@ def _kitchen(b, rx0, rx1, fy, cy, z, depth, rnd):
     b.cylinder(V(lx, cy - 0.85, z - depth * 0.55), 0.22, 0.25, Mat("paint", color=(0.24, 0.3, 0.26), glow=0.05), segments=12, radius_top=0.05, caps=(True, True))
     b.sphere(V(lx, cy - 0.85, z - depth * 0.55), 0.07, Mat("plain", color=(1.0, 0.88, 0.66), glow=1.0), rings=4, segments=8)
     b.box((lx - 0.5, fy, z - depth * 0.6), (lx + 0.5, fy + 0.75, z - depth * 0.6 + 0.7), Mat("timber", glow=0.08), skip=("bottom",))
+    _inner_door(b, rx0, fy, zb + 0.75, zb + 1.6, 1, cy)
 
 
-def window_unit(b, spec, x, y0, w, h, panes, backdrop_kind, room, rnd, reveal=0.13, lintel=None, sill=True, shutters=False):
-    """Ein komplettes Fenster: Rahmen, Glas, Dahinter, Sohlbank, Sturz, Läden."""
+def window_unit(b, spec, x, y0, w, h, panes, backdrop_kind, room, rnd, reveal=0.13, lintel=None, sill=True, shutters=0.0,
+                floor=0):
+    """Ein komplettes Fenster: Rahmen, Glas, Dahinter, Sohlbank, Sturz, Läden.
+    shutters = Platz (m) neben dem Fenster je Seite für Läden (0 = keine)."""
     zg = sash(b, x, y0, w, h, reveal, panes)
-    backdrop(b, backdrop_kind, x - w / 2 + 0.05, x + w / 2 - 0.05, y0 + 0.05, y0 + h - 0.05, zg, room, rnd)
+    backdrop(b, backdrop_kind, x - w / 2 + 0.05, x + w / 2 - 0.05, y0 + 0.05, y0 + h - 0.05, zg, room, rnd, floor)
     lintel = lintel or spec["lintel"]
     x0, x1 = x - w / 2, x + w / 2
     top = y0 + h
@@ -223,9 +281,12 @@ def window_unit(b, spec, x, y0, w, h, panes, backdrop_kind, room, rnd, reveal=0.
         else:
             b.box((x0 - 0.04, y0 - 0.06, 0), (x1 + 0.04, y0, 0.07), JOINERY)
     _lintel(b, lintel, x, x0, x1, top, w, spec)
-    if shutters:
+    # Läden nur, wo daneben genug Platz ist (nicht in Eckquadern, Nachbarfenstern, Türen)
+    start = 0.13 if lintel == "architrave" else 0.02
+    sw = min(w / 2 * 0.95, shutters - start)
+    if sw >= 0.28:
         for side in (-1, 1):
-            sx0, sx1 = sorted((x + side * (w / 2 + 0.02), x + side * (w / 2 + 0.02 + w / 2 * 0.95)))
+            sx0, sx1 = sorted((x + side * (w / 2 + start), x + side * (w / 2 + start + sw)))
             b.box((sx0, y0, 0.0), (sx1, top, 0.035), ACCENT)
             n = int(h / 0.08)
             for k in range(1, n):
@@ -290,6 +351,12 @@ def door_unit(b, spec, x, rnd):
         b.ramp(x - hw - 0.08, x + hw + 0.08, 0.26, 0.0, rise + 0.01)
     else:
         b.box((x - hw, 0, z), (x + hw, 0.12, 0.02), TRIM, skip=("back",))
+    if reveal > 0.13:
+        # Tiefe Türnische (bei zwei Stufen): Laibung bis zur Tür weiterführen
+        wm = wall_mat(spec.get("ground_wall", spec["wall"]))
+        b.face([V(x - hw, 0, -0.13), V(x - hw, top, -0.13), V(x - hw, top, z), V(x - hw, 0, z)], wm, (1, 0, 0))
+        b.face([V(x + hw, 0, -0.13), V(x + hw, top, -0.13), V(x + hw, top, z), V(x + hw, 0, z)], wm, (-1, 0, 0))
+        b.face([V(x - hw, top, -0.13), V(x + hw, top, -0.13), V(x + hw, top, z), V(x - hw, top, z)], wm, (0, -1, 0))
     f = 0.07
     b.box((x - hw, base, z), (x - hw + f, top, z + 0.06), JOINERY)
     b.box((x + hw - f, base, z), (x + hw, top, z + 0.06), JOINERY)
@@ -599,7 +666,8 @@ def roof_and_walls(b, spec):
     W, D, E = spec["width"], spec["depth"], spec["eaves"]
     w = W / 2
     rm = ROOF_MATS[spec["roof_mat"]]
-    side = Mat("brick", color=spec.get("party_color", (0.58, 0.33, 0.25)))
+    # Seiten passend zur Front: gleiches Material wie die oberen Geschosse (früher Backstein)
+    side = wall_mat(spec.get("upper_wall", spec["wall"]))
     if spec["roof"] == "front_gable":
         _front_gable_roof(b, spec, rm, side)
         return
@@ -613,9 +681,8 @@ def roof_and_walls(b, spec):
         b.cylinder(V(-w, ry + 0.02, rz), 0.09, W, RIDGE if spec["roof_mat"] == "clay" else Mat("terracotta", color=(0.55, 0.55, 0.58)), segments=8, caps=(True, True), axis="x")
     for s in (-1, 1):
         x = s * w
-        pts = [V(x, 0, -D), V(x, 0, 0), V(x, E, 0)] + [V(x, y + 0.1, z) for z, y in prof] + [V(x, E, -D)]
-        if s in spec.get("open_sides", ()):
-            pts = [V(x, E, 0)] + [V(x, y + 0.1, z) for z, y in prof] + [V(x, E, -D)]
+        # Giebel über der Traufe (die Wand darunter baut _side_walls, mit Fenstern wo frei)
+        pts = [V(x, E, 0)] + [V(x, y + 0.1, z) for z, y in prof] + [V(x, E, -D)]
         b.face(pts, side, (s, 0, 0))
         xc = s * (w - 0.17)
         for i in range(len(prof) - 1):
@@ -648,10 +715,6 @@ def _front_gable_roof(b, spec, rm, side):
         b.beam(V(s * (w + 0.04), E - 0.2, fz + 0.01), V(0, ry - 0.12, fz + 0.01), 0.05, 0.2, spec.get("barge_mat", TIMBER))
     b.cylinder(V(0, ry + 0.03, bz), 0.08, fz - bz, RIDGE if spec["roof_mat"] == "clay" else Mat("terracotta", color=(0.55, 0.55, 0.58)), segments=8, axis="z", caps=(True, True))
     b.cylinder(V(0, ry - 0.3, fz + 0.04), 0.035, 0.75, TIMBER, segments=6, radius_top=0.012)
-    for s in (-1, 1):
-        x = s * w
-        if s not in spec.get("open_sides", ()):
-            b.face([V(x, 0, -D), V(x, 0, 0), V(x, E, 0), V(x, E, -D)], side, (s, 0, 0))
     b.face([V(w, 0, -D), V(-w, 0, -D), V(-w, E, -D), V(w, E, -D), V(0, ry, -D)], side, (0, 0, -1))
 
 
@@ -790,6 +853,8 @@ def build_house(name, spec):
     wall_ground = wall_mat(spec.get("ground_wall", spec["wall"]))
     wall_upper = wall_mat(spec.get("upper_wall", spec["wall"]))
     rooms_left = spec.get("rooms", 0)
+    shop = spec.get("shop")
+    edge = 0.46 if spec.get("quoins") else 0.1
     # --- Erdgeschoss ---
     cols = spec["columns"]
     door_i = spec["door_col"]
@@ -798,6 +863,8 @@ def build_house(name, spec):
     g_y0, g_h = spec["ground_window"]
     bay_i = spec.get("bay_col", -1)
     for i, (x, ww) in enumerate(cols):
+        if shop:
+            break
         if i == door_i:
             steps = spec.get("steps", 0)
             door_rect = (x - spec.get("door_width", 1.0) / 2, 0.0, x + spec.get("door_width", 1.0) / 2, steps * 0.15 + 2.57)
@@ -806,7 +873,10 @@ def build_house(name, spec):
             holes_g.append((x - 0.9, 0.15, x + 0.9, storeys[0] - 0.55))
         else:
             holes_g.append((x - ww / 2, g_y0, x + ww / 2, g_y0 + g_h))
-    b.wall_with_holes(-w, w, 0.0, ys[1], 0.0, holes_g, wall_ground, reveal=0.13)
+    if shop:
+        shopfront_flowers(b, spec, rnd, ys[1])
+    else:
+        b.wall_with_holes(-w, w, 0.0, ys[1], 0.0, holes_g, wall_ground, reveal=0.13)
     # Sockel – mit Lücke an der Tür (früher lief er davor entlang)
     gaps = sorted([(door_rect[0] - 0.02, door_rect[2] + 0.02)] if door_rect else [])
     if bay_i >= 0:
@@ -814,11 +884,16 @@ def build_house(name, spec):
         gaps.append((x - 1.45, x + 1.45))
         gaps.sort()
     a = -w
-    for g0, g1 in gaps + [(w, w)]:
+    for g0, g1 in (gaps + [(w, w)]) if not shop else []:
         if g0 - a > 0.02:
             b.box((a, 0, 0), (g0, 0.32, 0.035), PLINTH, skip=("back", "bottom"))
         a = max(a, g1)
+    door_pad = 0.27 if spec["door_style"] in ("pilaster", "porch") else 0.1
+    ground_open = [((x - spec.get("door_width", 1.0) / 2 - door_pad, x + spec.get("door_width", 1.0) / 2 + door_pad) if i == door_i else
+                    (x - 1.0, x + 1.0) if i == bay_i else (x - ww / 2, x + ww / 2)) for i, (x, ww) in enumerate(cols)]
     for i, (x, ww) in enumerate(cols):
+        if shop:
+            break
         if i == door_i:
             door_unit(b, spec, x, rnd)
         elif i == bay_i:
@@ -828,7 +903,8 @@ def build_house(name, spec):
         else:
             kind, rooms_left = _pick_backdrop(spec, rnd, rooms_left, 0)
             room = _room_box(cols, i, w, 0.15, storeys[0] - 0.3, kind)
-            window_unit(b, spec, x, g_y0, ww, g_h, spec["panes_ground"], kind, room, rnd, shutters=spec.get("shutters", False))
+            window_unit(b, spec, x, g_y0, ww, g_h, spec["panes_ground"], kind, room, rnd,
+                        shutters=_shutter_space(ground_open, i, w, edge) if spec.get("shutters") else 0.0)
     if spec.get("quoins"):
         quoins(b, w, 0.35, ys[-1] - 0.3)
     # --- Obergeschosse ---
@@ -837,7 +913,9 @@ def build_house(name, spec):
         jetty = spec.get("jetty", 0.0) if spec.get("fachwerk") else 0.0
         b.push(b.move(0, 0, jetty))
         f_y0 = base + spec["upper_sill"]
-        f_h = min(spec["upper_window_h"], topy - f_y0 - 0.45)
+        # Im obersten Geschoss Platz für Sturz und Traufgesims lassen
+        top_floor = fl == len(storeys) - 1 and spec["roof"] != "front_gable"
+        f_h = min(spec["upper_window_h"], topy - f_y0 - (0.8 if top_floor else 0.45))
         holes = []
         french_i = spec.get("balcony_col", -1) if fl == spec.get("balcony_floor", 1) else -1
         for i, (x, ww) in enumerate(spec["upper_columns"]):
@@ -866,9 +944,11 @@ def build_house(name, spec):
                 continue
             kind, rooms_left = _pick_backdrop(spec, rnd, rooms_left, fl)
             room = _room_box(spec["upper_columns"], i, w, base + 0.05, topy - 0.25, kind)
+            upper_open = [(cx - cw / 2, cx + cw / 2) for cx, cw in spec["upper_columns"]]
             window_unit(b, spec, x, f_y0, ww, f_h, spec["panes"], kind, room, rnd,
-                        lintel="timber" if spec.get("fachwerk") else None, shutters=spec.get("shutters", False))
-            if spec.get("flower_boxes") and fl == 1 and rnd.random() < 0.7:
+                        lintel="timber" if spec.get("fachwerk") else None,
+                        shutters=_shutter_space(upper_open, i, w, edge) if spec.get("shutters") else 0.0, floor=fl)
+            if spec.get("flower_boxes") and fl == 1 and (shop or rnd.random() < 0.7):
                 P.flower_box(b, x - ww / 2 - 0.04, x + ww / 2 + 0.04, f_y0 + 0.005, 0.0, 0.19, ACCENT,
                              [rnd.choice(["rose", "white", "coral", "lavender"]), rnd.choice(["white", "rose", "lavender"])], seed=rnd.randrange(999))
         b.pop()
@@ -893,10 +973,13 @@ def build_house(name, spec):
             chimney(b, side * (w - 0.36), -spec["depth"] / 2, top - 0.6, top + rnd.uniform(0.8, 1.2), pots=rnd.randint(1, 4))
     if spec.get("downpipe", True):
         b.cylinder(V((w - 0.1) * spec.get("downpipe_side", 1), 0.0, 0.07), 0.04, E + 0.05, LEAD, segments=8, caps=(True, True))
+    _side_walls(b, spec, rnd, ys)
     if spec.get("ivy"):
         ivy(b, spec["ivy"] * (w - 0.5), 0.0, ys[-1] * 0.85, rnd)
+    if shop:
+        shop_outside_flowers(b, spec, rnd)
     # --- Vor dem Haus ---
-    if door_rect and spec.get("pots"):
+    if door_rect and spec.get("pots") and not shop:
         dx = cols[door_i][0]
         for s in spec["pots"]:
             _door_pot(b, dx + s * (spec.get("door_width", 1.0) / 2 + 0.35 + (0.15 if spec.get("steps") else 0.0)), 0.25, rnd)
@@ -905,9 +988,59 @@ def build_house(name, spec):
         px = cols[door_i][0] if door_rect else 0.0
         front_garden(b, w, setback, px, rnd)
         fence(b, w, 0.12, px - 0.5, px + 0.5)
-    if spec.get("side_windows"):
-        _side_windows(b, spec, rnd)
     return b
+
+
+def _shutter_space(openings, i, w, edge):
+    """Freier Platz neben Öffnung i (kleinster Abstand links/rechts zur nächsten Öffnung bzw.
+    Hauskante, abzüglich Eckquader) – so breit dürfen Läden höchstens sein."""
+    x0, x1 = openings[i]
+    left = x0 - (openings[i - 1][1] if i > 0 else -w + edge)
+    right = (openings[i + 1][0] if i + 1 < len(openings) else w - edge) - x1
+    if i > 0:
+        left /= 2
+    if i + 1 < len(openings):
+        right /= 2
+    return max(0.0, min(left, right) - 0.04)
+
+
+def _side_walls(b, spec, rnd, ys):
+    """Seitenwände bis zur Traufe im Material der Front. Wo die Seite frei sichtbar ist (Gasse,
+    Ende der Reihe), bekommt sie Fenster; wo nur ein Stück vorn frei ist (Nachbar zurück-
+    gesetzt), Efeu statt Fenster (spec["exposed"]: {Seite: ("full",) / ("partial", Länge)})."""
+    W, D = spec["width"], spec["depth"]
+    w = W / 2
+    exposed = spec.get("exposed", {})
+    for s in (-1, 1):
+        info = exposed.get(s)
+        b.push(b.move(s * w, 0, 0) @ b.turn_y(90 * s))
+        lo, hi = sorted((0.0, s * D))
+        for fl in range(len(spec["storeys"])):
+            y0, y1 = ys[fl], ys[fl + 1]
+            mat = wall_mat(spec.get("ground_wall", spec["wall"]) if fl == 0 else spec.get("upper_wall", spec["wall"]))
+            holes = []
+            if info and info[0] == "full":
+                if fl == 0:
+                    wy0, wh = 0.85, min(1.6, y1 - y0 - 1.35)
+                else:
+                    wy0 = y0 + 0.75
+                    wh = min(1.55, y1 - wy0 - (0.8 if fl == len(spec["storeys"]) - 1 else 0.45))
+                u = 1.6
+                while u < D - 1.0:
+                    holes.append((s * u - 0.45, wy0, s * u + 0.45, wy0 + wh))
+                    u += 2.6
+            b.wall_with_holes(lo, hi, y0, y1, 0.0, holes, mat, reveal=0.13)
+            for k, (hx0, hy0, hx1, hy1) in enumerate(holes):
+                kind = rnd.choices(["closed", "nets", "blind", "dim"], weights=[3, 4, 2, 2])[0]
+                room = (hx0 - 0.25, hx1 + 0.25, y0 + 0.05, y1 - 0.25, 0.7)
+                window_unit(b, spec, (hx0 + hx1) / 2, hy0, hx1 - hx0, hy1 - hy0, spec["panes"], kind, room, rnd,
+                            lintel="timber" if spec.get("fachwerk") else None, floor=fl)
+            if spec.get("fachwerk") and fl > 0 and info:
+                timber_frame(b, lo, hi, y0, y1, holes, rnd)
+        if info and info[0] == "partial" and info[1] > 0.4:
+            # Nur vorn ein Stück frei: Efeu statt Fenster
+            ivy(b, s * info[1] / 2, 0.0, ys[-1] * 0.8, rnd, spread=min(0.9, info[1] / 2 - 0.1))
+        b.pop()
 
 
 def _pick_backdrop(spec, rnd, rooms_left, floor):
@@ -988,19 +1121,192 @@ def _mansard_dormer(b, spec, cx, rnd, gw=0.42):
     b.box((cx - gw - 0.06, top, back), (cx + gw + 0.06, top + 0.12, dz + 0.08), LEAD)
 
 
-def _side_windows(b, spec, rnd):
-    """Fenster in einer freien Seitenwand (Endhaus)."""
-    W, D, E = spec["width"], spec["depth"], spec["eaves"]
+# ---------------------------------------------------------------------------------------------
+# Blumenladen (Konzeptbild "flowershop.png"): salbeigrüne Ladenfront, Blumen innen und davor
+# ---------------------------------------------------------------------------------------------
+
+def _bucket(b, x, z, rnd, palette=None, height=0.32, radius=0.13, y=0.0, tall=False, blossoms=12):
+    """Zinkeimer mit einem Strauß (Stiele, Blätter, Blüten)."""
+    b.cylinder(V(x, y, z), radius * 0.85, height, P.ZINC, segments=10, radius_top=radius, caps=(True, False))
+    b.cylinder(V(x, y + height - 0.03, z), radius * 0.95, 0.02, P.SOIL, segments=10)
+    stem_h = 0.35 if not tall else 0.6
+    b.sphere(V(x, y + height + stem_h * 0.4, z), radius * 1.1, P.leaf(rnd.randrange(3)), rings=4, segments=8,
+             squash=1.4 if tall else 0.9, jitter=0.15, seed=rnd.randrange(999))
+    P.blossom_cluster(b, (x, y + height + stem_h * 0.55, z), radius * 1.15, palette or rnd.choice(list(P.BLOSSOMS)), rnd,
+                      count=blossoms if not tall else max(4, blossoms * 3 // 4), size=0.04)
+
+
+def shopfront_flowers(b, spec, rnd, s0):
+    """Ladenfront des Blumenladens: Pilaster und Schild (Bild "fascia"), zwei Schaufenster mit
+    Sprossen-Oberlicht, mittige Glastür; dahinter ein kleiner Laden voller Blumen."""
+    W = spec["width"]
     w = W / 2
-    s = spec["side_windows"]
-    wall = wall_mat(spec["wall"])
-    b.push(b.move(s * (w + 0.002), 0, -D / 2) @ b.turn_y(90 * s))
-    holes = []
-    for y0, h in ((0.8, 1.5), (spec["storeys"][0] + 0.7, 1.45)):
-        for zc in (-D / 4, D / 4):
-            holes.append((zc - 0.45, y0, zc + 0.45, y0 + h))
-    b.wall_with_holes(-D / 2, D / 2, 0.0, E, 0.0, holes, wall, reveal=0.12)
-    for x0, y0, x1, y1 in holes:
-        window_unit(b, spec, (x0 + x1) / 2, y0, x1 - x0, y1 - y0, spec["panes"], rnd.choice(["closed", "nets", "blind"]),
-                    (x0 - 0.2, x1 + 0.2, y0 - 0.6, y1 + 0.3, 0.6), rnd, reveal=0.12, lintel="flat")
+    pil = 0.32
+    fascia_lo, fascia_hi = s0 - 0.45, s0 - 0.02
+    head = fascia_lo - 0.1
+    door_half = 0.55
+    post = 0.1
+    sill = 0.62
+    transom = head - 0.5
+    jz = 0.13
+    # Pilaster mit Kapitell, Schild, Gesims
+    for side in (-1, 1):
+        lo_x, hi_x = sorted((side * w, side * (w - pil)))
+        b.box((lo_x, 0, 0), (hi_x, fascia_hi, 0.15), JOINERY, skip=("back",))
+        b.box((lo_x - 0.02, 0, 0), (hi_x + 0.02, 0.3, 0.18), JOINERY, skip=("back", "bottom"))
+        b.box((lo_x - 0.03, fascia_lo - 0.2, 0), (hi_x + 0.03, fascia_lo, 0.2), JOINERY, skip=("back",))
+    b.box((-w + pil, fascia_lo, 0), (w - pil, fascia_hi, 0.17), JOINERY, skip=("back", "front"))
+    b.poly([V(-w + pil, fascia_lo, 0.17), V(w - pil, fascia_lo, 0.17), V(w - pil, fascia_hi, 0.17), V(-w + pil, fascia_hi, 0.17)],
+           Mat("plain", sign="fascia"), uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
+    b.extrude_x([(0, fascia_hi), (0, s0 + 0.12), (0.28, s0 + 0.12), (0.28, fascia_hi + 0.08), (0.2, fascia_hi + 0.02), (0.17, fascia_hi)],
+                -w - 0.03, w + 0.03, JOINERY)
+    b.box((-w - 0.03, s0 + 0.12, 0), (w + 0.03, s0 + 0.14, 0.29), LEAD, skip=("back",))
+    b.box((-w + pil, head, 0), (w - pil, fascia_lo, jz), JOINERY, skip=("back",))
+    # Innenraum (leicht beleuchtet) – die Innenseite der Front zeigt in den Raum
+    xi = w - 0.12
+    floor_y, ceil_y, zb = 0.1, s0 - 0.25, -4.6
+    shop_floor = Mat("boards", color=(0.6, 0.45, 0.32), glow=0.1)
+    b.room((-xi, floor_y, zb), (xi, ceil_y, -0.03),
+           {"floor": shop_floor, "ceiling": Mat("plain", color=(0.92, 0.9, 0.84), glow=0.16),
+            "back": Mat("render", color=(0.86, 0.88, 0.8), glow=0.16), "left": Mat("render", color=(0.86, 0.88, 0.8), glow=0.16),
+            "right": Mat("render", color=(0.86, 0.88, 0.8), glow=0.16)})
+    windows = []
+    for side in (-1, 1):
+        lo_x, hi_x = sorted((side * (w - pil), side * (door_half + post)))
+        windows.append((lo_x, hi_x))
+    holes = [(lo, sill, hi, head) for lo, hi in windows] + [(-door_half - post, floor_y, door_half + post, transom)]
+    b.push(b.move(0, 0, -0.03) @ b.turn_y(180))
+    b.wall_with_holes(-xi, xi, floor_y, ceil_y, 0.0, [(-h[2], h[1], -h[0], h[3]) for h in holes],
+                      Mat("render", color=(0.86, 0.88, 0.8), glow=0.16), reveal=0.03)
     b.pop()
+    # Schaufenster: Brüstung, Sohlbank, große Scheiben, Oberlicht mit kleinen Scheiben
+    for lo_x, hi_x in windows:
+        b.box((lo_x, 0, 0), (hi_x, sill - 0.05, 0.1), JOINERY, skip=("back",))
+        b.frame(lo_x + 0.1, 0.12, hi_x - 0.1, sill - 0.17, 0.1, 0.12, 0.03, JOINERY)
+        b.box((lo_x - 0.01, sill - 0.05, 0), (hi_x + 0.01, sill + 0.02, 0.16), JOINERY, skip=("back",))
+        b.box((lo_x, transom, -0.03), (hi_x, transom + 0.07, jz), JOINERY)
+        for xx in (lo_x, hi_x - 0.05):
+            b.box((xx, sill + 0.02, -0.03), (xx + 0.05, head, jz - 0.02), JOINERY, skip=("top", "bottom"))
+        gz = 0.06
+        b.quad(V(lo_x, sill + 0.02, gz), V(hi_x, sill + 0.02, gz), V(hi_x, head, gz), V(lo_x, head, gz), GLASS)
+        span = hi_x - lo_x
+        for k in (1, 2):
+            mx = lo_x + span * k / 3
+            b.box((mx - 0.025, sill + 0.02, gz - 0.02), (mx + 0.025, transom, jz - 0.03), JOINERY)
+        n = max(4, int(span / 0.28))
+        for k in range(1, n):
+            mx = lo_x + span * k / n
+            b.box((mx - 0.012, transom + 0.07, gz - 0.02), (mx + 0.012, head, jz - 0.03), JOINERY)
+        b.box((lo_x, transom + 0.07 + (head - transom - 0.07) / 2 - 0.01, gz - 0.02), (hi_x, transom + 0.07 + (head - transom - 0.07) / 2 + 0.01, jz - 0.03), JOINERY)
+        # Auslage innen: Stufenpodest mit Eimern
+        for k, (dz0, dy) in enumerate(((-0.15, 0.0), (-0.5, 0.25))):
+            b.box((lo_x + 0.08, floor_y, dz0 - 0.33), (hi_x - 0.08, sill - 0.04 + dy, dz0), Mat("timber", glow=0.08))
+            x = lo_x + 0.25
+            while x < hi_x - 0.2:
+                _bucket(b, x, dz0 - 0.16, rnd, y=sill - 0.04 + dy, height=0.24, radius=0.1, tall=k == 1, blossoms=8)
+                x += rnd.uniform(0.3, 0.38)
+    # Glastür in der Mitte mit Oberlicht
+    x0, x1 = -door_half, door_half
+    for lo, hi in ((x0 - post, x0), (x1, x1 + post)):
+        b.box((lo, 0, -0.03), (hi, head, jz), JOINERY, skip=("top",))
+    b.box((x0, transom, -0.03), (x1, transom + 0.07, jz), JOINERY)
+    b.quad(V(x0, transom + 0.07, 0.06), V(x1, transom + 0.07, 0.06), V(x1, head, 0.06), V(x0, head, 0.06), GLASS)
+    for k in range(1, 4):
+        mx = x0 + (x1 - x0) * k / 4
+        b.box((mx - 0.012, transom + 0.07, 0.04), (mx + 0.012, head, jz - 0.03), JOINERY)
+    dz = -0.05
+    fw = 0.09
+    b.box((x0 - 0.02, 0, dz - 0.3), (x1 + 0.02, 0.08, 0.06), Mat("paving", color=(0.92, 0.9, 0.86)), skip=("back",))
+    for lo, hi in ((x0, x0 + fw), (x1 - fw, x1)):
+        b.box((lo, 0.08, dz - 0.05), (hi, transom, dz), JOINERY)
+    for ya, yb in ((0.08, 0.32), (0.92, 1.0), (transom - 0.1, transom)):
+        b.box((x0 + fw, ya, dz - 0.05), (x1 - fw, yb, dz), JOINERY)
+    b.box((x0 + fw, 0.32, dz - 0.04), (x1 - fw, 0.92, dz - 0.01), JOINERY)
+    b.quad(V(x0 + fw, 1.0, dz - 0.025), V(x1 - fw, 1.0, dz - 0.025), V(x1 - fw, transom - 0.1, dz - 0.025), V(x0 + fw, transom - 0.1, dz - 0.025), GLASS)
+    b.sphere(V(x1 - fw - 0.06, 1.0, dz + 0.04), 0.03, GOLD, rings=4, segments=8)
+    b.box((-0.12, 1.55, dz - 0.012), (0.12, 1.65, dz - 0.004), Mat("plain", color=(0.93, 0.9, 0.82)))
+    # Im Laden: Regale mit Eimern, Theke, getrocknete Sträuße an der Decke
+    for side in (-1, 1):
+        sx = side * (xi - 0.2)
+        for y in (0.55, 1.35):
+            b.box((sx - 0.2, y - 0.03, -3.9), (sx + 0.2, y, -1.0), Mat("timber", glow=0.08))
+            z = -1.25
+            while z > -3.8:
+                _bucket(b, sx, z, rnd, y=y, height=0.2, radius=0.08, blossoms=5)
+                z -= rnd.uniform(0.45, 0.6)
+    b.box((-1.0, floor_y, -4.0), (1.0, 1.0, -3.4), Mat("paint", "door", glow=0.08))
+    b.box((-1.05, 1.0, -4.05), (1.05, 1.04, -3.35), Mat("timber", glow=0.1))
+    _bucket(b, 0.5, -3.7, rnd, y=1.04, height=0.2, radius=0.09)
+    for k in range(6):
+        hx = -1.4 + k * 0.55
+        b.tube([V(hx, ceil_y, -2.2), V(hx, ceil_y - 0.25, -2.2)], 0.004, Mat("plain", color=(0.6, 0.55, 0.4)), segments=3)
+        b.sphere(V(hx, ceil_y - 0.4, -2.2), 0.12, Mat("plain", color=rnd.choice([(0.72, 0.56, 0.42), (0.66, 0.48, 0.5), (0.7, 0.66, 0.5)]), glow=0.08),
+                 rings=4, segments=7, squash=1.5, jitter=0.2, seed=rnd.randrange(999))
+    for z in (-1.4, -3.0):
+        b.tube([V(0, ceil_y, z), V(0, ceil_y - 0.5, z)], 0.006, LEAD, segments=4)
+        b.sphere(V(0, ceil_y - 0.62, z), 0.13, Mat("plain", color=(1.0, 0.88, 0.66), glow=1.0), rings=5, segments=10)
+    # Grün über dem Schild: Polster mit Blüten, Ranken hängen herab
+    x = -w + 0.2
+    while x < w - 0.1:
+        r = rnd.uniform(0.15, 0.22)
+        b.sphere(V(x, s0 + 0.2 + r * 0.4, 0.15), r, P.leaf(rnd.randrange(3)), rings=4, segments=8, squash=0.7, jitter=0.18, seed=rnd.randrange(999))
+        if rnd.random() < 0.6:
+            P.blossom_cluster(b, (x, s0 + 0.2 + r * 0.45, 0.15), r, rnd.choice(["rose", "white", "lavender"]), rnd, count=8)
+        x += rnd.uniform(0.3, 0.45)
+    for k in range(9):
+        sx = -w + 0.3 + (W - 0.6) * rnd.random()
+        P.trailing_strand(b, (sx, s0 + 0.18, 0.3), rnd.uniform(0.2, 0.45), rnd, palette=rnd.choice([None, "rose", "white"]))
+    # Hängekörbe an beiden Pilastern
+    for side in (-1, 1):
+        P.hanging_basket(b, side * (w - pil / 2), fascia_lo - 0.25, 0.15, 0.45, seed=rnd.randrange(999))
+
+
+def shop_outside_flowers(b, spec, rnd):
+    """Vor dem Blumenladen: links eine Blumentreppe mit Eimern, rechts ein Fahrrad mit
+    Blumenkorb und ein paar Eimer, dazu die Kreidetafel (Bild "chalkboard")."""
+    w = spec["width"] / 2
+    # Blumentreppe (drei Stufen, Holz) links
+    x0, x1 = -w + 0.75, -0.85
+    for k, (zz, hh) in enumerate(((0.45, 0.25), (0.28, 0.5), (0.11, 0.75))):
+        b.box((x0, 0, zz - 0.17), (x1, hh, zz + 0.17), Mat("timber"))
+        x = x0 + 0.17
+        while x < x1 - 0.12:
+            _bucket(b, x, zz, rnd, y=hh, height=0.22, radius=0.09, tall=k == 2, blossoms=9)
+            x += 0.26
+    b.colliders.append(((x0, 0, -0.06), (x1, 0.9, 0.62)))
+    # Rechts: Fahrrad mit Korb, davor zwei Eimer am Boden
+    _bicycle(b, 1.55, 0.28, rnd)
+    for xx, zz in ((0.95, 0.5), (2.25, 0.55)):
+        _bucket(b, xx, zz, rnd, height=0.34, radius=0.14, tall=True)
+        b.colliders.append(((xx - 0.16, 0, zz - 0.16), (xx + 0.16, 0.8, zz + 0.16)))
+    P.chalkboard(b, -w + 0.38, 0.5, Mat("plain", sign="chalkboard"), facing=10)
+
+
+def _bicycle(b, x, z, rnd):
+    """Altes Damenrad, an die Brüstung gelehnt, mit Blumenkorb vorn."""
+    frame = Mat("paint", color=(0.42, 0.55, 0.45))
+    r = 0.33
+    b.push(b.move(x, 0, z) @ S.Matrix.Rotation(math.radians(4), 4, "Z"))
+    for cx in (-0.55, 0.55):
+        ring = [V(cx + r * math.cos(a), r + r * math.sin(a), 0) for a in [2 * math.pi * k / 20 for k in range(21)]]
+        b.tube(ring, 0.018, Mat("plain", color=(0.12, 0.12, 0.12)), segments=5, caps=False)
+        for k in range(8):
+            a = math.pi * k / 8
+            b.tube([V(cx - r * 0.9 * math.cos(a), r - r * 0.9 * math.sin(a), 0), V(cx + r * 0.9 * math.cos(a), r + r * 0.9 * math.sin(a), 0)],
+                   0.003, IRON, segments=3, caps=False)
+    seat = V(-0.2, 0.92, 0)
+    bars = V(0.45, 0.98, 0)
+    crank = V(-0.05, r, 0)
+    b.tube([V(-0.55, r, 0), crank, seat], 0.016, frame, segments=5)
+    b.tube([crank, V(0.4, 0.78, 0), bars], 0.016, frame, segments=5)
+    b.tube([V(0.55, r, 0), V(0.4, 0.78, 0)], 0.016, frame, segments=5)
+    b.tube([V(-0.55, r, 0), seat], 0.014, frame, segments=5)
+    b.box((-0.32, 0.92, -0.07), (-0.08, 0.97, 0.07), Mat("plain", color=(0.35, 0.22, 0.14)))
+    b.tube([V(0.45, 0.98, -0.25), V(0.45, 0.98, 0.25)], 0.014, IRON, segments=5)
+    # Korb mit Blumen
+    b.box((0.5, 0.78, -0.17), (0.82, 0.98, 0.17), Mat("plain", color=(0.62, 0.48, 0.3)))
+    b.sphere(V(0.66, 1.02, 0), 0.17, P.leaf(0), rings=4, segments=8, squash=0.8, jitter=0.2, seed=rnd.randrange(999))
+    P.blossom_cluster(b, (0.66, 1.03, 0), 0.17, "rose", rnd, count=14, size=0.045)
+    P.blossom_cluster(b, (0.66, 1.03, 0), 0.17, "white", rnd, count=6, size=0.045)
+    b.pop()
+    b.colliders.append(((x - 0.95, 0, z - 0.2), (x + 0.95, 1.1, z + 0.2)))

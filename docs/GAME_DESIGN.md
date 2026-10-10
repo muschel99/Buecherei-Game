@@ -760,6 +760,13 @@ Zwei Zustände:
   Fenster und Tür eines Hauses haben dieselbe gedeckte Farbe (Braun, Grau, Grün, Blau). Dazu
   hier und da zwei kleine Stufen vor der Tür (man läuft weich darüber), ein Erker, ein kleiner
   Balkon, Efeu, Blumenkästen und ein zurückgesetztes Haus mit Vorgarten und Eisenzaun.
+  Gegenüber der Bücherei ist der **Blumenladen** (Backsteinhaus mit Eckquadern): salbeigrüne
+  Ladenfront mit Sprossen-Oberlichtern und Glastür, Grün und Ranken über dem Schild,
+  Hängekörbe, links eine hölzerne Blumentreppe mit Zinkeimern, rechts ein altes Fahrrad mit
+  Blumenkorb, eine Kreidetafel, Blumenkästen an allen Fenstern; innen Regale voller Eimer,
+  eine Theke und getrocknete Sträuße unter der Decke. Schild und Tafel gestalte ich selbst.
+  Die Seitenwände der Häuser sind wie ihre Front; wo man sie frei sieht (Gassen, Reihenenden),
+  haben sie Fenster, wo nur ein Stück vorn frei ist, wächst Efeu.
   Vorher (Teil 2) waren die Reihenhäuser Stil-Modelle je Haustyp: Schiebefenster mit
   Steinstürzen, Haustüren mit Oberlicht und Messingklopfer, Blumenkästen, einzelne Häuser mit
   Erker, georgianischer Brüstung, Gaube oder (das Wohnhaus) einem Vordach auf Säulen; rote

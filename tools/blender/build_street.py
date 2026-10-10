@@ -26,6 +26,7 @@ import zlib
 sys.path.insert(0, os.path.dirname(__file__))
 import style_lib as S  # noqa: E402
 import street_houses as H  # noqa: E402
+import build_houses as BH  # noqa: E402
 
 HOUSES_TSCN = os.path.join(S.ROOT, "scenes", "world", "houses.tscn")
 HOUSE_DIR = os.path.join(S.ROOT, "scenes", "world", "houses")
@@ -39,6 +40,8 @@ JOINERY = {
     "dark_green": (0.11, 0.2, 0.15), "sage": (0.33, 0.4, 0.34), "forest": (0.16, 0.27, 0.2),
     "navy": (0.1, 0.14, 0.23), "slate_blue": (0.21, 0.28, 0.37), "steel_blue": (0.3, 0.37, 0.44),
     "cream": (0.84, 0.81, 0.72),
+    # nur für den Blumenladen (Salbeigrün wie im Konzeptbild)
+    "fern": (0.44, 0.55, 0.46),
 }
 WALL_COLORS = {
     "brick": [(0.6, 0.33, 0.25), (0.52, 0.3, 0.24), (0.64, 0.4, 0.3), (0.47, 0.28, 0.22), (0.7, 0.58, 0.42)],
@@ -52,16 +55,18 @@ SPECIAL = {
     "LibraryRow/Neighbor2": dict(wall="brick", wall_tone=4, storeys=3, roof="parapet", balustrade=True, door_style="pilaster",
                                  panes="sash66", balcony="stone", balcony_floor=2, joinery="charcoal", rooms=1, room_kind="living",
                                  eaves_style="cornice", lintel="architrave", quoins=False, fanlight="fan"),
-    "LibraryRow/Neighbor4": dict(wall="render", bay=True, steps=2, joinery="slate_blue", roof="side", roof_mat="slate", lintel="hood"),
+    "LibraryRow/Neighbor4": dict(wall="render", bay=False, steps=2, joinery="slate_blue", roof="side", roof_mat="slate", lintel="hood"),
     "Opposite/Opposite1_1": dict(wall="render", wall_tone=2, storeys=2, roof="mansard", dormers=3, joinery="gray", eaves_style="modillion",
                                  lintel="architrave", string="double"),
     "Opposite/Opposite1_2": dict(wall="brick", wall_tone=0, ivy=-1, eaves_style="corbel", balcony="juliet", balcony_floor=1,
-                                 door_style="hood", joinery="dark_green", lintel="brick_arch", flower_boxes=True),
+                                 door_style="hood", joinery="dark_green", lintel="brick_arch", flower_boxes=True, setback=1.8),
     "Opposite/Opposite1_3": dict(fachwerk=True, roof="front_gable", roof_mat="clay", jetty=0.3, ground_wall="stone", wall="render",
                                  wall_tone=0, joinery="brown", accent="dark_green", shutters=True, panes="casement", rooms=1,
                                  room_kind="living", door_leaf="glazed"),
-    "Opposite/Opposite1_4": dict(wall="brick", wall_tone=0, quoins=True, door_style="porch", steps=1, joinery="navy", lintel="architrave",
-                                 eaves_style="modillion", rooms=1, room_kind="living", pots=[-1, 1], panes="topbars"),
+    # Der Blumenladen (gegenüber der Bücherei): Ladenfront statt Erdgeschoss, Blumen davor
+    "Opposite/Opposite1_4": dict(wall="brick", wall_tone=0, quoins=True, shop="flowers", joinery="fern", lintel="architrave",
+                                 eaves_style="modillion", rooms=0, pots=[], panes="topbars", flower_boxes=True, steps=0, bay=False,
+                                 balcony=None, roof="side", roof_mat="slate", accent="fern"),
     "Opposite/Opposite1_5": dict(wall="render", wall_tone=3, steps=2, joinery="sage", rooms=1, room_kind="kitchen", flower_boxes=True,
                                  lintel="flat", eaves_style="fascia", roof_mat="clay", pots=[1]),
     "Opposite/Opposite2_1": dict(wall="stone", storeys=3, joinery="dark_brown", eaves_style="modillion", lintel="architrave",
@@ -115,7 +120,6 @@ def make_spec(house, block):
     solid = "solid = false" not in block
     near = solid
     W = tv["width"]
-    side_windows = int(re.search(r"side_windows = (-?\d+)", block).group(1)) if "side_windows" in block else 0
 
     def pick(key, choices, weights=None):
         if key in sp:
@@ -139,7 +143,7 @@ def make_spec(house, block):
     ww = pick("window_width", [0.85, 0.95, 1.05, 1.15])
     gw = min(1.35, ww + rnd.choice([0.0, 0.15, 0.3])) if cols_n == 2 else ww
     panes = pick("panes", ["sash22", "sash66", "topbars", "plain", "sash22"] if not fachwerk else ["casement"])
-    joinery = JOINERY[pick("joinery", [k for k in JOINERY if k != "cream"] + ["cream"])]
+    joinery = JOINERY[pick("joinery", [k for k in JOINERY if k not in ("cream", "fern")] + ["cream"])]
     accent = JOINERY[sp["accent"]] if "accent" in sp else joinery
     tone = sp.get("wall_tone", rnd.randrange(len(WALL_COLORS[wall])))
     wall_color = WALL_COLORS[wall][tone % len(WALL_COLORS[wall])]
@@ -181,14 +185,73 @@ def make_spec(house, block):
         "dormers": dormers, "chimneys": sp.get("chimneys", rnd.choice([[-1], [1], [-1, 1], []])),
         "rooms": sp.get("rooms", 1 if near and rnd.random() < 0.35 else 0), "room_kind": sp.get("room_kind", rnd.choice(["living", "kitchen"])),
         "room_floor": 0, "pots": sp.get("pots", rnd.choice([[], [], [-1], [1]]) if near else []),
-        "setback": sp.get("setback", 0.0), "side_windows": side_windows, "open_sides": (side_windows,) if side_windows else (),
+        "setback": sp.get("setback", 0.0), "shop": sp.get("shop"),
         "party_color": rnd.choice([(0.58, 0.33, 0.25), (0.52, 0.31, 0.24), (0.62, 0.38, 0.28)]),
         "downpipe_side": 1 if door_side < 0 else -1,
         "colors": {"wall": wall_color, "door": joinery, "accent": accent},
     }
     if spec["steps"] and spec["door_style"] == "porch":
         spec["steps"] = 1
+    if spec["shop"]:
+        spec["door_style"] = "simple"
     return spec
+
+
+def _transform(block):
+    m = re.search(r"transform = Transform3D\(([^)]*)\)", block)
+    v = [float(t) for t in m.group(1).split(",")]
+    return v[9], v[11], v[0], v[6]
+
+
+def exposures(houses, text, specs):
+    """Welche Seitenwände frei zu sehen sind: je Haus {Seite: ("full",) / ("partial", Länge)}.
+    Bündiger Nachbar = verdeckt; Ecke eines Nachbarn auf der eigenen Seitenwand = nur das Stück
+    davor frei (Nachbar zurückgesetzt); sonst ganz frei (Gasse, Ende der Reihe)."""
+    shapes = []
+    for h in houses:
+        block = house_block(text, h)
+        px, pz, c, sn = _transform(block)
+        tv = type_values(h["type"])
+        sb = specs[h["key"]]["setback"] if h["key"] in specs else 0.0
+        shapes.append((h["key"], px, pz, c, sn, tv["width"], tv["depth"], sb))
+
+    def at(shape, lx, lz):
+        _, px, pz, c, sn = shape[:5]
+        return (px + lx * c + lz * sn, pz - lx * sn + lz * c)
+
+    def seg_dist(p, a, b2):
+        ax, az = a
+        bx, bz = b2
+        dx, dz = bx - ax, bz - az
+        ln2 = dx * dx + dz * dz
+        t = max(0.0, min(1.0, ((p[0] - ax) * dx + (p[1] - az) * dz) / ln2)) if ln2 > 0 else 0.0
+        return math.hypot(p[0] - (ax + t * dx), p[1] - (az + t * dz))
+
+    result = {}
+    for a in shapes:
+        if a[0] not in specs:
+            continue
+        sides = {}
+        for sgn in (-1, 1):
+            corner = at(a, sgn * a[5] / 2, -a[7])
+            back = at(a, sgn * a[5] / 2, -a[6])
+            hidden = False
+            partial = None
+            for bshape in shapes:
+                if bshape[0] == a[0]:
+                    continue
+                for s2 in (-1, 1):
+                    bc = at(bshape, s2 * bshape[5] / 2, -bshape[7])
+                    bb = at(bshape, s2 * bshape[5] / 2, -bshape[6])
+                    if math.hypot(bc[0] - corner[0], bc[1] - corner[1]) < 0.45 or seg_dist(corner, bc, bb) < 0.45:
+                        hidden = True
+                    elif seg_dist(bc, corner, back) < 0.45:
+                        d = math.hypot(bc[0] - corner[0], bc[1] - corner[1])
+                        partial = d if partial is None else min(partial, d)
+            if not hidden:
+                sides[sgn] = ("partial", partial) if partial is not None else ("full",)
+        result[a[0]] = sides
+    return result
 
 
 def write_tscn(text, built):
@@ -226,15 +289,23 @@ def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     only = [a for a in argv if not a.startswith("--")]
     text, houses = read_houses()
+    specs = {}
+    for house in houses:
+        if house["type"] in STREET_TYPES:
+            specs[house["key"]] = make_spec(house, house_block(text, house))
+    for key, sides in exposures(houses, text, specs).items():
+        specs[key]["exposed"] = sides
+    # Schild-Bilder der Läden (nur fehlende werden neu gezeichnet)
+    shop_signs = {"flowers": BH.prepare_signs("flower_shop")}
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.preferences.filepaths.save_version = 0
     os.makedirs(OUT_DIR, exist_ok=True)
     built = []
     for house in houses:
-        if house["type"] not in STREET_TYPES:
+        if house["key"] not in specs:
             continue
         block = house_block(text, house)
-        spec = make_spec(house, block)
+        spec = specs[house["key"]]
         file_id = house["key"].replace("/", "_")
         glb = os.path.join(OUT_DIR, file_id + ".glb")
         res = "res://assets/models/houses/street/%s.glb" % file_id
@@ -242,16 +313,15 @@ def main():
         if not only or house["key"] in only:
             b = H.build_house(file_id, spec)
             tris = S.write_glb(b, glb)
-            S.write_import_settings(glb)
-            print("%-26s %-12s %5d Dreiecke  %s, %s, %d Geschosse%s" % (
+            S.write_import_settings(glb, shop_signs.get(spec["shop"]))
+            print("%-26s %-12s %5d Dreiecke  %s, %s, %d Geschosse%s%s  Seiten: %s" % (
                 house["key"], house["type"], tris, spec["wall"], spec["roof"], len(spec["storeys"]),
-                ", Fachwerk" if spec["fachwerk"] else ""))
+                ", Fachwerk" if spec["fachwerk"] else "", ", Laden" if spec["shop"] else "", spec.get("exposed")))
+            S.SIGN_PREFIX = "flower_shop_" if spec["shop"] == "flowers" else ""
             obj = S.to_blender(b, spec["colors"])
-            m = re.search(r"transform = Transform3D\(([^)]*)\)", block)
-            v = [float(t) for t in m.group(1).split(",")]
-            yaw = math.atan2(v[6], v[0])
-            obj.location = (v[9], -v[11], v[10])
-            obj.rotation_euler = (0, 0, yaw)
+            px, pz, c, sn = _transform(block)
+            obj.location = (px, -pz, 0)
+            obj.rotation_euler = (0, 0, math.atan2(sn, c))
         built.append((house["key"], res_id, res, spec["colors"]))
     write_tscn(text, built)
     blend = os.path.join(S.ROOT, "assets", "models", "source", "street.blend")

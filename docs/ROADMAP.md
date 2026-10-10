@@ -656,6 +656,14 @@ ist austauschbar.
       Fenster und Tür je Haus in Braun, Grau, Grün oder Blau; Sockel nicht mehr vor der Tür;
       Stufen mit Rampe, Erker, Balkone, Vorgarten mit Eisenzaun, Efeu; feinerer Rauputz;
       Schaufenster-Gucker meiden Kübel und Stufen
+- [x] Teil 2c – Nachbesserungen: Fensterläden nur, wo Platz ist; Türnische bei Stufen mit
+      Laibung; oberste Fenster unter dem Traufgesims; Seitenwände im Material der Front, freie
+      Seiten (Gassen, Reihenenden) mit Fenstern, halb verdeckte mit Efeu; Innentüren in den
+      Räumen, abwechslungsreiche Räume (Bild, Regal, Uhr, Spiegel, Pflanze, oben nur Decke
+      und Lampe); kein Erker neben dem Pub; Efeu-Backsteinhaus zurückgesetzt mit Zaun;
+      **Blumenladen** gegenüber der Bücherei (salbeigrüne Front, Blumentreppe, Fahrrad,
+      Hängekörbe, Blumenkästen, kleiner Laden innen, Schild und Tafel als Bilder);
+      Passanten: lange Hindernisse (Zaun, Fahrrad) als Reihe kleiner Kreise
 - [ ] Teil 3 – Pub, Eckhäuser, Torhaus
 - [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
       Gassenende, Straße mit Kopfsteinpflaster

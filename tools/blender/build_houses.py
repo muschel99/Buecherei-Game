@@ -997,7 +997,27 @@ def _open_design(b):
     b.recenter(start, 0.0, 0.0)
 
 
+def _flower_fascia_design(b):
+    """Startbild des Blumenladen-Schilds: helles Holz, cremefarbene Schrift, Blütenranken."""
+    fw, fh = 4.76, 0.43
+    b.box((-fw / 2, -fh / 2, -0.02), (fw / 2, fh / 2, 0.0), Mat("timber", color=(1, 1, 1)))
+    b.box((-fw / 2 + 0.05, -fh / 2 + 0.04, 0.0), (fw / 2 - 0.05, fh / 2 - 0.04, 0.004), Mat("paint", color=(0.42, 0.52, 0.42)))
+    start = len(b.faces)
+    b.playful_text("Blumenladen", 0.0, 0.0, 0.004, 0.24, 0.015, Mat("paint", color=(0.93, 0.9, 0.82)), font_path=S.PLAYFUL_FONT,
+                   seed=11, bounce=0.06, tilt=4, first_scale=1.25)
+    b.recenter(start, 0.0, 0.0)
+    import random
+    rnd = random.Random(4)
+    for side in (-1, 1):
+        for k in range(5):
+            P.blossom_cluster(b, (side * (1.75 + k * 0.1), -0.02 + 0.06 * math.sin(k), 0.01), 0.05, rnd.choice(["rose", "white", "lavender"]), rnd, count=4, size=0.03)
+
+
 SIGNS = {
+    "flower_shop": {
+        "fascia": (4.76, 0.43, 2048, _flower_fascia_design),
+        "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Frisch:", "Tulpen", "& Rosen"], 41)),
+    },
     "fashion_shop": {
         # Name: (Breite, Höhe in Metern, Bildbreite in Pixeln, Gestaltung)
         "fascia": (FASCIA[0], FASCIA[1], 2048, _fascia_design),
@@ -1184,4 +1204,5 @@ def main():
         build(name, render, "--reset-signs" in argv)
 
 
-main()
+if __name__ == "__main__":
+    main()
