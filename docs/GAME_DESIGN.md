@@ -654,36 +654,51 @@ Zwei Zustände:
   gerade Straße mit Gehwegen und Bordsteinen auf beiden Seiten (Gehweg vor der Bücherei 2,6 m,
   gegenüber 2,1 m, Fahrbahn 5,1 m – Werte in GameConfig). Gegenüber steht eine Zeile
   englischer Reihenhäuser als Kulisse, abwechselnd in Farbe und Höhe.
-  - **Abbiegendes Ende mit Torhaus (seit Etappe 4f):** Ein Ende biegt in eine Seitenstraße
-    ab. Sie läuft nicht mehr auf eine Hauswand zu, sondern auf ein **Torhaus mit Durchfahrt**:
-    unten ein großer gemauerter Rundbogen über der Fahrbahn (helle Bogensteine, Schlussstein,
-    Ecksteine), darüber ein waagerechtes Band für ein Schild, ein Obergeschoss in
-    Fachwerk-Optik mit zwei Sprossenfenstern und im Dach eine mittige Gaube mit
-    Sprossenfenster. Die Straße mit Pflaster und Bordsteinen läuft sichtbar durch den Bogen
-    (darunter schmale Gehwege) und biegt kurz dahinter in einer sanften Kurve zur Stadtmitte
-    hin ab. Durch den Bogen sieht man ein Stück Straße und die Häuser, die der Kurve folgen –
-    nie weit dahinter und nirgends ins Leere. Ich kann die Seitenstraße bis an den Bogen
-    entlanglaufen und knapp darunter treten, aber nicht hindurch (eine weiche, unsichtbare
-    Grenze im Bogen). Das Torhaus ist ein eigener, austauschbarer Haustyp
-    (`scenes/world/houses/gatehouse.tscn`); ein eigenes Modell muss die Öffnung des Bogens frei
-    lassen, die Straße darunter kommt aus dem Spiel. Kurve und Straße dahinter stehen in
-    GameConfig (`gate_road_before_curve`, `gate_curve_radius`, `gate_curve_angle`,
-    `gate_road_after_curve`, `gate_sidewalk_width`).
-  - **Gerades Ende (seit Etappe 4e, Grenze verschoben in 4f):** Das andere Ende läuft geradeaus
-    weiter (Schalter `GameConfig.straight_street_end`, Standard: die Seite, wo die
-    Nachbarhäuser bündig neben der Bücherei stehen). Die Grenze steht quer über Straße und
-    Gehwegen, 6 m hinter dem Ende der festen Nachbarhäuser (`straight_bound_offset`) – bis
-    dorthin kann ich laufen, die Häuser dort sind fest. Dahinter läuft die Straße nur noch
-    20 m weiter (`straight_street_length`), bis sie vor einem quer stehenden Haus in eine
-    Seitenstraße abknickt. Die Seitenstraße ist so lang (`straight_side_street_length` = 12 m),
-    dass man von der Grenze aus gerade eben nicht um den Knick schauen kann: Man sieht ein
-    Stück Hauswand in der Seitenstraße, aber nie ihr Ende. Geprüft mit Testbildern und
-    Sichtstrahlen von allen Punkten an der Grenze (Fahrbahn, beide Gehwege, alle Richtungen).
-  - In den Seitenstraßen liegen außer Sicht unsichtbare Start- und Endpunkte für spätere Autos,
-    Radfahrer und Fußgänger – am abbiegenden Ende hinter der Kurve hinter dem Torhaus. Noch
-    fährt und läuft dort niemand.
+  - **Abbiegendes Ende mit Torhaus (seit Etappe 4f):** Hinter den Häusern an der Gasse läuft
+    die Straße noch ein Stück geradeaus und macht dann eine sanfte Kurve (30°) von der Bücherei
+    weg. Danach steht quer über der Straße ein **Torhaus mit Durchfahrt**: unten ein großer
+    gemauerter Rundbogen über der Fahrbahn (helle Bogensteine, Schlussstein, Ecksteine),
+    darüber ein waagerechtes Band für ein Schild, ein Obergeschoss in Fachwerk-Optik mit zwei
+    Sprossenfenstern und im Dach eine mittige Gaube mit Sprossenfenster. Schon von der Ladentür
+    aus sieht man das Torhaus am Ende der Straße – zu etwa 80 %, der Rest verschwindet hinter
+    der Häuserreihe gegenüber. So versteckt sich der schöne Blick nicht hinter einer Ecke.
+    Die Straße mit Pflaster und Bordsteinen läuft sichtbar durch den Bogen (darunter schmale
+    Gehwege) und biegt kurz dahinter in einer weiteren Kurve ab; durch den Bogen sieht man ein
+    Stück Straße und die Häuser, die der Kurve folgen – nie weit dahinter und nirgends ins
+    Leere. Ich kann die ganze Straße bis an den Bogen entlanglaufen und knapp darunter treten,
+    aber nicht hindurch (eine weiche, unsichtbare Grenze im Bogen). Das Torhaus ist ein
+    eigener, austauschbarer Haustyp (`scenes/world/houses/gatehouse.tscn`); ein eigenes Modell
+    muss die Öffnung des Bogens frei lassen, die Straße darunter kommt aus dem Spiel. Kurven
+    und Abstände stehen in GameConfig (`gate_bend_offset`, `gate_bend_angle`,
+    `gate_bend_radius`, `gate_approach_length`, `gate_road_before_curve`, `gate_curve_radius`,
+    `gate_curve_angle`, `gate_road_after_curve`, `gate_sidewalk_width`).
+  - **Gerades Ende (seit Etappe 4e, seit 4f rund):** Das andere Ende läuft geradeaus weiter
+    (Schalter `GameConfig.straight_street_end`, Standard: die Seite, wo die Nachbarhäuser
+    bündig neben der Bücherei stehen). Die Grenze steht quer über Straße und Gehwegen, 6 m
+    hinter dem Ende der festen Nachbarhäuser (`straight_bound_offset`) – bis dorthin kann ich
+    laufen, die Häuser dort sind fest. 8 m hinter der Grenze (`straight_street_length`) biegt
+    die Straße in einer runden 90°-Kurve (`straight_curve_radius` = 8 m) nach rechts ab, zur
+    Bücherei-Seite hin, und läuft noch 14 m weiter (`straight_side_street_length`) bis zu
+    quer stehenden Häusern. Außen folgen die Häuser der Kurve. Von der Grenze aus kann man
+    gerade eben nicht um die Kurve schauen: Man sieht die Häuser außen in der Kurve, aber nie
+    das Ende der Seitenstraße. Geprüft mit Testbildern und Sichtstrahlen von allen Punkten an
+    der Grenze (Fahrbahn, beide Gehwege, alle Richtungen).
+  - **Eckhäuser mit abgeschrägter Ecke (seit Etappe 4f):** Innen in beiden Kurven steht ein
+    Eckhaus, dessen Ecke schräg abgeschnitten ist wie bei der Bücherei (die Schräge ist etwas
+    kürzer, 2,2 m). In der Schräge sitzt eine kleine Ladentür mit einem Schild darüber – daraus
+    sollen später kleine Läden werden. Jedes Eckhaus ist ein eigener Haustyp mit eigener
+    Vorlage zum Modellieren: `corner_90` (runde 90°-Kurve) und `corner_30` (sanfte Kurve vor
+    dem Torhaus). Die Rundung von Fahrbahn, Bordstein und Gehweg folgt der Kurve; das Eckhaus
+    steht mit seinen geraden Fassaden davor.
+  - Wo die zurückversetzten Häuser am kleinen Platz enden und die Reihe wieder vorn an der
+    Straße steht, sieht man die Seitenwand des nächsten Hauses – sie hat Fenster wie ein
+    englisches Endhaus (`side_windows`).
+  - An beiden Enden liegen außer Sicht unsichtbare Start- und Endpunkte für spätere Autos,
+    Radfahrer und Fußgänger – am geraden Ende in der Seitenstraße hinter der Kurve, am anderen
+    Ende hinter der Kurve hinter dem Torhaus. Noch fährt und läuft dort niemand.
 - **Häuserreihe, Gasse und Platz (seit Etappe 4d):** Auf der Bücherei-Seite stehen von der
-  Straße aus gesehen: Haus, Haus, Bücherei, Gasse, Haus, Haus. Die Gasse liegt an der Seite mit
+  Straße aus gesehen: Haus, Haus, Bücherei, Gasse, Haus, Haus (danach geht die Reihe an
+  beiden Enden weiter bis in die Kurven). Die Gasse liegt an der Seite mit
   der Schräge (vor dem linken Fenster). Die beiden Häuser neben der Bücherei stehen bündig mit
   ihrer Vorderwand; die beiden hinter der Gasse sind zurückversetzt – ihre Vorderkante liegt
   genau dort, wo die schräge Wand auf die Seitenwand an der Gasse trifft. Davor entsteht ein
@@ -700,7 +715,8 @@ Zwei Zustände:
   `scenes/world/houses.tscn` – im Godot-Editor sichtbar, anklickbar und verschiebbar. Jedes
   Haus gehört zu einem Haustyp mit festen Maßen; jeder Typ ist eine eigene Szene in
   `scenes/world/houses/` (vier Reihenhaus-Breiten von 4,5 bis 6,0 m, Wohnhaus, Restaurant/Pub,
-  Modegeschäft, alle 8 m tief; seit Etappe 4f das Torhaus, 10,4 m breit und 6 m tief). Gleiche Häuser nutzen dieselbe Szene und damit dasselbe Mesh,
+  Modegeschäft, alle 8 m tief; seit Etappe 4f das Torhaus, 10,4 m breit und 6 m tief, und die
+  beiden Eckhäuser mit abgeschrägter Ecke). Gleiche Häuser nutzen dieselbe Szene und damit dasselbe Mesh,
   nur die Farben unterscheiden sich je Haus. Liegt in einer Typ-Szene ein eigenes Modell
   („Model“), ersetzt es den Platzhalter in allen Häusern dieses Typs; die Kollision bleibt.
   Drei Häuser haben eine eigene Rolle: Das **Modegeschäft** steht direkt neben der Bücherei

@@ -42,8 +42,11 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
   4. Neue feste Blickwinkel: `scripts/tools/screenshot_views.gd` (je Gruppe eine Funktion,
      Lage aus StreetLayout, Augenhöhe `eye()`), dann in `all_sets()`/`get_set()` eintragen.
   Bei Grenzen und Wegen zusätzlich prüfen: Lauftest mit Physik (Spielfigur per
-  `move_and_slide` auf die Grenze zulaufen lassen) und bei Kulissen Sichtstrahlen in der
-  Draufsicht (trifft jeder Blick ein Haus?).
+  `move_and_slide` auf die Grenze zulaufen lassen; vorübergehende Test-Szene, danach löschen)
+  und bei Kulissen die Draufsicht mit `python3 tools/plan_check.py` (liest
+  `scenes/world/houses.tscn`): `plan` zeichnet alle Hausumrisse nach `screenshots/plan.png`,
+  `bound` prüft mit Sichtstrahlen von der Grenze am geraden Ende (nie ins Leere, nie bis ans
+  Ende der Seitenstraße), `gate` misst, wie viel vom Torhaus man von der Ladentür sieht.
 
 ## Projektstruktur
 ```
@@ -75,7 +78,8 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
                    LooseBook, TabletAppData, ReturnSlotData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
-  world/           Außenwelt (StreetLayout, WorldMesh, Street, HouseFacade, HouseTypes, HousesLayout,
+  world/           Außenwelt (StreetLayout, WorldMesh, Street, HouseFacade, GatehouseFacade,
+                   CornerHouseFacade, HouseTypes, HousesLayout,
                    Plaza, Alley, AlleyEnd, EntranceSteps; tools/ = Erzeuger für houses.tscn
                    und die Vorlagen; Szenen in scenes/world/)
 data/
@@ -194,25 +198,36 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `Houses` (feste Szene `scenes/world/houses.tscn`, siehe unten), `Plaza`, `Alley` (mit
   `scenes/world/alley_end.tscn`). Lage aller Teile nur über
   `StreetLayout` (statische Funktionen, z. B. `ground_y()`, `curb_z()`, `recess_z()`,
-  `east_end_x()`, `straight_bound_x()`, `is_straight(seite)`), Maße nur in GameConfig. Ein
-  Straßenende biegt ab, das andere läuft geradeaus (`GameConfig.straight_street_end`, Grenze
-  quer bei `straight_bound_x()` = `straight_bound_offset` hinter den festen Nachbarn, Knick
-  `straight_street_length` hinter der Grenze, Seitenstraße dort `straight_side_street_length`
-  lang – so gewählt, dass man von der Grenze aus nie ihr Ende sieht).
-  Das abbiegende Ende (seit Etappe 4f) führt durch ein **Torhaus** (`GatehouseFacade`, Haustyp
-  `GameConfig.gatehouse_type`, Kollision nur die Pfeiler): Die Straße läuft entlang
-  `StreetLayout.gate_path()` durch den Bogen und in einer Kurve weiter (Werte `gate_…` in
-  GameConfig, seitlicher Versatz `gate_offset`, positiv = Innenseite der Kurve); die Grenze
-  liegt im Bogen (`Street.GATE_BOUND_INSIDE`), Häuser entlang der Kurve baut
-  `HousesLayout._gate_street` (Gruppe `GateStreet`). `EntranceSteps` (Podest
+  `straight_bound_x()`, `is_straight(seite)`, `end_path(seite)`), Maße nur in GameConfig.
+  **Straßenenden (seit Etappe 4f rund):** Mittelstück gerade von `end_start_x(-1)` bis
+  `end_start_x(1)`, jedes Ende ein Weg `StreetLayout.end_path(seite)` (Punkte mit pos, dir, s,
+  part; Abschnitte curve/side_street bzw. bend/approach/passage/behind; seitlicher Versatz
+  `end_offset(punkt, abstand, seite)`, positiv = Bücherei-Seite, bleibt in Kurven auf derselben
+  Straßenseite). Gerades Ende (`GameConfig.straight_street_end`): Grenze quer bei
+  `straight_bound_x()` = `straight_bound_offset` hinter den festen Nachbarn, `straight_street_length`
+  dahinter eine runde 90°-Kurve zur Bücherei-Seite (`straight_curve_radius`), dann
+  `straight_side_street_length` bis zu Querhäusern – so gewählt, dass man von der Grenze aus nie
+  das Ende sieht. Anderes Ende: `gate_bend_offset` hinter den festen Nachbarn eine sanfte Kurve
+  (`gate_bend_angle`, `gate_bend_radius`) weg von der Bücherei, `gate_approach_length` danach das
+  **Torhaus** (`GatehouseFacade`, Haustyp `GameConfig.gatehouse_type`, Kollision nur die
+  Pfeiler, `StreetLayout.gatehouse_front()`); so gewählt, dass man es von der Ladentür zu etwa
+  80 % sieht. Innen in beiden Kurven ein **Eckhaus mit abgeschrägter Ecke**
+  (`CornerHouseFacade`, Haustypen `corner_90`/`corner_30` = `straight_corner_house` /
+  `gate_corner_house`; Ecke rechts, `corner_angle`, `chamfer_width`, `side_length`; Aufstellung
+  `HousesLayout._corner_placement`). Straße, Bordsteine und Gehwege der Enden baut `Street` als
+  Bänder entlang des Weges; die Grenze im Bogen liegt dort (`Street.GATE_BOUND_INSIDE`).
+  Häuser entlang von Kurven: `HousesLayout._fill_curve` (Sehnen auf der Linie der Hausfronten,
+  Vorderseite zur Straßenmitte). Prüfen: `tools/plan_check.py` (siehe Screenshot-Regel).
+  `EntranceSteps` (Podest
   + Stufen, nie breiter als die schräge Wand, unsichtbare Rampe als Kollision) liegt auf
   Ladenboden-Höhe. Kulisse baut `WorldMesh` (Vierecke/Quader mit Vertex-Farben); Kulissen-
   Szenen nutzen statt des Platzhalters ein Kind „Model“, wenn vorhanden. Draußen wird nichts
   gespeichert.
 - **Häuser (seit Etappe 4e):** Jedes Haus ist ein fester Knoten in `scenes/world/houses.tscn`
-  (Gruppen LibraryRow, Opposite, StraightEnd, SideStreets, GateStreet), Instanz eines Haustyps
+  (Gruppen LibraryRow, Opposite, StraightEnd, GateStreet), Instanz eines Haustyps
   `scenes/world/houses/<id>.tscn` (Wurzel `HouseFacade`, @tool, feste Maße width/depth/
-  eaves_height; je Haus nur Farben, `casts_shadow`, `solid`). Neu erzeugen nur über
+  eaves_height; je Haus nur Farben, `casts_shadow`, `solid`, ggf. `side_windows` = Fenster in
+  einer sichtbaren Seitenwand, im Plan als "props"). Neu erzeugen nur über
   `scenes/world/tools/generate_houses.tscn` (Planung `HousesLayout`, Typen-Maße `HouseTypes`;
   GameConfig: `neighbor_house_types`, `alley_house_types`, `opposite_feature_house`,
   `terrace_house_types`) – überschreibt Handänderungen. Gleiche Maße = ein gemeinsames Mesh
@@ -222,6 +237,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   ohne Schatten, Nachbarn nur bis `GameConfig.house_shadow_distance`; Kollision nur, wo man
   hinkommt. Reihen werden lückenlos gefüllt: Nachbarn überlappen um wenige cm, jedes zweite
   Haus steht 4 mm zurück (kein Z-Fighting).
+- `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
+  und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`
   (echte Größe, Ursprung/Vorderseite wie die Szene; Ordner mit `.gdignore`), erzeugt von
   `scenes/world/tools/export_templates.tscn`. Neue Möbel/Haustypen → Vorlagen neu erzeugen.

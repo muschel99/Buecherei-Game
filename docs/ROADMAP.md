@@ -552,6 +552,7 @@ lässt sich einzeln gegen ein eigenes Modell tauschen – mit Vorlagen in echter
 Leitgedanke: Feinschliff an beiden Straßenenden – am geraden Ende weiter laufen dürfen und den
 Knick näher heranholen, am abbiegenden Ende statt einer Hauswand ein Torhaus mit Durchfahrt.
 Dazu eine feste Arbeitsregel: Testbilder aus festen Blickwinkeln bei jeder sichtbaren Änderung.
+Im Nachtrag werden beide Enden rund und bekommen Eckhäuser mit abgeschrägter Ecke.
 - [x] Gerades Straßenende: Die Grenze steht jetzt 6 m hinter den festen Nachbarhäusern
       (`GameConfig.straight_bound_offset`), die Häuser bis dorthin sind fest. Dahinter läuft
       die Straße nur noch 20 m bis zum Knick (`straight_street_length`, vorher 30 m ab den
@@ -559,7 +560,8 @@ Dazu eine feste Arbeitsregel: Testbilder aus festen Blickwinkeln bei jeder sicht
       sodass man ihr Ende nie sieht. Geprüft mit Testbildern direkt an der Grenze (Fahrbahn,
       beide Gehwege, geradeaus und schräg), Sichtstrahlen von 101 Punkten in alle Richtungen
       (nirgends ins Leere, nie bis ans Ende der Seitenstraße, gut 3 m Reserve) und einem
-      Lauftest mit Physik (die Figur bleibt überall an der Grenze stehen)
+      Lauftest mit Physik (die Figur bleibt überall an der Grenze stehen). Die Grenze ist
+      geblieben; Knick und Seitenstraße hat der Nachtrag unten durch eine runde Kurve ersetzt
 - [x] Abbiegendes Ende: Torhaus mit Durchfahrt statt Hauswand – neuer Haustyp „gatehouse“
       (`scenes/world/houses/gatehouse.tscn`, Script `GatehouseFacade`): gemauerter Rundbogen
       mit Bogen-, Schluss-, Kämpfer- und Ecksteinen, gewölbte Durchfahrt, Band für ein Schild,
@@ -572,10 +574,25 @@ Dazu eine feste Arbeitsregel: Testbilder aus festen Blickwinkeln bei jeder sicht
       den Bogen begehbar (`side_street_length` = 8 m, das Torhaus schließt bündig an die
       Häuser gegenüber an); die Grenze liegt im Bogen. Geprüft: Testbilder (am Bogen mittig,
       seitlich, schräg, nach oben, aus der Seitenstraße, von oben), Sichtstrahlen von 617
-      Punkten, Lauftest mit Physik; beide Einstellungen von `straight_street_end` getestet
+      Punkten, Lauftest mit Physik; beide Einstellungen von `straight_street_end` getestet.
+      Die Seitenstraße davor hat der Nachtrag unten durch eine sanfte Kurve ersetzt
 - [x] Vorlage `assets/models/templates/houses/gatehouse.glb` und Anleitung in
       docs/ASSET_GUIDE.md („Das Torhaus durch ein eigenes Modell ersetzen“: Öffnung des Bogens
       frei lassen)
+- [x] Nachtrag: beide Straßenenden rund. Das gerade Ende biegt 8 m hinter der Grenze in einer
+      runden 90°-Kurve nach rechts zur Bücherei-Seite ab (vorher eckig nach links); die
+      Straße zum Torhaus macht statt eines 90°-Abzweigs eine sanfte 30°-Kurve, sodass man das
+      Torhaus von der Ladentür aus zu etwa 80 % sieht (gemessen: 79–82 % je nach Standort an
+      der Tür). Beide Enden sind Wege mit Kurven (`StreetLayout.end_path`), Straße, Bordsteine
+      und Gehwege folgen ihnen, die Häuser stehen entlang der Kurven
+- [x] Nachtrag: Eckhäuser mit abgeschrägter Ecke innen in beiden Kurven (Schräge 2,2 m,
+      kürzer als bei der Bücherei, mit kleiner Ladentür und Schild) – je ein eigener Haustyp
+      mit Vorlage zum Modellieren: `corner_90` und `corner_30` (Script `CornerHouseFacade`)
+- [x] Nachtrag: Die Seitenwand des ersten Hauses nach den zurückversetzten Häusern am Platz
+      hat Fenster (`HouseFacade.side_windows`)
+- [x] Nachtrag: Prüfwerkzeug `tools/plan_check.py` (Plan von oben, Sichtstrahlen an der
+      Grenze, Sichtanteil des Torhauses von der Tür); geprüft auch mit Lauftest (Torstraße auf
+      fünf Spuren bis unter den Bogen, Grenze) und beiden Einstellungen von `straight_street_end`
 - [x] Arbeitsregel „Screenshots und Selbstkontrolle“ in CLAUDE.md mit Werkzeug:
       `tools/setup_godot.sh` (Godot im Container einrichten), `tools/screenshots.sh`
       (Testbilder ohne Bildschirm, Szene `scenes/tools/screenshot_tour.tscn`, feste

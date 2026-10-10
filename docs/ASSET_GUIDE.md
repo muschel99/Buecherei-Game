@@ -276,8 +276,9 @@ unsichtbare Kollision (damit man nicht hindurchläuft) bleibt.
 - `scenes/world/houses.tscn` – **alle Häuser**, jedes als eigener Knoten. Öffne die Szene mit
   Doppelklick: Du siehst alle Häuser und kannst jedes anklicken und verschieben. Sie sind in
   Gruppen sortiert: `LibraryRow` (Nachbarn der Bücherei), `Opposite` (gegenüber),
-  `StraightEnd` (bis zum Knick am geraden Straßenende), `SideStreets` (an den Knicks),
-  `GateStreet` (das Torhaus am abbiegenden Ende und die Häuser entlang der Kurve dahinter).
+  `StraightEnd` (am geraden Straßenende: bis zur Grenze, das Eckhaus in der runden Kurve,
+  die Häuser um die Kurve und in der Seitenstraße), `GateStreet` (am anderen Ende: die Häuser
+  durch die sanfte Kurve, das Eckhaus innen in der Kurve, das Torhaus und die Häuser dahinter).
 - `scenes/world/houses/` – die **Haustypen**. Jedes Haus in `houses.tscn` ist ein Exemplar
   eines dieser Typen. Gleiche Häuser nutzen dieselbe Szene (das spart Rechenleistung).
 - `scenes/world/alley_end.tscn` – Mauer mit Tor am Ende der Gasse (mit Haus dahinter).
@@ -299,15 +300,19 @@ First, vorn und hinten steht es 20 cm über.
 | `pub.tscn`           | Restaurant / Pub (erstes Haus hinter der Gasse, am Platz) | 5,6 m | 7,2 m | 8 m |
 | `fashion_shop.tscn`  | Modegeschäft (direkt neben der Bücherei)     | 5,4 m  | 6,8 m     | 8 m   |
 | `gatehouse.tscn`     | Torhaus mit Durchfahrt (am abbiegenden Ende, siehe unten) | 10,4 m | 8,8 m | 6 m |
+| `corner_90.tscn`     | Eckhaus mit abgeschrägter Ecke in der runden 90°-Kurve (siehe unten) | 6,0 m | 6,8 m | 7 m |
+| `corner_30.tscn`     | Eckhaus mit abgeschrägter Ecke in der sanften 30°-Kurve (siehe unten) | 6,0 m | 7,0 m | 8 m |
 
-Die Kollision ist ein Kasten so groß wie Breite × Traufhöhe × Tiefe. Dein Modell darf darüber
-hinausragen (Dach, Schornstein, Markise); unten sollte es die Grundfläche ausfüllen.
+Die Kollision ist ein Kasten so groß wie Breite × Traufhöhe × Tiefe (bei den Eckhäusern ihr
+Grundriss, beim Torhaus nur die beiden Pfeiler). Dein Modell darf darüber hinausragen (Dach,
+Schornstein, Markise); unten sollte es die Grundfläche ausfüllen.
 
 ### Das Torhaus durch ein eigenes Modell ersetzen
-Am abbiegenden Straßenende steht quer über der Seitenstraße ein **Torhaus**: unten ein
-gemauerter Rundbogen über der Fahrbahn, darüber ein Band für ein Schild, ein Obergeschoss in
-Fachwerk und eine Gaube mit Sprossenfenster. Die Straße läuft durch den Bogen hindurch und
-biegt dahinter in einer Kurve ab. Szene: `scenes/world/houses/gatehouse.tscn`,
+Am abbiegenden Straßenende macht die Straße eine sanfte Kurve und läuft auf ein **Torhaus**
+zu (man sieht es schon von der Ladentür aus): unten ein gemauerter Rundbogen über der
+Fahrbahn, darüber ein Band für ein Schild, ein Obergeschoss in Fachwerk und eine Gaube mit
+Sprossenfenster. Die Straße läuft durch den Bogen hindurch und biegt dahinter in einer Kurve
+ab. Szene: `scenes/world/houses/gatehouse.tscn`,
 Vorlage: `templates/houses/gatehouse.glb`.
 
 **Wichtig: Dein Modell muss die Öffnung des Bogens frei lassen.** Die Straße darunter
@@ -335,9 +340,42 @@ So geht's:
 Ist dein Bogen breiter oder schmaler: Im Inspektor unter **Durchfahrt** die **Passage Width**
 (lichte Breite) anpassen – die schmalen Gehwege unter dem Bogen und die Grenze passen sich
 beim nächsten Start von selbst an. Änderst du Breite oder Tiefe des ganzen Torhauses (unter
-**Maße**), stelle danach die Häuser neu auf (siehe „Häuser neu aufstellen“). Die Straße hinter dem Bogen (Kurve, Länge, Breite der
-Gehwege) stellst du in `game_config.gd` ein (`gate_curve_radius`, `gate_curve_angle`,
+**Maße**), stelle danach die Häuser neu auf (siehe „Häuser neu aufstellen“). Die Straße vor
+dem Bogen (sanfte Kurve, Abstand zum Torhaus) und hinter dem Bogen (Kurve, Länge, Breite der
+Gehwege) stellst du in `game_config.gd` ein (`gate_bend_offset`, `gate_bend_angle`,
+`gate_bend_radius`, `gate_approach_length`, `gate_curve_radius`, `gate_curve_angle`,
 `gate_road_before_curve`, `gate_road_after_curve`, `gate_sidewalk_width`).
+
+### Die Eckhäuser (abgeschrägte Ecke) durch eigene Modelle ersetzen
+Innen in beiden Straßenkurven steht ein **Eckhaus mit abgeschrägter Ecke**, wie die Bücherei –
+gut geeignet für kleine Läden: In der Abschrägung sitzt eine Ladentür mit einem Schild
+darüber. Jedes Eckhaus ist ein eigener Haustyp mit eigener Vorlage:
+
+| Haustyp (Datei)   | Wo                                      | Vorlage                         |
+|-------------------|-----------------------------------------|---------------------------------|
+| `corner_90.tscn`  | runde 90°-Kurve am geraden Straßenende  | `templates/houses/corner_90.glb` |
+| `corner_30.tscn`  | sanfte 30°-Kurve vor dem Torhaus        | `templates/houses/corner_30.glb` |
+
+Grundriss (Ursprung unten in der Mitte der **Vorderseite**, Vorderseite +Z, die Ecke liegt
+**rechts**, wenn du von vorn auf das Haus schaust):
+- **corner_90:** Vorderseite 6,0 m (von x = -3 bis zur gedachten Ecke bei x = +3), dann
+  rechtwinklig die Seitenfassade 7,0 m nach hinten. Die Ecke ist 2,2 m breit schräg
+  abgeschnitten (sie beginnt 1,56 m vor der gedachten Ecke). Traufe 6,8 m, Walmdach oben flach.
+  In der Straße zeigt die Vorderseite in die Seitenstraße, die Seitenfassade zur langen Straße.
+- **corner_30:** Vorderseite 6,0 m, dann knickt die Front an der 2,2 m breiten Abschrägung
+  um 30° nach hinten und läuft 5,0 m weiter (gemessen ab der gedachten Ecke). Hinten gerade,
+  8 m tief, Traufe 7,0 m. In der Straße liegt die Vorderseite am Stück zum Torhaus, die
+  Seitenfassade zur langen Straße.
+- Beide Fassaden sind Straßenfassaden (mit Fenstern), die Rückseite sieht man nicht.
+
+So geht's (wie bei allen Häusern): Szene doppelklicken, dein `.glb` auf den obersten Knoten
+ziehen, in **Model** umbenennen (**F2**), nichts verschieben, **Strg+S**. Die Kollision ist der
+Grundriss als Prisma und bleibt. Im Inspektor unter **Ecke** stehen Winkel, Breite der
+Abschrägung und Länge der Seitenfassade; ändern sie sich, stelle die Häuser neu auf.
+
+**Fenster in einer Seitenwand:** Wo eine Seitenwand frei zu sehen ist (z. B. das erste Haus
+nach den zurückversetzten Häusern am Platz), bekommt das Haus Fenster darin – im Inspektor
+unter **Aussehen → Side Windows** (0 = keine, -1 = links, 1 = rechts, 2 = beide).
 
 ### Alle Häuser eines Typs ersetzen
 1. Im Dateisystem-Fenster `scenes/world/houses/` öffnen und den Haustyp doppelklicken
@@ -365,7 +403,8 @@ Inspektor unter **Dieses Haus** Wand-, Tür- und Akzentfarbe wählen.
 ### Häuser neu aufstellen
 Die Lage der Häuser wurde einmal aus der Straße berechnet und fest in `houses.tscn`
 geschrieben. Änderst du in `game_config.gd` etwas an der Straße (Breiten, gerades Ende,
-Grenze und Länge dahinter, Torhaus und Kurve,
+Grenze und Kurve dahinter, sanfte Kurve und Torhaus, die Eckhäuser `straight_corner_house` /
+`gate_corner_house`,
 Haustypen der Nachbarn in `neighbor_house_types` / `alley_house_types`, das Haus gegenüber
 in `opposite_feature_house`, die Reihenhaus-Typen in `terrace_house_types`), stelle die
 Häuser neu auf:
