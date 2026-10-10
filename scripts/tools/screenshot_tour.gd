@@ -22,6 +22,7 @@ extends Node
 ##   --focus=<abstand>  statt der Blickpunkte: Nahaufnahme des Passanten, der dem Ziel des ersten
 ##                      Blickpunkts am nächsten ist (aus so vielen Metern, schräg von vorn)
 ##   --focus_vehicle    dasselbe für das nächste Fahrzeug (Fahrrad, Auto, Lieferwagen)
+##   --focus_cross      dasselbe für einen Passanten, der gerade über die Straße geht
 ##   --stats            je Bild die Zeichenaufrufe und Objekte ausgeben (Leistung)
 ##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
 ##   --no_street_life   ohne Straßenleben (zum Vergleich)
@@ -126,6 +127,8 @@ func _focus_views(views: Dictionary) -> Dictionary:
 	var target: Vector3 = views[views.keys()[0]].target
 	var best: Node3D = null
 	var candidates: Array = life.get_vehicles() if _args.has("focus_vehicle") else life.get_walkers()
+	if _args.has("focus_cross"):
+		candidates = life.get_walkers().filter(func(w: Passerby) -> bool: return w.on_road)
 	for who: Node3D in candidates:
 		if best == null or who.global_position.distance_to(target) < best.global_position.distance_to(target):
 			best = who
@@ -171,6 +174,10 @@ func _prepare_street_life() -> void:
 	while done < seconds:
 		life.step(step)
 		done += step
+		# --focus_cross: anhalten, sobald jemand mitten auf der Fahrbahn ist
+		if _args.has("focus_cross") and life.get_walkers().any(func(w: Passerby) -> bool:
+				return w.on_road and absf(w.get_route().project(w.pos).y) < 1.0):
+			break
 		# Ab und zu ein Bild lang Luft holen (Physik, Kamera)
 		if int(done / step) % 60 == 0:
 			await get_tree().physics_frame
