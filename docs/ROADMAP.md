@@ -664,6 +664,9 @@ ist austauschbar.
       **Blumenladen** gegenüber der Bücherei (salbeigrüne Front, Blumentreppe, Fahrrad,
       Hängekörbe, Blumenkästen, kleiner Laden innen, Schild und Tafel als Bilder);
       Passanten: lange Hindernisse (Zaun, Fahrrad) als Reihe kleiner Kreise
+- [x] Teil 2d – Fensterläden am Rahmen angeschlagen und schräg aufgeklappt (12–30°, je Laden
+      anders); hintere Giebelwand der Giebelhäuser repariert; Prüfmodus
+      `build_street.py -- --check <Häuser>` (Bilder je Haus mit Nachbarn, Rückseiten pink)
 - [ ] Teil 3 – Pub, Eckhäuser, Torhaus
 - [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
       Gassenende, Straße mit Kopfsteinpflaster

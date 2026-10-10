@@ -281,17 +281,30 @@ def window_unit(b, spec, x, y0, w, h, panes, backdrop_kind, room, rnd, reveal=0.
         else:
             b.box((x0 - 0.04, y0 - 0.06, 0), (x1 + 0.04, y0, 0.07), JOINERY)
     _lintel(b, lintel, x, x0, x1, top, w, spec)
-    # Läden nur, wo daneben genug Platz ist (nicht in Eckquadern, Nachbarfenstern, Türen)
-    start = 0.13 if lintel == "architrave" else 0.02
-    sw = min(w / 2 * 0.95, shutters - start)
-    if sw >= 0.28:
+    # Fensterläden: am Fensterrahmen angeschlagen und ein Stück aufgeklappt (je Laden etwas
+    # anders), so stehen sie natürlich von der Wand ab. Reicht der Platz daneben nicht, klappen
+    # sie weiter auf.
+    if shutters > 0.0:
+        start = 0.13 if lintel == "architrave" else 0.03
         for side in (-1, 1):
-            sx0, sx1 = sorted((x + side * (w / 2 + start), x + side * (w / 2 + start + sw)))
-            b.box((sx0, y0, 0.0), (sx1, top, 0.035), ACCENT)
+            sw = w / 2 * 0.95
+            angle = rnd.uniform(12.0, 30.0)
+            while angle < 70.0 and start + sw * math.cos(math.radians(angle)) > shutters:
+                angle += 5.0
+            if start + sw * math.cos(math.radians(angle)) > shutters:
+                continue
+            hinge = x + side * (w / 2 + start)
+            b.push(b.move(hinge, 0.0, 0.03) @ b.turn_y(angle if side < 0 else -angle))
+            lo_x, hi_x = sorted((0.0, side * sw))
+            b.box((lo_x, y0, 0.0), (hi_x, top, 0.035), ACCENT)
             n = int(h / 0.08)
             for k in range(1, n):
                 yy = y0 + h * k / n
-                b.box((sx0 + 0.04, yy - 0.012, 0.035), (sx1 - 0.04, yy, 0.045), ACCENT, skip=("back",))
+                b.box((lo_x + 0.04, yy - 0.012, 0.035), (hi_x - 0.04, yy, 0.045), ACCENT, skip=("back",))
+            b.pop()
+            # Angeln am Rahmen
+            for hy in (y0 + 0.2, top - 0.2):
+                b.cylinder(V(hinge, hy - 0.05, 0.04), 0.012, 0.1, IRON, segments=6, caps=(True, True))
 
 
 def _lintel(b, style, x, x0, x1, top, w, spec):
@@ -715,7 +728,7 @@ def _front_gable_roof(b, spec, rm, side):
         b.beam(V(s * (w + 0.04), E - 0.2, fz + 0.01), V(0, ry - 0.12, fz + 0.01), 0.05, 0.2, spec.get("barge_mat", TIMBER))
     b.cylinder(V(0, ry + 0.03, bz), 0.08, fz - bz, RIDGE if spec["roof_mat"] == "clay" else Mat("terracotta", color=(0.55, 0.55, 0.58)), segments=8, axis="z", caps=(True, True))
     b.cylinder(V(0, ry - 0.3, fz + 0.04), 0.035, 0.75, TIMBER, segments=6, radius_top=0.012)
-    b.face([V(w, 0, -D), V(-w, 0, -D), V(-w, E, -D), V(w, E, -D), V(0, ry, -D)], side, (0, 0, -1))
+    b.face([V(w, 0, -D), V(-w, 0, -D), V(-w, E, -D), V(0, ry, -D), V(w, E, -D)], side, (0, 0, -1))
 
 
 def gable_triangle(b, spec, rnd):
@@ -904,7 +917,7 @@ def build_house(name, spec):
             kind, rooms_left = _pick_backdrop(spec, rnd, rooms_left, 0)
             room = _room_box(cols, i, w, 0.15, storeys[0] - 0.3, kind)
             window_unit(b, spec, x, g_y0, ww, g_h, spec["panes_ground"], kind, room, rnd,
-                        shutters=_shutter_space(ground_open, i, w, edge) if spec.get("shutters") else 0.0)
+                        shutters=_shutter_space(ground_open, i, w, 0.05) if spec.get("shutters") else 0.0)
     if spec.get("quoins"):
         quoins(b, w, 0.35, ys[-1] - 0.3)
     # --- Obergeschosse ---
@@ -947,7 +960,7 @@ def build_house(name, spec):
             upper_open = [(cx - cw / 2, cx + cw / 2) for cx, cw in spec["upper_columns"]]
             window_unit(b, spec, x, f_y0, ww, f_h, spec["panes"], kind, room, rnd,
                         lintel="timber" if spec.get("fachwerk") else None,
-                        shutters=_shutter_space(upper_open, i, w, edge) if spec.get("shutters") else 0.0, floor=fl)
+                        shutters=_shutter_space(upper_open, i, w, 0.05) if spec.get("shutters") else 0.0, floor=fl)
             if spec.get("flower_boxes") and fl == 1 and (shop or rnd.random() < 0.7):
                 P.flower_box(b, x - ww / 2 - 0.04, x + ww / 2 + 0.04, f_y0 + 0.005, 0.0, 0.19, ACCENT,
                              [rnd.choice(["rose", "white", "coral", "lavender"]), rnd.choice(["white", "rose", "lavender"])], seed=rnd.randrange(999))
@@ -993,7 +1006,7 @@ def build_house(name, spec):
 
 def _shutter_space(openings, i, w, edge):
     """Freier Platz neben Öffnung i (kleinster Abstand links/rechts zur nächsten Öffnung bzw.
-    Hauskante, abzüglich Eckquader) – so breit dürfen Läden höchstens sein."""
+    Hauskante; zwischen zwei Öffnungen die Hälfte) – so weit dürfen aufgeklappte Läden reichen."""
     x0, x1 = openings[i]
     left = x0 - (openings[i - 1][1] if i > 0 else -w + edge)
     right = (openings[i + 1][0] if i + 1 < len(openings) else w - edge) - x1

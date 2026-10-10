@@ -288,6 +288,9 @@ def write_tscn(text, built):
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     only = [a for a in argv if not a.startswith("--")]
+    check = "--check" in argv
+    if check:
+        S.SHOW_BACKFACES = True
     text, houses = read_houses()
     specs = {}
     for house in houses:
@@ -323,10 +326,38 @@ def main():
             obj.location = (px, -pz, 0)
             obj.rotation_euler = (0, 0, math.atan2(sn, c))
         built.append((house["key"], res_id, res, spec["colors"]))
+    if check:
+        # Prüfbilder je Haus (mit Nachbarn): von vorn und schräg von beiden Seiten, Rückseiten
+        # pink. Nichts wird gespeichert oder eingetragen.
+        _check_images(text, houses, specs, only)
+        return
     write_tscn(text, built)
     blend = os.path.join(S.ROOT, "assets", "models", "source", "street.blend")
     bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True)
     print("Fertig: %d Häuser" % len(built))
 
 
-main()
+def _check_images(text, houses, specs, only):
+    S.setup_render(resolution=(900, 700), samples=8)
+    out = os.path.join(S.ROOT, "screenshots", "blender", "street_check")
+    os.makedirs(out, exist_ok=True)
+    for house in houses:
+        if house["key"] not in specs or (only and house["key"] not in only):
+            continue
+        px, pz, c, sn = _transform(house_block(text, house))
+        e = specs[house["key"]]["eaves"]
+
+        def world(lx, ly, lz):
+            return (px + lx * c + lz * sn, ly, pz - lx * sn + lz * c)
+        name = house["key"].replace("/", "_")
+        for view, (cam, target) in {
+            "front": ((0, 1.7, 6.5), (0, e * 0.5, 0)),
+            "left": ((-4.5, 1.7, 4.0), (0.3, e * 0.45, -0.5)),
+            "right": ((4.5, 1.7, 4.0), (-0.3, e * 0.45, -0.5)),
+            "near": ((0.8, 1.6, 2.2), (0.0, 1.6, -1.0)),
+        }.items():
+            S.render_view(os.path.join(out, "%s-%s.png" % (name, view)), world(*cam), world(*target), lens=24)
+
+
+if __name__ == "__main__":
+    main()

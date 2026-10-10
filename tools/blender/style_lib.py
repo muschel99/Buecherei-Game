@@ -859,8 +859,14 @@ def preview_material(mat, role_colors):
         pink = nodes.new("ShaderNodeEmission")
         pink.inputs["Color"].default_value = (1.0, 0.0, 0.8, 1)
         pink.inputs["Strength"].default_value = 3.0
+        # Nur direkt gesehene Rückseiten pink (sonst färbt ihr Licht auch Nachbarflächen)
+        path = nodes.new("ShaderNodeLightPath")
+        both = nodes.new("ShaderNodeMath")
+        both.operation = "MULTIPLY"
+        links.new(geo.outputs["Backfacing"], both.inputs[0])
+        links.new(path.outputs["Is Camera Ray"], both.inputs[1])
         choose = nodes.new("ShaderNodeMixShader")
-        links.new(geo.outputs["Backfacing"], choose.inputs["Fac"])
+        links.new(both.outputs[0], choose.inputs["Fac"])
         links.new(bsdf.outputs[0], choose.inputs[1])
         links.new(pink.outputs[0], choose.inputs[2])
         links.new(choose.outputs[0], nodes["Material Output"].inputs["Surface"])

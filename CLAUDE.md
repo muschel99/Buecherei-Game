@@ -330,7 +330,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Knoten "UniqueModel"). Fensterrahmen + Tür = Rolle door, Läden/Blumenkästen = accent;
   kein reines Weiß (Creme). Hinter jedem Glas immer etwas (`street_houses.backdrop`); Räume
   (Wohnzimmer/Küche) nur vereinzelt. Stufen vor Türen mit `Builder.ramp` (Kollision zum
-  Darüberlaufen), feste Teile vor dem Haus als `colliders`.
+  Darüberlaufen), feste Teile vor dem Haus als `colliders`. Selbsttest vor dem Hochladen:
+  `blender -b --factory-startup --python tools/blender/build_street.py -- --check <Gruppe/Name> …`
+  → `screenshots/blender/street_check/` (je Haus vorn, schräg links/rechts, nah; Rückseiten
+  pink, nur direkt gesehene), danach `build_street.py` ohne --check (schreibt houses.tscn),
+  Godot-Import, Ladeprüfung, street_life_check.
   **Schilder = Bilder der Entwicklerin:** Schild-Flächen mit `Mat(..., sign="name")` und
   `poly(..., uvs=…)` (0..1) → glb-Material `sign_<name>` → `assets/materials/signs/<typ>_<name>.tres`
   → Bild `assets/textures/signs/<typ>_<name>.png`. Startbild aus der Gestaltung in
