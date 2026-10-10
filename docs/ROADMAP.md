@@ -679,8 +679,15 @@ ist austauschbar.
       (Backstein, heller Bogen mit Schlussstein, Ecksteine, gewölbte Durchfahrt mit Laternen,
       Schildband, vorkragendes Fachwerk mit Blumenkästen vorn und hinten, Tondach mit Gaube);
       alle Schilder als Bilder zum Gestalten
-- [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
-      Gassenende, Straße mit Kopfsteinpflaster
+- [x] Teil 3b – Türklopfer entfernt (flimmerten), Glas gleichmäßig unscharf statt gewellt,
+      Schaufenster klar; Pub nach Inspirationsbild (dunkle Front, Efeu, kleines Holzschild,
+      rundes Hängeschild, Menütafel, Tisch und Stühle); Torhaus mit hellen Steinen bis zum
+      Boden und hellem Bogen innen; Teestube mit Tür und Schild zur Straße
+- [x] Teil 4a – Straße, Gehwege, Bordsteine, Platz und Gassen mit den Stil-Texturen
+      (Kopfsteinpflaster, Gehwegplatten, Stein; Shader `ground_style.gdshader`),
+      Abflussdeckel am Straßenrand (`drain_grate`, Abstand `Street.drain_spacing`)
+- [ ] Teil 4b – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
+      Gassen und Gassenenden (Inspiration folgt), Deko für Teestube und Bäckerei
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
 - [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)
 

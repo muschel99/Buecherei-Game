@@ -82,7 +82,8 @@ class Mat:
 
     def key(self):
         if self.glass:
-            return "glass"
+            # glass=True: leicht unscharfes Fensterglas, glass="clear": klares Schaufensterglas
+            return "glass_clear" if self.glass == "clear" else "glass"
         if self.sign:
             return "sign_" + self.sign
         glow = "_g%02d" % round(self.glow * 99) if self.glow > 0 else ""
@@ -512,7 +513,7 @@ class Builder:
             tile = info["tile_size"]
             uv_of = face.get("uvs") or [_planar_uv(p, face["n"], tile) for p in face["pts"]]
             color = srgb_to_linear(mat.color) if mat.role == "fixed" else (1.0, 1.0, 1.0)
-            target = out.setdefault(mat.key() if mat.sign else ("glass" if mat.glass else "house"), [])
+            target = out.setdefault(mat.key() if (mat.sign or mat.glass) else "house", [])
             pts = face["pts"]
             for i in range(1, len(pts) - 1):
                 for k in (0, i, i + 1):
@@ -609,8 +610,8 @@ def write_glb(builder, path):
 
     primitives = []
     materials = []
-    for mat_name in ["house", "glass"] + sorted(k for k in tris if k.startswith("sign_")):
-        verts = tris[mat_name]
+    for mat_name in ["house", "glass", "glass_clear"] + sorted(k for k in tris if k.startswith("sign_")):
+        verts = tris.get(mat_name)
         if not verts:
             continue
         pos = bytearray()
@@ -656,7 +657,7 @@ def write_glb(builder, path):
         elif mat_name.startswith("sign_"):
             materials.append({"name": mat_name, "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 0.6}})
         else:
-            materials.append({"name": "glass", "alphaMode": "BLEND", "pbrMetallicRoughness": {"baseColorFactor": [0.15, 0.18, 0.2, 0.3], "metallicFactor": 0.0, "roughnessFactor": 0.05}})
+            materials.append({"name": mat_name, "alphaMode": "BLEND", "pbrMetallicRoughness": {"baseColorFactor": [0.15, 0.18, 0.2, 0.3], "metallicFactor": 0.0, "roughnessFactor": 0.05}})
         primitives.append({"attributes": attributes, "indices": indices, "material": len(materials) - 1})
     nodes = [{"name": builder.name, "mesh": 0}]
     meshes = [{"name": builder.name, "primitives": primitives}]
@@ -721,7 +722,8 @@ def write_import_settings(glb_path, signs=None):
     zum Schaufensterglas, "sign_<name>" zu den Schild-Materialien (signs = {Name: res-Pfad});
     keine automatischen Detailstufen (LOD). Eine vorhandene Datei behält ihre übrigen Werte."""
     path = glb_path + ".import"
-    mapping = {"glass": "res://assets/materials/house_glass.tres", "house": "res://assets/materials/house_style.tres"}
+    mapping = {"glass": "res://assets/materials/house_glass.tres", "glass_clear": "res://assets/materials/house_glass_clear.tres",
+               "house": "res://assets/materials/house_style.tres"}
     for name, res_path in (signs or {}).items():
         mapping["sign_" + name] = res_path
     entries = ",\n".join('"%s": {\n"use_external/enabled": true,\n"use_external/path": "%s"\n}' % (k, v)
@@ -808,7 +810,7 @@ def preview_material(mat, role_colors):
         # Wie im Spiel leicht verschwommen (raue Durchsicht)
         bsdf.inputs["Roughness"].default_value = 0.04
         bsdf.inputs["Transmission"].default_value = 0.9
-        bsdf.inputs["Transmission Roughness"].default_value = 0.25
+        bsdf.inputs["Transmission Roughness"].default_value = 0.0 if mat.glass == "clear" else 0.25
         bsdf.inputs["IOR"].default_value = 1.2
         return m
     info = LAYERS[mat.layer]

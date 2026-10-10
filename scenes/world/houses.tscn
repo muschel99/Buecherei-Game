@@ -73,9 +73,9 @@ wall_material = 1
 [node name="Neighbor3" parent="LibraryRow" unique_id=6891640 instance=ExtResource("3_ndida")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -8.8, 0, -2.0828428)
 unique_model = ExtResource("u_LibraryRow_Neighbor3")
-wall_color = Color(0.520, 0.300, 0.240, 1)
-door_color = Color(0.110, 0.200, 0.150, 1)
-accent_color = Color(0.110, 0.200, 0.150, 1)
+wall_color = Color(0.600, 0.330, 0.250, 1)
+door_color = Color(0.080, 0.100, 0.130, 1)
+accent_color = Color(0.080, 0.100, 0.130, 1)
 wall_material = 1
 [node name="Neighbor4" parent="LibraryRow" unique_id=1015887375 instance=ExtResource("4_img60")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -14.1, 0, -2.0828428)

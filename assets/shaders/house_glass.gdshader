@@ -1,24 +1,30 @@
-// Fensterglas der Stil-Häuser (seit Etappe 4g): leicht verschwommen, wie altes Glas.
-// Statt einfach durchsichtig zu sein, zeichnet das Glas das Bild dahinter weichgezeichnet
-// (aus dem Bildschirm-Puffer, je größer "blur", desto verschwommener) und ein wenig gewellt.
-// Darüber spiegelt es den Himmel wie echtes Glas.
+// Fensterglas der Wohnhäuser (seit Etappe 4g): raues, leicht milchiges Glas. Was dahinter
+// ist, erscheint gleichmäßig unscharf (weichgezeichnet aus dem Bildschirm-Puffer, viele
+// Proben auf einer kleinen Scheibe) – keine Wellen. Schaufenster nutzen klares Glas
+// (house_glass_clear.tres).
 shader_type spatial;
 render_mode cull_disabled;
 
 uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
-// Wie verschwommen (Stufe im Bildschirm-Puffer, 0 = klar)
-uniform float blur : hint_range(0.0, 6.0) = 2.2;
-// Leichte Wellen im Glas (Stärke) und ein Hauch Farbe
-uniform float wobble : hint_range(0.0, 0.02) = 0.004;
-uniform vec4 tint : source_color = vec4(0.84, 0.88, 0.9, 1.0);
-uniform float tint_strength : hint_range(0.0, 1.0) = 0.25;
+// Wie unscharf: Stufe im Bildschirm-Puffer (0 = klar) und Größe der Weichzeichnung
+uniform float blur : hint_range(0.0, 6.0) = 2.5;
+uniform float spread : hint_range(0.0, 0.03) = 0.008;
+// Leicht milchig: so viel helles Grau kommt dazu
+uniform vec4 milk : source_color = vec4(0.82, 0.84, 0.84, 1.0);
+uniform float milkiness : hint_range(0.0, 1.0) = 0.18;
 
 void fragment() {
-	vec2 wave = vec2(sin(UV.y * 31.0 + UV.x * 5.0), cos(UV.x * 27.0 + UV.y * 3.0)) * wobble;
-	vec3 behind = textureLod(screen_tex, SCREEN_UV + wave, blur).rgb;
+	vec2 aspect = vec2(VIEWPORT_SIZE.y / VIEWPORT_SIZE.x, 1.0);
+	vec3 sum = vec3(0.0);
+	const int SAMPLES = 12;
+	for (int i = 0; i < SAMPLES; i++) {
+		float r = sqrt((float(i) + 0.5) / float(SAMPLES)) * spread;
+		float a = float(i) * 2.39996;
+		sum += textureLod(screen_tex, SCREEN_UV + vec2(cos(a), sin(a)) * r * aspect, blur).rgb;
+	}
+	vec3 behind = sum / float(SAMPLES);
 	ALBEDO = vec3(0.0);
-	EMISSION = mix(behind, behind * tint.rgb, tint_strength);
-	ROUGHNESS = 0.06;
-	SPECULAR = 0.5;
-	METALLIC = 0.0;
+	EMISSION = mix(behind, milk.rgb * 0.6, milkiness);
+	ROUGHNESS = 0.25;
+	SPECULAR = 0.4;
 }

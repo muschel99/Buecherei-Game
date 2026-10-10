@@ -458,8 +458,13 @@ Haustyps). Die ganze Straße zum Anschauen in Blender: `assets/models/source/str
   speichern. Die Materialnamen „house“ und „glass“ bitte lassen – dann bleiben Texturen und
   Farben aus dem Spiel. Deine Datei wird beim nächsten Bau erkannt und **nicht überschrieben**
   (Hinweis „selbst bearbeitet“). Soll Claude sie wieder neu bauen: Datei löschen.
-- **Glas:** leicht verschwommen (Material `assets/materials/house_glass.tres`, Wert **Blur**:
-  0 = klar, 4 = Milchglas).
+- **Glas:** Fenster der Wohnhäuser rau und leicht milchig (Material
+  `assets/materials/house_glass.tres`: **Blur** = wie unscharf, **Spread** = wie weit verwischt,
+  **Milkiness** = wie milchig); Schaufenster klar (`house_glass_clear.tres`).
+- **Straße und Gehweg:** Materialien `assets/materials/cobblestone.tres` (Fahrbahn),
+  `sidewalk.tres` (Gehweg, Platz, Gassen), `curb_stone.tres` (Bordstein, Treppe). Im Inspektor:
+  **Layer** (welche Stil-Textur), **Tile Size** (Größe in Metern), **Tint** (Farbe).
+  Abflussdeckel: Knoten `Outside/Street` → **Drain Spacing** (Abstand).
 - Achtung: Stellst du die Häuser neu auf (`generate_houses.tscn`), danach `build_street.py`
   noch einmal laufen lassen – sonst zeigen die Häuser wieder ihr Typ-Modell.
 

@@ -6,7 +6,7 @@
 resource_name = "glass"
 render_priority = 0
 shader = ExtResource("1_shader")
-shader_parameter/blur = 2.2
-shader_parameter/wobble = 0.004
-shader_parameter/tint = Color(0.84, 0.88, 0.9, 1)
-shader_parameter/tint_strength = 0.25
+shader_parameter/blur = 2.5
+shader_parameter/spread = 0.008
+shader_parameter/milk = Color(0.82, 0.84, 0.84, 1)
+shader_parameter/milkiness = 0.18

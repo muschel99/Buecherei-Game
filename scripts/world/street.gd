@@ -32,10 +32,14 @@ const GATE_BOUND_INSIDE := 0.8
 @export var sidewalk_material: Material = preload("res://assets/materials/sidewalk.tres")
 @export var curb_material: Material = preload("res://assets/materials/curb_stone.tres")
 @export var road_material: Material = preload("res://assets/materials/cobblestone.tres")
+## Abflussdeckel am Straßenrand (seit Etappe 4g): Modell und ungefährer Abstand (m).
+@export var drain_scene: PackedScene = preload("res://assets/models/props/drain_grate.glb")
+@export var drain_spacing: float = 11.0
 
 
 func _ready() -> void:
 	_build_surfaces()
+	_build_drains()
 	_build_ground_collision()
 	_build_bounds()
 	_build_traffic_points()
@@ -72,6 +76,27 @@ func _build_surfaces() -> void:
 		var mesh: MeshInstance3D = (part[0] as WorldMesh).make_instance(part[1], part[2], false)
 		if mesh:
 			add_child(mesh)
+
+
+## Abflussdeckel auf der Fahrbahn dicht am Bordstein, auf beiden Seiten versetzt (gerades
+## Mittelstück der Straße). Reine Optik, ohne Kollision.
+func _build_drains() -> void:
+	if drain_scene == null:
+		return
+	var holder := Node3D.new()
+	holder.name = "Drains"
+	add_child(holder)
+	var road_y := -GameConfig.curb_height + 0.003
+	var x0 := StreetLayout.end_start_x(-1) + 2.0
+	var x1 := StreetLayout.end_start_x(1) - 2.0
+	for side in [1, -1]:
+		var z: float = StreetLayout.curb_z() - 0.21 if side > 0 else StreetLayout.far_curb_z() + 0.21
+		var x: float = x0 + (drain_spacing * 0.5 if side < 0 else 2.0)
+		while x < x1:
+			var drain := drain_scene.instantiate() as Node3D
+			drain.position = Vector3(x, road_y, z)
+			holder.add_child(drain)
+			x += drain_spacing
 
 
 ## Ein Straßenende als Bänder entlang seiner Mittellinie. Die Gehwege reichen bis zu den

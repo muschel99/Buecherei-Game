@@ -46,6 +46,11 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/house_glass.tres",
 "use_external/path": "res://assets/materials/house_glass.tres"
 },
+"glass_clear": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/house_glass_clear.tres",
+"use_external/path": "res://assets/materials/house_glass_clear.tres"
+},
 "house": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/house_style.tres",

@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://g3bt670j4les"
-path="res://.godot/imported/GateStreet_Corner.glb-2934b87386c2daef71077bbc745f5633.scn"
+uid="uid://d0f7o1aab5wkl"
+path="res://.godot/imported/drain_grate.glb-2aeaf76d86658ed07edd8a4511f9e3a4.scn"
 
 [deps]
 
-source_file="res://assets/models/houses/street/GateStreet_Corner.glb"
-dest_files=["res://.godot/imported/GateStreet_Corner.glb-2934b87386c2daef71077bbc745f5633.scn"]
+source_file="res://assets/models/props/drain_grate.glb"
+dest_files=["res://.godot/imported/drain_grate.glb-2aeaf76d86658ed07edd8a4511f9e3a4.scn"]
 
 [params]
 
@@ -43,23 +43,16 @@ _subresources={
 "materials": {
 "glass": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_glass.tres",
 "use_external/path": "res://assets/materials/house_glass.tres"
 },
 "glass_clear": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_glass_clear.tres",
 "use_external/path": "res://assets/materials/house_glass_clear.tres"
 },
 "house": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/house_style.tres",
 "use_external/path": "res://assets/materials/house_style.tres"
-},
-"sign_fascia": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/signs/corner_30_fascia.tres",
-"use_external/path": "res://assets/materials/signs/corner_30_fascia.tres"
 }
 }
 }

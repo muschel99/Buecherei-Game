@@ -43,6 +43,8 @@ JOINERY = {
     "cream": (0.84, 0.81, 0.72),
     # nur für den Blumenladen (Salbeigrün wie im Konzeptbild)
     "fern": (0.44, 0.55, 0.46),
+    # nur für den Pub (fast schwarzes Blau wie im Inspirationsbild)
+    "pub_black": (0.08, 0.1, 0.13),
 }
 WALL_COLORS = {
     "brick": [(0.6, 0.33, 0.25), (0.52, 0.3, 0.24), (0.64, 0.4, 0.3), (0.47, 0.28, 0.22), (0.7, 0.58, 0.42)],
@@ -54,7 +56,7 @@ WALL_COLORS = {
 # Besondere Häuser (vor allem in Sichtweite der Bücherei) – alles andere entscheidet der Zufall
 SPECIAL = {
     # Pub am Platz hinter der Gasse (Inspiration "Westminster Arms")
-    "LibraryRow/Neighbor3": dict(shop="pub", wall="brick", wall_tone=1, joinery="dark_green", accent="dark_green", lintel="segment",
+    "LibraryRow/Neighbor3": dict(shop="pub", wall="brick", wall_tone=0, joinery="pub_black", accent="pub_black", lintel="brick_arch",
                                  eaves_style="dentil", rooms=0, pots=[], panes="sash22", flower_boxes=True, steps=0, bay=False,
                                  balcony=None, roof="side", roof_mat="slate", quoins=False, shutters=False, string="none",
                                  dormers=0, storeys=2, chimneys=[1]),
@@ -150,7 +152,7 @@ def make_spec(house, block):
     ww = pick("window_width", [0.85, 0.95, 1.05, 1.15])
     gw = min(1.35, ww + rnd.choice([0.0, 0.15, 0.3])) if cols_n == 2 else ww
     panes = pick("panes", ["sash22", "sash66", "topbars", "plain", "sash22"] if not fachwerk else ["casement"])
-    joinery = JOINERY[pick("joinery", [k for k in JOINERY if k not in ("cream", "fern")] + ["cream"])]
+    joinery = JOINERY[pick("joinery", [k for k in JOINERY if k not in ("cream", "fern", "pub_black")] + ["cream"])]
     accent = JOINERY[sp["accent"]] if "accent" in sp else joinery
     tone = sp.get("wall_tone", rnd.randrange(len(WALL_COLORS[wall])))
     wall_color = WALL_COLORS[wall][tone % len(WALL_COLORS[wall])]
@@ -297,6 +299,8 @@ def landmark_spec(house, block):
         spec.update(corner_angle=val("corner_angle", 90.0), chamfer_width=val("chamfer_width", 2.2), side_length=val("side_length", 5.0),
                     roof_rise=1.8, storeys=[tv["eaves"] / storeys] * storeys,
                     wall="brick" if t == "corner_90" else "render", lintel="flat",
+                    # Teestube: Tür und Schild auf der Wand zur langen Straße (die Schräge sieht man kaum)
+                    door_edge=2 if t == "corner_90" else 1,
                     colors={"wall": (0.62, 0.38, 0.28) if t == "corner_90" else (0.88, 0.84, 0.74),
                             "door": JOINERY["navy"] if t == "corner_90" else JOINERY["dark_brown"],
                             "accent": JOINERY["navy"] if t == "corner_90" else JOINERY["dark_brown"]})

@@ -130,7 +130,28 @@ def garment_blouse():
     return b
 
 
+def drain_grate():
+    """Gusseiserner Abflussdeckel (Rinnstein-Einlauf), 0,5 x 0,34 m, flach auf der Fahrbahn.
+    Ursprung = Mitte unten, lange Seite entlang x (am Bordstein entlang)."""
+    b = S.Builder("drain_grate")
+    iron = Mat("metal", color=(0.55, 0.55, 0.55))
+    dark = Mat("plain", color=(0.04, 0.04, 0.04))
+    w, d, h = 0.25, 0.17, 0.012
+    # Rahmen
+    for x0, x1, z0, z1 in ((-w, w, -d, -d + 0.04), (-w, w, d - 0.04, d), (-w, -w + 0.04, -d + 0.04, d - 0.04), (w - 0.04, w, -d + 0.04, d - 0.04)):
+        b.box((x0, 0.0, z0), (x1, h, z1), iron, skip=("bottom",))
+    # Dunkler Schacht unter den Schlitzen, darüber Stege quer
+    b.box((-w + 0.04, 0.0, -d + 0.04), (w - 0.04, 0.002, d - 0.04), dark, skip=("bottom",))
+    n = 9
+    for k in range(n + 1):
+        x = -w + 0.04 + (2 * w - 0.08) * k / n
+        b.box((x - 0.011, 0.0, -d + 0.04), (x + 0.011, h - 0.002, d - 0.04), iron, skip=("bottom",))
+    b.box((-w + 0.04, 0.0, -0.012), (w - 0.04, h - 0.002, 0.012), iron, skip=("bottom",))
+    return b
+
+
 PROPS = {
+    "drain_grate": drain_grate,
     "dress_form": dress_form,
     "outfit_dress": outfit_dress,
     "outfit_coat": outfit_coat,

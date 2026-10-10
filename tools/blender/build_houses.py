@@ -46,7 +46,8 @@ GOLD = Mat("gold")
 CANVAS = Mat("canvas", "accent")
 CURTAIN = Mat("fabric", color=(0.92, 0.9, 0.84))
 DARK_GLASS = Mat("glass")
-CLEAR_GLASS = Mat("glass", glass=True)
+CLEAR_GLASS = Mat("glass", glass="clear")
+FROSTED_GLASS = Mat("glass", glass=True)
 POT = Mat("terracotta")
 TILES = Mat("paving", color=(1, 1, 1))
 
@@ -151,7 +152,7 @@ def sash_window(b, x, y0, w, h, reveal, panes=(2, 2), curtains=True, z=0.0):
     y1 = y0 + h
     zg = -reveal + 0.02
     # Echtes Glas, dahinter Vorhänge bzw. ein kleiner, dämmriger Raum (wie bei den Wohnhäusern)
-    b.quad(V(x0, y0, zg), V(x1, y0, zg), V(x1, y1, zg), V(x0, y1, zg), CLEAR_GLASS)
+    b.quad(V(x0, y0, zg), V(x1, y0, zg), V(x1, y1, zg), V(x0, y1, zg), FROSTED_GLASS)
     import random
     rnd = random.Random(int(abs(x) * 100 + y0 * 1000 + z * 10))
     kind = rnd.choice(["nets", "nets", "closed", "blind"]) if curtains else "dim"
@@ -1048,10 +1049,35 @@ def _board(b, fw, fh, board, text, letters, size, gold=True, playful=False):
     b.recenter(start, 0.0, 0.0)
 
 
+def _pub_fascia(b):
+    """Startbild des Pub-Schilds: dunkle Front, in der Mitte ein kleines Holzschild."""
+    fw, fh = 4.96, 0.58
+    b.box((-fw / 2, -fh / 2, -0.02), (fw / 2, fh / 2, 0.0), Mat("paint", color=(0.08, 0.1, 0.13)))
+    b.box((-0.8, -0.2, 0.0), (0.8, 0.2, 0.02), Mat("timber", color=(1.25, 1.1, 1.0)))
+    b.box((-0.76, -0.16, 0.02), (0.76, 0.16, 0.024), Mat("timber", color=(1.1, 0.95, 0.85)))
+    start = len(b.faces)
+    b.playful_text("The Ink & Ivy", 0.0, 0.0, 0.024, 0.15, 0.006, Mat("paint", color=(0.95, 0.9, 0.78)), font_path=S.PLAYFUL_FONT,
+                   seed=12, bounce=0.04, tilt=3)
+    b.recenter(start, 0.0, 0.0)
+
+
+def _pub_hanging(b):
+    """Startbild des runden Hängeschilds: dunkler Grund, Goldring, Tintenfass mit Feder."""
+    width, height = P.HANGING_SIGN
+    b.box((-width / 2 - 0.05, -height / 2 - 0.05, -0.03), (width / 2 + 0.05, height / 2 + 0.05, -0.02), Mat("plain", color=(0.5, 0.5, 0.5)))
+    b.cylinder(V(0, 0, -0.02), height / 2, 0.02, Mat("paint", color=(0.08, 0.1, 0.13)), segments=32, axis="z", caps=(True, True))
+    ring = [V(0.24 * math.cos(2 * math.pi * k / 32), 0.24 * math.sin(2 * math.pi * k / 32), 0.005) for k in range(33)]
+    b.tube(ring, 0.008, GOLD, segments=4, caps=False)
+    b.cylinder(V(0, -0.12, 0.0), 0.08, 0.02, Mat("paint", color=(0.85, 0.82, 0.74)), segments=16, axis="z", caps=(True, True))
+    b.box((-0.08, -0.12, 0.0), (0.08, 0.0, 0.02), Mat("paint", color=(0.85, 0.82, 0.74)))
+    b.beam(V(0.0, -0.02, 0.025), V(0.13, 0.16, 0.025), 0.03, 0.006, GOLD)
+    b.beam(V(0.03, 0.02, 0.025), V(0.15, 0.2, 0.025), 0.06, 0.004, Mat("paint", color=(0.85, 0.82, 0.74)))
+
+
 SIGNS = {
     "pub": {
-        "fascia": (4.92, 0.53, 2048, lambda b: _board(b, 4.92, 0.53, Mat("paint", color=(0.11, 0.2, 0.15)), "THE INK & IVY",
-                                                       GOLD, 0.28)),
+        "fascia": (4.96, 0.58, 2048, lambda b: _pub_fascia(b)),
+        "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, lambda b: _pub_hanging(b)),
         "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Heute:", "Pie &", "Cider"], 51)),
     },
     "corner_90": {

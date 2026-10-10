@@ -212,9 +212,12 @@ def thread_spiral(b, start, radius, turns, mat, plane_z, thickness=0.01, directi
 HANGING_SIGN = (0.6, 0.56)
 
 
-def _arch_outline(width, height):
-    """Umriss des Ausleger-Schilds (u, v) um die Mitte: unten gerade, oben ein flacher Bogen."""
+def _arch_outline(width, height, round_=False):
+    """Umriss des Ausleger-Schilds (u, v) um die Mitte: unten gerade, oben ein flacher Bogen –
+    oder rund (round_)."""
     hw, hh = width / 2, height / 2
+    if round_:
+        return [(hw * math.cos(2 * math.pi * k / 24 - math.pi / 2), hh * math.sin(2 * math.pi * k / 24 - math.pi / 2)) for k in range(24)]
     arc = []
     for k in range(13):
         a = math.pi * k / 12
@@ -222,7 +225,7 @@ def _arch_outline(width, height):
     return [(-hw, -hh), (hw, -hh)] + arc
 
 
-def projecting_sign(b, x, y_bracket, z_wall, edge_mat, sign_mat):
+def projecting_sign(b, x, y_bracket, z_wall, edge_mat, sign_mat, round_=False):
     """Ausleger-Schild quer zur Fassade (Ebene x = konstant): Schmiedeeisen-Arm mit Schnecken,
     Holzschild; beide Seiten zeigen das Bild sign_mat (Größe HANGING_SIGN, lesbar von beiden
     Seiten)."""
@@ -239,7 +242,7 @@ def projecting_sign(b, x, y_bracket, z_wall, edge_mat, sign_mat):
     cy = y_bracket - 0.1 - height / 2
     for zr in (cz - width / 2 + 0.06, cz + width / 2 - 0.06):
         b.tube([V(x, y_bracket - 0.015, zr), V(x, cy + height / 2 - 0.02, zr)], 0.006, IRON, segments=4)
-    outline = _arch_outline(width, height)
+    outline = _arch_outline(width, height, round_)
     t = 0.035
     # +x-Seite: rechts im Bild = -z; -x-Seite: rechts im Bild = +z
     for side in (1, -1):
