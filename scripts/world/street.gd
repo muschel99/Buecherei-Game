@@ -102,7 +102,8 @@ func _build_end(walk: WorldMesh, stone: WorldMesh, road: WorldMesh, side: int) -
 func _walk_outer(part: String, edge: float) -> float:
 	match part:
 		"passage":
-			return StreetLayout.gate_passage_width() / 2.0
+			# Bis an die Wände der Durchfahrt (der Bogen sitzt etwas zur Bücherei-Seite versetzt)
+			return StreetLayout.gate_passage_width() / 2.0 + edge * StreetLayout.gate_center_offset()
 		"behind", "behind_end":
 			return StreetLayout.gate_facade_offset() + WALK_EXTRA
 	var facade := StreetLayout.library_facade_offset() if edge > 0.0 else StreetLayout.opposite_facade_offset()
@@ -183,7 +184,8 @@ func _build_bounds() -> void:
 	var gate := StreetLayout.gatehouse_front()
 	var dir: Vector2 = gate.dir
 	var across := Vector2(-dir.y, dir.x) * (StreetLayout.gate_passage_width() / 2.0 + 0.3)
-	var middle: Vector2 = gate.pos + dir * GATE_BOUND_INSIDE
+	var middle: Vector2 = StreetLayout.end_offset(gate, StreetLayout.gate_center_offset(), StreetLayout.turning_side()) \
+		+ dir * GATE_BOUND_INSIDE
 	_add_bound(body, middle - across, middle + across)
 
 

@@ -300,7 +300,7 @@ First, vorn und hinten steht es 20 cm über.
 | `residential.tscn`   | Wohnhaus (gegenüber der Ladentür)            | 5,4 m  | 7,0 m     | 8 m   |
 | `pub.tscn`           | Restaurant / Pub (erstes Haus hinter der Gasse, am Platz) | 5,6 m | 7,2 m | 8 m |
 | `fashion_shop.tscn`  | Modegeschäft (direkt neben der Bücherei)     | 5,4 m  | 6,8 m     | 8 m   |
-| `gatehouse.tscn`     | Torhaus mit Durchfahrt (am abbiegenden Ende, siehe unten) | 10,4 m | 8,8 m | 6 m |
+| `gatehouse.tscn`     | Torhaus mit Durchfahrt (am abbiegenden Ende, siehe unten) | 9,8 m | 9,4 m | 6 m |
 | `corner_90.tscn`     | Eckhaus mit abgeschrägter Ecke in der runden 90°-Kurve (siehe unten) | 6,0 m | 6,8 m | 7 m |
 | `corner_30.tscn`     | Eckhaus mit abgeschrägter Ecke in der sanften 30°-Kurve (siehe unten) | 6,0 m | 7,0 m | 8 m |
 
@@ -322,16 +322,19 @@ dem Haus um die Durchfahrt herum (Pfeiler, Bogen, Gewölbe innen, Obergeschoss, 
 Modelliere also keinen Boden in die Durchfahrt und nichts, was in die Öffnung hineinragt.
 
 Maße (Ursprung unten in der Mitte der Vorderseite, Vorderseite +Z, wie bei allen Häusern):
-- Gesamt: 10,4 m breit, 6 m tief (von 0 bis -6 m), Traufe 8,8 m, First 11,2 m.
-- **Öffnung:** 6,5 m breit (von x = -3,25 bis +3,25), senkrecht bis 2,0 m hoch, darüber ein
-  Halbkreis – der Scheitel liegt bei 5,25 m. Sie geht ganz durch (von vorn bis hinten).
+- Gesamt: 9,8 m breit (genau so breit wie die Straße zwischen den Hausfronten), 6 m tief (von
+  0 bis -6 m), Traufe 9,4 m, First 11,8 m.
+- **Öffnung:** 6,5 m breit (von x = -3,25 bis +3,25), senkrecht bis 2,6 m hoch, darüber ein
+  Halbkreis – der Scheitel liegt bei 5,85 m. Sie geht ganz durch (von vorn bis hinten).
   In der Vorlage siehst du die Öffnung genau so; lass die Wände der Durchfahrt (innen) an
   derselben Stelle, dann passt die Straße.
-- Die beiden Pfeiler links und rechts (je 1,95 m breit) sind fest: Dort kann man nicht
+- Die beiden Pfeiler links und rechts (je 1,65 m breit) sind fest: Dort kann man nicht
   hindurchlaufen. Die Durchfahrt selbst ist frei; eine unsichtbare Grenze im Bogen hält die
   Spielfigur auf (sie bleibt knapp unter dem Bogen stehen).
-- Die rechte und linke Kante verschwinden hinter den Nachbarhäusern, die Rückseite sieht man
-  im Spiel nicht – dort darf dein Modell schlicht sein.
+- Das Torhaus steht mittig zwischen den Hausfronten, darum sind beide Pfeiler gleich breit
+  zu sehen. Die Fahrbahn läuft darunter 25 cm aus der Mitte (die Gehwege sind verschieden
+  breit) – das passt schon. Die Rückseite sieht man im Spiel nicht – dort darf dein Modell
+  schlicht sein.
 
 So geht's:
 1. `scenes/world/houses/gatehouse.tscn` doppelklicken.

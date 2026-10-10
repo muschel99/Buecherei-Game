@@ -657,7 +657,8 @@ Zwei Zustände:
   - **Abbiegendes Ende mit Torhaus (seit Etappe 4f):** Hinter den Häusern an der Gasse läuft
     die Straße noch ein Stück geradeaus und macht dann eine sanfte Kurve (30°) von der Bücherei
     weg. Direkt dahinter, gleich nach dem Eckhaus innen in der Kurve, steht quer über der Straße
-    ein **Torhaus mit Durchfahrt**: unten ein großer
+    ein **Torhaus mit Durchfahrt**, genau so breit wie die Straße zwischen den Hausfronten und
+    mittig zwischen ihnen (beide Pfeiler gleich breit, mit Ecksteinen): unten ein hoher
     gemauerter Rundbogen über der Fahrbahn (helle Bogensteine, Schlussstein, Ecksteine),
     darüber ein waagerechtes Band für ein Schild, ein Obergeschoss in Fachwerk-Optik mit zwei
     Sprossenfenstern und im Dach eine mittige Gaube mit Sprossenfenster. Schon von der Ladentür

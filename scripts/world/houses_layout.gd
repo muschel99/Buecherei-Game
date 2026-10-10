@@ -23,6 +23,8 @@ extends RefCounted
 ## 4 mm zurück, damit sich keine Flächen genau überdecken (kein Flimmern).
 
 const STAGGER := 0.004
+## Kürzere Reihen als das (Meter) werden nicht gefüllt.
+const MIN_ROW_LENGTH := 2.0
 
 ## Wandfarben (der Reihe nach): Backstein und Putz in hellen Tönen
 const STREET_COLORS: Array[Color] = [
@@ -171,10 +173,11 @@ static func _gate_end(houses: Array[Dictionary], side: int) -> void:
 	var start := houses.size()
 	_fill_curve(houses, group, "Bend", outer, approach, STREET_COLORS, 4, true)
 	_expose_gable(houses, start, side)
-	# Das Torhaus quer über der Straße, Vorderseite zur Bücherei hin; es behält die Farben aus
-	# seiner Szene
+	# Das Torhaus quer über der Straße, mittig zwischen den Hausfronten, Vorderseite zur
+	# Bücherei hin; es behält die Farben aus seiner Szene
 	var type := GameConfig.gatehouse_type
-	var gate := _add(houses, group, "Gatehouse", type, front.pos, _facing(-front_dir), 0)
+	var gate := _add(houses, group, "Gatehouse", type,
+		StreetLayout.end_offset(front, StreetLayout.gate_center_offset(), side), _facing(-front_dir), 0)
 	gate.wall_color = HouseTypes.value_of(type, "wall_color", gate.wall_color)
 	gate.door_color = HouseTypes.value_of(type, "door_color", gate.door_color)
 	gate.solid = true
@@ -349,6 +352,10 @@ static func _nearest_center(path: Array[Dictionary], point: Vector2) -> Vector2:
 ## Füllt die Strecke von a nach b lückenlos mit Reihenhäusern.
 static func _fill(houses: Array[Dictionary], group: String, prefix: String, a: Vector2, b: Vector2,
 		yaw: float, colors: Array[Color], color_offset: int, solid: bool) -> void:
+	# Eine Lücke, in die nicht einmal ein halbes Haus passt, bleibt leer (die Nachbarn schließen
+	# sie) – sonst stünde dort ein ganzes Haus quer in den Nachbarhäusern.
+	if a.distance_to(b) < MIN_ROW_LENGTH:
+		return
 	var types := _choose(a.distance_to(b), int(absf(a.x * 7.0 + a.y * 13.0)))
 	var start := houses.size()
 	_place(houses, group, prefix, types, a, b, yaw, colors, color_offset)

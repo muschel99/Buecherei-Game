@@ -19,235 +19,229 @@
 [ext_resource type="PackedScene" path="res://scenes/world/houses/corner_30.tscn" id="9_ufwiq"]
 [ext_resource type="PackedScene" path="res://scenes/world/houses/gatehouse.tscn" id="10_6fajw"]
 
-[node name="Houses" type="Node3D" unique_id=498442930]
+[node name="Houses" type="Node3D" unique_id=856762261]
 
-[node name="LibraryRow" type="Node3D" parent="." unique_id=1039225175]
+[node name="LibraryRow" type="Node3D" parent="." unique_id=1355307656]
 
-[node name="Neighbor1" parent="LibraryRow" unique_id=1728652819 instance=ExtResource("1_b4vo6")]
+[node name="Neighbor1" parent="LibraryRow" unique_id=608139219 instance=ExtResource("1_b4vo6")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 5.9, 0, -4.2)
 wall_color = Color(0.9, 0.86, 0.8, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 
-[node name="Neighbor2" parent="LibraryRow" unique_id=269607861 instance=ExtResource("2_8miuw")]
+[node name="Neighbor2" parent="LibraryRow" unique_id=602616017 instance=ExtResource("2_8miuw")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 11.35, 0, -4.2)
 wall_color = Color(0.74, 0.8, 0.78, 1)
 door_color = Color(0.16, 0.32, 0.24, 1)
 
-[node name="Neighbor3" parent="LibraryRow" unique_id=1992439102 instance=ExtResource("3_ndida")]
+[node name="Neighbor3" parent="LibraryRow" unique_id=6891640 instance=ExtResource("3_ndida")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -8.8, 0, -2.0828428)
 wall_color = Color(0.84, 0.76, 0.62, 1)
 door_color = Color(0.08, 0.08, 0.09, 1)
 
-[node name="Neighbor4" parent="LibraryRow" unique_id=1471681667 instance=ExtResource("4_img60")]
+[node name="Neighbor4" parent="LibraryRow" unique_id=1015887375 instance=ExtResource("4_img60")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -14.1, 0, -2.0828428)
 wall_color = Color(0.58, 0.34, 0.27, 1)
 door_color = Color(0.62, 0.5, 0.2, 1)
 
-[node name="Opposite" type="Node3D" parent="." unique_id=1230067715]
+[node name="Opposite" type="Node3D" parent="." unique_id=4495723]
 
-[node name="Opposite1_1" parent="Opposite" unique_id=1229631139 instance=ExtResource("5_b5un2")]
+[node name="Opposite1_1" parent="Opposite" unique_id=1658436555 instance=ExtResource("5_b5un2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.069431, 0, -14)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 
-[node name="Opposite1_2" parent="Opposite" unique_id=1531261678 instance=ExtResource("5_b5un2")]
+[node name="Opposite1_2" parent="Opposite" unique_id=2059951897 instance=ExtResource("5_b5un2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.077074, 0, -14.004)
 wall_color = Color(0.86, 0.82, 0.72, 1)
 door_color = Color(0.16, 0.32, 0.24, 1)
 casts_shadow = false
 
-[node name="Opposite1_3" parent="Opposite" unique_id=1539760515 instance=ExtResource("6_t0cuk")]
+[node name="Opposite1_3" parent="Opposite" unique_id=771530867 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.834716, 0, -14)
 wall_color = Color(0.62, 0.72, 0.76, 1)
 door_color = Color(0.08, 0.08, 0.09, 1)
 casts_shadow = false
 
-[node name="Opposite1_4" parent="Opposite" unique_id=1600916746 instance=ExtResource("7_u5j82")]
+[node name="Opposite1_4" parent="Opposite" unique_id=934646612 instance=ExtResource("7_u5j82")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8923588, 0, -14.004)
 wall_color = Color(0.5, 0.27, 0.22, 1)
 door_color = Color(0.62, 0.5, 0.2, 1)
 casts_shadow = false
 
-[node name="Opposite1_5" parent="Opposite" unique_id=1492323907 instance=ExtResource("6_t0cuk")]
+[node name="Opposite1_5" parent="Opposite" unique_id=421684356 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0499992, 0, -14)
 wall_color = Color(0.72, 0.78, 0.66, 1)
 casts_shadow = false
 
-[node name="Opposite2_1" parent="Opposite" unique_id=1831742171 instance=ExtResource("4_img60")]
+[node name="Opposite2_1" parent="Opposite" unique_id=1191145750 instance=ExtResource("4_img60")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.6, 0, -14)
 wall_color = Color(0.62, 0.72, 0.76, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 
-[node name="Opposite2_2" parent="Opposite" unique_id=2111697775 instance=ExtResource("6_t0cuk")]
+[node name="Opposite2_2" parent="Opposite" unique_id=1251456550 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.35, 0, -14.004)
 wall_color = Color(0.5, 0.27, 0.22, 1)
 door_color = Color(0.16, 0.32, 0.24, 1)
 casts_shadow = false
 
-[node name="Opposite2_3" parent="Opposite" unique_id=905851113 instance=ExtResource("6_t0cuk")]
+[node name="Opposite2_3" parent="Opposite" unique_id=1991094858 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.85, 0, -14)
 wall_color = Color(0.72, 0.78, 0.66, 1)
 door_color = Color(0.08, 0.08, 0.09, 1)
 casts_shadow = false
 
-[node name="Opposite2_4" parent="Opposite" unique_id=1349154722 instance=ExtResource("6_t0cuk")]
+[node name="Opposite2_4" parent="Opposite" unique_id=952392020 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.35, 0, -14.004)
 wall_color = Color(0.9, 0.84, 0.76, 1)
 door_color = Color(0.62, 0.5, 0.2, 1)
 casts_shadow = false
 
-[node name="Opposite2_5" parent="Opposite" unique_id=1721759074 instance=ExtResource("6_t0cuk")]
+[node name="Opposite2_5" parent="Opposite" unique_id=541160468 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.85, 0, -14)
 casts_shadow = false
 solid = false
 
-[node name="StraightEnd" type="Node3D" parent="." unique_id=444844960]
+[node name="StraightEnd" type="Node3D" parent="." unique_id=347616313]
 
-[node name="Street1" parent="StraightEnd" unique_id=1262939322 instance=ExtResource("2_8miuw")]
+[node name="Street1" parent="StraightEnd" unique_id=1657335541 instance=ExtResource("2_8miuw")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 16.85, 0, -4.2)
 wall_color = Color(0.5, 0.27, 0.22, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 
-[node name="Street2" parent="StraightEnd" unique_id=305666730 instance=ExtResource("6_t0cuk")]
+[node name="Street2" parent="StraightEnd" unique_id=31121414 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 21.699999, 0, -4.1959996)
 wall_color = Color(0.72, 0.78, 0.66, 1)
 door_color = Color(0.16, 0.32, 0.24, 1)
 casts_shadow = false
 
-[node name="Corner" parent="StraightEnd" unique_id=1734503893 instance=ExtResource("8_f2l8o")]
+[node name="Corner" parent="StraightEnd" unique_id=1341976489 instance=ExtResource("8_f2l8o")]
 transform = Transform3D(7.54979e-08, 0, 1, 0, 1, 0, -1, 0, 7.54979e-08, 30.949999, 0, -1.1999998)
 wall_color = Color(0.74, 0.8, 0.78, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 solid = false
 
-[node name="Outer1" parent="StraightEnd" unique_id=174277720 instance=ExtResource("2_8miuw")]
+[node name="Outer1" parent="StraightEnd" unique_id=562473706 instance=ExtResource("2_8miuw")]
 transform = Transform3D(0.97590625, 0, -0.21819034, 0, 1, 0, 0.21819034, 0, 0.97590625, 30.783741, 0, -13.399977)
 wall_color = Color(0.6, 0.42, 0.34, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 solid = false
 
-[node name="Outer2" parent="StraightEnd" unique_id=797909883 instance=ExtResource("5_b5un2")]
+[node name="Outer2" parent="StraightEnd" unique_id=139911522 instance=ExtResource("5_b5un2")]
 transform = Transform3D(0.7807107, 0, -0.62489265, 0, 1, 0, 0.62489265, 0, 0.7807107, 35.781513, 0, -10.943299)
 wall_color = Color(0.78, 0.74, 0.66, 1)
 door_color = Color(0.16, 0.32, 0.24, 1)
 casts_shadow = false
 solid = false
 
-[node name="Outer3" parent="StraightEnd" unique_id=344585320 instance=ExtResource("5_b5un2")]
+[node name="Outer3" parent="StraightEnd" unique_id=914304236 instance=ExtResource("5_b5un2")]
 transform = Transform3D(0.40741476, 0, -0.91324323, 0, 1, 0, 0.91324323, 0, 0.40741476, 39.32307, 0, -6.3533826)
 wall_color = Color(0.52, 0.33, 0.27, 1)
 door_color = Color(0.08, 0.08, 0.09, 1)
 casts_shadow = false
 solid = false
 
-[node name="Outer4" parent="StraightEnd" unique_id=783448787 instance=ExtResource("5_b5un2")]
+[node name="Outer4" parent="StraightEnd" unique_id=1881473890 instance=ExtResource("5_b5un2")]
 transform = Transform3D(0.035140388, 0, -0.9993824, 0, 1, 0, 0.9993824, 0, 0.035140388, 40.648575, 0, -0.64916265)
 wall_color = Color(0.6, 0.42, 0.34, 1)
 door_color = Color(0.62, 0.5, 0.2, 1)
 casts_shadow = false
 solid = false
 
-[node name="Outer5" parent="StraightEnd" unique_id=1354528731 instance=ExtResource("6_t0cuk")]
+[node name="Outer5" parent="StraightEnd" unique_id=1774149622 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 40.75, 0, 4.565992)
 wall_color = Color(0.78, 0.74, 0.66, 1)
 casts_shadow = false
 solid = false
 
-[node name="GateStreet" type="Node3D" parent="." unique_id=2127278232]
+[node name="GateStreet" type="Node3D" parent="." unique_id=1937820261]
 
-[node name="Corner" parent="GateStreet" unique_id=791479884 instance=ExtResource("9_ufwiq")]
+[node name="Corner" parent="GateStreet" unique_id=493406889 instance=ExtResource("9_ufwiq")]
 transform = Transform3D(0.86602545, 0, -0.49999997, 0, 1, 0, 0.49999997, 0, 0.86602545, -30.667507, 0, -15.5)
 wall_color = Color(0.86, 0.8, 0.68, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 
-[node name="Approach1" parent="GateStreet" unique_id=1551050300 instance=ExtResource("6_t0cuk")]
-transform = Transform3D(0.86602545, 0, -0.49999997, 0, 1, 0, 0.49999997, 0, 0.86602545, -33.25235, 0, -16.992357)
-wall_color = Color(0.62, 0.72, 0.76, 1)
-door_color = Color(0.5, 0.12, 0.14, 1)
-casts_shadow = false
-
-[node name="Bend1" parent="GateStreet" unique_id=1830426884 instance=ExtResource("2_8miuw")]
+[node name="Bend1" parent="GateStreet" unique_id=1895689675 instance=ExtResource("2_8miuw")]
 transform = Transform3D(-1, 0, 1.509958e-07, 0, 1, 0, -1.509958e-07, 0, -1, -19.35, 0, -4.2)
 side_windows = -1
 wall_color = Color(0.72, 0.78, 0.66, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 
-[node name="Bend2" parent="GateStreet" unique_id=2031250897 instance=ExtResource("5_b5un2")]
+[node name="Bend2" parent="GateStreet" unique_id=66511762 instance=ExtResource("5_b5un2")]
 transform = Transform3D(-0.99980843, 0, 0.019572351, 0, 1, 0, -0.019572351, 0, -0.99980843, -25.092545, 0, -4.2547183)
 wall_color = Color(0.9, 0.84, 0.76, 1)
 door_color = Color(0.16, 0.32, 0.24, 1)
 casts_shadow = false
 
-[node name="Bend3" parent="GateStreet" unique_id=815586680 instance=ExtResource("5_b5un2")]
+[node name="Bend3" parent="GateStreet" unique_id=2083840691 instance=ExtResource("5_b5un2")]
 transform = Transform3D(-0.9576218, 0, 0.28802863, 0, 1, 0, -0.28802863, 0, -0.9576218, -30.95781, 0, -5.1808186)
 door_color = Color(0.08, 0.08, 0.09, 1)
 casts_shadow = false
 
-[node name="Bend4" parent="GateStreet" unique_id=1800020591 instance=ExtResource("4_img60")]
+[node name="Bend4" parent="GateStreet" unique_id=338713679 instance=ExtResource("4_img60")]
 transform = Transform3D(-0.8690584, 0, 0.49470952, 0, 1, 0, -0.49470952, 0, -0.8690584, -35.99898, 0, -7.2750454)
 wall_color = Color(0.86, 0.82, 0.72, 1)
 door_color = Color(0.62, 0.5, 0.2, 1)
 casts_shadow = false
 
-[node name="Gatehouse" parent="GateStreet" unique_id=2089995112 instance=ExtResource("10_6fajw")]
-transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -35.56411, 0, -12.957696)
+[node name="Gatehouse" parent="GateStreet" unique_id=311817363 instance=ExtResource("10_6fajw")]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -35.68911, 0, -12.74119)
 casts_shadow = false
 
-[node name="BehindInner1" parent="GateStreet" unique_id=806160482 instance=ExtResource("6_t0cuk")]
+[node name="BehindInner1" parent="GateStreet" unique_id=932415981 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(0.6840557, 0, -0.7294298, 0, 1, 0, 0.7294298, 0, 0.6840557, -40.657417, 0, -21.44292)
 wall_color = Color(0.78, 0.74, 0.66, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 solid = false
 
-[node name="BehindInner2" parent="GateStreet" unique_id=644273386 instance=ExtResource("6_t0cuk")]
+[node name="BehindInner2" parent="GateStreet" unique_id=1362558312 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(-0.094675675, 0, -0.9955082, 0, 1, 0, 0.9955082, 0, -0.094675675, -41.83855, 0, -24.92666)
 wall_color = Color(0.52, 0.33, 0.27, 1)
 door_color = Color(0.16, 0.32, 0.24, 1)
 casts_shadow = false
 solid = false
 
-[node name="BehindOuter1" parent="GateStreet" unique_id=1607306605 instance=ExtResource("4_img60")]
+[node name="BehindOuter1" parent="GateStreet" unique_id=944901647 instance=ExtResource("4_img60")]
 transform = Transform3D(-0.81526655, 0, 0.5790859, 0, 1, 0, -0.5790859, 0, -0.81526655, -44.873444, 0, -13.811403)
 wall_color = Color(0.52, 0.33, 0.27, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)
 casts_shadow = false
 solid = false
 
-[node name="BehindOuter2" parent="GateStreet" unique_id=1843981639 instance=ExtResource("6_t0cuk")]
+[node name="BehindOuter2" parent="GateStreet" unique_id=1790456182 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(-0.57512164, 0, 0.8180679, 0, 1, 0, -0.8180679, 0, -0.57512164, -48.158447, 0, -17.048805)
 wall_color = Color(0.6, 0.42, 0.34, 1)
 door_color = Color(0.16, 0.32, 0.24, 1)
 casts_shadow = false
 solid = false
 
-[node name="BehindOuter3" parent="GateStreet" unique_id=1521389430 instance=ExtResource("2_8miuw")]
+[node name="BehindOuter3" parent="GateStreet" unique_id=5375259 instance=ExtResource("2_8miuw")]
 transform = Transform3D(-0.23327707, 0, 0.9724103, 0, 1, 0, -0.9724103, 0, -0.23327707, -50.06166, 0, -21.501568)
 wall_color = Color(0.78, 0.74, 0.66, 1)
 door_color = Color(0.08, 0.08, 0.09, 1)
 casts_shadow = false
 solid = false
 
-[node name="BehindOuter4" parent="GateStreet" unique_id=1558336824 instance=ExtResource("6_t0cuk")]
+[node name="BehindOuter4" parent="GateStreet" unique_id=1467725213 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(0.1410607, 0, 0.99000096, 0, 1, 0, -0.99000096, 0, 0.1410607, -50.38656, 0, -26.333237)
 wall_color = Color(0.52, 0.33, 0.27, 1)
 door_color = Color(0.62, 0.5, 0.2, 1)
 casts_shadow = false
 solid = false
 
-[node name="BehindOuter5" parent="GateStreet" unique_id=1683869589 instance=ExtResource("6_t0cuk")]
+[node name="BehindOuter5" parent="GateStreet" unique_id=1153962939 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(0.4403982, 0, 0.8978026, 0, 1, 0, -0.8978026, 0, 0.4403982, -49.097473, 0, -30.513504)
 wall_color = Color(0.6, 0.42, 0.34, 1)
 casts_shadow = false
 solid = false
 
-[node name="BehindOuter6" parent="GateStreet" unique_id=1881906391 instance=ExtResource("6_t0cuk")]
+[node name="BehindOuter6" parent="GateStreet" unique_id=1085650306 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(0.50000006, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, 0.50000006, -47.01978, 0, -34.423958)
 wall_color = Color(0.78, 0.74, 0.66, 1)
 door_color = Color(0.5, 0.12, 0.14, 1)

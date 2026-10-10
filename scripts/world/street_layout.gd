@@ -269,6 +269,12 @@ static func gatehouse_front() -> Dictionary:
 	return end_path(side).back()
 
 
+## Das Torhaus sitzt mittig zwischen den Hausfronten (nicht mittig auf der Fahrbahn), damit
+## beide Pfeiler gleich breit sind: so weit liegt seine Mitte zur Bücherei-Seite hin.
+static func gate_center_offset() -> float:
+	return (library_facade_offset() - opposite_facade_offset()) / 2.0
+
+
 ## Abstand der Hausfronten hinter dem Torhaus von der Straßenmitte.
 static func gate_facade_offset() -> float:
 	return GameConfig.street_width / 2.0 + GameConfig.gate_sidewalk_width

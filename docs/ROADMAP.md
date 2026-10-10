@@ -606,6 +606,13 @@ Nachtrag 2 rückt das Torhaus näher, unsichtbare Häuser fallen weg, gegenüber
       ins Leere, jedes Haus irgendwo sichtbar)
 - [x] Nachtrag 2: Kleine Gasse (1,8 m) in der langen Häuserreihe gegenüber, begehbar bis zu
       einer Mauer mit Tor (`OppositeAlley`, Werte `opposite_alley_…` in GameConfig)
+- [x] Nachtrag 3: Fehler behoben – nach dem Vorrücken stand in der 3-cm-Lücke zwischen
+      Eckhaus und Torhaus ein ganzes Reihenhaus quer in beiden (Fenster ineinander); zu
+      kurze Reihen (unter 2 m) bleiben jetzt leer (`HousesLayout.MIN_ROW_LENGTH`). Das Torhaus
+      sitzt mittig zwischen den Hausfronten statt mittig auf der Fahrbahn (vorher links 1,9 m,
+      rechts 1,4 m Pfeiler – wirkte schief; jetzt beide 1,65 m, `gate_center_offset`), ist
+      9,8 m breit, und der Bogen ist höher (Kämpfer 2,6 m, Scheitel 5,85 m, Traufe 9,4 m)
+      statt gedrungen. Vorlage neu erzeugt; Lauftest an beiden Pfeilern
 - [x] Arbeitsregel „Screenshots und Selbstkontrolle“ in CLAUDE.md mit Werkzeug:
       `tools/setup_godot.sh` (Godot im Container einrichten), `tools/screenshots.sh`
       (Testbilder ohne Bildschirm, Szene `scenes/tools/screenshot_tour.tscn`, feste

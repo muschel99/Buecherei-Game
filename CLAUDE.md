@@ -212,12 +212,14 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   aus nie das Ende sieht. Anderes Ende: `gate_bend_offset` hinter den festen Nachbarn eine sanfte Kurve
   (`gate_bend_angle`, `gate_bend_radius`) weg von der Bücherei, `gate_approach_length` danach
   (direkt hinter dem Eckhaus) das **Torhaus** (`GatehouseFacade`, Haustyp
-  `GameConfig.gatehouse_type`, Kollision nur die Pfeiler, `StreetLayout.gatehouse_front()`);
+  `GameConfig.gatehouse_type`, Kollision nur die Pfeiler, `StreetLayout.gatehouse_front()`,
+  mittig zwischen den Hausfronten: `gate_center_offset()` – Durchfahrt, Grenze und Gehwege
+  darunter sind entsprechend versetzt);
   von der Ladentür zu etwa 95 % sichtbar. Hinter dem Bogen Abschnitte `behind` (bis Ende der
   Kurve, Häuser auf beiden Seiten) und `behind_end` (nur außen Häuser).
   **Nur Sichtbares bauen:** Häuser, die man von keiner erreichbaren Stelle sieht, plant
   `HousesLayout` gar nicht erst (keine Querhäuser an den Enden, innen in der Seitenstraße
-  keine); nach Änderungen an den Enden mit `tools/plan_check.py unseen` prüfen (0 Blicke ins
+  keine; Reihen unter `HousesLayout.MIN_ROW_LENGTH` bleiben leer); nach Änderungen an den Enden mit `tools/plan_check.py unseen` prüfen (0 Blicke ins
   Leere, keine unsichtbaren Häuser). Kleine Gasse gegenüber: `OppositeAlley`
   (`scenes/world/opposite_alley.tscn`, `StreetLayout.opposite_alley()`, Werte
   `opposite_alley_x/_width/_depth`; die Reihe gegenüber wird dort geteilt, Abschluss
