@@ -1034,7 +1034,36 @@ def _flower_hanging_design(b):
     b.box((-0.06, -0.2, 0.0), (0.06, -0.12, 0.03), Mat("paint", color=(0.86, 0.82, 0.72)))
 
 
+def _board(b, fw, fh, board, text, letters, size, gold=True, playful=False):
+    """Schlichtes Startbild: Brett, feiner Rand, Schrift in der Mitte."""
+    b.box((-fw / 2, -fh / 2, -0.02), (fw / 2, fh / 2, 0.0), board)
+    edge = GOLD if gold else Mat("paint", color=(0.86, 0.82, 0.72))
+    for y0 in (-fh / 2 + 0.03, fh / 2 - 0.045):
+        b.box((-fw / 2 + 0.05, y0, 0.0), (fw / 2 - 0.05, y0 + 0.015, 0.008), edge)
+    start = len(b.faces)
+    if playful:
+        b.playful_text(text, 0.0, 0.0, 0.0, size, 0.012, letters, font_path=S.PLAYFUL_FONT, seed=5, bounce=0.06, tilt=4, first_scale=1.25)
+    else:
+        b.text(text, 0.0, 0.0, 0.0, size, 0.012, letters, spacing=1.1)
+    b.recenter(start, 0.0, 0.0)
+
+
 SIGNS = {
+    "pub": {
+        "fascia": (4.92, 0.53, 2048, lambda b: _board(b, 4.92, 0.53, Mat("paint", color=(0.11, 0.2, 0.15)), "THE INK & IVY",
+                                                       GOLD, 0.28)),
+        "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Heute:", "Pie &", "Cider"], 51)),
+    },
+    "corner_90": {
+        "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.1, 0.14, 0.23)), "Teestube", GOLD, 0.2, playful=True)),
+    },
+    "corner_30": {
+        "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.22, 0.15, 0.1)), "Bäckerei", Mat("paint", color=(0.9, 0.84, 0.7)),
+                                                    0.2, gold=False, playful=True)),
+    },
+    "gatehouse": {
+        "fascia": (4.6, 0.42, 2048, lambda b: _board(b, 4.6, 0.42, Mat("paint", color=(0.16, 0.27, 0.2)), "ALTE TORGASSE", GOLD, 0.24)),
+    },
     "flower_shop": {
         "fascia": (4.76, 0.43, 2048, _flower_fascia_design),
         "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Frisch:", "Tulpen", "& Rosen"], 41)),

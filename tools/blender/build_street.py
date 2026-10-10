@@ -31,7 +31,8 @@ import build_houses as BH  # noqa: E402
 HOUSES_TSCN = os.path.join(S.ROOT, "scenes", "world", "houses.tscn")
 HOUSE_DIR = os.path.join(S.ROOT, "scenes", "world", "houses")
 OUT_DIR = os.path.join(S.ROOT, "assets", "models", "houses", "street")
-STREET_TYPES = ("terrace_45", "terrace_50", "terrace_55", "terrace_60", "residential")
+STREET_TYPES = ("terrace_45", "terrace_50", "terrace_55", "terrace_60", "residential", "pub")
+LANDMARK_TYPES = ("corner_90", "corner_30", "gatehouse")
 
 # Fenster- und Türfarben (sRGB): Braun, Grau, Grün, Blau in Abstufungen, selten Creme
 JOINERY = {
@@ -52,6 +53,11 @@ WALL_COLORS = {
 
 # Besondere Häuser (vor allem in Sichtweite der Bücherei) – alles andere entscheidet der Zufall
 SPECIAL = {
+    # Pub am Platz hinter der Gasse (Inspiration "Westminster Arms")
+    "LibraryRow/Neighbor3": dict(shop="pub", wall="brick", wall_tone=1, joinery="dark_green", accent="dark_green", lintel="segment",
+                                 eaves_style="dentil", rooms=0, pots=[], panes="sash22", flower_boxes=True, steps=0, bay=False,
+                                 balcony=None, roof="side", roof_mat="slate", quoins=False, shutters=False, string="none",
+                                 dormers=0, storeys=2, chimneys=[1]),
     "LibraryRow/Neighbor2": dict(wall="brick", wall_tone=4, storeys=3, roof="parapet", balustrade=True, door_style="pilaster",
                                  panes="sash66", balcony="stone", balcony_floor=2, joinery="charcoal", rooms=1, room_kind="living",
                                  eaves_style="cornice", lintel="architrave", quoins=False, fanlight="fan"),
@@ -268,6 +274,35 @@ def exposures(houses, text, specs):
     return result
 
 
+def landmark_spec(house, block):
+    """Beschreibung für Eckhäuser und Torhaus (Maße aus der Haustyp-Szene)."""
+    seed = zlib.crc32(house["key"].encode())
+    rnd = random.Random(seed)
+    t = house["type"]
+    tv = type_values(t)
+    text = open(os.path.join(HOUSE_DIR, t + ".tscn")).read()
+
+    def val(name, default):
+        m = re.search(r"^%s = (-?[0-9.]+)" % name, text, re.M)
+        return float(m.group(1)) if m else default
+    spec = {"seed": seed, "kind": "gate" if t == "gatehouse" else "corner", "width": tv["width"], "depth": tv["depth"],
+            "eaves": tv["eaves"], "lintel": "flat", "sill": "stone", "panes": "sash22", "roof_mat": "clay" if t != "corner_30" else "slate",
+            "wall": "brick", "frame_cream": False, "door_style": "simple"}
+    if t == "gatehouse":
+        spec.update(passage_width=val("passage_width", 6.5), arch_spring=val("arch_spring", 2.6), masonry_height=val("masonry_height", 6.4),
+                    sign_band_height=val("sign_band_height", 0.5), jetty=val("jetty", 0.25), pitch=45.0, roof_mat="clay",
+                    colors={"wall": (0.58, 0.33, 0.25), "door": JOINERY["forest"], "accent": JOINERY["forest"]})
+    else:
+        storeys = 2
+        spec.update(corner_angle=val("corner_angle", 90.0), chamfer_width=val("chamfer_width", 2.2), side_length=val("side_length", 5.0),
+                    roof_rise=1.8, storeys=[tv["eaves"] / storeys] * storeys,
+                    wall="brick" if t == "corner_90" else "render", lintel="flat",
+                    colors={"wall": (0.62, 0.38, 0.28) if t == "corner_90" else (0.88, 0.84, 0.74),
+                            "door": JOINERY["navy"] if t == "corner_90" else JOINERY["dark_brown"],
+                            "accent": JOINERY["navy"] if t == "corner_90" else JOINERY["dark_brown"]})
+    return spec
+
+
 def write_tscn(text, built):
     """houses.tscn: je Haus unique_model, Farben und Wandmaterial "wie gebaut" eintragen."""
     text = re.sub(r'\[ext_resource type="PackedScene" path="res://assets/models/houses/street/[^"]+" id="[^"]+"\]\n', "", text)
@@ -312,8 +347,14 @@ def main():
             specs[house["key"]] = make_spec(house, house_block(text, house))
     for key, sides in exposures(houses, text, specs).items():
         specs[key]["exposed"] = sides
+    for house in houses:
+        if house["type"] in LANDMARK_TYPES:
+            specs[house["key"]] = landmark_spec(house, house_block(text, house))
     # Schild-Bilder der Läden (nur fehlende werden neu gezeichnet)
-    shop_signs = {"flowers": BH.prepare_signs("flower_shop")}
+    shop_signs = {"flowers": BH.prepare_signs("flower_shop"), "pub": BH.prepare_signs("pub"),
+                  "corner_90": BH.prepare_signs("corner_90"), "corner_30": BH.prepare_signs("corner_30"),
+                  "gatehouse": BH.prepare_signs("gatehouse")}
+    sign_set = {"flowers": "flower_shop", "pub": "pub"}
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.preferences.filepaths.save_version = 0
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -330,13 +371,23 @@ def main():
         if (not only or house["key"] in only) and _edited_by_hand(glb):
             print("%-26s selbst bearbeitet – bleibt, wie es ist" % house["key"])
         elif not only or house["key"] in only:
-            b = H.build_house(file_id, spec)
+            kind = spec.get("kind")
+            signs = house["type"] if kind else sign_set.get(spec.get("shop"))
+            if kind == "corner":
+                b = H.build_corner(file_id, spec)
+            elif kind == "gate":
+                b = H.build_gatehouse(file_id, spec)
+            else:
+                b = H.build_house(file_id, spec)
             tris = S.write_glb(b, glb)
-            S.write_import_settings(glb, shop_signs.get(spec["shop"]))
-            print("%-26s %-12s %5d Dreiecke  %s, %s, %d Geschosse%s%s  Seiten: %s" % (
-                house["key"], house["type"], tris, spec["wall"], spec["roof"], len(spec["storeys"]),
-                ", Fachwerk" if spec["fachwerk"] else "", ", Laden" if spec["shop"] else "", spec.get("exposed")))
-            S.SIGN_PREFIX = "flower_shop_" if spec["shop"] == "flowers" else ""
+            S.write_import_settings(glb, shop_signs.get(signs))
+            if kind:
+                print("%-26s %-12s %5d Dreiecke" % (house["key"], house["type"], tris))
+            else:
+                print("%-26s %-12s %5d Dreiecke  %s, %s, %d Geschosse%s%s  Seiten: %s" % (
+                    house["key"], house["type"], tris, spec["wall"], spec["roof"], len(spec["storeys"]),
+                    ", Fachwerk" if spec["fachwerk"] else "", ", Laden" if spec["shop"] else "", spec.get("exposed")))
+            S.SIGN_PREFIX = (signs + "_") if signs else ""
             obj = S.to_blender(b, spec["colors"])
             px, pz, c, sn = _transform(block)
             obj.location = (px, -pz, 0)
@@ -362,14 +413,15 @@ def _check_images(text, houses, specs, only):
             continue
         px, pz, c, sn = _transform(house_block(text, house))
         e = specs[house["key"]]["eaves"]
+        far = 1.8 if specs[house["key"]].get("kind") == "gate" else 1.0
 
         def world(lx, ly, lz):
             return (px + lx * c + lz * sn, ly, pz - lx * sn + lz * c)
         name = house["key"].replace("/", "_")
         for view, (cam, target) in {
-            "front": ((0, 1.7, 6.5), (0, e * 0.5, 0)),
-            "left": ((-4.5, 1.7, 4.0), (0.3, e * 0.45, -0.5)),
-            "right": ((4.5, 1.7, 4.0), (-0.3, e * 0.45, -0.5)),
+            "front": ((0, 1.7, 6.5 * far), (0, e * 0.5, 0)),
+            "left": ((-4.5 * far, 1.7, 4.0 * far), (0.3, e * 0.45, -0.5)),
+            "right": ((4.5 * far, 1.7, 4.0 * far), (-0.3, e * 0.45, -0.5)),
             "near": ((0.8, 1.6, 2.2), (0.0, 1.6, -1.0)),
         }.items():
             S.render_view(os.path.join(out, "%s-%s.png" % (name, view)), world(*cam), world(*target), lens=24)

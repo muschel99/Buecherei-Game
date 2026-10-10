@@ -760,6 +760,13 @@ Zwei Zustände:
   Fenster und Tür eines Hauses haben dieselbe gedeckte Farbe (Braun, Grau, Grün, Blau). Dazu
   hier und da zwei kleine Stufen vor der Tür (man läuft weich darüber), ein Erker, ein kleiner
   Balkon, Efeu, Blumenkästen und ein zurückgesetztes Haus mit Vorgarten und Eisenzaun.
+  Hinter der Gasse am Platz steht der Pub **„The Ink & Ivy“** (dunkelgrüne Holzfront,
+  große Sprossenfenster mit geätztem Glas unten, Doppeltür, Laternen, Hängekörbe; drinnen
+  warm beleuchtet ein Tresen mit Zapfhähnen und Flaschen). In den Kurven die **Teestube**
+  und die **Bäckerei** (Eckhäuser mit Ladentür und Schild in der Schräge), am Ende das
+  **Torhaus „Alte Torgasse“**: Backstein mit hellem Rundbogen und Schlussstein, gewölbte
+  Durchfahrt mit Laternen, darüber vorkragendes Fachwerk mit Blumenkästen und ein Tondach.
+  Die Namen stehen nur auf den Schild-Bildern und lassen sich frei ändern.
   Gegenüber der Bücherei ist der **Blumenladen** (Backsteinhaus mit Eckquadern): salbeigrüne
   Ladenfront mit Sprossen-Oberlichtern und Glastür, Grün und Ranken über dem Schild,
   Hängekörbe, links eine hölzerne Blumentreppe mit Zinkeimern, rechts ein altes Fahrrad mit

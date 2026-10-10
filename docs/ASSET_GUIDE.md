@@ -422,6 +422,12 @@ gibt es ein Startbild, das genau so groß ist, wie es sein muss:
 | `fashion_shop_open.png` | „Geöffnet“-Kärtchen in der Tür | 0,26 × 0,11 m | 360 × 152 |
 | `flower_shop_fascia.png` | Schild des Blumenladens | 4,76 × 0,43 m | 2048 × 185 |
 | `flower_shop_chalkboard.png` | Kreidetafel vor dem Blumenladen | 0,42 × 0,70 m | 360 × 600 |
+| `flower_shop_hanging.png` | Hängeschild am Blumenladen | 0,60 × 0,56 m | 512 × 478 |
+| `pub_fascia.png` | Schild des Pubs („The Ink & Ivy“) | 4,92 × 0,53 m | 2048 × 221 |
+| `pub_chalkboard.png` | Kreidetafel vor dem Pub | 0,42 × 0,70 m | 360 × 600 |
+| `corner_90_fascia.png` | Schild der Teestube (Eckhaus am geraden Ende) | 1,6 × 0,4 m | 768 × 192 |
+| `corner_30_fascia.png` | Schild der Bäckerei (Eckhaus vor dem Torhaus) | 1,6 × 0,4 m | 768 × 192 |
+| `gatehouse_fascia.png` | Schildband am Torhaus („Alte Torgasse“) | 4,6 × 0,42 m | 2048 × 187 |
 
 So geht's:
 1. Das Startbild öffnen und darüber malen – oder ein neues Bild im **gleichen

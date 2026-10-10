@@ -672,7 +672,13 @@ ist austauschbar.
       Putz, Tondach, cremefarbene Fenster, Holzschild, Rautengitter über der Tür, grünes
       Hängeschild, Hängekörbe an den Ecken, Efeu an den Pilastern, Fahrrad vor dem Regal);
       selbst bearbeitete Haus-Modelle werden beim Neubau nicht überschrieben
-- [ ] Teil 3 – Pub, Eckhäuser, Torhaus
+- [x] Teil 3 – Pub „The Ink & Ivy“ (dunkelgrüne Front, Fenster mit geätztem Glas unten,
+      Doppeltür, Laternen, Hängekörbe, Fass mit Blumen, Tafel; innen Tresen, Zapfhähne,
+      Flaschenregal, Tische), Eckhäuser „Teestube“ (corner_90, Backstein) und „Bäckerei“
+      (corner_30, Putz) mit Ladentür in der Schräge und Schild, Torhaus „Alte Torgasse“
+      (Backstein, heller Bogen mit Schlussstein, Ecksteine, gewölbte Durchfahrt mit Laternen,
+      Schildband, vorkragendes Fachwerk mit Blumenkästen vorn und hinten, Tondach mit Gaube);
+      alle Schilder als Bilder zum Gestalten
 - [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
       Gassenende, Straße mit Kopfsteinpflaster
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil

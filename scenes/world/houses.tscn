@@ -19,6 +19,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/houses/corner_30.tscn" id="9_ufwiq"]
 [ext_resource type="PackedScene" path="res://scenes/world/houses/gatehouse.tscn" id="10_6fajw"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/LibraryRow_Neighbor2.glb" id="u_LibraryRow_Neighbor2"]
+[ext_resource type="PackedScene" path="res://assets/models/houses/street/LibraryRow_Neighbor3.glb" id="u_LibraryRow_Neighbor3"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/LibraryRow_Neighbor4.glb" id="u_LibraryRow_Neighbor4"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/Opposite_Opposite1_1.glb" id="u_Opposite_Opposite1_1"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/Opposite_Opposite1_2.glb" id="u_Opposite_Opposite1_2"]
@@ -32,15 +33,18 @@
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/Opposite_Opposite2_5.glb" id="u_Opposite_Opposite2_5"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/StraightEnd_Street1.glb" id="u_StraightEnd_Street1"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/StraightEnd_Street2.glb" id="u_StraightEnd_Street2"]
+[ext_resource type="PackedScene" path="res://assets/models/houses/street/StraightEnd_Corner.glb" id="u_StraightEnd_Corner"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/StraightEnd_Outer1.glb" id="u_StraightEnd_Outer1"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/StraightEnd_Outer2.glb" id="u_StraightEnd_Outer2"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/StraightEnd_Outer3.glb" id="u_StraightEnd_Outer3"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/StraightEnd_Outer4.glb" id="u_StraightEnd_Outer4"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/StraightEnd_Outer5.glb" id="u_StraightEnd_Outer5"]
+[ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_Corner.glb" id="u_GateStreet_Corner"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_Bend1.glb" id="u_GateStreet_Bend1"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_Bend2.glb" id="u_GateStreet_Bend2"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_Bend3.glb" id="u_GateStreet_Bend3"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_Bend4.glb" id="u_GateStreet_Bend4"]
+[ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_Gatehouse.glb" id="u_GateStreet_Gatehouse"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_BehindInner1.glb" id="u_GateStreet_BehindInner1"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_BehindInner2.glb" id="u_GateStreet_BehindInner2"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/GateStreet_BehindOuter1.glb" id="u_GateStreet_BehindOuter1"]
@@ -68,9 +72,11 @@ accent_color = Color(0.190, 0.200, 0.210, 1)
 wall_material = 1
 [node name="Neighbor3" parent="LibraryRow" unique_id=6891640 instance=ExtResource("3_ndida")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -8.8, 0, -2.0828428)
-wall_color = Color(0.84, 0.76, 0.62, 1)
-door_color = Color(0.08, 0.08, 0.09, 1)
-
+unique_model = ExtResource("u_LibraryRow_Neighbor3")
+wall_color = Color(0.520, 0.300, 0.240, 1)
+door_color = Color(0.110, 0.200, 0.150, 1)
+accent_color = Color(0.110, 0.200, 0.150, 1)
+wall_material = 1
 [node name="Neighbor4" parent="LibraryRow" unique_id=1015887375 instance=ExtResource("4_img60")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -14.1, 0, -2.0828428)
 unique_model = ExtResource("u_LibraryRow_Neighbor4")
@@ -181,11 +187,13 @@ wall_material = 1
 casts_shadow = false
 [node name="Corner" parent="StraightEnd" unique_id=1341976489 instance=ExtResource("8_f2l8o")]
 transform = Transform3D(7.54979e-08, 0, 1, 0, 1, 0, -1, 0, 7.54979e-08, 30.949999, 0, -1.1999998)
-wall_color = Color(0.74, 0.8, 0.78, 1)
-door_color = Color(0.5, 0.12, 0.14, 1)
+unique_model = ExtResource("u_StraightEnd_Corner")
+wall_color = Color(0.620, 0.380, 0.280, 1)
+door_color = Color(0.100, 0.140, 0.230, 1)
+accent_color = Color(0.100, 0.140, 0.230, 1)
+wall_material = 1
 casts_shadow = false
 solid = false
-
 [node name="Outer1" parent="StraightEnd" unique_id=562473706 instance=ExtResource("2_8miuw")]
 transform = Transform3D(0.97590625, 0, -0.21819034, 0, 1, 0, 0.21819034, 0, 0.97590625, 30.783741, 0, -13.399977)
 unique_model = ExtResource("u_StraightEnd_Outer1")
@@ -235,10 +243,12 @@ solid = false
 
 [node name="Corner" parent="GateStreet" unique_id=493406889 instance=ExtResource("9_ufwiq")]
 transform = Transform3D(0.86602545, 0, -0.49999997, 0, 1, 0, 0.49999997, 0, 0.86602545, -30.667507, 0, -15.5)
-wall_color = Color(0.86, 0.8, 0.68, 1)
-door_color = Color(0.5, 0.12, 0.14, 1)
+unique_model = ExtResource("u_GateStreet_Corner")
+wall_color = Color(0.880, 0.840, 0.740, 1)
+door_color = Color(0.220, 0.150, 0.100, 1)
+accent_color = Color(0.220, 0.150, 0.100, 1)
+wall_material = 1
 casts_shadow = false
-
 [node name="Bend1" parent="GateStreet" unique_id=1895689675 instance=ExtResource("2_8miuw")]
 transform = Transform3D(-1, 0, 1.509958e-07, 0, 1, 0, -1.509958e-07, 0, -1, -19.35, 0, -4.2)
 unique_model = ExtResource("u_GateStreet_Bend1")
@@ -274,8 +284,12 @@ wall_material = 1
 casts_shadow = false
 [node name="Gatehouse" parent="GateStreet" unique_id=311817363 instance=ExtResource("10_6fajw")]
 transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -35.68911, 0, -12.74119)
+unique_model = ExtResource("u_GateStreet_Gatehouse")
+wall_color = Color(0.580, 0.330, 0.250, 1)
+door_color = Color(0.160, 0.270, 0.200, 1)
+accent_color = Color(0.160, 0.270, 0.200, 1)
+wall_material = 1
 casts_shadow = false
-
 [node name="BehindInner1" parent="GateStreet" unique_id=932415981 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(0.6840557, 0, -0.7294298, 0, 1, 0, 0.7294298, 0, 0.6840557, -40.657417, 0, -21.44292)
 unique_model = ExtResource("u_GateStreet_BehindInner1")

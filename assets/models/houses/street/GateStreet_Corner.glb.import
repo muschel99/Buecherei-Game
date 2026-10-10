@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://mefr714gy88n"
-path="res://.godot/imported/Opposite_Opposite2_2.glb-75d45afea8ac4f7c266519ec882ff427.scn"
+uid="uid://g3bt670j4les"
+path="res://.godot/imported/GateStreet_Corner.glb-2934b87386c2daef71077bbc745f5633.scn"
 
 [deps]
 
-source_file="res://assets/models/houses/street/Opposite_Opposite2_2.glb"
-dest_files=["res://.godot/imported/Opposite_Opposite2_2.glb-75d45afea8ac4f7c266519ec882ff427.scn"]
+source_file="res://assets/models/houses/street/GateStreet_Corner.glb"
+dest_files=["res://.godot/imported/GateStreet_Corner.glb-2934b87386c2daef71077bbc745f5633.scn"]
 
 [params]
 
@@ -50,6 +50,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/house_style.tres",
 "use_external/path": "res://assets/materials/house_style.tres"
+},
+"sign_fascia": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/signs/corner_30_fascia.tres",
+"use_external/path": "res://assets/materials/signs/corner_30_fascia.tres"
 }
 }
 }

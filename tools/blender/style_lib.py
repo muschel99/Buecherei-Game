@@ -779,6 +779,8 @@ def _atlas(kind):
 def preview_material(mat, role_colors):
     """Blender-Material, das rechnet wie der Godot-Shader (Ebene aus dem Atlas, Einfärben)."""
     name = mat.key()
+    if mat.sign:
+        name = SIGN_PREFIX + name
     if mat.role != "fixed" and not mat.glass and not mat.sign:
         # Je Haus andere Rollenfarben: eigener Name, sonst teilen sich alle Häuser eine Farbe
         name += "_%02x%02x%02x" % tuple(int(round(c * 255)) for c in role_colors[mat.role])

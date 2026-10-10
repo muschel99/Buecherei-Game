@@ -43,26 +43,32 @@ _subresources={
 "materials": {
 "glass": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/house_glass.tres",
 "use_external/path": "res://assets/materials/house_glass.tres"
 },
 "house": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/house_style.tres",
 "use_external/path": "res://assets/materials/house_style.tres"
 },
 "sign_chalkboard": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/signs/fashion_shop_chalkboard.tres",
 "use_external/path": "res://assets/materials/signs/fashion_shop_chalkboard.tres"
 },
 "sign_fascia": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/signs/fashion_shop_fascia.tres",
 "use_external/path": "res://assets/materials/signs/fashion_shop_fascia.tres"
 },
 "sign_hanging": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/signs/fashion_shop_hanging.tres",
 "use_external/path": "res://assets/materials/signs/fashion_shop_hanging.tres"
 },
 "sign_open": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/signs/fashion_shop_open.tres",
 "use_external/path": "res://assets/materials/signs/fashion_shop_open.tres"
 }
 }
