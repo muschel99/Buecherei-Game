@@ -1107,11 +1107,10 @@ def _wool_hanging(b):
 
 
 SIGNS = {
-    "wool_shop": {
-        "fascia": (3.94, 0.43, 2048, lambda b: _board(b, 3.94, 0.43, Mat("paint", color=(0.42, 0.52, 0.6)), "Wolle & Stoff",
-                                                       Mat("paint", color=(0.95, 0.92, 0.84)), 0.22, gold=False, playful=True)),
-        "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, _wool_hanging),
-        "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Neu:", "Merino", "& Leinen"], 61)),
+    "bakery_shop": {
+        "fascia": (3.94, 0.43, 2048, lambda b: _board(b, 3.94, 0.43, Mat("paint", color=(0.12, 0.27, 0.28)), "Bäckerei", GOLD, 0.24,
+                                                       playful=True)),
+        "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Heute:", "Zimt-", "schnecken"], 71)),
     },
     "pub": {
         "fascia": (4.96, 0.58, 2048, lambda b: _pub_fascia(b)),
@@ -1123,7 +1122,9 @@ SIGNS = {
         "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, lambda b: _teapot_sign(b)),
     },
     "corner_30": {
-        "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.12, 0.27, 0.28)), "Bäckerei", GOLD, 0.2, playful=True)),
+        "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.42, 0.52, 0.6)), "Wolle & Stoff",
+                                                    Mat("paint", color=(0.95, 0.92, 0.84)), 0.16, gold=False, playful=True)),
+        "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, lambda b: _wool_hanging(b)),
     },
     "gatehouse": {
         "fascia": (4.6, 0.42, 2048, lambda b: _board(b, 4.6, 0.42, Mat("paint", color=(0.16, 0.27, 0.2)), "ALTE TORGASSE", GOLD, 0.24)),

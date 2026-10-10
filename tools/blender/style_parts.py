@@ -286,3 +286,67 @@ def hanging_sign_design(b, board_mat, accent_mat):
         b.box((-0.08, yy, 0.03), (0.08, yy + 0.008, 0.034), accent_mat)
     b.beam(V(0.06, -0.16, 0.035), V(0.2, 0.15, 0.035), 0.012, 0.008, GOLD)
     thread_spiral(b, (0.08, 0.0), 0.06, 1.3, accent_mat, 0.04, thickness=0.006)
+
+
+LAMP_GREEN = Mat("paint", color=(0.12, 0.2, 0.16))
+LAMP_GLASS = Mat("plain", color=(1.0, 0.88, 0.62), glow=0.35)
+
+
+def lantern_head(b, x, y, z, size=0.22, mat=None):
+    """Viereckige viktorianische Laterne (unten bei y): Boden, vier Glasscheiben mit Stegen,
+    Dach mit Spitze."""
+    mat = mat or LAMP_GREEN
+    h = size * 1.5
+    b.cylinder(V(x, y - 0.06, z), size * 0.25, 0.06, mat, segments=8, radius_top=size * 0.55)
+    b.box((x - size * 0.55, y, z - size * 0.55), (x + size * 0.55, y + 0.03, z + size * 0.55), mat)
+    b.box((x - size * 0.45, y + 0.03, z - size * 0.45), (x + size * 0.45, y + h, z + size * 0.45), LAMP_GLASS)
+    for dx in (-1, 1):
+        for dz in (-1, 1):
+            b.box((x + dx * size * 0.5 - 0.012, y, z + dz * size * 0.5 - 0.012), (x + dx * size * 0.5 + 0.012, y + h, z + dz * size * 0.5 + 0.012), mat)
+    b.box((x - size * 0.58, y + h, z - size * 0.58), (x + size * 0.58, y + h + 0.03, z + size * 0.58), mat)
+    b.cylinder(V(x, y + h + 0.03, z), size * 0.62, size * 0.5, mat, segments=4, radius_top=0.02)
+    b.sphere(V(x, y + h + size * 0.55, z), 0.025, mat, rings=3, segments=6)
+
+
+def street_lamp(b, seed=1):
+    """Viktorianischer Laternenmast (Ursprung am Fuß, 3,8 m): Sockel, kannelierter Schaft,
+    Querstange (für Leitern), Laterne; zwei Hängekörbe mit Blumen."""
+    rnd = random.Random(seed)
+    m = LAMP_GREEN
+    b.cylinder(V(0, 0, 0), 0.17, 0.12, m, segments=12, radius_top=0.15, caps=(False, True))
+    b.cylinder(V(0, 0.12, 0), 0.13, 0.55, m, segments=12, radius_top=0.09, caps=(False, True))
+    b.cylinder(V(0, 0.67, 0), 0.1, 0.06, m, segments=12, caps=(False, True))
+    b.cylinder(V(0, 0.73, 0), 0.055, 2.55, m, segments=10, radius_top=0.045, caps=(False, True))
+    for k in range(8):
+        a = 2 * math.pi * k / 8
+        b.box((0.058 * math.cos(a) - 0.006, 0.8, 0.058 * math.sin(a) - 0.006), (0.058 * math.cos(a) + 0.006, 3.0, 0.058 * math.sin(a) + 0.006), m)
+    b.cylinder(V(0, 3.0, 0), 0.07, 0.08, m, segments=10, caps=(True, True))
+    b.tube([V(-0.32, 3.08, 0), V(0.32, 3.08, 0)], 0.016, m, segments=5)
+    for sx in (-0.32, 0.32):
+        b.sphere(V(sx, 3.08, 0), 0.03, m, rings=3, segments=6)
+    b.cylinder(V(0, 3.08, 0), 0.04, 0.2, m, segments=8, radius_top=0.06)
+    lantern_head(b, 0.0, 3.34, 0.0, size=0.24)
+    # Zwei Hängekörbe an Armen quer zur Straße (lokal ±x)
+    for sx in (-1, 1):
+        b.tube([V(0, 2.55, 0), V(sx * 0.25, 2.62, 0), V(sx * 0.5, 2.6, 0)], 0.012, m, segments=4)
+        top = 2.2
+        for a in (0, 2.1, 4.2):
+            b.tube([V(sx * 0.5, 2.58, 0), V(sx * 0.5 + 0.16 * math.cos(a), top, 0.16 * math.sin(a))], 0.004, m, segments=3, caps=False)
+        b.sphere(V(sx * 0.5, top, 0), 0.19, MOSS, rings=5, segments=10, squash=0.6)
+        b.sphere(V(sx * 0.5, top + 0.05, 0), 0.17, leaf(0), rings=5, segments=10, squash=0.6, jitter=0.15, seed=rnd.randrange(999))
+        blossom_cluster(b, (sx * 0.5, top + 0.05, 0), 0.17, rnd.choice(["rose", "coral"]), rnd, count=12)
+        blossom_cluster(b, (sx * 0.5, top + 0.05, 0), 0.17, "white", rnd, count=6)
+        for k in range(5):
+            a = 2 * math.pi * k / 5
+            trailing_strand(b, (sx * 0.5 + 0.17 * math.cos(a), top, 0.17 * math.sin(a)), rnd.uniform(0.15, 0.35), rnd,
+                            palette=rnd.choice(["lavender", "rose", None]))
+
+
+def wall_lantern(b, x, y, z_wall, mat=None):
+    """Wandlaterne: geschwungener Arm von der Wand (Ebene z_wall, nach +z), Laterne darunter."""
+    mat = mat or LAMP_GREEN
+    b.box((x - 0.06, y - 0.12, z_wall), (x + 0.06, y + 0.22, z_wall + 0.03), mat)
+    b.tube([V(x, y, z_wall), V(x, y + 0.12, z_wall + 0.2), V(x, y + 0.1, z_wall + 0.38)], 0.018, mat, segments=5)
+    _scroll(b, x, y - 0.02, z_wall + 0.12, 0.06, mat=mat)
+    b.tube([V(x, y + 0.1, z_wall + 0.38), V(x, y - 0.05, z_wall + 0.38)], 0.008, mat, segments=4)
+    lantern_head(b, x, y - 0.45, z_wall + 0.38, size=0.2, mat=mat)

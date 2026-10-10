@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8ywbqjm51i50"
-path="res://.godot/imported/wool_shop_fascia.png-1079f4dcfe980fc91d452b4b669fb52e.ctex"
+uid="uid://bplx63t3k3x80"
+path="res://.godot/imported/bakery_shop_fascia.png-0de35cb007706a3ed6e1cad43371981e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/signs/wool_shop_fascia.png"
-dest_files=["res://.godot/imported/wool_shop_fascia.png-1079f4dcfe980fc91d452b4b669fb52e.ctex"]
+source_file="res://assets/textures/signs/bakery_shop_fascia.png"
+dest_files=["res://.godot/imported/bakery_shop_fascia.png-0de35cb007706a3ed6e1cad43371981e.ctex"]
 
 [params]
 

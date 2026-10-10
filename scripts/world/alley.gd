@@ -18,6 +18,10 @@ const YARD_WALL_HEIGHT := 2.2
 const YARD_WALL_THICKNESS := 0.3
 
 @export var end_scene: PackedScene = preload("res://scenes/world/alley_end.tscn")
+## Stil-Modell der Gasse (seit Etappe 4g, tools/blender/build_alleys.py): hohe Hauswände und der
+## Garten mit Baum am Ende. Ist es da, ersetzt es Hofmauern und Abschluss (die Kollisionen baut
+## dieses Script weiter selbst).
+@export var model_scene: PackedScene = preload("res://assets/models/world/alley_library.glb")
 @export var paving_material: Material = preload("res://assets/materials/sidewalk.tres")
 @export var wall_material: Material = preload("res://assets/materials/outdoor_colors.tres")
 @export var yard_wall_color: Color = Color(0.52, 0.31, 0.25)
@@ -32,8 +36,14 @@ func _ready() -> void:
 	paving.add_quad(Vector3(far_x, 0.0, start), Vector3(library_x, 0.0, start),
 		Vector3(library_x, 0.0, end), Vector3(far_x, 0.0, end), Vector3.UP, Color.WHITE)
 	add_child(paving.make_instance("Paving", paving_material, false))
-	_build_yard_walls(library_x, far_x, end)
-	if end_scene:
+	if model_scene:
+		var model := model_scene.instantiate()
+		model.name = "Model"
+		add_child(model)
+		_build_garden_walls(library_x, far_x, end)
+	else:
+		_build_yard_walls(library_x, far_x, end)
+	if end_scene and model_scene == null:
 		var closing := end_scene.instantiate() as Node3D
 		closing.name = "End"
 		closing.position = Vector3((library_x + far_x) / 2.0, 0.0, end)
@@ -51,6 +61,37 @@ func _add_traffic_point(spot: Vector2, place: String) -> void:
 	marker.set_meta("place", place)
 	marker.add_to_group(Street.TRAFFIC_GROUP)
 	add_child(marker)
+
+
+## Feste, unsichtbare Wände zum Modell: hohe Hauswände an beiden Seiten, der Garten am Ende
+## (seitlich breiter) und der Zaun hinten. So hoch, dass man auch springend nicht darüber sieht.
+func _build_garden_walls(library_x: float, far_x: float, end: float) -> void:
+	var body := StaticBody3D.new()
+	body.name = "Walls"
+	body.collision_layer = 1  # Ebene "world"
+	body.collision_mask = 0
+	add_child(body)
+	var first_house: String = GameConfig.alley_house_types[0] if not GameConfig.alley_house_types.is_empty() else ""
+	var neighbor_back := StreetLayout.recess_z() + (HouseTypes.depth_of(first_house) if first_house != "" else 0.0)
+	var garden_z := end - GameConfig.alley_garden_depth
+	var garden_x := far_x - GameConfig.alley_garden_extra_width
+	var h := GameConfig.alley_wall_height
+	var t := YARD_WALL_THICKNESS
+	_add_collider(body, Vector3(library_x, 0.0, StreetLayout.HOUSE_BACK), Vector3(library_x + t, h, end + t))
+	_add_collider(body, Vector3(far_x - t, 0.0, neighbor_back), Vector3(far_x, h, garden_z))
+	_add_collider(body, Vector3(garden_x, 0.0, garden_z - t), Vector3(far_x, h, garden_z))
+	_add_collider(body, Vector3(garden_x - t, 0.0, garden_z - t), Vector3(garden_x, h, end + t))
+	# Hinten: Zaun (die Häuser dahinter sind nur Kulisse)
+	_add_collider(body, Vector3(garden_x - t, 0.0, end + 0.1), Vector3(library_x + t, h, end + 0.1 + t))
+
+
+func _add_collider(body: StaticBody3D, low: Vector3, high: Vector3) -> void:
+	var shape := BoxShape3D.new()
+	shape.size = high - low
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	collision.position = (low + high) / 2.0
+	body.add_child(collision)
 
 
 ## Hofmauern hinter der Bücherei und hinter dem Nachbarhaus (bis zum Ende der Gasse).

@@ -98,7 +98,7 @@ func _make_layer(layer_name: String) -> Layer:
 		"clay_tile":
 			return _roof_tiles(6, 10, Color(0.56, 0.29, 0.19), 0.2, 0.003, true)
 		"paint":
-			return _shabby_paint()
+			return _grain(Color(0.92, 0.92, 0.92, 1.0), 0.05, 0.4)
 		"stone_trim":
 			return _mottled(Color(0.81, 0.77, 0.67, 0.0), 0.06, 0.05, 11)
 		"metal":
@@ -583,37 +583,6 @@ static func _value_noise2(u: float, v: float, fx: int, fy: int, seed: int) -> fl
 	var x1 := (x0 + 1) % fx
 	var y1 := (y0 + 1) % fy
 	return lerpf(lerpf(_hash(x0, y0, seed), _hash(x1, y0, seed), tx), lerpf(_hash(x0, y1, seed), _hash(x1, y1, seed), tx), ty)
-
-
-## Lackiertes Holz im Shabby-Chic-Stil: Maserung schimmert durch, Pinselstriche, leichter
-## Schmutz, an einigen Stellen ist der Lack abgeplatzt und zeigt altes, graues Holz.
-## Lack einfärbbar (Türfarbe), abgeplatzte Stellen fest.
-func _shabby_paint() -> Layer:
-	var layer := Layer.new()
-	var grain := _streaks(3, 48, 141)
-	var brush := _streaks(2, 96, 142)
-	var chips_big := _field(10, 3, 143)
-	var chips_small := _field(40, 2, 144)
-	var dirt := _field(4, 3, 145)
-	var fine := _field(128, 2, 146)
-	for i in SIZE * SIZE:
-		var y := i / SIZE
-		var x := i % SIZE
-		# Maserung und Pinsel laufen waagerecht (u = entlang des Bretts): Felder sind senkrecht
-		# gestreckt erzeugt, darum hier um 90° gedreht gelesen
-		var j := x * SIZE + y
-		var wood_lines := 0.5 + 0.5 * sin((float(y) / SIZE * 40.0 + grain[j] * 5.0) * TAU)
-		var chip := smoothstep(0.72, 0.75, chips_big[i] * 0.55 + chips_small[i] * 0.45)
-		var tone := 0.95 + 0.05 * brush[j] - 0.06 * wood_lines * 0.5 + 0.03 * fine[i]
-		tone *= lerpf(1.0, 0.86, smoothstep(0.55, 0.85, dirt[i]))
-		var paint := Color(tone, tone, tone, 1.0)
-		var bare_tone := 0.26 + 0.08 * wood_lines + 0.04 * fine[i]
-		var bare := Color(bare_tone * 1.12, bare_tone * 0.98, bare_tone * 0.82, 0.0)
-		var c := paint.lerp(bare, chip)
-		c.a = 0.0 if chip > 0.5 else 1.0
-		layer.set_px(i, c, 0.62 - 0.25 * chip + 0.05 * wood_lines + 0.03 * brush[j])
-	layer.normal_strength = 1.6
-	return layer
 
 
 ## Holzbalken (Fachwerk, Regale, Bänke): kräftige Maserung, feine Risse, silbrig verwitterte

@@ -45,8 +45,10 @@ JOINERY = {
     "fern": (0.44, 0.55, 0.46),
     # nur für den Pub (fast schwarzes Blau wie im Inspirationsbild)
     "pub_black": (0.08, 0.1, 0.13),
-    # Wolle- und Stoffladen (taubenblau wie "Petite Mercerie")
+    # Wolle- und Stoffladen (taubenblau wie "Petite Mercerie"), Bäckerei (Petrol, rote Markise)
     "dove_blue": (0.42, 0.52, 0.6),
+    "petrol": (0.12, 0.27, 0.28),
+    "awning_red": (0.66, 0.18, 0.18),
 }
 WALL_COLORS = {
     "brick": [(0.6, 0.33, 0.25), (0.52, 0.3, 0.24), (0.64, 0.4, 0.3), (0.47, 0.28, 0.22), (0.7, 0.58, 0.42)],
@@ -78,10 +80,10 @@ SPECIAL = {
                                  eaves_style="gutter", rooms=0, pots=[], panes="sash22", flower_boxes=True, steps=0, bay=False,
                                  balcony=None, roof="side", roof_mat="clay", accent="fern", frame_cream=True, upper_cols=2,
                                  shutters=False, string="none", dormers=0, storeys=2),
-    # Wolle- und Stoffladen rechts neben dem Blumenladen (Inspiration "Wolleshop"): zwei Etagen,
-    # Giebel zur Straße, taubenblaue Ladenfront
-    "Opposite/Opposite1_5": dict(shop="wool", wall="render", wall_tone=0, storeys=2, roof="front_gable", roof_mat="clay",
-                                 joinery="dove_blue", accent="dove_blue", frame_cream=True, rooms=0, pots=[], steps=0, bay=False,
+    # Bäckerei rechts neben dem Blumenladen (Inspiration "Bäckerei"): zwei Etagen, Giebel zur
+    # Straße, Petrol mit Gold und rot-weißer Markise
+    "Opposite/Opposite1_5": dict(shop="bakery", wall="render", wall_tone=0, storeys=2, roof="front_gable", roof_mat="clay",
+                                 joinery="petrol", accent="awning_red", frame_cream=True, side_ground_window=True, rooms=0, pots=[], steps=0, bay=False,
                                  balcony=None, flower_boxes=True, shutters=False, lintel="flat", string="none", dormers=0,
                                  panes="sash22", quoins=False, upper_cols=2),
     "Opposite/Opposite2_1": dict(wall="stone", storeys=3, joinery="dark_brown", eaves_style="modillion", lintel="architrave",
@@ -158,7 +160,7 @@ def make_spec(house, block):
     ww = pick("window_width", [0.85, 0.95, 1.05, 1.15])
     gw = min(1.35, ww + rnd.choice([0.0, 0.15, 0.3])) if cols_n == 2 else ww
     panes = pick("panes", ["sash22", "sash66", "topbars", "plain", "sash22"] if not fachwerk else ["casement"])
-    joinery = JOINERY[pick("joinery", [k for k in JOINERY if k not in ("cream", "fern", "pub_black", "dove_blue")] + ["cream"])]
+    joinery = JOINERY[pick("joinery", [k for k in JOINERY if k not in ("cream", "fern", "pub_black", "dove_blue", "petrol", "awning_red")] + ["cream"])]
     accent = JOINERY[sp["accent"]] if "accent" in sp else joinery
     tone = sp.get("wall_tone", rnd.randrange(len(WALL_COLORS[wall])))
     wall_color = WALL_COLORS[wall][tone % len(WALL_COLORS[wall])]
@@ -196,7 +198,7 @@ def make_spec(house, block):
         "ground_window": (0.8, min(1.75, storeys[0] - 1.35)),
         "upper_sill": 0.75 if n_storeys == 2 else 0.8, "upper_window_h": rnd.uniform(1.5, 1.8),
         "bay_col": bay_col, "balcony": balcony, "balcony_floor": balcony_floor, "balcony_col": balcony_col,
-        "flower_boxes": sp.get("flower_boxes", rnd.random() < 0.45), "shutters": sp.get("shutters", fachwerk or rnd.random() < 0.1),
+        "flower_boxes": sp.get("flower_boxes", rnd.random() < 0.6), "shutters": sp.get("shutters", fachwerk or rnd.random() < 0.1),
         "fachwerk": fachwerk, "jetty": sp.get("jetty", 0.25 if fachwerk else 0.0),
         "ivy": sp.get("ivy", rnd.choice([-1, 1]) if wall == "brick" and rnd.random() < 0.15 else 0),
         "dormers": dormers, "chimneys": sp.get("chimneys", rnd.choice([[-1], [1], [-1, 1], []])),
@@ -308,13 +310,13 @@ def landmark_spec(house, block):
                     wall="brick" if t == "corner_90" else "render", lintel="flat",
                     # Teestube: Tür und Schild auf der Wand zur langen Straße (die Schräge sieht man kaum)
                     door_edge=2 if t == "corner_90" else 1,
-                    # Teestube: schwarz mit Gold, rosa Raum; Bäckerei: Petrol, rote Markisen, cremefarbener Raum
-                    shop="tea" if t == "corner_90" else "bakery",
-                    room_color=(0.88, 0.76, 0.74) if t == "corner_90" else (0.92, 0.88, 0.78),
-                    hanging_sign=t == "corner_90",
+                    # Teestube: schwarz mit Gold, rosa Raum; Wolle- und Stoffladen: taubenblau, heller Raum
+                    shop="tea" if t == "corner_90" else "wool",
+                    room_color=(0.88, 0.76, 0.74) if t == "corner_90" else (0.93, 0.9, 0.84),
+                    hanging_sign=True,
                     colors={"wall": (0.62, 0.38, 0.28) if t == "corner_90" else (0.88, 0.84, 0.74),
-                            "door": (0.07, 0.07, 0.08) if t == "corner_90" else (0.12, 0.27, 0.28),
-                            "accent": (0.07, 0.07, 0.08) if t == "corner_90" else (0.66, 0.18, 0.18)})
+                            "door": (0.07, 0.07, 0.08) if t == "corner_90" else JOINERY["dove_blue"],
+                            "accent": (0.07, 0.07, 0.08) if t == "corner_90" else JOINERY["dove_blue"]})
     return spec
 
 
@@ -366,10 +368,10 @@ def main():
         if house["type"] in LANDMARK_TYPES:
             specs[house["key"]] = landmark_spec(house, house_block(text, house))
     # Schild-Bilder der Läden (nur fehlende werden neu gezeichnet)
-    shop_signs = {"flowers": BH.prepare_signs("flower_shop"), "pub": BH.prepare_signs("pub"), "wool_shop": BH.prepare_signs("wool_shop"),
+    shop_signs = {"flowers": BH.prepare_signs("flower_shop"), "pub": BH.prepare_signs("pub"), "bakery_shop": BH.prepare_signs("bakery_shop"),
                   "corner_90": BH.prepare_signs("corner_90"), "corner_30": BH.prepare_signs("corner_30"),
                   "gatehouse": BH.prepare_signs("gatehouse")}
-    sign_set = {"flowers": "flower_shop", "pub": "pub", "wool": "wool_shop"}
+    sign_set = {"flowers": "flower_shop", "pub": "pub", "bakery": "bakery_shop"}
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.preferences.filepaths.save_version = 0
     os.makedirs(OUT_DIR, exist_ok=True)

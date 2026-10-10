@@ -11,7 +11,7 @@ extends Node
 ## Laufgeschwindigkeit in Metern pro Sekunde (gemütliches Schlendern ≈ 2.5).
 var walk_speed: float = 2.6
 ## Laufgeschwindigkeit beim schnellen Laufen (Umschalttaste gedrückt halten).
-var sprint_speed: float = 4.4
+var sprint_speed: float = 4.85
 ## Wie sanft zwischen normalem und schnellem Laufen gewechselt wird
 ## (Meter pro Sekunde, um die sich das Tempo pro Sekunde ändern darf; kleiner = sanfter).
 var sprint_blend_rate: float = 3.5
@@ -184,7 +184,13 @@ var gate_sidewalk_width: float = 1.6
 
 ## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
 var alley_width: float = 2.8
-var alley_depth: float = 11.0
+var alley_depth: float = 18.0
+## Garten am Ende der Gasse (seit Etappe 4g): so weit reicht er seitlich über die Gasse hinaus
+## (zur Seite des Nachbarhauses) und so tief ist er (das letzte Stück der Gasse).
+var alley_garden_extra_width: float = 3.2
+var alley_garden_depth: float = 6.0
+## Höhe der Hauswände entlang der Gassen (Rückseiten der Häuser, seit Etappe 4g).
+var alley_wall_height: float = 7.0
 ## Kleine Gasse in der Häuserreihe gegenüber (seit Etappe 4f), damit die lange Front nicht so
 ## einheitlich wirkt: Mitte (x, 0 = Mitte der Bücherei, + = Richtung gerades Straßenende),
 ## Breite und Tiefe (8 m = bis zur Rückseite der Häuser; dort Mauer mit Tor). Breite 0 = keine.
@@ -205,10 +211,9 @@ var alley_house_types: Array[String] = ["pub", "terrace_50"]
 var opposite_feature_house: String = "residential"
 ## Aus diesen Reihenhaus-Typen werden alle übrigen Häuserreihen lückenlos zusammengesetzt.
 var terrace_house_types: Array[String] = ["terrace_50", "terrace_45", "terrace_55", "terrace_60"]
-## Nachbarhäuser auf der Bücherei-Seite werfen nur bis zu dieser Entfernung (von der
-## Bücherei-Tür) Schatten – das spart Rechenleistung. Die Häuser gegenüber und an den
-## Seitenstraßen werfen nie Schatten (sie würden sonst das Fensterlicht verdecken).
-var house_shadow_distance: float = 14.0
+## Häuser werfen bis zu dieser Entfernung (von der Bücherei-Tür) Schatten. Seit Etappe 4g
+## werfen alle Häuser an der Straße Schatten (Wunsch: Schatten so weit wie die Straße).
+var house_shadow_distance: float = 120.0
 
 
 # --- Leben auf der Straße (Etappe 5a) ---
@@ -334,8 +339,9 @@ var currency_name: String = "Taler"
 var start_money: int = 500
 ## Anteil des Preises, den man beim Verkaufen zurückbekommt (0.5 = 50 %).
 var sell_price_share: float = 0.5
-## So viele Sekunden nach dem Bestellen steht der Karton vor der Tür.
-var delivery_time: float = 10.0
+## So viele Sekunden nach dem Bestellen fährt der Lieferwagen los (mit der Fahrt sind es
+## etwa 10–20 s, bis der Karton vor der Tür steht; ohne Straßenleben steht er dann da).
+var delivery_time: float = 2.0
 ## So lange dauert das Auspacken eines Kartons (die kleine Animation, in Sekunden).
 var unpack_time: float = 0.7
 ## Kartons vor der Tür: so viele Stapel nebeneinander an der Hauswand (danach eine Reihe davor).
@@ -460,19 +466,19 @@ var graphics_presets: Array[Dictionary] = [
 	{"ssao": false, "ssao_half_size": true, "ssil": false, "volumetric_fog": false, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 1024, "sun_shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 0,
 		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8,
-		"street_shadow_distance": 0.0, "street_shadow_detail": 0.0},
+		"street_shadow_distance": 15.0, "street_shadow_detail": 0.0},
 	{"ssao": true, "ssao_half_size": true, "ssil": false, "volumetric_fog": true, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 2048, "sun_shadow_size": 2048, "soft_shadows": 2, "lamp_shadows": 1,
 		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
-		"street_shadow_distance": 12.0, "street_shadow_detail": 0.0},
+		"street_shadow_distance": 35.0, "street_shadow_detail": 8.0},
 	{"ssao": true, "ssao_half_size": false, "ssil": true, "volumetric_fog": true, "fog_volume_size": 64,
 		"msaa": 2, "fxaa": false, "shadow_size": 4096, "sun_shadow_size": 4096, "soft_shadows": 3, "lamp_shadows": 2,
 		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
-		"street_shadow_distance": 20.0, "street_shadow_detail": 8.0},
+		"street_shadow_distance": 60.0, "street_shadow_detail": 15.0},
 ]
-## Bis zu dieser Entfernung (in Metern) wirft die Sonne Schatten. Der Raum ist 8 m tief –
-## 20 m reichen auch für den Blick von der Gasse. Kleiner = schärfere Schatten in der Nähe.
-var sun_shadow_distance: float = 20.0
+## Bis zu dieser Entfernung (in Metern) wirft die Sonne Schatten. Seit Etappe 4g so weit wie
+## die Straße (vorher 20 m). Die erste Schattenstufe bleibt fein (Fensterlicht im Laden).
+var sun_shadow_distance: float = 70.0
 ## Bei 2 Schattenstufen (Grafikstufe Niedrig): Grenze zwischen feiner und grober Stufe als
 ## Anteil der Schattenweite (0.3 = nach 6 m). So liegt das Fensterlicht meist in der feinen.
 var sun_two_cascade_split: float = 0.3

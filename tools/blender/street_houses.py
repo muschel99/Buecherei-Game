@@ -41,6 +41,10 @@ CURTAINS = [(0.86, 0.82, 0.72), (0.62, 0.66, 0.56), (0.72, 0.52, 0.5), (0.74, 0.
 ROOM_WALLS = [(0.86, 0.8, 0.66), (0.74, 0.78, 0.7), (0.84, 0.74, 0.68), (0.78, 0.8, 0.82), (0.88, 0.84, 0.74)]
 
 
+# Glatte, fein gefugte Ziegel (Bögen über Fenstern, Gesimse) – bewusst anders als die Wand
+GAUGED = [Mat("terracotta", color=(0.78, 0.46, 0.36)), Mat("terracotta", color=(0.7, 0.4, 0.31))]
+
+
 def wall_mat(layer):
     return Mat(WALL_LAYERS[layer], "wall")
 
@@ -325,13 +329,13 @@ def _lintel(b, style, x, x0, x1, top, w, spec):
         b.box((x0 - 0.12, top, 0), (x1 + 0.12, top + 0.2, 0.03), TRIM, skip=("back",))
         b.box((x - 0.07, top - 0.03, 0), (x + 0.07, top + 0.24, 0.06), TRIM, skip=("back",))
     elif style in ("brick_arch", "segment"):
-        mat = wall if style == "brick_arch" else TRIM
         n = max(5, int((w + 0.2) / (0.075 if style == "brick_arch" else 0.16)))
         for k in range(n):
             t = (k + 0.5) / n
             bx = x0 - 0.1 + (w + 0.2) * t
             lift = 0.07 * math.sin(math.pi * t)
             half = (w + 0.2) / n / 2 - 0.006
+            mat = GAUGED[k % 2] if style == "brick_arch" else TRIM
             b.box((bx - half, top + lift, 0), (bx + half, top + lift + 0.22, 0.025), mat, skip=("back",))
     elif style == "architrave":
         b.frame(x0, top - 0.01, x1, top, 0.0, 0.04, 0.1, TRIM, bottom=False)
@@ -814,7 +818,7 @@ def eaves(b, spec):
         b.box((-w, E - 0.08, 0), (w, E, 0.28), TRIM, skip=("back",))
     elif style == "corbel":
         for k, d in enumerate((0.05, 0.1, 0.16)):
-            b.box((-w, E - 0.3 + k * 0.08, 0), (w, E - 0.22 + k * 0.08, d), wall, skip=("back",))
+            b.box((-w, E - 0.3 + k * 0.08, 0), (w, E - 0.22 + k * 0.08, d), GAUGED[k % 2], skip=("back",))
         b.box((-w, E - 0.06, 0), (w, E, 0.28), JOINERY, skip=("back",))
     elif style == "modillion":
         x = -w + 0.15
@@ -854,7 +858,7 @@ def string_course(b, w, y, style, wall):
         b.box((-w, y - 0.1, 0), (w, y - 0.04, 0.04), TRIM, skip=("back",))
         b.box((-w, y + 0.02, 0), (w, y + 0.1, 0.06), TRIM, skip=("back",))
     elif style == "brick":
-        b.box((-w, y - 0.08, 0), (w, y + 0.08, 0.04), wall, skip=("back",))
+        b.box((-w, y - 0.08, 0), (w, y + 0.08, 0.04), GAUGED[0], skip=("back",))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1292,6 +1296,48 @@ def shopfront_flowers(b, spec, rnd, s0):
     for z in (-1.4, -3.0):
         b.tube([V(0, ceil_y, z), V(0, ceil_y - 0.5, z)], 0.006, LEAD, segments=4)
         b.sphere(V(0, ceil_y - 0.62, z), 0.13, Mat("plain", color=(1.0, 0.88, 0.66), glow=1.0), rings=5, segments=10)
+    # Mehr Blumen im Laden: Tisch mit gebundenen Sträußen in Papier, Hängepflanzen, Regal mit
+    # Töpfen an der Rückwand, Kranz, Gießkanne, Eimer am Boden
+    g = 0.14
+    wood = Mat("timber", color=(1.1, 1.0, 0.9), glow=g * 0.6)
+    b.box((-0.7, floor_y + 0.74, -3.0), (0.7, floor_y + 0.8, -2.3), wood)
+    for lx in (-0.64, 0.64):
+        for lz in (-2.94, -2.36):
+            b.box((lx - 0.03, floor_y, lz - 0.03), (lx + 0.03, floor_y + 0.74, lz + 0.03), wood)
+    for k in range(6):
+        px = -0.5 + (k % 3) * 0.5
+        pz = -2.85 + (k // 3) * 0.4
+        b.cylinder(V(px, floor_y + 0.8, pz), 0.05, 0.18, Mat("plain", color=(0.86, 0.8, 0.68), glow=g * 0.5), segments=8, radius_top=0.12, caps=(True, False))
+        b.sphere(V(px, floor_y + 1.05, pz), 0.1, P.leaf(k), rings=4, segments=8, jitter=0.15, seed=rnd.randrange(999))
+        P.blossom_cluster(b, (px, floor_y + 1.07, pz), 0.1, rnd.choice(list(P.BLOSSOMS)), rnd, count=8)
+    for y in (0.95, 1.5, 2.05):
+        b.box((-xi + 0.3, y - 0.03, zb), (xi - 0.3, y, zb + 0.3), wood)
+        x = -xi + 0.45
+        while x < xi - 0.4:
+            b.cylinder(V(x, y, zb + 0.15), 0.07, 0.13, POT, segments=10, radius_top=0.09)
+            b.sphere(V(x, y + 0.2, zb + 0.15), 0.11, P.leaf(rnd.randrange(3)), rings=4, segments=8, jitter=0.18, seed=rnd.randrange(999))
+            if rnd.random() < 0.5:
+                P.blossom_cluster(b, (x, y + 0.21, zb + 0.15), 0.1, rnd.choice(["rose", "white", "lavender"]), rnd, count=6)
+            x += rnd.uniform(0.28, 0.36)
+    for k in range(5):
+        hx = -1.6 + k * 0.8
+        hz = -1.5 - (k % 2) * 0.9
+        b.tube([V(hx, ceil_y, hz), V(hx, ceil_y - 0.5, hz)], 0.004, Mat("plain", color=(0.5, 0.45, 0.35)), segments=3)
+        b.cylinder(V(hx, ceil_y - 0.7, hz), 0.1, 0.18, POT, segments=10, radius_top=0.13)
+        b.sphere(V(hx, ceil_y - 0.48, hz), 0.15, P.leaf(k), rings=4, segments=8, jitter=0.2, seed=rnd.randrange(999))
+        for q in range(4):
+            P.trailing_strand(b, (hx + 0.1 * math.cos(q * 1.6), ceil_y - 0.55, hz + 0.1 * math.sin(q * 1.6)), rnd.uniform(0.3, 0.6), rnd)
+    b.push(b.move(xi, 0, -2.6) @ b.turn_y(-90))
+    ring = [V(0.25 * math.cos(a), 1.9 + 0.25 * math.sin(a), 0.05) for a in [2 * math.pi * k / 16 for k in range(17)]]
+    b.tube(ring, 0.05, P.leaf(1), segments=6, caps=False)
+    for k in range(5):
+        a = 2 * math.pi * k / 5
+        b.sphere(V(0.25 * math.cos(a), 1.9 + 0.25 * math.sin(a), 0.1), 0.04, Mat("plain", color=(0.86, 0.45, 0.5)), rings=3, segments=6)
+    b.pop()
+    b.cylinder(V(1.3, floor_y, -1.3), 0.12, 0.25, P.ZINC, segments=10, caps=(True, True))
+    b.tube([V(1.42, floor_y + 0.12, -1.3), V(1.6, floor_y + 0.3, -1.3)], 0.015, P.ZINC, segments=5)
+    for x, z in ((-1.4, -3.9), (-1.0, -3.95), (1.1, -3.9), (1.45, -3.85), (-1.6, -1.2)):
+        _bucket(b, x, z, rnd, height=0.32, radius=0.12, tall=rnd.random() < 0.5, blossoms=8)
     # Grün über dem Schild: Polster mit Blüten, Ranken hängen herab
     x = -w + 0.2
     while x < w - 0.1:
@@ -1827,8 +1873,129 @@ def wool_outside(b, spec, rnd):
     P.chalkboard(b, 0.85, 0.5, Mat("plain", sign="chalkboard"), facing=-10)
 
 
+def _basket(b, x, y, z, r, h, g=0.0):
+    """Weidenkorb (offen) am Ort (x, y, z)."""
+    b.cylinder(V(x, y, z), r * 0.85, h, Mat("plain", color=(0.62, 0.46, 0.28), glow=g), segments=12, radius_top=r, caps=(True, False))
+    ring = [V(x + r * math.cos(a), y + h, z + r * math.sin(a)) for a in [2 * math.pi * k / 16 for k in range(17)]]
+    b.tube(ring, 0.012, Mat("plain", color=(0.55, 0.4, 0.24), glow=g), segments=4, caps=False)
+
+
+def shopfront_bakery(b, spec, rnd, s0):
+    """Bäckerei (Inspiration "Bäckerei") im schmalen Haus: Petrol mit Gold, rot-weiße Markise,
+    Schaufenster mit Brot auf Stufen und Lichterkette; innen Brotregale bis zur Decke mit Körben,
+    Glastheke mit Kuchen und Gebäck, Karofliesen, Kreidetafel mit Preisen, Mehlsäcke, Lampen."""
+    m = shop_shell(b, spec, rnd, s0, (0.93, 0.89, 0.8), Mat("plain", color=(0.9, 0.87, 0.8), glow=0.1), door_half=0.45)
+    xi, fy, cy, zb, zf, g = m["xi"], m["floor_y"], m["ceil_y"], m["zb"], m["zf"], m["glow"]
+    w = m["w"]
+    wood = Mat("timber", color=(1.05, 0.9, 0.8), glow=g * 0.6)
+    # Karofliesen
+    dark = Mat("plain", color=(0.22, 0.3, 0.3), glow=g * 0.3)
+    t = 0.3
+    x = -xi
+    k = 0
+    while x < xi - 0.01:
+        z = zb
+        j = 0
+        while z < zf - 0.01:
+            if (k + j) % 2 == 0:
+                x1 = min(x + t, xi)
+                z1 = min(z + t, zf)
+                b.face([V(x, fy + 0.002, z), V(x1, fy + 0.002, z), V(x1, fy + 0.002, z1), V(x, fy + 0.002, z1)], dark, (0, 1, 0))
+            z += t
+            j += 1
+        x += t
+        k += 1
+    # Rückwand: Brotregal bis zur Decke mit Körben und Laiben
+    b.box((-xi, fy, zb), (xi, cy, zb + 0.05), wood)
+    rows = [0.5, 0.95, 1.4, 1.85, 2.3]
+    for y in rows:
+        b.box((-xi + 0.05, y - 0.03, zb), (xi - 0.05, y, zb + 0.4), wood)
+        x = -xi + 0.2
+        while x < xi - 0.15:
+            if rnd.random() < 0.35:
+                _basket(b, x + 0.08, y, zb + 0.2, 0.13, 0.12, g * 0.4)
+                for q in range(3):
+                    _loaf(b, x + 0.03 + q * 0.06, y + 0.08, zb + 0.2, rnd, g)
+                x += 0.32
+            else:
+                _loaf(b, x, y, zb + 0.2, rnd, g)
+                x += rnd.uniform(0.15, 0.2)
+    # Glastheke quer durch den Laden mit Kuchen, Torten und Gebäck
+    tz = zb + 1.2
+    b.box((-xi + 0.3, fy, tz - 0.3), (xi - 0.3, fy + 0.55, tz + 0.3), Mat("timber", color=(0.8, 0.55, 0.42), glow=g * 0.6))
+    b.box((-xi + 0.3, fy + 0.55, tz - 0.3), (xi - 0.3, fy + 0.6, tz + 0.3), Mat("timber", color=(0.6, 0.4, 0.28), glow=g * 0.6))
+    b.box((-xi + 0.34, fy + 0.6, tz - 0.26), (xi - 0.34, fy + 1.05, tz + 0.26), CLEAR)
+    b.box((-xi + 0.3, fy + 1.05, tz - 0.3), (xi - 0.3, fy + 1.08, tz + 0.3), wood)
+    x = -xi + 0.5
+    while x < xi - 0.4:
+        r = rnd.random()
+        if r < 0.3:
+            b.cylinder(V(x, fy + 0.6, tz), 0.13, 0.12, Mat("plain", color=rnd.choice([(0.92, 0.84, 0.72), (0.5, 0.3, 0.22), (0.92, 0.72, 0.74)]), glow=g * 0.6),
+                       segments=14, caps=(True, True))
+            b.sphere(V(x, fy + 0.74, tz), 0.02, Mat("plain", color=(0.8, 0.2, 0.2), glow=g), rings=3, segments=6)
+            x += 0.32
+        else:
+            for q in range(3):
+                b.sphere(V(x + q * 0.07, fy + 0.63, tz - 0.08 + rnd.uniform(0, 0.16)), 0.035,
+                         Mat("plain", color=rnd.choice([(0.86, 0.62, 0.34), (0.94, 0.86, 0.7), (0.6, 0.36, 0.22)]), glow=g * 0.5),
+                         rings=3, segments=7, squash=0.6)
+            x += 0.25
+    b.box((xi - 0.75, fy + 1.08, tz - 0.22), (xi - 0.45, fy + 1.2, tz + 0.02), Mat("gold", glow=0.05))
+    for q in range(2):
+        cx = -0.3 + q * 0.6
+        b.cylinder(V(cx, fy + 1.08, tz + 0.05), 0.02, 0.18, Mat("plain", color=(0.95, 0.94, 0.9), glow=g), segments=6)
+        b.cylinder(V(cx, fy + 1.26, tz + 0.05), 0.16, 0.012, Mat("plain", color=(0.95, 0.94, 0.9), glow=g), segments=14, caps=(True, True))
+        b.cylinder(V(cx, fy + 1.272, tz + 0.05), 0.12, 0.1, Mat("plain", color=(0.94, 0.8, 0.82), glow=g * 0.6), segments=14, caps=(True, True))
+    # Kreidetafel mit Preisen an der Seitenwand, Mehlsäcke, Brotkorb am Boden
+    b.push(b.move(-xi, 0, zb + 2.3) @ b.turn_y(90))
+    b.box((-0.45, 1.3, 0.0), (0.45, 2.1, 0.03), wood)
+    b.box((-0.41, 1.34, 0.03), (0.41, 2.06, 0.035), Mat("plain", color=(0.12, 0.13, 0.12), glow=0.03))
+    for r in range(5):
+        b.box((-0.32, 1.9 - r * 0.13, 0.035), (-0.32 + rnd.uniform(0.3, 0.6), 1.92 - r * 0.13, 0.038), Mat("plain", color=(0.9, 0.9, 0.86), glow=0.2))
+    b.pop()
+    for q, (sx, sz) in enumerate(((xi - 0.3, zb + 2.0), (xi - 0.32, zb + 2.45))):
+        b.sphere(V(sx, fy + 0.28, sz), 0.24, Mat("fabric", color=(0.88, 0.82, 0.7), glow=g * 0.5), rings=5, segments=9, squash=1.25)
+    _basket(b, -xi + 0.4, fy, zb + 3.2, 0.24, 0.3, g * 0.4)
+    for q in range(6):
+        b.push(b.move(-xi + 0.4 + rnd.uniform(-0.08, 0.08), fy + 0.25, zb + 3.2 + rnd.uniform(-0.08, 0.08)) @ S.Matrix.Rotation(rnd.uniform(-0.3, 0.3), 4, "Z"))
+        b.cylinder(V(0, 0, 0), 0.03, 0.55, Mat("plain", color=(0.78, 0.55, 0.3), glow=g * 0.5), segments=6, radius_top=0.025, caps=(True, True))
+        b.pop()
+    # Auslage im Schaufenster: Stufen mit Brot, Lichterkette
+    for lo_x, hi_x in m["windows"]:
+        for k2, (dz, dy) in enumerate(((-0.2, 0.0), (-0.45, 0.32), (-0.7, 0.64))):
+            b.box((lo_x + 0.08, m["sill"] - 0.02 + dy, dz - 0.22), (hi_x - 0.08, m["sill"] + dy, dz), wood)
+            x = lo_x + 0.18
+            while x < hi_x - 0.12:
+                _loaf(b, x, m["sill"] + dy, dz - 0.11, rnd, g)
+                x += rnd.uniform(0.15, 0.2)
+        for q in range(int((hi_x - lo_x) / 0.15)):
+            x = lo_x + 0.08 + q * 0.15
+            y = m["head"] - 0.1 - 0.08 * math.sin(math.pi * (x - lo_x) / (hi_x - lo_x))
+            b.sphere(V(x, y, -0.1), 0.016, Mat("plain", color=(1.0, 0.85, 0.55), glow=1.0), rings=3, segments=6)
+    for x, z in ((-0.5, zb + 2.6), (0.5, zb + 2.6), (0.0, zb + 1.2)):
+        b.tube([V(x, cy, z), V(x, cy - 0.45, z)], 0.005, LEAD, segments=4)
+        b.cylinder(V(x, cy - 0.65, z), 0.16, 0.2, Mat("gold", glow=0.05), segments=10, radius_top=0.05, caps=(True, False))
+        b.sphere(V(x, cy - 0.64, z), 0.06, Mat("plain", color=(1.0, 0.85, 0.58), glow=1.0), rings=3, segments=8)
+    # Markise über der ganzen Front
+    _shop_awning(b, -w + 0.1, w - 0.1, m["fascia_lo"] - 0.02, 0.2, 1.0, 0.5)
+
+
+def bakery_outside(b, spec, rnd):
+    """Vor der Bäckerei: zwei Holzkisten mit Blumen (wie im Bild), Kreidetafel."""
+    w = spec["width"] / 2
+    # Nur links (rechts geht der Weg aus der kleinen Gasse vorbei)
+    for x in (-w + 0.6,):
+        b.box((x - 0.32, 0, 0.2), (x + 0.32, 0.38, 0.55), Mat("timber"))
+        for q in range(4):
+            px = x - 0.24 + q * 0.16
+            b.sphere(V(px, 0.45, 0.37), 0.11, P.leaf(q), rings=4, segments=8, jitter=0.15, seed=rnd.randrange(99))
+            P.blossom_cluster(b, (px, 0.47, 0.37), 0.1, rnd.choice(["coral", "rose", "white"]), rnd, count=6)
+        b.colliders.append(((x - 0.34, 0, 0.18), (x + 0.34, 0.7, 0.57)))
+    P.chalkboard(b, 0.0 + 0.85, 0.75, Mat("plain", sign="chalkboard"), facing=-8)
+
+
 SHOPFRONTS = {"flowers": (shopfront_flowers, shop_outside_flowers), "pub": (shopfront_pub, pub_outside),
-              "wool": (shopfront_wool, wool_outside)}
+              "wool": (shopfront_wool, wool_outside), "bakery": (shopfront_bakery, bakery_outside)}
 
 
 # ---------------------------------------------------------------------------------------------
@@ -2042,6 +2209,10 @@ def _corner_shop_window(b, spec, s0, s1, sill, head, reveal, rnd, shop):
     innen eine Auslage (Brotregal bzw. Teedosen und Etagere)."""
     zg = -0.08
     b.quad(V(s0, sill, zg), V(s1, sill, zg), V(s1, head, zg), V(s0, head, zg), CLEAR)
+    if shop == "tea":
+        # Innen raues Glas (nur von drinnen sichtbar): man sieht das Straßenende nur verschwommen
+        b.poly([V(s1, sill, zg - 0.008), V(s0, sill, zg - 0.008), V(s0, head, zg - 0.008), V(s1, head, zg - 0.008)],
+               Mat("glass", glass="inner"))
     f = 0.06
     zf0, zf1 = -reveal, -0.02
     for xx in (s0, s1 - f):
@@ -2069,6 +2240,9 @@ def _corner_shop_window(b, spec, s0, s1, sill, head, reveal, rnd, shop):
             if shop == "bakery":
                 _loaf(b, x, sill + dy, dz - 0.1, rnd, g)
                 x += rnd.uniform(0.17, 0.24)
+            elif shop == "wool":
+                _yarn(b, x, sill + dy, dz - 0.1, 0.06, rnd.choice(YARN), g * 0.6, rnd)
+                x += 0.15
             else:
                 c = rnd.choice([(0.55, 0.2, 0.22), (0.2, 0.32, 0.28), (0.82, 0.7, 0.42), (0.3, 0.3, 0.42), (0.86, 0.82, 0.74)])
                 b.cylinder(V(x, sill + dy, dz - 0.1), 0.05, 0.13, Mat("paint", color=c, glow=g * 0.6), segments=10, caps=(True, True))
@@ -2105,6 +2279,9 @@ def _corner_wall_furniture(b, shop, la, lc, floor_y, ceil_y, rnd, g):
             if shop == "bakery":
                 _loaf(b, x, y, -0.15, rnd, g)
                 x += rnd.uniform(0.16, 0.24)
+            elif shop == "wool":
+                _yarn(b, x, y, -0.15, 0.06, rnd.choice(YARN), g * 0.6, rnd)
+                x += 0.14
             else:
                 c = rnd.choice([(0.55, 0.2, 0.22), (0.2, 0.32, 0.28), (0.82, 0.7, 0.42), (0.3, 0.3, 0.42), (0.86, 0.82, 0.74),
                                 (0.42, 0.26, 0.2)])
@@ -2154,6 +2331,32 @@ def _corner_shop_contents(b, shop, poly, floor_y, ceil_y, rnd, g):
                 _loaf(b, x, floor_y + 0.6, tz + rnd.uniform(-0.1, 0.1), rnd, g)
                 x += 0.18
         b.box((cx + 0.6, floor_y + 1.03, tz - 0.2), (cx + 1.0, floor_y + 1.15, tz + 0.05), Mat("gold", glow=0.05))
+    elif shop == "wool":
+        # Tisch mit Stoffstapeln, Körbe voller Knäuel, Stoffballen stehend, ein Sessel
+        wood = Mat("timber", color=(1.15, 1.05, 0.95), glow=g * 0.6)
+        b.box((cx - 0.8, floor_y + 0.74, cz - 0.45), (cx + 0.8, floor_y + 0.8, cz + 0.45), wood)
+        for lx in (-0.72, 0.72):
+            for lz in (-0.38, 0.38):
+                b.box((cx + lx - 0.03, floor_y, cz + lz - 0.03), (cx + lx + 0.03, floor_y + 0.74, cz + lz + 0.03), wood)
+        for k in range(6):
+            x0 = cx - 0.7 + (k % 3) * 0.48
+            z0 = cz - 0.38 + (k // 3) * 0.42
+            hgt = floor_y + 0.8
+            for j in range(rnd.randint(2, 5)):
+                tt = rnd.uniform(0.03, 0.05)
+                b.box((x0, hgt, z0), (x0 + 0.4, hgt + tt, z0 + 0.36), Mat("fabric", color=YARN[(k * 5 + j * 3) % len(YARN)], glow=g * 0.6))
+                hgt += tt
+        for dx, dz in ((-1.3, 0.9), (1.2, 1.0), (1.3, -1.0)):
+            x, z = cx + dx, cz + dz
+            if _point_in(poly, x, z, 0.35):
+                _basket(b, x, floor_y, z, 0.24, 0.3, g * 0.4)
+                for k in range(6):
+                    a = 2 * math.pi * k / 6
+                    _yarn(b, x + 0.12 * math.cos(a), floor_y + 0.22, z + 0.12 * math.sin(a), 0.07, rnd.choice(YARN), g * 0.6, rnd)
+        for k in range(7):
+            x, z = cx - 1.4 + k * 0.14, cz - 1.3
+            if _point_in(poly, x, z, 0.15):
+                b.cylinder(V(x, floor_y, z), 0.065, 1.0, Mat("fabric", color=YARN[k % len(YARN)], glow=g * 0.6), segments=8, caps=(True, True))
     else:
         cloth = Mat("fabric", color=(0.94, 0.92, 0.86), glow=g * 0.6)
         spots = []
@@ -2307,6 +2510,9 @@ def build_gatehouse(name, spec):
         if n.dot(np_ + nq) < 0:
             pts, nrm = pts[::-1], nrm[::-1]
         b.poly(pts, vault, normals=nrm)
+    # Wandlaternen links und rechts vom Bogen an der Vorderwand
+    for side in (-1, 1):
+        P.wall_lantern(b, side * (a + 0.95), spring + 1.0, 0.05)
     # Laternen im Bogen
     for side in (-1, 1):
         lx = side * (a - 0.02)

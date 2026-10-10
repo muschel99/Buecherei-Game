@@ -83,7 +83,7 @@ class Mat:
     def key(self):
         if self.glass:
             # glass=True: leicht unscharfes Fensterglas, glass="clear": klares Schaufensterglas
-            return "glass_clear" if self.glass == "clear" else "glass"
+            return {"clear": "glass_clear", "inner": "glass_inner"}.get(self.glass, "glass")
         if self.sign:
             return "sign_" + self.sign
         glow = "_g%02d" % round(self.glow * 99) if self.glow > 0 else ""
@@ -610,7 +610,7 @@ def write_glb(builder, path):
 
     primitives = []
     materials = []
-    for mat_name in ["house", "glass", "glass_clear"] + sorted(k for k in tris if k.startswith("sign_")):
+    for mat_name in ["house", "glass", "glass_clear", "glass_inner"] + sorted(k for k in tris if k.startswith("sign_")):
         verts = tris.get(mat_name)
         if not verts:
             continue
@@ -723,6 +723,7 @@ def write_import_settings(glb_path, signs=None):
     keine automatischen Detailstufen (LOD). Eine vorhandene Datei behält ihre übrigen Werte."""
     path = glb_path + ".import"
     mapping = {"glass": "res://assets/materials/house_glass.tres", "glass_clear": "res://assets/materials/house_glass_clear.tres",
+               "glass_inner": "res://assets/materials/house_glass_inner.tres",
                "house": "res://assets/materials/house_style.tres"}
     for name, res_path in (signs or {}).items():
         mapping["sign_" + name] = res_path

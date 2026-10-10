@@ -51,6 +51,10 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/house_glass_clear.tres",
 "use_external/path": "res://assets/materials/house_glass_clear.tres"
 },
+"glass_inner": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/house_glass_inner.tres"
+},
 "house": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/house_style.tres",
@@ -58,18 +62,13 @@ _subresources={
 },
 "sign_chalkboard": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/signs/wool_shop_chalkboard.tres",
-"use_external/path": "res://assets/materials/signs/wool_shop_chalkboard.tres"
+"use_external/fallback_path": "res://assets/materials/signs/bakery_shop_chalkboard.tres",
+"use_external/path": "res://assets/materials/signs/bakery_shop_chalkboard.tres"
 },
 "sign_fascia": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/signs/wool_shop_fascia.tres",
-"use_external/path": "res://assets/materials/signs/wool_shop_fascia.tres"
-},
-"sign_hanging": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/signs/wool_shop_hanging.tres",
-"use_external/path": "res://assets/materials/signs/wool_shop_hanging.tres"
+"use_external/fallback_path": "res://assets/materials/signs/bakery_shop_fascia.tres",
+"use_external/path": "res://assets/materials/signs/bakery_shop_fascia.tres"
 }
 }
 }

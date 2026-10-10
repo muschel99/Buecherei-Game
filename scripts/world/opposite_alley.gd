@@ -10,6 +10,10 @@ extends Node3D
 
 @export var end_scene: PackedScene = preload("res://scenes/world/alley_end.tscn")
 @export var paving_material: Material = preload("res://assets/materials/sidewalk.tres")
+## Stil-Modell (seit Etappe 4g, tools/blender/build_alleys.py): hinter dem Ende verläuft sich die
+## Gasse zwischen Steinbögen. Ist es da, ersetzt es den Abschluss; am Ende bleibt eine
+## unsichtbare Grenze.
+@export var model_scene: PackedScene = preload("res://assets/models/world/alley_opposite.glb")
 
 
 func _ready() -> void:
@@ -23,7 +27,22 @@ func _ready() -> void:
 	paving.add_quad(Vector3(span.x - 0.05, 0.0, end), Vector3(span.y + 0.05, 0.0, end),
 		Vector3(span.y + 0.05, 0.0, start), Vector3(span.x - 0.05, 0.0, start), Vector3.UP, Color.WHITE)
 	add_child(paving.make_instance("Paving", paving_material, false))
-	if end_scene:
+	if model_scene:
+		var model := model_scene.instantiate()
+		model.name = "Model"
+		add_child(model)
+		var body := StaticBody3D.new()
+		body.name = "EndBound"
+		body.collision_layer = 1  # Ebene "world"
+		body.collision_mask = 0
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(span.y - span.x + 0.6, 4.0, 0.3)
+		var collision := CollisionShape3D.new()
+		collision.shape = shape
+		collision.position = Vector3((span.x + span.y) / 2.0, 2.0, end - 0.15)
+		body.add_child(collision)
+		add_child(body)
+	elif end_scene:
 		var closing := end_scene.instantiate() as Node3D
 		closing.name = "End"
 		closing.set("width", span.y - span.x)

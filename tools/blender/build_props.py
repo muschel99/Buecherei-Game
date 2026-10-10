@@ -150,7 +150,16 @@ def drain_grate():
     return b
 
 
+def street_lamp():
+    """Viktorianischer Laternenmast mit zwei Hängekörben (Ursprung am Fuß)."""
+    import style_parts as P
+    b = S.Builder("street_lamp")
+    P.street_lamp(b)
+    return b
+
+
 PROPS = {
+    "street_lamp": street_lamp,
     "drain_grate": drain_grate,
     "dress_form": dress_form,
     "outfit_dress": outfit_dress,

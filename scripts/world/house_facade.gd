@@ -292,7 +292,8 @@ func _add_street_obstacle(body: StaticBody3D) -> void:
 		for k in count:
 			var obstacle := StreetObstacle.new()
 			obstacle.name = "StreetObstacle"
-			obstacle.radius = short_side / 2.0 if count > 1 else long_side / 2.0
+			# Kreis um die Ecken des Kastens (halbe Diagonale), sonst streifen Passanten die Ecken
+			obstacle.radius = short_side * 0.7 if count > 1 else Vector2(bounds.size.x, bounds.size.z).length() / 2.0
 			shape_node.add_child(obstacle)
 			var offset := (float(k) + 0.5) / count - 0.5
 			obstacle.position = (bounds.get_center() + along * offset * long_side) * Vector3(1.0, 0.0, 1.0)

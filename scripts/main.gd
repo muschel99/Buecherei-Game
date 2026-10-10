@@ -54,6 +54,9 @@ func _apply_sun_shadows(preset: Dictionary) -> void:
 		else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	# Bei 2 Stufen liegt die Grenze weiter weg, damit das Fensterlicht in der feinen
 	# ersten Stufe liegt (Anteil der Schattenweite, siehe GameConfig)
-	_sun.directional_shadow_split_1 = GameConfig.sun_two_cascade_split if two else 0.1
+	# Erste Stufe fein (etwa 5 m, Fensterlicht), weiter weg gröber bis zur ganzen Straße
+	_sun.directional_shadow_split_1 = GameConfig.sun_two_cascade_split if two else 0.07
+	_sun.directional_shadow_split_2 = 0.2
+	_sun.directional_shadow_split_3 = 0.5
 	_sun.directional_shadow_blend_splits = true
 	_sun.directional_shadow_max_distance = GameConfig.sun_shadow_distance

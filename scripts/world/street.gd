@@ -34,12 +34,17 @@ const GATE_BOUND_INSIDE := 0.8
 @export var road_material: Material = preload("res://assets/materials/cobblestone.tres")
 ## Abflussdeckel am Straßenrand (seit Etappe 4g): Modell und ungefährer Abstand (m).
 @export var drain_scene: PackedScene = preload("res://assets/models/props/drain_grate.glb")
-@export var drain_spacing: float = 11.0
+@export var drain_spacing: float = 22.0
+## Viktorianische Straßenlaternen am Gehwegrand (seit Etappe 4g): Modell und Abstand (m), auf
+## beiden Seiten versetzt.
+@export var lamp_scene: PackedScene = preload("res://assets/models/props/street_lamp.glb")
+@export var lamp_spacing: float = 13.0
 
 
 func _ready() -> void:
 	_build_surfaces()
 	_build_drains()
+	_build_lamps()
 	_build_ground_collision()
 	_build_bounds()
 	_build_traffic_points()
@@ -97,6 +102,40 @@ func _build_drains() -> void:
 			drain.position = Vector3(x, road_y, z)
 			holder.add_child(drain)
 			x += drain_spacing
+
+
+## Laternen auf beiden Gehwegen (dicht am Bordstein), mit fester Kollision am Mast; Passanten
+## gehen um sie herum (StreetObstacle).
+func _build_lamps() -> void:
+	if lamp_scene == null:
+		return
+	var holder := Node3D.new()
+	holder.name = "Lamps"
+	add_child(holder)
+	var x0 := StreetLayout.end_start_x(-1) + 3.0
+	var x1 := StreetLayout.end_start_x(1) - 3.0
+	for side in [1, -1]:
+		var z: float = StreetLayout.curb_z() + CURB_TOP + 0.4 if side > 0 else StreetLayout.far_curb_z() - CURB_TOP - 0.4
+		var x: float = x0 + (1.0 if side > 0 else lamp_spacing * 0.5)
+		while x < x1:
+			var lamp := lamp_scene.instantiate() as Node3D
+			lamp.position = Vector3(x, 0.0, z)
+			holder.add_child(lamp)
+			var body := StaticBody3D.new()
+			body.collision_layer = 1  # Ebene "world"
+			body.collision_mask = 0
+			var shape := CylinderShape3D.new()
+			shape.radius = 0.13
+			shape.height = 3.6
+			var collision := CollisionShape3D.new()
+			collision.shape = shape
+			collision.position = Vector3(0.0, 1.8, 0.0)
+			body.add_child(collision)
+			lamp.add_child(body)
+			var obstacle := StreetObstacle.new()
+			obstacle.radius = 0.3
+			lamp.add_child(obstacle)
+			x += lamp_spacing
 
 
 ## Ein Straßenende als Bänder entlang seiner Mittellinie. Die Gehwege reichen bis zu den

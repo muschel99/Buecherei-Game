@@ -266,6 +266,33 @@ func _add_window(spot: Vector2, face: Vector2, spread: float) -> void:
 		"spread": spread})
 
 
+## Freie Stelle zum Überqueren nahe s (für Passanten, die gerade losgehen wollen).
+func clear_crossing_s(s: float) -> float:
+	return _clear_crossing(s, s - 6.0, s + 6.0)
+
+
+## Überquerungsstelle, an der auf keinem Gehweg ein festes Hindernis (Laterne, Kübel) im Weg
+## steht (seit Etappe 4g): bei Bedarf ein Stück verschoben, sonst die ursprüngliche Stelle.
+func _clear_crossing(cross_s: float, a: float, b: float) -> float:
+	for attempt in 12:
+		var test := cross_s + (0.0 if attempt == 0 else (float((attempt + 1) / 2) * 0.8 * (1.0 if attempt % 2 == 1 else -1.0)))
+		if test < a or test > b:
+			continue
+		var free := true
+		for side in [1, -1]:
+			# Ganzer Weg vom Gehweg bis an den Bordstein muss frei sein
+			var curb := crossing_route.point_at(test, (GameConfig.street_width / 2.0 + Passerby.CURB_WAIT) * float(side))
+			for comfort in [0.0, 1.0]:
+				var p := _lane_point(side, test, comfort)
+				for obstacle in _static_obstacles:
+					var near := Geometry2D.get_closest_point_to_segment(obstacle.pos, p, curb)
+					if near.distance_to(obstacle.pos) < float(obstacle.radius) + 0.7:
+						free = false
+		if free:
+			return test
+	return cross_s
+
+
 ## Platz vor einem Schaufenster, dessen Hin- und Rückweg nicht durch feste Hindernisse
 ## (Kübel, Stufen …) führt (seit Etappe 4g); Vector2.INF, wenn keiner frei ist.
 func _free_window_spot(spot: Dictionary, side: int, cursor: float, dir: int, comfort: float) -> Vector2:
@@ -683,7 +710,7 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		var a := maxf(_crossing.x, minf(s0, end_s) + 2.0)
 		var b := minf(_crossing.y, maxf(s0, end_s) - 2.0)
 		if b - a > 1.0:
-			cross_s = _rng.randf_range(a, b)
+			cross_s = _clear_crossing(_rng.randf_range(a, b), a, b)
 		elif end_place == "":
 			end_side = start_side
 		else:
@@ -868,13 +895,39 @@ func _spawn_van() -> void:
 	if _van_manager == null or _van.active:
 		return
 	var start := road_route.point_at(0.0, _van.lane())
-	if not direction_free(1, GameConfig.delivery_van_speed) or is_visible_spot(start, 2.2, 2.5):
+	if not _van_way_free() or is_visible_spot(start, 2.2, 2.5):
 		return
 	_van.start_trip(road_route, _van_stop_s(), _van_stop_lat(), _van_manager)
 	_van_manager = null
 	_van.set_shadows(false)
 	_vehicles.append(_van)
 	appeared.emit(_van, _van.pos)
+
+
+## Darf der Lieferwagen losfahren? (seit Etappe 4g weniger streng als direction_free: Er
+## wartet nur, wenn am Start jemand fährt oder er ein langsameres Fahrzeug vor ihm einholen
+## würde – vor seinem Halt oder danach bis zum Straßenende. Er überholt nie.)
+func _van_way_free() -> bool:
+	var speed := GameConfig.delivery_van_speed
+	var stop := _van_stop_s()
+	var length := road_route.length()
+	# Annahme: Am Laden steht er mindestens so lange (Tür, ein paar Kartons)
+	var pause := 3.0
+	for other in _vehicles:
+		if other.direction != 1:
+			continue
+		var s0 := other.get_s()
+		if s0 < 30.0 or other.has_method("is_delivering"):
+			return false
+		var v := other.cruise_speed
+		if v >= speed - 0.01:
+			continue
+		if s0 * speed / (speed - v) < stop + 2.0:
+			return false
+		var lead := s0 + v * (stop / speed + pause) - stop
+		if stop + lead * speed / (speed - v) < length:
+			return false
+	return true
 
 
 ## Hier hält der Wagen: Seine Tür steht vor der Mitte der Kartonreihe (Lieferort).
@@ -920,6 +973,9 @@ func _start_vehicle(pool: Array[StreetVehicle], kind: String, cruise: float) -> 
 	starts.shuffle()
 	for start in starts:
 		var dir := 1 if start.place == "east" else -1
+		# Wartet der Lieferwagen auf seinen Start, fährt in seiner Richtung niemand Neues los
+		if dir == 1 and _van_manager != null:
+			continue
 		if not direction_free(dir, cruise) or is_visible_spot(start.pos, 1.8, 2.5):
 			continue
 		var vehicle: StreetVehicle = pool.pop_at(_rng.randi() % pool.size())

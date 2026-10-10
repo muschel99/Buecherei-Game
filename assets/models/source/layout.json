@@ -1,0 +1,15 @@
+{
+	"alley_end_z": 15.9171572875254,
+	"alley_start_z": -2.08284271247462,
+	"far_x": -6.0,
+	"garden_depth": 6.0,
+	"garden_extra_width": 3.2,
+	"library_back_z": 4.2,
+	"library_x": -3.2,
+	"neighbor_back_z": 5.91715728752538,
+	"opposite_alley_x0": 3.29999995231628,
+	"opposite_alley_x1": 5.09999990463257,
+	"opposite_end_z": -22.0,
+	"opposite_front_z": -14.0,
+	"wall_height": 7.0
+}

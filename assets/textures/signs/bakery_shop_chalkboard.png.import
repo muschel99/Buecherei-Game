@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dyrg2c5vaistr"
-path="res://.godot/imported/wool_shop_hanging.png-82786172d9963def04821fc2a96002d6.ctex"
+uid="uid://cwb3w0mgsgp7c"
+path="res://.godot/imported/bakery_shop_chalkboard.png-4372624c1f400b122bc7f03e9fb00a1a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/signs/wool_shop_hanging.png"
-dest_files=["res://.godot/imported/wool_shop_hanging.png-82786172d9963def04821fc2a96002d6.ctex"]
+source_file="res://assets/textures/signs/bakery_shop_chalkboard.png"
+dest_files=["res://.godot/imported/bakery_shop_chalkboard.png-4372624c1f400b122bc7f03e9fb00a1a.ctex"]
 
 [params]
 

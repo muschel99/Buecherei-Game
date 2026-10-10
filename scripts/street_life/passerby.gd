@@ -265,6 +265,8 @@ func _next_action() -> void:
 			_dir = 1 if float(_action.to) >= _s else -1
 		"cross":
 			_set_route(life.crossing_route)
+			# Steht an dieser Stelle eine Laterne o. Ä. im Weg, ein Stück weiter überqueren
+			_action.at_s = life.clear_crossing_s(_s)
 
 
 func _set_route(route: StreetRoute) -> void:
@@ -295,10 +297,26 @@ func _step_cross(delta: float) -> void:
 	var far_curb := (half + CURB_WAIT) * float(to_side)
 	_phase_time += delta
 	match _phase:
-		0:  # an den Bordstein (nicht durch andere hindurch)
+		0:  # an den Bordstein (nicht durch andere hindurch; steht etwas im Weg, seitlich vorbei)
+			var goal_s: float = _action.get("at_s", _s)
+			if not is_equal_approx(_s, goal_s):
+				# Erst auf dem Gehweg bis zur freien Stelle, dann zum Bordstein
+				var s_try := move_toward(_s, goal_s, speed_pref * delta)
+				if not life.blocks_move(self, _route.point_at(s_try, _lat)):
+					_s = s_try
+				_anim_state = &"walk"
+				_anim_speed = speed_pref
+				pos = _route.point_at(_s, _lat)
+				return
 			var lat := move_toward(_lat, curb, speed_pref * 0.8 * delta)
 			if not life.blocks_move(self, _route.point_at(_s, lat)):
 				_lat = lat
+			else:
+				for way: int in [_dir, -_dir]:
+					var try_s: float = _s + way * speed_pref * 0.6 * delta
+					if not life.blocks_move(self, _route.point_at(try_s, _lat)):
+						_s = try_s
+						break
 			_anim_state = &"walk"
 			_anim_speed = speed_pref * 0.8
 			if is_equal_approx(_lat, curb):
