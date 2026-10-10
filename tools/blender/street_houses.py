@@ -267,11 +267,13 @@ def _kitchen(b, rx0, rx1, fy, cy, z, depth, rnd):
 
 
 def window_unit(b, spec, x, y0, w, h, panes, backdrop_kind, room, rnd, reveal=0.13, lintel=None, sill=True, shutters=0.0,
-                floor=0):
+                floor=0, closed=False):
     """Ein komplettes Fenster: Rahmen, Glas, Dahinter, Sohlbank, Sturz, Läden.
-    shutters = Platz (m) neben dem Fenster je Seite für Läden (0 = keine)."""
-    zg = sash(b, x, y0, w, h, reveal, panes)
-    backdrop(b, backdrop_kind, x - w / 2 + 0.05, x + w / 2 - 0.05, y0 + 0.05, y0 + h - 0.05, zg, room, rnd, floor)
+    shutters = Platz (m) neben dem Fenster je Seite für Läden (0 = keine); closed = Läden zu."""
+    frame = CREAM if spec.get("frame_cream") else JOINERY
+    zg = sash(b, x, y0, w, h, reveal, panes, frame=frame)
+    if not (closed and shutters > 0.0):
+        backdrop(b, backdrop_kind, x - w / 2 + 0.05, x + w / 2 - 0.05, y0 + 0.05, y0 + h - 0.05, zg, room, rnd, floor)
     lintel = lintel or spec["lintel"]
     x0, x1 = x - w / 2, x + w / 2
     top = y0 + h
@@ -281,28 +283,32 @@ def window_unit(b, spec, x, y0, w, h, panes, backdrop_kind, room, rnd, reveal=0.
         else:
             b.box((x0 - 0.04, y0 - 0.06, 0), (x1 + 0.04, y0, 0.07), JOINERY)
     _lintel(b, lintel, x, x0, x1, top, w, spec)
-    # Fensterläden: am Fensterrahmen angeschlagen und ein Stück aufgeklappt (je Laden etwas
-    # anders), so stehen sie natürlich von der Wand ab. Reicht der Platz daneben nicht, klappen
-    # sie weiter auf.
+    # Fensterläden: am Fensterrahmen angeschlagen und leicht aufgeklappt (6–15°, je Laden
+    # etwas anders) oder ganz zu. Immer beide oder keiner – nie ein einzelner Laden.
     if shutters > 0.0:
         start = 0.13 if lintel == "architrave" else 0.03
+        leaves = []
         for side in (-1, 1):
             sw = w / 2 * 0.95
-            angle = rnd.uniform(12.0, 30.0)
-            while angle < 70.0 and start + sw * math.cos(math.radians(angle)) > shutters:
+            angle = 180.0 - 0.5 if closed else rnd.uniform(6.0, 15.0)
+            while not closed and angle < 70.0 and start + sw * math.cos(math.radians(angle)) > shutters:
                 angle += 5.0
-            if start + sw * math.cos(math.radians(angle)) > shutters:
-                continue
+            if not closed and start + sw * math.cos(math.radians(angle)) > shutters:
+                leaves = []
+                break
+            leaves.append((side, w / 2 + start if closed else sw, angle))
+        for side, sw, angle in leaves:
             hinge = x + side * (w / 2 + start)
             b.push(b.move(hinge, 0.0, 0.03) @ b.turn_y(angle if side < 0 else -angle))
             lo_x, hi_x = sorted((0.0, side * sw))
             b.box((lo_x, y0, 0.0), (hi_x, top, 0.035), ACCENT)
             n = int(h / 0.08)
+            # Lamellen auf der Seite, die zur Straße zeigt (beim geschlossenen Laden die Rückseite)
+            zf = (0.035, 0.045) if not closed else (-0.01, 0.0)
             for k in range(1, n):
                 yy = y0 + h * k / n
-                b.box((lo_x + 0.04, yy - 0.012, 0.035), (hi_x - 0.04, yy, 0.045), ACCENT, skip=("back",))
+                b.box((lo_x + 0.04, yy - 0.012, zf[0]), (hi_x - 0.04, yy, zf[1]), ACCENT, skip=("front",) if closed else ("back",))
             b.pop()
-            # Angeln am Rahmen
             for hy in (y0 + 0.2, top - 0.2):
                 b.cylinder(V(hinge, hy - 0.05, 0.04), 0.012, 0.1, IRON, segments=6, caps=(True, True))
 
@@ -814,6 +820,8 @@ def eaves(b, spec):
             x += 0.42
         b.extrude_x([(0, E - 0.08), (0, E), (0.3, E), (0.3, E - 0.06), (0.22, E - 0.08)], -w - 0.01, w + 0.01, TRIM)
         b.box((-w, E - 0.32, 0), (w, E - 0.22, 0.05), TRIM, skip=("back",))
+    elif style == "gutter":
+        b.box((-w, E - 0.16, 0), (w, E, 0.27), CREAM, skip=("back",))
     elif style == "fascia":
         b.box((-w, E - 0.22, 0), (w, E, 0.28), JOINERY, skip=("back",))
         b.box((-w, E - 0.24, 0), (w, E - 0.22, 0.29), JOINERY, skip=("back",))
@@ -917,7 +925,8 @@ def build_house(name, spec):
             kind, rooms_left = _pick_backdrop(spec, rnd, rooms_left, 0)
             room = _room_box(cols, i, w, 0.15, storeys[0] - 0.3, kind)
             window_unit(b, spec, x, g_y0, ww, g_h, spec["panes_ground"], kind, room, rnd,
-                        shutters=_shutter_space(ground_open, i, w, 0.05) if spec.get("shutters") else 0.0)
+                        shutters=_shutter_space(ground_open, i, w, 0.05) if spec.get("shutters") else 0.0,
+                        closed=spec.get("closed_ground", False) or rnd.random() < spec.get("closed_share", 0.0))
     if spec.get("quoins"):
         quoins(b, w, 0.35, ys[-1] - 0.3)
     # --- Obergeschosse ---
@@ -960,7 +969,8 @@ def build_house(name, spec):
             upper_open = [(cx - cw / 2, cx + cw / 2) for cx, cw in spec["upper_columns"]]
             window_unit(b, spec, x, f_y0, ww, f_h, spec["panes"], kind, room, rnd,
                         lintel="timber" if spec.get("fachwerk") else None,
-                        shutters=_shutter_space(upper_open, i, w, 0.05) if spec.get("shutters") else 0.0, floor=fl)
+                        shutters=_shutter_space(upper_open, i, w, 0.05) if spec.get("shutters") else 0.0, floor=fl,
+                        closed=rnd.random() < spec.get("closed_share", 0.0))
             if spec.get("flower_boxes") and fl == 1 and (shop or rnd.random() < 0.7):
                 P.flower_box(b, x - ww / 2 - 0.04, x + ww / 2 + 0.04, f_y0 + 0.005, 0.0, 0.19, ACCENT,
                              [rnd.choice(["rose", "white", "coral", "lavender"]), rnd.choice(["white", "rose", "lavender"])], seed=rnd.randrange(999))
@@ -1210,7 +1220,6 @@ def shopfront_flowers(b, spec, rnd, s0):
         for k in range(1, n):
             mx = lo_x + span * k / n
             b.box((mx - 0.012, transom + 0.07, gz - 0.02), (mx + 0.012, head, jz - 0.03), JOINERY)
-        b.box((lo_x, transom + 0.07 + (head - transom - 0.07) / 2 - 0.01, gz - 0.02), (hi_x, transom + 0.07 + (head - transom - 0.07) / 2 + 0.01, jz - 0.03), JOINERY)
         # Auslage innen: Stufenpodest mit Eimern
         for k, (dz0, dy) in enumerate(((-0.15, 0.0), (-0.5, 0.25))):
             b.box((lo_x + 0.08, floor_y, dz0 - 0.33), (hi_x - 0.08, sill - 0.04 + dy, dz0), Mat("timber", glow=0.08))
@@ -1224,9 +1233,21 @@ def shopfront_flowers(b, spec, rnd, s0):
         b.box((lo, 0, -0.03), (hi, head, jz), JOINERY, skip=("top",))
     b.box((x0, transom, -0.03), (x1, transom + 0.07, jz), JOINERY)
     b.quad(V(x0, transom + 0.07, 0.06), V(x1, transom + 0.07, 0.06), V(x1, head, 0.06), V(x0, head, 0.06), GLASS)
-    for k in range(1, 4):
-        mx = x0 + (x1 - x0) * k / 4
-        b.box((mx - 0.012, transom + 0.07, 0.04), (mx + 0.012, head, jz - 0.03), JOINERY)
+    # Rautengitter im Oberlicht der Tür
+    ty0, ty1 = transom + 0.07, head
+    n = 5
+    for k in range(-n, n + 1):
+        a = V(x0 + (x1 - x0) * (k / n), ty0, 0.07)
+        for d in (1, -1):
+            c = V(a.x + d * (ty1 - ty0), ty1, 0.07)
+            # nur das Stück innerhalb des Oberlichts
+            pts = []
+            for t in [i / 8 for i in range(9)]:
+                p2 = a + (c - a) * t
+                if x0 <= p2.x <= x1:
+                    pts.append(p2)
+            if len(pts) >= 2:
+                b.tube(pts, 0.006, Mat("metal"), segments=3)
     dz = -0.05
     fw = 0.09
     b.box((x0 - 0.02, 0, dz - 0.3), (x1 + 0.02, 0.08, 0.06), Mat("paving", color=(0.92, 0.9, 0.86)), skip=("back",))
@@ -1269,30 +1290,46 @@ def shopfront_flowers(b, spec, rnd, s0):
     for k in range(9):
         sx = -w + 0.3 + (W - 0.6) * rnd.random()
         P.trailing_strand(b, (sx, s0 + 0.18, 0.3), rnd.uniform(0.2, 0.45), rnd, palette=rnd.choice([None, "rose", "white"]))
-    # Hängekörbe an beiden Pilastern
+    # Hängekörbe an beiden Pilastern, Efeu rankt an den Pilastern herab
     for side in (-1, 1):
         P.hanging_basket(b, side * (w - pil / 2), fascia_lo - 0.25, 0.15, 0.45, seed=rnd.randrange(999))
+        for k in range(4):
+            P.trailing_strand(b, (side * (w - 0.05 - k * 0.07), s0 + 0.15, 0.2), rnd.uniform(0.6, 1.3), rnd)
 
 
 def shop_outside_flowers(b, spec, rnd):
-    """Vor dem Blumenladen: links eine Blumentreppe mit Eimern, rechts ein Fahrrad mit
-    Blumenkorb und ein paar Eimer, dazu die Kreidetafel (Bild "chalkboard")."""
+    """Vor dem Blumenladen (wie im Konzeptbild): links ein Holzregal mit Eimern und davor das
+    Fahrrad mit Blumenkorb, rechts eine Blumenstufe, Eimer am Boden und die Kreidetafel (Bild
+    "chalkboard"); oben Hängekörbe an beiden Ecken und ein Hängeschild (Bild "hanging")."""
     w = spec["width"] / 2
-    # Blumentreppe (drei Stufen, Holz) links
-    x0, x1 = -w + 0.75, -0.85
-    for k, (zz, hh) in enumerate(((0.45, 0.25), (0.28, 0.5), (0.11, 0.75))):
+    E = spec["eaves"]
+    # Links: niedriges Regal unter dem Fenster, davor das Fahrrad
+    x0, x1 = -w + 0.45, -0.8
+    b.box((x0, 0.0, 0.05), (x1, 0.45, 0.42), Mat("timber"))
+    x = x0 + 0.17
+    while x < x1 - 0.1:
+        _bucket(b, x, 0.24, rnd, y=0.45, height=0.22, radius=0.1, blossoms=9)
+        x += 0.27
+    b.colliders.append(((x0, 0, 0.05), (x1, 0.9, 0.42)))
+    _bicycle(b, (x0 + x1) / 2 - 0.05, 0.62, rnd)
+    for xx in (x0 + 0.05, x1 + 0.02):
+        _bucket(b, xx, 0.28, rnd, height=0.34, radius=0.13, tall=True, blossoms=10)
+    # Rechts: Blumenstufe (drei Stufen) und Eimer am Boden
+    x0, x1 = 0.8, w - 0.5
+    for k, (zz, hh) in enumerate(((0.47, 0.25), (0.3, 0.5), (0.13, 0.75))):
         b.box((x0, 0, zz - 0.17), (x1, hh, zz + 0.17), Mat("timber"))
         x = x0 + 0.17
         while x < x1 - 0.12:
             _bucket(b, x, zz, rnd, y=hh, height=0.22, radius=0.09, tall=k == 2, blossoms=9)
             x += 0.26
-    b.colliders.append(((x0, 0, -0.06), (x1, 0.9, 0.62)))
-    # Rechts: Fahrrad mit Korb, davor zwei Eimer am Boden
-    _bicycle(b, 1.55, 0.28, rnd)
-    for xx, zz in ((0.95, 0.5), (2.25, 0.55)):
-        _bucket(b, xx, zz, rnd, height=0.34, radius=0.14, tall=True)
-        b.colliders.append(((xx - 0.16, 0, zz - 0.16), (xx + 0.16, 0.8, zz + 0.16)))
-    P.chalkboard(b, -w + 0.38, 0.5, Mat("plain", sign="chalkboard"), facing=10)
+    b.colliders.append(((x0, 0, -0.06), (x1, 0.9, 0.64)))
+    _bucket(b, x0 - 0.18, 0.62, rnd, height=0.34, radius=0.14, tall=True, blossoms=10)
+    b.colliders.append(((x0 - 0.34, 0, 0.46), (x0 - 0.02, 0.8, 0.78)))
+    P.chalkboard(b, w - 0.3, 0.72, Mat("plain", sign="chalkboard"), facing=-12)
+    # Oben: Hängekörbe an den Ecken und das grüne Hängeschild
+    for side in (-1, 1):
+        P.hanging_basket(b, side * (w - 0.35), E - 0.45, 0.04, 0.5, seed=rnd.randrange(999))
+    P.projecting_sign(b, 0.15, E - 0.75, 0.0, Mat("paint", "door"), Mat("plain", sign="hanging"))
 
 
 def _bicycle(b, x, z, rnd):

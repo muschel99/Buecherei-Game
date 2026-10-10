@@ -998,25 +998,47 @@ def _open_design(b):
 
 
 def _flower_fascia_design(b):
-    """Startbild des Blumenladen-Schilds: helles Holz, cremefarbene Schrift, Blütenranken."""
+    """Startbild des Blumenladen-Schilds (wie im Konzeptbild): Holzbretter, helle Goldschrift,
+    an den Enden kleine Blütenzweige."""
     fw, fh = 4.76, 0.43
-    b.box((-fw / 2, -fh / 2, -0.02), (fw / 2, fh / 2, 0.0), Mat("timber", color=(1, 1, 1)))
-    b.box((-fw / 2 + 0.05, -fh / 2 + 0.04, 0.0), (fw / 2 - 0.05, fh / 2 - 0.04, 0.004), Mat("paint", color=(0.42, 0.52, 0.42)))
+    b.box((-fw / 2, -fh / 2, -0.02), (fw / 2, fh / 2, 0.0), Mat("paint", color=(0.44, 0.55, 0.46)))
+    wood = Mat("boards", color=(0.55, 0.38, 0.24))
+    b.box((-fw / 2 + 0.04, -fh / 2 + 0.035, 0.0), (fw / 2 - 0.04, fh / 2 - 0.035, 0.006), wood)
     start = len(b.faces)
-    b.playful_text("Blumenladen", 0.0, 0.0, 0.004, 0.24, 0.015, Mat("paint", color=(0.93, 0.9, 0.82)), font_path=S.PLAYFUL_FONT,
-                   seed=11, bounce=0.06, tilt=4, first_scale=1.25)
+    b.text("BLUMENLADEN", 0.0, 0.0, 0.006, 0.22, 0.012, Mat("gold", color=(1, 1, 1)), spacing=1.12)
     b.recenter(start, 0.0, 0.0)
     import random
     rnd = random.Random(4)
     for side in (-1, 1):
-        for k in range(5):
-            P.blossom_cluster(b, (side * (1.75 + k * 0.1), -0.02 + 0.06 * math.sin(k), 0.01), 0.05, rnd.choice(["rose", "white", "lavender"]), rnd, count=4, size=0.03)
+        for k in range(6):
+            P.blossom_cluster(b, (side * (1.85 + k * 0.08), -0.03 + 0.07 * math.sin(k * 1.3), 0.012), 0.05,
+                              rnd.choice(["rose", "white"]), rnd, count=4, size=0.03)
+
+
+def _flower_hanging_design(b):
+    """Startbild des grünen Hängeschilds: Salbeigrün, Goldrand, ein kleiner Strauß."""
+    width, height = P.HANGING_SIGN
+    import random
+    rnd = random.Random(8)
+    b.box((-width / 2 - 0.05, -height / 2 - 0.05, -0.03), (width / 2 + 0.05, height / 2 + 0.05, -0.02),
+          Mat("plain", color=(0.5, 0.5, 0.5)))
+    outline = P._arch_outline(width, height)
+    b.slab([V(u, v, 0) for u, v in outline], 0.02, Mat("paint", color=(0.36, 0.48, 0.38)))
+    inset = [V(u * 0.88, v * 0.9 - 0.01, 0.005) for u, v in outline] + [V(outline[0][0] * 0.88, outline[0][1] * 0.9 - 0.01, 0.005)]
+    b.tube(inset, 0.007, GOLD, segments=4, caps=False)
+    for k in range(7):
+        a = -0.6 + k * 0.2
+        b.tube([V(0, -0.15, 0.01), V(math.sin(a) * 0.14, -0.15 + math.cos(a) * 0.22, 0.01)], 0.006, Mat("plain", color=(0.3, 0.42, 0.24)), segments=3)
+    P.blossom_cluster(b, (0, 0.06, 0.02), 0.12, "rose", rnd, count=12, size=0.035)
+    P.blossom_cluster(b, (0, 0.06, 0.02), 0.12, "white", rnd, count=5, size=0.035)
+    b.box((-0.06, -0.2, 0.0), (0.06, -0.12, 0.03), Mat("paint", color=(0.86, 0.82, 0.72)))
 
 
 SIGNS = {
     "flower_shop": {
         "fascia": (4.76, 0.43, 2048, _flower_fascia_design),
         "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Frisch:", "Tulpen", "& Rosen"], 41)),
+        "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, _flower_hanging_design),
     },
     "fashion_shop": {
         # Name: (Breite, Höhe in Metern, Bildbreite in Pixeln, Gestaltung)

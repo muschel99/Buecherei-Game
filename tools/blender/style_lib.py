@@ -779,6 +779,9 @@ def _atlas(kind):
 def preview_material(mat, role_colors):
     """Blender-Material, das rechnet wie der Godot-Shader (Ebene aus dem Atlas, Einfärben)."""
     name = mat.key()
+    if mat.role != "fixed" and not mat.glass and not mat.sign:
+        # Je Haus andere Rollenfarben: eigener Name, sonst teilen sich alle Häuser eine Farbe
+        name += "_%02x%02x%02x" % tuple(int(round(c * 255)) for c in role_colors[mat.role])
     if name in bpy.data.materials:
         return bpy.data.materials[name]
     m = bpy.data.materials.new(name)
@@ -800,8 +803,10 @@ def preview_material(mat, role_colors):
         return m
     if mat.glass:
         bsdf.inputs["Base Color"].default_value = (0.85, 0.9, 0.9, 1)
+        # Wie im Spiel leicht verschwommen (raue Durchsicht)
         bsdf.inputs["Roughness"].default_value = 0.04
         bsdf.inputs["Transmission"].default_value = 0.9
+        bsdf.inputs["Transmission Roughness"].default_value = 0.25
         bsdf.inputs["IOR"].default_value = 1.2
         return m
     info = LAYERS[mat.layer]

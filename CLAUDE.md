@@ -334,7 +334,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `blender -b --factory-startup --python tools/blender/build_street.py -- --check <Gruppe/Name> …`
   → `screenshots/blender/street_check/` (je Haus vorn, schräg links/rechts, nah; Rückseiten
   pink, nur direkt gesehene), danach `build_street.py` ohne --check (schreibt houses.tscn),
-  Godot-Import, Ladeprüfung, street_life_check.
+  Godot-Import, Ladeprüfung, street_life_check. .glb ohne "Cozy Bücherei"-Erzeuger = von der
+  Entwicklerin bearbeitet → build_street.py lässt sie stehen (nie löschen/überschreiben).
+  Fensterläden: beide oder keiner, 6–15° offen oder zu (`closed_share`, `closed_ground`).
   **Schilder = Bilder der Entwicklerin:** Schild-Flächen mit `Mat(..., sign="name")` und
   `poly(..., uvs=…)` (0..1) → glb-Material `sign_<name>` → `assets/materials/signs/<typ>_<name>.tres`
   → Bild `assets/textures/signs/<typ>_<name>.png`. Startbild aus der Gestaltung in

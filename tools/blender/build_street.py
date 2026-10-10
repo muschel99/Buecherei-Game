@@ -64,11 +64,12 @@ SPECIAL = {
                                  wall_tone=0, joinery="brown", accent="dark_green", shutters=True, panes="casement", rooms=1,
                                  room_kind="living", door_leaf="glazed"),
     # Der Blumenladen (gegenüber der Bücherei): Ladenfront statt Erdgeschoss, Blumen davor
-    "Opposite/Opposite1_4": dict(wall="brick", wall_tone=0, quoins=True, shop="flowers", joinery="fern", lintel="architrave",
-                                 eaves_style="modillion", rooms=0, pots=[], panes="topbars", flower_boxes=True, steps=0, bay=False,
-                                 balcony=None, roof="side", roof_mat="slate", accent="fern"),
+    "Opposite/Opposite1_4": dict(wall="render", wall_tone=0, quoins=True, shop="flowers", joinery="fern", lintel="flat",
+                                 eaves_style="gutter", rooms=0, pots=[], panes="sash22", flower_boxes=True, steps=0, bay=False,
+                                 balcony=None, roof="side", roof_mat="clay", accent="fern", frame_cream=True, upper_cols=2,
+                                 shutters=False, string="none", dormers=0, storeys=2),
     "Opposite/Opposite1_5": dict(wall="render", wall_tone=3, steps=2, joinery="sage", rooms=1, room_kind="kitchen", flower_boxes=True,
-                                 lintel="flat", eaves_style="fascia", roof_mat="clay", pots=[1]),
+                                 lintel="flat", eaves_style="fascia", roof_mat="clay", pots=[1], shutters=True, closed_ground=True),
     "Opposite/Opposite2_1": dict(wall="stone", storeys=3, joinery="dark_brown", eaves_style="modillion", lintel="architrave",
                                  balcony="stone", balcony_floor=2, string="band", panes="sash66", dormers=[0.0], door_style="pilaster"),
     "Opposite/Opposite2_2": dict(wall="roughcast", joinery="dark_green", accent="sage", shutters=True, roof_mat="clay", eaves_style="fascia"),
@@ -153,6 +154,8 @@ def make_spec(house, block):
     bay_col = [i for i in range(cols_n) if i != door_col][0] if bay else -1
     balcony = pick("balcony", [None, None, None, "juliet", "stone"])
     upper_cols = [(x, ww) for x in xs]
+    if sp.get("upper_cols") == 2 and cols_n == 3:
+        upper_cols = [(-W / 4 - 0.05, ww), (W / 4 + 0.05, ww)]
     balcony_floor = sp.get("balcony_floor", n_storeys - 1 if n_storeys >= 3 else 1)
     balcony_col = -1
     if balcony and not fachwerk:
@@ -185,7 +188,8 @@ def make_spec(house, block):
         "dormers": dormers, "chimneys": sp.get("chimneys", rnd.choice([[-1], [1], [-1, 1], []])),
         "rooms": sp.get("rooms", 1 if near and rnd.random() < 0.35 else 0), "room_kind": sp.get("room_kind", rnd.choice(["living", "kitchen"])),
         "room_floor": 0, "pots": sp.get("pots", rnd.choice([[], [], [-1], [1]]) if near else []),
-        "setback": sp.get("setback", 0.0), "shop": sp.get("shop"),
+        "setback": sp.get("setback", 0.0), "shop": sp.get("shop"), "frame_cream": sp.get("frame_cream", False),
+        "closed_share": sp.get("closed_share", 0.15), "closed_ground": sp.get("closed_ground", False),
         "party_color": rnd.choice([(0.58, 0.33, 0.25), (0.52, 0.31, 0.24), (0.62, 0.38, 0.28)]),
         "downpipe_side": 1 if door_side < 0 else -1,
         "colors": {"wall": wall_color, "door": joinery, "accent": accent},
@@ -195,6 +199,16 @@ def make_spec(house, block):
     if spec["shop"]:
         spec["door_style"] = "simple"
     return spec
+
+
+def _edited_by_hand(glb):
+    """Wurde das Modell in Blender selbst bearbeitet und exportiert? Dann nicht überschreiben
+    (unsere .glb tragen "Cozy Bücherei" als Erzeuger; ein Blender-Export nicht)."""
+    if not os.path.exists(glb):
+        return False
+    with open(glb, "rb") as f:
+        head = f.read(4096)
+    return b"Cozy B" not in head
 
 
 def _transform(block):
@@ -313,7 +327,9 @@ def main():
         glb = os.path.join(OUT_DIR, file_id + ".glb")
         res = "res://assets/models/houses/street/%s.glb" % file_id
         res_id = "u_" + file_id
-        if not only or house["key"] in only:
+        if (not only or house["key"] in only) and _edited_by_hand(glb):
+            print("%-26s selbst bearbeitet – bleibt, wie es ist" % house["key"])
+        elif not only or house["key"] in only:
             b = H.build_house(file_id, spec)
             tris = S.write_glb(b, glb)
             S.write_import_settings(glb, shop_signs.get(spec["shop"]))

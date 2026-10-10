@@ -445,6 +445,15 @@ Haustyps). Die ganze Straße zum Anschauen in Blender: `assets/models/source/str
   unter `SPECIAL`; alle anderen mischt der Zufall – bei jedem Bau gleich.
 - **Farben** stehen weiter je Haus in `houses.tscn`: Wall Color (Wand), Door Color (Fenster
   und Tür), Accent Color (Läden, Blumenkästen). Das Wandmaterial ist „As Built“ (wie gebaut).
+- **Selbst nachbearbeiten:** Jedes Haus ist eine eigene Datei. In Blender
+  **Datei → Importieren → glTF 2.0** und z. B. `assets/models/houses/street/Opposite_Opposite1_3.glb`
+  wählen (oder die ganze Straße in `assets/models/source/street.blend` anschauen). Nach dem
+  Bearbeiten **Datei → Exportieren → glTF 2.0**, Format „glTF Binary“, unter **demselben Namen**
+  speichern. Die Materialnamen „house“ und „glass“ bitte lassen – dann bleiben Texturen und
+  Farben aus dem Spiel. Deine Datei wird beim nächsten Bau erkannt und **nicht überschrieben**
+  (Hinweis „selbst bearbeitet“). Soll Claude sie wieder neu bauen: Datei löschen.
+- **Glas:** leicht verschwommen (Material `assets/materials/house_glass.tres`, Wert **Blur**:
+  0 = klar, 4 = Milchglas).
 - Achtung: Stellst du die Häuser neu auf (`generate_houses.tscn`), danach `build_street.py`
   noch einmal laufen lassen – sonst zeigen die Häuser wieder ihr Typ-Modell.
 

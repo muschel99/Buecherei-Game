@@ -667,6 +667,11 @@ ist austauschbar.
 - [x] Teil 2d – Fensterläden am Rahmen angeschlagen und schräg aufgeklappt (12–30°, je Laden
       anders); hintere Giebelwand der Giebelhäuser repariert; Prüfmodus
       `build_street.py -- --check <Häuser>` (Bilder je Haus mit Nachbarn, Rückseiten pink)
+- [x] Teil 2e – Läden nur halb so weit offen (6–15°), nie einzeln, manche ganz zu; Glas leicht
+      verschwommen (Shader `house_glass.gdshader`); Blumenladen näher am Konzeptbild (heller
+      Putz, Tondach, cremefarbene Fenster, Holzschild, Rautengitter über der Tür, grünes
+      Hängeschild, Hängekörbe an den Ecken, Efeu an den Pilastern, Fahrrad vor dem Regal);
+      selbst bearbeitete Haus-Modelle werden beim Neubau nicht überschrieben
 - [ ] Teil 3 – Pub, Eckhäuser, Torhaus
 - [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
       Gassenende, Straße mit Kopfsteinpflaster
