@@ -80,6 +80,18 @@ static func opposite_front_z() -> float:
 	return far_curb_z() - GameConfig.opposite_sidewalk_width
 
 
+## Kleine Gasse in der Reihe gegenüber (seit Etappe 4f): von – bis (x); leer = keine Gasse.
+static func opposite_alley() -> Vector2:
+	var half := GameConfig.opposite_alley_width / 2.0
+	if half <= 0.0:
+		return Vector2.ZERO
+	return Vector2(GameConfig.opposite_alley_x - half, GameConfig.opposite_alley_x + half)
+
+
+static func opposite_alley_end_z() -> float:
+	return opposite_front_z() - GameConfig.opposite_alley_depth
+
+
 ## Gasse: von der Bücherei-Wand bis zur Hauswand gegenüber (x), und wo sie endet (z).
 static func alley_far_x() -> float:
 	return HOUSE_LEFT - GameConfig.alley_width
@@ -181,13 +193,13 @@ static func _end_parts(side: int) -> Array:
 		[gate_depth(), 0.0, "passage"],
 		[GameConfig.gate_road_before_curve, 0.0, "behind"],
 		[deg_to_rad(GameConfig.gate_curve_angle) * curve, -side / curve, "behind"],
-		[GameConfig.gate_road_after_curve, 0.0, "behind"],
+		[GameConfig.gate_road_after_curve, 0.0, "behind_end"],
 	]
 
 
 ## Mittellinie eines Straßenendes. Liste von { "pos": Vector2 (x, z), "dir": Vector2
 ## (Fahrtrichtung), "s": Meter ab dem Anfang, "part": Abschnitt (curve, side_street, bend,
-## approach, passage, behind) }. Genau an jedem Abschnittswechsel liegt ein Punkt.
+## approach, passage, behind = hinter dem Bogen bis zum Ende der Kurve, behind_end = danach) }. Genau an jedem Abschnittswechsel liegt ein Punkt.
 static func end_path(side: int, step: float = 0.5) -> Array[Dictionary]:
 	var points: Array[Dictionary] = []
 	var pos := Vector2(end_start_x(side), road_center_z())
@@ -255,6 +267,12 @@ static func gatehouse_front() -> Dictionary:
 		if absf(point.s - front_s) < 0.001:
 			return point
 	return end_path(side).back()
+
+
+## Das Torhaus sitzt mittig zwischen den Hausfronten (nicht mittig auf der Fahrbahn), damit
+## beide Pfeiler gleich breit sind: so weit liegt seine Mitte zur Bücherei-Seite hin.
+static func gate_center_offset() -> float:
+	return (library_facade_offset() - opposite_facade_offset()) / 2.0
 
 
 ## Abstand der Hausfronten hinter dem Torhaus von der Straßenmitte.

@@ -8,6 +8,8 @@ Eckhäuser, beim Torhaus nur die beiden Pfeiler (die Durchfahrt ist offen).
   python3 tools/plan_check.py plan    Hausumrisse zeichnen -> screenshots/plan.png
   python3 tools/plan_check.py bound   Sichtstrahlen von der Grenze am geraden Ende
   python3 tools/plan_check.py gate    Anteil der Torhaus-Front, den man von der Ladentür sieht
+  python3 tools/plan_check.py unseen  Häuser, die man von keiner erreichbaren Stelle aus sieht,
+                                      und Blicke ins Leere (erreichbar = zu Fuß vom Platz aus)
 Hinweis: Maße der Bücherei und Grenze stehen unten fest (wie in StreetLayout / GameConfig);
 nach Änderungen dort hier anpassen.
 """
@@ -22,6 +24,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 BOUND_X = 20.1
 BOUND_SIDE = 1
 NEAR_Z, FAR_Z = -4.5, -13.7
+# Bücherei, Gasse daneben (Hofmauern, Mauer am Ende mit Haus dahinter) als Hindernisse
+LIBRARY = [(-3.2, -2.0828), (-1.0828, -4.2), (3.2, -4.2), (3.2, 4.2), (-3.2, 4.2)]
+ALLEY_BLOCKS = [[(-6.3, 8.92), (-2.9, 8.92), (-2.9, 15.0), (-6.3, 15.0)],
+                [(-3.2, 4.2), (-2.9, 4.2), (-2.9, 8.92), (-3.2, 8.92)],
+                [(-6.3, 5.9), (-6.0, 5.9), (-6.0, 8.92), (-6.3, 8.92)],
+                # Kleine Gasse gegenüber (GameConfig.opposite_alley_x/_width/_depth): Mauer am Ende
+                # und das Haus dahinter
+                [(3.0, -22.3), (5.4, -22.3), (5.4, -22.0), (3.0, -22.0)],
+                [(0.3, -31.0), (8.1, -31.0), (8.1, -25.0), (0.3, -25.0)]]
 # Ladentür (StreetLayout.door_center) und Richtung nach draußen
 DOOR = (-2.1414, -3.1414)
 DOOR_OUT = (-0.7071, -0.7071)
@@ -165,6 +176,65 @@ def check_gate(houses, gate):
         print("%s: %d %% der Torhaus-Front sichtbar" % (label, round(100 * seen / max(1, total))))
 
 
+def _blockers(houses, gate):
+    """Alles, wo man nicht hinkommt: Häuser, Bücherei, Gasse, die beiden Grenzen."""
+    blocks = [poly for *_, poly in houses] + [LIBRARY] + ALLEY_BLOCKS
+    blocks.append([(BOUND_X - 0.3, -3.7), (BOUND_X + 0.3, -3.7), (BOUND_X + 0.3, -14.5), (BOUND_X - 0.3, -14.5)])
+    origin, ax, az, _ = gate
+    mid = (origin[0] - az[0] * 0.8, origin[1] - az[1] * 0.8)  # Grenze im Bogen (Street.GATE_BOUND_INSIDE)
+    corners = []
+    for u, v in ((-3.55, -0.3), (3.55, -0.3), (3.55, 0.3), (-3.55, 0.3)):
+        corners.append((mid[0] + ax[0] * u + az[0] * v, mid[1] + ax[1] * u + az[1] * v))
+    blocks.append(corners)
+    return blocks
+
+
+def reachable_points(houses, gate, step=0.5):
+    """Rasterpunkte, die man vom Gehweg vor der Bücherei aus zu Fuß erreicht (0,3 m Abstand)."""
+    blocks = _blockers(houses, gate)
+    def free(p):
+        for dx, dz in ((0, 0), (0.3, 0), (-0.3, 0), (0, 0.3), (0, -0.3)):
+            q = (p[0] + dx, p[1] + dz)
+            if any(_inside(q, poly) for poly in blocks):
+                return False
+        return True
+    start = (0.0, -6.0)
+    seen = {start}
+    todo = [start]
+    while todo:
+        p = todo.pop()
+        for dx, dz in ((step, 0), (-step, 0), (0, step), (0, -step)):
+            q = (round(p[0] + dx, 3), round(p[1] + dz, 3))
+            if q not in seen and abs(q[0]) < 120 and abs(q[1]) < 120 and free(q):
+                seen.add(q)
+                todo.append(q)
+    return sorted(seen)
+
+
+def check_unseen(houses, gate):
+    points = reachable_points(houses, gate)
+    occluders = houses + [("Library", "-", "-", LIBRARY)] + [("Alley", "-", "-", b) for b in ALLEY_BLOCKS]
+    hits = {}
+    void = []
+    sample = [p for i, p in enumerate(points) if i % 6 == 0]
+    for p in sample:
+        for a in range(0, 360, 2):
+            dist, name, group = cast(occluders, p, math.radians(a))
+            if dist is None:
+                void.append((p, a))
+            else:
+                hits[name] = hits.get(name, 0) + 1
+    print("Erreichbare Rasterpunkte: %d (geprüft: %d, je 180 Blickrichtungen)" % (len(points), len(sample)))
+    print("Blicke ins Leere: %d" % len(void), void[:5])
+    unseen = {}
+    for name, group, kind, _ in houses:
+        if name not in hits and not name.startswith("Gatehouse"):
+            unseen.setdefault(group, []).append(name)
+    for group, names in unseen.items():
+        print("Nie zu sehen (%s): %s" % (group, ", ".join(sorted(set(names)))))
+    return hits
+
+
 def draw(houses, path):
     from PIL import Image, ImageDraw
     xs = [x for *_, poly in houses for x, _ in poly]
@@ -199,5 +269,7 @@ if __name__ == "__main__":
         check_bound(houses)
     elif command == "gate":
         check_gate(houses, gate)
+    elif command == "unseen":
+        check_unseen(houses, gate)
     else:
         print(__doc__)

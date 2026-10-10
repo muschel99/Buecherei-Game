@@ -3,3 +3,6 @@
 
 # Testbilder von tools/screenshots.sh (nur zur Kontrolle, nicht ins Projekt)
 screenshots/
+
+# Zwischenspeicher von Python (tools/plan_check.py)
+__pycache__/

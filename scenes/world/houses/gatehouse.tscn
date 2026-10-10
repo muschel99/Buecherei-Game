@@ -7,7 +7,8 @@
 ; nach +Z, die Durchfahrt reicht nach -Z. Eigenes Modell: Kind-Knoten "Model" anlegen – dann
 ; verschwindet der Platzhalter. WICHTIG: Das eigene Modell muss die Öffnung des Bogens frei
 ; lassen (Breite passage_width, Scheitel arch_spring + passage_width / 2), die Straße darunter
-; baut das Spiel. Kollision: nur die beiden Pfeiler links und rechts.
+; baut das Spiel. Kollision: nur die beiden Pfeiler links und rechts. So breit wie die Straße
+; zwischen den Hausfronten (9,8 m); es steht mittig zwischen ihnen (StreetLayout.gate_center_offset).
 ; Wo es steht: scenes/world/houses.tscn (Gruppe GateStreet).
 
 [ext_resource type="Script" path="res://scripts/world/gatehouse_facade.gd" id="1_gate"]
@@ -15,13 +16,13 @@
 [node name="Gatehouse" type="Node3D"]
 script = ExtResource("1_gate")
 passage_width = 6.5
-arch_spring = 2.0
-masonry_height = 5.8
+arch_spring = 2.6
+masonry_height = 6.4
 sign_band_height = 0.5
 jetty = 0.25
-width = 10.4
+width = 9.8
 depth = 6.0
-eaves_height = 8.8
+eaves_height = 9.4
 roof_rise = 2.4
 chimney = false
 wall_color = Color(0.56, 0.36, 0.28, 1)

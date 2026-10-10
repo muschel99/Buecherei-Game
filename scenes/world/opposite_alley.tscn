@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+; Kleine Gasse in der Häuserreihe gegenüber (Etappe 4f), gebaut von
+; scripts/world/opposite_alley.gd. Liegt unter "Outside" (y = 0 = Gehweg). Maße in GameConfig
+; (opposite_alley_…). Der Abschluss am Ende ist die austauschbare Szene
+; scenes/world/alley_end.tscn (wie bei der Gasse neben der Bücherei).
+
+[ext_resource type="Script" path="res://scripts/world/opposite_alley.gd" id="1_alley"]
+
+[node name="OppositeAlley" type="Node3D"]
+script = ExtResource("1_alley")

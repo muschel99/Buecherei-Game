@@ -54,6 +54,9 @@ static func overview() -> Dictionary:
 		"aerial_west": {"pos": Vector3(4.0, 22.0, road_mid - 14.0), "target": Vector3(StreetLayout.end_start_x(-1), 0.0, road_mid - 6.0)},
 		"aerial_gate": {"pos": _ground3(_gate_point(-14.0, 0.0), 22.0), "target": _ground3(_gate_point(4.0, 0.0), 2.0)},
 		"high_street": {"pos": Vector3(0.0, y + 6.0, road_mid), "target": Vector3(-30.0, y, road_mid)},
+		"alley_from_library": look(GameConfig.opposite_alley_x - 1.5, curb + 0.8, 0.12, -1.0, 0.05),
+		"alley_inside": look(GameConfig.opposite_alley_x, StreetLayout.opposite_front_z() + 0.6, 0.0, -1.0),
+		"alley_end": look(GameConfig.opposite_alley_x, StreetLayout.opposite_alley_end_z() + 0.6, 0.15, 1.0),
 	}
 
 
