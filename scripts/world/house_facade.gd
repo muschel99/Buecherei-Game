@@ -24,6 +24,15 @@ extends Node3D
 ## (z. B. Blumenkübel vor der Tür, Knoten "…-colonly") fallen weg, wenn das Haus nicht "solid" ist.
 ## Sonst gehen Passanten um sie herum (je Teil ein StreetObstacle-Kreis).
 
+## Wandmaterial eines Stil-Modells (seit Etappe 4g). AUTO: rote und braune Wandfarben werden
+## Backstein, helle Farben Putz (jedes dritte Haus Rauputz).
+enum WallMaterial { AUTO, AS_BUILT, BRICK, STONE, RENDER, ROUGHCAST }
+
+## Nummer der Ebene in den Stil-Texturen (assets/textures/style/layers.json)
+const WALL_LAYERS := { WallMaterial.BRICK: 0, WallMaterial.STONE: 1, WallMaterial.RENDER: 2, WallMaterial.ROUGHCAST: 19 }
+## Varianten eines Modells mit Fenstern in der Seitenwand (side_windows): <modell>_side_left.glb …
+const SIDE_SUFFIX := { -1: "_side_left", 1: "_side_right", 2: "_side_both" }
+
 enum GroundFloor {
 	WINDOWS,  ## Erdgeschoss mit normalen Fenstern und Haustür
 	SHOPFRONT,  ## Ladenfront: große Schaufenster, Ladentür, Schild darüber
@@ -111,6 +120,12 @@ enum GroundFloor {
 @export var accent_color: Color = Color(0.16, 0.3, 0.22):
 	set(value):
 		accent_color = value
+		_apply_colors()
+## Wandmaterial bei Stil-Modellen (Backstein, Sandstein, Putz, Rauputz); "Auto" wählt nach der
+## Wandfarbe, "As Built" lässt es so, wie das Modell gebaut ist.
+@export var wall_material: WallMaterial = WallMaterial.AUTO:
+	set(value):
+		wall_material = value
 		_apply_colors()
 ## Wirft das Haus Sonnenschatten? (Häuser weit weg oder gegenüber besser nicht.)
 @export var casts_shadow: bool = true:
@@ -204,6 +219,7 @@ func _rebuild() -> void:
 		_placeholder.mesh = _get_mesh()
 		add_child(_placeholder)
 	elif not Engine.is_editor_hint():
+		model = _use_side_window_variant(model)
 		for body: StaticBody3D in model.find_children("*", "StaticBody3D", true, false):
 			if solid:
 				_add_street_obstacle(body)
@@ -211,6 +227,25 @@ func _rebuild() -> void:
 				# Haus ohne Kollision: auch die Kollisionen im Modell weglassen
 				body.queue_free()
 	_apply_colors()
+
+
+## Seitenfenster bei eigenem Modell: gibt es eine Variante (z. B. terrace_55_side_left.glb),
+## ersetzt sie das Modell dieses einen Hauses.
+func _use_side_window_variant(model: Node) -> Node:
+	if side_windows == 0 or model.scene_file_path.is_empty():
+		return model
+	var base := model.scene_file_path.get_basename()
+	for suffix: String in SIDE_SUFFIX.values():
+		base = base.trim_suffix(suffix)
+	var variant: String = base + SIDE_SUFFIX.get(side_windows, "") + ".glb"
+	if variant == model.scene_file_path or not ResourceLoader.exists(variant):
+		return model
+	var replacement := (load(variant) as PackedScene).instantiate()
+	model.name = "OldModel"
+	model.queue_free()
+	replacement.name = "Model"
+	add_child(replacement)
+	return replacement
 
 
 ## Feste Teile des Modells vor dem Haus (z. B. Kübel): Passanten gehen darum herum
@@ -241,12 +276,29 @@ func _apply_colors() -> void:
 	var model := get_node_or_null("Model")
 	if model and not model.is_queued_for_deletion():
 		targets.append_array(model.find_children("*", "GeometryInstance3D", true, false))
+	var layer := _wall_layer()
 	for target: GeometryInstance3D in targets:
+		if target != _placeholder:
+			target.set_instance_shader_parameter("wall_layer", layer)
 		target.set_instance_shader_parameter("wall_color", wall_color)
 		target.set_instance_shader_parameter("door_color", door_color)
 		target.set_instance_shader_parameter("accent_color", accent_color)
 		target.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if casts_shadow \
 			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## Ebene der Stil-Texturen für die Wände (-1 = wie gebaut).
+func _wall_layer() -> int:
+	match wall_material:
+		WallMaterial.AS_BUILT:
+			return -1
+		WallMaterial.AUTO:
+			if wall_color.r - wall_color.b > 0.18 and wall_color.r < 0.75:
+				return WALL_LAYERS[WallMaterial.BRICK]
+			# Helle Häuser: meist glatter Putz, jedes dritte Rauputz (fest je Lage)
+			var spot := Vector2i(roundi(position.x * 10.0), roundi(position.z * 10.0))
+			return WALL_LAYERS[WallMaterial.ROUGHCAST] if hash(spot) % 3 == 0 else WALL_LAYERS[WallMaterial.RENDER]
+	return WALL_LAYERS[wall_material]
 
 
 func _build_collision() -> void:

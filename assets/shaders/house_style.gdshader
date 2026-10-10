@@ -13,8 +13,9 @@ render_mode cull_back;
 
 uniform sampler2DArray albedo_layers : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2DArray normal_layers : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
-// Rauheit und Metall je Ebene (Reihenfolge wie layers.json)
+// Rauheit, Metall und Kachelgröße (m) je Ebene (Reihenfolge wie layers.json)
 uniform float roughness_layers[20];
+uniform float tile_layers[20];
 uniform float metallic_layers[20];
 uniform float normal_strength : hint_range(0.0, 2.0) = 1.0;
 // Ausgleich der mittleren Texturhelligkeit (1 / linear(tint_mean) aus layers.json)
@@ -25,6 +26,9 @@ uniform float glow_strength = 1.5;
 instance uniform vec4 wall_color : source_color = vec4(0.55, 0.3, 0.24, 1.0);
 instance uniform vec4 door_color : source_color = vec4(0.18, 0.28, 0.42, 1.0);
 instance uniform vec4 accent_color : source_color = vec4(0.16, 0.3, 0.22, 1.0);
+// Anderes Wandmaterial je Haus (seit Etappe 4g): Ebene für alle Wandflächen (Rolle 1),
+// -1 = so, wie das Modell gebaut ist (HouseFacade.wall_material)
+instance uniform int wall_layer = -1;
 
 varying flat int layer;
 varying vec3 tint;
@@ -33,6 +37,11 @@ varying float glow;
 void vertex() {
 	layer = int(round(UV2.x));
 	int role = int(round(UV2.y));
+	if (role == 1 && wall_layer >= 0) {
+		// Texturkoordinaten sind in Kacheln der gebauten Ebene: auf die neue umrechnen
+		UV *= tile_layers[layer] / tile_layers[wall_layer];
+		layer = wall_layer;
+	}
 	if (role == 1) {
 		tint = wall_color.rgb;
 	} else if (role == 2) {

@@ -24,6 +24,7 @@ import math
 import os
 import re
 import sys
+import zlib
 
 sys.path.insert(0, os.path.dirname(__file__))
 import style_lib as S  # noqa: E402
@@ -68,6 +69,7 @@ STYLE_ROOF_PITCH = 35.0
 
 def house_dims(type_id):
     """Maße aus der Haustyp-Szene (Standardwerte wie in house_facade.gd)."""
+    type_id = re.sub(r"_side_(left|right|both)$", "", type_id)
     text = open(os.path.join(HOUSE_DIR, type_id + ".tscn")).read()
 
     def value(name, default):
@@ -98,14 +100,16 @@ def roof_y(z, eaves, rise, front_z, depth):
     return eaves + (front_z - z) * rise / (front_z + depth / 2)
 
 
-def party_walls(b, w, depth, eaves, rise, front_z, back_z, mat=BRICK):
-    """Seitenwände, Rückwand und Giebel (Brandwände zu den Nachbarn) mit Aufkantung über dem Dach."""
+def party_walls(b, w, depth, eaves, rise, front_z, back_z, mat=BRICK, open_sides=()):
+    """Seitenwände, Rückwand und Giebel (Brandwände zu den Nachbarn) mit Aufkantung über dem Dach.
+    open_sides: Seiten (-1/1) ohne untere Wand (dort baut das Haus eine Wand mit Fenstern)."""
     ridge_y = eaves + rise
     for side in (-1, 1):
         x = side * w
         wall = [V(x, 0, -depth), V(x, 0, 0), V(x, eaves, 0), V(x, eaves, -depth)]
         gable = [V(x, eaves, back_z), V(x, eaves, front_z), V(x, ridge_y + 0.12, -depth / 2)]
-        b.poly(wall if side < 0 else wall[::-1], mat)
+        if side not in open_sides:
+            b.poly(wall if side < 0 else wall[::-1], mat)
         b.poly(gable if side < 0 else gable[::-1], mat)
         # Aufkantung mit Abdeckstein, folgt dem Dach; am First ein kleiner Deckstein
         xc = side * (w - 0.17)
@@ -585,6 +589,306 @@ def fashion_shop(type_id="fashion_shop"):
     return b, _fashion_props()
 
 
+# --- Reihenhäuser und Wohnhaus (Etappe 4g, Teil 2) ---
+
+WALL = Mat("brick", "wall")
+PLINTH = Mat("render", color=(0.4, 0.38, 0.36))
+
+
+def _columns(width, count):
+    return [-width / 2 + width * (i + 0.5) / count for i in range(count)]
+
+
+def _door_column(door_side, count):
+    return {-1: 0, 1: count - 1, 2: count // 2}.get(door_side, -1)
+
+
+def _window_hole(x, y0, w, h):
+    return (x - w / 2, y0, x + w / 2, y0 + h)
+
+
+def plain_window(b, x, y0, w, h, lintel="stone", sill=True, reveal=0.13, panes=(2, 2)):
+    """Schiebefenster in der Fassade (Loch kommt von der Wand) mit Sohlbank und Sturz."""
+    sash_window(b, x, y0, w, h, reveal, panes=panes)
+    x0, x1 = x - w / 2, x + w / 2
+    if sill:
+        b.box((x0 - 0.08, y0 - 0.08, 0), (x1 + 0.08, y0, 0.09), TRIM)
+    top = y0 + h
+    if lintel == "stone":
+        b.box((x0 - 0.1, top, 0), (x1 + 0.1, top + 0.2, 0.03), TRIM, skip=("back",))
+    elif lintel == "key":
+        b.box((x0 - 0.12, top, 0), (x1 + 0.12, top + 0.2, 0.03), TRIM, skip=("back",))
+        b.box((x - 0.07, top - 0.03, 0), (x + 0.07, top + 0.24, 0.06), TRIM, skip=("back",))
+    elif lintel == "arch":
+        # Flacher Bogen aus hochkant gestellten Steinen (in Steinfarbe)
+        n = max(5, int((w + 0.2) / 0.075))
+        for k in range(n):
+            t = (k + 0.5) / n
+            bx = x0 - 0.1 + (w + 0.2) * t
+            lift = 0.05 * math.sin(math.pi * t)
+            b.box((bx - 0.032, top + lift, 0), (bx + 0.032, top + lift + 0.22, 0.02), TRIM, skip=("back",))
+    elif lintel == "architrave":
+        b.frame(x0, y0, x1, top, 0.0, 0.04, 0.1, TRIM, bottom=False)
+        b.box((x0 - 0.1, top + 0.1, 0), (x1 + 0.1, top + 0.24, 0.05), TRIM, skip=("back",))
+        b.extrude_x([(0, top + 0.24), (0, top + 0.34), (0.12, top + 0.34), (0.12, top + 0.3), (0.06, top + 0.24)],
+                    x0 - 0.18, x1 + 0.18, TRIM)
+
+
+def front_door(b, x, style="simple", reveal=0.13, width=1.0, height=2.15):
+    """Haustür in einer Laibung: Stufe, Rahmen, Kassettentür (Türfarbe), Oberlicht mit Sprossen,
+    Messing-Klopfer und Briefschlitz. style: simple (Steinsturz), pilaster (Säulchen und Gebälk)."""
+    hw = width / 2
+    fan = 0.42
+    top = height + fan
+    z = -reveal
+    b.box((x - hw, 0, z), (x + hw, 0.14, 0.0), TRIM, skip=("back",))
+    f = 0.07
+    b.box((x - hw, 0.14, z), (x - hw + f, top, z + 0.06), WHITE)
+    b.box((x + hw - f, 0.14, z), (x + hw, top, z + 0.06), WHITE)
+    b.box((x - hw, top - f, z), (x + hw, top, z + 0.06), WHITE)
+    b.box((x - hw, height, z), (x + hw, height + 0.06, z + 0.06), WHITE)
+    # Türblatt mit vier Füllungen
+    dx0, dx1 = x - hw + f, x + hw - f
+    b.box((dx0, 0.14, z - 0.02), (dx1, height, z + 0.03), JOINERY, skip=("back",))
+    for (py0, py1) in ((0.3, 0.95), (1.1, height - 0.15)):
+        for (px0, px1) in ((dx0 + 0.08, x - 0.04), (x + 0.04, dx1 - 0.08)):
+            b.frame(px0, py0, px1, py1, z + 0.03, z + 0.045, 0.025, JOINERY)
+    b.box((x - 0.12, 1.0, z + 0.03), (x + 0.12, 1.04, z + 0.042), GOLD)
+    b.cylinder(V(x, 1.5, z + 0.03), 0.035, 0.015, GOLD, segments=10, axis="z", caps=(True, True))
+    b.sphere(V(dx1 - 0.08, 1.02, z + 0.06), 0.028, GOLD, rings=4, segments=8)
+    # Oberlicht
+    gy0 = height + 0.06
+    b.quad(V(dx0, gy0, z + 0.01), V(dx1, gy0, z + 0.01), V(dx1, top - f, z + 0.01), V(dx0, top - f, z + 0.01), DARK_GLASS)
+    for k in range(1, 4):
+        bx = dx0 + (dx1 - dx0) * k / 4
+        b.box((bx - 0.012, gy0, z + 0.01), (bx + 0.012, top - f, z + 0.04), WHITE)
+    if style == "simple":
+        b.box((x - hw - 0.12, top, 0), (x + hw + 0.12, top + 0.22, 0.04), TRIM, skip=("back",))
+    elif style == "pilaster":
+        for side in (-1, 1):
+            px = x + side * (hw + 0.1)
+            b.box((px - 0.09, 0, 0), (px + 0.09, top, 0.09), WHITE, skip=("back",))
+            b.box((px - 0.11, 0, 0), (px + 0.11, 0.25, 0.11), WHITE, skip=("back",))
+            b.box((px - 0.11, top - 0.12, 0), (px + 0.11, top, 0.11), WHITE, skip=("back",))
+        b.box((x - hw - 0.24, top, 0), (x + hw + 0.24, top + 0.2, 0.1), WHITE, skip=("back",))
+        b.extrude_x([(0, top + 0.2), (0, top + 0.32), (0.18, top + 0.32), (0.18, top + 0.28), (0.12, top + 0.2)],
+                    x - hw - 0.3, x + hw + 0.3, WHITE)
+    return (x - hw, 0.0, x + hw, top)
+
+
+def bay_window(b, cx, width, depth, height, solid_colliders=True):
+    """Erker im Erdgeschoss: drei Fensterseiten (vorn und zwei schräge), Brüstung in Wandfarbe,
+    Gesims und kleines Bleidach."""
+    hw = width / 2
+    side = depth  # 45°
+    pts = [(cx - hw - side, 0.0), (cx - hw, depth), (cx + hw, depth), (cx + hw + side, 0.0)]
+    sill = 0.75
+    head = height - 0.35
+    for i in range(3):
+        (ax, az), (bx, bz) = pts[i], pts[i + 1]
+        a, c = V(ax, 0, az), V(bx, 0, bz)
+        along = (c - a)
+        ln = along.length
+        along.normalize()
+        n = V(-along.z, 0, along.x)
+        b.push(S.Matrix.Translation(a) @ S.Matrix(((along.x, 0, n.x, 0), (0, 1, 0, 0), (along.z, 0, n.z, 0), (0, 0, 0, 1))))
+        b.box((0, 0, -0.02), (ln, sill, 0.0), WALL, skip=("back",))
+        b.box((-0.02, sill, -0.02), (ln + 0.02, sill + 0.06, 0.06), TRIM, skip=("back",))
+        wpad = 0.07
+        b.quad(V(wpad, sill + 0.06, -0.06), V(ln - wpad, sill + 0.06, -0.06), V(ln - wpad, head, -0.06), V(wpad, head, -0.06), DARK_GLASS)
+        cw = (ln - 2 * wpad) * 0.22
+        for c0, c1 in ((wpad, wpad + cw), (ln - wpad - cw, ln - wpad)):
+            b.quad(V(c0, sill + 0.1, -0.052), V(c1, sill + 0.1, -0.052), V(c1, head, -0.052), V(c0, head, -0.052), CURTAIN)
+        b.box((0, sill + 0.06, -0.06), (wpad, head, 0.0), WHITE, skip=("back",))
+        b.box((ln - wpad, sill + 0.06, -0.06), (ln, head, 0.0), WHITE, skip=("back",))
+        mid = sill + 0.06 + (head - sill - 0.06) * 0.55
+        b.box((wpad, mid - 0.03, -0.06), (ln - wpad, mid + 0.03, -0.01), WHITE, skip=("back",))
+        b.glazing_bars(wpad, mid + 0.03, ln - wpad, head, -0.06, -0.035, 2, 1, 0.02, WHITE)
+        b.box((0, head, -0.02), (ln, height, 0.0), WHITE, skip=("back",))
+        b.pop()
+    # Dach: Gesims-Kante und flaches Bleidach (geschlossene Platte)
+    over = 0.06
+    roof = [V(pts[0][0] - over, height, 0.0), V(pts[1][0] - over * 0.4, height, pts[1][1] + over),
+            V(pts[2][0] + over * 0.4, height, pts[2][1] + over), V(pts[3][0] + over, height, 0.0)]
+    b.slab([V(p.x, p.y + 0.08, p.z) for p in reversed(roof)][::-1], 0.08, WHITE)
+    peak = [V(p.x, height + 0.08, p.z) for p in roof]
+    top = [V(pts[0][0] + 0.15, height + 0.32, 0.0), V(pts[1][0] + 0.1, height + 0.32, pts[1][1] - 0.2),
+           V(pts[2][0] - 0.1, height + 0.32, pts[2][1] - 0.2), V(pts[3][0] - 0.15, height + 0.32, 0.0)]
+    for i in range(3):
+        b.poly([peak[i], peak[i + 1], top[i + 1], top[i]], LEAD)
+    b.poly([top[0], top[1], top[2], top[3]], LEAD)
+    for i in range(3):
+        (ax, az), (bx2, bz) = pts[i], pts[i + 1]
+        b.colliders.append(((min(ax, bx2), 0, 0), (max(ax, bx2), 1.0, max(az, bz))))
+
+
+def parapet(b, w, eaves, height=0.55):
+    """Brüstung vor dem Dach (georgianisch): Wand über die Traufe hinaus mit Abdeckstein."""
+    b.box((-w, eaves - 0.3, -0.36), (w, eaves + height, 0.0), WALL, skip=("bottom", "top"))
+    b.box((-w - 0.02, eaves + height, -0.38), (w + 0.02, eaves + height + 0.07, 0.05), TRIM)
+    b.box((-w, eaves - 0.25, 0), (w, eaves - 0.1, 0.06), TRIM, skip=("back",))
+
+
+def eaves_band(b, w, eaves, style):
+    """Traufe: dentil = kleine Steinkonsolen, cornice = Steingesims; dazu Traufbrett und Rinne."""
+    if style == "dentil":
+        x = -w + 0.06
+        while x + 0.08 < w:
+            b.box((x, eaves - 0.2, 0), (x + 0.08, eaves - 0.08, 0.08), TRIM, skip=("back",))
+            x += 0.18
+        b.box((-w, eaves - 0.08, 0), (w, eaves, 0.12), TRIM, skip=("back",))
+    else:
+        b.extrude_x([(0, eaves - 0.25), (0, eaves), (0.26, eaves), (0.26, eaves - 0.07), (0.16, eaves - 0.13), (0.1, eaves - 0.25)],
+                    -w - 0.01, w + 0.01, TRIM)
+    b.cylinder(V(-w, eaves + 0.03, 0.22), 0.055, 2 * w, LEAD, segments=8, caps=(True, True), axis="x")
+
+
+def porch(b, x, door_rect, depth=0.75):
+    """Vordach auf zwei Säulen mit kleinem Giebel (Wohnhaus)."""
+    x0, _, x1, top = door_rect
+    hw = (x1 - x0) / 2 + 0.35
+    y = top + 0.15
+    for side in (-1, 1):
+        cx = x + side * (hw - 0.1)
+        b.box((cx - 0.13, 0, depth - 0.23), (cx + 0.13, 0.25, depth + 0.03), TRIM)
+        b.cylinder(V(cx, 0.25, depth - 0.1), 0.08, y - 0.45, WHITE, segments=12, radius_top=0.07)
+        b.box((cx - 0.11, y - 0.2, depth - 0.21), (cx + 0.11, y, depth + 0.01), WHITE)
+        b.colliders.append(((cx - 0.14, 0, depth - 0.24), (cx + 0.14, 2.2, depth + 0.04)))
+    b.box((x - hw - 0.05, y, -0.02), (x + hw + 0.05, y + 0.25, depth + 0.08), WHITE, skip=("back",))
+    apex = y + 0.25 + 0.45
+    b.slab([V(x - hw - 0.08, y + 0.25, depth + 0.1), V(x + hw + 0.08, y + 0.25, depth + 0.1), V(x, apex, depth + 0.1)], depth + 0.1, WHITE)
+    for side in (-1, 1):
+        lo = V(x + side * (hw + 0.12), y + 0.22, depth + 0.14)
+        hi = V(x, apex + 0.05, depth + 0.14)
+        pts = [lo, hi, V(hi.x, hi.y, -0.02), V(lo.x, lo.y, -0.02)]
+        b.slab(pts if side < 0 else pts[::-1], 0.05, SLATE)
+
+
+def small_pot(b, x, z, palette, seed, tall=False):
+    """Kleiner Topf neben der Haustür (Lavendel oder Buchs)."""
+    import random
+    rnd = random.Random(seed)
+    h = 0.42 if tall else 0.28
+    b.cylinder(V(x, 0, z), 0.13, h, POT, segments=12, radius_top=0.16, caps=(False, True))
+    if palette:
+        b.sphere(V(x, h + 0.12, z), 0.16, P.leaf(seed), rings=5, segments=10, squash=0.8, jitter=0.12, seed=seed)
+        P.blossom_cluster(b, (x, h + 0.13, z), 0.15, palette, rnd, count=10)
+    else:
+        b.cylinder(V(x, h, z), 0.12, 0.5, P.leaf(seed), segments=10, radius_top=0.02, caps=(True, True))
+    b.colliders.append(((x - 0.17, 0, z - 0.17), (x + 0.17, 0.6, z + 0.17)))
+
+
+TERRACES = {
+    # door_style, ground ("windows"/"bay"), lintel, eaves, extras
+    "terrace_45": dict(door_style="simple", ground="windows", lintel="key", eaves="dentil", boxes=[1, 1], pot="lavender"),
+    "terrace_50": dict(door_style="simple", ground="bay", lintel="architrave", eaves="cornice", boxes=[0, 1], pot=None),
+    "terrace_55": dict(door_style="pilaster", ground="windows", lintel="architrave", eaves="parapet", boxes=[0, 0, 0], pot="box",
+                       tall=True),
+    "terrace_60": dict(door_style="simple", ground="windows", lintel="arch", eaves="dentil", boxes=[1, 0, 1], pot="rose",
+                       dormer=True),
+    "residential": dict(door_style="porch", ground="windows", lintel="architrave", eaves="cornice", boxes=[1, 0, 1], pot="pair"),
+}
+
+
+def terrace(type_id, side_windows=0):
+    """Reihenhaus bzw. Wohnhaus im Stil. Maße, Türseite und Fensterspalten aus der Haustyp-Szene;
+    Wände in Wandfarbe (Material je Haus wählbar: HouseFacade.wall_material)."""
+    spec = TERRACES[type_id]
+    d = house_dims(type_id)
+    text = open(os.path.join(HOUSE_DIR, type_id + ".tscn")).read()
+    door_side = int(re.search(r"^door_side = (-?\d+)", text, re.M).group(1)) if re.search(r"^door_side", text, re.M) else 1
+    cols_m = re.search(r"^window_columns = (\d+)", text, re.M)
+    has_chimney = not re.search(r"^chimney = false", text, re.M)
+    W, D, E, R = d["width"], d["depth"], d["eaves"], d["rise"]
+    w = W / 2
+    cols = int(cols_m.group(1)) if cols_m else max(1, int(W / 1.7))
+    b = S.Builder(type_id if not side_windows else "%s_side" % type_id)
+    # Mit Brüstung beginnt das Dach erst dahinter
+    front_z = -0.34 if spec["eaves"] == "parapet" else 0.25
+    back_z = -D - 0.2
+    party_walls(b, w, D, E, R, front_z, back_z, open_sides=(-1, 1) if side_windows == 2 else (side_windows,))
+    gable_roof(b, w, D, E, R, front_z, back_z)
+    if has_chimney:
+        chimney(b, (w - 0.36) * (1 if door_side != 1 else -1), -D / 2, E + R - 0.6, E + R + 0.9)
+    storey = E / 2
+    xs = _columns(W, cols)
+    door_col = _door_column(door_side, cols)
+    tall = spec.get("tall", False)
+    win_w = 0.92 if cols >= 3 else 1.0
+    g_y0, g_h = 0.8, min(1.85 if tall else 1.65, storey - 1.3)
+    f_y0 = storey + (0.55 if tall else 0.7)
+    f_h = min(1.95 if tall else 1.6, E - f_y0 - (0.75 if spec["eaves"] == "parapet" else 0.6))
+    holes = []
+    door_rect = None
+    if door_col >= 0:
+        door_rect = (xs[door_col] - 0.5, 0.0, xs[door_col] + 0.5, 2.15 + 0.42)
+        holes.append(door_rect)
+    bay = spec["ground"] == "bay"
+    for i, x in enumerate(xs):
+        if i != door_col and not bay:
+            holes.append(_window_hole(x, g_y0, win_w, g_h))
+        holes.append(_window_hole(x, f_y0, win_w, f_h))
+    # Fassade mit Sockel und Gurtgesims
+    b.wall_with_holes(-w, w, 0.0, E, 0.0, holes, WALL, reveal=0.13)
+    b.box((-w, 0, 0), (w, 0.32, 0.03), PLINTH, skip=("back", "bottom"))
+    b.box((-w, storey - 0.05, 0), (w, storey + 0.07, 0.05), TRIM, skip=("back",))
+    for i, x in enumerate(xs):
+        if i == door_col:
+            continue
+        if not bay:
+            plain_window(b, x, g_y0, win_w, g_h, lintel=spec["lintel"])
+    for i, x in enumerate(xs):
+        plain_window(b, x, f_y0, win_w, f_h, lintel=spec["lintel"], panes=(2, 3) if tall else (2, 2))
+        if spec["boxes"][i % len(spec["boxes"])]:
+            P.flower_box(b, x - 0.48, x + 0.48, f_y0 + 0.005, 0.0, 0.19, JOINERY,
+                         [["rose", "white"], ["lavender", "white"], ["coral", "rose"]][i % 3], seed=zlib.crc32(type_id.encode()) % 97 + i)
+    if bay:
+        bx = [x for i, x in enumerate(xs) if i != door_col][0]
+        # Erker vor einer zugemauerten Fläche (das Loch fehlt absichtlich)
+        bay_window(b, bx, 1.1, 0.45, storey - 0.25)
+    if door_rect:
+        style = spec["door_style"]
+        front_door(b, xs[door_col], "simple" if style == "porch" else style)
+        if style == "porch":
+            porch(b, xs[door_col], door_rect)
+    # Traufe
+    if spec["eaves"] == "parapet":
+        parapet(b, w, E)
+    else:
+        eaves_band(b, w, E, spec["eaves"])
+    b.cylinder(V(w - 0.12 if door_side != 1 else -w + 0.12, 0.0, 0.07), 0.04, E + 0.05, LEAD, segments=8, caps=(True, True))
+    if spec.get("dormer"):
+        dormer(b, 0.0, -0.7, E, R, front_z, D, gw=0.5)
+    # Töpfe an der Haustür (nur dekorativ, mit Kollision)
+    if door_rect and spec.get("pot"):
+        dx = xs[door_col]
+        pot = spec["pot"]
+        if pot == "pair":
+            for s2 in (-1, 1):
+                small_pot(b, dx + s2 * 0.95, 0.3, None, seed=31 + s2, tall=True)
+        elif pot == "box":
+            small_pot(b, dx + (0.85 if door_side == -1 else -0.85), 0.25, None, seed=33, tall=True)
+        else:
+            small_pot(b, dx + (0.78 if door_side == -1 else -0.78), 0.22, pot, seed=34)
+    if side_windows:
+        _side_wall_windows(b, w, D, E, storey, side_windows)
+    return b
+
+
+def _side_wall_windows(b, w, depth, eaves, storey, side):
+    """Fenster in der freien Seitenwand eines Endhauses (Variante <typ>_side_left/right)."""
+    for s2 in ((-1, 1) if side == 2 else (side,)):
+        b.push(b.move(s2 * (w + 0.002), 0, -depth / 2) @ b.turn_y(90 * s2))
+        holes = []
+        for y0, h in ((0.8, 1.5), (storey + 0.7, 1.45)):
+            for zc in (-depth / 4, depth / 4):
+                holes.append(_window_hole(zc, y0, 0.9, h))
+        b.wall_with_holes(-depth / 2, depth / 2, 0.0, eaves, 0.0, holes, WALL, reveal=0.12)
+        for x0, y0, x1, y1 in holes:
+            plain_window(b, (x0 + x1) / 2, y0, x1 - x0, y1 - y0, lintel="stone", reveal=0.12)
+        b.pop()
+
+
 # --- Requisiten im Laden (Puppen, Kleidung): eigene Szenen, austauschbar ---
 
 VINTAGE = {
@@ -755,8 +1059,15 @@ def _sign_lighting():
     scene.collection.objects.link(sun)
 
 
+TERRACE_PREVIEW = {"wall": (0.58, 0.33, 0.26), "door": (0.16, 0.32, 0.24), "accent": (0.16, 0.3, 0.22)}
 HOUSES = {
     "fashion_shop": (fashion_shop, {"wall": (0.9, 0.86, 0.8), "door": (0.1, 0.13, 0.21), "accent": (0.17, 0.2, 0.3)}),
+    "terrace_45": (lambda: terrace("terrace_45"), TERRACE_PREVIEW),
+    "terrace_50": (lambda: terrace("terrace_50"), dict(TERRACE_PREVIEW, door=(0.5, 0.12, 0.14))),
+    "terrace_55": (lambda: terrace("terrace_55"), dict(TERRACE_PREVIEW, door=(0.08, 0.08, 0.09))),
+    "terrace_55_side_left": (lambda: terrace("terrace_55", side_windows=-1), dict(TERRACE_PREVIEW, door=(0.08, 0.08, 0.09))),
+    "terrace_60": (lambda: terrace("terrace_60"), dict(TERRACE_PREVIEW, door=(0.62, 0.5, 0.2))),
+    "residential": (lambda: terrace("residential"), dict(TERRACE_PREVIEW, door=(0.18, 0.28, 0.42))),
 }
 
 

@@ -22,6 +22,7 @@ awning = true
 chimney = false
 door_color = Color(0.1, 0.13, 0.21, 1)
 accent_color = Color(0.17, 0.2, 0.3, 1)
+wall_material = 1
 depth = 8.0
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
