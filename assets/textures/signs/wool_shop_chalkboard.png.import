@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dlo44gqpg0b6g"
-path="res://.godot/imported/corner_90_fascia.png-4a7e07b2cd7ba605564d15d91e83bfce.ctex"
+uid="uid://cffv528a40ljf"
+path="res://.godot/imported/wool_shop_chalkboard.png-2d69d85fb30e816f330c34e016816daa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/signs/corner_90_fascia.png"
-dest_files=["res://.godot/imported/corner_90_fascia.png-4a7e07b2cd7ba605564d15d91e83bfce.ctex"]
+source_file="res://assets/textures/signs/wool_shop_chalkboard.png"
+dest_files=["res://.godot/imported/wool_shop_chalkboard.png-2d69d85fb30e816f330c34e016816daa.ctex"]
 
 [params]
 

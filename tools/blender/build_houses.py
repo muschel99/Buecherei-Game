@@ -1074,18 +1074,56 @@ def _pub_hanging(b):
     b.beam(V(0.03, 0.02, 0.025), V(0.15, 0.2, 0.025), 0.06, 0.004, Mat("paint", color=(0.85, 0.82, 0.74)))
 
 
+def _teapot_sign(b):
+    """Startbild des Teestuben-Hängeschilds: schwarzer Grund, Goldrand, weiße Teekanne."""
+    width, height = P.HANGING_SIGN
+    b.box((-width / 2 - 0.05, -height / 2 - 0.05, -0.03), (width / 2 + 0.05, height / 2 + 0.05, -0.02), Mat("plain", color=(0.5, 0.5, 0.5)))
+    outline = P._arch_outline(width, height)
+    b.slab([V(u, v, 0) for u, v in outline], 0.02, Mat("paint", color=(0.07, 0.07, 0.08)))
+    inset = [V(u * 0.88, v * 0.9 - 0.01, 0.005) for u, v in outline] + [V(outline[0][0] * 0.88, outline[0][1] * 0.9 - 0.01, 0.005)]
+    b.tube(inset, 0.007, GOLD, segments=4, caps=False)
+    white = Mat("paint", color=(0.93, 0.9, 0.84))
+    b.sphere(V(0, -0.04, 0.0), 0.12, white, rings=6, segments=12, squash=0.85)
+    b.tube([V(0.1, -0.06, 0.0), V(0.17, 0.0, 0.0), V(0.2, 0.04, 0.0)], lambda t: 0.025 - 0.012 * t, white, segments=6)
+    b.tube([V(-0.1, 0.02, 0.0), V(-0.18, 0.0, 0.0), V(-0.11, -0.08, 0.0)], 0.014, white, segments=5)
+    b.sphere(V(0, 0.08, 0.0), 0.025, GOLD, rings=3, segments=6)
+
+
+def _wool_hanging(b):
+    """Startbild des Wolleladen-Hängeschilds: Taubenblau, Goldrand, Wollknäuel mit Nadeln."""
+    width, height = P.HANGING_SIGN
+    b.box((-width / 2 - 0.05, -height / 2 - 0.05, -0.03), (width / 2 + 0.05, height / 2 + 0.05, -0.02), Mat("plain", color=(0.5, 0.5, 0.5)))
+    outline = P._arch_outline(width, height)
+    b.slab([V(u, v, 0) for u, v in outline], 0.02, Mat("paint", color=(0.42, 0.52, 0.6)))
+    inset = [V(u * 0.88, v * 0.9 - 0.01, 0.005) for u, v in outline] + [V(outline[0][0] * 0.88, outline[0][1] * 0.9 - 0.01, 0.005)]
+    b.tube(inset, 0.007, GOLD, segments=4, caps=False)
+    b.sphere(V(0, -0.04, 0.0), 0.13, Mat("plain", color=(0.86, 0.6, 0.58)), rings=6, segments=12)
+    for k in range(4):
+        a = 0.4 + k * 0.5
+        ring = [V(0.13 * math.cos(t) * math.cos(a), -0.04 + 0.13 * math.sin(t), 0.13 * math.cos(t) * math.sin(a) + 0.02) for t in [2 * math.pi * j / 16 for j in range(17)]]
+        b.tube(ring, 0.004, Mat("plain", color=(0.7, 0.44, 0.44)), segments=3, caps=False)
+    for dx in (-0.06, 0.06):
+        b.beam(V(dx, 0.0, 0.14), V(dx * 3, 0.2, 0.14), 0.012, 0.01, Mat("timber"))
+
+
 SIGNS = {
+    "wool_shop": {
+        "fascia": (3.94, 0.43, 2048, lambda b: _board(b, 3.94, 0.43, Mat("paint", color=(0.42, 0.52, 0.6)), "Wolle & Stoff",
+                                                       Mat("paint", color=(0.95, 0.92, 0.84)), 0.22, gold=False, playful=True)),
+        "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, _wool_hanging),
+        "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Neu:", "Merino", "& Leinen"], 61)),
+    },
     "pub": {
         "fascia": (4.96, 0.58, 2048, lambda b: _pub_fascia(b)),
         "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, lambda b: _pub_hanging(b)),
         "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Heute:", "Pie &", "Cider"], 51)),
     },
     "corner_90": {
-        "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.1, 0.14, 0.23)), "Teestube", GOLD, 0.2, playful=True)),
+        "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.07, 0.07, 0.08)), "Teestube", GOLD, 0.2, playful=True)),
+        "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, lambda b: _teapot_sign(b)),
     },
     "corner_30": {
-        "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.22, 0.15, 0.1)), "Bäckerei", Mat("paint", color=(0.9, 0.84, 0.7)),
-                                                    0.2, gold=False, playful=True)),
+        "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.12, 0.27, 0.28)), "Bäckerei", GOLD, 0.2, playful=True)),
     },
     "gatehouse": {
         "fascia": (4.6, 0.42, 2048, lambda b: _board(b, 4.6, 0.42, Mat("paint", color=(0.16, 0.27, 0.2)), "ALTE TORGASSE", GOLD, 0.24)),

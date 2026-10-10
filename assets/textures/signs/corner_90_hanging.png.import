@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dlo44gqpg0b6g"
-path="res://.godot/imported/corner_90_fascia.png-4a7e07b2cd7ba605564d15d91e83bfce.ctex"
+uid="uid://brbrar3viscmr"
+path="res://.godot/imported/corner_90_hanging.png-55be1de58d72b09298a47c5c6fa3b74d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/signs/corner_90_fascia.png"
-dest_files=["res://.godot/imported/corner_90_fascia.png-4a7e07b2cd7ba605564d15d91e83bfce.ctex"]
+source_file="res://assets/textures/signs/corner_90_hanging.png"
+dest_files=["res://.godot/imported/corner_90_hanging.png-55be1de58d72b09298a47c5c6fa3b74d.ctex"]
 
 [params]
 

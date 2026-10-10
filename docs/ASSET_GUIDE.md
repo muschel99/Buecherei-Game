@@ -428,6 +428,11 @@ gibt es ein Startbild, das genau so groß ist, wie es sein muss:
 | `corner_90_fascia.png` | Schild der Teestube (Eckhaus am geraden Ende) | 1,6 × 0,4 m | 768 × 192 |
 | `corner_30_fascia.png` | Schild der Bäckerei (Eckhaus vor dem Torhaus) | 1,6 × 0,4 m | 768 × 192 |
 | `gatehouse_fascia.png` | Schildband am Torhaus („Alte Torgasse“) | 4,6 × 0,42 m | 2048 × 187 |
+| `pub_hanging.png` | Rundes Hängeschild am Pub | 0,60 × 0,56 m (rund) | 512 × 478 |
+| `corner_90_hanging.png` | Teekannen-Hängeschild der Teestube | 0,60 × 0,56 m | 512 × 478 |
+| `wool_shop_fascia.png` | Schild des Wolle- und Stoffladens | 3,94 × 0,43 m | 2048 × 224 |
+| `wool_shop_hanging.png` | Hängeschild des Wolleladens | 0,60 × 0,56 m | 512 × 478 |
+| `wool_shop_chalkboard.png` | Kreidetafel vor dem Wolleladen | 0,42 × 0,70 m | 360 × 600 |
 
 So geht's:
 1. Das Startbild öffnen und darüber malen – oder ein neues Bild im **gleichen

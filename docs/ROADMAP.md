@@ -686,6 +686,15 @@ ist austauschbar.
 - [x] Teil 4a – Straße, Gehwege, Bordsteine, Platz und Gassen mit den Stil-Texturen
       (Kopfsteinpflaster, Gehwegplatten, Stein; Shader `ground_style.gdshader`),
       Abflussdeckel am Straßenrand (`drain_grate`, Abstand `Street.drain_spacing`)
+- [x] Teil 4c – Läden mit Innenräumen (Inspiration Bäckerei, Teashop, Wolleshop): Bäckerei
+      (Petrol, rote Markisen, Brotregale, Glastheke, Karofliesen, Lichterkette), Teestube
+      (schwarz-gold, Teekannen-Schild, Tische mit Decken, Teekannen, Etagere, Teedosen; Tür zur
+      Straße), neuer Wolle- und Stoffladen rechts neben dem Blumenladen (2 Etagen, Giebel zur
+      Straße, Fächerregal mit Wolle, Stoffballen, Körbe, Sessel); dunkle, detailreiche
+      Gaststube im Pub (Kamin, Sitznischen, Tresen mit Spiegel, Zinnkrüge), Seitenfenster in
+      die Gaststube; Fenster der Läden auch von innen sichtbar; Türen ohne Lücke; Fahrrad
+      gerade; Torbogen weich schattiert und mit Schatten; Shabby-Chic-Lack und verwitterte
+      Texturen (Holz, Backstein, Putz, Sandstein)
 - [ ] Teil 4b – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
       Gassen und Gassenenden (Inspiration folgt), Deko für Teestube und Bäckerei
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil

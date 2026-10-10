@@ -767,6 +767,15 @@ Zwei Zustände:
   **Torhaus „Alte Torgasse“**: Backstein mit hellem Rundbogen und Schlussstein, gewölbte
   Durchfahrt mit Laternen, darüber vorkragendes Fachwerk mit Blumenkästen und ein Tondach.
   Die Namen stehen nur auf den Schild-Bildern und lassen sich frei ändern.
+  Alle Läden haben einen eingerichteten Innenraum, den man durch klares Glas sieht: die
+  **Bäckerei** (Petrol mit roten Markisen, Brotregale, Glastheke mit Kuchen, Karofliesen), die
+  **Teestube** (schwarz-gold, Teekannen-Hängeschild, Tischchen mit Decken, Teekannen,
+  Etagere), der **Wolle- und Stoffladen** rechts neben dem Blumenladen (taubenblau,
+  Fächerregal voller Wollknäuel, Stoffballen, Körbe) und der **Pub** mit dunkler,
+  gemütlicher Gaststube (Kamin, Sitznischen, Tresen mit Spiegel und Flaschen, Zinnkrüge),
+  in die man auch durch ein Seitenfenster an der Gasse schaut. Lackiertes Holz sieht leicht
+  verwittert aus (Shabby Chic: Maserung, abgeplatzter Lack), Backstein und Putz mit Ruß- und
+  Regenspuren.
   Gegenüber der Bücherei ist der **Blumenladen** (Backsteinhaus mit Eckquadern): salbeigrüne
   Ladenfront mit Sprossen-Oberlichtern und Glastür, Grün und Ranken über dem Schild,
   Hängekörbe, links eine hölzerne Blumentreppe mit Zinkeimern, rechts ein altes Fahrrad mit

@@ -45,6 +45,8 @@ JOINERY = {
     "fern": (0.44, 0.55, 0.46),
     # nur für den Pub (fast schwarzes Blau wie im Inspirationsbild)
     "pub_black": (0.08, 0.1, 0.13),
+    # Wolle- und Stoffladen (taubenblau wie "Petite Mercerie")
+    "dove_blue": (0.42, 0.52, 0.6),
 }
 WALL_COLORS = {
     "brick": [(0.6, 0.33, 0.25), (0.52, 0.3, 0.24), (0.64, 0.4, 0.3), (0.47, 0.28, 0.22), (0.7, 0.58, 0.42)],
@@ -59,7 +61,7 @@ SPECIAL = {
     "LibraryRow/Neighbor3": dict(shop="pub", wall="brick", wall_tone=0, joinery="pub_black", accent="pub_black", lintel="brick_arch",
                                  eaves_style="dentil", rooms=0, pots=[], panes="sash22", flower_boxes=True, steps=0, bay=False,
                                  balcony=None, roof="side", roof_mat="slate", quoins=False, shutters=False, string="none",
-                                 dormers=0, storeys=2, chimneys=[1]),
+                                 dormers=0, storeys=2, chimneys=[1], side_ground_window=True),
     "LibraryRow/Neighbor2": dict(wall="brick", wall_tone=4, storeys=3, roof="parapet", balustrade=True, door_style="pilaster",
                                  panes="sash66", balcony="stone", balcony_floor=2, joinery="charcoal", rooms=1, room_kind="living",
                                  eaves_style="cornice", lintel="architrave", quoins=False, fanlight="fan"),
@@ -76,8 +78,12 @@ SPECIAL = {
                                  eaves_style="gutter", rooms=0, pots=[], panes="sash22", flower_boxes=True, steps=0, bay=False,
                                  balcony=None, roof="side", roof_mat="clay", accent="fern", frame_cream=True, upper_cols=2,
                                  shutters=False, string="none", dormers=0, storeys=2),
-    "Opposite/Opposite1_5": dict(wall="render", wall_tone=3, steps=2, joinery="sage", rooms=1, room_kind="kitchen", flower_boxes=True,
-                                 lintel="flat", eaves_style="fascia", roof_mat="clay", pots=[1], shutters=True, closed_ground=True),
+    # Wolle- und Stoffladen rechts neben dem Blumenladen (Inspiration "Wolleshop"): zwei Etagen,
+    # Giebel zur Straße, taubenblaue Ladenfront
+    "Opposite/Opposite1_5": dict(shop="wool", wall="render", wall_tone=0, storeys=2, roof="front_gable", roof_mat="clay",
+                                 joinery="dove_blue", accent="dove_blue", frame_cream=True, rooms=0, pots=[], steps=0, bay=False,
+                                 balcony=None, flower_boxes=True, shutters=False, lintel="flat", string="none", dormers=0,
+                                 panes="sash22", quoins=False, upper_cols=2),
     "Opposite/Opposite2_1": dict(wall="stone", storeys=3, joinery="dark_brown", eaves_style="modillion", lintel="architrave",
                                  balcony="stone", balcony_floor=2, string="band", panes="sash66", dormers=[0.0], door_style="pilaster"),
     "Opposite/Opposite2_2": dict(wall="roughcast", joinery="dark_green", accent="sage", shutters=True, roof_mat="clay", eaves_style="fascia"),
@@ -152,7 +158,7 @@ def make_spec(house, block):
     ww = pick("window_width", [0.85, 0.95, 1.05, 1.15])
     gw = min(1.35, ww + rnd.choice([0.0, 0.15, 0.3])) if cols_n == 2 else ww
     panes = pick("panes", ["sash22", "sash66", "topbars", "plain", "sash22"] if not fachwerk else ["casement"])
-    joinery = JOINERY[pick("joinery", [k for k in JOINERY if k not in ("cream", "fern", "pub_black")] + ["cream"])]
+    joinery = JOINERY[pick("joinery", [k for k in JOINERY if k not in ("cream", "fern", "pub_black", "dove_blue")] + ["cream"])]
     accent = JOINERY[sp["accent"]] if "accent" in sp else joinery
     tone = sp.get("wall_tone", rnd.randrange(len(WALL_COLORS[wall])))
     wall_color = WALL_COLORS[wall][tone % len(WALL_COLORS[wall])]
@@ -197,6 +203,7 @@ def make_spec(house, block):
         "rooms": sp.get("rooms", 1 if near and rnd.random() < 0.35 else 0), "room_kind": sp.get("room_kind", rnd.choice(["living", "kitchen"])),
         "room_floor": 0, "pots": sp.get("pots", rnd.choice([[], [], [-1], [1]]) if near else []),
         "setback": sp.get("setback", 0.0), "shop": sp.get("shop"), "frame_cream": sp.get("frame_cream", False),
+        "side_ground_window": sp.get("side_ground_window", False),
         "closed_share": sp.get("closed_share", 0.15), "closed_ground": sp.get("closed_ground", False),
         "party_color": rnd.choice([(0.58, 0.33, 0.25), (0.52, 0.31, 0.24), (0.62, 0.38, 0.28)]),
         "downpipe_side": 1 if door_side < 0 else -1,
@@ -301,9 +308,13 @@ def landmark_spec(house, block):
                     wall="brick" if t == "corner_90" else "render", lintel="flat",
                     # Teestube: Tür und Schild auf der Wand zur langen Straße (die Schräge sieht man kaum)
                     door_edge=2 if t == "corner_90" else 1,
+                    # Teestube: schwarz mit Gold, rosa Raum; Bäckerei: Petrol, rote Markisen, cremefarbener Raum
+                    shop="tea" if t == "corner_90" else "bakery",
+                    room_color=(0.88, 0.76, 0.74) if t == "corner_90" else (0.92, 0.88, 0.78),
+                    hanging_sign=t == "corner_90",
                     colors={"wall": (0.62, 0.38, 0.28) if t == "corner_90" else (0.88, 0.84, 0.74),
-                            "door": JOINERY["navy"] if t == "corner_90" else JOINERY["dark_brown"],
-                            "accent": JOINERY["navy"] if t == "corner_90" else JOINERY["dark_brown"]})
+                            "door": (0.07, 0.07, 0.08) if t == "corner_90" else (0.12, 0.27, 0.28),
+                            "accent": (0.07, 0.07, 0.08) if t == "corner_90" else (0.66, 0.18, 0.18)})
     return spec
 
 
@@ -355,10 +366,10 @@ def main():
         if house["type"] in LANDMARK_TYPES:
             specs[house["key"]] = landmark_spec(house, house_block(text, house))
     # Schild-Bilder der Läden (nur fehlende werden neu gezeichnet)
-    shop_signs = {"flowers": BH.prepare_signs("flower_shop"), "pub": BH.prepare_signs("pub"),
+    shop_signs = {"flowers": BH.prepare_signs("flower_shop"), "pub": BH.prepare_signs("pub"), "wool_shop": BH.prepare_signs("wool_shop"),
                   "corner_90": BH.prepare_signs("corner_90"), "corner_30": BH.prepare_signs("corner_30"),
                   "gatehouse": BH.prepare_signs("gatehouse")}
-    sign_set = {"flowers": "flower_shop", "pub": "pub"}
+    sign_set = {"flowers": "flower_shop", "pub": "pub", "wool": "wool_shop"}
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.preferences.filepaths.save_version = 0
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -384,7 +395,7 @@ def main():
             else:
                 b = H.build_house(file_id, spec)
             tris = S.write_glb(b, glb)
-            S.write_import_settings(glb, shop_signs.get(signs))
+            S.write_import_settings(glb, shop_signs.get(signs) or shop_signs.get(sign_set.get(spec.get("shop"))))
             if kind:
                 print("%-26s %-12s %5d Dreiecke" % (house["key"], house["type"], tris))
             else:

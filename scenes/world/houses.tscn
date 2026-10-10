@@ -121,9 +121,9 @@ casts_shadow = false
 [node name="Opposite1_5" parent="Opposite" unique_id=421684356 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0499992, 0, -14)
 unique_model = ExtResource("u_Opposite_Opposite1_5")
-wall_color = Color(0.780, 0.830, 0.850, 1)
-door_color = Color(0.330, 0.400, 0.340, 1)
-accent_color = Color(0.330, 0.400, 0.340, 1)
+wall_color = Color(0.900, 0.860, 0.780, 1)
+door_color = Color(0.420, 0.520, 0.600, 1)
+accent_color = Color(0.420, 0.520, 0.600, 1)
 wall_material = 1
 casts_shadow = false
 [node name="Opposite2_1" parent="Opposite" unique_id=1191145750 instance=ExtResource("4_img60")]
@@ -189,8 +189,8 @@ casts_shadow = false
 transform = Transform3D(7.54979e-08, 0, 1, 0, 1, 0, -1, 0, 7.54979e-08, 30.949999, 0, -1.1999998)
 unique_model = ExtResource("u_StraightEnd_Corner")
 wall_color = Color(0.620, 0.380, 0.280, 1)
-door_color = Color(0.100, 0.140, 0.230, 1)
-accent_color = Color(0.100, 0.140, 0.230, 1)
+door_color = Color(0.070, 0.070, 0.080, 1)
+accent_color = Color(0.070, 0.070, 0.080, 1)
 wall_material = 1
 casts_shadow = false
 solid = false
@@ -245,8 +245,8 @@ solid = false
 transform = Transform3D(0.86602545, 0, -0.49999997, 0, 1, 0, 0.49999997, 0, 0.86602545, -30.667507, 0, -15.5)
 unique_model = ExtResource("u_GateStreet_Corner")
 wall_color = Color(0.880, 0.840, 0.740, 1)
-door_color = Color(0.220, 0.150, 0.100, 1)
-accent_color = Color(0.220, 0.150, 0.100, 1)
+door_color = Color(0.120, 0.270, 0.280, 1)
+accent_color = Color(0.660, 0.180, 0.180, 1)
 wall_material = 1
 casts_shadow = false
 [node name="Bend1" parent="GateStreet" unique_id=1895689675 instance=ExtResource("2_8miuw")]
@@ -289,7 +289,6 @@ wall_color = Color(0.580, 0.330, 0.250, 1)
 door_color = Color(0.160, 0.270, 0.200, 1)
 accent_color = Color(0.160, 0.270, 0.200, 1)
 wall_material = 1
-casts_shadow = false
 [node name="BehindInner1" parent="GateStreet" unique_id=932415981 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(0.6840557, 0, -0.7294298, 0, 1, 0, 0.7294298, 0, 0.6840557, -40.657417, 0, -21.44292)
 unique_model = ExtResource("u_GateStreet_BehindInner1")

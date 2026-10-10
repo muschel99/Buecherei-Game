@@ -98,7 +98,7 @@ func _make_layer(layer_name: String) -> Layer:
 		"clay_tile":
 			return _roof_tiles(6, 10, Color(0.56, 0.29, 0.19), 0.2, 0.003, true)
 		"paint":
-			return _grain(Color(0.92, 0.92, 0.92, 1.0), 0.05, 0.4)
+			return _shabby_paint()
 		"stone_trim":
 			return _mottled(Color(0.81, 0.77, 0.67, 0.0), 0.06, 0.05, 11)
 		"metal":
@@ -110,7 +110,7 @@ func _make_layer(layer_name: String) -> Layer:
 		"terracotta":
 			return _mottled(Color(0.6, 0.33, 0.22, 0.0), 0.1, 0.08, 13)
 		"timber":
-			return _grain(Color(0.24, 0.16, 0.1, 0.0), 0.18, 1.2)
+			return _weathered_timber()
 		"gold":
 			return _mottled(Color(0.85, 0.66, 0.3, 0.0), 0.08, 0.02, 14)
 		"paving":
@@ -193,6 +193,9 @@ func _brick() -> Layer:
 	var per_row := 4
 	var fine := _field(64, 3, 1)
 	var wash := _field(4, 3, 2)
+	var soot := _field(3, 4, 3)
+	var bloom := _field(8, 3, 4)
+	var chips := _field(48, 2, 8)
 	for y in SIZE:
 		for x in SIZE:
 			var i := y * SIZE + x
@@ -218,7 +221,14 @@ func _brick() -> Layer:
 			stone = stone * lerpf(0.82, 1.0, smoothstep(0.004, 0.012, edge))
 			var mortar_tone := 0.68 + 0.1 * fine[i]
 			var mortar := Color(mortar_tone * 1.03, mortar_tone, mortar_tone * 0.92, 0.0)
+			# Abgestoßene Ecken: an einzelnen Steinen fehlt ein Stück der Kante
+			var chip := smoothstep(0.55, 0.75, chips[i]) * (1.0 - smoothstep(0.004, 0.02, edge))
+			brick *= 1.0 - chip
 			var c := mortar.lerp(stone, brick)
+			# Ruß und Schmutz in großen Flecken, weiße Salzränder (Ausblühungen) hier und da
+			c = c * lerpf(1.0, 0.78, smoothstep(0.55, 0.85, soot[i]))
+			var salt := smoothstep(0.7, 0.9, bloom[i]) * 0.35
+			c = c.lerp(Color(0.86, 0.84, 0.8, c.a), salt)
 			c.a = 1.0 if brick > 0.5 else 0.0
 			layer.set_px(i, c, 0.35 + 0.6 * brick + 0.05 * fine[i])
 	return layer
@@ -232,6 +242,8 @@ func _ashlar() -> Layer:
 	var per_row := 2
 	var fine := _field(96, 3, 21)
 	var mottle := _field(8, 4, 22)
+	var runs := _streaks(16, 2, 24)
+	var spots := _field(24, 3, 25)
 	for y in SIZE:
 		for x in SIZE:
 			var i := y * SIZE + x
@@ -246,8 +258,14 @@ func _ashlar() -> Layer:
 			var block := smoothstep(0.003, 0.005, edge)
 			var tone := (0.9 + 0.1 * _hash(col, row, 23)) * (0.86 + 0.18 * mottle[i]) * (0.95 + 0.1 * fine[i])
 			var stone := Color(tone, tone, tone, 1.0) * lerpf(0.88, 1.0, smoothstep(0.003, 0.02, edge))
+			# Verwitterung: dunkle Läufe unter Kanten, ein paar Flechten-Tupfen
+			stone = stone * lerpf(1.0, 0.82, smoothstep(0.6, 0.9, runs[i]) * (1.0 - fv))
 			var joint := Color(0.6, 0.58, 0.53, 0.0)
 			var c := joint.lerp(stone, block)
+			var lichen := smoothstep(0.82, 0.92, spots[i])
+			c = c.lerp(Color(0.62, 0.62, 0.48, 0.0), lichen * 0.6)
+			if lichen > 0.3:
+				c.a = 0.0
 			c.a = 1.0 if block > 0.5 else 0.0
 			layer.set_px(i, c, 0.5 + 0.4 * block * smoothstep(0.003, 0.015, edge) + 0.1 * fine[i])
 	return layer
@@ -258,8 +276,13 @@ func _render() -> Layer:
 	var layer := Layer.new()
 	var fine := _field(128, 2, 31)
 	var mottle := _field(6, 4, 32)
+	var rain := _streaks(24, 2, 33)
+	var damp := _field(3, 3, 34)
 	for i in SIZE * SIZE:
 		var tone := (0.88 + 0.12 * mottle[i]) * (0.97 + 0.05 * fine[i])
+		# Regenspuren (senkrecht) und feuchte Flecken
+		tone *= lerpf(1.0, 0.9, smoothstep(0.55, 0.85, rain[i]))
+		tone *= lerpf(1.0, 0.92, smoothstep(0.6, 0.85, damp[i]))
 		layer.set_px(i, Color(tone, tone, tone, 1.0), 0.5 + 0.3 * fine[i] + 0.2 * mottle[i])
 	layer.normal_strength = 0.8
 	return layer
@@ -532,6 +555,93 @@ func _normalize_tint(layer: Layer) -> void:
 			for k in 3:
 				layer.color[i * 4 + k] *= factor
 
+
+## Rauschen, das senkrecht gestreckt ist (Regenspuren, Läufe): fein quer, grob längs.
+static func _streaks(freq_x: int, freq_y: int, seed: int) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(SIZE * SIZE)
+	for y in SIZE:
+		for x in SIZE:
+			var u := float(x) / SIZE
+			var v := float(y) / SIZE
+			var a := _value_noise2(u, v, freq_x, freq_y, seed) * 0.6 + _value_noise2(u, v, freq_x * 2, freq_y * 2, seed + 1) * 0.4
+			out[y * SIZE + x] = a
+	return out
+
+
+static func _value_noise2(u: float, v: float, fx: int, fy: int, seed: int) -> float:
+	var x := u * fx
+	var y := v * fy
+	var ix := floori(x)
+	var iy := floori(y)
+	var tx := x - ix
+	var ty := y - iy
+	tx = tx * tx * (3.0 - 2.0 * tx)
+	ty = ty * ty * (3.0 - 2.0 * ty)
+	var x0 := posmod(ix, fx)
+	var y0 := posmod(iy, fy)
+	var x1 := (x0 + 1) % fx
+	var y1 := (y0 + 1) % fy
+	return lerpf(lerpf(_hash(x0, y0, seed), _hash(x1, y0, seed), tx), lerpf(_hash(x0, y1, seed), _hash(x1, y1, seed), tx), ty)
+
+
+## Lackiertes Holz im Shabby-Chic-Stil: Maserung schimmert durch, Pinselstriche, leichter
+## Schmutz, an einigen Stellen ist der Lack abgeplatzt und zeigt altes, graues Holz.
+## Lack einfärbbar (Türfarbe), abgeplatzte Stellen fest.
+func _shabby_paint() -> Layer:
+	var layer := Layer.new()
+	var grain := _streaks(3, 48, 141)
+	var brush := _streaks(2, 96, 142)
+	var chips_big := _field(10, 3, 143)
+	var chips_small := _field(40, 2, 144)
+	var dirt := _field(4, 3, 145)
+	var fine := _field(128, 2, 146)
+	for i in SIZE * SIZE:
+		var y := i / SIZE
+		var x := i % SIZE
+		# Maserung und Pinsel laufen waagerecht (u = entlang des Bretts): Felder sind senkrecht
+		# gestreckt erzeugt, darum hier um 90° gedreht gelesen
+		var j := x * SIZE + y
+		var wood_lines := 0.5 + 0.5 * sin((float(y) / SIZE * 40.0 + grain[j] * 5.0) * TAU)
+		var chip := smoothstep(0.72, 0.75, chips_big[i] * 0.55 + chips_small[i] * 0.45)
+		var tone := 0.95 + 0.05 * brush[j] - 0.06 * wood_lines * 0.5 + 0.03 * fine[i]
+		tone *= lerpf(1.0, 0.86, smoothstep(0.55, 0.85, dirt[i]))
+		var paint := Color(tone, tone, tone, 1.0)
+		var bare_tone := 0.26 + 0.08 * wood_lines + 0.04 * fine[i]
+		var bare := Color(bare_tone * 1.12, bare_tone * 0.98, bare_tone * 0.82, 0.0)
+		var c := paint.lerp(bare, chip)
+		c.a = 0.0 if chip > 0.5 else 1.0
+		layer.set_px(i, c, 0.62 - 0.25 * chip + 0.05 * wood_lines + 0.03 * brush[j])
+	layer.normal_strength = 1.6
+	return layer
+
+
+## Holzbalken (Fachwerk, Regale, Bänke): kräftige Maserung, feine Risse, silbrig verwitterte
+## Stellen. Fest (nicht einfärbbar), Farbe über die feste Farbe des Bauteils.
+func _weathered_timber() -> Layer:
+	var layer := Layer.new()
+	var bend := _field(2, 2, 151)
+	var crack_mask := _field(6, 2, 152)
+	var silver := _field(5, 3, 153)
+	var fine := _field(128, 2, 154)
+	var knots := _field(10, 2, 155)
+	for i in SIZE * SIZE:
+		var v := float(i / SIZE) / SIZE
+		var u := float(i % SIZE) / SIZE
+		# Lange, leicht gebogene Jahresringe entlang u, ab und zu ein Ast
+		var phase := v * 30.0 + bend[i] * 2.5 + smoothstep(0.75, 0.95, knots[i]) * 1.5
+		var ring := 0.5 + 0.5 * sin(phase * TAU)
+		ring = pow(ring, 3.0)
+		# Feine Risse: dünne Linien entlang der Maserung, nur stückweise
+		var crack_line := 1.0 - smoothstep(0.0, 0.06, absf(fmod(v * 9.0 + bend[i] * 0.6, 1.0) - 0.5))
+		var crack := crack_line * smoothstep(0.62, 0.7, crack_mask[i])
+		var tone := (1.0 - 0.3 * ring) * (0.94 + 0.08 * fine[i])
+		var c := Color(0.29 * tone, 0.19 * tone, 0.12 * tone, 0.0)
+		c = c.lerp(Color(0.37 * tone, 0.34 * tone, 0.3 * tone, 0.0), smoothstep(0.6, 0.85, silver[i]) * 0.55)
+		c = c * lerpf(1.0, 0.4, crack)
+		layer.set_px(i, c, 0.55 + 0.15 * ring - 0.35 * crack + 0.04 * fine[i] + 0.0 * u)
+	layer.normal_strength = 1.5
+	return layer
 
 # --- Zusammensetzen ---
 
