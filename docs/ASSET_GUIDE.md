@@ -395,7 +395,9 @@ Blender gebaut – so bleiben alle Häuser gleich in Maßstab, Materialien und D
   bisher in `houses.tscn` (Wand-, Tür-, Akzentfarbe) – sie färben auch das Modell.
 - **Neu bauen** (Terminal, im Projektordner):
   `blender -b --factory-startup --python tools/blender/build_houses.py -- fashion_shop --render`
-  (ohne `--render` geht es schneller, dann ohne Kontrollbilder in `screenshots/blender/`).
+  (ohne `--render` geht es schneller, dann ohne Kontrollbilder in `screenshots/blender/`;
+  `--check` macht Prüfbilder rundherum, auf denen jede Rückseite pink leuchtet – pink wäre im
+  Spiel ein Loch, durch das man hindurchsieht).
 - **Texturen:** Alle Modelle teilen sich 20 selbst erzeugte, nahtlose Texturen
   (`assets/textures/style/house_albedo.png` und `house_normal.png`, je ein großes Bild mit
   4 × 5 Feldern). Neu erzeugen: `godot --headless -s res://scripts/tools/generate_style_textures.gd`.
@@ -406,6 +408,21 @@ Blender gebaut – so bleiben alle Häuser gleich in Maßstab, Materialien und D
   das Haus dann neu, und es bleibt einheitlich. Farben je Haus kannst du jederzeit selbst in
   `houses.tscn` ändern. Möchtest du ein Haus ganz selbst modellieren, gilt der nächste
   Abschnitt („Alle Häuser eines Typs ersetzen“) – dann mit deinen eigenen Materialien.
+
+### Puppen und Kleidung im Laden (seit Etappe 4g)
+Im Modegeschäft stehen Schneiderpuppen und hängen Kleider – vorerst **Platzhalter**. Jedes
+Stück ist eine eigene kleine Szene in `scenes/world/props/`:
+`mannequin_dress.tscn`, `mannequin_coat.tscn` (Puppe = Knoten `Form`, Kleidung = `Outfit`),
+`garment_dress.tscn`, `garment_blouse.tscn` (hängend, Knoten `Model`, Ursprung oben am Haken).
+- **Farbe ändern:** `scenes/world/houses/fashion_shop_interior.tscn` öffnen, ein Stück
+  anklicken, im Inspektor bei **Color** eine Farbe wählen.
+- **Eigene Kleidung einsetzen:** In der Requisiten-Szene den Knoten `Outfit` (bzw. `Model`)
+  löschen, dein Kleidungsmodell (.glb) hineinziehen und in **Outfit** umbenennen (**F2**).
+  Die Puppe steht mit dem Fuß bei Höhe 0, die Vorderseite zeigt nach +Z; Vorlagen in echter
+  Größe: `assets/models/props/dress_form.glb` (Körper ab 1,0 m bis 1,55 m Höhe).
+- **Achtung:** `fashion_shop_interior.tscn` wird neu geschrieben, wenn Claude das Haus neu
+  baut. Wenn du dort selbst etwas zusammenstellst, sag Bescheid – dann bleibt die Datei.
+- Modelle neu bauen: `blender -b --factory-startup --python tools/blender/build_props.py`.
 
 ### Alle Häuser eines Typs ersetzen
 1. Im Dateisystem-Fenster `scenes/world/houses/` öffnen und den Haustyp doppelklicken

@@ -36,8 +36,13 @@ GRID_Y = _TABLE["grid_y"]
 LAYERS = {entry["name"]: entry for entry in _TABLE["layers"]}
 ROLES = {"fixed": 0, "wall": 1, "door": 2, "accent": 3}
 SERIF_FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
+# Für verspielte Schrift (Buchstaben hüpfen zusätzlich, siehe Builder.playful_text)
+PLAYFUL_FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-BoldItalic.ttf"
 # Stärke des Leuchtens (wie glow_strength im Shader)
 GLOW_STRENGTH = 1.5
+# Prüfmodus: Rückseiten leuchten pink. Godot zeichnet nur Vorderseiten – jede pinke Stelle
+# im Kontrollbild wäre im Spiel ein Loch (man sieht hindurch).
+SHOW_BACKFACES = False
 
 
 def srgb_to_linear(c):
@@ -111,8 +116,15 @@ class Builder:
 
     # --- Grundflächen ---
 
-    def poly(self, pts, mat, normals=None):
-        """Ein ebenes, konvexes Vieleck (Punkte gegen den Uhrzeigersinn von außen gesehen)."""
+    def poly(self, pts, mat, normals=None, both=False):
+        """Ein ebenes, konvexes Vieleck (Punkte gegen den Uhrzeigersinn von außen gesehen).
+        both = auch die Rückseite (knapp dahinter), für dünne Dinge wie Tuch oder Blätter."""
+        if both:
+            a, b2, c = (Vector(p) for p in pts[:3])
+            n = (b2 - a).cross(c - a)
+            if n.length > 1e-12:
+                off = n.normalized() * -0.0008
+                self.poly([Vector(p) + off for p in reversed(pts)], mat)
         pts = [self.xf @ Vector(p) for p in pts]
         n = (pts[1] - pts[0]).cross(pts[2] - pts[0])
         if n.length < 1e-9:
@@ -173,6 +185,130 @@ class Builder:
         if not skip_ends:
             self.poly([c[0], c[1], t[1], t[0]], mat)
             self.poly([c[2], c[3], t[3], t[2]], mat)
+
+    def slab(self, pts, thickness, mat, side_mat=None):
+        """Platte: Vieleck (Oberseite, gegen den Uhrzeigersinn von oben/außen) mit Dicke nach
+        innen – rundum geschlossen (Dachflächen von Gauben, Schilder, Bretter)."""
+        pts = [Vector(p) for p in pts]
+        n = Vector((0, 0, 0))
+        for i, a in enumerate(pts):
+            b2 = pts[(i + 1) % len(pts)]
+            n += Vector(((a.y - b2.y) * (a.z + b2.z), (a.z - b2.z) * (a.x + b2.x), (a.x - b2.x) * (a.y + b2.y)))
+        n.normalize()
+        low = [p - n * thickness for p in pts]
+        for tri in triangulate(pts):
+            self.poly(tri, mat)
+        for tri in triangulate(list(reversed(low))):
+            self.poly(tri, mat)
+        sm = side_mat or mat
+        for i in range(len(pts)):
+            j = (i + 1) % len(pts)
+            self.poly([low[i], low[j], pts[j], pts[i]], sm)
+
+    def room(self, lo, hi, mats, skip=()):
+        """Raum (Quader von innen gesehen): mats = {"floor", "ceiling", "back", "front", "left",
+        "right"} – fehlende Einträge und skip werden weggelassen."""
+        x0, y0, z0 = lo
+        x1, y1, z1 = hi
+        faces = {
+            "floor": [(x0, y0, z1), (x1, y0, z1), (x1, y0, z0), (x0, y0, z0)],
+            "ceiling": [(x0, y1, z0), (x1, y1, z0), (x1, y1, z1), (x0, y1, z1)],
+            "back": [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0)],
+            "front": [(x1, y0, z1), (x0, y0, z1), (x0, y1, z1), (x1, y1, z1)],
+            "left": [(x0, y0, z1), (x0, y0, z0), (x0, y1, z0), (x0, y1, z1)],
+            "right": [(x1, y0, z0), (x1, y0, z1), (x1, y1, z1), (x1, y1, z0)],
+        }
+        for key, pts in faces.items():
+            if key in mats and key not in skip:
+                self.poly(pts, mats[key])
+
+    def tube(self, points, radius, mat, segments=6, caps=True):
+        """Röhre entlang einer Linie aus Punkten (Schmiedeeisen, Faden, Ranken, Kabel)."""
+        pts = [Vector(p) for p in points]
+        if len(pts) < 2:
+            return
+        rings = []
+        prev_side = None
+        for i, p in enumerate(pts):
+            if i == 0:
+                d = pts[1] - pts[0]
+            elif i == len(pts) - 1:
+                d = pts[-1] - pts[-2]
+            else:
+                d = pts[i + 1] - pts[i - 1]
+            d.normalize()
+            ref = prev_side if prev_side is not None else (Vector((0, 1, 0)) if abs(d.y) < 0.9 else Vector((1, 0, 0)))
+            side = (ref - d * ref.dot(d))
+            if side.length < 1e-6:
+                side = d.orthogonal()
+            side.normalize()
+            prev_side = side
+            up = d.cross(side).normalized()
+            r = radius(i / (len(pts) - 1)) if callable(radius) else radius
+            ring = []
+            for k in range(segments):
+                a = 2 * math.pi * k / segments
+                nrm = side * math.cos(a) + up * math.sin(a)
+                ring.append((p + nrm * r, nrm))
+            rings.append(ring)
+        for i in range(len(rings) - 1):
+            for k in range(segments):
+                k1 = (k + 1) % segments
+                a, b2, c, d2 = rings[i][k], rings[i][k1], rings[i + 1][k1], rings[i + 1][k]
+                self.poly([a[0], b2[0], c[0], d2[0]], mat, normals=[a[1], b2[1], c[1], d2[1]])
+        if caps:
+            self.poly([v[0] for v in rings[-1]], mat)
+            self.poly([v[0] for v in rings[0]][::-1], mat)
+
+    def playful_text(self, string, x, y, z, size, depth, mat, font_path=None, seed=1, bounce=0.08,
+                     tilt=6.0, spacing=0.0, first_scale=1.0):
+        """Verspielte Schrift: jeder Buchstabe leicht gehüpft und gekippt, große Anfangsbuchstaben
+        (first_scale). Mittig um x, Grundlinie bei y, Vorderseite +z. Liefert die Breite."""
+        import random
+        rnd = random.Random(seed)
+        font_path = font_path or SERIF_FONT
+        glyphs = []
+        for k, ch in enumerate(string):
+            word_start = k == 0 or string[k - 1] == " "
+            scale = first_scale if (word_start and ch.isupper()) else 1.0
+            glyphs.append((ch, size * scale))
+        # Breite je Buchstabe aus Blender messen
+        widths = [self._glyph_width(ch, sz, font_path) for ch, sz in glyphs]
+        total = sum(widths) + spacing * size * (len(glyphs) - 1)
+        cx = x - total / 2
+        for (ch, sz), w in zip(glyphs, widths):
+            if ch != " ":
+                dy = rnd.uniform(-bounce, bounce) * size
+                angle = rnd.uniform(-tilt, tilt)
+                self.push(Matrix.Translation((cx + w / 2, y + dy, z)) @ Matrix.Rotation(math.radians(angle), 4, "Z"))
+                self.text(ch, 0.0, 0.0, 0.0, sz, depth, mat, font_path=font_path, align="CENTER")
+                self.pop()
+            cx += w + spacing * size
+        return total
+
+    _width_cache = {}
+
+    def _glyph_width(self, ch, size, font_path):
+        key = (ch, round(size, 4), font_path)
+        if key in Builder._width_cache:
+            return Builder._width_cache[key]
+        if ch == " ":
+            w = size * 0.32
+        else:
+            curve = bpy.data.curves.new("w", "FONT")
+            curve.body = ch
+            curve.size = size
+            if font_path and os.path.exists(font_path):
+                curve.font = bpy.data.fonts.load(font_path, check_existing=True)
+            obj = bpy.data.objects.new("w", curve)
+            bpy.context.scene.collection.objects.link(obj)
+            bpy.context.view_layer.update()
+            xs = [v[0] for v in obj.bound_box]
+            w = max(xs) - min(xs) + size * 0.04
+            bpy.data.objects.remove(obj)
+            bpy.data.curves.remove(curve)
+        Builder._width_cache[key] = w
+        return w
 
     def extrude_x(self, profile, x0, x1, mat, caps=True):
         """Profil (Liste von (z, y), gegen den Uhrzeigersinn, wenn man von +x schaut) von x0 bis x1
@@ -340,6 +476,18 @@ class Builder:
                     target.append((pts[k], face["normals"][k], uv_of[k], (float(info["index"]), float(ROLES[mat.role])),
                                    color + (1.0 - mat.glow,)))
         return out
+
+
+def bake_role(builder, role, color):
+    """Kopie der Flächen, bei der die Rolle (z. B. "accent") durch eine feste Farbe ersetzt ist
+    – für Vorschaubilder einzelner Requisiten mit ihrer Farbe aus Godot."""
+    out = Builder(builder.name)
+    for face in builder.faces:
+        mat = face["mat"]
+        if mat.role == role:
+            mat = Mat(mat.layer, color=color, glow=mat.glow)
+        out.faces.append(dict(face, mat=mat))
+    return out
 
 
 def _planar_uv(p, n, tile):
@@ -552,6 +700,12 @@ _ATLAS = {}
 
 
 def _atlas(kind):
+    if kind in _ATLAS:
+        try:
+            _ATLAS[kind].name
+        except ReferenceError:
+            # Nach einem Neustart der Blender-Szene ist das Bild weg
+            del _ATLAS[kind]
     if kind not in _ATLAS:
         path = os.path.join(TEX_DIR, "house_%s.png" % kind)
         img = bpy.data.images.load(path, check_existing=True)
@@ -627,6 +781,16 @@ def preview_material(mat, role_colors):
         # Wie im Shader: Leuchten in der eigenen Farbe
         links.new(mix.outputs[0], bsdf.inputs["Emission"])
         bsdf.inputs["Emission Strength"].default_value = mat.glow * GLOW_STRENGTH
+    if SHOW_BACKFACES:
+        geo = nodes.new("ShaderNodeNewGeometry")
+        pink = nodes.new("ShaderNodeEmission")
+        pink.inputs["Color"].default_value = (1.0, 0.0, 0.8, 1)
+        pink.inputs["Strength"].default_value = 3.0
+        choose = nodes.new("ShaderNodeMixShader")
+        links.new(geo.outputs["Backfacing"], choose.inputs["Fac"])
+        links.new(bsdf.outputs[0], choose.inputs[1])
+        links.new(pink.outputs[0], choose.inputs[2])
+        links.new(choose.outputs[0], nodes["Material Output"].inputs["Surface"])
     return m
 
 

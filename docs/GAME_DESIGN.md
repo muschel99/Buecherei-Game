@@ -753,11 +753,21 @@ Zwei Zustände:
   („Model“), ersetzt es den Platzhalter in allen Häusern dieses Typs; die Kollision bleibt.
   Drei Häuser haben eine eigene Rolle: Das **Modegeschäft** steht direkt neben der Bücherei
   (bündig, auf der Seite des geraden Straßenendes) mit Schaufenstern und Markise – seit
-  Etappe 4g als erstes fertiges Stil-Modell „Eleanor's Fine Dresses“: marineblaue Ladenfront
-  mit Goldschrift, zwei gestreifte Markisen, Tür mittig in einer kleinen Nische, Schaufenster
-  mit Puppen und Kleiderstange (leicht beleuchtet), Buchsbaum-Kübel neben der Tür (man läuft
-  nicht hindurch), darüber Sandstein mit Eckquadern, drei weiße Schiebefenster mit Vorhängen,
-  Zahnschnitt-Gesims, Ziergiebel mit Rosette, zwei Gauben und zwei Schornsteine; das
+  Etappe 4g als erstes fertiges Stil-Modell **„Zwirn und Zwirbel“**, leicht vintage:
+  marineblaue Ladenfront mit verspielter, hüpfender Goldschrift und einem Faden-Kringel mit
+  Nadel, zwei gestreifte Markisen, Tür mit großer Scheibe in einer kleinen Nische („Geöffnet“-
+  Schild), an der Säule zur Bücherei hin ein Ausleger-Schild (quer zur Fassade, Garnrolle mit
+  Nadel), an der anderen Säule ein Hängekorb. Vor dem Laden links eine Hortensie in einer
+  Zinkwanne, rechts ein Olivenbäumchen im hohen Topf und eine Kreidetafel („Neu: Herbstmode“) –
+  man läuft nicht hindurch, Passanten gehen darum herum. Darüber Sandstein mit Eckquadern,
+  drei weiße Schiebefenster mit Vorhängen und Blumenkästen, Zahnschnitt-Gesims, Ziergiebel mit
+  Rosette, zwei Gauben und zwei Schornsteine. Durch Tür und Schaufenster sieht man in einen
+  ganzen, dezent eingerichteten Laden (warm beleuchtet): Dielen, salbeigrüne Kassetten,
+  cremefarbene Tapete, zwei Glas-Pendelleuchten, Theke mit Messingkasse, Wandregal mit
+  gefalteten Stoffen und Hutschachteln, Uhr, Umkleide mit Samtvorhang, Spiegel mit Goldrahmen,
+  Sessel, Beistelltisch, Läufer, Farn. Schneiderpuppen (in den Schaufenstern und im Raum) und
+  Kleidung an zwei Messingstangen sind Platzhalter in Vintage-Farben – später werden dort die
+  gestalteten Kleidungsstücke zusammengestellt (eigene Szenen, Farbe je Stück einstellbar); das
   **Restaurant/Pub** steht als erstes Haus hinter der Gasse am kleinen Platz (Ladenfront mit
   großen Fenstern und grünem Schild), das **Wohnhaus** (Tür mit Vordach in der Mitte) steht
   gegenüber, genau vor der Ladentür der Bücherei. Alle anderen sind Reihenhäuser in den

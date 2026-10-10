@@ -44,6 +44,14 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 7. **Kleine Unregelmäßigkeiten** gehören dazu (Steine leicht verschieden, etwas Flechte auf
    dem Dach), aber nichts ist schief oder krumm gebaut.
 
+## Läden von innen
+- Wer durch Tür oder Schaufenster schaut, sieht einen ganzen Raum – nie ins Leere.
+- **Dezent vintage:** wenige, gut gewählte Dinge statt Fülle; warme Hölzer, Messing, gedeckte
+  Farben (Salbei, Altrosa, Senf, Petrol, Creme), ein Samt-Akzent.
+- Innenräume leuchten leicht von selbst (Material-Leuchten statt Lampen-Licht), damit sie
+  von der Straße warm wirken und nichts durch Wände strahlt.
+- Ware (Kleidung …) ist austauschbar: eigene kleine Szenen, Farbe je Stück.
+
 ## Farbpalette (Richtwerte, sRGB)
 | Was | Farbe |
 |-----|-------|
@@ -59,7 +67,7 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 ## Pläne für die einzelnen Häuser
 | Haustyp | Vorbild | Umsetzung |
 |---------|---------|-----------|
-| `fashion_shop` | Konzept „fashionshop“ | **fertig (4g, Teil 1):** Marineblaue Ladenfront, Goldschrift „Eleanor's Fine Dresses“, zwei gestreifte Markisen, Tür mittig, Buchsbaum-Kübel, Sandstein mit Eckquadern, 3 Schiebefenster, Zahnschnitt-Gesims, Ziergiebel mit Rosette, 2 Gauben, 2 Schornsteine |
+| `fashion_shop` | Konzept „fashionshop“ | **fertig (4g, Teil 1/1b):** „Zwirn und Zwirbel“, leicht vintage: marineblaue Ladenfront, verspielte Goldschrift mit Faden-Kringel, Markisen, Ausleger-Schild, Hängekorb, Blumenkästen, verschiedene Deko links/rechts, ganzer Ladenraum, Puppen und Kleidung als Platzhalter |
 | `pub` | Inspiration „Westminster Arms“, „O'Brian's“ | dunkelgrüne Pub-Front mit großen Sprossenfenstern, Laternen, Hängekörbe, Ziegel darüber |
 | `gatehouse` | Konzepte Torhaus (Ziegelbogen + Fachwerk) | Ziegel-Rundbogen mit hellen Bogensteinen, Fachwerk-Obergeschoss, Gaube |
 | `terrace_*` | Inspiration Straßenfotos | Mischung aus Backstein, Putz und Rauputz; Schiebefenster, Haustür mit Oberlicht, teils Ladenfront |

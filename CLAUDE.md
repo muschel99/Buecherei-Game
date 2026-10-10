@@ -303,6 +303,16 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   anhängen. HouseFacade gibt Hausfarben und Schatten auch an „Model“ weiter. Die Maße liest
   das Bau-Script aus der Haustyp-Szene (Grundriss und Traufe bleiben), Dachneigung der
   Stil-Modelle 35°. Jedes Modell bekommt eine .blend-Quelle in `assets/models/source/`.
+  **Geschlossen bauen:** Godot zeichnet nur Vorderseiten. Dünne Teile als `slab`/`beam`/`box`
+  (nie Einzelflächen, außer `poly(..., both=True)` für Tuch/Blätter), nie zwei Flächen genau
+  aufeinander; hinter Glas immer etwas (Laden: ganzer Raum, `Builder.room`). Nach jeder
+  Änderung `build_houses.py -- <typ> --check`: Prüfbilder mit pinken Rückseiten, keine pinke
+  Stelle darf bleiben. Bauteile: `style_parts.py` (Pflanzen, Blumenkasten, Hängekorb,
+  Ausleger-Schild, Kreidetafel, Faden-Kringel), verspielte Schrift `Builder.playful_text`.
+  Requisiten (Puppen, Kleidung): `tools/blender/build_props.py` → `assets/models/props/`,
+  Szenen `scenes/world/props/` mit Script `ShopProp` (Akzentfarbe je Stück, keine Schatten,
+  `visible_distance`); Aufstellung je Laden `scenes/world/houses/<typ>_interior.tscn`
+  (vom Bau-Script geschrieben). Innenräume leuchten über Material-Glow, keine Lampen-Lichter.
 - `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
   und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`

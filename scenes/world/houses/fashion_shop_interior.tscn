@@ -1,0 +1,105 @@
+[gd_scene load_steps=5 format=3]
+
+; Requisiten im Laden (Etappe 4g): erzeugt von tools/blender/build_houses.py – wird beim
+; Neubau überschrieben. Jede Puppe/jedes Kleidungsstück ist eine eigene Szene aus
+; scenes/world/props/ (Farbe im Inspektor: Color). Später ersetzt ein eigenes Modell den
+; Knoten "Outfit" (Puppe) bzw. "Model" (hängendes Teil).
+
+[ext_resource type="PackedScene" path="res://scenes/world/props/garment_blouse.tscn" id="1_garment_blouse"]
+[ext_resource type="PackedScene" path="res://scenes/world/props/garment_dress.tscn" id="2_garment_dress"]
+[ext_resource type="PackedScene" path="res://scenes/world/props/mannequin_coat.tscn" id="3_mannequin_coat"]
+[ext_resource type="PackedScene" path="res://scenes/world/props/mannequin_dress.tscn" id="4_mannequin_dress"]
+
+[node name="Interior" type="Node3D"]
+
+[node name="MannequinDress1" parent="." instance=ExtResource("4_mannequin_dress")]
+transform = Transform3D(0.95106, 0, -0.30902, 0, 1, 0, 0.30902, 0, 0.95106, -1.950, 0.600, -0.420)
+color = Color(0.740, 0.580, 0.280, 1)
+
+[node name="MannequinCoat1" parent="." instance=ExtResource("3_mannequin_coat")]
+transform = Transform3D(0.97815, 0, 0.20791, 0, 1, 0, -0.20791, 0, 0.97815, -1.150, 0.600, -0.500)
+color = Color(0.240, 0.420, 0.420, 1)
+
+[node name="MannequinCoat2" parent="." instance=ExtResource("3_mannequin_coat")]
+transform = Transform3D(0.97815, 0, -0.20791, 0, 1, 0, 0.20791, 0, 0.97815, 1.150, 0.600, -0.500)
+color = Color(0.620, 0.320, 0.220, 1)
+
+[node name="MannequinDress2" parent="." instance=ExtResource("4_mannequin_dress")]
+transform = Transform3D(0.95106, 0, 0.30902, 0, 1, 0, -0.30902, 0, 0.95106, 1.950, 0.600, -0.420)
+color = Color(0.740, 0.500, 0.500, 1)
+
+[node name="MannequinDress3" parent="." instance=ExtResource("4_mannequin_dress")]
+transform = Transform3D(0.81915, 0, -0.57358, 0, 1, 0, 0.57358, 0, 0.81915, -1.250, 0.100, -2.600)
+color = Color(0.220, 0.340, 0.260, 1)
+
+[node name="GarmentDress1" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -1.300)
+color = Color(0.440, 0.260, 0.340, 1)
+
+[node name="GarmentBlouse1" parent="." instance=ExtResource("1_garment_blouse")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -1.570)
+color = Color(0.860, 0.800, 0.680, 1)
+
+[node name="GarmentDress2" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -1.840)
+color = Color(0.240, 0.420, 0.420, 1)
+
+[node name="GarmentDress3" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -2.110)
+color = Color(0.740, 0.580, 0.280, 1)
+
+[node name="GarmentBlouse2" parent="." instance=ExtResource("1_garment_blouse")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -2.380)
+color = Color(0.580, 0.560, 0.600, 1)
+
+[node name="GarmentDress4" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -2.650)
+color = Color(0.740, 0.500, 0.500, 1)
+
+[node name="GarmentDress5" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -2.920)
+color = Color(0.200, 0.240, 0.360, 1)
+
+[node name="GarmentBlouse3" parent="." instance=ExtResource("1_garment_blouse")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -3.190)
+color = Color(0.620, 0.320, 0.220, 1)
+
+[node name="GarmentDress6" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -3.460)
+color = Color(0.220, 0.340, 0.260, 1)
+
+[node name="GarmentDress7" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -3.730)
+color = Color(0.860, 0.800, 0.680, 1)
+
+[node name="GarmentBlouse4" parent="." instance=ExtResource("1_garment_blouse")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, -2.200, 1.850, -4.000)
+color = Color(0.440, 0.260, 0.340, 1)
+
+[node name="GarmentBlouse5" parent="." instance=ExtResource("1_garment_blouse")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, 2.200, 1.850, -1.300)
+color = Color(0.440, 0.260, 0.340, 1)
+
+[node name="GarmentDress8" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, 2.200, 1.850, -1.600)
+color = Color(0.860, 0.800, 0.680, 1)
+
+[node name="GarmentBlouse6" parent="." instance=ExtResource("1_garment_blouse")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, 2.200, 1.850, -1.900)
+color = Color(0.240, 0.420, 0.420, 1)
+
+[node name="GarmentDress9" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, 2.200, 1.850, -2.200)
+color = Color(0.740, 0.580, 0.280, 1)
+
+[node name="GarmentBlouse7" parent="." instance=ExtResource("1_garment_blouse")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, 2.200, 1.850, -2.500)
+color = Color(0.580, 0.560, 0.600, 1)
+
+[node name="GarmentDress10" parent="." instance=ExtResource("2_garment_dress")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, 2.200, 1.850, -2.800)
+color = Color(0.740, 0.500, 0.500, 1)
+
+[node name="GarmentBlouse8" parent="." instance=ExtResource("1_garment_blouse")]
+transform = Transform3D(1.00000, 0, -0.00000, 0, 1, 0, 0.00000, 0, 1.00000, 2.200, 1.850, -3.100)
+color = Color(0.200, 0.240, 0.360, 1)

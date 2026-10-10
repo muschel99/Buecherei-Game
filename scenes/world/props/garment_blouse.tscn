@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+; Hängendes Kleidungsstück am Bügel (Etappe 4g, Platzhalter). Ursprung oben am Haken, Vorderseite +Z.
+; "Model" später durch ein eigenes Kleidungsmodell ersetzen; Farbe: Inspektor -> Color.
+
+[ext_resource type="Script" path="res://scripts/world/shop_prop.gd" id="1_prop"]
+[ext_resource type="PackedScene" path="res://assets/models/props/garment_blouse.glb" id="2_garment_blouse"]
+
+[node name="GarmentBlouse" type="Node3D"]
+script = ExtResource("1_prop")
+
+[node name="Model" parent="." instance=ExtResource("2_garment_blouse")]

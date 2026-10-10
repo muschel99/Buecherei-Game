@@ -635,6 +635,12 @@ ist austauschbar.
       Markisen, Sandstein, Ziergiebel, Gauben), Kontrollbilder aus Blender
 - [x] Teil 1 – Stil-Leitfaden, Arbeitsregeln für den Dev-Container (CLAUDE.md), Dockerfile:
       Xvfb, Software-Vulkan und numpy für Testbilder und Blender-Export
+- [x] Teil 1b – Modegeschäft überarbeitet (Rückmeldung): Löcher geschlossen (dünne Teile
+      ohne Rückseite und aufeinanderliegende Flächen; neue Prüfung `--check` färbt Rückseiten
+      pink), ganzer Ladenraum hinter Tür und Schaufenstern (dezent vintage), Name „Zwirn und
+      Zwirbel“ in verspielter, größerer Schrift mit Faden-Kringel, Ausleger-Schild,
+      Hängekorb, Blumenkästen, links Hortensie, rechts Olivenbäumchen und Kreidetafel;
+      Puppen und Kleidung als austauschbare Platzhalter (`scenes/world/props/`, ShopProp)
 - [ ] Teil 2 – Reihenhäuser (4 Breiten) und Wohnhaus
 - [ ] Teil 3 – Pub, Eckhäuser, Torhaus
 - [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),

@@ -352,7 +352,7 @@ func _glass() -> Layer:
 	return layer
 
 
-## Vorhangstoff: helles Leinen mit senkrechten Falten (Kachel 0,6 m, 5 Falten).
+## Stoff mit senkrechten Falten (Kachel 0,6 m, 5 Falten), einfärbbar (Vorhänge, Samt, Polster).
 func _fabric() -> Layer:
 	var layer := Layer.new()
 	var fine := _field(128, 2, 71)
@@ -363,7 +363,7 @@ func _fabric() -> Layer:
 			var u := float(x) / SIZE
 			var fold := 0.5 + 0.5 * sin((u * 5.0 + drift[i] * 0.4) * TAU)
 			var tone := (0.8 + 0.2 * fold) * (0.96 + 0.06 * fine[i])
-			layer.set_px(i, Color(0.88 * tone, 0.85 * tone, 0.78 * tone, 0.0), fold * 0.8 + 0.2 * fine[i])
+			layer.set_px(i, Color(tone, tone, tone, 1.0), fold * 0.8 + 0.2 * fine[i])
 	layer.normal_strength = 2.5
 	return layer
 

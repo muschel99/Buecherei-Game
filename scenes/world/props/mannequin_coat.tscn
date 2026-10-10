@@ -1,0 +1,15 @@
+[gd_scene load_steps=4 format=3]
+
+; Schneiderpuppe mit Outfit (Etappe 4g, Platzhalter). Ursprung unten (Boden), Vorderseite +Z.
+; "Outfit" später durch ein eigenes Kleidungsmodell ersetzen; Farbe: Inspektor -> Color.
+
+[ext_resource type="Script" path="res://scripts/world/shop_prop.gd" id="1_prop"]
+[ext_resource type="PackedScene" path="res://assets/models/props/dress_form.glb" id="2_dress_form"]
+[ext_resource type="PackedScene" path="res://assets/models/props/outfit_coat.glb" id="3_outfit_coat"]
+
+[node name="MannequinCoat" type="Node3D"]
+script = ExtResource("1_prop")
+
+[node name="Form" parent="." instance=ExtResource("2_dress_form")]
+
+[node name="Outfit" parent="." instance=ExtResource("3_outfit_coat")]
