@@ -42,7 +42,11 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
   (siehe `docs/ASSET_GUIDE.md`).
 - **Git:** Nach jedem funktionierenden Schritt ein Commit mit verständlicher deutscher Nachricht.
 - **Fehlermeldungen:** Erst kurz erklären, was die Meldung bedeutet, dann beheben.
-- **Screenshots und Selbstkontrolle (feste Regel seit Etappe 4f):** Bei jeder sichtbaren
+- **Seit Etappe 4g (Wunsch der Entwicklerin): Keine Kontrollbilder nötig** – sie testet selbst
+  am PC. Claude prüft ohne Bilder (Godot headless laden, Probe-Szenen, street_life_check,
+  plan_check) und sagt am Ende, was sie sich ansehen soll. Die Bild-Werkzeuge unten bleiben
+  für Fälle, in denen sie ausdrücklich Bilder möchte oder etwas nur so zu klären ist.
+- **Screenshots und Selbstkontrolle (Regel seit Etappe 4f, siehe oben):** Bei jeder sichtbaren
   Änderung startet Claude Godot ohne Bildschirm, macht Testbilder aus festen Blickwinkeln,
   schaut sie selbst an und bessert nach, bis es stimmt – erst dann meldet Claude „fertig“.
   Die wichtigsten Bilder schickt Claude am Ende mit (bzw. nennt die Pfade).
@@ -313,6 +317,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Szenen `scenes/world/props/` mit Script `ShopProp` (Akzentfarbe je Stück, keine Schatten,
   `visible_distance`); Aufstellung je Laden `scenes/world/houses/<typ>_interior.tscn`
   (vom Bau-Script geschrieben). Innenräume leuchten über Material-Glow, keine Lampen-Lichter.
+  **Wandmaterial je Haus:** Wandflächen (Rolle wall) werden als Backstein gebaut;
+  `HouseFacade.wall_material` (AUTO/AS_BUILT/BRICK/STONE/RENDER/ROUGHCAST) setzt per Instanz-Wert
+  `wall_layer` eine andere Ebene (Shader rechnet die Texturkoordinaten über `tile_layers` um).
+  Ändern sich Ebenen in layers.json, die Listen in `house_style.tres` (roughness/metallic/
+  tile_layers) mit anpassen. Seitenfenster bei Modellen: Variante `<typ>_side_left/right/both.glb`
+  (HouseFacade tauscht sie zur Laufzeit ein).
   **Schilder = Bilder der Entwicklerin:** Schild-Flächen mit `Mat(..., sign="name")` und
   `poly(..., uvs=…)` (0..1) → glb-Material `sign_<name>` → `assets/materials/signs/<typ>_<name>.tres`
   → Bild `assets/textures/signs/<typ>_<name>.png`. Startbild aus der Gestaltung in

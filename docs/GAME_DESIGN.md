@@ -751,6 +751,11 @@ Zwei Zustände:
   beiden Eckhäuser mit abgeschrägter Ecke). Gleiche Häuser nutzen dieselbe Szene und damit dasselbe Mesh,
   nur die Farben unterscheiden sich je Haus. Liegt in einer Typ-Szene ein eigenes Modell
   („Model“), ersetzt es den Platzhalter in allen Häusern dieses Typs; die Kollision bleibt.
+  Seit Etappe 4g sind die Reihenhäuser und das Wohnhaus Stil-Modelle: Schiebefenster mit
+  Steinstürzen, Haustüren mit Oberlicht und Messingklopfer, Blumenkästen, einzelne Häuser mit
+  Erker, georgianischer Brüstung, Gaube oder (das Wohnhaus) einem Vordach auf Säulen; rote
+  und braune Häuser sind aus Backstein, helle verputzt oder mit Rauputz – so wirkt die Straße
+  abwechslungsreich, obwohl sich viele Häuser ein Modell teilen.
   Drei Häuser haben eine eigene Rolle: Das **Modegeschäft** steht direkt neben der Bücherei
   (bündig, auf der Seite des geraden Straßenendes) mit Schaufenstern und Markise – seit
   Etappe 4g als erstes fertiges Stil-Modell **„Zwirn und Zwirbel“**, leicht vintage:

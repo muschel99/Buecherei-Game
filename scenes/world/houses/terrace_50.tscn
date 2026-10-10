@@ -1,12 +1,14 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 ; Haustyp "terrace_50" (Etappe 4e): Reihenhaus (5,0 m).
 ; Feste Maße (Inspektor: Gruppe "Maße"), Tiefe 8,0 m. Ursprung unten in der Mitte der
 ; Vorderseite, Vorderseite nach +Z, das Haus reicht nach -Z. Eigenes Modell: Kind-Knoten
 ; "Model" anlegen – dann verschwindet der Platzhalter, die Kollision bleibt.
+; Seit Etappe 4g: Stil-Modell aus tools/blender/build_houses.py (Wandmaterial je Haus: wall_material).
 ; Alle Häuser dieses Typs stehen in scenes/world/houses.tscn.
 
 [ext_resource type="Script" path="res://scripts/world/house_facade.gd" id="1_house"]
+[ext_resource type="PackedScene" path="res://assets/models/houses/terrace_50.glb" id="2_model"]
 
 [node name="Terrace50" type="Node3D"]
 script = ExtResource("1_house")
@@ -15,3 +17,5 @@ eaves_height = 6.9
 door_side = -1
 chimney = false
 depth = 8.0
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

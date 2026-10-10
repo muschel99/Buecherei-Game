@@ -70,7 +70,7 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 | `fashion_shop` | Konzept „fashionshop“ | **fertig (4g, Teil 1/1b):** „Zwirn und Zwirbel“, leicht vintage: marineblaue Ladenfront, verspielte Goldschrift mit Faden-Kringel, Markisen, Ausleger-Schild, Hängekorb, Blumenkästen, verschiedene Deko links/rechts, ganzer Ladenraum, Puppen und Kleidung als Platzhalter |
 | `pub` | Inspiration „Westminster Arms“, „O'Brian's“ | dunkelgrüne Pub-Front mit großen Sprossenfenstern, Laternen, Hängekörbe, Ziegel darüber |
 | `gatehouse` | Konzepte Torhaus (Ziegelbogen + Fachwerk) | Ziegel-Rundbogen mit hellen Bogensteinen, Fachwerk-Obergeschoss, Gaube |
-| `terrace_*` | Inspiration Straßenfotos | Mischung aus Backstein, Putz und Rauputz; Schiebefenster, Haustür mit Oberlicht, teils Ladenfront |
-| `residential` | – | Wohnhaus mit Vordach und Säulchen, Backstein |
+| `terrace_*` | Inspiration Straßenfotos | **fertig (4g, Teil 2):** 45 schmal mit Schlusssteinen, 50 mit Erker, 55 georgianisch mit Brüstung, 60 breit mit Gaube; Wand je Haus Backstein, Putz oder Rauputz |
+| `residential` | – | **fertig (4g, Teil 2):** mittige Tür unter Vordach mit Säulen und Giebel, Lorbeer-Kegel |
 | `corner_*` | Konzept „flowershop“ | Eckladen mit Ladenfront in der Schräge |
 | Bücherei | Konzept „Bookstore“, „The Book Nook“ | Ladenfront in der Schräge, Schild, Sprossenfenster |

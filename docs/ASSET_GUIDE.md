@@ -433,6 +433,13 @@ So geht's:
 - Etwas glänzender oder matter: das Material in `assets/materials/signs/` anklicken, im
   Inspektor **Roughness** (0 = glänzend, 1 = matt).
 
+### Wandmaterial je Haus (seit Etappe 4g)
+Bei den Stil-Häusern wählst du für jedes Haus in `houses.tscn` im Inspektor unter
+**Dieses Haus → Wall Material**: *Auto* (Standard: rote und braune Wandfarben werden
+Backstein, helle Farben Putz, jedes dritte Rauputz), *As Built* (wie gebaut), *Brick*
+(Backstein), *Stone* (Sandstein), *Render* (glatter Putz), *Roughcast* (Rauputz). Die
+**Wall Color** färbt das Material – ein heller Ton auf Backstein ergibt gestrichenen Backstein.
+
 ### Puppen und Kleidung im Laden (seit Etappe 4g)
 Im Modegeschäft stehen Schneiderpuppen und hängen Kleider – vorerst **Platzhalter**. Jedes
 Stück ist eine eigene kleine Szene in `scenes/world/props/`:

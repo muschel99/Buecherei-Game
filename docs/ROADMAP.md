@@ -644,7 +644,10 @@ ist austauschbar.
 - [x] Teil 1c – Ausleger-Schild und Hängekorb höher (über dem Ladengesims), Name mittig;
       alle Schilder sind Bilder zum selbst Gestalten (`assets/textures/signs/`, Startbilder
       werden nie überschrieben)
-- [ ] Teil 2 – Reihenhäuser (4 Breiten) und Wohnhaus
+- [x] Teil 2 – Reihenhäuser (4 Breiten) und Wohnhaus: Baukasten in build_houses.py (Schiebefenster
+      mit Stürzen, Haustür mit Oberlicht, Erker, georgianische Brüstung, Gaube, Vordach mit
+      Säulen, Blumenkästen, Töpfe); Wandmaterial je Haus (Auto: rot/braun = Backstein, hell =
+      Putz, jedes dritte Rauputz); Seitenfenster-Variante für Endhäuser
 - [ ] Teil 3 – Pub, Eckhäuser, Torhaus
 - [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
       Gassenende, Straße mit Kopfsteinpflaster

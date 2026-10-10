@@ -645,8 +645,8 @@ def front_door(b, x, style="simple", reveal=0.13, width=1.0, height=2.15):
     f = 0.07
     b.box((x - hw, 0.14, z), (x - hw + f, top, z + 0.06), WHITE)
     b.box((x + hw - f, 0.14, z), (x + hw, top, z + 0.06), WHITE)
-    b.box((x - hw, top - f, z), (x + hw, top, z + 0.06), WHITE)
-    b.box((x - hw, height, z), (x + hw, height + 0.06, z + 0.06), WHITE)
+    b.box((x - hw + f, top - f, z), (x + hw - f, top, z + 0.06), WHITE, skip=("left", "right"))
+    b.box((x - hw + f, height, z), (x + hw - f, height + 0.06, z + 0.06), WHITE, skip=("left", "right"))
     # Türblatt mit vier Füllungen
     dx0, dx1 = x - hw + f, x + hw - f
     b.box((dx0, 0.14, z - 0.02), (dx1, height, z + 0.03), JOINERY, skip=("back",))
@@ -706,6 +706,9 @@ def bay_window(b, cx, width, depth, height, solid_colliders=True):
         b.glazing_bars(wpad, mid + 0.03, ln - wpad, head, -0.06, -0.035, 2, 1, 0.02, WHITE)
         b.box((0, head, -0.02), (ln, height, 0.0), WHITE, skip=("back",))
         b.pop()
+    # Ecksäulchen, damit die schrägen Seiten sauber zusammenstoßen
+    for px, pz in pts[1:3]:
+        b.cylinder(V(px, 0, pz), 0.05, height, WHITE, segments=8, caps=(False, True))
     # Dach: Gesims-Kante und flaches Bleidach (geschlossene Platte)
     over = 0.06
     roof = [V(pts[0][0] - over, height, 0.0), V(pts[1][0] - over * 0.4, height, pts[1][1] + over),
@@ -724,7 +727,7 @@ def bay_window(b, cx, width, depth, height, solid_colliders=True):
 
 def parapet(b, w, eaves, height=0.55):
     """Brüstung vor dem Dach (georgianisch): Wand über die Traufe hinaus mit Abdeckstein."""
-    b.box((-w, eaves - 0.3, -0.36), (w, eaves + height, 0.0), WALL, skip=("bottom", "top"))
+    b.box((-w, eaves, -0.36), (w, eaves + height, 0.0), WALL, skip=("top",))
     b.box((-w - 0.02, eaves + height, -0.38), (w + 0.02, eaves + height + 0.07, 0.05), TRIM)
     b.box((-w, eaves - 0.25, 0), (w, eaves - 0.1, 0.06), TRIM, skip=("back",))
 
@@ -736,7 +739,8 @@ def eaves_band(b, w, eaves, style):
         while x + 0.08 < w:
             b.box((x, eaves - 0.2, 0), (x + 0.08, eaves - 0.08, 0.08), TRIM, skip=("back",))
             x += 0.18
-        b.box((-w, eaves - 0.08, 0), (w, eaves, 0.12), TRIM, skip=("back",))
+        # Traufbrett so tief wie der Dachüberstand (sonst sieht man unter das Dach)
+        b.box((-w, eaves - 0.08, 0), (w, eaves, 0.28), TRIM, skip=("back",))
     else:
         b.extrude_x([(0, eaves - 0.25), (0, eaves), (0.26, eaves), (0.26, eaves - 0.07), (0.16, eaves - 0.13), (0.1, eaves - 0.25)],
                     -w - 0.01, w + 0.01, TRIM)
