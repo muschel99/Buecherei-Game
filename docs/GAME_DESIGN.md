@@ -656,11 +656,13 @@ Zwei Zustände:
   englischer Reihenhäuser als Kulisse, abwechselnd in Farbe und Höhe.
   - **Abbiegendes Ende mit Torhaus (seit Etappe 4f):** Hinter den Häusern an der Gasse läuft
     die Straße noch ein Stück geradeaus und macht dann eine sanfte Kurve (30°) von der Bücherei
-    weg. Danach steht quer über der Straße ein **Torhaus mit Durchfahrt**: unten ein großer
+    weg. Direkt dahinter, gleich nach dem Eckhaus innen in der Kurve, steht quer über der Straße
+    ein **Torhaus mit Durchfahrt**: unten ein großer
     gemauerter Rundbogen über der Fahrbahn (helle Bogensteine, Schlussstein, Ecksteine),
     darüber ein waagerechtes Band für ein Schild, ein Obergeschoss in Fachwerk-Optik mit zwei
     Sprossenfenstern und im Dach eine mittige Gaube mit Sprossenfenster. Schon von der Ladentür
-    aus sieht man das Torhaus am Ende der Straße – zu etwa 80 %, der Rest verschwindet hinter
+    aus sieht man das Torhaus am Ende der Straße – seit es näher an die Kurve gerückt ist (die
+    Straße wirkte sonst zu weitläufig), zu etwa 95 %; nur ein schmaler Rand verschwindet hinter
     der Häuserreihe gegenüber. So versteckt sich der schöne Blick nicht hinter einer Ecke.
     Die Straße mit Pflaster und Bordsteinen läuft sichtbar durch den Bogen (darunter schmale
     Gehwege) und biegt kurz dahinter in einer weiteren Kurve ab; durch den Bogen sieht man ein
@@ -678,10 +680,9 @@ Zwei Zustände:
     hinter dem Ende der festen Nachbarhäuser (`straight_bound_offset`) – bis dorthin kann ich
     laufen, die Häuser dort sind fest. 8 m hinter der Grenze (`straight_street_length`) biegt
     die Straße in einer runden 90°-Kurve (`straight_curve_radius` = 8 m) nach rechts ab, zur
-    Bücherei-Seite hin, und läuft noch 14 m weiter (`straight_side_street_length`) bis zu
-    quer stehenden Häusern. Außen folgen die Häuser der Kurve. Von der Grenze aus kann man
-    gerade eben nicht um die Kurve schauen: Man sieht die Häuser außen in der Kurve, aber nie
-    das Ende der Seitenstraße. Geprüft mit Testbildern und Sichtstrahlen von allen Punkten an
+    Bücherei-Seite hin, und läuft noch 8 m weiter (`straight_side_street_length`). Außen folgen
+    die Häuser der Kurve. Von der Grenze aus kann man gerade eben nicht um die Kurve schauen:
+    Man sieht die Häuser außen in der Kurve, aber nie, wo die Seitenstraße aufhört. Geprüft mit Testbildern und Sichtstrahlen von allen Punkten an
     der Grenze (Fahrbahn, beide Gehwege, alle Richtungen).
   - **Eckhäuser mit abgeschrägter Ecke (seit Etappe 4f):** Innen in beiden Kurven steht ein
     Eckhaus, dessen Ecke schräg abgeschnitten ist wie bei der Bücherei (die Schräge ist etwas
@@ -693,6 +694,17 @@ Zwei Zustände:
   - Wo die zurückversetzten Häuser am kleinen Platz enden und die Reihe wieder vorn an der
     Straße steht, sieht man die Seitenwand des nächsten Hauses – sie hat Fenster wie ein
     englisches Endhaus (`side_windows`).
+  - **Nur was man sieht, wird gebaut (seit Etappe 4f):** Häuser, die man von keiner Stelle aus
+    sieht, die man zu Fuß erreicht, gibt es gar nicht (z. B. innen in der Seitenstraße hinter
+    der runden Kurve oder quer am Ende hinter dem Torbogen). Das spart Rechenleistung. Geprüft
+    mit Sichtstrahlen von allen erreichbaren Stellen (`tools/plan_check.py unseen`): Jedes
+    gebaute Haus ist irgendwo zu sehen, und nirgends schaut man ins Leere.
+  - **Kleine Gasse gegenüber (seit Etappe 4f):** Die lange Häuserreihe gegenüber ist schräg
+    gegenüber der Bücherei von einer schmalen Gasse (1,8 m) unterbrochen. Sie ist mit
+    denselben Platten belegt wie der Gehweg, ich kann hineingehen; nach 8 m endet sie an
+    einer Mauer mit Holztor, dahinter steht ein Haus (derselbe Abschluss wie bei der Gasse
+    neben der Bücherei). Lage und Maße: `GameConfig.opposite_alley_x`, `opposite_alley_width`,
+    `opposite_alley_depth`.
   - An beiden Enden liegen außer Sicht unsichtbare Start- und Endpunkte für spätere Autos,
     Radfahrer und Fußgänger – am geraden Ende in der Seitenstraße hinter der Kurve, am anderen
     Ende hinter der Kurve hinter dem Torhaus. Noch fährt und läuft dort niemand.

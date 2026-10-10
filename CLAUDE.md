@@ -46,7 +46,9 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
   und bei Kulissen die Draufsicht mit `python3 tools/plan_check.py` (liest
   `scenes/world/houses.tscn`): `plan` zeichnet alle Hausumrisse nach `screenshots/plan.png`,
   `bound` prüft mit Sichtstrahlen von der Grenze am geraden Ende (nie ins Leere, nie bis ans
-  Ende der Seitenstraße), `gate` misst, wie viel vom Torhaus man von der Ladentür sieht.
+  Ende der Seitenstraße), `gate` misst, wie viel vom Torhaus man von der Ladentür sieht,
+  `unseen` sucht alle zu Fuß erreichbaren Stellen und meldet Blicke ins Leere und Häuser, die
+  man nie sieht (feste Maße/Hindernisse oben im Script, nach Änderungen anpassen).
 
 ## Projektstruktur
 ```
@@ -206,12 +208,20 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Straßenseite). Gerades Ende (`GameConfig.straight_street_end`): Grenze quer bei
   `straight_bound_x()` = `straight_bound_offset` hinter den festen Nachbarn, `straight_street_length`
   dahinter eine runde 90°-Kurve zur Bücherei-Seite (`straight_curve_radius`), dann
-  `straight_side_street_length` bis zu Querhäusern – so gewählt, dass man von der Grenze aus nie
-  das Ende sieht. Anderes Ende: `gate_bend_offset` hinter den festen Nachbarn eine sanfte Kurve
-  (`gate_bend_angle`, `gate_bend_radius`) weg von der Bücherei, `gate_approach_length` danach das
-  **Torhaus** (`GatehouseFacade`, Haustyp `GameConfig.gatehouse_type`, Kollision nur die
-  Pfeiler, `StreetLayout.gatehouse_front()`); so gewählt, dass man es von der Ladentür zu etwa
-  80 % sieht. Innen in beiden Kurven ein **Eckhaus mit abgeschrägter Ecke**
+  `straight_side_street_length` weiter (ohne Querhäuser) – so gewählt, dass man von der Grenze
+  aus nie das Ende sieht. Anderes Ende: `gate_bend_offset` hinter den festen Nachbarn eine sanfte Kurve
+  (`gate_bend_angle`, `gate_bend_radius`) weg von der Bücherei, `gate_approach_length` danach
+  (direkt hinter dem Eckhaus) das **Torhaus** (`GatehouseFacade`, Haustyp
+  `GameConfig.gatehouse_type`, Kollision nur die Pfeiler, `StreetLayout.gatehouse_front()`);
+  von der Ladentür zu etwa 95 % sichtbar. Hinter dem Bogen Abschnitte `behind` (bis Ende der
+  Kurve, Häuser auf beiden Seiten) und `behind_end` (nur außen Häuser).
+  **Nur Sichtbares bauen:** Häuser, die man von keiner erreichbaren Stelle sieht, plant
+  `HousesLayout` gar nicht erst (keine Querhäuser an den Enden, innen in der Seitenstraße
+  keine); nach Änderungen an den Enden mit `tools/plan_check.py unseen` prüfen (0 Blicke ins
+  Leere, keine unsichtbaren Häuser). Kleine Gasse gegenüber: `OppositeAlley`
+  (`scenes/world/opposite_alley.tscn`, `StreetLayout.opposite_alley()`, Werte
+  `opposite_alley_x/_width/_depth`; die Reihe gegenüber wird dort geteilt, Abschluss
+  `AlleyEnd` mit eigener `width`). Innen in beiden Kurven ein **Eckhaus mit abgeschrägter Ecke**
   (`CornerHouseFacade`, Haustypen `corner_90`/`corner_30` = `straight_corner_house` /
   `gate_corner_house`; Ecke rechts, `corner_angle`, `chamfer_width`, `side_length`; Aufstellung
   `HousesLayout._corner_placement`). Straße, Bordsteine und Gehwege der Enden baut `Street` als

@@ -552,7 +552,8 @@ lässt sich einzeln gegen ein eigenes Modell tauschen – mit Vorlagen in echter
 Leitgedanke: Feinschliff an beiden Straßenenden – am geraden Ende weiter laufen dürfen und den
 Knick näher heranholen, am abbiegenden Ende statt einer Hauswand ein Torhaus mit Durchfahrt.
 Dazu eine feste Arbeitsregel: Testbilder aus festen Blickwinkeln bei jeder sichtbaren Änderung.
-Im Nachtrag werden beide Enden rund und bekommen Eckhäuser mit abgeschrägter Ecke.
+Im Nachtrag werden beide Enden rund und bekommen Eckhäuser mit abgeschrägter Ecke; im
+Nachtrag 2 rückt das Torhaus näher, unsichtbare Häuser fallen weg, gegenüber kommt eine Gasse.
 - [x] Gerades Straßenende: Die Grenze steht jetzt 6 m hinter den festen Nachbarhäusern
       (`GameConfig.straight_bound_offset`), die Häuser bis dorthin sind fest. Dahinter läuft
       die Straße nur noch 20 m bis zum Knick (`straight_street_length`, vorher 30 m ab den
@@ -593,6 +594,18 @@ Im Nachtrag werden beide Enden rund und bekommen Eckhäuser mit abgeschrägter E
 - [x] Nachtrag: Prüfwerkzeug `tools/plan_check.py` (Plan von oben, Sichtstrahlen an der
       Grenze, Sichtanteil des Torhauses von der Tür); geprüft auch mit Lauftest (Torstraße auf
       fünf Spuren bis unter den Bogen, Grenze) und beiden Einstellungen von `straight_street_end`
+- [x] Nachtrag 2: Das Torhaus rückt direkt hinter das Eckhaus in der sanften Kurve
+      (`gate_approach_length` 4 m statt 14 m), die vier Häuser davor fallen weg, die Straße
+      dahinter rückt mit – die Straße wirkt weniger weitläufig. Dafür sieht man das Torhaus
+      von der Ladentür jetzt zu etwa 95 % (statt 80 %; mit dem Torhaus direkt hinter der
+      Kurve lässt sich nicht mehr verdecken – geprüft auch mit späterer Kurve)
+- [x] Nachtrag 2: Häuser, die man von keiner erreichbaren Stelle aus sieht, werden nicht mehr
+      gebaut (innen in der Seitenstraße und quer am Ende am geraden Ende, quer am Ende hinter
+      dem Bogen; Seitenstraße 8 m statt 14 m): 37 statt 51 Häuser. Geprüft mit
+      `tools/plan_check.py unseen` (alle erreichbaren Stellen, jede Blickrichtung: kein Blick
+      ins Leere, jedes Haus irgendwo sichtbar)
+- [x] Nachtrag 2: Kleine Gasse (1,8 m) in der langen Häuserreihe gegenüber, begehbar bis zu
+      einer Mauer mit Tor (`OppositeAlley`, Werte `opposite_alley_…` in GameConfig)
 - [x] Arbeitsregel „Screenshots und Selbstkontrolle“ in CLAUDE.md mit Werkzeug:
       `tools/setup_godot.sh` (Godot im Container einrichten), `tools/screenshots.sh`
       (Testbilder ohne Bildschirm, Szene `scenes/tools/screenshot_tour.tscn`, feste

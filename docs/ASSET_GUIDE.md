@@ -281,7 +281,8 @@ unsichtbare Kollision (damit man nicht hindurchläuft) bleibt.
   durch die sanfte Kurve, das Eckhaus innen in der Kurve, das Torhaus und die Häuser dahinter).
 - `scenes/world/houses/` – die **Haustypen**. Jedes Haus in `houses.tscn` ist ein Exemplar
   eines dieser Typen. Gleiche Häuser nutzen dieselbe Szene (das spart Rechenleistung).
-- `scenes/world/alley_end.tscn` – Mauer mit Tor am Ende der Gasse (mit Haus dahinter).
+- `scenes/world/alley_end.tscn` – Mauer mit Tor am Ende der Gasse (mit Haus dahinter); auch am
+  Ende der kleinen Gasse gegenüber (`scenes/world/opposite_alley.tscn`).
 - `scenes/world/entrance_steps.tscn` – Podest mit Stufen vor der Ladentür.
 
 ### Die Haustypen und ihre Maße
@@ -421,6 +422,11 @@ die **Vorderseite zeigt in die Gasse (-Z)**, also zur Spielfigur hin. Die Mauer 
 dem Ursprung). Ein eigenes Model ersetzt Mauer, Tor **und** das Haus dahinter – dein Modell
 darf also gern auch eine Hauswand dahinter zeigen. Die feste Mauer-Kollision bleibt.
 Vorlage: `templates/world/alley_end.glb` (ohne das Haus dahinter).
+Dieselbe Szene schließt auch die **kleine Gasse gegenüber** ab (1,8 m breit, die Mauer dort ist
+also 2,4 m breit; das Spiel stellt die Breite über **Width** ein). Soll sie anders aussehen
+als die große Gasse: Szene duplizieren (z. B. `small_alley_end.tscn`), dort dein Modell
+einsetzen, dann in der Hauptszene den Knoten `Outside/OppositeAlley` anklicken und im
+Inspektor bei **End Scene** die neue Szene hineinziehen.
 
 ### Eingangstreppe ersetzen
 Szene `scenes/world/entrance_steps.tscn`. **Ursprung** außen auf der Hauswand in der Mitte der
