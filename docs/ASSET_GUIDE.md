@@ -383,6 +383,30 @@ Abschrägung und Länge der Seitenfassade; ändern sie sich, stelle die Häuser 
 nach den zurückversetzten Häusern am Platz), bekommt das Haus Fenster darin – im Inspektor
 unter **Aussehen → Side Windows** (0 = keine, -1 = links, 1 = rechts, 2 = beide).
 
+### Stil-Modelle aus Blender (seit Etappe 4g)
+Nach und nach bekommen die Häuser fertige Modelle im einheitlichen Stil (siehe
+docs/STYLE_GUIDE.md). Sie werden nicht von Hand geklickt, sondern von einem Python-Script in
+Blender gebaut – so bleiben alle Häuser gleich in Maßstab, Materialien und Detailgrad.
+- **Anschauen in Blender:** `assets/models/source/houses/<typ>.blend` öffnen (z. B.
+  `fashion_shop.blend`). Oben im Kopf auf **Material-Vorschau** schalten (Taste **Z** →
+  „Material Preview“), dann siehst du die Texturen und Farben wie im Spiel.
+- **Im Spiel:** `assets/models/houses/<typ>.glb` liegt als Knoten **Model** in der
+  Haustyp-Szene (z. B. `scenes/world/houses/fashion_shop.tscn`). Farben je Haus wählst du wie
+  bisher in `houses.tscn` (Wand-, Tür-, Akzentfarbe) – sie färben auch das Modell.
+- **Neu bauen** (Terminal, im Projektordner):
+  `blender -b --factory-startup --python tools/blender/build_houses.py -- fashion_shop --render`
+  (ohne `--render` geht es schneller, dann ohne Kontrollbilder in `screenshots/blender/`).
+- **Texturen:** Alle Modelle teilen sich 20 selbst erzeugte, nahtlose Texturen
+  (`assets/textures/style/house_albedo.png` und `house_normal.png`, je ein großes Bild mit
+  4 × 5 Feldern). Neu erzeugen: `godot --headless -s res://scripts/tools/generate_style_textures.gd`.
+  In Godot sind sie eine „Texturliste“ (Texture2DArray), darum zeigt Godot sie als ein Bild
+  mit 20 Ebenen.
+- **Änderungswünsche:** Die .blend-Datei ist zum Anschauen gedacht. Wünsche (z. B. „Tür
+  grün statt blau“, „Markise länger“, anderer Ladenname) sagst du Claude – das Script baut
+  das Haus dann neu, und es bleibt einheitlich. Farben je Haus kannst du jederzeit selbst in
+  `houses.tscn` ändern. Möchtest du ein Haus ganz selbst modellieren, gilt der nächste
+  Abschnitt („Alle Häuser eines Typs ersetzen“) – dann mit deinen eigenen Materialien.
+
 ### Alle Häuser eines Typs ersetzen
 1. Im Dateisystem-Fenster `scenes/world/houses/` öffnen und den Haustyp doppelklicken
    (z. B. `pub.tscn`).

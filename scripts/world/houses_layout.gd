@@ -448,7 +448,9 @@ static func _add(houses: Array[Dictionary], group: String, house_name: String, t
 		"group": group, "name": house_name, "type": type,
 		"position": Vector3(spot.x, 0.0, spot.y), "yaw": yaw,
 		"wall_color": STREET_COLORS[index % STREET_COLORS.size()],
-		"door_color": DOOR_COLORS[(index + 1) % DOOR_COLORS.size()],
+		# Haustypen mit eigenem Look (z. B. das Modegeschäft in Marineblau) bringen ihre
+		# Türfarbe selbst mit (seit Etappe 4g); sonst reihum aus der Liste
+		"door_color": HouseTypes.value_of(type, "door_color", DOOR_COLORS[(index + 1) % DOOR_COLORS.size()]),
 		"casts_shadow": false, "solid": true,
 	}
 	houses.append(house)

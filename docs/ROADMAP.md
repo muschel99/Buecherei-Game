@@ -31,6 +31,7 @@
 | 4d  | Straße, Gasse, Platz und Eingangstreppe  | fertig        |
 | 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | fertig |
 | 4f  | Grenze am geraden Straßenende und Torhaus mit Durchfahrt | fertig |
+| 4g  | Einheitlicher Stil: Modelle aus Blender (Häuser, Bücherei, Möbel, Innenraum) | in Arbeit |
 | 5   | Besucher                                 | in Arbeit     |
 | 5a  | Leben auf der Straße                     | fertig        |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
@@ -618,6 +619,28 @@ Nachtrag 2 rückt das Torhaus näher, unsichtbare Häuser fallen weg, gegenüber
       `tools/setup_godot.sh` (Godot im Container einrichten), `tools/screenshots.sh`
       (Testbilder ohne Bildschirm, Szene `scenes/tools/screenshot_tour.tscn`, feste
       Blickwinkel in `scripts/tools/screenshot_views.gd`, Bilder in `screenshots/`)
+
+### Etappe 4g – Einheitlicher Stil: Modelle aus Blender
+Leitgedanke: Aus den Platzhaltern wird eine stimmige, stilisiert-realistische englische
+Ladenstraße nach den Bildern in `Game design/` (Stil-Leitfaden: docs/STYLE_GUIDE.md). Die
+Grundrisse im Spiel bleiben, wie sie sind; jedes Modell wird per Script in Blender gebaut und
+ist austauschbar.
+- [x] Teil 1 – Grundlagen: 20 nahtlose Stil-Texturen (Ziegel, Sandstein, Putz, Schiefer,
+      Tonziegel, Lack, Glas, Laub, Pflaster …), selbst erzeugt
+      (`scripts/tools/generate_style_textures.gd`); ein gemeinsames Material für alle Häuser
+      (`house_style.tres`, ein Zeichenaufruf je Haus, Farben je Haus wie bisher); Blender-
+      Bauteile und eigener .glb-Export (`tools/blender/style_lib.py`); HouseFacade gibt die
+      Hausfarben auch an eigene Modelle weiter
+- [x] Teil 1 – erstes Haus: Modegeschäft nach dem Konzeptbild (Marineblau, Goldschrift,
+      Markisen, Sandstein, Ziergiebel, Gauben), Kontrollbilder aus Blender
+- [x] Teil 1 – Stil-Leitfaden, Arbeitsregeln für den Dev-Container (CLAUDE.md), Dockerfile:
+      Xvfb, Software-Vulkan und numpy für Testbilder und Blender-Export
+- [ ] Teil 2 – Reihenhäuser (4 Breiten) und Wohnhaus
+- [ ] Teil 3 – Pub, Eckhäuser, Torhaus
+- [ ] Teil 4 – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
+      Gassenende, Straße mit Kopfsteinpflaster
+- [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
+- [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)
 
 ## Etappe 5 – Besucher
 Leitgedanke: Bevor Kunden in die Bücherei kommen, wird erst die Straße lebendig (5a); danach

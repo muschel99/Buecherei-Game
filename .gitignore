@@ -6,3 +6,6 @@ screenshots/
 
 # Zwischenspeicher von Python (tools/plan_check.py)
 __pycache__/
+
+# Sicherungskopien von Blender
+*.blend1

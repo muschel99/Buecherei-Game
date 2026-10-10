@@ -94,6 +94,7 @@ USER node
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
   blender libfontconfig1 libgl1 libxi6 libxrandr2 libxcursor1 libxinerama1 \
+  xvfb xauth mesa-vulkan-drivers libvulkan1 python3-numpy \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN TAG=$(curl -s https://api.github.com/repos/godotengine/godot/releases/latest | jq -r .tag_name) && \
   curl -L -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${TAG}/Godot_v${TAG}_linux.x86_64.zip" && \

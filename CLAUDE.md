@@ -7,7 +7,22 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
 - Absolute Anfängerin: hat noch nie programmiert und noch nie mit einer Spiele-Engine gearbeitet.
 - Kommunikation auf Deutsch, in einfachen Worten.
 - Arbeitet mit **Fedora Linux** (Anleitungen für Terminal und Dateimanager entsprechend).
-- Testet auf dem eigenen PC; Claude arbeitet im Browser und kann Godot dort nicht sehen.
+- Testet auf dem eigenen PC. Blender ist auch auf ihrem PC installiert (Modelle dort anschauen).
+
+## Umgebung (seit Etappe 4g: Dev-Container auf ihrem PC)
+- Claude läuft in einem Docker-Dev-Container (`.devcontainer/`), Projektordner `/workspace`.
+- Firewall: nur GitHub, npm und Anthropic sind erreichbar (nichts sonst herunterladen).
+- Godot ist installiert (`godot`), es gibt keinen Bildschirm: `godot --headless` zum Prüfen,
+  Importieren und für Werkzeug-Scripts. Testbilder aus Godot brauchen Xvfb und Software-Vulkan
+  (`xvfb`, `mesa-vulkan-drivers`, seit 4g im Dockerfile – nach dem Neubau des Containers geht
+  `tools/screenshots.sh` wieder; `tools/setup_godot.sh` ist nur für den Browser-Container).
+- Blender 3.4 ist installiert (`blender`), nur im Hintergrund: `blender -b --factory-startup
+  --python script.py`. Kontrollbilder mit Cycles (CPU, ohne Entrauschen). EEVEE geht nicht
+  (kein Bildschirm). Blenders glTF-Export braucht numpy (seit 4g im Dockerfile:
+  `python3-numpy`); die Stil-Modelle schreiben ihre .glb ohnehin selbst (`style_lib.write_glb`).
+- `gh` ist angemeldet: nach jedem fertigen Schritt committen und nach origin pushen.
+- `Game design/` = Bildersammlung der Entwicklerin (Stilrichtung, Inspiration), mit `.gdignore`,
+  nicht in Git.
 
 ## So arbeiten wir zusammen
 - **Engine:** Godot 4 (aktuelle stabile Version, Standard-Version ohne .NET). **Sprache:** GDScript.
@@ -20,15 +35,22 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
 - Alle einstellbaren Werte (Tageslänge, Preise, Laufgeschwindigkeit, Mausempfindlichkeit,
   Freischaltintervalle usw.) gehören zentral in `scripts/autoload/game_config.gd`
   (Autoload „GameConfig“, im Code: `GameConfig.walk_speed`).
-- **Grafik und Sound:** Nichts aus dem Internet herunterladen. Einfache Platzhalter
-  (Grundformen, einfache Farben). Alles so bauen, dass eigene 3D-Modelle (.glb), Texturen
-  und Sounds leicht austauschbar sind (siehe `docs/ASSET_GUIDE.md`).
+- **Grafik und Sound:** Nichts aus dem Internet herunterladen. Seit Etappe 4g baut Claude die
+  Grafik selbst im einheitlichen Stil (`docs/STYLE_GUIDE.md`): Modelle per Blender-Script,
+  Texturen per Godot-Script; wo noch nichts gebaut ist, bleiben die einfachen Platzhalter.
+  Alles so bauen, dass eigene 3D-Modelle (.glb), Texturen und Sounds leicht austauschbar sind
+  (siehe `docs/ASSET_GUIDE.md`).
 - **Git:** Nach jedem funktionierenden Schritt ein Commit mit verständlicher deutscher Nachricht.
 - **Fehlermeldungen:** Erst kurz erklären, was die Meldung bedeutet, dann beheben.
 - **Screenshots und Selbstkontrolle (feste Regel seit Etappe 4f):** Bei jeder sichtbaren
   Änderung startet Claude Godot ohne Bildschirm, macht Testbilder aus festen Blickwinkeln,
   schaut sie selbst an und bessert nach, bis es stimmt – erst dann meldet Claude „fertig“.
-  Die wichtigsten Bilder schickt Claude am Ende mit (SendUserFile). So geht's:
+  Die wichtigsten Bilder schickt Claude am Ende mit (bzw. nennt die Pfade).
+  Für Blender-Modelle zusätzlich: `blender -b --factory-startup --python
+  tools/blender/build_houses.py -- <typ> --render` macht Kontrollbilder nach
+  `screenshots/blender/` (Cycles). Fehlt im Container Xvfb/Vulkan, ersetzen diese Bilder
+  vorläufig die Godot-Testbilder; dann ausdrücklich sagen, dass der Blick in Godot noch fehlt.
+  So geht's in Godot:
   1. Einmal je Chat: `tools/setup_godot.sh` (lädt Godot 4.6 nach /tmp/godot, verlinkt es als
      `godot`, installiert Software-Vulkan „lavapipe“, importiert das Projekt; ca. 1 Minute).
   2. Bilder: `tools/screenshots.sh <gruppe>` (startet Godot über `xvfb-run` mit Forward+ und
@@ -107,15 +129,19 @@ data/
   tablet_apps/     Datenblätter der Tablet-Apps (.tres) – werden automatisch auf den Startbildschirm geladen
   return_slots/    Datenblätter der Einwurf-Varianten des Rückgabekastens (.tres, App „Fassade“)
 assets/
-  models/          Eigene 3D-Modelle (.glb), templates/ = Vorlagen in echter Größe zum Modellieren
-  textures/        Texturen
+  models/          Eigene 3D-Modelle (.glb), templates/ = Vorlagen in echter Größe zum Modellieren,
+                   houses/ = Stil-Modelle der Häuser (aus tools/blender), source/ = .blend-Quellen
+                   (.gdignore)
+  textures/        Texturen, style/ = gemeinsame Stil-Texturen (Texture2DArray, layers.json)
   materials/       Gemeinsame Materialien (.tres), surfaces/ = Wand- und Bodenmaterialien
   shaders/         Shader (Platzhalter-Muster, Raster, Buchrücken, Buch-Vorschau)
   audio/music/     Musik
   audio/sfx/       Geräusche
   ui/              Oberflächen-Theme, icons/ = Symbole (Farbroller, Teppich)
 docs/              Dokumentation
-tools/             Shell-Skripte für Claude im Browser-Container (setup_godot.sh, screenshots.sh)
+tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py),
+  blender/         Blender-Scripts der Stil-Modelle (style_lib.py = Bauteile + .glb-Export,
+                   build_houses.py = Häuser)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
 (Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
@@ -265,6 +291,18 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   ohne Schatten, Nachbarn nur bis `GameConfig.house_shadow_distance`; Kollision nur, wo man
   hinkommt. Reihen werden lückenlos gefüllt: Nachbarn überlappen um wenige cm, jedes zweite
   Haus steht 4 mm zurück (kein Z-Fighting).
+- **Stil-Modelle (seit Etappe 4g, Stil: docs/STYLE_GUIDE.md):** Häuser (später Möbel, Laden)
+  werden per Python-Script in Blender gebaut (`tools/blender/`), in Godot-Koordinaten
+  (x rechts, y oben, z nach vorn). Jede Fläche = Ebene der Stil-Texturen + Rolle (fixed/wall/
+  door/accent) + feste Farbe; `style_lib.write_glb` schreibt die .glb (UV = Meter/Kachelgröße,
+  UV2 = (Ebene, Rolle), COLOR = feste Farbe linear, Alpha = 1 − Leuchten) mit den Materialien
+  „house“ (→ `assets/materials/house_style.tres`, Shader `house_style.gdshader`, ein
+  Zeichenaufruf je Haus) und „glass“ (→ `house_glass.tres`, Schaufenster); die
+  `.glb.import` dazu legt das Script an. Knoten „…-colonly“ = feste Kollision (z. B. Kübel).
+  Texturen: `scripts/tools/generate_style_textures.gd` (headless, `-s`), Ebenen nur hinten
+  anhängen. HouseFacade gibt Hausfarben und Schatten auch an „Model“ weiter. Die Maße liest
+  das Bau-Script aus der Haustyp-Szene (Grundriss und Traufe bleiben), Dachneigung der
+  Stil-Modelle 35°. Jedes Modell bekommt eine .blend-Quelle in `assets/models/source/`.
 - `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
   und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`

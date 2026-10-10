@@ -1,0 +1,148 @@
+{
+	"grid_x": 4,
+	"grid_y": 5,
+	"layer_size": 512,
+	"layers": [
+		{
+			"index": 0,
+			"metallic": 0.0,
+			"name": "brick",
+			"roughness": 0.9,
+			"tile_size": 0.9
+		},
+		{
+			"index": 1,
+			"metallic": 0.0,
+			"name": "stone",
+			"roughness": 0.85,
+			"tile_size": 1.2
+		},
+		{
+			"index": 2,
+			"metallic": 0.0,
+			"name": "render",
+			"roughness": 0.9,
+			"tile_size": 2.0
+		},
+		{
+			"index": 3,
+			"metallic": 0.0,
+			"name": "slate",
+			"roughness": 0.55,
+			"tile_size": 1.0
+		},
+		{
+			"index": 4,
+			"metallic": 0.0,
+			"name": "clay_tile",
+			"roughness": 0.8,
+			"tile_size": 1.0
+		},
+		{
+			"index": 5,
+			"metallic": 0.0,
+			"name": "paint",
+			"roughness": 0.6,
+			"tile_size": 1.0
+		},
+		{
+			"index": 6,
+			"metallic": 0.0,
+			"name": "stone_trim",
+			"roughness": 0.8,
+			"tile_size": 1.0
+		},
+		{
+			"index": 7,
+			"metallic": 0.5,
+			"name": "metal",
+			"roughness": 0.45,
+			"tile_size": 1.0
+		},
+		{
+			"index": 8,
+			"metallic": 0.0,
+			"name": "glass",
+			"roughness": 0.06,
+			"tile_size": 1.0
+		},
+		{
+			"index": 9,
+			"metallic": 0.0,
+			"name": "fabric",
+			"roughness": 0.95,
+			"tile_size": 0.6
+		},
+		{
+			"index": 10,
+			"metallic": 0.0,
+			"name": "terracotta",
+			"roughness": 0.85,
+			"tile_size": 1.0
+		},
+		{
+			"index": 11,
+			"metallic": 0.0,
+			"name": "timber",
+			"roughness": 0.75,
+			"tile_size": 1.0
+		},
+		{
+			"index": 12,
+			"metallic": 1.0,
+			"name": "gold",
+			"roughness": 0.3,
+			"tile_size": 1.0
+		},
+		{
+			"index": 13,
+			"metallic": 0.0,
+			"name": "paving",
+			"roughness": 0.9,
+			"tile_size": 1.8
+		},
+		{
+			"index": 14,
+			"metallic": 0.0,
+			"name": "plain",
+			"roughness": 0.6,
+			"tile_size": 1.0
+		},
+		{
+			"index": 15,
+			"metallic": 0.0,
+			"name": "canvas",
+			"roughness": 0.9,
+			"tile_size": 0.5
+		},
+		{
+			"index": 16,
+			"metallic": 0.0,
+			"name": "foliage",
+			"roughness": 0.85,
+			"tile_size": 0.6
+		},
+		{
+			"index": 17,
+			"metallic": 0.0,
+			"name": "setts",
+			"roughness": 0.85,
+			"tile_size": 1.2
+		},
+		{
+			"index": 18,
+			"metallic": 0.0,
+			"name": "boards",
+			"roughness": 0.6,
+			"tile_size": 1.2
+		},
+		{
+			"index": 19,
+			"metallic": 0.0,
+			"name": "roughcast",
+			"roughness": 0.95,
+			"tile_size": 1.5
+		}
+	],
+	"tint_mean": 0.8
+}

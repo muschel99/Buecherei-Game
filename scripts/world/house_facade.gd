@@ -17,6 +17,12 @@ extends Node3D
 ## Leistung: Alle Häuser mit gleichen Maßen teilen sich EIN Mesh und ein Material
 ## (assets/materials/house_facade.tres). Die Farben jedes Hauses (wall_color, door_color,
 ## accent_color) kommen als Instanz-Werte dazu – sie kosten nichts extra.
+##
+## Stil-Modelle (seit Etappe 4g, assets/models/houses/*.glb aus tools/blender/build_houses.py)
+## liegen als "Model" im Haustyp. Sie nutzen das Material house_style.tres, das dieselben
+## Instanz-Werte versteht: Die Farben je Haus wirken also auch dort. Feste Kollisionen im Modell
+## (z. B. Blumenkübel vor der Tür, Knoten "…-colonly") fallen weg, wenn das Haus nicht "solid" ist.
+## Sonst gehen Passanten um sie herum (je Teil ein StreetObstacle-Kreis).
 
 enum GroundFloor {
 	WINDOWS,  ## Erdgeschoss mit normalen Fenstern und Haustür
@@ -197,18 +203,50 @@ func _rebuild() -> void:
 		_placeholder.name = "Placeholder"
 		_placeholder.mesh = _get_mesh()
 		add_child(_placeholder)
+	elif not Engine.is_editor_hint():
+		for body: StaticBody3D in model.find_children("*", "StaticBody3D", true, false):
+			if solid:
+				_add_street_obstacle(body)
+			else:
+				# Haus ohne Kollision: auch die Kollisionen im Modell weglassen
+				body.queue_free()
 	_apply_colors()
 
 
-## Farben und Schatten an den Platzhalter geben (kostet nichts extra: Instanz-Werte).
+## Feste Teile des Modells vor dem Haus (z. B. Kübel): Passanten gehen darum herum
+## (ein Kreis um die Mitte des Teils, so groß wie seine Grundfläche).
+func _add_street_obstacle(body: StaticBody3D) -> void:
+	for shape_node: CollisionShape3D in body.find_children("*", "CollisionShape3D", true, false):
+		var bounds := AABB()
+		var faces: PackedVector3Array = shape_node.shape.get_faces() if shape_node.shape is ConcavePolygonShape3D \
+			else PackedVector3Array()
+		if faces.is_empty():
+			continue
+		bounds.position = faces[0]
+		for point in faces:
+			bounds = bounds.expand(point)
+		var obstacle := StreetObstacle.new()
+		obstacle.name = "StreetObstacle"
+		obstacle.radius = maxf(bounds.size.x, bounds.size.z) / 2.0
+		shape_node.add_child(obstacle)
+		obstacle.position = bounds.get_center() * Vector3(1.0, 0.0, 1.0)
+
+
+## Farben und Schatten an den Platzhalter bzw. das eigene Modell geben (kostet nichts extra:
+## Instanz-Werte).
 func _apply_colors() -> void:
-	if _placeholder == null:
-		return
-	_placeholder.set_instance_shader_parameter("wall_color", wall_color)
-	_placeholder.set_instance_shader_parameter("door_color", door_color)
-	_placeholder.set_instance_shader_parameter("accent_color", accent_color)
-	_placeholder.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if casts_shadow \
-		else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var targets: Array[Node] = []
+	if _placeholder:
+		targets.append(_placeholder)
+	var model := get_node_or_null("Model")
+	if model and not model.is_queued_for_deletion():
+		targets.append_array(model.find_children("*", "GeometryInstance3D", true, false))
+	for target: GeometryInstance3D in targets:
+		target.set_instance_shader_parameter("wall_color", wall_color)
+		target.set_instance_shader_parameter("door_color", door_color)
+		target.set_instance_shader_parameter("accent_color", accent_color)
+		target.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if casts_shadow \
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 func _build_collision() -> void:

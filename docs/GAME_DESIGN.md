@@ -10,6 +10,10 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - **Entspannt:** ohne Hektik, ohne Zeitdruck, ohne Strafen. Besucher warten geduldig.
 - **Ästhetik:** gemütlich, nicht kitschig. Inspiriert von Miniatur-Book-Nooks, in Richtung
   Paralives oder Garden Life. Stimmung entsteht vor allem über warmes, weiches Licht.
+  Seit Etappe 4g ein einheitlicher, **stilisiert-realistischer** Look: englische Ladenstraße
+  aus Backstein, Sandstein und Putz, lackierte Holz-Ladenfronten mit Goldschrift,
+  Schieferdächer mit Gauben – nicht zu süß, mit echten Proportionen und Materialien
+  (Stil-Leitfaden: docs/STYLE_GUIDE.md, Bilder in `Game design/`).
 - **Gestaltung:** Möbel und Raumteiler frei platzieren, Wände streichen, Böden tauschen.
   Kein freier Wandbau. Gestaltet wird in der Ego-Perspektive (Taste Tab), frei oder mit
   Einrasten. Deko kann auf Ablageflächen stehen oder an Wand und Tür hängen.
@@ -748,7 +752,12 @@ Zwei Zustände:
   nur die Farben unterscheiden sich je Haus. Liegt in einer Typ-Szene ein eigenes Modell
   („Model“), ersetzt es den Platzhalter in allen Häusern dieses Typs; die Kollision bleibt.
   Drei Häuser haben eine eigene Rolle: Das **Modegeschäft** steht direkt neben der Bücherei
-  (bündig, auf der Seite des geraden Straßenendes) mit Schaufenstern und Markise, das
+  (bündig, auf der Seite des geraden Straßenendes) mit Schaufenstern und Markise – seit
+  Etappe 4g als erstes fertiges Stil-Modell „Eleanor's Fine Dresses“: marineblaue Ladenfront
+  mit Goldschrift, zwei gestreifte Markisen, Tür mittig in einer kleinen Nische, Schaufenster
+  mit Puppen und Kleiderstange (leicht beleuchtet), Buchsbaum-Kübel neben der Tür (man läuft
+  nicht hindurch), darüber Sandstein mit Eckquadern, drei weiße Schiebefenster mit Vorhängen,
+  Zahnschnitt-Gesims, Ziergiebel mit Rosette, zwei Gauben und zwei Schornsteine; das
   **Restaurant/Pub** steht als erstes Haus hinter der Gasse am kleinen Platz (Ladenfront mit
   großen Fenstern und grünem Schild), das **Wohnhaus** (Tür mit Vordach in der Mitte) steht
   gegenüber, genau vor der Ladentür der Bücherei. Alle anderen sind Reihenhäuser in den

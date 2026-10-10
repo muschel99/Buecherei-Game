@@ -26,7 +26,7 @@
 [node name="Neighbor1" parent="LibraryRow" unique_id=608139219 instance=ExtResource("1_b4vo6")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 5.9, 0, -4.2)
 wall_color = Color(0.9, 0.86, 0.8, 1)
-door_color = Color(0.5, 0.12, 0.14, 1)
+door_color = Color(0.1, 0.13, 0.21, 1)
 
 [node name="Neighbor2" parent="LibraryRow" unique_id=602616017 instance=ExtResource("2_8miuw")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 11.35, 0, -4.2)
