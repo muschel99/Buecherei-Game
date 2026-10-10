@@ -5,7 +5,8 @@ extends Node3D
 ##
 ## Die Fensterbank ist zugleich Ablagefläche (SillSurface) und hat – wie Rahmen und Scheibe –
 ## eine feste Kollision (SillBody, Ebene "world"). So stehen Deko und Bücher auf der Bank,
-## ragen aber nie in Rahmen oder Glas hinein. Austauschbares Modell: siehe Kommentar in
+## ragen aber nie in Rahmen oder Glas hinein. Für die Sichtprüfung des Straßenlebens gilt
+## SillBody als durchsichtig (Metadaten "see_through"). Austauschbares Modell: siehe Kommentar in
 ## scenes/objects/shop_window.tscn.
 
 ## Oberkante der Fensterbank (2 mm über der Unterkante der Fensteröffnung, damit sich beide
@@ -24,6 +25,8 @@ const SURFACE_EDGE_MARGIN := 0.01
 
 
 func _ready() -> void:
+	# Durch das Glas sieht man hindurch (Sichtprüfung von StreetLife, seit Etappe 5a)
+	($SillBody as Node).set_meta("see_through", true)
 	var depth := maxf(GameConfig.window_sill_depth, 0.15)
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(SILL_WIDTH, SILL_THICKNESS, depth)

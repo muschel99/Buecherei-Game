@@ -38,6 +38,19 @@ func _ready() -> void:
 		closing.name = "End"
 		closing.position = Vector3((library_x + far_x) / 2.0, 0.0, end)
 		add_child(closing)
+	_add_traffic_point(StreetPaths.library_alley_points()[0], "alley")
+
+
+## Fester Punkt vor dem Tor am Ende: Hier erscheinen und verschwinden Passanten (StreetLife,
+## seit Etappe 5a) – nur, wenn es gerade niemand sieht.
+func _add_traffic_point(spot: Vector2, place: String) -> void:
+	var marker := Marker3D.new()
+	marker.name = "TrafficPoint"
+	marker.position = Vector3(spot.x, 0.0, spot.y)
+	marker.set_meta("kind", "walker")
+	marker.set_meta("place", place)
+	marker.add_to_group(Street.TRAFFIC_GROUP)
+	add_child(marker)
 
 
 ## Hofmauern hinter der Bücherei und hinter dem Nachbarhaus (bis zum Ende der Gasse).

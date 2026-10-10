@@ -10,7 +10,7 @@ extends RefCounted
 
 
 static func all_sets() -> PackedStringArray:
-	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop"])
+	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life"])
 
 
 static func get_set(set_name: String) -> Dictionary:
@@ -25,6 +25,8 @@ static func get_set(set_name: String) -> Dictionary:
 			return corners()
 		"shop":
 			return shop()
+		"street_life":
+			return street_life()
 	push_error("Unbekannte Gruppe von Blickpunkten: " + set_name)
 	return {}
 
@@ -164,4 +166,35 @@ static func shop() -> Dictionary:
 		"room_back": {"pos": Vector3(1.5, 1.6, 3.0), "target": Vector3(-1.5, 1.2, -3.0)},
 		"room_front": {"pos": Vector3(-1.0, 1.6, -2.0), "target": Vector3(2.0, 1.2, 3.5)},
 		"door_outside": look(StreetLayout.door_center().x - 3.0, StreetLayout.door_center().z - 3.0, 1.0, 1.0),
+	}
+
+
+## Leben auf der Straße (seit Etappe 5a): Gehwege, Schaufenster, Lieferwagen vor der Bücherei,
+## die Grenzen und die Enden der Gassen (von dort darf man nie jemanden erscheinen sehen).
+static func street_life() -> Dictionary:
+	var curb := StreetLayout.curb_z()
+	var road := StreetLayout.road_center_z()
+	var far := StreetLayout.opposite_front_z()
+	var side := float(StreetLayout.straight_side())
+	var bound := StreetLayout.straight_bound_x() - side * 0.62
+	var alley_x := (StreetLayout.HOUSE_LEFT + StreetLayout.alley_far_x()) / 2.0
+	var opp := GameConfig.opposite_alley_x
+	var y := eye()
+	return {
+		"walk_west": look(4.0, curb + 1.0, -1.0, 0.0),
+		"walk_east": look(-6.0, curb + 1.2, 1.0, 0.0),
+		"far_walk": look(-4.0, far + 0.8, 1.0, 0.02),
+		"across": {"pos": Vector3(1.0, y + 0.3, far + 0.5), "target": Vector3(1.0, y - 0.6, curb + 2.0)},
+		"door_view": {"pos": Vector3(StreetLayout.door_center().x - 0.4, 1.6, StreetLayout.door_center().z - 0.4),
+			"target": Vector3(4.0, 0.6, road)},
+		"van_stop": {"pos": Vector3(-5.0, y + 0.6, far + 1.0), "target": Vector3(1.5, y - 0.8, curb)},
+		"plaza": look(StreetLayout.alley_row_end_x() + 1.0, curb + 0.6, 1.0, 0.45, -0.05),
+		"bound": look(bound, road, side, 0.0),
+		"bound_back": look(bound, road, -side, 0.0),
+		"gate": _look_at(_gate_point(-0.15, 0.0), _gate_point(10.0, 0.0)),
+		"gate_back": _look_at(_gate_point(-0.15, 0.0), _gate_point(-20.0, 0.0)),
+		"alley_end": look(alley_x, StreetLayout.alley_end_z() - 0.5, 0.0, -1.0),
+		"opposite_alley_end": look(opp, StreetLayout.opposite_alley_end_z() + 0.5, 0.0, 1.0),
+		"opposite_alley_gate": look(opp, far + 2.0, 0.0, -1.0),
+		"aerial": {"pos": Vector3(-2.0, 14.0, road - 9.0), "target": Vector3(-2.0, 0.0, road + 1.0)},
 	}

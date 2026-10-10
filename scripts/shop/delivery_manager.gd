@@ -55,10 +55,11 @@ func _ready() -> void:
 ## Nimmt eine Bestellung an. contents: Liste von
 ## { "kind": "furniture", "surface" oder "books", "id": "...", "count": Anzahl }.
 ## Bei "books" ist die id das Genre und count die Zahl der Bücherpakete.
-func place_order(contents: Array) -> void:
+## wait: so viele Sekunden bis zur Lieferung (Standard: GameConfig.delivery_time).
+func place_order(contents: Array, wait: float = -1.0) -> void:
 	if contents.is_empty():
 		return
-	_orders.append({"contents": contents.duplicate(true), "remaining": GameConfig.delivery_time})
+	_orders.append({"contents": contents.duplicate(true), "remaining": GameConfig.delivery_time if wait < 0.0 else wait})
 	SaveManager.request_save()
 
 

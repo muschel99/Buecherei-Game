@@ -16,6 +16,11 @@ extends Node
 ##   --hud              Oberfläche (HUD) mit aufnehmen
 ##   --scene=res://…    andere Szene statt der Hauptszene laden (z. B. ein einzelnes Haus)
 ##   --list             nur die Gruppen und Blickpunkte auflisten
+##   --simulate=<sek>   Straßenleben vor den Bildern so viele Sekunden vorspulen (seit Etappe 5a)
+##   --seed=<zahl>      Zufall des Straßenlebens festlegen (gleiche Bilder bei jedem Lauf)
+##   --deliver=<n>      eine Testlieferung mit n Kartons bestellen (sofort fällig, Lieferwagen)
+##   --focus=<abstand>  statt der Blickpunkte: Nahaufnahme des Passanten, der dem Ziel des ersten
+##                      Blickpunkts am nächsten ist (aus so vielen Metern, schräg von vorn)
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
 
 const MAIN_SCENE := "res://scenes/main.tscn"
@@ -38,6 +43,10 @@ func _ready() -> void:
 	var main: Node = (load(String(_args.get("scene", MAIN_SCENE))) as PackedScene).instantiate()
 	add_child(main)
 	_freeze_player(main)
+	# Zufall des Straßenlebens festlegen, bevor es die ersten Passanten verteilt
+	var life := main.get_node_or_null("Outside/StreetLife") as StreetLife
+	if life and _args.has("seed"):
+		life.seed_random(int(_args.seed))
 	_camera = Camera3D.new()
 	_camera.name = "TourCamera"
 	_camera.fov = float(_args.get("fov", GameConfig.camera_fov))
@@ -52,12 +61,15 @@ func _ready() -> void:
 
 func _run() -> void:
 	await _wait_frames(WARMUP_FRAMES)
+	await _prepare_street_life()
 	var out_dir := String(_args.get("out", ProjectSettings.globalize_path("res://screenshots")))
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	# Godot soll die Bilder im Projekt nicht importieren
 	if not FileAccess.file_exists(out_dir.path_join(".gdignore")):
 		FileAccess.open(out_dir.path_join(".gdignore"), FileAccess.WRITE)
 	var views := _collect_views()
+	if _args.has("focus"):
+		views = _focus_views(views)
 	for view_name in views:
 		var view: Dictionary = views[view_name]
 		_camera.global_position = view.pos
@@ -89,9 +101,64 @@ func _collect_views() -> Dictionary:
 	return views
 
 
+## Nahaufnahmen eines Passanten: von vorn, schräg und von der Seite.
+func _focus_views(views: Dictionary) -> Dictionary:
+	var life := get_tree().get_first_node_in_group(StreetLife.GROUP) as StreetLife
+	if life == null or views.is_empty():
+		return views
+	var target: Vector3 = views[views.keys()[0]].target
+	var best: Passerby = null
+	for walker in life.get_walkers():
+		if best == null or walker.global_position.distance_to(target) < best.global_position.distance_to(target):
+			best = walker
+	if best == null:
+		return views
+	var distance := float(_args.focus)
+	var chest := best.global_position + Vector3.UP * 1.2
+	var forward := best.global_basis.z.normalized()
+	var result := {}
+	for item in [["front", 0.0], ["half", 0.7], ["side", 1.57], ["back", 3.14]]:
+		var dir := forward.rotated(Vector3.UP, float(item[1]))
+		result["focus_" + item[0]] = {"pos": chest + dir * distance + Vector3.UP * 0.2, "target": chest}
+	print("Nahaufnahme: ", best.name, " – ", best.debug_text())
+	return result
+
+
 func _vec(text: String) -> Vector3:
 	var n := text.split_floats(",")
 	return Vector3(n[0], n[1], n[2])
+
+
+## Straßenleben vorbereiten: Zufall festlegen, Testlieferung, vorspulen (in festen Schritten,
+## so schnell der Rechner kann). Die Kamera steht dabei am ersten Blickpunkt.
+func _prepare_street_life() -> void:
+	var life := get_tree().get_first_node_in_group(StreetLife.GROUP) as StreetLife
+	if life == null:
+		return
+	if _args.has("deliver"):
+		var manager := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
+		if manager:
+			var contents := [{"kind": "furniture", "id": "armchair_velvet", "count": int(_args.deliver)}]
+			manager.place_order(contents, 0.0)
+	var views := _collect_views()
+	if not views.is_empty():
+		var first: Dictionary = views[views.keys()[0]]
+		_camera.global_position = first.pos
+		_camera.look_at(first.target, Vector3.UP)
+	var seconds := float(_args.get("simulate", 0.0))
+	var step := 1.0 / 30.0
+	var done := 0.0
+	while done < seconds:
+		life.step(step)
+		done += step
+		# Ab und zu ein Bild lang Luft holen (Physik, Kamera)
+		if int(done / step) % 60 == 0:
+			await get_tree().physics_frame
+	# Während der Aufnahmen steht alles still (gleiche Bilder bei jedem Lauf)
+	life.set_physics_process(false)
+	await get_tree().process_frame
+	for walker in life.get_walkers():
+		walker.step(0.0001)
 
 
 ## Spielfigur anhalten und ihre Kamera abgeben (sie bleibt sonst die aktive Kamera).

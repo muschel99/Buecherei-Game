@@ -7,6 +7,9 @@
 ; als Platzhalter), "Plaza" (Platz vor der Schräge), "Alley" (Gasse mit Abschluss) und
 ; "OppositeAlley" (kleine Gasse gegenüber, seit Etappe 4f). Lage
 ; aller Teile: scripts/world/street_layout.gd. "Deliveries" ist der Lieferort der Kartons.
+; "StreetLife" (seit Etappe 5a): Passanten, Fahrräder, Autos und Lieferwagen; die Punkte unter
+; "WindowSpots" sind Stellen vor Schaufenstern, an denen Passanten stehen bleiben (Blickrichtung
+; = -Z des Punkts, also der blaue Pfeil zeigt vom Fenster weg).
 ; "EntranceSteps" (Podest mit Stufen vor der Tür) liegt auf Höhe des Ladenbodens.
 ; Über dem Laden: "UpperFloors" baut beim Start die Obergeschosse (vorerst geschlossene Hülle),
 ; das Dach und unten den Sockel (Anzahl und Höhe in GameConfig, siehe scripts/rooms/upper_floors.gd).
@@ -36,6 +39,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/plaza.tscn" id="28_plaza"]
 [ext_resource type="PackedScene" path="res://scenes/world/alley.tscn" id="29_alley"]
 [ext_resource type="PackedScene" path="res://scenes/world/opposite_alley.tscn" id="31_opposite_alley"]
+[ext_resource type="Script" path="res://scripts/street_life/street_life.gd" id="32_street_life"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -99,6 +103,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 [node name="Alley" parent="Outside" instance=ExtResource("29_alley")]
 
 [node name="OppositeAlley" parent="Outside" instance=ExtResource("31_opposite_alley")]
+
+[node name="StreetLife" type="Node3D" parent="Outside"]
+script = ExtResource("32_street_life")
+player_path = NodePath("../../Player")
+
+[node name="WindowSpots" type="Node3D" parent="Outside/StreetLife"]
+
+[node name="LibraryFront" type="Marker3D" parent="Outside/StreetLife/WindowSpots"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1, 0, -4.95)
 
 [node name="Deliveries" type="Marker3D" parent="Outside"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0, -4.7)

@@ -63,11 +63,12 @@ func _mesh_key() -> String:
 
 
 ## Nur die beiden Mauerpfeiler sind fest – die Durchfahrt bleibt frei (die unsichtbare Grenze
-## davor baut die Straße).
+## davor baut die Straße). Über dem Bogen verdeckt ein Sichtblocker (Ebene "sight_blocker",
+## seit Etappe 5a) die Sicht – durch die Öffnung des Bogens sieht man hindurch.
 func _build_collision() -> void:
 	_body = StaticBody3D.new()
 	_body.name = "Body"
-	_body.collision_layer = 1  # Ebene "world"
+	_body.collision_layer = _collision_layer()
 	_body.collision_mask = 0
 	var pier := width / 2.0 - passage_width / 2.0
 	for side in [-1.0, 1.0]:
@@ -78,6 +79,18 @@ func _build_collision() -> void:
 		collision.position = Vector3(side * (passage_width / 2.0 + pier / 2.0), eaves_height / 2.0, -depth / 2.0)
 		_body.add_child(collision)
 	add_child(_body)
+	var sight := StaticBody3D.new()
+	sight.name = "SightBlocker"
+	sight.collision_layer = SIGHT_BLOCKER_LAYER
+	sight.collision_mask = 0
+	var crown := arch_spring + passage_width / 2.0
+	var box := BoxShape3D.new()
+	box.size = Vector3(passage_width, eaves_height - crown, depth)
+	var top := CollisionShape3D.new()
+	top.shape = box
+	top.position = Vector3(0.0, (crown + eaves_height) / 2.0, -depth / 2.0)
+	sight.add_child(top)
+	_body.add_child(sight)
 
 
 ## Gemauertes Erdgeschoss mit Bogen und gewölbter Durchfahrt, Seitenwände.

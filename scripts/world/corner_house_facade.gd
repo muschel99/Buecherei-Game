@@ -75,7 +75,7 @@ func get_side_length() -> float:
 func _build_collision() -> void:
 	_body = StaticBody3D.new()
 	_body.name = "Body"
-	_body.collision_layer = 1  # Ebene "world"
+	_body.collision_layer = _collision_layer()
 	_body.collision_mask = 0
 	var points := PackedVector3Array()
 	for p in footprint():

@@ -182,6 +182,8 @@ open_menu={
 3d_physics/layer_4="furniture"
 3d_physics/layer_5="build_blocker"
 3d_physics/layer_6="placement_surface"
+3d_physics/layer_7="street_life"
+3d_physics/layer_8="sight_blocker"
 
 [rendering]
 
