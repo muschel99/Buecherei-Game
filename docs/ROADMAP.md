@@ -24,14 +24,15 @@
 | 3j  | Vorschau unbeleuchtet, Bücher anlehnen und Aufsteller | fertig |
 | 3k  | Tür, Buchmenü und Buchstützen           | fertig        |
 | 3l  | Fassaden-App und fester Rückgabekasten   | fertig        |
-| 4   | Außenwelt                                | in Arbeit     |
+| 4   | Außenwelt                                | fertig        |
 | 4a  | Eckladen-Grundriss, feste Theke und Rückgabekasten | fertig |
 | 4b  | Reparatur Eckladen (Schräge, Fassade, Fenster, Vorplatz, Licht) | fertig |
 | 4c  | Eckladen sauber nachbessern (Gehrung, Gehweg, Obergeschoss) | fertig |
 | 4d  | Straße, Gasse, Platz und Eingangstreppe  | fertig        |
 | 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | fertig |
 | 4f  | Grenze am geraden Straßenende und Torhaus mit Durchfahrt | fertig |
-| 5   | Besucher                                 | offen         |
+| 5   | Besucher                                 | in Arbeit     |
+| 5a  | Leben auf der Straße                     | in Arbeit     |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
 | 8   | Café                                     | offen         |
@@ -619,9 +620,35 @@ Nachtrag 2 rückt das Torhaus näher, unsichtbare Häuser fallen weg, gegenüber
       Blickwinkel in `scripts/tools/screenshot_views.gd`, Bilder in `screenshots/`)
 
 ## Etappe 5 – Besucher
+Leitgedanke: Bevor Kunden in die Bücherei kommen, wird erst die Straße lebendig (5a); danach
+kommen Besucher herein (weitere Unterschritte).
 - Besucher kommen herein, stöbern, leihen aus, warten geduldig an der Theke
 - Besucher nehmen Bücher aus Regalen (`BookShelf.remove_books`) und werfen sie in den
   Rückgabekasten (`ReturnBox.add_books`); dann die Testtasten abschalten (`GameConfig.debug_keys_enabled`)
+
+### Etappe 5a – Leben auf der Straße
+Leitgedanke: Passanten, Fahrräder, ein, zwei Autos und ein kleiner Lieferwagen machen die
+Straße lebendig – ruhig und gemütlich, keine volle Innenstadt. Grundregel: Niemand erscheint
+oder verschwindet sichtbar.
+- [ ] Feste Orte zum Erscheinen und Verschwinden außer Sicht (Straßenenden hinter der Kurve
+      und hinter dem Torhaus, Ende der Gassen) + Prüfung im Spiel, dass der Ort gerade nicht
+      im Blickfeld liegt (sonst wartet das Erscheinen bzw. die Figur läuft weiter)
+- [ ] Passanten auf beiden Gehwegen, in beide Richtungen, verschiedenes Tempo; weichen
+      einander, der Spielfigur, der Treppe und den Kartons aus
+- [ ] Passanten überqueren manchmal die Straße, bleiben vor Schaufenstern stehen (Modegeschäft,
+      Pub, Bücherei) und kommen aus den Gassen oder verschwinden darin
+- [ ] Wege so gebaut, dass ein Passant später in die Bücherei gehen kann (nächster Schritt)
+- [ ] Austauschbare Platzhalter-Figur, vorbereitet für eigene Figuren mit Animationen
+      (Gehen, Stehen, Umschauen) + Anleitung in docs/ASSET_GUIDE.md
+- [ ] Fahrradfahrer fahren durch, in beide Richtungen
+- [ ] Ein, zwei Autos fahren gelegentlich durch und bremsen für Fußgänger auf der Straße und
+      für die Spielfigur
+- [ ] Kleiner, rundlicher Lieferwagen bringt die Kartons (hält vor der Bücherei, stellt die
+      Kartons einzeln ab, fährt weiter); wartet oder weicht aus, wenn der Platz besetzt ist;
+      Bestellungen während der Fahrt kommen bei der nächsten Fahrt. Vorlage zum Modellieren
+- [ ] Alle Werte in GameConfig (ruhiger Startwert), später von der Tageszeit abhängig
+- [ ] Leistung in allen drei Grafikstufen (weit weg ohne Schatten und vereinfacht, kein
+      Zuckeln beim Erscheinen); gespeichert wird draußen nur die laufende Lieferung
 
 ## Etappe 6 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
@@ -655,7 +682,6 @@ Nachtrag 2 rückt das Torhaus näher, unsichtbare Häuser fallen weg, gegenüber
 - Die Gasse vor dem Haus (bisher: ein Stück Gehweg als Platzhalter), Fassade gestalten
   (in der App „Fassade“ aus Etappe 3l, z. B. Wandfarbe außen, Schild, Fenster), Jahreszeiten
   – baut auf der Außenwelt aus Etappe 4 auf
-- Vielleicht ein Lieferbote, der die Kartons bringt (bisher erscheinen sie einfach)
 
 ## Etappe 13 – Feinschliff
 - Menüs, Einstellungen, Speichern/Laden, Balancing
