@@ -21,6 +21,7 @@ extends Node
 ##   --deliver=<n>      eine Testlieferung mit n Kartons bestellen (sofort fällig, Lieferwagen)
 ##   --focus=<abstand>  statt der Blickpunkte: Nahaufnahme des Passanten, der dem Ziel des ersten
 ##                      Blickpunkts am nächsten ist (aus so vielen Metern, schräg von vorn)
+##   --focus_vehicle    dasselbe für das nächste Fahrzeug (Fahrrad, Auto, Lieferwagen)
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
 
 const MAIN_SCENE := "res://scenes/main.tscn"
@@ -107,10 +108,11 @@ func _focus_views(views: Dictionary) -> Dictionary:
 	if life == null or views.is_empty():
 		return views
 	var target: Vector3 = views[views.keys()[0]].target
-	var best: Passerby = null
-	for walker in life.get_walkers():
-		if best == null or walker.global_position.distance_to(target) < best.global_position.distance_to(target):
-			best = walker
+	var best: Node3D = null
+	var candidates: Array = life.get_vehicles() if _args.has("focus_vehicle") else life.get_walkers()
+	for who: Node3D in candidates:
+		if best == null or who.global_position.distance_to(target) < best.global_position.distance_to(target):
+			best = who
 	if best == null:
 		return views
 	var distance := float(_args.focus)
@@ -120,7 +122,7 @@ func _focus_views(views: Dictionary) -> Dictionary:
 	for item in [["front", 0.0], ["half", 0.7], ["side", 1.57], ["back", 3.14]]:
 		var dir := forward.rotated(Vector3.UP, float(item[1]))
 		result["focus_" + item[0]] = {"pos": chest + dir * distance + Vector3.UP * 0.2, "target": chest}
-	print("Nahaufnahme: ", best.name, " – ", best.debug_text())
+	print("Nahaufnahme: ", best.name)
 	return result
 
 
@@ -140,6 +142,8 @@ func _prepare_street_life() -> void:
 		if manager:
 			var contents := [{"kind": "furniture", "id": "armchair_velvet", "count": int(_args.deliver)}]
 			manager.place_order(contents, 0.0)
+			for i in 3:
+				await get_tree().process_frame
 	var views := _collect_views()
 	if not views.is_empty():
 		var first: Dictionary = views[views.keys()[0]]

@@ -47,9 +47,11 @@ const SIDESTEP_SPEED := 0.75
 const LOOK_AHEAD := 3.6
 ## So weit voraus richtet sich die bevorzugte Lage nach dem Weg (Meter).
 const COMFORT_LOOK_AHEAD := 1.5
-## So lange (Sekunden) wartet ein Passant, wenn die Spielfigur ihm den Weg versperrt – danach
-## dreht er um und geht einen anderen Weg.
+## So lange (Sekunden) wartet ein Passant, wenn ihm jemand den Weg versperrt (z. B. die
+## Spielfigur) – danach dreht er um und geht einen anderen Weg.
 const PATIENCE := 6.0
+## So weit vom Fahrbahnrand wartet man vor dem Überqueren (Meter, Mitte der Figur).
+const CURB_WAIT := 0.45
 ## Drehtempo der Figur (je Sekunde, weich).
 const TURN_RATE := 7.0
 
@@ -161,6 +163,18 @@ func get_route_s() -> float:
 	return _s
 
 
+## Den Besuch am Schaufenster auslassen (Platz versperrt) und gleich weitergehen.
+func skip_visit() -> void:
+	while not _actions.is_empty() and _actions[0].get("visit", false):
+		_actions.pop_front()
+	_next_action()
+
+
+## Den aktuellen Schritt auslassen (wenn er nicht weitergeht).
+func skip_action() -> void:
+	_next_action()
+
+
 ## Neue Schritte ab hier (z. B. nach dem Umdrehen).
 func replace_actions(actions: Array[Dictionary]) -> void:
 	_actions = actions
@@ -175,6 +189,15 @@ func get_action() -> Dictionary:
 ## Laufrichtung auf dem aktuellen Weg (1 = s wächst).
 func get_direction() -> int:
 	return _dir
+
+
+## Steht der Passant (mit seinem Körper) auf der Fahrbahn? Nur dann bremsen Fahrzeuge für ihn.
+func body_on_road() -> bool:
+	if on_road:
+		return true
+	if _route == null or not life.is_centerline(_route):
+		return false
+	return absf(_lat) - radius * scale.x < GameConfig.street_width / 2.0 + 0.05
 
 
 ## Zustand als Text (Prüfwerkzeug).
@@ -224,6 +247,19 @@ func _next_action() -> void:
 	_wait = 0.0
 	match String(_action.type):
 		"walk":
+			if _action.get("visit", false):
+				var there := life.window_route(pos, _action.spot, _action.face)
+				if there == null:
+					skip_visit()  # vor dem Fenster ist kein Platz (z. B. viele Kartons)
+					return
+				_action.route = there
+				_action.to = there.length()
+			elif _action.get("from_here", false):
+				# Kurzer Weg: dort beginnen, wo man gerade wirklich steht
+				var route: StreetRoute = _action.route
+				var there := StreetRoute.from_points(PackedVector2Array([pos, route.points[route.points.size() - 1]]), 0.35)
+				_action.route = there
+				_action.to = there.length()
 			_set_route(_action.route)
 			_dir = 1 if float(_action.to) >= _s else -1
 		"cross":
@@ -254,12 +290,14 @@ func _step_walk(delta: float) -> void:
 func _step_cross(delta: float) -> void:
 	var to_side: int = _action.to_side
 	var half := GameConfig.street_width / 2.0
-	var curb := (half + 0.32) * float(side)
-	var far_curb := (half + 0.32) * float(to_side)
+	var curb := (half + CURB_WAIT) * float(side)
+	var far_curb := (half + CURB_WAIT) * float(to_side)
 	_phase_time += delta
 	match _phase:
-		0:  # an den Bordstein
-			_lat = move_toward(_lat, curb, speed_pref * 0.8 * delta)
+		0:  # an den Bordstein (nicht durch andere hindurch)
+			var lat := move_toward(_lat, curb, speed_pref * 0.8 * delta)
+			if not life.blocks_move(self, _route.point_at(_s, lat)):
+				_lat = lat
 			_anim_state = &"walk"
 			_anim_speed = speed_pref * 0.8
 			if is_equal_approx(_lat, curb):
@@ -275,15 +313,25 @@ func _step_cross(delta: float) -> void:
 			if life.road_clear_for(self):
 				_phase = 3
 				on_road = true
-		3:  # hinüber (leicht schräg in Laufrichtung)
-			_lat = move_toward(_lat, far_curb, speed_pref * delta)
-			_s += _dir * 0.25 * delta
+		3:  # hinüber (leicht schräg in Laufrichtung) – steht dort jemand, ein Stück daneben
+			var lat := move_toward(_lat, far_curb, speed_pref * delta)
+			var s_next := _s + _dir * 0.25 * delta
+			if life.blocks_move(self, _route.point_at(s_next, lat)):
+				s_next = _s + _dir * speed_pref * 0.6 * delta
+				lat = _lat
+				if life.blocks_move(self, _route.point_at(s_next, lat)):
+					s_next = _s
+			_lat = lat
+			_s = s_next
 			_anim_state = &"walk"
 			_anim_speed = speed_pref
 			if is_equal_approx(_lat, far_curb):
 				on_road = false
 				side = to_side
+				pos = _route.point_at(_s, _lat)
 				_next_action()
+				return
+	pos = _route.point_at(_s, _lat)
 
 
 ## Stehen bleiben und schauen (Schaufenster: "browse").
@@ -347,10 +395,12 @@ func _walk_along(delta: float, want: float) -> void:
 			new_pos = pos
 			_lat = _old_lat
 		speed = 0.0
+	var moved := pos.distance_to(new_pos)
 	_s = new_s
 	pos = new_pos
-	# Versperrt die Spielfigur lange den Weg (z. B. in einer schmalen Gasse): umdrehen
-	if speed < 0.05 and life.player_blocks(self):
+	# Versperrt jemand lange den Weg (z. B. die Spielfigur in einer schmalen Gasse): umdrehen
+	# bzw. das Schaufenster auslassen
+	if moved < 0.12 * delta:
 		_blocked_time += delta
 		if _blocked_time > PATIENCE:
 			_blocked_time = 0.0

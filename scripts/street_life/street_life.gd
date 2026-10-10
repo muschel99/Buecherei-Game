@@ -42,7 +42,7 @@ const BOX_RADIUS := 0.4
 ## Ebenen, die die Sicht verdecken: world (1) und sight_blocker (8).
 const SIGHT_MASK := 1 | 128
 ## Radius beim Ausmessen der Gehwege (Passant + etwas Luft zur Wand).
-const FIT_RADIUS := 0.3
+const FIT_RADIUS := 0.36
 ## So viele Figuren mehr im Vorrat, als gleichzeitig unterwegs sind (mehr Abwechslung).
 const EXTRA_LOOKS := 4
 
@@ -58,7 +58,13 @@ var road_route: StreetRoute
 var _rng := RandomNumberGenerator.new()
 var _player: Node3D
 var _walkers: Array[Passerby] = []
-var _vehicles: Array = []
+var _vehicles: Array[StreetVehicle] = []
+var _idle_bikes: Array[StreetVehicle] = []
+var _idle_cars: Array[StreetVehicle] = []
+var _bike_timer := 0.0
+var _car_timer := 0.0
+var _van: DeliveryVan
+var _van_manager: DeliveryManager
 var _idle_walkers: Array[Passerby] = []
 var _walker_timer := 0.0
 ## Orte zum Erscheinen: { "kind", "place" ("east", "west", "alley", "opposite_alley"), "pos", "side" }
@@ -90,6 +96,7 @@ func _ready() -> void:
 
 func _start() -> void:
 	_build_pool()
+	_build_vehicle_pool()
 	for side in [1, -1]:
 		_fit_band_to_houses(sidewalks[side], side)
 	_collect_places()
@@ -128,7 +135,10 @@ func step(delta: float) -> void:
 	_collect_obstacles()
 	for walker in _walkers:
 		walker.step(delta)
+	for vehicle in _vehicles.duplicate():
+		vehicle.step(delta)
 	_spawn_walkers(delta)
+	_spawn_vehicles(delta)
 	_lod_timer -= delta
 	if _lod_timer <= 0.0:
 		_lod_timer = 0.3
@@ -157,6 +167,47 @@ func _build_pool() -> void:
 		walker.finished.connect(_on_walker_finished)
 		walker.randomize_look(_rng)
 		_idle_walkers.append(walker)
+
+
+## Fahrräder und Autos: ein kleiner Vorrat, beim Start gebaut.
+func _build_vehicle_pool() -> void:
+	var folder := Node3D.new()
+	folder.name = "Vehicles"
+	add_child(folder)
+	for item in [[GameConfig.bike_scene, 2, _idle_bikes, "Cyclist"], [GameConfig.car_scene, GameConfig.car_count, _idle_cars, "Car"]]:
+		var scene := load(item[0]) as PackedScene
+		if scene == null:
+			continue
+		for i in maxi(0, item[1]):
+			var vehicle := scene.instantiate() as StreetVehicle
+			vehicle.name = "%s%d" % [item[3], i + 1]
+			vehicle.life = self
+			folder.add_child(vehicle)
+			vehicle.finished.connect(_on_vehicle_finished.bind(item[2]))
+			(item[2] as Array).append(vehicle)
+	var van_scene := load(GameConfig.delivery_van_scene) as PackedScene
+	if van_scene:
+		_van = van_scene.instantiate() as DeliveryVan
+		_van.name = "DeliveryVan"
+		_van.life = self
+		folder.add_child(_van)
+		_van.randomize_look(_rng, GameConfig.delivery_van_color)
+		_van.finished.connect(_on_van_finished)
+	_bike_timer = _rng.randf_range(3.0, GameConfig.bike_interval.x)
+	_car_timer = _rng.randf_range(8.0, GameConfig.car_interval.x)
+
+
+func _on_vehicle_finished(vehicle: StreetVehicle, pool: Array) -> void:
+	vanished.emit(vehicle, vehicle.pos)
+	vehicle.set_active(false)
+	_vehicles.erase(vehicle)
+	pool.append(vehicle)
+
+
+func _on_van_finished(van: StreetVehicle) -> void:
+	vanished.emit(van, van.pos)
+	van.set_active(false)
+	_vehicles.erase(van)
 
 
 func _on_walker_finished(walker: Passerby) -> void:
@@ -275,7 +326,7 @@ func get_walkers() -> Array[Passerby]:
 
 
 ## Alle Fahrzeuge unterwegs (für das Prüfwerkzeug).
-func get_vehicles() -> Array:
+func get_vehicles() -> Array[StreetVehicle]:
 	return _vehicles
 
 
@@ -347,13 +398,80 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 	return false
 
 
-## Steht die Spielfigur so dicht vor dem Passanten, dass er nicht vorbeikommt?
-func player_blocks(walker: Passerby) -> bool:
-	return walker.pos.distance_to(player_pos()) < walker.radius * walker.scale.x + PLAYER_RADIUS + 0.9
+## Weg von "from" zu einem Platz vor einem Schaufenster. Stehen dort Kartons (Lieferung vor der
+## Bücherei) oder etwas anderes, rückt der Platz ein Stück vor (weg vom Fenster).
+func window_route(from: Vector2, spot: Vector2, face: Vector2) -> StreetRoute:
+	var blockers: Array[Dictionary] = []
+	for box in _box_positions():
+		blockers.append({"pos": box, "radius": BOX_RADIUS})
+	blockers.append_array(_static_obstacles)
+	for i in 9:
+		var free := true
+		for blocker in blockers:
+			if spot.distance_to(blocker.pos) < float(blocker.radius) + 0.32:
+				free = false
+				break
+		if free:
+			return StreetRoute.from_points(PackedVector2Array([from, spot]), 0.35)
+		spot -= face * 0.1
+	return null  # zu weit weg vom Fenster: lieber auslassen
 
 
-## Ist die Fahrbahn an der Stelle dieses Passanten frei zum Überqueren?
-func road_clear_for(_walker: Passerby) -> bool:
+## Ist die Fahrbahn an der Stelle dieses Passanten frei zum Überqueren? Kein Fahrzeug darf in
+## den nächsten Sekunden vorbeikommen (stehende Fahrzeuge dicht daneben zählen auch).
+func road_clear_for(walker: Passerby) -> bool:
+	var s := centerline.project(walker.pos, walker.get_route_s() - 3.0, walker.get_route_s() + 3.0).x
+	for vehicle in _vehicles:
+		var ahead := (s - vehicle.get_s()) * vehicle.direction
+		var reach := vehicle.length / 2.0 + 1.5
+		# Ein stehendes Fahrzeug hält nur auf, wenn es direkt davor steht
+		var coming := maxf(6.0, vehicle.speed * 5.0) if vehicle.speed > 0.3 else 0.0
+		if ahead > -reach and ahead < reach + coming:
+			return false
+	return true
+
+
+## Alles, wofür ein Fahrzeug bremsen oder ausweichen muss: Passanten, Spielfigur, andere
+## Fahrzeuge. Je Eintrag: pos, radius (halbe Breite), reach (halbe Länge in Fahrtrichtung),
+## speed (Tempo in meine Richtung), kind.
+func road_obstacles(vehicle: StreetVehicle) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var limit := (StreetVehicle.LOOK_AHEAD + 6.0) * (StreetVehicle.LOOK_AHEAD + 6.0)
+	var half := GameConfig.street_width / 2.0
+	for walker in _walkers:
+		# Nur wer auf der Fahrbahn ist – wer am Bordstein wartet, wartet ja auf das Fahrzeug
+		if walker.body_on_road() and walker.pos.distance_squared_to(vehicle.pos) < limit:
+			result.append({"pos": walker.pos, "radius": walker.radius * walker.scale.x, "reach": 0.3,
+				"speed": 0.0, "kind": "walker"})
+	if _player and player_pos().distance_squared_to(vehicle.pos) < limit:
+		var lat := centerline.project(player_pos(), vehicle.get_s() - 30.0, vehicle.get_s() + 30.0).y
+		if absf(lat) - PLAYER_RADIUS < half + 0.3:
+			result.append({"pos": player_pos(), "radius": PLAYER_RADIUS, "reach": 0.3, "speed": 0.0, "kind": "player"})
+	for other in _vehicles:
+		if other == vehicle or other.pos.distance_squared_to(vehicle.pos) > limit:
+			continue
+		var same := other.direction == vehicle.direction
+		result.append({"pos": other.pos, "radius": other.width / 2.0, "reach": other.length / 2.0,
+			"speed": other.speed if same else 0.0, "kind": "vehicle" if same else "vehicle_oncoming"})
+	return result
+
+
+## Steht die Spielfigur auf der Fahrbahn (oder ragt hinein)? (Prüfwerkzeug.)
+func player_on_road() -> bool:
+	return absf(centerline.project(player_pos()).y) - PLAYER_RADIUS < GameConfig.street_width / 2.0 + 0.3
+
+
+## Ist eine Spur (lat) über "distance" Meter vor diesem Fahrzeug frei von anderen Fahrzeugen?
+## (Fahrräder prüfen das, bevor sie zur Straßenmitte hin ausweichen.)
+func lane_free(vehicle: StreetVehicle, lat: float, distance: float) -> bool:
+	for other in _vehicles:
+		if other == vehicle:
+			continue
+		var ahead := (other.get_s() - vehicle.get_s()) * vehicle.direction
+		if ahead < -other.length or ahead > distance + 25.0:
+			continue
+		if absf(other.get_lat() - lat) < (other.width + vehicle.width) / 2.0 + 0.3:
+			return false
 	return true
 
 
@@ -615,11 +733,12 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 				actions.append({"type": "walk", "route": sidewalks[side], "to": lane_before})
 				cursor = lane_before + dir * 2.4
 				var there := StreetRoute.from_points(PackedVector2Array([_lane_point(side, lane_before, comfort), at]), 0.35)
-				actions.append({"type": "walk", "route": there, "to": there.length()})
-				actions.append({"type": "stand", "face": spot.face, "anim": &"browse",
+				# Der Weg zum Fenster wird erst beim Losgehen festgelegt (Kartons könnten davor stehen)
+				actions.append({"type": "walk", "route": there, "to": there.length(), "visit": true, "spot": at, "face": spot.face})
+				actions.append({"type": "stand", "face": spot.face, "anim": &"browse", "visit": true,
 					"time": _rng.randf_range(GameConfig.passerby_window_time.x, GameConfig.passerby_window_time.y)})
 				var back := StreetRoute.from_points(PackedVector2Array([at, _lane_point(side, lane_before + dir * 2.4, comfort)]), 0.35)
-				actions.append({"type": "walk", "route": back, "to": back.length()})
+				actions.append({"type": "walk", "route": back, "to": back.length(), "from_here": true})
 			"library":
 				if side == 1 and (event.s - cursor) * dir > 0.0:
 					cursor = event.s
@@ -664,6 +783,12 @@ func turn_around(walker: Passerby) -> void:
 	elif action.get("alley") == "out":
 		actions.append({"type": "walk", "route": route, "to": 0.0})
 		actions.append({"type": "leave", "gate": true, "face": (route.points[0] - route.points[1]).normalized()})
+	elif action.get("visit", false):
+		walker.skip_visit()
+		return
+	elif not is_centerline(route) and action.get("alley", "") == "":
+		walker.skip_action()  # kurzer Weg (z. B. vom Schaufenster zurück): einfach weiter
+		return
 	elif action.get("alley") == "in":
 		var to_end := -0.5 if _rng.randf() < 0.5 else centerline.length() + 0.5
 		actions.append({"type": "walk", "route": route, "to": 0.0})
@@ -694,6 +819,118 @@ func _alley_half(place: String) -> float:
 	return StreetPaths.library_alley_half_width() if place == "alley" else StreetPaths.opposite_alley_half_width()
 
 
+# --- Lieferwagen ---
+
+## Gibt es einen Lieferwagen? (Sonst liefert der DeliveryManager wie früher direkt.)
+func has_van() -> bool:
+	return _van != null or not _started  # vor dem Start: Bestellungen warten auf den Wagen
+
+
+## Der Lieferwagen soll losfahren (vom DeliveryManager). false = er ist noch unterwegs.
+func send_van(manager: DeliveryManager) -> bool:
+	if _van == null or _van.active or _van_manager != null:
+		return false
+	_van_manager = manager
+	return true
+
+
+## Wo gerade jemand steht (Spielfigur, Passanten) – dort stellt der Wagen keinen Karton ab.
+func blocking_points() -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	if _player:
+		points.append(_player.global_position)
+	for walker in _walkers:
+		points.append(walker.global_position)
+	return points
+
+
+## Startet den Lieferwagen am Anfang der Straße, sobald es dort niemand sieht und vor ihm
+## niemand fährt.
+func _spawn_van() -> void:
+	if _van_manager == null or _van.active:
+		return
+	var start := road_route.point_at(0.0, _van.lane())
+	if not direction_free(1, GameConfig.delivery_van_speed) or is_visible_spot(start, 2.2, 2.5):
+		return
+	_van.start_trip(road_route, _van_stop_s(), _van_stop_lat(), _van_manager)
+	_van_manager = null
+	_van.set_shadows(false)
+	_vehicles.append(_van)
+	appeared.emit(_van, _van.pos)
+
+
+## Hier hält der Wagen: Seine Tür steht vor der Mitte der Kartonreihe (Lieferort).
+func _van_stop_s() -> float:
+	var deliveries := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
+	var target := Vector2(0.0, StreetLayout.road_center_z())
+	if deliveries:
+		var along := deliveries.stack_direction.normalized() * GameConfig.delivery_stacks_per_row * DeliveryManager.STACK_SPACING / 2.0
+		target = _to_local2(deliveries.global_position + deliveries.global_basis * along)
+	return centerline.project(target).x - _van.door_point.z
+
+
+## Dicht am Bordstein der Bücherei-Seite.
+func _van_stop_lat() -> float:
+	return GameConfig.street_width / 2.0 - 0.22 - _van.width / 2.0
+
+
+# --- Fahrräder und Autos ---
+
+func _spawn_vehicles(delta: float) -> void:
+	if _van:
+		_spawn_van()
+	var calm := maxf(0.2, activity())
+	_bike_timer -= delta
+	if _bike_timer <= 0.0:
+		if _idle_bikes.is_empty() or activity() <= 0.0 or not _start_vehicle(_idle_bikes, "bike",
+				_rng.randf_range(GameConfig.bike_speed_range.x, GameConfig.bike_speed_range.y)):
+			_bike_timer = 1.0
+		else:
+			_bike_timer = _rng.randf_range(GameConfig.bike_interval.x, GameConfig.bike_interval.y) / calm
+	_car_timer -= delta
+	if _car_timer <= 0.0:
+		if _idle_cars.is_empty() or activity() <= 0.0 or not _start_vehicle(_idle_cars, "car", GameConfig.car_speed):
+			_car_timer = 1.0
+		else:
+			_car_timer = _rng.randf_range(GameConfig.car_interval.x, GameConfig.car_interval.y) / calm
+
+
+## Ein Fahrzeug an einem Straßenende losschicken – nur, wenn der Ort nicht im Blick ist und es
+## dort niemanden einholen würde (in jeder Richtung höchstens ein langsameres Fahrzeug vorn).
+func _start_vehicle(pool: Array[StreetVehicle], kind: String, cruise: float) -> bool:
+	var starts := _places.filter(func(p: Dictionary) -> bool: return p.kind == kind and p.place in ["east", "west"])
+	starts.shuffle()
+	for start in starts:
+		var dir := 1 if start.place == "east" else -1
+		if not direction_free(dir, cruise) or is_visible_spot(start.pos, 1.8, 2.5):
+			continue
+		var vehicle: StreetVehicle = pool.pop_at(_rng.randi() % pool.size())
+		var color: Color = GameConfig.car_colors[_rng.randi() % GameConfig.car_colors.size()] \
+			if not GameConfig.car_colors.is_empty() else Color.WHITE
+		if kind == "bike":
+			color = Color.from_hsv(_rng.randf(), _rng.randf_range(0.3, 0.55), _rng.randf_range(0.45, 0.75))
+		vehicle.randomize_look(_rng, color)
+		vehicle.begin(road_route, dir, cruise)
+		vehicle.set_shadows(false)
+		_vehicles.append(vehicle)
+		appeared.emit(vehicle, vehicle.pos)
+		return true
+	return false
+
+
+## Darf in dieser Richtung ein neues Fahrzeug (mit diesem Tempo) losfahren? Nicht, solange
+## vorn eins am Anfang der Strecke steht oder ein langsameres unterwegs ist (das neue würde es
+## einholen) – so muss niemand überholen.
+func direction_free(dir: int, cruise: float) -> bool:
+	var start := 0.0 if dir > 0 else centerline.length()
+	for other in _vehicles:
+		if other.direction != dir:
+			continue
+		if absf(other.get_s() - start) < 30.0 or other.cruise_speed < cruise - 0.01 or other.has_method("is_delivering"):
+			return false
+	return true
+
+
 # --- Detailstufe und Schatten ---
 
 func _update_detail() -> void:
@@ -704,3 +941,6 @@ func _update_detail() -> void:
 	for walker in _walkers:
 		var distance := camera.global_position.distance_to(walker.global_position)
 		walker.set_shadows(distance < shadow_distance)
+	for vehicle in _vehicles:
+		var distance := camera.global_position.distance_to(vehicle.global_position)
+		vehicle.set_shadows(distance < shadow_distance * 1.5)

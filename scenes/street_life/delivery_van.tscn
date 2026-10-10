@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+; Der Lieferwagen (seit Etappe 5a): bringt die Kartons (DeliveryVan, Ablauf siehe Script).
+; Austauschbar: "Model" ist das Aussehen – hier der Platzhalter (DeliveryVanPlaceholder:
+; rundlich, Paket auf dem Dach, Schiebetür links). Eigenes Modell: "Model" löschen, die .glb
+; hineinziehen und "Model" nennen (Vorderseite nach +Z, Räder auf y = 0, etwa 3,6 m lang,
+; 1,76 m breit). Vorlage in echter Größe: assets/models/templates/street_life/delivery_van.glb.
+; door_point = Mitte der Tür (von dort hüpfen die Kartons hinaus). Soll sich die Tür des eigenen
+; Modells bewegen, braucht das Modell eine Methode open_door(auf, dauer) – sonst bleibt sie zu.
+; "Body" ist die Kollision.
+
+[ext_resource type="Script" path="res://scripts/street_life/delivery_van.gd" id="1_van"]
+[ext_resource type="Script" path="res://scripts/street_life/delivery_van_placeholder.gd" id="2_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_van"]
+size = Vector3(1.76, 2.0, 3.6)
+
+[node name="DeliveryVan" type="Node3D"]
+script = ExtResource("1_van")
+length = 3.6
+width = 1.76
+lane_offset = 1.25
+
+[node name="Body" type="AnimatableBody3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("BoxShape3D_van")
+
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("2_model")

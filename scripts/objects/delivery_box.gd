@@ -50,6 +50,23 @@ func move_to(target: Transform3D, duration: float, delay: float = 0.0, bounce: b
 		step.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
+## Der Karton hüpft in einem kleinen Bogen von "from" (Position, im Koordinatensystem des
+## Lieferorts – z. B. die Tür des Lieferwagens) an seinen Platz (seit Etappe 5a).
+func hop_from(from: Vector3, target: Transform3D, duration: float, height: float = 0.7) -> void:
+	if _move_tween:
+		_move_tween.kill()
+	var start := Transform3D(target.basis.rotated(Vector3.UP, 0.6), from)
+	transform = start
+	show()
+	_move_tween = create_tween()
+	_move_tween.tween_method(func(t: float) -> void:
+		var origin := start.origin.lerp(target.origin, t) + Vector3.UP * sin(t * PI) * height
+		transform = Transform3D(start.basis.slerp(target.basis, t), origin), 0.0, 1.0, duration) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_move_tween.tween_property(self, "scale", Vector3(1.08, 0.9, 1.08), 0.08)
+	_move_tween.tween_property(self, "scale", Vector3.ONE, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
 ## Legt den Inhalt ins Inventar und lässt den Karton sanft verschwinden.
 func unpack() -> void:
 	if not _interactable.is_enabled:

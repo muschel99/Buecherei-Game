@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+; Ein Auto (seit Etappe 5a). Austauschbar: "Model" ist das Aussehen – hier der Platzhalter
+; (CarPlaceholder, rundlich, Farbe aus GameConfig.car_colors). Eigenes Modell: "Model" löschen,
+; die .glb hineinziehen und "Model" nennen (Vorderseite nach +Z, Räder auf y = 0, etwa 3,5 m
+; lang und 1,6 m breit; sonst length/width am Knoten "Car" anpassen). "Body" ist die Kollision.
+
+[ext_resource type="Script" path="res://scripts/street_life/street_vehicle.gd" id="1_vehicle"]
+[ext_resource type="Script" path="res://scripts/street_life/car_placeholder.gd" id="2_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_car"]
+size = Vector3(1.6, 1.4, 3.5)
+
+[node name="Car" type="Node3D"]
+script = ExtResource("1_vehicle")
+length = 3.5
+width = 1.6
+lane_offset = 1.25
+
+[node name="Body" type="AnimatableBody3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+shape = SubResource("BoxShape3D_car")
+
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("2_model")

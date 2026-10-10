@@ -27,7 +27,7 @@ var _report := {
 	"appeared": 0, "vanished": 0, "appear_in_view": [], "vanish_in_view": [],
 	"appear_open": 0, "vanish_open": 0, "places": {},
 	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "vehicle_close": [],
-	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0,
+	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {},
 }
 var _track := {}  # Passant -> [letzte Stelle, Zeit seit Bewegung]
 var _spot_name := ""
@@ -82,6 +82,8 @@ func _run() -> void:
 			if int(time / STEP) % 90 == 0:
 				await get_tree().physics_frame
 		print("Stelle fertig: %s (%d unterwegs)" % [spot_name, _life.get_walkers().size()])
+	var manager := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
+	print("Kartons vor der Tür: %d, Bestellungen offen: %d" % [manager.get_box_count(), manager.get_order_count()])
 	_print_report()
 	get_tree().quit()
 
@@ -130,6 +132,9 @@ func _v3(p: Vector2, y: float) -> Vector3:
 
 func _on_appeared(who: Node3D, spot: Vector2) -> void:
 	_report.appeared += 1
+	if who is StreetVehicle:
+		var key := who.name.rstrip("0123456789")
+		_report.vehicles[key] = int(_report.vehicles.get(key, 0)) + 1
 	_count_place(spot, "+")
 	if _life.is_visible_spot(spot):
 		_report.appear_in_view.append("%s bei %s (Stelle %s)" % [who.name, spot, _spot_name])
@@ -189,7 +194,7 @@ func _measure() -> void:
 		for hit in space.intersect_shape(query, 4):
 			var collider := hit.collider as Node
 			if collider and collider.name != "Bounds":
-				_report.solid.append("%s in %s bei %s (%s)" % [a.name, collider.get_path(), a.pos, _spot_name])
+				_report.solid.append("%s in %s bei %s (%s): %s" % [a.name, collider.name, a.pos, _spot_name, a.debug_text()])
 		# Hängt jemand fest?
 		var track: Array = _track.get(a, [a.pos, 0.0])
 		if a.pos.distance_to(track[0]) > 0.4:
@@ -201,9 +206,28 @@ func _measure() -> void:
 				track = [a.pos, -1000.0]
 		_track[a] = track
 	for vehicle in _life.get_vehicles():
+		var vtrack: Array = _track.get(vehicle, [vehicle.pos, 0.0])
+		if vehicle.pos.distance_to(vtrack[0]) > 1.0:
+			vtrack = [vehicle.pos, 0.0]
+		else:
+			vtrack[1] = float(vtrack[1]) + SAMPLE
+			if float(vtrack[1]) > 30.0:
+				var waits := " – wartet vor der Spielfigur (richtig)" if _life.player_on_road() else ""
+				_report.stuck.append("seit 30 s: %s (%s)%s" % [vehicle.debug_text(), _spot_name, waits])
+				vtrack = [vehicle.pos, -1000.0]
+		_track[vehicle] = vtrack
 		for walker in walkers:
 			if vehicle.speed > 0.8 and vehicle.distance_to_walker(walker) < 0.5:
-				_report.vehicle_close.append("%s nah an %s (%s)" % [vehicle.name, walker.name, _spot_name])
+				_report.vehicle_close.append("%s (s=%.1f lat=%.2f %.1f m/s) nah an %s (%s, %s)" % [vehicle.name,
+					vehicle.get_s(), vehicle.get_lat(), vehicle.speed, walker.name, _spot_name, walker.debug_text()])
+		if vehicle.speed > 0.8:
+			var p := _life.player_pos()
+			var forward := Vector2(sin(vehicle.rotation.y), cos(vehicle.rotation.y))
+			var d := p - vehicle.pos
+			var dx := maxf(absf(d.dot(forward)) - vehicle.length / 2.0, 0.0)
+			var dy := maxf(absf(d.dot(Vector2(forward.y, -forward.x))) - vehicle.width / 2.0, 0.0)
+			if sqrt(dx * dx + dy * dy) < 0.45:
+				_report.vehicle_close.append("%s nah an der Spielfigur (%s, %.1f m/s)" % [vehicle.name, _spot_name, vehicle.speed])
 
 
 func _print_report() -> void:
@@ -217,6 +241,7 @@ func _print_report() -> void:
 	for line in _report.appear_in_view + _report.vanish_in_view:
 		print("  SICHTBAR: ", line)
 	print("Orte (+ erscheinen, - verschwinden): ", _report.places)
+	print("Fahrzeuge losgefahren: ", _report.vehicles)
 	print("Kleinster Abstand zwischen Passanten: %.2f m, zur Spielfigur: %.2f m" % [_report.min_walker_gap, _report.min_player_gap])
 	for key in ["overlap", "player_bump", "solid", "stuck", "vehicle_close"]:
 		var list: Array = _report[key]
