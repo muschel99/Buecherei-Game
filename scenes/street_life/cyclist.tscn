@@ -1,0 +1,33 @@
+[gd_scene format=3]
+
+; Ein Fahrrad mit Fahrerin oder Fahrer (seit Etappe 5a). Fährt nah am Bordstein und weicht
+; Hindernissen zur Straßenmitte hin aus (can_swerve). Austauschbar: "Model" ist das Aussehen –
+; hier der Platzhalter (CyclistPlaceholder, Beine treten in die Pedale). Eigenes Modell: "Model"
+; löschen, die .glb hineinziehen und "Model" nennen (Vorderseite nach +Z, Räder auf y = 0).
+; Hat das eigene Modell eine Tret-Animation, ihren Namen bei move_animation eintragen (siehe
+; docs/ASSET_GUIDE.md). "Body" ist die Kollision.
+
+[ext_resource type="Script" path="res://scripts/street_life/street_vehicle.gd" id="1_vehicle"]
+[ext_resource type="Script" path="res://scripts/street_life/cyclist_placeholder.gd" id="2_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bike"]
+size = Vector3(0.6, 1.7, 1.8)
+
+[node name="Cyclist" type="Node3D"]
+script = ExtResource("1_vehicle")
+length = 1.8
+width = 0.6
+lane_offset = 1.9
+can_swerve = true
+
+[node name="Body" type="AnimatableBody3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("BoxShape3D_bike")
+
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("2_model")

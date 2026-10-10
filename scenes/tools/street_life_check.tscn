@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+; Prüfwerkzeug für das Leben auf der Straße (Etappe 5a). Ohne Bildschirm starten:
+;   godot --headless --path . res://scenes/tools/street_life_check.tscn -- --seconds=40
+; Bericht in der Ausgabe (siehe scripts/tools/street_life_check.gd).
+
+[ext_resource type="Script" path="res://scripts/tools/street_life_check.gd" id="1_check"]
+
+[node name="StreetLifeCheck" type="Node"]
+script = ExtResource("1_check")

@@ -16,6 +16,16 @@ extends Node
 ##   --hud              Oberfläche (HUD) mit aufnehmen
 ##   --scene=res://…    andere Szene statt der Hauptszene laden (z. B. ein einzelnes Haus)
 ##   --list             nur die Gruppen und Blickpunkte auflisten
+##   --simulate=<sek>   Straßenleben vor den Bildern so viele Sekunden vorspulen (seit Etappe 5a)
+##   --seed=<zahl>      Zufall des Straßenlebens festlegen (gleiche Bilder bei jedem Lauf)
+##   --deliver=<n>      eine Testlieferung mit n Kartons bestellen (sofort fällig, Lieferwagen)
+##   --focus=<abstand>  statt der Blickpunkte: Nahaufnahme des Passanten, der dem Ziel des ersten
+##                      Blickpunkts am nächsten ist (aus so vielen Metern, schräg von vorn)
+##   --focus_vehicle    dasselbe für das nächste Fahrzeug (Fahrrad, Auto, Lieferwagen)
+##   --focus_cross      dasselbe für einen Passanten, der gerade über die Straße geht
+##   --stats            je Bild die Zeichenaufrufe und Objekte ausgeben (Leistung)
+##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
+##   --no_street_life   ohne Straßenleben (zum Vergleich)
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
 
 const MAIN_SCENE := "res://scenes/main.tscn"
@@ -26,10 +36,16 @@ const SETTLE_FRAMES := 12
 
 var _args := {}
 var _camera: Camera3D
+var _old_quality: Variant = null
 
 
 func _ready() -> void:
 	_args = _parse_args()
+	if _args.has("no_street_life"):
+		GameConfig.street_life_enabled = false
+	if _args.has("quality"):
+		_old_quality = Settings.get_value("graphics/quality")
+		Settings.set_value("graphics/quality", int(_args.quality))
 	if _args.has("list"):
 		for set_name in ScreenshotViews.all_sets():
 			print("%s: %s" % [set_name, ", ".join(ScreenshotViews.get_set(set_name).keys())])
@@ -38,6 +54,10 @@ func _ready() -> void:
 	var main: Node = (load(String(_args.get("scene", MAIN_SCENE))) as PackedScene).instantiate()
 	add_child(main)
 	_freeze_player(main)
+	# Zufall des Straßenlebens festlegen, bevor es die ersten Passanten verteilt
+	var life := main.get_node_or_null("Outside/StreetLife") as StreetLife
+	if life and _args.has("seed"):
+		life.seed_random(int(_args.seed))
 	_camera = Camera3D.new()
 	_camera.name = "TourCamera"
 	_camera.fov = float(_args.get("fov", GameConfig.camera_fov))
@@ -52,18 +72,26 @@ func _ready() -> void:
 
 func _run() -> void:
 	await _wait_frames(WARMUP_FRAMES)
+	await _prepare_street_life()
 	var out_dir := String(_args.get("out", ProjectSettings.globalize_path("res://screenshots")))
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	# Godot soll die Bilder im Projekt nicht importieren
 	if not FileAccess.file_exists(out_dir.path_join(".gdignore")):
 		FileAccess.open(out_dir.path_join(".gdignore"), FileAccess.WRITE)
 	var views := _collect_views()
+	if _args.has("focus"):
+		views = _focus_views(views)
 	for view_name in views:
 		var view: Dictionary = views[view_name]
 		_camera.global_position = view.pos
 		_camera.look_at(view.target, Vector3.UP)
 		_camera.fov = float(view.get("fov", _camera.fov))
 		await _wait_frames(SETTLE_FRAMES)
+		if _args.has("stats"):
+			print("Zeichenaufrufe %s: %d, Objekte: %d, Dreiecke: %d" % [view_name,
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME),
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)])
 		var image := get_viewport().get_texture().get_image()
 		var file := "%s-%s" % [_args.get("set", "free"), view_name]
 		if _args.has("tag"):
@@ -71,6 +99,8 @@ func _run() -> void:
 		var path := out_dir.path_join(file + ".png")
 		image.save_png(path)
 		print("Bild gespeichert: ", path)
+	if _old_quality != null:
+		Settings.set_value("graphics/quality", _old_quality)
 	get_tree().quit()
 
 
@@ -89,9 +119,73 @@ func _collect_views() -> Dictionary:
 	return views
 
 
+## Nahaufnahmen eines Passanten: von vorn, schräg und von der Seite.
+func _focus_views(views: Dictionary) -> Dictionary:
+	var life := get_tree().get_first_node_in_group(StreetLife.GROUP) as StreetLife
+	if life == null or views.is_empty():
+		return views
+	var target: Vector3 = views[views.keys()[0]].target
+	var best: Node3D = null
+	var candidates: Array = life.get_vehicles() if _args.has("focus_vehicle") else life.get_walkers()
+	if _args.has("focus_cross"):
+		candidates = life.get_walkers().filter(func(w: Passerby) -> bool: return w.on_road)
+	for who: Node3D in candidates:
+		if best == null or who.global_position.distance_to(target) < best.global_position.distance_to(target):
+			best = who
+	if best == null:
+		return views
+	var distance := float(_args.focus)
+	var chest := best.global_position + Vector3.UP * 1.2
+	var forward := best.global_basis.z.normalized()
+	var result := {}
+	for item in [["front", 0.0], ["half", 0.7], ["side", 1.57], ["back", 3.14]]:
+		var dir := forward.rotated(Vector3.UP, float(item[1]))
+		result["focus_" + item[0]] = {"pos": chest + dir * distance + Vector3.UP * 0.2, "target": chest}
+	print("Nahaufnahme: ", best.name)
+	return result
+
+
 func _vec(text: String) -> Vector3:
 	var n := text.split_floats(",")
 	return Vector3(n[0], n[1], n[2])
+
+
+## Straßenleben vorbereiten: Zufall festlegen, Testlieferung, vorspulen (in festen Schritten,
+## so schnell der Rechner kann). Die Kamera steht dabei am ersten Blickpunkt.
+func _prepare_street_life() -> void:
+	var life := get_tree().get_first_node_in_group(StreetLife.GROUP) as StreetLife
+	if life == null:
+		return
+	if _args.has("deliver"):
+		var manager := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
+		if manager:
+			var contents := [{"kind": "furniture", "id": "armchair_velvet", "count": int(_args.deliver)}]
+			manager.place_order(contents, 0.0)
+			for i in 3:
+				await get_tree().process_frame
+	var views := _collect_views()
+	if not views.is_empty():
+		var first: Dictionary = views[views.keys()[0]]
+		_camera.global_position = first.pos
+		_camera.look_at(first.target, Vector3.UP)
+	var seconds := float(_args.get("simulate", 0.0))
+	var step := 1.0 / 30.0
+	var done := 0.0
+	while done < seconds:
+		life.step(step)
+		done += step
+		# --focus_cross: anhalten, sobald jemand mitten auf der Fahrbahn ist
+		if _args.has("focus_cross") and life.get_walkers().any(func(w: Passerby) -> bool:
+				return w.on_road and absf(w.get_route().project(w.pos).y) < 1.0):
+			break
+		# Ab und zu ein Bild lang Luft holen (Physik, Kamera)
+		if int(done / step) % 60 == 0:
+			await get_tree().physics_frame
+	# Während der Aufnahmen steht alles still (gleiche Bilder bei jedem Lauf)
+	life.set_physics_process(false)
+	await get_tree().process_frame
+	for walker in life.get_walkers():
+		walker.step(0.0001)
 
 
 ## Spielfigur anhalten und ihre Kamera abgeben (sie bleibt sonst die aktive Kamera).

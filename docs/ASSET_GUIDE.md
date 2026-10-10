@@ -230,7 +230,8 @@ Armchair        (Wurzel-Knoten)
 6. Speichern mit **Strg+S**. Alle Exemplare im Raum ändern sich automatisch.
 
 ## Vorlagen zum Modellieren
-Für jedes Möbelstück, jeden Haustyp, das Gassenende und die Eingangstreppe gibt es eine
+Für jedes Möbelstück, jeden Haustyp, das Gassenende, die Eingangstreppe und (seit Etappe 5a)
+den Lieferwagen, das Auto, das Fahrrad und einen Passanten gibt es eine
 schlichte **Vorlage** als `.glb`-Datei – in echter Größe (1 Einheit = 1 Meter) und genau so
 gelegen wie im Spiel. Darauf (oder daneben) modellierst du dein eigenes Modell; dann passt es
 später ohne Verschieben oder Skalieren.
@@ -240,6 +241,7 @@ später ohne Verschieben oder Skalieren.
 | Möbel und Deko | `assets/models/templates/furniture/`     | Id des Möbelstücks, z. B. `armchair_velvet.glb` |
 | Häuser         | `assets/models/templates/houses/`        | Haustyp, z. B. `pub.glb`      |
 | Gassenende, Treppe | `assets/models/templates/world/`     | `alley_end.glb`, `entrance_steps.glb` |
+| Straßenleben   | `assets/models/templates/street_life/`   | `delivery_van.glb`, `car.glb`, `cyclist.glb`, `passerby.glb` |
 
 Der Ordner `templates` enthält eine leere Datei `.gdignore`: Godot zeigt ihn darum im
 Dateisystem-Fenster nicht an und lädt die Vorlagen nicht ins Spiel. Du öffnest sie über den
@@ -439,6 +441,80 @@ breit wie die schräge Wand (2,99 m) und reicht 1,54 m nach vorn (Podest 0,7 m +
 zum Gehweg (-0,5 m), vier gleich hohe Absätze à 12,5 cm. Die unsichtbare Rampe zum Laufen
 bleibt; dein Modell sollte deshalb ungefähr diese Form haben.
 Vorlage: `templates/world/entrance_steps.glb`.
+
+## Leben auf der Straße: eigene Passanten, Fahrzeuge und Lieferwagen
+Seit Etappe 5a sind draußen Passanten, Fahrräder, Autos und ein Lieferwagen unterwegs. Alle
+sind eigene Szenen in `scenes/street_life/` mit demselben Aufbau wie die Möbel:
+```
+Passerby / Car / Cyclist / DeliveryVan   (Wurzel-Knoten mit Script)
+├── Body    ← die Kollision (damit man nicht hindurchläuft) – bleibt
+└── Model   ← nur die Optik: hier kommt dein Modell hin
+```
+Für alle gilt: **Vorderseite nach +Z** (das ist die Vorderansicht in Blender, Ziffernblock
+**1**), **Füße bzw. Räder auf Höhe 0**, Ursprung in der Mitte. Vorlagen in echter Größe liegen
+in `assets/models/templates/street_life/` (siehe „Vorlagen zum Modellieren“).
+
+### Eigene Passanten (Figur mit Skelett und Animationen)
+Gedacht für Figuren wie die Quaternius-Grundkörper mit Skelett, dazu deine Frisuren und
+Kleidung. So geht's:
+1. **In Blender:** Körper, Frisur und Kleidung an dasselbe Skelett hängen (Kleidung und Haare
+   als Kinder des Skeletts bzw. mit Gewichten). Die Figur steht mit den Füßen auf dem Boden,
+   schaut nach vorn (Vorderansicht) und ist etwa 1,72 m groß – die Vorlage
+   `templates/street_life/passerby.glb` zeigt die Größe. Nötige Animationen: **Gehen** (als
+   Schleife), **Stehen** (als Schleife), gern auch **Umschauen** (Kopf nach links und rechts)
+   und **Ins-Schaufenster-Schauen**. Exportieren als **glTF Binary (.glb)** mit Animationen
+   nach `~/Buecherei-Game/assets/models/street_life/` (Ordner anlegen). Jede Kombination aus
+   Frisur und Kleidung ist eine eigene `.glb` (z. B. `passerby_anna.glb`, `passerby_ben.glb`).
+2. **Schleifen einstellen:** In Godot die `.glb` im Dateisystem-Fenster doppelklicken
+   („Erweiterte Importeinstellungen“). Links unter **Animation** die Gehen- und
+   Stehen-Animation anklicken und rechts **Loop Mode** auf **Linear** stellen, dann
+   **Neu importieren**.
+3. **Szene anlegen:** Im Dateisystem-Fenster `scenes/street_life/passerby.tscn` rechts anklicken
+   → **Duplizieren…** → Name z. B. `passerby_anna.tscn`. Die neue Szene doppelklicken.
+4. Den Knoten **Model** anklicken und löschen (Entf). Deine `.glb` aus dem Dateisystem auf den
+   obersten Knoten **Passerby** ziehen und den neuen Knoten in **Model** umbenennen (F2).
+5. Oben den Knoten **Passerby** anklicken. Im Inspektor unter **Animationen (eigene Figur)**
+   die Namen deiner Animationen eintragen (so, wie sie im AnimationPlayer deiner Figur heißen –
+   bei Quaternius z. B. `Walk_Loop`, `Idle_Loop`): **Walk Animation**, **Idle Animation**,
+   **Look Animation** (Umschauen, leer = Stehen), **Browse Animation** (Schaufenster, leer =
+   Stehen). **Walk Animation Speed** = das Tempo (m/s), bei dem die Füße beim Gehen genau
+   passen (ausprobieren: rutschen die Füße nach vorn, Zahl kleiner machen). Schaut die Figur
+   rückwärts, **Model Faces Back** einschalten.
+6. Speichern (**Strg+S**). Dann in `scripts/autoload/game_config.gd` die Szene in die Liste
+   eintragen, z. B.
+   `var passerby_scenes: Array[String] = ["res://scenes/street_life/passerby_anna.tscn", "res://scenes/street_life/passerby_ben.tscn"]`.
+   Mehrere Szenen wechseln sich ab; den Platzhalter einfach aus der Liste nehmen.
+7. Die Größe schwankt leicht von selbst (`GameConfig.passerby_height_range`). Ist deine Figur
+   viel größer oder kleiner als 1,7 m, im Knoten **Body > CollisionShape3D** die Höhe anpassen.
+
+Schatten und Leistung regelt das Spiel selbst: Figuren werfen nur in der Nähe Schatten. Weit
+entfernte Figuren vereinfacht Godot beim Import automatisch (LOD).
+
+### Eigene Autos und Fahrräder
+Szenen `scenes/street_life/car.tscn` und `cyclist.tscn`: wie oben **Model** löschen, deine
+`.glb` hineinziehen und **Model** nennen. Ist das Fahrzeug deutlich länger oder breiter als die
+Vorlage, oben am Wurzel-Knoten **Length** und **Width** anpassen (damit es richtig bremst) und
+die Kiste in **Body > CollisionShape3D**. Die Platzhalter-Autos bekommen ihre Farbe aus
+`GameConfig.car_colors` – ein eigenes Modell behält seine eigenen Farben (für mehrere Farben
+mehrere Auto-Szenen anlegen und in `GameConfig.car_scene` die gewünschte eintragen). Hat dein
+Fahrrad-Modell eine Tret-Animation, ihren Namen bei **Move Animation** eintragen und bei
+**Move Animation Speed** das passende Tempo.
+
+### Eigener Lieferwagen
+Szene `scenes/street_life/delivery_van.tscn`, Vorlage `templates/street_life/delivery_van.glb`
+(3,6 m lang, 1,76 m breit, etwa 2,3 m hoch mit dem Paket auf dem Dach). Die Schiebetür sitzt
+auf der **linken** Seite (vom Fahrer aus gesehen; in der Vorlage auf +X) – das ist die Seite zum
+Gehweg, denn in England fährt man links. Modelliere die Tür als **eigenes Teil** und nenne es in
+Blender **Door**: Dann gleitet sie beim Ausladen von selbst nach hinten (wie weit: **Door Slide**
+am Knoten **DeliveryVan**). Aus der Mitte der Tür (**Door Point**) hüpfen die Kartons heraus.
+Model ersetzen wie oben.
+
+### Wo Passanten stehen bleiben
+Vor den Schaufenstern der Haustypen in `GameConfig.passerby_window_house_types` (Modegeschäft,
+Pub) bleiben Passanten von selbst stehen. Weitere Stellen (z. B. vor dem Fenster der Bücherei)
+sind Punkte in der Hauptszene unter **Outside → StreetLife → WindowSpots**: einen Punkt
+anklicken und verschieben, mit Strg+D verdoppeln. Der blaue Pfeil zeigt vom Fenster weg (der
+Passant schaut in die Gegenrichtung).
 
 ## Farben und Texturen von Wänden und Böden
 Die Materialien liegen in `assets/materials/` (z. B. `wall_plaster.tres`, `floor_wood.tres`).

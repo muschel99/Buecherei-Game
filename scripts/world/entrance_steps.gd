@@ -14,6 +14,7 @@ extends Node3D
 ## Stufenkanten läuft – so geht es weich hinauf und hinunter, ohne Hängenbleiben.
 ## Eigenes Modell: Einen Knoten "Model" (z. B. eine .glb-Szene) als Kind anlegen – dann baut
 ## das Script keine Platzhalter-Stufen, die Rampe (Kollision) bleibt.
+## Passanten gehen um die Treppe herum (StreetObstacle-Kreise, seit Etappe 5a).
 
 @export var material: Material = preload("res://assets/materials/curb_stone.tres")
 
@@ -44,6 +45,26 @@ func _ready() -> void:
 			builder.add_quad(Vector3(-w, bottom, 0), Vector3(w, bottom, 0), Vector3(w, top, 0), Vector3(-w, top, 0), Vector3.FORWARD, color)
 		add_child(builder.make_instance("Steps", material))
 	_build_ramp(count, tread, side, total, half_width, depth)
+	_add_street_obstacles(half_width + count * side, depth + count * tread)
+
+
+## Passanten gehen um die Treppe herum (seit Etappe 5a): Kreise entlang der Vorderkante und
+## der Seiten (StreetObstacle), die zusammen die ganze Treppe abdecken.
+func _add_street_obstacles(half: float, reach: float) -> void:
+	var r := 0.42
+	var spots: Array[Vector2] = []
+	var count := maxi(2, ceili((half - r) * 2.0 / 0.7) + 1)
+	for i in count:
+		spots.append(Vector2(lerpf(-half + r, half - r, float(i) / (count - 1)), reach - r))
+	for x in [-half + r, half - r]:
+		spots.append(Vector2(x, r))
+		spots.append(Vector2(x, (r + reach - r) / 2.0))
+	for spot in spots:
+		var obstacle := StreetObstacle.new()
+		obstacle.name = "StreetObstacle"
+		obstacle.radius = r
+		obstacle.position = Vector3(spot.x, 0.0, spot.y)
+		add_child(obstacle)
 
 
 ## Unsichtbare Rampe: unten eine Stufe vor der untersten Kante, oben das Podest. Sie berührt

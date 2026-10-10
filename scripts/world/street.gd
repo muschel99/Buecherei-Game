@@ -16,8 +16,8 @@ extends Node3D
 ##   unter dem Bogen des Torhauses sind die Gehwege schmaler, dahinter gate_sidewalk_width),
 ## - unsichtbare, weiche Grenzen: im Bogen des Torhauses quer über die Durchfahrt, am geraden
 ##   Ende quer über Straße und Gehwege (GameConfig.straight_bound_offset hinter den Nachbarhäusern),
-## - unsichtbare Start- und Endpunkte für spätere Autos, Radfahrer und Fußgänger
-##   (Knoten "TrafficPoints", Gruppe "traffic_points"; noch fährt und läuft dort niemand).
+## - unsichtbare Start- und Endpunkte für Autos, Radfahrer und Fußgänger
+##   (Knoten "TrafficPoints", Gruppe "traffic_points"; benutzt von StreetLife, seit Etappe 5a).
 
 const TRAFFIC_GROUP := "traffic_points"
 ## Breite der hellen Bordsteinkante oben auf dem Gehweg.
@@ -209,9 +209,11 @@ func _add_bound(body: StaticBody3D, a: Vector2, b: Vector2) -> void:
 		body.add_child(cap)
 
 
-## Unsichtbare Start- und Endpunkte für späteren Verkehr, außer Sicht am Ende beider
-## Straßenenden (hinter der Kurve bzw. hinter dem Torhaus).
-## Name = wer dort startet/endet; Metadaten "kind" = "car", "bike" oder "walker".
+## Unsichtbare Start- und Endpunkte für den Verkehr (StreetLife, seit Etappe 5a), außer Sicht
+## am Ende beider Straßenenden (hinter der Kurve bzw. hinter dem Torhaus).
+## Name = wer dort startet/endet; Metadaten "kind" = "car", "bike" oder "walker", "place" =
+## "east" oder "west" (Ende der Straße). Die Gassen tragen ihre eigenen Punkte bei (Alley,
+## OppositeAlley: "place" = "alley" bzw. "opposite_alley").
 func _build_traffic_points() -> void:
 	var root := Node3D.new()
 	root.name = "TrafficPoints"
@@ -240,5 +242,6 @@ func _build_traffic_points() -> void:
 			marker.name = point_name
 			marker.position = Vector3(p.x, spot[2], p.y)
 			marker.set_meta("kind", spot[0])
+			marker.set_meta("place", "east" if side > 0 else "west")
 			marker.add_to_group(TRAFFIC_GROUP)
 			root.add_child(marker)

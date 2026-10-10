@@ -94,9 +94,23 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   vor dem vorderen Schaufenster (abseits der Eingangstür, damit der Eingang frei bleibt) –
   **ein Karton pro Objekt** (drei Stühle und eine Lampe = vier Kartons) –,
   und ein dezenter Hinweis erscheint: „Lieferung ist da“.
+  - **Lieferwagen (seit Etappe 5a):** Die Kartons bringt ein kleiner, rundlicher Lieferwagen
+    (mintgrün, große runde Scheinwerfer, ein kleines Lächeln vorn, ein Paket auf dem Dach). Ist
+    eine Bestellung fällig, kommt er vom geraden Straßenende herangefahren, hält dicht am
+    Bordstein vor der Bücherei, schiebt seine Seitentür auf, und die Kartons hüpfen einer nach
+    dem anderen in einem kleinen Bogen an ihren Platz. Mit dem ersten Karton erscheint der
+    Hinweis „Lieferung ist da“. Dann schließt er die Tür, fährt weiter und verschwindet hinter
+    dem Torhaus. Steht dort, wo ein Karton hinkommen soll, gerade die Spielfigur oder ein
+    Passant, kommt er auf den nächsten freien Platz; ist alles besetzt, wartet der Wagen kurz.
+    Steht die Spielfigur auf der Fahrbahn, hält er davor an. Was während seiner Fahrt fällig
+    wird, bringt er bei der nächsten Fahrt. Was gerade im Wagen ist, wird mitgespeichert und
+    nach dem Laden noch einmal gebracht. Ohne Straßenleben (`GameConfig.street_life_enabled`)
+    erscheinen die Kartons wie früher direkt.
   - Die Kartons stapeln sich ordentlich: erst nebeneinander an der Hauswand (4 Stapel), dann
-    bis zu 3 übereinander, dann eine Reihe davor. Jeder steht leicht schief, keiner steckt im
-    anderen. Auch mehrere Bestellungen stapeln sich so weiter; neue Kartons füllen Lücken.
+    bis zu 3 übereinander, dann eine Reihe davor (seit Etappe 5a höchstens zwei Reihen, damit
+    auf dem Gehweg immer ein Durchgang bleibt; danach geht es in die Höhe). Jeder steht leicht
+    schief, keiner steckt im anderen. Auch mehrere Bestellungen stapeln sich so weiter; neue
+    Kartons füllen Lücken.
   - E auf einen Karton – von jeder Seite und auch von oben: Der Inhalt wandert direkt ins
     Inventar, der Karton hebt sich, dreht sich und schrumpft sanft weg. Wird ein unterer Karton
     eingesammelt, rutschen die oberen nach. Es reagiert immer der Karton, den man ansieht.
@@ -706,9 +720,10 @@ Zwei Zustände:
     einer Mauer mit Holztor, dahinter steht ein Haus (derselbe Abschluss wie bei der Gasse
     neben der Bücherei). Lage und Maße: `GameConfig.opposite_alley_x`, `opposite_alley_width`,
     `opposite_alley_depth`.
-  - An beiden Enden liegen außer Sicht unsichtbare Start- und Endpunkte für spätere Autos,
-    Radfahrer und Fußgänger – am geraden Ende in der Seitenstraße hinter der Kurve, am anderen
-    Ende hinter der Kurve hinter dem Torhaus. Noch fährt und läuft dort niemand.
+  - An beiden Enden liegen außer Sicht unsichtbare Start- und Endpunkte für Autos, Radfahrer
+    und Fußgänger – am geraden Ende in der Seitenstraße hinter der Kurve, am anderen Ende hinter
+    der Kurve hinter dem Torhaus; dazu je ein Punkt vor dem Tor am Ende der beiden Gassen. Seit
+    Etappe 5a ist dort Leben (siehe „Leben auf der Straße“).
 - **Häuserreihe, Gasse und Platz (seit Etappe 4d):** Auf der Bücherei-Seite stehen von der
   Straße aus gesehen: Haus, Haus, Bücherei, Gasse, Haus, Haus (danach geht die Reihe an
   beiden Enden weiter bis in die Kurven). Die Gasse liegt an der Seite mit
@@ -759,6 +774,67 @@ Zwei Zustände:
   Etappe 4a grundlegend geändert hat, wurde die Speicher-Version erhöht (`SaveManager`, jetzt
   Version 2): Ein alter Spielstand (Version 1) passt nicht mehr und wird beim Laden ignoriert –
   es beginnt automatisch ein frisches Spiel, ohne dass ich etwas löschen muss.
+
+## Leben auf der Straße (seit Etappe 5a)
+Bevor Besucher in die Bücherei kommen, wird die Straße lebendig – ruhig und gemütlich, keine
+volle Innenstadt: etwa acht Passanten auf der ganzen Straße, ab und zu ein Fahrrad, ein, zwei
+Autos und der Lieferwagen. Alle Mengen, Tempi und Häufigkeiten stehen in GameConfig (Abschnitt
+„Leben auf der Straße“); `street_activity` stellt alles zusammen ruhiger oder belebter.
+Einen Tag-Nacht-Wechsel gibt es noch nicht – die Menge bleibt gleich, kann aber später von der
+Tageszeit abhängen (`StreetLife.activity()`).
+- **Grundregel: Niemand erscheint oder verschwindet sichtbar.** Passanten, Räder und Autos
+  tauchen nur an festen Orten auf und verschwinden nur dort, wo man es nicht sehen kann: hinter
+  der runden Kurve am geraden Straßenende, hinter der Kurve hinter dem Torhaus und vor dem Tor am
+  Ende der beiden Gassen. Zusätzlich wird jedes Mal geprüft, ob der Ort gerade im Blickfeld liegt
+  (im Bild – mit etwas Rand – und nicht von einem Haus verdeckt; durch Fenster und den Torbogen
+  sieht man hindurch). Ist er zu sehen, wartet das Erscheinen; wer verschwinden will, geht noch
+  ein Stück weiter bzw. bleibt am Gassentor stehen, bis niemand hinsieht. Geprüft mit einem
+  Prüfwerkzeug (Spielfigur an allen erreichbaren Stellen, Kamera rundherum, viele Minuten
+  vorgespult): kein einziges Erscheinen oder Verschwinden im Blickfeld.
+- **Passanten** gehen auf beiden Gehwegen in beide Richtungen, jeder in eigenem Tempo und auf
+  seiner Lieblingsseite des Gehwegs. Sie weichen einander aus (Entgegenkommenden nach links, wie
+  man in England geht), ebenso der Spielfigur, der Eingangstreppe und den Kartons; ist kein
+  Platz, warten sie geduldig. Sie laufen nie in die Spielfigur hinein, und die Spielfigur bleibt
+  nie an ihnen hängen (sie haben eine runde Kollision; leicht versetzt gleitet man vorbei).
+  Versperrt die Spielfigur lange einen schmalen Weg (z. B. in der Gasse), dreht der Passant nach
+  ein paar Sekunden um. Die Gehwege passen sich beim Start genau an die Häuser an (auch an
+  eigene Haus-Modelle); unter dem schmalen Torbogen gehen sie dicht an der Wand.
+  - Manchmal gehen sie über die Straße: an den Bordstein, nach links und rechts schauen, warten,
+    bis kein Fahrzeug kommt, dann hinüber (nur auf dem geraden Mittelstück, wo man sie sieht).
+  - Manchmal bleiben sie vor einem Schaufenster stehen und schauen hinein: vor dem Modegeschäft,
+    dem Pub und dem Fenster der Bücherei. Stehen dort Kartons, schauen sie von etwas weiter weg –
+    oder lassen das Fenster aus.
+  - Manche kommen aus einer der beiden Gassen oder biegen in eine Gasse ein und verschwinden dort
+    außer Sicht.
+  - In die Bücherei gehen sie noch nicht. Die Wege sind aber dafür gebaut: Kommt ein Passant vor
+    der Bücherei vorbei, meldet er das (`StreetLife.passing_library`), und vor der Treppe liegt
+    ein fester Punkt (`StreetPaths.library_entrance()`) – dort setzt der nächste Schritt an.
+  - Aussehen: Platzhalter mit angedeuteter Form – Kopf mit Augen, Nase und Frisur (kurz, lang,
+    Dutt, lockig, fast keine; manchmal ein Hut), Körper (manchmal Mantel oder Umhängetasche),
+    Arme und Beine mit leichter Laufbewegung; jede Figur in eigenen, ruhigen Farben und etwas
+    anderer Größe. Eigene Figuren mit Skelett und Animationen (Gehen, Stehen, Umschauen) lassen
+    sich einsetzen (docs/ASSET_GUIDE.md, „Eigene Passanten“).
+- **Fahrräder** fahren in beide Richtungen durch, ohne anzuhalten: nah am Bordstein, um
+  Hindernisse fahren sie langsam außen herum (nur wenn die Gegenspur frei ist, sonst bremsen sie).
+  Platzhalter: Rad mit Korb, Fahrerin oder Fahrer tritt in die Pedale.
+- **Autos:** höchstens zwei, gelegentlich. Sie fahren links (wie in England), bremsen weich für
+  Fußgänger auf der Fahrbahn und für die Spielfigur, wenn sie auf der Fahrbahn steht, und warten,
+  bis frei ist – sie fahren nie jemanden um. Unter dem Torbogen fahren alle Fahrzeuge langsam und
+  etwas zur Mitte hin. Damit niemand überholen muss, fährt in jeder Richtung nur dann ein neues
+  Fahrzeug los, wenn es kein langsameres einholen würde. Platzhalter: kleines, rundliches Auto
+  in sanften Farben.
+- **Leistung:** Alle Figuren und Fahrzeuge entstehen beim Start und werden nur ein- und
+  ausgeblendet – kein Zuckeln, wenn jemand erscheint. Alle teilen sich ein Material; ein Auto ist
+  ein einziges Teil. Schatten nur in der Nähe (Niedrig: keine; Mittel: bis 12 m, als einfacher
+  Schatten in Grundhaltung; Hoch: bis 20 m, bis 8 m mit bewegten Armen und Beinen;
+  `graphics_presets`, „street_shadow_distance“, „street_shadow_detail“), weiter als 28 m zeigt
+  eine Figur nur noch eine vereinfachte Form ohne Bewegung. Gemessen (vier Blicke auf die
+  Straße, mit fahrendem Lieferwagen): Niedrig etwa 11–16 Zeichenaufrufe mehr als ohne
+  Straßenleben, Mittel etwa 15–26, Hoch etwa 35–42 (rund 5–10 %).
+  Unter dem engen Torbogen fahren Räder und Autos langsam; an Fußgängern, die dort am Rand der
+  Fahrbahn gehen, kommen Räder mit gut 30 cm Abstand im Schritttempo vorbei.
+- **Speichern:** Draußen wird nichts gespeichert – außer dem, was für eine laufende Lieferung
+  nötig ist (Bestellungen und was gerade im Lieferwagen ist).
 
 ## Einstellungen
 - Im Pausenmenü unter „Einstellungen“: Fenster oder Vollbild, Auflösung (gängige Auflösungen

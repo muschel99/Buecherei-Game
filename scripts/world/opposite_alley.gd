@@ -30,3 +30,13 @@ func _ready() -> void:
 		closing.position = Vector3((span.x + span.y) / 2.0, 0.0, end)
 		closing.rotation.y = PI  # Mauer hinter dem Ende, Vorderseite zur Gasse (+Z)
 		add_child(closing)
+	# Fester Punkt vor dem Tor: Hier erscheinen und verschwinden Passanten (StreetLife, seit
+	# Etappe 5a) – nur, wenn es gerade niemand sieht
+	var spot := StreetPaths.opposite_alley_points()[0]
+	var marker := Marker3D.new()
+	marker.name = "TrafficPoint"
+	marker.position = Vector3(spot.x, 0.0, spot.y)
+	marker.set_meta("kind", "walker")
+	marker.set_meta("place", "opposite_alley")
+	marker.add_to_group(Street.TRAFFIC_GROUP)
+	add_child(marker)

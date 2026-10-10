@@ -7,7 +7,8 @@ extends Node3D
 ## Solange kein Knoten "Model" in der Szene liegt, baut das Script einen schlichten Platzhalter:
 ## Hauskörper mit Fenstern, Tür, Sockel und Satteldach (First parallel zur Straße), auf Wunsch
 ## mit Schornstein, Ladenfront (große Schaufenster, Schild), Markise oder Vordach.
-## Die Kollision (ein Kasten so groß wie der Hauskörper) baut es immer – auch mit eigenem Modell.
+## Die Kollision (ein Kasten so groß wie der Hauskörper) baut es immer – auch mit eigenem Modell;
+## bei Häusern, an die man nicht herankommt (solid aus), nur als Sichtblocker.
 ## Das Script läuft auch im Editor (@tool): Man sieht die Häuser dort, wie im Spiel.
 ##
 ## Ursprung: unten in der Mitte der Vorderseite (auf Gehweg-Höhe). Die Vorderseite zeigt nach
@@ -110,13 +111,19 @@ enum GroundFloor {
 	set(value):
 		casts_shadow = value
 		_apply_colors()
-## Hat das Haus eine feste Kollision? (Nur nötig, wo man hinkommt.)
+## Hat das Haus eine feste Kollision? (Nur nötig, wo man hinkommt.) Ohne feste Kollision
+## bekommt es trotzdem einen unsichtbaren Sichtblocker (Ebene "sight_blocker", seit Etappe 5a):
+## Daran erkennt das Leben auf der Straße (StreetLife), was man von wo aus sehen kann.
 @export var solid: bool = true:
 	set(value):
 		solid = value
 		_queue_rebuild()
 
 @export var material: Material = preload("res://assets/materials/house_facade.tres")
+
+## Physik-Ebenen: "world" (fest) und "sight_blocker" (verdeckt nur die Sicht, seit Etappe 5a)
+const WORLD_LAYER := 1
+const SIGHT_BLOCKER_LAYER := 128
 
 const WINDOW_WIDTH := 0.95
 const WINDOW_HEIGHT := 1.45
@@ -183,8 +190,7 @@ func _rebuild() -> void:
 			old.queue_free()
 	_placeholder = null
 	_body = null
-	if solid:
-		_build_collision()
+	_build_collision()
 	var model := get_node_or_null("Model")
 	if model == null or model.is_queued_for_deletion():
 		_placeholder = MeshInstance3D.new()
@@ -208,7 +214,7 @@ func _apply_colors() -> void:
 func _build_collision() -> void:
 	_body = StaticBody3D.new()
 	_body.name = "Body"
-	_body.collision_layer = 1  # Ebene "world"
+	_body.collision_layer = _collision_layer()
 	_body.collision_mask = 0
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(width, eaves_height, depth)
@@ -217,6 +223,11 @@ func _build_collision() -> void:
 	collision.position = Vector3(0.0, eaves_height / 2.0, -depth / 2.0)
 	_body.add_child(collision)
 	add_child(_body)
+
+
+## Fest (Ebene "world") oder nur Sichtblocker (Ebene "sight_blocker"), siehe solid.
+func _collision_layer() -> int:
+	return WORLD_LAYER if solid else SIGHT_BLOCKER_LAYER
 
 
 ## Alle Häuser mit denselben Maßen teilen sich ein Mesh.

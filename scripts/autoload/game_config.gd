@@ -211,6 +211,74 @@ var terrace_house_types: Array[String] = ["terrace_50", "terrace_45", "terrace_5
 var house_shadow_distance: float = 14.0
 
 
+# --- Leben auf der Straße (Etappe 5a) ---
+# Passanten, Fahrräder, Autos und der Lieferwagen (scripts/street_life/, Knoten
+# "Outside/StreetLife"). Grundregel: Niemand erscheint oder verschwindet sichtbar – nur an
+# festen Orten außer Sicht und nur, wenn man gerade nicht hinsieht. Startwerte: ruhig und
+# gemütlich, keine volle Innenstadt. Draußen wird nichts gespeichert (außer der laufenden
+# Lieferung).
+
+## Straßenleben ein- oder ausschalten (aus = leere Straße, die Kartons kommen wie früher ohne
+## Lieferwagen).
+var street_life_enabled: bool = true
+## Wie belebt die Straße ist (1 = normal, 0.5 = halb so viele, 2 = doppelt so viele). Gilt für
+## Passanten, Fahrräder und Autos. Später hängt das zusätzlich von der Tageszeit ab
+## (StreetLife.activity()).
+var street_activity: float = 1.0
+
+## So viele Passanten sind höchstens gleichzeitig unterwegs (auf der ganzen Straße).
+var passerby_count: int = 8
+## Abstand zwischen zwei neuen Passanten (Sekunden, zufällig zwischen den beiden Werten).
+var passerby_spawn_interval: Vector2 = Vector2(4.0, 11.0)
+## Gehtempo (m/s, jeder Passant zufällig dazwischen; die Spielfigur geht 2,6).
+var passerby_speed_range: Vector2 = Vector2(0.95, 1.45)
+## Größe der Passanten (1 = 1,72 m, jeder zufällig dazwischen).
+var passerby_height_range: Vector2 = Vector2(0.92, 1.08)
+## Wie oft jemand vor einem Schaufenster stehen bleibt (0 = nie, 1 = jeder, der vorbeikommt)
+## und wie lange (Sekunden, zufällig dazwischen).
+var passerby_window_chance: float = 0.3
+var passerby_window_time: Vector2 = Vector2(3.0, 8.0)
+## Wie oft jemand über die Straße geht (0 = nie, 1 = jeder).
+var passerby_cross_chance: float = 0.3
+## Wie oft jemand aus einer Gasse kommt bzw. in eine Gasse geht (0 = nie, 1 = jeder).
+var passerby_alley_chance: float = 0.2
+## Vor den Schaufenstern dieser Haustypen bleiben Passanten stehen (dazu die Punkte unter
+## "Outside/StreetLife/WindowSpots" in der Hauptszene, z. B. vor dem Fenster der Bücherei).
+var passerby_window_house_types: Array[String] = ["fashion_shop", "pub"]
+## Szenen der Passanten (eigene Figuren hier eintragen, mehrere = abwechselnd; siehe
+## docs/ASSET_GUIDE.md, „Eigene Passanten“).
+var passerby_scenes: Array[String] = ["res://scenes/street_life/passerby.tscn"]
+
+## Fahrräder: So viele Sekunden (zufällig dazwischen) vergehen zwischen zwei Fahrrädern, und so
+## schnell fahren sie (m/s).
+var bike_interval: Vector2 = Vector2(25.0, 70.0)
+var bike_speed_range: Vector2 = Vector2(3.4, 4.6)
+## Autos: höchstens so viele gleichzeitig, Abstand zwischen zwei Autos (Sekunden) und Tempo (m/s).
+var car_count: int = 2
+var car_interval: Vector2 = Vector2(30.0, 90.0)
+var car_speed: float = 6.0
+## Farben der Autos (je Auto zufällig eine).
+var car_colors: Array[Color] = [Color(0.55, 0.68, 0.62), Color(0.78, 0.36, 0.3), Color(0.86, 0.8, 0.62),
+	Color(0.36, 0.44, 0.58), Color(0.92, 0.9, 0.84), Color(0.42, 0.32, 0.28)]
+## Szenen der Fahrzeuge (austauschbar, Anleitung in docs/ASSET_GUIDE.md).
+var bike_scene: String = "res://scenes/street_life/cyclist.tscn"
+var car_scene: String = "res://scenes/street_life/car.tscn"
+
+## Lieferwagen: Tempo (m/s), Abstand der Kartons beim Ausladen (Sekunden) und Farbe.
+var delivery_van_speed: float = 4.5
+var delivery_unload_interval: float = 0.55
+var delivery_van_color: Color = Color(0.56, 0.74, 0.7)
+var delivery_van_scene: String = "res://scenes/street_life/delivery_van.tscn"
+
+## Ab dieser Entfernung (Meter) zeigen Figuren und Fahrzeuge nur noch eine vereinfachte Form
+## ohne Bewegung. Schatten werfen sie nur in der Nähe (je Grafikstufe: graphics_presets,
+## "street_shadow_distance").
+var street_detail_distance: float = 28.0
+## Rand um das Bild (in Grad), der für die Sichtprüfung noch als „sichtbar“ zählt – so
+## erscheint auch knapp neben dem Bildrand niemand (z. B. beim schnellen Umdrehen).
+var street_view_margin: float = 12.0
+
+
 # --- Gestaltungsmodus (Etappe 2) ---
 
 ## Kantenlänge eines Rasterfelds in Metern. Mit eingeschaltetem Einrasten (G)
@@ -384,16 +452,23 @@ var autosave_delay: float = 1.5
 ##                   Die Übergänge werden immer weich überblendet (sonst Linie im Fensterlicht).
 ##   dust_amount     Anteil der Staubteilchen im Lichtstrahl (1 = alle)
 ##   render_scale    Auflösung der 3D-Ansicht (1 = voll, 0.8 = etwas weicher, schneller)
+##   street_shadow_distance  Passanten und Fahrzeuge werfen nur bis zu dieser Entfernung
+##                   Schatten (Meter, 0 = nie; seit Etappe 5a)
+##   street_shadow_detail  Bis zu dieser Entfernung (Meter) werfen Passanten Schatten mit bewegten
+##                   Armen und Beinen, weiter weg einen einfachen in Grundhaltung (viel günstiger)
 var graphics_presets: Array[Dictionary] = [
 	{"ssao": false, "ssao_half_size": true, "ssil": false, "volumetric_fog": false, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 1024, "sun_shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 0,
-		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8},
+		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8,
+		"street_shadow_distance": 0.0, "street_shadow_detail": 0.0},
 	{"ssao": true, "ssao_half_size": true, "ssil": false, "volumetric_fog": true, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 2048, "sun_shadow_size": 2048, "soft_shadows": 2, "lamp_shadows": 1,
-		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0},
+		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
+		"street_shadow_distance": 12.0, "street_shadow_detail": 0.0},
 	{"ssao": true, "ssao_half_size": false, "ssil": true, "volumetric_fog": true, "fog_volume_size": 64,
 		"msaa": 2, "fxaa": false, "shadow_size": 4096, "sun_shadow_size": 4096, "soft_shadows": 3, "lamp_shadows": 2,
-		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0},
+		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
+		"street_shadow_distance": 20.0, "street_shadow_detail": 8.0},
 ]
 ## Bis zu dieser Entfernung (in Metern) wirft die Sonne Schatten. Der Raum ist 8 m tief –
 ## 20 m reichen auch für den Blick von der Gasse. Kleiner = schärfere Schatten in der Nähe.

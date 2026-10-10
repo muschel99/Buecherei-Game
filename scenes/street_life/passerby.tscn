@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+; Ein Passant (seit Etappe 5a). Austauschbar: "Model" ist die Figur – hier der Platzhalter
+; (PasserbyPlaceholder: Kopf, Körper, Arme, Beine, eigene Farben und Größe). Eigene Figur:
+; "Model" löschen, die .glb-Figur hineinziehen und "Model" nennen (Füße auf y = 0, Blick nach +Z);
+; Namen der Animationen im Inspektor am Knoten "Passerby" eintragen. Anleitung:
+; docs/ASSET_GUIDE.md, „Eigene Passanten“. "Body" ist die Kollision (Ebene street_life), damit
+; die Spielfigur nicht hindurchläuft.
+
+[ext_resource type="Script" path="res://scripts/street_life/passerby.gd" id="1_passerby"]
+[ext_resource type="Script" path="res://scripts/street_life/passerby_placeholder.gd" id="2_placeholder"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.24
+height = 1.7
+
+[node name="Passerby" type="Node3D"]
+script = ExtResource("1_passerby")
+
+[node name="Body" type="AnimatableBody3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("2_placeholder")
