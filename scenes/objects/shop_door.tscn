@@ -14,7 +14,7 @@
 
 [ext_resource type="Script" path="res://scripts/objects/door.gd" id="1_door"]
 [ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="2_interactable"]
-[ext_resource type="Material" path="res://assets/materials/paint_white.tres" id="3_paint"]
+[ext_resource type="Material" path="res://assets/materials/library_joinery.tres" id="3_paint"]
 [ext_resource type="Material" path="res://assets/materials/glass.tres" id="4_glass"]
 [ext_resource type="Material" path="res://assets/materials/door_paint.tres" id="5_leaf"]
 [ext_resource type="Material" path="res://assets/materials/brass.tres" id="6_brass"]

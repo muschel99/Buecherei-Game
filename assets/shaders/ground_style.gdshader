@@ -11,6 +11,10 @@ uniform int layer = 13;
 uniform float tile_size = 1.8;
 // Farbe: färbt die ganze Fläche (1 = wie die Textur)
 uniform vec4 tint : source_color = vec4(1.0);
+// Farbe nur für die einfärbbaren Stellen der Textur (z. B. Ziegel, nicht die Fugen) – wie bei den
+// Häusern (house_style.gdshader); Weiß = unverändert
+uniform vec4 stone_tint : source_color = vec4(1.0);
+uniform float tint_gain = 1.0;
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.9;
 uniform float normal_strength : hint_range(0.0, 2.0) = 1.0;
 // Drehung des Musters um 90° (z. B. damit Pflasterreihen quer zur Fahrbahn liegen)
@@ -35,7 +39,8 @@ void fragment() {
 		uv = vec2(world_pos.x, world_pos.y);
 	}
 	vec3 uvw = vec3(uv / tile_size, float(layer));
-	ALBEDO = texture(albedo_layers, uvw).rgb * tint.rgb;
+	vec4 tex = texture(albedo_layers, uvw);
+	ALBEDO = mix(tex.rgb, tex.rgb * stone_tint.rgb * tint_gain, tex.a) * tint.rgb;
 	ROUGHNESS = roughness_value;
 	if (top) {
 		// Normal-Map (Tangentenraum: x = u, y = v) in die Welt und dann in den Blickraum drehen

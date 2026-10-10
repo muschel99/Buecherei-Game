@@ -12,7 +12,9 @@
 ;
 ; Zum Austauschen gegen ein eigenes Modell: Der Ursprung liegt in der Mitte der Fensteröffnung,
 ; +Z zeigt in den Raum. Die verglaste Fläche ist 2,4 m breit und 1,8 m hoch und passt genau in
-; das Loch in der Wand (CSG-Aussparung "WindowHole" im Raum). Die Fensterbank ("Sill") ist
+; das Loch in der Wand (CSG-Aussparung "WindowHole" im Raum).
+; Seit Etappe 4g: 2,4 x 2,3 m (von 0,30 bis 2,60 m über dem Ladenboden – fast bodentief, damit
+; man von draußen hineinschaut), Rahmen dunkelgrün wie die Ladenfront. Die Fensterbank ("Sill") ist
 ; zugleich eine Ablagefläche (PlacementSurface) für Deko und Bücher. Seit Etappe 4d ist sie
 ; tiefer: Ihre Tiefe (von der Scheibe bis zur vorderen Kante) steht in
 ; GameConfig.window_sill_depth, das Script scripts/objects/shop_window.gd passt Bank, Ablage
@@ -20,7 +22,7 @@
 ; der untere Rahmen liegt außen. "SillBody" ist die feste Kollision von Bank, Glas und
 ; Seitenrahmen (damit nichts hineinragt und niemand durchs Fenster läuft).
 
-[ext_resource type="Material" path="res://assets/materials/paint_white.tres" id="1_paint"]
+[ext_resource type="Material" path="res://assets/materials/library_joinery.tres" id="1_paint"]
 [ext_resource type="Material" path="res://assets/materials/glass.tres" id="2_glass"]
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="3_surface"]
 [ext_resource type="Script" path="res://scripts/objects/shop_window.gd" id="4_window"]
@@ -29,13 +31,13 @@
 size = Vector3(2.64, 0.12, 0.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_frame_v"]
-size = Vector3(0.12, 1.92, 0.3)
+size = Vector3(0.12, 2.42, 0.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_glass"]
-size = Vector3(2.4, 1.8, 0.012)
+size = Vector3(2.4, 2.3, 0.012)
 
 [sub_resource type="BoxMesh" id="BoxMesh_muntin_v"]
-size = Vector3(0.04, 1.8, 0.1)
+size = Vector3(0.04, 2.3, 0.1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_muntin_h"]
 size = Vector3(2.4, 0.04, 0.08)
@@ -56,21 +58,21 @@ size = Vector3(2.26, 0.03, 0.26)
 size = Vector3(2.7, 0.05, 0.32)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_glass_body"]
-size = Vector3(2.4, 1.8, 0.06)
+size = Vector3(2.4, 2.3, 0.06)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_side_body"]
-size = Vector3(0.12, 1.92, 0.3)
+size = Vector3(0.12, 2.42, 0.3)
 
 [node name="ShopWindow" type="Node3D"]
 script = ExtResource("4_window")
 
 [node name="FrameTop" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
 mesh = SubResource("BoxMesh_frame_h")
 material_override = ExtResource("1_paint")
 
 [node name="FrameBottom" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.9, -0.079)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.15, -0.079)
 mesh = SubResource("BoxMesh_frame_bottom")
 material_override = ExtResource("1_paint")
 
@@ -106,27 +108,32 @@ mesh = SubResource("BoxMesh_muntin_v")
 material_override = ExtResource("1_paint")
 
 [node name="MuntinH1" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.575, 0)
 mesh = SubResource("BoxMesh_muntin_h")
 material_override = ExtResource("1_paint")
 
 [node name="MuntinH2" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_muntin_h")
+material_override = ExtResource("1_paint")
+
+[node name="MuntinH3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.575, 0)
 mesh = SubResource("BoxMesh_muntin_h")
 material_override = ExtResource("1_paint")
 
 [node name="InnerRail" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.878, 0.028)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.128, 0.028)
 mesh = SubResource("BoxMesh_inner_rail")
 material_override = ExtResource("1_paint")
 
 [node name="Sill" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.923, 0.16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.173, 0.16)
 mesh = SubResource("BoxMesh_sill")
 material_override = ExtResource("1_paint")
 
 [node name="SillSurface" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.898, 0.18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.148, 0.18)
 collision_layer = 32
 collision_mask = 0
 monitoring = false
@@ -139,7 +146,7 @@ shape = SubResource("BoxShape3D_sill")
 collision_mask = 0
 
 [node name="Sill" type="CollisionShape3D" parent="SillBody"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.923, 0.16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.173, 0.16)
 shape = SubResource("BoxShape3D_sill_body")
 
 [node name="Glass" type="CollisionShape3D" parent="SillBody"]

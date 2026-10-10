@@ -337,6 +337,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Godot-Import, Ladeprüfung, street_life_check. .glb ohne "Cozy Bücherei"-Erzeuger = von der
   Entwicklerin bearbeitet → build_street.py lässt sie stehen (nie löschen/überschreiben).
   Fensterläden: beide oder keiner, 6–15° offen oder zu (`closed_share`, `closed_ground`).
+  Gassen: `tools/blender/build_alleys.py` (Lage aus `scenes/tools/export_layout.tscn` →
+  `assets/models/source/layout.json`), Kollisionen in Alley/OppositeAlley. Bücherei-Fassade:
+  `tools/blender/build_library.py` (Raumkoordinaten, Knoten "Facade" im Raum). Häuser mit
+  Schaufenstern an zwei Seiten: `HouseFacade.see_through` (sonst erscheinen Passanten
+  sichtbar hinter dem Haus). Boden-/Wand-Shader `ground_style.gdshader`: `stone_tint` färbt nur
+  einfärbbare Stellen (Ziegel), `tint` die ganze Fläche.
   **Schilder = Bilder der Entwicklerin:** Schild-Flächen mit `Mat(..., sign="name")` und
   `poly(..., uvs=…)` (0..1) → glb-Material `sign_<name>` → `assets/materials/signs/<typ>_<name>.tres`
   → Bild `assets/textures/signs/<typ>_<name>.png`. Startbild aus der Gestaltung in

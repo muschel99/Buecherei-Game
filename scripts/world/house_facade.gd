@@ -145,6 +145,13 @@ enum GroundFloor {
 	set(value):
 		solid = value
 		_queue_rebuild()
+## Kann man durch das Haus hindurchsehen (z. B. ein Eckladen mit Schaufenstern an zwei Seiten,
+## seit Etappe 4g)? Dann verdeckt es für das Straßenleben nichts – dort, wo man durch die
+## Fenster blickt, erscheint niemand.
+@export var see_through: bool = false:
+	set(value):
+		see_through = value
+		_queue_rebuild()
 
 @export var material: Material = preload("res://assets/materials/house_facade.tres")
 
@@ -220,6 +227,9 @@ func _rebuild() -> void:
 	_body = null
 	_unique = null
 	_build_collision()
+	if see_through and _body:
+		# Für die Sichtprüfung des Straßenlebens durchsichtig (siehe see_through)
+		_body.set_meta("see_through", true)
 	var model := get_node_or_null("Model")
 	if unique_model:
 		# Eigenes Modell dieses Hauses: das Modell des Haustyps nur verstecken (es gehört zur

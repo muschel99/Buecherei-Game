@@ -11,7 +11,7 @@ extends Node3D
 
 ## Oberkante der Fensterbank (2 mm über der Unterkante der Fensteröffnung, damit sich beide
 ## Flächen nie überdecken)
-const SILL_TOP := -0.898
+const SILL_TOP := -1.148
 const SILL_THICKNESS := 0.05
 const SILL_WIDTH := 2.7
 ## Ablagefläche: frei zwischen den seitlichen Rahmen, beginnt hinter der inneren Leiste

@@ -695,8 +695,20 @@ ist austauschbar.
       die Gaststube; Fenster der Läden auch von innen sichtbar; Türen ohne Lücke; Fahrrad
       gerade; Torbogen weich schattiert und mit Schatten; Shabby-Chic-Lack und verwitterte
       Texturen (Holz, Backstein, Putz, Sandstein)
-- [ ] Teil 4b – Bücherei von außen (Fassade, Ladenfront, Fenster, Tür, Dach, Treppe),
-      Gassen und Gassenenden (Inspiration folgt), Deko für Teestube und Bäckerei
+- [x] Teil 4d – Rückmeldungen: Lack wieder glatt, Fensterbögen aus eigenen Ziegeln, Teestube
+      innen mit rauem Glas, Bäckerei und Wolleladen getauscht (Bäckerei im schmalen Haus,
+      Wolle & Stoff im Eckhaus), Blumenladen und Bäckerei voller eingerichtet;
+      viktorianische Straßenlaternen mit Hängekörben, Wandlaternen am Torhaus, mehr Blumen;
+      Gasse an der Bücherei länger mit hohen Hauswänden und Garten (Baum mit runder Bank),
+      Gasse gegenüber verläuft sich zwischen Steinbögen (`build_alleys.py`); halb so viele
+      Abflussdeckel; schneller rennen; Schatten über die ganze Straße (Sonne 70 m, alle Häuser,
+      Passanten und Fahrzeuge); Lieferwagen nach 14–18 s; Passanten erscheinen nicht mehr
+      sichtbar durch die Teestube, überqueren nicht neben Laternen
+- [x] Teil 4e – Bücherei von außen: alte englische Ladenfront aus dunkelgrünem Holz
+      (Vertäfelung, Pilaster mit Konsolen, Sockelfelder, Schildband mit Bild, Gesims,
+      Wandlaternen, Hängekörbe; `build_library.py`), Fenster fast bodentief (0,30–2,60 m,
+      Fensterbank als Ablage bleibt), Obergeschoss aus Backstein
+- [ ] Teil 4f – Möbel und Deko im Stil, Innenraum der Bücherei
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
 - [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)
 

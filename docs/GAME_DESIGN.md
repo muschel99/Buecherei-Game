@@ -637,8 +637,14 @@ Zwei Zustände:
   so gebaut, dass es später als freischaltbare Etage ausgebaut werden kann. Anzahl und Höhe
   der Obergeschosse stehen in GameConfig (`upper_floor_count` = 1, `upper_floor_height` = 3,0 m).
   Die Decke im Laden bleibt, wie sie ist.
+- **Fassade (seit Etappe 4g):** eine alte englische Ladenfront aus dunkelgrün lackiertem Holz:
+  Sockelfelder, Pilaster mit Konsolen, Holzvertäfelung neben den Fenstern, ein Schildband mit
+  „Bücherei“ (über der Tür „Willkommen“ – beides Bilder, die ich selbst gestalte), Gesims,
+  Wandlaternen und Hängekörbe; das Obergeschoss ist aus Backstein. Die Fenster reichen fast
+  bis zum Boden (0,30 bis 2,60 m), damit man von draußen hineinschaut; die Fensterbank sitzt
+  jetzt tief und bleibt eine Ablage für Deko und Bücher.
 - In der unteren (vorderen) und in der linken Wand sitzt je ein großes englisches
-  Sprossenfenster (0,8 bis 2,6 m): ein Gitter aus vielen kleinen Scheiben, als einfacher
+  Sprossenfenster (seit Etappe 4g 0,3 bis 2,6 m, vorher 0,8 bis 2,6 m): ein Gitter aus vielen kleinen Scheiben, als einfacher
   Platzhalter mit angedeuteter Form. Der Rahmen steht auf beiden Seiten etwas vor der Wand und
   ist von innen und außen sichtbar; durch das Glas schaut man von beiden Seiten hindurch (seit
   Etappe 4c auch beim linken Fenster von innen). Auch der Türrahmen ist seit Etappe 4c von
@@ -776,6 +782,13 @@ Zwei Zustände:
   in die man auch durch ein Seitenfenster an der Gasse schaut. Lackiertes Holz sieht leicht
   verwittert aus (Shabby Chic: Maserung, abgeplatzter Lack), Backstein und Putz mit Ruß- und
   Regenspuren.
+  An der Straße stehen viktorianische Laternenmasten (dunkelgrün, mit Laterne und zwei
+  Hängekörben), am Torhaus hängen zwei Wandlaternen. Die **Gasse neben der Bücherei** ist
+  länger, zwischen hohen Hauswänden, und endet in einem kleinen Garten mit einem Baum, um
+  dessen Stamm eine runde Holzbank läuft (Kissen, Hocker mit Tasse und Buch), Beeten mit
+  Funkien und Hortensien und einem Holzzaun, hinter dem Häuser stehen. Die **kleine Gasse
+  gegenüber** verläuft sich hinter ihrem Ende zwischen Steinbögen. Schatten reichen über die
+  ganze Straße (auch von Passanten und Fahrzeugen); bestellte Kartons sind nach etwa 15 s da.
   Gegenüber der Bücherei ist der **Blumenladen** (Backsteinhaus mit Eckquadern): salbeigrüne
   Ladenfront mit Sprossen-Oberlichtern und Glastür, Grün und Ranken über dem Schild,
   Hängekörbe, links eine hölzerne Blumentreppe mit Zinkeimern, rechts ein altes Fahrrad mit

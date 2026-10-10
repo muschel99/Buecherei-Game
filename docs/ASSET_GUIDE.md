@@ -430,9 +430,12 @@ gibt es ein Startbild, das genau so groß ist, wie es sein muss:
 | `gatehouse_fascia.png` | Schildband am Torhaus („Alte Torgasse“) | 4,6 × 0,42 m | 2048 × 187 |
 | `pub_hanging.png` | Rundes Hängeschild am Pub | 0,60 × 0,56 m (rund) | 512 × 478 |
 | `corner_90_hanging.png` | Teekannen-Hängeschild der Teestube | 0,60 × 0,56 m | 512 × 478 |
-| `wool_shop_fascia.png` | Schild des Wolle- und Stoffladens | 3,94 × 0,43 m | 2048 × 224 |
-| `wool_shop_hanging.png` | Hängeschild des Wolleladens | 0,60 × 0,56 m | 512 × 478 |
-| `wool_shop_chalkboard.png` | Kreidetafel vor dem Wolleladen | 0,42 × 0,70 m | 360 × 600 |
+| `bakery_shop_fascia.png` | Schild der Bäckerei (rechts neben dem Blumenladen) | 3,94 × 0,43 m | 2048 × 224 |
+| `bakery_shop_chalkboard.png` | Kreidetafel vor der Bäckerei | 0,42 × 0,70 m | 360 × 600 |
+| `corner_30_fascia.png` | Schild „Wolle & Stoff“ (Eckhaus vor dem Torhaus) | 1,6 × 0,4 m | 768 × 192 |
+| `corner_30_hanging.png` | Hängeschild des Wolleladens | 0,60 × 0,56 m | 512 × 478 |
+| `library_fascia.png` | Schild der Bücherei über den Fenstern (vorn und an der Gasse) | 3,6 × 0,52 m | 2048 × 296 |
+| `library_door.png` | Schild der Bücherei über der Tür | 2,99 × 0,52 m | 1536 × 267 |
 
 So geht's:
 1. Das Startbild öffnen und darüber malen – oder ein neues Bild im **gleichen
@@ -479,6 +482,19 @@ Bei den Stil-Häusern wählst du für jedes Haus in `houses.tscn` im Inspektor u
 Backstein, helle Farben Putz, jedes dritte Rauputz), *As Built* (wie gebaut), *Brick*
 (Backstein), *Stone* (Sandstein), *Render* (glatter Putz), *Roughcast* (Rauputz). Die
 **Wall Color** färbt das Material – ein heller Ton auf Backstein ergibt gestrichenen Backstein.
+
+### Bücherei-Fassade, Gassen und Laternen (seit Etappe 4g)
+- **Fassade der Bücherei:** `assets/models/world/library_facade.glb` (Knoten „Facade“ in
+  `scenes/rooms/ground_floor_room.tscn`), gebaut mit
+  `blender -b --factory-startup --python tools/blender/build_library.py`.
+- **Gassen:** `assets/models/world/alley_library.glb` und `alley_opposite.glb`. Neu bauen:
+  erst `godot --headless --path . res://scenes/tools/export_layout.tscn` (schreibt die Lage
+  nach `assets/models/source/layout.json`), dann
+  `blender -b --factory-startup --python tools/blender/build_alleys.py`. Länge der Gasse und
+  Größe des Gartens: `alley_depth`, `alley_garden_depth`, `alley_garden_extra_width`,
+  Höhe der Hauswände `alley_wall_height` in `game_config.gd`.
+- **Laternen:** `assets/models/props/street_lamp.glb`; Abstand am Knoten `Outside/Street`
+  (**Lamp Spacing**), ebenso die Abflussdeckel (**Drain Spacing**).
 
 ### Puppen und Kleidung im Laden (seit Etappe 4g)
 Im Modegeschäft stehen Schneiderpuppen und hängen Kleider – vorerst **Platzhalter**. Jedes

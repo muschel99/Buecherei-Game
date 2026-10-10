@@ -20,3 +20,4 @@ eaves_height = 6.8
 roof_rise = 1.6
 chimney = false
 accent_color = Color(0.42, 0.2, 0.22, 1)
+see_through = true

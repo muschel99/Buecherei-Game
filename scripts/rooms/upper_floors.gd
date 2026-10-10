@@ -43,7 +43,8 @@ extends Node3D
 @export var roof_inset: float = 2.2
 ## So hoch steigt das Dach von der Traufe bis zur flachen Oberseite.
 @export var roof_rise: float = 1.4
-@export var wall_material: Material = preload("res://assets/materials/wall_plaster.tres")
+## Seit Etappe 4g Backstein (Stil-Textur, nach der Lage in der Welt aufgetragen).
+@export var wall_material: Material = preload("res://assets/materials/library_brick.tres")
 @export var trim_material: Material = preload("res://assets/materials/paint_white.tres")
 @export var roof_material: Material = preload("res://assets/materials/roof_slate.tres")
 
