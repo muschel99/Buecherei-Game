@@ -43,6 +43,8 @@ const SEAT_GROUP := "street_seats"
 ## So weit (Meter) von den unsichtbaren Grenzen entfernt beginnen die Stücke, auf denen beim
 ## Start schon Passanten stehen dürfen.
 const HIDDEN_MARGIN := 3.0
+## So viel Platz (Meter) braucht man beim Überqueren mindestens zu Laternen und Kübeln.
+const CROSSING_ROOM := 0.65
 ## Halbe Breite des Wegs in den Garten (schmal: man geht dicht an der Bank vorbei).
 const GARDEN_HALF_WIDTH := 0.3
 ## Abstand der Wege zu Schaufenstern von festen Hindernissen (Körpermitte, m)
@@ -287,30 +289,39 @@ func _add_window(spot: Vector2, face: Vector2, spread: float) -> void:
 
 
 ## Freie Stelle zum Überqueren nahe s (für Passanten, die gerade losgehen wollen).
-func clear_crossing_s(s: float) -> float:
-	return _clear_crossing(s, s - 6.0, s + 6.0)
+func clear_crossing_s(s: float, start_lat: float = NAN) -> float:
+	var free := _clear_crossing(s, s - 8.0, s + 8.0, start_lat, true)
+	return free
 
 
-## Überquerungsstelle, an der auf keinem Gehweg ein festes Hindernis (Laterne, Kübel) im Weg
-## steht (seit Etappe 4g): bei Bedarf ein Stück verschoben, sonst die ursprüngliche Stelle.
-func _clear_crossing(cross_s: float, a: float, b: float) -> float:
-	for attempt in 12:
+## Überquerungsstelle, an der kein festes Hindernis (Laterne, Kübel) im Weg steht (seit
+## Etappe 4g): vom Gehweg (Lage start_lat bzw. Mitte des Gehwegs) bis an den Bordstein und
+## drüben vom Bordstein bis auf den Gehweg. Bei Bedarf ein Stück verschoben. Gibt es keine
+## freie Stelle: NAN – oder mit best_effort die Stelle mit dem meisten Platz.
+func _clear_crossing(cross_s: float, a: float, b: float, start_lat: float = NAN, best_effort: bool = false) -> float:
+	var best := cross_s
+	var best_room := -INF
+	for attempt in 21:
 		var test := cross_s + (0.0 if attempt == 0 else (float((attempt + 1) / 2) * 0.8 * (1.0 if attempt % 2 == 1 else -1.0)))
 		if test < a or test > b:
 			continue
-		var free := true
+		var room := INF
 		for side in [1, -1]:
-			# Ganzer Weg vom Gehweg bis an den Bordstein muss frei sein
 			var curb := crossing_route.point_at(test, (GameConfig.street_width / 2.0 + Passerby.CURB_WAIT) * float(side))
-			for comfort in [0.0, 1.0]:
-				var p := _lane_point(side, test, comfort)
-				for obstacle in _static_obstacles:
-					var near := Geometry2D.get_closest_point_to_segment(obstacle.pos, p, curb)
-					if near.distance_to(obstacle.pos) < float(obstacle.radius) + 0.7:
-						free = false
-		if free:
+			# Wo man auf dem Gehweg geht: beim Planen mitten auf dem Gehweg, beim Überqueren die
+			# eigene Lage (Startseite) bzw. dicht am Bordstein (drüben)
+			var from := _lane_point(side, test, 0.5 if is_nan(start_lat) else 0.0)
+			if not is_nan(start_lat) and signf(start_lat) == float(side):
+				from = crossing_route.point_at(test, start_lat)
+			for obstacle in _static_obstacles:
+				var near := Geometry2D.get_closest_point_to_segment(obstacle.pos, from, curb)
+				room = minf(room, near.distance_to(obstacle.pos) - float(obstacle.radius))
+		if room >= CROSSING_ROOM:
 			return test
-	return cross_s
+		if room > best_room:
+			best_room = room
+			best = test
+	return best if best_effort else NAN
 
 
 ## Platz vor einem Schaufenster, dessen Hin- und Rückweg nicht durch feste Hindernisse
@@ -452,11 +463,22 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 	for obstacle in _obstacles:
 		if obstacle.get("agent") == walker:
 			continue
+		if walker.ghost_static > 0.0 and obstacle.kind == "static":
+			continue  # Sicherheitsnetz: steckte fest, darf hindurch (siehe Passerby.WEDGED_TIME)
 		var p: Vector2 = obstacle.pos
 		var limit := own + float(obstacle.radius)
 		limit += PLAYER_GAP if obstacle.kind == "player" else -0.03
 		var new_dist := new_pos.distance_to(p)
 		if new_dist < limit and new_dist < walker.pos.distance_to(p) - 0.0005:
+			return true
+	return false
+
+
+## Steckt der Passant gerade an einem festen Hindernis (Laterne, Kübel, Kiste)?
+func touches_static(walker: Passerby) -> bool:
+	var own := walker.radius * walker.scale.x
+	for obstacle in _static_obstacles:
+		if walker.pos.distance_to(obstacle.pos) < own + float(obstacle.radius) + 0.05:
 			return true
 	return false
 
@@ -482,13 +504,13 @@ func window_route(from: Vector2, spot: Vector2, face: Vector2) -> StreetRoute:
 
 ## Ist die Fahrbahn an der Stelle dieses Passanten frei zum Überqueren? Kein Fahrzeug darf in
 ## den nächsten Sekunden vorbeikommen (stehende Fahrzeuge dicht daneben zählen auch).
-func road_clear_for(walker: Passerby) -> bool:
+func road_clear_for(walker: Passerby, seconds: float = 5.0) -> bool:
 	var s := centerline.project(walker.pos, walker.get_route_s() - 3.0, walker.get_route_s() + 3.0).x
 	for vehicle in _vehicles:
 		var ahead := (s - vehicle.get_s()) * vehicle.direction
 		var reach := vehicle.length / 2.0 + 1.5
 		# Ein stehendes Fahrzeug hält nur auf, wenn es direkt davor steht
-		var coming := maxf(6.0, vehicle.speed * 5.0) if vehicle.speed > 0.3 else 0.0
+		var coming := maxf(6.0, vehicle.speed * seconds) if vehicle.speed > 0.3 else 0.0
 		if ahead > -reach and ahead < reach + coming:
 			return false
 	return true
@@ -739,7 +761,16 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		var a := maxf(_crossing.x, minf(s0, end_s) + 2.0)
 		var b := minf(_crossing.y, maxf(s0, end_s) - 2.0)
 		if b - a > 1.0:
-			cross_s = _clear_crossing(_rng.randf_range(a, b), a, b)
+			for attempt in 4:
+				cross_s = _clear_crossing(_rng.randf_range(a, b), a, b, NAN)
+				if not is_nan(cross_s):
+					break
+			if is_nan(cross_s):
+				# Nirgends frei (Laternen, Kübel): auf dieser Seite bleiben bzw. nicht in die Gasse
+				if end_place == "":
+					end_side = start_side
+				else:
+					return {}
 		elif end_place == "":
 			end_side = start_side
 		else:
@@ -776,7 +807,7 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 	if from_alley:
 		var points := alley_points.duplicate()
 		points[0] = start_pos
-		points.append(_lane_point(side, s0 + dir * 1.5, comfort))
+		points.append(_free_lane_point(side, s0 + dir * 1.5, comfort))
 		var route := StreetPaths.alley_route(points, _alley_half(start.place))
 		actions.append({"type": "walk", "route": route, "to": route.length(), "alley": "out"})
 		face = (points[1] - points[0]).normalized()
@@ -831,18 +862,18 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 					continue
 				actions.append({"type": "walk", "route": sidewalks[side], "to": join_s})
 				cursor = event.s + dir * 1.5
-				actions.append_array(_garden_actions(event.seat, _lane_point(side, join_s, comfort),
-					_lane_point(side, cursor, comfort)))
+				actions.append_array(_garden_actions(event.seat, _free_lane_point(side, join_s, comfort),
+					_free_lane_point(side, cursor, comfort)))
 	# 3. bis zum Ziel
 	if end_place != "":
 		var points := _alley_points(end_place)
 		points.reverse()
-		var join := _lane_point(side, end_s - dir * 1.5, comfort)
+		var join := _free_lane_point(side, end_s - dir * 1.5, comfort)
 		actions.append({"type": "walk", "route": sidewalks[side], "to": end_s - dir * 1.5})
 		var full := PackedVector2Array([join])
 		full.append_array(points)
 		var route := StreetPaths.alley_route(full, _alley_half(end_place))
-		actions.append({"type": "walk", "route": route, "to": route.length(), "alley": "in"})
+		actions.append({"type": "walk", "route": route, "to": route.length(), "alley": "in", "half": _alley_half(end_place)})
 		var last := full[full.size() - 1]
 		var before := full[full.size() - 2]
 		actions.append({"type": "leave", "gate": true, "face": (last - before).normalized()})
@@ -863,7 +894,7 @@ func _garden_actions(seat: SeatPoint, join: Vector2, rejoin: Vector2) -> Array[D
 	var way_out := StreetPaths.alley_route(PackedVector2Array([approach, turn, alley[1], alley[2], rejoin]), GARDEN_HALF_WIDTH)
 	var sit_time := _rng.randf_range(GameConfig.passerby_garden_time.x, GameConfig.passerby_garden_time.y)
 	var actions: Array[Dictionary] = [
-		{"type": "walk", "route": way_in, "to": way_in.length(), "alley": "garden_in"},
+		{"type": "walk", "route": way_in, "to": way_in.length(), "alley": "garden_in", "half": GARDEN_HALF_WIDTH},
 		{"type": "sit", "seat": seat, "spot": _to_local2(seat.global_position), "face": seat.get_meta("face"), "time": sit_time,
 			"height": to_local(seat.global_position).y},
 		{"type": "walk", "route": way_out, "to": way_out.length(), "alley": "garden_out"},
@@ -935,6 +966,21 @@ func _lane_point(side: int, s: float, pref: float) -> Vector2:
 	var route: StreetRoute = sidewalks[side]
 	var comfort := route.comfort_at(s)
 	return route.point_at(s, lerpf(comfort.x, comfort.y, pref))
+
+
+## Wie _lane_point, aber nie dicht an einem festen Hindernis (Kiste, Kübel, Laterne): Dort
+## beginnen oder enden Wege in Gassen – sonst bliebe man direkt daneben stehen.
+func _free_lane_point(side: int, s: float, pref: float) -> Vector2:
+	for p in [pref, 0.0, 1.0, 0.5, 0.25, 0.75]:
+		var point := _lane_point(side, s, p)
+		var free := true
+		for obstacle in _static_obstacles:
+			if point.distance_to(obstacle.pos) < float(obstacle.radius) + 0.45:
+				free = false
+				break
+		if free:
+			return point
+	return _lane_point(side, s, pref)
 
 
 ## Weg in einer Gasse: vom Tor (Ort zum Erscheinen) bis zur Einmündung.

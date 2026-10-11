@@ -717,6 +717,11 @@ ist austauschbar.
       Grenze; Passanten erscheinen nur noch an den Enden (unsichtbare Grenzen verdecken nicht
       mehr, Start nur hinter den Grenzen), weniger in den Gassen; Schilder des Blumenladens
       wieder verbunden
+- [x] Teil 4e3 – Passanten bleiben nicht mehr hängen: an Engstellen (Laterne, Kübel, Kiste)
+      kurz an den Fahrbahnrand, links aneinander vorbei, Überqueren nur an freien Stellen,
+      Sicherheitsnetz (bei Klemmen kurz durch feste Hindernisse); Fehler behoben: Passanten aus
+      dem Vorrat suchten ihren Weg an der alten Stelle. Prüfwerkzeug meldet jetzt auch kurzes
+      Auf-der-Stelle-Treten ("stall")
 - [ ] Teil 4f – Möbel und Deko im Stil, Innenraum der Bücherei
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
 - [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)

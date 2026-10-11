@@ -56,6 +56,26 @@ const PATIENCE := 6.0
 const CURB_WAIT := 0.45
 ## Drehtempo der Figur (je Sekunde, weich).
 const TURN_RATE := 7.0
+## Ist auf dem Gehweg kein Platz (Engstelle neben Laterne, Kübel oder Kiste, und jemand kommt
+## entgegen), tritt man kurz an den Rand der Fahrbahn: so weit (Meter, Mitte der Figur) über
+## den erlaubten Streifen hinaus und mindestens so lange (Sekunden) – nur, wenn kein Fahrzeug
+## kommt (Fahrzeuge bremsen dann für einen).
+const STEP_OFF := 0.8
+const STEP_OFF_TIME := 2.0
+## Für den kurzen Schritt an den Fahrbahnrand reicht es, wenn so viele Sekunden lang kein
+## Fahrzeug kommt (zum Überqueren wartet man länger, siehe StreetLife.road_clear_for).
+const STEP_OFF_LOOK := 3.0
+## So lange (Sekunden) versucht man höchstens, zum Überqueren an den Bordstein zu kommen.
+const CROSS_GIVE_UP := 4.0
+## So weit (Meter) geht man beim Überqueren höchstens schräg in Laufrichtung.
+const CROSS_DRIFT := 0.3
+## Stehen sich zwei an einer Engstelle gegenüber, geht nach so vielen Sekunden einer so lange
+## (YIELD_TIME) ganz an seinen linken Rand – so kommen beide aneinander vorbei.
+const FACE_OFF_TIME := 1.0
+const YIELD_TIME := 2.5
+## Sicherheitsnetz: Steckt man so lange (Sekunden) an einer Laterne, einem Kübel o. Ä. fest,
+## darf man eine Weile hindurchgehen (ghost_static), bis man frei ist.
+const WEDGED_TIME := 1.5
 ## Hinsetzen: so weit vor dem Sitzplatz steht man vorher (Meter), so lange dauert das Hinsetzen
 ## bzw. Aufstehen (Sekunden).
 const SIT_FRONT := 0.5
@@ -95,6 +115,13 @@ var _body: AnimatableBody3D
 var _shadows := -1
 var _old_lat := 0.0
 var _blocked_time := 0.0
+var _step_off := 0.0
+var _squeezed := false
+var _front_walker: Passerby = null
+var _face_off := 0.0
+var _yield := 0.0
+## > 0: feste Hindernisse (Laternen, Kübel) halten gerade nicht auf (Sekunden, siehe WEDGED_TIME).
+var ghost_static := 0.0
 
 
 func _ready() -> void:
@@ -152,6 +179,17 @@ func set_detail_distance(distance: float) -> void:
 ## Startet mit einer neuen Liste von Schritten (von StreetLife geplant) an der Stelle start.
 func begin(start: Vector2, actions: Array[Dictionary], face: Vector2) -> void:
 	pos = start
+	# Alles vom letzten Weg vergessen (die Figur kommt aus dem Vorrat) – sonst suchte sie ihre
+	# Lage auf der Straße dort, wo sie zuletzt war
+	_route = null
+	_s = 0.0
+	_lat = 0.0
+	_target_lat = 0.0
+	_step_off = 0.0
+	_blocked_time = 0.0
+	_face_off = 0.0
+	_yield = 0.0
+	ghost_static = 0.0
 	_actions = actions
 	_action = {}
 	_yaw = atan2(face.x, face.y)
@@ -263,6 +301,12 @@ func _next_action() -> void:
 					return
 				_action.route = there
 				_action.to = there.length()
+			elif _action.has("half"):
+				# In eine Gasse: der Weg beginnt genau dort, wo man gerade steht
+				var points: PackedVector2Array = (_action.route as StreetRoute).points.duplicate()
+				points[0] = pos
+				_action.route = StreetPaths.alley_route(points, float(_action.half))
+				_action.to = (_action.route as StreetRoute).length()
 			elif _action.get("from_here", false):
 				# Kurzer Weg: dort beginnen, wo man gerade wirklich steht
 				var route: StreetRoute = _action.route
@@ -272,9 +316,19 @@ func _next_action() -> void:
 			_set_route(_action.route)
 			_dir = 1 if float(_action.to) >= _s else -1
 		"cross":
+			# Steht an dieser Stelle eine Laterne o. Ä. im Weg, ein Stück weiter überqueren: erst
+			# ganz normal auf dem Gehweg (mit Ausweichen) bis dorthin, dann hinüber
+			var here := life.centerline.project(pos)
+			var at_s := life.clear_crossing_s(here.x, here.y)
+			here = Vector2(here.x, 0.0)
+			if absf(at_s - here.x) > 0.1 and not _action.get("moved", false):
+				_action.moved = true
+				_actions.push_front(_action)
+				_actions.push_front({"type": "walk", "route": life.sidewalks[side], "to": at_s})
+				_next_action()
+				return
 			_set_route(life.crossing_route)
-			# Steht an dieser Stelle eine Laterne o. Ä. im Weg, ein Stück weiter überqueren
-			_action.at_s = life.clear_crossing_s(_s)
+			_action.at_s = _s
 
 
 func _set_route(route: StreetRoute) -> void:
@@ -290,6 +344,7 @@ func _set_route(route: StreetRoute) -> void:
 ## Gehen bis zur Stelle "to" auf dem Weg.
 func _step_walk(delta: float) -> void:
 	var action := _action
+	var before := pos
 	_walk_along(delta, _comfort_lat())
 	# Unterwegs umgedreht (neue Schritte von StreetLife)? Dann gilt schon der neue Weg – nicht
 	# mit dem alten Ziel vergleichen (sonst fiele der neue Weg weg und er verschwände mitten
@@ -297,7 +352,8 @@ func _step_walk(delta: float) -> void:
 	if not is_same(action, _action):
 		return
 	var to: float = _action.to
-	if (to - _s) * _dir <= 0.0:
+	# Am Ziel – oder knapp davor und es geht nicht weiter (z. B. eine Kiste dicht daneben)
+	if (to - _s) * _dir <= 0.0 or (absf(to - _s) < 0.25 and pos.distance_to(before) < 0.001):
 		if _action.has("passing"):
 			life.passing(self, String(_action.passing))
 		_next_action()
@@ -312,6 +368,12 @@ func _step_cross(delta: float) -> void:
 	_phase_time += delta
 	match _phase:
 		0:  # an den Bordstein (nicht durch andere hindurch; steht etwas im Weg, seitlich vorbei)
+			if _phase_time > CROSS_GIVE_UP:
+				# Kommt nicht an den Bordstein (z. B. eng zwischen Laterne und anderen): doch nicht
+				# hinüber, auf dieser Seite weiter bis zum Ende
+				var to_end := -0.5 if _dir < 0 else life.centerline.length() + 0.5
+				replace_actions([{"type": "walk", "route": life.sidewalks[side], "to": to_end}, {"type": "leave", "gate": false}])
+				return
 			var goal_s: float = _action.get("at_s", _s)
 			if not is_equal_approx(_s, goal_s):
 				# Erst auf dem Gehweg bis zur freien Stelle, dann zum Bordstein
@@ -347,8 +409,19 @@ func _step_cross(delta: float) -> void:
 				_phase = 3
 				on_road = true
 		3:  # hinüber (leicht schräg in Laufrichtung) – steht dort jemand, ein Stück daneben
+			if not _action.has("from_s"):
+				_action.from_s = _s
 			var lat := move_toward(_lat, far_curb, speed_pref * delta)
-			var s_next := _s + _dir * 0.25 * delta
+			# Schräg höchstens CROSS_DRIFT weit (die freie Stelle drüben ist so viel breiter)
+			var s_next := _s
+			if absf(_s - float(_action.from_s)) < CROSS_DRIFT:
+				s_next = _s + _dir * 0.25 * delta
+			# Sicherheitsnetz: Hängt man auf der Fahrbahn fest (Fahrzeuge warten), durch Laterne
+			# oder Kübel hindurch
+			_action.road_time = float(_action.get("road_time", 0.0)) + delta
+			if _action.road_time > 6.0 and ghost_static <= 0.0:
+				ghost_static = 2.0
+			ghost_static = maxf(0.0, ghost_static - delta)
 			if life.blocks_move(self, _route.point_at(s_next, lat)):
 				# Seitlich ausweichen: erst in Laufrichtung, sonst in die andere
 				lat = _lat
@@ -463,11 +536,34 @@ func _step_leave(delta: float) -> void:
 
 ## Ein Stück am Weg entlang, mit Ausweichen. want = Wunsch-Lage (lat).
 func _walk_along(delta: float, want: float) -> void:
-	var band := _band_here()
-	_target_lat = _avoid(want, band)
+	var normal := _band_here()
+	_yield = maxf(0.0, _yield - delta)
+	if _yield > 0.0:
+		# Ganz an die linke Seite des Streifens, damit der andere vorbeikommt
+		want = normal.y if _dir > 0 else normal.x
+	var wide := _off_curb_band(normal)
+	var band := normal
+	_step_off = maxf(0.0, _step_off - delta)
+	# Schon am Fahrbahnrand (oder die Zeit läuft noch): dort weitergehen, solange es nötig ist
+	var stepped := _step_off > 0.0 or _lat < normal.x - 0.01 or _lat > normal.y + 0.01
+	if stepped:
+		# Am Fahrbahnrand: immer im breiten Streifen planen (sonst schwankte das Ziel)
+		band = wide
+		_target_lat = _avoid(want, wide)
+	else:
+		_target_lat = _avoid(want, normal)
+		if _squeezed and wide != normal and life.road_clear_for(self, STEP_OFF_LOOK):
+			# Auf dem Gehweg ist kein Platz: an den Fahrbahnrand, wenn dort Platz ist
+			var lat := _avoid(want, wide)
+			if not _squeezed:
+				_step_off = STEP_OFF_TIME
+				band = wide
+				_target_lat = lat
 	_old_lat = _lat
 	_lat = move_toward(_lat, _target_lat, SIDESTEP_SPEED * delta)
-	_lat = clampf(_lat, band.x, band.y)
+	# Zurück vom Fahrbahnrand nach und nach (nie ein Sprung) – aber nie über ihn hinaus
+	var old := clampf(_old_lat, wide.x, wide.y)
+	_lat = clampf(_lat, minf(band.x, old), maxf(band.y, old))
 	var speed := minf(speed_pref, _speed_limit)
 	if speed < 0.02:
 		speed = 0.0
@@ -494,8 +590,19 @@ func _walk_along(delta: float, want: float) -> void:
 	pos = new_pos
 	# Versperrt jemand lange den Weg (z. B. die Spielfigur in einer schmalen Gasse): umdrehen
 	# bzw. das Schaufenster auslassen
+	ghost_static = maxf(0.0, ghost_static - delta)
+	# Gegenüber steht jemand und keiner kommt weiter: einer (fest ausgewählt) tritt beiseite
+	if moved < 0.12 * delta and is_instance_valid(_front_walker) and _yield <= 0.0:
+		_face_off += delta
+		if _face_off > FACE_OFF_TIME and get_instance_id() < _front_walker.get_instance_id():
+			_yield = YIELD_TIME
+			_face_off = 0.0
+	elif moved >= 0.12 * delta:
+		_face_off = 0.0
 	if moved < 0.12 * delta:
 		_blocked_time += delta
+		if _blocked_time > WEDGED_TIME and ghost_static <= 0.0 and life.touches_static(self):
+			ghost_static = 1.5
 		if _blocked_time > PATIENCE:
 			_blocked_time = 0.0
 			life.turn_around(self)
@@ -520,9 +627,22 @@ func _band_here() -> Vector2:
 	return Vector2(minf(here.x, ahead.x), maxf(here.y, ahead.y))
 
 
+## Erlaubter Streifen mit dem Rand der Fahrbahn (nur auf den Gehwegen der Straße).
+func _off_curb_band(band: Vector2) -> Vector2:
+	if _route == null or not life.is_centerline(_route) or _route == life.crossing_route:
+		return band
+	var edge := GameConfig.street_width / 2.0 + Street.CURB_TOP + StreetPaths.CURB_CLEARANCE - STEP_OFF
+	if side > 0:
+		return Vector2(minf(band.x, edge), band.y)
+	return Vector2(band.x, maxf(band.y, -edge))
+
+
 ## Sucht die nächste freie Lage zur Wunsch-Lage und setzt das Tempo-Limit (bremsen).
+## _squeezed: Es gibt keine ganz freie Lage (man müsste sich an jemandem vorbeiquetschen).
 func _avoid(want: float, band: Vector2) -> float:
 	_speed_limit = INF
+	_squeezed = false
+	_front_walker = null
 	var intervals: Array[Vector4] = []  # (von, bis, entgegenkommend 0/1, Abstand voraus)
 	for obstacle in life.obstacles_near(self, LOOK_AHEAD + 1.5):
 		var lage := _route.project(obstacle.pos, _s - 2.0, _s + 2.0 + LOOK_AHEAD) if _dir > 0 \
@@ -537,6 +657,8 @@ func _avoid(want: float, band: Vector2) -> float:
 			continue
 		var gap: float = radius * scale.x + float(obstacle.radius) + (0.06 if obstacle.kind == "walker" else 0.12)
 		intervals.append(Vector4(lage.y - gap, lage.y + gap, 1.0 if their_speed < -0.2 else 0.0, along))
+		if along > 0.0 and along < gap + 0.6 and absf(_lat - lage.y) < gap and obstacle.kind == "walker" and their_speed < 0.2:
+			_front_walker = obstacle.agent
 		if along > 0.0 and absf(_lat - lage.y) < gap - 0.02:
 			# Es steht direkt vor mir: bremsen (hinter Langsameren her: deren Tempo)
 			var limit := speed_pref * clampf((along - gap - 0.05) / 0.9, 0.0, 1.0)
@@ -557,17 +679,24 @@ func _avoid(want: float, band: Vector2) -> float:
 			continue
 		var cost := absf(c - want) + absf(c - _target_lat) * 0.3
 		for iv in intervals:
+			# Wer direkt neben mir ist (Laterne, Passant), durch den gehe ich nicht hindurch auf
+			# seine andere Seite
+			var middle := (iv.x + iv.y) / 2.0
+			if iv.w < (iv.y - iv.x) / 2.0 and signf(c - middle) != signf(_lat - middle):
+				cost += 30.0
 			# Wie tief steckt diese Lage im Bereich eines anderen? (Ist nirgends ganz frei, gewinnt
 			# die Lage mit der kleinsten Überschneidung – meist der Rand des Streifens.)
 			var depth := minf(c - iv.x, iv.y - c)
 			if depth > 0.0:
 				cost += 10.0 + depth * 20.0 / maxf(0.5, iv.w)
-			# Entgegenkommenden links ausweichen (beide tun es – so treffen sie sich nie)
+			# Entgegenkommenden links ausweichen (beide tun es – so treffen sie sich nie, auch
+			# nicht in Engstellen: dort zählt die richtige Seite mehr als ein Stück Überschneidung)
 			if iv.z > 0.5 and signf(c - (iv.x + iv.y) / 2.0) != signf(left):
-				cost += 1.0
+				cost += 6.0
 		if cost < best_cost:
 			best_cost = cost
 			best = c
+	_squeezed = best_cost >= 10.0
 	return clampf(best, band.x, band.y)
 
 

@@ -6,7 +6,8 @@ extends Node
 ## - Erscheinen/Verschwinden: wie oft, wo – und ob der Ort dabei im Blickfeld lag (muss 0 sein)
 ##   bzw. ob man ihn mit freier Sicht hätte sehen können, wenn man sich umdreht (nur zur Info),
 ## - Passanten, die sich überschneiden, in die Spielfigur, in Häuser, Treppe oder Kartons laufen,
-## - Passanten, die hängen bleiben, und Fahrzeuge, die jemandem zu nahe kommen.
+## - Passanten, die hängen bleiben (stuck: 40 s, stall: beim Gehen 2,5 s auf der Stelle, nicht
+##   wegen der Spielfigur), und Fahrzeuge, die jemandem zu nahe kommen.
 ##
 ## Starten (Godot ohne Bildschirm):
 ##   godot --headless --path . res://scenes/tools/street_life_check.tscn -- --seconds=40 --seed=1
@@ -26,10 +27,11 @@ var _camera: Camera3D
 var _report := {
 	"appeared": 0, "vanished": 0, "appear_in_view": [], "vanish_in_view": [],
 	"appear_open": 0, "vanish_open": 0, "places": {},
-	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "vehicle_close": [],
+	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "stall": [], "vehicle_close": [],
 	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {}, "crossing": 0, "browsing": 0, "alley": 0, "sitting": 0,
 }
 var _track := {}  # Passant -> [letzte Stelle, Zeit seit Bewegung]
+var _stall := {}  # Passant -> Sekunden, die er beim Gehen auf der Stelle tritt
 var _spot_name := ""
 
 
@@ -214,6 +216,15 @@ func _measure() -> void:
 				_report.solid.append("%s in %s bei %s (%s): %s" % [a.name, collider.get_path(), a.pos, _spot_name, a.debug_text()] + " | nah: %s, Karton bei %s" % [
 					_life.obstacles_near(a, 1.0).map(func(o): return "%s@%s" % [o.kind, o.pos]),
 					_life.to_local((collider as Node3D).global_position)])
+		# Tritt jemand beim Gehen auf der Stelle (nicht wegen der Spielfigur)?
+		var walking: bool = a.get_action_type() == "walk" or (a.get_action_type() == "leave" and not a.get_action().get("gate", false))
+		if walking and a.velocity2.length() < 0.15 and a.pos.distance_to(player) > 2.0:
+			_stall[a] = float(_stall.get(a, 0.0)) + SAMPLE
+			if is_equal_approx(float(_stall[a]), 2.5):
+				_report.stall.append("%s bei %s (%s): %s | nah: %s" % [a.name, a.pos, _spot_name, a.debug_text(),
+					_life.obstacles_near(a, 1.6).map(func(o): return "%s@%s r%.2f" % [o.kind, o.pos, o.radius])])
+		else:
+			_stall[a] = 0.0
 		# Hängt jemand fest?
 		var track: Array = _track.get(a, [a.pos, 0.0])
 		if a.pos.distance_to(track[0]) > 0.4:
@@ -264,7 +275,7 @@ func _print_report() -> void:
 	print("Messungen mit Passanten beim Überqueren: %d, vor einem Schaufenster: %d, in einer Gasse: %d, auf der Bank: %d" % [
 		_report.crossing, _report.browsing, _report.alley, _report.sitting])
 	print("Kleinster Abstand zwischen Passanten: %.2f m, zur Spielfigur: %.2f m" % [_report.min_walker_gap, _report.min_player_gap])
-	for key in ["overlap", "player_bump", "solid", "stuck", "vehicle_close"]:
+	for key in ["overlap", "player_bump", "solid", "stuck", "stall", "vehicle_close"]:
 		var list: Array = _report[key]
 		print("%s: %d" % [key, list.size()])
 		for i in mini(list.size(), 12):

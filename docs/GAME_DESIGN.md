@@ -870,7 +870,9 @@ Tageszeit abhängen (`StreetLife.activity()`).
 - **Passanten** gehen auf beiden Gehwegen in beide Richtungen, jeder in eigenem Tempo und auf
   seiner Lieblingsseite des Gehwegs. Sie weichen einander aus (Entgegenkommenden nach links, wie
   man in England geht), ebenso der Spielfigur, der Eingangstreppe und den Kartons; ist kein
-  Platz, warten sie geduldig. Sie laufen nie in die Spielfigur hinein, und die Spielfigur bleibt
+  Platz, warten sie geduldig. An Engstellen (Laterne, Kübel oder Kiste, und jemand kommt
+  entgegen) tritt einer kurz an den Rand der Fahrbahn und geht vorbei – nur, wenn kein Auto
+  kommt; Autos bremsen dafür. Sie laufen nie in die Spielfigur hinein, und die Spielfigur bleibt
   nie an ihnen hängen (sie haben eine runde Kollision; leicht versetzt gleitet man vorbei).
   Versperrt die Spielfigur lange einen schmalen Weg (z. B. in der Gasse), dreht der Passant nach
   ein paar Sekunden um. Die Gehwege passen sich beim Start genau an die Häuser an (auch an

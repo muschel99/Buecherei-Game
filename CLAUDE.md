@@ -74,7 +74,13 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
   Vergleich; Gruppe `street_life`. Prüfwerkzeug ohne Bilder:
   `godot --headless --path . res://scenes/tools/street_life_check.tscn -- --seconds=60 --seed=1`
   (Erscheinen/Verschwinden im Blickfeld muss 0 sein, keine Überschneidungen, niemand in Häusern
-  oder festgefahren; Autos, die vor der Spielfigur auf der Fahrbahn warten, sind richtig).
+  oder festgefahren, "stall" = beim Gehen 2,5 s auf der Stelle soll 0 sein; Autos, die vor der
+  Spielfigur auf der Fahrbahn warten, sind richtig). Engstellen lösen Passanten, indem sie kurz
+  an den Fahrbahnrand treten (`Passerby.STEP_OFF`), Entgegenkommende gehen links vorbei
+  (Gegenüber-Stillstand: einer geht ganz an seinen linken Rand, `YIELD_TIME`); überquert wird
+  nur, wo zwischen Gehweg und Bordstein nichts steht (`StreetLife.CROSSING_ROOM`). Sicherheitsnetz:
+  Wer an einer Laterne/einem Kübel klemmt, darf kurz hindurch (`Passerby.ghost_static`).
+  Passanten aus dem Vorrat vergessen in `begin()` ihren alten Weg (sonst falsche Lage).
   Der Spielstand im Container (`~/.local/share/godot/app_userdata/Cozy Bücherei/`) sammelt bei
   Testläufen Kartons – vor Tests löschen.
   Bei Grenzen und Wegen zusätzlich prüfen: Lauftest mit Physik (Spielfigur per
