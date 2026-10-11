@@ -1,10 +1,13 @@
 """Wiederverwendbare Bauteile im Stil (seit Etappe 4g, Teil 1b): Pflanzen, Blumenkästen,
-Hängekorb, Ausleger-Schild, Kreidetafel. Alles in Godot-Koordinaten (siehe style_lib.py)."""
+Hängekorb, Ausleger-Schild, Kreidetafel. Alles in Godot-Koordinaten (siehe style_lib.py).
+Die Pflanzen selbst (Blätter, Blüten, Ranken) baut seit Teil 4f style_plants.py."""
 
 import math
 import random
 
 import style_lib as S
+import style_plants as PL
+from mathutils import Vector
 from style_lib import Mat, V
 
 POT = Mat("terracotta")
@@ -44,85 +47,52 @@ def blossom_cluster(b, center, radius, palette, rnd, count=6, size=0.035):
         b.sphere(p, size * rnd.uniform(0.8, 1.2), Mat("plain", color=rnd.choice(colors)), rings=3, segments=6, squash=0.7)
 
 
-def trailing_strand(b, start, length, rnd, color_index=1, palette=None):
-    """Hängende Ranke (Efeu, Hängepetunie): leicht schwingende Röhre mit Blättchen."""
-    pts = []
-    x, y, z = start
-    sway = rnd.uniform(-0.04, 0.04)
-    for k in range(7):
-        t = k / 6
-        pts.append(V(x + math.sin(t * 2.4) * sway, y - t * length, z + t * 0.05 + 0.02 * math.sin(t * 5)))
-    b.tube(pts, 0.007, leaf(color_index), segments=4)
-    for k in range(1, 7):
-        p = pts[k]
-        b.sphere(p + V(rnd.uniform(-0.02, 0.02), 0, 0.012), rnd.uniform(0.022, 0.032), leaf(color_index),
-                 rings=3, segments=5, squash=0.6)
-    if palette:
-        b.sphere(pts[-1] + V(0, -0.01, 0.01), 0.03, Mat("plain", color=rnd.choice(BLOSSOMS[palette])), rings=3, segments=6)
+def trailing_strand(b, start, length, rnd, color_index=1, palette=None, out=(0.0, 0.0, 1.0), space=None):
+    """Hängende Ranke (Efeu, mit palette Hängepetunie): beginnt bei start (auf einer Kante),
+    geht kurz nach vorn (out) und hängt dann herab – Blätter an Stielen (style_plants)."""
+    kind = "petunia" if palette in ("rose", "lavender", "white", "coral") else "ivy"
+    PL.trailing_ivy(b, Vector(start), length, rnd, Vector(out), space or PL.NO_SPACE, leaf_size=0.05, kind=kind,
+                    palette=palette, over=0.03, lift=0.005)
 
 
-def flower_box(b, x0, x1, y, z_back, z_front, box_mat, palettes, seed):
-    """Blumenkasten (unten bei y, von z_back bis z_front) mit Polstern, Blüten und Ranken."""
+def flower_box(b, x0, x1, y, z_back, z_front, box_mat, palettes, seed, glow=0.0):
+    """Blumenkasten (unten bei y, von z_back = Wand bis z_front): offener Kasten mit Leiste,
+    Erde, Halter; darin Geranien, Petunien, Margeriten und Lobelien, vorn hängen Ranken über
+    den Rand."""
     rnd = random.Random(seed)
     h = 0.17
-    b.box((x0, y, z_back), (x1, y + h, z_front), box_mat, skip=("back",))
+    soil_y = PL.trough(b, x0, x1, y, z_back, z_front, h, box_mat, soil_drop=0.018, skip_back=True)
     b.box((x0 - 0.015, y + h - 0.025, z_front), (x1 + 0.015, y + h, z_front + 0.015), box_mat, skip=("back",))
-    b.box((x0 + 0.01, y + h - 0.03, z_back + 0.01), (x1 - 0.01, y + h - 0.01, z_front - 0.01), SOIL, skip=("bottom", "back"))
     for cx in (x0 + 0.1, x1 - 0.1):
         b.box((cx - 0.02, y - 0.12, z_back), (cx + 0.02, y, z_back + 0.1), IRON, skip=("back",))
-    n = max(3, int((x1 - x0) / 0.16))
-    for k in range(n):
-        cx = x0 + (x1 - x0) * (k + 0.5) / n + rnd.uniform(-0.03, 0.03)
-        cz = (z_back + z_front) / 2 + rnd.uniform(-0.02, 0.03)
-        r = rnd.uniform(0.09, 0.12)
-        b.sphere(V(cx, y + h + r * 0.35, cz), r, leaf(k), rings=4, segments=8, squash=0.75, jitter=0.12, seed=seed * 7 + k)
-        blossom_cluster(b, (cx, y + h + r * 0.4, cz), r * 0.95, palettes[k % len(palettes)], rnd, count=7)
-    for k in range(int((x1 - x0) / 0.22) + 1):
-        sx = x0 + 0.06 + (x1 - x0 - 0.12) * rnd.random()
-        trailing_strand(b, (sx, y + h, z_front + 0.01), rnd.uniform(0.2, 0.4), rnd,
-                        palette=palettes[k % len(palettes)] if rnd.random() < 0.5 else None)
+    space = PL.BoxSpace(x0 - 0.015, x1 + 0.015, z_back, z_front + 0.015, y + h, soil_y, wall=0.018)
+    space.wall(z_back)
+    PL.bedding_row(b, x0 + 0.06, x1 - 0.06, soil_y, z_back + 0.03, z_front - 0.03, rnd, palettes, space, glow=glow,
+                   trail_front=0.32, front_dir=Vector((0, 0, 1)))
 
 
 def hydrangea_tub(b, x, z, seed):
     """Zinkwanne mit Hortensie (links vom Eingang)."""
     rnd = random.Random(seed)
-    b.cylinder(V(x, 0, z), 0.24, 0.42, ZINC, segments=16, radius_top=0.27, caps=(False, False))
-    b.cylinder(V(x, 0.4, z), 0.285, 0.04, ZINC, segments=16, caps=(False, True))
-    b.cylinder(V(x, 0.37, z), 0.26, 0.04, SOIL, segments=16)
+    v = PL.vessel(b, x, z, 0.24, 0.44, 0.27, ZINC, lip=0.015, lip_h=0.04, soil_drop=0.035, segments=16)
     for y in (0.08, 0.3):
         b.tube([V(x + 0.255 * math.cos(a), y, z + 0.255 * math.sin(a)) for a in [2 * math.pi * k / 16 for k in range(17)]],
                0.01, ZINC, segments=4, caps=False)
     for side in (-1, 1):
         b.tube([V(x + side * 0.27, 0.3, z), V(x + side * 0.31, 0.33, z), V(x + side * 0.31, 0.37, z), V(x + side * 0.28, 0.39, z)],
                0.012, ZINC, segments=5)
-    b.sphere(V(x, 0.62, z), 0.3, leaf(1), rings=6, segments=12, squash=0.75, jitter=0.1, seed=seed)
-    for k in range(9):
-        a = 2 * math.pi * k / 9 + rnd.uniform(-0.2, 0.2)
-        up = rnd.uniform(0.25, 0.85)
-        d = V(math.cos(a) * math.sqrt(1 - up * up), up, math.sin(a) * math.sqrt(1 - up * up))
-        p = V(x, 0.62, z) + V(d.x * 0.3, d.y * 0.24, d.z * 0.3)
-        color = rnd.choice(BLOSSOMS["hydrangea"])
-        b.sphere(p, rnd.uniform(0.085, 0.11), Mat("foliage", color=color), rings=5, segments=9, jitter=0.12, seed=seed + k)
+    space = PL.PotSpace(x, z, v["inner"], v["rim"], v["soil"], outer=v["outer"])
+    PL.hydrangea(b, V(x, v["soil"], z), 0.3, rnd, "hydrangea", space, heads=6)
     b.colliders.append(((x - 0.3, 0, z - 0.3), (x + 0.3, 0.9, z + 0.3)))
 
 
 def olive_tree(b, x, z, seed):
     """Hoher Terrakotta-Topf mit kleinem Olivenbäumchen (rechts vom Eingang)."""
     rnd = random.Random(seed)
-    b.cylinder(V(x, 0, z), 0.17, 0.5, POT, segments=14, radius_top=0.22, caps=(False, False))
-    b.cylinder(V(x, 0.5, z), 0.235, 0.06, POT, segments=14, caps=(False, True))
-    b.cylinder(V(x, 0.47, z), 0.205, 0.05, SOIL, segments=14)
+    v = PL.vessel(b, x, z, 0.17, 0.56, 0.22, POT, lip=0.015, lip_h=0.06, soil_drop=0.04)
     b.cylinder(V(x, 0.1, z), 0.19, 0.03, POT, segments=14, caps=(False, False))
-    trunk = [V(x, 0.5, z), V(x + 0.02, 0.75, z + 0.01), V(x - 0.03, 1.0, z), V(x + 0.01, 1.2, z - 0.02)]
-    b.tube(trunk, lambda t: 0.035 - 0.015 * t, Mat("timber"), segments=6)
-    silver = Mat("foliage", color=(0.5, 0.56, 0.42))
-    silver2 = Mat("foliage", color=(0.42, 0.5, 0.36))
-    for k, (dx, dy, dz, r) in enumerate([(0, 1.38, 0, 0.2), (-0.16, 1.28, 0.06, 0.15), (0.15, 1.3, -0.04, 0.16),
-                                         (0.05, 1.5, 0.08, 0.14), (-0.08, 1.48, -0.1, 0.14)]):
-        b.sphere(V(x + dx, dy, z + dz), r, silver if k % 2 == 0 else silver2, rings=5, segments=10, jitter=0.18,
-                 seed=seed * 3 + k)
-    for dx, dz in ((-0.1, 0.04), (0.1, -0.03)):
-        b.tube([V(x, 1.15, z), V(x + dx, 1.28, z + dz)], 0.012, Mat("timber"), segments=4)
+    space = PL.PotSpace(x, z, v["inner"], v["rim"], v["soil"], outer=v["outer"])
+    PL.olive(b, V(x, v["soil"], z), 1.0, rnd, space)
     b.colliders.append(((x - 0.24, 0, z - 0.24), (x + 0.24, 1.0, z + 0.24)))
 
 
@@ -135,9 +105,11 @@ def chalkboard(b, x, z, sign_mat, facing=0.0):
     b.push(b.move(x, 0, z) @ b.turn_y(facing))
     w, h = 0.5, 0.8
     bw, bh = CHALKBOARD_SIZE
-    lean = math.radians(12)
+    # So schräg, dass sich beide Tafeln oben genau treffen
+    lean = math.asin(0.172 / h)
     for side in (1, -1):
-        b.push(b.turn_y(0 if side > 0 else 180) @ S.Matrix.Rotation(-lean, 4, "X"))
+        # Drehpunkt ist die innere Unterkante der Tafel – so steht sie auf dem Boden
+        b.push(b.turn_y(0 if side > 0 else 180) @ b.move(0, 0, 0.17) @ S.Matrix.Rotation(-lean, 4, "X") @ b.move(0, 0, -0.17))
         b.box((-w / 2, 0, 0.17), (w / 2, h, 0.2), TIMBER)
         y0 = (h - bh) / 2
         if side > 0:
@@ -166,26 +138,97 @@ def hanging_basket(b, x, y_bracket, z_wall, reach, seed):
     """Hängekorb an einem schmiedeeisernen Arm (von der Wand bei z_wall nach vorn)."""
     rnd = random.Random(seed)
     zb = z_wall + reach
-    b.tube([V(x, y_bracket, z_wall), V(x, y_bracket, zb + 0.05)], 0.016, IRON, segments=6)
-    b.tube([V(x, y_bracket - 0.35, z_wall), V(x, y_bracket - 0.12, z_wall + reach * 0.5), V(x, y_bracket - 0.01, zb - 0.05)],
-           0.012, IRON, segments=5)
-    _scroll(b, x, y_bracket - 0.12, z_wall + 0.16, 0.08, axis_plane="yz")
+    arm = [V(x, y_bracket, z_wall), V(x, y_bracket, zb + 0.05)]
+    strut = [V(x, y_bracket - 0.35, z_wall), V(x, y_bracket - 0.12, z_wall + reach * 0.5), V(x, y_bracket - 0.01, zb - 0.05)]
+    b.tube(arm, 0.016, IRON, segments=6)
+    b.tube(strut, 0.012, IRON, segments=5)
+    _scroll(b, x, y_bracket - 0.12, z_wall + 0.16, 0.08, axis_plane="yz", attach=(arm, strut))
     b.box((x - 0.04, y_bracket - 0.4, z_wall), (x + 0.04, y_bracket + 0.05, z_wall + 0.02), IRON)
-    top = y_bracket - 0.4
-    for a in (0, 2.1, 4.2):
-        b.tube([V(x, y_bracket - 0.02, zb), V(x + 0.17 * math.cos(a), top, zb + 0.17 * math.sin(a))], 0.004, IRON, segments=3, caps=False)
-    b.sphere(V(x, top, zb), 0.2, MOSS, rings=5, segments=12, squash=0.6)
-    b.sphere(V(x, top + 0.05, zb), 0.17, leaf(0), rings=5, segments=10, squash=0.6, jitter=0.15, seed=seed)
-    blossom_cluster(b, (x, top + 0.05, zb), 0.17, "rose", rnd, count=12)
-    blossom_cluster(b, (x, top + 0.04, zb), 0.17, "white", rnd, count=6)
+    basket(b, V(x, y_bracket - 0.4, zb), 0.17, V(x, y_bracket - 0.015, zb), rnd, wall_z=z_wall)
+
+
+def basket(b, rim, radius, hook, rnd, palettes=("rose", "white", "lavender"), wall_z=None, mat=None):
+    """Hängekorb: Drahtkorb mit Kokosmatte, Erde, drei Ketten zum Haken; obenauf Geranien und
+    Petunien, rundherum hängen Lobelien, Petunien und Efeu über den Rand."""
+    mat = mat or IRON
+    rim = Vector(rim)
+    hook = Vector(hook)
+    coir = Mat("fabric", color=(0.46, 0.34, 0.22))
+    rings, segs = 4, 14
+    # Kokosmatte: untere Halbkugel (außen sichtbar), oben zu mit Erde
+    for r in range(rings):
+        a0 = math.pi / 2 * r / rings
+        a1 = math.pi / 2 * (r + 1) / rings
+        for k in range(segs):
+            t0 = 2 * math.pi * k / segs
+            t1 = 2 * math.pi * (k + 1) / segs
+            pts = [rim + Vector((math.cos(t) * math.cos(a), -math.sin(a) * 0.85, math.sin(t) * math.cos(a))) * radius
+                   for t, a in ((t0, a0), (t0, a1), (t1, a1), (t1, a0))]
+            nrm = [(p - rim).normalized() for p in pts]
+            b.poly(pts if (pts[1] - pts[0]).cross(pts[2] - pts[0]).dot(nrm[0]) > 0 else pts[::-1], coir)
+    b.poly([rim + Vector((math.cos(t) * radius, -0.012, math.sin(t) * radius)) for t in
+            [-2 * math.pi * k / segs for k in range(segs)]], SOIL)
+    # Drahtkorb außen: Ring oben, Bügel nach unten
+    b.tube([rim + Vector((math.cos(t) * (radius + 0.004), 0.0, math.sin(t) * (radius + 0.004))) for t in
+            [2 * math.pi * k / segs for k in range(segs + 1)]], 0.004, mat, segments=4, caps=False)
     for k in range(6):
-        a = 2 * math.pi * k / 6 + rnd.uniform(-0.3, 0.3)
-        trailing_strand(b, (x + 0.17 * math.cos(a), top, zb + 0.17 * math.sin(a)), rnd.uniform(0.15, 0.3), rnd,
-                        palette="rose" if k % 2 else "lavender")
+        t = 2 * math.pi * k / 6 + 0.2
+        b.tube([rim + Vector((math.cos(t) * math.cos(a), -math.sin(a) * 0.85, math.sin(t) * math.cos(a))) * (radius + 0.004)
+                for a in [math.pi / 2 * q / 6 for q in range(7)]], 0.0025, mat, segments=3, caps=False)
+    # Ketten aus Gliedern vom Rand zum Haken
+    for k in range(3):
+        t = 2 * math.pi * k / 3 + 0.5
+        chain(b, rim + Vector((math.cos(t) * radius, 0.0, math.sin(t) * radius)), hook, PL.CHAIN)
+    b.tube([hook, hook + Vector((0, 0.03, 0))], 0.004, mat, segments=4)
+    # Pflanzen (der Korb zählt am Ende als Gefäß, siehe style_plants.settle)
+    PL._register(b, "cyl", (b.xf @ (rim - Vector((0, radius * 0.85, 0))), radius - 0.01, radius + 0.006, radius * 0.85, radius * 0.85 - 0.012))
+    space = PL.BasketSpace(rim, radius, rim.y - 0.012)
+    if wall_z is not None:
+        space.wall(wall_z)
+    soil = rim + Vector((0, -0.012, 0))
+    PL.geranium(b, soil + Vector((rnd.uniform(-0.02, 0.02), 0, rnd.uniform(-0.02, 0.02))), rnd, palettes[0], 0.9, space, flowers=4)
+    for k in range(8):
+        t = 2 * math.pi * k / 8 + rnd.uniform(-0.25, 0.25)
+        d = Vector((math.cos(t), 0, math.sin(t)))
+        start = soil + d * (radius - 0.05)
+        kind = ("lobelia", "petunia", "ivy", "lobelia", "petunia", "ivy", "lobelia", "petunia")[k]
+        pal = {"lobelia": rnd.choice(["blue", "white"]), "petunia": palettes[(k + 1) % len(palettes)]}.get(kind)
+        PL.trailing_ivy(b, start, rnd.uniform(0.15, 0.36), rnd, d, space, leaf_size=0.045, kind=kind, palette=pal, over=0.11, lift=0.02)
+        if kind == "petunia":
+            PL.petunia_plant(b, soil + d * (radius * 0.55), rnd, pal, 0.8, space)
+        elif kind == "lobelia":
+            PL.lobelia(b, soil + d * (radius * 0.6), rnd, pal, 1.1, space)
 
 
-def _scroll(b, x, y, z, radius, axis_plane="yz", turns=1.6, mat=None):
-    """Kleine Schnecke (Spirale) aus Rundeisen, in der Ebene x = konstant."""
+def door_knob(b, x, y, z_face, out=1, mat=None):
+    """Türknauf: Rosette auf dem Türblatt (Ebene z_face), Hals, Kugel (out = +1 nach +z, -1 nach -z)."""
+    mat = mat or GOLD
+    b.cylinder(V(x, y, z_face if out > 0 else z_face - 0.006), 0.028, 0.006, mat, segments=12, axis="z", caps=(True, True))
+    zn = z_face + 0.006 * out
+    b.cylinder(V(x, y, zn if out > 0 else zn - 0.025), 0.009, 0.025, mat, segments=8, axis="z", caps=(False, False))
+    b.sphere(V(x, y, zn + out * 0.045), 0.027, mat, rings=5, segments=10)
+
+
+def chain(b, a, z, mat, link=0.024, wire=0.0018):
+    """Kette aus ovalen Gliedern von a nach z (jedes zweite Glied um 90° gedreht)."""
+    a = Vector(a)
+    z = Vector(z)
+    d = z - a
+    n = max(2, int(d.length / (link * 0.78)))
+    axis = d.normalized()
+    side = axis.cross(Vector((0, 1, 0)) if abs(axis.y) < 0.9 else Vector((1, 0, 0))).normalized()
+    other = axis.cross(side).normalized()
+    for k in range(n):
+        c = a + d * ((k + 0.5) / n)
+        w = side if k % 2 == 0 else other
+        loop = [c + axis * (math.cos(q) * link * 0.5) + w * (math.sin(q) * link * 0.28) for q in [2 * math.pi * i / 5 for i in range(6)]]
+        b.tube(loop, wire, mat, segments=3, caps=False)
+
+
+def _scroll(b, x, y, z, radius, axis_plane="yz", turns=1.6, mat=None, attach=()):
+    """Kleine Schnecke (Spirale) aus Rundeisen, in der Ebene x = konstant. attach = Stäbe
+    (Listen von Punkten), mit denen sie verbunden ist: wo sie einen Stab nicht berührt, kommt
+    ein kurzes Verbindungsstück mit Bund dazu (geschmiedet, nichts schwebt)."""
     pts = []
     for k in range(25):
         t = k / 24
@@ -193,6 +236,26 @@ def _scroll(b, x, y, z, radius, axis_plane="yz", turns=1.6, mat=None):
         r = radius * (1 - 0.8 * t)
         pts.append(V(x, y + r * math.sin(a), z + r * math.cos(a)))
     b.tube(pts, 0.009, mat or IRON, segments=4)
+    for bar in attach:
+        weld(b, pts, bar, mat or IRON)
+
+
+def weld(b, pts, bar, mat, radius=0.008):
+    """Verbindet eine Linie aus Punkten (pts) mit einem Stab (bar) an der engsten Stelle."""
+    best = None
+    for p in pts:
+        for i in range(len(bar) - 1):
+            a, c = Vector(bar[i]), Vector(bar[i + 1])
+            seg = c - a
+            f = max(0.0, min(1.0, (p - a).dot(seg) / max(seg.length_squared, 1e-9)))
+            q = a + seg * f
+            d = (p - q).length
+            if best is None or d < best[0]:
+                best = (d, p, q)
+    if best and best[0] > 0.004:
+        b.tube([best[1], best[2]], radius, mat, segments=4)
+    if best:
+        b.sphere(best[2], radius * 1.6, mat, rings=3, segments=6)
 
 
 def thread_spiral(b, start, radius, turns, mat, plane_z, thickness=0.01, direction=1):
@@ -231,12 +294,13 @@ def projecting_sign(b, x, y_bracket, z_wall, edge_mat, sign_mat, round_=False):
     Seiten)."""
     reach = 0.95
     b.box((x - 0.05, y_bracket - 0.5, z_wall), (x + 0.05, y_bracket + 0.06, z_wall + 0.025), IRON)
-    b.tube([V(x, y_bracket, z_wall), V(x, y_bracket, z_wall + reach)], 0.018, IRON, segments=6)
+    arm = [V(x, y_bracket, z_wall), V(x, y_bracket, z_wall + reach)]
+    strut = [V(x, y_bracket - 0.45, z_wall + 0.02), V(x, y_bracket - 0.18, z_wall + 0.35), V(x, y_bracket - 0.02, z_wall + 0.62)]
+    b.tube(arm, 0.018, IRON, segments=6)
     b.sphere(V(x, y_bracket, z_wall + reach + 0.01), 0.03, GOLD, rings=4, segments=8)
-    b.tube([V(x, y_bracket - 0.45, z_wall + 0.02), V(x, y_bracket - 0.18, z_wall + 0.35), V(x, y_bracket - 0.02, z_wall + 0.62)],
-           0.013, IRON, segments=5)
-    _scroll(b, x, y_bracket - 0.14, z_wall + 0.2, 0.1, turns=1.8)
-    _scroll(b, x, y_bracket - 0.06, z_wall + 0.48, 0.05, turns=1.4)
+    b.tube(strut, 0.013, IRON, segments=5)
+    _scroll(b, x, y_bracket - 0.14, z_wall + 0.2, 0.1, turns=1.8, attach=(arm, strut))
+    _scroll(b, x, y_bracket - 0.06, z_wall + 0.48, 0.05, turns=1.4, attach=(arm, strut))
     width, height = HANGING_SIGN
     cz = z_wall + 0.3 + width / 2
     cy = y_bracket - 0.1 - height / 2
@@ -329,17 +393,8 @@ def street_lamp(b, seed=1):
     # Zwei Hängekörbe an Armen quer zur Straße (lokal ±x)
     for sx in (-1, 1):
         b.tube([V(0, 2.55, 0), V(sx * 0.25, 2.62, 0), V(sx * 0.5, 2.6, 0)], 0.012, m, segments=4)
-        top = 2.2
-        for a in (0, 2.1, 4.2):
-            b.tube([V(sx * 0.5, 2.58, 0), V(sx * 0.5 + 0.16 * math.cos(a), top, 0.16 * math.sin(a))], 0.004, m, segments=3, caps=False)
-        b.sphere(V(sx * 0.5, top, 0), 0.19, MOSS, rings=5, segments=10, squash=0.6)
-        b.sphere(V(sx * 0.5, top + 0.05, 0), 0.17, leaf(0), rings=5, segments=10, squash=0.6, jitter=0.15, seed=rnd.randrange(999))
-        blossom_cluster(b, (sx * 0.5, top + 0.05, 0), 0.17, rnd.choice(["rose", "coral"]), rnd, count=12)
-        blossom_cluster(b, (sx * 0.5, top + 0.05, 0), 0.17, "white", rnd, count=6)
-        for k in range(5):
-            a = 2 * math.pi * k / 5
-            trailing_strand(b, (sx * 0.5 + 0.17 * math.cos(a), top, 0.17 * math.sin(a)), rnd.uniform(0.15, 0.35), rnd,
-                            palette=rnd.choice(["lavender", "rose", None]))
+        basket(b, V(sx * 0.5, 2.27, 0), 0.17, V(sx * 0.5, 2.585, 0), rnd, palettes=(rnd.choice(["rose", "coral"]), "white", "lavender"),
+               mat=m)
 
 
 ## Hängende Straßenlaterne am Wandarm: Ausladung (Mitte der Laterne vor der Wand) und Platz,
@@ -362,10 +417,12 @@ def bracket_lantern(b, mat=None):
     b.box((-0.07, -0.3, 0.0), (0.07, 0.15, 0.03), m)
     b.box((-0.05, -0.26, 0.03), (0.05, 0.11, 0.045), m)
     # Oberer Arm (leicht nach oben geschwungen) und eine Strebe von unten
-    b.tube([V(0, 0.08, 0.03), V(0, 0.18, 0.25), V(0, 0.2, r - 0.12), V(0, 0.16, r)], 0.022, m, segments=6)
-    b.tube([V(0, -0.24, 0.03), V(0, -0.08, 0.2), V(0, 0.08, 0.42), V(0, 0.18, 0.58)], 0.015, m, segments=5)
-    _scroll(b, 0, -0.04, 0.17, 0.075, mat=m)
-    _scroll(b, 0, 0.07, 0.4, 0.055, mat=m)
+    arm = [V(0, 0.08, 0.03), V(0, 0.18, 0.25), V(0, 0.2, r - 0.12), V(0, 0.16, r)]
+    strut = [V(0, -0.24, 0.03), V(0, -0.08, 0.2), V(0, 0.08, 0.42), V(0, 0.18, 0.58)]
+    b.tube(arm, 0.022, m, segments=6)
+    b.tube(strut, 0.015, m, segments=5)
+    _scroll(b, 0, -0.04, 0.17, 0.075, mat=m, attach=(arm, strut))
+    _scroll(b, 0, 0.07, 0.4, 0.055, mat=m, attach=(arm, strut))
     b.sphere(V(0, 0.2, r + 0.035), 0.028, m, rings=3, segments=6)
     # Haken mit kurzer Stange, daran die Laterne
     b.tube([V(0, 0.16, r), V(0, -0.03, r)], 0.011, m, segments=5)
@@ -376,7 +433,8 @@ def wall_lantern(b, x, y, z_wall, mat=None):
     """Wandlaterne: geschwungener Arm von der Wand (Ebene z_wall, nach +z), Laterne darunter."""
     mat = mat or LAMP_GREEN
     b.box((x - 0.06, y - 0.12, z_wall), (x + 0.06, y + 0.22, z_wall + 0.03), mat)
-    b.tube([V(x, y, z_wall), V(x, y + 0.12, z_wall + 0.2), V(x, y + 0.1, z_wall + 0.38)], 0.018, mat, segments=5)
-    _scroll(b, x, y - 0.02, z_wall + 0.12, 0.06, mat=mat)
+    arm = [V(x, y, z_wall), V(x, y + 0.12, z_wall + 0.2), V(x, y + 0.1, z_wall + 0.38)]
+    b.tube(arm, 0.018, mat, segments=5)
+    _scroll(b, x, y - 0.02, z_wall + 0.12, 0.06, mat=mat, attach=(arm, [V(x, y - 0.12, z_wall + 0.03), V(x, y + 0.22, z_wall + 0.03)]))
     b.tube([V(x, y + 0.1, z_wall + 0.38), V(x, y - 0.05, z_wall + 0.38)], 0.008, mat, segments=4)
     lantern_head(b, x, y - 0.45, z_wall + 0.38, size=0.2, mat=mat)

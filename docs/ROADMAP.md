@@ -722,7 +722,24 @@ ist austauschbar.
       Sicherheitsnetz (bei Klemmen kurz durch feste Hindernisse); Fehler behoben: Passanten aus
       dem Vorrat suchten ihren Weg an der alten Stelle. Prüfwerkzeug meldet jetzt auch kurzes
       Auf-der-Stelle-Treten ("stall")
-- [ ] Teil 4f – Möbel und Deko im Stil, Innenraum der Bücherei
+- [x] Teil 4f – Echte Pflanzen und nichts schwebt mehr: Pflanzen-Texturen per Godot-Script
+      (Efeu-, Laub-, Geranien-, Funkien-, Olivenblatt, Buchs- und Laubzweig, Farn, Gras, Blüten
+      von Geranie, Hortensie, Petunie, Margerite, Lavendel, Rinde; Form über Alpha), eigenes
+      Pflanzen-Material (beidseitig, Licht scheint durch); Pflanzen-Bibliothek
+      `style_plants.py`: Efeu wächst zusammenhängend aus einem Pflanzloch die Wand hoch (Triebe,
+      Haftwurzeln, Blätter an Stielen, um Fenster und Fallrohre herum, über Gesimse), Efeu auf
+      dem Pub-Gesims aus einem Trog, Blumenkästen und Hängekörbe (Drahtkorb, Kokosmatte,
+      Ketten) quellen über, Buchskugeln, Kegel, Hochstämmchen, Olivenbäumchen, Hortensien,
+      Lavendel, Farne, Funkien, Rosen, Baum im Garten, Sträuße im Blumenladen (Tulpen, Rosen,
+      Margeriten, Hortensien, Lavendel, Grün); Töpfe, Eimer, Kästen oben offen mit Rand und
+      Erde; Blätter wachsen nie in Wände, Töpfe oder Kästen (`Space`, `settle`). Fehler
+      behoben: Kreidetafeln schwebten 3,5 cm, Sträucher steckten in Töpfen, Töpfe/Kästen
+      waren oben zu, Türknäufe, Schild, Bilder, Vorhang, Lampen, Lichterkette, Kerzenflammen,
+      Stehlampe, Kranz, Balkongeländer, Auslage-Stufen, Wollknäuel, Knöpfe, Schild am Eckhaus,
+      Wandlaternen am Torhaus und an der Bücherei schwebten. Neues Prüfwerkzeug
+      `geo_check.py` (schwebende Teile, Blätter in festen Teilen, mit Programmzeile),
+      Blickpunkte `details`
+- [ ] Teil 4g – Möbel und Deko im Stil, Innenraum der Bücherei
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
 - [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)
 

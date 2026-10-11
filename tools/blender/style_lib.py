@@ -34,6 +34,14 @@ with open(os.path.join(TEX_DIR, "layers.json")) as _file:
 GRID_X = _TABLE["grid_x"]
 GRID_Y = _TABLE["grid_y"]
 LAYERS = {entry["name"]: entry for entry in _TABLE["layers"]}
+# Pflanzen (seit Etappe 4g, Teil 4f): eigene Texturliste mit ausgeschnittenen Blättern und Blüten
+# (scripts/tools/generate_plant_textures.gd), eigenes Material "plant" (beidseitig, Alpha-Schnitt)
+PLANT_DIR = os.path.join(ROOT, "assets", "textures", "plants")
+with open(os.path.join(PLANT_DIR, "layers.json")) as _file:
+    _PLANT_TABLE = json.load(_file)
+PLANT_LAYERS = {entry["name"]: dict(entry, tile_size=0.6) for entry in _PLANT_TABLE["layers"]}
+PLANT_GRID_X = _PLANT_TABLE["grid_x"]
+PLANT_GRID_Y = _PLANT_TABLE["grid_y"]
 ROLES = {"fixed": 0, "wall": 1, "door": 2, "accent": 3}
 SERIF_FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
 # Für verspielte Schrift (Buchstaben hüpfen zusätzlich, siehe Builder.playful_text)
@@ -45,6 +53,9 @@ GLOW_STRENGTH = 1.5
 SHOW_BACKFACES = False
 # Schild-Bilder heißen assets/textures/signs/<Haustyp>_<Schild>.png (setzt das Bau-Script)
 SIGN_PREFIX = ""
+# Schlussschritte für jedes fertige Modell (z. B. style_plants.settle: Blätter aus allen
+# Gefäßen schieben) – laufen einmal, bevor das Modell geschrieben oder geprüft wird
+FINISHERS = []
 
 
 def srgb_to_linear(c):
@@ -70,7 +81,9 @@ class Mat:
     Vertex-Farbe (1 - glow)."""
 
     def __init__(self, layer, role="fixed", color=(1.0, 1.0, 1.0), glass=False, glow=0.0, sign=None):
-        assert layer in LAYERS, layer
+        assert layer in LAYERS or layer in PLANT_LAYERS, layer
+        # Pflanzen-Ebene (Blatt, Blüte, Rinde): eigenes Material, Texturkoordinaten 0..1 je Blatt
+        self.plant = layer in PLANT_LAYERS
         # sign = Name eines Schilds: Fläche zeigt ein eigenes Bild (assets/textures/signs/),
         # Texturkoordinaten 0..1 kommen von poly(..., uvs=…)
         self.sign = sign
@@ -87,9 +100,16 @@ class Mat:
         if self.sign:
             return "sign_" + self.sign
         glow = "_g%02d" % round(self.glow * 99) if self.glow > 0 else ""
+        if self.plant:
+            return "plant_%s_%02x%02x%02x%s" % ((self.layer,) + tuple(int(round(min(c, 1.0) * 255)) for c in self.color) + (glow,))
         if self.role != "fixed":
             return "%s_%s%s" % (self.layer, self.role, glow)
         return "%s_%02x%02x%02x%s" % ((self.layer,) + tuple(int(round(c * 255)) for c in self.color) + (glow,))
+
+
+def layer_info(mat):
+    """Eintrag der Ebene (Nummer, Kachelgröße …) – aus der Haus- oder der Pflanzen-Tabelle."""
+    return PLANT_LAYERS[mat.layer] if mat.plant else LAYERS[mat.layer]
 
 
 def edited_by_hand(glb):
@@ -514,16 +534,28 @@ class Builder:
         for f in self.faces[start:]:
             f["pts"] = [p + Vector((dx, dy, 0)) for p in f["pts"]]
 
+    def finish(self):
+        """Schlussschritte (FINISHERS) einmal ausführen."""
+        if getattr(self, "_finished", False):
+            return
+        self._finished = True
+        for func in FINISHERS:
+            func(self)
+
     def triangles(self):
         """Alle Flächen als Dreiecke mit Daten je Ecke (für den Exporter)."""
+        self.finish()
         out = {"house": [], "glass": []}
         for face in self.faces:
             mat = face["mat"]
-            info = LAYERS[mat.layer]
+            info = layer_info(mat)
             tile = info["tile_size"]
             uv_of = face.get("uvs") or [_planar_uv(p, face["n"], tile) for p in face["pts"]]
             color = srgb_to_linear(mat.color) if mat.role == "fixed" else (1.0, 1.0, 1.0)
-            target = out.setdefault(mat.key() if (mat.sign or mat.glass) else "house", [])
+            if mat.plant:
+                target = out.setdefault("plant", [])
+            else:
+                target = out.setdefault(mat.key() if (mat.sign or mat.glass) else "house", [])
             pts = face["pts"]
             for i in range(1, len(pts) - 1):
                 for k in (0, i, i + 1):
@@ -605,7 +637,7 @@ def write_glb(builder, path):
     buffer_views = []
     accessors = []
 
-    def add(data, fmt, count, kind, target=34962, minmax=None):
+    def add(data, fmt, count, kind, target=34962, minmax=None, normalized=False):
         nonlocal chunks
         while len(chunks) % 4:
             chunks += b"\0"
@@ -613,6 +645,8 @@ def write_glb(builder, path):
         chunks += data
         buffer_views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(data), "target": target})
         acc = {"bufferView": len(buffer_views) - 1, "componentType": fmt, "count": count, "type": kind}
+        if normalized:
+            acc["normalized"] = True
         if minmax:
             acc["min"], acc["max"] = minmax
         accessors.append(acc)
@@ -620,7 +654,7 @@ def write_glb(builder, path):
 
     primitives = []
     materials = []
-    for mat_name in ["house", "glass", "glass_clear", "glass_inner"] + sorted(k for k in tris if k.startswith("sign_")):
+    for mat_name in ["house", "plant", "glass", "glass_clear", "glass_inner"] + sorted(k for k in tris if k.startswith("sign_")):
         verts = tris.get(mat_name)
         if not verts:
             continue
@@ -648,7 +682,8 @@ def write_glb(builder, path):
             # glTF zählt v von oben nach unten
             uv0 += struct.pack("<2f", uv[0], 1.0 - uv[1])
             uv1 += struct.pack("<2f", uv2[0], uv2[1])
-            col += struct.pack("<4f", c[0], c[1], c[2], c[3])
+            # Farbe als Bytes (0..255) – Godot speichert Vertex-Farben ohnehin mit 8 Bit
+            col += struct.pack("<4B", *(max(0, min(255, int(round(v * 255)))) for v in c))
             for k in range(3):
                 lo[k] = min(lo[k], p[k])
                 hi[k] = max(hi[k], p[k])
@@ -658,12 +693,15 @@ def write_glb(builder, path):
             "NORMAL": add(bytes(nor), 5126, count, "VEC3"),
             "TEXCOORD_0": add(bytes(uv0), 5126, count, "VEC2"),
             "TEXCOORD_1": add(bytes(uv1), 5126, count, "VEC2"),
-            "COLOR_0": add(bytes(col), 5126, count, "VEC4"),
+            "COLOR_0": add(bytes(col), 5121, count, "VEC4", normalized=True),
         }
         index_data = struct.pack("<%dI" % len(index_list), *index_list)
         indices = add(index_data, 5125, len(index_list), "SCALAR", target=34963)
         if mat_name == "house":
             materials.append({"name": "house", "pbrMetallicRoughness": {"baseColorFactor": [0.8, 0.8, 0.8, 1.0], "metallicFactor": 0.0, "roughnessFactor": 0.8}})
+        elif mat_name == "plant":
+            materials.append({"name": "plant", "alphaMode": "MASK", "doubleSided": True,
+                              "pbrMetallicRoughness": {"baseColorFactor": [0.8, 0.8, 0.8, 1.0], "metallicFactor": 0.0, "roughnessFactor": 0.6}})
         elif mat_name.startswith("sign_"):
             materials.append({"name": mat_name, "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 0.6}})
         else:
@@ -734,7 +772,8 @@ def write_import_settings(glb_path, signs=None):
     path = glb_path + ".import"
     mapping = {"glass": "res://assets/materials/house_glass.tres", "glass_clear": "res://assets/materials/house_glass_clear.tres",
                "glass_inner": "res://assets/materials/house_glass_inner.tres",
-               "house": "res://assets/materials/house_style.tres"}
+               "house": "res://assets/materials/house_style.tres",
+               "plant": "res://assets/materials/plant_style.tres"}
     for name, res_path in (signs or {}).items():
         mapping["sign_" + name] = res_path
     entries = ",\n".join('"%s": {\n"use_external/enabled": true,\n"use_external/path": "%s"\n}' % (k, v)
@@ -816,6 +855,8 @@ def preview_material(mat, role_colors):
         links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
         bsdf.inputs["Roughness"].default_value = 0.6
         return m
+    if mat.plant:
+        return _plant_preview(m, mat)
     if mat.glass:
         bsdf.inputs["Base Color"].default_value = (0.85, 0.9, 0.9, 1)
         # Wie im Spiel leicht verschwommen (raue Durchsicht)
@@ -893,8 +934,114 @@ def preview_material(mat, role_colors):
     return m
 
 
+_PLANT_ATLAS = {}
+
+
+def _plant_atlas(kind):
+    img = _PLANT_ATLAS.get(kind)
+    if img is not None:
+        try:
+            img.name
+        except ReferenceError:
+            img = None
+    if img is None:
+        img = bpy.data.images.load(os.path.join(PLANT_DIR, "plant_%s.png" % kind), check_existing=True)
+        if kind == "normal":
+            img.colorspace_settings.name = "Non-Color"
+        else:
+            img.alpha_mode = "STRAIGHT"
+        _PLANT_ATLAS[kind] = img
+    return img
+
+
+def _plant_preview(m, mat):
+    """Vorschau wie der Godot-Shader plant_style.gdshader: Feld der Pflanzen-Textur, Farbe x
+    Ecken-Farbe, ausgeschnitten nach Alpha, Licht scheint etwas durch."""
+    nt = m.node_tree
+    nodes = nt.nodes
+    links = nt.links
+    bsdf = nodes["Principled BSDF"]
+    out = nodes["Material Output"]
+    info = PLANT_LAYERS[mat.layer]
+    index = info["index"]
+    cell_x = index % PLANT_GRID_X
+    cell_y = PLANT_GRID_Y - 1 - index // PLANT_GRID_X
+    uv = nodes.new("ShaderNodeUVMap")
+    uv.uv_map = "UVMap"
+    fit = nodes.new("ShaderNodeVectorMath")
+    if mat.layer == "bark":
+        fit.operation = "FRACTION"
+        links.new(uv.outputs["UV"], fit.inputs[0])
+    else:
+        # Ein Blatt = ein ganzes Feld: nicht wiederholen, sondern am Rand festhalten
+        low = nodes.new("ShaderNodeVectorMath")
+        low.operation = "MAXIMUM"
+        low.inputs[1].default_value = (0.002, 0.002, 0.0)
+        links.new(uv.outputs["UV"], low.inputs[0])
+        fit.operation = "MINIMUM"
+        fit.inputs[1].default_value = (0.998, 0.998, 0.0)
+        links.new(low.outputs[0], fit.inputs[0])
+    mapping = nodes.new("ShaderNodeMapping")
+    ix = 2.0 / (_PLANT_TABLE["layer_size"] * PLANT_GRID_X)
+    iy = 2.0 / (_PLANT_TABLE["layer_size"] * PLANT_GRID_Y)
+    mapping.inputs["Scale"].default_value = (1.0 / PLANT_GRID_X - 2 * ix, 1.0 / PLANT_GRID_Y - 2 * iy, 1)
+    mapping.inputs["Location"].default_value = (cell_x / PLANT_GRID_X + ix, cell_y / PLANT_GRID_Y + iy, 0)
+    links.new(fit.outputs[0], mapping.inputs["Vector"])
+    tex = nodes.new("ShaderNodeTexImage")
+    tex.image = _plant_atlas("albedo")
+    tex.interpolation = "Linear"
+    links.new(mapping.outputs[0], tex.inputs["Vector"])
+    gain = 1.0 / srgb_to_linear((_PLANT_TABLE["neutral"],) * 3)[0]
+    tint = srgb_to_linear(mat.color)
+    rgb = nodes.new("ShaderNodeRGB")
+    rgb.outputs[0].default_value = (tint[0] * gain, tint[1] * gain, tint[2] * gain, 1)
+    mult = nodes.new("ShaderNodeMixRGB")
+    mult.blend_type = "MULTIPLY"
+    mult.inputs["Fac"].default_value = 1.0
+    links.new(tex.outputs["Color"], mult.inputs["Color1"])
+    links.new(rgb.outputs[0], mult.inputs["Color2"])
+    links.new(mult.outputs[0], bsdf.inputs["Base Color"])
+    bsdf.inputs["Roughness"].default_value = info["roughness"]
+    ntex = nodes.new("ShaderNodeTexImage")
+    ntex.image = _plant_atlas("normal")
+    links.new(mapping.outputs[0], ntex.inputs["Vector"])
+    nmap = nodes.new("ShaderNodeNormalMap")
+    nmap.uv_map = "UVMap"
+    links.new(ntex.outputs["Color"], nmap.inputs["Color"])
+    links.new(nmap.outputs["Normal"], bsdf.inputs["Normal"])
+    if mat.glow > 0:
+        links.new(mult.outputs[0], bsdf.inputs["Emission"])
+        bsdf.inputs["Emission Strength"].default_value = mat.glow * GLOW_STRENGTH
+    surface = bsdf.outputs[0]
+    if info["translucency"] > 0:
+        trans = nodes.new("ShaderNodeBsdfTranslucent")
+        links.new(mult.outputs[0], trans.inputs["Color"])
+        mix_t = nodes.new("ShaderNodeMixShader")
+        mix_t.inputs["Fac"].default_value = info["translucency"] * 0.4
+        links.new(surface, mix_t.inputs[1])
+        links.new(trans.outputs[0], mix_t.inputs[2])
+        surface = mix_t.outputs[0]
+    if mat.layer != "bark":
+        cut = nodes.new("ShaderNodeMath")
+        cut.operation = "GREATER_THAN"
+        cut.inputs[1].default_value = 0.5
+        links.new(tex.outputs["Alpha"], cut.inputs[0])
+        hole = nodes.new("ShaderNodeBsdfTransparent")
+        mix_a = nodes.new("ShaderNodeMixShader")
+        links.new(cut.outputs[0], mix_a.inputs["Fac"])
+        links.new(hole.outputs[0], mix_a.inputs[1])
+        links.new(surface, mix_a.inputs[2])
+        surface = mix_a.outputs[0]
+        m.blend_method = "CLIP"
+        m.shadow_method = "CLIP"
+    links.new(surface, out.inputs["Surface"])
+    m.use_backface_culling = False
+    return m
+
+
 def to_blender(builder, role_colors, collection=None):
     """Blender-Objekt bauen (Godot-Koordinaten werden zu Blender: x, -z, y)."""
+    builder.finish()
     mesh = bpy.data.meshes.new(builder.name)
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
@@ -914,7 +1061,7 @@ def to_blender(builder, role_colors, collection=None):
         except ValueError:
             continue
         f.material_index = slots[key]
-        info = LAYERS[mat.layer]
+        info = layer_info(mat)
         face_uvs = face.get("uvs") or [_planar_uv(p, face["n"], info["tile_size"]) for p in face["pts"]]
         for loop, p, n, (u, v) in zip(f.loops, face["pts"], face["normals"], face_uvs):
             loop[uv].uv = (u, v)

@@ -15,6 +15,8 @@ import random
 
 import style_lib as S
 import style_parts as P
+import style_plants as PL
+from mathutils import Vector
 from style_lib import Mat, V
 
 TRIM = Mat("stone_trim")
@@ -149,7 +151,7 @@ def _shallow_room(b, rx0, rx1, fy, cy, z, depth, rnd, glow=0.12, floor=0):
     color = rnd.choice(ROOM_WALLS)
     _room_shell(b, rx0, rx1, fy, cy, z, depth, color, glow)
     cx = (rx0 + rx1) / 2 + rnd.uniform(-0.25, 0.25)
-    zb = z - depth + 0.01
+    zb = z - depth
     choices = ["picture", "shelf", "clock", "mirror", "plant", "lamp", "nothing"]
     weights = [2, 3, 1, 1, 2, 2, 2] if floor == 0 else [1, 1, 1, 0, 1, 1, 2]
     if floor > 0:
@@ -181,10 +183,12 @@ def _shallow_room(b, rx0, rx1, fy, cy, z, depth, rnd, glow=0.12, floor=0):
         b.box((cx - 0.25, my - 0.4, zb), (cx + 0.25, my + 0.4, zb + 0.03), GOLD)
         b.box((cx - 0.21, my - 0.36, zb + 0.03), (cx + 0.21, my + 0.36, zb + 0.035), Mat("plain", color=(0.7, 0.74, 0.76), glow=glow + 0.05))
     elif content == "plant":
-        b.cylinder(V(cx, fy, z - 0.35), 0.14, 0.32, Mat("terracotta", glow=glow * 0.5), segments=10)
-        b.sphere(V(cx, fy + 0.6, z - 0.35), 0.3, Mat("foliage", color=(0.3, 0.44, 0.22), glow=glow * 0.5), rings=5, segments=10, jitter=0.15, seed=rnd.randrange(999))
+        PL.indoor_plant(b, cx, fy, z - depth * 0.5, rnd, glow=glow * 0.5, room=((rx0 + 0.02, fy, z - depth + 0.02), (rx1 - 0.02, cy - 0.02, z - 0.1)),
+                        size=min(1.0, depth / 0.8))
     elif content == "lamp":
         lx = rx0 + 0.25 if rnd.random() < 0.5 else rx1 - 0.25
+        b.cylinder(V(lx, fy, zb + 0.3), 0.12, 0.025, Mat("gold", glow=0.05), segments=10, caps=(False, True))
+        b.cylinder(V(lx, fy + 0.025, zb + 0.3), 0.012, 0.99, Mat("gold", glow=0.05), segments=6)
         b.cylinder(V(lx, fy + 1.0, zb + 0.3), 0.16, 0.22, Mat("plain", color=(1.0, 0.86, 0.62), glow=0.9), segments=10, radius_top=0.1, caps=(True, True))
     elif content == "ceiling":
         # Hängelampe und Stuckrosette – mehr sieht man von unten nicht
@@ -206,7 +210,7 @@ def _inner_door(b, x, fy, z0, z1, facing, ceiling_y):
     b.box((lo2, fy, z0), (hi2, fy + h, z1), door)
     for py0, py1 in ((0.25, 0.9), (1.05, h - 0.15)):
         b.box((lo2 + (0.0 if facing > 0 else -0.008), fy + py0, z0 + 0.1), (hi2 + (0.008 if facing > 0 else 0.0), fy + py1, z1 - 0.1), door)
-    b.sphere(V(x_in + facing * 0.05, fy + 1.0, z1 - 0.12), 0.025, GOLD, rings=3, segments=6)
+    b.sphere(V(x_in + facing * 0.036, fy + 1.0, z1 - 0.12), 0.025, GOLD, rings=3, segments=6)
 
 
 def _living_room(b, rx0, rx1, fy, cy, z, depth, rnd):
@@ -239,8 +243,7 @@ def _living_room(b, rx0, rx1, fy, cy, z, depth, rnd):
             b.box((sx + 0.32, y, zz), (sx + 0.35, y + hgt, zz + t), Mat("plain", color=rnd.choice(CURTAINS), glow=0.08))
             zz += t + 0.004
     _inner_door(b, rx1, fy, zb + 1.3, zb + 2.15, -1, cy)
-    b.cylinder(V(rx0 + 0.6, fy, z - 0.45), 0.15, 0.3, Mat("terracotta", glow=0.05), segments=10)
-    b.sphere(V(rx0 + 0.6, fy + 0.55, z - 0.45), 0.25, Mat("foliage", color=(0.3, 0.44, 0.22), glow=0.06), rings=5, segments=10, jitter=0.15, seed=rnd.randrange(999))
+    PL.indoor_plant(b, rx0 + 0.6, fy, z - 0.55, rnd, glow=0.06, room=((rx0 + 0.02, fy, z - depth + 0.02), (rx1 - 0.02, cy - 0.02, z - 0.12)))
 
 
 def _kitchen(b, rx0, rx1, fy, cy, z, depth, rnd):
@@ -401,7 +404,7 @@ def door_unit(b, spec, x, rnd):
         b.frame(dx0 + 0.1, base + 0.3, dx1 - 0.1, base + 0.95, z + 0.03, z + 0.045, 0.025, JOINERY)
         gy0, gy1 = base + 1.15, base + height - 0.12
         b.quad(V(dx0 + 0.1, gy0, z + 0.035), V(dx1 - 0.1, gy0, z + 0.035), V(dx1 - 0.1, gy1, z + 0.035), V(dx0 + 0.1, gy1, z + 0.035), GLASS)
-        b.quad(V(dx0 + 0.1, gy0, z + 0.01), V(dx1 - 0.1, gy0, z + 0.01), V(dx1 - 0.1, gy1, z + 0.01), V(dx0 + 0.1, gy1, z + 0.01),
+        b.quad(V(dx0 + 0.1, gy0, z + 0.029), V(dx1 - 0.1, gy0, z + 0.029), V(dx1 - 0.1, gy1, z + 0.029), V(dx0 + 0.1, gy1, z + 0.029),
                Mat("plain", color=(0.3, 0.26, 0.22), glow=0.1))
         b.frame(dx0 + 0.1, gy0, dx1 - 0.1, gy1, z + 0.03, z + 0.05, 0.03, JOINERY)
     b.box((x - 0.12, base + 1.0, z + 0.03), (x + 0.12, base + 1.04, z + 0.042), GOLD)
@@ -533,12 +536,11 @@ def balcony(b, kind, x, y_floor, w, rnd):
             b.beam(V(cx, y_floor - 0.45, 0.06), V(cx, y_floor - 0.12, d - 0.08), 0.1, 0.06, TRIM)
         _railing(b, [V(x0 + 0.04, y_floor, 0.0), V(x0 + 0.04, y_floor, d - 0.04), V(x1 - 0.04, y_floor, d - 0.04), V(x1 - 0.04, y_floor, 0.0)], 0.95)
         for cx in (x0 + 0.25, x1 - 0.25):
-            b.cylinder(V(cx, y_floor, d - 0.2), 0.1, 0.2, POT, segments=10, radius_top=0.12)
-            b.sphere(V(cx, y_floor + 0.3, d - 0.2), 0.13, P.leaf(rnd.randrange(3)), rings=4, segments=8, jitter=0.15, seed=rnd.randrange(99))
-            P.blossom_cluster(b, (cx, y_floor + 0.3, d - 0.2), 0.12, rnd.choice(["rose", "white", "coral"]), rnd, count=8)
+            PL.pot_plant(b, cx, d - 0.2, "geranium", rnd, 0.1, 0.2, 0.12, y=y_floor, palette=rnd.choice(["rose", "white", "coral", "red"]),
+                         collider=False)
     else:
         x0, x1 = x - w / 2 - 0.05, x + w / 2 + 0.05
-        _railing(b, [V(x0, y_floor + 0.05, 0.03), V(x0, y_floor + 0.05, 0.14), V(x1, y_floor + 0.05, 0.14), V(x1, y_floor + 0.05, 0.03)], 0.8)
+        _railing(b, [V(x0, y_floor, 0.0), V(x0, y_floor, 0.14), V(x1, y_floor, 0.14), V(x1, y_floor, 0.0)], 0.8)
 
 
 def _railing(b, path, height):
@@ -550,7 +552,8 @@ def _railing(b, path, height):
         n = max(1, int((c - a).length / 0.11))
         for k in range(n + 1):
             p = a + (c - a) * (k / n)
-            b.box((p.x - 0.008, p.y + 0.08, p.z - 0.008), (p.x + 0.008, p.y + height, p.z + 0.008), IRON, skip=("bottom", "top"))
+            # Stäbe stehen unten auf (Fensterbank, Balkonplatte)
+            b.box((p.x - 0.008, p.y, p.z - 0.008), (p.x + 0.008, p.y + height, p.z + 0.008), IRON, skip=("top",))
             if k % 4 == 2:
                 b.sphere(p + V(0, height * 0.55, 0), 0.025, IRON, rings=3, segments=6)
 
@@ -590,27 +593,17 @@ def front_garden(b, w, setback, path_x, rnd):
         if a1 - a0 < 0.3:
             continue
         b.box((a0, 0, z1), (a1, 0.06, z0 - 0.15), Mat("plain", color=(0.24, 0.18, 0.13)), skip=("bottom",))
-        x = a0 + 0.3
-        while x < a1 - 0.2:
-            z = z1 + rnd.uniform(0.35, setback - 0.45)
-            r = rnd.uniform(0.18, 0.3)
-            b.sphere(V(x, r * 0.8, z), r, P.leaf(rnd.randrange(3)), rings=5, segments=9, squash=0.8, jitter=0.15, seed=rnd.randrange(999))
-            if rnd.random() < 0.6:
-                P.blossom_cluster(b, (x, r * 0.8, z), r, rnd.choice(["lavender", "rose", "white"]), rnd, count=10)
-            x += rnd.uniform(0.45, 0.7)
+        # Beet: Hauswand hinten (z1), Zaun vorn (z0) – nichts wächst hinein
+        space = PL.Space().floor(0.06).wall(z1, gap=0.01).block((a0 - 1, -1, z0 - 0.2), (a1 + 1, 2.0, z0 + 1.0))
+        PL.garden_bed(b, a0, a1, z1 + 0.25, z0 - 0.4, 0.06, rnd, space=space)
 
 
-def ivy(b, x, z, top, rnd, spread=0.8):
-    """Efeu an der Fassade: Polster aus Laub, die nach oben schmaler werden."""
-    y = 0.2
-    while y < top:
-        t = y / top
-        width = spread * (1.0 - 0.6 * t)
-        for _ in range(3):
-            px = x + rnd.uniform(-width, width)
-            r = rnd.uniform(0.16, 0.26) * (1 - 0.4 * t)
-            b.sphere(V(px, y, z + r * 0.35), r, P.leaf(rnd.randrange(3)), rings=4, segments=8, squash=0.9, jitter=0.2, seed=rnd.randrange(999))
-        y += 0.32
+def ivy(b, x, z, top, rnd, spread=0.8, holes=(), bumps=(), x_min=-1e9, x_max=1e9, pit=True, floor_y=None):
+    """Efeu an der Fassade (style_plants.ivy_wall): wächst aus einem kleinen Pflanzloch bei x die
+    Wand hoch, lässt Fenster, Türen und Fallrohre (holes) frei und wächst über Gesimse (bumps =
+    Rechtecke x0, y0, x1, y1, Vorderkante z) hinweg statt hindurch."""
+    PL.ivy_wall(b, x, z, top, rnd, x_min=x_min, x_max=x_max, holes=holes, bumps=bumps, spread=spread,
+                stems=4 if spread < 0.6 else 6, pit=pit, floor_y=floor_y)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -905,6 +898,17 @@ def build_house(name, spec):
         SHOPFRONTS[shop][0](b, spec, rnd, ys[1])
     else:
         b.wall_with_holes(-w, w, 0.0, ys[1], 0.0, holes_g, wall_ground, reveal=0.13)
+    # Für den Efeu: Öffnungen mit Rahmen, Bänken, Stürzen (und Türvordach) bleiben frei
+    ivy_holes = [(-w, 0.0, w, ys[1] + 0.3)] if shop else \
+        [(h[0] - 0.45, h[1], h[2] + 0.45, h[3] + 0.7) if h is door_rect else (h[0] - 0.2, h[1] - 0.3, h[2] + 0.2, h[3] + 0.35)
+         for h in holes_g]
+    if bay_i >= 0 and not shop:
+        ivy_holes.append((cols[bay_i][0] - 1.55, 0.0, cols[bay_i][0] + 1.55, storeys[0] + 0.25))
+    if door_rect and spec["door_style"] in ("pilaster", "porch"):
+        ivy_holes.append((door_rect[0] - 0.7, 0.0, door_rect[2] + 0.7, door_rect[3] + 0.9))
+    ivy_bumps = [(-w, 0.0, w, 0.36, 0.035)]
+    if spec.get("quoins"):
+        ivy_bumps += [(-w, 0.3, -w + 0.46, ys[-1], 0.04), (w - 0.46, 0.3, w, ys[-1], 0.04)]
     # Sockel – mit Lücke an der Tür (früher lief er davor entlang)
     gaps = sorted([(door_rect[0] - 0.02, door_rect[2] + 0.02)] if door_rect else [])
     if bay_i >= 0:
@@ -953,6 +957,14 @@ def build_house(name, spec):
             else:
                 holes.append((x - ww / 2, f_y0, x + ww / 2, f_y0 + f_h))
         b.wall_with_holes(-w, w, base, topy, 0.0, holes, wall_upper, reveal=0.13)
+        boxes = spec.get("flower_boxes") and fl == 1
+        for i, h in enumerate(holes):
+            if i == french_i:
+                ivy_holes.append((h[0] - 0.5, h[1] - 0.5, h[2] + 0.5, h[3] + 0.4))
+            else:
+                ivy_holes.append((h[0] - 0.2, h[1] - (0.55 if boxes else 0.3), h[2] + 0.2, h[3] + (0.6 if boxes else 0.35)))
+        if fl < len(storeys) and not spec.get("fachwerk") and spec["string"] != "none":
+            ivy_bumps.append((-w, base - 0.12, w, base + 0.12, 0.065))
         if jetty > 0:
             # Vorkragung: Unterseite und Seiten des überstehenden Stücks
             b.face([V(-w, base, 0.0), V(w, base, 0.0), V(w, base, -jetty), V(-w, base, -jetty)], TIMBER, (0, -1, 0))
@@ -1005,7 +1017,11 @@ def build_house(name, spec):
         b.cylinder(V((w - 0.1) * spec.get("downpipe_side", 1), 0.0, 0.07), 0.04, E + 0.05, LEAD, segments=8, caps=(True, True))
     _side_walls(b, spec, rnd, ys)
     if spec.get("ivy"):
-        ivy(b, spec["ivy"] * (w - 0.5), 0.0, ys[-1] * 0.85, rnd)
+        pipe_x = (w - 0.1) * spec.get("downpipe_side", 1)
+        ivy_holes.append((pipe_x - 0.08, 0.0, pipe_x + 0.08, E + 1.0))
+        garden = spec.get("setback", 0.0) > 0.5
+        ivy(b, spec["ivy"] * (w - 0.5), 0.0, ys[-1] * 0.85, rnd, spread=0.8, holes=ivy_holes, bumps=ivy_bumps,
+            x_min=-w + 0.06, x_max=w - 0.06, pit=not garden, floor_y=0.07 if garden else None)
     if shop:
         SHOPFRONTS[shop][1](b, spec, rnd)
     # --- Vor dem Haus ---
@@ -1121,7 +1137,9 @@ def _side_walls(b, spec, rnd, ys):
                 timber_frame(b, lo, hi, y0, y1, holes, rnd)
         if info and info[0] == "partial" and info[1] > 0.4:
             # Nur vorn ein Stück frei: Efeu statt Fenster
-            ivy(b, s * info[1] / 2, 0.0, ys[-1] * 0.8, rnd, spread=min(0.9, info[1] / 2 - 0.1))
+            lo_x, hi_x = sorted((s * 0.06, s * (info[1] - 0.06)))
+            ivy(b, s * info[1] / 2, 0.0, ys[-1] * 0.8, rnd, spread=min(0.9, info[1] / 2 - 0.1), x_min=lo_x, x_max=hi_x,
+                bumps=[(lo_x - 0.1, 0.0, hi_x + 0.1, 0.32, 0.035)])
         b.pop()
 
 
@@ -1141,16 +1159,8 @@ def _room_box(cols, i, w, floor_y, ceil_y, kind):
 
 
 def _door_pot(b, x, z, rnd):
-    kind = rnd.choice(["lavender", "box", "rose", "fern"])
-    h = 0.35
-    b.cylinder(V(x, 0, z), 0.13, h, POT, segments=12, radius_top=0.16, caps=(False, True))
-    if kind == "box":
-        b.cylinder(V(x, h, z), 0.13, 0.5, P.leaf(1), segments=10, radius_top=0.02, caps=(True, True))
-    else:
-        b.sphere(V(x, h + 0.12, z), 0.17, P.leaf(rnd.randrange(3)), rings=5, segments=10, squash=0.8, jitter=0.12, seed=rnd.randrange(999))
-        if kind != "fern":
-            P.blossom_cluster(b, (x, h + 0.13, z), 0.16, "lavender" if kind == "lavender" else "rose", rnd, count=10)
-    b.colliders.append(((x - 0.17, 0, z - 0.17), (x + 0.17, 0.6, z + 0.17)))
+    kind = rnd.choice(["lavender", "box_ball", "cone", "geranium", "fern"])
+    PL.pot_plant(b, x, z, kind, rnd, 0.13, 0.35, 0.16, palette=rnd.choice(["rose", "red", "white"]))
 
 
 def _dormer(b, spec, cx, rnd, gw=0.45):
@@ -1207,15 +1217,24 @@ def _mansard_dormer(b, spec, cx, rnd, gw=0.42):
 # Blumenladen (Konzeptbild "flowershop.png"): salbeigrüne Ladenfront, Blumen innen und davor
 # ---------------------------------------------------------------------------------------------
 
-def _bucket(b, x, z, rnd, palette=None, height=0.32, radius=0.13, y=0.0, tall=False, blossoms=12):
-    """Zinkeimer mit einem Strauß (Stiele, Blätter, Blüten)."""
-    b.cylinder(V(x, y, z), radius * 0.85, height, P.ZINC, segments=10, radius_top=radius, caps=(True, False))
-    b.cylinder(V(x, y + height - 0.03, z), radius * 0.95, 0.02, P.SOIL, segments=10)
-    stem_h = 0.35 if not tall else 0.6
-    b.sphere(V(x, y + height + stem_h * 0.4, z), radius * 1.1, P.leaf(rnd.randrange(3)), rings=4, segments=8,
-             squash=1.4 if tall else 0.9, jitter=0.15, seed=rnd.randrange(999))
-    P.blossom_cluster(b, (x, y + height + stem_h * 0.55, z), radius * 1.15, palette or rnd.choice(list(P.BLOSSOMS)), rnd,
-                      count=blossoms if not tall else max(4, blossoms * 3 // 4), size=0.04)
+WATER = Mat("plain", color=(0.22, 0.27, 0.28))
+BOUQUETS = {"tulip": ["rose", "white", "yellow", "red", "coral"], "rose": ["rose", "red", "white", "coral"],
+            "daisy": ["white", "white", "yellow"], "hydrangea": ["hydrangea", "white", "rose"], "lavender": [None], "greens": [None]}
+
+
+def _bucket(b, x, z, rnd, palette=None, height=0.32, radius=0.13, y=0.0, tall=False, blossoms=12, glow=0.0, before=None):
+    """Zinkeimer mit Wasser und einem Strauß (Stiele, Blätter, Blüten – style_plants.bouquet).
+    before = z, vor dem nichts wächst (z. B. das Fahrrad davor)."""
+    v = PL.vessel(b, x, z, radius * 0.85, height, radius, P.ZINC, y=y, lip=0.006, lip_h=0.02, soil_drop=0.045, wall=0.006,
+                  soil_mat=WATER, segments=10)
+    kinds = ["tulip", "greens", "lavender", "rose"] if tall else ["tulip", "rose", "daisy", "hydrangea", "lavender", "rose", "daisy"]
+    kind = rnd.choice(kinds)
+    pal = palette or rnd.choice(BOUQUETS[kind]) or "rose"
+    space = PL.PotSpace(x, z, v["inner"], v["rim"], v["soil"], outer=v["outer"], ground=y)
+    if before is not None:
+        space.plane((0, 0, before), (0, 0, -1), gap=0.0)
+    PL.bouquet(b, V(x, v["soil"], z), (0.55 if tall else 0.34) * max(0.75, radius / 0.13), v["inner"], rnd, kind, pal, space, glow,
+               count=max(5, int(blossoms * 1.3)))
 
 
 def shopfront_flowers(b, spec, rnd, s0):
@@ -1284,7 +1303,8 @@ def shopfront_flowers(b, spec, rnd, s0):
             b.box((lo_x + 0.08, floor_y, dz0 - 0.33), (hi_x - 0.08, sill - 0.04 + dy, dz0), Mat("timber", glow=0.08))
             x = lo_x + 0.25
             while x < hi_x - 0.2:
-                _bucket(b, x, dz0 - 0.16, rnd, y=sill - 0.04 + dy, height=0.24, radius=0.1, tall=k == 1, blossoms=8)
+                with PL.detail(0.75):
+                    _bucket(b, x, dz0 - 0.16, rnd, y=sill - 0.04 + dy, height=0.24, radius=0.1, tall=k == 1, blossoms=8)
                 x += rnd.uniform(0.3, 0.38)
     # Glastür in der Mitte mit Oberlicht
     x0, x1 = -door_half, door_half
@@ -1319,7 +1339,13 @@ def shopfront_flowers(b, spec, rnd, s0):
     b.quad(V(x0 + fw, 1.0, dz - 0.025), V(x1 - fw, 1.0, dz - 0.025), V(x1 - fw, transom - 0.1, dz - 0.025), V(x0 + fw, transom - 0.1, dz - 0.025), CLEAR)
     b.sphere(V(x1 - fw - 0.06, 1.0, dz + 0.04), 0.03, GOLD, rings=4, segments=8)
     b.box((-0.12, 1.55, dz - 0.012), (0.12, 1.65, dz - 0.004), Mat("plain", color=(0.93, 0.9, 0.82)))
-    # Im Laden: Regale mit Eimern, Theke, getrocknete Sträuße an der Decke
+    for sx in (-0.1, 0.1):
+        b.tube([V(sx, 1.645, dz - 0.008), V(0.0, transom - 0.1, dz - 0.008)], 0.0015, Mat("plain", color=(0.6, 0.5, 0.36)), segments=3, caps=False)
+    b.sphere(V(0.0, transom - 0.1, dz - 0.008), 0.006, GOLD, rings=3, segments=6)
+    # Im Laden (hinter Glas): Regale mit Eimern, Theke, getrocknete Sträuße an der Decke –
+    # mit weniger Stielen und Blättern als draußen
+    detail = PL.detail(0.55)
+    detail.__enter__()
     for side in (-1, 1):
         sx = side * (xi - 0.2)
         for y in (0.55, 1.35):
@@ -1333,9 +1359,8 @@ def shopfront_flowers(b, spec, rnd, s0):
     _bucket(b, 0.5, -3.7, rnd, y=1.04, height=0.2, radius=0.09)
     for k in range(6):
         hx = -1.4 + k * 0.55
-        b.tube([V(hx, ceil_y, -2.2), V(hx, ceil_y - 0.25, -2.2)], 0.004, Mat("plain", color=(0.6, 0.55, 0.4)), segments=3)
-        b.sphere(V(hx, ceil_y - 0.4, -2.2), 0.12, Mat("plain", color=rnd.choice([(0.72, 0.56, 0.42), (0.66, 0.48, 0.5), (0.7, 0.66, 0.5)]), glow=0.08),
-                 rings=4, segments=7, squash=1.5, jitter=0.2, seed=rnd.randrange(999))
+        b.tube([V(hx, ceil_y, -2.2), V(hx, ceil_y - 0.2, -2.2)], 0.004, Mat("plain", color=(0.6, 0.55, 0.4)), segments=3)
+        PL.dried_bunch(b, V(hx, ceil_y - 0.2, -2.2), 0.32, rnd, glow=0.08)
     for z in (-1.4, -3.0):
         b.tube([V(0, ceil_y, z), V(0, ceil_y - 0.5, z)], 0.006, LEAD, segments=4)
         b.sphere(V(0, ceil_y - 0.62, z), 0.13, Mat("plain", color=(1.0, 0.88, 0.66), glow=1.0), rings=5, segments=10)
@@ -1350,53 +1375,46 @@ def shopfront_flowers(b, spec, rnd, s0):
     for k in range(6):
         px = -0.5 + (k % 3) * 0.5
         pz = -2.85 + (k // 3) * 0.4
-        b.cylinder(V(px, floor_y + 0.8, pz), 0.05, 0.18, Mat("plain", color=(0.86, 0.8, 0.68), glow=g * 0.5), segments=8, radius_top=0.12, caps=(True, False))
-        b.sphere(V(px, floor_y + 1.05, pz), 0.1, P.leaf(k), rings=4, segments=8, jitter=0.15, seed=rnd.randrange(999))
-        P.blossom_cluster(b, (px, floor_y + 1.07, pz), 0.1, rnd.choice(list(P.BLOSSOMS)), rnd, count=8)
+        # Strauß in Papier (Tüte offen, innen sichtbar)
+        v = PL.vessel(b, px, pz, 0.05, 0.18, 0.12, Mat("plain", color=(0.86, 0.8, 0.68), glow=g * 0.5), y=floor_y + 0.8, lip=0.0,
+                      soil_drop=0.07, wall=0.003, soil_mat=Mat("plain", color=(0.7, 0.64, 0.52), glow=g * 0.3), segments=8)
+        kind = rnd.choice(["rose", "tulip", "daisy", "rose"])
+        PL.bouquet(b, V(px, v["soil"], pz), 0.26, v["inner"], rnd, kind, rnd.choice(BOUQUETS[kind]),
+                   PL.PotSpace(px, pz, v["inner"], v["rim"], v["soil"], outer=v["outer"], ground=floor_y + 0.8), g * 0.5, count=8)
     for y in (0.95, 1.5, 2.05):
         b.box((-xi + 0.3, y - 0.03, zb), (xi - 0.3, y, zb + 0.3), wood)
         x = -xi + 0.45
         while x < xi - 0.4:
-            b.cylinder(V(x, y, zb + 0.15), 0.07, 0.13, POT, segments=10, radius_top=0.09)
-            b.sphere(V(x, y + 0.2, zb + 0.15), 0.11, P.leaf(rnd.randrange(3)), rings=4, segments=8, jitter=0.18, seed=rnd.randrange(999))
-            if rnd.random() < 0.5:
-                P.blossom_cluster(b, (x, y + 0.21, zb + 0.15), 0.1, rnd.choice(["rose", "white", "lavender"]), rnd, count=6)
-            x += rnd.uniform(0.28, 0.36)
+            with PL.detail(0.7):
+                PL.pot_plant(b, x, zb + 0.15, rnd.choice(["geranium", "fern", "box_low", "daisy", "lavender"]), rnd, 0.07, 0.13, 0.09, y=y,
+                             palette=rnd.choice(["rose", "white", "red", "coral"]), glow=g * 0.5, collider=False, wall_z=zb + 0.005)
+            x += rnd.uniform(0.4, 0.5)
     for k in range(5):
         hx = -1.6 + k * 0.8
-        hz = -1.5 - (k % 2) * 0.9
-        b.tube([V(hx, ceil_y, hz), V(hx, ceil_y - 0.5, hz)], 0.004, Mat("plain", color=(0.5, 0.45, 0.35)), segments=3)
-        b.cylinder(V(hx, ceil_y - 0.7, hz), 0.1, 0.18, POT, segments=10, radius_top=0.13)
-        b.sphere(V(hx, ceil_y - 0.48, hz), 0.15, P.leaf(k), rings=4, segments=8, jitter=0.2, seed=rnd.randrange(999))
-        for q in range(4):
-            P.trailing_strand(b, (hx + 0.1 * math.cos(q * 1.6), ceil_y - 0.55, hz + 0.1 * math.sin(q * 1.6)), rnd.uniform(0.3, 0.6), rnd)
+        hz = -2.2 if k == 2 else -1.5 - (k % 2) * 0.9
+        # Hängetopf an drei Schnüren mit Efeu und Lobelien
+        v = PL.vessel(b, hx, hz, 0.1, 0.18, 0.13, Mat("terracotta", glow=g * 0.5), y=ceil_y - 0.7)
+        for q in range(3):
+            a = 2 * math.pi * q / 3
+            b.tube([V(hx, ceil_y, hz), V(hx + math.cos(a) * v["outer"], v["rim"], hz + math.sin(a) * v["outer"])], 0.003,
+                   Mat("plain", color=(0.5, 0.45, 0.35)), segments=3)
+        PL.potted(b, hx, hz, v["rim"], v["inner"], v["soil"], "trailing", rnd, rnd.choice(["white", "blue"]), g * 0.5,
+                  outer_r=v["outer"], ground=floor_y)
     b.push(b.move(xi, 0, -2.6) @ b.turn_y(-90))
-    ring = [V(0.25 * math.cos(a), 1.9 + 0.25 * math.sin(a), 0.05) for a in [2 * math.pi * k / 16 for k in range(17)]]
-    b.tube(ring, 0.05, P.leaf(1), segments=6, caps=False)
-    for k in range(5):
-        a = 2 * math.pi * k / 5
-        b.sphere(V(0.25 * math.cos(a), 1.9 + 0.25 * math.sin(a), 0.1), 0.04, Mat("plain", color=(0.86, 0.45, 0.5)), rings=3, segments=6)
+    PL.wreath(b, V(0.0, 1.9, 0.0), 0.25, rnd, glow=g * 0.5)
     b.pop()
     b.cylinder(V(1.3, floor_y, -1.3), 0.12, 0.25, P.ZINC, segments=10, caps=(True, True))
     b.tube([V(1.42, floor_y + 0.12, -1.3), V(1.6, floor_y + 0.3, -1.3)], 0.015, P.ZINC, segments=5)
     for x, z in ((-1.4, -3.9), (-1.0, -3.95), (1.1, -3.9), (1.45, -3.85), (-1.6, -1.2)):
         _bucket(b, x, z, rnd, height=0.32, radius=0.12, tall=rnd.random() < 0.5, blossoms=8)
-    # Grün über dem Schild: Polster mit Blüten, Ranken hängen herab
-    x = -w + 0.2
-    while x < w - 0.1:
-        r = rnd.uniform(0.15, 0.22)
-        b.sphere(V(x, s0 + 0.2 + r * 0.4, 0.15), r, P.leaf(rnd.randrange(3)), rings=4, segments=8, squash=0.7, jitter=0.18, seed=rnd.randrange(999))
-        if rnd.random() < 0.6:
-            P.blossom_cluster(b, (x, s0 + 0.2 + r * 0.45, 0.15), r, rnd.choice(["rose", "white", "lavender"]), rnd, count=8)
-        x += rnd.uniform(0.3, 0.45)
-    for k in range(9):
-        sx = -w + 0.3 + (W - 0.6) * rnd.random()
-        P.trailing_strand(b, (sx, s0 + 0.18, 0.3), rnd.uniform(0.2, 0.45), rnd, palette=rnd.choice([None, "rose", "white"]))
-    # Hängekörbe an beiden Pilastern, Efeu rankt an den Pilastern herab
+    detail.__exit__()
+    # Grün über dem Schild: Pflanztrog auf dem Gesims, Ranken hängen herab, an den Pilastern
+    # lange Efeuranken
+    PL.ledge_planter(b, -w + 0.02, w - 0.02, s0 + 0.14, 0.03, 0.27, rnd, ["rose", "white", "lavender"], Mat("timber"), 0.29,
+                     trail=0.42, long_trails=[(side * (w - 0.08 - k * 0.07), rnd.uniform(0.6, 1.3)) for side in (-1, 1) for k in range(4)])
+    # Hängekörbe an beiden Pilastern
     for side in (-1, 1):
         P.hanging_basket(b, side * (w - pil / 2), fascia_lo - 0.25, 0.15, 0.45, seed=rnd.randrange(999))
-        for k in range(4):
-            P.trailing_strand(b, (side * (w - 0.05 - k * 0.07), s0 + 0.15, 0.2), rnd.uniform(0.6, 1.3), rnd)
 
 
 def shop_outside_flowers(b, spec, rnd):
@@ -1410,12 +1428,12 @@ def shop_outside_flowers(b, spec, rnd):
     b.box((x0, 0.0, 0.05), (x1, 0.45, 0.42), Mat("timber"))
     x = x0 + 0.17
     while x < x1 - 0.1:
-        _bucket(b, x, 0.24, rnd, y=0.45, height=0.22, radius=0.1, blossoms=9)
+        _bucket(b, x, 0.24, rnd, y=0.45, height=0.22, radius=0.1, blossoms=9, before=0.34)
         x += 0.27
     b.colliders.append(((x0, 0, 0.05), (x1, 0.9, 0.42)))
     _bicycle(b, (x0 + x1) / 2 - 0.05, 0.62, rnd)
     for xx in (x0 + 0.05, x1 + 0.02):
-        _bucket(b, xx, 0.28, rnd, height=0.34, radius=0.13, tall=True, blossoms=10)
+        _bucket(b, xx, 0.28, rnd, height=0.34, radius=0.13, tall=True, blossoms=10, before=0.34)
     # Rechts: Blumenstufe (drei Stufen) und Eimer am Boden
     x0, x1 = 0.8, w - 0.5
     for k, (zz, hh) in enumerate(((0.47, 0.25), (0.3, 0.5), (0.13, 0.75))):
@@ -1456,10 +1474,16 @@ def _bicycle(b, x, z, rnd):
     b.box((-0.32, 0.92, -0.07), (-0.08, 0.97, 0.07), Mat("plain", color=(0.35, 0.22, 0.14)))
     b.tube([V(0.45, 0.98, -0.25), V(0.45, 0.98, 0.25)], 0.014, IRON, segments=5)
     # Korb mit Blumen
-    b.box((0.5, 0.78, -0.17), (0.82, 0.98, 0.17), Mat("plain", color=(0.62, 0.48, 0.3)))
-    b.sphere(V(0.66, 1.02, 0), 0.17, P.leaf(0), rings=4, segments=8, squash=0.8, jitter=0.2, seed=rnd.randrange(999))
-    P.blossom_cluster(b, (0.66, 1.03, 0), 0.17, "rose", rnd, count=14, size=0.045)
-    P.blossom_cluster(b, (0.66, 1.03, 0), 0.17, "white", rnd, count=6, size=0.045)
+    wicker = Mat("plain", color=(0.62, 0.48, 0.3))
+    soil = PL.trough(b, 0.5, 0.82, 0.78, -0.17, 0.17, 0.2, wicker, soil_drop=0.03, wall=0.012)
+    # Korb am Lenker festgeschraubt, unten eine Strebe zur Gabel
+    for zz in (-0.1, 0.1):
+        b.tube([V(0.45, 0.98, zz), V(0.5, 0.93, zz)], 0.006, IRON, segments=4)
+    b.tube([V(0.6, 0.78, 0.0), V(0.56, 0.4, 0.0)], 0.006, IRON, segments=4)
+    space = PL.BoxSpace(0.5, 0.82, -0.17, 0.17, 0.98, soil, wall=0.012)
+    PL.bouquet(b, V(0.6, soil, -0.06), 0.24, 0.1, rnd, "rose", "rose", space, count=6)
+    PL.bouquet(b, V(0.72, soil, 0.06), 0.22, 0.1, rnd, "daisy", "white", space, count=7)
+    PL.bouquet(b, V(0.66, soil, 0.0), 0.3, 0.08, rnd, "lavender", "rose", space, count=10)
     b.pop()
     b.colliders.append(((x - 0.95, 0, z - 0.2), (x + 0.95, 1.1, z + 0.2)))
 
@@ -1568,6 +1592,9 @@ def shopfront_pub(b, spec, rnd, s0):
         b.frame(px, 0.3, px + 0.42, 0.85, bz1, bz1 + 0.012, 0.03, mahogany)
     b.box((-1.78, 1.05, bz0 - 0.03), (1.78, 1.11, bz1 + 0.06), Mat("timber", color=(0.5, 0.3, 0.22), glow=0.1))
     b.tube([V(-1.7, 0.22, bz1 + 0.12), V(1.7, 0.22, bz1 + 0.12)], 0.018, brass, segments=6)
+    for k in range(5):
+        hx = -1.6 + k * 0.8
+        b.tube([V(hx, 0.22, bz1), V(hx, 0.22, bz1 + 0.12)], 0.01, brass, segments=4)
     for k in range(4):
         tx = -0.75 + k * 0.5
         b.cylinder(V(tx, 1.11, -3.55), 0.03, 0.06, brass, segments=8)
@@ -1593,6 +1620,8 @@ def shopfront_pub(b, spec, rnd, s0):
                 b.cylinder(V(x, y + hgt * 0.65, zb + 0.16), 0.035, hgt * 0.35, Mat("plain", color=c, glow=0.35), segments=7, radius_top=0.012)
                 x += rnd.uniform(0.085, 0.12)
     b.box((-1.7, ceil_y - 0.32, bz0 - 0.05), (1.7, ceil_y - 0.26, bz0 + 0.05), wood)
+    for hx in (-1.55, -0.5, 0.5, 1.55):
+        b.tube([V(hx, ceil_y + 0.01, bz0), V(hx, ceil_y - 0.27, bz0)], 0.008, brass, segments=4)
     for k in range(9):
         mx = -1.6 + k * 0.4
         b.tube([V(mx, ceil_y - 0.32, bz0), V(mx, ceil_y - 0.42, bz0)], 0.006, brass, segments=3)
@@ -1636,13 +1665,14 @@ def shopfront_pub(b, spec, rnd, s0):
         b.cylinder(V(tx, floor_y + 0.74, tz), 0.32, 0.04, wood, segments=14, caps=(True, True))
         b.cylinder(V(tx, floor_y, tz), 0.04, 0.74, Mat("metal"), segments=6)
         b.cylinder(V(tx, floor_y + 0.78, tz), 0.03, 0.08, Mat("plain", color=(0.95, 0.92, 0.84)), segments=8)
-        b.sphere(V(tx, floor_y + 0.9, tz), 0.02, Mat("plain", color=(1.0, 0.8, 0.4), glow=1.0), rings=3, segments=6)
+        b.tube([V(tx, floor_y + 0.85, tz), V(tx, floor_y + 0.875, tz)], 0.002, Mat("plain", color=(0.15, 0.12, 0.1)), segments=3)
+        b.sphere(V(tx, floor_y + 0.89, tz), 0.018, Mat("plain", color=(1.0, 0.8, 0.4), glow=1.0), rings=3, segments=6, squash=1.4)
         for k in range(2):
             a = math.pi * k + 0.6
             b.cylinder(V(tx + 0.5 * math.cos(a), floor_y, tz + 0.5 * math.sin(a)), 0.16, 0.46, leather, segments=10, caps=(False, True))
     for x, z in ((-1.0, -1.4), (0.6, -1.4), (0.0, -3.0)):
-        b.tube([V(x, ceil_y, z), V(x, ceil_y - 0.55, z)], 0.006, LEAD, segments=4)
-        b.cylinder(V(x, ceil_y - 0.75, z), 0.15, 0.2, brass, segments=10, radius_top=0.05, caps=(True, False))
+        b.tube([V(x, ceil_y, z), V(x, ceil_y - 0.58, z)], 0.006, LEAD, segments=4)
+        b.cylinder(V(x, ceil_y - 0.75, z), 0.15, 0.2, brass, segments=10, radius_top=0.05, caps=(True, True))
         b.sphere(V(x, ceil_y - 0.75, z), 0.06, Mat("plain", color=(1.0, 0.78, 0.45), glow=1.0), rings=3, segments=8)
 
     # --- Fenster: große klare Scheiben, oben kleine Scheiben ---
@@ -1661,14 +1691,13 @@ def shopfront_pub(b, spec, rnd, s0):
         b.box((mid - 0.025, sill + 0.02, gz - 0.02), (mid + 0.025, transom, jz - 0.03), JOINERY)
         b.box((lo_x, sill - 0.02, zf - 0.25), (hi_x, sill + 0.02, zf), wood)
         if k == 0:
-            b.box((lo_x + 0.2, sill + 0.05, -0.25), (lo_x + 0.75, sill + 0.95, -0.22), Mat("timber", glow=0.1))
-            b.box((lo_x + 0.24, sill + 0.09, -0.22), (lo_x + 0.71, sill + 0.91, -0.215), Mat("plain", color=(0.13, 0.14, 0.13), glow=0.05))
+            b.box((lo_x + 0.2, sill + 0.02, -0.25), (lo_x + 0.75, sill + 0.92, -0.22), Mat("timber", glow=0.1))
+            b.box((lo_x + 0.24, sill + 0.06, -0.22), (lo_x + 0.71, sill + 0.88, -0.215), Mat("plain", color=(0.13, 0.14, 0.13), glow=0.05))
             for r in range(5):
                 yy = sill + 0.75 - r * 0.13
                 b.box((lo_x + 0.3, yy, -0.215), (lo_x + 0.3 + rnd.uniform(0.2, 0.36), yy + 0.02, -0.212), Mat("plain", color=(0.9, 0.9, 0.86), glow=0.2))
         else:
-            b.cylinder(V(mid, sill + 0.02, -0.15), 0.1, 0.18, POT, segments=10, radius_top=0.12)
-            b.sphere(V(mid, sill + 0.38, -0.15), 0.2, P.leaf(1), rings=5, segments=10, jitter=0.18, seed=rnd.randrange(99))
+            PL.pot_plant(b, mid, -0.15, "fern", rnd, 0.1, 0.18, 0.12, y=sill + 0.02, glow=0.05, collider=False)
     # --- Tür in tiefer Nische: Laibung und Decke als feste Blöcke (kein Durchblick) ---
     x0, x1 = -door_half, door_half
     for lo, hi in ((x0 - post, x0), (x1, x1 + post)):
@@ -1685,19 +1714,14 @@ def shopfront_pub(b, spec, rnd, s0):
     b.box((x1 - f, 0.9, dz - 0.05), (x1, transom - 0.1, dz), JOINERY)
     b.quad(V(x0 + f, 0.9, dz - 0.025), V(x1 - f, 0.9, dz - 0.025), V(x1 - f, transom - 0.1, dz - 0.025), V(x0 + f, transom - 0.1, dz - 0.025), CLEAR)
     b.glazing_bars(x0 + f, 0.9, x1 - f, transom - 0.1, dz - 0.04, dz - 0.02, 2, 3, 0.02, JOINERY)
-    b.sphere(V(x1 - f - 0.05, 1.0, dz + 0.04), 0.03, GOLD, rings=4, segments=8)
+    P.door_knob(b, x1 - f * 0.5, 1.0, dz, 1)
     # Efeu über dem Schild, Ranken an den Seiten
-    x = -w
-    while x < w:
-        r = rnd.uniform(0.2, 0.3)
-        b.sphere(V(x, s0 + 0.25, 0.18), r, P.leaf(rnd.randrange(3)), rings=4, segments=8, squash=0.8, jitter=0.2, seed=rnd.randrange(999))
-        x += rnd.uniform(0.25, 0.35)
-    for k in range(18):
-        sx = -w + 0.1 + (W - 0.2) * rnd.random()
-        P.trailing_strand(b, (sx, s0 + 0.15, 0.32), rnd.uniform(0.4, 1.1) if abs(sx) > 0.9 else rnd.uniform(0.15, 0.35), rnd)
-    for side in (-1, 1):
-        for k in range(6):
-            P.trailing_strand(b, (side * (w - 0.05 - k * 0.05), s0 + 0.2, 0.22), rnd.uniform(1.2, 2.4), rnd)
+    # Efeu wächst oben auf dem Gesims entlang (aus einem Kasten an der Ecke) und hängt in Ranken
+    # herab, an den Pilastern bis weit hinunter
+    soil = PL.trough(b, -w + 0.02, -w + 0.46, s0 + 0.12, 0.03, 0.26, 0.14, JOINERY)
+    PL.ivy_garland(b, -w + 0.1, w - 0.02, s0 + 0.12, 0.3, rnd, drop_max=1.1, leaf_size=0.065,
+                   side_drops=[(side * (w - 0.08 - k * 0.06), rnd.uniform(1.2, 2.4)) for side in (-1, 1) for k in range(5)],
+                   source=(-w + 0.02, -w + 0.46, soil, s0 + 0.26, 0.03, 0.26))
     P.projecting_sign(b, w - 0.15, s0 + 0.95, 0.0, JOINERY, Mat("plain", sign="hanging"), round_=True)
 
 
@@ -1719,9 +1743,7 @@ def pub_outside(b, spec, rnd):
     b.colliders.append(((tx - 0.75, 0, tz - 0.32), (tx + 0.75, 0.9, tz + 0.32)))
     P.chalkboard(b, -w + 0.55, 0.5, Mat("plain", sign="chalkboard"), facing=8)
     for x in (-0.95, 0.95):
-        b.cylinder(V(x, 0, 0.32), 0.17, 0.42, POT, segments=12, radius_top=0.2, caps=(False, True))
-        b.sphere(V(x, 0.7, 0.32), 0.27, P.leaf(rnd.randrange(3)), rings=5, segments=10, squash=1.2, jitter=0.18, seed=rnd.randrange(99))
-        b.colliders.append(((x - 0.22, 0, 0.1), (x + 0.22, 0.9, 0.54)))
+        PL.pot_plant(b, x, 0.32, "box_ball", rnd, 0.17, 0.42, 0.2)
 
 
 def shop_shell(b, spec, rnd, s0, wall_color, floor_mat, glow=0.16, door_half=0.5):
@@ -1797,7 +1819,7 @@ def shop_shell(b, spec, rnd, s0, wall_color, floor_mat, glow=0.16, door_half=0.5
         b.box((x0 + fw, ya, dz - 0.05), (x1 - fw, yb, dz), JOINERY)
     b.box((x0 + fw, 0.32, dz - 0.04), (x1 - fw, 0.92, dz - 0.01), JOINERY)
     b.quad(V(x0 + fw, 1.0, dz - 0.025), V(x1 - fw, 1.0, dz - 0.025), V(x1 - fw, transom - 0.1, dz - 0.025), V(x0 + fw, transom - 0.1, dz - 0.025), CLEAR)
-    b.sphere(V(x1 - fw - 0.06, 1.0, dz + 0.04), 0.03, GOLD, rings=4, segments=8)
+    P.door_knob(b, x1 - fw * 0.5, 1.0, dz, 1)
     return {"w": w, "xi": xi, "floor_y": floor_y, "ceil_y": ceil_y, "zb": zb, "zf": zf, "windows": windows, "sill": sill,
             "head": head, "fascia_lo": fascia_lo, "pil": pil, "glow": glow}
 
@@ -1866,7 +1888,7 @@ def shopfront_wool(b, spec, rnd, s0):
             b.box((x0, hgt, z0), (x0 + 0.36, hgt + t, z0 + 0.34), Mat("fabric", color=YARN[(k * 4 + j * 7) % len(YARN)], glow=g * 0.6))
             hgt += t
     for bx, bz in ((-0.9, -1.4), (0.95, -1.6), (-1.1, -3.6)):
-        b.cylinder(V(bx, fy, bz), 0.22, 0.28, Mat("plain", color=(0.66, 0.5, 0.32), glow=g * 0.5), segments=12, radius_top=0.26, caps=(True, False))
+        _basket(b, bx, fy, bz, 0.26, 0.28, g * 0.5, fill=0.2)
         for k in range(5):
             a = 2 * math.pi * k / 5
             _yarn(b, bx + 0.12 * math.cos(a), fy + 0.2, bz + 0.12 * math.sin(a), 0.07, rnd.choice(YARN), g * 0.6, rnd)
@@ -1876,8 +1898,8 @@ def shopfront_wool(b, spec, rnd, s0):
     b.box((xi - 0.75, fy + 0.46, -3.88), (xi - 0.35, fy + 0.95, -3.7), Mat("fabric", color=(0.74, 0.58, 0.5), glow=g * 0.6))
     # Hängelampen
     for x, z in ((-0.6, -2.4), (0.6, -2.4), (0.0, -1.2)):
-        b.tube([V(x, cy, z), V(x, cy - 0.45, z)], 0.005, LEAD, segments=4)
-        b.cylinder(V(x, cy - 0.65, z), 0.14, 0.2, Mat("gold", glow=0.05), segments=10, radius_top=0.05, caps=(True, False))
+        b.tube([V(x, cy, z), V(x, cy - 0.5, z)], 0.005, LEAD, segments=4)
+        b.cylinder(V(x, cy - 0.65, z), 0.14, 0.2, Mat("gold", glow=0.05), segments=10, radius_top=0.05, caps=(True, True))
         b.sphere(V(x, cy - 0.64, z), 0.055, Mat("plain", color=(1.0, 0.86, 0.6), glow=1.0), rings=3, segments=8)
     # Schaufenster-Auslage: Körbe mit Knäueln und Stoffstapel auf dem Fensterbrett
     for lo_x, hi_x in m["windows"]:
@@ -1887,13 +1909,7 @@ def shopfront_wool(b, spec, rnd, s0):
             x += 0.2
     # Grün über dem Schild
     w = m["w"]
-    x = -w + 0.2
-    while x < w - 0.1:
-        r = rnd.uniform(0.14, 0.2)
-        b.sphere(V(x, s0 + 0.2 + r * 0.4, 0.15), r, P.leaf(rnd.randrange(3)), rings=4, segments=8, squash=0.7, jitter=0.18, seed=rnd.randrange(999))
-        x += rnd.uniform(0.35, 0.5)
-    for k in range(6):
-        P.trailing_strand(b, (-w + 0.3 + (2 * w - 0.6) * rnd.random(), s0 + 0.18, 0.3), rnd.uniform(0.2, 0.5), rnd)
+    PL.ledge_planter(b, -w + 0.02, w - 0.02, s0 + 0.14, 0.03, 0.27, rnd, ["white", "lavender"], Mat("timber"), 0.29, trail=0.45)
     P.projecting_sign(b, w - 0.15, s0 + 0.9, 0.0, JOINERY, Mat("plain", sign="hanging"))
 
 
@@ -1907,7 +1923,7 @@ def wool_outside(b, spec, rnd):
     for k, x in enumerate((bx0 + 0.25, bx0 + 0.65)):
         if x > bx1 - 0.15:
             break
-        b.cylinder(V(x, 0.43, 0.29), 0.15, 0.18, Mat("plain", color=(0.66, 0.5, 0.32)), segments=10, radius_top=0.17, caps=(True, False))
+        _basket(b, x, 0.43, 0.29, 0.17, 0.18, fill=0.13)
         for j in range(4):
             a = 2 * math.pi * j / 4
             _yarn(b, x + 0.08 * math.cos(a), 0.56, 0.29 + 0.08 * math.sin(a), 0.06, rnd.choice(YARN), 0.0, rnd)
@@ -1916,11 +1932,29 @@ def wool_outside(b, spec, rnd):
     P.chalkboard(b, 0.85, 0.5, Mat("plain", sign="chalkboard"), facing=-10)
 
 
-def _basket(b, x, y, z, r, h, g=0.0):
-    """Weidenkorb (offen) am Ort (x, y, z)."""
-    b.cylinder(V(x, y, z), r * 0.85, h, Mat("plain", color=(0.62, 0.46, 0.28), glow=g), segments=12, radius_top=r, caps=(True, False))
+def _basket(b, x, y, z, r, h, g=0.0, fill=None, fill_color=(0.7, 0.62, 0.5)):
+    """Weidenkorb (offen, mit Innenwand) am Ort (x, y, z); fill = Höhe der Füllung über dem
+    Boden (Brot, Wolle liegen darauf)."""
+    wicker = Mat("plain", color=(0.62, 0.46, 0.28), glow=g)
+    PL.vessel(b, x, z, r * 0.85, h, r, wicker, y=y, lip=0.0, wall=0.012, soil_drop=h - (fill if fill is not None else 0.03),
+              soil_mat=Mat("fabric", color=fill_color, glow=g), segments=12)
     ring = [V(x + r * math.cos(a), y + h, z + r * math.sin(a)) for a in [2 * math.pi * k / 16 for k in range(17)]]
     b.tube(ring, 0.012, Mat("plain", color=(0.55, 0.4, 0.24), glow=g), segments=4, caps=False)
+
+
+def _fairy_wire(b, xa, xb, s0, s1, ybase, z, top):
+    """Draht der Lichterkette (Lämpchen hängen bei y = ybase - 0,08 · sin(…) zwischen s0 und
+    s1): läuft durch alle Lämpchen und ist an beiden Enden oben am Rahmen (top) befestigt."""
+    pts = []
+    n = 24
+    for k in range(n + 1):
+        x = xa + (xb - xa) * k / n
+        pts.append(V(x, ybase - 0.08 * math.sin(math.pi * (x - s0) / (s1 - s0)) + 0.012, z))
+    wire = Mat("plain", color=(0.2, 0.26, 0.18))
+    b.tube(pts, 0.0025, wire, segments=3)
+    # Aufgehängt an zwei Haken in der Wand über dem Fenster (Innenseite bei z = -0,03)
+    for p in (pts[0], pts[-1]):
+        b.tube([p, V(p.x, top, z), V(p.x, top, -0.028)], 0.0025, wire, segments=3)
 
 
 def shopfront_bakery(b, spec, rnd, s0):
@@ -1998,15 +2032,15 @@ def shopfront_bakery(b, spec, rnd, s0):
     b.pop()
     for q, (sx, sz) in enumerate(((xi - 0.3, zb + 2.0), (xi - 0.32, zb + 2.45))):
         b.sphere(V(sx, fy + 0.28, sz), 0.24, Mat("fabric", color=(0.88, 0.82, 0.7), glow=g * 0.5), rings=5, segments=9, squash=1.25)
-    _basket(b, -xi + 0.4, fy, zb + 3.2, 0.24, 0.3, g * 0.4)
+    _basket(b, -xi + 0.4, fy, zb + 3.2, 0.24, 0.3, g * 0.4, fill=0.03)
     for q in range(6):
-        b.push(b.move(-xi + 0.4 + rnd.uniform(-0.08, 0.08), fy + 0.25, zb + 3.2 + rnd.uniform(-0.08, 0.08)) @ S.Matrix.Rotation(rnd.uniform(-0.3, 0.3), 4, "Z"))
+        b.push(b.move(-xi + 0.4 + rnd.uniform(-0.08, 0.08), fy + 0.035, zb + 3.2 + rnd.uniform(-0.08, 0.08)) @ S.Matrix.Rotation(rnd.uniform(-0.3, 0.3), 4, "Z"))
         b.cylinder(V(0, 0, 0), 0.03, 0.55, Mat("plain", color=(0.78, 0.55, 0.3), glow=g * 0.5), segments=6, radius_top=0.025, caps=(True, True))
         b.pop()
     # Auslage im Schaufenster: Stufen mit Brot, Lichterkette
     for lo_x, hi_x in m["windows"]:
         for k2, (dz, dy) in enumerate(((-0.2, 0.0), (-0.45, 0.32), (-0.7, 0.64))):
-            b.box((lo_x + 0.08, m["sill"] - 0.02 + dy, dz - 0.22), (hi_x - 0.08, m["sill"] + dy, dz), wood)
+            b.box((lo_x + 0.08, m["sill"] - 0.04, dz - 0.22), (hi_x - 0.08, m["sill"] + dy, dz), wood)
             x = lo_x + 0.18
             while x < hi_x - 0.12:
                 _loaf(b, x, m["sill"] + dy, dz - 0.11, rnd, g)
@@ -2014,10 +2048,12 @@ def shopfront_bakery(b, spec, rnd, s0):
         for q in range(int((hi_x - lo_x) / 0.15)):
             x = lo_x + 0.08 + q * 0.15
             y = m["head"] - 0.1 - 0.08 * math.sin(math.pi * (x - lo_x) / (hi_x - lo_x))
-            b.sphere(V(x, y, -0.1), 0.016, Mat("plain", color=(1.0, 0.85, 0.55), glow=1.0), rings=3, segments=6)
+            b.sphere(V(x, y, -0.05), 0.016, Mat("plain", color=(1.0, 0.85, 0.55), glow=1.0), rings=3, segments=6)
+        count = int((hi_x - lo_x) / 0.15)
+        _fairy_wire(b, lo_x + 0.08, lo_x + 0.08 + (count - 1) * 0.15, lo_x, hi_x, m["head"] - 0.1, -0.05, m["head"] + 0.03)
     for x, z in ((-0.5, zb + 2.6), (0.5, zb + 2.6), (0.0, zb + 1.2)):
-        b.tube([V(x, cy, z), V(x, cy - 0.45, z)], 0.005, LEAD, segments=4)
-        b.cylinder(V(x, cy - 0.65, z), 0.16, 0.2, Mat("gold", glow=0.05), segments=10, radius_top=0.05, caps=(True, False))
+        b.tube([V(x, cy, z), V(x, cy - 0.5, z)], 0.005, LEAD, segments=4)
+        b.cylinder(V(x, cy - 0.65, z), 0.16, 0.2, Mat("gold", glow=0.05), segments=10, radius_top=0.05, caps=(True, True))
         b.sphere(V(x, cy - 0.64, z), 0.06, Mat("plain", color=(1.0, 0.85, 0.58), glow=1.0), rings=3, segments=8)
     # Markise über der ganzen Front
     _shop_awning(b, -w + 0.1, w - 0.1, m["fascia_lo"] - 0.02, 0.2, 1.0, 0.5)
@@ -2028,11 +2064,9 @@ def bakery_outside(b, spec, rnd):
     w = spec["width"] / 2
     # Nur links (rechts geht der Weg aus der kleinen Gasse vorbei)
     for x in (-w + 0.6,):
-        b.box((x - 0.32, 0, 0.2), (x + 0.32, 0.38, 0.55), Mat("timber"))
-        for q in range(4):
-            px = x - 0.24 + q * 0.16
-            b.sphere(V(px, 0.45, 0.37), 0.11, P.leaf(q), rings=4, segments=8, jitter=0.15, seed=rnd.randrange(99))
-            P.blossom_cluster(b, (px, 0.47, 0.37), 0.1, rnd.choice(["coral", "rose", "white"]), rnd, count=6)
+        soil = PL.trough(b, x - 0.32, x + 0.32, 0.0, 0.2, 0.55, 0.38, Mat("timber"), soil_drop=0.03)
+        space = PL.BoxSpace(x - 0.32, x + 0.32, 0.2, 0.55, 0.38, soil, wall=0.018)
+        PL.bedding_row(b, x - 0.27, x + 0.27, soil, 0.24, 0.51, rnd, ["coral", "rose", "white"], space, trail_front=0.22)
         b.colliders.append(((x - 0.34, 0, 0.18), (x + 0.34, 0.7, 0.57)))
     P.chalkboard(b, 0.0 + 0.85, 0.75, Mat("plain", sign="chalkboard"), facing=-8)
 
@@ -2194,7 +2228,8 @@ def build_corner(name, spec):
             _corner_door(b, spec, rnd)
             b.pop()
             if spec.get("hanging_sign"):
-                P.projecting_sign(b, dx + 1.35, ys[1] + 0.75, 0.0, JOINERY, Mat("plain", sign="hanging"))
+                # Nicht über die Kante der Wand hinaus (sonst hängt das Schild in der Luft)
+                P.projecting_sign(b, min(dx + 1.35, half - 0.25), ys[1] + 0.75, 0.0, JOINERY, Mat("plain", sign="hanging"))
         # Innenwand des Ladens (zeigt in den Raum), mit denselben Öffnungen
         ia, ic = inset[i], inset[(i + 1) % n]
         mx, mz = (a[0] + c[0]) / 2, (a[1] + c[1]) / 2
@@ -2277,7 +2312,7 @@ def _corner_shop_window(b, spec, s0, s1, sill, head, reveal, rnd, shop):
     g = 0.14
     wood = Mat("timber", glow=g * 0.7)
     for k, (dz, dy) in enumerate(((-0.35, 0.0), (-0.6, 0.35), (-0.85, 0.7))):
-        b.box((s0 + 0.08, sill - 0.04 + dy, dz - 0.2), (s1 - 0.08, sill + dy, dz), wood)
+        b.box((s0 + 0.08, sill - 0.06, dz - 0.2), (s1 - 0.08, sill + dy, dz), wood)
         x = s0 + 0.2
         while x < s1 - 0.15:
             if shop == "bakery":
@@ -2296,6 +2331,8 @@ def _corner_shop_window(b, spec, s0, s1, sill, head, reveal, rnd, shop):
             x = s0 + 0.1 + k * 0.18
             y = head - 0.12 - 0.08 * math.sin(math.pi * (x - s0) / (s1 - s0))
             b.sphere(V(x, y, -0.12), 0.018, Mat("plain", color=(1.0, 0.85, 0.55), glow=1.0), rings=3, segments=6)
+        count = int((s1 - s0) / 0.18)
+        _fairy_wire(b, s0 + 0.1, s0 + 0.1 + (count - 1) * 0.18, s0, s1, head - 0.12, -0.12, head + 0.03)
 
 
 def _loaf(b, x, y, z, rnd, g):
@@ -2392,7 +2429,7 @@ def _corner_shop_contents(b, shop, poly, floor_y, ceil_y, rnd, g):
         for dx, dz in ((-1.3, 0.9), (1.2, 1.0), (1.3, -1.0)):
             x, z = cx + dx, cz + dz
             if _point_in(poly, x, z, 0.35):
-                _basket(b, x, floor_y, z, 0.24, 0.3, g * 0.4)
+                _basket(b, x, floor_y, z, 0.24, 0.3, g * 0.4, fill=0.22)
                 for k in range(6):
                     a = 2 * math.pi * k / 6
                     _yarn(b, x + 0.12 * math.cos(a), floor_y + 0.22, z + 0.12 * math.sin(a), 0.07, rnd.choice(YARN), g * 0.6, rnd)
@@ -2433,8 +2470,8 @@ def _corner_shop_contents(b, shop, poly, floor_y, ceil_y, rnd, g):
         x, z = cx + dx, cz + dz
         if not _point_in(poly, x, z, 0.3):
             continue
-        b.tube([V(x, ceil_y, z), V(x, ceil_y - 0.45, z)], 0.005, LEAD, segments=4)
-        b.cylinder(V(x, ceil_y - 0.65, z), 0.16, 0.2, Mat("gold", glow=0.05), segments=10, radius_top=0.05, caps=(True, False))
+        b.tube([V(x, ceil_y, z), V(x, ceil_y - 0.5, z)], 0.005, LEAD, segments=4)
+        b.cylinder(V(x, ceil_y - 0.65, z), 0.16, 0.2, Mat("gold", glow=0.05), segments=10, radius_top=0.05, caps=(True, True))
         b.sphere(V(x, ceil_y - 0.64, z), 0.06, Mat("plain", color=(1.0, 0.85, 0.58), glow=1.0), rings=3, segments=8)
 
 
@@ -2555,7 +2592,7 @@ def build_gatehouse(name, spec):
         b.poly(pts, vault, normals=nrm)
     # Wandlaternen links und rechts vom Bogen an der Vorderwand
     for side in (-1, 1):
-        P.wall_lantern(b, side * (a + 0.95), spring + 1.0, 0.05)
+        P.wall_lantern(b, side * (a + 0.95), spring + 1.0, 0.0)
     # Laternen im Bogen
     for side in (-1, 1):
         lx = side * (a - 0.02)

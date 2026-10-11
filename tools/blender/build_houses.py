@@ -29,6 +29,7 @@ import zlib
 sys.path.insert(0, os.path.dirname(__file__))
 import style_lib as S  # noqa: E402
 import style_parts as P  # noqa: E402
+import style_plants as PL  # noqa: E402
 import street_houses as H  # noqa: E402
 from style_lib import Mat, V  # noqa: E402
 
@@ -250,11 +251,15 @@ def _recessed_door(b, half, transom, head, jz):
     b.frame(x0 + fw + 0.06, 0.35, x1 - fw - 0.06, 0.75, t1 - 0.01, t1 + 0.008, 0.022, JOINERY)
     b.quad(V(x0 + fw, 0.92, dz - 0.025), V(x1 - fw, 0.92, dz - 0.025), V(x1 - fw, transom - 0.1, dz - 0.025), V(x0 + fw, transom - 0.1, dz - 0.025), CLEAR_GLASS)
     b.box((-0.15, 0.86, t1), (0.15, 0.89, t1 + 0.012), GOLD)
-    b.sphere(V(x1 - fw - 0.06, 1.0, dz + 0.04), 0.03, GOLD, rings=4, segments=8)
-    b.sphere(V(x1 - fw - 0.06, 1.0, t0 - 0.04), 0.03, GOLD, rings=4, segments=8)
-    # Kleines Schild an der Scheibe: "Geöffnet" (eigenes Bild, siehe SIGNS)
+    P.door_knob(b, x1 - fw * 0.5, 1.0, t1, 1)
+    P.door_knob(b, x1 - fw * 0.5, 1.0, t0, -1)
+    # Kleines Schild an der Scheibe: "Geöffnet" (eigenes Bild, siehe SIGNS), an einer Schnur
     cw, ch = OPEN_SIGN
     b.box((-cw / 2, 1.45, t1 - 0.02), (cw / 2, 1.45 + ch, t1 - 0.012), Mat("plain", color=(0.93, 0.9, 0.82)), skip=("front",))
+    for sx in (-cw / 2 + 0.02, cw / 2 - 0.02):
+        b.tube([V(sx, 1.45 + ch - 0.005, t1 - 0.016), V(0.0, transom - 0.1, t1 - 0.016)], 0.0015, Mat("plain", color=(0.6, 0.5, 0.36)),
+               segments=3, caps=False)
+    b.sphere(V(0.0, transom - 0.1, t1 - 0.016), 0.006, GOLD, rings=3, segments=6)
     b.poly([V(-cw / 2, 1.45, t1 - 0.012), V(cw / 2, 1.45, t1 - 0.012), V(cw / 2, 1.45 + ch, t1 - 0.012), V(-cw / 2, 1.45 + ch, t1 - 0.012)],
            Mat("plain", sign="open"), uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
 
@@ -326,10 +331,12 @@ def _shop_interior(b, xi, floor_y, ceiling, z_front, z_back, windows, door_half)
     b.box((0.68, 1.26, -4.82), (0.92, 1.36, -4.79), Mat("plain", color=(0.95, 0.92, 0.84), glow=0.2))
     # Seidenpapier-Stapel und kleine Vase auf der Theke
     b.box((-0.7, 1.02, -4.85), (-0.3, 1.07, -4.6), Mat("plain", color=(0.86, 0.78, 0.66), glow=0.1))
-    b.cylinder(V(0.1, 1.02, -4.7), 0.05, 0.16, Mat("plain", color=(0.72, 0.8, 0.82), glow=0.1), segments=10, radius_top=0.03)
     import random
     rnd = random.Random(5)
-    P.blossom_cluster(b, (0.1, 1.22, -4.7), 0.06, "rose", rnd, count=6, size=0.025)
+    v = PL.vessel(b, 0.1, -4.7, 0.05, 0.16, 0.03, Mat("plain", color=(0.72, 0.8, 0.82), glow=0.1), y=1.02, lip=0.004, lip_h=0.01,
+                  soil_drop=0.01, wall=0.003, soil_mat=Mat("plain", color=(0.3, 0.36, 0.36)), segments=10)
+    PL.bouquet(b, V(0.1, v["soil"], -4.7), 0.2, 0.03, rnd, "rose", "rose",
+               PL.PotSpace(0.1, -4.7, v["inner"], v["rim"], v["soil"], outer=v["outer"], ground=1.02), 0.1, count=3)
     # Wandregal hinter der Theke mit gefalteten Stoffen, Hutschachteln und einer Uhr darüber
     rz0, rz1 = z_back + 0.01, z_back + 0.3
     for x in (-1.3, 1.5):
@@ -360,8 +367,8 @@ def _shop_interior(b, xi, floor_y, ceiling, z_front, z_back, windows, door_half)
     # Umkleide hinten links: Messingstange, Samtvorhang (vorn halb zugezogen, seitlich offen)
     fx, fz = -1.6, -4.6
     b.tube([V(-xi, 2.4, fz), V(fx, 2.4, fz), V(fx, 2.4, z_back)], 0.015, IN_BRASS, segments=6)
-    _curtain(b, V(-xi + 0.02, 0.14, fz), V(fx - 0.25, 0.14, fz), 2.38, IN_VELVET)
-    _curtain(b, V(fx, 0.14, z_back + 0.05), V(fx, 0.14, z_back + 0.45), 2.38, IN_VELVET)
+    _curtain(b, V(-xi + 0.02, 0.14, fz), V(fx - 0.25, 0.14, fz), 2.4, IN_VELVET, rings=IN_BRASS)
+    _curtain(b, V(fx, 0.14, z_back + 0.05), V(fx, 0.14, z_back + 0.45), 2.4, IN_VELVET, rings=IN_BRASS)
     b.box((-xi + 0.05, floor_y, z_back + 0.1), (-xi + 0.45, 0.55, z_back + 0.55), Mat("fabric", color=(0.6, 0.52, 0.44), glow=0.08))
     # Spiegel mit Goldrahmen an der rechten Wand
     mz0, mz1 = -5.25, -4.55
@@ -379,23 +386,21 @@ def _shop_interior(b, xi, floor_y, ceiling, z_front, z_back, windows, door_half)
             b.tube([V(x, 1.85, z), V(side * xi, 1.85, z)], 0.012, IN_BRASS, segments=5)
     # Bilder (Modezeichnungen) über den Stangen
     for side, z in ((-1, -2.0), (-1, -3.3), (1, -2.2)):
-        x = side * (xi - 0.02)
+        x = side * xi
         b.push(b.move(x, 2.5, z) @ b.turn_y(-90 * side))
         b.box((-0.22, 0, 0), (0.22, 0.5, 0.03), IN_BRASS)
         b.box((-0.18, 0.04, 0.03), (0.18, 0.46, 0.035), Mat("plain", color=(0.9, 0.86, 0.76), glow=0.15))
         b.box((-0.05, 0.1, 0.035), (0.05, 0.38, 0.038), Mat("plain", color=(0.55, 0.4, 0.4), glow=0.1))
         b.pop()
     # Farn im Topf neben der Theke
-    b.cylinder(V(-1.2, floor_y, -4.2), 0.13, 0.28, POT, segments=12, radius_top=0.16)
-    for k in range(9):
-        a = 2 * math.pi * k / 9
-        tip = V(-1.2 + 0.38 * math.cos(a), floor_y + 0.42 + 0.1 * math.sin(3 * a), -4.2 + 0.38 * math.sin(a))
-        mid = V(-1.2 + 0.18 * math.cos(a), floor_y + 0.6, -4.2 + 0.18 * math.sin(a))
-        b.tube([V(-1.2, floor_y + 0.3, -4.2), mid, tip], lambda t: 0.035 * (1 - t) + 0.006, Mat("foliage", color=(0.3, 0.45, 0.22), glow=0.08), segments=4)
+    import random
+    PL.pot_plant(b, -1.35, -4.15, "fern", random.Random(9), 0.13, 0.28, 0.16, y=floor_y, glow=0.08, collider=False,
+                 blocks=[((-0.95, floor_y, -5.05), (1.35, 1.05, -4.41))])
 
 
-def _curtain(b, a, c, top, mat, folds=6):
-    """Faltiger Vorhang von a nach c (unten), bis zur Höhe top (beidseitig sichtbar)."""
+def _curtain(b, a, c, top, mat, folds=6, rings=None):
+    """Faltiger Vorhang von a nach c (unten), bis zur Höhe top (beidseitig sichtbar). Mit rings
+    hängt er an Ringen um die Stange (Höhe top = Mitte der Stange)."""
     d = c - a
     n = folds * 2
     side = V(-d.z, 0, d.x).normalized()
@@ -407,6 +412,15 @@ def _curtain(b, a, c, top, mat, folds=6):
     for k in range(n):
         p0, p1 = pts[k], pts[k + 1]
         b.poly([p0, p1, V(p1.x, top, p1.z), V(p0.x, top, p0.z)], mat, both=True)
+    if rings is not None:
+        axis = d.normalized()
+        up = V(0, 1, 0)
+        for k in range(0, n + 1, 2):
+            c0 = a + d * (k / n)
+            centre = V(c0.x, top, c0.z)
+            loop = [centre + side * (0.024 * math.cos(q)) + up * (0.024 * math.sin(q)) for q in [2 * math.pi * i / 8 for i in range(9)]]
+            b.tube(loop, 0.004, rings, segments=3, caps=False)
+            b.tube([centre - up * 0.024, V(pts[k].x, top - 0.035, pts[k].z)], 0.003, rings, segments=3)
 
 
 def _armchair(b, x, floor_y, z, yaw):
@@ -773,17 +787,16 @@ def porch(b, x, door_rect, depth=0.75):
 
 
 def small_pot(b, x, z, palette, seed, tall=False):
-    """Kleiner Topf neben der Haustür (Lavendel oder Buchs)."""
+    """Topf neben der Haustür: mit palette Lavendel oder Geranie, sonst ein Buchs- bzw.
+    (hoher Topf) Lorbeerkegel."""
     import random
     rnd = random.Random(seed)
     h = 0.42 if tall else 0.28
-    b.cylinder(V(x, 0, z), 0.13, h, POT, segments=12, radius_top=0.16, caps=(False, True))
     if palette:
-        b.sphere(V(x, h + 0.12, z), 0.16, P.leaf(seed), rings=5, segments=10, squash=0.8, jitter=0.12, seed=seed)
-        P.blossom_cluster(b, (x, h + 0.13, z), 0.15, palette, rnd, count=10)
+        kind = "lavender" if palette == "lavender" else "geranium"
     else:
-        b.cylinder(V(x, h, z), 0.12, 0.5, P.leaf(seed), segments=10, radius_top=0.02, caps=(True, True))
-    b.colliders.append(((x - 0.17, 0, z - 0.17), (x + 0.17, 0.6, z + 0.17)))
+        kind = "cone" if tall else "box_low"
+    PL.pot_plant(b, x, z, kind, rnd, 0.13, h, 0.16, palette=palette)
 
 
 TERRACES = {

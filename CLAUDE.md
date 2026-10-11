@@ -67,6 +67,7 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
      `<gruppe>-<blickpunkt>[-tag].png`; ansehen mit dem Read-Werkzeug.
   4. Neue feste Blickwinkel: `scripts/tools/screenshot_views.gd` (je Gruppe eine Funktion,
      Lage aus StreetLayout, Augenhöhe `eye()`), dann in `all_sets()`/`get_set()` eintragen.
+  Nahaufnahmen von Pflanzen und Deko: Gruppe `details` (seit Etappe 4g, Teil 4f).
   Straßenleben (seit Etappe 5a): `--simulate=<sek>` spult vor, `--seed=<zahl>` macht es
   wiederholbar, `--deliver=<n>` bestellt eine Testlieferung (Lieferwagen), `--focus=<meter>`
   (+ `--focus_vehicle`) zeigt die nächste Figur bzw. das nächste Fahrzeug aus der Nähe, `--stats`
@@ -361,6 +362,24 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   → Bild `assets/textures/signs/<typ>_<name>.png`. Startbild aus der Gestaltung in
   `SIGNS` (build_houses.py), nur wenn das Bild fehlt – vorhandene Bilder NIE überschreiben
   (`--reset-signs` nur auf ausdrücklichen Wunsch).
+- **Pflanzen (seit Etappe 4g, Teil 4f):** nie mehr Kugeln als Laub. Alle Pflanzen baut
+  `tools/blender/style_plants.py` (Efeu `ivy_wall`/`ivy_garland`/`trailing_ivy`, Balkonblumen
+  `bedding_row`, `geranium`, `petunia_plant`, `lobelia`, Kübel `potted`/`pot_plant`, `box_ball`,
+  `olive`, `hydrangea`, `lavender`, `fern`, `hosta`, `shrub`, `tree`, Sträuße `bouquet`):
+  Blätter/Blüten sind Karten (`card`, `blossom`) mit Pflanzen-Texturen
+  (`assets/textures/plants/`, `scripts/tools/generate_plant_textures.gd`, Alpha = Form) im
+  Material „plant“ (`plant_style.tres`, beidseitig, ein Zeichenaufruf je Haus; Mat mit
+  Pflanzen-Ebene → `Mat.plant`). Jedes Blatt hängt an Stiel und Trieb. Hindernisse über
+  `Space` (wall, floor, block, plane, inside) bzw. `PotSpace`/`BoxSpace`/`BasketSpace`;
+  Gefäße immer offen mit Rand und Erde (`vessel`, `trough`) – sie melden sich an, und der
+  Schlussschritt `settle` (S.FINISHERS, `Builder.finish()`) schiebt am Ende alle Blätter aus
+  allen Gefäßwänden. Viele Stück: `with PL.detail(0.6):`. Efeu an Fassaden mit `holes`
+  (Fenster/Türen/Fallrohr) und `bumps` (Gesimse, Sockel). Prüfen:
+  `blender -b --factory-startup --python tools/blender/geo_check.py` (alle .glb: schwebende
+  Teile, Blätter in festen Teilen; `-- --source [Namen]` baut aus den Scripts und nennt die
+  Programmzeile) – muss vor dem Hochladen „in Ordnung“ melden; Pflanzen ansehen:
+  `tools/blender/plant_showcase.py`. Schmiedeeisen-Schnecken mit `attach` (P.weld),
+  Türknäufe `P.door_knob`, Ketten `P.chain`.
 - `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
   und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`

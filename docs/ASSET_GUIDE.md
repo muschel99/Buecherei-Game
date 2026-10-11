@@ -409,6 +409,29 @@ Blender gebaut – so bleiben alle Häuser gleich in Maßstab, Materialien und D
   `houses.tscn` ändern. Möchtest du ein Haus ganz selbst modellieren, gilt der nächste
   Abschnitt („Alle Häuser eines Typs ersetzen“) – dann mit deinen eigenen Materialien.
 
+### Pflanzen (seit Etappe 4g, Teil 4f)
+Alle Pflanzen der Außenwelt (Efeu, Blumenkästen, Hängekörbe, Kübel, Sträuße, Garten) baut
+`tools/blender/style_plants.py`. Jedes Blatt ist eine gebogene Fläche mit einer echten
+Blattform, jedes Blatt hängt an einem Stiel, jeder Stiel an einem Trieb – nichts schwebt.
+- **Blatt- und Blütenbilder:** `assets/textures/plants/plant_albedo.png` (Farbe, Alpha =
+  Form: was durchsichtig ist, wird weggeschnitten) und `plant_normal.png` (Adern als Relief),
+  je 4 × 4 Felder: Efeublatt, Laubblatt, schmales Blatt (Olive, Lavendel), Geranienblatt,
+  Funkienblatt, Buchs-Zweig, Laubzweig, Farnwedel, Gras, Blüten (Geranie, Hortensie,
+  Petunie, Margerite, Blütenblatt), Lavendelähre, Rinde. Neu erzeugen:
+  `godot --headless -s res://scripts/tools/generate_plant_textures.gd`.
+  **Eigene Bilder:** Du kannst ein Feld in einem Malprogramm ersetzen (gleiche Größe 512 × 512,
+  Stielansatz unten in der Mitte, Blüten mittig, Hintergrund durchsichtig). Achtung: Ein neuer
+  Lauf des Scripts überschreibt die Bilder – sag Claude Bescheid, dann wird das Script
+  angepasst.
+- **Material:** `assets/materials/plant_style.tres` (Shader `plant_style.gdshader`): beide
+  Seiten sichtbar, Licht scheint leicht durch die Blätter (**Translucency Layers**), in der
+  Ferne bleiben Blätter dicht. Rauheit je Feld: **Roughness Layers**.
+- **Anschauen ohne Spiel:** `blender -b --factory-startup --python tools/blender/plant_showcase.py`
+  stellt alle Pflanzen nebeneinander auf und macht Bilder nach `screenshots/blender/plants/`.
+- **Prüfen:** `blender -b --factory-startup --python tools/blender/geo_check.py` sucht in allen
+  fertigen Modellen schwebende Teile und Blätter, die in Wänden, Töpfen oder Kästen stecken
+  (mit `-- --source` nennt es zu jedem Fund die Programmzeile).
+
 ### Schilder selbst gestalten (seit Etappe 4g)
 Alle Schilder an den Stil-Häusern sind **Bilder** (PNG) – du kannst sie selbst malen oder
 gestalten (z. B. in Krita, GIMP, Procreate oder auf Papier und eingescannt). Für jedes Schild

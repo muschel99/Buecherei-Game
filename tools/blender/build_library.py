@@ -25,6 +25,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 import style_lib as S  # noqa: E402
 import style_parts as P  # noqa: E402
+import style_plants as PL  # noqa: E402
 import street_houses as H  # noqa: E402
 import build_houses as BH  # noqa: E402
 from style_lib import Mat, V  # noqa: E402
@@ -120,12 +121,14 @@ def front_or_left(b, a, c, window_center, rnd, lantern_at=None, pots=()):
         pilaster(b, x)
     facade_band(b, half, "fascia")
     if lantern_at is not None:
-        P.wall_lantern(b, lantern_at, 2.2, 0.12, mat=GREEN_DARK)
+        # Auf einem Pilaster (Vorderseite 0,12) oder auf der Vertäfelung (Brett vorn bei PROUD + 0,035)
+        on_pilaster = any(abs(lantern_at - x) < 0.1 for x in (-half + 0.15, wx0 - 0.15, wx1 + 0.15, half - 0.15))
+        P.wall_lantern(b, lantern_at, 2.2, 0.12 if on_pilaster else PROUD + 0.035, mat=GREEN_DARK)
     for px in pots:
-        b.cylinder(V(px, GROUND, 0.32), 0.17, 0.42, H.POT, segments=12, radius_top=0.21, caps=(False, True))
-        b.sphere(V(px, GROUND + 0.62, 0.32), 0.25, P.leaf(rnd.randrange(3)), rings=5, segments=10, squash=1.0, jitter=0.15, seed=rnd.randrange(99))
-        P.blossom_cluster(b, (px, GROUND + 0.66, 0.32), 0.24, rnd.choice(["lavender", "rose", "white"]), rnd, count=14)
-        b.colliders.append(((px - 0.22, GROUND, 0.1), (px + 0.22, GROUND + 0.9, 0.54)))
+        kind = rnd.choice(["hydrangea", "lavender", "geranium"])
+        v = PL.pot_plant(b, px, 0.32, kind, rnd, 0.17, 0.42, 0.21, y=GROUND, palette=rnd.choice(["hydrangea", "white"]) if kind == "hydrangea"
+                         else rnd.choice(["rose", "white", "red"]), collider=False, wall_z=0.06)
+        b.colliders.append(((px - 0.23, GROUND, 0.1), (px + 0.23, GROUND + 0.9, 0.55)))
     b.pop()
 
 
@@ -212,4 +215,5 @@ def main():
     bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True, compress=True)
 
 
-main()
+if __name__ == "__main__":
+    main()

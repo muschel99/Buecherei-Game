@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import style_lib as S  # noqa: E402
 import street_houses as H  # noqa: E402
 import build_houses as BH  # noqa: E402
+import style_plants as PL  # noqa: E402
 
 HOUSES_TSCN = os.path.join(S.ROOT, "scenes", "world", "houses.tscn")
 HOUSE_DIR = os.path.join(S.ROOT, "scenes", "world", "houses")
@@ -111,6 +112,11 @@ LANTERNS = {
     "Opposite/Opposite2_1": -1.1,
     "Opposite/Opposite2_5": -0.05,
 }
+
+
+def far_detail(key):
+    """Detailstufe der Pflanzen je Haus: hinter dem Torbogen nur halb so viele Blätter."""
+    return 0.5 if key.startswith("GateStreet/Behind") else 1.0
 
 
 def read_houses():
@@ -397,12 +403,14 @@ def main():
         elif not only or house["key"] in only:
             kind = spec.get("kind")
             signs = house["type"] if kind else sign_set.get(spec.get("shop"))
-            if kind == "corner":
-                b = H.build_corner(file_id, spec)
-            elif kind == "gate":
-                b = H.build_gatehouse(file_id, spec)
-            else:
-                b = H.build_house(file_id, spec)
+            # Häuser weit hinter dem Torbogen sieht man nur von fern: weniger Blätter
+            with PL.detail(far_detail(house["key"])):
+                if kind == "corner":
+                    b = H.build_corner(file_id, spec)
+                elif kind == "gate":
+                    b = H.build_gatehouse(file_id, spec)
+                else:
+                    b = H.build_house(file_id, spec)
             lanterns = []
             if house["key"] in LANTERNS:
                 spot = H.find_lantern_spot(b, spec, LANTERNS[house["key"]])

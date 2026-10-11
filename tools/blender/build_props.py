@@ -39,6 +39,14 @@ def lathe(b, y_radii, mat, segments=16, x=0.0, z=0.0, depth_scale=0.8):
     b.pop()
 
 
+def _surface_z(y_radii, y, depth_scale=0.8):
+    """Vorderkante eines Drehkörpers (lathe) in der Höhe y."""
+    for (y0, r0), (y1, r1) in zip(y_radii, y_radii[1:]):
+        if y0 <= y <= y1:
+            return (r0 + (r1 - r0) * (y - y0) / (y1 - y0)) * depth_scale
+    return y_radii[-1][1] * depth_scale
+
+
 def _interp(values, t):
     f = t * (len(values) - 1)
     i = min(int(f), len(values) - 2)
@@ -67,31 +75,38 @@ def dress_form():
 def outfit_dress():
     """Kleid im Stil der 50er: Oberteil, ausgestellter Rock, kleiner Kragen, Gürtel."""
     b = S.Builder("outfit_dress")
-    lathe(b, [(1.17, 0.135), (1.3, 0.16), (1.38, 0.175), (1.47, 0.16), (1.52, 0.115), (1.535, 0.075)], CLOTH)
+    top = [(1.17, 0.135), (1.3, 0.16), (1.38, 0.175), (1.47, 0.16), (1.52, 0.115), (1.535, 0.075)]
+    lathe(b, top, CLOTH)
     lathe(b, [(0.55, 0.36), (0.75, 0.32), (0.95, 0.25), (1.1, 0.17), (1.19, 0.135)], CLOTH, segments=20)
     lathe(b, [(1.16, 0.14), (1.2, 0.14)], BELT)
     for side in (-1, 1):
         lathe(b, [(1.38, 0.06), (1.44, 0.075), (1.48, 0.06)], CLOTH, x=side * 0.16, depth_scale=0.9)
-    b.push(S.Matrix.Translation((0, 0, 0.12)))
+    # Kragen liegt am Hals an, Knöpfe sitzen auf dem Stoff
     for side in (-1, 1):
-        b.poly([V(0, 1.53, 0.01), V(side * 0.08, 1.55, -0.03), V(side * 0.09, 1.49, 0.0)][::(1 if side < 0 else -1)], COLLAR, both=True)
+        pts = [V(0, 1.515, _surface_z(top, 1.515) + 0.004), V(side * 0.08, 1.53, _surface_z(top, 1.53) * 0.7),
+               V(side * 0.09, 1.48, _surface_z(top, 1.48) * 0.8 + 0.004)]
+        b.poly(pts[::(1 if side < 0 else -1)], COLLAR, both=True)
     for k in range(3):
-        b.sphere(V(0, 1.27 + k * 0.07, 0.025), 0.01, BUTTON, rings=3, segments=6)
-    b.pop()
+        y = 1.27 + k * 0.07
+        b.sphere(V(0, y, _surface_z(top, y) + 0.006), 0.01, BUTTON, rings=3, segments=6)
     return b
 
 
 def outfit_coat():
     """Gerader Mantel bis unters Knie mit Revers, Gürtel und Knöpfen."""
     b = S.Builder("outfit_coat")
-    lathe(b, [(0.45, 0.24), (0.8, 0.22), (1.05, 0.2), (1.18, 0.16), (1.3, 0.175), (1.4, 0.185), (1.48, 0.17), (1.53, 0.12), (1.545, 0.08)], CLOTH, segments=18)
+    body = [(0.45, 0.24), (0.8, 0.22), (1.05, 0.2), (1.18, 0.16), (1.3, 0.175), (1.4, 0.185), (1.48, 0.17), (1.53, 0.12), (1.545, 0.08)]
+    lathe(b, body, CLOTH, segments=18)
     lathe(b, [(1.14, 0.17), (1.19, 0.17)], CLOTH_PLAIN)
     for side in (-1, 1):
         lathe(b, [(1.0, 0.055), (1.25, 0.06), (1.42, 0.075), (1.48, 0.07)], CLOTH, x=side * 0.2, depth_scale=0.9)
+    # Revers liegt auf der Brust, Knöpfe sitzen auf dem Stoff
     for side in (-1, 1):
-        b.poly([V(side * 0.01, 1.2, 0.165), V(side * 0.11, 1.5, 0.12), V(side * 0.03, 1.5, 0.15)][::(1 if side < 0 else -1)], CLOTH, both=True)
+        b.poly([V(side * 0.01, 1.2, _surface_z(body, 1.2) + 0.003), V(side * 0.11, 1.5, _surface_z(body, 1.5) * 0.85),
+                V(side * 0.03, 1.5, _surface_z(body, 1.5) + 0.003)][::(1 if side < 0 else -1)], CLOTH, both=True)
     for k in range(3):
-        b.sphere(V(0.03, 0.75 + k * 0.17, 0.205), 0.014, BUTTON, rings=3, segments=6)
+        y = 0.75 + k * 0.17
+        b.sphere(V(0.03, y, _surface_z(body, y) + 0.008), 0.014, BUTTON, rings=3, segments=6)
     return b
 
 

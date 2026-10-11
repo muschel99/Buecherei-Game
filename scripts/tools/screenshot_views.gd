@@ -10,7 +10,7 @@ extends RefCounted
 
 
 static func all_sets() -> PackedStringArray:
-	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life"])
+	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details"])
 
 
 static func get_set(set_name: String) -> Dictionary:
@@ -27,6 +27,8 @@ static func get_set(set_name: String) -> Dictionary:
 			return shop()
 		"street_life":
 			return street_life()
+		"details":
+			return details()
 	push_error("Unbekannte Gruppe von Blickpunkten: " + set_name)
 	return {}
 
@@ -197,4 +199,27 @@ static func street_life() -> Dictionary:
 		"opposite_alley_end": look(opp, StreetLayout.opposite_alley_end_z() + 0.5, 0.0, 1.0),
 		"opposite_alley_gate": look(opp, far + 2.0, 0.0, -1.0),
 		"aerial": {"pos": Vector3(-2.0, 14.0, road - 9.0), "target": Vector3(-2.0, 0.0, road + 1.0)},
+	}
+
+
+## Nahaufnahmen von Pflanzen und Deko (seit Etappe 4g, Teil 4f): Eingänge der Läden, Efeu,
+## Hängekörbe, Blumenkästen, Töpfe in der Gasse, Garten. Feste Lage der Häuser aus houses.tscn
+## (Modeladen x = 5,9, Pub x = -8,8, Blumenladen x = -3,9, Efeu-Haus gegenüber x = -14,1).
+static func details() -> Dictionary:
+	var g := StreetLayout.ground_y()
+	var front := StreetLayout.HOUSE_FRONT
+	var opp := StreetLayout.opposite_front_z()
+	var lamp_z := StreetLayout.curb_z() + 0.5
+	return {
+		"fashion_entrance": {"pos": Vector3(5.9, g + 1.6, front - 2.8), "target": Vector3(5.9, g + 0.8, front)},
+		"fashion_plants": {"pos": Vector3(6.0, g + 1.3, front - 1.9), "target": Vector3(6.1, g + 0.7, front - 0.3)},
+		"pub_front": {"pos": Vector3(-7.0, g + 1.6, -5.4), "target": Vector3(-9.0, g + 1.3, -2.1)},
+		"pub_ivy": {"pos": Vector3(-8.8, g + 1.6, -5.9), "target": Vector3(-8.8, g + 3.0, -2.1)},
+		"library_corner": {"pos": Vector3(-3.8, g + 1.6, -5.0), "target": Vector3(-2.3, g + 3.4, -3.2)},
+		"flower_shop": {"pos": Vector3(-3.9, g + 1.6, opp + 2.4), "target": Vector3(-3.9, g + 0.9, opp)},
+		"ivy_house": {"pos": Vector3(-12.4, g + 1.6, opp + 3.0), "target": Vector3(-14.9, g + 2.8, opp - 1.8)},
+		"lamp_basket": {"pos": Vector3(-6.0, g + 1.6, lamp_z - 1.4), "target": Vector3(-7.5, g + 2.3, lamp_z)},
+		"window_boxes": {"pos": Vector3(0.4, g + 1.6, opp + 3.5), "target": Vector3(0.9, g + 4.0, opp)},
+		"alley_pots": {"pos": Vector3(-4.7, g + 1.6, 4.2), "target": Vector3(-3.5, g + 0.3, 7.2)},
+		"garden": {"pos": Vector3(-4.8, g + 1.6, 8.6), "target": Vector3(-7.7, g + 1.6, 12.9)},
 	}

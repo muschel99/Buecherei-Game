@@ -25,6 +25,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 import style_lib as S  # noqa: E402
 import style_parts as P  # noqa: E402
+import style_plants as PL  # noqa: E402
 import street_houses as H  # noqa: E402
 from style_lib import Mat, V  # noqa: E402
 
@@ -43,9 +44,11 @@ FLAG = Mat("paving", color=(1.0, 0.98, 0.94))
 SPEC = {"lintel": "flat", "sill": "stone", "frame_cream": True, "wall": "brick"}
 
 
-def house_back(b, a, c, height, mat, rnd, windows=True, roof=True, pipes=True):
+def house_back(b, a, c, height, mat, rnd, windows=True, roof=True, pipes=True, ivy_roots=(), ivy_holes=()):
     """Rückwand eines Hauses von a nach c (x, z), Vorderseite zeigt nach rechts der Linie a→c
-    gesehen von oben (in die Gasse). Mit kleinen Fenstern, Fallrohr, Traufe und Dachansatz."""
+    gesehen von oben (in die Gasse). Mit kleinen Fenstern, Fallrohr, Traufe und Dachansatz.
+    ivy_roots = Stellen (entlang der Wand, Mitte = 0), an denen Efeu aus dem Boden wächst; er
+    lässt Fenster, Fallrohr und ivy_holes (Rechtecke) frei."""
     xf, ln = H._facade_xf(a, c)
     b.push(xf)
     half = ln / 2
@@ -65,45 +68,26 @@ def house_back(b, a, c, height, mat, rnd, windows=True, roof=True, pipes=True):
         b.box((-half, height - 0.18, 0.0), (half, height, 0.25), H.CREAM, skip=("back",))
         b.slab([V(-half, height, 0.35), V(half, height, 0.35), V(half, height + 1.6, -1.6), V(-half, height + 1.6, -1.6)], 0.06, SLATE)
         b.cylinder(V(-half, height + 0.02, 0.32), 0.05, ln, H.LEAD, segments=6, caps=(True, True), axis="x")
+    blocked = [(x0 - 0.2, y0 - 0.3, x1 + 0.2, y1 + 0.35) for x0, y0, x1, y1 in holes] + list(ivy_holes)
     if pipes:
         # Fallrohr nur dort, wo es an keinem Fenster vorbeiläuft
         spots = [-half + 0.4 + 0.1 * k for k in range(int((ln - 0.8) / 0.1) + 1)]
         spots = [x for x in spots if all(x < x0 - 0.25 or x > x1 + 0.25 for x0, _, x1, _ in holes)]
         if spots:
-            b.cylinder(V(rnd.choice(spots), 0.0, 0.07), 0.04, height, H.LEAD, segments=8, caps=(True, True))
+            px = rnd.choice(spots)
+            b.cylinder(V(px, 0.0, 0.07), 0.04, height, H.LEAD, segments=8, caps=(True, True))
+            blocked.append((px - 0.08, 0.0, px + 0.08, height + 1.0))
     b.box((-half, 0.0, 0.0), (half, 0.28, 0.03), H.PLINTH, skip=("back", "bottom"))
+    for x in ivy_roots:
+        PL.ivy_wall(b, x, 0.0, min(height - 0.6, 4.2), rnd, x_min=-half + 0.05, x_max=half - 0.05, holes=blocked, stems=6,
+                    spread=1.1, bumps=[(-half, 0.0, half, 0.32, 0.03)])
     b.pop()
 
 
-def tree(b, x, z, rnd, height=5.8):
-    """Laubbaum wie in der Vorlage: kräftiger Stamm, der sich in Äste teilt, lockere Krone aus
-    vielen Laubbüscheln."""
-    bark = Mat("timber", color=(0.75, 0.68, 0.6))
-    trunk_top = 2.2
-    b.tube([V(x, 0, z), V(x + 0.05, 1.0, z), V(x - 0.04, trunk_top, z + 0.03)], lambda t: 0.26 - 0.08 * t, bark, segments=10)
-    for k in range(5):
-        r = 0.25 + 0.2 * (k % 2)
-        b.sphere(V(x + r * math.cos(k * 1.3), 0.05, z + r * math.sin(k * 1.3)), 0.12, bark, rings=3, segments=6, squash=0.5)
-    tips = []
-    for k in range(6):
-        a = 2 * math.pi * k / 6 + rnd.uniform(-0.3, 0.3)
-        spread = rnd.uniform(1.2, 2.0)
-        top = height - rnd.uniform(0.3, 1.4)
-        mid = V(x + math.cos(a) * spread * 0.4, trunk_top + 1.1, z + math.sin(a) * spread * 0.4)
-        tip = V(x + math.cos(a) * spread, top, z + math.sin(a) * spread)
-        b.tube([V(x, trunk_top - 0.2, z), mid, tip], lambda t: 0.14 - 0.11 * t, bark, segments=6)
-        tips.append(tip)
-        for j in range(2):
-            a2 = a + rnd.uniform(-0.8, 0.8)
-            twig = tip + V(math.cos(a2) * 0.6, rnd.uniform(-0.2, 0.4), math.sin(a2) * 0.6)
-            b.tube([mid + (tip - mid) * 0.6, twig], 0.03, bark, segments=4)
-            tips.append(twig)
-    greens = [Mat("foliage", color=c) for c in ((0.42, 0.52, 0.28), (0.34, 0.46, 0.22), (0.5, 0.58, 0.32))]
-    for tip in tips:
-        for j in range(3):
-            p = tip + V(rnd.uniform(-0.5, 0.5), rnd.uniform(-0.3, 0.4), rnd.uniform(-0.5, 0.5))
-            b.sphere(p, rnd.uniform(0.45, 0.75), rnd.choice(greens), rings=5, segments=9, jitter=0.25, seed=rnd.randrange(9999))
-    b.sphere(V(x, height - 0.4, z), 1.1, greens[1], rings=6, segments=10, jitter=0.3, seed=rnd.randrange(9999))
+def tree(b, x, z, rnd, height=5.8, space=None):
+    """Laubbaum wie in der Vorlage (style_plants.tree): Stamm mit Rinde, Äste, dichte Krone aus
+    Laubzweigen; space hält die Krone aus den Mauern."""
+    PL.tree(b, V(x, 0.0, z), height, rnd, space or PL.NO_SPACE)
     b.colliders.append(((x - 0.3, 0, z - 0.3), (x + 0.3, 2.0, z + 0.3)))
 
 
@@ -152,19 +136,17 @@ def round_bench(b, x, z, rnd):
     b.colliders.append(((sx - 0.24, 0, sz - 0.18), (sx + 0.24, 0.45, sz + 0.18)))
 
 
-def shrub(b, x, z, rnd, size=0.45, palette=None):
-    b.sphere(V(x, size * 0.7, z), size, P.leaf(rnd.randrange(3)), rings=5, segments=9, squash=0.8, jitter=0.2, seed=rnd.randrange(9999))
-    if palette:
-        P.blossom_cluster(b, (x, size * 0.75, z), size, palette, rnd, count=int(size * 30))
+def shrub(b, x, z, rnd, size=0.45, palette=None, space=None):
+    """Strauch (style_plants.shrub); mit palette Blütenbälle obenauf."""
+    PL.shrub(b, V(x, 0.0, z), size * 1.1, size * 1.7, rnd, palette if palette in PL.BLOSSOMS else None, space or PL.NO_SPACE)
 
 
-def hosta(b, x, z, rnd):
-    """Funkie / Farn: ein Kranz aus Blättern."""
-    m = Mat("foliage", color=rnd.choice([(0.36, 0.5, 0.24), (0.46, 0.56, 0.3), (0.3, 0.42, 0.22)]))
-    for k in range(9):
-        a = 2 * math.pi * k / 9 + rnd.uniform(-0.2, 0.2)
-        tip = V(x + 0.42 * math.cos(a), 0.3 + rnd.uniform(-0.05, 0.1), z + 0.42 * math.sin(a))
-        b.tube([V(x, 0.02, z), V(x + 0.2 * math.cos(a), 0.4, z + 0.2 * math.sin(a)), tip], lambda t: 0.05 + 0.05 * math.sin(math.pi * t), m, segments=4)
+def hosta(b, x, z, rnd, space=None):
+    """Funkie oder Farn im Beet."""
+    if rnd.random() < 0.6:
+        PL.hosta(b, V(x, 0.0, z), rnd.uniform(0.4, 0.5), rnd, space or PL.NO_SPACE)
+    else:
+        PL.fern(b, V(x, 0.0, z), rnd.uniform(0.5, 0.65), rnd, space or PL.NO_SPACE)
 
 
 def brick_wall(b, x0, x1, z0, z1, height, mat):
@@ -210,8 +192,11 @@ def library_alley():
             b.slab(pts if s < 0 else pts[::-1], 0.06, Mat("clay_tile"))
     # Boden zwischen Zaun und Häusern (Sträucher) und Garten
     b.face([V(gx, 0.01, fz + 0.05), V(lx + 1.5, 0.01, fz + 0.05), V(lx + 1.5, 0.01, bz), V(gx, 0.01, bz)], GRASS, (0, 1, 0))
+    # Hecke hinter dem Zaun: bleibt zwischen Zaun, Seitenmauern und den Häusern dahinter
+    hedge = PL.Space().plane((0, 0, fz + 0.08), (0, 0, 1)).plane((0, 0, bz - 0.12), (0, 0, -1)) \
+        .plane((gx, 0, 0), (1, 0, 0), gap=0.05).plane((lx, 0, 0), (-1, 0, 0), gap=0.05).floor(0.01)
     for x in [gx + 0.4 + k * 0.7 for k in range(int((lx - gx) / 0.7))]:
-        shrub(b, x, fz + 1.0 + rnd.uniform(-0.3, 0.4), rnd, rnd.uniform(0.5, 0.75), rnd.choice([None, "hydrangea", "rose"]))
+        shrub(b, x, fz + 1.0 + rnd.uniform(-0.3, 0.4), rnd, rnd.uniform(0.5, 0.75), rnd.choice([None, "hydrangea", "rose"]), space=hedge)
     b.face([V(gx, 0.005, gz), V(fx, 0.005, gz), V(fx, 0.005, end), V(gx, 0.005, end)], GRASS, (0, 1, 0))
     # Trittsteine von der Gasse zur Bank
     # Baum mit Bank: Lage wie im Spiel (StreetLayout.garden_tree – dort sitzen die Sitzplätze)
@@ -220,7 +205,10 @@ def library_alley():
         px = fx + 0.2 - k * 0.55
         pz = tz + 0.9 + math.sin(k) * 0.25
         b.cylinder(V(px, 0.0, pz), rnd.uniform(0.2, 0.26), 0.02, FLAG, segments=9, caps=(True, False))
-    tree(b, tx, tz, rnd)
+    # Beete: Abstand zu den Hauswänden (Fensterbänke stehen vor), nichts in Zaun und Bank
+    garden = PL.Space().plane((gx, 0, 0), (1, 0, 0), gap=0.1).plane((0, 0, gz), (0, 0, 1), gap=0.1).plane((0, 0, fz - 0.03), (0, 0, -1)) \
+        .plane((lx, 0, 0), (-1, 0, 0), gap=0.1).floor(0.01).cylinder(tx, tz, 1.0, -1.0, 0.95)
+    tree(b, tx, tz, rnd, space=PL.Space().plane((gx, 0, 0), (1, 0, 0), gap=0.05).plane((lx, 0, 0), (-1, 0, 0), gap=0.05))
     round_bench(b, tx, tz, rnd)
     # Beete an den Rändern: Funkien, Farne, Hortensien, Buchs
     for k in range(9):
@@ -228,17 +216,15 @@ def library_alley():
         px = gx + 0.45 + a * (fx - gx - 0.9)
         pz = gz + 0.5 if k % 2 == 0 else end - 0.5
         if k % 3:
-            hosta(b, px, pz, rnd)
+            hosta(b, px, pz, rnd, space=garden)
         else:
-            shrub(b, px, pz, rnd, 0.5, rnd.choice(["hydrangea", "white", "rose"]))
+            shrub(b, px, pz, rnd, 0.5, rnd.choice(["hydrangea", "white", "rose"]), space=garden)
     for pz in (gz + 1.2, gz + 2.6, gz + 4.2, end - 0.6):
-        hosta(b, gx + 0.45, pz, rnd)
+        hosta(b, gx + 0.45, pz, rnd, space=garden)
     # In der Gasse: ein paar Töpfe und eine Wandlaterne
-    for pz in (6.5, 9.0):
+    for pz, kind in ((6.5, "hydrangea"), (9.0, "lavender")):
         x = lx - 0.35
-        b.cylinder(V(x, 0, pz), 0.17, 0.4, H.POT, segments=12, radius_top=0.2, caps=(False, True))
-        shrub(b, x, pz, rnd, 0.28, rnd.choice(["rose", "lavender"]))
-        b.colliders.append(((x - 0.22, 0, pz - 0.22), (x + 0.22, 0.8, pz + 0.22)))
+        PL.pot_plant(b, x, pz, kind, rnd, 0.17, 0.4, 0.2, palette="hydrangea", wall_z=None)
     b.push(b.move(lx, 0, 7.8) @ b.turn_y(-90))
     P.wall_lantern(b, 0.0, 2.7, 0.0)
     b.pop()
@@ -279,9 +265,15 @@ def opposite_alley():
     h = 6.5
     # Den Boden (großes Kopfsteinpflaster bis hinten) legt das Spiel selbst (OppositeAlley)
     # Wände aus Bruchstein (hoch, wie Häuser), mit kleinen Fenstern, Efeu, Schild
+    # Efeu an der linken Wand: lässt die Bögen frei (lokal x = Mitte der Wand - Welt-z)
+    mid = (z0 + z_end) / 2
+    pots = [z0 - 1.6 - k * 3.8 for k in range(3)]
+    arch_holes = [(mid - zz - 0.15, 0.0, mid - zz + 0.75, h) for zz in (z0 - 2.5, z0 - 6.5, z0 - 10.0)]
+    arch_holes += [(mid - pz - 0.35, 0.0, mid - pz + 0.35, 0.8) for k, pz in enumerate(pots) if k % 2 == 0]
     for xw, face in ((x0, 1), (x1, -1)):
         a, c = ((xw, z0), (xw, z_end)) if face > 0 else ((xw, z_end), (xw, z0))
-        house_back(b, a, c, h, RUBBLE, rnd, windows=True, roof=False, pipes=False)
+        house_back(b, a, c, h, RUBBLE, rnd, windows=True, roof=False, pipes=False,
+                   ivy_roots=(mid - (z0 - 3.5), mid - (z0 - 7.6)) if face > 0 else (), ivy_holes=arch_holes)
     # Drei Bögen, der hinterste etwas tiefer
     for k, zz in enumerate((z0 - 2.5, z0 - 6.5, z0 - 10.0)):
         arch(b, x0, x1, zz, 0.6, 2.4 + 0.1 * k, h, RUBBLE, rnd)
@@ -293,17 +285,11 @@ def opposite_alley():
     P.wall_lantern(b, dx + 0.75, 2.6, z_end)
     b.box((x0 + 0.02, 0, z_end + 1.6), (x0 + 0.04, 6.0, z_end + 1.7), Mat("plain", color=(1.0, 0.9, 0.7), glow=0.15))
     # Ein paar kleine Töpfe dicht an den Wänden (Passanten kommen hier durch)
-    for k in range(3):
-        pz = z0 - 1.6 - k * 3.8
+    for k, pz in enumerate(pots):
         side = x0 + 0.2 if k % 2 == 0 else x1 - 0.2
-        b.cylinder(V(side, 0, pz), 0.11, 0.28, H.POT, segments=10, radius_top=0.13, caps=(False, True))
-        shrub(b, side, pz, rnd, 0.17, rnd.choice(["rose", "white", None]))
-    # Efeu an der linken Wand (als Laubpolster an der Wand entlang)
-    for k in range(14):
-        pz = z0 - 0.5 - k * 0.75
-        for j in range(int(rnd.uniform(1, 6))):
-            b.sphere(V(x0 + 0.05, 0.4 + j * 0.55 + rnd.uniform(-0.1, 0.1), pz + rnd.uniform(-0.2, 0.2)), rnd.uniform(0.18, 0.28),
-                     P.leaf(rnd.randrange(3)), rings=4, segments=7, squash=0.9, jitter=0.2, seed=rnd.randrange(9999))
+        wall = ((x0 - 1.0, -1.0, pz - 1.0), (x0 + 0.06, 5.0, pz + 1.0)) if k % 2 == 0 else ((x1 - 0.06, -1.0, pz - 1.0), (x1 + 1.0, 5.0, pz + 1.0))
+        PL.pot_plant(b, side, pz, rnd.choice(["geranium", "lavender", "box_low"]), rnd, 0.11, 0.28, 0.13,
+                     palette=rnd.choice(["rose", "white", "red"]), blocks=[wall])
     return b
 
 
@@ -336,4 +322,5 @@ def main():
     bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True, compress=True)
 
 
-main()
+if __name__ == "__main__":
+    main()

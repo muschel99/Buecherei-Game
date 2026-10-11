@@ -44,6 +44,21 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 7. **Kleine Unregelmäßigkeiten** gehören dazu (Steine leicht verschieden, etwas Flechte auf
    dem Dach), aber nichts ist schief oder krumm gebaut.
 
+## Pflanzen (seit Etappe 4g, Teil 4f)
+- **Echte Blätter statt Kugeln:** jedes Blatt eine gebogene, leicht gefaltete Fläche mit
+  echter Form (gezackter Rand, Lappen beim Efeu, Adern) aus den Pflanzen-Texturen; Blüten aus
+  einzelnen Blütenblättern bzw. Einzelblüten (Geranien-Dolden, Hortensien-Bälle).
+- **Alles hängt zusammen:** Blatt → Stiel → Trieb → Erde/Stamm. Efeu wächst aus einem
+  Pflanzloch die Wand hoch, um Fenster und Fallrohre herum, über Gesimse hinweg, mit
+  Haftwurzeln. Ranken hängen über Kastenränder, nicht durch sie hindurch.
+- **Nichts steckt ineinander:** Pflanzen wachsen nicht in Wände, Töpfe, Kästen oder Zäune
+  (style_plants: Space, settle). Töpfe und Kästen sind oben offen, mit Rand und Erde.
+- **Üppig, aber gepflegt:** englische Blumenkästen und Hängekörbe quellen über (Geranien,
+  Petunien, Lobelien, Efeu); Formgehölze (Buchskugel, Kegel, Hochstämmchen) sind sauber
+  geschnitten.
+- **Leistung:** kleine Blätter und Blüten mit wenigen Flächen, hinter Glas weniger Stiele
+  (Detailstufe); Efeu höchstens etwa 1.400 Blätter je Pflanze.
+
 ## Läden von innen
 - Wer durch Tür oder Schaufenster schaut, sieht einen ganzen Raum – nie ins Leere.
 - **Dezent vintage:** wenige, gut gewählte Dinge statt Fülle; warme Hölzer, Messing, gedeckte

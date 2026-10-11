@@ -1,0 +1,104 @@
+{
+	"grid_x": 4,
+	"grid_y": 4,
+	"layer_size": 512,
+	"layers": [
+		{
+			"index": 0,
+			"name": "ivy_leaf",
+			"roughness": 0.42,
+			"translucency": 0.3
+		},
+		{
+			"index": 1,
+			"name": "broad_leaf",
+			"roughness": 0.6,
+			"translucency": 0.45
+		},
+		{
+			"index": 2,
+			"name": "narrow_leaf",
+			"roughness": 0.62,
+			"translucency": 0.3
+		},
+		{
+			"index": 3,
+			"name": "round_leaf",
+			"roughness": 0.75,
+			"translucency": 0.4
+		},
+		{
+			"index": 4,
+			"name": "heart_leaf",
+			"roughness": 0.5,
+			"translucency": 0.45
+		},
+		{
+			"index": 5,
+			"name": "box_sprig",
+			"roughness": 0.45,
+			"translucency": 0.25
+		},
+		{
+			"index": 6,
+			"name": "leaf_spray",
+			"roughness": 0.6,
+			"translucency": 0.45
+		},
+		{
+			"index": 7,
+			"name": "fern_frond",
+			"roughness": 0.7,
+			"translucency": 0.5
+		},
+		{
+			"index": 8,
+			"name": "grass_tuft",
+			"roughness": 0.7,
+			"translucency": 0.5
+		},
+		{
+			"index": 9,
+			"name": "floret5",
+			"roughness": 0.6,
+			"translucency": 0.6
+		},
+		{
+			"index": 10,
+			"name": "floret4",
+			"roughness": 0.6,
+			"translucency": 0.6
+		},
+		{
+			"index": 11,
+			"name": "petunia",
+			"roughness": 0.55,
+			"translucency": 0.6
+		},
+		{
+			"index": 12,
+			"name": "daisy",
+			"roughness": 0.7,
+			"translucency": 0.5
+		},
+		{
+			"index": 13,
+			"name": "petal",
+			"roughness": 0.5,
+			"translucency": 0.6
+		},
+		{
+			"index": 14,
+			"name": "lavender",
+			"roughness": 0.75,
+			"translucency": 0.3
+		},
+		{
+			"index": 15,
+			"name": "bark",
+			"roughness": 0.92,
+			"translucency": 0.0
+		}
+	],
+	"neutral": 0.8
+}

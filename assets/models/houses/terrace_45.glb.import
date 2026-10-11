@@ -43,12 +43,26 @@ _subresources={
 "materials": {
 "glass": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/house_glass.tres",
 "use_external/path": "res://assets/materials/house_glass.tres"
+},
+"glass_clear": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/house_glass_clear.tres"
+},
+"glass_inner": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/house_glass_inner.tres"
 },
 "house": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/house_style.tres",
 "use_external/path": "res://assets/materials/house_style.tres"
+},
+"plant": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/plant_style.tres",
+"use_external/path": "res://assets/materials/plant_style.tres"
 }
 }
 }
