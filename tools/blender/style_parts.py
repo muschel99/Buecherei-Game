@@ -342,6 +342,36 @@ def street_lamp(b, seed=1):
                             palette=rnd.choice(["lavender", "rose", None]))
 
 
+## Hängende Straßenlaterne am Wandarm: Ausladung (Mitte der Laterne vor der Wand) und Platz,
+## den sie braucht (um den Befestigungspunkt: x ±, y von – bis, z von – bis) – damit das
+## Bau-Script der Häuser eine freie Stelle an der Fassade findet.
+## Drei Kästen: Wandplatte (darf nirgends anstoßen), Arm (dünne Bänder an der Wand dürfen
+## dahinter liegen) und Laterne.
+BRACKET_REACH = 0.72
+BRACKET_SPACE = [((-0.08, 0.08), (-0.31, 0.16), (0.0, 0.05)),
+                 ((-0.06, 0.06), (-0.3, 0.26), (0.06, BRACKET_REACH - 0.1)),
+                 ((-0.19, 0.19), (-0.72, 0.03), (BRACKET_REACH - 0.22, BRACKET_REACH + 0.2))]
+
+
+def bracket_lantern(b, mat=None):
+    """Hängende viktorianische Straßenlaterne an einem geschwungenen Wandarm (Ursprung: Mitte der
+    Wandplatte auf der Wand, +z von der Wand weg, y nach oben). Die Laterne hängt am Ende des
+    Arms, ihre Unterkante liegt 0,68 m unter dem Befestigungspunkt."""
+    m = mat or LAMP_GREEN
+    r = BRACKET_REACH
+    b.box((-0.07, -0.3, 0.0), (0.07, 0.15, 0.03), m)
+    b.box((-0.05, -0.26, 0.03), (0.05, 0.11, 0.045), m)
+    # Oberer Arm (leicht nach oben geschwungen) und eine Strebe von unten
+    b.tube([V(0, 0.08, 0.03), V(0, 0.18, 0.25), V(0, 0.2, r - 0.12), V(0, 0.16, r)], 0.022, m, segments=6)
+    b.tube([V(0, -0.24, 0.03), V(0, -0.08, 0.2), V(0, 0.08, 0.42), V(0, 0.18, 0.58)], 0.015, m, segments=5)
+    _scroll(b, 0, -0.04, 0.17, 0.075, mat=m)
+    _scroll(b, 0, 0.07, 0.4, 0.055, mat=m)
+    b.sphere(V(0, 0.2, r + 0.035), 0.028, m, rings=3, segments=6)
+    # Haken mit kurzer Stange, daran die Laterne
+    b.tube([V(0, 0.16, r), V(0, -0.03, r)], 0.011, m, segments=5)
+    lantern_head(b, 0.0, -0.62, r, size=0.27, mat=m)
+
+
 def wall_lantern(b, x, y, z_wall, mat=None):
     """Wandlaterne: geschwungener Arm von der Wand (Ebene z_wall, nach +z), Laterne darunter."""
     mat = mat or LAMP_GREEN

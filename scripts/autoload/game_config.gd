@@ -197,6 +197,9 @@ var alley_wall_height: float = 7.0
 var opposite_alley_x: float = 4.2
 var opposite_alley_width: float = 1.8
 var opposite_alley_depth: float = 8.0
+## Hinter dem Ende der kleinen Gasse gegenüber geht es (nur zum Anschauen, seit Etappe 4g)
+## noch so weit zwischen Steinbögen weiter – bis zu einer Tür, aus der Passanten kommen.
+var opposite_alley_back_depth: float = 13.0
 
 ## Häuser (seit Etappe 4e): Jedes Haus ist ein Haustyp = eine Szene mit festen Maßen in
 ## scenes/world/houses/<id>.tscn (z. B. "terrace_50", "pub"). Die Häuser selbst stehen fest in
@@ -245,8 +248,13 @@ var passerby_window_chance: float = 0.3
 var passerby_window_time: Vector2 = Vector2(3.0, 8.0)
 ## Wie oft jemand über die Straße geht (0 = nie, 1 = jeder).
 var passerby_cross_chance: float = 0.3
-## Wie oft jemand aus einer Gasse kommt bzw. in eine Gasse geht (0 = nie, 1 = jeder).
-var passerby_alley_chance: float = 0.2
+## Wie oft jemand aus der kleinen Gasse gegenüber kommt bzw. in sie hineingeht (0 = nie,
+## 1 = jeder). Seit Etappe 4g seltener.
+var passerby_alley_chance: float = 0.07
+## Wie oft jemand, der an der Gasse neben der Bücherei vorbeikommt, in den Garten geht und sich
+## eine Weile auf die runde Bank unter dem Baum setzt (seit Etappe 4g) – und wie lange (Sekunden).
+var passerby_garden_chance: float = 0.06
+var passerby_garden_time: Vector2 = Vector2(20.0, 50.0)
 ## Vor den Schaufenstern dieser Haustypen bleiben Passanten stehen (dazu die Punkte unter
 ## "Outside/StreetLife/WindowSpots" in der Hauptszene, z. B. vor dem Fenster der Bücherei).
 var passerby_window_house_types: Array[String] = ["fashion_shop", "pub"]

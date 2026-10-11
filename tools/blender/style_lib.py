@@ -92,6 +92,16 @@ class Mat:
         return "%s_%02x%02x%02x%s" % ((self.layer,) + tuple(int(round(c * 255)) for c in self.color) + (glow,))
 
 
+def edited_by_hand(glb):
+    """Wurde das Modell in Blender selbst bearbeitet und exportiert? Dann nicht überschreiben
+    (unsere .glb tragen "Cozy Bücherei" als Erzeuger; ein Blender-Export nicht)."""
+    if not os.path.exists(glb):
+        return False
+    with open(glb, "rb") as f:
+        head = f.read(4096)
+    return b"Cozy B" not in head
+
+
 class Builder:
     """Sammelt Flächen in Godot-Koordinaten (siehe oben)."""
 

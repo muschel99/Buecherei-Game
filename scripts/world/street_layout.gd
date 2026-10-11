@@ -101,6 +101,14 @@ static func alley_end_z() -> float:
 	return recess_z() + GameConfig.alley_depth
 
 
+## Mitte des Baums mit der runden Bank im Garten am Ende der Gasse (x, z; seit Etappe 4g).
+static func garden_tree() -> Vector2:
+	var far_x := alley_far_x()
+	var garden_x := far_x - GameConfig.alley_garden_extra_width
+	var garden_z := alley_end_z() - GameConfig.alley_garden_depth
+	return Vector2((garden_x + far_x) / 2.0 - 0.1, garden_z + GameConfig.alley_garden_depth * 0.5)
+
+
 ## Wo die Nachbarhäuser neben der Bücherei enden (x): rechts (+X) bündig, links (-X)
 ## hinter der Gasse.
 static func neighbor_row_end_x() -> float:

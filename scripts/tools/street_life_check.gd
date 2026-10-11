@@ -27,7 +27,7 @@ var _report := {
 	"appeared": 0, "vanished": 0, "appear_in_view": [], "vanish_in_view": [],
 	"appear_open": 0, "vanish_open": 0, "places": {},
 	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "vehicle_close": [],
-	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {}, "crossing": 0, "browsing": 0, "alley": 0,
+	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {}, "crossing": 0, "browsing": 0, "alley": 0, "sitting": 0,
 }
 var _track := {}  # Passant -> [letzte Stelle, Zeit seit Bewegung]
 var _spot_name := ""
@@ -135,7 +135,7 @@ func _on_appeared(who: Node3D, spot: Vector2) -> void:
 	if who is StreetVehicle:
 		var key := who.name.rstrip("0123456789")
 		_report.vehicles[key] = int(_report.vehicles.get(key, 0)) + 1
-	_count_place(spot, "+")
+	_count_place(spot, "+" if who is Passerby else "+Fahrzeug ")
 	if _life.is_visible_spot(spot):
 		_report.appear_in_view.append("%s bei %s (Stelle %s)" % [who.name, spot, _spot_name])
 	if _open_view(spot):
@@ -144,7 +144,7 @@ func _on_appeared(who: Node3D, spot: Vector2) -> void:
 
 func _on_vanished(who: Node3D, spot: Vector2) -> void:
 	_report.vanished += 1
-	_count_place(spot, "-")
+	_count_place(spot, "-" if who is Passerby else "-Fahrzeug ")
 	if _life.is_visible_spot(spot):
 		_report.vanish_in_view.append("%s bei %s (Stelle %s)" % [who.name, spot, _spot_name])
 	if _open_view(spot):
@@ -179,6 +179,8 @@ func _measure() -> void:
 			_report.browsing += 1
 		if action.has("alley"):
 			_report.alley += 1
+		if walker.get_action_type() == "sit":
+			_report.sitting += 1
 	for i in walkers.size():
 		var a := walkers[i]
 		for j in range(i + 1, walkers.size()):
@@ -191,6 +193,10 @@ func _measure() -> void:
 		_report.min_player_gap = minf(_report.min_player_gap, player_gap)
 		if player_gap < -0.02:
 			_report.player_bump.append("%s %.2f m (%s)" % [a.name, player_gap, _spot_name])
+		# Wer auf der Bank sitzt, steckt mit den Beinen in ihrer Kollision und bewegt sich nicht
+		if a.get_action_type() == "sit":
+			_track[a] = [a.pos, 0.0]
+			continue
 		# In etwas Festes hinein? (Häuser, Mauern, Treppe, Kartons; nicht die Grenzen der Spielfigur)
 		var query := PhysicsShapeQueryParameters3D.new()
 		var capsule := CapsuleShape3D.new()
@@ -255,8 +261,8 @@ func _print_report() -> void:
 		print("  SICHTBAR: ", line)
 	print("Orte (+ erscheinen, - verschwinden): ", _report.places)
 	print("Fahrzeuge losgefahren: ", _report.vehicles)
-	print("Messungen mit Passanten beim Überqueren: %d, vor einem Schaufenster: %d, in einer Gasse: %d" % [
-		_report.crossing, _report.browsing, _report.alley])
+	print("Messungen mit Passanten beim Überqueren: %d, vor einem Schaufenster: %d, in einer Gasse: %d, auf der Bank: %d" % [
+		_report.crossing, _report.browsing, _report.alley, _report.sitting])
 	print("Kleinster Abstand zwischen Passanten: %.2f m, zur Spielfigur: %.2f m" % [_report.min_walker_gap, _report.min_player_gap])
 	for key in ["overlap", "player_bump", "solid", "stuck", "vehicle_close"]:
 		var list: Array = _report[key]

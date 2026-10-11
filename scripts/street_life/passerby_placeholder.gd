@@ -4,7 +4,7 @@ extends Node3D
 ## Kopf (mit Frisur, manchmal Hut), Körper (manchmal Mantel oder Tasche), Arme und Beine.
 ## Jede Figur bekommt eigene Farben und eine eigene Größe (randomize_look). Die Laufbewegung
 ## macht dieses Script selbst (animate): Beine und Arme schwingen, der Körper wippt leicht;
-## beim Umschauen dreht sich der Kopf.
+## beim Umschauen dreht sich der Kopf; zum Sitzen knickt sie in Hüfte und Knien ein.
 ##
 ## Eigene Figur statt Platzhalter: In scenes/street_life/passerby.tscn den Knoten "Model"
 ## ersetzen (Anleitung: docs/ASSET_GUIDE.md, „Eigene Passanten“). Die Figur steht mit den
@@ -45,11 +45,21 @@ const HEAD_Y := 1.5
 
 ## Tempo, bei dem die Schritte genau passen (Meter je Doppelschritt)
 const STRIDE := 1.3
+## Knie (unter der Hüfte) und Sitzhaltung: Abstand Becken über der Sitzfläche.
+const KNEE := 0.44
+const SEAT_GAP := 0.04
+
+## Höhe der Sitzfläche beim Sitzen (Meter, in der Größe der Figur; setzt Passerby).
+var sit_height := 0.45
 
 var _hips: Node3D
 var _head: Node3D
 var _arms: Array[Node3D] = []
 var _legs: Array[Node3D] = []
+var _knees: Array[Node3D] = []
+var _sit := 0.0
+var _sitting_detail := false
+var _shadow_level := 0
 var _near: Array[GeometryInstance3D] = []
 var _far: MeshInstance3D
 var _shadow: MeshInstance3D
@@ -73,7 +83,10 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 		child.queue_free()
 	_arms.clear()
 	_legs.clear()
+	_knees.clear()
 	_near.clear()
+	_sit = 0.0
+	_sitting_detail = false
 	var skin: Color = SKIN_COLORS[rng.randi() % SKIN_COLORS.size()]
 	var hair: Color = HAIR_COLORS[rng.randi() % HAIR_COLORS.size()]
 	var top: Color = TOP_COLORS[rng.randi() % TOP_COLORS.size()]
@@ -121,10 +134,18 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 		leg.name = "LegL" if side < 0 else "LegR"
 		leg.position = Vector3(side * 0.095, HIP, 0.0)
 		add_child(leg)
-		var leg_shapes := StreetShapes.new()
-		_add_leg(leg_shapes, bottom, shoes)
-		_near.append(_mesh_instance(leg, "Mesh", leg_shapes))
+		var thigh := StreetShapes.new()
+		_add_thigh(thigh, bottom)
+		_near.append(_mesh_instance(leg, "Mesh", thigh))
+		var knee := Node3D.new()
+		knee.name = "Knee"
+		knee.position.y = -KNEE
+		leg.add_child(knee)
+		var shin := StreetShapes.new()
+		_add_shin(shin, bottom, shoes)
+		_near.append(_mesh_instance(knee, "Mesh", shin))
 		_legs.append(leg)
+		_knees.append(knee)
 
 	# Vereinfachte Figur für die Ferne: alles in einem Teil, ohne Bewegung
 	var far := StreetShapes.new()
@@ -155,7 +176,7 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 func set_detail_distance(distance: float) -> void:
 	_detail_distance = distance
 	for part in _near:
-		part.visibility_range_end = distance
+		part.visibility_range_end = 0.0 if _sitting_detail else distance
 	if _far:
 		_far.visibility_range_begin = distance
 
@@ -164,18 +185,21 @@ func set_detail_distance(distance: float) -> void:
 ## viele Zeichenaufrufe), 2 = genau (Arme und Beine bewegen sich auch im Schatten).
 func set_shadows(level: int) -> void:
 	var detailed := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if level >= 2 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_shadow_level = level
 	for part in _near:
 		part.cast_shadow = detailed
 	if _shadow:
-		_shadow.visible = level == 1
+		_shadow.visible = level == 1 and not _sitting_detail
 
 
-## Bewegung je Bild: state = "walk", "idle", "look" (Umschauen) oder "browse" (ins Schaufenster
-## schauen), speed = Tempo in m/s.
+## Bewegung je Bild: state = "walk", "idle", "look" (Umschauen), "browse" (ins Schaufenster
+## schauen) oder "sit" (sitzen), speed = Tempo in m/s.
 func animate(state: StringName, speed: float, delta: float) -> void:
 	if _hips == null:
 		return
 	_time += delta
+	_sit = move_toward(_sit, 1.0 if state == &"sit" else 0.0, delta / 0.8)
+	_set_sitting_detail(_sit > 0.0)
 	var walking := state == &"walk" and speed > 0.05
 	var target_swing := clampf(speed / 1.3, 0.25, 1.2) if walking else 0.0
 	_swing = move_toward(_swing, target_swing, delta * 3.0)
@@ -185,12 +209,18 @@ func animate(state: StringName, speed: float, delta: float) -> void:
 		_phase = move_toward(_phase, 0.0 if _phase < PI else TAU, delta * 4.0)
 	var leg_angle := sin(_phase) * 0.42 * _swing
 	var arm_angle := sin(_phase) * 0.32 * _swing
-	_legs[0].rotation.x = leg_angle
-	_legs[1].rotation.x = -leg_angle
-	_arms[0].rotation.x = -arm_angle
-	_arms[1].rotation.x = arm_angle
+	# Sitzen: Oberschenkel nach vorn, Unterschenkel senkrecht, Hände auf dem Schoß
+	var sit := smoothstep(0.0, 1.0, _sit)
+	var hip_sit := sit_height + SEAT_GAP
+	_legs[0].rotation.x = lerpf(leg_angle, -PI / 2.0 + 0.08, sit)
+	_legs[1].rotation.x = lerpf(-leg_angle, -PI / 2.0 + 0.04, sit)
+	for i in 2:
+		_knees[i].rotation.x = lerpf(0.0, PI / 2.0 - 0.06, sit)
+		_legs[i].position.y = lerpf(HIP, hip_sit, sit)
+	_arms[0].rotation.x = lerpf(-arm_angle, -0.6, sit)
+	_arms[1].rotation.x = lerpf(arm_angle, -0.55, sit)
 	# Bei jedem Schritt hebt sich das Becken ein wenig
-	_hips.position.y = HIP + absf(sin(_phase)) * 0.022 * _swing - 0.01 * _swing
+	_hips.position.y = lerpf(HIP + absf(sin(_phase)) * 0.022 * _swing - 0.01 * _swing, hip_sit, sit)
 	_hips.rotation.y = sin(_phase) * 0.05 * _swing
 	# Ruhig atmen im Stehen
 	var breathe := sin(_time * 1.6) * 0.006 * (1.0 - minf(1.0, _swing))
@@ -206,6 +236,19 @@ func animate(state: StringName, speed: float, delta: float) -> void:
 	_head_yaw = lerpf(_head_yaw, target_yaw, minf(1.0, delta * 5.0))
 	_head_pitch = lerpf(_head_pitch, target_pitch, minf(1.0, delta * 3.0))
 	_head.rotation = Vector3(_head_pitch, _head_yaw, 0.0)
+
+
+## Im Sitzen immer die genaue Figur (die vereinfachte steht) und kein Grundhaltungs-Schatten.
+func _set_sitting_detail(sitting: bool) -> void:
+	if sitting == _sitting_detail:
+		return
+	_sitting_detail = sitting
+	for part in _near:
+		part.visibility_range_end = 0.0 if sitting else _detail_distance
+	if _far:
+		_far.visible = not sitting
+	if _shadow:
+		_shadow.visible = _shadow_level == 1 and not sitting
 
 
 func _mesh_instance(parent: Node3D, mesh_name: String, shapes: StreetShapes) -> MeshInstance3D:
@@ -271,7 +314,19 @@ func _add_arm(shapes: StreetShapes, side: float, sleeve: Color, skin: Color, seg
 	shapes.add_ellipsoid(Vector3(side * 0.015, -0.6, 0.01), Vector3(0.075, 0.1, 0.08), StreetShapes.solid(skin), 8, 4)
 
 
-## Bein (relativ zur Hüfte, hängt nach unten): Hosenbein und Schuh.
+## Oberschenkel (relativ zur Hüfte, hängt nach unten bis zum Knie).
+func _add_thigh(shapes: StreetShapes, trousers: Color, segments: int = 12) -> void:
+	shapes.add_round_box(Vector3(0.0, -KNEE / 2.0 - 0.01, 0.0), Vector3(0.145, KNEE + 0.06, 0.155), StreetShapes.solid(trousers), 0.6, segments, 6)
+
+
+## Unterschenkel mit Schuh (relativ zum Knie).
+func _add_shin(shapes: StreetShapes, trousers: Color, shoes: Color, segments: int = 12) -> void:
+	var foot := -(HIP - KNEE)
+	shapes.add_round_box(Vector3(0.0, foot / 2.0 + 0.02, 0.0), Vector3(0.135, -foot + 0.04, 0.145), StreetShapes.solid(trousers), 0.6, segments, 6)
+	shapes.add_round_box(Vector3(0.0, foot + 0.04, 0.045), Vector3(0.11, 0.08, 0.25), StreetShapes.solid(shoes), 0.5, 10, 5)
+
+
+## Bein (relativ zur Hüfte, hängt nach unten): Hosenbein und Schuh (vereinfachte Figur).
 func _add_leg(shapes: StreetShapes, trousers: Color, shoes: Color, segments: int = 12) -> void:
 	shapes.add_round_box(Vector3(0.0, -0.41, 0.0), Vector3(0.14, 0.84, 0.15), StreetShapes.solid(trousers), 0.6, segments, 6)
 	shapes.add_round_box(Vector3(0.0, -HIP + 0.04, 0.045), Vector3(0.11, 0.08, 0.25), StreetShapes.solid(shoes), 0.5, 10, 5)

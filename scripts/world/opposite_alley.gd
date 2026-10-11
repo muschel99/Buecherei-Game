@@ -1,15 +1,17 @@
 class_name OppositeAlley
 extends Node3D
 ## Kleine Gasse in der Häuserreihe gegenüber (seit Etappe 4f): eine schmale Lücke zwischen zwei
-## Häusern, damit die lange Front nicht so einheitlich wirkt. Mit denselben großen Platten
-## belegt wie der Gehweg, begehbar bis an den Abschluss am Ende (Mauer mit Tor und einem Haus
-## dahinter, dieselbe austauschbare Szene wie bei der Gasse neben der Bücherei).
+## Häusern, damit die lange Front nicht so einheitlich wirkt. Mit großem Kopfsteinpflaster
+## belegt (seit Etappe 4g), begehbar bis an eine unsichtbare Grenze; dahinter verläuft sie sich
+## zwischen Steinbögen bis zu einer Tür (GameConfig.opposite_alley_back_depth). Dort kommen
+## Passanten heraus und gehen hinein – außerhalb der Reichweite der Spielfigur, durch die
+## unsichtbare Grenze hindurch. Ohne Modell: Abschluss mit Mauer und Tor (alley_end.tscn).
 ## Lage und Maße: GameConfig.opposite_alley_x, opposite_alley_width, opposite_alley_depth;
 ## die Häuser links und rechts lässt HousesLayout dafür frei (houses.tscn neu erzeugen).
 ## Liegt (wie alles unter "Outside") auf Gehweg-Höhe. Die Seitenwände sind die Nachbarhäuser.
 
 @export var end_scene: PackedScene = preload("res://scenes/world/alley_end.tscn")
-@export var paving_material: Material = preload("res://assets/materials/sidewalk.tres")
+@export var paving_material: Material = preload("res://assets/materials/alley_setts.tres")
 ## Stil-Modell (seit Etappe 4g, tools/blender/build_alleys.py): hinter dem Ende verläuft sich die
 ## Gasse zwischen Steinbögen. Ist es da, ersetzt es den Abschluss; am Ende bleibt eine
 ## unsichtbare Grenze.
@@ -22,19 +24,24 @@ func _ready() -> void:
 		return
 	var start := StreetLayout.opposite_front_z()
 	var end := StreetLayout.opposite_alley_end_z()
+	# Mit Modell reicht das Pflaster bis zur Tür ganz hinten
+	var paving_end := end - (GameConfig.opposite_alley_back_depth if model_scene else 0.0)
 	var paving := WorldMesh.new()
-	# Die Platten reichen 5 cm unter die Häuser, damit an den Wänden keine Fuge bleibt
-	paving.add_quad(Vector3(span.x - 0.05, 0.0, end), Vector3(span.y + 0.05, 0.0, end),
+	# Das Pflaster reicht 5 cm unter die Häuser, damit an den Wänden keine Fuge bleibt
+	paving.add_quad(Vector3(span.x - 0.05, 0.0, paving_end), Vector3(span.y + 0.05, 0.0, paving_end),
 		Vector3(span.y + 0.05, 0.0, start), Vector3(span.x - 0.05, 0.0, start), Vector3.UP, Color.WHITE)
 	add_child(paving.make_instance("Paving", paving_material, false))
 	if model_scene:
 		var model := model_scene.instantiate()
 		model.name = "Model"
 		add_child(model)
+		# Unsichtbare Grenze für die Spielfigur; Passanten gehen hindurch, und sie verdeckt für die
+		# Sichtprüfung nichts (wie die Grenzen der Straße)
 		var body := StaticBody3D.new()
-		body.name = "EndBound"
+		body.name = "Bounds"
 		body.collision_layer = 1  # Ebene "world"
 		body.collision_mask = 0
+		body.set_meta("see_through", true)
 		var shape := BoxShape3D.new()
 		shape.size = Vector3(span.y - span.x + 0.6, 4.0, 0.3)
 		var collision := CollisionShape3D.new()
@@ -49,8 +56,8 @@ func _ready() -> void:
 		closing.position = Vector3((span.x + span.y) / 2.0, 0.0, end)
 		closing.rotation.y = PI  # Mauer hinter dem Ende, Vorderseite zur Gasse (+Z)
 		add_child(closing)
-	# Fester Punkt vor dem Tor: Hier erscheinen und verschwinden Passanten (StreetLife, seit
-	# Etappe 5a) – nur, wenn es gerade niemand sieht
+	# Fester Punkt vor der Tür ganz hinten (bzw. vor dem Tor): Hier erscheinen und verschwinden
+	# Passanten (StreetLife, seit Etappe 5a) – nur, wenn es gerade niemand sieht
 	var spot := StreetPaths.opposite_alley_points()[0]
 	var marker := Marker3D.new()
 	marker.name = "TrafficPoint"

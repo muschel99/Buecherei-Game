@@ -153,6 +153,16 @@ enum GroundFloor {
 		see_through = value
 		_queue_rebuild()
 
+## Hängende Straßenlaternen an der Front (seit Etappe 4g): Befestigungspunkte an der Wand in
+## Hauskoordinaten (x entlang der Front, y Höhe, z Wandebene). Trägt tools/blender/build_street.py
+## ein (es sucht eine freie Stelle zwischen Fenstern und Schildern).
+@export var lanterns: PackedVector3Array = PackedVector3Array():
+	set(value):
+		lanterns = value
+		_queue_rebuild()
+## Modell der hängenden Laterne (Ursprung = Befestigung an der Wand, +Z von der Wand weg).
+@export var lantern_scene: PackedScene = preload("res://assets/models/props/wall_street_lantern.glb")
+
 @export var material: Material = preload("res://assets/materials/house_facade.tres")
 
 ## Physik-Ebenen: "world" (fest) und "sight_blocker" (verdeckt nur die Sicht, seit Etappe 5a)
@@ -186,6 +196,7 @@ var _rebuild_queued := false
 var _placeholder: MeshInstance3D
 var _body: StaticBody3D
 var _unique: Node3D
+var _lanterns: Node3D
 
 
 func _ready() -> void:
@@ -219,13 +230,15 @@ func _queue_rebuild() -> void:
 ## Baut Platzhalter und Kollision (neu).
 func _rebuild() -> void:
 	_rebuild_queued = false
-	for old: Node in [_placeholder, _body, _unique]:
+	for old: Node in [_placeholder, _body, _unique, _lanterns]:
 		if old:
 			remove_child(old)
 			old.queue_free()
 	_placeholder = null
 	_body = null
 	_unique = null
+	_lanterns = null
+	_build_lanterns()
 	_build_collision()
 	if see_through and _body:
 		# Für die Sichtprüfung des Straßenlebens durchsichtig (siehe see_through)
@@ -260,6 +273,19 @@ func _rebuild() -> void:
 				# Haus ohne Kollision: auch die Kollisionen im Modell weglassen
 				body.queue_free()
 	_apply_colors()
+
+
+## Hängende Laternen an den Punkten aus "lanterns" (nur Optik, hoch über den Köpfen).
+func _build_lanterns() -> void:
+	if lanterns.is_empty() or lantern_scene == null:
+		return
+	_lanterns = Node3D.new()
+	_lanterns.name = "Lanterns"
+	add_child(_lanterns)
+	for spot in lanterns:
+		var lantern := lantern_scene.instantiate() as Node3D
+		lantern.position = spot
+		_lanterns.add_child(lantern)
 
 
 ## Seitenfenster bei eigenem Modell: gibt es eine Variante (z. B. terrace_55_side_left.glb),

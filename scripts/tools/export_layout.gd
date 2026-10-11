@@ -21,6 +21,8 @@ func _ready() -> void:
 		"opposite_alley_x1": span.y,
 		"opposite_front_z": StreetLayout.opposite_front_z(),
 		"opposite_end_z": StreetLayout.opposite_alley_end_z(),
+		"opposite_back_depth": GameConfig.opposite_alley_back_depth,
+		"garden_tree": [StreetLayout.garden_tree().x, StreetLayout.garden_tree().y],
 	}
 	var file := FileAccess.open("res://assets/models/source/layout.json", FileAccess.WRITE)
 	file.store_string(JSON.stringify(data, "\t"))

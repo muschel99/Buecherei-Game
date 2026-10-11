@@ -28,6 +28,8 @@ signal finished(passerby: Passerby)
 @export var look_animation: StringName = &"LookAround"
 ## Ins Schaufenster schauen. Leer = Stehen.
 @export var browse_animation: StringName = &""
+## Sitzen (z. B. auf der Bank im Garten; Gesäß auf Sitzhöhe 0,45 m). Leer = Stehen.
+@export var sit_animation: StringName = &"Sit"
 ## Bei diesem Tempo (m/s) passen die Schritte der Geh-Animation genau; schneller oder
 ## langsamer spielt sie entsprechend schneller oder langsamer.
 @export var walk_animation_speed: float = 1.3
@@ -54,6 +56,10 @@ const PATIENCE := 6.0
 const CURB_WAIT := 0.45
 ## Drehtempo der Figur (je Sekunde, weich).
 const TURN_RATE := 7.0
+## Hinsetzen: so weit vor dem Sitzplatz steht man vorher (Meter), so lange dauert das Hinsetzen
+## bzw. Aufstehen (Sekunden).
+const SIT_FRONT := 0.5
+const SIT_TIME := 0.9
 
 var life: StreetLife
 var active := false
@@ -209,7 +215,7 @@ func debug_text() -> String:
 		_route.part_at(_s) if _route else "", _dir]
 
 
-## Was gerade passiert ("walk", "cross", "stand", "leave").
+## Was gerade passiert ("walk", "cross", "stand", "sit", "leave").
 func get_action_type() -> String:
 	return String(_action.get("type", ""))
 
@@ -226,6 +232,8 @@ func step(delta: float) -> void:
 			_step_cross(delta)
 		"stand":
 			_step_stand(delta)
+		"sit":
+			_step_sit(delta)
 		"leave":
 			_step_leave(delta)
 		_:
@@ -281,8 +289,14 @@ func _set_route(route: StreetRoute) -> void:
 
 ## Gehen bis zur Stelle "to" auf dem Weg.
 func _step_walk(delta: float) -> void:
-	var to: float = _action.to
+	var action := _action
 	_walk_along(delta, _comfort_lat())
+	# Unterwegs umgedreht (neue Schritte von StreetLife)? Dann gilt schon der neue Weg – nicht
+	# mit dem alten Ziel vergleichen (sonst fiele der neue Weg weg und er verschwände mitten
+	# auf der Straße)
+	if not is_same(action, _action):
+		return
+	var to: float = _action.to
 	if (to - _s) * _dir <= 0.0:
 		if _action.has("passing"):
 			life.passing(self, String(_action.passing))
@@ -366,6 +380,61 @@ func _step_stand(delta: float) -> void:
 		_next_action()
 
 
+## Hinsetzen (Sitzplatz aus StreetLife): vor den Platz gehen, umdrehen, hinsetzen, sitzen,
+## aufstehen und zurück an die Stelle, an der man ankam.
+func _step_sit(delta: float) -> void:
+	var spot: Vector2 = _action.spot
+	var face: Vector2 = _action.face
+	var front := spot + face * SIT_FRONT
+	_phase_time += delta
+	_anim_speed = 0.0
+	match _phase:
+		0:  # vor den Platz
+			if not _action.has("back"):
+				_action.back = pos
+				if _model and "sit_height" in _model:
+					_model.set("sit_height", float(_action.get("height", 0.45)) / scale.y)
+			_anim_state = &"walk"
+			_anim_speed = speed_pref * 0.7
+			var next := pos.move_toward(front, speed_pref * 0.7 * delta)
+			if not life.blocks_move(self, next):
+				pos = next
+			if pos.distance_to(front) < 0.01:
+				_phase = 1
+				_phase_time = 0.0
+		1:  # zur Blickrichtung drehen
+			_anim_state = &"idle"
+			if _phase_time > 0.5:
+				_phase = 2
+				_phase_time = 0.0
+		2:  # hinsetzen (ein Stück zurück auf den Sitz)
+			_anim_state = &"sit"
+			pos = front.lerp(spot, smoothstep(0.0, 1.0, _phase_time / SIT_TIME))
+			if _phase_time >= SIT_TIME:
+				_phase = 3
+				_phase_time = 0.0
+		3:  # sitzen
+			_anim_state = &"sit"
+			if _phase_time >= float(_action.get("time", 20.0)):
+				_phase = 4
+				_phase_time = 0.0
+				life.release_seat(self)
+		4:  # aufstehen
+			_anim_state = &"idle"
+			pos = spot.lerp(front, smoothstep(0.0, 1.0, _phase_time / SIT_TIME))
+			if _phase_time >= SIT_TIME:
+				_phase = 5
+		5:  # zurück an die Stelle, an der man ankam
+			_anim_state = &"walk"
+			_anim_speed = speed_pref * 0.7
+			var back: Vector2 = _action.back
+			var next := pos.move_toward(back, speed_pref * 0.7 * delta)
+			if not life.blocks_move(self, next):
+				pos = next
+			if pos.distance_to(back) < 0.01:
+				_next_action()
+
+
 ## Verschwinden – aber nur, wenn es gerade niemand sieht. Sonst ein Stück weitergehen (am
 ## Straßenende) bzw. am Tor warten (in der Gasse).
 func _step_leave(delta: float) -> void:
@@ -386,8 +455,10 @@ func _step_leave(delta: float) -> void:
 		_anim_state = &"idle"
 		return
 	var before := _s
+	var action := _action
 	_walk_along(delta, _comfort_lat())
-	_action.extra = extra + absf(_s - before)
+	if is_same(action, _action):
+		_action.extra = extra + absf(_s - before)
 
 
 ## Ein Stück am Weg entlang, mit Ausweichen. want = Wunsch-Lage (lat).
@@ -520,6 +591,9 @@ func _update_facing(delta: float) -> void:
 	elif _action.get("type") == "cross" and _phase in [1, 2]:
 		var normal := _route.normal_at(_s) * -float(side)
 		target = atan2(normal.x, normal.y)
+	elif _action.get("type") == "sit" and _phase in [1, 2, 3, 4]:
+		var face: Vector2 = _action.face
+		target = atan2(face.x, face.y)
 	elif _action.get("type") == "leave" and bool(_action.get("gate", false)) and _action.has("face"):
 		var face: Vector2 = _action.face
 		target = atan2(face.x, face.y)
@@ -539,6 +613,8 @@ func _animate(delta: float) -> void:
 				anim_name = look_animation if look_animation != &"" else idle_animation
 			&"browse":
 				anim_name = browse_animation if browse_animation != &"" else idle_animation
+			&"sit":
+				anim_name = sit_animation if sit_animation != &"" else idle_animation
 		if anim_name != &"" and _anim_player.has_animation(anim_name):
 			if _anim_player.current_animation != anim_name:
 				_anim_player.play(anim_name, animation_blend)

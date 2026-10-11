@@ -158,8 +158,18 @@ def street_lamp():
     return b
 
 
+def wall_street_lantern():
+    """Hängende Straßenlaterne am Wandarm (Ursprung: Befestigung an der Wand, +Z von der Wand
+    weg). Die Häuser tragen ihre Befestigungspunkte selbst (HouseFacade.lanterns)."""
+    import style_parts as P
+    b = S.Builder("wall_street_lantern")
+    P.bracket_lantern(b)
+    return b
+
+
 PROPS = {
     "street_lamp": street_lamp,
+    "wall_street_lantern": wall_street_lantern,
     "drain_grate": drain_grate,
     "dress_form": dress_form,
     "outfit_dress": outfit_dress,
@@ -171,10 +181,13 @@ PREVIEW_ACCENT = (0.72, 0.58, 0.3)
 
 
 def build(name):
+    glb = os.path.join(S.ROOT, "assets", "models", "props", name + ".glb")
+    if S.edited_by_hand(glb):
+        print("%s: selbst bearbeitet – bleibt, wie es ist" % name)
+        return
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.preferences.filepaths.save_version = 0
     b = PROPS[name]()
-    glb = os.path.join(S.ROOT, "assets", "models", "props", name + ".glb")
     tris = S.write_glb(b, glb)
     S.write_import_settings(glb)
     print("%s: %d Dreiecke" % (name, tris))

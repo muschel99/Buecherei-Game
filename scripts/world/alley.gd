@@ -11,11 +11,23 @@ extends Node3D
 ## der Bücherei ist nur ein Platzhalter: Wird die Bücherei später nach hinten erweitert,
 ## tritt der Anbau an ihre Stelle.
 ## Am Ende steht ein austauschbarer Abschluss (end_scene, z. B. Mauer mit Tor) – er ist fest,
-## dahinter kommt man nicht.
+## dahinter kommt man nicht. Seit Etappe 4g endet die Gasse im Garten mit Baum (model_scene):
+## Auf der runden Bank um den Stamm kann man sich setzen (E), ab und zu auch ein Passant
+## (Sitzplätze in der Gruppe StreetLife.SEAT_GROUP). Passanten erscheinen hier nicht mehr.
 ## Liegt (wie alles unter "Outside") auf Gehweg-Höhe.
 
 const YARD_WALL_HEIGHT := 2.2
 const YARD_WALL_THICKNESS := 0.3
+## Runde Bank um den Baum (Maße wie in tools/blender/build_alleys.py): Sitzhöhe, Abstand der
+## Sitzplätze von der Stammmitte, Richtungen der Sitzplätze (Winkel in Bogenmaß, 0 = +X, zur
+## Gasse hin; frei von Kissen und Hocker) und welche davon Passanten nehmen (vom Weg aus
+## erreichbar, nicht an den Beeten).
+const BENCH_SEAT_HEIGHT := 0.45
+const BENCH_SEAT_RADIUS := 0.68
+const BENCH_SEAT_ANGLES: Array[float] = [1.75, 2.7, 3.65, 4.6, 5.55]
+const BENCH_WALKER_SEATS: Array[float] = [1.75, 4.6, 5.55]
+## So weit vor der Bank (von der Stammmitte) steht man, bevor man sich setzt.
+const BENCH_APPROACH := 1.45
 
 @export var end_scene: PackedScene = preload("res://scenes/world/alley_end.tscn")
 ## Stil-Modell der Gasse (seit Etappe 4g, tools/blender/build_alleys.py): hohe Hauswände und der
@@ -41,6 +53,7 @@ func _ready() -> void:
 		model.name = "Model"
 		add_child(model)
 		_build_garden_walls(library_x, far_x, end)
+		_build_bench()
 	else:
 		_build_yard_walls(library_x, far_x, end)
 	if end_scene and model_scene == null:
@@ -48,7 +61,8 @@ func _ready() -> void:
 		closing.name = "End"
 		closing.position = Vector3((library_x + far_x) / 2.0, 0.0, end)
 		add_child(closing)
-	_add_traffic_point(StreetPaths.library_alley_points()[0], "alley")
+		# Ohne Garten: Passanten kommen durch das Tor am Ende
+		_add_traffic_point(StreetPaths.library_alley_points()[0], "alley")
 
 
 ## Fester Punkt vor dem Tor am Ende: Hier erscheinen und verschwinden Passanten (StreetLife,
@@ -61,6 +75,44 @@ func _add_traffic_point(spot: Vector2, place: String) -> void:
 	marker.set_meta("place", place)
 	marker.add_to_group(Street.TRAFFIC_GROUP)
 	add_child(marker)
+
+
+## Sitzplätze auf der runden Bank um den Baum: für die Spielfigur (E, wie bei Sesseln) und für
+## Passanten (Gruppe StreetLife.SEAT_GROUP; Metadaten "approach" = Stelle vor dem Sitz, "face" =
+## Blickrichtung, beide als x/z unter "Outside").
+func _build_bench() -> void:
+	var tree := StreetLayout.garden_tree()
+	var bench := Node3D.new()
+	bench.name = "Bench"
+	bench.position = Vector3(tree.x, 0.0, tree.y)
+	var seating := Seating.new()
+	seating.name = "Seating"
+	for angle in BENCH_SEAT_ANGLES:
+		var out := Vector3(cos(angle), 0.0, sin(angle))
+		var seat := SeatPoint.new()
+		seat.name = "Seat%d" % (seating.get_child_count() + 1)
+		# Blickrichtung +Z = vom Stamm weg
+		seat.transform = Transform3D(Basis(Vector3.UP.cross(out), Vector3.UP, out),
+			out * BENCH_SEAT_RADIUS + Vector3.UP * BENCH_SEAT_HEIGHT)
+		if angle in BENCH_WALKER_SEATS:
+			seat.add_to_group(StreetLife.SEAT_GROUP)
+			seat.set_meta("approach", tree + Vector2(out.x, out.z) * BENCH_APPROACH)
+			seat.set_meta("face", Vector2(out.x, out.z))
+		seating.add_child(seat)
+	var area := Interactable.new()
+	area.name = "Interactable"
+	area.collision_layer = 2  # Ebene "interactable"
+	area.collision_mask = 0
+	area.monitoring = false
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(2.1, 0.8, 2.1)
+	shape.shape = box
+	shape.position = Vector3(0.0, 0.5, 0.0)
+	area.add_child(shape)
+	seating.add_child(area)
+	bench.add_child(seating)
+	add_child(bench)
 
 
 ## Feste, unsichtbare Wände zum Modell: hohe Hauswände an beiden Seiten, der Garten am Ende

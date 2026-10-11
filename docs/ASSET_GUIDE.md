@@ -426,7 +426,6 @@ gibt es ein Startbild, das genau so groß ist, wie es sein muss:
 | `pub_fascia.png` | Schild des Pubs („The Ink & Ivy“) | 4,92 × 0,53 m | 2048 × 221 |
 | `pub_chalkboard.png` | Kreidetafel vor dem Pub | 0,42 × 0,70 m | 360 × 600 |
 | `corner_90_fascia.png` | Schild der Teestube (Eckhaus am geraden Ende) | 1,6 × 0,4 m | 768 × 192 |
-| `corner_30_fascia.png` | Schild der Bäckerei (Eckhaus vor dem Torhaus) | 1,6 × 0,4 m | 768 × 192 |
 | `gatehouse_fascia.png` | Schildband am Torhaus („Alte Torgasse“) | 4,6 × 0,42 m | 2048 × 187 |
 | `pub_hanging.png` | Rundes Hängeschild am Pub | 0,60 × 0,56 m (rund) | 512 × 478 |
 | `corner_90_hanging.png` | Teekannen-Hängeschild der Teestube | 0,60 × 0,56 m | 512 × 478 |
@@ -493,8 +492,25 @@ Backstein, helle Farben Putz, jedes dritte Rauputz), *As Built* (wie gebaut), *B
   `blender -b --factory-startup --python tools/blender/build_alleys.py`. Länge der Gasse und
   Größe des Gartens: `alley_depth`, `alley_garden_depth`, `alley_garden_extra_width`,
   Höhe der Hauswände `alley_wall_height` in `game_config.gd`.
-- **Laternen:** `assets/models/props/street_lamp.glb`; Abstand am Knoten `Outside/Street`
-  (**Lamp Spacing**), ebenso die Abflussdeckel (**Drain Spacing**).
+- **Laternen:** Laternenmast `assets/models/props/street_lamp.glb`, Stellen am Knoten
+  `Outside/Street` (**Lamp Positions**, x-Werte auf der Bücherei-Seite), Abflussdeckel
+  ebenda (**Drain Spacing**). Hängende Laterne am Wandarm:
+  `assets/models/props/wall_street_lantern.glb` (Ursprung = Befestigung an der Wand, +Z von der
+  Wand weg); welche Häuser eine haben, steht in `tools/blender/build_street.py` unter
+  `LANTERNS`, den Platz trägt das Script je Haus in `houses.tscn` ein (**Lanterns**).
+  Neu bauen: `blender -b --factory-startup --python tools/blender/build_props.py -- street_lamp wall_street_lantern`.
+- **Laternen selbst nachmodellieren:** In Blender `assets/models/source/props/street_lamp.blend`
+  bzw. `wall_street_lantern.blend` öffnen (oder **Datei → Importieren → glTF 2.0** und die
+  .glb wählen), bearbeiten, dann **Datei → Exportieren → glTF 2.0**, Format „glTF Binary“, unter
+  demselben Namen nach `assets/models/props/` speichern. Ursprung und Größe beibehalten
+  (Mast: Fuß auf dem Boden; Wandlaterne: Wandplatte im Ursprung). Deine Datei wird beim
+  nächsten Bau erkannt und nicht überschrieben.
+- **Bank im Garten:** Die Sitzplätze baut `Alley` (Knoten `Outside/Alley/Bench`, Winkel und
+  Höhe oben im Script `scripts/world/alley.gd`); Passanten setzen sich nur auf die Plätze, die
+  vom Weg aus erreichbar sind. Eigene Passanten-Figuren brauchen dafür eine Animation „Sit“
+  (Gesäß auf 0,45 m).
+- **Kleine Gasse gegenüber:** Boden `assets/materials/alley_setts.tres` (großes Kopfsteinpflaster,
+  **Tile Size** = Größe der Steine).
 
 ### Puppen und Kleidung im Laden (seit Etappe 4g)
 Im Modegeschäft stehen Schneiderpuppen und hängen Kleider – vorerst **Platzhalter**. Jedes

@@ -40,7 +40,6 @@ WOOD = Mat("timber", color=(1.25, 1.15, 1.0))
 GRASS = Mat("foliage", color=(0.36, 0.46, 0.24))
 SOIL = Mat("plain", color=(0.24, 0.19, 0.14))
 FLAG = Mat("paving", color=(1.0, 0.98, 0.94))
-SETTS = Mat("setts", color=(1.05, 1.0, 0.95))
 SPEC = {"lintel": "flat", "sill": "stone", "frame_cream": True, "wall": "brick"}
 
 
@@ -67,8 +66,11 @@ def house_back(b, a, c, height, mat, rnd, windows=True, roof=True, pipes=True):
         b.slab([V(-half, height, 0.35), V(half, height, 0.35), V(half, height + 1.6, -1.6), V(-half, height + 1.6, -1.6)], 0.06, SLATE)
         b.cylinder(V(-half, height + 0.02, 0.32), 0.05, ln, H.LEAD, segments=6, caps=(True, True), axis="x")
     if pipes:
-        px = -half + rnd.uniform(0.4, ln - 0.4)
-        b.cylinder(V(px, 0.0, 0.07), 0.04, height, H.LEAD, segments=8, caps=(True, True))
+        # Fallrohr nur dort, wo es an keinem Fenster vorbeiläuft
+        spots = [-half + 0.4 + 0.1 * k for k in range(int((ln - 0.8) / 0.1) + 1)]
+        spots = [x for x in spots if all(x < x0 - 0.25 or x > x1 + 0.25 for x0, _, x1, _ in holes)]
+        if spots:
+            b.cylinder(V(rnd.choice(spots), 0.0, 0.07), 0.04, height, H.LEAD, segments=8, caps=(True, True))
     b.box((-half, 0.0, 0.0), (half, 0.28, 0.03), H.PLINTH, skip=("back", "bottom"))
     b.pop()
 
@@ -144,7 +146,9 @@ def round_bench(b, x, z, rnd):
             b.box((sx + dx - 0.02, 0, sz + dz - 0.02), (sx + dx + 0.02, 0.38, sz + dz + 0.02), WOOD)
     b.cylinder(V(sx - 0.08, 0.42, sz), 0.04, 0.08, Mat("plain", color=(0.94, 0.92, 0.86)), segments=8)
     b.box((sx + 0.0, 0.42, sz - 0.08), (sx + 0.16, 0.45, sz + 0.06), Mat("plain", color=(0.4, 0.5, 0.42)))
-    b.colliders.append(((x - r_out, 0, z - r_out), (x + r_out, 0.5, z + r_out)))
+    # Kollision: zwei Kästen über Kreuz (fast rund, die Ecken stehen kaum über)
+    b.colliders.append(((x - r_out, 0, z - 0.55), (x + r_out, 0.5, z + 0.55)))
+    b.colliders.append(((x - 0.55, 0, z - r_out), (x + 0.55, 0.5, z + r_out)))
     b.colliders.append(((sx - 0.24, 0, sz - 0.18), (sx + 0.24, 0.45, sz + 0.18)))
 
 
@@ -161,6 +165,12 @@ def hosta(b, x, z, rnd):
         a = 2 * math.pi * k / 9 + rnd.uniform(-0.2, 0.2)
         tip = V(x + 0.42 * math.cos(a), 0.3 + rnd.uniform(-0.05, 0.1), z + 0.42 * math.sin(a))
         b.tube([V(x, 0.02, z), V(x + 0.2 * math.cos(a), 0.4, z + 0.2 * math.sin(a)), tip], lambda t: 0.05 + 0.05 * math.sin(math.pi * t), m, segments=4)
+
+
+def brick_wall(b, x0, x1, z0, z1, height, mat):
+    """Schlichte, hohe Backsteinwand (Kasten) mit Abdeckung – schließt Lücken zwischen Häusern."""
+    b.box((x0, 0.0, z0), (x1, height, z1), mat)
+    b.box((x0 - 0.04, height, z0), (x1 + 0.04, height + 0.12, z1), RUBBLE_DARK, skip=("bottom",))
 
 
 def library_alley():
@@ -185,8 +195,12 @@ def library_alley():
     for y in (0.3, 1.0):
         b.box((gx, y, fz + 0.03), (lx, y + 0.08, fz + 0.06), Mat("timber", color=(1.1, 1.05, 0.95)))
     bz = end + 2.5
+    # Zwischen den Seitenwänden und den Häusern hinter dem Zaun: Backsteinwände bis an die
+    # Häuser (sonst sieht man hinten seitlich aus der Welt hinaus)
+    brick_wall(b, lx, lx + 0.3, end + 0.6, bz + 0.05, h, BRICKS[0])
+    brick_wall(b, gx - 0.3, gx, end + 0.6, bz + 0.05, h - 0.4, BRICKS[2])
     for k, (x0, x1, hh, mat) in enumerate(((gx - 1.0, (gx + lx) / 2, 6.6, BRICKS[1]), ((gx + lx) / 2, lx + 1.5, 7.3, RENDER))):
-        house_back(b, (x1, bz), (x0, bz), hh, mat, rnd)
+        house_back(b, (x1, bz), (x0, bz), hh, mat, rnd, pipes=False)
         mx = (x0 + x1) / 2
         b.face([V(x0, hh, bz), V(x1, hh, bz), V(mx, hh + 2.0, bz)], mat, (0, 0, -1))
         for s in (-1, 1):
@@ -200,7 +214,8 @@ def library_alley():
         shrub(b, x, fz + 1.0 + rnd.uniform(-0.3, 0.4), rnd, rnd.uniform(0.5, 0.75), rnd.choice([None, "hydrangea", "rose"]))
     b.face([V(gx, 0.005, gz), V(fx, 0.005, gz), V(fx, 0.005, end), V(gx, 0.005, end)], GRASS, (0, 1, 0))
     # Trittsteine von der Gasse zur Bank
-    tx, tz = (gx + fx) / 2 - 0.1, gz + L["garden_depth"] * 0.5
+    # Baum mit Bank: Lage wie im Spiel (StreetLayout.garden_tree – dort sitzen die Sitzplätze)
+    tx, tz = L["garden_tree"]
     for k in range(5):
         px = fx + 0.2 - k * 0.55
         pz = tz + 0.9 + math.sin(k) * 0.25
@@ -260,10 +275,9 @@ def opposite_alley():
     b = S.Builder("alley_opposite")
     x0, x1 = L["opposite_alley_x0"], L["opposite_alley_x1"]
     z0 = L["opposite_end_z"] + 0.2
-    z_end = z0 - 13.0
+    z_end = L["opposite_end_z"] - L["opposite_back_depth"]
     h = 6.5
-    # Boden: Kopfsteinpflaster, das sich nach hinten zieht
-    b.face([V(x0 - 0.05, 0.0, z0), V(x1 + 0.05, 0.0, z0), V(x1 + 0.05, 0.0, z_end), V(x0 - 0.05, 0.0, z_end)], SETTS, (0, 1, 0))
+    # Den Boden (großes Kopfsteinpflaster bis hinten) legt das Spiel selbst (OppositeAlley)
     # Wände aus Bruchstein (hoch, wie Häuser), mit kleinen Fenstern, Efeu, Schild
     for xw, face in ((x0, 1), (x1, -1)):
         a, c = ((xw, z0), (xw, z_end)) if face > 0 else ((xw, z_end), (xw, z0))
@@ -278,12 +292,12 @@ def opposite_alley():
     b.box((dx - 0.55, 2.1, z_end), (dx + 0.55, 2.25, z_end + 0.08), RUBBLE_DARK)
     P.wall_lantern(b, dx + 0.75, 2.6, z_end)
     b.box((x0 + 0.02, 0, z_end + 1.6), (x0 + 0.04, 6.0, z_end + 1.7), Mat("plain", color=(1.0, 0.9, 0.7), glow=0.15))
-    # Hängendes Holzschild und Laterne am zweiten Bogen, Pflanzen an den Wänden
-    for k in range(6):
-        pz = z0 - 1.0 - k * 1.9
-        side = x0 + 0.3 if k % 2 == 0 else x1 - 0.3
-        b.cylinder(V(side, 0, pz), 0.14, 0.32, H.POT, segments=10, radius_top=0.17, caps=(False, True))
-        shrub(b, side, pz, rnd, 0.24, rnd.choice(["rose", "white", None]))
+    # Ein paar kleine Töpfe dicht an den Wänden (Passanten kommen hier durch)
+    for k in range(3):
+        pz = z0 - 1.6 - k * 3.8
+        side = x0 + 0.2 if k % 2 == 0 else x1 - 0.2
+        b.cylinder(V(side, 0, pz), 0.11, 0.28, H.POT, segments=10, radius_top=0.13, caps=(False, True))
+        shrub(b, side, pz, rnd, 0.17, rnd.choice(["rose", "white", None]))
     # Efeu an der linken Wand (als Laubpolster an der Wand entlang)
     for k in range(14):
         pz = z0 - 0.5 - k * 0.75

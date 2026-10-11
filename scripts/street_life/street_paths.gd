@@ -139,6 +139,17 @@ static func s_at_x(x: float) -> float:
 	return middle.x
 
 
+## Wo die unsichtbaren Grenzen der Spielfigur auf der Mittellinie liegen: x = s der Grenze am
+## geraden Ende (davor, zu kleinerem s, kommt die Spielfigur nicht hin), y = s der Grenze im
+## Torbogen (dahinter kommt sie nicht hin).
+static func bound_s() -> Vector2:
+	var route := centerline()
+	var gate := StreetLayout.gatehouse_front()
+	var middle: Vector2 = StreetLayout.end_offset(gate, StreetLayout.gate_center_offset(), StreetLayout.turning_side()) \
+		+ (gate.dir as Vector2) * Street.GATE_BOUND_INSIDE
+	return Vector2(s_at_x(StreetLayout.straight_bound_x()), route.project(middle).x)
+
+
 ## Bereich (s von – bis), in dem Passanten über die Straße gehen dürfen: das gerade Mittelstück
 ## (dort sieht man sie), mit etwas Abstand zu Grenze und Kurve.
 static func crossing_range() -> Vector2:
@@ -177,14 +188,15 @@ static func library_alley_half_width() -> float:
 	return GameConfig.alley_width / 2.0 - 0.45
 
 
-## Die kleine Gasse gegenüber: vom Tor bis zur Einmündung auf den Gehweg.
+## Die kleine Gasse gegenüber: von der Tür ganz hinten (hinter den Steinbögen, außerhalb der
+## Reichweite der Spielfigur) bis zur Einmündung auf den Gehweg.
 static func opposite_alley_points() -> PackedVector2Array:
 	var span := StreetLayout.opposite_alley()
 	if span == Vector2.ZERO:
 		return PackedVector2Array()
 	var x := (span.x + span.y) / 2.0
 	return PackedVector2Array([
-		Vector2(x, StreetLayout.opposite_alley_end_z() + 0.6),
+		Vector2(x, StreetLayout.opposite_alley_end_z() - GameConfig.opposite_alley_back_depth + 0.6),
 		Vector2(x, StreetLayout.opposite_front_z() + 0.4),
 	])
 

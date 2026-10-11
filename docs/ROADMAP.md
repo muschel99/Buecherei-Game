@@ -708,6 +708,15 @@ ist austauschbar.
       (Vertäfelung, Pilaster mit Konsolen, Sockelfelder, Schildband mit Bild, Gesims,
       Wandlaternen, Hängekörbe; `build_library.py`), Fenster fast bodentief (0,30–2,60 m,
       Fensterbank als Ablage bleibt), Obergeschoss aus Backstein
+- [x] Teil 4e2 – Rückmeldungen: Laternenmasten nur noch auf der Bücherei-Seite (größere Abstände,
+      keiner vor der Bücherei), gegenüber hängende Laternen an Wandarmen (`wall_street_lantern`,
+      Plätze sucht `build_street.py`, `HouseFacade.lanterns`); Garten der Gasse hinten mit
+      Backsteinwänden geschlossen, Fallrohre nie vor Fenstern; Bank zum Sitzen (Spielfigur und
+      Passanten, die Platzhalter-Figur hat jetzt Knie); kleine Gasse gegenüber mit großem
+      Kopfsteinpflaster, Passanten kommen von der Tür hinter den Bögen durch die unsichtbare
+      Grenze; Passanten erscheinen nur noch an den Enden (unsichtbare Grenzen verdecken nicht
+      mehr, Start nur hinter den Grenzen), weniger in den Gassen; Schilder des Blumenladens
+      wieder verbunden
 - [ ] Teil 4f – Möbel und Deko im Stil, Innenraum der Bücherei
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
 - [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)

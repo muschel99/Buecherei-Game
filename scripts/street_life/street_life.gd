@@ -5,9 +5,11 @@ extends Node3D
 ## Gehweg-Höhe). Alle Werte in GameConfig (Abschnitt „Leben auf der Straße“).
 ##
 ## Grundregel: Niemand erscheint oder verschwindet sichtbar.
-## - Erscheinen und Verschwinden nur an festen Orten außer Sicht (Gruppe
-##   Street.TRAFFIC_GROUP: hinter der runden Kurve am geraden Ende, hinter dem Torhaus, am Ende
-##   der Gassen).
+## - Erscheinen und Verschwinden nur an festen Orten außerhalb der Reichweite der Spielfigur
+##   (Gruppe Street.TRAFFIC_GROUP: hinter der runden Kurve am geraden Ende, hinter dem Torhaus,
+##   an der Tür hinter den Steinbögen der kleinen Gasse gegenüber). Auch beim Start stehen
+##   Passanten nur dort (auf den Stücken hinter den unsichtbaren Grenzen).
+## - Unsichtbare Grenzen verdecken nichts (Metadaten "see_through").
 ## - Zusätzlich wird jedes Mal geprüft, ob der Ort gerade im Blickfeld der Kamera liegt
 ##   (is_visible_spot: im Bild – mit Rand – und nicht von Häusern verdeckt). Wenn ja, wartet das
 ##   Erscheinen bzw. die Figur geht noch ein Stück weiter (oder wartet am Tor).
@@ -16,7 +18,9 @@ extends Node3D
 ##
 ## Passanten gehen die Gehwege entlang (StreetPaths, StreetRoute), überqueren manchmal die
 ## Straße, schauen in Schaufenster (Modegeschäft, Pub, Bücherei: Knoten "WindowSpots" und
-## GameConfig.passerby_window_house_types) und kommen aus den Gassen oder gehen hinein.
+## GameConfig.passerby_window_house_types), kommen aus der kleinen Gasse gegenüber oder gehen
+## hinein und setzen sich manchmal im Garten am Ende der Gasse neben der Bücherei auf die Bank
+## (Sitzplätze der Gruppe SEAT_GROUP, siehe Alley).
 ## Für den nächsten Schritt (Besucher): Kommt ein Passant an der Bücherei vorbei, ruft er
 ## passing(passant, "library") – hier kann er später entscheiden, hineinzugehen
 ## (Signal passing_library, Ort vor der Treppe: StreetPaths.library_entrance()).
@@ -34,6 +38,13 @@ signal vanished(who: Node3D, spot: Vector2)
 
 const GROUP := "street_life"
 const OBSTACLE_GROUP := "street_obstacles"
+## Sitzplätze für Passanten (SeatPoint mit Metadaten "approach" und "face", siehe Alley).
+const SEAT_GROUP := "street_seats"
+## So weit (Meter) von den unsichtbaren Grenzen entfernt beginnen die Stücke, auf denen beim
+## Start schon Passanten stehen dürfen.
+const HIDDEN_MARGIN := 3.0
+## Halbe Breite des Wegs in den Garten (schmal: man geht dicht an der Bank vorbei).
+const GARDEN_HALF_WIDTH := 0.3
 ## Abstand der Wege zu Schaufenstern von festen Hindernissen (Körpermitte, m)
 const WINDOW_CLEARANCE := 0.45
 ## Spielfigur: Radius (wie ihre Kollision) und Abstand, den Passanten mindestens halten.
@@ -76,6 +87,9 @@ var _windows: Array[Dictionary] = []
 var _static_obstacles: Array[Dictionary] = []
 var _obstacles: Array[Dictionary] = []
 var _library_s := 0.0
+var _garden_s := 0.0
+var _hidden := Vector2.ZERO  # s bis zur Grenze am geraden Ende, s ab der Grenze im Torbogen
+var _seats: Array[SeatPoint] = []
 var _crossing := Vector2.ZERO
 var _lod_timer := 0.0
 var _started := false
@@ -92,6 +106,8 @@ func _ready() -> void:
 	road_route = StreetPaths.road_route()
 	_crossing = StreetPaths.crossing_range()
 	_library_s = centerline.project(StreetPaths.library_entrance()).x
+	_garden_s = centerline.project(StreetPaths.library_alley_points()[2]).x
+	_hidden = StreetPaths.bound_s()
 	# Orte, Schaufenster und Hindernisse erst, wenn alle Nachbarn (Straße, Häuser) fertig sind
 	_start.call_deferred()
 
@@ -104,6 +120,9 @@ func _start() -> void:
 	_collect_places()
 	_collect_windows()
 	_collect_static_obstacles()
+	_seats.clear()
+	for seat: SeatPoint in get_tree().get_nodes_in_group(SEAT_GROUP):
+		_seats.append(seat)
 	_started = true
 	if GameConfig.street_life_enabled:
 		_fill_street()
@@ -213,6 +232,7 @@ func _on_van_finished(van: StreetVehicle) -> void:
 
 
 func _on_walker_finished(walker: Passerby) -> void:
+	release_seat(walker)
 	vanished.emit(walker, walker.pos)
 	walker.set_active(false)
 	_walkers.erase(walker)
@@ -598,19 +618,25 @@ func _spawn_walkers(delta: float) -> void:
 ## gerade nicht hinsieht.
 func _fill_street() -> void:
 	var wanted := roundi(GameConfig.passerby_count * activity() * 0.7)
-	for i in wanted * 4:
+	for i in wanted * 6:
 		if _walkers.size() >= wanted or _idle_walkers.is_empty():
 			break
 		var plan := _plan_walker(_pick_street_end())
 		if plan.is_empty():
 			continue
-		# Eine Stelle auf dem ersten Stück Gehweg
+		# Eine Stelle auf dem ersten Stück Gehweg – aber nur hinter der unsichtbaren Grenze
+		# (dort, wo die Spielfigur nicht hinkommt)
 		var first: Dictionary = plan.actions[0]
 		if first.type != "walk" or not is_centerline(first.route):
 			continue
 		var route: StreetRoute = first.route
 		var start_s := centerline.project(plan.start).x
-		var s := lerpf(start_s, float(first.to), _rng.randf_range(0.1, 0.9))
+		var to_s := float(first.to)
+		var hidden_end := _hidden.x - HIDDEN_MARGIN if to_s > start_s else _hidden.y + HIDDEN_MARGIN
+		var span := Vector2(start_s, to_s if (to_s - hidden_end) * (to_s - start_s) < 0.0 else hidden_end)
+		if (span.y - span.x) * signf(to_s - start_s) < 2.0:
+			continue
+		var s := lerpf(span.x, span.y, _rng.randf_range(0.15, 0.95))
 		var comfort := route.comfort_at(s)
 		var spot := route.point_at(s, lerpf(comfort.x, comfort.y, plan.comfort))
 		if is_visible_spot(spot) or _crowded(spot):
@@ -658,6 +684,9 @@ func _launch(plan: Dictionary) -> void:
 	_walkers.append(walker)
 	var actions: Array[Dictionary] = []
 	actions.assign(plan.actions)
+	for action in actions:
+		if action.type == "sit":
+			(action.seat as SeatPoint).occupant = walker  # Platz freihalten, bis er dort sitzt
 	walker.begin(plan.start, actions, plan.face)
 	walker.set_shadows(0)
 	appeared.emit(walker, walker.pos)
@@ -732,6 +761,12 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		if not choices.is_empty():
 			window = choices[_rng.randi() % choices.size()]
 
+	# Garten am Ende der Gasse neben der Bücherei: manchmal hinein und auf die Bank setzen
+	var garden_seat: SeatPoint = null
+	if (_garden_s - s0) * dir > 3.0 and (end_s - _garden_s) * dir > 3.0 \
+			and _rng.randf() < GameConfig.passerby_garden_chance:
+		garden_seat = _free_seat()
+
 	var comfort := _rng.randf_range(0.2, 0.8)
 	var speed := _rng.randf_range(GameConfig.passerby_speed_range.x, GameConfig.passerby_speed_range.y)
 	var side := start_side
@@ -757,6 +792,8 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		events.append({"s": float(window.s), "type": "window", "spot": window})
 	if (_library_s - s0) * dir > 0.0 and (end_s - _library_s) * dir > 0.0:
 		events.append({"s": _library_s, "type": "library"})
+	if garden_seat:
+		events.append({"s": _garden_s, "type": "garden", "seat": garden_seat})
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a.s - s0) * dir < (b.s - s0) * dir)
 	# Nie rückwärts: jedes Stück Gehweg endet frühestens dort, wo das vorige aufgehört hat
 	var cursor := s0
@@ -788,6 +825,14 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 				if side == 1 and (event.s - cursor) * dir > 0.0:
 					cursor = event.s
 					actions.append({"type": "walk", "route": sidewalks[side], "to": cursor, "passing": "library"})
+			"garden":
+				var join_s: float = event.s - dir * 1.5
+				if side != 1 or (join_s - cursor) * dir < 0.0:
+					continue
+				actions.append({"type": "walk", "route": sidewalks[side], "to": join_s})
+				cursor = event.s + dir * 1.5
+				actions.append_array(_garden_actions(event.seat, _lane_point(side, join_s, comfort),
+					_lane_point(side, cursor, comfort)))
 	# 3. bis zum Ziel
 	if end_place != "":
 		var points := _alley_points(end_place)
@@ -805,6 +850,38 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		actions.append({"type": "walk", "route": sidewalks[side], "to": end_s})
 		actions.append({"type": "leave", "gate": false})
 	return {"start": start_pos, "face": face, "side": start_side, "speed": speed, "comfort": comfort, "actions": actions}
+
+
+## In den Garten am Ende der Gasse, auf die Bank setzen, zurück auf den Gehweg: von "join"
+## (auf dem Gehweg vor der Gasse) bis "rejoin" (ein Stück weiter in Laufrichtung).
+func _garden_actions(seat: SeatPoint, join: Vector2, rejoin: Vector2) -> Array[Dictionary]:
+	var alley := StreetPaths.library_alley_points()
+	var approach: Vector2 = seat.get_meta("approach")
+	var turn := Vector2(alley[1].x, approach.y)
+	# Schmaler Streifen: im Garten geht man dicht an der Bank vorbei
+	var way_in := StreetPaths.alley_route(PackedVector2Array([join, alley[2], alley[1], turn, approach]), GARDEN_HALF_WIDTH)
+	var way_out := StreetPaths.alley_route(PackedVector2Array([approach, turn, alley[1], alley[2], rejoin]), GARDEN_HALF_WIDTH)
+	var sit_time := _rng.randf_range(GameConfig.passerby_garden_time.x, GameConfig.passerby_garden_time.y)
+	var actions: Array[Dictionary] = [
+		{"type": "walk", "route": way_in, "to": way_in.length(), "alley": "garden_in"},
+		{"type": "sit", "seat": seat, "spot": _to_local2(seat.global_position), "face": seat.get_meta("face"), "time": sit_time,
+			"height": to_local(seat.global_position).y},
+		{"type": "walk", "route": way_out, "to": way_out.length(), "alley": "garden_out"},
+	]
+	return actions
+
+
+## Ein freier Sitzplatz für Passanten (zufällig) oder null.
+func _free_seat() -> SeatPoint:
+	var free := _seats.filter(func(seat: SeatPoint) -> bool: return seat.is_free())
+	return free[_rng.randi() % free.size()] if not free.is_empty() else null
+
+
+## Sitzplatz wieder freigeben (aufgestanden, umgedreht oder verschwunden).
+func release_seat(walker: Passerby) -> void:
+	for seat in _seats:
+		if seat.occupant == walker:
+			seat.occupant = null
 
 
 ## Nie rückwärts: "to" frühestens bei "cursor" (in Laufrichtung dir).
@@ -834,6 +911,15 @@ func turn_around(walker: Passerby) -> void:
 	elif not is_centerline(route) and action.get("alley", "") == "":
 		walker.skip_action()  # kurzer Weg (z. B. vom Schaufenster zurück): einfach weiter
 		return
+	elif action.get("alley") == "garden_in":
+		# Doch nicht in den Garten: zurück auf den Gehweg und zu einem Ende
+		release_seat(walker)
+		var to_end := -0.5 if _rng.randf() < 0.5 else centerline.length() + 0.5
+		actions.append({"type": "walk", "route": route, "to": 0.0})
+		actions.append({"type": "walk", "route": sidewalks[walker.side], "to": to_end})
+		actions.append({"type": "leave", "gate": false})
+	elif action.get("alley") == "garden_out":
+		return  # auf dem Rückweg aus dem Garten: warten, bis der Weg frei ist
 	elif action.get("alley") == "in":
 		var to_end := -0.5 if _rng.randf() < 0.5 else centerline.length() + 0.5
 		actions.append({"type": "walk", "route": route, "to": 0.0})

@@ -782,12 +782,15 @@ Zwei Zustände:
   in die man auch durch ein Seitenfenster an der Gasse schaut. Lackiertes Holz sieht leicht
   verwittert aus (Shabby Chic: Maserung, abgeplatzter Lack), Backstein und Putz mit Ruß- und
   Regenspuren.
-  An der Straße stehen viktorianische Laternenmasten (dunkelgrün, mit Laterne und zwei
-  Hängekörben), am Torhaus hängen zwei Wandlaternen. Die **Gasse neben der Bücherei** ist
-  länger, zwischen hohen Hauswänden, und endet in einem kleinen Garten mit einem Baum, um
-  dessen Stamm eine runde Holzbank läuft (Kissen, Hocker mit Tasse und Buch), Beeten mit
-  Funkien und Hortensien und einem Holzzaun, hinter dem Häuser stehen. Die **kleine Gasse
-  gegenüber** verläuft sich hinter ihrem Ende zwischen Steinbögen. Schatten reichen über die
+  Auf der Bücherei-Seite stehen wenige viktorianische Laternenmasten (dunkelgrün, mit Laterne
+  und zwei Hängekörben; nicht vor der Bücherei); gegenüber ist der Gehweg schmal, dort hängen
+  die Laternen an geschwungenen Wandarmen an den Häusern. Am Torhaus hängen zwei Wandlaternen.
+  Die **Gasse neben der Bücherei** ist länger, zwischen hohen Hauswänden, und endet in einem
+  kleinen Garten mit einem Baum, um dessen Stamm eine runde Holzbank läuft (Kissen, Hocker mit
+  Tasse und Buch), Beeten mit Funkien und Hortensien und einem Holzzaun, hinter dem Häuser
+  stehen (seitlich mit hohen Backsteinwänden geschlossen). Auf die Bank kann man sich setzen (E),
+  ab und zu setzt sich auch ein Passant dorthin. Die **kleine Gasse gegenüber** hat großes
+  Kopfsteinpflaster und verläuft sich hinter ihrem Ende zwischen Steinbögen bis zu einer Tür. Schatten reichen über die
   ganze Straße (auch von Passanten und Fahrzeugen); bestellte Kartons sind nach etwa 15 s da.
   Gegenüber der Bücherei ist der **Blumenladen** (Backsteinhaus mit Eckquadern): salbeigrüne
   Ladenfront mit Sprossen-Oberlichtern und Glastür, Grün und Ranken über dem Schild,
@@ -853,9 +856,12 @@ Autos und der Lieferwagen. Alle Mengen, Tempi und Häufigkeiten stehen in GameCo
 Einen Tag-Nacht-Wechsel gibt es noch nicht – die Menge bleibt gleich, kann aber später von der
 Tageszeit abhängen (`StreetLife.activity()`).
 - **Grundregel: Niemand erscheint oder verschwindet sichtbar.** Passanten, Räder und Autos
-  tauchen nur an festen Orten auf und verschwinden nur dort, wo man es nicht sehen kann: hinter
-  der runden Kurve am geraden Straßenende, hinter der Kurve hinter dem Torhaus und vor dem Tor am
-  Ende der beiden Gassen. Zusätzlich wird jedes Mal geprüft, ob der Ort gerade im Blickfeld liegt
+  tauchen nur an festen Orten auf und verschwinden nur dort, wo man es nicht sehen kann – immer
+  außerhalb der Reichweite der Spielfigur: hinter der runden Kurve am geraden Straßenende, hinter
+  der Kurve hinter dem Torhaus und an der Tür hinter den Steinbögen der kleinen Gasse gegenüber
+  (dorthin gehen sie durch die unsichtbare Grenze hindurch). Auch beim Start stehen sie nur
+  hinter den Grenzen, nie mitten auf der Straße. Unsichtbare Grenzen verdecken bei der Prüfung
+  nichts. Zusätzlich wird jedes Mal geprüft, ob der Ort gerade im Blickfeld liegt
   (im Bild – mit etwas Rand – und nicht von einem Haus verdeckt; durch Fenster und den Torbogen
   sieht man hindurch). Ist er zu sehen, wartet das Erscheinen; wer verschwinden will, geht noch
   ein Stück weiter bzw. bleibt am Gassentor stehen, bis niemand hinsieht. Geprüft mit einem
@@ -874,8 +880,9 @@ Tageszeit abhängen (`StreetLife.activity()`).
   - Manchmal bleiben sie vor einem Schaufenster stehen und schauen hinein: vor dem Modegeschäft,
     dem Pub und dem Fenster der Bücherei. Stehen dort Kartons, schauen sie von etwas weiter weg –
     oder lassen das Fenster aus.
-  - Manche kommen aus einer der beiden Gassen oder biegen in eine Gasse ein und verschwinden dort
-    außer Sicht.
+  - Wenige kommen aus der kleinen Gasse gegenüber oder gehen hinein (bis zur Tür ganz hinten).
+  - Ab und zu biegt jemand in die Gasse neben der Bücherei ein, setzt sich im Garten eine Weile
+    auf die runde Bank unter dem Baum und geht dann weiter.
   - In die Bücherei gehen sie noch nicht. Die Wege sind aber dafür gebaut: Kommt ein Passant vor
     der Bücherei vorbei, meldet er das (`StreetLife.passing_library`), und vor der Treppe liegt
     ein fester Punkt (`StreetPaths.library_entrance()`) – dort setzt der nächste Schritt an.

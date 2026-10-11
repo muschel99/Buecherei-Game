@@ -101,6 +101,18 @@ SPECIAL = {
 }
 
 
+# Hängende Straßenlaternen (seit Etappe 4g, statt Laternenmasten auf dem schmalen Gehweg
+# gegenüber): Haus -> gewünschte Stelle entlang der Front (Mitte = 0). Das Script sucht dort in
+# der Nähe eine freie Stelle (street_houses.find_lantern_spot) und trägt sie in houses.tscn ein
+# (HouseFacade.lanterns); das Modell ist assets/models/props/wall_street_lantern.glb.
+LANTERNS = {
+    "Opposite/Opposite1_1": -0.9,
+    "Opposite/Opposite1_3": 0.3,
+    "Opposite/Opposite2_1": -1.1,
+    "Opposite/Opposite2_5": -0.05,
+}
+
+
 def read_houses():
     """Häuser aus houses.tscn: Schlüssel "Gruppe/Name", Typ, Block-Text."""
     text = open(HOUSES_TSCN).read()
@@ -218,16 +230,6 @@ def make_spec(house, block):
     return spec
 
 
-def _edited_by_hand(glb):
-    """Wurde das Modell in Blender selbst bearbeitet und exportiert? Dann nicht überschreiben
-    (unsere .glb tragen "Cozy Bücherei" als Erzeuger; ein Blender-Export nicht)."""
-    if not os.path.exists(glb):
-        return False
-    with open(glb, "rb") as f:
-        head = f.read(4096)
-    return b"Cozy B" not in head
-
-
 def _transform(block):
     m = re.search(r"transform = Transform3D\(([^)]*)\)", block)
     v = [float(t) for t in m.group(1).split(",")]
@@ -324,21 +326,25 @@ def write_tscn(text, built):
     """houses.tscn: je Haus unique_model, Farben und Wandmaterial "wie gebaut" eintragen."""
     text = re.sub(r'\[ext_resource type="PackedScene" path="res://assets/models/houses/street/[^"]+" id="[^"]+"\]\n', "", text)
     lines = []
-    for key, res_id, path, colors in built:
+    for key, res_id, path, colors, lanterns in built:
         lines.append('[ext_resource type="PackedScene" path="%s" id="%s"]' % (path, res_id))
     last = list(re.finditer(r'\[ext_resource [^\n]*\]\n', text))[-1]
     text = text[:last.end()] + "\n".join(lines) + "\n" + text[last.end():]
-    for key, res_id, path, colors in built:
+    for key, res_id, path, colors, lanterns in built:
         group, name = key.split("/")
         pat = re.compile(r'(\[node name="%s" parent="%s"[^\n]*\n)(.*?)(?=\n\[|\Z)' % (re.escape(name), re.escape(group)), re.S)
         m = pat.search(text)
         body = m.group(2)
-        body = "\n".join(l for l in body.split("\n") if not re.match(r"(unique_model|wall_color|door_color|accent_color|wall_material) =", l))
+        # Laternen: nur neu eintragen, wenn das Haus gerade gebaut wurde (sonst bleibt die Zeile)
+        keys = "unique_model|wall_color|door_color|accent_color|wall_material" + ("|lanterns" if lanterns is not None else "")
+        body = "\n".join(l for l in body.split("\n") if not re.match(r"(%s) =" % keys, l))
 
         def col(c):
             return "Color(%.3f, %.3f, %.3f, 1)" % c
         extra = ['unique_model = ExtResource("%s")' % res_id, "wall_color = " + col(colors["wall"]),
                  "door_color = " + col(colors["door"]), "accent_color = " + col(colors["accent"]), "wall_material = 1"]
+        if lanterns:
+            extra.append("lanterns = PackedVector3Array(%s)" % ", ".join("%.3f, %.3f, %.3f" % tuple(v + 0.0 for v in p) for p in lanterns))
         lines_body = body.rstrip("\n").split("\n")
         # nach der transform-Zeile einfügen
         out = []
@@ -368,7 +374,7 @@ def main():
         if house["type"] in LANDMARK_TYPES:
             specs[house["key"]] = landmark_spec(house, house_block(text, house))
     # Schild-Bilder der Läden (nur fehlende werden neu gezeichnet)
-    shop_signs = {"flowers": BH.prepare_signs("flower_shop"), "pub": BH.prepare_signs("pub"), "bakery_shop": BH.prepare_signs("bakery_shop"),
+    shop_signs = {"flower_shop": BH.prepare_signs("flower_shop"), "pub": BH.prepare_signs("pub"), "bakery_shop": BH.prepare_signs("bakery_shop"),
                   "corner_90": BH.prepare_signs("corner_90"), "corner_30": BH.prepare_signs("corner_30"),
                   "gatehouse": BH.prepare_signs("gatehouse")}
     sign_set = {"flowers": "flower_shop", "pub": "pub", "bakery": "bakery_shop"}
@@ -385,7 +391,8 @@ def main():
         glb = os.path.join(OUT_DIR, file_id + ".glb")
         res = "res://assets/models/houses/street/%s.glb" % file_id
         res_id = "u_" + file_id
-        if (not only or house["key"] in only) and _edited_by_hand(glb):
+        lanterns = None
+        if (not only or house["key"] in only) and S.edited_by_hand(glb):
             print("%-26s selbst bearbeitet – bleibt, wie es ist" % house["key"])
         elif not only or house["key"] in only:
             kind = spec.get("kind")
@@ -396,8 +403,15 @@ def main():
                 b = H.build_gatehouse(file_id, spec)
             else:
                 b = H.build_house(file_id, spec)
+            lanterns = []
+            if house["key"] in LANTERNS:
+                spot = H.find_lantern_spot(b, spec, LANTERNS[house["key"]])
+                if spot:
+                    lanterns.append(spot)
+                print("%-26s Laterne: %s" % (house["key"], spot or "kein freier Platz"))
             tris = S.write_glb(b, glb)
-            S.write_import_settings(glb, shop_signs.get(signs) or shop_signs.get(sign_set.get(spec.get("shop"))))
+            # Schild-Bilder je Schild-Satz (flower_shop, pub, …) – Schlüssel = Name des Satzes
+            S.write_import_settings(glb, shop_signs.get(signs))
             if kind:
                 print("%-26s %-12s %5d Dreiecke" % (house["key"], house["type"], tris))
             else:
@@ -409,7 +423,7 @@ def main():
             px, pz, c, sn = _transform(block)
             obj.location = (px, -pz, 0)
             obj.rotation_euler = (0, 0, math.atan2(sn, c))
-        built.append((house["key"], res_id, res, spec["colors"]))
+        built.append((house["key"], res_id, res, spec["colors"], lanterns))
     if check:
         # Prüfbilder je Haus (mit Nachbarn): von vorn und schräg von beiden Seiten, Rückseiten
         # pink. Nichts wird gespeichert oder eingetragen.

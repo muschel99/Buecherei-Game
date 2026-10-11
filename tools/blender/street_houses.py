@@ -1021,6 +1021,49 @@ def build_house(name, spec):
     return b
 
 
+def find_lantern_spot(b, spec, pref_x):
+    """Freie Stelle für eine hängende Straßenlaterne (style_parts.bracket_lantern) an der Front:
+    In ihrem Platz (P.BRACKET_SPACE) darf nichts anderes stecken – keine Fensterbank, kein
+    Laden, kein Sturz, kein Schild, keine Markise, kein Fallrohr. Gesucht wird nahe pref_x
+    (Mitte = 0), knapp unter dem ersten Obergeschoss und so hoch, dass man darunter durchgeht.
+    Ergebnis: Befestigungspunkt (x, y, z) in Hauskoordinaten oder None."""
+    w = spec["width"] / 2
+    z0 = -spec.get("setback", 0.0)
+    ground = spec["storeys"][0]
+    margin = 0.03
+    # Nur Flächen vor der Wand in der Höhe, in der die Laterne hängen kann
+    near = []
+    for f in b.faces:
+        xs = [p.x for p in f["pts"]]
+        ys = [p.y for p in f["pts"]]
+        zs = [p.z - z0 for p in f["pts"]]
+        if max(zs) > 0.004 and max(ys) > 2.0 and min(ys) < ground + 1.0 and max(xs) > -w and min(xs) < w:
+            near.append((min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)))
+
+    def free(x, y):
+        for (bx0, bx1), (by0, by1), (bz0, bz1) in P.BRACKET_SPACE:
+            lo = (x + bx0 - margin, y + by0 - margin, max(0.004, bz0))
+            hi = (x + bx1 + margin, y + by1 + margin, bz1 + margin)
+            for fx0, fx1, fy0, fy1, fz0, fz1 in near:
+                if fx1 > lo[0] and fx0 < hi[0] and fy1 > lo[1] and fy0 < hi[1] and fz1 > lo[2] and fz0 < hi[2]:
+                    return False
+        return True
+
+    best, best_cost = None, None
+    want_y = ground - 0.25
+    ys = [round(want_y + 0.05 * k, 3) for k in range(-8, 8)]
+    for y in ys:
+        if y < 2.95:  # Unterkante der Laterne mindestens 2,27 m über dem Gehweg
+            continue
+        x = -w + 0.45
+        while x <= w - 0.45 + 1e-6:
+            cost = abs(x - pref_x) + 2.0 * abs(y - want_y)
+            if (best_cost is None or cost < best_cost) and free(x, y):
+                best, best_cost = (round(x, 3), y, z0), cost
+            x += 0.05
+    return best
+
+
 def _shutter_space(openings, i, w, edge):
     """Freier Platz neben Öffnung i (kleinster Abstand links/rechts zur nächsten Öffnung bzw.
     Hauskante; zwischen zwei Öffnungen die Hälfte) – so weit dürfen aufgeklappte Läden reichen."""

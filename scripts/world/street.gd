@@ -35,10 +35,12 @@ const GATE_BOUND_INSIDE := 0.8
 ## Abflussdeckel am Straßenrand (seit Etappe 4g): Modell und ungefährer Abstand (m).
 @export var drain_scene: PackedScene = preload("res://assets/models/props/drain_grate.glb")
 @export var drain_spacing: float = 22.0
-## Viktorianische Straßenlaternen am Gehwegrand (seit Etappe 4g): Modell und Abstand (m), auf
-## beiden Seiten versetzt.
+## Viktorianische Laternenmasten am Gehwegrand (seit Etappe 4g): Modell und Stellen (x auf dem
+## geraden Mittelstück) – nur auf der Bücherei-Seite, mit großem Abstand und nie dort, wo der
+## Gehweg ohnehin eng ist (vor der Bücherei, vor Läden mit Kübeln). Gegenüber ist der Gehweg
+## schmal: Dort hängen die Laternen an den Häusern (HouseFacade.lanterns).
 @export var lamp_scene: PackedScene = preload("res://assets/models/props/street_lamp.glb")
-@export var lamp_spacing: float = 13.0
+@export var lamp_positions: PackedFloat32Array = PackedFloat32Array([-18.5, -7.5, 14.0])
 
 
 func _ready() -> void:
@@ -104,38 +106,37 @@ func _build_drains() -> void:
 			x += drain_spacing
 
 
-## Laternen auf beiden Gehwegen (dicht am Bordstein), mit fester Kollision am Mast; Passanten
-## gehen um sie herum (StreetObstacle).
+## Laternenmasten auf dem Gehweg der Bücherei-Seite (dicht am Bordstein), mit fester Kollision
+## am Mast; Passanten gehen um sie herum (StreetObstacle).
 func _build_lamps() -> void:
 	if lamp_scene == null:
 		return
 	var holder := Node3D.new()
 	holder.name = "Lamps"
 	add_child(holder)
-	var x0 := StreetLayout.end_start_x(-1) + 3.0
-	var x1 := StreetLayout.end_start_x(1) - 3.0
-	for side in [1, -1]:
-		var z: float = StreetLayout.curb_z() + CURB_TOP + 0.4 if side > 0 else StreetLayout.far_curb_z() - CURB_TOP - 0.4
-		var x: float = x0 + (1.0 if side > 0 else lamp_spacing * 0.5)
-		while x < x1:
-			var lamp := lamp_scene.instantiate() as Node3D
-			lamp.position = Vector3(x, 0.0, z)
-			holder.add_child(lamp)
-			var body := StaticBody3D.new()
-			body.collision_layer = 1  # Ebene "world"
-			body.collision_mask = 0
-			var shape := CylinderShape3D.new()
-			shape.radius = 0.13
-			shape.height = 3.6
-			var collision := CollisionShape3D.new()
-			collision.shape = shape
-			collision.position = Vector3(0.0, 1.8, 0.0)
-			body.add_child(collision)
-			lamp.add_child(body)
-			var obstacle := StreetObstacle.new()
-			obstacle.radius = 0.3
-			lamp.add_child(obstacle)
-			x += lamp_spacing
+	var x0 := StreetLayout.end_start_x(-1) + 1.0
+	var x1 := StreetLayout.end_start_x(1) - 1.0
+	var z := StreetLayout.curb_z() + CURB_TOP + 0.4
+	for x in lamp_positions:
+		if x < x0 or x > x1:
+			continue
+		var lamp := lamp_scene.instantiate() as Node3D
+		lamp.position = Vector3(x, 0.0, z)
+		holder.add_child(lamp)
+		var body := StaticBody3D.new()
+		body.collision_layer = 1  # Ebene "world"
+		body.collision_mask = 0
+		var shape := CylinderShape3D.new()
+		shape.radius = 0.13
+		shape.height = 3.6
+		var collision := CollisionShape3D.new()
+		collision.shape = shape
+		collision.position = Vector3(0.0, 1.8, 0.0)
+		body.add_child(collision)
+		lamp.add_child(body)
+		var obstacle := StreetObstacle.new()
+		obstacle.radius = 0.3
+		lamp.add_child(obstacle)
 
 
 ## Ein Straßenende als Bänder entlang seiner Mittellinie. Die Gehwege reichen bis zu den
@@ -240,6 +241,9 @@ func _build_bounds() -> void:
 	body.name = "Bounds"
 	body.collision_layer = 1
 	body.collision_mask = 0
+	# Unsichtbar: verdeckt für die Sichtprüfung des Straßenlebens nichts (sonst erschienen
+	# Passanten hinter der Grenze, obwohl man sie sieht – z. B. durch den Torbogen)
+	body.set_meta("see_through", true)
 	add_child(body)
 	var x := StreetLayout.straight_bound_x()
 	_add_bound(body, Vector2(x, StreetLayout.HOUSE_FRONT + 0.5), Vector2(x, StreetLayout.opposite_front_z() - 0.5))

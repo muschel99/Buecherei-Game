@@ -341,7 +341,14 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `assets/models/source/layout.json`), Kollisionen in Alley/OppositeAlley. Bücherei-Fassade:
   `tools/blender/build_library.py` (Raumkoordinaten, Knoten "Facade" im Raum). Häuser mit
   Schaufenstern an zwei Seiten: `HouseFacade.see_through` (sonst erscheinen Passanten
-  sichtbar hinter dem Haus). Boden-/Wand-Shader `ground_style.gdshader`: `stone_tint` färbt nur
+  sichtbar hinter dem Haus). Unsichtbare Grenzen (Körper "Bounds") immer mit Metadaten
+  `see_through`, sonst gelten Orte dahinter als verdeckt. Hängende Straßenlaternen:
+  `HouseFacade.lanterns` (Plätze sucht `street_houses.find_lantern_spot`, Häuser in
+  `build_street.LANTERNS`), Modell `wall_street_lantern.glb`; Laternenmasten nur auf der
+  Bücherei-Seite (`Street.lamp_positions`). Passanten erscheinen nur außerhalb der Reichweite
+  der Spielfigur (Straßenenden hinter den Grenzen, Tür hinter den Bögen der Gasse gegenüber);
+  Sitzplätze für Passanten: SeatPoint in Gruppe `StreetLife.SEAT_GROUP` mit Metadaten
+  "approach"/"face" (Bank im Garten, `Alley`), Schritt "sit" im Passerby. Boden-/Wand-Shader `ground_style.gdshader`: `stone_tint` färbt nur
   einfärbbare Stellen (Ziegel), `tint` die ganze Fläche.
   **Schilder = Bilder der Entwicklerin:** Schild-Flächen mit `Mat(..., sign="name")` und
   `poly(..., uvs=…)` (0..1) → glb-Material `sign_<name>` → `assets/materials/signs/<typ>_<name>.tres`
