@@ -1555,35 +1555,25 @@ def shop_outside_flowers(b, spec, rnd):
 
 
 def _bicycle(b, x, z, rnd):
-    """Altes Damenrad, an die Brüstung gelehnt, mit Blumenkorb vorn."""
-    frame = Mat("paint", color=(0.42, 0.55, 0.45))
-    r = 0.33
+    """Hollandrad (wie die Räder auf der Straße) mit Ständer, vorn ein Blumenkorb."""
+    frame = Mat("car_paint", color=(0.42, 0.55, 0.45))
     b.push(b.move(x, 0.0, z))
-    for cx in (-0.55, 0.55):
-        ring = [V(cx + r * math.cos(a), r + r * math.sin(a), 0) for a in [2 * math.pi * k / 20 for k in range(21)]]
-        b.tube(ring, 0.018, Mat("plain", color=(0.12, 0.12, 0.12)), segments=5, caps=False)
-        for k in range(8):
-            a = math.pi * k / 8
-            b.tube([V(cx - r * 0.9 * math.cos(a), r - r * 0.9 * math.sin(a), 0), V(cx + r * 0.9 * math.cos(a), r + r * 0.9 * math.sin(a), 0)],
-                   0.003, IRON, segments=3, caps=False)
-    seat = V(-0.2, 0.92, 0)
-    bars = V(0.45, 0.98, 0)
-    crank = V(-0.05, r, 0)
-    b.tube([V(-0.55, r, 0), crank, seat], 0.016, frame, segments=5)
-    b.tube([crank, V(0.4, 0.78, 0), bars], 0.016, frame, segments=5)
-    b.tube([V(0.55, r, 0), V(0.4, 0.78, 0)], 0.016, frame, segments=5)
-    b.tube([V(-0.55, r, 0), seat], 0.014, frame, segments=5)
-    b.box((-0.32, 0.92, -0.07), (-0.08, 0.97, 0.07), Mat("plain", color=(0.35, 0.22, 0.14)))
-    b.tube([V(0.45, 0.98, -0.25), V(0.45, 0.98, 0.25)], 0.014, IRON, segments=5)
+    # Hollandrad (Bauteil P.bicycle, wie auf der Straße), mit dem Vorderrad nach +x; Ständer
+    b.push(b.turn_y(90))
+    P.bicycle(b, frame, wheel_r=0.33, wheel_z=0.55, crank=(0.33, -0.05), seat=(0.92, -0.2), bars=(0.98, 0.4),
+              kickstand=True, lamp=False)
+    b.pop()
     # Korb mit Blumen
     wicker = Mat("plain", color=(0.62, 0.48, 0.3))
     soil = PL.trough(b, 0.5, 0.82, 0.78, -0.17, 0.17, 0.2, wicker, soil_drop=0.03, wall=0.012)
     # Korb am Lenker festgeschraubt, unten eine Strebe zur Gabel (gehören zum Korb)
     for zz in (-0.1, 0.1):
-        b.tube([V(0.45, 0.98, zz), V(0.5, 0.93, zz)], 0.006, IRON, segments=4)
+        b.tube([V(0.4, 0.98, zz), V(0.5, 0.93, zz)], 0.006, IRON, segments=4)
     b.tube([V(0.6, 0.78, 0.0), V(0.56, 0.4, 0.0)], 0.006, IRON, segments=4)
     PL.extend_last_vessel(b)
     space = PL.BoxSpace(0.5, 0.82, -0.17, 0.17, 0.98, soil, wall=0.012)
+    # Lenker und Griffe hinter dem Korb: dort wächst nichts hinein
+    space.block((0.1, 0.9, -0.34), (0.5, 1.08, 0.34))
     PL.bouquet(b, V(0.6, soil, -0.06), 0.24, 0.1, rnd, "rose", "rose", space, count=6)
     PL.bouquet(b, V(0.72, soil, 0.06), 0.22, 0.1, rnd, "daisy", "white", space, count=7)
     PL.bouquet(b, V(0.66, soil, 0.0), 0.3, 0.08, rnd, "lavender", "rose", space, count=10)

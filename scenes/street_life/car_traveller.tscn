@@ -1,0 +1,39 @@
+[gd_scene load_steps=6 format=3]
+
+; Kombi mit Holzrahmen (Wagenfarbe) (seit Etappe 5b). Aussehen: "Model" (VehicleModel) mit der Karosserie aus
+; tools/blender/build_vehicles.py; die Räder setzt das Script ein und dreht sie. "Body" ist die
+; Kollision. Eigenes Modell: siehe docs/ASSET_GUIDE.md ("Eigene Autos und Fahrräder").
+
+[ext_resource type="Script" path="res://scripts/street_life/street_vehicle.gd" id="1_vehicle"]
+[ext_resource type="Script" path="res://scripts/street_life/vehicle_model.gd" id="2_model"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/traveller.glb" id="3_body"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/traveller_wheel.glb" id="4_wheel"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_car"]
+size = Vector3(1.55, 1.4, 3.8)
+
+[node name="Car" type="Node3D"]
+script = ExtResource("1_vehicle")
+length = 3.8
+width = 1.55
+lane_offset = 1.25
+
+[node name="Body" type="AnimatableBody3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+shape = SubResource("BoxShape3D_car")
+
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("2_model")
+wheel_scene = ExtResource("4_wheel")
+wheel_radius = 0.31
+wheel_positions = Array[Vector3]([Vector3(0.64, 0.31, 1.08), Vector3(0.64, 0.31, -1.12)])
+fixed_color = false
+paint_color = Color(0.36, 0.44, 0.58, 1)
+second_color = Color(0.9, 0.87, 0.8, 1)
+
+[node name="Car" parent="Model" instance=ExtResource("3_body")]

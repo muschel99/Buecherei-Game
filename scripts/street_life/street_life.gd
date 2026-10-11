@@ -197,11 +197,14 @@ func _build_vehicle_pool() -> void:
 	var folder := Node3D.new()
 	folder.name = "Vehicles"
 	add_child(folder)
-	for item in [[GameConfig.bike_scene, 2, _idle_bikes, "Cyclist"], [GameConfig.car_scene, GameConfig.car_count, _idle_cars, "Car"]]:
-		var scene := load(item[0]) as PackedScene
-		if scene == null:
-			continue
+	var car_list: Array[String] = GameConfig.car_scenes if not GameConfig.car_scenes.is_empty() else [GameConfig.car_scene]
+	for item in [[[GameConfig.bike_scene], 2, _idle_bikes, "Cyclist"], [car_list, GameConfig.car_count, _idle_cars, "Car"]]:
+		var scenes: Array = item[0]
 		for i in maxi(0, item[1]):
+			# Mehrere Szenen (verschiedene Autos): der Reihe nach
+			var scene := load(scenes[i % scenes.size()]) as PackedScene
+			if scene == null:
+				continue
 			var vehicle := scene.instantiate() as StreetVehicle
 			vehicle.name = "%s%d" % [item[3], i + 1]
 			vehicle.life = self

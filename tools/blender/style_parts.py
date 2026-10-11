@@ -518,3 +518,123 @@ def wall_lantern(b, x, y, z_wall, mat=None):
     _scroll(b, x, y - 0.02, z_wall + 0.12, 0.06, mat=mat, attach=(arm, [V(x, y - 0.12, z_wall + 0.03), V(x, y + 0.22, z_wall + 0.03)]))
     b.tube([V(x, y + 0.1, z_wall + 0.38), V(x, y - 0.05, z_wall + 0.38)], 0.008, mat, segments=4)
     lantern_head(b, x, y - 0.45, z_wall + 0.38, size=0.2, mat=mat)
+
+
+# ---------------------------------------------------------------------------------------------
+# Fahrrad (Hollandrad mit tiefem Einstieg) – seit Etappe 5b, auch vor dem Blumenladen
+# ---------------------------------------------------------------------------------------------
+
+BIKE_RUBBER = Mat("rubber")
+BIKE_CHROME = Mat("chrome")
+BIKE_SADDLE = Mat("leather", color=(0.36, 0.23, 0.15))
+
+
+def bike_wheel(b, center, radius, axis="x", spokes=28):
+    """Speichenrad um center (Achse x): Reifen, Felge, Nabe, Speichen (gekreuzt)."""
+    c = Vector(center)
+    seg = 32
+    def ring(r, x=0.0):
+        return [c + Vector((x, math.cos(a) * r, math.sin(a) * r)) for a in [2 * math.pi * k / seg for k in range(seg + 1)]]
+    b.tube(ring(radius - 0.018), 0.019, BIKE_RUBBER, segments=6, caps=False)
+    b.tube(ring(radius - 0.042), 0.007, BIKE_CHROME, segments=4, caps=False)
+    b.cylinder(c + Vector((-0.04, 0, 0)), 0.018, 0.08, BIKE_CHROME, segments=10, axis="x", caps=(True, True))
+    for k in range(spokes):
+        side = -0.035 if k % 2 else 0.035
+        a = 2 * math.pi * k / spokes
+        a2 = a + (0.35 if k % 4 < 2 else -0.35)
+        p0 = c + Vector((side, math.cos(a2) * 0.016, math.sin(a2) * 0.016))
+        p1 = c + Vector((0.0, math.cos(a) * (radius - 0.045), math.sin(a) * (radius - 0.045)))
+        b.tube([p0, p1], 0.0016, BIKE_CHROME, segments=3, caps=False)
+
+
+def bike_crank(b, center, arm=0.17):
+    """Kettenblatt, Kurbeln und Pedale um center (Achse x, dreht sich als Ganzes)."""
+    c = Vector(center)
+    b.cylinder(c + Vector((-0.07, 0, 0)), 0.012, 0.14, BIKE_CHROME, segments=8, axis="x", caps=(True, True))
+    b.cylinder(c + Vector((0.035, 0, 0)), 0.1, 0.006, BIKE_CHROME, segments=24, axis="x", caps=(True, True))
+    # Linke Kurbel (x < 0) zeigt bei Winkel 0 nach vorn – so passen die Beine des Fahrers
+    for side, ang in ((-1, 0.0), (1, math.pi)):
+        end = c + Vector((side * 0.075, math.sin(ang) * arm, math.cos(ang) * arm))
+        b.beam(c + Vector((side * 0.075, 0, 0)), end, 0.022, 0.012, BIKE_CHROME)
+        b.box((end.x + side * 0.005 - 0.0, end.y - 0.012, end.z - 0.045), (end.x + side * 0.1, end.y + 0.012, end.z + 0.045), BIKE_RUBBER) \
+            if side > 0 else b.box((end.x - 0.1, end.y - 0.012, end.z - 0.045), (end.x - 0.005, end.y + 0.012, end.z + 0.045), BIKE_RUBBER)
+
+
+def bicycle(b, frame, wheel_r=0.34, wheel_z=0.52, crank=(0.36, 0.02), seat=(0.92, -0.22), bars=(1.06, 0.3),
+            wheels=True, crank_parts=True, rack=True, lamp=True, kickstand=False):
+    """Hollandrad (vorn +z, Räder auf y = 0): tiefer, geschwungener Rahmen in Farbe frame,
+    Schutzbleche, Kettenschutz, Gepäckträger, Lampe, Klingel, Ledersattel. wheels/crank_parts =
+    False: Räder bzw. Kurbel nicht mitbauen (im Spiel eigene, drehende Teile)."""
+    fz, rz = wheel_z, -wheel_z
+    ry = wheel_r
+    cy, cz = crank
+    sy, sz = seat
+    by, bz = bars
+    head_top = V(0, by - 0.16, bz + 0.03)
+    head_bot = V(0, by - 0.36, bz + 0.07)
+    # Rahmen: geschwungenes Unterrohr (tiefer Einstieg), Sitzrohr, Hinterbau, Gabel
+    down = [head_bot, V(0, by - 0.48, bz - 0.05), V(0, cy + 0.12, cz + 0.12), V(0, cy + 0.03, cz + 0.04)]
+    b.tube(down, 0.024, frame, segments=8)
+    seat_lo, seat_hi = V(0, cy, cz), V(0, sy - 0.08, sz + 0.02)
+    join = seat_lo.lerp(seat_hi, 0.52)
+    # Zweites Rohr: vom Steuerrohr geschwungen bis ans Sitzrohr (Damenrahmen)
+    b.tube([head_top, head_top.lerp(join, 0.35) + V(0, -0.1, 0), head_top.lerp(join, 0.7) + V(0, -0.06, 0), join], 0.018, frame,
+           segments=8)
+    b.tube([seat_lo, seat_hi], 0.02, frame, segments=8)
+    for sd in (-1, 1):
+        b.tube([V(0, cy, cz), V(sd * 0.055, ry, rz)], 0.011, frame, segments=6)
+        b.tube([V(0, sy - 0.14, sz + 0.0), V(sd * 0.055, ry + 0.01, rz + 0.01)], 0.01, frame, segments=6)
+        b.tube([head_bot, V(sd * 0.045, head_bot.y - 0.1, head_bot.z + 0.04), V(sd * 0.05, ry, fz)], 0.011, frame, segments=6)
+    b.tube([head_bot - V(0, 0.03, 0), head_top + V(0, 0.03, 0)], 0.026, frame, segments=8)
+    # Lenker (geschwungen, nach hinten), Griffe, Klingel
+    b.tube([head_top, V(0, by, bz)], 0.014, BIKE_CHROME, segments=6)
+    for sd in (-1, 1):
+        b.tube([V(0, by, bz), V(sd * 0.12, by + 0.02, bz - 0.01), V(sd * 0.24, by + 0.03, bz - 0.1), V(sd * 0.28, by + 0.02, bz - 0.17)],
+               0.011, BIKE_CHROME, segments=6)
+        b.cylinder(V(sd * 0.28, by + 0.02, bz - 0.2), 0.016, 0.1, BIKE_SADDLE, segments=8, axis="z", caps=(True, True))
+    b.cylinder(V(0.08, by + 0.02, bz - 0.02), 0.022, 0.018, BIKE_CHROME, segments=10, caps=(False, True))
+    # Sattel (Leder, Federn)
+    b.tube([V(0, sy - 0.09, sz + 0.02), V(0, sy - 0.02, sz + 0.0)], 0.012, BIKE_CHROME, segments=6)
+    b.push(S.Matrix.Translation((0, sy + 0.015, sz)) @ S.Matrix.Diagonal((1.0, 0.45, 1.0, 1.0)))
+    b.sphere(V(0, 0, -0.02), 0.09, BIKE_SADDLE, rings=5, segments=12)
+    b.sphere(V(0, 0, 0.08), 0.045, BIKE_SADDLE, rings=4, segments=10)
+    b.pop()
+    # Sattelfedern: von der Sattelunterseite schräg zur Sattelstütze
+    for sd in (-1, 1):
+        coil = [V(sd * 0.045 * (1 - k / 10), sy + 0.004 - k * 0.009 + 0.005 * math.sin(k * 2.2), sz - 0.07 + k * 0.004)
+                for k in range(11)]
+        b.tube(coil, 0.005, BIKE_CHROME, segments=4)
+    b.tube([V(-0.045, sy + 0.004, sz - 0.07), V(0.045, sy + 0.004, sz - 0.07)], 0.005, BIKE_CHROME, segments=4)
+    # Schutzbleche (Bögen über den Rädern)
+    for wz, a0, a1 in ((fz, -0.2, 2.2), (rz, 0.9, 3.4)):
+        arc = [V(0, ry + math.sin(a) * (ry + 0.03), wz + math.cos(a) * (ry + 0.03)) for a in [a0 + (a1 - a0) * k / 16 for k in range(17)]]
+        for sd in (-1, 1):
+            b.tube([p + V(sd * 0.03, 0, 0) for p in arc], 0.006, frame, segments=4)
+        for a, c2 in zip(arc, arc[1:]):
+            n = (a - V(0, ry, wz)).normalized()
+            b.poly([a + V(-0.03, 0, 0), c2 + V(-0.03, 0, 0), c2 + V(0.03, 0, 0), a + V(0.03, 0, 0)], frame,
+                   normals=[n, (c2 - V(0, ry, wz)).normalized(), (c2 - V(0, ry, wz)).normalized(), n])
+    # Kettenschutz: flaches Blech von der Kurbel bis zur Hinterradnabe
+    gx = 0.06
+    top0, top1 = V(gx, cy + 0.12, cz + 0.06), V(gx, ry + 0.06, rz + 0.06)
+    bot0, bot1 = V(gx, cy + 0.03, cz + 0.08), V(gx, ry - 0.02, rz + 0.1)
+    b.poly([bot0, bot1, top1, top0], frame, both=True)
+    b.tube([top0, top1], 0.006, frame, segments=4)
+    if rack:
+        rack_y = ry + wheel_r * 0.5 + 0.06
+        for x in (-0.07, 0.0, 0.07):
+            b.tube([V(x, rack_y, sz - 0.04), V(x, rack_y, rz - 0.12)], 0.006, BIKE_CHROME, segments=4)
+        for sd in (-1, 1):
+            b.tube([V(sd * 0.07, rack_y, rz - 0.1), V(sd * 0.06, ry, rz)], 0.006, BIKE_CHROME, segments=4)
+        b.box((-0.06, rack_y - 0.02, rz - 0.15), (0.06, rack_y + 0.02, rz - 0.12), Mat("plain", color=(0.8, 0.1, 0.08), glow=0.2))
+    if lamp:
+        b.cylinder(V(0, head_bot.y + 0.05, head_bot.z + 0.05), 0.04, 0.07, BIKE_CHROME, segments=12, axis="z", caps=(True, False))
+        b.cylinder(V(0, head_bot.y + 0.05, head_bot.z + 0.12), 0.036, 0.004, Mat("plain", color=(1.0, 0.95, 0.8), glow=0.6),
+                   segments=12, axis="z", caps=(False, True))
+    if kickstand:
+        b.tube([V(0.03, cy - 0.02, cz - 0.08), V(0.18, 0.0, cz - 0.2)], 0.008, BIKE_CHROME, segments=4)
+    if wheels:
+        bike_wheel(b, (0, ry, fz), wheel_r)
+        bike_wheel(b, (0, ry, rz), wheel_r)
+    if crank_parts:
+        bike_crank(b, (0, cy, cz))

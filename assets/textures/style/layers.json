@@ -1,6 +1,6 @@
 {
 	"grid_x": 4,
-	"grid_y": 5,
+	"grid_y": 6,
 	"layer_size": 512,
 	"layers": [
 		{
@@ -142,6 +142,34 @@
 			"name": "roughcast",
 			"roughness": 0.95,
 			"tile_size": 1.5
+		},
+		{
+			"index": 20,
+			"metallic": 0.1,
+			"name": "car_paint",
+			"roughness": 0.2,
+			"tile_size": 1.0
+		},
+		{
+			"index": 21,
+			"metallic": 1.0,
+			"name": "chrome",
+			"roughness": 0.12,
+			"tile_size": 1.0
+		},
+		{
+			"index": 22,
+			"metallic": 0.0,
+			"name": "rubber",
+			"roughness": 0.85,
+			"tile_size": 1.0
+		},
+		{
+			"index": 23,
+			"metallic": 0.0,
+			"name": "leather",
+			"roughness": 0.55,
+			"tile_size": 0.6
 		}
 	],
 	"tint_mean": 0.8

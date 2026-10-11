@@ -267,7 +267,7 @@ var passerby_scenes: Array[String] = ["res://scenes/street_life/passerby.tscn"]
 var bike_interval: Vector2 = Vector2(25.0, 70.0)
 var bike_speed_range: Vector2 = Vector2(3.4, 4.6)
 ## Autos: höchstens so viele gleichzeitig, Abstand zwischen zwei Autos (Sekunden) und Tempo (m/s).
-var car_count: int = 2
+var car_count: int = 3
 var car_interval: Vector2 = Vector2(30.0, 90.0)
 var car_speed: float = 6.0
 ## Farben der Autos (je Auto zufällig eine).
@@ -276,6 +276,10 @@ var car_colors: Array[Color] = [Color(0.55, 0.68, 0.62), Color(0.78, 0.36, 0.3),
 ## Szenen der Fahrzeuge (austauschbar, Anleitung in docs/ASSET_GUIDE.md).
 var bike_scene: String = "res://scenes/street_life/cyclist.tscn"
 var car_scene: String = "res://scenes/street_life/car.tscn"
+## Die Autos auf der Straße (seit Etappe 5b): je Eintrag ein Wagen im Vorrat, der Reihe nach
+## (mehr Einträge als car_count: es fahren nur die ersten). Leer = car_scene.
+var car_scenes: Array[String] = ["res://scenes/street_life/car_taxi.tscn", "res://scenes/street_life/car_mini.tscn",
+	"res://scenes/street_life/car_traveller.tscn"]
 
 ## Lieferwagen: Tempo (m/s), Abstand der Kartons beim Ausladen (Sekunden) und Farbe.
 var delivery_van_speed: float = 4.5

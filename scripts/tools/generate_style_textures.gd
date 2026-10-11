@@ -17,7 +17,7 @@ extends SceneTree
 
 const SIZE := 512
 const GRID_X := 4
-const GRID_Y := 5
+const GRID_Y := 6
 ## Einfärbbare Stellen werden auf diese mittlere Helligkeit gebracht (sRGB). Der Shader teilt
 ## wieder dadurch – so hat ein Haus im Mittel genau die Farbe, die man im Inspektor wählt.
 const TINT_MEAN := 0.8
@@ -46,6 +46,11 @@ const LAYERS := [
 	["setts", 1.2, 0.85, 0.0],
 	["boards", 1.2, 0.6, 0.0],
 	["roughcast", 1.5, 0.95, 0.0],
+	# Seit Etappe 5b (Fahrzeuge): Autolack (glänzend, einfärbbar), Chrom, Gummi, Leder (einfärbbar)
+	["car_paint", 1.0, 0.2, 0.1],
+	["chrome", 1.0, 0.12, 1.0],
+	["rubber", 1.0, 0.85, 0.0],
+	["leather", 0.6, 0.55, 0.0],
 ]
 
 var _albedo := Image.create_empty(SIZE * GRID_X, SIZE * GRID_Y, false, Image.FORMAT_RGBA8)
@@ -117,6 +122,18 @@ func _make_layer(layer_name: String) -> Layer:
 			return _paving()
 		"plain":
 			return _mottled(Color(1.0, 1.0, 1.0, 1.0), 0.0, 0.0, 15)
+		"car_paint":
+			var paint := _mottled(Color(1.0, 1.0, 1.0, 1.0), 0.0, 0.006, 21)
+			paint.normal_strength = 0.05
+			return paint
+		"chrome":
+			var chrome := _mottled(Color(0.86, 0.87, 0.89, 0.0), 0.02, 0.0, 22)
+			chrome.normal_strength = 0.05
+			return chrome
+		"rubber":
+			return _mottled(Color(0.06, 0.06, 0.065, 0.0), 0.05, 0.08, 23)
+		"leather":
+			return _mottled(Color(1.0, 1.0, 1.0, 1.0), 0.08, 0.05, 24)
 		"canvas":
 			return _canvas()
 		"foliage":

@@ -14,9 +14,9 @@ render_mode cull_back;
 uniform sampler2DArray albedo_layers : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2DArray normal_layers : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 // Rauheit, Metall und Kachelgröße (m) je Ebene (Reihenfolge wie layers.json)
-uniform float roughness_layers[20];
-uniform float tile_layers[20];
-uniform float metallic_layers[20];
+uniform float roughness_layers[24];
+uniform float tile_layers[24];
+uniform float metallic_layers[24];
 uniform float normal_strength : hint_range(0.0, 2.0) = 1.0;
 // Ausgleich der mittleren Texturhelligkeit (1 / linear(tint_mean) aus layers.json)
 uniform float tint_gain = 1.656;
