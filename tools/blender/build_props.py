@@ -75,9 +75,9 @@ def dress_form():
 def outfit_dress():
     """Kleid im Stil der 50er: Oberteil, ausgestellter Rock, kleiner Kragen, Gürtel."""
     b = S.Builder("outfit_dress")
-    top = [(1.17, 0.135), (1.3, 0.16), (1.38, 0.175), (1.47, 0.16), (1.52, 0.115), (1.535, 0.075)]
+    top = [(1.185, 0.135), (1.3, 0.16), (1.38, 0.175), (1.47, 0.16), (1.52, 0.115), (1.535, 0.075)]
     lathe(b, top, CLOTH)
-    lathe(b, [(0.55, 0.36), (0.75, 0.32), (0.95, 0.25), (1.1, 0.17), (1.19, 0.135)], CLOTH, segments=20)
+    lathe(b, [(0.55, 0.36), (0.75, 0.32), (0.95, 0.25), (1.1, 0.17), (1.175, 0.138)], CLOTH, segments=20)
     lathe(b, [(1.16, 0.14), (1.2, 0.14)], BELT)
     for side in (-1, 1):
         lathe(b, [(1.38, 0.06), (1.44, 0.075), (1.48, 0.06)], CLOTH, x=side * 0.16, depth_scale=0.9)
@@ -158,10 +158,11 @@ def drain_grate():
     # Dunkler Schacht unter den Schlitzen, darüber Stege quer
     b.box((-w + 0.04, 0.0, -d + 0.04), (w - 0.04, 0.002, d - 0.04), dark, skip=("bottom",))
     n = 9
-    for k in range(n + 1):
+    for k in range(1, n):
         x = -w + 0.04 + (2 * w - 0.08) * k / n
         b.box((x - 0.011, 0.0, -d + 0.04), (x + 0.011, h - 0.002, d - 0.04), iron, skip=("bottom",))
-    b.box((-w + 0.04, 0.0, -0.012), (w - 0.04, h - 0.002, 0.012), iron, skip=("bottom",))
+    # Mittelsteg etwas tiefer als die Stege (sonst decken sich die Oberseiten an den Kreuzungen)
+    b.box((-w + 0.04, 0.0, -0.012), (w - 0.04, h - 0.005, 0.012), iron, skip=("bottom",))
     return b
 
 

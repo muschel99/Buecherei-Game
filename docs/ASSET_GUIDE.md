@@ -286,6 +286,10 @@ unsichtbare Kollision (damit man nicht hindurchläuft) bleibt.
 - `scenes/world/alley_end.tscn` – Mauer mit Tor am Ende der Gasse (mit Haus dahinter); auch am
   Ende der kleinen Gasse gegenüber (`scenes/world/opposite_alley.tscn`).
 - `scenes/world/entrance_steps.tscn` – Podest mit Stufen vor der Ladentür.
+- **Schatten draußen heller oder dunkler:** Ein sanftes Himmelslicht (Knoten `SkyFill` in
+  `main.tscn`) hellt nur die Außenwelt auf, innen bleibt alles wie es ist. Stärke und Farbe
+  stehen in `scripts/autoload/game_config.gd`: `outdoor_fill_energy` (0 = aus, 0,55 = jetzt,
+  höher = hellere Schatten) und `outdoor_fill_color`.
 
 ### Die Haustypen und ihre Maße
 Alle Häuser: **Ursprung unten in der Mitte der Vorderseite** (auf Gehweg-Höhe), die
@@ -426,6 +430,15 @@ Blattform, jedes Blatt hängt an einem Stiel, jeder Stiel an einem Trieb – nic
 - **Material:** `assets/materials/plant_style.tres` (Shader `plant_style.gdshader`): beide
   Seiten sichtbar, Licht scheint leicht durch die Blätter (**Translucency Layers**), in der
   Ferne bleiben Blätter dicht. Rauheit je Feld: **Roughness Layers**.
+- **Töpfe und Gruppen:** Töpfe gibt es in vier Größen (`POT_SIZES`: small, medium, large,
+  xl). `pot_cluster` stellt 1–3 verschieden große Töpfe dicht nebeneinander an eine Wand
+  (groß hinten, kleiner davor) – so stehen sie an der Straße und in den Gassen.
+- **Hängekörbe:** drei Arten (`style_parts.BASKET_VARIANTS`): „summer“ (Drahtkorb mit
+  Kokosmatte, Geranien, Lobelien, Petunien, Efeu), „fuchsia“ (Weidenkorb, Fuchsien hängen in
+  Bögen über) und „cascade“ (grüne Schale, Petunien-Wasserfall). `hanging_basket(...,
+  variant="fuchsia")` wählt die Art.
+- **Efeu über die ganze Wand:** In `build_street.py` bei `SPECIAL` für ein Haus
+  `ivy_cover=True` eintragen (bisher: GateStreet/Bend1, das hohe Steinhaus am Platz beim Pub).
 - **Anschauen ohne Spiel:** `blender -b --factory-startup --python tools/blender/plant_showcase.py`
   stellt alle Pflanzen nebeneinander auf und macht Bilder nach `screenshots/blender/plants/`.
 - **Prüfen:** `blender -b --factory-startup --python tools/blender/geo_check.py` sucht in allen
@@ -456,6 +469,7 @@ gibt es ein Startbild, das genau so groß ist, wie es sein muss:
 | `bakery_shop_chalkboard.png` | Kreidetafel vor der Bäckerei | 0,42 × 0,70 m | 360 × 600 |
 | `corner_30_fascia.png` | Schild „Wolle & Stoff“ (Eckhaus vor dem Torhaus) | 1,6 × 0,4 m | 768 × 192 |
 | `corner_30_hanging.png` | Hängeschild des Wolleladens | 0,60 × 0,56 m | 512 × 478 |
+| `corner_30_chalkboard.png` | Kreidetafel vor dem Wolleladen | 0,42 × 0,70 m | 360 × 600 |
 | `library_fascia.png` | Schild der Bücherei über den Fenstern (vorn und an der Gasse) | 3,6 × 0,52 m | 2048 × 296 |
 | `library_door.png` | Schild der Bücherei über der Tür | 2,99 × 0,52 m | 1536 × 267 |
 

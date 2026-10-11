@@ -5,6 +5,7 @@ extends Node3D
 @onready var _environment: Environment = $WorldEnvironment.environment
 @onready var _dust: GPUParticles3D = $GroundFloorRoom/WindowDust
 @onready var _sun: DirectionalLight3D = $Sun
+@onready var _sky_fill: DirectionalLight3D = $SkyFill
 
 var _dust_amount: int = 0
 
@@ -14,6 +15,7 @@ func _ready() -> void:
 	# Draußen liegt alles tiefer als der Ladenboden (Etappe 4d, GameConfig.shop_floor_rise)
 	($Outside as Node3D).position.y = StreetLayout.ground_y()
 	_apply_graphics_quality()
+	_setup_sky_fill()
 	Settings.setting_changed.connect(_on_setting_changed)
 	# Alle Knoten der Szene sind jetzt bereit – also können sie ihre Daten übernehmen
 	SaveManager.load_game()
@@ -21,6 +23,43 @@ func _ready() -> void:
 	($GroundFloorRoom as Room).ensure_essentials()
 	# Startgeschenke (z. B. ein Rückgabekasten) kommen einmal ins Inventar
 	BookStock.give_start_gifts()
+
+
+## Himmelslicht (GameConfig.outdoor_fill_*): wirkt nur auf die Render-Ebene "draußen". Alles
+## unter Outside, die Eingangstreppe, die Obergeschosse und die Fassade der Bücherei kommen auf
+## diese Ebene – auch was später dazukommt (Lieferkartons, Passanten aus dem Vorrat).
+func _setup_sky_fill() -> void:
+	_sky_fill.light_energy = GameConfig.outdoor_fill_energy
+	_sky_fill.light_color = GameConfig.outdoor_fill_color
+	_sky_fill.light_cull_mask = 1 << (GameConfig.OUTDOOR_RENDER_LAYER - 1)
+	_sky_fill.visible = GameConfig.outdoor_fill_energy > 0.0
+	for root: Node in _outdoor_roots():
+		_mark_outdoor(root)
+	get_tree().node_added.connect(_on_node_added)
+
+
+func _outdoor_roots() -> Array[Node]:
+	var roots: Array[Node] = [$Outside, $EntranceSteps, $UpperFloors]
+	var facade := get_node_or_null("GroundFloorRoom/Facade")
+	if facade:
+		roots.append(facade)
+	return roots
+
+
+func _mark_outdoor(node: Node) -> void:
+	if node is VisualInstance3D:
+		(node as VisualInstance3D).set_layer_mask_value(GameConfig.OUTDOOR_RENDER_LAYER, true)
+	for child in node.get_children():
+		_mark_outdoor(child)
+
+
+func _on_node_added(node: Node) -> void:
+	if not node is VisualInstance3D:
+		return
+	for root: Node in _outdoor_roots():
+		if root.is_ancestor_of(node):
+			(node as VisualInstance3D).set_layer_mask_value(GameConfig.OUTDOOR_RENDER_LAYER, true)
+			return
 
 
 func _on_setting_changed(key: String, _value: Variant) -> void:

@@ -72,11 +72,14 @@ def read_glb(path):
             pos = accessor(prim["attributes"]["POSITION"])
             col = accessor(prim["attributes"]["COLOR_0"]) if "COLOR_0" in prim["attributes"] else None
             uv2 = accessor(prim["attributes"]["TEXCOORD_1"]) if "TEXCOORD_1" in prim["attributes"] else None
+            uv0 = accessor(prim["attributes"]["TEXCOORD_0"]) if "TEXCOORD_0" in prim["attributes"] else None
             idx = accessor(prim["indices"])
             for t in range(0, len(idx), 3):
                 a, b, c = idx[t], idx[t + 1], idx[t + 2]
+                # glTF zählt v von oben: zurückrechnen
+                uvs = tuple((uv0[k][0], 1.0 - uv0[k][1]) for k in (a, b, c)) if uv0 else None
                 out[mat].append((Vector(pos[a]), Vector(pos[b]), Vector(pos[c]), col[a][:3] if col else (1, 1, 1),
-                                 int(round(uv2[a][0])) if uv2 else -1, 1.0 - col[a][3] if col else 0.0))
+                                 int(round(uv2[a][0])) if uv2 else -1, 1.0 - col[a][3] if col else 0.0, uvs))
     return out
 
 
@@ -121,7 +124,7 @@ def check(path, report_limit=12):
     kinds = []
     for mat, lst in by_mat.items():
         for tri in lst:
-            tris.append(tri[:5] + (None, tri[5]))
+            tris.append(tri[:5] + (None, tri[5], tri[6]))
             kinds.append("glass" if mat.startswith("glass") else "plant" if mat == "plant" else "solid")
     return analyse(os.path.relpath(path, S.ROOT), tris, kinds, report_limit)
 
@@ -219,6 +222,7 @@ def analyse(name, tris, kinds, report_limit=12):
         for a, c in plant.overlap(solid):
             tri = tris[plant_idx[a]]
             hits.append(((tri[0] + tri[1] + tri[2]) / 3, tri[5], tris[solid_idx[c]][5]))
+    flicker = zfight(tris, kinds)
     lines = []
     if floating:
         lines.append("%s: %d schwebende Teile" % (name, len(floating)))
@@ -232,18 +236,138 @@ def analyse(name, tris, kinds, report_limit=12):
             near = [h for h in hits if (h[0] - c).length < 0.25]
             src = sorted({"%s in %s" % (h[1], h[2]) for h in near if h[1]})
             lines.append("    steckt (%d) bei (%.2f, %.2f, %.2f)%s" % (count, c.x, c.y, c.z, ("  <- " + "; ".join(src[:2])) if src else ""))
+    if flicker:
+        clusters = _cluster([f[0] for f in flicker])
+        lines.append("%s: %d Stellen mit Flimmern (Flächen fast in derselben Ebene, %d Bereiche)" % (name, len(flicker), len(clusters)))
+        for c, count in clusters[:report_limit]:
+            near = [f for f in flicker if (f[0] - c).length < 0.25]
+            src = sorted({"%s / %s" % (f[1], f[2]) for f in near if f[1]})
+            lines.append("    flimmert (%d) bei (%.2f, %.2f, %.2f)%s" % (count, c.x, c.y, c.z, ("  <- " + "; ".join(src[:2])) if src else ""))
     if not lines:
         lines.append("%s: in Ordnung" % name)
     return lines
 
 
 PL_BARK = S.PLANT_LAYERS["bark"]["index"]
+_ALPHA = {}
+
+
+def _alpha_table():
+    """Deckung (Alpha) der Pflanzen-Texturen als Zahlenfeld [Ebene][Zeile von oben][Spalte]."""
+    if "a" not in _ALPHA:
+        import numpy as np
+        img = bpy.data.images.load(os.path.join(S.PLANT_DIR, "plant_albedo.png"), check_existing=True)
+        w, h = img.size
+        px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)[::-1, :, 3]
+        size = S._PLANT_TABLE["layer_size"]
+        gx = S.PLANT_GRID_X
+        cells = []
+        for index in range(len(S.PLANT_LAYERS)):
+            cx, cy = index % gx, index // gx
+            cells.append(px[cy * size:(cy + 1) * size, cx * size:(cx + 1) * size])
+        _ALPHA["a"] = cells
+        _ALPHA["size"] = size
+    return _ALPHA["a"], _ALPHA["size"]
+
+
+def _alpha(layer, uv):
+    if layer == PL_BARK or layer < 0 or uv is None:
+        return 1.0
+    cells, size = _alpha_table()
+    u = min(max(uv[0], 0.0), 0.999)
+    v = min(max(uv[1], 0.0), 0.999)
+    return float(cells[layer][int((1.0 - v) * size) % size, int(u * size)])
+
+
+def _bary(p, a, b, c):
+    """Baryzentrische Koordinaten von p (in der Ebene von a, b, c)."""
+    v0, v1, v2 = b - a, c - a, p - a
+    d00, d01, d11 = v0.dot(v0), v0.dot(v1), v1.dot(v1)
+    d20, d21 = v2.dot(v0), v2.dot(v1)
+    den = d00 * d11 - d01 * d01
+    if abs(den) < 1e-14:
+        return None
+    v = (d11 * d20 - d01 * d21) / den
+    w = (d00 * d21 - d01 * d20) / den
+    return (1.0 - v - w, v, w)
+
+
+def _uv_at(tri, bc):
+    uvs = tri[7] if len(tri) > 7 else None
+    if not uvs:
+        return None
+    return (uvs[0][0] * bc[0] + uvs[1][0] * bc[1] + uvs[2][0] * bc[2], uvs[0][1] * bc[0] + uvs[1][1] * bc[1] + uvs[2][1] * bc[2])
+
+
+def zfight(tris, kinds, gap=0.0015, max_reports=4000):
+    """Flimmern (Z-Fighting): zwei sichtbare Flächen liegen fast in derselben Ebene übereinander
+    (Abstand unter gap). Bei Pflanzen zählt nur, wo beide Blätter wirklich gedeckt sind (Alpha
+    der Textur), und auch Rückseiten (Blätter sind beidseitig sichtbar). Bei festen Teilen nur
+    Flächen in dieselbe Richtung."""
+    found = []
+    for group in ("plant", "solid"):
+        idx = [i for i, k in enumerate(kinds) if k == group and not (group == "plant" and tris[i][4] == PL_BARK)]
+        if group == "solid":
+            # Stängel, Erde, Wasser und Laubkerne zählen nicht (Stängel treffen sich an den
+            # Ansätzen, das ist winzig und versteckt); leuchtende Innenräume auch nicht
+            idx = [i for i in idx if tris[i][6] <= 0.0 and not _soft(tris[i][3]) and tris[i][4] != FOLIAGE]
+            # Unterseiten auf dem Boden sieht man nie
+            idx = [i for i in idx if not (max(p.y for p in tris[i][:3]) < 0.003 and
+                                          ((tris[i][1] - tris[i][0]).cross(tris[i][2] - tris[i][0])).y < 0)]
+        if len(idx) < 2:
+            continue
+        verts = [p for i in idx for p in tris[i][:3]]
+        tree = BVHTree.FromPolygons(verts, [(3 * k, 3 * k + 1, 3 * k + 2) for k in range(len(idx))], all_triangles=True)
+        normals = []
+        for i in idx:
+            n = (tris[i][1] - tris[i][0]).cross(tris[i][2] - tris[i][0])
+            normals.append(n.normalized() if n.length > 1e-12 else None)
+        keys = [{(round(p.x, 5), round(p.y, 5), round(p.z, 5)) for p in tris[i][:3]} for i in idx]
+        for a, i in enumerate(idx):
+            na = normals[a]
+            if na is None:
+                continue
+            tri = tris[i]
+            for w in ((1 / 3, 1 / 3, 1 / 3), (0.6, 0.2, 0.2), (0.2, 0.6, 0.2), (0.2, 0.2, 0.6)):
+                p = tri[0] * w[0] + tri[1] * w[1] + tri[2] * w[2]
+                if group == "plant" and _alpha(tri[4], _uv_at(tri, w)) < 0.5:
+                    continue
+                hit = False
+                for _, _, c, dist in tree.find_nearest_range(p, gap):
+                    if c == a or normals[c] is None or keys[a] & keys[c]:
+                        continue
+                    dot = na.dot(normals[c])
+                    if (abs(dot) if group == "plant" else dot) < 0.97:
+                        continue
+                    other = tris[idx[c]]
+                    q = p - normals[c] * (p - other[0]).dot(normals[c])
+                    bc = _bary(q, other[0], other[1], other[2])
+                    if bc is None or min(bc) < 0.02:
+                        continue
+                    if group == "plant" and _alpha(other[4], _uv_at(other, bc)) < 0.5:
+                        continue
+                    found.append((p, tri[5], other[5]))
+                    hit = True
+                    break
+                if hit or len(found) >= max_reports:
+                    break
+            if len(found) >= max_reports:
+                break
+    return found
 # Laub-Ebene der Häuser: Kern von Buchskugeln, Blütenbällen und Rosen (liegt absichtlich in den Blättern)
 FOLIAGE = S.LAYERS["foliage"]["index"]
 
 
+# Farbtoleranz für weiche Teile: in den .glb sind Farben auf 1/255 gerundet (bis 0,002 daneben)
+SOFT_TOL = [0.0015]
+
+
 def _soft(color):
-    return any(abs(color[0] - c[0]) < 0.004 and abs(color[1] - c[1]) < 0.004 and abs(color[2] - c[2]) < 0.004 for c in SOFT_COLORS)
+    tol = SOFT_TOL[0]
+    if any(abs(color[0] - c[0]) < tol and abs(color[1] - c[1]) < tol and abs(color[2] - c[2]) < tol
+           for c in (S.srgb_to_linear(c2) for c2 in PL.SOFT_COLORS)):
+        return True
+    return any(abs(color[0] - c[0]) < tol and abs(color[1] - c[1]) < tol and abs(color[2] - c[2]) < tol for c in SOFT_COLORS)
 
 
 def _origin():
@@ -265,8 +389,10 @@ def from_builder(b):
         info = S.layer_info(mat)
         color = S.srgb_to_linear(mat.color) if mat.role == "fixed" else (1.0, 1.0, 1.0)
         pts = face["pts"]
+        uvs = face.get("uvs")
         for i in range(1, len(pts) - 1):
-            tris.append((pts[0], pts[i], pts[i + 1], color, info["index"], face.get("origin"), mat.glow))
+            tuv = (tuple(uvs[0]), tuple(uvs[i]), tuple(uvs[i + 1])) if uvs else None
+            tris.append((pts[0], pts[i], pts[i + 1], color, info["index"], face.get("origin"), mat.glow, tuv))
             kinds.append("glass" if mat.glass else "plant" if mat.plant else "solid")
     return tris, kinds
 
@@ -313,7 +439,66 @@ def source_mode(names):
             continue
         b = builders[name]()
         tris, kinds = from_builder(b)
-        print("\n".join(analyse(name, tris, kinds, report_limit=40)))
+        lines = analyse(name, tris, kinds, report_limit=40)
+        stuck = vessels_in_solids(b)
+        if stuck:
+            if lines[-1].endswith("in Ordnung"):
+                lines.pop()
+            lines.append("%s: %d Gefäße stecken in festen Teilen" % (name, len(stuck)))
+            for where, origin, other in stuck[:40]:
+                lines.append("    Gefäß bei (%.2f, %.2f, %.2f)  <- %s steckt in %s" % (where.x, where.y, where.z, origin, other))
+        print("\n".join(lines))
+
+
+def vessels_in_solids(b):
+    """Töpfe, Eimer und Kästen (style_plants.vessel/trough), deren Wand in einem anderen festen
+    Teil steckt (Regal, Wand, Nachbartopf). Geprüft wird eine um 4 mm kleinere Hülle."""
+    vessels = b.__dict__.get("vessels", [])
+    if not vessels:
+        return []
+    own = {}
+    for k, (_, _, _, f0, f1) in enumerate(vessels):
+        for f in range(f0, f1):
+            own[f] = k
+    solid, owner, origin = [], [], []
+    for f, face in enumerate(b.faces):
+        mat = face["mat"]
+        if mat.glass or mat.plant or mat.layer == "foliage" or _soft(S.srgb_to_linear(mat.color)):
+            continue
+        pts = face["pts"]
+        for i in range(1, len(pts) - 1):
+            solid.append((pts[0], pts[i], pts[i + 1]))
+            owner.append(own.get(f, -1))
+            origin.append(face.get("origin", "?"))
+    if not solid:
+        return []
+    tree = BVHTree.FromPolygons([p for t in solid for p in t], [(3 * k, 3 * k + 1, 3 * k + 2) for k in range(len(solid))], all_triangles=True)
+    out = []
+    m = 0.004
+    for k, (kind, xf, data, f0, f1) in enumerate(vessels):
+        shell = []
+        if kind == "cyl":
+            x, y, z, r0, r1, h = data
+            ring = []
+            for yy, rr in ((y + m, r0 - m), (y + h - m, r1 - m)):
+                ring.append([xf @ Vector((x + rr * math.cos(a), yy, z + rr * math.sin(a))) for a in [2 * math.pi * q / 12 for q in range(12)]])
+            for q in range(12):
+                q1 = (q + 1) % 12
+                shell += [(ring[0][q], ring[0][q1], ring[1][q1]), (ring[0][q], ring[1][q1], ring[1][q])]
+        else:
+            x0, y0, z0, x1, y1, z1, skip_back = data
+            lo = Vector((x0 + m, y0 + m, z0 + (m if not skip_back else 0.02)))
+            hi = Vector((x1 - m, y1 - m, z1 - m))
+            c = [xf @ Vector((px, py, pz)) for px in (lo.x, hi.x) for py in (lo.y, hi.y) for pz in (lo.z, hi.z)]
+            for a, b2, c2, d in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)):
+                shell += [(c[a], c[b2], c[c2]), (c[a], c[c2], c[d])]
+        test = BVHTree.FromPolygons([p for t in shell for p in t], [(3 * q, 3 * q + 1, 3 * q + 2) for q in range(len(shell))], all_triangles=True)
+        hits = [o for _, o in test.overlap(tree) if owner[o] != k]
+        if hits:
+            centre = sum((p for t in shell for p in t), Vector()) / (3 * len(shell))
+            vessel_origin = b.faces[f0].get("origin", "?") if f0 < len(b.faces) else "?"
+            out.append((centre, vessel_origin, origin[hits[0]]))
+    return out
 
 
 def _type_builder(BH, type_id):
@@ -326,6 +511,7 @@ def main():
     if "--source" in argv:
         source_mode([a for a in argv if not a.startswith("--")])
         return
+    SOFT_TOL[0] = 0.0026
     paths = [os.path.join(S.ROOT, a) for a in argv if not a.startswith("--")]
     if not paths:
         for pattern in ("assets/models/houses/*.glb", "assets/models/houses/street/*.glb", "assets/models/world/*.glb",

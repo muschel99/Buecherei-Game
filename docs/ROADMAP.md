@@ -739,6 +739,16 @@ ist austauschbar.
       Wandlaternen am Torhaus und an der Bücherei schwebten. Neues Prüfwerkzeug
       `geo_check.py` (schwebende Teile, Blätter in festen Teilen, mit Programmzeile),
       Blickpunkte `details`
+- [x] Teil 4f2 – Rückmeldungen zu den Pflanzen: vollere, buschige Töpfe in vier Größen (mit
+      Grün unter den Blüten und Ranken über den Rand), Töpfe in unregelmäßigen Gruppen zu
+      zweit oder dritt (`pot_cluster`) auf der Straße und in den Gassen, drei verschiedene
+      Hängekörbe (Sommerkorb, Fuchsien im Weidenkorb, Petunien-Wasserfall), Fahrradkorb mit
+      Grün und herabhängenden Ranken, Blumenladen aufgeräumt (keine Eimer mehr im Regal),
+      Efeu bedeckt am Steinhaus beim Pub die ganze Wand (`ivy_cover`), hellere Schatten
+      draußen (Himmelslicht `SkyFill` nur für die Außenwelt), neue Kreidetafeln der
+      Entwicklerin und eine Tafel vor dem Wolleladen. Prüfwerkzeug findet jetzt auch Flimmern
+      (zwei Flächen genau aufeinander) und Töpfe, die in Regalen oder Wänden stecken;
+      viele kleine Flimmer-Stellen an Gesimsen, Dachrinnen, Fenstern und Zäunen behoben
 - [ ] Teil 4g – Möbel und Deko im Stil, Innenraum der Bücherei
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
 - [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)

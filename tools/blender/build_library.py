@@ -79,16 +79,17 @@ def pilaster(b, x, width=0.3):
     b.box((x - hw - 0.02, FASCIA[0] - 0.25, PROUD), (x + hw + 0.02, FASCIA[0] - 0.15, 0.15), GREEN, skip=("back",))
     # Konsole (geschwungen angedeutet) vor dem Schildband
     b.box((x - hw - 0.02, FASCIA[0] - 0.15, PROUD), (x + hw + 0.02, FASCIA[1] + 0.05, 0.24), GREEN, skip=("back",))
-    b.box((x - hw + 0.03, FASCIA[0] - 0.4, PROUD), (x + hw - 0.03, FASCIA[0] - 0.15, 0.2), GREEN, skip=("back",))
-    b.cylinder(V(x - hw - 0.02, FASCIA[0] + 0.12, 0.22), 0.07, width + 0.04, GOLD, segments=10, caps=(True, True), axis="x")
+    b.box((x - hw + 0.03, FASCIA[0] - 0.4, PROUD), (x + hw - 0.03, FASCIA[0] - 0.153, 0.2), GREEN, skip=("back",))
+    b.cylinder(V(x - hw - 0.017, FASCIA[0] + 0.12, 0.22), 0.07, width + 0.034, GOLD, segments=10, caps=(True, True), axis="x")
 
 
 def facade_band(b, half, sign_name, ends=True):
     """Schildband mit Bild (sign_name) und Gesims über die ganze Wandlänge (-half … half)."""
     b.box((-half, FASCIA[0], PROUD), (half, FASCIA[1], 0.18), GREEN, skip=("back", "front"))
     inset = 0.32 if ends else 0.05
-    b.box((-half, FASCIA[0], 0.17), (-half + inset, FASCIA[1], 0.18), GREEN, skip=("back",))
-    b.box((half - inset, FASCIA[0], 0.17), (half, FASCIA[1], 0.18), GREEN, skip=("back",))
+    # Vorderseite links und rechts neben dem Bild (nur Flächen – der Kasten darüber ist schon zu)
+    b.quad(V(-half, FASCIA[0], 0.18), V(-half + inset, FASCIA[0], 0.18), V(-half + inset, FASCIA[1], 0.18), V(-half, FASCIA[1], 0.18), GREEN)
+    b.quad(V(half - inset, FASCIA[0], 0.18), V(half, FASCIA[0], 0.18), V(half, FASCIA[1], 0.18), V(half - inset, FASCIA[1], 0.18), GREEN)
     b.poly([V(-half + inset, FASCIA[0], 0.18), V(half - inset, FASCIA[0], 0.18), V(half - inset, FASCIA[1], 0.18), V(-half + inset, FASCIA[1], 0.18)],
            Mat("plain", sign=sign_name), uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
     b.extrude_x([(PROUD, FASCIA[1]), (PROUD, TOP), (0.32, TOP), (0.32, FASCIA[1] + 0.07), (0.22, FASCIA[1] + 0.02), (0.18, FASCIA[1])],
@@ -99,7 +100,8 @@ def facade_band(b, half, sign_name, ends=True):
 def window_surround(b, x0, x1, y0, y1):
     """Feine Rahmenleiste um ein Fenster und Brüstungsbrett darunter."""
     b.frame(x0, y0, x1, y1, PROUD, 0.07, 0.07, GREEN)
-    b.box((x0 - 0.1, y0 - 0.12, PROUD), (x1 + 0.1, y0 - 0.07, 0.12), GREEN_DARK, skip=("back",))
+    # Brett 4 mm hinter der Vorderkante der Pilaster (wo es an sie stößt, flimmert sonst nichts)
+    b.box((x0 - 0.1, y0 - 0.12, PROUD), (x1 + 0.1, y0 - 0.07, 0.116), GREEN_DARK, skip=("back",))
 
 
 def front_or_left(b, a, c, window_center, rnd, lantern_at=None, pots=()):
@@ -145,7 +147,8 @@ def diagonal(b, rnd):
     facade_band(b, half, "door", ends=False)
     # Hängekörbe an beiden Ecken der Schräge
     for side in (-1, 1):
-        P.hanging_basket(b, side * (half - 0.15), TOP + 0.1, 0.1, 0.42, seed=rnd.randrange(999))
+        P.hanging_basket(b, side * (half - 0.15), TOP + 0.1, 0.1, 0.42, seed=rnd.randrange(999), variant="summer" if side < 0 else "fuchsia",
+                         clear_z=0.2)
     b.pop()
 
 

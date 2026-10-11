@@ -380,6 +380,20 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Programmzeile) – muss vor dem Hochladen „in Ordnung“ melden; Pflanzen ansehen:
   `tools/blender/plant_showcase.py`. Schmiedeeisen-Schnecken mit `attach` (P.weld),
   Türknäufe `P.door_knob`, Ketten `P.chain`.
+  Seit Teil 4f2: Töpfe in Gruppen `PL.pot_cluster` (Größen `POT_SIZES`, `blocks` = Fensterbänke/
+  Rohre an der Wand), Hängekörbe in drei Arten (`P.BASKET_VARIANTS`, Korb meldet sich als
+  "bowl" an), Efeu über die ganze Wand mit `ivy_cover` (build_street `SPECIAL`). Nach `settle`
+  trennt `separate` fast deckungsgleiche Blätter (Flimmern) durch Kippen um den Stielansatz;
+  Ansatz (`roots`) und Hindernisse (`spaces`) merkt `_tag` in Modell-Koordinaten (`b.xf`),
+  gekippte Blätter werden erneut durch ihr `Space` geschoben; hebt `settle` einen Ansatz an,
+  setzt es ein kurzes Stielstück dazu. Jedes Blatt hält einen eigenen kleinen Zusatzabstand zu
+  Wänden/Ebenen/Erde (`_EXTRA`, `LEAF_GAP_STEP`), damit angedrückte Blätter nicht aufeinander
+  liegen. Töpfe sind unten schmaler (`_cyl_outer`), Innenwände Vielecke (sdi mit 0,945);
+  Blattkanten, die als Sehne durch einen Nachbartopf laufen, hebt `_chord_lift`. Sperren:
+  `block` schiebt nur nach oben/vorn/seitlich – für Glas davor oder ein Brett darüber
+  `planes` (Punkt, Richtung ins Freie, Abstand) nehmen. geo_check meldet auch Flimmern (zwei
+  Flächen genau aufeinander: die kleinere 2–3 mm zurücksetzen, Deckel/Böden in anderen Teilen
+  mit `skip`, Rückseiten in der Wand weglassen) und Gefäße, die in festen Teilen stecken.
 - `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
   und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`
@@ -389,6 +403,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (`SillBody`: Bank, Glas, Seitenrahmen) aus `GameConfig.window_sill_depth`.
 - Sonnenschatten ohne `light_angular_distance` (PCSS zeigte Treppenkanten); weich macht sie
   `shadow_blur` mit dem Filter der Grafikstufe.
+- **Hellere Schatten draußen (seit Teil 4f2):** Himmelslicht `SkyFill` (DirectionalLight3D ohne
+  Schatten, main.tscn) wirkt nur auf Render-Ebene `GameConfig.OUTDOOR_RENDER_LAYER` (2);
+  `main.gd` setzt diese Ebene für alles unter Outside, EntranceSteps, UpperFloors und der
+  Bücherei-Fassade (auch später hinzukommende Knoten). Stärke/Farbe: `outdoor_fill_energy`,
+  `outdoor_fill_color`. Innen bleibt es dunkler (kein Füll-Licht im Raum).
 - **Oberflächen/Menüs:** Projekt nutzt Stretch-Modus `canvas_items` + `expand` (Basis 1600 x 900).
   Neue Menüs immer mit Anchors und Containern bauen, dann passen sie sich automatisch an.
   Menüs, deren Inhalt wachsen kann, dürfen nie höher als das Bild werden: feste Höhe über

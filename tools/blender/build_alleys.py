@@ -44,11 +44,23 @@ FLAG = Mat("paving", color=(1.0, 0.98, 0.94))
 SPEC = {"lintel": "flat", "sill": "stone", "frame_cream": True, "wall": "brick"}
 
 
-def house_back(b, a, c, height, mat, rnd, windows=True, roof=True, pipes=True, ivy_roots=(), ivy_holes=()):
+def _local_blocks(b, parts):
+    """Ecken (Welt-Koordinaten) als Kästen (lo, hi) in den aktuellen Bau-Koordinaten von b."""
+    inv = b.xf.inverted()
+    out = []
+    for p0, p1 in parts:
+        corners = [inv @ V(x, y, z) for x in (p0.x, p1.x) for y in (p0.y, p1.y) for z in (p0.z, p1.z)]
+        out.append((V(min(c.x for c in corners), min(c.y for c in corners), min(c.z for c in corners)),
+                    V(max(c.x for c in corners), max(c.y for c in corners), max(c.z for c in corners))))
+    return out
+
+
+def house_back(b, a, c, height, mat, rnd, windows=True, roof=True, pipes=True, ivy_roots=(), ivy_holes=(), parts=None):
     """Rückwand eines Hauses von a nach c (x, z), Vorderseite zeigt nach rechts der Linie a→c
     gesehen von oben (in die Gasse). Mit kleinen Fenstern, Fallrohr, Traufe und Dachansatz.
     ivy_roots = Stellen (entlang der Wand, Mitte = 0), an denen Efeu aus dem Boden wächst; er
-    lässt Fenster, Fallrohr und ivy_holes (Rechtecke) frei."""
+    lässt Fenster, Fallrohr und ivy_holes (Rechtecke) frei. parts = Liste, in die die Ecken
+    (Welt-Koordinaten) von Fensterbänken und Fallrohr kommen (für Töpfe davor)."""
     xf, ln = H._facade_xf(a, c)
     b.push(xf)
     half = ln / 2
@@ -66,22 +78,33 @@ def house_back(b, a, c, height, mat, rnd, windows=True, roof=True, pipes=True, i
                       rnd.choice(["closed", "nets", "blind"]), (x0 - 0.2, x1 + 0.2, y0 - 0.5, y1 + 0.3, 0.5), rnd, reveal=0.12)
     if roof:
         b.box((-half, height - 0.18, 0.0), (half, height, 0.25), H.CREAM, skip=("back",))
-        b.slab([V(-half, height, 0.35), V(half, height, 0.35), V(half, height + 1.6, -1.6), V(-half, height + 1.6, -1.6)], 0.06, SLATE)
-        b.cylinder(V(-half, height + 0.02, 0.32), 0.05, ln, H.LEAD, segments=6, caps=(True, True), axis="x")
+        b.slab([V(-half + 0.003, height, 0.35), V(half - 0.003, height, 0.35), V(half - 0.003, height + 1.6, -1.6), V(-half + 0.003, height + 1.6, -1.6)],
+               0.06, SLATE)
+        b.cylinder(V(-half + 0.003, height + 0.02, 0.32), 0.05, ln - 0.006, H.LEAD, segments=6, caps=(True, True), axis="x")
     blocked = [(x0 - 0.2, y0 - 0.3, x1 + 0.2, y1 + 0.35) for x0, y0, x1, y1 in holes] + list(ivy_holes)
+    pipe = None
     if pipes:
         # Fallrohr nur dort, wo es an keinem Fenster vorbeiläuft
         spots = [-half + 0.4 + 0.1 * k for k in range(int((ln - 0.8) / 0.1) + 1)]
         spots = [x for x in spots if all(x < x0 - 0.25 or x > x1 + 0.25 for x0, _, x1, _ in holes)]
         if spots:
             px = rnd.choice(spots)
-            b.cylinder(V(px, 0.0, 0.07), 0.04, height, H.LEAD, segments=8, caps=(True, True))
+            pipe = px
+            # Endet oben im Traufbrett (nicht genau auf dessen Oberkante)
+            b.cylinder(V(px, 0.0, 0.07), 0.04, height - (0.17 if roof else 0.0), H.LEAD, segments=8, caps=(True, True))
             blocked.append((px - 0.08, 0.0, px + 0.08, height + 1.0))
+            if parts is not None:
+                parts.append((xf @ V(px - 0.06, 0.0, 0.0), xf @ V(px + 0.06, height, 0.13)))
+    if parts is not None:
+        for x0, y0, x1, y1 in holes:
+            # Fensterbank und Rahmen ragen etwas vor die Wand
+            parts.append((xf @ V(x0 - 0.1, y0 - 0.2, 0.0), xf @ V(x1 + 0.1, y1 + 0.1, 0.2)))
     b.box((-half, 0.0, 0.0), (half, 0.28, 0.03), H.PLINTH, skip=("back", "bottom"))
     for x in ivy_roots:
         PL.ivy_wall(b, x, 0.0, min(height - 0.6, 4.2), rnd, x_min=-half + 0.05, x_max=half - 0.05, holes=blocked, stems=6,
                     spread=1.1, bumps=[(-half, 0.0, half, 0.32, 0.03)])
     b.pop()
+    return pipe
 
 
 def tree(b, x, z, rnd, height=5.8, space=None):
@@ -166,8 +189,12 @@ def library_alley():
     h = L["wall_height"]
     # Hauswände: Bücherei-Seite (hinter der Bücherei), gegenüber bis zum Garten, Garten rundherum
     # Richtung a → c so, dass die Vorderseite in die Gasse bzw. den Garten zeigt
-    house_back(b, (lx, L["library_back_z"]), (lx, end + 0.6), h, BRICKS[0], rnd)
-    house_back(b, (fx, gz), (fx, L["neighbor_back_z"]), h, BRICKS[1], rnd)
+    lib_parts, far_parts = [], []
+    lib_pipe = house_back(b, (lx, L["library_back_z"]), (lx, end + 0.6), h, BRICKS[0], rnd, parts=lib_parts)
+    if lib_pipe is not None:
+        # Rohr in Welt-z (Wand läuft von library_back_z bis end + 0,6 in +z)
+        lib_pipe += (L["library_back_z"] + end + 0.6) / 2
+    house_back(b, (fx, gz), (fx, L["neighbor_back_z"]), h, BRICKS[1], rnd, parts=far_parts)
     house_back(b, (gx, gz), (fx, gz), h - 0.6, RENDER, rnd)
     house_back(b, (gx, end + 0.6), (gx, gz), h - 0.4, BRICKS[2], rnd)
     # Hinten: niedriger Holzzaun, dahinter angedeutete Häuser mit Giebeln
@@ -206,9 +233,10 @@ def library_alley():
         pz = tz + 0.9 + math.sin(k) * 0.25
         b.cylinder(V(px, 0.0, pz), rnd.uniform(0.2, 0.26), 0.02, FLAG, segments=9, caps=(True, False))
     # Beete: Abstand zu den Hauswänden (Fensterbänke stehen vor), nichts in Zaun und Bank
-    garden = PL.Space().plane((gx, 0, 0), (1, 0, 0), gap=0.1).plane((0, 0, gz), (0, 0, 1), gap=0.1).plane((0, 0, fz - 0.03), (0, 0, -1)) \
-        .plane((lx, 0, 0), (-1, 0, 0), gap=0.1).floor(0.01).cylinder(tx, tz, 1.0, -1.0, 0.95)
-    tree(b, tx, tz, rnd, space=PL.Space().plane((gx, 0, 0), (1, 0, 0), gap=0.05).plane((lx, 0, 0), (-1, 0, 0), gap=0.05))
+    garden = PL.Space().plane((gx, 0, 0), (1, 0, 0), gap=0.2).plane((0, 0, gz), (0, 0, 1), gap=0.2).plane((0, 0, fz - 0.03), (0, 0, -1)) \
+        .plane((lx, 0, 0), (-1, 0, 0), gap=0.2).floor(0.01).cylinder(tx, tz, 1.0, -1.0, 0.95)
+    tree(b, tx, tz, rnd, space=PL.Space().plane((gx, 0, 0), (1, 0, 0), gap=0.25).plane((lx, 0, 0), (-1, 0, 0), gap=0.25)
+         .plane((0, 0, gz), (0, 0, 1), gap=0.25))
     round_bench(b, tx, tz, rnd)
     # Beete an den Rändern: Funkien, Farne, Hortensien, Buchs
     for k in range(9):
@@ -222,9 +250,22 @@ def library_alley():
     for pz in (gz + 1.2, gz + 2.6, gz + 4.2, end - 0.6):
         hosta(b, gx + 0.45, pz, rnd, space=garden)
     # In der Gasse: ein paar Töpfe und eine Wandlaterne
-    for pz, kind in ((6.5, "hydrangea"), (9.0, "lavender")):
-        x = lx - 0.35
-        PL.pot_plant(b, x, pz, kind, rnd, 0.17, 0.4, 0.2, palette="hydrangea", wall_z=None)
+    # Töpfe in unregelmäßigen Gruppen an der Wand der Bücherei (Rohr und Laterne bleiben frei)
+    b.push(b.move(lx, 0, 0) @ b.turn_y(-90))
+    for start, direction, count in ((5.25, 1, 3), (8.0, 1, 2)):
+        if lib_pipe is not None and abs(start + direction * 0.5 - lib_pipe) < 0.9:
+            start += 1.0 * direction
+        PL.pot_cluster(b, start, rnd, direction=direction, count=count, depth=0.62, max_len=1.0, wall_z=0.035,
+                       blocks=_local_blocks(b, lib_parts))
+    b.pop()
+    # Gegenüber an der Nachbarwand eine kleine Gruppe (lokal x = -Welt-z), nicht vor dem Fallrohr
+    b.push(b.move(fx, 0, 0) @ b.turn_y(90))
+    blocks = _local_blocks(b, far_parts)
+    start = -7.6
+    while any(lo.x - 0.75 < start < hi.x + 0.05 and lo.y < 0.5 for lo, hi in blocks) and start < -5.0:
+        start += 0.2
+    PL.pot_cluster(b, start, rnd, direction=1, count=2, depth=0.5, max_len=0.8, wall_z=0.035, blocks=blocks)
+    b.pop()
     b.push(b.move(lx, 0, 7.8) @ b.turn_y(-90))
     P.wall_lantern(b, 0.0, 2.7, 0.0)
     b.pop()
@@ -267,13 +308,14 @@ def opposite_alley():
     # Wände aus Bruchstein (hoch, wie Häuser), mit kleinen Fenstern, Efeu, Schild
     # Efeu an der linken Wand: lässt die Bögen frei (lokal x = Mitte der Wand - Welt-z)
     mid = (z0 + z_end) / 2
-    pots = [z0 - 1.6 - k * 3.8 for k in range(3)]
     arch_holes = [(mid - zz - 0.15, 0.0, mid - zz + 0.75, h) for zz in (z0 - 2.5, z0 - 6.5, z0 - 10.0)]
-    arch_holes += [(mid - pz - 0.35, 0.0, mid - pz + 0.35, 0.8) for k, pz in enumerate(pots) if k % 2 == 0]
+    # Wo links Töpfe stehen, wächst kein Efeu am Boden
+    arch_holes += [(mid - pz - 0.6, 0.0, mid - pz + 0.6, 0.9) for pz in (z0 - 1.5, z0 - 5.6, z0 - 9.4)]
+    wall_parts = []
     for xw, face in ((x0, 1), (x1, -1)):
         a, c = ((xw, z0), (xw, z_end)) if face > 0 else ((xw, z_end), (xw, z0))
         house_back(b, a, c, h, RUBBLE, rnd, windows=True, roof=False, pipes=False,
-                   ivy_roots=(mid - (z0 - 3.5), mid - (z0 - 7.6)) if face > 0 else (), ivy_holes=arch_holes)
+                   ivy_roots=(mid - (z0 - 3.5), mid - (z0 - 7.6)) if face > 0 else (), ivy_holes=arch_holes, parts=wall_parts)
     # Drei Bögen, der hinterste etwas tiefer
     for k, zz in enumerate((z0 - 2.5, z0 - 6.5, z0 - 10.0)):
         arch(b, x0, x1, zz, 0.6, 2.4 + 0.1 * k, h, RUBBLE, rnd)
@@ -285,11 +327,17 @@ def opposite_alley():
     P.wall_lantern(b, dx + 0.75, 2.6, z_end)
     b.box((x0 + 0.02, 0, z_end + 1.6), (x0 + 0.04, 6.0, z_end + 1.7), Mat("plain", color=(1.0, 0.9, 0.7), glow=0.15))
     # Ein paar kleine Töpfe dicht an den Wänden (Passanten kommen hier durch)
-    for k, pz in enumerate(pots):
-        side = x0 + 0.2 if k % 2 == 0 else x1 - 0.2
-        wall = ((x0 - 1.0, -1.0, pz - 1.0), (x0 + 0.06, 5.0, pz + 1.0)) if k % 2 == 0 else ((x1 - 0.06, -1.0, pz - 1.0), (x1 + 1.0, 5.0, pz + 1.0))
-        PL.pot_plant(b, side, pz, rnd.choice(["geranium", "lavender", "box_low"]), rnd, 0.11, 0.28, 0.13,
-                     palette=rnd.choice(["rose", "white", "red"]), blocks=[wall])
+    # Töpfe in Gruppen an beiden Wänden (Pflanzlöcher des Efeus und die Mitte bleiben frei)
+    for wall_x, turn, starts in ((x0, 90, ((z0 - 1.05, -1, 2), (z0 - 5.1, -1, 3), (z0 - 9.2, -1, 1))),
+                                 (x1, -90, ((z0 - 2.9, -1, 1), (z0 - 8.3, -1, 2)))):
+        b.push(b.move(wall_x, 0, 0) @ b.turn_y(turn))
+        for zz, direction, count in starts:
+            # lokal x läuft bei turn 90 entgegen Welt-z, bei -90 mit Welt-z
+            lx_ = -zz if turn == 90 else zz
+            d_ = direction if turn == -90 else -direction
+            PL.pot_cluster(b, lx_, rnd, direction=d_, count=count, depth=0.44, max_len=0.9, wall_z=0.035,
+                           blocks=[blk for blk in _local_blocks(b, wall_parts) if blk[0].z > -0.1])
+        b.pop()
     return b
 
 

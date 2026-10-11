@@ -98,6 +98,8 @@ SPECIAL = {
                                 panes="sash66", lintel="brick_arch", eaves_style="dentil"),
     "StraightEnd/Street2": dict(fachwerk=True, roof="front_gable", roof_mat="clay", jetty=0.3, ground_wall="stone", wall="render",
                                 wall_tone=1, joinery="dark_brown", accent="slate_blue", shutters=True, panes="casement"),
+    # Eckhaus am Platz neben dem Pub: die freie Seitenwand ganz mit Efeu bewachsen
+    "GateStreet/Bend1": dict(ivy_cover=True),
     "GateStreet/BehindOuter3": dict(fachwerk=True, roof="front_gable", roof_mat="clay", jetty=0.25, ground_wall="stone", wall="render"),
 }
 
@@ -228,6 +230,11 @@ def make_spec(house, block):
         "party_color": rnd.choice([(0.58, 0.33, 0.25), (0.52, 0.31, 0.24), (0.62, 0.38, 0.28)]),
         "downpipe_side": 1 if door_side < 0 else -1,
         "colors": {"wall": wall_color, "door": joinery, "accent": accent},
+        # Efeu bedeckt die freie Seitenwand ganz; Tiefe für Töpfe vor dem Haus (Bücherei-Seite
+        # hat den breiten Gehweg)
+        "ivy_cover": sp.get("ivy_cover", False),
+        "walk_depth": 0.62 if house["key"].startswith(("LibraryRow", "StraightEnd/Street", "GateStreet/Bend")) else 0.44,
+        "near": near,
     }
     if spec["steps"] and spec["door_style"] == "porch":
         spec["steps"] = 1
@@ -321,7 +328,7 @@ def landmark_spec(house, block):
                     # Teestube: schwarz mit Gold, rosa Raum; Wolle- und Stoffladen: taubenblau, heller Raum
                     shop="tea" if t == "corner_90" else "wool",
                     room_color=(0.88, 0.76, 0.74) if t == "corner_90" else (0.93, 0.9, 0.84),
-                    hanging_sign=True,
+                    hanging_sign=True, chalkboard=t == "corner_30",
                     colors={"wall": (0.62, 0.38, 0.28) if t == "corner_90" else (0.88, 0.84, 0.74),
                             "door": (0.07, 0.07, 0.08) if t == "corner_90" else JOINERY["dove_blue"],
                             "accent": (0.07, 0.07, 0.08) if t == "corner_90" else JOINERY["dove_blue"]})

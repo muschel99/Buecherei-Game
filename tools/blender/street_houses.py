@@ -153,7 +153,7 @@ def _shallow_room(b, rx0, rx1, fy, cy, z, depth, rnd, glow=0.12, floor=0):
     cx = (rx0 + rx1) / 2 + rnd.uniform(-0.25, 0.25)
     zb = z - depth
     choices = ["picture", "shelf", "clock", "mirror", "plant", "lamp", "nothing"]
-    weights = [2, 3, 1, 1, 2, 2, 2] if floor == 0 else [1, 1, 1, 0, 1, 1, 2]
+    weights = [2, 3, 1, 1, 2, 2, 2] if floor == 0 else [1, 1, 1, 0, 0, 1, 2]
     if floor > 0:
         choices.append("ceiling")
         weights.append(5)
@@ -243,7 +243,9 @@ def _living_room(b, rx0, rx1, fy, cy, z, depth, rnd):
             b.box((sx + 0.32, y, zz), (sx + 0.35, y + hgt, zz + t), Mat("plain", color=rnd.choice(CURTAINS), glow=0.08))
             zz += t + 0.004
     _inner_door(b, rx1, fy, zb + 1.3, zb + 2.15, -1, cy)
-    PL.indoor_plant(b, rx0 + 0.6, fy, z - 0.55, rnd, glow=0.06, room=((rx0 + 0.02, fy, z - depth + 0.02), (rx1 - 0.02, cy - 0.02, z - 0.12)))
+    on_rug = cx - 1.1 < rx0 + 0.6 < cx + 1.1 and zb + 1.1 < z - 0.55 < zb + 2.3
+    PL.indoor_plant(b, rx0 + 0.6, fy + (0.008 if on_rug else 0.0), z - 0.55, rnd, glow=0.06,
+                    room=((rx0 + 0.02, fy, z - depth + 0.02), (rx1 - 0.02, cy - 0.02, z - 0.12)))
 
 
 def _kitchen(b, rx0, rx1, fy, cy, z, depth, rnd):
@@ -352,7 +354,7 @@ def _lintel(b, style, x, x0, x1, top, w, spec):
             cx = x + s * (w / 2 + 0.1)
             b.box((cx - 0.04, top - 0.12, 0), (cx + 0.04, top + 0.08, 0.1), TRIM, skip=("back",))
     elif style == "timber":
-        b.box((x0 - 0.12, top, 0), (x1 + 0.12, top + 0.16, 0.035), TIMBER, skip=("back",))
+        b.box((x0 - 0.12, top + 0.003, 0), (x1 + 0.12, top + 0.183, 0.047), TIMBER, skip=("back",))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -380,7 +382,7 @@ def door_unit(b, spec, x, rnd):
         b.box((x - hw - 0.08, 0, z), (x + hw + 0.08, rise, 0.24), TRIM, skip=("back",))
         b.ramp(x - hw - 0.08, x + hw + 0.08, 0.26, 0.0, rise + 0.01)
     else:
-        b.box((x - hw, 0, z), (x + hw, 0.12, 0.02), TRIM, skip=("back",))
+        b.box((x - hw + 0.003, 0, z), (x + hw - 0.003, 0.12, 0.02), TRIM, skip=("back", "bottom"))
     if reveal > 0.13:
         # Tiefe Türnische (bei zwei Stufen): Laibung bis zur Tür weiterführen
         wm = wall_mat(spec.get("ground_wall", spec["wall"]))
@@ -429,8 +431,8 @@ def door_unit(b, spec, x, rnd):
         col = CREAM if rnd.random() < 0.5 else TRIM
         for side in (-1, 1):
             px = x + side * (hw + 0.1)
-            b.box((px - 0.09, 0, 0), (px + 0.09, top, 0.09), col, skip=("back",))
-            b.box((px - 0.11, 0, 0), (px + 0.11, 0.25, 0.11), col, skip=("back",))
+            b.box((px - 0.09, 0, 0), (px + 0.09, top, 0.09), col, skip=("back", "top", "bottom"))
+            b.box((px - 0.11, 0, 0), (px + 0.11, 0.25, 0.11), col, skip=("back", "bottom"))
             b.box((px - 0.11, top - 0.12, 0), (px + 0.11, top, 0.11), col, skip=("back",))
         b.box((x - hw - 0.24, top, 0), (x + hw + 0.24, top + 0.2, 0.1), col, skip=("back",))
         b.extrude_x([(0, top + 0.2), (0, top + 0.32), (0.18, top + 0.32), (0.18, top + 0.28), (0.12, top + 0.2)],
@@ -536,8 +538,11 @@ def balcony(b, kind, x, y_floor, w, rnd):
             b.beam(V(cx, y_floor - 0.45, 0.06), V(cx, y_floor - 0.12, d - 0.08), 0.1, 0.06, TRIM)
         _railing(b, [V(x0 + 0.04, y_floor, 0.0), V(x0 + 0.04, y_floor, d - 0.04), V(x1 - 0.04, y_floor, d - 0.04), V(x1 - 0.04, y_floor, 0.0)], 0.95)
         for cx in (x0 + 0.25, x1 - 0.25):
+            rail = [((x0 - 1.0, y_floor - 0.2, d - 0.07), (x1 + 1.0, y_floor + 1.2, d + 1.0)),
+                    ((x0 - 1.0, y_floor - 0.2, -1.0), (x0 + 0.07, y_floor + 1.2, d + 1.0)),
+                    ((x1 - 0.07, y_floor - 0.2, -1.0), (x1 + 1.0, y_floor + 1.2, d + 1.0))]
             PL.pot_plant(b, cx, d - 0.2, "geranium", rnd, 0.1, 0.2, 0.12, y=y_floor, palette=rnd.choice(["rose", "white", "coral", "red"]),
-                         collider=False)
+                         collider=False, blocks=rail, trailers=False, wall_z=0.0)
     else:
         x0, x1 = x - w / 2 - 0.05, x + w / 2 + 0.05
         _railing(b, [V(x0, y_floor, 0.0), V(x0, y_floor, 0.14), V(x1, y_floor, 0.14), V(x1, y_floor, 0.0)], 0.8)
@@ -563,7 +568,7 @@ def fence(b, w, z, gate_x0, gate_x1):
     for a0, a1 in ((-w + 0.02, gate_x0), (gate_x1, w - 0.02)):
         if a1 - a0 < 0.05:
             continue
-        b.box((a0, 0, z - 0.12), (a1, 0.35, z + 0.12), TRIM)
+        b.box((a0, 0, z - 0.12), (a1, 0.35, z + 0.12), TRIM, skip=("bottom",))
         b.box((a0 - 0.01, 0.35, z - 0.14), (a1 + 0.01, 0.4, z + 0.14), TRIM)
         n = int((a1 - a0) / 0.12)
         for k in range(n + 1):
@@ -573,20 +578,23 @@ def fence(b, w, z, gate_x0, gate_x1):
         b.tube([V(a0, 1.05, z), V(a1, 1.05, z)], 0.012, IRON, segments=4)
         b.tube([V(a0, 0.5, z), V(a1, 0.5, z)], 0.012, IRON, segments=4)
         for px in (a0, a1):
-            b.box((px - 0.11, 0, z - 0.11), (px + 0.11, 1.2, z + 0.11), TRIM)
+            b.box((px - 0.11, 0, z - 0.11), (px + 0.11, 1.2, z + 0.11), TRIM, skip=("bottom",))
             b.box((px - 0.13, 1.2, z - 0.13), (px + 0.13, 1.27, z + 0.13), TRIM)
     # Törchen (geschlossen)
-    n = int((gate_x1 - gate_x0) / 0.1)
-    for k in range(1, n):
-        x = gate_x0 + (gate_x1 - gate_x0) * k / n
+    # Stäbe zwischen den Pfosten (die Pfosten reichen 11 cm in die Lücke)
+    g0, g1 = gate_x0 + 0.13, gate_x1 - 0.13
+    n = max(1, int((g1 - g0) / 0.1))
+    for k in range(n + 1):
+        x = g0 + (g1 - g0) * k / n
         b.box((x - 0.009, 0.08, z - 0.009), (x + 0.009, 1.05, z + 0.009), IRON)
     b.tube([V(gate_x0 + 0.1, 1.0, z), V(gate_x1 - 0.1, 1.0, z)], 0.012, IRON, segments=4)
     b.tube([V(gate_x0 + 0.1, 0.15, z), V(gate_x1 - 0.1, 0.15, z)], 0.012, IRON, segments=4)
     b.colliders.append(((-w, 0, z - 0.15), (w, 1.2, z + 0.15)))
 
 
-def front_garden(b, w, setback, path_x, rnd):
-    """Vorgarten: Plattenweg zur Tür, Beete mit Lavendel, Buchs und Rosen."""
+def front_garden(b, w, setback, path_x, rnd, blocks=()):
+    """Vorgarten: Plattenweg zur Tür, Beete mit Lavendel, Buchs und Rosen. blocks = feste
+    Kästen (lo, hi) im Garten, z. B. der Erker."""
     z0, z1 = 0.0, -setback
     b.box((path_x - 0.5, 0, z1), (path_x + 0.5, 0.02, z0), Mat("paving", color=(0.92, 0.9, 0.86)), skip=("bottom",))
     for a0, a1 in ((-w, path_x - 0.5), (path_x + 0.5, w)):
@@ -595,15 +603,17 @@ def front_garden(b, w, setback, path_x, rnd):
         b.box((a0, 0, z1), (a1, 0.06, z0 - 0.15), Mat("plain", color=(0.24, 0.18, 0.13)), skip=("bottom",))
         # Beet: Hauswand hinten (z1), Zaun vorn (z0) – nichts wächst hinein
         space = PL.Space().floor(0.06).wall(z1, gap=0.01).block((a0 - 1, -1, z0 - 0.2), (a1 + 1, 2.0, z0 + 1.0))
+        for lo, hi in blocks:
+            space.block(lo, hi)
         PL.garden_bed(b, a0, a1, z1 + 0.25, z0 - 0.4, 0.06, rnd, space=space)
 
 
-def ivy(b, x, z, top, rnd, spread=0.8, holes=(), bumps=(), x_min=-1e9, x_max=1e9, pit=True, floor_y=None):
+def ivy(b, x, z, top, rnd, spread=0.8, holes=(), bumps=(), x_min=-1e9, x_max=1e9, pit=True, floor_y=None, cover=False):
     """Efeu an der Fassade (style_plants.ivy_wall): wächst aus einem kleinen Pflanzloch bei x die
     Wand hoch, lässt Fenster, Türen und Fallrohre (holes) frei und wächst über Gesimse (bumps =
     Rechtecke x0, y0, x1, y1, Vorderkante z) hinweg statt hindurch."""
     PL.ivy_wall(b, x, z, top, rnd, x_min=x_min, x_max=x_max, holes=holes, bumps=bumps, spread=spread,
-                stems=4 if spread < 0.6 else 6, pit=pit, floor_y=floor_y)
+                stems=(14 if cover else 4 if spread < 0.6 else 6), pit=pit, floor_y=floor_y, cover=cover)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -615,18 +625,18 @@ def timber_frame(b, x0, x1, y0, y1, holes, rnd, z=0.0):
     (abwechselnd) und Brüstungskreuze unter den Fenstern."""
     t = 0.16
     d = 0.035
-    b.box((x0, y0, z), (x1, y0 + t, z + d), TIMBER, skip=("back",))
-    b.box((x0, y1 - t, z), (x1, y1, z + d), TIMBER, skip=("back",))
+    b.box((x0 + 0.002, y0, z), (x1 - 0.002, y0 + t, z + d), TIMBER, skip=("back",))
+    b.box((x0 + 0.002, y1 - t, z), (x1 - 0.002, y1, z + d), TIMBER, skip=("back",))
     posts = {round(x0, 3), round(x1 - t, 3)}
     for hx0, hy0, hx1, hy1 in holes:
         posts.add(round(hx0 - t, 3))
         posts.add(round(hx1, 3))
-        b.box((hx0 - t, hy0 - t, z), (hx1 + t, hy0, z + d), TIMBER, skip=("back",))
-        b.box((hx0 - t, hy1, z), (hx1 + t, hy1 + t, z + d), TIMBER, skip=("back",))
-        # Andreaskreuz unter dem Fenster
+        b.box((hx0 - t + 0.003, hy0 - t, z), (hx1 + t - 0.003, hy0 - 0.004, z + d + 0.004), TIMBER, skip=("back",))
+        b.box((hx0 - t + 0.003, hy1, z), (hx1 + t - 0.003, hy1 + t, z + d + 0.004), TIMBER, skip=("back",))
+        # Andreaskreuz unter dem Fenster (die zweite Strebe liegt etwas tiefer)
         if hy0 - t - (y0 + t) > 0.35:
             _brace(b, hx0, y0 + t, hx1, hy0 - t, z, d)
-            _brace(b, hx1, y0 + t, hx0, hy0 - t, z, d)
+            _brace(b, hx1, y0 + t, hx0, hy0 - t, z, d, front=0.68)
     xs = sorted(p for p in posts if x0 - 0.01 <= p <= x1 - t + 0.01)
     for px in xs:
         b.box((px, y0 + t, z), (px + t, y1 - t, z + d), TIMBER, skip=("back",))
@@ -647,17 +657,19 @@ def timber_frame(b, x0, x1, y0, y1, holes, rnd, z=0.0):
             _brace(b, a, y0 + t, c, y1 - t, z, d)
         else:
             _brace(b, a, y0 + t, c, y1 - t, z, d)
-            _brace(b, c, y0 + t, a, y1 - t, z, d)
+            _brace(b, c, y0 + t, a, y1 - t, z, d, front=0.68)
 
 
-def _brace(b, xa, ya, xb, yb, z, d, width=0.13):
-    """Schräge Strebe von (xa, ya) nach (xb, yb) als flaches Brett vor der Wand."""
+def _brace(b, xa, ya, xb, yb, z, d, width=0.13, front=0.8):
+    """Schräge Strebe von (xa, ya) nach (xb, yb) als flaches Brett vor der Wand (Vorderseite bei
+    front · d – etwas hinter den Ständern, damit sich die Enden nicht mit ihnen decken)."""
     a, c = V(xa, ya, 0), V(xb, yb, 0)
     u = (c - a).normalized()
     n = V(-u.y, u.x, 0) * (width / 2)
     pts = [a - n, c - n, c + n, a + n]
-    b.slab([V(p.x, p.y, z + d * 0.8) for p in pts] if (pts[1] - pts[0]).cross(pts[2] - pts[0]).z > 0 else
-           [V(p.x, p.y, z + d * 0.8) for p in reversed(pts)], d * 0.8, TIMBER)
+    back = 0.002 if front > 0.75 else 0.004
+    b.slab([V(p.x, p.y, z + d * front) for p in pts] if (pts[1] - pts[0]).cross(pts[2] - pts[0]).z > 0 else
+           [V(p.x, p.y, z + d * front) for p in reversed(pts)], d * front - back, TIMBER)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -697,7 +709,8 @@ def roof_and_walls(b, spec):
     ridge_i = max(range(len(prof)), key=lambda i: prof[i][1])
     if spec["roof"] != "mansard":
         rz, ry = prof[ridge_i]
-        b.cylinder(V(-w, ry + 0.02, rz), 0.09, W, RIDGE if spec["roof_mat"] == "clay" else Mat("terracotta", color=(0.55, 0.55, 0.58)), segments=8, caps=(True, True), axis="x")
+        b.cylinder(V(-w + 0.003, ry + 0.02, rz), 0.09, W - 0.006, RIDGE if spec["roof_mat"] == "clay" else Mat("terracotta", color=(0.55, 0.55, 0.58)),
+                   segments=8, caps=(True, True), axis="x")
     for s in (-1, 1):
         x = s * w
         # Giebel über der Traufe (die Wand darunter baut _side_walls, mit Fenstern wo frei)
@@ -707,8 +720,13 @@ def roof_and_walls(b, spec):
         for i in range(len(prof) - 1):
             (za, ya), (zc, yc) = prof[i], prof[i + 1]
             pa, pc = V(xc, ya - 0.08, za), V(xc, yc - 0.08, zc)
-            b.beam(pa, pc, 0.3, 0.2, side)
-            b.beam(pa + V(0, 0.2, 0), pc + V(0, 0.2, 0), 0.34, 0.045, TRIM)
+            narrow = 0.004 * (i % 2)
+            b.beam(pa, pc, 0.3 - narrow, 0.2, side)
+            dd = (pc - pa).normalized() * 0.02
+            # Abdeckung genau auf der Mauerkrone (senkrecht zur Schräge versetzt, nicht lotrecht –
+            # sonst liegt ihre Oberseite fast in derselben Ebene wie die der Mauer)
+            up = (pc - pa).normalized().cross(V(0, 1, 0)).normalized().cross((pc - pa).normalized()).normalized()
+            b.beam(pa - dd + up * 0.2, pc + dd + up * 0.2, 0.34 - narrow, 0.045, TRIM)
         rz, ry = prof[ridge_i]
         b.box((xc - 0.18, ry + 0.08, rz - 0.2), (xc + 0.18, ry + 0.2, rz + 0.2), TRIM)
     b.quad(V(w, 0, -D), V(-w, 0, -D), V(-w, E, -D), V(w, E, -D), side)
@@ -758,7 +776,7 @@ def gable_triangle(b, spec, rnd):
     b.face([V(-half_at, top_y, 0), V(half_at, top_y, 0), V(0, E + rise, 0)], mat, (0, 0, 1))
     room = (-ww / 2 - 0.3, ww / 2 + 0.3, gy0 - 0.4, gy0 + wh + 0.2, 0.9)
     window_unit(b, spec, 0.0, gy0, ww, wh, "casement" if spec.get("fachwerk") else spec["panes"],
-                rnd.choice(["closed", "dim", "nets"]), room, rnd, reveal=0.12, lintel="timber" if spec.get("fachwerk") else "flat")
+                rnd.choice(["closed", "dim", "nets"]), room, rnd, reveal=0.12, lintel="timber" if spec.get("fachwerk") else "flat", floor=2)
     if spec.get("fachwerk"):
         t = 0.16
         b.box((-w, E, 0), (w, E + t, 0.035), TIMBER, skip=("back",))
@@ -828,7 +846,7 @@ def eaves(b, spec):
     else:
         b.extrude_x([(0, E - 0.25), (0, E), (0.28, E), (0.28, E - 0.07), (0.16, E - 0.13), (0.1, E - 0.25)],
                     -w - 0.01, w + 0.01, TRIM)
-    b.cylinder(V(-w, E + 0.03, 0.24), 0.055, W, LEAD, segments=8, caps=(True, True), axis="x")
+    b.cylinder(V(-w + 0.003, E + 0.03, 0.24), 0.055, W - 0.006, LEAD, segments=8, caps=(True, True), axis="x")
 
 
 def quoins(b, w, y0, y1):
@@ -846,12 +864,12 @@ def quoins(b, w, y0, y1):
 
 def string_course(b, w, y, style, wall):
     if style == "band":
-        b.box((-w, y - 0.06, 0), (w, y + 0.06, 0.05), TRIM, skip=("back",))
+        b.box((-w + 0.002, y - 0.06, 0), (w - 0.002, y + 0.06, 0.05), TRIM, skip=("back",))
     elif style == "double":
-        b.box((-w, y - 0.1, 0), (w, y - 0.04, 0.04), TRIM, skip=("back",))
-        b.box((-w, y + 0.02, 0), (w, y + 0.1, 0.06), TRIM, skip=("back",))
+        b.box((-w + 0.002, y - 0.1, 0), (w - 0.002, y - 0.04, 0.04), TRIM, skip=("back",))
+        b.box((-w + 0.002, y + 0.02, 0), (w - 0.002, y + 0.1, 0.06), TRIM, skip=("back",))
     elif style == "brick":
-        b.box((-w, y - 0.08, 0), (w, y + 0.08, 0.04), GAUGED[0], skip=("back",))
+        b.box((-w + 0.002, y - 0.08, 0), (w - 0.002, y + 0.08, 0.04), GAUGED[0], skip=("back",))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -939,7 +957,8 @@ def build_house(name, spec):
                         shutters=_shutter_space(ground_open, i, w, 0.05) if spec.get("shutters") else 0.0,
                         closed=spec.get("closed_ground", False) or rnd.random() < spec.get("closed_share", 0.0))
     if spec.get("quoins"):
-        quoins(b, w, 0.35, ys[-1] - 0.3)
+        # Bei Läden erst über dem Ladenfenster (die Pilaster stehen unten an der Kante)
+        quoins(b, w, ys[1] + 0.45 if shop else 0.35, ys[-1] - 0.3)
     # --- Obergeschosse ---
     for fl in range(1, len(storeys)):
         base, topy = ys[fl], ys[fl + 1]
@@ -991,7 +1010,12 @@ def build_house(name, spec):
                         shutters=_shutter_space(upper_open, i, w, 0.05) if spec.get("shutters") else 0.0, floor=fl,
                         closed=rnd.random() < spec.get("closed_share", 0.0))
             if spec.get("flower_boxes") and fl == 1 and (shop or rnd.random() < 0.7):
-                P.flower_box(b, x - ww / 2 - 0.04, x + ww / 2 + 0.04, f_y0 + 0.005, 0.0, 0.19, ACCENT,
+                # Vor Fensterläden, Fachwerk und Ecksteinen steht der Kasten etwas von der Wand ab;
+                # bei Läden bleibt er schmaler als das Fenster (die Läden schwingen daneben auf)
+                shutters_here = bool(spec.get("shutters"))
+                zb = 0.07 if shutters_here else (0.045 if spec.get("fachwerk") or spec.get("quoins") else 0.0)
+                half_box = ww / 2 - 0.03 if shutters_here else ww / 2 + 0.04
+                P.flower_box(b, x - half_box, x + half_box, f_y0 + 0.005, zb, zb + 0.19, ACCENT,
                              [rnd.choice(["rose", "white", "coral", "lavender"]), rnd.choice(["white", "rose", "lavender"])], seed=rnd.randrange(999))
         b.pop()
         if fl < len(storeys) and not spec.get("fachwerk"):
@@ -1014,25 +1038,29 @@ def build_house(name, spec):
         else:
             chimney(b, side * (w - 0.36), -spec["depth"] / 2, top - 0.6, top + rnd.uniform(0.8, 1.2), pots=rnd.randint(1, 4))
     if spec.get("downpipe", True):
-        b.cylinder(V((w - 0.1) * spec.get("downpipe_side", 1), 0.0, 0.07), 0.04, E + 0.05, LEAD, segments=8, caps=(True, True))
+        pipe_y = ys[1] + 0.145 if shop else 0.0
+        b.cylinder(V(pipe_x(spec), pipe_y, 0.07), 0.04, E + 0.05 - pipe_y, LEAD, segments=8, caps=(True, True))
     _side_walls(b, spec, rnd, ys)
     if spec.get("ivy"):
-        pipe_x = (w - 0.1) * spec.get("downpipe_side", 1)
-        ivy_holes.append((pipe_x - 0.08, 0.0, pipe_x + 0.08, E + 1.0))
+        px = pipe_x(spec)
+        ivy_holes.append((px - 0.08, 0.0, px + 0.08, E + 1.0))
         garden = spec.get("setback", 0.0) > 0.5
         ivy(b, spec["ivy"] * (w - 0.5), 0.0, ys[-1] * 0.85, rnd, spread=0.8, holes=ivy_holes, bumps=ivy_bumps,
             x_min=-w + 0.06, x_max=w - 0.06, pit=not garden, floor_y=0.07 if garden else None)
     if shop:
         SHOPFRONTS[shop][1](b, spec, rnd)
     # --- Vor dem Haus ---
-    if door_rect and spec.get("pots") and not shop:
-        dx = cols[door_i][0]
-        for s in spec["pots"]:
-            _door_pot(b, dx + s * (spec.get("door_width", 1.0) / 2 + 0.35 + (0.15 if spec.get("steps") else 0.0)), 0.25, rnd)
+    if not shop and setback <= 0 and spec.get("near", True):
+        _pot_groups(b, spec, rnd, cols, door_i if door_rect else -1, bay_i, w)
     b.pop()
     if setback > 0:
         px = cols[door_i][0] if door_rect else 0.0
-        front_garden(b, w, setback, px, rnd)
+        bay_block = []
+        if 0 <= bay_i < len(cols):
+            # Erker ragt in den Garten (Breite 1,1 + Schrägen 0,45, Tiefe 0,45)
+            bx = cols[bay_i][0]
+            bay_block = [((bx - 1.03, -0.1, -setback - 0.05), (bx + 1.03, storeys[0], -setback + 0.5))]
+        front_garden(b, w, setback, px, rnd, blocks=bay_block)
         fence(b, w, 0.12, px - 0.5, px + 0.5)
     return b
 
@@ -1138,8 +1166,13 @@ def _side_walls(b, spec, rnd, ys):
         if info and info[0] == "partial" and info[1] > 0.4:
             # Nur vorn ein Stück frei: Efeu statt Fenster
             lo_x, hi_x = sorted((s * 0.06, s * (info[1] - 0.06)))
-            ivy(b, s * info[1] / 2, 0.0, ys[-1] * 0.8, rnd, spread=min(0.9, info[1] / 2 - 0.1), x_min=lo_x, x_max=hi_x,
-                bumps=[(lo_x - 0.1, 0.0, hi_x + 0.1, 0.32, 0.035)])
+            cover = spec.get("ivy_cover", False)
+            bumps = [(lo_x - 0.1, 0.0, hi_x + 0.1, 0.32, 0.035)]
+            if spec.get("fachwerk"):
+                # Fachwerk-Hölzer stehen vor der Wand: der Efeu wächst darüber
+                bumps.append((lo_x - 0.1, ys[1] - 0.05, hi_x + 0.1, ys[-1] + 0.05, 0.045))
+            ivy(b, s * info[1] / 2, 0.0, (ys[-1] - 0.3) if cover else ys[-1] * 0.8, rnd, spread=min(0.9, info[1] / 2 - 0.1),
+                x_min=lo_x, x_max=hi_x, bumps=bumps, cover=cover)
         b.pop()
 
 
@@ -1158,9 +1191,49 @@ def _room_box(cols, i, w, floor_y, ceil_y, kind):
     return (left + 0.02, right - 0.02, floor_y, ceil_y, depth)
 
 
-def _door_pot(b, x, z, rnd):
-    kind = rnd.choice(["lavender", "box_ball", "cone", "geranium", "fern"])
-    PL.pot_plant(b, x, z, kind, rnd, 0.13, 0.35, 0.16, palette=rnd.choice(["rose", "red", "white"]))
+def _pot_groups(b, spec, rnd, cols, door_i, bay_i, w):
+    """Töpfe vor dem Haus in Gruppen (1–3 Töpfe verschiedener Größe dicht beieinander): neben
+    der Tür (spec["pots"] = Seiten) und manchmal eine zweite Gruppe an der Hausecke. Hält Abstand
+    zu Tür, Stufen, Säulen, Erker und Fallrohr."""
+    blocked = []
+    if door_i >= 0:
+        dx = cols[door_i][0]
+        hw = spec.get("door_width", 1.0) / 2
+        pad = (0.25 if spec["door_style"] in ("pilaster", "porch") else 0.08) + (0.14 if spec.get("steps") else 0.0)
+        blocked.append((dx - hw - pad, dx + hw + pad))
+    if bay_i >= 0:
+        blocked.append((cols[bay_i][0] - 1.15, cols[bay_i][0] + 1.15))
+    if spec.get("downpipe", True):
+        px = pipe_x(spec)
+        blocked.append((px - 0.08, px + 0.08))
+
+    def free_from(x, direction):
+        """Wie weit es ab x in Richtung direction frei ist (bis zur Hauskante)."""
+        edge = w - 0.04
+        limit = edge - x if direction > 0 else x + edge
+        for a, c in blocked:
+            if direction > 0 and a >= x - 1e-6:
+                limit = min(limit, a - x)
+            elif direction < 0 and c <= x + 1e-6:
+                limit = min(limit, x - c)
+        return limit
+    depth = spec.get("walk_depth", 0.44)
+    if door_i >= 0:
+        dx = cols[door_i][0]
+        for s in spec.get("pots", []):
+            a, c = blocked[0]
+            start = c + 0.01 if s > 0 else a - 0.01
+            room = free_from(start, s)
+            if room > 0.25:
+                span = PL.pot_cluster(b, start, rnd, direction=s, depth=depth, max_len=min(room, 1.0), wall_z=0.04)
+                blocked.append((span[0] - 0.05, span[1] + 0.05))
+    # Zweite Gruppe an der freien Hausecke (nur manchmal, unregelmäßig)
+    if rnd.random() < 0.45:
+        s = rnd.choice((-1, 1))
+        start = -s * (w - 0.06)
+        room = free_from(start, s)
+        if room > 0.3 and all(not (a <= start <= c) for a, c in blocked):
+            PL.pot_cluster(b, start, rnd, direction=s, depth=depth, max_len=min(room, 0.9), wall_z=0.04)
 
 
 def _dormer(b, spec, cx, rnd, gw=0.45):
@@ -1179,7 +1252,8 @@ def _dormer(b, spec, cx, rnd, gw=0.45):
     b.wall_with_holes(cx - gw, cx + gw, base, top, dz, [(cx - 0.28, win_lo, cx + 0.28, win_hi)], rm, reveal=0.08, reveal_mat=JOINERY)
     b.push(b.move(0, 0, dz))
     window_unit(b, spec, cx, win_lo, 0.56, win_hi - win_lo, "casement" if spec["panes"] == "casement" else "sash22",
-                rnd.choice(["closed", "dim", "nets"]), (cx - 0.4, cx + 0.4, base, top + 0.2, 0.6), rnd, reveal=0.08, lintel="none", sill=False)
+                rnd.choice(["closed", "dim", "nets"]), (cx - 0.4, cx + 0.4, base, top + 0.2, 0.6), rnd, reveal=0.08, lintel="none", sill=False,
+                floor=2)
     b.pop()
     b.quad(V(cx - gw, base, back), V(cx - gw, base, dz), V(cx - gw, top, dz), V(cx - gw, top, back), rm)
     b.quad(V(cx + gw, base, dz), V(cx + gw, base, back), V(cx + gw, top, back), V(cx + gw, top, dz), rm)
@@ -1206,7 +1280,7 @@ def _mansard_dormer(b, spec, cx, rnd, gw=0.42):
     b.wall_with_holes(cx - gw, cx + gw, base, top, dz, [(cx - 0.3, win_lo, cx + 0.3, win_hi)], JOINERY, reveal=0.06)
     b.push(b.move(0, 0, dz))
     window_unit(b, spec, cx, win_lo, 0.6, win_hi - win_lo, "sash22", rnd.choice(["closed", "dim", "nets", "blind"]),
-                (cx - 0.4, cx + 0.4, base, top, 0.5), rnd, reveal=0.06, lintel="none", sill=False)
+                (cx - 0.4, cx + 0.4, base, top, 0.5), rnd, reveal=0.06, lintel="none", sill=False, floor=2)
     b.pop()
     for s in (-1, 1):
         b.face([V(cx + s * gw, base, dz), V(cx + s * gw, top, dz), V(cx + s * gw, top, back), V(cx + s * gw, base, back)], rm, (s, 0, 0))
@@ -1222,7 +1296,8 @@ BOUQUETS = {"tulip": ["rose", "white", "yellow", "red", "coral"], "rose": ["rose
             "daisy": ["white", "white", "yellow"], "hydrangea": ["hydrangea", "white", "rose"], "lavender": [None], "greens": [None]}
 
 
-def _bucket(b, x, z, rnd, palette=None, height=0.32, radius=0.13, y=0.0, tall=False, blossoms=12, glow=0.0, before=None):
+def _bucket(b, x, z, rnd, palette=None, height=0.32, radius=0.13, y=0.0, tall=False, blossoms=12, glow=0.0, before=None, blocks=(),
+            behind=None):
     """Zinkeimer mit Wasser und einem Strauß (Stiele, Blätter, Blüten – style_plants.bouquet).
     before = z, vor dem nichts wächst (z. B. das Fahrrad davor)."""
     v = PL.vessel(b, x, z, radius * 0.85, height, radius, P.ZINC, y=y, lip=0.006, lip_h=0.02, soil_drop=0.045, wall=0.006,
@@ -1233,6 +1308,11 @@ def _bucket(b, x, z, rnd, palette=None, height=0.32, radius=0.13, y=0.0, tall=Fa
     space = PL.PotSpace(x, z, v["inner"], v["rim"], v["soil"], outer=v["outer"], ground=y)
     if before is not None:
         space.plane((0, 0, before), (0, 0, -1), gap=0.0)
+    if behind is not None:
+        # Nichts wächst nach hinten in Fensterbrüstung und Fensterbank
+        space.plane((0, 0, behind), (0, 0, 1), gap=0.0)
+    for lo, hi in blocks:
+        space.block(lo, hi)
     PL.bouquet(b, V(x, v["soil"], z), (0.55 if tall else 0.34) * max(0.75, radius / 0.13), v["inner"], rnd, kind, pal, space, glow,
                count=max(5, int(blossoms * 1.3)))
 
@@ -1285,7 +1365,7 @@ def shopfront_flowers(b, spec, rnd, s0):
         b.box((lo_x, 0, 0), (hi_x, sill - 0.05, 0.1), JOINERY, skip=("back",))
         b.frame(lo_x + 0.1, 0.12, hi_x - 0.1, sill - 0.17, 0.1, 0.12, 0.03, JOINERY)
         b.box((lo_x - 0.01, sill - 0.05, 0), (hi_x + 0.01, sill + 0.02, 0.16), JOINERY, skip=("back",))
-        b.box((lo_x, transom, -0.03), (hi_x, transom + 0.07, jz), JOINERY)
+        b.box((lo_x + 0.003, transom, -0.03), (hi_x - 0.003, transom + 0.07, jz), JOINERY)
         for xx in (lo_x, hi_x - 0.05):
             b.box((xx, sill + 0.02, -0.03), (xx + 0.05, head, jz - 0.02), JOINERY, skip=("top", "bottom"))
         gz = 0.06
@@ -1304,7 +1384,7 @@ def shopfront_flowers(b, spec, rnd, s0):
             x = lo_x + 0.25
             while x < hi_x - 0.2:
                 with PL.detail(0.75):
-                    _bucket(b, x, dz0 - 0.16, rnd, y=sill - 0.04 + dy, height=0.24, radius=0.1, tall=k == 1, blossoms=8)
+                    _bucket(b, x, dz0 - 0.16, rnd, y=sill - 0.04 + dy, height=0.24, radius=0.1, tall=k == 1, blossoms=8, before=-0.05)
                 x += rnd.uniform(0.3, 0.38)
     # Glastür in der Mitte mit Oberlicht
     x0, x1 = -door_half, door_half
@@ -1359,8 +1439,8 @@ def shopfront_flowers(b, spec, rnd, s0):
     _bucket(b, 0.5, -3.7, rnd, y=1.04, height=0.2, radius=0.09)
     for k in range(6):
         hx = -1.4 + k * 0.55
-        b.tube([V(hx, ceil_y, -2.2), V(hx, ceil_y - 0.2, -2.2)], 0.004, Mat("plain", color=(0.6, 0.55, 0.4)), segments=3)
-        PL.dried_bunch(b, V(hx, ceil_y - 0.2, -2.2), 0.32, rnd, glow=0.08)
+        b.tube([V(hx, ceil_y, -1.95), V(hx, ceil_y - 0.2, -1.95)], 0.004, Mat("plain", color=(0.6, 0.55, 0.4)), segments=3)
+        PL.dried_bunch(b, V(hx, ceil_y - 0.2, -1.95), 0.32, rnd, glow=0.08)
     for z in (-1.4, -3.0):
         b.tube([V(0, ceil_y, z), V(0, ceil_y - 0.5, z)], 0.006, LEAD, segments=4)
         b.sphere(V(0, ceil_y - 0.62, z), 0.13, Mat("plain", color=(1.0, 0.88, 0.66), glow=1.0), rings=5, segments=10)
@@ -1380,41 +1460,53 @@ def shopfront_flowers(b, spec, rnd, s0):
                       soil_drop=0.07, wall=0.003, soil_mat=Mat("plain", color=(0.7, 0.64, 0.52), glow=g * 0.3), segments=8)
         kind = rnd.choice(["rose", "tulip", "daisy", "rose"])
         PL.bouquet(b, V(px, v["soil"], pz), 0.26, v["inner"], rnd, kind, rnd.choice(BOUQUETS[kind]),
-                   PL.PotSpace(px, pz, v["inner"], v["rim"], v["soil"], outer=v["outer"], ground=floor_y + 0.8), g * 0.5, count=8)
-    for y in (0.95, 1.5, 2.05):
+                   PL.PotSpace(px, pz, v["inner"], v["rim"], v["soil"], outer=v["outer"], ground=floor_y + 0.8), g * 0.5, count=8,
+                   greens=False)
+    shelf_ys = (0.95, 1.5, 2.05)
+    for si, y in enumerate(shelf_ys):
         b.box((-xi + 0.3, y - 0.03, zb), (xi - 0.3, y, zb + 0.3), wood)
+        # Das nächste Brett darüber: Alles bleibt darunter
+        above = [(V(0, shelf_ys[si + 1] - 0.03, 0), V(0, -1, 0), 0.015)] if si + 1 < len(shelf_ys) else []
         x = -xi + 0.45
         while x < xi - 0.4:
             with PL.detail(0.7):
                 PL.pot_plant(b, x, zb + 0.15, rnd.choice(["geranium", "fern", "box_low", "daisy", "lavender"]), rnd, 0.07, 0.13, 0.09, y=y,
-                             palette=rnd.choice(["rose", "white", "red", "coral"]), glow=g * 0.5, collider=False, wall_z=zb + 0.005)
+                             palette=rnd.choice(["rose", "white", "red", "coral"]), glow=g * 0.5, collider=False, wall_z=zb + 0.005,
+                             planes=above)
             x += rnd.uniform(0.4, 0.5)
     for k in range(5):
         hx = -1.6 + k * 0.8
-        hz = -2.2 if k == 2 else -1.5 - (k % 2) * 0.9
+        hz = -2.68 if k == 2 else -1.5 - (k % 2) * 0.9
         # Hängetopf an drei Schnüren mit Efeu und Lobelien
         v = PL.vessel(b, hx, hz, 0.1, 0.18, 0.13, Mat("terracotta", glow=g * 0.5), y=ceil_y - 0.7)
         for q in range(3):
             a = 2 * math.pi * q / 3
             b.tube([V(hx, ceil_y, hz), V(hx + math.cos(a) * v["outer"], v["rim"], hz + math.sin(a) * v["outer"])], 0.003,
                    Mat("plain", color=(0.5, 0.45, 0.35)), segments=3)
+        # Die Ranken wachsen nicht in die Hängelampen (Mitte, z = -1,4 und -3,0)
+        lamps = [((-0.17, ceil_y - 0.8, lz - 0.17), (0.17, ceil_y, lz + 0.17)) for lz in (-1.4, -3.0)]
         PL.potted(b, hx, hz, v["rim"], v["inner"], v["soil"], "trailing", rnd, rnd.choice(["white", "blue"]), g * 0.5,
-                  outer_r=v["outer"], ground=floor_y)
+                  outer_r=v["outer"], ground=floor_y, blocks=lamps)
     b.push(b.move(xi, 0, -2.6) @ b.turn_y(-90))
     PL.wreath(b, V(0.0, 1.9, 0.0), 0.25, rnd, glow=g * 0.5)
     b.pop()
     b.cylinder(V(1.3, floor_y, -1.3), 0.12, 0.25, P.ZINC, segments=10, caps=(True, True))
     b.tube([V(1.42, floor_y + 0.12, -1.3), V(1.6, floor_y + 0.3, -1.3)], 0.015, P.ZINC, segments=5)
-    for x, z in ((-1.4, -3.9), (-1.0, -3.95), (1.1, -3.9), (1.45, -3.85), (-1.6, -1.2)):
-        _bucket(b, x, z, rnd, height=0.32, radius=0.12, tall=rnd.random() < 0.5, blossoms=8)
+    for x, z in ((-1.45, -3.95), (-1.2, -3.22), (1.25, -3.22), (1.5, -3.9), (-1.6, -1.2)):
+        _bucket(b, x, z, rnd, height=0.32, radius=0.12, y=floor_y, tall=rnd.random() < 0.5, blossoms=8)
     detail.__exit__()
     # Grün über dem Schild: Pflanztrog auf dem Gesims, Ranken hängen herab, an den Pilastern
-    # lange Efeuranken
-    PL.ledge_planter(b, -w + 0.02, w - 0.02, s0 + 0.14, 0.03, 0.27, rnd, ["rose", "white", "lavender"], Mat("timber"), 0.29,
-                     trail=0.42, long_trails=[(side * (w - 0.08 - k * 0.07), rnd.uniform(0.6, 1.3)) for side in (-1, 1) for k in range(4)])
+    # lange Efeuranken (neben dem Arm der Hängekörbe bei w - pil / 2 vorbei)
+    px0, px1 = _planter_span(spec, -w + 0.02, w - 0.02)
+    PL.ledge_planter(b, px0, px1, s0 + 0.14, 0.045, 0.27, rnd, ["rose", "white", "lavender"], Mat("timber"), 0.29,
+                     trail=0.42, long_trails=[(min(px1 - 0.06, max(px0 + 0.06, side * (w - off))), rnd.uniform(0.6, 1.3))
+                                              for side in (-1, 1) for off in (0.04, 0.26, 0.3)],
+                     wall_z=0.045 if spec.get("quoins") else 0.0,
+                     blocks=[((side * (w - pil / 2) - 0.04, fascia_lo - 0.7, 0.1), (side * (w - pil / 2) + 0.04, fascia_lo - 0.2, 0.68))
+                             for side in (-1, 1)])
     # Hängekörbe an beiden Pilastern
     for side in (-1, 1):
-        P.hanging_basket(b, side * (w - pil / 2), fascia_lo - 0.25, 0.15, 0.45, seed=rnd.randrange(999))
+        P.hanging_basket(b, side * (w - pil / 2), fascia_lo - 0.25, 0.15, 0.45, seed=rnd.randrange(999), variant="summer" if side < 0 else "cascade")
 
 
 def shop_outside_flowers(b, spec, rnd):
@@ -1423,32 +1515,42 @@ def shop_outside_flowers(b, spec, rnd):
     "chalkboard"); oben Hängekörbe an beiden Ecken und ein Hängeschild (Bild "hanging")."""
     w = spec["width"] / 2
     E = spec["eaves"]
-    # Links: niedriges Regal unter dem Fenster, davor das Fahrrad
-    x0, x1 = -w + 0.45, -0.8
+    # Links: niedriges Regal unter dem Fenster, davor das Fahrrad; links und rechts daneben je
+    # ein hoher Eimer auf dem Boden (nicht im Regal)
+    x0, x1 = -w + 0.65, -0.95
     b.box((x0, 0.0, 0.05), (x1, 0.45, 0.42), Mat("timber"))
+    # Fahrrad davor (Rahmen bei z = 0,62, Korb ab z = 0,45, Lenker reicht bis z = 0,37): Sträuße
+    # bleiben vor z = 0,43 und wachsen nicht in den Lenker
+    bike_x = (x0 + x1) / 2 - 0.05
+    handlebar = ((bike_x + 0.37, 0.9, 0.3), (bike_x + 0.53, 1.06, 0.95))
     x = x0 + 0.17
     while x < x1 - 0.1:
-        _bucket(b, x, 0.24, rnd, y=0.45, height=0.22, radius=0.1, blossoms=9, before=0.34)
+        _bucket(b, x, 0.29, rnd, y=0.45, height=0.22, radius=0.1, blossoms=9, before=0.43, behind=0.18, blocks=(handlebar,))
         x += 0.27
     b.colliders.append(((x0, 0, 0.05), (x1, 0.9, 0.42)))
-    _bicycle(b, (x0 + x1) / 2 - 0.05, 0.62, rnd)
-    for xx in (x0 + 0.05, x1 + 0.02):
-        _bucket(b, xx, 0.28, rnd, height=0.34, radius=0.13, tall=True, blossoms=10, before=0.34)
+    _bicycle(b, bike_x, 0.62, rnd)
+    pilaster = ((-w - 0.05, 0.0, -0.1), (-w + 0.37, 3.0, 0.2))
+    for xx, zz, front in ((-w + 0.32, 0.33, 0.52), (x1 + 0.17, 0.3, 0.44)):
+        _bucket(b, xx, zz, rnd, height=0.34, radius=0.12, tall=True, blossoms=10, before=front, blocks=(pilaster, handlebar),
+                behind=0.165)
+    b.colliders.append(((-w + 0.17, 0, 0.2), (-w + 0.47, 0.8, 0.52)))
     # Rechts: Blumenstufe (drei Stufen) und Eimer am Boden
     x0, x1 = 0.8, w - 0.5
-    for k, (zz, hh) in enumerate(((0.47, 0.25), (0.3, 0.5), (0.13, 0.75))):
-        b.box((x0, 0, zz - 0.17), (x1, hh, zz + 0.17), Mat("timber"))
-        x = x0 + 0.17
+    # Hintere Stufe vor der Fensterbrüstung (die reicht bis z = 0,16), vordere davor
+    b.box((x0, 0, 0.17), (x1, 0.6, 0.42), Mat("timber"))
+    b.box((x0, 0, 0.42), (x1, 0.3, 0.67), Mat("timber"), skip=("back",))
+    for k, (zz, hh) in enumerate(((0.545, 0.3), (0.295, 0.6))):
+        x = x0 + 0.15
         while x < x1 - 0.12:
-            _bucket(b, x, zz, rnd, y=hh, height=0.22, radius=0.09, tall=k == 2, blossoms=9)
-            x += 0.26
-    b.colliders.append(((x0, 0, -0.06), (x1, 0.9, 0.64)))
+            _bucket(b, x, zz, rnd, y=hh, height=0.22, radius=0.095, tall=k == 1, blossoms=9, behind=0.18)
+            x += 0.25
+    b.colliders.append(((x0, 0, 0.17), (x1, 0.9, 0.67)))
     _bucket(b, x0 - 0.18, 0.62, rnd, height=0.34, radius=0.14, tall=True, blossoms=10)
     b.colliders.append(((x0 - 0.34, 0, 0.46), (x0 - 0.02, 0.8, 0.78)))
     P.chalkboard(b, w - 0.3, 0.72, Mat("plain", sign="chalkboard"), facing=-12)
     # Oben: Hängekörbe an den Ecken und das grüne Hängeschild
     for side in (-1, 1):
-        P.hanging_basket(b, side * (w - 0.35), E - 0.45, 0.04, 0.5, seed=rnd.randrange(999))
+        P.hanging_basket(b, side * (w - 0.35), E - 0.45, 0.04, 0.5, seed=rnd.randrange(999), variant="fuchsia")
     P.projecting_sign(b, 0.15, E - 0.75, 0.0, Mat("paint", "door"), Mat("plain", sign="hanging"))
 
 
@@ -1476,14 +1578,35 @@ def _bicycle(b, x, z, rnd):
     # Korb mit Blumen
     wicker = Mat("plain", color=(0.62, 0.48, 0.3))
     soil = PL.trough(b, 0.5, 0.82, 0.78, -0.17, 0.17, 0.2, wicker, soil_drop=0.03, wall=0.012)
-    # Korb am Lenker festgeschraubt, unten eine Strebe zur Gabel
+    # Korb am Lenker festgeschraubt, unten eine Strebe zur Gabel (gehören zum Korb)
     for zz in (-0.1, 0.1):
         b.tube([V(0.45, 0.98, zz), V(0.5, 0.93, zz)], 0.006, IRON, segments=4)
     b.tube([V(0.6, 0.78, 0.0), V(0.56, 0.4, 0.0)], 0.006, IRON, segments=4)
+    PL.extend_last_vessel(b)
     space = PL.BoxSpace(0.5, 0.82, -0.17, 0.17, 0.98, soil, wall=0.012)
     PL.bouquet(b, V(0.6, soil, -0.06), 0.24, 0.1, rnd, "rose", "rose", space, count=6)
     PL.bouquet(b, V(0.72, soil, 0.06), 0.22, 0.1, rnd, "daisy", "white", space, count=7)
     PL.bouquet(b, V(0.66, soil, 0.0), 0.3, 0.08, rnd, "lavender", "rose", space, count=10)
+    # Viel Grün im Korb: Laubzweige über alle Ränder, Efeu und Hängepetunien hängen herab
+    n_greens = 14
+    for k in range(n_greens):
+        t = k / n_greens
+        if t < 0.25:
+            start, out = V(0.52 + 0.28 * (t / 0.25), soil, -0.13), V(0, 0, -1)
+        elif t < 0.5:
+            start, out = V(0.79, soil, -0.13 + 0.26 * ((t - 0.25) / 0.25)), V(1, 0, 0)
+        elif t < 0.75:
+            start, out = V(0.8 - 0.28 * ((t - 0.5) / 0.25), soil, 0.13), V(0, 0, 1)
+        else:
+            start, out = V(0.53, soil, 0.13 - 0.26 * ((t - 0.75) / 0.25)), V(-1, 0, 0)
+        along = (out * 0.6 + V(0, 1.0, 0)).normalized()
+        PL.card(b, start, along, V(0, 1, 0) - along * along.y + out * 0.2, rnd.uniform(0.13, 0.18), 0.11,
+                PL.leaf_mat("leaf_spray", rnd), rows=3, fold=0.2, curl=rnd.uniform(1.1, 1.5), space=space)
+    for start, out, kind in ((V(0.6, soil, 0.1), V(0, 0, 1), "ivy"), (V(0.74, soil, 0.1), V(0, 0, 1), "petunia"),
+                             (V(0.77, soil, -0.05), V(1, 0, 0), "ivy"), (V(0.77, soil, 0.06), V(1, 0, 0), "lobelia"),
+                             (V(0.6, soil, -0.1), V(0, 0, -1), "ivy")):
+        PL.trailing_ivy(b, start, rnd.uniform(0.25, 0.42), rnd, out, space, leaf_size=0.045, kind=kind,
+                        palette={"petunia": "rose", "lobelia": "white"}.get(kind), over=0.07, lift=0.2 - (soil - 0.78) + 0.02)
     b.pop()
     b.colliders.append(((x - 0.95, 0, z - 0.2), (x + 0.95, 1.1, z + 0.2)))
 
@@ -1685,7 +1808,7 @@ def shopfront_pub(b, spec, rnd, s0):
             b.box((xx, sill + 0.02, zf - 0.02), (xx + 0.06, head, jz - 0.02), JOINERY, skip=("top", "bottom"))
         gz = 0.06
         b.quad(V(lo_x, sill + 0.02, gz), V(hi_x, sill + 0.02, gz), V(hi_x, head, gz), V(lo_x, head, gz), CLEAR)
-        b.box((lo_x, transom - 0.03, gz - 0.02), (hi_x, transom + 0.03, jz - 0.03), JOINERY)
+        b.box((lo_x + 0.003, transom - 0.03, gz - 0.02), (hi_x - 0.003, transom + 0.03, jz - 0.03), JOINERY)
         b.glazing_bars(lo_x + 0.06, transom + 0.03, hi_x - 0.06, head, gz - 0.02, jz - 0.04, 4, 1, 0.022, JOINERY)
         mid = (lo_x + hi_x) / 2
         b.box((mid - 0.025, sill + 0.02, gz - 0.02), (mid + 0.025, transom, jz - 0.03), JOINERY)
@@ -1697,7 +1820,11 @@ def shopfront_pub(b, spec, rnd, s0):
                 yy = sill + 0.75 - r * 0.13
                 b.box((lo_x + 0.3, yy, -0.215), (lo_x + 0.3 + rnd.uniform(0.2, 0.36), yy + 0.02, -0.212), Mat("plain", color=(0.9, 0.9, 0.86), glow=0.2))
         else:
-            PL.pot_plant(b, mid, -0.15, "fern", rnd, 0.1, 0.18, 0.12, y=sill + 0.02, glow=0.05, collider=False)
+            # Nichts wächst durch Glas, Mittelsprosse und Seitenpfosten
+            posts = [((lo_x - 0.2, sill, zf - 0.5), (lo_x + 0.065, head, 1.0)), ((hi_x - 0.065, sill, zf - 0.5), (hi_x + 0.2, head, 1.0))]
+            glass = [(V(0, 0, gz - 0.025), V(0, 0, -1), 0.006)]
+            PL.pot_plant(b, mid, -0.15, "fern", rnd, 0.1, 0.18, 0.12, y=sill + 0.02, glow=0.05, collider=False, blocks=posts,
+                         planes=glass)
     # --- Tür in tiefer Nische: Laibung und Decke als feste Blöcke (kein Durchblick) ---
     x0, x1 = -door_half, door_half
     for lo, hi in ((x0 - post, x0), (x1, x1 + post)):
@@ -1718,10 +1845,12 @@ def shopfront_pub(b, spec, rnd, s0):
     # Efeu über dem Schild, Ranken an den Seiten
     # Efeu wächst oben auf dem Gesims entlang (aus einem Kasten an der Ecke) und hängt in Ranken
     # herab, an den Pilastern bis weit hinunter
-    soil = PL.trough(b, -w + 0.02, -w + 0.46, s0 + 0.12, 0.03, 0.26, 0.14, JOINERY)
-    PL.ivy_garland(b, -w + 0.1, w - 0.02, s0 + 0.12, 0.3, rnd, drop_max=1.1, leaf_size=0.065,
+    tside = -1 if pipe_x(spec) > 0 else 1
+    tx0, tx1 = sorted((tside * (w - 0.02), tside * (w - 0.46)))
+    soil = PL.trough(b, tx0, tx1, s0 + 0.12, 0.03, 0.26, 0.14, JOINERY)
+    PL.ivy_garland(b, -w + 0.1, w - 0.1, s0 + 0.12, 0.3, rnd, drop_max=1.1, leaf_size=0.065,
                    side_drops=[(side * (w - 0.08 - k * 0.06), rnd.uniform(1.2, 2.4)) for side in (-1, 1) for k in range(5)],
-                   source=(-w + 0.02, -w + 0.46, soil, s0 + 0.26, 0.03, 0.26))
+                   source=(tx0, tx1, soil, s0 + 0.26, 0.03, 0.26), pipe=pipe_x(spec), lanes=3)
     P.projecting_sign(b, w - 0.15, s0 + 0.95, 0.0, JOINERY, Mat("plain", sign="hanging"), round_=True)
 
 
@@ -1743,7 +1872,22 @@ def pub_outside(b, spec, rnd):
     b.colliders.append(((tx - 0.75, 0, tz - 0.32), (tx + 0.75, 0.9, tz + 0.32)))
     P.chalkboard(b, -w + 0.55, 0.5, Mat("plain", sign="chalkboard"), facing=8)
     for x in (-0.95, 0.95):
-        PL.pot_plant(b, x, 0.32, "box_ball", rnd, 0.17, 0.42, 0.2)
+        PL.pot_plant(b, x, 0.42, "box_ball", rnd, 0.17, 0.42, 0.2, wall_z=0.18)
+
+
+def pipe_x(spec):
+    """Lage des Fallrohrs an der Front (x)."""
+    return (spec["width"] / 2 - 0.1) * spec.get("downpipe_side", 1)
+
+
+def _planter_span(spec, x0, x1, margin=0.08):
+    """Pflanztrog auf dem Gesims: auf der Seite des Fallrohrs davor aufhören."""
+    if not spec.get("downpipe", True):
+        return x0, x1
+    px = pipe_x(spec)
+    if px > 0:
+        return x0, min(x1, px - 0.04 - margin)
+    return max(x0, px + 0.04 + margin), x1
 
 
 def shop_shell(b, spec, rnd, s0, wall_color, floor_mat, glow=0.16, door_half=0.5):
@@ -1798,7 +1942,7 @@ def shop_shell(b, spec, rnd, s0, wall_color, floor_mat, glow=0.16, door_half=0.5
             b.box((xx, sill + 0.02, zf - 0.02), (xx + 0.05, head, jz - 0.02), JOINERY, skip=("top", "bottom"))
         gz = 0.06
         b.quad(V(lo_x, sill + 0.02, gz), V(hi_x, sill + 0.02, gz), V(hi_x, head, gz), V(lo_x, head, gz), CLEAR)
-        b.box((lo_x, transom - 0.03, gz - 0.02), (hi_x, transom + 0.03, jz - 0.03), JOINERY)
+        b.box((lo_x + 0.003, transom - 0.03, gz - 0.02), (hi_x - 0.003, transom + 0.03, jz - 0.03), JOINERY)
         n = max(3, int((hi_x - lo_x) / 0.3))
         b.glazing_bars(lo_x + 0.05, transom + 0.03, hi_x - 0.05, head, gz - 0.02, jz - 0.04, n, 1, 0.022, JOINERY)
         mid = (lo_x + hi_x) / 2
@@ -1909,7 +2053,8 @@ def shopfront_wool(b, spec, rnd, s0):
             x += 0.2
     # Grün über dem Schild
     w = m["w"]
-    PL.ledge_planter(b, -w + 0.02, w - 0.02, s0 + 0.14, 0.03, 0.27, rnd, ["white", "lavender"], Mat("timber"), 0.29, trail=0.45)
+    px0, px1 = _planter_span(spec, -w + 0.02, w - 0.02)
+    PL.ledge_planter(b, px0, px1, s0 + 0.14, 0.03, 0.27, rnd, ["white", "lavender"], Mat("timber"), 0.29, trail=0.45)
     P.projecting_sign(b, w - 0.15, s0 + 0.9, 0.0, JOINERY, Mat("plain", sign="hanging"))
 
 
@@ -1940,6 +2085,7 @@ def _basket(b, x, y, z, r, h, g=0.0, fill=None, fill_color=(0.7, 0.62, 0.5)):
               soil_mat=Mat("fabric", color=fill_color, glow=g), segments=12)
     ring = [V(x + r * math.cos(a), y + h, z + r * math.sin(a)) for a in [2 * math.pi * k / 16 for k in range(17)]]
     b.tube(ring, 0.012, Mat("plain", color=(0.55, 0.4, 0.24), glow=g), segments=4, caps=False)
+    PL.extend_last_vessel(b)
 
 
 def _fairy_wire(b, xa, xb, s0, s1, ybase, z, top):
@@ -1989,10 +2135,10 @@ def shopfront_bakery(b, spec, rnd, s0):
         b.box((-xi + 0.05, y - 0.03, zb), (xi - 0.05, y, zb + 0.4), wood)
         x = -xi + 0.2
         while x < xi - 0.15:
-            if rnd.random() < 0.35:
-                _basket(b, x + 0.08, y, zb + 0.2, 0.13, 0.12, g * 0.4)
+            if rnd.random() < 0.35 and x + 0.08 + 0.13 < xi - 0.06:
+                _basket(b, x + 0.08, y, zb + 0.2, 0.13, 0.12, g * 0.4, fill=0.06)
                 for q in range(3):
-                    _loaf(b, x + 0.03 + q * 0.06, y + 0.08, zb + 0.2, rnd, g)
+                    _loaf(b, x + 0.08 + (q - 1) * 0.055, y + 0.06, zb + 0.2 + (0.03 if q == 1 else -0.02), rnd, g, size=0.045)
                 x += 0.32
             else:
                 _loaf(b, x, y, zb + 0.2, rnd, g)
@@ -2034,7 +2180,7 @@ def shopfront_bakery(b, spec, rnd, s0):
         b.sphere(V(sx, fy + 0.28, sz), 0.24, Mat("fabric", color=(0.88, 0.82, 0.7), glow=g * 0.5), rings=5, segments=9, squash=1.25)
     _basket(b, -xi + 0.4, fy, zb + 3.2, 0.24, 0.3, g * 0.4, fill=0.03)
     for q in range(6):
-        b.push(b.move(-xi + 0.4 + rnd.uniform(-0.08, 0.08), fy + 0.035, zb + 3.2 + rnd.uniform(-0.08, 0.08)) @ S.Matrix.Rotation(rnd.uniform(-0.3, 0.3), 4, "Z"))
+        b.push(b.move(-xi + 0.4 + rnd.uniform(-0.06, 0.06), fy + 0.035, zb + 3.2 + rnd.uniform(-0.06, 0.06)) @ S.Matrix.Rotation(rnd.uniform(-0.15, 0.15), 4, "Z"))
         b.cylinder(V(0, 0, 0), 0.03, 0.55, Mat("plain", color=(0.78, 0.55, 0.3), glow=g * 0.5), segments=6, radius_top=0.025, caps=(True, True))
         b.pop()
     # Auslage im Schaufenster: Stufen mit Brot, Lichterkette
@@ -2230,6 +2376,9 @@ def build_corner(name, spec):
             if spec.get("hanging_sign"):
                 # Nicht über die Kante der Wand hinaus (sonst hängt das Schild in der Luft)
                 P.projecting_sign(b, min(dx + 1.35, half - 0.25), ys[1] + 0.75, 0.0, JOINERY, Mat("plain", sign="hanging"))
+            if spec.get("chalkboard"):
+                # Kreidetafel links neben der Tür, leicht zur Straße gedreht (Bild "chalkboard")
+                P.chalkboard(b, max(dx - 0.85, -half + 0.3), 0.55, Mat("plain", sign="chalkboard"), facing=14)
         # Innenwand des Ladens (zeigt in den Raum), mit denselben Öffnungen
         ia, ic = inset[i], inset[(i + 1) % n]
         mx, mz = (a[0] + c[0]) / 2, (a[1] + c[1]) / 2
@@ -2335,11 +2484,12 @@ def _corner_shop_window(b, spec, s0, s1, sill, head, reveal, rnd, shop):
         _fairy_wire(b, s0 + 0.1, s0 + 0.1 + (count - 1) * 0.18, s0, s1, head - 0.12, -0.12, head + 0.03)
 
 
-def _loaf(b, x, y, z, rnd, g):
-    """Brot oder Gebäck (gestreckte, flache Kugel in Krustenfarbe)."""
+def _loaf(b, x, y, z, rnd, g, size=None):
+    """Brot oder Gebäck (gestreckte, flache Kugel in Krustenfarbe); size = feste Größe (Brötchen
+    im Korb)."""
     crust = rnd.choice([(0.72, 0.48, 0.26), (0.62, 0.38, 0.2), (0.82, 0.62, 0.36), (0.52, 0.32, 0.18)])
-    sx = rnd.uniform(0.06, 0.1)
-    b.push(b.move(x, y, z) @ S.Matrix.Diagonal((1.0, 0.65, rnd.uniform(0.7, 1.3), 1.0)))
+    sx = size if size is not None else rnd.uniform(0.06, 0.1)
+    b.push(b.move(x, y, z) @ S.Matrix.Diagonal((1.0, 0.65, rnd.uniform(0.85, 1.1) if size else rnd.uniform(0.7, 1.3), 1.0)))
     b.sphere(V(0, sx * 0.9, 0), sx, Mat("plain", color=crust, glow=g * 0.5), rings=4, segments=8, jitter=0.06, seed=rnd.randrange(999))
     b.pop()
 
@@ -2505,7 +2655,7 @@ def _corner_door(b, spec, rnd):
     b.poly([V(-sw / 2, 2.75, 0.08), V(sw / 2, 2.75, 0.08), V(sw / 2, 2.75 + sh, 0.08), V(-sw / 2, 2.75 + sh, 0.08)],
            Mat("plain", sign="fascia"), uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
     for side in (-1, 1):
-        P.hanging_basket(b, side * 0.95, 3.0, 0.0, 0.4, seed=rnd.randrange(99))
+        P.hanging_basket(b, side * 0.95, 3.0, 0.0, 0.4, seed=rnd.randrange(99), variant="cascade" if side < 0 else "summer")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -2548,16 +2698,18 @@ def build_gatehouse(name, spec):
         kz = z + out * 0.09
         ky = spring + a
         b.slab([V(-0.2, ky - 0.05, kz), V(0.2, ky - 0.05, kz), V(0.26, ky + 0.55, kz), V(-0.26, ky + 0.55, kz)][::(1 if out > 0 else -1)], 0.09, TRIM)
+        # Rückseiten der Steine liegen in der Wand (nicht bauen, sonst flimmern sie gegeneinander)
+        wall_side = ("back",) if out > 0 else ("front",)
         for side in (-1, 1):
             lo, hi = sorted((side * a, side * (a + 0.5)))
-            b.box((lo, spring - 0.2, min(z, z + out * 0.07)), (hi, spring, max(z, z + out * 0.07)), TRIM)
+            b.box((lo, spring - 0.2, min(z, z + out * 0.07)), (hi, spring, max(z, z + out * 0.07)), TRIM, skip=wall_side)
             # Helle Steine an den Bogenseiten bis zum Boden (abwechselnd lang und kurz)
             yy = 0.0
             kk = 0
             while yy + 0.2 < spring - 0.2:
                 hgt = min(0.34, spring - 0.2 - yy)
                 lo2, hi2 = sorted((side * a, side * (a + (0.46 if kk % 2 == 0 else 0.3))))
-                b.box((lo2, yy + 0.01, min(z, z + out * 0.05)), (hi2, yy + hgt - 0.01, max(z, z + out * 0.05)), TRIM)
+                b.box((lo2, yy + 0.01, min(z, z + out * 0.05)), (hi2, yy + hgt - 0.01, max(z, z + out * 0.05)), TRIM, skip=wall_side)
                 yy += hgt
                 kk += 1
         # Ecksteine
@@ -2566,11 +2718,11 @@ def build_gatehouse(name, spec):
         while y + 0.3 < mh:
             for side in (-1, 1):
                 lo, hi = sorted((side * w, side * (w - (0.5 if k % 2 == 0 else 0.3))))
-                b.box((lo, y, min(z, z + out * 0.04)), (hi, y + 0.28, max(z, z + out * 0.04)), TRIM)
+                b.box((lo, y, min(z, z + out * 0.04)), (hi, y + 0.28, max(z, z + out * 0.04)), TRIM, skip=wall_side)
             y += 0.31
             k += 1
-        b.box((-w, 0, min(z, z + out * 0.035)), (-a, 0.35, max(z, z + out * 0.035)), PLINTH)
-        b.box((a, 0, min(z, z + out * 0.035)), (w, 0.35, max(z, z + out * 0.035)), PLINTH)
+        b.box((-w, 0, min(z, z + out * 0.035)), (-a - 0.003, 0.35, max(z, z + out * 0.035)), PLINTH, skip=wall_side)
+        b.box((a + 0.003, 0, min(z, z + out * 0.035)), (w, 0.35, max(z, z + out * 0.035)), PLINTH, skip=wall_side)
     # Seitenwände
     for side in (-1, 1):
         b.face([V(side * w, 0, 0), V(side * w, 0, -D), V(side * w, top, -D), V(side * w, top, 0)], brick, (side, 0, 0))
@@ -2620,12 +2772,13 @@ def build_gatehouse(name, spec):
             window_unit(b, up_spec, (x0 + x1) / 2, y0, x1 - x0, y1 - y0, "casement", rnd.choice(["closed", "nets", "dim"]),
                         (x0 - 0.3, x1 + 0.3, top + 0.1, E - 0.2, 0.8), rnd, reveal=0.12, lintel="timber", floor=1)
             if out > 0:
-                P.flower_box(b, x0 - 0.04, x1 + 0.04, y0 + 0.005, 0.0, 0.18, ACCENT, ["rose", "white"], seed=rnd.randrange(999))
+                P.flower_box(b, x0 - 0.04, x1 + 0.04, y0 + 0.005, 0.045, 0.225, ACCENT, ["rose", "white"], seed=rnd.randrange(999))
         b.face([V(-w, top, 0), V(w, top, 0), V(w, top, -jetty), V(-w, top, -jetty)], TIMBER, (0, -1, 0))
         n = int(W / 0.5)
         for k in range(n + 1):
             bx = -w + 0.08 + (W - 0.16) * k / n
-            b.box((bx - 0.06, top - 0.16, -jetty), (bx + 0.06, top, 0.02), TIMBER)
+            # Balkenköpfe 3 mm unter der Oberkante des Schildbands (sonst flimmern die Oberseiten)
+            b.box((bx - 0.06, top - 0.16, -jetty), (bx + 0.06, top - 0.003, 0.02), TIMBER)
         b.pop()
     for side in (-1, 1):
         b.face([V(side * w, top, jetty), V(side * w, top, -D - jetty), V(side * w, E, -D - jetty), V(side * w, E, jetty)], wall_mat("render"), (side, 0, 0))

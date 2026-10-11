@@ -56,22 +56,14 @@ def group_ivy(b, rnd):
 
 def group_pots(b, rnd):
     ground(b, -3.0, 3.0, -1.0, 2.0)
-    views = []
-    plants = [("box_ball", None), ("cone", None), ("standard", None), ("olive", None), ("lavender", None),
-              ("geranium", "red"), ("hydrangea", "hydrangea"), ("fern", None), ("petunia", "lavender"), ("daisy", None)]
-    for k, (kind, palette) in enumerate(plants):
-        x = -2.6 + (k % 5) * 1.3
-        z = 0.0 if k < 5 else 1.2
-        r = 0.2 if kind in ("olive", "hydrangea", "standard") else 0.16
-        rim, soil = pot(b, x, z, r * 0.8, 0.4 if kind != "olive" else 0.48, r)
-        PL.potted(b, x, z, rim, r - 0.012, soil, kind, random.Random(k + 5), palette, outer_r=r + 0.015)
-    views.append(("front", (0.0, 1.7, 6.2), (0.0, 0.6, 0.6)))
-    views.append(("near_left", (-1.9, 1.0, 1.4), (-2.0, 0.6, 0.0)))
-    views.append(("near_back", (-1.3, 1.0, 2.6), (-1.6, 0.5, 1.2)))
-    views.append(("olive", (0.35, 1.3, 1.3), (0.3, 1.1, 0.0)))
-    views.append(("near_right", (1.4, 1.0, 2.6), (1.3, 0.5, 1.2)))
-    views.append(("top", (0.0, 3.5, 2.5), (0.0, 0.3, 0.5)))
-    return views
+    b.box((-3.0, 0.0, -0.4), (3.0, 2.0, -0.001), BRICK, skip=("front",))
+    b.poly([V(-3.0, 0, 0), V(3.0, 0, 0), V(3.0, 2.0, 0), V(-3.0, 2.0, 0)], BRICK)
+    x = -2.6
+    for k in range(4):
+        lo, hi = PL.pot_cluster(b, x, random.Random(30 + k), direction=1, count=(3, 2, 3, 1)[k], depth=0.62)
+        x = hi + 0.35
+    return [("front", (0.0, 1.5, 3.6), (0.0, 0.6, 0.0)), ("left", (-1.6, 1.1, 1.6), (-1.9, 0.5, 0.2)),
+            ("right", (1.4, 1.1, 1.6), (1.4, 0.5, 0.2)), ("top", (0.0, 3.2, 2.2), (0.0, 0.3, 0.3))]
 
 
 def group_box(b, rnd):
@@ -80,10 +72,12 @@ def group_box(b, rnd):
     sill = 1.0
     b.box((-0.7, sill - 0.06, 0.0), (0.7, sill, 0.08), STONE, skip=("back",))
     P.flower_box(b, -0.6, 0.6, sill + 0.005, 0.0, 0.2, Mat("paint", color=(0.12, 0.24, 0.18)), ["rose", "white", "coral"], seed=3)
-    P.hanging_basket(b, 1.15, 2.6, 0.0, 0.5, seed=4)
-    P.hanging_basket(b, -1.15, 2.6, 0.0, 0.5, seed=8)
-    return [("front", (0.0, 1.5, 3.4), (0.0, 1.5, 0.0)), ("box_near", (-0.4, 1.4, 1.1), (0.0, 1.05, 0.1)),
-            ("basket_near", (1.4, 1.8, 1.4), (1.15, 2.0, 0.5)), ("below", (0.2, 0.6, 1.0), (0.0, 1.1, 0.1))]
+    P.hanging_basket(b, 1.25, 2.6, 0.0, 0.5, seed=4, variant="summer")
+    P.hanging_basket(b, -1.25, 2.6, 0.0, 0.5, seed=8, variant="fuchsia")
+    P.hanging_basket(b, 0.0, 3.3, 0.0, 0.5, seed=9, variant="cascade")
+    return [("front", (0.0, 1.8, 4.2), (0.0, 1.9, 0.0)), ("box_near", (-0.4, 1.4, 1.1), (0.0, 1.05, 0.1)),
+            ("summer", (1.5, 1.8, 1.5), (1.25, 2.0, 0.5)), ("fuchsia", (-1.5, 1.8, 1.5), (-1.25, 2.0, 0.5)),
+            ("cascade", (0.3, 2.5, 1.5), (0.0, 2.7, 0.5))]
 
 
 def group_garden(b, rnd):

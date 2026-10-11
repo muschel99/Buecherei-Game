@@ -93,10 +93,10 @@ def gable_roof(b, w, depth, eaves, rise, front_z, back_z, mat=SLATE):
     ridge_z = -depth / 2
     b.quad(V(-w, eaves, front_z), V(w, eaves, front_z), V(w, ridge_y, ridge_z), V(-w, ridge_y, ridge_z), mat)
     b.quad(V(w, eaves, back_z), V(-w, eaves, back_z), V(-w, ridge_y, ridge_z), V(w, ridge_y, ridge_z), mat)
-    b.cylinder(V(-w, ridge_y + 0.02, ridge_z), 0.09, 2 * w, RIDGE, segments=8, caps=(True, True), axis="x")
+    b.cylinder(V(-w + 0.003, ridge_y + 0.02, ridge_z), 0.09, 2 * w - 0.006, RIDGE, segments=8, caps=(True, True), axis="x")
     # Hinten: Traufbrett und Rinne schließen die Dachkante
     b.box((-w, eaves - 0.22, back_z), (w, eaves + 0.01, -depth), WHITE, skip=("front",))
-    b.cylinder(V(-w, eaves - 0.04, back_z - 0.04), 0.055, 2 * w, LEAD, segments=8, caps=(True, True), axis="x")
+    b.cylinder(V(-w + 0.003, eaves - 0.04, back_z - 0.04), 0.055, 2 * w - 0.006, LEAD, segments=8, caps=(True, True), axis="x")
 
 
 def roof_y(z, eaves, rise, front_z, depth):
@@ -120,9 +120,12 @@ def party_walls(b, w, depth, eaves, rise, front_z, back_z, mat=BRICK, open_sides
         front = V(xc, eaves - 0.08, front_z)
         ridge = V(xc, ridge_y - 0.08, -depth / 2)
         back = V(xc, eaves - 0.08, back_z)
-        for pa, pb in ((front, ridge), (ridge, back)):
-            b.beam(pa, pb, 0.3, 0.2, mat)
-            b.beam(pa + V(0, 0.2, 0), pb + V(0, 0.2, 0), 0.34, 0.045, TRIM)
+        for k, (pa, pb) in enumerate(((front, ridge), (ridge, back))):
+            narrow = 0.004 * k
+            b.beam(pa, pb, 0.3 - narrow, 0.2, mat)
+            dd = (pb - pa).normalized() * 0.02
+            up = (pb - pa).normalized().cross(V(0, 1, 0)).normalized().cross((pb - pa).normalized()).normalized()
+            b.beam(pa - dd + up * 0.2, pb + dd + up * 0.2, 0.34 - narrow, 0.045, TRIM)
         b.box((xc - 0.18, ridge_y + 0.08, -depth / 2 - 0.2), (xc + 0.18, ridge_y + 0.2, -depth / 2 + 0.2), TRIM)
     b.quad(V(w, 0, -depth), V(-w, 0, -depth), V(-w, eaves, -depth), V(w, eaves, -depth), mat)
 
@@ -229,7 +232,7 @@ def _recessed_door(b, half, transom, head, jz):
     x0, x1 = -half, half
     for lo, hi in ((x0 - 0.1, x0), (x1, x1 + 0.1)):
         b.box((lo, 0.02, back - 0.05), (hi, transom, 0.0), JOINERY)
-    b.box((x0 - 0.1, transom, back - 0.05), (x1 + 0.1, transom + 0.08, jz), JOINERY)
+    b.box((x0 - 0.097, transom, back - 0.05), (x1 + 0.097, transom + 0.08, jz), JOINERY)
     b.box((x0 - 0.02, 0, back), (x1 + 0.02, 0.06, 0.08), TILES, skip=("back",))
     gz = 0.06
     b.quad(V(x0, transom + 0.08, gz), V(x1, transom + 0.08, gz), V(x1, head, gz), V(x0, head, gz), CLEAR_GLASS)
@@ -495,9 +498,9 @@ def fashion_shop(type_id="fashion_shop"):
         b.extrude_x([(0, top + 0.14), (0, top + 0.3), (0.16, top + 0.3), (0.16, top + 0.25), (0.08, top + 0.14)],
                     x - win_w / 2 - 0.22, x + win_w / 2 + 0.22, TRIM)
         b.box((x - 0.08, win_y + win_h - 0.04, 0.0), (x + 0.08, win_y + win_h + 0.2, 0.09), TRIM, skip=("back",))
-        P.flower_box(b, x - 0.5, x + 0.5, win_y + 0.005, 0.0, 0.2, JOINERY,
+        P.flower_box(b, x - 0.5, x + 0.5, win_y + 0.005, 0.055, 0.255, JOINERY,
                      [["rose", "white"], ["coral", "lavender"], ["white", "rose"]][k], seed=11 + k)
-    b.box((-w, win_y - 0.2, 0), (w, win_y - 0.12, 0.05), TRIM, skip=("back",))
+    b.box((-w + 0.002, win_y - 0.2, 0), (w - 0.002, win_y - 0.12, 0.05), TRIM, skip=("back",))
     y = shop_top + 0.06
     k = 0
     while y + 0.3 < E - 0.3:
@@ -507,17 +510,18 @@ def fashion_shop(type_id="fashion_shop"):
             b.box((lo_x, y, 0), (hi_x, y + 0.29, 0.035), TRIM, skip=("back",))
         y += 0.31
         k += 1
-    b.cylinder(V(-w + 0.12, shop_top, 0.08), 0.04, E - shop_top + 0.05, LEAD, segments=8, caps=(True, True))
+    # Fallrohr beginnt in der Bleiabdeckung über dem Schild (nicht genau auf ihrer Unterseite)
+    b.cylinder(V(-w + 0.12, shop_top + 0.01, 0.08), 0.04, E - shop_top + 0.04, LEAD, segments=8, caps=(True, True))
 
     # --- Traufgesims mit Zahnschnitt ---
-    b.box((-w, E - 0.42, 0), (w, E - 0.28, 0.07), TRIM, skip=("back",))
+    b.box((-w + 0.002, E - 0.42, 0), (w - 0.002, E - 0.28, 0.07), TRIM, skip=("back",))
     x = -w + 0.08
     while x + 0.06 < w:
         b.box((x, E - 0.28, 0.0), (x + 0.06, E - 0.18, 0.12), TRIM, skip=("back",))
         x += 0.13
     b.extrude_x([(0, E - 0.18), (0, E), (0.32, E), (0.32, E - 0.07), (0.22, E - 0.11), (0.15, E - 0.18)],
                 -w - 0.02, w + 0.02, TRIM)
-    b.cylinder(V(-w, E + 0.03, 0.27), 0.06, W, LEAD, segments=8, caps=(True, True), axis="x")
+    b.cylinder(V(-w + 0.003, E + 0.03, 0.27), 0.06, W - 0.006, LEAD, segments=8, caps=(True, True), axis="x")
 
     # --- Ziergiebel mit Rosette (geschlossener Körper, Dach als Platten) ---
     pw = 1.0
@@ -579,7 +583,7 @@ def fashion_shop(type_id="fashion_shop"):
         b.box((lo_x, 0, 0), (hi_x, sill_y - 0.05, 0.11), JOINERY, skip=("back",))
         b.frame(lo_x + 0.12, 0.12, hi_x - 0.12, sill_y - 0.17, 0.11, 0.13, 0.03, JOINERY)
         b.box((lo_x - 0.01, sill_y - 0.05, 0), (hi_x + 0.01, sill_y + 0.02, 0.17), JOINERY, skip=("back",))
-        b.box((lo_x, transom, 0), (hi_x, transom + 0.08, jz), JOINERY)
+        b.box((lo_x + 0.003, transom, 0), (hi_x - 0.003, transom + 0.08, jz), JOINERY)
         b.box((lo_x, sill_y + 0.02, -0.03), (lo_x + 0.05, head, jz - 0.02), JOINERY, skip=("top", "bottom"))
         b.box((hi_x - 0.05, sill_y + 0.02, -0.03), (hi_x, head, jz - 0.02), JOINERY, skip=("top", "bottom"))
         gz = 0.06
@@ -597,13 +601,13 @@ def fashion_shop(type_id="fashion_shop"):
     _shop_interior(b, w - 0.12, 0.1, 3.3, -0.03, -6.0, windows, door_half)
 
     # --- Vor dem Laden: links Hortensie, rechts Olivenbäumchen und Kreidetafel ---
-    P.hydrangea_tub(b, -(door_half + 0.5), 0.42, seed=21)
-    P.olive_tree(b, door_half + 0.46, 0.38, seed=22)
+    P.hydrangea_tub(b, -(door_half + 0.5), 0.42, seed=21, wall_z=0.19)
+    P.olive_tree(b, door_half + 0.46, 0.42, seed=22)
     P.chalkboard(b, 1.78, 0.5, Mat("plain", sign="chalkboard"), facing=-12)
     # Ausleger-Schild rechts (zur Bücherei hin), Hängekorb links – über dem Ladengesims an den
     # Eckquadern, also oberhalb der Markisen
     P.projecting_sign(b, w - 0.2, 4.32, 0.035, JOINERY, Mat("plain", sign="hanging"))
-    P.hanging_basket(b, -(w - 0.2), 4.38, 0.035, 0.55, seed=25)
+    P.hanging_basket(b, -(w - 0.2), 4.38, 0.035, 0.55, seed=25, variant="cascade", clear_z=0.32)
     return b, _fashion_props()
 
 
@@ -672,7 +676,7 @@ def front_door(b, x, style="simple", reveal=0.13, width=1.0, height=2.15):
         for (px0, px1) in ((dx0 + 0.08, x - 0.04), (x + 0.04, dx1 - 0.08)):
             b.frame(px0, py0, px1, py1, z + 0.03, z + 0.045, 0.025, JOINERY)
     b.box((x - 0.12, 1.0, z + 0.03), (x + 0.12, 1.04, z + 0.042), GOLD)
-    b.cylinder(V(x, 1.5, z + 0.03), 0.035, 0.015, GOLD, segments=10, axis="z", caps=(True, True))
+    b.cylinder(V(x, 1.5, z + 0.032), 0.035, 0.015, GOLD, segments=10, axis="z", caps=(True, True))
     b.sphere(V(dx1 - 0.08, 1.02, z + 0.06), 0.028, GOLD, rings=4, segments=8)
     # Oberlicht
     gy0 = height + 0.06
@@ -685,7 +689,8 @@ def front_door(b, x, style="simple", reveal=0.13, width=1.0, height=2.15):
     elif style == "pilaster":
         for side in (-1, 1):
             px = x + side * (hw + 0.1)
-            b.box((px - 0.09, 0, 0), (px + 0.09, top, 0.09), WHITE, skip=("back",))
+            # Schaft: Ober- und Unterseite stecken in Fuß und Kapitell
+            b.box((px - 0.09, 0, 0), (px + 0.09, top, 0.09), WHITE, skip=("back", "top", "bottom"))
             b.box((px - 0.11, 0, 0), (px + 0.11, 0.25, 0.11), WHITE, skip=("back",))
             b.box((px - 0.11, top - 0.12, 0), (px + 0.11, top, 0.11), WHITE, skip=("back",))
         b.box((x - hw - 0.24, top, 0), (x + hw + 0.24, top + 0.2, 0.1), WHITE, skip=("back",))
@@ -762,7 +767,7 @@ def eaves_band(b, w, eaves, style):
     else:
         b.extrude_x([(0, eaves - 0.25), (0, eaves), (0.26, eaves), (0.26, eaves - 0.07), (0.16, eaves - 0.13), (0.1, eaves - 0.25)],
                     -w - 0.01, w + 0.01, TRIM)
-    b.cylinder(V(-w, eaves + 0.03, 0.22), 0.055, 2 * w, LEAD, segments=8, caps=(True, True), axis="x")
+    b.cylinder(V(-w + 0.003, eaves + 0.03, 0.22), 0.055, 2 * w - 0.006, LEAD, segments=8, caps=(True, True), axis="x")
 
 
 def porch(b, x, door_rect, depth=0.75):
@@ -796,7 +801,7 @@ def small_pot(b, x, z, palette, seed, tall=False):
         kind = "lavender" if palette == "lavender" else "geranium"
     else:
         kind = "cone" if tall else "box_low"
-    PL.pot_plant(b, x, z, kind, rnd, 0.13, h, 0.16, palette=palette)
+    PL.pot_plant(b, x, z, kind, rnd, 0.13, h, 0.16, palette=palette, wall_z=0.035)
 
 
 TERRACES = {
@@ -861,7 +866,7 @@ def terrace(type_id, side_windows=0):
     for i, x in enumerate(xs):
         plain_window(b, x, f_y0, win_w, f_h, lintel=spec["lintel"], panes=(2, 3) if tall else (2, 2))
         if spec["boxes"][i % len(spec["boxes"])]:
-            P.flower_box(b, x - 0.48, x + 0.48, f_y0 + 0.005, 0.0, 0.19, JOINERY,
+            P.flower_box(b, x - 0.48, x + 0.48, f_y0 + 0.005, 0.045, 0.235, JOINERY,
                          [["rose", "white"], ["lavender", "white"], ["coral", "rose"]][i % 3], seed=zlib.crc32(type_id.encode()) % 97 + i)
     if bay:
         bx = [x for i, x in enumerate(xs) if i != door_col][0]
@@ -1138,6 +1143,7 @@ SIGNS = {
         "fascia": (1.6, 0.4, 768, lambda b: _board(b, 1.6, 0.4, Mat("paint", color=(0.42, 0.52, 0.6)), "Wolle & Stoff",
                                                     Mat("paint", color=(0.95, 0.92, 0.84)), 0.16, gold=False, playful=True)),
         "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, lambda b: _wool_hanging(b)),
+        "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Neu:", "Merino-", "wolle"], 61)),
     },
     "gatehouse": {
         "fascia": (4.6, 0.42, 2048, lambda b: _board(b, 4.6, 0.42, Mat("paint", color=(0.16, 0.27, 0.2)), "ALTE TORGASSE", GOLD, 0.24)),

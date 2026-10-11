@@ -55,23 +55,26 @@ def trailing_strand(b, start, length, rnd, color_index=1, palette=None, out=(0.0
                     palette=palette, over=0.03, lift=0.005)
 
 
-def flower_box(b, x0, x1, y, z_back, z_front, box_mat, palettes, seed, glow=0.0):
-    """Blumenkasten (unten bei y, von z_back = Wand bis z_front): offener Kasten mit Leiste,
-    Erde, Halter; darin Geranien, Petunien, Margeriten und Lobelien, vorn hängen Ranken über
-    den Rand."""
+def flower_box(b, x0, x1, y, z_back, z_front, box_mat, palettes, seed, glow=0.0, wall_z=0.0):
+    """Blumenkasten (unten bei y, von z_back bis z_front; die Hauswand liegt bei wall_z – steht
+    etwas vor, z. B. Fensterrahmen oder Fachwerk, beginnt der Kasten erst bei z_back): offener
+    Kasten mit Leiste, Erde, Halter bis an die Wand; darin Geranien, Petunien, Margeriten und
+    Lobelien, vorn hängen Ranken über den Rand."""
     rnd = random.Random(seed)
     h = 0.17
-    soil_y = PL.trough(b, x0, x1, y, z_back, z_front, h, box_mat, soil_drop=0.018, skip_back=True)
+    at_wall = z_back <= wall_z + 0.001
+    soil_y = PL.trough(b, x0, x1, y, z_back, z_front, h, box_mat, soil_drop=0.018, skip_back=at_wall, lip=0.015)
     b.box((x0 - 0.015, y + h - 0.025, z_front), (x1 + 0.015, y + h, z_front + 0.015), box_mat, skip=("back",))
+    PL.extend_last_vessel(b)
     for cx in (x0 + 0.1, x1 - 0.1):
-        b.box((cx - 0.02, y - 0.12, z_back), (cx + 0.02, y, z_back + 0.1), IRON, skip=("back",))
+        b.box((cx - 0.02, y - 0.12, wall_z), (cx + 0.02, y, z_back + 0.1), IRON, skip=("back",))
     space = PL.BoxSpace(x0 - 0.015, x1 + 0.015, z_back, z_front + 0.015, y + h, soil_y, wall=0.018)
     space.wall(z_back)
     PL.bedding_row(b, x0 + 0.06, x1 - 0.06, soil_y, z_back + 0.03, z_front - 0.03, rnd, palettes, space, glow=glow,
                    trail_front=0.32, front_dir=Vector((0, 0, 1)))
 
 
-def hydrangea_tub(b, x, z, seed):
+def hydrangea_tub(b, x, z, seed, wall_z=None):
     """Zinkwanne mit Hortensie (links vom Eingang)."""
     rnd = random.Random(seed)
     v = PL.vessel(b, x, z, 0.24, 0.44, 0.27, ZINC, lip=0.015, lip_h=0.04, soil_drop=0.035, segments=16)
@@ -81,7 +84,10 @@ def hydrangea_tub(b, x, z, seed):
     for side in (-1, 1):
         b.tube([V(x + side * 0.27, 0.3, z), V(x + side * 0.31, 0.33, z), V(x + side * 0.31, 0.37, z), V(x + side * 0.28, 0.39, z)],
                0.012, ZINC, segments=5)
+    PL.extend_last_vessel(b)
     space = PL.PotSpace(x, z, v["inner"], v["rim"], v["soil"], outer=v["outer"])
+    if wall_z is not None:
+        space.wall(wall_z)
     PL.hydrangea(b, V(x, v["soil"], z), 0.3, rnd, "hydrangea", space, heads=6)
     b.colliders.append(((x - 0.3, 0, z - 0.3), (x + 0.3, 0.9, z + 0.3)))
 
@@ -134,70 +140,142 @@ def chalkboard_design(b, lines, seed):
         y -= 0.13
 
 
-def hanging_basket(b, x, y_bracket, z_wall, reach, seed):
-    """Hängekorb an einem schmiedeeisernen Arm (von der Wand bei z_wall nach vorn)."""
+def hanging_basket(b, x, y_bracket, z_wall, reach, seed, variant=None, clear_z=None):
+    """Hängekorb an einem schmiedeeisernen Arm (von der Wand bei z_wall nach vorn). variant:
+    "summer", "fuchsia" oder "cascade" (ohne Angabe je nach seed)."""
     rnd = random.Random(seed)
     zb = z_wall + reach
-    arm = [V(x, y_bracket, z_wall), V(x, y_bracket, zb + 0.05)]
-    strut = [V(x, y_bracket - 0.35, z_wall), V(x, y_bracket - 0.12, z_wall + reach * 0.5), V(x, y_bracket - 0.01, zb - 0.05)]
+    arm = [V(x, y_bracket, z_wall + 0.01), V(x, y_bracket, zb + 0.05)]
+    strut = [V(x, y_bracket - 0.35, z_wall + 0.01), V(x, y_bracket - 0.12, z_wall + reach * 0.5), V(x, y_bracket - 0.01, zb - 0.05)]
     b.tube(arm, 0.016, IRON, segments=6)
     b.tube(strut, 0.012, IRON, segments=5)
     _scroll(b, x, y_bracket - 0.12, z_wall + 0.16, 0.08, axis_plane="yz", attach=(arm, strut))
     b.box((x - 0.04, y_bracket - 0.4, z_wall), (x + 0.04, y_bracket + 0.05, z_wall + 0.02), IRON)
-    basket(b, V(x, y_bracket - 0.4, zb), 0.17, V(x, y_bracket - 0.015, zb), rnd, wall_z=z_wall)
+    # Nichts wächst über die Strebe in den Winkel zwischen Arm und Wand (Ebene durch die Strebe)
+    d = Vector((0.0, 0.34, reach - 0.06)).normalized()
+    under_strut = (V(x, y_bracket - 0.35, z_wall + 0.01), Vector((0.0, -d.z, d.y)), 0.025)
+    basket(b, V(x, y_bracket - 0.4, zb), 0.17, V(x, y_bracket - 0.015, zb), rnd,
+           wall_z=clear_z if clear_z is not None else z_wall + 0.03, variant=variant, planes=(under_strut,))
 
 
-def basket(b, rim, radius, hook, rnd, palettes=("rose", "white", "lavender"), wall_z=None, mat=None):
-    """Hängekorb: Drahtkorb mit Kokosmatte, Erde, drei Ketten zum Haken; obenauf Geranien und
-    Petunien, rundherum hängen Lobelien, Petunien und Efeu über den Rand."""
-    mat = mat or IRON
-    rim = Vector(rim)
-    hook = Vector(hook)
-    coir = Mat("fabric", color=(0.46, 0.34, 0.22))
-    rings, segs = 4, 14
-    # Kokosmatte: untere Halbkugel (außen sichtbar), oben zu mit Erde
+BASKET_VARIANTS = ("summer", "fuchsia", "cascade")
+
+
+def _bowl(b, rim, radius, mat, rings=4, segs=14, squash=0.85):
+    """Untere Halbkugel (außen sichtbar) unter dem Rand rim."""
     for r in range(rings):
         a0 = math.pi / 2 * r / rings
         a1 = math.pi / 2 * (r + 1) / rings
         for k in range(segs):
             t0 = 2 * math.pi * k / segs
             t1 = 2 * math.pi * (k + 1) / segs
-            pts = [rim + Vector((math.cos(t) * math.cos(a), -math.sin(a) * 0.85, math.sin(t) * math.cos(a))) * radius
+            pts = [rim + Vector((math.cos(t) * math.cos(a), -math.sin(a) * squash, math.sin(t) * math.cos(a))) * radius
                    for t, a in ((t0, a0), (t0, a1), (t1, a1), (t1, a0))]
-            nrm = [(p - rim).normalized() for p in pts]
-            b.poly(pts if (pts[1] - pts[0]).cross(pts[2] - pts[0]).dot(nrm[0]) > 0 else pts[::-1], coir)
+            nrm = [Vector((math.cos(t) * math.cos(a), -math.sin(a) / squash, math.sin(t) * math.cos(a))).normalized()
+                   for t, a in ((t0, a0), (t0, a1), (t1, a1), (t1, a0))]
+            # Ausrichtung über die Diagonalen (unten am Pol fallen zwei Ecken zusammen)
+            if (pts[2] - pts[0]).cross(pts[3] - pts[1]).dot(nrm[0] + nrm[2]) < 0:
+                pts, nrm = pts[::-1], nrm[::-1]
+            b.poly(pts, mat, normals=nrm)
+
+
+def basket(b, rim, radius, hook, rnd, palettes=("rose", "white", "lavender"), wall_z=None, mat=None, variant=None, planes=()):
+    """Hängekorb mit drei Ketten zum Haken, in drei Arten:
+    summer  – Drahtkorb mit Kokosmatte; Geranien obenauf, ringsum Lobelien, Petunien, Efeu
+    fuchsia – Weidenkorb; Fuchsien hängen in Bögen über, dazwischen weiße Lobelien
+    cascade – grün lackierte Schale; ein Wasserfall aus Hängepetunien in ein, zwei Farben"""
+    mat = mat or IRON
+    rim = Vector(rim)
+    hook = Vector(hook)
+    variant = variant or rnd.choice(BASKET_VARIANTS)
+    segs = 14
+    if variant == "fuchsia":
+        wicker = Mat("plain", color=(0.55, 0.4, 0.24))
+        _bowl(b, rim, radius, wicker, squash=0.75)
+        # Geflecht: waagerechte Ringe auf dem Korb
+        for q in range(1, 4):
+            a = math.pi / 2 * q / 4.4
+            r = radius * math.cos(a) + 0.003
+            yy = -math.sin(a) * radius * 0.75
+            b.tube([rim + Vector((math.cos(t) * r, yy, math.sin(t) * r)) for t in [2 * math.pi * k / segs for k in range(segs + 1)]],
+                   0.005, Mat("plain", color=(0.48, 0.34, 0.2)), segments=3, caps=False)
+        b.tube([rim + Vector((math.cos(t) * radius, 0.0, math.sin(t) * radius)) for t in [2 * math.pi * k / segs for k in range(segs + 1)]],
+               0.011, Mat("plain", color=(0.5, 0.36, 0.22)), segments=4, caps=False)
+        squash = 0.75
+        rim_top = 0.012
+    elif variant == "cascade":
+        paint = Mat("paint", color=(0.13, 0.22, 0.17))
+        _bowl(b, rim, radius, paint, squash=0.6)
+        b.tube([rim + Vector((math.cos(t) * (radius + 0.004), 0.0, math.sin(t) * (radius + 0.004))) for t in
+                [2 * math.pi * k / segs for k in range(segs + 1)]], 0.008, paint, segments=4, caps=False)
+        squash = 0.6
+        rim_top = 0.013
+    else:
+        coir = Mat("fabric", color=(0.46, 0.34, 0.22))
+        _bowl(b, rim, radius, coir)
+        # Drahtkorb außen: Ring oben, Bügel nach unten, Ring unten
+        b.tube([rim + Vector((math.cos(t) * (radius + 0.004), 0.0, math.sin(t) * (radius + 0.004))) for t in
+                [2 * math.pi * k / segs for k in range(segs + 1)]], 0.004, mat, segments=4, caps=False)
+        for k in range(6):
+            t = 2 * math.pi * k / 6 + 0.2
+            b.tube([rim + Vector((math.cos(t) * math.cos(a), -math.sin(a) * 0.85, math.sin(t) * math.cos(a))) * (radius + 0.008)
+                    for a in [math.pi / 2 * q / 6 * 0.8 for q in range(7)]], 0.0025, mat, segments=3, caps=False)
+        a_end = math.pi / 2 * 0.8
+        b.tube([rim + Vector((math.cos(t) * math.cos(a_end), -math.sin(a_end) * 0.85, math.sin(t) * math.cos(a_end))) * (radius + 0.008)
+                for t in [2 * math.pi * q / 12 for q in range(13)]], 0.0025, mat, segments=3, caps=False)
+        squash = 0.85
+        rim_top = 0.006
     b.poly([rim + Vector((math.cos(t) * radius, -0.012, math.sin(t) * radius)) for t in
             [-2 * math.pi * k / segs for k in range(segs)]], SOIL)
-    # Drahtkorb außen: Ring oben, Bügel nach unten
-    b.tube([rim + Vector((math.cos(t) * (radius + 0.004), 0.0, math.sin(t) * (radius + 0.004))) for t in
-            [2 * math.pi * k / segs for k in range(segs + 1)]], 0.004, mat, segments=4, caps=False)
-    for k in range(6):
-        t = 2 * math.pi * k / 6 + 0.2
-        b.tube([rim + Vector((math.cos(t) * math.cos(a), -math.sin(a) * 0.85, math.sin(t) * math.cos(a))) * (radius + 0.004)
-                for a in [math.pi / 2 * q / 6 for q in range(7)]], 0.0025, mat, segments=3, caps=False)
     # Ketten aus Gliedern vom Rand zum Haken
     for k in range(3):
         t = 2 * math.pi * k / 3 + 0.5
         chain(b, rim + Vector((math.cos(t) * radius, 0.0, math.sin(t) * radius)), hook, PL.CHAIN)
     b.tube([hook, hook + Vector((0, 0.03, 0))], 0.004, mat, segments=4)
     # Pflanzen (der Korb zählt am Ende als Gefäß, siehe style_plants.settle)
-    PL._register(b, "cyl", (b.xf @ (rim - Vector((0, radius * 0.85, 0))), radius - 0.01, radius + 0.006, radius * 0.85, radius * 0.85 - 0.012))
+    PL._register(b, "bowl", (b.xf @ rim, radius * 1.0 + 0.012, squash, rim.y - 0.012, rim.y + rim_top))
     space = PL.BasketSpace(rim, radius, rim.y - 0.012)
     if wall_z is not None:
         space.wall(wall_z)
+    for point, normal, gap in planes:
+        space.plane(point, normal, gap=gap)
     soil = rim + Vector((0, -0.012, 0))
-    PL.geranium(b, soil + Vector((rnd.uniform(-0.02, 0.02), 0, rnd.uniform(-0.02, 0.02))), rnd, palettes[0], 0.9, space, flowers=4)
-    for k in range(8):
-        t = 2 * math.pi * k / 8 + rnd.uniform(-0.25, 0.25)
-        d = Vector((math.cos(t), 0, math.sin(t)))
-        start = soil + d * (radius - 0.05)
-        kind = ("lobelia", "petunia", "ivy", "lobelia", "petunia", "ivy", "lobelia", "petunia")[k]
-        pal = {"lobelia": rnd.choice(["blue", "white"]), "petunia": palettes[(k + 1) % len(palettes)]}.get(kind)
-        PL.trailing_ivy(b, start, rnd.uniform(0.15, 0.36), rnd, d, space, leaf_size=0.045, kind=kind, palette=pal, over=0.11, lift=0.02)
-        if kind == "petunia":
-            PL.petunia_plant(b, soil + d * (radius * 0.55), rnd, pal, 0.8, space)
-        elif kind == "lobelia":
-            PL.lobelia(b, soil + d * (radius * 0.6), rnd, pal, 1.1, space)
+    if variant == "fuchsia":
+        colors = rnd.choice(PL.FUCHSIA_COLORS)
+        # Mitte: ein Busch aus aufrechten Trieben, ringsum Bögen, die weit überhängen
+        for k in range(10):
+            t = 2 * math.pi * k / 10 + rnd.uniform(-0.2, 0.2)
+            d = Vector((math.cos(t), 0, math.sin(t)))
+            PL.fuchsia_trail(b, soil + d * (radius * rnd.uniform(0.3, 0.75)), rnd.uniform(0.22, 0.42), rnd, d, space, colors=colors,
+                             over=radius * 0.45, lift=rnd.uniform(0.05, 0.12))
+        for k in range(4):
+            t = 2 * math.pi * k / 4 + 0.4
+            d = Vector((math.cos(t), 0, math.sin(t)))
+            PL.lobelia(b, soil + d * (radius * 0.6), rnd, "white", 1.0, space, trail=0.25, out=d, reach=radius * 0.5, lift=0.02)
+    elif variant == "cascade":
+        pal = rnd.choice([("rose", "white"), ("lavender", "white"), ("coral", "rose"), ("lavender", "rose")])
+        PL.petunia_plant(b, soil, rnd, pal[0], 1.0, space)
+        for k in range(14):
+            t = 2 * math.pi * k / 14 + rnd.uniform(-0.15, 0.15)
+            d = Vector((math.cos(t), 0, math.sin(t)))
+            start = soil + d * (radius - 0.04)
+            PL.trailing_ivy(b, start, rnd.uniform(0.3, 0.6), rnd, d, space, leaf_size=0.045, kind="petunia", palette=pal[k % 2],
+                            over=0.1, lift=0.025)
+            if k % 2 == 0:
+                PL.petunia_plant(b, soil + d * (radius * 0.55), rnd, pal[k % 2], 0.85, space)
+    else:
+        PL.geranium(b, soil + Vector((rnd.uniform(-0.02, 0.02), 0, rnd.uniform(-0.02, 0.02))), rnd, palettes[0], 0.9, space, flowers=4)
+        for k in range(10):
+            t = 2 * math.pi * k / 10 + rnd.uniform(-0.25, 0.25)
+            d = Vector((math.cos(t), 0, math.sin(t)))
+            start = soil + d * (radius - 0.05)
+            kind = ("lobelia", "petunia", "ivy", "lobelia", "petunia", "ivy", "lobelia", "petunia", "ivy", "lobelia")[k]
+            pal = {"lobelia": rnd.choice(["blue", "white"]), "petunia": palettes[(k + 1) % len(palettes)]}.get(kind)
+            PL.trailing_ivy(b, start, rnd.uniform(0.15, 0.4), rnd, d, space, leaf_size=0.045, kind=kind, palette=pal, over=0.11, lift=0.02)
+            if kind == "petunia":
+                PL.petunia_plant(b, soil + d * (radius * 0.55), rnd, pal, 0.8, space)
+            elif kind == "lobelia":
+                PL.lobelia(b, soil + d * (radius * 0.6), rnd, pal, 1.1, space)
 
 
 def door_knob(b, x, y, z_face, out=1, mat=None):
@@ -253,7 +331,7 @@ def weld(b, pts, bar, mat, radius=0.008):
             if best is None or d < best[0]:
                 best = (d, p, q)
     if best and best[0] > 0.004:
-        b.tube([best[1], best[2]], radius, mat, segments=4)
+        b.tube([best[1], best[2]], radius, mat, segments=4, caps=False)
     if best:
         b.sphere(best[2], radius * 1.6, mat, rings=3, segments=6)
 
@@ -294,7 +372,8 @@ def projecting_sign(b, x, y_bracket, z_wall, edge_mat, sign_mat, round_=False):
     Seiten)."""
     reach = 0.95
     b.box((x - 0.05, y_bracket - 0.5, z_wall), (x + 0.05, y_bracket + 0.06, z_wall + 0.025), IRON)
-    arm = [V(x, y_bracket, z_wall), V(x, y_bracket, z_wall + reach)]
+    # Der Arm beginnt in der Wandplatte (nicht genau auf ihrer Rückseite)
+    arm = [V(x, y_bracket, z_wall + 0.01), V(x, y_bracket, z_wall + reach)]
     strut = [V(x, y_bracket - 0.45, z_wall + 0.02), V(x, y_bracket - 0.18, z_wall + 0.35), V(x, y_bracket - 0.02, z_wall + 0.62)]
     b.tube(arm, 0.018, IRON, segments=6)
     b.sphere(V(x, y_bracket, z_wall + reach + 0.01), 0.03, GOLD, rings=4, segments=8)
@@ -366,7 +445,8 @@ def lantern_head(b, x, y, z, size=0.22, mat=None):
     b.box((x - size * 0.45, y + 0.03, z - size * 0.45), (x + size * 0.45, y + h, z + size * 0.45), LAMP_GLASS)
     for dx in (-1, 1):
         for dz in (-1, 1):
-            b.box((x + dx * size * 0.5 - 0.012, y, z + dz * size * 0.5 - 0.012), (x + dx * size * 0.5 + 0.012, y + h, z + dz * size * 0.5 + 0.012), mat)
+            b.box((x + dx * size * 0.5 - 0.012, y + 0.03, z + dz * size * 0.5 - 0.012), (x + dx * size * 0.5 + 0.012, y + h, z + dz * size * 0.5 + 0.012), mat,
+                  skip=("bottom", "top"))
     b.box((x - size * 0.58, y + h, z - size * 0.58), (x + size * 0.58, y + h + 0.03, z + size * 0.58), mat)
     b.cylinder(V(x, y + h + 0.03, z), size * 0.62, size * 0.5, mat, segments=4, radius_top=0.02)
     b.sphere(V(x, y + h + size * 0.55, z), 0.025, mat, rings=3, segments=6)
@@ -394,7 +474,7 @@ def street_lamp(b, seed=1):
     for sx in (-1, 1):
         b.tube([V(0, 2.55, 0), V(sx * 0.25, 2.62, 0), V(sx * 0.5, 2.6, 0)], 0.012, m, segments=4)
         basket(b, V(sx * 0.5, 2.27, 0), 0.17, V(sx * 0.5, 2.585, 0), rnd, palettes=(rnd.choice(["rose", "coral"]), "white", "lavender"),
-               mat=m)
+               mat=m, variant="cascade" if sx < 0 else "fuchsia")
 
 
 ## Hängende Straßenlaterne am Wandarm: Ausladung (Mitte der Laterne vor der Wand) und Platz,

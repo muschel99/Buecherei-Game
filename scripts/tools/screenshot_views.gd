@@ -217,6 +217,8 @@ static func details() -> Dictionary:
 		"pub_ivy": {"pos": Vector3(-8.8, g + 1.6, -5.9), "target": Vector3(-8.8, g + 3.0, -2.1)},
 		"library_corner": {"pos": Vector3(-3.8, g + 1.6, -5.0), "target": Vector3(-2.3, g + 3.4, -3.2)},
 		"flower_shop": {"pos": Vector3(-3.9, g + 1.6, opp + 2.4), "target": Vector3(-3.9, g + 0.9, opp)},
+		"flower_bike": {"pos": Vector3(-4.9, g + 1.4, opp + 1.9), "target": Vector3(-5.9, g + 0.8, opp + 0.2)},
+		"flower_right": {"pos": Vector3(-2.7, g + 1.3, opp + 1.7), "target": Vector3(-2.3, g + 0.7, opp + 0.3)},
 		"ivy_house": {"pos": Vector3(-12.4, g + 1.6, opp + 3.0), "target": Vector3(-14.9, g + 2.8, opp - 1.8)},
 		"lamp_basket": {"pos": Vector3(-6.0, g + 1.6, lamp_z - 1.4), "target": Vector3(-7.5, g + 2.3, lamp_z)},
 		"window_boxes": {"pos": Vector3(0.4, g + 1.6, opp + 3.5), "target": Vector3(0.9, g + 4.0, opp)},

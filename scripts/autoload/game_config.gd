@@ -490,6 +490,14 @@ var sun_shadow_distance: float = 70.0
 ## Bei 2 Schattenstufen (Grafikstufe Niedrig): Grenze zwischen feiner und grober Stufe als
 ## Anteil der Schattenweite (0.3 = nach 6 m). So liegt das Fensterlicht meist in der feinen.
 var sun_two_cascade_split: float = 0.3
+## Himmelslicht draußen (seit Etappe 4g, Teil 4f): schattenloses Licht von oben, das nur
+## Dinge draußen trifft (Häuser, Straße, Passanten) – macht die Schatten draußen heller, ohne
+## dass Licht durch die Wände in die Bücherei fällt. 0 = aus.
+var outdoor_fill_energy: float = 0.55
+## Farbe des Himmelslichts (leicht bläulich wie der Himmel, der in die Schatten scheint).
+var outdoor_fill_color: Color = Color(0.8, 0.86, 1.0)
+## Render-Ebene für alles draußen (nur sie empfängt das Himmelslicht; 1 = alles andere).
+const OUTDOOR_RENDER_LAYER := 2
 ## Höchstens so viele Bilder pro Sekunde, solange das Pausenmenü offen ist (spart Strom).
 var paused_max_fps: int = 30
 
