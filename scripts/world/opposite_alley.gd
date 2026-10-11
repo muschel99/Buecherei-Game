@@ -35,6 +35,8 @@ func _ready() -> void:
 		var model := model_scene.instantiate()
 		model.name = "Model"
 		add_child(model)
+		# Die Wände sind nur von innen gebaut: Schatten trotzdem von beiden Seiten
+		WorldMesh.cast_shadows_both_sides(model)
 		# Unsichtbare Grenze für die Spielfigur; Passanten gehen hindurch, und sie verdeckt für die
 		# Sichtprüfung nichts (wie die Grenzen der Straße)
 		var body := StaticBody3D.new()

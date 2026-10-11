@@ -52,6 +52,8 @@ func _ready() -> void:
 		var model := model_scene.instantiate()
 		model.name = "Model"
 		add_child(model)
+		# Die Wände sind nur von innen gebaut: Schatten trotzdem von beiden Seiten
+		WorldMesh.cast_shadows_both_sides(model)
 		_build_garden_walls(library_x, far_x, end)
 		_build_bench()
 	else:

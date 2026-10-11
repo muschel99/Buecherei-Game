@@ -105,3 +105,15 @@ func make_instance(node_name: String, material: Material, cast_shadow: bool = tr
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if cast_shadow \
 		else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return instance
+
+
+## Alle Modelle unter root werfen Schatten von beiden Seiten. Nötig bei Kulissen aus einseitigen
+## Flächen (z. B. Gassenwände nur von innen gebaut): Godot rechnet Schatten sonst nur von den
+## sichtbaren Seiten – scheint die Sonne auf die Rückseite, fehlt der Schatten.
+static func cast_shadows_both_sides(root: Node) -> void:
+	if root is GeometryInstance3D:
+		var geometry := root as GeometryInstance3D
+		if geometry.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			geometry.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_DOUBLE_SIDED
+	for child in root.get_children():
+		cast_shadows_both_sides(child)
