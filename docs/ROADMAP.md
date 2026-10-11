@@ -34,6 +34,7 @@
 | 4g  | Einheitlicher Stil: Modelle aus Blender (Häuser, Bücherei, Möbel, Innenraum) | in Arbeit |
 | 5   | Besucher                                 | in Arbeit     |
 | 5a  | Leben auf der Straße                     | fertig        |
+| 5b  | Figuren und Fahrzeuge im Stil            | in Arbeit     |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
 | 8   | Café                                     | offen         |
@@ -810,6 +811,22 @@ oder verschwindet sichtbar.
       35–42 Zeichenaufrufe mehr (rund 5–10 %)
 - [x] Testbilder-Werkzeug erweitert: `--simulate`, `--seed`, `--deliver`, `--focus`, `--stats`,
       `--quality`, Blickpunkt-Gruppe `street_life`
+
+### Etappe 5b – Figuren und Fahrzeuge im Stil
+Leitgedanke: Statt Platzhaltern echte Figuren (warm, stilisiert, Frisuren aus dicken Strähnen –
+Richtung Disney Dreamlight Valley) und Fahrzeuge, die zur englischen Altstadt passen.
+- [x] Figuren-Baukasten (`tools/blender/build_characters.py`, `character_lib.py`):
+      Quaternius-Grundkörper (CC0) weicher gemacht, Kopf etwas größer, Formregler „Rundlich“,
+      „Schlank“, „Kraeftig“; Kleidung als Hülle um den Körper (gleiche Gewichte und Formregler,
+      gerade Säume, Bündchen, Schichten innen → außen), Röcke und Mantelschöße als Glocke,
+      Schuhe aus Querschnitten, Frisuren aus Strähnen (lang, lockig, Dutt, kurz, Seitenscheitel),
+      Bart, Mütze, Schal; 3 Frauen und 3 Männer; Baukasten je Grundkörper; Mixamo-Dateien
+- [x] Fahrzeuge (`tools/blender/build_vehicles.py`): Taxi, Mini, Kombi mit Holzrahmen,
+      Lieferwagen (Bulli mit Nest-&-Nook-Logo als austauschbares Bild), Hollandrad; Räder und
+      Kurbel drehen sich (`VehicleModel`, `CyclistPlaceholder`); neue Stil-Ebenen Autolack,
+      Chrom, Gummi, Leder; das Rad vor dem Blumenladen ist dasselbe Hollandrad
+- [ ] Animationen von Mixamo (Gehen, Stehen, Umschauen, Sitzen …) übertragen und die Figuren
+      als Passanten einsetzen (danach: Fahrer auf den Rädern, Besucher in der Bücherei)
 
 ## Etappe 6 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

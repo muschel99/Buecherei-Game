@@ -9,3 +9,9 @@ __pycache__/
 
 # Sicherungskopien von Blender
 *.blend1
+
+# Texturen, die Godot beim Import aus den Figuren (.glb) herauslöst (entstehen auf jedem PC neu)
+assets/models/characters/*.jpg
+assets/models/characters/*.jpg.import
+assets/models/characters/*.png
+assets/models/characters/*.png.import

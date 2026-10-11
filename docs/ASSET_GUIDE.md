@@ -635,6 +635,41 @@ Für alle gilt: **Vorderseite nach +Z** (das ist die Vorderansicht in Blender, Z
 **1**), **Füße bzw. Räder auf Höhe 0**, Ursprung in der Mitte. Vorlagen in echter Größe liegen
 in `assets/models/templates/street_life/` (siehe „Vorlagen zum Modellieren“).
 
+### Die Figuren (seit Etappe 5b)
+Sechs Figuren im Stil des Spiels (Kopf etwas größer, Frisuren aus dicken Strähnen):
+**Mila** (Pullover, Leggings, Stiefeletten), **Rosa** (Bluse, Mieder, langer Rock), **Hanna**
+(Strickjacke, Rock, Dutt), **Theo** (Pullover, Jeans, Turnschuhe), **Bruno** (Hemd, Weste,
+Schiebermütze, Bart) und **Arthur** (Mantel, Schal, Schnurrbart). Grundlage sind die
+Quaternius-Grundkörper (CC0, frei verwendbar) – sie liegen unverändert in
+`assets/models/characters/base_quaternius/` (zum Anschauen in Blender).
+- **Fertige Figuren:** `assets/models/characters/<name>.glb` (Skelett + Körper, Kleidung, Haare,
+  T-Pose). Alle nebeneinander in Godot: `scenes/tools/character_lineup.tscn` öffnen.
+- **Baukasten:** `kit_female.glb` und `kit_male.glb` – der Körper in Teilen (Kopf, Rumpf, Arme,
+  Beine, Füße …) mit **Formreglern** (Blend Shapes „Rundlich“, „Schlank“, beim Mann auch
+  „Kraeftig“), dazu alle Kleidungsstücke und Frisuren, alle am selben Skelett. Jedes
+  Kleidungsstück hat dieselben Formregler, passt also zu jeder Körperform. Die Blender-Dateien
+  dazu: `assets/models/source/characters/kit_female.blend`, `kit_male.blend`, je Figur
+  `<name>.blend`.
+- **Neue Figur:** in `tools/blender/build_characters.py` bei `CHARACTERS` einen Eintrag
+  ergänzen (Körper, Hautton, Formregler, Größe, Frisur + Farbe, Kleidungsstücke + Farben) und
+  das Script laufen lassen: `blender -b --factory-startup --python
+  tools/blender/build_characters.py` (Kontrollbilder: `-- --render mila` →
+  `screenshots/blender/characters/`).
+
+### Animationen von Mixamo (Bewegungen für die Figuren)
+Mixamo kann nur im Browser benutzt werden – das machst du, den Rest Claude:
+1. Auf mixamo.com anmelden und **Upload Character** wählen. Eine Figur aus
+   `assets/models/characters/mixamo/` hochladen (z. B. `mila.fbx`; T-Pose, nur das Netz).
+2. Der Auto-Rigger fragt nach Punkten: Kinn, Handgelenke, Ellbogen, Knie, Leiste – auf die
+   Figur ziehen, **Next**. Mixamo setzt das Skelett ein.
+3. Animationen suchen und je eine herunterladen (**Download**, Format **FBX Binary**, **Without
+   Skin**, 30 fps). Gebraucht werden: Gehen (*Walking*), Stehen (*Idle*), Umschauen
+   (*Looking Around*), Sitzen (*Sitting Idle*), gern auch Lesen, Winken, Ins-Schaufenster-Schauen.
+   Bei Geh-Animationen **In Place** anhaken.
+4. Die Dateien in den Ordner `assets/models/characters/animations/` legen (anlegen) und Claude
+   Bescheid sagen. Einmal hochladen genügt: Alle Figuren haben dasselbe Skelett, Godot überträgt
+   die Bewegungen auf jede Figur.
+
 ### Eigene Passanten (Figur mit Skelett und Animationen)
 Gedacht für Figuren wie die Quaternius-Grundkörper mit Skelett, dazu deine Frisuren und
 Kleidung. So geht's:
@@ -671,24 +706,34 @@ Kleidung. So geht's:
 Schatten und Leistung regelt das Spiel selbst: Figuren werfen nur in der Nähe Schatten. Weit
 entfernte Figuren vereinfacht Godot beim Import automatisch (LOD).
 
-### Eigene Autos und Fahrräder
-Szenen `scenes/street_life/car.tscn` und `cyclist.tscn`: wie oben **Model** löschen, deine
-`.glb` hineinziehen und **Model** nennen. Ist das Fahrzeug deutlich länger oder breiter als die
-Vorlage, oben am Wurzel-Knoten **Length** und **Width** anpassen (damit es richtig bremst) und
-die Kiste in **Body > CollisionShape3D**. Die Platzhalter-Autos bekommen ihre Farbe aus
-`GameConfig.car_colors` – ein eigenes Modell behält seine eigenen Farben (für mehrere Farben
-mehrere Auto-Szenen anlegen und in `GameConfig.car_scene` die gewünschte eintragen). Hat dein
-Fahrrad-Modell eine Tret-Animation, ihren Namen bei **Move Animation** eintragen und bei
-**Move Animation Speed** das passende Tempo.
-
-### Eigener Lieferwagen
-Szene `scenes/street_life/delivery_van.tscn`, Vorlage `templates/street_life/delivery_van.glb`
-(3,6 m lang, 1,76 m breit, etwa 2,3 m hoch mit dem Paket auf dem Dach). Die Schiebetür sitzt
-auf der **linken** Seite (vom Fahrer aus gesehen; in der Vorlage auf +X) – das ist die Seite zum
-Gehweg, denn in England fährt man links. Modelliere die Tür als **eigenes Teil** und nenne es in
-Blender **Door**: Dann gleitet sie beim Ausladen von selbst nach hinten (wie weit: **Door Slide**
-am Knoten **DeliveryVan**). Aus der Mitte der Tür (**Door Point**) hüpfen die Kartons heraus.
-Model ersetzen wie oben.
+### Autos, Fahrräder und Lieferwagen (seit Etappe 5b)
+Alle Fahrzeuge baut `tools/blender/build_vehicles.py` (ohne Markenzeichen):
+**Taxi** (englisches Taxi, immer schwarz, Schild „TAXI“), **Mini** (Wagenfarbe, helles Dach),
+**Kombi mit Holzrahmen** („Traveller“), der **Lieferwagen** (Bulli, unten Wagenfarbe, oben creme,
+großes V vorn, geteilte Frontscheibe, Dachträger mit Paketen) und das **Hollandrad**.
+- Dateien: `assets/models/vehicles/<name>.glb` (Karosserie), `<name>_wheel.glb` (ein Rad – das
+  Spiel setzt es viermal ein und dreht es beim Fahren), `delivery_van_door.glb` (Schiebetür),
+  `bicycle_wheel.glb`, `bicycle_crank.glb` (Kurbel mit Pedalen); Blender-Dateien zum Anschauen in
+  `assets/models/source/vehicles/`.
+- Szenen: `scenes/street_life/car_taxi.tscn`, `car_mini.tscn`, `car_traveller.tscn`,
+  `delivery_van.tscn`, `cyclist.tscn`. Welche Autos fahren, steht in
+  `scripts/autoload/game_config.gd` bei `car_scenes` (Anzahl gleichzeitig: `car_count`).
+- **Farben:** Die Autos (außer dem Taxi) bekommen eine Farbe aus `GameConfig.car_colors`. Am
+  Knoten **Model** einer Auto-Szene: **Fixed Color** an = immer **Paint Color** (so beim Taxi);
+  **Second Color** = Dach/obere Hälfte. Lieferwagen: `GameConfig.delivery_van_color`.
+- **Logo am Lieferwagen:** Das Bild `assets/textures/signs/delivery_van_logo.png` (1024 × 496
+  Pixel, entspricht 0,95 × 0,46 m an beiden Seiten). Selbst gestalten wie bei den Schildern:
+  Bild öffnen, darüber malen oder ein neues im gleichen Seitenverhältnis anlegen, unter
+  **genau demselben Namen** speichern – Godot lädt es von selbst.
+- **Paketanimation:** unverändert; die Schiebetür heißt im Modell **Door** und gleitet beim
+  Ausladen um **Door Slide** nach hinten, die Kartons hüpfen aus der Mitte der Öffnung
+  (**Door Point** am Knoten **DeliveryVan**).
+- **Eigenes Modell:** In der Szene unter **Model** die Karosserie (Kind `Car`, `Van`) durch dein
+  `.glb` ersetzen (Vorderseite +Z, Räder auf y = 0). Bringt dein Modell eigene Räder mit, bei
+  **Model** das Feld **Wheel Scene** leeren. Ist es deutlich länger oder breiter, oben am
+  Wurzel-Knoten **Length** und **Width** anpassen und die Kiste in **Body > CollisionShape3D**.
+- Neu bauen: `blender -b --factory-startup --python tools/blender/build_vehicles.py`
+  (Kontrollbilder: `-- taxi --render` → `screenshots/blender/vehicles/`).
 
 ### Wo Passanten stehen bleiben
 Vor den Schaufenstern der Haustypen in `GameConfig.passerby_window_house_types` (Modegeschäft,

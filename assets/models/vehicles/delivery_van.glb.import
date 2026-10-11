@@ -43,6 +43,7 @@ _subresources={
 "materials": {
 "glass": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/house_glass.tres",
 "use_external/path": "res://assets/materials/house_glass.tres"
 },
 "glass_clear": {
@@ -55,6 +56,7 @@ _subresources={
 },
 "house": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/house_style.tres",
 "use_external/path": "res://assets/materials/house_style.tres"
 },
 "plant": {
@@ -63,6 +65,7 @@ _subresources={
 },
 "sign_logo": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/signs/delivery_van_logo.tres",
 "use_external/path": "res://assets/materials/signs/delivery_van_logo.tres"
 }
 }

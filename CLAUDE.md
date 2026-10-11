@@ -394,6 +394,27 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `planes` (Punkt, Richtung ins Freie, Abstand) nehmen. geo_check meldet auch Flimmern (zwei
   Flächen genau aufeinander: die kleinere 2–3 mm zurücksetzen, Deckel/Böden in anderen Teilen
   mit `skip`, Rückseiten in der Wand weglassen) und Gefäße, die in festen Teilen stecken.
+- **Figuren (seit Etappe 5b):** `tools/blender/build_characters.py` (Figuren `CHARACTERS`,
+  Kleidungsstücke `make_part`, Frisuren `make_hair`) mit `character_lib.py`. Grundkörper:
+  Quaternius (CC0) in `assets/models/characters/base_quaternius/` (.gdignore, nie verändern);
+  Blenders glTF-Import braucht den numpy-Kniff am Anfang von character_lib (np.bool …).
+  Nähte verschweißen (`weld`), Kleidung = `shell` (Körperkopie, Normale nach außen, glätten,
+  `cuts` = gerade Säume per bisect, `neck_cuts` mit Bereich), Röcke `bell`, Schuhe `shoe`,
+  Haare `long_hair`/`bun_hair`/`cropped_hair` (Strähnen über `HeadShape.surface_dir`, Gesicht
+  bleibt frei), Schichten `_layer_clothes` + `push_out_of`. Farbtöne in Texturen einrechnen
+  (`tinted_image`) – der glTF-Export übernimmt keine Farb-Knoten. Export: Figuren mit fest
+  angewandten Formreglern (`<name>.glb`, JPEG-Texturen), Baukasten `kit_<körper>.glb` (Körper in
+  Teilen `SEGMENTS`, Formregler bleiben, Teile mit Extra "covers"), Mixamo `mixamo/<name>.fbx`
+  (nur Netze, .gdignore). Ansicht: `scenes/tools/character_lineup.tscn`.
+- **Fahrzeuge (seit Etappe 5b):** `tools/blender/build_vehicles.py`: Karosserie `Body`
+  (Querschnitte entlang z, Radkästen, weiche Normalen, Fenster/Lack je Fläche über
+  `window_mats`), Teile auf der Haut über BVH (`hit`, `round_lamp`, `plate`). Lack = Rolle
+  accent (Godot: Wagenfarbe), zweite Farbe = Rolle door; Räder als eigene .glb, eingesetzt und
+  gedreht von `VehicleModel` (scripts/street_life/vehicle_model.gd), Lieferwagen-Tür = Knoten
+  "Door". Logo des Lieferwagens = Schild-Bild `delivery_van_logo.png` (Startbild `logo_design`,
+  nie überschreiben). Hollandrad: `style_parts.bicycle` (auch vor dem Blumenladen), auf der Straße
+  Rahmen/Räder/Kurbel getrennt (`CyclistPlaceholder`). Stil-Ebenen 20–23: car_paint, chrome,
+  rubber, leather (Shader-Listen jetzt 24 lang).
 - `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
   und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`

@@ -1,0 +1,53 @@
+[gd_scene load_steps=8 format=3]
+
+; Alle Figuren nebeneinander zum Anschauen (seit Etappe 5b): Szene öffnen und im 3D-Fenster
+; herumfliegen (rechte Maustaste halten + WASD). Die Figuren stehen in T-Pose (Arme waagerecht),
+; bis die Mixamo-Animationen da sind. Neu bauen: tools/blender/build_characters.py.
+
+[ext_resource type="PackedScene" path="res://assets/models/characters/mila.glb" id="1_mila"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/rosa.glb" id="2_rosa"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/hanna.glb" id="3_hanna"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/theo.glb" id="4_theo"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/bruno.glb" id="5_bruno"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/arthur.glb" id="6_arthur"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+size = Vector2(14, 6)
+
+[sub_resource type="Environment" id="Environment_soft"]
+background_mode = 1
+background_color = Color(0.82, 0.8, 0.76, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.9, 0.88, 0.85, 1)
+ambient_light_energy = 0.6
+tonemap_mode = 2
+
+[node name="CharacterLineup" type="Node3D"]
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_floor")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 5, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_soft")
+
+[node name="Mila" parent="." instance=ExtResource("1_mila")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 0, 0)
+
+[node name="Rosa" parent="." instance=ExtResource("2_rosa")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.85, 0, 0)
+
+[node name="Hanna" parent="." instance=ExtResource("3_hanna")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.95, 0, 0)
+
+[node name="Theo" parent="." instance=ExtResource("4_theo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 0, 0)
+
+[node name="Bruno" parent="." instance=ExtResource("5_bruno")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.85, 0, 0)
+
+[node name="Arthur" parent="." instance=ExtResource("6_arthur")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.75, 0, 0)
