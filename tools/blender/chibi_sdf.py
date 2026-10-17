@@ -100,6 +100,30 @@ class Ellipsoid(Leaf):
         return k0 * (k0 - 1.0) / np.maximum(k1, 1e-9)
 
 
+class RoundBox(Leaf):
+    """Abgerundeter Quader (Mitte c, halbe Kantenlängen b, Rundung r, optional gedreht)."""
+
+    def __init__(self, name, c, b, r, bones=None, sigma=0.012, rot=None):
+        c = np.array(c, np.float64)
+        b = np.array(b, np.float64)
+        m = float(np.linalg.norm(b) + r)
+        super().__init__(name, c - m, c + m, bones, sigma)
+        self.c, self.b, self.r = c, b, float(r)
+        self.rot = None if rot is None else np.array(rot, np.float64)
+
+    def f(self, x, y, z):
+        dx, dy, dz = x - self.c[0], y - self.c[1], z - self.c[2]
+        if self.rot is not None:
+            r = self.rot
+            dx, dy, dz = (r[0, 0] * dx + r[1, 0] * dy + r[2, 0] * dz,
+                          r[0, 1] * dx + r[1, 1] * dy + r[2, 1] * dz,
+                          r[0, 2] * dx + r[1, 2] * dy + r[2, 2] * dz)
+        qx, qy, qz = np.abs(dx) - self.b[0], np.abs(dy) - self.b[1], np.abs(dz) - self.b[2]
+        outside = np.sqrt(np.maximum(qx, 0) ** 2 + np.maximum(qy, 0) ** 2 + np.maximum(qz, 0) ** 2)
+        inside = np.minimum(np.maximum(qx, np.maximum(qy, qz)), 0.0)
+        return outside + inside - self.r
+
+
 class RoundCone(Leaf):
     """Runder Kegel (Kapsel mit zwei Radien) von a (Radius ra) nach b (Radius rb)."""
 
@@ -180,9 +204,13 @@ class Group:
 
     def leaves(self):
         out = []
+        seen = set()
         for op, n, k in self.items:
             if op == "union":
-                out += n.leaves()
+                for lf in n.leaves():
+                    if id(lf) not in seen:
+                        seen.add(id(lf))
+                        out.append(lf)
         return out
 
     def eval_grid(self, xs, ys, zs):
@@ -451,6 +479,11 @@ def transform(node, rot, origin):
         node.rot = rot if node.rot is None else rot @ node.rot
         m = float(max(node.r))
         node.lo, node.hi = node.c - m, node.c + m
+    elif isinstance(node, RoundBox):
+        node.c = origin + rot @ (node.c - origin)
+        node.rot = rot if node.rot is None else rot @ node.rot
+        m = float(np.linalg.norm(node.b) + node.r)
+        node.lo, node.hi = node.c - m, node.c + m
     elif isinstance(node, RoundCone):
         node.a = origin + rot @ (node.a - origin)
         node.b = origin + rot @ (node.b - origin)
@@ -509,7 +542,7 @@ DIMS = {
         chest=(0.118, 0.104, 0.28), bust=(0.056, -0.072, 0.72, 0.050, 0.047, 0.045),
         waist=(0.122, 0.090, 0.27), belly=(0.07, 0.060, 0.08), pelvis=(0.146, 0.104, 0.22),
         butt=(0.072, 0.074, 0.080), neck=0.046,
-        arm=(0.044, 0.040, 0.023), upper_arm=0.20, fore_arm=0.165, hand=1.05, wrist=(0.026, 0.019),
+        arm=(0.044, 0.040, 0.021), upper_arm=0.20, fore_arm=0.165, hand=1.05, wrist=(0.026, 0.019),
         hip_x=0.090, thigh=0.080, knee=0.057, calf=0.052, ankle=0.042, foot=1.0, thigh_top=0.94),
     "male": dict(
         crotch=0.49,
@@ -517,7 +550,7 @@ DIMS = {
         chest=(0.124, 0.104, 0.30), bust=None,
         waist=(0.143, 0.094, 0.25), belly=(0.08, 0.064, 0.09), pelvis=(0.102, 0.094, 0.21),
         butt=(0.050, 0.054, 0.064), neck=0.050,
-        arm=(0.047, 0.043, 0.026), upper_arm=0.21, fore_arm=0.175, hand=1.13, wrist=(0.029, 0.021),
+        arm=(0.047, 0.043, 0.023), upper_arm=0.21, fore_arm=0.175, hand=1.13, wrist=(0.029, 0.021),
         hip_x=0.076, thigh=0.072, knee=0.054, calf=0.048, ankle=0.042, foot=1.08, thigh_top=0.80,
         thigh_start=0.84,
         # dick: Bauch weniger rund, Hüfte wächst mit (gerade Linie), Schultern schmaler
@@ -678,11 +711,10 @@ class Body:
             ("union", RoundCone("forearm_" + side, (s * elbow_x, y0, sz), (s * wrist_x, y0, sz), r_el, r_wr,
                                 {side + "LowerArm": 1.0}, 0.012), 0.012),
         ]
-        # Handgelenk: schmalste Stelle, breiter als dick (flach)
-        items.append(("union", Ellipsoid("wrist_" + side, (s * (wrist_x - 0.004), y0, sz), (0.024, ww, wt),
-                                         {side + "LowerArm": 0.5, side + "Hand": 0.5}, 0.008), 0.02))
-        hand, hj = self._hand(s, (s * wrist_x, y0, sz))
-        items.append(("union", hand, 0.012))
+        # Unterarm läuft schmal ins Handgelenk aus; die Hand setzt nur leicht verschmolzen an
+        # (große Verschmelzung würde am Handgelenk eine Beule bilden)
+        hand, hj = self._hand(s, (s * wrist_x, y0, sz), r_wr)
+        items.append(("union", hand, 0.004))
         group = Group("arm_" + side, items)
         rot = _rot_y(s * ARM_REST)
         origin = np.array((s * sx, y0, sz))
@@ -697,50 +729,61 @@ class Body:
                                  "hand": {k: [tp(p) for p in v] for k, v in hj.items()}}
         return group
 
-    def _hand(self, s, wrist):
-        """Hand in T-Pose: Handfläche nach unten, Finger entlang ±x, Daumen nach vorn (-y)."""
+    def _hand(self, s, wrist, wrist_r):
+        """Hand in T-Pose: Handfläche nach unten, Finger entlang ±x, Daumen nach vorn (-y).
+        Jeder Finger verschmilzt weich mit der Handfläche, aber nie mit dem Nachbarfinger
+        (getrennte Finger, damit sie sich in Animationen einzeln bewegen)."""
         side = "Left" if s > 0 else "Right"
         k = self.hand_scale * (1 + (self.fac("arm") - 1) * 0.2)
         wx, wy, wz = wrist
         hb = side + "Hand"
-        # Handfläche: breit und flach
-        items = [("union", Ellipsoid("palm_" + side, (wx + s * 0.040 * k, wy + 0.001, wz - 0.002),
-                                     (0.038 * k, 0.036 * k, 0.0150 * k), {hb: 1.0}, 0.008), 0.0)]
+        # Handfläche: breit und flach, beginnt kurz hinter dem Handgelenk
+        # flach wie ein abgerundetes Brett (eine Kugel sähe aufgeblasen aus)
+        core = Ellipsoid("palm_core_" + side, (wx + s * 0.046 * k, wy + 0.001, wz - 0.002),
+                         (0.031 * k, 0.030 * k, 0.0112 * k), {hb: 1.0}, 0.008)
+        # Verbindung zum Handgelenk: beginnt so schmal wie der Unterarm, wird zur Hand hin flacher
+        heel = RoundCone("palm_heel_" + side, (wx - s * 0.004, wy, wz), (wx + s * 0.030 * k, wy + 0.001, wz - 0.002),
+                         wrist_r, 0.0118 * k, {hb: 1.0}, 0.008)
+        palm = Group("palm_" + side, [("union", core, 0.0), ("union", heel, 0.012)])
+        items = [("union", palm, 0.0)]
         joints = {}
-        fingers = (("Index", -0.0222, 0.044, -3.0), ("Middle", -0.0072, 0.048, -1.0),
-                   ("Ring", 0.0076, 0.045, 1.0), ("Little", 0.0218, 0.036, 3.5))
+        fingers = (("Index", -0.0230, 0.052, -5.0), ("Middle", -0.0077, 0.057, -1.5),
+                   ("Ring", 0.0077, 0.053, 2.0), ("Little", 0.0225, 0.043, 6.0))
         for name, off, length, spread in fingers:
             base = np.array((wx + s * 0.068 * k, wy + off * k, wz - 0.002))
             a = math.radians(spread)
-            d = np.array((s * math.cos(a), math.sin(a), -0.04))
+            d = np.array((s * math.cos(a), math.sin(a), -0.03))
             d /= np.linalg.norm(d)
             seg = (0.44, 0.31, 0.25)
             pts = [base]
             for fr in seg:
                 pts.append(pts[-1] + d * length * k * fr)
-            r0, r1 = 0.0086 * k, 0.0076 * k
+            r0, r1 = 0.0068 * k, 0.0058 * k
             bones = ("Proximal", "Intermediate", "Distal")
+            finger = [("union", palm, 0.0)]
             for i in range(3):
                 ra = r0 + (r1 - r0) * i / 3.0
                 rb = r0 + (r1 - r0) * (i + 1) / 3.0
-                items.append(("union", RoundCone(f"{side}{name}{bones[i]}", pts[i], pts[i + 1], ra, rb,
-                                                 {f"{side}{name}{bones[i]}": 1.0}, 0.004),
-                              0.012 if i == 0 else 0.004))
+                finger.append(("union", RoundCone(f"{side}{name}{bones[i]}", pts[i], pts[i + 1], ra, rb,
+                                                  {f"{side}{name}{bones[i]}": 1.0}, 0.004),
+                               0.008 if i == 0 else 0.003))
+            items.append(("union", Group("finger_" + name, finger), 0.0))
             joints[name] = [tuple(p) for p in pts]
         # Daumen: von der Handwurzel nach vorn und außen
-        # Daumen liegt eng an der Hand an (wie beim Fäustling)
         t0 = np.array((wx + s * 0.020 * k, wy - 0.020 * k, wz - 0.004))
-        t1 = t0 + np.array((s * 0.023, -0.013, -0.003)) * k
-        t2 = t1 + np.array((s * 0.017, -0.005, -0.001)) * k
-        t3 = t2 + np.array((s * 0.013, -0.002, 0.0)) * k
+        t1 = t0 + np.array((s * 0.026, -0.016, -0.003)) * k
+        t2 = t1 + np.array((s * 0.020, -0.006, -0.001)) * k
+        t3 = t2 + np.array((s * 0.016, -0.002, 0.0)) * k
         tp = [t0, t1, t2, t3]
-        rad = (0.0110 * k, 0.0095 * k, 0.0088 * k, 0.0080 * k)
+        rad = (0.0100 * k, 0.0085 * k, 0.0076 * k, 0.0066 * k)
         tb = ("Metacarpal", "Proximal", "Distal")
+        thumb = [("union", palm, 0.0)]
         for i in range(3):
-            items.append(("union", RoundCone(f"{side}Thumb{tb[i]}", tp[i], tp[i + 1], rad[i], rad[i + 1],
+            thumb.append(("union", RoundCone(f"{side}Thumb{tb[i]}", tp[i], tp[i + 1], rad[i], rad[i + 1],
                                              {f"{side}Thumb{tb[i]}": 1.0} if i > 0 else
                                              {f"{side}Thumb{tb[i]}": 0.7, hb: 0.3}, 0.005),
-                          0.014 if i == 0 else 0.004))
+                          0.012 if i == 0 else 0.003))
+        items.append(("union", Group("thumb", thumb), 0.0))
         joints["Thumb"] = [tuple(p) for p in tp]
         group = Group("hand_" + side, items)
         # Hand leicht eingedreht (Daumen zum Körper): hängend sieht man von vorn den Handrücken schräg

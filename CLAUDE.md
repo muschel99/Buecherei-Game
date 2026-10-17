@@ -422,6 +422,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   gleichmäßige, fast gleichseitige Dreiecke – lange dünne Dreiecke vom Ausdünnen machten in Mixamo
   Schattenflecken und Knicke); Kantenlänge `REMESH_*`, feiner an dünnen Teilen, Gelenken und
   Details (`bend_zones`: Nabel, Nase, Schritt).
+  Danach `repair_manifold` (Netz muss geschlossen sein: 0 Löcher, keine Kante mit >2 Flächen).
+  Hände: Handfläche + Ballen (RoundCone in Handgelenkbreite, keine Beule), jeder Finger nur mit
+  der Handfläche verschmolzen (getrennte Finger). Mixamo-FBX: Vierecke, eigene UVs (Smart UV),
+  Material mit Rückseiten-Ausblenden.
   **UV2:** x = Verschattung (AO; Vertex-Farben kommen beim Export durcheinander), y = Abstand
   zum Rand der **aufgemalten Unterwäsche** (`Body.underwear_distance`, negativ = Stoff; in Godot
   `1 - UV2.y`) – keine Stoff-Netze, damit später nichts unter enger Kleidung hervorschaut.

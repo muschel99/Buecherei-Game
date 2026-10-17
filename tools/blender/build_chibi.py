@@ -156,7 +156,51 @@ def surface_object(name, node, lo, hi, tris, keep=None, protect=None):
         L = R.length_field(node, protect, REMESH_BASE, REMESH_FINEST, REMESH_JOINTS, coords(obj))
         R.remesh(obj, node, L, REMESH_ITERATIONS)
     fix_folds(obj, node)
+    repair_manifold(obj, node)
     return obj
+
+
+def mesh_problems(obj):
+    """(Kanten mit mehr als zwei Flächen, Randkanten = Löcher)"""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    nm = sum(1 for e in bm.edges if len(e.link_faces) > 2)
+    bd = sum(1 for e in bm.edges if len(e.link_faces) < 2)
+    bm.free()
+    return nm, bd
+
+
+def repair_manifold(obj, node, rounds=6):
+    """Kanten mit mehr als zwei Flächen und Löcher reparieren: Umgebung ausschneiden, Loch
+    schließen, auf die Oberfläche setzen. Das Netz muss geschlossen sein (Mixamo, Schatten)."""
+    for _ in range(rounds):
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bad = [e for e in bm.edges if len(e.link_faces) != 2]
+        if not bad:
+            bm.free()
+            break
+        verts = set()
+        for e in bad:
+            for v in e.verts:
+                verts.add(v)
+                for x in v.link_edges:
+                    verts.add(x.other_vert(v))
+        faces = {f for v in verts for f in v.link_faces}
+        bmesh.ops.delete(bm, geom=list(faces), context="FACES_ONLY")
+        loose_e = [e for e in bm.edges if not e.link_faces]
+        bmesh.ops.delete(bm, geom=loose_e, context="EDGES")
+        loose_v = [v for v in bm.verts if not v.link_edges]
+        bmesh.ops.delete(bm, geom=loose_v, context="VERTS")
+        rim = [e for e in bm.edges if len(e.link_faces) == 1]
+        res = bmesh.ops.holes_fill(bm, edges=rim, sides=0)
+        bmesh.ops.triangulate(bm, faces=res["faces"])
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        bm.to_mesh(obj.data)
+        bm.free()
+        set_coords(obj, S.project(node, coords(obj), 4))
+    nm, bd = mesh_problems(obj)
+    print(f"  Netz geschlossen: {nm} Kanten mit >2 Flächen, {bd} Randkanten")
 
 
 def fix_folds(obj, node, rounds=8):
@@ -997,9 +1041,21 @@ def export_mixamo(path, body_obj):
         me.uv_layers.remove(me.uv_layers[-1])
     me.materials.clear()
     mat = bpy.data.materials.get("mixamo_skin") or principled("mixamo_skin", SKIN, ao=False)
+    # einseitig: Rückseiten ausblenden (beidseitig würde Mixamo die Lichtseite in den Schatten rechnen)
+    mat.use_backface_culling = True
     me.materials.append(mat)
     for poly in me.polygons:
         poly.material_index = 0
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    # Vierecke wie bei üblichen Figuren und ordentliche, nicht überlappende Texturkoordinaten
+    # (die Gesichts-Abwicklung läuft am Scheitel in einem Punkt zusammen)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.tris_convert_to_quads()
+    bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.003)
+    bpy.ops.object.mode_set(mode="OBJECT")
     # Zahlen selbst in Zentimeter umrechnen (1,56 m -> 156) und die Szene auf Zentimeter stellen:
     # nur so schreibt Blender "Einheit Zentimeter" ohne zusätzlichen Faktor 100 am Objekt
     me.transform(Matrix.Scale(100.0, 4))
