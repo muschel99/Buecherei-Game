@@ -546,7 +546,8 @@ class Body:
         bx, by, bz = D["belly"]
         px, py, pz = D["pelvis"]
         torso = [
-            ("union", Ellipsoid("chest", (0, 0.010, cr + 0.70 * T), (cx * ft, cy * ft, cz * T), sp), 0.0),
+            # Brustkorb etwas nach vorn: aufrechte Haltung mit geschwungenem Rücken
+            ("union", Ellipsoid("chest", (0, -0.004, cr + 0.70 * T), (cx * ft, cy * ft, cz * T), sp), 0.0),
             ("union", Ellipsoid("waist", (0, 0.0, cr + 0.42 * T), (wx * ft, wy * ft, wz * T), sp), 0.10),
             ("union", Ellipsoid("belly", (0, -0.022 - 0.022 * max(fb - 1, 0), cr + 0.34 * T - 0.01 * max(fb - 1, 0)),
                                 (bx * min(fb, 1.0) ** 0.5 * max(fb, 1) ** 0.6, by * fb, bz * max(fb, 1) ** 0.5), sp), 0.07),
@@ -562,12 +563,12 @@ class Body:
             if D["bust"]:
                 bx_, by_, bz_, rx, ry, rz = D["bust"]
                 q = fac("bust")
-                torso.append(("union", Ellipsoid("breast_" + side, (s * bx_, by_ * q, cr + bz_ * T),
+                torso.append(("union", Ellipsoid("breast_" + side, (s * bx_, by_ * q - 0.012, cr + bz_ * T),
                                                  (rx * q, ry * q, rz * q), {"UpperChest": 1.0}), 0.04))
             # weiche Schulter: vom Nacken über eine runde Schulterkuppe zum Arm
             sz, sx = self.shoulder_z, self.shoulder_x
             # Schulterlinie: vom Hals weich nach außen abfallend (keine Schulterkugel)
-            torso.append(("union", RoundCone("trap_" + side, (0, 0.018, nb - 0.028), (s * (sx - 0.012), 0.014, sz - 0.008),
+            torso.append(("union", RoundCone("trap_" + side, (0, 0.012, nb - 0.028), (s * (sx - 0.012), 0.010, sz - 0.008),
                                              0.036 * ft, 0.042 * ft,
                                              {"UpperChest": 0.5, side + "Shoulder": 0.5}), 0.06))
         if not fem:
@@ -603,8 +604,10 @@ class Body:
         elbow_x = sx + self.upper_arm
         wrist_x = elbow_x + self.fore_arm
         fa = fac("arm")
-        r_up, r_el, r_wr = (r * fa for r in D["arm"])
-        r_wr = D["arm"][2] * (1 + (fa - 1) * 0.5)
+        # dicker/dünner vor allem am Oberarm, zum Handgelenk hin immer weniger (kein Überquellen)
+        r_up = D["arm"][0] * fa
+        r_el = D["arm"][1] * (1 + (fa - 1) * 0.6)
+        r_wr = D["arm"][2] * (1 + (fa - 1) * 0.25)
         items = [
             ("union", RoundCone("upperarm_" + side, (s * sx, y0, sz), (s * elbow_x, y0, sz), r_up, r_el,
                                 {side + "UpperArm": 1.0}, 0.012), 0.0),
@@ -631,7 +634,7 @@ class Body:
     def _hand(self, s, wrist):
         """Hand in T-Pose: Handfläche nach unten, Finger entlang ±x, Daumen nach vorn (-y)."""
         side = "Left" if s > 0 else "Right"
-        k = self.hand_scale
+        k = self.hand_scale * (1 + (self.fac("arm") - 1) * 0.2)
         wx, wy, wz = wrist
         hb = side + "Hand"
         items = [("union", Ellipsoid("palm_" + side, (wx + s * 0.034 * k, wy + 0.001, wz - 0.002),

@@ -430,7 +430,7 @@ def compare_with_reference(figs):
     F.write_png(os.path.join(SHOT_DIR, "compare.png"), np.concatenate(tiles, 1))
 
 
-def around_sheet(figs):
+def around_sheet(figs, name="around.png"):
     """Erste Figur von der Seite, von hinten, von der anderen Seite und von vorn (wie die Vorlage)."""
     arm, body, _ = figs[0]
     tiles = []
@@ -438,7 +438,7 @@ def around_sheet(figs):
         path = os.path.join(SHOT_DIR, f"around_{turn}.png")
         ortho_render(path, arm.location.x, S.HEIGHTS["female"]["medium"], turn=turn)
         tiles.append(load_png(path)[:, 262:762])
-    F.write_png(os.path.join(SHOT_DIR, "around.png"), np.concatenate(tiles, 1))
+    F.write_png(os.path.join(SHOT_DIR, name), np.concatenate(tiles, 1))
 
 
 def set_shape(figs, name):
@@ -598,6 +598,10 @@ def main():
                 set_shape(figs, "medium")
             elif v == "around":
                 around_sheet(figs)
+            elif v == "around_fat":
+                set_shape(figs, "fat")
+                around_sheet(figs, "around_fat.png")
+                set_shape(figs, "medium")
             elif v == "compare":
                 compare_with_reference(figs)
             elif v == "faces":
