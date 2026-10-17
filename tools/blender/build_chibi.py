@@ -976,13 +976,21 @@ def export_mixamo(path, body_obj):
     me.materials.append(mat)
     for poly in me.polygons:
         poly.material_index = 0
+    # Zahlen selbst in Zentimeter umrechnen (1,56 m -> 156) und die Szene auf Zentimeter stellen:
+    # nur so schreibt Blender "Einheit Zentimeter" ohne zusätzlichen Faktor 100 am Objekt
+    me.transform(Matrix.Scale(100.0, 4))
+    units = bpy.context.scene.unit_settings
+    old_scale = units.scale_length
+    units.scale_length = 0.01
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"MESH"}, path_mode="STRIP",
                              embed_textures=False, bake_anim=False, use_mesh_modifiers=False,
-                             mesh_smooth_type="FACE", apply_scale_options="FBX_SCALE_ALL",
+                             mesh_smooth_type="FACE", apply_unit_scale=True, global_scale=1.0,
+                             apply_scale_options="FBX_SCALE_UNITS", bake_space_transform=True,
                              axis_forward="-Z", axis_up="Y")
+    units.scale_length = old_scale
     bpy.data.objects.remove(obj)
     bpy.data.meshes.remove(me)
 
