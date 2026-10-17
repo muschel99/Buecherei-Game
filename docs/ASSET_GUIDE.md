@@ -635,6 +635,34 @@ Für alle gilt: **Vorderseite nach +Z** (das ist die Vorderansicht in Blender, Z
 **1**), **Füße bzw. Räder auf Höhe 0**, Ursprung in der Mitte. Vorlagen in echter Größe liegen
 in `assets/models/templates/street_life/` (siehe „Vorlagen zum Modellieren“).
 
+### Die Chibi-Figuren (seit Etappe 5c)
+Niedliche Grundkörper ("Mannequins") wie auf den Vorlagen: großer runder Kopf (bei allen gleich
+groß, 0,47 m), weicher Vinyl-Körper, Frauen mit Bandeau-Top und Slip, Männer mit Boxershorts,
+noch ohne Haare und Kleidung. Gebaut mit `tools/blender/build_chibi.py` (Körper aus weichen
+Grundformen: `chibi_sdf.py`; gezeichnetes Gesicht: `chibi_face.py`).
+- **Sechs Dateien:** `assets/models/characters/chibi/<gender>_<größe>.glb`
+  (`female_small`, `female_medium`, `female_tall`, `male_small` …). Größen: Frauen 1,50 / 1,58 / 1,66 m,
+  Männer 1,58 / 1,67 / 1,76 m (änderbar oben in `chibi_sdf.py`, `HEIGHTS`).
+- **Dünn – mittel – dick:** jede Datei hat die Formregler `thin` und `fat` (auch die Wäsche),
+  also gibt es von jeder Größe alle drei Formen und alles dazwischen. In Godot: Eigenschaft
+  **Body Shape** der Figur (-1 = dünn, 0 = mittel, 1 = dick).
+- **In Godot benutzen:** `scenes/characters/chibi_character.tscn` in eine Szene ziehen und im
+  Inspektor einstellen: Figure (welcher Körper), Body Shape, Hautfarbe, Wäschefarbe, Augenfarbe,
+  Augenbrauenfarbe, unter „Gesicht“ den Ausdruck (Mood), Blickrichtung (Look), Blinzeln, Sprechen.
+  Alle zusammen ansehen: `scenes/tools/chibi_lineup.tscn` öffnen und **F6** drücken.
+- **Gesichtsausdrücke:** neutral, fröhlich, lachen, überrascht, traurig, böse, müde, verliebt
+  (Herzaugen), begeistert (Glitzeraugen), besorgt, schwindelig; dazu Blinzeln und Sprechen von
+  allein. Animieren: im AnimationPlayer eine Spur auf `mood`, `look`, `eyes_override` oder
+  `mouth_override` der Figur legen. Die Bilder dafür liegen in
+  `assets/textures/characters/chibi_face/` (Augen, Iris, Augenbrauen, Münder – je Feld ein
+  Ausdruck) und werden vom Script gezeichnet; neue Ausdrücke = neue Zeichnung in `chibi_face.py`.
+- **Neu bauen:** `blender -b --factory-startup --python tools/blender/build_chibi.py`
+  (Kontrollbilder: `-- --only=female_medium --render --views=around,faces,compare,shapes` →
+  `screenshots/blender/chibi/`). Quellen: `assets/models/source/characters/chibi/*.blend`.
+- **Mixamo:** `assets/models/characters/chibi/mixamo/<name>.fbx` (A-Pose: Arme 50° nach unten –
+  Mixamo kann das). Ablauf wie unten bei „Animationen von Mixamo“; hochladen am besten
+  `female_medium.fbx`.
+
 ### Die Figuren (seit Etappe 5b)
 Sechs Figuren im Stil des Spiels (Kopf etwas größer, Frisuren aus dicken Strähnen):
 **Mila** (Pullover, Leggings, Stiefeletten), **Rosa** (Bluse, Mieder, langer Rock), **Hanna**

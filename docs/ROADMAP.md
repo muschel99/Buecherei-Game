@@ -35,6 +35,7 @@
 | 5   | Besucher                                 | in Arbeit     |
 | 5a  | Leben auf der Straße                     | fertig        |
 | 5b  | Figuren und Fahrzeuge im Stil            | in Arbeit     |
+| 5c  | Chibi-Figuren (Mannequins, Gesichter)    | in Arbeit     |
 | 6   | Wirtschaft und Tagesablauf               | offen         |
 | 7   | Stilsystem und Besuchervielfalt          | offen         |
 | 8   | Café                                     | offen         |
@@ -827,6 +828,17 @@ Richtung Disney Dreamlight Valley) und Fahrzeuge, die zur englischen Altstadt pa
       Chrom, Gummi, Leder; das Rad vor dem Blumenladen ist dasselbe Hollandrad
 - [ ] Animationen von Mixamo (Gehen, Stehen, Umschauen, Sitzen …) übertragen und die Figuren
       als Passanten einsetzen (danach: Fahrer auf den Rädern, Besucher in der Bücherei)
+
+### Etappe 5c – Chibi-Figuren
+Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi-Proportionen
+(Kopf 30 % der Körpergröße), weiche Vinyl-Formen, gezeichnete Manga-Gesichter.
+- [x] Grundkörper: Frau und Mann je klein/mittel/groß, Formregler dünn/dick, Bandeau + Slip bzw.
+      Boxershorts, Bauch mit Nabel, Knopfnase, Ohren; A-Pose, Skelett mit Godot-Humanoid-Namen;
+      Mixamo-Dateien
+- [x] Gezeichnetes Gesicht mit Ausdrücken, Blickrichtung, Blinzeln und Sprechen (Shader +
+      `ChibiCharacter`), Frauen mit Schmuckwimpern
+- [ ] Rückmeldung der Entwicklerin zu Körperform und Gesicht einarbeiten
+- [ ] Mixamo-Animationen übertragen, dann Frisuren und Kleidung für die Chibi-Körper
 
 ## Etappe 6 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

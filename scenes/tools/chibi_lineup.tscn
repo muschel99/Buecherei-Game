@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3]
+
+; Chibi-Figuren zum Anschauen (seit Etappe 5c): Szene öffnen und F6 drücken (Szene starten) –
+; dann wechseln die Gesichtsausdrücke. Vorn mittel, dahinter dünn und dick.
+; Neu bauen: tools/blender/build_chibi.py.
+
+[ext_resource type="Script" path="res://scripts/tools/chibi_lineup.gd" id="1_lineup"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+size = Vector2(14, 10)
+
+[sub_resource type="Environment" id="Environment_soft"]
+background_mode = 1
+background_color = Color(0.82, 0.8, 0.76, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.9, 0.88, 0.85, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_color = Color(0.72, 0.68, 0.62, 1)
+
+[node name="ChibiLineup" type="Node3D"]
+script = ExtResource("1_lineup")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_floor")
+surface_material_override/0 = SubResource("Mat_floor")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 4, 0)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_soft")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.985, 0.174, 0, -0.174, 0.985, 0, 1.4, 3.8)
+fov = 50.0

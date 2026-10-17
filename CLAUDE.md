@@ -406,6 +406,19 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   angewandten Formreglern (`<name>.glb`, JPEG-Texturen), Baukasten `kit_<körper>.glb` (Körper in
   Teilen `SEGMENTS`, Formregler bleiben, Teile mit Extra "covers"), Mixamo `mixamo/<name>.fbx`
   (nur Netze, .gdignore). Ansicht: `scenes/tools/character_lineup.tscn`.
+- **Chibi-Figuren (seit Etappe 5c, ersetzen später die Figuren aus 5b):**
+  `tools/blender/build_chibi.py` baut 6 Grundkörper (`chibi_sdf.Body`: Feld aus weichen
+  Grundformen → Surface Nets → Ausdünnen → `fix_folds`; Kopf für alle gleich, `HEAD_HEIGHT`;
+  Maße in `DIMS`, Formen `SHAPE_FACTORS`). Formregler `thin`/`fat` = dieselben Ecken auf die
+  glatte Form ohne Nabel projiziert (+ Feinheiten), Wäsche folgt der Haut (`follow_body_keys`).
+  Gewichte aus den Grundformen (`skin_weights`), Knochennamen = SkeletonProfileHumanoid,
+  A-Pose (`ARM_REST`). Verschattung (AO) steht in **UV2.x** (Vertex-Farben kommen beim Export
+  durcheinander). Gesicht: Material „face“ mit Zylinder-UV; `chibi_face.py` zeichnet die
+  Atlanten (Maße müssen zu `assets/shaders/chibi_face.gdshader` passen), Shader wählt die
+  Mipmap-Stufe selbst (sonst Rauschen). Godot: `ChibiCharacter` (`scenes/characters/
+  chibi_character.tscn`; Instanz-Werte für Farben und Gesicht, Enum `Mood` – „Expression“ ist
+  in Godot schon belegt). Ansicht `scenes/tools/chibi_lineup.tscn`; Vergleichsbild mit der
+  Vorlage: `--views=compare` (`screenshots/chibi_reference.png`), Rundum `--views=around`.
 - **Fahrzeuge (seit Etappe 5b):** `tools/blender/build_vehicles.py`: Karosserie `Body`
   (Querschnitte entlang z, Radkästen, weiche Normalen, Fenster/Lack je Fläche über
   `window_mats`), Teile auf der Haut über BVH (`hit`, `round_lamp`, `plate`). Lack = Rolle
@@ -653,3 +666,4 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   älteren Spielständen).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
+

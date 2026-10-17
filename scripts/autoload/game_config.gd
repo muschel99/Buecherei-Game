@@ -527,6 +527,27 @@ var return_box_capacity: int = 50
 var return_box_default_slot: String = "slot_plain"
 
 
+# --- Chibi-Figuren (Etappe 5c) ---
+# Gesicht und Körper der Figuren (scripts/characters/chibi_character.gd).
+
+## So lange (Sekunden, von–bis zufällig) bleiben die Augen zwischen zwei Blinzlern offen.
+var chibi_blink_interval: Vector2 = Vector2(2.5, 6.0)
+## So lange dauert ein Blinzeln (Sekunden).
+var chibi_blink_time: float = 0.16
+## So lange bleibt beim Sprechen eine Mundform stehen (Sekunden).
+var chibi_talk_frame_time: float = 0.11
+## Hautfarben zur Auswahl (hell bis dunkel).
+var chibi_skin_colors: Array[Color] = [
+	Color(0.98, 0.86, 0.76), Color(0.95, 0.80, 0.68), Color(0.86, 0.68, 0.54),
+	Color(0.70, 0.50, 0.37), Color(0.52, 0.36, 0.26), Color(0.38, 0.25, 0.18),
+]
+## Augenfarben zur Auswahl.
+var chibi_iris_colors: Array[Color] = [
+	Color(0.42, 0.28, 0.20), Color(0.30, 0.45, 0.62), Color(0.36, 0.52, 0.36),
+	Color(0.55, 0.42, 0.25), Color(0.40, 0.38, 0.48),
+]
+
+
 # --- Testtasten (nur zum Ausprobieren) ---
 
 ## Schaltet alle Testtasten auf einmal ein oder aus (F9 = Bücher in den Rückgabekasten,
