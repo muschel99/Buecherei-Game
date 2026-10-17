@@ -418,7 +418,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Mixamo-FBX** (`export_mixamo`): nur das Netz, Zahlen ×100 in Zentimetern, Szene auf
   Zentimeter (`scale_length` 0.01), `bake_space_transform` – in der Datei dann y = 0…156, Einheit 1,
   keine Lcl-Drehung/-Skalierung (sonst hält Mixamo die Figur für 1,5 cm groß → schwarze
-  Schattenflecken). Gelenke beim Ausdünnen feiner (`bend_zones`, `ZONE_DENSITY`).
+  Schattenflecken); ohne vorgerechnete Normalen. Netz: `chibi_remesh.py` (isotropes Remeshing:
+  gleichmäßige, fast gleichseitige Dreiecke – lange dünne Dreiecke vom Ausdünnen machten in Mixamo
+  Schattenflecken und Knicke); Kantenlänge `REMESH_*`, feiner an dünnen Teilen, Gelenken und
+  Details (`bend_zones`: Nabel, Nase, Schritt).
   **UV2:** x = Verschattung (AO; Vertex-Farben kommen beim Export durcheinander), y = Abstand
   zum Rand der **aufgemalten Unterwäsche** (`Body.underwear_distance`, negativ = Stoff; in Godot
   `1 - UV2.y`) – keine Stoff-Netze, damit später nichts unter enger Kleidung hervorschaut.

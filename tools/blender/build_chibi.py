@@ -22,6 +22,7 @@ import numpy as np  # noqa: E402
 
 import character_lib as C  # noqa: E402  (numpy-Kniff, Export, Kontrollbilder)
 import chibi_face as F  # noqa: E402
+import chibi_remesh as R  # noqa: E402
 import chibi_sdf as S  # noqa: E402
 import bpy  # noqa: E402
 import bmesh  # noqa: E402
@@ -33,8 +34,13 @@ SOURCE_DIR = os.path.join(ROOT, "assets", "models", "source", "characters", "chi
 SHOT_DIR = os.path.join(ROOT, "screenshots", "blender", "chibi")
 
 GRID = 0.003           # Rasterweite des Feldes (m)
-BODY_TRIS = 26000      # Dreiecke des Körpers nach dem Ausdünnen
-ZONE_DENSITY = 3.0     # Biegestellen (Gelenke) bekommen so viel mehr Dreiecke je Fläche
+BODY_TRIS = 26000      # Dreiecke des Körpers vor dem Remeshing (Startnetz = 1,3-fach)
+ZONE_DENSITY = 3.0     # (nur decimate mit protect) Biegestellen bekommen so viel mehr Dreiecke
+# Gleichmäßiges Netz (chibi_remesh): Kantenlängen in m – sonst, dünnste Teile (Finger), Gelenke
+REMESH_BASE = 0.017
+REMESH_FINEST = 0.0035
+REMESH_JOINTS = 0.008
+REMESH_ITERATIONS = 8
 
 SKIN = (0.95, 0.80, 0.68)
 CLOTH = (0.90, 0.89, 0.87)   # aufgemalte Unterwäsche (hellgrau-weiß)
@@ -140,8 +146,15 @@ def surface_object(name, node, lo, hi, tris, keep=None, protect=None):
         v = v[used]
         q = remap[q]
     obj = mesh_from_arrays(name, v, q)
-    decimate(obj, tris, protect)
-    set_coords(obj, S.project(node, coords(obj), 4))
+    if protect is None:
+        decimate(obj, tris)
+        set_coords(obj, S.project(node, coords(obj), 4))
+    else:
+        # gleichmäßiges Netz: erst grob ausdünnen, dann isotropes Remeshing (Gelenke feiner)
+        _decimate_pass(obj, tris * 1.3 / _tris(obj))
+        set_coords(obj, S.project(node, coords(obj), 4))
+        L = R.length_field(node, protect, REMESH_BASE, REMESH_FINEST, REMESH_JOINTS, coords(obj))
+        R.remesh(obj, node, L, REMESH_ITERATIONS)
     fix_folds(obj, node)
     return obj
 
@@ -405,6 +418,11 @@ def bend_zones(body):
         lg = body.joints_leg[side]
         zones += [(lg["hip"], 0.08), (lg["knee"], 0.05), (lg["ankle"], 0.04)]
     zones.append(((0.0, 0.02, body.neck_base), 0.05))
+    # kleine Details: Bauchnabel, Nase, Gesicht (Kinn), Schritt
+    zones.append((body.navel, 0.02, 0.003))
+    zones.append(((0.0, -0.17, body.chin + S.NOSE_Z), 0.03, 0.004))
+    zones.append(((0.0, -0.10, body.chin + 0.05), 0.08, 0.010))
+    zones.append(((0.0, 0.0, body.crotch), 0.07, 0.008))
     return zones
 
 
@@ -969,6 +987,12 @@ def export_mixamo(path, body_obj):
     bpy.context.scene.collection.objects.link(obj)
     if me.shape_keys:
         obj.shape_key_clear()
+    # keine vorgerechneten Normalen: Mixamo rechnet sie aus den Flächen (Licht passt zur Form)
+    if me.has_custom_normals:
+        me.free_normals_split()
+    me.use_auto_smooth = False
+    for poly in me.polygons:
+        poly.use_smooth = True
     while len(me.uv_layers) > 1:
         me.uv_layers.remove(me.uv_layers[-1])
     me.materials.clear()
