@@ -34,7 +34,7 @@ SHOT_DIR = os.path.join(ROOT, "screenshots", "blender", "chibi")
 
 GRID = 0.003           # Rasterweite des Feldes (m)
 BODY_TRIS = 26000      # Dreiecke des Körpers nach dem Ausdünnen
-CLOTH_TRIS = 3200      # Dreiecke je Wäschestück
+CLOTH_TRIS = 6500      # Dreiecke je Wäschestück
 
 SKIN = (0.95, 0.80, 0.68)
 CLOTH = (0.80, 0.70, 0.60)
@@ -166,11 +166,24 @@ def add_shape_keys(obj, plain, variants):
     smooth = S.project(plain.root, base, 6)
     detail = base - smooth
     obj.shape_key_add(name="Basis", from_mix=False)
+    names, w = S.skin_weights(plain.root, smooth, plain.spine)
     for name, other in variants.items():
         key = obj.shape_key_add(name=name, from_mix=False)
-        p = S.project(other.root, smooth, 10) + detail
+        p = S.project(other.root, smooth, 10) + detail + arm_shift(names, w, other.arm_spread)
         key.data.foreach_set("co", p.astype(np.float32).ravel())
         key.value = 0.0
+
+
+ARM_BONES = ("UpperArm", "LowerArm", "Hand", "Thumb", "Index", "Middle", "Ring", "Little")
+
+
+def arm_shift(names, w, spread):
+    """Arme (nach ihrem Gewicht) seitlich verschieben: breitere/schmalere Schultern."""
+    out = np.zeros((len(w), 3))
+    for i, n in enumerate(names):
+        if any(b in n for b in ARM_BONES):
+            out[:, 0] += w[:, i] * (spread if n.startswith("Left") else -spread)
+    return out
 
 
 def follow_body_keys(obj, body, variants):
@@ -357,7 +370,7 @@ def build(gender, height):
             return body.root.eval_points(c) > -0.0015
 
         cl = surface_object(kind.capitalize(), node, node.lo, node.hi, CLOTH_TRIS, keep)
-        add_ao(cl, node, 0.6)
+        add_ao(cl, S.Offset(plain["medium"].root, 0.0035), 0.6)
         smooth_normals(cl, node)
         follow_body_keys(cl, plain["medium"], {s: plain[s] for s in ("thin", "fat")})
         cl.data.materials.append(principled("cloth", CLOTH, 0.8))
@@ -439,6 +452,27 @@ def around_sheet(figs, name="around.png"):
         ortho_render(path, arm.location.x, S.HEIGHTS["female"]["medium"], turn=turn)
         tiles.append(load_png(path)[:, 262:762])
     F.write_png(os.path.join(SHOT_DIR, name), np.concatenate(tiles, 1))
+
+
+def wrists_sheet(figs, size=420):
+    """Hände und Unterarme von vorn: je Figur dünn, mittel, dick (Zeilen = Figuren)."""
+    scene = bpy.context.scene
+    old = scene.render.resolution_x, scene.render.resolution_y
+    scene.render.resolution_x = scene.render.resolution_y = size
+    rows = []
+    for arm, body, parts in figs:
+        tiles = []
+        for name in ("thin", "medium", "fat"):
+            set_shape([(arm, body, parts)], name)
+            bpy.context.view_layer.update()
+            hand = arm.matrix_world @ arm.pose.bones["LeftLowerArm"].tail
+            path = os.path.join(SHOT_DIR, f"wrist_{name}.png")
+            C.render(path, tuple(hand + Vector((0.12, -0.75, 0.02))), tuple(hand + Vector((0.0, 0.0, -0.01))), lens=85)
+            tiles.append(load_png(path))
+        set_shape([(arm, body, parts)], "medium")
+        rows.append(np.concatenate(tiles, 1))
+    F.write_png(os.path.join(SHOT_DIR, "wrists.png"), np.concatenate(rows, 0))
+    scene.render.resolution_x, scene.render.resolution_y = old
 
 
 def set_shape(figs, name):
@@ -596,6 +630,8 @@ def main():
                 set_shape(figs, "fat")
                 C.render(path, (x0, -3.0, 0.9), (x0, 0, 0.75), lens=50)
                 set_shape(figs, "medium")
+            elif v == "wrists":
+                wrists_sheet(figs)
             elif v == "around":
                 around_sheet(figs)
             elif v == "around_fat":

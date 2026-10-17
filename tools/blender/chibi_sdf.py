@@ -27,6 +27,8 @@ SHAPES = ("thin", "medium", "fat")
 EAR_TURN = 24.0   # Ohren um so viel Grad nach vorn gedreht
 ARM_REST = 50.0   # Ruhehaltung der Arme: so viel Grad unter der Waagerechten (A-Pose)
 NOSE_Z = 0.114    # Nasenspitze über dem Kinn
+HAND_TWIST = 30.0  # Hände um so viel Grad eingedreht (Daumen zum Körper)
+ARM_SPREAD = {"thin": -0.006, "medium": 0.0, "fat": 0.028}   # Schultern breiter/schmaler (m)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -405,6 +407,11 @@ def _rot_z(deg):
     return np.array([[math.cos(a), -math.sin(a), 0.0], [math.sin(a), math.cos(a), 0.0], [0.0, 0.0, 1.0]])
 
 
+def _rot_x(deg):
+    a = math.radians(deg)
+    return np.array([[1.0, 0.0, 0.0], [0.0, math.cos(a), -math.sin(a)], [0.0, math.sin(a), math.cos(a)]])
+
+
 def _rot_y(deg):
     a = math.radians(deg)
     return np.array([[math.cos(a), 0.0, math.sin(a)], [0.0, 1.0, 0.0], [-math.sin(a), 0.0, math.cos(a)]])
@@ -478,21 +485,21 @@ DIMS = {
         chest=(0.127, 0.104, 0.28), bust=(0.056, -0.072, 0.72, 0.050, 0.047, 0.045),
         waist=(0.106, 0.088, 0.26), belly=(0.07, 0.060, 0.08), pelvis=(0.160, 0.104, 0.22),
         butt=(0.072, 0.074, 0.080), neck=0.046,
-        arm=(0.043, 0.038, 0.033), upper_arm=0.20, fore_arm=0.172, hand=1.0,
-        hip_x=0.086, thigh=0.079, knee=0.059, calf=0.055, ankle=0.044, foot=1.0),
+        arm=(0.048, 0.043, 0.037), upper_arm=0.20, fore_arm=0.165, hand=1.12,
+        hip_x=0.086, thigh=0.083, knee=0.059, calf=0.055, ankle=0.044, foot=1.0),
     "male": dict(
         crotch=0.49,
         shoulder=(0.134, 0.875),
         chest=(0.140, 0.104, 0.30), bust=None,
         waist=(0.126, 0.094, 0.26), belly=(0.08, 0.064, 0.09), pelvis=(0.140, 0.098, 0.21),
         butt=(0.062, 0.058, 0.068), neck=0.050,
-        arm=(0.047, 0.042, 0.036), upper_arm=0.21, fore_arm=0.182, hand=1.08,
+        arm=(0.052, 0.047, 0.040), upper_arm=0.21, fore_arm=0.175, hand=1.2,
         hip_x=0.088, thigh=0.076, knee=0.060, calf=0.058, ankle=0.047, foot=1.08),
 }
 # Faktoren je Form: (dünn, dick) für Rumpfbreite, Bauch, Arme, Beine, Hals, Po
 SHAPE_FACTORS = {
-    "torso": (0.9, 1.16), "belly": (0.6, 2.1), "arm": (0.87, 1.22), "leg": (0.86, 1.2),
-    "neck": (0.93, 1.12), "butt": (0.88, 1.2), "bust": (0.88, 1.15),
+    "torso": (0.9, 1.22), "belly": (0.6, 2.1), "arm": (0.87, 1.26), "leg": (0.86, 1.24),
+    "neck": (0.93, 1.18), "butt": (0.88, 1.28), "bust": (0.88, 1.22),
 }
 
 
@@ -516,6 +523,9 @@ class Body:
             return 1.0 + (fat - 1.0) * f if f >= 0 else 1.0 + (1.0 - thin) * f
 
         self.fac = fac
+        # Arme bei dick weiter außen (breitere Schultern), bei dünn etwas enger; der Arm selbst
+        # bleibt am Skelett – build_chibi verschiebt ihn im Formregler (ARM_SPREAD)
+        self.arm_spread = ARM_SPREAD[shape]
         cr, T = self.crotch, self.T
         # Längen wachsen mit der Körpergröße (gegenüber der mittleren Größe)
         mid = HEIGHTS[gender]["medium"] - HEAD_HEIGHT
@@ -547,17 +557,18 @@ class Body:
         px, py, pz = D["pelvis"]
         torso = [
             # Brustkorb etwas nach vorn: aufrechte Haltung mit geschwungenem Rücken
-            ("union", Ellipsoid("chest", (0, -0.004, cr + 0.70 * T), (cx * ft, cy * ft, cz * T), sp), 0.0),
-            ("union", Ellipsoid("waist", (0, 0.0, cr + 0.42 * T), (wx * ft, wy * ft, wz * T), sp), 0.10),
+            ("union", Ellipsoid("chest", (0, -0.010, cr + 0.70 * T), (cx * ft, cy * ft, cz * T), sp), 0.0),
+            # Taille hinten nach innen (Hohlkreuz)
+            ("union", Ellipsoid("waist", (0, -0.010, cr + 0.42 * T), (wx * ft, wy * ft, wz * T), sp), 0.10),
             ("union", Ellipsoid("belly", (0, -0.022 - 0.022 * max(fb - 1, 0), cr + 0.34 * T - 0.01 * max(fb - 1, 0)),
                                 (bx * min(fb, 1.0) ** 0.5 * max(fb, 1) ** 0.6, by * fb, bz * max(fb, 1) ** 0.5), sp), 0.07),
-            ("union", Ellipsoid("pelvis", (0, 0.018, cr + 0.17 * T), (px * ft ** 0.8, py * ft, pz * T), sp), 0.09),
+            ("union", Ellipsoid("pelvis", (0, 0.024, cr + 0.17 * T), (px * ft ** 0.8, py * ft, pz * T), sp), 0.09),
         ]
         for s in (1, -1):
             side = "Left" if s > 0 else "Right"
             u = fac("butt")
             b = D["butt"]
-            torso.append(("union", Ellipsoid("butt_" + side, (s * 0.054, 0.060, cr + 0.065),
+            torso.append(("union", Ellipsoid("butt_" + side, (s * 0.054, 0.068, cr + 0.065),
                                              (b[0] * u, b[1] * u, b[2] * u),
                                              {"Hips": 0.6, side + "UpperLeg": 0.4}), 0.05))
             if D["bust"]:
@@ -568,7 +579,7 @@ class Body:
             # weiche Schulter: vom Nacken über eine runde Schulterkuppe zum Arm
             sz, sx = self.shoulder_z, self.shoulder_x
             # Schulterlinie: vom Hals weich nach außen abfallend (keine Schulterkugel)
-            torso.append(("union", RoundCone("trap_" + side, (0, 0.012, nb - 0.028), (s * (sx - 0.012), 0.010, sz - 0.008),
+            torso.append(("union", RoundCone("trap_" + side, (0, 0.012, nb - 0.028), (s * (sx - 0.012 + self.arm_spread), 0.010, sz - 0.008),
                                              0.036 * ft, 0.042 * ft,
                                              {"UpperChest": 0.5, side + "Shoulder": 0.5}), 0.06))
         if not fem:
@@ -638,7 +649,7 @@ class Body:
         wx, wy, wz = wrist
         hb = side + "Hand"
         items = [("union", Ellipsoid("palm_" + side, (wx + s * 0.034 * k, wy + 0.001, wz - 0.002),
-                                     (0.041 * k, 0.034 * k, 0.021 * k), {hb: 1.0}, 0.008), 0.0)]
+                                     (0.040 * k, 0.034 * k, 0.025 * k), {hb: 1.0}, 0.008), 0.0)]
         joints = {}
         fingers = (("Index", -0.0222, 0.044, -3.0), ("Middle", -0.0072, 0.048, -1.0),
                    ("Ring", 0.0076, 0.045, 1.0), ("Little", 0.0218, 0.036, 3.5))
@@ -651,7 +662,7 @@ class Body:
             pts = [base]
             for fr in seg:
                 pts.append(pts[-1] + d * length * k * fr)
-            r0, r1 = 0.0090 * k, 0.0080 * k
+            r0, r1 = 0.0098 * k, 0.0088 * k
             bones = ("Proximal", "Intermediate", "Distal")
             for i in range(3):
                 ra = r0 + (r1 - r0) * i / 3.0
@@ -661,10 +672,11 @@ class Body:
                               0.012 if i == 0 else 0.004))
             joints[name] = [tuple(p) for p in pts]
         # Daumen: von der Handwurzel nach vorn und außen
-        t0 = np.array((wx + s * 0.012 * k, wy - 0.019 * k, wz - 0.005))
-        t1 = t0 + np.array((s * 0.025, -0.021, -0.004)) * k
-        t2 = t1 + np.array((s * 0.019, -0.011, -0.002)) * k
-        t3 = t2 + np.array((s * 0.016, -0.006, 0.0)) * k
+        # Daumen liegt eng an der Hand an (wie beim Fäustling)
+        t0 = np.array((wx + s * 0.014 * k, wy - 0.018 * k, wz - 0.004))
+        t1 = t0 + np.array((s * 0.023, -0.013, -0.003)) * k
+        t2 = t1 + np.array((s * 0.017, -0.005, -0.001)) * k
+        t3 = t2 + np.array((s * 0.013, -0.002, 0.0)) * k
         tp = [t0, t1, t2, t3]
         rad = (0.0125 * k, 0.0105 * k, 0.0095 * k, 0.0085 * k)
         tb = ("Metacarpal", "Proximal", "Distal")
@@ -674,7 +686,13 @@ class Body:
                                              {f"{side}Thumb{tb[i]}": 0.7, hb: 0.3}, 0.005),
                           0.014 if i == 0 else 0.004))
         joints["Thumb"] = [tuple(p) for p in tp]
-        return Group("hand_" + side, items), joints
+        group = Group("hand_" + side, items)
+        # Hand leicht eingedreht (Daumen zum Körper): hängend sieht man von vorn den Handrücken schräg
+        rot = _rot_x(HAND_TWIST)
+        origin = np.asarray(wrist, float)
+        transform(group, rot, origin)
+        joints = {n: [tuple(origin + rot @ (np.asarray(p) - origin)) for p in pts] for n, pts in joints.items()}
+        return group, joints
 
     def _leg(self, s):
         D, fac = self.D, self.fac
