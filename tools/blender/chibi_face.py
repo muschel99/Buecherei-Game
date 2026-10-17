@@ -20,28 +20,30 @@ import numpy as np
 FACE_SIZE = 0.48          # UV 0..1 entspricht 0,48 m
 FACE_RADIUS = 0.21        # Radius der Zylinder-Abwicklung (Kopfmitte)
 FACE_AXIS_Y = 0.0138      # Kopfachse (y) für die Abwicklung
-EYE_X, EYE_Z = 0.078, 0.160
+EYE_X, EYE_Z = 0.089, 0.146
 EYE_CELL = 0.085          # Größe eines Feldes im Atlas (Zeichnung in m)
 IRIS_CELL = 0.05
-EYE_SCALE = 1.62          # Augen im Gesicht so viel größer als gezeichnet
-BROW_X, BROW_Z = 0.080, 0.246
+EYE_SCALE = 2.05          # Augen im Gesicht so viel größer als gezeichnet
+BROW_X, BROW_Z = 0.088, 0.232
 BROW_CELL = (0.07, 0.035)
-BROW_SCALE = 1.35
-MOUTH_Z = 0.081
+BROW_SCALE = 1.5
+MOUTH_Z = 0.068
 MOUTH_CELL = 0.06
-MOUTH_SCALE = 1.45
-BLUSH_X, BLUSH_Z = 0.122, 0.112
-BLUSH_R = (0.030, 0.016)
+MOUTH_SCALE = 2.6
+BLUSH_X, BLUSH_Z = 0.112, 0.098
+BLUSH_R = (0.034, 0.019)
 
 CELL_PX = 256
-LINE = (0.23, 0.14, 0.13)
-LINE_SOFT = (0.42, 0.28, 0.26)
+LINE = (0.16, 0.10, 0.10)
+LINE_SOFT = (0.36, 0.24, 0.22)
 
-EYE_FRAMES = ["open", "half", "closed", "happy", "wide", "sad", "angry", "soft"]
-IRIS_FRAMES = ["normal", "heart", "sparkle", "spiral"]
+EYE_FRAMES = ["open", "half", "closed", "happy", "wide", "sad", "angry", "soft", "annoyed", "squeeze", "cry",
+              "teary"]
+IRIS_FRAMES = ["normal", "heart", "sparkle", "spiral", "small", "star"]
 BROW_FRAMES = ["neutral", "raised", "worried", "angry", "sad", "flat", "focused", "relaxed"]
 MOUTH_FRAMES = ["smile", "smile_wide", "open_smile", "laugh", "o", "O", "flat", "frown",
-                "cat", "wavy", "sad_open", "smirk", "talk_a", "talk_e", "talk_o", "pout"]
+                "cat", "wavy", "sad_open", "smirk", "talk_a", "talk_e", "talk_o", "pout",
+                "grin", "bleh", "shout", "triangle"]
 
 
 # ---------------------------------------------------------------------------------------------
@@ -138,119 +140,194 @@ def taper(n, w0, w1, w2=None, mid=0.5):
 # ---------------------------------------------------------------------------------------------
 
 EYE_RX, EYE_RY = 0.0205, 0.0275
+EYE_CELL_PX = 192         # Augen-Atlas: 12 Ausdrücke × 6 Sätze (Frau/Mann × 3 Augenformen)
+
+# Augenformen im Manga-Stil: Innen- und Außenwinkel, Kontrollpunkte der oberen und unteren
+# Lidlinie (Bezier), Stärke der Lidlinie, Schwung außen, Iris (Größe, Höhe)
+EYE_SHAPES = {
+    "female": {
+        # süß: groß und breit, große Iris (wie die meisten Vorlagen)
+        "sweet": dict(inner=(-0.023, -0.006), outer=(0.024, -0.004), top=((-0.020, 0.026), (0.017, 0.029)),
+                      bottom=((0.020, -0.028), (-0.018, -0.028)), line=0.0052, wing=(0.0045, 0.0020),
+                      iris=(1.20, -0.003)),
+        # elegant: mandelförmig, Außenwinkel mit Schwung nach oben
+        "elegant": dict(inner=(-0.023, -0.004), outer=(0.025, 0.006), top=((-0.016, 0.020), (0.013, 0.025)),
+                        bottom=((0.019, -0.021), (-0.015, -0.022)), line=0.0052, wing=(0.0080, 0.0045),
+                        iris=(1.05, -0.002)),
+        # lebhaft: groß und hoch, rund oben
+        "lively": dict(inner=(-0.021, -0.003), outer=(0.022, -0.002), top=((-0.020, 0.032), (0.017, 0.034)),
+                       bottom=((0.019, -0.029), (-0.017, -0.029)), line=0.0050, wing=(0.0050, 0.0020),
+                       iris=(1.17, -0.001)),
+    },
+    "male": {
+        # sanft: groß, oben weich gebogen, Außenwinkel leicht hängend
+        "gentle": dict(inner=(-0.022, -0.004), outer=(0.023, -0.007), top=((-0.017, 0.022), (0.013, 0.025)),
+                       bottom=((0.018, -0.025), (-0.016, -0.024)), line=0.0048, wing=(0.0012, -0.0004),
+                       iris=(1.06, -0.002)),
+        # cool: schmal, Oberlid fast gerade und nach außen ansteigend, Iris halb unter dem Lid
+        "cool": dict(inner=(-0.022, -0.003), outer=(0.024, 0.006), top=((-0.014, 0.012), (0.010, 0.017)),
+                     bottom=((0.018, -0.017), (-0.013, -0.018)), line=0.0052, wing=(0.0012, 0.0),
+                     iris=(0.96, -0.004)),
+        # fröhlich: groß und hoch, kräftiger runder Bogen
+        "bright": dict(inner=(-0.020, -0.002), outer=(0.021, -0.002), top=((-0.019, 0.028), (0.015, 0.031)),
+                       bottom=((0.018, -0.027), (-0.016, -0.026)), line=0.0050, wing=(0.0012, 0.0),
+                       iris=(1.10, -0.002)),
+    },
+}
+SHAPE_NAMES = {g: list(v) for g, v in EYE_SHAPES.items()}
+TEAR = (0.55, 0.76, 0.96)
 
 
-def _eye_shape(frame):
-    """(rx, ry, Oberlid(x) oder None, Unterlid(x) oder None, Linienstärke)"""
-    rx, ry = EYE_RX, EYE_RY
-    if frame == "wide":
-        return rx * 1.1, ry * 1.08, None, None, 0.85
+def _curves(gender, shape, ys=1.0):
+    """Obere (innen → außen) und untere (außen → innen) Lidlinie als Punkte."""
+    sh = EYE_SHAPES[gender][shape]
+    sc = np.array((1.0, ys))
+    a, b = np.array(sh["inner"]) * sc, np.array(sh["outer"]) * sc
+    t1, t2 = (np.array(p) * sc for p in sh["top"])
+    b1, b2 = (np.array(p) * sc for p in sh["bottom"])
+    return bezier(a, t1, t2, b, 48), bezier(b, b1, b2, a, 48)
+
+
+def _curve_y(curve, x):
+    """y der Linie an den Stellen x (Punkte nach x sortiert)."""
+    order = np.argsort(curve[:, 0])
+    return np.interp(x, curve[order, 0], curve[order, 1])
+
+
+def _lid_clip(frame, upper, lower):
+    """Zusätzliche Begrenzung der Öffnung je Ausdruck: (Oberlid(x), Unterlid(x)) oder None."""
+    lo = lambda x: _curve_y(lower, x)           # noqa: E731
+    up = lambda x: _curve_y(upper, x)           # noqa: E731
+    x0, x1 = upper[0, 0], upper[-1, 0]
+    t = lambda x: np.clip((x - x0) / (x1 - x0), 0, 1)   # noqa: E731  0 innen, 1 außen
     if frame == "half":
-        return rx, ry, (lambda x: 0.0015 + 0.0025 * x / rx), None, 1.0
+        return (lambda x: lo(x) + 0.42 * (up(x) - lo(x))), None
+    if frame == "annoyed":
+        return (lambda x: lo(x) + 0.5 * (up(x) - lo(x)) * (0.75 + 0.25 * t(x))), None
     if frame == "sad":
-        return rx, ry, (lambda x: ry * (0.55 - 0.45 * x / rx)), None, 1.0
+        return (lambda x: up(x) - (up(x) - lo(x)) * 0.42 * t(x)), None
     if frame == "angry":
-        return rx, ry, (lambda x: ry * (0.45 + 0.4 * x / rx)), None, 1.0
+        return (lambda x: up(x) - (up(x) - lo(x)) * 0.48 * (1 - t(x))), None
     if frame == "soft":
-        return rx, ry, None, (lambda x: -ry * 0.42 + 0.006 * (1 - (x / rx) ** 2)), 1.0
-    return rx, ry, None, None, 1.0
+        return None, (lambda x: lo(x) + (up(x) - lo(x)) * 0.36 * np.sin(np.pi * t(x)) ** 0.7)
+    return None, None
 
 
-def _upper_boundary(rx, ry, top, n=48):
-    th = np.linspace(math.radians(174), math.radians(6), n)
-    x = rx * np.cos(th)
-    y = ry * np.sin(th)
-    if top is not None:
-        y = np.minimum(y, top(x))
-        # nur der Teil, der noch im Auge liegt
-        keep = y > -ry * np.sin(np.arccos(np.clip(x / rx, -1, 1))) + 1e-4
-        x, y = x[keep], y[keep]
-    return np.stack([x, y], axis=1)
+def _lashes(lay, line_pts, fem, lw):
+    """Schmuckwimpern (Frauen) am äußeren Ende der Oberlidlinie."""
+    if not fem:
+        return
+    n = len(line_pts)
+    for i, (k, ang, ln, w0) in enumerate(((0.62, 72.0, 0.0050, 0.0013), (0.74, 55.0, 0.0064, 0.0015),
+                                          (0.85, 36.0, 0.0076, 0.0017), (0.95, 16.0, 0.0080, 0.0018))):
+        base = line_pts[min(int(k * (n - 1)), n - 1)]
+        a = math.radians(ang)
+        tip = base + np.array((math.cos(a), math.sin(a))) * ln
+        c1 = base + np.array((math.cos(a + 0.5), math.sin(a + 0.5))) * ln * 0.45
+        c2 = tip - np.array((math.cos(a - 0.35), math.sin(a - 0.35))) * ln * 0.3
+        lp = bezier(base, c1, c2, tip, 12)
+        lay.paint(sd_stroke(lay.X, lay.Y, lp, taper(len(lp), w0, 0.0)), LINE)
 
 
-def draw_eye(frame, gender):
-    lay = Layer(CELL_PX, CELL_PX, EYE_CELL, EYE_CELL)
-    mask = np.zeros((CELL_PX, CELL_PX, 4))
+def _tears(lay, start, length=0.024):
+    """Tränenbach von start nach unten, mit Tropfen."""
+    X, Y = lay.X, lay.Y
+    pts = bezier(start, start + np.array((0.002, -length * 0.4)), start + np.array((0.001, -length * 0.75)),
+                 start + np.array((0.0025, -length)), 16)
+    lay.paint(sd_stroke(X, Y, pts, taper(len(pts), 0.0018, 0.0034, 0.0026, 0.6)), TEAR, 0.85)
+    lay.paint(sd_ellipse(X, Y, start[0] + 0.0035, start[1] - length - 0.004, 0.0026, 0.0034), TEAR, 0.9)
+
+
+def draw_eye(frame, gender, shape):
+    """Ein Auge (Linien RGBA + Maske: R = Öffnung, G = Lidschatten), x nach außen."""
+    lay = Layer(EYE_CELL_PX, EYE_CELL_PX, EYE_CELL, EYE_CELL)
+    mask = np.zeros((EYE_CELL_PX, EYE_CELL_PX, 4))
     X, Y = lay.X, lay.Y
     fem = gender == "female"
-    lw = 1.0
-    if frame in ("closed", "happy"):
-        if frame == "closed":
-            pts = bezier((-EYE_RX * 0.95, 0.001), (-EYE_RX * 0.4, -0.009), (EYE_RX * 0.5, -0.009), (EYE_RX * 1.15, 0.0))
+    sh = EYE_SHAPES[gender][shape]
+    upper, lower = _curves(gender, shape, 1.1 if frame == "wide" else 1.0)
+    if frame == "wide":
+        upper = upper * np.array((1.06, 1.0))
+        lower = lower * np.array((1.06, 1.0))
+    lw = sh["line"]
+    inner, outer = upper[0], upper[-1]
+    wing = np.array(sh["wing"])
+    if frame in ("closed", "happy", "squeeze", "cry"):
+        w = outer[0] - inner[0]
+        cx = (outer[0] + inner[0]) / 2
+        cy = (outer[1] + inner[1]) / 2 - 0.002
+        if frame in ("closed", "cry"):
+            pts = bezier((inner[0], cy + 0.002), (cx - w * 0.2, cy - 0.010), (cx + w * 0.25, cy - 0.010),
+                         (outer[0] + wing[0] * 0.6, cy + 0.001), 32)
             lash_dir = -1
-        else:
-            pts = bezier((-EYE_RX * 0.98, -0.007), (-EYE_RX * 0.5, 0.009), (EYE_RX * 0.55, 0.009), (EYE_RX * 1.1, -0.006))
+        elif frame == "happy":
+            pts = bezier((inner[0], cy - 0.006), (cx - w * 0.25, cy + 0.011), (cx + w * 0.25, cy + 0.011),
+                         (outer[0] + wing[0] * 0.5, cy - 0.005), 32)
             lash_dir = 1
-        lay.paint(sd_stroke(X, Y, pts, taper(len(pts), 0.0012, 0.0036 * lw, 0.0044 * lw, 0.6)), LINE)
+        else:
+            # zusammengekniffen ">": Spitze zur Nase
+            a = np.array((outer[0], cy + 0.010))
+            m = np.array((inner[0] + 0.004, cy))
+            b = np.array((outer[0], cy - 0.010))
+            for p, q in ((a, m), (m, b)):
+                seg = np.linspace(p, q, 12)
+                lay.paint(sd_stroke(X, Y, seg, taper(len(seg), 0.0040, 0.0030)), LINE)
+            return lay.rgba(), mask
+        lay.paint(sd_stroke(X, Y, pts, taper(len(pts), 0.0014, lw * 0.85, lw, 0.6)), LINE)
         if fem:
-            # geschwungene Wimpern am äußeren Teil des geschlossenen Lids
-            for i, (ang, ln) in enumerate(((10.0, 0.0062), (-15.0, 0.0068), (-40.0, 0.0062), (-62.0, 0.0050))):
-                base = pts[-1 - i * 3]
+            for i, (k, ang, ln) in enumerate(((0.95, 8.0, 0.0060), (0.85, -18.0, 0.0064), (0.74, -42.0, 0.0054))):
+                base = pts[int(k * (len(pts) - 1))]
                 a = math.radians(ang * lash_dir)
                 tip = base + np.array((math.cos(a), math.sin(a))) * ln
-                ctrl = base + (tip - base) * 0.45 + np.array((0.0, lash_dir * 0.0016))
+                ctrl = base + (tip - base) * 0.45 + np.array((0.0, lash_dir * 0.0015))
                 lp = bezier(base, ctrl, ctrl, tip, 10)
-                lay.paint(sd_stroke(X, Y, lp, taper(len(lp), 0.0017, 0.0)), LINE)
+                lay.paint(sd_stroke(X, Y, lp, taper(len(lp), 0.0016, 0.0)), LINE)
+        if frame == "cry":
+            _tears(lay, np.array((cx + w * 0.18, cy - 0.008)))
         return lay.rgba(), mask
-    rx, ry, top, bottom, thick = _eye_shape(frame)
-    # Öffnung (Weiß + Iris) als Maske
-    d_open = sd_ellipse(X, Y, 0.0, 0.0, rx, ry)
+    # Öffnung
+    poly = np.concatenate([upper, lower[1:-1]])
+    d_open = sd_poly(X, Y, poly)
+    top, bottom = _lid_clip(frame, upper, lower)
     if top is not None:
         d_open = np.maximum(d_open, Y - top(X))
     if bottom is not None:
         d_open = np.maximum(d_open, bottom(X) - Y)
     mask[..., 0] = lay.cov(d_open)
-    # Schatten unter dem Oberlid
-    ell_top = ry * np.sqrt(np.clip(1 - (X / rx) ** 2, 0.0, 1.0))
-    up = ell_top if top is None else np.minimum(ell_top, top(X))
-    mask[..., 1] = np.clip(1.0 - (up - Y) / 0.009, 0.0, 1.0) * mask[..., 0]
+    up_y = _curve_y(upper, X) if top is None else np.minimum(_curve_y(upper, X), top(X))
+    mask[..., 1] = np.clip(1.0 - (up_y - Y) / 0.010, 0.0, 1.0) * mask[..., 0]
     mask[..., 3] = 1.0
-    # Oberlid-Linie entlang der oberen Grenze, außen dicker, mit Schwung nach außen
-    ub = _upper_boundary(rx, ry, top)
-    ub = ub + np.array((0.0, 0.0006))
-    tail_end = ub[-1] + np.array((0.0075, -0.0005 if top is None else 0.0))
-    tail = bezier(ub[-1], ub[-1] + np.array((0.003, 0.0)), tail_end - np.array((0.002, 0.0)), tail_end, 8)[1:]
-    path = np.concatenate([ub, tail])
-    n = len(path)
-    w = np.concatenate([taper(len(ub), 0.0012 * thick, 0.0034 * lw * thick, 0.0048 * lw * thick, 0.45),
-                        taper(len(tail), 0.0046 * lw * thick, 0.0004)])
-    lay.paint(sd_stroke(X, Y, path, w), LINE)
-    if fem:
-        # fünf geschwungene Wimpern am äußeren Lid, nach außen länger
-        for i, (ang, ln, w0) in enumerate(((78.0, 0.0050, 0.0013), (62.0, 0.0062, 0.0015), (44.0, 0.0074, 0.0017),
-                                           (24.0, 0.0084, 0.0019), (4.0, 0.0072, 0.0018))):
-            k = int(len(ub) - 1 - (4 - i) * 4)
-            base = ub[max(k, 0)] + np.array((0.0, -0.0004))
+    # Oberlidlinie entlang der sichtbaren oberen Grenze, außen dick, mit Schwung
+    xs = upper[:, 0]
+    yl = upper[:, 1] if top is None else np.minimum(upper[:, 1], top(xs))
+    keep = yl > _curve_y(lower, xs) + 0.0005
+    line = np.stack([xs[keep], yl[keep]], axis=1) + np.array((0.0, lw * 0.25))
+    if len(line) < 3:
+        return lay.rgba(), mask
+    tail_end = line[-1] + wing
+    tail = bezier(line[-1], line[-1] + wing * 0.4, tail_end - wing * 0.2, tail_end, 10)[1:]
+    path = np.concatenate([line, tail])
+    widths = np.concatenate([taper(len(line), lw * 0.35, lw * 0.85, lw, 0.55), taper(len(tail), lw * 0.95, 0.0004)])
+    lay.paint(sd_stroke(X, Y, path, widths), LINE)
+    _lashes(lay, line, fem, lw)
+    # Unterlid: kurzer Strich außen
+    if bottom is None:
+        lowp = lower[2:20]
+    else:
+        lx = np.linspace(outer[0] * 0.95, outer[0] * 0.2, 16)
+        lowp = np.stack([lx, bottom(lx) - 0.0004], axis=1)
+    lay.paint(sd_stroke(X, Y, lowp, taper(len(lowp), lw * 0.45, 0.0)), LINE_SOFT if bottom is None else LINE, 0.95)
+    if fem and bottom is None:
+        for k, ang, ln in ((0.12, -40.0, 0.0030), (0.28, -62.0, 0.0024)):
+            base = lower[int(k * (len(lower) - 1))]
             a = math.radians(ang)
             tip = base + np.array((math.cos(a), math.sin(a))) * ln
-            # Schwung: erst nach oben, dann nach außen gebogen
-            ctrl1 = base + np.array((math.cos(a + 0.5), math.sin(a + 0.5))) * ln * 0.45
-            ctrl2 = tip - np.array((math.cos(a - 0.35), math.sin(a - 0.35))) * ln * 0.3
-            lp = bezier(base, ctrl1, ctrl2, tip, 12)
-            lay.paint(sd_stroke(X, Y, lp, taper(len(lp), w0, 0.0)), LINE)
-        if bottom is None:
-            # zwei feine Wimpern unten außen
-            for ang_pos, ang, ln in ((-22.0, -35.0, 0.0034), (-42.0, -62.0, 0.0028)):
-                t = math.radians(ang_pos)
-                base = np.array((rx * math.cos(t), ry * math.sin(t))) * 1.02
-                a = math.radians(ang)
-                tip = base + np.array((math.cos(a), math.sin(a))) * ln
-                lp = bezier(base, base + (tip - base) * 0.4 + np.array((0.0004, 0.0)), tip, tip, 8)
-                lay.paint(sd_stroke(X, Y, lp, taper(len(lp), 0.0011, 0.0)), LINE_SOFT)
-        # Lidfalte
-        th = np.linspace(math.radians(118), math.radians(35), 20)
-        crease = np.stack([rx * 1.08 * np.cos(th) + 0.001, ry * 1.08 * np.sin(th) + 0.0055], axis=1)
-        if top is not None:
-            crease[:, 1] = np.minimum(crease[:, 1], top(crease[:, 0]) + 0.006)
-        lay.paint(sd_stroke(X, Y, crease, taper(len(crease), 0.0002, 0.0008, 0.0003)), LINE_SOFT, 0.55)
-    # Unterlid: feine Linie außen
-    if bottom is None:
-        th = np.linspace(math.radians(-12), math.radians(-105), 24)
-        low = np.stack([rx * np.cos(th) * 1.02, ry * np.sin(th) * 1.02], axis=1)
-    else:
-        xs = np.linspace(rx * 0.95, -rx * 0.6, 24)
-        low = np.stack([xs, bottom(xs) - 0.0004], axis=1)
-    lay.paint(sd_stroke(X, Y, low, taper(len(low), 0.0014 * lw, 0.0)), LINE_SOFT if bottom is None else LINE, 0.9)
+            lay.paint(sd_stroke(X, Y, np.linspace(base, tip, 6), taper(6, 0.0010, 0.0)), LINE_SOFT)
+    if frame == "teary":
+        # nasser Rand unten und ein Tropfen außen
+        wet = lower[4:44] + np.array((0.0, 0.0018))
+        lay.paint(sd_stroke(X, Y, wet, taper(len(wet), 0.0006, 0.0020, 0.0006)), TEAR, 0.75)
+        lay.paint(sd_ellipse(X, Y, outer[0] - 0.002, outer[1] - 0.006, 0.0022, 0.0030), TEAR, 0.85)
     return lay.rgba(), mask
 
 
@@ -258,7 +335,7 @@ def draw_eye(frame, gender):
 # Iris: R = Helligkeit (oben dunkel), G = Glanzlicht, B = dunkle Linien/Pupille, A = Iris
 # ---------------------------------------------------------------------------------------------
 
-IRIS_RX, IRIS_RY = 0.0158, 0.0212
+IRIS_RX, IRIS_RY = 0.0160, 0.0215
 
 
 def _heart(X, Y, cx, cy, s):
@@ -278,23 +355,39 @@ def _star(X, Y, cx, cy, r, thin=0.18):
     return (k - 1.0) * r * thin * 2
 
 
-def draw_iris(frame):
+def draw_iris(frame, gender="female"):
     lay = Layer(CELL_PX, CELL_PX, IRIS_CELL, IRIS_CELL)
     X, Y = lay.X, lay.Y
     out = np.zeros((CELL_PX, CELL_PX, 4))
-    d = sd_ellipse(X, Y, 0, 0, IRIS_RX, IRIS_RY)
+    irx, iry = IRIS_RX, IRIS_RY
+    vinyl = False
+    d = sd_ellipse(X, Y, 0, 0, irx, iry)
     cov = lay.cov(d)
-    k0 = np.sqrt((X / IRIS_RX) ** 2 + (Y / IRIS_RY) ** 2)
-    shade = 0.28 + 0.72 * np.clip((IRIS_RY * 0.35 - Y) / (IRIS_RY * 1.2), 0.0, 1.0) ** 0.8
+    k0 = np.sqrt((X / irx) ** 2 + (Y / iry) ** 2)
+    shade = 0.28 + 0.72 * np.clip((iry * 0.35 - Y) / (iry * 1.2), 0.0, 1.0) ** 0.8
     shade *= 1.0 - 0.45 * np.clip((k0 - 0.72) / 0.28, 0.0, 1.0)
     # heller Bogen unten
-    shade += 0.25 * np.clip(1 - np.abs(k0 - 0.68) / 0.12, 0, 1) * np.clip(-Y / IRIS_RY, 0, 1)
+    shade += 0.25 * np.clip(1 - np.abs(k0 - 0.68) / 0.12, 0, 1) * np.clip(-Y / iry, 0, 1)
     out[..., 0] = np.clip(shade, 0.0, 1.0)
     dark = lay.cov(np.abs(d + 0.0006) - 0.0006) * 0.9            # Rand der Iris
     ang = np.arctan2(Y, X)
     streak = (0.5 + 0.5 * np.cos(ang * 22.0)) * np.clip((k0 - 0.45) / 0.4, 0, 1) * np.clip((0.95 - k0) / 0.2, 0, 1)
-    dark = np.maximum(dark, 0.18 * streak * (Y < IRIS_RY * 0.2))
+    dark = np.maximum(dark, 0.18 * streak * (Y < iry * 0.2) * (0.0 if vinyl else 1.0))
+    if vinyl:
+        # Knopfauge: dunkel, weicher Verlauf, nur ein feiner Rand
+        out[..., 0] = np.clip(0.15 + 0.55 * np.clip(-Y / iry, 0, 1) ** 1.5, 0, 1)
+        dark = lay.cov(np.abs(d + 0.0004) - 0.0004) * 0.5
     hi = np.zeros_like(X)
+    if frame == "small":
+        # erschrocken: nur ein kleiner Punkt mit Glanz
+        cov = lay.cov(sd_ellipse(X, Y, 0, -0.001, 0.0062, 0.0080))
+        out[..., 0] = 0.25
+        dark = cov * 0.9
+        hi = lay.cov(sd_ellipse(X, Y, -0.0018, 0.0022, 0.0016, 0.0018))
+        out[..., 1] = hi * cov
+        out[..., 2] = dark * cov
+        out[..., 3] = cov
+        return out
     if frame == "heart":
         dark = np.maximum(dark, lay.cov(_heart(X, Y, 0.0, -0.001, 0.0135)) * 0.95)
         hi = np.maximum(hi, lay.cov(_heart(X, Y, -0.0062, 0.0085, 0.0062)))
@@ -302,15 +395,23 @@ def draw_iris(frame):
     elif frame == "spiral":
         r = np.sqrt(X * X + Y * Y)
         sp = np.abs(((r / 0.0042 - ang / (2 * math.pi)) % 1.0) - 0.5) * 0.0042 - 0.0007
-        dark = np.maximum(dark, lay.cov(sp) * (r < IRIS_RX * 0.95))
+        dark = np.maximum(dark, lay.cov(sp) * (r < irx * 0.95))
     else:
-        dark = np.maximum(dark, lay.cov(sd_ellipse(X, Y, 0.0, -0.0008, 0.0066, 0.0094)) * 0.95)
+        if not vinyl:
+            dark = np.maximum(dark, lay.cov(sd_ellipse(X, Y, 0.0, -0.0008, 0.0066, 0.0094)) * 0.95)
         hi = np.maximum(hi, lay.cov(sd_ellipse(X, Y, -0.0060, 0.0085, 0.0054, 0.0062, rot=0.35)))
         hi = np.maximum(hi, lay.cov(sd_ellipse(X, Y, 0.0068, -0.0092, 0.0021, 0.0021)))
         hi = np.maximum(hi, 0.8 * lay.cov(sd_ellipse(X, Y, 0.0030, 0.0098, 0.0011, 0.0011)))
+        if frame == "star":
+            hi = np.maximum(hi, lay.cov(_star(X, Y, 0.0, -0.001, 0.0080, 0.22)))
         if frame == "sparkle":
             hi = np.maximum(hi, lay.cov(_star(X, Y, 0.0055, 0.0035, 0.0055)))
             hi = np.maximum(hi, lay.cov(_star(X, Y, -0.0048, -0.0072, 0.0035)))
+    if gender == "male" and frame in ("normal", "sparkle", "star"):
+        # Männer: nur ein kleiner, gedämpfter Glanzpunkt (sonst wirkt es zu weiblich)
+        hi = 0.7 * lay.cov(sd_ellipse(X, Y, -0.0050, 0.0072, 0.0026, 0.0028))
+        if frame == "star":
+            hi = np.maximum(hi, 0.8 * lay.cov(_star(X, Y, 0.0, -0.001, 0.0060, 0.22)))
     out[..., 1] = hi * cov
     out[..., 2] = dark * cov
     out[..., 3] = cov
@@ -321,8 +422,9 @@ def draw_iris(frame):
 # Augenbrauen (A = Deckkraft; Farbe kommt aus dem Shader), x nach außen
 # ---------------------------------------------------------------------------------------------
 
-def draw_brow(frame):
+def draw_brow(frame, gender="female"):
     w, h = BROW_CELL
+    male = gender == "male"
     lay = Layer(CELL_PX, CELL_PX // 2, w, h)
     inner_y, mid_y, outer_y, lift = {
         "neutral": (0.0, 0.0035, -0.0015, 0.0),
@@ -338,8 +440,13 @@ def draw_brow(frame):
     p3 = (0.021, outer_y + lift)
     p1 = (-0.007, mid_y + 0.0015 + lift)
     p2 = (0.010, mid_y + 0.0012 + lift)
+    if male:
+        # Männer: kräftig und gerade
+        p1 = (p1[0], p1[1] - 0.0018)
+        p2 = (p2[0], p2[1] - 0.0018)
     pts = bezier(p0, p1, p2, p3, 28)
-    lay.paint(sd_stroke(lay.X, lay.Y, pts, taper(len(pts), 0.0036, 0.0031, 0.0009, 0.35)), (1, 1, 1))
+    t = 2.0 if male else 1.0
+    lay.paint(sd_stroke(lay.X, lay.Y, pts, taper(len(pts), 0.0036 * t, 0.0031 * t, 0.0012 * t, 0.35)), (1, 1, 1))
     return lay.rgba()
 
 
@@ -372,15 +479,15 @@ def _open_mouth(lay, top_pts, bottom_pts, tongue=True, teeth=False, line=0.0016)
 def draw_mouth(frame):
     lay = Layer(CELL_PX, CELL_PX, MOUTH_CELL, MOUTH_CELL)
     X, Y = lay.X, lay.Y
-    lw = 0.0017
+    lw = 0.0026
 
-    def line(pts, w0=0.0010, w1=lw, w2=0.0010):
+    def line(pts, w0=0.0016, w1=lw, w2=0.0016):
         lay.paint(sd_stroke(X, Y, pts, taper(len(pts), w0, w1, w2, 0.5)), LINE)
 
     if frame == "smile":
-        line(bezier((-0.0085, 0.0018), (-0.004, -0.0028), (0.004, -0.0028), (0.0085, 0.0018)))
+        line(bezier((-0.0105, 0.0024), (-0.0045, -0.0034), (0.0045, -0.0034), (0.0105, 0.0024)))
     elif frame == "smile_wide":
-        line(bezier((-0.0135, 0.003), (-0.006, -0.0042), (0.006, -0.0042), (0.0135, 0.003)))
+        line(bezier((-0.0145, 0.0034), (-0.0065, -0.0048), (0.0065, -0.0048), (0.0145, 0.0034)))
     elif frame == "open_smile":
         top = bezier((-0.010, 0.002), (-0.004, 0.0005), (0.004, 0.0005), (0.010, 0.002), 16)
         bot = bezier((-0.010, 0.002), (-0.007, -0.010), (0.007, -0.010), (0.010, 0.002), 16)
@@ -428,6 +535,25 @@ def draw_mouth(frame):
         d = sd_ellipse(X, Y, 0, -0.0015, 0.0058, 0.0072)
         lay.paint(d, MOUTH_INSIDE)
         lay.paint(np.abs(d) - 0.0008, LINE)
+    elif frame == "grin":
+        # breites Grinsen mit Zähnen
+        top = bezier((-0.0135, 0.0030), (-0.006, 0.0005), (0.006, 0.0005), (0.0135, 0.0030), 16)
+        bot = bezier((-0.0135, 0.0030), (-0.008, -0.0075), (0.008, -0.0075), (0.0135, 0.0030), 16)
+        _open_mouth(lay, top, bot, tongue=False, teeth=True)
+    elif frame == "bleh":
+        line(bezier((-0.009, 0.0015), (-0.004, -0.0025), (0.004, -0.0025), (0.009, 0.0015)))
+        t = sd_ellipse(X, Y, 0.002, -0.0045, 0.0042, 0.0045)
+        lay.paint(np.maximum(t, -(Y + 0.0010)), TONGUE)
+        lay.paint(np.maximum(np.abs(t) - 0.0006, -(Y + 0.0012)), LINE)
+    elif frame == "shout":
+        top = bezier((-0.0110, 0.0050), (-0.005, 0.0020), (0.005, 0.0020), (0.0110, 0.0050), 16)
+        bot = bezier((-0.0110, 0.0050), (-0.009, -0.0140), (0.009, -0.0140), (0.0110, 0.0050), 16)
+        _open_mouth(lay, top, bot, teeth=True)
+    elif frame == "triangle":
+        tri = np.array([(-0.0050, -0.0035), (0.0050, -0.0035), (0.0, 0.0040)])
+        d = sd_poly(X, Y, tri) - 0.0008
+        lay.paint(d, MOUTH_INSIDE)
+        lay.paint(np.abs(d) - 0.0007, LINE)
     elif frame == "pout":
         a = bezier((-0.0035, 0.004), (0.0015, 0.004), (0.0015, 0.0), (-0.0015, 0.0), 12)
         b = bezier((-0.0015, 0.0), (0.0015, 0.0), (0.0015, -0.004), (-0.0035, -0.004), 12)
@@ -440,26 +566,31 @@ def draw_mouth(frame):
 # ---------------------------------------------------------------------------------------------
 
 def build_atlases():
-    """Liefert dict Name -> Bild (H, W, 4) in 0..1."""
-    eyes = np.zeros((4 * CELL_PX, 4 * CELL_PX, 4))
+    """Liefert dict Name -> Bild (H, W, 4) in 0..1.
+    Augen/Masken: Spalte = Ausdruck (EYE_FRAMES), Zeile = Satz (Frau: 3 Formen, Mann: 3 Formen)."""
+    ec = EYE_CELL_PX
+    eyes = np.zeros((6 * ec, len(EYE_FRAMES) * ec, 4))
     masks = np.zeros_like(eyes)
     for gi, gender in enumerate(("female", "male")):
-        for i, f in enumerate(EYE_FRAMES):
+        for si, shape in enumerate(SHAPE_NAMES[gender]):
+            r = gi * 3 + si
+            for c, f in enumerate(EYE_FRAMES):
+                lines, mask = draw_eye(f, gender, shape)
+                eyes[r * ec:(r + 1) * ec, c * ec:(c + 1) * ec] = lines
+                masks[r * ec:(r + 1) * ec, c * ec:(c + 1) * ec] = mask
+    iris = np.zeros((4 * CELL_PX, 3 * CELL_PX, 4))
+    for gi, gender in enumerate(("female", "male")):
+        for i, f in enumerate(IRIS_FRAMES):
+            r, c = gi * 2 + i // 3, i % 3
+            iris[r * CELL_PX:(r + 1) * CELL_PX, c * CELL_PX:(c + 1) * CELL_PX] = draw_iris(f, gender)
+    brows = np.zeros((4 * CELL_PX // 2, 4 * CELL_PX, 4))
+    for gi, gender in enumerate(("female", "male")):
+        for i, f in enumerate(BROW_FRAMES):
             r, c = gi * 2 + i // 4, i % 4
-            lines, mask = draw_eye(f, gender)
-            eyes[r * CELL_PX:(r + 1) * CELL_PX, c * CELL_PX:(c + 1) * CELL_PX] = lines
-            masks[r * CELL_PX:(r + 1) * CELL_PX, c * CELL_PX:(c + 1) * CELL_PX] = mask
-    iris = np.zeros((2 * CELL_PX, 2 * CELL_PX, 4))
-    for i, f in enumerate(IRIS_FRAMES):
-        r, c = i // 2, i % 2
-        iris[r * CELL_PX:(r + 1) * CELL_PX, c * CELL_PX:(c + 1) * CELL_PX] = draw_iris(f)
-    brows = np.zeros((2 * CELL_PX // 2, 4 * CELL_PX, 4))
-    for i, f in enumerate(BROW_FRAMES):
-        r, c = i // 4, i % 4
-        brows[r * CELL_PX // 2:(r + 1) * CELL_PX // 2, c * CELL_PX:(c + 1) * CELL_PX] = draw_brow(f)
-    mouths = np.zeros((4 * CELL_PX, 4 * CELL_PX, 4))
+            brows[r * CELL_PX // 2:(r + 1) * CELL_PX // 2, c * CELL_PX:(c + 1) * CELL_PX] = draw_brow(f, gender)
+    mouths = np.zeros((4 * CELL_PX, 5 * CELL_PX, 4))
     for i, f in enumerate(MOUTH_FRAMES):
-        r, c = i // 4, i % 4
+        r, c = i // 5, i % 5
         mouths[r * CELL_PX:(r + 1) * CELL_PX, c * CELL_PX:(c + 1) * CELL_PX] = draw_mouth(f)
     return {"face_eyes": eyes, "face_eye_masks": masks, "face_iris": iris, "face_brows": brows,
             "face_mouths": mouths}
@@ -485,21 +616,38 @@ def write_png(path, img):
 # Ausdrücke und Zusammensetzen (wie der Shader)
 # ---------------------------------------------------------------------------------------------
 
-# Ausdruck = Augen, Iris, Augenbrauen, Mund, Wangenröte, Irisgröße
+# Ausdruck = Auge links, Auge rechts (der Figur), Iris, Augenbrauen, Mund, Wangenröte, Irisgröße,
+# Rotstriche auf den Wangen – muss zu ChibiCharacter.MOODS passen
 EXPRESSIONS = {
-    "neutral": ("open", "normal", "neutral", "smile", 0.4, 1.0),
-    "happy": ("soft", "normal", "relaxed", "open_smile", 0.55, 1.0),
-    "laugh": ("happy", "normal", "raised", "laugh", 0.7, 1.0),
-    "surprised": ("wide", "normal", "raised", "O", 0.2, 0.78),
-    "sad": ("sad", "normal", "worried", "frown", 0.1, 1.0),
-    "angry": ("angry", "normal", "angry", "flat", 0.35, 0.95),
-    "sleepy": ("half", "normal", "relaxed", "o", 0.2, 1.0),
-    "love": ("open", "heart", "raised", "cat", 0.9, 1.05),
-    "excited": ("open", "sparkle", "raised", "open_smile", 0.6, 1.05),
-    "blink": ("closed", "normal", "neutral", "smile", 0.25, 1.0),
-    "worried": ("open", "normal", "worried", "wavy", 0.3, 0.9),
-    "dizzy": ("open", "spiral", "worried", "wavy", 0.2, 1.0),
+    "neutral": ("open", "open", "normal", "neutral", "smile", 0.55, 1.0, 0.0),
+    "happy": ("soft", "soft", "normal", "relaxed", "open_smile", 0.5, 1.0, 0.0),
+    "laugh": ("happy", "happy", "normal", "raised", "laugh", 0.7, 1.0, 0.0),
+    "content": ("happy", "happy", "normal", "relaxed", "smile_wide", 0.6, 1.0, 0.0),
+    "grin": ("soft", "soft", "normal", "raised", "grin", 0.5, 1.0, 0.0),
+    "excited": ("open", "open", "sparkle", "raised", "open_smile", 0.6, 1.05, 0.0),
+    "love": ("open", "open", "heart", "raised", "cat", 0.9, 1.05, 0.0),
+    "starstruck": ("wide", "wide", "star", "raised", "O", 0.6, 1.0, 0.0),
+    "wink": ("open", "happy", "normal", "raised", "grin", 0.5, 1.0, 0.0),
+    "cheeky": ("happy", "open", "normal", "raised", "bleh", 0.5, 1.0, 0.0),
+    "surprised": ("wide", "wide", "normal", "raised", "O", 0.2, 0.8, 0.0),
+    "shocked": ("wide", "wide", "small", "raised", "triangle", 0.1, 1.0, 0.0),
+    "sad": ("sad", "sad", "normal", "worried", "frown", 0.1, 1.0, 0.0),
+    "teary": ("teary", "teary", "sparkle", "worried", "wavy", 0.4, 1.0, 0.0),
+    "crying": ("cry", "cry", "normal", "worried", "sad_open", 0.4, 1.0, 0.0),
+    "angry": ("angry", "angry", "normal", "angry", "flat", 0.3, 0.95, 0.0),
+    "furious": ("squeeze", "squeeze", "normal", "angry", "shout", 0.6, 1.0, 0.0),
+    "annoyed": ("annoyed", "annoyed", "normal", "flat", "flat", 0.1, 1.0, 0.0),
+    "smug": ("annoyed", "annoyed", "normal", "focused", "smirk", 0.2, 1.0, 0.0),
+    "worried": ("open", "open", "normal", "worried", "wavy", 0.3, 0.9, 0.0),
+    "embarrassed": ("soft", "soft", "normal", "worried", "wavy", 0.9, 1.0, 1.0),
+    "shy": ("open", "open", "normal", "sad", "pout", 0.8, 1.0, 1.0),
+    "thinking": ("open", "half", "normal", "focused", "pout", 0.2, 1.0, 0.0),
+    "sleepy": ("half", "half", "normal", "relaxed", "o", 0.2, 1.0, 0.0),
+    "asleep": ("closed", "closed", "normal", "relaxed", "o", 0.3, 1.0, 0.0),
+    "dizzy": ("open", "open", "spiral", "worried", "wavy", 0.2, 1.0, 0.0),
+    "blink": ("closed", "closed", "normal", "neutral", "smile", 0.55, 1.0, 0.0),
 }
+# Iris je Augenform: (Größe, Höhe) – auch in chibi_face.gdshader (SET_IRIS)
 
 
 def _sample(img, u, v):
@@ -533,54 +681,61 @@ def srgb_to_linear(c):
 
 
 def compose(atlases, expression="neutral", gender="female", size=1024, skin=(0.95, 0.80, 0.68),
-            iris_color=(0.42, 0.28, 0.20), brow_color=(0.30, 0.22, 0.18), look=(0.0, 0.0)):
+            iris_color=(0.42, 0.28, 0.20), brow_color=(0.30, 0.22, 0.18), look=(0.0, 0.0), shape=None):
     """Ganzes Gesicht (sRGB, 0..1) im UV-Bereich 0..1 – Gegenstück zu chibi_face.gdshader."""
-    eye_f, iris_f, brow_f, mouth_f, blush, iris_scale = EXPRESSIONS[expression]
+    eye_l, eye_r, iris_f, brow_f, mouth_f, blush, iris_scale, blush_lines = EXPRESSIONS[expression]
     n = size
     u = (np.arange(n) + 0.5) / n
     U, V = np.meshgrid(u, u)
     fx = (U - 0.5) * FACE_SIZE
     fz = (1.0 - V) * FACE_SIZE
     col = np.ones((n, n, 3)) * np.array(skin)
-    # Wangenröte
     for s in (1, -1):
-        e = ((fx - s * BLUSH_X) / BLUSH_R[0]) ** 2 + ((fz - BLUSH_Z) / BLUSH_R[1]) ** 2
-        a = np.clip(1.0 - e, 0.0, 1.0) ** 1.5 * 0.55 * blush
-        col = col * (1 - a[..., None]) + np.array((0.98, 0.55, 0.55)) * a[..., None]
+        bu, bv = (fx - s * BLUSH_X) / BLUSH_R[0], (fz - BLUSH_Z) / BLUSH_R[1]
+        a = np.clip(1.0 - (bu * bu + bv * bv), 0.0, 1.0) ** 1.2 * 0.75 * blush
+        col = col * (1 - a[..., None]) + np.array((0.97, 0.50, 0.52)) * a[..., None]
+        if blush_lines > 0:
+            # drei kurze schräge Striche ("///")
+            st = np.abs(((bu * s * 0.9 + bv * 1.6) * 1.5 + 0.5) % 1.0 - 0.5)
+            a = (st < 0.11) * (np.abs(bu) < 0.62) * (np.abs(bv) < 0.55) * 0.75 * blush_lines
+            col = col * (1 - a[..., None]) + np.array((0.86, 0.36, 0.38)) * a[..., None]
     gi = 0 if gender == "female" else 1
-    ei = EYE_FRAMES.index(eye_f)
-    erow, ecol = gi * 2 + ei // 4, ei % 4
+    shape = shape or SHAPE_NAMES[gender][0]
+    row = gi * 3 + SHAPE_NAMES[gender].index(shape)
+    isc, idy = EYE_SHAPES[gender][shape]["iris"]
     ii = IRIS_FRAMES.index(iris_f)
-    for s in (1, -1):
+    ec = EYE_CELL_PX
+    for s, eye_f in ((1, eye_l), (-1, eye_r)):
+        ei = EYE_FRAMES.index(eye_f)
         lx = (fx - s * EYE_X) * s / EYE_SCALE
         ly = (fz - EYE_Z) / EYE_SCALE
-        lines = _cell(atlases["face_eyes"], lx, ly, EYE_CELL, EYE_CELL, ecol, erow, CELL_PX, CELL_PX)
-        mask = _cell(atlases["face_eye_masks"], lx, ly, EYE_CELL, EYE_CELL, ecol, erow, CELL_PX, CELL_PX)
-        white = mask[..., 0]
-        shadow = mask[..., 1]
-        eye_col = np.array((0.99, 0.98, 0.97))
-        col = col * (1 - white[..., None]) + eye_col * white[..., None]
-        ix = ((fx - s * EYE_X) / EYE_SCALE - look[0] * 0.006) / iris_scale
-        iy = ((fz - EYE_Z) / EYE_SCALE - 0.0015 - look[1] * 0.004) / iris_scale
-        ir = _cell(atlases["face_iris"], ix, iy, IRIS_CELL, IRIS_CELL, ii % 2, ii // 2, CELL_PX, CELL_PX)
+        lines = _cell(atlases["face_eyes"], lx, ly, EYE_CELL, EYE_CELL, ei, row, ec, ec)
+        mask = _cell(atlases["face_eye_masks"], lx, ly, EYE_CELL, EYE_CELL, ei, row, ec, ec)
+        white, shadow = mask[..., 0], mask[..., 1]
+        col = col * (1 - white[..., None]) + np.array((0.99, 0.98, 0.97)) * white[..., None]
+        sc = iris_scale * isc
+        ix = ((fx - s * EYE_X) / EYE_SCALE - look[0] * 0.006) / sc
+        iy = ((fz - EYE_Z) / EYE_SCALE - idy - look[1] * 0.004) / sc
+        ir = _cell(atlases["face_iris"], ix, iy, IRIS_CELL, IRIS_CELL, ii % 3, gi * 2 + ii // 3, CELL_PX, CELL_PX)
         ia = ir[..., 3] * white
         base = np.array(iris_color)
-        icol = base * 0.35 + (base * 1.15 - base * 0.35) * np.clip(ir[..., 0:1], 0, 1)
-        icol = icol * (1 - ir[..., 2:3]) + np.array(LINE) * ir[..., 2:3] * 0.8
+        icol = base * 0.25 + (base * 1.2 - base * 0.25) * np.clip(ir[..., 0:1], 0, 1)
+        icol = icol * (1 - ir[..., 2:3]) + np.array(LINE) * ir[..., 2:3] * 0.85
         icol = icol * (1 - ir[..., 1:2]) + 1.0 * ir[..., 1:2]
         col = col * (1 - ia[..., None]) + np.clip(icol, 0, 1) * ia[..., None]
-        sh = shadow * 0.45
-        col = col * (1 - sh[..., None] * (1 - np.array((0.78, 0.76, 0.86))))
+        sh = shadow * 0.5
+        col = col * (1 - sh[..., None] * (1 - np.array((0.72, 0.70, 0.82))))
         la = lines[..., 3:4]
         col = col * (1 - la) + lines[..., :3] * la
         bi = BROW_FRAMES.index(brow_f)
         bx = (fx - s * BROW_X) * s / BROW_SCALE
-        br = _cell(atlases["face_brows"], bx, (fz - BROW_Z) / BROW_SCALE, BROW_CELL[0], BROW_CELL[1], bi % 4, bi // 4,
-                   CELL_PX, CELL_PX // 2)
+        br = _cell(atlases["face_brows"], bx, (fz - BROW_Z) / BROW_SCALE, BROW_CELL[0], BROW_CELL[1], bi % 4,
+                   gi * 2 + bi // 4, CELL_PX, CELL_PX // 2)
         ba = br[..., 3:4]
         col = col * (1 - ba) + np.array(brow_color) * ba
     mi = MOUTH_FRAMES.index(mouth_f)
-    m = _cell(atlases["face_mouths"], fx / MOUTH_SCALE, (fz - MOUTH_Z) / MOUTH_SCALE, MOUTH_CELL, MOUTH_CELL, mi % 4, mi // 4, CELL_PX, CELL_PX)
+    m = _cell(atlases["face_mouths"], fx / MOUTH_SCALE, (fz - MOUTH_Z) / MOUTH_SCALE, MOUTH_CELL, MOUTH_CELL,
+              mi % 5, mi // 5, CELL_PX, CELL_PX)
     ma = m[..., 3:4]
     col = col * (1 - ma) + m[..., :3] * ma
     out = np.ones((n, n, 4))

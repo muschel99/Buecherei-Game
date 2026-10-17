@@ -1,14 +1,24 @@
-// Haut und Wäsche der Chibi-Figuren (seit Etappe 5c): eine Farbe je Figur (Instanz-Wert),
-// dazu die eingebaute Verschattung aus UV2.x (Achseln, Bauchnabel, Finger).
+// Haut der Chibi-Figuren (seit Etappe 5c): eine Farbe je Figur (Instanz-Wert), dazu die
+// eingebaute Verschattung (UV2.x: Achseln, Bauchnabel, Finger) und die aufgemalte Unterwäsche:
+// UV2.y = Abstand zum Rand von Bandeau/Hose (glTF dreht v um: 1 - UV2.y), negativ = Stoff.
 shader_type spatial;
 
-instance uniform vec4 base_color : source_color = vec4(0.95, 0.80, 0.68, 1.0);
+// Instanz-Werte mit festen Nummern – gleich wie in chibi_face.gdshader (beide Oberflächen
+// des Körpers teilen sich die Werte über diese Nummern)
+instance uniform vec4 base_color : source_color, instance_index(0) = vec4(0.95, 0.80, 0.68, 1.0);
+instance uniform vec4 cloth_color : source_color, instance_index(1) = vec4(0.90, 0.89, 0.87, 1.0);
 uniform float ao_strength : hint_range(0.0, 1.0) = 1.0;
 uniform float roughness : hint_range(0.0, 1.0) = 0.55;
 
 void fragment() {
 	float ao = mix(1.0, UV2.x, ao_strength);
-	ALBEDO = base_color.rgb * ao;
-	ROUGHNESS = roughness;
+	float d = 1.0 - UV2.y;
+	// scharfe, geglättete Kante (Breite = ein Bildpunkt)
+	float w = max(fwidth(d), 0.0002);
+	float cloth = clamp(0.5 - d / w, 0.0, 1.0);
+	// feiner Saum am Rand der Wäsche
+	float hem = cloth * (1.0 - smoothstep(0.0, 0.0025, -d)) * 0.12;
+	ALBEDO = mix(base_color.rgb, cloth_color.rgb * (1.0 - hem), cloth) * ao;
+	ROUGHNESS = mix(roughness, 0.85, cloth);
 	SPECULAR = 0.3;
 }

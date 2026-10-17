@@ -637,8 +637,9 @@ in `assets/models/templates/street_life/` (siehe „Vorlagen zum Modellieren“)
 
 ### Die Chibi-Figuren (seit Etappe 5c)
 Niedliche Grundkörper ("Mannequins") wie auf den Vorlagen: großer runder Kopf (bei allen gleich
-groß, 0,47 m), weicher Vinyl-Körper, Frauen mit Bandeau-Top und Slip, Männer mit Boxershorts,
-noch ohne Haare und Kleidung. Gebaut mit `tools/blender/build_chibi.py` (Körper aus weichen
+groß, 0,47 m), weicher Vinyl-Körper, Frauen mit Bandeau-Top und Slip, Männer mit Boxershorts –
+die Unterwäsche ist nur **aufgemalt** (Farbe einstellbar), damit unter enger Kleidung nichts
+hervorschaut. Noch ohne Haare und Kleidung. Gebaut mit `tools/blender/build_chibi.py` (Körper aus weichen
 Grundformen: `chibi_sdf.py`; gezeichnetes Gesicht: `chibi_face.py`).
 - **Sechs Dateien:** `assets/models/characters/chibi/<gender>_<größe>.glb`
   (`female_small`, `female_medium`, `female_tall`, `male_small` …). Größen: Frauen 1,50 / 1,58 / 1,66 m,
@@ -650,18 +651,23 @@ Grundformen: `chibi_sdf.py`; gezeichnetes Gesicht: `chibi_face.py`).
   Inspektor einstellen: Figure (welcher Körper), Body Shape, Hautfarbe, Wäschefarbe, Augenfarbe,
   Augenbrauenfarbe, unter „Gesicht“ den Ausdruck (Mood), Blickrichtung (Look), Blinzeln, Sprechen.
   Alle zusammen ansehen: `scenes/tools/chibi_lineup.tscn` öffnen und **F6** drücken.
-- **Gesichtsausdrücke:** neutral, fröhlich, lachen, überrascht, traurig, böse, müde, verliebt
-  (Herzaugen), begeistert (Glitzeraugen), besorgt, schwindelig; dazu Blinzeln und Sprechen von
-  allein. Animieren: im AnimationPlayer eine Spur auf `mood`, `look`, `eyes_override` oder
-  `mouth_override` der Figur legen. Die Bilder dafür liegen in
-  `assets/textures/characters/chibi_face/` (Augen, Iris, Augenbrauen, Münder – je Feld ein
-  Ausdruck) und werden vom Script gezeichnet; neue Ausdrücke = neue Zeichnung in `chibi_face.py`.
+- **Gesicht im Manga-Chibi-Stil:** je Geschlecht **3 Augenformen** (Eigenschaft **Eye Shape**):
+  Frauen süß / elegant / lebhaft (mit Wimpern), Männer sanft / cool / fröhlich (ohne Wimpern,
+  dezenter Glanz, kräftige Augenbrauen). Augenfarbe, Augenbrauenfarbe und Hautfarbe frei.
+- **Gesichtsausdrücke (Mood, 26 Stück, für jede Augenform):** neutral, fröhlich, lachen,
+  zufrieden, grinsen, begeistert, verliebt, Sternchenaugen, zwinkern, frech (Zunge), überrascht,
+  schockiert, traurig, Tränen in den Augen, weinen, böse, wütend (><), genervt, selbstgefällig,
+  besorgt, verlegen (Rotstriche), schüchtern, nachdenklich, müde, schlafend, schwindelig; dazu
+  Blinzeln, Sprechen und Blickrichtung. Animieren: im AnimationPlayer eine Spur auf `mood`,
+  `look`, `eyes_override` oder `mouth_override` der Figur. Die Bilder dafür liegen in
+  `assets/textures/characters/chibi_face/` und werden von `chibi_face.py` gezeichnet.
 - **Neu bauen:** `blender -b --factory-startup --python tools/blender/build_chibi.py`
   (Kontrollbilder: `-- --only=female_medium --render --views=around,faces,compare,shapes` →
   `screenshots/blender/chibi/`). Quellen: `assets/models/source/characters/chibi/*.blend`.
-- **Mixamo:** `assets/models/characters/chibi/mixamo/<name>.fbx` (A-Pose: Arme 50° nach unten –
-  Mixamo kann das). Ablauf wie unten bei „Animationen von Mixamo“; hochladen am besten
-  `female_medium.fbx`.
+- **Mixamo:** `assets/models/characters/chibi/mixamo/<name>.fbx` (T-Pose, Arme waagerecht, nur das
+  Netz – Mixamo setzt sein Skelett selbst ein). Ablauf wie unten bei „Animationen von Mixamo“;
+  hochladen am besten `female_medium.fbx`. Ohne Animation lassen die Figuren in Godot die Arme
+  locker hängen (Eigenschaft **Relaxed Arms**, 57°).
 
 ### Die Figuren (seit Etappe 5b)
 Sechs Figuren im Stil des Spiels (Kopf etwas größer, Frisuren aus dicken Strähnen):

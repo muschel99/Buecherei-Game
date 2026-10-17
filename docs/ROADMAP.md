@@ -833,7 +833,7 @@ Richtung Disney Dreamlight Valley) und Fahrzeuge, die zur englischen Altstadt pa
 Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi-Proportionen
 (Kopf 30 % der Körpergröße), weiche Vinyl-Formen, gezeichnete Manga-Gesichter.
 - [x] Grundkörper: Frau und Mann je klein/mittel/groß, Formregler dünn/dick, Bandeau + Slip bzw.
-      Boxershorts, Bauch mit Nabel, Knopfnase, Ohren; A-Pose, Skelett mit Godot-Humanoid-Namen;
+      Boxershorts, Bauch mit Nabel, Knopfnase, Ohren; T-Pose, Skelett mit Godot-Humanoid-Namen;
       Mixamo-Dateien
 - [x] Gezeichnetes Gesicht mit Ausdrücken, Blickrichtung, Blinzeln und Sprechen (Shader +
       `ChibiCharacter`), Frauen mit Schmuckwimpern

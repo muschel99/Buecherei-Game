@@ -7,7 +7,7 @@ extends Node3D
 ## Körperform: body_shape von -1 (dünn) über 0 (mittel) bis 1 (dick) – Formregler im Modell.
 ## Gesicht: gezeichnet (Shader chibi_face.gdshader). Ausdruck, Blickrichtung, Blinzeln und
 ## Sprechen sind Eigenschaften dieses Knotens und lassen sich mit einem AnimationPlayer
-## animieren (z. B. Spur "expression" oder "look"). Mit eyes_override/mouth_override kann eine
+## animieren (z. B. Spur "mood" oder "look"). Mit eyes_override/mouth_override kann eine
 ## Animation einzelne Teile des Gesichts unabhängig vom Ausdruck setzen (-1 = vom Ausdruck).
 
 enum Figure { FEMALE_SMALL, FEMALE_MEDIUM, FEMALE_TALL, MALE_SMALL, MALE_MEDIUM, MALE_TALL }
@@ -21,30 +21,56 @@ const FIGURE_FILES: Array[String] = [
 ]
 
 # Felder der Atlanten – Reihenfolge wie in tools/blender/chibi_face.py
-const EYE_FRAMES: Array[String] = ["open", "half", "closed", "happy", "wide", "sad", "angry", "soft"]
-const IRIS_FRAMES: Array[String] = ["normal", "heart", "sparkle", "spiral"]
+const EYE_FRAMES: Array[String] = ["open", "half", "closed", "happy", "wide", "sad", "angry", "soft", "annoyed",
+	"squeeze", "cry", "teary"]
+const IRIS_FRAMES: Array[String] = ["normal", "heart", "sparkle", "spiral", "small", "star"]
 const BROW_FRAMES: Array[String] = ["neutral", "raised", "worried", "angry", "sad", "flat", "focused", "relaxed"]
 const MOUTH_FRAMES: Array[String] = ["smile", "smile_wide", "open_smile", "laugh", "o", "O", "flat", "frown",
-	"cat", "wavy", "sad_open", "smirk", "talk_a", "talk_e", "talk_o", "pout"]
+	"cat", "wavy", "sad_open", "smirk", "talk_a", "talk_e", "talk_o", "pout", "grin", "bleh", "shout", "triangle"]
 
-enum Mood { NEUTRAL, HAPPY, LAUGH, SURPRISED, SAD, ANGRY, SLEEPY, LOVE, EXCITED, WORRIED, DIZZY }
-## Ausdruck = [Augen, Iris, Augenbrauen, Mund, Wangenröte, Irisgröße]
-const EXPRESSIONS := {
-	Mood.NEUTRAL: ["open", "normal", "neutral", "smile", 0.4, 1.0],
-	Mood.HAPPY: ["soft", "normal", "relaxed", "open_smile", 0.55, 1.0],
-	Mood.LAUGH: ["happy", "normal", "raised", "laugh", 0.7, 1.0],
-	Mood.SURPRISED: ["wide", "normal", "raised", "O", 0.2, 0.78],
-	Mood.SAD: ["sad", "normal", "worried", "frown", 0.1, 1.0],
-	Mood.ANGRY: ["angry", "normal", "angry", "flat", 0.35, 0.95],
-	Mood.SLEEPY: ["half", "normal", "relaxed", "o", 0.2, 1.0],
-	Mood.LOVE: ["open", "heart", "raised", "cat", 0.9, 1.05],
-	Mood.EXCITED: ["open", "sparkle", "raised", "open_smile", 0.6, 1.05],
-	Mood.WORRIED: ["open", "normal", "worried", "wavy", 0.3, 0.9],
-	Mood.DIZZY: ["open", "spiral", "worried", "wavy", 0.2, 1.0],
+## Augenformen: Frauen süß / elegant / lebhaft, Männer sanft / cool / fröhlich.
+enum EyeShape { SHAPE_1, SHAPE_2, SHAPE_3 }
+
+enum Mood { NEUTRAL, HAPPY, LAUGH, CONTENT, GRIN, EXCITED, LOVE, STARSTRUCK, WINK, CHEEKY, SURPRISED,
+	SHOCKED, SAD, TEARY, CRYING, ANGRY, FURIOUS, ANNOYED, SMUG, WORRIED, EMBARRASSED, SHY, THINKING,
+	SLEEPY, ASLEEP, DIZZY }
+## Ausdruck = [Auge links, Auge rechts, Iris, Augenbrauen, Mund, Wangenröte, Irisgröße, Rotstriche]
+## (wie EXPRESSIONS in chibi_face.py)
+const MOODS := {
+	Mood.NEUTRAL: ["open", "open", "normal", "neutral", "smile", 0.55, 1.0, 0.0],
+	Mood.HAPPY: ["soft", "soft", "normal", "relaxed", "open_smile", 0.5, 1.0, 0.0],
+	Mood.LAUGH: ["happy", "happy", "normal", "raised", "laugh", 0.7, 1.0, 0.0],
+	Mood.CONTENT: ["happy", "happy", "normal", "relaxed", "smile_wide", 0.6, 1.0, 0.0],
+	Mood.GRIN: ["soft", "soft", "normal", "raised", "grin", 0.5, 1.0, 0.0],
+	Mood.EXCITED: ["open", "open", "sparkle", "raised", "open_smile", 0.6, 1.05, 0.0],
+	Mood.LOVE: ["open", "open", "heart", "raised", "cat", 0.9, 1.05, 0.0],
+	Mood.STARSTRUCK: ["wide", "wide", "star", "raised", "O", 0.6, 1.0, 0.0],
+	Mood.WINK: ["open", "happy", "normal", "raised", "grin", 0.5, 1.0, 0.0],
+	Mood.CHEEKY: ["happy", "open", "normal", "raised", "bleh", 0.5, 1.0, 0.0],
+	Mood.SURPRISED: ["wide", "wide", "normal", "raised", "O", 0.2, 0.8, 0.0],
+	Mood.SHOCKED: ["wide", "wide", "small", "raised", "triangle", 0.1, 1.0, 0.0],
+	Mood.SAD: ["sad", "sad", "normal", "worried", "frown", 0.1, 1.0, 0.0],
+	Mood.TEARY: ["teary", "teary", "sparkle", "worried", "wavy", 0.4, 1.0, 0.0],
+	Mood.CRYING: ["cry", "cry", "normal", "worried", "sad_open", 0.4, 1.0, 0.0],
+	Mood.ANGRY: ["angry", "angry", "normal", "angry", "flat", 0.3, 0.95, 0.0],
+	Mood.FURIOUS: ["squeeze", "squeeze", "normal", "angry", "shout", 0.6, 1.0, 0.0],
+	Mood.ANNOYED: ["annoyed", "annoyed", "normal", "flat", "flat", 0.1, 1.0, 0.0],
+	Mood.SMUG: ["annoyed", "annoyed", "normal", "focused", "smirk", 0.2, 1.0, 0.0],
+	Mood.WORRIED: ["open", "open", "normal", "worried", "wavy", 0.3, 0.9, 0.0],
+	Mood.EMBARRASSED: ["soft", "soft", "normal", "worried", "wavy", 0.9, 1.0, 1.0],
+	Mood.SHY: ["open", "open", "normal", "sad", "pout", 0.8, 1.0, 1.0],
+	Mood.THINKING: ["open", "half", "normal", "focused", "pout", 0.2, 1.0, 0.0],
+	Mood.SLEEPY: ["half", "half", "normal", "relaxed", "o", 0.2, 1.0, 0.0],
+	Mood.ASLEEP: ["closed", "closed", "normal", "relaxed", "o", 0.3, 1.0, 0.0],
+	Mood.DIZZY: ["open", "open", "spiral", "worried", "wavy", 0.2, 1.0, 0.0],
 }
 ## Bei diesen Augen wird geblinzelt (bei geschlossenen/lachenden nicht).
-const BLINKING_EYES: Array[String] = ["open", "wide", "sad", "angry", "soft"]
+const BLINKING_EYES: Array[String] = ["open", "wide", "sad", "angry", "soft", "annoyed", "teary", "half"]
 const TALK_MOUTHS: Array[String] = ["talk_a", "talk_e", "talk_o", "smile", "talk_a", "flat"]
+## Beim locker Hängenlassen übernimmt das Schlüsselbein so viele Grad (runde Schulter).
+const SHOULDER_SHARE := 15.0
+## Dicke Figuren lassen die Arme so viel Grad weniger tief hängen (sonst liegen sie am Bauch).
+const FAT_RELAX_LESS := 8.0
 
 const SKIN_SHADER := preload("res://assets/shaders/chibi_skin.gdshader")
 const FACE_SHADER := preload("res://assets/shaders/chibi_face.gdshader")
@@ -59,11 +85,13 @@ const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 	set(value):
 		body_shape = value
 		_apply_shape()
+		_apply_pose()
 @export var skin_color: Color = Color(0.95, 0.80, 0.68):
 	set(value):
 		skin_color = value
 		_apply_colors()
-@export var cloth_color: Color = Color(0.80, 0.70, 0.60):
+## Farbe der aufgemalten Unterwäsche.
+@export var cloth_color: Color = Color(0.90, 0.89, 0.87):
 	set(value):
 		cloth_color = value
 		_apply_colors()
@@ -78,9 +106,14 @@ const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 		_apply_colors()
 
 @export_group("Gesicht")
-@export var expression: Mood = Mood.NEUTRAL:
+## Augenform (1–3, je Geschlecht verschieden).
+@export var eye_shape: EyeShape = EyeShape.SHAPE_1:
 	set(value):
-		expression = value
+		eye_shape = value
+		_apply_face()
+@export var mood: Mood = Mood.NEUTRAL:
+	set(value):
+		mood = value
 		_apply_face()
 ## Blickrichtung der Augen (-1..1 je Achse; x = zur linken Gesichtsseite der Figur).
 @export var look: Vector2 = Vector2.ZERO:
@@ -88,18 +121,18 @@ const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 		look = value
 		_apply_face()
 ## Augen unabhängig vom Ausdruck (-1 = vom Ausdruck, sonst Nummer in EYE_FRAMES).
-@export_range(-1, 7) var eyes_override: int = -1:
+@export_range(-1, 11) var eyes_override: int = -1:
 	set(value):
 		eyes_override = value
 		_apply_face()
 ## Mund unabhängig vom Ausdruck (-1 = vom Ausdruck, sonst Nummer in MOUTH_FRAMES).
-@export_range(-1, 15) var mouth_override: int = -1:
+@export_range(-1, 19) var mouth_override: int = -1:
 	set(value):
 		mouth_override = value
 		_apply_face()
-## Ohne Animation stehen die Figuren in A-Pose (Arme 50° nach unten, so gebaut für Mixamo).
-## So viele Grad lässt die Figur die Arme zusätzlich locker hängen (0 = Ruhehaltung).
-@export_range(0.0, 40.0) var relaxed_arms: float = 25.0:
+## Gebaut sind die Figuren in T-Pose (Arme waagerecht, für Mixamo). Ohne Animation lässt die
+## Figur die Arme um so viele Grad locker hängen (0 = T-Pose).
+@export_range(0.0, 85.0) var relaxed_arms: float = 57.0:
 	set(value):
 		relaxed_arms = value
 		_apply_pose()
@@ -108,7 +141,6 @@ const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 
 var _model: Node3D
 var _body: MeshInstance3D
-var _cloth: Array[MeshInstance3D] = []
 var _blink_wait := 2.0
 var _blink_t := -1.0
 var _talk_t := 0.0
@@ -132,7 +164,6 @@ func _rebuild() -> void:
 		_model.queue_free()
 		_model = null
 	_body = null
-	_cloth.clear()
 	var scene := load(FIGURE_FILES[figure]) as PackedScene
 	if scene == null:
 		return
@@ -150,12 +181,8 @@ func _rebuild() -> void:
 			elif mat_name.begins_with("skin"):
 				mi.set_surface_override_material(i, _material("skin"))
 				is_body = true
-			else:
-				mi.set_surface_override_material(i, _material("cloth"))
 		if is_body:
 			_body = mi
-		else:
-			_cloth.append(mi)
 	_apply_shape()
 	_apply_colors()
 	_apply_face()
@@ -169,14 +196,18 @@ func _apply_pose() -> void:
 	var skeleton := _model.find_child("Skeleton3D", true, false) as Skeleton3D
 	if skeleton == null:
 		return
-	for side in [["LeftUpperArm", -1.0], ["RightUpperArm", 1.0]]:
-		var bone := skeleton.find_bone(side[0])
-		if bone < 0:
-			continue
-		var rest_global := skeleton.get_bone_global_rest(bone).basis
-		var turn := Basis(Vector3.BACK, deg_to_rad(relaxed_arms) * side[1])
-		var local := Quaternion(rest_global.inverse() * turn * rest_global)
-		skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_rest(bone).basis.get_rotation_quaternion() * local)
+	# das Schlüsselbein dreht ein Stück mit (runde Schulter), der Oberarm den Rest
+	var angle := maxf(relaxed_arms - FAT_RELAX_LESS * maxf(body_shape, 0.0), 0.0)
+	var share := minf(SHOULDER_SHARE, angle)
+	for side in [["Left", -1.0], ["Right", 1.0]]:
+		for part in [["Shoulder", share], ["UpperArm", angle - share]]:
+			var bone := skeleton.find_bone(side[0] + part[0])
+			if bone < 0:
+				continue
+			var rest_global := skeleton.get_bone_global_rest(bone).basis
+			var turn := Basis(Vector3.BACK, deg_to_rad(part[1]) * side[1])
+			var local := Quaternion(rest_global.inverse() * turn * rest_global)
+			skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_rest(bone).basis.get_rotation_quaternion() * local)
 
 
 ## Gemeinsame Materialien (einmal für alle Figuren; Farben kommen als Instanz-Werte).
@@ -193,9 +224,6 @@ static func _material(kind: String) -> ShaderMaterial:
 		mat.set_shader_parameter("mouth_tex", load(FACE_DIR + "face_mouths.png"))
 	else:
 		mat.shader = SKIN_SHADER
-		if kind == "cloth":
-			mat.set_shader_parameter("roughness", 0.85)
-			mat.set_shader_parameter("ao_strength", 0.7)
 	_materials[kind] = mat
 	return mat
 
@@ -217,33 +245,35 @@ func _apply_colors() -> void:
 		_body.set_instance_shader_parameter("base_color", skin_color)
 		_body.set_instance_shader_parameter("iris_color", iris_color)
 		_body.set_instance_shader_parameter("brow_color", brow_color)
-	for mi in _cloth:
-		mi.set_instance_shader_parameter("base_color", cloth_color)
+		_body.set_instance_shader_parameter("cloth_color", cloth_color)
 
 
 func _apply_face() -> void:
 	if _body == null:
 		return
-	var e: Array = EXPRESSIONS[expression]
-	var eyes: String = e[0]
-	if eyes_override >= 0:
-		eyes = EYE_FRAMES[eyes_override]
-	if _blink_t >= 0.0 and eyes in BLINKING_EYES:
-		# Blinzeln: halb – zu – halb
-		var t := _blink_t / GameConfig.chibi_blink_time
-		eyes = "closed" if t > 0.3 and t < 0.7 else "half"
-	var mouth: String = e[3]
+	var e: Array = MOODS[mood]
+	var eyes: Array[String] = [e[0], e[1]]
+	for i in 2:
+		if eyes_override >= 0:
+			eyes[i] = EYE_FRAMES[eyes_override]
+		if _blink_t >= 0.0 and eyes[i] in BLINKING_EYES:
+			# Blinzeln: halb – zu – halb
+			var t := _blink_t / GameConfig.chibi_blink_time
+			eyes[i] = "closed" if t > 0.3 and t < 0.7 else "half"
+	var mouth: String = e[4]
 	if talking and _talk_mouth != "":
 		mouth = _talk_mouth
 	if mouth_override >= 0:
 		mouth = MOUTH_FRAMES[mouth_override]
-	_body.set_instance_shader_parameter("eye_frame", EYE_FRAMES.find(eyes))
-	_body.set_instance_shader_parameter("eye_set", 0 if is_female() else 1)
-	_body.set_instance_shader_parameter("iris_frame", IRIS_FRAMES.find(e[1]))
-	_body.set_instance_shader_parameter("brow_frame", BROW_FRAMES.find(e[2]))
+	_body.set_instance_shader_parameter("eye_set", (0 if is_female() else 3) + int(eye_shape))
+	_body.set_instance_shader_parameter("eye_frame", EYE_FRAMES.find(eyes[0]))
+	_body.set_instance_shader_parameter("eye_frame_r", EYE_FRAMES.find(eyes[1]))
+	_body.set_instance_shader_parameter("iris_frame", IRIS_FRAMES.find(e[2]))
+	_body.set_instance_shader_parameter("brow_frame", BROW_FRAMES.find(e[3]))
 	_body.set_instance_shader_parameter("mouth_frame", MOUTH_FRAMES.find(mouth))
-	_body.set_instance_shader_parameter("blush", e[4])
-	_body.set_instance_shader_parameter("iris_scale", e[5])
+	_body.set_instance_shader_parameter("blush", e[5])
+	_body.set_instance_shader_parameter("iris_scale", e[6])
+	_body.set_instance_shader_parameter("blush_lines", e[7])
 	_body.set_instance_shader_parameter("look", look)
 
 
@@ -280,5 +310,4 @@ func _all_meshes() -> Array[MeshInstance3D]:
 	var out: Array[MeshInstance3D] = []
 	if _body:
 		out.append(_body)
-	out.append_array(_cloth)
 	return out

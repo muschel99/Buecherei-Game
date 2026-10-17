@@ -23,6 +23,7 @@ func _ready() -> void:
 			var colors := GameConfig.chibi_skin_colors
 			c.skin_color = colors[(i + row * 2) % colors.size()]
 			c.iris_color = GameConfig.chibi_iris_colors[(i + row) % GameConfig.chibi_iris_colors.size()]
+			c.eye_shape = ((i + row) % 3) as ChibiCharacter.EyeShape
 			c.position = Vector3((i - 2.5) * SPACING, 0.0, -row * ROW_DEPTH)
 			add_child(c)
 			_characters.append(c)
@@ -37,6 +38,6 @@ func _process(delta: float) -> void:
 	var count := ChibiCharacter.Mood.size()
 	for i in _characters.size():
 		var c := _characters[i]
-		c.expression = ((i + _step) % count) as ChibiCharacter.Mood
+		c.mood = ((i + _step) % count) as ChibiCharacter.Mood
 		c.talking = i < 6 and (_step + i) % 3 == 0
 		c.look = Vector2(sin(_step * 1.3 + i), cos(_step * 0.7 + i) * 0.5)
