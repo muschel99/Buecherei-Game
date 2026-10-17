@@ -29,7 +29,7 @@ HEAD_DROP = 0.018  # Kopf so viel tiefer gesetzt (kürzerer Hals)
 TRAP_RISE = 0.03  # Schulterlinie beginnt so viel höher am Hals
 ARM_REST = 0.0    # Ruhehaltung der Arme: so viel Grad unter der Waagerechten (0 = T-Pose für Mixamo)
 NOSE_Z = 0.114    # Nasenspitze über dem Kinn
-ARMPIT_BLEND = 0.07  # so lang (m) wird die Haut am Oberarm-Ansatz weich zwischen Rumpf und Arm geteilt
+ARMPIT_BLEND = 0.10  # so lang (m) wird die Haut am Oberarm-Ansatz weich zwischen Rumpf und Arm geteilt
 HAND_TWIST = 20.0  # Hände um so viel Grad eingedreht (Daumen zum Körper)
 ARM_SPREAD = {"thin": -0.006, "medium": 0.0, "fat": 0.054}   # Schultern breiter/schmaler (m)
 LEG_SPREAD = {"thin": -0.003, "medium": 0.0, "fat": 0.014}    # Beine auseinander (Lücke im Schritt)

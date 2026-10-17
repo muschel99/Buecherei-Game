@@ -34,6 +34,7 @@ SHOT_DIR = os.path.join(ROOT, "screenshots", "blender", "chibi")
 
 GRID = 0.003           # Rasterweite des Feldes (m)
 BODY_TRIS = 26000      # Dreiecke des Körpers nach dem Ausdünnen
+ZONE_DENSITY = 3.0     # Biegestellen (Gelenke) bekommen so viel mehr Dreiecke je Fläche
 
 SKIN = (0.95, 0.80, 0.68)
 CLOTH = (0.90, 0.89, 0.87)   # aufgemalte Unterwäsche (hellgrau-weiß)
@@ -72,18 +73,60 @@ def set_coords(obj, p):
     obj.data.update()
 
 
-def decimate(obj, tris):
-    faces = sum(len(p.vertices) - 2 for p in obj.data.polygons)
+def _decimate_pass(obj, ratio, keep_mask=None):
+    """Ein Ausdünn-Durchgang; Ecken mit keep_mask bleiben unverändert."""
     m = obj.modifiers.new("Decimate", "DECIMATE")
     m.decimate_type = "COLLAPSE"
-    m.ratio = min(1.0, tris / max(faces, 1))
+    m.ratio = min(1.0, max(ratio, 0.0001))
     m.use_symmetry = True
     m.symmetry_axis = "X"
+    if keep_mask is not None:
+        vg = obj.vertex_groups.new(name="keep")
+        vg.add([int(i) for i in np.nonzero(keep_mask)[0]], 1.0, "REPLACE")
+        # Gewicht 1 würde stärker ausdünnen – umgekehrt bleibt die Gruppe stehen
+        m.vertex_group = vg.name
+        m.invert_vertex_group = True
+        m.vertex_group_factor = 1000.0
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.modifier_apply(modifier=m.name)
+    if keep_mask is not None:
+        obj.vertex_groups.remove(obj.vertex_groups["keep"])
 
 
-def surface_object(name, node, lo, hi, tris, keep=None):
+def _zone_mask(obj, protect):
+    p = coords(obj)
+    mask = np.zeros(len(p), bool)
+    for c, r in protect:
+        mask |= np.linalg.norm(p - np.asarray(c), axis=1) < r
+    return mask
+
+
+def _tris(obj):
+    return sum(len(p.vertices) - 2 for p in obj.data.polygons)
+
+
+def decimate(obj, tris, protect=None):
+    """Ausdünnen auf etwa tris Dreiecke. protect = Liste (Punkt, Radius): Biegestellen (Gelenke)
+    bekommen ein ZONE_DENSITY-mal so dichtes Netz (sonst knickt die Haut dort beim Animieren)."""
+    total = _tris(obj)
+    if not protect:
+        _decimate_pass(obj, tris / max(total, 1))
+        return
+    zone = _zone_mask(obj, protect)
+    share = zone.mean()
+    rest_target = tris * (1.0 - share)
+    zone_target = tris * share * ZONE_DENSITY
+    # 1. alles außer den Biegestellen
+    zone_faces = total * share
+    _decimate_pass(obj, (zone_faces + rest_target) / total, zone)
+    # 2. die Biegestellen (der Rest bleibt stehen)
+    zone = _zone_mask(obj, protect)
+    now = _tris(obj)
+    rest_now = now - now * zone.mean()
+    _decimate_pass(obj, (rest_now + zone_target) / now, ~zone)
+
+
+def surface_object(name, node, lo, hi, tris, keep=None, protect=None):
     """Netz der Oberfläche eines Feldes, ausgedünnt und genau auf die Oberfläche gesetzt.
     keep(p) = welche Flächen bleiben (Mittelpunkte)."""
     v, q = S.surface_nets(node, lo, hi, GRID)
@@ -97,7 +140,7 @@ def surface_object(name, node, lo, hi, tris, keep=None):
         v = v[used]
         q = remap[q]
     obj = mesh_from_arrays(name, v, q)
-    decimate(obj, tris)
+    decimate(obj, tris, protect)
     set_coords(obj, S.project(node, coords(obj), 4))
     fix_folds(obj, node)
     return obj
@@ -349,13 +392,29 @@ def face_uv(obj, body):
 # Figur
 # ---------------------------------------------------------------------------------------------
 
+def bend_zones(body):
+    """Stellen, die sich beim Animieren stark biegen: dort bleibt das Netz fein."""
+    zones = []
+    for side in ("Left", "Right"):
+        a = body.joints_arm[side]
+        sh = np.array(a["shoulder"])
+        s = 1.0 if side == "Left" else -1.0
+        zones += [(sh + np.array((-s * 0.03, 0.0, -0.06)), 0.07),   # Achsel und Brustseite
+                  (sh + np.array((0.0, 0.0, 0.02)), 0.06),           # Schulter
+                  (a["elbow"], 0.045), (a["wrist"], 0.035)]
+        lg = body.joints_leg[side]
+        zones += [(lg["hip"], 0.08), (lg["knee"], 0.05), (lg["ankle"], 0.04)]
+    zones.append(((0.0, 0.02, body.neck_base), 0.05))
+    return zones
+
+
 def build(gender, height):
     bodies = {s: S.Body(gender, height, s) for s in S.SHAPES}
     plain = {s: S.Body(gender, height, s, navel=False) for s in S.SHAPES}
     body = bodies["medium"]
     lo, hi = body.bounds()
     arm = make_armature(body)
-    obj = surface_object("Body", body.root, lo, hi, BODY_TRIS)
+    obj = surface_object("Body", body.root, lo, hi, BODY_TRIS, protect=bend_zones(body))
     add_ao(obj, body.root, 0.5)
     smooth_normals(obj, body.root)
     add_shape_keys(obj, plain["medium"], {"thin": plain["thin"], "fat": plain["fat"]})
@@ -630,6 +689,9 @@ def collision_check(figs):
         print("ARME", body.gender, body.height_class, ", ".join(line))
 
 
+FINGERS = ("Thumb", "Index", "Middle", "Ring", "Little")
+
+
 def joints_check(figs):
     """Gelenke prüfen (für Mixamo/Godot): jedes Gelenk muss innen im Körper liegen; Bilder in T-Pose
     mit durchsichtigem Körper, Gelenke rot, Knochen blau (vorn und von der Seite)."""
@@ -656,21 +718,36 @@ def joints_check(figs):
         for n, h, t, par in body.bones():
             h = Vector(h) + arm.location
             t = Vector(t) + arm.location
-            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.010, location=h, segments=12, ring_count=8)
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.006 if any(f in n for f in FINGERS) else 0.010,
+                                                 location=h, segments=12, ring_count=8)
             made.append(bpy.context.active_object)
             made[-1].data.materials.append(red)
             vec = t - h
-            bpy.ops.mesh.primitive_cylinder_add(radius=0.004, depth=vec.length, location=(h + t) / 2, vertices=8)
+            bpy.ops.mesh.primitive_cylinder_add(radius=0.0025 if any(f in n for f in FINGERS) else 0.004,
+                                                depth=vec.length, location=(h + t) / 2, vertices=8)
             c = bpy.context.active_object
             c.rotation_euler = vec.to_track_quat("Z", "Y").to_euler()
             c.data.materials.append(blue)
             made.append(c)
         tiles = []
-        for turn in (0, 90):
+        for turn in (0, 90, 35):
             path = os.path.join(SHOT_DIR, "tile.png")
             ortho_render(path, arm.location.x, S.HEIGHTS["male"]["tall"] + 0.25, turn=turn, res=1024)
             tiles.append(load_png(path)[:, 112:912])
         F.write_png(os.path.join(SHOT_DIR, f"joints_{body.gender}.png"), np.concatenate(tiles, 1))
+        # Hand aus der Nähe (von oben und von vorn)
+        scene = bpy.context.scene
+        old = scene.render.resolution_x, scene.render.resolution_y
+        scene.render.resolution_x = scene.render.resolution_y = 600
+        wrist = Vector(body.joints_arm["Left"]["wrist"]) + arm.location
+        c = wrist + Vector((0.07, -0.01, 0.0))
+        hands = []
+        for cam in (c + Vector((0.0, -0.02, 0.45)), c + Vector((0.05, -0.45, 0.05))):
+            path = os.path.join(SHOT_DIR, "tile.png")
+            C.render(path, tuple(cam), tuple(c), lens=60)
+            hands.append(load_png(path))
+        F.write_png(os.path.join(SHOT_DIR, f"joints_hand_{body.gender}.png"), np.concatenate(hands, 1))
+        scene.render.resolution_x, scene.render.resolution_y = old
         for o in made:
             bpy.data.objects.remove(o)
         for m in mats:
@@ -746,6 +823,34 @@ def armpits_sheet(figs, size=360):
         set_shape([fig], "medium")
         rows.append(np.concatenate(tiles, 1))
     F.write_png(os.path.join(SHOT_DIR, "armpits.png"), np.concatenate(rows, 0))
+    for f in figs:
+        for o in f[2]:
+            o.hide_render = False
+    scene.render.resolution_x, scene.render.resolution_y = old
+
+
+def underarm_sheet(figs, size=420):
+    """Achsel in T-Pose (von unten-vorn) und in mehreren Arm-Stellungen (Mitte bis ganz unten)."""
+    scene = bpy.context.scene
+    old = scene.render.resolution_x, scene.render.resolution_y
+    scene.render.resolution_x = scene.render.resolution_y = size
+    rows = []
+    for fig in figs[:2]:
+        arm, body, parts = fig
+        only_visible(figs, fig)
+        x0 = arm.location.x
+        sh = Vector(body.joints_arm["Left"]["shoulder"]) + arm.location
+        tiles = []
+        for angle in (0.0, 30.0, 50.0, 65.0, 80.0):
+            pose_relaxed(arm, angle)
+            bpy.context.view_layer.update()
+            path = os.path.join(SHOT_DIR, "tile.png")
+            target = sh + Vector((-0.03, 0.0, -0.08))
+            C.render(path, tuple(target + Vector((0.12, -0.55, -0.10))), tuple(target), lens=55)
+            tiles.append(load_png(path))
+        pose_relaxed(arm)
+        rows.append(np.concatenate(tiles, 1))
+    F.write_png(os.path.join(SHOT_DIR, "underarm.png"), np.concatenate(rows, 0))
     for f in figs:
         for o in f[2]:
             o.hide_render = False
@@ -849,10 +954,37 @@ def export_figure(gender, height):
     gd = os.path.join(mixamo, ".gdignore")
     if not os.path.exists(gd):
         open(gd, "w").close()
-    C.export_fbx(os.path.join(mixamo, name + ".fbx"), parts, arm)
+    export_mixamo(os.path.join(mixamo, name + ".fbx"), parts[0])
     os.makedirs(SOURCE_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SOURCE_DIR, name + ".blend"), compress=True)
     print("geschrieben:", name, len(parts[0].data.polygons), "Flächen")
+
+
+def export_mixamo(path, body_obj):
+    """Für Mixamo: nur das Netz in T-Pose, ohne Formregler, eine Texturkoordinate, ein Material,
+    Maße direkt in Zentimetern (Mixamo beachtet den Maßstab-Faktor im FBX nicht – die Figur wäre
+    dort 1,5 cm groß und bekäme dunkle Schattenflecken)."""
+    me = body_obj.data.copy()
+    obj = bpy.data.objects.new("Body", me)
+    bpy.context.scene.collection.objects.link(obj)
+    if me.shape_keys:
+        obj.shape_key_clear()
+    while len(me.uv_layers) > 1:
+        me.uv_layers.remove(me.uv_layers[-1])
+    me.materials.clear()
+    mat = bpy.data.materials.get("mixamo_skin") or principled("mixamo_skin", SKIN, ao=False)
+    me.materials.append(mat)
+    for poly in me.polygons:
+        poly.material_index = 0
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"MESH"}, path_mode="STRIP",
+                             embed_textures=False, bake_anim=False, use_mesh_modifiers=False,
+                             mesh_smooth_type="FACE", apply_scale_options="FBX_SCALE_ALL",
+                             axis_forward="-Z", axis_up="Y")
+    bpy.data.objects.remove(obj)
+    bpy.data.meshes.remove(me)
 
 
 def export_face_textures():
@@ -945,6 +1077,8 @@ def main():
                 underwear_check(figs)
             elif v == "armpits":
                 armpits_sheet(figs)
+            elif v == "underarm":
+                underarm_sheet(figs)
             elif v == "tpose":
                 tpose_sheet(figs)
             elif v == "eyes":
