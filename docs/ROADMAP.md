@@ -803,7 +803,19 @@ handwerklich, bewusst unperfekt, aber solide gebaut (Regeln: docs/STYLE_GUIDE.md
       Gaube, Wandlaternen mit dem neuen Kopf); alte Modelle dieser Häuser entfernt
 - [x] Markisen aus einem Stück Stoff (Blender-Stoffsimulation, mit Dicke), auch am Modegeschäft;
       im Spiel schwingen sie leicht im Wind (`wind_strength` im Shader)
-- [ ] Pflanzen im Bilderbuch-Stil zurück (wenn die Entwicklerin so weit ist)
+- [x] Licht an der Straße geplant (Wunsch der Entwicklerin): Masten nur auf der Bücherei-Seite
+      (x = −18,5 / −7,5 / 14, `Street.lamp_positions`), sonst hängende Straßenlaternen am Wandarm
+      (`storybook_parts.street_wall_lantern`, gleicher Kopf). Neu an den Bilderbuch-Läden:
+      Blumenladen (gegenüber der Bücherei-Tür), Teeladen (Ende der geraden Straße), Wolleladen
+      (Torstraße); Torhaus mit zwei Wandlaternen; Pub braucht keine (Mast davor)
+- [ ] **Laternen an Wohnhäusern beim Neubau** (Plan): behalten an Opposite1_1, Opposite1_3,
+      Opposite2_1, Opposite2_5 (gleiche Stelle wie jetzt, `LANTERNS` in build_street.py); neu an
+      StraightEnd/Outer3 (Kurve am geraden Ende), GateStreet/Bend3 (Torstraße, Bücherei-Seite) und
+      GateStreet/BehindOuter3 (hinter dem Torbogen); keine an LibraryRow/Neighbor2 und Neighbor4,
+      StraightEnd/Street1 und Street2 (Masten bzw. Teeladen-Laterne in der Nähe)
+- [ ] Pflanzen im Bilderbuch-Stil zurück (wenn die Entwicklerin so weit ist); dabei die Hängekörbe
+      der Straßenlaterne prüfen: build_storybook_lamps.py baut sie zurzeit spärlicher als die
+      hochgeladene street_lamp.glb (darum nicht neu exportiert)
 - [ ] Wandlaternen an der Bücherei mit dem neuen Kopf (wenn sie dran ist)
 - [ ] Weitere Häuser im Bilderbuch-Stil (jedes mit eigener Wölbung und eigenen Farbtönen)
 - [ ] Licht der ganzen Welt: warm um 3500 K, weiche Schatten, mildes Bloom, etwas mehr

@@ -117,21 +117,9 @@ def street_lamp(M, coll):
 
 def wall_lantern(M, coll):
     """Hängende Laterne am geschwungenen Wandarm (Ursprung: Mitte der Wandplatte auf der Wand,
-    Laterne vor der Wand, also bei -y)."""
-    reach = 0.72
-    ir = Body("Wandarm", M["lamp_iron"], coll, seed=60, vary=0.03, bevel=0.005)
-    ir.box((0, -0.015, -0.07), (0.14, 0.03, 0.45), step=1, dent=0.001)
-    ir.box((0, -0.035, -0.07), (0.1, 0.015, 0.37), step=1, dent=0.001)
-    arm = [Vector((0, -0.03, 0.08)), Vector((0, -0.25, 0.18)), Vector((0, -reach + 0.12, 0.2)), Vector((0, -reach, 0.16))]
-    strut = [Vector((0, -0.03, -0.24)), Vector((0, -0.2, -0.08)), Vector((0, -0.42, 0.08)), Vector((0, -0.58, 0.18))]
-    ir.tube(arm, 0.02, segs=10, smooth=2, round_ends=True)
-    ir.tube(strut, 0.014, segs=8, smooth=2, round_ends=True)
-    SP.scroll(ir, (0, -0.17, 0.03), 0.075, 0.0, turns=1.4, thick=0.009, start=0.6)
-    SP.scroll(ir, (0, -0.4, 0.13), 0.05, 0.0, turns=1.3, thick=0.008, start=0.9)
-    ir.blob((0, -reach - 0.03, 0.17), 0.026, subdiv=2, lump=0.0)
-    ir.tube([Vector((0, -reach, 0.16)), Vector((0, -reach, -0.07))], 0.01, segs=8, round_ends=True)
-    ir.build()
-    SP.lantern_head(M, coll, "Hängende Laterne Kopf", (0, -reach, -0.62), scale=0.76, hanging=True, seed=64)
+    Laterne vor der Wand, also bei -y). Gemeinsames Bauteil: storybook_parts.street_wall_lantern
+    (dieselbe Laterne bauen die Bilderbuch-Häuser selbst ein)."""
+    SP.street_wall_lantern(M, coll, "Wandarm", "Hängende Laterne Kopf", (0.0, 0.0, 0.0), seed=60)
 
 
 def render(name, cam, target, lens, res):

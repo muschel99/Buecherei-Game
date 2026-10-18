@@ -157,7 +157,8 @@ tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py)
                    build_storybook_shop.py = Modegeschäft, build_storybook_pub.py = Pub,
                    storybook_town.py = Bausteine der übrigen Läden, build_storybook_bakery/
                    flowers/tea/wool/gatehouse.py, build_storybook_lamps.py = Laternen,
-                   export_storybook.py, storybook_gap_check.py = Lochprüfung)
+                   export_storybook.py, storybook_gap_check.py = Lochprüfung,
+                   storybook_overlap_check.py = Töpfe/Deko in Wänden)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
 (Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
@@ -381,7 +382,15 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   aneinanderstoßen, immer überlappen lassen (Scheiben in Rahmen und Riegel, Türpfosten über den
   Schaufensterrahmen, Füllungen bis in die Riegel, Schild auf geschlossenem Schildkasten).
   Eckhäuser/Torhaus: `--probe=x0,y0,x1,y1` bzw. `x0,y0,z0,x1,y1,z1` (Prüfkörper ganz innen) und
-  `--ring=cx,cy,r` (Blicke rundherum).
+  `--ring=cx,cy,r` (Blicke rundherum). **Überschneidungen:** `blender -b <haus>.blend --python
+  tools/blender/storybook_overlap_check.py` muss „keine Überschneidungen“ melden (alles, was auf dem
+  Boden steht, gegen Mauern/Fenster/Ladenfront und untereinander). Töpfe vor Ladenfronten mit
+  `storybook_town.pot_out(r)` (Brüstung und Sockel ragen bis 24 cm vor), Kästen mit
+  `gap=FRONT_CLEAR`; an Hausenden auf Teile des Nachbarhauses achten (Torhaus-Töpfe neben dem
+  Wolleladen). **Oberflächen im Spiel:** feine Muster blendet der Shader aus, sobald sie kleiner als
+  ein paar Bildpunkte werden (`detail_fade`, sonst flimmert es sandig); gestrichenes Holz hat
+  `grain="paint"` (matt, keine Maserung), nur echtes Holz `wood` (feine Linien), Stein ohne
+  Risslinien. Markisen: Gelenkarme seitlich neben dem Stoff, Wind bläht nur nach außen.
   **Weitere Läden (seit 4h):** Bäckerei, Blumenladen, Teeladen (corner_90), Wolleladen (corner_30)
   und Torhaus haben je ein eigenes Script `build_storybook_<haus>.py` mit den Bausteinen
   `storybook_town.py`: Wände entlang beliebiger Grundrisse (`corner_outline` = genau

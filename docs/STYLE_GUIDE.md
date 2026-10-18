@@ -118,6 +118,11 @@ Schilder sind weiter Bilder der Entwicklerin.
 - **Markisen sind Stoff:** ein einziges Stück (Blenders Stoffsimulation: leichter Durchhang
   zwischen Kasten und Fallstange, Volant fällt frei), mit Dicke, ohne Seitenplatten oder Fugen;
   im Spiel schwingt der Stoff leicht im Wind. Kasten, Gelenkarme und Stange tragen ihn.
+- **Oberflächen ruhig:** Putz mit sanften Kellenwellen, Stein weich unregelmäßig (keine Risslinien),
+  gestrichenes Holz matt ohne Maserung, nur echtes Holz mit feinen Linien; nichts darf aus der
+  Entfernung sandig flimmern. Markisen: Arme seitlich neben dem Stoff, nie darunter.
+- **Nichts steht in der Wand:** Töpfe, Kübel, Kästen und Tafeln stehen frei vor Brüstung,
+  Pilastern und Türpfosten (auch nicht im Nachbarhaus); Prüfung `storybook_overlap_check.py`.
 - **Fahrräder und Gestelle logisch:** Räder stehen auf dem Boden, Ständer berühren den Boden,
   Rahmen, Gabel, Kette und Körbe hängen wirklich zusammen.
 - **Bögen über Fenstern:** Fenster oben mit flachem Bogen, Steinbogen genau darauf (gleicher

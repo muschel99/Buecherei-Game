@@ -289,4 +289,11 @@ static func shops() -> Dictionary:
 		"wool_door": {"pos": Vector3(-28.6, g + 1.6, -11.6), "target": Vector3(-28.0, g + 2.2, -14.3)},
 		"gate": {"pos": Vector3(-27.0, g + 1.7, -7.7), "target": Vector3(-35.7, g + 5.0, -12.7)},
 		"gate_arch": {"pos": Vector3(-31.0, g + 1.6, -10.0), "target": Vector3(-36.5, g + 3.6, -13.5)},
+		"plaster_up": {"pos": Vector3(-1.4, g + 1.6, opp + 2.2), "target": Vector3(-1.4, g + 6.5, opp)},
+		"wool_pots": {"pos": Vector3(-33.1, g + 1.7, -14.35), "target": Vector3(-32.6, g + 0.3, -16.15)},
+		"awning_under_a": {"pos": Vector3(4.5, g + 1.5, StreetLayout.HOUSE_FRONT - 0.8), "target": Vector3(4.3, g + 3.4, StreetLayout.HOUSE_FRONT - 0.2)},
+		"awning_under_b": {"pos": Vector3(7.3, g + 1.5, StreetLayout.HOUSE_FRONT - 0.8), "target": Vector3(7.5, g + 3.4, StreetLayout.HOUSE_FRONT - 0.2)},
+		"bakery_awning": {"pos": Vector3(0.4, g + 1.5, opp + 1.0), "target": Vector3(0.8, g + 3.3, opp + 0.3)},
+		"brick_pub": {"pos": Vector3(-7.6, g + 1.7, -4.4), "target": Vector3(-8.8, g + 4.4, -2.08)},
+		"brick_pub_far": {"pos": Vector3(-6.5, g + 1.7, -12.0), "target": Vector3(-8.8, g + 3.6, -2.08)},
 	}

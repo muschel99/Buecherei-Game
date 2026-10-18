@@ -44,11 +44,11 @@ FRONT = ((-HW, 0.0), (HW, 0.0))
 SETTLE = {"wave": 0.018, "wavelength": 2.6, "lean": -0.002, "roof_sag": 0.05, "ridge_tilt": 0.03, "eaves_sag": 0.02}
 
 OBSTACLES = {
-    "Pflanzkasten links": ((-1.5, -0.32), (0.78, 0.42), 0.4),
-    "Topf an der Tür links": ((-0.86, -0.36), (0.44, 0.44), 0.42),
-    "Topf an der Tür rechts": ((0.86, -0.36), (0.4, 0.4), 0.4),
-    "Kreidetafel": ((1.46, -0.5), (0.56, 0.42), 0.85),
-    "Kübel rechts": ((1.98, -0.36), (0.5, 0.5), 0.5),
+    "Pflanzkasten links": ((-1.5, -0.43), (0.78, 0.42), 0.4),
+    "Topf an der Tür links": ((-0.86, -0.48), (0.44, 0.44), 0.42),
+    "Topf an der Tür rechts": ((0.86, -0.46), (0.4, 0.4), 0.4),
+    "Kreidetafel": ((1.42, -0.62), (0.56, 0.42), 0.85),
+    "Kübel rechts": ((1.98, -0.52), (0.5, 0.5), 0.5),
 }
 
 
@@ -217,12 +217,13 @@ def bakery_inside(M, C):
 
 def outside(M, C):
     """Vor dem Laden: Pflanzkasten links, Töpfe neben der Tür, Kreidetafel und großer Kübel rechts."""
-    SC.planter_box(M, C["pots"], "Pflanzkasten links", SC.front_matrix(-1.5, 0.0, 0.0), 0.74, 0.36, 0.36, seed=60, gap=0.13, mat="box",
-                   rail=False)
-    SC.pot(M, C["pots"], "Topf an der Tür links", (-0.86, -0.36, 0.0), 0.2, 0.4, 61, mat="pot")
-    SC.pot(M, C["pots"], "Topf an der Tür rechts", (0.86, -0.36, 0.0), 0.18, 0.38, 62, mat="pot_light")
-    SC.chalkboard(M, C["deco"], (1.46, -0.5), -8, SC.sign_material("bakery_shop", "chalkboard"))
-    SC.pot(M, C["pots"], "Kübel rechts", (1.98, -0.36, 0.0), 0.23, 0.46, 63, mat="pot_dark", style="tall")
+    # Alles frei vor Brüstung und Pilastern (T.pot_out)
+    SC.planter_box(M, C["pots"], "Pflanzkasten links", SC.front_matrix(-1.5, 0.0, 0.0), 0.74, 0.36, 0.36, seed=60, gap=T.FRONT_CLEAR,
+                   mat="box", rail=False)
+    SC.pot(M, C["pots"], "Topf an der Tür links", (-0.86, -T.pot_out(0.2), 0.0), 0.2, 0.4, 61, mat="pot")
+    SC.pot(M, C["pots"], "Topf an der Tür rechts", (0.86, -T.pot_out(0.18), 0.0), 0.18, 0.38, 62, mat="pot_light")
+    SC.chalkboard(M, C["deco"], (1.42, -0.62), -8, SC.sign_material("bakery_shop", "chalkboard"))
+    SC.pot(M, C["pots"], "Kübel rechts", (1.98, -T.pot_out(0.23), 0.0), 0.23, 0.46, 63, mat="pot_dark", style="tall")
 
 
 def build_scene():

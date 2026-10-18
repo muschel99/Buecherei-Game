@@ -549,8 +549,8 @@ def chair(M, C, name, x, y, yaw, seed):
 OBSTACLES = {
     "Tisch links": ((-1.75, -0.62), (1.05, 0.62), 0.9),
     "Tisch rechts": ((1.95, -0.62), (1.5, 0.62), 0.9),
-    "Topf links": ((-1.0, -0.42), (0.5, 0.5), 0.5),
-    "Topf rechts": ((1.0, -0.42), (0.5, 0.5), 0.5),
+    "Topf links": ((-0.95, -0.52), (0.5, 0.5), 0.5),
+    "Topf rechts": ((0.95, -0.52), (0.5, 0.5), 0.5),
     "Kreidetafel": ((-2.52, -0.95), (0.56, 0.45), 0.85),
 }
 
@@ -563,8 +563,9 @@ def outside(M, C):
     bistro_table(M, C, "Tisch rechts", 1.95, -0.62, 94)
     chair(M, C, "Stuhl rechts 1", 1.45, -0.62, 85, 96)
     chair(M, C, "Stuhl rechts 2", 2.45, -0.64, -95, 98)
-    SC.pot(M, C["pots"], "Topf links", (-1.0, -0.42, 0.0), 0.23, 0.46, 101, style="bowl", mat="pot")
-    SC.pot(M, C["pots"], "Topf rechts", (1.0, -0.42, 0.0), 0.23, 0.46, 102, style="bowl", mat="pot_light")
+    # frei vor der Brüstung der Schaufenster (sonst steckt der Topf darin)
+    SC.pot(M, C["pots"], "Topf links", (-0.95, -0.52, 0.0), 0.23, 0.46, 101, style="bowl", mat="pot")
+    SC.pot(M, C["pots"], "Topf rechts", (0.95, -0.52, 0.0), 0.23, 0.46, 102, style="bowl", mat="pot_light")
     SC.chalkboard(M, C["deco"], (-2.52, -0.95), -12, SC.sign_material("pub", "chalkboard"))
     SC.projecting_sign(M, C["deco"], "Hängeschild", (HW - 0.15, 0.0, 5.45), SC.sign_material("pub", "hanging"), 0.64,
                        0.64 * 478 / 512, outline=SB.round_outline(48))

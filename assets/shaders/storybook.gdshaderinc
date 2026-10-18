@@ -6,9 +6,9 @@
 // Ein Material je Blender-Material (assets/materials/storybook/*.tres, vom Bau-Script geschrieben).
 // Lage im Modell: Godot-Koordinaten (x rechts, y oben, z nach vorn) – in Blender (x, -z, y).
 uniform vec4 base_color : source_color = vec4(0.9, 0.85, 0.75, 1.0);
-// Zweite Farbe: Streifen (Markise) bzw. dunkle Ziegel
+// Zweite Farbe: Streifen (Markise) bzw. Fugen der Ziegel
 uniform vec4 second_color : source_color = vec4(0.75, 0.35, 0.27, 1.0);
-// 0 Putz, 1 Stein, 2 Holz, 3 Ziegel, 4 Gewebe, 5 Blatt, 6 glatt
+// 0 Putz, 1 Stein, 2 Holz, 3 Ziegel, 4 Gewebe, 5 Blatt, 6 glatt, 7 Lack (gestrichenes Holz)
 uniform int grain = 0;
 // Breite der Streifen in m (0 = keine)
 uniform float stripe_width = 0.0;
@@ -40,13 +40,22 @@ void vertex() {
 	model_pos = VERTEX;
 	float sway = (1.0 - COLOR.a) * wind_strength;
 	if (sway > 0.0) {
-		// Beide Seiten des Stoffs bewegen sich gleich (fester Richtungsvektor, nicht die Normale)
+		// Beide Seiten des Stoffs bewegen sich gleich (fester Richtungsvektor, nicht die Normale).
+		// Der Wind bläht den Stoff nur nach außen und oben auf (0..1), nie zurück zu Kasten und
+		// Stange – so sticht nichts durch.
 		float t = TIME;
 		float wave = sin(t * 1.6 + VERTEX.x * 1.4 + VERTEX.z * 0.9) * 0.6
 			+ sin(t * 2.9 + VERTEX.x * 3.1 - VERTEX.y * 1.7) * 0.3
 			+ sin(t * 0.7 + VERTEX.x * 0.5) * 0.4;
-		VERTEX += vec3(0.0, 0.55, 0.85) * sway * wave;
+		float puff = clamp(0.5 + 0.5 * wave / 1.3, 0.0, 1.0);
+		VERTEX += vec3(0.0, 0.55, 0.85) * sway * puff;
 	}
+}
+
+// 1 = Muster mit dieser Frequenz (Wiederholungen je Meter) gut sichtbar, 0 = feiner als ein paar
+// Bildpunkte – dann ausblenden (sonst flimmert es und wirkt sandig)
+float detail_fade(float px, float freq) {
+	return 1.0 - smoothstep(0.1, 0.33, px * freq);
 }
 
 float hash(vec3 p) {
@@ -102,41 +111,65 @@ void fragment() {
 	vec3 p = model_pos;
 	vec3 col = base_color.rgb;
 	float height = 0.0;
+	// Größe eines Bildpunkts auf der Fläche (m): feine Muster blenden sich aus, bevor sie flimmern
+	float px = length(fwidth(p)) + 1e-5;
 	if (stripe_width > 0.0) {
 		// Streifen entlang x, Kanten leicht unruhig wie gewebt
 		float s = fract((p.x + 0.012 * value_noise(p * 3.0)) / (stripe_width * 2.0));
 		col = s > 0.5 ? second_color.rgb : base_color.rgb;
 	}
 	if (grain == 3) {
-		// Ziegel im Läuferverband, waagerecht auf allen Seiten (Länge entlang x - z)
-		vec2 b = vec2(p.x - p.z, p.y) / vec2(0.225, 0.075);
-		float row = floor(b.y);
-		b.x += mod(row, 2.0) * 0.5;
-		vec2 cell = fract(b);
-		vec2 id = vec2(floor(b.x), row);
-		float mortar = step(cell.x, 0.045) + step(cell.y, 0.13);
-		float shade = 0.82 + 0.18 * hash(vec3(id, 3.0));
-		col = mix(base_color.rgb * shade, vec3(0.78, 0.72, 0.62), clamp(mortar, 0.0, 1.0));
-		height = 1.0 - clamp(mortar, 0.0, 1.0);
+		// Ziegel im Läuferverband, waagerecht auf allen Seiten (Länge entlang x - z). Bilderbuch-
+		// Größe (34 x 11,5 cm), runde Kanten, jeder Stein in eigenem Braun – einzelne beige und
+		// dunkle dazwischen –, Fugen zurückgesetzt in gedämpftem Grau-Beige (second_color).
+		const float BW = 0.34;
+		const float BH = 0.115;
+		const float JOINT = 0.02;
+		vec2 q = vec2(p.x - p.z, p.y);
+		float row = floor(q.y / BH);
+		q.x += mod(row, 2.0) * BW * 0.5;
+		vec2 id = vec2(floor(q.x / BW), row);
+		vec2 f = vec2(fract(q.x / BW) * BW, fract(q.y / BH) * BH);
+		// Abstand zur Fuge in m (Kanten leicht unregelmäßig, wie von Hand gesetzt)
+		float d = min(min(f.x, BW - f.x), min(f.y, BH - f.y)) - JOINT * 0.5 + (value_noise(p * 14.0) - 0.5) * 0.008;
+		float stone = smoothstep(-px, px, d);
+		float h1 = hash(vec3(id, 3.0));
+		float h2 = hash(vec3(id, 7.0));
+		vec3 brick = base_color.rgb * (0.88 + 0.18 * h1);
+		brick = mix(brick, vec3(0.8, 0.66, 0.5), smoothstep(0.7, 1.0, h2) * 0.6);
+		brick = mix(brick, base_color.rgb * vec3(0.74, 0.7, 0.68), smoothstep(0.25, 0.0, h2) * 0.7);
+		// aus der Ferne: Steinfarben und Fugen gemittelt statt flimmernder Linien
+		brick = mix(base_color.rgb * 0.97, brick, detail_fade(px, 1.0 / BH));
+		float far = smoothstep(0.4, 1.1, px / JOINT);
+		vec3 avg = mix(brick, second_color.rgb, JOINT * (BW + BH) / (BW * BH));
+		col = mix(mix(second_color.rgb, brick, stone), avg, far);
+		height = smoothstep(-0.004, 0.03, d) * (1.0 - far);
 	}
 	col *= COLOR.rgb;
 	float blot = fbm(p * blot_scale, 3);
 	col *= mix(1.0 - vary, 1.0 + vary, smoothstep(0.3, 0.7, blot));
 	if (grain == 2) {
-		// Holzmaserung: verzogene Bänder
-		float bands = 0.5 + 0.5 * sin((p.y * 9.0 + 7.0 * fbm(p * vec3(1.5, 0.4, 1.5), 3)) * 6.2832);
-		col *= mix(0.88, 1.0, bands);
-		height = bands;
+		// Holz: feine, leicht geschwungene Maserungslinien (etwa alle 2,5 cm)
+		float u = p.y * 38.0 + 2.5 * fbm(p * vec3(0.7, 2.5, 0.7), 3);
+		float lines = smoothstep(0.72, 1.0, 0.5 + 0.5 * sin(u * 6.2832)) * detail_fade(px, 38.0);
+		col *= 1.0 - 0.09 * lines;
+		height = 1.0 - lines;
 	} else if (grain == 1) {
-		height = smoothstep(0.0, 0.12, cell_edge(p * 7.0));
+		// Stein: weich unregelmäßig, leichte Farbwolken, keine Risslinien
+		col *= mix(0.95, 1.04, fbm(p * 3.0 + vec3(5.0), 2));
+		height = fbm(p * 9.0, 3) * 0.7 + fbm(p * 45.0, 2) * 0.3 * detail_fade(px, 45.0);
 	} else if (grain == 0) {
-		height = fbm(p * 60.0, 3);
+		// Putz: sanfte Wellen der Kelle, feines Korn nur aus der Nähe
+		height = fbm(p * 7.0, 3) * 0.65 + fbm(p * 40.0, 2) * 0.35 * detail_fade(px, 40.0);
 	} else if (grain == 4) {
-		height = fbm(p * 160.0, 2);
+		height = fbm(p * 90.0, 2) * detail_fade(px, 90.0);
 	} else if (grain == 5) {
-		height = fbm(p * 90.0, 2);
+		height = fbm(p * 90.0, 2) * detail_fade(px, 90.0);
 	} else if (grain == 6) {
-		height = fbm(p * 25.0, 2);
+		height = fbm(p * 25.0, 2) * detail_fade(px, 25.0);
+	} else if (grain == 7) {
+		// Lack: matt, ganz leicht uneben gestrichen
+		height = fbm(p * 6.0, 3) * 0.7 + fbm(p * 30.0, 2) * 0.3 * detail_fade(px, 30.0);
 	}
 	// Feines Relief aus der Höhe (Bump über Bildschirm-Ableitungen)
 	if (bump_strength > 0.0) {

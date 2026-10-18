@@ -32,7 +32,7 @@ GAME_MAT_DIR = os.path.join(ROOT, "assets", "materials", "storybook")
 SIGN_DIR = os.path.join(ROOT, "assets", "textures", "signs")
 SHOTS = os.path.join(ROOT, "screenshots", "blender", "storybook")
 
-GRAIN_ID = {"plaster": 0, "stone": 1, "wood": 2, "brick": 3, "fabric": 4, "leaf": 5, "smooth": 6}
+GRAIN_ID = {"plaster": 0, "stone": 1, "wood": 2, "brick": 3, "fabric": 4, "leaf": 5, "smooth": 6, "paint": 7}
 GAME_MATERIALS = {}   # Blender-Name -> Werte für das Godot-Material (siehe write_game_materials)
 
 
@@ -52,14 +52,15 @@ def materials():
         "plaster_side": M("Putz Sand Seitenwand", (0.84, 0.75, 0.6), rough=0.93, vary=0.1, scale=1.2),
         "stone": M("Sandstein", (0.85, 0.77, 0.62), grain="stone", rough=0.9, vary=0.1, bump=0.3),
         "trim": M("Stuck Gebrochenweiß", (0.93, 0.89, 0.8), rough=0.88, vary=0.05, scale=3.0),
-        "blue": M("Lack Taubenblau", (0.24, 0.33, 0.44), grain="wood", rough=0.72, vary=0.06, bump=0.12),
-        "blue_dark": M("Lack Taubenblau dunkel", (0.18, 0.25, 0.34), grain="wood", rough=0.72, vary=0.05, bump=0.12),
+        "blue": M("Lack Taubenblau", (0.24, 0.33, 0.44), grain="paint", rough=0.72, vary=0.06, bump=0.12),
+        "blue_dark": M("Lack Taubenblau dunkel", (0.18, 0.25, 0.34), grain="paint", rough=0.72, vary=0.05, bump=0.12),
         "sign": M("Holz Schild Nussbraun", (0.33, 0.21, 0.13), grain="wood", rough=0.8, vary=0.08, bump=0.25),
         "gold": M("Ocker-Gold matt", (0.84, 0.64, 0.3), grain="smooth", rough=0.5, metal=0.35, vary=0.05),
         "roof": M("Dachziegel Schiefer-Braun", (0.42, 0.34, 0.3), grain="stone", rough=0.92, vary=0.08, bump=0.2),
         "terra": M("Terrakotta", (0.74, 0.39, 0.25), rough=0.9, vary=0.08, scale=3.0),
-        "brick": M("Backstein", (0.66, 0.36, 0.26), grain="brick", rough=0.92, vary=0.06),
-        "frame": M("Fensterrahmen Creme", (0.91, 0.86, 0.76), grain="wood", rough=0.8, vary=0.04, bump=0.08),
+        # Ziegel: warmes Braun (einzelne Steine beige oder dunkler, im Shader), color2 = Fuge
+        "brick": M("Backstein", (0.6, 0.38, 0.27), grain="brick", rough=0.92, vary=0.06, color2=(0.57, 0.5, 0.42)),
+        "frame": M("Fensterrahmen Creme", (0.91, 0.86, 0.76), grain="paint", rough=0.8, vary=0.04, bump=0.08),
         "glass": M("Glas", (0.92, 0.95, 0.93), grain="smooth", rough=0.03, glass=True, vary=0.0, bump=0.0),
         "curtain": M("Vorhang Leinen", (0.9, 0.8, 0.64), grain="fabric", rough=0.95, vary=0.05, emit=0.35,
                      emit_color=(0.95, 0.72, 0.45)),
@@ -110,11 +111,11 @@ def materials():
         "earth": M("Fugen", (0.36, 0.3, 0.25), rough=1.0),
         "grass": M("Gras", (0.36, 0.5, 0.2), grain="leaf", rough=0.8, vary=0.15, plant=True),
         # Pub "The Ink & Ivy"
-        "pub_brick": M("Backstein Ziegelrot", (0.72, 0.4, 0.28), grain="brick", rough=0.92, vary=0.07),
-        "pub_arch": M("Backstein Bogen hell", (0.8, 0.48, 0.32), grain="brick", rough=0.92, vary=0.06),
-        "pub_side": M("Backstein Seitenwand", (0.66, 0.37, 0.27), grain="brick", rough=0.92, vary=0.07),
-        "bottle": M("Lack Flaschengrün", (0.2, 0.3, 0.22), grain="wood", rough=0.72, vary=0.06, bump=0.12),
-        "bottle_dark": M("Lack Flaschengrün dunkel", (0.14, 0.22, 0.16), grain="wood", rough=0.72, vary=0.05, bump=0.12),
+        "pub_brick": M("Backstein Ziegelrot", (0.66, 0.4, 0.28), grain="brick", rough=0.92, vary=0.07, color2=(0.6, 0.52, 0.43)),
+        "pub_arch": M("Backstein Bogen hell", (0.78, 0.55, 0.4), grain="brick", rough=0.92, vary=0.06, color2=(0.62, 0.55, 0.46)),
+        "pub_side": M("Backstein Seitenwand", (0.58, 0.38, 0.28), grain="brick", rough=0.92, vary=0.07, color2=(0.56, 0.49, 0.41)),
+        "bottle": M("Lack Flaschengrün", (0.2, 0.3, 0.22), grain="paint", rough=0.72, vary=0.06, bump=0.12),
+        "bottle_dark": M("Lack Flaschengrün dunkel", (0.14, 0.22, 0.16), grain="paint", rough=0.72, vary=0.05, bump=0.12),
         "slate": M("Schiefer Blaugrau", (0.36, 0.38, 0.42), grain="stone", rough=0.9, vary=0.08, bump=0.2),
         "pub_wall_in": M("Gaststube Wand Rot", (0.62, 0.22, 0.17), grain="fabric", rough=0.9, vary=0.06, glow=0.24),
         "pub_wood_in": M("Gaststube Holz dunkel", (0.36, 0.22, 0.14), grain="wood", rough=0.75, vary=0.08, glow=0.2),
@@ -136,15 +137,15 @@ def materials():
         # Teeladen, Wolleladen, Blumenladen, Bäckerei, Torhaus (storybook_town.py)
         "awning_red": M("Markisenstoff Rot", (0.94, 0.89, 0.8), grain="fabric", rough=0.95, vary=0.04, stripes=0.15,
                         color2=(0.72, 0.16, 0.15), wind=0.035),
-        "tea_black": M("Lack Schwarzbraun", (0.1, 0.09, 0.085), grain="wood", rough=0.7, vary=0.05, bump=0.12),
-        "shutter": M("Fensterladen Schiefergrau", (0.24, 0.26, 0.28), grain="wood", rough=0.78, vary=0.06, bump=0.15),
+        "tea_black": M("Lack Schwarzbraun", (0.1, 0.09, 0.085), grain="paint", rough=0.7, vary=0.05, bump=0.12),
+        "shutter": M("Fensterladen Schiefergrau", (0.24, 0.26, 0.28), grain="paint", rough=0.78, vary=0.06, bump=0.15),
         "tea_wall_in": M("Teestube Wand Altrosa", (0.86, 0.68, 0.64), rough=0.9, vary=0.05, glow=0.26),
-        "fern": M("Lack Farngrün", (0.42, 0.53, 0.42), grain="wood", rough=0.72, vary=0.06, bump=0.12),
-        "fern_dark": M("Lack Farngrün dunkel", (0.3, 0.4, 0.31), grain="wood", rough=0.72, vary=0.05, bump=0.12),
-        "petrol": M("Lack Tannengrün", (0.11, 0.25, 0.2), grain="wood", rough=0.72, vary=0.06, bump=0.12),
-        "petrol_dark": M("Lack Tannengrün dunkel", (0.08, 0.18, 0.15), grain="wood", rough=0.72, vary=0.05, bump=0.12),
-        "box_red": M("Lack Blumenkasten Rot", (0.7, 0.2, 0.17), grain="wood", rough=0.75, vary=0.06),
-        "box_green": M("Lack Blumenkasten Grün", (0.3, 0.42, 0.3), grain="wood", rough=0.75, vary=0.06),
+        "fern": M("Lack Farngrün", (0.42, 0.53, 0.42), grain="paint", rough=0.72, vary=0.06, bump=0.12),
+        "fern_dark": M("Lack Farngrün dunkel", (0.3, 0.4, 0.31), grain="paint", rough=0.72, vary=0.05, bump=0.12),
+        "petrol": M("Lack Tannengrün", (0.11, 0.25, 0.2), grain="paint", rough=0.72, vary=0.06, bump=0.12),
+        "petrol_dark": M("Lack Tannengrün dunkel", (0.08, 0.18, 0.15), grain="paint", rough=0.72, vary=0.05, bump=0.12),
+        "box_red": M("Lack Blumenkasten Rot", (0.7, 0.2, 0.17), grain="paint", rough=0.75, vary=0.06),
+        "box_green": M("Lack Blumenkasten Grün", (0.3, 0.42, 0.3), grain="paint", rough=0.75, vary=0.06),
         "bread": M("Brot goldbraun", (0.8, 0.52, 0.25), rough=0.85, vary=0.12, scale=8, glow=0.3),
         "bread_dark": M("Brot dunkel", (0.56, 0.32, 0.16), rough=0.85, vary=0.12, scale=8, glow=0.3),
         "wicker": M("Weidenkorb", (0.68, 0.5, 0.3), grain="fabric", rough=0.9, vary=0.1, bump=0.4),

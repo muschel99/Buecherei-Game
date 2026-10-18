@@ -76,7 +76,8 @@ def image_material(name, path, rough=0.7, emit=0.0):
 def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bump=0.25, metal=0.0, emit=0.0,
              emit_color=None, glass=False, color2=None, stripes=None):
     """Mattes Material: Grundfarbe x Farbton je Teil ("tint") x leichte Flecken (Rauschen).
-    grain: plaster (Putz, rau), stone, wood (Maserung), fabric, leaf, smooth, brick.
+    grain: plaster (Putz), stone, wood (feine Maserung), paint (gestrichenes Holz, matt), fabric, leaf,
+    smooth, brick – wie im Godot-Shader storybook.gdshaderinc.
     stripes = Breite der Streifen (m) in color/color2 (Markisenstoff)."""
     if name in bpy.data.materials:
         return bpy.data.materials[name]
@@ -146,12 +147,13 @@ def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bum
         wave = N.new("ShaderNodeTexWave")
         wave.wave_type = "BANDS"
         wave.bands_direction = "Z"
-        wave.inputs["Scale"].default_value = 9.0
-        wave.inputs["Distortion"].default_value = 7.0
-        wave.inputs["Detail"].default_value = 3.0
+        # feine Linien etwa alle 2,5 cm, leicht geschwungen
+        wave.inputs["Scale"].default_value = 38.0
+        wave.inputs["Distortion"].default_value = 2.5
+        wave.inputs["Detail"].default_value = 2.0
         L.new(coord.outputs["Object"], wave.inputs["Vector"])
         dark = N.new("ShaderNodeMapRange")
-        dark.inputs["To Min"].default_value = 0.88
+        dark.inputs["To Min"].default_value = 0.93
         L.new(wave.outputs["Fac"], dark.inputs["Value"])
         hv = N.new("ShaderNodeHueSaturation")
         L.new(col, hv.inputs["Color"])
@@ -159,21 +161,25 @@ def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bum
         col = hv.outputs[0]
         height = wave.outputs["Fac"]
     elif grain == "stone":
-        vor = N.new("ShaderNodeTexVoronoi")
-        vor.feature = "DISTANCE_TO_EDGE"
-        vor.inputs["Scale"].default_value = 7.0
-        L.new(coord.outputs["Object"], vor.inputs["Vector"])
-        height = vor.outputs["Distance"]
+        # weich unregelmäßig, keine Risslinien
+        st = N.new("ShaderNodeTexNoise")
+        st.inputs["Scale"].default_value = 9.0
+        st.inputs["Detail"].default_value = 4.0
+        L.new(coord.outputs["Object"], st.inputs["Vector"])
+        height = st.outputs["Fac"]
     elif grain == "brick":
         brick = N.new("ShaderNodeTexBrick")
-        # Ziegel in echter Größe (22,5 x 7,5 cm mit Fuge), wie im Godot-Shader storybook.gdshader
+        # Bilderbuch-Ziegel (34 x 11,5 cm, weiche Fugen), wie im Godot-Shader storybook.gdshaderinc;
+        # color2 = Farbe der Fuge
         brick.inputs["Scale"].default_value = 1.0
-        brick.inputs["Mortar Size"].default_value = 0.009
-        brick.inputs["Brick Width"].default_value = 0.225
-        brick.inputs["Row Height"].default_value = 0.075
+        brick.inputs["Mortar Size"].default_value = 0.01
+        brick.inputs["Mortar Smooth"].default_value = 0.6
+        brick.inputs["Bias"].default_value = 0.0
+        brick.inputs["Brick Width"].default_value = 0.34
+        brick.inputs["Row Height"].default_value = 0.115
         brick.inputs["Color1"].default_value = (*srgb(color), 1)
-        brick.inputs["Color2"].default_value = (*srgb(tuple(v * 0.82 for v in color)), 1)
-        brick.inputs["Mortar"].default_value = (*srgb((0.78, 0.72, 0.62)), 1)
+        brick.inputs["Color2"].default_value = (*srgb((0.8 * 0.5 + color[0] * 0.5, 0.66 * 0.5 + color[1] * 0.5, 0.5 * 0.5 + color[2] * 0.5)), 1)
+        brick.inputs["Mortar"].default_value = (*srgb(color2 or (0.6, 0.53, 0.44)), 1)
         # Ziegel liegen waagerecht auf allen Seiten: Koordinaten (x + y, z)
         sep = N.new("ShaderNodeSeparateXYZ")
         L.new(coord.outputs["Object"], sep.inputs[0])
@@ -193,7 +199,7 @@ def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bum
         height = brick.outputs["Fac"]
     else:
         fine = N.new("ShaderNodeTexNoise")
-        fine.inputs["Scale"].default_value = {"plaster": 60.0, "fabric": 160.0, "leaf": 90.0, "smooth": 25.0}.get(grain, 40.0)
+        fine.inputs["Scale"].default_value = {"plaster": 7.0, "fabric": 90.0, "leaf": 90.0, "smooth": 25.0, "paint": 6.0}.get(grain, 40.0)
         fine.inputs["Detail"].default_value = 8.0
         L.new(coord.outputs["Object"], fine.inputs["Vector"])
         height = fine.outputs["Fac"]

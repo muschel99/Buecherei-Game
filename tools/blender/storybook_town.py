@@ -712,7 +712,8 @@ def cloth_awning(M, C, name, width, top, reach, drop, valance=0.24, mat="awning"
     Stoffsimulation lässt die Bahn zwischen Kasten und Fallstange leicht durchhängen, der Volant
     fällt vorn herab. Danach bekommt der Stoff Dicke (Körper, keine Löcher). Im Alpha der
     Vertex-Farbe steht, wie frei jede Stelle im Wind schwingt (Shader: wind_strength).
-    Dazu Kasten an der Wand, zwei Gelenkarme und die Fallstange."""
+    Dazu Kasten an der Wand, die Fallstange und zwei Gelenkarme SEITLICH neben dem Stoff (an den
+    Enden der Stange) – so kann der Stoff nie durch die Arme stechen, auch nicht im Wind."""
     rnd = random.Random(seed)
     a = Vector((0.0, -0.06, top))              # Stoff kommt aus dem Kasten
     b = Vector((0.0, -reach, top - drop))      # Fallstange
@@ -804,18 +805,21 @@ def cloth_awning(M, C, name, width, top, reach, drop, valance=0.24, mat="awning"
     if wind is not None:
         me.attributes.remove(wind)
     obj.vertex_groups.clear()
-    # Kasten, Gelenkarme, Fallstange
+    # Kasten, Fallstange (etwas breiter als der Stoff) und Gelenkarme außen neben dem Stoff
     fr = Body(name + " Kasten und Arme", M["iron"], C["shop"], seed=seed + 1, vary=0.03, bevel=0.006)
-    fr.box((0, -0.06, top + 0.03), (width + 0.1, 0.13, 0.13), step=0.3, dent=0.002)
+    fr.box((0, -0.06, top + 0.03), (width + 0.16, 0.13, 0.13), step=0.3, dent=0.002)
     bar = b + Vector((0, -0.012, 0.0))
-    fr.box(tuple(bar), (width + 0.06, 0.05, 0.05), step=0.3, dent=0.001)
-    for sx in (-width / 2 + 0.12, width / 2 - 0.12):
-        # Gelenkarme hängen unten am Kasten (Lager) und tragen die Fallstange
-        root = Vector((sx, -0.07, top - 0.05))
-        elbow = Vector((sx * 0.94, -reach * 0.5, top - drop * 0.35 - 0.1))
-        fr.tube([root, elbow, Vector((sx, bar.y + 0.02, bar.z - 0.01))], 0.014, segs=8, round_ends=True)
+    fr.box(tuple(bar), (width + 0.16, 0.05, 0.05), step=0.3, dent=0.001)
+    for sgn in (-1, 1):
+        sx = sgn * (width / 2 + 0.045)
+        # Lager unten am Kasten, Gelenk in der Mitte (leicht durchgeknickt), Kappe am Stangenende
+        root = Vector((sx, -0.07, top - 0.06))
+        end = Vector((sx, bar.y, bar.z))
+        elbow = root.lerp(end, 0.5) + Vector((0, 0, -0.07))
+        fr.tube([root, elbow, end], 0.014, segs=8, round_ends=True)
         fr.blob(tuple(elbow), 0.022, subdiv=1, lump=0.0)
-        fr.box(tuple(root + Vector((0, 0, 0.01))), (0.07, 0.08, 0.06), step=1, dent=0.001)
+        fr.box(tuple(root + Vector((0, 0, 0.02))), (0.07, 0.08, 0.06), step=1, dent=0.001)
+        fr.blob(tuple(Vector((sgn * (width / 2 + 0.085), bar.y, bar.z))), 0.03, subdiv=1, lump=0.0)
     fr.build()
     return obj
 
@@ -983,3 +987,21 @@ def wall_lantern(M, C, name, x, z, scale=0.58, seed=130):
     ir.build()
     SP.lantern_head(M, C["deco"], name, (x, -0.38, z - 0.49), scale=scale, hanging=True, seed=seed + 2)
     SC.add_light(name + " Licht", (x, -0.38, z - 0.34), 2700, 22, C["light"], radius=0.04)
+
+
+# Vor der Ladenfront: Brüstung, Pilaster-Sockel und Türpfosten ragen bis 24 cm vor die Wand.
+FRONT_CLEAR = 0.25
+
+
+def pot_out(r, clear=FRONT_CLEAR):
+    """Abstand Topfmitte – Wand, damit der Topf (Rand etwas breiter als r) frei vor Brüstung und
+    Sockel steht, mit 2 cm Luft."""
+    return clear + r * 1.07 + 0.02
+
+
+def street_lantern(M, C, name, x, z, seed=60):
+    """Straßenlaterne am Wandarm (wie wall_street_lantern.glb an den Wohnhäusern) im Rahmen canon:
+    Wandplatte bei (x, 0, z), Laterne 0,72 m vor der Wand, Unterkante etwa 0,67 m unter z.
+    Mit placed() an jede Wand setzbar."""
+    SP.street_wall_lantern(M, C["deco"], name + " Arm", name + " Kopf", (x, 0.0, z), seed=seed)
+    SC.add_light(name + " Licht", (x, -0.72, z - 0.36), 2700, 30, C["light"], radius=0.05)

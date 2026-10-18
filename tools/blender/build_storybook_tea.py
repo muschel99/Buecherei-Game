@@ -120,6 +120,8 @@ def shopfront(M, C):
     gl.box((length / 2, HEAD + 0.035, 0.3), (length - 0.04, 0.025, 0.025), step=0.4, dent=0.001, matrix=fm)
     gl.box((length / 2, HEAD + FASCIA_H - 0.035, 0.3), (length - 0.04, 0.025, 0.025), step=0.4, dent=0.001, matrix=fm)
     gl.build()
+    # Straßenlaterne am Wandarm auf der Seite zur langen Straße (dort steht sonst kein Licht)
+    T.placed(C["deco"], T.canon(*S2, 5.5), T.street_lantern, M, C, "Straßenlaterne", 0.0, 4.1, seed=140)
     T.placed(C["deco"], T.canon(*S2, 0.35), SC.projecting_sign, M, C["deco"], "Hängeschild", (0.0, 0.0, 4.35),
              SC.sign_material("corner_90", "hanging"), 0.56, 0.56 * 478 / 512, outline=SB.round_outline(arch=0.12))
 
@@ -197,10 +199,10 @@ def outside(M, C):
     Pilaster neben der Tür (Pflanzen kommen später)."""
     for k, x in enumerate((2.5, 4.05)):
         T.placed(C["pots"], T.canon(*S2, x), SC.planter_box, M, C["pots"], "Pflanzkasten %d" % (k + 1), SC.front_matrix(0.0, 0.0, 0.0),
-                 1.2, 0.38, 0.34, seed=60 + k, gap=0.1, mat="box", rail=False)
-        OBSTACLES["Pflanzkasten %d" % (k + 1)] = T.obstacle(*S2, x, 0.3, (1.26, 0.44), 0.38)
-    T.placed(C["pots"], T.canon(*S2, 5.25), SC.pot, M, C["pots"], "Topf hinten", (0.0, -0.33, 0.0), 0.22, 0.44, 63, mat="pot_dark")
-    OBSTACLES["Topf hinten"] = T.obstacle(*S2, 5.25, 0.33, (0.48, 0.48), 0.46)
+                 1.2, 0.38, 0.34, seed=60 + k, gap=T.FRONT_CLEAR, mat="box", rail=False)
+        OBSTACLES["Pflanzkasten %d" % (k + 1)] = T.obstacle(*S2, x, T.FRONT_CLEAR + 0.19, (1.26, 0.44), 0.38)
+    T.placed(C["pots"], T.canon(*S2, 5.3), SC.pot, M, C["pots"], "Topf hinten", (0.0, -T.pot_out(0.22), 0.0), 0.22, 0.44, 63, mat="pot_dark")
+    OBSTACLES["Topf hinten"] = T.obstacle(*S2, 5.3, T.pot_out(0.22), (0.48, 0.48), 0.46)
     T.placed(C["pots"], T.canon(*S1, 1.1), SC.pot, M, C["pots"], "Topf an der Ecke", (0.0, -0.36, 0.0), 0.24, 0.48, 64, mat="pot",
              style="tall")
     OBSTACLES["Topf an der Ecke"] = T.obstacle(*S1, 1.1, 0.36, (0.52, 0.52), 0.5)

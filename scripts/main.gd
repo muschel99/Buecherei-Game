@@ -14,6 +14,7 @@ func _ready() -> void:
 	_dust_amount = _dust.amount
 	# Draußen liegt alles tiefer als der Ladenboden (Etappe 4d, GameConfig.shop_floor_rise)
 	($Outside as Node3D).position.y = StreetLayout.ground_y()
+	_apply_sun_direction()
 	_apply_graphics_quality()
 	_setup_sky_fill()
 	Settings.setting_changed.connect(_on_setting_changed)
@@ -87,6 +88,15 @@ func _apply_graphics_quality() -> void:
 ## Sonnenscheibe" (light_angular_distance > 0) bleibt bewusst aus (seit Etappe 4c): Sie ist
 ## teurer und zeigte an langen geraden Kanten (Dachkante, Fenstersturz, Fensterlicht am Boden)
 ## eine Treppenlinie.
+## Sonne nach GameConfig.sun_elevation / sun_azimuth ausrichten (das Licht fällt von dort ein).
+func _apply_sun_direction() -> void:
+	var el := deg_to_rad(GameConfig.sun_elevation)
+	var az := deg_to_rad(GameConfig.sun_azimuth)
+	# Richtung zur Sonne: gegenüber liegt bei -Z, rechts (vom Laden aus) bei +X
+	var to_sun := Vector3(cos(el) * sin(az), sin(el), -cos(el) * cos(az))
+	_sun.basis = Basis.looking_at(-to_sun, Vector3.UP)
+
+
 func _apply_sun_shadows(preset: Dictionary) -> void:
 	var two := int(preset.get("sun_cascades", 4)) <= 2
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if two \

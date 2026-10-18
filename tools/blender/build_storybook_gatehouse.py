@@ -155,7 +155,9 @@ def body(M, C):
     v.build()
     s = Body("Seitenwände und Giebel", M["plaster_side"], C["walls"], seed=11, vary=0.04, bevel=0.01)
     for p0, p1 in (((HW, -JETTY), (HW, D + JETTY)), ((-HW, D + JETTY), (-HW, -JETTY))):
-        T.wall_run(s, p0, p1, 0.0, E, step=0.5)
+        # unten (Mauerwerk) bündig mit Vorder- und Rückseite, oben um die Vorkragung länger
+        T.wall_run(s, p0, p1, 0.0, MASON - 0.02, step=0.5, ext=(-JETTY, -JETTY))
+        T.wall_run(s, p0, p1, MASON - 0.02, E, step=0.5)
         s.slab([(0.0, E - 0.03), (D + 2 * JETTY, E - 0.03), (D / 2 + JETTY, RIDGE - 0.3)], 0.3,
                T.wall_matrix(p0, p1) @ Matrix.Translation((0, 0, -0.3)), dent=0.006)
     s.build()

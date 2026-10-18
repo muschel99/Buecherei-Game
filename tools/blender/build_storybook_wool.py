@@ -99,6 +99,8 @@ def upper(M, C, ops):
                 kb.tube([fm @ Vector((sx, -0.36, 0.04)), fm @ Vector((sx, -0.07, 0.4)), fm @ Vector((sx, -0.07, 0.04))], 0.009, segs=6,
                         round_ends=True)
             kb.build()
+    # Straßenlaterne am Wandarm am Ende der Seite zur Hauptstraße (Licht in der Torstraße)
+    T.placed(C["deco"], T.canon(*S2, 3.55), T.street_lantern, M, C, "Straßenlaterne", 0.0, 4.15, seed=140)
     T.placed(C["deco"], T.canon(*S1, 1.85), SC.projecting_sign, M, C["deco"], "Hängeschild", (0.0, 0.0, 4.15),
              SC.sign_material("corner_30", "hanging"), 0.52, 0.52 * 478 / 512, outline=SB.round_outline(arch=0.12))
 
@@ -185,16 +187,18 @@ def outside(M, C):
     """Viele Töpfe und Kübel an der Hauswand (Pflanzen kommen später), Ampeln neben der Tür,
     Kreidetafel links von der Tür."""
     rnd = T.RND
-    pots = [(S0, 0.35, 0.25, 0.5, "tub", "pot_dark"), (S0, 1.35, 0.17, 0.34, "classic", "pot"), (S0, 2.05, 0.14, 0.28, "bowl", "pot_light"),
-            (S0, 3.1, 0.18, 0.36, "tall", "pot"), (S0, 3.75, 0.15, 0.3, "classic", "pot_dark"),
-            (S2, 0.75, 0.16, 0.32, "classic", "pot_light"), (S2, 1.45, 0.2, 0.4, "tall", "pot"), (S2, 2.25, 0.14, 0.27, "bowl", "pot_dark"),
-            (S2, 3.0, 0.17, 0.34, "classic", "pot"), (S2, 3.65, 0.24, 0.48, "tub", "pot_light")]
+    # Links (S0 ab x = 0) grenzt das Torhaus an, dort stehen seine Töpfe: erst ab 0,9 m. Alle Töpfe
+    # stehen frei vor Brüstung und Pilaster-Sockeln (T.pot_out).
+    pots = [(S0, 1.2, 0.17, 0.34, "classic", "pot"), (S0, 1.8, 0.14, 0.28, "bowl", "pot_light"), (S0, 2.45, 0.2, 0.4, "tall", "pot_dark"),
+            (S0, 3.1, 0.15, 0.3, "classic", "pot"), (S0, 3.65, 0.13, 0.26, "bowl", "pot_dark"),
+            (S2, 0.7, 0.16, 0.32, "classic", "pot_light"), (S2, 1.3, 0.2, 0.4, "tall", "pot"), (S2, 1.9, 0.14, 0.27, "bowl", "pot_dark"),
+            (S2, 2.45, 0.15, 0.3, "classic", "pot"), (S2, 3.1, 0.24, 0.48, "tub", "pot_light")]
     for k, (p, x, r, h, style, mat) in enumerate(pots):
-        out = r + 0.12 + rnd.uniform(0.0, 0.05)
+        out = T.pot_out(r) + rnd.uniform(0.0, 0.04)
         T.placed(C["pots"], T.canon(*p, x), SC.pot, M, C["pots"], "Topf %d" % (k + 1), (0.0, -out, 0.0), r, h, 70 + k, mat=mat, style=style)
         OBSTACLES["Topf %d" % (k + 1)] = T.obstacle(*p, x, out, (2 * r + 0.08, 2 * r + 0.08), h + 0.04)
-    T.placed(C["pots"], T.canon(*S1, 0.2), SC.zinc_tub, M, C["pots"], "Zinkeimer an der Tür", (0.0, -0.3, 0.0), 85)
-    OBSTACLES["Zinkeimer an der Tür"] = T.obstacle(*S1, 0.2, 0.3, (0.5, 0.5), 0.36)
+    T.placed(C["pots"], T.canon(*S1, 0.24), SC.zinc_tub, M, C["pots"], "Zinkeimer an der Tür", (0.0, -T.pot_out(0.235), 0.0), 85)
+    OBSTACLES["Zinkeimer an der Tür"] = T.obstacle(*S1, 0.24, T.pot_out(0.235), (0.5, 0.5), 0.36)
     T.placed(C["deco"], T.canon(*S0, 4.35), SC.chalkboard, M, C["deco"], (0.0, -0.62), 8, SC.sign_material("corner_30", "chalkboard"))
     OBSTACLES["Kreidetafel"] = T.obstacle(*S0, 4.35, 0.62, (0.56, 0.42), 0.85)
     for k, x in enumerate((0.16, L1 - 0.16)):

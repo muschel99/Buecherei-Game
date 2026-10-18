@@ -46,9 +46,9 @@ SETTLE = {"wave": 0.02, "wavelength": 2.8, "lean": -0.0025, "roof_sag": 0.05, "r
 OBSTACLES = {
     "Fahrrad": ((-1.4, -0.45), (1.9, 0.62), 1.1),
     "Topf Ecke links": ((-2.5, -0.5), (0.4, 0.4), 0.36),
-    "Töpfe rechts": ((1.45, -0.32), (1.6, 0.5), 0.45),
-    "Kreidetafel": ((2.25, -0.62), (0.56, 0.42), 0.85),
-    "Eimer an der Tür": ((0.78, -0.35), (0.44, 0.44), 0.4),
+    "Töpfe rechts": ((1.65, -0.42), (0.85, 0.36), 0.4),
+    "Kreidetafel": ((2.35, -0.66), (0.56, 0.42), 0.85),
+    "Eimer an der Tür": ((0.92, -0.52), (0.5, 0.5), 0.4),
 }
 
 
@@ -123,6 +123,9 @@ def upper(M, C, ops):
         kb.build()
     SC.projecting_sign(M, C["deco"], "Ausleger-Schild", (0.0, 0.0, 5.45), SC.sign_material("flower_shop", "hanging"), 0.56,
                        0.56 * 478 / 512, outline=SB.round_outline(arch=0.12))
+    # Straßenlaterne am Wandarm rechts neben dem Fenster: leuchtet gegenüber der Bücherei-Tür
+    # (zwischen den Laternen an Opposite1_3 und Opposite2_1)
+    T.street_lantern(M, C, "Straßenlaterne", HW - 0.6, 4.05, seed=140)
 
 
 def shopfront(M, C):
@@ -220,13 +223,12 @@ def outside(M, C):
     # Vorderrad steht vor der Türplatte
     T.bicycle(M, C, "Fahrrad", -1.35, -0.45, seed=90)
     SC.pot(M, C["pots"], "Topf Ecke links", (-2.5, -0.5, 0.0), 0.16, 0.33, 61, mat="pot_dark", style="classic")
-    SC.zinc_tub(M, C["pots"], "Eimer an der Tür", (0.78, -0.35, 0.0), 62)
+    SC.zinc_tub(M, C["pots"], "Eimer an der Tür", (0.92, -T.pot_out(0.235), 0.0), 62)
     rnd = T.RND
-    for i, (x, r, h, st) in enumerate(((1.0, 0.13, 0.26, "classic"), (1.3, 0.16, 0.32, "tall"), (1.62, 0.14, 0.27, "bowl"),
-                                       (1.92, 0.12, 0.24, "classic"))):
-        SC.pot(M, C["pots"], "Topf rechts %d" % (i + 1), (x, -0.25 - rnd.uniform(0, 0.12), 0.0), r, h, 63 + i,
+    for i, (x, r, h, st) in enumerate(((1.36, 0.13, 0.26, "classic"), (1.68, 0.15, 0.3, "tall"), (1.97, 0.1, 0.21, "bowl"))):
+        SC.pot(M, C["pots"], "Topf rechts %d" % (i + 1), (x, -T.pot_out(r) - rnd.uniform(0, 0.04), 0.0), r, h, 63 + i,
                mat=("pot", "pot_light", "pot_dark")[i % 3], style=st)
-    SC.chalkboard(M, C["deco"], (2.25, -0.62), -14, SC.sign_material("flower_shop", "chalkboard"))
+    SC.chalkboard(M, C["deco"], (2.35, -0.66), -14, SC.sign_material("flower_shop", "chalkboard"))
 
 
 def build_scene():

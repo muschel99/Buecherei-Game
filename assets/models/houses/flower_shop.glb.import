@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cogtenhgn267t"
+uid="uid://qfh313cvhqoi"
 path="res://.godot/imported/flower_shop.glb-b9ae4bcf5d5aefac6c72d1ae3070f2a9.scn"
 
 [deps]
@@ -347,6 +347,7 @@ _subresources={
 },
 "Laternenglas leuchtend": {
 "use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/laternenglas_leuchtend.tres",
 "use_external/path": "res://assets/materials/storybook/laternenglas_leuchtend.tres"
 },
 "Leder Grün": {

@@ -68,3 +68,25 @@ def scroll(body, center, radius, plane_x, turns=1.4, thick=0.01, start=0.0):
         pts.append(Vector((plane_x, center[1] + r * math.cos(a), center[2] + r * math.sin(a))))
     body.tube(pts, lambda t: thick * (1.0 - 0.4 * t), segs=8)
     body.blob(pts[-1], thick * 1.3, subdiv=1, lump=0.0)
+
+
+def street_wall_lantern(M, coll, arm_name, head_name, origin=(0.0, 0.0, 0.0), seed=60):
+    """Hängende Straßenlaterne am geschwungenen Wandarm (dieselbe wie assets/models/props/
+    wall_street_lantern.glb): Wandplatte bei origin auf der Wand (Front zeigt nach -y), Arm mit
+    Strebe und zwei Schnecken 0,72 m nach vorn, daran der gemeinsame Laternenkopf (scale 0.76).
+    Die Laterne hängt bis etwa 0,67 m unter origin."""
+    o = Vector(origin)
+    reach = 0.72
+    ir = Body(arm_name, M["lamp_iron"], coll, seed=seed, vary=0.03, bevel=0.005)
+    ir.box(tuple(o + Vector((0, -0.015, -0.07))), (0.14, 0.03, 0.45), step=1, dent=0.001)
+    ir.box(tuple(o + Vector((0, -0.035, -0.07))), (0.1, 0.015, 0.37), step=1, dent=0.001)
+    arm = [o + Vector((0, -0.03, 0.08)), o + Vector((0, -0.25, 0.18)), o + Vector((0, -reach + 0.12, 0.2)), o + Vector((0, -reach, 0.16))]
+    strut = [o + Vector((0, -0.03, -0.24)), o + Vector((0, -0.2, -0.08)), o + Vector((0, -0.42, 0.08)), o + Vector((0, -0.58, 0.18))]
+    ir.tube(arm, 0.02, segs=10, smooth=2, round_ends=True)
+    ir.tube(strut, 0.014, segs=8, smooth=2, round_ends=True)
+    scroll(ir, tuple(o + Vector((0, -0.17, 0.03))), 0.075, o.x, turns=1.4, thick=0.009, start=0.6)
+    scroll(ir, tuple(o + Vector((0, -0.4, 0.13))), 0.05, o.x, turns=1.3, thick=0.008, start=0.9)
+    ir.blob(tuple(o + Vector((0, -reach - 0.03, 0.17))), 0.026, subdiv=2, lump=0.0)
+    ir.tube([o + Vector((0, -reach, 0.16)), o + Vector((0, -reach, -0.07))], 0.01, segs=8, round_ends=True)
+    ir.build()
+    return lantern_head(M, coll, head_name, tuple(o + Vector((0, -reach, -0.62))), scale=0.76, hanging=True, seed=seed + 4)

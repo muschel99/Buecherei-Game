@@ -488,6 +488,11 @@ var graphics_presets: Array[Dictionary] = [
 		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
 		"street_shadow_distance": 60.0, "street_shadow_detail": 15.0},
 ]
+## Stand der Sonne (seit Etappe 4h, Wunsch: höher und etwas nach rechts): Höhe über dem Horizont
+## in Grad (90 = genau von oben) und Richtung in Grad – 0 = genau hinter den Häusern gegenüber der
+## Bücherei, positiv = nach rechts (vom Laden aus auf die Straße geschaut). Vorher 35 und 15.
+var sun_elevation: float = 47.0
+var sun_azimuth: float = 30.0
 ## Bis zu dieser Entfernung (in Metern) wirft die Sonne Schatten. Seit Etappe 4g so weit wie
 ## die Straße (vorher 20 m). Die erste Schattenstufe bleibt fein (Fensterlicht im Laden).
 var sun_shadow_distance: float = 70.0
