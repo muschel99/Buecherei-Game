@@ -1,4 +1,8 @@
-"""Baut für jedes Wohnhaus der Straße ein eigenes Modell (seit Etappe 4g, Teil 2b).
+"""Baut für jedes Wohnhaus der Straße ein eigenes Modell (seit Etappe 4g, Teil 2b) – ALTER STIL.
+
+Seit dem Stil-Umbau (Etappe 4h) baut tools/blender/build_storybook_street.py die Wohnhäuser im
+Bilderbuch-Stil und nutzt von hier nur die Beschreibungen (make_spec, exposures, SPECIAL).
+Ohne "-- --alter-stil" baut dieses Script nichts mehr.
 
 Aufruf (Terminal, im Projektordner):
     blender -b --factory-startup --python tools/blender/build_street.py
@@ -377,6 +381,13 @@ def write_tscn(text, built):
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    if "--alter-stil" not in argv:
+        # Seit dem Stil-Umbau (Etappe 4h) baut build_storybook_street.py die Wohnhäuser; dieses
+        # Script liefert nur noch die Beschreibungen (make_spec, exposures) und würde sonst
+        # houses.tscn auf die alten Modelle zurückstellen.
+        print("Die Wohnhäuser baut jetzt tools/blender/build_storybook_street.py (Bilderbuch-Stil).\n"
+              "Alter Stil nur mit: ... build_street.py -- --alter-stil")
+        return
     only = [a for a in argv if not a.startswith("--")]
     check = "--check" in argv
     if check:

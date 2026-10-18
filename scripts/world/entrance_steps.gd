@@ -31,21 +31,55 @@ func _ready() -> void:
 	if get_node_or_null("Model") == null:
 		var builder := WorldMesh.new()
 		var color := Color.WHITE  # Farbe kommt aus dem Material
-		# Stufe k (0 = unterste, count = Podest): je höher, desto schmaler und flacher
+		# Stufe k (0 = unterste, count = Podest): je höher, desto schmaler und flacher. Vorder- und
+		# Seitenkanten weich gerundet (Stil-Umbau, Etappe 4h)
 		for k in count + 1:
 			var w := half_width + (count - k) * side
 			var d := depth + (count - k) * tread
 			var top := -total + (k + 1) * rise
 			var bottom := top - rise
-			# Auftritt (oben), Stirnseite (vorn), Seiten, Rückseite (sichtbar seitlich neben der Wand)
-			builder.add_quad(Vector3(-w, top, 0), Vector3(w, top, 0), Vector3(w, top, d), Vector3(-w, top, d), Vector3.UP, color)
-			builder.add_quad(Vector3(-w, bottom, d), Vector3(w, bottom, d), Vector3(w, top, d), Vector3(-w, top, d), Vector3.BACK, color)
-			builder.add_quad(Vector3(-w, bottom, 0), Vector3(-w, bottom, d), Vector3(-w, top, d), Vector3(-w, top, 0), Vector3.LEFT, color)
-			builder.add_quad(Vector3(w, bottom, 0), Vector3(w, bottom, d), Vector3(w, top, d), Vector3(w, top, 0), Vector3.RIGHT, color)
-			builder.add_quad(Vector3(-w, bottom, 0), Vector3(w, bottom, 0), Vector3(w, top, 0), Vector3(-w, top, 0), Vector3.FORWARD, color)
+			_rounded_step(builder, w, d, top, bottom, minf(STEP_ROUND, rise * 0.45), color)
 		add_child(builder.make_instance("Steps", material))
 	_build_ramp(count, tread, side, total, half_width, depth)
 	_add_street_obstacles(half_width + count * side, depth + count * tread)
+
+
+## Rundung der Stufenkanten in m.
+const STEP_ROUND := 0.04
+
+
+## Eine Stufe als Quader (hinten an der Wand), vorn und an den Seiten weich gerundet: Auftritt,
+## gerundete Kanten, gerundete Ecken vorn, senkrechte Stirn- und Seitenflächen, Rückseite.
+func _rounded_step(builder: WorldMesh, w: float, d: float, top: float, bottom: float, r: float, color: Color) -> void:
+	builder.add_quad(Vector3(-w + r, top, 0), Vector3(w - r, top, 0), Vector3(w - r, top, d - r), Vector3(-w + r, top, d - r), Vector3.UP, color)
+	builder.add_round_edge(Vector2(-w + r, d), Vector2(w - r, d), Vector2(0.0, 1.0), top, r, color)
+	builder.add_round_edge(Vector2(-w, 0.0), Vector2(-w, d - r), Vector2(-1.0, 0.0), top, r, color)
+	builder.add_round_edge(Vector2(w, 0.0), Vector2(w, d - r), Vector2(1.0, 0.0), top, r, color)
+	builder.add_quad(Vector3(-w + r, bottom, d), Vector3(w - r, bottom, d), Vector3(w - r, top - r, d), Vector3(-w + r, top - r, d),
+		Vector3.BACK, color)
+	builder.add_quad(Vector3(-w, bottom, 0), Vector3(-w, bottom, d - r), Vector3(-w, top - r, d - r), Vector3(-w, top - r, 0), Vector3.LEFT, color)
+	builder.add_quad(Vector3(w, bottom, 0), Vector3(w, bottom, d - r), Vector3(w, top - r, d - r), Vector3(w, top - r, 0), Vector3.RIGHT, color)
+	builder.add_quad(Vector3(-w, bottom, 0), Vector3(w, bottom, 0), Vector3(w, top, 0), Vector3(-w, top, 0), Vector3.FORWARD, color)
+	# Ecken vorn: senkrecht ein Viertelzylinder, oben ein Achtel einer Kugel
+	for sx in [-1.0, 1.0]:
+		var c := Vector3(sx * (w - r), 0.0, d - r)
+		var seg := 3
+		for i in seg:
+			var p0 := PI / 2.0 * float(i) / seg
+			var p1 := PI / 2.0 * float(i + 1) / seg
+			var h0 := Vector3(sx * sin(p0), 0.0, cos(p0))
+			var h1 := Vector3(sx * sin(p1), 0.0, cos(p1))
+			builder.add_quad_smooth(c + h0 * r + Vector3.UP * bottom, c + h1 * r + Vector3.UP * bottom,
+				c + h1 * r + Vector3.UP * (top - r), c + h0 * r + Vector3.UP * (top - r), h0, h1, h1, h0, color)
+			for j in seg:
+				var t0 := PI / 2.0 * float(j) / seg
+				var t1 := PI / 2.0 * float(j + 1) / seg
+				var n00 := h0 * cos(t0) + Vector3.UP * sin(t0)
+				var n10 := h1 * cos(t0) + Vector3.UP * sin(t0)
+				var n11 := h1 * cos(t1) + Vector3.UP * sin(t1)
+				var n01 := h0 * cos(t1) + Vector3.UP * sin(t1)
+				var base := c + Vector3.UP * (top - r)
+				builder.add_quad_smooth(base + n00 * r, base + n10 * r, base + n11 * r, base + n01 * r, n00, n10, n11, n01, color)
 
 
 ## Passanten gehen um die Treppe herum (seit Etappe 5a): Kreise entlang der Vorderkante und

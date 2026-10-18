@@ -11,8 +11,8 @@
 ; "WindowSpots" sind Stellen vor Schaufenstern, an denen Passanten stehen bleiben (Blickrichtung
 ; = -Z des Punkts, also der blaue Pfeil zeigt vom Fenster weg).
 ; "EntranceSteps" (Podest mit Stufen vor der Tür) liegt auf Höhe des Ladenbodens.
-; Über dem Laden: "UpperFloors" baut beim Start die Obergeschosse (vorerst geschlossene Hülle),
-; das Dach und unten den Sockel (Anzahl und Höhe in GameConfig, siehe scripts/rooms/upper_floors.gd).
+; Über dem Laden: "UpperFloors" legt die Geschoss-Knoten an (Floor1 …, Anzahl und Höhe in GameConfig);
+; Hülle, Dach und Sockel zeigt seit dem Stil-Umbau das Fassaden-Modell im Raum (library_facade.glb).
 
 [ext_resource type="PackedScene" path="res://scenes/rooms/ground_floor_room.tscn" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
@@ -132,6 +132,7 @@ transform = Transform3D(-0.7071068, 0, -0.7071068, 0, 1, 0, 0.7071068, 0, -0.707
 
 [node name="UpperFloors" type="Node3D" parent="."]
 script = ExtResource("24_upper_floors")
+build_visuals = false
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0, 2.6)

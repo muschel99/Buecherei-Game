@@ -12,6 +12,7 @@ bei y = 0 und zeigt nach -y (im Spiel +Z).
 """
 
 import bpy
+import json
 import math
 import numpy as np
 
@@ -32,21 +33,27 @@ GAME_MAT_DIR = os.path.join(ROOT, "assets", "materials", "storybook")
 SIGN_DIR = os.path.join(ROOT, "assets", "textures", "signs")
 SHOTS = os.path.join(ROOT, "screenshots", "blender", "storybook")
 
-GRAIN_ID = {"plaster": 0, "stone": 1, "wood": 2, "brick": 3, "fabric": 4, "leaf": 5, "smooth": 6, "paint": 7}
+GRAIN_ID = {"plaster": 0, "stone": 1, "wood": 2, "brick": 3, "fabric": 4, "leaf": 5, "smooth": 6, "paint": 7, "ashlar": 8}
 GAME_MATERIALS = {}   # Blender-Name -> Werte für das Godot-Material (siehe write_game_materials)
+LAST_EXPORT_MATERIALS = []   # Materialnamen der zuletzt geschriebenen .glb (export_objects)
 
 
 # --- Materialien ---
 
+def make_material(name, color, glow=0.0, plant=False, **kw):
+    """Material in Blender anlegen und die Werte für Godot merken (glow = Leuchten im Spiel,
+    z. B. Innenräume, die in Blender von Lampen beleuchtet werden; plant = Blätter/Blüten, im
+    Spiel beidseitig sichtbar). Gleicher Name = dasselbe Material."""
+    GAME_MATERIALS[name] = dict(kw, color=color, glow=glow, plant=plant)
+    mat = SB.material(name, color, **{k: v for k, v in kw.items() if k != "wind"})
+    mat["spiel_pflanze"] = plant   # export_storybook.py vereinfacht diese Teile fürs Spiel
+    # Werte fürs Spiel in der .blend merken (export_storybook.py braucht sie für Sammel-Materialien)
+    mat["spiel_werte"] = json.dumps(GAME_MATERIALS[name])
+    return mat
+
+
 def materials():
-    def M(name, color, glow=0.0, plant=False, **kw):
-        """Material in Blender anlegen und die Werte für Godot merken (glow = Leuchten im Spiel,
-        z. B. Innenräume, die in Blender von Lampen beleuchtet werden; plant = Blätter/Blüten, im
-        Spiel beidseitig sichtbar)."""
-        GAME_MATERIALS[name] = dict(kw, color=color, glow=glow, plant=plant)
-        mat = SB.material(name, color, **{k: v for k, v in kw.items() if k != "wind"})
-        mat["spiel_pflanze"] = plant   # export_storybook.py vereinfacht diese Teile fürs Spiel
-        return mat
+    M = make_material
     return {
         "plaster": M("Putz Creme", (0.9, 0.83, 0.7), rough=0.93, vary=0.09, scale=1.4, bump=0.35),
         "plaster_side": M("Putz Sand Seitenwand", (0.84, 0.75, 0.6), rough=0.93, vary=0.1, scale=1.2),
@@ -325,7 +332,7 @@ def front_matrix(x, z, y=0.0, turn=0.0):
 def add_bevel(obj, width):
     mod = obj.modifiers.new("Weiche Kanten", "BEVEL")
     mod.width = width * SB.BEVEL_SCALE
-    mod.segments = 3
+    mod.segments = SB.BEVEL_SEGMENTS[0]
     mod.limit_method = "ANGLE"
     mod.angle_limit = math.radians(40)
 
@@ -449,12 +456,15 @@ def slug(name):
     return "".join(ch if ch.isalnum() else "_" for ch in out).strip("_")
 
 
-def write_game_materials():
+def write_game_materials(only=None):
     """Je Blender-Material ein Godot-Material (Shader storybook.gdshader, Glas eigenes Material).
-    Liefert {Blender-Name: res-Pfad}."""
+    only = nur diese Namen schreiben (z. B. die Materialien einer .glb). Liefert {Blender-Name:
+    res-Pfad}."""
     os.makedirs(GAME_MAT_DIR, exist_ok=True)
     out = {}
     for name, v in GAME_MATERIALS.items():
+        if only is not None and name not in only:
+            continue
         path = os.path.join(GAME_MAT_DIR, slug(name) + ".tres")
         res = "res://" + os.path.relpath(path, ROOT).replace(os.sep, "/")
         out[name] = res
@@ -527,24 +537,91 @@ def leaf_tops(me):
     bm.free()
 
 
-def export_objects(objs, cols, path, simplify=None):
+# Sammel-Materialien fürs Spiel (palette=True in export_objects): gleichartige Oberflächen teilen
+# sich ein Material, die Farbe steht in den Ecken (Farbton "tint" x Grundfarbe) – so braucht ein
+# Haus nur etwa zehn Zeichenaufrufe statt dreißig. Werte je Art (grain).
+PALETTE_GRAIN = {
+    "plaster": dict(rough=0.92, vary=0.08, scale=1.6, bump=0.32),
+    "stone": dict(rough=0.9, vary=0.08, scale=4.0, bump=0.25),
+    "wood": dict(rough=0.8, vary=0.07, scale=4.0, bump=0.22),
+    "paint": dict(rough=0.72, vary=0.05, scale=4.0, bump=0.12),
+    "brick": dict(rough=0.92, vary=0.06, scale=4.0, bump=0.25, color2=(0.57, 0.5, 0.42)),
+    "ashlar": dict(rough=0.9, vary=0.06, scale=4.0, bump=0.3, color2=(0.62, 0.56, 0.47)),
+    "fabric": dict(rough=0.92, vary=0.05, scale=4.0, bump=0.2),
+    "leaf": dict(rough=0.75, vary=0.1, scale=4.0, bump=0.2),
+    "smooth": dict(rough=0.6, vary=0.05, scale=4.0, bump=0.1),
+}
+
+
+def palette_key(info):
+    """Name des Sammel-Materials für ein Material (None = bleibt eigenes Material: Glas, Bilder,
+    Leuchten, Streifen, Wind)."""
+    if not info or info.get("image") or info.get("glass") or info.get("emit", 0) > 0 or info.get("stripes") or info.get("wind"):
+        return None
+    grain = info.get("grain", "plaster")
+    if info.get("plant"):
+        return "Sammel Pflanze"
+    if info.get("metal", 0.0) >= 0.2:
+        return "Sammel Metall"
+    name = "Sammel " + {"plaster": "Putz", "stone": "Stein", "wood": "Holz", "paint": "Lack", "brick": "Ziegel", "ashlar": "Quader",
+                        "fabric": "Stoff", "leaf": "Blatt", "smooth": "Glatt"}.get(grain, grain)
+    return name + (" innen" if info.get("glow", 0) > 0 else "")
+
+
+def palette_material(key, info):
+    """Blender-Material (weiß) und Godot-Werte für ein Sammel-Material."""
+    grain = "leaf" if key == "Sammel Pflanze" else "smooth" if key == "Sammel Metall" else info.get("grain", "plaster")
+    v = dict(PALETTE_GRAIN.get(grain, PALETTE_GRAIN["plaster"]))
+    if key == "Sammel Metall":
+        v.update(rough=0.55, metal=0.35)
+    GAME_MATERIALS[key] = dict(v, grain=grain, color=(1.0, 1.0, 1.0), glow=0.27 if key.endswith(" innen") else 0.0,
+                               plant=key == "Sammel Pflanze")
+    kw = {k: v[k] for k in ("rough", "vary", "scale", "bump", "metal", "color2") if k in v}
+    return SB.material(key, (1.0, 1.0, 1.0), grain=grain, **kw)
+
+
+def bake_palette(obj, info):
+    """Grundfarbe des Materials in den Farbton der Ecken einrechnen (linear)."""
+    me = obj.data
+    ca = me.color_attributes.get("tint")
+    lin = SB.srgb(info["color"])
+    if ca is None:
+        ca = me.color_attributes.new("tint", "FLOAT_COLOR", "POINT")
+        for d in ca.data:
+            d.color = (1.0, 1.0, 1.0, 1.0)
+    for d in ca.data:
+        c = d.color
+        d.color = (c[0] * lin[0], c[1] * lin[1], c[2] * lin[2], c[3])
+
+
+def export_objects(objs, cols, path, simplify=None, palette=False, extra=()):
     """Alle Teile mit gleichem Material zu einem Netz zusammenfassen (wenige Zeichenaufrufe),
     Modifikatoren anwenden und als .glb speichern. simplify(material) = True: nur die Oberseiten
-    der Blätter (leaf_tops). Die Einzelteile bleiben unverändert."""
+    der Blätter (leaf_tops). palette = gleichartige Materialien zu Sammel-Materialien
+    zusammenlegen (Farbe in den Ecken). extra = weitere Objekte, die unverändert mitkommen
+    (z. B. leere Platzhalter für Pflanzen). Die Einzelteile bleiben unverändert."""
     tmp = SB.collection("_export")
     groups = {}
     for obj in objs:
         if obj.type == "MESH" and obj.data.materials and obj.data.materials[0] is not None:
-            groups.setdefault(obj.data.materials[0].name, []).append(obj)
+            mname = obj.data.materials[0].name
+            key = palette_key(GAME_MATERIALS.get(mname)) if palette else None
+            groups.setdefault(key or mname, []).append(obj)
     dg = bpy.context.evaluated_depsgraph_get()
     merged = []
     for name, objs in groups.items():
         copies = []
+        pal = name.startswith("Sammel ")
         for o in objs:
             me = bpy.data.meshes.new_from_object(o.evaluated_get(dg), preserve_all_data_layers=True, depsgraph=dg)
             c = bpy.data.objects.new(name, me)
             c.matrix_world = o.matrix_world
             tmp.objects.link(c)
+            if pal:
+                info = GAME_MATERIALS[o.data.materials[0].name]
+                bake_palette(c, info)
+                me.materials.clear()
+                me.materials.append(palette_material(name, info))
             copies.append(c)
         if simplify and simplify(objs[0].data.materials[0]):
             for c in copies:
@@ -561,7 +638,7 @@ def export_objects(objs, cols, path, simplify=None):
         merged.append(obj)
     for o in bpy.context.view_layer.objects:
         o.select_set(False)
-    for o in merged + cols:
+    for o in merged + list(cols) + list(extra):
         o.select_set(True)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     # Bilder (Schilder) nicht in die .glb packen – Godot nimmt die eigenen Materialien
@@ -570,8 +647,9 @@ def export_objects(objs, cols, path, simplify=None):
              bpy.ops.export_scene.gltf.get_rna_type().properties["export_image_format"].enum_items] else {}
     bpy.ops.export_scene.gltf(filepath=path, **extra, export_format="GLB", use_selection=True, export_apply=True, export_colors=True,
                               export_lights=False, export_cameras=False, export_texcoords=True, export_normals=True,
-                              export_yup=True, export_materials="EXPORT")
+                              export_yup=True, export_materials="EXPORT", export_extras=True)
     tris = sum(len(p.vertices) - 2 for o in merged for p in o.data.polygons)
+    LAST_EXPORT_MATERIALS[:] = [o.data.materials[0].name for o in merged if o.data.materials]
     for o in merged:
         me = o.data
         bpy.data.objects.remove(o)

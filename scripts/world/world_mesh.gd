@@ -44,6 +44,47 @@ func add_triangle(a: Vector3, b: Vector3, c: Vector3, normal: Vector3, color: Co
 	_empty = false
 
 
+## Viereck mit eigener Normale je Ecke (weiche Rundungen, z. B. abgerundete Stein- und Stufen-
+## kanten, seit dem Stil-Umbau). Die Reihenfolge der Ecken wird passend zur mittleren Normale gedreht.
+func add_quad_smooth(a: Vector3, b: Vector3, c: Vector3, d: Vector3, na: Vector3, nb: Vector3, nc: Vector3, nd: Vector3,
+		color: Color) -> void:
+	_add_smooth_triangle([a, b, c], [na, nb, nc], color)
+	_add_smooth_triangle([a, c, d], [na, nc, nd], color)
+
+
+func _add_smooth_triangle(points: Array, normals: Array, color: Color) -> void:
+	var pts := points.duplicate()
+	var nrm := normals.duplicate()
+	if xform != Transform3D.IDENTITY:
+		for i in 3:
+			pts[i] = xform * (pts[i] as Vector3)
+			nrm[i] = (xform.basis * (nrm[i] as Vector3)).normalized()
+	var mean: Vector3 = (nrm[0] + nrm[1] + nrm[2]) as Vector3
+	var order := [0, 1, 2] if ((pts[1] - pts[0]) as Vector3).cross(pts[2] - pts[0]).dot(mean) < 0.0 else [0, 2, 1]
+	for i: int in order:
+		var corner: Vector3 = pts[i]
+		_tool.set_normal(nrm[i])
+		_tool.set_color(color)
+		_tool.set_uv(Vector2(corner.x + corner.z, corner.y))
+		_tool.add_vertex(corner)
+	_empty = false
+
+
+## Gerundete Kante entlang a → b (Viertelkreis, segments Stücke): out = waagerechte Richtung nach
+## außen (zur Kante hin), die Rundung reicht von der Oberseite (radius vor der Kante) bis zur
+## senkrechten Fläche (radius unter der Oberkante). top = Höhe der Oberseite.
+func add_round_edge(a: Vector2, b: Vector2, out: Vector2, top: float, radius: float, color: Color, segments: int = 3) -> void:
+	var o := Vector3(out.x, 0.0, out.y).normalized()
+	var pa := Vector3(a.x, top - radius, a.y) - o * radius
+	var pb := Vector3(b.x, top - radius, b.y) - o * radius
+	for k in segments:
+		var t0 := PI / 2.0 * (1.0 - float(k) / segments)
+		var t1 := PI / 2.0 * (1.0 - float(k + 1) / segments)
+		var n0 := o * cos(t0) + Vector3.UP * sin(t0)
+		var n1 := o * cos(t1) + Vector3.UP * sin(t1)
+		add_quad_smooth(pa + n0 * radius, pb + n0 * radius, pb + n1 * radius, pa + n1 * radius, n0, n0, n1, n1, color)
+
+
 ## Quader zwischen zwei Ecken (achsparallel). "skip": Seiten, die man nie sieht, weglassen
 ## ("bottom", "top", "front" = +Z, "back" = -Z, "left" = -X, "right" = +X).
 func add_box(low: Vector3, high: Vector3, color: Color, skip: PackedStringArray = PackedStringArray(["bottom"])) -> void:

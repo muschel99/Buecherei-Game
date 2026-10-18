@@ -136,6 +136,7 @@ func _apply_graphics_quality() -> void:
 	viewport.msaa_3d = {0: Viewport.MSAA_DISABLED, 2: Viewport.MSAA_2X, 4: Viewport.MSAA_4X}.get(int(preset.msaa), Viewport.MSAA_DISABLED)
 	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if preset.fxaa else Viewport.SCREEN_SPACE_AA_DISABLED
 	viewport.scaling_3d_scale = preset.render_scale
+	viewport.mesh_lod_threshold = float(preset.get("lod_threshold", 1.0))
 
 
 ## Vollbild nutzt die Auflösung des Bildschirms; im Fenster gilt die gewählte Auflösung.

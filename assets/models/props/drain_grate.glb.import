@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://d0f7o1aab5wkl"
+uid="uid://ck6uvwfk6fbl1"
 path="res://.godot/imported/drain_grate.glb-2aeaf76d86658ed07edd8a4511f9e3a4.scn"
 
 [deps]
@@ -24,7 +24,7 @@ nodes/import_as_skeleton_bones=false
 nodes/use_name_suffixes=true
 nodes/use_node_type_suffixes=true
 meshes/ensure_tangents=true
-meshes/generate_lods=false
+meshes/generate_lods=true
 meshes/create_shadow_meshes=true
 meshes/light_baking=1
 meshes/lightmap_texel_size=0.2
@@ -41,26 +41,15 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"glass": {
+"Sammel Glatt": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_glatt.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_glatt.tres"
 },
-"glass_clear": {
+"Sammel Metall": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass_clear.tres"
-},
-"glass_inner": {
-"use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass_inner.tres"
-},
-"house": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_style.tres",
-"use_external/path": "res://assets/materials/house_style.tres"
-},
-"plant": {
-"use_external/enabled": true,
-"use_external/path": "res://assets/materials/plant_style.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
 }
 }
 }

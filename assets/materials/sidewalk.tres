@@ -1,18 +1,22 @@
-[gd_resource type="ShaderMaterial" load_steps=4 format=3]
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
 
-[ext_resource type="Shader" path="res://assets/shaders/ground_style.gdshader" id="1_shader"]
-[ext_resource type="CompressedTexture2DArray" path="res://assets/textures/style/house_albedo.png" id="2_albedo"]
-[ext_resource type="CompressedTexture2DArray" path="res://assets/textures/style/house_normal.png" id="3_normal"]
+; Boden im Bilderbuch-Stil (Stil-Umbau, Etappe 4h): Shader assets/shaders/storybook_ground.gdshader,
+; Muster und Farben hier einstellbar (Inspektor → Shader Parameters).
+
+[ext_resource type="Shader" path="res://assets/shaders/storybook_ground.gdshader" id="1_shader"]
 
 [resource]
-resource_name = "Gehwegplatten"
+resource_name = "Gehwegplatten (Bilderbuch)"
 render_priority = 0
 shader = ExtResource("1_shader")
-shader_parameter/albedo_layers = ExtResource("2_albedo")
-shader_parameter/normal_layers = ExtResource("3_normal")
-shader_parameter/layer = 13
-shader_parameter/tile_size = 1.8
-shader_parameter/tint = Color(1.05, 1.05, 1.05, 1)
-shader_parameter/roughness_value = 0.9
-shader_parameter/normal_strength = 1.0
+shader_parameter/pattern = 1
+shader_parameter/stone_size = 0.620
+shader_parameter/color_a = Color(0.800, 0.740, 0.650, 1)
+shader_parameter/color_b = Color(0.860, 0.800, 0.700, 1)
+shader_parameter/color_c = Color(0.740, 0.700, 0.650, 1)
+shader_parameter/color_accent = Color(0.840, 0.720, 0.600, 1)
+shader_parameter/joint_color = Color(0.520, 0.460, 0.400, 1)
+shader_parameter/joint = 0.018
+shader_parameter/roughness_value = 0.90
+shader_parameter/bump_strength = 0.90
 shader_parameter/rotate_90 = false

@@ -47,8 +47,7 @@ OBSTACLES = {
     "Pflanzkasten links": ((-1.5, -0.43), (0.78, 0.42), 0.4),
     "Topf an der Tür links": ((-0.86, -0.48), (0.44, 0.44), 0.42),
     "Topf an der Tür rechts": ((0.86, -0.46), (0.4, 0.4), 0.4),
-    "Kreidetafel": ((1.42, -0.62), (0.56, 0.42), 0.85),
-    "Kübel rechts": ((1.98, -0.52), (0.5, 0.5), 0.5),
+    "Kreidetafel": ((1.42, -0.56), (0.56, 0.42), 0.85),
 }
 
 
@@ -222,8 +221,8 @@ def outside(M, C):
                    mat="box", rail=False)
     SC.pot(M, C["pots"], "Topf an der Tür links", (-0.86, -T.pot_out(0.2), 0.0), 0.2, 0.4, 61, mat="pot")
     SC.pot(M, C["pots"], "Topf an der Tür rechts", (0.86, -T.pot_out(0.18), 0.0), 0.18, 0.38, 62, mat="pot_light")
-    SC.chalkboard(M, C["deco"], (1.42, -0.62), -8, SC.sign_material("bakery_shop", "chalkboard"))
-    SC.pot(M, C["pots"], "Kübel rechts", (1.98, -T.pot_out(0.23), 0.0), 0.23, 0.46, 63, mat="pot_dark", style="tall")
+    # Kreidetafel dicht an der Wand; an der Ecke zur kleinen Gasse bleibt der schmale Gehweg frei
+    SC.chalkboard(M, C["deco"], (1.42, -0.56), -8, SC.sign_material("bakery_shop", "chalkboard"))
 
 
 def build_scene():

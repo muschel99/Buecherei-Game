@@ -470,6 +470,8 @@ var autosave_delay: float = 1.5
 ##                   Die Übergänge werden immer weich überblendet (sonst Linie im Fensterlicht).
 ##   dust_amount     Anteil der Staubteilchen im Lichtstrahl (1 = alle)
 ##   render_scale    Auflösung der 3D-Ansicht (1 = voll, 0.8 = etwas weicher, schneller)
+##   lod_threshold   Ab wie vielen Bildpunkten Abweichung Godot vereinfachte Fassungen (LODs) der
+##                   Modelle nimmt (seit dem Stil-Umbau: größer = früher einfacher, schneller)
 ##   street_shadow_distance  Passanten und Fahrzeuge werfen nur bis zu dieser Entfernung
 ##                   Schatten (Meter, 0 = nie; seit Etappe 5a)
 ##   street_shadow_detail  Bis zu dieser Entfernung (Meter) werfen Passanten Schatten mit bewegten
@@ -477,15 +479,15 @@ var autosave_delay: float = 1.5
 var graphics_presets: Array[Dictionary] = [
 	{"ssao": false, "ssao_half_size": true, "ssil": false, "volumetric_fog": false, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 1024, "sun_shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 0,
-		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8,
+		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8, "lod_threshold": 4.0,
 		"street_shadow_distance": 15.0, "street_shadow_detail": 0.0},
 	{"ssao": true, "ssao_half_size": true, "ssil": false, "volumetric_fog": true, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 2048, "sun_shadow_size": 2048, "soft_shadows": 2, "lamp_shadows": 1,
-		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
+		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0, "lod_threshold": 2.0,
 		"street_shadow_distance": 35.0, "street_shadow_detail": 8.0},
 	{"ssao": true, "ssao_half_size": false, "ssil": true, "volumetric_fog": true, "fog_volume_size": 64,
 		"msaa": 2, "fxaa": false, "shadow_size": 4096, "sun_shadow_size": 4096, "soft_shadows": 3, "lamp_shadows": 2,
-		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0,
+		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0, "lod_threshold": 1.0,
 		"street_shadow_distance": 60.0, "street_shadow_detail": 15.0},
 ]
 ## Stand der Sonne (seit Etappe 4h, Wunsch: höher und etwas nach rechts): Höhe über dem Horizont

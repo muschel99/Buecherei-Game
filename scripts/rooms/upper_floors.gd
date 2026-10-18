@@ -53,12 +53,25 @@ extends Node3D
 @export var plinth_sides := PackedStringArray(["diagonal", "front", "left", "back"])
 @export var plinth_material: Material = preload("res://assets/materials/plinth_stone.tres")
 
+## Seit dem Stil-Umbau (Etappe 4h) zeigt das Modell der Bücherei-Fassade (assets/models/world/
+## library_facade.glb, Knoten "Facade" im Raum) auch Obergeschosse, Dach und Sockel im Bilderbuch-
+## Stil. Dann baut UpperFloors nur noch die leeren Geschoss-Knoten (Floor1 …, zum späteren
+## Freischalten), aber keine eigenen Wände, Fenster, Dächer und Sockel.
+@export var build_visuals := true
+
 ## Namen der Seiten des Grundrisses in der Reihenfolge der Ecken (siehe _outline).
 const SIDE_NAMES := ["diagonal", "front", "right", "back", "left"]
 
 
 func _ready() -> void:
 	var outline := _outline()
+	if not build_visuals:
+		for index in GameConfig.upper_floor_count:
+			var storey := Node3D.new()
+			storey.name = "Floor%d" % (index + 1)
+			storey.position.y = get_floor_base(index)
+			add_child(storey)
+		return
 	for index in GameConfig.upper_floor_count:
 		add_child(_build_floor(index, outline))
 	add_child(_build_roof(outline))

@@ -80,14 +80,6 @@ func _apply_graphics_quality() -> void:
 	_apply_sun_shadows(preset)
 
 
-## Sonnenschatten: Die Sonne verteilt ihre Schatten auf mehrere Stufen ("Kaskaden") – nah
-## an der Kamera fein, weiter weg gröber. Ohne Überblendung sieht man dort, wo eine Stufe in
-## die nächste übergeht, eine Linie im Fensterlicht, die beim Laufen mitwandert. Deshalb
-## werden die Übergänge weich überblendet.
-## Die Schattenkanten macht der normale weiche Filter (Sun: shadow_blur) weich. Eine "breite
-## Sonnenscheibe" (light_angular_distance > 0) bleibt bewusst aus (seit Etappe 4c): Sie ist
-## teurer und zeigte an langen geraden Kanten (Dachkante, Fenstersturz, Fensterlicht am Boden)
-## eine Treppenlinie.
 ## Sonne nach GameConfig.sun_elevation / sun_azimuth ausrichten (das Licht fällt von dort ein).
 func _apply_sun_direction() -> void:
 	var el := deg_to_rad(GameConfig.sun_elevation)
@@ -97,6 +89,14 @@ func _apply_sun_direction() -> void:
 	_sun.basis = Basis.looking_at(-to_sun, Vector3.UP)
 
 
+## Sonnenschatten: Die Sonne verteilt ihre Schatten auf mehrere Stufen ("Kaskaden") – nah
+## an der Kamera fein, weiter weg gröber. Ohne Überblendung sieht man dort, wo eine Stufe in
+## die nächste übergeht, eine Linie im Fensterlicht, die beim Laufen mitwandert. Deshalb
+## werden die Übergänge weich überblendet.
+## Die Schattenkanten macht der normale weiche Filter (Sun: shadow_blur) weich. Eine "breite
+## Sonnenscheibe" (light_angular_distance > 0) bleibt bewusst aus (seit Etappe 4c): Sie ist
+## teurer und zeigte an langen geraden Kanten (Dachkante, Fenstersturz, Fensterlicht am Boden)
+## eine Treppenlinie.
 func _apply_sun_shadows(preset: Dictionary) -> void:
 	var two := int(preset.get("sun_cascades", 4)) <= 2
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if two \

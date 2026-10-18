@@ -22,6 +22,8 @@ extends Node3D
 const TRAFFIC_GROUP := "traffic_points"
 ## Breite der hellen Bordsteinkante oben auf dem Gehweg.
 const CURB_TOP := 0.15
+## Rundung der Bordsteinkante zur Fahrbahn hin (Stil-Umbau, Etappe 4h): weich statt scharf.
+const CURB_ROUND := 0.045
 ## So weit reichen die Gehwege an den Enden unter die Häuser (die Hausfronten folgen den
 ## Kurven in geraden Stücken – so bleibt nirgends eine Lücke ohne Boden).
 const WALK_EXTRA := 1.5
@@ -67,15 +69,18 @@ func _build_surfaces() -> void:
 	var stone := WorldMesh.new()
 	var road := WorldMesh.new()
 	var white := Color.WHITE  # Farbe kommt aus dem Material
+	var r := CURB_ROUND
 	# Gehweg auf der Bücherei-Seite (die Ecke an der Schräge und die Gasse bauen Plaza/Alley)
 	_rect(walk, x0, x1, curb + s, front, 0.0)
-	_rect(stone, x0, x1, curb, curb + s, 0.0)
+	_rect(stone, x0, x1, curb + r, curb + s, 0.0)
 	# Gehweg gegenüber
 	_rect(walk, x0, x1, opposite, far - s, 0.0)
-	_rect(stone, x0, x1, far - s, far, 0.0)
-	# Bordsteinkanten (senkrecht, zur Fahrbahn hin) und Fahrbahn
-	stone.add_wall(Vector2(x0, curb), Vector2(x1, curb), road_y, 0.0, Vector3.FORWARD, white)
-	stone.add_wall(Vector2(x0, far), Vector2(x1, far), road_y, 0.0, Vector3.BACK, white)
+	_rect(stone, x0, x1, far - s, far - r, 0.0)
+	# Bordsteinkanten: weich gerundet, darunter senkrecht zur Fahrbahn; Fahrbahn
+	stone.add_round_edge(Vector2(x0, curb), Vector2(x1, curb), Vector2(0.0, -1.0), 0.0, r, white)
+	stone.add_round_edge(Vector2(x0, far), Vector2(x1, far), Vector2(0.0, 1.0), 0.0, r, white)
+	stone.add_wall(Vector2(x0, curb), Vector2(x1, curb), road_y, -r, Vector3.FORWARD, white)
+	stone.add_wall(Vector2(x0, far), Vector2(x1, far), road_y, -r, Vector3.BACK, white)
 	_rect(road, x0, x1, far, curb, road_y)
 	for side in [1, -1]:
 		_build_end(walk, stone, road, side)
@@ -153,13 +158,14 @@ func _build_end(walk: WorldMesh, stone: WorldMesh, road: WorldMesh, side: int) -
 		var part: String = b.part
 		_band(road, a, b, side, -half, half, road_y)
 		for edge in [1.0, -1.0]:
-			_band(stone, a, b, side, edge * half, edge * (half + s), 0.0)
+			_band(stone, a, b, side, edge * (half + CURB_ROUND), edge * (half + s), 0.0)
 			_band(walk, a, b, side, edge * (half + s), edge * _walk_outer(part, edge), 0.0)
-			# Senkrechte Bordsteinkante zur Fahrbahn hin
+			# Bordsteinkante zur Fahrbahn hin: gerundet, darunter senkrecht
 			var p := StreetLayout.end_offset(a, edge * half, side)
 			var q := StreetLayout.end_offset(b, edge * half, side)
-			var toward := StreetLayout.end_offset(a, 0.0, side) - p
-			stone.add_wall(p, q, road_y, 0.0, Vector3(toward.x, 0.0, toward.y).normalized(), Color.WHITE)
+			var toward := (StreetLayout.end_offset(a, 0.0, side) - p).normalized()
+			stone.add_round_edge(p, q, toward, 0.0, CURB_ROUND, Color.WHITE)
+			stone.add_wall(p, q, road_y, -CURB_ROUND, Vector3(toward.x, 0.0, toward.y), Color.WHITE)
 
 
 ## Bis zu diesem Abstand von der Mittellinie reicht der Gehweg (edge: 1 = Bücherei-Seite,

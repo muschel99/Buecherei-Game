@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://57jyw23gxd0n"
+uid="uid://b5jx5388xyy2"
 path="res://.godot/imported/alley_opposite.glb-18400122cc2af159be3a606ccdea9f0e.scn"
 
 [deps]
@@ -24,7 +24,7 @@ nodes/import_as_skeleton_bones=false
 nodes/use_name_suffixes=true
 nodes/use_node_type_suffixes=true
 meshes/ensure_tangents=true
-meshes/generate_lods=false
+meshes/generate_lods=true
 meshes/create_shadow_meshes=true
 meshes/light_baking=1
 meshes/lightmap_texel_size=0.2
@@ -41,28 +41,50 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"glass": {
+"Glas": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_glass.tres",
-"use_external/path": "res://assets/materials/house_glass.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/glas.tres",
+"use_external/path": "res://assets/materials/storybook/glas.tres"
 },
-"glass_clear": {
+"Laternenglas leuchtend": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass_clear.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/laternenglas_leuchtend.tres",
+"use_external/path": "res://assets/materials/storybook/laternenglas_leuchtend.tres"
 },
-"glass_inner": {
+"Sammel Holz": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass_inner.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_holz.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_holz.tres"
 },
-"house": {
+"Sammel Metall": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_style.tres",
-"use_external/path": "res://assets/materials/house_style.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
 },
-"plant": {
+"Sammel Putz": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/plant_style.tres",
-"use_external/path": "res://assets/materials/plant_style.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_putz.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_putz.tres"
+},
+"Sammel Putz innen": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_putz_innen.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_putz_innen.tres"
+},
+"Sammel Quader": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_quader.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_quader.tres"
+},
+"Sammel Stein": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_stein.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_stein.tres"
+},
+"Vorhang Leinen": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/vorhang_leinen.tres",
+"use_external/path": "res://assets/materials/storybook/vorhang_leinen.tres"
 }
 }
 }

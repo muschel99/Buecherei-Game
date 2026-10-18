@@ -24,6 +24,9 @@ from mathutils import Matrix, Vector, noise
 FONT_DIR = "/usr/share/fonts/truetype/dejavu"
 # Alle weichen Kanten (Bevel) um diesen Faktor breiter als im Bau-Script angegeben
 BEVEL_SCALE = 1.6
+# Rundungsstufen der weichen Kanten: (große Teile ab 1 cm, kleine Teile). Die Wohnhäuser setzen
+# weniger (sparsamer fürs Spiel), die Läden behalten (3, 2).
+BEVEL_SEGMENTS = (3, 2)
 
 
 def srgb(c):
@@ -77,7 +80,7 @@ def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bum
              emit_color=None, glass=False, color2=None, stripes=None):
     """Mattes Material: Grundfarbe x Farbton je Teil ("tint") x leichte Flecken (Rauschen).
     grain: plaster (Putz), stone, wood (feine Maserung), paint (gestrichenes Holz, matt), fabric, leaf,
-    smooth, brick – wie im Godot-Shader storybook.gdshaderinc.
+    smooth, brick, ashlar (große Quader) – wie im Godot-Shader storybook.gdshaderinc.
     stripes = Breite der Streifen (m) in color/color2 (Markisenstoff)."""
     if name in bpy.data.materials:
         return bpy.data.materials[name]
@@ -167,20 +170,28 @@ def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bum
         st.inputs["Detail"].default_value = 4.0
         L.new(coord.outputs["Object"], st.inputs["Vector"])
         height = st.outputs["Fac"]
-    elif grain == "brick":
+    elif grain in ("brick", "ashlar"):
+        # Mauerwerk wie im Godot-Shader: Ziegel 34 x 11,5 cm, Quader 46 x 27 cm; Steinfarbe =
+        # Grundfarbe x Farbton des Teils ("tint"), Fuge = color2 (nicht eingefärbt)
+        ash = grain == "ashlar"
         brick = N.new("ShaderNodeTexBrick")
-        # Bilderbuch-Ziegel (34 x 11,5 cm, weiche Fugen), wie im Godot-Shader storybook.gdshaderinc;
-        # color2 = Farbe der Fuge
         brick.inputs["Scale"].default_value = 1.0
-        brick.inputs["Mortar Size"].default_value = 0.01
-        brick.inputs["Mortar Smooth"].default_value = 0.6
+        brick.inputs["Mortar Size"].default_value = 0.012 if ash else 0.01
+        brick.inputs["Mortar Smooth"].default_value = 0.7 if ash else 0.6
         brick.inputs["Bias"].default_value = 0.0
-        brick.inputs["Brick Width"].default_value = 0.34
-        brick.inputs["Row Height"].default_value = 0.115
-        brick.inputs["Color1"].default_value = (*srgb(color), 1)
-        brick.inputs["Color2"].default_value = (*srgb((0.8 * 0.5 + color[0] * 0.5, 0.66 * 0.5 + color[1] * 0.5, 0.5 * 0.5 + color[2] * 0.5)), 1)
+        brick.inputs["Brick Width"].default_value = 0.46 if ash else 0.34
+        brick.inputs["Row Height"].default_value = 0.27 if ash else 0.115
+        if ash:
+            brick.offset = 0.37
+        L.new(mul.outputs[0], brick.inputs["Color1"])
+        dark = N.new("ShaderNodeMixRGB")
+        dark.blend_type = "MULTIPLY"
+        dark.inputs[0].default_value = 1.0
+        dark.inputs[2].default_value = (0.86, 0.84, 0.8, 1) if not ash else (1.04, 1.02, 0.95, 1)
+        L.new(mul.outputs[0], dark.inputs[1])
+        L.new(dark.outputs[0], brick.inputs["Color2"])
         brick.inputs["Mortar"].default_value = (*srgb(color2 or (0.6, 0.53, 0.44)), 1)
-        # Ziegel liegen waagerecht auf allen Seiten: Koordinaten (x + y, z)
+        # Steine liegen waagerecht auf allen Seiten: Koordinaten (x + y, z)
         sep = N.new("ShaderNodeSeparateXYZ")
         L.new(coord.outputs["Object"], sep.inputs[0])
         xy = N.new("ShaderNodeMath")
@@ -190,12 +201,7 @@ def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bum
         L.new(xy.outputs[0], comb.inputs["X"])
         L.new(sep.outputs["Z"], comb.inputs["Y"])
         L.new(comb.outputs[0], brick.inputs["Vector"])
-        mul2 = N.new("ShaderNodeMixRGB")
-        mul2.blend_type = "MULTIPLY"
-        mul2.inputs[0].default_value = 1.0
-        L.new(brick.outputs["Color"], mul2.inputs[1])
-        L.new(attr.outputs["Color"], mul2.inputs[2])
-        col = mul2.outputs[0]
+        col = brick.outputs["Color"]
         height = brick.outputs["Fac"]
     else:
         fine = N.new("ShaderNodeTexNoise")
@@ -602,7 +608,7 @@ class Body:
             # gerundet bei größeren Teilen
             mod = obj.modifiers.new("Weiche Kanten", "BEVEL")
             mod.width = self.bevel * BEVEL_SCALE
-            mod.segments = 3 if self.bevel >= 0.01 else 2
+            mod.segments = BEVEL_SEGMENTS[0] if self.bevel >= 0.01 else BEVEL_SEGMENTS[1]
             mod.limit_method = "ANGLE"
             mod.angle_limit = math.radians(40)
             mod.harden_normals = False

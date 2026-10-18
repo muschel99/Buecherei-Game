@@ -823,6 +823,60 @@ handwerklich, bewusst unperfekt, aber solide gebaut (Regeln: docs/STYLE_GUIDE.md
 - [ ] Kopfsteinpflaster und Wege handverlegt (versetzte Reihen, kleine Höhenunterschiede)
 - [ ] Mehr Grün an Straßenrändern und Plätzen (Büsche, Bäume)
 
+### Stil-Umbau der Welt (Etappe 4h, selbstständig abgearbeitet)
+Auftrag der Entwicklerin (2026-10-18): die ganze Welt im Stil der Ladenhäuser und der Vorlagebilder
+(süß, weich, cozy, leicht stilisiert; Cottages mit cremefarbenem Putz, Terrakotta-Ziegeln, runden
+Gauben, Rundbogenfenstern, braunen Backsteinen, rundem Kopfsteinpflaster, viel Grün). Jedes Detail
+ein geschlossener Körper. Ohne Rückfragen: Entscheidungen werden unten unter „Entscheidungen“
+notiert. Nach jedem Schritt: Screenshots prüfen, Spielablauf prüfen (Laufen, Grenzen, Kollision,
+Lieferung, Laden, street_life_check), Commit + Push. Figuren und Straßenleben bleiben, wie sie sind.
+Bricht eine Sitzung ab: hier beim ersten offenen Punkt weitermachen.
+- [x] 1. Wohnhäuser neu (eigene Datei, Schema wie die Ladenhäuser): alle Reihenhäuser und
+      Kulissenhäuser im neuen Stil, Breiten/Höhen/Farben der bisherigen Varianten als Anhaltspunkt,
+      Laternen nach Plan (siehe oben), sparsam für alle drei Grafikstufen
+- [x] 2. Gassenende, Hofmauern und die Fassade der Bücherei (außen) im neuen Stil
+- [ ] 3. Straße, Gehwege, Bordsteine, Platz, Gasse und Eingangstreppe: weiche Kanten, warme
+      Steintöne, Platten und Pflaster leicht unregelmäßig
+- [ ] 4. Kleine Dinge draußen (Laternen, Schilder, Türen, Fensterläden, Briefkästen, Abflussdeckel,
+      Bank) im selben Stil
+- [ ] 5. Pflanzen ganz neu: üppig, verschlungen, rund; jedes Blatt ein Körper; Efeu und
+      Kletterpflanzen an Fassaden, Blumenkästen, Kübelpflanzen vor Türen, Ranken an Torhaus und
+      Gasse, kleine Bäume/Büsche auf dem Platz; als austauschbare Szenen mit Vorlagen in
+      assets/models/templates/
+- [ ] 6. Rundgang: Screenshots aller wichtigen Blickpunkte, angleichen (auch Ladenhäuser, falls
+      nötig), Holzmaserung und Farben authentischer, so lange bis die Welt stimmig ist
+- [ ] 7. Doku: GAME_DESIGN.md, ROADMAP.md, ASSET_GUIDE.md (neue Dateien, eigene Modelle für Häuser
+      und Pflanzen einsetzen); Zusammenfassung mit Screenshots und Entscheidungsliste
+
+**Entscheidungen (selbst getroffen):**
+- Wohnhäuser: dieselben 29 Häuser an denselben Stellen (Breite, Tiefe, Geschosse, Dachform,
+  Wandart, Fensterspalten, Türseite, freie Seitenwände aus der bisherigen Beschreibung
+  build_street.make_spec), aber komplett neu gebaut (tools/blender/storybook_houses.py +
+  build_storybook_street.py). Der Bilderbuch-Stil je Haus (Putzfarbe, Ziegel-/Quaderton,
+  Fensterform Rundbogen/Segmentbogen/Rechteck, Brettertür mit Bogen, Gauben, Markise, Vordach …)
+  kommt fest aus dem Hausnamen – bei jedem Neubau gleich.
+- Je Haus eine eigene .blend (assets/models/source/houses/storybook/) statt einer großen Datei –
+  so lässt sich jedes Haus einzeln nachmodellieren und wird nicht überschrieben.
+- Leistung: Im Spiel teilen sich gleichartige Oberflächen ein „Sammel-Material“ (Farbe steckt in
+  den Ecken) → 8–10 Zeichenaufrufe je Haus statt ~30; Dächer aus Ziegelreihen (je Reihe ein Körper
+  mit runden Ziegelkanten) statt Einzelziegeln; Rückseiten und ferne Kulissenhäuser schlichter;
+  Godot-LODs mit Schwelle je Grafikstufe (GameConfig lod_threshold).
+- Brett-Fensterläden mit Z-Riegel statt Lamellenläden (Cottage-Stil, ein Fünftel der Dreiecke).
+- Keine Erker in den Gehweg (Passanten/Physik); stattdessen kleine Stoffmarkisen über einzelnen
+  Erdgeschossfenstern (wie Vorlagebild 2). Vor Haustüren nur flache Platten, keine Stufen.
+- Mansard-/Flachdach-Varianten der alten Häuser werden Satteldächer mit Gauben.
+- Pflanzen gehören nicht ins Haus-Modell: Häuser legen leere Pflanzplätze an (PlantSpot_…),
+  Schritt 5 setzt dort austauschbare Pflanzen-Szenen ein.
+- Laternen an Wohnhäusern nach Plan über HouseFacade.lanterns (ein gemeinsames Modell).
+- Bücherei: neue Außenhülle als Blender-Modell (grüne Holzfront wie bisher, darüber Ziegel-
+  Obergeschoss mit Bogenfenstern, Walmdach aus Ziegelreihen); UpperFloors baut nur noch die leeren
+  Geschoss-Knoten (build_visuals = false). Fenster, Tür und Wände des Ladens bleiben unverändert.
+- Gassen: Rückwände mit Fenstern, Feldsteinsockeln und Dachansätzen, Hofmauern, Lattenzaun, runde
+  Holzbank; Baum, Hecke, Beete, Efeu und Töpfe kommen in Schritt 5 auf Pflanzplätze.
+- Kleine Wand-Briefkästen an etwa der Hälfte der nahen Wohnhäuser (Cozy-Detail, neu).
+- build_street.py baut nur noch mit „-- --alter-stil“ (sonst würde es die neuen Häuser in
+  houses.tscn zurückstellen).
+
 ## Etappe 5 – Besucher
 Leitgedanke: Bevor Kunden in die Bücherei kommen, wird erst die Straße lebendig (5a); danach
 kommen Besucher herein (weitere Unterschritte).

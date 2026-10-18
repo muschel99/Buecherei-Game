@@ -1005,3 +1005,184 @@ def street_lantern(M, C, name, x, z, seed=60):
     Mit placed() an jede Wand setzbar."""
     SP.street_wall_lantern(M, C["deco"], name + " Arm", name + " Kopf", (x, 0.0, z), seed=seed)
     SC.add_light(name + " Licht", (x, -0.72, z - 0.36), 2700, 30, C["light"], radius=0.05)
+
+
+# --- Dächer aus Ziegelreihen (sparsam: eine Reihe = ein Körper) ---
+
+def _tile_strip(body, frame, xa, xb, y_lo, y_hi, rnd, tile_w, scallop, thick, odd, simple):
+    """Eine Ziegelreihe von xa bis xb (Dachkoordinaten): runde Ziegel-Unterkanten (Biberschwanz),
+    vorn weich gerundet, leicht angehoben (Reihen liegen wie Ziegel übereinander), jeder Ziegel
+    mit eigenem Farbton. Ein geschlossener Körper."""
+    n = max(1, int(round((xb - xa) / tile_w)))
+    tw = (xb - xa) / n
+    bounds = [xa]
+    x = xa + (tw * 0.5 if odd else tw)
+    while x < xb - 0.04:
+        bounds.append(x)
+        x += tw
+    bounds.append(xb)
+    samples = (0.0, 0.5) if simple else (0.0, 0.33, 0.67)
+    pts, cols = [], []
+    for i in range(len(bounds) - 1):
+        u0, u1 = bounds[i], bounds[i + 1]
+        v = 1.0 + rnd.uniform(-0.11, 0.09)
+        w = rnd.uniform(-0.04, 0.04)
+        col = (v * (1 + w), v, v * (1 - w * 1.5))
+        f = min(1.0, (u1 - u0) / tw)
+        for t in samples:
+            pts.append((u0 + t * (u1 - u0), y_lo - scallop * f * math.sin(math.pi * t)))
+            cols.append(col)
+    pts.append((xb, y_lo))
+    cols.append(cols[-1])
+    lift = thick * 0.9                          # Unterkante steht so weit über der Dachfläche
+    span = max(0.05, y_hi - y_lo)
+
+    def z_at(y, z):
+        return z + lift * (y_hi - y) / span      # eben: Reihe um die Oberkante gekippt
+
+    r = thick * 0.7
+    if simple:
+        prof = [(0.0, thick), (0.0, 0.0)]
+    else:
+        prof = [(r, thick), (0.0, thick - r * 0.6), (0.0, 0.0)]
+    bm = body.bm
+    rings = []
+    for (x, y), c in zip(pts, cols):
+        ring = []
+        for dy, z in prof:
+            vtx = bm.verts.new(frame @ Vector((x, y + dy, z_at(y + dy, z))))
+            vtx[body.tint] = (*c, 1.0)
+            ring.append(vtx)
+        rings.append(ring)
+    tl = bm.verts.new(frame @ Vector((xa, y_hi, z_at(y_hi, thick))))
+    tr = bm.verts.new(frame @ Vector((xb, y_hi, z_at(y_hi, thick))))
+    bl = bm.verts.new(frame @ Vector((xa, y_hi, z_at(y_hi, 0.0))))
+    br = bm.verts.new(frame @ Vector((xb, y_hi, z_at(y_hi, 0.0))))
+    for vtx, c in ((tl, cols[0]), (bl, cols[0]), (tr, cols[-1]), (br, cols[-1])):
+        vtx[body.tint] = (*c, 1.0)
+    faces = [bm.faces.new([rg[0] for rg in rings] + [tr, tl]), bm.faces.new([bl, br] + [rg[-1] for rg in reversed(rings)])]
+    for i in range(len(rings) - 1):
+        a, b = rings[i], rings[i + 1]
+        for k in range(len(prof) - 1):
+            faces.append(bm.faces.new((a[k], b[k], b[k + 1], a[k + 1])))
+    faces.append(bm.faces.new([tl, bl] + list(reversed(rings[0]))))
+    faces.append(bm.faces.new([tr] + rings[-1] + [br]))
+    faces.append(bm.faces.new((tl, tr, br, bl)))
+    bmesh.ops.recalc_face_normals(bm, faces=faces)
+    for fc in faces:
+        fc.smooth = True
+    return faces
+
+
+def tile_rows(body, b0, b1, t0, t1, rnd, tile_w=0.3, row=0.24, thick=0.035, scallop=0.05, holes=(), simple=False):
+    """Dachziegel als Reihen auf einer Dachfläche (Trapez: Traufe b0 → b1, oben t0 → t1): jede Reihe
+    ein Körper mit runden Ziegelkanten und eigenem Farbton je Ziegel (storybook-weich, aber nur ein
+    Bruchteil der Dreiecke einzelner Ziegel). holes = Aussparungen (x0, x1, y0, y1) in Dach-
+    koordinaten (x entlang der Traufe ab b0, y hangaufwärts), z. B. Gauben und Schornsteine.
+    simple = schlichter (Rückseiten, ferne Häuser). Liefert den Rahmen der Dachfläche."""
+    b0, b1, t0, t1 = (Vector(v) for v in (b0, b1, t0, t1))
+    d = b1 - b0
+    length = d.length
+    d.normalize()
+    up = (t0 - b0) - d * (t0 - b0).dot(d)
+    slope = up.length
+    u = up / slope
+    n = d.cross(u)
+    xa_top, xb_top = (t0 - b0).dot(d), (t1 - b0).dot(d)
+    frame = Matrix(((d.x, u.x, n.x, b0.x), (d.y, u.y, n.y, b0.y), (d.z, u.z, n.z, b0.z), (0, 0, 0, 1)))
+    s, k = 0.0, 0
+    while s < slope - 0.06:
+        y_hi = min(slope, s + row + 0.07)
+        t = min(1.0, (s + y_hi) / 2 / slope)
+        x0, x1 = xa_top * t, length + (xb_top - length) * t
+        segs = [(x0, x1)]
+        for hx0, hx1, hy0, hy1 in holes:
+            if hy1 > s - 0.06 and hy0 < y_hi:
+                out = []
+                for a, b in segs:
+                    if hx1 <= a or hx0 >= b:
+                        out.append((a, b))
+                        continue
+                    if hx0 - a > 0.08:
+                        out.append((a, hx0))
+                    if b - hx1 > 0.08:
+                        out.append((hx1, b))
+                segs = out
+        for a, b in segs:
+            _tile_strip(body, frame, a, b, s, y_hi, rnd, tile_w, scallop * (0.6 if simple else 1.0), thick, k % 2 == 1, simple)
+        s += row
+        k += 1
+    return frame
+
+
+def cozy_roof(M, C, name, frame, length, span, eaves, pitch, mat, cap_mat=None, ends=(0.25, 0.25), holes=(), seed=8,
+              back_simple=True, both=True, tile_w=0.33, row=0.26, verge=True, front_simple=False):
+    """Satteldach im Bilderbuch-Stil (lokal: x = Firstrichtung, y quer, First bei y = 0, z oben;
+    Traufen bei y = -span (vorn) und +span): Dachkern, Ziegelreihen, runder First, Ortgang an beiden
+    Enden. holes = Aussparungen der vorderen Fläche (x ab dem linken Ende, y hangaufwärts).
+    Liefert (Firsthöhe, z(y) der vorderen Fläche, Winkel)."""
+    rnd = random.Random(seed)
+    a = math.radians(pitch)
+    ridge = eaves + span * math.tan(a)
+    slope = span / math.cos(a)
+    core = Body(name + " Dachflächen", M[mat], C["roof"], seed=seed, vary=0.04, bevel=0.012)
+    tiles = Body(name + " Ziegelreihen", M[mat], C["roof"], seed=seed + 1, vary=0.0)
+    x0, x1 = -length / 2 - ends[0], length / 2 + ends[1]
+    for side in ((-1, 1) if both else (-1,)):
+        start = Vector((x0 if side < 0 else x1, side * span, eaves))
+        d = Vector((1.0 if side < 0 else -1.0, 0, 0))
+        uu = Vector((0, -side * span, ridge - eaves)).normalized()
+        nn = d.cross(uu)
+        m = frame @ Matrix(((d.x, uu.x, nn.x, start.x), (d.y, uu.y, nn.y, start.y), (d.z, uu.z, nn.z, start.z), (0, 0, 0, 1)))
+        core.box((0, 0, 0), (x1 - x0, slope + 0.04, 0.16), step=0.6, dent=0.006,
+                 matrix=m @ Matrix.Translation(((x1 - x0) / 2, slope / 2, -0.09)))
+        top = start + uu * slope
+        tile_rows(tiles, frame @ start, frame @ (start + d * (x1 - x0)), frame @ top, frame @ (top + d * (x1 - x0)), rnd,
+                  tile_w=tile_w, row=row, holes=holes if side < 0 else (), simple=(back_simple and side > 0) or front_simple)
+    core.build()
+    tiles.build()
+    caps = Body(name + " First und Ortgang", M[cap_mat or mat], C["roof"], seed=seed + 2, vary=0.06, bevel=0.01)
+    caps.tube([frame @ Vector((x0 - 0.02, 0, ridge + 0.05)), frame @ Vector((0, 0, ridge + 0.07)), frame @ Vector((x1 + 0.02, 0, ridge + 0.05))],
+              0.085, segs=12, wobble=0.03, round_ends=True)
+    if verge:
+        for xe in (x0 + 0.02, x1 - 0.02):
+            for side in ((-1, 1) if both else (-1,)):
+                lo = Vector((xe, side * (span + 0.03), eaves + 0.04))
+                hi = Vector((xe, 0.0, ridge + 0.04))
+                caps.tube([frame @ lo, frame @ lo.lerp(hi, 0.5), frame @ hi], 0.055, segs=10, wobble=0.02, round_ends=True)
+    caps.build()
+    return ridge, (lambda y: eaves + (span - abs(y)) * math.tan(a)), a
+
+
+def cozy_hip_roof(M, C, name, outline, hipped, eaves, rise, run, overhang, mat, cap_mat=None, simple=(), holes=None, seed=8):
+    """Walmdach aus Ziegelreihen über einem beliebigen Grundriss (wie hip_roof, aber im Stil der
+    Wohnhäuser): Kanten mit hipped[i] steigen um rise auf run Meter nach innen an, die anderen enden
+    senkrecht (Brandwand). simple = Kanten mit schlichten Reihen (Rückseiten). holes = {Kante:
+    [(x0, x1, y0, y1)]} Aussparungen (Schornstein). Oben bleibt eine flache Fläche. Grate und Firste
+    als runde Wülste."""
+    rnd = random.Random(seed)
+    low = offset_polygon(outline, [-overhang if h else 0.0 for h in hipped])
+    high = offset_polygon(outline, [run if h else 0.0 for h in hipped])
+    core = Body(name + " Kern", M[mat], C["roof"], seed=seed, vary=0.03)
+    roof_core(core, low, high, eaves - 0.06, eaves + rise - 0.03)
+    core.build()
+    tiles = Body(name + " Ziegelreihen", M[mat], C["roof"], seed=seed + 1, vary=0.0)
+    caps = Body(name + " Grate", M[cap_mat or mat], C["roof"], seed=seed + 2, vary=0.06, bevel=0.01)
+    n = len(outline)
+    for i in range(n):
+        if not hipped[i]:
+            continue
+        j = (i + 1) % n
+        b0, b1 = low[i].to_3d(), low[j].to_3d()
+        t0, t1 = high[i].to_3d(), high[j].to_3d()
+        b0.z = b1.z = eaves
+        t0.z = t1.z = eaves + rise
+        tile_rows(tiles, b0, b1, t0, t1, rnd, holes=(holes or {}).get(i, ()), simple=i in simple)
+        caps.tube([t0 + Vector((0, 0, 0.04)), t1 + Vector((0, 0, 0.04))], 0.07, segs=10, wobble=0.03, round_ends=True)
+        for k in (i, j):
+            lo, hi = low[k].to_3d(), high[k].to_3d()
+            lo.z, hi.z = eaves + 0.03, eaves + rise + 0.04
+            caps.tube([lo, hi], 0.065, segs=10, wobble=0.03, round_ends=True)
+    tiles.build()
+    caps.build()
+    return low, high

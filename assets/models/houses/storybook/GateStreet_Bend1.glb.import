@@ -1,0 +1,93 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://d3k5if2qlecig"
+path="res://.godot/imported/GateStreet_Bend1.glb-33e134c3dc09a025d44ddf2397d26f8d.scn"
+
+[deps]
+
+source_file="res://assets/models/houses/storybook/GateStreet_Bend1.glb"
+dest_files=["res://.godot/imported/GateStreet_Bend1.glb-33e134c3dc09a025d44ddf2397d26f8d.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"Glas": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/glas.tres",
+"use_external/path": "res://assets/materials/storybook/glas.tres"
+},
+"Sammel Lack": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_lack.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_lack.tres"
+},
+"Sammel Metall": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
+},
+"Sammel Putz": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_putz.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_putz.tres"
+},
+"Sammel Putz innen": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_putz_innen.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_putz_innen.tres"
+},
+"Sammel Quader": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_quader.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_quader.tres"
+},
+"Sammel Stein": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_stein.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_stein.tres"
+},
+"Sammel Ziegel": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_ziegel.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_ziegel.tres"
+},
+"Vorhang Leinen": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/vorhang_leinen.tres",
+"use_external/path": "res://assets/materials/storybook/vorhang_leinen.tres"
+}
+}
+}
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=0

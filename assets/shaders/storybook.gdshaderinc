@@ -8,7 +8,8 @@
 uniform vec4 base_color : source_color = vec4(0.9, 0.85, 0.75, 1.0);
 // Zweite Farbe: Streifen (Markise) bzw. Fugen der Ziegel
 uniform vec4 second_color : source_color = vec4(0.75, 0.35, 0.27, 1.0);
-// 0 Putz, 1 Stein, 2 Holz, 3 Ziegel, 4 Gewebe, 5 Blatt, 6 glatt, 7 Lack (gestrichenes Holz)
+// 0 Putz, 1 Stein, 2 Holz, 3 Ziegel, 4 Gewebe, 5 Blatt, 6 glatt, 7 Lack (gestrichenes Holz),
+// 8 Quader (große, runde Steinblöcke)
 uniform int grain = 0;
 // Breite der Streifen in m (0 = keine)
 uniform float stripe_width = 0.0;
@@ -118,34 +119,51 @@ void fragment() {
 		float s = fract((p.x + 0.012 * value_noise(p * 3.0)) / (stripe_width * 2.0));
 		col = s > 0.5 ? second_color.rgb : base_color.rgb;
 	}
-	if (grain == 3) {
-		// Ziegel im Läuferverband, waagerecht auf allen Seiten (Länge entlang x - z). Bilderbuch-
-		// Größe (34 x 11,5 cm), runde Kanten, jeder Stein in eigenem Braun – einzelne beige und
-		// dunkle dazwischen –, Fugen zurückgesetzt in gedämpftem Grau-Beige (second_color).
-		const float BW = 0.34;
-		const float BH = 0.115;
-		const float JOINT = 0.02;
+	bool masonry = grain == 3 || grain == 8;
+	if (masonry) {
+		// Mauerwerk im Läuferverband, waagerecht auf allen Seiten (Länge entlang x - z), runde
+		// Kanten, jeder Stein in eigenem Ton, Fugen zurückgesetzt in gedämpftem Grau-Beige
+		// (second_color, nicht eingefärbt). Ziegel: 34 x 11,5 cm, einzelne beige und dunkle Steine.
+		// Quader: 46 x 27 cm, Breiten je Reihe verschoben, manche Blöcke geteilt.
+		bool ashlar = grain == 8;
+		float BW = ashlar ? 0.46 : 0.34;
+		float BH = ashlar ? 0.27 : 0.115;
+		float JOINT = ashlar ? 0.024 : 0.02;
 		vec2 q = vec2(p.x - p.z, p.y);
 		float row = floor(q.y / BH);
-		q.x += mod(row, 2.0) * BW * 0.5;
+		q.x += ashlar ? hash(vec3(row, 1.7, 2.9)) * BW : mod(row, 2.0) * BW * 0.5;
 		vec2 id = vec2(floor(q.x / BW), row);
 		vec2 f = vec2(fract(q.x / BW) * BW, fract(q.y / BH) * BH);
+		float dx = min(f.x, BW - f.x);
+		if (ashlar && hash(vec3(id, 5.0)) < 0.35) {
+			// geteilter Block: zweite Fuge etwa in der Mitte
+			dx = min(dx, abs(f.x - BW * (0.4 + 0.2 * hash(vec3(id, 9.0)))));
+		}
 		// Abstand zur Fuge in m (Kanten leicht unregelmäßig, wie von Hand gesetzt)
-		float d = min(min(f.x, BW - f.x), min(f.y, BH - f.y)) - JOINT * 0.5 + (value_noise(p * 14.0) - 0.5) * 0.008;
+		float d = min(dx, min(f.y, BH - f.y)) - JOINT * 0.5 + (value_noise(p * 14.0) - 0.5) * (ashlar ? 0.014 : 0.008);
 		float stone = smoothstep(-px, px, d);
 		float h1 = hash(vec3(id, 3.0));
 		float h2 = hash(vec3(id, 7.0));
-		vec3 brick = base_color.rgb * (0.88 + 0.18 * h1);
-		brick = mix(brick, vec3(0.8, 0.66, 0.5), smoothstep(0.7, 1.0, h2) * 0.6);
-		brick = mix(brick, base_color.rgb * vec3(0.74, 0.7, 0.68), smoothstep(0.25, 0.0, h2) * 0.7);
+		vec3 base = base_color.rgb * COLOR.rgb;
+		vec3 brick = base * (0.88 + 0.18 * h1);
+		if (ashlar) {
+			brick = mix(brick, base * vec3(1.06, 1.03, 0.96), smoothstep(0.6, 1.0, h2) * 0.8);
+			brick *= 0.93 + 0.1 * fbm(p * 6.0, 2);
+		} else {
+			brick = mix(brick, vec3(0.8, 0.66, 0.5), smoothstep(0.7, 1.0, h2) * 0.6);
+			brick = mix(brick, base * vec3(0.74, 0.7, 0.68), smoothstep(0.25, 0.0, h2) * 0.7);
+		}
 		// aus der Ferne: Steinfarben und Fugen gemittelt statt flimmernder Linien
-		brick = mix(base_color.rgb * 0.97, brick, detail_fade(px, 1.0 / BH));
+		brick = mix(base * 0.97, brick, detail_fade(px, 1.0 / BH));
 		float far = smoothstep(0.4, 1.1, px / JOINT);
 		vec3 avg = mix(brick, second_color.rgb, JOINT * (BW + BH) / (BW * BH));
 		col = mix(mix(second_color.rgb, brick, stone), avg, far);
-		height = smoothstep(-0.004, 0.03, d) * (1.0 - far);
+		// runde Steinkanten: Höhe steigt zur Steinmitte weich an
+		height = smoothstep(-0.004, ashlar ? 0.06 : 0.03, d) * (1.0 - far);
 	}
-	col *= COLOR.rgb;
+	if (!masonry) {
+		col *= COLOR.rgb;
+	}
 	float blot = fbm(p * blot_scale, 3);
 	col *= mix(1.0 - vary, 1.0 + vary, smoothstep(0.3, 0.7, blot));
 	if (grain == 2) {
