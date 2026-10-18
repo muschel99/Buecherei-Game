@@ -783,6 +783,14 @@ handwerklich, bewusst unperfekt, aber solide gebaut (Regeln: docs/STYLE_GUIDE.md
 - [x] Laternen im Bilderbuch-Stil (`build_storybook_lamps.py`): ein gemeinsamer Laternenkopf nach
       dem Beispielbild für Straßenlaternen (neuer Mast mit Schnecken und zwei Hängekörben),
       hängende Laternen an den Häusern und Wandlaternen am Modegeschäft
+- [x] Pub „The Ink & Ivy“ neu nach dem Vorlagebild (`build_storybook_pub.py`): ziegelroter
+      Backstein mit hellen Bögen über den Fenstern, flaschengrüne Ladenfront mit Sprossenfenstern,
+      Zahnschnitt-Gesims, Schieferdach, Gaststube (rote Wände, Tresen, Flaschenregal, Sitznischen,
+      Kerzen), Bistrotische mit Stühlen, Terrakotta-Töpfe, Blumenkästen; alter Pub entfernt
+- [x] Schilder der Entwicklerin (Bilder) auf Schild-Körpern bei Pub und Modegeschäft (Ladenschild,
+      Ausleger-/Hängeschild, Kreidetafel, „Geöffnet“-Kärtchen)
+- [x] Pflanzen an Pub und Modegeschäft vorerst entfernt – nur Töpfe, Kübel und Kästen
+- [ ] Pflanzen im Bilderbuch-Stil zurück (wenn die Entwicklerin so weit ist)
 - [ ] Wandlaternen an Bücherei und Torhaus mit dem neuen Kopf (wenn diese Häuser dran sind)
 - [ ] Weitere Häuser im Bilderbuch-Stil (jedes mit eigener Wölbung und eigenen Farbtönen)
 - [ ] Licht der ganzen Welt: warm um 3500 K, weiche Schatten, mildes Bloom, etwas mehr

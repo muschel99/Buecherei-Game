@@ -1,0 +1,12 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+; Schild-Bild der Entwicklerin – Bild austauschen: res://assets/textures/signs/fashion_shop_hanging.png
+
+[ext_resource type="Texture2D" path="res://assets/textures/signs/fashion_shop_hanging.png" id="1_image"]
+
+[resource]
+resource_name = "Schild fashion_shop hanging"
+albedo_texture = ExtResource("1_image")
+roughness = 0.7
+metallic_specular = 0.25
+texture_filter = 5

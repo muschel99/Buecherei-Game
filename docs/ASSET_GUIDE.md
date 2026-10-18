@@ -452,10 +452,14 @@ gibt es ein Startbild, das genau so groß ist, wie es sein muss:
 
 | Bild (`assets/textures/signs/`) | Wo | Größe am Haus | Startbild (Pixel) |
 |---|---|---|---|
+| `fashion_shop_fascia.png` | Ladenschild des Modegeschäfts | 4,66 × 0,50 m | 2048 × 219 |
+| `fashion_shop_hanging.png` | Ausleger-Schild (beide Seiten gleich, oben Bogen) | 0,60 × 0,56 m | 512 × 478 |
+| `fashion_shop_chalkboard.png` | Kreidetafel vor dem Modegeschäft (beide Seiten) | 0,42 × 0,70 m | 360 × 600 |
+| `fashion_shop_open.png` | „Geöffnet“-Kärtchen in der Tür | 0,26 × 0,11 m | 360 × 152 |
 | `flower_shop_fascia.png` | Schild des Blumenladens | 4,76 × 0,43 m | 2048 × 185 |
 | `flower_shop_chalkboard.png` | Kreidetafel vor dem Blumenladen | 0,42 × 0,70 m | 360 × 600 |
 | `flower_shop_hanging.png` | Hängeschild am Blumenladen | 0,60 × 0,56 m | 512 × 478 |
-| `pub_fascia.png` | Schild des Pubs („The Ink & Ivy“) | 4,92 × 0,53 m | 2048 × 221 |
+| `pub_fascia.png` | Schild des Pubs („The Ink & Ivy“, ganze Breite zwischen den Pilastern) | 4,92 × 0,57 m | 2048 × 239 |
 | `pub_chalkboard.png` | Kreidetafel vor dem Pub | 0,42 × 0,70 m | 360 × 600 |
 | `corner_90_fascia.png` | Schild der Teestube (Eckhaus am geraden Ende) | 1,6 × 0,4 m | 768 × 192 |
 | `gatehouse_fascia.png` | Schildband am Torhaus („Alte Torgasse“) | 4,6 × 0,42 m | 2048 × 187 |
@@ -569,7 +573,16 @@ geschlossener Körper, den du in Blender wie gewohnt umformen kannst.
   Blender-Material, Shader `assets/shaders/storybook.gdshader`): z. B. `lack_taubenblau.tres`
   anklicken → Inspektor → **Shader Parameters → Base Color**. Achtung: Ein Neubau durch
   Claude schreibt diese Dateien neu – dauerhafte Wünsche lieber sagen.
-- Das Ladenschild ist ein 3D-Schriftzug im Modell (kein Bild mehr).
+- **Schilder sind deine Bilder** (wie früher): Ladenschild `fashion_shop_fascia.png`, Ausleger-Schild
+  `fashion_shop_hanging.png`, Kreidetafel `fashion_shop_chalkboard.png`, Kärtchen in der Tür
+  `fashion_shop_open.png` (alle in `assets/textures/signs/`). Bild austauschen (gleicher Name, am
+  besten gleiche Pixelgröße) – fertig, nichts neu bauen. Beim Pub genauso: `pub_fascia.png`,
+  `pub_hanging.png` (rundes Hängeschild), `pub_chalkboard.png`.
+- **Pub „The Ink & Ivy“** genauso: `assets/models/source/houses/pub_storybook.blend` öffnen,
+  bearbeiten, speichern, ins Spiel bringen mit
+  `blender -b assets/models/source/houses/pub_storybook.blend --python tools/blender/export_storybook.py`.
+- Pflanzen sind an beiden Häusern vorerst weggelassen; Töpfe, Kübel und Blumenkästen (mit Erde)
+  stehen schon da.
 - **Laternen** (Straßenlaterne und hängende Laterne an den Häusern, gleicher Kopf wie die
   Wandlaternen) liegen zum Weiterbauen in `assets/models/source/props/storybook_lamps.blend`;
   neu bauen: `blender -b --factory-startup --python tools/blender/build_storybook_lamps.py`.

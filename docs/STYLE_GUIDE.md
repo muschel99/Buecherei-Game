@@ -84,7 +84,7 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 | Haustyp | Vorbild | Umsetzung |
 |---------|---------|-----------|
 | `fashion_shop` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** „Zwirn und Zwirbel“: Putz creme, taubenblaue Ladenfront, Nussbaum-Schild mit Goldschrift, terrakotta-rosa Markisen, Oberlicht, Gauben, Ziergiebel, Efeu, Blumenkästen, Buchs (`build_storybook_shop.py`) |
-| `pub` | Inspiration „Westminster Arms“, „O'Brian's“ | dunkelgrüne Pub-Front mit großen Sprossenfenstern, Laternen, Hängekörbe, Ziegel darüber |
+| `pub` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** „The Ink & Ivy“: Backstein mit hellen Bögen, flaschengrüne Ladenfront, Sprossenfenster, Zahnschnitt-Gesims, Gaststube, Bistrotische, Schilder als Bilder (`build_storybook_pub.py`) |
 | `gatehouse` | Konzepte Torhaus (Ziegelbogen + Fachwerk) | Ziegel-Rundbogen mit hellen Bogensteinen, Fachwerk-Obergeschoss, Gaube |
 | `terrace_*` | Inspiration Straßenfotos | **fertig (4g, Teil 2):** 45 schmal mit Schlusssteinen, 50 mit Erker, 55 georgianisch mit Brüstung, 60 breit mit Gaube; Wand je Haus Backstein, Putz oder Rauputz |
 | `residential` | – | **fertig (4g, Teil 2):** mittige Tür unter Vordach mit Säulen und Giebel, Lorbeer-Kegel |
@@ -95,7 +95,9 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 Die Welt wird zu einer **lebendig gewordenen Kinderbuch-Illustration**: Vintage-Charme in
 moderner 3D-Darstellung – warm, einladend, liebevoll gestaltet und bewusst unperfekt. Ein alt
 gewachsenes Dorf, idealisiert, ruhig und ordentlich, ohne Verfall, Schmutz oder störende Moderne.
-Umgesetzt: Modegeschäft (`tools/blender/build_storybook_shop.py`). Die anderen Häuser folgen.
+Umgesetzt: Modegeschäft (`build_storybook_shop.py`) und Pub (`build_storybook_pub.py`) in
+`tools/blender/`. Die anderen Häuser folgen. Pflanzen bleiben vorerst weg (nur Töpfe und Kübel);
+Schilder sind weiter Bilder der Entwicklerin.
 
 **Formen**
 - Solide und handfest, wie aus echten Materialien, die sich über die Jahre gesetzt haben – **nicht**
@@ -104,6 +106,10 @@ Umgesetzt: Modegeschäft (`tools/blender/build_storybook_shop.py`). Die anderen 
   Mitte etwas durchgesackt, Fenster, Gauben, Markisen, Schilder, Balkone um Bruchteile eines
   Grads schief oder um Millimeter verschoben. Jedes Haus mit eigener Wölbung (`SETTLE`).
 - Weiche Kanten (Bevel), aber klare, lesbare Proportionen.
+- **Logisch geschlossen:** Türnischen oben mit einer Nischendecke schließen, Oberlicht direkt
+  über dem Türblatt in derselben Ebene (sonst schaut man über der Tür ins Haus). Innenwände
+  reichen bis dicht hinter die Schaufenster, Vertäfelung endet an Fenstern, Stühle schauen zum
+  Tisch.
 - Jedes Teil ist ein **geschlossener Körper mit Dicke** (keine Einzelflächen), einzeln in
   Blender bearbeitbar; Bauteile in Sammlungen (Mauern, Dach, Fenster, Laden, Innen, Pflanzen,
   Deko, Licht).

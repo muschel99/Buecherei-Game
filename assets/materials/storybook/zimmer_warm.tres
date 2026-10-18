@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3]
 
-; Erzeugt von tools/blender/build_storybook_shop.py (Blender-Material "Zimmer warm") – wird beim Neubau
+; Erzeugt von den Bilderbuch-Bau-Scripts (tools/blender/build_storybook_*.py, Blender-Material "Zimmer warm") – wird beim Neubau
 ; überschrieben. Werte gern ausprobieren, dauerhaft aber im Bau-Script ändern.
 
 [ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]

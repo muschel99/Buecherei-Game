@@ -1,12 +1,16 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 ; Haustyp "pub" (Etappe 4e): Restaurant/Pub (5,6 m): Ladenfront mit großen Fenstern, Tür in der Mitte, Schild.
 ; Feste Maße (Inspektor: Gruppe "Maße"), Tiefe 8,0 m. Ursprung unten in der Mitte der
 ; Vorderseite, Vorderseite nach +Z, das Haus reicht nach -Z. Eigenes Modell: Kind-Knoten
 ; "Model" anlegen – dann verschwindet der Platzhalter, die Kollision bleibt.
+; Seit dem Bilderbuch-Stil: Modell "The Ink & Ivy" aus tools/blender/build_storybook_pub.py
+; (assets/models/houses/pub.glb; Quelle zum Weiterbauen in Einzelteilen:
+; assets/models/source/houses/pub_storybook.blend). Gaststube, Tische und Schilder sind Teil des Modells.
 ; Alle Häuser dieses Typs stehen in scenes/world/houses.tscn.
 
 [ext_resource type="Script" path="res://scripts/world/house_facade.gd" id="1_house"]
+[ext_resource type="PackedScene" path="res://assets/models/houses/pub.glb" id="2_model"]
 
 [node name="Pub" type="Node3D"]
 script = ExtResource("1_house")
@@ -18,3 +22,5 @@ chimney = true
 accent_color = Color(0.13, 0.27, 0.2, 1)
 window_columns = 3
 depth = 8.0
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

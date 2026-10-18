@@ -27,7 +27,8 @@ import sys
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(__file__))
-import build_storybook_shop as B  # noqa: E402
+import storybook_common as B  # noqa: E402
+import storybook_plants as PL  # noqa: E402
 import storybook_lib as SB  # noqa: E402
 import storybook_parts as SP  # noqa: E402
 from storybook_lib import Body  # noqa: E402
@@ -67,15 +68,15 @@ def hanging_basket(M, coll, name, center, radius, seed, palette=("red", "pink", 
         a = 2 * math.pi * k / 5 + rnd.uniform(-0.3, 0.3)
         r = radius * (0.25 + 0.4 * (k > 0))
         base = c + Vector((math.cos(a) * r, math.sin(a) * r, -0.005))
-        B.geranium(leaves, stems, blooms[rnd.choice(palette)], base, UPRIGHT, rnd)
+        PL.geranium(leaves, stems, blooms[rnd.choice(palette)], base, UPRIGHT, rnd)
     for k in range(9):
         a = 2 * math.pi * k / 9 + rnd.uniform(-0.2, 0.2)
         out = Vector((math.cos(a), math.sin(a), 0.0))
         start = c + out * radius * 0.92
         if k % 2:
-            B.cascade(leaves, stems, blooms[rnd.choice(palette)], start, (out + Vector((0, 0, 0.3))).normalized(), rnd.uniform(0.25, 0.45), rnd)
+            PL.cascade(leaves, stems, blooms[rnd.choice(palette)], start, (out + Vector((0, 0, 0.3))).normalized(), rnd.uniform(0.25, 0.45), rnd)
         else:
-            B.hang(ivy, stems, start, (out * 0.7 + Vector((0, 0, -0.5))).normalized(), rnd.uniform(0.3, 0.6), rnd, out=out)
+            PL.hang(ivy, stems, start, (out * 0.7 + Vector((0, 0, -0.5))).normalized(), rnd.uniform(0.3, 0.6), rnd, out=out)
     for body in (leaves, ivy, stems, *blooms.values()):
         body.build()
 
@@ -158,7 +159,6 @@ def main():
         print("Spiel: %s (%d Dreiecke, %d Netze)" % (path, tris, parts))
     if "--render" in argv:
         B.setup_render("--quick" in argv)
-        B.SHOTS = os.path.join(B.ROOT, "screenshots", "blender", "storybook")
         wall_obj_offset = Vector((1.6, 0, 1.4))
         for o in wall.objects:
             o.location = wall_obj_offset

@@ -1,6 +1,6 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
-; Erzeugt von tools/blender/build_storybook_shop.py (Blender-Material "Glas") – wird beim Neubau
+; Erzeugt von den Bilderbuch-Bau-Scripts (tools/blender/build_storybook_*.py, Blender-Material "Glas") – wird beim Neubau
 ; überschrieben. Werte gern ausprobieren, dauerhaft aber im Bau-Script ändern.
 
 [resource]

@@ -19,7 +19,6 @@
 [ext_resource type="PackedScene" path="res://scenes/world/houses/corner_30.tscn" id="9_ufwiq"]
 [ext_resource type="PackedScene" path="res://scenes/world/houses/gatehouse.tscn" id="10_6fajw"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/LibraryRow_Neighbor2.glb" id="u_LibraryRow_Neighbor2"]
-[ext_resource type="PackedScene" path="res://assets/models/houses/street/LibraryRow_Neighbor3.glb" id="u_LibraryRow_Neighbor3"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/LibraryRow_Neighbor4.glb" id="u_LibraryRow_Neighbor4"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/Opposite_Opposite1_1.glb" id="u_Opposite_Opposite1_1"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/street/Opposite_Opposite1_2.glb" id="u_Opposite_Opposite1_2"]
@@ -72,7 +71,6 @@ accent_color = Color(0.190, 0.200, 0.210, 1)
 wall_material = 1
 [node name="Neighbor3" parent="LibraryRow" unique_id=6891640 instance=ExtResource("3_ndida")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -8.8, 0, -2.0828428)
-unique_model = ExtResource("u_LibraryRow_Neighbor3")
 wall_color = Color(0.600, 0.330, 0.250, 1)
 door_color = Color(0.080, 0.100, 0.130, 1)
 accent_color = Color(0.080, 0.100, 0.130, 1)

@@ -48,6 +48,31 @@ def collection(name, parent=None):
 
 # --- Materialien (matt, mit sichtbarer Materialität) ---
 
+def image_material(name, path, rough=0.7, emit=0.0):
+    """Material, das ein Bild zeigt (Schilder der Entwicklerin, assets/textures/signs/*.png),
+    über die Texturkoordinaten "UVMap" der Schild-Platte (Body.panel)."""
+    if name in bpy.data.materials:
+        return bpy.data.materials[name]
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    N, L = m.node_tree.nodes, m.node_tree.links
+    bsdf = N["Principled BSDF"]
+    tex = N.new("ShaderNodeTexImage")
+    tex.image = bpy.data.images.load(path, check_existing=True)
+    tex.interpolation = "Cubic"
+    uv = N.new("ShaderNodeUVMap")
+    uv.uv_map = "UVMap"
+    L.new(uv.outputs["UV"], tex.inputs["Vector"])
+    L.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    bsdf.inputs["Roughness"].default_value = rough
+    bsdf.inputs["Specular"].default_value = 0.25
+    if emit > 0:
+        L.new(tex.outputs["Color"], bsdf.inputs["Emission"])
+        bsdf.inputs["Emission Strength"].default_value = emit
+    m["schild_bild"] = path
+    return m
+
+
 def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bump=0.25, metal=0.0, emit=0.0,
              emit_color=None, glass=False, color2=None, stripes=None):
     """Mattes Material: Grundfarbe x Farbton je Teil ("tint") x leichte Flecken (Rauschen).
@@ -211,6 +236,7 @@ class Body:
         self.bevel = bevel
         self.bm = bmesh.new()
         self.tint = self.bm.verts.layers.float_color.new("tint")
+        self.uv = None
         self.extra_mats = []
 
     # Farbton der zuletzt gebauten Verts
@@ -463,6 +489,30 @@ class Body:
         self._finish_island(rim + [top, bot], faces, tint)
         return faces
 
+    def panel(self, matrix, width, height, thick, outline=None, tint=None):
+        """Schild-Platte für ein Bild: Vorderseite (lokal +z) zeigt das ganze Bild (u über die
+        Breite, v über die Höhe), Rand und Rückseite den Randpixel. outline = eigener Umriss
+        (Punkte in -0.5..0.5, z. B. rund oder mit Bogen), sonst Rechteck. Ein geschlossener
+        Körper, Ursprung in der Mitte der Rückseite."""
+        if self.uv is None:
+            self.uv = self.bm.loops.layers.uv.new("UVMap")
+        pts = outline or [(-0.5, -0.5), (0.5, -0.5), (0.5, 0.5), (-0.5, 0.5)]
+        bm = self.bm
+        back = [bm.verts.new(matrix @ Vector((u * width, v * height, 0.0))) for u, v in pts]
+        front = [bm.verts.new(matrix @ Vector((u * width, v * height, thick))) for u, v in pts]
+        faces = [bm.faces.new(front), bm.faces.new(list(reversed(back)))]
+        n = len(pts)
+        for i in range(n):
+            j = (i + 1) % n
+            faces.append(bm.faces.new((back[i], back[j], front[j], front[i])))
+        uv_of = {v: (u + 0.5, w + 0.5) for v, (u, w) in zip(front, pts)}
+        for f in faces:
+            for loop in f.loops:
+                loop[self.uv].uv = uv_of.get(loop.vert, (0.01, 0.5))
+        bmesh.ops.recalc_face_normals(bm, faces=faces)
+        self._paint(back + front, tint)
+        return faces
+
     def star(self, center, normal, size, points, rnd, thick=0.004, cup=0.25, tint=None):
         """Ganze Blüte als ein Körper: Stern mit points Blütenblättern, leicht schalenförmig,
         in der Mitte etwas dicker (Ober- und Unterseite treffen sich am Rand)."""
@@ -539,7 +589,8 @@ class Body:
         me.auto_smooth_angle = math.radians(smooth_angle)
         obj = bpy.data.objects.new(self.name, me)
         self.coll.objects.link(obj)
-        me.materials.append(self.mat)
+        if self.mat is not None:
+            me.materials.append(self.mat)
         if self.bevel > 0:
             # Weiche, runde Kanten (keine scharfen Ecken): etwas breiter als angegeben, dreifach
             # gerundet bei größeren Teilen
@@ -608,6 +659,20 @@ def boolean_cut(obj, cutters):
         bpy.data.objects.remove(c)
         bpy.data.meshes.remove(me)
     bpy.data.collections.remove(coll)
+
+
+def round_outline(n=40, arch=None):
+    """Umriss für Body.panel: Kreis (arch=None) oder Rechteck mit Bogen oben (arch = Höhe des
+    Bogens als Anteil der Höhe, z. B. 0.18)."""
+    if arch is None:
+        return [(0.5 * math.cos(2 * math.pi * k / n), 0.5 * math.sin(2 * math.pi * k / n)) for k in range(n)]
+    top = 0.5 - arch
+    pts = [(-0.5, -0.5), (0.5, -0.5), (0.5, top)]
+    for k in range(1, n):
+        t = k / n
+        pts.append((0.5 * math.cos(math.pi * t), top + arch * math.sin(math.pi * t)))
+    pts.append((-0.5, top))
+    return pts
 
 
 def cutter(center, size, turn=(0, 0, 0), matrix=None):

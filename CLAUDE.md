@@ -153,7 +153,8 @@ docs/              Dokumentation
 tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py),
   blender/         Blender-Scripts der Stil-Modelle (style_lib.py = Bauteile + .glb-Export,
                    build_houses.py = Häuser; Bilderbuch-Stil: storybook_lib.py,
-                   storybook_parts.py, build_storybook_shop.py = Modegeschäft,
+                   storybook_parts.py, storybook_common.py, storybook_plants.py,
+                   build_storybook_shop.py = Modegeschäft, build_storybook_pub.py = Pub,
                    build_storybook_lamps.py = Laternen, export_storybook.py)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
@@ -379,7 +380,17 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   „…-colonly“ aus `OBSTACLES`, LODs an) und `assets/models/source/houses/fashion_shop_storybook.blend`
   (Einzelteile, zum Weiterbauen). Vor der Tür nur eine flache Platte (2,5 cm), keine Stufen.
   Gemeinsame Teile: `storybook_parts.py` (Laternenkopf `lantern_head` – gleicher Kopf für
-  Wandlaternen, hängende Laternen und Straßenlaternen; `scroll`). Laternen baut
+  Wandlaternen, hängende Laternen und Straßenlaternen; `scroll`); `storybook_common.py`
+  (Materialien `materials()`, Töpfe `pot`/`zinc_tub`, Blumenkästen `planter_box`, Kreidetafel,
+  Ausleger-Schild `projecting_sign`, `settle`, Export, Fingerabdruck, Kontrollbilder);
+  `storybook_plants.py` (Geranien, Ranken – vorerst nur an den Laternen). **Pflanzen an Pub und
+  Modegeschäft vorerst weggelassen** (Wunsch der Entwicklerin): nur Töpfe, Kübel, Kästen mit Erde.
+  **Schilder = Bilder der Entwicklerin** auch im Bilderbuch-Stil: `sign_material(typ, name)` +
+  `Body.panel` (Schild-Platte als Körper, Bild vorn) → im Spiel StandardMaterial auf
+  `assets/textures/signs/<typ>_<name>.png` (nie überschreiben). Pub: `build_storybook_pub.py`
+  → `assets/models/houses/pub.glb`, Quelle `pub_storybook.blend`; build_street.py überspringt ihn
+  (`STORYBOOK`). Eine bearbeitete .blend bringt `export_storybook.py` ins Spiel (erkennt das Haus
+  an der Sammlung). Laternen baut
   `tools/blender/build_storybook_lamps.py` → `assets/models/props/street_lamp.glb`,
   `wall_street_lantern.glb` (Maße wie bisher), Quelle `assets/models/source/props/storybook_lamps.blend`. Godot-Materialien schreibt das Script nach `assets/materials/storybook/`
   (Shader `storybook.gdshader` / `storybook_plant.gdshader` beidseitig, gemeinsamer Teil

@@ -10,7 +10,7 @@ extends RefCounted
 
 
 static func all_sets() -> PackedStringArray:
-	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details", "fashion"])
+	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details", "fashion", "pub"])
 
 
 static func get_set(set_name: String) -> Dictionary:
@@ -29,6 +29,8 @@ static func get_set(set_name: String) -> Dictionary:
 			return street_life()
 		"fashion":
 			return fashion()
+		"pub":
+			return pub()
 		"details":
 			return details()
 	push_error("Unbekannte Gruppe von Blickpunkten: " + set_name)
@@ -242,4 +244,25 @@ static func fashion() -> Dictionary:
 		"shopfront": {"pos": Vector3(x + 1.2, g + 1.6, front - 3.6), "target": Vector3(x - 0.3, g + 1.6, front)},
 		"upper": {"pos": Vector3(x - 1.0, g + 1.6, front - 4.5), "target": Vector3(x, g + 6.8, front)},
 		"aerial": {"pos": Vector3(x + 3.0, g + 11.0, front - 9.5), "target": Vector3(x, g + 5.5, front + 1.0)},
+		"door_up": {"pos": Vector3(x + 0.3, g + 1.6, front - 1.1), "target": Vector3(x, g + 2.6, front + 0.3)},
+		"door_side": {"pos": Vector3(x - 1.4, g + 1.6, front - 1.3), "target": Vector3(x, g + 2.0, front)},
+	}
+
+
+## Pub "The Ink & Ivy" (Bilderbuch-Stil): von vorn über den Platz, schräg aus der Gasse, Tische
+## vor dem Pub, Hängeschild an der Gassenseite, Blick nach oben.
+static func pub() -> Dictionary:
+	var g := StreetLayout.ground_y()
+	var front := -2.0828
+	var x := -8.8
+	return {
+		"front": {"pos": Vector3(x, g + 1.7, front - 9.0), "target": Vector3(x, g + 3.6, front)},
+		"angle_alley": {"pos": Vector3(x + 5.0, g + 1.6, front - 5.5), "target": Vector3(x + 0.3, g + 3.2, front)},
+		"tables": {"pos": Vector3(x + 0.4, g + 1.5, front - 3.2), "target": Vector3(x - 0.6, g + 0.9, front)},
+		"sign": {"pos": Vector3(x - 4.2, g + 1.6, front - 2.2), "target": Vector3(x - 2.65, g + 4.8, front - 0.4)},
+		"upper": {"pos": Vector3(x, g + 1.6, front - 4.0), "target": Vector3(x, g + 5.5, front)},
+		"door_up": {"pos": Vector3(x - 0.3, g + 1.6, front - 1.1), "target": Vector3(x, g + 2.6, front + 0.3)},
+		"door_side": {"pos": Vector3(x + 1.4, g + 1.6, front - 1.3), "target": Vector3(x, g + 2.0, front)},
+		"window_side": {"pos": Vector3(x - 3.2, g + 1.6, front - 0.9), "target": Vector3(x - 1.6, g + 1.8, front)},
+		"roof_side": {"pos": Vector3(x - 6.0, g + 2.0, front - 4.0), "target": Vector3(x - 2.6, g + 5.5, front + 2.0)},
 	}
