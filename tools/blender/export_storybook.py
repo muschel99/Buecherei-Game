@@ -13,8 +13,8 @@ Was es tut:
   - Teile mit "-colonly" am Namensende (Sammlung "Kollision (Spiel)") werden im Spiel zu
     Kollision und zu Hindernissen für Passanten,
   - fasst Teile mit gleichem Material zusammen, wendet Modifikatoren an (z. B. weiche Kanten),
-  - Blätter und Blüten (Materialien mit "spiel_pflanze") behalten fürs Spiel nur ihre Oberseite
-    (im Spiel von beiden Seiten sichtbar, PLANT_TOPS_ONLY), alles andere bleibt genau so,
+  - alle Teile bleiben genau so (auch Blätter und Blüten sind kleine Körper); mit
+    PLANT_TOPS_ONLY = True behielten Blätter nur ihre Oberseite (weniger Dreiecke),
   - schreibt assets/models/houses/fashion_shop.glb; Materialien mit passendem Godot-Material in
     assets/materials/storybook/ bekommen es zugeordnet (neue Materialien zeigen ihre Grundfarbe).
 Die .blend-Datei selbst wird nicht verändert.
@@ -28,8 +28,8 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 import build_storybook_shop as B  # noqa: E402
 
-# Blätter und Blüten fürs Spiel nur als Oberseite (False = ganze Körper, viel mehr Dreiecke)
-PLANT_TOPS_ONLY = True
+# True = Blätter und Blüten fürs Spiel nur als Oberseite (weniger Dreiecke, aber keine Körper mehr)
+PLANT_TOPS_ONLY = False
 
 
 def collect(coll, skip):

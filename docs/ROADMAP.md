@@ -776,6 +776,14 @@ handwerklich, bewusst unperfekt, aber solide gebaut (Regeln: docs/STYLE_GUIDE.md
       `export_storybook.py` bringt sie ins Spiel
 - [x] Altes Modegeschäft entfernt (Modell, Puppen- und Kleidungs-Requisiten, Script `ShopProp`,
       Schild-Bilder)
+- [x] Modegeschäft nachgebessert (Rückmeldung): Türzarge, flache Platte statt Stufen,
+      Aufsteller richtig herum, Giebel unter den Gaubendächern, breitere weiche Kanten; jedes Blatt
+      und jede Blüte ein kleiner Körper (auch im Spiel), runde Efeu-Triebe mit Herzblättern,
+      üppige rote/rosa Geranien, große Hortensie, volle Olivenkrone
+- [x] Laternen im Bilderbuch-Stil (`build_storybook_lamps.py`): ein gemeinsamer Laternenkopf nach
+      dem Beispielbild für Straßenlaternen (neuer Mast mit Schnecken und zwei Hängekörben),
+      hängende Laternen an den Häusern und Wandlaternen am Modegeschäft
+- [ ] Wandlaternen an Bücherei und Torhaus mit dem neuen Kopf (wenn diese Häuser dran sind)
 - [ ] Weitere Häuser im Bilderbuch-Stil (jedes mit eigener Wölbung und eigenen Farbtönen)
 - [ ] Licht der ganzen Welt: warm um 3500 K, weiche Schatten, mildes Bloom, etwas mehr
       Umgebungsverdeckung (AO), leichte Schärfentiefe, Fensterlicht als Blickfang

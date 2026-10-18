@@ -532,8 +532,8 @@ Backstein, helle Farben Putz, jedes dritte Rauputz), *As Built* (wie gebaut), *B
   Wand weg); welche Häuser eine haben, steht in `tools/blender/build_street.py` unter
   `LANTERNS`, den Platz trägt das Script je Haus in `houses.tscn` ein (**Lanterns**).
   Neu bauen: `blender -b --factory-startup --python tools/blender/build_props.py -- street_lamp wall_street_lantern`.
-- **Laternen selbst nachmodellieren:** In Blender `assets/models/source/props/street_lamp.blend`
-  bzw. `wall_street_lantern.blend` öffnen (oder **Datei → Importieren → glTF 2.0** und die
+- **Laternen selbst nachmodellieren:** In Blender `assets/models/source/props/storybook_lamps.blend`
+  öffnen (oder **Datei → Importieren → glTF 2.0** und die
   .glb wählen), bearbeiten, dann **Datei → Exportieren → glTF 2.0**, Format „glTF Binary“, unter
   demselben Namen nach `assets/models/props/` speichern. Ursprung und Größe beibehalten
   (Mast: Fuß auf dem Boden; Wandlaterne: Wandplatte im Ursprung). Deine Datei wird beim
@@ -570,6 +570,9 @@ geschlossener Körper, den du in Blender wie gewohnt umformen kannst.
   anklicken → Inspektor → **Shader Parameters → Base Color**. Achtung: Ein Neubau durch
   Claude schreibt diese Dateien neu – dauerhafte Wünsche lieber sagen.
 - Das Ladenschild ist ein 3D-Schriftzug im Modell (kein Bild mehr).
+- **Laternen** (Straßenlaterne und hängende Laterne an den Häusern, gleicher Kopf wie die
+  Wandlaternen) liegen zum Weiterbauen in `assets/models/source/props/storybook_lamps.blend`;
+  neu bauen: `blender -b --factory-startup --python tools/blender/build_storybook_lamps.py`.
 
 ### Alle Häuser eines Typs ersetzen
 1. Im Dateisystem-Fenster `scenes/world/houses/` öffnen und den Haustyp doppelklicken

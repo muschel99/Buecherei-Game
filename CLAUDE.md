@@ -153,7 +153,8 @@ docs/              Dokumentation
 tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py),
   blender/         Blender-Scripts der Stil-Modelle (style_lib.py = Bauteile + .glb-Export,
                    build_houses.py = Häuser; Bilderbuch-Stil: storybook_lib.py,
-                   build_storybook_shop.py = Modegeschäft, export_storybook.py)
+                   storybook_parts.py, build_storybook_shop.py = Modegeschäft,
+                   build_storybook_lamps.py = Laternen, export_storybook.py)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
 (Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
@@ -370,17 +371,23 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Modifikator; Öffnungen per `boolean_cut` mit `cutter(matrix=…)` in derselben Ebene wie das
   Fenster; `settle()` verzieht alles gemeinsam: Wellen, Neigung, Dachdurchhang, Werte je Haus in
   `SETTLE`). Am Ende meldet das Script „Offene Kanten: keine“ – sonst nachbessern.
-  **Zwei Durchgänge:** erst die leichte Spiel-Kopie (`SB.GAME`: Blätter nur Oberseite, Blüten
-  als Stern, Bevel einfach) → `assets/models/houses/fashion_shop.glb` (Teile je Material
-  zusammengefasst, Kollisionskästen „…-colonly“ aus `OBSTACLES`, LODs an), dann die volle
-  Fassung → `assets/models/source/houses/fashion_shop_storybook.blend` (Einzelteile, zum
-  Weiterbauen). Godot-Materialien schreibt das Script nach `assets/materials/storybook/`
+  **Alles Körper, auch im Spiel (Wunsch der Entwicklerin):** jedes Blatt ein kleiner linsenförmiger
+  Körper (`Body.leaf`, Formen heart/round/oval/narrow), jede Blüte ein Stern-Körper (`Body.star`),
+  Stiele/Äste runde Röhren (`tube(..., smooth=, round_ends=True)`), weiche Kanten breit
+  (`BEVEL_SCALE`), nie Einzelflächen. Ein Durchgang: Szene bauen → Spiel-Kopie
+  `assets/models/houses/fashion_shop.glb` (Teile je Material zusammengefasst, Kollisionskästen
+  „…-colonly“ aus `OBSTACLES`, LODs an) und `assets/models/source/houses/fashion_shop_storybook.blend`
+  (Einzelteile, zum Weiterbauen). Vor der Tür nur eine flache Platte (2,5 cm), keine Stufen.
+  Gemeinsame Teile: `storybook_parts.py` (Laternenkopf `lantern_head` – gleicher Kopf für
+  Wandlaternen, hängende Laternen und Straßenlaternen; `scroll`). Laternen baut
+  `tools/blender/build_storybook_lamps.py` → `assets/models/props/street_lamp.glb`,
+  `wall_street_lantern.glb` (Maße wie bisher), Quelle `assets/models/source/props/storybook_lamps.blend`. Godot-Materialien schreibt das Script nach `assets/materials/storybook/`
   (Shader `storybook.gdshader` / `storybook_plant.gdshader` beidseitig, gemeinsamer Teil
   `storybook.gdshaderinc`: rechnet Grundfarbe x tint x Flecken, Holz, Ziegel, Stein, Streifen
   aus der Lage im Modell nach; `glow` = Leuchten innen, keine Lampen im Spiel). Hat die
   Entwicklerin die .blend bearbeitet (Fingerabdruck in `fashion_shop_storybook.stamp` passt
   nicht), überschreibt das Script nichts (nur mit `--force`); ihre Fassung bringt
-  `tools/blender/export_storybook.py` ins Spiel (Blätter → nur Oberseite). Bilder:
+  `tools/blender/export_storybook.py` ins Spiel. Bilder:
   `-- --render` (Cycles, ohne Rauschfilter – OIDN fehlt im Container, dafür viele Samples;
   Lampen mit `visible_camera/transmission = False`), Blickpunkte im Spiel: Gruppe `fashion`.
 - **Pflanzen (seit Etappe 4g, Teil 4f):** nie mehr Kugeln als Laub. Alle Pflanzen baut

@@ -1,5 +1,5 @@
-"""Baut die Requisiten der Straße im Stil (seit Etappe 4g): Laternenmast, hängende Laterne am
-Wandarm, Abflussdeckel.
+"""Baut die Requisiten der Straße im Stil (seit Etappe 4g): Abflussdeckel. Die Laternen (Mast und
+hängende Laterne) baut seit dem Bilderbuch-Stil tools/blender/build_storybook_lamps.py.
 
 Aufruf (Terminal, im Projektordner):
     blender -b --factory-startup --python tools/blender/build_props.py
@@ -38,26 +38,7 @@ def drain_grate():
     return b
 
 
-def street_lamp():
-    """Viktorianischer Laternenmast mit zwei Hängekörben (Ursprung am Fuß)."""
-    import style_parts as P
-    b = S.Builder("street_lamp")
-    P.street_lamp(b)
-    return b
-
-
-def wall_street_lantern():
-    """Hängende Straßenlaterne am Wandarm (Ursprung: Befestigung an der Wand, +Z von der Wand
-    weg). Die Häuser tragen ihre Befestigungspunkte selbst (HouseFacade.lanterns)."""
-    import style_parts as P
-    b = S.Builder("wall_street_lantern")
-    P.bracket_lantern(b)
-    return b
-
-
 PROPS = {
-    "street_lamp": street_lamp,
-    "wall_street_lantern": wall_street_lantern,
     "drain_grate": drain_grate,
 }
 

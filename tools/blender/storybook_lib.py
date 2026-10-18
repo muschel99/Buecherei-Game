@@ -22,9 +22,8 @@ import random
 from mathutils import Matrix, Vector, noise
 
 FONT_DIR = "/usr/share/fonts/truetype/dejavu"
-# Leichte Kopie fürs Spiel: Blätter nur als Oberseite (im Spiel beidseitig sichtbar), Kanten
-# einfacher abgerundet. Die Blender-Datei wird immer mit GAME = False gebaut (echte Körper).
-GAME = False
+# Alle weichen Kanten (Bevel) um diesen Faktor breiter als im Bau-Script angegeben
+BEVEL_SCALE = 1.6
 
 
 def srgb(c):
@@ -299,11 +298,31 @@ class Body:
         self._finish_island(low + high, faces, tint)
         return faces
 
-    def tube(self, points, radius, segs=7, tint=None, wobble=0.0):
-        """Röhre entlang einer Punktfolge, an beiden Enden geschlossen (Stiele, Äste, Eisen)."""
+    def tube(self, points, radius, segs=7, tint=None, wobble=0.0, smooth=0, round_ends=False):
+        """Röhre entlang einer Punktfolge, an beiden Enden geschlossen (Stiele, Äste, Eisen).
+        smooth = so oft die Bahn runden (Ecken abschneiden, Chaikin), round_ends = Enden als
+        kleine Kuppel statt flachem Deckel."""
         pts = [Vector(p) for p in points]
         if len(pts) < 2:
             return []
+        for _ in range(smooth):
+            out = [pts[0]]
+            for a, b2 in zip(pts, pts[1:]):
+                out += [a.lerp(b2, 0.25), a.lerp(b2, 0.75)]
+            out.append(pts[-1])
+            pts = out
+        if round_ends and len(pts) >= 2:
+            r0 = radius(0.0) if callable(radius) else radius
+            r1 = radius(1.0) if callable(radius) else radius
+            pts.insert(0, pts[0] - (pts[1] - pts[0]).normalized() * r0 * 0.6)
+            pts.append(pts[-1] + (pts[-1] - pts[-2]).normalized() * r1 * 0.6)
+            base_radius = radius
+            n_pts = len(pts)
+
+            def radius(t, f=base_radius, n=n_pts):
+                k = t * (n - 1)
+                v = f(min(1.0, max(0.0, (k - 1) / max(1, n - 3)))) if callable(f) else f
+                return v * (0.55 if k < 0.5 or k > n - 1.5 else 1.0)
         bm = self.bm
         rings = []
         prev = None
@@ -330,11 +349,12 @@ class Body:
         self._finish_island([v for r in rings for v in r], faces, tint)
         return faces
 
-    def lathe(self, profile, center, segs=16, wave=0.0, waves=0, dent=0.0, tint=None, turn=(0, 0)):
+    def lathe(self, profile, center, segs=16, wave=0.0, waves=0, dent=0.0, tint=None, turn=(0, 0), spin=0.0):
         """Drehkörper um die z-Achse: profile = [(Radius, Höhe), …] von unten nach oben; Radius 0
         am Anfang/Ende schließt den Körper (sonst Deckel). wave/waves = Falten (Rock, Topf)."""
         bm = self.bm
-        m = Matrix.Translation(center) @ Matrix.Rotation(math.radians(turn[1]), 4, "Y") @ Matrix.Rotation(math.radians(turn[0]), 4, "X")
+        m = Matrix.Translation(center) @ Matrix.Rotation(math.radians(turn[1]), 4, "Y") @ Matrix.Rotation(math.radians(turn[0]), 4, "X") @ \
+            Matrix.Rotation(math.radians(spin), 4, "Z")
         seed = Vector((self.rnd.uniform(0, 50), self.rnd.uniform(0, 50), self.rnd.uniform(0, 50)))
         rings = []
         for r, z in profile:
@@ -414,54 +434,59 @@ class Body:
         self._finish_island(verts, faces, tint)
         return faces
 
-    def leaf(self, base, direction, normal, length, width, shape="oval", thick=0.0025, curl=0.15, tint=None, segs=None):
-        """Blatt als dünner Körper (Ober- und Unterseite, Rand): Form ivy (dreilappig), oval,
-        round (Geranie), narrow (Olive), petal (Blütenblatt). curl biegt es leicht."""
+    def leaf(self, base, direction, normal, length, width, shape="oval", thick=0.003, curl=0.15, tint=None, segs=None):
+        """Blatt als kleiner Körper: linsenförmig – Ober- und Unterseite wölben sich zur Mitte
+        hin auf und treffen sich am Rand (weich, ohne scharfe Kante). Formen: ivy (dreilappig),
+        oval, round (Geranie, gewellter Rand), narrow (Olive), petal (Blütenblatt), heart.
+        curl biegt das Blatt leicht."""
         f = Vector(direction).normalized()
         n = Vector(normal)
-        n = (n - f * n.dot(f)).normalized()
-        s = f.cross(n).normalized()
+        n = (n - f * n.dot(f))
+        n = n.normalized() if n.length > 1e-6 else f.orthogonal().normalized()
+        s_ = f.cross(n).normalized()
         outline = _leaf_outline(shape, self.rnd, segs)
         bm = self.bm
-        top, bot = [], []
-        for u, w in outline:
-            # u entlang des Blatts 0..1, w quer -1..1
+
+        def at(u, w):
             bend = curl * (u * u) * length - abs(w) * curl * 0.3 * width
-            p = Vector(base) + f * (u * length) + s * (w * width * 0.5) + n * bend
-            top.append(bm.verts.new(p + n * thick * 0.5))
-            bot.append(bm.verts.new(p - n * thick * 0.5))
-        if GAME:
-            # Spiel: nur die Oberseite (Material beidseitig), Unterseite und Rand weglassen
-            for v in bot:
-                bm.verts.remove(v)
-            face = bm.faces.new(top)
-            face.smooth = True
-            self._paint(top, tint)
-            return [face]
-        faces = [bm.faces.new(top), bm.faces.new(list(reversed(bot)))]
-        k = len(outline)
+            return Vector(base) + f * (u * length) + s_ * (w * width * 0.5) + n * bend
+        rim = [bm.verts.new(at(u, w)) for u, w in outline]
+        # Mitte oben und unten etwas aufgewölbt (Blatt ist in der Mitte dicker als am Rand)
+        top = bm.verts.new(at(0.42, 0.0) + n * thick * 0.5)
+        bot = bm.verts.new(at(0.42, 0.0) - n * thick * 0.5)
+        faces = []
+        k = len(rim)
         for i in range(k):
             j = (i + 1) % k
-            faces.append(bm.faces.new((top[j], top[i], bot[i], bot[j])))
-        self._finish_island(top + bot, faces, tint)
+            faces.append(bm.faces.new((rim[i], rim[j], top)))
+            faces.append(bm.faces.new((rim[j], rim[i], bot)))
+        self._finish_island(rim + [top, bot], faces, tint)
         return faces
 
-    def star(self, center, normal, size, points, rnd, cup=0.25, tint=None):
-        """Spiel: ganze Blüte als ein Stern (statt einzelner Blütenblätter)."""
+    def star(self, center, normal, size, points, rnd, thick=0.004, cup=0.25, tint=None):
+        """Ganze Blüte als ein Körper: Stern mit points Blütenblättern, leicht schalenförmig,
+        in der Mitte etwas dicker (Ober- und Unterseite treffen sich am Rand)."""
         n = Vector(normal).normalized()
         ref = Vector((0, 0, 1)) if abs(n.z) < 0.9 else Vector((1, 0, 0))
         s1 = n.cross(ref).normalized()
         s2 = n.cross(s1).normalized()
         spin = rnd.uniform(0, 2 * math.pi)
-        verts = []
+        c = Vector(center)
+        rim = []
         for k in range(points * 2):
-            a = spin + math.pi * k / points
-            r = size * (1.0 if k % 2 == 0 else 0.42)
-            verts.append(self.bm.verts.new(Vector(center) + (s1 * math.cos(a) + s2 * math.sin(a)) * r + n * cup * r))
-        face = self.bm.faces.new(verts)
-        face.smooth = True
-        self._paint(verts, tint)
-        return [face]
+            a = spin + 2 * math.pi * k / (points * 2)
+            r = size * (1.0 if k % 2 else 0.45)
+            rim.append(self.bm.verts.new(c + (s1 * math.cos(a) + s2 * math.sin(a)) * r + n * cup * r))
+        top = self.bm.verts.new(c + n * thick)
+        bot = self.bm.verts.new(c - n * thick * 0.6)
+        faces = []
+        m = len(rim)
+        for i in range(m):
+            j = (i + 1) % m
+            faces.append(self.bm.faces.new((rim[i], rim[j], top)))
+            faces.append(self.bm.faces.new((rim[j], rim[i], bot)))
+        self._finish_island(rim + [top, bot], faces, tint)
+        return faces
 
     def text(self, string, size, depth, matrix, font="DejaVuSerif-Bold.ttf", jitter=0.0, tint=None, spacing=1.0):
         """Schrift als Körper (jeder Buchstabe einzeln, leicht gehüpft/gekippt: handgemalt).
@@ -516,9 +541,11 @@ class Body:
         self.coll.objects.link(obj)
         me.materials.append(self.mat)
         if self.bevel > 0:
+            # Weiche, runde Kanten (keine scharfen Ecken): etwas breiter als angegeben, dreifach
+            # gerundet bei größeren Teilen
             mod = obj.modifiers.new("Weiche Kanten", "BEVEL")
-            mod.width = self.bevel
-            mod.segments = 1 if GAME else 2
+            mod.width = self.bevel * BEVEL_SCALE
+            mod.segments = 3 if self.bevel >= 0.01 else 2
             mod.limit_method = "ANGLE"
             mod.angle_limit = math.radians(40)
             mod.harden_normals = False
@@ -528,6 +555,16 @@ class Body:
 def _leaf_outline(shape, rnd, segs=None):
     """Umriss eines Blatts als (u, w): u = 0 (Stiel) .. 1 (Spitze), w = -1..1 quer."""
     pts = []
+    if shape == "heart":
+        # Herzblatt (Bilderbuch-Efeu, Ranken): rundliche Lappen am Stiel, weiche Spitze
+        out = []
+        n = segs or 12
+        for k in range(n):
+            t = 2 * math.pi * k / n
+            x = math.sin(t) ** 3
+            y = (13 * math.cos(t) - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t)) / 17.0
+            out.append(((0.72 - y) / 1.72, x * rnd.uniform(0.93, 1.05)))
+        return out
     if shape == "ivy":
         # Efeublatt: drei bis fünf Lappen, jedes etwas anders
         side = []
@@ -536,7 +573,7 @@ def _leaf_outline(shape, rnd, segs=None):
             side.append((u, w * rnd.uniform(0.9, 1.1)))
         pts = [(0.0, 0.0)] + [(u, -w) for u, w in side] + [(1.0, 0.0)] + [(u, w) for u, w in reversed(side)]
         return pts
-    n = segs or {"oval": 10, "round": 14, "narrow": 8, "petal": 8}.get(shape, 10)
+    n = segs or {"oval": 8, "round": 9, "narrow": 7, "petal": 6}.get(shape, 8)
     right = []
     for i in range(1, n):
         u = i / n

@@ -36,6 +36,7 @@ from mathutils import Matrix, Vector, noise
 
 sys.path.insert(0, os.path.dirname(__file__))
 import storybook_lib as SB  # noqa: E402
+import storybook_parts as SP  # noqa: E402
 from storybook_lib import Body  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -94,6 +95,7 @@ def materials():
         "awning": M("Markisenstoff", (0.93, 0.88, 0.78), grain="fabric", rough=0.95, vary=0.04, stripes=0.13,
                     color2=(0.76, 0.35, 0.27)),
         "iron": M("Schmiedeeisen", (0.21, 0.2, 0.19), grain="smooth", rough=0.7, metal=0.4, vary=0.04),
+        "lamp_iron": M("Laterne Eisen dunkelbraun", (0.13, 0.11, 0.095), grain="smooth", rough=0.6, metal=0.3, vary=0.04),
         "bronze": M("Dachrinne Bronze", (0.36, 0.28, 0.2), grain="smooth", rough=0.65, metal=0.4),
         "lamp": M("Laternenglas leuchtend", (1.0, 0.86, 0.62), grain="smooth", rough=0.4, emit=7.0,
                   emit_color=(1.0, 0.74, 0.42), vary=0.0, bump=0.0),
@@ -109,6 +111,7 @@ def materials():
         "olive_leaf": M("Blatt Olive", (0.5, 0.56, 0.4), grain="leaf", rough=0.8, vary=0.1, plant=True),
         "stem": M("Stiel", (0.34, 0.38, 0.2), rough=0.8, vary=0.08),
         "bark": M("Rinde", (0.42, 0.34, 0.26), grain="wood", rough=0.95, vary=0.1),
+        "red": M("Blüte Geranienrot", (0.86, 0.2, 0.22), grain="fabric", rough=0.7, vary=0.1, plant=True),
         "pink": M("Blüte Rosa", (0.93, 0.46, 0.6), grain="fabric", rough=0.7, vary=0.12, plant=True),
         "rose": M("Blüte Himbeer", (0.85, 0.3, 0.43), grain="fabric", rough=0.7, vary=0.1, plant=True),
         "coral": M("Blüte Koralle", (0.96, 0.56, 0.45), grain="fabric", rough=0.7, vary=0.1, plant=True),
@@ -196,8 +199,8 @@ def walls(M, C):
 
 def add_bevel(obj, width):
     mod = obj.modifiers.new("Weiche Kanten", "BEVEL")
-    mod.width = width
-    mod.segments = 2
+    mod.width = width * SB.BEVEL_SCALE
+    mod.segments = 3
     mod.limit_method = "ANGLE"
     mod.angle_limit = math.radians(40)
 
@@ -388,7 +391,7 @@ def upper_windows(M, C):
     for k, (x, dx, t) in enumerate(WIN_JITTER):
         fm = window(M, C, "Fenster %d" % (k + 1), x + dx, WIN_Z0, WIN_W, WIN_H, t)
         flower_box(M, C, "Blumenkasten Fenster %d" % (k + 1), fm, WIN_W + 0.16, 0.22, 0.24,
-                   [("pink", "coral", "blush_flower"), ("rose", "pink", "blush_flower"), ("coral", "pink", "rose")][k], seed=40 + k)
+                   [("red", "pink", "rose"), ("rose", "red", "pink"), ("pink", "red", "coral")][k], seed=40 + k)
 
 
 def dormers(M, C):
@@ -400,13 +403,20 @@ def dormers(M, C):
         top = base + 1.0
         name = "Gaube %s" % ("links" if cx < 0 else "rechts")
         fm = front_matrix(cx, base, fy, t)
-        b = Body("%s Wände" % name, M["trim"], C["walls"], seed=60 + k, vary=0.04)
+        b = Body("%s Wände und Giebel" % name, M["trim"], C["walls"], seed=60 + k, vary=0.04)
         depth = (top + 0.45 - E) / math.tan(a) + EAVES_Y - fy + 0.3
-        b.box((0, 0.5, -depth / 2), (1.0, 1.0, depth), step=0.2, dent=0.005, matrix=fm)
+        # Hausform: Wände bis 1,0 m, darüber der Giebel bis knapp unter das Dach
+        roof_at = lambda x: 0.96 + (0.52 / 0.64) * (0.64 - abs(x)) - 0.012
+        b.slab([(-0.5, 0.0), (0.5, 0.0), (0.5, roof_at(0.5)), (0.0, roof_at(0.0)), (-0.5, roof_at(-0.5))], depth,
+               fm @ Matrix.Translation((0, 0, -depth)), dent=0.004)
         wall = b.build()
         cut = SB.cutter((0, 0.56, -0.2), (0.54, 0.64, 0.5), matrix=fm)
         SB.boolean_cut(wall, [cut])
-        add_bevel(wall, 0.01)
+        add_bevel(wall, 0.012)
+        ro = Body("%s Rosette" % name, M["trim"], C["walls"], seed=68 + k, vary=0.03, bevel=0.004)
+        ro.lathe([(0.0, 0.0), (0.075, 0.0), (0.08, 0.015), (0.06, 0.03), (0.0, 0.035)], fm @ Vector((0, 1.2, -0.005)), segs=18,
+                 turn=(90, 0))
+        ro.build()
         window(M, C, name + " Fenster", 0, 0, 0.54, 0.64, t, panes=(2, 2), surround=False, hood=False,
                fm=fm @ Matrix.Translation((0, 0.24, 0)))
         sill = Body("%s Fensterbank" % name, M["trim"], C["walls"], seed=66 + k, bevel=0.008)
@@ -429,7 +439,7 @@ def dormers(M, C):
         tr.blob(fm @ Vector((0, 1.56, 0.16)), 0.04, subdiv=1, lump=0.1)
         tr.build()
         flower_box(M, C, "Blumenkasten %s" % name, fm @ Matrix.Translation((0, 0.22, 0)), 0.64, 0.15, 0.16,
-                   ("pink", "rose", "blush_flower"), seed=70 + k, trailing=4, gap=0.0)
+                   ("red", "pink", "rose"), seed=70 + k, trailing=5, gap=0.0)
 
 
 # --- Laden im Erdgeschoss ---
@@ -539,18 +549,25 @@ def door(M, C):
         if side < 0:
             pts = list(reversed(pts))
         b.slab(pts, 0.04, fm @ Matrix.Translation((0, 0, -0.02)), dent=0.002)
-    # Türblatt
+    # Türblatt (steht auf der Platte, 2,5 cm höher)
     dz = -0.3
-    fb((-0.5, 1.15, dz), (0.1, 2.3, 0.05))
-    fb((0.5, 1.15, dz), (0.1, 2.3, 0.05))
-    fb((0, 0.18, dz), (0.9, 0.36, 0.05))
-    fb((0, 0.95, dz), (0.9, 0.1, 0.05))
-    fb((0, 2.25, dz), (0.9, 0.1, 0.05))
-    fb((0, 0.62, dz - 0.005), (0.9, 0.56, 0.04))
-    fb((0, 0.62, dz + 0.03), (0.6, 0.38, 0.02))
+    lift = 0.025
+    fb((-0.43, 1.15 + lift, dz), (0.1, 2.24, 0.05))
+    fb((0.43, 1.15 + lift, dz), (0.1, 2.24, 0.05))
+    fb((0, 0.18 + lift, dz), (0.78, 0.36, 0.05))
+    fb((0, 0.95 + lift, dz), (0.78, 0.1, 0.05))
+    fb((0, 2.21 + lift, dz), (0.78, 0.1, 0.05))
+    fb((0, 0.62 + lift, dz - 0.005), (0.78, 0.56, 0.04))
+    fb((0, 0.62 + lift, dz + 0.03), (0.52, 0.38, 0.02))
     b.build()
+    # Türzarge (cremefarben) rund um das Türblatt
+    z = Body("Türzarge", M["frame"], C["shop"], seed=105, vary=0.03, bevel=0.012)
+    for side in (-1, 1):
+        z.box((side * 0.53, 1.16 + lift, dz), (0.1, 2.32, 0.16), step=0.3, dent=0.002, matrix=fm)
+    z.box((0, 2.29 + lift, dz), (1.16, 0.09, 0.16), step=0.3, dent=0.002, matrix=fm)
+    z.build()
     g = Body("Tür Glas", M["glass"], C["shop"], seed=101)
-    g.box((0, 1.6, dz), (0.82, 1.2, 0.006), step=10, dent=0, matrix=fm)
+    g.box((0, 1.6 + lift, dz), (0.7, 1.12, 0.006), step=10, dent=0, matrix=fm)
     g.box((0, 2.59, -0.02), (1.18, 0.56, 0.006), step=10, dent=0, matrix=fm)
     g.build()
     ar = Body("Oberlicht Sprossen", M["frame"], C["shop"], seed=102, vary=0.03)
@@ -564,12 +581,13 @@ def door(M, C):
     ar.tube([fm @ Vector((-0.6, 2.32, 0.0)), fm @ Vector((0.6, 2.32, 0.0))], 0.02, segs=8)
     ar.build()
     k = Body("Tür Knauf und Briefschlitz", M["gold"], C["shop"], seed=103)
-    k.blob(fm @ Vector((0.4, 1.02, dz + 0.06)), 0.03, subdiv=2, lump=0.05)
-    k.box((0, 0.98, dz + 0.035), (0.28, 0.04, 0.02), step=1, dent=0.001, matrix=fm)
+    k.blob(fm @ Vector((0.33, 1.02 + lift, dz + 0.06)), 0.03, subdiv=2, lump=0.05)
+    k.box((0, 0.98 + lift, dz + 0.035), (0.28, 0.04, 0.02), step=1, dent=0.001, matrix=fm)
     k.build()
-    st = Body("Türstufe", M["stone"], C["shop"], seed=104, vary=0.06, bevel=0.015)
-    st.box((0, -0.14, 0.04), (1.36, 0.34, 0.08), step=0.3, dent=0.004)
-    st.box((0, 0.15, 0.03), (1.22, 0.32, 0.06), step=0.3, dent=0.003)
+    # Eine flache Steinplatte vor und in der Türnische (2,5 cm hoch, keine Treppe): darüber
+    # läuft man ohne Stolpern, sie braucht im Spiel keine eigene Kollision
+    st = Body("Türplatte", M["stone"], C["shop"], seed=104, vary=0.06, bevel=0.012)
+    st.box((0, -0.05, 0.01), (1.3, 0.66, 0.03), step=0.3, dent=0.002)
     st.build()
 
 
@@ -696,36 +714,25 @@ def kelvin_rgb(k):
 
 
 def lanterns(M, C):
+    """Wandlaternen links und rechts: Wandplatte, geschwungener Arm mit Schnecke, daran hängt
+    der gemeinsame Laternenkopf (storybook_parts.lantern_head, wie an der Straße)."""
     for side in (-1, 1):
         x = side * (HW - 0.2)
-        t = RND.uniform(-3, 3)
         name = "Wandlaterne %s" % ("links" if side < 0 else "rechts")
-        ir = Body(name + " Eisen", M["iron"], C["deco"], seed=130 + side, vary=0.03)
-        ir.box((x, -0.02, 4.24), (0.12, 0.04, 0.22), step=1, dent=0.002)
-        arm = [(x, -0.04, 4.27), (x, -0.25, 4.29), (x, -0.36, 4.24)]
-        ir.tube(arm, 0.014, segs=6)
-        curl = [(x, -0.06 - 0.06 * (1 - math.cos(q)), 4.15 + 0.06 * math.sin(q)) for q in [k * 0.4 for k in range(10)]]
-        ir.tube([(x, -0.04, 4.17)] + curl[1:], 0.009, segs=5)
-        c = Vector((x, -0.36, 4.04))
-        m = Matrix.Translation(c) @ Matrix.Rotation(math.radians(t), 4, "Y")
-        ir.lathe([(0.0, 0.0), (0.07, 0.0), (0.09, 0.03), (0.0, 0.04)], m @ Vector((0, 0, -0.22)), segs=12)
-        for k in range(4):
-            a = math.pi / 4 + k * math.pi / 2
-            p = Vector((0.075 * math.cos(a), 0.075 * math.sin(a), 0))
-            ir.tube([m @ (p + Vector((0, 0, -0.19))), m @ (p + Vector((0, 0, 0.06)))], 0.008, segs=5)
-        ir.lathe([(0.0, 0.0), (0.12, 0.0), (0.1, 0.03), (0.02, 0.13), (0.0, 0.14)], m @ Vector((0, 0, 0.06)), segs=12)
-        ir.blob(m @ Vector((0, 0, 0.23)), 0.022, subdiv=1, lump=0.1)
+        ir = Body(name + " Arm", M["lamp_iron"], C["deco"], seed=130 + side, vary=0.03, bevel=0.005)
+        ir.box((x, -0.02, 4.36), (0.12, 0.04, 0.26), step=1, dent=0.001)
+        arm = [(x, -0.04, 4.4), (x, -0.16, 4.44), (x, -0.3, 4.43), (x, -0.38, 4.4)]
+        ir.tube(arm, 0.014, segs=8, smooth=2, round_ends=True)
+        SP.scroll(ir, (x, -0.13, 4.33), 0.07, x, turns=1.3, thick=0.008, start=1.2)
+        ir.tube([(x, -0.38, 4.4), (x, -0.38, 4.33)], 0.008, segs=8, round_ends=True)
         ir.build()
-        gl = Body(name + " Glas", M["lamp"], C["deco"], seed=132 + side)
-        gl.lathe([(0.0, 0.0), (0.062, 0.0), (0.07, 0.12), (0.066, 0.24), (0.0, 0.245)], m @ Vector((0, 0, -0.18)), segs=4,
-                 turn=(0, 0))
-        gl.build()
-        add_light(name + " Licht", m @ Vector((0, 0, -0.05)), 2700, 22, C["light"], radius=0.04)
+        SP.lantern_head(M, C["deco"], name, (x, -0.38, 3.91), scale=0.58, hanging=True, seed=132 + side)
+        add_light(name + " Licht", (x, -0.38, 4.06), 2700, 22, C["light"], radius=0.04)
 
 
 # --- Pflanzen ---
 
-def flower_box(M, C, name, fm, width, depth, height, palette, seed, trailing=8, gap=0.06):
+def flower_box(M, C, name, fm, width, depth, height, palette, seed, trailing=11, gap=0.06):
     """Holzkasten auf der Fensterbank, randvoll mit Geranien, darüber hinaus wuchernd, vorn
     hängen Efeuranken über den Rand. fm = Ebene des Fensters (lokal y = 0 Unterkante)."""
     rnd = random.Random(seed)
@@ -749,10 +756,10 @@ def flower_box(M, C, name, fm, width, depth, height, palette, seed, trailing=8, 
     stems = Body(name + " Stiele", M["stem"], C["plants"], seed=seed + 3, vary=0.08)
     blooms = {k: Body("%s Blüten %s" % (name, k), M[k], C["plants"], seed=seed + 4 + i, vary=0.1) for i, k in enumerate(dict.fromkeys(palette))}
     rot = fm.to_3x3()
-    n_plants = max(3, int(width / 0.12))
+    n_plants = max(3, int(width / 0.1))
     for i in range(n_plants):
         lx = -width / 2 + 0.08 + (width - 0.16) * (i + rnd.uniform(-0.25, 0.25)) / max(1, n_plants - 1)
-        lz = g + depth / 2 + rnd.uniform(-0.03, 0.03)
+        lz = g + depth * rnd.uniform(0.35, 0.75)
         base = fm @ Vector((lx, soil_y, lz))
         geranium(leaves, stems, blooms[rnd.choice(palette)], base, rot, rnd)
     ivy = Body(name + " Ranken", M["ivy"], C["plants"], seed=seed + 9, vary=0.12)
@@ -779,51 +786,57 @@ def cascade(leaves, stems, bloom, start, out, length, rnd):
     for i in range(max(3, int(length / 0.03))):
         d = (d + Vector((rnd.uniform(-0.15, 0.15), rnd.uniform(-0.15, 0.15), -0.45))).normalized()
         pts.append(pts[-1] + d * 0.03)
-    stems.tube(pts, lambda t: 0.004 * (1 - 0.5 * t), segs=4)
+    stems.tube(pts, lambda t: 0.0045 * (1 - 0.5 * t), segs=6, smooth=2, round_ends=True)
     for i, p in enumerate(pts[1:], 1):
         if rnd.random() < 0.7:
             dd = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-0.5, 0.5))).normalized()
-            leaves.leaf(p, dd, Vector((0, 0, 1)) + dd * 0.2, rnd.uniform(0.03, 0.045), 0.03, shape="oval", curl=0.15, segs=6)
+            leaves.leaf(p, dd, Vector((0, 0, 1)) + dd * 0.2, rnd.uniform(0.035, 0.05), 0.032, shape="oval", curl=0.15, segs=6,
+                        thick=0.0035)
         if rnd.random() < 0.55:
             n = (Vector(out) + Vector((rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), rnd.uniform(-0.3, 0.6)))).normalized()
             floret(bloom, p + n * 0.02, n, rnd.uniform(0.022, 0.03), rnd, petals=5)
 
 
 def geranium(leaves, stems, bloom, base, rot, rnd):
-    """Geranie: runde, gewellte Blätter rund um den Fuß (ungleich verteilt), zwei, drei Stiele
-    mit Dolden aus kleinen fünfblättrigen Blüten; einzelne Blüten stehen etwas ab."""
+    """Geranie als rundes Polster: viele runde, gewellte Blätter rund um den Fuß (ungleich,
+    einzelne stehen heraus), darüber zwei bis vier kugelige Blütenbälle auf Stielen."""
     up = rot @ Vector((0, 1, 0))
     out = rot @ Vector((0, 0, 1))
-    for k in range(rnd.randint(9, 13)):
+    for k in range(rnd.randint(14, 20)):
+        # vorn (zur Straße) mehr und tiefer hängende Blätter, hinten weniger
         a = rnd.uniform(0, 2 * math.pi)
-        d = (rot @ Vector((math.cos(a), rnd.uniform(0.15, 0.7), math.sin(a)))).normalized()
+        if math.sin(a) < 0 and rnd.random() < 0.5:
+            a = -a
+        lift = rnd.uniform(-0.25, 0.7) if math.sin(a) > 0.3 else rnd.uniform(0.1, 0.75)
+        d = (rot @ Vector((math.cos(a), lift, math.sin(a)))).normalized()
         L = rnd.uniform(0.065, 0.1)
-        stem_end = base + d * rnd.uniform(0.03, 0.07)
-        stems.tube([base, stem_end], 0.003, segs=4)
-        leaves.leaf(stem_end, d + up * 0.2, up + d * -0.3, L, L * 0.95, shape="round", curl=0.18)
+        stem_end = base + d * rnd.uniform(0.03, 0.09) + up * rnd.uniform(0.0, 0.05)
+        stems.tube([base, stem_end], 0.0035, segs=5)
+        leaves.leaf(stem_end, d + up * 0.25, up + d * -0.35, L, L * 0.95, shape="round", curl=0.2, thick=0.004)
     for k in range(rnd.randint(2, 4)):
-        top = base + up * rnd.uniform(0.12, 0.26) + (rot @ Vector((rnd.uniform(-0.06, 0.06), 0, rnd.uniform(-0.02, 0.06))))
-        mid = (base + top) / 2 + out * 0.015
-        stems.tube([base, mid, top], 0.004, segs=5)
-        umbel(bloom, top, rnd.uniform(0.045, 0.065), up, rnd, count=rnd.randint(16, 24))
+        top = base + up * rnd.uniform(0.14, 0.26) + (rot @ Vector((rnd.uniform(-0.07, 0.07), 0, rnd.uniform(-0.03, 0.07))))
+        mid = (base + top) / 2 + out * 0.02
+        stems.tube([base, mid, top], 0.0045, segs=6, smooth=2, round_ends=True)
+        umbel(bloom, top, rnd.uniform(0.055, 0.07), up, rnd, count=rnd.randint(22, 30), size=0.021)
 
 
-def umbel(bloom, center, radius, up, rnd, count=None, petals=5, size=0.017):
-    for k in range(count or rnd.randint(11, 17)):
-        d = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-1, 1)))
+def umbel(bloom, center, radius, up, rnd, count=None, petals=5, size=0.019):
+    """Kugeliger Blütenball (Geranie): dicht gepackte Einzelblüten, unten etwas flacher."""
+    for k in range(count or rnd.randint(16, 22)):
+        d = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), rnd.gauss(0, 1)))
         if d.length < 0.1:
             continue
         d.normalize()
-        if d.dot(up) < -0.2:
-            d = (d + up * 0.8).normalized()
-        c = Vector(center) + d * radius * rnd.uniform(0.75, 1.15)
+        if d.dot(up) < -0.35:
+            d = (d + up * 0.9).normalized()
+        c = Vector(center) + d * radius * rnd.uniform(0.82, 1.08)
         floret(bloom, c, d, size * rnd.uniform(0.85, 1.15), rnd, petals)
 
 
 def floret(body, center, normal, size, rnd, petals=5):
-    if SB.GAME:
-        body.star(center, normal, size, petals, rnd)
-        return
+    """Eine Blüte als ein Körper (Stern aus Blütenblättern, leicht schalenförmig)."""
+    body.star(center, normal, size, petals, rnd)
+    return
     n = Vector(normal).normalized()
     ref = Vector((0, 0, 1)) if abs(n.z) < 0.9 else Vector((1, 0, 0))
     s1 = n.cross(ref).normalized()
@@ -836,30 +849,34 @@ def floret(body, center, normal, size, rnd, petals=5):
 
 
 def hang(leaves, stems, start, direction, length, rnd, out=None, wall_z=None, young=None):
-    """Hängende Efeuranke: Trieb fällt in leichtem Bogen, Blätter abwechselnd links/rechts,
+    """Hängende Ranke: Trieb fällt in weichem Bogen, Herzblätter abwechselnd links und rechts,
     zur Spitze hin kleiner."""
     pts = [Vector(start)]
     d = Vector(direction)
-    step = 0.035
+    step = 0.04
     n = max(3, int(length / step))
+    sway = rnd.uniform(0, 6.28)
     for i in range(n):
-        d = (d + Vector((rnd.uniform(-0.15, 0.15), rnd.uniform(-0.05, 0.05), -0.35))).normalized()
+        d = (d + Vector((0.08 * math.sin(sway + i * 0.6), rnd.uniform(-0.03, 0.03), -0.4))).normalized()
         pts.append(pts[-1] + d * step)
-    stems.tube(pts, lambda t: 0.0035 * (1 - 0.5 * t), segs=4)
+    stems.tube(pts, lambda t: 0.0045 * (1 - 0.45 * t), segs=6, smooth=1, round_ends=True)
     out = out or Vector((0, -1, 0))
-    for i in range(1, len(pts), 1):
+    for i in range(1, len(pts)):
         side = 1 if i % 2 else -1
         tang = (pts[i] - pts[i - 1]).normalized()
         sideways = tang.cross(out).normalized() * side
-        size = 0.06 * (1 - 0.45 * i / len(pts)) * rnd.uniform(0.8, 1.15)
-        base = pts[i] + sideways * 0.01 + out * 0.006
-        leaves.leaf(base, (sideways * 0.6 + Vector((0, 0, -0.6)) + out * 0.2).normalized(), out, size, size, shape="ivy", curl=0.12)
+        size = 0.062 * (1 - 0.45 * i / len(pts)) * rnd.uniform(0.85, 1.15)
+        tip = pts[i] + sideways * 0.018 + out * 0.008
+        stems.tube([pts[i], tip], 0.0018, segs=4)
+        leaves.leaf(tip, (sideways * 0.5 + Vector((0, 0, -0.7)) + out * 0.25).normalized(), out, size, size * 0.95, shape="heart",
+                    curl=0.12, thick=0.0035)
 
 
 def ivy_climb(M, C, side, top, seed):
-    """Efeu wächst an der Hausecke vom Boden bis unters Dach: Triebe am Pfeiler hoch, über
-    Kapitell und Gesims, dann an der Ecke der Putzwand; Seitentriebe, Blätter ungleich, oben
-    jung und heller."""
+    """Kletterpflanze an der Hausecke (Vorbild: Bilderbuch-Ranken): mehrere weiche, runde Triebe
+    winden sich in sanften S-Bögen vom Boden bis unters Dach, über Kapitell und Gesims hinweg;
+    Seitentriebe schwingen nach außen; große Herzblätter an kurzen Stielen, unten dichter, oben
+    jünger und heller, einzelne Blätter stehen heraus."""
     rnd = random.Random(seed)
     name = "Efeu %s" % ("links" if side < 0 else "rechts")
     leaves = Body(name + " Blätter", M["ivy"], C["plants"], seed=seed, vary=0.12)
@@ -884,66 +901,84 @@ def ivy_climb(M, C, side, top, seed):
         return y
 
     def hug(x, z):
-        return min(surface_y(x, z + dz) for dz in (-0.08, -0.04, 0.0, 0.04, 0.08))
+        return min(surface_y(x, z + dz) for dz in (-0.1, -0.05, 0.0, 0.05, 0.1))
 
-    def grow(x, z, z_end, xmin, xmax, thick, depth=0):
+    def leaf_at(p, tang, side_, frac):
+        size = rnd.uniform(0.06, 0.1) * (1.1 - 0.45 * frac)
+        out = Vector((rnd.uniform(-0.25, 0.25), -1, rnd.uniform(-0.1, 0.3))).normalized()
+        sideways = tang.cross(Vector((0, -1, 0))).normalized() * side_
+        tip = p + sideways * rnd.uniform(0.02, 0.04) + Vector((0, -rnd.uniform(0.012, 0.03), rnd.uniform(-0.01, 0.015)))
+        stems.tube([p, tip], 0.0022, segs=4)
+        d = (sideways * rnd.uniform(0.3, 0.8) + Vector((0, -rnd.uniform(0.0, 0.25), -rnd.uniform(0.3, 0.9)))).normalized()
+        body = young if frac > 0.8 and rnd.random() < 0.7 else leaves
+        body.leaf(tip, d, out, size, size * rnd.uniform(0.9, 1.05), shape="heart", curl=rnd.uniform(0.08, 0.2), thick=0.004)
+
+    def vine(x0, z0, z1, lo, hi, thick, sway, phase, freq, branches=True):
         pts = []
-        heading = 0.0
-        while z < z_end:
-            heading = max(-0.6, min(0.6, heading + rnd.uniform(-0.25, 0.25)))
-            x = max(xmin, min(xmax, x + math.sin(heading) * 0.04))
-            z += 0.045
+        z = z0
+        while z < z1:
+            x = x0 + sway * math.sin(z * freq + phase) + 0.03 * math.sin(z * 4.1 + phase * 2)
+            x = max(lo, min(hi, x))
             pts.append(Vector((x, hug(x, z) - thick - 0.004, z)))
-            if depth == 0 and rnd.random() < 0.06 and z > 0.4:
-                lo_, hi_ = (xmin - 0.12, xmax) if side > 0 else (xmin, xmax + 0.12)
-                grow(x, z, min(z_end, z + rnd.uniform(0.4, 1.4)), lo_, hi_, thick * 0.7, depth + 1)
-        if len(pts) < 2:
+            z += 0.05
+        if len(pts) < 3:
             return
-        stems.tube(pts, lambda t: thick * (1 - 0.6 * t), segs=5)
-        for i, p in enumerate(pts):
+        stems.tube(pts, lambda t: thick * (1 - 0.55 * t), segs=8, smooth=1, round_ends=True)
+        for i in range(1, len(pts) - 1):
             frac = i / len(pts)
-            for side_ in ((1 if i % 2 else -1),) + ((-1 if i % 2 else 1,) if rnd.random() < 0.55 else ()):
-                leaf_at(p, side_, frac, depth)
+            tang = (pts[i + 1] - pts[i - 1]).normalized()
+            leaf_at(pts[i], tang, 1 if i % 2 else -1, frac)
+            if rnd.random() < 0.7:
+                leaf_at(pts[i], tang, -1 if i % 2 else 1, frac)
+            # Seitentrieb: schwingt in einem Bogen nach außen und hängt etwas über
+            if branches and rnd.random() < 0.08 and 0.3 < pts[i].z < z1 - 0.3:
+                out = -side
+                bpts = []
+                for k in range(9):
+                    t = k / 8
+                    bx = pts[i].x + out * 0.28 * math.sin(t * 1.4) * rnd.uniform(0.8, 1.1)
+                    bx = max(lo - 0.12, min(hi + 0.12, bx)) if side > 0 else max(lo - 0.12, min(hi + 0.12, bx))
+                    bz = pts[i].z + 0.22 * math.sin(t * 2.6) - 0.1 * t
+                    bpts.append(Vector((bx, hug(bx, bz) - thick * 0.6 - 0.006, bz)))
+                stems.tube(bpts, lambda t: thick * 0.6 * (1 - 0.5 * t), segs=6, smooth=1, round_ends=True)
+                for k in range(1, len(bpts)):
+                    leaf_at(bpts[k], (bpts[k] - bpts[k - 1]).normalized(), 1 if k % 2 else -1, frac)
 
-    def leaf_at(p, side_, frac, depth):
-        """Ein Blatt an einem kurzen Stiel, zur Seite und nach unten hängend, oben jünger."""
-        size = rnd.uniform(0.055, 0.095) * (1.15 - 0.5 * frac * (1 if depth == 0 else 1.3))
-        off = Vector((side_ * rnd.uniform(0.02, 0.05), -rnd.uniform(0.01, 0.035), rnd.uniform(-0.01, 0.02)))
-        base = p + off
-        stems.tube([p, base], 0.0018, segs=3)
-        dirv = Vector((side_ * rnd.uniform(0.2, 0.9), -rnd.uniform(0.0, 0.3), rnd.uniform(-1.0, -0.2))).normalized()
-        normal = Vector((rnd.uniform(-0.3, 0.3), -1, rnd.uniform(-0.2, 0.3)))
-        body = young if frac > 0.82 and rnd.random() < 0.7 else leaves
-        body.leaf(base, dirv, normal, size, size * rnd.uniform(0.9, 1.1), shape="ivy", curl=rnd.uniform(0.05, 0.2))
-
-    x_edge = side * (HW - 0.17)
-    lo, hi = sorted((side * (HW - 0.36), side * (HW - 0.02)))
-    for k in range(5):
-        grow(x_edge + rnd.uniform(-0.12, 0.12), 0.05, top - rnd.uniform(0.0, 1.2) * (k > 0), lo, hi, 0.012 - 0.0015 * k)
+    x_edge = side * (HW - 0.18)
+    lo, hi = sorted((side * (HW - 0.38), side * (HW - 0.02)))
+    for k in range(6):
+        z1 = top - (0.0 if k == 0 else rnd.uniform(0.2, 2.2))
+        vine(x_edge + rnd.uniform(-0.08, 0.08), 0.03, z1, lo, hi, 0.014 - 0.0015 * k, rnd.uniform(0.07, 0.12),
+             rnd.uniform(0, 6.28), rnd.uniform(2.0, 3.2))
     for body in (leaves, young, stems):
         body.build()
 
 
 def ivy_garland(M, C, x0, x1, seed):
-    """Efeu oben auf dem Ladengesims mit herabhängenden Ranken über dem Schild."""
+    """Ranke oben auf dem Ladengesims: weicher, runder Trieb in Wellen, Herzblätter, dazwischen
+    hängen Ranken über das Schild herab."""
     rnd = random.Random(seed)
     leaves = Body("Efeu Gesims %.0f Blätter" % x0, M["ivy"], C["plants"], seed=seed, vary=0.12)
     stems = Body("Efeu Gesims %.0f Triebe" % x0, M["bark"], C["plants"], seed=seed + 1)
     z = SHOP_TOP + 0.012
     pts = []
     x = x0
-    step = 0.04 * (1 if x1 > x0 else -1)
+    step = 0.05 * (1 if x1 > x0 else -1)
     while (x - x1) * (1 if x1 > x0 else -1) < 0:
-        pts.append(Vector((x, -0.3 + 0.03 * math.sin(x * 7), z + 0.006)))
+        pts.append(Vector((x, -0.28 + 0.05 * math.sin(x * 6), z + 0.009)))
         x += step
-    stems.tube(pts, 0.006, segs=5)
+    stems.tube(pts, lambda t: 0.009 * (1 - 0.5 * t), segs=8, smooth=1, round_ends=True)
     for i, p in enumerate(pts):
-        for _ in range(rnd.randint(2, 3)):
-            d = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 0.2), rnd.uniform(0.2, 0.8))).normalized()
-            leaves.leaf(p + Vector((0, 0, 0.005)), d, Vector((rnd.uniform(-0.3, 0.3), rnd.uniform(-0.6, 0.2), 1)), rnd.uniform(0.04, 0.065),
-                        0.055, shape="ivy", curl=0.12)
-        if rnd.random() < 0.22:
-            hang(leaves, stems, p + Vector((0, -0.12, 0)), Vector((rnd.uniform(-0.2, 0.2), -0.6, -0.5)).normalized(), rnd.uniform(0.15, 0.7), rnd)
+        for _ in range(rnd.randint(1, 3)):
+            d = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 0.1), rnd.uniform(0.1, 0.6))).normalized()
+            tip = p + d * 0.02 + Vector((0, 0, 0.006))
+            stems.tube([p, tip], 0.002, segs=4)
+            size = rnd.uniform(0.05, 0.08)
+            leaves.leaf(tip, d, Vector((rnd.uniform(-0.3, 0.3), rnd.uniform(-0.6, 0.2), 1)), size, size, shape="heart", curl=0.14,
+                        thick=0.004)
+        if rnd.random() < 0.2:
+            hang(leaves, stems, p + Vector((0, -0.11, 0)), Vector((rnd.uniform(-0.2, 0.2), -0.6, -0.5)).normalized(),
+                 rnd.uniform(0.2, 0.7), rnd)
     leaves.build()
     stems.build()
 
@@ -960,7 +995,7 @@ def boxwood(M, C, center, radius, seed):
     leaves = Body("Buchs Blätter %d" % seed, M["box_leaf"], C["plants"], seed=seed + 1, vary=0.2)
     twigs = Body("Buchs Zweige %d" % seed, M["bark"], C["plants"], seed=seed + 2)
     seedv = Vector((rnd.uniform(0, 9), rnd.uniform(0, 9), 0))
-    for k in range(2600):
+    for k in range(2000):
         d = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), rnd.gauss(0, 1))).normalized()
         if d.z < -0.6:
             continue
@@ -970,13 +1005,13 @@ def boxwood(M, C, center, radius, seed):
         lump = 1 + 0.16 * clump
         p = c + Vector((d.x * sc[0], d.y * sc[1], d.z * sc[2])) * radius * lump * rnd.uniform(0.86, 1.03)
         t = (d * 0.5 + Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-0.3, 1)))).normalized()
-        leaves.leaf(p, t, d + Vector((rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), 0.3)), rnd.uniform(0.026, 0.04), 0.022,
+        leaves.leaf(p, t, d + Vector((rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), 0.3)), rnd.uniform(0.03, 0.045), 0.025,
                     shape="oval", thick=0.002, curl=0.15, segs=6)
     for k in range(rnd.randint(7, 12)):
         d = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), abs(rnd.gauss(0, 1)))).normalized()
         start = c + Vector((d.x * sc[0], d.y * sc[1], d.z * sc[2])) * radius * 0.8
         end = start + (d + Vector((0, 0, 0.3))).normalized() * rnd.uniform(0.12, 0.24)
-        twigs.tube([start, end], 0.0035, segs=4)
+        twigs.tube([start, end], 0.0035, segs=6, round_ends=True)
         for j in range(7):
             p = start + (end - start) * (0.35 + 0.1 * j)
             leaves.leaf(p, (d + Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), 0.6))).normalized(), d, 0.03, 0.02, shape="oval",
@@ -986,68 +1021,96 @@ def boxwood(M, C, center, radius, seed):
 
 
 def hydrangea_tub(M, C, pos, seed):
+    """Zinkeimer mit üppiger Hortensie: viele große Blätter rundherum (hängen über den Rand),
+    darüber fünf bis sieben große Blütenkugeln in Flieder und Blau."""
     rnd = random.Random(seed)
     x, y = pos
-    tub = Body("Zinkwanne", M["zinc"], C["plants"], seed=seed, vary=0.04)
-    tub.lathe([(0.17, 0.0), (0.22, 0.32), (0.235, 0.33), (0.235, 0.35), (0.21, 0.35), (0.165, 0.04), (0.0, 0.04)], (x, y, 0.0), segs=24, dent=0.004)
+    tub = Body("Zinkwanne", M["zinc"], C["plants"], seed=seed, vary=0.04, bevel=0.004)
+    tub.lathe([(0.17, 0.0), (0.22, 0.32), (0.235, 0.33), (0.235, 0.35), (0.21, 0.35), (0.165, 0.04), (0.0, 0.04)], (x, y, 0.0), segs=28, dent=0.004)
     for side in (-1, 1):
-        tub.tube([(x + side * 0.22, y, 0.28), (x + side * 0.27, y, 0.3), (x + side * 0.27, y, 0.22), (x + side * 0.215, y, 0.2)], 0.008, segs=5)
+        tub.tube([(x + side * 0.22, y, 0.28), (x + side * 0.27, y, 0.3), (x + side * 0.27, y, 0.22), (x + side * 0.215, y, 0.2)], 0.008,
+                 segs=8, smooth=2, round_ends=True)
     for zz in (0.08, 0.24):
         r = 0.17 + 0.05 * zz / 0.32
-        tub.lathe([(0.0, 0.0), (r + 0.006, 0.0), (r + 0.006, 0.015), (0.0, 0.016)], (x, y, zz), segs=24)
+        tub.lathe([(0.0, 0.0), (r + 0.006, 0.0), (r + 0.008, 0.008), (r + 0.006, 0.016), (0.0, 0.017)], (x, y, zz), segs=28)
     tub.build()
     soil = Body("Zinkwanne Erde", M["soil"], C["plants"], seed=seed + 1)
-    soil.lathe([(0.0, 0.0), (0.205, 0.0), (0.2, 0.03), (0.0, 0.035)], (x, y, 0.29), segs=20, dent=0.008)
+    soil.lathe([(0.0, 0.0), (0.205, 0.0), (0.2, 0.03), (0.0, 0.04)], (x, y, 0.29), segs=24, dent=0.008)
     soil.build()
-    leaves = Body("Hortensie Blätter", M["leaf"], C["plants"], seed=seed + 2, vary=0.12)
+    leaves = Body("Hortensie Blätter", M["leaf"], C["plants"], seed=seed + 2, vary=0.14)
     stems = Body("Hortensie Stiele", M["stem"], C["plants"], seed=seed + 3)
-    lilac = Body("Hortensie Blüten Flieder", M["lilac"], C["plants"], seed=seed + 4, vary=0.14)
-    blue = Body("Hortensie Blüten Blau", M["blue_flower"], C["plants"], seed=seed + 5, vary=0.14)
-    base = Vector((x, y, 0.31))
-    for k in range(rnd.randint(4, 5)):
-        a = 2 * math.pi * k / 4.5 + rnd.uniform(-0.4, 0.4)
-        top = base + Vector((0.13 * math.cos(a), 0.13 * math.sin(a) - 0.03, rnd.uniform(0.32, 0.46)))
-        stems.tube([base, (base + top) / 2 + Vector((0, 0, 0.03)), top], 0.006, segs=5)
-        head = top + Vector((0, 0, 0.06))
-        body = lilac if rnd.random() < 0.6 else blue
-        hr = rnd.uniform(0.1, 0.13)
-        for j in range(130):
-            d = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), abs(rnd.gauss(0, 1)) + 0.3)).normalized()
-            floret(body, head + d * hr * rnd.uniform(0.85, 1.05), d, 0.026 * rnd.uniform(0.8, 1.2), rnd, petals=4)
-        for j in range(6):
-            p = base + (top - base) * rnd.uniform(0.3, 0.75)
-            dd = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-0.1, 0.4))).normalized()
-            leaves.leaf(p, dd, Vector((0, 0, 1)) - dd * 0.4, rnd.uniform(0.11, 0.15), 0.08, shape="oval", curl=0.2)
+    lilac = Body("Hortensie Blüten Flieder", M["lilac"], C["plants"], seed=seed + 4, vary=0.16)
+    blue = Body("Hortensie Blüten Blau", M["blue_flower"], C["plants"], seed=seed + 5, vary=0.16)
+    base = Vector((x, y, 0.32))
+    heads = rnd.randint(7, 9)
+    for k in range(heads):
+        a = 2 * math.pi * k / heads + rnd.uniform(-0.35, 0.35)
+        r = rnd.uniform(0.12, 0.22) if k else 0.0
+        top = base + Vector((r * math.cos(a), r * math.sin(a), rnd.uniform(0.2, 0.34) + (0.1 if k == 0 else 0.0)))
+        stems.tube([base, base + (top - base) * 0.5 + Vector((0, 0, 0.04)), top], 0.007, segs=7, smooth=2, round_ends=True)
+        head = top + Vector((0, 0, 0.07))
+        body = lilac if rnd.random() < 0.65 else blue
+        hr = rnd.uniform(0.11, 0.14)
+        for j in range(170):
+            d = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), rnd.gauss(0, 1) * 0.8 + 0.35)).normalized()
+            floret(body, head + d * hr * rnd.uniform(0.86, 1.03), d, 0.027 * rnd.uniform(0.85, 1.2), rnd, petals=4)
+    # Große Blätter: am Rand hängen sie über, innen stehen sie schräg nach oben
+    for k in range(70):
+        a = rnd.uniform(0, 2 * math.pi)
+        outward = Vector((math.cos(a), math.sin(a), 0))
+        start = base + outward * rnd.uniform(0.03, 0.2) + Vector((0, 0, rnd.uniform(0.02, 0.3)))
+        d = (outward * rnd.uniform(0.6, 1.0) + Vector((0, 0, rnd.uniform(-0.45, 0.5)))).normalized()
+        tip = start + d * 0.03
+        stems.tube([start, tip], 0.004, segs=6)
+        size = rnd.uniform(0.11, 0.17)
+        leaves.leaf(tip, d, Vector((0, 0, 1)) - d * 0.3, size, size * 0.7, shape="oval", curl=0.22, thick=0.005, segs=8)
     for body in (leaves, stems, lilac, blue):
         body.build()
 
 
 def olive_pot(M, C, pos, seed):
+    """Olivenbäumchen im Terrakottatopf: leicht gedrehter Stamm, fünf Äste in Bögen nach außen
+    und oben, die sich in Zweige teilen; schmale silbergrüne Blätter in lockeren Büscheln –
+    die Krone ist rundlich, aber nicht geschnitten."""
     rnd = random.Random(seed)
     x, y = pos
-    pot = Body("Olivenbaum Topf", M["pot"], C["plants"], seed=seed, vary=0.05)
-    pot.lathe([(0.14, 0.0), (0.18, 0.38), (0.2, 0.39), (0.2, 0.44), (0.175, 0.44), (0.135, 0.04), (0.0, 0.04)], (x, y, 0.0), segs=22, dent=0.004)
+    pot = Body("Olivenbaum Topf", M["pot"], C["plants"], seed=seed, vary=0.05, bevel=0.005)
+    pot.lathe([(0.14, 0.0), (0.18, 0.38), (0.2, 0.39), (0.205, 0.415), (0.2, 0.44), (0.175, 0.44), (0.135, 0.04), (0.0, 0.04)],
+              (x, y, 0.0), segs=28, dent=0.004)
     pot.build()
     soil = Body("Olivenbaum Erde", M["soil"], C["plants"], seed=seed + 1)
-    soil.lathe([(0.0, 0.0), (0.172, 0.0), (0.17, 0.02), (0.0, 0.025)], (x, y, 0.4), segs=18, dent=0.006)
+    soil.lathe([(0.0, 0.0), (0.172, 0.0), (0.17, 0.02), (0.0, 0.03)], (x, y, 0.4), segs=24, dent=0.006)
     soil.build()
-    bark = Body("Olivenbaum Stamm", M["bark"], C["plants"], seed=seed + 2)
-    leaves = Body("Olivenbaum Blätter", M["olive_leaf"], C["plants"], seed=seed + 3, vary=0.14)
-    trunk = [Vector((x, y, 0.4)), Vector((x + 0.02, y, 0.7)), Vector((x - 0.015, y + 0.01, 1.0)), Vector((x + 0.01, y, 1.22))]
-    bark.tube(trunk, lambda t: 0.028 * (1 - 0.45 * t), segs=8, wobble=0.1)
+    bark = Body("Olivenbaum Stamm und Äste", M["bark"], C["plants"], seed=seed + 2)
+    leaves = Body("Olivenbaum Blätter", M["olive_leaf"], C["plants"], seed=seed + 3, vary=0.16)
+    trunk = [Vector((x, y, 0.38)), Vector((x + 0.02, y + 0.01, 0.62)), Vector((x - 0.015, y - 0.005, 0.86)),
+             Vector((x + 0.01, y + 0.01, 1.05)), Vector((x, y, 1.14))]
+    bark.tube(trunk, lambda t: 0.034 * (1 - 0.4 * t), segs=10, smooth=2, wobble=0.06, round_ends=True)
     top = trunk[-1]
-    for k in range(6):
-        a = 2 * math.pi * k / 6 + rnd.uniform(-0.4, 0.4)
-        L = rnd.uniform(0.18, 0.32)
-        end = top + Vector((L * math.cos(a), L * math.sin(a) * 0.8, rnd.uniform(0.05, 0.3)))
-        mid = (top + end) / 2 + Vector((0, 0, 0.04))
-        bark.tube([top - Vector((0, 0, 0.02)), mid, end], 0.012, segs=6)
-        for j in range(60):
-            t = rnd.uniform(0.2, 1.08)
-            p = top + (end - top) * t + Vector((rnd.uniform(-0.05, 0.05), rnd.uniform(-0.05, 0.05), rnd.uniform(-0.04, 0.06)))
-            d = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-0.6, 0.8))).normalized()
-            leaves.leaf(p, d, Vector((rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), 1)), rnd.uniform(0.045, 0.065), 0.02, shape="narrow",
-                        thick=0.0018, curl=0.1, segs=7)
+
+    def twig(start, d, length, thick, depth):
+        pts = [start]
+        dd = d.normalized()
+        for i in range(6):
+            dd = (dd + Vector((rnd.uniform(-0.15, 0.15), rnd.uniform(-0.15, 0.15), 0.12))).normalized()
+            pts.append(pts[-1] + dd * length / 6)
+        bark.tube(pts, lambda t: thick * (1 - 0.6 * t), segs=7, smooth=2, round_ends=True)
+        if depth == 0:
+            for k in range(rnd.randint(3, 4)):
+                p = pts[rnd.randint(2, 5)]
+                nd = (dd + Vector((rnd.uniform(-0.8, 0.8), rnd.uniform(-0.8, 0.8), rnd.uniform(0.1, 0.6)))).normalized()
+                twig(p, nd, length * rnd.uniform(0.45, 0.65), thick * 0.55, 1)
+        # Blätter in der äußeren Hälfte, in Büscheln
+        for i in range(2, len(pts)):
+            for _ in range(rnd.randint(4, 6)):
+                ld = (dd * 0.5 + Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-0.3, 0.9)))).normalized()
+                L = rnd.uniform(0.065, 0.09)
+                leaves.leaf(pts[i], ld, Vector((rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), 1)), L, L * 0.34, shape="narrow",
+                            curl=0.12, thick=0.0025, segs=7)
+    for k in range(5):
+        a = 2 * math.pi * k / 5 + rnd.uniform(-0.4, 0.4)
+        d = Vector((math.cos(a), math.sin(a) * 0.85, rnd.uniform(0.6, 1.1)))
+        twig(top - Vector((0, 0, rnd.uniform(0.0, 0.1))), d, rnd.uniform(0.34, 0.48), 0.017, 0)
     bark.build()
     leaves.build()
 
@@ -1070,11 +1133,17 @@ def chalkboard(M, C, pos, yaw):
     x, y = pos
     m = Matrix.Translation((x, y, 0)) @ Matrix.Rotation(math.radians(yaw), 4, "Z")
     a = math.radians(12)
-    w = Body("Kreidetafel Rahmen", M["wood"], C["deco"], seed=140, vary=0.05, bevel=0.005)
+    hinge = 0.82
+    drop = hinge * (1 - math.cos(a))   # so weit heben sich die Füße beim Spreizen – wieder absenken
+
+    def leaf_matrix(side):
+        """Tafelhälfte: oben am Scharnier gedreht, unten gespreizt (side = -1 hinten, 1 vorn)."""
+        return m @ Matrix.Translation((0, 0, hinge - drop)) @ Matrix.Rotation(-side * a, 4, "X") @ Matrix.Translation((0, 0, -hinge))
+    w = Body("Kreidetafel Rahmen", M["wood"], C["deco"], seed=140, vary=0.05, bevel=0.008)
     bd = Body("Kreidetafel Tafel", M["chalkboard"], C["deco"], seed=141, vary=0.03)
     ch = Body("Kreidetafel Schrift", M["chalk"], C["deco"], seed=142, vary=0.02)
     for side in (-1, 1):
-        fm = m @ Matrix.Translation((0, side * 0.0, 0)) @ Matrix.Rotation(side * a, 4, "X")
+        fm = leaf_matrix(side)
         def lb(c, s):
             w.box(c, s, step=0.3, dent=0.002, matrix=fm)
         lb((-0.24, side * -0.02, 0.4), (0.04, 0.03, 0.8))
@@ -1082,11 +1151,11 @@ def chalkboard(M, C, pos, yaw):
         lb((0, side * -0.02, 0.78), (0.52, 0.03, 0.04))
         lb((0, side * -0.02, 0.14), (0.52, 0.03, 0.04))
         bd.box((0, side * -0.02, 0.46), (0.44, 0.012, 0.6), step=0.3, dent=0.001, matrix=fm)
-    tm = m @ Matrix.Rotation(-a, 4, "X") @ Matrix.Translation((0, -0.027, 0)) @ Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    tm = leaf_matrix(1) @ Matrix.Translation((0, -0.027, 0)) @ Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
     for k, (txt, zz, sz) in enumerate((("Neu:", 0.66, 0.07), ("Herbst-", 0.54, 0.075), ("mode", 0.43, 0.075))):
         ch.text(txt, sz, 0.002, tm @ Matrix.Translation((0, zz, 0)), font="DejaVuSerif-BoldItalic.ttf", jitter=0.08)
     pts = [Vector((-0.15 + 0.3 * t, 0, 0.3 + 0.025 * math.sin(t * 12))) for t in [k / 20 for k in range(21)]]
-    ch.tube([m @ Matrix.Rotation(-a, 4, "X") @ (p + Vector((0, -0.029, 0))) for p in pts], 0.003, segs=4)
+    ch.tube([leaf_matrix(1) @ (p + Vector((0, -0.029, 0))) for p in pts], 0.003, segs=6, round_ends=True)
     for body in (w, bd, ch):
         body.build()
 
@@ -1449,10 +1518,8 @@ def render(name, cam, target, lens, res, focus=None, fstop=6.0):
 WIN_JITTER = []
 
 
-def build_scene(game):
-    """Ganzes Haus bauen. game = leichte Kopie fürs Spiel (siehe SB.GAME). Beide Durchgänge
-    nutzen dieselben Zufallszahlen – Lage und Form sind gleich."""
-    SB.GAME = game
+def build_scene():
+    """Ganzes Haus bauen (immer gleich: feste Zufallszahlen)."""
     RND.seed(1907)
     WIN_JITTER.clear()
     GAME_MATERIALS.clear()
@@ -1507,19 +1574,18 @@ def main():
               "  blender -b %s --python tools/blender/export_storybook.py\n"
               "Neu bauen (eigene Änderungen gehen verloren): ... build_storybook_shop.py -- --force" % os.path.relpath(BLEND, ROOT))
         return
-    if "--no-game" not in argv:
-        M, C, cols = build_scene(True)
-        mapping = write_game_materials()
-        tris, parts = export_game(C, cols)
-        write_import_settings(mapping)
-        print("Spiel: %s (%d Dreiecke, %d Netze)" % (GAME_GLB, tris, parts))
-    M, C, cols = build_scene(False)
-    # Prüfung: jedes Teil ein geschlossener Körper?
+    M, C, cols = build_scene()
+    # Prüfung: jedes Teil ein geschlossener Körper (auch die Spiel-Datei besteht aus diesen Teilen)?
     open_parts = [(o.name, SB.non_manifold(o)) for c in C.values() for o in c.objects if o.type == "MESH"]
     bad = [(n, k) for n, k in open_parts if k]
     faces = sum(len(o.data.polygons) for c in C.values() for o in c.objects if o.type == "MESH")
     print("Teile: %d, Flächen: %d" % (len(open_parts), faces))
     print("Offene Kanten: %s" % (bad if bad else "keine – alles geschlossene Körper"))
+    if "--no-game" not in argv:
+        mapping = write_game_materials()
+        tris, parts = export_game(C, cols)
+        write_import_settings(mapping)
+        print("Spiel: %s (%d Dreiecke, %d Netze)" % (GAME_GLB, tris, parts))
     os.makedirs(os.path.dirname(BLEND), exist_ok=True)
     if "--render" in argv:
         quick = "--quick" in argv
@@ -1531,9 +1597,15 @@ def main():
             "schraeg_links": ((-7.0, -9.5, 2.0), (0.2, 0.0, 4.6), 30, (1600, 1100)),
             "schraeg_rechts": ((7.0, -9.5, 2.0), (-0.2, 0.0, 4.6), 30, (1600, 1100)),
             "laden": ((1.4, -4.4, 1.6), (-0.1, 0.0, 1.9), 26, (1600, 1100)),
+            "tuer": ((0.2, -2.6, 1.4), (0.0, 0.1, 1.3), 30, (1000, 1200)),
             "dach": ((3.2, -5.6, 8.9), (0.0, 1.6, 8.0), 32, (1600, 1100)),
+            "gaube": ((1.0, -2.2, 8.4), (1.85, 0.7, 8.2), 35, (1200, 1000)),
             "efeu": ((3.7, -2.6, 2.6), (2.45, 0.0, 3.2), 32, (1100, 1400)),
+            "laterne": ((3.3, -1.6, 4.0), (2.5, -0.38, 4.1), 35, (1000, 1200)),
+            "tafel": ((2.6, -2.0, 0.9), (1.78, -0.6, 0.45), 32, (1200, 1000)),
             "fenster": ((0.6, -2.4, 4.9), (0.0, 0.0, 4.75), 30, (1400, 1000)),
+            "hortensie": ((-1.6, -2.0, 1.1), (-1.15, -0.48, 0.6), 35, (1000, 1000)),
+            "olive": ((1.9, -2.6, 1.3), (1.12, -0.45, 0.9), 35, (1000, 1200)),
         }
         for name, (cam, target, lens, res) in views.items():
             if only and name not in only[0]:

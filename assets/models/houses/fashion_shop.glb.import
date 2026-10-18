@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://b51uc8ixqhvo1"
+uid="uid://cwgiabpu1u6j7"
 path="res://.godot/imported/fashion_shop.glb-fe117c62c9ede263865f39365d079e3f.scn"
 
 [deps]
@@ -85,6 +85,11 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/bluete_flieder.tres",
 "use_external/path": "res://assets/materials/storybook/bluete_flieder.tres"
 },
+"Blüte Geranienrot": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/bluete_geranienrot.tres",
+"use_external/path": "res://assets/materials/storybook/bluete_geranienrot.tres"
+},
 "Blüte Himbeer": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/bluete_himbeer.tres",
@@ -102,7 +107,6 @@ _subresources={
 },
 "Blüte Zartrosa": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/bluete_zartrosa.tres",
 "use_external/path": "res://assets/materials/storybook/bluete_zartrosa.tres"
 },
 "Bordstein": {
@@ -198,6 +202,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/lampenschirm_leuchtend.tres",
 "use_external/path": "res://assets/materials/storybook/lampenschirm_leuchtend.tres"
+},
+"Laterne Eisen dunkelbraun": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/laterne_eisen_dunkelbraun.tres",
+"use_external/path": "res://assets/materials/storybook/laterne_eisen_dunkelbraun.tres"
 },
 "Laternenglas leuchtend": {
 "use_external/enabled": true,
