@@ -16,8 +16,8 @@ zusammengefasst.
 
 Mit --source baut das Script die Modelle direkt aus den Bau-Scripts (ohne zu speichern) und
 nennt zu jedem Fund die Programmzeile, die das Teil gebaut hat:
-    blender -b --factory-startup --python tools/blender/geo_check.py -- --source Opposite/Opposite1_4 fashion_shop
-Namen: Häuser wie in houses.tscn (Gruppe/Name), Haustypen (fashion_shop, terrace_45 …),
+    blender -b --factory-startup --python tools/blender/geo_check.py -- --source Opposite/Opposite1_4 terrace_55
+Namen: Häuser wie in houses.tscn (Gruppe/Name), Haustypen (terrace_45, pub …),
 alley_library, alley_opposite, library, Requisiten (street_lamp …); ohne Namen alle.
 """
 

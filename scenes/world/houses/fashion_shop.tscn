@@ -1,16 +1,16 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=3 format=3]
 
-; Haustyp "fashion_shop" (Etappe 4e): Modegeschäft (5,4 m): Ladenfront mit Schaufenstern, Tür an der Seite, Markise.
+; Haustyp "fashion_shop" (Etappe 4e): Modegeschäft (5,4 m): Ladenfront mit Schaufenstern, Tür in der Mitte, Markisen.
 ; Feste Maße (Inspektor: Gruppe "Maße"), Tiefe 8,0 m. Ursprung unten in der Mitte der
 ; Vorderseite, Vorderseite nach +Z, das Haus reicht nach -Z. Eigenes Modell: Kind-Knoten
 ; "Model" anlegen – dann verschwindet der Platzhalter, die Kollision bleibt.
-; Seit Etappe 4g: Stil-Modell aus tools/blender/build_houses.py (assets/models/houses/fashion_shop.glb),
-; Laden "Zwirn und Zwirbel"; Puppen und Kleidung im Laden: fashion_shop_interior.tscn ("Interior").
+; Seit dem Bilderbuch-Stil: Modell "Zwirn und Zwirbel" aus tools/blender/build_storybook_shop.py
+; (assets/models/houses/fashion_shop.glb; Quelle zum Weiterbauen in Einzelteilen:
+; assets/models/source/houses/fashion_shop_storybook.blend). Puppen und Laden sind Teil des Modells.
 ; Alle Häuser dieses Typs stehen in scenes/world/houses.tscn.
 
 [ext_resource type="Script" path="res://scripts/world/house_facade.gd" id="1_house"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/fashion_shop.glb" id="2_model"]
-[ext_resource type="PackedScene" path="res://scenes/world/houses/fashion_shop_interior.tscn" id="3_interior"]
 
 [node name="FashionShop" type="Node3D"]
 script = ExtResource("1_house")
@@ -26,5 +26,3 @@ wall_material = 1
 depth = 8.0
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
-
-[node name="Interior" parent="." instance=ExtResource("3_interior")]

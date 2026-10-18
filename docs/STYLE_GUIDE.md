@@ -42,7 +42,8 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 6. **Leistung:** ein Haus = ein Zeichenaufruf (+1 für Schaufensterglas). Etwa 5.000–15.000
    Dreiecke je Haus. Was man nie sieht (Rückseite), bleibt schlicht.
 7. **Kleine Unregelmäßigkeiten** gehören dazu (Steine leicht verschieden, etwas Flechte auf
-   dem Dach), aber nichts ist schief oder krumm gebaut.
+   dem Dach). Seit dem Bilderbuch-Stil (unten) dürfen Häuser auch minimal schief und wellig
+   sein – subtil, nie verformt.
 
 ## Pflanzen (seit Etappe 4g, Teil 4f)
 - **Echte Blätter statt Kugeln:** jedes Blatt eine gebogene, leicht gefaltete Fläche mit
@@ -82,10 +83,52 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 ## Pläne für die einzelnen Häuser
 | Haustyp | Vorbild | Umsetzung |
 |---------|---------|-----------|
-| `fashion_shop` | Konzept „fashionshop“ | **fertig (4g, Teil 1/1b):** „Zwirn und Zwirbel“, leicht vintage: marineblaue Ladenfront, verspielte Goldschrift mit Faden-Kringel, Markisen, Ausleger-Schild, Hängekorb, Blumenkästen, verschiedene Deko links/rechts, ganzer Ladenraum, Puppen und Kleidung als Platzhalter |
+| `fashion_shop` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** „Zwirn und Zwirbel“: Putz creme, taubenblaue Ladenfront, Nussbaum-Schild mit Goldschrift, terrakotta-rosa Markisen, Oberlicht, Gauben, Ziergiebel, Efeu, Blumenkästen, Buchs (`build_storybook_shop.py`) |
 | `pub` | Inspiration „Westminster Arms“, „O'Brian's“ | dunkelgrüne Pub-Front mit großen Sprossenfenstern, Laternen, Hängekörbe, Ziegel darüber |
 | `gatehouse` | Konzepte Torhaus (Ziegelbogen + Fachwerk) | Ziegel-Rundbogen mit hellen Bogensteinen, Fachwerk-Obergeschoss, Gaube |
 | `terrace_*` | Inspiration Straßenfotos | **fertig (4g, Teil 2):** 45 schmal mit Schlusssteinen, 50 mit Erker, 55 georgianisch mit Brüstung, 60 breit mit Gaube; Wand je Haus Backstein, Putz oder Rauputz |
 | `residential` | – | **fertig (4g, Teil 2):** mittige Tür unter Vordach mit Säulen und Giebel, Lorbeer-Kegel |
 | `corner_*` | Konzept „flowershop“ | Eckladen mit Ladenfront in der Schräge |
 | Bücherei | Konzept „Bookstore“, „The Book Nook“ | Ladenfront in der Schräge, Schild, Sprossenfenster |
+
+## Bilderbuch-Stil (seit Etappe 4h)
+Die Welt wird zu einer **lebendig gewordenen Kinderbuch-Illustration**: Vintage-Charme in
+moderner 3D-Darstellung – warm, einladend, liebevoll gestaltet und bewusst unperfekt. Ein alt
+gewachsenes Dorf, idealisiert, ruhig und ordentlich, ohne Verfall, Schmutz oder störende Moderne.
+Umgesetzt: Modegeschäft (`tools/blender/build_storybook_shop.py`). Die anderen Häuser folgen.
+
+**Formen**
+- Solide und handfest, wie aus echten Materialien, die sich über die Jahre gesetzt haben – **nicht**
+  Knete, Play-Doh oder digitales Spielzeug. Häuser stehen fest im Boden, Dächer liegen auf.
+- Nichts steht perfekt gerade: Wände minimal wellig, das Haus leicht geneigt, das Dach in der
+  Mitte etwas durchgesackt, Fenster, Gauben, Markisen, Schilder, Balkone um Bruchteile eines
+  Grads schief oder um Millimeter verschoben. Jedes Haus mit eigener Wölbung (`SETTLE`).
+- Weiche Kanten (Bevel), aber klare, lesbare Proportionen.
+- Jedes Teil ist ein **geschlossener Körper mit Dicke** (keine Einzelflächen), einzeln in
+  Blender bearbeitbar; Bauteile in Sammlungen (Mauern, Dach, Fenster, Laden, Innen, Pflanzen,
+  Deko, Licht).
+
+**Farben**
+- Basis: Sepia, Beige, warmes Braun, gebrochenes Weiß (Creme, Sand, helles Taupe).
+- Akzente: satte Grüntöne (Wald, Oliv, Moos), Terrakotta und Ziegelrot bis Orange-Rot,
+  Blautöne, Rosa, Senfgelb – mit vielen Abstufungen; kein Haus trägt genau denselben Ton.
+- Jeder Baustein hat eigene Nuancen (Farbton je Teil, leichte Flecken). Kein Neon, kein reines
+  Schwarz, kein reines Weiß.
+
+**Materialien**
+- Matt, sichtbare Materialität: Holzmaserung, Steinstruktur, leicht rauer Putz, Ziegel in
+  echter Größe; nichts glänzt oder spiegelt (Glas klar, aber matt).
+
+**Pflanzen**
+- Üppig: Blumenkästen an möglichst jedem Fenster, Efeu an Fassaden, Büsche und Bäume.
+- Natürlich, nicht symmetrisch: Äste in natürlichen Richtungen, Laub ungleich dicht, einzelne
+  Blüten und Zweige stehen heraus; Buchs nicht exakt rund.
+
+**Licht (kommt für die ganze Welt)**
+- Warm um 3500 K, weiche fließende Schatten, keine harten Kontraste, mildes warmes Bloom um
+  Lichtquellen, Laternen und Schaufenster im Glühbirnen-Look, Fensterlicht als Blickfang.
+- Etwas mehr Umgebungsverdeckung in Ecken und Nischen, geringe Schärfentiefe.
+
+**Wege**
+- Kopfsteinpflaster oder gepflegter Naturweg, Steine bewusst nicht perfekt ausgerichtet
+  (versetzte Reihen, kleine Höhenunterschiede, unterschiedliche Steinformen).

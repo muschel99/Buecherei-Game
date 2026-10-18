@@ -392,13 +392,13 @@ Nach und nach bekommen die Häuser fertige Modelle im einheitlichen Stil (siehe
 docs/STYLE_GUIDE.md). Sie werden nicht von Hand geklickt, sondern von einem Python-Script in
 Blender gebaut – so bleiben alle Häuser gleich in Maßstab, Materialien und Detailgrad.
 - **Anschauen in Blender:** `assets/models/source/houses/<typ>.blend` öffnen (z. B.
-  `fashion_shop.blend`). Oben im Kopf auf **Material-Vorschau** schalten (Taste **Z** →
+  `terrace_55.blend`). Oben im Kopf auf **Material-Vorschau** schalten (Taste **Z** →
   „Material Preview“), dann siehst du die Texturen und Farben wie im Spiel.
 - **Im Spiel:** `assets/models/houses/<typ>.glb` liegt als Knoten **Model** in der
-  Haustyp-Szene (z. B. `scenes/world/houses/fashion_shop.tscn`). Farben je Haus wählst du wie
+  Haustyp-Szene (z. B. `scenes/world/houses/terrace_55.tscn`). Farben je Haus wählst du wie
   bisher in `houses.tscn` (Wand-, Tür-, Akzentfarbe) – sie färben auch das Modell.
 - **Neu bauen** (Terminal, im Projektordner):
-  `blender -b --factory-startup --python tools/blender/build_houses.py -- fashion_shop --render`
+  `blender -b --factory-startup --python tools/blender/build_houses.py -- terrace_55 --render`
   (ohne `--render` geht es schneller, dann ohne Kontrollbilder in `screenshots/blender/`;
   `--check` macht Prüfbilder rundherum, auf denen jede Rückseite pink leuchtet – pink wäre im
   Spiel ein Loch, durch das man hindurchsieht).
@@ -452,10 +452,6 @@ gibt es ein Startbild, das genau so groß ist, wie es sein muss:
 
 | Bild (`assets/textures/signs/`) | Wo | Größe am Haus | Startbild (Pixel) |
 |---|---|---|---|
-| `fashion_shop_fascia.png` | Ladenschild über den Schaufenstern | 4,76 × 0,51 m | 2048 × 219 |
-| `fashion_shop_hanging.png` | Ausleger-Schild (beide Seiten gleich) | 0,60 × 0,56 m, oben Bogen | 512 × 478 |
-| `fashion_shop_chalkboard.png` | Kreidetafel vor dem Laden | 0,42 × 0,70 m | 360 × 600 |
-| `fashion_shop_open.png` | „Geöffnet“-Kärtchen in der Tür | 0,26 × 0,11 m | 360 × 152 |
 | `flower_shop_fascia.png` | Schild des Blumenladens | 4,76 × 0,43 m | 2048 × 185 |
 | `flower_shop_chalkboard.png` | Kreidetafel vor dem Blumenladen | 0,42 × 0,70 m | 360 × 600 |
 | `flower_shop_hanging.png` | Hängeschild am Blumenladen | 0,60 × 0,56 m | 512 × 478 |
@@ -549,20 +545,31 @@ Backstein, helle Farben Putz, jedes dritte Rauputz), *As Built* (wie gebaut), *B
 - **Kleine Gasse gegenüber:** Boden `assets/materials/alley_setts.tres` (großes Kopfsteinpflaster,
   **Tile Size** = Größe der Steine).
 
-### Puppen und Kleidung im Laden (seit Etappe 4g)
-Im Modegeschäft stehen Schneiderpuppen und hängen Kleider – vorerst **Platzhalter**. Jedes
-Stück ist eine eigene kleine Szene in `scenes/world/props/`:
-`mannequin_dress.tscn`, `mannequin_coat.tscn` (Puppe = Knoten `Form`, Kleidung = `Outfit`),
-`garment_dress.tscn`, `garment_blouse.tscn` (hängend, Knoten `Model`, Ursprung oben am Haken).
-- **Farbe ändern:** `scenes/world/houses/fashion_shop_interior.tscn` öffnen, ein Stück
-  anklicken, im Inspektor bei **Color** eine Farbe wählen.
-- **Eigene Kleidung einsetzen:** In der Requisiten-Szene den Knoten `Outfit` (bzw. `Model`)
-  löschen, dein Kleidungsmodell (.glb) hineinziehen und in **Outfit** umbenennen (**F2**).
-  Die Puppe steht mit dem Fuß bei Höhe 0, die Vorderseite zeigt nach +Z; Vorlagen in echter
-  Größe: `assets/models/props/dress_form.glb` (Körper ab 1,0 m bis 1,55 m Höhe).
-- **Achtung:** `fashion_shop_interior.tscn` wird neu geschrieben, wenn Claude das Haus neu
-  baut. Wenn du dort selbst etwas zusammenstellst, sag Bescheid – dann bleibt die Datei.
-- Modelle neu bauen: `blender -b --factory-startup --python tools/blender/build_props.py`.
+### Modegeschäft im Bilderbuch-Stil selbst weiterbauen (seit Etappe 4h)
+Das Modegeschäft „Zwirn und Zwirbel“ ist ein eigenes Modell aus vielen Einzelteilen – jedes ein
+geschlossener Körper, den du in Blender wie gewohnt umformen kannst.
+- **Öffnen:** `assets/models/source/houses/fashion_shop_storybook.blend` in Blender. Rechts oben
+  im **Outliner** liegen die Sammlungen (Mauern, Dach, Fenster, Laden, Innen, Pflanzen, Deko,
+  Licht, Kollision). Taste **Z → Rendered** zeigt Licht und Farben, **Tab** bearbeitet das
+  angeklickte Teil. Die weichen Kanten sind ein Modifikator („Weiche Kanten“, Schraubenschlüssel-
+  Reiter rechts) – Breite dort einstellbar.
+- **Speichern** mit **Strg+S** (Datei behalten, nicht umbenennen).
+- **Ins Spiel bringen** (Terminal, im Projektordner):
+  `blender -b assets/models/source/houses/fashion_shop_storybook.blend --python tools/blender/export_storybook.py`
+  – schreibt `assets/models/houses/fashion_shop.glb`; Godot übernimmt es beim nächsten Öffnen.
+  Neue Teile mit einem vorhandenen Material sehen im Spiel genauso aus; neue Materialien zeigen
+  ihre Grundfarbe.
+- **Kollision:** Feste Dinge vor dem Laden (Buchs, Kübel, Olivenbaum, Tafel) haben je einen
+  Kasten in der Sammlung „Kollision (Spiel)“ (Name endet auf `-colonly`). Verschiebst du ein
+  Teil, den Kasten mitverschieben – dann gehen Spielfigur und Passanten richtig darum herum.
+- **Geschützt:** Hast du die Datei bearbeitet, überschreibt Claudes Bau-Script
+  (`build_storybook_shop.py`) sie nicht mehr (es erkennt das am Fingerabdruck in
+  `fashion_shop_storybook.stamp`).
+- **Farben und Oberflächen im Spiel** stehen in `assets/materials/storybook/` (ein Material je
+  Blender-Material, Shader `assets/shaders/storybook.gdshader`): z. B. `lack_taubenblau.tres`
+  anklicken → Inspektor → **Shader Parameters → Base Color**. Achtung: Ein Neubau durch
+  Claude schreibt diese Dateien neu – dauerhafte Wünsche lieber sagen.
+- Das Ladenschild ist ein 3D-Schriftzug im Modell (kein Bild mehr).
 
 ### Alle Häuser eines Typs ersetzen
 1. Im Dateisystem-Fenster `scenes/world/houses/` öffnen und den Haustyp doppelklicken

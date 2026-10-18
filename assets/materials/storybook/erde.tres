@@ -1,0 +1,23 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+; Erzeugt von tools/blender/build_storybook_shop.py (Blender-Material "Erde") – wird beim Neubau
+; überschrieben. Werte gern ausprobieren, dauerhaft aber im Bau-Script ändern.
+
+[ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "Erde"
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/base_color = Color(0.250, 0.180, 0.120, 1)
+shader_parameter/second_color = Color(0.250, 0.180, 0.120, 1)
+shader_parameter/grain = 0
+shader_parameter/stripe_width = 0.000
+shader_parameter/vary = 0.100
+shader_parameter/blot_scale = 8.000
+shader_parameter/bump_strength = 0.250
+shader_parameter/rough = 1.000
+shader_parameter/metal = 0.000
+shader_parameter/emission_color = Color(0.250, 0.180, 0.120, 1)
+shader_parameter/emission_energy = 0.000
+shader_parameter/glow = 0.000

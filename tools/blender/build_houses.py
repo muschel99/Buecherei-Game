@@ -1,22 +1,20 @@
 """Baut die Stil-Modelle der Häuser (seit Etappe 4g).
 
 Aufruf (Terminal, im Projektordner):
-    blender -b --factory-startup --python tools/blender/build_houses.py -- fashion_shop
-    blender -b --factory-startup --python tools/blender/build_houses.py -- fashion_shop --render
-    blender -b --factory-startup --python tools/blender/build_houses.py -- fashion_shop --check
+    blender -b --factory-startup --python tools/blender/build_houses.py -- terrace_55
+    blender -b --factory-startup --python tools/blender/build_houses.py -- terrace_55 --render
+    blender -b --factory-startup --python tools/blender/build_houses.py -- terrace_55 --check
     blender -b --factory-startup --python tools/blender/build_houses.py -- all
 
 Ergebnis je Haustyp:
     assets/models/houses/<typ>.glb            Modell für Godot (Knoten "Model" im Haustyp)
     assets/models/source/houses/<typ>.blend   zum Anschauen in Blender
-    scenes/world/houses/<typ>_interior.tscn   Requisiten im Laden (Puppen, Kleidung), falls der
-                                              Haustyp einen Laden hat (wird neu geschrieben!)
     screenshots/blender/<typ>-*.png           Kontrollbilder (--render) bzw. Prüfbilder (--check:
                                               Rückseiten pink = im Spiel ein Loch)
 
 Maße (Breite, Tiefe, Traufhöhe) liest das Script aus scenes/world/houses/<typ>.tscn – so passt
 das Modell immer genau auf den Platz im Spiel.
-Requisiten (Puppen, Kleidung) baut tools/blender/build_props.py.
+Das Modegeschäft ist seit dem Bilderbuch-Stil ein eigenes Modell: tools/blender/build_storybook_shop.py.
 """
 
 import bpy
@@ -34,7 +32,6 @@ import street_houses as H  # noqa: E402
 from style_lib import Mat, V  # noqa: E402
 
 # --- Gemeinsame Materialien (Ebene, Rolle, feste Farbe in sRGB) ---
-WALL_STONE = Mat("stone", "wall")
 BRICK = Mat("brick", color=(0.6, 0.33, 0.25))
 TRIM = Mat("stone_trim")
 JOINERY = Mat("paint", "door")
@@ -44,26 +41,10 @@ SLATE = Mat("slate")
 RIDGE = Mat("terracotta", color=(1, 1, 1))
 LEAD = Mat("metal")
 GOLD = Mat("gold")
-CANVAS = Mat("canvas", "accent")
 CURTAIN = Mat("fabric", color=(0.92, 0.9, 0.84))
 DARK_GLASS = Mat("glass")
-CLEAR_GLASS = Mat("glass", glass="clear")
 FROSTED_GLASS = Mat("glass", glass=True)
 POT = Mat("terracotta")
-TILES = Mat("paving", color=(1, 1, 1))
-
-# Ladenraum (leicht leuchtend, damit er von draußen hell und einladend wirkt)
-IN_FLOOR = Mat("boards", color=(0.66, 0.48, 0.32), glow=0.1)
-IN_PAPER = Mat("render", color=(0.9, 0.84, 0.72), glow=0.16)
-IN_SAGE = Mat("paint", color=(0.56, 0.6, 0.5), glow=0.12)
-IN_SAGE_DARK = Mat("paint", color=(0.42, 0.46, 0.38), glow=0.1)
-IN_CEILING = Mat("plain", color=(0.92, 0.88, 0.8), glow=0.16)
-IN_WOOD = Mat("timber", glow=0.1)
-IN_BRASS = Mat("gold", glow=0.05)
-IN_VELVET = Mat("fabric", color=(0.46, 0.3, 0.36), glow=0.08)
-IN_ROSE = Mat("fabric", color=(0.7, 0.5, 0.48), glow=0.08)
-IN_MIRROR = Mat("plain", color=(0.74, 0.78, 0.8), glow=0.2)
-LAMP = Mat("plain", color=(1.0, 0.88, 0.66), glow=1.0)
 
 HOUSE_DIR = os.path.join(S.ROOT, "scenes", "world", "houses")
 # Dachneigung der Stil-Modelle: etwa 35° (englische Schieferdächer). Der Platzhalter hat ein
@@ -198,417 +179,6 @@ def dormer(b, cx, fz, eaves, rise, front_z, depth, gw=0.44):
         # Ortgang-Brett (weiß), vorn unter der Dachkante
         b.beam(lo + V(0, -0.13, 0.0), hi + V(0, -0.13, 0.0), 0.04, 0.12, WHITE)
     b.cylinder(V(cx, ridge + 0.04, back), 0.05, fz + 0.12 - back, RIDGE, segments=6, caps=(False, True), axis="z")
-
-
-# --- Ladenfront-Teile ---
-
-def _arch_bar(b, cx, y_base, radius_x, radius_y, z0, z1, segments=10):
-    """Bogensprosse im Oberlicht (Halbellipse aus kurzen Stücken)."""
-    pts = []
-    for i in range(segments + 1):
-        a = math.pi * i / segments
-        pts.append(V(cx - radius_x * math.cos(a), y_base + radius_y * math.sin(a), (z0 + z1) / 2))
-    b.tube(pts, 0.012, JOINERY, segments=5)
-
-
-def _awning(b, x0, x1, y_top, z_wall, reach, drop):
-    """Markise: Tuch schräg nach vorn, Volant vorn, Seitenwangen (alles beidseitig)."""
-    a, c = V(x0, y_top, z_wall), V(x1, y_top, z_wall)
-    d, e = V(x1, y_top - drop, reach), V(x0, y_top - drop, reach)
-    b.poly([a, c, d, e], CANVAS, both=True)
-    val = 0.2
-    b.poly([V(x0, y_top - drop - val, reach), V(x1, y_top - drop - val, reach), d, e], CANVAS, both=True)
-    for x, flip in ((x0, True), (x1, False)):
-        pts = [V(x, y_top, z_wall), V(x, y_top - drop, reach), V(x, y_top - drop - val, reach), V(x, y_top - drop - val * 0.5, z_wall + 0.25)]
-        b.poly(pts if flip else pts[::-1], CANVAS, both=True)
-    b.cylinder(V(x0, y_top - drop, reach - 0.02), 0.018, x1 - x0, LEAD, segments=6, caps=(True, True), axis="x")
-    b.box((x0 - 0.03, y_top - 0.05, 0.0), (x1 + 0.03, y_top + 0.08, z_wall + 0.03), JOINERY)
-
-
-def _recessed_door(b, half, transom, head, jz):
-    """Ladentür in einer flachen Nische: geschlossene Seitenwände und Decke, Fliesenboden, Tür
-    mit großer Glasscheibe (man sieht in den Laden), Oberlicht vorn."""
-    back = -0.42
-    x0, x1 = -half, half
-    for lo, hi in ((x0 - 0.1, x0), (x1, x1 + 0.1)):
-        b.box((lo, 0.02, back - 0.05), (hi, transom, 0.0), JOINERY)
-    b.box((x0 - 0.097, transom, back - 0.05), (x1 + 0.097, transom + 0.08, jz), JOINERY)
-    b.box((x0 - 0.02, 0, back), (x1 + 0.02, 0.06, 0.08), TILES, skip=("back",))
-    gz = 0.06
-    b.quad(V(x0, transom + 0.08, gz), V(x1, transom + 0.08, gz), V(x1, head, gz), V(x0, head, gz), CLEAR_GLASS)
-    _arch_bar(b, 0.0, transom + 0.08, half - 0.03, head - transom - 0.12, gz, jz - 0.03)
-    b.box((-0.012, transom + 0.08, gz), (0.012, head, jz - 0.03), JOINERY)
-    # Blende hinter dem Oberlicht (zur Straße hin), damit man dort nicht in den Raum sieht
-    b.quad(V(x0 - 0.1, transom + 0.08, -0.025), V(x1 + 0.1, transom + 0.08, -0.025), V(x1 + 0.1, head + 0.08, -0.025),
-           V(x0 - 0.1, head + 0.08, -0.025), JOINERY)
-    # Türblatt: Rahmen, große Scheibe oben, Füllung unten, Briefschlitz und Knauf (beidseitig)
-    dz = back
-    fw = 0.1
-    t0, t1 = dz - 0.05, dz
-    b.box((x0, 0.06, t0), (x0 + fw, transom, t1), JOINERY)
-    b.box((x1 - fw, 0.06, t0), (x1, transom, t1), JOINERY)
-    b.box((x0 + fw, 0.06, t0), (x1 - fw, 0.28, t1), JOINERY)
-    b.box((x0 + fw, 0.82, t0), (x1 - fw, 0.92, t1), JOINERY)
-    b.box((x0 + fw, transom - 0.1, t0), (x1 - fw, transom, t1), JOINERY)
-    b.box((x0 + fw, 0.28, t0 + 0.01), (x1 - fw, 0.82, t1 - 0.01), JOINERY)
-    b.frame(x0 + fw + 0.06, 0.35, x1 - fw - 0.06, 0.75, t1 - 0.01, t1 + 0.008, 0.022, JOINERY)
-    b.quad(V(x0 + fw, 0.92, dz - 0.025), V(x1 - fw, 0.92, dz - 0.025), V(x1 - fw, transom - 0.1, dz - 0.025), V(x0 + fw, transom - 0.1, dz - 0.025), CLEAR_GLASS)
-    b.box((-0.15, 0.86, t1), (0.15, 0.89, t1 + 0.012), GOLD)
-    P.door_knob(b, x1 - fw * 0.5, 1.0, t1, 1)
-    P.door_knob(b, x1 - fw * 0.5, 1.0, t0, -1)
-    # Kleines Schild an der Scheibe: "Geöffnet" (eigenes Bild, siehe SIGNS), an einer Schnur
-    cw, ch = OPEN_SIGN
-    b.box((-cw / 2, 1.45, t1 - 0.02), (cw / 2, 1.45 + ch, t1 - 0.012), Mat("plain", color=(0.93, 0.9, 0.82)), skip=("front",))
-    for sx in (-cw / 2 + 0.02, cw / 2 - 0.02):
-        b.tube([V(sx, 1.45 + ch - 0.005, t1 - 0.016), V(0.0, transom - 0.1, t1 - 0.016)], 0.0015, Mat("plain", color=(0.6, 0.5, 0.36)),
-               segments=3, caps=False)
-    b.sphere(V(0.0, transom - 0.1, t1 - 0.016), 0.006, GOLD, rings=3, segments=6)
-    b.poly([V(-cw / 2, 1.45, t1 - 0.012), V(cw / 2, 1.45, t1 - 0.012), V(cw / 2, 1.45 + ch, t1 - 0.012), V(-cw / 2, 1.45 + ch, t1 - 0.012)],
-           Mat("plain", sign="open"), uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
-
-
-# --- Ladenraum ---
-
-def _wall_panelling(b, length, ceiling, chair_rail=1.02):
-    """Wandverkleidung in Wand-Koordinaten (u = 0..length entlang der Wand, Vorderseite +z):
-    Sockelleiste, Kassetten bis zur Stuhlleiste, Bilderleiste, Deckenprofil."""
-    u0, u1 = 0.03, length - 0.03
-    b.box((u0, 0.1, 0), (u1, chair_rail, 0.022), IN_SAGE)
-    b.box((u0, 0.1, 0), (u1, 0.24, 0.035), IN_SAGE_DARK)
-    b.box((u0, chair_rail - 0.03, 0), (u1, chair_rail + 0.03, 0.045), IN_SAGE_DARK)
-    n = max(1, int((u1 - u0) / 0.75))
-    step = (u1 - u0) / n
-    for k in range(n):
-        a = u0 + k * step + 0.1
-        b.frame(a + 0.02, 0.36, a + step - 0.22, chair_rail - 0.16, 0.022, 0.032, 0.022, IN_SAGE_DARK)
-    b.box((u0, 2.42, 0), (u1, 2.45, 0.025), IN_WOOD)
-    b.box((u0, ceiling - 0.1, 0), (u1, ceiling, 0.07), IN_CEILING)
-
-
-def _shop_interior(b, xi, floor_y, ceiling, z_front, z_back, windows, door_half):
-    """Leicht vintage, dezent: Dielen, salbeigrüne Kassetten, cremefarbene Tapete, zwei
-    Glas-Pendelleuchten, Theke mit Messingkasse, Wandregal mit gefalteten Stoffen und
-    Hutschachteln, Umkleide mit Samtvorhang, Spiegel mit Goldrahmen, Sessel, Beistelltisch,
-    Läufer, Kleiderstangen an beiden Seiten (Kleidung = Requisiten, siehe _interior_props)."""
-    b.room((-xi, floor_y, z_back), (xi, ceiling, z_front),
-           {"floor": IN_FLOOR, "ceiling": IN_CEILING, "back": IN_PAPER, "left": IN_PAPER, "right": IN_PAPER})
-    # Innenseite der Vorderwand (zeigt in den Raum) mit Öffnungen für Schaufenster und Tür
-    holes = [(lo, sill, hi, head) for lo, hi, sill, head in windows] + [(-door_half - 0.1, floor_y, door_half + 0.1, 2.38)]
-    b.push(b.move(0, 0, z_front) @ b.turn_y(180))
-    b.wall_with_holes(-xi, xi, floor_y, ceiling, 0.0, [(-h[2], h[1], -h[0], h[3]) for h in holes], IN_PAPER, reveal=0.03)
-    b.pop()
-    # Wandverkleidung: links, rechts, hinten
-    depth = z_front - z_back
-    for xf in (b.move(-xi, 0, z_front) @ b.turn_y(90), b.move(xi, 0, z_back) @ b.turn_y(-90)):
-        b.push(xf)
-        _wall_panelling(b, depth, ceiling)
-        b.pop()
-    b.push(b.move(-xi, 0, z_back))
-    _wall_panelling(b, 2 * xi, ceiling)
-    b.pop()
-    # Schaufenster-Podeste (hell gestrichen, Dielen oben)
-    for lo, hi, sill, head in windows:
-        b.box((lo + 0.05, floor_y, z_front - 0.8), (hi - 0.05, sill - 0.04, z_front - 0.01), Mat("paint", color=(0.86, 0.81, 0.72), glow=0.12))
-        b.box((lo + 0.03, sill - 0.04, z_front - 0.82), (hi - 0.03, sill - 0.01, z_front - 0.01), IN_FLOOR)
-    # Läufer
-    b.box((-1.0, floor_y, -3.6), (1.0, floor_y + 0.008, -1.4), Mat("plain", color=(0.48, 0.34, 0.33), glow=0.1))
-    b.box((-0.88, floor_y, -3.48), (0.88, floor_y + 0.012, -1.52), Mat("fabric", color=(0.72, 0.56, 0.5), glow=0.1))
-    # Pendelleuchten
-    for z in (-1.9, -4.0):
-        b.tube([V(0, ceiling, z), V(0, 2.72, z)], 0.006, LEAD, segments=4)
-        b.cylinder(V(0, 2.66, z), 0.04, 0.07, IN_BRASS, segments=10, radius_top=0.025)
-        b.sphere(V(0, 2.54, z), 0.14, LAMP, rings=6, segments=12)
-        b.cylinder(V(0, ceiling - 0.02, z), 0.07, 0.02, IN_BRASS, segments=10)
-    # Theke (salbeigrün mit Kassetten, Holzplatte) und Messingkasse
-    cz0, cz1 = -5.0, -4.45
-    b.box((-0.9, floor_y, cz0), (1.3, 0.98, cz1), IN_SAGE)
-    for k in range(3):
-        a = -0.82 + k * 0.72
-        b.frame(a + 0.06, 0.25, a + 0.6, 0.82, cz1, cz1 + 0.012, 0.025, IN_SAGE_DARK)
-    b.box((-0.95, 0.98, cz0 - 0.03), (1.35, 1.02, cz1 + 0.04), IN_WOOD)
-    b.box((0.6, 1.02, -4.85), (1.0, 1.14, -4.55), IN_BRASS)
-    b.poly([V(0.6, 1.14, -4.55), V(1.0, 1.14, -4.55), V(1.0, 1.26, -4.78), V(0.6, 1.26, -4.78)], IN_BRASS)
-    b.box((0.6, 1.14, -4.85), (1.0, 1.26, -4.78), IN_BRASS)
-    for side in (0.6, 1.0):
-        b.poly([V(side, 1.14, -4.55), V(side, 1.26, -4.78), V(side, 1.14, -4.78)][::(1 if side > 0.8 else -1)], IN_BRASS)
-    b.box((0.68, 1.26, -4.82), (0.92, 1.36, -4.79), Mat("plain", color=(0.95, 0.92, 0.84), glow=0.2))
-    # Seidenpapier-Stapel und kleine Vase auf der Theke
-    b.box((-0.7, 1.02, -4.85), (-0.3, 1.07, -4.6), Mat("plain", color=(0.86, 0.78, 0.66), glow=0.1))
-    import random
-    rnd = random.Random(5)
-    v = PL.vessel(b, 0.1, -4.7, 0.05, 0.16, 0.03, Mat("plain", color=(0.72, 0.8, 0.82), glow=0.1), y=1.02, lip=0.004, lip_h=0.01,
-                  soil_drop=0.01, wall=0.003, soil_mat=Mat("plain", color=(0.3, 0.36, 0.36)), segments=10)
-    PL.bouquet(b, V(0.1, v["soil"], -4.7), 0.2, 0.03, rnd, "rose", "rose",
-               PL.PotSpace(0.1, -4.7, v["inner"], v["rim"], v["soil"], outer=v["outer"], ground=1.02), 0.1, count=3)
-    # Wandregal hinter der Theke mit gefalteten Stoffen, Hutschachteln und einer Uhr darüber
-    rz0, rz1 = z_back + 0.01, z_back + 0.3
-    for x in (-1.3, 1.5):
-        b.box((x - 0.025, 1.1, rz0), (x + 0.025, 2.3, rz1), IN_WOOD)
-    folded = [(0.66, 0.46, 0.4), (0.3, 0.38, 0.4), (0.8, 0.72, 0.56), (0.4, 0.42, 0.32), (0.62, 0.36, 0.3), (0.78, 0.76, 0.7)]
-    for level, y in enumerate((1.3, 1.75, 2.2)):
-        b.box((-1.3, y - 0.03, rz0), (1.5, y, rz1), IN_WOOD)
-        x = -1.2
-        k = level
-        while x < 1.3:
-            if (k + level) % 4 == 3 and level < 2:
-                for s in range(2):
-                    r = 0.15 - s * 0.02
-                    b.cylinder(V(x + 0.16, y + s * 0.17, (rz0 + rz1) / 2), r, 0.17, Mat("plain", color=folded[(k + s) % 6], glow=0.1), segments=14)
-                x += 0.4
-            else:
-                hgt = y
-                for s in range(rnd.randint(3, 5)):
-                    t = rnd.uniform(0.035, 0.05)
-                    b.box((x, hgt, rz0 + 0.03), (x + 0.28, hgt + t, rz1 - 0.02), Mat("fabric", color=folded[(k + s) % 6], glow=0.1))
-                    hgt += t
-                x += 0.36
-            k += 1
-    b.cylinder(V(0.1, 2.78, z_back + 0.01), 0.17, 0.04, IN_BRASS, segments=20, axis="z", caps=(True, True))
-    b.cylinder(V(0.1, 2.78, z_back + 0.045), 0.145, 0.015, Mat("plain", color=(0.95, 0.92, 0.84), glow=0.2), segments=20, axis="z", caps=(True, True))
-    b.beam(V(0.1, 2.78, z_back + 0.065), V(0.1, 2.88, z_back + 0.065), 0.012, 0.005, LEAD)
-    b.beam(V(0.1, 2.78, z_back + 0.067), V(0.17, 2.76, z_back + 0.067), 0.012, 0.005, LEAD)
-    # Umkleide hinten links: Messingstange, Samtvorhang (vorn halb zugezogen, seitlich offen)
-    fx, fz = -1.6, -4.6
-    b.tube([V(-xi, 2.4, fz), V(fx, 2.4, fz), V(fx, 2.4, z_back)], 0.015, IN_BRASS, segments=6)
-    _curtain(b, V(-xi + 0.02, 0.14, fz), V(fx - 0.25, 0.14, fz), 2.4, IN_VELVET, rings=IN_BRASS)
-    _curtain(b, V(fx, 0.14, z_back + 0.05), V(fx, 0.14, z_back + 0.45), 2.4, IN_VELVET, rings=IN_BRASS)
-    b.box((-xi + 0.05, floor_y, z_back + 0.1), (-xi + 0.45, 0.55, z_back + 0.55), Mat("fabric", color=(0.6, 0.52, 0.44), glow=0.08))
-    # Spiegel mit Goldrahmen an der rechten Wand
-    mz0, mz1 = -5.25, -4.55
-    b.box((xi - 0.04, 0.35, mz0), (xi, 2.25, mz1), IN_BRASS)
-    b.box((xi - 0.05, 0.43, mz0 + 0.08), (xi - 0.04, 2.17, mz1 - 0.08), IN_MIRROR)
-    b.sphere(V(xi - 0.05, 2.33, (mz0 + mz1) / 2), 0.07, IN_BRASS, rings=4, segments=8, squash=0.6)
-    # Sessel (Samt, altrosa) und Beistelltisch
-    _armchair(b, 1.95, floor_y, -3.85, -90)
-    _side_table(b, 0.35, floor_y, -2.3, rnd)
-    # Kleiderstangen links und rechts (Messing, mit Wandhaltern)
-    for side, z0, z1 in ((-1, -1.15, -4.35), (1, -1.15, -3.2)):
-        x = side * 2.2
-        b.tube([V(x, 1.85, z0), V(x, 1.85, z1)], 0.014, IN_BRASS, segments=6)
-        for z in (z0, z1):
-            b.tube([V(x, 1.85, z), V(side * xi, 1.85, z)], 0.012, IN_BRASS, segments=5)
-    # Bilder (Modezeichnungen) über den Stangen
-    for side, z in ((-1, -2.0), (-1, -3.3), (1, -2.2)):
-        x = side * xi
-        b.push(b.move(x, 2.5, z) @ b.turn_y(-90 * side))
-        b.box((-0.22, 0, 0), (0.22, 0.5, 0.03), IN_BRASS)
-        b.box((-0.18, 0.04, 0.03), (0.18, 0.46, 0.035), Mat("plain", color=(0.9, 0.86, 0.76), glow=0.15))
-        b.box((-0.05, 0.1, 0.035), (0.05, 0.38, 0.038), Mat("plain", color=(0.55, 0.4, 0.4), glow=0.1))
-        b.pop()
-    # Farn im Topf neben der Theke
-    import random
-    PL.pot_plant(b, -1.35, -4.15, "fern", random.Random(9), 0.13, 0.28, 0.16, y=floor_y, glow=0.08, collider=False,
-                 blocks=[((-0.95, floor_y, -5.05), (1.35, 1.05, -4.41))])
-
-
-def _curtain(b, a, c, top, mat, folds=6, rings=None):
-    """Faltiger Vorhang von a nach c (unten), bis zur Höhe top (beidseitig sichtbar). Mit rings
-    hängt er an Ringen um die Stange (Höhe top = Mitte der Stange)."""
-    d = c - a
-    n = folds * 2
-    side = V(-d.z, 0, d.x).normalized()
-    pts = []
-    for k in range(n + 1):
-        t = k / n
-        off = side * (0.045 * (1 if k % 2 else -1))
-        pts.append(a + d * t + off)
-    for k in range(n):
-        p0, p1 = pts[k], pts[k + 1]
-        b.poly([p0, p1, V(p1.x, top, p1.z), V(p0.x, top, p0.z)], mat, both=True)
-    if rings is not None:
-        axis = d.normalized()
-        up = V(0, 1, 0)
-        for k in range(0, n + 1, 2):
-            c0 = a + d * (k / n)
-            centre = V(c0.x, top, c0.z)
-            loop = [centre + side * (0.024 * math.cos(q)) + up * (0.024 * math.sin(q)) for q in [2 * math.pi * i / 8 for i in range(9)]]
-            b.tube(loop, 0.004, rings, segments=3, caps=False)
-            b.tube([centre - up * 0.024, V(pts[k].x, top - 0.035, pts[k].z)], 0.003, rings, segments=3)
-
-
-def _armchair(b, x, floor_y, z, yaw):
-    """Kleiner Samtsessel mit gedrechselten Beinen."""
-    b.push(b.move(x, floor_y, z) @ b.turn_y(yaw))
-    for lx in (-0.28, 0.28):
-        for lz in (-0.26, 0.24):
-            b.cylinder(V(lx, 0, lz), 0.025, 0.2, IN_WOOD, segments=6, radius_top=0.03)
-    b.box((-0.34, 0.2, -0.32), (0.34, 0.44, 0.3), IN_ROSE)
-    b.box((-0.3, 0.44, -0.28), (0.3, 0.5, 0.28), IN_ROSE)
-    b.beam(V(0, 0.42, -0.28), V(0, 0.98, -0.36), 0.66, 0.14, IN_ROSE)
-    for side in (-1, 1):
-        b.box((side * 0.34 - 0.06, 0.44, -0.3), (side * 0.34 + 0.06, 0.62, 0.26), IN_ROSE)
-        b.cylinder(V(side * 0.34, 0.62, -0.3), 0.06, 0.56, IN_ROSE, segments=8, axis="z", caps=(True, True))
-    b.pop()
-
-
-def _side_table(b, x, floor_y, z, rnd):
-    """Runder Beistelltisch mit gefalteten Tüchern und einer Vase mit Trockenblumen."""
-    b.cylinder(V(x, floor_y + 0.7, z), 0.36, 0.035, IN_WOOD, segments=20, caps=(True, True))
-    b.cylinder(V(x, floor_y + 0.08, z), 0.035, 0.62, IN_WOOD, segments=8)
-    for k in range(3):
-        a = 2 * math.pi * k / 3
-        b.tube([V(x, floor_y + 0.12, z), V(x + 0.24 * math.cos(a), floor_y, z + 0.24 * math.sin(a))], 0.018, IN_WOOD, segments=5)
-    top = floor_y + 0.735
-    b.box((x - 0.2, top, z - 0.12), (x + 0.05, top + 0.03, z + 0.1), Mat("fabric", color=(0.78, 0.68, 0.48), glow=0.1))
-    b.box((x - 0.18, top + 0.03, z - 0.1), (x + 0.03, top + 0.055, z + 0.08), Mat("fabric", color=(0.4, 0.46, 0.44), glow=0.1))
-    b.cylinder(V(x + 0.16, top, z + 0.02), 0.05, 0.2, Mat("plain", color=(0.86, 0.82, 0.72), glow=0.1), segments=10, radius_top=0.035)
-    for k in range(6):
-        a = 2 * math.pi * k / 6
-        tip = V(x + 0.16 + 0.1 * math.cos(a), top + 0.42 + 0.05 * rnd.random(), z + 0.02 + 0.1 * math.sin(a))
-        b.tube([V(x + 0.16, top + 0.18, z + 0.02), tip], 0.004, Mat("plain", color=(0.55, 0.5, 0.36)), segments=3)
-        b.sphere(tip, 0.03, Mat("plain", color=(0.82, 0.7, 0.55), glow=0.05), rings=3, segments=6)
-
-
-# --- Haustypen ---
-
-def fashion_shop(type_id="fashion_shop"):
-    """Modegeschäft "Zwirn und Zwirbel" (Konzeptbild "fashionshop.png", leicht vintage):
-    marineblaue Ladenfront mit verspielter Goldschrift und Faden-Kringel, gestreifte Markisen,
-    Tür mit großer Scheibe in einer Nische, Ausleger-Schild mit Garnrolle, Hängekorb,
-    links Hortensie in Zinkwanne, rechts Olivenbäumchen und Kreidetafel; Sandstein mit
-    Eckquadern, Schiebefenster mit Blumenkästen, Zahnschnitt-Gesims, Ziergiebel, Gauben.
-    Dahinter ein ganzer Ladenraum (siehe _shop_interior)."""
-    d = house_dims(type_id)
-    W, D, E, R = d["width"], d["depth"], d["eaves"], d["rise"]
-    w = W / 2
-    b = S.Builder(type_id)
-    front_z = 0.25
-    back_z = -D - 0.2
-
-    party_walls(b, w, D, E, R, front_z, back_z)
-    gable_roof(b, w, D, E, R, front_z, back_z)
-    for side in (-1, 1):
-        chimney(b, side * (w - 0.42), -D / 2, E + R - 0.6, E + R + 1.0)
-
-    # --- Obergeschoss: Sandstein mit drei Fenstern und Blumenkästen ---
-    shop_top = 3.62
-    win_w, win_h, win_y = 0.9, 1.62, 4.18
-    xs = [-1.7, 0.0, 1.7]
-    reveal = 0.14
-    holes = [(x - win_w / 2, win_y, x + win_w / 2, win_y + win_h) for x in xs]
-    b.wall_with_holes(-w, w, 3.4, E, 0.0, holes, WALL_STONE, reveal=reveal)
-    for k, x in enumerate(xs):
-        sash_window(b, x, win_y, win_w, win_h, reveal)
-        b.frame(x - win_w / 2, win_y, x + win_w / 2, win_y + win_h, 0.0, 0.05, 0.11, TRIM, bottom=False)
-        b.box((x - win_w / 2 - 0.17, win_y - 0.09, 0), (x + win_w / 2 + 0.17, win_y, 0.12), TRIM)
-        for cx in (x - win_w / 2 - 0.08, x + win_w / 2 + 0.08):
-            b.box((cx - 0.05, win_y - 0.24, 0), (cx + 0.05, win_y - 0.09, 0.08), TRIM, skip=("back",))
-        top = win_y + win_h + 0.11
-        b.box((x - win_w / 2 - 0.11, top, 0), (x + win_w / 2 + 0.11, top + 0.14, 0.07), TRIM, skip=("back",))
-        b.extrude_x([(0, top + 0.14), (0, top + 0.3), (0.16, top + 0.3), (0.16, top + 0.25), (0.08, top + 0.14)],
-                    x - win_w / 2 - 0.22, x + win_w / 2 + 0.22, TRIM)
-        b.box((x - 0.08, win_y + win_h - 0.04, 0.0), (x + 0.08, win_y + win_h + 0.2, 0.09), TRIM, skip=("back",))
-        P.flower_box(b, x - 0.5, x + 0.5, win_y + 0.005, 0.055, 0.255, JOINERY,
-                     [["rose", "white"], ["coral", "lavender"], ["white", "rose"]][k], seed=11 + k)
-    b.box((-w + 0.002, win_y - 0.2, 0), (w - 0.002, win_y - 0.12, 0.05), TRIM, skip=("back",))
-    y = shop_top + 0.06
-    k = 0
-    while y + 0.3 < E - 0.3:
-        long_ = k % 2 == 0
-        for side in (-1, 1):
-            lo_x, hi_x = sorted((side * w, side * (w - (0.44 if long_ else 0.3))))
-            b.box((lo_x, y, 0), (hi_x, y + 0.29, 0.035), TRIM, skip=("back",))
-        y += 0.31
-        k += 1
-    # Fallrohr beginnt in der Bleiabdeckung über dem Schild (nicht genau auf ihrer Unterseite)
-    b.cylinder(V(-w + 0.12, shop_top + 0.01, 0.08), 0.04, E - shop_top + 0.04, LEAD, segments=8, caps=(True, True))
-
-    # --- Traufgesims mit Zahnschnitt ---
-    b.box((-w + 0.002, E - 0.42, 0), (w - 0.002, E - 0.28, 0.07), TRIM, skip=("back",))
-    x = -w + 0.08
-    while x + 0.06 < w:
-        b.box((x, E - 0.28, 0.0), (x + 0.06, E - 0.18, 0.12), TRIM, skip=("back",))
-        x += 0.13
-    b.extrude_x([(0, E - 0.18), (0, E), (0.32, E), (0.32, E - 0.07), (0.22, E - 0.11), (0.15, E - 0.18)],
-                -w - 0.02, w + 0.02, TRIM)
-    b.cylinder(V(-w + 0.003, E + 0.03, 0.27), 0.06, W - 0.006, LEAD, segments=8, caps=(True, True), axis="x")
-
-    # --- Ziergiebel mit Rosette (geschlossener Körper, Dach als Platten) ---
-    pw = 1.0
-    apex = E + 0.78
-    zf = 0.08
-    b.slab([V(-pw, E, zf), V(pw, E, zf), V(0, apex, zf)], 2.0, WALL_STONE)
-    for side in (-1, 1):
-        b.beam(V(side * (pw + 0.12), E - 0.02, 0.1), V(0, apex + 0.1, 0.1), 0.22, 0.13, TRIM)
-        lo = V(side * (pw + 0.14), E + 0.08, 0.0)
-        hi = V(0, apex + 0.2, 0.0)
-        pts = [lo, hi, V(hi.x, hi.y, -1.9), V(lo.x, lo.y, -1.9)]
-        b.slab(pts if side < 0 else pts[::-1], 0.05, SLATE)
-    b.cylinder(V(0, E + 0.33, zf), 0.2, 0.05, TRIM, segments=20, axis="z")
-    b.cylinder(V(0, E + 0.33, zf + 0.05), 0.15, 0.03, TRIM, segments=16, axis="z")
-    for i in range(8):
-        a = 2 * math.pi * i / 8
-        b.sphere(V(0.09 * math.cos(a), E + 0.33 + 0.09 * math.sin(a), zf + 0.09), 0.03, TRIM, rings=3, segments=6)
-    b.sphere(V(0, E + 0.33, zf + 0.09), 0.045, TRIM, rings=4, segments=8)
-
-    for side in (-1, 1):
-        dormer(b, side * 1.95, -0.7, E, R, front_z, D)
-
-    # --- Ladenfront (Erdgeschoss) ---
-    pil = 0.32
-    fascia_lo, fascia_hi = 2.94, 3.45
-    head = 2.84
-    door_half = 0.62
-    post = 0.1
-    sill_y = 0.6
-    transom = 2.3
-    jz = 0.13
-    for side in (-1, 1):
-        lo_x, hi_x = sorted((side * w, side * (w - pil)))
-        b.box((lo_x, 0, 0), (hi_x, fascia_hi, 0.16), JOINERY, skip=("back",))
-        b.box((lo_x - 0.02, 0, 0), (hi_x + 0.02, 0.32, 0.19), JOINERY, skip=("back", "bottom"))
-        b.box((lo_x + 0.04, 0.5, 0.16), (hi_x - 0.04, 2.4, 0.18), JOINERY, skip=("back", "bottom"))
-        b.box((lo_x - 0.02, fascia_lo - 0.18, 0), (hi_x + 0.02, fascia_hi + 0.05, 0.26), JOINERY, skip=("back",))
-        b.box((lo_x + 0.02, fascia_lo - 0.34, 0), (hi_x - 0.02, fascia_lo - 0.18, 0.21), JOINERY, skip=("back",))
-        b.cylinder(V(lo_x + 0.02, fascia_lo + 0.12, 0.2), 0.08, hi_x - lo_x - 0.04, GOLD, segments=10, caps=(True, True), axis="x")
-    # Ladenschild: die Vorderseite zeigt ein Bild (assets/textures/signs/fashion_shop_fascia.png,
-    # Startbild = fascia_design) – zum selbst Gestalten austauschbar
-    b.box((-w + pil, fascia_lo, 0), (w - pil, fascia_hi, 0.2), JOINERY, skip=("back", "front"))
-    b.poly([V(-w + pil, fascia_lo, 0.2), V(w - pil, fascia_lo, 0.2), V(w - pil, fascia_hi, 0.2), V(-w + pil, fascia_hi, 0.2)],
-           Mat("plain", sign="fascia"), uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
-    # Gesims über dem Schild
-    b.extrude_x([(0, fascia_hi), (0, shop_top), (0.3, shop_top), (0.3, fascia_hi + 0.1), (0.22, fascia_hi + 0.05), (0.2, fascia_hi)],
-                -w - 0.03, w + 0.03, JOINERY)
-    b.box((-w - 0.03, shop_top, 0), (w + 0.03, shop_top + 0.02, 0.31), LEAD, skip=("back",))
-    b.box((-w + pil, head, 0), (w - pil, fascia_lo, jz), JOINERY, skip=("back",))
-    for side in (-1, 1):
-        lo_x, hi_x = sorted((side * door_half, side * (door_half + post)))
-        b.box((lo_x, 0, 0), (hi_x, head, jz), JOINERY, skip=("back", "top"))
-    win_x0 = w - pil
-    win_x1 = door_half + post
-    windows = []
-    for side in (-1, 1):
-        lo_x, hi_x = sorted((side * win_x0, side * win_x1))
-        windows.append((lo_x, hi_x, sill_y + 0.02, head))
-        b.box((lo_x, 0, 0), (hi_x, sill_y - 0.05, 0.11), JOINERY, skip=("back",))
-        b.frame(lo_x + 0.12, 0.12, hi_x - 0.12, sill_y - 0.17, 0.11, 0.13, 0.03, JOINERY)
-        b.box((lo_x - 0.01, sill_y - 0.05, 0), (hi_x + 0.01, sill_y + 0.02, 0.17), JOINERY, skip=("back",))
-        b.box((lo_x + 0.003, transom, 0), (hi_x - 0.003, transom + 0.08, jz), JOINERY)
-        b.box((lo_x, sill_y + 0.02, -0.03), (lo_x + 0.05, head, jz - 0.02), JOINERY, skip=("top", "bottom"))
-        b.box((hi_x - 0.05, sill_y + 0.02, -0.03), (hi_x, head, jz - 0.02), JOINERY, skip=("top", "bottom"))
-        gz = 0.06
-        b.quad(V(lo_x, sill_y + 0.02, gz), V(hi_x, sill_y + 0.02, gz), V(hi_x, head, gz), V(lo_x, head, gz), CLEAR_GLASS)
-        cx = (lo_x + hi_x) / 2
-        span = hi_x - lo_x - 0.1
-        for i in range(1, 4):
-            bx = lo_x + 0.05 + span * i / 4
-            b.box((bx - 0.012, transom + 0.08, gz - 0.02), (bx + 0.012, head, jz - 0.03), JOINERY)
-        _arch_bar(b, cx, transom + 0.08, span / 2, head - transom - 0.13, gz, jz - 0.03)
-        _awning(b, lo_x - 0.02, hi_x + 0.02, head, 0.15, 0.95, 0.5)
-    _recessed_door(b, door_half, transom, head, jz)
-
-    # --- Ladenraum dahinter ---
-    _shop_interior(b, w - 0.12, 0.1, 3.3, -0.03, -6.0, windows, door_half)
-
-    # --- Vor dem Laden: links Hortensie, rechts Olivenbäumchen und Kreidetafel ---
-    P.hydrangea_tub(b, -(door_half + 0.5), 0.42, seed=21, wall_z=0.19)
-    P.olive_tree(b, door_half + 0.46, 0.42, seed=22)
-    P.chalkboard(b, 1.78, 0.5, Mat("plain", sign="chalkboard"), facing=-12)
-    # Ausleger-Schild rechts (zur Bücherei hin), Hängekorb links – über dem Ladengesims an den
-    # Eckquadern, also oberhalb der Markisen
-    P.projecting_sign(b, w - 0.2, 4.32, 0.035, JOINERY, Mat("plain", sign="hanging"))
-    P.hanging_basket(b, -(w - 0.2), 4.38, 0.035, 0.55, seed=25, variant="cascade", clear_z=0.32)
-    return b, _fashion_props()
 
 
 # --- Reihenhäuser und Wohnhaus (Etappe 4g, Teil 2) ---
@@ -915,107 +485,11 @@ def _side_wall_windows(b, w, depth, eaves, storey, side):
         b.pop()
 
 
-# --- Requisiten im Laden (Puppen, Kleidung): eigene Szenen, austauschbar ---
-
-VINTAGE = {
-    "mustard": (0.74, 0.58, 0.28), "teal": (0.24, 0.42, 0.42), "rose": (0.74, 0.5, 0.5),
-    "cream": (0.86, 0.8, 0.68), "bottle": (0.22, 0.34, 0.26), "rust": (0.62, 0.32, 0.22),
-    "navy": (0.2, 0.24, 0.36), "plum": (0.44, 0.26, 0.34), "heather": (0.58, 0.56, 0.6),
-}
-
-
-def _fashion_props():
-    """Liste (Szene, Lage x/y/z, Drehung in Grad, Farbe) – wird zu fashion_shop_interior.tscn."""
-    v = VINTAGE
-    props = [
-        ("mannequin_dress", (-1.95, 0.6, -0.42), 18, v["mustard"]),
-        ("mannequin_coat", (-1.15, 0.6, -0.5), -12, v["teal"]),
-        ("mannequin_coat", (1.15, 0.6, -0.5), 12, v["rust"]),
-        ("mannequin_dress", (1.95, 0.6, -0.42), -18, v["rose"]),
-        ("mannequin_dress", (-1.25, 0.1, -2.6), 35, v["bottle"]),
-    ]
-    order = ["plum", "cream", "teal", "mustard", "heather", "rose", "navy", "rust", "bottle", "cream", "plum"]
-    z = -1.3
-    k = 0
-    while z > -4.25:
-        props.append(("garment_dress" if k % 3 != 1 else "garment_blouse", (-2.2, 1.85, z), 0, v[order[k % len(order)]]))
-        z -= 0.27
-        k += 1
-    z = -1.3
-    while z > -3.1:
-        props.append(("garment_blouse" if k % 2 else "garment_dress", (2.2, 1.85, z), 0, v[order[k % len(order)]]))
-        z -= 0.3
-        k += 1
-    return props
-
-
-def write_interior_scene(type_id, props):
-    """Schreibt scenes/world/houses/<typ>_interior.tscn mit allen Requisiten."""
-    scenes = sorted({p[0] for p in props})
-    ids = {name: "%d_%s" % (i + 1, name) for i, name in enumerate(scenes)}
-    lines = ['[gd_scene load_steps=%d format=3]' % (len(scenes) + 1), "",
-             "; Requisiten im Laden (Etappe 4g): erzeugt von tools/blender/build_houses.py – wird beim",
-             "; Neubau überschrieben. Jede Puppe/jedes Kleidungsstück ist eine eigene Szene aus",
-             "; scenes/world/props/ (Farbe im Inspektor: Color). Später ersetzt ein eigenes Modell den",
-             "; Knoten \"Outfit\" (Puppe) bzw. \"Model\" (hängendes Teil).", ""]
-    for name in scenes:
-        lines.append('[ext_resource type="PackedScene" path="res://scenes/world/props/%s.tscn" id="%s"]' % (name, ids[name]))
-    lines += ["", '[node name="Interior" type="Node3D"]', ""]
-    counts = {}
-    for name, (x, y, z), yaw, color in props:
-        counts[name] = counts.get(name, 0) + 1
-        a = math.radians(yaw)
-        c, s = math.cos(a), math.sin(a)
-        lines.append('[node name="%s%d" parent="." instance=ExtResource("%s")]' % (
-            "".join(part.capitalize() for part in name.split("_")), counts[name], ids[name]))
-        lines.append("transform = Transform3D(%.5f, 0, %.5f, 0, 1, 0, %.5f, 0, %.5f, %.3f, %.3f, %.3f)" % (c, -s, s, c, x, y, z))
-        lines.append("color = Color(%.3f, %.3f, %.3f, 1)" % color)
-        lines.append("")
-    path = os.path.join(HOUSE_DIR, type_id + "_interior.tscn")
-    with open(path, "w") as f:
-        f.write("\n".join(lines))
-
-
 # --- Schilder zum selbst Gestalten ---
 # Jedes Schild ist eine Fläche mit eigenem Bild: assets/textures/signs/<typ>_<name>.png
 # (Material assets/materials/signs/<typ>_<name>.tres). Fehlt das Bild, rendert das Script ein
 # Startbild aus der Gestaltung unten. Vorhandene Bilder werden NIE überschrieben (eigene
 # Gestaltung bleibt) – außer mit --reset-signs.
-FASCIA = (4.76, 0.51)
-OPEN_SIGN = (0.26, 0.11)
-NAVY = (0.1, 0.13, 0.21)
-
-
-def _fascia_design(b):
-    """Startbild des Ladenschilds: Marineblau, Goldrand, verspielte Schrift mit Faden-Kringel
-    und Nadel – Schrift samt Verzierung genau in der Mitte."""
-    fw, fh = FASCIA
-    board = Mat("paint", color=NAVY)
-    b.box((-fw / 2, -fh / 2, -0.02), (fw / 2, fh / 2, 0.0), board)
-    for y0 in (-fh / 2 + 0.035, fh / 2 - 0.05):
-        b.box((-fw / 2 + 0.06, y0, 0.0), (fw / 2 - 0.06, y0 + 0.015, 0.01), GOLD)
-    for x in (-fw / 2 + 0.06, fw / 2 - 0.075):
-        b.box((x, -fh / 2 + 0.035, 0.0), (x + 0.015, fh / 2 - 0.035, 0.01), GOLD)
-    start = len(b.faces)
-    text_w = b.playful_text("Zwirn und Zwirbel", 0.0, 0.0, 0.0, 0.3, 0.022, GOLD,
-                            font_path=S.PLAYFUL_FONT, seed=7, bounce=0.07, tilt=5, first_scale=1.3)
-    tail_x = text_w / 2 + 0.03
-    P.thread_spiral(b, (tail_x, 0.01), 0.1, 1.6, GOLD, 0.012, thickness=0.008)
-    b.beam(V(tail_x + 0.22, -0.01, 0.012), V(tail_x + 0.36, 0.27, 0.012), 0.016, 0.01, GOLD)
-    b.tube([V(tail_x + 0.03, -0.02, 0.012), V(tail_x + 0.14, -0.04, 0.012), V(tail_x + 0.24, 0.02, 0.012),
-            V(tail_x + 0.33, 0.22, 0.012)], 0.006, GOLD, segments=4)
-    b.recenter(start, 0.0, 0.0)
-
-
-def _open_design(b):
-    cw, ch = OPEN_SIGN
-    b.box((-cw / 2, -ch / 2, -0.01), (cw / 2, ch / 2, 0.0), Mat("plain", color=(0.93, 0.9, 0.82)))
-    start = len(b.faces)
-    b.playful_text("Geöffnet", 0.0, 0.0, 0.0, 0.05, 0.002, Mat("paint", color=NAVY), font_path=S.PLAYFUL_FONT,
-                   seed=3, bounce=0.05, tilt=3)
-    b.recenter(start, 0.0, 0.0)
-
-
 def _flower_fascia_design(b):
     """Startbild des Blumenladen-Schilds (wie im Konzeptbild): Holzbretter, helle Goldschrift,
     an den Enden kleine Blütenzweige."""
@@ -1153,14 +627,6 @@ SIGNS = {
         "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Frisch:", "Tulpen", "& Rosen"], 41)),
         "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512, _flower_hanging_design),
     },
-    "fashion_shop": {
-        # Name: (Breite, Höhe in Metern, Bildbreite in Pixeln, Gestaltung)
-        "fascia": (FASCIA[0], FASCIA[1], 2048, _fascia_design),
-        "hanging": (P.HANGING_SIGN[0], P.HANGING_SIGN[1], 512,
-                    lambda b: P.hanging_sign_design(b, Mat("paint", color=NAVY), Mat("plain", color=(0.82, 0.52, 0.56)))),
-        "chalkboard": (P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360, lambda b: P.chalkboard_design(b, ["Neu:", "Herbst-", "mode"], 23)),
-        "open": (OPEN_SIGN[0], OPEN_SIGN[1], 360, _open_design),
-    },
 }
 SIGN_TEX_DIR = os.path.join(S.ROOT, "assets", "textures", "signs")
 SIGN_MAT_DIR = os.path.join(S.ROOT, "assets", "materials", "signs")
@@ -1223,7 +689,6 @@ def _sign_lighting():
 
 TERRACE_PREVIEW = {"wall": (0.58, 0.33, 0.26), "door": (0.16, 0.32, 0.24), "accent": (0.16, 0.3, 0.22)}
 HOUSES = {
-    "fashion_shop": (fashion_shop, {"wall": (0.9, 0.86, 0.8), "door": (0.1, 0.13, 0.21), "accent": (0.17, 0.2, 0.3)}),
     "terrace_45": (lambda: terrace("terrace_45"), TERRACE_PREVIEW),
     "terrace_50": (lambda: terrace("terrace_50"), dict(TERRACE_PREVIEW, door=(0.5, 0.12, 0.14))),
     "terrace_55": (lambda: terrace("terrace_55"), dict(TERRACE_PREVIEW, door=(0.08, 0.08, 0.09))),
@@ -1240,15 +705,12 @@ def build(type_id, render, reset_signs=False):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.preferences.filepaths.save_version = 0
     result = func()
-    b, props = result if isinstance(result, tuple) else (result, [])
+    b = result[0] if isinstance(result, tuple) else result
     glb = os.path.join(S.ROOT, "assets", "models", "houses", type_id + ".glb")
     tris = S.write_glb(b, glb)
     S.write_import_settings(glb, signs)
     print("%s: %d Dreiecke -> %s" % (type_id, tris, glb))
-    if props:
-        write_interior_scene(type_id, props)
     S.to_blender(b, preview_colors)
-    _place_props_preview(props)
     blend = os.path.join(S.ROOT, "assets", "models", "source", "houses", type_id + ".blend")
     os.makedirs(os.path.dirname(blend), exist_ok=True)
     if S.SHOW_BACKFACES:
@@ -1256,25 +718,6 @@ def build(type_id, render, reset_signs=False):
     elif render:
         _render(type_id)
     bpy.ops.wm.save_as_mainfile(filepath=blend, relative_remap=True, compress=True)
-
-
-def _place_props_preview(props):
-    """Requisiten für die Vorschau in Blender aufstellen (wie in der Interior-Szene)."""
-    import build_props
-    parts = {
-        "mannequin_dress": ["dress_form", "outfit_dress"], "mannequin_coat": ["dress_form", "outfit_coat"],
-        "garment_dress": ["garment_dress"], "garment_blouse": ["garment_blouse"],
-    }
-    built = {}
-    for name, pos, yaw, color in props:
-        for part in parts[name]:
-            if part not in built:
-                built[part] = build_props.PROPS[part]()
-            colored = S.bake_role(built[part], "accent", color)
-            colored.name = part
-            obj = S.to_blender(colored, {})
-            obj.location = (pos[0], -pos[2], pos[1])
-            obj.rotation_euler = (0, 0, math.radians(yaw))
 
 
 def _render(type_id):

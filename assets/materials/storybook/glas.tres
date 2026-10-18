@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+; Erzeugt von tools/blender/build_storybook_shop.py (Blender-Material "Glas") – wird beim Neubau
+; überschrieben. Werte gern ausprobieren, dauerhaft aber im Bau-Script ändern.
+
+[resource]
+resource_name = "Glas"
+transparency = 1
+albedo_color = Color(0.920, 0.950, 0.930, 0.06)
+metallic_specular = 0.12
+roughness = 0.15

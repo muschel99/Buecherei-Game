@@ -32,6 +32,7 @@
 | 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | fertig |
 | 4f  | Grenze am geraden Straßenende und Torhaus mit Durchfahrt | fertig |
 | 4g  | Einheitlicher Stil: Modelle aus Blender (Häuser, Bücherei, Möbel, Innenraum) | in Arbeit |
+| 4h  | Bilderbuch-Stil: Häuser neu, Licht, Pflaster, Pflanzen | in Arbeit |
 | 5   | Besucher                                 | in Arbeit     |
 | 5a  | Leben auf der Straße                     | fertig        |
 | 5b  | Figuren und Fahrzeuge im Stil            | in Arbeit     |
@@ -754,6 +755,32 @@ ist austauschbar.
 - [ ] Teil 4g – Möbel und Deko im Stil, Innenraum der Bücherei
 - [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
 - [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)
+
+### Etappe 4h – Bilderbuch-Stil
+Leitgedanke: Die Welt wird zu einer lebendig gewordenen Kinderbuch-Illustration – warm,
+handwerklich, bewusst unperfekt, aber solide gebaut (Regeln: docs/STYLE_GUIDE.md, Abschnitt
+„Bilderbuch-Stil“). Haus für Haus, Lage, Wege und Spielablauf bleiben gleich.
+- [x] Modegeschäft „Zwirn und Zwirbel“ neu nach dem Vorlagebild der Entwicklerin
+      (`tools/blender/build_storybook_shop.py`, Bausteine `storybook_lib.py`): cremefarbener
+      Putz mit Ecksteinen, taubenblaue Ladenfront mit Nussbaum-Schild und Goldschrift,
+      terrakotta-rosa Markisen, halbrundes Oberlicht über der Tür, vier Schneiderpuppen im warm
+      leuchtenden Laden, Wandlaternen, Zahnschnitt-Gesims, Ziergiebel mit Rosette, zwei Gauben,
+      Dach aus einzeln schiefen Ziegeln, Schornsteine; Efeu an beiden Ecken und über dem Schild,
+      überquellende Blumenkästen mit Geranien und Hängepetunien, Buchs, Hortensie, Olivenbaum,
+      Kreidetafel. Alles leicht verzogen (Wände wellig, Haus minimal geneigt, Dach in der Mitte
+      durchgesackt, Bauteile um Bruchteile eines Grads schief). Jedes Teil ist ein geschlossener
+      Körper und einzeln in Blender bearbeitbar (`assets/models/source/houses/fashion_shop_storybook.blend`);
+      fürs Spiel eine leichtere Kopie (Blätter nur als Oberseite, Teile je Material
+      zusammengefasst, Detailstufen) mit eigenem Shader `storybook.gdshader` (Materialien
+      `assets/materials/storybook/`). Selbst bearbeitete .blend wird nie überschrieben,
+      `export_storybook.py` bringt sie ins Spiel
+- [x] Altes Modegeschäft entfernt (Modell, Puppen- und Kleidungs-Requisiten, Script `ShopProp`,
+      Schild-Bilder)
+- [ ] Weitere Häuser im Bilderbuch-Stil (jedes mit eigener Wölbung und eigenen Farbtönen)
+- [ ] Licht der ganzen Welt: warm um 3500 K, weiche Schatten, mildes Bloom, etwas mehr
+      Umgebungsverdeckung (AO), leichte Schärfentiefe, Fensterlicht als Blickfang
+- [ ] Kopfsteinpflaster und Wege handverlegt (versetzte Reihen, kleine Höhenunterschiede)
+- [ ] Mehr Grün an Straßenrändern und Plätzen (Büsche, Bäume)
 
 ## Etappe 5 – Besucher
 Leitgedanke: Bevor Kunden in die Bücherei kommen, wird erst die Straße lebendig (5a); danach

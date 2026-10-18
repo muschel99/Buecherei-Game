@@ -10,7 +10,7 @@ extends RefCounted
 
 
 static func all_sets() -> PackedStringArray:
-	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details"])
+	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details", "fashion"])
 
 
 static func get_set(set_name: String) -> Dictionary:
@@ -27,6 +27,8 @@ static func get_set(set_name: String) -> Dictionary:
 			return shop()
 		"street_life":
 			return street_life()
+		"fashion":
+			return fashion()
 		"details":
 			return details()
 	push_error("Unbekannte Gruppe von Blickpunkten: " + set_name)
@@ -224,4 +226,20 @@ static func details() -> Dictionary:
 		"window_boxes": {"pos": Vector3(0.4, g + 1.6, opp + 3.5), "target": Vector3(0.9, g + 4.0, opp)},
 		"alley_pots": {"pos": Vector3(-4.7, g + 1.6, 4.2), "target": Vector3(-3.5, g + 0.3, 7.2)},
 		"garden": {"pos": Vector3(-4.8, g + 1.6, 8.6), "target": Vector3(-7.7, g + 1.6, 12.9)},
+	}
+
+
+## Modegeschäft rundherum (Neugestaltung im Bilderbuch-Stil): ganz von vorn, schräg von
+## beiden Seiten, Ladenfront nah, Blick nach oben zu Giebel und Dach, von schräg oben.
+static func fashion() -> Dictionary:
+	var g := StreetLayout.ground_y()
+	var front := StreetLayout.HOUSE_FRONT
+	var x := 5.9
+	return {
+		"front": {"pos": Vector3(x, g + 1.7, StreetLayout.opposite_front_z() + 0.6), "target": Vector3(x, g + 4.2, front)},
+		"angle_left": {"pos": Vector3(x - 5.5, g + 1.6, front - 6.5), "target": Vector3(x + 0.3, g + 3.6, front)},
+		"angle_right": {"pos": Vector3(x + 5.5, g + 1.6, front - 6.5), "target": Vector3(x - 0.3, g + 3.6, front)},
+		"shopfront": {"pos": Vector3(x + 1.2, g + 1.6, front - 3.6), "target": Vector3(x - 0.3, g + 1.6, front)},
+		"upper": {"pos": Vector3(x - 1.0, g + 1.6, front - 4.5), "target": Vector3(x, g + 6.8, front)},
+		"aerial": {"pos": Vector3(x + 3.0, g + 11.0, front - 9.5), "target": Vector3(x, g + 5.5, front + 1.0)},
 	}

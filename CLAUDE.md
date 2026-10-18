@@ -152,7 +152,8 @@ assets/
 docs/              Dokumentation
 tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py),
   blender/         Blender-Scripts der Stil-Modelle (style_lib.py = Bauteile + .glb-Export,
-                   build_houses.py = Häuser)
+                   build_houses.py = Häuser; Bilderbuch-Stil: storybook_lib.py,
+                   build_storybook_shop.py = Modegeschäft, export_storybook.py)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
 (Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
@@ -320,10 +321,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Änderung `build_houses.py -- <typ> --check`: Prüfbilder mit pinken Rückseiten, keine pinke
   Stelle darf bleiben. Bauteile: `style_parts.py` (Pflanzen, Blumenkasten, Hängekorb,
   Ausleger-Schild, Kreidetafel, Faden-Kringel), verspielte Schrift `Builder.playful_text`.
-  Requisiten (Puppen, Kleidung): `tools/blender/build_props.py` → `assets/models/props/`,
-  Szenen `scenes/world/props/` mit Script `ShopProp` (Akzentfarbe je Stück, keine Schatten,
-  `visible_distance`); Aufstellung je Laden `scenes/world/houses/<typ>_interior.tscn`
-  (vom Bau-Script geschrieben). Innenräume leuchten über Material-Glow, keine Lampen-Lichter.
+  Straßen-Requisiten (Laternen, Abflussdeckel): `tools/blender/build_props.py` →
+  `assets/models/props/`. Innenräume leuchten über Material-Glow, keine Lampen-Lichter.
   **Wandmaterial je Haus:** Wandflächen (Rolle wall) werden als Backstein gebaut;
   `HouseFacade.wall_material` (AUTO/AS_BUILT/BRICK/STONE/RENDER/ROUGHCAST) setzt per Instanz-Wert
   `wall_layer` eine andere Ebene (Shader rechnet die Texturkoordinaten über `tile_layers` um).
@@ -362,6 +361,28 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   → Bild `assets/textures/signs/<typ>_<name>.png`. Startbild aus der Gestaltung in
   `SIGNS` (build_houses.py), nur wenn das Bild fehlt – vorhandene Bilder NIE überschreiben
   (`--reset-signs` nur auf ausdrücklichen Wunsch).
+- **Bilderbuch-Stil (seit Etappe 4h, Regeln: docs/STYLE_GUIDE.md „Bilderbuch-Stil“):** Häuser
+  werden Haus für Haus neu gebaut – warm, handwerklich, bewusst unperfekt, aber solide (nie Knete).
+  Lage, Maße (Breite/Tiefe/Traufe des Haustyps), Wege und Kollision bleiben. Erstes Haus:
+  Modegeschäft, eigenes Script `tools/blender/build_storybook_shop.py` mit Bausteinen
+  `storybook_lib.py` (`Body`: box/span/slab/tube/lathe/sheet/blob/leaf/text – jedes Teil ein
+  **geschlossener Körper**, Farbton je Teil im Farbattribut "tint", weiche Kanten als Bevel-
+  Modifikator; Öffnungen per `boolean_cut` mit `cutter(matrix=…)` in derselben Ebene wie das
+  Fenster; `settle()` verzieht alles gemeinsam: Wellen, Neigung, Dachdurchhang, Werte je Haus in
+  `SETTLE`). Am Ende meldet das Script „Offene Kanten: keine“ – sonst nachbessern.
+  **Zwei Durchgänge:** erst die leichte Spiel-Kopie (`SB.GAME`: Blätter nur Oberseite, Blüten
+  als Stern, Bevel einfach) → `assets/models/houses/fashion_shop.glb` (Teile je Material
+  zusammengefasst, Kollisionskästen „…-colonly“ aus `OBSTACLES`, LODs an), dann die volle
+  Fassung → `assets/models/source/houses/fashion_shop_storybook.blend` (Einzelteile, zum
+  Weiterbauen). Godot-Materialien schreibt das Script nach `assets/materials/storybook/`
+  (Shader `storybook.gdshader` / `storybook_plant.gdshader` beidseitig, gemeinsamer Teil
+  `storybook.gdshaderinc`: rechnet Grundfarbe x tint x Flecken, Holz, Ziegel, Stein, Streifen
+  aus der Lage im Modell nach; `glow` = Leuchten innen, keine Lampen im Spiel). Hat die
+  Entwicklerin die .blend bearbeitet (Fingerabdruck in `fashion_shop_storybook.stamp` passt
+  nicht), überschreibt das Script nichts (nur mit `--force`); ihre Fassung bringt
+  `tools/blender/export_storybook.py` ins Spiel (Blätter → nur Oberseite). Bilder:
+  `-- --render` (Cycles, ohne Rauschfilter – OIDN fehlt im Container, dafür viele Samples;
+  Lampen mit `visible_camera/transmission = False`), Blickpunkte im Spiel: Gruppe `fashion`.
 - **Pflanzen (seit Etappe 4g, Teil 4f):** nie mehr Kugeln als Laub. Alle Pflanzen baut
   `tools/blender/style_plants.py` (Efeu `ivy_wall`/`ivy_garland`/`trailing_ivy`, Balkonblumen
   `bedding_row`, `geranium`, `petunia_plant`, `lobelia`, Kübel `potted`/`pot_plant`, `box_ball`,
