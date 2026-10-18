@@ -835,9 +835,12 @@ Bricht eine Sitzung ab: hier beim ersten offenen Punkt weitermachen.
       Kulissenhäuser im neuen Stil, Breiten/Höhen/Farben der bisherigen Varianten als Anhaltspunkt,
       Laternen nach Plan (siehe oben), sparsam für alle drei Grafikstufen
 - [x] 2. Gassenende, Hofmauern und die Fassade der Bücherei (außen) im neuen Stil
-- [ ] 3. Straße, Gehwege, Bordsteine, Platz, Gasse und Eingangstreppe: weiche Kanten, warme
+- [ ] 3. Straße, Gehwege, Bordsteine, Platz, Gasse und Eingangstreppe (Stand: Boden-Shader
+      storybook_ground.gdshader für Fahrbahn, Gehwege, Platz, Gassen und Bordsteine fertig, Bordstein-
+      und Stufenkanten gerundet, Abflussdeckel neu; noch offen: Rundgang-Prüfung von Platz,
+      gerader Grenze und Torhaus-Durchfahrt, Lauftest an der Treppe, dann abhaken): weiche Kanten, warme
       Steintöne, Platten und Pflaster leicht unregelmäßig
-- [ ] 4. Kleine Dinge draußen (Laternen, Schilder, Türen, Fensterläden, Briefkästen, Abflussdeckel,
+- [ ] 4. Kleine Dinge draußen (begonnen: Briefkästen an Wohnhäusern, Abflussdeckel) (Laternen, Schilder, Türen, Fensterläden, Briefkästen, Abflussdeckel,
       Bank) im selben Stil
 - [ ] 5. Pflanzen ganz neu: üppig, verschlungen, rund; jedes Blatt ein Körper; Efeu und
       Kletterpflanzen an Fassaden, Blumenkästen, Kübelpflanzen vor Türen, Ranken an Torhaus und
