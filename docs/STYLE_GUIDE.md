@@ -84,7 +84,7 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 | Haustyp | Vorbild | Umsetzung |
 |---------|---------|-----------|
 | `fashion_shop` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** „Zwirn und Zwirbel“: Putz creme, taubenblaue Ladenfront, Nussbaum-Schild mit Goldschrift, terrakotta-rosa Markisen, Oberlicht, Gauben, Ziergiebel, Efeu, Blumenkästen, Buchs (`build_storybook_shop.py`) |
-| `pub` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** „The Ink & Ivy“: Backstein mit hellen Bögen, flaschengrüne Ladenfront, Sprossenfenster, Zahnschnitt-Gesims, Gaststube, Bistrotische, Schilder als Bilder (`build_storybook_pub.py`) |
+| `pub` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** „The Ink & Ivy“: Backstein mit hellen Bögen, flaschengrüne Ladenfront, Fenster mit flachem Bogen, Zahnschnitt-Gesims, Gaststube, Bistrotische, Schilder als Bilder (`build_storybook_pub.py`) |
 | `gatehouse` | Konzepte Torhaus (Ziegelbogen + Fachwerk) | Ziegel-Rundbogen mit hellen Bogensteinen, Fachwerk-Obergeschoss, Gaube |
 | `terrace_*` | Inspiration Straßenfotos | **fertig (4g, Teil 2):** 45 schmal mit Schlusssteinen, 50 mit Erker, 55 georgianisch mit Brüstung, 60 breit mit Gaube; Wand je Haus Backstein, Putz oder Rauputz |
 | `residential` | – | **fertig (4g, Teil 2):** mittige Tür unter Vordach mit Säulen und Giebel, Lorbeer-Kegel |
@@ -109,7 +109,11 @@ Schilder sind weiter Bilder der Entwicklerin.
 - **Logisch geschlossen:** Türnischen oben mit einer Nischendecke schließen, Oberlicht direkt
   über dem Türblatt in derselben Ebene (sonst schaut man über der Tür ins Haus). Innenwände
   reichen bis dicht hinter die Schaufenster, Vertäfelung endet an Fenstern, Stühle schauen zum
-  Tisch.
+  Tisch. Leicht schiefe Teile überlappen sich immer (nie genau Kante an Kante); Schilder sitzen
+  auf einem geschlossenen Schildkasten in der Farbe der Holzfassade. Prüfen mit
+  `storybook_gap_check.py` (muss „keine Löcher gefunden“ melden).
+- **Bögen über Fenstern:** Fenster oben mit flachem Bogen, Steinbogen genau darauf (gleicher
+  Mittelpunkt), Bögen und Bänke im hellen Gesims-Material, frei unter dem Traufgesims.
 - Jedes Teil ist ein **geschlossener Körper mit Dicke** (keine Einzelflächen), einzeln in
   Blender bearbeitbar; Bauteile in Sammlungen (Mauern, Dach, Fenster, Laden, Innen, Pflanzen,
   Deko, Licht).

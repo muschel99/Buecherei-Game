@@ -687,6 +687,27 @@ def cutter(center, size, turn=(0, 0, 0), matrix=None):
     return obj
 
 
+def slab_cutter(outline, matrix, z0=-0.5, depth=1.0):
+    """Schneide-Körper mit beliebigem Umriss (2D, gegen den Uhrzeigersinn, in der xy-Ebene von
+    matrix), von z0 bis z0 + depth – z. B. Fenster mit Bogen oben."""
+    b = Body("_cut", None, bpy.context.scene.collection, vary=0)
+    b.slab(outline, depth, matrix @ Matrix.Translation((0, 0, z0)), dent=0.0)
+    me = bpy.data.meshes.new("_cut")
+    b.bm.to_mesh(me)
+    b.bm.free()
+    return bpy.data.objects.new("_cut", me)
+
+
+def arc_points(hx, hs, rise, inset=0.0, n=16):
+    """Flacher Bogen über einer Öffnung der halben Breite hx (Seiten bis Höhe hs, Scheitel
+    hs + rise), um inset nach innen versetzt; Punkte von rechts nach links."""
+    big_r = (hx * hx + rise * rise) / (2 * rise)
+    cy = hs + rise - big_r
+    r = big_r - inset
+    phi0 = math.asin((hx - inset) / r)
+    return [(r * math.sin(phi0 - 2 * phi0 * k / n), cy + r * math.cos(phi0 - 2 * phi0 * k / n)) for k in range(n + 1)]
+
+
 def non_manifold(obj):
     """Anzahl offener/kaputter Kanten (0 = geschlossener Körper)."""
     bm = bmesh.new()

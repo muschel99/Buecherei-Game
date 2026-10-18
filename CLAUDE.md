@@ -155,7 +155,8 @@ tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py)
                    build_houses.py = Häuser; Bilderbuch-Stil: storybook_lib.py,
                    storybook_parts.py, storybook_common.py, storybook_plants.py,
                    build_storybook_shop.py = Modegeschäft, build_storybook_pub.py = Pub,
-                   build_storybook_lamps.py = Laternen, export_storybook.py)
+                   build_storybook_lamps.py = Laternen, export_storybook.py,
+                   storybook_gap_check.py = Lochprüfung)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
 (Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
@@ -372,6 +373,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Modifikator; Öffnungen per `boolean_cut` mit `cutter(matrix=…)` in derselben Ebene wie das
   Fenster; `settle()` verzieht alles gemeinsam: Wellen, Neigung, Dachdurchhang, Werte je Haus in
   `SETTLE`). Am Ende meldet das Script „Offene Kanten: keine“ – sonst nachbessern.
+  **Lochprüfung vor jedem Hochladen:** `blender -b <haus>.blend --python
+  tools/blender/storybook_gap_check.py -- --size=<Breite>,<Tiefe>,<Traufe> [--side=-1|1]`
+  (Einrichtung aus, Glas undurchsichtig, pinker Prüfkörper im Haus, viele Blicke von der Straße,
+  nach oben zu Tür und Schild) muss „keine Löcher gefunden“ melden. Leicht schiefe Teile, die
+  aneinanderstoßen, immer überlappen lassen (Scheiben in Rahmen und Riegel, Türpfosten über den
+  Schaufensterrahmen, Füllungen bis in die Riegel, Schild auf geschlossenem Schildkasten).
   **Alles Körper, auch im Spiel (Wunsch der Entwicklerin):** jedes Blatt ein kleiner linsenförmiger
   Körper (`Body.leaf`, Formen heart/round/oval/narrow), jede Blüte ein Stern-Körper (`Body.star`),
   Stiele/Äste runde Röhren (`tube(..., smooth=, round_ends=True)`), weiche Kanten breit

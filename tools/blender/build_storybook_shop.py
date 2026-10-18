@@ -443,7 +443,8 @@ def door(M, C):
     dz = -0.3
     lift = 0.025
     for side in (-1, 1):
-        fb((side * 0.68, 1.48, 0.0), (0.12, 2.96, 0.2))
+        # Pfosten breit genug, dass sie auch schief noch den Schaufensterrahmen überlappen
+        fb((side * 0.71, 1.48, 0.0), (0.18, 2.96, 0.2))
         # Nischenwand bis unter den Kopf (vorher nur bis 2,4 m: oben offen)
         fb((side * 0.6, 1.46, -0.17), (0.04, 2.92, 0.3))
     fb((0, 2.92, 0.0), (1.48, 0.1, 0.2))
@@ -459,8 +460,9 @@ def door(M, C):
             pts = list(reversed(pts))
         b.slab(pts, 0.04, fm @ Matrix.Translation((0, 0, dz - 0.02)), dent=0.002)
     # Türblatt (steht auf der Platte, 2,5 cm höher)
-    fb((-0.43, 1.15 + lift, dz), (0.1, 2.24, 0.05))
-    fb((0.43, 1.15 + lift, dz), (0.1, 2.24, 0.05))
+    # Türblatt überlappt die Zarge ringsum um 5 mm (keine Lücke)
+    fb((-0.435, 1.155 + lift, dz), (0.1, 2.25, 0.05))
+    fb((0.435, 1.155 + lift, dz), (0.1, 2.25, 0.05))
     fb((0, 0.18 + lift, dz), (0.78, 0.36, 0.05))
     fb((0, 0.95 + lift, dz), (0.78, 0.1, 0.05))
     fb((0, 2.21 + lift, dz), (0.78, 0.1, 0.05))
@@ -474,7 +476,8 @@ def door(M, C):
     z.box((0, 2.29 + lift, dz), (1.16, 0.09, 0.16), step=0.3, dent=0.002, matrix=fm)
     z.build()
     g = Body("Tür Glas", M["glass"], C["shop"], seed=101)
-    g.box((0, 1.6 + lift, dz), (0.7, 1.12, 0.006), step=10, dent=0, matrix=fm)
+    # Scheibe reicht ringsum in Rahmen und Riegel hinein (keine Spalten)
+    g.box((0, 1.6 + lift, dz), (0.8, 1.22, 0.006), step=10, dent=0, matrix=fm)
     g.box((0, hb + ay / 2, dz), (2 * ax + 0.06, ay, 0.006), step=10, dent=0, matrix=fm)
     g.build()
     ar = Body("Oberlicht Sprossen", M["frame"], C["shop"], seed=102, vary=0.03)

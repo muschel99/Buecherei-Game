@@ -27,6 +27,7 @@ import math
 import os
 import random
 import sys
+import zlib
 
 from mathutils import Matrix, Vector
 
@@ -44,7 +45,8 @@ GAME_GLB = os.path.join(ROOT, "assets", "models", "houses", "pub.glb")
 
 W, D = 5.6, 8.0
 HW = W / 2
-E = 6.25                          # Oberkante Gesims (Traufe)
+E = 6.55                          # Oberkante Gesims (Traufe); höher als der Haustyp (6,25), damit
+                                  # die Fensterbögen frei unter dem Zahnschnitt sitzen
 PITCH = 37.0
 EAVES_Y = -0.18
 RIDGE_Y = D / 2
@@ -61,6 +63,7 @@ TRANSOM = 2.22
 DOOR_HALF = 0.52
 WIN_X = (-1.75, 0.0, 1.75)        # Fenster im Obergeschoss
 WIN_W, WIN_Z0, WIN_H = 0.98, 4.12, 1.48
+WIN_RISE = 0.08                   # flacher Bogen oben am Fenster (Scheitel WIN_H + WIN_RISE)
 
 # Wölbung dieses Hauses (anders als beim Modegeschäft)
 SETTLE = {"wave": 0.02, "wavelength": 3.0, "lean": -0.003, "roof_sag": 0.06, "ridge_tilt": -0.04, "eaves_sag": 0.03}
@@ -87,7 +90,8 @@ def walls(M, C):
     b = Body("Fassade oben (Backstein)", M["pub_brick"], C["walls"], seed=1, vary=0.03)
     b.box((0, 0.15, (SHOP_TOP - 0.15 + E) / 2), (W, 0.3, E - SHOP_TOP + 0.15), step=0.22, dent=0.007, dent_scale=1.5)
     wall = b.build()
-    cuts = [SB.cutter((0, WIN_H / 2, 0), (WIN_W, WIN_H, 1.0), matrix=front_matrix(x + dx, WIN_Z0, 0.0, t)) for x, dx, t in WIN_JITTER]
+    outline = [(-WIN_W / 2, 0.0), (WIN_W / 2, 0.0)] + SB.arc_points(WIN_W / 2, WIN_H, WIN_RISE)
+    cuts = [SB.slab_cutter(outline, front_matrix(x + dx, WIN_Z0, 0.0, t)) for x, dx, t in WIN_JITTER]
     SB.boolean_cut(wall, cuts)
     add_bevel(wall, 0.012)
     # Freie Seitenwand (zur Gasse) mit Fenstern, Brandwand rechts, Rückwand, Giebel
@@ -111,22 +115,23 @@ def walls(M, C):
 
 
 def brick_arches(M, C):
-    """Flache Bögen aus hellen Ziegeln über den Fenstern (jeder Stein etwas anders)."""
-    b = Body("Fensterbögen", M["pub_arch"], C["walls"], seed=5, vary=0.1, bevel=0.006)
+    """Flache Bögen über den Fenstern im hellen Material des Gesimses (jeder Stein etwas anders)."""
+    b = Body("Fensterbögen", M["trim"], C["walls"], seed=5, vary=0.1, bevel=0.006)
+    hx = WIN_W / 2
+    big_r = (hx * hx + WIN_RISE * WIN_RISE) / (2 * WIN_RISE)
+    cy = WIN_H + WIN_RISE - big_r
     for x, dx, t in WIN_JITTER:
-        fm = front_matrix(x + dx, WIN_Z0 + WIN_H, 0.0, t)
-        span = WIN_W + 0.3
-        rise = 0.1
-        r = (span * span / 4 + rise * rise) / (2 * rise)
-        cy = rise - r
-        half = math.asin(span / 2 / r)
+        fm = front_matrix(x + dx, WIN_Z0, 0.0, t)
+        # Steine strahlenförmig auf einem Kreis um denselben Mittelpunkt wie der Fensterbogen:
+        # die Unterkante des Bogens liegt genau auf der runden Oberkante des Fensters
+        r = big_r + 0.135
+        half = math.asin((hx + 0.15) / r)
         n = 11
         for k in range(n):
             a = -half + 2 * half * (k + 0.5) / n
-            # Bogen sitzt direkt auf dem Fenster (Mitte unten bündig mit der Oberkante)
-            lx, ly = r * math.sin(a), cy + r * math.cos(a) + 0.15 - rise
+            lx, ly = r * math.sin(a), cy + r * math.cos(a)
             m = fm @ Matrix.Translation((lx, ly, 0.035)) @ Matrix.Rotation(-a, 4, "Z")
-            b.box((0, 0, 0), (2 * r * math.sin(half / n) * 0.94, 0.26 * RND.uniform(0.95, 1.05), 0.07), step=1, dent=0.003, matrix=m)
+            b.box((0, 0, 0), (2 * r * math.sin(half / n) * 0.94, 0.26 * RND.uniform(0.97, 1.03), 0.07), step=1, dent=0.003, matrix=m)
         # Fensterbank aus Stein
         sm = front_matrix(x + dx, WIN_Z0, 0.0, t)
         b2 = b
@@ -212,8 +217,7 @@ def roof(M, C):
 
 def upper_windows(M, C):
     for k, (x, dx, t) in enumerate(WIN_JITTER):
-        fm = FS.window(M, C, "Fenster %d" % (k + 1), x + dx, WIN_Z0, WIN_W, WIN_H, t, panes=(2, 1), surround=False, hood=False,
-                       frame="bottle")
+        fm = arched_window(M, C, "Fenster %d" % (k + 1), front_matrix(x + dx, WIN_Z0, 0.0, t), WIN_W, WIN_H, WIN_RISE)
         box(M, C, "Blumenkasten Fenster %d" % (k + 1), fm, WIN_W + 0.08, 41 + k)
     for name, y, z, w, h in SIDE_WINDOWS:
         fm = FS.window(M, C, name, 0, 0, w, h, 0, panes=(2, 2) if z > 1 else (3, 2), surround=False, hood=False,
@@ -221,6 +225,47 @@ def upper_windows(M, C):
         sill = Body(name + " Bank", M["trim"], C["walls"], seed=int(y * 10), vary=0.04, bevel=0.008)
         sill.box((0, -0.04, 0.07), (w + 0.16, 0.08, 0.15), step=0.4, dent=0.003, matrix=fm)
         sill.build()
+
+
+def arched_window(M, C, name, fm, w, hs, rise):
+    """Schiebefenster mit flachem Bogen oben (passend zum Steinbogen): Rahmen, Bogen-Kopfstück,
+    Mittelsprosse, Glas und Vorhänge – alles geschlossene Körper in der Ebene fm."""
+    hx, back, f = w / 2, -0.12, 0.065
+    seed = zlib.crc32(name.encode()) % 1000
+    b = Body(name + " Rahmen", M["bottle"], C["windows"], seed=seed, vary=0.03, bevel=0.006)
+
+    def lbox(c, sz):
+        b.box(c, sz, step=0.3, dent=0.002, matrix=fm)
+    lbox((-hx + f / 2, (hs - 0.04) / 2, back), (f, hs - 0.04, 0.07))
+    lbox((hx - f / 2, (hs - 0.04) / 2, back), (f, hs - 0.04, 0.07))
+    lbox((0, f / 2, back), (w - 2 * f, f, 0.07))
+    # Bogen-Kopfstück: Band zwischen äußerem und innerem Bogen (2 mm dicker als die Pfosten)
+    low = hs - 0.06
+    head = (SB.arc_points(hx, hs, rise) + [(-hx, low), (-hx + f, low)]
+            + list(reversed(SB.arc_points(hx, hs, rise, f))) + [(hx - f, low), (hx, low)])
+    b.slab(head, 0.074, fm @ Matrix.Translation((0, 0, back - 0.037)), dent=0.002)
+    # Kämpfer zwischen unterem und oberem Flügel, Mittelsprossen
+    lbox((0, hs / 2, back + 0.012), (w - 2 * f, 0.055, 0.075))
+    lbox((0, (f + hs / 2) / 2, back - 0.005), (0.026, hs / 2 - f, 0.045))
+    top = hs + rise - f + 0.01
+    lbox((0, (hs / 2 + top) / 2, back + 0.009), (0.026, top - hs / 2, 0.045))
+    b.build()
+    g = Body(name + " Glas", M["glass"], C["windows"], seed=1)
+    g.slab([(-hx + 0.01, 0.01), (hx - 0.01, 0.01)] + SB.arc_points(hx, hs, rise, 0.01), 0.006,
+           fm @ Matrix.Translation((0, 0, back - 0.033)), dent=0.0)
+    g.build()
+    c = Body(name + " Vorhänge", M["curtain"], C["windows"], seed=seed + 7, vary=0.05)
+    for side in (-1, 1):
+        cw = w * RND.uniform(0.26, 0.34)
+        x0 = side * hx - (cw if side > 0 else 0) + side * 0.02
+        folds = RND.randint(4, 6)
+        origin = fm @ Vector((x0, 0.02, back - 0.12))
+        u = fm.to_3x3() @ Vector((cw, 0, 0))
+        v = fm.to_3x3() @ Vector((0, hs - 0.06, 0))
+        c.sheet(origin, u, v, 16, 10, 0.008,
+                offset=lambda uu, vv, f_=folds: 0.025 * math.sin(uu * math.pi * f_) * (0.6 + 0.4 * vv))
+    c.build()
+    return fm
 
 
 def box(M, C, name, fm, width, seed):
@@ -251,11 +296,14 @@ def shopfront(M, C):
     f.box((0, -0.06, HEAD + 0.05), (W - 2 * PIL, 0.12, 0.1), step=0.3, dent=0.003)
     f.box((0, -0.17, SHOP_TOP - 0.12), (W + 0.06, 0.34, 0.12), step=0.3, dent=0.004)
     f.box((0, -0.21, SHOP_TOP - 0.03), (W + 0.12, 0.42, 0.08), step=0.3, dent=0.004)
+    # Schildkasten: geschlossener Block von der Wand bis hinter das Schild (sonst Loch dahinter)
+    f.box((0, -0.105, (HEAD + 0.02 + SHOP_TOP - 0.16) / 2), (FASCIA_W + 0.04, 0.45, SHOP_TOP - 0.16 - HEAD - 0.02),
+          step=0.3, dent=0.003)
     f.build()
     # Schild: Bild der Entwicklerin (pub_fascia.png) über die ganze Breite zwischen den Pilastern
     s = Body("Ladenschild", SC.sign_material("pub", "fascia"), C["shop"], seed=21, vary=0.0)
-    s.panel(front_matrix(0, FASCIA_Z - FASCIA_H / 2, -0.24, RND.uniform(-0.3, 0.3)) @ Matrix.Translation((0, FASCIA_H / 2, 0)),
-            FASCIA_W, FASCIA_H, 0.24)
+    s.panel(front_matrix(0, FASCIA_Z - FASCIA_H / 2, -0.325, RND.uniform(-0.3, 0.3)) @ Matrix.Translation((0, FASCIA_H / 2, 0)),
+            FASCIA_W - 0.02, FASCIA_H, 0.05)
     s.build()
     # Schaufenster links und rechts der Tür
     fr = Body("Schaufenster Rahmen", M["bottle"], C["shop"], seed=22, vary=0.03, bevel=0.008)
@@ -297,18 +345,20 @@ def door(M, C):
     dz, lift = -0.28, 0.025
     top = 2.24 + lift + 0.04
     for sx in (-1, 1):
-        fb((sx * (DOOR_HALF + 0.06), HEAD / 2, 0.0), (0.12, HEAD, 0.2))
+        # Pfosten breit genug, dass sie auch schief noch den Schaufensterrahmen überlappen
+        fb((sx * (DOOR_HALF + 0.09), HEAD / 2, 0.0), (0.18, HEAD, 0.2))
         fb((sx * (DOOR_HALF - 0.02), HEAD / 2, -0.16), (0.04, HEAD, 0.28))
     # Nischendecke (von der Front bis hinter das Oberlicht) und Kämpfer oben am Oberlicht
     fb((0, HEAD - 0.02, -0.18), (2 * DOOR_HALF, 0.04, 0.36))
     fb((0, HEAD - 0.07, dz), (2 * DOOR_HALF - 0.02, 0.06, 0.06))
     for i in (1, 2):
         fb((-DOOR_HALF + 2 * DOOR_HALF * i / 3, (top + HEAD - 0.07) / 2, dz), (0.03, HEAD - 0.07 - top, 0.045))
+    # Türblatt füllt die Zarge ganz aus (überlappt sie 5 mm), keine Lücke oben und seitlich
     for sx in (-1, 1):
-        fb((sx * 0.4, 1.09 + lift, dz), (0.1, 2.14, 0.05))
-    for z, h in ((0.17, 0.34), (0.98, 0.1), (2.11, 0.1)):
-        fb((0, z + lift, dz), (0.7, h, 0.05))
-    fb((0, 0.62 + lift, dz - 0.004), (0.7, 0.56, 0.04))
+        fb((sx * 0.41, 1.1 + lift, dz), (0.11, 2.2, 0.05))
+    for z, h in ((0.17, 0.34), (0.98, 0.1), (2.15, 0.12)):
+        fb((0, z + lift, dz), (0.72, h, 0.05))
+    fb((0, 0.635 + lift, dz - 0.004), (0.72, 0.62, 0.04))
     fb((0, 0.62 + lift, dz + 0.028), (0.48, 0.38, 0.02))
     for i in (1,):
         fb((0, 1.55 + lift, dz), (0.03, 1.05, 0.045))
@@ -320,7 +370,8 @@ def door(M, C):
     z.box((0, 2.24 + lift, dz), (1.08, 0.08, 0.14), step=0.3, dent=0.002, matrix=fm)
     z.build()
     g = Body("Tür Glas", M["glass"], C["shop"], seed=32)
-    g.box((0, 1.55 + lift, dz), (0.66, 1.06, 0.006), step=10, dent=0, matrix=fm)
+    # Scheibe reicht ringsum in Rahmen und Riegel hinein (keine Spalten)
+    g.box((0, 1.565 + lift, dz), (0.74, 1.13, 0.006), step=10, dent=0, matrix=fm)
     g.box((0, (top + HEAD - 0.07) / 2, dz), (2 * DOOR_HALF - 0.04, HEAD - 0.07 - top, 0.006), step=10, dent=0, matrix=fm)
     g.build()
     k = Body("Tür Griff und Briefschlitz", M["gold"], C["shop"], seed=33, bevel=0.003)
@@ -584,6 +635,7 @@ def main():
             "pub_schild": ((4.3, -1.6, 5.0), (2.65, -0.45, 5.0), 32, (1100, 1000)),
             "pub_stube": ((0.8, -1.6, 1.5), (0.1, 3.0, 1.5), 32, (1400, 1000)),
             "pub_oben": ((0.8, -3.0, 4.9), (0.0, 0.0, 5.0), 34, (1400, 1000)),
+            "pub_unten": ((0.4, -1.3, 1.5), (0.0, 0.0, 2.9), 26, (1400, 1000)),
         }
         for name, (cam, target, lens, res) in views.items():
             if only and name not in only[0]:

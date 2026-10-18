@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bmvvyuergjewe"
+uid="uid://dp3luhe08ewi"
 path="res://.godot/imported/pub.glb-407c7d2769030d92ab20ebde5843f4e4.scn"
 
 [deps]
@@ -47,7 +47,6 @@ _subresources={
 },
 "Backstein Bogen hell": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/backstein_bogen_hell.tres",
 "use_external/path": "res://assets/materials/storybook/backstein_bogen_hell.tres"
 },
 "Backstein Seitenwand": {
