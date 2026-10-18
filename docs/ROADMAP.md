@@ -790,8 +790,21 @@ handwerklich, bewusst unperfekt, aber solide gebaut (Regeln: docs/STYLE_GUIDE.md
 - [x] Schilder der Entwicklerin (Bilder) auf Schild-Körpern bei Pub und Modegeschäft (Ladenschild,
       Ausleger-/Hängeschild, Kreidetafel, „Geöffnet“-Kärtchen)
 - [x] Pflanzen an Pub und Modegeschäft vorerst entfernt – nur Töpfe, Kübel und Kästen
+- [x] Pub ohne Lücken: Tür, Schildkasten, Fenster mit Bögen; Lochprüfung für alle
+      Häuser (`tools/blender/storybook_gap_check.py`)
+- [x] Fünf weitere Häuser nach den Vorlagebildern, gemeinsame Bausteine `storybook_town.py`
+      (Wände entlang beliebiger Grundrisse, Walm- und Satteldächer aus einzelnen Ziegeln, Fensterläden,
+      Türen, Ladenfronten, Schildkästen, Blumenampeln, Hollandrad, Stoff-Markisen):
+      Bäckerei (Giebel zur Straße, rot-weiße Markise, Brot im Fenster), Blumenladen (Fahrrad mit
+      Körben auf dem Ständer, Pflanzkasten über dem Schild, Ampeln, viele Töpfe), Teeladen (Eckhaus
+      aus Backstein, Fensterläden, Tee, Dosen und Kannen statt Büchern), Wolleladen (Eckhaus mit
+      30°-Knick, Schildband um beide Ecken, Schild nur über den Fenstern, viele Kübel, Wolle im
+      Regal), Torhaus (Rundbogen aus Sandstein, Gewölbe, Schildband „Alte Torgasse“, Fachwerk,
+      Gaube, Wandlaternen mit dem neuen Kopf); alte Modelle dieser Häuser entfernt
+- [x] Markisen aus einem Stück Stoff (Blender-Stoffsimulation, mit Dicke), auch am Modegeschäft;
+      im Spiel schwingen sie leicht im Wind (`wind_strength` im Shader)
 - [ ] Pflanzen im Bilderbuch-Stil zurück (wenn die Entwicklerin so weit ist)
-- [ ] Wandlaternen an Bücherei und Torhaus mit dem neuen Kopf (wenn diese Häuser dran sind)
+- [ ] Wandlaternen an der Bücherei mit dem neuen Kopf (wenn sie dran ist)
 - [ ] Weitere Häuser im Bilderbuch-Stil (jedes mit eigener Wölbung und eigenen Farbtönen)
 - [ ] Licht der ganzen Welt: warm um 3500 K, weiche Schatten, mildes Bloom, etwas mehr
       Umgebungsverdeckung (AO), leichte Schärfentiefe, Fensterlicht als Blickfang

@@ -85,18 +85,21 @@ niedlich: keine Kulleraugen-Häuser, keine schiefen Comic-Wände, keine knallige
 |---------|---------|-----------|
 | `fashion_shop` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** „Zwirn und Zwirbel“: Putz creme, taubenblaue Ladenfront, Nussbaum-Schild mit Goldschrift, terrakotta-rosa Markisen, Oberlicht, Gauben, Ziergiebel, Efeu, Blumenkästen, Buchs (`build_storybook_shop.py`) |
 | `pub` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** „The Ink & Ivy“: Backstein mit hellen Bögen, flaschengrüne Ladenfront, Fenster mit flachem Bogen, Zahnschnitt-Gesims, Gaststube, Bistrotische, Schilder als Bilder (`build_storybook_pub.py`) |
-| `gatehouse` | Konzepte Torhaus (Ziegelbogen + Fachwerk) | Ziegel-Rundbogen mit hellen Bogensteinen, Fachwerk-Obergeschoss, Gaube |
+| `gatehouse` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h, Bilderbuch-Stil):** Backstein, Rundbogen aus Sandstein mit Schlussstein, Gewölbe, grünes Schildband „Alte Torgasse“, Fachwerk mit Terrakotta-Gefachen, Gaube, Wandlaternen, beide Seiten gleich (`build_storybook_gatehouse.py`) |
 | `terrace_*` | Inspiration Straßenfotos | **fertig (4g, Teil 2):** 45 schmal mit Schlusssteinen, 50 mit Erker, 55 georgianisch mit Brüstung, 60 breit mit Gaube; Wand je Haus Backstein, Putz oder Rauputz |
 | `residential` | – | **fertig (4g, Teil 2):** mittige Tür unter Vordach mit Säulen und Giebel, Lorbeer-Kegel |
-| `corner_*` | Konzept „flowershop“ | Eckladen mit Ladenfront in der Schräge |
+| `corner_90` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h):** Teeladen „Teestube“: Backstein, schwarze Ladenfront mit Gold zur langen Straße, Fensterläden, Tee, Dosen und Kannen (`build_storybook_tea.py`) |
+| `corner_30` | Vorlagebild der Entwicklerin (Bilderbuch) | **fertig (4h):** Wolle & Stoff: Putz creme, taubenblaue Schaufenster links und rechts, Tür in der Schräge, Schildband um beide Ecken (`build_storybook_wool.py`) |
+| Blumenladen, Bäckerei | Vorlagebilder der Entwicklerin (Bilderbuch) | **fertig (4h):** Blumenladen farngrün mit Hollandrad und Pflanzkasten über dem Schild (`build_storybook_flowers.py`); Bäckerei mit Giebel zur Straße und rot-weißer Markise (`build_storybook_bakery.py`) |
 | Bücherei | Konzept „Bookstore“, „The Book Nook“ | Ladenfront in der Schräge, Schild, Sprossenfenster |
 
 ## Bilderbuch-Stil (seit Etappe 4h)
 Die Welt wird zu einer **lebendig gewordenen Kinderbuch-Illustration**: Vintage-Charme in
 moderner 3D-Darstellung – warm, einladend, liebevoll gestaltet und bewusst unperfekt. Ein alt
 gewachsenes Dorf, idealisiert, ruhig und ordentlich, ohne Verfall, Schmutz oder störende Moderne.
-Umgesetzt: Modegeschäft (`build_storybook_shop.py`) und Pub (`build_storybook_pub.py`) in
-`tools/blender/`. Die anderen Häuser folgen. Pflanzen bleiben vorerst weg (nur Töpfe und Kübel);
+Umgesetzt: Modegeschäft (`build_storybook_shop.py`), Pub (`build_storybook_pub.py`), Bäckerei,
+Blumenladen, Teeladen, Wolleladen und Torhaus (`build_storybook_<haus>.py`, gemeinsame Bausteine
+`storybook_town.py`) in `tools/blender/`. Die anderen Häuser folgen. Pflanzen bleiben vorerst weg (nur Töpfe und Kübel);
 Schilder sind weiter Bilder der Entwicklerin.
 
 **Formen**
@@ -112,6 +115,11 @@ Schilder sind weiter Bilder der Entwicklerin.
   Tisch. Leicht schiefe Teile überlappen sich immer (nie genau Kante an Kante); Schilder sitzen
   auf einem geschlossenen Schildkasten in der Farbe der Holzfassade. Prüfen mit
   `storybook_gap_check.py` (muss „keine Löcher gefunden“ melden).
+- **Markisen sind Stoff:** ein einziges Stück (Blenders Stoffsimulation: leichter Durchhang
+  zwischen Kasten und Fallstange, Volant fällt frei), mit Dicke, ohne Seitenplatten oder Fugen;
+  im Spiel schwingt der Stoff leicht im Wind. Kasten, Gelenkarme und Stange tragen ihn.
+- **Fahrräder und Gestelle logisch:** Räder stehen auf dem Boden, Ständer berühren den Boden,
+  Rahmen, Gabel, Kette und Körbe hängen wirklich zusammen.
 - **Bögen über Fenstern:** Fenster oben mit flachem Bogen, Steinbogen genau darauf (gleicher
   Mittelpunkt), Bögen und Bänke im hellen Gesims-Material, frei unter dem Traufgesims.
 - Jedes Teil ist ein **geschlossener Körper mit Dicke** (keine Einzelflächen), einzeln in

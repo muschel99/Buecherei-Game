@@ -10,7 +10,7 @@ extends RefCounted
 
 
 static func all_sets() -> PackedStringArray:
-	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details", "fashion", "pub"])
+	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details", "fashion", "pub", "shops"])
 
 
 static func get_set(set_name: String) -> Dictionary:
@@ -31,6 +31,8 @@ static func get_set(set_name: String) -> Dictionary:
 			return fashion()
 		"pub":
 			return pub()
+		"shops":
+			return shops()
 		"details":
 			return details()
 	push_error("Unbekannte Gruppe von Blickpunkten: " + set_name)
@@ -268,4 +270,23 @@ static func pub() -> Dictionary:
 		"door_side": {"pos": Vector3(x + 1.4, g + 1.6, front - 1.3), "target": Vector3(x, g + 2.0, front)},
 		"window_side": {"pos": Vector3(x - 3.2, g + 1.6, front - 0.9), "target": Vector3(x - 1.6, g + 1.8, front)},
 		"roof_side": {"pos": Vector3(x - 6.0, g + 2.0, front - 4.0), "target": Vector3(x - 2.6, g + 5.5, front + 2.0)},
+	}
+
+
+## Bilderbuch-Läden (Etappe 4h): Bäckerei und Blumenladen gegenüber, Teeladen am geraden
+## Straßenende, Wolleladen und Torhaus an der Torstraße – je von vorn und aus der Nähe.
+static func shops() -> Dictionary:
+	var g := StreetLayout.ground_y()
+	var opp := -14.0
+	return {
+		"bakery": {"pos": Vector3(1.05, g + 1.7, opp + 7.0), "target": Vector3(1.05, g + 3.8, opp)},
+		"bakery_close": {"pos": Vector3(2.6, g + 1.6, opp + 2.6), "target": Vector3(0.6, g + 2.2, opp)},
+		"flowers": {"pos": Vector3(-3.9, g + 1.7, opp + 7.0), "target": Vector3(-3.9, g + 3.6, opp)},
+		"flowers_bike": {"pos": Vector3(-2.6, g + 1.5, opp + 2.6), "target": Vector3(-5.4, g + 0.8, opp + 0.4)},
+		"tea": {"pos": Vector3(26.6, g + 1.7, -11.0), "target": Vector3(26.6, g + 3.2, -4.2)},
+		"tea_corner": {"pos": Vector3(23.0, g + 1.7, -9.5), "target": Vector3(29.5, g + 3.0, -3.5)},
+		"wool": {"pos": Vector3(-29.8, g + 1.7, -7.5), "target": Vector3(-28.0, g + 3.2, -14.3)},
+		"wool_door": {"pos": Vector3(-28.6, g + 1.6, -11.6), "target": Vector3(-28.0, g + 2.2, -14.3)},
+		"gate": {"pos": Vector3(-27.0, g + 1.7, -7.7), "target": Vector3(-35.7, g + 5.0, -12.7)},
+		"gate_arch": {"pos": Vector3(-31.0, g + 1.6, -10.0), "target": Vector3(-36.5, g + 3.6, -13.5)},
 	}

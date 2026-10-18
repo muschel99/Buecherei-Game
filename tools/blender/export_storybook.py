@@ -30,7 +30,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 import storybook_common as SC  # noqa: E402
 
 # Haus-Sammlung in der .blend -> Datei fürs Spiel (assets/models/houses/)
-HOUSES = {"Modegeschäft (Bilderbuch)": "fashion_shop.glb", "Pub (Bilderbuch)": "pub.glb"}
+HOUSES = {"Modegeschäft (Bilderbuch)": "fashion_shop.glb", "Pub (Bilderbuch)": "pub.glb", "Bäckerei (Bilderbuch)": "bakery.glb",
+          "Blumenladen (Bilderbuch)": "flower_shop.glb", "Teeladen (Bilderbuch)": "tea_shop.glb", "Wolleladen (Bilderbuch)": "wool_shop.glb",
+          "Torhaus (Bilderbuch)": "gatehouse.glb"}
 
 # True = Blätter und Blüten fürs Spiel nur als Oberseite (weniger Dreiecke, aber keine Körper mehr)
 PLANT_TOPS_ONLY = False

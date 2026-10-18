@@ -44,7 +44,7 @@ def materials():
         z. B. Innenräume, die in Blender von Lampen beleuchtet werden; plant = Blätter/Blüten, im
         Spiel beidseitig sichtbar)."""
         GAME_MATERIALS[name] = dict(kw, color=color, glow=glow, plant=plant)
-        mat = SB.material(name, color, **kw)
+        mat = SB.material(name, color, **{k: v for k, v in kw.items() if k != "wind"})
         mat["spiel_pflanze"] = plant   # export_storybook.py vereinfacht diese Teile fürs Spiel
         return mat
     return {
@@ -64,7 +64,7 @@ def materials():
         "curtain": M("Vorhang Leinen", (0.9, 0.8, 0.64), grain="fabric", rough=0.95, vary=0.05, emit=0.35,
                      emit_color=(0.95, 0.72, 0.45)),
         "awning": M("Markisenstoff", (0.93, 0.88, 0.78), grain="fabric", rough=0.95, vary=0.04, stripes=0.13,
-                    color2=(0.76, 0.35, 0.27)),
+                    color2=(0.76, 0.35, 0.27), wind=0.035),
         "iron": M("Schmiedeeisen", (0.21, 0.2, 0.19), grain="smooth", rough=0.7, metal=0.4, vary=0.04),
         "lamp_iron": M("Laterne Eisen dunkelbraun", (0.13, 0.11, 0.095), grain="smooth", rough=0.6, metal=0.3, vary=0.04),
         "bronze": M("Dachrinne Bronze", (0.36, 0.28, 0.2), grain="smooth", rough=0.65, metal=0.4),
@@ -133,6 +133,42 @@ def materials():
         "chair": M("Holz Stuhl", (0.4, 0.26, 0.16), grain="wood", rough=0.78, vary=0.08),
         "pot_light": M("Terrakotta Topf hell", (0.8, 0.5, 0.33), rough=0.92, vary=0.08, scale=6),
         "pot_dark": M("Terrakotta Topf dunkel", (0.62, 0.34, 0.22), rough=0.92, vary=0.08, scale=6),
+        # Teeladen, Wolleladen, Blumenladen, Bäckerei, Torhaus (storybook_town.py)
+        "awning_red": M("Markisenstoff Rot", (0.94, 0.89, 0.8), grain="fabric", rough=0.95, vary=0.04, stripes=0.15,
+                        color2=(0.72, 0.16, 0.15), wind=0.035),
+        "tea_black": M("Lack Schwarzbraun", (0.1, 0.09, 0.085), grain="wood", rough=0.7, vary=0.05, bump=0.12),
+        "shutter": M("Fensterladen Schiefergrau", (0.24, 0.26, 0.28), grain="wood", rough=0.78, vary=0.06, bump=0.15),
+        "tea_wall_in": M("Teestube Wand Altrosa", (0.86, 0.68, 0.64), rough=0.9, vary=0.05, glow=0.26),
+        "fern": M("Lack Farngrün", (0.42, 0.53, 0.42), grain="wood", rough=0.72, vary=0.06, bump=0.12),
+        "fern_dark": M("Lack Farngrün dunkel", (0.3, 0.4, 0.31), grain="wood", rough=0.72, vary=0.05, bump=0.12),
+        "petrol": M("Lack Tannengrün", (0.11, 0.25, 0.2), grain="wood", rough=0.72, vary=0.06, bump=0.12),
+        "petrol_dark": M("Lack Tannengrün dunkel", (0.08, 0.18, 0.15), grain="wood", rough=0.72, vary=0.05, bump=0.12),
+        "box_red": M("Lack Blumenkasten Rot", (0.7, 0.2, 0.17), grain="wood", rough=0.75, vary=0.06),
+        "box_green": M("Lack Blumenkasten Grün", (0.3, 0.42, 0.3), grain="wood", rough=0.75, vary=0.06),
+        "bread": M("Brot goldbraun", (0.8, 0.52, 0.25), rough=0.85, vary=0.12, scale=8, glow=0.3),
+        "bread_dark": M("Brot dunkel", (0.56, 0.32, 0.16), rough=0.85, vary=0.12, scale=8, glow=0.3),
+        "wicker": M("Weidenkorb", (0.68, 0.5, 0.3), grain="fabric", rough=0.9, vary=0.1, bump=0.4),
+        "wicker_in": M("Weidenkorb innen", (0.68, 0.5, 0.3), grain="fabric", rough=0.9, vary=0.1, bump=0.4, glow=0.25),
+        "bike": M("Lack Fahrrad Salbei", (0.52, 0.64, 0.48), grain="smooth", rough=0.45, metal=0.15, vary=0.04),
+        "rubber": M("Gummi", (0.12, 0.11, 0.1), grain="smooth", rough=0.8, vary=0.03),
+        "chrome": M("Chrom matt", (0.72, 0.71, 0.68), grain="smooth", rough=0.35, metal=0.6, vary=0.03),
+        "saddle": M("Leder Sattel", (0.42, 0.25, 0.15), grain="fabric", rough=0.6, vary=0.06),
+        "oak_dark": M("Fachwerk Eiche dunkel", (0.3, 0.19, 0.12), grain="wood", rough=0.85, vary=0.08, bump=0.3),
+        "infill": M("Gefach Terrakotta", (0.78, 0.47, 0.34), rough=0.93, vary=0.08, scale=1.6, bump=0.3),
+        "clay": M("Dachziegel Ton", (0.72, 0.4, 0.27), grain="stone", rough=0.9, vary=0.1, bump=0.2),
+        "clay_dark": M("Dachziegel Ton dunkel", (0.6, 0.32, 0.22), grain="stone", rough=0.9, vary=0.1, bump=0.2),
+        "vault": M("Gewölbe Sandstein", (0.8, 0.72, 0.58), grain="stone", rough=0.92, vary=0.1, bump=0.3),
+        "wool_wall_in": M("Wolleladen Wand Creme", (0.93, 0.88, 0.8), rough=0.9, vary=0.04, glow=0.28),
+        "flower_wall_in": M("Blumenladen Wand Hellgrün", (0.8, 0.84, 0.72), rough=0.9, vary=0.05, glow=0.28),
+        "bakery_wall_in": M("Bäckerei Wand Honig", (0.93, 0.8, 0.6), rough=0.9, vary=0.05, glow=0.3),
+        "yarn_blue": M("Wolle Blau", (0.42, 0.55, 0.78), grain="fabric", rough=0.95, vary=0.08, glow=0.22),
+        "yarn_lilac": M("Wolle Flieder", (0.7, 0.6, 0.82), grain="fabric", rough=0.95, vary=0.08, glow=0.22),
+        "yarn_mint": M("Wolle Mint", (0.62, 0.8, 0.7), grain="fabric", rough=0.95, vary=0.08, glow=0.22),
+        "tin_red": M("Teedose Rot", (0.66, 0.2, 0.18), grain="smooth", rough=0.45, metal=0.2, vary=0.06, glow=0.3),
+        "tin_green": M("Teedose Grün", (0.24, 0.42, 0.3), grain="smooth", rough=0.45, metal=0.2, vary=0.06, glow=0.3),
+        "tin_cream": M("Teedose Creme", (0.9, 0.84, 0.7), grain="smooth", rough=0.45, metal=0.2, vary=0.06, glow=0.3),
+        "tin_blue": M("Teedose Blau", (0.24, 0.32, 0.5), grain="smooth", rough=0.45, metal=0.2, vary=0.06, glow=0.3),
+        "china": M("Porzellan", (0.95, 0.93, 0.88), grain="smooth", rough=0.3, vary=0.03, glow=0.3),
     }
 
 
@@ -393,9 +429,12 @@ def settle(objects, p, half, eaves, ridge):
 def colliders(C, obstacles):
     """Kästen für die Kollision im Spiel (in Blender nur als Drahtgitter sichtbar)."""
     out = []
-    for name, ((x, y), (sx, sy), h) in obstacles.items():
+    for name, entry in obstacles.items():
+        # ((x, y), (Breite, Tiefe), Höhe[, Drehung in Grad um die Hochachse])
+        (x, y), (sx, sy), h = entry[:3]
+        yaw = entry[3] if len(entry) > 3 else 0.0
         b = Body(name + "-colonly", None, C["collision"], vary=0)
-        b.box((x, y, h / 2), (sx, sy, h), step=10, dent=0)
+        b.box((x, y, h / 2), (sx, sy, h), step=10, dent=0, turn=(0, 0, yaw))
         obj = b.build()
         obj.display_type = "WIRE"
         obj.hide_render = True
@@ -447,9 +486,10 @@ def write_game_materials():
                     'shader_parameter/blot_scale = %.3f\nshader_parameter/bump_strength = %.3f\nshader_parameter/rough = %.3f\n'
                     'shader_parameter/metal = %.3f\nshader_parameter/emission_color = Color(%.3f, %.3f, %.3f, 1)\n'
                     'shader_parameter/emission_energy = %.3f\nshader_parameter/glow = %.3f\n'
+                    'shader_parameter/wind_strength = %.3f\n'
                     % (head, "storybook_plant" if v["plant"] else "storybook", name, c[0], c[1], c[2], c2[0], c2[1], c2[2], GRAIN_ID[v.get("grain", "plaster")], v.get("stripes") or 0.0,
                        v.get("vary", 0.08), v.get("scale", 4.0), v.get("bump", 0.25), v.get("rough", 0.85), v.get("metal", 0.0),
-                       ec[0], ec[1], ec[2], emit * 0.45, v["glow"]))
+                       ec[0], ec[1], ec[2], emit * 0.45, v["glow"], v.get("wind", 0.0)))
         with open(path, "w") as f:
             f.write(text)
     return out

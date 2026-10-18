@@ -155,8 +155,9 @@ tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py)
                    build_houses.py = Häuser; Bilderbuch-Stil: storybook_lib.py,
                    storybook_parts.py, storybook_common.py, storybook_plants.py,
                    build_storybook_shop.py = Modegeschäft, build_storybook_pub.py = Pub,
-                   build_storybook_lamps.py = Laternen, export_storybook.py,
-                   storybook_gap_check.py = Lochprüfung)
+                   storybook_town.py = Bausteine der übrigen Läden, build_storybook_bakery/
+                   flowers/tea/wool/gatehouse.py, build_storybook_lamps.py = Laternen,
+                   export_storybook.py, storybook_gap_check.py = Lochprüfung)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
 (Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
@@ -379,6 +380,20 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   nach oben zu Tür und Schild) muss „keine Löcher gefunden“ melden. Leicht schiefe Teile, die
   aneinanderstoßen, immer überlappen lassen (Scheiben in Rahmen und Riegel, Türpfosten über den
   Schaufensterrahmen, Füllungen bis in die Riegel, Schild auf geschlossenem Schildkasten).
+  Eckhäuser/Torhaus: `--probe=x0,y0,x1,y1` bzw. `x0,y0,z0,x1,y1,z1` (Prüfkörper ganz innen) und
+  `--ring=cx,cy,r` (Blicke rundherum).
+  **Weitere Läden (seit 4h):** Bäckerei, Blumenladen, Teeladen (corner_90), Wolleladen (corner_30)
+  und Torhaus haben je ein eigenes Script `build_storybook_<haus>.py` mit den Bausteinen
+  `storybook_town.py`: Wände entlang beliebiger Grundrisse (`corner_outline` = genau
+  `CornerHouseFacade.footprint()`, `wall_matrix`/`canon`/`placed` für Teile an schrägen Wänden,
+  `outline_walls`, `band` = Gesims/Leiste ohne Fuge um Ecken), `hip_roof`/`pitched_roof` aus
+  einzelnen Ziegeln, `door`, `shop_window`, `fascia` (Schildkasten + Bild), `shutters`,
+  `hanging_basket` (Ampel ohne Pflanze), `bicycle` (steht auf dem Ständer, runde Körbe),
+  `round_basket` (geflochten: Staken, Ruten abwechselnd davor/dahinter, gedrehter Rand), `loop_tube` (Ring ohne Fuge), `wall_lantern`,
+  `cloth_awning` (Markise = EIN Stück Stoff aus Blenders Stoffsimulation + Dicke; Alpha der
+  Vertex-Farbe = wie frei der Stoff im Wind schwingt, Shader `wind_strength`), `run` (Ablauf wie
+  beim Pub). Spiel-Dateien `assets/models/houses/{bakery,flower_shop,tea_shop,wool_shop,gatehouse}.glb`,
+  eingetragen als `unique_model` in houses.tscn; build_street.py überspringt diese Häuser (`STORYBOOK`).
   **Alles Körper, auch im Spiel (Wunsch der Entwicklerin):** jedes Blatt ein kleiner linsenförmiger
   Körper (`Body.leaf`, Formen heart/round/oval/narrow), jede Blüte ein Stern-Körper (`Body.star`),
   Stiele/Äste runde Röhren (`tube(..., smooth=, round_ends=True)`), weiche Kanten breit

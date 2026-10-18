@@ -10,6 +10,9 @@ Mauer, Rahmen, Tür oder Schild. Viele Blickpunkte von der Straße (Augenhöhe, 
 oben) – das Script zählt die pinken Pixel je Bild und speichert Bilder mit Loch nach
 screenshots/blender/gap_check/ (mit --keep alle). --size = Breite, Tiefe, Traufhöhe (Meter),
 --side = freie Seitenwand (-1 links, 1 rechts, 0 keine) für Blicke aus der Gasse.
+Eckhäuser: --probe=x0,y0,x1,y1 (Prüfkörper im Grundriss, ganz innerhalb der Mauern; mit Höhen:
+x0,y0,z0,x1,y1,z1) und
+--ring=cx,cy,r (zusätzlich 16 Blicke rundherum auf Augenhöhe und von schräg unten).
 """
 
 import math
@@ -22,12 +25,12 @@ from mathutils import Vector
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT = os.path.join(ROOT, "screenshots", "blender", "gap_check")
-INSIDE = ("Gaststube und Zimmer", "Innen", "Licht", "Kollision (Spiel)")
+INSIDE = ("Gaststube und Zimmer", "Innen", "Zimmer oben", "Licht", "Kollision (Spiel)")
 
 
 def args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    opts = {"size": "5.6,8.0,6.5", "hide": "", "side": "0"}
+    opts = {"size": "5.6,8.0,6.5", "hide": "", "side": "0", "probe": "", "ring": ""}
     keep = "--keep" in argv
     for a in argv:
         if a.startswith("--") and "=" in a:
@@ -35,10 +38,12 @@ def args():
             opts[k] = v
     w, d, e = (float(v) for v in opts["size"].split(","))
     hide = set(INSIDE) | {h for h in opts["hide"].split(",") if h}
-    return w, d, e, hide, int(opts["side"]), keep
+    probe = [float(v) for v in opts["probe"].split(",")] if opts["probe"] else None
+    ring = [float(v) for v in opts["ring"].split(",")] if opts["ring"] else None
+    return w, d, e, hide, int(opts["side"]), keep, probe, ring
 
 
-def setup(w, d, e, hide):
+def setup(w, d, e, hide, probe_box=None):
     sc = bpy.context.scene
     sc.render.engine = "BLENDER_WORKBENCH"
     sh = sc.display.shading
@@ -62,6 +67,11 @@ def setup(w, d, e, hide):
     hw = w / 2 - 0.36
     me = bpy.data.meshes.new("_probe")
     lo, hi = Vector((-hw, 0.45, 0.12)), Vector((hw, d - 0.35, e - 0.15))
+    if probe_box and len(probe_box) == 6:
+        # mit Höhen: x0,y0,z0,x1,y1,z1 (z. B. nur das Obergeschoss über der Durchfahrt des Torhauses)
+        lo, hi = Vector(probe_box[:3]), Vector(probe_box[3:])
+    elif probe_box:
+        lo, hi = Vector((probe_box[0], probe_box[1], 0.12)), Vector((probe_box[2], probe_box[3], e - 0.15))
     vs = [(x, y, z) for x in (lo.x, hi.x) for y in (lo.y, hi.y) for z in (lo.z, hi.z)]
     fs = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
     me.from_pydata(vs, [], fs)
@@ -71,7 +81,7 @@ def setup(w, d, e, hide):
     sc.collection.objects.link(probe)
 
 
-def views(w, e, side):
+def views(w, e, side, ring=None):
     """Blickpunkte (Kamera, Ziel, Brennweite): Straße in Augenhöhe, nah an Tür und Fenstern,
     schräg, nach oben zu Schild und Gesims, aus der Gasse."""
     out = {}
@@ -87,6 +97,12 @@ def views(w, e, side):
         out["schild_unten_%d" % k] = ((x * 3, -1.0, 1.5), (x, 0.0, 3.1), 18)
     for k, x in enumerate((-hw + 0.6, hw - 0.6)):
         out["fenster_oben_%d" % k] = ((x, -3.0, 1.6), (x, 0.0, e - 1.0), 28)
+    if ring:
+        cx, cy, r = ring
+        for k in range(16):
+            a = 2 * math.pi * k / 16
+            cam = (cx + math.cos(a) * r, cy + math.sin(a) * r, 1.6 if k % 2 == 0 else 1.1)
+            out["rund_%02d" % k] = (cam, (cx + math.cos(a) * r * 0.55, cy + math.sin(a) * r * 0.55, 2.6), 26)
     if side:
         sx = side * (hw + 2.5)
         for k, y in enumerate((-1.0, 1.5, 4.0)):
@@ -95,13 +111,13 @@ def views(w, e, side):
 
 
 def main():
-    w, d, e, hide, side, keep = args()
-    setup(w, d, e, hide)
+    w, d, e, hide, side, keep, probe, ring = args()
+    setup(w, d, e, hide, probe)
     os.makedirs(OUT, exist_ok=True)
     sc = bpy.context.scene
     tmp = os.path.join(OUT, "_tmp.png")
     found = []
-    for name, (cam, tgt, lens) in views(w, e, side).items():
+    for name, (cam, tgt, lens) in views(w, e, side, ring).items():
         data = bpy.data.cameras.new(name)
         data.lens = lens
         data.clip_start = 0.02
@@ -122,7 +138,7 @@ def main():
             found.append((name, pink))
     if os.path.exists(tmp):
         os.remove(tmp)
-    print("Lochprüfung: %d Blickpunkte" % len(views(w, e, side)))
+    print("Lochprüfung: %d Blickpunkte" % len(views(w, e, side, ring)))
     if found:
         for name, n in found:
             print("  LOCH: %s – %d pinke Pixel (Bild: %s.png)" % (name, n, os.path.join(OUT, name)))

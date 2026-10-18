@@ -1,0 +1,539 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://c03e4al2gkfss"
+path="res://.godot/imported/tea_shop.glb-6190364126dc4fcad286ca992c6bbfc0.scn"
+
+[deps]
+
+source_file="res://assets/models/houses/tea_shop.glb"
+dest_files=["res://.godot/imported/tea_shop.glb-6190364126dc4fcad286ca992c6bbfc0.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"Backstein": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/backstein.tres",
+"use_external/path": "res://assets/materials/storybook/backstein.tres"
+},
+"Backstein Bogen hell": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/backstein_bogen_hell.tres"
+},
+"Backstein Seitenwand": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/backstein_seitenwand.tres"
+},
+"Backstein Ziegelrot": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/backstein_ziegelrot.tres"
+},
+"Bild warm": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bild_warm.tres"
+},
+"Blatt Buchs": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_buchs.tres"
+},
+"Blatt Efeu": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_efeu.tres"
+},
+"Blatt Efeu jung": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_efeu_jung.tres"
+},
+"Blatt Geranie": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_geranie.tres"
+},
+"Blatt Olive": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_olive.tres"
+},
+"Blumenladen Wand Hellgrün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blumenladen_wand_hellgruen.tres"
+},
+"Blüte Blau": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_blau.tres"
+},
+"Blüte Creme": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_creme.tres"
+},
+"Blüte Flieder": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_flieder.tres"
+},
+"Blüte Geranienrot": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_geranienrot.tres"
+},
+"Blüte Himbeer": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_himbeer.tres"
+},
+"Blüte Koralle": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_koralle.tres"
+},
+"Blüte Rosa": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_rosa.tres"
+},
+"Blüte Zartrosa": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_zartrosa.tres"
+},
+"Bordstein": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bordstein.tres"
+},
+"Brot dunkel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/brot_dunkel.tres"
+},
+"Brot goldbraun": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/brot_goldbraun.tres"
+},
+"Buchs Inneres": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/buchs_inneres.tres"
+},
+"Bäckerei Wand Honig": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/baeckerei_wand_honig.tres"
+},
+"Chrom matt": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/chrom_matt.tres"
+},
+"Dachrinne Bronze": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/dachrinne_bronze.tres",
+"use_external/path": "res://assets/materials/storybook/dachrinne_bronze.tres"
+},
+"Dachziegel Schiefer-Braun": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/dachziegel_schiefer_braun.tres",
+"use_external/path": "res://assets/materials/storybook/dachziegel_schiefer_braun.tres"
+},
+"Dachziegel Ton": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/dachziegel_ton.tres"
+},
+"Dachziegel Ton dunkel": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/dachziegel_ton_dunkel.tres",
+"use_external/path": "res://assets/materials/storybook/dachziegel_ton_dunkel.tres"
+},
+"Erde": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/erde.tres",
+"use_external/path": "res://assets/materials/storybook/erde.tres"
+},
+"Fachwerk Eiche dunkel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/fachwerk_eiche_dunkel.tres"
+},
+"Fensterladen Schiefergrau": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/fensterladen_schiefergrau.tres",
+"use_external/path": "res://assets/materials/storybook/fensterladen_schiefergrau.tres"
+},
+"Fensterrahmen Creme": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/fensterrahmen_creme.tres",
+"use_external/path": "res://assets/materials/storybook/fensterrahmen_creme.tres"
+},
+"Flaschen Bernstein": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/flaschen_bernstein.tres"
+},
+"Flaschen Blau": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/flaschen_blau.tres"
+},
+"Flaschen Creme": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/flaschen_creme.tres"
+},
+"Flaschen Grün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/flaschen_gruen.tres"
+},
+"Flaschen Rot": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/flaschen_rot.tres"
+},
+"Fugen": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/fugen.tres"
+},
+"Gaststube Decke": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/gaststube_decke.tres"
+},
+"Gaststube Holz dunkel": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/gaststube_holz_dunkel.tres",
+"use_external/path": "res://assets/materials/storybook/gaststube_holz_dunkel.tres"
+},
+"Gaststube Wand Rot": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/gaststube_wand_rot.tres"
+},
+"Gefach Terrakotta": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/gefach_terrakotta.tres"
+},
+"Gehwegplatten": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/gehwegplatten.tres"
+},
+"Gewölbe Sandstein": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/gewoelbe_sandstein.tres"
+},
+"Glas": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/glas.tres",
+"use_external/path": "res://assets/materials/storybook/glas.tres"
+},
+"Gras": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/gras.tres"
+},
+"Gummi": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/gummi.tres"
+},
+"Holz Blumenkasten": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/holz_blumenkasten.tres",
+"use_external/path": "res://assets/materials/storybook/holz_blumenkasten.tres"
+},
+"Holz Eiche": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/holz_eiche.tres"
+},
+"Holz Eiche innen": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/holz_eiche_innen.tres",
+"use_external/path": "res://assets/materials/storybook/holz_eiche_innen.tres"
+},
+"Holz Schild Nussbraun": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/holz_schild_nussbraun.tres"
+},
+"Holz Stuhl": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/holz_stuhl.tres"
+},
+"Holz Tischplatte": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/holz_tischplatte.tres"
+},
+"Innenwand Salbei": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/innenwand_salbei.tres"
+},
+"Kerze leuchtend": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/kerze_leuchtend.tres"
+},
+"Kopfsteinpflaster": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/kopfsteinpflaster.tres"
+},
+"Kreide": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/kreide.tres"
+},
+"Lack Blumenkasten Grün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_blumenkasten_gruen.tres"
+},
+"Lack Blumenkasten Rot": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_blumenkasten_rot.tres"
+},
+"Lack Fahrrad Salbei": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_fahrrad_salbei.tres"
+},
+"Lack Farngrün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_farngruen.tres"
+},
+"Lack Farngrün dunkel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_farngruen_dunkel.tres"
+},
+"Lack Flaschengrün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_flaschengruen.tres"
+},
+"Lack Flaschengrün dunkel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_flaschengruen_dunkel.tres"
+},
+"Lack Schwarzbraun": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/lack_schwarzbraun.tres",
+"use_external/path": "res://assets/materials/storybook/lack_schwarzbraun.tres"
+},
+"Lack Tannengrün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_tannengruen.tres"
+},
+"Lack Tannengrün dunkel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_tannengruen_dunkel.tres"
+},
+"Lack Taubenblau": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_taubenblau.tres"
+},
+"Lack Taubenblau dunkel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lack_taubenblau_dunkel.tres"
+},
+"Lampenschirm leuchtend": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/lampenschirm_leuchtend.tres"
+},
+"Laterne Eisen dunkelbraun": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/laterne_eisen_dunkelbraun.tres",
+"use_external/path": "res://assets/materials/storybook/laterne_eisen_dunkelbraun.tres"
+},
+"Laternenglas leuchtend": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/laternenglas_leuchtend.tres"
+},
+"Leder Grün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/leder_gruen.tres"
+},
+"Leder Sattel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/leder_sattel.tres"
+},
+"Markisenstoff": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/markisenstoff.tres"
+},
+"Markisenstoff Rot": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/markisenstoff_rot.tres"
+},
+"Messing innen": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/messing_innen.tres"
+},
+"Ocker-Gold matt": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/ocker_gold_matt.tres",
+"use_external/path": "res://assets/materials/storybook/ocker_gold_matt.tres"
+},
+"Porzellan": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/porzellan.tres",
+"use_external/path": "res://assets/materials/storybook/porzellan.tres"
+},
+"Putz Creme": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/putz_creme.tres"
+},
+"Putz Sand Seitenwand": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/putz_sand_seitenwand.tres",
+"use_external/path": "res://assets/materials/storybook/putz_sand_seitenwand.tres"
+},
+"Rinde": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/rinde.tres"
+},
+"Sandstein": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sandstein.tres",
+"use_external/path": "res://assets/materials/storybook/sandstein.tres"
+},
+"Schiefer Blaugrau": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/schiefer_blaugrau.tres"
+},
+"Schild corner_90 fascia": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/schild_corner_90_fascia.tres",
+"use_external/path": "res://assets/materials/storybook/schild_corner_90_fascia.tres"
+},
+"Schild corner_90 hanging": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/schild_corner_90_hanging.tres",
+"use_external/path": "res://assets/materials/storybook/schild_corner_90_hanging.tres"
+},
+"Schmiedeeisen": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/schmiedeeisen.tres"
+},
+"Schneiderpuppe Leinen": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/schneiderpuppe_leinen.tres"
+},
+"Stiel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/stiel.tres"
+},
+"Stoff Altrosa": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/stoff_altrosa.tres"
+},
+"Stoff Rostrot": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/stoff_rostrot.tres"
+},
+"Stoff Salbeigrün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/stoff_salbeigruen.tres"
+},
+"Stoff Senf": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/stoff_senf.tres"
+},
+"Stuck Gebrochenweiß": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/stuck_gebrochenweiss.tres",
+"use_external/path": "res://assets/materials/storybook/stuck_gebrochenweiss.tres"
+},
+"Tafel": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/tafel.tres"
+},
+"Tapete Creme": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/tapete_creme.tres",
+"use_external/path": "res://assets/materials/storybook/tapete_creme.tres"
+},
+"Teedose Blau": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/teedose_blau.tres",
+"use_external/path": "res://assets/materials/storybook/teedose_blau.tres"
+},
+"Teedose Creme": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/teedose_creme.tres",
+"use_external/path": "res://assets/materials/storybook/teedose_creme.tres"
+},
+"Teedose Grün": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/teedose_gruen.tres",
+"use_external/path": "res://assets/materials/storybook/teedose_gruen.tres"
+},
+"Teedose Rot": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/teedose_rot.tres",
+"use_external/path": "res://assets/materials/storybook/teedose_rot.tres"
+},
+"Teestube Wand Altrosa": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/teestube_wand_altrosa.tres",
+"use_external/path": "res://assets/materials/storybook/teestube_wand_altrosa.tres"
+},
+"Terrakotta": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/terrakotta.tres",
+"use_external/path": "res://assets/materials/storybook/terrakotta.tres"
+},
+"Terrakotta Topf": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/terrakotta_topf.tres",
+"use_external/path": "res://assets/materials/storybook/terrakotta_topf.tres"
+},
+"Terrakotta Topf dunkel": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/terrakotta_topf_dunkel.tres",
+"use_external/path": "res://assets/materials/storybook/terrakotta_topf_dunkel.tres"
+},
+"Terrakotta Topf hell": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/terrakotta_topf_hell.tres"
+},
+"Vorhang Leinen": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/vorhang_leinen.tres",
+"use_external/path": "res://assets/materials/storybook/vorhang_leinen.tres"
+},
+"Weidenkorb": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/weidenkorb.tres"
+},
+"Weidenkorb innen": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/weidenkorb_innen.tres"
+},
+"Wolle Blau": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/wolle_blau.tres"
+},
+"Wolle Flieder": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/wolle_flieder.tres"
+},
+"Wolle Mint": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/wolle_mint.tres"
+},
+"Wolleladen Wand Creme": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/wolleladen_wand_creme.tres"
+},
+"Zimmer warm": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/zimmer_warm.tres",
+"use_external/path": "res://assets/materials/storybook/zimmer_warm.tres"
+},
+"Zink": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/zink.tres"
+}
+}
+}
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=0

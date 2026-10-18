@@ -410,26 +410,15 @@ def shopfront(M, C):
 
 
 def awning(M, C, side, cx, ww):
-    """Markise: Stoff mit leichtem Durchhang, Volant vorn, Seitenwangen; Stange und Halter."""
+    """Markise aus EINEM Stück Stoff (Blenders Stoffsimulation, storybook_town.cloth_awning): Kasten
+    unter dem Schild, Gelenkarme, Fallstange und Volant – keine einzelnen Platten mehr, keine
+    Löcher; im Spiel schwingt der Stoff leicht im Wind (Shader: wind_strength)."""
+    import storybook_town as T
     tilt = RND.uniform(-2.5, 2.5)
-    droop = RND.uniform(0.0, 0.03)
+    RND.uniform(0.0, 0.03)
     name = "Markise %s" % ("links" if side < 0 else "rechts")
-    b = Body(name, M["awning"], C["shop"], seed=90 + side, vary=0.03)
-    x0, x1 = cx - ww / 2 - 0.04, cx + ww / 2 + 0.04
-    top = Vector((x0, -0.14, 2.95))
-    reach, drop = 0.85, 0.5 + math.radians(tilt) * 0.85
-    b.sheet(top, (x1 - x0, 0, 0), (0, -reach, -drop), 18, 8, 0.012,
-            offset=lambda u, v: -(0.025 * math.sin(math.pi * v) + droop * math.sin(math.pi * u)) * 1.0)
-    fy, fz = -0.14 - reach, 2.95 - drop
-    b.sheet((x0, fy, fz), (x1 - x0, 0, 0), (0, 0, -0.2), 18, 3, 0.012,
-            offset=lambda u, v: 0.006 * math.sin(u * 40))
-    for xx in (x0, x1):
-        b.slab([(0.14, 2.95), (0.14 + reach, fz), (0.14 + reach, fz - 0.2), (0.14 + 0.3, fz - 0.05)], 0.012,
-               Matrix.Translation((xx - (0.012 if xx > cx else 0), 0, 0)) @ Matrix(((0, 0, 1, 0), (-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1))))
-    b.build()
-    r = Body(name + " Stange", M["iron"], C["shop"], seed=92 + side)
-    r.tube([(x0, fy + 0.02, fz + 0.01), (x1, fy + 0.02, fz + 0.01)], 0.016, segs=8)
-    r.build()
+    T.placed(C["shop"], Matrix.Translation((cx, -0.08, 0.0)), T.cloth_awning, M, C, name, ww + 0.08, 2.95, 0.85,
+             0.5 + math.radians(tilt) * 0.85, valance=0.2, mat="awning", seed=90 + side)
 
 
 def door(M, C):

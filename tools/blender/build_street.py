@@ -35,7 +35,9 @@ OUT_DIR = os.path.join(S.ROOT, "assets", "models", "houses", "street")
 STREET_TYPES = ("terrace_45", "terrace_50", "terrace_55", "terrace_60", "residential", "pub")
 # Häuser im Bilderbuch-Stil haben eigene Bau-Scripts (tools/blender/build_storybook_*.py): hier nur
 # für die Nachbarschaft (freie Seitenwände) mitplanen, aber nicht bauen und nicht eintragen
-STORYBOOK = {"LibraryRow/Neighbor3": "build_storybook_pub.py"}
+STORYBOOK = {"LibraryRow/Neighbor3": "build_storybook_pub.py", "Opposite/Opposite1_4": "build_storybook_flowers.py",
+             "Opposite/Opposite1_5": "build_storybook_bakery.py", "StraightEnd/Corner": "build_storybook_tea.py",
+             "GateStreet/Corner": "build_storybook_wool.py", "GateStreet/Gatehouse": "build_storybook_gatehouse.py"}
 LANDMARK_TYPES = ("corner_90", "corner_30", "gatehouse")
 
 # Fenster- und Türfarben (sRGB): Braun, Grau, Grün, Blau in Abstufungen, selten Creme

@@ -1,0 +1,12 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+; Schild-Bild der Entwicklerin – Bild austauschen: res://assets/textures/signs/corner_30_fascia.png
+
+[ext_resource type="Texture2D" path="res://assets/textures/signs/corner_30_fascia.png" id="1_image"]
+
+[resource]
+resource_name = "Schild corner_30 fascia"
+albedo_texture = ExtResource("1_image")
+roughness = 0.7
+metallic_specular = 0.25
+texture_filter = 5

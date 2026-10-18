@@ -29,10 +29,24 @@ instance uniform vec4 door_color : source_color = vec4(1.0);
 instance uniform vec4 accent_color : source_color = vec4(1.0);
 instance uniform int wall_layer = -1;
 
+// Wind (Markisenstoff): so weit (m) schwingt der Stoff; wie stark jede Ecke mitgeht, steht im
+// Alpha der Vertex-Farbe (1 = fest, z. B. am Kasten und an der Stange; 0 = frei, unten am Volant).
+// Feste Teile haben Alpha 1 und bewegen sich nie.
+uniform float wind_strength = 0.0;
+
 varying vec3 model_pos;
 
 void vertex() {
 	model_pos = VERTEX;
+	float sway = (1.0 - COLOR.a) * wind_strength;
+	if (sway > 0.0) {
+		// Beide Seiten des Stoffs bewegen sich gleich (fester Richtungsvektor, nicht die Normale)
+		float t = TIME;
+		float wave = sin(t * 1.6 + VERTEX.x * 1.4 + VERTEX.z * 0.9) * 0.6
+			+ sin(t * 2.9 + VERTEX.x * 3.1 - VERTEX.y * 1.7) * 0.3
+			+ sin(t * 0.7 + VERTEX.x * 0.5) * 0.4;
+		VERTEX += vec3(0.0, 0.55, 0.85) * sway * wave;
+	}
 }
 
 float hash(vec3 p) {

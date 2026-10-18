@@ -3,7 +3,7 @@
 
 Aufruf (Terminal, im Projektordner):
     blender -b --factory-startup --python tools/blender/geo_check.py
-    blender -b --factory-startup --python tools/blender/geo_check.py -- assets/models/houses/street/Opposite_Opposite1_4.glb
+    blender -b --factory-startup --python tools/blender/geo_check.py -- assets/models/houses/street/Opposite_Opposite1_3.glb
 
 Was geprüft wird (je .glb, in den Koordinaten des Modells, Boden = Höhe 0):
   1. Schwebende Teile: Ein Teil = zusammenhängende Flächen. Teile, die sich berühren (Abstand
