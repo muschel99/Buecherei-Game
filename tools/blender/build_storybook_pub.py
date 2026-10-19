@@ -34,6 +34,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, os.path.dirname(__file__))
 import build_storybook_shop as FS  # noqa: E402
 import storybook_common as SC  # noqa: E402
+import storybook_greenery as GR  # noqa: E402
 import storybook_lib as SB  # noqa: E402
 from storybook_common import add_bevel, add_light, front_matrix  # noqa: E402
 from storybook_lib import Body  # noqa: E402
@@ -571,6 +572,47 @@ def outside(M, C):
                        0.64 * 478 / 512, outline=SB.round_outline(48))
 
 
+# --- Efeu ---
+
+def pub_ivy(M, C):
+    """Dichter Efeu („The Ink & Ivy“, Wunsch der Entwicklerin): wächst von der Gassenecke an der
+    Seitenwand und am Eckpfeiler hoch, klettert über das Gesims und läuft als Girlande über das Schild
+    (an den Enden hängen Ranken herab); Fenster, Tür, Hängeschild und Schrift bleiben frei.
+    Wand-Koordinaten: u = x + HW entlang der Front (0 = Gassenecke), u < 0 = Seitenwand zur Gasse (Tiefe
+    -u), v = Höhe."""
+    rr = random.Random(1889)
+    GR.plant_palette(M)
+    p = GR.Plant(M, C["deco"], seed=1889)
+    holes = [(PIL - 0.02, 0.0, W - PIL + 0.02, HEAD + 0.12),                                           # Schaufenster, Tür
+             (HW - 1.3, FASCIA_Z - FASCIA_H / 2 - 0.02, HW + 1.3, FASCIA_Z + FASCIA_H / 2 + 0.02),    # Schrift
+             (W - 0.8, 4.95, W, 6.0)]                                                                # Hängeschild
+    for x in WIN_X:
+        holes.append((x + HW - WIN_W / 2 - 0.14, WIN_Z0 - 0.45, x + HW + WIN_W / 2 + 0.14, WIN_Z0 + WIN_H + WIN_RISE + 0.3))
+    for _, y, z, w, h in SIDE_WINDOWS:
+        holes.append((-(y + w / 2 + 0.13), z - 0.17, -(y - w / 2 - 0.13), z + h + 0.25))
+
+    def to3d(u, v, w):
+        if u < 0.0:
+            return (-HW - w, -u, v)
+        off = 0.0
+        if v < HEAD + 0.1 and (u < PIL + 0.03 or u > W - PIL - 0.03):
+            off = 0.25 if v < 0.36 else 0.21                                  # Pilaster (unten mit Sockel)
+        if HEAD - 0.05 <= v <= SHOP_TOP + 0.02:
+            off = 0.45                                                        # Kapitell, Schildkasten, Gesims
+        elif SHOP_TOP + 0.02 < v < SHOP_TOP + 0.3:
+            off = 0.45 * (1 - (v - SHOP_TOP - 0.02) / 0.28)                   # über die Gesimskante zurück zur Wand
+        return (u - HW, -(off + w), v)
+    roots = [(-0.35, 0.0), (-1.25, 0.0), (0.15, 0.0), (-3.6, 0.0)]
+    GR.wall_ivy(p, W, E - 0.35, holes, rr, to3d, roots, reach=(0.55, 1.0), wrap=(D - 1.0, 0.0), density=1.3, stems=(3, 5))
+    # Girlande auf dem Gesims über dem Schild
+    top = SHOP_TOP + 0.06
+    GR.garland(p, [[(0.05, HEAD + 0.2, 0.47), (0.2, top, 0.44), (1.0, top + 0.02, 0.44), (1.55, top, 0.44)]], to3d, rr, kind="ivy", strands=4,
+               density=1.3, hang=1.4)
+    GR.garland(p, [[(1.55, top, 0.44), (2.8, top + 0.03, 0.44), (4.0, top, 0.44)]], to3d, rr, kind="ivy", strands=2, density=1.0, hang=0.0)
+    GR.garland(p, [[(4.0, top, 0.44), (4.6, top + 0.02, 0.44)]], to3d, rr, kind="ivy", strands=2, density=1.0, hang=0.8)
+    p.build()
+
+
 # --- Ablauf ---
 
 def build_scene():
@@ -597,6 +639,7 @@ def build_scene():
     shopfront(M, C)
     taproom(M, C)
     outside(M, C)
+    pub_ivy(M, C)
     house = [o for k, c in C.items() if k != "env" for o in c.objects]
     SC.settle(house, SETTLE, HW, E, RIDGE)
     cols = SC.colliders(C, OBSTACLES)

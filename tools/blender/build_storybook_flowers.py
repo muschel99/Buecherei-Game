@@ -323,14 +323,20 @@ def rose_garland(M, C):
     GR.plant_palette(M)
     p = GR.Plant(M, C["deco"], seed=1925)
     top = HEAD + FASCIA_H + 0.06
-    guides = []
+    front = 0.34   # Vorderkante des Schildkastens (0,3 m vor der Wand): alles hängt davor, nichts darin
+    pillars, outer, inner = [], [], []
     for side in (-1, 1):
         x = side * (HW - 0.15)
-        guides.append([(x, 0.05, 0.15), (x + side * 0.02, 1.0, 0.17), (x - side * 0.02, 2.0, 0.16), (x, HEAD - 0.05, 0.18),
-                       (x - side * 0.08, top, 0.2)])
-        guides.append([(x - side * 0.08, top, 0.2), (side * 1.7, top - 0.03, 0.22), (side * 0.9, top + 0.02, 0.2)])
-    GR.garland(p, guides, lambda u, v, w: (u, -w, v), rr, kind="rose", flowers=("pink", "blush_flower", "rose", "white_flower"), strands=3,
-               density=1.2, hang=0.8)
+        pillars.append([(x, 0.05, 0.15), (x + side * 0.02, 1.0, 0.17), (x - side * 0.02, 2.0, 0.16), (x, HEAD - 0.1, 0.2),
+                        (x - side * 0.04, HEAD + 0.12, front), (x - side * 0.08, top, front)])
+        outer.append([(x - side * 0.08, top, front), (side * 2.05, top + 0.02, front + 0.01), (side * 1.75, top - 0.01, front)])
+        inner.append([(side * 1.75, top - 0.01, front), (side * 1.3, top + 0.03, front - 0.04), (side * 0.85, top + 0.01, front - 0.08)])
+    flowers = ("pink", "blush_flower", "rose", "white_flower")
+    to3d = lambda u, v, w: (u, -w, v)  # noqa: E731
+    GR.garland(p, pillars, to3d, rr, kind="rose", flowers=flowers, strands=3, density=1.2, hang=0.5)
+    # über den Schildenden hängen Ranken mit Rosen herab, über der Schrift nicht
+    GR.garland(p, outer, to3d, rr, kind="rose", flowers=flowers, strands=3, density=1.2, hang=1.2)
+    GR.garland(p, inner, to3d, rr, kind="rose", flowers=flowers, strands=2, density=1.0, hang=0.0)
     p.build()
 
 

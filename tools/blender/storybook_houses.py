@@ -209,9 +209,15 @@ def board_shutters(M, C, name, fm, w, h, mat="h_join", open_off=4.0, seed=1, roo
     breiter als der freie Platz neben dem Fenster (room = freier Platz links/rechts in m)."""
     rnd = random.Random(seed)
     b = Body(name + " Läden", M[mat], C["windows"], seed=seed, vary=0.07, bevel=0.006)
-    phi = math.radians(open_off)
+    reach = []
     for side, free in ((-1, room[0]), (1, room[1])):
-        lw = w / 2 + 0.03 if free is None else min(w / 2 + 0.03, free - 0.08)
+        lw = w / 2 + 0.03
+        phi = math.radians(open_off)
+        if free is not None and free - 0.06 < lw:
+            # zu wenig Platz neben dem Fenster (Nachbarfenster, Eckpfosten): Laden weiter aufklappen,
+            # bis er an der Wand vorbeipasst (höchstens 75°)
+            phi = math.acos(max(0.26, (free - 0.06) / lw))
+        reach.append(lw * math.cos(phi))
         hinge = Vector((side * (w / 2 + 0.04), 0.0, 0.09))
         lx = Vector((side * math.cos(phi), 0.0, math.sin(phi)))
         ly = Vector((0.0, 1.0, 0.0))
@@ -227,6 +233,7 @@ def board_shutters(M, C, name, fm, w, h, mat="h_join", open_off=4.0, seed=1, roo
         p1 = leaf @ Vector((lw - 0.06, h - 0.26, 0.026))
         b.span(p0, p1, 0.07, 0.022, step=1, dent=0.002)
     b.build()
+    return max(reach)
 
 
 def surround(M, C, name, fm, w, h, rise, kind, seed=1):
@@ -403,9 +410,10 @@ def plant_spot(C, kind, pos, size, n=0, facing=0.0, hint=""):
 class House:
     """Baut ein Wohnhaus. Ergebnis: Teile in den Sammlungen C, Pflanzplätze, Laternenplatz."""
 
-    def __init__(self, M, C, spec, st, key, near=True, lantern_pref=False):
+    def __init__(self, M, C, spec, st, key, near=True, lantern_pref=False, corner=None):
         self.M, self.C, self.spec, self.st, self.key, self.near = M, C, spec, st, key, near
         self.lantern_pref = lantern_pref   # False = keine Straßenlaterne am Haus, sonst bevorzugte Lage (x oder None)
+        self.corner = corner               # (Seite, Länge): Innenecke – das Nachbarhaus steht so weit vor (Eckbeet)
         self.rnd = random.Random(st["rnd_seed"])
         self.W, self.D = spec["width"], spec["depth"]
         self.hw = self.W / 2
@@ -465,6 +473,8 @@ class House:
             self.timber()
         if self.sb > 0.5:
             self.garden()
+        if self.corner:
+            self.corner_bed()
         self.interior()
         self.place_spots()
         return self
@@ -676,8 +686,10 @@ class House:
             d = self.door
             stops.append((d["x"] - d["w"] / 2 - 0.15, d["x"] + d["w"] / 2 + 0.15, 1.0))
         x0, x1 = o["x"] - o["w"] / 2, o["x"] + o["w"] / 2
-        left = x0 - (-self.hw + 0.12)
-        right = (self.hw - 0.12) - x1
+        # Fachwerk mit Vorkragung: die Seitenwände stehen unten als Pfosten (0,32 m) vor der Front
+        edge = self.hw - (0.36 if o in self.ground and self.st["fachwerk"] and self.jetty > 0 else 0.12)
+        left = x0 + edge
+        right = edge - x1
         for a, b, share in stops:
             if b <= x0 + 0.01:
                 left = min(left, (x0 - b) * share)
@@ -698,12 +710,11 @@ class House:
         has_shutters = False
         if st["shutters"]:
             room = self.free_beside(o) if front else (None, None)
-            # Läden nur, wenn auf beiden Seiten Platz für (fast) halb so breite Läden ist – beide oder keiner
-            if not front or min(room) - 0.08 >= max(0.22, o["w"] * 0.38):
+            # Läden (beide oder keiner); wo es eng ist, klappen sie weiter auf
+            if not front or min(room) >= 0.12:
                 has_shutters = True
-                o["shutter_w"] = min(o["w"] / 2 + 0.03, min(r for r in room if r is not None) - 0.08) if front and None not in room else o["w"] / 2
-                board_shutters(M, C, name, fm, o["w"], o["h"], mat="h_join", open_off=self.rnd.uniform(2, 5),
-                               seed=zlib.crc32(name.encode()) % 983, room=room)
+                o["shutter_w"] = board_shutters(M, C, name, fm, o["w"], o["h"], mat="h_join", open_off=self.rnd.uniform(2, 5),
+                                                seed=zlib.crc32(name.encode()) % 983, room=room)
         if ground and front and self.near and st.get("canopy") and not st["shutters"]:
             # kleine Stoffmarkise über dem Fenster (wie auf dem Vorlagebild)
             top = o["h"] + 0.38
@@ -961,6 +972,36 @@ class House:
             t.box((0, yU + 0.15, self.zs[1] - 0.02), (self.W, 0.3 + self.jetty, 0.14), step=0.6, dent=0.004)
         t.build()
 
+    def corner_bed(self):
+        """Beet auf Gehweghöhe in der Innenecke vor einem vorstehenden Nachbarhaus: runde Randsteine an
+        den offenen Seiten, Erde, ein Strauch in der Ecke und ein Beet voller Blumen (Pflanzplätze); der
+        Efeu wächst aus dem Beet an beiden Wänden hoch (ivy)."""
+        M, C, hw, sb, rnd = self.M, self.C, self.hw, self.sb, random.Random(77)
+        s = self.corner[0]
+        bw, bd = 1.75, 1.3
+        x0, x1 = sorted((s * hw, s * (hw - bw)))
+        y0, y1 = sb - 0.1 - bd, sb - 0.1
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        e = Body("Eckbeet Erde", M["soil"], C["pots"], seed=70, vary=0.1)
+        e.box((cx, cy, 0.03), (bw - 0.04, bd - 0.04, 0.06), step=0.4, dent=0.012)
+        e.build()
+        st = Body("Eckbeet Randsteine", M["stone"], C["pots"], seed=71, vary=0.12, bevel=0.02)
+        x = x0
+        while x < x1 - 0.06:
+            w_ = min(rnd.uniform(0.22, 0.32), x1 - x)
+            st.box((x + w_ / 2, y0 + 0.06, 0.07), (w_ - 0.02, 0.12, 0.14), step=1, dent=0.008, turn=(0, 0, rnd.uniform(-3, 3)))
+            x += w_
+        xe = x0 + 0.06 if s > 0 else x1 - 0.06      # offene Seite zum Platz
+        y = y0 + 0.12
+        while y < y1 - 0.06:
+            h_ = min(rnd.uniform(0.22, 0.32), y1 - y)
+            st.box((xe, y + h_ / 2, 0.07), (0.12, h_ - 0.02, 0.14), step=1, dent=0.008, turn=(0, 0, rnd.uniform(-3, 3)))
+            y += h_
+        st.build()
+        self.spot("hedge", (s * (hw - 0.45), sb - 0.55, 0.05), (0.8, 0.8, 1.3))
+        self.spot("bed", (cx - s * 0.2, cy - 0.15, 0.05), (bw - 0.6, bd - 0.45, 0.9), hint="garden")
+        self.obstacles["Eckbeet"] = ((cx, cy), (bw, bd), 0.15)
+
     def garden(self):
         """Vorgarten: niedrige Mauer mit Pforte, Plattenweg, zwei Beete (Pflanzplätze)."""
         M, C, hw, sb = self.M, self.C, self.hw, self.sb
@@ -995,7 +1036,7 @@ class House:
                 e = Body("Beet", M["soil"], C["pots"], seed=19, vary=0.1)
                 e.blob(((a + b) / 2, (0.3 + sb) / 2, -0.02), 0.5, subdiv=2, lump=0.1, scale=((b - a) / 1.0, (sb - 0.4) / 1.0, 0.12))
                 e.build()
-                self.spot("bed", ((a + b) / 2, (0.3 + sb) / 2, 0.03), (b - a - 0.1, sb - 0.5, 0.9))
+                self.spot("bed", ((a + b) / 2, (0.3 + sb) / 2, 0.03), (b - a - 0.1, sb - 0.5, 0.9), hint="garden")
 
     def interior(self):
         """Warme Räume hinter den Fenstern (leuchten im Spiel leicht von selbst)."""
@@ -1046,7 +1087,10 @@ class House:
             ls = self.lantern_spot(self.lantern_pref)
             if ls:
                 self.lantern_xz = (ls[0], ls[1])
-        if gaps and self.rnd.random() < 0.58:
+        if self.corner:
+            s_ = self.corner[0]
+            taken.append(tuple(sorted((s_ * hw, s_ * (hw - 1.75)))))
+        if gaps and (self.rnd.random() < 0.58 or self.sb > 0.5 or self.corner):
             self.ivy(gaps, taken)
         # Grasbüschel genau aus der Ecke zwischen Wand (vor dem Sockel) und Gehweg, nach vorn gefächert:
         # unregelmäßig – mal einzeln, mal zwei, drei zusammen, dazwischen kurze und lange Lücken; nicht vor
@@ -1083,7 +1127,12 @@ class House:
             lx, lz = self.lantern_xz
             holes.append((self.fx(lx - 0.38), lz - 0.7, self.fx(lx + 0.38), lz + 0.5))
         for t0, t1 in taken[1:]:
-            holes.append((self.fx(t0), 0.0, self.fx(t1), 0.95))   # Kübel vor der Wand
+            if not (self.corner and abs(abs(t0 + t1) / 2 - (hw - 0.875)) < 0.05):
+                holes.append((self.fx(t0), 0.0, self.fx(t1), 0.95))   # Kübel vor der Wand (nicht das Eckbeet)
+        jetty_posts = st["fachwerk"] and self.jetty > 0
+        if jetty_posts:
+            # Fachwerk mit Vorkragung: unten stehen die Seitenwände als Pfosten vor der Front
+            holes += [(0.0, 0.0, 0.38, self.zs[1]), (self.W - 0.38, 0.0, self.W, self.zs[1])]
         # Wurzeln irgendwo an der Front – auch unter einem Fenster (dann wächst der Efeu im Bogen darum herum),
         # nicht vor Tür und Kübeln; an freien Hausecken gern dicht an der Ecke
         exposed = self.spec.get("exposed", {})
@@ -1099,13 +1148,19 @@ class House:
             if any(h[0] - 0.05 < u < h[2] + 0.05 and h[1] < 0.3 for h in holes) or any(abs(u - r[0]) < 1.0 for r in roots):
                 continue
             roots.append((u, 0.0))
+        if self.corner:
+            # Eckbeet: Wurzeln im Beet, der Efeu wächst an beiden Wänden der Innenecke hoch
+            s_ = self.corner[0]
+            roots = [(self.fx(s_ * (hw - 0.35)), 0.0), (self.W + 0.5 if s_ > 0 else -0.5, 0.0)] + roots[:1]
         if not roots:
             return
         wrap = [0.0, 0.0]
         for side, info in exposed.items():
             free = 1.2 if info[0] == "full" else min(1.5, info[1] - 0.3)
-            wrap[0 if side < 0 else 1] = max(0.0, free)
-        size = rnd.choice(("low", "mid", "mid", "high", "high"))
+            wrap[0 if side < 0 else 1] = 0.0 if jetty_posts else max(0.0, free)
+        if self.corner:
+            wrap[0 if self.corner[0] < 0 else 1] = min(1.9, self.corner[1] - 0.3)
+        size = rnd.choice(("mid", "high", "high")) if (self.corner or self.sb > 0.5) else rnd.choice(("low", "mid", "mid", "high", "high"))
         reach = {"low": (0.2, 0.45), "mid": (0.35, 0.85), "high": (0.55, 1.0)}[size]
         height = self.E - 0.45
         bumps = [(0.0, 0.47, 0.1)]
@@ -1115,11 +1170,17 @@ class House:
         if st["fachwerk"]:
             bumps.append((z1 - 0.15, height, 0.05))
 
+        corner = self.corner[0] if self.corner else 0
+
         def to3d(u, v, w):
             yf = sb - (jetty if v > z1 - 0.1 else 0.0)
             if u < 0.0:
+                if corner < 0:
+                    return (-hw + w, sb + u, v)       # Innenecke: Seitenwand des vorstehenden Nachbarn
                 return (-hw - w, sb - u, v)
             if u > self.W:
+                if corner > 0:
+                    return (hw - w, sb - (u - self.W), v)
                 return (hw + w, sb + (u - self.W), v)
             return (u - hw, yf - w, v)
         p = G.Plant(self.M, self.C["ivy"], seed=zlib.crc32(self.key.encode()) % 9973)

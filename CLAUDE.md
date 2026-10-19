@@ -406,13 +406,20 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Efeu/Kletterpflanzen wachsen mit ihrer Wand** (Ausnahme von „nie im Haus-Modell“): `wall_ivy` kennt
   Fenster, Kästen, Läden, Tür, Laterne, Kübel (holes) und wächst wild – verschieden hoch, im Bogen um
   Fenster, unter Kästen hindurch, auf breiten Wandbändern seitlich (nie als Säule durch schmale Streifen),
-  an freien Ecken herum (wrap); gebaut von `House.ivy` (nicht jedes Haus), `alley_ivy` (Gassen),
-  Torhaus (Glyzinie), Blumenladen (`garland` = Rosengirlande um die Ladenfront). Gefäße:
+  an freien Ecken herum (wrap); gebaut von `House.ivy` (nicht jedes Haus; Häuser mit Vorgarten und
+  Eckbeet immer), `alley_ivy` (Gassen), Torhaus (Glyzinie), Pub (`pub_ivy`: dicht um die Gassenecke, über
+  Gesims und Schild), Blumenladen (`garland` = Rosengirlande um die Ladenfront, vor der Vorderkante des
+  Schildkastens; Ranken hängen nur an den Schildenden). Eckbeet: `CORNERS` in build_storybook_street.py
+  (Haus → Seite, wie weit das Nachbarhaus vorsteht) → `House.corner_bed` (Randsteine, Strauch, Beet
+  "garden", Efeu an beiden Wänden der Innenecke). Fensterläden: wo der Platz nicht reicht
+  (Nachbarfenster, Eckpfosten der Fachwerkhäuser mit Vorkragung), klappen sie weiter auf (bis 75°). Gefäße:
   `Plant(container=CONTAINERS[art])` – Ranken über den Rand nur mit `drape`/`trail`, `clear_rim` legt
   Teile aus der Gefäßwand über den Rand (Pflanzen dürfen sich überschneiden, Töpfe nie). Sorten und
   Farbvarianten: `PLANTS` in build_storybook_plants.py (nicht mehr gelistete baut das Script ab).
   Greenery: Nachbarn im Umkreis `variety_radius` bekommen andere Sorten (`_pick_varied`), Blumenkästen
-  zwei bis drei Sorten im Wechsel, Topfpflanzen quellen über (`pot_overflow`), an Töpfen wachsen Gras und
+  zwei bis drei Sorten im Wechsel (lange Kästen drei bis sechs in unregelmäßigen Gruppen), Beete dicht
+  (Vorgärten/Eckbeet mit Hinweis "garden": Stockrosen, Fingerhut, Rittersporn, große Hortensien, Rosen,
+  Pfingstrosen, Buchs …), Topfpflanzen quellen über (`pot_overflow`), an Töpfen wachsen Gras und
   Ranken über den Rand (Art `rim`, `rim_chance`). Großer Gartenbaum `tree_garden_big` (Hinweis "garden",
   feste Lage, Krone bleibt in `GARDEN_BOUNDS` = Hof aus layout.json). Grasbüschel: Art `walltuft` (nach
   vorn gefächert, aus der Ecke Wand/Gehweg, Ursprung = Ecke vor dem Sockel, verschieden groß, ab und zu

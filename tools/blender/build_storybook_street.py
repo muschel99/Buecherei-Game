@@ -36,6 +36,11 @@ RES = "res://assets/models/houses/storybook/%s.glb"
 
 # Hängende Straßenlaternen an Wohnhäusern (Plan in docs/ROADMAP.md): Haus -> bevorzugte Stelle
 # entlang der Front (Mitte = 0) oder None (nahe der Tür)
+# Innenecken mit Eckbeet: Haus → (Seite in Hauskoordinaten, wie weit das Nachbarhaus vor der Front steht).
+# Neighbor4 (Ende der zurückgesetzten Reihe am kleinen Platz): das Nachbarhaus steht 2,12 m weiter vorn
+# (Hausfront -4,2 statt -2,08 in Godot z).
+CORNERS = {"LibraryRow/Neighbor4": (1, 2.117)}
+
 LANTERNS = {
     "Opposite/Opposite1_1": -0.9, "Opposite/Opposite1_3": 0.3, "Opposite/Opposite2_1": -1.1, "Opposite/Opposite2_5": -0.05,
     "StraightEnd/Outer3": None, "GateStreet/Bend3": None, "GateStreet/BehindOuter3": None,
@@ -72,7 +77,8 @@ def build_one(key, spec, near, argv):
     SH.house_materials(M, st)
     C = collections(key)
     SC.SPOTS["coll"] = C["plants"]
-    house = SH.House(M, C, spec, st, key, near=near, lantern_pref=LANTERNS[key] if key in LANTERNS else False).build()
+    house = SH.House(M, C, spec, st, key, near=near, lantern_pref=LANTERNS[key] if key in LANTERNS else False,
+                     corner=CORNERS.get(key)).build()
     objs = [o for k, c in C.items() if k not in ("env", "collision", "plants") for o in c.objects]
     SC.settle(objs, st["settle"], house.hw, house.E, house.ridge)
     bad = [(o.name, SB.non_manifold(o)) for o in objs if o.type == "MESH" and SB.non_manifold(o)]

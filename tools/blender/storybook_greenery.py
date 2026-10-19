@@ -1746,3 +1746,74 @@ def garland(p, guides, to3d, rnd, kind="rose", flowers=None, strands=3, density=
                                 mat=leaf_mat, petiole=0.008, width=0.62 if kind != "ivy" else 0.95)
                         if kind == "rose" and rnd.random() < 0.25:
                             rose(p, rnd.choice(flowers or ("pink", "rose", "blush_flower")), q + n3 * 0.03, (n3 - UP * 0.3).normalized(), 0.045)
+
+
+def hollyhock(p, colors, stems=4, height=1.5):
+    """Stockrose (Bauerngarten): große runde Blätter am Grund, hohe Stängel mit offenen, schalenförmigen
+    Blüten rundherum bis fast oben, an der Spitze Knospen."""
+    rnd = p.rnd
+    leaf_ball(p, Vector((0, 0, 0.16)), 0.2, 26, 0.12, rnd, mat="leaf", shape="round", width=0.95, squash=(1.1, 1.1, 0.7),
+              twig_from=Vector((0, 0, 0)))
+    for k in range(stems):
+        a = 2 * math.pi * k / stems + rnd.uniform(-0.4, 0.4)
+        out = Vector((math.cos(a), math.sin(a), 0.0))
+        base = out * 0.05
+        top = base + out * rnd.uniform(0.05, 0.2) + UP * height * rnd.uniform(0.72, 1.0)
+        mid = base.lerp(top, 0.5) + out * 0.03
+        p.body("stem", vary=0.06).tube([base, mid, top], lambda t: 0.009 * (1 - 0.5 * t), segs=5, smooth=1, round_ends=True)
+        col = rnd.choice(colors)
+        n = rnd.randint(8, 11)
+        for j in range(n):
+            t = 0.38 + 0.55 * j / n
+            q = base.lerp(top, t) if t < 0.5 else mid.lerp(top, (t - 0.5) * 2)
+            b_ = rnd.uniform(0, 6.28)
+            d = (Vector((math.cos(b_), math.sin(b_), 0.0)) + UP * 0.25).normalized()
+            floret(p, col, q + d * 0.025, d, 0.058 * (1 - 0.35 * t), 5, cup=0.45, samples=5, notch=0.16)
+            if j % 3 == 0:
+                leaf_on(p, q, (d - UP * 0.2).normalized(), (UP + d * 0.4).normalized(), 0.07, shape="round", width=0.95, petiole=0.02)
+        for j in range(3):
+            p.body("leaf", vary=0.08).blob(top - UP * 0.035 * j + rnd_dir(rnd) * 0.012, 0.014 - 0.002 * j, subdiv=1, lump=0.1)
+
+
+def foxglove(p, colors, stems=5, height=1.0):
+    """Fingerhut: Blattrosette am Grund, schlanke Stängel, an der oberen Hälfte hängende Glocken zu einer
+    Seite."""
+    rnd = p.rnd
+    leaf_ball(p, Vector((0, 0, 0.1)), 0.17, 22, 0.13, rnd, mat="leaf_dark", shape="oval", width=0.55, squash=(1.1, 1.1, 0.55),
+              twig_from=Vector((0, 0, 0)))
+    for k in range(stems):
+        a = 2 * math.pi * k / stems + rnd.uniform(-0.4, 0.4)
+        out = Vector((math.cos(a), math.sin(a), 0.0))
+        base = out * 0.04
+        top = base + out * rnd.uniform(0.03, 0.15) + UP * height * rnd.uniform(0.65, 1.0)
+        p.body("stem", vary=0.06).tube([base, base.lerp(top, 0.5) + out * 0.02, top], lambda t: 0.007 * (1 - 0.5 * t), segs=5, smooth=1,
+                                       round_ends=True)
+        col = rnd.choice(colors)
+        face = rnd.uniform(0, 6.28)
+        for j in range(12):
+            t = 0.45 + 0.5 * j / 12
+            q = base.lerp(top, t)
+            b_ = face + rnd.uniform(-1.3, 1.3)
+            d = (Vector((math.cos(b_), math.sin(b_), 0.0)) * 0.8 - UP * 0.55).normalized()
+            L = 0.045 * (1 - 0.4 * (t - 0.45) / 0.5)
+            p.body(col, vary=0.08).tube([q, q + d * L], lambda u, L=L: L * (0.22 + 0.32 * u), segs=6, round_ends=True)
+
+
+def delphinium(p, colors, stems=5, height=1.1):
+    """Rittersporn: geschlitzte Blätter am Grund, hohe Ähren dicht mit blauen Blüten besetzt."""
+    rnd = p.rnd
+    for _ in range(18):
+        d = rnd_dir(rnd)
+        d.z = abs(d.z) * 0.5 + 0.3
+        leaf_on(p, d * 0.04, d.normalized(), UP, rnd.uniform(0.09, 0.13), shape="narrow", width=0.45, petiole=0.0, mat="leaf")
+    for k in range(stems):
+        a = 2 * math.pi * k / stems + rnd.uniform(-0.4, 0.4)
+        out = Vector((math.cos(a), math.sin(a), 0.0))
+        base = out * 0.03
+        top = base + out * rnd.uniform(0.03, 0.12) + UP * height * rnd.uniform(0.7, 1.0)
+        p.body("stem", vary=0.06).tube([base, top], lambda t: 0.007 * (1 - 0.5 * t), segs=5, round_ends=True)
+        col = rnd.choice(colors)
+        for j in range(16):
+            t = 0.5 + 0.48 * j / 16
+            q = base.lerp(top, t) + rnd_dir(rnd) * 0.018 * (1.2 - t)
+            floret(p, col, q, (rnd_dir(rnd) + UP * 0.3).normalized(), 0.026 * (1.25 - 0.5 * t), 5, cup=0.25, samples=4, notch=0.3)

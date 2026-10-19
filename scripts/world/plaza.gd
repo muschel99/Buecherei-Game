@@ -8,7 +8,8 @@ extends Node3D
 
 @export var material: Material = preload("res://assets/materials/sidewalk.tres")
 ## Bäumchen im Kübel: (x, Abstand vor den zurückgesetzten Hausfronten nach -z) – leer = keine.
-@export var tree_spots: PackedVector2Array = PackedVector2Array([Vector2(-16.35, -0.55)])
+## (Die Ecke am Ende der Häuserreihe hat seit dem Stil-Umbau ein Eckbeet am Haus LibraryRow/Neighbor4.)
+@export var tree_spots: PackedVector2Array = PackedVector2Array()
 
 
 func _ready() -> void:

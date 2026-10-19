@@ -99,23 +99,31 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 		"box":
 			# Blumenkasten: Ausschnitte nebeneinander, zwei bis drei Sorten im Wechsel (nie zweimal dieselbe
 			# nebeneinander), andere Sorten als an den Nachbarfenstern
+			var nominal: Vector3 = (entries[0] as Dictionary).size
+			var n := maxi(1, roundi(size.x / nominal.x))
+			# lange Kästen: mehr Sorten, in unregelmäßigen Gruppen (1–3 gleiche nebeneinander), verschieden groß
 			var sorts: Array = [_pick_varied(entries, hint, rng, base.origin)]
-			for k in (2 if rng.randf() < 0.35 else 1):
+			var count := (2 if rng.randf() < 0.35 else 1) if n <= 6 else rng.randi_range(3, 5)
+			for k in count:
 				sorts.append(_pick_varied(entries, hint, rng, base.origin, sorts))
 			for e: Dictionary in sorts:
 				_placed_ids.append([base.origin, e.id])
-			var nominal: Vector3 = (sorts[0] as Dictionary).size
-			var n := maxi(1, roundi(size.x / nominal.x))
 			var step := size.x / n
 			var s := clampf(step / nominal.x, 0.8, 1.25) * 1.1   # etwas üppiger als der Kasten
 			var prev := -1
+			var run := 0
 			for i in n:
-				var k := rng.randi_range(0, sorts.size() - 1)
-				if sorts.size() > 1 and k == prev:
-					k = (k + 1 + rng.randi_range(0, sorts.size() - 2)) % sorts.size()
+				var k := prev
+				if run <= 0 or prev < 0:
+					k = rng.randi_range(0, sorts.size() - 1)
+					if sorts.size() > 1 and k == prev:
+						k = (k + 1 + rng.randi_range(0, sorts.size() - 2)) % sorts.size()
+					run = 1 if n <= 6 else rng.randi_range(1, 3)
+				run -= 1
 				prev = k
-				var t := Transform3D(Basis(Vector3.UP, rng.randf_range(-0.15, 0.15)).scaled(Vector3.ONE * s * rng.randf_range(0.92, 1.06)),
-					Vector3(-size.x / 2.0 + step * (i + 0.5) + rng.randf_range(-0.02, 0.02), 0.0, 0.0))
+				var sc := s * (rng.randf_range(0.92, 1.06) if n <= 6 else rng.randf_range(0.82, 1.22))
+				var t := Transform3D(Basis(Vector3.UP, rng.randf_range(-0.3, 0.3)).scaled(Vector3(sc, sc * rng.randf_range(0.9, 1.15), sc)),
+					Vector3(-size.x / 2.0 + step * (i + 0.5) + rng.randf_range(-0.05, 0.05), 0.0, rng.randf_range(-0.015, 0.015)))
 				out.append([sorts[k], t])
 		"potfill", "basket":
 			var e: Dictionary = _pick_varied(entries, hint, rng, base.origin)
@@ -177,17 +185,25 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 			if sy >= 0.5:
 				out.append([e, Transform3D(Basis().scaled(Vector3(sx, sy, sx)), Vector3.ZERO)])
 		"bed":
-			var e0: Dictionary = entries[0]
-			var cell := (e0.size as Vector3).x * 0.9
-			var nx := maxi(1, floori(size.x / cell))
-			var nz := maxi(1, floori(size.z / cell))
+			# Beet: dicht an dicht (Pflanzen dürfen sich überschneiden), große und kleine durcheinander;
+			# im Vorgarten und im Eckbeet (Hinweis "garden") vor allem üppige Büsche und große Blumen,
+			# dazwischen ab und zu eine kleine Pflanze
+			var cell := 0.42 if hint == "garden" else 0.5
+			var nx := maxi(1, roundi(size.x / cell))
+			var nz := maxi(1, roundi(size.z / cell))
+			var small := entries.filter(func(x: Dictionary) -> bool: return (x.size as Vector3).y < 0.5)
 			for i in nx:
 				for j in nz:
-					var p := Vector3(-size.x / 2.0 + size.x * (i + 0.5) / nx + rng.randf_range(-0.06, 0.06), 0.0,
-						-size.z / 2.0 + size.z * (j + 0.5) / nz + rng.randf_range(-0.06, 0.06))
-					var e: Dictionary = _pick_varied(entries, hint, rng, base * p, [], 0.8)
+					var p := Vector3(-size.x / 2.0 + size.x * (i + 0.5) / nx + rng.randf_range(-0.08, 0.08), 0.0,
+						-size.z / 2.0 + size.z * (j + 0.5) / nz + rng.randf_range(-0.08, 0.08))
+					var e: Dictionary = _pick_varied(entries, hint, rng, base * p, [], 0.7)
 					_placed_ids.append([base * p, e.id])
-					out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * rng.randf_range(0.85, 1.1)), p)])
+					var sc := rng.randf_range(0.9, 1.3) if hint == "garden" else rng.randf_range(0.85, 1.1)
+					out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * sc), p)])
+					if not small.is_empty() and rng.randf() < 0.3:
+						var q := p + Vector3(rng.randf_range(-0.2, 0.2), 0.0, rng.randf_range(-0.2, 0.2))
+						var f: Dictionary = _pick_varied(small, "", rng, base * q, [], 0.6)
+						out.append([f, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * rng.randf_range(0.8, 1.1)), q)])
 		"hedge":
 			var e0: Dictionary = entries[0]
 			var step := (e0.size as Vector3).x * 0.8

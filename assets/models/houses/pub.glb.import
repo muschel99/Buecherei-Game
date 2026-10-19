@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://crnu0l6byqesp"
+uid="uid://tnlr0qwdbf3y"
 path="res://.godot/imported/pub.glb-407c7d2769030d92ab20ebde5843f4e4.scn"
 
 [deps]
@@ -45,10 +45,6 @@ _subresources={
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/backstein.tres"
 },
-"Backstein Bogen hell": {
-"use_external/enabled": true,
-"use_external/path": "res://assets/materials/storybook/backstein_bogen_hell.tres"
-},
 "Backstein Seitenwand": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/backstein_seitenwand.tres",
@@ -64,25 +60,71 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/bild_warm.tres",
 "use_external/path": "res://assets/materials/storybook/bild_warm.tres"
 },
+"Blatt Blaugrün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_blaugruen.tres"
+},
+"Blatt Bronze": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_bronze.tres"
+},
 "Blatt Buchs": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/blatt_buchs.tres"
+},
+"Blatt Buchs frisch": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_buchs_frisch.tres"
+},
+"Blatt Dunkelgrün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_dunkelgruen.tres"
 },
 "Blatt Efeu": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/blatt_efeu.tres"
 },
+"Blatt Efeu frisch": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/blatt_efeu_frisch.tres",
+"use_external/path": "res://assets/materials/storybook/blatt_efeu_frisch.tres"
+},
 "Blatt Efeu jung": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/blatt_efeu_jung.tres"
+},
+"Blatt Efeu jung frisch": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/blatt_efeu_jung_frisch.tres",
+"use_external/path": "res://assets/materials/storybook/blatt_efeu_jung_frisch.tres"
+},
+"Blatt Gelbgrün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_gelbgruen.tres"
 },
 "Blatt Geranie": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/blatt_geranie.tres"
 },
+"Blatt Geranie frisch": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_geranie_frisch.tres"
+},
 "Blatt Olive": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/blatt_olive.tres"
+},
+"Blatt Olive frisch": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_olive_frisch.tres"
+},
+"Blatt Silbergrau": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blatt_silbergrau.tres"
+},
+"Blattkern Grün": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/blattkern_gruen.tres"
 },
 "Blumenladen Wand Hellgrün": {
 "use_external/enabled": true,
@@ -104,21 +146,73 @@ _subresources={
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/bluete_geranienrot.tres"
 },
+"Blüte Goldgelb": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_goldgelb.tres"
+},
 "Blüte Himbeer": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/bluete_himbeer.tres"
+},
+"Blüte Himmelblau": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_himmelblau.tres"
 },
 "Blüte Koralle": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/bluete_koralle.tres"
 },
+"Blüte Magenta": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_magenta.tres"
+},
+"Blüte Orange": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_orange.tres"
+},
+"Blüte Pfirsich": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_pfirsich.tres"
+},
 "Blüte Rosa": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/bluete_rosa.tres"
 },
+"Blüte Violett": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_violett.tres"
+},
+"Blüte Weinrot": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_weinrot.tres"
+},
+"Blüte Weiß": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_weiss.tres"
+},
 "Blüte Zartrosa": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/bluete_zartrosa.tres"
+},
+"Blüte Zitronengelb": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluete_zitronengelb.tres"
+},
+"Blütenkern Blau": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluetenkern_blau.tres"
+},
+"Blütenkern Rosa": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluetenkern_rosa.tres"
+},
+"Blütenmitte Braun": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bluetenmitte_braun.tres"
+},
+"Bogenstein Terrakotta": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bogenstein_terrakotta.tres"
 },
 "Bordstein": {
 "use_external/enabled": true,
@@ -202,6 +296,14 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/flaschen_rot.tres",
 "use_external/path": "res://assets/materials/storybook/flaschen_rot.tres"
 },
+"Frucht Orange": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/frucht_orange.tres"
+},
+"Frucht Zitrone": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/frucht_zitrone.tres"
+},
 "Fugen": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/fugen.tres"
@@ -241,6 +343,10 @@ _subresources={
 "Gras": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/gras.tres"
+},
+"Grashalm": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/grashalm.tres"
 },
 "Gummi": {
 "use_external/enabled": true,
@@ -398,6 +504,10 @@ _subresources={
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/rinde.tres"
 },
+"Rinde frisch": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/rinde_frisch.tres"
+},
 "Sandstein": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sandstein.tres",
@@ -435,6 +545,11 @@ _subresources={
 "Stiel": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/stiel.tres"
+},
+"Stiel frisch": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/stiel_frisch.tres",
+"use_external/path": "res://assets/materials/storybook/stiel_frisch.tres"
 },
 "Stoff Altrosa": {
 "use_external/enabled": true,
@@ -509,6 +624,10 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/vorhang_leinen.tres",
 "use_external/path": "res://assets/materials/storybook/vorhang_leinen.tres"
+},
+"Wasser im Eimer": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/wasser_im_eimer.tres"
 },
 "Weidenkorb": {
 "use_external/enabled": true,
