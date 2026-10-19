@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c7k1xfcycwgiy"
+uid="uid://c3a4o4e806x8c"
 path="res://.godot/imported/GateStreet_BehindInner1.glb-f22e9c3caf40d2889f274bbb3ecda7f4.scn"
 
 [deps]
@@ -55,6 +55,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
+},
+"Sammel Pflanze": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_pflanze.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_pflanze.tres"
 },
 "Sammel Putz": {
 "use_external/enabled": true,

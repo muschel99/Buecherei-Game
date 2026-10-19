@@ -45,7 +45,7 @@ LANTERNS = {
 def collections(key):
     root = SB.collection("Haus " + key)
     C = {k: SB.collection(v, root) for k, v in (("walls", "Mauern"), ("roof", "Dach"), ("windows", "Fenster"), ("shop", "Tür"),
-                                                ("inside", "Räume"), ("pots", "Kästen und Beete"), ("deco", "Deko"),
+                                                ("inside", "Räume"), ("pots", "Kästen und Beete"), ("deco", "Deko"), ("ivy", "Efeu"),
                                                 ("plants", "Pflanzplätze"), ("light", "Licht"))}
     C["env"] = SB.collection("Umgebung (nur Vorschau)")
     C["collision"] = SB.collection("Kollision (Spiel)", root)
@@ -72,7 +72,7 @@ def build_one(key, spec, near, argv):
     SH.house_materials(M, st)
     C = collections(key)
     SC.SPOTS["coll"] = C["plants"]
-    house = SH.House(M, C, spec, st, key, near=near).build()
+    house = SH.House(M, C, spec, st, key, near=near, lantern_pref=LANTERNS[key] if key in LANTERNS else False).build()
     objs = [o for k, c in C.items() if k not in ("env", "collision", "plants") for o in c.objects]
     SC.settle(objs, st["settle"], house.hw, house.E, house.ridge)
     bad = [(o.name, SB.non_manifold(o)) for o in objs if o.type == "MESH" and SB.non_manifold(o)]

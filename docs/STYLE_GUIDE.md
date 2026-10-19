@@ -151,14 +151,17 @@ Schilder sind weiter Bilder der Entwicklerin.
   spitzen Zacken. Blüten mit fünf runden Blütenblättern (Kerbe dazwischen), zu Kuppeln geordnet.
 - **Keine Grundformen sichtbar:** Kerne in Büschen und Blütenköpfen sind klein und dunkel und ganz
   von Blättern/Blüten verdeckt – man sieht sie höchstens als Schatten.
-- **Kletterpflanzen sind wilde Ranken:** verholzte Haupttriebe in Bögen und schrägen Schwüngen,
-  Seitentriebe, die sich verzweigen oder herabhängen, einzelne Blätter in kleinen Büscheln – keine
-  dichten Blattpolster, nie vor Fenstern.
+- **Efeu wächst wild mit seiner Wand:** verschieden hoch, im Bogen um Fenster, unter Blumenkästen
+  hindurch, auf den Wandbändern zwischen den Geschossen seitlich, um freie Hausecken herum, oben
+  hängen Ranken wieder herab – nie als gerade Säule, nie über Fenster; nicht an jedem Haus.
 - **Vielfalt:** viele Sorten (Geranien, Petunien, Männertreu, Begonien, Fuchsien, Kräuter, Heide,
   Stiefmütterchen, Tulpen, Margeriten, Dahlien, Rosen, Zitrus, Oliven, Buchs, Gräser …) in natürlichen
   Farben und verschiedenen Grüntönen; nebeneinander nie zweimal dieselbe Pflanze.
 - **Ranken aus Gefäßen** legen sich über den Rand, nie durch Topf oder Kasten.
-- **Grasbüschel** am Fuß der Hauswände, an Gassenmauern und am Bordstein.
+- **Grasbüschel** wachsen aus der Ecke zwischen Hauswand und Gehweg (nach vorn gefächert, lange
+  Halme, verschieden groß, unregelmäßig verteilt, ab und zu eine Wildblume), am Bordstein nur selten.
+- **Üppig bis überquellend:** Pflanzen in Töpfen sind größer als der Topf, dazu wachsen Gras und
+  Ranken über den Rand; der Blumenladen ist innen und außen randvoll mit Blumen.
 - **Bäume:** natürlich verzweigt, Krone aus vielen Blattbüscheln; der Baum im Gartenhof ist groß und
   überspannt den ganzen Hof.
 - **Fensterbögen** haben ein eigenes, ruhiges Material (kein Ziegelmuster der Wand). Über runden

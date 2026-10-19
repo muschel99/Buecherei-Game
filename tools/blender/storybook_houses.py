@@ -22,6 +22,7 @@ import bpy
 from mathutils import Matrix, Vector
 
 import storybook_common as SC
+import storybook_greenery as G
 import storybook_lib as SB
 import storybook_town as T
 from storybook_lib import Body
@@ -402,8 +403,9 @@ def plant_spot(C, kind, pos, size, n=0, facing=0.0, hint=""):
 class House:
     """Baut ein Wohnhaus. Ergebnis: Teile in den Sammlungen C, Pflanzplätze, Laternenplatz."""
 
-    def __init__(self, M, C, spec, st, key, near=True):
+    def __init__(self, M, C, spec, st, key, near=True, lantern_pref=False):
         self.M, self.C, self.spec, self.st, self.key, self.near = M, C, spec, st, key, near
+        self.lantern_pref = lantern_pref   # False = keine Straßenlaterne am Haus, sonst bevorzugte Lage (x oder None)
         self.rnd = random.Random(st["rnd_seed"])
         self.W, self.D = spec["width"], spec["depth"]
         self.hw = self.W / 2
@@ -699,6 +701,7 @@ class House:
             # Läden nur, wenn auf beiden Seiten Platz für (fast) halb so breite Läden ist – beide oder keiner
             if not front or min(room) - 0.08 >= max(0.22, o["w"] * 0.38):
                 has_shutters = True
+                o["shutter_w"] = min(o["w"] / 2 + 0.03, min(r for r in room if r is not None) - 0.08) if front and None not in room else o["w"] / 2
                 board_shutters(M, C, name, fm, o["w"], o["h"], mat="h_join", open_off=self.rnd.uniform(2, 5),
                                seed=zlib.crc32(name.encode()) % 983, room=room)
         if ground and front and self.near and st.get("canopy") and not st["shutters"]:
@@ -707,10 +710,12 @@ class House:
             T.placed(C["shop"], fm @ Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1))), T.cloth_awning, M, C,
                      name + " Markise", o["w"] + 0.3, top, 0.55, 0.32, valance=0.13, mat="h_canopy", frames=24,
                      seed=zlib.crc32(name.encode()) % 971)
+            o["canopy"] = True
             ground_box = False
         else:
             ground_box = self.rnd.random() < 0.3
         if st["boxes"] and (not ground or ground_box):
+            o["box"] = True
             bw = o["w"] + (0.03 if has_shutters else 0.18)   # mit Läden: Kasten bleibt zwischen den Scharnieren
             SC.planter_box(M, C["pots"], name + " Blumenkasten", fm @ Matrix.Translation((0, -0.06, 0.1)), bw, 0.2, 0.2,
                            seed=zlib.crc32(name.encode()) % 977, gap=0.1, mat="h_box")
@@ -723,6 +728,7 @@ class House:
     def juliet(self):
         """Französischer Balkon: schmiedeeisernes Gitter vor dem mittleren Fenster oben."""
         o = self.upper[len(self.upper) // 2] if len(self.upper) % 2 else self.upper[0]
+        o["balcony"] = True
         fm = T.wall_matrix(*self.front, self.fx(o["x"]), o["z"])
         ir = Body("Balkongitter", self.M["lamp_iron"], self.C["windows"], seed=30, bevel=0.003)
         w = o["w"] + 0.3
@@ -745,13 +751,7 @@ class House:
             body, p0, p1 = self.side_walls[side]
             L = T.seg_len(p0, p1)
             if info[0] != "full":
-                # nur vorn ein Stück frei: Kletterpflanze an der Seitenwand
-                if info[1] > 0.5:
-                    m = T.canon(p0, p1, info[1] / 2 if side > 0 else L - info[1] / 2, 0.0, 0.0)
-                    c = m @ Vector((0, 0, 0))
-                    self.spot("climber", (c.x, c.y, 0.0), (min(2.5, info[1] - 0.2), 0.3, self.E - 0.6),
-                              facing=90.0 * side)
-                continue
+                continue   # nur vorn ein Stück frei: dorthin wächst der Efeu der Front um die Ecke
             cuts = []
             wins = []
             for f in range(len(self.storeys)):
@@ -1039,31 +1039,92 @@ class House:
                     self.spot("pot", (x, sb - 0.32, 0.0), (0.5, 0.5, 1.0))
                     taken.append((x - 0.3, x + 0.3))
                     self.obstacles["Kübel %d" % len(self.obstacles)] = ((x, sb - 0.32), (0.5, 0.5), 0.9)
-        # Kletterpflanze am breitesten freien Streifen (Hauswand), sonst neben der Tür
-        if gaps:
-            a, b = max(gaps, key=lambda g: g[1] - g[0])
-            w = min(1.6, b - a)
-            c = (a + b) / 2
-            # nur so hoch, wie die Wand darüber frei ist (keine Fenster, Briefkasten, Markise)
-            top = self.E - 0.8
-            for o in self.upper:
-                if abs(o["x"] - c) < reach(o) + w / 2 - 0.02:
-                    top = min(top, o["z"] - 0.15)
-            if self.st.get("hood") and abs(d["x"] - c) < d["w"] / 2 + w / 2 + 0.4:
-                top = min(top, d["h"] + 0.2)
-            if top > 1.2:
-                self.spot("climber", (c, sb, 0.0), (w, 0.3, top))
-                taken.append((c - w / 2 - 0.1, c + w / 2 + 0.1))
-        # Grasbüschel am Fuß der Wand (in den freien Streifen, nicht vor Kübeln und Kletterpflanzen)
-        for a, b in gaps:
-            for _ in range(1 if b - a < 1.2 else 2):
-                if self.rnd.random() < 0.3:
-                    continue
-                x = self.rnd.uniform(a + 0.15, b - 0.15)
-                if all(not (t0 - 0.15 < x < t1 + 0.15) for t0, t1 in taken):
-                    self.spot("tuft", (x, sb - self.rnd.uniform(0.13, 0.2), 0.0), (0.3, 0.3, 0.25), self.rnd.uniform(0, 360))
-                    taken.append((x - 0.2, x + 0.2))
         self.gaps = gaps
+        # Efeu: wächst mit dem Haus (kennt Fenster, Kästen, Läden, Tür, Laterne) – nicht an jedem Haus
+        self.lantern_xz = None
+        if self.lantern_pref is not False:
+            ls = self.lantern_spot(self.lantern_pref)
+            if ls:
+                self.lantern_xz = (ls[0], ls[1])
+        if gaps and self.rnd.random() < 0.58:
+            self.ivy(gaps, taken)
+        # Grasbüschel genau aus der Ecke zwischen Wand (vor dem Sockel) und Gehweg, nach vorn gefächert:
+        # unregelmäßig – mal einzeln, mal zwei, drei zusammen, dazwischen kurze und lange Lücken; nicht vor
+        # der Tür und nicht vor Kübeln
+        rnd = self.rnd
+        x = -hw + rnd.uniform(0.1, 0.9)
+        while x < hw - 0.15:
+            for k in range(1 if rnd.random() < 0.6 else rnd.randint(2, 3)):
+                xx = x + k * rnd.uniform(0.14, 0.32)
+                if xx < hw - 0.12 and abs(xx - d["x"]) > d["w"] / 2 + 0.35 and all(not (t0 - 0.1 < xx < t1 + 0.1) for t0, t1 in taken):
+                    self.spot("walltuft", (xx, sb - 0.1, 0.0), (0.3, 0.15, 0.3), rnd.uniform(-22, 22))
+            x += rnd.uniform(0.45, 1.0) if rnd.random() < 0.4 else rnd.uniform(1.1, 2.8)
+        self.gaps = gaps
+
+    def ivy(self, gaps, taken):
+        """Wilder Efeu an der Front (storybook_greenery.wall_ivy): Wurzeln in freien Wandstreifen, Triebe
+        verschieden hoch, im Bogen um Fenster, unter Blumenkästen hindurch, an freien Seiten um die Ecke."""
+        st, rnd, hw, sb = self.st, self.rnd, self.hw, self.sb
+        G.plant_palette(self.M)
+        holes = []
+        for o in self.ground + self.upper:
+            half = o["w"] / 2 + 0.1 + (o.get("shutter_w", 0.0) + 0.05 if o.get("shutter_w") else 0.0) + (0.15 if o.get("balcony") else 0.0)
+            if o.get("canopy"):
+                half = max(half, o["w"] / 2 + 0.3)
+            v0 = o["z"] - (0.42 if o.get("box") else 0.16)
+            v1 = o["z"] + o["h"] + (0.62 if o.get("canopy") else 0.3)
+            holes.append((self.fx(o["x"] - half), v0, self.fx(o["x"] + half), v1))
+        d = self.door
+        dw = d["w"] / 2 + (0.5 if st["hood"] else 0.26)
+        holes.append((self.fx(d["x"] - dw), 0.0, self.fx(d["x"] + dw), d["h"] + (0.95 if st["hood"] else 0.38)))
+        if hasattr(self, "mailbox_x"):
+            holes.append((self.fx(self.mailbox_x - 0.22), 0.7, self.fx(self.mailbox_x + 0.22), 1.55))
+        if self.lantern_xz:
+            lx, lz = self.lantern_xz
+            holes.append((self.fx(lx - 0.38), lz - 0.7, self.fx(lx + 0.38), lz + 0.5))
+        for t0, t1 in taken[1:]:
+            holes.append((self.fx(t0), 0.0, self.fx(t1), 0.95))   # Kübel vor der Wand
+        # Wurzeln irgendwo an der Front – auch unter einem Fenster (dann wächst der Efeu im Bogen darum herum),
+        # nicht vor Tür und Kübeln; an freien Hausecken gern dicht an der Ecke
+        exposed = self.spec.get("exposed", {})
+        n_roots = 1 if rnd.random() < 0.55 else 2
+        roots = []
+        for _ in range(60):
+            if len(roots) >= n_roots:
+                break
+            x = rnd.uniform(-hw + 0.15, hw - 0.15)
+            if exposed and rnd.random() < 0.4:
+                x = rnd.choice(list(exposed)) * (hw - rnd.uniform(0.15, 0.4))
+            u = self.fx(x)
+            if any(h[0] - 0.05 < u < h[2] + 0.05 and h[1] < 0.3 for h in holes) or any(abs(u - r[0]) < 1.0 for r in roots):
+                continue
+            roots.append((u, 0.0))
+        if not roots:
+            return
+        wrap = [0.0, 0.0]
+        for side, info in exposed.items():
+            free = 1.2 if info[0] == "full" else min(1.5, info[1] - 0.3)
+            wrap[0 if side < 0 else 1] = max(0.0, free)
+        size = rnd.choice(("low", "mid", "mid", "high", "high"))
+        reach = {"low": (0.2, 0.45), "mid": (0.35, 0.85), "high": (0.55, 1.0)}[size]
+        height = self.E - 0.45
+        bumps = [(0.0, 0.47, 0.1)]
+        if st["band"] and not st["fachwerk"]:
+            bumps += [(self.zs[f] - 0.05, self.zs[f] + 0.16, 0.1) for f in range(1, len(self.storeys))]
+        jetty, z1 = self.jetty if st["fachwerk"] else 0.0, self.zs[1]
+        if st["fachwerk"]:
+            bumps.append((z1 - 0.15, height, 0.05))
+
+        def to3d(u, v, w):
+            yf = sb - (jetty if v > z1 - 0.1 else 0.0)
+            if u < 0.0:
+                return (-hw - w, sb - u, v)
+            if u > self.W:
+                return (hw + w, sb + (u - self.W), v)
+            return (u - hw, yf - w, v)
+        p = G.Plant(self.M, self.C["ivy"], seed=zlib.crc32(self.key.encode()) % 9973)
+        G.wall_ivy(p, self.W, height, holes, rnd, to3d, roots, reach=reach, wrap=wrap, bumps=bumps, density=1.0 if self.near else 0.7)
+        p.build()
 
     def lantern_spot(self, prefer=None):
         """Platz für die hängende Straßenlaterne (Godot-Hauskoordinaten: x, y = Höhe der Wandplatte,

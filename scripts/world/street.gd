@@ -129,13 +129,15 @@ func _build_tuft_spots() -> void:
 	var n := 0
 	for side in [1, -1]:
 		var z: float = StreetLayout.curb_z() - 0.09 if side > 0 else StreetLayout.far_curb_z() + 0.09
-		var x := x0 + rng.randf_range(0.0, 3.0)
+		var x := x0 + rng.randf_range(0.0, 8.0)
 		while x < x1:
 			var blocked: bool = side > 0 and x > tuft_keep_clear.x and x < tuft_keep_clear.y
-			if not blocked:
-				_add_tuft_spot(holder, Vector3(x, road_y, z + side * -rng.randf_range(0.0, 0.05)), rng, n)
-				n += 1
-			x += rng.randf_range(2.5, 7.0)
+			if not blocked and rng.randf() < 0.65:
+				# meist einzeln, selten zwei dicht beieinander
+				for k in (1 if rng.randf() < 0.8 else 2):
+					_add_tuft_spot(holder, Vector3(x + k * rng.randf_range(0.2, 0.45), road_y, z + side * -rng.randf_range(0.0, 0.05)), rng, n)
+					n += 1
+			x += rng.randf_range(5.0, 16.0)
 	var z_lamp := StreetLayout.curb_z() + CURB_TOP + 0.4
 	for x in lamp_positions:
 		if rng.randf() < 0.7:

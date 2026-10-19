@@ -16,6 +16,7 @@ Ergebnis: assets/models/houses/gatehouse.glb und assets/models/source/houses/gat
 
 import math
 import os
+import random
 import sys
 
 import bpy
@@ -24,6 +25,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_storybook_shop as FS  # noqa: E402
 import storybook_common as SC  # noqa: E402
+import storybook_greenery as GR  # noqa: E402
 import storybook_lib as SB  # noqa: E402
 import storybook_town as T  # noqa: E402
 from storybook_lib import Body  # noqa: E402
@@ -135,11 +137,29 @@ def facade(M, C, tag):
             kb.tube([wm @ Vector((sx, -0.32, 0.03)), wm @ Vector((sx, -0.07, 0.34)), wm @ Vector((sx, -0.07, 0.03))], 0.009, segs=6,
                     round_ends=True)
         kb.build()
-    # Wandlaternen auf den Pfeilern, Töpfe am Fuß
+    # Wandlaternen auf den Pfeilern, Töpfe am Fuß; Glyzinie wächst wild über die Pfeiler und den Bogen
+    # Bogen als Treppe aus Streifen (so darf die Glyzinie in die Zwickel neben und über dem Rundbogen)
+    holes = [(HW - A - 0.18, 0.0, HW + A + 0.18, SPRING), (0.0, MASON - 0.12, W, MASON + BAND + 0.1)]
+    R = A + 0.32
+    v = SPRING
+    while v < SPRING + R:
+        half = math.sqrt(max(0.0, R * R - (v - SPRING) ** 2))
+        holes.append((HW - half - 0.05, v, HW + half + 0.05, v + 0.2))
+        v += 0.2
+    roots = []
+    rr = random.Random(771 if tag == "Vorn" else 772)   # eigener Zufall: der Rest des Hauses bleibt, wie er ist
     for side in (-1, 1):
         T.wall_lantern(M, C, "%s Laterne %s" % (tag, "links" if side < 0 else "rechts"), side * (A + 0.98), 3.55, seed=130 + side)
-        # Kletterpflanze (Glyzinie/Efeu) an der äußeren Pfeilerkante bis unter das Schildband
-        SC.plant_spot("climber", (side * (HW - 0.24), 0.0, 0.0), (0.42, 0.3, MASON - 0.5), 0.0, hint="wisteria")
+        holes.append((HW + side * (A + 0.98) - 0.24, 3.2, HW + side * (A + 0.98) + 0.24, 3.95))   # Wandlaterne
+        for j, (dx, r, hgt, mat) in enumerate(((0.62, 0.22, 0.44, "pot"), (1.02, 0.18, 0.36, "pot_dark"))):
+            holes.append((HW + side * (A + dx) - r - 0.06, 0.0, HW + side * (A + dx) + r + 0.06, hgt + 0.15))
+        roots.append((HW + side * (HW - 0.28), 0.0))
+    GR.plant_palette(M)
+    ivy = GR.Plant(M, C["deco"], seed=771 if tag == "Vorn" else 772)
+    GR.wall_ivy(ivy, W, MASON - 0.15, holes, rr, lambda u, v, w: (u - HW, -w, v), roots, reach=(0.45, 1.0), kind="wisteria",
+                bumps=[(0.0, 0.5, 0.06)], density=0.8)
+    ivy.build()
+    for side in (-1, 1):
         for j, (dx, r, hgt, mat) in enumerate(((0.62, 0.22, 0.44, "pot"), (1.02, 0.18, 0.36, "pot_dark"))):
             x = side * (A + dx)
             SC.pot(M, C["pots"], "%s Topf %s %d" % (tag, "links" if side < 0 else "rechts", j + 1), (x, -0.32, 0.0), r, hgt,

@@ -401,24 +401,29 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   darauf, als MultiMesh je Gebiet. Pflanzen-Stil (Wunsch der Entwicklerin): pralle, runde Blätter
   (`Body.leaf`, unter 17 cm ohne inneren Ring = weniger Dreiecke), Blüten mit runden Blütenblättern
   (`Body.star`), weich schattiert (`build(smooth_angle=180)`), Kerne klein/dunkel und von Blättern
-  verdeckt (`leaf_ball` rechnet die Blattzahl aus der Fläche), Kletterpflanzen als wilde Ranken mit
-  einzelnen Blättern (`climber`), Lavendel als Busch mit Ähren (`lavender_bush`, `spike`), Baumkronen aus
-  Blattbüscheln ohne Kern (`crown`/`spray`, wenige Hauptäste). Gefäße: `Plant(container=CONTAINERS[art])`
-  – Ranken über den Rand nur mit `drape`/`trail`, `clear_rim` legt alles, was in einer Gefäßwand
-  stecken würde, über den Rand. Sorten und Farbvarianten: `PLANTS` in build_storybook_plants.py (je Art
-  viele; nicht mehr gelistete baut das Script ab). Greenery: Nachbarn im Umkreis `variety_radius` bekommen
-  andere Sorten (`_pick_varied`), Blumenkästen zwei bis drei Sorten im Wechsel. Großer Gartenbaum
-  `tree_garden_big` (Hinweis "garden", feste Lage, Krone bleibt in `GARDEN_BOUNDS` = Hof aus layout.json –
-  ändert sich der Hof, Werte anpassen). Grasbüschel (Art `tuft`): Plätze am Fuß der Wohnhäuser
-  (`place_spots`), der Gassenwände (`wall_tufts`), in der Rinne vor den Bordsteinen und an Laternenfüßen
-  (`Street._build_tuft_spots`, nicht am Halteplatz des Lieferwagens). Kletterpflanzen in Gassen nur an
-  fensterfreien Wandstücken (`climber_place`). Laternen-Ampeln = Pflanzplätze (Art `basket`).
-  Schnittblumen (Art `bucket`, Ursprung = Mitte des Rands): `SC.flower_bucket` (Zinkeimer, Vase) bzw.
-  `T.bicycle(..., flowers=True)` legt die Plätze an, Sträuße baut `cut_bunch` mit `head_*` (Tulpe, Rose,
-  Ranunkel, Dahlie, Sonnenblume, Margerite, Hortensie, Lavendel, Schleierkraut, gemischt). Kletterrosen
-  mit Hinweis "rose" (`climber_rose_narrow`, z. B. an den Pfeilern des Blumenladens). Blumenladen:
-  Stufenständer `flower_stand` (bleibt vor der 24 cm vorstehenden Brüstung, Gehweg frei). Alle
-  gesetzten Pflanzen zusammen höchstens etwa 8,5 Mio. Dreiecke. Eingangstreppe: eigenes Material `entrance_steps.tres` (Muster 4, ohne Fugen,
+  verdeckt (`leaf_ball` rechnet die Blattzahl aus der Fläche), Lavendel als Busch mit Ähren
+  (`lavender_bush`, `spike`), Baumkronen aus Blattbüscheln ohne Kern (`crown`/`spray`, wenige Hauptäste).
+  **Efeu/Kletterpflanzen wachsen mit ihrer Wand** (Ausnahme von „nie im Haus-Modell“): `wall_ivy` kennt
+  Fenster, Kästen, Läden, Tür, Laterne, Kübel (holes) und wächst wild – verschieden hoch, im Bogen um
+  Fenster, unter Kästen hindurch, auf breiten Wandbändern seitlich (nie als Säule durch schmale Streifen),
+  an freien Ecken herum (wrap); gebaut von `House.ivy` (nicht jedes Haus), `alley_ivy` (Gassen),
+  Torhaus (Glyzinie), Blumenladen (`garland` = Rosengirlande um die Ladenfront). Gefäße:
+  `Plant(container=CONTAINERS[art])` – Ranken über den Rand nur mit `drape`/`trail`, `clear_rim` legt
+  Teile aus der Gefäßwand über den Rand (Pflanzen dürfen sich überschneiden, Töpfe nie). Sorten und
+  Farbvarianten: `PLANTS` in build_storybook_plants.py (nicht mehr gelistete baut das Script ab).
+  Greenery: Nachbarn im Umkreis `variety_radius` bekommen andere Sorten (`_pick_varied`), Blumenkästen
+  zwei bis drei Sorten im Wechsel, Topfpflanzen quellen über (`pot_overflow`), an Töpfen wachsen Gras und
+  Ranken über den Rand (Art `rim`, `rim_chance`). Großer Gartenbaum `tree_garden_big` (Hinweis "garden",
+  feste Lage, Krone bleibt in `GARDEN_BOUNDS` = Hof aus layout.json). Grasbüschel: Art `walltuft` (nach
+  vorn gefächert, aus der Ecke Wand/Gehweg, Ursprung = Ecke vor dem Sockel, verschieden groß, ab und zu
+  Wildblumen) am Fuß der Wohnhäuser (`place_spots`) und Gassenwände (`wall_tufts`), unregelmäßig;
+  Art `tuft` (rund) nur selten in der Rinne und an Laternenfüßen (`Street._build_tuft_spots`, nicht am
+  Halteplatz des Lieferwagens). Laternen-Ampeln = Pflanzplätze (Art `basket`). Schnittblumen (Art
+  `bucket`, Ursprung = Mitte des Rands): `SC.flower_bucket` (Zinkeimer, Vase), `T.bicycle(...,
+  flowers=True)`; Sträuße `cut_bunch` mit `head_*`. Blumenladen innen randvoll (Regale Topf an Topf,
+  Wandregale, Eimerreihen, Hängetöpfe), außen Stufenständer (`flower_stand`, vor der 24 cm vorstehenden
+  Brüstung), Ampeln unter dem Schild. Alle gesetzten Pflanzen zusammen höchstens etwa 9 Mio. Dreiecke.
+  Eingangstreppe: eigenes Material `entrance_steps.tres` (Muster 4, ohne Fugen,
   nach der Lage im Modell). `T.placed` setzt neue Objekte über `matrix_basis` (sonst landen
   leere Objekte im Ursprung). Boden: Shader `storybook_ground.gdshader` (Materialien cobblestone,
   sidewalk, curb_stone, alley_setts), runde Kanten `WorldMesh.add_round_edge`. Bücherei außen:

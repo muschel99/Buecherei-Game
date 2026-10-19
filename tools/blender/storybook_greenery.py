@@ -20,6 +20,10 @@ from storybook_lib import Body
 UP = Vector((0, 0, 1))
 FRONT = Vector((0, -1, 0))
 
+# frischere, wärmere Grüntöne als die alten Pflanzen (Vorlagebilder: saftiges Gelbgrün)
+FRESH = {"ivy": (0.26, 0.42, 0.16), "ivy_young": (0.42, 0.58, 0.22), "leaf": (0.34, 0.52, 0.2), "box_leaf": (0.27, 0.45, 0.17),
+         "olive_leaf": (0.52, 0.6, 0.4), "stem": (0.4, 0.42, 0.22), "bark": (0.45, 0.34, 0.24)}
+
 
 def rnd_dir(rnd):
     while True:
@@ -68,11 +72,11 @@ class Plant:
 # --- Einzelteile ---
 
 def leaf_on(p, at, d, n, size, shape="oval", width=0.85, petiole=0.02, mat="leaf", stem_mat="stem", thick=None, curl=0.18, fan=None,
-            segs=None):
+            segs=None, petiole_segs=4):
     """Ein Blatt mit kurzem Stiel: Ansatz at, Richtung d, Blattoberseite n."""
     tip_base = at + d * petiole
     if petiole > 0.004:
-        p.body(stem_mat, vary=0.06).tube([at, tip_base], max(0.0022, size * 0.04), segs=4)
+        p.body(stem_mat, vary=0.06).tube([at, tip_base], max(0.0022, size * 0.04), segs=petiole_segs)
     # genug Randpunkte für einen weichen, runden Umriss; dick und kissenförmig (kein Blatt Papier)
     if segs is None:
         segs = {"heart": 14, "round": 8, "oval": 7, "narrow": 5, "petal": 6, "cup": 6, "blade": 6, "ivy": None}.get(shape, 7)
@@ -1370,3 +1374,375 @@ def head_lavender(p, col, at, up):
 def head_mixed(p, col, at, up):
     fn = p.rnd.choice((head_rose, head_peony, head_tulip, head_daisy, head_gyps))
     fn(p, col if fn is not head_gyps else "white_flower", at, up)
+
+
+def wall_ivy(p, length, height, holes, rnd, to3d, roots, reach=(0.35, 1.0), kind="ivy", flowers=None, wrap=(0.0, 0.0), bumps=(),
+             density=1.0, stems=(2, 4)):
+    """Efeu (oder Kletterrose, Glyzinie) an einer bestimmten Wand – wild gewachsen statt als Säule: aus
+    jedem Wurzelpunkt (roots, Wand-Koordinaten) wachsen mehrere Triebe verschieden hoch (reach = Anteil
+    von height), pendeln, laufen ab und zu ein Stück waagerecht, weichen Fenstern, Türen, Kästen und
+    Laternen (holes) im Bogen seitlich aus, laufen unter Blumenkästen hindurch und wachsen, wo wrap es
+    erlaubt, um die Hausecke. Seitentriebe verzweigen sich, oben hängen Ranken wieder herab.
+    Wand-Koordinaten: u entlang der Wand (0 … length; < 0 bzw. > length = um die Ecke), v nach oben,
+    w von der Wand weg. holes = [(u0, v0, u1, v1)]: dort wächst nichts (auch kein Blatt hinein).
+    to3d(u, v, w) bildet auf das Modell ab; bumps = [(v0, v1, w)]: dort steht die Wand vor (Sockel,
+    Gesims, Fachwerk-Überstand)."""
+    gap = 0.11
+    umin, umax = -wrap[0], length + wrap[1]
+
+    def in_hole(u, v, m):
+        return any(u0 - m < u < u1 + m and v0 - m < v < v1 + m for u0, v0, u1, v1 in holes)
+
+    def blocked(u, v, m=gap):
+        return u < umin + 0.05 or u > umax - 0.05 or v < 0.0 or v > height or in_hole(u, v, m)
+
+    def w_at(v):
+        w = 0.055
+        for v0, v1, extra in bumps:
+            if v0 <= v <= v1:
+                w = max(w, 0.055 + extra)
+        return w
+
+    def free_width(u, v):
+        left = 0.0
+        while left < 1.6 and not blocked(u - left - 0.05, v, gap * 0.5):
+            left += 0.05
+        right = 0.0
+        while right < 1.6 and not blocked(u + right + 0.05, v, gap * 0.5):
+            right += 0.05
+        return left, right
+
+    def grow(u, v, tgt, lean, drift=0.0):
+        pts = [(u, v)]
+        d = Vector((lean, 1.0)).normalized()
+        detour, run, run_dir, narrow_runs = 0, 0, 1, 0
+        phase, swing = rnd.uniform(0, 6.28), rnd.uniform(0.9, 2.2)
+        for _ in range(360):
+            u, v = pts[-1]
+            if v >= tgt:
+                break
+            if not detour and not run and v > 0.25 and narrow_runs < 3:
+                # auf einem breiten Wandband (unter Fensterbänken, zwischen den Geschossen), über dem es nur schmal
+                # weitergeht: erst ein Stück seitlich am Band entlang wandern, dann woanders hinauf – so entsteht
+                # ein unregelmäßiger Wuchs statt einer Säule
+                l1, r1 = free_width(u, v + 0.35)
+                if l1 + r1 < 0.85:
+                    l0, r0 = free_width(u, v)
+                    if l0 + r0 < 0.85 and rnd.random() < 0.06:
+                        break   # im schmalen Streifen enden die Triebe in zufälliger Höhe (keine langen Stränge)
+                    if l0 + r0 > 1.2 and rnd.random() < 0.7:
+                        narrow_runs += 1
+                        run, run_dir = rnd.randint(7, 18), (-1 if l0 > r0 else 1) if rnd.random() < 0.7 else rnd.choice((-1, 1))
+            if not detour and not run and rnd.random() < 0.03:
+                run, run_dir = rnd.randint(4, 10), rnd.choice((-1, 1))
+            if detour:
+                want = Vector((detour, 0.12))
+            elif run:
+                want = Vector((run_dir, rnd.uniform(-0.15, 0.35)))
+                run -= 1
+            else:
+                want = Vector((math.sin(v * swing + phase) * 0.75 + drift + rnd.uniform(-0.5, 0.5), 1.0))
+            d = (d * 0.55 + want.normalized() * 0.45).normalized()
+            q = (u + d.x * 0.08, v + d.y * 0.08)
+            if blocked(*q):
+                if not detour:
+                    hole = next(((u0, v0, u1, v1) for u0, v0, u1, v1 in holes if u0 - gap < q[0] < u1 + gap and v0 - gap < q[1] < v1 + gap),
+                                None)
+                    if hole:
+                        detour = -1 if u - (hole[0] - gap) < (hole[2] + gap) - u else 1
+                    else:
+                        detour = -1 if u > (umin + umax) / 2 else 1
+                    if blocked(u + detour * 0.08, v + 0.01):
+                        detour = -detour
+                    run = 0
+                q = (u + detour * 0.08, v + 0.01)
+                if blocked(*q):
+                    q = (u + detour * 0.08, v - 0.025)
+                    if blocked(*q):
+                        break
+                d = Vector((detour, 0.1)).normalized()
+            elif detour and not blocked(u, v + 0.3):
+                detour = 0   # oben frei: im Bogen wieder hinauf
+            pts.append(q)
+        return pts
+
+    def shoot(u, v, d, L, gravity=0.0):
+        pts = [(u, v)]
+        d = Vector(d).normalized()
+        for _ in range(int(L / 0.06)):
+            d = (d + Vector((rnd.uniform(-0.3, 0.3), rnd.uniform(-0.3, 0.3) - gravity))).normalized()
+            q = (pts[-1][0] + d.x * 0.06, pts[-1][1] + d.y * 0.06)
+            if blocked(*q, m=gap * 0.8):
+                break
+            pts.append(q)
+        return pts
+
+    mains = []
+    for ru, rv in roots:
+        n = rnd.randint(stems[0], stems[1] + 1)
+        for j in range(n):
+            tgt = height * rnd.uniform(*reach)
+            # die Triebe einer Wurzel fächern auseinander (schräg nach links und rechts), statt dicht
+            # nebeneinander als Säule hochzuwachsen
+            fan = (j / max(1, n - 1) - 0.5) * 2 if n > 1 else 0.0
+            pts = grow(ru + rnd.uniform(-0.06, 0.06), rv, tgt, fan * 0.9 + rnd.uniform(-0.3, 0.3), drift=fan * rnd.uniform(0.35, 0.75))
+            if len(pts) > 3:
+                mains.append(pts)
+    branches = []
+    for pts in mains:
+        i = rnd.randint(2, 4)
+        while i < len(pts) - 1:
+            u, v = pts[i]
+            if rnd.random() < 0.3:
+                sp = shoot(u, v, (rnd.choice((-1, 1)) * 0.6, -1.0), rnd.uniform(0.3, 0.8), gravity=0.35)   # hängt herab
+            else:
+                sp = shoot(u, v, (rnd.choice((-1, 1)), rnd.uniform(-0.3, 0.8)), rnd.uniform(0.25, 0.75))
+            if len(sp) > 2:
+                branches.append(sp)
+                if len(sp) > 5 and rnd.random() < 0.4:
+                    j = rnd.randint(2, len(sp) - 2)
+                    sub = shoot(*sp[j], (rnd.uniform(-1, 1), rnd.uniform(-0.6, 0.9)), rnd.uniform(0.15, 0.4))
+                    if len(sub) > 2:
+                        branches.append(sub)
+            i += rnd.randint(2, 5)
+        top = pts[-1]
+        for _ in range(rnd.randint(0, 2)):
+            sp = shoot(*top, (rnd.uniform(-1, 1), -0.6), rnd.uniform(0.3, 0.9), gravity=0.5)
+            if len(sp) > 2:
+                branches.append(sp)
+    leaf_mat = {"ivy": "ivy", "rose": "leaf_dark", "wisteria": "ivy_young", "clematis": "leaf"}[kind]
+    stem_mat = "bark" if kind in ("wisteria", "rose") else "stem"
+    shape = "heart" if kind == "ivy" else "oval"
+    base_size = {"ivy": 0.115, "rose": 0.09, "wisteria": 0.085, "clematis": 0.085}[kind]
+    jitter = {}
+
+    def P(u, v, key):
+        w = w_at(v) + jitter.setdefault(key, rnd.uniform(0.0, 0.035))
+        return Vector(to3d(u, v, w))
+
+    def N(u, v):
+        return (Vector(to3d(u, v, 1.0)) - Vector(to3d(u, v, 0.0))).normalized()
+
+    for ru, rv in roots:
+        p.body("soil", vary=0.08).blob(Vector(to3d(ru, 0.0, 0.1)), 0.11, subdiv=2, lump=0.2, scale=(1.0, 1.0, 0.25))
+    for k, pts in enumerate(mains + branches):
+        main = k < len(mains)
+        p3 = [P(u, v, k) for u, v in pts]
+        r0 = 0.016 if main else 0.007
+        p.body(stem_mat, vary=0.06).tube(p3, lambda t, r0=r0: r0 * (1 - 0.6 * t), segs=6 if main else 4, smooth=2 if main else 1,
+                                         round_ends=True)
+        # Blätter an kurzen Stielen in Büscheln; keines ragt in ein Fenster
+        dist, nxt = 0.0, rnd.uniform(0.03, 0.08)
+        for i in range(1, len(pts)):
+            (u0, v0), (u1, v1) = pts[i - 1], pts[i]
+            seg = math.hypot(u1 - u0, v1 - v0)
+            dist += seg
+            if dist < nxt:
+                continue
+            nxt = dist + rnd.uniform(0.065, 0.095) / density
+            t2 = Vector((u1 - u0, v1 - v0)).normalized() if seg > 1e-6 else Vector((0.0, 1.0))
+            perp = Vector((-t2.y, t2.x))
+            tip = i / len(pts)
+            fade = 1.0 - 0.25 * tip * (0.5 if main else 1.0)
+            fl, fr = free_width(u1, v1)
+            count = (rnd.choice((1, 2, 2, 3)) if fl + fr > 0.85 else rnd.choice((1, 1, 2))) + (1 if v1 < 0.9 else 0)
+            for j in range(count):
+                s_ = base_size * rnd.uniform(0.7, 1.2) * fade
+                d2 = (perp * rnd.choice((-1, 1)) * rnd.uniform(0.5, 1.0) + t2 * rnd.uniform(-0.3, 0.6) - Vector((0, rnd.uniform(0.0, 0.4)))).normalized()
+                if in_hole(u1 + d2.x * s_ * 1.1, v1 + d2.y * s_ * 1.1, 0.0):
+                    d2 = Vector((-d2.x, d2.y))
+                    if in_hole(u1 + d2.x * s_ * 1.1, v1 + d2.y * s_ * 1.1, 0.0):
+                        continue
+                n3 = N(u1, v1)
+                at = P(u1, v1, k) + n3 * rnd.uniform(0.008, 0.03)
+                d3 = (Vector(to3d(u1 + d2.x * 0.1, v1 + d2.y * 0.1, 0.06)) - Vector(to3d(u1, v1, 0.06))).normalized()
+                d3 = (d3 + n3 * rnd.uniform(0.15, 0.5)).normalized()
+                nrm = (n3 + Vector((rnd.uniform(-0.3, 0.3), rnd.uniform(-0.3, 0.3), rnd.uniform(0.0, 0.5)))).normalized()
+                young = kind == "ivy" and (tip > 0.75 or rnd.random() < 0.15)
+                leaf_on(p, at, d3, nrm, s_, shape=shape, mat="ivy_young" if young else leaf_mat, stem_mat="stem",
+                        petiole=rnd.uniform(0.012, 0.024), width=(0.95 if kind == "ivy" else 0.62) * rnd.uniform(0.92, 1.06),
+                        curl=rnd.uniform(0.06, 0.2), segs=11 if kind == "ivy" else 6, petiole_segs=3)
+            if kind == "rose" and rnd.random() < 0.22:
+                n3 = N(u1, v1)
+                rose(p, rnd.choice(flowers or ("rose", "pink", "blush_flower")), P(u1, v1, k) + n3 * 0.05,
+                     (n3 + Vector((0, 0, 0.35))).normalized(), rnd.uniform(0.055, 0.075))
+            if kind == "clematis" and rnd.random() < 0.18:
+                n3 = N(u1, v1)
+                floret(p, rnd.choice(flowers or ("purple_flower", "lilac")), P(u1, v1, k) + n3 * 0.045, n3, rnd.uniform(0.055, 0.07), 6,
+                       cup=0.12, samples=5, notch=0.3)
+            if kind == "wisteria" and main and rnd.random() < 0.12 and v1 > 0.8:
+                n3 = N(u1, v1)
+                top3 = P(u1, v1, k) + n3 * 0.1
+                L = rnd.uniform(0.2, 0.34)
+                p.body("stem", vary=0.06).tube([P(u1, v1, k), top3, top3 - UP * L], 0.003, segs=4)
+                for jj in range(9):
+                    tt = jj / 8
+                    c = top3 - UP * L * tt + (n3 * rnd.uniform(0, 0.03) + rnd_dir(rnd) * 0.02) * (1 - tt * 0.6)
+                    floret(p, rnd.choice(flowers or ("lilac", "lilac", "blue_flower")), c, rnd_dir(rnd), 0.022 * (1 - 0.4 * tt), petals=4,
+                           cup=0.3)
+
+
+def plant_palette(M):
+    """Pflanzen-Materialien (auch für Efeu und Rosen, die mit einem Haus gebaut werden): zusätzliche Grün-
+    und Blütentöne und die frischen Grüntöne der Pflanzen-Bibliothek. Mehrfacher Aufruf schadet nicht."""
+    if M.get("_plant_palette"):
+        return M
+    M["_plant_palette"] = True
+    plant_materials(M)
+    for key, col in FRESH.items():
+        info = SC.GAME_MATERIALS[M[key].name]
+        kw = {k: v for k, v in info.items() if k not in ("color", "glow", "plant")}
+        M[key] = SC.make_material(M[key].name + " frisch", col, glow=info.get("glow", 0.0), plant=info.get("plant", False), **kw)
+    return M
+
+
+def wild_flower(p, kind, at, up):
+    """Kleine Wildblume für Grasbüschel: Gänseblümchen, Löwenzahn, Vergissmeinnicht, Lichtnelke, Mohn."""
+    rnd = p.rnd
+    if kind == "daisy":
+        daisy_head(p, at, up, 0.023, petal="white_flower")
+    elif kind == "dandelion":
+        floret(p, "gold_flower", at, up, 0.023, 12, cup=0.25, samples=2, notch=0.5)
+        p.body("gold_flower", vary=0.06).blob(at + up * 0.004, 0.008, subdiv=1, lump=0.2)
+    elif kind == "forgetmenot":
+        for _ in range(5):
+            floret(p, "sky_flower", at + rnd_dir(rnd) * 0.014, (up + rnd_dir(rnd) * 0.4).normalized(), 0.01, 5, cup=0.2, samples=2)
+    elif kind == "campion":
+        floret(p, "pink", at, up, 0.024, 5, cup=0.3, samples=4, notch=0.55)
+    else:
+        floret(p, "red", at, up, 0.033, 4, cup=0.45, samples=4, notch=0.2)
+        p.body("brown_disc", vary=0.05).blob(at + up * 0.006, 0.006, subdiv=1, lump=0.1)
+
+
+def wall_tuft(p, blades=22, height=0.3, flowers=(), n_flowers=(1, 3), mats=("grass_leaf", "grass_leaf", "leaf_lime", "leaf")):
+    """Grasbüschel aus der Ecke zwischen Hauswand und Gehweg (Ursprung = Ecke, Wand bei y = 0,
+    Gehweg nach -y): die Halme fächern nach vorn und zur Seite auf, keiner wächst in die Wand; ab und zu
+    wächst eine kleine Wildblume heraus."""
+    rnd = p.rnd
+    for _ in range(blades):
+        a = rnd.uniform(-1.3, 1.3)
+        out = Vector((math.sin(a), -math.cos(a), 0.0))
+        lean = rnd.uniform(0.04, 0.4) + 0.2 * abs(a) / 1.3
+        d = (UP + out * lean).normalized()
+        nrm = (out - UP * lean).normalized()
+        base = Vector((rnd.uniform(-0.06, 0.06), rnd.uniform(-0.035, -0.005), 0.0))
+        L = height * rnd.uniform(0.5, 1.15)
+        # schmale, lange Halme: aufrecht, die Spitze neigt sich nach vorn über
+        leaf_on(p, base, d, nrm, L, shape="blade", width=rnd.uniform(0.032, 0.055), petiole=0.0, mat=rnd.choice(mats),
+                curl=rnd.uniform(0.1, 0.32), fan=True, segs=6, thick=max(0.003, L * 0.03))
+    if flowers:
+        for _ in range(rnd.randint(*n_flowers)):
+            a = rnd.uniform(-0.9, 0.9)
+            out = Vector((math.sin(a), -math.cos(a), 0.0))
+            top = Vector((rnd.uniform(-0.05, 0.05), -0.02, 0.0)) + out * rnd.uniform(0.03, 0.09) + UP * height * rnd.uniform(0.5, 1.05)
+            mid = top * 0.5 + Vector((0, -0.01, 0))
+            p.body("stem", vary=0.05).tube([Vector((top.x * 0.3, -0.02, 0.0)), mid, top], 0.0018, segs=3, smooth=1)
+            wild_flower(p, rnd.choice(flowers), top, (UP + out * 0.4).normalized())
+            if rnd.random() < 0.5:
+                leaf_on(p, mid, (out + UP * 0.3).normalized(), UP, 0.035, shape="narrow", width=0.4, petiole=0.0, mat="leaf")
+
+
+def rim_piece(p, kind, spread=0.9):
+    """Begleiter für Töpfe in der ganzen Stadt: hängt auf einer Seite (um +x) über den Topfrand –
+    Efeuranken, Grashalme, die sich über den Rand neigen, oder blühende Ranken."""
+    rnd = p.rnd
+    c = p.container or CONTAINERS["potfill"]
+    if kind in ("ivy", "ivy_long", "flowers", "bacopa"):
+        n = rnd.randint(2, 4) if kind != "ivy_long" else rnd.randint(3, 5)
+        for k in range(n):
+            a = rnd.uniform(-spread, spread)
+            L = rnd.uniform(0.18, 0.4) if kind != "ivy_long" else rnd.uniform(0.35, 0.65)
+            if kind == "flowers":
+                trail(p, a, L, rnd, leaf_mat="leaf", shape="oval", leaf=0.036, flowers=("pink", "blush_flower", "white_flower"),
+                      flower_size=0.022)
+            elif kind == "bacopa":
+                trail(p, a, L, rnd, leaf_mat="leaf_lime", shape="round", leaf=0.026, flowers=("white_flower", "sky_flower"), flower_size=0.012)
+            else:
+                trail(p, a, L, rnd, leaf=0.045)
+    else:
+        # Grashalme: innen am Rand aus der Erde, neigen sich weit über den Rand
+        for _ in range(rnd.randint(14, 24)):
+            a = rnd.uniform(-spread, spread)
+            out = Vector((math.cos(a), math.sin(a), 0.0))
+            base = out * rnd.uniform(c["inner"] - 0.07, c["inner"] - 0.02)
+            lean = rnd.uniform(0.45, 0.9)
+            d = (UP + out * lean).normalized()
+            nrm = (out - UP * lean).normalized()
+            leaf_on(p, base, d, nrm, rnd.uniform(0.18, 0.34), shape="blade", width=rnd.uniform(0.06, 0.09), petiole=0.0,
+                    mat=rnd.choice(("grass_leaf", "grass_leaf", "leaf_lime")), curl=rnd.uniform(0.4, 0.8), fan=True, segs=6)
+        if kind == "grass_flowers":
+            for _ in range(rnd.randint(1, 3)):
+                a = rnd.uniform(-spread, spread)
+                out = Vector((math.cos(a), math.sin(a), 0.0))
+                top = out * (c["rim_r"] + rnd.uniform(0.0, 0.05)) + UP * rnd.uniform(0.12, 0.2)
+                p.body("stem", vary=0.05).tube([out * (c["inner"] - 0.05), out * (c["inner"] - 0.01) + UP * 0.1, top], 0.0018, segs=3,
+                                               smooth=1)
+                wild_flower(p, rnd.choice(("daisy", "campion", "forgetmenot")), top, (UP + out * 0.6).normalized())
+
+
+def garland(p, guides, to3d, rnd, kind="rose", flowers=None, strands=3, density=1.0, hang=0.3):
+    """Girlande (Kletterrosen, Efeu) entlang vorgegebener Linien in Wand-Koordinaten (u, v, w): je Linie
+    mehrere Triebe, die sich umeinander winden, mit Blättern, Blüten und herabhängenden Ranken – z. B.
+    an den Pfeilern einer Ladenfront hoch und oben über dem Schild entlang."""
+    leaf_mat = {"ivy": "ivy", "rose": "leaf_dark", "clematis": "leaf"}[kind]
+    shape = "heart" if kind == "ivy" else "oval"
+    base_size = {"ivy": 0.1, "rose": 0.085, "clematis": 0.08}[kind]
+
+    def resample(pts, step):
+        out = [Vector(pts[0])]
+        for a, b in zip(pts, pts[1:]):
+            a, b = Vector(a), Vector(b)
+            n = max(1, int((b - a).length / step))
+            out += [a.lerp(b, (i + 1) / n) for i in range(n)]
+        return out
+
+    for guide in guides:
+        g = resample(guide, 0.06)
+        for k in range(strands):
+            ph, amp, freq = rnd.uniform(0, 6.28), rnd.uniform(0.025, 0.07), rnd.uniform(0.25, 0.55)
+            p2 = []
+            for i, q in enumerate(g):
+                t = (g[min(i + 1, len(g) - 1)] - g[max(i - 1, 0)])
+                t2 = Vector((t.x, t.y)).normalized() if Vector((t.x, t.y)).length > 1e-6 else Vector((0.0, 1.0))
+                nrm2 = Vector((-t2.y, t2.x))
+                off = math.sin(i * freq + ph) * amp
+                p2.append((q.x + nrm2.x * off, q.y + nrm2.y * off, q.z + 0.02 + 0.02 * math.sin(i * freq * 0.7 + ph * 2)))
+            p3 = [Vector(to3d(*q)) for q in p2]
+            p.body("bark" if kind == "rose" else "stem", vary=0.06).tube(p3, lambda t: 0.009 * (1 - 0.4 * t), segs=5, smooth=1,
+                                                                         round_ends=True)
+            dist, nxt = 0.0, rnd.uniform(0.02, 0.06)
+            for i in range(1, len(p3)):
+                dist += (p3[i] - p3[i - 1]).length
+                if dist < nxt:
+                    continue
+                nxt = dist + rnd.uniform(0.06, 0.09) / density
+                u, v, w = p2[i]
+                n3 = (Vector(to3d(u, v, w + 1.0)) - Vector(to3d(u, v, w))).normalized()
+                tang = (p3[i] - p3[i - 1]).normalized()
+                side = tang.cross(n3)
+                for _ in range(rnd.choice((1, 2, 2, 3))):
+                    d3 = (side * rnd.choice((-1, 1)) * rnd.uniform(0.5, 1.0) + tang * rnd.uniform(-0.3, 0.5) + n3 * rnd.uniform(0.2, 0.6)
+                          - UP * rnd.uniform(0.0, 0.3)).normalized()
+                    leaf_on(p, p3[i] + n3 * 0.01, d3, (n3 + UP * 0.3).normalized(), base_size * rnd.uniform(0.75, 1.2), shape=shape, mat=leaf_mat,
+                            petiole=rnd.uniform(0.01, 0.02), width=0.62 if kind != "ivy" else 0.95, curl=0.15, segs=6 if kind != "ivy" else 11,
+                            petiole_segs=3)
+                if kind == "rose" and rnd.random() < 0.3:
+                    rose(p, rnd.choice(flowers or ("pink", "rose", "blush_flower")), p3[i] + n3 * 0.045 + side * rnd.uniform(-0.03, 0.03),
+                         (n3 + UP * 0.25).normalized(), rnd.uniform(0.05, 0.075))
+                if kind == "clematis" and rnd.random() < 0.25:
+                    floret(p, rnd.choice(flowers or ("purple_flower", "lilac")), p3[i] + n3 * 0.04, n3, rnd.uniform(0.05, 0.065), 6, cup=0.12,
+                           samples=5, notch=0.3)
+                if rnd.random() < hang * 0.12:
+                    # hängende Ranke
+                    tip = p3[i] + n3 * 0.04
+                    pts = [tip]
+                    dd = (n3 * 0.3 - UP).normalized()
+                    for _ in range(rnd.randint(3, 8)):
+                        dd = (dd + Vector((rnd.uniform(-0.2, 0.2), rnd.uniform(-0.2, 0.2), -0.25))).normalized()
+                        pts.append(pts[-1] + dd * 0.05)
+                    p.body("stem", vary=0.06).tube(pts, 0.0035, segs=4, smooth=1, round_ends=True)
+                    for j, q in enumerate(pts[1:], 1):
+                        leaf_on(p, q, (side * (1 if j % 2 else -1) + n3 * 0.4 - UP * 0.3).normalized(), n3, base_size * 0.8, shape=shape,
+                                mat=leaf_mat, petiole=0.008, width=0.62 if kind != "ivy" else 0.95)
+                        if kind == "rose" and rnd.random() < 0.25:
+                            rose(p, rnd.choice(flowers or ("pink", "rose", "blush_flower")), q + n3 * 0.03, (n3 - UP * 0.3).normalized(), 0.045)

@@ -255,7 +255,7 @@ def projecting_sign(M, coll, name, wall, image, width, height, outline=None, rea
 
 # --- Töpfe, Kübel, Blumenkästen (Deko; Pflanzen kommen später) ---
 
-def pot(M, coll, name, base, radius, height, seed, mat="pot", style="classic", soil=True, spot="potfill"):
+def pot(M, coll, name, base, radius, height, seed, mat="pot", style="classic", soil=True, spot="potfill", segs=None):
     """Blumentopf als Körper: Wand mit Dicke, Rand (Wulst), innen Erde. style: classic (unten
     schmaler, dicker Rand), bowl (bauchig), tall (hoch und schlank), tub (Kübel mit zwei Ringen)."""
     rnd = random.Random(seed)
@@ -273,19 +273,21 @@ def pot(M, coll, name, base, radius, height, seed, mat="pot", style="classic", s
     outside = [(0.0, 0.0)] + [(x, z) for x, z in prof] + [(rim_r, h * 0.86), (rim_r + 0.006, h * 0.93), (rim_r, h),
                                                           (rim_r - wall * 0.6, h + 0.004)]
     inside = [(rim_r - wall * 1.4, h - 0.006), (prof[-1][0] - wall, h * 0.8), (prof[0][0] - wall, wall), (0.0, wall)]
+    # kleine Töpfe brauchen weniger Unterteilung (Regale voller Töpfe)
+    segs = segs or (32 if r >= 0.12 else 22 if r >= 0.08 else 16)
     b = Body(name, M[mat], coll, seed=seed, vary=0.05, bevel=0.004)
-    b.lathe(outside + inside, base, segs=32, dent=0.003 * rnd.uniform(0.6, 1.4))
+    b.lathe(outside + inside, base, segs=segs, dent=0.003 * rnd.uniform(0.6, 1.4))
     if style == "tub":
         for zz in (h * 0.22, h * 0.7):
             rr = r * (0.88 + 0.1 * zz / h)
             b.lathe([(0.0, 0.0), (rr + 0.004, 0.0), (rr + 0.009, 0.008), (rr + 0.004, 0.016), (0.0, 0.016)],
-                    Vector(base) + Vector((0, 0, zz)), segs=32)
+                    Vector(base) + Vector((0, 0, zz)), segs=segs)
     b.build()
     if soil:
         e = Body(name + " Erde", M["soil"], coll, seed=seed + 1)
         sr = rim_r - wall * 1.5
         e.lathe([(0.0, 0.0), (sr, 0.0), (sr * 0.97, 0.025), (sr * 0.5, 0.04), (0.0, 0.045)],
-                Vector(base) + Vector((0, 0, h * 0.84)), segs=24, dent=0.006)
+                Vector(base) + Vector((0, 0, h * 0.84)), segs=max(12, segs * 3 // 4), dent=0.006)
         e.build()
         if spot:
             plant_spot(spot, Vector(base) + Vector((0, 0, h * 0.84 + 0.035)), (2 * sr, 2 * sr, h * 1.6), 0.0, hint=style)
@@ -322,12 +324,13 @@ def flower_bucket(M, coll, name, base, radius, height, seed, mat="zinc", style="
     else:
         prof = [(0.0, 0.0), (r * 0.78, 0.0), (r, h * 0.97), (r * 1.04, h), (r * 0.98, h + 0.004), (r * 0.94, h * 0.97), (r * 0.72, 0.03),
                 (0.0, 0.03)]
+    segs = 28 if r >= 0.12 else 20
     b = Body(name, M[mat], coll, seed=seed, vary=0.05, bevel=0.003)
-    b.lathe(prof, (x, y, z), segs=28, dent=0.003)
+    b.lathe(prof, (x, y, z), segs=segs, dent=0.003)
     if style == "bucket":
         for zz in (h * 0.25, h * 0.72):
             rr = r * (0.78 + 0.22 * zz / h)
-            b.lathe([(0.0, 0.0), (rr + 0.005, 0.0), (rr + 0.007, 0.007), (rr + 0.005, 0.014), (0.0, 0.015)], (x, y, z + zz), segs=28)
+            b.lathe([(0.0, 0.0), (rr + 0.005, 0.0), (rr + 0.007, 0.007), (rr + 0.005, 0.014), (0.0, 0.015)], (x, y, z + zz), segs=segs)
         for side in (-1, 1):
             b.tube([(x + side * r * 0.98, y, z + h * 0.85), (x + side * (r + 0.04), y, z + h * 0.88), (x + side * (r + 0.04), y, z + h * 0.7),
                     (x + side * r * 0.92, y, z + h * 0.66)], 0.006, segs=8, smooth=2, round_ends=True)

@@ -21,9 +21,13 @@ const SPOT_PREFIX := "PlantSpot_"
 ## Ab dieser Entfernung (m) werden Pflanzen je Art weich ausgeblendet (0 = immer sichtbar). Kleine Dinge
 ## sieht man aus der Ferne ohnehin kaum – das spart viel Rechenzeit.
 @export var fade_distances := {"box": 45.0, "potfill": 45.0, "basket": 45.0, "bed": 45.0, "pot": 50.0, "climber": 75.0,
-	"hedge": 75.0, "tree": 0.0, "tubtree": 0.0, "tuft": 30.0, "bucket": 45.0}
+	"hedge": 75.0, "tree": 0.0, "tubtree": 0.0, "tuft": 30.0, "walltuft": 35.0, "bucket": 45.0, "rim": 45.0}
 ## Im Umkreis (m) einer Pflanze bekommen Nachbarplätze möglichst eine andere Sorte (keine Kopien nebeneinander).
 @export var variety_radius := 3.0
+## Pflanzen in Töpfen etwas größer als der Topf (quellen über den Rand)
+@export var pot_overflow := 1.22
+## Wie oft an Töpfen Gras oder Ranken über den Rand wachsen (Art "rim", 0 … 1)
+@export var rim_chance := 0.8
 @export var enabled := true
 
 ## kind -> Array von Einträgen {id, scene, size, weight, radius, hint}
@@ -103,7 +107,7 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 			var nominal: Vector3 = (sorts[0] as Dictionary).size
 			var n := maxi(1, roundi(size.x / nominal.x))
 			var step := size.x / n
-			var s := clampf(step / nominal.x, 0.8, 1.25)
+			var s := clampf(step / nominal.x, 0.8, 1.25) * 1.1   # etwas üppiger als der Kasten
 			var prev := -1
 			for i in n:
 				var k := rng.randi_range(0, sorts.size() - 1)
@@ -116,8 +120,10 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 		"potfill", "basket":
 			var e: Dictionary = _pick_varied(entries, hint, rng, base.origin)
 			_placed_ids.append([base.origin, e.id])
-			var s := clampf(size.x / (e.size as Vector3).x * 1.08, 0.3, 2.0)
+			var s := clampf(size.x / (e.size as Vector3).x * (pot_overflow if kind == "potfill" else 1.08), 0.3, 2.2)
 			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s), Vector3.ZERO)])
+			if kind == "potfill":
+				out.append_array(_rim_pieces(size.x / 0.4 * 1.08, 0.0, rng, base.origin))
 		"bucket":
 			# Schnittblumen im Eimer/Korb: Ursprung = Mitte des Rands, Breite = Innendurchmesser
 			var e: Dictionary = _pick_varied(entries, hint, rng, base.origin, [], 1.2)
@@ -128,6 +134,15 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 			var e: Dictionary = _pick_varied(entries, hint, rng, base.origin)
 			_placed_ids.append([base.origin, e.id])
 			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)), Vector3.ZERO)])
+			# Kübel der Pflanzen-Bibliothek: Erde 0,42 m hoch, innen 0,205 m Radius
+			out.append_array(_rim_pieces(0.205 / 0.182, 0.4214, rng, base.origin))
+		"walltuft":
+			# Grasbüschel aus der Ecke Wand/Gehweg: verschieden groß, leicht verdreht (Spot zeigt nach vorn)
+			var e: Dictionary = _pick_varied(entries, hint, rng, base.origin, [], 0.8)
+			_placed_ids.append([base.origin, e.id])
+			var s := rng.randf_range(0.65, 1.4)
+			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(-0.25, 0.25)).scaled(Vector3(s, s * rng.randf_range(0.85, 1.2), s)),
+				Vector3.ZERO)])
 		"climber":
 			# die höchste Kletterpflanze, die passt (Hinweis bevorzugt); nie breiter als der Platz
 			var fitting := entries.filter(func(x: Dictionary) -> bool: return (x.size as Vector3).y <= size.y * 1.15)
@@ -198,8 +213,25 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 		_:
 			var e: Dictionary = _pick_varied(entries, hint, rng, base.origin, [], 1.0 if kind == "tuft" else variety_radius)
 			_placed_ids.append([base.origin, e.id])
-			var s := clampf(size.y / (e.size as Vector3).y, 0.8, 1.2)
+			var s := clampf(size.y / (e.size as Vector3).y, 0.8, 1.2) * (rng.randf_range(0.55, 1.45) if kind == "tuft" else 1.0)
 			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s), Vector3.ZERO)])
+	return out
+
+
+## Begleiter am Topfrand (Art "rim"): ein oder zwei Stücke Gras bzw. Ranken, die über den Rand wachsen.
+## scale = Größe des Topfs relativ zur Vorlage, lift = Höhe der Erde über dem Pflanzplatz.
+func _rim_pieces(scale: float, lift: float, rng: RandomNumberGenerator, pos: Vector3) -> Array:
+	var out := []
+	var rims: Array = _catalog.get("rim", [])
+	if rims.is_empty() or rng.randf() > rim_chance:
+		return out
+	var a := rng.randf_range(0.0, TAU)
+	var used: Array = []
+	for k in (1 if rng.randf() < 0.6 else 2):
+		var e: Dictionary = _pick_varied(rims, "", rng, pos, used, 0.0)
+		used.append(e)
+		var t := Transform3D(Basis(Vector3.UP, a + k * PI + rng.randf_range(-0.7, 0.7)).scaled(Vector3.ONE * scale), Vector3(0.0, lift, 0.0))
+		out.append([e, t])
 	return out
 
 

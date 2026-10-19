@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+; Pflanze im Bilderbuch-Stil (gebaut von tools/blender/build_storybook_plants.py). Austauschbar: das Kind
+; "Model" durch ein eigenes Modell ersetzen (Ursprung wie die Vorlage assets/models/templates/plants/walltuft.glb)
+; oder eine neue Szene mit PlantPiece in diesen Ordner legen – Greenery findet sie selbst.
+
+[ext_resource type="Script" path="res://scripts/world/plant_piece.gd" id="1_piece"]
+[ext_resource type="PackedScene" path="res://assets/models/plants/walltuft_dandelion.glb" id="2_model"]
+
+[node name="WalltuftDandelion" type="Node3D"]
+script = ExtResource("1_piece")
+kind = "walltuft"
+nominal_size = Vector3(0.300, 0.280, 0.150)
+weight = 0.50
+collision_radius = 0.00
+hint = ""
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

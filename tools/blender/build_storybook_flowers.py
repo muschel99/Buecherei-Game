@@ -14,6 +14,7 @@ Ergebnis: assets/models/houses/flower_shop.glb und assets/models/source/houses/f
 
 import math
 import os
+import random
 import sys
 
 import bpy
@@ -22,6 +23,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_storybook_shop as FS  # noqa: E402
 import storybook_common as SC  # noqa: E402
+import storybook_greenery as GR  # noqa: E402
 import storybook_lib as SB  # noqa: E402
 import storybook_town as T  # noqa: E402
 from storybook_lib import Body  # noqa: E402
@@ -191,28 +193,90 @@ def flower_inside(M, C):
         for k, (yy, zz) in enumerate(((0.55, 0.3), (0.85, 0.6), (1.15, 0.9))):
             wood.box((cx, yy, zz / 2), (1.4, 0.3, zz), step=0.4, dent=0.002)
     wood.build()
-    rnd = T.RND
-    for i in range(9):
-        zz = (0.9, 1.4, 1.9)[i % 3]
-        px = -xi + 0.4 + (2 * xi - 0.8) * (i // 3) / 2 + rnd.uniform(-0.15, 0.15)
-        SC.pot(M, C["inside"], "Regal Topf %d" % i, (px, yb - 0.22, zz + 0.018), rnd.uniform(0.07, 0.1), rnd.uniform(0.12, 0.17), 100 + i,
-               mat=("pot", "pot_light", "pot_dark")[i % 3], style=("classic", "bowl", "tall")[i % 3])
+    rnd = random.Random(1924)   # eigener Zufall für die Bepflanzung des Ladens
+    # Regale randvoll: auf jedem Brett Topf an Topf (Töpfe, Eimer, Vasen), keiner steckt im anderen
+    uprights = (-xi + 0.15, -0.8, 0.8, xi - 0.15)
+    k = 0
+    for zz in (0.9, 1.4, 1.9, 2.4):
+        x = -xi + 0.1
+        while True:
+            r = rnd.uniform(0.065, 0.1)
+            cx = x + r
+            if cx + r > xi - 0.08:
+                break
+            if any(abs(cx - ux) < r + 0.03 for ux in uprights):
+                x += 0.04
+                continue
+            if rnd.random() < 0.3:
+                SC.flower_bucket(M, C["inside"], "Regal Eimer %d" % k, (cx, yb - 0.22, zz + 0.018), r * 0.92, r * rnd.uniform(1.6, 2.0),
+                                 400 + k, mat=rnd.choice(("zinc", "pot_light")), style=rnd.choice(("bucket", "vase")))
+            else:
+                SC.pot(M, C["inside"], "Regal Topf %d" % k, (cx, yb - 0.22 + rnd.uniform(-0.03, 0.03), zz + 0.018), r,
+                       rnd.uniform(0.11, 0.17), 100 + k, mat=rnd.choice(("pot", "pot_light", "pot_dark")),
+                       style=rnd.choice(("classic", "bowl", "tall", "classic")))
+            x = cx + r + rnd.uniform(0.012, 0.04)
+            k += 1
+    # unter dem untersten Brett große Töpfe und Eimer
+    x = -xi + 0.12
+    while True:
+        r = rnd.uniform(0.12, 0.15)
+        cx = x + r
+        if cx + r > xi - 0.1:
+            break
+        if any(abs(cx - ux) < r + 0.03 for ux in uprights):
+            x += 0.04
+            continue
+        if rnd.random() < 0.45:
+            SC.flower_bucket(M, C["inside"], "Boden Eimer %d" % k, (cx, yb - 0.26, 0.08), r * 0.9, rnd.uniform(0.26, 0.34), 400 + k)
+        else:
+            SC.pot(M, C["inside"], "Boden Topf %d" % k, (cx, yb - 0.26, 0.08), r, rnd.uniform(0.24, 0.32), 100 + k,
+                   mat=rnd.choice(("pot", "pot_light", "pot_dark")), style=rnd.choice(("classic", "tub", "bowl")))
+        x = cx + r + rnd.uniform(0.015, 0.04)
+        k += 1
+    # an den Seitenwänden: Reihen von Eimern am Boden, darüber zwei schmale Wandregale mit kleinen Töpfen
+    for side in (-1, 1):
+        y = 1.45
+        while y < yb - 0.55:
+            r = rnd.uniform(0.12, 0.14)
+            if rnd.random() < 0.6:
+                SC.flower_bucket(M, C["inside"], "Seite Eimer %d" % k, (side * (xi - 0.17), y + r, 0.08), r * 0.92, rnd.uniform(0.26, 0.34), 400 + k)
+            else:
+                SC.pot(M, C["inside"], "Seite Topf %d" % k, (side * (xi - 0.17), y + r, 0.08), r, rnd.uniform(0.22, 0.3), 100 + k,
+                       mat=rnd.choice(("pot", "pot_light")), style=rnd.choice(("classic", "tub")))
+            y += 2 * r + rnd.uniform(0.02, 0.05)
+            k += 1
+        for zz in (1.5, 2.15):
+            wood_side = Body("Wandregal %d %.2f" % (side, zz), M["wood_in"], C["inside"], seed=600 + k, vary=0.06, bevel=0.005)
+            wood_side.box((side * (xi - 0.1), (1.4 + yb - 0.5) / 2, zz), (0.2, yb - 1.9, 0.03), step=0.4, dent=0.002)
+            wood_side.build()
+            y = 1.48
+            while True:
+                r = rnd.uniform(0.055, 0.075)
+                if y + 2 * r > yb - 0.55:
+                    break
+                SC.pot(M, C["inside"], "Wandregal Topf %d" % k, (side * (xi - 0.1), y + r, zz + 0.015), r, rnd.uniform(0.09, 0.13), 100 + k,
+                       mat=rnd.choice(("pot", "pot_light", "pot_dark")), style=rnd.choice(("classic", "bowl")))
+                y += 2 * r + rnd.uniform(0.015, 0.04)
+                k += 1
     for side in (-1, 1):
         cx = side * (DOOR_HALF + 0.14 + SHOP_X) / 2
         for k, (yy, zz) in enumerate(((0.55, 0.3), (0.85, 0.6), (1.15, 0.9))):
-            for j in range(3):
-                px = cx - 0.45 + 0.45 * j + rnd.uniform(-0.05, 0.05)
-                if (j + k) % 3 == 1:
+            for j in range(4):
+                px = cx - 0.51 + 0.34 * j + rnd.uniform(-0.02, 0.02)
+                if (j + k) % 2 == 1:
                     SC.flower_bucket(M, C["inside"], "Eimer %d %d %d" % (side, k, j), (px, yy, zz), 0.12, 0.26, 200 + 10 * k + j + (side > 0) * 50)
                 else:
-                    SC.pot(M, C["inside"], "Topf %d %d %d" % (side, k, j), (px, yy, zz), rnd.uniform(0.1, 0.14), rnd.uniform(0.16, 0.24),
+                    SC.pot(M, C["inside"], "Topf %d %d %d" % (side, k, j), (px, yy, zz), rnd.uniform(0.11, 0.135), rnd.uniform(0.16, 0.24),
                            300 + 10 * k + j + (side > 0) * 50, mat=("pot", "pot_light")[j % 2], style=("classic", "tall")[k % 2])
     # Eimer am Boden gleich hinter der Tür, Vase mit Strauß auf dem Werktisch, Hängetöpfe unter der Decke
     for i, x in enumerate((-0.38, 0.38)):
         SC.flower_bucket(M, C["inside"], "Eimer an der Tür %d" % (i + 1), (x, 0.5, 0.08), 0.13, 0.32, 260 + i)
     SC.flower_bucket(M, C["inside"], "Vase Werktisch", (0.35, yb - 1.4, 0.945), 0.07, 0.2, 265, mat="pot_light", style="vase")
+    SC.flower_bucket(M, C["inside"], "Eimer Werktisch", (-0.1, yb - 1.3, 0.945), 0.1, 0.2, 264)
+    for i, (x, y, r) in enumerate(((-0.55, yb - 1.45, 0.09), (0.68, yb - 1.5, 0.08))):
+        SC.pot(M, C["inside"], "Werktisch Topf %d" % i, (x, y, 0.945), r, 0.13, 280 + i, mat="pot_light", style="bowl")
     ch = Body("Hängetöpfe Ketten", M["lamp_iron"], C["inside"], seed=266)
-    for i, (x, y) in enumerate(((-1.3, 0.75), (1.3, 0.75), (0.0, 1.6))):
+    for i, (x, y) in enumerate(((-1.6, 0.7), (-0.55, 0.75), (0.55, 0.75), (1.6, 0.7), (-1.6, 1.9), (-0.55, 2.0), (0.55, 2.0), (1.6, 1.9))):
         base = Vector((x, y, 2.45))
         SC.pot(M, C["inside"], "Hängetopf %d" % (i + 1), tuple(base), 0.13, 0.15, 267 + i, mat="pot_light", style="bowl", spot="basket")
         for k in range(3):
@@ -240,9 +304,34 @@ def outside(M, C):
     SC.pot(M, C["pots"], "Topf Ecke links", (-2.5, -0.5, 0.0), 0.16, 0.33, 61, mat="pot_dark", style="classic")
     flower_stand(M, C)
     SC.chalkboard(M, C["deco"], (2.35, -0.66), -14, SC.sign_material("flower_shop", "chalkboard"))
-    # Kletterrosen an den Pfeilern der Ladenfront (bis unter die Ampel-Arme)
+    rose_garland(M, C)
+    # Blumenampeln unter dem Schild vor den Schaufenstern (Bepflanzung setzt das Spiel ein)
+    ch = Body("Ampeln Ketten", M["lamp_iron"], C["pots"], seed=95)
+    for i, x in enumerate((-1.95, -1.1, 1.1, 1.95)):
+        base = Vector((x, -0.42, 2.28))
+        SC.pot(M, C["pots"], "Ampel Schild %d" % (i + 1), tuple(base), 0.15, 0.16, 96 + i, mat="pot_light", style="bowl", spot="basket")
+        for k in range(3):
+            a = 2 * math.pi * k / 3 + 0.3
+            ch.tube([base + Vector((math.cos(a) * 0.15, math.sin(a) * 0.15, 0.15)), Vector((x, -0.27, HEAD - 0.02))], 0.003, segs=4)
+    ch.build()
+
+
+def rose_garland(M, C):
+    """Kletterrosen rahmen die Ladenfront (Bild der Entwicklerin): an beiden Pfeilern hoch und oben auf
+    dem Schildkasten entlang, an den Enden hängen Ranken mit Rosen herab."""
+    rr = random.Random(1925)
+    GR.plant_palette(M)
+    p = GR.Plant(M, C["deco"], seed=1925)
+    top = HEAD + FASCIA_H + 0.06
+    guides = []
     for side in (-1, 1):
-        SC.plant_spot("climber", (side * (HW - 0.15), -0.16, 0.0), (0.42, 0.3, HEAD - 0.45), 0.0, hint="rose")
+        x = side * (HW - 0.15)
+        guides.append([(x, 0.05, 0.15), (x + side * 0.02, 1.0, 0.17), (x - side * 0.02, 2.0, 0.16), (x, HEAD - 0.05, 0.18),
+                       (x - side * 0.08, top, 0.2)])
+        guides.append([(x - side * 0.08, top, 0.2), (side * 1.7, top - 0.03, 0.22), (side * 0.9, top + 0.02, 0.2)])
+    GR.garland(p, guides, lambda u, v, w: (u, -w, v), rr, kind="rose", flowers=("pink", "blush_flower", "rose", "white_flower"), strands=3,
+               density=1.2, hang=0.8)
+    p.build()
 
 
 def flower_stand(M, C):

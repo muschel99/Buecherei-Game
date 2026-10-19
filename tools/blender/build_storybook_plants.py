@@ -114,29 +114,8 @@ PLANTS = {
     "pot_grass": ("pot", (0.5, 0.5, 1.1), 0.4, 0.0, "", "pot:grass"),
     "pot_lavender": ("pot", (0.5, 0.5, 1.0), 0.5, 0.0, "", "pot:lavender"),
     "pot_rose": ("pot", (0.5, 0.5, 1.25), 0.5, 0.0, "", "pot:rose"),
-    # Kletterpflanzen (Wand bei y = 0; je Größe zwei verschieden gewachsene Efeu)
-    "climber_ivy_25": ("climber", (1.3, 0.25, 2.5), 1.0, 0.0, "", lambda p: G.climber(p, 1.3, 2.5, "ivy")),
-    "climber_ivy_25b": ("climber", (1.3, 0.25, 2.5), 1.0, 0.0, "", lambda p: G.climber(p, 1.3, 2.5, "ivy")),
-    "climber_ivy_40": ("climber", (1.4, 0.3, 4.0), 1.0, 0.0, "", lambda p: G.climber(p, 1.4, 4.0, "ivy")),
-    "climber_ivy_40b": ("climber", (1.4, 0.3, 4.0), 1.0, 0.0, "", lambda p: G.climber(p, 1.4, 4.0, "ivy")),
-    "climber_ivy_55": ("climber", (1.6, 0.3, 5.5), 1.0, 0.0, "", lambda p: G.climber(p, 1.6, 5.5, "ivy")),
-    "climber_ivy_55b": ("climber", (1.6, 0.3, 5.5), 1.0, 0.0, "", lambda p: G.climber(p, 1.6, 5.5, "ivy")),
-    "climber_ivy_narrow": ("climber", (0.5, 0.25, 3.5), 1.0, 0.0, "", lambda p: G.climber(p, 0.5, 3.5, "ivy")),
-    "climber_ivy_narrow_b": ("climber", (0.6, 0.25, 2.6), 1.0, 0.0, "", lambda p: G.climber(p, 0.6, 2.6, "ivy")),
-    "climber_rose_30": ("climber", (1.2, 0.3, 3.0), 0.8, 0.0, "", lambda p: G.climber(p, 1.2, 3.0, "rose")),
-    "climber_rose_45": ("climber", (1.3, 0.3, 4.5), 0.8, 0.0, "", lambda p: G.climber(p, 1.3, 4.5, "rose")),
-    "climber_rose_red_30": ("climber", (1.1, 0.3, 3.0), 0.6, 0.0, "", lambda p: G.climber(p, 1.1, 3.0, "rose", ("red", "burgundy_flower", "rose"))),
-    "climber_rose_white_45": ("climber", (1.3, 0.3, 4.5), 0.6, 0.0, "",
-                              lambda p: G.climber(p, 1.3, 4.5, "rose", ("cream_flower", "white_flower", "blush_flower"))),
-    "climber_clematis_30": ("climber", (1.1, 0.3, 3.0), 0.6, 0.0, "", lambda p: G.climber(p, 1.1, 3.0, "clematis")),
-    "climber_clematis_45": ("climber", (1.3, 0.3, 4.5), 0.5, 0.0, "",
-                            lambda p: G.climber(p, 1.3, 4.5, "clematis", ("white_flower", "blush_flower"))),
-    "climber_rose_narrow": ("climber", (0.45, 0.3, 2.4), 1.0, 0.0, "rose",
-                            lambda p: G.climber(p, 0.45, 2.4, "rose", ("pink", "blush_flower", "rose"))),
-    "climber_rose_narrow_b": ("climber", (0.45, 0.3, 2.4), 1.0, 0.0, "rose",
-                              lambda p: G.climber(p, 0.45, 2.4, "rose", ("cream_flower", "blush_flower", "white_flower"))),
-    "climber_wisteria_55": ("climber", (1.5, 0.35, 5.5), 0.6, 0.0, "wisteria", lambda p: G.climber(p, 1.5, 5.5, "wisteria")),
-    "climber_wisteria_narrow": ("climber", (0.6, 0.3, 5.5), 0.6, 0.0, "wisteria", lambda p: G.climber(p, 0.6, 5.5, "wisteria")),
+    # Kletterpflanzen: Efeu, Rosen und Glyzinien wachsen jetzt mit ihrer Wand (storybook_greenery.wall_ivy/garland,
+    # gebaut von den Haus-, Gassen- und Laden-Scripts) – keine einzelnen Modelle mehr
     # Schnittblumen im Eimer, in der Vase oder im Fahrradkorb (Blumenladen)
     "bucket_tulips_red": ("bucket", (0.24, 0.24, 0.55), 0.8, 0.0, "", lambda p: G.cut_bunch(p, G.head_tulip, ("red",), n=13,
                                                                                                leaf_mat="leaf_blue", leaf=0.12)),
@@ -210,7 +189,28 @@ PLANTS = {
     "tree_garden": ("tree", (3.0, 3.0, 5.0), 1.0, 0.0, "", lambda p: G.tree(p, 5.0, 1.45)),
     "tree_garden_big": ("tree", (5.6, 7.4, 10.0), 1.0, 0.0, "garden", G.garden_tree),
     "tubtree_bay": ("tubtree", (0.9, 0.9, 3.0), 1.0, 0.36, "", "tub:tree"),
-    # Grasbüschel am Fuß der Hauswände und an Gehweg und Bordstein
+    # Grasbüschel aus der Ecke zwischen Hauswand und Gehweg (nach vorn gefächert), mal mit Wildblumen
+    "walltuft_small": ("walltuft", (0.25, 0.12, 0.26), 1.0, 0.0, "", lambda p: G.wall_tuft(p, blades=18, height=0.26)),
+    "walltuft_medium": ("walltuft", (0.3, 0.15, 0.38), 1.0, 0.0, "", lambda p: G.wall_tuft(p, blades=30, height=0.38)),
+    "walltuft_large": ("walltuft", (0.4, 0.2, 0.5), 0.8, 0.0, "", lambda p: G.wall_tuft(p, blades=44, height=0.5)),
+    "walltuft_tall": ("walltuft", (0.35, 0.18, 0.62), 0.6, 0.0, "", lambda p: G.wall_tuft(p, blades=34, height=0.62)),
+    "walltuft_daisy": ("walltuft", (0.3, 0.15, 0.3), 0.6, 0.0, "", lambda p: G.wall_tuft(p, blades=28, height=0.36, flowers=("daisy",))),
+    "walltuft_dandelion": ("walltuft", (0.3, 0.15, 0.28), 0.5, 0.0, "", lambda p: G.wall_tuft(p, blades=24, height=0.32, flowers=("dandelion",))),
+    "walltuft_forgetmenot": ("walltuft", (0.3, 0.15, 0.28), 0.5, 0.0, "",
+                             lambda p: G.wall_tuft(p, blades=26, height=0.34, flowers=("forgetmenot",), n_flowers=(2, 3))),
+    "walltuft_campion": ("walltuft", (0.35, 0.18, 0.36), 0.5, 0.0, "", lambda p: G.wall_tuft(p, blades=30, height=0.44, flowers=("campion",))),
+    "walltuft_poppy": ("walltuft", (0.35, 0.18, 0.36), 0.4, 0.0, "",
+                       lambda p: G.wall_tuft(p, blades=28, height=0.42, flowers=("poppy",), n_flowers=(1, 2))),
+    "walltuft_mixed": ("walltuft", (0.4, 0.2, 0.4), 0.6, 0.0, "",
+                       lambda p: G.wall_tuft(p, blades=40, height=0.48, flowers=("daisy", "campion", "forgetmenot"), n_flowers=(2, 4))),
+    # Begleiter für Töpfe: hängen auf einer Seite über den Rand (Greenery setzt sie zu den Topfpflanzen)
+    "rim_ivy": ("rim", (0.4, 0.4, 0.3), 1.0, 0.0, "", lambda p: G.rim_piece(p, "ivy")),
+    "rim_ivy_long": ("rim", (0.4, 0.4, 0.3), 0.8, 0.0, "", lambda p: G.rim_piece(p, "ivy_long")),
+    "rim_grass": ("rim", (0.4, 0.4, 0.3), 1.0, 0.0, "", lambda p: G.rim_piece(p, "grass")),
+    "rim_grass_flowers": ("rim", (0.4, 0.4, 0.3), 0.8, 0.0, "", lambda p: G.rim_piece(p, "grass_flowers")),
+    "rim_flowers": ("rim", (0.4, 0.4, 0.3), 0.8, 0.0, "", lambda p: G.rim_piece(p, "flowers")),
+    "rim_bacopa": ("rim", (0.4, 0.4, 0.3), 0.7, 0.0, "", lambda p: G.rim_piece(p, "bacopa")),
+    # Grasbüschel an Bordstein und Laternen (rund)
     "tuft_grass": ("tuft", (0.3, 0.3, 0.25), 1.0, 0.0, "", lambda p: G.grass_tuft(p)),
     "tuft_grass_low": ("tuft", (0.25, 0.25, 0.18), 1.0, 0.0, "", lambda p: G.grass_tuft(p, blades=16, height=0.17)),
     "tuft_grass_tall": ("tuft", (0.35, 0.35, 0.32), 0.6, 0.0, "", lambda p: G.grass_tuft(p, blades=30, height=0.32)),
@@ -218,25 +218,16 @@ PLANTS = {
     "tuft_dandelion": ("tuft", (0.3, 0.3, 0.2), 0.5, 0.0, "", lambda p: G.grass_tuft(p, blades=16, height=0.18, flowers=("gold_flower",))),
 }
 
-# frischere, wärmere Grüntöne als die alten Pflanzen (Vorlagebilder: saftiges Gelbgrün)
-FRESH = {"ivy": (0.26, 0.42, 0.16), "ivy_young": (0.42, 0.58, 0.22), "leaf": (0.34, 0.52, 0.2), "box_leaf": (0.27, 0.45, 0.17),
-         "olive_leaf": (0.52, 0.6, 0.4), "stem": (0.4, 0.42, 0.22), "bark": (0.45, 0.34, 0.24)}
-
-
 def materials():
-    M = SC.materials()
-    G.plant_materials(M)
-    for key, col in FRESH.items():
-        info = SC.GAME_MATERIALS[M[key].name]
-        kw = {k: v for k, v in info.items() if k not in ("color", "glow", "plant")}
-        M[key] = SC.make_material(M[key].name + " frisch", col, glow=info.get("glow", 0.0), plant=info.get("plant", False), **kw)
-    return M
+    return G.plant_palette(SC.materials())
 
 
 def build_plant(pid, M, coll):
     kind, size, weight, col_r, hint, fn = PLANTS[pid]
     # Gefäßrand (Ranken legen sich darüber, nichts steckt in der Wand)
     container = G.CONTAINERS.get(kind) if kind in ("box", "potfill", "basket", "bucket") else None
+    if kind == "rim":
+        container = G.CONTAINERS["potfill"]
     if isinstance(fn, str):
         container = G.CONTAINERS["pot" if fn.startswith("pot:") else "tub"]
     p = G.Plant(M, coll, seed=sum(ord(c) * (i + 1) for i, c in enumerate(pid)), container=container)
@@ -336,9 +327,11 @@ def write_template(kind, M):
     if kind == "box":
         b.box((0, 0.0, -0.1), (0.3, 0.16, 0.2), step=1, dent=0.0)
         b.box((0, 0.11, 0.0), (0.4, 0.02, 0.42), step=1, dent=0.0)     # Hauswand dahinter
+    elif kind == "walltuft":
+        b.box((0, 0.1, 0.4), (0.6, 0.2, 0.8), step=1, dent=0.0)        # Hauswand bei y = 0
     elif kind == "bucket":
         b.lathe([(0.0, -0.3), (0.1, -0.3), (0.125, 0.0), (0.0, 0.0)], (0, 0, 0), segs=24)
-    elif kind in ("potfill", "basket"):
+    elif kind in ("potfill", "basket", "rim"):
         b.lathe([(0.0, -0.4), (0.15, -0.4), (0.21, -0.04), (0.23, 0.0), (0.0, 0.0)], (0, 0, 0), segs=24)
     elif kind == "pot":
         b.box((0, 0.55, 0.5), (1.0, 0.04, 1.0), step=1, dent=0.0)      # Wand 0,32 m dahinter (ungefähr)

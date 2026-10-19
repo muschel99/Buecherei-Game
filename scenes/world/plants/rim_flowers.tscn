@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+; Pflanze im Bilderbuch-Stil (gebaut von tools/blender/build_storybook_plants.py). Austauschbar: das Kind
+; "Model" durch ein eigenes Modell ersetzen (Ursprung wie die Vorlage assets/models/templates/plants/rim.glb)
+; oder eine neue Szene mit PlantPiece in diesen Ordner legen – Greenery findet sie selbst.
+
+[ext_resource type="Script" path="res://scripts/world/plant_piece.gd" id="1_piece"]
+[ext_resource type="PackedScene" path="res://assets/models/plants/rim_flowers.glb" id="2_model"]
+
+[node name="RimFlowers" type="Node3D"]
+script = ExtResource("1_piece")
+kind = "rim"
+nominal_size = Vector3(0.400, 0.300, 0.400)
+weight = 0.80
+collision_radius = 0.00
+hint = ""
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

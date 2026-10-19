@@ -29,6 +29,7 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import storybook_common as SC  # noqa: E402
+import storybook_greenery as GR  # noqa: E402
 import storybook_houses as SH  # noqa: E402
 import storybook_lib as SB  # noqa: E402
 import storybook_town as T  # noqa: E402
@@ -230,16 +231,33 @@ def climber_place(wins, length, along, width=1.4, height=4.2, blocks=()):
     return best[1:] if best else None
 
 
-def wall_tufts(spots, p0z, p1z, x, inward, rnd, avoid, every=(1.4, 2.8)):
-    """Grasbüschel am Fuß einer Gassenwand (Godot x der Wand, z von p0z bis p1z, inward = Richtung in die
-    Gasse): unregelmäßig verteilt, nicht vor Töpfen, Kletterpflanzen und Türen (avoid = [(x, z, Abstand)])."""
-    z = min(p0z, p1z) + rnd.uniform(0.3, 1.0)
+def alley_ivy(M, C, p0, p1, wins, roots, rnd, blocks=(), height=4.5):
+    """Wilder Efeu an einer Gassenwand p0 → p1 (wächst mit der Gasse, kennt ihre Fenster wins =
+    (x, z0, w, h) entlang der Wand und weitere freie Bereiche blocks = (u0, v0, u1, v1))."""
+    length = T.seg_len(p0, p1)
+    fm0 = T.wall_matrix(p0, p1)
+    holes = [(x - w / 2 - 0.12, z0 - 0.17, x + w / 2 + 0.12, z0 + hh + 0.3) for x, z0, w, hh in wins] + list(blocks)
+    GR.plant_palette(M)
+    p = GR.Plant(M, C["ivy"], seed=rnd.randrange(99999))
+    GR.wall_ivy(p, length, height, holes, rnd, lambda u, v, w: tuple(fm0 @ Vector((u, v, w))), [(a, 0.0) for a in roots],
+                reach=(0.3, 1.0), bumps=[(0.0, 0.4, 0.1)])
+    p.build()
+
+
+def wall_tufts(spots, p0z, p1z, x, inward, rnd, avoid, every=None):
+    """Grasbüschel aus der Ecke zwischen Gassenwand und Pflaster (Godot x der Wand, z von p0z bis p1z,
+    inward = Richtung in die Gasse), nach vorn gefächert; unregelmäßig (einzeln oder in kleinen Gruppen),
+    nicht vor Töpfen und Türen (avoid = [(x, z, Abstand)])."""
+    face = -90.0 if inward < 0 else 90.0
+    z = min(p0z, p1z) + rnd.uniform(0.2, 1.0)
     while z < max(p0z, p1z) - 0.3:
-        px = x + inward * rnd.uniform(0.08, 0.16)
-        if all(math.hypot(px - ax, z - az) > d for ax, az, d in avoid):
-            gx_, gy_ = G(px, z)
-            spots.append(("tuft", (gx_, gy_, 0.0), (0.3, 0.3, 0.25), rnd.uniform(0, 360)))
-        z += rnd.uniform(*every)
+        for k in range(1 if rnd.random() < 0.6 else rnd.randint(2, 3)):
+            zz = z + k * rnd.uniform(0.14, 0.32)
+            px = x + inward * 0.1
+            if zz < max(p0z, p1z) - 0.2 and all(math.hypot(px - ax, zz - az) > d for ax, az, d in avoid):
+                gx_, gy_ = G(px, zz)
+                spots.append(("walltuft", (gx_, gy_, 0.0), (0.3, 0.15, 0.3), face + rnd.uniform(-22, 22)))
+        z += rnd.uniform(0.45, 1.0) if rnd.random() < 0.4 else rnd.uniform(1.1, 2.8)
 
 
 def library_alley(M, C, rnd):
@@ -311,19 +329,20 @@ def library_alley(M, C, rnd):
             px, py = G(lx - 0.34, zz)
             spots.append(("pot", (px, py, 0.0), (0.5, 0.5, 1.0), -90.0))
             avoid.append((lx - 0.34, zz, 0.6))
-    # Kletterpflanzen nur an fensterfreien Wandstücken (wachsen nie vor einem Fenster hoch)
+    # Efeu wächst wild an den Wänden: um Fenster herum, nicht hinter Töpfe und Laterne
     lib_len, pub_len, gl_len = end + 0.6 - L["library_back_z"], gz - L["neighbor_back_z"], end + 0.6 - gz
-    for (x, z, face, height, wins, z_of, along_of, length) in (
-            (lx - 0.06, 11.4, -90.0, 4.2, wins_lib, lambda a: L["library_back_z"] + a, lambda zz: zz - L["library_back_z"], lib_len),
-            (fx + 0.06, 7.0, 90.0, 4.6, wins_pub, lambda a: gz - a, lambda zz: gz - zz, pub_len),
-            (gx + 0.06, 14.3, 90.0, 4.0, wins_gl, lambda a: end + 0.6 - a, lambda zz: end + 0.6 - zz, gl_len)):
-        pots = [(along_of(az), 0.0, 2 * d - 0.6, 1.0) for ax, az, d in avoid if abs(ax - x) < 0.5]
-        place = climber_place(wins, length, along_of(z), 1.4, height, pots)
+    lantern_lib = (3.0, 2.0, 3.45, 3.3)   # Wandlaterne Gasse (along 3,2 m, 2,7 m hoch)
+    for (x, z, p0, p1, height, wins, along_of, length, extra) in (
+            (lx, 11.4, G(lx, L["library_back_z"]), G(lx, end + 0.6), 5.0, wins_lib, lambda zz: zz - L["library_back_z"], lib_len,
+             [lantern_lib]),
+            (fx, 7.0, G(fx, gz), G(fx, L["neighbor_back_z"]), 5.2, wins_pub, lambda zz: gz - zz, pub_len, []),
+            (gx, 14.3, G(gx, end + 0.6), G(gx, gz), 4.6, wins_gl, lambda zz: end + 0.6 - zz, gl_len, [])):
+        pots = [(along_of(az) - 0.32, 0.0, along_of(az) + 0.32, 1.0) for ax, az, d in avoid if abs(ax - x) < 0.5]
+        place = climber_place(wins, length, along_of(z), 1.0, 4.0, [((a0 + a1) / 2, 0.0, a1 - a0, 1.0) for a0, _, a1, _ in pots])
         if place:
-            a, w, top = place
-            px, py = G(x, z_of(a))
-            spots.append(("climber", (px, py, 0.0), (w, 0.3, top), face))
-            avoid.append((x, z_of(a), w / 2 + 0.4))
+            roots = [place[0]] + ([place[0] + rnd.choice((-1, 1)) * rnd.uniform(0.8, 1.6)] if rnd.random() < 0.5 else [])
+            roots = [a for a in roots if 0.3 < a < length - 0.3 and not any(a0 - 0.1 < a < a1 + 0.1 for a0, _, a1, _ in pots)]
+            alley_ivy(M, C, p0, p1, wins, roots, rnd, pots + extra, height)
     # Grasbüschel am Fuß der Gassenwände (nicht im Garten: dort ist Rasen)
     wall_tufts(spots, L["library_back_z"] + 0.4, gz, lx, -1, rnd, avoid)
     wall_tufts(spots, L["neighbor_back_z"] + 0.3, gz, fx, 1, rnd, avoid)
@@ -382,21 +401,20 @@ def opposite_alley(M, C, rnd):
         px, py = G(xw, zz)
         spots.append(("pot", (px, py, 0.0), (0.4, 0.4, 0.8), face))
         avoid.append((xw, zz, 0.6))
-    # Kletterpflanzen nur an fensterfreien Wandstücken, nicht unter den Bögen über der Gasse
+    # Efeu wächst wild an den Wänden: um Fenster herum, nicht unter die Bögen über der Gasse
     length = z0 - z_end
     arches = [(z0 - zz + 0.3, 2.2, 0.9, 4.0) for zz in (z0 - 2.5, z0 - 6.5, z0 - 10.0)]
-    for zz, face, xw, wins, left in ((z0 - 3.5, 90.0, x0 + 0.06, wins_l, True), (z0 - 7.6, 90.0, x0 + 0.06, wins_l, True),
-                                     (z0 - 4.6, -90.0, x1 - 0.06, wins_r, False)):
+    for zz, xw, wins, left, p0, p1 in ((z0 - 3.5, x0, wins_l, True, G(x0, z0), G(x0, z_end)), (z0 - 4.6, x1, wins_r, False, G(x1, z_end), G(x1, z0))):
         along = z0 - zz if left else zz - z_end
         blocks = arches if left else [(length - a, z, w, hh) for a, z, w, hh in arches]
-        blocks = blocks + [((z0 - az) if left else (az - z_end), 0.0, 2 * d - 0.6, 1.0) for ax, az, d in avoid if abs(ax - xw) < 0.5]
-        place = climber_place(wins, length, along, 1.2, 4.0, blocks)
+        pots = [(((z0 - az) if left else (az - z_end)) - 0.3, 0.0, ((z0 - az) if left else (az - z_end)) + 0.3, 0.9)
+                for ax, az, d in avoid if abs(ax - xw) < 0.5]
+        arch_holes = [(a - w / 2 - 0.1, z, a + w / 2 + 0.1, h) for a, z, w, hh in blocks]
+        place = climber_place(wins, length, along, 1.0, 4.0, blocks + [((a0 + a1) / 2, 0.0, a1 - a0, 1.0) for a0, _, a1, _ in pots])
         if place:
-            a, w, top = place
-            zc = z0 - a if left else z_end + a
-            px, py = G(xw, zc)
-            spots.append(("climber", (px, py, 0.0), (w, 0.3, top), face))
-            avoid.append((xw, zc, w / 2 + 0.4))
+            roots = [place[0]] + ([place[0] + rnd.choice((-1, 1)) * rnd.uniform(1.0, 2.0)] if rnd.random() < 0.6 else [])
+            roots = [a for a in roots if 0.3 < a < length - 0.3 and not any(a0 - 0.1 < a < a1 + 0.1 for a0, _, a1, _ in pots + arch_holes)]
+            alley_ivy(M, C, p0, p1, wins, roots, rnd, pots + arch_holes, h - 0.8)
     wall_tufts(spots, z_end + 0.3, z0, x0, 1, rnd, avoid)
     wall_tufts(spots, z_end + 0.3, z0, x1, -1, rnd, avoid)
     return spots
@@ -422,7 +440,8 @@ def collections(title):
     root = SB.collection(title)
     C = {k: SB.collection(v + " (" + title + ")", root) for k, v in (("walls", "Mauern"), ("roof", "Dächer"), ("windows", "Fenster"),
                                                                     ("shop", "Türen"), ("inside", "Räume"), ("pots", "Kästen"),
-                                                                    ("deco", "Deko"), ("plants", "Pflanzplätze"), ("light", "Licht"))}
+                                                                    ("deco", "Deko"), ("ivy", "Efeu"), ("plants", "Pflanzplätze"),
+                                                                    ("light", "Licht"))}
     C["env"] = SB.collection("Umgebung (nur Vorschau)")
     C["collision"] = SB.collection("Kollision (" + title + ")", root)
     return C
