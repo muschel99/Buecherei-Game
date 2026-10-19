@@ -1,0 +1,283 @@
+class_name Greenery
+extends Node3D
+## Pflanzen auf allen Pflanzplätzen (Stil-Umbau der Welt, Etappe 4h, Schritt 5).
+##
+## Die Modelle der Häuser, Läden, Gassen und der Bücherei enthalten leere Knoten „PlantSpot_<art>_<n>“
+## mit Eigenschaften (Metadaten "extras": kind, width, depth, height, hint). Beim Start sucht Greenery
+## alle diese Plätze und setzt passende Pflanzen-Szenen aus scenes/world/plants/ darauf (Wurzel PlantPiece:
+## Art, Nennmaß, Gewicht, Hinweis). Neue Pflanze = neue Szene in diesem Ordner, kein Code.
+##
+## Leistung: Gleiche Pflanzen werden je Gebiet (cell_size) zu einem MultiMesh zusammengefasst – so
+## zeichnet die ganze Straße ihre Pflanzen in wenigen Durchgängen. Pflanzen mit collision_radius
+## (Bäumchen im Kübel) bekommen eine feste Kollision und ein Hindernis für Passanten.
+## Liegt in main.tscn als erstes Kind von "Outside" (läuft vor dem Start des Straßenlebens).
+
+const SPOT_PREFIX := "PlantSpot_"
+
+## Ordner mit den Pflanzen-Szenen.
+@export_dir var plants_dir := "res://scenes/world/plants"
+## Größe eines Gebiets in Metern (je Gebiet und Pflanzenteil ein MultiMesh).
+@export var cell_size := 26.0
+## Ab dieser Entfernung (m) werden Pflanzen je Art weich ausgeblendet (0 = immer sichtbar). Kleine Dinge
+## sieht man aus der Ferne ohnehin kaum – das spart viel Rechenzeit.
+@export var fade_distances := {"box": 45.0, "potfill": 45.0, "basket": 45.0, "bed": 45.0, "pot": 50.0, "climber": 75.0,
+	"hedge": 75.0, "tree": 0.0, "tubtree": 0.0}
+@export var enabled := true
+
+## kind -> Array von Einträgen {id, scene, size, weight, radius, hint}
+var _catalog := {}
+## Teile (MeshInstance3D) einer Pflanzen-Szene: Pfad -> Array von {mesh, xform, material, shadow}
+var _parts := {}
+## Bündel: Schlüssel -> {mesh, material, shadow, transforms}
+var _batches := {}
+var _instances: Array[MultiMeshInstance3D] = []
+var placed_count := 0
+
+
+func _ready() -> void:
+	if Engine.is_editor_hint() or not enabled:
+		return
+	_load_catalog()
+	_place_all.call_deferred()
+	Settings.setting_changed.connect(_on_setting_changed)
+
+
+func _load_catalog() -> void:
+	_catalog.clear()
+	var files: PackedStringArray = ResourceLoader.list_directory(plants_dir)
+	for file in files:
+		if not file.ends_with(".tscn") and not file.ends_with(".scn"):
+			continue
+		var path := plants_dir.path_join(file)
+		var scene := load(path) as PackedScene
+		if scene == null:
+			continue
+		var root := scene.instantiate()
+		if root is PlantPiece:
+			var piece := root as PlantPiece
+			if piece.weight > 0.0:
+				var entry := {"id": file.get_basename(), "scene": scene, "path": path, "size": piece.nominal_size, "kind": piece.kind,
+					"weight": piece.weight, "radius": piece.collision_radius, "hint": piece.hint}
+				if not _catalog.has(piece.kind):
+					_catalog[piece.kind] = []
+				(_catalog[piece.kind] as Array).append(entry)
+		root.free()
+
+
+func _place_all() -> void:
+	var inverse := global_transform.affine_inverse()
+	for spot: Node in get_tree().root.find_children(SPOT_PREFIX + "*", "", true, false):
+		if not spot is Node3D or not spot.has_meta("extras"):
+			continue
+		var extras: Dictionary = spot.get_meta("extras")
+		var base: Transform3D = inverse * (spot as Node3D).global_transform
+		for item: Array in _pieces_for(extras, base):
+			_add_piece(item[0], base * (item[1] as Transform3D))
+	_build_batches()
+
+
+## Welche Pflanzen auf einen Platz kommen: Liste von [Eintrag, Lage relativ zum Platz].
+func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
+	var kind := str(extras.get("kind", ""))
+	var entries: Array = _catalog.get(kind, [])
+	if entries.is_empty():
+		return []
+	var size := Vector3(float(extras.get("width", 0.3)), float(extras.get("height", 0.4)), float(extras.get("depth", 0.2)))
+	var hint := str(extras.get("hint", ""))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector3i((base.origin * 100.0).round()))
+	var out := []
+	match kind:
+		"box":
+			# Blumenkasten: Ausschnitte nebeneinander, ein oder zwei Sorten je Kasten
+			var a: Dictionary = _pick(entries, hint, rng)
+			var b: Dictionary = _pick(entries, hint, rng) if rng.randf() < 0.45 else a
+			var nominal: Vector3 = a.size
+			var n := maxi(1, roundi(size.x / nominal.x))
+			var step := size.x / n
+			var s := clampf(step / nominal.x, 0.8, 1.25)
+			for i in n:
+				var e: Dictionary = a if i % 2 == 0 else b
+				var t := Transform3D(Basis(Vector3.UP, rng.randf_range(-0.12, 0.12)).scaled(Vector3.ONE * s),
+					Vector3(-size.x / 2.0 + step * (i + 0.5), 0.0, 0.0))
+				out.append([e, t])
+		"potfill", "basket":
+			var e: Dictionary = _pick(entries, hint, rng)
+			var s := clampf(size.x / (e.size as Vector3).x * 1.08, 0.3, 2.0)
+			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s), Vector3.ZERO)])
+		"pot":
+			var e: Dictionary = _pick(entries, hint, rng)
+			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)), Vector3.ZERO)])
+		"climber":
+			# die höchste Kletterpflanze, die passt (Hinweis bevorzugt); nie breiter als der Platz
+			var fitting := entries.filter(func(x: Dictionary) -> bool: return (x.size as Vector3).y <= size.y * 1.15)
+			if fitting.is_empty():
+				fitting = entries
+			var with_hint := fitting.filter(func(x: Dictionary) -> bool: return hint != "" and x.hint == hint)
+			if not with_hint.is_empty():
+				fitting = with_hint
+			else:
+				fitting = fitting.filter(func(x: Dictionary) -> bool: return x.hint == "")
+			if fitting.is_empty():
+				return out
+			var best := 0.0
+			for x: Dictionary in fitting:
+				best = maxf(best, (x.size as Vector3).y)
+			var tall := fitting.filter(func(x: Dictionary) -> bool: return (x.size as Vector3).y >= best - 0.6)
+			var e: Dictionary = _pick(tall, "", rng)
+			var nominal: Vector3 = e.size
+			var s := minf(minf(size.y / nominal.y, size.x / nominal.x), 1.15)
+			if s >= 0.55:
+				out.append([e, Transform3D(Basis().scaled(Vector3(s * rng.randf_range(0.95, 1.05), s, s)), Vector3.ZERO)])
+		"bed":
+			var e0: Dictionary = entries[0]
+			var cell := (e0.size as Vector3).x * 0.9
+			var nx := maxi(1, floori(size.x / cell))
+			var nz := maxi(1, floori(size.z / cell))
+			for i in nx:
+				for j in nz:
+					var e: Dictionary = _pick(entries, hint, rng)
+					var p := Vector3(-size.x / 2.0 + size.x * (i + 0.5) / nx + rng.randf_range(-0.06, 0.06), 0.0,
+						-size.z / 2.0 + size.z * (j + 0.5) / nz + rng.randf_range(-0.06, 0.06))
+					out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * rng.randf_range(0.85, 1.1)), p)])
+		"hedge":
+			var e0: Dictionary = entries[0]
+			var step := (e0.size as Vector3).x * 0.8
+			var n := maxi(1, floori(size.x / step))
+			for i in n:
+				var e: Dictionary = _pick(entries, hint, rng)
+				var p := Vector3(-size.x / 2.0 + size.x * (i + 0.5) / n, 0.0, rng.randf_range(-0.12, 0.12))
+				out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * rng.randf_range(0.85, 1.1)), p)])
+		_:
+			var e: Dictionary = _pick(entries, hint, rng)
+			var s := clampf(size.y / (e.size as Vector3).y, 0.8, 1.2)
+			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s), Vector3.ZERO)])
+	return out
+
+
+## Zufällige Wahl nach Gewicht; Einträge mit passendem Hinweis zählen viermal.
+func _pick(entries: Array, hint: String, rng: RandomNumberGenerator) -> Dictionary:
+	var total := 0.0
+	for e: Dictionary in entries:
+		total += float(e.weight) * (4.0 if hint != "" and e.hint == hint else 1.0)
+	var r := rng.randf() * total
+	for e: Dictionary in entries:
+		r -= float(e.weight) * (4.0 if hint != "" and e.hint == hint else 1.0)
+		if r <= 0.0:
+			return e
+	return entries[-1]
+
+
+func _add_piece(entry: Dictionary, xform: Transform3D) -> void:
+	placed_count += 1
+	var path: String = entry.path
+	if not _parts.has(path):
+		_parts[path] = _collect_parts(entry.scene)
+	var cell := Vector2i(floori(xform.origin.x / cell_size), floori(xform.origin.z / cell_size))
+	var center := Vector3((cell.x + 0.5) * cell_size, 0.0, (cell.y + 0.5) * cell_size)
+	var parts: Array = _parts[path]
+	for i in parts.size():
+		var part: Dictionary = parts[i]
+		var key := "%s#%d@%d,%d" % [path, i, cell.x, cell.y]
+		if not _batches.has(key):
+			_batches[key] = {"mesh": part.mesh, "material": part.material, "shadow": part.shadow, "transforms": [],
+				"center": center, "fade": float(fade_distances.get(entry.kind, 0.0))}
+		# Lage relativ zur Mitte des Gebiets (dort steht das MultiMesh – für die Entfernung beim Ausblenden)
+		(_batches[key].transforms as Array).append(Transform3D(Basis(), -center) * xform * (part.xform as Transform3D))
+	if float(entry.radius) > 0.0:
+		_add_collision(xform, float(entry.radius) * xform.basis.get_scale().x, (entry.size as Vector3).y * xform.basis.get_scale().y)
+
+
+## Alle MeshInstance3D einer Szene mit ihrer Lage relativ zur Wurzel.
+func _collect_parts(scene: PackedScene) -> Array:
+	var root := scene.instantiate() as Node3D
+	var out := []
+	for node: Node in root.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var t := mi.transform
+		var p := mi.get_parent()
+		while p != null and p != root:
+			if p is Node3D:
+				t = (p as Node3D).transform * t
+			p = p.get_parent()
+		out.append({"mesh": mi.mesh, "xform": t, "material": mi.material_override,
+			"shadow": mi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF})
+	root.free()
+	return out
+
+
+func _build_batches() -> void:
+	var shadows := _plant_shadows()
+	for key: String in _batches:
+		var batch: Dictionary = _batches[key]
+		var transforms: Array = batch.transforms
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = batch.mesh
+		mm.instance_count = transforms.size()
+		for i in transforms.size():
+			mm.set_instance_transform(i, transforms[i])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.name = "Plants"
+		mmi.multimesh = mm
+		mmi.position = batch.center
+		mmi.set_meta("fade", float(batch.fade))
+		_apply_range(mmi)
+		if batch.material:
+			mmi.material_override = batch.material
+		mmi.set_meta("casts", batch.shadow)
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows and batch.shadow \
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mmi)
+		_instances.append(mmi)
+	_batches.clear()
+
+
+## Feste Kollision (Zylinder) und Hindernis für Passanten, z. B. Bäumchen im Kübel.
+func _add_collision(xform: Transform3D, radius: float, height: float) -> void:
+	var body := StaticBody3D.new()
+	body.name = "PlantBody"
+	body.collision_layer = 1  # Ebene "world"
+	body.collision_mask = 0
+	var shape := CylinderShape3D.new()
+	shape.radius = radius
+	shape.height = minf(height, 2.0)
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	collision.position = Vector3(0.0, shape.height / 2.0, 0.0)
+	body.add_child(collision)
+	body.position = xform.origin
+	add_child(body)
+	var obstacle := StreetObstacle.new()
+	obstacle.name = "StreetObstacle"
+	obstacle.radius = radius + 0.05
+	obstacle.position = xform.origin
+	add_child(obstacle)
+
+
+## Ausblenden in der Ferne (Entfernung je Art x Faktor der Grafikstufe, plant_distance).
+func _apply_range(mmi: MultiMeshInstance3D) -> void:
+	var fade := float(mmi.get_meta("fade", 0.0))
+	if fade <= 0.0:
+		mmi.visibility_range_end = 0.0
+		return
+	var factor := float(Settings.get_graphics_preset().get("plant_distance", 1.0))
+	mmi.visibility_range_end = fade * factor + cell_size * 0.7
+	mmi.visibility_range_end_margin = 8.0
+	mmi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+
+
+func _plant_shadows() -> bool:
+	return bool(Settings.get_graphics_preset().get("plant_shadows", true))
+
+
+func _on_setting_changed(key: String, _value: Variant) -> void:
+	if key != "graphics/quality":
+		return
+	var shadows := _plant_shadows()
+	for mmi in _instances:
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows and bool(mmi.get_meta("casts")) \
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_apply_range(mmi)

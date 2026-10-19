@@ -52,8 +52,40 @@ def make_material(name, color, glow=0.0, plant=False, **kw):
     return mat
 
 
+# Pflanzplätze (Stil-Umbau, Schritt 5): Töpfe, Kästen, Eimer und Ampeln melden hier ihren Platz an;
+# daraus werden leere Objekte „PlantSpot_<art>_<n>“ (Eigenschaften kind, width, depth, height, hint),
+# die mit in die .glb kommen. Das Spiel (Greenery) setzt dort austauschbare Pflanzen-Szenen ein.
+SPOTS = {"coll": None, "n": 0}
+
+
+def plant_spot(kind, pos, size, facing=0.0, hint=""):
+    """Pflanzplatz anlegen (Blender-Koordinaten, facing = Drehung um z in Grad: 0 = Vorderseite -y)."""
+    if SPOTS["coll"] is None or SPOTS["coll"].name not in bpy.data.collections:
+        SPOTS["coll"] = SB.collection("Pflanzplätze")
+    e = bpy.data.objects.new("PlantSpot_%s_%d" % (kind, SPOTS["n"]), None)
+    SPOTS["n"] += 1
+    e.empty_display_type = "ARROWS"
+    e.empty_display_size = 0.25
+    e.location = pos
+    e.rotation_euler = (0.0, 0.0, math.radians(facing))
+    e["kind"] = kind
+    e["width"], e["depth"], e["height"] = (round(float(v), 3) for v in size)
+    if hint:
+        e["hint"] = hint
+    SPOTS["coll"].objects.link(e)
+    return e
+
+
+def facing_of(fm):
+    """Drehung (Grad) eines Pflanzplatzes, der nach lokal +z der Ebene fm zeigt."""
+    n = fm.to_3x3() @ Vector((0, 0, 1))
+    return math.degrees(math.atan2(n.x, -n.y))
+
+
 def materials():
     M = make_material
+    SPOTS["coll"] = None
+    SPOTS["n"] = 0
     return {
         "plaster": M("Putz Creme", (0.9, 0.83, 0.7), rough=0.93, vary=0.09, scale=1.4, bump=0.35),
         "plaster_side": M("Putz Sand Seitenwand", (0.84, 0.75, 0.6), rough=0.93, vary=0.1, scale=1.2),
@@ -221,7 +253,7 @@ def projecting_sign(M, coll, name, wall, image, width, height, outline=None, rea
 
 # --- Töpfe, Kübel, Blumenkästen (Deko; Pflanzen kommen später) ---
 
-def pot(M, coll, name, base, radius, height, seed, mat="pot", style="classic", soil=True):
+def pot(M, coll, name, base, radius, height, seed, mat="pot", style="classic", soil=True, spot="potfill"):
     """Blumentopf als Körper: Wand mit Dicke, Rand (Wulst), innen Erde. style: classic (unten
     schmaler, dicker Rand), bowl (bauchig), tall (hoch und schlank), tub (Kübel mit zwei Ringen)."""
     rnd = random.Random(seed)
@@ -253,6 +285,8 @@ def pot(M, coll, name, base, radius, height, seed, mat="pot", style="classic", s
         e.lathe([(0.0, 0.0), (sr, 0.0), (sr * 0.97, 0.025), (sr * 0.5, 0.04), (0.0, 0.045)],
                 Vector(base) + Vector((0, 0, h * 0.84)), segs=24, dent=0.006)
         e.build()
+        if spot:
+            plant_spot(spot, Vector(base) + Vector((0, 0, h * 0.84 + 0.035)), (2 * sr, 2 * sr, h * 1.6), 0.0, hint=style)
 
 
 def zinc_tub(M, coll, name, base, seed):
@@ -271,6 +305,7 @@ def zinc_tub(M, coll, name, base, seed):
     soil = Body(name + " Erde", M["soil"], coll, seed=seed + 1)
     soil.lathe([(0.0, 0.0), (0.205, 0.0), (0.2, 0.03), (0.0, 0.04)], (x, y, z + 0.29), segs=24, dent=0.008)
     soil.build()
+    plant_spot("potfill", (x, y, z + 0.325), (0.4, 0.4, 0.6), 0.0, hint="tub")
 
 
 def planter_box(M, coll, name, fm, width, depth, height, seed, gap=0.06, mat="box", rail=True):
@@ -290,6 +325,7 @@ def planter_box(M, coll, name, fm, width, depth, height, seed, gap=0.06, mat="bo
     s = Body(name + " Erde", M["soil"], coll, seed=seed + 1)
     s.box((0, height - 0.045, g + depth / 2), (width - 2 * wall - 0.004, 0.05, depth - 2 * wall - 0.004), step=0.2, dent=0.006, matrix=fm)
     s.build()
+    plant_spot("box", fm @ Vector((0, height - 0.02, g + depth / 2)), (width - 2 * wall, depth - 2 * wall, 0.45), facing_of(fm))
 
 
 def chalkboard(M, coll, pos, yaw, image, name="Kreidetafel", seed=140):
@@ -576,6 +612,9 @@ def palette_material(key, info):
         v.update(rough=0.55, metal=0.35)
     GAME_MATERIALS[key] = dict(v, grain=grain, color=(1.0, 1.0, 1.0), glow=0.27 if key.endswith(" innen") else 0.0,
                                plant=key == "Sammel Pflanze")
+    if key == "Sammel Pflanze":
+        # Blätter und Blüten wiegen sich leicht im Wind (Alpha der Vertex-Farbe: 1 = fest am Fuß)
+        GAME_MATERIALS[key]["wind"] = 0.014
     kw = {k: v[k] for k in ("rough", "vary", "scale", "bump", "metal", "color2") if k in v}
     return SB.material(key, (1.0, 1.0, 1.0), grain=grain, **kw)
 
@@ -594,12 +633,14 @@ def bake_palette(obj, info):
         d.color = (c[0] * lin[0], c[1] * lin[1], c[2] * lin[2], c[3])
 
 
-def export_objects(objs, cols, path, simplify=None, palette=False, extra=()):
+def export_objects(objs, cols, path, simplify=None, palette=False, extra=None):
     """Alle Teile mit gleichem Material zu einem Netz zusammenfassen (wenige Zeichenaufrufe),
     Modifikatoren anwenden und als .glb speichern. simplify(material) = True: nur die Oberseiten
     der Blätter (leaf_tops). palette = gleichartige Materialien zu Sammel-Materialien
     zusammenlegen (Farbe in den Ecken). extra = weitere Objekte, die unverändert mitkommen
-    (z. B. leere Platzhalter für Pflanzen). Die Einzelteile bleiben unverändert."""
+    (ohne Angabe: alle Pflanzplätze „PlantSpot_…“ der Szene). Die Einzelteile bleiben unverändert."""
+    if extra is None:
+        extra = [o for o in bpy.data.objects if o.name.startswith("PlantSpot_")]
     tmp = SB.collection("_export")
     groups = {}
     for obj in objs:

@@ -413,7 +413,10 @@ Blender gebaut – so bleiben alle Häuser gleich in Maßstab, Materialien und D
   `houses.tscn` ändern. Möchtest du ein Haus ganz selbst modellieren, gilt der nächste
   Abschnitt („Alle Häuser eines Typs ersetzen“) – dann mit deinen eigenen Materialien.
 
-### Pflanzen (seit Etappe 4g, Teil 4f)
+### Pflanzen (seit Etappe 4g, Teil 4f) – alter Stil
+> Seit dem Stil-Umbau (Etappe 4h) gelten die Pflanzen im Bilderbuch-Stil, siehe
+> „Die Welt im Bilderbuch-Stil“ weiter unten. Dieser Abschnitt beschreibt den alten Stil (nur noch
+> die Laternen-Hängekörbe nutzen ihn).
 Alle Pflanzen der Außenwelt (Efeu, Blumenkästen, Hängekörbe, Kübel, Sträuße, Garten) baut
 `tools/blender/style_plants.py`. Jedes Blatt ist eine gebogene Fläche mit einer echten
 Blattform, jedes Blatt hängt an einem Stiel, jeder Stiel an einem Trieb – nichts schwebt.
@@ -485,7 +488,9 @@ So geht's:
 - Etwas glänzender oder matter: das Material in `assets/materials/signs/` anklicken, im
   Inspektor **Roughness** (0 = glänzend, 1 = matt).
 
-### Jedes Haus einzeln (seit Etappe 4g, Teil 2b)
+### Jedes Haus einzeln (seit Etappe 4g, Teil 2b) – alter Stil
+> Seit dem Stil-Umbau baut `build_storybook_street.py` alle Wohnhäuser neu (siehe „Die Welt im
+> Bilderbuch-Stil“); `build_street.py` liefert nur noch die Beschreibungen.
 Jedes Reihenhaus und das Wohnhaus hat ein **eigenes Modell**:
 `assets/models/houses/street/<Gruppe>_<Name>.glb` (z. B. `Opposite_Opposite1_3.glb`). In
 `houses.tscn` steht es beim Haus unter **Dieses Haus → Unique Model** (leer = Modell des
@@ -520,6 +525,8 @@ Backstein, helle Farben Putz, jedes dritte Rauputz), *As Built* (wie gebaut), *B
 **Wall Color** färbt das Material – ein heller Ton auf Backstein ergibt gestrichenen Backstein.
 
 ### Bücherei-Fassade, Gassen und Laternen (seit Etappe 4g)
+> Fassade der Bücherei und Gassen sind seit dem Stil-Umbau neu (`build_storybook_library.py`,
+> `build_storybook_alleys.py`, siehe „Die Welt im Bilderbuch-Stil“). Laternen und Bank wie hier.
 - **Fassade der Bücherei:** `assets/models/world/library_facade.glb` (Knoten „Facade“ in
   `scenes/rooms/ground_floor_room.tscn`), gebaut mit
   `blender -b --factory-startup --python tools/blender/build_library.py`.
@@ -659,6 +666,72 @@ breit wie die schräge Wand (2,99 m) und reicht 1,54 m nach vorn (Podest 0,7 m +
 zum Gehweg (-0,5 m), vier gleich hohe Absätze à 12,5 cm. Die unsichtbare Rampe zum Laufen
 bleibt; dein Modell sollte deshalb ungefähr diese Form haben.
 Vorlage: `templates/world/entrance_steps.glb`.
+
+## Die Welt im Bilderbuch-Stil (Stil-Umbau, Etappe 4h)
+Alle Häuser, die Bücherei von außen, die Gassen, der Boden und die Pflanzen sind im Bilderbuch-Stil
+neu gebaut – jedes Teil ein geschlossener Körper mit weichen Kanten, damit du alles in Blender oder
+Nomad Sculpt nachmodellieren kannst.
+
+### Wo liegt was?
+| Was | Spiel-Datei | Zum Nachmodellieren | Bau-Script (`tools/blender/`) |
+|---|---|---|---|
+| 29 Wohn- und Kulissenhäuser | `assets/models/houses/storybook/<Gruppe>_<Name>.glb` | `assets/models/source/houses/storybook/<Gruppe>_<Name>.blend` | `build_storybook_street.py` (Bauteile `storybook_houses.py`) |
+| Läden, Pub, Torhaus | `assets/models/houses/<name>.glb` | `assets/models/source/houses/<name>_storybook.blend` | `build_storybook_<haus>.py` |
+| Bücherei außen | `assets/models/world/library_facade.glb` | `assets/models/source/library_storybook.blend` | `build_storybook_library.py` |
+| Gassen | `assets/models/world/alley_library.glb`, `alley_opposite.glb` | `assets/models/source/alleys_storybook.blend` | `build_storybook_alleys.py` |
+| Pflanzen | `assets/models/plants/<id>.glb` + Szene `scenes/world/plants/<id>.tscn` | `assets/models/source/plants/<id>.blend` | `build_storybook_plants.py` (Formen `storybook_greenery.py`) |
+| Abflussdeckel | `assets/models/props/drain_grate.glb` | `assets/models/source/props/storybook_props.blend` | `build_storybook_props.py` |
+| Boden (Pflaster, Platten, Bordstein) | Materialien `assets/materials/cobblestone.tres`, `sidewalk.tres`, `curb_stone.tres`, `alley_setts.tres` | – | Shader `assets/shaders/storybook_ground.gdshader` |
+
+### Ein Haus selbst umbauen
+1. Die .blend des Hauses in Blender öffnen (Tabelle oben). Rechts im **Outliner** liegen die Teile in
+   Sammlungen (Mauern, Dach, Fenster, Tür, Räume, Kästen und Beete, Deko, Pflanzplätze).
+2. Teile umformen, verschieben, neue hinzufügen; **Strg+S**.
+3. Ins Spiel bringen (Terminal im Projektordner):
+   `blender -b assets/models/source/houses/storybook/Opposite_Opposite1_3.blend --python tools/blender/export_storybook.py`
+   (bei Läden und Pub genauso mit ihrer .blend). Godot übernimmt die neue .glb beim nächsten Öffnen.
+4. Deine .blend wird nie überschrieben (das Bau-Script erkennt sie am Fingerabdruck in der .stamp-Datei).
+
+**Ganz eigenes Haus-Modell:** In `scenes/world/houses.tscn` das Haus anklicken → Inspektor → **Dieses
+Haus → Unique Model** → deine .glb wählen (Ursprung unten in der Mitte der Vorderseite, Vorderseite +Z,
+Maße wie der Haustyp, siehe „Die Haustypen und ihre Maße“). Willst du dort Pflanzen haben: leere Objekte
+„PlantSpot_<art>_<n>“ mit den Eigenschaften `kind`, `width`, `depth`, `height` (Blender: Objekt-Eigenschaften
+→ Benutzerdefiniert) ins Modell legen und mit „Benutzerdefinierte Eigenschaften“ exportieren.
+
+### Pflanzen (Bilderbuch-Stil)
+- **So kommen Pflanzen in die Welt:** Die Modelle enthalten leere **Pflanzplätze** („PlantSpot_…“). Beim
+  Start sucht der Knoten `Outside/Greenery` (Script `scripts/world/greenery.gd`) alle Plätze und setzt
+  passende Pflanzen-Szenen aus `scenes/world/plants/` darauf – gleiche Pflanzen werden für die Leistung
+  gebündelt gezeichnet. Arten der Plätze:
+  | Art | Wo | Ursprung der Pflanze |
+  |---|---|---|
+  | `box` | Blumenkästen an Fenstern (mehrere 30-cm-Stücke nebeneinander) | Erde in der Kastenmitte |
+  | `potfill` | in vorhandenen Töpfen und Eimern (Läden, Blumenladen innen) | Erde in der Topfmitte (skaliert nach Topfgröße) |
+  | `basket` | Blumenampeln | Erde im Ampeltopf |
+  | `pot` | Kübel mit Pflanze vor Haustüren | Boden (Topf ist Teil der Pflanze) |
+  | `climber` | Kletterpflanzen an Hauswänden, Torhaus, Gassen | Fuß an der Wand, Wand bei z = 0, Pflanze davor (+Z) |
+  | `bed`, `hedge` | Beete in Vorgärten und im Garten, Hecke hinter dem Zaun | Boden |
+  | `tree`, `tubtree` | Baum im Garten, Bäumchen im Kübel auf dem Platz | Boden |
+- **Eigene Pflanze:** In Blender modellieren (Vorlage in echter Größe: `assets/models/templates/plants/<art>.glb`,
+  Vorderseite +Z bzw. in Blender -Y), als .glb nach `assets/models/plants/` exportieren. Dann in Godot eine
+  vorhandene Szene aus `scenes/world/plants/` duplizieren (Rechtsklick → **Duplizieren…**), das Kind
+  „Model“ löschen, deine .glb auf die Wurzel ziehen und in **Model** umbenennen. Im Inspektor der Wurzel:
+  **Kind** (Art), **Nominal Size** (Breite, Höhe, Tiefe in m, an denen du gebaut hast), **Weight** (wie oft
+  sie gewählt wird, 0 = nie), **Collision Radius** (> 0: man kann nicht hindurchlaufen), **Hint** (z. B.
+  „wisteria“ = bevorzugt am Torhaus, „tall“ = hohe Töpfe). Fertig – Greenery nimmt sie beim nächsten Start.
+- **Vorhandene Pflanze umformen:** `assets/models/source/plants/<id>.blend` öffnen, bearbeiten, speichern,
+  dann `blender -b assets/models/source/plants/<id>.blend --python tools/blender/export_storybook.py`.
+- **Wind:** Blätter und Blüten wiegen sich leicht (Material `assets/materials/storybook/sammel_pflanze.tres`
+  → **Shader Parameters → Wind Strength**, 0 = still).
+- **Leistung:** Kleine Pflanzen werden in großer Entfernung weich ausgeblendet (Greenery → **Fade Distances**);
+  auf der Grafikstufe „Niedrig“ werfen Pflanzen keine Schatten (`plant_shadows` in `game_config.gd`).
+
+### Boden
+Die Steine werden im Shader aus der Lage berechnet (keine Bilder): in den Materialien
+`cobblestone.tres` (Fahrbahn, runde Steine), `sidewalk.tres` (Platten), `curb_stone.tres` (Bordstein,
+Treppe) und `alley_setts.tres` (Kleinpflaster) im Inspektor unter **Shader Parameters**: **Pattern**
+(0 Kopfstein, 1 Platten, 2 Bordstein, 3 Kleinpflaster), **Stone Size**, Farben **Color A/B/C**,
+**Color Accent** (einzelne andersfarbige Steine), **Joint Color** und **Joint** (Fuge).
 
 ## Leben auf der Straße: eigene Passanten, Fahrzeuge und Lieferwagen
 Seit Etappe 5a sind draußen Passanten, Fahrräder, Autos und ein Lieferwagen unterwegs. Alle

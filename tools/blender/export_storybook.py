@@ -8,6 +8,7 @@ Aufruf (Terminal, im Projektordner):
     blender -b assets/models/source/houses/fashion_shop_storybook.blend --python tools/blender/export_storybook.py
     blender -b assets/models/source/houses/pub_storybook.blend --python tools/blender/export_storybook.py
     blender -b assets/models/source/houses/storybook/Opposite_Opposite1_3.blend --python tools/blender/export_storybook.py
+    blender -b assets/models/source/plants/climber_ivy_40.blend --python tools/blender/export_storybook.py
   (Wohnhäuser: Teile werden fürs Spiel zu Sammel-Materialien zusammengelegt, Pflanzplätze
   „PlantSpot_…“ kommen mit – verschieben erlaubt, die Pflanze wandert mit)
 
@@ -57,6 +58,11 @@ def main():
         if name in bpy.data.collections:
             root, target = bpy.data.collections[name], os.path.join(SC.ROOT, "assets", "models", "houses", file)
     for coll in bpy.data.collections:
+        # Pflanzen (build_storybook_plants.py): Sammlung „Pflanze <id>“
+        if coll.name.startswith("Pflanze "):
+            root = coll
+            target = os.path.join(SC.ROOT, "assets", "models", "plants", coll.name[8:] + ".glb")
+            palette = True
         # Wohnhäuser (build_storybook_street.py): Sammlung „Haus <Gruppe>/<Name>“
         if coll.name.startswith("Haus ") and "/" in coll.name:
             key = coll.name[5:]

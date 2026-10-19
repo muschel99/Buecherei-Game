@@ -138,7 +138,9 @@ def facade(M, C, tag):
     # Wandlaternen auf den Pfeilern, Töpfe am Fuß
     for side in (-1, 1):
         T.wall_lantern(M, C, "%s Laterne %s" % (tag, "links" if side < 0 else "rechts"), side * (A + 0.98), 3.55, seed=130 + side)
-        for j, (dx, r, hgt, mat) in enumerate(((0.75, 0.22, 0.44, "pot"), (1.3, 0.18, 0.36, "pot_dark"))):
+        # Kletterpflanze (Glyzinie/Efeu) an der äußeren Pfeilerkante bis unter das Schildband
+        SC.plant_spot("climber", (side * (HW - 0.24), 0.0, 0.0), (0.42, 0.3, MASON - 0.5), 0.0, hint="wisteria")
+        for j, (dx, r, hgt, mat) in enumerate(((0.62, 0.22, 0.44, "pot"), (1.02, 0.18, 0.36, "pot_dark"))):
             x = side * (A + dx)
             SC.pot(M, C["pots"], "%s Topf %s %d" % (tag, "links" if side < 0 else "rechts", j + 1), (x, -0.32, 0.0), r, hgt,
                    150 + j + (side > 0) * 5, mat=mat, style="classic" if j else "tall")
@@ -222,7 +224,7 @@ def build_scene():
     body(M, C)
     roof(M, C)
     for side in (-1, 1):
-        for j, (dx, r) in enumerate(((0.75, 0.22), (1.3, 0.18))):
+        for j, (dx, r) in enumerate(((0.62, 0.22), (1.02, 0.18))):
             OBSTACLES["Topf vorn %d %d" % (side, j)] = ((side * (A + dx), -0.32), (2 * r + 0.08, 2 * r + 0.08), 0.46)
             OBSTACLES["Topf hinten %d %d" % (side, j)] = ((-side * (A + dx), D + 0.32), (2 * r + 0.08, 2 * r + 0.08), 0.46)
     house = [o for k, c in C.items() if k not in ("env", "collision") for o in c.objects]

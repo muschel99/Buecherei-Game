@@ -158,7 +158,10 @@ tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py)
                    storybook_town.py = Bausteine der übrigen Läden, build_storybook_bakery/
                    flowers/tea/wool/gatehouse.py, build_storybook_lamps.py = Laternen,
                    export_storybook.py, storybook_gap_check.py = Lochprüfung,
-                   storybook_overlap_check.py = Töpfe/Deko in Wänden)
+                   storybook_overlap_check.py = Töpfe/Deko in Wänden; Stil-Umbau der Welt:
+                   build_storybook_street.py + storybook_houses.py = Wohnhäuser,
+                   build_storybook_library.py, build_storybook_alleys.py, build_storybook_props.py,
+                   build_storybook_plants.py + storybook_greenery.py = Pflanzen)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
 (Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
@@ -387,7 +390,18 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Boden steht, gegen Mauern/Fenster/Ladenfront und untereinander). Töpfe vor Ladenfronten mit
   `storybook_town.pot_out(r)` (Brüstung und Sockel ragen bis 24 cm vor), Kästen mit
   `gap=FRONT_CLEAR`; an Hausenden auf Teile des Nachbarhauses achten (Torhaus-Töpfe neben dem
-  Wolleladen). **Oberflächen im Spiel:** feine Muster blendet der Shader aus, sobald sie kleiner als
+  Wolleladen). **Stil-Umbau der Welt (Etappe 4h, Checkliste in docs/ROADMAP.md „Stil-Umbau der
+  Welt“):** Wohnhäuser `build_storybook_street.py` (Beschreibung aus build_street.make_spec, Stil je
+  Haus `storybook_houses.house_style`, je Haus .glb in assets/models/houses/storybook/ und .blend in
+  assets/models/source/houses/storybook/; Sammel-Materialien `export_objects(palette=True)`: Farbe in
+  den Ecken, 8–10 Zeichenaufrufe je Haus). **Pflanzen** nie im Haus-Modell: Häuser/Töpfe/Kästen legen
+  Pflanzplätze an (`storybook_common.plant_spot` → leere Objekte „PlantSpot_<art>_<n>“ mit extras
+  kind/width/depth/height/hint; `pot()`, `zinc_tub()`, `planter_box()` tun das selbst). `Outside/Greenery`
+  (scripts/world/greenery.gd) setzt beim Start Szenen aus scenes/world/plants/ (Wurzel `PlantPiece`)
+  darauf, als MultiMesh je Gebiet. `T.placed` setzt neue Objekte über `matrix_basis` (sonst landen
+  leere Objekte im Ursprung). Boden: Shader `storybook_ground.gdshader` (Materialien cobblestone,
+  sidewalk, curb_stone, alley_setts), runde Kanten `WorldMesh.add_round_edge`. Bücherei außen:
+  `build_storybook_library.py`, UpperFloors `build_visuals = false`. **Oberflächen im Spiel:** feine Muster blendet der Shader aus, sobald sie kleiner als
   ein paar Bildpunkte werden (`detail_fade`, sonst flimmert es sandig); gestrichenes Holz hat
   `grain="paint"` (matt, keine Maserung), nur echtes Holz `wood` (feine Linien), Stein ohne
   Risslinien. Markisen: Gelenkarme seitlich neben dem Stoff, Wind bläht nur nach außen.

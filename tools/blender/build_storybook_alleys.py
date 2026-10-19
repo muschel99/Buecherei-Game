@@ -337,7 +337,7 @@ def export(C, name, obstacles, spots):
     obstacles = {k: ((p[0], -p[1]), size, h) for k, (p, size, h) in (obstacles or {}).items()}
     cols = SC.colliders(C, obstacles) if obstacles else []
     for i, (kind, pos, size, face) in enumerate(spots):
-        SH.plant_spot(C, kind, pos, size, i, face)
+        SH.plant_spot(C, kind, pos, size, facing=face)
     objs = [o for k, c in C.items() if k not in ("env", "collision", "plants", "light") for o in c.objects if o.type == "MESH"]
     bad = [(o.name, SB.non_manifold(o)) for o in objs if SB.non_manifold(o)]
     glb = os.path.join(OUT, name + ".glb")
@@ -370,9 +370,11 @@ def main():
     mats(M)
     rnd = random.Random(31)
     C1 = collections("Gasse Bücherei")
+    SC.SPOTS["coll"] = C1["plants"]
     obstacles, spots = library_alley(M, C1, rnd)
     export(C1, "alley_library", {"Bank %d" % i: o for i, o in enumerate(obstacles)}, spots)
     C2 = collections("Gasse gegenüber")
+    SC.SPOTS["coll"] = C2["plants"]
     spots2 = opposite_alley(M, C2, random.Random(47))
     export(C2, "alley_opposite", None, spots2)
     if "--render" in argv:

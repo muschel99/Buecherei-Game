@@ -843,10 +843,12 @@ Bricht eine Sitzung ab: hier beim ersten offenen Punkt weitermachen.
 - [x] 4. Kleine Dinge draußen (Abflussdeckel neu, Briefkästen und Brett-Fensterläden an den Häusern,
       Türen mit Eisenbändern, Laternen mit dem gemeinsamen Kopf, Schilder bleiben Bilder) (Laternen, Schilder, Türen, Fensterläden, Briefkästen, Abflussdeckel,
       Bank) im selben Stil
-- [ ] 5. Pflanzen ganz neu: üppig, verschlungen, rund; jedes Blatt ein Körper; Efeu und
+- [x] 5. Pflanzen ganz neu: üppig, verschlungen, rund; jedes Blatt ein Körper; Efeu und
       Kletterpflanzen an Fassaden, Blumenkästen, Kübelpflanzen vor Türen, Ranken an Torhaus und
       Gasse, kleine Bäume/Büsche auf dem Platz; als austauschbare Szenen mit Vorlagen in
-      assets/models/templates/
+      assets/models/templates/ (30 Pflanzen: Geranien, Petunien, gemischte Kästen, Busch,
+      Hortensie, Olive, Lavendel, Ampeln, Efeu, Kletterrosen, Glyzinie, Funkie, Farn, Margeriten, Hecke,
+      Rosenstrauch, Gartenbaum, Bäumchen im Kübel; Greenery setzt sie auf ~350 Pflanzplätze)
 - [ ] 6. Rundgang: Screenshots aller wichtigen Blickpunkte, angleichen (auch Ladenhäuser, falls
       nötig), Holzmaserung und Farben authentischer, so lange bis die Welt stimmig ist
 - [ ] 7. Doku: GAME_DESIGN.md, ROADMAP.md, ASSET_GUIDE.md (neue Dateien, eigene Modelle für Häuser
@@ -882,6 +884,16 @@ Bricht eine Sitzung ab: hier beim ersten offenen Punkt weitermachen.
   weich ausgeblendet); Farben je Material im Inspektor einstellbar.
 - Häuser mit Straßenlaterne bekommen keine Stoffmarkisen (die Laterne hing sonst darin).
 - Die Kübel-Ecke der Bäckerei zur kleinen Gasse bleibt frei (dort blieben Passanten stecken).
+- Pflanzen: eigene Formen statt Kugeln – Blatt-Büschel aus vielen linsenförmigen Blättern um einen
+  kleinen dunklen Blattkern (der Kern füllt Lücken, man sieht ihn kaum), Kletterpflanzen als dichte
+  Blattpolster entlang geschwungener Triebe, Rosen aus Blütenblatt-Ringen, Hortensien aus vierblättrigen
+  Blüten. Pflanzen stecken nicht in den Haus-Modellen, sondern kommen über Pflanzplätze und eigene
+  Szenen (scenes/world/plants/) – austauschbar ohne Neubau der Häuser.
+- Leistung der Pflanzen: gleiche Pflanzen je 26-m-Gebiet als MultiMesh, kleine Pflanzen werden in der
+  Ferne ausgeblendet (Faktor je Grafikstufe plant_distance), auf „Niedrig“ ohne Pflanzenschatten.
+- Pflanzen und Blumen wiegen sich leicht im Wind (gleicher Wind wie die Markisen).
+- Auf dem Platz nur ein Bäumchen im Kübel (am Ende der Häuserreihe); ein zweites am Gasseneingang
+  blockierte Passanten auf ihrem Weg in den Garten.
 - build_street.py baut nur noch mit „-- --alter-stil“ (sonst würde es die neuen Häuser in
   houses.tscn zurückstellen).
 

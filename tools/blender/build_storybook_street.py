@@ -71,12 +71,14 @@ def build_one(key, spec, near, argv):
         st["canopy"] = None  # Häuser mit Straßenlaterne: keine Stoffmarkisen (die Laterne hängt sonst darin)
     SH.house_materials(M, st)
     C = collections(key)
+    SC.SPOTS["coll"] = C["plants"]
     house = SH.House(M, C, spec, st, key, near=near).build()
     objs = [o for k, c in C.items() if k not in ("env", "collision", "plants") for o in c.objects]
     SC.settle(objs, st["settle"], house.hw, house.E, house.ridge)
     bad = [(o.name, SB.non_manifold(o)) for o in objs if o.type == "MESH" and SB.non_manifold(o)]
     meshes = [o for o in objs if o.type == "MESH" and o.users_collection[0] is not C["light"]]
-    tris, parts = SC.export_objects(meshes, [], glb, palette=True, extra=house.spots)
+    cols = SC.colliders(C, house.obstacles) if house.obstacles else []
+    tris, parts = SC.export_objects(meshes, cols, glb, palette=True)
     mapping = SC.write_game_materials(only=set(SC.LAST_EXPORT_MATERIALS))
     SC.write_import_settings(mapping, glb)
     lantern = house.lantern_spot(LANTERNS[key]) if key in LANTERNS else None

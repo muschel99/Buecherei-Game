@@ -211,9 +211,6 @@ def upper(M, C, rnd):
             kb.tube([fm @ Vector((sx, -0.36, 0.04)), fm @ Vector((sx, -0.07, 0.4)), fm @ Vector((sx, -0.07, 0.04))], 0.009, segs=6,
                     round_ends=True)
         kb.build()
-        c = fm @ Vector((0, 0.175, 0.2))
-        nrm = fm.to_3x3() @ Vector((0, 0, 1))
-        SH.plant_spot(C, "box", tuple(c), (win_w + 0.12, 0.15, 0.4), len(C["plants"].objects), math.degrees(math.atan2(nrm.x, -nrm.y)))
         # warmer Raum dahinter
         rm = Body(name + " Raum", M["h_room"], C["inside"], seed=240 + k, vary=0.04)
         rm.box((0, 1.35, -1.5), (2.2, 2.9, 0.08), step=1, dent=0.0, matrix=fm)
@@ -280,6 +277,7 @@ def build_scene():
     M = SC.materials()
     mats(M)
     root = SB.collection("Bücherei (Bilderbuch)")
+    SC.SPOTS["coll"] = None
     C = {k: SB.collection(v, root) for k, v in (("walls", "Mauern"), ("roof", "Dach"), ("windows", "Fenster"), ("shop", "Ladenfront"),
                                                 ("inside", "Räume oben"), ("pots", "Kästen"), ("deco", "Deko"), ("plants", "Pflanzplätze"),
                                                 ("light", "Licht"))}
@@ -294,7 +292,7 @@ def build_scene():
     roof(M, C)
     # Pflanzplatz für den Kübel an der Gassenwand (wie bisher bei Godot z = 3,7)
     pm = T.canon(*LEFT, 5.78, GROUND, 0.32)
-    SH.plant_spot(C, "pot", tuple(pm @ Vector((0, 0, 0))), (0.5, 0.5, 1.0), len(C["plants"].objects), -90.0)
+    SH.plant_spot(C, "pot", tuple(pm @ Vector((0, 0, 0))), (0.5, 0.5, 1.0), facing=-90.0)
     objs = [o for k, c in C.items() if k not in ("env", "collision", "plants") for o in c.objects]
     SC.settle(objs, SETTLE, 3.2, E, E + RISE)
     return M, C
@@ -310,7 +308,7 @@ def main():
     bad = [(o.name, SB.non_manifold(o)) for o in objs if SB.non_manifold(o)]
     print("Offene Kanten: %s" % (bad if bad else "keine – alles geschlossene Körper"))
     # Raumkoordinaten von Godot: Blender (x, y, z) = Godot (x, -z, y) – glTF dreht das beim Export
-    tris, n = SC.export_objects(objs, [], GAME_GLB, palette=True, extra=list(C["plants"].objects))
+    tris, n = SC.export_objects(objs, [], GAME_GLB, palette=True)
     mapping = SC.write_game_materials(only=set(SC.LAST_EXPORT_MATERIALS))
     SC.write_import_settings(mapping, GAME_GLB)
     print("Spiel: %s (%d Dreiecke, %d Netze)" % (GAME_GLB, tris, n))

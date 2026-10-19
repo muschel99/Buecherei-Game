@@ -366,19 +366,13 @@ def rafters(M, C, name, x0, x1, y_front, z, n_every=0.55):
     b.build()
 
 
-def plant_spot(C, kind, pos, size, n, facing=0.0):
-    """Leerer Pflanzplatz (Objekt „PlantSpot_<art>_<n>“) mit Art und Größe als Eigenschaften:
-    kind = box (Blumenkasten), pot (Kübel vor der Tür), climber (Kletterpflanze an der Wand),
-    bed (Beet im Vorgarten). size = (Breite, Tiefe, Höhe) in m; facing = Drehung um z (Grad)."""
-    e = bpy.data.objects.new("PlantSpot_%s_%d" % (kind, n), None)
-    e.empty_display_type = "ARROWS"
-    e.empty_display_size = 0.25
-    e.location = pos
-    e.rotation_euler = (0.0, 0.0, math.radians(facing))
-    e["kind"] = kind
-    e["width"], e["depth"], e["height"] = (round(v, 3) for v in size)
-    C["plants"].objects.link(e)
-    return e
+def plant_spot(C, kind, pos, size, n=0, facing=0.0, hint=""):
+    """Leerer Pflanzplatz (storybook_common.plant_spot): kind = box (Blumenkasten), pot (Kübel mit
+    Pflanze vor der Tür), potfill (Pflanze in einem vorhandenen Topf), basket (Ampel), climber
+    (Kletterpflanze an der Wand, Ursprung auf der Wand), bed (Beet), hedge, tree, tubtree.
+    size = (Breite, Tiefe, Höhe) in m; facing = Drehung um z (Grad)."""
+    SC.SPOTS["coll"] = C["plants"]
+    return SC.plant_spot(kind, pos, size, facing, hint)
 
 
 # --- Haus ---
@@ -401,15 +395,15 @@ class House:
         self.front = ((-self.hw, self.sb), (self.hw, self.sb))
         self.upper_front = ((-self.hw, self.sb - self.jetty), (self.hw, self.sb - self.jetty))
         self.spots = []
+        self.obstacles = {}
         self.lantern = None
         self.n_spot = 0
 
     def fx(self, x):
         return x + self.hw
 
-    def spot(self, kind, pos, size, facing=0.0):
-        self.spots.append(plant_spot(self.C, kind, pos, size, self.n_spot, facing))
-        self.n_spot += 1
+    def spot(self, kind, pos, size, facing=0.0, hint=""):
+        self.spots.append(plant_spot(self.C, kind, pos, size, facing=facing, hint=hint))
 
     # Öffnungen der Front
     def layout(self):
@@ -670,10 +664,6 @@ class House:
                 kb.tube([fm @ Vector((sx, -0.36, 0.04)), fm @ Vector((sx, -0.07, 0.4)), fm @ Vector((sx, -0.07, 0.04))], 0.009, segs=6,
                         round_ends=True)
             kb.build()
-            # Mitte der Erde im Kasten; Blickrichtung = Wandnormale
-            c = fm @ Vector((0, 0.2 - 0.045 + 0.02, 0.2))
-            nrm = fm.to_3x3() @ Vector((0, 0, 1))
-            self.spot("box", tuple(c), (bw - 0.06, 0.15, 0.4), facing=math.degrees(math.atan2(nrm.x, -nrm.y)))
 
     def juliet(self):
         """Französischer Balkon: schmiedeeisernes Gitter vor dem mittleren Fenster oben."""
@@ -702,7 +692,7 @@ class House:
             if info[0] != "full":
                 # nur vorn ein Stück frei: Kletterpflanze an der Seitenwand
                 if info[1] > 0.5:
-                    m = T.canon(p0, p1, info[1] / 2 if side > 0 else L - info[1] / 2, 0.0, 0.08)
+                    m = T.canon(p0, p1, info[1] / 2 if side > 0 else L - info[1] / 2, 0.0, 0.0)
                     c = m @ Vector((0, 0, 0))
                     self.spot("climber", (c.x, c.y, 0.0), (min(2.5, info[1] - 0.2), 0.3, self.E - 0.6),
                               facing=90.0 * side)
@@ -986,8 +976,10 @@ class House:
             # Kübel neben der Tür, wenn dort Platz ist
             for side in (-1, 1):
                 x = d["x"] + side * (d["w"] / 2 + 0.38)
-                if any(a + 0.2 < x < b - 0.2 for a, b in gaps) and self.rnd.random() < 0.6:
-                    self.spot("pot", (x, -0.3, 0.0), (0.5, 0.5, 1.0))
+                if any(a + 0.2 < x < b - 0.2 for a, b in gaps) and self.rnd.random() < 0.6 and \
+                        self.spec.get("walk_depth", 0.44) >= 0.6 and abs(x - getattr(self, "mailbox_x", 99.0)) > 0.4:
+                    self.spot("pot", (x, sb - 0.32, 0.0), (0.5, 0.5, 1.0))
+                    self.obstacles["Kübel %d" % len(self.obstacles)] = ((x, sb - 0.32), (0.5, 0.5), 0.9)
         # Kletterpflanze am breitesten freien Streifen (Hauswand), sonst neben der Tür
         if gaps:
             a, b = max(gaps, key=lambda g: g[1] - g[0])
@@ -1001,7 +993,7 @@ class House:
             if self.st.get("hood") and abs(d["x"] - c) < d["w"] / 2 + w / 2 + 0.4:
                 top = min(top, d["h"] + 0.2)
             if top > 1.2:
-                self.spot("climber", (c, sb - 0.06, 0.0), (w, 0.3, top))
+                self.spot("climber", (c, sb, 0.0), (w, 0.3, top))
         self.gaps = gaps
 
     def lantern_spot(self, prefer=None):

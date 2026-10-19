@@ -7,6 +7,8 @@ extends Node3D
 ## Laufen: Die Bodenkollision baut die Straße (Street) für alles draußen.
 
 @export var material: Material = preload("res://assets/materials/sidewalk.tres")
+## Bäumchen im Kübel: (x, Abstand vor den zurückgesetzten Hausfronten nach -z) – leer = keine.
+@export var tree_spots: PackedVector2Array = PackedVector2Array([Vector2(-16.35, -0.55)])
 
 
 func _ready() -> void:
@@ -21,3 +23,16 @@ func _ready() -> void:
 	var builder := WorldMesh.new()
 	builder.add_floor(points, 0.0, Color.WHITE)
 	add_child(builder.make_instance("Paving", material, false))
+	_add_plant_spots()
+
+
+## Pflanzplätze für Bäumchen im Kübel (Stil-Umbau, Schritt 5): Greenery setzt dort Pflanzen mit
+## eigener Kollision ein. Lage: vor dem Ende der Häuserreihe und an der Ecke des Pubs zur Gasse.
+func _add_plant_spots() -> void:
+	var back := StreetLayout.recess_z()
+	for spot in tree_spots:
+		var marker := Marker3D.new()
+		marker.name = "PlantSpot_tubtree_%d" % get_child_count()
+		marker.position = Vector3(spot.x, 0.0, back + spot.y)
+		marker.set_meta("extras", {"kind": "tubtree", "width": 0.9, "depth": 0.9, "height": 3.0})
+		add_child(marker)

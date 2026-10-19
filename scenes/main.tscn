@@ -7,6 +7,7 @@
 ; als Platzhalter), "Plaza" (Platz vor der Schräge), "Alley" (Gasse mit Abschluss) und
 ; "OppositeAlley" (kleine Gasse gegenüber, seit Etappe 4f). Lage
 ; aller Teile: scripts/world/street_layout.gd. "Deliveries" ist der Lieferort der Kartons.
+; "Greenery" (seit dem Stil-Umbau, Schritt 5): setzt die Pflanzen auf alle Pflanzplätze (PlantSpot_…).
 ; "StreetLife" (seit Etappe 5a): Passanten, Fahrräder, Autos und Lieferwagen; die Punkte unter
 ; "WindowSpots" sind Stellen vor Schaufenstern, an denen Passanten stehen bleiben (Blickrichtung
 ; = -Z des Punkts, also der blaue Pfeil zeigt vom Fenster weg).
@@ -40,6 +41,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/alley.tscn" id="29_alley"]
 [ext_resource type="PackedScene" path="res://scenes/world/opposite_alley.tscn" id="31_opposite_alley"]
 [ext_resource type="Script" path="res://scripts/street_life/street_life.gd" id="32_street_life"]
+[ext_resource type="Script" path="res://scripts/world/greenery.gd" id="33_greenery"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -100,6 +102,9 @@ sky_mode = 1
 
 [node name="Outside" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="Greenery" type="Node3D" parent="Outside"]
+script = ExtResource("33_greenery")
 
 [node name="Street" parent="Outside" instance=ExtResource("26_street")]
 

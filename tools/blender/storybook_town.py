@@ -67,8 +67,10 @@ def placed(coll, matrix, fn, *args, **kw):
     before = set(bpy.data.objects)
     out = fn(*args, **kw)
     for o in bpy.data.objects:
-        if o not in before:
-            o.matrix_world = matrix @ o.matrix_world
+        if o not in before and o.parent is None:
+            # matrix_basis statt matrix_world: neue leere Objekte (Pflanzplätze) haben ihre Lage nur in
+            # location, matrix_world rechnet Blender erst beim nächsten Update aus
+            o.matrix_world = matrix @ o.matrix_basis
     return out
 
 
@@ -511,7 +513,7 @@ def hanging_basket(M, C, name, x, z, reach=0.5, drop=0.42, radius=0.17, mat="pot
         p = base + Vector((math.cos(a) * rim * 0.92, math.sin(a) * rim * 0.92, h + 0.005))
         ir.tube([ring, p], 0.0035, segs=5, round_ends=True)
     ir.build()
-    SC.pot(M, C["pots"], name + " Topf", tuple(base), radius, h, seed + 3, mat=mat, style="bowl")
+    SC.pot(M, C["pots"], name + " Topf", tuple(base), radius, h, seed + 3, mat=mat, style="bowl", spot="basket")
 
 
 def bicycle(M, C, name, x, y, seed=90):

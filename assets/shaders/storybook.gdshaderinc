@@ -45,9 +45,11 @@ void vertex() {
 		// Der Wind bläht den Stoff nur nach außen und oben auf (0..1), nie zurück zu Kasten und
 		// Stange – so sticht nichts durch.
 		float t = TIME;
-		float wave = sin(t * 1.6 + VERTEX.x * 1.4 + VERTEX.z * 0.9) * 0.6
-			+ sin(t * 2.9 + VERTEX.x * 3.1 - VERTEX.y * 1.7) * 0.3
-			+ sin(t * 0.7 + VERTEX.x * 0.5) * 0.4;
+		// Phase aus der Lage in der Welt (gebündelte Pflanzen schwingen nicht alle gleich)
+		vec3 wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+		float wave = sin(t * 1.6 + wp.x * 1.4 + wp.z * 0.9) * 0.6
+			+ sin(t * 2.9 + wp.x * 3.1 - wp.y * 1.7) * 0.3
+			+ sin(t * 0.7 + wp.x * 0.5 + wp.z * 0.3) * 0.4;
 		float puff = clamp(0.5 + 0.5 * wave / 1.3, 0.0, 1.0);
 		VERTEX += vec3(0.0, 0.55, 0.85) * sway * puff;
 	}
