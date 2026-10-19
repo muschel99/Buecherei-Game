@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+; Eingangstreppe im Bilderbuch-Stil: ruhiger, warmer Sandstein ohne Fugen (Shader
+; assets/shaders/storybook_ground.gdshader, Muster 4 = nach der Lage im Modell).
+
+[ext_resource type="Shader" path="res://assets/shaders/storybook_ground.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "Treppe Sandstein (Bilderbuch)"
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/pattern = 4
+shader_parameter/stone_size = 0.860
+shader_parameter/color_a = Color(0.840, 0.740, 0.600, 1)
+shader_parameter/color_b = Color(0.880, 0.800, 0.670, 1)
+shader_parameter/color_c = Color(0.930, 0.870, 0.760, 1)
+shader_parameter/color_accent = Color(0.820, 0.700, 0.570, 1)
+shader_parameter/joint_color = Color(0.640, 0.580, 0.500, 1)
+shader_parameter/joint = 0.014
+shader_parameter/roughness_value = 0.88
+shader_parameter/bump_strength = 0.0
+shader_parameter/rotate_90 = false

@@ -120,15 +120,26 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 				fitting = fitting.filter(func(x: Dictionary) -> bool: return x.hint == "")
 			if fitting.is_empty():
 				return out
+			# bevorzugt Pflanzen, die (fast) in die Breite passen – sonst die schmalste
+			var narrow := fitting.filter(func(x: Dictionary) -> bool: return (x.size as Vector3).x <= size.x * 1.25)
+			if narrow.is_empty():
+				var smallest := INF
+				for x: Dictionary in fitting:
+					smallest = minf(smallest, (x.size as Vector3).x)
+				narrow = fitting.filter(func(x: Dictionary) -> bool: return (x.size as Vector3).x <= smallest + 0.01)
 			var best := 0.0
-			for x: Dictionary in fitting:
+			for x: Dictionary in narrow:
 				best = maxf(best, (x.size as Vector3).y)
-			var tall := fitting.filter(func(x: Dictionary) -> bool: return (x.size as Vector3).y >= best - 0.6)
+			var tall := narrow.filter(func(x: Dictionary) -> bool: return (x.size as Vector3).y >= best - 0.6)
 			var e: Dictionary = _pick(tall, "", rng)
 			var nominal: Vector3 = e.size
-			var s := minf(minf(size.y / nominal.y, size.x / nominal.x), 1.15)
-			if s >= 0.55:
-				out.append([e, Transform3D(Basis().scaled(Vector3(s * rng.randf_range(0.95, 1.05), s, s)), Vector3.ZERO)])
+			# Breite nie größer als der Platz (Fenster bleiben frei); Höhe für sich, Breite höchstens
+			# 30 % schmaler als die Höhe (sonst wirken die Blätter gestaucht)
+			var sy := minf(size.y / nominal.y, 1.15)
+			var sx := minf(size.x / nominal.x, sy)
+			sy = minf(sy, sx / 0.7)
+			if sy >= 0.5:
+				out.append([e, Transform3D(Basis().scaled(Vector3(sx, sy, sx)), Vector3.ZERO)])
 		"bed":
 			var e0: Dictionary = entries[0]
 			var cell := (e0.size as Vector3).x * 0.9

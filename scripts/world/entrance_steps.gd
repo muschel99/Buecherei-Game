@@ -16,7 +16,7 @@ extends Node3D
 ## das Script keine Platzhalter-Stufen, die Rampe (Kollision) bleibt.
 ## Passanten gehen um die Treppe herum (StreetObstacle-Kreise, seit Etappe 5a).
 
-@export var material: Material = preload("res://assets/materials/curb_stone.tres")
+@export var material: Material = preload("res://assets/materials/entrance_steps.tres")
 
 
 func _ready() -> void:

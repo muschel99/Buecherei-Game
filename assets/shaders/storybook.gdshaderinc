@@ -169,34 +169,15 @@ void fragment() {
 	float blot = fbm(p * blot_scale, 3);
 	col *= mix(1.0 - vary, 1.0 + vary, smoothstep(0.3, 0.7, blot));
 	if (grain == 2) {
-		// Holz: Bretter (je etwa 13 cm breit) in leicht verschiedenen Tönen – heller, rötlicher oder
-		// dunkler –, darin geschwungene Jahresringe (Maserung entlang y), dazwischen feine Poren und
-		// selten ein Astloch mit Ringen drumherum. Aus der Ferne bleiben nur die Brett-Töne.
-		float across = p.x - p.z;
-		float plank = floor(across / 0.13);
-		float ph = hash(vec3(plank, 2.3, 7.1));
-		float ph2 = hash(vec3(plank, 9.4, 1.7));
-		col *= mix(vec3(0.9, 0.9, 0.92), vec3(1.08, 1.03, 0.96), ph);
-		col = mix(col, col * vec3(1.06, 0.94, 0.88), step(0.75, ph2) * 0.6);
-		// Astloch: je Brett und Meter höchstens eins
-		float seg = floor(p.y / 0.9);
-		vec2 knot = vec2((plank + 0.25 + 0.5 * hash(vec3(plank, seg, 3.3))) * 0.13, (seg + hash(vec3(plank, seg, 5.1))) * 0.9);
-		vec2 dk = vec2(across, p.y) - knot;
-		float kd = length(dk * vec2(1.0, 0.45));
-		float has_knot = step(0.72, hash(vec3(plank, seg, 8.8)));
-		float warp = has_knot * 0.06 * exp(-kd * kd / 0.004);
-		float u = p.y * 30.0 + 2.0 * fbm(vec3(across * 3.0, p.y * 0.6, plank), 3) + warp * 60.0;
-		float rings = 0.5 + 0.5 * sin(u * 6.2832);
-		float lines = smoothstep(0.65, 1.0, rings) * detail_fade(px, 30.0);
-		col *= 1.0 - 0.12 * lines;
-		col *= 1.0 - 0.06 * fbm(vec3(across * 40.0, p.y * 4.0, plank), 2) * detail_fade(px, 40.0);
-		float knot_dark = has_knot * (1.0 - smoothstep(0.008, 0.02, kd));
-		col = mix(col, col * vec3(0.55, 0.45, 0.38), knot_dark * detail_fade(px, 25.0));
-		// Fuge zwischen den Brettern (nur aus der Nähe)
-		float fx = fract(across / 0.13) * 0.13;
-		float gap = (1.0 - smoothstep(0.0, 0.004 + px, min(fx, 0.13 - fx))) * detail_fade(px, 60.0);
-		col *= 1.0 - 0.25 * gap;
-		height = (1.0 - lines) * 0.7 + (1.0 - gap) * 0.3;
+		// Holz im Bilderbuch-Stil: ruhige, weiche Maserung – breite, sanft geschwungene Streifen in
+		// leicht verschiedenen Brauntönen, ohne harte Linien, Astlöcher oder Fugen. Bewusst
+		// niedrige Frequenz und kein Relief (feine Muster ergaben Treppchen-Pixel).
+		float warp = fbm(p * vec3(1.2, 0.35, 1.2), 3);
+		float streak = 0.5 + 0.5 * sin((p.x * 7.0 - p.z * 7.0 + warp * 3.0) * 6.2832 * 0.5);
+		float soft = fbm(vec3((p.x - p.z) * 9.0, p.y * 1.2, 0.0), 2);
+		float tone = mix(streak, soft, 0.5);
+		col *= mix(0.92, 1.05, smoothstep(0.2, 0.8, tone));
+		height = 0.0;
 	} else if (grain == 1) {
 		// Stein: weich unregelmäßig, leichte Farbwolken, keine Risslinien
 		col *= mix(0.95, 1.04, fbm(p * 3.0 + vec3(5.0), 2));
@@ -207,7 +188,8 @@ void fragment() {
 	} else if (grain == 4) {
 		height = fbm(p * 90.0, 2) * detail_fade(px, 90.0);
 	} else if (grain == 5) {
-		height = fbm(p * 90.0, 2) * detail_fade(px, 90.0);
+		// Blätter und Blüten: glatt und prall, nur ganz sanfte Wellen (keine Körnung)
+		height = fbm(p * 5.0, 2) * 0.35;
 	} else if (grain == 6) {
 		height = fbm(p * 25.0, 2) * detail_fade(px, 25.0);
 	} else if (grain == 7) {

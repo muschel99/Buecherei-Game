@@ -151,7 +151,8 @@ def materials():
         "grass": M("Gras", (0.36, 0.5, 0.2), grain="leaf", rough=0.8, vary=0.15, plant=True),
         # Pub "The Ink & Ivy"
         "pub_brick": M("Backstein Ziegelrot", (0.66, 0.4, 0.28), grain="brick", rough=0.92, vary=0.07, color2=(0.6, 0.52, 0.43)),
-        "pub_arch": M("Backstein Bogen hell", (0.78, 0.55, 0.4), grain="brick", rough=0.92, vary=0.06, color2=(0.62, 0.55, 0.46)),
+        # Bogensteine über den Fenstern: ruhig, ohne Ziegelmuster (jeder Stein ein eigener Farbton)
+        "pub_arch": M("Bogenstein Terrakotta", (0.8, 0.57, 0.42), rough=0.9, vary=0.12, scale=2.0, bump=0.15),
         "pub_side": M("Backstein Seitenwand", (0.58, 0.38, 0.28), grain="brick", rough=0.92, vary=0.07, color2=(0.56, 0.49, 0.41)),
         "bottle": M("Lack Flaschengrün", (0.2, 0.3, 0.22), grain="paint", rough=0.72, vary=0.06, bump=0.12),
         "bottle_dark": M("Lack Flaschengrün dunkel", (0.14, 0.22, 0.16), grain="paint", rough=0.72, vary=0.05, bump=0.12),

@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://b4lpbbc46bp8f"
+uid="uid://drywhk3q1mcia"
 path="res://.godot/imported/climber_wisteria_55.glb-998e51eef0e555129831ee17fa0884d3.scn"
 
 [deps]
@@ -41,11 +41,6 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"Sammel Blatt": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/sammel_blatt.tres",
-"use_external/path": "res://assets/materials/storybook/sammel_blatt.tres"
-},
 "Sammel Holz": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_holz.tres",

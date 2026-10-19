@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cog4j4clcr474"
+uid="uid://c3lhm3upnn3da"
 path="res://.godot/imported/climber_ivy_40.glb-7bfef45ec2d8e92df165882d9a9d90b2.scn"
 
 [deps]
@@ -41,11 +41,6 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"Sammel Blatt": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/sammel_blatt.tres",
-"use_external/path": "res://assets/materials/storybook/sammel_blatt.tres"
-},
 "Sammel Pflanze": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_pflanze.tres",

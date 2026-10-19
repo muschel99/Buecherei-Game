@@ -6,6 +6,8 @@
 //   pattern 1 = Platten (verschieden breite Reihen – Gehwege, Platz, Gasse)
 //   pattern 2 = Bordstein-Quader (lange Steine)
 //   pattern 3 = Kleinpflaster (kleine runde Steine in Reihen – Gassen)
+//   pattern 4 = ruhiger Sandstein ohne Fugen, nach der Lage im Modell (Eingangstreppe: jede Stufe
+//               ein ganzer Stein, Muster dreht sich mit der Treppe)
 shader_type spatial;
 
 uniform int pattern = 0;
@@ -26,10 +28,14 @@ uniform bool rotate_90 = false;
 
 varying vec3 world_pos;
 varying vec3 world_normal;
+varying vec3 local_pos;
+varying vec3 local_normal;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	local_pos = VERTEX;
+	local_normal = NORMAL;
 }
 
 float hash12(vec2 p) {
@@ -129,6 +135,17 @@ void fragment() {
 		col = mix(joint_color.rgb, stone_color(id), stone);
 		// Flecken und leichte Abnutzung auf jeder Platte
 		col *= 0.93 + 0.12 * vnoise(uv * 2.3 + id * 3.1);
+	} else if (pattern == 4) {
+		// ruhiger Sandstein: weiche Wolken in zwei Tönen, ein paar helle Sprenkel, keine Fugen
+		vec3 lp = local_pos;
+		vec2 luv = abs(local_normal.y) > 0.5 ? lp.xz : (abs(local_normal.x) > abs(local_normal.z) ? lp.zy : lp.xy);
+		uv = luv;
+		id = vec2(0.0);
+		float cloud = vnoise(luv * 1.6 + 3.1) * 0.6 + vnoise(luv * 4.3) * 0.4;
+		col = mix(color_a.rgb, color_b.rgb, smoothstep(0.25, 0.75, cloud));
+		col = mix(col, color_c.rgb, smoothstep(0.62, 0.8, vnoise(luv * 7.0 + 11.0)) * 0.5);
+		height = 0.0;
+		edge_m = 1.0;
 	} else {
 		// Bordstein: lange Quader entlang u
 		float L = stone_size;
@@ -144,7 +161,7 @@ void fragment() {
 	float grain = vnoise(uv * 40.0) * (1.0 - smoothstep(0.004, 0.012, px));
 	col *= 0.96 + 0.08 * grain;
 	// aus der Ferne: Fugen und Wölbung weich verschwinden lassen
-	float far = smoothstep(stone_size * 0.06, stone_size * 0.22, px);
+	float far = pattern == 4 ? 0.0 : smoothstep(stone_size * 0.06, stone_size * 0.22, px);
 	col = mix(col, mix(stone_color(id), joint_color.rgb, 0.15), far * 0.6);
 	height *= 1.0 - far;
 	ALBEDO = col;

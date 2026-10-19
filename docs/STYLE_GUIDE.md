@@ -146,6 +146,15 @@ Schilder sind weiter Bilder der Entwicklerin.
 - Üppig: Blumenkästen an möglichst jedem Fenster, Efeu an Fassaden, Büsche und Bäume.
 - Natürlich, nicht symmetrisch: Äste in natürlichen Richtungen, Laub ungleich dicht, einzelne
   Blüten und Zweige stehen heraus; Buchs nicht exakt rund.
+- **Blätter prall und rund** (Vorlagebilder der Entwicklerin): jedes Blatt ein glatter, kissenförmiger
+  Körper mit runder Spitze, gut einzeln erkennbar, an sichtbaren Stielen; keine Körnung, keine
+  spitzen Zacken. Blüten mit fünf runden Blütenblättern (Kerbe dazwischen), zu Kuppeln geordnet.
+- **Keine Grundformen sichtbar:** Kerne in Büschen und Blütenköpfen sind klein und dunkel und ganz
+  von Blättern/Blüten verdeckt – man sieht sie höchstens als Schatten.
+- **Kletterpflanzen sind Ranken:** verholzte Haupttriebe, geschwungene Seitentriebe, einzelne Blätter
+  in kleinen Büscheln – keine dichten Blattpolster.
+- **Fensterbögen** haben ein eigenes, ruhiges Material (kein Ziegelmuster der Wand). Über runden
+  Fenstern sitzt immer ein gebogener Sturz, gerade Stürze nur über geraden Fenstern.
 
 **Licht (kommt für die ganze Welt)**
 - Warm um 3500 K, weiche fließende Schatten, keine harten Kontraste, mildes warmes Bloom um

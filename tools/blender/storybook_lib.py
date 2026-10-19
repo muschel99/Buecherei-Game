@@ -150,19 +150,19 @@ def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bum
         wave = N.new("ShaderNodeTexWave")
         wave.wave_type = "BANDS"
         wave.bands_direction = "Z"
-        # feine Linien etwa alle 2,5 cm, leicht geschwungen
-        wave.inputs["Scale"].default_value = 38.0
-        wave.inputs["Distortion"].default_value = 2.5
+        # ruhige, breite Maserung (wie im Godot-Shader: keine feinen Linien)
+        wave.inputs["Scale"].default_value = 3.5
+        wave.inputs["Distortion"].default_value = 3.0
         wave.inputs["Detail"].default_value = 2.0
         L.new(coord.outputs["Object"], wave.inputs["Vector"])
         dark = N.new("ShaderNodeMapRange")
-        dark.inputs["To Min"].default_value = 0.93
+        dark.inputs["To Min"].default_value = 0.92
         L.new(wave.outputs["Fac"], dark.inputs["Value"])
         hv = N.new("ShaderNodeHueSaturation")
         L.new(col, hv.inputs["Color"])
         L.new(dark.outputs[0], hv.inputs["Value"])
         col = hv.outputs[0]
-        height = wave.outputs["Fac"]
+        height = None
     elif grain == "stone":
         # weich unregelmäßig, keine Risslinien
         st = N.new("ShaderNodeTexNoise")
@@ -205,7 +205,7 @@ def material(name, color, rough=0.85, grain="plaster", vary=0.08, scale=4.0, bum
         height = brick.outputs["Fac"]
     else:
         fine = N.new("ShaderNodeTexNoise")
-        fine.inputs["Scale"].default_value = {"plaster": 7.0, "fabric": 90.0, "leaf": 90.0, "smooth": 25.0, "paint": 6.0}.get(grain, 40.0)
+        fine.inputs["Scale"].default_value = {"plaster": 7.0, "fabric": 90.0, "leaf": 5.0, "smooth": 25.0, "paint": 6.0}.get(grain, 40.0)
         fine.inputs["Detail"].default_value = 8.0
         L.new(coord.outputs["Object"], fine.inputs["Vector"])
         height = fine.outputs["Fac"]
@@ -473,10 +473,10 @@ class Body:
         return faces
 
     def leaf(self, base, direction, normal, length, width, shape="oval", thick=0.003, curl=0.15, tint=None, segs=None):
-        """Blatt als kleiner Körper: linsenförmig – Ober- und Unterseite wölben sich zur Mitte
-        hin auf und treffen sich am Rand (weich, ohne scharfe Kante). Formen: ivy (dreilappig),
-        oval, round (Geranie, gewellter Rand), narrow (Olive), petal (Blütenblatt), heart.
-        curl biegt das Blatt leicht."""
+        """Blatt als kleiner, weich gewölbter Körper (wie ein Kissen): runder Umriss mit vielen
+        Randpunkten, Ober- und Unterseite wölben sich über einen inneren Ring zur Mitte auf –
+        im Querschnitt rund, nirgends eine scharfe Kante. Formen: ivy (dreilappig), oval, round
+        (Geranie, leicht gewellt), narrow (Olive), petal (Blütenblatt), heart. curl biegt das Blatt."""
         f = Vector(direction).normalized()
         n = Vector(normal)
         n = (n - f * n.dot(f))
@@ -488,17 +488,31 @@ class Body:
         def at(u, w):
             bend = curl * (u * u) * length - abs(w) * curl * 0.3 * width
             return Vector(base) + f * (u * length) + s_ * (w * width * 0.5) + n * bend
+        uc = 0.45
         rim = [bm.verts.new(at(u, w)) for u, w in outline]
-        # Mitte oben und unten etwas aufgewölbt (Blatt ist in der Mitte dicker als am Rand)
-        top = bm.verts.new(at(0.42, 0.0) + n * thick * 0.5)
-        bot = bm.verts.new(at(0.42, 0.0) - n * thick * 0.5)
+        top = bm.verts.new(at(uc, 0.0) + n * thick * 0.55)
+        bot = bm.verts.new(at(uc, 0.0) - n * thick * 0.42)
         faces = []
         k = len(rim)
+        if length < 0.17:
+            # kleine Blätter (die allermeisten): Rand direkt zur gewölbten Mitte – weich schattiert genauso
+            # rund, aber nur ein Drittel der Dreiecke
+            for i in range(k):
+                j = (i + 1) % k
+                faces.append(bm.faces.new((rim[i], rim[j], top)))
+                faces.append(bm.faces.new((rim[j], rim[i], bot)))
+            self._finish_island(rim + [top, bot], faces, tint)
+            return faces
+        # große Blätter: innerer Ring (60 % zur Mitte) oben und unten aufgewölbt
+        t_in = [bm.verts.new(at(uc + (u - uc) * 0.6, w * 0.6) + n * thick * 0.42) for u, w in outline]
+        b_in = [bm.verts.new(at(uc + (u - uc) * 0.6, w * 0.6) - n * thick * 0.32) for u, w in outline]
         for i in range(k):
             j = (i + 1) % k
-            faces.append(bm.faces.new((rim[i], rim[j], top)))
-            faces.append(bm.faces.new((rim[j], rim[i], bot)))
-        self._finish_island(rim + [top, bot], faces, tint)
+            faces.append(bm.faces.new((rim[i], rim[j], t_in[j], t_in[i])))
+            faces.append(bm.faces.new((t_in[i], t_in[j], top)))
+            faces.append(bm.faces.new((rim[j], rim[i], b_in[i], b_in[j])))
+            faces.append(bm.faces.new((b_in[j], b_in[i], bot)))
+        self._finish_island(rim + t_in + b_in + [top, bot], faces, tint)
         return faces
 
     def panel(self, matrix, width, height, thick, outline=None, tint=None):
@@ -526,28 +540,56 @@ class Body:
         return faces
 
     def star(self, center, normal, size, points, rnd, thick=0.004, cup=0.25, tint=None):
-        """Ganze Blüte als ein Körper: Stern mit points Blütenblättern, leicht schalenförmig,
-        in der Mitte etwas dicker (Ober- und Unterseite treffen sich am Rand)."""
-        n = Vector(normal).normalized()
-        ref = Vector((0, 0, 1)) if abs(n.z) < 0.9 else Vector((1, 0, 0))
-        s1 = n.cross(ref).normalized()
-        s2 = n.cross(s1).normalized()
+        """Ganze Blüte als ein weicher Körper: runde Blütenblätter (Umriss mit sanften, runden
+        Bögen statt Spitzen), leicht schalenförmig, in der Mitte zu einem runden Polster gewölbt –
+        wie gemalt, nicht sternförmig."""
+        nrm = Vector(normal).normalized()
+        ref = Vector((0, 0, 1)) if abs(nrm.z) < 0.9 else Vector((1, 0, 0))
+        s1 = nrm.cross(ref).normalized()
+        s2 = nrm.cross(s1).normalized()
         spin = rnd.uniform(0, 2 * math.pi)
         c = Vector(center)
-        rim = []
-        for k in range(points * 2):
-            a = spin + 2 * math.pi * k / (points * 2)
-            r = size * (1.0 if k % 2 else 0.45)
-            rim.append(self.bm.verts.new(c + (s1 * math.cos(a) + s2 * math.sin(a)) * r + n * cup * r))
-        top = self.bm.verts.new(c + n * thick)
-        bot = self.bm.verts.new(c - n * thick * 0.6)
+        m = points * (6 if size >= 0.016 else 4)
+        th = max(thick, size * 0.16)
+        bm = self.bm
+        rings = []
+        small = size < 0.05   # kleine Blüten: Rand direkt zur gewölbten Mitte (weniger Dreiecke)
+        for frac, lift_t, lift_b in ((1.0, 0.0, 0.0),) + (() if small else ((0.55, 0.55, -0.35),)):
+            top_ring, bot_ring = [], []
+            for k in range(m):
+                a = spin + 2 * math.pi * k / m
+                # runde Blütenblätter mit kleiner Kerbe dazwischen (wie gemalte Blüten)
+                lobe = abs(math.cos(points * (a - spin) / 2))
+                r = size * frac * (0.58 + 0.42 * lobe ** 0.55)
+                d = s1 * math.cos(a) + s2 * math.sin(a)
+                p = c + d * r + nrm * cup * r
+                if frac == 1.0:
+                    v = bm.verts.new(p)
+                    top_ring.append(v)
+                    bot_ring.append(v)
+                else:
+                    top_ring.append(bm.verts.new(p + nrm * th * lift_t))
+                    bot_ring.append(bm.verts.new(p + nrm * th * lift_b))
+            rings.append((top_ring, bot_ring))
+        rim = rings[0][0]
+        top = bm.verts.new(c + nrm * th * 0.9)
+        bot = bm.verts.new(c - nrm * th * 0.5)
         faces = []
-        m = len(rim)
+        if small:
+            for i in range(m):
+                j = (i + 1) % m
+                faces.append(bm.faces.new((rim[i], rim[j], top)))
+                faces.append(bm.faces.new((rim[j], rim[i], bot)))
+            self._finish_island(rim + [top, bot], faces, tint)
+            return faces
+        t_in, b_in = rings[1]
         for i in range(m):
             j = (i + 1) % m
-            faces.append(self.bm.faces.new((rim[i], rim[j], top)))
-            faces.append(self.bm.faces.new((rim[j], rim[i], bot)))
-        self._finish_island(rim + [top, bot], faces, tint)
+            faces.append(bm.faces.new((rim[i], rim[j], t_in[j], t_in[i])))
+            faces.append(bm.faces.new((t_in[i], t_in[j], top)))
+            faces.append(bm.faces.new((rim[j], rim[i], b_in[i], b_in[j])))
+            faces.append(bm.faces.new((b_in[j], b_in[i], bot)))
+        self._finish_island(rim + t_in + b_in + [top, bot], faces, tint)
         return faces
 
     def text(self, string, size, depth, matrix, font="DejaVuSerif-Bold.ttf", jitter=0.0, tint=None, spacing=1.0):
@@ -624,9 +666,9 @@ def _leaf_outline(shape, rnd, segs=None):
         n = segs or 12
         for k in range(n):
             t = 2 * math.pi * k / n
-            x = math.sin(t) ** 3
+            x = math.sin(t) ** 3 * 0.55 + math.sin(t) * 0.45   # fülliger, runde Lappen
             y = (13 * math.cos(t) - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t)) / 17.0
-            out.append(((0.72 - y) / 1.72, x * rnd.uniform(0.93, 1.05)))
+            out.append(((0.72 - y) / 1.72, x * rnd.uniform(0.97, 1.03)))
         return out
     if shape == "ivy":
         # Efeublatt: drei bis fünf Lappen, jedes etwas anders
@@ -636,19 +678,20 @@ def _leaf_outline(shape, rnd, segs=None):
             side.append((u, w * rnd.uniform(0.9, 1.1)))
         pts = [(0.0, 0.0)] + [(u, -w) for u, w in side] + [(1.0, 0.0)] + [(u, w) for u, w in reversed(side)]
         return pts
-    n = segs or {"oval": 8, "round": 9, "narrow": 7, "petal": 6}.get(shape, 8)
+    n = segs or {"oval": 8, "round": 9, "narrow": 6, "petal": 6}.get(shape, 8)
     right = []
     for i in range(1, n):
-        u = i / n
+        # Punkte an Stiel und Spitze dichter (runde Enden), Breite mit Hochzahl < 1: prall, nie spitz
+        u = 0.5 - 0.5 * math.cos(math.pi * i / n)
         if shape == "round":
-            w = math.sin(math.pi * (0.15 + 0.85 * u)) * (1 + 0.08 * math.sin(u * 40))  # gewellter Rand
+            w = math.sin(math.pi * (0.12 + 0.88 * u)) ** 0.75 * (1 + 0.035 * math.sin(u * 2 * math.pi * 3))  # sanft gewellter Rand
         elif shape == "narrow":
-            w = math.sin(math.pi * u) ** 0.8 * 0.6
+            w = math.sin(math.pi * u) ** 0.7 * 0.6
         elif shape == "petal":
-            w = math.sin(math.pi * u ** 0.7) * 0.9
+            w = math.sin(math.pi * u ** 0.7) ** 0.7 * 0.9
         else:
-            w = math.sin(math.pi * u ** 0.85)
-        right.append((u, w * rnd.uniform(0.92, 1.08)))
+            w = math.sin(math.pi * u ** 0.9) ** 0.7
+        right.append((u, w * rnd.uniform(0.97, 1.03)))
     return [(0.0, 0.0)] + [(u, -w) for u, w in right] + [(1.0, 0.0)] + [(u, w) for u, w in reversed(right)]
 
 

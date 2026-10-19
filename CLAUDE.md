@@ -398,7 +398,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Pflanzplätze an (`storybook_common.plant_spot` → leere Objekte „PlantSpot_<art>_<n>“ mit extras
   kind/width/depth/height/hint; `pot()`, `zinc_tub()`, `planter_box()` tun das selbst). `Outside/Greenery`
   (scripts/world/greenery.gd) setzt beim Start Szenen aus scenes/world/plants/ (Wurzel `PlantPiece`)
-  darauf, als MultiMesh je Gebiet. `T.placed` setzt neue Objekte über `matrix_basis` (sonst landen
+  darauf, als MultiMesh je Gebiet. Pflanzen-Stil (Wunsch der Entwicklerin): pralle, runde Blätter
+  (`Body.leaf`, unter 17 cm ohne inneren Ring = weniger Dreiecke), Blüten mit runden Blütenblättern
+  (`Body.star`), weich schattiert (`build(smooth_angle=180)`), Kerne klein/dunkel und von Blättern
+  verdeckt (`leaf_ball` rechnet die Blattzahl aus der Fläche), Kletterpflanzen als Ranken mit einzelnen
+  Blättern (`climber`), Lavendel als Ähren (`spike`); alle gesetzten Pflanzen zusammen höchstens etwa
+  8 Mio. Dreiecke. Eingangstreppe: eigenes Material `entrance_steps.tres` (Muster 4, ohne Fugen,
+  nach der Lage im Modell). `T.placed` setzt neue Objekte über `matrix_basis` (sonst landen
   leere Objekte im Ursprung). Boden: Shader `storybook_ground.gdshader` (Materialien cobblestone,
   sidewalk, curb_stone, alley_setts), runde Kanten `WorldMesh.add_round_edge`. Bücherei außen:
   `build_storybook_library.py`, UpperFloors `build_visuals = false`. **Oberflächen im Spiel:** feine Muster blendet der Shader aus, sobald sie kleiner als

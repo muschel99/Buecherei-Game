@@ -201,24 +201,27 @@ def window(M, C, name, fm, w, h, rise, panes=(2, 3), curtains=True, seed=1, fram
         c.build()
 
 
-def board_shutters(M, C, name, fm, w, h, mat="h_join", open_off=10.0, seed=1):
+def board_shutters(M, C, name, fm, w, h, mat="h_join", open_off=4.0, seed=1, room=(None, None)):
     """Brett-Fensterläden links und rechts (Cottage): drei Bretter, zwei Riegel und eine schräge
-    Strebe (Z), fast an die Wand geklappt; eiserne Kloben. Sparsam: wenige Körper je Laden."""
+    Strebe (Z) – beide Läden gleich herum (Riegel und Strebe zeigen nach außen, zur Straße). Fast
+    flach an die Wand geklappt und vor Fachwerk und Faschen (Scharnier 9 cm vor der Wand), nie
+    breiter als der freie Platz neben dem Fenster (room = freier Platz links/rechts in m)."""
     rnd = random.Random(seed)
     b = Body(name + " Läden", M[mat], C["windows"], seed=seed, vary=0.07, bevel=0.006)
-    lw = w / 2 + 0.03
     phi = math.radians(open_off)
-    for side in (-1, 1):
-        hinge = Vector((side * (w / 2 + 0.04), 0.0, 0.035))
+    for side, free in ((-1, room[0]), (1, room[1])):
+        lw = w / 2 + 0.03 if free is None else min(w / 2 + 0.03, free - 0.08)
+        hinge = Vector((side * (w / 2 + 0.04), 0.0, 0.09))
         lx = Vector((side * math.cos(phi), 0.0, math.sin(phi)))
         ly = Vector((0.0, 1.0, 0.0))
-        lz = lx.cross(ly)
+        lz = Vector((-side * math.sin(phi), 0.0, math.cos(phi)))   # immer von der Wand weg
         leaf = fm @ Matrix(((lx.x, ly.x, lz.x, hinge.x), (lx.y, ly.y, lz.y, hinge.y), (lx.z, ly.z, lz.z, hinge.z), (0, 0, 0, 1)))
-        pw = lw / 3
-        for i in range(3):
+        n = 3 if lw > 0.3 else 2
+        pw = lw / n
+        for i in range(n):
             b.box((pw * (i + 0.5), h / 2, 0.0), (pw - 0.008, h - 0.02 * rnd.random(), 0.03), step=1, dent=0.002, matrix=leaf)
         for yy in (0.2, h - 0.2):
-            b.box((lw / 2, yy, -side * 0.0 + 0.026), (lw - 0.06, 0.08, 0.022), step=1, dent=0.002, matrix=leaf)
+            b.box((lw / 2, yy, 0.026), (lw - 0.06, 0.08, 0.022), step=1, dent=0.002, matrix=leaf)
         p0 = leaf @ Vector((0.06, 0.26, 0.026))
         p1 = leaf @ Vector((lw - 0.06, h - 0.26, 0.026))
         b.span(p0, p1, 0.07, 0.022, step=1, dent=0.002)
@@ -247,6 +250,25 @@ def surround(M, C, name, fm, w, h, rise, kind, seed=1):
             a = -half + 2 * half * (k + 0.5) / n
             m = fm @ Matrix.Translation((r * math.sin(a), cy + r * math.cos(a), 0.03)) @ Matrix.Rotation(-a, 4, "Z")
             st.box((0, 0, 0), (2 * r * math.sin(half / n) * 0.93, 0.24 * rnd.uniform(0.96, 1.04), 0.06), step=1, dent=0.003, matrix=m)
+    elif kind == "ashlar" and rise > 0:
+        # runde Fenster: Bogen aus wenigen großen Steinen, der der Rundung folgt, Schlussstein in der Mitte
+        hx, band = w / 2, 0.15
+        big_r = (hx * hx + rise * rise) / (2 * rise)
+        cy = hs + rise - big_r
+        half = math.asin(min(1.0, hx / big_r))
+        n = 5 if w < 0.9 else 7
+        for k in range(n):
+            a0 = -half + 2 * half * k / n + 0.006
+            a1 = -half + 2 * half * (k + 1) / n - 0.006
+            ro = big_r + band + (0.06 if k == n // 2 else rnd.uniform(-0.01, 0.01))
+            arc = [a0 + (a1 - a0) * t / 4 for t in range(5)]
+            pts = [(big_r * math.sin(x), cy + big_r * math.cos(x)) for x in arc] + \
+                  [(ro * math.sin(x), cy + ro * math.cos(x)) for x in reversed(arc)]
+            th = 0.07 if k == n // 2 else 0.055
+            st.slab(pts, th, fm @ Matrix.Translation((0, 0, -0.005)), dent=0.002)
+        # Kämpfersteine, auf denen der Bogen aufsetzt
+        for side in (-1, 1):
+            st.box((side * (hx + band / 2 - 0.01), hs - 0.07, 0.025), (band + 0.04, 0.14, 0.06), step=1, dent=0.003, matrix=fm)
     elif kind == "ashlar":
         top = h + 0.02
         st.box((0, top + 0.1, 0.03), (w + 0.3, 0.2, 0.06), step=0.6, dent=0.004, matrix=fm)
@@ -312,7 +334,7 @@ def plank_door(M, C, name, fm, w, h, rise, seed=1):
              turn=(-90, 0))
     ir.build()
     pl = Body(name + " Platte", M["stone"], C["shop"], seed=seed + 3, vary=0.06, bevel=0.012)
-    pl.box((0, 0.0125, 0.3), (w + 0.3, 0.025, 0.6), step=0.6, dent=0.002, matrix=fm)
+    pl.box((0, 0.0125, 0.2), (w + 0.3, 0.025, 0.8), step=0.6, dent=0.002, matrix=fm)
     pl.build()
     del rnd
 
@@ -525,18 +547,27 @@ class House:
             # Sockel aus runden, unregelmäßigen Feldsteinen in zwei Reihen (jeder Stein ein Körper)
             p = Body("Sockelsteine", M["stone"], C["walls"], seed=8, vary=0.13, bevel=0.03)
             for a, b in segs:
+                L = b - a
+                if L < 0.06:
+                    continue
                 for row, (z0, z1) in enumerate(((0.0, 0.23), (0.23, 0.44))):
-                    x = a + (0.12 if row else 0.0)
-                    while x < b - 0.06:
-                        wdt = min(self.rnd.uniform(0.3, 0.52), b - x)
-                        if wdt > 0.08:
-                            p.box((x + wdt / 2, sb - 0.035 + self.rnd.uniform(-0.01, 0.01), (z0 + z1) / 2),
-                                  (wdt - 0.025, 0.13, z1 - z0 - 0.025), step=1, dent=0.012,
-                                  turn=(self.rnd.uniform(-2, 2), 0, self.rnd.uniform(-1.5, 1.5)))
-                        x += wdt
+                    # Steine gleichmäßig verteilt bis genau an die Enden (keine Lücke an Tür und Kante);
+                    # die zweite Reihe versetzt (halber Stein am Anfang)
+                    n = max(1, round(L / 0.42))
+                    cuts = [a + L * k / n for k in range(n + 1)]
+                    if row and n > 1:
+                        cuts = [a] + [(cuts[k] + cuts[k + 1]) / 2 for k in range(n)] + [b]
+                    cuts = [c + (self.rnd.uniform(-0.04, 0.04) if 0 < k < len(cuts) - 1 else 0.0) for k, c in enumerate(cuts)]
+                    for x0, x1 in zip(cuts, cuts[1:]):
+                        wdt = x1 - x0
+                        if wdt > 0.03:
+                            p.box(((x0 + x1) / 2, sb - 0.035 + self.rnd.uniform(-0.01, 0.01), (z0 + z1) / 2),
+                                  (wdt - 0.022, 0.13, z1 - z0 - 0.022), step=1, dent=0.01 if wdt > 0.15 else 0.004,
+                                  turn=(self.rnd.uniform(-2, 2), 0, self.rnd.uniform(-1.2, 1.2)))
             p.build()
             if any(b - a > 0.05 for a, b in segs):
-                f = Body("Sockelfuge", M["earth"], C["walls"], seed=9, vary=0.05)
+                f = Body("Sockelfuge", SC.make_material("Fuge Sockel", (0.62, 0.56, 0.48), rough=0.95, vary=0.05, bump=0.1),
+                         C["walls"], seed=9, vary=0.05)
                 for a, b in segs:
                     if b - a > 0.05:
                         f.box(((a + b) / 2, sb + 0.0, 0.22), (b - a, 0.06, 0.44), step=1, dent=0.0)
@@ -633,6 +664,25 @@ class House:
             st.box((0, h + band / 2, 0.03), (w + 2 * band, band, 0.07), step=0.6, dent=0.003, matrix=fm)
         st.build()
 
+    def free_beside(self, o):
+        """Platz für die Fensterläden links und rechts neben einem Fenster der Front: bis zur Hauskante
+        bzw. Tür ganz, zu einem Nachbarfenster (das auch Läden hat) nur die Hälfte der Lücke."""
+        same = [x for x in (self.ground if o in self.ground else [u for u in self.upper if u.get("floor") == o.get("floor")])
+                if x is not o]
+        stops = [(x["x"] - x["w"] / 2, x["x"] + x["w"] / 2, 0.5) for x in same]
+        if o in self.ground and getattr(self, "door", None):
+            d = self.door
+            stops.append((d["x"] - d["w"] / 2 - 0.15, d["x"] + d["w"] / 2 + 0.15, 1.0))
+        x0, x1 = o["x"] - o["w"] / 2, o["x"] + o["w"] / 2
+        left = x0 - (-self.hw + 0.12)
+        right = (self.hw - 0.12) - x1
+        for a, b, share in stops:
+            if b <= x0 + 0.01:
+                left = min(left, (x0 - b) * share)
+            elif a >= x1 - 0.01:
+                right = min(right, (a - x1) * share)
+        return left, right
+
     def one_window(self, name, fm, o, kind, ground, front=True):
         M, C, st = self.M, self.C, self.st
         panes = (2, 3) if o["h"] > 1.3 else (2, 2)
@@ -643,9 +693,14 @@ class House:
             sl = Body(name + " Bank", M["h_timber"], C["walls"], seed=5, vary=0.06, bevel=0.01)
             sl.box((0, -0.04, 0.07), (o["w"] + 0.24, 0.08, 0.14), step=0.6, dent=0.003, matrix=fm)
             sl.build()
+        has_shutters = False
         if st["shutters"]:
-            board_shutters(M, C, name, fm, o["w"], o["h"], mat="h_join", open_off=self.rnd.uniform(6, 12),
-                           seed=zlib.crc32(name.encode()) % 983)
+            room = self.free_beside(o) if front else (None, None)
+            # Läden nur, wenn auf beiden Seiten Platz für (fast) halb so breite Läden ist – beide oder keiner
+            if not front or min(room) - 0.08 >= max(0.22, o["w"] * 0.38):
+                has_shutters = True
+                board_shutters(M, C, name, fm, o["w"], o["h"], mat="h_join", open_off=self.rnd.uniform(2, 5),
+                               seed=zlib.crc32(name.encode()) % 983, room=room)
         if ground and front and self.near and st.get("canopy") and not st["shutters"]:
             # kleine Stoffmarkise über dem Fenster (wie auf dem Vorlagebild)
             top = o["h"] + 0.38
@@ -656,7 +711,7 @@ class House:
         else:
             ground_box = self.rnd.random() < 0.3
         if st["boxes"] and (not ground or ground_box):
-            bw = o["w"] + 0.18
+            bw = o["w"] + (0.03 if has_shutters else 0.18)   # mit Läden: Kasten bleibt zwischen den Scharnieren
             SC.planter_box(M, C["pots"], name + " Blumenkasten", fm @ Matrix.Translation((0, -0.06, 0.1)), bw, 0.2, 0.2,
                            seed=zlib.crc32(name.encode()) % 977, gap=0.1, mat="h_box")
             kb = Body(name + " Konsolen", M["lamp_iron"], C["pots"], seed=45, bevel=0.003)

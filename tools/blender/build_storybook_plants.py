@@ -13,6 +13,7 @@ Im Spiel setzt Greenery (scripts/world/greenery.gd) die Szenen auf die Pflanzpl�
 Haus-Modellen). Eigene Pflanze: neue Szene in scenes/world/plants/ mit PlantPiece (Art, Nennmaß) – fertig.
 """
 
+import json
 import math
 import os
 import random
@@ -110,8 +111,35 @@ def build_plant(pid, M, coll):
     return p.build(sway_height=sway)
 
 
-def write_scene(pid):
+def measured_size(meshes):
+    """Echte Ausdehnung (Breite x, Tiefe y, Höhe z) der gebauten Pflanze."""
+    dg = bpy.context.evaluated_depsgraph_get()
+    lo, hi = [1e9] * 3, [-1e9] * 3
+    for o in meshes:
+        ev = o.evaluated_get(dg)
+        for v in ev.to_mesh().vertices:
+            p = o.matrix_world @ v.co
+            for i in range(3):
+                lo[i], hi[i] = min(lo[i], p[i]), max(hi[i], p[i])
+        ev.to_mesh_clear()
+    return (2 * max(abs(lo[0]), abs(hi[0])), hi[1] - lo[1], hi[2])
+
+
+SIZE_FILE = os.path.join(SRC, "measured_sizes.json")
+
+
+def write_scene(pid, real=None):
+    """real = gemessene Größe: Kletterpflanzen bekommen ihr echtes Maß als Nennmaß (Greenery setzt sie
+    danach so ein, dass sie nie über ihren Wandstreifen hinaus – also über Fenster – wachsen)."""
     kind, size, weight, col_r, hint, _ = PLANTS[pid]
+    sizes = json.load(open(SIZE_FILE)) if os.path.exists(SIZE_FILE) else {}
+    if real is not None:
+        sizes[pid] = [round(v, 3) for v in real]
+        os.makedirs(SRC, exist_ok=True)
+        json.dump(sizes, open(SIZE_FILE, "w"), indent=1, sort_keys=True)
+    if kind == "climber" and pid in sizes:
+        w, d, h = sizes[pid]
+        size = (w, d, h)
     os.makedirs(SCENES, exist_ok=True)
     text = """[gd_scene load_steps=3 format=3]
 
@@ -188,7 +216,7 @@ def main():
         tris, n = SC.export_objects(meshes, [], glb, palette=True, extra=[])
         mapping = SC.write_game_materials(only=set(SC.LAST_EXPORT_MATERIALS))
         SC.write_import_settings(mapping, glb)
-        write_scene(pid)
+        write_scene(pid, measured_size(meshes))
         total += tris
         print("%-26s %6d Dreiecke, %d Netze, offene Kanten: %s" % (pid, tris, n, bad if bad else "keine"))
         if "--render" in argv:
