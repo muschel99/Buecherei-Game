@@ -43,12 +43,15 @@ const GATE_BOUND_INSIDE := 0.8
 ## schmal: Dort hängen die Laternen an den Häusern (HouseFacade.lanterns).
 @export var lamp_scene: PackedScene = preload("res://assets/models/props/street_lamp.glb")
 @export var lamp_positions: PackedFloat32Array = PackedFloat32Array([-18.5, -7.5, 14.0])
+## Hier (x von … bis) wachsen auf der Bücherei-Seite keine Grasbüschel in der Rinne (Halteplatz des Lieferwagens).
+@export var tuft_keep_clear := Vector2(-9.0, 7.0)
 
 
 func _ready() -> void:
 	_build_surfaces()
 	_build_drains()
 	_build_lamps()
+	_build_tuft_spots()
 	_build_ground_collision()
 	_build_bounds()
 	_build_traffic_points()
@@ -109,6 +112,45 @@ func _build_drains() -> void:
 			drain.position = Vector3(x, road_y, z)
 			holder.add_child(drain)
 			x += drain_spacing
+
+
+## Grasbüschel in der Rinne vor beiden Bordsteinen und am Fuß der Laternen: leere Pflanzplätze
+## ("PlantSpot_tuft_…", wie in den Haus-Modellen) – Greenery setzt die Büschel ein. Nicht dort, wo der
+## Lieferwagen hält (tuft_keep_clear um die Bücherei), immer gleich verteilt (fester Zufall).
+func _build_tuft_spots() -> void:
+	var holder := Node3D.new()
+	holder.name = "TuftSpots"
+	add_child(holder)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4711
+	var road_y := -GameConfig.curb_height
+	var x0 := StreetLayout.end_start_x(-1) + 1.5
+	var x1 := StreetLayout.end_start_x(1) - 1.5
+	var n := 0
+	for side in [1, -1]:
+		var z: float = StreetLayout.curb_z() - 0.09 if side > 0 else StreetLayout.far_curb_z() + 0.09
+		var x := x0 + rng.randf_range(0.0, 3.0)
+		while x < x1:
+			var blocked: bool = side > 0 and x > tuft_keep_clear.x and x < tuft_keep_clear.y
+			if not blocked:
+				_add_tuft_spot(holder, Vector3(x, road_y, z + side * -rng.randf_range(0.0, 0.05)), rng, n)
+				n += 1
+			x += rng.randf_range(2.5, 7.0)
+	var z_lamp := StreetLayout.curb_z() + CURB_TOP + 0.4
+	for x in lamp_positions:
+		if rng.randf() < 0.7:
+			var a := rng.randf_range(0.0, TAU)
+			_add_tuft_spot(holder, Vector3(x + cos(a) * 0.3, 0.0, z_lamp + sin(a) * 0.3), rng, n)
+			n += 1
+
+
+func _add_tuft_spot(holder: Node3D, pos: Vector3, rng: RandomNumberGenerator, n: int) -> void:
+	var spot := Node3D.new()
+	spot.name = "PlantSpot_tuft_%d" % n
+	spot.position = pos
+	spot.rotation.y = rng.randf_range(0.0, TAU)
+	spot.set_meta("extras", {"kind": "tuft", "width": 0.3, "depth": 0.3, "height": 0.25})
+	holder.add_child(spot)
 
 
 ## Laternenmasten auf dem Gehweg der Bücherei-Seite (dicht am Bordstein), mit fester Kollision

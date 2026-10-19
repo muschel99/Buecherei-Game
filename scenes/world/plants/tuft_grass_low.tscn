@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+; Pflanze im Bilderbuch-Stil (gebaut von tools/blender/build_storybook_plants.py). Austauschbar: das Kind
+; "Model" durch ein eigenes Modell ersetzen (Ursprung wie die Vorlage assets/models/templates/plants/tuft.glb)
+; oder eine neue Szene mit PlantPiece in diesen Ordner legen – Greenery findet sie selbst.
+
+[ext_resource type="Script" path="res://scripts/world/plant_piece.gd" id="1_piece"]
+[ext_resource type="PackedScene" path="res://assets/models/plants/tuft_grass_low.glb" id="2_model"]
+
+[node name="TuftGrassLow" type="Node3D"]
+script = ExtResource("1_piece")
+kind = "tuft"
+nominal_size = Vector3(0.250, 0.180, 0.250)
+weight = 1.00
+collision_radius = 0.00
+hint = ""
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

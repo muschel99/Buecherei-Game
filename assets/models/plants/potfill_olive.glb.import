@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cm6vb6rfhquy"
+uid="uid://dwl5wbpyy53vf"
 path="res://.godot/imported/potfill_olive.glb-a32a67ad7af124af76eacfc371f6d88b.scn"
 
 [deps]
@@ -41,11 +41,6 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"Sammel Blatt": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/sammel_blatt.tres",
-"use_external/path": "res://assets/materials/storybook/sammel_blatt.tres"
-},
 "Sammel Holz": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_holz.tres",

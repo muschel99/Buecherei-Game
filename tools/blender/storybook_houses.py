@@ -1029,6 +1029,7 @@ class House:
         for (a0, a1), (b0, b1) in zip(edges, edges[1:]):
             if b0 - a1 > 0.3:
                 gaps.append((a1, b0))
+        taken = [(getattr(self, "mailbox_x", 99.0) - 0.25, getattr(self, "mailbox_x", 99.0) + 0.25)]
         if sb < 0.5 and self.near:
             # Kübel neben der Tür, wenn dort Platz ist
             for side in (-1, 1):
@@ -1036,6 +1037,7 @@ class House:
                 if any(a + 0.2 < x < b - 0.2 for a, b in gaps) and self.rnd.random() < 0.6 and \
                         self.spec.get("walk_depth", 0.44) >= 0.6 and abs(x - getattr(self, "mailbox_x", 99.0)) > 0.4:
                     self.spot("pot", (x, sb - 0.32, 0.0), (0.5, 0.5, 1.0))
+                    taken.append((x - 0.3, x + 0.3))
                     self.obstacles["Kübel %d" % len(self.obstacles)] = ((x, sb - 0.32), (0.5, 0.5), 0.9)
         # Kletterpflanze am breitesten freien Streifen (Hauswand), sonst neben der Tür
         if gaps:
@@ -1051,6 +1053,16 @@ class House:
                 top = min(top, d["h"] + 0.2)
             if top > 1.2:
                 self.spot("climber", (c, sb, 0.0), (w, 0.3, top))
+                taken.append((c - w / 2 - 0.1, c + w / 2 + 0.1))
+        # Grasbüschel am Fuß der Wand (in den freien Streifen, nicht vor Kübeln und Kletterpflanzen)
+        for a, b in gaps:
+            for _ in range(1 if b - a < 1.2 else 2):
+                if self.rnd.random() < 0.3:
+                    continue
+                x = self.rnd.uniform(a + 0.15, b - 0.15)
+                if all(not (t0 - 0.15 < x < t1 + 0.15) for t0, t1 in taken):
+                    self.spot("tuft", (x, sb - self.rnd.uniform(0.13, 0.2), 0.0), (0.3, 0.3, 0.25), self.rnd.uniform(0, 360))
+                    taken.append((x - 0.2, x + 0.2))
         self.gaps = gaps
 
     def lantern_spot(self, prefer=None):

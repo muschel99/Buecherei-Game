@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+; Pflanze im Bilderbuch-Stil (gebaut von tools/blender/build_storybook_plants.py). Austauschbar: das Kind
+; "Model" durch ein eigenes Modell ersetzen (Ursprung wie die Vorlage assets/models/templates/plants/tree.glb)
+; oder eine neue Szene mit PlantPiece in diesen Ordner legen – Greenery findet sie selbst.
+
+[ext_resource type="Script" path="res://scripts/world/plant_piece.gd" id="1_piece"]
+[ext_resource type="PackedScene" path="res://assets/models/plants/tree_garden_big.glb" id="2_model"]
+
+[node name="TreeGardenBig" type="Node3D"]
+script = ExtResource("1_piece")
+kind = "tree"
+nominal_size = Vector3(5.600, 10.000, 7.400)
+weight = 1.00
+collision_radius = 0.00
+hint = "garden"
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

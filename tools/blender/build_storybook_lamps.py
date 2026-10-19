@@ -28,7 +28,6 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(__file__))
 import storybook_common as B  # noqa: E402
-import storybook_plants as PL  # noqa: E402
 import storybook_lib as SB  # noqa: E402
 import storybook_parts as SP  # noqa: E402
 from storybook_lib import Body  # noqa: E402
@@ -39,9 +38,9 @@ BLEND = os.path.join(B.ROOT, "assets", "models", "source", "props", "storybook_l
 UPRIGHT = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))
 
 
-def hanging_basket(M, coll, name, center, radius, seed, palette=("red", "pink", "rose")):
-    """Hängekorb (Weidengeflecht) an drei Ketten, randvoll mit Geranien; Ranken und
-    Blütenkaskaden hängen rundherum herab."""
+def hanging_basket(M, coll, name, center, radius, seed, palette=None):
+    """Hängekorb (Weidengeflecht) an drei Ketten mit Erde; die Pflanzen setzt das Spiel auf den
+    Pflanzplatz (Greenery: jede Laterne eine andere Ampel-Bepflanzung)."""
     rnd = random.Random(seed)
     c = Vector(center)
     b = Body(name + " Korb", M["box"], coll, seed=seed, vary=0.06, bevel=0.003)
@@ -60,25 +59,9 @@ def hanging_basket(M, coll, name, center, radius, seed, palette=("red", "pink", 
     soil = Body(name + " Erde", M["soil"], coll, seed=seed + 2)
     soil.lathe([(0.0, -0.04), (radius * 0.88, -0.035), (radius * 0.86, -0.01), (0.0, 0.0)], c, segs=20, dent=0.004)
     soil.build()
-    leaves = Body(name + " Blätter", M["leaf"], coll, seed=seed + 3, vary=0.12)
-    ivy = Body(name + " Ranken", M["ivy"], coll, seed=seed + 4, vary=0.12)
-    stems = Body(name + " Stiele", M["stem"], coll, seed=seed + 5)
-    blooms = {k: Body("%s Blüten %s" % (name, k), M[k], coll, seed=seed + 6 + i, vary=0.1) for i, k in enumerate(dict.fromkeys(palette))}
-    for k in range(5):
-        a = 2 * math.pi * k / 5 + rnd.uniform(-0.3, 0.3)
-        r = radius * (0.25 + 0.4 * (k > 0))
-        base = c + Vector((math.cos(a) * r, math.sin(a) * r, -0.005))
-        PL.geranium(leaves, stems, blooms[rnd.choice(palette)], base, UPRIGHT, rnd)
-    for k in range(9):
-        a = 2 * math.pi * k / 9 + rnd.uniform(-0.2, 0.2)
-        out = Vector((math.cos(a), math.sin(a), 0.0))
-        start = c + out * radius * 0.92
-        if k % 2:
-            PL.cascade(leaves, stems, blooms[rnd.choice(palette)], start, (out + Vector((0, 0, 0.3))).normalized(), rnd.uniform(0.25, 0.45), rnd)
-        else:
-            PL.hang(ivy, stems, start, (out * 0.7 + Vector((0, 0, -0.5))).normalized(), rnd.uniform(0.3, 0.6), rnd, out=out)
-    for body in (leaves, ivy, stems, *blooms.values()):
-        body.build()
+    # Bepflanzung setzt das Spiel ein (Greenery, Art "basket"): Pflanzplatz knapp unter der Erde
+    B.SPOTS["coll"] = coll
+    B.plant_spot("basket", c + Vector((0, 0, -0.01)), (2 * radius * 0.88, 2 * radius * 0.88, 0.5), 0.0)
 
 
 def street_lamp(M, coll):
@@ -137,12 +120,13 @@ def main():
     wall = SB.collection("Hängende Laterne", root)
     street_lamp(M, street)
     wall_lantern(M, wall)
-    bad = [(o.name, SB.non_manifold(o)) for c in (street, wall) for o in c.objects if SB.non_manifold(o)]
+    bad = [(o.name, SB.non_manifold(o)) for c in (street, wall) for o in c.objects if o.type == "MESH" and SB.non_manifold(o)]
     print("Offene Kanten: %s" % (bad if bad else "keine – alles geschlossene Körper"))
     mapping = B.write_game_materials()
     for coll, file in ((street, "street_lamp.glb"), (wall, "wall_street_lantern.glb")):
         path = os.path.join(PROPS_DIR, file)
-        tris, parts = B.export_objects(list(coll.objects), [], path)
+        tris, parts = B.export_objects([o for o in coll.objects if o.type == "MESH"], [], path,
+                                       extra=[o for o in coll.objects if o.type == "EMPTY"])
         B.write_import_settings(mapping, path)
         print("Spiel: %s (%d Dreiecke, %d Netze)" % (path, tris, parts))
     if "--render" in argv:

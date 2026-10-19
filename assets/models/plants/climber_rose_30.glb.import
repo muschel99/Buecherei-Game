@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://wnqiv8tg1axy"
+uid="uid://bs0vaol6pmgx5"
 path="res://.godot/imported/climber_rose_30.glb-8d6149cad4c912893070d70a59d2e299.scn"
 
 [deps]
@@ -41,6 +41,11 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
+"Sammel Holz": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_holz.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_holz.tres"
+},
 "Sammel Pflanze": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_pflanze.tres",

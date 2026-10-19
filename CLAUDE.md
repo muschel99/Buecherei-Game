@@ -401,9 +401,19 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   darauf, als MultiMesh je Gebiet. Pflanzen-Stil (Wunsch der Entwicklerin): pralle, runde Blätter
   (`Body.leaf`, unter 17 cm ohne inneren Ring = weniger Dreiecke), Blüten mit runden Blütenblättern
   (`Body.star`), weich schattiert (`build(smooth_angle=180)`), Kerne klein/dunkel und von Blättern
-  verdeckt (`leaf_ball` rechnet die Blattzahl aus der Fläche), Kletterpflanzen als Ranken mit einzelnen
-  Blättern (`climber`), Lavendel als Ähren (`spike`); alle gesetzten Pflanzen zusammen höchstens etwa
-  8 Mio. Dreiecke. Eingangstreppe: eigenes Material `entrance_steps.tres` (Muster 4, ohne Fugen,
+  verdeckt (`leaf_ball` rechnet die Blattzahl aus der Fläche), Kletterpflanzen als wilde Ranken mit
+  einzelnen Blättern (`climber`), Lavendel als Busch mit Ähren (`lavender_bush`, `spike`), Baumkronen aus
+  Blattbüscheln ohne Kern (`crown`/`spray`, wenige Hauptäste). Gefäße: `Plant(container=CONTAINERS[art])`
+  – Ranken über den Rand nur mit `drape`/`trail`, `clear_rim` legt alles, was in einer Gefäßwand
+  stecken würde, über den Rand. Sorten und Farbvarianten: `PLANTS` in build_storybook_plants.py (je Art
+  viele; nicht mehr gelistete baut das Script ab). Greenery: Nachbarn im Umkreis `variety_radius` bekommen
+  andere Sorten (`_pick_varied`), Blumenkästen zwei bis drei Sorten im Wechsel. Großer Gartenbaum
+  `tree_garden_big` (Hinweis "garden", feste Lage, Krone bleibt in `GARDEN_BOUNDS` = Hof aus layout.json –
+  ändert sich der Hof, Werte anpassen). Grasbüschel (Art `tuft`): Plätze am Fuß der Wohnhäuser
+  (`place_spots`), der Gassenwände (`wall_tufts`), in der Rinne vor den Bordsteinen und an Laternenfüßen
+  (`Street._build_tuft_spots`, nicht am Halteplatz des Lieferwagens). Kletterpflanzen in Gassen nur an
+  fensterfreien Wandstücken (`climber_place`). Laternen-Ampeln = Pflanzplätze (Art `basket`). Alle
+  gesetzten Pflanzen zusammen höchstens etwa 8,5 Mio. Dreiecke. Eingangstreppe: eigenes Material `entrance_steps.tres` (Muster 4, ohne Fugen,
   nach der Lage im Modell). `T.placed` setzt neue Objekte über `matrix_basis` (sonst landen
   leere Objekte im Ursprung). Boden: Shader `storybook_ground.gdshader` (Materialien cobblestone,
   sidewalk, curb_stone, alley_setts), runde Kanten `WorldMesh.add_round_edge`. Bücherei außen:
@@ -434,7 +444,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Wandlaternen, hängende Laternen und Straßenlaternen; `scroll`); `storybook_common.py`
   (Materialien `materials()`, Töpfe `pot`/`zinc_tub`, Blumenkästen `planter_box`, Kreidetafel,
   Ausleger-Schild `projecting_sign`, `settle`, Export, Fingerabdruck, Kontrollbilder);
-  `storybook_plants.py` (Geranien, Ranken – vorerst nur an den Laternen). **Pflanzen an Pub und
+  `storybook_plants.py` (alte Geranien/Ranken, nicht mehr benutzt). **Pflanzen an Pub und
   Modegeschäft vorerst weggelassen** (Wunsch der Entwicklerin): nur Töpfe, Kübel, Kästen mit Erde.
   **Schilder = Bilder der Entwicklerin** auch im Bilderbuch-Stil: `sign_material(typ, name)` +
   `Body.panel` (Schild-Platte als Körper, Bild vorn) → im Spiel StandardMaterial auf

@@ -472,7 +472,7 @@ class Body:
         self._finish_island(verts, faces, tint)
         return faces
 
-    def leaf(self, base, direction, normal, length, width, shape="oval", thick=0.003, curl=0.15, tint=None, segs=None):
+    def leaf(self, base, direction, normal, length, width, shape="oval", thick=0.003, curl=0.15, tint=None, segs=None, fan=None):
         """Blatt als kleiner, weich gewölbter Körper (wie ein Kissen): runder Umriss mit vielen
         Randpunkten, Ober- und Unterseite wölben sich über einen inneren Ring zur Mitte auf –
         im Querschnitt rund, nirgends eine scharfe Kante. Formen: ivy (dreilappig), oval, round
@@ -494,7 +494,7 @@ class Body:
         bot = bm.verts.new(at(uc, 0.0) - n * thick * 0.42)
         faces = []
         k = len(rim)
-        if length < 0.17:
+        if fan or (fan is None and length < 0.17):
             # kleine Blätter (die allermeisten): Rand direkt zur gewölbten Mitte – weich schattiert genauso
             # rund, aber nur ein Drittel der Dreiecke
             for i in range(k):
@@ -539,7 +539,7 @@ class Body:
         self._paint(back + front, tint)
         return faces
 
-    def star(self, center, normal, size, points, rnd, thick=0.004, cup=0.25, tint=None):
+    def star(self, center, normal, size, points, rnd, thick=0.004, cup=0.25, tint=None, samples=None, notch=0.42):
         """Ganze Blüte als ein weicher Körper: runde Blütenblätter (Umriss mit sanften, runden
         Bögen statt Spitzen), leicht schalenförmig, in der Mitte zu einem runden Polster gewölbt –
         wie gemalt, nicht sternförmig."""
@@ -549,7 +549,7 @@ class Body:
         s2 = nrm.cross(s1).normalized()
         spin = rnd.uniform(0, 2 * math.pi)
         c = Vector(center)
-        m = points * (6 if size >= 0.016 else 4)
+        m = points * (samples or (6 if size >= 0.016 else 4))
         th = max(thick, size * 0.16)
         bm = self.bm
         rings = []
@@ -560,7 +560,7 @@ class Body:
                 a = spin + 2 * math.pi * k / m
                 # runde Blütenblätter mit kleiner Kerbe dazwischen (wie gemalte Blüten)
                 lobe = abs(math.cos(points * (a - spin) / 2))
-                r = size * frac * (0.58 + 0.42 * lobe ** 0.55)
+                r = size * frac * (1.0 - notch + notch * lobe ** 0.55)
                 d = s1 * math.cos(a) + s2 * math.sin(a)
                 p = c + d * r + nrm * cup * r
                 if frac == 1.0:
@@ -689,6 +689,12 @@ def _leaf_outline(shape, rnd, segs=None):
             w = math.sin(math.pi * u) ** 0.7 * 0.6
         elif shape == "petal":
             w = math.sin(math.pi * u ** 0.7) ** 0.7 * 0.9
+        elif shape == "cup":
+            # Tulpenblatt: oben am breitesten, runde Spitze
+            w = math.sin(math.pi * u ** 1.35) ** 0.6 * 0.95
+        elif shape == "blade":
+            # Grashalm: am Fuß breit, läuft lang und spitz aus
+            w = (1.0 - u ** 1.6) ** 0.8 * min(1.0, 0.35 + u * 4.0)
         else:
             w = math.sin(math.pi * u ** 0.9) ** 0.7
         right.append((u, w * rnd.uniform(0.97, 1.03)))

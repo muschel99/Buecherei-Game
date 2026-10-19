@@ -151,8 +151,16 @@ Schilder sind weiter Bilder der Entwicklerin.
   spitzen Zacken. Blüten mit fünf runden Blütenblättern (Kerbe dazwischen), zu Kuppeln geordnet.
 - **Keine Grundformen sichtbar:** Kerne in Büschen und Blütenköpfen sind klein und dunkel und ganz
   von Blättern/Blüten verdeckt – man sieht sie höchstens als Schatten.
-- **Kletterpflanzen sind Ranken:** verholzte Haupttriebe, geschwungene Seitentriebe, einzelne Blätter
-  in kleinen Büscheln – keine dichten Blattpolster.
+- **Kletterpflanzen sind wilde Ranken:** verholzte Haupttriebe in Bögen und schrägen Schwüngen,
+  Seitentriebe, die sich verzweigen oder herabhängen, einzelne Blätter in kleinen Büscheln – keine
+  dichten Blattpolster, nie vor Fenstern.
+- **Vielfalt:** viele Sorten (Geranien, Petunien, Männertreu, Begonien, Fuchsien, Kräuter, Heide,
+  Stiefmütterchen, Tulpen, Margeriten, Dahlien, Rosen, Zitrus, Oliven, Buchs, Gräser …) in natürlichen
+  Farben und verschiedenen Grüntönen; nebeneinander nie zweimal dieselbe Pflanze.
+- **Ranken aus Gefäßen** legen sich über den Rand, nie durch Topf oder Kasten.
+- **Grasbüschel** am Fuß der Hauswände, an Gassenmauern und am Bordstein.
+- **Bäume:** natürlich verzweigt, Krone aus vielen Blattbüscheln; der Baum im Gartenhof ist groß und
+  überspannt den ganzen Hof.
 - **Fensterbögen** haben ein eigenes, ruhiges Material (kein Ziegelmuster der Wand). Über runden
   Fenstern sitzt immer ein gebogener Sturz, gerade Stürze nur über geraden Fenstern.
 

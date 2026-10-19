@@ -35,36 +35,127 @@ TEMPLATES = os.path.join(SC.ROOT, "assets", "models", "templates", "plants")
 
 # id: (Art, Nennmaß (Breite, Tiefe, Höhe) in m, Gewicht, Kollisionsradius, Hinweis, Bau-Funktion)
 PLANTS = {
+    # Blumenkästen: Ausschnitt 0,3 m (Greenery reiht verschiedene Sorten nebeneinander)
     "box_geranium_red": ("box", (0.3, 0.16, 0.42), 1.0, 0.0, "", lambda p: G.box_geranium(p, "red")),
     "box_geranium_pink": ("box", (0.3, 0.16, 0.42), 1.0, 0.0, "", lambda p: G.box_geranium(p, "pink")),
+    "box_geranium_coral": ("box", (0.3, 0.16, 0.42), 0.7, 0.0, "", lambda p: G.box_geranium(p, "coral", "leaf_dark")),
+    "box_geranium_white": ("box", (0.3, 0.16, 0.42), 0.6, 0.0, "", lambda p: G.box_geranium(p, "white_flower", "leaf_blue")),
     "box_petunia": ("box", (0.3, 0.16, 0.3), 1.0, 0.0, "", lambda p: G.box_petunia(p, ("pink", "rose", "lilac", "cream_flower"))),
+    "box_petunia_purple": ("box", (0.3, 0.16, 0.3), 0.8, 0.0, "",
+                           lambda p: G.box_petunia(p, ("purple_flower", "magenta_flower", "white_flower"), "leaf_lime")),
+    "box_petunia_white": ("box", (0.3, 0.16, 0.3), 0.6, 0.0, "", lambda p: G.box_petunia(p, ("white_flower", "blush_flower", "sky_flower"))),
     "box_mixed": ("box", (0.3, 0.16, 0.34), 0.8, 0.0, "", G.box_mixed),
+    "box_lobelia": ("box", (0.3, 0.16, 0.2), 0.8, 0.0, "", lambda p: G.lobelia_box(p)),
+    "box_lobelia_white": ("box", (0.3, 0.16, 0.2), 0.5, 0.0, "", lambda p: G.lobelia_box(p, ("white_flower", "sky_flower"), "leaf")),
+    "box_begonia_red": ("box", (0.3, 0.16, 0.24), 0.7, 0.0, "", lambda p: G.begonia_box(p, "red", "leaf_dark")),
+    "box_begonia_pink": ("box", (0.3, 0.16, 0.24), 0.6, 0.0, "", lambda p: G.begonia_box(p, "pink", "leaf_bronze")),
+    "box_fuchsia": ("box", (0.3, 0.16, 0.3), 0.7, 0.0, "", lambda p: G.fuchsia(p, "magenta_flower", "purple_flower")),
+    "box_fuchsia_red": ("box", (0.3, 0.16, 0.3), 0.5, 0.0, "", lambda p: G.fuchsia(p, "red", "purple_flower")),
+    "box_herbs": ("box", (0.3, 0.16, 0.28), 0.5, 0.0, "", G.herb_box),
+    "box_pansy": ("box", (0.3, 0.16, 0.16), 0.6, 0.0, "", G.pansy_box),
+    "box_heather": ("box", (0.3, 0.16, 0.26), 0.4, 0.0, "", lambda p: G.heather(p, "magenta_flower", n=26)),
+    "box_heather_white": ("box", (0.3, 0.16, 0.26), 0.3, 0.0, "", lambda p: G.heather(p, "white_flower", n=26)),
+    "box_ivy": ("box", (0.3, 0.16, 0.2), 0.6, 0.0, "", G.ivy_box),
+    # Füllung vorhandener Töpfe und Kübel (Hinweis = Topfform)
     "potfill_bush": ("potfill", (0.4, 0.4, 0.5), 1.0, 0.0, "classic", lambda p: G.bush(p, 0.22, 0.42)),
-    "potfill_hydrangea": ("potfill", (0.4, 0.4, 0.5), 1.0, 0.0, "bowl", lambda p: G.hydrangea(p, p.rnd.choice(("blue_flower", "pink")), 1.0)),
-    "potfill_geranium": ("potfill", (0.4, 0.4, 0.45), 1.0, 0.0, "", lambda p: G.geranium_bush(p, "red")),
+    "potfill_bush_dark": ("potfill", (0.4, 0.4, 0.5), 0.6, 0.0, "classic", lambda p: G.bush(p, 0.22, 0.4, mat="leaf_dark", leaf=0.055)),
+    "potfill_boxball": ("potfill", (0.4, 0.4, 0.42), 0.7, 0.0, "classic", lambda p: G.boxball(p, 0.19)),
+    "potfill_hydrangea_blue": ("potfill", (0.4, 0.4, 0.5), 0.8, 0.0, "bowl", lambda p: G.hydrangea(p, "blue_flower")),
+    "potfill_hydrangea_pink": ("potfill", (0.4, 0.4, 0.5), 0.7, 0.0, "bowl", lambda p: G.hydrangea(p, "pink", leaf_mat="leaf_dark")),
+    "potfill_hydrangea_white": ("potfill", (0.4, 0.4, 0.5), 0.5, 0.0, "bowl", lambda p: G.hydrangea(p, "white_flower", leaf_mat="leaf_lime")),
+    "potfill_geranium_red": ("potfill", (0.4, 0.4, 0.45), 0.8, 0.0, "", lambda p: G.geranium_bush(p, "red")),
+    "potfill_geranium_pink": ("potfill", (0.4, 0.4, 0.45), 0.7, 0.0, "", lambda p: G.geranium_bush(p, "pink")),
+    "potfill_geranium_coral": ("potfill", (0.4, 0.4, 0.45), 0.5, 0.0, "", lambda p: G.geranium_bush(p, "coral")),
     "potfill_olive": ("potfill", (0.4, 0.4, 1.2), 0.8, 0.0, "tall", lambda p: G.olive(p, 0.85, 0.26)),
-    "potfill_lavender": ("potfill", (0.4, 0.4, 0.55), 0.8, 0.0, "tub", G.lavender),
+    "potfill_lavender": ("potfill", (0.4, 0.4, 0.55), 0.9, 0.0, "tub", lambda p: G.lavender_bush(p)),
+    "potfill_lavender_dark": ("potfill", (0.4, 0.4, 0.55), 0.5, 0.0, "tub", lambda p: G.lavender_bush(p, "purple_flower", spikes=42)),
+    "potfill_marguerite": ("potfill", (0.4, 0.4, 0.5), 0.7, 0.0, "",
+                           lambda p: G.flower_bush(p, lambda q, c, at, up: G.daisy_head(q, at, up, 0.036, petal=c), ("white_flower",), n=12,
+                                                   height=0.38, leaf_mat="leaf_blue", leaf_shape="narrow", leaf=0.05)),
+    "potfill_dahlia": ("potfill", (0.4, 0.4, 0.55), 0.5, 0.0, "",
+                       lambda p: G.flower_bush(p, lambda q, c, at, up: G.pompon(q, c, at, up, 0.048), ("burgundy_flower", "orange_flower",
+                                                                                                     "peach_flower"), n=7, height=0.42, leaf_mat="leaf_dark")),
+    "potfill_mums": ("potfill", (0.4, 0.4, 0.4), 0.5, 0.0, "bowl",
+                     lambda p: G.flower_bush(p, lambda q, c, at, up: G.pompon(q, c, at, up, 0.03, layers=3, points=12),
+                                             ("yellow_flower", "orange_flower", "gold_flower"), n=18, height=0.3, leaf_mat="leaf_dark", leaf=0.045)),
+    "potfill_tulips_red": ("potfill", (0.4, 0.4, 0.45), 0.5, 0.0, "", lambda p: G.tulip_pot(p, "red")),
+    "potfill_tulips_yellow": ("potfill", (0.4, 0.4, 0.45), 0.5, 0.0, "", lambda p: G.tulip_pot(p, "yellow_flower")),
+    "potfill_tulips_mixed": ("potfill", (0.4, 0.4, 0.45), 0.5, 0.0, "", lambda p: G.tulip_pot(p, ("pink", "white_flower", "peach_flower"))),
+    "potfill_grass": ("potfill", (0.4, 0.4, 0.6), 0.5, 0.0, "tall",
+                      lambda p: G.grass_tuft(p, blades=60, height=0.5, mats=("grass_leaf", "leaf_blue", "grass_leaf"), plume="peach_flower")),
+    "potfill_fern": ("potfill", (0.4, 0.4, 0.45), 0.5, 0.0, "", lambda p: G.fern(p, 0.85)),
+    "potfill_hosta": ("potfill", (0.4, 0.4, 0.4), 0.5, 0.0, "bowl", lambda p: G.hosta(p, 0.85, mats=("leaf_blue", "leaf_blue", "leaf"))),
+    "potfill_hosta_lime": ("potfill", (0.4, 0.4, 0.4), 0.4, 0.0, "bowl", lambda p: G.hosta(p, 0.8, mats=("leaf_lime", "leaf"))),
+    "potfill_rosemary": ("potfill", (0.4, 0.4, 0.45), 0.4, 0.0, "", lambda p: G.rosemary(p)),
+    "potfill_pansy": ("potfill", (0.4, 0.4, 0.2), 0.6, 0.0, "bowl", G.pansy_box),
+    "potfill_fuchsia": ("potfill", (0.4, 0.4, 0.4), 0.5, 0.0, "bowl", lambda p: G.fuchsia(p, "magenta_flower", "purple_flower", trails=7)),
+    "potfill_heather": ("potfill", (0.4, 0.4, 0.3), 0.4, 0.0, "", lambda p: G.heather(p, "magenta_flower")),
+    "potfill_heather_white": ("potfill", (0.4, 0.4, 0.3), 0.3, 0.0, "", lambda p: G.heather(p, "white_flower")),
+    "potfill_citrus": ("potfill", (0.4, 0.4, 1.1), 0.5, 0.0, "tall", lambda p: G.citrus(p, 0.7, "fruit_lemon")),
+    "potfill_orange": ("potfill", (0.4, 0.4, 1.1), 0.4, 0.0, "tall", lambda p: G.citrus(p, 0.7, "fruit")),
+    "potfill_rose": ("potfill", (0.4, 0.4, 0.55), 0.6, 0.0, "", lambda p: G.rose_bush(p, ("rose", "pink"))),
+    "potfill_rose_white": ("potfill", (0.4, 0.4, 0.55), 0.4, 0.0, "", lambda p: G.rose_bush(p, ("cream_flower", "blush_flower"))),
+    "potfill_trailing": ("potfill", (0.4, 0.4, 0.4), 0.6, 0.0, "", lambda p: G.trailing(p, ("pink", "blush_flower", "white_flower"), ranks=9)),
+    # Ampeln
     "basket_trailing_pink": ("basket", (0.34, 0.34, 0.5), 1.0, 0.0, "", lambda p: G.trailing(p, ("pink", "rose", "cream_flower"))),
     "basket_trailing_red": ("basket", (0.34, 0.34, 0.5), 1.0, 0.0, "", lambda p: G.trailing(p, ("red", "coral", "cream_flower"))),
+    "basket_trailing_blue": ("basket", (0.34, 0.34, 0.5), 0.8, 0.0, "",
+                             lambda p: G.trailing(p, ("blue_flower", "sky_flower", "white_flower"), leaf_mat="leaf_lime")),
+    "basket_trailing_purple": ("basket", (0.34, 0.34, 0.5), 0.8, 0.0, "", lambda p: G.trailing(p, ("purple_flower", "magenta_flower",
+                                                                                                    "white_flower"))),
+    "basket_fuchsia": ("basket", (0.34, 0.34, 0.5), 0.7, 0.0, "", lambda p: G.fuchsia(p, "magenta_flower", "purple_flower", trails=8)),
+    # Kübel mit Pflanze vor der Tür (Topf gehört zur Pflanze)
     "pot_bush": ("pot", (0.5, 0.5, 0.9), 1.0, 0.0, "", "pot:bush"),
-    "pot_hydrangea": ("pot", (0.5, 0.5, 0.85), 1.0, 0.0, "", "pot:hydrangea"),
+    "pot_hydrangea": ("pot", (0.5, 0.5, 0.85), 0.8, 0.0, "", "pot:hydrangea"),
     "pot_olive": ("pot", (0.5, 0.5, 1.4), 0.7, 0.0, "", "pot:olive"),
+    "pot_boxball": ("pot", (0.5, 0.5, 1.2), 0.6, 0.0, "", "pot:boxball"),
+    "pot_cone": ("pot", (0.5, 0.5, 1.35), 0.5, 0.0, "", "pot:cone"),
+    "pot_citrus": ("pot", (0.5, 0.5, 1.3), 0.6, 0.0, "", "pot:citrus"),
+    "pot_grass": ("pot", (0.5, 0.5, 1.1), 0.4, 0.0, "", "pot:grass"),
+    "pot_lavender": ("pot", (0.5, 0.5, 1.0), 0.5, 0.0, "", "pot:lavender"),
+    "pot_rose": ("pot", (0.5, 0.5, 1.25), 0.5, 0.0, "", "pot:rose"),
+    # Kletterpflanzen (Wand bei y = 0; je Größe zwei verschieden gewachsene Efeu)
     "climber_ivy_25": ("climber", (1.3, 0.25, 2.5), 1.0, 0.0, "", lambda p: G.climber(p, 1.3, 2.5, "ivy")),
+    "climber_ivy_25b": ("climber", (1.3, 0.25, 2.5), 1.0, 0.0, "", lambda p: G.climber(p, 1.3, 2.5, "ivy")),
     "climber_ivy_40": ("climber", (1.4, 0.3, 4.0), 1.0, 0.0, "", lambda p: G.climber(p, 1.4, 4.0, "ivy")),
+    "climber_ivy_40b": ("climber", (1.4, 0.3, 4.0), 1.0, 0.0, "", lambda p: G.climber(p, 1.4, 4.0, "ivy")),
     "climber_ivy_55": ("climber", (1.6, 0.3, 5.5), 1.0, 0.0, "", lambda p: G.climber(p, 1.6, 5.5, "ivy")),
+    "climber_ivy_55b": ("climber", (1.6, 0.3, 5.5), 1.0, 0.0, "", lambda p: G.climber(p, 1.6, 5.5, "ivy")),
     "climber_ivy_narrow": ("climber", (0.5, 0.25, 3.5), 1.0, 0.0, "", lambda p: G.climber(p, 0.5, 3.5, "ivy")),
+    "climber_ivy_narrow_b": ("climber", (0.6, 0.25, 2.6), 1.0, 0.0, "", lambda p: G.climber(p, 0.6, 2.6, "ivy")),
     "climber_rose_30": ("climber", (1.2, 0.3, 3.0), 0.8, 0.0, "", lambda p: G.climber(p, 1.2, 3.0, "rose")),
     "climber_rose_45": ("climber", (1.3, 0.3, 4.5), 0.8, 0.0, "", lambda p: G.climber(p, 1.3, 4.5, "rose")),
+    "climber_rose_red_30": ("climber", (1.1, 0.3, 3.0), 0.6, 0.0, "", lambda p: G.climber(p, 1.1, 3.0, "rose", ("red", "burgundy_flower", "rose"))),
+    "climber_rose_white_45": ("climber", (1.3, 0.3, 4.5), 0.6, 0.0, "",
+                              lambda p: G.climber(p, 1.3, 4.5, "rose", ("cream_flower", "white_flower", "blush_flower"))),
+    "climber_clematis_30": ("climber", (1.1, 0.3, 3.0), 0.6, 0.0, "", lambda p: G.climber(p, 1.1, 3.0, "clematis")),
+    "climber_clematis_45": ("climber", (1.3, 0.3, 4.5), 0.5, 0.0, "",
+                            lambda p: G.climber(p, 1.3, 4.5, "clematis", ("white_flower", "blush_flower"))),
     "climber_wisteria_55": ("climber", (1.5, 0.35, 5.5), 0.6, 0.0, "wisteria", lambda p: G.climber(p, 1.5, 5.5, "wisteria")),
     "climber_wisteria_narrow": ("climber", (0.6, 0.3, 5.5), 0.6, 0.0, "wisteria", lambda p: G.climber(p, 0.6, 5.5, "wisteria")),
+    # Beete
     "bed_hosta": ("bed", (0.55, 0.55, 0.4), 1.0, 0.0, "", lambda p: G.hosta(p, 1.0)),
+    "bed_hosta_blue": ("bed", (0.55, 0.55, 0.4), 0.7, 0.0, "", lambda p: G.hosta(p, 1.0, mats=("leaf_blue", "leaf_blue", "leaf"))),
     "bed_fern": ("bed", (0.6, 0.6, 0.45), 1.0, 0.0, "", lambda p: G.fern(p, 1.0)),
     "bed_daisy": ("bed", (0.45, 0.45, 0.42), 1.0, 0.0, "", G.daisies),
-    "bed_lavender": ("bed", (0.45, 0.45, 0.55), 1.0, 0.0, "", G.lavender),
+    "bed_lavender": ("bed", (0.45, 0.45, 0.55), 1.0, 0.0, "", lambda p: G.lavender_bush(p)),
+    "bed_pansy": ("bed", (0.4, 0.4, 0.2), 0.7, 0.0, "", G.pansy_box),
+    "bed_tulips": ("bed", (0.4, 0.4, 0.45), 0.7, 0.0, "", lambda p: G.tulip_pot(p, ("red", "yellow_flower", "pink", "white_flower"), n=11)),
+    "bed_grass": ("bed", (0.5, 0.5, 0.5), 0.6, 0.0, "", lambda p: G.grass_tuft(p, blades=45, height=0.45, plume="peach_flower")),
+    # Hecke, Bäume
     "hedge_shrub": ("hedge", (0.8, 0.8, 1.3), 1.0, 0.0, "", lambda p: G.shrub(p, 0.8, 1.3)),
+    "hedge_shrub_dark": ("hedge", (0.8, 0.8, 1.3), 0.8, 0.0, "", lambda p: G.shrub(p, 0.8, 1.25, mats=("leaf_dark", "box_leaf"))),
     "hedge_shrub_rose": ("hedge", (0.8, 0.8, 1.2), 0.7, 0.0, "", lambda p: G.shrub(p, 0.8, 1.2, "rose")),
+    "hedge_hydrangea": ("hedge", (0.8, 0.8, 1.1), 0.6, 0.0, "", lambda p: G.shrub(p, 0.8, 1.1, "hydrangea_blue", mats=("leaf", "leaf_lime"))),
     "tree_garden": ("tree", (3.0, 3.0, 5.0), 1.0, 0.0, "", lambda p: G.tree(p, 5.0, 1.45)),
+    "tree_garden_big": ("tree", (5.6, 7.4, 10.0), 1.0, 0.0, "garden", G.garden_tree),
     "tubtree_bay": ("tubtree", (0.9, 0.9, 3.0), 1.0, 0.36, "", "tub:tree"),
+    # Grasbüschel am Fuß der Hauswände und an Gehweg und Bordstein
+    "tuft_grass": ("tuft", (0.3, 0.3, 0.25), 1.0, 0.0, "", lambda p: G.grass_tuft(p)),
+    "tuft_grass_low": ("tuft", (0.25, 0.25, 0.18), 1.0, 0.0, "", lambda p: G.grass_tuft(p, blades=16, height=0.17)),
+    "tuft_grass_tall": ("tuft", (0.35, 0.35, 0.32), 0.6, 0.0, "", lambda p: G.grass_tuft(p, blades=30, height=0.32)),
+    "tuft_daisy": ("tuft", (0.3, 0.3, 0.22), 0.6, 0.0, "", lambda p: G.grass_tuft(p, blades=18, height=0.2, flowers=("white_flower",))),
+    "tuft_dandelion": ("tuft", (0.3, 0.3, 0.2), 0.5, 0.0, "", lambda p: G.grass_tuft(p, blades=16, height=0.18, flowers=("gold_flower",))),
 }
 
 # frischere, wärmere Grüntöne als die alten Pflanzen (Vorlagebilder: saftiges Gelbgrün)
@@ -84,7 +175,11 @@ def materials():
 
 def build_plant(pid, M, coll):
     kind, size, weight, col_r, hint, fn = PLANTS[pid]
-    p = G.Plant(M, coll, seed=abs(hash(pid)) % 100000 if False else sum(ord(c) * (i + 1) for i, c in enumerate(pid)))
+    # Gefäßrand (Ranken legen sich darüber, nichts steckt in der Wand)
+    container = G.CONTAINERS.get(kind) if kind in ("box", "potfill", "basket") else None
+    if isinstance(fn, str):
+        container = G.CONTAINERS["pot" if fn.startswith("pot:") else "tub"]
+    p = G.Plant(M, coll, seed=sum(ord(c) * (i + 1) for i, c in enumerate(pid)), container=container)
     extra = []
     if isinstance(fn, str) and fn.startswith("pot:"):
         # Topf (Terrakotta) mit Erde, darin die Pflanze
@@ -92,8 +187,15 @@ def build_plant(pid, M, coll):
         r, h = 0.22, 0.46
         SC.pot(M, coll, "Topf", (0, 0, 0), r, h, 7, mat=p.rnd.choice(("pot", "pot_light", "pot_dark")), style="classic", spot=None)
         top = h * 0.84 + 0.035
-        sub = {"bush": lambda q: G.bush(q, 0.22, 0.42), "hydrangea": lambda q: G.hydrangea(q, q.rnd.choice(("blue_flower", "pink")), 1.0),
-               "olive": lambda q: G.olive(q, 0.85, 0.26)}[fn[4:]]
+        sub = {"bush": lambda q: G.bush(q, 0.22, 0.42, mats=("box_leaf", "leaf_dark")),
+               "hydrangea": lambda q: G.hydrangea(q, q.rnd.choice(("blue_flower", "pink")), 1.0),
+               "olive": lambda q: G.olive(q, 0.85, 0.26),
+               "boxball": lambda q: G.standard_ball(q, 0.48, 0.2),
+               "cone": lambda q: G.cone_topiary(q, 0.85, 0.22),
+               "citrus": lambda q: G.citrus(q, 0.62, q.rnd.choice(("fruit_lemon", "fruit"))),
+               "grass": lambda q: G.grass_tuft(q, blades=70, height=0.62, mats=("grass_leaf", "leaf_blue", "leaf_lime"), plume="peach_flower"),
+               "lavender": lambda q: G.lavender_bush(q, spikes=60, height=0.55),
+               "rose": lambda q: G.standard_rose(q)}[fn[4:]]
         sub(p)
         objs = p.build(sway_height=None)
         for o in objs:
@@ -101,7 +203,7 @@ def build_plant(pid, M, coll):
         return objs
     if isinstance(fn, str) and fn.startswith("tub:"):
         top = G.tub(M, coll, 0.36, 0.5, seed=5)
-        G.tree(p, 2.6, 0.9, mat="box_leaf")
+        G.bay_tree(p)
         objs = p.build()
         for o in objs:
             o.location.z += top
@@ -180,7 +282,7 @@ def write_template(kind, M):
         b.box((0, 0.55, 0.5), (1.0, 0.04, 1.0), step=1, dent=0.0)      # Wand 0,32 m dahinter (ungefähr)
     elif kind == "climber":
         b.box((0, 0.02, 2.0), (1.6, 0.04, 4.0), step=1, dent=0.0)       # Wand bei y = 0
-    elif kind in ("bed", "hedge", "tree", "tubtree"):
+    elif kind in ("bed", "hedge", "tree", "tubtree", "tuft"):
         b.box((0, 0, -0.02), (1.0, 1.0, 0.04), step=1, dent=0.0)       # Boden
     b.build()
     os.makedirs(TEMPLATES, exist_ok=True)
@@ -188,6 +290,25 @@ def write_template(kind, M):
     if not os.path.exists(gd):
         open(gd, "w").close()
     SC.export_objects(list(coll.objects), [], os.path.join(TEMPLATES, kind + ".glb"), extra=[])
+
+
+def remove_stale():
+    """Pflanzen, die es in PLANTS nicht mehr gibt, entfernen – nur, was dieses Script gebaut hat und
+    in Blender nicht bearbeitet wurde (eigene Szenen und Modelle der Entwicklerin bleiben)."""
+    for name in sorted(os.listdir(SCENES)):
+        pid, ext = os.path.splitext(name)
+        if ext != ".tscn" or pid in PLANTS:
+            continue
+        path = os.path.join(SCENES, name)
+        if "build_storybook_plants.py" not in open(path).read():
+            continue
+        blend, stamp = os.path.join(SRC, pid + ".blend"), os.path.join(SRC, pid + ".stamp")
+        if SC.edited_by_hand(blend, stamp):
+            continue
+        for f in (path, os.path.join(OUT, pid + ".glb"), os.path.join(OUT, pid + ".glb.import"), blend, stamp):
+            if os.path.exists(f):
+                os.remove(f)
+        print("entfernt (nicht mehr in PLANTS): %s" % pid)
 
 
 def main():
@@ -233,6 +354,7 @@ def main():
     if not only:
         for kind in sorted({v[0] for v in PLANTS.values()}):
             write_template(kind, None)
+        remove_stale()
     print("Fertig: zusammen %d Dreiecke" % total)
 
 

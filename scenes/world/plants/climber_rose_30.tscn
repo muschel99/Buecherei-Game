@@ -10,7 +10,7 @@
 [node name="ClimberRose30" type="Node3D"]
 script = ExtResource("1_piece")
 kind = "climber"
-nominal_size = Vector3(1.291, 2.767, 0.399)
+nominal_size = Vector3(1.312, 2.813, 0.538)
 weight = 0.80
 collision_radius = 0.00
 hint = ""

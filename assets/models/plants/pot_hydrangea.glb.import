@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://tsq2ifn71x17"
+uid="uid://dnc2ylupp31nx"
 path="res://.godot/imported/pot_hydrangea.glb-a601544222f6755d58928711674dfc69.scn"
 
 [deps]
@@ -55,11 +55,6 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_putz.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_putz.tres"
-},
-"Sammel Stoff": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/sammel_stoff.tres",
-"use_external/path": "res://assets/materials/storybook/sammel_stoff.tres"
 }
 }
 }

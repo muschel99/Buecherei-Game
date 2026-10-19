@@ -204,6 +204,44 @@ def round_bench(M, C, x, z, rnd):
             ((x, z), (0.6, 0.6), 2.0)]
 
 
+def climber_place(wins, length, along, width=1.4, height=4.2, blocks=()):
+    """Stelle an einer Wand mit Fenstern wins (x, z0, w, h entlang der Wand) nahe along, an der eine
+    Kletterpflanze kein Fenster verdeckt: sie wächst nur so hoch, wie die Wand über ihr frei ist, und
+    rückt zur Seite, bis neben ihr kein Fenster im Erdgeschoss liegt. blocks = weitere Hindernisse wie
+    Fenster (z. B. Bögen über der Gasse). Liefert (along, Breite, Höhe) oder None."""
+    best = None
+    for w in (width, width * 0.7, 0.55):
+        for k in range(41):
+            for sg in ((1, -1) if k else (1,)):
+                a = along + sg * k * 0.1
+                if a - w / 2 < 0.25 or a + w / 2 > length - 0.25:
+                    continue
+                top = height
+                for wx, z0, ww, hh in list(wins) + list(blocks):
+                    if abs(a - wx) < ww / 2 + w / 2 + 0.15:
+                        top = min(top, z0 - 0.2)
+                if top < 2.0:
+                    continue
+                score = top * w - 0.6 * k * 0.1
+                if best is None or score > best[0]:
+                    best = (score, a, w, top)
+        if best:
+            break
+    return best[1:] if best else None
+
+
+def wall_tufts(spots, p0z, p1z, x, inward, rnd, avoid, every=(1.4, 2.8)):
+    """Grasbüschel am Fuß einer Gassenwand (Godot x der Wand, z von p0z bis p1z, inward = Richtung in die
+    Gasse): unregelmäßig verteilt, nicht vor Töpfen, Kletterpflanzen und Türen (avoid = [(x, z, Abstand)])."""
+    z = min(p0z, p1z) + rnd.uniform(0.3, 1.0)
+    while z < max(p0z, p1z) - 0.3:
+        px = x + inward * rnd.uniform(0.08, 0.16)
+        if all(math.hypot(px - ax, z - az) > d for ax, az, d in avoid):
+            gx_, gy_ = G(px, z)
+            spots.append(("tuft", (gx_, gy_, 0.0), (0.3, 0.3, 0.25), rnd.uniform(0, 360)))
+        z += rnd.uniform(*every)
+
+
 def library_alley(M, C, rnd):
     L = LAYOUT
     lx, fx = L["library_x"], L["far_x"]
@@ -213,9 +251,9 @@ def library_alley(M, C, rnd):
     h = L["wall_height"]
     spots = []
     wins_lib = back_wall(M, C, "Rückwand hinter der Bücherei", G(lx, L["library_back_z"]), G(lx, end + 0.6), h, "brick_a", rnd)
-    back_wall(M, C, "Rückwand hinter dem Pub", G(fx, gz), G(fx, L["neighbor_back_z"]), h, "plaster_a", rnd, kind="plaster")
+    wins_pub = back_wall(M, C, "Rückwand hinter dem Pub", G(fx, gz), G(fx, L["neighbor_back_z"]), h, "plaster_a", rnd, kind="plaster")
     back_wall(M, C, "Gartenwand hinten", G(gx, gz), G(fx, gz), h - 0.6, "plaster_b", rnd, kind="plaster")
-    back_wall(M, C, "Gartenwand links", G(gx, end + 0.6), G(gx, gz), h - 0.4, "brick_c", rnd)
+    wins_gl = back_wall(M, C, "Gartenwand links", G(gx, end + 0.6), G(gx, gz), h - 0.4, "brick_c", rnd)
     # Lattenzaun hinten mit runden Latten-Köpfen
     fz = end + 0.15
     fence = Body("Gartenzaun", M["fence"], C["walls"], seed=330, vary=0.07, bevel=0.006)
@@ -257,7 +295,8 @@ def library_alley(M, C, rnd):
     tsb.build()
     obstacles = round_bench(M, C, tx, tz, rnd)
     p = G(tx, tz)
-    spots.append(("tree", (p[0], p[1], 0.0), (2.0, 2.0, 5.8), 0.0))
+    # der große Baum (tree_garden_big): Krone passt genau in den Hof, darum fester Hinweis "garden"
+    spots.append(("tree", (p[0], p[1], 0.0), (5.6, 7.4, 10.0), 0.0, "garden"))
     # Hecke hinter dem Zaun, Beete am Rand des Gartens
     a, b = G(gx + 0.3, fz + 1.1), G(lx - 0.3, fz + 1.1)
     spots.append(("hedge", ((a[0] + b[0]) / 2, a[1], 0.02), (lx - gx - 0.6, 1.2, 1.6), 180.0))
@@ -265,14 +304,29 @@ def library_alley(M, C, rnd):
         (ax, ay), (bx2, by2) = G(x0, z0), G(x1, z1)
         spots.append(("bed", ((ax + bx2) / 2, (ay + by2) / 2, 0.02), (max(abs(bx2 - ax), abs(by2 - ay)), 0.6, 0.9), face))
     # Töpfe an der Wand hinter der Bücherei (Gasse) und Efeu an den Wänden
+    avoid = []
     for zz in (5.6, 8.3, 9.0):
         ok = all(abs((zz - L["library_back_z"]) - wx) > w / 2 + 0.35 for wx, z0, w, _ in wins_lib if z0 < 2)
         if ok:
             px, py = G(lx - 0.34, zz)
             spots.append(("pot", (px, py, 0.0), (0.5, 0.5, 1.0), -90.0))
-    for (x, z, face, height) in ((lx - 0.06, 11.4, -90.0, 4.2), (fx + 0.06, 7.0, 90.0, 4.6), (gx + 0.06, 14.3, 90.0, 4.0)):
-        px, py = G(x, z)
-        spots.append(("climber", (px, py, 0.0), (1.4, 0.3, height), face))
+            avoid.append((lx - 0.34, zz, 0.6))
+    # Kletterpflanzen nur an fensterfreien Wandstücken (wachsen nie vor einem Fenster hoch)
+    lib_len, pub_len, gl_len = end + 0.6 - L["library_back_z"], gz - L["neighbor_back_z"], end + 0.6 - gz
+    for (x, z, face, height, wins, z_of, along_of, length) in (
+            (lx - 0.06, 11.4, -90.0, 4.2, wins_lib, lambda a: L["library_back_z"] + a, lambda zz: zz - L["library_back_z"], lib_len),
+            (fx + 0.06, 7.0, 90.0, 4.6, wins_pub, lambda a: gz - a, lambda zz: gz - zz, pub_len),
+            (gx + 0.06, 14.3, 90.0, 4.0, wins_gl, lambda a: end + 0.6 - a, lambda zz: end + 0.6 - zz, gl_len)):
+        pots = [(along_of(az), 0.0, 2 * d - 0.6, 1.0) for ax, az, d in avoid if abs(ax - x) < 0.5]
+        place = climber_place(wins, length, along_of(z), 1.4, height, pots)
+        if place:
+            a, w, top = place
+            px, py = G(x, z_of(a))
+            spots.append(("climber", (px, py, 0.0), (w, 0.3, top), face))
+            avoid.append((x, z_of(a), w / 2 + 0.4))
+    # Grasbüschel am Fuß der Gassenwände (nicht im Garten: dort ist Rasen)
+    wall_tufts(spots, L["library_back_z"] + 0.4, gz, lx, -1, rnd, avoid)
+    wall_tufts(spots, L["neighbor_back_z"] + 0.3, gz, fx, 1, rnd, avoid)
     T.placed(C["deco"], T.canon(*(G(lx, 7.0), G(lx, 7.8)), 0.4, 0.0, 0.0), T.wall_lantern, M, C, "Wandlaterne Gasse", 0.0, 2.7, seed=340)
     return obstacles, spots
 
@@ -308,8 +362,8 @@ def opposite_alley(M, C, rnd):
     z_end = L["opposite_end_z"] - L["opposite_back_depth"]
     h = 6.5
     spots = []
-    back_wall(M, C, "Wand links", G(x0, z0), G(x0, z_end), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
-    back_wall(M, C, "Wand rechts", G(x1, z_end), G(x1, z0), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
+    wins_l = back_wall(M, C, "Wand links", G(x0, z0), G(x0, z_end), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
+    wins_r = back_wall(M, C, "Wand rechts", G(x1, z_end), G(x1, z0), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
     for k, zz in enumerate((z0 - 2.5, z0 - 6.5, z0 - 10.0)):
         stone_arch(M, C, "Bogen %d" % (k + 1), x0, x1, zz, 0.6, 2.4 + 0.1 * k, h, rnd)
     # Ende: Wand mit Tür und Laterne
@@ -323,12 +377,28 @@ def opposite_alley(M, C, rnd):
     SC.add_bevel(ew, 0.02)
     SH.plank_door(M, C, "Tür hinten", fm, 0.95, 2.15, 0.3, seed=351)
     T.placed(C["deco"], T.canon(p0, p1, dx - x0 + 0.62, 0.0, 0.0), T.wall_lantern, M, C, "Laterne hinten", 0.0, 2.6, seed=352)
+    avoid = [(dx, z_end, 0.9)]
     for zz, face, xw in ((z0 - 1.5, 90.0, x0 + 0.3), (z0 - 5.6, 90.0, x0 + 0.3), (z0 - 8.3, -90.0, x1 - 0.3)):
         px, py = G(xw, zz)
         spots.append(("pot", (px, py, 0.0), (0.4, 0.4, 0.8), face))
-    for zz, face, xw in ((z0 - 3.5, 90.0, x0 + 0.06), (z0 - 7.6, 90.0, x0 + 0.06), (z0 - 4.6, -90.0, x1 - 0.06)):
-        px, py = G(xw, zz)
-        spots.append(("climber", (px, py, 0.0), (1.2, 0.3, 4.0), face))
+        avoid.append((xw, zz, 0.6))
+    # Kletterpflanzen nur an fensterfreien Wandstücken, nicht unter den Bögen über der Gasse
+    length = z0 - z_end
+    arches = [(z0 - zz + 0.3, 2.2, 0.9, 4.0) for zz in (z0 - 2.5, z0 - 6.5, z0 - 10.0)]
+    for zz, face, xw, wins, left in ((z0 - 3.5, 90.0, x0 + 0.06, wins_l, True), (z0 - 7.6, 90.0, x0 + 0.06, wins_l, True),
+                                     (z0 - 4.6, -90.0, x1 - 0.06, wins_r, False)):
+        along = z0 - zz if left else zz - z_end
+        blocks = arches if left else [(length - a, z, w, hh) for a, z, w, hh in arches]
+        blocks = blocks + [((z0 - az) if left else (az - z_end), 0.0, 2 * d - 0.6, 1.0) for ax, az, d in avoid if abs(ax - xw) < 0.5]
+        place = climber_place(wins, length, along, 1.2, 4.0, blocks)
+        if place:
+            a, w, top = place
+            zc = z0 - a if left else z_end + a
+            px, py = G(xw, zc)
+            spots.append(("climber", (px, py, 0.0), (w, 0.3, top), face))
+            avoid.append((xw, zc, w / 2 + 0.4))
+    wall_tufts(spots, z_end + 0.3, z0, x0, 1, rnd, avoid)
+    wall_tufts(spots, z_end + 0.3, z0, x1, -1, rnd, avoid)
     return spots
 
 
@@ -336,8 +406,9 @@ def export(C, name, obstacles, spots):
     # Hindernisse in Godot-Koordinaten (x, z) → Blender (x, -z)
     obstacles = {k: ((p[0], -p[1]), size, h) for k, (p, size, h) in (obstacles or {}).items()}
     cols = SC.colliders(C, obstacles) if obstacles else []
-    for i, (kind, pos, size, face) in enumerate(spots):
-        SH.plant_spot(C, kind, pos, size, facing=face)
+    for spot in spots:
+        kind, pos, size, face = spot[:4]
+        SH.plant_spot(C, kind, pos, size, facing=face, hint=spot[4] if len(spot) > 4 else "")
     objs = [o for k, c in C.items() if k not in ("env", "collision", "plants", "light") for o in c.objects if o.type == "MESH"]
     bad = [(o.name, SB.non_manifold(o)) for o in objs if SB.non_manifold(o)]
     glb = os.path.join(OUT, name + ".glb")

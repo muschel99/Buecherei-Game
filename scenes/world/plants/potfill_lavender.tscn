@@ -11,7 +11,7 @@
 script = ExtResource("1_piece")
 kind = "potfill"
 nominal_size = Vector3(0.400, 0.550, 0.400)
-weight = 0.80
+weight = 0.90
 collision_radius = 0.00
 hint = "tub"
 
