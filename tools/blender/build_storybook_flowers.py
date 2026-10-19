@@ -46,10 +46,13 @@ SETTLE = {"wave": 0.02, "wavelength": 2.8, "lean": -0.0025, "roof_sag": 0.05, "r
 OBSTACLES = {
     "Fahrrad": ((-1.4, -0.45), (1.9, 0.62), 1.1),
     "Topf Ecke links": ((-2.5, -0.5), (0.4, 0.4), 0.36),
-    "Töpfe rechts": ((1.65, -0.42), (0.85, 0.36), 0.4),
+    "Blumenständer": ((1.42, -0.48), (1.24, 0.46), 0.55),
     "Kreidetafel": ((2.35, -0.66), (0.56, 0.42), 0.85),
-    "Eimer an der Tür": ((0.92, -0.52), (0.5, 0.5), 0.4),
 }
+# Stufenständer vor dem rechten Schaufenster (Bild der Entwicklerin): zwei Stufen aus Holz, hinten
+# Zinkeimer mit Schnittblumen, vorn kleine Töpfe; bleibt im Streifen 0,65 m vor der Wand (Gehweg frei)
+STAND_X = (0.8, 2.04)
+STAND_STEPS = ((-0.26, -0.5, 0.42), (-0.5, -0.71, 0.2))   # (y hinten, y vorn, Höhe); Brüstung ragt 24 cm vor
 
 
 def fx(x):
@@ -200,10 +203,22 @@ def flower_inside(M, C):
             for j in range(3):
                 px = cx - 0.45 + 0.45 * j + rnd.uniform(-0.05, 0.05)
                 if (j + k) % 3 == 1:
-                    SC.zinc_tub(M, C["inside"], "Eimer %d %d %d" % (side, k, j), (px, yy, zz), 200 + 10 * k + j + (side > 0) * 50)
+                    SC.flower_bucket(M, C["inside"], "Eimer %d %d %d" % (side, k, j), (px, yy, zz), 0.12, 0.26, 200 + 10 * k + j + (side > 0) * 50)
                 else:
                     SC.pot(M, C["inside"], "Topf %d %d %d" % (side, k, j), (px, yy, zz), rnd.uniform(0.1, 0.14), rnd.uniform(0.16, 0.24),
                            300 + 10 * k + j + (side > 0) * 50, mat=("pot", "pot_light")[j % 2], style=("classic", "tall")[k % 2])
+    # Eimer am Boden gleich hinter der Tür, Vase mit Strauß auf dem Werktisch, Hängetöpfe unter der Decke
+    for i, x in enumerate((-0.38, 0.38)):
+        SC.flower_bucket(M, C["inside"], "Eimer an der Tür %d" % (i + 1), (x, 0.5, 0.08), 0.13, 0.32, 260 + i)
+    SC.flower_bucket(M, C["inside"], "Vase Werktisch", (0.35, yb - 1.4, 0.945), 0.07, 0.2, 265, mat="pot_light", style="vase")
+    ch = Body("Hängetöpfe Ketten", M["lamp_iron"], C["inside"], seed=266)
+    for i, (x, y) in enumerate(((-1.3, 0.75), (1.3, 0.75), (0.0, 1.6))):
+        base = Vector((x, y, 2.45))
+        SC.pot(M, C["inside"], "Hängetopf %d" % (i + 1), tuple(base), 0.13, 0.15, 267 + i, mat="pot_light", style="bowl", spot="basket")
+        for k in range(3):
+            a = 2 * math.pi * k / 3
+            ch.tube([base + Vector((math.cos(a) * 0.13, math.sin(a) * 0.13, 0.14)), Vector((x, y, 3.25))], 0.003, segs=4)
+    ch.build()
     up = Body("Zimmer oben", M["in_dark"], C["inside"], seed=58, vary=0.04)
     up.box((0, 2.6, 3.62), (W - 0.6, 4.6, 0.1), step=0.8, dent=0.003)
     up.box((0, 2.6, E - 0.4), (W - 0.6, 4.6, 0.1), step=0.8, dent=0.003)
@@ -221,14 +236,45 @@ def outside(M, C):
     """Hollandrad vor dem linken Fenster, Töpfe und Eimer (leer, mit Erde), Kreidetafel rechts."""
     # Rad und Topf mit Abstand: das Hinterrad (mit Schutzblech) endet 4 cm vor dem Topf, das
     # Vorderrad steht vor der Türplatte
-    T.bicycle(M, C, "Fahrrad", -1.35, -0.45, seed=90)
+    T.bicycle(M, C, "Fahrrad", -1.35, -0.45, seed=90, flowers=True)
     SC.pot(M, C["pots"], "Topf Ecke links", (-2.5, -0.5, 0.0), 0.16, 0.33, 61, mat="pot_dark", style="classic")
-    SC.zinc_tub(M, C["pots"], "Eimer an der Tür", (0.92, -T.pot_out(0.235), 0.0), 62)
-    rnd = T.RND
-    for i, (x, r, h, st) in enumerate(((1.36, 0.13, 0.26, "classic"), (1.68, 0.15, 0.3, "tall"), (1.97, 0.1, 0.21, "bowl"))):
-        SC.pot(M, C["pots"], "Topf rechts %d" % (i + 1), (x, -T.pot_out(r) - rnd.uniform(0, 0.04), 0.0), r, h, 63 + i,
-               mat=("pot", "pot_light", "pot_dark")[i % 3], style=st)
+    flower_stand(M, C)
     SC.chalkboard(M, C["deco"], (2.35, -0.66), -14, SC.sign_material("flower_shop", "chalkboard"))
+    # Kletterrosen an den Pfeilern der Ladenfront (bis unter die Ampel-Arme)
+    for side in (-1, 1):
+        SC.plant_spot("climber", (side * (HW - 0.15), -0.16, 0.0), (0.42, 0.3, HEAD - 0.45), 0.0, hint="rose")
+
+
+def flower_stand(M, C):
+    """Stufenständer aus Holz vor dem rechten Schaufenster: Rahmen, Bretter, hinten drei Zinkeimer mit
+    Schnittblumen, vorn vier kleine Töpfe (Pflanzen setzt das Spiel ein)."""
+    rnd = T.RND
+    x0, x1 = STAND_X
+    wd = Body("Blumenständer", M["box"], C["pots"], seed=70, vary=0.08, bevel=0.006)
+    for (yb, yf, hh) in STAND_STEPS:
+        # Brett je Stufe (drei Latten), darunter eine Schürze
+        n = 3
+        for k in range(n):
+            ya = yb + (yf - yb) * k / n
+            yz = yb + (yf - yb) * (k + 1) / n
+            wd.box(((x0 + x1) / 2, (ya + yz) / 2, hh - 0.015), (x1 - x0, abs(yz - ya) - 0.008, 0.03), step=0.5, dent=0.002)
+        wd.box(((x0 + x1) / 2, yf + 0.012, hh - 0.06), (x1 - x0 - 0.04, 0.022, 0.09), step=0.5, dent=0.002)
+    for sx in (x0 + 0.03, (x0 + x1) / 2, x1 - 0.03):
+        for (yb, yf, hh) in STAND_STEPS:
+            wd.box((sx, yf + 0.03, (hh - 0.03) / 2), (0.05, 0.05, hh - 0.03), step=0.5, dent=0.002)
+        wd.box((sx, STAND_STEPS[0][0] - 0.03, STAND_STEPS[0][2] / 2), (0.05, 0.05, STAND_STEPS[0][2] - 0.03), step=0.5, dent=0.002)
+        wd.box((sx, (STAND_STEPS[0][0] + STAND_STEPS[1][1]) / 2, 0.06), (0.045, abs(STAND_STEPS[1][1] - STAND_STEPS[0][0]), 0.04), step=0.5,
+               dent=0.002)
+    wd.build()
+    (yb, yf, hh) = STAND_STEPS[0]
+    for i, x in enumerate((1.0, 1.42, 1.84)):
+        SC.flower_bucket(M, C["pots"], "Eimer hinten %d" % (i + 1), (x + rnd.uniform(-0.03, 0.03), (yb + yf) / 2, hh),
+                         rnd.uniform(0.11, 0.125), rnd.uniform(0.24, 0.3), 72 + i)
+    (yb, yf, hh) = STAND_STEPS[1]
+    for i, x in enumerate((0.94, 1.26, 1.58, 1.9)):
+        r = rnd.uniform(0.09, 0.11)
+        SC.pot(M, C["pots"], "Topf vorn %d" % (i + 1), (x, (yb + yf) / 2 - 0.005, hh + 0.008), min(r, 0.095), rnd.uniform(0.15, 0.19), 76 + i,
+               mat=("pot", "pot_light", "pot_dark", "pot")[i], style=("classic", "bowl", "classic", "tall")[i])
 
 
 def build_scene():

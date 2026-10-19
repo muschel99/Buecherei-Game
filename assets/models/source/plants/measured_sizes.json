@@ -159,6 +159,116 @@
   0.476,
   0.171
  ],
+ "bucket_dahlias": [
+  0.415,
+  0.412,
+  0.363
+ ],
+ "bucket_dahlias_warm": [
+  0.441,
+  0.403,
+  0.379
+ ],
+ "bucket_daisies": [
+  0.395,
+  0.409,
+  0.341
+ ],
+ "bucket_gypsophila": [
+  0.455,
+  0.439,
+  0.388
+ ],
+ "bucket_hydrangea": [
+  0.394,
+  0.415,
+  0.357
+ ],
+ "bucket_hydrangea_pink": [
+  0.398,
+  0.421,
+  0.364
+ ],
+ "bucket_lavender": [
+  0.282,
+  0.289,
+  0.421
+ ],
+ "bucket_mixed": [
+  0.44,
+  0.424,
+  0.365
+ ],
+ "bucket_mixed_bright": [
+  0.448,
+  0.432,
+  0.372
+ ],
+ "bucket_mums": [
+  0.409,
+  0.391,
+  0.289
+ ],
+ "bucket_peonies": [
+  0.478,
+  0.418,
+  0.391
+ ],
+ "bucket_ranunculus": [
+  0.471,
+  0.442,
+  0.348
+ ],
+ "bucket_roses_cream": [
+  0.476,
+  0.462,
+  0.395
+ ],
+ "bucket_roses_peach": [
+  0.481,
+  0.471,
+  0.401
+ ],
+ "bucket_roses_pink": [
+  0.475,
+  0.483,
+  0.399
+ ],
+ "bucket_roses_red": [
+  0.472,
+  0.484,
+  0.408
+ ],
+ "bucket_sunflowers": [
+  0.54,
+  0.509,
+  0.532
+ ],
+ "bucket_tulips_mixed": [
+  0.443,
+  0.444,
+  0.404
+ ],
+ "bucket_tulips_pink": [
+  0.459,
+  0.434,
+  0.405
+ ],
+ "bucket_tulips_red": [
+  0.434,
+  0.457,
+  0.402
+ ],
+ "bucket_tulips_white": [
+  0.447,
+  0.462,
+  0.406
+ ],
+ "bucket_tulips_yellow": [
+  0.46,
+  0.429,
+  0.402
+ ],
  "climber_clematis_30": [
   1.224,
   0.399,
@@ -218,6 +328,16 @@
   1.431,
   0.469,
   3.952
+ ],
+ "climber_rose_narrow": [
+  0.579,
+  0.348,
+  2.278
+ ],
+ "climber_rose_narrow_b": [
+  0.552,
+  0.45,
+  2.192
  ],
  "climber_rose_red_30": [
   1.246,

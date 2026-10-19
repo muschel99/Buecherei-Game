@@ -412,7 +412,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   ändert sich der Hof, Werte anpassen). Grasbüschel (Art `tuft`): Plätze am Fuß der Wohnhäuser
   (`place_spots`), der Gassenwände (`wall_tufts`), in der Rinne vor den Bordsteinen und an Laternenfüßen
   (`Street._build_tuft_spots`, nicht am Halteplatz des Lieferwagens). Kletterpflanzen in Gassen nur an
-  fensterfreien Wandstücken (`climber_place`). Laternen-Ampeln = Pflanzplätze (Art `basket`). Alle
+  fensterfreien Wandstücken (`climber_place`). Laternen-Ampeln = Pflanzplätze (Art `basket`).
+  Schnittblumen (Art `bucket`, Ursprung = Mitte des Rands): `SC.flower_bucket` (Zinkeimer, Vase) bzw.
+  `T.bicycle(..., flowers=True)` legt die Plätze an, Sträuße baut `cut_bunch` mit `head_*` (Tulpe, Rose,
+  Ranunkel, Dahlie, Sonnenblume, Margerite, Hortensie, Lavendel, Schleierkraut, gemischt). Kletterrosen
+  mit Hinweis "rose" (`climber_rose_narrow`, z. B. an den Pfeilern des Blumenladens). Blumenladen:
+  Stufenständer `flower_stand` (bleibt vor der 24 cm vorstehenden Brüstung, Gehweg frei). Alle
   gesetzten Pflanzen zusammen höchstens etwa 8,5 Mio. Dreiecke. Eingangstreppe: eigenes Material `entrance_steps.tres` (Muster 4, ohne Fugen,
   nach der Lage im Modell). `T.placed` setzt neue Objekte über `matrix_basis` (sonst landen
   leere Objekte im Ursprung). Boden: Shader `storybook_ground.gdshader` (Materialien cobblestone,

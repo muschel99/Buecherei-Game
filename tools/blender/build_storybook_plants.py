@@ -131,8 +131,68 @@ PLANTS = {
     "climber_clematis_30": ("climber", (1.1, 0.3, 3.0), 0.6, 0.0, "", lambda p: G.climber(p, 1.1, 3.0, "clematis")),
     "climber_clematis_45": ("climber", (1.3, 0.3, 4.5), 0.5, 0.0, "",
                             lambda p: G.climber(p, 1.3, 4.5, "clematis", ("white_flower", "blush_flower"))),
+    "climber_rose_narrow": ("climber", (0.45, 0.3, 2.4), 1.0, 0.0, "rose",
+                            lambda p: G.climber(p, 0.45, 2.4, "rose", ("pink", "blush_flower", "rose"))),
+    "climber_rose_narrow_b": ("climber", (0.45, 0.3, 2.4), 1.0, 0.0, "rose",
+                              lambda p: G.climber(p, 0.45, 2.4, "rose", ("cream_flower", "blush_flower", "white_flower"))),
     "climber_wisteria_55": ("climber", (1.5, 0.35, 5.5), 0.6, 0.0, "wisteria", lambda p: G.climber(p, 1.5, 5.5, "wisteria")),
     "climber_wisteria_narrow": ("climber", (0.6, 0.3, 5.5), 0.6, 0.0, "wisteria", lambda p: G.climber(p, 0.6, 5.5, "wisteria")),
+    # Schnittblumen im Eimer, in der Vase oder im Fahrradkorb (Blumenladen)
+    "bucket_tulips_red": ("bucket", (0.24, 0.24, 0.55), 0.8, 0.0, "", lambda p: G.cut_bunch(p, G.head_tulip, ("red",), n=13,
+                                                                                               leaf_mat="leaf_blue", leaf=0.12)),
+    "bucket_tulips_yellow": ("bucket", (0.24, 0.24, 0.55), 0.7, 0.0, "", lambda p: G.cut_bunch(p, G.head_tulip, ("yellow_flower",), n=13,
+                                                                                                  leaf_mat="leaf_blue", leaf=0.12)),
+    "bucket_tulips_pink": ("bucket", (0.24, 0.24, 0.55), 0.8, 0.0, "", lambda p: G.cut_bunch(p, G.head_tulip, ("pink", "blush_flower"), n=13,
+                                                                                                leaf_mat="leaf_blue", leaf=0.12)),
+    "bucket_tulips_mixed": ("bucket", (0.24, 0.24, 0.55), 0.8, 0.0, "",
+                            lambda p: G.cut_bunch(p, G.head_tulip, ("orange_flower", "pink", "white_flower", "purple_flower"), n=14,
+                                                  leaf_mat="leaf_blue", leaf=0.12)),
+    "bucket_tulips_white": ("bucket", (0.24, 0.24, 0.55), 0.5, 0.0, "", lambda p: G.cut_bunch(p, G.head_tulip, ("white_flower",), n=13,
+                                                                                                 leaf_mat="leaf_blue", leaf=0.12)),
+    "bucket_roses_pink": ("bucket", (0.24, 0.24, 0.6), 0.8, 0.0, "", lambda p: G.cut_bunch(p, G.head_rose, ("pink", "rose"), n=11,
+                                                                                              leaf_mat="leaf_dark", leaf_shape="oval", leaf=0.06, leaf_width=0.62)),
+    "bucket_roses_red": ("bucket", (0.24, 0.24, 0.6), 0.7, 0.0, "", lambda p: G.cut_bunch(p, G.head_rose, ("red",), n=11,
+                                                                                             leaf_mat="leaf_dark", leaf_shape="oval", leaf=0.06, leaf_width=0.62)),
+    "bucket_roses_cream": ("bucket", (0.24, 0.24, 0.6), 0.7, 0.0, "", lambda p: G.cut_bunch(p, G.head_rose, ("cream_flower", "blush_flower"), n=11,
+                                                                                               leaf_mat="leaf_dark", leaf_shape="oval", leaf=0.06, leaf_width=0.62)),
+    "bucket_roses_peach": ("bucket", (0.24, 0.24, 0.6), 0.6, 0.0, "", lambda p: G.cut_bunch(p, G.head_rose, ("peach_flower", "coral"), n=11,
+                                                                                               leaf_mat="leaf_dark", leaf_shape="oval", leaf=0.06, leaf_width=0.62)),
+    "bucket_ranunculus": ("bucket", (0.24, 0.24, 0.5), 0.7, 0.0, "", lambda p: G.cut_bunch(p, G.head_peony, ("blush_flower", "pink", "coral"),
+                                                                                              n=12, height=0.34, leaf_mat="leaf", leaf_shape="round", leaf=0.05,
+                                                                                              leaf_width=0.9)),
+    "bucket_peonies": ("bucket", (0.24, 0.24, 0.55), 0.6, 0.0, "", lambda p: G.cut_bunch(p, G.head_peony, ("pink", "white_flower", "magenta_flower"),
+                                                                                           n=9, leaf_mat="leaf_dark", leaf_shape="oval", leaf=0.08)),
+    "bucket_dahlias": ("bucket", (0.24, 0.24, 0.55), 0.6, 0.0, "",
+                       lambda p: G.cut_bunch(p, G.head_dahlia, ("burgundy_flower", "peach_flower", "magenta_flower"), n=9, leaf_mat="leaf_dark",
+                                             leaf_shape="oval", leaf=0.08, leaf_width=0.6)),
+    "bucket_dahlias_warm": ("bucket", (0.24, 0.24, 0.55), 0.5, 0.0, "",
+                            lambda p: G.cut_bunch(p, G.head_dahlia, ("orange_flower", "yellow_flower", "coral"), n=9, leaf_mat="leaf_dark",
+                                                  leaf_shape="oval", leaf=0.08, leaf_width=0.6)),
+    "bucket_sunflowers": ("bucket", (0.24, 0.24, 0.75), 0.6, 0.0, "", lambda p: G.cut_bunch(p, G.head_sunflower, ("yellow_flower", "gold_flower"),
+                                                                                              n=6, height=0.6, spread=0.2, leaf_shape="heart", leaf=0.11,
+                                                                                              leaf_width=0.85)),
+    "bucket_daisies": ("bucket", (0.24, 0.24, 0.5), 0.7, 0.0, "", lambda p: G.cut_bunch(p, G.head_daisy, ("white_flower",), n=16, height=0.38,
+                                                                                           leaf_mat="leaf_blue", leaf=0.06)),
+    "bucket_hydrangea": ("bucket", (0.24, 0.24, 0.5), 0.6, 0.0, "", lambda p: G.cut_bunch(p, G.head_hydrangea, ("blue_flower", "sky_flower"), n=5,
+                                                                                             height=0.32, spread=0.13, leaf_shape="oval", leaf=0.09,
+                                                                                             leaf_width=0.7)),
+    "bucket_hydrangea_pink": ("bucket", (0.24, 0.24, 0.5), 0.5, 0.0, "",
+                              lambda p: G.cut_bunch(p, G.head_hydrangea, ("pink", "blush_flower", "white_flower"), n=5, height=0.32, spread=0.13,
+                                                    leaf_shape="oval", leaf=0.09, leaf_width=0.7)),
+    "bucket_lavender": ("bucket", (0.24, 0.24, 0.55), 0.6, 0.0, "", lambda p: G.cut_bunch(p, G.head_lavender, ("lilac", "purple_flower"), n=30,
+                                                                                            height=0.45, spread=0.12, leaf_mat="leaf_silver", leaves=0)),
+    "bucket_gypsophila": ("bucket", (0.24, 0.24, 0.5), 0.5, 0.0, "", lambda p: G.cut_bunch(p, G.head_gyps, ("white_flower",), n=12, height=0.38,
+                                                                                              leaves=0)),
+    "bucket_mixed": ("bucket", (0.24, 0.24, 0.5), 0.8, 0.0, "",
+                     lambda p: G.cut_bunch(p, G.head_mixed, ("pink", "blush_flower", "white_flower", "peach_flower", "lilac"), n=13, height=0.36,
+                                           leaf_mat="leaf_dark", leaf_shape="oval", leaf=0.06, leaf_width=0.6)),
+    "bucket_mixed_bright": ("bucket", (0.24, 0.24, 0.5), 0.7, 0.0, "",
+                            lambda p: G.cut_bunch(p, G.head_mixed, ("yellow_flower", "orange_flower", "magenta_flower", "white_flower", "red"), n=13,
+                                                  height=0.36, leaf_mat="leaf", leaf_shape="oval", leaf=0.06, leaf_width=0.6)),
+    "bucket_mums": ("bucket", (0.24, 0.24, 0.45), 0.5, 0.0, "",
+                    lambda p: G.cut_bunch(p, lambda q, c, at, up: G.pompon(q, c, at, up, 0.04, layers=3, points=12),
+                                          ("yellow_flower", "gold_flower", "burgundy_flower"), n=14, height=0.32, leaf_mat="leaf_dark", leaf_shape="oval",
+                                          leaf=0.05, leaf_width=0.6)),
     # Beete
     "bed_hosta": ("bed", (0.55, 0.55, 0.4), 1.0, 0.0, "", lambda p: G.hosta(p, 1.0)),
     "bed_hosta_blue": ("bed", (0.55, 0.55, 0.4), 0.7, 0.0, "", lambda p: G.hosta(p, 1.0, mats=("leaf_blue", "leaf_blue", "leaf"))),
@@ -176,7 +236,7 @@ def materials():
 def build_plant(pid, M, coll):
     kind, size, weight, col_r, hint, fn = PLANTS[pid]
     # Gefäßrand (Ranken legen sich darüber, nichts steckt in der Wand)
-    container = G.CONTAINERS.get(kind) if kind in ("box", "potfill", "basket") else None
+    container = G.CONTAINERS.get(kind) if kind in ("box", "potfill", "basket", "bucket") else None
     if isinstance(fn, str):
         container = G.CONTAINERS["pot" if fn.startswith("pot:") else "tub"]
     p = G.Plant(M, coll, seed=sum(ord(c) * (i + 1) for i, c in enumerate(pid)), container=container)
@@ -276,6 +336,8 @@ def write_template(kind, M):
     if kind == "box":
         b.box((0, 0.0, -0.1), (0.3, 0.16, 0.2), step=1, dent=0.0)
         b.box((0, 0.11, 0.0), (0.4, 0.02, 0.42), step=1, dent=0.0)     # Hauswand dahinter
+    elif kind == "bucket":
+        b.lathe([(0.0, -0.3), (0.1, -0.3), (0.125, 0.0), (0.0, 0.0)], (0, 0, 0), segs=24)
     elif kind in ("potfill", "basket"):
         b.lathe([(0.0, -0.4), (0.15, -0.4), (0.21, -0.04), (0.23, 0.0), (0.0, 0.0)], (0, 0, 0), segs=24)
     elif kind == "pot":

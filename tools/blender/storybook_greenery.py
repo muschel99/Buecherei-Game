@@ -698,6 +698,8 @@ CONTAINERS = {
     "basket": {"kind": "round", "inner": 0.155, "rim_r": 0.19, "rim_h": 0.035},
     "pot": {"kind": "round", "inner": 0.205, "rim_r": 0.245, "rim_h": 0.045},
     "tub": {"kind": "round", "inner": 0.31, "rim_r": 0.36, "rim_h": 0.03},
+    # Eimer/Vase für Schnittblumen: Ursprung = Mitte des Rands (kein Erdreich, Stiele stehen innen)
+    "bucket": {"kind": "round", "inner": 0.115, "rim_r": 0.13, "rim_h": 0.0},
 }
 
 
@@ -1292,3 +1294,79 @@ def standard_rose(p, colors=("pink", "rose", "blush_flower")):
             if rnd.random() < 0.5:
                 rose(p, rnd.choice(colors), pts[len(pts) // 2] + out * 0.04, (out + UP).normalized(), rnd.uniform(0.045, 0.06))
     standard(p, 0.62, top, 0.018)
+
+
+def cut_bunch(p, head, colors, n=11, height=0.4, leaf_mat="leaf", leaf_shape="narrow", leaf=0.08, leaf_width=0.4, spread=0.17,
+              stem_mat="stem", leaves=3, fill=1.5):
+    """Schnittblumen im Eimer, in der Vase oder im Fahrradkorb (Ursprung = Mitte des Rands): die Stiele
+    stehen unten im Gefäß dicht beisammen, gehen innen am Rand vorbei nach oben und fächern sich zu einem
+    runden Strauß auf. head(p, Farbe, Lage, Richtung) baut eine Blüte."""
+    rnd = p.rnd
+    c = p.container or CONTAINERS["bucket"]
+    n = int(n * fill + 0.5)
+    height *= 0.85
+    for k in range(n):
+        z = 1.0 - 0.9 * (k + 0.5) / n
+        rr = math.sqrt(max(0.0, 1 - z * z))
+        a = k * 2.39996 + rnd.uniform(-0.2, 0.2)
+        d = Vector((math.cos(a) * rr, math.sin(a) * rr, z))
+        top = Vector((d.x * spread, d.y * spread, height * (0.6 + 0.4 * z))) + rnd_dir(rnd) * 0.012
+        base = Vector((d.x * 0.03, d.y * 0.03, -0.15))
+        mid = Vector((d.x, d.y, 0.0)) * min(0.07, c["inner"] * 0.6) + UP * 0.02
+        p.body(stem_mat, vary=0.06).tube([base, mid, top], 0.0042, segs=4, smooth=1)
+        head(p, rnd.choice(colors), top, (Vector((d.x, d.y, 0.0)) * 0.7 + UP).normalized())
+        for j in range(leaves):
+            q = mid.lerp(top, 0.06 + 0.22 * j + rnd.uniform(-0.04, 0.04))
+            out = Vector((d.x, d.y, 0.0))
+            out = out.normalized() if out.length > 1e-3 else rnd_dir(rnd)
+            side = out.cross(UP)
+            dd = (out * 0.7 + side * rnd.uniform(-0.6, 0.6) + UP * rnd.uniform(0.2, 0.8)).normalized()
+            leaf_on(p, q, dd, (out + UP * 0.4).normalized(), leaf * rnd.uniform(0.8, 1.15), shape=leaf_shape, width=leaf_width, petiole=0.0,
+                    mat=leaf_mat, curl=0.3)
+
+
+def head_tulip(p, col, at, up):
+    tulip(p, col, at, up, 0.062)
+
+
+def head_rose(p, col, at, up):
+    rose(p, col, at, up, 0.075)
+
+
+def head_peony(p, col, at, up):
+    peony(p, col, at, up, 0.06)
+
+
+def head_dahlia(p, col, at, up):
+    pompon(p, col, at, up, 0.06)
+
+
+def head_sunflower(p, col, at, up):
+    daisy_head(p, at, up, 0.085, petal=col, center="brown_disc", points=16)
+
+
+def head_daisy(p, col, at, up):
+    daisy_head(p, at, up, 0.046, petal=col)
+
+
+def head_hydrangea(p, col, at, up):
+    p.body(col, vary=0.06).blob(at, 0.05, subdiv=2, lump=0.15, scale=(1.0, 1.0, 0.8), tint=(0.62, 0.62, 0.66))
+    umbel(p, col, at + up * 0.01, 0.075, up, 22, 0.026, petals=4, core=False)
+
+
+def head_gyps(p, col, at, up):
+    """Schleierkraut: Wölkchen aus winzigen weißen Sternchen an feinen Ästchen."""
+    rnd = p.rnd
+    for _ in range(16):
+        q = at + rnd_dir(rnd) * 0.06
+        p.body("stem", vary=0.05).tube([at, q], 0.0015, segs=3)
+        floret(p, col, q, rnd_dir(rnd), 0.011, 5, cup=0.2, samples=2)
+
+
+def head_lavender(p, col, at, up):
+    spike(p, col, at - up * 0.07, at + up * 0.04, 0.011)
+
+
+def head_mixed(p, col, at, up):
+    fn = p.rnd.choice((head_rose, head_peony, head_tulip, head_daisy, head_gyps))
+    fn(p, col if fn is not head_gyps else "white_flower", at, up)

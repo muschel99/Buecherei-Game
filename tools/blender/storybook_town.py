@@ -516,7 +516,7 @@ def hanging_basket(M, C, name, x, z, reach=0.5, drop=0.42, radius=0.17, mat="pot
     SC.pot(M, C["pots"], name + " Topf", tuple(base), radius, h, seed + 3, mat=mat, style="bowl", spot="basket")
 
 
-def bicycle(M, C, name, x, y, seed=90):
+def bicycle(M, C, name, x, y, seed=90, flowers=False):
     """Hollandrad mit Körben (Rahmen canon: Wand bei y = 0, außen -y), parallel zur Wand, Front
     nach +x. Steht auf dem Hinterbau-Doppelständer: Vorderrad und beide Ständerfüße auf dem Boden,
     das Hinterrad 2 cm angehoben – so steht ein Rad wirklich. Alles Körper."""
@@ -616,6 +616,10 @@ def bicycle(M, C, name, x, y, seed=90):
     # Sattel bleibt Luft, die Sattelstütze bleibt frei)
     round_basket(M, C, name + " Korb vorn", fb_c, 0.15, 0.17, 0.19, seed + 4)
     round_basket(M, C, name + " Korb hinten", Vector((xr - 0.07, y, rack_z + 0.007)), 0.14, 0.16, 0.17, seed + 6)
+    if flowers:
+        # Blumensträuße in den Körben (setzt das Spiel ein, Art "bucket"): Platz = Mitte des Korbrands
+        SC.plant_spot("bucket", Vector(fb_c) + Vector((0, 0, 0.19)), (0.3, 0.3, 0.6), 0.0, hint="bike")
+        SC.plant_spot("bucket", Vector((xr - 0.07, y, rack_z + 0.007 + 0.17)), (0.28, 0.28, 0.6), 0.0, hint="bike")
 
 
 def loop_tube(body, points, radius, segs=6, axis=(0, 0, 1), tint=None):

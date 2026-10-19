@@ -131,6 +131,7 @@ def materials():
         "lilac": M("Blüte Flieder", (0.68, 0.58, 0.86), grain="fabric", rough=0.7, vary=0.12, plant=True),
         "blue_flower": M("Blüte Blau", (0.48, 0.55, 0.86), grain="fabric", rough=0.7, vary=0.1, plant=True),
         "zinc": M("Zink", (0.62, 0.63, 0.6), grain="smooth", rough=0.6, metal=0.3, vary=0.06),
+        "water": M("Wasser im Eimer", (0.18, 0.22, 0.2), grain="smooth", rough=0.15, vary=0.02),
         "pot": M("Terrakotta Topf", (0.72, 0.42, 0.28), rough=0.92, vary=0.08, scale=6),
         "chalkboard": M("Tafel", (0.17, 0.21, 0.19), rough=0.95, vary=0.06),
         "chalk": M("Kreide", (0.93, 0.91, 0.85), rough=1.0, vary=0.03),
@@ -307,6 +308,35 @@ def zinc_tub(M, coll, name, base, seed):
     soil.lathe([(0.0, 0.0), (0.205, 0.0), (0.2, 0.03), (0.0, 0.04)], (x, y, z + 0.29), segs=24, dent=0.008)
     soil.build()
     plant_spot("potfill", (x, y, z + 0.325), (0.4, 0.4, 0.6), 0.0, hint="tub")
+
+
+def flower_bucket(M, coll, name, base, radius, height, seed, mat="zinc", style="bucket", hint=""):
+    """Gefäß für Schnittblumen (Blumenladen): Zinkeimer mit Henkeln (bucket), schlanke Vase (vase) oder
+    Kanne (jug); innen Wasser (dunkle Scheibe knapp unter dem Rand). Pflanzplatz „bucket“ in der Mitte
+    des Rands – die Blumen setzt das Spiel ein (Greenery)."""
+    x, y, z = base
+    r, h = radius, height
+    if style == "vase":
+        prof = [(0.0, 0.0), (r * 0.7, 0.0), (r * 0.95, h * 0.35), (r * 0.78, h * 0.85), (r * 0.9, h), (r * 0.82, h), (r * 0.7, h * 0.85),
+                (r * 0.86, h * 0.35), (r * 0.6, 0.03), (0.0, 0.03)]
+    else:
+        prof = [(0.0, 0.0), (r * 0.78, 0.0), (r, h * 0.97), (r * 1.04, h), (r * 0.98, h + 0.004), (r * 0.94, h * 0.97), (r * 0.72, 0.03),
+                (0.0, 0.03)]
+    b = Body(name, M[mat], coll, seed=seed, vary=0.05, bevel=0.003)
+    b.lathe(prof, (x, y, z), segs=28, dent=0.003)
+    if style == "bucket":
+        for zz in (h * 0.25, h * 0.72):
+            rr = r * (0.78 + 0.22 * zz / h)
+            b.lathe([(0.0, 0.0), (rr + 0.005, 0.0), (rr + 0.007, 0.007), (rr + 0.005, 0.014), (0.0, 0.015)], (x, y, z + zz), segs=28)
+        for side in (-1, 1):
+            b.tube([(x + side * r * 0.98, y, z + h * 0.85), (x + side * (r + 0.04), y, z + h * 0.88), (x + side * (r + 0.04), y, z + h * 0.7),
+                    (x + side * r * 0.92, y, z + h * 0.66)], 0.006, segs=8, smooth=2, round_ends=True)
+    b.build()
+    w = Body(name + " Wasser", M["water"] if "water" in M else M["soil"], coll, seed=seed + 1)
+    inner = (r * 0.94 if style != "vase" else r * 0.8) - 0.004
+    w.lathe([(0.0, 0.0), (inner, 0.0), (inner, 0.01), (0.0, 0.01)], (x, y, z + h - 0.05), segs=20)
+    w.build()
+    plant_spot("bucket", (x, y, z + h), (2 * inner, 2 * inner, 0.6), 0.0, hint=hint)
 
 
 def planter_box(M, coll, name, fm, width, depth, height, seed, gap=0.06, mat="box", rail=True):

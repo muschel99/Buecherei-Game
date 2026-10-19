@@ -118,6 +118,12 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 			_placed_ids.append([base.origin, e.id])
 			var s := clampf(size.x / (e.size as Vector3).x * 1.08, 0.3, 2.0)
 			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s), Vector3.ZERO)])
+		"bucket":
+			# Schnittblumen im Eimer/Korb: Ursprung = Mitte des Rands, Breite = Innendurchmesser
+			var e: Dictionary = _pick_varied(entries, hint, rng, base.origin, [], 1.2)
+			_placed_ids.append([base.origin, e.id])
+			var s := clampf(size.x / (e.size as Vector3).x, 0.6, 1.15)
+			out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s), Vector3.ZERO)])
 		"pot":
 			var e: Dictionary = _pick_varied(entries, hint, rng, base.origin)
 			_placed_ids.append([base.origin, e.id])
