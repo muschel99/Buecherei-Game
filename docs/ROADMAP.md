@@ -32,7 +32,7 @@
 | 4e  | Breitere Straße, ein gerades Straßenende und austauschbare Häuser | fertig |
 | 4f  | Grenze am geraden Straßenende und Torhaus mit Durchfahrt | fertig |
 | 4g  | Einheitlicher Stil: Modelle aus Blender (Häuser, Bücherei, Möbel, Innenraum) | in Arbeit |
-| 4h  | Bilderbuch-Stil: Häuser neu, Licht, Pflaster, Pflanzen | in Arbeit |
+| 4h  | Bilderbuch-Stil: Häuser neu, Licht, Pflaster, Pflanzen | fertig (Licht folgt) |
 | 5   | Besucher                                 | in Arbeit     |
 | 5a  | Leben auf der Straße                     | fertig        |
 | 5b  | Figuren und Fahrzeuge im Stil            | in Arbeit     |
@@ -849,9 +849,9 @@ Bricht eine Sitzung ab: hier beim ersten offenen Punkt weitermachen.
       assets/models/templates/ (30 Pflanzen: Geranien, Petunien, gemischte Kästen, Busch,
       Hortensie, Olive, Lavendel, Ampeln, Efeu, Kletterrosen, Glyzinie, Funkie, Farn, Margeriten, Hecke,
       Rosenstrauch, Gartenbaum, Bäumchen im Kübel; Greenery setzt sie auf ~350 Pflanzplätze)
-- [ ] 6. Rundgang: Screenshots aller wichtigen Blickpunkte, angleichen (auch Ladenhäuser, falls
+- [x] 6. Rundgang: Screenshots aller wichtigen Blickpunkte, angleichen (auch Ladenhäuser, falls
       nötig), Holzmaserung und Farben authentischer, so lange bis die Welt stimmig ist
-- [ ] 7. Doku: GAME_DESIGN.md, ROADMAP.md, ASSET_GUIDE.md (neue Dateien, eigene Modelle für Häuser
+- [x] 7. Doku: GAME_DESIGN.md, ROADMAP.md, ASSET_GUIDE.md (neue Dateien, eigene Modelle für Häuser
       und Pflanzen einsetzen); Zusammenfassung mit Screenshots und Entscheidungsliste
 
 **Entscheidungen (selbst getroffen):**
@@ -894,6 +894,13 @@ Bricht eine Sitzung ab: hier beim ersten offenen Punkt weitermachen.
 - Pflanzen und Blumen wiegen sich leicht im Wind (gleicher Wind wie die Markisen).
 - Auf dem Platz nur ein Bäumchen im Kübel (am Ende der Häuserreihe); ein zweites am Gasseneingang
   blockierte Passanten auf ihrem Weg in den Garten.
+- Rundgang: echte Holzmaserung im Shader (Bretter in verschiedenen Tönen, Jahresringe, Poren, seltene
+  Astlöcher, Fugen), wärmeres Kopfsteinpflaster; die Bäckerei bekam Fenster in der Seitenwand zur
+  kleinen Gasse (vorher eine leere Fläche); Kletterpflanzen wachsen nicht mehr in Fensterläden.
+- Die Ladenhäuser passen zum neuen Stil und wurden nur angeglichen (Pflanzplätze, Ziegel, Holz),
+  nicht neu modelliert.
+- Noch nicht im Bilderbuch-Stil: Möbel und Innenraum der Bücherei (gehören nicht zur Welt draußen),
+  die Laternenmasten (Hängekörbe noch im alten Pflanzenstil).
 - build_street.py baut nur noch mit „-- --alter-stil“ (sonst würde es die neuen Häuser in
   houses.tscn zurückstellen).
 

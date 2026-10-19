@@ -68,8 +68,29 @@ def walls(M, C):
     ops.append((*FRONT, fx(0.0), GABLE_Z0, GABLE_W, GABLE_H, 0.6, 0.0))
     T.cut(wall, ops)
     # Brandwände, Rückwand mit Giebel
+    # Seitenwand zur kleinen Gasse (rechts): Putz wie vorn, mit zwei Fenstern und Blumenkasten
+    sw = Body("Seitenwand Gasse", M["plaster"], C["walls"], seed=3, vary=0.03)
+    T.wall_run(sw, (HW, 0.0), (HW, D), 0.0, E, step=0.5)
+    side_wall = sw.build()
+    # unten hinter dem Laden (der Laden reicht bis 4 m), oben in die Zimmer
+    side_ops = [((HW, 0.0), (HW, D), 5.2, 0.9, 0.85, 1.4, 0.6, 0.0), ((HW, 0.0), (HW, D), 1.6, UP_Z0, 0.85, 1.3, -0.8, 0.0),
+                ((HW, 0.0), (HW, D), 4.2, UP_Z0, 0.85, 1.3, 0.5, 0.0)]
+    T.cut(side_wall, side_ops, bevel=0.012)
+    for k, (p0, p1, x, z, w, h, turn, _) in enumerate(side_ops):
+        fm = T.wall_matrix(p0, p1, x, z, 0.0, turn)
+        FS.window(M, C, "Seitenfenster %d" % (k + 1), 0, 0, w, h, 0, panes=(2, 2), surround=True, hood=False, fm=fm)
+        if z > 2:
+            SC.planter_box(M, C["pots"], "Seitenfenster %d Blumenkasten" % (k + 1), fm @ Matrix.Translation((0, -0.08, 0.08)), w + 0.2, 0.2,
+                           0.2, seed=70 + k, gap=0.1, mat="box_red")
+        # warmer Raum dahinter
+        rm = Body("Seitenraum %d" % (k + 1), M["in_dark"], C["inside"], seed=80 + k, vary=0.04)
+        rm.box((0, 0.6, -1.3), (1.8, 2.0, 0.08), step=1, dent=0.0, matrix=fm)
+        for sx in (-0.9, 0.9):
+            rm.box((sx, 0.6, -0.8), (0.08, 2.0, 1.0), step=1, dent=0.0, matrix=fm)
+        rm.box((0, -0.35, -0.8), (1.8, 0.08, 1.0), step=1, dent=0.0, matrix=fm)
+        rm.box((0, 1.55, -0.8), (1.8, 0.08, 1.0), step=1, dent=0.0, matrix=fm)
+        rm.build()
     s = Body("Brandwände und Rückwand", M["plaster_side"], C["walls"], seed=2, vary=0.04, bevel=0.01)
-    T.wall_run(s, (HW, 0.0), (HW, D), 0.0, E, step=0.5)
     T.wall_run(s, (-HW, D), (-HW, 0.0), 0.0, E, step=0.5)
     T.wall_run(s, (HW, D), (-HW, D), 0.0, E, step=0.5)
     s.slab([(0.0, E - 0.03), (W, E - 0.03), (W / 2, RIDGE - 0.12)], 0.3, T.wall_matrix((HW, D), (-HW, D)) @ Matrix.Translation((0, 0, -0.3)),
@@ -205,8 +226,8 @@ def bakery_inside(M, C):
     up.box((0, 2.6, 3.42), (W - 0.6, 4.6, 0.1), step=0.8, dent=0.003)
     up.box((0, 2.6, E - 0.35), (W - 0.6, 4.6, 0.1), step=0.8, dent=0.003)
     up.box((0, 4.9, (3.4 + E) / 2), (W - 0.6, 0.1, E - 3.4), step=0.8, dent=0.003)
-    for sx in (-1, 1):
-        up.box((sx * (HW - 0.32), 2.6, (3.4 + E) / 2), (0.04, 4.6, E - 3.4), step=0.8, dent=0.003)
+    # rechts keine Innenwand: dort schauen die Seitenfenster hinein (eigene Räume dahinter)
+    up.box((-(HW - 0.32), 2.6, (3.4 + E) / 2), (0.04, 4.6, E - 3.4), step=0.8, dent=0.003)
     up.build()
     for x in (-1.0, 1.0):
         SC.add_light("Ladenlicht", (x, 1.4, 2.8), 2900, 60, C["light"], radius=0.2)

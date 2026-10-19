@@ -966,7 +966,9 @@ class House:
         d = self.door
         hw, sb = self.hw, self.sb
         # freie Wandstreifen im Erdgeschoss (zwischen Tür/Fenstern und Hauskanten)
-        edges = sorted([(-hw, -hw)] + [(o["x"] - o["w"] / 2 - 0.12, o["x"] + o["w"] / 2 + 0.12) for o in self.ground] +
+        # Fensterläden klappen bis eine Fensterbreite neben das Fenster: dort wächst nichts
+        reach = (lambda o: o["w"] + 0.12) if self.st["shutters"] else (lambda o: o["w"] / 2 + 0.12)
+        edges = sorted([(-hw, -hw)] + [(o["x"] - reach(o), o["x"] + reach(o)) for o in self.ground] +
                        [(d["x"] - d["w"] / 2 - 0.2, d["x"] + d["w"] / 2 + 0.2), (hw, hw)])
         gaps = []
         for (a0, a1), (b0, b1) in zip(edges, edges[1:]):
@@ -988,7 +990,7 @@ class House:
             # nur so hoch, wie die Wand darüber frei ist (keine Fenster, Briefkasten, Markise)
             top = self.E - 0.8
             for o in self.upper:
-                if abs(o["x"] - c) < o["w"] / 2 + w / 2 + 0.1:
+                if abs(o["x"] - c) < reach(o) + w / 2 - 0.02:
                     top = min(top, o["z"] - 0.15)
             if self.st.get("hood") and abs(d["x"] - c) < d["w"] / 2 + w / 2 + 0.4:
                 top = min(top, d["h"] + 0.2)

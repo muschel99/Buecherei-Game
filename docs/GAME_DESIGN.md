@@ -636,7 +636,9 @@ Zwei Zustände:
   kann man vorerst nur das Erdgeschoss – das Obergeschoss ist eine geschlossene Hülle. Es ist
   so gebaut, dass es später als freischaltbare Etage ausgebaut werden kann. Anzahl und Höhe
   der Obergeschosse stehen in GameConfig (`upper_floor_count` = 1, `upper_floor_height` = 3,0 m).
-  Die Decke im Laden bleibt, wie sie ist.
+  Die Decke im Laden bleibt, wie sie ist. Seit dem Stil-Umbau (Etappe 4h) zeigt das Fassaden-Modell
+  das Obergeschoss aus braunen Ziegeln mit Bogenfenstern und Blumenkästen und ein Walmdach aus
+  Ziegelreihen (siehe „Die Welt im Bilderbuch-Stil“).
 - **Fassade (seit Etappe 4g):** eine alte englische Ladenfront aus dunkelgrün lackiertem Holz:
   Sockelfelder, Pilaster mit Konsolen, Holzvertäfelung neben den Fenstern, ein Schildband mit
   „Bücherei“ (über der Tür „Willkommen“ – beides Bilder, die ich selbst gestalte), Gesims,
@@ -847,6 +849,29 @@ Zwei Zustände:
   Etappe 4a grundlegend geändert hat, wurde die Speicher-Version erhöht (`SaveManager`, jetzt
   Version 2): Ein alter Spielstand (Version 1) passt nicht mehr und wird beim Laden ignoriert –
   es beginnt automatisch ein frisches Spiel, ohne dass ich etwas löschen muss.
+
+## Die Welt im Bilderbuch-Stil (seit Etappe 4h)
+Die ganze Straße sieht aus wie eine lebendig gewordene Kinderbuch-Illustration: süß, weich und
+gemütlich, leicht stilisiert statt streng realistisch (Vorbild: die Bildersammlung in „Game design“).
+- **Häuser:** Cottages und Stadthäuser mit cremefarbenem oder pastelligem Putz (Creme, Butter,
+  Pfirsich, Rosé, Salbei), warmen braunen Ziegeln oder großen runden Sandsteinquadern, Sockeln aus
+  Feldsteinen, Ecksteinen, Rundbogen- und Segmentbogenfenstern mit dicken Holzrahmen, Brettertüren mit
+  Bogen und Eisenbändern, kleinen Vordächern, Brett-Fensterläden, Stoffmarkisen, Briefkästen und
+  Fachwerk. Dächer aus Terrakotta- oder Schieferziegeln mit runden Ziegelkanten, Gauben und
+  Schornsteinen. Jedes Haus ist ein bisschen schief und gesetzt – nie ganz gerade.
+- **Läden:** Modegeschäft, Pub, Bäckerei, Blumenladen, Teestube, Wolle & Stoff und das Torhaus mit
+  eigenen Ladenfronten und den Schildern, die ich selbst gestalte.
+- **Die Bücherei von außen:** grüne Holz-Ladenfront mit Goldkanten, darüber ein Obergeschoss aus
+  braunen Ziegeln mit Bogenfenstern und Blumenkästen und ein Walmdach.
+- **Boden:** rundes Kopfsteinpflaster in warmen Tönen, unregelmäßige Gehwegplatten, weich gerundete
+  Bordsteine und Stufen, Kleinpflaster in den Gassen.
+- **Pflanzen überall:** Efeu, Kletterrosen und Glyzinien an den Fassaden, Geranien, Petunien und
+  Lavendel in den Blumenkästen, Hortensien, Buchs und Olivenbäumchen in Töpfen, Blumenampeln,
+  Beete und eine Hecke im Garten, ein Baum mit runder Bank. Blätter und Markisen wiegen sich leicht
+  im Wind. Jedes Blatt und jedes Teil ist ein eigener runder Körper – ich kann alles in Blender oder
+  Nomad Sculpt nachmodellieren und gegen eigene Modelle tauschen (siehe docs/ASSET_GUIDE.md).
+- **Licht:** warme Sonne von schräg oben (Höhe und Richtung in GameConfig), Laternen an Masten und an
+  Hauswänden.
 
 ## Leben auf der Straße (seit Etappe 5a)
 Bevor Besucher in die Bücherei kommen, wird die Straße lebendig – ruhig und gemütlich, keine
