@@ -1013,12 +1013,12 @@ class House:
             if b - a < 0.3:
                 continue
             x = min(max((a + b) / 2, a + 0.15), b - 0.15)
+            if self.st["hood"] and abs(x - d["x"]) < d["w"] / 2 + 0.55:
+                continue  # nicht aus dem Vordach heraus
             cost = abs(x - (prefer if prefer is not None else d["x"]))
             if best is None or cost < best[0]:
                 best = (cost, x)
         if best is None:
             return None
         z = self.zs[1] - 0.35
-        if self.st["hood"] and abs(best[1] - d["x"]) < d["w"] / 2 + 0.5:
-            z = max(z, d["h"] + 0.75)
         return (round(best[1], 3), round(z, 3), round(-self.sb, 3))

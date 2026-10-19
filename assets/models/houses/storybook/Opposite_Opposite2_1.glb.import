@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://din3ra1q5fuoh"
+uid="uid://djwjortkc35fu"
 path="res://.godot/imported/Opposite_Opposite2_1.glb-8d9a8d25a6ce74fbcbb0ca1f96e9725e.scn"
 
 [deps]
@@ -45,11 +45,6 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/glas.tres",
 "use_external/path": "res://assets/materials/storybook/glas.tres"
-},
-"Markisenstoff Schiefer": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/markisenstoff_schiefer.tres",
-"use_external/path": "res://assets/materials/storybook/markisenstoff_schiefer.tres"
 },
 "Sammel Holz": {
 "use_external/enabled": true,

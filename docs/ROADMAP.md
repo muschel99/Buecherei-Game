@@ -835,12 +835,13 @@ Bricht eine Sitzung ab: hier beim ersten offenen Punkt weitermachen.
       Kulissenhäuser im neuen Stil, Breiten/Höhen/Farben der bisherigen Varianten als Anhaltspunkt,
       Laternen nach Plan (siehe oben), sparsam für alle drei Grafikstufen
 - [x] 2. Gassenende, Hofmauern und die Fassade der Bücherei (außen) im neuen Stil
-- [ ] 3. Straße, Gehwege, Bordsteine, Platz, Gasse und Eingangstreppe (Stand: Boden-Shader
-      storybook_ground.gdshader für Fahrbahn, Gehwege, Platz, Gassen und Bordsteine fertig, Bordstein-
-      und Stufenkanten gerundet, Abflussdeckel neu; noch offen: Rundgang-Prüfung von Platz,
-      gerader Grenze und Torhaus-Durchfahrt, Lauftest an der Treppe, dann abhaken): weiche Kanten, warme
+- [x] 3. Straße, Gehwege, Bordsteine, Platz, Gasse und Eingangstreppe: weiche Kanten, warme
+      Steintöne, Platten und Pflaster leicht unregelmäßig (Shader storybook_ground.gdshader:
+      rundes Kopfsteinpflaster, Platten in Reihen, Bordstein-Quader, Kleinpflaster; gerundete
+      Bordstein- und Stufenkanten): weiche Kanten, warme
       Steintöne, Platten und Pflaster leicht unregelmäßig
-- [ ] 4. Kleine Dinge draußen (begonnen: Briefkästen an Wohnhäusern, Abflussdeckel) (Laternen, Schilder, Türen, Fensterläden, Briefkästen, Abflussdeckel,
+- [x] 4. Kleine Dinge draußen (Abflussdeckel neu, Briefkästen und Brett-Fensterläden an den Häusern,
+      Türen mit Eisenbändern, Laternen mit dem gemeinsamen Kopf, Schilder bleiben Bilder) (Laternen, Schilder, Türen, Fensterläden, Briefkästen, Abflussdeckel,
       Bank) im selben Stil
 - [ ] 5. Pflanzen ganz neu: üppig, verschlungen, rund; jedes Blatt ein Körper; Efeu und
       Kletterpflanzen an Fassaden, Blumenkästen, Kübelpflanzen vor Türen, Ranken an Torhaus und
@@ -877,6 +878,10 @@ Bricht eine Sitzung ab: hier beim ersten offenen Punkt weitermachen.
 - Gassen: Rückwände mit Fenstern, Feldsteinsockeln und Dachansätzen, Hofmauern, Lattenzaun, runde
   Holzbank; Baum, Hecke, Beete, Efeu und Töpfe kommen in Schritt 5 auf Pflanzplätze.
 - Kleine Wand-Briefkästen an etwa der Hälfte der nahen Wohnhäuser (Cozy-Detail, neu).
+- Boden: eigener Shader ohne Bilder (Steine werden aus der Lage berechnet, aus der Ferne
+  weich ausgeblendet); Farben je Material im Inspektor einstellbar.
+- Häuser mit Straßenlaterne bekommen keine Stoffmarkisen (die Laterne hing sonst darin).
+- Die Kübel-Ecke der Bäckerei zur kleinen Gasse bleibt frei (dort blieben Passanten stecken).
 - build_street.py baut nur noch mit „-- --alter-stil“ (sonst würde es die neuen Häuser in
   houses.tscn zurückstellen).
 

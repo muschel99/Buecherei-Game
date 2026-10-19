@@ -67,6 +67,8 @@ def build_one(key, spec, near, argv):
     SB.BEVEL_SEGMENTS = (2, 1) if near else (1, 1)
     M = SC.materials()
     st = SH.house_style(spec, key)
+    if key in LANTERNS:
+        st["canopy"] = None  # Häuser mit Straßenlaterne: keine Stoffmarkisen (die Laterne hängt sonst darin)
     SH.house_materials(M, st)
     C = collections(key)
     house = SH.House(M, C, spec, st, key, near=near).build()
