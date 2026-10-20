@@ -591,25 +591,32 @@ def pub_ivy(M, C):
     for _, y, z, w, h in SIDE_WINDOWS:
         holes.append((-(y + w / 2 + 0.13), z - 0.17, -(y - w / 2 - 0.13), z + h + 0.25))
 
+    def front_off(u, v):
+        """Wie weit die Ladenfront an dieser Stelle vor der Backsteinwand steht (der Efeu liegt darauf)."""
+        if v < HEAD - 0.05:
+            if u < PIL + 0.03 or u > W - PIL - 0.03:
+                return 0.24 if v < 0.36 else 0.2                              # Pilaster (unten mit Sockel)
+            return 0.0
+        if v < SHOP_TOP - 0.18:
+            return 0.37 if PIL < u < W - PIL else 0.36                        # Schildkasten, Kapitell
+        if v <= SHOP_TOP:
+            return 0.42                                                       # Ladengesims
+        return 0.0                                                            # darüber Backstein
+
     def to3d(u, v, w):
         if u < 0.0:
-            return (-HW - w, -u, v)
-        off = 0.0
-        if v < HEAD + 0.1 and (u < PIL + 0.03 or u > W - PIL - 0.03):
-            off = 0.25 if v < 0.36 else 0.21                                  # Pilaster (unten mit Sockel)
-        if HEAD - 0.05 <= v <= SHOP_TOP + 0.02:
-            off = 0.45                                                        # Kapitell, Schildkasten, Gesims
-        elif SHOP_TOP + 0.02 < v < SHOP_TOP + 0.3:
-            off = 0.45 * (1 - (v - SHOP_TOP - 0.02) / 0.28)                   # über die Gesimskante zurück zur Wand
-        return (u - HW, -(off + w), v)
+            # Seitenwand zur Gasse; dicht an der Ecke liegt sie neben den vorstehenden Teilen der Front
+            fo = front_off(0.0, v) * max(0.0, 1.0 + u / 0.5)
+            return (-HW - w, -u - fo, v)
+        return (u - HW, -(front_off(u, v) + w), v)
     roots = [(-0.35, 0.0), (-1.25, 0.0), (0.15, 0.0), (-3.6, 0.0)]
     GR.wall_ivy(p, W, E - 0.35, holes, rr, to3d, roots, reach=(0.55, 1.0), wrap=(D - 1.0, 0.0), density=1.3, stems=(3, 5))
-    # Girlande auf dem Gesims über dem Schild
-    top = SHOP_TOP + 0.06
-    GR.garland(p, [[(0.05, HEAD + 0.2, 0.47), (0.2, top, 0.44), (1.0, top + 0.02, 0.44), (1.55, top, 0.44)]], to3d, rr, kind="ivy", strands=4,
-               density=1.3, hang=1.4)
-    GR.garland(p, [[(1.55, top, 0.44), (2.8, top + 0.03, 0.44), (4.0, top, 0.44)]], to3d, rr, kind="ivy", strands=2, density=1.0, hang=0.0)
-    GR.garland(p, [[(4.0, top, 0.44), (4.6, top + 0.02, 0.44)]], to3d, rr, kind="ivy", strands=2, density=1.0, hang=0.8)
+    # Girlande liegt oben auf dem Ladengesims (Gesims 0,42 m tief), Ranken hängen vorn über das Schild
+    flat = lambda u, v, w: (u - HW, -w, v)  # noqa: E731
+    top = SHOP_TOP + 0.03
+    GR.garland(p, [[(0.05, top, 0.4), (0.6, top + 0.01, 0.4), (1.55, top, 0.38)]], flat, rr, kind="ivy", strands=4, density=1.3, hang=1.4)
+    GR.garland(p, [[(1.55, top, 0.3), (2.8, top + 0.01, 0.28), (4.0, top, 0.3)]], flat, rr, kind="ivy", strands=2, density=1.0, hang=0.0)
+    GR.garland(p, [[(4.0, top, 0.38), (4.6, top + 0.01, 0.4)]], flat, rr, kind="ivy", strands=2, density=1.0, hang=0.8)
     p.build()
 
 
