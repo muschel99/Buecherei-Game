@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://c0thg3y2ovbxd"
+path="res://.godot/imported/paint_filter.glsl-d2b91b98f3ccb0b305f8f2c51579f742.res"
+
+[deps]
+
+source_file="res://assets/shaders/paint/paint_filter.glsl"
+dest_files=["res://.godot/imported/paint_filter.glsl-d2b91b98f3ccb0b305f8f2c51579f742.res"]
+
+[params]
+

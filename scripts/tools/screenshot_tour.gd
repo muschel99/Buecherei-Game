@@ -46,6 +46,9 @@ func _ready() -> void:
 	if _args.has("quality"):
 		_old_quality = Settings.get_value("graphics/quality")
 		Settings.set_value("graphics/quality", int(_args.quality))
+	if _args.has("paint"):
+		# Malstil für diese Bilder (0 = normal, 1 = Aquarell); bleibt danach so eingestellt
+		Settings.set_value("graphics/paint_style", int(_args.paint))
 	if _args.has("list"):
 		for set_name in ScreenshotViews.all_sets():
 			print("%s: %s" % [set_name, ", ".join(ScreenshotViews.get_set(set_name).keys())])

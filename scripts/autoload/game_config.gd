@@ -478,20 +478,44 @@ var autosave_delay: float = 1.5
 ##                   Schatten (Meter, 0 = nie; seit Etappe 5a)
 ##   street_shadow_detail  Bis zu dieser Entfernung (Meter) werfen Passanten Schatten mit bewegten
 ##                   Armen und Beinen, weiter weg einen einfachen in Grundhaltung (viel günstiger)
+##   paint_radius    Pinselgröße des Malfilters „Aquarell“ (Bildpunkte bei 1080 Bildzeilen; je größer,
+##                   desto flächiger gemalt und desto mehr Rechenarbeit)
 var graphics_presets: Array[Dictionary] = [
 	{"ssao": false, "ssao_half_size": true, "ssil": false, "volumetric_fog": false, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 1024, "sun_shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 0,
 		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8, "lod_threshold": 4.0, "plant_shadows": false, "plant_distance": 0.6,
-		"street_shadow_distance": 15.0, "street_shadow_detail": 0.0},
+		"street_shadow_distance": 15.0, "street_shadow_detail": 0.0, "paint_radius": 2.0},
 	{"ssao": true, "ssao_half_size": true, "ssil": false, "volumetric_fog": true, "fog_volume_size": 48,
 		"msaa": 0, "fxaa": true, "shadow_size": 2048, "sun_shadow_size": 2048, "soft_shadows": 2, "lamp_shadows": 1,
 		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0, "lod_threshold": 2.0, "plant_shadows": true, "plant_distance": 1.0,
-		"street_shadow_distance": 35.0, "street_shadow_detail": 8.0},
+		"street_shadow_distance": 35.0, "street_shadow_detail": 8.0, "paint_radius": 3.0},
 	{"ssao": true, "ssao_half_size": false, "ssil": true, "volumetric_fog": true, "fog_volume_size": 64,
 		"msaa": 2, "fxaa": false, "shadow_size": 4096, "sun_shadow_size": 4096, "soft_shadows": 3, "lamp_shadows": 2,
 		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0, "lod_threshold": 1.0, "plant_shadows": true, "plant_distance": 1.4,
-		"street_shadow_distance": 60.0, "street_shadow_detail": 15.0},
+		"street_shadow_distance": 60.0, "street_shadow_detail": 15.0, "paint_radius": 3.0},
 ]
+
+# --- Malfilter „Aquarell“ (Gezeichnet-Look; Einstellung Grafik → Malstil, Testtaste F8) ---
+# Malt das 3D-Bild wie mit Aquarell/Gouache: Pinselflächen, dunklere Farbränder, Tuschelinien,
+# Papier, warme Farbstimmung (scripts/rendering/paint_filter_effect.gd, assets/shaders/paint/).
+## Pinselgröße, falls die Grafikstufe keine eigene hat (graphics_presets "paint_radius").
+var paint_brush_radius: float = 3.0
+## Tuschelinien an Kanten: Deckkraft (0 = keine), Abstand der Kantensuche (Bildpunkte), Farbe und
+## Entfernung (m), ab der sie ganz verschwunden sind.
+var paint_line_strength: float = 0.68
+var paint_line_width: float = 1.0
+var paint_line_color: Color = Color(0.26, 0.17, 0.11)
+var paint_line_fade_distance: float = 40.0
+## Papierstruktur (ungleichmäßig aufgetragene Farbe, Körnung, Fasern; 0 = glatt).
+var paint_paper_strength: float = 0.8
+## Farbränder dunkler wie bei getrocknetem Aquarell (0 = aus).
+var paint_edge_darkening: float = 0.4
+## Zittern wie von Hand (Bildpunkte).
+var paint_wobble: float = 1.2
+## Farbstimmung: warm (0 = neutral), Sättigung (1 = unverändert), Papierton in den Schatten.
+var paint_warmth: float = 0.5
+var paint_saturation: float = 1.04
+var paint_wash: float = 0.12
 ## Stand der Sonne (seit Etappe 4h, Wunsch: höher und etwas nach rechts): Höhe über dem Horizont
 ## in Grad (90 = genau von oben) und Richtung in Grad – 0 = genau hinter den Häusern gegenüber der
 ## Bücherei, positiv = nach rechts (vom Laden aus auf die Straße geschaut). Vorher 35 und 15.

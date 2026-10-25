@@ -660,6 +660,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - Möbel-Knoten in Szenen können ihre Nummer (`uid`) und ihr Trägermöbel (`support_uid`) fest
   eintragen (z. B. Tablet auf der Theke).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).
+- **Malfilter „Aquarell“** (Gezeichnet-Look, Einstellung Grafik → „Malstil“, Testtaste F8, Testbilder
+  `--paint=0|1`): `PaintFilterEffect` (scripts/rendering/, ein `CompositorEffect` nach allen festen und
+  durchsichtigen Dingen, vor Belichtung/Leuchten; main.gd hängt ihn als `Compositor` an die
+  WorldEnvironment) mit zwei Rechen-Shadern `assets/shaders/paint/paint_copy.glsl` (Arbeitskopie) und
+  `paint_filter.glsl` (Zittern, Kuwahara-Pinselflächen, dunklere Farbränder, Tuschelinien aus Tiefe +
+  normal_roughness, Papier, warme Farbstimmung). Alle Werte in GameConfig (`paint_*`), Pinselgröße je
+  Grafikstufe (`graphics_presets` "paint_radius"). Die Oberfläche (HUD, Menüs) bleibt scharf.
 - **Bücher:** Neues Genre = neues Datenblatt in `data/genres/` + Bücherliste
   `data/books/<id>.txt` (kein Code). Neues Buch = neue Zeile `Titel | Motiv` (Motive:
   `BookMotifs`, Liste in docs/ASSET_GUIDE.md). Titel sind gemütlich, erfunden, nie düster.

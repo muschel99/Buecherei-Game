@@ -8,6 +8,8 @@ extends Node3D
 @onready var _sky_fill: DirectionalLight3D = $SkyFill
 
 var _dust_amount: int = 0
+## Malfilter „Aquarell“ (Einstellung Grafik → Malstil)
+var _paint := PaintFilterEffect.new()
 
 
 func _ready() -> void:
@@ -15,6 +17,7 @@ func _ready() -> void:
 	# Draußen liegt alles tiefer als der Ladenboden (Etappe 4d, GameConfig.shop_floor_rise)
 	($Outside as Node3D).position.y = StreetLayout.ground_y()
 	_apply_sun_direction()
+	_setup_paint_filter()
 	_apply_graphics_quality()
 	_setup_sky_fill()
 	Settings.setting_changed.connect(_on_setting_changed)
@@ -66,11 +69,22 @@ func _on_node_added(node: Node) -> void:
 func _on_setting_changed(key: String, _value: Variant) -> void:
 	if key == "graphics/quality":
 		_apply_graphics_quality()
+	elif key == "graphics/paint_style":
+		_paint.enabled = int(Settings.get_value("graphics/paint_style")) == 1
+
+
+## Malfilter als Nachbearbeitung der Kamera-Bilder dieser Welt (Compositor der WorldEnvironment).
+func _setup_paint_filter() -> void:
+	var compositor := Compositor.new()
+	compositor.compositor_effects = [_paint]
+	($WorldEnvironment as WorldEnvironment).compositor = compositor
+	_paint.enabled = int(Settings.get_value("graphics/paint_style")) == 1
 
 
 ## Aufwändige Effekte je nach Grafikstufe (Werte in GameConfig.graphics_presets).
 func _apply_graphics_quality() -> void:
 	var preset := Settings.get_graphics_preset()
+	_paint.apply_config(preset)
 	_environment.ssao_enabled = preset.ssao
 	_environment.ssil_enabled = preset.ssil
 	_environment.volumetric_fog_enabled = preset.volumetric_fog
