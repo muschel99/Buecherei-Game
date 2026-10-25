@@ -435,7 +435,7 @@ def opposite_alley(M, C, rnd):
     ew = endw.build()
     dx = (x0 + x1) / 2
     fm = T.wall_matrix(p0, p1, dx - x0, 0.0)
-    SB.boolean_cut(ew, [SH.cutter_for(fm, 0.95, 2.15, 0.3)])
+    SB.boolean_cut(ew, [SH.cutter_for(fm, 0.95, 2.15, 0.3, below=0.1)])
     SC.add_bevel(ew, 0.02)
     SH.plank_door(M, C, "Tür hinten", fm, 0.95, 2.15, 0.3, seed=351)
     T.placed(C["deco"], T.canon(p0, p1, dx - x0 + 0.62, 0.0, 0.0), T.wall_lantern, M, C, "Laterne hinten", 0.0, 2.6, seed=352)

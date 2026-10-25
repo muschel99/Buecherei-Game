@@ -146,10 +146,14 @@ def opening_outline(w, h, rise, inset=0.0, n=14):
     return [(-hx, inset), (hx, inset)] + SB.arc_points(w / 2, h - rise, rise, inset, n)
 
 
-def cutter_for(fm, w, h, rise, depth=2.0):
+def cutter_for(fm, w, h, rise, depth=2.0, below=0.0):
+    """Schneidekörper für eine Öffnung; below = so weit reicht er unter die Unterkante (Türen: unter den
+    Boden – schneidet er genau in der Ebene der Mauerunterkante, gehen Flächen verloren und es bleiben Löcher)."""
     if rise > 0:
-        return SB.slab_cutter(opening_outline(w, h, rise), fm, -depth / 2, depth)
-    return SB.cutter((0, h / 2, 0), (w, h, depth), matrix=fm)
+        outline = opening_outline(w, h, rise)
+        outline = [(x, y - below if y <= 1e-6 else y) for x, y in outline]
+        return SB.slab_cutter(outline, fm, -depth / 2, depth)
+    return SB.cutter((0, (h - below) / 2, 0), (w, h + below, depth), matrix=fm)
 
 
 def window(M, C, name, fm, w, h, rise, panes=(2, 3), curtains=True, seed=1, frame="h_join"):
@@ -512,7 +516,7 @@ class House:
                    T.wall_matrix(*self.front) @ Matrix.Translation((0, 0, -0.332)), dent=0.006)
         front = g.build()
         door = self.door
-        ops.append(cutter_for(T.wall_matrix(*self.front, self.fx(door["x"]), 0.0), door["w"], door["h"], door["rise"]))
+        ops.append(cutter_for(T.wall_matrix(*self.front, self.fx(door["x"]), 0.0), door["w"], door["h"], door["rise"], below=0.1))
         for o in self.ground:
             ops.append(cutter_for(T.wall_matrix(*self.front, self.fx(o["x"]), o["z"]), o["w"], o["h"], o["rise"]))
         if not st["fachwerk"]:
@@ -681,6 +685,8 @@ class House:
         hs = h - rise
         for side in (-1, 1):
             st.box((side * (w / 2 + band / 2 - 0.01), (0.44 + hs) / 2, 0.03), (band, hs - 0.44, 0.07), step=0.6, dent=0.003, matrix=fm)
+            # Sockelstein unter der Fassung: so breit wie die Fassung, steht etwas vor dem Sockel des Hauses
+            st.box((side * (w / 2 + band / 2 - 0.01), 0.225, 0.06), (band + 0.03, 0.43, 0.12), step=0.6, dent=0.003, matrix=fm)
         if rise > 0:
             arc_o = SB.arc_points(w / 2 + band - 0.01, hs, rise + band * 0.7)
             arc_i = list(reversed(SB.arc_points(w / 2 - 0.01, hs, rise)))
