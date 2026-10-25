@@ -138,9 +138,12 @@ func _apply_graphics_quality() -> void:
 	RenderingServer.directional_soft_shadow_filter_set_quality(filter)
 	RenderingServer.positional_soft_shadow_filter_set_quality(filter)
 	viewport.msaa_3d = {0: Viewport.MSAA_DISABLED, 2: Viewport.MSAA_2X, 4: Viewport.MSAA_4X}.get(int(preset.msaa), Viewport.MSAA_DISABLED)
-	# FXAA glättet auch die Tuschelinien des Malfilters – darum immer an, solange er läuft
+	# TAA (zeitliche Kantenglättung) glättet Kanten, feine Muster und das Punkt-Rauschen der weichen Schatten;
+	# ohne TAA glättet FXAA – beim Malfilter immer eine von beiden (sonst sind die Tuschelinien treppig)
+	var taa := bool(preset.get("taa", false))
 	var paint := int(get_value("graphics/paint_style")) == 1
-	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if preset.fxaa or paint else Viewport.SCREEN_SPACE_AA_DISABLED
+	viewport.use_taa = taa
+	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if not taa and (preset.fxaa or paint) else Viewport.SCREEN_SPACE_AA_DISABLED
 	viewport.scaling_3d_scale = preset.render_scale
 	viewport.mesh_lod_threshold = float(preset.get("lod_threshold", 1.0))
 

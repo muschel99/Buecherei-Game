@@ -436,7 +436,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   nach der Lage im Modell). `T.placed` setzt neue Objekte über `matrix_basis` (sonst landen
   leere Objekte im Ursprung). Boden: Shader `storybook_ground.gdshader` (Materialien cobblestone,
   sidewalk, curb_stone, alley_setts), runde Kanten `WorldMesh.add_round_edge`. Bücherei außen:
-  `build_storybook_library.py`, UpperFloors `build_visuals = false`. **Oberflächen im Spiel:** feine Muster blendet der Shader aus, sobald sie kleiner als
+  `build_storybook_library.py`, UpperFloors `build_visuals = false`. **Relief nie über Bildschirm-Ableitungen**
+  (dFdx/dFdy arbeiten in 2x2-Blöcken → Treppchen und Pixel an Fugen): `storybook.gdshaderinc` rechnet die
+  Höhe (`surface_height`) an drei Stellen im Abstand eines Bildpunkts, `storybook_ground.gdshader` die
+  Steigung genau aus der Steinform (`slope`); Steine sind Kissen (Rundung je Fugenrichtung malgenommen,
+  Kopfstein oben flach) – sonst laufen Knickkanten von den Ecken zur Mitte. Weiche Schatten und
+  Umgebungsverschattung rauschen ohne TAA pixelig: Grafikstufen Mittel/Hoch mit `taa` (graphics_presets),
+  Niedrig FXAA. **Oberflächen im Spiel:** feine Muster blendet der Shader aus, sobald sie kleiner als
   ein paar Bildpunkte werden (`detail_fade`, sonst flimmert es sandig); gestrichenes Holz hat
   `grain="paint"` (matt, keine Maserung), nur echtes Holz `wood` (feine Linien), Stein ohne
   Risslinien. Markisen: Gelenkarme seitlich neben dem Stoff, Wind bläht nur nach außen.

@@ -483,19 +483,21 @@ var autosave_delay: float = 1.5
 ##                   Schatten (Meter, 0 = nie; seit Etappe 5a)
 ##   street_shadow_detail  Bis zu dieser Entfernung (Meter) werfen Passanten Schatten mit bewegten
 ##                   Armen und Beinen, weiter weg einen einfachen in Grundhaltung (viel günstiger)
+##   taa             Zeitliche Kantenglättung (TAA): verrechnet mehrere Bilder – glättet Kanten, feine Muster
+##                   in der Ferne und das Punkt-Rauschen weicher Schatten/Umgebungsverschattung (sonst pixelig)
 ##   paint_radius    Pinselgröße des Malfilters „Aquarell“ (Bildpunkte bei 1080 Bildzeilen; 0 = aus und
 ##                   scharf – Wunsch der Entwicklerin; je größer, desto flächiger und weicher gemalt)
 var graphics_presets: Array[Dictionary] = [
 	{"ssao": false, "ssao_half_size": true, "ssil": false, "volumetric_fog": false, "fog_volume_size": 48,
-		"msaa": 0, "fxaa": true, "shadow_size": 1024, "sun_shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 0,
+		"msaa": 0, "fxaa": true, "taa": false, "shadow_size": 1024, "sun_shadow_size": 2048, "soft_shadows": 1, "lamp_shadows": 0,
 		"cube_shadows": false, "sun_cascades": 2, "dust_amount": 0.5, "render_scale": 0.8, "lod_threshold": 4.0, "plant_shadows": false, "plant_distance": 0.6,
 		"street_shadow_distance": 15.0, "street_shadow_detail": 0.0, "paint_radius": 0.0},
 	{"ssao": true, "ssao_half_size": true, "ssil": false, "volumetric_fog": true, "fog_volume_size": 48,
-		"msaa": 0, "fxaa": true, "shadow_size": 2048, "sun_shadow_size": 2048, "soft_shadows": 2, "lamp_shadows": 1,
+		"msaa": 0, "fxaa": false, "taa": true, "shadow_size": 2048, "sun_shadow_size": 2048, "soft_shadows": 2, "lamp_shadows": 1,
 		"cube_shadows": false, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0, "lod_threshold": 2.0, "plant_shadows": true, "plant_distance": 1.0,
 		"street_shadow_distance": 35.0, "street_shadow_detail": 8.0, "paint_radius": 0.0},
 	{"ssao": true, "ssao_half_size": false, "ssil": true, "volumetric_fog": true, "fog_volume_size": 64,
-		"msaa": 2, "fxaa": false, "shadow_size": 4096, "sun_shadow_size": 4096, "soft_shadows": 3, "lamp_shadows": 2,
+		"msaa": 2, "fxaa": false, "taa": true, "shadow_size": 4096, "sun_shadow_size": 4096, "soft_shadows": 3, "lamp_shadows": 2,
 		"cube_shadows": true, "sun_cascades": 4, "dust_amount": 1.0, "render_scale": 1.0, "lod_threshold": 1.0, "plant_shadows": true, "plant_distance": 1.4,
 		"street_shadow_distance": 60.0, "street_shadow_detail": 15.0, "paint_radius": 0.0},
 ]

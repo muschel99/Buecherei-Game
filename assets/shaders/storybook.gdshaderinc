@@ -36,9 +36,11 @@ instance uniform int wall_layer = -1;
 uniform float wind_strength = 0.0;
 
 varying vec3 model_pos;
+varying vec3 model_normal;
 
 void vertex() {
 	model_pos = VERTEX;
+	model_normal = NORMAL;
 	float sway = (1.0 - COLOR.a) * wind_strength;
 	if (sway > 0.0) {
 		// Beide Seiten des Stoffs bewegen sich gleich (fester Richtungsvektor, nicht die Normale).
@@ -110,10 +112,59 @@ float cell_edge(vec3 p) {
 	return d2 - d1;
 }
 
+// Mauerwerk im Läuferverband: Abstand zur nächsten Fuge (m) und Nummer des Steins (id); edges = Abstand
+// zur nächsten senkrechten bzw. waagerechten Fuge einzeln (für die runde Kissenform der Steine)
+float masonry_d(vec3 p, out vec2 id, out vec2 edges) {
+	bool ashlar = grain == 8;
+	float BW = ashlar ? 0.46 : 0.34;
+	float BH = ashlar ? 0.27 : 0.115;
+	float JOINT = ashlar ? 0.024 : 0.02;
+	vec2 q = vec2(p.x - p.z, p.y);
+	float row = floor(q.y / BH);
+	q.x += ashlar ? hash(vec3(row, 1.7, 2.9)) * BW : mod(row, 2.0) * BW * 0.5;
+	id = vec2(floor(q.x / BW), row);
+	vec2 f = vec2(fract(q.x / BW) * BW, fract(q.y / BH) * BH);
+	float dx = min(f.x, BW - f.x);
+	if (ashlar && hash(vec3(id, 5.0)) < 0.35) {
+		// geteilter Block: zweite Fuge etwa in der Mitte
+		dx = min(dx, abs(f.x - BW * (0.4 + 0.2 * hash(vec3(id, 9.0)))));
+	}
+	// Kanten leicht unregelmäßig, wie von Hand gesetzt
+	float jitter = (value_noise(p * 14.0) - 0.5) * (ashlar ? 0.014 : 0.008) - JOINT * 0.5;
+	edges = vec2(dx, min(f.y, BH - f.y)) + jitter;
+	return min(edges.x, edges.y);
+}
+
+// Höhe des feinen Reliefs (0 … 1) an der Stelle p; px = Größe eines Bildpunkts (m)
+float surface_height(vec3 p, float px) {
+	if (grain == 3 || grain == 8) {
+		bool ashlar = grain == 8;
+		float JOINT = ashlar ? 0.024 : 0.02;
+		vec2 id;
+		vec2 edges;
+		masonry_d(p, id, edges);
+		float far = smoothstep(0.4, 1.1, px / JOINT);
+		// runde Steinkanten wie ein Kissen: Rundung zu jeder Fuge für sich, malgenommen – so sind auch die
+		// Ecken rund (mit dem kleinsten Abstand allein liefen Knickkanten diagonal von den Ecken zur Mitte)
+		float w = ashlar ? 0.05 : 0.026;
+		return smoothstep(-0.004, w, edges.x) * smoothstep(-0.004, w, edges.y) * (1.0 - far);
+	} else if (grain == 1) {
+		return fbm(p * 9.0, 3) * 0.7 + fbm(p * 45.0, 2) * 0.3 * detail_fade(px, 45.0);
+	} else if (grain == 0) {
+		return fbm(p * 7.0, 3) * 0.65 + fbm(p * 40.0, 2) * 0.35 * detail_fade(px, 40.0);
+	} else if (grain == 4) {
+		return fbm(p * 90.0, 2) * detail_fade(px, 90.0);
+	} else if (grain == 6) {
+		return fbm(p * 25.0, 2) * detail_fade(px, 25.0);
+	} else if (grain == 7) {
+		return fbm(p * 6.0, 3) * 0.7 + fbm(p * 30.0, 2) * 0.3 * detail_fade(px, 30.0);
+	}
+	return 0.0;
+}
+
 void fragment() {
 	vec3 p = model_pos;
 	vec3 col = base_color.rgb;
-	float height = 0.0;
 	// Größe eines Bildpunkts auf der Fläche (m): feine Muster blenden sich aus, bevor sie flimmern
 	float px = length(fwidth(p)) + 1e-5;
 	if (stripe_width > 0.0) {
@@ -131,18 +182,9 @@ void fragment() {
 		float BW = ashlar ? 0.46 : 0.34;
 		float BH = ashlar ? 0.27 : 0.115;
 		float JOINT = ashlar ? 0.024 : 0.02;
-		vec2 q = vec2(p.x - p.z, p.y);
-		float row = floor(q.y / BH);
-		q.x += ashlar ? hash(vec3(row, 1.7, 2.9)) * BW : mod(row, 2.0) * BW * 0.5;
-		vec2 id = vec2(floor(q.x / BW), row);
-		vec2 f = vec2(fract(q.x / BW) * BW, fract(q.y / BH) * BH);
-		float dx = min(f.x, BW - f.x);
-		if (ashlar && hash(vec3(id, 5.0)) < 0.35) {
-			// geteilter Block: zweite Fuge etwa in der Mitte
-			dx = min(dx, abs(f.x - BW * (0.4 + 0.2 * hash(vec3(id, 9.0)))));
-		}
-		// Abstand zur Fuge in m (Kanten leicht unregelmäßig, wie von Hand gesetzt)
-		float d = min(dx, min(f.y, BH - f.y)) - JOINT * 0.5 + (value_noise(p * 14.0) - 0.5) * (ashlar ? 0.014 : 0.008);
+		vec2 id;
+		vec2 edges;
+		float d = masonry_d(p, id, edges);
 		float stone = smoothstep(-px, px, d);
 		float h1 = hash(vec3(id, 3.0));
 		float h2 = hash(vec3(id, 7.0));
@@ -160,8 +202,6 @@ void fragment() {
 		float far = smoothstep(0.4, 1.1, px / JOINT);
 		vec3 avg = mix(brick, second_color.rgb, JOINT * (BW + BH) / (BW * BH));
 		col = mix(mix(second_color.rgb, brick, stone), avg, far);
-		// runde Steinkanten: Höhe steigt zur Steinmitte weich an
-		height = smoothstep(-0.004, ashlar ? 0.06 : 0.03, d) * (1.0 - far);
 	}
 	if (!masonry) {
 		col *= COLOR.rgb;
@@ -177,36 +217,23 @@ void fragment() {
 		float soft = fbm(vec3((p.x - p.z) * 9.0, p.y * 1.2, 0.0), 2);
 		float tone = mix(streak, soft, 0.5);
 		col *= mix(0.92, 1.05, smoothstep(0.2, 0.8, tone));
-		height = 0.0;
 	} else if (grain == 1) {
 		// Stein: weich unregelmäßig, leichte Farbwolken, keine Risslinien
 		col *= mix(0.95, 1.04, fbm(p * 3.0 + vec3(5.0), 2));
-		height = fbm(p * 9.0, 3) * 0.7 + fbm(p * 45.0, 2) * 0.3 * detail_fade(px, 45.0);
-	} else if (grain == 0) {
-		// Putz: sanfte Wellen der Kelle, feines Korn nur aus der Nähe
-		height = fbm(p * 7.0, 3) * 0.65 + fbm(p * 40.0, 2) * 0.35 * detail_fade(px, 40.0);
-	} else if (grain == 4) {
-		height = fbm(p * 90.0, 2) * detail_fade(px, 90.0);
-	} else if (grain == 5) {
-		// Blätter und Blüten: glatt und prall, nur ganz sanfte Wellen (keine Körnung)
-		height = fbm(p * 5.0, 2) * 0.35;
-	} else if (grain == 6) {
-		height = fbm(p * 25.0, 2) * detail_fade(px, 25.0);
-	} else if (grain == 7) {
-		// Lack: matt, ganz leicht uneben gestrichen
-		height = fbm(p * 6.0, 3) * 0.7 + fbm(p * 30.0, 2) * 0.3 * detail_fade(px, 30.0);
 	}
-	// Feines Relief aus der Höhe (Bump über Bildschirm-Ableitungen)
-	if (bump_strength > 0.0) {
-		vec3 dp1 = dFdx(VERTEX);
-		vec3 dp2 = dFdy(VERTEX);
-		float dh1 = dFdx(height);
-		float dh2 = dFdy(height);
-		vec3 r1 = cross(dp2, NORMAL);
-		vec3 r2 = cross(NORMAL, dp1);
-		float det = dot(dp1, r1);
-		vec3 grad = sign(det) * (dh1 * r1 + dh2 * r2);
-		NORMAL = normalize(abs(det) * NORMAL - grad * bump_strength * 0.02);
+	// Feines Relief (Putz, Stein, Steinkanten, Gewebe): Höhe an drei Stellen der Fläche, Abstand etwa ein
+	// Bildpunkt – so ist das Relief an jedem Bildpunkt genau und weich (die frühere Rechnung über
+	// Bildschirm-Ableitungen arbeitete in 2x2-Blöcken und machte Treppchen und Pixel an Fugen und Kanten).
+	// Holz (Maserung nur in der Farbe) und Blätter (glatt) ohne Relief.
+	if (bump_strength > 0.0 && grain != 2 && grain != 5) {
+		vec3 n = normalize(model_normal);
+		vec3 t = normalize(cross(abs(n.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0), n));
+		vec3 b = cross(n, t);
+		float e = max(px, 0.0015);
+		float h0 = surface_height(p, px);
+		vec3 grad = ((surface_height(p + t * e, px) - h0) * t + (surface_height(p + b * e, px) - h0) * b) / e;
+		vec3 g = (VIEW_MATRIX * (MODEL_MATRIX * vec4(grad, 0.0))).xyz;
+		NORMAL = normalize(NORMAL - g * bump_strength * 0.02);
 	}
 	ALBEDO = col;
 	ROUGHNESS = rough;

@@ -1,7 +1,9 @@
 // Boden der Außenwelt im Bilderbuch-Stil (Stil-Umbau der Welt, Etappe 4h): Straße, Gehwege,
 // Bordsteine, Platz, Gassen und Eingangstreppe. Alles aus der Lage in der Welt berechnet (keine
 // Bilder): runde, unregelmäßige Steine in warmen Tönen, weiche Fugen, jeder Stein leicht gewölbt.
-// Aus der Ferne werden Fugen und Wölbung weich ausgeblendet (sonst flimmert es).
+// Aus der Ferne werden Fugen und Wölbung weich ausgeblendet (sonst flimmert es). Die Wölbung (Relief)
+// wird an jedem Bildpunkt genau aus der Steinform berechnet – nicht über Bildschirm-Ableitungen, die in
+// 2x2-Blöcken arbeiten und Treppchen und Pixel an den Fugen machten.
 //   pattern 0 = Kopfsteinpflaster (rund, unregelmäßig – Fahrbahn)
 //   pattern 1 = Platten (verschieden breite Reihen – Gehwege, Platz, Gasse)
 //   pattern 2 = Bordstein-Quader (lange Steine)
@@ -57,6 +59,12 @@ float vnoise(vec2 x) {
 	return mix(mix(hash12(i), hash12(i + vec2(1, 0)), f.x), mix(hash12(i + vec2(0, 1)), hash12(i + vec2(1, 1)), f.x), f.y);
 }
 
+// Ableitung von smoothstep(a, b, x) nach x
+float smoothstep_slope(float a, float b, float x) {
+	float t = clamp((x - a) / (b - a), 0.0, 1.0);
+	return 6.0 * t * (1.0 - t) / (b - a);
+}
+
 // Farbe eines Steins aus seiner Nummer: Mischung aus drei warmen Tönen, selten ein Akzentstein
 vec3 stone_color(vec2 id) {
 	float h = hash12(id * 1.37 + 4.1);
@@ -69,13 +77,24 @@ vec3 stone_color(vec2 id) {
 void fragment() {
 	bool top = abs(world_normal.y) > 0.5;
 	vec2 uv;
+	// Richtungen von u und v in der Welt (für das Relief)
+	vec3 axis_u;
+	vec3 axis_v;
 	if (top) {
 		uv = rotate_90 ? world_pos.zx : world_pos.xz;
+		axis_u = rotate_90 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+		axis_v = rotate_90 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 0.0, 1.0);
 	} else if (abs(world_normal.x) > abs(world_normal.z)) {
 		uv = vec2(world_pos.z, world_pos.y);
+		axis_u = vec3(0.0, 0.0, 1.0);
+		axis_v = vec3(0.0, 1.0, 0.0);
 	} else {
 		uv = vec2(world_pos.x, world_pos.y);
+		axis_u = vec3(1.0, 0.0, 0.0);
+		axis_v = vec3(0.0, 1.0, 0.0);
 	}
+	// Steigung des Reliefs (Höhe je m entlang u und v)
+	vec2 slope = vec2(0.0);
 	// Größe eines Bildpunkts auf dem Boden (m)
 	float px = length(fwidth(world_pos)) + 1e-5;
 	vec3 col;
@@ -94,19 +113,25 @@ void fragment() {
 		float d1 = 8.0;
 		float d2 = 8.0;
 		vec2 best = vec2(0.0);
+		vec2 r1 = vec2(1.0, 0.0);
+		vec2 r2 = vec2(-1.0, 0.0);
+		float ky = pattern == 3 ? 1.0 : 1.15;
 		for (int y = -1; y <= 1; y++) {
 			for (int x = -1; x <= 1; x++) {
 				vec2 g = vec2(float(x), float(y));
 				vec2 o = pattern == 3 ? vec2(0.5) + (hash22(cell + g) - 0.5) * 0.35 : 0.15 + 0.7 * hash22(cell + g);
 				vec2 r = g + o - f;
-				r.y *= pattern == 3 ? 1.0 : 1.15;
+				r.y *= ky;
 				float d = dot(r, r);
 				if (d < d1) {
 					d2 = d1;
+					r2 = r1;
 					d1 = d;
+					r1 = r;
 					best = cell + g;
 				} else if (d < d2) {
 					d2 = d;
+					r2 = r;
 				}
 			}
 		}
@@ -115,7 +140,12 @@ void fragment() {
 		float j = joint * s;
 		float stone = smoothstep(j * 0.5 - px, j * 0.5 + px, edge_m);
 		// Wölbung: zur Steinmitte hin weich ansteigend
-		height = smoothstep(j * 0.3, j * 0.5 + s * 0.28, edge_m);
+		// gewölbt nur am Rand, oben flach (sonst laufen Knickkanten von den Ecken zur Steinmitte)
+		float rim = j * 0.5 + s * 0.13;
+		height = smoothstep(j * 0.3, rim, edge_m);
+		// Steigung des Randabstands: zeigt von der Fuge weg zur Steinmitte
+		vec2 ge = 0.5 * (vec2(r1.x, r1.y * ky) / max(length(r1), 1e-4) - vec2(r2.x, r2.y * ky) / max(length(r2), 1e-4));
+		slope = ge * smoothstep_slope(j * 0.3, rim, edge_m);
 		col = mix(joint_color.rgb, stone_color(id), stone);
 	} else if (pattern == 1) {
 		// Platten in Reihen, jede Reihe mit eigener Breite und Versatz
@@ -131,7 +161,16 @@ void fragment() {
 		float wob = (vnoise(uv * 9.0) - 0.5) * 0.012;
 		edge_m = min(min(fx, w - fx), min(fy, rh - fy)) + wob;
 		float stone = smoothstep(joint * 0.5 - px, joint * 0.5 + px, edge_m);
-		height = smoothstep(joint * 0.3, joint * 0.5 + 0.05, edge_m);
+		// Kissenform: Rundung zu den Längs- und Querfugen einzeln, malgenommen – runde Ecken ohne Knickkanten
+		float ex = min(fx, w - fx) + wob;
+		float ey = min(fy, rh - fy) + wob;
+		float a0 = joint * 0.3;
+		float a1 = joint * 0.5 + 0.05;
+		float hx = smoothstep(a0, a1, ex);
+		float hy = smoothstep(a0, a1, ey);
+		height = hx * hy;
+		slope = vec2((fx < w - fx ? 1.0 : -1.0) * smoothstep_slope(a0, a1, ex) * hy,
+			(fy < rh - fy ? 1.0 : -1.0) * smoothstep_slope(a0, a1, ey) * hx);
 		col = mix(joint_color.rgb, stone_color(id), stone);
 		// Flecken und leichte Abnutzung auf jeder Platte
 		col *= 0.93 + 0.12 * vnoise(uv * 2.3 + id * 3.1);
@@ -155,6 +194,7 @@ void fragment() {
 		edge_m = min(fx, L - fx) + (vnoise(uv * 8.0) - 0.5) * 0.008;
 		float stone = smoothstep(joint * 0.5 - px, joint * 0.5 + px, edge_m);
 		height = smoothstep(joint * 0.3, joint * 0.5 + 0.04, edge_m);
+		slope = vec2(fx < L - fx ? 1.0 : -1.0, 0.0) * smoothstep_slope(joint * 0.3, joint * 0.5 + 0.04, edge_m);
 		col = mix(joint_color.rgb, stone_color(id), stone);
 	}
 	// feine Körnung, aus der Ferne ausgeblendet
@@ -167,15 +207,12 @@ void fragment() {
 	ALBEDO = col;
 	ROUGHNESS = roughness_value;
 	if (bump_strength > 0.0) {
-		vec3 dp1 = dFdx(VERTEX);
-		vec3 dp2 = dFdy(VERTEX);
-		float dh1 = dFdx(height);
-		float dh2 = dFdy(height);
-		vec3 r1 = cross(dp2, NORMAL);
-		vec3 r2 = cross(NORMAL, dp1);
-		float det = dot(dp1, r1);
-		vec3 grad = sign(det) * (dh1 * r1 + dh2 * r2);
-		NORMAL = normalize(abs(det) * NORMAL - grad * bump_strength * 0.035);
+		// Relief aus der Steigung (in der Welt), geglättet auf die Größe eines Bildpunkts: ist die Rundung
+		// der Steinkante schmaler als ein paar Bildpunkte, wird sie sanft flacher (sonst flimmert es)
+		float soft = 1.0 - smoothstep(0.012, 0.04, px);
+		vec3 grad = (slope.x * axis_u + slope.y * axis_v) * (1.0 - far) * soft;
+		vec3 g = (VIEW_MATRIX * vec4(grad, 0.0)).xyz;
+		NORMAL = normalize(NORMAL - g * bump_strength * 0.035);
 	}
 	SPECULAR = 0.3;
 }
