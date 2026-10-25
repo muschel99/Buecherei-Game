@@ -376,10 +376,10 @@ DIMS = {
         crotch=0.493,          # Schritthöhe als Anteil der Kinnhöhe
         shoulder=(0.140, 0.084),  # Schultergelenk: seitlich (x) und so tief unter dem Halsansatz
         chest=(0.110, 0.096, 0.28), bust=(0.054, -0.074, 0.72, 0.054, 0.052, 0.049),
-        waist=(0.104, 0.080, 0.27), belly=(0.064, 0.052, 0.08), pelvis=(0.132, 0.100, 0.22),
+        waist=(0.104, 0.080, 0.27), belly=(0.064, 0.052, 0.08), pelvis=(0.118, 0.100, 0.22),
         butt=(0.068, 0.080, 0.082), neck=0.044,
         arm=(0.041, 0.036, 0.021), upper_arm=0.20, fore_arm=0.165, hand=1.05,
-        hip_x=0.090, thigh=0.078, knee=0.054, calf=0.045, ankle=0.040, foot=1.0, thigh_top=0.94),
+        hip_x=0.080, thigh=0.072, knee=0.052, calf=0.045, ankle=0.040, foot=1.0, thigh_top=0.80),
     "male": dict(
         crotch=0.49,
         shoulder=(0.156, 0.086),
