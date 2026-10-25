@@ -30,8 +30,11 @@ layout(push_constant, std430) uniform Params {
 	float warmth;          // warme Farbstimmung
 	float saturation;      // Sättigung (1 = unverändert)
 	float wash;            // Papierton in den Schatten
-	vec3 line_color;       // Farbe der Tusche (linear)
+	vec3 line_color;       // Farbton der Tusche (linear)
 	float line_fade;       // ab dieser Entfernung (m) verschwinden die Linien
+	float line_dark;       // Helligkeit der Tusche im Verhältnis zur Fläche darunter (0,3 = ein Drittel)
+	float pressure;        // wie stark der Strichdruck schwankt (0 = gleichmäßig)
+	vec2 reserved;
 } params;
 
 float hash12(vec2 p) {
@@ -131,15 +134,21 @@ void main() {
 		col = acc / wsum;
 	}
 
-	// 3. Farbränder dunkler (wie getrocknete Aquarellfarbe am Rand einer Fläche)
-	float e = 1.5 * scale;
+	// Entfernung des Bildpunkts in m (umgekehrte Tiefe): in der Ferne werden Farbränder und Linien
+	// ausgeblendet – dort sind die Formen kleiner als ein paar Bildpunkte und würden nur flimmern
+	float r0 = raw_depth(px);
+	float dist = params.z_near / max(r0, 1e-7);
+	float near = 1.0 - smoothstep(params.line_fade * 0.3, params.line_fade, dist);
+
+	// 3. Farbränder dunkler (wie getrocknete Aquarellfarbe am Rand einer Fläche) – nur an deutlichen
+	// Farbgrenzen, nicht an feinen Mustern wie Pflaster oder Ziegeln
+	float e = 2.0 * scale;
 	float gx = tlum(source_at(px + vec2(e, 0.0)).rgb) - tlum(source_at(px - vec2(e, 0.0)).rgb);
 	float gy = tlum(source_at(px + vec2(0.0, e)).rgb) - tlum(source_at(px - vec2(0.0, e)).rgb);
-	col *= 1.0 - params.edge_dark * smoothstep(0.04, 0.3, length(vec2(gx, gy)));
+	col *= 1.0 - params.edge_dark * near * smoothstep(0.12, 0.4, length(vec2(gx, gy)));
 
 	// 4. Tuschelinien: Sprünge in der Tiefe (Umrisse) und Knicke in der Flächenrichtung
-	float r0 = raw_depth(p);
-	float dist = params.z_near / max(r0, 1e-7);   // Entfernung in m (umgekehrte Tiefe)
+	r0 = raw_depth(p);
 	vec3 n0 = normal_at(p);
 	float w = params.line_width * scale;
 	float edge = 0.0;
@@ -153,20 +162,25 @@ void main() {
 		float bend = max(1.0 - dot(n0, normal_at(p + o)), 1.0 - dot(n0, normal_at(p - o)));
 		edge = max(edge, smoothstep(0.3, 0.6, bend));
 	}
-	// in der Ferne feiner und blasser, über dem Himmel keine
-	edge *= 1.0 - smoothstep(params.line_fade * 0.45, params.line_fade, dist);
-	// Strichdruck schwankt wie bei einer Feder
-	edge *= 0.6 + 0.4 * vnoise(suv * 55.0 + vec2(r0 * 400.0, 0.0));
-	col = mix(col, params.line_color * (0.5 + 0.5 * min(lum(col), 1.0)), clamp(edge * params.line_strength, 0.0, 1.0));
+	// in der Ferne blasser und ab line_fade gar nicht mehr (auch nicht über dem Himmel)
+	edge *= near;
+	// Strichdruck schwankt leicht (gleichmäßig entlang der Bildfläche, keine Brüche in der Linie)
+	edge *= 1.0 - params.pressure * vnoise(suv * 18.0);
+	// Tusche: dunkles Braun, so hell wie ein Teil der Fläche darunter – auf hellen Wänden mittelbraun,
+	// im Schatten dunkelbraun, nie schwarz
+	vec3 hue = params.line_color / max(lum(params.line_color), 1e-4);
+	vec3 ink = hue * max(lum(col) * params.line_dark, 0.02);
+	ink = mix(ink, col * params.line_dark, 0.25);
+	col = mix(col, ink, clamp(edge * params.line_strength, 0.0, 1.0));
 
 	// 5. Papier
 	float l = tlum(col);
 	float clouds = fbm(suv * 3.2);                         // Farbe ungleichmäßig aufgetragen (große Wolken)
 	float pools = fbm(suv * 14.0 + 3.7) - 0.5;              // kleine Pfützen und Flecken im Pigment
-	float grain = vnoise(px / (1.7 * scale)) - 0.5;         // Papierkörnung
-	float fibers = vnoise(suv * vec2(240.0, 70.0)) - 0.5;   // Papierfasern
+	float grain = vnoise(px / (4.0 * scale)) - 0.5;         // Papierkörnung (grob, kein Bildrauschen)
+	float fibers = vnoise(suv * vec2(120.0, 35.0)) - 0.5;   // Papierfasern
 	col *= mix(1.0, 0.87 + 0.26 * clouds, params.paper);
-	col *= 1.0 - params.paper * (0.12 * pools + 0.16 * grain * (1.15 - l) + 0.05 * fibers);
+	col *= 1.0 - params.paper * (0.12 * pools + 0.07 * grain * (1.15 - l) + 0.04 * fibers);
 
 	// 6. warme, weiche Farbstimmung
 	col += params.wash * 0.03 * vec3(1.0, 0.9, 0.74) * (1.0 - l);

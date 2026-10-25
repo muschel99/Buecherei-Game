@@ -51,8 +51,13 @@ var mouse_sensitivity: float = 0.12
 var invert_mouse_y: bool = false
 ## Wie weit man maximal nach oben/unten schauen kann (in Grad).
 var max_look_angle: float = 85.0
-## Sichtfeld der Kamera in Grad (größer = mehr Weitwinkel).
+## Sichtfeld der Kamera nach oben/unten in Grad (größer = mehr Weitwinkel) – gilt, solange das Bild nicht
+## zu breit wird (siehe camera_max_horizontal_fov).
 var camera_fov: float = 72.0
+## Höchstens so breit (in Grad, von links nach rechts) darf das Sichtfeld werden – je Stufe der
+## Einstellung „Sichtfeld“ (Eng, Normal, Weit). Auf breiten Bildschirmen (21:9, 32:9) wird sonst das
+## Bild an den Rändern stark gestreckt (Fischauge); dann wird stattdessen oben/unten etwas weniger gezeigt.
+var camera_max_horizontal_fov: Array[float] = [88.0, 98.0, 108.0]
 ## Stärke des sanften Kopfwippens beim Laufen in Metern (0 = aus).
 var head_bob_amount: float = 0.02
 ## Tempo des Kopfwippens (höher = schnellere Schritte).
@@ -500,18 +505,21 @@ var graphics_presets: Array[Dictionary] = [
 # Papier, warme Farbstimmung (scripts/rendering/paint_filter_effect.gd, assets/shaders/paint/).
 ## Pinselgröße, falls die Grafikstufe keine eigene hat (graphics_presets "paint_radius").
 var paint_brush_radius: float = 0.0
-## Tuschelinien an Kanten: Deckkraft (0 = keine), Abstand der Kantensuche (Bildpunkte), Farbe und
-## Entfernung (m), ab der sie ganz verschwunden sind.
+## Tuschelinien an Kanten: Deckkraft (0 = keine), Abstand der Kantensuche (Bildpunkte), Farbton (Braun –
+## nie Schwarz), Helligkeit im Verhältnis zur Fläche darunter (kleiner = dunkler), Schwankung des
+## Strichdrucks (0 = gleichmäßig) und Entfernung (m), ab der sie ganz verschwunden sind.
 var paint_line_strength: float = 0.68
 var paint_line_width: float = 1.0
-var paint_line_color: Color = Color(0.26, 0.17, 0.11)
-var paint_line_fade_distance: float = 40.0
+var paint_line_color: Color = Color(0.4, 0.24, 0.13)
+var paint_line_darkness: float = 0.3
+var paint_line_pressure: float = 0.15
+var paint_line_fade_distance: float = 24.0
 ## Papierstruktur (ungleichmäßig aufgetragene Farbe, Körnung, Fasern; 0 = glatt).
 var paint_paper_strength: float = 0.8
 ## Farbränder dunkler wie bei getrocknetem Aquarell (0 = aus).
 var paint_edge_darkening: float = 0.4
-## Zittern der Tuschelinien wie von Hand (Bildpunkte; die Farbflächen bleiben scharf).
-var paint_wobble: float = 1.2
+## Zittern der Tuschelinien wie von Hand (Bildpunkte; 0 = gerade und ordentlich – Wunsch der Entwicklerin).
+var paint_wobble: float = 0.0
 ## Farbstimmung: warm (0 = neutral), Sättigung (1 = unverändert), Papierton in den Schatten.
 var paint_warmth: float = 0.5
 var paint_saturation: float = 1.04

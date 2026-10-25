@@ -660,13 +660,19 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - Möbel-Knoten in Szenen können ihre Nummer (`uid`) und ihr Trägermöbel (`support_uid`) fest
   eintragen (z. B. Tablet auf der Theke).
 - Renderer: Forward+ (nötig für volumetrischen Nebel / Lichtstrahlen).
+- **Sichtfeld:** `Player.fitted_fov(größe)` – oben/unten `GameConfig.camera_fov`, aber links/rechts nie
+  breiter als `camera_max_horizontal_fov[Einstellung „Sichtfeld“]` (sonst Fischauge auf 21:9/32:9);
+  passt sich bei Fenstergröße und Einstellung an.
 - **Malfilter „Aquarell“** (Gezeichnet-Look, Einstellung Grafik → „Malstil“, Testtaste F4 – nie F8, das beendet in Godot das
   laufende Spiel –, Testbilder
   `--paint=0|1`): `PaintFilterEffect` (scripts/rendering/, ein `CompositorEffect` nach allen festen und
   durchsichtigen Dingen, vor Belichtung/Leuchten; main.gd hängt ihn als `Compositor` an die
   WorldEnvironment) mit zwei Rechen-Shadern `assets/shaders/paint/paint_copy.glsl` (Arbeitskopie) und
   `paint_filter.glsl` (Farben scharf am Bildpunkt – Wunsch: nicht verschwommen; Kuwahara-Pinselflächen nur
-  wahlweise, `paint_radius` > 0; dunklere Farbränder, zittrige Tuschelinien aus Tiefe +
+  wahlweise, `paint_radius` > 0; dunklere Farbränder nur an deutlichen Farbgrenzen; gerade Tuschelinien
+  (`paint_wobble` 0) in dunklem Braun relativ zur Fläche darunter – nie Schwarz; Farbränder und Linien
+  enden bei `paint_line_fade_distance`, sonst flimmert es pixelig; Papierkörnung grob; bei aktivem Filter
+  immer FXAA; Linien aus Tiefe +
   normal_roughness, Papier, warme Farbstimmung). Alle Werte in GameConfig (`paint_*`), Pinselgröße je
   Grafikstufe (`graphics_presets` "paint_radius"). Die Oberfläche (HUD, Menüs) bleibt scharf.
 - **Bücher:** Neues Genre = neues Datenblatt in `data/genres/` + Bücherliste

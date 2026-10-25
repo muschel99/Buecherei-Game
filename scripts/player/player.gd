@@ -76,7 +76,11 @@ var interaction_enabled: bool = true:
 func _ready() -> void:
 	# Werte aus der zentralen Konfiguration übernehmen
 	head.position.y = GameConfig.eye_height
-	camera.fov = GameConfig.camera_fov
+	apply_field_of_view()
+	get_viewport().size_changed.connect(apply_field_of_view)
+	Settings.setting_changed.connect(func(key: String, _value: Variant) -> void:
+		if key == "graphics/field_of_view":
+			apply_field_of_view())
 	# Der Strahl reicht so weit wie die größte Reichweite; ob ein Ziel nah genug ist,
 	# wird danach je nach Objekt geprüft (siehe _update_interaction_target)
 	var reach := maxf(GameConfig.interaction_distance, GameConfig.long_interaction_distance)
@@ -92,6 +96,24 @@ func _ready() -> void:
 	camera.add_child(held)
 	# Mauszeiger im Spiel "fangen" (unsichtbar, bleibt im Fenster)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+## Sichtfeld der Kamera: oben/unten GameConfig.camera_fov – aber nie breiter als die Einstellung
+## „Sichtfeld“ erlaubt (GameConfig.camera_max_horizontal_fov). Auf breiten Bildschirmen zeigt die Kamera
+## dann oben und unten etwas weniger, statt das Bild an den Rändern zu verzerren.
+func apply_field_of_view() -> void:
+	camera.fov = fitted_fov(get_viewport().get_visible_rect().size)
+
+
+static func fitted_fov(view_size: Vector2) -> float:
+	var aspect := view_size.x / maxf(1.0, view_size.y)
+	var options := GameConfig.camera_max_horizontal_fov
+	var level := clampi(int(Settings.get_value("graphics/field_of_view")), 0, options.size() - 1)
+	var max_half_h := deg_to_rad(options[level]) / 2.0
+	var half_v := deg_to_rad(GameConfig.camera_fov) / 2.0
+	if atan(tan(half_v) * aspect) > max_half_h:
+		half_v = atan(tan(max_half_h) / aspect)
+	return rad_to_deg(2.0 * half_v)
 
 
 func _unhandled_input(event: InputEvent) -> void:

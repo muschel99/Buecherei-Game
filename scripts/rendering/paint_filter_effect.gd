@@ -19,8 +19,10 @@ const SOURCE := &"source"
 @export var brush_radius := 0.0
 @export var line_strength := 0.55
 @export var line_width := 1.0
-@export var line_color := Color(0.26, 0.17, 0.11)
-@export var line_fade_distance := 40.0
+@export var line_color := Color(0.4, 0.24, 0.13)
+@export var line_darkness := 0.3
+@export var line_pressure := 0.15
+@export var line_fade_distance := 24.0
 @export var paper_strength := 0.5
 @export var edge_darkening := 0.35
 @export var wobble := 1.2
@@ -59,6 +61,8 @@ func apply_config(preset: Dictionary) -> void:
 	line_strength = GameConfig.paint_line_strength
 	line_width = GameConfig.paint_line_width
 	line_color = GameConfig.paint_line_color
+	line_darkness = GameConfig.paint_line_darkness
+	line_pressure = GameConfig.paint_line_pressure
 	line_fade_distance = GameConfig.paint_line_fade_distance
 	paper_strength = GameConfig.paint_paper_strength
 	edge_darkening = GameConfig.paint_edge_darkening
@@ -117,6 +121,7 @@ func _render_callback(callback_type: int, render_data: RenderData) -> void:
 		line_strength, line_width, paper_strength, edge_darkening,
 		wobble, warmth, saturation, wash,
 		c.r, c.g, c.b, line_fade_distance,
+		line_darkness, line_pressure, 0.0, 0.0,
 	]).to_byte_array()
 	for view in buffers.get_view_count():
 		var color := buffers.get_color_layer(view)

@@ -33,6 +33,8 @@ const DEFINITIONS: Array[Dictionary] = [
 		"type": "choice", "options": ["30", "60", "120", "unbegrenzt"], "default": 1},
 	{"key": "graphics/quality", "section": "Grafik", "label": "Grafikqualität",
 		"type": "choice", "options": ["Niedrig", "Mittel", "Hoch"], "default": 1},
+	{"key": "graphics/field_of_view", "section": "Grafik", "label": "Sichtfeld",
+		"type": "choice", "options": ["Eng", "Normal", "Weit"], "default": 1},
 	{"key": "graphics/paint_style", "section": "Grafik", "label": "Malstil (Testtaste F4)",
 		"type": "choice", "options": ["Normal", "Aquarell"], "default": 1},
 	{"key": "graphics/show_fps", "section": "Grafik", "label": "Bilder pro Sekunde anzeigen (F3)",
@@ -105,7 +107,7 @@ func _apply(key: String) -> void:
 			DisplayServer.window_set_vsync_mode(vsync)
 		"display/max_fps":
 			apply_frame_limit()
-		"graphics/quality":
+		"graphics/quality", "graphics/paint_style":
 			_apply_graphics_quality()
 
 
@@ -136,7 +138,9 @@ func _apply_graphics_quality() -> void:
 	RenderingServer.directional_soft_shadow_filter_set_quality(filter)
 	RenderingServer.positional_soft_shadow_filter_set_quality(filter)
 	viewport.msaa_3d = {0: Viewport.MSAA_DISABLED, 2: Viewport.MSAA_2X, 4: Viewport.MSAA_4X}.get(int(preset.msaa), Viewport.MSAA_DISABLED)
-	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if preset.fxaa else Viewport.SCREEN_SPACE_AA_DISABLED
+	# FXAA glättet auch die Tuschelinien des Malfilters – darum immer an, solange er läuft
+	var paint := int(get_value("graphics/paint_style")) == 1
+	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if preset.fxaa or paint else Viewport.SCREEN_SPACE_AA_DISABLED
 	viewport.scaling_3d_scale = preset.render_scale
 	viewport.mesh_lod_threshold = float(preset.get("lod_threshold", 1.0))
 

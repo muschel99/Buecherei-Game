@@ -63,7 +63,7 @@ func _ready() -> void:
 		life.seed_random(int(_args.seed))
 	_camera = Camera3D.new()
 	_camera.name = "TourCamera"
-	_camera.fov = float(_args.get("fov", GameConfig.camera_fov))
+	_camera.fov = float(_args.get("fov", Player.fitted_fov(get_viewport().get_visible_rect().size)))
 	_camera.near = 0.03
 	_camera.far = 400.0
 	main.add_child(_camera)
