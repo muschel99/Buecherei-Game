@@ -30,7 +30,14 @@ HEIGHTS = {
 SHAPES = ("thin", "medium", "fat")
 EAR_TURN = 40.0   # Ohren um so viel Grad nach vorn gedreht
 HEAD_DROP = 0.018  # Kopf so viel tiefer gesetzt (kürzerer Hals)
-NOSE_Z = 0.114    # Nasenspitze über dem Kinn
+NOSE_Z = 0.112    # Nasenspitze über dem Kinn (an der Unterkante der Augen, wie im Manga-Chibi-Stil)
+NOSE_R = (0.0105, 0.0072, 0.0085)  # kleine, flache Knopfnase (Halbmaße; nur ein Punkt im Gesicht)
+# Ohren auf Augenhöhe (Mitte der Augen 0,146 m über dem Kinn): Oberkante etwa an der Oberkante der
+# Augen, Unterkante an der Nase – Höhe in Kopf-Einheiten (gebaut für 0,41 m), Abstand der Ohrmitte
+# zur Kopfseite (m), Halbmaße (Dicke, Breite, Höhe)
+EAR_Z = 0.128
+EAR_OUT = 0.021
+EAR_R = (0.016, 0.038, 0.041)
 # Schultern breiter/schmaler (m): Bei dick/dünn rückt der ganze Arm samt Gelenken nach außen/innen
 # (in Godot verschiebt ChibiCharacter dafür die Oberarm-Knochen, die Formregler enthalten es nicht)
 ARM_SPREAD = {"thin": -0.006, "medium": 0.0, "fat": 0.054}
@@ -312,12 +319,22 @@ def head_point(chin, x, y, z):
     return np.array((x * k, y * k, chin + z * k))
 
 
+_EAR_X = {}
+
+
 def ear_frame(chin, s):
-    """Ohr der Seite s: Mitte, Richtung nach außen (schräg nach vorn), Halbmaße (Dicke, Breite, Höhe)."""
+    """Ohr der Seite s: Mitte, Richtung nach außen (schräg nach vorn), Halbmaße (Dicke, Breite, Höhe).
+    Die Ohrmitte sitzt EAR_OUT außerhalb der Kopfseite (gemessen an der Kopfform ohne Ohren)."""
     a = math.radians(EAR_TURN)
     n = np.array((s * math.cos(a), -math.sin(a), 0.0))
-    r = np.array((0.016, 0.035, 0.038)) * HEAD_K
-    return head_point(chin, s * 0.206, 0.030, 0.150), n, r
+    r = np.array(EAR_R) * HEAD_K
+    if chin not in _EAR_X:
+        shell = head_group(chin, with_nose=False, with_ears=False)
+        p, _ = raycast(shell, head_point(chin, 0.0, 0.030, EAR_Z), [(1.0, 0.0, 0.0)], tmax=0.4)
+        _EAR_X[chin] = float(p[0][0]) + EAR_OUT
+    c = head_point(chin, 0.0, 0.030, EAR_Z)
+    c[0] = s * _EAR_X[chin]
+    return c, n, r
 
 
 def head_group(chin, with_nose=True, with_ears=True):
@@ -348,13 +365,13 @@ def head_group(chin, with_nose=True, with_ears=True):
             ear_c, n, r = ear_frame(chin, s)
             ear = Ellipsoid("ear_" + side, ear_c, r, rot=_rot_z(-s * EAR_TURN))
             cup = Ellipsoid("ear_cup_" + side, ear_c + n * 0.0185 * k + np.array((0, 0, 0.001 * k)),
-                            R(0.0065, 0.022, 0.024), rot=_rot_z(-s * EAR_TURN))
+                            R(0.0065, 0.024, 0.026), rot=_rot_z(-s * EAR_TURN))
             items.append(("union", ear, 0.016 * k))
             items.append(("subtract", cup, 0.006 * k))
     if with_nose:
         # kleine Knopfnase: sitzt auf der Gesichtsfläche
         c, r = nose_shape(chin)
-        items.append(("union", Ellipsoid("nose", c, r), 0.012))
+        items.append(("union", Ellipsoid("nose", c, r), 0.010))
     return Group("head", items)
 
 
@@ -362,7 +379,7 @@ def nose_shape(chin):
     """Mitte und Halbmaße der Knopfnase."""
     z = chin + NOSE_Z
     y = surface_y(head_group(chin, False, False), z)
-    return np.array((0.0, y + 0.0035, z)), np.array((0.0135, 0.0095, 0.0105))
+    return np.array((0.0, y + 0.0030, z)), np.array(NOSE_R)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -379,7 +396,7 @@ DIMS = {
         waist=(0.104, 0.080, 0.27), belly=(0.064, 0.052, 0.08), pelvis=(0.118, 0.100, 0.20),
         butt=(0.064, 0.068, 0.078), neck=0.044,
         arm=(0.041, 0.036, 0.021), upper_arm=0.20, fore_arm=0.165, hand=1.05,
-        hip_x=0.084, thigh=0.070, knee=0.052, calf=0.045, ankle=0.040, foot=1.0, thigh_top=0.80),
+        hip_x=0.084, thigh=0.070, knee=0.050, calf=0.040, ankle=0.035, foot=0.88, thigh_top=0.80),
     "male": dict(
         crotch=0.49,
         shoulder=(0.156, 0.072),
@@ -387,7 +404,7 @@ DIMS = {
         waist=(0.136, 0.088, 0.25), belly=(0.08, 0.064, 0.09), pelvis=(0.126, 0.094, 0.19),
         butt=(0.050, 0.054, 0.064), neck=0.050,
         arm=(0.047, 0.042, 0.024), upper_arm=0.21, fore_arm=0.175, hand=1.13,
-        hip_x=0.078, thigh=0.071, knee=0.052, calf=0.043, ankle=0.041, foot=1.08, thigh_top=0.80,
+        hip_x=0.078, thigh=0.071, knee=0.050, calf=0.039, ankle=0.036, foot=0.95, thigh_top=0.80,
         thigh_start=0.84,
         # Becken so breit wie die Taille: seitlich eine gerade Linie von der Taille zur Hüfte (keine
         # Kerbe); dick: Bauch weniger rund, Hüfte wächst mit, Schultern schmaler
@@ -627,8 +644,8 @@ class Body:
         ]
         foot = [
             # Fuß: hinten an der Ferse höher, vorn zu den Zehen flach auslaufend
-            ("union", Ellipsoid("foot_" + side, (ax + s * 0.004, -0.012 * fs, 0.038 * fs), (0.052 * fs, 0.080 * fs, 0.038 * fs)), 0.0),
-            ("union", Ellipsoid("toes_" + side, (ax + s * 0.006, -0.074 * fs, 0.025 * fs), (0.053 * fs, 0.052 * fs, 0.025 * fs)), 0.03),
+            ("union", Ellipsoid("foot_" + side, (ax + s * 0.004, -0.016 * fs, 0.038 * fs), (0.046 * fs, 0.076 * fs, 0.038 * fs)), 0.0),
+            ("union", Ellipsoid("toes_" + side, (ax + s * 0.006, -0.074 * fs, 0.025 * fs), (0.050 * fs, 0.052 * fs, 0.025 * fs)), 0.03),
             ("intersect", Func("floor", lambda x, y, z: -z + 0 * x + 0 * y), 0.006),
         ]
         leg_g = Group("leg_" + side, leg)

@@ -29,7 +29,7 @@ WEB_X = 0.068   # Schwimmhaut zwischen den Fingern so weit vor dem Handgelenk (m
 WEB_Z = 0.62    # und so hoch (Anteil der halben Handdicke)
 THUMB_BASE = 0.55  # Daumenansatz: so weit entlang des Mittelhandknochens (Anteil)
 # Ohr-Ringe: (Abstand nach außen, Größe) als Anteil der Ohr-Halbmaße; Boden der Mulde
-EAR_RINGS = ((0.25, 0.97), (0.90, 0.80), (1.00, 0.56), (0.80, 0.30))
+EAR_RINGS = ((0.25, 0.97), (0.85, 0.84), (0.97, 0.66), (0.80, 0.36))
 EAR_CUP = 0.74
 
 # Ringe als Punkte auf dem Rand des Quadrats [-1, 1]² (a, b): Reihenfolge = Reihenfolge der Ecken
@@ -469,10 +469,11 @@ def _leg(cg, body, s, side, port, info):
         pts, _ = S.raycast(P[part + "_" + side], c, dirs, tmax=0.25)
         if part == "legfoot":
             # vorn nicht bis zu den Zehen: dort beginnt der Fuß (Öffnung vorn am Knöchel)
-            for k in (0, 1, 2):
+            # (die vorderen Ecken an den Seiten weniger stark – sonst eine Kerbe außen am Knöchel)
+            for k, lim in ((0, 1.40), (1, 1.15), (2, 1.40)):
                 v = pts[k] - c
-                if np.linalg.norm(v) > 1.15 * r_an:
-                    pts[k] = c + v / np.linalg.norm(v) * 1.15 * r_an
+                if np.linalg.norm(v) > lim * r_an:
+                    pts[k] = c + v / np.linalg.norm(v) * lim * r_an
         region = "foot_" + side if i == len(levels) - 1 else "leg_" + side
         r = cg.ring(pts, region)
         # Fuß-Öffnung vorn zwischen Knöchel- und Fersenring (Felder 0 und 1)
@@ -498,7 +499,7 @@ def _leg(cg, body, s, side, port, info):
     # flache Querschnitte (wie bei der Hand): Ecken zu den Seitenkanten, nicht oben in die Mitte
     for y, z, half_h in ((-0.045, 0.032, 0.030), (-0.085, 0.024, 0.022), (-0.114, 0.020, 0.017)):
         c = np.array((ankle[0] + s * 0.005, y * fs, z * fs))
-        fdirs = flat_dirs(FOOT_6, s * ex, ez, 0.050 * fs, half_h * fs)
+        fdirs = flat_dirs(FOOT_6, s * ex, ez, 0.047 * fs, half_h * fs)
         pts, _ = S.raycast(P["foot_" + side], c, fdirs, tmax=0.12)
         r = cg.ring(pts, "foot_" + side)
         cg.band(prev, r)
