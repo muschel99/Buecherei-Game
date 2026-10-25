@@ -67,8 +67,10 @@ const MOODS := {
 ## Bei diesen Augen wird geblinzelt (bei geschlossenen/lachenden nicht).
 const BLINKING_EYES: Array[String] = ["open", "wide", "sad", "angry", "soft", "annoyed", "teary", "half"]
 const TALK_MOUTHS: Array[String] = ["talk_a", "talk_e", "talk_o", "smile", "talk_a", "flat"]
-## Beim locker Hängenlassen übernimmt das Schlüsselbein so viele Grad (runde Schulter).
-const SHOULDER_SHARE := 15.0
+## Beim locker Hängenlassen übernimmt das Schlüsselbein so viele Grad (wenig – sonst hängen die
+## Schultern), der Ellbogen ist leicht gebeugt.
+const SHOULDER_SHARE := 6.0
+const ELBOW_RELAX := 12.0
 ## Dicke Figuren lassen die Arme so viel Grad weniger tief hängen (sonst liegen sie am Bauch).
 const FAT_RELAX_LESS := 8.0
 
@@ -141,6 +143,7 @@ const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 
 var _model: Node3D
 var _body: MeshInstance3D
+var _shape_modifier: ChibiShapeModifier
 var _blink_wait := 2.0
 var _blink_t := -1.0
 var _talk_t := 0.0
@@ -170,6 +173,7 @@ func _rebuild() -> void:
 	_model = scene.instantiate()
 	_model.name = "Model"
 	add_child(_model)
+	_add_shape_modifier()
 	for mesh_instance in _model.find_children("*", "MeshInstance3D", true, false):
 		var mi := mesh_instance as MeshInstance3D
 		var is_body := false
@@ -189,6 +193,33 @@ func _rebuild() -> void:
 	_apply_pose()
 
 
+## Dünn/dick: Arme und Beine samt Gelenken verschieben (Werte aus der Figur, gebaut von
+## tools/blender/build_chibi.py; Godot liest sie als Metadaten "extras" am Skelett-Knoten).
+func _add_shape_modifier() -> void:
+	_shape_modifier = null
+	var skeleton := _model.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skeleton == null:
+		return
+	var extras: Dictionary = {}
+	for node in [skeleton, skeleton.get_parent()]:
+		if node and node.has_meta("extras"):
+			extras = node.get_meta("extras")
+	var offsets: Dictionary = extras.get("chibi_bone_offsets", {})
+	_shape_modifier = ChibiShapeModifier.new()
+	_shape_modifier.name = "ShapeModifier"
+	for shape in ["fat", "thin"]:
+		var table := {}
+		var source: Dictionary = offsets.get(shape, {})
+		for bone in source:
+			var v: Array = source[bone]
+			table[bone] = Vector3(v[0], v[1], v[2])
+		if shape == "fat":
+			_shape_modifier.offsets_fat = table
+		else:
+			_shape_modifier.offsets_thin = table
+	skeleton.add_child(_shape_modifier)
+
+
 ## Arme locker hängen lassen (nur ohne Animation sinnvoll – eine Animation überschreibt das).
 func _apply_pose() -> void:
 	if _model == null:
@@ -196,16 +227,18 @@ func _apply_pose() -> void:
 	var skeleton := _model.find_child("Skeleton3D", true, false) as Skeleton3D
 	if skeleton == null:
 		return
-	# das Schlüsselbein dreht ein Stück mit (runde Schulter), der Oberarm den Rest
+	# das Schlüsselbein dreht ein kleines Stück mit, der Oberarm den Rest; Ellbogen leicht gebeugt
 	var angle := maxf(relaxed_arms - FAT_RELAX_LESS * maxf(body_shape, 0.0), 0.0)
 	var share := minf(SHOULDER_SHARE, angle)
+	var elbow := ELBOW_RELAX * minf(angle / 30.0, 1.0)
 	for side in [["Left", -1.0], ["Right", 1.0]]:
-		for part in [["Shoulder", share], ["UpperArm", angle - share]]:
+		for part in [["Shoulder", share, Vector3.BACK], ["UpperArm", angle - share, Vector3.BACK],
+				["LowerArm", elbow, Vector3.UP]]:
 			var bone := skeleton.find_bone(side[0] + part[0])
 			if bone < 0:
 				continue
 			var rest_global := skeleton.get_bone_global_rest(bone).basis
-			var turn := Basis(Vector3.BACK, deg_to_rad(part[1]) * side[1])
+			var turn := Basis(part[2], deg_to_rad(part[1]) * side[1])
 			var local := Quaternion(rest_global.inverse() * turn * rest_global)
 			skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_rest(bone).basis.get_rotation_quaternion() * local)
 
@@ -232,6 +265,8 @@ func _apply_shape() -> void:
 	for mi in _all_meshes():
 		_set_blend(mi, "thin", maxf(-body_shape, 0.0))
 		_set_blend(mi, "fat", maxf(body_shape, 0.0))
+	if _shape_modifier:
+		_shape_modifier.body_shape = body_shape
 
 
 func _set_blend(mi: MeshInstance3D, shape_name: String, value: float) -> void:

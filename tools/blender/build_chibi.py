@@ -1,15 +1,24 @@
-"""Chibi-Figuren (seit Etappe 5c): Grundkörper ("Mannequins") für Frauen und Männer in drei Größen,
-je mit den Formreglern "thin" und "fat", Unterwäsche (Bandeau + Slip bzw. Boxershorts), Skelett
-mit Namen wie Godots SkeletonProfileHumanoid, gezeichnetes Gesicht (Material "face").
+"""Chibi-Figuren (seit Etappe 5c, Körper neu gebaut): Grundkörper ("Mannequins") für Frauen und
+Männer in drei Größen, je mit den Formreglern "thin" und "fat", aufgemalter Unterwäsche (Bandeau +
+Slip bzw. Boxershorts), Skelett mit Namen wie Godots SkeletonProfileHumanoid und gezeichnetem
+Gesicht (Material "face").
+
+So entsteht der Körper:
+  1. chibi_cage baut ein grobes Netz nur aus Vierecken mit Ringen um jedes Gelenk (T-Pose).
+  2. Es wird zweimal geglättet (Catmull-Clark) und genau auf die Form aus chibi_sdf gelegt.
+  3. Die Lichtrichtungen (Normalen) kommen aus dem Netz selbst – sie passen also immer zu den
+     Flächen (früher aus der Form gerechnet: bis 16° daneben, fleckiges Licht).
+  4. Gewichte und Skelett aus chibi_rig, Formregler: dasselbe Netz der dünnen/dicken Form.
 
 Aufruf:
   blender -b --factory-startup --python tools/blender/build_chibi.py -- [Optionen]
     --only female_medium,male_medium   nur diese Figuren
-    --render                           Kontrollbilder nach screenshots/blender/chibi/
-    --no-export                        nichts schreiben (nur ansehen)
+    --render                           Kontrollbilder nach screenshots/blender/chibi/ (nichts schreiben)
+    --views=front,poses,...            welche Kontrollbilder (Liste unten in main)
 
-Ausgabe: assets/models/characters/chibi/<gender>_<größe>.glb, .blend-Quellen in
-assets/models/source/characters/chibi/, Mixamo-Dateien in assets/models/characters/chibi/mixamo/.
+Ausgabe: assets/models/characters/chibi/<gender>_<größe>.glb (am Skelett die Gelenk-Verschiebungen
+für dünn/dick, "chibi_bone_offsets"), .blend-Quellen in assets/models/source/characters/chibi/,
+Mixamo-Dateien in assets/models/characters/chibi/mixamo/.
 """
 
 import math
@@ -21,26 +30,21 @@ sys.path.insert(0, os.path.dirname(__file__))
 import numpy as np  # noqa: E402
 
 import character_lib as C  # noqa: E402  (numpy-Kniff, Export, Kontrollbilder)
+import chibi_cage as G  # noqa: E402
 import chibi_face as F  # noqa: E402
-import chibi_remesh as R  # noqa: E402
+import chibi_rig as R  # noqa: E402
 import chibi_sdf as S  # noqa: E402
 import bpy  # noqa: E402
 import bmesh  # noqa: E402
-from mathutils import Matrix, Quaternion, Vector  # noqa: E402
+from mathutils import Matrix, Vector  # noqa: E402
 
 ROOT = C.ROOT
 OUT_DIR = os.path.join(ROOT, "assets", "models", "characters", "chibi")
 SOURCE_DIR = os.path.join(ROOT, "assets", "models", "source", "characters", "chibi")
 SHOT_DIR = os.path.join(ROOT, "screenshots", "blender", "chibi")
 
-GRID = 0.003           # Rasterweite des Feldes (m)
-BODY_TRIS = 26000      # Dreiecke des Körpers vor dem Remeshing (Startnetz = 1,3-fach)
-ZONE_DENSITY = 3.0     # (nur decimate mit protect) Biegestellen bekommen so viel mehr Dreiecke
-# Gleichmäßiges Netz (chibi_remesh): Kantenlängen in m – sonst, dünnste Teile (Finger), Gelenke
-REMESH_BASE = 0.017
-REMESH_FINEST = 0.0035
-REMESH_JOINTS = 0.008
-REMESH_ITERATIONS = 8
+SUBDIVISIONS = 2     # so oft wird der Käfig geglättet (jedes Viereck wird zu 4^n)
+RELAX_ITERATIONS = 3  # danach die Ecken so oft gleichmäßig verteilen (entlang der Oberfläche)
 
 SKIN = (0.95, 0.80, 0.68)
 CLOTH = (0.90, 0.89, 0.87)   # aufgemalte Unterwäsche (hellgrau-weiß)
@@ -79,227 +83,123 @@ def set_coords(obj, p):
     obj.data.update()
 
 
-def _decimate_pass(obj, ratio, keep_mask=None):
-    """Ein Ausdünn-Durchgang; Ecken mit keep_mask bleiben unverändert."""
-    m = obj.modifiers.new("Decimate", "DECIMATE")
-    m.decimate_type = "COLLAPSE"
-    m.ratio = min(1.0, max(ratio, 0.0001))
-    m.use_symmetry = True
-    m.symmetry_axis = "X"
-    if keep_mask is not None:
-        vg = obj.vertex_groups.new(name="keep")
-        vg.add([int(i) for i in np.nonzero(keep_mask)[0]], 1.0, "REPLACE")
-        # Gewicht 1 würde stärker ausdünnen – umgekehrt bleibt die Gruppe stehen
-        m.vertex_group = vg.name
-        m.invert_vertex_group = True
-        m.vertex_group_factor = 1000.0
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.modifier_apply(modifier=m.name)
-    if keep_mask is not None:
-        obj.vertex_groups.remove(obj.vertex_groups["keep"])
+def vertex_normals(obj):
+    me = obj.data
+    me.update()
+    n = np.zeros(len(me.vertices) * 3, np.float32)
+    me.vertices.foreach_get("normal", n)
+    return n.reshape(-1, 3).astype(np.float64)
 
 
-def _zone_mask(obj, protect):
-    p = coords(obj)
-    mask = np.zeros(len(p), bool)
-    for c, r in protect:
-        mask |= np.linalg.norm(p - np.asarray(c), axis=1) < r
-    return mask
+def neighbors(obj):
+    """Nachbarecken je Ecke (über Kanten)."""
+    me = obj.data
+    e = np.zeros(len(me.edges) * 2, np.int64)
+    me.edges.foreach_get("vertices", e)
+    e = e.reshape(-1, 2)
+    out = [[] for _ in range(len(me.vertices))]
+    for a, b in e:
+        out[a].append(b)
+        out[b].append(a)
+    return [np.array(x) for x in out]
 
 
-def _tris(obj):
-    return sum(len(p.vertices) - 2 for p in obj.data.polygons)
-
-
-def decimate(obj, tris, protect=None):
-    """Ausdünnen auf etwa tris Dreiecke. protect = Liste (Punkt, Radius): Biegestellen (Gelenke)
-    bekommen ein ZONE_DENSITY-mal so dichtes Netz (sonst knickt die Haut dort beim Animieren)."""
-    total = _tris(obj)
-    if not protect:
-        _decimate_pass(obj, tris / max(total, 1))
-        return
-    zone = _zone_mask(obj, protect)
-    share = zone.mean()
-    rest_target = tris * (1.0 - share)
-    zone_target = tris * share * ZONE_DENSITY
-    # 1. alles außer den Biegestellen
-    zone_faces = total * share
-    _decimate_pass(obj, (zone_faces + rest_target) / total, zone)
-    # 2. die Biegestellen (der Rest bleibt stehen)
-    zone = _zone_mask(obj, protect)
-    now = _tris(obj)
-    rest_now = now - now * zone.mean()
-    _decimate_pass(obj, (rest_now + zone_target) / now, ~zone)
-
-
-def surface_object(name, node, lo, hi, tris, keep=None, protect=None):
-    """Netz der Oberfläche eines Feldes, ausgedünnt und genau auf die Oberfläche gesetzt.
-    keep(p) = welche Flächen bleiben (Mittelpunkte)."""
-    v, q = S.surface_nets(node, lo, hi, GRID)
-    v = S.project(node, v, 3)
-    if keep is not None:
-        centers = v[q].mean(axis=1)
-        q = q[keep(centers)]
-        used = np.unique(q)
-        remap = np.full(len(v), -1, np.int64)
-        remap[used] = np.arange(len(used))
-        v = v[used]
-        q = remap[q]
-    obj = mesh_from_arrays(name, v, q)
-    if protect is None:
-        decimate(obj, tris)
-        set_coords(obj, S.project(node, coords(obj), 4))
-    else:
-        # gleichmäßiges Netz: erst grob ausdünnen, dann isotropes Remeshing (Gelenke feiner)
-        _decimate_pass(obj, tris * 1.3 / _tris(obj))
-        set_coords(obj, S.project(node, coords(obj), 4))
-        L = R.length_field(node, protect, REMESH_BASE, REMESH_FINEST, REMESH_JOINTS, coords(obj))
-        R.remesh(obj, node, L, REMESH_ITERATIONS)
-    fix_folds(obj, node)
-    repair_manifold(obj, node)
-    return obj
-
-
-def mesh_problems(obj):
-    """(Kanten mit mehr als zwei Flächen, Randkanten = Löcher)"""
+def recalc_normals(obj):
     bm = bmesh.new()
     bm.from_mesh(obj.data)
-    nm = sum(1 for e in bm.edges if len(e.link_faces) > 2)
-    bd = sum(1 for e in bm.edges if len(e.link_faces) < 2)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(obj.data)
     bm.free()
-    return nm, bd
+    obj.data.update()
 
 
-def repair_manifold(obj, node, rounds=6):
-    """Kanten mit mehr als zwei Flächen und Löcher reparieren: Umgebung ausschneiden, Loch
-    schließen, auf die Oberfläche setzen. Das Netz muss geschlossen sein (Mixamo, Schatten)."""
-    for _ in range(rounds):
-        bm = bmesh.new()
-        bm.from_mesh(obj.data)
-        bad = [e for e in bm.edges if len(e.link_faces) != 2]
-        if not bad:
-            bm.free()
-            break
-        verts = set()
-        for e in bad:
-            for v in e.verts:
-                verts.add(v)
-                for x in v.link_edges:
-                    verts.add(x.other_vert(v))
-        faces = {f for v in verts for f in v.link_faces}
-        bmesh.ops.delete(bm, geom=list(faces), context="FACES_ONLY")
-        loose_e = [e for e in bm.edges if not e.link_faces]
-        bmesh.ops.delete(bm, geom=loose_e, context="EDGES")
-        loose_v = [v for v in bm.verts if not v.link_edges]
-        bmesh.ops.delete(bm, geom=loose_v, context="VERTS")
-        rim = [e for e in bm.edges if len(e.link_faces) == 1]
-        res = bmesh.ops.holes_fill(bm, edges=rim, sides=0)
-        bmesh.ops.triangulate(bm, faces=res["faces"])
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-        bm.to_mesh(obj.data)
-        bm.free()
-        set_coords(obj, S.project(node, coords(obj), 4))
-    nm, bd = mesh_problems(obj)
-    print(f"  Netz geschlossen: {nm} Kanten mit >2 Flächen, {bd} Randkanten")
+def subdivide(obj, levels):
+    m = obj.modifiers.new("Subdivision", "SUBSURF")
+    m.levels = levels
+    m.render_levels = levels
+    m.quality = 3
+    m.uv_smooth = "NONE"
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=m.name)
 
 
-def fix_folds(obj, node, rounds=8):
-    """Umgeklappte Dreiecke (vom Ausdünnen) glätten: Ecken der Fläche und ihre Nachbarn in die
-    Mitte ihrer Nachbarn setzen und wieder auf die Oberfläche schieben."""
-    for _ in range(rounds):
-        bm = bmesh.new()
-        bm.from_mesh(obj.data)
-        bm.faces.ensure_lookup_table()
-        bm.normal_update()
-        centers = np.array([f.calc_center_median() for f in bm.faces])
-        fn = np.array([f.normal for f in bm.faces])
-        g = S.normals(node, centers)
-        bad = np.nonzero((fn * g).sum(axis=1) < 0.35)[0]
-        if len(bad) == 0:
-            bm.free()
-            return
-        if _ >= rounds // 2:
-            # hartnäckige Stellen (winzige Dreiecke an Fingerspitzen): kürzeste Kante zusammenlegen
-            edges = set()
-            for i in bad:
-                f = bm.faces[int(i)]
-                edges.add(min(f.edges, key=lambda e: e.calc_length()))
-            bmesh.ops.collapse(bm, edges=list(edges), uvs=False)
-            bm.to_mesh(obj.data)
-            bm.free()
-            set_coords(obj, S.project(node, coords(obj), 4))
-            continue
-        verts = set()
-        for i in bad:
-            for v in bm.faces[int(i)].verts:
-                verts.add(v)
-                for e in v.link_edges:
-                    verts.add(e.other_vert(v))
-        moved = {}
-        for v in verts:
-            nb = [e.other_vert(v).co for e in v.link_edges]
-            moved[v.index] = sum(nb, Vector()) / len(nb)
-        idx = np.array(list(moved))
-        pts = S.project(node, np.array([moved[i] for i in idx]), 6)
-        for i, q in zip(idx, pts):
-            bm.verts.ensure_lookup_table()
-            bm.verts[int(i)].co = q
-        bm.to_mesh(obj.data)
-        bm.free()
+def fit_to_shape(obj, node, relax=RELAX_ITERATIONS):
+    """Geglättetes Netz genau auf die Form legen: jede Ecke entlang ihrer Normalen auf die
+    Oberfläche, dann die Ecken entlang der Oberfläche gleichmäßig verteilen."""
+    p, f = S.project_along(node, coords(obj), vertex_normals(obj))
+    set_coords(obj, p)
+    nb = neighbors(obj)
+    for _ in range(relax):
+        p = coords(obj)
+        avg = np.array([p[x].mean(axis=0) for x in nb])
+        n = vertex_normals(obj)
+        move = avg - p
+        move -= (move * n).sum(axis=1)[:, None] * n
+        q, f = S.project_along(node, p + 0.5 * move, n, iterations=12)
+        set_coords(obj, q)
+    return np.abs(f)
 
 
-def smooth_normals(obj, node):
-    me = obj.data
-    n = S.normals(node, coords(obj))
-    me.use_auto_smooth = True
-    me.auto_smooth_angle = math.pi
-    for p in me.polygons:
-        p.use_smooth = True
-    me.normals_split_custom_set_from_vertices([tuple(x) for x in n])
+def body_mesh(name, body):
+    """Netz einer Figur: Käfig → zweimal glätten → auf die Form legen. Die Bereiche des Käfigs
+    (Rumpf, Arm, Finger …) werden als Gruppen "region_…" weich mitgeglättet."""
+    p, faces, region, info = G.build(body)
+    obj = mesh_from_arrays(name, p, faces)
+    for r in sorted(set(region)):
+        vg = obj.vertex_groups.new(name="region_" + r)
+        vg.add([i for i, x in enumerate(region) if x == r], 1.0, "REPLACE")
+    recalc_normals(obj)
+    subdivide(obj, SUBDIVISIONS)
+    err = fit_to_shape(obj, body.root)
+    print(f"  {name}: {len(obj.data.vertices)} Ecken, {len(obj.data.polygons)} Vierecke, "
+          f"Abstand zur Form max {err.max() * 1000:.2f} mm")
+    return obj, info
 
 
-def add_shape_keys(obj, plain, variants):
-    """Formregler: dieselben Ecken auf die glatte Form (ohne Bauchnabel) der anderen Körperform
-    schieben; Feinheiten (Nabel) wandern als Abstand zur glatten Form mit. Arme und Beine werden
-    vorher so weit verschoben wie in der anderen Form (breitere Schultern, Lücke im Schritt)."""
-    base = coords(obj)
-    smooth = S.project(plain.root, base, 6)
-    detail = base - smooth
-    names, w = S.skin_weights(plain.root, smooth, plain.spine)
-    obj.shape_key_add(name="Basis", from_mix=False)
-    for name, other in variants.items():
-        key = obj.shape_key_add(name=name, from_mix=False)
-        p = S.project(other.root, smooth + limb_shift(names, w, other), 10) + detail
-        key.data.foreach_set("co", p.astype(np.float32).ravel())
-        key.value = 0.0
-
-
-ARM_BONES = ("UpperArm", "LowerArm", "Hand", "Thumb", "Index", "Middle", "Ring", "Little")
-LEG_BONES = ("UpperLeg", "LowerLeg", "Foot", "Toes")
-
-
-def limb_shift(names, w, other):
-    """Arme und Beine (nach ihrem Gewicht) seitlich verschieben wie in der Form other."""
-    out = np.zeros((len(w), 3))
-    for i, n in enumerate(names):
-        sign = 1.0 if n.startswith("Left") else -1.0
-        if any(b in n for b in ARM_BONES):
-            out[:, 0] += w[:, i] * other.arm_spread * sign
-        elif n.endswith("Shoulder"):
-            out[:, 0] += w[:, i] * other.arm_spread * sign * 0.5
-        elif any(b in n for b in LEG_BONES):
-            out[:, 0] += w[:, i] * other.leg_spread * sign
+def read_regions(obj):
+    """Bereiche (geglättet) je Ecke aus den Gruppen region_… – danach werden sie entfernt."""
+    n = len(obj.data.vertices)
+    out = {}
+    groups = [g for g in obj.vertex_groups if g.name.startswith("region_")]
+    for g in groups:
+        out[g.name[len("region_"):]] = np.zeros(n)
+    names = {g.index: g.name[len("region_"):] for g in groups}
+    for v in obj.data.vertices:
+        for gr in v.groups:
+            if gr.group in names:
+                out[names[gr.group]][v.index] = gr.weight
+    for g in groups:
+        obj.vertex_groups.remove(g)
     return out
 
 
-def add_ao(obj, node, strength=0.9):
+def mesh_report(obj, node):
+    """Prüfwerte des Netzes: geschlossen, Ecken-Nachbarn, umgeklappte Flächen."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    nonman = sum(1 for e in bm.edges if len(e.link_faces) != 2)
+    val = np.array([len(v.link_edges) for v in bm.verts])
+    bm.faces.ensure_lookup_table()
+    bm.normal_update()
+    centers = np.array([f.calc_center_median() for f in bm.faces])
+    fn = np.array([f.normal for f in bm.faces])
+    bm.free()
+    g = S.normals(node, centers)
+    dots = (fn * g).sum(axis=1)
+    hist = {int(k): int((val == k).sum()) for k in np.unique(val)}
+    print(f"  Netz: {nonman} offene/mehrfache Kanten, Nachbarn je Ecke {hist}, "
+          f"Flächen schräg zur Form (>45°): {int((dots < 0.707).sum())}, umgeklappt: {int((dots < 0).sum())}")
+    return nonman, int((dots < 0).sum())
+
+
+def add_ao(obj, node, strength=0.5):
     """Verschattung je Ecke als zweite Texturkoordinate "AO" (u = Helligkeit) – Vertex-Farben
     kommen beim glTF-Export von Blender 3.4 durcheinander."""
     me = obj.data
     if not me.uv_layers:
         me.uv_layers.new(name="UVMap")
     p = coords(obj)
-    ao = S.ambient_occlusion(node, p, S.normals(node, p), strength=strength)
+    ao = S.ambient_occlusion(node, p, vertex_normals(obj), strength=strength)
     layer = me.uv_layers.new(name="AO")
     li = np.zeros(len(me.loops), np.int32)
     me.loops.foreach_get("vertex_index", li)
@@ -307,8 +207,15 @@ def add_ao(obj, node, strength=0.9):
     layer.data.foreach_set("uv", uv.astype(np.float32).ravel())
 
 
+def smooth_shading(obj):
+    me = obj.data
+    me.use_auto_smooth = False
+    me.polygons.foreach_set("use_smooth", np.ones(len(me.polygons), bool))
+    me.update()
+
+
 # ---------------------------------------------------------------------------------------------
-# Skelett und Gewichte
+# Skelett, Gewichte, Formregler
 # ---------------------------------------------------------------------------------------------
 
 def make_armature(body, name="Skeleton"):
@@ -318,15 +225,15 @@ def make_armature(body, name="Skeleton"):
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.mode_set(mode="EDIT")
     made = {}
-    for bname, head, tail, parent in body.bones():
+    for bname, head, tail, parent in R.bones(body):
         eb = arm.edit_bones.new(bname)
-        eb.head = head
-        eb.tail = tail
+        eb.head = tuple(head)
+        eb.tail = tuple(tail)
         if parent:
             eb.parent = made[parent]
             eb.use_connect = False
         made[bname] = eb
-    # Rollen: Arme und Finger mit der Handfläche nach unten (z-Achse des Knochens nach oben)
+    # Rollen: Arme und Finger mit der z-Achse nach oben (Handfläche unten), sonst nach vorn
     for eb in arm.edit_bones:
         if any(k in eb.name for k in ("Arm", "Hand", "Thumb", "Index", "Middle", "Ring", "Little", "Shoulder")):
             eb.align_roll(Vector((0, 0, 1)))
@@ -336,21 +243,38 @@ def make_armature(body, name="Skeleton"):
     return obj
 
 
-def bind(obj, arm, body):
-    """Gewichte aus den Grundformen: Eckpunkte zuerst auf den Körper schieben (Kleidung)."""
-    p = coords(obj)
-    on_body = S.project(body.root, p, 4)
-    names, w = S.skin_weights(body.root, on_body, body.spine)
+def bind(obj, arm, weights, names):
     for i, n in enumerate(names):
-        idx = np.nonzero(w[:, i] > 0)[0]
+        idx = np.nonzero(weights[:, i] > 0)[0]
         if len(idx) == 0:
             continue
         vg = obj.vertex_groups.new(name=n)
         for j in idx:
-            vg.add([int(j)], float(w[j, i]), "REPLACE")
+            vg.add([int(j)], float(weights[j, i]), "REPLACE")
     obj.parent = arm
     m = obj.modifiers.new("Armature", "ARMATURE")
     m.object = arm
+
+
+def add_shape_keys(obj, body, others, weights, names):
+    """Formregler: dasselbe Netz der dünnen/dicken Form. Arme und Beine rücken dort samt Gelenken
+    nach außen – diese Verschiebung machen in Godot die Knochen (ChibiCharacter), darum ist sie
+    hier herausgerechnet (sonst knickt der Ellbogen neben dem Gelenk)."""
+    obj.shape_key_add(name="Basis", from_mix=False)
+    offsets = {}
+    for name, other_obj in others.items():
+        other = other_obj["body"]
+        p = coords(other_obj["obj"])
+        shift = np.zeros_like(p)
+        offs = R.limb_offsets(body, other)
+        for root, d in offs.items():
+            chain = R.chain_children(names, root)
+            shift += weights[:, chain].sum(axis=1)[:, None] * d[None, :]
+        key = obj.shape_key_add(name=name, from_mix=False)
+        key.data.foreach_set("co", (p - shift).astype(np.float32).ravel())
+        key.value = 0.0
+        offsets[name] = {k: [float(x) for x in v] for k, v in offs.items()}
+    return offsets
 
 
 # ---------------------------------------------------------------------------------------------
@@ -403,7 +327,7 @@ def principled(name, color, rough=0.5, ao=True, image=None, cloth=None):
 
 
 # ---------------------------------------------------------------------------------------------
-# Gesicht
+# Gesicht und Unterwäsche
 # ---------------------------------------------------------------------------------------------
 
 _ATLASES = {}
@@ -445,61 +369,13 @@ def face_uv(obj, body):
     me.update()
 
 
-# ---------------------------------------------------------------------------------------------
-# Figur
-# ---------------------------------------------------------------------------------------------
-
-def bend_zones(body):
-    """Stellen, die sich beim Animieren stark biegen: dort bleibt das Netz fein."""
-    zones = []
-    for side in ("Left", "Right"):
-        a = body.joints_arm[side]
-        sh = np.array(a["shoulder"])
-        s = 1.0 if side == "Left" else -1.0
-        zones += [(sh + np.array((-s * 0.03, 0.0, -0.06)), 0.07),   # Achsel und Brustseite
-                  (sh + np.array((0.0, 0.0, 0.02)), 0.06),           # Schulter
-                  (a["elbow"], 0.045), (a["wrist"], 0.035)]
-        lg = body.joints_leg[side]
-        zones += [(lg["hip"], 0.08), (lg["knee"], 0.05), (lg["ankle"], 0.04)]
-    zones.append(((0.0, 0.02, body.neck_base), 0.05))
-    # kleine Details: Bauchnabel, Nase, Gesicht (Kinn), Schritt
-    zones.append((body.navel, 0.02, 0.003))
-    zones.append(((0.0, -0.17, body.chin + S.NOSE_Z), 0.03, 0.004))
-    zones.append(((0.0, -0.10, body.chin + 0.05), 0.08, 0.010))
-    zones.append(((0.0, 0.0, body.crotch), 0.07, 0.008))
-    return zones
-
-
-def build(gender, height):
-    bodies = {s: S.Body(gender, height, s) for s in S.SHAPES}
-    plain = {s: S.Body(gender, height, s, navel=False) for s in S.SHAPES}
-    body = bodies["medium"]
-    lo, hi = body.bounds()
-    arm = make_armature(body)
-    obj = surface_object("Body", body.root, lo, hi, BODY_TRIS, protect=bend_zones(body))
-    add_ao(obj, body.root, 0.5)
-    smooth_normals(obj, body.root)
-    add_shape_keys(obj, plain["medium"], {"thin": plain["thin"], "fat": plain["fat"]})
-    obj.data.materials.append(principled("skin", SKIN, cloth=CLOTH))
-    face_uv(obj, body)
-    img = face_image(f"face_{gender}_{height}", "neutral", gender)
-    obj.data.materials.append(principled("face", SKIN, image=img))
-    bind(obj, arm, body)
-    paint_underwear(obj, body)
-    return arm, [obj], body
-
-
-def paint_underwear(obj, body):
-    """Unterwäsche aufmalen: Abstand zum Rand je Ecke in UV2.y (Shader zieht daraus die Kante)."""
+def paint_underwear(obj, body, weights, names):
+    """Unterwäsche aufmalen: Abstand zum Rand je Ecke in UV2.y (Shader zieht daraus die Kante).
+    Nie auf Haut, die mit Arm oder Schlüsselbein dreht (sonst wandert der Rand auf den Arm)."""
     me = obj.data
     p = coords(obj)
     d = body.underwear_distance(p)
-    # nur auf Haut, die beim Bewegen der Arme nicht mitdreht (sonst wandert die Ecke auf den Arm)
-    # stufenlose Anteile (ungerundet), damit die Kante unter der Achsel eine saubere Linie wird
-    names, w = S.skin_weights(body.root, S.project(body.root, p, 4), body.spine, raw=True)
-    moving = sum(w[:, i] for i, n in enumerate(names)
-                 if any(b in n for b in ARM_BONES) or n.endswith("Shoulder"))
-    # nur in Armnähe wirken lassen (sonst würde der Rand von Slip/Hose verbogen)
+    moving = sum(weights[:, i] for i, n in enumerate(names) if any(b in n for b in R.ARM_BONES) or n.endswith("Shoulder"))
     d = np.maximum(d, np.where(moving > 0.001, moving - 0.012, -1.0))
     layer = me.uv_layers["AO"]
     li = np.zeros(len(me.loops), np.int32)
@@ -511,34 +387,121 @@ def paint_underwear(obj, body):
     layer.data.foreach_set("uv", uv.ravel())
 
 
+# ---------------------------------------------------------------------------------------------
+# Figur
+# ---------------------------------------------------------------------------------------------
+
+def build(gender, height):
+    """Eine Figur in der Szene bauen. Liefert (Skelett, [Körper], Body, Verschiebungen dünn/dick)."""
+    bodies = {s: S.Body(gender, height, s) for s in S.SHAPES}
+    body = bodies["medium"]
+    print(f"{gender}_{height}:")
+    obj, info = body_mesh("Body", body)
+    regions = read_regions(obj)
+    others = {}
+    for s in ("thin", "fat"):
+        o, _ = body_mesh("tmp_" + s, bodies[s])
+        assert len(o.data.vertices) == len(obj.data.vertices), "dünn/dick: anderes Netz"
+        others[s] = {"obj": o, "body": bodies[s]}
+    mesh_report(obj, body.root)
+    smooth_shading(obj)
+    arm = make_armature(body)
+    names = [b[0] for b in R.bones(body)]
+    weights = R.skin_weights(body, coords(obj), regions, neighbors(obj), names)
+    add_ao(obj, body.root)
+    offsets = add_shape_keys(obj, body, others, weights, names)
+    for o in others.values():
+        bpy.data.objects.remove(o["obj"])
+    obj.data.materials.append(principled("skin", SKIN, cloth=CLOTH))
+    face_uv(obj, body)
+    img = face_image(f"face_{gender}_{height}", "neutral", gender)
+    obj.data.materials.append(principled("face", SKIN, image=img))
+    bind(obj, arm, weights, names)
+    paint_underwear(obj, body, weights, names)
+    # Gelenk-Verschiebungen für dünn/dick als Zusatzangabe am Skelett (Godot liest sie als
+    # Metadaten "extras"; Achsen wie in Godot: x, z → y, -y → z)
+    arm["chibi_bone_offsets"] = {shape: {bone: [d[0], d[2], -d[1]] for bone, d in bones.items()}
+                                 for shape, bones in offsets.items()}
+    return arm, [obj], body, offsets
+
+
 RELAX_ANGLE = 57.0   # Kontrollbilder: Arme so viel Grad aus der T-Pose heruntergenommen
 FAT_RELAX_LESS = 8.0    # dicke Figuren: Arme so viel Grad weniger tief (wie ChibiCharacter)
-SHOULDER_SHARE = 15.0   # davon übernimmt das Schlüsselbein (wie ChibiCharacter.SHOULDER_SHARE)
+SHOULDER_SHARE = 6.0    # davon übernimmt das Schlüsselbein (wie ChibiCharacter.SHOULDER_SHARE)
+
+
+def _rotate(arm, bone, axis, deg):
+    """Knochen um eine Achse im Skelett-Raum drehen (zusätzlich zur bisherigen Drehung)."""
+    pb = arm.pose.bones[bone]
+    rest = pb.bone.matrix_local.to_3x3()
+    r = Matrix.Rotation(math.radians(deg), 3, axis)
+    pb.rotation_mode = "QUATERNION"
+    pb.rotation_quaternion = (rest.inverted() @ r @ rest).to_quaternion() @ pb.rotation_quaternion
+
+
+def reset_pose(arm):
+    for pb in arm.pose.bones:
+        pb.rotation_mode = "QUATERNION"
+        pb.rotation_quaternion = (1, 0, 0, 0)
 
 
 def pose_relaxed(arm, angle=None):
-    """Arme aus der T-Pose locker herunter (für die Kontrollbilder)."""
+    """Arme aus der T-Pose locker herunter (für die Kontrollbilder, wie ChibiCharacter)."""
     angle = RELAX_ANGLE if angle is None else angle
-    bpy.context.view_layer.objects.active = arm
-    bpy.ops.object.mode_set(mode="POSE")
     for side, s in (("Left", 1), ("Right", -1)):
-        # das Schlüsselbein dreht ein Stück mit (runde Schulter), der Oberarm den Rest
-        share = min(SHOULDER_SHARE, angle)
-        for bone, part in ((side + "Shoulder", share), (side + "UpperArm", angle - share)):
+        for bone in (side + "Shoulder", side + "UpperArm", side + "LowerArm"):
             pb = arm.pose.bones[bone]
-            rest = pb.bone.matrix_local.to_3x3()
-            r = Matrix.Rotation(math.radians(s * part), 3, "Y")
             pb.rotation_mode = "QUATERNION"
-            pb.rotation_quaternion = (rest.inverted() @ r @ rest).to_quaternion()
-        lower = arm.pose.bones[side + "LowerArm"]
-        rest2 = lower.bone.matrix_local.to_3x3()
-        r2 = Matrix.Rotation(math.radians(-12), 3, "Z") if s > 0 else Matrix.Rotation(math.radians(12), 3, "Z")
-        lower.rotation_mode = "QUATERNION"
-        lower.rotation_quaternion = (rest2.inverted() @ r2 @ rest2).to_quaternion()
-    bpy.ops.object.mode_set(mode="OBJECT")
+            pb.rotation_quaternion = (1, 0, 0, 0)
+        share = min(SHOULDER_SHARE, angle)
+        _rotate(arm, side + "Shoulder", "Y", s * share)
+        _rotate(arm, side + "UpperArm", "Y", s * (angle - share))
+        _rotate(arm, side + "LowerArm", "Z", -s * 12)
 
+
+def set_shape(figs, name):
+    """Formregler setzen und Arme/Beine samt Knochen verschieben (wie ChibiCharacter in Godot)."""
+    for arm, _body, parts, offsets in figs:
+        for o in parts:
+            for kb in o.data.shape_keys.key_blocks[1:]:
+                kb.value = 1.0 if kb.name == name else 0.0
+        for pb in arm.pose.bones:
+            pb.location = (0, 0, 0)
+        if name in offsets:
+            for bone, d in offsets[name].items():
+                pb = arm.pose.bones[bone]
+                pb.location = pb.bone.matrix_local.to_3x3().inverted() @ Vector(d)
+        posed = arm.pose.bones["LeftUpperArm"].rotation_quaternion.angle > 0.01
+        if posed:
+            pose_relaxed(arm, RELAX_ANGLE - (FAT_RELAX_LESS if name == "fat" else 0.0))
+    bpy.context.view_layer.update()
+
+
+# ---------------------------------------------------------------------------------------------
+# Kontrollbilder
+# ---------------------------------------------------------------------------------------------
 
 REFERENCE = os.path.join(ROOT, "screenshots", "chibi_reference.png")
+
+
+def load_png(path):
+    im = bpy.data.images.load(path)
+    w, h = im.size
+    px = np.flipud(np.array(im.pixels[:]).reshape(h, w, 4))
+    bpy.data.images.remove(im)
+    return px
+
+
+def shot(cam, target, lens=50, size=None):
+    """Ein Bild rendern und als Feld (Pixel) liefern."""
+    scene = bpy.context.scene
+    old = scene.render.resolution_x, scene.render.resolution_y
+    if size:
+        scene.render.resolution_x = scene.render.resolution_y = size
+    path = os.path.join(SHOT_DIR, "tile.png")
+    C.render(path, tuple(cam), tuple(target), lens=lens)
+    scene.render.resolution_x, scene.render.resolution_y = old
+    return load_png(path)
 
 
 def ortho_render(path, x0, H, res=1024, feet_row=948, fig_px=808, turn=0.0):
@@ -562,38 +525,29 @@ def ortho_render(path, x0, H, res=1024, feet_row=948, fig_px=808, turn=0.0):
     scene.render.resolution_x, scene.render.resolution_y = old
 
 
-def load_png(path):
-    im = bpy.data.images.load(path)
-    w, h = im.size
-    px = np.flipud(np.array(im.pixels[:]).reshape(h, w, 4))
-    bpy.data.images.remove(im)
-    return px
+def only_visible(figs, keep):
+    """Nur die Figur keep rendern (die anderen stehen sonst bei Seitenansichten im Bild)."""
+    for f in figs:
+        for o in f[2]:
+            o.hide_render = keep is not None and f is not keep
 
 
 def compare_with_reference(figs):
     """Vorlage (falls vorhanden) und Figuren nebeneinander, gleicher Maßstab (Kopf = 30 %)."""
     tiles = []
     if os.path.exists(REFERENCE):
-        ref = load_png(REFERENCE)
-        tiles.append(ref[:, 430:930])
-    for arm, body, parts in figs:
+        tiles.append(load_png(REFERENCE)[:, 430:930])
+    for arm, body, parts, _ in figs:
         path = os.path.join(SHOT_DIR, f"ortho_{body.gender}_{body.height_class}.png")
         ortho_render(path, arm.location.x, S.HEIGHTS["female"]["medium"])
         tiles.append(load_png(path)[:, 262:762])
     F.write_png(os.path.join(SHOT_DIR, "compare.png"), np.concatenate(tiles, 1))
 
 
-def only_visible(figs, keep):
-    """Nur die Figur keep rendern (die anderen stehen sonst bei Seitenansichten im Bild)."""
-    for f in figs:
-        for o in f[2]:
-            o.hide_render = f is not keep
-
-
 def around_sheet(figs, suffix=""):
     """Je Geschlecht: von der Seite, von hinten, von der anderen Seite und von vorn."""
     for fig in figs[:2]:
-        arm, body, _ = fig
+        arm, body = fig[0], fig[1]
         only_visible(figs, fig)
         tiles = []
         for turn in (-90, 180, 90, 0):
@@ -601,230 +555,14 @@ def around_sheet(figs, suffix=""):
             ortho_render(path, arm.location.x, S.HEIGHTS["male"]["tall"] + 0.05, turn=turn)
             tiles.append(load_png(path)[:, 262:762])
         F.write_png(os.path.join(SHOT_DIR, f"around_{body.gender}{suffix}.png"), np.concatenate(tiles, 1))
-    for f in figs:
-        for o in f[2]:
-            o.hide_render = False
-
-
-def gender_lineups(figs):
-    """Je Geschlecht ein Bild: Zeilen dünn/mittel/dick, Spalten klein/mittel/groß."""
-    for gender in ("female", "male"):
-        group = [f for f in figs if f[1].gender == gender]
-        if not group:
-            continue
-        cx = sum(f[0].location.x for f in group) / len(group)
-        hidden = [f for f in figs if f[1].gender != gender]
-        for arm, _, parts in hidden:
-            for o in parts:
-                o.hide_render = True
-        rows = []
-        for name in ("thin", "medium", "fat"):
-            set_shape(group, name)
-            path = os.path.join(SHOT_DIR, "tile.png")
-            C.render(path, (cx, -4.4, 0.95), (cx, 0, 0.86), lens=50)
-            rows.append(load_png(path))
-        set_shape(group, "medium")
-        for arm, _, parts in hidden:
-            for o in parts:
-                o.hide_render = False
-        F.write_png(os.path.join(SHOT_DIR, f"lineup_{gender}.png"), np.concatenate(rows, 0))
-
-
-def wrists_sheet(figs, size=420):
-    """Hände und Unterarme von vorn: je Figur dünn, mittel, dick (Zeilen = Figuren)."""
-    scene = bpy.context.scene
-    old = scene.render.resolution_x, scene.render.resolution_y
-    scene.render.resolution_x = scene.render.resolution_y = size
-    rows = []
-    for arm, body, parts in figs:
-        tiles = []
-        for name in ("thin", "medium", "fat"):
-            set_shape([(arm, body, parts)], name)
-            bpy.context.view_layer.update()
-            hand = arm.matrix_world @ arm.pose.bones["LeftLowerArm"].tail
-            path = os.path.join(SHOT_DIR, f"wrist_{name}.png")
-            C.render(path, tuple(hand + Vector((0.12, -0.75, 0.02))), tuple(hand + Vector((0.0, 0.0, -0.01))), lens=85)
-            tiles.append(load_png(path))
-        set_shape([(arm, body, parts)], "medium")
-        rows.append(np.concatenate(tiles, 1))
-    F.write_png(os.path.join(SHOT_DIR, "wrists.png"), np.concatenate(rows, 0))
-    scene.render.resolution_x, scene.render.resolution_y = old
-
-
-def head_tiles(arm, body, items, size):
-    """Kopf-Nahaufnahmen; items = [(Ausdruck, Augenform)]."""
-    name = f"face_{body.gender}_{body.height_class}"
-    tiles = []
-    for e, shape in items:
-        face_image(name, e, body.gender, shape=shape)
-        z = body.chin + 0.2
-        path = os.path.join(SHOT_DIR, "tile.png")
-        C.render(path, (arm.location.x + 0.3, -1.3, z + 0.04), (arm.location.x, 0, z - 0.03), lens=85)
-        tiles.append(load_png(path))
-    face_image(name, "neutral", body.gender)
-    return tiles
-
-
-def eyes_sheet(figs, size=360):
-    """Augenformen zur Auswahl: je Zeile eine Form (3 Frau, 3 Mann), Spalten = Ausdrücke."""
-    scene = bpy.context.scene
-    old = scene.render.resolution_x, scene.render.resolution_y
-    scene.render.resolution_x = scene.render.resolution_y = size
-    moods = ("neutral", "happy", "laugh", "surprised", "sad", "angry", "wink", "embarrassed")
-    for arm, body, parts in figs[:2]:
-        rows = []
-        for shape in F.SHAPE_NAMES[body.gender]:
-            rows.append(np.concatenate(head_tiles(arm, body, [(m, shape) for m in moods], size), 1))
-        F.write_png(os.path.join(SHOT_DIR, f"eyes_{body.gender}.png"), np.concatenate(rows, 0))
-    scene.render.resolution_x, scene.render.resolution_y = old
-
-
-def matrix_sheet(figs, size=240):
-    """Vollständige Übersicht je Geschlecht: jede Augenform (Zeilenpaar) mit allen Ausdrücken."""
-    scene = bpy.context.scene
-    old = scene.render.resolution_x, scene.render.resolution_y
-    scene.render.resolution_x = scene.render.resolution_y = size
-    names = [n for n in F.EXPRESSIONS if n != "blink"]
-    half = (len(names) + 1) // 2
-    for fig in figs[:2]:
-        arm, body, parts = fig
-        only_visible(figs, fig)
-        rows = []
-        for shape in F.SHAPE_NAMES[body.gender]:
-            tiles = head_tiles(arm, body, [(m, shape) for m in names], size)
-            while len(tiles) < 2 * half:
-                tiles.append(np.ones_like(tiles[0]))
-            rows.append(np.concatenate(tiles[:half], 1))
-            rows.append(np.concatenate(tiles[half:], 1))
-        F.write_png(os.path.join(SHOT_DIR, f"matrix_{body.gender}.png"), np.concatenate(rows, 0))
-    for f in figs:
-        for o in f[2]:
-            o.hide_render = False
-    scene.render.resolution_x, scene.render.resolution_y = old
-
-
-def moods_sheet(figs, size=300):
-    """Alle Ausdrücke (erste Augenform), Frau und Mann."""
-    scene = bpy.context.scene
-    old = scene.render.resolution_x, scene.render.resolution_y
-    scene.render.resolution_x = scene.render.resolution_y = size
-    names = list(F.EXPRESSIONS)
-    for arm, body, parts in figs[:2]:
-        tiles = head_tiles(arm, body, [(m, None) for m in names], size)
-        while len(tiles) % 9:
-            tiles.append(np.ones_like(tiles[0]))
-        rows = [np.concatenate(tiles[i:i + 9], 1) for i in range(0, len(tiles), 9)]
-        F.write_png(os.path.join(SHOT_DIR, f"moods_{body.gender}.png"), np.concatenate(rows, 0))
-    scene.render.resolution_x, scene.render.resolution_y = old
-
-
-def collision_check(figs):
-    """Ragen die locker hängenden Arme in den Rumpf? (je Figur und Form, kleinster Abstand in mm)"""
-    dg = bpy.context.evaluated_depsgraph_get()
-    for arm, body, parts in figs:
-        obj = parts[0]
-        groups = {g.index: g.name for g in obj.vertex_groups}
-        armw = np.zeros(len(obj.data.vertices))
-        for v in obj.data.vertices:
-            for g in v.groups:
-                if any(b in groups[g.group] for b in ARM_BONES):
-                    armw[v.index] += g.weight
-        idx = np.nonzero(armw > 0.95)[0]
-        line = []
-        for name in ("thin", "medium", "fat"):
-            set_shape([(arm, body, parts)], name)
-            # dicke Figuren lassen die Arme weniger tief hängen (wie ChibiCharacter)
-            pose_relaxed(arm, RELAX_ANGLE - (FAT_RELAX_LESS if name == "fat" else 0.0))
-            dg.update()
-            ev = obj.evaluated_get(dg)
-            co = np.array([ev.data.vertices[i].co for i in idx])
-            other = S.Body(body.gender, body.height_class, name, navel=False)
-            rest = S.Group("rest", [it for it in other.root.items if not it[1].name.startswith("arm_")
-                                    and it[0] == "union"])
-            d = rest.eval_points(co)
-            hits = co[d < 0]
-            j = int(np.argmin(d))
-            where = f" bei z={co[j, 2]:.2f} x={co[j, 0]:.2f}" if len(hits) else ""
-            line.append(f"{name}: {d.min() * 1000:.0f} mm{where} ({len(hits)} Ecken)")
-        set_shape([(arm, body, parts)], "medium")
-        pose_relaxed(arm)
-        print("ARME", body.gender, body.height_class, ", ".join(line))
-
-
-FINGERS = ("Thumb", "Index", "Middle", "Ring", "Little")
-
-
-def joints_check(figs):
-    """Gelenke prüfen (für Mixamo/Godot): jedes Gelenk muss innen im Körper liegen; Bilder in T-Pose
-    mit durchsichtigem Körper, Gelenke rot, Knochen blau (vorn und von der Seite)."""
-    for fig in figs:
-        arm, body, parts = fig
-        heads = [(n, np.array(h)) for n, h, t, par in body.bones()]
-        d = body.root.eval_points(np.array([h for _, h in heads]))
-        outside = [(n, round(float(v) * 1000, 1)) for (n, _), v in zip(heads, d) if v > -0.002]
-        print("GELENKE", body.gender, body.height_class, len(heads), "Knochen,",
-              "alle innen" if not outside else f"außen/am Rand: {outside}")
-    if not figs:
-        return
-    # Bilder: nur die ersten zwei Figuren, in Ruhehaltung (T-Pose)
-    red = principled("joint", (0.9, 0.1, 0.1), ao=False)
-    blue = principled("bone", (0.1, 0.3, 0.9), ao=False)
-    for fig in figs[:2]:
-        arm, body, parts = fig
-        only_visible(figs, fig)
-        arm.data.pose_position = "REST"
-        mats = [m for o in parts for m in o.data.materials]
-        for m in mats:
-            m.node_tree.nodes["Principled BSDF"].inputs["Alpha"].default_value = 0.22
-        made = []
-        for n, h, t, par in body.bones():
-            h = Vector(h) + arm.location
-            t = Vector(t) + arm.location
-            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.006 if any(f in n for f in FINGERS) else 0.010,
-                                                 location=h, segments=12, ring_count=8)
-            made.append(bpy.context.active_object)
-            made[-1].data.materials.append(red)
-            vec = t - h
-            bpy.ops.mesh.primitive_cylinder_add(radius=0.0025 if any(f in n for f in FINGERS) else 0.004,
-                                                depth=vec.length, location=(h + t) / 2, vertices=8)
-            c = bpy.context.active_object
-            c.rotation_euler = vec.to_track_quat("Z", "Y").to_euler()
-            c.data.materials.append(blue)
-            made.append(c)
-        tiles = []
-        for turn in (0, 90, 35):
-            path = os.path.join(SHOT_DIR, "tile.png")
-            ortho_render(path, arm.location.x, S.HEIGHTS["male"]["tall"] + 0.25, turn=turn, res=1024)
-            tiles.append(load_png(path)[:, 112:912])
-        F.write_png(os.path.join(SHOT_DIR, f"joints_{body.gender}.png"), np.concatenate(tiles, 1))
-        # Hand aus der Nähe (von oben und von vorn)
-        scene = bpy.context.scene
-        old = scene.render.resolution_x, scene.render.resolution_y
-        scene.render.resolution_x = scene.render.resolution_y = 600
-        wrist = Vector(body.joints_arm["Left"]["wrist"]) + arm.location
-        c = wrist + Vector((0.07, -0.01, 0.0))
-        hands = []
-        for cam in (c + Vector((0.0, -0.02, 0.45)), c + Vector((0.05, -0.45, 0.05))):
-            path = os.path.join(SHOT_DIR, "tile.png")
-            C.render(path, tuple(cam), tuple(c), lens=60)
-            hands.append(load_png(path))
-        F.write_png(os.path.join(SHOT_DIR, f"joints_hand_{body.gender}.png"), np.concatenate(hands, 1))
-        scene.render.resolution_x, scene.render.resolution_y = old
-        for o in made:
-            bpy.data.objects.remove(o)
-        for m in mats:
-            m.node_tree.nodes["Principled BSDF"].inputs["Alpha"].default_value = 1.0
-        arm.data.pose_position = "POSE"
-    for f in figs:
-        for o in f[2]:
-            o.hide_render = False
+    only_visible(figs, None)
 
 
 def tpose_sheet(figs):
     """Figuren in T-Pose (so wie gebaut, für Mixamo): vorn und hinten, Frau oben, Mann unten."""
     rows = []
     for fig in figs[:2]:
-        arm, body, parts = fig
+        arm = fig[0]
         only_visible(figs, fig)
         arm.data.pose_position = "REST"
         tiles = []
@@ -835,121 +573,143 @@ def tpose_sheet(figs):
         arm.data.pose_position = "POSE"
         rows.append(np.concatenate(tiles, 1))
     F.write_png(os.path.join(SHOT_DIR, "tpose.png"), np.concatenate(rows, 0))
-    for f in figs:
-        for o in f[2]:
-            o.hide_render = False
+    only_visible(figs, None)
 
 
-def underwear_check(figs):
-    """Keine bemalte Ecke (Unterwäsche) darf am Arm oder Schlüsselbein hängen."""
-    for arm, body, parts in figs:
-        obj = parts[0]
-        me = obj.data
-        layer = me.uv_layers["AO"]
-        li = np.zeros(len(me.loops), np.int32)
-        me.loops.foreach_get("vertex_index", li)
-        uv = np.zeros(len(li) * 2, np.float32)
-        layer.data.foreach_get("uv", uv)
-        d = np.full(len(me.vertices), 1.0)
-        d[li] = uv.reshape(-1, 2)[:, 1]
-        groups = {g.index: g.name for g in obj.vertex_groups}
-        moving = np.zeros(len(me.vertices))
-        for v in me.vertices:
-            for g in v.groups:
-                n = groups[g.group]
-                if any(b in n for b in ARM_BONES) or n.endswith("Shoulder"):
-                    moving[v.index] += g.weight
-        bad = int(((d < 0.0005) & (moving > 0.02)).sum())
-        print("WAESCHE", body.gender, body.height_class, "bemalte Ecken, die mit Arm/Schulter drehen:", bad)
+# Bewegungsprobe: Haltungen (Name, Drehungen [(Knochen, Achse, Grad je Seite)], Blickpunkte)
+POSES = [
+    ("tpose", [], [((0.55, -0.75, 1.05), (0.12, 0, 0.92)), ((0.0, 0.9, 1.1), (0.1, 0, 0.92))]),
+    ("down", [("Shoulder", "Y", 6), ("UpperArm", "Y", 60)],
+     [((0.0, -1.1, 1.0), (0.0, 0, 0.88)), ((0.75, -0.7, 1.0), (0.1, 0, 0.88))]),
+    ("forward", [("UpperArm", "Y", 15), ("UpperArm", "Z", -80)],
+     [((0.9, -0.7, 1.1), (0.1, -0.1, 0.92)), ((0.0, 1.0, 1.1), (0.0, 0, 0.92))]),
+    ("up", [("Shoulder", "Y", -18), ("UpperArm", "Y", -60)],
+     [((0.0, -1.2, 1.15), (0.0, 0, 1.0)), ((0.8, -0.6, 1.0), (0.12, 0, 1.0))]),
+    ("elbow", [("UpperArm", "Y", 50), ("LowerArm", "Z", -100), ("Hand", "X", 30)],
+     [((0.6, -0.8, 1.0), (0.2, -0.1, 0.9)), ((0.3, -0.9, 0.85), (0.3, 0, 0.85))]),
+    ("fist", [("UpperArm", "Y", 60)] + [(f + p, "Y", 70) for f in ("Index", "Middle", "Ring", "Little")
+                                       for p in ("Proximal", "Intermediate", "Distal")]
+     + [("ThumbProximal", "Z", 30), ("ThumbDistal", "Z", 30)],
+     [((0.55, -0.55, 0.72), (0.3, 0.0, 0.68)), ((0.65, 0.2, 0.6), (0.3, 0.0, 0.68))]),
+    ("sit", [("UpperLeg", "X", -90), ("LowerLeg", "X", 90), ("UpperArm", "Y", 60)],
+     [((1.0, -0.6, 0.75), (0.0, -0.15, 0.6)), ((0.0, -1.2, 0.75), (0.0, -0.1, 0.6))]),
+    ("walk", [("UpperArm", "Y", 65)], [((1.1, -0.2, 0.6), (0.0, 0, 0.5)), ((0.0, -1.3, 0.6), (0, 0, 0.5))]),
+]
+WALK = [("LeftUpperLeg", "X", -30), ("LeftLowerLeg", "X", 45), ("RightUpperLeg", "X", 20)]
 
 
-def armpits_sheet(figs, size=360):
-    """Achseln aus der Nähe (Arme hängend): Zeilen = Figuren, Spalten = dünn/mittel/dick × vorn/schräg."""
-    scene = bpy.context.scene
-    old = scene.render.resolution_x, scene.render.resolution_y
-    scene.render.resolution_x = scene.render.resolution_y = size
-    rows = []
-    for fig in figs:
-        arm, body, parts = fig
-        only_visible(figs, fig)
-        tiles = []
-        z = body.shoulder_z - 0.06
-        x0 = arm.location.x
-        for name in ("thin", "medium", "fat"):
-            set_shape([fig], name)
-            bpy.context.view_layer.update()
-            for cam in ((x0, -1.2, z + 0.05), (x0 + 0.75, -0.9, z + 0.1)):
-                path = os.path.join(SHOT_DIR, "tile.png")
-                C.render(path, cam, (x0, 0, z), lens=60)
-                tiles.append(load_png(path))
-        set_shape([fig], "medium")
-        rows.append(np.concatenate(tiles, 1))
-    F.write_png(os.path.join(SHOT_DIR, "armpits.png"), np.concatenate(rows, 0))
-    for f in figs:
-        for o in f[2]:
-            o.hide_render = False
-    scene.render.resolution_x, scene.render.resolution_y = old
+def apply_pose(arm, name):
+    reset_pose(arm)
+    for pname, rots, _ in POSES:
+        if pname != name:
+            continue
+        for side, s in (("Left", 1), ("Right", -1)):
+            for bone, axis, deg in rots:
+                full = side + bone
+                if full not in arm.pose.bones:
+                    continue
+                # Drehungen um y und z spiegeln sich mit der Seite, um x nicht
+                _rotate(arm, full, axis, deg * (s if axis in ("Y", "Z") else 1.0))
+        if name == "walk":
+            for bone, axis, deg in WALK:
+                _rotate(arm, bone, axis, deg)
+    bpy.context.view_layer.update()
 
 
-def underarm_sheet(figs, size=420):
-    """Achsel in T-Pose (von unten-vorn) und in mehreren Arm-Stellungen (Mitte bis ganz unten)."""
-    scene = bpy.context.scene
-    old = scene.render.resolution_x, scene.render.resolution_y
-    scene.render.resolution_x = scene.render.resolution_y = size
-    rows = []
+def poses_sheet(figs, size=420):
+    """Bewegungsprobe mit hartem Licht: Arme runter/vor/hoch, Ellbogen, Faust, Sitzen, Gehen."""
+    sun = bpy.data.objects["Sun"]
+    old_angle, old_energy = sun.data.angle, sun.data.energy
+    sun.data.angle = math.radians(2)
+    sun.data.energy = 4.0
     for fig in figs[:2]:
-        arm, body, parts = fig
+        arm, body = fig[0], fig[1]
         only_visible(figs, fig)
-        x0 = arm.location.x
-        sh = Vector(body.joints_arm["Left"]["shoulder"]) + arm.location
+        x0 = Vector((arm.location.x, 0, 0))
         tiles = []
-        for angle in (0.0, 30.0, 50.0, 65.0, 80.0):
-            pose_relaxed(arm, angle)
-            bpy.context.view_layer.update()
-            path = os.path.join(SHOT_DIR, "tile.png")
-            target = sh + Vector((-0.03, 0.0, -0.08))
-            C.render(path, tuple(target + Vector((0.12, -0.55, -0.10))), tuple(target), lens=55)
-            tiles.append(load_png(path))
+        for name, _, cams in POSES:
+            apply_pose(arm, name)
+            row = [shot(Vector(c) + x0, Vector(t) + x0, size=size) for c, t in cams]
+            tiles.append(np.concatenate(row, 1))
+        grid = [np.concatenate(tiles[i:i + 2], 1) for i in range(0, len(tiles), 2)]
+        F.write_png(os.path.join(SHOT_DIR, f"poses_{body.gender}.png"), np.concatenate(grid, 0))
+        reset_pose(arm)
         pose_relaxed(arm)
-        rows.append(np.concatenate(tiles, 1))
-    F.write_png(os.path.join(SHOT_DIR, "underarm.png"), np.concatenate(rows, 0))
-    for f in figs:
-        for o in f[2]:
-            o.hide_render = False
-    scene.render.resolution_x, scene.render.resolution_y = old
+    only_visible(figs, None)
+    sun.data.angle, sun.data.energy = old_angle, old_energy
 
 
-def heads_sheet(figs, size=520):
-    """Kopf von vorn, schräg und im Profil (Kinn, Kiefer, Ohren), Frau oben, Mann unten."""
-    scene = bpy.context.scene
-    old = scene.render.resolution_x, scene.render.resolution_y
-    scene.render.resolution_x = scene.render.resolution_y = size
-    rows = []
+def wire_sheet(figs, size=520):
+    """Netz sichtbar (Drahtgitter über der Haut): Rumpf, Schulter, Hand und Kopf in T-Pose."""
     for fig in figs[:2]:
-        arm, body, _ = fig
+        arm, body, parts = fig[0], fig[1], fig[2]
         only_visible(figs, fig)
-        tiles = []
-        x0 = arm.location.x
-        z = body.chin + 0.17
-        for dx, dy in ((0.0, -1.0), (0.7, -0.7), (1.0, 0.0), (0.7, 0.7)):
+        arm.data.pose_position = "REST"
+        obj = parts[0]
+        wire = obj.modifiers.new("Wire", "WIREFRAME")
+        wire.thickness = 0.0012
+        wire.use_replace = False
+        wire.material_offset = 5
+        dark = principled("wire_dark", (0.15, 0.12, 0.12), ao=False)
+        obj.data.materials.append(dark)
+        x0 = Vector((arm.location.x, 0, 0))
+        sz = body.shoulder_z
+        wx = body.joints_arm["Left"]["wrist"]
+        cams = [((0.0, -1.2, 0.85), (0.0, 0, 0.8)), ((0.55, -0.45, sz + 0.05), (0.14, 0, sz)),
+                ((wx[0] + 0.05, -0.02, sz + 0.32), (wx[0] + 0.05, 0, sz)), ((wx[0] + 0.05, -0.05, sz - 0.32), (wx[0] + 0.05, 0, sz)),
+                ((0.45, -0.75, body.chin + 0.2), (0, 0, body.chin + 0.2)), ((0.3, -0.5, 0.2), (0.09, -0.03, 0.1))]
+        tiles = [shot(Vector(c) + x0, Vector(t) + x0, lens=50 if i == 0 else 60, size=size) for i, (c, t) in enumerate(cams)]
+        F.write_png(os.path.join(SHOT_DIR, f"wire_{body.gender}.png"),
+                    np.concatenate([np.concatenate(tiles[:3], 1), np.concatenate(tiles[3:], 1)], 0))
+        obj.modifiers.remove(wire)
+        obj.data.materials.pop()
+        arm.data.pose_position = "POSE"
+    only_visible(figs, None)
+
+
+def hands_sheet(figs, size=460):
+    """Hand in T-Pose von oben, unten, vorn und hängend von vorn und von der Seite."""
+    for fig in figs[:2]:
+        arm, body = fig[0], fig[1]
+        only_visible(figs, fig)
+        x0 = Vector((arm.location.x, 0, 0))
+        w = Vector(body.joints_arm["Left"]["wrist"]) + x0
+        c = w + Vector((0.06, 0.0, 0.0))
+        reset_pose(arm)
+        bpy.context.view_layer.update()
+        tiles = [shot(c + Vector((0.0, -0.02, 0.36)), c, lens=60, size=size),
+                 shot(c + Vector((0.0, -0.02, -0.36)), c, lens=60, size=size),
+                 shot(c + Vector((0.04, -0.36, 0.05)), c, lens=60, size=size)]
+        pose_relaxed(arm)
+        bpy.context.view_layer.update()
+        hand = arm.matrix_world @ arm.pose.bones["LeftHand"].head
+        tiles.append(shot(hand + Vector((0.05, -0.42, -0.02)), hand + Vector((0.0, 0, -0.05)), lens=60, size=size))
+        tiles.append(shot(hand + Vector((0.42, -0.05, -0.02)), hand + Vector((0.0, 0, -0.05)), lens=60, size=size))
+        tiles.append(shot(hand + Vector((0.30, 0.30, 0.0)), hand + Vector((0.0, 0, -0.05)), lens=60, size=size))
+        F.write_png(os.path.join(SHOT_DIR, f"hands_{body.gender}.png"),
+                    np.concatenate([np.concatenate(tiles[:3], 1), np.concatenate(tiles[3:], 1)], 0))
+    only_visible(figs, None)
+
+
+def gender_lineups(figs):
+    """Je Geschlecht ein Bild: Zeilen dünn/mittel/dick, Spalten klein/mittel/groß."""
+    for gender in ("female", "male"):
+        group = [f for f in figs if f[1].gender == gender]
+        if not group:
+            continue
+        cx = sum(f[0].location.x for f in group) / len(group)
+        for f in figs:
+            for o in f[2]:
+                o.hide_render = f[1].gender != gender
+        rows = []
+        for name in ("thin", "medium", "fat"):
+            set_shape(group, name)
             path = os.path.join(SHOT_DIR, "tile.png")
-            C.render(path, (x0 + dx * 1.9, dy * 1.9, z + 0.05), (x0, 0.0, z - 0.04), lens=70)
-            tiles.append(load_png(path))
-        rows.append(np.concatenate(tiles, 1))
-    F.write_png(os.path.join(SHOT_DIR, "heads.png"), np.concatenate(rows, 0))
-    for f in figs:
-        for o in f[2]:
-            o.hide_render = False
-    scene.render.resolution_x, scene.render.resolution_y = old
-
-
-def set_shape(figs, name):
-    for arm, _body, parts in figs:
-        for o in parts:
-            for kb in o.data.shape_keys.key_blocks[1:]:
-                kb.value = 1.0 if kb.name == name else 0.0
-        if arm.pose is not None and arm.pose.bones["LeftUpperArm"].rotation_quaternion.angle > 0.01:
-            pose_relaxed(arm, RELAX_ANGLE - (FAT_RELAX_LESS if name == "fat" else 0.0))
+            C.render(path, (cx, -4.4, 0.95), (cx, 0, 0.86), lens=50)
+            rows.append(load_png(path))
+        set_shape(group, "medium")
+        only_visible(figs, None)
+        F.write_png(os.path.join(SHOT_DIR, f"lineup_{gender}.png"), np.concatenate(rows, 0))
 
 
 def shapes_sheet(figs, cx):
@@ -964,31 +724,132 @@ def shapes_sheet(figs, cx):
     F.write_png(os.path.join(SHOT_DIR, "shapes.png"), np.concatenate(rows, 0))
 
 
-def faces_sheet(figs, size=520):
-    """Alle Ausdrücke auf dem Kopf (Frau oben, Mann unten) als ein Bild."""
-    scene = bpy.context.scene
-    old = scene.render.resolution_x, scene.render.resolution_y
-    scene.render.resolution_x = scene.render.resolution_y = size
-    rows = []
-    for arm, body, parts in figs[:2]:
-        gender = body.gender
-        name = f"face_{gender}_{body.height_class}"
-        tiles = []
-        for e in F.EXPRESSIONS:
-            face_image(name, e, gender)
-            z = body.chin + 0.19
-            x0 = arm.location.x
-            path = os.path.join(SHOT_DIR, f"face_{gender}_{e}.png")
-            C.render(path, (x0 + 0.28, -1.15, z + 0.06), (x0, 0, z), lens=85)
-            im = bpy.data.images.load(path)
-            px = np.array(im.pixels[:]).reshape(size, size, 4)
-            tiles.append(np.flipud(px))
-            bpy.data.images.remove(im)
-        face_image(name, "neutral", gender)
-        rows.append(np.concatenate([np.concatenate(tiles[:6], 1), np.concatenate(tiles[6:12], 1)], 0))
-    F.write_png(os.path.join(SHOT_DIR, "faces.png"), np.concatenate(rows, 0))
-    scene.render.resolution_x, scene.render.resolution_y = old
+def head_tiles(arm, body, items, size):
+    """Kopf-Nahaufnahmen; items = [(Ausdruck, Augenform)]."""
+    name = f"face_{body.gender}_{body.height_class}"
+    tiles = []
+    for e, shape in items:
+        face_image(name, e, body.gender, shape=shape)
+        z = body.chin + 0.2
+        tiles.append(shot((arm.location.x + 0.3, -1.3, z + 0.04), (arm.location.x, 0, z - 0.03), lens=85, size=size))
+    face_image(name, "neutral", body.gender)
+    return tiles
 
+
+def eyes_sheet(figs, size=360):
+    """Augenformen zur Auswahl: je Zeile eine Form (3 Frau, 3 Mann), Spalten = Ausdrücke."""
+    moods = ("neutral", "happy", "laugh", "surprised", "sad", "angry", "wink", "embarrassed")
+    for fig in figs[:2]:
+        arm, body = fig[0], fig[1]
+        only_visible(figs, fig)
+        rows = [np.concatenate(head_tiles(arm, body, [(m, shape) for m in moods], size), 1)
+                for shape in F.SHAPE_NAMES[body.gender]]
+        F.write_png(os.path.join(SHOT_DIR, f"eyes_{body.gender}.png"), np.concatenate(rows, 0))
+    only_visible(figs, None)
+
+
+def heads_sheet(figs, size=520):
+    """Kopf von vorn, schräg und im Profil (Kinn, Kiefer, Ohren), Frau oben, Mann unten."""
+    rows = []
+    for fig in figs[:2]:
+        arm, body = fig[0], fig[1]
+        only_visible(figs, fig)
+        x0 = arm.location.x
+        z = body.chin + 0.17
+        rows.append(np.concatenate([shot((x0 + dx * 1.9, dy * 1.9, z + 0.05), (x0, 0.0, z - 0.04), lens=70, size=size)
+                                    for dx, dy in ((0.0, -1.0), (0.7, -0.7), (1.0, 0.0), (0.7, 0.7))], 1))
+    F.write_png(os.path.join(SHOT_DIR, "heads.png"), np.concatenate(rows, 0))
+    only_visible(figs, None)
+
+
+def armpits_sheet(figs, size=360):
+    """Achseln aus der Nähe (Arme hängend): Zeilen = Figuren, Spalten = dünn/mittel/dick × vorn/schräg."""
+    rows = []
+    for fig in figs:
+        arm, body = fig[0], fig[1]
+        only_visible(figs, fig)
+        tiles = []
+        z = body.shoulder_z - 0.06
+        x0 = arm.location.x
+        for name in ("thin", "medium", "fat"):
+            set_shape([fig], name)
+            for cam in ((x0, -1.2, z + 0.05), (x0 + 0.75, -0.9, z + 0.1)):
+                tiles.append(shot(cam, (x0, 0, z), lens=60, size=size))
+        set_shape([fig], "medium")
+        rows.append(np.concatenate(tiles, 1))
+    F.write_png(os.path.join(SHOT_DIR, "armpits.png"), np.concatenate(rows, 0))
+    only_visible(figs, None)
+
+
+def collision_check(figs):
+    """Ragen die locker hängenden Arme in den Rumpf? (je Figur und Form, kleinster Abstand in mm)"""
+    dg = bpy.context.evaluated_depsgraph_get()
+    for fig in figs:
+        arm, body, parts = fig[0], fig[1], fig[2]
+        obj = parts[0]
+        groups = {g.index: g.name for g in obj.vertex_groups}
+        armw = np.zeros(len(obj.data.vertices))
+        for v in obj.data.vertices:
+            for g in v.groups:
+                if any(b in groups[g.group] for b in R.ARM_BONES):
+                    armw[v.index] += g.weight
+        idx = np.nonzero(armw > 0.95)[0]
+        line = []
+        for name in ("thin", "medium", "fat"):
+            set_shape([fig], name)
+            pose_relaxed(arm, RELAX_ANGLE - (FAT_RELAX_LESS if name == "fat" else 0.0))
+            dg.update()
+            ev = obj.evaluated_get(dg)
+            co = np.array([ev.data.vertices[i].co for i in idx])
+            other = S.Body(body.gender, body.height_class, name)
+            rest = S.Group("rest", [it for it in other.root.items if it[0] == "union" and not it[1].name.startswith("arm_")])
+            d = rest.eval_points(co)
+            hits = co[d < 0]
+            j = int(np.argmin(d))
+            where = f" bei z={co[j, 2]:.2f} x={co[j, 0]:.2f}" if len(hits) else ""
+            line.append(f"{name}: {d.min() * 1000:.0f} mm{where} ({len(hits)} Ecken)")
+        set_shape([fig], "medium")
+        pose_relaxed(arm)
+        print("ARME", body.gender, body.height_class, ", ".join(line))
+
+
+def joints_check(figs):
+    """Jedes Gelenk muss innen im Körper liegen (für Mixamo/Godot)."""
+    for fig in figs:
+        body = fig[1]
+        heads = [(n, h) for n, h, t, par in R.bones(body)]
+        d = body.root.eval_points(np.array([h for _, h in heads]))
+        outside = [(n, round(float(v) * 1000, 1)) for (n, _), v in zip(heads, d) if v > -0.002]
+        print("GELENKE", body.gender, body.height_class, len(heads), "Knochen,",
+              "alle innen" if not outside else f"außen/am Rand: {outside}")
+
+
+def underwear_check(figs):
+    """Keine bemalte Ecke (Unterwäsche) darf am Arm oder Schlüsselbein hängen."""
+    for fig in figs:
+        body, obj = fig[1], fig[2][0]
+        me = obj.data
+        layer = me.uv_layers["AO"]
+        li = np.zeros(len(me.loops), np.int32)
+        me.loops.foreach_get("vertex_index", li)
+        uv = np.zeros(len(li) * 2, np.float32)
+        layer.data.foreach_get("uv", uv)
+        d = np.full(len(me.vertices), 1.0)
+        d[li] = uv.reshape(-1, 2)[:, 1]
+        groups = {g.index: g.name for g in obj.vertex_groups}
+        moving = np.zeros(len(me.vertices))
+        for v in me.vertices:
+            for g in v.groups:
+                n = groups[g.group]
+                if any(b in n for b in R.ARM_BONES) or n.endswith("Shoulder"):
+                    moving[v.index] += g.weight
+        bad = int(((d < 0.0005) & (moving > 0.02)).sum())
+        print("WAESCHE", body.gender, body.height_class, "bemalte Ecken, die mit Arm/Schulter drehen:", bad)
+
+
+# ---------------------------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------------------------
 
 FACE_TEX_DIR = os.path.join(ROOT, "assets", "textures", "characters", "chibi_face")
 
@@ -996,7 +857,7 @@ FACE_TEX_DIR = os.path.join(ROOT, "assets", "textures", "characters", "chibi_fac
 def export_figure(gender, height):
     """Eine Figur bauen und als .glb (Godot), .fbx (Mixamo) und .blend (Quelle) schreiben."""
     C.reset()
-    arm, parts, body = build(gender, height)
+    arm, parts, body, offsets = build(gender, height)
     for im in bpy.data.images:
         if im.source == "GENERATED":
             im.pack()
@@ -1019,7 +880,7 @@ def export_figure(gender, height):
     export_mixamo(os.path.join(mixamo, name + ".fbx"), parts[0])
     os.makedirs(SOURCE_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SOURCE_DIR, name + ".blend"), compress=True)
-    print("geschrieben:", name, len(parts[0].data.polygons), "Flächen")
+    print("geschrieben:", name, len(parts[0].data.polygons), "Vierecke")
 
 
 def export_mixamo(path, body_obj):
@@ -1031,12 +892,6 @@ def export_mixamo(path, body_obj):
     bpy.context.scene.collection.objects.link(obj)
     if me.shape_keys:
         obj.shape_key_clear()
-    # keine vorgerechneten Normalen: Mixamo rechnet sie aus den Flächen (Licht passt zur Form)
-    if me.has_custom_normals:
-        me.free_normals_split()
-    me.use_auto_smooth = False
-    for poly in me.polygons:
-        poly.use_smooth = True
     while len(me.uv_layers) > 1:
         me.uv_layers.remove(me.uv_layers[-1])
     me.materials.clear()
@@ -1044,16 +899,14 @@ def export_mixamo(path, body_obj):
     # einseitig: Rückseiten ausblenden (beidseitig würde Mixamo die Lichtseite in den Schatten rechnen)
     mat.use_backface_culling = True
     me.materials.append(mat)
-    for poly in me.polygons:
-        poly.material_index = 0
+    me.polygons.foreach_set("material_index", np.zeros(len(me.polygons), np.int32))
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    # Vierecke wie bei üblichen Figuren und ordentliche, nicht überlappende Texturkoordinaten
-    # (die Gesichts-Abwicklung läuft am Scheitel in einem Punkt zusammen)
+    # ordentliche, nicht überlappende Texturkoordinaten (die Gesichts-Abwicklung läuft am Scheitel
+    # in einem Punkt zusammen)
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action="SELECT")
-    bpy.ops.mesh.tris_convert_to_quads()
     bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.003)
     bpy.ops.object.mode_set(mode="OBJECT")
     # Zahlen selbst in Zentimeter umrechnen (1,56 m -> 156) und die Szene auf Zentimeter stellen:
@@ -1089,97 +942,59 @@ def main():
             only = a.split("=", 1)[1].split(",")
         if a.startswith("--views="):
             views = a.split("=", 1)[1].split(",")
-        if a.startswith("--relax="):
-            global RELAX_ANGLE
-            RELAX_ANGLE = float(a.split("=", 1)[1])
-    do_render = "--render" in argv
     names = [(g, h) for g in ("female", "male") for h in ("small", "medium", "tall")]
     if only:
         names = [n for n in names if f"{n[0]}_{n[1]}" in only]
-    if not do_render:
+    if "--render" not in argv:
         export_face_textures()
         for g, h in names:
             export_figure(g, h)
         return
     C.reset()
-    if do_render:
-        C.setup_render(res=(1200, 900), samples=24)
-        # weiches Licht wie bei Vinyl-Figuren im Fotostudio
-        sun = bpy.data.objects["Sun"]
-        sun.data.angle = math.radians(25)
-        sun.data.energy = 2.4
-        bpy.context.scene.world.node_tree.nodes["Background"].inputs[1].default_value = 1.3
+    C.setup_render(res=(1200, 900), samples=24)
+    # weiches Licht wie bei Vinyl-Figuren im Fotostudio
+    sun = bpy.data.objects["Sun"]
+    sun.data.angle = math.radians(25)
+    sun.data.energy = 2.4
+    bpy.context.scene.world.node_tree.nodes["Background"].inputs[1].default_value = 1.3
     x = 0.0
     figs = []
     for g, h in names:
-        arm, parts, body = build(g, h)
+        arm, parts, body, offsets = build(g, h)
         arm.location.x = x
         pose_relaxed(arm)
-        figs.append((arm, body, parts))
+        figs.append((arm, body, parts, offsets))
         x += 0.8
-    if do_render:
-        os.makedirs(SHOT_DIR, exist_ok=True)
-        cx = (x - 0.8) / 2
-        bpy.context.view_layer.update()
-        for v in views:
-            path = os.path.join(SHOT_DIR, v + ".png")
-            arm, body, _ = figs[0]
-            x0 = arm.location.x
-            if v == "front":
-                C.render(path, (cx, -4.6, 0.95), (cx, 0, 0.82), lens=50)
-            elif v == "side":
-                C.render(path, (cx + 3.4, -3.2, 1.0), (cx, 0, 0.8), lens=50)
-            elif v == "back":
-                C.render(path, (cx - 2.0, 4.0, 1.2), (cx, 0, 0.8), lens=50)
-            elif v == "head":
-                z = body.chin + 0.2
-                C.render(path, (x0 + 0.45, -1.1, z + 0.08), (x0, 0, z), lens=60)
-            elif v == "heads":
-                heads_sheet(figs)
-            elif v == "headfront":
-                z = body.chin + 0.2
-                C.render(path, (x0, -1.3, z + 0.02), (x0, 0, z), lens=60)
-            elif v == "shapes":
-                shapes_sheet(figs, cx)
-            elif v == "fat":
-                set_shape(figs, "fat")
-                C.render(path, (x0, -3.0, 0.9), (x0, 0, 0.75), lens=50)
-                set_shape(figs, "medium")
-            elif v == "wrists":
-                wrists_sheet(figs)
-            elif v == "around":
-                around_sheet(figs)
-            elif v == "around_fat":
-                set_shape(figs, "fat")
-                around_sheet(figs, "_fat")
-                set_shape(figs, "medium")
-            elif v == "lineups":
-                gender_lineups(figs)
-            elif v == "compare":
-                compare_with_reference(figs)
-            elif v == "collide":
-                collision_check(figs)
-            elif v == "joints":
-                joints_check(figs)
-            elif v == "underwear":
-                underwear_check(figs)
-            elif v == "armpits":
-                armpits_sheet(figs)
-            elif v == "underarm":
-                underarm_sheet(figs)
-            elif v == "tpose":
-                tpose_sheet(figs)
-            elif v == "eyes":
-                eyes_sheet(figs)
-            elif v == "moods":
-                moods_sheet(figs)
-            elif v == "matrix":
-                matrix_sheet(figs)
-            elif v == "faces":
-                faces_sheet(figs)
-            elif v == "hand":
-                hand = arm.matrix_world @ arm.pose.bones["LeftHand"].head
-                C.render(path, tuple(hand + Vector((0.35, -0.4, 0.05))), tuple(hand + Vector((0, 0, -0.05))), lens=60)
+    os.makedirs(SHOT_DIR, exist_ok=True)
+    cx = (x - 0.8) / 2
+    bpy.context.view_layer.update()
+    arm0, body0 = figs[0][0], figs[0][1]
+    x0 = arm0.location.x
+    sheets = {"heads": heads_sheet, "wrists": hands_sheet, "hands": hands_sheet, "around": around_sheet,
+              "lineups": gender_lineups, "compare": compare_with_reference, "collide": collision_check,
+              "joints": joints_check, "underwear": underwear_check, "armpits": armpits_sheet, "tpose": tpose_sheet,
+              "eyes": eyes_sheet, "poses": poses_sheet, "wire": wire_sheet}
+    for v in views:
+        path = os.path.join(SHOT_DIR, v + ".png")
+        if v in sheets:
+            sheets[v](figs)
+        elif v == "front":
+            C.render(path, (cx, -4.6, 0.95), (cx, 0, 0.82), lens=50)
+        elif v == "side":
+            C.render(path, (cx + 3.4, -3.2, 1.0), (cx, 0, 0.8), lens=50)
+        elif v == "back":
+            C.render(path, (cx - 2.0, 4.0, 1.2), (cx, 0, 0.8), lens=50)
+        elif v == "head":
+            z = body0.chin + 0.2
+            C.render(path, (x0 + 0.45, -1.1, z + 0.08), (x0, 0, z), lens=60)
+        elif v == "shapes":
+            shapes_sheet(figs, cx)
+        elif v == "around_fat":
+            set_shape(figs, "fat")
+            around_sheet(figs, "_fat")
+            set_shape(figs, "medium")
+        else:
+            print("unbekannte Ansicht:", v)
 
 
 if __name__ == "__main__":
