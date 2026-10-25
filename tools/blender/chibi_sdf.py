@@ -554,12 +554,14 @@ class Body:
         side = "Left" if s > 0 else "Right"
         k = self.hand_k
         wx, wy, wz = wrist
-        # Handfläche: flaches, abgerundetes Brett; zum Handgelenk hin schmaler (Handballen)
+        # Handfläche: weiches Kissen (ringsum runde Kanten), Handrücken leicht gewölbt; zum Handgelenk
+        # hin schmaler (Handballen)
         palm_c = np.array((wx + s * 0.038 * k, wy, wz - 0.0015 * k))
-        palm = RoundBox("palm_" + side, palm_c, (0.025 * k, 0.0262 * k, 0.0048 * k), 0.0068 * k)
+        palm = RoundBox("palm_" + side, palm_c, (0.022 * k, 0.0222 * k, 0.0012 * k), 0.0104 * k)
+        back = Ellipsoid("back_" + side, palm_c + np.array((0.0, 0.0, 0.003 * k)), (0.030 * k, 0.029 * k, 0.0098 * k))
         heel = RoundCone("heel_" + side, (wx - s * 0.004, wy, wz), (wx + s * 0.024 * k, wy, wz - 0.001 * k),
                          wrist_r, 0.0118 * k)
-        palm_g = Group("palm_" + side, [("union", palm, 0.0), ("union", heel, 0.014)])
+        palm_g = Group("palm_" + side, [("union", palm, 0.0), ("union", back, 0.012), ("union", heel, 0.014)])
         info = {"k": k, "palm_c": palm_c, "half": (0.0330 * k, 0.0116 * k), "fingers": {}}
         r0, r1 = FINGER_RADIUS[0] * k, FINGER_RADIUS[1] * k
         names = ("Proximal", "Intermediate", "Distal")

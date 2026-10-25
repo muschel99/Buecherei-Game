@@ -28,6 +28,9 @@ GRID = 5   # Rumpfdeckel und Kopfseiten: 5x5 Felder
 WEB_X = 0.068   # Schwimmhaut zwischen den Fingern so weit vor dem Handgelenk (mal Handgröße)
 WEB_Z = 0.62    # und so hoch (Anteil der halben Handdicke)
 THUMB_BASE = 0.55  # Daumenansatz: so weit entlang des Mittelhandknochens (Anteil)
+# Ohr-Ringe: (Abstand nach außen, Größe) als Anteil der Ohr-Halbmaße; Boden der Mulde
+EAR_RINGS = ((0.25, 0.97), (0.90, 0.80), (1.00, 0.56), (0.80, 0.30))
+EAR_CUP = 0.74
 
 # Ringe als Punkte auf dem Rand des Quadrats [-1, 1]² (a, b): Reihenfolge = Reihenfolge der Ecken
 # Arm (a = y, b = z) und Hals (a = x, b = y): wie die 3x2-Öffnung im Rumpf
@@ -159,6 +162,12 @@ class Cage:
         if cap:
             self.quad(*inner)
         return inner
+
+    def ring_band(self, ring, pts, region):
+        """Neuer Ring (pts) mit einem Band aus Vierecken zum Ring ring."""
+        new = self.ring(pts, region)
+        self.band(ring, new)
+        return new
 
     @staticmethod
     def ring_on(part, center, d, across):
@@ -528,59 +537,69 @@ def _head(cg, body, info):
     def cell_center(cell):
         return np.mean([pos[c] for c in cell[2]], axis=0)
 
-    # Ohren: das Feld der Seite, das der Ohrmitte am nächsten liegt
+    # Ohren: 2x2 Felder der Seite um die Ohrmitte (ihr Rand = Ring aus 8 Ecken – runde Ohren)
+    def side_key(face, a, b):
+        return (n, a, b) if face == "left" else (0, a, b)
+
     ears = {}
     for s, face in ((1, "left"), (-1, "right")):
         ear_c, ear_n, ear_r = S.ear_frame(chin, s)
-        cand = [c for c in cells if c[0] == face]
-        best = min(cand, key=lambda c: np.linalg.norm(cell_center(c) - ear_c))
-        ears[face] = (best[1], ear_c, ear_n, ear_r)
+        blocks = [(a, b) for a in range(n - 1) for b in range(n - 1)]
+        a0, b0 = min(blocks, key=lambda ab: np.linalg.norm(pos[side_key(face, ab[0] + 1, ab[1] + 1)] - ear_c))
+        ring = [(a0, b0), (a0 + 1, b0), (a0 + 2, b0), (a0 + 2, b0 + 1), (a0 + 2, b0 + 2), (a0 + 1, b0 + 2),
+                (a0, b0 + 2), (a0, b0 + 1)]
+        ears[face] = ({(a0 + da, b0 + db) for da in (0, 1) for db in (0, 1)}, [side_key(face, a, b) for a, b in ring],
+                      side_key(face, a0 + 1, b0 + 1), ear_c, ear_n, ear_r)
     # Nase: das vordere Feld an der Nase
     nose_c, nose_r = S.nose_shape(chin)
     front = [c for c in cells if c[0] == "front"]
     nose_cell = min(front, key=lambda c: np.linalg.norm(cell_center(c) - nose_c))[1]
 
-    # Ecken der Ohrfelder an den Ohransatz rücken (ein Quadrat um die Ohrmitte)
-    for face, (ab, ear_c, ear_n, ear_r) in ears.items():
-        cell = [c for c in cells if c[0] == face and c[1] == ab][0]
+    # Rand der Ohrfelder als Ellipse um den Ohransatz legen (Winkel gleichmäßig, Reihenfolge bleibt)
+    ear_angles = {}
+    for face, (block, ring, mid_key, ear_c, ear_n, ear_r) in ears.items():
         u = np.cross(np.array((0.0, 0.0, 1.0)), ear_n)
         u /= np.linalg.norm(u)
         v = np.array((0.0, 0.0, 1.0))
-        mid = cell_center(cell)
-        for key in cell[2]:
-            d = pos[key] - mid
-            su, sv = np.sign(d @ u), np.sign(d @ v)
-            target = ear_c + u * su * 0.75 * ear_r[1] + v * sv * 0.75 * ear_r[2]
+        mid = pos[mid_key]
+        ang = np.unwrap([math.atan2((pos[key] - mid) @ v, (pos[key] - mid) @ u) for key in ring])
+        step = math.pi / 4 * (1 if ang[-1] > ang[0] else -1)
+        start = float(np.mean(ang - step * np.arange(8)))
+        ear_angles[face] = [start + step * i for i in range(8)]
+        for key, a in zip(ring, ear_angles[face]):
+            target = ear_c + u * math.cos(a) * 0.80 * ear_r[1] + v * math.sin(a) * 0.80 * ear_r[2]
             q, _ = S.raycast(P["head_shell"], center, [target - center], tmax=0.5)
             pos[key] = q[0]
 
     idx = {}
+    ear_mids = {e[2] for e in ears.values()}
     for key in keys:
-        if key in ((2, 3, 0), (3, 3, 0)):
-            continue   # in der Halsöffnung
+        if key in ((2, 3, 0), (3, 3, 0)) or key in ear_mids:
+            continue   # in der Halsöffnung bzw. mitten im Ohransatz
         idx[key] = cg.add(pos[key], "head")
     for face, ab, corners in cells:
         if face == "bottom" and ab in neck_cells:
             continue
-        if face in ears and ears[face][0] == ab:
+        if face in ears and ab in ears[face][0]:
             continue
         if face == "front" and ab == nose_cell:
             continue
         cg.quad(*[idx[c] for c in corners])
-    # Ohren: drei Ringe aus dem Feld nach außen – Rand der Scheibe, Vorderseite, Boden der Mulde –
-    # und ein Deckel in der Mulde
-    for face, (ab, ear_c, ear_n, ear_r) in ears.items():
-        cell = [c for c in cells if c[0] == face and c[1] == ab][0]
-        ring = [idx[c] for c in cell[2]]
+    # Ohren: Ringe aus 8 Ecken auf Ellipsen nach außen – Rand der Scheibe, Vorderkante, Rand der
+    # Mulde, in der Mulde – und ein Deckel aus 2x2 Feldern am Boden der Mulde
+    for face, (block, ring_keys, mid_key, ear_c, ear_n, ear_r) in ears.items():
+        ring = [idx[key] for key in ring_keys]
         u = np.cross(np.array((0.0, 0.0, 1.0)), ear_n)
         u /= np.linalg.norm(u)
-        mid = np.mean([cg.p[c] for c in ring], axis=0)
-        signs = [(np.sign((cg.p[c] - mid) @ u), np.sign(cg.p[c][2] - mid[2])) for c in ring]
-        for out, size in ((0.35, 0.92), (0.95, 0.68), (0.70, 0.32)):
-            pos = [ear_c + ear_n * out * ear_r[0] + u * su * size * ear_r[1] + np.array((0, 0, sv * size * ear_r[2]))
-                   for su, sv in signs]
-            ring = cg.inset(ring, pos, "head", cap=False)
-        cg.quad(*ring)
+        v = np.array((0.0, 0.0, 1.0))
+        for out, size in EAR_RINGS:
+            pts = [ear_c + ear_n * out * ear_r[0] + u * math.cos(a) * size * ear_r[1] + v * math.sin(a) * size * ear_r[2]
+                   for a in ear_angles[face]]
+            ring = cg.ring_band(ring, pts, "head")
+        mid = cg.add(ear_c + ear_n * EAR_CUP * ear_r[0], "head")
+        r = ring
+        for quad in ((r[0], r[1], mid, r[7]), (r[1], r[2], r[3], mid), (mid, r[3], r[4], r[5]), (r[7], mid, r[5], r[6])):
+            cg.quad(*quad)
     # Nase: kleines Feld auf der Nasenkuppe
     cell = [c for c in cells if c[0] == "front" and c[1] == nose_cell][0]
     corners = [idx[c] for c in cell[2]]

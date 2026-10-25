@@ -539,7 +539,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Vierecke: Rumpf 8 Ringe × 20 Ecken mit 5x5-Deckeln, Arm-/Bein-/Halsöffnungen; Arme/Beine/Hals
   10er-Ringe mit je einem Ring auf dem Gelenk; Hand 10er-Ringe 4-1-4-1, Finger/Daumen 4er-Ringe,
   Kanten zwischen Nachbarfingern vorn an der Schwimmhaut `WEB_X`/`WEB_Z`, Daumen direkt auf der
-  Handseite `THUMB_BASE`; Kopf Würfelkugel 5x5, Ohren 3 Ringe, Nase/Nabel eingesetzte Felder), zweimal
+  Handseite `THUMB_BASE`; Handfläche = weiches Kissen + gewölbter Handrücken; Kopf Würfelkugel 5x5, Ohren aus
+  2x2 Feldern mit Ringen aus 8 Ecken auf Ellipsen `EAR_RINGS` (4er-Ringe gaben Ecken), Nase/Nabel eingesetzte Felder), zweimal
   Catmull-Clark (`SUBDIVISIONS`), dann `fit_to_shape` (entlang der Normalen auf die Form,
   `project_along` mit Schritt- und Weitenbegrenzung, dann gleichmäßig verteilt). Normalen aus dem Netz
   (keine eigenen – die alten wichen bis 16° ab: fleckiges Licht). Käfig-Ecken tragen Bereiche
@@ -561,7 +562,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   sein Skelett ein). Beide in Zentimetern (Zahlen ×100, Szene `scale_length` 0.01) und ohne
   Lcl-Drehung/-Skalierung (sonst hält Mixamo die Figur für 1,5 cm groß): Netz per
   `bake_space_transform`, mit Skelett Zahlen schon "y oben" (Knochen per `EditBone.transform`).
-  Mixamo liest kein .glb.
+  Mixamo liest kein .glb. Fleckige, flackernde Stellen nur auf der beleuchteten Seite in Mixamos Vorschau
+  sind Schatten-Akne der Vorschau (Netz geprüft: geschlossen, Flächen außen, Normalen passend) – in Godot
+  nicht vorhanden (Gehprobe mit Sonnenschatten).
   **UV2:** x = Verschattung (AO; Vertex-Farben kommen beim Export durcheinander), y = Abstand
   zum Rand der **aufgemalten Unterwäsche** (`Body.underwear_distance`, negativ = Stoff; in Godot
   `1 - UV2.y`; Bandeau-Kante nach der Richtung um den Körper, nicht nach der Tiefe) – keine
