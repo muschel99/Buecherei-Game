@@ -152,7 +152,7 @@ def gable_house(M, C, name, x0, x1, z_face, h, wall, rnd, roof_mat="h_roof"):
     pitch = 48.0
     ridge = h + span * math.tan(math.radians(pitch))
     g = Body(name + " Giebel", M[wall], C["walls"], seed=rnd.randrange(999), vary=0.04)
-    g.slab([(0.0, h - 0.05), (W, h - 0.05), (W / 2, ridge - 0.14)], 0.3, fm @ Matrix.Translation((0, 0, -0.3)), dent=0.004)
+    g.slab([(0.0, h - 0.05), (W, h - 0.05), (W / 2, ridge - 0.14)], 0.3, fm @ Matrix.Translation((0, 0, -0.312)), dent=0.004)
     g.build()
     yb = -z_face
     frame = Matrix(((0, 1, 0, (x0 + x1) / 2), (-1, 0, 0, yb - 2.0 + 0.3), (0, 0, 1, 0), (0, 0, 0, 1)))
@@ -356,16 +356,29 @@ def stone_arch(M, C, name, x0, x1, z, depth, spring, top, rnd):
     # Umriss liegt in der Ebene x/z (Blender), Platte von y0 über die Tiefe der Gasse nach y1
     wall.slab(outline, abs(y1 - y0), Matrix(((1, 0, 0, 0), (0, 0, 1, min(y0, y1)), (0, 1, 0, 0), (0, 0, 0, 1))), dent=0.004)
     wall.build()
-    st = Body(name + " Bogensteine", M["stone"], C["walls"], seed=rnd.randrange(999), vary=0.1, bevel=0.012)
+    # Bogensteine: keilförmig, strahlenförmig ausgerichtet und durch die ganze Bogentiefe (vorn und hinten
+    # 2 cm vor der Mauer) – so ist auch die Unterseite des Bogens ordentlich aus Steinen
+    st = Body(name + " Bogensteine", M["stone"], C["walls"], seed=rnd.randrange(999), vary=0.08, bevel=0.012)
     n = 11
+    gap = 0.012                      # Fuge zwischen zwei Steinen (rad)
+    r_in = a - 0.02                  # innen 2 cm in die Öffnung: deckt die Laibung der Mauer ganz ab
+    depth_all = abs(y1 - y0) + 0.04
+    m = Matrix(((1, 0, 0, 0), (0, 0, 1, min(y0, y1) - 0.02), (0, 1, 0, 0), (0, 0, 0, 1)))
     for k in range(n):
-        t = math.pi * (k + 0.5) / n
         key = k == n // 2
-        rr = a + 0.16
-        for yy in (y0 + 0.02 * (1 if y1 > y0 else -1), y1 - 0.02 * (1 if y1 > y0 else -1)):
-            m = Matrix.Translation((cx - rr * math.cos(t), yy, spring + rr * math.sin(t))) @ Matrix.Rotation(-(t - math.pi / 2), 4, "Y")
-            st.box((0, 0, 0), (2 * rr * math.sin(math.pi / (2 * n)) * (1.15 if key else 0.92), 0.08, 0.36 if key else 0.3), step=1, dent=0.004,
-                   matrix=m)
+        t0 = math.pi * k / n + gap / 2
+        t1 = math.pi * (k + 1) / n - gap / 2
+        if key:
+            t0, t1 = t0 - 0.015, t1 + 0.015
+        r_out = a + (0.36 if key else 0.3)
+        arc = [t0 + (t1 - t0) * i / 3 for i in range(4)]
+        pts = [(cx - r_in * math.cos(t), spring + r_in * math.sin(t)) for t in arc] + \
+              [(cx - r_out * math.cos(t), spring + r_out * math.sin(t)) for t in reversed(arc)]
+        st.slab(pts, depth_all, m, dent=0.003)
+    # Kämpfersteine: auf ihnen setzt der Bogen auf (bündig mit den Bogensteinen)
+    for side in (-1, 1):
+        xk = cx + side * (a + 0.13)
+        st.box((xk, (y0 + y1) / 2, spring - 0.09), (0.32, depth_all, 0.18), step=1, dent=0.003)
     st.build()
 
 
@@ -376,8 +389,11 @@ def opposite_alley(M, C, rnd):
     z_end = L["opposite_end_z"] - L["opposite_back_depth"]
     h = 6.5
     spots = []
-    wins_l = back_wall(M, C, "Wand links", G(x0, z0), G(x0, z_end), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
-    wins_r = back_wall(M, C, "Wand rechts", G(x1, z_end), G(x1, z0), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
+    # Mauern beginnen genau an der Rückseite der Häuser (vorher 20 cm Überlappung mit den Seitenwänden der
+    # Häuser – dort schaute die Mauer fleckig durch den Putz)
+    zw = L["opposite_end_z"]
+    wins_l = back_wall(M, C, "Wand links", G(x0, zw), G(x0, z_end), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
+    wins_r = back_wall(M, C, "Wand rechts", G(x1, z_end), G(x1, zw), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
     for k, zz in enumerate((z0 - 2.5, z0 - 6.5, z0 - 10.0)):
         stone_arch(M, C, "Bogen %d" % (k + 1), x0, x1, zz, 0.6, 2.4 + 0.1 * k, h, rnd)
     # Ende: Wand mit Tür und Laterne
@@ -397,12 +413,12 @@ def opposite_alley(M, C, rnd):
         spots.append(("pot", (px, py, 0.0), (0.4, 0.4, 0.8), face))
         avoid.append((xw, zz, 0.6))
     # Efeu wächst wild an den Wänden: um Fenster herum, nicht unter die Bögen über der Gasse
-    length = z0 - z_end
-    arches = [(z0 - zz + 0.3, 2.2, 0.9, 4.0) for zz in (z0 - 2.5, z0 - 6.5, z0 - 10.0)]
-    for zz, xw, wins, left, p0, p1 in ((z0 - 3.5, x0, wins_l, True, G(x0, z0), G(x0, z_end)), (z0 - 4.6, x1, wins_r, False, G(x1, z_end), G(x1, z0))):
-        along = z0 - zz if left else zz - z_end
+    length = zw - z_end
+    arches = [(zw - zz + 0.3, 2.2, 0.9, 4.0) for zz in (z0 - 2.5, z0 - 6.5, z0 - 10.0)]
+    for zz, xw, wins, left, p0, p1 in ((z0 - 3.5, x0, wins_l, True, G(x0, zw), G(x0, z_end)), (z0 - 4.6, x1, wins_r, False, G(x1, z_end), G(x1, zw))):
+        along = zw - zz if left else zz - z_end
         blocks = arches if left else [(length - a, z, w, hh) for a, z, w, hh in arches]
-        pots = [(((z0 - az) if left else (az - z_end)) - 0.3, 0.0, ((z0 - az) if left else (az - z_end)) + 0.3, 0.9)
+        pots = [(((zw - az) if left else (az - z_end)) - 0.3, 0.0, ((zw - az) if left else (az - z_end)) + 0.3, 0.9)
                 for ax, az, d in avoid if abs(ax - xw) < 0.5]
         arch_holes = [(a - w / 2 - 0.1, z, a + w / 2 + 0.1, h) for a, z, w, hh in blocks]
         place = climber_place(wins, length, along, 1.0, 4.0, blocks + [((a0 + a1) / 2, 0.0, a1 - a0, 1.0) for a0, _, a1, _ in pots])

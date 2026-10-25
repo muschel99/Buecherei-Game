@@ -259,24 +259,32 @@ def surround(M, C, name, fm, w, h, rise, kind, seed=1):
             m = fm @ Matrix.Translation((r * math.sin(a), cy + r * math.cos(a), 0.03)) @ Matrix.Rotation(-a, 4, "Z")
             st.box((0, 0, 0), (2 * r * math.sin(half / n) * 0.93, 0.24 * rnd.uniform(0.96, 1.04), 0.06), step=1, dent=0.003, matrix=m)
     elif kind == "ashlar" and rise > 0:
-        # runde Fenster: Bogen aus wenigen großen Steinen, der der Rundung folgt, Schlussstein in der Mitte
+        # runde Fenster: ordentlicher Bogen aus gleich großen Keilsteinen, strahlenförmig, gleiche Fugen,
+        # Schlussstein nur wenig größer; die Kämpfersteine liegen bündig darunter
         hx, band = w / 2, 0.15
         big_r = (hx * hx + rise * rise) / (2 * rise)
         cy = hs + rise - big_r
         half = math.asin(min(1.0, hx / big_r))
-        n = 5 if w < 0.9 else 7
+        arc_len = 2 * half * (big_r + band / 2)
+        n = max(5, int(round(arc_len / 0.16)) | 1)       # ungerade Zahl: Schlussstein in der Mitte
+        gap = 0.012 / big_r
         for k in range(n):
-            a0 = -half + 2 * half * k / n + 0.006
-            a1 = -half + 2 * half * (k + 1) / n - 0.006
-            ro = big_r + band + (0.06 if k == n // 2 else rnd.uniform(-0.01, 0.01))
-            arc = [a0 + (a1 - a0) * t / 4 for t in range(5)]
+            a0 = -half + 2 * half * k / n + gap / 2
+            a1 = -half + 2 * half * (k + 1) / n - gap / 2
+            ro = big_r + band + (0.03 if k == n // 2 else 0.0)
+            arc = [a0 + (a1 - a0) * t / 3 for t in range(4)]
             pts = [(big_r * math.sin(x), cy + big_r * math.cos(x)) for x in arc] + \
                   [(ro * math.sin(x), cy + ro * math.cos(x)) for x in reversed(arc)]
-            th = 0.07 if k == n // 2 else 0.055
-            st.slab(pts, th, fm @ Matrix.Translation((0, 0, -0.005)), dent=0.002)
-        # Kämpfersteine, auf denen der Bogen aufsetzt
+            st.slab(pts, 0.05, fm @ Matrix.Translation((0, 0, 0.0)), dent=0.0015)
         for side in (-1, 1):
-            st.box((side * (hx + band / 2 - 0.01), hs - 0.07, 0.025), (band + 0.04, 0.14, 0.06), step=1, dent=0.003, matrix=fm)
+            # Kämpferstein: schließt lückenlos an den untersten Bogenstein an (Oberseite schräg wie dessen
+            # Fuge, außen ein kleiner waagerechter Absatz)
+            ox = (big_r + band) * math.sin(half) + 0.06
+            oy = cy + (big_r + band) * math.cos(half)
+            pts = [(hx, hs - 0.12), (ox, hs - 0.12), (ox, oy), (ox - 0.06, oy), (hx, hs)]
+            if side < 0:
+                pts = [(-x, y) for x, y in reversed(pts)]
+            st.slab(pts, 0.05, fm, dent=0.0015)
     elif kind == "ashlar":
         top = h + 0.02
         st.box((0, top + 0.1, 0.03), (w + 0.3, 0.2, 0.06), step=0.6, dent=0.004, matrix=fm)
@@ -501,7 +509,7 @@ class House:
         ops = []
         if st["roof"] == "front" and not st["fachwerk"]:
             g.slab([(0.0, top - 0.05), (self.W, top - 0.05), (self.W / 2, self.ridge_guess() - 0.14)], 0.32,
-                   T.wall_matrix(*self.front) @ Matrix.Translation((0, 0, -0.32)), dent=0.006)
+                   T.wall_matrix(*self.front) @ Matrix.Translation((0, 0, -0.332)), dent=0.006)
         front = g.build()
         door = self.door
         ops.append(cutter_for(T.wall_matrix(*self.front, self.fx(door["x"]), 0.0), door["w"], door["h"], door["rise"]))
@@ -521,7 +529,7 @@ class House:
             T.wall_run(u, *self.upper_front, self.zs[1], top, thick=0.3, step=0.5)
             if st["roof"] == "front":
                 u.slab([(0.0, top - 0.05), (self.W, top - 0.05), (self.W / 2, self.ridge_guess() - 0.14)], 0.3,
-                       T.wall_matrix(*self.upper_front) @ Matrix.Translation((0, 0, -0.3)), dent=0.006)
+                       T.wall_matrix(*self.upper_front) @ Matrix.Translation((0, 0, -0.312)), dent=0.006)
             up = u.build()
             cuts = [cutter_for(T.wall_matrix(*self.upper_front, self.fx(o["x"]), o["z"]), o["w"], o["h"], o["rise"]) for o in self.upper]
             gw = self.gable_window() if st["roof"] == "front" else None
@@ -540,12 +548,12 @@ class House:
             if st["roof"] == "side":
                 L = D - y0
                 body.slab([(0.0, top - 0.05), (L, top - 0.05), (L / 2, self.ridge_guess() - 0.14)], 0.32,
-                          T.wall_matrix(p0, p1) @ Matrix.Translation((0, 0, -0.32)), dent=0.006)
+                          T.wall_matrix(p0, p1) @ Matrix.Translation((0, 0, -0.332)), dent=0.006)
             self.side_walls[side] = (body.build(), p0, p1)
         T.wall_run(s, (hw, D), (-hw, D), 0.0, top, thick=0.32, step=0.8)
         if st["roof"] == "front":
             s.slab([(0.0, top - 0.05), (self.W, top - 0.05), (self.W / 2, self.ridge_guess() - 0.14)], 0.32,
-                   T.wall_matrix((hw, D), (-hw, D)) @ Matrix.Translation((0, 0, -0.32)), dent=0.006)
+                   T.wall_matrix((hw, D), (-hw, D)) @ Matrix.Translation((0, 0, -0.332)), dent=0.006)
         s.build()
 
     def ridge_guess(self):

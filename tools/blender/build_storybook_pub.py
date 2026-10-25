@@ -106,8 +106,9 @@ def walls(M, C):
     b.box((HW - 0.15, D / 2, E / 2), (0.3, D, E), step=0.4, dent=0.006)
     b.box((0, D - 0.15, E / 2), (W - 0.6, 0.3, E), step=0.5, dent=0.006)
     for sx in (-1, 1):
-        m = Matrix.Translation((sx * HW - (0.3 if sx > 0 else 0), 0, 0)) @ Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
-        b.slab([(0.0, E - 0.05), (D, E - 0.05), (RIDGE_Y, RIDGE + 0.04)], 0.3, m, dent=0.006)
+        # Giebel 12 mm hinter der Außenfläche der Wand (kein Flimmern im Überlappungsstreifen)
+        m = Matrix.Translation((sx * HW - (0.3 if sx > 0 else -0.012), 0, 0)) @ Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+        b.slab([(0.0, E - 0.05), (D, E - 0.05), (RIDGE_Y, RIDGE + 0.04)], 0.288, m, dent=0.006)
     b.build()
     # Ladenwand hinter der Front (zwischen Pilastern und Gaststube): unten bis zum Gesims
     b = Body("Mauer hinter dem Laden", M["pub_side"], C["walls"], seed=4, vary=0.03, bevel=0.008)

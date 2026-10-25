@@ -181,7 +181,7 @@ def body(M, C):
         T.wall_run(s, p0, p1, 0.0, MASON - 0.02, step=0.5, ext=(-JETTY, -JETTY))
         T.wall_run(s, p0, p1, MASON - 0.02, E, step=0.5)
         s.slab([(0.0, E - 0.03), (D + 2 * JETTY, E - 0.03), (D / 2 + JETTY, RIDGE - 0.3)], 0.3,
-               T.wall_matrix(p0, p1) @ Matrix.Translation((0, 0, -0.3)), dent=0.006)
+               T.wall_matrix(p0, p1) @ Matrix.Translation((0, 0, -0.312)), dent=0.006)
     s.build()
     rm = Body("Zimmer oben", M["in_dark"], C["inside"], seed=12, vary=0.04)
     rm.box((0, D / 2, MASON + BAND + 0.05), (W - 0.6, D, 0.1), step=0.8, dent=0.003)

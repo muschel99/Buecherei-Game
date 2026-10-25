@@ -60,8 +60,12 @@ def walls(M, C):
     # Front mit Giebeldreieck, Öffnungen: Ladenfront, zwei Fenster oben, Giebelfenster
     b = Body("Fassade (Putz)", M["plaster"], C["walls"], seed=1, vary=0.03)
     T.wall_run(b, *FRONT, 0.0, E, step=0.22)
-    b.slab([(0.0, E - 0.03), (W, E - 0.03), (W / 2, RIDGE - 0.12)], 0.3, T.wall_matrix(*FRONT) @ Matrix.Translation((0, 0, -0.3)), dent=0.006)
+    b.slab([(0.0, E - 0.03), (W, E - 0.03), (W / 2, RIDGE - 0.12)], 0.3, T.wall_matrix(*FRONT) @ Matrix.Translation((0, 0, -0.312)), dent=0.006)
     wall = b.build()
+    # schmales Giebelgesims über der Fuge zwischen Wand und Giebeldreieck
+    gb = Body("Giebelgesims", M["trim"], C["walls"], seed=9, vary=0.04, bevel=0.012)
+    gb.box((W / 2, E - 0.01, 0.03), (W + 0.03, 0.11, 0.07), step=0.4, dent=0.002, matrix=T.wall_matrix(*FRONT))
+    gb.build()
     ops = [(*FRONT, fx(0.0), 0.0, 2 * SHOP_X, HEAD, 0.0, 0.0)]
     for k, x in enumerate(UP_X):
         ops.append((*FRONT, fx(x), UP_Z0, UP_W, UP_H, T.RND.uniform(-1.2, 1.2), 0.0))
@@ -93,7 +97,7 @@ def walls(M, C):
     s = Body("Brandwände und Rückwand", M["plaster_side"], C["walls"], seed=2, vary=0.04, bevel=0.01)
     T.wall_run(s, (-HW, D), (-HW, 0.0), 0.0, E, step=0.5)
     T.wall_run(s, (HW, D), (-HW, D), 0.0, E, step=0.5)
-    s.slab([(0.0, E - 0.03), (W, E - 0.03), (W / 2, RIDGE - 0.12)], 0.3, T.wall_matrix((HW, D), (-HW, D)) @ Matrix.Translation((0, 0, -0.3)),
+    s.slab([(0.0, E - 0.03), (W, E - 0.03), (W / 2, RIDGE - 0.12)], 0.3, T.wall_matrix((HW, D), (-HW, D)) @ Matrix.Translation((0, 0, -0.312)),
            dent=0.006)
     s.build()
     return ops

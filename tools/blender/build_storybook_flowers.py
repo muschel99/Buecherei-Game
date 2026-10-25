@@ -75,7 +75,7 @@ def walls(M, C):
     T.wall_run(s, (HW, D), (-HW, D), 0.0, E, step=0.5)
     for p0, p1 in (((HW, 0.0), (HW, D)), ((-HW, D), (-HW, 0.0))):
         # Giebeldreieck in der Brandwand, knapp unter der Dachfläche
-        s.slab([(0.0, E - 0.03), (D, E - 0.03), (D / 2, RIDGE - 0.14)], 0.3, T.wall_matrix(p0, p1) @ Matrix.Translation((0, 0, -0.3)),
+        s.slab([(0.0, E - 0.03), (D, E - 0.03), (D / 2, RIDGE - 0.14)], 0.3, T.wall_matrix(p0, p1) @ Matrix.Translation((0, 0, -0.312)),
                dent=0.006)
     s.build()
     # Ecksteine (Sandstein, lang und kurz im Wechsel) an beiden Kanten
