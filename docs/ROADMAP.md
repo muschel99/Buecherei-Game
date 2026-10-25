@@ -986,7 +986,13 @@ Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi
       Mixamo-Dateien
 - [x] Gezeichnetes Gesicht mit Ausdrücken, Blickrichtung, Blinzeln und Sprechen (Shader +
       `ChibiCharacter`), Frauen mit Schmuckwimpern
-- [ ] Rückmeldung der Entwicklerin zu Körperform und Gesicht einarbeiten
+- [x] Körper neu gebaut (Rückmeldung der Entwicklerin: Licht wirkte kaputt, Brust unter den Armen
+      verformte sich, Hand verdreht, ungesunde Schultern): Netz nur aus Vierecken mit Ringen um die
+      Gelenke (Käfig `chibi_cage.py`, zweimal geglättet und auf die Form gelegt), Normalen aus dem Netz,
+      Arme/Beine ohne Beulen, flachere Schultern, neue Hand (Handfläche unten, Schwimmhaut, Daumen vorn),
+      neues Skelett mit breiten, weichen Gewichten (`chibi_rig.py`), Bewegungsprobe `--views=poses`;
+      dünn/dick verschieben die Gelenke in Godot (`ChibiShapeModifier`); Mixamo-Datei mit unserem
+      Skelett (Mixamo-Namen), dazu eine ohne Skelett als Ersatz
 - [ ] Mixamo-Animationen übertragen, dann Frisuren und Kleidung für die Chibi-Körper
 
 ## Etappe 6 – Wirtschaft und Tagesablauf

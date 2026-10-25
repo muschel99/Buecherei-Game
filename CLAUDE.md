@@ -531,38 +531,48 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   angewandten Formreglern (`<name>.glb`, JPEG-Texturen), Baukasten `kit_<körper>.glb` (Körper in
   Teilen `SEGMENTS`, Formregler bleiben, Teile mit Extra "covers"), Mixamo `mixamo/<name>.fbx`
   (nur Netze, .gdignore). Ansicht: `scenes/tools/character_lineup.tscn`.
-- **Chibi-Figuren (seit Etappe 5c, ersetzen später die Figuren aus 5b):**
-  `tools/blender/build_chibi.py` baut 6 Grundkörper (`chibi_sdf.Body`: Feld aus weichen
-  Grundformen → Surface Nets → Ausdünnen → `fix_folds`; Kopf für alle gleich, `HEAD_HEIGHT`;
-  Maße in `DIMS`, Formen `SHAPE_FACTORS`, Breite wächst mit der Größe `Body.ws`). Formregler
-  `thin`/`fat` = dieselben Ecken (Arme/Beine vorher um `ARM_SPREAD`/`LEG_SPREAD` verschoben,
-  `limb_shift`) auf die glatte Form ohne Nabel projiziert (+ Feinheiten). Gewichte aus den
-  Grundformen (`skin_weights`), Knochennamen = SkeletonProfileHumanoid, T-Pose (`ARM_REST` = 0; Achsel weich gewichtet `ARMPIT_BLEND`;
-  in Godot hängen die Arme ohne Animation um `relaxed_arms` 57° herunter – mehr berührt den Rumpf).
-  `--views=joints` prüft, dass alle Gelenke innen liegen (Bilder mit Knochen).
-  **Mixamo-FBX** (`export_mixamo`): nur das Netz, Zahlen ×100 in Zentimetern, Szene auf
-  Zentimeter (`scale_length` 0.01), `bake_space_transform` – in der Datei dann y = 0…156, Einheit 1,
-  keine Lcl-Drehung/-Skalierung (sonst hält Mixamo die Figur für 1,5 cm groß → schwarze
-  Schattenflecken); ohne vorgerechnete Normalen. Netz: `chibi_remesh.py` (isotropes Remeshing:
-  gleichmäßige, fast gleichseitige Dreiecke – lange dünne Dreiecke vom Ausdünnen machten in Mixamo
-  Schattenflecken und Knicke); Kantenlänge `REMESH_*`, feiner an dünnen Teilen, Gelenken und
-  Details (`bend_zones`: Nabel, Nase, Schritt).
-  Danach `repair_manifold` (Netz muss geschlossen sein: 0 Löcher, keine Kante mit >2 Flächen).
-  Hände: Handfläche + Ballen (RoundCone in Handgelenkbreite, keine Beule), jeder Finger nur mit
-  der Handfläche verschmolzen (getrennte Finger). Mixamo-FBX: Vierecke, eigene UVs (Smart UV),
-  Material mit Rückseiten-Ausblenden.
+- **Chibi-Figuren (seit Etappe 5c, Körper neu gebaut; ersetzen später die Figuren aus 5b):**
+  `tools/blender/build_chibi.py` baut 6 Grundkörper in drei Stufen: **Form** = Abstandsfeld
+  `chibi_sdf.Body` (Grundformen; Teile in einer Linie – Ober-/Unterarm, Schenkel, Fingerglieder –
+  hart vereinigt, sonst Beulen; Kopf für alle gleich, `HEAD_HEIGHT`; Maße `DIMS`, Formen
+  `SHAPE_FACTORS`, `Body.parts` = einzelne Teile). **Netz** = Käfig `chibi_cage.build` (nur
+  Vierecke: Rumpf 8 Ringe × 20 Ecken mit 5x5-Deckeln, Arm-/Bein-/Halsöffnungen; Arme/Beine/Hals
+  10er-Ringe mit je einem Ring auf dem Gelenk; Hand 10er-Ringe 4-1-4-1, Finger/Daumen 4er-Ringe,
+  Kanten zwischen Nachbarfingern vorn an der Schwimmhaut `WEB_X`/`WEB_Z`, Daumen direkt auf der
+  Handseite `THUMB_BASE`; Kopf Würfelkugel 5x5, Ohren 3 Ringe, Nase/Nabel eingesetzte Felder), zweimal
+  Catmull-Clark (`SUBDIVISIONS`), dann `fit_to_shape` (entlang der Normalen auf die Form,
+  `project_along` mit Schritt- und Weitenbegrenzung, dann gleichmäßig verteilt). Normalen aus dem Netz
+  (keine eigenen – die alten wichen bis 16° ab: fleckiges Licht). Käfig-Ecken tragen Bereiche
+  (`region_…`, beim Glätten weich verteilt). **Skelett + Gewichte** = `chibi_rig` (Namen =
+  SkeletonProfileHumanoid; Schulterlinie flach `DIMS["shoulder"]`, Schlüsselbein fast waagerecht;
+  breite Übergänge `*_BLEND`, Oberarm zieht am Ansatz nur Haut nah an der Armachse `ARM_RADIAL`,
+  danach `SMOOTH_ITERATIONS` Glätten). Formregler `thin`/`fat` = dasselbe Netz der anderen Form
+  **ohne** die Arm-/Bein-Verschiebung (`limb_offsets`): die macht in Godot `ChibiShapeModifier`
+  (SkeletonModifier3D, Werte als glTF-Extras `chibi_bone_offsets` am Skelett) – sonst knickt der
+  Ellbogen neben dem Gelenk. T-Pose: Arme waagerecht, Handflächen unten, Daumen vorn; in Godot
+  hängen die Arme ohne Animation um `relaxed_arms` 57° (Schlüsselbein `SHOULDER_SHARE` 6°, Ellbogen
+  `ELBOW_RELAX`). Prüfen: `--views=poses` (Bewegungsprobe mit hartem Licht: Arme runter/vor/hoch,
+  Ellbogen, Faust, Sitzen, Gehen), `wire` (Netz), `hands`, `collide` (hängende Arme ≥ 0 mm vom
+  Rumpf), `joints` (alle Gelenke innen), `underwear`, außerdem compare, around, lineups, heads,
+  armpits, tpose, eyes. Konsole: "Netz: 0 offene/mehrfache Kanten" muss bleiben.
+  **Mixamo-FBX** (`export_mixamo`): `mixamo/<name>.fbx` **mit unserem Skelett** (Knochen mit
+  Mixamo-Namen `mixamorig:…`, `mixamo_name`, Endknochen HeadTop_End/…4/Toe_End ohne Gewicht) –
+  Mixamo übernimmt es, kein Punkte-Setzen; `<name>_mesh_only.fbx` = nur das Netz (Ersatz, Mixamo setzt
+  sein Skelett ein). Beide in Zentimetern (Zahlen ×100, Szene `scale_length` 0.01) und ohne
+  Lcl-Drehung/-Skalierung (sonst hält Mixamo die Figur für 1,5 cm groß): Netz per
+  `bake_space_transform`, mit Skelett Zahlen schon "y oben" (Knochen per `EditBone.transform`).
+  Mixamo liest kein .glb.
   **UV2:** x = Verschattung (AO; Vertex-Farben kommen beim Export durcheinander), y = Abstand
   zum Rand der **aufgemalten Unterwäsche** (`Body.underwear_distance`, negativ = Stoff; in Godot
-  `1 - UV2.y`) – keine Stoff-Netze, damit später nichts unter enger Kleidung hervorschaut.
-  `--views=collide` prüft, dass hängende Arme den Rumpf nicht berühren (muss ≥ 0 mm sein).
+  `1 - UV2.y`; Bandeau-Kante nach der Richtung um den Körper, nicht nach der Tiefe) – keine
+  Stoff-Netze, damit später nichts unter enger Kleidung hervorschaut.
   Gesicht: Material „face“ mit Zylinder-UV; `chibi_face.py` zeichnet die Atlanten (Augen:
   12 Bilder × 6 Sätze = je Geschlecht 3 Augenformen `EYE_SHAPES`; Männer ohne Wimpern/Lidspitze,
   dezenter Glanz; 26 Ausdrücke `EXPRESSIONS` = `ChibiCharacter.MOODS`; Maße müssen zu
   `assets/shaders/chibi_face.gdshader` passen, auch `SET_IRIS`), Shader wählt die Mipmap-Stufe
   selbst (sonst Rauschen). Godot: `ChibiCharacter` (`scenes/characters/chibi_character.tscn`;
   Instanz-Werte für Farben und Gesicht, Enum `Mood` – „Expression“ ist in Godot schon belegt).
-  Ansicht `scenes/tools/chibi_lineup.tscn`; Prüfbilder `--views=compare,around,lineups,heads,
-  wrists,eyes,matrix` (nach `screenshots/blender/chibi/`).
+  Ansicht `scenes/tools/chibi_lineup.tscn`; Prüfbilder nach `screenshots/blender/chibi/`.
 - **Fahrzeuge (seit Etappe 5b):** `tools/blender/build_vehicles.py`: Karosserie `Body`
   (Querschnitte entlang z, Radkästen, weiche Normalen, Fenster/Lack je Fläche über
   `window_mats`), Teile auf der Haut über BVH (`hit`, `round_lamp`, `plate`). Lack = Rolle

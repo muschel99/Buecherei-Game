@@ -877,19 +877,49 @@ def export_figure(gender, height):
     gd = os.path.join(mixamo, ".gdignore")
     if not os.path.exists(gd):
         open(gd, "w").close()
-    export_mixamo(os.path.join(mixamo, name + ".fbx"), parts[0])
+    # mit unserem Skelett (zuerst hochladen) und, falls Mixamo es nicht nimmt, nur das Netz
+    export_mixamo(os.path.join(mixamo, name + ".fbx"), parts[0], arm)
+    export_mixamo(os.path.join(mixamo, name + "_mesh_only.fbx"), parts[0])
     os.makedirs(SOURCE_DIR, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SOURCE_DIR, name + ".blend"), compress=True)
     print("geschrieben:", name, len(parts[0].data.polygons), "Vierecke")
 
 
-def export_mixamo(path, body_obj):
-    """Für Mixamo: nur das Netz in T-Pose, ohne Formregler, eine Texturkoordinate, ein Material,
-    Maße direkt in Zentimetern (Mixamo beachtet den Maßstab-Faktor im FBX nicht – die Figur wäre
-    dort 1,5 cm groß und bekäme dunkle Schattenflecken)."""
-    me = body_obj.data.copy()
-    obj = bpy.data.objects.new("Body", me)
+# Knochennamen für Mixamo: so heißen die Knochen in Mixamos eigenem Skelett. Mit diesen Namen
+# erkennt Mixamo unser Skelett und setzt kein eigenes ein (kein Punkte-Setzen nötig).
+MIXAMO_SPINE = {"Hips": "Hips", "Spine": "Spine", "Chest": "Spine1", "UpperChest": "Spine2", "Neck": "Neck",
+                "Head": "Head"}
+MIXAMO_LIMBS = {"Shoulder": "Shoulder", "UpperArm": "Arm", "LowerArm": "ForeArm", "Hand": "Hand",
+                "UpperLeg": "UpLeg", "LowerLeg": "Leg", "Foot": "Foot", "Toes": "ToeBase"}
+MIXAMO_FINGERS = {"Thumb": "Thumb", "Index": "Index", "Middle": "Middle", "Ring": "Ring", "Little": "Pinky"}
+
+
+def mixamo_name(bone):
+    """Godot-Humanoid-Name → Mixamo-Name (z. B. LeftUpperArm → mixamorig:LeftArm)."""
+    if bone in MIXAMO_SPINE:
+        return "mixamorig:" + MIXAMO_SPINE[bone]
+    for side in ("Left", "Right"):
+        if not bone.startswith(side):
+            continue
+        rest = bone[len(side):]
+        if rest in MIXAMO_LIMBS:
+            return f"mixamorig:{side}{MIXAMO_LIMBS[rest]}"
+        for finger, mixamo in MIXAMO_FINGERS.items():
+            if rest.startswith(finger):
+                segments = ("Metacarpal", "Proximal", "Distal") if finger == "Thumb" else ("Proximal", "Intermediate", "Distal")
+                return f"mixamorig:{side}Hand{mixamo}{segments.index(rest[len(finger):]) + 1}"
+    raise ValueError("kein Mixamo-Name für " + bone)
+
+
+def _mixamo_mesh(body_obj, name="Body"):
+    """Kopie des Körpers für Mixamo: ohne Formregler, eine Texturkoordinate, ein Material."""
+    obj = body_obj.copy()
+    obj.data = body_obj.data.copy()
+    obj.name = name
+    obj.modifiers.clear()
+    obj.parent = None
     bpy.context.scene.collection.objects.link(obj)
+    me = obj.data
     if me.shape_keys:
         obj.shape_key_clear()
     while len(me.uv_layers) > 1:
@@ -909,23 +939,96 @@ def export_mixamo(path, body_obj):
     bpy.ops.mesh.select_all(action="SELECT")
     bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.003)
     bpy.ops.object.mode_set(mode="OBJECT")
-    # Zahlen selbst in Zentimeter umrechnen (1,56 m -> 156) und die Szene auf Zentimeter stellen:
-    # nur so schreibt Blender "Einheit Zentimeter" ohne zusätzlichen Faktor 100 am Objekt
+    # Zahlen selbst in Zentimeter umrechnen (1,56 m -> 156)
     me.transform(Matrix.Scale(100.0, 4))
+    return obj
+
+
+def _mixamo_armature(arm, body_obj):
+    """Kopie des Skeletts mit Mixamo-Namen, Endknochen wie bei Mixamo und Maßen in Zentimetern."""
+    a = arm.copy()
+    a.data = arm.data.copy()
+    a.name = "Armature"
+    a.location = (0, 0, 0)
+    bpy.context.scene.collection.objects.link(a)
+    for g in body_obj.vertex_groups:
+        g.name = mixamo_name(g.name)
+    bpy.ops.object.select_all(action="DESELECT")
+    bpy.context.view_layer.objects.active = a
+    bpy.ops.object.mode_set(mode="EDIT")
+    eb = a.data.edit_bones
+    for b in list(eb):
+        b.name = mixamo_name(b.name)
+    # Endknochen (ohne Gewichte): Scheitel, Fingerspitzen, Zehenspitzen
+    ends = [("mixamorig:HeadTop_End", "mixamorig:Head", Vector((0, 0, 0.12)))]
+    for side in ("Left", "Right"):
+        for finger in MIXAMO_FINGERS.values():
+            parent = eb[f"mixamorig:{side}Hand{finger}3"]
+            ends.append((f"mixamorig:{side}Hand{finger}4", parent.name, (parent.tail - parent.head) * 0.6))
+        toe = eb[f"mixamorig:{side}ToeBase"]
+        ends.append((f"mixamorig:{side}Toe_End", toe.name, (toe.tail - toe.head) * 0.6))
+    for name, parent, d in ends:
+        p = eb[parent]
+        b = eb.new(name)
+        b.head = p.tail.copy()
+        b.tail = p.tail + d
+        b.roll = p.roll
+        b.parent = p
+        b.use_deform = False
+    # in Zentimeter und schon "y oben, z vorn" wie im FBX (das Skelett-Objekt dreht es in Blender
+    # zurück) – so schreibt Blender keine -90°-Drehung an die Knoten (wie bei der Datei ohne Skelett)
+    xf = Matrix.Rotation(math.radians(-90.0), 4, "X") @ Matrix.Scale(100.0, 4)
+    for b in eb:
+        b.transform(xf)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    a.rotation_euler = (math.radians(90.0), 0.0, 0.0)
+    return a
+
+
+def export_mixamo(path, body_obj, arm=None):
+    """Für Mixamo: T-Pose, Maße direkt in Zentimetern (Mixamo beachtet den Maßstab-Faktor im FBX
+    nicht – die Figur wäre dort 1,5 cm groß und bekäme dunkle Schattenflecken). Mit arm: samt
+    unserem Skelett und den Gewichten (Mixamo-Namen) – Mixamo übernimmt es, die Bewegungen laufen
+    dann schon in der Vorschau mit unseren Gelenken. Ohne arm: nur das Netz (Mixamo setzt sein
+    eigenes Skelett ein, Punkte setzen)."""
+    obj = _mixamo_mesh(body_obj)
+    selected = [obj]
+    if arm is not None:
+        a = _mixamo_armature(arm, obj)
+        obj.data.transform(Matrix.Rotation(math.radians(-90.0), 4, "X"))
+        obj.parent = a
+        m = obj.modifiers.new("Armature", "ARMATURE")
+        m.object = a
+        selected.append(a)
+    # Szene auf Zentimeter: nur so schreibt Blender "Einheit Zentimeter" ohne Faktor 100 am Objekt
     units = bpy.context.scene.unit_settings
     old_scale = units.scale_length
     units.scale_length = 0.01
     bpy.ops.object.select_all(action="DESELECT")
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"MESH"}, path_mode="STRIP",
-                             embed_textures=False, bake_anim=False, use_mesh_modifiers=False,
-                             mesh_smooth_type="FACE", apply_unit_scale=True, global_scale=1.0,
-                             apply_scale_options="FBX_SCALE_UNITS", bake_space_transform=True,
-                             axis_forward="-Z", axis_up="Y")
+    for o in selected:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = selected[-1]
+    if arm is None:
+        bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"MESH"}, path_mode="STRIP",
+                                 embed_textures=False, bake_anim=False, use_mesh_modifiers=False,
+                                 mesh_smooth_type="FACE", apply_unit_scale=True, global_scale=1.0,
+                                 apply_scale_options="FBX_SCALE_UNITS", bake_space_transform=True,
+                                 axis_forward="-Z", axis_up="Y")
+    else:
+        bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"MESH", "ARMATURE"},
+                                 path_mode="STRIP", embed_textures=False, bake_anim=False, use_mesh_modifiers=False,
+                                 mesh_smooth_type="FACE", apply_unit_scale=True, global_scale=1.0,
+                                 apply_scale_options="FBX_SCALE_UNITS", add_leaf_bones=False,
+                                 use_armature_deform_only=False, primary_bone_axis="Y", secondary_bone_axis="X",
+                                 axis_forward="-Z", axis_up="Y")
     units.scale_length = old_scale
-    bpy.data.objects.remove(obj)
-    bpy.data.meshes.remove(me)
+    for o in selected:
+        data = o.data
+        bpy.data.objects.remove(o)
+        if isinstance(data, bpy.types.Mesh):
+            bpy.data.meshes.remove(data)
+        else:
+            bpy.data.armatures.remove(data)
 
 
 def export_face_textures():

@@ -749,8 +749,14 @@ in `assets/models/templates/street_life/` (siehe „Vorlagen zum Modellieren“)
 Niedliche Grundkörper ("Mannequins") wie auf den Vorlagen: großer runder Kopf (bei allen gleich
 groß, 0,47 m), weicher Vinyl-Körper, Frauen mit Bandeau-Top und Slip, Männer mit Boxershorts –
 die Unterwäsche ist nur **aufgemalt** (Farbe einstellbar), damit unter enger Kleidung nichts
-hervorschaut. Noch ohne Haare und Kleidung. Gebaut mit `tools/blender/build_chibi.py` (Körper aus weichen
-Grundformen: `chibi_sdf.py`; gezeichnetes Gesicht: `chibi_face.py`).
+hervorschaut. Noch ohne Haare und Kleidung. Gebaut mit `tools/blender/build_chibi.py` (Form aus weichen
+Grundformen: `chibi_sdf.py`; Netz: `chibi_cage.py`; Skelett und Gewichte: `chibi_rig.py`; gezeichnetes
+Gesicht: `chibi_face.py`).
+- **Aufbau des Körpers (neu gebaut):** ein geschlossener Körper nur aus Vierecken (13.632) mit Ringen
+  um jedes Gelenk – Schultern, Ellbogen, Handgelenke, Fingergelenke, Hüfte, Knie, Knöchel –, wie bei
+  einer von Hand modellierten Spielfigur. Deshalb ist das Licht auf der Haut gleichmäßig, und beim
+  Bewegen biegt sich die Haut an den Gelenken, statt zu knicken. In Blender (`.blend`) siehst du das
+  Netz im Bearbeitungsmodus (**Tab**).
 - **Sechs Dateien:** `assets/models/characters/chibi/<gender>_<größe>.glb`
   (`female_small`, `female_medium`, `female_tall`, `male_small` …). Größen: Frauen 1,50 / 1,58 / 1,66 m,
   Männer 1,58 / 1,67 / 1,76 m (änderbar oben in `chibi_sdf.py`, `HEIGHTS`).
@@ -774,10 +780,18 @@ Grundformen: `chibi_sdf.py`; gezeichnetes Gesicht: `chibi_face.py`).
 - **Neu bauen:** `blender -b --factory-startup --python tools/blender/build_chibi.py`
   (Kontrollbilder: `-- --only=female_medium --render --views=around,faces,compare,shapes` →
   `screenshots/blender/chibi/`). Quellen: `assets/models/source/characters/chibi/*.blend`.
-- **Mixamo:** `assets/models/characters/chibi/mixamo/<name>.fbx` (T-Pose, Arme waagerecht, nur das
-  Netz – Mixamo setzt sein Skelett selbst ein). Ablauf wie unten bei „Animationen von Mixamo“;
-  hochladen am besten `female_medium.fbx`. Ohne Animation lassen die Figuren in Godot die Arme
-  locker hängen (Eigenschaft **Relaxed Arms**, 57°).
+- **Mixamo:** Mixamo liest **keine `.glb`** – hochladen nur die Dateien aus
+  `assets/models/characters/chibi/mixamo/`:
+  - `<name>.fbx` (z. B. `female_medium.fbx`): T-Pose **mit unserem Skelett** und allen Gewichten (die
+    Knochen heißen wie bei Mixamo, `mixamorig:Hips` …). Mixamo erkennt das Skelett und fragt nicht nach
+    Punkten; die Bewegungen laufen schon in der Vorschau mit unseren Schultern und Gelenken.
+  - `<name>_mesh_only.fbx`: nur der Körper, falls Mixamo das Skelett einmal nicht annimmt – dann setzt
+    Mixamo sein eigenes ein (Punkte für Kinn, Handgelenke, Ellbogen, Knie, Leiste setzen).
+  Ablauf wie unten bei „Animationen von Mixamo“. Ohne Animation lassen die Figuren in Godot die Arme
+  locker hängen (Eigenschaft **Relaxed Arms**, 57°, Ellbogen leicht gebeugt).
+- **Dünn und dick in Bewegung:** Bei dünnen und dicken Figuren rücken Arme und Beine samt Gelenken nach
+  innen bzw. außen. Das macht in Godot der Knoten **ShapeModifier** unter `Skeleton3D` (legt
+  ChibiCharacter selbst an) – auch während Animationen.
 
 ### Die Figuren (seit Etappe 5b)
 Sechs Figuren im Stil des Spiels (Kopf etwas größer, Frisuren aus dicken Strähnen):
@@ -802,10 +816,14 @@ Quaternius-Grundkörper (CC0, frei verwendbar) – sie liegen unverändert in
 
 ### Animationen von Mixamo (Bewegungen für die Figuren)
 Mixamo kann nur im Browser benutzt werden – das machst du, den Rest Claude:
-1. Auf mixamo.com anmelden und **Upload Character** wählen. Eine Figur aus
-   `assets/models/characters/mixamo/` hochladen (z. B. `mila.fbx`; T-Pose, nur das Netz).
-2. Der Auto-Rigger fragt nach Punkten: Kinn, Handgelenke, Ellbogen, Knie, Leiste – auf die
-   Figur ziehen, **Next**. Mixamo setzt das Skelett ein.
+1. Auf mixamo.com anmelden und **Upload Character** wählen. Eine Figur hochladen – immer die
+   **.fbx**, nie die .glb (die kann Mixamo nicht lesen):
+   - **Chibi-Figuren:** `assets/models/characters/chibi/mixamo/female_medium.fbx` (mit Skelett).
+     Mixamo zeigt die Figur gleich mit ihrem Skelett an, es gibt keine Punkte zu setzen – weiter mit
+     Schritt 3. Klappt das nicht, stattdessen `female_medium_mesh_only.fbx` hochladen und Schritt 2.
+   - Figuren aus Etappe 5b: `assets/models/characters/mixamo/` (z. B. `mila.fbx`; nur das Netz).
+2. Nur bei Dateien ohne Skelett: Der Auto-Rigger fragt nach Punkten: Kinn, Handgelenke, Ellbogen,
+   Knie, Leiste – auf die Figur ziehen, **Next**. Mixamo setzt das Skelett ein.
 3. Animationen suchen und je eine herunterladen (**Download**, Format **FBX Binary**, **Without
    Skin**, 30 fps). Gebraucht werden: Gehen (*Walking*), Stehen (*Idle*), Umschauen
    (*Looking Around*), Sitzen (*Sitting Idle*), gern auch Lesen, Winken, Ins-Schaufenster-Schauen.
