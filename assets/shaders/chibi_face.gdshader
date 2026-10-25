@@ -7,18 +7,18 @@ shader_type spatial;
 
 // --- Lage im Gesicht (m), wie chibi_face.py ---
 const float FACE_SIZE = 0.48;
-const vec2 EYE = vec2(0.089, 0.146);
+const vec2 EYE = vec2(0.103, 0.170);
 const float EYE_CELL = 0.085;
 const float EYE_CELL_PX = 192.0;
 const float IRIS_CELL = 0.05;
-const float EYE_SCALE = 2.05;
-const vec2 BROW = vec2(0.088, 0.232);
+const float EYE_SCALE = 2.30;
+const vec2 BROW = vec2(0.101, 0.264);
 const vec2 BROW_CELL = vec2(0.07, 0.035);
 const float BROW_SCALE = 1.5;
 const float MOUTH_Z = 0.068;
 const float MOUTH_CELL = 0.06;
 const float MOUTH_SCALE = 2.6;
-const vec2 BLUSH = vec2(0.112, 0.098);
+const vec2 BLUSH = vec2(0.127, 0.103);
 const vec2 BLUSH_R = vec2(0.034, 0.019);
 // Iris je Augen-Satz (Größe, Höhe): Frau süß/elegant/lebhaft, Mann sanft/cool/fröhlich
 const vec2 SET_IRIS[6] = vec2[6](vec2(1.20, -0.003), vec2(1.05, -0.002), vec2(1.17, -0.001),

@@ -20,17 +20,18 @@ import numpy as np
 FACE_SIZE = 0.48          # UV 0..1 entspricht 0,48 m
 FACE_RADIUS = 0.21        # Radius der Zylinder-Abwicklung (Kopfmitte)
 FACE_AXIS_Y = 0.0138      # Kopfachse (y) für die Abwicklung
-EYE_X, EYE_Z = 0.089, 0.146
+EYE_X, EYE_Z = 0.103, 0.170   # Augenmitte zwischen Ohrmitte und Ohr-Oberkante
 EYE_CELL = 0.085          # Größe eines Feldes im Atlas (Zeichnung in m)
 IRIS_CELL = 0.05
-EYE_SCALE = 2.05          # Augen im Gesicht so viel größer als gezeichnet
-BROW_X, BROW_Z = 0.088, 0.232
+EYE_SCALE = 2.30          # Augen im Gesicht so viel größer als gezeichnet (weiter oben ist der Kopf
+                          # breiter – darum mit der Höhe etwas größer und weiter auseinander)
+BROW_X, BROW_Z = 0.101, 0.264
 BROW_CELL = (0.07, 0.035)
 BROW_SCALE = 1.5
 MOUTH_Z = 0.068
 MOUTH_CELL = 0.06
 MOUTH_SCALE = 2.6
-BLUSH_X, BLUSH_Z = 0.112, 0.098
+BLUSH_X, BLUSH_Z = 0.127, 0.103
 BLUSH_R = (0.034, 0.019)
 
 CELL_PX = 256
