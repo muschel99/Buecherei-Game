@@ -575,7 +575,11 @@ class House:
     def plinth_and_quoins(self):
         M, C, st, hw, sb = self.M, self.C, self.st, self.hw, self.sb
         d = self.door
-        segs = [(-hw, d["x"] - d["w"] / 2 - 0.02), (d["x"] + d["w"] / 2 + 0.02, hw)]
+        # Lücke im Sockel: so breit wie die Tür samt Rahmen (Kassettentür: Pfosten 18 cm neben der Öffnung)
+        gap = d["w"] / 2 + (0.19 if st["door"] != "plank" else 0.02)
+        # Fachwerk mit Vorkragung: die Seitenwände stehen unten als Pfosten vor der Front – dort kein Sockel
+        post = 0.32 if st["fachwerk"] and self.jetty > 0 else 0.0
+        segs = [(-hw + post, d["x"] - gap), (d["x"] + gap, hw - post)]
         if self.near:
             # Sockel aus runden, unregelmäßigen Feldsteinen in zwei Reihen (jeder Stein ein Körper)
             p = Body("Sockelsteine", M["stone"], C["walls"], seed=8, vary=0.13, bevel=0.03)
@@ -615,16 +619,18 @@ class House:
         if st["quoins"] or exposed:
             q = Body("Ecksteine", M["stone"], C["walls"], seed=9, vary=0.1, bevel=0.014)
             ztop = self.zs[1] if st["fachwerk"] else self.E - 0.35
+            # die Hausecke liegt bei Fachwerk mit Vorkragung vorn am Pfosten (vor der Erdgeschosswand)
+            yc = sb - (self.jetty if post else 0.0)
             for side in (-1, 1):
                 if not st["quoins"] and side not in exposed:
                     continue
                 z, k = 0.5, 0
                 while z + 0.3 < ztop:
-                    wdt = 0.42 if k % 2 == 0 else 0.27
-                    q.box((side * (hw - wdt / 2 + 0.005), sb - 0.025, z + 0.14), (wdt, 0.06, 0.27), step=0.6, dent=0.004,
+                    wdt = (0.42 if k % 2 == 0 else 0.27) if not post else (0.3 if k % 2 == 0 else 0.2)
+                    q.box((side * (hw - wdt / 2 + 0.005), yc - 0.025, z + 0.14), (wdt, 0.06, 0.27), step=0.6, dent=0.004,
                           turn=(0, self.rnd.uniform(-1.2, 1.2), 0))
                     if side in exposed:
-                        q.box((side * (hw + 0.025), sb + wdt / 2 - 0.005, z + 0.14), (0.06, wdt, 0.27), step=0.6, dent=0.004)
+                        q.box((side * (hw + 0.025), yc + wdt / 2 - 0.005, z + 0.14), (0.06, wdt, 0.27), step=0.6, dent=0.004)
                     z += 0.3
                     k += 1
             q.build()
@@ -1033,7 +1039,8 @@ class House:
         for a, b in ((-hw, px - 0.55), (px + 0.55, hw)):
             if b - a > 0.2:
                 wl.box(((a + b) / 2, 0.15, 0.3), (b - a, 0.3, 0.6), step=0.5, dent=0.008)
-                wl.box(((a + b) / 2, 0.15, 0.63), (b - a + 0.04, 0.36, 0.08), step=0.5, dent=0.006)
+                ca, cb = max(-hw, a - 0.02), min(hw, b + 0.02)
+                wl.box(((ca + cb) / 2, 0.15, 0.63), (cb - ca, 0.36, 0.08), step=0.5, dent=0.006)
         for x in (px - 0.6, px + 0.6):
             wl.box((x, 0.15, 0.45), (0.3, 0.34, 0.9), step=0.5, dent=0.006)
             wl.lathe([(0.0, 0.0), (0.12, 0.0), (0.13, 0.05), (0.08, 0.12), (0.0, 0.15)], (x, 0.15, 0.9), segs=14)
