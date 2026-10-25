@@ -294,6 +294,8 @@ def build(body):
                 continue   # in den Beinöffnungen
             o = (inner_x[u], 0.010 + leg_y[w] * r_th, body.hip_z - 0.5)
             p, _ = S.raycast(P["torso"], o, [(0.0, 0.0, 1.0)], tmax=0.6)
+            # nie über dem Hüftring (bei schmalem Becken träfe der Strahl vorn erst den Bauch)
+            p[0][2] = min(p[0][2], zs[0] - 0.012)
             bot_grid[(u, w)] = cg.add(p[0], "torso")
     leg_cells = {(u, w) for u in (3, 4) for w in (1, 2, 3)} | {(u, w) for u in (0, 1) for w in (1, 2, 3)}
     for u in range(n):
@@ -479,10 +481,11 @@ def _leg(cg, body, s, side, port, info):
     # Fuß: Röhre aus 6er-Ringen nach vorn, vorn ein Deckel aus zwei Feldern
     fs = body.foot_scale
     port = [g5[0], g5[1], g5[2], g6[2], g6[1], g6[0]]
-    fdirs = round_dirs(FOOT_6, s * ex, ez)
     prev = port
-    for y in (-0.045, -0.085, -0.112):
-        c = np.array((ankle[0] + s * 0.005, y * fs, 0.036 * fs))
+    # flache Querschnitte (wie bei der Hand): Ecken zu den Seitenkanten, nicht oben in die Mitte
+    for y, z, half_h in ((-0.045, 0.032, 0.030), (-0.085, 0.024, 0.022), (-0.114, 0.020, 0.017)):
+        c = np.array((ankle[0] + s * 0.005, y * fs, z * fs))
+        fdirs = flat_dirs(FOOT_6, s * ex, ez, 0.050 * fs, half_h * fs)
         pts, _ = S.raycast(P["foot_" + side], c, fdirs, tmax=0.12)
         r = cg.ring(pts, "foot_" + side)
         cg.band(prev, r)
@@ -512,14 +515,18 @@ def _head(cg, body, info):
     dirs = np.tan(cube * math.pi / 4) * aspect
     pts, ok = S.raycast(P["head_shell"], center, dirs, tmax=0.5)
     pos = {key: pts[i] for i, key in enumerate(keys)}
-    # Halsöffnung unten am Kopf nur wenig größer als der Hals (sonst läuft der Hals als Trichter
-    # unter das Kinn und das Netz knickt in der Falte): Punkte von unten auf die Kopfunterseite
-    rn = 1.35 * body.neck_r
+    # Halsöffnung unten am Kopf genau dort, wo der Hals auf die Kopfunterseite trifft (weiter innen
+    # läge sie im Hals – bei dicken Figuren falteten sich Kopf- und Halsring dann ineinander; weiter
+    # außen liefe der Hals als Trichter unter das Kinn): von innen nach außen suchen, ab wo unter der
+    # Kopfunterseite kein Körper mehr ist
     neck_x = {1: -1.0, 2: -1 / 3, 3: 1 / 3, 4: 1.0}
     neck_y = {2: -1.0, 3: 0.0, 4: 1.0}
     for (i, j) in NECK_PORT:
-        o = (neck_x[i] * rn, 0.018 + neck_y[j] * rn, chin - 0.2)
-        q, hit = S.raycast(P["head_shell"], o, [(0.0, 0.0, 1.0)], tmax=0.5)
+        for rho in np.linspace(0.8, 2.6, 37) * body.neck_r:
+            o = (neck_x[i] * rho, 0.018 + neck_y[j] * rho, chin - 0.2)
+            q, hit = S.raycast(P["head_shell"], o, [(0.0, 0.0, 1.0)], tmax=0.5)
+            if hit[0] and body.root.eval_points(q - np.array((0.0, 0.0, 0.004)))[0] > 0.0:
+                break
         pos[(i, j, 0)] = q[0]
 
     # Felder der sechs Würfelseiten (Ecken in Reihenfolge um das Feld)

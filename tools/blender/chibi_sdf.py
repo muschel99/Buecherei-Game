@@ -374,30 +374,31 @@ def nose_shape(chin):
 DIMS = {
     "female": dict(
         crotch=0.493,          # Schritthöhe als Anteil der Kinnhöhe
-        shoulder=(0.142, 0.090),  # Schultergelenk: seitlich (x) und so tief unter dem Halsansatz
-        chest=(0.118, 0.104, 0.28), bust=(0.056, -0.072, 0.72, 0.050, 0.047, 0.045),
-        waist=(0.122, 0.090, 0.27), belly=(0.07, 0.060, 0.08), pelvis=(0.146, 0.104, 0.22),
-        butt=(0.072, 0.074, 0.080), neck=0.046,
-        arm=(0.044, 0.039, 0.022), upper_arm=0.20, fore_arm=0.165, hand=1.05,
-        hip_x=0.090, thigh=0.080, knee=0.057, calf=0.052, ankle=0.042, foot=1.0, thigh_top=0.94),
+        shoulder=(0.140, 0.084),  # Schultergelenk: seitlich (x) und so tief unter dem Halsansatz
+        chest=(0.110, 0.096, 0.28), bust=(0.054, -0.074, 0.72, 0.054, 0.052, 0.049),
+        waist=(0.104, 0.080, 0.27), belly=(0.064, 0.052, 0.08), pelvis=(0.132, 0.100, 0.22),
+        butt=(0.068, 0.080, 0.082), neck=0.044,
+        arm=(0.041, 0.036, 0.021), upper_arm=0.20, fore_arm=0.165, hand=1.05,
+        hip_x=0.090, thigh=0.078, knee=0.054, calf=0.045, ankle=0.040, foot=1.0, thigh_top=0.94),
     "male": dict(
         crotch=0.49,
-        shoulder=(0.156, 0.092),
-        chest=(0.124, 0.104, 0.30), bust=None,
-        waist=(0.143, 0.094, 0.25), belly=(0.08, 0.064, 0.09), pelvis=(0.102, 0.094, 0.21),
+        shoulder=(0.156, 0.086),
+        chest=(0.124, 0.100, 0.30), bust=None,
+        waist=(0.136, 0.088, 0.25), belly=(0.08, 0.064, 0.09), pelvis=(0.126, 0.094, 0.21),
         butt=(0.050, 0.054, 0.064), neck=0.050,
         arm=(0.047, 0.042, 0.024), upper_arm=0.21, fore_arm=0.175, hand=1.13,
-        hip_x=0.076, thigh=0.072, knee=0.054, calf=0.048, ankle=0.042, foot=1.08, thigh_top=0.80,
+        hip_x=0.076, thigh=0.072, knee=0.052, calf=0.043, ankle=0.041, foot=1.08, thigh_top=0.80,
         thigh_start=0.84,
-        # dick: Bauch weniger rund, Hüfte wächst mit (gerade Linie), Schultern schmaler
+        # Becken so breit wie die Taille: seitlich eine gerade Linie von der Taille zur Hüfte (keine
+        # Kerbe); dick: Bauch weniger rund, Hüfte wächst mit, Schultern schmaler
         shape_factors={"waist": (0.9, 1.16), "belly": (0.6, 1.40), "torso": (0.9, 1.14),
-                       "pelvis": (0.9, 1.34)},
+                       "pelvis": (0.9, 1.16)},
         arm_spread_fat=0.030),
 }
 # Faktoren je Form: (dünn, dick) für Rumpfbreite, Bauch, Arme, Beine, Hals, Po
 SHAPE_FACTORS = {
     "torso": (0.9, 1.22), "pelvis": (0.9, 1.13), "waist": (0.9, 1.34), "belly": (0.6, 2.1), "arm": (0.87, 1.26), "leg": (0.86, 1.2),
-    "neck": (0.93, 1.18), "butt": (0.88, 1.28), "bust": (0.88, 1.42),
+    "neck": (0.93, 1.12), "butt": (0.88, 1.28), "bust": (0.88, 1.42),
 }
 
 
@@ -438,7 +439,7 @@ class Body:
         sx, drop = D["shoulder"]
         self.shoulder_x = sx * ws + self.arm_spread
         self.shoulder_z = self.neck_base - drop * self.len_scale
-        self.arm_y = 0.012
+        self.arm_y = 0.022   # Schultergelenk etwas hinter der Körpermitte (Schultern zurück)
         self.upper_arm = D["upper_arm"] * self.len_scale
         self.fore_arm = D["fore_arm"] * self.len_scale
         fa = fac("arm")
@@ -472,23 +473,26 @@ class Body:
         px, py, pz = D["pelvis"]
         torso = [
             # Brustkorb etwas nach vorn: aufrechte Haltung mit geschwungenem Rücken
-            ("union", Ellipsoid("chest", (0, -0.010, cr + 0.70 * T), (cx * ft, cy * ft, cz * T)), 0.0),
-            # Taille hinten nach innen (Hohlkreuz)
-            ("union", Ellipsoid("waist", (0, -0.010, cr + 0.42 * T), (wx * fac("waist"), wy * fac("waist"), wz * T)), 0.10),
+            # (bei dick wächst der Brustkorb nach vorn weniger – sonst sitzt das Kinn auf der Brust)
+            ("union", Ellipsoid("chest", (0, -0.014, cr + 0.70 * T), (cx * ft, cy * ws * (ft / ws) ** 0.5, cz * T)), 0.0),
+            # Taille nach vorn gesetzt: hinten deutliches Hohlkreuz zwischen Brustkorb und Po
+            ("union", Ellipsoid("waist", (0, -0.020, cr + 0.42 * T), (wx * fac("waist"), wy * fac("waist"), wz * T)), 0.075),
             ("union", Ellipsoid("belly", (0, -0.022 - 0.022 * max(fb - 1, 0), cr + 0.34 * T - 0.01 * max(fb - 1, 0)),
                                 (bx * min(fb, 1.0) ** 0.5 * max(fb, 1) ** 0.6, by * fb, bz * max(fb, 1) ** 0.5)), 0.07),
-            ("union", Ellipsoid("pelvis", (0, 0.024, cr + 0.17 * T), (px * fac("pelvis"), py * ft, pz * T)), 0.09),
+            ("union", Ellipsoid("pelvis", (0, 0.028, cr + 0.17 * T), (px * fac("pelvis"), py * ft, pz * T)), 0.07),
         ]
         for s in (1, -1):
-            # Schulterblätter: leichter Rundrücken oben (über dem Hohlkreuz)
+            # Schulterblätter: nur angedeutet (ein stärkerer Rundrücken wirkte bucklig)
             torso.append(("union", Ellipsoid("blade_" + ("Left" if s > 0 else "Right"),
-                                             (s * 0.056 * self.ws, 0.064, cr + 0.79 * T), (0.060 * ft, 0.040 * ft, 0.085)), 0.06))
+                                             (s * 0.056 * self.ws, 0.054, cr + 0.79 * T), (0.055 * ft, 0.028 * ft, 0.070)), 0.05))
+        # oberer Rücken unter dem Nacken (Trapez): weicher Übergang vom Hals zu den Schulterblättern
+        torso.append(("union", Ellipsoid("upper_back", (0, 0.036, nb - 0.032), (0.075 * ft, 0.042 * ft, 0.045)), 0.05))
         r_up = self.r_arm[0]
         for s in (1, -1):
             side = "Left" if s > 0 else "Right"
             u = fac("butt")
             b = D["butt"]
-            torso.append(("union", Ellipsoid("butt_" + side, (s * 0.054 * self.ws, 0.068, cr + 0.065),
+            torso.append(("union", Ellipsoid("butt_" + side, (s * 0.054 * self.ws, 0.074, cr + 0.065),
                                              (b[0] * u, b[1] * u, b[2] * u)), 0.05))
             if D["bust"]:
                 bx_, by_, bz_, rx, ry, rz = D["bust"]
@@ -501,8 +505,8 @@ class Body:
             # (bei dicken Figuren weicher angesetzt: der breitere Brustkorb wächst nach vorn, sonst
             # entsteht oben auf der Brust eine Rinne)
             torso.append(("union", RoundCone("trap_" + side, (s * 0.012, 0.016, nb - 0.014),
-                                             (s * (sx - 0.010), self.arm_y, sz + 0.002), 0.034 * ft, r_up * 0.92),
-                          0.06 * max(ft / ws, 1.0) ** 3))
+                                             (s * (sx - 0.010), self.arm_y, sz + 0.008), 0.034 * ft, r_up * 0.95),
+                          0.06 * max(ft / ws, 1.0) ** 1.5))
         if not fem:
             # breite, flache Brust (keine Muskeln)
             torso.append(("union", Ellipsoid("chest_front", (0, -0.028, cr + 0.72 * T),
@@ -514,10 +518,11 @@ class Body:
         items = [("union", body, 0.0), ("union", neck, 0.04)]
         for s in (1, -1):
             items.append(("union", self._arm(s), 0.075))
+        # Beine und Kopf weich angesetzt (sonst Kerben vorn an der Hüfte und eine scharfe Falte unter dem Kinn)
         legs = Group("legs", [("union", self._leg(1), 0.0), ("union", self._leg(-1), 0.0)])
-        items.append(("union", legs, 0.05))
+        items.append(("union", legs, 0.07))
         head = head_group(self.chin)
-        items.append(("union", head, 0.025))
+        items.append(("union", head, 0.028))
         # Bauchnabel: kleine Mulde vorn
         nav_z = cr + 0.37 * T
         ny = surface_y(Group("body0", items), nav_z)
@@ -620,15 +625,16 @@ class Body:
                                 (r_ca * 0.97, r_ca * 1.02, (kz - az) * 0.45)), 0.05),
         ]
         foot = [
-            ("union", Ellipsoid("foot_" + side, (ax + s * 0.004, -0.022 * fs, 0.042 * fs), (0.052 * fs, 0.084 * fs, 0.044 * fs)), 0.0),
-            ("union", Ellipsoid("toes_" + side, (ax + s * 0.006, -0.070 * fs, 0.034 * fs), (0.053 * fs, 0.050 * fs, 0.034 * fs)), 0.03),
+            # Fuß: hinten an der Ferse höher, vorn zu den Zehen flach auslaufend
+            ("union", Ellipsoid("foot_" + side, (ax + s * 0.004, -0.012 * fs, 0.038 * fs), (0.052 * fs, 0.080 * fs, 0.038 * fs)), 0.0),
+            ("union", Ellipsoid("toes_" + side, (ax + s * 0.006, -0.074 * fs, 0.025 * fs), (0.053 * fs, 0.052 * fs, 0.025 * fs)), 0.03),
             ("intersect", Func("floor", lambda x, y, z: -z + 0 * x + 0 * y), 0.006),
         ]
         leg_g = Group("leg_" + side, leg)
         foot_g = Group("foot_" + side, foot)
         self.joints_leg[side] = {"hip": np.array((hx, 0.010, hz)), "knee": np.array((kx, 0.004, kz)),
-                                 "ankle": np.array((ax, 0.012, az)), "ball": np.array((ax + s * 0.004, -0.064 * fs, 0.03)),
-                                 "toe": np.array((ax + s * 0.006, -0.12 * fs, 0.03))}
+                                 "ankle": np.array((ax, 0.012, az)), "ball": np.array((ax + s * 0.004, -0.064 * fs, 0.024)),
+                                 "toe": np.array((ax + s * 0.006, -0.118 * fs, 0.020))}
         legfoot = Group("legfoot_" + side, [("union", leg_g, 0.0), ("union", foot_g, 0.035)])
         self.parts.update({"leg_" + side: leg_g, "foot_" + side: foot_g, "legfoot_" + side: legfoot})
         return legfoot
