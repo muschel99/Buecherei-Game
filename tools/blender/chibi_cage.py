@@ -222,8 +222,17 @@ def build(body):
     names = ["T0", "T1", "T2", "T3", "T3b", "T4", "T5", "T6"]
     torso_pts = {}
     dirs = np.array([((u - n / 2) / (n / 2), (w - n / 2) / (n / 2) * 0.85, 0.0) for u, w in sq])
+    # die obersten Ringe vorn und hinten tiefer als an den Seiten (Sattel über die Schulter): bei hohen
+    # Schultern bliebe dem Deckel sonst am Rücken kein Platz bis zum Hals und das Netz faltete sich
+    saddle = {"T5": -0.30, "T6": -0.65}
     for name, z in zip(names, zs):
-        pts, _ = S.raycast(P["torso"], (0.0, 0.005, z), dirs, tmax=0.4)
+        if name in saddle:
+            heights = np.array([z + saddle[name] * rp * (0.5 if u in (0, n) else 1.0)
+                                * (0.0 if u in (0, n) and 0 < w < n else 1.0) for u, w in sq])
+        else:
+            heights = np.full(len(sq), z)
+        origins = np.stack([np.zeros(len(sq)), np.full(len(sq), 0.005), heights], axis=1)
+        pts, _ = S.raycast(P["torso"], origins, dirs, tmax=0.4)
         torso_pts[name] = pts
     # Arm-Öffnung (3x2 Felder) seitlich auf T4..T6: ein Quadrat um den Armansatz
     x_port = sx - 0.030
@@ -269,10 +278,14 @@ def build(body):
         if u in neck_x and w in neck_y:
             inner_xy[(u, w)] = np.array((neck_x[u] * rn, yn + neck_y[w] * rn, 0.0))
     top_grid = {uw: top[i] for uw, i in sq_index.items()}
+    # nie unter dem obersten Ring (bei dicker Brust träfe der senkrechte Strahl vorn sonst die
+    # Brustwölbung tiefer unten und das Netz faltete sich)
+    z_floor = min(cg.p[i][2] for i in top) + 0.006
     for (u, w), q in inner_xy.items():
         if (u, w) in ((2, 3), (3, 3)):
             continue   # liegt in der Halsöffnung
         p, _ = S.raycast(P["torso"], (q[0], q[1], nb + 0.3), [(0.0, 0.0, -1.0)], tmax=0.6)
+        p[0][2] = max(p[0][2], z_floor)
         top_grid[(u, w)] = cg.add(p[0], "torso")
     neck_cells = {(u, w) for u in (1, 2, 3) for w in (2, 3)}
     for u in range(n):

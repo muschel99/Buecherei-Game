@@ -34,7 +34,7 @@ NOSE_Z = 0.114    # Nasenspitze über dem Kinn
 # Schultern breiter/schmaler (m): Bei dick/dünn rückt der ganze Arm samt Gelenken nach außen/innen
 # (in Godot verschiebt ChibiCharacter dafür die Oberarm-Knochen, die Formregler enthalten es nicht)
 ARM_SPREAD = {"thin": -0.006, "medium": 0.0, "fat": 0.054}
-LEG_SPREAD = {"thin": -0.003, "medium": 0.0, "fat": 0.014}    # Beine auseinander (Lücke im Schritt)
+LEG_SPREAD = {"thin": -0.003, "medium": 0.0, "fat": 0.020}    # Beine auseinander (Lücke im Schritt)
 FINGER_CURL = (4.0, 9.0, 14.0)  # Finger in der T-Pose leicht gekrümmt (Grad je Glied, locker statt steif)
 # Finger: Name, Versatz quer zur Hand (y, vorn = Zeigefinger), Länge, Spreizung (Grad)
 FINGERS = (("Index", -0.0255, 0.050, -6.0), ("Middle", -0.0085, 0.055, -2.0),
@@ -374,20 +374,20 @@ def nose_shape(chin):
 DIMS = {
     "female": dict(
         crotch=0.493,          # Schritthöhe als Anteil der Kinnhöhe
-        shoulder=(0.140, 0.084),  # Schultergelenk: seitlich (x) und so tief unter dem Halsansatz
-        chest=(0.110, 0.096, 0.28), bust=(0.054, -0.074, 0.72, 0.054, 0.052, 0.049),
-        waist=(0.104, 0.080, 0.27), belly=(0.064, 0.052, 0.08), pelvis=(0.118, 0.100, 0.22),
-        butt=(0.068, 0.080, 0.082), neck=0.044,
+        shoulder=(0.140, 0.070),  # Schultergelenk: seitlich (x) und so tief unter dem Halsansatz
+        chest=(0.110, 0.096, 0.28), bust=(0.052, -0.074, 0.70, 0.052, 0.050, 0.047),
+        waist=(0.104, 0.080, 0.27), belly=(0.064, 0.052, 0.08), pelvis=(0.118, 0.100, 0.20),
+        butt=(0.064, 0.068, 0.078), neck=0.044,
         arm=(0.041, 0.036, 0.021), upper_arm=0.20, fore_arm=0.165, hand=1.05,
-        hip_x=0.080, thigh=0.072, knee=0.052, calf=0.045, ankle=0.040, foot=1.0, thigh_top=0.80),
+        hip_x=0.084, thigh=0.070, knee=0.052, calf=0.045, ankle=0.040, foot=1.0, thigh_top=0.80),
     "male": dict(
         crotch=0.49,
-        shoulder=(0.156, 0.086),
+        shoulder=(0.156, 0.072),
         chest=(0.124, 0.100, 0.30), bust=None,
-        waist=(0.136, 0.088, 0.25), belly=(0.08, 0.064, 0.09), pelvis=(0.126, 0.094, 0.21),
+        waist=(0.136, 0.088, 0.25), belly=(0.08, 0.064, 0.09), pelvis=(0.126, 0.094, 0.19),
         butt=(0.050, 0.054, 0.064), neck=0.050,
         arm=(0.047, 0.042, 0.024), upper_arm=0.21, fore_arm=0.175, hand=1.13,
-        hip_x=0.076, thigh=0.072, knee=0.052, calf=0.043, ankle=0.041, foot=1.08, thigh_top=0.80,
+        hip_x=0.078, thigh=0.071, knee=0.052, calf=0.043, ankle=0.041, foot=1.08, thigh_top=0.80,
         thigh_start=0.84,
         # Becken so breit wie die Taille: seitlich eine gerade Linie von der Taille zur Hüfte (keine
         # Kerbe); dick: Bauch weniger rund, Hüfte wächst mit, Schultern schmaler
@@ -479,33 +479,33 @@ class Body:
             ("union", Ellipsoid("waist", (0, -0.020, cr + 0.42 * T), (wx * fac("waist"), wy * fac("waist"), wz * T)), 0.075),
             ("union", Ellipsoid("belly", (0, -0.022 - 0.022 * max(fb - 1, 0), cr + 0.34 * T - 0.01 * max(fb - 1, 0)),
                                 (bx * min(fb, 1.0) ** 0.5 * max(fb, 1) ** 0.6, by * fb, bz * max(fb, 1) ** 0.5)), 0.07),
-            ("union", Ellipsoid("pelvis", (0, 0.028, cr + 0.17 * T), (px * fac("pelvis"), py * ft, pz * T)), 0.07),
+            # Becken unten kürzer (sonst reicht es unter den Schritt und die Oberschenkel kleben zusammen)
+            ("union", Ellipsoid("pelvis", (0, 0.022, cr + 0.19 * T), (px * fac("pelvis"), py * ft, pz * T)), 0.07),
         ]
-        for s in (1, -1):
-            # Schulterblätter: nur angedeutet (ein stärkerer Rundrücken wirkte bucklig)
-            torso.append(("union", Ellipsoid("blade_" + ("Left" if s > 0 else "Right"),
-                                             (s * 0.056 * self.ws, 0.054, cr + 0.79 * T), (0.055 * ft, 0.028 * ft, 0.070)), 0.05))
-        # oberer Rücken unter dem Nacken (Trapez): weicher Übergang vom Hals zu den Schulterblättern
-        torso.append(("union", Ellipsoid("upper_back", (0, 0.036, nb - 0.032), (0.075 * ft, 0.042 * ft, 0.045)), 0.05))
+        sz, sx = self.shoulder_z, self.shoulder_x
         r_up = self.r_arm[0]
+        # obere Brust unter den Schlüsselbeinen bis zu den Schultern: füllt die Mulde zwischen Hals, Brust
+        # und Armansatz (glatter Übergang von der Schulter zum Brustkorb, die Brust sitzt nicht als Beule)
+        torso.append(("union", Ellipsoid("upper_chest", (0, -0.020, sz - 0.014),
+                                         (0.118 * ft, 0.060 * ws * (ft / ws) ** 0.5, 0.056)), 0.05))
+        # oberer Rücken: breit und glatt vom Nacken bis unter die Schulterblätter (früher einzelne
+        # Schulterblätter: Knick quer über den Rücken)
+        torso.append(("union", Ellipsoid("upper_back", (0, 0.028, sz - 0.020), (0.108 * ft, 0.050 * ft, 0.080)), 0.06))
         for s in (1, -1):
             side = "Left" if s > 0 else "Right"
             u = fac("butt")
             b = D["butt"]
-            torso.append(("union", Ellipsoid("butt_" + side, (s * 0.054 * self.ws, 0.074, cr + 0.065),
+            torso.append(("union", Ellipsoid("butt_" + side, (s * 0.054 * self.ws, 0.062, cr + 0.065),
                                              (b[0] * u, b[1] * u, b[2] * u)), 0.05))
             if D["bust"]:
                 bx_, by_, bz_, rx, ry, rz = D["bust"]
                 q = fac("bust")
                 torso.append(("union", Ellipsoid("breast_" + side, (s * bx_ * self.ws, by_ * q - 0.012, cr + bz_ * T - 0.02 * max(q - 1.0, 0.0)),
-                                                 (rx * q, ry * q, rz * q)), 0.06))
-            # Schulterlinie: vom Hals flach nach außen bis oben auf den Oberarm (runde Schulter,
-            # oben bündig mit dem Arm – keine Kugel, die über die Linie steht)
-            sz, sx = self.shoulder_z, self.shoulder_x
-            # (bei dicken Figuren weicher angesetzt: der breitere Brustkorb wächst nach vorn, sonst
-            # entsteht oben auf der Brust eine Rinne)
-            torso.append(("union", RoundCone("trap_" + side, (s * 0.012, 0.016, nb - 0.014),
-                                             (s * (sx - 0.010), self.arm_y, sz + 0.008), 0.034 * ft, r_up * 0.95),
+                                                 (rx * q, ry * q, rz * q)), 0.075))
+            # Schulterlinie: vom Hals fast waagerecht nach außen bis oben auf den Oberarm (runde Schulter,
+            # oben bündig mit dem Arm; bei dicken Figuren weicher angesetzt – sonst eine Rinne oben auf der Brust)
+            torso.append(("union", RoundCone("trap_" + side, (s * 0.030, 0.016, nb - 0.032),
+                                             (s * (sx - 0.008), self.arm_y, sz + 0.006), 0.030 * ft, r_up * 0.95),
                           0.06 * max(ft / ws, 1.0) ** 1.5))
         if not fem:
             # breite, flache Brust (keine Muskeln)
@@ -518,9 +518,10 @@ class Body:
         items = [("union", body, 0.0), ("union", neck, 0.04)]
         for s in (1, -1):
             items.append(("union", self._arm(s), 0.075))
-        # Beine und Kopf weich angesetzt (sonst Kerben vorn an der Hüfte und eine scharfe Falte unter dem Kinn)
+        # Beine mäßig weich angesetzt (zu weich: Oberschenkel kleben innen zusammen), Kopf weich (keine scharfe
+        # Falte unter dem Kinn)
         legs = Group("legs", [("union", self._leg(1), 0.0), ("union", self._leg(-1), 0.0)])
-        items.append(("union", legs, 0.07))
+        items.append(("union", legs, 0.045))
         head = head_group(self.chin)
         items.append(("union", head, 0.028))
         # Bauchnabel: kleine Mulde vorn
