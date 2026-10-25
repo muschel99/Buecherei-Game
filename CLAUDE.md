@@ -407,7 +407,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Fenster, Kästen, Läden, Tür, Laterne, Kübel (holes) und wächst wild – verschieden hoch, im Bogen um
   Fenster, unter Kästen hindurch, auf breiten Wandbändern seitlich (nie als Säule durch schmale Streifen),
   an freien Ecken herum (wrap); gebaut von `House.ivy` (nicht jedes Haus; Häuser mit Vorgarten und
-  Eckbeet immer), `alley_ivy` (Gassen), Torhaus (Glyzinie), Pub (`pub_ivy`: dicht um die Gassenecke, über
+  Eckbeet immer), `alley_ivy` (Gassen; Gasse gegenüber: Mauern beginnen 3 cm hinter den Häusern, ihr Dach erst hinter
+  deren Dachüberstand (`back_wall(roof_trim=, notch=)`), Sockelsteine `plinth_run` bis vorn an die
+  Straße; Bögen aus durchgehenden Keilsteinen), Torhaus (Glyzinie), Pub (`pub_ivy`: dicht um die Gassenecke, über
   Gesims und Schild), Blumenladen (`garland` = Rosengirlande um die Ladenfront, vor der Vorderkante des
   Schildkastens; Ranken hängen nur an den Schildenden). Eckbeet: `CORNERS` in build_storybook_street.py
   (Haus → Seite, wie weit das Nachbarhaus vorsteht) → `House.corner_bed` (Randsteine, Strauch, Beet

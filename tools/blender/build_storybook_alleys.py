@@ -67,7 +67,25 @@ def mats(M):
     M["cushion_b"] = mk("Kissen Salbei", (0.5, 0.58, 0.46), grain="fabric", rough=0.95, vary=0.04, bump=0.15)
 
 
-def back_wall(M, C, name, p0, p1, h, wall, rnd, kind="brick", windows=True, roof=True, pipe=True, roof_mat="h_roof"):
+def plinth_run(M, C, name, p0, p1, rnd, z_top=0.38, start=0.0):
+    """Sockel aus Feldsteinen in zwei versetzten Reihen vor einer Wand p0 → p1 (wie unter den Gassenwänden)."""
+    L = T.seg_len(p0, p1)
+    fm0 = T.wall_matrix(p0, p1)
+    st = Body(name, M["stone"], C["walls"], seed=rnd.randrange(999), vary=0.13, bevel=0.025)
+    zm = z_top * 0.53
+    for row, (z0, z1) in enumerate(((0.0, zm), (zm, z_top))):
+        x = start + (0.12 if row else 0.0)
+        while x < L - 0.06:
+            w = min(rnd.uniform(0.3, 0.5), L - x)
+            if w > 0.08:
+                st.box((x + w / 2, (z0 + z1) / 2, 0.035), (w - 0.022, z1 - z0 - 0.02, 0.12), step=1, dent=0.01,
+                       turn=(rnd.uniform(-1.5, 1.5), 0, rnd.uniform(-1.5, 1.5)), matrix=fm0)
+            x += w
+    st.build()
+
+
+def back_wall(M, C, name, p0, p1, h, wall, rnd, kind="brick", windows=True, roof=True, pipe=True, roof_mat="h_roof", roof_trim=(0.0, 0.0),
+              notch=None):
     """Rückwand eines Hauses p0 → p1 (Vorderseite rechts der Laufrichtung, in die Gasse): Fenster mit
     Rahmen, Vorhängen und warmem Raum dahinter, Feldsteinsockel, Traufe mit Dachansatz aus
     Ziegelreihen, Fallrohr. Liefert die Fenster (x, z0, w, h) entlang der Wand."""
@@ -84,8 +102,13 @@ def back_wall(M, C, name, p0, p1, h, wall, rnd, kind="brick", windows=True, roof
                     wins.append((x, z0, 0.8, 1.25))
             x += rnd.uniform(2.2, 3.1)
     rise = 0.1 if kind != "plaster" else 0.24
-    if wins:
-        SB.boolean_cut(wobj, [SH.cutter_for(T.wall_matrix(p0, p1, x, z0), w, hh, rise) for x, z0, w, hh in wins])
+    cuts = [SH.cutter_for(T.wall_matrix(p0, p1, x, z0), w, hh, rise) for x, z0, w, hh in wins]
+    if notch:
+        # Mauer oben ausgespart (a0 … a1 entlang der Mauer ab Höhe z): dort liegt der Dachüberstand des Nachbarhauses
+        a0, a1, zn = notch
+        cuts.append(SH.cutter_for(T.wall_matrix(p0, p1, (a0 + a1) / 2, zn), a1 - a0, h + 1.0 - zn, 0.0))
+    if cuts:
+        SB.boolean_cut(wobj, cuts)
     SC.add_bevel(wobj, 0.02)
     for k, (x, z0, w, hh) in enumerate(wins):
         fm = T.wall_matrix(p0, p1, x, z0, 0.0, rnd.uniform(-1, 1))
@@ -111,26 +134,28 @@ def back_wall(M, C, name, p0, p1, h, wall, rnd, kind="brick", windows=True, roof
             x += w
     st.build()
     if roof:
+        ra, rb = roof_trim[0], L - roof_trim[1]
+        rl, rc = rb - ra, (ra + rb) / 2
         tr = Body(name + " Traufe", M["h_join_dark"], C["roof"], seed=rnd.randrange(999), vary=0.05, bevel=0.01)
-        tr.box((L / 2, h - 0.03, 0.16), (L, 0.06, 0.32), step=0.6, dent=0.003, matrix=fm0)
-        tr.box((L / 2, h - 0.04, 0.31), (L, 0.2, 0.05), step=0.6, dent=0.003, matrix=fm0)
+        tr.box((rc, h - 0.03, 0.16), (rl, 0.06, 0.32), step=0.6, dent=0.003, matrix=fm0)
+        tr.box((rc, h - 0.04, 0.31), (rl, 0.2, 0.05), step=0.6, dent=0.003, matrix=fm0)
         tr.build()
         tiles = Body(name + " Dachansatz", M[roof_mat], C["roof"], seed=rnd.randrange(999), vary=0.0)
         rise_r, back_r = 2.0, 2.0
-        b0, b1 = fm0 @ Vector((0.0, h, 0.34)), fm0 @ Vector((L, h, 0.34))
-        t0, t1 = fm0 @ Vector((0.0, h + rise_r, -back_r)), fm0 @ Vector((L, h + rise_r, -back_r))
+        b0, b1 = fm0 @ Vector((ra, h, 0.34)), fm0 @ Vector((rb, h, 0.34))
+        t0, t1 = fm0 @ Vector((ra, h + rise_r, -back_r)), fm0 @ Vector((rb, h + rise_r, -back_r))
         frame = T.tile_rows(tiles, b0, b1, t0, t1, rnd, simple=False)
         tiles.build()
         slope = (t0 - b0).length
         core = Body(name + " Dachfläche", M[roof_mat], C["roof"], seed=rnd.randrange(999), vary=0.04)
-        core.box((0, 0, 0), (L, slope + 0.02, 0.16), step=0.6, dent=0.004, matrix=frame @ Matrix.Translation((L / 2, slope / 2, -0.09)))
+        core.box((0, 0, 0), (rl, slope + 0.02, 0.16), step=0.6, dent=0.004, matrix=frame @ Matrix.Translation((rl / 2, slope / 2, -0.09)))
         core.build()
         cap = Body(name + " First", M["h_roof_cap"], C["roof"], seed=rnd.randrange(999), vary=0.05)
-        cap.tube([fm0 @ Vector((0.0, h + rise_r + 0.04, -back_r)), fm0 @ Vector((L, h + rise_r + 0.04, -back_r))], 0.08, segs=10,
+        cap.tube([fm0 @ Vector((ra, h + rise_r + 0.04, -back_r)), fm0 @ Vector((rb, h + rise_r + 0.04, -back_r))], 0.08, segs=10,
                  round_ends=True)
         cap.build()
         g = Body(name + " Rinne", M["bronze"], C["roof"], seed=rnd.randrange(999))
-        g.tube([fm0 @ Vector((0.0, h - 0.02, 0.4)), fm0 @ Vector((L, h - 0.02, 0.4))], 0.05, segs=10, round_ends=True)
+        g.tube([fm0 @ Vector((ra, h - 0.02, 0.4)), fm0 @ Vector((rb, h - 0.02, 0.4))], 0.05, segs=10, round_ends=True)
         if pipe:
             free = [x for x in [0.4 + 0.1 * k for k in range(int((L - 0.8) / 0.1))] if all(abs(x - wx) > w / 2 + 0.3 for wx, _, w, _ in wins)]
             if free:
@@ -391,9 +416,16 @@ def opposite_alley(M, C, rnd):
     spots = []
     # Mauern beginnen genau an der Rückseite der Häuser (vorher 20 cm Überlappung mit den Seitenwänden der
     # Häuser – dort schaute die Mauer fleckig durch den Putz)
-    zw = L["opposite_end_z"]
-    wins_l = back_wall(M, C, "Wand links", G(x0, zw), G(x0, z_end), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
-    wins_r = back_wall(M, C, "Wand rechts", G(x1, z_end), G(x1, zw), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False)
+    # 3 cm Fuge zu den Häusern; das kleine Dach der Mauern beginnt erst hinter dem Dachüberstand der Häuser
+    zw = L["opposite_end_z"] - 0.03
+    wins_l = back_wall(M, C, "Wand links", G(x0, zw), G(x0, z_end), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False,
+                       roof_trim=(0.6, 0.0), notch=(-0.1, 0.45, 6.15))
+    wins_r = back_wall(M, C, "Wand rechts", G(x1, z_end), G(x1, zw), h, "sandstone", rnd, kind="ashlar", roof=True, pipe=False,
+                       roof_trim=(0.0, 0.6))
+    # Sockelsteine laufen an den Hauswänden bis vorn zur Straße durch
+    front = L["opposite_front_z"]
+    plinth_run(M, C, "Sockel Hauswand links", G(x0, front - 0.05), G(x0, zw), rnd)
+    plinth_run(M, C, "Sockel Hauswand rechts", G(x1, zw), G(x1, front - 0.05), rnd)
     for k, zz in enumerate((z0 - 2.5, z0 - 6.5, z0 - 10.0)):
         stone_arch(M, C, "Bogen %d" % (k + 1), x0, x1, zz, 0.6, 2.4 + 0.1 * k, h, rnd)
     # Ende: Wand mit Tür und Laterne
