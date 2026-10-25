@@ -262,7 +262,7 @@ def arched_window(M, C, name, fm, w, hs, rise):
         folds = RND.randint(4, 6)
         origin = fm @ Vector((x0, 0.02, back - 0.12))
         u = fm.to_3x3() @ Vector((cw, 0, 0))
-        v = fm.to_3x3() @ Vector((0, hs - 0.06, 0))
+        v = fm.to_3x3() @ Vector((0, hs + rise - 0.06, 0))   # bis in den Bogen
         c.sheet(origin, u, v, 16, 10, 0.008,
                 offset=lambda uu, vv, f_=folds: 0.025 * math.sin(uu * math.pi * f_) * (0.6 + 0.4 * vv))
     c.build()

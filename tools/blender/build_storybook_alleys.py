@@ -162,7 +162,7 @@ def gable_house(M, C, name, x0, x1, z_face, h, wall, rnd, roof_mat="h_roof"):
 
 def round_bench(M, C, x, z, rnd):
     """Runde Holzbank um den Baumstamm: Sitzring aus Latten (jede Latte ein Körper), Lehne aus
-    senkrechten Latten mit Ring obenauf, Beine, zwei Kissen; daneben ein Hocker mit Tasse und Buch."""
+    senkrechten Latten mit Ring obenauf, Beine; daneben ein Hocker mit Tasse und Buch."""
     cx, cy = G(x, z)
     r_in, r_out, seat = 0.42, 0.95, 0.45
     wd = Body("Bank Holz", M["h_join"], C["deco"], seed=301, vary=0.1, bevel=0.008)
@@ -190,11 +190,6 @@ def round_bench(M, C, x, z, rnd):
         for dy in (-0.12, 0.12):
             wd.box((sx + dx, sy + dy, 0.19), (0.04, 0.04, 0.38), step=1, dent=0.002)
     wd.build()
-    for k, (a, key) in enumerate(((-0.4, "cushion_a"), (-1.0, "cushion_b"))):
-        c = Body("Kissen %d" % (k + 1), M[key], C["deco"], seed=310 + k, vary=0.04)
-        px, py = cx + 0.66 * math.cos(a), cy + 0.66 * math.sin(a)
-        c.blob((px, py, seat + 0.18), 0.2, subdiv=2, lump=0.04, scale=(1.0, 0.36, 0.9))
-        c.build()
     cup = Body("Tasse", M["china"], C["deco"], seed=320)
     cup.lathe([(0.0, 0.0), (0.035, 0.0), (0.042, 0.08), (0.038, 0.085), (0.032, 0.012), (0.0, 0.012)], (sx - 0.08, sy, 0.42), segs=14)
     cup.build()

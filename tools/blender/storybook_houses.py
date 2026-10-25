@@ -197,7 +197,7 @@ def window(M, C, name, fm, w, h, rise, panes=(2, 3), curtains=True, seed=1, fram
             folds = rnd.randint(4, 6)
             origin = fm @ Vector((x0, 0.04, back - 0.11))
             u = fm.to_3x3() @ Vector((cw, 0, 0))
-            v = fm.to_3x3() @ Vector((0, hs - 0.1, 0))
+            v = fm.to_3x3() @ Vector((0, (h if rise > 0 else hs) - 0.08, 0))   # bis in den Bogen
             c.sheet(origin, u, v, 7, 3, 0.008, offset=lambda uu, vv, f_=folds: 0.022 * math.sin(uu * math.pi * f_) * (0.6 + 0.4 * vv))
         c.build()
 
@@ -326,6 +326,15 @@ def plank_door(M, C, name, fm, w, h, rise, seed=1):
         t1 = (arc_y(x1, hx, hs, rise, f - 0.006) if rise > 0 else h - f + 0.006)
         leaf.slab([(x0, lift), (x1, lift), (x1, t1), (x0, t0)], 0.05, fm @ Matrix.Translation((0, 0, dz - 0.025)), dent=0.002)
     leaf.build()
+    # Rückwand hinter den Brettern: durch die Fugen sieht man dunkles Holz statt ins Leere
+    back = Body(name + " Türrückwand", M["h_join_dark"], C["shop"], seed=seed + 4, vary=0.03)
+    ox = inner / 2
+    if rise > 0:
+        outline = [(-ox, lift), (ox, lift)] + SB.arc_points(hx, hs, rise, f - 0.006)
+    else:
+        outline = [(-ox, lift), (ox, lift), (ox, h - f + 0.006), (-ox, h - f + 0.006)]
+    back.slab(outline, 0.018, fm @ Matrix.Translation((0, 0, dz - 0.045)), dent=0.0)
+    back.build()
     ir = Body(name + " Beschläge", M["lamp_iron"], C["shop"], seed=seed + 2, vary=0.03, bevel=0.003)
     for yy in (0.42, hs - 0.38):
         ir.box((-0.04, yy, dz + 0.03), (inner - 0.14, 0.045, 0.012), step=1, dent=0.001, matrix=fm)
