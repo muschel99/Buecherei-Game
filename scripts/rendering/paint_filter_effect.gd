@@ -16,7 +16,7 @@ const CONTEXT := &"paint_filter"
 const SOURCE := &"source"
 
 ## Pinselgröße in Bildpunkten (bei 1080 Bildzeilen, wächst mit der Auflösung); 0 = keine Pinselflächen.
-@export var brush_radius := 3.0
+@export var brush_radius := 0.0
 @export var line_strength := 0.55
 @export var line_width := 1.0
 @export var line_color := Color(0.26, 0.17, 0.11)

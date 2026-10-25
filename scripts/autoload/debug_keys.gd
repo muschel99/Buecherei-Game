@@ -4,7 +4,8 @@ extends Node
 ## F9  (Aktion "debug_fill_return_box"): ein paar Bücher in den Rückgabekasten legen,
 ##      solange es noch keine Besucher gibt.
 ## F10 (Aktion "debug_add_money"): Testgeld (GameConfig.debug_money_amount) dazubekommen.
-## F8  (Aktion "debug_toggle_paint"): Malstil „Aquarell“ an/aus (zum Vergleichen; wie die Einstellung).
+## F4  (Aktion "debug_toggle_paint"): Malstil „Aquarell“ an/aus (zum Vergleichen; wie die Einstellung).
+##      Nicht F8: das ist in Godot „laufendes Spiel beenden“ (F7 = Pause, F5/F6 = Starten).
 ##
 ## Alle Testtasten auf einmal abschalten: in GameConfig debug_keys_enabled = false setzen.
 

@@ -33,7 +33,7 @@ const DEFINITIONS: Array[Dictionary] = [
 		"type": "choice", "options": ["30", "60", "120", "unbegrenzt"], "default": 1},
 	{"key": "graphics/quality", "section": "Grafik", "label": "Grafikqualität",
 		"type": "choice", "options": ["Niedrig", "Mittel", "Hoch"], "default": 1},
-	{"key": "graphics/paint_style", "section": "Grafik", "label": "Malstil (Testtaste F8)",
+	{"key": "graphics/paint_style", "section": "Grafik", "label": "Malstil (Testtaste F4)",
 		"type": "choice", "options": ["Normal", "Aquarell"], "default": 1},
 	{"key": "graphics/show_fps", "section": "Grafik", "label": "Bilder pro Sekunde anzeigen (F3)",
 		"type": "toggle", "default": false},

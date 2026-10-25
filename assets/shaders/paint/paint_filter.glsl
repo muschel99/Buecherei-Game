@@ -4,8 +4,8 @@
 // Malfilter „Aquarell“, Schritt 2 (Gezeichnet-Look, Wunsch der Entwicklerin): malt das fertige 3D-Bild
 // neu, bevor Godot Belichtung und Leuchten anwendet. Gestartet von scripts/rendering/paint_filter_effect.gd,
 // alle Werte kommen aus GameConfig (Abschnitt „Malfilter“).
-//   1. leichtes Zittern wie von Hand (alles ein wenig versetzt gelesen)
-//   2. Pinselflächen: verallgemeinerter Kuwahara-Filter – feine Details werden zu ruhigen Farbflecken
+//   1. leichtes Zittern wie von Hand – nur bei den Tuschelinien (die Farben bleiben scharf)
+//   2. Pinselflächen (wahlweise, Pinselgröße > 0): verallgemeinerter Kuwahara-Filter – macht das Bild weicher
 //   3. Farbränder dunkler (Pigment sammelt sich am Rand wie bei Aquarell)
 //   4. feine Tuschelinien an Kanten (aus Tiefe und Flächenrichtung), warmbraun, Strichdruck schwankt
 //   5. Papier: ungleichmäßig aufgetragene Farbe, Körnung (in dunklen Stellen stärker), Fasern
@@ -90,12 +90,12 @@ void main() {
 	vec2 px = vec2(ip) + 0.5;
 	vec2 suv = px / size.y;
 
-	// 1. Zittern wie von Hand
+	// 1. Zittern wie von Hand (nur für die Linien; Farben werden genau am Bildpunkt gelesen – scharf)
 	vec2 wob = (vec2(vnoise(suv * 9.0), vnoise(suv * 9.0 + 17.3)) - 0.5) * 2.0 * params.wobble * scale;
 	vec2 p = px + wob;
 
-	// 2. Pinselflächen: vier Viertel um den Punkt, das ruhigste (kleinste Streuung) zählt am meisten
-	vec4 center = source_at(p);
+	// 2. Pinselflächen (wahlweise): vier Viertel um den Punkt, das ruhigste (kleinste Streuung) zählt am meisten
+	vec4 center = source_at(px);
 	vec3 col = center.rgb;
 	int r = int(round(params.radius * scale));
 	if (r > 0) {
@@ -105,7 +105,7 @@ void main() {
 		float n[4] = float[](0.0, 0.0, 0.0, 0.0);
 		for (int y = -r; y <= r; y++) {
 			for (int x = -r; x <= r; x++) {
-				vec3 c = source_at(p + vec2(float(x), float(y))).rgb;
+				vec3 c = source_at(px + vec2(float(x), float(y))).rgb;
 				float l = tlum(c);
 				for (int k = 0; k < 4; k++) {
 					bool inx = (k % 2 == 0) ? x <= 0 : x >= 0;
@@ -133,8 +133,8 @@ void main() {
 
 	// 3. Farbränder dunkler (wie getrocknete Aquarellfarbe am Rand einer Fläche)
 	float e = 1.5 * scale;
-	float gx = tlum(source_at(p + vec2(e, 0.0)).rgb) - tlum(source_at(p - vec2(e, 0.0)).rgb);
-	float gy = tlum(source_at(p + vec2(0.0, e)).rgb) - tlum(source_at(p - vec2(0.0, e)).rgb);
+	float gx = tlum(source_at(px + vec2(e, 0.0)).rgb) - tlum(source_at(px - vec2(e, 0.0)).rgb);
+	float gy = tlum(source_at(px + vec2(0.0, e)).rgb) - tlum(source_at(px - vec2(0.0, e)).rgb);
 	col *= 1.0 - params.edge_dark * smoothstep(0.04, 0.3, length(vec2(gx, gy)));
 
 	// 4. Tuschelinien: Sprünge in der Tiefe (Umrisse) und Knicke in der Flächenrichtung
