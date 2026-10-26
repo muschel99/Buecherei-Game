@@ -100,12 +100,13 @@ func animate(speed: float, delta: float) -> void:
 	_roll = fmod(_roll + speed / WHEEL * delta, TAU)
 	for wheel in _wheels:
 		wheel.basis = Basis(Vector3.RIGHT, _roll)
+	# Kurbel dreht wie die Räder (oben nach vorn): das vordere Pedal geht nach unten
 	if _crank_node:
-		_crank_node.basis = Basis(Vector3.RIGHT, -_crank)
+		_crank_node.basis = Basis(Vector3.RIGHT, _crank)
 	for i in _legs.size():
 		var side := -1.0 if i == 0 else 1.0
 		var angle := _crank + (PI if i == 1 else 0.0)
-		var pedal := CRANK + Vector3(side * 0.12, sin(angle) * 0.17, cos(angle) * 0.17)
+		var pedal := CRANK + Vector3(side * 0.12, -sin(angle) * 0.17, cos(angle) * 0.17)
 		var hip := HIP + Vector3(side * 0.1, 0.0, 0.0)
 		# Knie: zwischen Hüfte und Pedal, nach vorn geknickt (zwei Glieder à 0,46 m)
 		var reach := hip.distance_to(pedal)
