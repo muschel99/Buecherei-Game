@@ -270,6 +270,8 @@ func _apply_outfit() -> void:
 			if piece_name == "Cloth_shoes":
 				mi.set_instance_shader_parameter("sole_color", GameConfig.chibi_sole_color)
 				mi.set_instance_shader_parameter("sole_height", GameConfig.chibi_sole_height)
+	if _body:
+		_body.set_instance_shader_parameter("lower_cloth_color", _lower_cloth_color())
 
 
 ## Knochen drehen (ab der Ruhelage): turns = [[Knochen, Achse, Grad], …] – Achsen wie die Figur in
@@ -379,6 +381,13 @@ func _apply_colors() -> void:
 		_body.set_instance_shader_parameter("iris_color", iris_color)
 		_body.set_instance_shader_parameter("brow_color", brow_color)
 		_body.set_instance_shader_parameter("cloth_color", cloth_color)
+		_body.set_instance_shader_parameter("lower_cloth_color", _lower_cloth_color())
+
+
+## Unterhose: unter dem Rock in Rockfarbe (etwas dunkler, wie ein Hosenrock) – beim Sitzen sieht
+## man so nur Stoff im Schatten.
+func _lower_cloth_color() -> Color:
+	return bottom_color.darkened(GameConfig.chibi_skort_darken) if bottom == Bottom.SKIRT else cloth_color
 
 
 func _apply_face() -> void:

@@ -209,7 +209,8 @@ def shell(P, faces, W, ao, cuts, offset, fields, shifts, smooth=10, floor=False)
     band_v = np.unique(band_f)
     inner_index = np.full(m, -1, np.int64)
     inner_index[band_v] = m + np.arange(len(band_v))
-    rim = np.stack([boundary[:, 0], boundary[:, 1], inner_index[boundary[:, 1]], inner_index[boundary[:, 0]]], axis=1)
+    # Saumrand: über die Randkante andersherum als die Außenfläche (zeigt so nach außen)
+    rim = np.stack([boundary[:, 1], boundary[:, 0], inner_index[boundary[:, 0]], inner_index[boundary[:, 1]]], axis=1)
     out_faces = np.concatenate([gf, inner_index[band_f][:, ::-1], rim])
     height = Pg["Basis"][:, 2]
     return {"P": {s: np.concatenate([outer[s], inner[s][band_v]]) for s in P}, "faces": out_faces,
@@ -272,12 +273,35 @@ def garment_specs(body):
 # ---------------------------------------------------------------------------------------------
 
 SKIRT_SEGMENTS = 56
-SKIRT_FLARE = 0.30     # so viel weiter je Meter nach unten (A-Linie)
+SKIRT_FLARE = 0.20     # so viel weiter je Meter nach unten (A-Linie; mehr: Hände schwingen hindurch)
+SKIRT_WEIGHT_SMOOTH = 4   # Glätten der vom Körper übernommenen Gewichte (rundum und nach unten)
 
 
-def skirt(bodies, names, limb_offsets):
+def _skin_weights_below(points, body_P, body_W, names, z_min, k=6):
+    """Anteil linkes und rechtes Bein an den Gewichten der nächsten Körper-Ecken (je Punkt)."""
+    idx = {n: i for i, n in enumerate(names)}
+    sel = np.where(body_P[:, 2] > z_min)[0]
+    bp = body_P[sel]
+    legs = {side: body_W[sel][:, [idx[n] for n in names if n.startswith(side) and
+                                  any(part in n for part in ("Leg", "Foot", "Toe"))]].sum(axis=1)
+            for side in ("Left", "Right")}
+    out = np.zeros((len(points), 2))
+    for i0 in range(0, len(points), 64):
+        p = points[i0:i0 + 64]
+        d = np.linalg.norm(p[:, None, :] - bp[None, :, :], axis=2)
+        nn = np.argpartition(d, k, axis=1)[:, :k]
+        dn = np.take_along_axis(d, nn, axis=1)
+        w = 1.0 / (dn + 1e-3) ** 2
+        w /= w.sum(axis=1, keepdims=True)
+        out[i0:i0 + 64, 0] = (w * legs["Left"][nn]).sum(axis=1)
+        out[i0:i0 + 64, 1] = (w * legs["Right"][nn]).sum(axis=1)
+    return out
+
+
+def skirt(bodies, names, limb_offsets, body_P, body_W):
     """Glockenrock: Ringe von der Taille bis über das Knie, außen um Rumpf und Beine gemessen.
-    bodies = {Form: Body}, limb_offsets = {Form: {Knochen: Verschiebung}} (wie beim Körper)."""
+    bodies = {Form: Body}, limb_offsets = {Form: {Knochen: Verschiebung}} (wie beim Körper),
+    body_P/body_W = Ecken und Gewichte des Körpers (mittlere Form)."""
     body = bodies["medium"]
     cr, T = body.crotch, body.T
     fem = body.gender == "female"
@@ -309,17 +333,34 @@ def skirt(bodies, names, limb_offsets):
             r_prev, z_prev = r, z
             pts.append(np.stack([r * np.cos(ang), axis_y + r * np.sin(ang), np.full_like(ang, z)], axis=1))
         out[shape] = np.concatenate(pts)
-    n_rows, n_seg = len(rows), SKIRT_SEGMENTS
+    n_seg = SKIRT_SEGMENTS
     # Gewichte: oben Becken, nach unten immer mehr die Oberschenkel (nach Seite)
     base = out["medium"]
     z = base[:, 2]
-    leg = 0.65 * smoothstep(z_wide + 0.02, z_hem, z)
-    left = smoothstep(-0.06, 0.06, base[:, 0])   # +x = linke Körperseite
+    # (unten fast ganz mit den Beinen – beim Sitzen und bei großen Schritten bleiben die
+    # Oberschenkel so unter dem Stoff; vorn und hinten in der Mitte je zur Hälfte)
+    leg = 0.95 * smoothstep(z_wide, z_hem, z)
+    rad = base[:, :2] - np.array((0.0, axis_y))
+    left = smoothstep(-0.4, 0.4, rad[:, 0] / np.maximum(np.linalg.norm(rad, axis=1), 1e-9))   # +x = links
+    # dazu mindestens so stark wie die Haut darunter (sonst stößt der Oberschenkel beim großen
+    # Schritt vorn durch den Stoff): Gewichte der nächsten Körper-Ecken, rundum und nach unten geglättet
+    skin = _skin_weights_below(base, body_P, body_W, names, body.knee_z + 0.03)
+    n_rows = len(rows)
+    grid = skin.reshape(n_rows, SKIRT_SEGMENTS, 2)
+    for _ in range(SKIRT_WEIGHT_SMOOTH):
+        ring = 0.5 * grid + 0.25 * (np.roll(grid, 1, axis=1) + np.roll(grid, -1, axis=1))
+        grid = ring.copy()
+        grid[1:-1] = 0.5 * ring[1:-1] + 0.25 * (ring[:-2] + ring[2:])
+    skin = grid.reshape(-1, 2)
+    wl = np.maximum(leg * left, skin[:, 0])
+    wr = np.maximum(leg * (1.0 - left), skin[:, 1])
+    total = np.maximum(wl + wr, 1.0)
+    wl, wr = wl / total, wr / total
     W = np.zeros((len(base), len(names)))
     idx = {n: i for i, n in enumerate(names)}
-    W[:, idx["Hips"]] = 1.0 - leg
-    W[:, idx["LeftUpperLeg"]] = leg * left
-    W[:, idx["RightUpperLeg"]] = leg * (1.0 - left)
+    W[:, idx["Hips"]] = 1.0 - wl - wr
+    W[:, idx["LeftUpperLeg"]] = wl
+    W[:, idx["RightUpperLeg"]] = wr
     # Formregler: Bein-Verschiebung herausrechnen (die machen in Godot die Knochen)
     keys = {"Basis": base}
     for shape in ("thin", "fat"):
@@ -329,20 +370,22 @@ def skirt(bodies, names, limb_offsets):
                 p -= W[:, idx[bone]][:, None] * np.asarray(d)[None, :]
         keys[shape] = p
     # Außen- und Innenseite, Saum unten, Bund oben
+    # Außenseite: Umlauf so, dass die Flächen nach außen zeigen (Ringe laufen nach unten,
+    # Segmente gegen den Uhrzeiger); Innenseite umgekehrt; Bund oben und Saum unten passend dazu
     faces = []
     for r in range(n_rows - 1):
         for s in range(n_seg):
             a = r * n_seg + s
             b = r * n_seg + (s + 1) % n_seg
-            faces.append((a, b, b + n_seg, a + n_seg))
+            faces.append((a, a + n_seg, b + n_seg, b))
     faces = np.array(faces, np.int64)
     m = len(base)
     rim = []
-    for r in (0, n_rows - 1):
-        for s in range(n_seg):
-            a = r * n_seg + s
-            b = r * n_seg + (s + 1) % n_seg
-            rim.append((a, b, b + m, a + m))
+    for s in range(n_seg):
+        a, b = s, (s + 1) % n_seg
+        rim.append((a, b, b + m, a + m))
+        a, b = (n_rows - 1) * n_seg + s, (n_rows - 1) * n_seg + (s + 1) % n_seg
+        rim.append((b, a, a + m, b + m))
     rim = np.array(rim, np.int64)
     P = {}
     for s, p in keys.items():

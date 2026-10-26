@@ -610,6 +610,8 @@ var chibi_shoe_colors: Array[Color] = [
 ## Sohle der Schuhe (bis zu dieser Höhe über dem Boden, m) in dieser Farbe.
 var chibi_sole_color: Color = Color(0.86, 0.82, 0.74)
 var chibi_sole_height: float = 0.012
+## Unter dem Rock: aufgemalte Hose in Rockfarbe, um so viel dunkler (0 = gleich, 1 = schwarz).
+var chibi_skort_darken: float = 0.25
 
 
 # --- Testtasten (nur zum Ausprobieren) ---

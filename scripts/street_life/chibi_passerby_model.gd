@@ -2,10 +2,13 @@
 class_name ChibiPasserbyModel
 extends ChibiCharacter
 ## Chibi-Figur als Passant (seit Etappe 5c): zufälliges Aussehen (randomize_look: Körper, Haut,
-## Augen, Frisur, Kleidung und Farben) und eine einfache eigene Bewegung (animate: Gehen, Stehen,
-## Umschauen, ins Schaufenster schauen, Sitzen) – bis die Mixamo-Animationen eingebaut sind.
-## Dieselbe Schnittstelle wie PasserbyPlaceholder (Passerby ruft randomize_look, animate,
-## set_shadows; sit_height = Höhe der Sitzfläche).
+## Augen, Frisur, Kleidung und Farben) und Bewegung (animate): die Mixamo-Animationen aus der Figur
+## (walk, idle, idle_2, sit_down, sit_idle, stand_up; übertragen von tools/blender/chibi_anim.py) –
+## Gehen im passenden Tempo, Stehen, Umschauen (Kopf dreht sich, ChibiHeadModifier), Schaufenster
+## (ruhiges Stehen, Blick leicht gesenkt), Hinsetzen, Sitzen, Aufstehen. Ohne Animationen in der
+## Figur: eine einfache eigene Bewegung. Dieselbe Schnittstelle wie PasserbyPlaceholder (Passerby
+## ruft randomize_look, animate, set_shadows; sit_height = Höhe der Sitzfläche; sit_front und
+## sit_time = Weg und Dauer des Hinsetzens, passend zur Animation).
 
 ## Meter je Doppelschritt bei 0,55 m Beinlänge (so passen die Schritte zum Tempo)
 const STRIDE := 0.95
@@ -17,8 +20,27 @@ const ARM_SWING := 16.0
 ## Beim Sitzen: so tief liegt die Sitzfläche unter dem Hüftgelenk (Dicke des Oberschenkels)
 const SIT_THIGH := 0.062
 
+## Überblenden zwischen zwei Animationen (Sekunden).
+const BLEND := 0.3
+## Animationen, die sich wiederholen.
+const LOOPS: Array[StringName] = [&"walk", &"idle", &"idle_2", &"sit_idle"]
+
 ## Höhe der Sitzfläche beim Sitzen (Meter; setzt Passerby).
 var sit_height := 0.45
+## Weg (m) und Dauer (s) des Hinsetzens laut Animation (0 = Passerby nimmt eigene Werte).
+var sit_front := 0.0
+var sit_time := 0.0
+
+var _player: AnimationPlayer
+var _head_modifier: ChibiHeadModifier
+## Tempo, bei dem die Füße der Geh-Animation genau passen; Höhe der Sitzfläche unter dem Po.
+var _walk_speed := 1.0
+var _sit_seat := 0.23
+var _prev_state: StringName = &""
+## Übergänge Hinsetzen/Aufstehen: welcher läuft gerade und seit wann
+var _transition: StringName = &""
+var _transition_t := 0.0
+var _seated := 0.0
 
 var _phase := 0.0
 var _swing := 0.0
@@ -59,6 +81,48 @@ func _pick(rng: RandomNumberGenerator, colors: Array[Color]) -> Color:
 	return colors[rng.randi_range(0, colors.size() - 1)] if not colors.is_empty() else Color.WHITE
 
 
+## Nach dem Laden der Figur: AnimationPlayer, Angaben zu den Animationen, Kopf-Drehung.
+func _rebuild() -> void:
+	super._rebuild()
+	_player = null
+	_head_modifier = null
+	sit_front = 0.0
+	sit_time = 0.0
+	if _model == null:
+		return
+	var players := _model.find_children("*", "AnimationPlayer", true, false)
+	if not players.is_empty() and (players[0] as AnimationPlayer).has_animation(&"walk"):
+		_player = players[0]
+		for anim_name in LOOPS:
+			if _player.has_animation(anim_name):
+				_player.get_animation(anim_name).loop_mode = Animation.LOOP_LINEAR
+		var extras: Dictionary = {}
+		for node in [_skeleton, _skeleton.get_parent() if _skeleton else null]:
+			if node and node.has_meta("extras"):
+				extras = node.get_meta("extras")
+		var info: Dictionary = extras.get("chibi_anim", {})
+		_walk_speed = float(info.get("walk_speed", 1.0))
+		_sit_seat = float(info.get("sit_seat", 0.23))
+		sit_front = float(info.get("sit_down_shift", 0.0))
+		sit_time = float(info.get("sit_down_time", 0.0))
+		_player.play(&"idle")
+	if _skeleton:
+		_head_modifier = ChibiHeadModifier.new()
+		_head_modifier.name = "HeadModifier"
+		_skeleton.add_child(_head_modifier)
+	_prev_state = &""
+	_transition = &""
+	_seated = 0.0
+	if not visibility_changed.is_connected(_on_visibility_changed):
+		visibility_changed.connect(_on_visibility_changed)
+
+
+## Unsichtbare Passanten (im Vorrat) rechnen keine Animation.
+func _on_visibility_changed() -> void:
+	if _player:
+		_player.active = is_visible_in_tree()
+
+
 ## Hüfthöhe und Beinlänge der Figur (für Schrittlänge und Sitzhaltung).
 func _measure() -> void:
 	if _skeleton == null:
@@ -81,6 +145,9 @@ func set_shadows(level: int) -> void:
 ## schauen) oder "sit" (sitzen), speed = Tempo in m/s.
 func animate(state: StringName, speed: float, delta: float) -> void:
 	if _skeleton == null or _model == null:
+		return
+	if _player:
+		_animate_clips(state, speed, delta)
 		return
 	_time += delta
 	_sit = move_toward(_sit, 1.0 if state == &"sit" else 0.0, delta / 0.8)
@@ -130,3 +197,63 @@ func animate(state: StringName, speed: float, delta: float) -> void:
 	var bob := absf(s) * 0.012 * _swing - 0.006 * _swing
 	var seated := sit_height - (_hip_height - SIT_THIGH)
 	_model.position.y = lerpf(bob, seated, sit)
+
+
+## Bewegung über die Animationen der Figur.
+func _animate_clips(state: StringName, speed: float, delta: float) -> void:
+	_time += delta
+	# Hinsetzen beginnt, wenn "sit" anfängt; Aufstehen, wenn "sit" endet – beide laufen ganz durch
+	if state == &"sit" and _prev_state != &"sit":
+		_start_transition(&"sit_down")
+	elif state != &"sit" and _prev_state == &"sit":
+		_start_transition(&"stand_up")
+	_prev_state = state
+	var clip: StringName = &"idle"
+	var clip_speed := 1.0
+	if _transition != &"":
+		_transition_t += delta
+		var length := _player.get_animation(_transition).length if _player.has_animation(_transition) else 0.0
+		var t := clampf(_transition_t / maxf(length, 0.01), 0.0, 1.0)
+		_seated = smoothstep(0.0, 1.0, t) if _transition == &"sit_down" else 1.0 - smoothstep(0.0, 1.0, t)
+		clip = _transition
+		if _transition_t >= length:
+			_transition = &""
+	if _transition == &"":
+		match state:
+			&"walk":
+				clip = &"walk" if speed > 0.05 else &"idle"
+				clip_speed = clampf(speed / maxf(_walk_speed, 0.1), 0.5, 2.0)
+			&"sit":
+				clip = &"sit_idle"
+				_seated = 1.0
+			&"browse":
+				clip = &"idle_2"
+			_:
+				clip = &"idle"
+		if state != &"sit":
+			_seated = 0.0
+	if _player.current_animation != clip and _player.has_animation(clip):
+		_player.play(clip, BLEND)
+	_player.speed_scale = clip_speed if clip == &"walk" else 1.0
+	# Kopf: beim Umschauen nach links und rechts, im Schaufenster leicht gesenkt
+	var target_yaw := 0.0
+	var target_pitch := 0.0
+	if state == &"look":
+		target_yaw = sin(_time * 1.4) * 42.0
+	elif state == &"browse":
+		target_yaw = sin(_time * 0.5) * 14.0
+		target_pitch = 10.0
+	_head_yaw = lerpf(_head_yaw, target_yaw, minf(1.0, delta * 5.0))
+	_head_pitch = lerpf(_head_pitch, target_pitch, minf(1.0, delta * 3.0))
+	if _head_modifier:
+		_head_modifier.yaw = _head_yaw
+		_head_modifier.pitch = _head_pitch
+	# Sitzen: Figur auf die Höhe der Sitzfläche heben (die Animation sitzt auf ihrer eigenen Höhe)
+	_model.position.y = (sit_height - _sit_seat) * _seated
+
+
+func _start_transition(clip: StringName) -> void:
+	if _player.has_animation(clip):
+		_transition = clip
+		_transition_t = 0.0
+		_player.play(clip, BLEND)

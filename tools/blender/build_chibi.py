@@ -31,6 +31,7 @@ import numpy as np  # noqa: E402
 
 import character_lib as C  # noqa: E402  (numpy-Kniff, Export, Kontrollbilder)
 import chibi_cage as G  # noqa: E402
+import chibi_anim as A  # noqa: E402
 import chibi_face as F  # noqa: E402
 import chibi_outfit as O  # noqa: E402
 import chibi_rig as R  # noqa: E402
@@ -519,7 +520,7 @@ def build_outfit(obj, arm, bodies, weights, names, offsets):
         data = O.shell(P, faces, weights, ao, fields=fields, shifts=shifts, **spec)
         mat = principled("cloth_" + name, O.PREVIEW_COLORS[name], rough=0.8)
         parts.append(piece_object("Cloth_" + name, data, arm, names, mat))
-    data = O.skirt(bodies, names, offsets)
+    data = O.skirt(bodies, names, offsets, P["Basis"], weights)
     parts.append(piece_object("Cloth_skirt", data, arm, names, principled("cloth_skirt", O.PREVIEW_COLORS["skirt"], rough=0.8)))
     for style in O.HAIRS:
         data = hair_data(style, body, names)
@@ -809,6 +810,44 @@ def outfits_sheet(figs, size=460):
     only_visible(figs, None)
 
 
+ANIM_FRAMES = [("walk", (1, 9, 17, 25)), ("idle", (1, 220)), ("idle_2", (125,)), ("sit_down", (1, 30, 68)),
+               ("sit_idle", (60,)), ("stand_up", (35, 69))]
+
+
+def anims_sheet(figs, size=400):
+    """Bewegungen (Mixamo, übertragen): je Figur mehrere Bilder jeder Animation von der Seite und
+    schräg vorn, angezogen (nichts darf durchschauen, Füße auf dem Boden)."""
+    for fig in figs[:2]:
+        arm, body, parts = fig[0], fig[1], fig[2]
+        if not arm.animation_data or not arm.animation_data.nla_tracks:
+            A.add_animations(arm, parts[0])
+        dress(fig, OUTFITS[body.gender][0] if body.gender == "male" else OUTFITS[body.gender][1])
+        only_visible(figs, fig)
+        reset_pose(arm)
+        for pb in arm.pose.bones:
+            pb.location = (0, 0, 0)
+        x0 = Vector((arm.location.x, 0, 0))
+        tiles = []
+        for name, frames in ANIM_FRAMES:
+            action = bpy.data.actions.get(name)
+            if action is None:
+                continue
+            arm.animation_data.action = action
+            for f in frames:
+                bpy.context.scene.frame_set(f)
+                cam = (1.9, -0.9, 0.9) if name != "walk" else (2.2, -0.3, 0.85)
+                tiles.append(shot(Vector(cam) + x0, Vector((0, 0, 0.62)) + x0, size=size))
+        arm.animation_data.action = None
+        bpy.context.scene.frame_set(1)
+        while len(tiles) % 5:
+            tiles.append(np.ones_like(tiles[0]))
+        F.write_png(os.path.join(SHOT_DIR, f"anims_{body.gender}.png"),
+                    np.concatenate([np.concatenate(tiles[i:i + 5], 1) for i in range(0, len(tiles), 5)], 0))
+        dress(fig, [])
+        pose_relaxed(arm)
+    only_visible(figs, None)
+
+
 def wire_sheet(figs, size=520):
     """Netz sichtbar (Drahtgitter über der Haut): Rumpf, Schulter, Hand und Kopf in T-Pose."""
     for fig in figs[:2]:
@@ -1028,6 +1067,10 @@ def export_figure(gender, height):
     """Eine Figur bauen und als .glb (Godot), .fbx (Mixamo) und .blend (Quelle) schreiben."""
     C.reset()
     arm, parts, body, offsets = build(gender, height)
+    # Bewegungen (Mixamo) auf diese Figur übertragen; Tempo, Sitzhöhe usw. als Zusatzangaben
+    anim = A.add_animations(arm, parts[0])
+    arm["chibi_anim"] = anim
+    print("  Bewegungen:", {k: round(v, 3) for k, v in anim.items()})
     for im in bpy.data.images:
         if im.source == "GENERATED":
             im.pack()
@@ -1040,8 +1083,8 @@ def export_figure(gender, height):
     bpy.context.view_layer.objects.active = arm
     bpy.ops.export_scene.gltf(filepath=os.path.join(OUT_DIR, name + ".glb"), export_format="GLB", use_selection=True,
                               export_skins=True, export_morph=True, export_morph_normal=True, export_colors=False,
-                              export_animations=False, export_extras=True, export_apply=False, export_yup=True,
-                              export_image_format="AUTO")
+                              export_animations=True, export_nla_strips=True, export_force_sampling=True,
+                              export_extras=True, export_apply=False, export_yup=True, export_image_format="AUTO")
     mixamo = os.path.join(OUT_DIR, "mixamo")
     os.makedirs(mixamo, exist_ok=True)
     gd = os.path.join(mixamo, ".gdignore")
@@ -1247,7 +1290,8 @@ def main():
     sheets = {"heads": heads_sheet, "wrists": hands_sheet, "hands": hands_sheet, "around": around_sheet,
               "lineups": gender_lineups, "compare": compare_with_reference, "collide": collision_check,
               "joints": joints_check, "underwear": underwear_check, "armpits": armpits_sheet, "tpose": tpose_sheet,
-              "eyes": eyes_sheet, "poses": poses_sheet, "wire": wire_sheet, "outfits": outfits_sheet}
+              "eyes": eyes_sheet, "poses": poses_sheet, "wire": wire_sheet, "outfits": outfits_sheet,
+              "anims": anims_sheet}
     for v in views:
         path = os.path.join(SHOT_DIR, v + ".png")
         if v in sheets:

@@ -576,6 +576,16 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   selbst (sonst Rauschen). Godot: `ChibiCharacter` (`scenes/characters/chibi_character.tscn`;
   Instanz-Werte für Farben und Gesicht, Enum `Mood` – „Expression“ ist in Godot schon belegt).
   Ansicht `scenes/tools/chibi_lineup.tscn`; Prüfbilder nach `screenshots/blender/chibi/`.
+  **Animationen (5c):** Mixamo-FBX in `assets/models/characters/animations/` (Liste
+  `chibi_anim.CLIPS`: walk, idle, idle_2 = Schaufenster, sit_down, sit_idle, stand_up) überträgt
+  build_chibi auf alle Figuren (je Knochen die Drehung gegenüber der T-Pose in Weltachsen, Hüfte ×
+  Verhältnis der Hüfthöhen, Sitz-Clips ohne seitliches Wandern) → NLA-Spuren → Animationen in der
+  .glb; Zusatzangaben als Extras `chibi_anim` am Skelett (walk_speed, sit_seat, sit_down/stand_up
+  _time/_shift). Godot: `ChibiPasserbyModel` spielt sie (Passerby `model_animates`), Umschauen =
+  Kopf drehen nach der Animation (`ChibiHeadModifier`), Sitzen hebt das Modell um
+  sit_height − sit_seat. Rock: Gewichte mindestens wie die Haut darunter (`_skin_weights_below`),
+  darunter Hosenrock im Haut-Shader (`lower_cloth_color`, Grenze über UV = Höhe in der Ruhelage).
+  Godot zeichnet nur Vorderseiten: Umlaufsinn neuer Kleidung prüfen (Cycles zeigt beide Seiten).
   **Kleidung/Frisuren** (`chibi_outfit.py`, `build_chibi.build_outfit`): jede Figur enthält alle Stücke
   als eigene Netze „Cloth_<name>“/„Hair_<name>“ (Material cloth_…/hair_…); `ChibiCharacter` blendet ein
   (top/bottom/shoes/hair + Farben als Instanz-Werte, Shader `chibi_cloth`/`chibi_hair`). Kleidung =

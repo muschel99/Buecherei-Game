@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3]
 
 ; Ein Passant als Chibi-Figur (seit Etappe 5c): "Model" ist eine zufällig eingekleidete
-; Chibi-Figur (ChibiPasserbyModel: Körper, Frisur, Kleidung, Farben; einfache eigene Bewegung, bis
-; die Mixamo-Animationen eingebaut sind). "Body" ist die Kollision (Ebene street_life).
+; Chibi-Figur (ChibiPasserbyModel: Körper, Frisur, Kleidung, Farben; Bewegung mit den
+; Mixamo-Animationen der Figur). "Body" ist die Kollision (Ebene street_life).
 ; Welche Passanten-Szenen unterwegs sind: GameConfig.passerby_scenes.
 
 [ext_resource type="Script" path="res://scripts/street_life/passerby.gd" id="1_passerby"]
@@ -14,6 +14,7 @@ height = 1.6
 
 [node name="Passerby" type="Node3D"]
 script = ExtResource("1_passerby")
+model_animates = true
 vary_size = false
 
 [node name="Body" type="AnimatableBody3D" parent="."]

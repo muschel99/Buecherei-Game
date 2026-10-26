@@ -39,6 +39,10 @@ signal finished(passerby: Passerby)
 ## nach -Z, hier einschalten.
 @export var model_faces_back: bool = false
 
+## Die Figur bewegt sich selbst (Methode animate des Modells, z. B. ChibiPasserbyModel mit
+## eigenem AnimationPlayer) – dann sucht Passerby keinen AnimationPlayer.
+@export var model_animates: bool = false
+
 @export_group("Körper")
 ## Größe zufällig etwas ändern (GameConfig.passerby_height_range). Aus bei Figuren, die selbst
 ## schon verschieden groß sind (Chibi-Figuren: gleich großer Kopf bei allen).
@@ -130,7 +134,7 @@ var ghost_static := 0.0
 func _ready() -> void:
 	_model = get_node_or_null("Model") as Node3D
 	_body = get_node_or_null("Body") as AnimatableBody3D
-	if _model:
+	if _model and not model_animates:
 		var players := _model.find_children("*", "AnimationPlayer", true, false)
 		if not players.is_empty():
 			_anim_player = players[0]
@@ -461,7 +465,8 @@ func _step_stand(delta: float) -> void:
 func _step_sit(delta: float) -> void:
 	var spot: Vector2 = _action.spot
 	var face: Vector2 = _action.face
-	var front := spot + face * SIT_FRONT
+	var front := spot + face * _sit_value("sit_front", SIT_FRONT) * scale.x
+	var sit_time := _sit_value("sit_time", SIT_TIME)
 	_phase_time += delta
 	_anim_speed = 0.0
 	match _phase:
@@ -485,8 +490,8 @@ func _step_sit(delta: float) -> void:
 				_phase_time = 0.0
 		2:  # hinsetzen (ein Stück zurück auf den Sitz)
 			_anim_state = &"sit"
-			pos = front.lerp(spot, smoothstep(0.0, 1.0, _phase_time / SIT_TIME))
-			if _phase_time >= SIT_TIME:
+			pos = front.lerp(spot, smoothstep(0.0, 1.0, _phase_time / sit_time))
+			if _phase_time >= sit_time:
 				_phase = 3
 				_phase_time = 0.0
 		3:  # sitzen
@@ -497,8 +502,8 @@ func _step_sit(delta: float) -> void:
 				life.release_seat(self)
 		4:  # aufstehen
 			_anim_state = &"idle"
-			pos = spot.lerp(front, smoothstep(0.0, 1.0, _phase_time / SIT_TIME))
-			if _phase_time >= SIT_TIME:
+			pos = spot.lerp(front, smoothstep(0.0, 1.0, _phase_time / sit_time))
+			if _phase_time >= sit_time:
 				_phase = 5
 		5:  # zurück an die Stelle, an der man ankam
 			_anim_state = &"walk"
@@ -509,6 +514,16 @@ func _step_sit(delta: float) -> void:
 				pos = next
 			if pos.distance_to(back) < 0.01:
 				_next_action()
+
+
+## Weg (m) bzw. Zeit (s) des Hinsetzens: vom Modell, wenn es sie vorgibt (seine Sitz-Animation),
+## sonst die festen Werte.
+func _sit_value(key: String, fallback: float) -> float:
+	if _model and key in _model:
+		var value := float(_model.get(key))
+		if value > 0.0:
+			return value
+	return fallback
 
 
 ## Verschwinden – aber nur, wenn es gerade niemand sieht. Sonst ein Stück weitergehen (am

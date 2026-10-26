@@ -999,8 +999,11 @@ Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi
       wählbar mit Farben (`ChibiCharacter`: top, bottom, shoes, hair)
 - [x] Chibi-Figuren als Passanten (`passerby_chibi.tscn`, `ChibiPasserbyModel`: zufälliges Aussehen,
       einfache eigene Bewegung); street_life_check ohne Fehler
-- [ ] Mixamo-Animationen übertragen (Gehen, Stehen, Umschauen, Schaufenster, Hinsetzen, Sitzen,
-      Aufstehen), danach Radfahrer als Chibi-Figuren und mehr Kleidung
+- [x] Mixamo-Animationen übertragen (Gehen, Stehen, Schaufenster, Hinsetzen, Sitzen, Aufstehen;
+      `chibi_anim.py`, je Knochen die Drehung gegenüber der T-Pose, Hüfte im Verhältnis der Größe);
+      Umschauen mit gedrehtem Kopf (`ChibiHeadModifier`); Rock folgt den Beinen, Hosenrock darunter
+- [ ] Radfahrer als Chibi-Figuren (eigene Tret-Animation; die alten Radfahrer traten rückwärts),
+      danach mehr Kleidung
 
 ## Etappe 6 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

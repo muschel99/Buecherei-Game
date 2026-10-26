@@ -799,11 +799,25 @@ Gesicht: `chibi_face.py`).
   (Schnitte und Formen in `tools/blender/chibi_outfit.py`), Kontrollbild `--views=outfits`.
   Farben zur Auswahl für Passanten: `GameConfig.chibi_top_colors`, `chibi_bottom_colors`,
   `chibi_shoe_colors`, `chibi_hair_colors`.
+- **Rock:** Der Rock hängt unten fast ganz an den Oberschenkeln und mindestens so stark wie die
+  Haut darunter – so bleibt das Bein beim großen Schritt und beim Sitzen unter dem Stoff. Unter dem
+  Rock trägt die Figur eine aufgemalte Hose in Rockfarbe (wie ein Hosenrock, etwas dunkler:
+  `GameConfig.chibi_skort_darken`) – beim Sitzen sieht man zwischen den Knien nur Stoff.
 - **Als Passanten:** `scenes/street_life/passerby_chibi.tscn` (eingetragen in
   `GameConfig.passerby_scenes`). Jeder Passant bekommt zufällig Körper, Haut, Augen, Frisur,
-  Kleidung und Farben. Bis die Mixamo-Animationen eingebaut sind, bewegt er sich mit einer
-  einfachen eigenen Bewegung (Gehen, Stehen, Umschauen, Schaufenster, Sitzen). Die alten
+  Kleidung und Farben und bewegt sich mit den Mixamo-Animationen (siehe unten). Die alten
   Platzhalter: `res://scenes/street_life/passerby.tscn` wieder in die Liste schreiben.
+- **Animationen in den Figuren (seit Etappe 5c):** Jede Figur-.glb enthält sechs Animationen:
+  `walk`, `idle`, `idle_2` (Schaufenster), `sit_down`, `sit_idle`, `stand_up`. Die Mixamo-Dateien
+  dazu liegen in `assets/models/characters/animations/<name>.fbx` (gleiche Namen); `build_chibi.py`
+  überträgt sie beim Bauen auf alle sechs Figuren (`tools/blender/chibi_anim.py`, Liste `CLIPS`).
+  Umschauen nach links und rechts ist keine eigene Animation: Beim Stehen dreht Godot den Kopf
+  dazu (`ChibiHeadModifier`), beim Schaufenster senkt sich der Blick leicht. Das Gehtempo passt
+  `ChibiPasserbyModel` an die Animation an (Füße rutschen nicht). Hinsetzen und Aufstehen laufen
+  als Übergang, beim Sitzen hebt sich die Figur auf die Höhe der Bank.
+  **Neue Animation:** von Mixamo herunterladen (wie unten), als `<name>.fbx` in den Ordner legen,
+  in `CLIPS` eintragen (Schleife ja/nein, seitliches Wandern der Hüfte entfernen ja/nein), Figuren
+  neu bauen; in Godot heißt sie dann im AnimationPlayer der Figur genauso.
 - **Dünn und dick in Bewegung:** Bei dünnen und dicken Figuren rücken Arme und Beine samt Gelenken nach
   innen bzw. außen. Das macht in Godot der Knoten **ShapeModifier** unter `Skeleton3D` (legt
   ChibiCharacter selbst an) – auch während Animationen.
@@ -843,9 +857,10 @@ Mixamo kann nur im Browser benutzt werden – das machst du, den Rest Claude:
    Skin**, 30 fps). Gebraucht werden: Gehen (*Walking*), Stehen (*Idle*), Umschauen
    (*Looking Around*), Sitzen (*Sitting Idle*), gern auch Lesen, Winken, Ins-Schaufenster-Schauen.
    Bei Geh-Animationen **In Place** anhaken.
-4. Die Dateien in den Ordner `assets/models/characters/animations/` legen (anlegen) und Claude
-   Bescheid sagen. Einmal hochladen genügt: Alle Figuren haben dasselbe Skelett, Godot überträgt
-   die Bewegungen auf jede Figur.
+4. Die Dateien in den Ordner `assets/models/characters/animations/` legen (oder in den Ordner
+   „Game design“ – dann holt Claude sie dort ab) und Claude Bescheid sagen. Einmal herunterladen
+   genügt: Alle Chibi-Figuren haben dasselbe Skelett, `build_chibi.py` überträgt die Bewegungen
+   auf jede Figur (in der Größe passend).
 
 ### Eigene Passanten (Figur mit Skelett und Animationen)
 Gedacht für Figuren wie die Quaternius-Grundkörper mit Skelett, dazu deine Frisuren und
