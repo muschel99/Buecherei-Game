@@ -917,6 +917,15 @@ großes V vorn, geteilte Frontscheibe, Dachträger mit Paketen) und das **Hollan
   Pixel, entspricht 0,95 × 0,46 m an beiden Seiten). Selbst gestalten wie bei den Schildern:
   Bild öffnen, darüber malen oder ein neues im gleichen Seitenverhältnis anlegen, unter
   **genau demselben Namen** speichern – Godot lädt es von selbst.
+- **Radfahrer (seit Etappe 5c):** `cyclist.tscn` zeigt eine zufällig eingekleidete Chibi-Figur
+  auf dem Hollandrad (`ChibiCyclistModel`). Das Rad ist für jede Figur passend verkleinert (kurze
+  Chibi-Beine: am unteren Pedal ist das Bein fast gestreckt), die Figur tritt genau im Takt der
+  Kurbel vorwärts (Bewegung „ride“ in jeder Figur, gebaut von `tools/blender/chibi_ride.py`: eine
+  Kurbelumdrehung, Knie und Ellbogen über IK, Finger außen und Daumen innen um die Griffe;
+  Einstellungen oben im Script).
+  Kontrollbild: `build_chibi.py -- --only=female_medium,male_medium --render --views=ride`. Den alten
+  Platzhalter-Radfahrer bekommst du zurück, indem du in `cyclist.tscn` beim Knoten **Model** das
+  Script `res://scripts/street_life/cyclist_placeholder.gd` einträgst.
 - **Paketanimation:** unverändert; die Schiebetür heißt im Modell **Door** und gleitet beim
   Ausladen um **Door Slide** nach hinten, die Kartons hüpfen aus der Mitte der Öffnung
   (**Door Point** am Knoten **DeliveryVan**).

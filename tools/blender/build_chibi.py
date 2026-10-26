@@ -34,6 +34,7 @@ import chibi_cage as G  # noqa: E402
 import chibi_anim as A  # noqa: E402
 import chibi_face as F  # noqa: E402
 import chibi_outfit as O  # noqa: E402
+import chibi_ride as RD  # noqa: E402
 import chibi_rig as R  # noqa: E402
 import chibi_sdf as S  # noqa: E402
 import bpy  # noqa: E402
@@ -848,6 +849,81 @@ def anims_sheet(figs, size=400):
     only_visible(figs, None)
 
 
+RIDE_ANGLES = (0, 90, 180, 270)
+VEHICLE_DIR = os.path.join(ROOT, "assets", "models", "vehicles")
+
+
+def _import_bike(x0, scale):
+    """Hollandrad aus dem Spiel (Rahmen, Räder, Kurbel), verkleinert unter die Figur bei x0.
+    Liefert (Wurzel, Kurbel)."""
+    root = bpy.data.objects.new("Bike", None)
+    bpy.context.scene.collection.objects.link(root)
+    root.location = (x0, 0.0, 0.0)
+    root.scale = (scale,) * 3
+    grey = principled("bike_check", (0.35, 0.36, 0.38), rough=0.4, ao=False)
+    crank = None
+    for name, pos in (("bicycle", (0, 0, 0)), ("bicycle_wheel", (0, 0.34, 0.52)), ("bicycle_wheel", (0, 0.34, -0.52)),
+                      ("bicycle_crank", RD.CRANK)):
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.gltf(filepath=os.path.join(VEHICLE_DIR, name + ".glb"))
+        new = [o for o in bpy.data.objects if o not in before]
+        holder = bpy.data.objects.new(name, None)
+        bpy.context.scene.collection.objects.link(holder)
+        holder.parent = root
+        holder.location = RD.g2b(pos)
+        for o in new:
+            if o.parent is None:
+                o.parent = holder
+            if o.type == "MESH":
+                o.data.materials.clear()
+                o.data.materials.append(grey)
+        if name == "bicycle_crank":
+            crank = holder
+    return root, crank
+
+
+def ride_sheet(figs, size=420):
+    """Radfahren: je Figur vier Kurbelstellungen von der Seite, schräg vorn und von vorn
+    (Füße auf den Pedalen, Hände an den Griffen, nichts im Fahrrad oder im Körper)."""
+    for fig in figs[:2]:
+        arm, body, parts = fig[0], fig[1], fig[2]
+        action_name = "ride_" + arm.name   # je Figur eigene Aktion (andere Maße)
+        info = RD.add_ride(arm, action_name)
+        dress(fig, OUTFITS[body.gender][0] if body.gender == "male" else OUTFITS[body.gender][1])
+        only_visible(figs, fig)
+        reset_pose(arm)
+        x0 = arm.location.x
+        bike, crank = _import_bike(x0, info["ride_scale"])
+        arm.animation_data.action = bpy.data.actions[action_name]
+        tiles = []
+        s = info["ride_scale"]
+        grip = RD.g2b(RD.GRIP, s)
+        x = Vector((x0, 0, 0))
+        for deg in RIDE_ANGLES:
+            f = 1 + round(deg / 360.0 * RD.FRAMES)
+            bpy.context.scene.frame_set(f)
+            crank.rotation_euler = (RD.ride_angle(f), 0.0, 0.0)
+            bpy.context.view_layer.update()
+            for cam in ((2.4, -0.15, 0.95), (1.5, -1.9, 1.35), (0.0, -2.6, 1.0)):
+                tiles.append(shot(Vector(cam) + x, Vector((x0, 0.0, 0.78)), size=size))
+        # Nahaufnahmen bei Bild 1: Hand von oben und von außen, Füße auf den Pedalen
+        bpy.context.scene.frame_set(1)
+        crank.rotation_euler = (0.0, 0.0, 0.0)
+        bpy.context.view_layer.update()
+        for cam, target in ((grip + Vector((0.20, 0.16, 0.42)), grip), (grip + Vector((0.35, -0.05, 0.05)), grip),
+                            (Vector((0.6, -0.25, 0.30)), Vector((0.0, 0.0, 0.20)))):
+            tiles.append(shot(cam + x, target + x, lens=60, size=size))
+        arm.animation_data.action = None
+        bpy.context.scene.frame_set(1)
+        F.write_png(os.path.join(SHOT_DIR, f"ride_{body.gender}.png"),
+                    np.concatenate([np.concatenate(tiles[i:i + 3], 1) for i in range(0, len(tiles), 3)], 0))
+        for o in [bike] + list(bike.children_recursive):
+            bpy.data.objects.remove(o)
+        dress(fig, [])
+        pose_relaxed(arm)
+    only_visible(figs, None)
+
+
 def wire_sheet(figs, size=520):
     """Netz sichtbar (Drahtgitter über der Haut): Rumpf, Schulter, Hand und Kopf in T-Pose."""
     for fig in figs[:2]:
@@ -1069,6 +1145,7 @@ def export_figure(gender, height):
     arm, parts, body, offsets = build(gender, height)
     # Bewegungen (Mixamo) auf diese Figur übertragen; Tempo, Sitzhöhe usw. als Zusatzangaben
     anim = A.add_animations(arm, parts[0])
+    anim.update(RD.add_ride(arm))
     arm["chibi_anim"] = anim
     print("  Bewegungen:", {k: round(v, 3) for k, v in anim.items()})
     for im in bpy.data.images:
@@ -1291,7 +1368,7 @@ def main():
               "lineups": gender_lineups, "compare": compare_with_reference, "collide": collision_check,
               "joints": joints_check, "underwear": underwear_check, "armpits": armpits_sheet, "tpose": tpose_sheet,
               "eyes": eyes_sheet, "poses": poses_sheet, "wire": wire_sheet, "outfits": outfits_sheet,
-              "anims": anims_sheet}
+              "anims": anims_sheet, "ride": ride_sheet}
     for v in views:
         path = os.path.join(SHOT_DIR, v + ".png")
         if v in sheets:

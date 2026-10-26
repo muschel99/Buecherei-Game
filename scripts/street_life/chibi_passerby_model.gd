@@ -8,7 +8,8 @@ extends ChibiCharacter
 ## (ruhiges Stehen, Blick leicht gesenkt), Hinsetzen, Sitzen, Aufstehen. Ohne Animationen in der
 ## Figur: eine einfache eigene Bewegung. Dieselbe Schnittstelle wie PasserbyPlaceholder (Passerby
 ## ruft randomize_look, animate, set_shadows; sit_height = Höhe der Sitzfläche; sit_front und
-## sit_time = Weg und Dauer des Hinsetzens, passend zur Animation).
+## sit_time = Weg und Dauer des Hinsetzens, passend zur Animation). Auf dem Fahrrad
+## (ChibiCyclistModel): pose_ride mit der Animation "ride" (tools/blender/chibi_ride.py).
 
 ## Meter je Doppelschritt bei 0,55 m Beinlänge (so passen die Schritte zum Tempo)
 const STRIDE := 0.95
@@ -23,13 +24,16 @@ const SIT_THIGH := 0.062
 ## Überblenden zwischen zwei Animationen (Sekunden).
 const BLEND := 0.3
 ## Animationen, die sich wiederholen.
-const LOOPS: Array[StringName] = [&"walk", &"idle", &"idle_2", &"sit_idle"]
+const LOOPS: Array[StringName] = [&"walk", &"idle", &"idle_2", &"sit_idle", &"ride"]
 
 ## Höhe der Sitzfläche beim Sitzen (Meter; setzt Passerby).
 var sit_height := 0.45
 ## Weg (m) und Dauer (s) des Hinsetzens laut Animation (0 = Passerby nimmt eigene Werte).
 var sit_front := 0.0
 var sit_time := 0.0
+## Fahrrad passend zu dieser Figur: so viel kleiner als das Hollandrad in echter Größe (aus der
+## Animation "ride"; 0 = Figur ohne Radfahr-Animation).
+var ride_scale := 0.0
 
 var _player: AnimationPlayer
 var _head_modifier: ChibiHeadModifier
@@ -105,6 +109,7 @@ func _rebuild() -> void:
 		_sit_seat = float(info.get("sit_seat", 0.23))
 		sit_front = float(info.get("sit_down_shift", 0.0))
 		sit_time = float(info.get("sit_down_time", 0.0))
+		ride_scale = float(info.get("ride_scale", 0.0))
 		_player.play(&"idle")
 	if _skeleton:
 		_head_modifier = ChibiHeadModifier.new()
@@ -250,6 +255,23 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 		_head_modifier.pitch = _head_pitch
 	# Sitzen: Figur auf die Höhe der Sitzfläche heben (die Animation sitzt auf ihrer eigenen Höhe)
 	_model.position.y = (sit_height - _sit_seat) * _seated
+
+
+## Radfahren: Haltung zur Kurbelstellung crank (Bogenmaß; 0 = Kurbel auf der Seite x < 0 vorn,
+## wachsend = vorwärts treten). Die Animation "ride" ist genau eine Kurbelumdrehung; der Kopf schaut
+## ab und zu ein wenig zur Seite.
+func pose_ride(crank: float, delta: float) -> void:
+	if _player == null or not _player.has_animation(&"ride"):
+		return
+	_time += delta
+	if _player.current_animation != &"ride":
+		_player.play(&"ride")
+	_player.speed_scale = 0.0
+	_player.seek(fposmod(crank / TAU, 1.0) * _player.get_animation(&"ride").length, true)
+	if _head_modifier:
+		_head_modifier.yaw = sin(_time * GameConfig.chibi_rider_glance_rate) * GameConfig.chibi_rider_glance
+		_head_modifier.pitch = 0.0
+	_model.position.y = 0.0
 
 
 func _start_transition(clip: StringName) -> void:

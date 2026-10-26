@@ -1,7 +1,7 @@
 // Haut der Chibi-Figuren (seit Etappe 5c): eine Farbe je Figur (Instanz-Wert), dazu die
 // eingebaute Verschattung (UV2.x: Achseln, Bauchnabel, Finger) und die aufgemalte Unterwäsche:
 // UV2.y = Abstand zum Rand von Bandeau/Hose (glTF dreht v um: 1 - UV2.y), negativ = Stoff.
-// Unter dem Rock trägt die Hose die Rockfarbe (lower_cloth_color, wie ein Hosenrock); oben und
+// Unter Rock und Hose trägt die Unterhose deren Farbe (lower_cloth_color, wie ein Hosenrock); oben und
 // unten trennt die Höhe in der Ruhelage (UV = Gesichts-Abwicklung: 1 - UV.y = Höhe über dem Kinn
 // in 0,48-m-Einheiten, Hosenbund aller Figuren unter -0,75, Bandeau über -0,62).
 shader_type spatial;

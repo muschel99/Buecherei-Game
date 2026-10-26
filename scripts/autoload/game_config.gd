@@ -610,8 +610,11 @@ var chibi_shoe_colors: Array[Color] = [
 ## Sohle der Schuhe (bis zu dieser Höhe über dem Boden, m) in dieser Farbe.
 var chibi_sole_color: Color = Color(0.86, 0.82, 0.74)
 var chibi_sole_height: float = 0.012
-## Unter dem Rock: aufgemalte Hose in Rockfarbe, um so viel dunkler (0 = gleich, 1 = schwarz).
+## Unter Rock und Hose: aufgemalte Unterhose in deren Farbe, um so viel dunkler (0 = gleich, 1 = schwarz).
 var chibi_skort_darken: float = 0.25
+## Radfahrer: Kopf schaut so weit zur Seite (Grad) und so schnell hin und her (Bogenmaß je Sekunde).
+var chibi_rider_glance: float = 12.0
+var chibi_rider_glance_rate: float = 0.35
 
 
 # --- Testtasten (nur zum Ausprobieren) ---

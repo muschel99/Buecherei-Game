@@ -586,6 +586,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   sit_height − sit_seat. Rock: Gewichte mindestens wie die Haut darunter (`_skin_weights_below`),
   darunter Hosenrock im Haut-Shader (`lower_cloth_color`, Grenze über UV = Höhe in der Ruhelage).
   Godot zeichnet nur Vorderseiten: Umlaufsinn neuer Kleidung prüfen (Cycles zeigt beide Seiten).
+  **Radfahren:** `chibi_ride.py` baut "ride" selbst (eine Kurbelumdrehung, `FRAMES` Bilder; Hüfte
+  auf den Sattel, Zwei-Glieder-IK für Knie/Ellbogen, Finger außen und Daumen innen um die Griffe
+  (`HAND_DIR`, `THUMB_DIRS`); Hollandrad je Figur um
+  `ride_scale` verkleinert, Extras) → `ChibiCyclistModel` (cyclist.tscn): Fahrrad × ride_scale, Figur
+  folgt der Kurbel (`ChibiPasserbyModel.pose_ride` = seek); Kurbel 0 = Seite x < 0 vorn, vorwärts =
+  `Basis(RIGHT, +Winkel)` wie die Räder. Kontrollbild `--views=ride`.
   **Kleidung/Frisuren** (`chibi_outfit.py`, `build_chibi.build_outfit`): jede Figur enthält alle Stücke
   als eigene Netze „Cloth_<name>“/„Hair_<name>“ (Material cloth_…/hair_…); `ChibiCharacter` blendet ein
   (top/bottom/shoes/hair + Farben als Instanz-Werte, Shader `chibi_cloth`/`chibi_hair`). Kleidung =

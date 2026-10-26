@@ -384,10 +384,11 @@ func _apply_colors() -> void:
 		_body.set_instance_shader_parameter("lower_cloth_color", _lower_cloth_color())
 
 
-## Unterhose: unter dem Rock in Rockfarbe (etwas dunkler, wie ein Hosenrock) – beim Sitzen sieht
-## man so nur Stoff im Schatten.
+## Unterhose: unter Rock und Hose in deren Farbe (etwas dunkler, unter dem Rock wie ein Hosenrock) –
+## beim Sitzen sieht man unter dem Rock nur Stoff im Schatten, und wo die Wäsche in der Hüftbeuge
+## durch die Hose drückt, fällt sie nicht auf.
 func _lower_cloth_color() -> Color:
-	return bottom_color.darkened(GameConfig.chibi_skort_darken) if bottom == Bottom.SKIRT else cloth_color
+	return bottom_color.darkened(GameConfig.chibi_skort_darken) if bottom != Bottom.NONE else cloth_color
 
 
 func _apply_face() -> void:

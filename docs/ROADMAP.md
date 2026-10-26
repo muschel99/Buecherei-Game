@@ -1002,8 +1002,11 @@ Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi
 - [x] Mixamo-Animationen übertragen (Gehen, Stehen, Schaufenster, Hinsetzen, Sitzen, Aufstehen;
       `chibi_anim.py`, je Knochen die Drehung gegenüber der T-Pose, Hüfte im Verhältnis der Größe);
       Umschauen mit gedrehtem Kopf (`ChibiHeadModifier`); Rock folgt den Beinen, Hosenrock darunter
-- [ ] Radfahrer als Chibi-Figuren (eigene Tret-Animation; die alten Radfahrer traten rückwärts),
-      danach mehr Kleidung
+- [x] Radfahrer treten vorwärts (Platzhalter: Kurbel und Beine drehten andersherum als die Räder)
+- [x] Radfahrer als Chibi-Figuren: eigene Bewegung „ride“ (`chibi_ride.py`, eine Kurbelumdrehung,
+      IK für Knie und Ellbogen), Hollandrad je Figur verkleinert, Bewegung im Takt der Kurbel
+      (`ChibiCyclistModel`)
+- [ ] Mehr Kleidung und Frisuren
 
 ## Etappe 6 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
