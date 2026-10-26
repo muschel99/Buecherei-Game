@@ -993,7 +993,14 @@ Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi
       neues Skelett mit breiten, weichen Gewichten (`chibi_rig.py`), Bewegungsprobe `--views=poses`;
       dünn/dick verschieben die Gelenke in Godot (`ChibiShapeModifier`); Mixamo-Datei mit unserem
       Skelett (Mixamo-Namen), dazu eine ohne Skelett als Ersatz
-- [ ] Mixamo-Animationen übertragen, dann Frisuren und Kleidung für die Chibi-Körper
+- [x] Einfache Grundausstattung: T-Shirt, Pullover, Hose, Rock, Schuhe; Frisuren Bob mit Pony, Dutt,
+      Zöpfe, Kurzhaar (`chibi_outfit.py`; Kleidung = Hülle aus dem Körper mit denselben Gewichten und
+      Formreglern, Rock als Glocke, Frisuren aus weichen Grundformen am Kopf-Knochen); in Godot
+      wählbar mit Farben (`ChibiCharacter`: top, bottom, shoes, hair)
+- [x] Chibi-Figuren als Passanten (`passerby_chibi.tscn`, `ChibiPasserbyModel`: zufälliges Aussehen,
+      einfache eigene Bewegung); street_life_check ohne Fehler
+- [ ] Mixamo-Animationen übertragen (Gehen, Stehen, Umschauen, Schaufenster, Hinsetzen, Sitzen,
+      Aufstehen), danach Radfahrer als Chibi-Figuren und mehr Kleidung
 
 ## Etappe 6 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

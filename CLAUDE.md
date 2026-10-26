@@ -576,6 +576,20 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   selbst (sonst Rauschen). Godot: `ChibiCharacter` (`scenes/characters/chibi_character.tscn`;
   Instanz-Werte für Farben und Gesicht, Enum `Mood` – „Expression“ ist in Godot schon belegt).
   Ansicht `scenes/tools/chibi_lineup.tscn`; Prüfbilder nach `screenshots/blender/chibi/`.
+  **Kleidung/Frisuren** (`chibi_outfit.py`, `build_chibi.build_outfit`): jede Figur enthält alle Stücke
+  als eigene Netze „Cloth_<name>“/„Hair_<name>“ (Material cloth_…/hair_…); `ChibiCharacter` blendet ein
+  (top/bottom/shoes/hair + Farben als Instanz-Werte, Shader `chibi_cloth`/`chibi_hair`). Kleidung =
+  `shell`: Körperflächen nach Schnitten (`garment_specs`: Funktionen f(p) ≥ 0), Randecken auf die
+  Schnittlinie geschoben (auch über Diagonalen) und entlang des Saums geglättet, Außenseite entlang
+  der Normalen (`offset`), geglättet und mit `keep_clear` nie näher als 85 % des Abstands an den Körper
+  (je Formregler mit der Verschiebung von Armen/Beinen), Innenseite nur als Streifen am Saum
+  (`INNER_BAND`), gleiche Gewichte/Formregler wie der Körper. Schichten: Oberteile ≥ 7,5 mm, Hose
+  und Rockbund darunter (≤ 6 mm). Rock = Glocke (`skirt`, außen um Rumpf und Beine gemessen).
+  Frisuren = Abstandsfeld (`hair_field`, Gesichtsfenster bis über die Brauen, Kerben im Pony),
+  Surface Nets (`HAIR_GRID`), Flächen tief im Kopf entfallen, Gewicht Head = 1. Erste Texturkoordinate
+  immer gefüllt (sonst vervielfacht der Export jede Ecke: 21 statt 6 MB). Passanten:
+  `passerby_chibi.tscn` + `ChibiPasserbyModel` (randomize_look, animate = einfache eigene Bewegung über
+  `set_bone_turns`, set_shadows; `Passerby.vary_size = false`).
 - **Fahrzeuge (seit Etappe 5b):** `tools/blender/build_vehicles.py`: Karosserie `Body`
   (Querschnitte entlang z, Radkästen, weiche Normalen, Fenster/Lack je Fläche über
   `window_mats`), Teile auf der Haut über BVH (`hit`, `round_lamp`, `plate`). Lack = Rolle

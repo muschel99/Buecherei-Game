@@ -265,7 +265,7 @@ var passerby_garden_time: Vector2 = Vector2(20.0, 50.0)
 var passerby_window_house_types: Array[String] = ["fashion_shop", "pub"]
 ## Szenen der Passanten (eigene Figuren hier eintragen, mehrere = abwechselnd; siehe
 ## docs/ASSET_GUIDE.md, „Eigene Passanten“).
-var passerby_scenes: Array[String] = ["res://scenes/street_life/passerby.tscn"]
+var passerby_scenes: Array[String] = ["res://scenes/street_life/passerby_chibi.tscn"]
 
 ## Fahrräder: So viele Sekunden (zufällig dazwischen) vergehen zwischen zwei Fahrrädern, und so
 ## schnell fahren sie (m/s).
@@ -589,6 +589,27 @@ var chibi_iris_colors: Array[Color] = [
 	Color(0.42, 0.28, 0.20), Color(0.30, 0.45, 0.62), Color(0.36, 0.52, 0.36),
 	Color(0.55, 0.42, 0.25), Color(0.40, 0.38, 0.48),
 ]
+## Haarfarben zur Auswahl (Augenbrauen bekommen dieselbe Farbe, etwas dunkler).
+var chibi_hair_colors: Array[Color] = [
+	Color(0.20, 0.13, 0.09), Color(0.36, 0.23, 0.14), Color(0.58, 0.38, 0.20), Color(0.82, 0.66, 0.42),
+	Color(0.62, 0.26, 0.14), Color(0.12, 0.10, 0.10), Color(0.70, 0.68, 0.66),
+]
+## Kleidung: ruhige, gemütliche Farben für Oberteile, Hosen/Röcke und Schuhe.
+var chibi_top_colors: Array[Color] = [
+	Color(0.86, 0.80, 0.62), Color(0.55, 0.64, 0.52), Color(0.70, 0.40, 0.30), Color(0.28, 0.34, 0.48),
+	Color(0.90, 0.86, 0.78), Color(0.52, 0.34, 0.44), Color(0.78, 0.62, 0.34), Color(0.52, 0.60, 0.70),
+	Color(0.80, 0.56, 0.52),
+]
+var chibi_bottom_colors: Array[Color] = [
+	Color(0.24, 0.27, 0.36), Color(0.34, 0.30, 0.26), Color(0.44, 0.42, 0.38), Color(0.20, 0.20, 0.22),
+	Color(0.52, 0.44, 0.34), Color(0.30, 0.38, 0.50), Color(0.62, 0.34, 0.28), Color(0.38, 0.46, 0.38),
+]
+var chibi_shoe_colors: Array[Color] = [
+	Color(0.16, 0.12, 0.10), Color(0.38, 0.25, 0.16), Color(0.86, 0.84, 0.80), Color(0.30, 0.22, 0.20),
+]
+## Sohle der Schuhe (bis zu dieser Höhe über dem Boden, m) in dieser Farbe.
+var chibi_sole_color: Color = Color(0.86, 0.82, 0.74)
+var chibi_sole_height: float = 0.012
 
 
 # --- Testtasten (nur zum Ausprobieren) ---

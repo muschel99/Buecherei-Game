@@ -40,6 +40,9 @@ signal finished(passerby: Passerby)
 @export var model_faces_back: bool = false
 
 @export_group("Körper")
+## Größe zufällig etwas ändern (GameConfig.passerby_height_range). Aus bei Figuren, die selbst
+## schon verschieden groß sind (Chibi-Figuren: gleich großer Kopf bei allen).
+@export var vary_size: bool = true
 ## Platz, den die Figur braucht (Radius in Metern) – zum Ausweichen.
 @export var radius: float = 0.25
 
@@ -141,7 +144,7 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 	if _model and _model.has_method("randomize_look"):
 		_model.call("randomize_look", rng)
 	var size := rng.randf_range(GameConfig.passerby_height_range.x, GameConfig.passerby_height_range.y)
-	scale = Vector3.ONE * size
+	scale = Vector3.ONE * (size if vary_size else 1.0)
 	_shadows = -1
 	set_shadows(0)
 	set_detail_distance(GameConfig.street_detail_distance)

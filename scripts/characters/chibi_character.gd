@@ -9,6 +9,8 @@ extends Node3D
 ## Sprechen sind Eigenschaften dieses Knotens und lassen sich mit einem AnimationPlayer
 ## animieren (z. B. Spur "mood" oder "look"). Mit eyes_override/mouth_override kann eine
 ## Animation einzelne Teile des Gesichts unabhängig vom Ausdruck setzen (-1 = vom Ausdruck).
+## Kleidung und Frisur: Jede Figur enthält alle Stücke (Knoten "Cloth_…", "Hair_…" im Modell);
+## top, bottom, shoes und hair blenden das gewählte ein, die Farben sind Instanz-Werte.
 
 enum Figure { FEMALE_SMALL, FEMALE_MEDIUM, FEMALE_TALL, MALE_SMALL, MALE_MEDIUM, MALE_TALL }
 const FIGURE_FILES: Array[String] = [
@@ -30,6 +32,14 @@ const MOUTH_FRAMES: Array[String] = ["smile", "smile_wide", "open_smile", "laugh
 
 ## Augenformen: Frauen süß / elegant / lebhaft, Männer sanft / cool / fröhlich.
 enum EyeShape { SHAPE_1, SHAPE_2, SHAPE_3 }
+
+## Kleidung und Frisuren (Namen der Knoten im Modell: "Cloth_" bzw. "Hair_" + Name).
+enum Top { NONE, TSHIRT, SWEATER }
+enum Bottom { NONE, TROUSERS, SKIRT }
+enum Hair { NONE, BOB, BUN, PIGTAILS, SHORT }
+const TOP_NAMES: Array[String] = ["", "tshirt", "sweater"]
+const BOTTOM_NAMES: Array[String] = ["", "trousers", "skirt"]
+const HAIR_NAMES: Array[String] = ["", "bob", "bun", "pigtails", "short"]
 
 enum Mood { NEUTRAL, HAPPY, LAUGH, CONTENT, GRIN, EXCITED, LOVE, STARSTRUCK, WINK, CHEEKY, SURPRISED,
 	SHOCKED, SAD, TEARY, CRYING, ANGRY, FURIOUS, ANNOYED, SMUG, WORRIED, EMBARRASSED, SHY, THINKING,
@@ -76,6 +86,8 @@ const FAT_RELAX_LESS := 8.0
 
 const SKIN_SHADER := preload("res://assets/shaders/chibi_skin.gdshader")
 const FACE_SHADER := preload("res://assets/shaders/chibi_face.gdshader")
+const CLOTH_SHADER := preload("res://assets/shaders/chibi_cloth.gdshader")
+const HAIR_SHADER := preload("res://assets/shaders/chibi_hair.gdshader")
 const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 
 @export var figure: Figure = Figure.FEMALE_MEDIUM:
@@ -106,6 +118,40 @@ const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 	set(value):
 		brow_color = value
 		_apply_colors()
+
+@export_group("Kleidung")
+@export var top: Top = Top.NONE:
+	set(value):
+		top = value
+		_apply_outfit()
+@export var bottom: Bottom = Bottom.NONE:
+	set(value):
+		bottom = value
+		_apply_outfit()
+@export var shoes: bool = false:
+	set(value):
+		shoes = value
+		_apply_outfit()
+@export var hair: Hair = Hair.NONE:
+	set(value):
+		hair = value
+		_apply_outfit()
+@export var top_color: Color = Color(0.86, 0.80, 0.62):
+	set(value):
+		top_color = value
+		_apply_outfit()
+@export var bottom_color: Color = Color(0.30, 0.34, 0.46):
+	set(value):
+		bottom_color = value
+		_apply_outfit()
+@export var shoe_color: Color = Color(0.38, 0.25, 0.16):
+	set(value):
+		shoe_color = value
+		_apply_outfit()
+@export var hair_color: Color = Color(0.36, 0.23, 0.14):
+	set(value):
+		hair_color = value
+		_apply_outfit()
 
 @export_group("Gesicht")
 ## Augenform (1–3, je Geschlecht verschieden).
@@ -143,6 +189,9 @@ const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 
 var _model: Node3D
 var _body: MeshInstance3D
+var _skeleton: Skeleton3D
+## Kleidungsstücke und Frisuren der Figur: Name ("Cloth_tshirt", "Hair_bob" …) → MeshInstance3D
+var _pieces := {}
 var _shape_modifier: ChibiShapeModifier
 var _blink_wait := 2.0
 var _blink_t := -1.0
@@ -167,12 +216,14 @@ func _rebuild() -> void:
 		_model.queue_free()
 		_model = null
 	_body = null
+	_pieces.clear()
 	var scene := load(FIGURE_FILES[figure]) as PackedScene
 	if scene == null:
 		return
 	_model = scene.instantiate()
 	_model.name = "Model"
 	add_child(_model)
+	_skeleton = _model.find_child("Skeleton3D", true, false) as Skeleton3D
 	_add_shape_modifier()
 	for mesh_instance in _model.find_children("*", "MeshInstance3D", true, false):
 		var mi := mesh_instance as MeshInstance3D
@@ -185,12 +236,72 @@ func _rebuild() -> void:
 			elif mat_name.begins_with("skin"):
 				mi.set_surface_override_material(i, _material("skin"))
 				is_body = true
+			elif mat_name.begins_with("cloth"):
+				mi.set_surface_override_material(i, _material("cloth"))
+			elif mat_name.begins_with("hair"):
+				mi.set_surface_override_material(i, _material("hair"))
 		if is_body:
 			_body = mi
+		elif mi.name.begins_with("Cloth_") or mi.name.begins_with("Hair_"):
+			_pieces[String(mi.name)] = mi
 	_apply_shape()
 	_apply_colors()
 	_apply_face()
+	_apply_outfit()
 	_apply_pose()
+
+
+## Gewählte Kleidungsstücke und Frisur einblenden, die übrigen ausblenden; Farben setzen.
+func _apply_outfit() -> void:
+	if _model == null:
+		return
+	var wanted := {
+		"Cloth_" + TOP_NAMES[top]: top_color,
+		"Cloth_" + BOTTOM_NAMES[bottom]: bottom_color,
+		"Hair_" + HAIR_NAMES[hair]: hair_color,
+	}
+	if shoes:
+		wanted["Cloth_shoes"] = shoe_color
+	for piece_name in _pieces:
+		var mi: MeshInstance3D = _pieces[piece_name]
+		mi.visible = wanted.has(piece_name)
+		if mi.visible:
+			mi.set_instance_shader_parameter("base_color", wanted[piece_name])
+			if piece_name == "Cloth_shoes":
+				mi.set_instance_shader_parameter("sole_color", GameConfig.chibi_sole_color)
+				mi.set_instance_shader_parameter("sole_height", GameConfig.chibi_sole_height)
+
+
+## Knochen drehen (ab der Ruhelage): turns = [[Knochen, Achse, Grad], …] – Achsen wie die Figur in
+## T-Pose (x = linke Seite der Figur, y oben, z vorn). Mehrere Einträge für denselben Knochen
+## werden nacheinander angewendet. Knochen, die nicht vorkommen, bleiben, wie sie sind.
+func set_bone_turns(turns: Array) -> void:
+	if _skeleton == null:
+		return
+	var per_bone := {}
+	for t in turns:
+		var bone := _skeleton.find_bone(t[0])
+		if bone < 0:
+			continue
+		var turn := Basis(t[1], deg_to_rad(t[2]))
+		per_bone[bone] = turn * per_bone.get(bone, Basis.IDENTITY)
+	for bone in per_bone:
+		var rest_global := _skeleton.get_bone_global_rest(bone).basis
+		var local := Quaternion(rest_global.inverse() * per_bone[bone] * rest_global)
+		_skeleton.set_bone_pose_rotation(bone, _skeleton.get_bone_rest(bone).basis.get_rotation_quaternion() * local)
+
+
+## Drehungen der locker hängenden Arme (für set_bone_turns; Animationen bauen darauf auf).
+func relaxed_arm_turns() -> Array:
+	var angle := maxf(relaxed_arms - FAT_RELAX_LESS * maxf(body_shape, 0.0), 0.0)
+	var share := minf(SHOULDER_SHARE, angle)
+	var elbow := ELBOW_RELAX * minf(angle / 30.0, 1.0)
+	var out := []
+	for side in [["Left", -1.0], ["Right", 1.0]]:
+		out.append([side[0] + "Shoulder", Vector3.BACK, share * side[1]])
+		out.append([side[0] + "UpperArm", Vector3.BACK, (angle - share) * side[1]])
+		out.append([side[0] + "LowerArm", Vector3.UP, elbow * side[1]])
+	return out
 
 
 ## Dünn/dick: Arme und Beine samt Gelenken verschieben (Werte aus der Figur, gebaut von
@@ -220,27 +331,10 @@ func _add_shape_modifier() -> void:
 	skeleton.add_child(_shape_modifier)
 
 
-## Arme locker hängen lassen (nur ohne Animation sinnvoll – eine Animation überschreibt das).
+## Arme locker hängen lassen (nur ohne Animation sinnvoll – eine Animation überschreibt das):
+## das Schlüsselbein dreht ein kleines Stück mit, der Oberarm den Rest; Ellbogen leicht gebeugt.
 func _apply_pose() -> void:
-	if _model == null:
-		return
-	var skeleton := _model.find_child("Skeleton3D", true, false) as Skeleton3D
-	if skeleton == null:
-		return
-	# das Schlüsselbein dreht ein kleines Stück mit, der Oberarm den Rest; Ellbogen leicht gebeugt
-	var angle := maxf(relaxed_arms - FAT_RELAX_LESS * maxf(body_shape, 0.0), 0.0)
-	var share := minf(SHOULDER_SHARE, angle)
-	var elbow := ELBOW_RELAX * minf(angle / 30.0, 1.0)
-	for side in [["Left", -1.0], ["Right", 1.0]]:
-		for part in [["Shoulder", share, Vector3.BACK], ["UpperArm", angle - share, Vector3.BACK],
-				["LowerArm", elbow, Vector3.UP]]:
-			var bone := skeleton.find_bone(side[0] + part[0])
-			if bone < 0:
-				continue
-			var rest_global := skeleton.get_bone_global_rest(bone).basis
-			var turn := Basis(part[2], deg_to_rad(part[1]) * side[1])
-			var local := Quaternion(rest_global.inverse() * turn * rest_global)
-			skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_rest(bone).basis.get_rotation_quaternion() * local)
+	set_bone_turns(relaxed_arm_turns())
 
 
 ## Gemeinsame Materialien (einmal für alle Figuren; Farben kommen als Instanz-Werte).
@@ -255,6 +349,10 @@ static func _material(kind: String) -> ShaderMaterial:
 		mat.set_shader_parameter("iris_tex", load(FACE_DIR + "face_iris.png"))
 		mat.set_shader_parameter("brow_tex", load(FACE_DIR + "face_brows.png"))
 		mat.set_shader_parameter("mouth_tex", load(FACE_DIR + "face_mouths.png"))
+	elif kind == "cloth":
+		mat.shader = CLOTH_SHADER
+	elif kind == "hair":
+		mat.shader = HAIR_SHADER
 	else:
 		mat.shader = SKIN_SHADER
 	_materials[kind] = mat
@@ -341,8 +439,11 @@ func _process(delta: float) -> void:
 		_apply_face()
 
 
+## Körper und alle Kleidungsstücke (für die Formregler dünn/dick).
 func _all_meshes() -> Array[MeshInstance3D]:
 	var out: Array[MeshInstance3D] = []
 	if _body:
 		out.append(_body)
+	for piece_name in _pieces:
+		out.append(_pieces[piece_name])
 	return out

@@ -789,6 +789,21 @@ Gesicht: `chibi_face.py`).
     Mixamo sein eigenes ein (Punkte für Kinn, Handgelenke, Ellbogen, Knie, Leiste setzen).
   Ablauf wie unten bei „Animationen von Mixamo“. Ohne Animation lassen die Figuren in Godot die Arme
   locker hängen (Eigenschaft **Relaxed Arms**, 57°, Ellbogen leicht gebeugt).
+- **Kleidung und Frisuren (Grundausstattung):** Jede Figur enthält alle Stücke, in Godot blendet
+  man das Gewünschte ein (Eigenschaften der Figur unter **Kleidung**): **Top** (T-Shirt,
+  Pullover), **Bottom** (Hose, Rock), **Shoes** (Schuhe mit heller Sohle), **Hair** (Bob mit Pony,
+  Dutt, Zöpfe, Kurzhaar), dazu je eine Farbe (**Top Color**, **Bottom Color**, **Shoe Color**,
+  **Hair Color**; Augenbrauen über **Brow Color** passend zum Haar). Die Kleidung ist eine Hülle
+  aus dem Körper – sie bewegt sich genau mit, auch dünn und dick. In Blender liegen die Stücke als
+  eigene Objekte „Cloth_…“ und „Hair_…“ in der .blend der Figur. Neu bauen: `build_chibi.py`
+  (Schnitte und Formen in `tools/blender/chibi_outfit.py`), Kontrollbild `--views=outfits`.
+  Farben zur Auswahl für Passanten: `GameConfig.chibi_top_colors`, `chibi_bottom_colors`,
+  `chibi_shoe_colors`, `chibi_hair_colors`.
+- **Als Passanten:** `scenes/street_life/passerby_chibi.tscn` (eingetragen in
+  `GameConfig.passerby_scenes`). Jeder Passant bekommt zufällig Körper, Haut, Augen, Frisur,
+  Kleidung und Farben. Bis die Mixamo-Animationen eingebaut sind, bewegt er sich mit einer
+  einfachen eigenen Bewegung (Gehen, Stehen, Umschauen, Schaufenster, Sitzen). Die alten
+  Platzhalter: `res://scenes/street_life/passerby.tscn` wieder in die Liste schreiben.
 - **Dünn und dick in Bewegung:** Bei dünnen und dicken Figuren rücken Arme und Beine samt Gelenken nach
   innen bzw. außen. Das macht in Godot der Knoten **ShapeModifier** unter `Skeleton3D` (legt
   ChibiCharacter selbst an) – auch während Animationen.

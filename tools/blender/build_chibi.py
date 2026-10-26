@@ -32,6 +32,7 @@ import numpy as np  # noqa: E402
 import character_lib as C  # noqa: E402  (numpy-Kniff, Export, Kontrollbilder)
 import chibi_cage as G  # noqa: E402
 import chibi_face as F  # noqa: E402
+import chibi_outfit as O  # noqa: E402
 import chibi_rig as R  # noqa: E402
 import chibi_sdf as S  # noqa: E402
 import bpy  # noqa: E402
@@ -422,7 +423,110 @@ def build(gender, height):
     # Metadaten "extras"; Achsen wie in Godot: x, z → y, -y → z)
     arm["chibi_bone_offsets"] = {shape: {bone: [d[0], d[2], -d[1]] for bone, d in bones.items()}
                                  for shape, bones in offsets.items()}
-    return arm, [obj], body, offsets
+    outfit = build_outfit(obj, arm, bodies, weights, names, offsets)
+    return arm, [obj] + outfit, body, offsets
+
+
+# ---------------------------------------------------------------------------------------------
+# Kleidung und Frisuren (chibi_outfit)
+# ---------------------------------------------------------------------------------------------
+
+def vertex_ao(obj):
+    """Verschattung je Ecke (aus der Texturkoordinate "AO")."""
+    me = obj.data
+    li = np.zeros(len(me.loops), np.int32)
+    me.loops.foreach_get("vertex_index", li)
+    uv = np.zeros(len(li) * 2, np.float32)
+    me.uv_layers["AO"].data.foreach_get("uv", uv)
+    ao = np.ones(len(me.vertices))
+    ao[li] = uv.reshape(-1, 2)[:, 0]
+    return ao
+
+
+def piece_object(name, data, arm, names, mat):
+    """Blender-Objekt aus einem Kleidungsstück/einer Frisur (chibi_outfit): Formregler, Gewichte,
+    Verschattung (UV2.x) und Höhe über dem Boden (UV2.y, für die Schuhsohle). Die Flächen zeigen
+    schon richtig nach außen (Außenseite wie der Körper, Innenstreifen umgedreht)."""
+    obj = mesh_from_arrays(name, data["P"]["Basis"], data["faces"])
+    if len(data["P"]) > 1:
+        obj.shape_key_add(name="Basis", from_mix=False)
+        for key_name in ("thin", "fat"):
+            key = obj.shape_key_add(name=key_name, from_mix=False)
+            key.data.foreach_set("co", data["P"][key_name].astype(np.float32).ravel())
+            key.value = 0.0
+    me = obj.data
+    li = np.zeros(len(me.loops), np.int32)
+    me.loops.foreach_get("vertex_index", li)
+    # erste Texturkoordinate überall 0 (neue Ebenen bekommen sonst je Fläche eigene Ecken – der
+    # Export müsste dann jede Ecke vervielfachen)
+    first = me.uv_layers.new(name="UVMap")
+    first.data.foreach_set("uv", np.zeros(len(li) * 2, np.float32))
+    layer = me.uv_layers.new(name="AO")
+    uv = np.stack([data["ao"][li], data["height"][li]], axis=1)
+    layer.data.foreach_set("uv", uv.astype(np.float32).ravel())
+    smooth_shading(obj)
+    me.materials.append(mat)
+    bind(obj, arm, R.prune(data["W"]), names)
+    return obj
+
+
+def hair_data(style, body, names):
+    """Frisur als Netz: Raster-Oberfläche der Form (ohne die Teile tief im Kopf), auf die Form
+    gelegt; hängt ganz am Kopf-Knochen."""
+    field = O.hair_field(style, body.chin)
+    v, q = O.surface_nets(field, field.lo, field.hi, O.HAIR_GRID)
+    centers = v[q].mean(axis=1)
+    q = q[body.parts["head"].eval_points(centers) > -O.HAIR_HIDDEN]
+    used = np.unique(q)
+    remap = np.full(len(v), -1, np.int64)
+    remap[used] = np.arange(len(used))
+    v, q = v[used], remap[q]
+    tmp = mesh_from_arrays("tmp_hair", v, q)
+    fit_to_shape(tmp, field, relax=2)
+    p = coords(tmp)
+    faces = np.array([list(f.vertices) for f in tmp.data.polygons], np.int64)
+    n = vertex_normals(tmp)
+    bpy.data.objects.remove(tmp)
+    both = S.Group("hair_head", [("union", field, 0.0), ("union", body.parts["head"], 0.0)])
+    ao = S.ambient_occlusion(both, p, n, strength=0.6)
+    W = np.zeros((len(p), len(names)))
+    W[:, names.index("Head")] = 1.0
+    return {"P": {"Basis": p}, "faces": faces, "W": W, "ao": ao, "height": p[:, 2]}
+
+
+def build_outfit(obj, arm, bodies, weights, names, offsets):
+    """Alle Kleidungsstücke und Frisuren der Figur (in Godot einzeln ein-/ausblendbar)."""
+    body = bodies["medium"]
+    keys = obj.data.shape_keys.key_blocks
+    P = {}
+    for key_name in ("Basis", "thin", "fat"):
+        a = np.zeros(len(obj.data.vertices) * 3, np.float32)
+        keys[key_name].data.foreach_get("co", a)
+        P[key_name] = a.reshape(-1, 3).astype(np.float64)
+    faces = np.array([list(f.vertices) for f in obj.data.polygons], np.int64)
+    ao = vertex_ao(obj)
+    # Körperform je Formregler und Verschiebung von Armen/Beinen je Ecke (die Formregler sind ohne
+    # sie gespeichert, die Form selbst hat sie)
+    fields = {"Basis": body.root, "thin": bodies["thin"].root, "fat": bodies["fat"].root}
+    shifts = {"Basis": np.zeros_like(P["Basis"])}
+    for shape in ("thin", "fat"):
+        sh = np.zeros_like(P["Basis"])
+        for root, d in offsets[shape].items():
+            sh += weights[:, R.chain_children(names, root)].sum(axis=1)[:, None] * np.asarray(d)[None, :]
+        shifts[shape] = sh
+    parts = []
+    for name, spec in O.garment_specs(body).items():
+        data = O.shell(P, faces, weights, ao, fields=fields, shifts=shifts, **spec)
+        mat = principled("cloth_" + name, O.PREVIEW_COLORS[name], rough=0.8)
+        parts.append(piece_object("Cloth_" + name, data, arm, names, mat))
+    data = O.skirt(bodies, names, offsets)
+    parts.append(piece_object("Cloth_skirt", data, arm, names, principled("cloth_skirt", O.PREVIEW_COLORS["skirt"], rough=0.8)))
+    for style in O.HAIRS:
+        data = hair_data(style, body, names)
+        parts.append(piece_object("Hair_" + style, data, arm, names, principled("hair_" + style, O.PREVIEW_COLORS["hair"], rough=0.45)))
+    for o in parts:
+        print(f"  {o.name}: {len(o.data.polygons)} Flächen")
+    return parts
 
 
 RELAX_ANGLE = 57.0   # Kontrollbilder: Arme so viel Grad aus der T-Pose heruntergenommen
@@ -463,6 +567,8 @@ def set_shape(figs, name):
     """Formregler setzen und Arme/Beine samt Knochen verschieben (wie ChibiCharacter in Godot)."""
     for arm, _body, parts, offsets in figs:
         for o in parts:
+            if o.data.shape_keys is None:
+                continue
             for kb in o.data.shape_keys.key_blocks[1:]:
                 kb.value = 1.0 if kb.name == name else 0.0
         for pb in arm.pose.bones:
@@ -525,11 +631,31 @@ def ortho_render(path, x0, H, res=1024, feet_row=948, fig_px=808, turn=0.0):
     scene.render.resolution_x, scene.render.resolution_y = old
 
 
+# Kontrollbilder: welche Kleidungsstücke/Frisur je Figur zu sehen sind (Name des Skeletts →
+# Namen der Teile); ohne Eintrag nur der Körper
+WORN = {}
+
+
+def base_name(o):
+    return o.name.split(".")[0]
+
+
+def worn(fig, o):
+    return base_name(o) == "Body" or base_name(o) in WORN.get(fig[0].name, ())
+
+
+def dress(fig, pieces):
+    """Figur für die Kontrollbilder anziehen (pieces = z. B. ["tshirt", "trousers", "shoes", "bob"])."""
+    WORN[fig[0].name] = {("Hair_" if p in O.HAIRS else "Cloth_") + p for p in pieces}
+    for o in fig[2]:
+        o.hide_render = not worn(fig, o)
+
+
 def only_visible(figs, keep):
     """Nur die Figur keep rendern (die anderen stehen sonst bei Seitenansichten im Bild)."""
     for f in figs:
         for o in f[2]:
-            o.hide_render = keep is not None and f is not keep
+            o.hide_render = (keep is not None and f is not keep) or not worn(f, o)
 
 
 def compare_with_reference(figs):
@@ -637,6 +763,50 @@ def poses_sheet(figs, size=420):
         pose_relaxed(arm)
     only_visible(figs, None)
     sun.data.angle, sun.data.energy = old_angle, old_energy
+
+
+OUTFITS = {
+    "female": [["tshirt", "trousers", "shoes", "bob"], ["sweater", "skirt", "shoes", "pigtails"],
+               ["tshirt", "skirt", "shoes", "bun"]],
+    "male": [["tshirt", "trousers", "shoes", "short"], ["sweater", "trousers", "shoes", "short"],
+             ["sweater", "trousers", "shoes", "bun"]],
+}
+
+
+def outfits_sheet(figs, size=460):
+    """Kleidung und Frisuren: je Figur drei Kombinationen von vorn, schräg und hinten, dazu
+    Gehen und Sitzen mit der ersten Kombination (nichts darf durchschauen)."""
+    sun = bpy.data.objects["Sun"]
+    for fig in figs[:2]:
+        arm, body = fig[0], fig[1]
+        x0 = Vector((arm.location.x, 0, 0))
+        rows = []
+        for pieces in OUTFITS[body.gender]:
+            dress(fig, pieces)
+            only_visible(figs, fig)
+            reset_pose(arm)
+            pose_relaxed(arm)
+            bpy.context.view_layer.update()
+            row = [shot(Vector(c) + x0, Vector(t) + x0, size=size)
+                   for c, t in (((0.0, -2.6, 1.0), (0, 0, 0.8)), ((1.9, -1.7, 1.05), (0, 0, 0.8)),
+                                ((-0.6, 2.5, 1.0), (0, 0, 0.8)), ((0.55, -1.0, 1.35), (0, 0, body.chin + 0.2)))]
+            rows.append(np.concatenate(row, 1))
+        dress(fig, OUTFITS[body.gender][0])
+        only_visible(figs, fig)
+        old_angle = sun.data.angle
+        sun.data.angle = math.radians(3)
+        row = []
+        for name in ("walk", "sit", "forward", "elbow"):
+            apply_pose(arm, name)
+            cams = [c for n, _, c in POSES if n == name][0]
+            row.append(shot(Vector(cams[0][0]) + x0, Vector(cams[0][1]) + x0, size=size))
+        sun.data.angle = old_angle
+        rows.append(np.concatenate(row, 1))
+        reset_pose(arm)
+        pose_relaxed(arm)
+        F.write_png(os.path.join(SHOT_DIR, f"outfits_{body.gender}.png"), np.concatenate(rows, 0))
+        dress(fig, [])
+    only_visible(figs, None)
 
 
 def wire_sheet(figs, size=520):
@@ -1067,6 +1237,7 @@ def main():
         arm.location.x = x
         pose_relaxed(arm)
         figs.append((arm, body, parts, offsets))
+        dress(figs[-1], [])
         x += 0.8
     os.makedirs(SHOT_DIR, exist_ok=True)
     cx = (x - 0.8) / 2
@@ -1076,7 +1247,7 @@ def main():
     sheets = {"heads": heads_sheet, "wrists": hands_sheet, "hands": hands_sheet, "around": around_sheet,
               "lineups": gender_lineups, "compare": compare_with_reference, "collide": collision_check,
               "joints": joints_check, "underwear": underwear_check, "armpits": armpits_sheet, "tpose": tpose_sheet,
-              "eyes": eyes_sheet, "poses": poses_sheet, "wire": wire_sheet}
+              "eyes": eyes_sheet, "poses": poses_sheet, "wire": wire_sheet, "outfits": outfits_sheet}
     for v in views:
         path = os.path.join(SHOT_DIR, v + ".png")
         if v in sheets:
