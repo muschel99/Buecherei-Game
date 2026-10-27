@@ -87,6 +87,36 @@ Das Spiel legt dann automatisch eine Kollisions-Kiste in Größe des Modells an.
 Für Regale ist eine eigene Szene besser, damit jedes Regalbrett eine eigene Kollision bekommt
 (sonst kann man keine Deko hineinstellen).
 
+## Farbvarianten (seit Etappe 6)
+Jedes Möbelstück kann mehrere Farben haben (im Shop wählt man die Farbe vor dem Kauf, im Inventar
+ist jede Farbe ein eigener Eintrag). Eingefärbt werden **nur Teile mit einem bestimmten
+Materialnamen** – so bleibt z. B. das Holzgestell eines Sessels, wie es ist, und nur der Stoff
+wechselt die Farbe.
+
+**So funktioniert es**
+- Im Modell heißt jedes einfärbbare Material so wie seine Rolle, z. B. `fabric` (Stoff), `leather`
+  (Leder), `paint` (Lack/Anstrich), `metal` (Metall), `glass_shade` (Lampenschirm), `bloom` (Blüten),
+  `pot` (Topf). Groß/klein ist egal; Blenders Anhängsel wie `fabric.001` zählen mit.
+- Im Datenblatt (`data/furniture/…tres`) steht unter **Farben → Color Variants** eine Liste von
+  Varianten. Jede Variante hat:
+  - **Id** – kurzer englischer Name, z. B. `bordeaux` (steht im Spielstand, später nicht mehr ändern),
+  - **Display Name** – Name im Spiel, z. B. „Bordeaux“ (erscheint im Tooltip),
+  - **Colors** – Liste „Materialname → Farbe“, z. B. `fabric` → Bordeauxrot, `piping` → Gold,
+  - **Swatch** – Farbe des Farbtupfers im Shop (leer = die erste Farbe aus Colors).
+- Die **erste Variante ist die Standardfarbe** (ältere Spielstände ohne Farbe bekommen sie).
+
+**Mit eigenem Modell (Blender oder Nomad Sculpt)**
+1. Im Modell den Teilen, die ihre Farbe wechseln sollen, ein eigenes Material geben und es genau
+   so nennen wie in den Varianten (z. B. `fabric`). In Blender: Material-Reiter → Name doppelklicken.
+2. Am besten das Material hell und neutral färben (Weiß bis Hellgrau): Das Spiel ersetzt die
+   **Grundfarbe** (Base Color) durch die Farbe der Variante.
+3. Alle anderen Teile bekommen andere Namen (z. B. `wood`) – sie bleiben unverändert.
+4. Als `.glb` exportieren und wie unten beschrieben einsetzen. Die Farbvarianten im Datenblatt
+   funktionieren dann sofort mit deinem Modell.
+
+Neue Variante ohne Code: im Datenblatt bei **Color Variants** auf **+** klicken, **Neue
+ColorVariant** wählen, Felder ausfüllen, speichern.
+
 ## Eigene Wandfarben, Böden und Decken
 Wandfarben, Böden und Decken funktionieren genauso – ihre Datenblätter liegen in `data/surfaces/`.
 Felder: Id, Display Name, **Kind** (Wall = Wandfarbe, Floor = Boden, Ceiling = Decke), Price,

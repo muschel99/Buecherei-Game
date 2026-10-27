@@ -44,10 +44,14 @@ static var _swatches := {}  # Oberflächen-id -> Farbfeld
 
 
 ## Meldet ein Ding, das ins Lager geht (FurnitureData, SurfaceData oder GenreData –
-## bei einem Genre erscheint ein kleiner Bücherstapel in seinen Farben).
-static func add_item(sender: Node, item: Resource, count: int = 1) -> void:
+## bei einem Genre erscheint ein kleiner Bücherstapel in seinen Farben). variant = Farbe eines
+## Möbelstücks (das Bild zeigt es in dieser Farbe).
+static func add_item(sender: Node, item: Resource, count: int = 1, variant: String = "") -> void:
+	var entry: Variant = item
+	if item is FurnitureData and not variant.is_empty():
+		entry = {"data": item, "variant": variant}
 	for i in count:
-		sender.get_tree().call_group(GROUP, "enqueue", item)
+		sender.get_tree().call_group(GROUP, "enqueue", entry)
 
 
 ## Meldet ein Ding mit eigenem Bild.
@@ -96,12 +100,16 @@ func _icon_for(entry: Variant) -> Texture2D:
 		return _swatch(entry)
 	if entry is GenreData:
 		return BookIcons.get_stack_icon(entry)
+	var variant := ""
+	if entry is Dictionary:
+		variant = str(entry.get("variant", ""))
+		entry = entry.get("data")
 	if entry is FurnitureData:
-		var ready_image := ThumbnailRenderer.get_cached(entry)
+		var ready_image := ThumbnailRenderer.get_cached(entry, variant)
 		if ready_image:
 			return ready_image
 		var result: Array = [null]
-		_thumbnails.request(entry, func(texture: Texture2D) -> void: result[0] = texture)
+		_thumbnails.request(entry, func(texture: Texture2D) -> void: result[0] = texture, variant)
 		var waited := 0.0
 		while result[0] == null and waited < 2.0:
 			await get_tree().process_frame

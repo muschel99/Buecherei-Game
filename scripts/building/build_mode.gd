@@ -41,6 +41,8 @@ var grid_enabled: bool = false
 
 var _tool: Tool = Tool.NONE
 var _selected_data: FurnitureData = null
+## Farbvariante des gewählten Möbelstücks (jede Farbe ist ein eigener Inventar-Eintrag).
+var _selected_variant: String = ""
 var _selected_surface: SurfaceData = null
 var _moving_item: PlacedFurniture = null
 var _moving_extras: Array[PlacedFurniture] = []
@@ -84,6 +86,11 @@ func _ready() -> void:
 ## Der Raum, der gerade gestaltet wird.
 func get_room() -> Room:
 	return _room
+
+
+## Farbe des gewählten Möbelstücks (leer = keine Auswahl oder Standardfarbe).
+func get_selected_variant() -> String:
+	return _selected_variant if _selected_data else ""
 
 
 ## Das gerade gewählte Inventar-Element (Möbel-Datenblatt, Oberfläche oder null).
@@ -189,13 +196,14 @@ func _apply_mouse_mode() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-## Wird von der Katalog-Oberfläche aufgerufen.
-func select_furniture(data: FurnitureData) -> void:
+## Wird von der Katalog-Oberfläche aufgerufen (variant = Farbe, leer = Standardfarbe).
+func select_furniture(data: FurnitureData, variant: String = "") -> void:
 	_cancel_tool()
-	if Inventory.get_count(data.get_id()) <= 0:
+	if Inventory.get_count(data.get_id(), variant) <= 0:
 		_flash_status("%s: keins mehr im Inventar." % data.display_name)
 		return
 	_selected_data = data
+	_selected_variant = data.resolve_variant(variant)
 	_tool = Tool.PLACE_NEW
 	_rotation_offset = 0.0  # Vorderseite zeigt zu mir
 	_preview.setup(data)
@@ -227,15 +235,15 @@ func _on_primary_click() -> void:
 			if _hovered:
 				_pick_up(_hovered)
 		Tool.PLACE_NEW:
-			if _placement_ok and Inventory.take_furniture(_selected_data.get_id()):
-				_room.add_furniture(_selected_data, _placement_transform, _placement_support)
+			if _placement_ok and Inventory.take_furniture(_selected_data.get_id(), 1, _selected_variant):
+				_room.add_furniture(_selected_data, _placement_transform, _placement_support, _selected_variant)
 				var verb := "aufgehängt" if _selected_data.is_hanging() else "aufgestellt"
 				_flash_status("%s %s." % [_selected_data.display_name, verb])
 				_clear_tool()
 		Tool.MOVE:
 			if _placement_ok:
 				if not _moving_is_fixed:
-					Inventory.take_furniture(_moving_item.data.get_id())  # aus der Hand wieder in den Raum
+					Inventory.take_furniture(_moving_item.data.get_id(), 1, _moving_item.variant)  # aus der Hand wieder in den Raum
 				_room.move_furniture(_moving_item, _placement_transform, _placement_support)
 				_flash_status("%s umgestellt." % _moving_item.data.display_name)
 				_finish_move()
@@ -275,13 +283,13 @@ func _pick_up(item: PlacedFurniture) -> void:
 	# Feste Möbel (z. B. die Theke) lassen sich verschieben, kommen dabei aber nie ins Inventar
 	_moving_is_fixed = item.data.is_fixed
 	if not _moving_is_fixed:
-		Inventory.add_furniture(item.data.get_id())
+		Inventory.add_furniture(item.data.get_id(), 1, item.variant)
 	_moving_item = item
 	_moving_extras = _room.get_dependents(item)
 	var extras: Array[Dictionary] = []
 	var inverse := item.global_transform.affine_inverse()
 	for extra in _moving_extras:
-		extras.append({"data": extra.data, "transform": inverse * extra.global_transform})
+		extras.append({"data": extra.data, "variant": extra.variant, "transform": inverse * extra.global_transform})
 	for piece: PlacedFurniture in [item] + _moving_extras:
 		piece.set_collision_enabled(false)
 		piece.visible = false
@@ -315,7 +323,7 @@ func _cancel_tool() -> void:
 		# Zurück an den alten Platz (die Position wurde nicht geändert) – also wieder aus
 		# dem Inventar heraus (feste Möbel lagen nie im Inventar)
 		if not _moving_is_fixed:
-			Inventory.take_furniture(_moving_item.data.get_id())
+			Inventory.take_furniture(_moving_item.data.get_id(), 1, _moving_item.variant)
 		_finish_move()
 	elif _tool != Tool.NONE:
 		_clear_tool()
@@ -328,6 +336,7 @@ func _clear_tool() -> void:
 	_moving_is_fixed = false
 	_set_cursor_icon("")
 	_selected_data = null
+	_selected_variant = ""
 	_selected_surface = null
 	_preview.clear()
 	_preview.visible = false
@@ -370,9 +379,9 @@ func _delete_target() -> void:
 func _store_in_inventory(item: PlacedFurniture, include_item: bool) -> void:
 	var dependents := _room.get_dependents(item)
 	if include_item:
-		Inventory.add_furniture(item.data.get_id())
+		Inventory.add_furniture(item.data.get_id(), 1, item.variant)
 	for dependent in dependents:
-		Inventory.add_furniture(dependent.data.get_id())
+		Inventory.add_furniture(dependent.data.get_id(), 1, dependent.variant)
 	var text := "%s ins Inventar gelegt." % item.data.display_name
 	if not dependents.is_empty():
 		var parts := "1 Teil" if dependents.size() == 1 else "%d Teile" % dependents.size()
@@ -568,7 +577,7 @@ func _update_placement() -> void:
 		# Nur der Name (die Tasten stehen in der Tastenhilfe rechts)
 		var name_text := data.display_name
 		if _tool == Tool.PLACE_NEW:
-			name_text += " ×%d" % Inventory.get_count(data.get_id())
+			name_text += " ×%d" % Inventory.get_count(data.get_id(), _selected_variant)
 		_set_status(name_text)
 	else:
 		_set_status("%s – %s" % [data.display_name, problem], true)

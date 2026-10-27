@@ -14,6 +14,13 @@ extends Node3D
 		if is_node_ready():
 			_rebuild_model()
 
+## Farbvariante (id einer ColorVariant aus dem Datenblatt; leer = Standardfarbe).
+@export_storage var variant: String = "":
+	set(value):
+		variant = value
+		if is_node_ready():
+			_rebuild_model()
+
 ## Gruppe für Teile eines Modells, die etwas enthalten (z. B. Bücher im Regal, Rückgabekasten).
 ## Solche Knoten haben get_contents_data(), load_contents_data(daten) und release_contents().
 const CONTENTS_GROUP := "furniture_contents"
@@ -96,7 +103,7 @@ func _rebuild_model() -> void:
 	if data == null:
 		return
 
-	_model = FurnitureUtils.instantiate_model(data)
+	_model = FurnitureUtils.instantiate_model(data, variant)
 	# "Intern" heißt: Das Modell wird nicht in die Szenendatei gespeichert und
 	# taucht nicht im Szenenbaum auf – es entsteht immer frisch aus dem Datenblatt.
 	add_child(_model, false, Node.INTERNAL_MODE_FRONT)

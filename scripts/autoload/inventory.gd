@@ -6,7 +6,8 @@ extends Node
 ## - Wandfarben, Böden und Decken werden einmal gekauft und sind danach unbegrenzt da.
 ##   Ein paar schlichte gibt es von Anfang an (Häkchen "Owned At Start" im Datenblatt).
 ## Was im Raum steht, gehört mir natürlich auch – das zählt der Raum selbst (Room).
-## Im Code: Inventory.get_count("armchair_velvet"), Inventory.add_furniture(...).
+## Im Code: Inventory.get_count("armchair_velvet", "bordeaux"), Inventory.add_furniture(id, 1, farbe).
+## Jede Farbvariante eines Möbelstücks ist ein eigener Eintrag (seit Etappe 6).
 ## Das Inventar wird mit dem Spielstand gespeichert (Gruppe "persist", siehe SaveManager).
 
 ## Wird gesendet, wenn sich etwas im Inventar ändert.
@@ -15,7 +16,9 @@ signal changed
 ## Name im Spielstand.
 var save_key: String = "inventory"
 
-var _furniture: Dictionary = {}  # id -> Anzahl (nur Einträge mit Anzahl > 0)
+## Schlüssel -> Anzahl (nur Einträge mit Anzahl > 0). Schlüssel = "id" oder bei Möbeln mit
+## Farbvarianten "id:farbe" (FurnitureData.make_key) – jede Farbe ist ein eigener Eintrag.
+var _furniture: Dictionary = {}
 var _surfaces: Array[String] = []  # ids der Oberflächen, die mir gehören
 
 
@@ -28,38 +31,76 @@ func _ready() -> void:
 
 # --- Möbel und Deko ---
 
-## Wie viele davon liegen im Inventar (nicht aufgestellt)?
-func get_count(id: String) -> int:
-	return int(_furniture.get(id, 0))
+## Wie viele davon liegen im Inventar (nicht aufgestellt)? Bei Möbeln mit Farben zählt nur die
+## angegebene Farbe (leer = Standardfarbe).
+func get_count(id: String, variant: String = "") -> int:
+	return int(_furniture.get(_key(id, variant), 0))
 
 
-## Legt Möbel ins Inventar.
-func add_furniture(id: String, amount: int = 1) -> void:
+## Wie viele liegen im Inventar, alle Farben zusammen?
+func get_total_count(id: String) -> int:
+	var total := 0
+	for key in _furniture:
+		if FurnitureData.split_key(key)[0] == id:
+			total += int(_furniture[key])
+	return total
+
+
+## Legt Möbel ins Inventar (in der Farbe variant, leer = Standardfarbe).
+func add_furniture(id: String, amount: int = 1, variant: String = "") -> void:
 	if amount <= 0 or Catalog.get_furniture(id) == null:
 		return
-	_furniture[id] = get_count(id) + amount
+	var key := _key(id, variant)
+	_furniture[key] = int(_furniture.get(key, 0)) + amount
 	_changed()
 
 
 ## Nimmt Möbel aus dem Inventar (zum Aufstellen oder Verkaufen).
 ## Liefert false (und ändert nichts), wenn nicht genug da ist.
-func take_furniture(id: String, amount: int = 1) -> bool:
-	if amount <= 0 or get_count(id) < amount:
+func take_furniture(id: String, amount: int = 1, variant: String = "") -> bool:
+	var key := _key(id, variant)
+	if amount <= 0 or int(_furniture.get(key, 0)) < amount:
 		return false
-	_furniture[id] = get_count(id) - amount
-	if _furniture[id] == 0:
-		_furniture.erase(id)
+	_furniture[key] = int(_furniture[key]) - amount
+	if _furniture[key] == 0:
+		_furniture.erase(key)
 	_changed()
 	return true
 
 
-## Alle Möbel, von denen mindestens eins im Inventar liegt (sortiert wie im Katalog).
+## Alle Möbel, von denen mindestens eins im Inventar liegt (egal in welcher Farbe, sortiert
+## wie im Katalog).
 func get_stored_furniture() -> Array[FurnitureData]:
 	var result: Array[FurnitureData] = []
 	for data in Catalog.get_all_furniture():
-		if get_count(data.get_id()) > 0:
+		if get_total_count(data.get_id()) > 0:
 			result.append(data)
 	return result
+
+
+## Alle Einträge im Inventar – jede Farbe einzeln – als Liste von
+## { "data": FurnitureData, "variant": Farb-id, "count": Anzahl }, sortiert wie im Katalog und
+## in der Reihenfolge der Farben im Datenblatt.
+func get_stored_entries() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for data in get_stored_furniture():
+		var variants: Array[String] = [""]
+		if data.has_variants():
+			variants.clear()
+			for variant in data.color_variants:
+				if variant:
+					variants.append(variant.id)
+		for variant in variants:
+			var count := get_count(data.get_id(), variant)
+			if count > 0:
+				result.append({"data": data, "variant": variant, "count": count})
+	return result
+
+
+## Schlüssel für ein Möbelstück in einer Farbe (unbekannte oder leere Farbe = Standardfarbe).
+func _key(id: String, variant: String) -> String:
+	var data := Catalog.get_furniture(id)
+	return FurnitureData.make_key(id, data.resolve_variant(variant) if data else variant)
 
 
 # --- Wandfarben, Böden, Decken ---
@@ -100,11 +141,14 @@ func load_save_data(data: Dictionary) -> void:
 	_furniture.clear()
 	var furniture = data.get("furniture")
 	if furniture is Dictionary:
-		for id in furniture:
-			var amount := int(furniture[id])
-			if amount > 0 and Catalog.get_furniture(str(id)):
-				_furniture[str(id)] = amount
-			elif amount > 0 and str(id) == ReturnBox.LEGACY_FURNITURE_ID:
+		for saved_key in furniture:
+			var amount := int(furniture[saved_key])
+			var parts := FurnitureData.split_key(str(saved_key))
+			if amount > 0 and Catalog.get_furniture(parts[0]):
+				# Ältere Spielstände ohne Farbe: Standardfarbe; verschwundene Farben ebenso
+				var key := _key(parts[0], parts[1])
+				_furniture[key] = int(_furniture.get(key, 0)) + amount
+			elif amount > 0 and parts[0] == ReturnBox.LEGACY_FURNITURE_ID:
 				ReturnBox.refund_legacy(amount, false)  # alter Spielstand: Kasten ist jetzt fest eingebaut
 	# Oberflächen kommen dazu (die Startfarben und alles, was schon im Raum zu sehen ist,
 	# bleiben erhalten – auch wenn der Spielstand älter ist als dieses Inventar)

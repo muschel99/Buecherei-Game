@@ -59,20 +59,27 @@ func _ready() -> void:
 	_viewport.add_child(_stage)
 
 
-## Liefert das Bild sofort, falls es schon fertig ist (sonst null).
-static func get_cached(data: FurnitureData) -> Texture2D:
-	if data.icon:
+## Liefert das Bild sofort, falls es schon fertig ist (sonst null). variant = Farbe (leer =
+## Standardfarbe). Ein eigenes Bild im Datenblatt (icon) gilt nur für Objekte ohne Farben.
+static func get_cached(data: FurnitureData, variant: String = "") -> Texture2D:
+	if data.icon and not data.has_variants():
 		return data.icon
-	return _cache.get(data.get_id())
+	return _cache.get(cache_key(data, variant))
 
 
-## Bestellt ein Bild. callback(texture: Texture2D) wird aufgerufen, sobald es fertig ist.
-func request(data: FurnitureData, callback: Callable) -> void:
-	var ready_image := get_cached(data)
+## Kennung eines Bilds: id bzw. id:farbe.
+static func cache_key(data: FurnitureData, variant: String = "") -> String:
+	return FurnitureData.make_key(data.get_id(), data.resolve_variant(variant))
+
+
+## Bestellt ein Bild (in der Farbe variant). callback(texture: Texture2D) wird aufgerufen,
+## sobald es fertig ist.
+func request(data: FurnitureData, callback: Callable, variant: String = "") -> void:
+	var ready_image := get_cached(data, variant)
 	if ready_image:
 		callback.call(ready_image)
 		return
-	_enqueue(data.get_id(), func() -> Node3D: return FurnitureUtils.instantiate_model(data), callback)
+	_enqueue(cache_key(data, variant), func() -> Node3D: return FurnitureUtils.instantiate_model(data, variant), callback)
 
 
 ## Bestellt ein Bild einer Modell-Szene (Vorderseite +Z). key muss eindeutig sein

@@ -100,7 +100,7 @@ func unpack() -> void:
 				if Catalog.get_furniture(id) == null and id == ReturnBox.LEGACY_FURNITURE_ID:
 					ReturnBox.refund_legacy(count, true)  # alter Spielstand: bestellt, gibt es nicht mehr
 				else:
-					Inventory.add_furniture(id, count)
+					Inventory.add_furniture(id, count, str(entry.get("variant", "")))
 	# Beiläufig unten rechts zeigen, was ins Lager geht (statt eines Textes)
 	for entry in contents:
 		var id := str(entry.get("id"))
@@ -117,7 +117,7 @@ func unpack() -> void:
 			_:
 				var furniture := Catalog.get_furniture(id)
 				if furniture:
-					StorageIndicator.add_item(self, furniture, int(entry.get("count", 1)))
+					StorageIndicator.add_item(self, furniture, int(entry.get("count", 1)), str(entry.get("variant", "")))
 	unpacked.emit(self)
 	# Kleine Animation: Der Karton plustert sich kurz auf, hebt sich, dreht sich und
 	# schrumpft dabei zu nichts – alles zusammen dauert GameConfig.unpack_time.

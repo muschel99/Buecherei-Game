@@ -14,11 +14,64 @@ const SURFACE_LAYER_BIT := 32
 const _FALLBACK_CELL := 0.25
 
 static var _highlight_material: ShaderMaterial
+## Eingefärbte Kopien von Materialien (Original + Farbe -> Kopie), damit gleiche Farben dasselbe
+## Material teilen.
+static var _tinted_materials: Dictionary = {}
 
 
-## Erzeugt das 3D-Modell eines Möbelstücks aus seinem Datenblatt.
-## Fehlt eine Kollision (z. B. bei einer reinen .glb-Datei), wird eine passende Kiste ergänzt.
-static func instantiate_model(data: FurnitureData) -> Node3D:
+## Erzeugt das 3D-Modell eines Möbelstücks aus seinem Datenblatt, eingefärbt in der Farbvariante
+## variant_id (leer = Standardfarbe). Fehlt eine Kollision (z. B. bei einer reinen .glb-Datei),
+## wird eine passende Kiste ergänzt.
+static func instantiate_model(data: FurnitureData, variant_id: String = "") -> Node3D:
+	var model := _instantiate_plain(data)
+	apply_variant(model, data.get_variant(variant_id))
+	return model
+
+
+## Färbt ein Modell in einer Farbvariante: Jedes Teil, dessen Material so heißt wie ein Eintrag
+## der Variante (z. B. "fabric"), bekommt dessen Farbe; alles andere bleibt. variant = null:
+## nichts ändern. Funktioniert mit den Bilderbuch-Materialien (Shader-Wert base_color), mit
+## normalen Godot-Materialien (albedo_color) und mit eigenen Modellen (Materialname aus Blender).
+static func apply_variant(root: Node, variant: ColorVariant) -> void:
+	if root == null or variant == null or variant.colors.is_empty():
+		return
+	var meshes: Array[Node] = root.find_children("*", "MeshInstance3D", true, false)
+	if root is MeshInstance3D:
+		meshes.append(root)
+	for node in meshes:
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.mesh == null:
+			continue
+		for i in mesh_instance.mesh.get_surface_count():
+			var material := mesh_instance.get_active_material(i)
+			if material == null:
+				continue
+			var color = variant.color_for(material.resource_name)
+			if color == null and mesh_instance.mesh is ArrayMesh:
+				color = variant.color_for(mesh_instance.mesh.surface_get_name(i))
+			if color != null:
+				mesh_instance.set_surface_override_material(i, tinted_material(material, color))
+
+
+## Kopie eines Materials mit neuer Grundfarbe (zwischengespeichert).
+static func tinted_material(material: Material, color: Color) -> Material:
+	var key := "%d|%s" % [material.get_instance_id(), color.to_html()]
+	if _tinted_materials.has(key):
+		return _tinted_materials[key]
+	var copy := material.duplicate() as Material
+	if copy is BaseMaterial3D:
+		copy.albedo_color = Color(color.r, color.g, color.b, copy.albedo_color.a)
+	elif copy is ShaderMaterial and copy.shader:
+		var names: Array = copy.shader.get_shader_uniform_list().map(func(entry: Dictionary) -> String: return entry.name)
+		for parameter in ["base_color", "albedo", "albedo_color", "color"]:
+			if names.has(parameter):
+				copy.set_shader_parameter(parameter, color)
+				break
+	_tinted_materials[key] = copy
+	return copy
+
+
+static func _instantiate_plain(data: FurnitureData) -> Node3D:
 	var packed: PackedScene = null
 	if not data.scene_path.is_empty() and ResourceLoader.exists(data.scene_path):
 		packed = load(data.scene_path) as PackedScene

@@ -76,7 +76,8 @@ func _ready() -> void:
 
 
 ## Nimmt eine Bestellung an. contents: Liste von
-## { "kind": "furniture", "surface" oder "books", "id": "...", "count": Anzahl }.
+## { "kind": "furniture", "surface" oder "books", "id": "...", "count": Anzahl } (bei Möbeln
+## zusätzlich "variant" = Farbe, siehe FurnitureData.color_variants).
 ## Bei "books" ist die id das Genre und count die Zahl der Bücherpakete.
 ## wait: so viele Sekunden bis zur Lieferung (Standard: GameConfig.delivery_time).
 func place_order(contents: Array, wait: float = -1.0) -> void:
@@ -214,7 +215,11 @@ static func split_contents(contents: Array) -> Array:
 		if entry.get("kind") == "surface":
 			count = 1  # Oberflächen gibt es nur einmal
 		for i in count:
-			result.append([{"kind": str(entry.get("kind", "furniture")), "id": str(entry.get("id", "")), "count": 1}])
+			var single := {"kind": str(entry.get("kind", "furniture")), "id": str(entry.get("id", "")), "count": 1}
+			# Farbe des Möbelstücks reist mit (fehlt sie, gibt es die Standardfarbe)
+			if not str(entry.get("variant", "")).is_empty():
+				single["variant"] = str(entry.variant)
+			result.append([single])
 	return result
 
 

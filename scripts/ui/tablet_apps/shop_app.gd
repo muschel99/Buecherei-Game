@@ -11,7 +11,8 @@ const PREVIEW_SIZE := Vector2(176, 118)
 const CART_WIDTH := 320.0
 
 ## Warenkorb: Einträge { "kind": "furniture"/"surface"/"books", "id": "...", "count": Anzahl }
-## (bei "books": id = Genre, count = Zahl der Bücherpakete)
+## (bei "books": id = Genre, count = Zahl der Bücherpakete; bei Möbeln mit Farben zusätzlich
+## "variant" = gewählte Farbe – jede Farbe ist ein eigener Eintrag)
 var cart: Array[Dictionary] = []
 
 var _order_text := ""
@@ -28,15 +29,23 @@ func app_opened() -> void:
 # --- Warenkorb ---
 
 ## Legt etwas in den Warenkorb (Möbel und Bücherpakete auch mehrfach, Oberflächen einmal).
-func add_to_cart(item: Resource) -> void:
+## variant = Farbe eines Möbelstücks (leer = Standardfarbe).
+func add_to_cart(item: Resource, variant: String = "") -> void:
 	var kind := "furniture"
 	if item is SurfaceData:
 		kind = "surface"
 	elif item is GenreData:
 		kind = "books"
-	var entry := _find_cart_entry(kind, item.get_id())
+	if item is FurnitureData:
+		variant = item.resolve_variant(variant)
+	else:
+		variant = ""
+	var entry := _find_cart_entry(kind, item.get_id(), variant)
 	if entry.is_empty():
-		cart.append({"kind": kind, "id": item.get_id(), "count": 1})
+		entry = {"kind": kind, "id": item.get_id(), "count": 1}
+		if not variant.is_empty():
+			entry["variant"] = variant
+		cart.append(entry)
 	elif kind != "surface":
 		entry.count += 1
 	_order_text = ""
@@ -195,7 +204,7 @@ func create_offer_card(item: Resource) -> Button:
 		var catalog := Catalog.get_books_of_genre(item.get_id()).size()
 		status = "Sammlung: %d von %d" % [BookStock.get_discovered_count(item.get_id()), catalog]
 	else:
-		var owned := Inventory.get_count(item.get_id()) + _count_in_room(item.get_id())
+		var owned := Inventory.get_total_count(item.get_id()) + _count_in_room(item.get_id())
 		status = "Hast du: %d" % owned if owned > 0 else ""
 	box.add_child(_small_label(status, 13, TabletFrame.MUTED_COLOR))
 	# Lange Zeilen enden mit "…", statt über den Kartenrand zu ragen
@@ -252,9 +261,9 @@ func create_style_row(styles: Array[String]) -> HBoxContainer:
 
 # --- Hilfsfunktionen ---
 
-func _find_cart_entry(kind: String, id: String) -> Dictionary:
+func _find_cart_entry(kind: String, id: String, variant: String = "") -> Dictionary:
 	for entry in cart:
-		if entry.kind == kind and entry.id == id:
+		if entry.kind == kind and entry.id == id and str(entry.get("variant", "")) == variant:
 			return entry
 	return {}
 
@@ -276,6 +285,8 @@ func _name_of(entry: Dictionary) -> String:
 	var resource := _resource_of(entry)
 	if resource is GenreData:
 		return "Bücherpaket %s (%d Bücher)" % [resource.display_name, GameConfig.books_per_package]
+	if resource is FurnitureData and resource.has_variants():
+		return "%s · %s" % [resource.display_name, resource.get_variant_name(str(entry.get("variant", "")))]
 	return resource.display_name if resource else str(entry.id)
 
 

@@ -95,6 +95,15 @@ const SUBCATEGORIES := {
 ## Bücher lassen sich flach obendrauf legen, auch ohne Ablagefläche (Polster: Kissen, Decke).
 @export var books_can_lie: bool = false
 
+@export_group("Farben")
+## Farbvarianten beim Kauf (3–5 je Objekt). Die erste ist die Standardfarbe. Eingefärbt werden
+## nur Teile, deren Material so heißt wie ein Eintrag der Variante (siehe ColorVariant).
+## Leer = nur eine Farbe (so, wie das Modell gebaut ist).
+@export var color_variants: Array[ColorVariant] = []
+
+## Trennzeichen zwischen id und Farbe in Inventar und Spielstand, z. B. "armchair_wing:bordeaux".
+const VARIANT_SEPARATOR := ":"
+
 ## Werte für "placement"
 const PLACE_FLOOR := 1
 const PLACE_SURFACE := 2
@@ -123,6 +132,49 @@ func get_id() -> String:
 	if not id.is_empty():
 		return id
 	return resource_path.get_file().get_basename()
+
+
+## Hat das Objekt mehrere Farben zur Auswahl?
+func has_variants() -> bool:
+	return not color_variants.is_empty()
+
+
+## Die Farbvariante mit dieser id (oder null). Unbekannte/leere id = die Standardfarbe.
+func get_variant(variant_id: String) -> ColorVariant:
+	for variant in color_variants:
+		if variant and variant.id == variant_id:
+			return variant
+	return color_variants[0] if has_variants() else null
+
+
+## Gültige Farb-id: die angegebene, falls es sie gibt, sonst die Standardfarbe ("" ohne Farben).
+## So werden alte Spielstände ohne Farbe zur Standardfarbe.
+func resolve_variant(variant_id: String) -> String:
+	var variant := get_variant(variant_id)
+	return variant.id if variant else ""
+
+
+## Name der Farbe für Tooltips (leer ohne Farbvarianten).
+func get_variant_name(variant_id: String) -> String:
+	var variant := get_variant(variant_id)
+	if variant == null:
+		return ""
+	return variant.display_name if not variant.display_name.is_empty() else variant.id
+
+
+## Schlüssel für Inventar und Spielstand: "id" bzw. "id:farbe".
+static func make_key(furniture_id: String, variant_id: String) -> String:
+	if variant_id.is_empty():
+		return furniture_id
+	return furniture_id + VARIANT_SEPARATOR + variant_id
+
+
+## Zerlegt einen Schlüssel in [id, farbe] ("id" allein -> [id, ""]).
+static func split_key(key: String) -> Array[String]:
+	var at := key.find(VARIANT_SEPARATOR)
+	if at < 0:
+		return [key, ""]
+	return [key.substr(0, at), key.substr(at + 1)]
 
 
 ## Anzeigename der Unterkategorie (leer, wenn keine gewählt ist).

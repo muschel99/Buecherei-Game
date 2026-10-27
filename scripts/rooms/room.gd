@@ -108,19 +108,23 @@ func get_placed_furniture() -> Array[PlacedFurniture]:
 	return result
 
 
-## Wie viele Möbel mit dieser id stehen gerade im Raum?
-func count_placed(id: String) -> int:
+## Wie viele Möbel mit dieser id stehen gerade im Raum? variant = null: alle Farben zusammen,
+## sonst nur diese Farbe.
+func count_placed(id: String, variant: Variant = null) -> int:
 	var count := 0
 	for item in get_placed_furniture():
-		if item.data and item.data.get_id() == id:
+		if item.data and item.data.get_id() == id and (variant == null or item.variant == item.data.resolve_variant(variant)):
 			count += 1
 	return count
 
 
-## Stellt ein neues Möbelstück in den Raum (Transform = Position und Drehung in der Welt).
-func add_furniture(data: FurnitureData, world_transform: Transform3D, support: PlacedFurniture) -> PlacedFurniture:
+## Stellt ein neues Möbelstück in den Raum (Transform = Position und Drehung in der Welt),
+## in der Farbvariante variant (leer = Standardfarbe).
+func add_furniture(data: FurnitureData, world_transform: Transform3D, support: PlacedFurniture,
+		variant: String = "") -> PlacedFurniture:
 	var item := PlacedFurniture.new()
 	item.data = data
+	item.variant = data.resolve_variant(variant)
 	item.name = data.get_id().to_pascal_case()
 	furniture_root.add_child(item, true)
 	item.global_transform = world_transform
@@ -193,7 +197,7 @@ func get_dependents(item: PlacedFurniture) -> Array[PlacedFurniture]:
 func ensure_essentials() -> void:
 	for data in Catalog.get_all_furniture():
 		var id := data.get_id()
-		if not data.is_essential or count_placed(id) > 0 or Inventory.get_count(id) > 0:
+		if not data.is_essential or count_placed(id) > 0 or Inventory.get_total_count(id) > 0:
 			continue
 		var spot: Dictionary = _essential_spots.get(id, {})
 		var support := _find_placed(str(spot.get("support_id", "")))
@@ -381,6 +385,7 @@ func get_save_data() -> Dictionary:
 		var entry := {
 			"uid": item.uid,
 			"id": item.data.get_id(),
+			"variant": item.variant,
 			"position": [item.position.x, item.position.y, item.position.z],
 			"rotation_y": item.rotation.y,
 			"support_uid": item.support_uid,
@@ -490,6 +495,8 @@ func _load_furniture_entry(entry: Dictionary) -> void:
 		return
 	var item := PlacedFurniture.new()
 	item.data = data
+	# Farbe (ältere Spielstände haben keine: dann die Standardfarbe)
+	item.variant = data.resolve_variant(str(entry.get("variant", "")))
 	item.name = id.to_pascal_case()
 	var position_values = entry.get("position", [0, 0, 0])
 	if position_values is Array and position_values.size() == 3:

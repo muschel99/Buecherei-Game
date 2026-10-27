@@ -103,13 +103,13 @@ func _show_tab(index: int) -> void:
 	_filter_bar.setup(FilterBar.present_subcategories(tab[2], owned) if tab[1] == "furniture" else [])
 	_filter_bar.visible = not owned.is_empty()  # ohne Inhalt keine Filter
 	if tab[1] == "furniture":
-		for data: FurnitureData in owned:
-			if not _filter_bar.matches(data):
+		for entry in Inventory.get_stored_entries():
+			var data: FurnitureData = entry.data
+			if data.category != tab[2] or not _filter_bar.matches(data):
 				continue
-			var count := Inventory.get_count(data.get_id())
-			var card := _create_card(data.display_name, _size_text(data), data.style_ids, data.description, Color(0, 0, 0, 0), count)
-			card.pressed.connect(_build_mode.select_furniture.bind(data))
-			_add_card(data, card)
+			var card := _create_card(data.display_name, _size_text(data), data.style_ids, data.description, Color(0, 0, 0, 0), entry.count)
+			card.pressed.connect(_build_mode.select_furniture.bind(data, entry.variant))
+			_add_card(FurnitureData.make_key(data.get_id(), entry.variant), card)
 	else:
 		for surface: SurfaceData in owned:
 			if not _filter_bar.matches(surface):
@@ -163,9 +163,10 @@ func _refresh() -> void:
 
 
 
-func _add_card(data: Resource, card: Button) -> void:
+## key = Oberfläche bzw. bei Möbeln "id:farbe" (FurnitureData.make_key).
+func _add_card(key: Variant, card: Button) -> void:
 	_item_row.add_child(card)
-	_cards[data] = card
+	_cards[key] = card
 
 
 ## Eine Karte im Inventar: Name, Anzahl (count, -1 = ohne), Zusatzzeile, Stile und
@@ -281,5 +282,8 @@ func _on_grid_changed(enabled: bool) -> void:
 
 
 func _on_selection_changed(selected: Resource) -> void:
-	for data in _cards:
-		_cards[data].set_pressed_no_signal(data == selected)
+	var selected_key: Variant = selected
+	if selected is FurnitureData:
+		selected_key = FurnitureData.make_key(selected.get_id(), _build_mode.get_selected_variant())
+	for key in _cards:
+		_cards[key].set_pressed_no_signal(key == selected_key)

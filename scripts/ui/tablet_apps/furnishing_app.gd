@@ -127,16 +127,16 @@ func _on_filter_changed() -> void:
 func _refresh_sell_list() -> void:
 	clear(_sell_list)
 	var count := 0
-	for data in Inventory.get_stored_furniture():
-		if data.is_essential:
+	for entry in Inventory.get_stored_entries():
+		if entry.data.is_essential:
 			continue
-		_sell_list.add_child(_create_sell_row(data))
+		_sell_list.add_child(_create_sell_row(entry.data, entry.variant))
 		count += 1
 	if count == 0:
 		_sell_list.add_child(make_label("Im Inventar liegt gerade nichts zum Verkaufen.", 17, TabletFrame.MUTED_COLOR))
 
 
-func _create_sell_row(data: FurnitureData) -> Control:
+func _create_sell_row(data: FurnitureData, variant: String) -> Control:
 	var panel := make_panel(10.0)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
@@ -147,7 +147,10 @@ func _create_sell_row(data: FurnitureData) -> Control:
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
-	info.add_child(make_label("%s  ×%d" % [data.display_name, Inventory.get_count(data.get_id())], 17))
+	var title := data.display_name
+	if data.has_variants():
+		title += " · " + data.get_variant_name(variant)
+	info.add_child(make_label("%s  ×%d" % [title, Inventory.get_count(data.get_id(), variant)], 17))
 	info.add_child(create_style_row(data.style_ids))
 	row.add_child(info)
 	var price := make_label("+" + Wallet.format(data.get_sell_price()), 17, TabletFrame.KEY_COLOR)
@@ -155,15 +158,15 @@ func _create_sell_row(data: FurnitureData) -> Control:
 	price.custom_minimum_size.x = 0
 	price.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(price)
-	var button := make_icon_button(TabletIconButton.Icon.SELL, sell.bind(data), "Verkaufen")
+	var button := make_icon_button(TabletIconButton.Icon.SELL, sell.bind(data, variant), "Verkaufen")
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(button)
 	return panel
 
 
-## Verkauft ein Exemplar aus dem Inventar.
-func sell(data: FurnitureData) -> void:
-	if data.is_essential or not Inventory.take_furniture(data.get_id()):
+## Verkauft ein Exemplar (in der Farbe variant) aus dem Inventar.
+func sell(data: FurnitureData, variant: String = "") -> void:
+	if data.is_essential or not Inventory.take_furniture(data.get_id(), 1, variant):
 		return
 	var price := data.get_sell_price()
 	Wallet.earn(price, "Verkauf am Tablet")
