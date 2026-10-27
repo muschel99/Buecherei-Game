@@ -883,3 +883,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 
+## Seeing your work
+- A virtual screen is available. To check visuals, render real frames:
+  `xvfb-run -a godot --path . --rendering-driver opengl3 --rendering-method gl_compatibility --write-movie /tmp/shot.png --fixed-fps 30 --quit-after 90`
+  Then look at the PNG files in /tmp and fix what you see.
+- For Blender models, render previews from several angles (Cycles, CPU) and look at them before exporting.
+- After every visual change, check screenshots for floating parts, gaps, clipping through walls and wrong scale.
+- When exporting from Blender: apply all transforms and put the origin at the base of the object.

@@ -101,3 +101,10 @@ RUN TAG=$(curl -s https://api.github.com/repos/godotengine/godot/releases/latest
   unzip /tmp/godot.zip -d /opt/godot && rm /tmp/godot.zip && \
   ln -s /opt/godot/Godot_v${TAG}_linux.x86_64 /usr/local/bin/godot
 USER node
+
+# Virtual screen so Claude can render and take screenshots
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  xvfb xauth libgl1-mesa-dri libglx-mesa0 libegl1 \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+USER node
