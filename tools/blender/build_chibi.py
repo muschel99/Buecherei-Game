@@ -853,17 +853,17 @@ RIDE_ANGLES = (0, 90, 180, 270)
 VEHICLE_DIR = os.path.join(ROOT, "assets", "models", "vehicles")
 
 
-def _import_bike(x0, scale):
-    """Hollandrad aus dem Spiel (Rahmen, Räder, Kurbel), verkleinert unter die Figur bei x0.
-    Liefert (Wurzel, Kurbel)."""
+def _import_bike(x0, scale, seat):
+    """Chibi-Hollandrad aus dem Spiel (Rahmen, Räder, Kurbel, Sattel auf Höhe seat), verkleinert unter
+    die Figur bei x0. Liefert (Wurzel, Kurbel)."""
     root = bpy.data.objects.new("Bike", None)
     bpy.context.scene.collection.objects.link(root)
     root.location = (x0, 0.0, 0.0)
     root.scale = (scale,) * 3
     grey = principled("bike_check", (0.35, 0.36, 0.38), rough=0.4, ao=False)
     crank = None
-    for name, pos in (("bicycle", (0, 0, 0)), ("bicycle_wheel", (0, 0.34, 0.52)), ("bicycle_wheel", (0, 0.34, -0.52)),
-                      ("bicycle_crank", RD.CRANK)):
+    for name, pos in (("bicycle_chibi", (0, 0, 0)), ("bicycle_wheel", (0, 0.34, 0.52)), ("bicycle_wheel", (0, 0.34, -0.52)),
+                      ("bicycle_chibi_crank", RD.CRANK), ("bicycle_chibi_saddle", (0, seat, RD.SEAT_Z))):
         before = set(bpy.data.objects)
         bpy.ops.import_scene.gltf(filepath=os.path.join(VEHICLE_DIR, name + ".glb"))
         new = [o for o in bpy.data.objects if o not in before]
@@ -877,7 +877,7 @@ def _import_bike(x0, scale):
             if o.type == "MESH":
                 o.data.materials.clear()
                 o.data.materials.append(grey)
-        if name == "bicycle_crank":
+        if name == "bicycle_chibi_crank":
             crank = holder
     return root, crank
 
@@ -893,7 +893,7 @@ def ride_sheet(figs, size=420):
         only_visible(figs, fig)
         reset_pose(arm)
         x0 = arm.location.x
-        bike, crank = _import_bike(x0, info["ride_scale"])
+        bike, crank = _import_bike(x0, info["ride_scale"], info["ride_seat"])
         arm.animation_data.action = bpy.data.actions[action_name]
         tiles = []
         s = info["ride_scale"]

@@ -615,6 +615,31 @@ var chibi_skort_darken: float = 0.25
 ## Radfahrer: Kopf schaut so weit zur Seite (Grad) und so schnell hin und her (Bogenmaß je Sekunde).
 var chibi_rider_glance: float = 12.0
 var chibi_rider_glance_rate: float = 0.35
+## Mimik der Passanten: Augen schauen hin und her (Wartezeit bis zum nächsten Blick, Sekunden; so weit
+## zur Seite/nach oben, -1..1), ab und zu ein anderer Ausdruck (Wartezeit, Dauer in Sekunden).
+var chibi_glance_wait: Vector2 = Vector2(0.7, 2.8)
+var chibi_glance_range: Vector2 = Vector2(0.75, 0.3)
+var chibi_mood_wait: Vector2 = Vector2(9.0, 24.0)
+var chibi_mood_time: Vector2 = Vector2(2.0, 4.5)
+## Aufmerksamkeit: Die Spielfigur schauen Passanten bis zu diesem Abstand an (Meter), andere Passanten
+## nur aus der Nähe; nur, was etwa vor ihnen ist (Winkel zur Blickrichtung, Grad; andere Passanten nur
+## enger vorn, damit Nebeneinandergehende sich nicht anstarren). Kopf dreht höchstens so weit, den Rest
+## machen die Augen.
+var chibi_look_player_radius: float = 6.0
+var chibi_look_others_radius: float = 2.6
+var chibi_look_angle: float = 100.0
+var chibi_look_others_angle: float = 60.0
+var chibi_look_max_yaw: float = 60.0
+var chibi_look_max_pitch: float = 25.0
+## Grüßen (Lächeln + dezentes Nicken), wenn jemand so nah kommt: Abstand (m), wie oft (0..1), wie lange
+## dieselbe Person nicht wieder gegrüßt wird (s), Nicken (Grad, Sekunden), Lächeln (Sekunden).
+var chibi_greet_radius: float = 3.5
+var chibi_greet_chance_player: float = 0.8
+var chibi_greet_chance_others: float = 0.4
+var chibi_greet_cooldown: float = 30.0
+var chibi_nod_angle: float = 9.0
+var chibi_nod_time: float = 0.8
+var chibi_greet_smile_time: float = 2.5
 
 
 # --- Testtasten (nur zum Ausprobieren) ---

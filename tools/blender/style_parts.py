@@ -560,11 +560,29 @@ def bike_crank(b, center, arm=0.17):
             if side > 0 else b.box((end.x - 0.1, end.y - 0.012, end.z - 0.045), (end.x - 0.005, end.y + 0.012, end.z + 0.045), BIKE_RUBBER)
 
 
+def bike_saddle(b, seat, post=0.07):
+    """Ledersattel mit Federn auf der Sattelstütze; seat = Sitzpunkt (Mitte über der Stütze), die
+    Stütze reicht post unter die Federn (lang = verstellbar, steckt im Sitzrohr)."""
+    _, sy, sz = seat
+    b.tube([V(0, sy - 0.09 - (post - 0.07), sz + 0.02), V(0, sy - 0.02, sz + 0.0)], 0.012, BIKE_CHROME, segments=6)
+    b.push(S.Matrix.Translation((0, sy + 0.015, sz)) @ S.Matrix.Diagonal((1.0, 0.45, 1.0, 1.0)))
+    b.sphere(V(0, 0, -0.02), 0.09, BIKE_SADDLE, rings=5, segments=12)
+    b.sphere(V(0, 0, 0.08), 0.045, BIKE_SADDLE, rings=4, segments=10)
+    b.pop()
+    # Sattelfedern: von der Sattelunterseite schräg zur Sattelstütze
+    for sd in (-1, 1):
+        coil = [V(sd * 0.045 * (1 - k / 10), sy + 0.004 - k * 0.009 + 0.005 * math.sin(k * 2.2), sz - 0.07 + k * 0.004)
+                for k in range(11)]
+        b.tube(coil, 0.005, BIKE_CHROME, segments=4)
+    b.tube([V(-0.045, sy + 0.004, sz - 0.07), V(0.045, sy + 0.004, sz - 0.07)], 0.005, BIKE_CHROME, segments=4)
+
+
 def bicycle(b, frame, wheel_r=0.34, wheel_z=0.52, crank=(0.36, 0.02), seat=(0.92, -0.22), bars=(1.06, 0.3),
-            wheels=True, crank_parts=True, rack=True, lamp=True, kickstand=False):
+            wheels=True, crank_parts=True, rack=True, lamp=True, kickstand=False, saddle=True):
     """Hollandrad (vorn +z, Räder auf y = 0): tiefer, geschwungener Rahmen in Farbe frame,
-    Schutzbleche, Kettenschutz, Gepäckträger, Lampe, Klingel, Ledersattel. wheels/crank_parts =
-    False: Räder bzw. Kurbel nicht mitbauen (im Spiel eigene, drehende Teile)."""
+    Schutzbleche, Kettenschutz, Gepäckträger, Lampe, Klingel, Ledersattel. wheels/crank_parts/
+    saddle = False: Räder, Kurbel bzw. Sattel nicht mitbauen (im Spiel eigene Teile: Räder und Kurbel
+    drehen sich, der Sattel wird je Fahrer eingestellt)."""
     fz, rz = wheel_z, -wheel_z
     ry = wheel_r
     cy, cz = crank
@@ -594,17 +612,8 @@ def bicycle(b, frame, wheel_r=0.34, wheel_z=0.52, crank=(0.36, 0.02), seat=(0.92
         b.cylinder(V(sd * 0.28, by + 0.02, bz - 0.2), 0.016, 0.1, BIKE_SADDLE, segments=8, axis="z", caps=(True, True))
     b.cylinder(V(0.08, by + 0.02, bz - 0.02), 0.022, 0.018, BIKE_CHROME, segments=10, caps=(False, True))
     # Sattel (Leder, Federn)
-    b.tube([V(0, sy - 0.09, sz + 0.02), V(0, sy - 0.02, sz + 0.0)], 0.012, BIKE_CHROME, segments=6)
-    b.push(S.Matrix.Translation((0, sy + 0.015, sz)) @ S.Matrix.Diagonal((1.0, 0.45, 1.0, 1.0)))
-    b.sphere(V(0, 0, -0.02), 0.09, BIKE_SADDLE, rings=5, segments=12)
-    b.sphere(V(0, 0, 0.08), 0.045, BIKE_SADDLE, rings=4, segments=10)
-    b.pop()
-    # Sattelfedern: von der Sattelunterseite schräg zur Sattelstütze
-    for sd in (-1, 1):
-        coil = [V(sd * 0.045 * (1 - k / 10), sy + 0.004 - k * 0.009 + 0.005 * math.sin(k * 2.2), sz - 0.07 + k * 0.004)
-                for k in range(11)]
-        b.tube(coil, 0.005, BIKE_CHROME, segments=4)
-    b.tube([V(-0.045, sy + 0.004, sz - 0.07), V(0.045, sy + 0.004, sz - 0.07)], 0.005, BIKE_CHROME, segments=4)
+    if saddle:
+        bike_saddle(b, (0, sy, sz))
     # Schutzbleche (Bögen über den Rädern)
     for wz, a0, a1 in ((fz, -0.2, 2.2), (rz, 0.9, 3.4)):
         arc = [V(0, ry + math.sin(a) * (ry + 0.03), wz + math.cos(a) * (ry + 0.03)) for a in [a0 + (a1 - a0) * k / 16 for k in range(17)]]

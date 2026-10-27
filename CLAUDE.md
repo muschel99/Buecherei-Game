@@ -587,11 +587,21 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   darunter Hosenrock im Haut-Shader (`lower_cloth_color`, Grenze über UV = Höhe in der Ruhelage).
   Godot zeichnet nur Vorderseiten: Umlaufsinn neuer Kleidung prüfen (Cycles zeigt beide Seiten).
   **Radfahren:** `chibi_ride.py` baut "ride" selbst (eine Kurbelumdrehung, `FRAMES` Bilder; Hüfte
-  auf den Sattel, Zwei-Glieder-IK für Knie/Ellbogen, Finger außen und Daumen innen um die Griffe
-  (`HAND_DIR`, `THUMB_DIRS`); Hollandrad je Figur um
-  `ride_scale` verkleinert, Extras) → `ChibiCyclistModel` (cyclist.tscn): Fahrrad × ride_scale, Figur
-  folgt der Kurbel (`ChibiPasserbyModel.pose_ride` = seek); Kurbel 0 = Seite x < 0 vorn, vorwärts =
+  auf den Sattel, Zwei-Glieder-IK für Knie/Ellbogen; `solve_setup` je Figur: Rahmengröße nach
+  Beinlänge `ride_scale`, Sattelhöhe `ride_seat` (Bein am unteren Pedal `LEG_REACH`), Oberkörper-
+  Neigung (Arme `ARM_REACH`); Hand = gerade Verlängerung des Unterarms, Handrücken außen, Finger unten
+  herum nach innen, Daumen oben herum nach innen (`THUMB_DIRS` im Handrahmen), Ellbogen hängen nach
+  unten) → Extras → `ChibiCyclistModel` (cyclist.tscn): Chibi-Rad aus `build_vehicles.CHIBI_BIKE`
+  (Rahmen `bicycle_chibi`, Sattel mit langer Stütze und kurze Kurbel als eigene .glb; Maße wie
+  chibi_ride), Rad × ride_scale, Sattel auf ride_seat, Figur folgt der Kurbel
+  (`ChibiPasserbyModel.pose_ride` = seek); Kurbel 0 = Seite x < 0 vorn, vorwärts =
   `Basis(RIGHT, +Winkel)` wie die Räder. Kontrollbild `--views=ride`.
+  **Mimik:** `ChibiPasserbyModel._update_face`: Grundausdruck NEUTRAL (Augen offen), Ausdrücke mit
+  offenen Augen kurz zwischendurch (`IDLE_MOODS`, Schaufenster `BROWSE_MOODS`), Augen über `look`
+  (Setter setzt nur den Shader-Wert); `_scan_focus` (alle 0,3 s): Kamera = Spielfigur hat Vorrang
+  (Radius/Winkel, Sichtstrahl gegen world/sight_blocker, `see_through` zählt nicht), sonst andere
+  Chibi-Figuren eng vorn (`_everyone`); Kopf über `ChibiHeadModifier`, Rest die Augen; Grüßen =
+  `GREET_MOODS` + Nicken (`_nod_pitch`), je Person höchstens alle `chibi_greet_cooldown` Sekunden.
   **Kleidung/Frisuren** (`chibi_outfit.py`, `build_chibi.build_outfit`): jede Figur enthält alle Stücke
   als eigene Netze „Cloth_<name>“/„Hair_<name>“ (Material cloth_…/hair_…); `ChibiCharacter` blendet ein
   (top/bottom/shoes/hair + Farben als Instanz-Werte, Shader `chibi_cloth`/`chibi_hair`). Kleidung =

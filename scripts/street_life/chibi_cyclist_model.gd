@@ -1,29 +1,34 @@
 class_name ChibiCyclistModel
 extends Node3D
-## Radfahrerin oder Radfahrer als Chibi-Figur (seit Etappe 5c): das Hollandrad (Stil-Modell wie
-## beim CyclistPlaceholder, Räder und Kurbel drehen sich), passend zur Figur verkleinert
-## (ChibiPasserbyModel.ride_scale), darauf eine zufällig eingekleidete Chibi-Figur. Sie tritt mit
-## der Animation "ride" (tools/blender/chibi_ride.py) genau im Takt der Kurbel. Dieselbe
-## Schnittstelle wie CyclistPlaceholder (StreetVehicle ruft build, animate, set_shadows).
-## Vorderseite nach +Z, Räder auf y = 0.
+## Radfahrerin oder Radfahrer als Chibi-Figur (seit Etappe 5c): das Chibi-Hollandrad
+## (tools/blender/build_vehicles.py: Rahmen bicycle_chibi, Sattel und Kurbel als eigene Teile; Räder
+## und Kurbel drehen sich), eingestellt wie ein echtes Rad für die Figur: Rahmengröße
+## (ChibiPasserbyModel.ride_scale) und Sattelhöhe (ride_seat). Darauf eine zufällig eingekleidete
+## Chibi-Figur; sie tritt mit der Animation "ride" (tools/blender/chibi_ride.py) genau im Takt der
+## Kurbel. Dieselbe Schnittstelle wie CyclistPlaceholder (StreetVehicle ruft build, animate,
+## set_shadows). Vorderseite nach +Z, Räder auf y = 0.
 
-## Hollandrad in echter Größe (wie CyclistPlaceholder): Radius, Achsen vorn/hinten, Kurbel
+## Hollandrad in voller Größe (wie chibi_ride.py): Radius, Achsen vorn/hinten, Kurbel, Sitzpunkt
 const WHEEL := 0.34
 const WHEEL_Z := 0.52
 const CRANK := Vector3(0.0, 0.36, 0.02)
+const SEAT_Z := -0.22
 ## Übersetzung: so viele Radumdrehungen je Kurbelumdrehung
 const GEAR := 2.4
-## Fahrrad-Größe, falls die Figur keine Radfahr-Animation hat
-const FALLBACK_SCALE := 0.7
+## Rahmengröße und Sitzpunkt, falls die Figur keine Radfahr-Animation hat
+const FALLBACK_SCALE := 0.88
+const FALLBACK_SEAT := 0.8
 
-const BIKE_SCENE := preload("res://assets/models/vehicles/bicycle.glb")
+const BIKE_SCENE := preload("res://assets/models/vehicles/bicycle_chibi.glb")
+const SADDLE_SCENE := preload("res://assets/models/vehicles/bicycle_chibi_saddle.glb")
 const WHEEL_SCENE := preload("res://assets/models/vehicles/bicycle_wheel.glb")
-const CRANK_SCENE := preload("res://assets/models/vehicles/bicycle_crank.glb")
+const CRANK_SCENE := preload("res://assets/models/vehicles/bicycle_chibi_crank.glb")
 
 var _rider: ChibiPasserbyModel
 var _bike: Node3D
 var _wheels: Array[Node3D] = []
 var _crank_node: Node3D
+var _saddle: Node3D
 var _crank := 0.0
 var _roll := 0.0
 var _scale := FALLBACK_SCALE
@@ -47,7 +52,6 @@ func build(rng: RandomNumberGenerator, color: Color) -> void:
 	_bike = Node3D.new()
 	_bike.name = "Bike"
 	add_child(_bike)
-	_fit_bike()
 	var frame := BIKE_SCENE.instantiate() as Node3D
 	frame.name = "Bicycle"
 	_bike.add_child(frame)
@@ -61,6 +65,8 @@ func build(rng: RandomNumberGenerator, color: Color) -> void:
 	_crank_node = CRANK_SCENE.instantiate() as Node3D
 	_crank_node.position = CRANK
 	_bike.add_child(_crank_node)
+	_saddle = SADDLE_SCENE.instantiate() as Node3D
+	_bike.add_child(_saddle)
 	if rng.randf() < 0.5:
 		# Korb vorn auf dem Gepäckträger
 		var shapes := StreetShapes.new()
@@ -69,15 +75,20 @@ func build(rng: RandomNumberGenerator, color: Color) -> void:
 		basket.name = "Basket"
 		basket.mesh = shapes.commit()
 		_bike.add_child(basket)
+	_fit_bike()
 	_crank = rng.randf() * TAU
 	animate(0.0, 0.0)
 
 
-## Fahrrad auf die Größe der Figur bringen (die kennt sie erst, wenn ihr Modell geladen ist).
+## Fahrrad für die Figur einstellen: Rahmengröße und Sattelhöhe (die kennt sie erst, wenn ihr
+## Modell geladen ist).
 func _fit_bike() -> void:
 	_scale = _rider.ride_scale if _rider.ride_scale > 0.0 else FALLBACK_SCALE
 	if not is_equal_approx(_bike.scale.x, _scale):
 		_bike.scale = Vector3.ONE * _scale
+	var seat := _rider.ride_seat if _rider.ride_seat > 0.0 else FALLBACK_SEAT
+	if _saddle and not is_equal_approx(_saddle.position.y, seat):
+		_saddle.position = Vector3(0.0, seat, SEAT_Z)
 
 
 ## Treten: Räder und Kurbel drehen sich passend zum Tempo, die Figur folgt der Kurbel.

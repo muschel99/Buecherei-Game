@@ -167,7 +167,8 @@ const FACE_DIR := "res://assets/textures/characters/chibi_face/"
 @export var look: Vector2 = Vector2.ZERO:
 	set(value):
 		look = value
-		_apply_face()
+		if _body:
+			_body.set_instance_shader_parameter("look", look)
 ## Augen unabhängig vom Ausdruck (-1 = vom Ausdruck, sonst Nummer in EYE_FRAMES).
 @export_range(-1, 11) var eyes_override: int = -1:
 	set(value):

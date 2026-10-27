@@ -10,6 +10,9 @@ extends ChibiCharacter
 ## ruft randomize_look, animate, set_shadows; sit_height = Höhe der Sitzfläche; sit_front und
 ## sit_time = Weg und Dauer des Hinsetzens, passend zur Animation). Auf dem Fahrrad
 ## (ChibiCyclistModel): pose_ride mit der Animation "ride" (tools/blender/chibi_ride.py).
+## Mimik: Grundausdruck neutral mit offenen Augen, die Augen schauen hin und her, ab und zu ein
+## anderer Ausdruck (vor dem Schaufenster öfter); die Spielfigur und andere Passanten in der Nähe
+## werden angeschaut und manchmal mit Lächeln und dezentem Nicken gegrüßt (Werte in GameConfig).
 
 ## Meter je Doppelschritt bei 0,55 m Beinlänge (so passen die Schritte zum Tempo)
 const STRIDE := 0.95
@@ -25,15 +28,25 @@ const SIT_THIGH := 0.062
 const BLEND := 0.3
 ## Animationen, die sich wiederholen.
 const LOOPS: Array[StringName] = [&"walk", &"idle", &"idle_2", &"sit_idle", &"ride"]
+## Ausdrücke mit offenen Augen: ab und zu zwischendurch, vor dem Schaufenster, beim Grüßen.
+const IDLE_MOODS: Array[Mood] = [Mood.HAPPY, Mood.GRIN, Mood.THINKING, Mood.HAPPY]
+const BROWSE_MOODS: Array[Mood] = [Mood.EXCITED, Mood.HAPPY, Mood.LOVE, Mood.THINKING, Mood.SURPRISED]
+const GREET_MOODS: Array[Mood] = [Mood.HAPPY, Mood.GRIN]
+## Physik-Ebenen, die den Blick verdecken (world, sight_blocker).
+const SIGHT_MASK := 1 | 128
+
+## Alle Chibi-Figuren auf der Straße (für Blicke und Grüße untereinander).
+static var _everyone: Array[ChibiPasserbyModel] = []
 
 ## Höhe der Sitzfläche beim Sitzen (Meter; setzt Passerby).
 var sit_height := 0.45
 ## Weg (m) und Dauer (s) des Hinsetzens laut Animation (0 = Passerby nimmt eigene Werte).
 var sit_front := 0.0
 var sit_time := 0.0
-## Fahrrad passend zu dieser Figur: so viel kleiner als das Hollandrad in echter Größe (aus der
-## Animation "ride"; 0 = Figur ohne Radfahr-Animation).
+## Fahrrad passend zu dieser Figur (aus der Animation "ride"; 0 = Figur ohne Radfahr-Animation):
+## Rahmengröße gegenüber dem Hollandrad in voller Größe und Höhe des Sitzpunkts (volle Größe).
 var ride_scale := 0.0
+var ride_seat := 0.0
 
 var _player: AnimationPlayer
 var _head_modifier: ChibiHeadModifier
@@ -52,6 +65,23 @@ var _sit := 0.0
 var _time := 0.0
 var _head_yaw := 0.0
 var _head_pitch := 0.0
+var _head_bone := -1
+## Mimik: Restzeit des anderen Ausdrucks (0 = Grundausdruck), Wartezeit bis zum nächsten
+var _mood_left := 0.0
+var _mood_wait := 10.0
+var _was_browsing := false
+## Augen: jetzige Richtung, Ziel des Hin-und-her-Schauens
+var _eyes := Vector2.ZERO
+var _glance := Vector2.ZERO
+var _glance_wait := 1.0
+## Wen die Figur anschaut (Kamera der Spielfigur oder eine andere Chibi-Figur) und Kopfdrehung dorthin
+var _focus: Node3D
+var _focus_turn := Vector2.ZERO
+var _scan_wait := 0.0
+## Wem schon zugenickt wurde (instance_id → Zeit), Nicken läuft seit
+var _greeted := {}
+var _nod_t := -1.0
+var _nod_pitch := 0.0
 var _hip_height := 0.6
 var _leg_length := LEG_REFERENCE
 
@@ -77,7 +107,10 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 	top_color = _pick(rng, GameConfig.chibi_top_colors)
 	bottom_color = _pick(rng, GameConfig.chibi_bottom_colors)
 	shoe_color = _pick(rng, GameConfig.chibi_shoe_colors)
-	mood = [Mood.NEUTRAL, Mood.NEUTRAL, Mood.HAPPY, Mood.CONTENT][rng.randi_range(0, 3)]
+	# Grundausdruck neutral (Augen offen – so läuft und fährt man); andere Ausdrücke kommen ab und zu
+	mood = Mood.NEUTRAL
+	_mood_left = 0.0
+	_mood_wait = rng.randf_range(GameConfig.chibi_mood_wait.x, GameConfig.chibi_mood_wait.y)
 	_measure()
 
 
@@ -110,7 +143,9 @@ func _rebuild() -> void:
 		sit_front = float(info.get("sit_down_shift", 0.0))
 		sit_time = float(info.get("sit_down_time", 0.0))
 		ride_scale = float(info.get("ride_scale", 0.0))
+		ride_seat = float(info.get("ride_seat", 0.0))
 		_player.play(&"idle")
+	_head_bone = _skeleton.find_bone("Head") if _skeleton else -1
 	if _skeleton:
 		_head_modifier = ChibiHeadModifier.new()
 		_head_modifier.name = "HeadModifier"
@@ -120,6 +155,22 @@ func _rebuild() -> void:
 	_seated = 0.0
 	if not visibility_changed.is_connected(_on_visibility_changed):
 		visibility_changed.connect(_on_visibility_changed)
+
+
+func _enter_tree() -> void:
+	if not Engine.is_editor_hint() and not _everyone.has(self):
+		_everyone.append(self)
+
+
+func _exit_tree() -> void:
+	_everyone.erase(self)
+
+
+## Augenhöhe der Figur (Welt).
+func eye_point() -> Vector3:
+	if _skeleton and _head_bone >= 0:
+		return _skeleton.global_transform * (_skeleton.get_bone_global_pose(_head_bone).origin + Vector3(0.0, 0.09, 0.0))
+	return global_position + Vector3.UP
 
 
 ## Unsichtbare Passanten (im Vorrat) rechnen keine Animation.
@@ -248,11 +299,16 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 	elif state == &"browse":
 		target_yaw = sin(_time * 0.5) * 14.0
 		target_pitch = 10.0
+	# Wer in der Nähe ist, wird angeschaut (hat Vorrang vor dem Umschauen)
+	_update_face(state, delta, GameConfig.chibi_look_max_yaw)
+	if _focus:
+		target_yaw = _focus_turn.x
+		target_pitch = _focus_turn.y
 	_head_yaw = lerpf(_head_yaw, target_yaw, minf(1.0, delta * 5.0))
 	_head_pitch = lerpf(_head_pitch, target_pitch, minf(1.0, delta * 3.0))
 	if _head_modifier:
 		_head_modifier.yaw = _head_yaw
-		_head_modifier.pitch = _head_pitch
+		_head_modifier.pitch = _head_pitch + _nod_pitch
 	# Sitzen: Figur auf die Höhe der Sitzfläche heben (die Animation sitzt auf ihrer eigenen Höhe)
 	_model.position.y = (sit_height - _sit_seat) * _seated
 
@@ -268,9 +324,16 @@ func pose_ride(crank: float, delta: float) -> void:
 		_player.play(&"ride")
 	_player.speed_scale = 0.0
 	_player.seek(fposmod(crank / TAU, 1.0) * _player.get_animation(&"ride").length, true)
+	# Kopf schaut ab und zu zur Seite – oder zu dem, der in der Nähe ist (weniger weit als zu Fuß)
+	_update_face(&"ride", delta, GameConfig.chibi_look_max_yaw * 0.7)
+	var target := Vector2(sin(_time * GameConfig.chibi_rider_glance_rate) * GameConfig.chibi_rider_glance, 0.0)
+	if _focus:
+		target = _focus_turn
+	_head_yaw = lerpf(_head_yaw, target.x, minf(1.0, delta * 5.0))
+	_head_pitch = lerpf(_head_pitch, target.y, minf(1.0, delta * 3.0))
 	if _head_modifier:
-		_head_modifier.yaw = sin(_time * GameConfig.chibi_rider_glance_rate) * GameConfig.chibi_rider_glance
-		_head_modifier.pitch = 0.0
+		_head_modifier.yaw = _head_yaw
+		_head_modifier.pitch = _head_pitch + _nod_pitch
 	_model.position.y = 0.0
 
 
@@ -279,3 +342,127 @@ func _start_transition(clip: StringName) -> void:
 		_transition = clip
 		_transition_t = 0.0
 		_player.play(clip, BLEND)
+
+
+## Mimik und Blick je Bild: Ausdruck zurück zum Grundausdruck oder ab und zu ein anderer, Augen
+## schauen hin und her; wer in der Nähe ist, wird angeschaut (_focus, Kopfdrehung _focus_turn, den
+## Rest machen die Augen) und manchmal gegrüßt (Lächeln + Nicken, _nod_pitch).
+func _update_face(state: StringName, delta: float, max_yaw: float) -> void:
+	if _mood_left > 0.0:
+		_mood_left -= delta
+		if _mood_left <= 0.0:
+			mood = Mood.NEUTRAL
+	var browsing := state == &"browse"
+	if browsing and not _was_browsing:
+		_mood_wait = randf_range(0.8, 2.0)  # vor dem Schaufenster bald ein Ausdruck
+	_was_browsing = browsing
+	_mood_wait -= delta
+	if _mood_wait <= 0.0 and _mood_left <= 0.0:
+		var pool := BROWSE_MOODS if browsing else IDLE_MOODS
+		_show_mood(pool[randi() % pool.size()], randf_range(GameConfig.chibi_mood_time.x, GameConfig.chibi_mood_time.y))
+		_mood_wait = randf_range(2.5, 6.0) if browsing else randf_range(GameConfig.chibi_mood_wait.x, GameConfig.chibi_mood_wait.y)
+	# Wen anschauen? (nicht jedes Bild)
+	_scan_wait -= delta
+	if _scan_wait <= 0.0:
+		_scan_wait = randf_range(0.25, 0.4)
+		_scan_focus()
+	var eyes_target := _glance
+	if _focus:
+		var d := global_transform.basis.inverse() * (_focus_point() - eye_point())
+		var yaw := rad_to_deg(atan2(d.x, d.z))
+		var pitch := -rad_to_deg(atan2(d.y, Vector2(d.x, d.z).length()))
+		_focus_turn = Vector2(clampf(yaw, -max_yaw, max_yaw),
+			clampf(pitch, -GameConfig.chibi_look_max_pitch, GameConfig.chibi_look_max_pitch))
+		eyes_target = Vector2(clampf((yaw - _head_yaw) / 30.0, -1.0, 1.0), clampf(-(pitch - _head_pitch) / 20.0, -1.0, 1.0))
+	else:
+		_glance_wait -= delta
+		if _glance_wait <= 0.0:
+			_glance_wait = randf_range(GameConfig.chibi_glance_wait.x, GameConfig.chibi_glance_wait.y)
+			var r := GameConfig.chibi_glance_range
+			# öfter wieder geradeaus
+			_glance = Vector2.ZERO if randf() < 0.35 else Vector2(randf_range(-r.x, r.x), randf_range(-r.y, r.y))
+		eyes_target = _glance
+	# Augen springen schnell zum neuen Ziel
+	_eyes = _eyes.lerp(eyes_target, minf(1.0, delta * 14.0))
+	if _eyes.distance_to(look) > 0.01:
+		look = _eyes
+	# dezentes Nicken: einmal kurz nach unten und zurück
+	_nod_pitch = 0.0
+	if _nod_t >= 0.0:
+		_nod_t += delta
+		var t := _nod_t / GameConfig.chibi_nod_time
+		if t >= 1.0:
+			_nod_t = -1.0
+		else:
+			_nod_pitch = sin(PI * t) * GameConfig.chibi_nod_angle
+
+
+func _show_mood(new_mood: Mood, duration: float) -> void:
+	mood = new_mood
+	_mood_left = duration
+
+
+## Wer ist am interessantesten? Die Spielfigur (Kamera) immer zuerst, sonst die nächste andere Figur,
+## die vor einem ist (nicht direkt daneben – wer nebeneinander geht, starrt sich nicht an); nur, was
+## nicht verdeckt ist. Beim ersten Nahekommen vielleicht grüßen.
+func _scan_focus() -> void:
+	var me := eye_point()
+	var forward := global_transform.basis.z
+	forward.y = 0.0
+	forward = forward.normalized()
+	var best: Node3D = null
+	var best_dist := INF
+	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
+	if camera:
+		var dist := _focus_distance(me, forward, camera.global_position, GameConfig.chibi_look_player_radius,
+			GameConfig.chibi_look_angle)
+		if dist < INF and _line_clear(me, camera.global_position):
+			best = camera
+			best_dist = dist
+	if best == null:
+		for other in _everyone:
+			if other == self or not other.is_visible_in_tree():
+				continue
+			var dist := _focus_distance(me, forward, other.eye_point(), GameConfig.chibi_look_others_radius,
+				GameConfig.chibi_look_others_angle)
+			if dist < best_dist:
+				best = other
+				best_dist = dist
+	_focus = best
+	if best == null or best_dist > GameConfig.chibi_greet_radius:
+		return
+	var id := best.get_instance_id()
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - float(_greeted.get(id, -INF)) < GameConfig.chibi_greet_cooldown:
+		return
+	_greeted[id] = now
+	var chance := GameConfig.chibi_greet_chance_player if best == camera else GameConfig.chibi_greet_chance_others
+	if randf() < chance:
+		_show_mood(GREET_MOODS[randi() % GREET_MOODS.size()], GameConfig.chibi_greet_smile_time)
+		_nod_t = 0.0
+
+
+## Abstand zu einem Punkt, wenn er nah genug und etwa vor der Figur ist (höchstens angle Grad
+## neben der Blickrichtung; sonst INF).
+func _focus_distance(me: Vector3, forward: Vector3, point: Vector3, radius: float, angle: float) -> float:
+	var d := point - me
+	var dist := d.length()
+	if dist > radius or dist < 0.2:
+		return INF
+	var flat := Vector3(d.x, 0.0, d.z).normalized()
+	if rad_to_deg(forward.angle_to(flat)) > angle:
+		return INF
+	return dist
+
+
+func _focus_point() -> Vector3:
+	if _focus is ChibiPasserbyModel:
+		return (_focus as ChibiPasserbyModel).eye_point()
+	return _focus.global_position
+
+
+## Sieht man von a nach b? (Häuser und Mauern verdecken, Glas mit Metadaten "see_through" nicht)
+func _line_clear(a: Vector3, b: Vector3) -> bool:
+	var query := PhysicsRayQueryParameters3D.create(a, b, SIGHT_MASK)
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return hit.is_empty() or (hit.collider as Object).has_meta("see_through")

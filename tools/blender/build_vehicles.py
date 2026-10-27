@@ -803,6 +803,30 @@ def build_bicycle(full=False):
     return b, dict(length=1.8, wheels=[], hw=[(0, 0.3), (0, 0.3)])
 
 
+# Hollandrad der Chibi-Radfahrer (seit Etappe 5c): tieferes Sitzrohr, Sattel als eigenes Teil (je
+# Fahrer eingestellt), kürzere Kurbeln (kurze Beine); Maße wie chibi_ride.py (SEAT_FRAME, CRANK_ARM)
+CHIBI_BIKE = dict(seat=(0.68, -0.22), crank_arm=0.13, saddle_post=0.40)
+
+
+def build_bicycle_chibi():
+    b = S.Builder("bicycle_chibi")
+    P.bicycle(b, PAINT, seat=CHIBI_BIKE["seat"], wheels=False, crank_parts=False, saddle=False)
+    return b
+
+
+def build_bicycle_chibi_saddle():
+    """Sattel mit langer Stütze; Ursprung = Sitzpunkt (im Spiel je Fahrer in der Höhe verschoben)."""
+    b = S.Builder("bicycle_chibi_saddle")
+    P.bike_saddle(b, (0, 0, 0), post=CHIBI_BIKE["saddle_post"])
+    return b
+
+
+def build_bicycle_chibi_crank():
+    b = S.Builder("bicycle_chibi_crank")
+    P.bike_crank(b, (0, 0, 0), arm=CHIBI_BIKE["crank_arm"])
+    return b
+
+
 def build_bicycle_wheel():
     b = S.Builder("bicycle_wheel")
     P.bike_wheel(b, (0, 0, 0), BIKE["wheel_r"])
@@ -878,6 +902,9 @@ def export(name):
         save(build_bicycle()[0], "bicycle")
         save(build_bicycle_wheel(), "bicycle_wheel")
         save(build_bicycle_crank(), "bicycle_crank")
+        save(build_bicycle_chibi(), "bicycle_chibi")
+        save(build_bicycle_chibi_saddle(), "bicycle_chibi_saddle")
+        save(build_bicycle_chibi_crank(), "bicycle_chibi_crank")
         return
     b, spec = CARS[name]()
     signs = None

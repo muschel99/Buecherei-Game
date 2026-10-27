@@ -807,6 +807,13 @@ Gesicht: `chibi_face.py`).
   `GameConfig.passerby_scenes`). Jeder Passant bekommt zufällig Körper, Haut, Augen, Frisur,
   Kleidung und Farben und bewegt sich mit den Mixamo-Animationen (siehe unten). Die alten
   Platzhalter: `res://scenes/street_life/passerby.tscn` wieder in die Liste schreiben.
+- **Mimik der Passanten (seit Etappe 5c):** Grundausdruck neutral mit offenen Augen (so läuft
+  und fährt man). Die Augen schauen hin und her, ab und zu wechselt der Ausdruck kurz (vor dem
+  Schaufenster öfter: begeistert, verliebt, nachdenklich …). Kommt die Spielfigur näher (bis 6 m,
+  etwa vor dem Passanten, nicht hinter einer Wand), schaut er sie an – Kopf und Augen – und grüßt
+  meist mit einem Lächeln und einem ganz leichten Nicken. Begegnen sich zwei Passanten, schauen
+  sie sich an und grüßen sich manchmal genauso. Alle Werte in `GameConfig` (`chibi_glance_…`,
+  `chibi_mood_…`, `chibi_look_…`, `chibi_greet_…`, `chibi_nod_…`).
 - **Animationen in den Figuren (seit Etappe 5c):** Jede Figur-.glb enthält sechs Animationen:
   `walk`, `idle`, `idle_2` (Schaufenster), `sit_down`, `sit_idle`, `stand_up`. Die Mixamo-Dateien
   dazu liegen in `assets/models/characters/animations/<name>.fbx` (gleiche Namen); `build_chibi.py`
@@ -918,14 +925,18 @@ großes V vorn, geteilte Frontscheibe, Dachträger mit Paketen) und das **Hollan
   Bild öffnen, darüber malen oder ein neues im gleichen Seitenverhältnis anlegen, unter
   **genau demselben Namen** speichern – Godot lädt es von selbst.
 - **Radfahrer (seit Etappe 5c):** `cyclist.tscn` zeigt eine zufällig eingekleidete Chibi-Figur
-  auf dem Hollandrad (`ChibiCyclistModel`). Das Rad ist für jede Figur passend verkleinert (kurze
-  Chibi-Beine: am unteren Pedal ist das Bein fast gestreckt), die Figur tritt genau im Takt der
+  auf dem Chibi-Hollandrad (`ChibiCyclistModel`; Rahmen `bicycle_chibi.glb` mit tiefem Sitzrohr,
+  Sattel `bicycle_chibi_saddle.glb` und Kurbel `bicycle_chibi_crank.glb` als eigene Teile). Das Rad
+  ist für jede Figur eingestellt wie ein echtes Rad: Rahmengröße nach der Beinlänge (0,8 bis 1,0 vom
+  Hollandrad), Sattelhöhe so, dass das Bein am unteren Pedal fast gestreckt ist, und der Oberkörper
+  neigt sich so weit, dass die Arme bequem zum Lenker reichen. Die Figur tritt genau im Takt der
   Kurbel vorwärts (Bewegung „ride“ in jeder Figur, gebaut von `tools/blender/chibi_ride.py`: eine
-  Kurbelumdrehung, Knie und Ellbogen über IK, Finger außen und Daumen innen um die Griffe;
-  Einstellungen oben im Script).
-  Kontrollbild: `build_chibi.py -- --only=female_medium,male_medium --render --views=ride`. Den alten
-  Platzhalter-Radfahrer bekommst du zurück, indem du in `cyclist.tscn` beim Knoten **Model** das
-  Script `res://scripts/street_life/cyclist_placeholder.gd` einträgst.
+  Kurbelumdrehung, Knie und Ellbogen über IK). **Hand am Griff:** gerade Verlängerung des Unterarms,
+  Handrücken nach außen, die Finger umschließen den Griff unten herum nach innen, der Daumen oben
+  herum nach innen, der kleine Finger ist hinten (am nächsten zum Körper). Einstellungen oben in
+  `chibi_ride.py`. Kontrollbild: `build_chibi.py -- --only=female_medium,male_medium --render
+  --views=ride`. Den alten Platzhalter-Radfahrer bekommst du zurück, indem du in `cyclist.tscn` beim
+  Knoten **Model** das Script `res://scripts/street_life/cyclist_placeholder.gd` einträgst.
 - **Paketanimation:** unverändert; die Schiebetür heißt im Modell **Door** und gleitet beim
   Ausladen um **Door Slide** nach hinten, die Kartons hüpfen aus der Mitte der Öffnung
   (**Door Point** am Knoten **DeliveryVan**).
