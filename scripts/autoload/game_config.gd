@@ -260,6 +260,10 @@ var passerby_alley_chance: float = 0.07
 ## eine Weile auf die runde Bank unter dem Baum setzt (seit Etappe 4g) – und wie lange (Sekunden).
 var passerby_garden_chance: float = 0.06
 var passerby_garden_time: Vector2 = Vector2(20.0, 50.0)
+## Bänke an der Straße und Stühle vor dem Pub (StreetSeat, seit Etappe 5c): wie oft sich jemand, der
+## daran vorbeikommt, hinsetzt – und wie lange (Sekunden).
+var passerby_seat_chance: float = 0.18
+var passerby_seat_time: Vector2 = Vector2(15.0, 40.0)
 ## Vor den Schaufenstern dieser Haustypen bleiben Passanten stehen (dazu die Punkte unter
 ## "Outside/StreetLife/WindowSpots" in der Hauptszene, z. B. vor dem Fenster der Bücherei).
 var passerby_window_house_types: Array[String] = ["fashion_shop", "pub"]

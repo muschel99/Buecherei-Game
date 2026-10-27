@@ -362,7 +362,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Bücherei-Seite (`Street.lamp_positions`). Passanten erscheinen nur außerhalb der Reichweite
   der Spielfigur (Straßenenden hinter den Grenzen, Tür hinter den Bögen der Gasse gegenüber);
   Sitzplätze für Passanten: SeatPoint in Gruppe `StreetLife.SEAT_GROUP` mit Metadaten
-  "approach"/"face" (Bank im Garten, `Alley`), Schritt "sit" im Passerby. Boden-/Wand-Shader `ground_style.gdshader`: `stone_tint` färbt nur
+  "approach"/"face" (Bank im Garten, `Alley`), Schritt "sit" im Passerby. Seit 5c an der Straße:
+  `StreetSeat` (erbt SeatPoint, `approach` lokal, `front`) – Parkbänke `scenes/world/street_bench.tscn`
+  unter Outside/Benches (Modell aus build_storybook_props.py, StreetObstacle-Kreise, beim Hinsetzen
+  zählen feste Hindernisse nicht) und die Pub-Stühle ("SeatChair…" in pub.tscn); `_plan_walker`
+  plant sie wie Schaufenster (`passerby_seat_chance`), Garten-Bank nur über `_free_seat`. Boden-/Wand-Shader `ground_style.gdshader`: `stone_tint` färbt nur
   einfärbbare Stellen (Ziegel), `tint` die ganze Fläche.
   **Schilder = Bilder der Entwicklerin:** Schild-Flächen mit `Mat(..., sign="name")` und
   `poly(..., uvs=…)` (0..1) → glb-Material `sign_<name>` → `assets/materials/signs/<typ>_<name>.tres`

@@ -11,6 +11,8 @@
 ; "StreetLife" (seit Etappe 5a): Passanten, Fahrräder, Autos und Lieferwagen; die Punkte unter
 ; "WindowSpots" sind Stellen vor Schaufenstern, an denen Passanten stehen bleiben (Blickrichtung
 ; = -Z des Punkts, also der blaue Pfeil zeigt vom Fenster weg).
+; "Benches" (seit Etappe 5c): Parkbänke (scenes/world/street_bench.tscn) – verschieben oder mit
+; Strg+D verdoppeln; Passanten setzen sich von selbst darauf (wie auf die Stühle vor dem Pub).
 ; "EntranceSteps" (Podest mit Stufen vor der Tür) liegt auf Höhe des Ladenbodens.
 ; Über dem Laden: "UpperFloors" legt die Geschoss-Knoten an (Floor1 …, Anzahl und Höhe in GameConfig);
 ; Hülle, Dach und Sockel zeigt seit dem Stil-Umbau das Fassaden-Modell im Raum (library_facade.glb).
@@ -42,6 +44,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/opposite_alley.tscn" id="31_opposite_alley"]
 [ext_resource type="Script" path="res://scripts/street_life/street_life.gd" id="32_street_life"]
 [ext_resource type="Script" path="res://scripts/world/greenery.gd" id="33_greenery"]
+[ext_resource type="PackedScene" path="res://scenes/world/street_bench.tscn" id="34_bench"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -115,6 +118,17 @@ script = ExtResource("33_greenery")
 [node name="Alley" parent="Outside" instance=ExtResource("29_alley")]
 
 [node name="OppositeAlley" parent="Outside" instance=ExtResource("31_opposite_alley")]
+
+[node name="Benches" type="Node3D" parent="Outside"]
+
+[node name="BenchLibraryRow" parent="Outside/Benches" instance=ExtResource("34_bench")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 12.4, 0, -4.58)
+
+[node name="BenchOppositeWest" parent="Outside/Benches" instance=ExtResource("34_bench")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.9, 0, -13.62)
+
+[node name="BenchOppositeEast" parent="Outside/Benches" instance=ExtResource("34_bench")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.6, 0, -13.62)
 
 [node name="StreetLife" type="Node3D" parent="Outside"]
 script = ExtResource("32_street_life")

@@ -1006,6 +1006,14 @@ Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi
 - [x] Radfahrer als Chibi-Figuren: eigene Bewegung „ride“ (`chibi_ride.py`, eine Kurbelumdrehung,
       IK für Knie und Ellbogen), Hollandrad je Figur verkleinert, Bewegung im Takt der Kurbel
       (`ChibiCyclistModel`)
+- [x] Größere Fahrräder (eigenes Chibi-Hollandrad, je Figur eingestellt: Rahmen, Sattelhöhe,
+      Oberkörper), Hand am Griff als gerade Verlängerung des Unterarms
+- [x] Mimik: Grundausdruck neutral mit offenen Augen, Augen schauen hin und her, Ausdrücke wechseln
+      ab und zu (vor Schaufenstern öfter); die Spielfigur wird angeschaut und mit Lächeln und
+      leichtem Nicken gegrüßt, Passanten grüßen sich auch untereinander
+- [x] Mehr Sitzplätze: drei Parkbänke an der Straße, die Stühle vor dem Pub
+- [ ] Passanten zusammen: nebeneinander gehen und sich unterhalten, zusammen sitzen und reden
+- [ ] Mehr Alltag: jemand läuft hin und her und schaut aufs Handy, wartet, telefoniert …
 - [ ] Mehr Kleidung und Frisuren
 
 ## Etappe 6 – Wirtschaft und Tagesablauf

@@ -465,7 +465,8 @@ func _step_stand(delta: float) -> void:
 func _step_sit(delta: float) -> void:
 	var spot: Vector2 = _action.spot
 	var face: Vector2 = _action.face
-	var front := spot + face * _sit_value("sit_front", SIT_FRONT) * scale.x
+	# so weit vor dem Sitz hinstellen (vor einem Tisch weniger, Angabe des Sitzplatzes)
+	var front := spot + face * float(_action.get("front", _sit_value("sit_front", SIT_FRONT))) * scale.x
 	var sit_time := _sit_value("sit_time", SIT_TIME)
 	_phase_time += delta
 	_anim_speed = 0.0

@@ -92,6 +92,8 @@ var _library_s := 0.0
 var _garden_s := 0.0
 var _hidden := Vector2.ZERO  # s bis zur Grenze am geraden Ende, s ab der Grenze im Torbogen
 var _seats: Array[SeatPoint] = []
+## Sitzplätze an der Straße (StreetSeat): { "seat", "pos", "approach", "face", "height", "front", "s", "side" }
+var _street_seats: Array[Dictionary] = []
 var _crossing := Vector2.ZERO
 var _lod_timer := 0.0
 var _started := false
@@ -123,8 +125,11 @@ func _start() -> void:
 	_collect_windows()
 	_collect_static_obstacles()
 	_seats.clear()
+	_street_seats.clear()
 	for seat: SeatPoint in get_tree().get_nodes_in_group(SEAT_GROUP):
 		_seats.append(seat)
+		if seat is StreetSeat:
+			_add_street_seat(seat as StreetSeat)
 	_started = true
 	if GameConfig.street_life_enabled:
 		_fill_street()
@@ -283,6 +288,18 @@ func _collect_windows() -> void:
 		var out := Vector2(front.x, front.z).normalized()
 		var spread := maxf(0.0, float(house.get("width")) / 2.0 - 1.1)
 		_add_window(_to_local2(node.global_position) + out * 0.75, -out, spread)
+
+
+## Sitzplatz an der Straße: Lage, Blickrichtung und Anlaufstelle unter "Outside" (x/z), Stelle auf
+## der Mittellinie und Straßenseite (wie bei den Schaufenstern).
+func _add_street_seat(seat: StreetSeat) -> void:
+	var forward := seat.global_basis.z
+	var approach := _to_local2(seat.to_global(seat.approach))
+	var lage := centerline.project(approach)
+	_street_seats.append({"seat": seat, "pos": _to_local2(seat.global_position),
+		"approach": approach, "face": Vector2(forward.x, forward.z).normalized(),
+		"height": to_local(seat.global_position).y, "front": seat.front,
+		"s": lage.x, "side": 1 if lage.y > 0.0 else -1})
 
 
 func _add_window(spot: Vector2, face: Vector2, spread: float) -> void:
@@ -468,6 +485,8 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 			continue
 		if walker.ghost_static > 0.0 and obstacle.kind == "static":
 			continue  # Sicherheitsnetz: steckte fest, darf hindurch (siehe Passerby.WEDGED_TIME)
+		if obstacle.kind == "static" and walker.get_action_type() == "sit":
+			continue  # wer sich setzt, geht dicht an Bank, Stuhl und Tisch heran
 		var p: Vector2 = obstacle.pos
 		var limit := own + float(obstacle.radius)
 		limit += PLAYER_GAP if obstacle.kind == "player" else -0.03
@@ -795,6 +814,23 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		if not choices.is_empty():
 			window = choices[_rng.randi() % choices.size()]
 
+	# Bank oder Stuhl an der Straße auf dem Weg (auf der Seite, auf der man dort gerade geht)
+	var street_seat := {}
+	if _rng.randf() < GameConfig.passerby_seat_chance:
+		var seats: Array[Dictionary] = []
+		for entry in _street_seats:
+			var along: float = (float(entry.s) - s0) * dir
+			var until: float = (end_s - s0) * dir
+			if along < 2.0 or along > until - 2.0 or not (entry.seat as SeatPoint).is_free():
+				continue
+			var side_there := start_side
+			if not is_nan(cross_s) and (float(entry.s) - cross_s) * dir > 0.0:
+				side_there = end_side
+			if side_there == int(entry.side):
+				seats.append(entry)
+		if not seats.is_empty():
+			street_seat = seats[_rng.randi() % seats.size()]
+
 	# Garten am Ende der Gasse neben der Bücherei: manchmal hinein und auf die Bank setzen
 	var garden_seat: SeatPoint = null
 	if (_garden_s - s0) * dir > 3.0 and (end_s - _garden_s) * dir > 3.0 \
@@ -824,6 +860,8 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		events.append({"s": cross_s, "type": "cross"})
 	if not window.is_empty():
 		events.append({"s": float(window.s), "type": "window", "spot": window})
+	if not street_seat.is_empty():
+		events.append({"s": float(street_seat.s), "type": "seat", "entry": street_seat})
 	if (_library_s - s0) * dir > 0.0 and (end_s - _library_s) * dir > 0.0:
 		events.append({"s": _library_s, "type": "library"})
 	if garden_seat:
@@ -854,6 +892,23 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 				actions.append({"type": "stand", "face": spot.face, "anim": &"browse", "visit": true,
 					"time": _rng.randf_range(GameConfig.passerby_window_time.x, GameConfig.passerby_window_time.y)})
 				var back := StreetRoute.from_points(PackedVector2Array([at, _lane_point(side, lane_before + dir * 2.4, comfort)]), 0.35)
+				actions.append({"type": "walk", "route": back, "to": back.length(), "from_here": true})
+			"seat":
+				var entry: Dictionary = event.entry
+				if side != int(entry.side):
+					continue
+				var lane_before := _ahead(float(entry.s) - dir * 1.2, cursor, dir)
+				actions.append({"type": "walk", "route": sidewalks[side], "to": lane_before})
+				cursor = lane_before + dir * 2.4
+				# hin zur Anlaufstelle (vom Gehweg aus, wo man gerade steht), setzen, zurück auf den Gehweg
+				var there := StreetRoute.from_points(PackedVector2Array([_free_lane_point(side, lane_before, comfort), entry.approach]), 0.35)
+				actions.append({"type": "walk", "route": there, "to": there.length(), "from_here": true})
+				var sit := {"type": "sit", "seat": entry.seat, "spot": entry.pos, "face": entry.face, "height": entry.height,
+					"time": _rng.randf_range(GameConfig.passerby_seat_time.x, GameConfig.passerby_seat_time.y)}
+				if float(entry.front) >= 0.0:
+					sit.front = entry.front
+				actions.append(sit)
+				var back := StreetRoute.from_points(PackedVector2Array([entry.approach, _free_lane_point(side, cursor, comfort)]), 0.35)
 				actions.append({"type": "walk", "route": back, "to": back.length(), "from_here": true})
 			"library":
 				if side == 1 and (event.s - cursor) * dir > 0.0:
@@ -905,9 +960,9 @@ func _garden_actions(seat: SeatPoint, join: Vector2, rejoin: Vector2) -> Array[D
 	return actions
 
 
-## Ein freier Sitzplatz für Passanten (zufällig) oder null.
+## Ein freier Sitzplatz im Garten (zufällig) oder null – die Plätze an der Straße plant _plan_walker.
 func _free_seat() -> SeatPoint:
-	var free := _seats.filter(func(seat: SeatPoint) -> bool: return seat.is_free())
+	var free := _seats.filter(func(seat: SeatPoint) -> bool: return seat.is_free() and not seat is StreetSeat)
 	return free[_rng.randi() % free.size()] if not free.is_empty() else null
 
 

@@ -954,6 +954,18 @@ sind Punkte in der Hauptszene unter **Outside → StreetLife → WindowSpots**: 
 anklicken und verschieben, mit Strg+D verdoppeln. Der blaue Pfeil zeigt vom Fenster weg (der
 Passant schaut in die Gegenrichtung).
 
+### Wo Passanten sich hinsetzen (seit Etappe 5c)
+- **Parkbänke:** in der Hauptszene unter **Outside → Benches** (Szene `scenes/world/street_bench.tscn`,
+  Modell `assets/models/props/street_bench.glb` aus `tools/blender/build_storybook_props.py`). Eine
+  Bank anklicken und verschieben oder mit Strg+D verdoppeln – der blaue Pfeil (Z) zeigt in
+  Sitzrichtung, also von der Hauswand weg. Jede Bank hat zwei Plätze.
+- **Stühle vor dem Pub:** die drei Stühle sind Sitzplätze (Knoten „SeatChair…“ in
+  `scenes/world/houses/pub.tscn`).
+- Wer an einem freien Platz vorbeigeht, setzt sich manchmal hin: wie oft und wie lange in
+  `GameConfig.passerby_seat_chance` und `passerby_seat_time`. Ein neuer Sitzplatz ist ein Knoten mit
+  dem Script `res://scripts/street_life/street_seat.gd` (mitten auf der Sitzfläche, Z = Blickrichtung;
+  **Approach** = Stelle, von der aus man sich setzt).
+
 ## Farben und Texturen von Wänden und Böden
 Die Materialien liegen in `assets/materials/` (z. B. `wall_plaster.tres`, `floor_wood.tres`).
 Doppelklicke ein Material, dann siehst du rechts im **Inspektor** die Eigenschaften:

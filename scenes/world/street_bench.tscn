@@ -1,0 +1,38 @@
+[gd_scene format=3]
+
+; Parkbank an der Straße (seit Etappe 5c): Modell aus tools/blender/build_storybook_props.py
+; (assets/models/props/street_bench.glb, mit fester Kollision), zwei Sitzplätze für Passanten
+; (StreetSeat) und drei Hindernis-Kreise (StreetObstacle: Passanten gehen außen herum, nur wer sich
+; setzt, darf hinein). Ursprung am Boden unter der Sitzmitte, Vorderseite (Sitzrichtung) nach +Z.
+; Aufgestellt in der Hauptszene unter Outside/Benches – dort verschieben oder mit Strg+D verdoppeln.
+
+[ext_resource type="PackedScene" path="res://assets/models/props/street_bench.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/street_life/street_seat.gd" id="2_seat"]
+[ext_resource type="Script" path="res://scripts/street_life/street_obstacle.gd" id="3_obstacle"]
+
+[node name="StreetBench" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="SeatLeft" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.37, 0.45, 0.0)
+script = ExtResource("2_seat")
+
+[node name="SeatRight" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.37, 0.45, 0.0)
+script = ExtResource("2_seat")
+
+[node name="ObstacleLeft" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.05)
+script = ExtResource("3_obstacle")
+radius = 0.3
+
+[node name="ObstacleMiddle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
+script = ExtResource("3_obstacle")
+radius = 0.3
+
+[node name="ObstacleRight" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, -0.05)
+script = ExtResource("3_obstacle")
+radius = 0.3

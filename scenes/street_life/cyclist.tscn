@@ -13,11 +13,11 @@
 [ext_resource type="Script" path="res://scripts/street_life/chibi_cyclist_model.gd" id="2_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bike"]
-size = Vector3(0.6, 1.5, 1.4)
+size = Vector3(0.6, 1.7, 1.8)
 
 [node name="Cyclist" type="Node3D"]
 script = ExtResource("1_vehicle")
-length = 1.4
+length = 1.8
 width = 0.6
 lane_offset = 1.9
 can_swerve = true
@@ -28,7 +28,7 @@ collision_mask = 0
 sync_to_physics = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
 shape = SubResource("BoxShape3D_bike")
 
 [node name="Model" type="Node3D" parent="."]
