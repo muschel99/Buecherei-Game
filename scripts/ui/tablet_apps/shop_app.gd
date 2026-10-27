@@ -9,6 +9,8 @@ const SOFT_WARNING_COLOR := Color(1.0, 0.8, 0.62)
 const CARD_SIZE := Vector2(196, 262)
 const PREVIEW_SIZE := Vector2(176, 118)
 const CART_WIDTH := 320.0
+## Größe der Bild-Kacheln (Möbel und Oberflächen bei „Nest & Nook“).
+const OFFER_TILE_SIZE := Vector2(150, 142)
 
 ## Warenkorb: Einträge { "kind": "furniture"/"surface"/"books", "id": "...", "count": Anzahl }
 ## (bei "books": id = Genre, count = Zahl der Bücherpakete; bei Möbeln mit Farben zusätzlich
@@ -16,6 +18,8 @@ const CART_WIDTH := 320.0
 var cart: Array[Dictionary] = []
 
 var _order_text := ""
+## Gewählte Farbe je Angebot (id -> Farb-id), bleibt beim Neuaufbau der Liste erhalten.
+var _chosen_variants := {}
 var _cart_list: VBoxContainer
 var _total_label: Label
 var _cart_message: Label
@@ -133,11 +137,26 @@ func refresh_cart() -> void:
 		_cart_message.text = "Lieferung in etwa %d Sekunden." % roundi(GameConfig.delivery_time)
 
 
-## Eine Zeile im Warenkorb: Name oben, darunter Anzahl (− 2 +) und Preis.
+## Eine Zeile im Warenkorb: kleines Bild, Name, darunter Anzahl (− 2 +) und Preis.
 func _create_cart_row(entry: Dictionary) -> Control:
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	var resource := _resource_of(entry)
+	if resource is FurnitureData or resource is SurfaceData:
+		var tile := ItemTile.new(Vector2(58, 50))
+		tile.toggle_mode = false
+		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.setup(resource, str(entry.get("variant", "")), tablet.thumbnails if tablet else null)
+		tile.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		line.add_child(tile)
 	var block := VBoxContainer.new()
+	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	block.add_theme_constant_override("separation", 2)
-	block.add_child(make_label(_name_of(entry), 15))
+	line.add_child(block)
+	var title := make_label(_name_of(entry), 15)
+	title.custom_minimum_size.x = 0
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	block.add_child(title)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	block.add_child(row)
@@ -156,10 +175,52 @@ func _create_cart_row(entry: Dictionary) -> Control:
 	price.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(price)
-	return block
+	return line
 
 
 # --- Angebotskarten ---
+
+## Bild-Kachel für ein Möbelstück oder eine Oberfläche: großes Bild in der gewählten Farbe,
+## Preis klein in der Ecke, darunter Farbtupfer zum Wählen der Farbe; Name und Werte im
+## Tooltip. Ein Klick legt es in der gewählten Farbe in den Warenkorb.
+func create_offer_tile(item: Resource) -> ItemTile:
+	var tile := ItemTile.new(OFFER_TILE_SIZE, true)
+	tile.toggle_mode = false
+	var id: String = item.get_id()
+	tile.setup(item, str(_chosen_variants.get(id, "")), tablet.thumbnails if tablet else null)
+	tile.set_badge(str(item.price), ItemTile.KEY_COLOR, true)
+	tile.tooltip_text = _offer_tooltip(item, tile.variant)
+	tile.variant_chosen.connect(func(variant: String) -> void:
+		_chosen_variants[id] = variant
+		tile.tooltip_text = _offer_tooltip(item, variant))
+	tile.pressed.connect(func() -> void: add_to_cart(item, tile.variant))
+	# Oberflächen kauft man nur einmal
+	if item is SurfaceData:
+		var status := ""
+		if Inventory.owns_surface(id):
+			status = "Gehört dir schon"
+		elif _is_surface_on_the_way(id):
+			status = "Schon bestellt"
+		elif not _find_cart_entry("surface", id).is_empty():
+			status = "Im Warenkorb"
+		if not status.is_empty():
+			tile.disabled = true
+			tile.set_dimmed(true)
+			tile.set_badge("✓")
+			tile.tooltip_text = _offer_tooltip(item, "") + "\n" + status
+	return tile
+
+
+func _offer_tooltip(item: Resource, variant: String) -> String:
+	var extra: Array[String] = [Wallet.format(item.price)]
+	if item is FurnitureData:
+		var owned := Inventory.get_total_count(item.get_id()) + _count_in_room(item.get_id())
+		if owned > 0:
+			extra.append("Hast du: %d" % owned)
+	elif item is SurfaceData:
+		extra.append("Einmal kaufen, immer nutzen")
+	return ItemTile.describe(item, variant, extra)
+
 
 ## Eine Karte: Vorschau, Name, Stile, Preis und was man davon schon hat. Ein Klick legt sie in
 ## den Warenkorb.

@@ -8,7 +8,8 @@ extends Node
 ## pro Bild-Durchgang gemacht, damit das Spiel dabei nicht ruckelt.
 ## Hat ein Datenblatt ein eigenes Bild (FurnitureData.icon), wird stattdessen dieses benutzt.
 
-const IMAGE_SIZE := Vector2i(256, 176)
+## Quadratisch (seit Etappe 6): hohe Regale und flache Teppiche füllen die Bild-Kacheln gleich gut.
+const IMAGE_SIZE := Vector2i(224, 224)
 ## Blickrichtung der Kamera: schräg von vorn rechts oben
 const VIEW_DIRECTION := Vector3(0.6, 0.5, 1.0)
 const FIELD_OF_VIEW := 30.0

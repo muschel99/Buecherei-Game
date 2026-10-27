@@ -1,17 +1,20 @@
 extends CanvasLayer
 ## Oberfläche des Gestaltungsmodus: Inventar unten, Tastenhilfe am Rand, Statuszeile.
 ##
-## Die Karten zeigen nur, was gerade im Inventar liegt: Möbel mit Anzahl (×2), Wandfarben,
-## Böden und Decken ohne Anzahl (unbegrenzt). Was ganz im Raum steht, erscheint hier nicht –
-## so bleibt die Liste übersichtlich, auch wenn es später sehr viele Objekte gibt.
-## Ein Klick auf eine Karte meldet die Auswahl an den Gestaltungsmodus (BuildMode).
+## Das Inventar zeigt große Bild-Kacheln (Vorschaubild in der jeweiligen Farbe, klein in der
+## Ecke die Anzahl) – nur, was gerade im Inventar liegt; jede Farbe ist eine eigene Kachel.
+## Wandfarben, Böden und Decken erscheinen als Farbfeld (unbegrenzt). Name und Werte stehen nur
+## im Tooltip. Kategorien und Filter sind kleine Symbol-Knöpfe (Name im Tooltip).
+## Ein Klick auf eine Kachel meldet die Auswahl an den Gestaltungsmodus (BuildMode).
 ## Neues gibt es im Shop.
 
 const KEY_COLOR := Color(0.96, 0.78, 0.48)
 const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.8)
 const WARNING_COLOR := Color(1.0, 0.68, 0.55)
 const TEXT_COLOR := Color(1.0, 0.96, 0.88)
-const CARD_SIZE := Vector2(206, 100)
+## Größe einer Bild-Kachel (das Bild passt sich bei jeder Auflösung mit an).
+const TILE_SIZE := Vector2(132, 112)
+const TAB_BUTTON_SIZE := 40.0
 
 ## Pfad zum Gestaltungsmodus (im Inspektor der Hauptszene eingetragen).
 @export var build_mode_path: NodePath
@@ -28,17 +31,19 @@ const CARD_SIZE := Vector2(206, 100)
 
 ## Reiter: [Anzeigename, "furniture" oder "surface", Kategorie bzw. Art]
 var _tabs: Array = []
-var _tab_buttons: Array[Button] = []
-var _cards := {}  # Datenblatt -> Karte (Button)
+var _tab_buttons: Array[IconToggle] = []
+var _cards := {}  # Oberfläche bzw. "id:farbe" -> Kachel (ItemTile)
 var _grid_help_label: Label
-var _selected_style: StyleBoxFlat
 var _current_tab: int = 0
 var _refresh_queued := false
+var _thumbnails: ThumbnailRenderer
 
 
 func _ready() -> void:
 	hide()
-	_selected_style = _make_selected_style()
+	_thumbnails = ThumbnailRenderer.new()
+	_thumbnails.name = "Thumbnails"
+	add_child(_thumbnails)
 	for category in FurnitureData.Category.values():
 		_tabs.append([FurnitureData.get_category_display_name(category), "furniture", category])
 	_tabs.append(["Wandfarbe", "surface", SurfaceData.Kind.WALL])
@@ -74,16 +79,18 @@ func _process(_delta: float) -> void:
 
 func _build_tab_buttons() -> void:
 	for i in _tabs.size():
-		var button := Button.new()
-		button.text = _tabs[i][0]
-		button.toggle_mode = true
-		button.focus_mode = Control.FOCUS_NONE
-		button.add_theme_font_size_override("font_size", 16)
-		button.add_theme_stylebox_override("pressed", _selected_style)
-		button.add_theme_stylebox_override("hover_pressed", _selected_style)
+		var button := IconToggle.new(TAB_BUTTON_SIZE)
+		var tab: Array = _tabs[i]
+		button.icon_key = CatalogIcons.category_key(tab[2]) if tab[1] == "furniture" else CatalogIcons.surface_key(tab[2])
+		button.tooltip_text = tab[0]
 		button.pressed.connect(_show_tab.bind(i))
 		_tab_row.add_child(button)
 		_tab_buttons.append(button)
+		if i == FurnitureData.Category.size() - 1:
+			# Kleiner Abstand zwischen Möbeln und Oberflächen
+			var gap := Control.new()
+			gap.custom_minimum_size.x = 8
+			_tab_row.add_child(gap)
 
 
 func _show_tab(index: int) -> void:
@@ -92,6 +99,9 @@ func _show_tab(index: int) -> void:
 	_current_tab = index
 	for i in _tab_buttons.size():
 		_tab_buttons[i].set_pressed_no_signal(i == index)
+		# Reiter ohne eigene Dinge leicht ausgegraut (bleiben anklickbar)
+		_tab_buttons[i].is_empty = get_owned_items(i).is_empty()
+		_tab_buttons[i].queue_redraw()
 	for child in _item_row.get_children():
 		_item_row.remove_child(child)
 		child.queue_free()
@@ -107,16 +117,21 @@ func _show_tab(index: int) -> void:
 			var data: FurnitureData = entry.data
 			if data.category != tab[2] or not _filter_bar.matches(data):
 				continue
-			var card := _create_card(data.display_name, _size_text(data), data.style_ids, data.description, Color(0, 0, 0, 0), entry.count)
-			card.pressed.connect(_build_mode.select_furniture.bind(data, entry.variant))
-			_add_card(FurnitureData.make_key(data.get_id(), entry.variant), card)
+			var tile := ItemTile.new(TILE_SIZE)
+			tile.setup(data, entry.variant, _thumbnails)
+			tile.set_badge("×%d" % entry.count)
+			tile.tooltip_text = ItemTile.describe(data, entry.variant)
+			tile.pressed.connect(_build_mode.select_furniture.bind(data, entry.variant))
+			_add_card(FurnitureData.make_key(data.get_id(), entry.variant), tile)
 	else:
 		for surface: SurfaceData in owned:
 			if not _filter_bar.matches(surface):
 				continue
-			var card := _create_card(surface.display_name, "unbegrenzt", surface.style_ids, "", surface.preview_color)
-			card.pressed.connect(_build_mode.select_surface.bind(surface))
-			_add_card(surface, card)
+			var tile := ItemTile.new(TILE_SIZE)
+			tile.setup(surface, "", _thumbnails)
+			tile.tooltip_text = ItemTile.describe(surface, "", ["unbegrenzt"])
+			tile.pressed.connect(_build_mode.select_surface.bind(surface))
+			_add_card(surface, tile)
 
 	if _cards.is_empty():
 		var empty := Label.new()
@@ -124,6 +139,8 @@ func _show_tab(index: int) -> void:
 		if not owned.is_empty():
 			empty.text = "Dazu passt hier gerade nichts – probier einen anderen Filter."
 		empty.add_theme_color_override("font_color", MUTED_COLOR)
+		empty.custom_minimum_size.y = TILE_SIZE.y
+		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_item_row.add_child(empty)
 	_on_selection_changed(_build_mode.get_selected())
 	# Beim Aktualisieren desselben Reiters bleibt die Liste, wo sie war
@@ -146,7 +163,7 @@ func get_owned_items(index: int) -> Array[Resource]:
 
 func _on_filter_changed() -> void:
 	_item_scroll.scroll_horizontal = 0
-	_show_tab(_current_tab)
+	_queue_refresh()
 
 
 ## Inventar oder Einrichtung haben sich geändert: Karten neu aufbauen (einmal pro Bild).
@@ -162,78 +179,10 @@ func _refresh() -> void:
 	_show_tab(_current_tab)
 
 
-
 ## key = Oberfläche bzw. bei Möbeln "id:farbe" (FurnitureData.make_key).
 func _add_card(key: Variant, card: Button) -> void:
 	_item_row.add_child(card)
 	_cards[key] = card
-
-
-## Eine Karte im Inventar: Name, Anzahl (count, -1 = ohne), Zusatzzeile, Stile und
-## optional ein Farbfeld.
-func _create_card(title: String, subtitle: String, styles: Array[String], tooltip: String, swatch := Color(0, 0, 0, 0), count := -1) -> Button:
-	var card := Button.new()
-	card.custom_minimum_size = CARD_SIZE
-	card.toggle_mode = true
-	card.focus_mode = Control.FOCUS_NONE
-	card.tooltip_text = tooltip
-	card.add_theme_stylebox_override("pressed", _selected_style)
-	card.add_theme_stylebox_override("hover_pressed", _selected_style)
-
-	var box := VBoxContainer.new()
-	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 10)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override("separation", 2)
-	card.add_child(box)
-
-	if swatch.a > 0.0:
-		var color_field := ColorRect.new()
-		color_field.color = swatch
-		color_field.custom_minimum_size = Vector2(0, 18)
-		color_field.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(color_field)
-
-	# Name und daneben die Anzahl (z. B. "×2")
-	var title_row := HBoxContainer.new()
-	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(title_row)
-	var title_label := _small_label(title, 16, TEXT_COLOR)
-	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	title_label.max_lines_visible = 2 if swatch.a <= 0.0 else 1
-	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_row.add_child(title_label)
-	if count >= 0:
-		var badge := _small_label("×%d" % count, 17, KEY_COLOR if count > 0 else MUTED_COLOR)
-		badge.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		title_row.add_child(badge)
-	box.add_child(_small_label(subtitle, 14, MUTED_COLOR))
-
-	var style_row := HBoxContainer.new()
-	style_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	style_row.add_theme_constant_override("separation", 8)
-	for style in StyleTags.known(styles):
-		style_row.add_child(_small_label("● " + StyleTags.get_display_name(style), 13, StyleTags.get_color(style)))
-	if StyleTags.known(styles).is_empty():
-		style_row.add_child(_small_label("○ stilneutral", 13, MUTED_COLOR))
-	box.add_child(style_row)
-	return card
-
-
-func _size_text(data: FurnitureData) -> String:
-	var size := data.get_footprint_size()
-	return "%s × %s m" % [String.num(size.x, 2), String.num(size.y, 2)]
-
-
-func _make_selected_style() -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.45, 0.31, 0.2, 1)
-	style.border_color = KEY_COLOR
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(8)
-	style.set_content_margin_all(10)
-	style.content_margin_left = 24
-	style.content_margin_right = 24
-	return style
 
 
 # --- Tastenhilfe ---

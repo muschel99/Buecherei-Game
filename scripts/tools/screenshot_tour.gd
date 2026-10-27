@@ -26,6 +26,10 @@ extends Node
 ##   --stats            je Bild die Zeichenaufrufe und Objekte ausgeben (Leistung)
 ##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
 ##   --no_street_life   ohne Straßenleben (zum Vergleich)
+##   --ui=build|shop    Gestaltungsmodus bzw. Theken-Tablet mit „Nest & Nook“ öffnen (seit Etappe 6,
+##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0)
+##   --give             zum Testen von jedem Möbelstück 1–3 Stück (in allen Farben) ins Inventar
+##   --indoor           ohne Straße draußen (Häuser, Pflanzen, Passanten) – schnell, für Bilder vom Laden
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
 
 const MAIN_SCENE := "res://scenes/main.tscn"
@@ -41,6 +45,7 @@ var _old_quality: Variant = null
 
 func _ready() -> void:
 	_args = _parse_args()
+	SaveManager.saving_enabled = false
 	if _args.has("no_street_life"):
 		GameConfig.street_life_enabled = false
 	if _args.has("quality"):
@@ -55,6 +60,8 @@ func _ready() -> void:
 		get_tree().quit()
 		return
 	var main: Node = (load(String(_args.get("scene", MAIN_SCENE))) as PackedScene).instantiate()
+	if _args.has("indoor"):
+		_strip_outside(main)
 	add_child(main)
 	_freeze_player(main)
 	# Zufall des Straßenlebens festlegen, bevor es die ersten Passanten verteilt
@@ -68,7 +75,7 @@ func _ready() -> void:
 	_camera.far = 400.0
 	main.add_child(_camera)
 	_camera.make_current()
-	if not _args.has("hud"):
+	if not _args.has("hud") and not _args.has("ui"):
 		_hide_interface(get_tree().root)
 	_run.call_deferred()
 
@@ -76,6 +83,10 @@ func _ready() -> void:
 func _run() -> void:
 	await _wait_frames(WARMUP_FRAMES)
 	await _prepare_street_life()
+	if _args.has("give"):
+		_give_everything()
+	if _args.has("ui"):
+		await _open_ui(String(_args.ui), int(_args.get("tab", 0)))
 	var out_dir := String(_args.get("out", ProjectSettings.globalize_path("res://screenshots")))
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	# Godot soll die Bilder im Projekt nicht importieren
@@ -105,6 +116,49 @@ func _run() -> void:
 	if _old_quality != null:
 		Settings.set_value("graphics/quality", _old_quality)
 	get_tree().quit()
+
+
+## Nimmt die Straße draußen heraus, bevor die Szene startet (nur der Lieferort bleibt).
+func _strip_outside(main: Node) -> void:
+	var outside := main.get_node_or_null("Outside")
+	if outside == null:
+		return
+	for child in outside.get_children():
+		if child.name != "Deliveries":
+			outside.remove_child(child)
+			child.free()
+
+
+## Zum Testen: von jedem Möbelstück 1–3 Stück ins Inventar (jede Farbe einmal).
+func _give_everything() -> void:
+	var i := 0
+	for data in Catalog.get_all_furniture():
+		if data.is_fixed:
+			continue
+		if data.has_variants():
+			for variant in data.color_variants:
+				Inventory.add_furniture(data.get_id(), 1, variant.id)
+		else:
+			Inventory.add_furniture(data.get_id(), 1 + i % 3)
+		i += 1
+	for surface in Catalog.get_all_surfaces():
+		Inventory.add_surface(surface.get_id())
+
+
+## Öffnet den Gestaltungsmodus ("build") oder das Theken-Tablet mit „Nest & Nook“ ("shop") und
+## wartet, bis die Vorschaubilder fotografiert sind.
+func _open_ui(which: String, tab: int) -> void:
+	if which == "build":
+		var build_mode := get_tree().root.find_child("BuildMode", true, false) as BuildMode
+		build_mode.set_active(true)
+		var build_ui := get_tree().root.find_child("BuildUI", true, false)
+		build_ui.call("_show_tab", tab)
+	elif which == "shop":
+		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
+		tablet.open_tablet()
+		var app := tablet.open_app("furnishing")
+		app.call("_on_category_pressed", tab)
+	await _wait_frames(90)
 
 
 ## Blickpunkte aus der gewählten Gruppe (+ freier Blickpunkt aus --cam).

@@ -1,14 +1,15 @@
 class_name FilterBar
 extends VBoxContainer
-## Kleine Filter-Schaltflächen über einer Liste (im Shop und im Inventar des Gestaltungsmodus).
+## Kleine Filter-Knöpfe über einer Liste (im Shop und im Inventar des Gestaltungsmodus) –
+## nur Symbole, der Name steht im Tooltip.
 ##
-## Zwei Gruppen nebeneinander:
-## - Unterkategorie: "Alle" und die Unterkategorien, die es in der Liste gerade gibt
-##   (z. B. Sessel, Sofas, Stühle – siehe FurnitureData.SUBCATEGORIES)
-## - Stil: "Alle Stile", die Stile aus data/styles/ (StyleTags), Neutral (= ohne Stil-Merkmal)
-## Mit two_rows stehen die Gruppen in zwei eigenen Zeilen (im Shop), sonst nebeneinander
-## (im Gestaltungsmodus). Passt die Breite nicht, rutschen die Schaltflächen in die nächste Zeile.
-## Mit matches(objekt) prüft die Liste, ob ein Objekt zum Filter passt.
+## Zwei Gruppen:
+## - Unterkategorie: „Alle“ und die Unterkategorien, die es in der Liste gerade gibt
+##   (z. B. Sessel, Sofas, Stühle – siehe FurnitureData.SUBCATEGORIES, Symbole: CatalogIcons)
+## - Stil: „Alle Stile“, die Stile aus data/styles/ (StyleTags, Farbpunkt oder eigenes Symbol),
+##   „Stilneutral“ (= ohne Stil-Merkmal)
+## Mit two_rows stehen die Gruppen in zwei eigenen Zeilen, sonst nebeneinander. Passt die Breite
+## nicht, rutschen die Knöpfe in die nächste Zeile. matches(objekt) prüft, ob ein Objekt passt.
 
 ## Wird gesendet, wenn ein Filter angeklickt wurde.
 signal changed
@@ -16,9 +17,7 @@ signal changed
 ## Stil-Filter: ANY_STYLE = alle, NEUTRAL = ohne Stil-Merkmal, sonst eine Stil-id.
 const ANY_STYLE := ""
 const NEUTRAL := "-neutral-"
-
-const KEY_COLOR := Color(0.96, 0.78, 0.48)
-const TEXT_COLOR := Color(1.0, 0.96, 0.88)
+const BUTTON_SIZE := 36.0
 const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.8)
 
 ## Unterkategorien und Stile in zwei eigenen Zeilen (true) oder nebeneinander (false)?
@@ -29,26 +28,20 @@ var subcategory: String = ""
 ## Gewählter Stil (ANY_STYLE, NEUTRAL oder eine Stil-id).
 var style: String = ANY_STYLE
 
-var _subcategory_buttons := {}  # id -> Button
-var _style_buttons := {}  # Stil -> Button
-var _normal_style: StyleBoxFlat
-var _hover_style: StyleBoxFlat
-var _selected_style: StyleBoxFlat
+var _subcategory_buttons := {}  # id -> IconToggle
+var _style_buttons := {}  # Stil -> IconToggle
 var _first_row: HFlowContainer
 var _second_row: HFlowContainer
 
 
 func _init() -> void:
-	add_theme_constant_override("separation", 5)
+	add_theme_constant_override("separation", 4)
 	_first_row = _make_row()
 	_second_row = _make_row()
-	_normal_style = _make_style(Color(0.3, 0.21, 0.15, 0.85), Color(0, 0, 0, 0))
-	_hover_style = _make_style(Color(0.45, 0.31, 0.2, 0.95), Color(0, 0, 0, 0))
-	_selected_style = _make_style(Color(0.45, 0.31, 0.2, 1), KEY_COLOR)
 
 
-## Baut die Schaltflächen neu. subcategories: Liste von [id, Anzeigename] – nur die, die in
-## der Liste wirklich vorkommen. Leer = keine Unterkategorie-Gruppe (z. B. bei Wandfarben).
+## Baut die Knöpfe neu. subcategories: Liste von [id, Anzeigename] – nur die, die in der Liste
+## wirklich vorkommen. Leer = keine Unterkategorie-Gruppe (z. B. bei Wandfarben).
 ## Eine gewählte Unterkategorie bleibt gewählt, solange es sie noch gibt; der Stil bleibt immer.
 func setup(subcategories: Array) -> void:
 	for row in [_first_row, _second_row]:
@@ -62,21 +55,32 @@ func setup(subcategories: Array) -> void:
 		subcategory = ""
 
 	var style_row := _first_row
-	if not subcategories.is_empty():
-		_add_button(_first_row, _subcategory_buttons, "", "Alle", TEXT_COLOR)
+	if subcategories.size() > 1:
+		_add_button(_first_row, _subcategory_buttons, "", "Alle").icon_key = "all"
 		for entry in subcategories:
-			_add_button(_first_row, _subcategory_buttons, entry[0], entry[1], TEXT_COLOR)
+			_add_button(_first_row, _subcategory_buttons, entry[0], entry[1]).icon_key = entry[0]
 		if two_rows:
 			style_row = _second_row
 		else:
-			var gap := Control.new()
-			gap.custom_minimum_size.x = 14
-			_first_row.add_child(gap)
+			_first_row.add_child(_make_divider())
 
-	_add_button(style_row, _style_buttons, ANY_STYLE, "Alle Stile", TEXT_COLOR)
-	for id in StyleTags.ids():
-		_add_button(style_row, _style_buttons, id, "● " + StyleTags.get_display_name(id), StyleTags.get_color(id))
-	_add_button(style_row, _style_buttons, NEUTRAL, "○ Neutral", MUTED_COLOR)
+	var any := _add_button(style_row, _style_buttons, ANY_STYLE, "Alle Stile")
+	var colors: Array[Color] = []
+	for style_data in StyleTags.all():
+		colors.append(style_data.color)
+	any.dot_colors = colors
+	for style_data in StyleTags.all():
+		var tip := style_data.display_name
+		if not style_data.description.is_empty():
+			tip += "\n" + style_data.description
+		var button := _add_button(style_row, _style_buttons, style_data.get_id(), tip)
+		if style_data.icon:
+			button.texture = style_data.icon
+		else:
+			button.dot_color = style_data.color
+	var neutral := _add_button(style_row, _style_buttons, NEUTRAL, "Stilneutral")
+	neutral.dot_color = MUTED_COLOR
+	neutral.dot_ring = true
 	_second_row.visible = _second_row.get_child_count() > 0
 	_update_pressed()
 
@@ -113,7 +117,7 @@ static func present_subcategories(category: FurnitureData.Category, items: Array
 	return result
 
 
-## Alle Filter-Schaltflächen (z. B. für Tests).
+## Alle Filter-Knöpfe (z. B. für Tests).
 func get_buttons() -> Array[Button]:
 	var result: Array[Button] = []
 	for row in [_first_row, _second_row]:
@@ -125,32 +129,37 @@ func get_buttons() -> Array[Button]:
 
 func _make_row() -> HFlowContainer:
 	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 5)
-	row.add_theme_constant_override("v_separation", 5)
+	row.add_theme_constant_override("h_separation", 4)
+	row.add_theme_constant_override("v_separation", 4)
 	add_child(row)
 	return row
 
 
-func _add_button(row: HFlowContainer, group: Dictionary, value: Variant, text: String, color: Color) -> void:
-	var button := Button.new()
-	button.text = text
-	button.toggle_mode = true
-	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 14)
-	button.add_theme_color_override("font_color", color)
-	button.add_theme_color_override("font_hover_color", color.lightened(0.15))
-	button.add_theme_color_override("font_pressed_color", color.lightened(0.15))
-	button.add_theme_color_override("font_hover_pressed_color", color.lightened(0.15))
-	button.add_theme_stylebox_override("normal", _normal_style)
-	button.add_theme_stylebox_override("hover", _hover_style)
-	button.add_theme_stylebox_override("pressed", _selected_style)
-	button.add_theme_stylebox_override("hover_pressed", _selected_style)
+## Dünner senkrechter Strich zwischen den Gruppen.
+func _make_divider() -> Control:
+	var line := ColorRect.new()
+	line.color = Color(1.0, 0.94, 0.84, 0.18)
+	line.custom_minimum_size = Vector2(1, BUTTON_SIZE * 0.7)
+	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var box := MarginContainer.new()
+	box.add_theme_constant_override("margin_left", 6)
+	box.add_theme_constant_override("margin_right", 6)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(line)
+	return box
+
+
+func _add_button(row: HFlowContainer, group: Dictionary, value: String, tip: String) -> IconToggle:
+	var button := IconToggle.new(BUTTON_SIZE)
+	button.tooltip_text = tip
 	button.pressed.connect(_on_pressed.bind(group, value))
 	row.add_child(button)
 	group[value] = button
+	return button
 
 
-func _on_pressed(group: Dictionary, value: Variant) -> void:
+func _on_pressed(group: Dictionary, value: String) -> void:
 	if is_same(group, _subcategory_buttons):
 		subcategory = value
 	else:
@@ -162,19 +171,7 @@ func _on_pressed(group: Dictionary, value: Variant) -> void:
 func _update_pressed() -> void:
 	for id in _subcategory_buttons:
 		_subcategory_buttons[id].set_pressed_no_signal(id == subcategory)
+		_subcategory_buttons[id].queue_redraw()
 	for tag in _style_buttons:
 		_style_buttons[tag].set_pressed_no_signal(tag == style)
-
-
-func _make_style(color: Color, border: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	box.set_corner_radius_all(6)
-	box.content_margin_left = 10
-	box.content_margin_right = 10
-	box.content_margin_top = 3
-	box.content_margin_bottom = 4
-	if border.a > 0.0:
-		box.border_color = border
-		box.set_border_width_all(1)
-	return box
+		_style_buttons[tag].queue_redraw()

@@ -19,6 +19,9 @@ const PERSIST_GROUP := "persist"
 ## Speichern einfach überschrieben.
 const SAVE_VERSION := 2
 
+## Aus = es wird nichts gespeichert (z. B. bei Testbildern und Prüfwerkzeugen).
+var saving_enabled := true
+
 var _autosave_timer: Timer
 var _is_loading := false
 
@@ -47,7 +50,7 @@ func quit_game() -> void:
 
 ## Merkt vor, bald zu speichern (mehrere Änderungen kurz hintereinander = ein Speichervorgang).
 func request_save() -> void:
-	if _is_loading:
+	if _is_loading or not saving_enabled:
 		return
 	_autosave_timer.start(GameConfig.autosave_delay)
 
@@ -58,6 +61,8 @@ func has_save() -> bool:
 
 func save_game() -> void:
 	_autosave_timer.stop()
+	if not saving_enabled:
+		return
 	var nodes := {}
 	for node in get_tree().get_nodes_in_group(PERSIST_GROUP):
 		nodes[node.save_key] = node.get_save_data()

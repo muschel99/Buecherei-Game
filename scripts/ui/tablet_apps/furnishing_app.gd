@@ -1,11 +1,13 @@
 extends ShopApp
 ## Laden "Nest & Nook" (App "furnishing") auf dem Theken-Tablet: Möbel, Deko, Wandfarben, Böden und Decken kaufen
 ## (nach Kategorien, mit Filtern und Warenkorb) und Dinge aus dem Inventar verkaufen.
-## Oben links zwei Symbol-Knöpfe: Kaufen (Tasche) und Verkaufen (Münze).
+## Oben links zwei Symbol-Knöpfe: Kaufen (Tasche) und Verkaufen (Münze), darunter die Kategorien als
+## Symbole (Name im Tooltip). Angebote sind Bild-Kacheln (ItemTile) wie im Gestaltungsmodus:
+## Farbe über die Farbtupfer wählen, Klick auf die Kachel = in den Warenkorb.
 
 ## Kategorien links: [Anzeigename, "furniture" oder "surface", Kategorie bzw. Art]
 var _categories: Array = []
-var _category_buttons: Array[Button] = []
+var _category_buttons: Array[IconToggle] = []
 var _current_category: int = 0
 var _selling := false
 
@@ -92,6 +94,9 @@ func show_category(index: int) -> void:
 	_current_category = index
 	for i in _category_buttons.size():
 		_category_buttons[i].set_pressed_no_signal(i == index)
+		# Kategorien ohne Angebot leicht ausgegraut (z. B. die feste Theke)
+		_category_buttons[i].is_empty = get_offers(i).is_empty()
+		_category_buttons[i].queue_redraw()
 	clear(_item_flow)
 	# Filter: nur die Unterkategorien anbieten, die es hier wirklich gibt
 	var all_offers := get_offers(index)
@@ -100,7 +105,7 @@ func show_category(index: int) -> void:
 	_filter_bar.setup(subcategories)
 	var offers := get_visible_offers(index)
 	for item in offers:
-		_item_flow.add_child(create_offer_card(item))
+		_item_flow.add_child(create_offer_tile(item))
 	if all_offers.is_empty():
 		_item_flow.add_child(make_label("Hier gibt es gerade nichts.", 16, TabletFrame.MUTED_COLOR))
 	elif offers.is_empty():
@@ -181,9 +186,9 @@ func _build() -> void:
 	columns.add_theme_constant_override("separation", 16)
 	add_child(columns)
 
-	# Links: Kaufen/Verkaufen und die Kategorien
+	# Links: Kaufen/Verkaufen und die Kategorien (Symbole)
 	var left := VBoxContainer.new()
-	left.custom_minimum_size.x = 190
+	left.custom_minimum_size.x = 104
 	left.add_theme_constant_override("separation", 12)
 	columns.add_child(left)
 	var modes := HBoxContainer.new()
@@ -200,12 +205,18 @@ func _build() -> void:
 	category_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left.add_child(category_scroll)
 	_category_column = category_scroll
-	var category_list := VBoxContainer.new()
+	var category_list := GridContainer.new()
+	category_list.columns = 2
 	category_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	category_list.add_theme_constant_override("separation", 6)
+	category_list.add_theme_constant_override("h_separation", 8)
+	category_list.add_theme_constant_override("v_separation", 8)
 	category_scroll.add_child(category_list)
 	for i in _categories.size():
-		var button := make_choice_button(_categories[i][0], _on_category_pressed.bind(i))
+		var category: Array = _categories[i]
+		var button := IconToggle.new(46)
+		button.icon_key = CatalogIcons.category_key(category[2]) if category[1] == "furniture" else CatalogIcons.surface_key(category[2])
+		button.tooltip_text = category[0]
+		button.pressed.connect(_on_category_pressed.bind(i))
 		category_list.add_child(button)
 		_category_buttons.append(button)
 
