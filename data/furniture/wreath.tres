@@ -1,15 +1,50 @@
-[gd_resource type="Resource" script_class="FurnitureData" format=3]
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_antmg"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "red"
+display_name = "Rot kariert"
+colors = Dictionary[String, Color]({"bow": Color(0.750, 0.250, 0.250, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "blue"
+display_name = "Blau kariert"
+colors = Dictionary[String, Color]({"bow": Color(0.350, 0.480, 0.700, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "green"
+display_name = "Grün kariert"
+colors = Dictionary[String, Color]({"bow": Color(0.450, 0.600, 0.450, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "pink"
+display_name = "Rosa kariert"
+colors = Dictionary[String, Color]({"bow": Color(0.880, 0.550, 0.600, 1)})
 
 [resource]
-script = ExtResource("1_antmg")
+script = ExtResource("1_data")
 id = "wreath"
-display_name = "Türkranz"
-description = "Grüner Kranz für Tür oder Wand."
+display_name = "Trockenblumenkranz"
+description = "Ein Kranz aus Zweigen mit Trockenblumen, Lavendel und einer Karoschleife – für Tür und Wand."
+category = 5
+subcategory = "picture"
 price = 40
 style_ids = Array[String](["country"])
 scene_path = "res://scenes/furniture/wreath.tscn"
-footprint = Vector2i(4, 1)
+footprint = Vector2i(4, 5)
+is_unlocked = true
+is_essential = false
+is_fixed = false
 placement = 12
-subcategory = "picture"
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

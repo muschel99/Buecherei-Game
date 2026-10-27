@@ -1,15 +1,50 @@
-[gd_resource type="Resource" script_class="FurnitureData" format=3]
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_a4orl"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "honey"
+display_name = "Honig"
+colors = Dictionary[String, Color]({"fur": Color(0.760, 0.550, 0.320, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "chocolate"
+display_name = "Schokolade"
+colors = Dictionary[String, Color]({"fur": Color(0.420, 0.280, 0.180, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "cream"
+display_name = "Creme"
+colors = Dictionary[String, Color]({"fur": Color(0.920, 0.850, 0.720, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "rose"
+display_name = "Rosé"
+colors = Dictionary[String, Color]({"fur": Color(0.880, 0.680, 0.660, 1)})
 
 [resource]
-script = ExtResource("1_a4orl")
+script = ExtResource("1_data")
 id = "teddy"
 display_name = "Teddybär"
-description = "Ein alter Teddy, der gern auf Sesseln sitzt."
+description = "Ein kuscheliger Teddy mit Karoschleife."
+category = 5
+subcategory = "figure"
 price = 28
 style_ids = Array[String](["country"])
 scene_path = "res://scenes/furniture/teddy.tscn"
 footprint = Vector2i(2, 2)
+is_unlocked = true
+is_essential = false
+is_fixed = false
 placement = 3
-subcategory = "figure"
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

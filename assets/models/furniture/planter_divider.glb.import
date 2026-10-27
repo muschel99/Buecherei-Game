@@ -1,0 +1,93 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://c3qi0la78xg3c"
+path="res://.godot/imported/planter_divider.glb-f060a84cfe0cfb7eaafe965cb59b560e.scn"
+
+[deps]
+
+source_file="res://assets/models/furniture/planter_divider.glb"
+dest_files=["res://.godot/imported/planter_divider.glb-f060a84cfe0cfb7eaafe965cb59b560e.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"b": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/b.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/b.tres"
+},
+"bark": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/bark.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/bark.tres"
+},
+"l": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/l.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/l.tres"
+},
+"leaf_dark": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/leaf_dark.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/leaf_dark.tres"
+},
+"m": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/m.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/m.tres"
+},
+"o": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/o.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/o.tres"
+},
+"paint": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/paint.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/paint.tres"
+},
+"soil": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/soil.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/soil.tres"
+},
+"stem": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/stem.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/stem.tres"
+}
+}
+}
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=0

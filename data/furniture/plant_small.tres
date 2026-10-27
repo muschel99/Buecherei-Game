@@ -1,15 +1,50 @@
-[gd_resource type="Resource" script_class="FurnitureData" format=3]
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_k6nsd"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "red"
+display_name = "Rot"
+colors = Dictionary[String, Color]({"bloom": Color(0.860, 0.200, 0.170, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "pink"
+display_name = "Rosa"
+colors = Dictionary[String, Color]({"bloom": Color(0.930, 0.520, 0.620, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "white"
+display_name = "Weiß"
+colors = Dictionary[String, Color]({"bloom": Color(0.960, 0.950, 0.900, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "coral"
+display_name = "Koralle"
+colors = Dictionary[String, Color]({"bloom": Color(0.950, 0.450, 0.380, 1)})
 
 [resource]
-script = ExtResource("1_k6nsd")
+script = ExtResource("1_data")
 id = "plant_small"
-display_name = "Kleine Topfpflanze"
-description = "Passt auf Tische, Regale und die Fensterbank."
-price = 18
+display_name = "Geranie im Terrakottatopf"
+description = "Eine kleine, üppig blühende Geranie für Fensterbank und Regal."
+category = 5
+subcategory = "plant"
+price = 16
 style_ids = Array[String](["country"])
 scene_path = "res://scenes/furniture/plant_small.tscn"
 footprint = Vector2i(2, 2)
+is_unlocked = true
+is_essential = false
+is_fixed = false
 placement = 3
-subcategory = "plant"
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

@@ -1,0 +1,25 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Trockenblumenkranz“, Material „dried_a“).
+
+[ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "dried_a"
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/base_color = Color(0.850, 0.620, 0.620, 1)
+shader_parameter/second_color = Color(0.850, 0.620, 0.620, 1)
+shader_parameter/third_color = Color(0.950, 0.910, 0.820, 1)
+shader_parameter/grain = 5
+shader_parameter/stripe_width = 0.000
+shader_parameter/vary = 0.100
+shader_parameter/blot_scale = 4.000
+shader_parameter/bump_strength = 0.250
+shader_parameter/rough = 0.800
+shader_parameter/metal = 0.000
+shader_parameter/emission_color = Color(0.850, 0.620, 0.620, 1)
+shader_parameter/emission_energy = 0.000
+shader_parameter/glow = 0.000
+shader_parameter/pattern = 0
+shader_parameter/pattern_size = 0.040

@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "blue"
+display_name = "Hellblau"
+colors = Dictionary[String, Color]({"ceramic": Color(0.680, 0.780, 0.860, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "sage"
+display_name = "Salbei"
+colors = Dictionary[String, Color]({"ceramic": Color(0.660, 0.740, 0.620, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "rose"
+display_name = "Rosé"
+colors = Dictionary[String, Color]({"ceramic": Color(0.880, 0.700, 0.700, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "butter"
+display_name = "Butter"
+colors = Dictionary[String, Color]({"ceramic": Color(0.950, 0.880, 0.620, 1)})
+
+[resource]
+script = ExtResource("1_data")
+id = "table_lamp_country"
+display_name = "Keramiklampe mit Blümchenschirm"
+description = "Ein bauchiger Keramikfuß mit gemalten Blüten und ein Schirm mit gewelltem Rand."
+category = 4
+subcategory = "table_lamp"
+price = 58
+style_ids = Array[String](["country"])
+scene_path = "res://scenes/furniture/table_lamp_country.tscn"
+footprint = Vector2i(3, 3)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 3
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])
