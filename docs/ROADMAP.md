@@ -37,14 +37,72 @@
 | 5a  | Leben auf der Straße                     | fertig        |
 | 5b  | Figuren und Fahrzeuge im Stil            | in Arbeit     |
 | 5c  | Chibi-Figuren (Mannequins, Gesichter)    | in Arbeit     |
-| 6   | Wirtschaft und Tagesablauf               | offen         |
-| 7   | Stilsystem und Besuchervielfalt          | offen         |
-| 8   | Café                                     | offen         |
-| 9   | Erweiterungen und Freischaltungen        | offen         |
-| 10  | Atmosphäre und Sound                     | offen         |
-| 11  | Story und Spiegel                        | offen         |
-| 12  | Gasse, Fassade und Jahreszeiten          | offen         |
-| 13  | Feinschliff                              | offen         |
+| 6   | Möbelkatalog im neuen Stil               | in Arbeit     |
+| 7   | Wirtschaft und Tagesablauf               | offen         |
+| 8   | Besuchervielfalt                         | offen         |
+| 9   | Café                                     | offen         |
+| 10  | Erweiterungen und Freischaltungen        | offen         |
+| 11  | Atmosphäre und Sound                     | offen         |
+| 12  | Story und Spiegel                        | offen         |
+| 13  | Gasse, Fassade und Jahreszeiten          | offen         |
+| 14  | Feinschliff                              | offen         |
+
+(Seit Etappe 6 sind die späteren Etappen eine Nummer weitergerückt: Wirtschaft ist jetzt 7, Café 9,
+Freischaltungen 10 usw.)
+
+## Stand nach dem Stil-Umbau (Überblick, Stand 27.10.2026)
+Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
+
+**Was neu ist**
+- **Die Welt im Bilderbuch-Stil (4g, 4h, Stil-Umbau):** Alle Häuser sind neu in Blender gebaut – weich,
+  warm, leicht schief und gesetzt, jedes Teil ein geschlossener Körper mit runden Kanten. 29 Wohnhäuser,
+  jedes einzeln, dazu die Läden Modegeschäft „Zwirn und Zwirbel“, Pub „The Ink & Ivy“, Bäckerei,
+  Blumenladen, Teestube, Wolle & Stoff und das Torhaus „Alte Torgasse“, außerdem die Fassade der
+  Bücherei und beide Gassen (mit Garten und runder Bank). Holz, Ziegel, Stein und Putz rechnet ein
+  gemeinsamer Shader aus der Lage im Modell aus.
+- **Boden:** rundes Kopfsteinpflaster, unregelmäßige Gehwegplatten, weich gerundete Bordsteine und
+  Stufen (ohne Bilder, im Shader berechnet).
+- **Pflanzen:** üppig und rund, jedes Blatt und jede Blüte ein eigener kleiner Körper. Rund 70
+  Pflanzen-Szenen (Blumenkästen, Ampeln, Beete, Töpfe, Efeu, Kletterrosen, Glyzinie, Gartenbaum,
+  Grasbüschel) stehen auf etwa 350 Pflanzplätzen, die die Häuser selbst anlegen. Efeu wächst wild mit
+  seiner Wand.
+- **Laternen und Bänke:** Laternenmasten auf der Bücherei-Seite, Wandlaternen gegenüber, drei Parkbänke.
+- **Leben auf der Straße (5a):** Passanten, Radfahrer, Autos (Taxi, Mini, Kombi) und der Lieferwagen, der
+  die Kartons bringt. Niemand erscheint oder verschwindet sichtbar.
+- **Figuren (5b, 5c):** Zuerst realistische Figuren mit Kleidung (5b), inzwischen ersetzt durch
+  **Chibi-Figuren** (5c): 6 Grundkörper, gezeichnete Gesichter mit Mimik und Blinzeln, Kleidung und
+  Frisuren, Bewegungen von Mixamo (Gehen, Stehen, Schaufenster, Hinsetzen, Sitzen), eigene
+  Radfahr-Bewegung, Grüßen mit Lächeln und Nicken.
+- **Malfilter „Aquarell“:** das Spiel wie gemalt, mit feinen braunen Linien (Einstellung Grafik →
+  Malstil, Testtaste F4).
+- **Bildqualität:** ruhige Kanten (TAA auf Mittel/Hoch), keine Pixel an Fugen, Sichtfeld auch für sehr
+  breite Bildschirme.
+- **Prüfwerkzeuge:** Testbilder (`tools/screenshots.sh`), Lochprüfung und Überschneidungsprüfung für
+  Häuser, `plan_check.py` (Sicht und Grenzen), `street_life_check` (Straßenleben).
+
+**Wo die wichtigen Dateien liegen**
+
+| Was | Wo |
+|-----|----|
+| Häuser bauen (Blender) | `tools/blender/build_storybook_*.py`, Bausteine `storybook_lib.py`, `storybook_town.py`, `storybook_houses.py` |
+| Häuser im Spiel | `scenes/world/houses.tscn`, Modelle `assets/models/houses/`, Quellen `assets/models/source/houses/` |
+| Pflanzen | `tools/blender/build_storybook_plants.py` + `storybook_greenery.py` → `scenes/world/plants/`, gesetzt von `scripts/world/greenery.gd` |
+| Materialien und Shader | `assets/materials/storybook/`, `assets/shaders/storybook*.gdshader` |
+| Straßenleben | `scripts/street_life/`, `scenes/street_life/` |
+| Chibi-Figuren | `tools/blender/build_chibi.py` (+ `chibi_*.py`), `scenes/characters/`, `scripts/characters/` |
+| Fahrzeuge | `tools/blender/build_vehicles.py`, `assets/models/vehicles/` |
+| Malfilter | `scripts/rendering/`, `assets/shaders/paint/` |
+| Alle einstellbaren Werte | `scripts/autoload/game_config.gd` |
+
+**Was noch offen oder provisorisch ist**
+- Innen ist noch alles Platzhalter: **alle Möbel und die Deko**, Theke und Rückgabe-Einwurf → **Etappe 6**.
+  Wände, Boden, Decke und Fenster der Bücherei innen kommen danach.
+- Das Licht der ganzen Welt (warm, mildes Leuchten, leichte Unschärfe in der Ferne) ist noch nicht
+  abgestimmt.
+- Die realistischen Figuren aus 5b werden nicht mehr benutzt (die Chibi-Figuren ersetzen sie), ihre
+  Dateien liegen noch im Projekt.
+- Passanten gehen noch allein: keine Gruppen, keine Gespräche, wenig Kleidung und Frisuren.
+- Kein Tag-Nacht-Wechsel; Besucher kommen noch nicht in die Bücherei.
 
 ## Etappe 1 – Grundgerüst und erster Raum
 - [x] Godot-4-Projekt mit Ordnerstruktur
@@ -119,8 +177,8 @@
 - [x] Bilder-pro-Sekunde-Anzeige (F3 oder Einstellungen); alle Einstellungen gespeichert
 
 ## Etappe 2f – Inventar, Shop und Lieferung
-Greift Teilen von Etappe 6 vor: Geld, Kaufen und Verkaufen sind schon da und so gebaut,
-dass Etappe 6 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den Datenblättern).
+Greift Teilen von Etappe 7 vor: Geld, Kaufen und Verkaufen sind schon da und so gebaut,
+dass Etappe 7 darauf aufbauen kann (Einnahmen über `Wallet.earn`, Preise in den Datenblättern).
 - [x] Zentrales Geld-System (`Wallet`): Startgeld 500 Taler (`GameConfig.start_money`),
       dezente Anzeige oben links, jede Buchung mit kurzem Grund
 - [x] Gestaltungsmodus wird zum Inventar (`Inventory`): nur Eigenes, mit Anzahl (×2);
@@ -752,9 +810,9 @@ ist austauschbar.
       Entwicklerin und eine Tafel vor dem Wolleladen. Prüfwerkzeug findet jetzt auch Flimmern
       (zwei Flächen genau aufeinander) und Töpfe, die in Regalen oder Wänden stecken;
       viele kleine Flimmer-Stellen an Gesimsen, Dachrinnen, Fenstern und Zäunen behoben
-- [ ] Teil 4g – Möbel und Deko im Stil, Innenraum der Bücherei
-- [ ] Teil 5 – Möbel und Deko (42 Stück) im selben Stil
-- [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen, Theke)
+- [ ] Teil 4g – Möbel und Deko im Stil, Innenraum der Bücherei (Möbel und Theke → Etappe 6)
+- [x] Teil 5 – Möbel und Deko im selben Stil → wird Etappe 6 („Möbelkatalog im neuen Stil“)
+- [ ] Teil 6 – Innenraum der Bücherei (Wände, Boden, Decke, Fenster innen)
 
 ### Etappe 4h – Bilderbuch-Stil
 Leitgedanke: Die Welt wird zu einer lebendig gewordenen Kinderbuch-Illustration – warm,
@@ -1016,7 +1074,31 @@ Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi
 - [ ] Mehr Alltag: jemand läuft hin und her und schaut aufs Handy, wartet, telefoniert …
 - [ ] Mehr Kleidung und Frisuren
 
-## Etappe 6 – Wirtschaft und Tagesablauf
+## Etappe 6 – Möbelkatalog im neuen Stil
+Leitgedanke: Ein liebevoller Möbelkatalog im Bilderbuch-Stil der Welt – weich, rund, leicht schief und
+handgemacht, jedes Teil ein geschlossener Körper. Drei Startstile (Dark Academia, Minimalistisch,
+Landhaus) mit je etwa 20–25 Objekten, dazu etwa 15 stilneutrale. Jedes Objekt in 3–5 Farben; im
+Gestaltungsmodus und im Shop schöne Bild-Kacheln statt Text. Der Stil dient nur noch dem Einrichten.
+- [x] Überblick „Stand nach dem Stil-Umbau“ (oben), Notion-Seite „Roadmap (aus Claude Code)“ und
+      Arbeitsregel dazu in CLAUDE.md
+- [ ] Stile neu: Dark Academia, Minimalistisch und Landhaus als Datenblätter (`data/styles/`, neuer Stil
+      = neue Datei, kein Code); Botanisch entfällt; der Stil bestimmt keine Besucher und keine Musik mehr
+- [ ] Farbvarianten (3–5 je Objekt, Pflanzen mit Blütenfarben): eingefärbt werden benannte Materialien
+      (auch bei eigenen Modellen); im Inventar ist jede Farbe ein eigener Eintrag; gespeichert, alte
+      Spielstände laden weiter
+- [ ] Gestaltungsmodus und Shop mit großen Bild-Kacheln (Vorschaubild in der Farbe, Anzahl bzw. Preis
+      klein in der Ecke, Name und Werte im Tooltip), Filter als Symbol-Knöpfe, Farbwahl vor dem Kauf
+- [ ] Möbel-Baukasten in Blender (Bilderbuch-Stil): Modell, .blend, Godot-Szene (Kollision,
+      Ablageflächen, Fächer, Sitzplätze, Licht), Datenblatt und Vorlage aus einem Script
+- [ ] Dark Academia (etwa 23 Objekte)
+- [ ] Minimalistisch (etwa 22 Objekte)
+- [ ] Landhaus (etwa 23 Objekte)
+- [ ] Stilneutral (etwa 15 Objekte)
+- [ ] Theke und Rückgabe-Einwurf je Stil (Auswahl in der App „Fassade“)
+- [ ] Übersichts-Szene mit allen Objekten, Testbilder, Leistung in allen drei Grafikstufen
+- [ ] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE)
+
+## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
   Verkaufen, Lieferung
 - Einnahmen: Leseausweise, Abstempeln, Leihgebühren, Mitgliedschaften (über `Wallet.earn`)
@@ -1024,30 +1106,31 @@ Leitgedanke: niedlicher und gemütlicher als die realistischen Figuren – Chibi
 - Tag mit Öffnen-Schild, Pause und Vorspulen; Tagesabrechnung aus den Buchungen
 - Preise und Startgeld ausbalancieren
 
-## Etappe 7 – Stilsystem und Besuchervielfalt
-- Stil-Merkmale an Möbeln (Botanisch, Modern, Dark Academia) – Grundlage seit Etappe 2 vorhanden
-- Genres tragen schon einen passenden Stil (Datenblatt) – kann später mitzählen
-- Vorherrschender Stil beeinflusst Besucher und Musik
+## Etappe 8 – Besuchervielfalt
+- Verschiedene Besucher mit eigenen Vorlieben (z. B. Lieblingsgenres – Genres tragen schon einen
+  passenden Stil im Datenblatt)
+- Verworfen (seit Etappe 6): Der Einrichtungsstil bestimmt nicht, welche Besucher kommen oder welche
+  Musik läuft – der Stil dient nur dem Einrichten
 
-## Etappe 8 – Café
+## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)
 
-## Etappe 9 – Erweiterungen und Freischaltungen
+## Etappe 10 – Erweiterungen und Freischaltungen
 - Weitere Räume, Obergeschoss, Genres freischalten (`BookStock.unlock_genre`), Renovieren
 - Einzelne Bücher nach und nach freischalten und sammeln (Grundlage: Sammlung in BookStock,
   `is_discovered`, `mark_discovered`; Pakete wählen bisher automatisch neue Titel)
 - Neue Möbel im Shop freischalten (Datenblatt-Feld `is_unlocked`)
 
-## Etappe 10 – Atmosphäre und Sound
-- Musik je Stil, Geräusche, Tageszeit-Licht
+## Etappe 11 – Atmosphäre und Sound
+- Musik, Geräusche, Tageszeit-Licht
 
-## Etappe 11 – Story und Spiegel
+## Etappe 12 – Story und Spiegel
 - Kleine unerklärliche Ereignisse, der Spiegel und seine Wesen
 
-## Etappe 12 – Gasse, Fassade und Jahreszeiten
+## Etappe 13 – Gasse, Fassade und Jahreszeiten
 - Die Gasse vor dem Haus (bisher: ein Stück Gehweg als Platzhalter), Fassade gestalten
   (in der App „Fassade“ aus Etappe 3l, z. B. Wandfarbe außen, Schild, Fenster), Jahreszeiten
   – baut auf der Außenwelt aus Etappe 4 auf
 
-## Etappe 13 – Feinschliff
+## Etappe 14 – Feinschliff
 - Menüs, Einstellungen, Speichern/Laden, Balancing

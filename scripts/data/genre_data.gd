@@ -8,7 +8,7 @@ extends Resource
 ## also keinen Code, nur ein neues Datenblatt und eine Bücherliste (data/books/<id>.txt).
 ## - Umbenennen: einfach "Display Name" ändern (die id bleibt gleich).
 ## - Freischalten: Häkchen bei "Is Unlocked" setzen (im Spiel später auch über
-##   BookStock.unlock_genre("id"), z. B. in Etappe 8).
+##   BookStock.unlock_genre("id"), z. B. in Etappe 10).
 ## Anleitung: docs/ASSET_GUIDE.md, Abschnitt "Bücher und Genres".
 
 ## Eindeutiger Name ohne Leer- und Sonderzeichen, z. B. "crime".

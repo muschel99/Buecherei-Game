@@ -90,7 +90,7 @@ func get_unlocked_genres() -> Array[GenreData]:
 	return result
 
 
-## Schaltet ein Genre frei (z. B. später als Belohnung in Etappe 8).
+## Schaltet ein Genre frei (z. B. später als Belohnung in Etappe 10).
 func unlock_genre(genre_id: String) -> void:
 	if Catalog.get_genre(genre_id) == null or is_genre_unlocked(genre_id):
 		return

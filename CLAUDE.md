@@ -41,6 +41,11 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
   Alles so bauen, dass eigene 3D-Modelle (.glb), Texturen und Sounds leicht austauschbar sind
   (siehe `docs/ASSET_GUIDE.md`).
 - **Git:** Nach jedem funktionierenden Schritt ein Commit mit verständlicher deutscher Nachricht.
+- **Roadmap in Notion (seit Etappe 6):** Jedes Mal, wenn `docs/ROADMAP.md` aktualisiert wird, wird die
+  Notion-Seite „Roadmap (aus Claude Code)“ (Unterseite von „Cozy-Bücherei-Spiel (Arbeitstitel)“) auf
+  denselben Stand gebracht – übersichtlich und gut lesbar (Tabellen, Überschriften, Häkchen). Sonst
+  nichts im Notion der Entwicklerin ändern (Lesen ist in Ordnung). Notion ist über den claude.ai-
+  Zugang verbunden (Werkzeuge `notion-…`).
 - **Fehlermeldungen:** Erst kurz erklären, was die Meldung bedeutet, dann beheben.
 - **Seit Etappe 4g (Wunsch der Entwicklerin): Keine Kontrollbilder nötig** – sie testet selbst
   am PC. Claude prüft ohne Bilder (Godot headless laden, Probe-Szenen, street_life_check,
@@ -667,7 +672,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
 - Stil-Merkmale sind überall freiwillig; ohne Stil-Merkmal = stilneutral, zählt nicht mit.
 - **Geld** ändert sich nur über `Wallet.spend(betrag, grund)` / `Wallet.earn(betrag, grund)`
-  (Etappe 6 baut darauf auf). Anzeige als Text: `Wallet.format(betrag)`.
+  (Etappe 7 baut darauf auf). Anzeige als Text: `Wallet.format(betrag)`.
 - **Inventar** (`Inventory`): Möbel mit Anzahl (`add_furniture`, `take_furniture`), Oberflächen
   einmal besessen (`add_surface`, `owns_surface`). Was im Raum steht, zählt der Raum
   (`Room.count_placed`). Der Gestaltungsmodus zeigt nur, was im Inventar liegt (Anzahl ≥ 1).

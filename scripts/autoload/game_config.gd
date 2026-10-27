@@ -660,4 +660,4 @@ var debug_money_amount: int = 500
 # --- Spätere Etappen ---
 # Hier kommen nach und nach weitere Werte dazu, z. B.:
 # Tageslänge (Etappe 5), Leihgebühren (Etappe 5),
-# Freischaltintervalle (Etappe 8).
+# Freischaltintervalle (Etappe 10).

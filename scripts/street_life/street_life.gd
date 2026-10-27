@@ -147,7 +147,7 @@ func is_centerline(route: StreetRoute) -> bool:
 
 
 ## Wie belebt die Straße gerade ist (1 = normal). Später kann das von der Tageszeit abhängen
-## (Etappe 6): dann hier die Uhrzeit einrechnen – Anzahl und Abstände richten sich danach.
+## (Etappe 7): dann hier die Uhrzeit einrechnen – Anzahl und Abstände richten sich danach.
 func activity() -> float:
 	return maxf(0.0, GameConfig.street_activity)
 

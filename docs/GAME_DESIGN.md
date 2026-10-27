@@ -162,7 +162,7 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Bücherpakets, freigeschaltet ja/nein, Schriftart und passende Cover-Gestaltungen.
   Umbenennen, hinzufügen und freischalten geht ohne Code.
   - Zum Start frei: Roman, Krimi, Fantasy, Sachbuch, Kinderbuch.
-  - Angelegt, aber gesperrt (Freischaltung in Etappe 9): Klassiker, Lyrik, Natur und Garten,
+  - Angelegt, aber gesperrt (Freischaltung in Etappe 10): Klassiker, Lyrik, Natur und Garten,
     Philosophie, Science-Fiction, Kochen und Backen, Reisen, Kunst, Geschichte, Achtsamkeit,
     Comics und Graphic Novels.
 - **Echte Bücher:** Jedes Genre hat 50 feste Titel (zusammen 800), deutsch und englisch, alle
@@ -185,12 +185,12 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Autor und Genre – nicht bei jedem flüchtigen Blick) und wenn man es in der Hand hält
   (das Buch obenauf mit Cover; nach dem Nehmen oder Wechseln zeigt die Karte es kurz).
 - Von einem Titel kann es mehrere Exemplare geben; alle sehen gleich aus. Jedes Exemplar hat
-  einen Zustand (vorerst immer „gut“; beschädigte Bücher kommen in Etappe 6).
+  einen Zustand (vorerst immer „gut“; beschädigte Bücher kommen in Etappe 7).
 - **Sammlung:** Bücherpakete bringen zuerst Titel, die ich noch nicht kenne – man weiß nie
   genau, was als Nächstes kommt. Beim Auspacken freut sich ein kurzer Hinweis mit
   („7 neue Titel · Krimi“). Erst wenn alle 50 Titel eines Genres entdeckt
   sind, kommen doppelte (die mit den wenigsten Exemplaren zuerst). Grundlage für das spätere
-  Freischalten einzelner Bücher (Etappe 9).
+  Freischalten einzelner Bücher (Etappe 10).
 - **Bücherbestand** (getrennt vom Möbel-Inventar): Jedes Buch ist im Lager, in einem Regal,
   im Rückgabekasten oder in meinen Händen. Zum Start liegen 12 verschiedene Titel je freiem
   Genre im Lager (GameConfig).
@@ -470,12 +470,12 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   (`GameConfig.debug_money_amount`).
 - Beide lassen sich zentral abschalten: `GameConfig.debug_keys_enabled = false`.
 
-### Später (Etappe 6)
+### Später (Etappe 7)
 - Leihgebühren über Leseausweise (Buch abstempeln statt Wechselgeld).
 - Mitgliedschaften.
 - Café als zusätzliche Einnahmequelle.
 - Bücher können kaputtgehen (Reparatur) – der Zustand ist im Buch schon vorgesehen.
-- Genres werden nach und nach freigeschaltet (Etappe 9, `BookStock.unlock_genre`).
+- Genres werden nach und nach freigeschaltet (Etappe 10, `BookStock.unlock_genre`).
 
 ## Theke
 - Gehört seit Etappe 4a **fest zum Laden**: nicht kaufbar, nicht verkaufbar und nicht im
