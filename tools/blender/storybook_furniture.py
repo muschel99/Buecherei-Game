@@ -220,9 +220,10 @@ def pillow(b, center, size, roundness=3.2, puff=0.0, sag=0.0, step=0.03, tint=No
     (roundness 2 = Kugel, groß = fast Kasten). puff wölbt Ober- und Unterseite in der Mitte, sag lässt
     die Mitte etwas einsinken (benutzt)."""
     sx, sy, sz = size
-    # in echter Größe unterteilt (lange und kurze Seiten gleich fein), dann auf das Superellipsoid
-    faces = b.box((0, 0, 0), (sx, sy, sz), step=step, dent=0.0, tint=tint)
-    verts = {v for f in faces for v in f.verts}
+    # Gitter in echter Größe (je Richtung so fein wie step, aber mindestens zwei Abschnitte – sonst
+    # wird ein flaches Kissen an den Rändern zu klein), dann auf das Superellipsoid gelegt
+    counts = [max(2, int(round(d / step))) for d in (sx, sy, sz)]
+    faces, verts = _grid_box(b, (sx, sy, sz), counts, tint)
     m = Matrix.Translation(Vector(center)) @ Matrix.Rotation(math.radians(turn), 4, "Z")
     if matrix is not None:
         m = matrix @ m
@@ -235,6 +236,36 @@ def pillow(b, center, size, roundness=3.2, puff=0.0, sag=0.0, step=0.03, tint=No
         z = q.z * sz / 2 + (puff * bulge * (1 if q.z > 0 else -0.6)) - (sag * bulge if q.z > 0 else 0.0)
         v.co = m @ Vector((q.x * sx / 2, q.y * sy / 2, z))
     return faces
+
+
+def _grid_box(b, size, counts, tint=None):
+    """Geschlossener Kasten um den Ursprung mit eigener Unterteilung je Richtung."""
+    sx, sy, sz = size
+    nx, ny, nz = counts
+    idx = {}
+    bm = b.bm
+
+    def v(i, j, k):
+        key = (i, j, k)
+        if key not in idx:
+            idx[key] = bm.verts.new(((i / nx - 0.5) * sx, (j / ny - 0.5) * sy, (k / nz - 0.5) * sz))
+        return idx[key]
+    faces = []
+    for j in range(ny):
+        for k in range(nz):
+            faces.append(bm.faces.new((v(0, j, k), v(0, j + 1, k), v(0, j + 1, k + 1), v(0, j, k + 1))))
+            faces.append(bm.faces.new((v(nx, j, k), v(nx, j, k + 1), v(nx, j + 1, k + 1), v(nx, j + 1, k))))
+    for i in range(nx):
+        for k in range(nz):
+            faces.append(bm.faces.new((v(i, 0, k), v(i, 0, k + 1), v(i + 1, 0, k + 1), v(i + 1, 0, k))))
+            faces.append(bm.faces.new((v(i, ny, k), v(i + 1, ny, k), v(i + 1, ny, k + 1), v(i, ny, k + 1))))
+    for i in range(nx):
+        for j in range(ny):
+            faces.append(bm.faces.new((v(i, j, 0), v(i + 1, j, 0), v(i + 1, j + 1, 0), v(i, j + 1, 0))))
+            faces.append(bm.faces.new((v(i, j, nz), v(i, j + 1, nz), v(i + 1, j + 1, nz), v(i + 1, j, nz))))
+    verts = list(idx.values())
+    b._finish_island(verts, faces, tint)
+    return faces, verts
 
 
 def piping(b, center, size, z_level, r=0.006, turn=0.0, roundness=3.2, n=48, matrix=None):
@@ -639,6 +670,81 @@ def lush_fern(p, size=1.0, fronds=36, leaf_mat="box_leaf", stem_mat="stem"):
         curl = [base, top] + [top + Vector((math.cos(a) * 0.022 * (1 - t / 6) * math.sin(t), math.sin(a) * 0.022 * (1 - t / 6) * math.sin(t),
                                            0.022 * (1 - t / 6) * math.cos(t) - 0.022)) for t in [i * 0.6 for i in range(1, 9)]]
         p.body(stem_mat, vary=0.06).tube(curl, 0.004 * size, segs=5, smooth=1, round_ends=True)
+
+
+def monstera_leaf(p, base, d, n, size, mat="leaf_dark", lobes=4):
+    """Monstera-Blatt: Mittelrippe mit tief eingeschnittenen, runden Lappen (jeder Lappen ein
+    eigenes Blatt-Körperchen, dazwischen die typischen Schlitze), herzförmig am Ansatz."""
+    d, n = Vector(d).normalized(), Vector(n).normalized()
+    side = d.cross(n).normalized()
+    rib = p.body("stem", vary=0.05)
+    rib.tube([base, base + d * size * 0.92], lambda t: 0.004 * (1 - 0.6 * t) * max(size / 0.3, 0.6), segs=5, round_ends=True)
+    for i in range(lobes):
+        u = 0.08 + 0.8 * i / (lobes - 1)
+        # Umriss: am Ansatz breit (Herz), zur Spitze schmaler
+        reach = size * (0.5 * math.sin(math.pi * (0.25 + 0.75 * u)) + 0.1)
+        at = base + d * size * u
+        for sg in (-1, 1):
+            out = (side * sg + d * (0.2 + 0.5 * u)).normalized()
+            p.body(mat, vary=0.1).leaf(at, out, n, reach, reach * 0.62, shape="round", thick=0.0045, curl=0.12, segs=8)
+    p.body(mat, vary=0.1).leaf(base + d * size * 0.82, d, n, size * 0.22, size * 0.14, shape="oval", thick=0.004, curl=0.1, segs=7)
+
+
+def monstera(p, size=1.0, leaves=11):
+    """Monstera: lange Stiele aus der Erde, die sich nach außen neigen, oben große geschlitzte
+    Blätter in verschiedenen Höhen; dazwischen ein paar junge, noch eingerollte Blätter."""
+    rnd = p.rnd
+    for i in range(leaves):
+        a = 2 * math.pi * i / leaves * 2.3 + rnd.uniform(-0.3, 0.3)
+        out = Vector((math.cos(a), math.sin(a), 0))
+        # Blätter in allen Höhen: unten kurz und weit ausladend, oben lang und steiler
+        h = (0.14 + 0.5 * ((i * 0.618) % 1.0)) * size
+        lean = rnd.uniform(0.55, 1.0) if h < 0.35 * size else rnd.uniform(0.3, 0.6)
+        top = out * h * lean + Vector((0, 0, h))
+        mid = out * h * lean * 0.3 + Vector((0, 0, h * 0.6))
+        p.body("stem", vary=0.06).tube([Vector((0, 0, 0.01)), mid, top], 0.007 * size, segs=6, smooth=2, round_ends=True)
+        d = (out * 0.8 + Vector((0, 0, rnd.uniform(-0.1, 0.3)))).normalized()
+        nrm = (Vector((0, 0, 1)) - d * d.z).normalized()
+        nrm = (nrm + out * 0.45).normalized()
+        monstera_leaf(p, top, d, nrm, rnd.uniform(0.32, 0.44) * size)
+    for i in range(2):
+        a = rnd.uniform(0, 2 * math.pi)
+        base = Vector((math.cos(a) * 0.03, math.sin(a) * 0.03, 0.01))
+        top = base + Vector((0, 0, 0.32 * size))
+        p.body("stem", vary=0.06).tube([base, top], 0.006 * size, segs=6, round_ends=True)
+        p.body("leaf_lime", vary=0.08).leaf(top - Vector((0, 0, 0.02)), Vector((0.05, 0, 1)).normalized(), Vector((1, 0, 0)),
+                                           0.16 * size, 0.04 * size, shape="narrow", thick=0.006, curl=0.6, segs=6)
+
+
+def succulent_rosette(p, center, r, mat="leaf_blue", n=16, tip_mat=None):
+    """Sukkulente: dicke, runde Blätter in einer Spirale (außen flach, innen steil)."""
+    c = Vector(center)
+    golden = math.radians(137.5)
+    for i in range(n):
+        t = i / max(1, n - 1)
+        a = i * golden
+        out = Vector((math.cos(a), math.sin(a), 0))
+        rise = 0.2 + 0.9 * (1 - t)
+        d = (out * (1 - 0.6 * (1 - t)) + Vector((0, 0, rise))).normalized()
+        nrm = (Vector((0, 0, 1)) - d * d.z).normalized()
+        size = r * (0.55 + 0.45 * t)
+        p.body(mat, vary=0.08).leaf(c + out * r * 0.1 * t, d, nrm, size, size * 0.55, shape="oval", thick=size * 0.28, curl=0.25, segs=6)
+
+
+def eucalyptus(p, base, d, length, rnd, mat="leaf_silver", pairs=7):
+    """Eukalyptus-Zweig: dünner Stiel, runde Blätter paarweise."""
+    d = Vector(d).normalized()
+    pts = [Vector(base)]
+    for i in range(6):
+        pts.append(pts[-1] + (d + Vector((rnd.uniform(-0.1, 0.1), rnd.uniform(-0.1, 0.1), 0))).normalized() * length / 6)
+    p.body("stem", vary=0.05).tube(pts, lambda t: 0.0028 * (1 - 0.5 * t), segs=5, smooth=1, round_ends=True)
+    for i in range(1, pairs + 1):
+        q = pts[0].lerp(pts[-1], i / (pairs + 0.5))
+        side = d.cross(Vector((1, 0, 0)) if abs(d.x) < 0.9 else Vector((0, 1, 0))).normalized()
+        s = 0.035 * (1 - 0.35 * i / pairs)
+        for sg in (-1, 1):
+            sd = (side * sg + d * 0.2).normalized()
+            p.body(mat, vary=0.08).leaf(q, sd, sd.cross(d).normalized() * sg, s, s * 0.95, shape="round", thick=0.003, curl=0.1, segs=7)
 
 
 # --- Export ---

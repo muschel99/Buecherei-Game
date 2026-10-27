@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "white"
+display_name = "Weiß"
+colors = Dictionary[String, Color]({"wax": Color(0.950, 0.930, 0.880, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "sand"
+display_name = "Sand"
+colors = Dictionary[String, Color]({"wax": Color(0.840, 0.760, 0.620, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "sage"
+display_name = "Salbei"
+colors = Dictionary[String, Color]({"wax": Color(0.620, 0.680, 0.580, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "clay"
+display_name = "Terrakotta"
+colors = Dictionary[String, Color]({"wax": Color(0.760, 0.520, 0.420, 1)})
+
+[resource]
+script = ExtResource("1_data")
+id = "candles_min"
+display_name = "Stumpenkerzen auf Tablett"
+description = "Drei Kerzen in verschiedenen Höhen auf einem runden Steintablett."
+category = 4
+subcategory = "candle"
+price = 24
+style_ids = Array[String](["minimalist"])
+scene_path = "res://scenes/furniture/candles_min.tscn"
+footprint = Vector2i(3, 3)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 3
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

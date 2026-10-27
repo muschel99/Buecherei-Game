@@ -1,67 +1,44 @@
 [gd_scene format=3]
 
-[ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="1_b3cx1"]
-[ext_resource type="Material" path="res://assets/materials/paint_black.tres" id="2_0vm3v"]
-[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="3_0vm3v"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Modell, Kollision, Ablageflächen, Fächer und Licht. Wird beim Neubau
+; überschrieben, solange die Datei unverändert ist (speichert Godot sie, bleibt sie, wie sie ist).
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_tyopi"]
-top_radius = 0.35
-bottom_radius = 0.35
-height = 0.03
-radial_segments = 24
+[ext_resource type="PackedScene" path="res://assets/models/furniture/table_bistro.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="2_surface"]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_u7jib"]
-top_radius = 0.025
-bottom_radius = 0.025
-height = 0.7
-radial_segments = 24
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(1.0000, 0.0300, 1.0000)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_7y12u"]
-top_radius = 0.22
-bottom_radius = 0.24
-height = 0.025
-radial_segments = 24
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(0.6000, 0.7200, 0.6000)
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_5posa"]
-height = 0.75
-radius = 0.35
+[sub_resource type="BoxShape3D" id="Shape_2"]
+size = Vector3(0.8600, 0.0300, 0.8600)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_tyopi"]
-size = Vector3(0.5, 0.03, 0.5)
+[node name="TableBistro" type="Node3D"]
 
-[node name="TableBistro" type="Node3D" unique_id=1676703214]
+[node name="Model" parent="." instance=ExtResource("1_model")]
 
-[node name="Model" type="Node3D" parent="." unique_id=1270045131]
+[node name="Body" type="StaticBody3D" parent="."]
 
-[node name="Top" type="MeshInstance3D" parent="Model" unique_id=939061379]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.735, 0)
-material_override = ExtResource("1_b3cx1")
-mesh = SubResource("CylinderMesh_tyopi")
+[node name="Shape0" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.7350, -0.0000)
+shape = SubResource("Shape_0")
 
-[node name="Pole" type="MeshInstance3D" parent="Model" unique_id=1750092375]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.37, 0)
-material_override = ExtResource("2_0vm3v")
-mesh = SubResource("CylinderMesh_u7jib")
+[node name="Shape1" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.3600, -0.0000)
+shape = SubResource("Shape_1")
 
-[node name="Foot" type="MeshInstance3D" parent="Model" unique_id=1736232137]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0125, 0)
-material_override = ExtResource("2_0vm3v")
-mesh = SubResource("CylinderMesh_7y12u")
+[node name="Surfaces" type="Node3D" parent="."]
 
-[node name="Body" type="StaticBody3D" parent="." unique_id=149626390]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=618795005]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, 0)
-shape = SubResource("CylinderShape3D_5posa")
-
-[node name="Surfaces" type="Node3D" parent="." unique_id=1469396626]
-
-[node name="Top" type="Area3D" parent="Surfaces" unique_id=1814486868]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+[node name="Surface0" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.7500, -0.0000)
 collision_layer = 32
 collision_mask = 0
 monitoring = false
-script = ExtResource("3_0vm3v")
+script = ExtResource("2_surface")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Top" unique_id=1974662262]
-shape = SubResource("BoxShape3D_tyopi")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Surface0"]
+shape = SubResource("Shape_2")
+
+

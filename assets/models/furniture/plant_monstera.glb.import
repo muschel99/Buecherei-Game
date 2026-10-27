@@ -1,0 +1,78 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://dai6dhv7kc7i8"
+path="res://.godot/imported/plant_monstera.glb-c621623380b13973491996b703e2d500.scn"
+
+[deps]
+
+source_file="res://assets/models/furniture/plant_monstera.glb"
+dest_files=["res://.godot/imported/plant_monstera.glb-c621623380b13973491996b703e2d500.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"leaf_dark": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_monstera/leaf_dark.tres",
+"use_external/path": "res://assets/materials/furniture/plant_monstera/leaf_dark.tres"
+},
+"leaf_lime": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_monstera/leaf_lime.tres",
+"use_external/path": "res://assets/materials/furniture/plant_monstera/leaf_lime.tres"
+},
+"pot": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_monstera/pot.tres",
+"use_external/path": "res://assets/materials/furniture/plant_monstera/pot.tres"
+},
+"soil": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_monstera/soil.tres",
+"use_external/path": "res://assets/materials/furniture/plant_monstera/soil.tres"
+},
+"stem": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_monstera/stem.tres",
+"use_external/path": "res://assets/materials/furniture/plant_monstera/stem.tres"
+},
+"wood": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_monstera/wood.tres",
+"use_external/path": "res://assets/materials/furniture/plant_monstera/wood.tres"
+}
+}
+}
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=0

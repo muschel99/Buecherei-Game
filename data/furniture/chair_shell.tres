@@ -1,16 +1,56 @@
-[gd_resource type="Resource" script_class="FurnitureData" format=3]
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=8 format=3]
 
-[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_fixqm"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "sage"
+display_name = "Salbei"
+colors = Dictionary[String, Color]({"shell": Color(0.620, 0.680, 0.580, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "white"
+display_name = "Weiß"
+colors = Dictionary[String, Color]({"shell": Color(0.930, 0.920, 0.880, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "blue"
+display_name = "Taubenblau"
+colors = Dictionary[String, Color]({"shell": Color(0.560, 0.640, 0.720, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "clay"
+display_name = "Terrakotta"
+colors = Dictionary[String, Color]({"shell": Color(0.760, 0.520, 0.420, 1)})
+
+[sub_resource type="Resource" id="Variant_4"]
+script = ExtResource("2_variant")
+id = "charcoal"
+display_name = "Anthrazit"
+colors = Dictionary[String, Color]({"shell": Color(0.300, 0.300, 0.300, 1)})
 
 [resource]
-script = ExtResource("1_fixqm")
-books_can_lean = true
+script = ExtResource("1_data")
 id = "chair_shell"
 display_name = "Schalenstuhl"
-description = "Weiße Schale, schwarze Beine."
+description = "Weiche Sitzschale mit runder Lehne auf schlanken Holzbeinen."
+category = 1
+subcategory = "chair"
 price = 60
 style_ids = Array[String](["minimalist"])
 scene_path = "res://scenes/furniture/chair_shell.tscn"
-footprint = Vector2i(4, 4)
-category = 1
-subcategory = "chair"
+footprint = Vector2i(4, 5)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 1
+books_can_lean = true
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3"), SubResource("Variant_4")])

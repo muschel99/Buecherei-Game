@@ -1,236 +1,148 @@
 [gd_scene format=3]
 
-[ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="1_d4wef"]
-[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="5_qk8qk"]
-[ext_resource type="Script" path="res://scripts/objects/book_shelf.gd" id="6_shelf"]
-[ext_resource type="Script" path="res://scripts/objects/book_row.gd" id="7_row"]
-[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="8_interactable"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Modell, Kollision, Ablageflächen, Fächer und Licht. Wird beim Neubau
+; überschrieben, solange die Datei unverändert ist (speichert Godot sie, bleibt sie, wie sie ist).
 
-[sub_resource type="BoxMesh" id="BoxMesh_02vgu"]
-size = Vector3(0.025, 1.5, 0.38)
+[ext_resource type="PackedScene" path="res://assets/models/furniture/shelf_cube_white.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="2_surface"]
+[ext_resource type="Script" path="res://scripts/objects/book_shelf.gd" id="3_shelf"]
+[ext_resource type="Script" path="res://scripts/objects/book_row.gd" id="4_row"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="5_interact"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_wuf1j"]
-size = Vector3(0.025, 1.5, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(0.0280, 1.1000, 0.3600)
 
-[sub_resource type="BoxMesh" id="BoxMesh_0hnqd"]
-size = Vector3(0.96, 1.5, 0.01)
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(0.0280, 1.1000, 0.3600)
 
-[sub_resource type="BoxMesh" id="BoxMesh_cysmk"]
-size = Vector3(0.96, 0.025, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_2"]
+size = Vector3(0.0280, 1.1000, 0.3600)
 
-[sub_resource type="BoxMesh" id="BoxMesh_5macm"]
-size = Vector3(0.96, 0.025, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_3"]
+size = Vector3(0.7400, 0.0280, 0.3600)
 
-[sub_resource type="BoxMesh" id="BoxMesh_2t2e2"]
-size = Vector3(0.96, 0.025, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_4"]
+size = Vector3(0.7400, 0.0280, 0.3600)
 
-[sub_resource type="BoxMesh" id="BoxMesh_rkoa7"]
-size = Vector3(0.96, 0.025, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_5"]
+size = Vector3(0.7400, 0.0280, 0.3600)
 
-[sub_resource type="BoxMesh" id="BoxMesh_y7cnl"]
-size = Vector3(0.02, 1.5, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_6"]
+size = Vector3(0.7400, 0.0280, 0.3600)
 
-[sub_resource type="BoxMesh" id="BoxMesh_ehd35"]
-size = Vector3(0.02, 1.5, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_7"]
+size = Vector3(0.7400, 1.1000, 0.0140)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_4cd8x"]
-size = Vector3(0.96, 0.025, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_8"]
+size = Vector3(0.7000, 0.0400, 0.3200)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_rdd2b"]
-size = Vector3(0.96, 0.025, 0.38)
+[sub_resource type="BoxShape3D" id="Shape_9"]
+size = Vector3(0.7200, 0.0300, 0.3400)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_qcli2"]
-size = Vector3(0.96, 0.025, 0.38)
+[node name="ShelfCubeWhite" type="Node3D"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_4rcul"]
-size = Vector3(0.96, 0.025, 0.38)
+[node name="Model" parent="." instance=ExtResource("1_model")]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_8u73v"]
-size = Vector3(0.02, 1.5, 0.38)
+[node name="Body" type="StaticBody3D" parent="."]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_txw3r"]
-size = Vector3(0.02, 1.5, 0.38)
+[node name="Shape0" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.3560, 0.5900, -0.0000)
+shape = SubResource("Shape_0")
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_w6nyd"]
-size = Vector3(0.025, 1.5, 0.38)
+[node name="Shape1" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.5900, -0.0000)
+shape = SubResource("Shape_1")
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_c0ch2"]
-size = Vector3(0.025, 1.5, 0.38)
+[node name="Shape2" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.3560, 0.5900, -0.0000)
+shape = SubResource("Shape_2")
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_a0nfq"]
-size = Vector3(0.96, 1.5, 0.01)
+[node name="Shape3" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.0540, -0.0000)
+shape = SubResource("Shape_3")
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_wuf1j"]
-size = Vector3(0.96, 0.03, 0.38)
+[node name="Shape4" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.4067, -0.0000)
+shape = SubResource("Shape_4")
 
-[node name="ShelfCubeWhite" type="Node3D" unique_id=450669138]
+[node name="Shape5" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.7733, -0.0000)
+shape = SubResource("Shape_5")
 
-[node name="Model" type="Node3D" parent="." unique_id=1550652801]
+[node name="Shape6" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 1.1260, -0.0000)
+shape = SubResource("Shape_6")
 
-[node name="SideLeft" type="MeshInstance3D" parent="Model" unique_id=1553062665]
-transform = Transform3D(1, 0, 0, 0, 0.994666, 0, 0, 0, 0.994737, -0.4675, 0.75, 0.001)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_02vgu")
+[node name="Shape7" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.5900, -0.1700)
+shape = SubResource("Shape_7")
 
-[node name="SideRight" type="MeshInstance3D" parent="Model" unique_id=1416696757]
-transform = Transform3D(1, 0, 0, 0, 0.994666, 0, 0, 0, 0.994737, 0.4675, 0.75, 0.001)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_wuf1j")
+[node name="Shape8" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.0200, -0.0000)
+shape = SubResource("Shape_8")
 
-[node name="Back" type="MeshInstance3D" parent="Model" unique_id=1951508606]
-transform = Transform3D(0.995833, 0, 0, 0, 0.997333, 0, 0, 0, 1, 0, 0.75, -0.185)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_0hnqd")
+[node name="Surfaces" type="Node3D" parent="."]
 
-[node name="Board0" type="MeshInstance3D" parent="Model" unique_id=1201077116]
-transform = Transform3D(0.991666, 0, 0, 0, 1, 0, 0, 0, 0.984211, 0, 0.0125, 0.001)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_cysmk")
-
-[node name="Board1" type="MeshInstance3D" parent="Model" unique_id=472141457]
-transform = Transform3D(0.991666, 0, 0, 0, 1, 0, 0, 0, 0.984211, 0, 0.5, 0.001)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_5macm")
-
-[node name="Board2" type="MeshInstance3D" parent="Model" unique_id=1303053276]
-transform = Transform3D(0.991666, 0, 0, 0, 1, 0, 0, 0, 0.984211, 0, 1, 0.001)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_2t2e2")
-
-[node name="Board3" type="MeshInstance3D" parent="Model" unique_id=172516604]
-transform = Transform3D(0.991666, 0, 0, 0, 1, 0, 0, 0, 0.984211, 0, 1.4875, 0.001)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_rkoa7")
-
-[node name="Divider1" type="MeshInstance3D" parent="Model" unique_id=1353993177]
-transform = Transform3D(1, 0, 0, 0, 0.994666, 0, 0, 0, 0.994737, -0.16, 0.75, 0.001)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_y7cnl")
-
-[node name="Divider2" type="MeshInstance3D" parent="Model" unique_id=1589917169]
-transform = Transform3D(1, 0, 0, 0, 0.994666, 0, 0, 0, 0.994737, 0.16, 0.75, 0.001)
-material_override = ExtResource("1_d4wef")
-mesh = SubResource("BoxMesh_ehd35")
-
-[node name="Body" type="StaticBody3D" parent="." unique_id=1626088116]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=171723919]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0125, 0)
-shape = SubResource("BoxShape3D_4cd8x")
-
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="Body" unique_id=693487299]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxShape3D_rdd2b")
-
-[node name="CollisionShape3D3" type="CollisionShape3D" parent="Body" unique_id=330543339]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-shape = SubResource("BoxShape3D_qcli2")
-
-[node name="CollisionShape3D4" type="CollisionShape3D" parent="Body" unique_id=93418024]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4875, 0)
-shape = SubResource("BoxShape3D_4rcul")
-
-[node name="CollisionShape3D5" type="CollisionShape3D" parent="Body" unique_id=1154389763]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.16, 0.75, 0)
-shape = SubResource("BoxShape3D_8u73v")
-
-[node name="CollisionShape3D6" type="CollisionShape3D" parent="Body" unique_id=1431046927]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.16, 0.75, 0)
-shape = SubResource("BoxShape3D_txw3r")
-
-[node name="CollisionShape3D7" type="CollisionShape3D" parent="Body" unique_id=1718738195]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4675, 0.75, 0)
-shape = SubResource("BoxShape3D_w6nyd")
-
-[node name="CollisionShape3D8" type="CollisionShape3D" parent="Body" unique_id=2075333997]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4675, 0.75, 0)
-shape = SubResource("BoxShape3D_c0ch2")
-
-[node name="CollisionShape3D9" type="CollisionShape3D" parent="Body" unique_id=47258186]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, -0.185)
-shape = SubResource("BoxShape3D_a0nfq")
-
-[node name="Surfaces" type="Node3D" parent="." unique_id=567870693]
-
-[node name="Top" type="Area3D" parent="Surfaces" unique_id=598120029]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+[node name="Surface0" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 1.1400, -0.0000)
 collision_layer = 32
 collision_mask = 0
 monitoring = false
-script = ExtResource("5_qk8qk")
+script = ExtResource("2_surface")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Top" unique_id=1975501639]
-shape = SubResource("BoxShape3D_wuf1j")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Surface0"]
+shape = SubResource("Shape_9")
 
 [node name="BookShelf" type="Node3D" parent="."]
-script = ExtResource("6_shelf")
+script = ExtResource("3_shelf")
 
 [node name="Row1" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3125, 1.0125, 0.005)
-script = ExtResource("7_row")
-width = 0.27
-height = 0.45
-depth = 0.36
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.1780, 0.0680, 0.0050)
+script = ExtResource("4_row")
+width = 0.318
+height = 0.325
+depth = 0.330
 
 [node name="Row2" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 1.0125, 0.005)
-script = ExtResource("7_row")
-width = 0.29
-height = 0.45
-depth = 0.36
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.1780, 0.0680, 0.0050)
+script = ExtResource("4_row")
+width = 0.318
+height = 0.325
+depth = 0.330
 
 [node name="Row3" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3125, 1.0125, 0.005)
-script = ExtResource("7_row")
-width = 0.27
-height = 0.45
-depth = 0.36
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.1780, 0.4207, 0.0050)
+script = ExtResource("4_row")
+width = 0.318
+height = 0.339
+depth = 0.330
 
 [node name="Row4" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3125, 0.5125, 0.005)
-script = ExtResource("7_row")
-width = 0.27
-height = 0.46
-depth = 0.36
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.1780, 0.4207, 0.0050)
+script = ExtResource("4_row")
+width = 0.318
+height = 0.339
+depth = 0.330
 
 [node name="Row5" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.5125, 0.005)
-script = ExtResource("7_row")
-width = 0.29
-height = 0.46
-depth = 0.36
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.1780, 0.7873, 0.0050)
+script = ExtResource("4_row")
+width = 0.318
+height = 0.339
+depth = 0.330
 
 [node name="Row6" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3125, 0.5125, 0.005)
-script = ExtResource("7_row")
-width = 0.27
-height = 0.46
-depth = 0.36
-
-[node name="Row7" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3125, 0.025, 0.005)
-script = ExtResource("7_row")
-width = 0.27
-height = 0.45
-depth = 0.36
-
-[node name="Row8" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.025, 0.005)
-script = ExtResource("7_row")
-width = 0.29
-height = 0.45
-depth = 0.36
-
-[node name="Row9" type="Marker3D" parent="BookShelf"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3125, 0.025, 0.005)
-script = ExtResource("7_row")
-width = 0.27
-height = 0.45
-depth = 0.36
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.1780, 0.7873, 0.0050)
+script = ExtResource("4_row")
+width = 0.318
+height = 0.339
+depth = 0.330
 
 [node name="Interactable" type="Area3D" parent="BookShelf"]
 collision_layer = 2
 collision_mask = 0
 monitoring = false
-script = ExtResource("8_interactable")
+script = ExtResource("5_interact")
 prompt_text = "Menü"
+
+

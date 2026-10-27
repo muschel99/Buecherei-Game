@@ -11,7 +11,7 @@
 size = Vector3(0.3200, 1.6000, 0.3200)
 
 [sub_resource type="BoxShape3D" id="Shape_1"]
-size = Vector3(0.5133, 1.6517, 0.5134)
+size = Vector3(0.5116, 1.6503, 0.5124)
 
 [node name="FloorLampBrass" type="Node3D"]
 script = ExtResource("2_light")
@@ -43,7 +43,7 @@ script = ExtResource("3_interact")
 prompt_text = "Aus"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
-transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.0022, 0.8149, 0.0004)
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.0022, 0.8153, 0.0013)
 shape = SubResource("Shape_1")
 
 [connection signal="interacted" from="Interactable" to="." method="_on_interactable_interacted"]
