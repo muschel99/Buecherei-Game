@@ -6,7 +6,10 @@ extends Node3D
 ## 1. Dieses Script an den obersten Knoten der Szene hängen.
 ## 2. Einen Interactable-Knoten mit Kollisionsform hinzufügen (für die Taste E).
 ## Den Rest findet das Script selbst: alle Lichter (OmniLight3D, SpotLight3D …) und
-## alle leuchtenden Teile (Materialien mit "Emission"). Mehr ist nicht nötig.
+## alle leuchtenden Teile (Materialien mit "Emission" – auch Bilderbuch-Materialien mit dem
+## Shader-Wert emission_energy, z. B. in einem .glb-Modell). Mehr ist nicht nötig.
+## Flammen schrumpfen beim Löschen: In eigenen Modellen ist darum jede Flamme ein eigenes Teil
+## mit dem Ursprung am Docht.
 ##
 ## Elektrische Lampen blenden sanft auf und ab. Bei Flammen (Kerzen, Laternen)
 ## flackert die Flamme beim Löschen kurz auf und erlischt dann.
@@ -38,7 +41,9 @@ var _lights: Array[Light3D] = []
 var _light_energy: Array[float] = []
 var _light_has_shadow: Array[bool] = []
 var _glow_meshes: Array[MeshInstance3D] = []
-var _glow_materials: Array[StandardMaterial3D] = []
+var _glow_materials: Array[Material] = []
+## Name des Helligkeits-Werts je leuchtendem Material (normales oder Shader-Material).
+var _glow_properties: Array[String] = []
 var _glow_energy: Array[float] = []
 var _glow_scale: Array[Vector3] = []
 var _interactable: Interactable = null
@@ -52,15 +57,23 @@ func _ready() -> void:
 		_light_energy.append(node.light_energy)
 		_light_has_shadow.append(node.shadow_enabled)
 	for node in find_children("*", "MeshInstance3D", true, false):
-		var material := node.material_override as StandardMaterial3D
+		var mesh_instance := node as MeshInstance3D
+		var material := mesh_instance.material_override as StandardMaterial3D
 		if material and material.emission_enabled:
 			# Eigene Kopie, damit jede Lampe unabhängig leuchtet
 			material = material.duplicate()
-			node.material_override = material
-			_glow_meshes.append(node)
-			_glow_materials.append(material)
-			_glow_energy.append(material.emission_energy_multiplier)
-			_glow_scale.append(node.scale)
+			mesh_instance.material_override = material
+			_add_glow(mesh_instance, material, "emission_energy_multiplier")
+		elif mesh_instance.material_override == null and mesh_instance.mesh:
+			# Teile eines Modells (.glb): jede leuchtende Fläche bekommt eine eigene Kopie
+			for i in mesh_instance.mesh.get_surface_count():
+				var surface_material := mesh_instance.get_active_material(i)
+				var property := _glow_property(surface_material)
+				if property.is_empty():
+					continue
+				surface_material = surface_material.duplicate()
+				mesh_instance.set_surface_override_material(i, surface_material)
+				_add_glow(mesh_instance, surface_material, property)
 	for node in find_children("*", "Area3D", true, false):
 		if node is Interactable:
 			_interactable = node
@@ -70,6 +83,25 @@ func _ready() -> void:
 	_apply_state(false)
 	_apply_shadow_quality()
 	Settings.setting_changed.connect(_on_setting_changed)
+
+
+func _add_glow(mesh_instance: MeshInstance3D, material: Material, property: String) -> void:
+	_glow_meshes.append(mesh_instance)
+	_glow_materials.append(material)
+	_glow_properties.append(property)
+	_glow_energy.append(float(material.get(property)))
+	_glow_scale.append(mesh_instance.scale)
+
+
+## Welcher Wert macht dieses Material hell? Leer = es leuchtet nicht.
+static func _glow_property(material: Material) -> String:
+	if material is StandardMaterial3D and material.emission_enabled:
+		return "emission_energy_multiplier"
+	if material is ShaderMaterial:
+		var energy = material.get_shader_parameter("emission_energy")
+		if energy is float and energy > 0.0:
+			return "shader_parameter/emission_energy"
+	return ""
 
 
 func _on_setting_changed(key: String, _value: Variant) -> void:
@@ -126,7 +158,7 @@ func _apply_state(animate: bool) -> void:
 			_lights[i].light_energy = _light_energy[i] if is_on else 0.0
 			_lights[i].visible = is_on
 		for i in _glow_materials.size():
-			_glow_materials[i].emission_energy_multiplier = _glow_energy[i] if is_on else 0.0
+			_glow_materials[i].set(_glow_properties[i], _glow_energy[i] if is_on else 0.0)
 			if kind == Kind.FLAME:
 				_glow_meshes[i].visible = is_on
 		return
@@ -144,7 +176,7 @@ func _animate_electric() -> void:
 	for i in _lights.size():
 		_tween.tween_property(_lights[i], "light_energy", _light_energy[i] if is_on else 0.0, duration)
 	for i in _glow_materials.size():
-		_tween.tween_property(_glow_materials[i], "emission_energy_multiplier", _glow_energy[i] if is_on else 0.0, duration)
+		_tween.tween_property(_glow_materials[i], _glow_properties[i], _glow_energy[i] if is_on else 0.0, duration)
 	if not is_on:
 		_tween.chain().tween_callback(_hide_lights)
 
@@ -158,7 +190,7 @@ func _animate_flame() -> void:
 		for i in _glow_meshes.size():
 			_glow_meshes[i].scale = _glow_scale[i] * 0.2
 			_tween.tween_property(_glow_meshes[i], "scale", _glow_scale[i], duration * 0.7).set_ease(Tween.EASE_OUT)
-			_tween.tween_property(_glow_materials[i], "emission_energy_multiplier", _glow_energy[i], duration * 0.7)
+			_tween.tween_property(_glow_materials[i], _glow_properties[i], _glow_energy[i], duration * 0.7)
 		for i in _lights.size():
 			_tween.tween_property(_lights[i], "light_energy", _light_energy[i], duration * 0.7)
 		return
@@ -171,7 +203,7 @@ func _animate_flame() -> void:
 		_flame_tweens.append(flame_tween)
 		flame_tween.tween_property(_glow_meshes[i], "scale", stretched, flicker)
 		flame_tween.tween_property(_glow_meshes[i], "scale", gone, duration - flicker).set_ease(Tween.EASE_IN)
-		_tween.tween_property(_glow_materials[i], "emission_energy_multiplier", 0.0, duration)
+		_tween.tween_property(_glow_materials[i], _glow_properties[i], 0.0, duration)
 	for i in _lights.size():
 		_tween.tween_property(_lights[i], "light_energy", 0.0, duration)
 	_tween.chain().tween_callback(_hide_lights)

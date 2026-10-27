@@ -10,7 +10,8 @@ extends RefCounted
 
 
 static func all_sets() -> PackedStringArray:
-	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details", "fashion", "pub", "shops"])
+	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details", "fashion", "pub", "shops",
+		"catalog", "catalog_items"])
 
 
 static func get_set(set_name: String) -> Dictionary:
@@ -35,6 +36,12 @@ static func get_set(set_name: String) -> Dictionary:
 			return shops()
 		"details":
 			return details()
+		"catalog":
+			# Möbelkatalog (seit Etappe 6): nur mit --scene=res://scenes/tools/catalog_showroom.tscn
+			return CatalogShowroom.views()
+		"catalog_items":
+			# Nahaufnahme je Objekt (Name = id), ebenfalls mit der Übersichts-Szene
+			return CatalogShowroom.item_views()
 	push_error("Unbekannte Gruppe von Blickpunkten: " + set_name)
 	return {}
 

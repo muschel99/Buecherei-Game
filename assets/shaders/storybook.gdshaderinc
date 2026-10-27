@@ -23,6 +23,14 @@ uniform vec4 emission_color : source_color = vec4(1.0, 0.75, 0.45, 1.0);
 uniform float emission_energy = 0.0;
 // Innenräume leuchten leicht in ihrer eigenen Farbe (keine Lampen-Lichter im Spiel)
 uniform float glow = 0.0;
+// Stoffmuster (seit Etappe 6, Möbel): 0 keins, 1 Vichy-Karo, 2 Blümchen, 3 Schottenkaro.
+// Karo: base_color = Karofarbe, third_color = heller Grund. Blümchen: base_color = Grund,
+// second_color = Blüten, third_color = Blütenmitte. Schottenkaro: base_color = Grund,
+// second_color und third_color = Streifen. Farbvarianten ändern base_color.
+uniform int pattern = 0;
+// Größe eines Musterfelds in m (ein Karo, eine Blume)
+uniform float pattern_size = 0.04;
+uniform vec4 third_color : source_color = vec4(0.95, 0.91, 0.82, 1.0);
 
 // Die Häuser bekommen von HouseFacade immer diese Werte – hier ohne Wirkung
 instance uniform vec4 wall_color : source_color = vec4(1.0);
@@ -136,6 +144,63 @@ float masonry_d(vec3 p, out vec2 id, out vec2 edges) {
 }
 
 // Höhe des feinen Reliefs (0 … 1) an der Stelle p; px = Größe eines Bildpunkts (m)
+// Musterfläche: die zwei Achsen quer zur Hauptrichtung der Fläche (wie aufgedruckt)
+vec2 pattern_uv(vec3 p, vec3 n) {
+	vec3 a = abs(n);
+	if (a.y >= a.x && a.y >= a.z) {
+		return p.xz;
+	}
+	if (a.x >= a.z) {
+		return p.zy;
+	}
+	return p.xy;
+}
+
+// weiche Streifen 0/1 mit Kantenglättung (w = Breite eines Bildpunkts im Muster)
+float soft_band(float x, float w) {
+	float f = abs(fract(x) - 0.5) * 2.0;
+	return smoothstep(0.5 - w, 0.5 + w, f);
+}
+
+vec3 fabric_pattern(vec3 col, vec3 p, vec3 n, float px) {
+	vec2 uv = pattern_uv(p, n) / pattern_size;
+	float w = clamp(px / pattern_size * 1.5, 0.02, 0.5);
+	float fade = detail_fade(px, 1.0 / pattern_size);
+	if (pattern == 1) {
+		float a = soft_band(uv.x, w);
+		float b = soft_band(uv.y, w);
+		vec3 light = third_color.rgb;
+		vec3 c = mix(light, col, (a + b) * 0.5);
+		return mix(mix(light, col, 0.5), c, fade);
+	}
+	if (pattern == 2) {
+		vec2 cell = floor(uv);
+		vec2 f = fract(uv) - 0.5;
+		float h1 = hash(vec3(cell, 1.0));
+		float h2 = hash(vec3(cell, 2.0));
+		float h3 = hash(vec3(cell, 3.0));
+		vec2 q = f - (vec2(h1, h2) - 0.5) * 0.35;
+		float r = length(q);
+		float ang = atan(q.y, q.x) + h3 * 6.2832;
+		float petal = 0.2 + 0.07 * cos(ang * 5.0);
+		float flower = 1.0 - smoothstep(petal - w, petal + w, r);
+		float heart = 1.0 - smoothstep(0.06 - w, 0.06 + w, r);
+		vec3 c = mix(col, second_color.rgb, flower);
+		c = mix(c, third_color.rgb, heart);
+		return mix(mix(col, second_color.rgb, 0.18), c, fade);
+	}
+	if (pattern == 3) {
+		float a = soft_band(uv.x * 0.5, w);
+		float b = soft_band(uv.y * 0.5, w);
+		float thin_a = 1.0 - smoothstep(0.04, 0.04 + w, abs(fract(uv.x * 0.5 + 0.25) - 0.5));
+		float thin_b = 1.0 - smoothstep(0.04, 0.04 + w, abs(fract(uv.y * 0.5 + 0.25) - 0.5));
+		vec3 c = mix(col, second_color.rgb, (a + b) * 0.35);
+		c = mix(c, third_color.rgb, max(thin_a, thin_b) * 0.85);
+		return mix(mix(col, second_color.rgb, 0.3), c, fade);
+	}
+	return col;
+}
+
 float surface_height(vec3 p, float px) {
 	if (grain == 3 || grain == 8) {
 		bool ashlar = grain == 8;
@@ -202,6 +267,9 @@ void fragment() {
 		float far = smoothstep(0.4, 1.1, px / JOINT);
 		vec3 avg = mix(brick, second_color.rgb, JOINT * (BW + BH) / (BW * BH));
 		col = mix(mix(second_color.rgb, brick, stone), avg, far);
+	}
+	if (pattern > 0) {
+		col = fabric_pattern(col, p, normalize(model_normal), px);
 	}
 	if (!masonry) {
 		col *= COLOR.rgb;
