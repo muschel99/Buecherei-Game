@@ -60,7 +60,7 @@ Jede Ablagefläche ist ein Knoten vom Typ **PlacementSurface** (z. B. unter dem 
 3. Ihm eine **CollisionShape3D** mit einer flachen **BoxShape3D** geben, so groß wie die Fläche
    (Höhe ca. 0,03 m).
 Ein Möbelstück darf beliebig viele Ablageflächen haben (Sitzfläche, beide Armlehnen …).
-Am einfachsten schaust du dir eine fertige Szene an, z. B. `scenes/furniture/armchair.tscn`.
+Am einfachsten schaust du dir eine fertige Szene an, z. B. `scenes/furniture/armchair_velvet.tscn`.
 
 **Dinge zum Aufhängen** (Wandbild, Türkranz, Lichtschalter): Hier liegt der Ursprung der Szene
 hinten in der Mitte (dort, wo es die Wand berührt), die Vorderseite zeigt nach +Z.
@@ -213,7 +213,7 @@ nimmt Godot eine ähnliche). Welche Art ein Genre benutzt, steht im Genre-Datenb
 
 ### Ein Bücherregal bauen
 Ein Regal bekommt Bücher, wenn seine Szene einen Knoten `BookShelf`
-(Script `scripts/objects/book_shelf.gd`) hat. Vorlage: `scenes/furniture/bookshelf.tscn`.
+(Script `scripts/objects/book_shelf.gd`) hat. Vorlage: `scenes/furniture/bookshelf_oak.tscn`.
 - Darunter je Fach ein `Marker3D` mit dem Script `scripts/objects/book_row.gd`. Der Marker liegt
   **mitten auf dem Regalbrett** (Mitte der Breite und Tiefe, genau auf der Oberkante). Im
   Inspektor: **Width** (nutzbare Breite), **Height** (lichte Höhe bis zum nächsten Brett),
@@ -256,7 +256,7 @@ Raum, die Wand ist 20 cm dick):
 3. Fertig – die App „Fassade“ zeigt die neue Variante von selbst.
 
 ## Ein Möbelstück durch ein eigenes Modell ersetzen
-Jede Möbel-Szene (z. B. `scenes/furniture/armchair.tscn`) hat diesen Aufbau:
+Jede Möbel-Szene (z. B. `scenes/furniture/armchair_velvet.tscn`) hat diesen Aufbau:
 ```
 Armchair        (Wurzel-Knoten)
 ├── Model       ← nur die Optik: hier kommt dein Modell hin

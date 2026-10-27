@@ -1,0 +1,10 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Kerze im Glas“, Material „glass“).
+
+[resource]
+resource_name = "glass"
+transparency = 1
+albedo_color = Color(0.900, 0.950, 0.950, 0.35)
+metallic_specular = 0.2
+roughness = 0.25

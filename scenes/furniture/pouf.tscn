@@ -1,0 +1,61 @@
+[gd_scene format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Modell, Kollision, Ablageflächen, Fächer und Licht. Wird beim Neubau
+; überschrieben, solange die Datei unverändert ist (speichert Godot sie, bleibt sie, wie sie ist).
+
+[ext_resource type="PackedScene" path="res://assets/models/furniture/pouf.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="2_surface"]
+[ext_resource type="Script" path="res://scripts/objects/seating.gd" id="3_seating"]
+[ext_resource type="Script" path="res://scripts/objects/seat_point.gd" id="4_seat"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="5_interact"]
+
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(0.5600, 0.4100, 0.5600)
+
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(0.3000, 0.0300, 0.3000)
+
+[sub_resource type="BoxShape3D" id="Shape_2"]
+size = Vector3(0.5600, 0.4000, 0.5600)
+
+[node name="Pouf" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="Shape0" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.2000, -0.0000)
+shape = SubResource("Shape_0")
+
+[node name="Surfaces" type="Node3D" parent="."]
+
+[node name="Surface0" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.4100, -0.0000)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_surface")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Surface0"]
+shape = SubResource("Shape_1")
+
+[node name="Seating" type="Node3D" parent="."]
+script = ExtResource("3_seating")
+
+[node name="Seat1" type="Marker3D" parent="Seating"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.4100, -0.0000)
+script = ExtResource("4_seat")
+
+[node name="Interactable" type="Area3D" parent="Seating"]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_interact")
+prompt_text = "Sitzen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Seating/Interactable"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.3000, -0.0000)
+shape = SubResource("Shape_2")
+
+

@@ -1,52 +1,38 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/objects/light_switch.gd" id="1_as71g"]
-[ext_resource type="Material" path="res://assets/materials/plastic_white.tres" id="2_yhbwn"]
-[ext_resource type="Material" path="res://assets/materials/candle_wax.tres" id="3_y7ye5"]
-[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="4_tqgds"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Modell, Kollision, Ablageflächen, Fächer und Licht. Wird beim Neubau
+; überschrieben, solange die Datei unverändert ist (speichert Godot sie, bleibt sie, wie sie ist).
 
-[sub_resource type="BoxMesh" id="BoxMesh_0elb6"]
-size = Vector3(0.08, 0.12, 0.01)
+[ext_resource type="PackedScene" path="res://assets/models/furniture/light_switch.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/objects/light_switch.gd" id="2_root"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="3_interact"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_a4njr"]
-size = Vector3(0.03, 0.05, 0.012)
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(0.1000, 0.1000, 0.0240)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_4v77w"]
-size = Vector3(0.08, 0.12, 0.02)
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(0.2000, 0.2000, 0.0800)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_4lt6s"]
-size = Vector3(0.2, 0.24, 0.12)
+[node name="LightSwitch" type="Node3D"]
+script = ExtResource("2_root")
 
-[node name="LightSwitch" type="Node3D" unique_id=1863170131]
-script = ExtResource("1_as71g")
+[node name="Model" parent="." instance=ExtResource("1_model")]
 
-[node name="Model" type="Node3D" parent="." unique_id=1368723002]
+[node name="Body" type="StaticBody3D" parent="."]
 
-[node name="Plate" type="MeshInstance3D" parent="Model" unique_id=758331010]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.005)
-material_override = ExtResource("2_yhbwn")
-mesh = SubResource("BoxMesh_0elb6")
+[node name="Shape0" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.0000, 0.0120)
+shape = SubResource("Shape_0")
 
-[node name="Rocker" type="MeshInstance3D" parent="Model" unique_id=1367119020]
-transform = Transform3D(1, 0, 0, 0, 0.99026805, -0.1391731, 0, 0.1391731, 0.99026805, 0, 0, 0.014)
-material_override = ExtResource("3_y7ye5")
-mesh = SubResource("BoxMesh_a4njr")
-
-[node name="Body" type="StaticBody3D" parent="." unique_id=377788281]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=335401784]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-shape = SubResource("BoxShape3D_4v77w")
-
-[node name="Interactable" type="Area3D" parent="." unique_id=1957897500]
+[node name="Interactable" type="Area3D" parent="."]
 collision_layer = 2
 collision_mask = 0
 monitoring = false
-script = ExtResource("4_tqgds")
+script = ExtResource("3_interact")
 prompt_text = "Licht"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable" unique_id=1085607639]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.06)
-shape = SubResource("BoxShape3D_4lt6s")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.0000, 0.0400)
+shape = SubResource("Shape_1")
 
 [connection signal="interacted" from="Interactable" to="." method="_on_interactable_interacted"]

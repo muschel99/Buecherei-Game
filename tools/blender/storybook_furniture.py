@@ -71,9 +71,10 @@ PLANT_COLORS = {
 }
 
 
-def srgb_lin(c):
-    """sRGB -> linear (Godot-Farben in den .tres sind sRGB, hier für die Datenblätter unverändert)."""
-    return tuple(c[:3])
+def lin(c):
+    """Farbton je Teil (Farbattribut "tint") aus einer sRGB-Farbe: Das Spiel liest "tint" linear –
+    ohne Umrechnung wirken kräftige Farben (Bucheinbände, Flicken) blass."""
+    return SB.srgb(c)
 
 
 class Mats(dict):
@@ -112,6 +113,8 @@ class Kit:
         self.shadow = "important"
         self.interact = None  # (Mitte, Größe) des E-Bereichs (Lampen, Sitzmöbel)
         self.book_spot = None  # Buch-Aufsteller: (Punkt, Neigung)
+        self.root_script = None  # eigenes Skript am obersten Knoten (z. B. Lichtschalter)
+        self.interact_prompt = None  # Wort neben E (mit root_script: E ruft _on_interactable_interacted)
         self.settle_amount = spec.get("settle", 1.0)
 
     # --- Materialien und Teile ---
@@ -402,7 +405,7 @@ def book(cover, pages, pos, size, turn=0.0, tint=None, tilt=0.0):
     t, d, h = size
     m = Matrix.Translation(Vector(pos)) @ Matrix.Rotation(math.radians(turn), 4, "Z") @ \
         Matrix.Rotation(math.radians(tilt), 4, "Y") @ Matrix.Translation((0, 0, h / 2))
-    cover.box((0, 0, 0), (t, d, h), step=0.5, dent=0.0008, tint=tint, matrix=m)
+    cover.box((0, 0, 0), (t, d, h), step=0.5, dent=0.0008, tint=lin(tint) if tint else None, matrix=m)
     pages.box((0, d * 0.035, 0), (t * 0.84, d * 0.95, h * 0.94), step=0.5, dent=0.0, matrix=m @ Matrix.Translation((0, 0.0025, 0)))
 
 
@@ -863,6 +866,8 @@ def write_scene(kit, bounds, force=False):
 
     root = pascal(kit.id)
     lines = ['[node name="%s" type="Node3D"]' % root]
+    if kit.root_script:
+        lines.append('script = ExtResource("%s")' % script("root", kit.root_script))
     if kit.light_kind:
         lines.append('script = ExtResource("%s")' % script("light", "res://scripts/objects/light_source.gd"))
         lines.append("kind = %d" % (1 if kit.light_kind == "flame" else 0))
@@ -917,13 +922,19 @@ def write_scene(kit, bounds, force=False):
         nodes.append(text)
         nodes.append('[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]\ntransform = %s\nshape = SubResource("%s")\n'
                      % (tf(ic), shape(isz)))
+    if kit.interact_prompt and not kit.light_kind:
+        ic, isz = kit.interact or ((bounds[0] + bounds[1]) / 2, bounds[1] - bounds[0] + Vector((0.04, 0.04, 0.04)))
+        nodes.append('[node name="Interactable" type="Area3D" parent="."]\ncollision_layer = 2\ncollision_mask = 0\nmonitoring = false\n'
+                     'script = ExtResource("%s")\nprompt_text = "%s"\n' % (script("interact", "res://scripts/interaction/interactable.gd"), kit.interact_prompt))
+        nodes.append('[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]\ntransform = %s\nshape = SubResource("%s")\n'
+                     % (tf(ic), shape(isz)))
     if kit.book_spot:
         pos, lean = kit.book_spot
         nodes.append('[node name="BookStand" type="Node3D" parent="."]\nscript = ExtResource("%s")\nlean_angle = %.1f\n'
                      % (script("stand", "res://scripts/objects/book_stand.gd"), lean))
         nodes.append('[node name="BookSpot" type="Marker3D" parent="BookStand"]\ntransform = %s\n' % tf(pos))
     connections = []
-    if kit.light_kind:
+    if kit.light_kind or (kit.interact_prompt and kit.root_script):
         connections.append('[connection signal="interacted" from="Interactable" to="." method="_on_interactable_interacted"]')
     text = "[gd_scene format=3]\n\n%s – Modell, Kollision, Ablageflächen, Fächer und Licht. Wird beim Neubau\n; überschrieben, solange die Datei unverändert ist (speichert Godot sie, bleibt sie, wie sie ist).\n\n" % MARK
     text += "\n".join(ext) + "\n\n" + "\n".join(subs) + "\n" + "\n".join(nodes) + "\n" + "\n".join(connections) + "\n"

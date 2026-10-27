@@ -2,7 +2,7 @@ class_name BookShelf
 extends Node3D
 ## Ein Bücherregal: Bücher stehen frei auf Brettern (BookRow), die Rücken zeigen nach vorn.
 ##
-## So baut man ein Bücherregal (siehe scenes/furniture/bookshelf.tscn):
+## So baut man ein Bücherregal (siehe scenes/furniture/bookshelf_oak.tscn):
 ## - In der Möbel-Szene einen Knoten mit diesem Script anlegen ("BookShelf").
 ## - Darunter für jedes Brett einen BookRow-Knoten (Reihenfolge = Reihenfolge beim Befüllen).
 ## - Ein Interactable "Interactable" – ohne eigene Kollisionsform: Man trifft das Regal über

@@ -653,14 +653,14 @@ def build_globe_small(k):
 
 def build_bust(k):
     k.mat("plaster", (0.93, 0.91, 0.86), grain="stone", rough=0.8, vary=0.05, bump=0.15)
-    k.mat("cover", (1, 1, 1), grain="fabric", rough=0.75, vary=0.0)
+    k.mat("cover", (1, 1, 1), grain="paint", rough=0.7, vary=0.0, bump=0.05)
     k.mat("pages", (0.93, 0.88, 0.76), grain="paint", rough=0.85, vary=0.04)
     cover = k.part("Buchdeckel", "cover", bevel=0.0015, vary=0.0)
     pages = k.part("Buchseiten", "pages", bevel=0.0008)
     z = 0.0
     for i, (w, d, t, col, turn) in enumerate(((0.24, 0.17, 0.04, BORDEAUX, 4), (0.22, 0.155, 0.032, BOTTLE, -6), (0.2, 0.14, 0.035, NAVY, 2))):
         m = Matrix.Translation((0, 0, z)) @ Matrix.Rotation(math.radians(turn), 4, "Z")
-        cover.box((0, 0, t / 2), (w, d, t), step=0.5, dent=0.0008, tint=col, matrix=m)
+        cover.box((0, 0, t / 2), (w, d, t), step=0.5, dent=0.0008, tint=F.lin(col), matrix=m)
         pages.box((0.004, 0.0, t / 2), (w - 0.012, d - 0.01, t * 0.84), step=0.5, dent=0.0, matrix=m)
         z += t
     b = k.part("Büste", "plaster", bevel=0.0, vary=0.02)

@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "zinc"
+display_name = "Zink"
+colors = Dictionary[String, Color]({"stand": Color(0.620, 0.640, 0.620, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "cream"
+display_name = "Creme"
+colors = Dictionary[String, Color]({"stand": Color(0.920, 0.880, 0.800, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "green"
+display_name = "Grün"
+colors = Dictionary[String, Color]({"stand": Color(0.300, 0.420, 0.320, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "black"
+display_name = "Schwarz"
+colors = Dictionary[String, Color]({"stand": Color(0.180, 0.180, 0.180, 1)})
+
+[resource]
+script = ExtResource("1_data")
+id = "umbrella_stand"
+display_name = "Schirmständer"
+description = "Ein Zinkständer mit zwei bunten Schirmen – für Regentage am Eingang."
+category = 5
+subcategory = "storage"
+price = 40
+style_ids = Array[String]([])
+scene_path = "res://scenes/furniture/umbrella_stand.tscn"
+footprint = Vector2i(3, 3)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 1
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

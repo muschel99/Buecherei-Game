@@ -479,7 +479,7 @@ def build_quilt(k):
         for iy in range(4):
             x = -0.215 + ix * 0.086
             y = -0.13 + iy * 0.086
-            patches.box((x, y, 0.103), (0.082, 0.082, 0.004), step=0.5, dent=0.0004, tint=cols[(ix + iy * 2) % len(cols)])
+            patches.box((x, y, 0.103), (0.082, 0.082, 0.004), step=0.5, dent=0.0004, tint=F.lin(cols[(ix + iy * 2) % len(cols)]))
     k.collider((0, 0, 0.05), (0.54, 0.38, 0.1))
     k.surface((0, 0, 0.105), (0.48, 0.32))
 

@@ -695,7 +695,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Theke hört auf `changed` und färbt sich. Stilauswahl in der App „Fassade“, aber bewusst
   von überall aufrufbar. Module (Backshop, Kaffee) hängen unter dem Knoten `Modules` –
   Struktur steht bereit, noch nichts umgesetzt.
-- **Deko-Regal** (`deco_shelf_light`, Szene `deco_shelf.tscn`, Unterkategorie `deco_shelf`):
+- **Deko-Regal** (`deco_shelf_light`, Szene `deco_shelf_light.tscn`, Unterkategorie `deco_shelf`):
   ein Regal ohne `BookShelf`/`BookRow`, darum lassen sich dort keine Bücher einräumen – nur
   Ablageflächen zum Dekorieren. Bücherregale (mit BookShelf) gibt es weiter im Shop.
 - **Einkaufen:** Läden „Nest & Nook“ (Möbel, Deko, Oberflächen; Kaufen/Verkaufen) und

@@ -1,15 +1,44 @@
-[gd_resource type="Resource" script_class="FurnitureData" format=3]
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_dy4oa"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "white"
+display_name = "Porzellan"
+colors = Dictionary[String, Color]({"porcelain": Color(0.930, 0.910, 0.860, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "black"
+display_name = "Schwarz"
+colors = Dictionary[String, Color]({"porcelain": Color(0.160, 0.150, 0.150, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "sage"
+display_name = "Salbei"
+colors = Dictionary[String, Color]({"porcelain": Color(0.660, 0.740, 0.620, 1)})
 
 [resource]
-script = ExtResource("1_dy4oa")
+script = ExtResource("1_data")
 id = "light_switch"
 display_name = "Lichtschalter"
-description = "An die Wand hängen. Mit E alle Lampen im Raum schalten."
-price = 12
-scene_path = "res://scenes/furniture/light_switch.tscn"
-footprint = Vector2i(1, 1)
-placement = 4
+description = "Ein runder Porzellanschalter mit Messinghebel – schaltet alle Lampen im Raum."
 category = 4
 subcategory = "switch"
+price = 12
+style_ids = Array[String]([])
+scene_path = "res://scenes/furniture/light_switch.tscn"
+footprint = Vector2i(1, 1)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 4
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2")])
