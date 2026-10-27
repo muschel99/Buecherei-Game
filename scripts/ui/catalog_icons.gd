@@ -164,6 +164,18 @@ static func draw(canvas: CanvasItem, key: String, rect: Rect2, color: Color) -> 
 			p.leaf(12, 14, 12, 3.5, 2.6)
 			p.leaf(12, 14, 6, 6.5, 2.4)
 			p.leaf(12, 14, 18, 6.5, 2.4)
+		"vase":
+			p.poly([[9, 21], [8, 15], [10, 11], [10, 9], [14, 9], [14, 11], [16, 15], [15, 21]], true)
+			p.line(12, 9, 11, 4)
+			p.line(12, 9, 14, 5)
+			p.circle(10.5, 3.5, 1.4)
+			p.circle(14.8, 4.2, 1.4)
+		"tableware":
+			p.poly([[5, 11], [5, 16], [7, 19], [13, 19], [15, 16], [15, 11]], true)
+			p.arc(17, 14, 2.5, -PI / 2, PI / 2)
+			p.ellipse(10, 20.5, 7, 1)
+			p.line(8, 8, 9, 5)
+			p.line(11, 8, 12, 5)
 		"rug":
 			p.rect(5, 7, 14, 10)
 			p.rect(7.5, 9.5, 9, 5)

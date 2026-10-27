@@ -29,16 +29,16 @@ const _CATEGORY_NAMES := {
 ## dann im Feld "Subcategory" aus.
 const SUBCATEGORIES := {
 	Category.SHELF: [["bookshelf", "Bücherregale"], ["deco_shelf", "Deko-Regale"], ["wall_shelf", "Wandregale"],
-		["display_case", "Vitrinen"]],
+		["display_case", "Vitrinen"], ["cabinet", "Schränke und Kommoden"]],
 	Category.SEATING: [["armchair", "Sessel"], ["sofa", "Sofas"], ["chair", "Stühle"], ["stool", "Hocker"]],
 	Category.TABLE: [["side_table", "Beistelltische"], ["coffee_table", "Couchtische"], ["desk", "Schreibtische"],
 		["dining_table", "Esstische"]],
 	Category.COUNTER: [],
 	Category.LIGHTING: [["table_lamp", "Tischlampen"], ["floor_lamp", "Stehlampen"], ["ceiling_lamp", "Deckenlampen"],
 		["wall_lamp", "Wandlampen"], ["candle", "Kerzen und Laternen"], ["switch", "Lichtschalter"]],
-	Category.DECO: [["plant", "Pflanzen"], ["rug", "Teppiche"], ["picture", "Bilder und Wandschmuck"],
-		["figure", "Figuren"], ["textile", "Textilien"], ["storage", "Aufbewahrung und Organisation"],
-		["books", "Bücher"], ["bookend", "Buchstützen"]],
+	Category.DECO: [["plant", "Pflanzen"], ["vase", "Vasen und Blumen"], ["rug", "Teppiche"], ["picture", "Bilder und Wandschmuck"],
+		["figure", "Figuren und Kuriositäten"], ["textile", "Textilien"], ["tableware", "Geschirr"],
+		["storage", "Aufbewahrung und Organisation"], ["books", "Bücher"], ["bookend", "Buchstützen"]],
 	Category.DIVIDER: [],
 }
 

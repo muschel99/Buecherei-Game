@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "walnut_green"
+display_name = "Walnuss · Grün"
+colors = Dictionary[String, Color]({"wood": Color(0.360, 0.220, 0.140, 1), "leather": Color(0.140, 0.270, 0.200, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "mahogany_red"
+display_name = "Mahagoni · Bordeaux"
+colors = Dictionary[String, Color]({"wood": Color(0.420, 0.190, 0.130, 1), "leather": Color(0.420, 0.100, 0.130, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "oak_cognac"
+display_name = "Räuchereiche · Cognac"
+colors = Dictionary[String, Color]({"wood": Color(0.440, 0.300, 0.180, 1), "leather": Color(0.560, 0.290, 0.150, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "ebony_navy"
+display_name = "Ebenholz · Blau"
+colors = Dictionary[String, Color]({"wood": Color(0.190, 0.130, 0.100, 1), "leather": Color(0.140, 0.180, 0.310, 1)})
+
+[resource]
+script = ExtResource("1_data")
+id = "chair_da"
+display_name = "Schreibtischstuhl"
+description = "Runder Stuhl mit Bogenlehne aus Spindeln und Ledersitz mit Ziernägeln."
+category = 1
+subcategory = "chair"
+price = 95
+style_ids = Array[String](["dark_academia"])
+scene_path = "res://scenes/furniture/chair_da.tscn"
+footprint = Vector2i(5, 4)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 1
+books_can_lean = true
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

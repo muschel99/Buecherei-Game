@@ -166,13 +166,13 @@ static func item_views() -> Dictionary:
 	for entry in plan():
 		var data: FurnitureData = entry.data
 		var size := _size_of(data)
-		var reach := maxf(maxf(size.x, size.y), size.z * 0.8) * 1.6 + 0.6
+		var reach := maxf(maxf(size.x, size.y), size.z * 0.8) * 2.4 + 0.35
 		var center: Vector3 = entry.pos + Vector3(0, size.y * 0.45, 0)
 		if entry.kind == "ceiling":
 			center = entry.pos - Vector3(0, size.y * 0.5, 0)
 		elif entry.kind == "wall":
 			center = entry.pos
-		result[data.get_id()] = {"pos": center + Vector3(reach * 0.45, reach * 0.35, reach), "target": center}
+		result[data.get_id()] = {"pos": center + Vector3(reach * 0.42, reach * 0.32, reach), "target": center, "fov": 34.0}
 	return result
 
 

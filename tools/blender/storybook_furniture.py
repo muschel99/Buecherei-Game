@@ -120,7 +120,10 @@ class Kit:
         """Material mit Rollennamen (z. B. "fabric"). Gleicher Name = dasselbe Material."""
         if slot in self.M:
             return self.M[slot]
+        # Werte nur fürs Spiel (Stoffmuster, dritte Farbe, Deckkraft von Glas) – Blender kennt sie nicht
+        game_only = {key: kw.pop(key) for key in ("color3", "pattern", "pattern_size", "alpha") if key in kw}
         self.M[slot] = SC.make_material(slot, color, **kw)
+        SC.GAME_MATERIALS[slot].update(game_only)
         return self.M[slot]
 
     def part(self, name, slot, bevel=0.006, vary=0.04, settle=True):
@@ -265,6 +268,57 @@ def button(b, pos, r=0.009, normal=(0, 0, 1)):
     for v in {v for f in faces for v in f.verts}:
         v.co = m @ v.co
     return faces
+
+
+def sphere(b, center, r, segs=24, rings=12, squash=1.0):
+    """Kugel als Drehkörper (z. B. Globus, Lampenglas). squash < 1 = flacher."""
+    prof = [(math.sin(math.pi * i / rings) * r, (-math.cos(math.pi * i / rings) * r) * squash) for i in range(rings + 1)]
+    prof[0] = (0.0, prof[0][1])
+    prof[-1] = (0.0, prof[-1][1])
+    return b.lathe(prof, center, segs=segs)
+
+
+def patch(b, pos, normal, r, h, rnd, wobble=0.3, segs=18):
+    """Flache, unregelmäßige Linse auf einer Fläche (Kontinent auf dem Globus, Fleck, Siegel):
+    Umriss mit welligem Rand, Mitte etwas dicker, zeigt nach normal."""
+    nrm = Vector(normal).normalized()
+    rot = nrm.to_track_quat("Z", "Y").to_matrix().to_4x4()
+    m = Matrix.Translation(Vector(pos)) @ rot
+    phases = [rnd.uniform(0, 2 * math.pi) for _ in range(3)]
+    bm = b.bm
+    rim_top, rim_bot = [], []
+    for k in range(segs):
+        a = 2 * math.pi * k / segs
+        rr = r * (1 + wobble * 0.5 * (math.sin(2 * a + phases[0]) * 0.6 + math.sin(3 * a + phases[1]) * 0.4 + math.sin(5 * a + phases[2]) * 0.25))
+        rim_top.append(bm.verts.new(m @ Vector((math.cos(a) * rr, math.sin(a) * rr, h * 0.5))))
+        rim_bot.append(bm.verts.new(m @ Vector((math.cos(a) * rr, math.sin(a) * rr, -h * 0.5))))
+    top = bm.verts.new(m @ Vector((0, 0, h)))
+    bot = bm.verts.new(m @ Vector((0, 0, -h)))
+    faces = []
+    for k in range(segs):
+        k1 = (k + 1) % segs
+        faces.append(bm.faces.new((rim_top[k], rim_top[k1], top)))
+        faces.append(bm.faces.new((rim_bot[k1], rim_bot[k], bot)))
+        faces.append(bm.faces.new((rim_bot[k], rim_bot[k1], rim_top[k1], rim_top[k])))
+    b._finish_island(rim_top + rim_bot + [top, bot], faces)
+    return faces
+
+
+def ring(b, center, radius, r, matrix=None, n=40, segs=6):
+    """Geschlossener Ring (Röhre im Kreis) in der xy-Ebene von matrix um center."""
+    m = matrix if matrix is not None else Matrix.Identity(4)
+    c = Vector(center)
+    pts = [c + m.to_3x3() @ Vector((math.cos(2 * math.pi * k / n) * radius, math.sin(2 * math.pi * k / n) * radius, 0)) for k in range(n + 1)]
+    return b.tube(pts, r, segs=segs)
+
+
+def curved_leg(b, top, foot, r_top, r_foot, bow=0.05, outward=(0, 0, 0)):
+    """Geschwungenes Bein (Dreibein, Stuhl): von top nach foot mit sanftem Bogen nach außen."""
+    t, f = Vector(top), Vector(foot)
+    out = Vector(outward)
+    mid = t.lerp(f, 0.5) + out * bow
+    pts = [t, t.lerp(mid, 0.6), mid, mid.lerp(f, 0.6), f + out * bow * 0.4]
+    return b.tube(pts, lambda u: r_top + (r_foot - r_top) * u, segs=10, smooth=2, round_ends=True)
 
 
 def turned_leg(b, base, height, r, style="baluster", segs=14, flip=False):
@@ -544,22 +598,26 @@ def rug(kit, slot, size, thickness=0.012, shape="rect", fringe_slot=None, border
 UP = Vector((0, 0, 1))
 
 
-def lush_fern(p, size=1.0, fronds=20, leaf_mat="box_leaf", stem_mat="stem"):
-    """Üppiger Farn: viele gebogene Wedel in zwei Lagen (innen steil, außen überhängend), jeder mit
-    Fiederblättchen paarweise bis zur Spitze; junge, eingerollte Wedel in der Mitte."""
+def lush_fern(p, size=1.0, fronds=36, leaf_mat="box_leaf", stem_mat="stem"):
+    """Üppiger Farn: drei Lagen Wedel (innen aufrecht, Mitte schräg, außen überhängend), jeder mit
+    breiten, runden Fiederblättchen paarweise bis zur Spitze; darunter ein dichtes Blattpolster
+    (kein Topfrand und keine Erde zu sehen); junge, eingerollte Wedel in der Mitte."""
     rnd = p.rnd
+    G.leaf_ball(p, Vector((0, 0, 0.05 * size)), 0.13 * size, 60, 0.05 * size, rnd, mat=leaf_mat, shape="oval",
+                squash=(1.0, 1.0, 0.55), stem_mat=stem_mat)
+    layers = [(0.28, 0.05, 0.02, 0.8), (0.55, 0.12, 0.07, 1.0), (0.9, 0.17, 0.13, 1.05)]
     for k in range(fronds):
-        outer = k % 2 == 0
-        a = 2 * math.pi * k / fronds + rnd.uniform(-0.15, 0.15)
+        tilt, bend, droop, length = layers[k % 3]
+        a = 2 * math.pi * k / fronds * 2.7 + rnd.uniform(-0.2, 0.2)
         out = Vector((math.cos(a), math.sin(a), 0))
-        pts = [out * 0.01 + Vector((0, 0, 0.015))]
-        d = (out * (0.55 if outer else 0.25) + UP).normalized()
-        L = rnd.uniform(0.42, 0.56) * size * (1.0 if outer else 0.8)
-        segs = 11
+        pts = [out * 0.015 + Vector((0, 0, 0.02))]
+        d = (out * tilt + UP).normalized()
+        L = rnd.uniform(0.46, 0.6) * size * length
+        segs = 13
         for i in range(segs):
-            d = (d + out * (0.15 if outer else 0.07) - UP * (0.1 if outer else 0.035)).normalized()
+            d = (d + out * bend - UP * droop).normalized()
             pts.append(pts[-1] + d * L / segs)
-        p.body(stem_mat, vary=0.06).tube(pts, lambda t: 0.0042 * size * (1 - 0.65 * t), segs=5, smooth=1, round_ends=True)
+        p.body(stem_mat, vary=0.06).tube(pts, lambda t: 0.0045 * size * (1 - 0.65 * t), segs=5, smooth=1, round_ends=True)
         for i in range(1, len(pts)):
             q = pts[i]
             tang = (pts[i] - pts[i - 1]).normalized()
@@ -570,18 +628,17 @@ def lush_fern(p, size=1.0, fronds=20, leaf_mat="box_leaf", stem_mat="stem"):
             nrm = side.cross(tang).normalized()
             if nrm.z < 0:
                 nrm = -nrm
-            s = 0.06 * size * (1 - 0.62 * i / len(pts)) * rnd.uniform(0.9, 1.1)
+            s = 0.085 * size * (1 - 0.6 * i / len(pts)) * rnd.uniform(0.9, 1.1)
             for sg in (-1, 1):
-                p.body(leaf_mat, vary=0.1).leaf(q, (side * sg + tang * 0.45).normalized(), nrm, s, s * 0.42,
-                                                shape="narrow", thick=0.0032, curl=0.18, segs=5)
-    # eingerollte junge Wedel (Bischofsstäbe)
-    for k in range(3):
+                p.body(leaf_mat, vary=0.12).leaf(q, (side * sg + tang * 0.35).normalized(), nrm, s, s * 0.5,
+                                                 shape="oval", thick=0.0034, curl=0.2, segs=5)
+    for k in range(4):
         a = rnd.uniform(0, 2 * math.pi)
-        base = Vector((math.cos(a) * 0.02, math.sin(a) * 0.02, 0.015))
-        top = base + Vector((0, 0, 0.12 * size))
-        curl = [base, top] + [top + Vector((math.cos(a) * 0.02 * (1 - t / 6) * math.sin(t), math.sin(a) * 0.02 * (1 - t / 6) * math.sin(t),
-                                           0.02 * (1 - t / 6) * math.cos(t) - 0.02)) for t in [i * 0.6 for i in range(1, 9)]]
-        p.body(stem_mat, vary=0.06).tube(curl, 0.0035 * size, segs=5, smooth=1, round_ends=True)
+        base = Vector((math.cos(a) * 0.025, math.sin(a) * 0.025, 0.04))
+        top = base + Vector((0, 0, 0.16 * size))
+        curl = [base, top] + [top + Vector((math.cos(a) * 0.022 * (1 - t / 6) * math.sin(t), math.sin(a) * 0.022 * (1 - t / 6) * math.sin(t),
+                                           0.022 * (1 - t / 6) * math.cos(t) - 0.022)) for t in [i * 0.6 for i in range(1, 9)]]
+        p.body(stem_mat, vary=0.06).tube(curl, 0.004 * size, segs=5, smooth=1, round_ends=True)
 
 
 # --- Export ---

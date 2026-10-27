@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://couml4yqalnm8"
+uid="uid://ckmftypqmp7le"
 path="res://.godot/imported/plant_fern_urn.glb-b19f8aff46ea6ed62c0cef7be6699b84.scn"
 
 [deps]
@@ -45,6 +45,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/plant_fern_urn/box_leaf.tres",
 "use_external/path": "res://assets/materials/furniture/plant_fern_urn/box_leaf.tres"
+},
+"leaf_core": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_fern_urn/leaf_core.tres",
+"use_external/path": "res://assets/materials/furniture/plant_fern_urn/leaf_core.tres"
 },
 "pot": {
 "use_external/enabled": true,

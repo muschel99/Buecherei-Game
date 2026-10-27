@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "bordeaux"
+display_name = "Bordeaux"
+colors = Dictionary[String, Color]({"rug": Color(0.420, 0.100, 0.130, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "navy"
+display_name = "Nachtblau"
+colors = Dictionary[String, Color]({"rug": Color(0.160, 0.200, 0.360, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "forest"
+display_name = "Waldgrün"
+colors = Dictionary[String, Color]({"rug": Color(0.180, 0.300, 0.220, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "rust"
+display_name = "Rost"
+colors = Dictionary[String, Color]({"rug": Color(0.600, 0.280, 0.160, 1)})
+
+[resource]
+script = ExtResource("1_data")
+id = "rug_persian"
+display_name = "Perserteppich"
+description = "Großer Teppich mit Bordüre, Medaillon und Fransen."
+category = 5
+subcategory = "rug"
+price = 170
+style_ids = Array[String](["dark_academia"])
+scene_path = "res://scenes/furniture/rug_persian.tscn"
+footprint = Vector2i(21, 14)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 1
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

@@ -710,6 +710,10 @@ func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.collision_mask = FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.PLAYER_LAYER_BIT \
 		| FurnitureUtils.FURNITURE_LAYER_BIT
+	# Teppiche liegen flach auf dem Boden: Sie dürfen unter Möbel und übereinander (Möbel stehen
+	# ohnehin auf ihnen – die Prüfform ist um SHRINK kleiner als der Teppich dick ist)
+	if _preview.data and _preview.data.subcategory == "rug":
+		query.collision_mask &= ~FurnitureUtils.FURNITURE_LAYER_BIT
 	if check_entrance:
 		query.collision_mask |= FurnitureUtils.BUILD_BLOCKER_LAYER_BIT
 	query.collide_with_areas = true

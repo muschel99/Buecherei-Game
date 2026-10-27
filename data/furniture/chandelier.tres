@@ -1,16 +1,44 @@
-[gd_resource type="Resource" script_class="FurnitureData" format=3]
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_og7mo"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "brass"
+display_name = "Messing"
+colors = Dictionary[String, Color]({"brass": Color(0.800, 0.620, 0.320, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "silver"
+display_name = "Silber"
+colors = Dictionary[String, Color]({"brass": Color(0.740, 0.740, 0.720, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "bronze"
+display_name = "Bronze"
+colors = Dictionary[String, Color]({"brass": Color(0.550, 0.380, 0.220, 1)})
 
 [resource]
-script = ExtResource("1_og7mo")
+script = ExtResource("1_data")
 id = "chandelier"
-display_name = "Kronleuchter, Messing"
-description = "Sechs Kerzenlichter auf einem Messingring. An die Decke hängen, mit E schalten."
+display_name = "Messing-Kronleuchter"
+description = "Sechs geschwungene Arme mit Kerzenbirnen an einer Messingkette."
+category = 4
+subcategory = "ceiling_lamp"
 price = 320
 style_ids = Array[String](["dark_academia"])
 scene_path = "res://scenes/furniture/chandelier.tscn"
-footprint = Vector2i(6, 6)
+footprint = Vector2i(6, 7)
+is_unlocked = true
+is_essential = false
+is_fixed = false
 placement = 16
-category = 4
-subcategory = "ceiling_lamp"
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2")])

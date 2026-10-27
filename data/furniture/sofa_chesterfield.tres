@@ -1,16 +1,56 @@
-[gd_resource type="Resource" script_class="FurnitureData" format=3]
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=8 format=3]
 
-[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_576c1"]
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "cognac"
+display_name = "Cognac"
+colors = Dictionary[String, Color]({"leather": Color(0.560, 0.290, 0.150, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "bordeaux"
+display_name = "Bordeaux"
+colors = Dictionary[String, Color]({"leather": Color(0.420, 0.100, 0.130, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "bottle"
+display_name = "Flaschengrün"
+colors = Dictionary[String, Color]({"leather": Color(0.140, 0.270, 0.200, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "navy"
+display_name = "Nachtblau"
+colors = Dictionary[String, Color]({"leather": Color(0.140, 0.180, 0.310, 1)})
+
+[sub_resource type="Resource" id="Variant_4"]
+script = ExtResource("2_variant")
+id = "chocolate"
+display_name = "Schokolade"
+colors = Dictionary[String, Color]({"leather": Color(0.270, 0.160, 0.110, 1)})
 
 [resource]
-script = ExtResource("1_576c1")
-books_can_lean = true
+script = ExtResource("1_data")
 id = "sofa_chesterfield"
 display_name = "Chesterfield-Sofa"
-description = "Gestepptes Leder mit Messingfüßen."
+description = "Dreisitzer mit tiefen Knöpfen, gerollten Armlehnen und Messingnägeln."
+category = 1
+subcategory = "sofa"
 price = 380
 style_ids = Array[String](["dark_academia"])
 scene_path = "res://scenes/furniture/sofa_chesterfield.tscn"
-footprint = Vector2i(18, 8)
-category = 1
-subcategory = "sofa"
+footprint = Vector2i(17, 9)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 1
+books_can_lean = true
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3"), SubResource("Variant_4")])
