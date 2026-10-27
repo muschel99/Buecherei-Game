@@ -148,7 +148,7 @@ func _create_sell_row(data: FurnitureData) -> Control:
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
 	info.add_child(make_label("%s  ×%d" % [data.display_name, Inventory.get_count(data.get_id())], 17))
-	info.add_child(create_style_row(data.styles))
+	info.add_child(create_style_row(data.style_ids))
 	row.add_child(info)
 	var price := make_label("+" + Wallet.format(data.get_sell_price()), 17, TabletFrame.KEY_COLOR)
 	price.autowrap_mode = TextServer.AUTOWRAP_OFF

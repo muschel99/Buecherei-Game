@@ -1,3 +1,4 @@
+@tool
 class_name SurfaceData
 extends Resource
 ## Datenblatt für eine Wandfarbe, einen Bodenbelag oder eine Decke.
@@ -21,8 +22,8 @@ enum Kind { WALL, FLOOR, CEILING }
 @export var kind: Kind = Kind.WALL
 ## Preis in Talern. Einmal im Shop gekauft, kann man sie unbegrenzt verwenden.
 @export var price: int = 0
-## Stil-Merkmale (freiwillig). Keine Häkchen = stilneutral.
-@export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
+## Stil-Merkmale (freiwillig): Stile aus data/styles/. Leer = stilneutral.
+@export var style_ids: Array[String] = []
 ## Das Material, das auf Wände bzw. Boden gelegt wird.
 @export var material: Material
 ## Farbe des Farbfelds im Katalog.
@@ -38,3 +39,19 @@ func get_id() -> String:
 	if not id.is_empty():
 		return id
 	return resource_path.get_file().get_basename()
+
+
+## Im Inspektor: Stile als Auswahlliste (aus data/styles/).
+func _validate_property(property: Dictionary) -> void:
+	if property.name == "style_ids":
+		property.hint = PROPERTY_HINT_TYPE_STRING
+		property.hint_string = StyleTags.inspector_hint_string()
+
+
+## Ältere Datenblätter speicherten die Stile als Zahl ("styles = 4", 1 Botanisch, 2 Modern,
+## 4 Dark Academia) – beim Laden werden sie auf die heutigen Stile übertragen.
+func _set(property: StringName, value: Variant) -> bool:
+	if property == &"styles" and value is int:
+		style_ids = StyleTags.from_legacy_flags(value)
+		return true
+	return false

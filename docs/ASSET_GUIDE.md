@@ -38,7 +38,7 @@ Ein neues Datenblatt dort = ein neues Möbelstück im Shop (kaufen, dann liegt e
 | Category              | Reiter im Katalog (Regale, Sitzmöbel, Tische, Theke, Beleuchtung …)       |
 | Subcategory           | Unterkategorie für die Filter, z. B. `armchair` (Sessel) – Auswahlliste passend zur Kategorie |
 | Price                 | Preis in Talern im Shop (beim Verkaufen gibt es die Hälfte zurück)        |
-| Styles                | Häkchen bei Botanisch, Modern und/oder Dark Academia – ohne Häkchen = stilneutral |
+| Style Ids             | Stile des Objekts: mit **+** einen Eintrag anlegen und den Stil wählen (Dark Academia = `dark_academia`, Minimalistisch = `minimalist`, Landhaus = `country`) – leer = stilneutral |
 | Scene Path            | Die Szene (`.tscn`) oder das Modell (`.glb`) – mit dem Ordner-Symbol auswählen |
 | Footprint             | Grundfläche in Rasterfeldern: x = Breite, y = Tiefe. 1 Feld = 1/9 m (≈ 11,1 cm), 9 Felder = 1 m |
 | Icon                  | Eigenes Vorschaubild für den Shop (freiwillig) – leer = das Spiel fotografiert das Modell selbst |
@@ -90,11 +90,21 @@ Für Regale ist eine eigene Szene besser, damit jedes Regalbrett eine eigene Kol
 ## Eigene Wandfarben, Böden und Decken
 Wandfarben, Böden und Decken funktionieren genauso – ihre Datenblätter liegen in `data/surfaces/`.
 Felder: Id, Display Name, **Kind** (Wall = Wandfarbe, Floor = Boden, Ceiling = Decke), Price,
-**Styles** (freiwillig – ohne Häkchen stilneutral), **Material** (das Aussehen) und
+**Style Ids** (freiwillig – leer = stilneutral), **Material** (das Aussehen) und
 **Preview Color** (Farbe des Feldes im Shop und im Inventar) und **Owned At Start**
 (Häkchen = von Anfang an vorhanden, muss nicht gekauft werden).
 Die bisherigen Oberflächen sind alle stilneutral. Für ein besonderes Design (z. B. eine
-Dark-Academia-Holzvertäfelung) einfach die passenden Stil-Häkchen setzen – dann zählt es mit.
+Dark-Academia-Holzvertäfelung) einfach bei **Style Ids** den passenden Stil eintragen – dann zählt es mit.
+
+## Einen neuen Stil anlegen (ohne Code)
+Jeder Stil ist ein Datenblatt in `data/styles/` (z. B. `country.tres` = Landhaus).
+1. Im Dateisystem-Fenster Rechtsklick auf ein Stil-Datenblatt → **Duplizieren…**, z. B. `cottagecore.tres`.
+2. Im Inspektor: **Id** (klein, englisch, z. B. `cottagecore` – später nicht mehr ändern),
+   **Display Name** (Name im Spiel), **Description** (ein Satz für den Tooltip), **Color**
+   (Erkennungsfarbe), **Icon** (freiwillig: kleines Bild für den Filter-Knopf, sonst ein Farbpunkt),
+   **Order** (Reihenfolge).
+3. Speichern und das Spiel neu starten – der Stil erscheint von selbst als Filter, in der
+   Stilanzeige und im Inspektor der Möbel bei **Style Ids**.
 
 So nutzt du eine eigene Textur:
 1. Bild (z. B. `oak_planks.png`) nach `assets/textures/` kopieren.
@@ -125,7 +135,7 @@ Jedes Genre ist ein Datenblatt in `data/genres/` (z. B. `crime.tres` für Krimi)
 | Display Name      | Name im Spiel, z. B. „Krimi“ – **hier umbenennen**                           |
 | Description       | Kurzer Text im Shop                                                          |
 | Spine Colors      | Farben der Buchrücken (mehrere; jedes Buch nimmt eine, leicht abgewandelt)   |
-| Styles            | Passender Stil (freiwillig)                                                  |
+| Style Ids         | Passender Stil (freiwillig), z. B. `dark_academia`                           |
 | Price             | Preis eines Bücherpakets in Talern                                           |
 | Is Unlocked       | Häkchen = freigeschaltet (im Shop und im Regal-Menü)                         |
 | Sort Order        | Reihenfolge in Listen (kleiner = weiter vorn)                                |

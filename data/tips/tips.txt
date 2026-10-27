@@ -122,9 +122,9 @@ Wandfarben und Böden streichst du Stück für Stück mit einem Klick.
 Mit <Umschalt> und Klick bekommt gleich die ganze Wand ihre neue Farbe.
 
 == Stile
-Viele Möbel haben einen Stil: Botanisch, Modern oder Dark Academia.
+Viele Möbel haben einen Stil: Dark Academia, Minimalistisch oder Landhaus.
 
-Später bestimmt der Stil deiner Bücherei, wer dich besuchen kommt.
+Über die Stil-Filter findest du schnell alles, was zusammenpasst. Mischen ist natürlich erlaubt!
 
 = Einkaufen und Lieferung | shop
 == Am Theken-Tablet

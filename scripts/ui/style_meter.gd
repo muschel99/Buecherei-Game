@@ -2,9 +2,9 @@ extends CanvasLayer
 ## Stilanzeige: Wie stark ist jeder Stil im Raum vertreten?
 ##
 ## Erscheint automatisch oben im Bild, solange der Gestaltungsmodus offen ist.
-## Gezählt werden nur Möbel und Deko – Wandfarben und Böden sind stilneutral.
-## Die Berechnung steckt in Room.get_style_shares() und wird später auch für
-## Besucher (Etappe 4/6) und Musik (Etappe 9) gebraucht.
+## Gezählt werden Möbel, Deko und Oberflächen mit Stil-Merkmal (stilneutrale zählen nicht).
+## Die Stile kommen aus data/styles/ (StyleTags) – ein neuer Stil erscheint hier von selbst.
+## Die Berechnung steckt in Room.get_style_shares(). Der Stil dient nur dem Einrichten.
 
 ## Pfade zu Raum und Gestaltungsmodus (im Inspektor der Hauptszene eingetragen).
 @export var room_path: NodePath
@@ -20,7 +20,7 @@ var _percent_labels := {}  # Stil -> Label
 
 func _ready() -> void:
 	hide()
-	for style in StyleTags.ALL:
+	for style in StyleTags.ids():
 		var box := HBoxContainer.new()
 		box.add_theme_constant_override("separation", 6)
 		var name_label := Label.new()
@@ -66,7 +66,7 @@ func _on_build_mode_active_changed(active: bool) -> void:
 
 func _refresh() -> void:
 	var shares := _room.get_style_shares()
-	for style in StyleTags.ALL:
+	for style in StyleTags.ids():
 		var percent: float = shares[style] * 100.0
 		_bars[style].value = percent
 		_percent_labels[style].text = "%d %%" % roundi(percent)

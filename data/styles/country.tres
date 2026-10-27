@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StyleData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/style_data.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+id = "country"
+display_name = "Landhaus"
+description = "Ländlich, warm und bewohnt: bemaltes Holz, Karo und Blümchen, Körbe, Emaille, Trockenblumen."
+color = Color(0.68, 0.8, 0.58, 1)
+order = 30

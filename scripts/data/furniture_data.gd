@@ -60,9 +60,9 @@ const SUBCATEGORIES := {
 ## Preis in Talern im Shop. Beim Verkaufen gibt es einen Teil davon zurück
 ## (GameConfig.sell_price_share).
 @export var price: int = 0
-## Stil-Merkmale: eines oder mehrere Häkchen setzen. Ohne Häkchen ist das Objekt
-## stilneutral und zählt nicht zur Stilberechnung (z. B. Lichtschalter, Kasse).
-@export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
+## Stil-Merkmale: einer oder mehrere Stile aus data/styles/ (z. B. "dark_academia"). Leer = das
+## Objekt ist stilneutral und zählt nicht zur Stilanzeige (z. B. Lichtschalter, Kasse).
+@export var style_ids: Array[String] = []
 ## Die Szene (.tscn) oder das 3D-Modell (.glb) des Möbelstücks.
 @export_file("*.tscn", "*.scn", "*.glb", "*.gltf") var scene_path: String = ""
 ## Eigenes Vorschaubild für den Shop (freiwillig). Leer = das Spiel fotografiert das
@@ -139,6 +139,9 @@ static func get_subcategory_display_name(of_category: Category, id: String) -> S
 
 ## Im Inspektor: Feld "Subcategory" als Auswahlliste mit den Unterkategorien der Kategorie.
 func _validate_property(property: Dictionary) -> void:
+	if property.name == "style_ids":
+		property.hint = PROPERTY_HINT_TYPE_STRING
+		property.hint_string = StyleTags.inspector_hint_string()
 	if property.name == "subcategory":
 		var ids: Array[String] = [""]
 		for entry in SUBCATEGORIES.get(category, []):
@@ -163,3 +166,12 @@ func get_sell_price() -> int:
 ## Grundfläche in Metern (Breite, Tiefe).
 func get_footprint_size() -> Vector2:
 	return Vector2(footprint) * GameConfig.grid_cell_size
+
+
+## Ältere Datenblätter speicherten die Stile als Zahl ("styles = 4", 1 Botanisch, 2 Modern,
+## 4 Dark Academia) – beim Laden werden sie auf die heutigen Stile übertragen.
+func _set(property: StringName, value: Variant) -> bool:
+	if property == &"styles" and value is int:
+		style_ids = StyleTags.from_legacy_flags(value)
+		return true
+	return false

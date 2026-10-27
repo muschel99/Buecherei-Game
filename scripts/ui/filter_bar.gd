@@ -5,7 +5,7 @@ extends VBoxContainer
 ## Zwei Gruppen nebeneinander:
 ## - Unterkategorie: "Alle" und die Unterkategorien, die es in der Liste gerade gibt
 ##   (z. B. Sessel, Sofas, Stühle – siehe FurnitureData.SUBCATEGORIES)
-## - Stil: "Alle Stile", Botanisch, Modern, Dark Academia, Neutral (= ohne Stil-Merkmal)
+## - Stil: "Alle Stile", die Stile aus data/styles/ (StyleTags), Neutral (= ohne Stil-Merkmal)
 ## Mit two_rows stehen die Gruppen in zwei eigenen Zeilen (im Shop), sonst nebeneinander
 ## (im Gestaltungsmodus). Passt die Breite nicht, rutschen die Schaltflächen in die nächste Zeile.
 ## Mit matches(objekt) prüft die Liste, ob ein Objekt zum Filter passt.
@@ -13,9 +13,9 @@ extends VBoxContainer
 ## Wird gesendet, wenn ein Filter angeklickt wurde.
 signal changed
 
-## Stil-Filter: ANY_STYLE = alle, NEUTRAL = ohne Stil-Merkmal, sonst ein StyleTags-Wert.
-const ANY_STYLE := -1
-const NEUTRAL := 0
+## Stil-Filter: ANY_STYLE = alle, NEUTRAL = ohne Stil-Merkmal, sonst eine Stil-id.
+const ANY_STYLE := ""
+const NEUTRAL := "-neutral-"
 
 const KEY_COLOR := Color(0.96, 0.78, 0.48)
 const TEXT_COLOR := Color(1.0, 0.96, 0.88)
@@ -26,8 +26,8 @@ const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.8)
 
 ## Gewählte Unterkategorie ("" = alle).
 var subcategory: String = ""
-## Gewählter Stil (ANY_STYLE, NEUTRAL oder ein StyleTags-Wert).
-var style: int = ANY_STYLE
+## Gewählter Stil (ANY_STYLE, NEUTRAL oder eine Stil-id).
+var style: String = ANY_STYLE
 
 var _subcategory_buttons := {}  # id -> Button
 var _style_buttons := {}  # Stil -> Button
@@ -74,8 +74,8 @@ func setup(subcategories: Array) -> void:
 			_first_row.add_child(gap)
 
 	_add_button(style_row, _style_buttons, ANY_STYLE, "Alle Stile", TEXT_COLOR)
-	for tag in StyleTags.ALL:
-		_add_button(style_row, _style_buttons, tag, "● " + StyleTags.get_display_name(tag), StyleTags.get_color(tag))
+	for id in StyleTags.ids():
+		_add_button(style_row, _style_buttons, id, "● " + StyleTags.get_display_name(id), StyleTags.get_color(id))
 	_add_button(style_row, _style_buttons, NEUTRAL, "○ Neutral", MUTED_COLOR)
 	_second_row.visible = _second_row.get_child_count() > 0
 	_update_pressed()
@@ -86,11 +86,11 @@ func matches(item: Resource) -> bool:
 	if not subcategory.is_empty():
 		if not item is FurnitureData or item.subcategory != subcategory:
 			return false
-	var styles: int = item.styles
+	var styles: Array[String] = StyleTags.known(item.style_ids)
 	if style == NEUTRAL:
-		return styles == 0
+		return styles.is_empty()
 	if style != ANY_STYLE:
-		return (styles & style) != 0
+		return styles.has(style)
 	return true
 
 

@@ -22,8 +22,8 @@ extends Resource
 ## Farben der Buchrücken. Jedes Buch bekommt eine davon, leicht abgewandelt
 ## (heller, dunkler, etwas wärmer oder kühler), damit kein Regal gleichförmig aussieht.
 @export var spine_colors: Array[Color] = [Color(0.55, 0.4, 0.3)]
-## Passender Stil (freiwillig). Ohne Häkchen = stilneutral.
-@export_flags("Botanisch:1", "Modern:2", "Dark Academia:4") var styles: int = 0
+## Passender Stil (freiwillig): Stile aus data/styles/. Leer = stilneutral.
+@export var style_ids: Array[String] = []
 ## Preis eines Bücherpakets in Talern (wie viele Bücher in einem Paket stecken, steht in
 ## GameConfig.books_per_package).
 @export var price: int = 40
@@ -63,3 +63,19 @@ func get_books_path() -> String:
 	if not books_path.is_empty():
 		return books_path
 	return "res://data/books/%s.txt" % get_id()
+
+
+## Im Inspektor: Stile als Auswahlliste (aus data/styles/).
+func _validate_property(property: Dictionary) -> void:
+	if property.name == "style_ids":
+		property.hint = PROPERTY_HINT_TYPE_STRING
+		property.hint_string = StyleTags.inspector_hint_string()
+
+
+## Ältere Datenblätter speicherten die Stile als Zahl ("styles = 4", 1 Botanisch, 2 Modern,
+## 4 Dark Academia) – beim Laden werden sie auf die heutigen Stile übertragen.
+func _set(property: StringName, value: Variant) -> bool:
+	if property == &"styles" and value is int:
+		style_ids = StyleTags.from_legacy_flags(value)
+		return true
+	return false

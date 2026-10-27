@@ -107,14 +107,14 @@ func _show_tab(index: int) -> void:
 			if not _filter_bar.matches(data):
 				continue
 			var count := Inventory.get_count(data.get_id())
-			var card := _create_card(data.display_name, _size_text(data), data.styles, data.description, Color(0, 0, 0, 0), count)
+			var card := _create_card(data.display_name, _size_text(data), data.style_ids, data.description, Color(0, 0, 0, 0), count)
 			card.pressed.connect(_build_mode.select_furniture.bind(data))
 			_add_card(data, card)
 	else:
 		for surface: SurfaceData in owned:
 			if not _filter_bar.matches(surface):
 				continue
-			var card := _create_card(surface.display_name, "unbegrenzt", surface.styles, "", surface.preview_color)
+			var card := _create_card(surface.display_name, "unbegrenzt", surface.style_ids, "", surface.preview_color)
 			card.pressed.connect(_build_mode.select_surface.bind(surface))
 			_add_card(surface, card)
 
@@ -170,7 +170,7 @@ func _add_card(data: Resource, card: Button) -> void:
 
 ## Eine Karte im Inventar: Name, Anzahl (count, -1 = ohne), Zusatzzeile, Stile und
 ## optional ein Farbfeld.
-func _create_card(title: String, subtitle: String, styles: int, tooltip: String, swatch := Color(0, 0, 0, 0), count := -1) -> Button:
+func _create_card(title: String, subtitle: String, styles: Array[String], tooltip: String, swatch := Color(0, 0, 0, 0), count := -1) -> Button:
 	var card := Button.new()
 	card.custom_minimum_size = CARD_SIZE
 	card.toggle_mode = true
@@ -210,9 +210,9 @@ func _create_card(title: String, subtitle: String, styles: int, tooltip: String,
 	var style_row := HBoxContainer.new()
 	style_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	style_row.add_theme_constant_override("separation", 8)
-	for style in StyleTags.to_list(styles):
+	for style in StyleTags.known(styles):
 		style_row.add_child(_small_label("● " + StyleTags.get_display_name(style), 13, StyleTags.get_color(style)))
-	if styles == 0:
+	if StyleTags.known(styles).is_empty():
 		style_row.add_child(_small_label("○ stilneutral", 13, MUTED_COLOR))
 	box.add_child(style_row)
 	return card

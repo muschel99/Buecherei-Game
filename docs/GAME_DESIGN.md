@@ -20,8 +20,10 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   Der Eingangsbereich vor der Tür bleibt frei – für Möbel und (seit Etappe 3k) auch für
   ausgelegte Bücher. Gestaltet wird mit dem, was man besitzt
   (Inventar); Neues kauft man am Theken-Tablet (Laden „Nest & Nook“).
-- **Stile:** Zum Start drei Stile: *Botanisch*, *Modern*, *Dark Academia*. Möbel tragen
-  Stil-Merkmale. Der vorherrschende Stil bestimmt, welche Besucher kommen und welche Musik läuft.
+- **Stile:** Zum Start drei Stile: *Dark Academia*, *Minimalistisch* und *Landhaus* (seit Etappe 6;
+  vorher Botanisch, Modern, Dark Academia). Möbel tragen Stil-Merkmale. Der Stil dient nur dem
+  Einrichten (Filter, Stilanzeige). Verworfen (Etappe 6): Der Stil bestimmt nicht, welche Besucher
+  kommen oder welche Musik läuft. Neue Stile lassen sich ohne Code ergänzen (`data/styles/`).
 
 ## Bücherei-Wirtschaft
 
@@ -144,7 +146,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     Aufbewahrung und Organisation, Bücher
 - Bei „Nest & Nook“ und im Gestaltungsmodus stehen über der Liste kleine Filter-Schaltflächen:
   „Alle“ und die Unterkategorien, die es dort gerade gibt, daneben der Stil-Filter
-  „Alle Stile“, Botanisch, Modern, Dark Academia, Neutral (= ohne Stil-Merkmal).
+  „Alle Stile“, Dark Academia, Minimalistisch, Landhaus, Neutral (= ohne Stil-Merkmal).
   Leere Unterkategorien werden nicht gezeigt; sie erscheinen von selbst, sobald es
   passende Objekte gibt (im Gestaltungsmodus: sobald dort etwas im Inventar liegt). Bei schmalen Bildschirmen rutschen die Schaltflächen in eine
   zweite Zeile.
@@ -598,6 +600,19 @@ Zwei Zustände:
   Dark-Academia-Holzvertäfelung) bekommen später Stil-Merkmale; jede verwendete Oberfläche mit
   Stil zählt dann wie ein Möbelstück.
 - Die Stil-Anteile stehen oben im Bild, solange der Gestaltungsmodus offen ist.
+- **Die Stile (seit Etappe 6):** jeder Stil ein Datenblatt in `data/styles/` (Name, Erkennungsfarbe,
+  Symbol, Reihenfolge). Ein neuer Stil = eine neue Datei; er erscheint von selbst in Filtern,
+  Stilanzeige und im Inspektor. Bestehende Objekte haben ihren am besten passenden neuen Stil
+  bekommen (Botanisch wurde meist Landhaus, Modern wurde Minimalistisch).
+  - *Dark Academia:* Studierzimmer und alte Bibliothek – Walnuss, Leder, Messing, Bordeaux,
+    Flaschengrün, Dunkelblau, Bankerlampen, Kerzenlicht, Globen, Büsten, Landkarten.
+  - *Minimalistisch:* ruhig und aufgeräumt – helles Holz, Weiß, Grau, gedeckte Akzente, klare, aber
+    weiche Formen, wenig und dafür schöne Deko.
+  - *Landhaus:* ländlich, warm und bewohnt (Cottage, Shabby Chic) – bemaltes Holz, Creme, Salbei,
+    Rosa, Karo- und Blümchenstoffe, Spitze, Körbe, Emaille, Keramik, Trockenblumen.
+  - Pflanzen gibt es in allen Stilen reichlich (Botanisch als eigener Stil entfällt).
+- Der Stil dient nur dem Einrichten: Er bestimmt nicht, welche Besucher kommen oder welche Musik
+  läuft (Idee in Etappe 6 verworfen).
 
 ### Licht
 - Alle Lichtquellen lassen sich mit E schalten (gemeinsames System `LightSource`).

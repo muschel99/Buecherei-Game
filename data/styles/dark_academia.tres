@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StyleData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/style_data.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+id = "dark_academia"
+display_name = "Dark Academia"
+description = "Studierzimmer und alte Bibliothek: dunkles Holz, Leder, Messing, Bordeaux und Flaschengrün, Kerzenlicht."
+color = Color(0.78, 0.47, 0.38, 1)
+order = 10

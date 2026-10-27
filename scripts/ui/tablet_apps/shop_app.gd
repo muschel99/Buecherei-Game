@@ -174,7 +174,7 @@ func create_offer_card(item: Resource) -> Button:
 	title.max_lines_visible = 2
 	title.custom_minimum_size.y = 42
 	box.add_child(title)
-	box.add_child(create_style_row(item.styles))
+	box.add_child(create_style_row(item.style_ids))
 	box.add_child(_small_label(Wallet.format(item.price), 17, TabletFrame.KEY_COLOR))
 	# Was habe ich schon? Oberflächen kauft man nur einmal.
 	var status := ""
@@ -239,13 +239,13 @@ func create_preview(item: Resource) -> Control:
 	return picture
 
 
-func create_style_row(styles: int) -> HBoxContainer:
+func create_style_row(styles: Array[String]) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override("separation", 8)
-	for style in StyleTags.to_list(styles):
+	for style in StyleTags.known(styles):
 		row.add_child(_small_label("● " + StyleTags.get_display_name(style), 13, StyleTags.get_color(style)))
-	if styles == 0:
+	if StyleTags.known(styles).is_empty():
 		row.add_child(_small_label("○ stilneutral", 13, TabletFrame.MUTED_COLOR))
 	return row
 

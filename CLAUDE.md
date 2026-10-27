@@ -126,7 +126,7 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
                    Wallet, Inventory, BookStock, BookArt, CounterStyle, DebugKeys)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
-  data/            Datenformate (FurnitureData, SurfaceData, StyleTags, GenreData, BookData, Book,
+  data/            Datenformate (FurnitureData, SurfaceData, StyleData + StyleTags, GenreData, BookData, Book,
                    LooseBook, TabletAppData, ReturnSlotData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
@@ -139,6 +139,7 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
+  styles/          Datenblätter der Einrichtungsstile (.tres, StyleData) – neuer Stil = neue Datei
   genres/          Datenblätter der Buch-Genres (.tres)
   books/           Bücherlisten (.txt, eine je Genre, eine Zeile pro Buch: Titel | Motiv)
   tips/            Texte der App „Tipps & Tricks“ (tips.txt, Aufbau oben in der Datei)
@@ -671,6 +672,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - Speichern: Knoten in der Gruppe `persist` mit `save_key`, `get_save_data()` und
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
 - Stil-Merkmale sind überall freiwillig; ohne Stil-Merkmal = stilneutral, zählt nicht mit.
+  **Stile (seit Etappe 6):** Dark Academia (`dark_academia`), Minimalistisch (`minimalist`), Landhaus
+  (`country`) als Datenblätter `data/styles/*.tres` (StyleData: Name, Farbe, Symbol, Reihenfolge).
+  Objekte tragen `style_ids: Array[String]` (Möbel, Oberflächen, Genres); alte Zahlen-Stile
+  (`styles = 4`) übersetzt `_set` beim Laden (`StyleTags.LEGACY_FLAGS`). Nie Stile im Code aufzählen –
+  immer `StyleTags.ids()`/`all()`. Der Stil dient nur dem Einrichten (keine Besucher, keine Musik).
 - **Geld** ändert sich nur über `Wallet.spend(betrag, grund)` / `Wallet.earn(betrag, grund)`
   (Etappe 7 baut darauf auf). Anzeige als Text: `Wallet.format(betrag)`.
 - **Inventar** (`Inventory`): Möbel mit Anzahl (`add_furniture`, `take_furniture`), Oberflächen

@@ -8,7 +8,6 @@ id = "travel"
 display_name = "Reisen"
 description = "Fernweh zwischen zwei Buchdeckeln."
 spine_colors = Array[Color]([Color(0.2, 0.42, 0.62, 1), Color(0.84, 0.74, 0.54, 1), Color(0.86, 0.52, 0.28, 1), Color(0.3, 0.66, 0.66, 1)])
-styles = 0
 price = 45
 is_unlocked = false
 sort_order = 120

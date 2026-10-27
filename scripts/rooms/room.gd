@@ -266,16 +266,16 @@ func get_hang_kind(collider: Object) -> HangKind:
 ## Anteil jedes Stils im Raum (siehe StyleTags.calculate_shares).
 ## Stilneutrale Dinge (ohne Stil-Merkmal) zählen nicht mit.
 func get_style_shares() -> Dictionary:
-	var flags_list: Array[int] = []
+	var style_lists: Array = []
 	for item in get_placed_furniture():
 		if item.data:
-			flags_list.append(item.data.styles)
+			style_lists.append(item.data.style_ids)
 	# Wandfarben, Böden und Decken: jede verwendete Oberfläche mit Stil zählt einmal
 	for id in _get_used_surface_ids():
 		var surface := Catalog.get_surface(id)
 		if surface:
-			flags_list.append(surface.styles)
-	return StyleTags.calculate_shares(flags_list)
+			style_lists.append(surface.style_ids)
+	return StyleTags.calculate_shares(style_lists)
 
 
 ## Alle Oberflächen (ids), die gerade irgendwo im Raum zu sehen sind.
