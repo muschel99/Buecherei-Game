@@ -126,8 +126,8 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
                    Wallet, Inventory, BookStock, BookArt, CounterStyle, DebugKeys)
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
-  data/            Datenformate (FurnitureData, SurfaceData, StyleData + StyleTags, GenreData, BookData, Book,
-                   LooseBook, TabletAppData, ReturnSlotData)
+  data/            Datenformate (FurnitureData, ColorVariant, SurfaceData, StyleData + StyleTags, GenreData,
+                   BookData, Book, LooseBook, TabletAppData, ReturnSlotData, CounterData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
   street_life/     Straßenleben (StreetLife, StreetPaths, StreetRoute, Passerby, StreetVehicle,
@@ -140,6 +140,7 @@ data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
   styles/          Datenblätter der Einrichtungsstile (.tres, StyleData) – neuer Stil = neue Datei
+  counters/        Datenblätter der Theken (.tres, CounterData, App „Fassade“)
   genres/          Datenblätter der Buch-Genres (.tres)
   books/           Bücherlisten (.txt, eine je Genre, eine Zeile pro Buch: Titel | Motiv)
   tips/            Texte der App „Tipps & Tricks“ (tips.txt, Aufbau oben in der Datei)
@@ -167,7 +168,9 @@ tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py)
                    storybook_overlap_check.py = Töpfe/Deko in Wänden; Stil-Umbau der Welt:
                    build_storybook_street.py + storybook_houses.py = Wohnhäuser,
                    build_storybook_library.py, build_storybook_alleys.py, build_storybook_props.py,
-                   build_storybook_plants.py + storybook_greenery.py = Pflanzen)
+                   build_storybook_plants.py + storybook_greenery.py = Pflanzen; Möbelkatalog:
+                   build_storybook_furniture.py + storybook_furniture.py, furniture_<stil>.py,
+                   furniture_fixtures.py = Theken/Einwürfe; Start: tools/build_furniture.sh)
 screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 ```
 (Werkzeug-Szenen: `scenes/tools/` + `scripts/tools/`, z. B. ScreenshotTour, ScreenshotViews.)
@@ -671,6 +674,35 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Überblendung entsteht eine wandernde Linie im Fensterlicht.
 - Speichern: Knoten in der Gruppe `persist` mit `save_key`, `get_save_data()` und
   `load_save_data()` werden vom `SaveManager` automatisch gespeichert (JSON in `user://`).
+- **Möbelkatalog im Bilderbuch-Stil (seit Etappe 6):** alle Möbel/Deko, Theken und Einwürfe baut
+  `tools/build_furniture.sh [ids] [--style=…]` (Blender `build_storybook_furniture.py`, danach
+  Godot-Import). Je Stil ein Modul `tools/blender/furniture_<stil>.py` (`ITEMS`: Beschreibung mit id,
+  Name, Kategorie/Unterkategorie, Preis grob nach Größe, `styles`, `place`, `variants`, `build`) mit
+  den Bausteinen `storybook_furniture.py` (`Kit`: `mat`/`part`/`plant`, `collider`, `surface`, `seat`,
+  `row` = Bücherfach, `light`/`flame`, `book_spot`, `root_script`; Formen `pillow`, `turned_leg`,
+  `book`/`book_row`, `candle`, `shade`, `pot`, `rug` …; Pflanzen `lush_fern`, `monstera` …).
+  Ausgabe je id: .glb, .blend (+ `.stamp`/`.glbstamp` = Fingerabdrücke), Materialien
+  `assets/materials/furniture/<id>/<rolle>.tres` (Rollennamen = Farbvarianten), Szene, Datenblatt,
+  Vorlage. `kind="counter"`/`"return_slot"` (`furniture_fixtures.py`, `KINDS`) schreibt nur Modell +
+  Datenblatt (`data/counters/`, `data/return_slots/`). Handarbeit bleibt: Dateien ohne die
+  Erzeuger-Zeile (Godot hat gespeichert), geänderte .blend, ersetzte .glb (nur `--force`);
+  `--adopt` überschreibt einmalig alte Platzhalter gleicher id. Farbtöne einzelner Teile
+  (`tint=`) immer über `F.lin(farbe)` (sRGB → linear, sonst zu blass). Blender-Koordinaten: Vorderseite
+  -y; Wanddinge Ursprung hinten in der Mitte, Deckenlampen oben. Übersicht:
+  `scenes/tools/catalog_showroom.tscn` (Reihen je Stil + „Theken und Einwürfe“), Testbilder Gruppen
+  `catalog` (`<stil>_all`, `<stil>_N`) und `catalog_items` (je id) mit
+  `--scene=res://scenes/tools/catalog_showroom.tscn`; `--cam` ohne Gruppennamen (sonst die ganze
+  Gruppe). Oberflächen-Bilder (Gestaltungsmodus, Shop: `--ui=build|shop`, `--indoor`) mit
+  `--rendering-driver opengl3` (lavapipe stürzt beim Vorschaubild-Rendern ab).
+- **Farbvarianten (seit Etappe 6):** `FurnitureData.color_variants` (`ColorVariant`: id, Name,
+  `colors` = Materialname → Farbe, `swatch`); `FurnitureUtils.instantiate_model(data, variante)` /
+  `apply_variant` färben Materialien gleichen Namens (Endung ".001" egal; Shader-Wert `base_color`
+  bzw. `albedo_color`). Erste Variante = Standard (`resolve_variant`). Inventar-Schlüssel
+  "id:variante" (`FurnitureData.make_key`/`split_key`, `Inventory.get_count(id, variante)`,
+  `get_stored_entries()`); `PlacedFurniture.variant`, Raum speichert "variant"; Bestellungen und
+  Kartons tragen "variant". **Kacheln:** `ItemTile` (Vorschaubild in der Farbe, Zähl-/Preis-Abzeichen,
+  Farbtupfer, Tooltip `ItemTile.describe`), `IconToggle` + `CatalogIcons` (gezeichnete Symbole),
+  `FilterBar` (Stil/Kategorie/Unterkategorie als Symbol-Knöpfe) – im Gestaltungsmodus und im Shop.
 - Stil-Merkmale sind überall freiwillig; ohne Stil-Merkmal = stilneutral, zählt nicht mit.
   **Stile (seit Etappe 6):** Dark Academia (`dark_academia`), Minimalistisch (`minimalist`), Landhaus
   (`country`) als Datenblätter `data/styles/*.tres` (StyleData: Name, Farbe, Symbol, Reihenfolge).
@@ -690,11 +722,14 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (`BuildMode` prüft `is_fixed` beim Aufheben, Verschieben und Wegräumen). Sinnvoll mit
   `is_essential` zusammen.
 - **Theke** (`scenes/furniture/counter.tscn`, Script `Counter`): fest verbaut
-  (is_essential + is_fixed). Ihr Stil (Farben) liegt zentral im Autoload `CounterStyle`
-  (STYLES, `set_style`, `get_style`, Signal `changed`, gespeichert, Gruppe `persist`); die
-  Theke hört auf `changed` und färbt sich. Stilauswahl in der App „Fassade“, aber bewusst
-  von überall aufrufbar. Module (Backshop, Kaffee) hängen unter dem Knoten `Modules` –
-  Struktur steht bereit, noch nichts umgesetzt.
+  (is_essential + is_fixed), Kollision und Ablagefläche fest (2 x 0,65 m, Platte auf 1 m). Welche
+  Theke dasteht, liegt zentral im Autoload `CounterStyle` (`set_style`, `get_style` → `CounterData`,
+  Signal `changed`, gespeichert, Gruppe `persist`); seit Etappe 6 ist jede Theke ein Datenblatt
+  `data/counters/<id>.tres` (`CounterData`: Name, Beschreibung, `style_ids`, Modell, Reihenfolge,
+  `legacy_ids` = alte Kennungen wie "wood_warm"; `Catalog.get_counter`/`get_all_counters`). Die Theke
+  setzt das Modell unter `Model` ein (schon bei `NOTIFICATION_SCENE_INSTANTIATED`, damit die
+  Blaupause stimmt). Auswahl in der App „Fassade“, aber bewusst von überall aufrufbar. Module
+  (Backshop, Kaffee, Kasse) hängen unter dem Knoten `Modules`.
 - **Deko-Regal** (`deco_shelf_light`, Szene `deco_shelf_light.tscn`, Unterkategorie `deco_shelf`):
   ein Regal ohne `BookShelf`/`BookRow`, darum lassen sich dort keine Bücher einräumen – nur
   Ablageflächen zum Dekorieren. Bücherregale (mit BookShelf) gibt es weiter im Shop.

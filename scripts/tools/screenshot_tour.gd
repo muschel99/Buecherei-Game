@@ -27,7 +27,8 @@ extends Node
 ##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
 ##   --no_street_life   ohne Straßenleben (zum Vergleich)
 ##   --ui=build|shop    Gestaltungsmodus bzw. Theken-Tablet mit „Nest & Nook“ öffnen (seit Etappe 6,
-##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0)
+##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0);
+##   --ui=app:<id>      Theken-Tablet mit einer anderen App öffnen, z. B. app:facade
 ##   --give             zum Testen von jedem Möbelstück 1–3 Stück (in allen Farben) ins Inventar
 ##   --indoor           ohne Straße draußen (Häuser, Pflanzen, Passanten) – schnell, für Bilder vom Laden
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
@@ -145,8 +146,8 @@ func _give_everything() -> void:
 		Inventory.add_surface(surface.get_id())
 
 
-## Öffnet den Gestaltungsmodus ("build") oder das Theken-Tablet mit „Nest & Nook“ ("shop") und
-## wartet, bis die Vorschaubilder fotografiert sind.
+## Öffnet den Gestaltungsmodus ("build"), das Theken-Tablet mit „Nest & Nook“ ("shop") oder mit
+## einer anderen App ("app:<id>") und wartet, bis die Vorschaubilder fotografiert sind.
 func _open_ui(which: String, tab: int) -> void:
 	if which == "build":
 		var build_mode := get_tree().root.find_child("BuildMode", true, false) as BuildMode
@@ -158,6 +159,10 @@ func _open_ui(which: String, tab: int) -> void:
 		tablet.open_tablet()
 		var app := tablet.open_app("furnishing")
 		app.call("_on_category_pressed", tab)
+	elif which.begins_with("app:"):
+		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
+		tablet.open_tablet()
+		tablet.open_app(which.trim_prefix("app:"))
 	await _wait_frames(90)
 
 

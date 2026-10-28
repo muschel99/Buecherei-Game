@@ -33,8 +33,11 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - **Inventar:** Alles, was mir gehört und gerade nicht im Raum steht. Möbel und Deko werden
   gezählt (z. B. „Bücherregal ×2“). Die Möbel, die zum Start im Raum stehen, gehören mir.
   Seit Etappe 4a startet der Laden fast leer (ich soll ihn selbst einrichten): Es stehen nur
-  noch drei Platzhalter da – die feste Theke (mit dem Tablet darauf), ein Sessel und ein
-  Deko-Regal. Alles Weitere kaufe ich am Tablet.
+  die feste Theke (mit Kasse und Tablet darauf), ein Samtsessel und ein Deko-Regal da. Alles
+  Weitere kaufe ich am Tablet.
+  **Farben (seit Etappe 6):** Fast jedes Möbelstück gibt es in 3–5 Farben (Pflanzen in
+  verschiedenen Blütenfarben). Jede Farbe ist im Inventar ein eigener Eintrag („Samtsessel ·
+  Bordeaux ×1“) und bleibt beim Speichern erhalten.
   Wandfarben, Böden und Decken kauft man einmal und kann sie danach unbegrenzt verwenden;
   ein paar schlichte Farben (Warmer Putz, Kalkweiß, Nebelgrau), ein Boden (Eichendielen) und
   zwei Decken sind von Anfang an da.
@@ -61,12 +64,15 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   - **Laden „Nest & Nook“** (Möbel, Deko & Farben; App „furnishing“, Logo: kleines Haus mit
     Herz): oben links zwei Symbole – Kaufen (Tasche) und Verkaufen (Münze).
     - *Kaufen:* alle freigeschalteten Möbel, Deko, Wandfarben, Böden und Decken nach
-      Kategorien, mit kleinem Vorschaubild, Preis und Stil-Merkmalen. Über der Liste helfen
-      Filter beim Suchen (siehe „Filter“). Ein Klick legt etwas in den Warenkorb (Möbel auch
-      mehrfach, Oberflächen einmal; − und + ändern die Anzahl); „Bestellen“ bezahlt. Reicht
-      das Geld nicht, steht dort freundlich, wie viel fehlt – ohne Strafe.
+      Kategorien, als **große Bild-Kacheln** (seit Etappe 6): das Vorschaubild in der gewählten
+      Farbe, der Preis klein als Münze in der Ecke, darunter kleine Farbtupfer – ein Klick auf
+      einen Tupfer wählt die Farbe vor dem Kauf. Name, Größe, Stil und Beschreibung stehen nur im
+      Tooltip (Maus über die Kachel). Über den Kacheln helfen Filter beim Suchen (siehe
+      „Filter“). Ein Klick auf die Kachel legt das Stück in der gewählten Farbe in den Warenkorb
+      (Möbel auch mehrfach, Oberflächen einmal; − und + ändern die Anzahl); „Bestellen“ bezahlt.
+      Reicht das Geld nicht, steht dort freundlich, wie viel fehlt – ohne Strafe.
     - *Verkaufen:* Möbel aus dem Inventar (nicht die im Raum) bringen die Hälfte des Preises
-      zurück (Anteil in GameConfig). Oberflächen behält man.
+      zurück (Anteil in GameConfig), jede Farbe einzeln. Oberflächen behält man.
   - **„Bücherladen“** (Platzhaltername, ein schönerer gemütlicher Name kommt später; App
     „books“, Logo: Einkaufstasche mit Buch): Bücherpakete je Genre kaufen (siehe „Bücher
     kaufen“), mit eigenem Warenkorb.
@@ -81,9 +87,12 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     Die App besteht aus Abschnitten (je ein Kasten mit Überschrift):
     - **Rückgabekasten**: oben rechts dezent ein Buchsymbol mit „12 / 50“ (wie viele Bücher
       darin liegen), darunter die Einwurf-Varianten als Karten mit Vorschaubild (vor einem
-      Stück Hauswand). Ein Klick wählt den Einwurf; der gewählte ist hervorgehoben.
-    - **Theke** (seit Etappe 4a): die Stilvarianten der Theke als Auswahlkarten (schlichtes
-      Holz, dunkles Holz, hell lackiert). Ein Klick färbt die Theke im Laden sofort um.
+      Stück Hauswand). Ein Klick wählt den Einwurf; der gewählte ist hervorgehoben. Seit
+      Etappe 6 gibt es je Stil einen Einwurf (Messingklappe, Schlichte Platte, Briefkasten mit
+      Dach), ein kleiner Farbpunkt auf der Karte zeigt den Stil.
+    - **Theke** (seit Etappe 4a, neu in Etappe 6): die Theken als Karten mit Vorschaubild und
+      Stil-Punkt (Schlichte Holztheke, Bibliothekstheke, Helle Theke, Landhaustheke). Ein Klick
+      stellt sofort die andere Theke in den Laden – kein Kaufen nötig.
     Später kommen weitere Abschnitte dazu, z. B. Wandfarbe außen, Schild, Fenster (im Code:
     eine Funktion je Abschnitt, eingetragen in `SECTIONS`).
   - **App „Tipps & Tricks“** (seit Etappe 3h): ein kleines, gemütliches Büchlein auf
@@ -137,16 +146,19 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
 - Kategorien (Reiter): Regale, Sitzmöbel, Tische, Theke, Beleuchtung, Deko, Raumteiler sowie
   Wandfarben, Böden und Decken.
 - Unterkategorien:
-  - Regale: Bücherregale, Deko-Regale (nur zum Dekorieren, keine Bücher), Wandregale, Vitrinen
+  - Regale: Bücherregale, Deko-Regale (nur zum Dekorieren, keine Bücher), Wandregale, Vitrinen,
+    Schränke und Kommoden
   - Sitzmöbel: Sessel, Sofas, Stühle, Hocker
   - Tische: Beistelltische, Couchtische, Schreibtische, Esstische
   - Beleuchtung: Tischlampen, Stehlampen, Deckenlampen, Wandlampen, Kerzen und Laternen,
     Lichtschalter
-  - Deko: Pflanzen, Teppiche, Bilder und Wandschmuck, Figuren, Textilien (Kissen, Decken),
-    Aufbewahrung und Organisation, Bücher
-- Bei „Nest & Nook“ und im Gestaltungsmodus stehen über der Liste kleine Filter-Schaltflächen:
-  „Alle“ und die Unterkategorien, die es dort gerade gibt, daneben der Stil-Filter
-  „Alle Stile“, Dark Academia, Minimalistisch, Landhaus, Neutral (= ohne Stil-Merkmal).
+  - Deko: Pflanzen, Vasen und Blumen, Teppiche, Bilder und Wandschmuck, Figuren und
+    Kuriositäten, Textilien (Kissen, Decken), Geschirr, Aufbewahrung und Organisation, Bücher,
+    Buchstützen
+- Bei „Nest & Nook“ und im Gestaltungsmodus stehen über den Kacheln kleine runde
+  **Symbol-Knöpfe** (seit Etappe 6, Name im Tooltip): „Alle“ und die Unterkategorien, die es
+  dort gerade gibt, daneben der Stil-Filter als Farbpunkte – alle Stile, Dark Academia,
+  Minimalistisch, Landhaus, Neutral (= ohne Stil-Merkmal).
   Leere Unterkategorien werden nicht gezeigt; sie erscheinen von selbst, sobald es
   passende Objekte gibt (im Gestaltungsmodus: sobald dort etwas im Inventar liegt). Bei schmalen Bildschirmen rutschen die Schaltflächen in eine
   zweite Zeile.
@@ -487,10 +499,18 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Lager, Fassade, Statistik, Tipps & Tricks). Die Struktur für weitere Theken-Module (z. B.
   Backshop-Auslage, Kaffeeautomat) ist vorgesehen (Knoten „Modules“ in der Theken-Szene,
   `CounterStyle.modules`) – umgesetzt ist davon noch nichts.
-- **Stil der Theke:** Über das Tablet in der App „Fassade“ wähle ich eine von mehreren
-  Platzhalter-Varianten (schlichtes Holz, dunkles Holz, hell lackiert) – kein Kaufen nötig.
-  Der Stil liegt zentral im Autoload `CounterStyle` und lässt sich leicht auch an anderer
-  Stelle aufrufen (z. B. später direkt beim Anschauen der Theke).
+- **Welche Theke:** Über das Tablet in der App „Fassade“ wähle ich eine Theke – seit Etappe 6 je
+  Stil eine eigene im Bilderbuch-Stil, kein Kaufen nötig:
+  - *Schlichte Holztheke* (stilneutral, zum Start): Eiche mit drei Feldern vorn.
+  - *Bibliothekstheke* (Dark Academia): Walnuss, Pilaster, grüne Lederauflage mit Goldlinie,
+    Messing-Fußstange, Messingschild „Ausleihe“, hinten Karteikasten und Messinggriffe.
+  - *Helle Theke* (Minimalistisch): weiß mit runden Ecken, Eichenlamellen, helle Eichenplatte.
+  - *Landhaustheke* (Landhaus): salbeigrün mit Nut-und-Feder-Brettern, gemalter Blumenranke,
+    Kiefernplatte, hinten ein Karovorhang und Porzellanknäufe.
+  Hinten (wo ich stehe) haben alle offene Fächer und Schübe mit ein paar Büchern und Kleinkram.
+  Die Wahl liegt zentral im Autoload `CounterStyle` und lässt sich leicht auch an anderer Stelle
+  aufrufen (z. B. später direkt beim Anschauen der Theke). Ältere Spielstände bekommen die
+  passende neue Theke.
 - Der Rückgabekasten sitzt seit Etappe 4a fest in der schrägen Eingangswand, rechts neben der
   Tür (siehe oben).
 
@@ -543,7 +563,10 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Esc            | Schließt, was offen ist – sonst Pausenmenü     |
 
 ### Im Gestaltungsmodus
-Unten erscheint das **Inventar**: nur Dinge, die gerade im Inventar liegen, mit Anzahl (×2).
+Unten erscheint das **Inventar**: nur Dinge, die gerade im Inventar liegen – seit Etappe 6 als
+große Bild-Kacheln in der Farbe des Stücks, die Anzahl (×2) klein in der Ecke, Name und Werte
+nur im Tooltip; die Reiter und Filter sind runde Symbol-Knöpfe. Die Leiste lässt sich scrollen und
+passt sich jeder Bildschirmgröße an.
 Was ganz im Raum steht, erscheint dort nicht (so bleibt es auch bei sehr vielen Objekten
 übersichtlich); Wandfarben, Böden und Decken, die mir gehören, sind immer da. Ist ein Reiter
 leer, steht dort freundlich: „Hier ist noch nichts. Bei „Nest & Nook“ am Theken-Tablet findest du mehr.“

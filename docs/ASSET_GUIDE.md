@@ -117,6 +117,37 @@ wechselt die Farbe.
 Neue Variante ohne Code: im Datenblatt bei **Color Variants** auf **+** klicken, **Neue
 ColorVariant** wählen, Felder ausfüllen, speichern.
 
+## Der Möbelkatalog im Bilderbuch-Stil (seit Etappe 6)
+Alle Möbel, die Deko, die Theken und die Einwürfe werden per Script in Blender gebaut – im selben
+Stil wie die Häuser: weich, rund, leicht schief, jedes Teil ein geschlossener Körper.
+
+| Was | Wo |
+|-----|----|
+| Bau-Scripts je Stil (Beschreibung + Bau-Funktion je Objekt) | `tools/blender/furniture_dark_academia.py`, `furniture_minimalist.py`, `furniture_country.py`, `furniture_neutral.py`, `furniture_fixtures.py` (Theken, Einwürfe) |
+| Bausteine (Kissen, Beine, Bücher, Kerzen, Lampenschirme, Töpfe, Pflanzen …) | `tools/blender/storybook_furniture.py` |
+| Spiel-Modelle | `assets/models/furniture/<id>.glb` (Einwürfe: `assets/models/objects/return_slots/`) |
+| Blender-Quellen (Einzelteile, zum Weiterbauen) | `assets/models/source/furniture/<id>.blend` |
+| Materialien (je Rolle, z. B. `wood.tres`, `fabric.tres`) | `assets/materials/furniture/<id>/` |
+| Szenen und Datenblätter | `scenes/furniture/<id>.tscn`, `data/furniture/<id>.tres`, `data/counters/`, `data/return_slots/` |
+| Vorlagen in echter Größe | `assets/models/templates/furniture/`, `…/templates/objects/` |
+| Übersicht aller Objekte | `scenes/tools/catalog_showroom.tscn` |
+
+**Alles ansehen:** In Godot `scenes/tools/catalog_showroom.tscn` öffnen und mit **F6** starten.
+Je Stil steht eine Reihe da (Wanddinge an der Wand, Deckenlampen am Balken), zuletzt „Theken und
+Einwürfe“. **Pfeiltasten hoch/runter** = andere Reihe, **rechte Maustaste halten und ziehen** =
+drehen, **Mausrad** = näher/weiter.
+
+**Deine Änderungen bleiben:** Das Bau-Script überschreibt nie
+- ein Datenblatt oder eine Szene, die Godot gespeichert hat (z. B. nachdem du im Inspektor den
+  Preis geändert hast),
+- eine `.blend`-Quelle, die du in Blender geändert und gespeichert hast,
+- eine `.glb`, die du durch dein eigenes Modell ersetzt hast.
+
+**Ein Modell in Blender weiterbauen:** `assets/models/source/furniture/<id>.blend` öffnen – dort
+ist jedes Teil einzeln, die Materialien heißen wie ihre Rollen (`wood`, `fabric`, `brass` …).
+Ändern, speichern, dann **Datei → Exportieren → glTF 2.0 (.glb)** nach
+`assets/models/furniture/<id>.glb` (wie „Weg 1“ oben).
+
 ## Eigene Wandfarben, Böden und Decken
 Wandfarben, Böden und Decken funktionieren genauso – ihre Datenblätter liegen in `data/surfaces/`.
 Felder: Id, Display Name, **Kind** (Wall = Wandfarbe, Floor = Boden, Ceiling = Decke), Price,
@@ -247,27 +278,71 @@ Raum, die Wand ist 20 cm dick):
   der frei bleibt) und `DropPoint` (wo später Besucher davor stehen) müssen bleiben.
 
 **Neuer Einwurf (ohne Code):**
-1. Eine kleine Szene in `scenes/objects/return_slots/` bauen (Beispiele: `slot_plain.tscn`,
-   `slot_flap.tscn`, `slot_plaque.tscn`): Vorderseite zeigt nach +Z (zur Straße), Ursprung
-   hinten in der Mitte (dort, wo es an der Hauswand anliegt). Nur Optik, keine Kollision.
+1. Ein Modell bauen – eine `.glb` (z. B. in `assets/models/objects/return_slots/`, Vorlagen in
+   `assets/models/templates/objects/`) oder eine kleine Szene in `scenes/objects/return_slots/`.
+   Vorderseite zeigt nach +Z (zur Straße; in Blender nach -Y), Ursprung hinten auf der Hauswand,
+   in der Mitte des Schlitzes. Etwa 30–40 cm breit und 20–35 cm hoch. Nur Optik, keine Kollision.
 2. Ein Datenblatt in `data/return_slots/` anlegen (am einfachsten eines kopieren): `id`,
-   `display_name` (Name in der App „Fassade“), `scene_path`, `order` (Reihenfolge), freiwillig
-   `icon` (eigenes Vorschaubild, sonst wird das Modell fotografiert).
+   `display_name` (Name in der App „Fassade“), `style_ids` (passender Stil, erscheint als Farbpunkt;
+   leer = stilneutral), `scene_path`, `order` (Reihenfolge), freiwillig `icon` (eigenes
+   Vorschaubild, sonst wird das Modell fotografiert).
 3. Fertig – die App „Fassade“ zeigt die neue Variante von selbst.
+
+Seit Etappe 6 gibt es je Stil einen Einwurf im Bilderbuch-Stil: Messingklappe (Dark Academia),
+Schlichte Platte (Minimalistisch), Briefkasten mit Dach (Landhaus). Die drei schlichten
+Einwürfe von früher sind weiter wählbar.
+
+### Theke (fest im Laden, je Stil ein Modell)
+Die Theke (`scenes/furniture/counter.tscn`) hat feste Kollision und Ablagefläche; wie sie aussieht,
+wählt man in der App „Fassade“. Jede Theke ist ein Datenblatt in `data/counters/` mit eigenem
+Modell: Schlichte Holztheke (stilneutral, Start), Bibliothekstheke (Dark Academia), Helle Theke
+(Minimalistisch), Landhaustheke.
+
+**Eigene Theke (ohne Code):**
+1. Modell bauen – am besten auf der Vorlage `templates/furniture/counter_classic.glb`:
+   **2 m breit, 0,65 m tief, die Platte oben genau auf 1 m Höhe**, Fußpunkt in der Mitte am
+   Boden, Kundenseite vorn (in Blender -Y, in Godot +Z), hinten die Seite, an der du stehst.
+   In Godot reicht die Tiefe von z = -0,305 (hinten) bis 0,345 (vorn). Die Kasse und das Tablet
+   kommen von selbst obendrauf.
+2. Als `.glb` speichern, z. B. `assets/models/my_models/counter_mine.glb`.
+3. Ein Datenblatt in `data/counters/` kopieren und anpassen: `id`, `display_name`,
+   `description` (Tooltip), `style_ids`, `scene_path` (dein Modell), `order`, freiwillig `icon`.
+4. Fertig – die App „Fassade“ zeigt die neue Theke von selbst.
 
 ## Ein Möbelstück durch ein eigenes Modell ersetzen
 Jede Möbel-Szene (z. B. `scenes/furniture/armchair_velvet.tscn`) hat diesen Aufbau:
 ```
-Armchair        (Wurzel-Knoten)
-├── Model       ← nur die Optik: hier kommt dein Modell hin
-└── Body        ← die Kollision (damit man nicht durchlaufen kann)
+ArmchairVelvet  (Wurzel-Knoten)
+├── Model       ← nur die Optik: das Modell assets/models/furniture/armchair_velvet.glb
+├── Body        ← die Kollision (damit man nicht durchlaufen kann)
+└── …           ← je nach Möbel: Ablageflächen, Fächer, Sitzplatz, Licht
 ```
-1. Doppelklicke die Möbel-Szene im **Dateisystem**-Fenster (unten links), um sie zu öffnen.
-2. Lösche alle Kinder des Knotens `Model` (die grauen Platzhalter-Kisten).
-3. Ziehe deine `.glb`-Datei aus dem Dateisystem auf den Knoten `Model`.
-4. Passe bei Bedarf Größe und Position an. Der Boden ist bei Höhe 0.
-5. Passe im Knoten `Body > CollisionShape3D` die Kiste grob an die neue Form an.
-6. Speichern mit **Strg+S**. Alle Exemplare im Raum ändern sich automatisch.
+Zum Modellieren nimmst du die Vorlage in echter Größe (siehe „Vorlagen zum Modellieren“) – dann
+passt dein Modell ohne Verschieben.
+
+**Weg 1 (am einfachsten): die Modell-Datei ersetzen**
+1. Dein Modell in Blender als `.glb` exportieren und **unter demselben Namen** speichern:
+   `~/Buecherei-Game/assets/models/furniture/<id>.glb` (die alte Datei überschreiben).
+2. Godot öffnen (oder in Godot kurz ins Fenster klicken) – es liest die Datei neu ein. Alle
+   Exemplare im Spiel sehen jetzt so aus wie dein Modell.
+3. Materialien: Heißt ein Material so wie eine Rolle des Originals (z. B. `wood`, `fabric`),
+   bekommt es automatisch das passende Bilderbuch-Material und die Farbvarianten. Andere Namen
+   behalten dein eigenes Material.
+Das Bau-Script erkennt deine Datei an ihrem Fingerabdruck (`<id>.glbstamp` neben der .blend-Quelle)
+und überschreibt sie nie.
+
+**Weg 2: in der Szene tauschen (eigener Dateiname)**
+1. Deine `.glb` in einen eigenen Ordner legen, z. B. `assets/models/my_models/`.
+2. Die Möbel-Szene im **Dateisystem**-Fenster (unten links) doppelklicken.
+3. Deine `.glb` aus dem Dateisystem auf den obersten Knoten ziehen.
+4. Den alten Knoten `Model` löschen (Rechtsklick → **Löschen**), deinen neuen Knoten auswählen,
+   **F2** drücken und ihn `Model` nennen.
+5. Speichern mit **Strg+S**. Eine Szene, die Godot gespeichert hat, überschreibt das Bau-Script
+   nicht mehr.
+
+Ist deine Form deutlich anders, passe unter `Body` die Kollisionskästen (`CollisionShape3D`)
+grob an. Ablageflächen (`Surfaces`) müssen oben genau auf der Fläche liegen, auf die man etwas
+stellen kann.
 
 ## Vorlagen zum Modellieren
 Für jedes Möbelstück, jeden Haustyp, das Gassenende, die Eingangstreppe und (seit Etappe 5a)
@@ -279,6 +354,8 @@ später ohne Verschieben oder Skalieren.
 | Was            | Ordner                                   | Dateiname                     |
 |----------------|------------------------------------------|-------------------------------|
 | Möbel und Deko | `assets/models/templates/furniture/`     | Id des Möbelstücks, z. B. `armchair_velvet.glb` |
+| Theken         | `assets/models/templates/furniture/`     | `counter_classic.glb`, `counter_country.glb` … |
+| Einwürfe (Rückgabekasten) | `assets/models/templates/objects/` | `slot_dark_academia.glb` …      |
 | Häuser         | `assets/models/templates/houses/`        | Haustyp, z. B. `pub.glb`      |
 | Gassenende, Treppe | `assets/models/templates/world/`     | `alley_end.glb`, `entrance_steps.glb` |
 | Straßenleben   | `assets/models/templates/street_life/`   | `delivery_van.glb`, `car.glb`, `cyclist.glb`, `passerby.glb` |
@@ -304,9 +381,9 @@ Die Vorlagen neu erzeugen (z. B. nach neuen Möbeln oder geänderten Haus-Maßen
 Szene `scenes/world/tools/export_templates.tscn` öffnen und mit **F6** starten. Das Fenster
 schließt sich nach ein paar Sekunden von selbst.
 
-**Für Möbel:** Vorlage `templates/furniture/<id>.glb` nehmen, Modell bauen, dann wie im
-Abschnitt „Ein Möbelstück durch ein eigenes Modell ersetzen“ unter `Model` einsetzen. Weil die
-Vorlage genau so liegt wie die Szene, muss am Knoten `Model` nichts verschoben werden.
+**Für Möbel:** Vorlage `templates/furniture/<id>.glb` nehmen (seit Etappe 6 ist sie eine Kopie
+des echten Modells), Modell bauen, dann wie im Abschnitt „Ein Möbelstück durch ein eigenes Modell
+ersetzen“ einsetzen. Weil die Vorlage genau so liegt wie die Szene, muss nichts verschoben werden.
 
 ## Außenwelt: Häuser, Gassenende und Eingangstreppe
 Draußen besteht alles aus Platzhaltern, die du einzeln durch eigene Modelle ersetzen kannst.

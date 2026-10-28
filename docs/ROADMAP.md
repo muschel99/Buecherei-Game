@@ -95,8 +95,8 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 | Alle einstellbaren Werte | `scripts/autoload/game_config.gd` |
 
 **Was noch offen oder provisorisch ist**
-- Innen ist noch alles Platzhalter: **alle Möbel und die Deko**, Theke und Rückgabe-Einwurf → **Etappe 6**.
-  Wände, Boden, Decke und Fenster der Bücherei innen kommen danach.
+- Möbel, Deko, Theke und Rückgabe-Einwurf gibt es seit **Etappe 6** im Bilderbuch-Stil. Noch Platzhalter:
+  Kasse und Tablet auf der Theke, Wände, Boden, Decke und Fenster der Bücherei innen.
 - Das Licht der ganzen Welt (warm, mildes Leuchten, leichte Unschärfe in der Ferne) ist noch nicht
   abgestimmt.
 - Die realistischen Figuren aus 5b werden nicht mehr benutzt (die Chibi-Figuren ersetzen sie), ihre
@@ -1081,22 +1081,39 @@ Landhaus) mit je etwa 20–25 Objekten, dazu etwa 15 stilneutrale. Jedes Objekt 
 Gestaltungsmodus und im Shop schöne Bild-Kacheln statt Text. Der Stil dient nur noch dem Einrichten.
 - [x] Überblick „Stand nach dem Stil-Umbau“ (oben), Notion-Seite „Roadmap (aus Claude Code)“ und
       Arbeitsregel dazu in CLAUDE.md
-- [ ] Stile neu: Dark Academia, Minimalistisch und Landhaus als Datenblätter (`data/styles/`, neuer Stil
+- [x] Stile neu: Dark Academia, Minimalistisch und Landhaus als Datenblätter (`data/styles/`, neuer Stil
       = neue Datei, kein Code); Botanisch entfällt; der Stil bestimmt keine Besucher und keine Musik mehr
-- [ ] Farbvarianten (3–5 je Objekt, Pflanzen mit Blütenfarben): eingefärbt werden benannte Materialien
+- [x] Farbvarianten (3–5 je Objekt, Pflanzen mit Blütenfarben): eingefärbt werden benannte Materialien
       (auch bei eigenen Modellen); im Inventar ist jede Farbe ein eigener Eintrag; gespeichert, alte
       Spielstände laden weiter
-- [ ] Gestaltungsmodus und Shop mit großen Bild-Kacheln (Vorschaubild in der Farbe, Anzahl bzw. Preis
+- [x] Gestaltungsmodus und Shop mit großen Bild-Kacheln (Vorschaubild in der Farbe, Anzahl bzw. Preis
       klein in der Ecke, Name und Werte im Tooltip), Filter als Symbol-Knöpfe, Farbwahl vor dem Kauf
-- [ ] Möbel-Baukasten in Blender (Bilderbuch-Stil): Modell, .blend, Godot-Szene (Kollision,
+- [x] Möbel-Baukasten in Blender (Bilderbuch-Stil): Modell, .blend, Godot-Szene (Kollision,
       Ablageflächen, Fächer, Sitzplätze, Licht), Datenblatt und Vorlage aus einem Script
-- [ ] Dark Academia (etwa 23 Objekte)
-- [ ] Minimalistisch (etwa 22 Objekte)
-- [ ] Landhaus (etwa 23 Objekte)
-- [ ] Stilneutral (etwa 15 Objekte)
-- [ ] Theke und Rückgabe-Einwurf je Stil (Auswahl in der App „Fassade“)
+      (`tools/build_furniture.sh`)
+- [x] Dark Academia (26 Objekte)
+- [x] Minimalistisch (25 Objekte)
+- [x] Landhaus (26 Objekte)
+- [x] Stilneutral (17 Objekte)
+- [x] Theke und Rückgabe-Einwurf je Stil (Auswahl in der App „Fassade“): 4 Theken (Schlichte Holztheke,
+      Bibliothekstheke, Helle Theke, Landhaustheke) als Datenblätter in `data/counters/`, 3 neue Einwürfe
+      (Messingklappe, Schlichte Platte, Briefkasten mit Dach); alte Spielstände bekommen die passende Theke
 - [ ] Übersichts-Szene mit allen Objekten, Testbilder, Leistung in allen drei Grafikstufen
-- [ ] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE)
+- [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md)
+
+**Entscheidungen (selbst getroffen):**
+- Alte Platzhalter-Möbel wurden unter ihrer bisherigen id ersetzt (z. B. `armchair_velvet`,
+  `deco_shelf_light`, `plant_cactus`) – so bleiben Inventar und eingerichtete Räume in alten
+  Spielständen erhalten; Platzhalter-Szenen ohne Datenblatt sind gelöscht.
+- Die Stil-Anzeige oben im Gestaltungsmodus bleibt (Anteile der Stile im Raum), auch ohne
+  Auswirkung auf Besucher oder Musik.
+- Theken sind Datenblätter mit eigenem Modell (`data/counters/`) statt Farbeinträgen im Code;
+  alte Spielstände: „Schlichtes Holz“ → Schlichte Holztheke, „Dunkles Holz“ → Bibliothekstheke,
+  „Hell lackiert“ → Helle Theke.
+- Die drei schlichten Einwürfe von früher bleiben wählbar (stilneutral), dazu je Stil ein neuer.
+- Theken und Einwürfe haben keine Farbvarianten (je Stil ein festes Modell).
+- Eigene Modelle sind geschützt: eine ersetzte `.glb`, eine in Blender gespeicherte `.blend` und
+  von Godot gespeicherte Szenen/Datenblätter überschreibt das Bau-Script nie.
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

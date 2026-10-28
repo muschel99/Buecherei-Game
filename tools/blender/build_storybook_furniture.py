@@ -11,9 +11,9 @@ Ohne ids: alle Objekte (bzw. alle eines Stils). Je Objekt entstehen:
     scenes/furniture/<id>.tscn                    Szene: Modell, Kollision, Ablageflächen, Fächer, Sitz, Licht
     data/furniture/<id>.tres                      Datenblatt mit Preis, Stil und Farbvarianten
     assets/models/templates/furniture/<id>.glb    Vorlage in echter Größe
-Selbst bearbeitete Dateien bleiben: eine .blend, deren Fingerabdruck nicht mehr stimmt (dann wird
-das ganze Objekt übersprungen, außer mit --force), und Szenen/Datenblätter, die Godot gespeichert
-hat. --adopt überschreibt einmalig die alten Platzhalter-Datenblätter gleicher id.
+Selbst bearbeitete Dateien bleiben: eine .blend oder .glb, deren Fingerabdruck (.stamp/.glbstamp)
+nicht mehr stimmt (dann wird das ganze Objekt übersprungen, außer mit --force), und
+Szenen/Datenblätter, die Godot gespeichert hat. --adopt überschreibt einmalig die alten Platzhalter-Datenblätter gleicher id.
 Die Objekte selbst stehen in furniture_<stil>.py (je Objekt eine Beschreibung + Bau-Funktion).
 Theken und Einwürfe des Rückgabekastens je Stil: furniture_fixtures.py (kind="counter"/"return_slot",
 Modell + Datenblatt in data/counters/ bzw. data/return_slots/, keine eigene Szene).
@@ -53,11 +53,17 @@ def reset_scene():
 
 
 def build(spec, force=False, adopt=False):
-    source = F.dirs(spec)["source"]
-    blend = os.path.join(source, spec["id"] + ".blend")
-    stamp = os.path.join(source, spec["id"] + ".stamp")
+    folders = F.dirs(spec)
+    blend = os.path.join(folders["source"], spec["id"] + ".blend")
+    stamp = os.path.join(folders["source"], spec["id"] + ".stamp")
+    glb = os.path.join(folders["model"], spec["id"] + ".glb")
+    glb_stamp = os.path.join(folders["source"], spec["id"] + ".glbstamp")
     if not force and SC.edited_by_hand(blend, stamp):
         print("  %-26s .blend von Hand bearbeitet – übersprungen (--force baut trotzdem neu)" % spec["id"])
+        return 0
+    # Eigenes Modell unter demselben Namen eingesetzt (Fingerabdruck der .glb stimmt nicht mehr)
+    if not force and SC.edited_by_hand(glb, glb_stamp):
+        print("  %-26s .glb durch eigenes Modell ersetzt – übersprungen (--force baut trotzdem neu)" % spec["id"])
         return 0
     reset_scene()
     kit = F.Kit(spec)
@@ -66,6 +72,8 @@ def build(spec, force=False, adopt=False):
     tris = F.export(kit, force_data=adopt and spec.get("adopt", False))
     with open(stamp, "w") as f:
         f.write(SC.blend_fingerprint(blend))
+    with open(glb_stamp, "w") as f:
+        f.write(SC.blend_fingerprint(glb))
     return tris
 
 
