@@ -570,6 +570,107 @@ def build_tablet(k):
     case.blob(tilt @ Vector((0, -0.007, 0.183)), 0.003, subdiv=1, lump=0.0)
 
 
+# --- Innenseite des Rückgabekastens (seit Etappe 6b): Ursprung innen auf der Wand am Boden, Mitte;
+#     Vorderseite -y (in den Raum), Klappe in 0,95 m Höhe, immer geschlossen ---
+
+INSIDE_Z = 0.95
+INSIDE_W, INSIDE_H = 0.46, 0.56
+
+
+def inside_frame(k, slot, hatch_slot, depth=0.035, hatch_depth=0.022, bevel=0.006):
+    """Rahmen (vier Leisten, überlappend) und die Klappe darin."""
+    fr = k.part("Rahmen", slot, bevel=bevel)
+    w, h, bar = INSIDE_W, INSIDE_H, 0.05
+    for zz in (INSIDE_Z - h / 2 + bar / 2, INSIDE_Z + h / 2 - bar / 2):
+        fr.box((0, -depth / 2, zz), (w, depth, bar), step=0.3, dent=0.0006)
+    for xx in (-w / 2 + bar / 2, w / 2 - bar / 2):
+        fr.box((xx, -depth / 2, INSIDE_Z), (bar, depth, h - bar * 1.6), step=0.3, dent=0.0006)
+    ha = k.part("Klappe", hatch_slot, bevel=bevel * 0.8)
+    ha.box((0, -hatch_depth / 2 - 0.004, INSIDE_Z), (w - 2 * bar + 0.012, hatch_depth, h - 2 * bar + 0.012), step=0.3, dent=0.0005)
+    return fr, ha
+
+
+def inside_hinges(k, slot, x=-INSIDE_W / 2 + 0.06):
+    hi = k.part("Scharniere", slot, bevel=0.0)
+    for zz in (INSIDE_Z - 0.16, INSIDE_Z + 0.16):
+        hi.tube([(x, -0.03, zz - 0.035), (x, -0.03, zz + 0.035)], 0.007, segs=8, round_ends=True)
+
+
+def build_inside_neutral(k):
+    FN.wood(k, FN.OAK_MID)
+    k.mat("hatch", (0.93, 0.89, 0.8), grain="paint", rough=0.72, vary=0.05, bump=0.08)
+    FD.brass(k)
+    k.mat("letters", (0.3, 0.24, 0.18), grain="smooth", rough=0.6, vary=0.02)
+    inside_frame(k, "wood", "hatch")
+    hw = k.part("Griff", "brass", bevel=0.0)
+    F.bar_handle(hw, (0, -0.026, INSIDE_Z + 0.17), 0.12, r=0.006, depth=0.026)
+    inside_hinges(k, "brass")
+    plate = k.part("Schild", "brass", bevel=0.002)
+    plate.box((0, -0.03, INSIDE_Z - 0.08), (0.16, 0.006, 0.045), step=0.5, dent=0.0)
+    k.part("Schrift", "letters", bevel=0.0, settle=False).text("Rückgabe", 0.022, 0.002,
+                                                                Matrix.Translation((0, -0.033, INSIDE_Z - 0.087)) @ UP, font="DejaVuSerif.ttf", resolution=4)
+
+
+def build_inside_dark_academia(k):
+    FD.wood(k)
+    FD.brass(k)
+    k.mat("letters", (0.2, 0.13, 0.08), grain="smooth", rough=0.5, vary=0.02)
+    fr, ha = inside_frame(k, "wood", "wood", depth=0.04)
+    mold = k.part("Profil", "wood", bevel=0.0)
+    hw, hh = INSIDE_W / 2 - 0.1, INSIDE_H / 2 - 0.1
+    pts = [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh), (-hw, -hh)]
+    mold.tube([(x, -0.03, INSIDE_Z + z) for x, z in pts], 0.006, segs=6)
+    hw2 = k.part("Beschläge", "brass", bevel=0.0)
+    F.bar_handle(hw2, (0, -0.03, INSIDE_Z + 0.15), 0.1, r=0.006, depth=0.026)
+    inside_hinges(k, "brass")
+    hw2.box((0, -0.033, INSIDE_Z - 0.06), (0.2, 0.006, 0.05), step=0.5, dent=0.0)
+    for sx in (-0.09, 0.09):
+        hw2.blob((sx, -0.037, INSIDE_Z - 0.06), 0.004, subdiv=1, lump=0.0, scale=(1, 0.5, 1))
+    k.part("Schrift", "letters", bevel=0.0, settle=False).text("RÜCKGABE", 0.026, 0.002,
+                                                                Matrix.Translation((0, -0.036, INSIDE_Z - 0.069)) @ UP, font="DejaVuSerif.ttf",
+                                                                spacing=1.2, resolution=4)
+
+
+def build_inside_minimalist(k):
+    k.mat("white", FM.WHITE, grain="paint", rough=0.6, vary=0.03, bump=0.04)
+    FM.wood(k)
+    k.mat("letters", FM.CHARCOAL, grain="smooth", rough=0.6, vary=0.02)
+    inside_frame(k, "white", "white", depth=0.025, hatch_depth=0.02, bevel=0.008)
+    tab = k.part("Griffleiste", "wood", bevel=0.003)
+    tab.box((0, -0.03, INSIDE_Z + INSIDE_H / 2 - 0.07), (0.14, 0.024, 0.014), step=0.5, dent=0.0002)
+    k.part("Schrift", "letters", bevel=0.0, settle=False).text("Rückgabe", 0.024, 0.002,
+                                                                Matrix.Translation((0, -0.022, INSIDE_Z - 0.03)) @ UP, font="DejaVuSans.ttf",
+                                                                spacing=1.2, resolution=4)
+
+
+def build_inside_country(k):
+    FC.paint(k, FC.POWDER)
+    FC.paint(k, FC.CREAM, slot="cream")
+    k.mat("porcelain", (0.95, 0.93, 0.88), grain="smooth", rough=0.35, vary=0.03)
+    k.mat("heart", (0.78, 0.3, 0.32), grain="paint", rough=0.7, vary=0.05)
+    k.mat("bloom", FC.ROSE, grain="paint", rough=0.7, vary=0.06)
+    k.mat("leafpaint", (0.45, 0.58, 0.4), grain="paint", rough=0.7, vary=0.06)
+    k.mat("letters", (0.22, 0.3, 0.46), grain="paint", rough=0.6, vary=0.03)
+    rnd = random.Random(k.seed)
+    inside_frame(k, "paint", "cream", depth=0.04)
+    F.knob(k.part("Knauf", "porcelain", bevel=0.0), (0.12, -0.026, INSIDE_Z), r=0.014)
+    inside_hinges(k, "porcelain")
+    heart = k.part("Herz", "heart", bevel=0.0, settle=False)
+    for sx in (-0.012, 0.012):
+        heart.blob((sx, -0.027, INSIDE_Z + 0.09), 0.016, subdiv=1, lump=0.0, scale=(1, 0.3, 1))
+    heart.blob((0, -0.027, INSIDE_Z + 0.075), 0.017, subdiv=1, lump=0.0, scale=(0.9, 0.3, 1.1))
+    fl = k.part("Blüten", "bloom", bevel=0.0, settle=False)
+    lv = k.part("Blätter", "leafpaint", bevel=0.0, settle=False)
+    for x in (-0.09, 0.0, 0.09):
+        fl.star((x, -0.027, INSIDE_Z - 0.14), (0, -1, 0), 0.02, 5, rnd, thick=0.002, cup=0.0)
+        for side in (-1, 1):
+            lv.leaf((x + side * 0.008, -0.0265, INSIDE_Z - 0.146), Vector((side, 0, -0.4)).normalized(), Vector((0, -1, 0)), 0.02, 0.009,
+                    shape="oval", thick=0.0018, curl=0.0, segs=5)
+    k.part("Schrift", "letters", bevel=0.0, settle=False).text("Bücher", 0.03, 0.002,
+                                                                Matrix.Translation((0, -0.026, INSIDE_Z - 0.05)) @ UP, font="DejaVuSerif-Italic.ttf",
+                                                                resolution=4)
+
+
 ITEMS = [
     dict(id="counter_classic", kind="counter", name="Schlichte Holztheke", order=10, legacy=["wood_warm"], settle=0.35,
          desc="Eine ehrliche Theke aus Eiche mit drei Feldern vorn – passt zu allem.",
@@ -583,12 +684,18 @@ ITEMS = [
     dict(id="counter_country", kind="counter", name="Landhaustheke", order=40, settle=0.35,
          desc="Salbeigrün gestrichen, Kiefernplatte, gemalte Blumenranke und ein Karovorhang hinten.",
          styles=["country"], build=build_counter_country),
-    dict(id="slot_dark_academia", kind="return_slot", name="Messingklappe", order=40, settle=0.3,
+    dict(id="slot_dark_academia", kind="return_slot", inside="inside_dark_academia", name="Messingklappe", order=40, settle=0.3,
          desc="", styles=["dark_academia"], build=build_slot_dark_academia),
-    dict(id="slot_minimalist", kind="return_slot", name="Schlichte Platte", order=50, settle=0.3,
+    dict(id="slot_minimalist", kind="return_slot", inside="inside_minimalist", name="Schlichte Platte", order=50, settle=0.3,
          desc="", styles=["minimalist"], build=build_slot_minimalist),
-    dict(id="slot_country", kind="return_slot", name="Briefkasten mit Dach", order=60, settle=0.3,
+    dict(id="slot_country", kind="return_slot", inside="inside_country", name="Briefkasten mit Dach", order=60, settle=0.3,
          desc="", styles=["country"], build=build_slot_country),
     dict(id="cash_register", kind="part", name="Kasse", settle=0.3, styles=[], build=build_cash_register),
     dict(id="tablet", kind="part", name="Theken-Tablet", settle=0.2, styles=[], build=build_tablet),
+    dict(id="inside_neutral", kind="slot_inside", name="Innenklappe neutral", settle=0.2, styles=[], build=build_inside_neutral),
+    dict(id="inside_dark_academia", kind="slot_inside", name="Innenklappe Dark Academia", settle=0.2, styles=[],
+         build=build_inside_dark_academia),
+    dict(id="inside_minimalist", kind="slot_inside", name="Innenklappe Minimalistisch", settle=0.2, styles=[],
+         build=build_inside_minimalist),
+    dict(id="inside_country", kind="slot_inside", name="Innenklappe Landhaus", settle=0.2, styles=[], build=build_inside_country),
 ]

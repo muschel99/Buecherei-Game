@@ -8,3 +8,4 @@ id = "slot_plain"
 display_name = "Schlichter Schlitz"
 scene_path = "res://scenes/objects/return_slots/slot_plain.tscn"
 order = 10
+inside_path = "res://assets/models/objects/return_slots/inside_neutral.glb"

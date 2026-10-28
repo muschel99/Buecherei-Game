@@ -1,0 +1,103 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://d15xqqtbh4jp8"
+path="res://.godot/imported/core.glb-eecf1b1bd6ff09d3559ca2eedd8ffd8f.scn"
+
+[deps]
+
+source_file="res://assets/models/facade/core.glb"
+dest_files=["res://.godot/imported/core.glb-eecf1b1bd6ff09d3559ca2eedd8ffd8f.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"Backstein Ziegelrot": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/backstein_ziegelrot.tres",
+"use_external/path": "res://assets/materials/storybook/backstein_ziegelrot.tres"
+},
+"Dachrinne Bronze": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/dachrinne_bronze.tres",
+"use_external/path": "res://assets/materials/storybook/dachrinne_bronze.tres"
+},
+"Dachziegel Bücherei": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/dachziegel_buecherei.tres",
+"use_external/path": "res://assets/materials/storybook/dachziegel_buecherei.tres"
+},
+"Dachziegel Bücherei First": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/dachziegel_buecherei_first.tres",
+"use_external/path": "res://assets/materials/storybook/dachziegel_buecherei_first.tres"
+},
+"Laterne Eisen dunkelbraun": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/laterne_eisen_dunkelbraun.tres",
+"use_external/path": "res://assets/materials/storybook/laterne_eisen_dunkelbraun.tres"
+},
+"Laternenglas leuchtend": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/laternenglas_leuchtend.tres",
+"use_external/path": "res://assets/materials/storybook/laternenglas_leuchtend.tres"
+},
+"Sandstein": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sandstein.tres",
+"use_external/path": "res://assets/materials/storybook/sandstein.tres"
+},
+"Stuck Gebrochenweiß": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/stuck_gebrochenweiss.tres",
+"use_external/path": "res://assets/materials/storybook/stuck_gebrochenweiss.tres"
+},
+"Terrakotta": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/terrakotta.tres",
+"use_external/path": "res://assets/materials/storybook/terrakotta.tres"
+},
+"Zimmer warm 1": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/zimmer_warm_1.tres",
+"use_external/path": "res://assets/materials/storybook/zimmer_warm_1.tres"
+},
+"facade_upper_wall": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/facade_upper_wall.tres",
+"use_external/path": "res://assets/materials/storybook/facade_upper_wall.tres"
+}
+}
+}
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=0

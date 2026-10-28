@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FacadeOption" format=3]
+
+; Erzeugt von tools/blender/facade_options.py – im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/facade_option.gd" id="1_data"]
+[ext_resource type="Material" path="res://assets/materials/facade/facade_wall_roughcast.tres" id="2_mat"]
+
+[resource]
+script = ExtResource("1_data")
+id = "roughcast"
+display_name = "Rauputz"
+category = "upper"
+order = 50
+price = 120
+material = ExtResource("2_mat")
+swatch = Color(0.860, 0.820, 0.740, 1)

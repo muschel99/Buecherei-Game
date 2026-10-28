@@ -586,6 +586,9 @@ var counter_default_style: String = "counter_classic"
 
 ## So viele Bücher passen in den Rückgabekasten. Ist er voll, nimmt er nichts mehr an.
 var return_box_capacity: int = 50
+## So weit vor der Wand sitzt der Einwurf auf der Montageplatte der Fassade (Meter; muss zu
+## SLOT_OUT in tools/blender/build_storybook_facade.py passen).
+var facade_slot_out: float = 0.07
 ## Einwurf-Variante zum Start (id aus data/return_slots/).
 var return_box_default_slot: String = "slot_plain"
 

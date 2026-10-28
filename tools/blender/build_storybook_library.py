@@ -14,6 +14,10 @@ Aufruf (Terminal, im Projektordner):
     blender -b --factory-startup --python tools/blender/build_storybook_library.py [-- --render [--quick]] [--force]
 Ergebnis: assets/models/world/library_facade.glb (Knoten "Facade" im Raum, Raumkoordinaten:
 Ladenboden y = 0, Gehweg 0,5 m tiefer) und assets/models/source/library_storybook.blend.
+
+Seit Etappe 6b nutzt das Spiel diese Gesamt-Fassade nicht mehr: Die Fassade ist ein Baukasten
+(tools/blender/build_storybook_facade.py, Teile in assets/models/facade/), der die Bausteine dieses
+Scripts verwendet. Ein Aufruf hier baut nur noch das alte Gesamtmodell zum Vergleich.
 """
 
 import math
@@ -61,8 +65,8 @@ def mats(M):
     M["h_join"] = mk("Lack Creme", (0.9, 0.86, 0.76), grain="paint", rough=0.72, vary=0.06, bump=0.12)
     M["h_join_dark"] = M["green_dark"]
     M["h_box"] = M["green"]
-    M["h_roof"] = mk("Dachziegel Ton", (0.75, 0.42, 0.28), grain="stone", rough=0.9, vary=0.08, bump=0.2)
-    M["h_roof_cap"] = mk("Dachziegel Ton First", (0.65, 0.36, 0.25), grain="stone", rough=0.9, vary=0.06, bump=0.2)
+    M["h_roof"] = mk("Dachziegel Bücherei", (0.75, 0.42, 0.28), grain="stone", rough=0.9, vary=0.08, bump=0.2)
+    M["h_roof_cap"] = mk("Dachziegel Bücherei First", (0.65, 0.36, 0.25), grain="stone", rough=0.9, vary=0.06, bump=0.2)
     M["h_room"] = mk("Zimmer warm 1", SH.ROOMS[0], glow=0.3, rough=0.95, vary=0.05, bump=0.05)
 
 

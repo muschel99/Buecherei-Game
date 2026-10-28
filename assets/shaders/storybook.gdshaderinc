@@ -9,7 +9,7 @@ uniform vec4 base_color : source_color = vec4(0.9, 0.85, 0.75, 1.0);
 // Zweite Farbe: Streifen (Markise) bzw. Fugen der Ziegel
 uniform vec4 second_color : source_color = vec4(0.75, 0.35, 0.27, 1.0);
 // 0 Putz, 1 Stein, 2 Holz, 3 Ziegel, 4 Gewebe, 5 Blatt, 6 glatt, 7 Lack (gestrichenes Holz),
-// 8 Quader (große, runde Steinblöcke)
+// 8 Quader (große, runde Steinblöcke), 9 Bretter (waagerechte Holzverschalung, seit Etappe 6b)
 uniform int grain = 0;
 // Breite der Streifen in m (0 = keine)
 uniform float stripe_width = 0.0;
@@ -143,6 +143,16 @@ float masonry_d(vec3 p, out vec2 id, out vec2 edges) {
 	return min(edges.x, edges.y);
 }
 
+// Holzverschalung: Höhe eines Bretts (m) und Lage im Brett (0 unten … 1 oben); id = Brett (Reihe, Stück)
+const float BOARD_H = 0.15;
+const float BOARD_L = 2.2;
+float board_f(vec3 p, out vec2 id) {
+	float row = floor(p.y / BOARD_H);
+	float along = p.x - p.z + hash(vec3(row, 4.1, 8.3)) * BOARD_L;
+	id = vec2(floor(along / BOARD_L), row);
+	return fract(p.y / BOARD_H);
+}
+
 // Höhe des feinen Reliefs (0 … 1) an der Stelle p; px = Größe eines Bildpunkts (m)
 // Musterfläche: die zwei Achsen quer zur Hauptrichtung der Fläche (wie aufgedruckt)
 vec2 pattern_uv(vec3 p, vec3 n) {
@@ -223,6 +233,11 @@ float surface_height(vec3 p, float px) {
 		return fbm(p * 25.0, 2) * detail_fade(px, 25.0);
 	} else if (grain == 7) {
 		return fbm(p * 6.0, 3) * 0.7 + fbm(p * 30.0, 2) * 0.3 * detail_fade(px, 30.0);
+	} else if (grain == 9) {
+		// jedes Brett unten dicker (liegt über dem nächsten), die Kante weich gerundet
+		vec2 id;
+		float f = board_f(p, id);
+		return (1.0 - f * 0.85) * smoothstep(0.0, 0.06, f) * detail_fade(px, 1.0 / BOARD_H);
 	}
 	return 0.0;
 }
@@ -285,6 +300,15 @@ void fragment() {
 		float soft = fbm(vec3((p.x - p.z) * 9.0, p.y * 1.2, 0.0), 2);
 		float tone = mix(streak, soft, 0.5);
 		col *= mix(0.92, 1.05, smoothstep(0.2, 0.8, tone));
+	} else if (grain == 9) {
+		// Bretter: jedes in eigenem Ton, unter jeder Kante ein weicher Schatten; ruhige Maserung längs
+		vec2 id;
+		float f = board_f(p, id);
+		float fade = detail_fade(px, 1.0 / BOARD_H);
+		float tone = mix(0.9, 1.06, hash(vec3(id, 2.0)));
+		float shade = mix(0.68, 1.0, smoothstep(0.0, 0.22, f));
+		float streak = fbm(vec3((p.x - p.z) * 1.5, p.y * 22.0, id.x * 3.1), 2);
+		col *= mix(0.97, tone * shade * mix(0.94, 1.05, streak), fade);
 	} else if (grain == 1) {
 		// Stein: weich unregelmäßig, leichte Farbwolken, keine Risslinien
 		col *= mix(0.95, 1.04, fbm(p * 3.0 + vec3(5.0), 2));

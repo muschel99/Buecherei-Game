@@ -8,3 +8,4 @@ id = "slot_flap"
 display_name = "Klappe"
 scene_path = "res://scenes/objects/return_slots/slot_flap.tscn"
 order = 20
+inside_path = "res://assets/models/objects/return_slots/inside_dark_academia.glb"

@@ -28,6 +28,9 @@ const LEGACY_FURNITURE_ID := "return_box"
 const LEGACY_PRICE := 90
 ## Knoten im Raum mit den möglichen Orten (Marker3D, Name = Kennung des Orts)
 const SPOTS_NODE := "ReturnBoxSpots"
+## Schlichte Innenklappe (seit Etappe 6b): wenn innen „neutral“ gewählt ist oder der Einwurf kein
+## eigenes Gegenstück hat.
+const NEUTRAL_INSIDE := "res://assets/models/objects/return_slots/inside_neutral.glb"
 const DEFAULT_SPOT := "BesideDoor"
 
 var save_key := "return_box"
@@ -40,6 +43,8 @@ var spot_id: String = DEFAULT_SPOT
 var _interactable: Interactable
 var _slot_point: Node3D
 var _slot_model: Node3D
+var _inside_model: Node3D
+var _inside_path := ""
 var _is_aimed := false
 
 
@@ -55,6 +60,7 @@ func _ready() -> void:
 		_interactable.aim_ended.connect(_on_aim_ended)
 	move_to_spot(spot_id)
 	set_slot(GameConfig.return_box_default_slot, false)
+	FacadeDesign.changed.connect(_update_inside)
 	_update()
 
 
@@ -176,8 +182,36 @@ func set_slot(id: String, notify: bool = true) -> void:
 	slot_id = data.get_id()
 	if _slot_model == null or changed_id:
 		_build_slot_model(data)
+	_update_inside()
 	if changed_id and notify:
 		_changed()
+
+
+## Innen: das passende Gegenstück zum Einwurf (oder die neutrale Klappe, FacadeDesign "slot_inside").
+## Pfad des Modells für eine Wahl – auch für die Vorschau in der App „Fassade“.
+static func inside_path_for(slot: ReturnSlotData, inside_mode: String) -> String:
+	if inside_mode == "match" and slot and not slot.inside_path.is_empty() and ResourceLoader.exists(slot.inside_path):
+		return slot.inside_path
+	return NEUTRAL_INSIDE
+
+
+func _update_inside() -> void:
+	var inside := get_node_or_null("Inside") as Node3D
+	var path := inside_path_for(get_slot(), str(FacadeDesign.config.get("slot_inside", "match")))
+	if inside == null or path == _inside_path or not ResourceLoader.exists(path):
+		return
+	_inside_path = path
+	if _inside_model:
+		inside.remove_child(_inside_model)
+		_inside_model.queue_free()
+	# Die einfache Klappe der Szene weicht dem Modell (innen auf der Wand: 10 cm vor der Mitte)
+	for child in inside.get_children():
+		if child is VisualInstance3D:
+			(child as VisualInstance3D).visible = false
+	_inside_model = (load(path) as PackedScene).instantiate() as Node3D
+	_inside_model.name = "InsideModel"
+	_inside_model.position = Vector3(0.0, 0.0, 0.1)
+	inside.add_child(_inside_model)
 
 
 ## Setzt den Kasten an einen Ort (Marker unter ReturnBoxSpots im Raum). Unbekannt = bleibt.
@@ -202,6 +236,8 @@ func _build_slot_model(data: ReturnSlotData) -> void:
 	_slot_model = packed.instantiate() as Node3D if packed else null
 	if _slot_model:
 		_slot_model.name = "SlotModel"
+		# Auf der Montageplatte der Fassade, ein Stück vor der Wand (seit Etappe 6b)
+		_slot_model.position = Vector3(0.0, 0.0, GameConfig.facade_slot_out)
 		_slot_point.add_child(_slot_model)
 
 

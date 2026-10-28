@@ -20,6 +20,9 @@ extends Resource
 ## Modell des Einwurfs (.tscn oder .glb): Vorderseite zeigt nach +Z (zur Straße),
 ## Ursprung hinten auf der Hauswand, in der Mitte des Schlitzes; etwa 40 x 35 cm.
 @export_file("*.tscn", "*.glb") var scene_path: String = ""
+## Das passende Gegenstück innen am Rückgabekasten (seit Etappe 6b; Ursprung innen auf der Wand am
+## Boden, Vorderseite +Z in den Raum, Klappe in 0,95 m Höhe). Leer = die neutrale Innenklappe.
+@export_file("*.glb", "*.tscn") var inside_path: String = ""
 ## Eigenes Vorschaubild für die App (leer = das Modell wird fotografiert).
 @export var icon: Texture2D
 ## Reihenfolge in der App (kleiner = weiter vorn).

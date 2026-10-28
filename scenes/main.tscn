@@ -15,7 +15,7 @@
 ; Strg+D verdoppeln; Passanten setzen sich von selbst darauf (wie auf die Stühle vor dem Pub).
 ; "EntranceSteps" (Podest mit Stufen vor der Tür) liegt auf Höhe des Ladenbodens.
 ; Über dem Laden: "UpperFloors" legt die Geschoss-Knoten an (Floor1 …, Anzahl und Höhe in GameConfig);
-; Hülle, Dach und Sockel zeigt seit dem Stil-Umbau das Fassaden-Modell im Raum (library_facade.glb).
+; Hülle, Dach und Sockel zeigt seit dem Stil-Umbau die Fassade im Raum (seit Etappe 6b ein Baukasten: LibraryFacade).
 
 [ext_resource type="PackedScene" path="res://scenes/rooms/ground_floor_room.tscn" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]

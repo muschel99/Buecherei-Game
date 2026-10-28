@@ -28,6 +28,7 @@ Wallet="*res://scripts/autoload/wallet.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
 BookStock="*res://scripts/autoload/book_stock.gd"
 CounterStyle="*res://scripts/autoload/counter_style.gd"
+FacadeDesign="*res://scripts/autoload/facade_design.gd"
 DebugKeys="*res://scripts/autoload/debug_keys.gd"
 
 [display]

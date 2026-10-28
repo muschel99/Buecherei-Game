@@ -12,3 +12,4 @@ display_name = "Schlichte Platte"
 style_ids = Array[String](["minimalist"])
 scene_path = "res://assets/models/objects/return_slots/slot_minimalist.glb"
 order = 50
+inside_path = "res://assets/models/objects/return_slots/inside_minimalist.glb"

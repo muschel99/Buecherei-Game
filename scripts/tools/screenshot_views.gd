@@ -11,11 +11,13 @@ extends RefCounted
 
 static func all_sets() -> PackedStringArray:
 	return PackedStringArray(["overview", "straight_end", "turning_end", "corners", "shop", "street_life", "details", "fashion", "pub", "shops",
-		"catalog", "catalog_items"])
+		"catalog", "catalog_items", "facade"])
 
 
 static func get_set(set_name: String) -> Dictionary:
 	match set_name:
+		"facade":
+			return facade()
 		"overview":
 			return overview()
 		"straight_end":
@@ -55,6 +57,24 @@ static func eye() -> float:
 static func look(x: float, z: float, dx: float, dz: float, pitch: float = 0.0) -> Dictionary:
 	var y := eye()
 	return {"pos": Vector3(x, y, z), "target": Vector3(x + dx * 10.0, y + pitch * 10.0, z + dz * 10.0)}
+
+
+## Die Fassade der Bücherei (seit Etappe 6b): die Schräge mit Tür und Briefkasten, das ganze Haus von
+## gegenüber, die Front, die oberen Fenster und der Briefkasten aus der Nähe.
+static func facade() -> Dictionary:
+	var door := StreetLayout.door_center()
+	var out := Vector3(-1.0, 0.0, -1.0).normalized()   # aus der Schräge nach draußen
+	var along := Vector3(-1.0, 0.0, 1.0).normalized()   # entlang der Schräge (zur Gasse)
+	var slot := door + along * 1.058 + Vector3(0.0, 1.0, 0.0)
+	return {
+		"diagonal": {"pos": door + out * 6.5 + Vector3(0, 1.5, 0), "target": door + Vector3(0, 1.8, 0)},
+		"wide": {"pos": door + out * 14.0 + Vector3(0, 3.0, 0), "target": door + Vector3(0, 3.3, 0)},
+		"front": {"pos": Vector3(1.0, 2.4, -13.5), "target": Vector3(1.0, 3.0, -4.2)},
+		"upper": {"pos": door + out * 4.5 + Vector3(0, 3.6, 0), "target": door + Vector3(0, 4.9, 0) + along * 0.4},
+		"slot": {"pos": slot + out * 1.25 + Vector3(0, 0.12, 0) - along * 0.25, "target": slot + out * 0.05, "fov": 45.0},
+		# Gegenstück innen am Rückgabekasten (aus dem Laden)
+		"slot_inside": {"pos": slot - out * 1.7 + Vector3(0, 0.25, 0) + along * 0.35, "target": slot - out * 0.2 - Vector3(0, 0.05, 0), "fov": 50.0},
+	}
 
 
 ## Die Straße im Ganzen: von der Bücherei aus in beide Richtungen, die Bücherei von

@@ -15,12 +15,14 @@ const SURFACE_FOLDER := "res://data/surfaces/"
 const GENRE_FOLDER := "res://data/genres/"
 const RETURN_SLOT_FOLDER := "res://data/return_slots/"
 const COUNTER_FOLDER := "res://data/counters/"
+const FACADE_FOLDER := "res://data/facade/"
 
 var _furniture: Dictionary = {}  # id -> FurnitureData
 var _surfaces: Dictionary = {}  # id -> SurfaceData
 var _genres: Dictionary = {}  # id -> GenreData
 var _return_slots: Dictionary = {}  # id -> ReturnSlotData (Einwurf-Varianten des Rückgabekastens)
 var _counters: Dictionary = {}  # id -> CounterData (Theken-Varianten)
+var _facade: Dictionary = {}  # Kategorie -> {id -> FacadeOption} (Fassade der Bücherei)
 var _books: Dictionary = {}  # id -> BookData
 var _books_by_genre: Dictionary = {}  # genre_id -> Array[BookData] (Reihenfolge wie in der Liste)
 
@@ -41,6 +43,11 @@ func _ready() -> void:
 	for resource in _load_folder(COUNTER_FOLDER):
 		if resource is CounterData:
 			_register(_counters, resource.get_id(), resource)
+	for resource in _load_folder(FACADE_FOLDER):
+		if resource is FacadeOption:
+			if not _facade.has(resource.category):
+				_facade[resource.category] = {}
+			_register(_facade[resource.category], resource.id, resource)
 	for genre in get_all_genres():
 		_load_books(genre)
 	print("Katalog geladen: %d Möbel, %d Oberflächen, %d Genres, %d Bücher" % [_furniture.size(),
@@ -104,6 +111,22 @@ func get_all_counters() -> Array[CounterData]:
 	var result: Array[CounterData] = []
 	result.assign(_counters.values())
 	result.sort_custom(func(a: CounterData, b: CounterData) -> bool:
+		if a.order != b.order:
+			return a.order < b.order
+		return a.display_name < b.display_name)
+	return result
+
+
+## Eine Wahl für die Fassade (Kategorie, z. B. "ground", und id) – oder null.
+func get_facade_option(category: String, id: String) -> FacadeOption:
+	return (_facade.get(category, {}) as Dictionary).get(id)
+
+
+## Alle Optionen einer Fassaden-Kategorie, sortiert nach "Order" und Name.
+func get_facade_options(category: String) -> Array[FacadeOption]:
+	var result: Array[FacadeOption] = []
+	result.assign((_facade.get(category, {}) as Dictionary).values())
+	result.sort_custom(func(a: FacadeOption, b: FacadeOption) -> bool:
 		if a.order != b.order:
 			return a.order < b.order
 		return a.display_name < b.display_name)

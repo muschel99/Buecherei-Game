@@ -54,6 +54,9 @@ KINDS = {
                         mat="assets/materials/objects", template="assets/models/templates/objects", data="data/return_slots"),
     "part": dict(model="assets/models/furniture", source="assets/models/source/furniture",
                  mat="assets/materials/furniture", template="assets/models/templates/furniture"),
+    # Innenseite des Rückgabekastens (seit Etappe 6b): nur Modell, neben den Einwürfen
+    "slot_inside": dict(model="assets/models/objects/return_slots", source="assets/models/source/objects",
+                        mat="assets/materials/objects", template="assets/models/templates/objects"),
 }
 
 
@@ -1057,6 +1060,8 @@ def write_option_data(kit, glb, force=False):
     ]
     if spec.get("legacy"):
         lines.append("legacy_ids = PackedStringArray(%s)" % ", ".join('"%s"' % s for s in spec["legacy"]))
+    if spec.get("inside"):
+        lines.append('inside_path = "res://assets/models/objects/return_slots/%s.glb"' % spec["inside"])
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
@@ -1087,7 +1092,7 @@ def export(kit, force_data=False, render=False):
     names = list(dict.fromkeys(SC.LAST_EXPORT_MATERIALS + [o.data.materials[0].name for o in flames if o.data.materials]))
     mapping = write_materials(kit, names)
     write_import(glb, mapping)
-    if kit.spec.get("kind") == "part":
+    if kit.spec.get("kind") in ("part", "slot_inside"):
         pass  # nur Modell: die Szene gibt es schon
     elif "data" in kit.dirs:
         write_option_data(kit, glb, force=force_data)

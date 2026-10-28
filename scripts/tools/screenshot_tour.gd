@@ -29,6 +29,7 @@ extends Node
 ##   --ui=build|shop    Gestaltungsmodus bzw. Theken-Tablet mit „Nest & Nook“ öffnen (seit Etappe 6,
 ##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0);
 ##   --ui=app:<id>      Theken-Tablet mit einer anderen App öffnen, z. B. app:facade
+##   --facade=k:v,k:v   Fassade vorher so bauen (FacadeDesign, z. B. ground:stone_grey,window:bay)
 ##   --ui=launch:<id>   App mit der Öffnen-Animation starten; --seconds=<s> = Bild nach so vielen
 ##                      Sekunden (z. B. 0.15 = Kachel wächst, 0.8 = Begrüßung)
 ##   --ui=build_filter  Gestaltungsmodus mit offenem Filter; --ui=build_hold: erstes Möbel der
@@ -91,6 +92,14 @@ func _run() -> void:
 	await _prepare_street_life()
 	if _args.has("give"):
 		_give_everything()
+	if _args.has("facade"):
+		var wish := FacadeDesign.config.duplicate()
+		for pair in String(_args.facade).split(",", false):
+			var kv := pair.split(":")
+			if kv.size() == 2:
+				wish[kv[0]] = kv[1]
+		FacadeDesign.apply(wish)
+		await _wait_frames(10)
 	if _args.has("ui"):
 		await _open_ui(String(_args.ui), int(_args.get("tab", 0)))
 	var out_dir := String(_args.get("out", ProjectSettings.globalize_path("res://screenshots")))

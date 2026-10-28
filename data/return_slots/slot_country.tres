@@ -12,3 +12,4 @@ display_name = "Briefkasten mit Dach"
 style_ids = Array[String](["country"])
 scene_path = "res://assets/models/objects/return_slots/slot_country.glb"
 order = 60
+inside_path = "res://assets/models/objects/return_slots/inside_country.glb"

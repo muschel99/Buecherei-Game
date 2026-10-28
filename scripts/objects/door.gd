@@ -91,6 +91,34 @@ func is_leaf(collider: Object) -> bool:
 	return collider == _leaf
 
 
+## Türblatt aus der Fassade (seit Etappe 6b, LibraryFacade): ein eigenes Modell statt des einfachen
+## Blatts (Scharnier-Koordinaten: Drehachse bei x = 0, Blatt nach -x, draußen -z), Fläche
+## „facade_door“ in der Türfarbe. Die Kollision (DoorLeaf) bleibt – nur ihre Optik wird ausgeblendet.
+## Leerer Pfad = das einfache Blatt der Szene.
+func set_leaf(path: String, color: Color) -> void:
+	var hinge := get_node("Hinge") as Node3D
+	var old := hinge.get_node_or_null("LeafModel")
+	if old:
+		hinge.remove_child(old)
+		old.queue_free()
+	var builtin := path.is_empty() or not ResourceLoader.exists(path)
+	for part in ["DoorLeaf", "LeafGlass", "LeafMuntinV", "LeafMuntinH", "Knob", "KnobOutside"]:
+		var node := hinge.get_node_or_null(part) as Node3D
+		if node:
+			node.visible = builtin
+	if builtin:
+		return
+	var model := (load(path) as PackedScene).instantiate() as Node3D
+	model.name = "LeafModel"
+	hinge.add_child(model)
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := node as MeshInstance3D
+		for i in mesh_instance.mesh.get_surface_count():
+			var material := mesh_instance.mesh.surface_get_material(i)
+			if material and material.resource_name == "facade_door":
+				mesh_instance.set_surface_override_material(i, FurnitureUtils.tinted_material(material, color))
+
+
 func _update_prompt() -> void:
 	_interactable.prompt_text = "Schließen" if is_open else "Öffnen"
 

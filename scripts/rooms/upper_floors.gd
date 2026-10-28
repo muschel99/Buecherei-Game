@@ -53,8 +53,8 @@ extends Node3D
 @export var plinth_sides := PackedStringArray(["diagonal", "front", "left", "back"])
 @export var plinth_material: Material = preload("res://assets/materials/plinth_stone.tres")
 
-## Seit dem Stil-Umbau (Etappe 4h) zeigt das Modell der Bücherei-Fassade (assets/models/world/
-## library_facade.glb, Knoten "Facade" im Raum) auch Obergeschosse, Dach und Sockel im Bilderbuch-
+## Seit dem Stil-Umbau (Etappe 4h) zeigt die Bücherei-Fassade (Knoten "Facade" im Raum, seit
+## Etappe 6b der Baukasten LibraryFacade aus assets/models/facade/) auch Obergeschosse, Dach und Sockel im Bilderbuch-
 ## Stil. Dann baut UpperFloors nur noch die leeren Geschoss-Knoten (Floor1 …, zum späteren
 ## Freischalten), aber keine eigenen Wände, Fenster, Dächer und Sockel.
 @export var build_visuals := true

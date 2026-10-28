@@ -30,7 +30,7 @@
 [ext_resource type="PackedScene" path="res://scenes/objects/return_box.tscn" id="23_return_box"]
 [ext_resource type="PackedScene" path="res://scenes/objects/shop_window.tscn" id="24_window"]
 [ext_resource type="PackedScene" path="res://scenes/objects/shop_door.tscn" id="25_door"]
-[ext_resource type="PackedScene" path="res://assets/models/world/library_facade.glb" id="40_facade"]
+[ext_resource type="Script" path="res://scripts/world/library_facade.gd" id="40_facade"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_skirting_z8"]
 size = Vector3(0.02, 0.1, 8)
@@ -258,4 +258,5 @@ shape = SubResource("BoxShape3D_entrance")
 [node name="WindowDust" parent="." instance=ExtResource("14_dust")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 1.2, -3.5)
 
-[node name="Facade" parent="." instance=ExtResource("40_facade")]
+[node name="Facade" type="Node3D" parent="."]
+script = ExtResource("40_facade")
