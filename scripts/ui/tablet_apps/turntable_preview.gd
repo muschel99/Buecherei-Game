@@ -9,12 +9,12 @@ extends SubViewport
 const BACKGROUND := Color(0.84, 0.78, 0.69)
 const PLINTH_COLOR := Color(0.42, 0.3, 0.22)
 ## Innen: warmer Putz wie im Laden
-const INSIDE_PLASTER := Color(0.74, 0.65, 0.53)
+const INSIDE_PLASTER := Color(0.64, 0.58, 0.5)
 const FACADE_PAINT := "res://assets/materials/storybook/facade_paint.tres"
 ## Wandstück: Breite, Höhe (unten, oben) und Dicke wie die Hauswand am Rückgabekasten (m)
-const WALL_WIDTH := 0.72
-const WALL_BOTTOM := 0.45
-const WALL_TOP := 1.5
+const WALL_WIDTH := 1.1
+const WALL_BOTTOM := 0.5
+const WALL_TOP := 1.42
 const WALL_THICKNESS := 0.2
 ## Blickrichtung der Kamera (leicht von oben)
 const VIEW_DIRECTION := Vector3(0.0, 0.32, 1.0)
@@ -36,7 +36,7 @@ func _init() -> void:
 	environment.background_color = BACKGROUND
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.95, 0.88, 0.8)
-	environment.ambient_light_energy = 0.5
+	environment.ambient_light_energy = 0.35
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	var world_environment := WorldEnvironment.new()
 	world_environment.environment = environment
@@ -44,13 +44,13 @@ func _init() -> void:
 	# Warmes Hauptlicht mit Schatten von links oben, sanftes Gegenlicht
 	var key_light := DirectionalLight3D.new()
 	key_light.light_color = Color(1.0, 0.92, 0.8)
-	key_light.light_energy = 0.85
+	key_light.light_energy = 0.75
 	key_light.shadow_enabled = true
 	key_light.rotation_degrees = Vector3(-42.0, -35.0, 0.0)
 	add_child(key_light)
 	var fill := DirectionalLight3D.new()
 	fill.light_color = Color(0.85, 0.9, 1.0)
-	fill.light_energy = 0.35
+	fill.light_energy = 0.25
 	fill.rotation_degrees = Vector3(-20.0, 150.0, 0.0)
 	add_child(fill)
 	_camera = Camera3D.new()
@@ -83,13 +83,13 @@ func _process(delta: float) -> void:
 	_pivot.rotate_y(TAU / maxf(GameConfig.facade_turntable_period, 1.0) * delta)
 
 
-## Zeigt eine Theke.
+## Zeigt eine Theke (die Kundenseite zuerst schräg zur Kamera).
 func show_counter(counter: CounterData) -> void:
 	var path := counter.scene_path if counter else ""
 	if path == _key:
 		return
 	_key = path
-	_clear()
+	_clear(0.5)
 	if not path.is_empty() and ResourceLoader.exists(path):
 		_pivot.add_child((load(path) as PackedScene).instantiate() as Node3D)
 	_frame_camera()
@@ -102,7 +102,8 @@ func show_letterbox(slot: ReturnSlotData, inside_path: String, outside_material:
 	if key == _key:
 		return
 	_key = key
-	_clear()
+	# Die Straßenseite (-Z) zuerst schräg zur Kamera
+	_clear(PI - 0.6)
 	# Lage wie am Rückgabekasten: Ursprung in der Mitte der Wand am Boden, +Z = innen, -Z = Straße
 	var middle := (WALL_BOTTOM + WALL_TOP) / 2.0
 	var height := WALL_TOP - WALL_BOTTOM
@@ -135,11 +136,12 @@ static func outside_material_for(design: Dictionary) -> Material:
 	return FurnitureUtils.tinted_material(base, paint.color if paint else Color(0.13, 0.25, 0.18))
 
 
-func _clear() -> void:
+## Leert den Drehteller; start = Drehung, mit der es losgeht.
+func _clear(start: float = 0.0) -> void:
 	for child in _pivot.get_children():
 		_pivot.remove_child(child)
 		child.queue_free()
-	_pivot.rotation = Vector3.ZERO
+	_pivot.rotation = Vector3(0.0, start, 0.0)
 
 
 func _box(box_size: Vector3, center: Vector3, material: Material) -> MeshInstance3D:

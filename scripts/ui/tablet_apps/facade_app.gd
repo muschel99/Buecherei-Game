@@ -403,8 +403,14 @@ func _describe_picture(entry: Dictionary, option: FacadeOption, category: String
 	else:
 		var view := VIEW_DOOR if category == "door" else VIEW_FRONT
 		var path := option.scene_path
+		var key := "facade/" + category + "_" + option.id
+		var fabric: FacadeOption = null
+		if category == "awning":
+			# Markisen gleich im gewählten Stoff
+			fabric = FacadeDesign.get_option("fabric", FacadeDesign.get_draft())
+			key += "_" + (fabric.id if fabric else "")
 		entry.picture = func(tile: FacadeTile) -> void:
-			_photo(tile, "facade/" + category + "_" + option.id, func() -> Node3D: return _instance(path), view)
+			_photo(tile, key, func() -> Node3D: return _with_fabric(_instance(path), fabric), view)
 
 
 ## Bestellt ein Foto für eine Kachel (zwischengespeichert unter key).
@@ -433,6 +439,19 @@ static func _instance(path: String) -> Node3D:
 	if path.is_empty() or not ResourceLoader.exists(path):
 		return Node3D.new()
 	return (load(path) as PackedScene).instantiate() as Node3D
+
+
+## Markisenstoff (Fläche „facade_awning“) durch den gewählten Stoff ersetzen.
+static func _with_fabric(model: Node3D, fabric: FacadeOption) -> Node3D:
+	if fabric == null or fabric.material == null:
+		return model
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := node as MeshInstance3D
+		for i in mesh_instance.mesh.get_surface_count():
+			var material := mesh_instance.mesh.surface_get_material(i)
+			if material and material.resource_name == "facade_awning":
+				mesh_instance.set_surface_override_material(i, fabric.material)
+	return model
 
 
 ## Ein Modell vor einem Stück Hauswand (Briefkasten außen bzw. innen), Wand um die Höhe y.
