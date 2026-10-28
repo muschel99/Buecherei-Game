@@ -59,11 +59,11 @@ func refresh() -> void:
 				places = _count_places()
 			_list.add_child(_create_collection(entry.genre, places))
 	# Oben: alles zusammen
-	var title := make_label("Alle Bücher", 18, TabletFrame.MUTED_COLOR)
+	var title := make_title("Alle Bücher", 18, style.muted)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_summary.add_child(title)
-	_add_counts(_summary, sums, TabletFrame.KEY_COLOR)
+	_add_counts(_summary, sums, style.accent)
 	var spacer := Control.new()
 	spacer.custom_minimum_size.x = _fold_width()
 	_summary.add_child(spacer)
@@ -91,10 +91,10 @@ func _create_genre_row(entry: Dictionary) -> Control:
 	names.add_theme_constant_override("separation", 0)
 	row.add_child(names)
 	names.add_child(make_label(genre.display_name, 18))
-	var found := make_label("%d von %d Titeln entdeckt" % [entry.discovered, entry.catalog], 13, TabletFrame.MUTED_COLOR)
+	var found := make_label("%d von %d Titeln entdeckt" % [entry.discovered, entry.catalog], 13, style.muted)
 	found.name = "Discovered"
 	names.add_child(found)
-	_add_counts(row, [entry.stored, entry.shelves, entry.loose, entry.elsewhere], TabletFrame.TEXT_COLOR)
+	_add_counts(row, [entry.stored, entry.shelves, entry.loose, entry.elsewhere], style.text)
 	var fold := make_icon_button(TabletIconButton.Icon.COLLAPSE if is_expanded(id) else TabletIconButton.Icon.EXPAND,
 		toggle_collection.bind(id))
 	fold.name = "Fold"
@@ -162,10 +162,10 @@ func _add_counts(row: HBoxContainer, values: Array, color: Color) -> void:
 		cell.add_theme_constant_override("separation", 4)
 		cell.tooltip_text = StockSymbol.TIPS[kinds[i]]
 		cell.mouse_filter = Control.MOUSE_FILTER_PASS
-		var symbol := StockSymbol.create(kinds[i])
+		var symbol := StockSymbol.create(kinds[i], style.text)
 		symbol.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		cell.add_child(symbol)
-		var number := make_label(str(values[i]), 18, color if int(values[i]) > 0 else TabletFrame.MUTED_COLOR)
+		var number := make_label(str(values[i]), 18, color if int(values[i]) > 0 else style.muted)
 		number.autowrap_mode = TextServer.AUTOWRAP_OFF
 		number.custom_minimum_size.x = 36
 		number.size_flags_vertical = Control.SIZE_SHRINK_CENTER

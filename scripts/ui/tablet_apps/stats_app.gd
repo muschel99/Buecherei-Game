@@ -123,21 +123,21 @@ func _create_tile(entry: Dictionary) -> Control:
 	head.add_theme_constant_override("separation", 6)
 	box.add_child(head)
 	if entry.has("symbol"):
-		var symbol := StockSymbol.create(entry.symbol)
+		var symbol := StockSymbol.create(entry.symbol, style.muted)
 		symbol.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		head.add_child(symbol)
-	var label := make_label(str(entry.get("label", "")), 16, TabletFrame.MUTED_COLOR)
+	var label := make_label(str(entry.get("label", "")), 16, style.muted)
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.custom_minimum_size.x = 0
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(label)
-	var value := make_label(_format(entry.value), 40, TabletFrame.TEXT_COLOR)
+	var value := make_title(_format(entry.value), 40, style.text)
 	value.name = "Value"
 	value.autowrap_mode = TextServer.AUTOWRAP_OFF
 	box.add_child(value)
-	var note := make_label(str(entry.get("note", "")), 14, TabletFrame.MUTED_COLOR)
+	var note := make_label(str(entry.get("note", "")), 14, style.muted)
 	box.add_child(note)
 	return panel
 
@@ -149,10 +149,10 @@ func _create_genre_bars(entry: Dictionary) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	panel.add_child(box)
-	box.add_child(make_label(str(entry.get("label", "")), 17, TabletFrame.MUTED_COLOR))
+	box.add_child(make_title(str(entry.get("label", "")), 17, style.muted))
 	var counts: Dictionary = entry.per_genre
 	if counts.is_empty():
-		box.add_child(make_label("Noch nichts da.", 15, TabletFrame.MUTED_COLOR))
+		box.add_child(make_label("Noch nichts da.", 15, style.muted))
 		return panel
 	var biggest := 1
 	for id in counts:
@@ -172,6 +172,8 @@ func _create_genre_bars(entry: Dictionary) -> Control:
 		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(name_label)
 		var bar := StatBar.new()
+		bar.fill_color = style.second
+		bar.track_color = Color(style.text, 0.08)
 		bar.share = float(counts[id]) / float(biggest)
 		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -207,9 +209,11 @@ class StatBar:
 	extends Control
 
 	const HEIGHT := 10.0
-	const TRACK_COLOR := Color(1.0, 0.95, 0.85, 0.07)
 
 	var share := 0.0
+	## Farben (aus dem Look der App)
+	var fill_color := Color(0.96, 0.78, 0.48)
+	var track_color := Color(1.0, 0.95, 0.85, 0.07)
 
 	func _init() -> void:
 		custom_minimum_size = Vector2(60, HEIGHT)
@@ -217,9 +221,9 @@ class StatBar:
 
 	func _draw() -> void:
 		var radius := HEIGHT / 2.0
-		_round_bar(size.x, TRACK_COLOR, radius)
+		_round_bar(size.x, track_color, radius)
 		if share > 0.0:
-			_round_bar(maxf(size.x * share, HEIGHT), TabletFrame.KEY_COLOR, radius)
+			_round_bar(maxf(size.x * share, HEIGHT), fill_color, radius)
 
 	func _round_bar(width: float, color: Color, radius: float) -> void:
 		var box := StyleBoxFlat.new()

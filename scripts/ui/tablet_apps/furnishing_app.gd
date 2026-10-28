@@ -107,9 +107,9 @@ func show_category(index: int) -> void:
 	for item in offers:
 		_item_flow.add_child(create_offer_tile(item))
 	if all_offers.is_empty():
-		_item_flow.add_child(make_label("Hier gibt es gerade nichts.", 16, TabletFrame.MUTED_COLOR))
+		_item_flow.add_child(make_label("Hier gibt es gerade nichts.", 16, style.muted))
 	elif offers.is_empty():
-		_item_flow.add_child(make_label("Dazu passt gerade nichts.", 16, TabletFrame.MUTED_COLOR))
+		_item_flow.add_child(make_label("Dazu passt gerade nichts.", 16, style.muted))
 	_item_scroll.set_deferred("scroll_vertical", scroll)
 
 
@@ -138,7 +138,7 @@ func _refresh_sell_list() -> void:
 		_sell_list.add_child(_create_sell_row(entry.data, entry.variant))
 		count += 1
 	if count == 0:
-		_sell_list.add_child(make_label("Im Inventar liegt gerade nichts zum Verkaufen.", 17, TabletFrame.MUTED_COLOR))
+		_sell_list.add_child(make_label("Im Inventar liegt gerade nichts zum Verkaufen.", 17, style.muted))
 
 
 func _create_sell_row(data: FurnitureData, variant: String) -> Control:
@@ -158,7 +158,7 @@ func _create_sell_row(data: FurnitureData, variant: String) -> Control:
 	info.add_child(make_label("%s  ×%d" % [title, Inventory.get_count(data.get_id(), variant)], 17))
 	info.add_child(create_style_row(data.style_ids))
 	row.add_child(info)
-	var price := make_label("+" + Wallet.format(data.get_sell_price()), 17, TabletFrame.KEY_COLOR)
+	var price := make_label("+" + Wallet.format(data.get_sell_price()), 17, style.accent)
 	price.autowrap_mode = TextServer.AUTOWRAP_OFF
 	price.custom_minimum_size.x = 0
 	price.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -214,6 +214,7 @@ func _build() -> void:
 	for i in _categories.size():
 		var category: Array = _categories[i]
 		var button := IconToggle.new(46)
+		button.apply_style(style)
 		button.icon_key = CatalogIcons.category_key(category[2]) if category[1] == "furniture" else CatalogIcons.surface_key(category[2])
 		button.tooltip_text = category[0]
 		button.pressed.connect(_on_category_pressed.bind(i))
@@ -230,6 +231,7 @@ func _build() -> void:
 	_buy_column.add_theme_constant_override("separation", 10)
 	middle.add_child(_buy_column)
 	_filter_bar = FilterBar.new()
+	_filter_bar.app_style = style
 	_filter_bar.changed.connect(_on_filter_changed)
 	_buy_column.add_child(_filter_bar)
 	_item_scroll = ScrollContainer.new()
@@ -260,8 +262,8 @@ func _build() -> void:
 	var sell_box := VBoxContainer.new()
 	sell_box.add_theme_constant_override("separation", 10)
 	sell_panel.add_child(sell_box)
-	sell_box.add_child(make_label("Verkaufen", 19))
+	sell_box.add_child(make_title("Verkaufen", 20))
 	sell_box.add_child(make_label("Du bekommst %d %% des Preises zurück. Was im Raum steht, räumst du vorher im Gestaltungsmodus (Tab) ins Inventar: Rechtsklick nimmt es auf, ein Klick aufs Mausrad legt es weg." \
-		% roundi(GameConfig.sell_price_share * 100.0), 15, TabletFrame.MUTED_COLOR))
-	_sell_message = make_label("", 16, TabletFrame.KEY_COLOR)
+		% roundi(GameConfig.sell_price_share * 100.0), 15, style.muted))
+	_sell_message = make_label("", 16, style.accent)
 	sell_box.add_child(_sell_message)

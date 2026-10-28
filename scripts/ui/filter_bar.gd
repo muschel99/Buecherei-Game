@@ -23,6 +23,8 @@ const MUTED_COLOR := Color(0.85, 0.78, 0.68, 0.8)
 ## Unterkategorien und Stile in zwei eigenen Zeilen (true) oder nebeneinander (false)?
 @export var two_rows: bool = false
 
+## Look einer Tablet-App (seit Etappe 6b; leer = für den dunklen Gestaltungsmodus).
+var app_style: TabletAppStyle
 ## Gewählte Unterkategorie ("" = alle).
 var subcategory: String = ""
 ## Gewählter Stil (ANY_STYLE, NEUTRAL oder eine Stil-id).
@@ -152,6 +154,8 @@ func _make_divider() -> Control:
 
 func _add_button(row: HFlowContainer, group: Dictionary, value: String, tip: String) -> IconToggle:
 	var button := IconToggle.new(BUTTON_SIZE)
+	if app_style:
+		button.apply_style(app_style)
 	button.tooltip_text = tip
 	button.pressed.connect(_on_pressed.bind(group, value))
 	row.add_child(button)

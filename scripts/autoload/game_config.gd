@@ -564,6 +564,17 @@ var paused_max_fps: int = 30
 var pause_on_focus_loss: bool = true
 
 
+# --- Theken-Tablet ---
+
+## Öffnen einer App (seit Etappe 6b): so lange wächst das Symbol zum ganzen Bildschirm (Sekunden),
+## so lange stehen Logo und Begrüßung da (Ladebildschirm), so lange blendet die App ein …
+var tablet_app_zoom_time: float = 0.35
+var tablet_app_loading_time: float = 1.0
+var tablet_app_reveal_time: float = 0.25
+## … und so lange schrumpft sie beim Schließen zurück zu ihrem Symbol.
+var tablet_app_close_time: float = 0.3
+
+
 # --- Theke ---
 
 ## Theke beim allerersten Start (id eines Datenblatts in data/counters/). Die Theke wechsle ich

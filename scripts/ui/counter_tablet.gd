@@ -12,6 +12,11 @@ extends CanvasLayer
 ##   nächsten Öffnen startet es wieder auf dem Startbildschirm.
 ## - Apps sind eigene kleine Szenen mit Datenblatt (data/tablet_apps/*.tres, TabletAppData);
 ##   neue App = neue Szene + Datenblatt, der Startbildschirm findet sie von selbst.
+## - Seit Etappe 6b hat jede App ihren eigenen Look (TabletAppData.style): Das Tablet malt den
+##   Bildschirm in ihrer Farbe und ihrem Muster und färbt die Leiste. Tippt man ein Symbol an,
+##   wächst es weich zum ganzen Bildschirm, zeigt kurz Logo und Begrüßung (TabletAppLaunch) und
+##   öffnet dann die App; Home, Kreuz und Esc lassen sie zurück zum Symbol schrumpfen.
+##   open_app(id) öffnet ohne Animation (Tests, andere Stellen im Spiel).
 ## Solange das Tablet offen ist, ist der Mauszeiger sichtbar und die Spielfigur steht still.
 
 const GROUP := "counter_tablet"
@@ -41,7 +46,11 @@ var _app_tagline: Label
 var _money_label: Label
 var _home_view: Control
 var _app_area: Control
+var _close_button: TabletIconButton
 var _refresh_queued := false
+var _app_icons: Dictionary = {}  # id -> TabletAppIcon auf dem Startbildschirm
+## Läuft gerade eine Öffnen- oder Schließen-Animation? (dann zählen keine weiteren Klicks)
+var _animating := false
 
 
 func _ready() -> void:
@@ -116,9 +125,10 @@ func close() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-## Esc (über den MenuStack): schließt immer das ganze Tablet, nicht nur die App.
+## Esc (über den MenuStack): schließt immer das ganze Tablet, nicht nur die App (die App schrumpft
+## vorher kurz zurück zu ihrem Symbol).
 func close_from_escape() -> void:
-	close()
+	_back_to_icon(close)
 
 
 ## Nach dem Pausenmenü: Mauszeiger wieder sichtbar.
@@ -140,6 +150,98 @@ func go_home() -> void:
 	_app_logo.hide()
 	_app_title.text = ""
 	_app_tagline.text = ""
+	_apply_bar_style(null)
+
+
+## Ein App-Symbol wurde angetippt: Die Kachel wächst zum ganzen Bildschirm, Logo und Begrüßung
+## erscheinen kurz, dann öffnet sich die App (Zeiten in GameConfig).
+func launch_app(id: String) -> void:
+	var data := _find_app(id)
+	var icon: TabletAppIcon = _app_icons.get(id)
+	if _animating or data == null or icon == null:
+		return
+	_animating = true
+	var launch := _make_launch(data, icon)
+	var tween := create_tween()
+	tween.tween_property(launch, "grow", 1.0, GameConfig.tablet_app_zoom_time) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	# Hinter der Kachel öffnet sich schon die App
+	tween.tween_callback(open_app.bind(id))
+	tween.tween_property(launch, "greeting", 1.0, 0.2)
+	tween.parallel().tween_property(launch, "loading", 1.0, GameConfig.tablet_app_loading_time)
+	tween.tween_property(launch, "modulate:a", 0.0, GameConfig.tablet_app_reveal_time)
+	tween.tween_callback(func() -> void:
+		launch.queue_free()
+		_animating = false)
+
+
+## Home: Die App schrumpft zurück zu ihrem Symbol.
+func _on_home_pressed() -> void:
+	_back_to_icon(go_home)
+
+
+## Die App schrumpft kurz zurück zu ihrem Symbol, danach then (Startbildschirm oder Tablet zu).
+## Ohne offene App (oder ohne Symbol) gleich then.
+func _back_to_icon(then: Callable) -> void:
+	if _animating:
+		return
+	var data := _find_app(_current_id)
+	var icon: TabletAppIcon = _app_icons.get(_current_id)
+	if _current == null or data == null or icon == null or not visible:
+		then.call()
+		return
+	_animating = true
+	var launch := _make_launch(data, icon)
+	launch.grow = 1.0
+	launch.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(launch, "modulate:a", 1.0, 0.1)
+	tween.tween_callback(go_home)
+	tween.tween_property(launch, "grow", 0.0, GameConfig.tablet_app_close_time) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_callback(func() -> void:
+		launch.queue_free()
+		_animating = false
+		then.call())
+
+
+## Die wachsende Kachel liegt über allem (Symbol und Bildschirm in Koordinaten des Tablets).
+func _make_launch(data: TabletAppData, icon: TabletAppIcon) -> TabletAppLaunch:
+	var launch := TabletAppLaunch.new()
+	launch.name = "Launch"
+	add_child(launch)
+	var screen := _frame.get_screen_rect()
+	launch.setup(data, icon.get_tile_rect_in_canvas(), Rect2(_frame.get_global_rect().position + screen.position, screen.size))
+	return launch
+
+
+func _find_app(id: String) -> TabletAppData:
+	for app in _apps:
+		if app.id == id:
+			return app
+	return null
+
+
+## Die Leiste oben im Look der App (null = Standard des Tablets): Schrift, Farben, Knöpfe.
+func _apply_bar_style(style: TabletAppStyle) -> void:
+	_frame.screen_style = style
+	var text := style.text if style else TabletFrame.TEXT_COLOR
+	var muted := style.muted if style else TabletFrame.MUTED_COLOR
+	var accent := style.accent if style else TabletFrame.KEY_COLOR
+	_app_title.add_theme_color_override("font_color", text)
+	_app_tagline.add_theme_color_override("font_color", muted)
+	_money_label.add_theme_color_override("font_color", accent)
+	for label: Label in [_app_tagline, _money_label]:
+		if style and style.font:
+			label.add_theme_font_override("font", style.font)
+		else:
+			label.remove_theme_font_override("font")
+	if style and style.get_title_font():
+		_app_title.add_theme_font_override("font", style.get_title_font())
+	else:
+		_app_title.remove_theme_font_override("font")
+	for button: TabletIconButton in [_home_button, _close_button]:
+		button.set_colors(text if style else TabletIconButton.LINE_COLOR, accent if style else TabletIconButton.HOVER_COLOR)
 
 
 ## Öffnet eine App (id aus ihrem Datenblatt). Liefert die App (oder null).
@@ -159,6 +261,7 @@ func open_app(id: String) -> TabletApp:
 				node.queue_free()
 			return null
 		node.tablet = self
+		node.apply_style(data.style)  # vor dem Einfügen: die App baut sich darin schon auf
 		node.hide()
 		_app_area.add_child(node)
 		_app_nodes[id] = node
@@ -172,8 +275,9 @@ func open_app(id: String) -> TabletApp:
 	_home_button.show()
 	_app_logo.setup(data)
 	_app_logo.show()
-	_app_title.text = data.display_name
+	_app_title.text = data.style.title_text(data.display_name) if data.style else data.display_name
 	_app_tagline.text = data.tagline
+	_apply_bar_style(data.style)
 	_current.app_opened()
 	_current.refresh()
 	return _current
@@ -232,7 +336,7 @@ func _build() -> void:
 	screen.add_child(bar)
 	_home_button = TabletIconButton.new()
 	_home_button.icon_kind = TabletIconButton.Icon.HOME
-	_home_button.pressed.connect(go_home)
+	_home_button.pressed.connect(_on_home_pressed)
 	bar.add_child(_home_button)
 	# Kleines Logo der App, Name und (bei Läden) ein kurzer Untertitel
 	_app_logo = TabletAppIcon.new()
@@ -261,9 +365,9 @@ func _build() -> void:
 	_money_label.custom_minimum_size.x = 0
 	_money_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(_money_label)
-	var close_button := TabletFrame.make_close_button()
-	close_button.pressed.connect(close)
-	bar.add_child(close_button)
+	_close_button = TabletFrame.make_close_button()
+	_close_button.pressed.connect(_back_to_icon.bind(close))
+	bar.add_child(_close_button)
 
 	# Startbildschirm
 	_home_view = Control.new()
@@ -290,8 +394,9 @@ func _build() -> void:
 		var icon := TabletAppIcon.new()
 		icon.name = app.id
 		icon.setup(app)
-		icon.pressed.connect(open_app.bind(app.id))
+		icon.pressed.connect(launch_app.bind(app.id))
 		grid.add_child(icon)
+		_app_icons[app.id] = icon
 
 	# Bereich für die geöffnete App
 	_app_area = MarginContainer.new()  # die App füllt den ganzen Bereich

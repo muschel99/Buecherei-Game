@@ -5,7 +5,6 @@ extends TabletApp
 ## Bestellen bezahlt (Wallet) und gibt die Bestellung an den Lieferdienst (DeliveryManager) –
 ## kurz darauf stehen die Kartons vor der Tür. Jede App hat ihren eigenen Warenkorb.
 
-const SOFT_WARNING_COLOR := Color(1.0, 0.8, 0.62)
 const CARD_SIZE := Vector2(196, 262)
 const PREVIEW_SIZE := Vector2(176, 118)
 const CART_WIDTH := 320.0
@@ -92,7 +91,7 @@ func build_cart(parent: Container) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	panel.add_child(box)
-	box.add_child(make_label("Warenkorb", 19))
+	box.add_child(make_title("Warenkorb", 20))
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -101,15 +100,11 @@ func build_cart(parent: Container) -> Control:
 	_cart_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cart_list.add_theme_constant_override("separation", 10)
 	scroll.add_child(_cart_list)
-	_total_label = make_label("", 18, TabletFrame.KEY_COLOR)
+	_total_label = make_label("", 18, style.accent)
 	box.add_child(_total_label)
-	_cart_message = make_label("", 15, TabletFrame.MUTED_COLOR)
+	_cart_message = make_label("", 15, style.muted)
 	box.add_child(_cart_message)
-	_order_button = Button.new()
-	_order_button.text = "Bestellen"
-	_order_button.focus_mode = Control.FOCUS_NONE
-	_order_button.add_theme_font_size_override("font_size", 19)
-	_order_button.pressed.connect(order)
+	_order_button = make_primary_button("Bestellen", order)
 	box.add_child(_order_button)
 	return panel
 
@@ -119,12 +114,12 @@ func refresh_cart() -> void:
 	for entry in cart:
 		_cart_list.add_child(_create_cart_row(entry))
 	if cart.is_empty():
-		_cart_list.add_child(make_label("Noch leer.", 15, TabletFrame.MUTED_COLOR))
+		_cart_list.add_child(make_label("Noch leer.", 15, style.muted))
 	var total := get_cart_total()
 	_total_label.text = "Summe: " + Wallet.format(total)
 	var affordable := Wallet.can_afford(total)
 	_order_button.disabled = cart.is_empty() or not affordable
-	_cart_message.remove_theme_color_override("font_color")
+	_cart_message.add_theme_color_override("font_color", style.muted)
 	if not _order_text.is_empty():
 		_cart_message.text = _order_text
 	elif cart.is_empty():
@@ -132,7 +127,7 @@ func refresh_cart() -> void:
 	elif not affordable:
 		# Freundlich, ohne Strafe: einfach zeigen, wie viel fehlt
 		_cart_message.text = "Es fehlen noch %s." % Wallet.format(total - Wallet.money)
-		_cart_message.add_theme_color_override("font_color", SOFT_WARNING_COLOR)
+		_cart_message.add_theme_color_override("font_color", style.second)
 	else:
 		_cart_message.text = "Lieferung in etwa %d Sekunden." % roundi(GameConfig.delivery_time)
 
@@ -147,6 +142,7 @@ func _create_cart_row(entry: Dictionary) -> Control:
 		tile.toggle_mode = false
 		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tile.setup(resource, str(entry.get("variant", "")), tablet.thumbnails if tablet else null)
+		tile.apply_style(style)
 		tile.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		line.add_child(tile)
 	var block := VBoxContainer.new()
@@ -170,7 +166,7 @@ func _create_cart_row(entry: Dictionary) -> Control:
 		row.add_child(make_icon_button(TabletIconButton.Icon.PLUS, _change_cart_count.bind(entry, 1)))
 	else:
 		row.add_child(make_icon_button(TabletIconButton.Icon.CLOSE, _change_cart_count.bind(entry, -1), "Entfernen"))
-	var price := make_label(Wallet.format(_price_of(entry) * int(entry.count)), 16, TabletFrame.KEY_COLOR)
+	var price := make_label(Wallet.format(_price_of(entry) * int(entry.count)), 16, style.accent)
 	price.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	price.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -188,6 +184,7 @@ func create_offer_tile(item: Resource) -> ItemTile:
 	tile.toggle_mode = false
 	var id: String = item.get_id()
 	tile.setup(item, str(_chosen_variants.get(id, "")), tablet.thumbnails if tablet else null)
+	tile.apply_style(style)
 	tile.set_badge(str(item.price), ItemTile.KEY_COLOR, true)
 	tile.tooltip_text = _offer_tooltip(item, tile.variant)
 	tile.variant_chosen.connect(func(variant: String) -> void:
@@ -239,13 +236,13 @@ func create_offer_card(item: Resource) -> Button:
 	var title_text: String = item.display_name
 	if item is GenreData:
 		title_text = "%s – Paket mit %d Büchern" % [item.display_name, GameConfig.books_per_package]
-	var title := _small_label(title_text, 16, TabletFrame.TEXT_COLOR)
+	var title := _small_label(title_text, 16, style.text)
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.max_lines_visible = 2
 	title.custom_minimum_size.y = 42
 	box.add_child(title)
 	box.add_child(create_style_row(item.style_ids))
-	box.add_child(_small_label(Wallet.format(item.price), 17, TabletFrame.KEY_COLOR))
+	box.add_child(_small_label(Wallet.format(item.price), 17, style.accent))
 	# Was habe ich schon? Oberflächen kauft man nur einmal.
 	var status := ""
 	if item is SurfaceData:
@@ -267,7 +264,7 @@ func create_offer_card(item: Resource) -> Button:
 	else:
 		var owned := Inventory.get_total_count(item.get_id()) + _count_in_room(item.get_id())
 		status = "Hast du: %d" % owned if owned > 0 else ""
-	box.add_child(_small_label(status, 13, TabletFrame.MUTED_COLOR))
+	box.add_child(_small_label(status, 13, style.muted))
 	# Lange Zeilen enden mit "…", statt über den Kartenrand zu ragen
 	for label in box.get_children():
 		if label is Label and label.autowrap_mode == TextServer.AUTOWRAP_OFF:
@@ -316,7 +313,7 @@ func create_style_row(styles: Array[String]) -> HBoxContainer:
 	for style in StyleTags.known(styles):
 		row.add_child(_small_label("● " + StyleTags.get_display_name(style), 13, StyleTags.get_color(style)))
 	if StyleTags.known(styles).is_empty():
-		row.add_child(_small_label("○ stilneutral", 13, TabletFrame.MUTED_COLOR))
+		row.add_child(_small_label("○ stilneutral", 13, style.muted))
 	return row
 
 

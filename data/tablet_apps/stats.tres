@@ -1,6 +1,28 @@
 [gd_resource type="Resource" script_class="TabletAppData" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/tablet_app_data.gd" id="1_app"]
+[ext_resource type="Script" path="res://scripts/data/tablet_app_style.gd" id="2_style"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/DejaVuSansMono.ttf" id="3_font"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/DejaVuSerif-Italic.ttf" id="4_font"]
+
+[sub_resource type="Resource" id="Style"]
+script = ExtResource("2_style")
+background = Color(0.97, 0.95, 0.89, 1)
+pattern_color = Color(0.45, 0.6, 0.8, 0.32)
+panel = Color(1, 0.99, 0.96, 0.78)
+panel_border = Color(0.2, 0.3, 0.55, 0.25)
+text = Color(0.15, 0.22, 0.42, 1)
+muted = Color(0.4, 0.45, 0.55, 0.95)
+accent = Color(0.2, 0.35, 0.65, 1)
+accent_text = Color(0.97, 0.97, 1, 1)
+second = Color(0.82, 0.38, 0.32, 1)
+pattern = 3
+radius = 8
+button_radius = 8
+border_width = 1
+font = ExtResource("3_font")
+title_font = ExtResource("4_font")
+welcome = "Dein Kassenbuch"
 
 [resource]
 script = ExtResource("1_app")
@@ -10,3 +32,4 @@ symbol = 5
 color = Color(0.34, 0.42, 0.52, 1)
 scene_path = "res://scenes/ui/tablet_apps/stats_app.tscn"
 order = 40
+style = SubResource("Style")

@@ -29,3 +29,5 @@ enum Symbol { FURNISHING, BOOKS, STOCK, COLLECTION, GENERIC, STATS, TIPS, NEST, 
 @export var order: int = 0
 ## Ausgeschaltete Apps erscheinen nicht.
 @export var is_enabled: bool = true
+## Eigener Look der App (Farben, Muster, Schrift, Formen – seit Etappe 6b). Leer = wie das Tablet.
+@export var style: TabletAppStyle

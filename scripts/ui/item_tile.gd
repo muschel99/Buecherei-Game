@@ -28,6 +28,10 @@ var _badge_coin: Control
 var _dots: HBoxContainer
 var _dot_buttons := {}  # Farb-id -> Button
 var _show_dots := false
+## Ring um den gewählten Farbtupfer (in Apps mit eigenem Look deren Akzent)
+var ring_color := KEY_COLOR
+## Farbe der Zahl oben rechts, wenn set_badge ohne eigene Farbe aufgerufen wird
+var _badge_default_color := KEY_COLOR
 
 
 ## tile_size: Größe der Kachel; with_dots: Farbtupfer zum Wählen (Shop).
@@ -165,8 +169,42 @@ static func _decimal(value: float) -> String:
 func set_badge(text: String, color: Color = KEY_COLOR, coin: bool = false) -> void:
 	_badge.visible = not text.is_empty()
 	_badge_label.text = text
-	_badge_label.add_theme_color_override("font_color", color)
+	_badge_label.add_theme_color_override("font_color", _badge_default_color if color == KEY_COLOR else color)
 	_badge_coin.visible = coin
+
+
+## Im Look einer Tablet-App (seit Etappe 6b): Kachel, Rahmen, Zahl und Tupfer-Ring in ihren Farben.
+func apply_style(style: TabletAppStyle) -> void:
+	var states := {
+		"normal": style.panel,
+		"hover": style.panel.lerp(style.accent, 0.16),
+		"pressed": style.panel.lerp(style.accent, 0.22),
+		"hover_pressed": style.panel.lerp(style.accent, 0.28),
+		"disabled": Color(style.panel, style.panel.a * 0.6),
+	}
+	for state: String in states:
+		var box := StyleBoxFlat.new()
+		box.bg_color = states[state]
+		box.set_corner_radius_all(style.radius)
+		box.anti_aliasing = true
+		if state.contains("pressed"):
+			box.border_color = style.accent
+			box.set_border_width_all(3)
+		elif style.border_width > 0:
+			box.border_color = style.panel_border
+			box.set_border_width_all(style.border_width)
+		add_theme_stylebox_override(state, box)
+	var badge_box := _badge.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	badge_box.bg_color = Color(style.text, 0.88)
+	badge_box.set_corner_radius_all(mini(style.button_radius, 9) if style.button_radius > 2 else 2)
+	_badge.add_theme_stylebox_override("panel", badge_box)
+	_badge_default_color = style.panel if style.panel.get_luminance() > 0.5 else style.background
+	_badge_label.add_theme_color_override("font_color", _badge_default_color)
+	if style.font:
+		_badge_label.add_theme_font_override("font", style.font)
+	ring_color = style.accent
+	for dot in _dot_buttons.values():
+		dot.queue_redraw()
 
 
 ## Ausgegraut (z. B. Oberfläche gehört mir schon), bleibt sichtbar.
@@ -260,4 +298,4 @@ class _ColorDot:
 		draw_circle(center, radius, color_variant.get_swatch())
 		draw_arc(center, radius, 0.0, TAU, 24, Color(0, 0, 0, 0.35), 1.0, true)
 		if tile.variant == color_variant.id or is_hovered():
-			draw_arc(center, radius + 2.5, 0.0, TAU, 28, ItemTile.KEY_COLOR, 1.6, true)
+			draw_arc(center, radius + 2.5, 0.0, TAU, 28, tile.ring_color, 1.6, true)

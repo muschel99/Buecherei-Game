@@ -11,6 +11,9 @@ const ACTIVE_COLOR := Color(0.96, 0.78, 0.48)
 const EMPTY_ALPHA := 0.38
 
 ## Schlüssel des gezeichneten Symbols (siehe CatalogIcons).
+## Farben der Striche (Standard: hell auf dunklem Grund; apply_style für Apps mit eigenem Look)
+var line_color := LINE_COLOR
+var active_color := ACTIVE_COLOR
 var icon_key: String = "":
 	set(value):
 		icon_key = value
@@ -41,30 +44,43 @@ func _init(side: float = 40.0) -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	custom_minimum_size = Vector2(side, side)
 	text = ""
-	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
-		var box := StyleBoxFlat.new()
-		box.set_corner_radius_all(int(side / 2.0))
-		box.anti_aliasing = true
-		match state:
-			"normal":
-				box.bg_color = Color(1.0, 0.95, 0.85, 0.06)
-			"hover":
-				box.bg_color = Color(1.0, 0.95, 0.85, 0.16)
-			"pressed", "hover_pressed":
-				box.bg_color = Color(0.45, 0.31, 0.2, 1.0)
-				box.border_color = ACTIVE_COLOR
-				box.set_border_width_all(2)
-			_:
-				box.bg_color = Color(0, 0, 0, 0)
-		add_theme_stylebox_override(state, box)
+	_apply_boxes(Color(1.0, 0.95, 0.85), Color(0.45, 0.31, 0.2, 1.0), int(side / 2.0))
 	mouse_entered.connect(queue_redraw)
 	mouse_exited.connect(queue_redraw)
 	toggled.connect(func(_on: bool) -> void: queue_redraw())
 
 
+## Im Look einer Tablet-App (seit Etappe 6b): Striche, Fläche und Rahmen in ihren Farben.
+func apply_style(style: TabletAppStyle) -> void:
+	line_color = style.text
+	active_color = style.accent
+	_apply_boxes(style.text, style.panel.lerp(style.accent, 0.3), int(custom_minimum_size.x / 2.0))
+	queue_redraw()
+
+
+## Runde Flächen: zart im Ton der Striche, gewählt kräftig mit Rahmen in der Akzentfarbe.
+func _apply_boxes(base: Color, chosen: Color, radius: int) -> void:
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+		var box := StyleBoxFlat.new()
+		box.set_corner_radius_all(radius)
+		box.anti_aliasing = true
+		match state:
+			"normal":
+				box.bg_color = Color(base, 0.06)
+			"hover":
+				box.bg_color = Color(base, 0.16)
+			"pressed", "hover_pressed":
+				box.bg_color = chosen
+				box.border_color = active_color
+				box.set_border_width_all(2)
+			_:
+				box.bg_color = Color(0, 0, 0, 0)
+		add_theme_stylebox_override(state, box)
+
+
 func _draw() -> void:
 	var inner := Rect2(Vector2.ONE * size.x * 0.2, size * 0.6)
-	var color := ACTIVE_COLOR if button_pressed or is_hovered() else LINE_COLOR
+	var color := active_color if button_pressed or is_hovered() else line_color
 	if texture:
 		draw_texture_rect(texture, inner, false)
 	elif not dot_colors.is_empty():

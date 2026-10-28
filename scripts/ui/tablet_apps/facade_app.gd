@@ -67,7 +67,7 @@ func _build_return_box_section() -> void:
 		return
 	var content := make_section("Rückgabekasten", "Fest in der schrägen Eingangswand, rechts neben der Tür",
 		_make_count(box.get_books().size(), box.get_capacity(), box.is_full()))
-	content.add_child(make_label("Einwurf", 15, TabletFrame.MUTED_COLOR))
+	content.add_child(make_label("Einwurf", 15, style.muted))
 	var cards := HFlowContainer.new()
 	cards.add_theme_constant_override("h_separation", 12)
 	cards.add_theme_constant_override("v_separation", 12)
@@ -95,7 +95,7 @@ func choose_slot(id: String) -> void:
 
 func _build_counter_section() -> void:
 	var content := make_section("Theke", "Die feste Theke im Laden")
-	content.add_child(make_label("Modell", 15, TabletFrame.MUTED_COLOR))
+	content.add_child(make_label("Modell", 15, style.muted))
 	var cards := HFlowContainer.new()
 	cards.add_theme_constant_override("h_separation", 12)
 	cards.add_theme_constant_override("v_separation", 12)
@@ -126,10 +126,10 @@ func _make_count(count: int, capacity: int, full: bool) -> Control:
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
 	var glyph := CountBadge.BookGlyph.new()
 	glyph.custom_minimum_size = Vector2(22, 22)
-	glyph.color = TabletFrame.TEXT_COLOR
+	glyph.color = style.text
 	glyph.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(glyph)
-	var number := make_label("%d / %d" % [count, capacity], 17, TabletFrame.KEY_COLOR if full else TabletFrame.TEXT_COLOR)
+	var number := make_label("%d / %d" % [count, capacity], 17, style.accent if full else style.text)
 	number.name = "Number"
 	number.autowrap_mode = TextServer.AUTOWRAP_OFF
 	number.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -172,7 +172,7 @@ func make_section(title: String, subtitle: String = "", extra: Control = null) -
 	head.add_child(names)
 	names.add_child(make_label(title, 20))
 	if not subtitle.is_empty():
-		names.add_child(make_label(subtitle, 14, TabletFrame.MUTED_COLOR))
+		names.add_child(make_label(subtitle, 14, style.muted))
 	if extra:
 		extra.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		head.add_child(extra)
@@ -190,11 +190,11 @@ func make_option_card(title: String, selected: bool, action: Callable, style_ids
 	card.button_pressed = selected
 	card.tooltip_text = title
 	if selected:
-		var style := TabletFrame.make_panel_style(Color(0.45, 0.31, 0.2, 1.0), 10, 8.0)
-		style.border_color = TabletFrame.KEY_COLOR
-		style.set_border_width_all(2)
+		var chosen := style.make_panel_box(8.0, style.panel.lerp(style.accent, 0.25))
+		chosen.border_color = style.accent
+		chosen.set_border_width_all(2)
 		for state in ["normal", "hover", "pressed", "hover_pressed"]:
-			card.add_theme_stylebox_override(state, style)
+			card.add_theme_stylebox_override(state, chosen)
 	else:
 		card.pressed.connect(action)
 	var box := VBoxContainer.new()
@@ -210,7 +210,7 @@ func make_option_card(title: String, selected: bool, action: Callable, style_ids
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(preview)
-	var label := make_label(("✓ " if selected else "") + title, 16, TabletFrame.KEY_COLOR if selected else TabletFrame.TEXT_COLOR)
+	var label := make_label(("✓ " if selected else "") + title, 16, style.accent if selected else style.text)
 	label.name = "Title"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF

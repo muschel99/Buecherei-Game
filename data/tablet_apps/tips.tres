@@ -1,6 +1,26 @@
 [gd_resource type="Resource" script_class="TabletAppData" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/tablet_app_data.gd" id="1_app"]
+[ext_resource type="Script" path="res://scripts/data/tablet_app_style.gd" id="2_style"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/DejaVuSerif.ttf" id="3_font"]
+
+[sub_resource type="Resource" id="Style"]
+script = ExtResource("2_style")
+background = Color(0.38, 0.3, 0.42, 1)
+pattern_color = Color(1, 0.92, 0.98, 0.1)
+panel = Color(0.3, 0.23, 0.33, 0.9)
+panel_border = Color(0, 0, 0, 0)
+text = Color(0.98, 0.94, 0.96, 1)
+muted = Color(0.85, 0.78, 0.86, 0.85)
+accent = Color(0.95, 0.75, 0.55, 1)
+accent_text = Color(0.25, 0.15, 0.2, 1)
+second = Color(0.8, 0.6, 0.85, 1)
+pattern = 6
+radius = 14
+button_radius = 20
+border_width = 0
+title_font = ExtResource("3_font")
+welcome = "Schön, dass du reinschaust"
 
 [resource]
 script = ExtResource("1_app")
@@ -10,3 +30,4 @@ symbol = 6
 color = Color(0.5, 0.38, 0.5, 1)
 scene_path = "res://scenes/ui/tablet_apps/tips_app.tscn"
 order = 50
+style = SubResource("Style")

@@ -59,6 +59,13 @@ func _draw() -> void:
 		size.x, font_size, LINE_COLOR)
 
 
+## Wo die Kachel (ohne Namen) gerade liegt – in Koordinaten der Zeichenebene (für die Animation
+## beim Öffnen einer App).
+func get_tile_rect_in_canvas() -> Rect2:
+	var rect := get_global_rect()
+	return Rect2(rect.position + Vector2((rect.size.x - TILE_SIZE) / 2.0, 2.0), Vector2(TILE_SIZE, TILE_SIZE))
+
+
 ## Die farbige Kachel mit Symbol (shadow = Schattengröße).
 func _draw_tile(tile: Rect2, shadow: int) -> void:
 	var box := StyleBoxFlat.new()

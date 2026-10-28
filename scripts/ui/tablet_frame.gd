@@ -27,6 +27,12 @@ const BEZEL_RADIUS := 30
 const SCREEN_RADIUS := 16
 
 var _screen_box: StyleBoxFlat
+## Look der gerade offenen App (seit Etappe 6b): Der Bildschirm zeigt ihre Farbe und ihr Muster.
+## null = der warme Standard-Bildschirm.
+var screen_style: TabletAppStyle:
+	set(value):
+		screen_style = value
+		queue_redraw()
 
 
 func _init() -> void:
@@ -49,10 +55,18 @@ func _notification(what: int) -> void:
 
 ## Der Bildschirm und die kleine Kamera werden auf das Gehäuse gezeichnet.
 func _draw() -> void:
-	var screen := Rect2(Vector2(BEZEL, BEZEL), size - Vector2(BEZEL, BEZEL) * 2.0)
+	var screen := get_screen_rect()
 	if screen.size.x > 0.0 and screen.size.y > 0.0:
-		draw_style_box(_screen_box, screen)
+		if screen_style:
+			TabletAppBackdrop.paint(self, screen, screen_style, SCREEN_RADIUS)
+		else:
+			draw_style_box(_screen_box, screen)
 	draw_circle(Vector2(size.x / 2.0, BEZEL / 2.0), 2.5, Color(0.24, 0.21, 0.19))
+
+
+## Der Bildschirm (innerhalb des Rahmens), in eigenen Koordinaten.
+func get_screen_rect() -> Rect2:
+	return Rect2(Vector2(BEZEL, BEZEL), size - Vector2(BEZEL, BEZEL) * 2.0)
 
 
 func _apply_bezel() -> void:

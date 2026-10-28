@@ -29,6 +29,8 @@ extends Node
 ##   --ui=build|shop    Gestaltungsmodus bzw. Theken-Tablet mit „Nest & Nook“ öffnen (seit Etappe 6,
 ##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0);
 ##   --ui=app:<id>      Theken-Tablet mit einer anderen App öffnen, z. B. app:facade
+##   --ui=launch:<id>   App mit der Öffnen-Animation starten; --seconds=<s> = Bild nach so vielen
+##                      Sekunden (z. B. 0.15 = Kachel wächst, 0.8 = Begrüßung)
 ##   --ui=build_filter  Gestaltungsmodus mit offenem Filter; --ui=build_hold: erstes Möbel der
 ##                      Kategorie in der Hand (Blaupause). Im Gestaltungsmodus folgt die Kamera der
 ##                      Spielfigur dem Blickpunkt (Hervorheben und Blaupause zielen mit ihr)
@@ -171,6 +173,21 @@ func _open_ui(which: String, tab: int) -> void:
 		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
 		tablet.open_tablet()
 		tablet.open_app(which.trim_prefix("app:"))
+	elif which.begins_with("launch:"):
+		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
+		tablet.open_tablet()
+		await _wait_frames(20)
+		tablet.launch_app(which.trim_prefix("launch:"))
+		await get_tree().create_timer(float(_args.get("seconds", 0.15))).timeout
+		# Das Bild genau jetzt (ohne die übliche Wartezeit): Animation anhalten
+		var launch := tablet.get_node_or_null("Launch")
+		for tween in get_tree().get_processed_tweens():
+			tween.pause()
+		# --grow=0.5: die Kachel genau so weit gewachsen zeigen (Zwischenschritt)
+		if launch and _args.has("grow"):
+			launch.grow = float(_args.grow)
+			launch.greeting = 0.0
+		return
 	await _wait_frames(90)
 
 

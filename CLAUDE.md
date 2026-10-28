@@ -217,6 +217,17 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `data/tablet_apps/<id>.tres` (`TabletAppData`: Name = bei Läden der Ladenname, `tagline`,
   Symbol oder eigenes Bild, Farbe, Reihenfolge; neue Symbole hinten an das Enum anhängen) – kein
   Code am Startbildschirm. Einkaufs-Apps erben von `ShopApp` (Warenkorb, Angebotskarten).
+  **Eigener Look je App (seit Etappe 6b):** `TabletAppData.style` (`TabletAppStyle`: Farben background/
+  panel/text/muted/accent/accent_text/second, Muster `pattern` LINEN/PAPER/LINES/GRID/KRAFT/DOTS – gemalt
+  von `TabletAppBackdrop.paint`, auch auf dem Bildschirm des Rahmens `TabletFrame.screen_style` –, Rundungen,
+  Schrift `font`/`title_font` aus `assets/ui/fonts/` (DejaVu, Lizenz daneben), `welcome`). Apps nie feste
+  Farben: `style.text` … und die Bausteine `make_label`/`make_title`/`make_panel`/`make_primary_button`/
+  `make_choice_button`/`make_icon_button`; Kacheln `ItemTile.apply_style`, Symbol-Knöpfe
+  `IconToggle.apply_style`, `FilterBar.app_style`, `TabletIconButton.set_colors`. Das Tablet setzt den
+  Stil vor dem Einfügen der App (`apply_style`) und färbt die Leiste. **Öffnen:** `launch_app(id)` –
+  Kachel wächst aus dem Symbol (`TabletAppLaunch`, grow), Begrüßung + Ladebalken, dann die App; Home/Kreuz/
+  Esc schrumpfen sie zurück (`_back_to_icon`); Zeiten `tablet_app_*` in GameConfig; `open_app(id)` ohne
+  Animation. Bilder: `--ui=app:<id>` bzw. `--ui=launch:<id> --seconds=… [--grow=0.5]`.
   Apps: Nest & Nook (furnishing), Bücherladen (books), Lager (storage, nur Übersicht +
   Sammlung), Fassade (facade; Abschnitte: neue Fassaden-Einstellung = Funktion mit
   `make_section()` + Eintrag in `SECTIONS`, Auswahlkarten `make_option_card()`), Statistik

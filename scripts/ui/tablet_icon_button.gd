@@ -31,6 +31,11 @@ const LINE_COLOR := Color(1.0, 0.94, 0.84, 0.92)
 const HOVER_COLOR := Color(0.96, 0.78, 0.48)
 const DISABLED_COLOR := Color(0.85, 0.78, 0.68, 0.3)
 
+## Farben des Symbols (Standard: hell auf dem dunklen Bildschirm; Apps mit eigenem Look setzen
+## sie über set_colors).
+var line_color := LINE_COLOR
+var hover_color := HOVER_COLOR
+
 ## Welches Symbol gezeichnet wird.
 @export var icon_kind: Icon = Icon.CLOSE:
 	set(value):
@@ -49,6 +54,22 @@ func _ready() -> void:
 	text = ""
 	if tooltip_text.is_empty():
 		tooltip_text = DEFAULT_TIPS.get(icon_kind, "")
+	_apply_boxes()
+	mouse_entered.connect(queue_redraw)
+	mouse_exited.connect(queue_redraw)
+
+
+## Eigene Farben (z. B. dunkle Striche auf dem hellen Papier einer App).
+func set_colors(line: Color, hover: Color) -> void:
+	line_color = line
+	hover_color = hover
+	if is_inside_tree():
+		_apply_boxes()
+	queue_redraw()
+
+
+## Runde Fläche hinter dem Symbol, ganz zart im Farbton der Striche.
+func _apply_boxes() -> void:
 	var radius := int(custom_minimum_size.x / 2.0)
 	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
 		var box := StyleBoxFlat.new()
@@ -56,18 +77,16 @@ func _ready() -> void:
 		box.anti_aliasing = true
 		match state:
 			"normal":
-				box.bg_color = Color(1.0, 0.95, 0.85, 0.07)
+				box.bg_color = Color(line_color, 0.07)
 			"hover":
-				box.bg_color = Color(1.0, 0.95, 0.85, 0.16)
+				box.bg_color = Color(line_color, 0.16)
 			"pressed", "hover_pressed":
-				box.bg_color = Color(1.0, 0.85, 0.6, 0.24)
+				box.bg_color = Color(hover_color, 0.24)
 			"disabled":
-				box.bg_color = Color(1.0, 0.95, 0.85, 0.03)
+				box.bg_color = Color(line_color, 0.03)
 			_:
 				box.bg_color = Color(0, 0, 0, 0)
 		add_theme_stylebox_override(state, box)
-	mouse_entered.connect(queue_redraw)
-	mouse_exited.connect(queue_redraw)
 
 
 func _update_size() -> void:
@@ -78,7 +97,7 @@ func _update_size() -> void:
 func _draw() -> void:
 	if icon != null:
 		return  # eigenes Bild: zeigt der Button selbst
-	var color := DISABLED_COLOR if disabled else (HOVER_COLOR if is_hovered() or button_pressed else LINE_COLOR)
+	var color := Color(line_color, 0.3) if disabled else (hover_color if is_hovered() or button_pressed else line_color)
 	var c := size / 2.0
 	var w := 2.0
 	match icon_kind:

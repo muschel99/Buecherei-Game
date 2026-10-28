@@ -1,6 +1,30 @@
 [gd_resource type="Resource" script_class="TabletAppData" format=3]
 
 [ext_resource type="Script" path="res://scripts/data/tablet_app_data.gd" id="1_app"]
+[ext_resource type="Script" path="res://scripts/data/tablet_app_style.gd" id="2_style"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/DejaVuSansCondensed.ttf" id="3_font"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/DejaVuSansCondensed-Bold.ttf" id="4_font"]
+
+[sub_resource type="Resource" id="Style"]
+script = ExtResource("2_style")
+background = Color(0.72, 0.57, 0.4, 1)
+pattern_color = Color(0.42, 0.3, 0.18, 0.2)
+panel = Color(0.86, 0.76, 0.6, 0.95)
+panel_border = Color(0.38, 0.26, 0.15, 0.6)
+text = Color(0.2, 0.13, 0.07, 1)
+muted = Color(0.38, 0.27, 0.16, 0.95)
+accent = Color(0.62, 0.2, 0.15, 1)
+accent_text = Color(0.98, 0.93, 0.85, 1)
+second = Color(0.3, 0.42, 0.3, 1)
+pattern = 5
+radius = 6
+button_radius = 4
+border_width = 2
+title_spacing = 3
+font = ExtResource("3_font")
+title_font = ExtResource("4_font")
+title_uppercase = true
+welcome = "Willkommen im %s"
 
 [resource]
 script = ExtResource("1_app")
@@ -10,3 +34,4 @@ symbol = 2
 color = Color(0.68, 0.5, 0.25, 1)
 scene_path = "res://scenes/ui/tablet_apps/storage_app.tscn"
 order = 30
+style = SubResource("Style")
