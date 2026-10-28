@@ -37,7 +37,7 @@
 | 5a  | Leben auf der Straße                     | fertig        |
 | 5b  | Figuren und Fahrzeuge im Stil            | in Arbeit     |
 | 5c  | Chibi-Figuren (Mannequins, Gesichter)    | in Arbeit     |
-| 6   | Möbelkatalog im neuen Stil               | in Arbeit     |
+| 6   | Möbelkatalog im neuen Stil               | fertig        |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
@@ -95,8 +95,8 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 | Alle einstellbaren Werte | `scripts/autoload/game_config.gd` |
 
 **Was noch offen oder provisorisch ist**
-- Möbel, Deko, Theke und Rückgabe-Einwurf gibt es seit **Etappe 6** im Bilderbuch-Stil. Noch Platzhalter:
-  Kasse und Tablet auf der Theke, Wände, Boden, Decke und Fenster der Bücherei innen.
+- Möbel, Deko, Theke (mit Kasse und Tablet) und Rückgabe-Einwurf gibt es seit **Etappe 6** im
+  Bilderbuch-Stil. Noch Platzhalter: Wände, Boden, Decke und Fenster der Bücherei innen.
 - Das Licht der ganzen Welt (warm, mildes Leuchten, leichte Unschärfe in der Ferne) ist noch nicht
   abgestimmt.
 - Die realistischen Figuren aus 5b werden nicht mehr benutzt (die Chibi-Figuren ersetzen sie), ihre
@@ -1098,7 +1098,12 @@ Gestaltungsmodus und im Shop schöne Bild-Kacheln statt Text. Der Stil dient nur
 - [x] Theke und Rückgabe-Einwurf je Stil (Auswahl in der App „Fassade“): 4 Theken (Schlichte Holztheke,
       Bibliothekstheke, Helle Theke, Landhaustheke) als Datenblätter in `data/counters/`, 3 neue Einwürfe
       (Messingklappe, Schlichte Platte, Briefkasten mit Dach); alte Spielstände bekommen die passende Theke
-- [ ] Übersichts-Szene mit allen Objekten, Testbilder, Leistung in allen drei Grafikstufen
+- [x] Übersichts-Szene mit allen Objekten (`scenes/tools/catalog_showroom.tscn`), Testbilder, Leistung in
+      allen drei Grafikstufen: ein ganzer Stil auf einmal im Bild (≈ 26 Objekte, alle Lampen an) braucht
+      830–1020 / 1020–1320 / 1290–1580 Zeichenaufrufe (Niedrig/Mittel/Hoch) – weniger als halb so viel wie
+      der Blick aus dem Laden auf die Straße (1740 / 3390 / 3380). Lampen-Schatten: Niedrig keine, ab Mittel
+      die 3 Stehlampen, auf Hoch dazu 5 Tisch- und Hängelampen, Kerzen/Wandlampen/Kronleuchter nie
+- [x] Kasse und Theken-Tablet im Bilderbuch-Stil (stilneutral, auf jeder Theke)
 - [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md)
 
 **Entscheidungen (selbst getroffen):**
