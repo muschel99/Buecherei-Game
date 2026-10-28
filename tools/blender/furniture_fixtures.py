@@ -6,6 +6,7 @@ Theken (kind="counter"): alle gleich groß, damit Kollision und Ablagefläche de
 Einwürfe (kind="return_slot"): Ursprung hinten auf der Hauswand in der Mitte des Schlitzes,
 Vorderseite -y, etwa 34 x 30 cm. Ergebnis: Modell + Datenblatt in data/counters/ bzw.
 data/return_slots/ (siehe storybook_furniture.write_option_data), Auswahl in der App „Fassade“.
+Teile (kind="part"): Kasse und Tablet auf der Theke – nur Modell, ihre Szenen binden die .glb ein.
 """
 
 import math
@@ -507,6 +508,68 @@ def build_slot_country(k):
                         shape="oval", thick=0.0018, curl=0.0, segs=5)
 
 
+# --- Kasse (Modul der Theke, stilneutral; Bedienseite -y, Anzeige auch nach hinten zur Kundschaft) ---
+
+def build_cash_register(k):
+    FN.wood(k, FN.OAK_MID)
+    FD.brass(k)
+    k.mat("key", (0.95, 0.92, 0.84), grain="smooth", rough=0.4, vary=0.03)
+    k.mat("key_red", (0.72, 0.24, 0.2), grain="smooth", rough=0.4, vary=0.03)
+    k.mat("screen", (0.98, 0.9, 0.72), grain="smooth", rough=0.3, vary=0.02, emit=1.4, emit_color=(1.0, 0.84, 0.58))
+    base = k.part("Gehäuse", "wood", bevel=0.006)
+    base.box((0, 0.0, 0.006), (0.38, 0.34, 0.012), step=0.3, dent=0.0004)
+    base.box((0, 0.0, 0.056), (0.36, 0.32, 0.09), step=0.3, dent=0.0006)
+    base.box((0, 0.11, 0.167), (0.24, 0.08, 0.135), step=0.3, dent=0.0006)
+    base.box((0, 0.11, 0.24), (0.26, 0.095, 0.016), step=0.3, dent=0.0004)
+    deck = Matrix.Translation((0, -0.055, 0.112)) @ Matrix.Rotation(math.radians(22), 4, "X")
+    base.box((0, 0, 0), (0.34, 0.17, 0.05), step=0.3, dent=0.0004, matrix=deck)
+    drawer = k.part("Schublade", "wood", bevel=0.004)
+    drawer.box((0, -0.162, 0.052), (0.32, 0.012, 0.068), step=0.3, dent=0.0004)
+    hw = k.part("Beschläge", "brass", bevel=0.0)
+    F.knob(hw, (0, -0.168, 0.052), r=0.011)
+    # Fenster der Anzeige (vorn und hinten) mit Messingrahmen
+    win = k.part("Anzeige", "screen", bevel=0.0, settle=False)
+    for y, sign in ((0.0695, -1), (0.1505, 1)):
+        win.box((0, y, 0.19), (0.16, 0.004, 0.042), step=0.5, dent=0.0)
+        hw.tube([(-0.084, y + sign * 0.002, 0.168), (0.084, y + sign * 0.002, 0.168), (0.084, y + sign * 0.002, 0.212),
+                 (-0.084, y + sign * 0.002, 0.212), (-0.084, y + sign * 0.002, 0.168)], 0.003, segs=5)
+    # Tasten: drei Reihen auf dem schrägen Feld, die rechte untere rot
+    keys = k.part("Tasten", "key", bevel=0.0)
+    red = k.part("Taste rot", "key_red", bevel=0.0)
+    for row, ly in enumerate((-0.05, 0.0, 0.05)):
+        for col in range(5):
+            lx = -0.12 + col * 0.06
+            stem = deck @ Vector((lx, ly, 0.025))
+            top = deck @ Vector((lx, ly, 0.04))
+            hw.tube([stem, top], 0.0035, segs=6)
+            part = red if (row == 0 and col == 4) else keys
+            part.lathe([(0.0, 0.0), (0.013, 0.0), (0.014, 0.004), (0.011, 0.008), (0.0, 0.009)], top, segs=14, turn=(22, 0))
+    # Kurbel rechts
+    hw.blob((0.186, 0.0, 0.058), 0.014, subdiv=1, lump=0.0, scale=(0.6, 1, 1))
+    hw.tube([(0.19, 0.0, 0.058), (0.2, -0.02, 0.1), (0.2, -0.03, 0.125)], 0.0045, segs=6, smooth=1)
+    wood_knob = k.part("Kurbelgriff", "wood", bevel=0.0)
+    wood_knob.lathe([(0.0, 0.0), (0.008, 0.0), (0.009, 0.02), (0.006, 0.03), (0.0, 0.031)], (0.199, -0.03, 0.125), segs=12,
+                    turn=(0, 90))
+
+
+# --- Theken-Tablet (stilneutral; Bildschirm -y, leicht nach hinten gekippt) ---
+
+def build_tablet(k):
+    FN.wood(k, FN.OAK_MID)
+    k.mat("case", (0.33, 0.24, 0.19), grain="smooth", rough=0.5, vary=0.08, scale=5.0, bump=0.12)
+    k.mat("screen", (0.98, 0.9, 0.74), grain="smooth", rough=0.3, vary=0.02, emit=1.2, emit_color=(1.0, 0.86, 0.62))
+    stand = k.part("Ständer", "wood", bevel=0.005)
+    stand.box((0, 0.0, 0.008), (0.16, 0.11, 0.016), step=0.3, dent=0.0004)
+    stand.box((0, -0.044, 0.022), (0.17, 0.02, 0.022), step=0.3, dent=0.0004)
+    stand.span((0, 0.045, 0.012), (0, 0.03, 0.124), 0.04, 0.012, step=0.3, dent=0.0003)
+    tilt = Matrix.Translation((0, -0.034, 0.026)) @ Matrix.Rotation(math.radians(-25), 4, "X")
+    case = k.part("Hülle", "case", bevel=0.007)
+    case.box((0, 0, 0.096), (0.27, 0.014, 0.19), step=0.3, dent=0.0004, matrix=tilt)
+    screen = k.part("Bildschirm", "screen", bevel=0.0, settle=False)
+    screen.box((0, -0.0075, 0.1), (0.236, 0.004, 0.152), step=0.5, dent=0.0, matrix=tilt)
+    case.blob(tilt @ Vector((0, -0.007, 0.183)), 0.003, subdiv=1, lump=0.0)
+
+
 ITEMS = [
     dict(id="counter_classic", kind="counter", name="Schlichte Holztheke", order=10, legacy=["wood_warm"], settle=0.35,
          desc="Eine ehrliche Theke aus Eiche mit drei Feldern vorn – passt zu allem.",
@@ -526,4 +589,6 @@ ITEMS = [
          desc="", styles=["minimalist"], build=build_slot_minimalist),
     dict(id="slot_country", kind="return_slot", name="Briefkasten mit Dach", order=60, settle=0.3,
          desc="", styles=["country"], build=build_slot_country),
+    dict(id="cash_register", kind="part", name="Kasse", settle=0.3, styles=[], build=build_cash_register),
+    dict(id="tablet", kind="part", name="Theken-Tablet", settle=0.2, styles=[], build=build_tablet),
 ]

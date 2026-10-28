@@ -25,6 +25,8 @@ var _player: Player
 
 
 func _ready() -> void:
+	# Unsichtbar, bis _process entscheidet (sonst steht kurz ein leeres Buch im Bild)
+	visible = false
 	position = OFFSET
 	# Cover zeigt zu mir (Buchrücken links), leicht schräg gehalten
 	rotation_degrees = Vector3(12.0, -90.0 + 14.0, 6.0)

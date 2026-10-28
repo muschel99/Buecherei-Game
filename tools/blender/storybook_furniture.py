@@ -42,8 +42,9 @@ DATA_DIR = os.path.join(ROOT, "data", "furniture")
 SHOTS = os.path.join(ROOT, "screenshots", "blender", "furniture")
 
 # Arten (Beschreibung: kind=…): gewöhnliche Möbel (Szene + Datenblatt in data/furniture/), Theken
-# (nur Modell + Datenblatt in data/counters/ – die feste Theken-Szene setzt das Modell ein) und
-# Einwürfe des Rückgabekastens (Modell + Datenblatt in data/return_slots/).
+# (nur Modell + Datenblatt in data/counters/ – die feste Theken-Szene setzt das Modell ein),
+# Einwürfe des Rückgabekastens (Modell + Datenblatt in data/return_slots/) und Teile (nur Modell,
+# z. B. Kasse und Tablet – ihre Szenen gibt es schon und binden die .glb ein).
 KINDS = {
     "furniture": dict(model="assets/models/furniture", source="assets/models/source/furniture",
                       mat="assets/materials/furniture", template="assets/models/templates/furniture"),
@@ -51,6 +52,8 @@ KINDS = {
                     mat="assets/materials/furniture", template="assets/models/templates/furniture", data="data/counters"),
     "return_slot": dict(model="assets/models/objects/return_slots", source="assets/models/source/objects",
                         mat="assets/materials/objects", template="assets/models/templates/objects", data="data/return_slots"),
+    "part": dict(model="assets/models/furniture", source="assets/models/source/furniture",
+                 mat="assets/materials/furniture", template="assets/models/templates/furniture"),
 }
 
 
@@ -1084,7 +1087,9 @@ def export(kit, force_data=False, render=False):
     names = list(dict.fromkeys(SC.LAST_EXPORT_MATERIALS + [o.data.materials[0].name for o in flames if o.data.materials]))
     mapping = write_materials(kit, names)
     write_import(glb, mapping)
-    if "data" in kit.dirs:
+    if kit.spec.get("kind") == "part":
+        pass  # nur Modell: die Szene gibt es schon
+    elif "data" in kit.dirs:
         write_option_data(kit, glb, force=force_data)
     else:
         write_scene(kit, bounds, force=force_data)
