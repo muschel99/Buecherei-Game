@@ -19,6 +19,8 @@ const CROSSHAIR_ACTIVE_SCALE := 1.6
 
 @onready var _crosshair: Panel = $Crosshair
 @onready var _cursor_icon: TextureRect = $CursorIcon
+## Filter im Gestaltungsmodus offen (Mauszeiger frei, kein Punkt in der Mitte)
+var _filter_open := false
 @onready var _money_label: Label = %MoneyLabel
 @onready var _money_change_label: Label = %MoneyChangeLabel
 
@@ -157,10 +159,12 @@ func _on_player_interaction_target_changed(target: Interactable) -> void:
 	_tween.tween_property(_crosshair, "modulate:a", 1.0 if is_active else CROSSHAIR_IDLE_ALPHA, FADE_TIME)
 
 
-## Im Katalog-Zustand des Gestaltungsmodus ist der Mauszeiger sichtbar – dann
-## wird der Punkt in der Bildmitte nicht gebraucht.
-func _on_build_mode_catalog_state_changed(in_catalog: bool) -> void:
-	_crosshair.visible = not in_catalog and not _cursor_icon.visible
+## Bei offenem Filter im Gestaltungsmodus ist der Mauszeiger sichtbar – dann wird der Punkt in
+## der Bildmitte nicht gebraucht.
+func _on_build_mode_filter_open_changed(open: bool) -> void:
+	_filter_open = open
+	_crosshair.visible = not open and not _cursor_icon.visible
+	_cursor_icon.modulate.a = 0.0 if open else 1.0
 
 
 ## Beim Gestalten: Farbroller (Wand), Teppich (Boden) oder Deckenroller statt des Punkts.
@@ -175,4 +179,4 @@ func _on_build_mode_cursor_icon_changed(icon: String) -> void:
 		_:
 			_cursor_icon.texture = null
 	_cursor_icon.visible = _cursor_icon.texture != null
-	_crosshair.visible = not _cursor_icon.visible
+	_crosshair.visible = not _cursor_icon.visible and not _filter_open

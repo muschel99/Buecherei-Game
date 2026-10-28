@@ -50,7 +50,7 @@ func _init(tile_size: Vector2 = Vector2(132, 112), with_dots: bool = false) -> v
 			"pressed", "hover_pressed":
 				box.bg_color = Color(0.48, 0.34, 0.22, 0.9)
 				box.border_color = KEY_COLOR
-				box.set_border_width_all(2)
+				box.set_border_width_all(3)
 			"disabled":
 				box.bg_color = Color(0.3, 0.22, 0.16, 0.35)
 			_:

@@ -343,6 +343,11 @@ var preview_color_invalid: Color = Color(0.95, 0.4, 0.35)
 var highlight_brightness: float = 0.06
 ## Heller Schimmer am Rand des Objekts (0 = kein Rand, 1 = sehr hell).
 var highlight_rim_strength: float = 0.45
+## Im Gestaltungsmodus (seit Etappe 6b): das angeschaute Möbelstück leuchtet etwas deutlicher und
+## warm – Aufhellung, Rand und Farbe.
+var build_highlight_brightness: float = 0.11
+var build_highlight_rim_strength: float = 0.7
+var build_highlight_color: Color = Color(1.0, 0.88, 0.66)
 ## Regal-Menü: Ein Fach, dessen Auswahl ich anfahre, leuchtet so hell auf (Fläche, Kanten).
 var fach_highlight_fill: float = 0.07
 var fach_highlight_edge: float = 0.5

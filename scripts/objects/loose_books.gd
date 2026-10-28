@@ -20,7 +20,7 @@ extends Node3D
 ##   aufrechtes Buch: aufrecht daneben (Rücken nach vorn). Eine halbdurchsichtige Vorschau
 ##   zeigt vorher, wohin es kommt (rötlich, wenn es dort nicht geht).
 ## - Rechtsklick auf ein ausgelegtes Buch: wieder in die Hand nehmen.
-## - Möbelstück verschoben: Bücher darauf wandern mit (move_with). Weggeräumt (X): Bücher
+## - Möbelstück verschoben: Bücher darauf wandern mit (move_with). Weggeräumt (Mausrad-Klick): Bücher
 ##   gehen ins Lager (release_on).
 
 ## Wird gesendet, wenn Bücher ausgelegt oder weggenommen werden.

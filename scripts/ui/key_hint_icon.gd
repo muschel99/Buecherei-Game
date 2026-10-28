@@ -2,10 +2,10 @@ class_name KeyHintIcon
 extends Control
 ## Ein kleines, weiches Tastensymbol für die Hinweise unter der Bildmitte:
 ## eine abgerundete Taste mit Buchstaben (z. B. "E", "Q") oder eine Maus, bei der die linke
-## bzw. rechte Taste oder das Mausrad hell ist. Halte-Aktionen haben einen feinen Ring, der sich beim
-## Gedrückthalten füllt (progress).
+## bzw. rechte Taste oder das Mausrad hell ist (MOUSE_MIDDLE = Mausrad drücken: Rad mit kleinem Pfeil
+## nach unten). Halte-Aktionen haben einen feinen Ring, der sich beim Gedrückthalten füllt (progress).
 
-enum Kind { KEY, MOUSE_LEFT, MOUSE_RIGHT, MOUSE_WHEEL }
+enum Kind { KEY, MOUSE_LEFT, MOUSE_RIGHT, MOUSE_WHEEL, MOUSE_MIDDLE }
 
 const ICON_SIZE := 38.0
 const FILL_COLOR := Color(0.12, 0.09, 0.07, 0.42)
@@ -55,6 +55,11 @@ func _draw() -> void:
 				rect.size.x, font_size, LINE_COLOR)
 		Kind.MOUSE_WHEEL:
 			_draw_mouse_wheel(center)
+		Kind.MOUSE_MIDDLE:
+			_draw_mouse_wheel(center)
+			# Kleiner Pfeil unter dem Rad: das Rad wird gedrückt, nicht gedreht
+			var tip := Vector2(center.x, center.y + 9.0)
+			draw_colored_polygon(PackedVector2Array([tip, tip + Vector2(-4.0, -4.5), tip + Vector2(4.0, -4.5)]), BUTTON_COLOR)
 		_:
 			_draw_mouse(center, kind == Kind.MOUSE_LEFT)
 	if is_hold:

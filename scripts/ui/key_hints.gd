@@ -83,21 +83,21 @@ func _rebuild(with_words: bool) -> void:
 		var icon := KeyHintIcon.new()
 		match input:
 			"take":
-				_setup_icon(icon, "book_take", false)
+				setup_icon(icon, "book_take", false)
 			"place":
-				_setup_icon(icon, "book_place", false)
+				setup_icon(icon, "book_place", false)
 			"place_all":
-				_setup_icon(icon, "book_place", true)
+				setup_icon(icon, "book_place", true)
 			"store_hold":
-				_setup_icon(icon, "store_books", true)
+				setup_icon(icon, "store_books", true)
 			"menu":
-				_setup_icon(icon, "open_menu", false)
+				setup_icon(icon, "open_menu", false)
 			"rotate":
-				_setup_icon(icon, "book_rotate", false)
+				setup_icon(icon, "book_rotate", false)
 			"cycle":
-				_setup_icon(icon, "interact", false)
+				setup_icon(icon, "interact", false)
 			_:
-				_setup_icon(icon, "interact", input == "interact_hold")
+				setup_icon(icon, "interact", input == "interact_hold")
 		item.add_child(icon)
 		_icons[input] = icon
 		var word: String = hint.get("word", "")
@@ -125,7 +125,7 @@ func _fade(alpha: float) -> void:
 ## Symbol passend zur Taste einer Aktion: Maus links/rechts, Mausrad oder eine Taste mit
 ## Buchstaben.
 ## So stimmen die Symbole auch, wenn die Tasten später anders belegt werden.
-static func _setup_icon(icon: KeyHintIcon, action: StringName, hold: bool) -> void:
+static func setup_icon(icon: KeyHintIcon, action: StringName, hold: bool) -> void:
 	icon.is_hold = hold
 	for event in InputMap.action_get_events(action):
 		if event is InputEventMouseButton:
@@ -134,17 +134,24 @@ static func _setup_icon(icon: KeyHintIcon, action: StringName, hold: bool) -> vo
 					icon.kind = KeyHintIcon.Kind.MOUSE_RIGHT
 				MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN:
 					icon.kind = KeyHintIcon.Kind.MOUSE_WHEEL
+				MOUSE_BUTTON_MIDDLE:
+					icon.kind = KeyHintIcon.Kind.MOUSE_MIDDLE
 				_:
 					icon.kind = KeyHintIcon.Kind.MOUSE_LEFT
 			return
 	icon.kind = KeyHintIcon.Kind.KEY
-	icon.key_text = _key_name(action)
+	icon.key_text = key_name(action)
 
 
 ## Tastenname einer Aktion (z. B. "E"), damit das Symbol auch nach einer Tastenänderung stimmt.
-static func _key_name(action: StringName) -> String:
+static func key_name(action: StringName) -> String:
 	for event in InputMap.action_get_events(action):
 		if event is InputEventKey:
-			return OS.get_keycode_string(DisplayServer.keyboard_get_keycode_from_physical(event.physical_keycode)) \
-				if event.physical_keycode != 0 else event.as_text_keycode()
+			if event.physical_keycode == 0:
+				return event.as_text_keycode()
+			# Buchstabe nach der Tastaturbelegung (z. B. deutsches Y statt Z) – ohne Bildschirm
+			# (Tests) kennt Godot die Belegung nicht, dann der Name der Taste
+			if DisplayServer.get_name() == "headless":
+				return OS.get_keycode_string(event.physical_keycode)
+			return OS.get_keycode_string(DisplayServer.keyboard_get_keycode_from_physical(event.physical_keycode))
 	return "?"

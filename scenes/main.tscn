@@ -199,7 +199,7 @@ player_path = NodePath("../Player")
 [node name="StorageIndicator" parent="." instance=ExtResource("18_storage")]
 
 [connection signal="interaction_target_changed" from="Player" to="HUD" method="_on_player_interaction_target_changed"]
-[connection signal="catalog_state_changed" from="BuildMode" to="HUD" method="_on_build_mode_catalog_state_changed"]
+[connection signal="filter_open_changed" from="BuildMode" to="HUD" method="_on_build_mode_filter_open_changed"]
 [connection signal="cursor_icon_changed" from="BuildMode" to="HUD" method="_on_build_mode_cursor_icon_changed"]
 [connection signal="seated_changed" from="Player" to="HUD" method="_on_player_seated_changed"]
 [connection signal="hold_progress_changed" from="Player" to="HUD" method="_on_player_hold_progress_changed"]

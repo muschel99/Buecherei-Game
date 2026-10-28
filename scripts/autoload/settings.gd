@@ -41,6 +41,8 @@ const DEFINITIONS: Array[Dictionary] = [
 		"type": "toggle", "default": false},
 	{"key": "interface/hints", "section": "Oberfläche", "label": "Hinweise",
 		"type": "choice", "options": ["Aus", "Nur Symbole", "Symbol mit Wort"], "default": 2},
+	{"key": "interface/build_key_help", "section": "Oberfläche", "label": "Tastenhilfe im Gestaltungsmodus (H)",
+		"type": "toggle", "default": true},
 ]
 
 ## Werte der Einstellung "Hinweise" (Tastensymbole unter der Bildmitte).

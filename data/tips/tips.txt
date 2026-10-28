@@ -106,15 +106,17 @@ Wo Deko steht, bleibt Platz frei – die Bücher rücken einfach daneben.
 == Der Gestaltungsmodus
 Mit <Tab> öffnest du den Gestaltungsmodus. Unten siehst du alles, was in deinem Inventar liegt.
 
-Ein Klick wählt etwas aus, ein weiterer Klick stellt es hin.
+Mit <Y> und <X> wechselst du die Kategorie, mit <C> und <V> das Möbelstück. Ein <Linksklick> stellt es hin.
 
-== Drehen und Einrasten
-Mit dem <Mausrad> drehst du ein Möbelstück.
+== Aufnehmen und Drehen
+Schau ein Möbelstück an und nimm es mit einem <Rechtsklick> auf. Mit dem <Mausrad> drehst du es.
 
 <G> schaltet das Raster ein – dann steht alles schön ordentlich.
 
-== Wegräumen
-Mit <X> legst du ein Möbelstück zurück ins Inventar – mit allem, was darauf steht.
+== Weglegen und Filter
+Ein Klick auf das <Mausrad> legt weg, was du in der Hand hast – ein aufgenommenes Möbelstück kommt mit allem, was darauf steht, zurück ins Inventar.
+
+Mit <F> öffnest du den Filter. <H> blendet die kleine Tastenhilfe unten aus und ein.
 
 == Wände und Böden
 Wandfarben und Böden streichst du Stück für Stück mit einem Klick.

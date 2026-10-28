@@ -88,9 +88,11 @@ func get_content_nodes() -> Array[Node]:
 
 
 ## Leichtes Aufleuchten, wenn man im Gestaltungsmodus darauf zeigt.
-func set_highlighted(highlighted: bool) -> void:
+## Hervorheben (build = im Gestaltungsmodus: etwas deutlicher und warm).
+func set_highlighted(highlighted: bool, build: bool = false) -> void:
 	if _model:
-		FurnitureUtils.set_overlay(_model, FurnitureUtils.get_highlight_material() if highlighted else null)
+		var material := FurnitureUtils.get_build_highlight_material() if build else FurnitureUtils.get_highlight_material()
+		FurnitureUtils.set_overlay(_model, material if highlighted else null)
 
 
 func _rebuild_model() -> void:

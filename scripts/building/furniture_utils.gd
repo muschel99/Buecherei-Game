@@ -14,6 +14,7 @@ const SURFACE_LAYER_BIT := 32
 const _FALLBACK_CELL := 0.25
 
 static var _highlight_material: ShaderMaterial
+static var _build_highlight_material: ShaderMaterial
 ## Eingefärbte Kopien von Materialien (Original + Farbe -> Kopie), damit gleiche Farben dasselbe
 ## Material teilen.
 static var _tinted_materials: Dictionary = {}
@@ -165,6 +166,18 @@ static func get_highlight_material() -> ShaderMaterial:
 		_highlight_material.set_shader_parameter("brightness", GameConfig.highlight_brightness)
 		_highlight_material.set_shader_parameter("rim_strength", GameConfig.highlight_rim_strength)
 	return _highlight_material
+
+
+## Hervorhebung im Gestaltungsmodus: etwas deutlicher und warm (Werte in GameConfig).
+static func get_build_highlight_material() -> ShaderMaterial:
+	if _build_highlight_material == null:
+		_build_highlight_material = ShaderMaterial.new()
+		_build_highlight_material.shader = load("res://assets/shaders/highlight.gdshader")
+		_build_highlight_material.set_shader_parameter("brightness", GameConfig.build_highlight_brightness)
+		_build_highlight_material.set_shader_parameter("rim_strength", GameConfig.build_highlight_rim_strength)
+		var color := GameConfig.build_highlight_color
+		_build_highlight_material.set_shader_parameter("tint", Vector3(color.r, color.g, color.b))
+	return _build_highlight_material
 
 
 ## Hebt das Objekt hervor, zu dem ein Interactable gehört (oder nimmt die Hervorhebung weg).

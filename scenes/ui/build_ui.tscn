@@ -24,7 +24,12 @@ content_margin_left = 14.0
 content_margin_top = 10.0
 content_margin_right = 14.0
 content_margin_bottom = 12.0
-bg_color = Color(0.1, 0.07, 0.05, 0.5)
+bg_color = Color(0.17, 0.12, 0.09, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.96, 0.78, 0.48, 0.6)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -71,6 +76,29 @@ theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 vertical_alignment = 2
 
+[node name="FilterPanel" type="PanelContainer" parent="Root/BottomBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(660, 0)
+size_flags_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_help")
+
+[node name="VBox" type="VBoxContainer" parent="Root/BottomBox/FilterPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FilterTitle" type="HBoxContainer" parent="Root/BottomBox/FilterPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FilterBar" type="VBoxContainer" parent="Root/BottomBox/FilterPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_filter")
+two_rows = true
+
 [node name="CatalogPanel" type="PanelContainer" parent="Root/BottomBox"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -97,20 +125,13 @@ size_flags_vertical = 4
 mouse_filter = 2
 color = Color(1, 0.94, 0.84, 0.18)
 
-[node name="FilterBar" type="VBoxContainer" parent="Root/BottomBox/CatalogPanel/VBox/Header"]
+[node name="FilterSummary" type="HBoxContainer" parent="Root/BottomBox/CatalogPanel/VBox/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
-script = ExtResource("2_filter")
-
-[node name="CatalogHint" type="Label" parent="Root/BottomBox/CatalogPanel/VBox/Header"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 4
-theme_override_colors/font_color = Color(0.85, 0.78, 0.68, 0.8)
-theme_override_font_sizes/font_size = 14
-text = "Tab – Katalog bedienen"
+mouse_filter = 2
+theme_override_constants/separation = 6
 
 [node name="ItemScroll" type="ScrollContainer" parent="Root/BottomBox/CatalogPanel/VBox"]
 unique_name_in_owner = true
@@ -123,37 +144,9 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HelpPanel" type="PanelContainer" parent="Root"]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -16.0
-offset_top = -120.0
-offset_right = -16.0
-offset_bottom = -120.0
-grow_horizontal = 0
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_help")
-
-[node name="VBox" type="VBoxContainer" parent="Root/HelpPanel"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 6
-
-[node name="Title" type="Label" parent="Root/HelpPanel/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.96, 0.88, 0.9)
-theme_override_font_sizes/font_size = 15
-text = "Gestaltungsmodus"
-
-[node name="HelpGrid" type="GridContainer" parent="Root/HelpPanel/VBox"]
+[node name="KeyHelp" type="HBoxContainer" parent="Root/BottomBox"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/h_separation = 14
-theme_override_constants/v_separation = 3
-columns = 2
+alignment = 1
+theme_override_constants/separation = 18

@@ -37,7 +37,7 @@ extends Node3D
 ## Leistung: Alle Bücher eines Regals werden in einem einzigen Rutsch gezeichnet
 ## (MultiMesh); die Buchrücken kommen aus einem gemeinsamen Bild (BookArt).
 ## Genre und Bücher (mit ihrer Lage) werden mit dem Regal im Raum gespeichert
-## (PlacedFurniture). Wird das Regal mit X weggeräumt, gehen die Bücher ins Lager
+## (PlacedFurniture). Wird das Regal weggeräumt (Mausrad-Klick), gehen die Bücher ins Lager
 ## (release_contents).
 
 ## Wird gesendet, wenn sich Bücher oder Genre ändern.

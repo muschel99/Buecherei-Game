@@ -337,7 +337,7 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   die Buchrücken kommen aus einem gemeinsamen Bild, das beim Start einmal gezeichnet wird.
   So bleiben auch hunderte Bücher im Raum leicht für den PC.
 - **Gestalten:** Verschiebt man ein Regal, bleiben Bücher und Deko darin (auch in der Vorschau
-  sichtbar). Räumt man es mit X weg, gehen seine Bücher ins Lager und die Deko ins Inventar.
+  sichtbar). Räumt man es weg (aufnehmen, Mausrad-Klick), gehen seine Bücher ins Lager und die Deko ins Inventar.
 
 ### Bücher in der Hand und Rückgabekasten (seit Etappe 3, neue Steuerung seit 3c/3d/3e)
 - Ich trage höchstens **7 Bücher** (`GameConfig.max_carried_books`). Das Buch obenauf sieht man
@@ -439,7 +439,7 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   - Ein Aufsteller hält genau ein Buch; ist er belegt, ist die Vorschau rot und ein Klick lässt
     sie nur kurz wackeln. Passt das Buch nicht (z. B. Regalbrett darüber zu niedrig), auch rot.
   - Das Buch zählt zum Bestand als „ausgelegt“. Verschiebe ich den Aufsteller (oder das
-    Möbelstück, auf dem er steht), wandert es mit; räume ich ihn mit X weg, geht es ins Lager.
+    Möbelstück, auf dem er steht), wandert es mit; räume ich ihn weg (Mausrad-Klick), geht es ins Lager.
   - Für eigene Modelle: Szene mit dem Knoten `BookStand` und dem Marker `BookSpot` (hintere
     Unterkante des Buchs, +Z nach vorn), Neigung `lean_angle`.
 - **Drehen mit dem Mausrad** (seit Etappe 3e): Vor dem Ablegen dreht das Mausrad das Buch
@@ -457,7 +457,7 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 - **Rechtsklick** auf ein ausgelegtes Buch nimmt es wieder in die Hand; was darauf lag,
   rutscht nach.
 - Ausgelegte Bücher gehören zu meinem Bestand („ausgelegt“). Verschiebe ich ein Möbelstück im
-  Gestaltungsmodus, wandern die Bücher darauf mit; räume ich es mit X weg, gehen sie zurück
+  Gestaltungsmodus, wandern die Bücher darauf mit; räume ich es weg (Mausrad-Klick), gehen sie zurück
   ins Lager. Mitten auf ausgelegte Bücher lässt sich kein Möbelstück stellen („Hier liegen
   Bücher.“). Steht eine Buchstütze im Bücherregal, räumt dort das Regal selbst ein.
   Ausgelegte Bücher und Buchstützen werden gespeichert wie bisher; ältere Spielstände laden
@@ -494,7 +494,7 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 ## Theke
 - Gehört seit Etappe 4a **fest zum Laden**: nicht kaufbar, nicht verkaufbar und nicht im
   Inventar (`is_essential` + `is_fixed`). Im Gestaltungsmodus lässt sie sich frei verschieben,
-  aber nicht wegräumen (X verweigert sie freundlich).
+  aber nicht wegräumen (der Mausrad-Klick stellt sie freundlich zurück an ihren Platz).
 - Modular: Kasse von Anfang an, dazu das Tablet mit seinen Apps (Nest & Nook, Bücherladen,
   Lager, Fassade, Statistik, Tipps & Tricks). Die Struktur für weitere Theken-Module (z. B.
   Backshop-Auslage, Kaffeeautomat) ist vorgesehen (Knoten „Modules“ in der Theken-Szene,
@@ -528,7 +528,7 @@ eine bestimmte Stelle treffen: Wer auf irgendeinen Teil eines Objekts schaut (vo
 Seite, hinten oder oben), kann es benutzen. Ausnahme Bücher (seit Etappe 3d): Rechtsklick
 nimmt ein Buch, Linksklick legt das Buch obenauf ab (ins Regal oder frei auf Tisch, Boden …),
 Linksklick halten am Regal räumt alle passenden ein, das Mausrad dreht das Buch vor dem
-Ablegen (nur im Spiel; im Gestaltungsmodus bleibt die Maus wie bisher). Hat das angeschaute
+Ablegen (nur im Spiel; der Gestaltungsmodus hat eigene Tasten, siehe dort). Hat das angeschaute
 Objekt keine eigene E-Aktion, blättert E durch die Bücher in der Hand. Das Regal-Menü öffnet
 die eigene, ruhige Taste R – so öffnet sich nie aus Versehen ein Menü; seit Etappe 3h geht R
 überall (ohne Regal im Blick nur mit der Bücherauswahl).
@@ -570,31 +570,52 @@ passt sich jeder Bildschirmgröße an.
 Was ganz im Raum steht, erscheint dort nicht (so bleibt es auch bei sehr vielen Objekten
 übersichtlich); Wandfarben, Böden und Decken, die mir gehören, sind immer da. Ist ein Reiter
 leer, steht dort freundlich: „Hier ist noch nichts. Bei „Nest & Nook“ am Theken-Tablet findest du mehr.“
-Platzieren nimmt eins aus dem Inventar; Aufheben und Wegräumen (X) legen es zurück – samt
-allem, was darauf steht.
+Platzieren nimmt eins aus dem Inventar; Aufnehmen und Weglegen (Mausrad-Klick) legen es zurück –
+samt allem, was darauf steht.
 
-Zwei Zustände:
-- **Katalog-Zustand:** Mauszeiger sichtbar. Im Inventar stöbern und auswählen, platzierte Möbel
-  anklicken (= aufheben, die Anzahl steigt um eins). Laufen mit WASD geht weiter, Umsehen mit gehaltener rechter Maustaste.
-  Nach dem Umsehen erscheint der Mauszeiger genau dort wieder, wo man die Taste gedrückt hat.
-- **Platzier-Zustand:** Sobald etwas ausgewählt oder aufgehoben ist, verschwindet der Mauszeiger
-  und die Vorschau folgt dem Blick. Nach dem Platzieren oder Zurücklegen geht es automatisch
-  zurück in den Katalog-Zustand.
-- Die Statuszeile unten zeigt nur kurz den Namen (z. B. „Kleiner Globus ×1“) oder, warum es
-  gerade nicht passt („Zu hoch für dieses Fach.“, „Hier stehen Bücher.“). Die Tasten stehen in
-  der Tastenhilfe rechts.
+Bedienung (seit Etappe 6b, Wunsch nach dem Test von Etappe 6): **Das Umsehen ist immer an die
+Maus gebunden** – wie beim Herumlaufen, ohne Umschalten. In der Bildmitte sitzt ein kleiner, dezenter
+Punkt; das Möbelstück, das ich anschaue, leuchtet sanft und warm auf (zarter heller Rand), darüber
+steht kurz sein Name.
+- **Auswählen mit der Tastatur:** Y und X wechseln die Kategorie (Y zurück, X vor, rundherum),
+  C und V das Möbelstück in der Kategorie (C zurück, V vor). Vor dem ersten und nach dem letzten
+  liegt ein leerer Platz „nichts ausgewählt“ (vorn in der Leiste, gestrichelter Kreis) – dort gibt es
+  keine Blaupause, danach geht es wieder von vorn los. Die Inventarleiste bleibt immer sichtbar:
+  Die gewählte Kategorie ist hell umrandet und steht mit Namen daneben, das gewählte Möbelstück hat
+  einen kräftigen goldenen Rahmen und rückt ins Bild.
+- **Abstellen:** Die Blaupause folgt dem Blick, Linksklick stellt hin. Ist noch eins im Inventar,
+  bleibt es in der Hand (gleiche Drehung) – sonst ist danach nichts ausgewählt.
+- **Aufnehmen:** Rechtsklick auf das angeschaute Möbelstück nimmt es auf (die Anzahl im Inventar
+  steigt um eins). Was ich vorher hielt, gebe ich dafür ab: Neues bleibt im Inventar, ein
+  aufgenommenes Möbelstück geht an seinen alten Platz zurück.
+- **Weglegen:** Ein Klick auf das Mausrad legt weg, was ich in der Hand habe – keine Blaupause mehr.
+  Ein aufgenommenes Möbelstück kommt dabei ins Inventar, samt allem, was darauf steht (so räumt man
+  weg); die Theke gehört fest zum Laden und geht an ihren Platz zurück.
+- **Filter:** F öffnet den Filter über der Leiste (Unterkategorien und Stile als Symbol-Knöpfe). Nur
+  solange er offen ist, ist der Mauszeiger frei – dann lassen sich Filter und Kacheln anklicken.
+  F oder Esc schließt ihn, danach ist das Umsehen wieder an der Maus. Aktive Filter stehen als kleine
+  Symbole neben dem Namen der Kategorie.
+- **Tastenhilfe:** Unten am Rand eine kleine Zeile mit Symbolen und je einem Wort (Kategorie, Möbel,
+  Aufnehmen, Ablegen, Drehen, Weglegen, Filter, Raster, Hilfe). H blendet sie aus und ein (bleibt
+  gespeichert, auch unter Einstellungen → Oberfläche); ausgeblendet bleibt nur ein dezentes „H Hilfe“.
+- Die Statuszeile über der Leiste zeigt nur kurz den Namen (z. B. „Kleiner Globus ×1“) oder, warum es
+  gerade nicht passt („Zu hoch für dieses Fach.“, „Hier stehen Bücher.“).
 
 | Taste                    | Aktion                                                         |
 |--------------------------|----------------------------------------------------------------|
-| Tab / Esc                | Gestaltungsmodus schließen (Gehaltenes geht zurück)            |
-| Linksklick               | Auswählen / aufheben / platzieren / Abschnitt streichen         |
+| Tab / Esc                | Gestaltungsmodus schließen (Gehaltenes geht zurück; Esc schließt zuerst einen offenen Filter) |
+| Maus                     | Umsehen (immer)                                                |
+| Y / X                    | Kategorie zurück / vor                                         |
+| C / V                    | Möbelstück zurück / vor (dazwischen: nichts ausgewählt)        |
+| Linksklick               | Abstellen bzw. Abschnitt streichen/belegen                     |
 | Linksklick halten + ziehen | Mehrere Wand-, Boden- oder Deckenabschnitte nacheinander     |
 | Umschalt + Linksklick    | Wand: ganze Wand · Boden/Decke: Füllwerkzeug (wie Farbeimer)   |
-| Rechte Maustaste halten  | Umsehen (im Katalog-Zustand)                                   |
-| Rechtsklick              | Auswahl beenden bzw. Aufgehobenes zurück an den alten Platz    |
+| Rechtsklick              | Angeschautes Möbelstück aufnehmen                              |
 | Mausrad                  | Drehen                                                         |
+| Mausrad-Klick            | Weglegen (keine Blaupause mehr; Aufgenommenes ins Inventar)    |
+| F                        | Filter auf/zu (nur dann ist der Mauszeiger frei)               |
 | G                        | Einrasten an/aus (Raster 1/9 m ≈ 11,1 cm und 15°-Schritte)      |
-| X                        | Gehaltenes oder anvisiertes Objekt ins Inventar legen          |
+| H                        | Tastenhilfe am unteren Rand aus/ein                            |
 
 ### Gestaltungsregeln
 - Standard: frei platzieren und stufenlos drehen. Mit G rastet alles am Raster ein.

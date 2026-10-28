@@ -179,12 +179,26 @@ text = "Tab"
 [node name="ActionBuild" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 text = "Gestaltungsmodus (Inventar) öffnen/schließen"
 
-[node name="KeyRemove" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+[node name="KeyBuildChoose" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
-text = "X"
+text = "Y / X · C / V"
 
-[node name="ActionRemove" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
-text = "Im Gestaltungsmodus: Objekt ins Inventar legen"
+[node name="ActionBuildChoose" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Im Gestaltungsmodus: Kategorie zurück/vor · Möbel zurück/vor (dazwischen: nichts ausgewählt)"
+
+[node name="KeyBuildMouse" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "Maustasten"
+
+[node name="ActionBuildMouse" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Im Gestaltungsmodus: Rechtsklick aufnehmen · Linksklick abstellen · Mausrad drehen · Mausrad-Klick weglegen (ins Inventar)"
+
+[node name="KeyBuildMore" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)
+text = "F · G · H"
+
+[node name="ActionBuildMore" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
+text = "Im Gestaltungsmodus: Filter (Mauszeiger frei) · Raster · Tastenhilfe am unteren Rand"
 
 [node name="KeyFps" type="Label" parent="ControlsPanel/VBox/KeyGrid"]
 theme_override_colors/font_color = Color(0.96, 0.78, 0.48, 1)

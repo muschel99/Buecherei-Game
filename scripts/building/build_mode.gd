@@ -4,15 +4,16 @@ extends Node
 ## Wände streichen und Böden tauschen – alles in der Ego-Perspektive.
 ##
 ## Unten erscheint das Inventar (Inventory): nur Dinge, die mir gehören. Platzieren nimmt
-## eins aus dem Inventar, Aufheben und Wegräumen (X) legen es wieder hinein.
+## eins aus dem Inventar, Aufnehmen und Weglegen legen es wieder hinein.
 ##
-## Öffnen und schließen mit Tab, schließen auch mit Esc.
-## Zwei Zustände:
-## - Katalog-Zustand: Mauszeiger sichtbar. Im Inventar wählen, ein platziertes
-##   Möbelstück anklicken (= aufheben). Rechte Maustaste halten = umsehen.
-## - Platzier-Zustand: Mauszeiger weg, die Vorschau folgt dem Blick.
-##   Linksklick platziert, Rechtsklick legt zurück – danach wieder Katalog-Zustand.
-## Die Oberfläche (Katalog, Tastenhilfe) steckt in BuildUI.
+## Öffnen und schließen mit Tab, schließen auch mit Esc. Seit Etappe 6b ist das Umsehen immer
+## an die Maus gebunden (wie beim Herumlaufen), in der Bildmitte sitzt ein Punkt:
+## - Rechtsklick nimmt das angeschaute Möbelstück auf (es wird sanft hervorgehoben),
+## - Linksklick stellt das Gehaltene ab (bzw. streicht/belegt bei Wandfarben und Böden),
+## - Mausrad dreht, Mausrad-Klick legt das Gehaltene weg (ins Inventar, nichts mehr ausgewählt).
+## Auswählen geht über die Tasten Y/X (Kategorie) und C/V (Möbel) – das macht BuildUI und ruft
+## select_furniture/select_surface/clear_selection. Nur solange der Filter offen ist (F,
+## set_filter_open), ist der Mauszeiger frei; dann zählen Klicks nicht in der Welt.
 
 ## Wird gesendet, wenn der Gestaltungsmodus an- oder ausgeht.
 signal active_changed(active: bool)
@@ -22,8 +23,8 @@ signal status_changed(text: String, is_warning: bool)
 signal grid_changed(enabled: bool)
 ## Das gewählte Katalog-Element hat sich geändert (null = nichts gewählt).
 signal selection_changed(selected: Resource)
-## Katalog-Zustand (true) oder Platzier-Zustand (false).
-signal catalog_state_changed(in_catalog: bool)
+## Der Filter ist auf- oder zugegangen (nur dann ist der Mauszeiger frei).
+signal filter_open_changed(open: bool)
 ## Symbol in der Bildmitte: "" = normaler Punkt, "roller" = Farbroller, "carpet" = Teppich.
 signal cursor_icon_changed(icon: String)
 
@@ -38,6 +39,8 @@ enum Tool { NONE, PLACE_NEW, MOVE, PAINT }
 
 var is_active: bool = false
 var grid_enabled: bool = false
+## Ist gerade der Filter offen? Dann ist der Mauszeiger frei (sonst immer gefangen).
+var filter_open: bool = false
 
 var _tool: Tool = Tool.NONE
 var _selected_data: FurnitureData = null
@@ -52,9 +55,6 @@ var _moving_is_fixed: bool = false
 ## Drehung des Objekts relativ zur Blickrichtung (0 = Vorderseite zeigt zu mir).
 var _rotation_offset: float = 0.0
 var _hovered: PlacedFurniture = null
-## Rechte Maustaste im Katalog-Zustand gedrückt = umsehen
-var _is_looking := false
-var _cursor_position_before_look := Vector2.ZERO
 
 var _preview: FurniturePreview
 var _grid: MeshInstance3D
@@ -100,9 +100,14 @@ func get_selected() -> Resource:
 	return _selected_surface
 
 
-## Ist gerade der Katalog-Zustand aktiv (nichts in der Hand)?
-func is_in_catalog_state() -> bool:
+## Ist gerade nichts in der Hand (keine Blaupause)?
+func has_nothing_in_hand() -> bool:
 	return is_active and _tool == Tool.NONE
+
+
+## Wird gerade ein platziertes Möbelstück umgestellt (aufgenommen)?
+func is_moving() -> bool:
+	return _tool == Tool.MOVE
 
 
 # --- Eingabe ---
@@ -115,13 +120,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_active(not is_active)
 		get_viewport().set_input_as_handled()
 		return
-	if not is_active:
-		return
+	if not is_active or filter_open:
+		return  # Bei offenem Filter gehören die Klicks dem Filter
 
 	if event.is_action_pressed("build_toggle_grid"):
 		_set_grid_enabled(not grid_enabled)
-	elif event.is_action_pressed("build_delete"):
-		_delete_target()
 	elif event.is_action_pressed("build_rotate"):
 		_rotate(1.0)
 	elif event.is_action_pressed("build_rotate_back"):
@@ -130,10 +133,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_on_primary_click()
 	elif event.is_action_released("build_place"):
 		_paint_held = false
-	elif event.is_action_pressed("build_cancel"):
-		_on_secondary_pressed()
-	elif event.is_action_released("build_cancel"):
-		_stop_looking()
+	elif event.is_action_pressed("build_pick"):
+		_pick_up_target()
+	elif event.is_action_pressed("build_drop"):
+		drop_selection()
 	else:
 		return
 	get_viewport().set_input_as_handled()
@@ -165,15 +168,14 @@ func set_active(active: bool) -> void:
 		MenuStack.open(self)
 		_set_status("")
 	else:
+		set_filter_open(false)
 		MenuStack.close(self)
 		_cancel_tool()
 		_set_hovered(null)
-		_is_looking = false
 		SaveManager.request_save()
 	_apply_mouse_mode()
 	_update_grid_visibility()
 	active_changed.emit(active)
-	catalog_state_changed.emit(is_in_catalog_state())
 
 
 ## Esc: Gestaltungsmodus schließen (wird vom MenuStack aufgerufen).
@@ -184,19 +186,30 @@ func close_from_escape() -> void:
 
 ## Nach dem Pausenmenü: passenden Mauszustand wiederherstellen.
 func restore_mouse_mode() -> void:
-	_is_looking = false
 	_apply_mouse_mode()
 
 
-## Katalog-Zustand = Mauszeiger sichtbar, sonst gefangen (zum Umsehen).
+## Filter auf oder zu (BuildUI, Taste F). Nur bei offenem Filter ist der Mauszeiger frei.
+func set_filter_open(open: bool) -> void:
+	if open == filter_open:
+		return
+	filter_open = open and is_active
+	_paint_held = false
+	if filter_open:
+		_set_hovered(null)
+	_apply_mouse_mode()
+	filter_open_changed.emit(filter_open)
+
+
+## Mauszeiger nur bei offenem Filter frei, sonst gefangen (Umsehen mit der Maus).
 func _apply_mouse_mode() -> void:
-	if is_active and _tool == Tool.NONE and not _is_looking:
+	if is_active and filter_open:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-## Wird von der Katalog-Oberfläche aufgerufen (variant = Farbe, leer = Standardfarbe).
+## Wird von der Inventar-Leiste aufgerufen (variant = Farbe, leer = Standardfarbe).
 func select_furniture(data: FurnitureData, variant: String = "") -> void:
 	_cancel_tool()
 	if Inventory.get_count(data.get_id(), variant) <= 0:
@@ -211,7 +224,7 @@ func select_furniture(data: FurnitureData, variant: String = "") -> void:
 	selection_changed.emit(data)
 
 
-## Wird von der Katalog-Oberfläche aufgerufen.
+## Wird von der Inventar-Leiste aufgerufen.
 func select_surface(surface: SurfaceData) -> void:
 	_cancel_tool()
 	_selected_surface = surface
@@ -220,26 +233,28 @@ func select_surface(surface: SurfaceData) -> void:
 	selection_changed.emit(surface)
 
 
+## „Nichts ausgewählt“ (C/V über das Ende hinaus, Kategorie gewechselt): keine Blaupause mehr.
+## Ein aufgenommenes Möbelstück geht dabei an seinen alten Platz zurück.
+func clear_selection() -> void:
+	_cancel_tool()
+
+
 func _enter_placing_state() -> void:
 	_set_hovered(null)
-	_is_looking = false
-	_apply_mouse_mode()
-	catalog_state_changed.emit(false)
 
 
 # --- Aktionen ---
 
 func _on_primary_click() -> void:
 	match _tool:
-		Tool.NONE:
-			if _hovered:
-				_pick_up(_hovered)
 		Tool.PLACE_NEW:
 			if _placement_ok and Inventory.take_furniture(_selected_data.get_id(), 1, _selected_variant):
 				_room.add_furniture(_selected_data, _placement_transform, _placement_support, _selected_variant)
 				var verb := "aufgehängt" if _selected_data.is_hanging() else "aufgestellt"
 				_flash_status("%s %s." % [_selected_data.display_name, verb])
-				_clear_tool()
+				# Ist noch eins im Inventar, bleibt es in der Hand (gleiche Drehung) – sonst nichts mehr
+				if Inventory.get_count(_selected_data.get_id(), _selected_variant) <= 0:
+					_clear_tool()
 		Tool.MOVE:
 			if _placement_ok:
 				if not _moving_is_fixed:
@@ -253,27 +268,41 @@ func _on_primary_click() -> void:
 			_paint_at_target(Input.is_action_pressed("build_paint_all"))
 
 
-## Rechte Maustaste: im Platzier-Zustand zurücklegen, im Katalog-Zustand umsehen.
-func _on_secondary_pressed() -> void:
-	if _tool != Tool.NONE:
-		_cancel_tool()
+## Rechtsklick: das angeschaute Möbelstück aufnehmen. Was ich gerade halte, gebe ich dafür ab:
+## Neues aus dem Inventar bleibt im Inventar, ein aufgenommenes Möbelstück geht an seinen alten
+## Platz zurück.
+func _pick_up_target() -> void:
+	var item := _find_target_item()
+	if item == null:
 		return
-	_is_looking = true
-	_cursor_position_before_look = get_viewport().get_mouse_position()
-	_set_hovered(null)
-	_apply_mouse_mode()
+	if _is_on_open_door(item):
+		_flash_status("%s hängt an der offenen Tür." % item.data.display_name)
+		return
+	_cancel_tool()
+	_pick_up(item)
 
 
-func _stop_looking() -> void:
-	if not _is_looking:
-		return
-	_is_looking = false
-	_apply_mouse_mode()
-	# Mauszeiger dort wieder erscheinen lassen, wo er vor dem Umsehen war.
-	# Gespeichert ist die Position im Spielbild (wegen der Skalierung für verschiedene
-	# Auflösungen nicht gleich Fensterpixel) – warp_mouse erwartet aber Fensterpixel.
-	var window_position := get_tree().root.get_final_transform() * _cursor_position_before_look
-	Input.warp_mouse(window_position)
+## Mausrad-Klick: das Gehaltene weglegen – Neues bleibt im Inventar, ein aufgenommenes
+## Möbelstück kommt ins Inventar (samt allem, was darauf steht). Danach ist nichts ausgewählt.
+func drop_selection() -> void:
+	match _tool:
+		Tool.MOVE:
+			if _moving_is_fixed:
+				# Feste Möbel (z. B. die Theke) gehen nie ins Inventar – zurück an ihren Platz
+				var fixed_name := _moving_item.data.display_name
+				_cancel_tool()
+				_flash_status("%s gehört fest zum Laden – wieder an ihrem Platz." % fixed_name)
+				return
+			# Das Möbelstück selbst zählt schon zum Inventar (seit dem Aufnehmen)
+			var item := _moving_item
+			_moving_item = null
+			_moving_extras.clear()
+			_store_in_inventory(item, false)
+			_clear_tool()
+		Tool.PLACE_NEW, Tool.PAINT:
+			var held := _selected_data.display_name if _selected_data else _selected_surface.display_name
+			_clear_tool()
+			_flash_status("%s weggelegt." % held)
 
 
 ## Hebt ein platziertes Möbelstück auf, um es neu zu platzieren.
@@ -329,7 +358,7 @@ func _cancel_tool() -> void:
 		_clear_tool()
 
 
-## Zurück in den Katalog-Zustand.
+## Nichts mehr in der Hand.
 func _clear_tool() -> void:
 	_tool = Tool.NONE
 	_paint_held = false
@@ -342,37 +371,7 @@ func _clear_tool() -> void:
 	_preview.visible = false
 	_placement_visible = false
 	_update_grid_visibility()
-	_apply_mouse_mode()
 	selection_changed.emit(null)
-	catalog_state_changed.emit(is_in_catalog_state())
-
-
-## Taste X: Was ich in der Hand halte bzw. worauf der Mauszeiger zeigt, wegräumen.
-## Es kommt ins Inventar – samt allem, was darauf steht.
-func _delete_target() -> void:
-	if _tool == Tool.PLACE_NEW:
-		# Neu ausgewählt und noch nicht aufgestellt: einfach zurück ins Inventar
-		var item_name := _selected_data.display_name
-		_clear_tool()
-		_flash_status("%s zurück ins Inventar gelegt." % item_name)
-	elif _tool == Tool.MOVE:
-		# Feste Möbel (z. B. die Theke) lassen sich nicht wegräumen – sie bleiben in der Hand
-		if _moving_is_fixed:
-			_flash_status("%s gehört fest zum Laden – nur verschieben." % _moving_item.data.display_name)
-			return
-		# Das Möbelstück selbst zählt schon zum Inventar (seit dem Aufheben)
-		var item := _moving_item
-		_moving_item = null
-		_moving_extras.clear()
-		_store_in_inventory(item, false)
-		_clear_tool()
-	elif _tool == Tool.NONE and _hovered:
-		if _hovered.data.is_fixed:
-			_flash_status("%s gehört fest zum Laden – nur verschieben." % _hovered.data.display_name)
-			return
-		var item := _hovered
-		_set_hovered(null)
-		_store_in_inventory(item, true)
 
 
 ## Räumt ein Möbelstück und alles, was darauf steht, ins Inventar.
@@ -408,26 +407,23 @@ func _set_grid_enabled(enabled: bool) -> void:
 
 # --- Zeigen und Prüfen ---
 
-## Katalog-Zustand: Möbelstück unter dem Mauszeiger hervorheben.
+## Nichts in der Hand: das Möbelstück in der Bildmitte sanft hervorheben (Rechtsklick nimmt es auf).
 func _update_hover() -> void:
-	var item: PlacedFurniture = null
-	if not _is_looking and get_viewport().gui_get_hovered_control() == null:
-		var mouse := get_viewport().get_mouse_position()
-		var camera := _player.camera
-		var from := camera.project_ray_origin(mouse)
-		var to := from + camera.project_ray_normal(mouse) * GameConfig.build_reach
-		var hit := _ray(from, to, FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT)
-		if not hit.is_empty():
-			item = FurnitureUtils.find_placed_furniture(hit.collider)
+	var item: PlacedFurniture = null if filter_open else _find_target_item()
 	if item and _is_on_open_door(item):
 		_set_hovered(null)
 		_set_status("%s – hängt an der offenen Tür" % item.data.display_name)
 		return
 	_set_hovered(item)
-	if item:
-		_set_status(item.data.display_name)
-	elif not _is_looking:
-		_set_status("")
+	_set_status(item.data.display_name if item else "")
+
+
+## Das platzierte Möbelstück in der Bildmitte (oder null).
+func _find_target_item() -> PlacedFurniture:
+	var hit := _ray_from_camera(FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT)
+	if hit.is_empty():
+		return null
+	return FurnitureUtils.find_placed_furniture(hit.collider)
 
 
 func _set_hovered(item: PlacedFurniture) -> void:
@@ -437,7 +433,7 @@ func _set_hovered(item: PlacedFurniture) -> void:
 		_hovered.set_highlighted(false)
 	_hovered = item
 	if _hovered:
-		_hovered.set_highlighted(true)
+		_hovered.set_highlighted(true, true)
 
 
 ## Texte und Symbole je Art der Oberfläche

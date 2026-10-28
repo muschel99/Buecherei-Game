@@ -261,7 +261,7 @@ func _build() -> void:
 	sell_box.add_theme_constant_override("separation", 10)
 	sell_panel.add_child(sell_box)
 	sell_box.add_child(make_label("Verkaufen", 19))
-	sell_box.add_child(make_label("Du bekommst %d %% des Preises zurück. Was im Raum steht, räumst du vorher im Gestaltungsmodus (Tab) mit X ins Inventar." \
+	sell_box.add_child(make_label("Du bekommst %d %% des Preises zurück. Was im Raum steht, räumst du vorher im Gestaltungsmodus (Tab) ins Inventar: Rechtsklick nimmt es auf, ein Klick aufs Mausrad legt es weg." \
 		% roundi(GameConfig.sell_price_share * 100.0), 15, TabletFrame.MUTED_COLOR))
 	_sell_message = make_label("", 16, TabletFrame.KEY_COLOR)
 	sell_box.add_child(_sell_message)

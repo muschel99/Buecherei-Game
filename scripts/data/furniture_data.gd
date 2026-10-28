@@ -77,7 +77,7 @@ const SUBCATEGORIES := {
 ## lässt sich nicht verkaufen – nur verschieben oder ins Inventar legen.
 @export var is_essential: bool = false
 ## Fest im Laden verbaut (z. B. die Theke): Es lässt sich im Gestaltungsmodus zwar frei
-## verschieben, aber nicht wegräumen (X) und liegt nie im Inventar. Sinnvoll zusammen mit
+## verschieben, aber nicht wegräumen (Mausrad-Klick) und liegt nie im Inventar. Sinnvoll zusammen mit
 ## is_essential (dann auch nicht kaufbar und nicht verkaufbar).
 @export var is_fixed: bool = false
 

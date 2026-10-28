@@ -29,6 +29,9 @@ extends Node
 ##   --ui=build|shop    Gestaltungsmodus bzw. Theken-Tablet mit „Nest & Nook“ öffnen (seit Etappe 6,
 ##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0);
 ##   --ui=app:<id>      Theken-Tablet mit einer anderen App öffnen, z. B. app:facade
+##   --ui=build_filter  Gestaltungsmodus mit offenem Filter; --ui=build_hold: erstes Möbel der
+##                      Kategorie in der Hand (Blaupause). Im Gestaltungsmodus folgt die Kamera der
+##                      Spielfigur dem Blickpunkt (Hervorheben und Blaupause zielen mit ihr)
 ##   --give             zum Testen von jedem Möbelstück 1–3 Stück (in allen Farben) ins Inventar
 ##   --indoor           ohne Straße draußen (Häuser, Pflanzen, Passanten) – schnell, für Bilder vom Laden
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
@@ -101,6 +104,7 @@ func _run() -> void:
 		_camera.global_position = view.pos
 		_camera.look_at(view.target, Vector3.UP)
 		_camera.fov = float(view.get("fov", _camera.fov))
+		_aim_player_camera()
 		await _wait_frames(SETTLE_FRAMES)
 		if _args.has("stats"):
 			print("Zeichenaufrufe %s: %d, Objekte: %d, Dreiecke: %d" % [view_name,
@@ -149,11 +153,15 @@ func _give_everything() -> void:
 ## Öffnet den Gestaltungsmodus ("build"), das Theken-Tablet mit „Nest & Nook“ ("shop") oder mit
 ## einer anderen App ("app:<id>") und wartet, bis die Vorschaubilder fotografiert sind.
 func _open_ui(which: String, tab: int) -> void:
-	if which == "build":
+	if which.begins_with("build"):
 		var build_mode := get_tree().root.find_child("BuildMode", true, false) as BuildMode
 		build_mode.set_active(true)
 		var build_ui := get_tree().root.find_child("BuildUI", true, false)
-		build_ui.call("_show_tab", tab)
+		build_ui.call("_choose_tab", tab)
+		if which == "build_filter":
+			build_mode.set_filter_open(true)
+		elif which == "build_hold":
+			build_ui.call("_step_item", 1)
 	elif which == "shop":
 		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
 		tablet.open_tablet()
@@ -164,6 +172,16 @@ func _open_ui(which: String, tab: int) -> void:
 		tablet.open_tablet()
 		tablet.open_app(which.trim_prefix("app:"))
 	await _wait_frames(90)
+
+
+## Im Gestaltungsmodus zielen Hervorheben und Blaupause mit der Kamera der Spielfigur – sie
+## bekommt denselben Blick wie die Tour-Kamera (die Spielfigur selbst ist angehalten).
+func _aim_player_camera() -> void:
+	if not _args.has("ui") or not String(_args.ui).begins_with("build"):
+		return
+	var player := get_tree().root.find_child("Player", true, false) as Player
+	if player and player.camera:
+		player.camera.global_transform = _camera.global_transform
 
 
 ## Blickpunkte aus der gewählten Gruppe (+ freier Blickpunkt aus --cam).

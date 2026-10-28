@@ -4,7 +4,7 @@ extends Node3D
 ##
 ## Das Buch selbst ist ein ausgelegtes Buch (LooseBooks, Haltung DISPLAYED, support_uid = der
 ## Aufsteller) – so zählt es zum Bestand ("ausgelegt"), wandert beim Verschieben mit und geht
-## beim Wegräumen (X) ins Lager, ganz ohne eigenen Code hier.
+## beim Wegräumen (Mausrad-Klick) ins Lager, ganz ohne eigenen Code hier.
 ## Der Aufsteller sagt nur, wo das Buch liegt: Der Marker "BookSpot" ist die hintere Unterkante
 ## des Buchs (+Z = nach vorn), lean_angle die Neigung der Stütze. Eigenes Modell: Marker und
 ## Winkel an die Stütze anpassen.

@@ -657,6 +657,20 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Menüs, deren Inhalt wachsen kann, dürfen nie höher als das Bild werden: feste Höhe über
   Anchors (Anteil der Bildhöhe), wachsender Teil in einen ScrollContainer, Kopf und
   „Schließen“ fest (Beispiel: `ShelfMenu`).
+- **Gestaltungsmodus-Bedienung (seit Etappe 6b):** Umsehen immer mit der Maus (gefangen), Punkt in
+  der Mitte; nur bei offenem Filter (`BuildMode.set_filter_open`, Signal `filter_open_changed`) ist der
+  Mauszeiger frei – dann meldet sich BuildUI beim MenuStack an (Esc schließt zuerst den Filter) und
+  Klicks zählen nicht in der Welt. Nichts in der Hand: angeschautes Möbel warm hervorgehoben
+  (`PlacedFurniture.set_highlighted(true, true)`, `FurnitureUtils.get_build_highlight_material`,
+  Werte `build_highlight_*`), Rechtsklick nimmt auf (`_pick_up_target`; Gehaltenes wird vorher
+  abgegeben: Neues bleibt im Inventar, Aufgenommenes zurück an den alten Platz), Mausrad-Klick
+  `drop_selection` (Aufgenommenes ins Inventar samt Daraufstehendem, feste Möbel zurück an ihren
+  Platz). Auswahl nur über die Leiste: BuildUI `_step_tab`/`_step_item` (vor dem ersten Möbel der
+  leere Platz „nichts ausgewählt“ = `BuildMode.clear_selection`), nach dem Abstellen bleibt das Möbel
+  in der Hand, solange noch eins im Inventar ist. Tastenhilfe unten: Einstellung
+  `interface/build_key_help` (H). Tastenbuchstaben nie fest schreiben: `KeyHints.setup_icon`/`key_name`
+  (Belegung der Tastatur, ohne Bildschirm der Tastenname). Bilder: `--ui=build|build_hold|build_filter`
+  (die Kamera der Spielfigur folgt dem Blickpunkt).
 - Spieler-Einstellungen gehören in `Settings.DEFINITIONS` (`scripts/autoload/settings.gd`),
   nicht in GameConfig; der Einstellungsbereich im Pausenmenü baut sich daraus selbst.
 - Alles, was Licht abgibt, bekommt `LightSource` (Art ELECTRIC oder FLAME) + Interactable.
@@ -720,7 +734,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   verkaufbar; `Room.ensure_essentials()` stellt es zurück, falls es fehlt.
   `SurfaceData.owned_at_start` = von Anfang an vorhanden.
 - `FurnitureData.is_fixed` (seit Etappe 4a) = fest verbaut (z. B. die Theke): im
-  Gestaltungsmodus verschiebbar, aber nicht wegräumbar (X verweigert) und nie im Inventar
+  Gestaltungsmodus verschiebbar, aber nicht wegräumbar (Mausrad-Klick stellt sie zurück) und nie im Inventar
   (`BuildMode` prüft `is_fixed` beim Aufheben, Verschieben und Wegräumen). Sinnvoll mit
   `is_essential` zusammen.
 - **Theke** (`scenes/furniture/counter.tscn`, Script `Counter`): fest verbaut
@@ -760,8 +774,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - Die Spielfigur kann man anhalten: `player.movement_enabled = false` (z. B. im Shop).
 - Eingabe-Aktionen: `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `jump`,
   `crouch`, `interact`,
-  `pause`, `toggle_build_mode` (Tab), `build_place`, `build_cancel` (rechte Maustaste),
-  `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid`, `build_delete` (X),
+  `pause`, `toggle_build_mode` (Tab), `build_place` (Linksklick: abstellen/streichen), `build_pick`
+  (Rechtsklick: angeschautes Möbel aufnehmen), `build_drop` (Mausrad-Klick: weglegen),
+  `build_rotate`/`build_rotate_back` (Mausrad), `build_toggle_grid` (G), `build_category_prev`/`_next`
+  (Y/X – Lage der Taste: physisch Z/X), `build_item_prev`/`_next` (C/V), `build_filter` (F),
+  `build_toggle_help` (H),
   `build_paint_all` (Umschalt), `toggle_fps` (F3), `debug_fill_return_box` (F9, Testtaste),
   `debug_add_money` (F10, Testtaste), `book_rotate`/`book_rotate_back` (Mausrad, Buch obenauf
   vor dem Ablegen drehen), `book_take` (rechte Maustaste), `book_place` (linke Maustaste;
@@ -856,7 +873,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   nach dem Ablegen 0), `turn_active_book(±1)`, Schritt `GameConfig.book_turn_step`; angelehnt
   höchstens `GameConfig.loose_book_lean_max_turn`; aufrecht in Reihen und im Regal nie. Die
   Drehung steckt in der gespeicherten Lage (kein eigenes Feld).
-  Der Raum verschiebt sie mit ihrem Möbelstück (`move_with`) und gibt sie beim Wegräumen (X)
+  Der Raum verschiebt sie mit ihrem Möbelstück (`move_with`) und gibt sie beim Wegräumen (Mausrad-Klick)
   ins Lager (`release_on`); gespeichert unter `loose_books` im Raum. Ausgelegte Bücher haben
   keine Kollision: Der Gestaltungsmodus prüft sie extra (`overlaps_shape`), die Spielfigur
   über `pick_distance` (verglichen mit dem ersten festen Körper, nicht mit E-Bereichen).
@@ -925,7 +942,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   wand_größe)` (mit Stück Hauswand dahinter, fast von vorn).
 - Möbel mit Inhalt (Regal): Knoten in der Gruppe `PlacedFurniture.CONTENTS_GROUP`
   mit `get_contents_data()`, `load_contents_data()`, `release_contents()` – der Raum speichert
-  den Inhalt mit dem Möbelstück, beim Wegräumen (X) geht er ins Lager.
+  den Inhalt mit dem Möbelstück, beim Wegräumen (Mausrad-Klick) geht er ins Lager.
 - Startgeschenke fürs Inventar: `GameConfig.start_furniture_gifts` (jedes nur einmal, auch in
   älteren Spielständen).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:

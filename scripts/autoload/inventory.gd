@@ -2,7 +2,7 @@ extends Node
 ## Das Inventar: alles, was mir gehört und gerade nicht im Raum steht.
 ##
 ## - Möbel und Deko werden gezählt (z. B. "Bücherregal ×2"). Platzieren nimmt eins heraus,
-##   Aufheben oder Wegräumen (X) legt es wieder hinein.
+##   Aufnehmen oder Weglegen (Mausrad-Klick) legt es wieder hinein.
 ## - Wandfarben, Böden und Decken werden einmal gekauft und sind danach unbegrenzt da.
 ##   Ein paar schlichte gibt es von Anfang an (Häkchen "Owned At Start" im Datenblatt).
 ## Was im Raum steht, gehört mir natürlich auch – das zählt der Raum selbst (Room).
