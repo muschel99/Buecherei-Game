@@ -592,9 +592,11 @@ class Body:
         self._finish_island(rim + t_in + b_in + [top, bot], faces, tint)
         return faces
 
-    def text(self, string, size, depth, matrix, font="DejaVuSerif-Bold.ttf", jitter=0.0, tint=None, spacing=1.0):
+    def text(self, string, size, depth, matrix, font="DejaVuSerif-Bold.ttf", jitter=0.0, tint=None, spacing=1.0,
+             resolution=None):
         """Schrift als Körper (jeder Buchstabe einzeln, leicht gehüpft/gekippt: handgemalt).
-        Mittig um den Ursprung von matrix, Grundlinie bei y = 0, Vorderseite +z."""
+        Mittig um den Ursprung von matrix, Grundlinie bei y = 0, Vorderseite +z. resolution =
+        Zwischenpunkte je Kurvenstück (leer = Blenders 12; kleine Schrift reicht 4)."""
         glyphs = []
         x = 0.0
         for ch in string:
@@ -605,6 +607,8 @@ class Body:
             curve.body = ch
             curve.size = size
             curve.extrude = depth / 2
+            if resolution:
+                curve.resolution_u = resolution
             curve.font = bpy.data.fonts.load(os.path.join(FONT_DIR, font), check_existing=True)
             obj = bpy.data.objects.new("t", curve)
             bpy.context.scene.collection.objects.link(obj)

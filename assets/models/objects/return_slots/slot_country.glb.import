@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://d2w27nb5aodpm"
+uid="uid://c1ctltwr3mhht"
 path="res://.godot/imported/slot_country.glb-af2e686e260ef079a6129a440a1c6a9d.scn"
 
 [deps]
@@ -65,6 +65,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/objects/slot_country/leafpaint.tres",
 "use_external/path": "res://assets/materials/objects/slot_country/leafpaint.tres"
+},
+"letters": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/objects/slot_country/letters.tres",
+"use_external/path": "res://assets/materials/objects/slot_country/letters.tres"
 },
 "paint": {
 "use_external/enabled": true,

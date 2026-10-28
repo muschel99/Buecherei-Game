@@ -222,7 +222,7 @@ def build_counter_dark_academia(k):
         plate.blob((sx, FRONT_Y - 0.019, 0.69), 0.005, subdiv=1, lump=0.0, scale=(1, 0.5, 1))
     letters = k.part("Schrift", "letters", bevel=0.0, settle=False)
     letters.text("AUSLEIHE", 0.042, 0.003, Matrix.Translation((0, FRONT_Y - 0.0185, 0.676)) @ UP, font="DejaVuSerif.ttf",
-                 spacing=1.15)
+                 spacing=1.15, resolution=4)
     # Hinten: Messing-Bügelgriffe mit Kärtchen, Bücher, Karteikasten, Papiere
     drawers(k, "wood", "brass", handle="bar")
     lab = k.part("Kärtchen", "paper", bevel=0.0)
@@ -431,8 +431,8 @@ def build_slot_dark_academia(k):
     flap.tube([(-0.1, -0.031, 0.0), (0.1, -0.031, 0.0)], 0.0035, segs=8, round_ends=True)
     flap.blob((0, -0.038, -0.024), 0.006, subdiv=1, lump=0.0, scale=(1.6, 0.8, 0.8))
     letters = k.part("Schrift", "brass", bevel=0.0, settle=False)
-    letters.text("BÜCHER", 0.038, 0.003, Matrix.Translation((0, -0.022, 0.06)) @ UP, font="DejaVuSerif.ttf", spacing=1.15)
-    letters.text("Rückgabe", 0.024, 0.0025, Matrix.Translation((0, -0.022, -0.1)) @ UP, font="DejaVuSerif-Italic.ttf")
+    letters.text("BÜCHER", 0.038, 0.003, Matrix.Translation((0, -0.022, 0.06)) @ UP, font="DejaVuSerif.ttf", spacing=1.15, resolution=4)
+    letters.text("Rückgabe", 0.024, 0.0025, Matrix.Translation((0, -0.022, -0.1)) @ UP, font="DejaVuSerif-Italic.ttf", resolution=4)
 
 
 # --- Einwurf: Schlichte Platte (Minimalistisch) ---
@@ -457,7 +457,7 @@ def build_slot_minimalist(k):
     ledge = k.part("Leiste", "wood", bevel=0.003)
     ledge.box((0, -0.024, -0.075), (0.18, 0.012, 0.008), step=0.5, dent=0.0)
     letters = k.part("Schrift", "letters", bevel=0.0, settle=False)
-    letters.text("Rückgabe", 0.028, 0.002, Matrix.Translation((0, -0.018, 0.045)) @ UP, font="DejaVuSans.ttf", spacing=1.2)
+    letters.text("Rückgabe", 0.028, 0.002, Matrix.Translation((0, -0.018, 0.045)) @ UP, font="DejaVuSans.ttf", spacing=1.2, resolution=4)
 
 
 # --- Einwurf: Briefkasten mit Dach (Landhaus) ---
@@ -494,8 +494,9 @@ def build_slot_country(k):
     flap = k.part("Klappe", "cream", bevel=0.002)
     hinge = Matrix.Translation((0, -D - 0.003, 0.056)) @ Matrix.Rotation(math.radians(-18), 4, "X")
     flap.box((0, -0.002, -0.018), (0.21, 0.005, 0.034), step=0.5, dent=0.0, matrix=hinge)
-    letters = k.part("Schrift", "cream", bevel=0.0, settle=False)
-    letters.text("Bücher", 0.04, 0.003, Matrix.Translation((0, -D, -0.035)) @ UP, font="DejaVuSerif-Italic.ttf")
+    k.mat("letters", (0.22, 0.3, 0.46), grain="paint", rough=0.6, vary=0.03)
+    letters = k.part("Schrift", "letters", bevel=0.0, settle=False)
+    letters.text("Bücher", 0.04, 0.003, Matrix.Translation((0, -D, -0.035)) @ UP, font="DejaVuSerif-Italic.ttf", resolution=4)
     blooms = [k.part("Blüten rosa", "bloom", bevel=0.0, settle=False), k.part("Blüten gelb", "bloom_b", bevel=0.0, settle=False)]
     leaves = k.part("Blätter", "leafpaint", bevel=0.0, settle=False)
     for j, x in enumerate((-0.09, -0.03, 0.03, 0.09)):
