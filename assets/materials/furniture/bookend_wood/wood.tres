@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3]
 
-; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Buchstützen aus Holz“, Material „wood“).
+; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Buchstütze aus Holz“, Material „wood“).
 
 [ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]
 

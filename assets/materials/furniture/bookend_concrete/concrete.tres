@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3]
 
-; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Bogen-Buchstützen aus Beton“, Material „concrete“).
+; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Bogen-Buchstütze aus Beton“, Material „concrete“).
 
 [ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]
 

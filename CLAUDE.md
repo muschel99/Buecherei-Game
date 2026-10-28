@@ -884,8 +884,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `set_blueprint_valid()` (Shader `blueprint.gdshader`: unshaded, ruhiges Blau, Deckkraft
   `GameConfig.preview_opacity`, leicht zur Kamera versetzt – kein Z-Fighting, keine Lichtkante).
   Stapel = Bücher, die lückenlos aufeinander liegen (`LooseBooks.STACK_GAP`).
-  **Buchstützen** (Unterkategorie `bookend`, `BookShelf.is_bookend(data)`): Bücher rasten an
-  ihnen ein, nie umgekehrt – Deko rastet im Gestaltungsmodus nie an Büchern ein. Luft zu Büchern
+  **Buchstützen** (Unterkategorie `bookend`, `BookShelf.is_bookend(data)`, seit Etappe 6b je eine
+  einzelne Stütze: flache Seite +x zu den Büchern, vorn/hinten gleich – um 180° gedreht für die
+  andere Seite): Bücher rasten an ihnen ein; Deko rastet im Gestaltungsmodus nie an Büchern ein,
+  nur Buchstützen rücken im Regalfach bündig an den Bücherblock (`BookShelf.bookend_snap_offset`,
+  nur auf freie Stellen, `shelf_snap_distance`). Luft zu Büchern
   `BookShelf.deco_margin(data)` (Buchstütze `BOOKEND_MARGIN`, sonst `DECO_MARGIN`); frei
   ausgelegt knapp daneben (`GameConfig.bookend_snap_distance`) steht ein Buch aufrecht daran;
   Blick auf eine Buchstütze im Regal zählt als Blick aufs Regal (`Interactable.find_for`,

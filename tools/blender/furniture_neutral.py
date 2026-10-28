@@ -75,15 +75,20 @@ def build_book_stack(k):
 
 # --- Buchstützen aus Holz ---
 
-def build_wood_bookends(k):
+def build_wood_bookend(k):
+    """Einzelne Buchstütze (seit Etappe 6b): flache Seite +x zu den Büchern, Standfuß und Knauf
+    außen – vorn und hinten gleich, damit sie um 180° gedreht auf der anderen Seite genauso aussieht."""
     wood(k)
-    for side in (-1, 1):
-        b = k.part("Buchstütze", "wood", bevel=0.004)
-        b.box((side * 0.13, 0, 0.005), (0.1, 0.12, 0.01), step=0.3, dent=0.0005)
-        b.box((side * 0.085, 0, 0.08), (0.02, 0.12, 0.16), step=0.3, dent=0.0005)
-        F.button(b, (side * 0.085 + side * 0.012, 0, 0.12), r=0.018, normal=(side, 0, 0))
-    for side in (-1, 1):
-        k.collider((side * 0.11, 0, 0.08), (0.12, 0.12, 0.16))
+    b = k.part("Buchstütze", "wood", bevel=0.004)
+    # Aufrechtes Brett mit weichem Bogen oben (Umriss in der Ebene Tiefe/Höhe, Dicke nach +x)
+    outline = [(-0.06, 0.0), (0.06, 0.0), (0.06, 0.12)]
+    outline += [(0.06 * math.cos(math.pi * i / 12), 0.12 + 0.05 * math.sin(math.pi * i / 12)) for i in range(1, 12)]
+    outline += [(-0.06, 0.12)]
+    m = Matrix(((0, 0, 1, 0.011), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    b.slab(outline, 0.022, m, dent=0.0004)
+    b.box((-0.012, 0, 0.012), (0.05, 0.11, 0.024), step=0.3, dent=0.0005)
+    F.button(b, (0.009, 0, 0.12), r=0.018, normal=(-1, 0, 0))
+    k.collider((0.0, 0, 0.085), (0.07, 0.12, 0.17))
 
 
 # --- Lichtschalter ---
@@ -400,9 +405,9 @@ ITEMS = [
          styles=STYLE, place=["surface", "floor"], adopt=True, build=build_book_stack,
          variants=[("red", "Rotes Lesezeichen", {"ribbon": (0.72, 0.2, 0.2)}), ("green", "Grünes Lesezeichen", {"ribbon": (0.3, 0.5, 0.32)}),
                    ("gold", "Goldenes Lesezeichen", {"ribbon": (0.85, 0.66, 0.3)})]),
-    dict(id="bookend_wood", name="Buchstützen aus Holz", category="deco", sub="bookend", price=14,
-         desc="Zwei schlichte Holzwinkel mit einem runden Knauf.",
-         styles=STYLE, place=["surface", "floor"], adopt=True, build=build_wood_bookends, variants=wood_variants()),
+    dict(id="bookend_wood", name="Buchstütze aus Holz", category="deco", sub="bookend", price=8,
+         desc="Ein schlichtes Holzbrett mit rundem Knauf – eine Stütze; zwei halten einen Bücherblock (Mausrad dreht).",
+         styles=STYLE, place=["surface", "floor"], build=build_wood_bookend, variants=wood_variants()),
     dict(id="light_switch", name="Lichtschalter", category="lighting", sub="switch", price=12,
          desc="Ein runder Porzellanschalter mit Messinghebel – schaltet alle Lampen im Raum.",
          styles=STYLE, place="wall", adopt=True, build=build_light_switch,

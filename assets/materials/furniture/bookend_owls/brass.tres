@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3]
 
-; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Eulen-Buchstützen“, Material „brass“).
+; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Eulen-Buchstütze“, Material „brass“).
 
 [ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]
 

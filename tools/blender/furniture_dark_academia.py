@@ -887,28 +887,29 @@ def build_orrery(k):
 
 # --- Eulen-Buchstützen ---
 
-def build_owl_bookends(k):
+def build_owl_bookend(k):
+    """Einzelne Eulen-Buchstütze (seit Etappe 6b): Messingplatte mit flacher Seite +x zu den
+    Büchern, die Eule sitzt im Profil davor und schaut nach außen (-x) – vorn und hinten gleich,
+    um 180° gedreht hält sie den Bücherblock von der anderen Seite."""
     brass(k)
     k.mat("eyes", (0.15, 0.12, 0.1), grain="smooth", rough=0.3, vary=0.02)
-    for side in (-1, 1):
-        x = side * 0.11
-        b = k.part("Eule", "brass", bevel=0.0)
-        b.box((x, 0, 0.004), (0.09, 0.11, 0.008), step=0.5, dent=0.0004)
-        b.box((x - side * 0.043, 0, 0.08), (0.008, 0.11, 0.16), step=0.5, dent=0.0004)
-        body = Vector((x + side * 0.005, 0, 0.065))
-        b.blob(body, 0.042, subdiv=2, lump=0.06, scale=(0.9, 0.85, 1.25))
-        head = body + Vector((0, -0.004, 0.065))
-        b.blob(head, 0.034, subdiv=2, lump=0.04, scale=(1.05, 0.9, 0.85))
-        for e in (-1, 1):
-            b.blob(head + Vector((e * 0.02, -0.008, 0.028)), 0.01, subdiv=1, lump=0.05, scale=(0.7, 0.7, 1.4))
-            b.blob(body + Vector((e * 0.036, 0.0, -0.005)), 0.022, subdiv=1, lump=0.06, scale=(0.45, 0.8, 1.2))
-        eyes = k.part("Augen", "eyes", bevel=0.0)
-        for e in (-1, 1):
-            F.button(b, head + Vector((e * 0.014, -0.028, 0.004)), r=0.011, normal=(0, -1, 0.1))
-            eyes.blob(head + Vector((e * 0.014, -0.033, 0.005)), 0.0055, subdiv=1, lump=0.02)
-        b.blob(head + Vector((0, -0.033, -0.012)), 0.006, subdiv=1, lump=0.02, scale=(0.7, 1, 1.2))
-    for side in (-1, 1):
-        k.collider((side * 0.11, 0, 0.08), (0.1, 0.11, 0.16))
+    b = k.part("Eule", "brass", bevel=0.0)
+    b.box((-0.004, 0, 0.004), (0.09, 0.1, 0.008), step=0.5, dent=0.0004)
+    b.box((0.04, 0, 0.08), (0.008, 0.1, 0.16), step=0.5, dent=0.0004)
+    body = Vector((-0.004, 0, 0.065))
+    b.blob(body, 0.042, subdiv=2, lump=0.06, scale=(0.85, 0.9, 1.25))
+    head = body + Vector((-0.004, 0, 0.065))
+    b.blob(head, 0.034, subdiv=2, lump=0.04, scale=(0.9, 1.05, 0.85))
+    for e in (-1, 1):
+        # Federohren und Flügel
+        b.blob(head + Vector((-0.008, e * 0.02, 0.028)), 0.01, subdiv=1, lump=0.05, scale=(0.7, 0.7, 1.4))
+        b.blob(body + Vector((0.0, e * 0.036, -0.005)), 0.022, subdiv=1, lump=0.06, scale=(0.8, 0.45, 1.2))
+    eyes = k.part("Augen", "eyes", bevel=0.0)
+    for e in (-1, 1):
+        F.button(b, head + Vector((-0.028, e * 0.014, 0.004)), r=0.011, normal=(-1, 0, 0.1))
+        eyes.blob(head + Vector((-0.033, e * 0.014, 0.005)), 0.0055, subdiv=1, lump=0.02)
+    b.blob(head + Vector((-0.033, 0, -0.012)), 0.006, subdiv=1, lump=0.02, scale=(1, 0.7, 1.2))
+    k.collider((0.0, 0, 0.08), (0.09, 0.1, 0.16))
 
 
 ITEMS = [
@@ -1033,9 +1034,9 @@ ITEMS = [
     dict(id="orrery", name="Planetenmodell", category="deco", sub="figure", price=95,
          desc="Ein kleines Sonnensystem auf Messingarmen, die Sonne glüht sanft.",
          styles=STYLE, place=["surface", "floor"], build=build_orrery, variants=wood_variants()),
-    dict(id="bookend_owls", name="Eulen-Buchstützen", category="deco", sub="bookend", price=26,
-         desc="Zwei kleine Eulen halten die Bücher zusammen.",
-         styles=STYLE, place=["surface", "floor"], build=build_owl_bookends,
+    dict(id="bookend_owls", name="Eulen-Buchstütze", category="deco", sub="bookend", price=14,
+         desc="Eine kleine Messingeule an einer Platte – eine Stütze; zwei halten einen Bücherblock (Mausrad dreht).",
+         styles=STYLE, place=["surface", "floor"], build=build_owl_bookend,
          variants=[("brass", "Messing", {"brass": BRASS}), ("bronze", "Bronze", {"brass": (0.5, 0.35, 0.2)}),
                    ("silver", "Silber", {"brass": (0.74, 0.74, 0.72)}), ("iron", "Gusseisen", {"brass": (0.2, 0.19, 0.18)})]),
 ]

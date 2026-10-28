@@ -424,9 +424,14 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
     Ziele ich knapp neben eine Buchstütze (höchstens `GameConfig.bookend_snap_distance`, 5 cm),
     steht das Buch aufrecht und bündig an ihr (nur ein Hauch Luft). Im Bücherregal stehen
     Bücher ebenso bündig an der Buchstütze; schaue ich mit einem Buch in der Hand direkt auf
-    eine Buchstütze im Regal, stellt das Regal das Buch an die Seite, auf die ich schaue. Die
-    Buchstütze selbst rastet im Gestaltungsmodus nie an Büchern ein – sie steht genau dort, wo
-    ich hinschaue, und darf bündig neben Bücher.
+    eine Buchstütze im Regal, stellt das Regal das Buch an die Seite, auf die ich schaue.
+    **Seit Etappe 6b ist jede Buchstütze ein einzelnes Stück** (Holz mit Bogen und Knauf, Beton-
+    Viertelbogen, Messingeule) und wird einzeln verkauft: Man stellt links und rechts neben einen
+    Bücherblock je eine, mit beliebigem Abstand. Die flache Seite zeigt zu den Büchern, die Zierde
+    nach außen; vorn und hinten sehen gleich aus, darum dreht man die zweite mit dem Mausrad einfach
+    um 180°. Im Gestaltungsmodus rückt eine Buchstütze im Regalfach bündig an den Bücherblock heran,
+    wenn sie höchstens `GameConfig.shelf_snap_distance` (2,5 cm) daneben steht oder so weit
+    hineinragt – aber nie zwischen zwei Bücher. Sonst steht sie genau dort, wo ich hinschaue.
 - **Flach auf Polster** (seit Etappe 3j): Auch auf Sofakissen und eine Sofadecke lassen sich
   Bücher flach legen (im Datenblatt `books_can_lie`), wie auf einen Tisch – Cover oben, leicht
   schräg, Stapel möglich.

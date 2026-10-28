@@ -623,6 +623,12 @@ func _place_standing(hit: Dictionary) -> String:
 		return "Das gehört auf eine Ablage (Tisch, Regal, Sessel, Fensterbank)."
 	if surface_normal.y < 0.7:
 		return "Hier steht es nicht gerade."
+	if on_surface and BookShelf.is_bookend(data):
+		# Buchstützen rücken im Regalfach bündig an den Bücherblock heran
+		var shelf := BookShelf.find_for_surface(ground.collider)
+		if shelf:
+			_preview.global_transform = _placement_transform
+			_placement_transform.origin += shelf.bookend_snap_offset(ground.collider, _preview.get_world_corners())
 	if on_surface:
 		var problem := _check_surface_fit(ground.collider as PlacementSurface)
 		if not problem.is_empty():

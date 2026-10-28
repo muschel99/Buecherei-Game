@@ -587,16 +587,15 @@ def build_moon_lamp(k):
 
 # --- Beton-Buchstützen ---
 
-def build_arch_bookends(k):
+def build_arch_bookend(k):
+    """Einzelner Viertelbogen (seit Etappe 6b): flache Seite +x zu den Büchern, Bogen nach außen;
+    vorn und hinten gleich (um 180° gedreht steht er genauso auf der anderen Seite)."""
     k.mat("concrete", (0.7, 0.69, 0.66), grain="stone", rough=0.85, vary=0.07, bump=0.4)
-    for side in (-1, 1):
-        b = k.part("Bogen", "concrete", bevel=0.004)
-        # Viertelbogen: flache Seite innen (zu den Büchern), Bogen nach außen
-        outline = [(0.0, 0.0)] + [(side * 0.12 * math.cos(math.pi / 2 * i / 14), 0.16 * math.sin(math.pi / 2 * i / 14)) for i in range(15)]
-        m = Matrix.Translation((side * 0.09, 0.04, 0)) @ Matrix.Rotation(math.radians(90), 4, "X")
-        b.slab(outline, 0.08, m, dent=0.0008)
-    for side in (-1, 1):
-        k.collider((side * 0.15, 0, 0.08), (0.12, 0.08, 0.16))
+    b = k.part("Bogen", "concrete", bevel=0.004)
+    outline = [(0.0, 0.0)] + [(-0.12 * math.cos(math.pi / 2 * i / 14), 0.16 * math.sin(math.pi / 2 * i / 14)) for i in range(15)]
+    m = Matrix.Translation((0.06, 0.04, 0)) @ Matrix.Rotation(math.radians(90), 4, "X")
+    b.slab(outline, 0.08, m, dent=0.0008)
+    k.collider((0.0, 0, 0.08), (0.12, 0.08, 0.16))
 
 ITEMS = [
     dict(id="shelf_cube_white", name="Würfelregal", category="shelf", sub="bookshelf", price=140,
@@ -700,9 +699,9 @@ ITEMS = [
     dict(id="moon_lamp", name="Mondlampe", category="lighting", sub="table_lamp", price=48,
          desc="Ein kleiner Mond mit Kratern auf einem Holzständer, der sanft leuchtet.",
          styles=STYLE, place=["surface", "floor"], build=build_moon_lamp, variants=wood_variants()),
-    dict(id="bookend_concrete", name="Bogen-Buchstützen aus Beton", category="deco", sub="bookend", price=18,
-         desc="Zwei schwere Viertelbögen aus Beton halten die Bücher.",
-         styles=STYLE, place=["surface", "floor"], adopt=True, build=build_arch_bookends,
+    dict(id="bookend_concrete", name="Bogen-Buchstütze aus Beton", category="deco", sub="bookend", price=10,
+         desc="Ein schwerer Viertelbogen aus Beton – eine Stütze; zwei halten einen Bücherblock (Mausrad dreht).",
+         styles=STYLE, place=["surface", "floor"], build=build_arch_bookend,
          variants=[("concrete", "Beton", {"concrete": (0.7, 0.69, 0.66)}), ("sand", "Sand", {"concrete": SAND}),
                    ("clay", "Terrakotta", {"concrete": CLAY}), ("charcoal", "Anthrazit", {"concrete": CHARCOAL})]),
 ]

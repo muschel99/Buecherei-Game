@@ -796,6 +796,38 @@ func is_free_for_deco(surface: PlacementSurface, corners: PackedVector3Array,
 	return true
 
 
+## Gestaltungsmodus: Eine Buchstütze rückt bündig an den Bücherblock heran (seit Etappe 6b). Steht
+## sie höchstens GameConfig.shelf_snap_distance neben einem Buch oder ragt so weit hinein, liefert
+## das die Verschiebung (in der Welt), nach der sie mit BOOKEND_MARGIN Luft daneben steht – sonst
+## Vector3.ZERO. Ob danach alles frei ist, prüft wie immer is_free_for_deco.
+func bookend_snap_offset(surface: PlacementSurface, corners: PackedVector3Array) -> Vector3:
+	var row := _surfaces.find(surface)
+	if row < 0 or _row_books[row].is_empty():
+		return Vector3.ZERO
+	var span := _span_on_row(row, corners)
+	var best := INF
+	for book: Book in _row_books[row]:
+		var left: float = _x[book]
+		var right: float = _x[book] + _book_width(book)
+		# Stütze rechts neben dem Buch (ihre linke Kante an seine rechte) bzw. links daneben –
+		# nur, wo sie danach frei steht (nicht zwischen zwei Büchern)
+		for shift: float in [right + BOOKEND_MARGIN - span.x, left - BOOKEND_MARGIN - span.y]:
+			if absf(shift) <= GameConfig.shelf_snap_distance and absf(shift) < absf(best) \
+					and _span_is_free(row, Vector2(span.x + shift, span.y + shift)):
+				best = shift
+	if best == INF:
+		return Vector3.ZERO
+	return _rows[row].global_basis.x.normalized() * best
+
+
+## Überlappt diese Strecke auf dem Brett (mit BOOKEND_MARGIN Luft) kein Buch?
+func _span_is_free(row: int, span: Vector2) -> bool:
+	for book: Book in _row_books[row]:
+		if span.x - BOOKEND_MARGIN + EPSILON < _x[book] + _book_width(book) and span.y + BOOKEND_MARGIN - EPSILON > _x[book]:
+			return false
+	return true
+
+
 ## Jedes Brett bekommt eine Ablagefläche für Deko (so hoch, wie das Fach Platz bietet).
 func _create_row_surfaces() -> void:
 	for row in _rows:
