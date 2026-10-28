@@ -27,6 +27,8 @@ extends Resource
 @export var icon: Texture2D
 ## Reihenfolge in der App (kleiner = weiter vorn).
 @export var order: int = 0
+## Kosten beim Bauen in der App „Fassade“ (nur, wenn diese Theke neu gewählt wird).
+@export var price: int = 0
 ## Frühere Kennungen dieser Theke (ältere Spielstände), z. B. "wood_warm".
 @export var legacy_ids: PackedStringArray = []
 

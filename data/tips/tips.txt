@@ -146,3 +146,13 @@ Schau einen Karton an und drücke <E> – sein Inhalt wandert in dein Inventar.
 Die App „Lager“ zeigt, wie viele Bücher du hast und wo sie gerade sind.
 
 Klappst du ein Genre auf, siehst du deine Sammlung – und welche Titel noch zu entdecken sind.
+
+== Die Bücherei von außen
+In der App „Fassade“ gestaltest du die Bücherei: Holz oder Stein unten, Putz, Ziegel oder Bretter oben, Fenster, Markisen, Tür, Blumen – und dazu Briefkasten und Theke.
+
+Neben dem Tablet siehst du auf zwei Polaroids sofort, wie es aussehen würde.
+
+== Bauen oder lieber nicht
+Alles, was du auswählst, ist erst ein Entwurf. „Bauen“ zeigt, was der Umbau kostet, und baut erst dann wirklich um.
+
+„Abbrechen“ verwirft den Entwurf – dann bleibt alles, wie es war.

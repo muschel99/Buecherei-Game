@@ -8,4 +8,5 @@ id = "slot_plaque"
 display_name = "Holzschild"
 scene_path = "res://scenes/objects/return_slots/slot_plaque.tscn"
 order = 30
+price = 35
 inside_path = "res://assets/models/objects/return_slots/inside_neutral.glb"

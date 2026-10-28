@@ -39,6 +39,17 @@ func refresh() -> void:
 	pass
 
 
+## Ein eigener Bereich neben dem Tablet (z. B. die Polaroids der App „Fassade“) – null = keiner.
+## Hat eine App einen, rückt das Tablet nach dem Öffnen nach links und zeigt ihn rechts daneben.
+func get_side_view() -> Control:
+	return null
+
+
+## Der Bereich neben dem Tablet erscheint (true) bzw. verschwindet (false).
+func side_view_changed(_shown: bool) -> void:
+	pass
+
+
 ## Neu anzeigen, aber erst am Ende des Bilds – so wird kein Knopf entfernt, während sein
 ## Klick noch verarbeitet wird.
 func request_refresh() -> void:

@@ -38,6 +38,7 @@
 | 5b  | Figuren und Fahrzeuge im Stil            | in Arbeit     |
 | 5c  | Chibi-Figuren (Mannequins, Gesichter)    | in Arbeit     |
 | 6   | Möbelkatalog im neuen Stil               | fertig        |
+| 6b  | Bedienung, Tablet-Looks, Fassade gestalten | fertig      |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
@@ -50,7 +51,7 @@
 (Seit Etappe 6 sind die späteren Etappen eine Nummer weitergerückt: Wirtschaft ist jetzt 7, Café 9,
 Freischaltungen 10 usw.)
 
-## Stand nach dem Stil-Umbau (Überblick, Stand 27.10.2026)
+## Stand nach dem Stil-Umbau (Überblick, Stand 28.10.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
 
 **Was neu ist**
@@ -79,6 +80,11 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   breite Bildschirme.
 - **Prüfwerkzeuge:** Testbilder (`tools/screenshots.sh`), Lochprüfung und Überschneidungsprüfung für
   Häuser, `plan_check.py` (Sicht und Grenzen), `street_life_check` (Straßenleben).
+- **Etappe 6b:** neue Bedienung im Gestaltungsmodus (Umsehen immer mit der Maus), einzelne Buchstützen,
+  jede Tablet-App mit eigenem Look und Öffnen-Animation, die **Fassade der Bücherei als Baukasten**
+  (Erdgeschoss, Obergeschoss, Fenster, Markisen, Tür, Blumenkästen, Ampeln, Pflanzen – alles
+  kombinierbar), der Briefkasten sauber eingebaut mit Gegenstück innen und die neue App „Fassade“ mit
+  Live-Vorschau auf zwei Polaroids, „Bauen“ und „Abbrechen“.
 
 **Wo die wichtigen Dateien liegen**
 
@@ -92,6 +98,8 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 | Chibi-Figuren | `tools/blender/build_chibi.py` (+ `chibi_*.py`), `scenes/characters/`, `scripts/characters/` |
 | Fahrzeuge | `tools/blender/build_vehicles.py`, `assets/models/vehicles/` |
 | Malfilter | `scripts/rendering/`, `assets/shaders/paint/` |
+| Fassade der Bücherei (Baukasten) | `tools/blender/build_storybook_facade.py` + `facade_options.py` → `assets/models/facade/`, `data/facade/`; im Spiel `scripts/world/library_facade.gd`, Wahl `scripts/autoload/facade_design.gd` |
+| App „Fassade“ | `scripts/ui/tablet_apps/facade_app.gd` (+ `facade_tile.gd`, `facade_preview.gd`, `turntable_preview.gd`, `polaroid.gd`) |
 | Alle einstellbaren Werte | `scripts/autoload/game_config.gd` |
 
 **Was noch offen oder provisorisch ist**
@@ -1120,6 +1128,65 @@ Gestaltungsmodus und im Shop schöne Bild-Kacheln statt Text. Der Stil dient nur
 - Theken und Einwürfe haben keine Farbvarianten (je Stil ein festes Modell).
 - Eigene Modelle sind geschützt: eine ersetzte `.glb`, eine in Blender gespeicherte `.blend` und
   von Godot gespeicherte Szenen/Datenblätter überschreibt das Bau-Script nie.
+
+## Etappe 6b – Bedienung, Tablet-Looks, Fassade gestalten
+Leitgedanke (Wünsche nach dem Test von Etappe 6): Der Gestaltungsmodus fühlt sich an wie Umsehen und
+Greifen, das Tablet wie ein echtes Tablet mit liebevollen Apps, und die Bücherei bekommt ein Gesicht,
+das ich selbst gestalte – außen und innen zusammen, mit Vorschau, bevor gebaut wird.
+
+**1. Gestaltungsmodus**
+- [x] Umsehen immer mit der Maus (gefangen), dezenter Punkt in der Mitte; angeschautes Möbel warm
+      hervorgehoben (ohne Flimmern)
+- [x] Rechtsklick nimmt auf, Linksklick stellt ab, Mausrad dreht, Mausrad-Klick legt weg bzw. leert die Hand
+- [x] Y/X wechseln die Kategorie, C/V das Stück (mit leerem Platz „nichts ausgewählt“); nach dem
+      Abstellen bleibt das Stück in der Hand, solange noch eins im Inventar ist
+- [x] F öffnet den Filter (nur dann ist der Mauszeiger frei; F oder Esc schließt ihn)
+- [x] Inventarleiste bleibt sichtbar und zeigt Kategorie und Stück deutlich; kleine Tastenhilfe mit
+      Symbolen, ein-/ausblendbar mit H
+
+**2. Buchstützen**
+- [x] Jede Buchstütze ein einzelnes Stück (Holz mit Bogen, Beton-Bogen, Eule), einzeln drehbar und zu kaufen
+- [x] Frei im Regalfach; rückt bündig an den Bücherblock (1 mm Luft), Bücher rasten an ihr ein
+
+**3./4. Tablet**
+- [x] Öffnen: Symbol wächst zum ganzen Bildschirm, Begrüßung mit Logo und Ladebalken (≈ 1 s), dann die
+      App; Schließen schrumpft zurück zum Symbol
+- [x] Jede App mit eigenem Look: Farben, Muster, Schrift, Rundungen, Begrüßung (`TabletAppData.style`)
+
+**5. Fassade als Baukasten**
+- [x] Teile in Blender (`build_storybook_facade.py`): Kern (Dach, Gesimse, Laternen, Ankerpunkte),
+      4 Erdgeschosse (klassisch, Nut und Feder, viktorianisch, Naturstein), 3 Obergeschoss-Fenster
+      (Bogen, Sprossen, Erker), 3 Markisen, 4 Türen, 4 Blumenkästen, 3 Ampeln
+- [x] 86 Wahl-Datenblätter (`data/facade/`): Anstriche, Wände oben (Ziegel, Putz, Rauputz, Stein,
+      Holzbretter), Rahmen- und Türfarben, 8 Markisenstoffe, Pflanzen in Farben, Fülle
+- [x] `LibraryFacade` baut die Fassade aus der Wahl (gleiche Teile bleiben stehen), Türblatt und
+      Türfarbe an der Ladentür, Pflanzen auf den Plätzen der Kästen und Ampeln
+- [x] Neue Oberfläche „Bretter“ im Bilderbuch-Shader (Holzverschalung)
+
+**6. Briefkasten**
+- [x] Einwurf auf einer eigenen Montageplatte mit Rahmen in der Fassade, ohne Lücken
+- [x] Innen das passende Gegenstück je Einwurf oder eine neutrale Innenklappe (4 neue Modelle)
+
+**7. App „Fassade“ neu**
+- [x] Reiter Erdgeschoss, Obergeschoss, Markise, Pflanzen, Briefkasten, Theke mit großen Bild-Kacheln
+      (Fotos, gezeichnete Proben, Farbtupfer), wenig Text
+- [x] Zwei schräge Polaroids neben dem Tablet: Bücherei live von gegenüber; drehende Theke bzw.
+      Wandstück mit Briefkasten außen und innen
+- [x] Entwurf statt sofort: „Bauen“ mit Kosten, „Abbrechen“ ohne Änderung; Entwurf und Fassade im
+      Spielstand
+- [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md, Notion)
+
+**Entscheidungen (selbst getroffen):**
+- Theken und Einwürfe kosten jetzt etwas beim Bauen (Theke 120–260, Einwurf 20–60 Taler); vorher
+  war der Wechsel kostenlos.
+- Der Entwurf bleibt erhalten, wenn man das Tablet einfach schließt (und im Spielstand), nur
+  „Abbrechen“ verwirft ihn.
+- Das alte Gesamtmodell der Bücherei-Fassade ist entfernt; die Fassade entsteht nur noch aus dem
+  Baukasten (Standard = Aussehen wie bisher: grüne Holzfront, braune Ziegel, Bogenfenster).
+- Die Holz-Erdgeschosse zeigt die App als gezeichnete Proben im gewählten Anstrich (Fotos waren zu
+  dunkel und kaum zu unterscheiden), alles andere als Foto.
+- Die Live-Vorschau kopiert beim Öffnen der App die Umgebung (Laden, Straße, Nachbarn) nur als Optik
+  in eine eigene kleine Welt – die echte Fassade ändert sich nie vor „Bauen“.
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

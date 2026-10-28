@@ -13,4 +13,5 @@ description = "Eine ehrliche Theke aus Eiche mit drei Feldern vorn – passt zu 
 style_ids = Array[String]([])
 scene_path = "res://assets/models/furniture/counter_classic.glb"
 order = 10
+price = 120
 legacy_ids = PackedStringArray("wood_warm")

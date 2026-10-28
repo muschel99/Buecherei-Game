@@ -28,7 +28,10 @@ extends Node
 ##   --no_street_life   ohne Straßenleben (zum Vergleich)
 ##   --ui=build|shop    Gestaltungsmodus bzw. Theken-Tablet mit „Nest & Nook“ öffnen (seit Etappe 6,
 ##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0);
-##   --ui=app:<id>      Theken-Tablet mit einer anderen App öffnen, z. B. app:facade
+##   --ui=app:<id>      Theken-Tablet mit einer anderen App öffnen, z. B. app:facade; --page=<id> wählt
+##                      in der App „Fassade“ einen Reiter (ground, upper, awning, plants, letterbox,
+##                      counter), --draft=k:v,k:v legt dort einen Entwurf an (wie --facade, dazu
+##                      counter:…, slot:…)
 ##   --facade=k:v,k:v   Fassade vorher so bauen (FacadeDesign, z. B. ground:stone_grey,window:bay)
 ##   --ui=launch:<id>   App mit der Öffnen-Animation starten; --seconds=<s> = Bild nach so vielen
 ##                      Sekunden (z. B. 0.15 = Kachel wächst, 0.8 = Begrüßung)
@@ -181,7 +184,12 @@ func _open_ui(which: String, tab: int) -> void:
 	elif which.begins_with("app:"):
 		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
 		tablet.open_tablet()
-		tablet.open_app(which.trim_prefix("app:"))
+		var app := tablet.open_app(which.trim_prefix("app:"))
+		if _args.has("draft"):
+			for pair in String(_args.draft).split(",", false):
+				FacadeDesign.set_draft_value(pair.get_slice(":", 0), pair.get_slice(":", 1))
+		if _args.has("page") and app and app.has_method("show_page"):
+			app.show_page(String(_args.page))
 	elif which.begins_with("launch:"):
 		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
 		tablet.open_tablet()

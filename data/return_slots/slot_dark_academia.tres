@@ -12,4 +12,5 @@ display_name = "Messingklappe"
 style_ids = Array[String](["dark_academia"])
 scene_path = "res://assets/models/objects/return_slots/slot_dark_academia.glb"
 order = 40
+price = 55
 inside_path = "res://assets/models/objects/return_slots/inside_dark_academia.glb"

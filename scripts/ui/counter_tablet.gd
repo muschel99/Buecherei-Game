@@ -17,6 +17,9 @@ extends CanvasLayer
 ##   wächst es weich zum ganzen Bildschirm, zeigt kurz Logo und Begrüßung (TabletAppLaunch) und
 ##   öffnet dann die App; Home, Kreuz und Esc lassen sie zurück zum Symbol schrumpfen.
 ##   open_app(id) öffnet ohne Animation (Tests, andere Stellen im Spiel).
+## - Hat eine App einen eigenen Bereich neben dem Tablet (TabletApp.get_side_view, z. B. die Polaroids
+##   der App „Fassade“), rückt das Tablet nach dem Öffnen nach links und zeigt ihn rechts daneben;
+##   vor dem Zurückschrumpfen rückt es wieder in die Mitte.
 ## Solange das Tablet offen ist, ist der Mauszeiger sichtbar und die Spielfigur steht still.
 
 const GROUP := "counter_tablet"
@@ -24,6 +27,8 @@ const APPS_FOLDER := "res://data/tablet_apps/"
 ## Größe des Tablets (Anteil des Bilds, von der Mitte aus)
 const MARGIN_X := 0.06
 const MARGIN_Y := 0.06
+## Breite des Bereichs neben dem Tablet (Anteil des Bilds), wenn eine App einen hat
+const SIDE_WIDTH := 0.31
 
 ## Pfad zur Spielfigur (im Inspektor der Hauptszene eingetragen).
 @export var player_path: NodePath
@@ -51,6 +56,9 @@ var _refresh_queued := false
 var _app_icons: Dictionary = {}  # id -> TabletAppIcon auf dem Startbildschirm
 ## Läuft gerade eine Öffnen- oder Schließen-Animation? (dann zählen keine weiteren Klicks)
 var _animating := false
+## Bereich rechts neben dem Tablet und der Teil der App, der gerade darin zu sehen ist
+var _side_area: Control
+var _side_view: Control
 
 
 func _ready() -> void:
@@ -118,6 +126,7 @@ func close() -> void:
 	if not is_open:
 		return
 	is_open = false
+	_hide_side(false)
 	hide()
 	MenuStack.close(self)
 	_player.movement_enabled = true
@@ -140,6 +149,7 @@ func restore_mouse_mode() -> void:
 
 ## Zurück zum Startbildschirm.
 func go_home() -> void:
+	_hide_side(false)
 	if _current:
 		_current.hide()
 	_current = null
@@ -170,9 +180,16 @@ func launch_app(id: String) -> void:
 	tween.tween_property(launch, "greeting", 1.0, 0.2)
 	tween.parallel().tween_property(launch, "loading", 1.0, GameConfig.tablet_app_loading_time)
 	tween.tween_property(launch, "modulate:a", 0.0, GameConfig.tablet_app_reveal_time)
-	tween.tween_callback(func() -> void:
-		launch.queue_free()
-		_animating = false)
+	await tween.finished
+	launch.queue_free()
+	# Hat die App einen Bereich neben dem Tablet, rückt es jetzt zur Seite
+	await _show_side(_current, true)
+	_animating = false
+
+
+## Die offene App schließen: Sie schrumpft zurück zu ihrem Symbol (wie Home).
+func close_app() -> void:
+	_back_to_icon(go_home)
 
 
 ## Home: Die App schrumpft zurück zu ihrem Symbol.
@@ -191,6 +208,10 @@ func _back_to_icon(then: Callable) -> void:
 		then.call()
 		return
 	_animating = true
+	if _side_view:
+		# Erst rückt das Tablet wieder in die Mitte, dann ordnet sich der Startbildschirm neu an
+		await _hide_side(true)
+		await get_tree().process_frame
 	var launch := _make_launch(data, icon)
 	launch.grow = 1.0
 	launch.modulate.a = 0.0
@@ -203,6 +224,70 @@ func _back_to_icon(then: Callable) -> void:
 		launch.queue_free()
 		_animating = false
 		then.call())
+
+
+## Zeigt den Bereich der App neben dem Tablet (falls sie einen hat): Das Tablet rückt nach links,
+## rechts gleitet der Bereich herein. animated = false: sofort.
+func _show_side(app: TabletApp, animated: bool) -> void:
+	var view := app.get_side_view() if app else null
+	if view == null or view == _side_view:
+		return
+	_hide_side(false)
+	if view.get_parent() != _side_area:
+		if view.get_parent():
+			view.get_parent().remove_child(view)
+		_side_area.add_child(view)
+	for child in _side_area.get_children():
+		(child as CanvasItem).visible = child == view
+	_side_view = view
+	_side_area.show()
+	app.side_view_changed(true)
+	var narrow := 1.0 - MARGIN_X - SIDE_WIDTH
+	if not animated:
+		_frame.anchor_right = narrow
+		return
+	_side_area.modulate.a = 0.0
+	view.position.x = 90.0
+	var tween := create_tween().set_parallel()
+	tween.tween_property(_frame, "anchor_right", narrow, GameConfig.tablet_side_time) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(view, "position:x", 0.0, GameConfig.tablet_side_time) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_side_area, "modulate:a", 1.0, GameConfig.tablet_side_time * 0.8)
+	await tween.finished
+
+
+## Versteckt den Bereich neben dem Tablet, das Tablet rückt wieder in die Mitte.
+func _hide_side(animated: bool) -> void:
+	if _side_view == null:
+		return
+	var view := _side_view
+	if animated:
+		var tween := create_tween().set_parallel()
+		tween.tween_property(_frame, "anchor_right", 1.0 - MARGIN_X, GameConfig.tablet_side_time) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(view, "position:x", 90.0, GameConfig.tablet_side_time) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		tween.tween_property(_side_area, "modulate:a", 0.0, GameConfig.tablet_side_time * 0.8)
+		await tween.finished
+		if _side_view != view:
+			return
+	_side_view = null
+	_frame.anchor_right = 1.0 - MARGIN_X
+	_side_area.hide()
+	_side_area.modulate.a = 1.0
+	view.position.x = 0.0
+	view.hide()
+	var owner_app := _app_owning(view)
+	if owner_app:
+		owner_app.side_view_changed(false)
+
+
+func _app_owning(view: Control) -> TabletApp:
+	for app: TabletApp in _app_nodes.values():
+		if app.get_side_view() == view:
+			return app
+	return null
 
 
 ## Die wachsende Kachel liegt über allem (Symbol und Bildschirm in Koordinaten des Tablets).
@@ -267,6 +352,8 @@ func open_app(id: String) -> TabletApp:
 		_app_nodes[id] = node
 	if _current:
 		_current.hide()
+	if _current != _app_nodes[id]:
+		_hide_side(false)
 	_current = _app_nodes[id]
 	_current_id = id
 	_home_view.hide()
@@ -280,6 +367,9 @@ func open_app(id: String) -> TabletApp:
 	_apply_bar_style(data.style)
 	_current.app_opened()
 	_current.refresh()
+	# Ohne Animation (Tests, andere Stellen im Spiel): Bereich neben dem Tablet gleich zeigen
+	if not _animating:
+		_show_side(_current, false)
 	return _current
 
 
@@ -325,6 +415,17 @@ func _build() -> void:
 	_frame.anchor_top = MARGIN_Y
 	_frame.anchor_bottom = 1.0 - MARGIN_Y
 	add_child(_frame)
+
+	# Platz rechts neben dem Tablet (nur für Apps mit eigenem Bereich, z. B. Polaroids)
+	_side_area = Control.new()
+	_side_area.name = "Side"
+	_side_area.anchor_left = 1.0 - MARGIN_X - SIDE_WIDTH + 0.012
+	_side_area.anchor_right = 0.99
+	_side_area.anchor_top = 0.03
+	_side_area.anchor_bottom = 0.97
+	_side_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_side_area.hide()
+	add_child(_side_area)
 
 	var screen := VBoxContainer.new()
 	screen.add_theme_constant_override("separation", 12)

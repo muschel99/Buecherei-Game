@@ -13,4 +13,5 @@ description = "Walnuss mit Pilastern, grüner Lederauflage, Messingstange und de
 style_ids = Array[String](["dark_academia"])
 scene_path = "res://assets/models/furniture/counter_dark_academia.glb"
 order = 20
+price = 260
 legacy_ids = PackedStringArray("wood_dark")

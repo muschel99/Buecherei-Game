@@ -1,247 +1,485 @@
 extends TabletApp
-## App "Fassade" auf dem Theken-Tablet: Hier gestalte ich die Hausfront.
+## App „Fassade“ auf dem Theken-Tablet (seit Etappe 6b neu): Hier gestalte ich die Bücherei außen und
+## innen zusammen – Fassade, Pflanzen draußen, Briefkasten und Theke.
 ##
-## Die App besteht aus Abschnitten (je ein Kasten mit Überschrift), von oben nach unten:
-## der Rückgabekasten (welcher Einwurf außen in der Hauswand sitzt, dazu dezent, wie viele Bücher
-## gerade darin liegen) und die Theke (welches Modell im Laden steht). Beide gibt es je Stil;
-## ein Farbpunkt auf der Karte zeigt den Stil, der Tooltip Name, Stil und Beschreibung.
+## - Oben Reiter mit Symbol und einem Wort (PAGES), darunter je Reiter Reihen großer Bild-Kacheln
+##   (FacadeTile, Name und Preis im Tooltip; Farbvarianten als Tupfer unter der Kachel).
+## - Alles, was ich antippe, landet erst im Entwurf (FacadeDesign.draft) – die echte Fassade bleibt.
+##   Neben dem Tablet liegen zwei schräge Polaroids: die Bücherei von gegenüber, live mit dem Entwurf
+##   (FacadePreview), und eine drehende Theke bzw. ein Wandstück mit dem Briefkasten außen und innen
+##   (TurntablePreview).
+## - Unten „Abbrechen“ (Entwurf verwerfen, App schließt) und „Bauen“ mit den Kosten: Erst das baut um
+##   (FacadeDesign.build_draft). Der Entwurf bleibt erhalten, wenn ich das Tablet einfach zumache, und
+##   wird mit dem Spielstand gespeichert.
 ##
-## Neue Fassaden-Einstellung (z. B. Wandfarbe außen, Schild, Fenster): eine Funktion schreiben,
-## die mit make_section() einen Abschnitt baut, und sie in SECTIONS eintragen. Auswahlen wie
-## beim Einwurf baut make_option_card() (Vorschaubild, Name, ausgewählt hervorgehoben).
+## Neue Wahl-Möglichkeiten brauchen keinen Code: neue Datenblätter in data/facade/ (FacadeOption),
+## data/return_slots/ oder data/counters/. Eine neue Kategorie: in PAGES eine Reihe ergänzen.
 
-## Die Abschnitte (Namen der Funktionen, die sie bauen), von oben nach unten.
-const SECTIONS := ["_build_return_box_section", "_build_counter_section"]
-const CARD_SIZE := Vector2(190, 178)
-const PREVIEW_SIZE := Vector2(170, 112)
+## Die Reiter: Kennung, Name, Symbol (CatalogIcons) und die Reihen darauf ([Schlüssel, Überschrift];
+## Schlüssel = Kategorie von FacadeDesign oder "slot", "slot_inside", "counter").
+const PAGES := [
+	{"id": "ground", "name": "Erdgeschoss", "icon": "fac_ground",
+		"rows": [["ground", "Verkleidung"], ["ground_color", "Anstrich"], ["door", "Tür"], ["door_color", "Türfarbe"]]},
+	{"id": "upper", "name": "Obergeschoss", "icon": "fac_upper",
+		"rows": [["upper", "Wand"], ["window", "Fenster"], ["frame_color", "Rahmen"]]},
+	{"id": "awning", "name": "Markise", "icon": "fac_awning", "rows": [["awning", "Form"], ["fabric", "Stoff"]]},
+	{"id": "plants", "name": "Pflanzen", "icon": "fac_plants",
+		"rows": [["box", "Blumenkästen"], ["box_plant", "Blumen"], ["basket", "Ampeln"], ["basket_plant", "Hängepflanzen"],
+			["fullness", "Fülle"]]},
+	{"id": "letterbox", "name": "Briefkasten", "icon": "fac_slot", "rows": [["slot", "Einwurf außen"], ["slot_inside", "Innen"]]},
+	{"id": "counter", "name": "Theke", "icon": "cat_counter", "rows": [["counter", "Theke"]]},
+]
+const TILE_SIZE := Vector2(112, 112)
+const PLANT_FOLDER := "res://scenes/world/plants/"
+## Blickrichtungen für die Fotos der Fassaden-Teile (zum Modell hin gesehen von dort)
+const VIEW_DOOR := Vector3(-0.35, 0.12, -1.0)    # Türblatt von der Straße
+const VIEW_FRONT := Vector3(0.55, 0.45, 1.0)     # Markise, Kasten, Ampel, Pflanze
+## Innen am Briefkasten: die beiden Möglichkeiten
+const INSIDE_CHOICES := [["match", "Passend zum Einwurf"], ["neutral", "Neutrale Klappe"]]
 
-var _box: VBoxContainer
+var _page := "ground"
+var _tabs: HBoxContainer
 var _scroll: ScrollContainer
+var _rows: VBoxContainer
+var _cost_label: Label
+var _build_button: Button
+var _cancel_button: Button
+var _side: Control
+var _polaroid_facade: Polaroid
+var _polaroid_detail: Polaroid
+var _facade_preview: FacadePreview
+var _detail_preview: TurntablePreview
+var _side_shown := false
 
 
 func _ready() -> void:
+	var layout := VBoxContainer.new()
+	layout.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layout.add_theme_constant_override("separation", 10)
+	add_child(layout)
+	_tabs = HBoxContainer.new()
+	_tabs.name = "Tabs"
+	_tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+	_tabs.add_theme_constant_override("separation", 6)
+	layout.add_child(_tabs)
 	_scroll = ScrollContainer.new()
-	_scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(_scroll)
-	# Etwas Luft an den Seiten, damit es ruhig wirkt
+	layout.add_child(_scroll)
 	var margin := MarginContainer.new()
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for side in ["left", "right"]:
-		margin.add_theme_constant_override("margin_" + side, 40)
-	margin.add_theme_constant_override("margin_top", 8)
+		margin.add_theme_constant_override("margin_" + side, 18)
 	_scroll.add_child(margin)
-	_box = VBoxContainer.new()
-	_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_box.add_theme_constant_override("separation", 22)
-	margin.add_child(_box)
+	_rows = VBoxContainer.new()
+	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_rows.add_theme_constant_override("separation", 14)
+	margin.add_child(_rows)
+	layout.add_child(_make_footer())
+	FacadeDesign.draft_changed.connect(_on_draft_changed)
+	Wallet.money_changed.connect(func(_money: int, _change: int) -> void: _update_footer())
 
+
+## Unten: Kosten, „Abbrechen“ und „Bauen“.
+func _make_footer() -> Control:
+	var panel := make_panel(10.0)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	panel.add_child(row)
+	_cost_label = make_label("", 18)
+	_cost_label.name = "Cost"
+	_cost_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cost_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_cost_label)
+	_cancel_button = make_choice_button("Abbrechen", _on_cancel)
+	_cancel_button.name = "Cancel"
+	_cancel_button.toggle_mode = false
+	_cancel_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(_cancel_button)
+	_build_button = make_primary_button("Bauen", _on_build)
+	_build_button.name = "Build"
+	_build_button.custom_minimum_size.x = 190
+	row.add_child(_build_button)
+	return panel
+
+
+# --- Polaroids neben dem Tablet ---
+
+func get_side_view() -> Control:
+	if _side == null:
+		_side = Control.new()
+		_side.name = "FacadePolaroids"
+		_side.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_side.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_facade_preview = FacadePreview.new()
+		_side.add_child(_facade_preview)
+		_detail_preview = TurntablePreview.new()
+		_side.add_child(_detail_preview)
+		_polaroid_facade = Polaroid.new()
+		_polaroid_facade.name = "PolaroidFacade"
+		_polaroid_facade.caption = "Unsere Bücherei"
+		_polaroid_facade.texture = _facade_preview.get_texture()
+		_polaroid_facade.tilt_degrees = -3.5
+		_side.add_child(_polaroid_facade)
+		_polaroid_detail = Polaroid.new()
+		_polaroid_detail.name = "PolaroidDetail"
+		_polaroid_detail.texture = _detail_preview.get_texture()
+		_polaroid_detail.tilt_degrees = 4.0
+		_polaroid_detail.tape_color = Color(0.62, 0.75, 0.72, 0.75)
+		_polaroid_detail.tape_at = 0.74
+		_side.add_child(_polaroid_detail)
+		_side.resized.connect(_layout_side)
+	return _side
+
+
+func side_view_changed(shown: bool) -> void:
+	_side_shown = shown
+	if shown:
+		_layout_side()
+		_update_previews()
+	if _facade_preview:
+		_facade_preview.set_active(shown)
+		_detail_preview.set_active(shown)
+
+
+## Zwei Polaroids untereinander, leicht überlappend, so groß wie der Platz erlaubt.
+func _layout_side() -> void:
+	if _side == null:
+		return
+	var area := _side.size
+	var ratio := Polaroid.height_for(1.0)
+	var overlap := 0.04
+	var width := minf(area.x * 0.9, area.y / (ratio * 2.0 - overlap))
+	var height := width * ratio
+	_polaroid_facade.size = Vector2(width, height)
+	_polaroid_facade.position = Vector2((area.x - width) / 2.0 - area.x * 0.02, (area.y - height * (2.0 - overlap)) / 2.0)
+	_polaroid_detail.size = Vector2(width, height)
+	_polaroid_detail.position = Vector2((area.x - width) / 2.0 + area.x * 0.03, _polaroid_facade.position.y + height * (1.0 - overlap))
+
+
+func _update_previews() -> void:
+	if _facade_preview == null or not _side_shown:
+		return
+	var design := FacadeDesign.get_draft()
+	_facade_preview.show_design(design)
+	if _page == "counter":
+		_polaroid_detail.caption = "Theke"
+		_detail_preview.show_counter(Catalog.get_counter(str(design.get("counter", ""))))
+	else:
+		_polaroid_detail.caption = "Briefkasten"
+		var slot := Catalog.get_return_slot(str(design.get("slot", "")))
+		_detail_preview.show_letterbox(slot, ReturnBox.inside_path_for(slot, str(design.get("slot_inside", "match"))),
+			TurntablePreview.outside_material_for(design))
+
+
+# --- App ---
 
 func app_opened() -> void:
-	# Ändert sich der Rückgabekasten (Bücher kommen dazu), zeigt die App es gleich
-	var box := ReturnBox.find(get_tree())
-	if box and not box.changed.is_connected(_on_box_changed):
-		box.changed.connect(_on_box_changed)
+	# Die Umgebung (Laden, Straße) einmal je Öffnen in die Vorschau kopieren
+	get_side_view()
+	var room := get_tree().root.find_child("GroundFloorRoom", true, false) as Node3D
+	if room:
+		_facade_preview.capture(room)
 
 
-## Nur neu aufbauen, solange die App zu sehen ist (beim Öffnen baut sie sich ohnehin neu auf).
-func _on_box_changed() -> void:
-	if tablet and tablet.is_open and is_visible_in_tree():
+func _on_draft_changed() -> void:
+	_update_previews()
+	# Nur, solange die App offen ist (beim Öffnen baut sie sich ohnehin neu auf)
+	if tablet and tablet.is_open and visible:
 		request_refresh()
 
 
 func refresh() -> void:
+	_build_tabs()
 	var scroll := _scroll.scroll_vertical
-	clear(_box)
-	for builder: String in SECTIONS:
-		if has_method(builder):
-			call(builder)
+	clear(_rows)
+	for page: Dictionary in PAGES:
+		if page.id == _page:
+			for row: Array in page.rows:
+				_build_row(row[0], row[1])
 	_scroll.set_deferred("scroll_vertical", scroll)
+	_update_footer()
+	_update_previews()
 
 
-# --- Abschnitt: Rückgabekasten ---
-
-func _build_return_box_section() -> void:
-	var box := ReturnBox.find(get_tree())
-	if box == null:
+## Einen Reiter wählen (id aus PAGES).
+func show_page(id: String) -> void:
+	if id == _page:
 		return
-	var content := make_section("Rückgabekasten", "Fest in der schrägen Eingangswand, rechts neben der Tür",
-		_make_count(box.get_books().size(), box.get_capacity(), box.is_full()))
-	content.add_child(make_label("Einwurf", 15, style.muted))
-	var cards := HFlowContainer.new()
-	cards.add_theme_constant_override("h_separation", 12)
-	cards.add_theme_constant_override("v_separation", 12)
-	content.add_child(cards)
-	for slot in Catalog.get_all_return_slots():
-		var card := make_option_card(slot.display_name, slot.get_id() == box.slot_id, choose_slot.bind(slot.get_id()),
-			slot.style_ids)
-		card.name = slot.get_id()
-		card.tooltip_text = ItemTile.describe(slot)
-		var preview := card.get_node("Box/Preview") as TextureRect
-		# Mit einem Stück Hauswand dahinter, fast von vorn
-		_request_picture("return_slot/" + slot.get_id(), slot.scene_path, slot.icon, preview, Vector2(0.5, 0.36))
-		cards.add_child(card)
-
-
-## Einwurf wählen (Kennung einer ReturnSlotData).
-func choose_slot(id: String) -> void:
-	var box := ReturnBox.find(get_tree())
-	if box:
-		box.set_slot(id)
+	_page = id
+	_scroll.scroll_vertical = 0
 	request_refresh()
 
 
-# --- Abschnitt: Theke ---
-
-func _build_counter_section() -> void:
-	var content := make_section("Theke", "Die feste Theke im Laden")
-	content.add_child(make_label("Modell", 15, style.muted))
-	var cards := HFlowContainer.new()
-	cards.add_theme_constant_override("h_separation", 12)
-	cards.add_theme_constant_override("v_separation", 12)
-	content.add_child(cards)
-	for counter in CounterStyle.get_all_styles():
-		var id := counter.get_id()
-		var card := make_option_card(counter.display_name, id == CounterStyle.style_id, choose_counter_style.bind(id),
-			counter.style_ids)
-		card.name = id
-		card.tooltip_text = ItemTile.describe(counter)
-		var preview := card.get_node("Box/Preview") as TextureRect
-		_request_picture("counter/" + id, counter.scene_path, counter.icon, preview)
-		cards.add_child(card)
+func _build_tabs() -> void:
+	clear(_tabs)
+	for page: Dictionary in PAGES:
+		var tab := _PageTab.new()
+		tab.name = page.id
+		tab.icon_key = page.icon
+		tab.word = page.name
+		tab.selected = page.id == _page
+		tab.colors(style)
+		tab.pressed.connect(show_page.bind(page.id))
+		_tabs.add_child(tab)
 
 
-## Theke wählen (Kennung einer CounterData).
-func choose_counter_style(id: String) -> void:
-	CounterStyle.set_style(id)
+func _update_footer() -> void:
+	if _build_button == null:
+		return
+	var changes := FacadeDesign.has_changes()
+	var cost := FacadeDesign.get_draft_cost()
+	var affordable := Wallet.can_afford(cost)
+	if not changes:
+		_cost_label.text = "So steht die Bücherei gerade da."
+		_cost_label.add_theme_color_override("font_color", style.muted)
+	else:
+		_cost_label.text = "Umbau: " + Wallet.format(cost)
+		_cost_label.add_theme_color_override("font_color", style.text if affordable else style.second)
+	_build_button.text = "Bauen" if cost <= 0 else "Bauen · " + Wallet.format(cost)
+	_build_button.disabled = not changes or not affordable
+	_build_button.tooltip_text = "" if affordable else "Dafür reicht das Geld noch nicht."
+
+
+func _on_build() -> void:
+	if FacadeDesign.build_draft():
+		if _polaroid_facade:
+			_polaroid_facade.flash()
 	request_refresh()
 
 
-## Buchsymbol und "12 / 50" (voll: in der Hinweisfarbe).
-func _make_count(count: int, capacity: int, full: bool) -> Control:
-	var row := HBoxContainer.new()
-	row.name = "Count"
-	row.add_theme_constant_override("separation", 6)
-	row.tooltip_text = "Bücher im Rückgabekasten"
-	row.mouse_filter = Control.MOUSE_FILTER_PASS
-	var glyph := CountBadge.BookGlyph.new()
-	glyph.custom_minimum_size = Vector2(22, 22)
-	glyph.color = style.text
-	glyph.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(glyph)
-	var number := make_label("%d / %d" % [count, capacity], 17, style.accent if full else style.text)
-	number.name = "Number"
-	number.autowrap_mode = TextServer.AUTOWRAP_OFF
-	number.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(number)
-	return row
+## Abbrechen: Entwurf verwerfen – nichts ändert sich – und die App schließen.
+func _on_cancel() -> void:
+	FacadeDesign.clear_draft()
+	if tablet:
+		tablet.close_app()
 
 
-## Foto eines Modells für eine Karte (zwischengespeichert unter key; icon = eigenes Bild).
-## wall_size > 0: mit einem Stück Hauswand dahinter, fast von vorn.
-func _request_picture(key: String, scene_path: String, icon: Texture2D, target: TextureRect,
-		wall_size: Vector2 = Vector2.ZERO) -> void:
+# --- Reihen und Kacheln ---
+
+## Eine Reihe: Überschrift mit dem Namen der aktuellen Wahl, darunter die Kacheln.
+func _build_row(key: String, title: String) -> void:
+	var design := FacadeDesign.get_draft()
+	var chosen := str(design.get(key, ""))
+	var entries := _entries(key, design)
+	if entries.is_empty():
+		return
+	var box := VBoxContainer.new()
+	box.name = key
+	box.add_theme_constant_override("separation", 6)
+	_rows.add_child(box)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	box.add_child(head)
+	var title_label := make_title(title, 16)
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	head.add_child(title_label)
+	var chosen_name := ""
+	for entry: Dictionary in entries:
+		for dot: Array in entry.dots:
+			if dot[0] == chosen:
+				chosen_name = dot[2]
+		if entry.id == chosen and chosen_name.is_empty():
+			chosen_name = entry.name
+	var name_label := make_label(chosen_name, 16, style.muted)
+	name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	name_label.size_flags_vertical = Control.SIZE_SHRINK_END
+	head.add_child(name_label)
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 10)
+	flow.add_theme_constant_override("v_separation", 10)
+	box.add_child(flow)
+	for entry: Dictionary in entries:
+		var tile := FacadeTile.new()
+		tile.name = entry.id
+		tile.kind = entry.kind
+		tile.color = entry.get("color", Color.WHITE)
+		tile.material_sample = entry.get("material")
+		tile.amount = entry.get("amount", 1.0)
+		tile.variant = entry.get("variant", "")
+		tile.dots = entry.dots
+		tile.selected = entry.ids.has(chosen)
+		tile.dot_selected = chosen
+		tile.tooltip_text = entry.name if entry.price <= 0 else "%s · %s" % [entry.name, Wallet.format(entry.price)]
+		tile.setup(style, TILE_SIZE)
+		if not tile.selected:
+			tile.pressed.connect(_choose.bind(key, entry.id))
+		tile.dot_chosen.connect(func(id: String) -> void: _choose(key, id))
+		if entry.has("picture"):
+			(entry.picture as Callable).call(tile)
+		flow.add_child(tile)
+
+
+func _choose(key: String, id: String) -> void:
+	FacadeDesign.set_draft_value(key, id)
+
+
+## Die Kacheln einer Reihe: je [id (beim Antippen), ids (alle, die dazugehören), name, price, kind, dots,
+## dazu color/material/amount bzw. picture = Callable(tile), die das Foto bestellt].
+func _entries(key: String, design: Dictionary) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	match key:
+		"slot":
+			for slot in Catalog.get_all_return_slots():
+				var id := slot.get_id()
+				result.append(_entry(id, slot.display_name, slot.price, func(tile: FacadeTile) -> void:
+					_photo(tile, "return_slot/" + id, func() -> Node3D: return _with_wall(slot.scene_path, 0.0, 0.5, 0.36), Vector3(0.3, 0.2, 1.0))))
+		"slot_inside":
+			var slot := Catalog.get_return_slot(str(design.get("slot", "")))
+			for choice: Array in INSIDE_CHOICES:
+				var path := ReturnBox.inside_path_for(slot, choice[0])
+				result.append(_entry(choice[0], choice[1], 0, func(tile: FacadeTile) -> void:
+					_photo(tile, "return_inside/" + path, func() -> Node3D: return _with_wall(path, 0.95, 0.62, 0.62), Vector3(0.3, 0.2, 1.0))))
+		"counter":
+			for counter in CounterStyle.get_all_styles():
+				var id := counter.get_id()
+				result.append(_entry(id, counter.display_name, counter.price, func(tile: FacadeTile) -> void:
+					_photo(tile, "counter/" + id, func() -> Node3D: return _instance(counter.scene_path), ThumbnailRenderer.VIEW_DIRECTION)))
+		_:
+			result = _facade_entries(key, str(design.get(key, "")))
+	return result
+
+
+func _entry(id: String, title: String, price: int, picture: Callable) -> Dictionary:
+	return {"id": id, "ids": [id], "name": title, "price": price, "kind": FacadeTile.Kind.PHOTO, "dots": [], "picture": picture}
+
+
+## Kacheln einer Fassaden-Kategorie; Optionen derselben Gruppe (z. B. Geranien) teilen sich eine Kachel
+## mit Farbtupfern.
+func _facade_entries(category: String, chosen: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var groups := {}  # Gruppe -> Eintrag
+	for option in Catalog.get_facade_options(category):
+		var entry: Dictionary
+		if not option.group.is_empty() and groups.has(option.group):
+			entry = groups[option.group]
+			entry.ids.append(option.id)
+			entry.dots.append([option.id, option.get_swatch(), option.display_name])
+			if option.id == chosen:
+				entry.id = option.id
+			continue
+		entry = {"id": option.id, "ids": [option.id], "name": option.display_name.get_slice(" · ", 0), "price": option.price,
+			"dots": [[option.id, option.get_swatch(), option.display_name]]}
+		_describe_picture(entry, option, category)
+		result.append(entry)
+		if not option.group.is_empty():
+			groups[option.group] = entry
+	return result
+
+
+## Wie die Kachel einer Option aussieht: Probe, Farbe oder Foto.
+func _describe_picture(entry: Dictionary, option: FacadeOption, category: String) -> void:
+	entry.kind = FacadeTile.Kind.PHOTO
+	if option.material:
+		entry.kind = FacadeTile.Kind.MATERIAL
+		entry.material = option.material
+	elif category == "ground":
+		# Holzfronten gezeichnet, im Anstrich des Entwurfs (Fotos wären dunkel und kaum zu unterscheiden)
+		entry.kind = FacadeTile.Kind.SHOPFRONT
+		entry.variant = option.id
+		var paint := FacadeDesign.get_option("ground_color", FacadeDesign.get_draft())
+		entry.color = paint.color if paint else Color(0.13, 0.25, 0.18)
+	elif category == "window":
+		# Nahaufnahme des Fensters über der Tür
+		var path := option.scene_path
+		var door := StreetLayout.door_center()
+		var out := Vector3(-1.0, 0.0, -1.0).normalized()
+		entry.picture = func(tile: FacadeTile) -> void:
+			_photo_view(tile, "facade/window_" + option.id, func() -> Node3D: return _instance(path),
+				door + out * 2.8 + Vector3(0.0, 4.9, 0.0), door + Vector3(0.0, 4.8, 0.0))
+	elif category in ["ground_color", "frame_color", "door_color"]:
+		entry.kind = {"ground_color": FacadeTile.Kind.PAINT, "frame_color": FacadeTile.Kind.FRAME,
+			"door_color": FacadeTile.Kind.DOOR}[category]
+		entry.color = option.color
+	elif category == "fullness":
+		entry.kind = FacadeTile.Kind.FULLNESS
+		entry.amount = option.amount
+	elif not option.plants.is_empty():
+		var plant := PLANT_FOLDER + option.plants[0] + ".tscn"
+		entry.picture = func(tile: FacadeTile) -> void:
+			_photo(tile, "facade_plant/" + option.plants[0], func() -> Node3D: return _instance(plant), VIEW_FRONT)
+	elif option.scene_path.is_empty():
+		entry.kind = FacadeTile.Kind.NONE
+	else:
+		var view := VIEW_DOOR if category == "door" else VIEW_FRONT
+		var path := option.scene_path
+		entry.picture = func(tile: FacadeTile) -> void:
+			_photo(tile, "facade/" + category + "_" + option.id, func() -> Node3D: return _instance(path), view)
+
+
+## Bestellt ein Foto für eine Kachel (zwischengespeichert unter key).
+func _photo(tile: FacadeTile, key: String, make_model: Callable, view: Vector3) -> void:
 	if tablet == null or tablet.thumbnails == null:
 		return
-	# Schwache Referenz: Ist die Karte schon wieder weg, wird das Foto nicht mehr eingesetzt
-	var target_ref: WeakRef = weakref(target)
-	var show_picture := func(texture: Texture2D) -> void:
-		var picture := target_ref.get_ref() as TextureRect
-		if picture:
-			picture.texture = texture
-	tablet.thumbnails.request_scene(key, scene_path, icon, show_picture, wall_size)
+	var tile_ref: WeakRef = weakref(tile)
+	tablet.thumbnails.request_model(key, make_model, func(texture: Texture2D) -> void:
+		var target := tile_ref.get_ref() as FacadeTile
+		if target:
+			target.texture = texture, view)
 
 
-# --- Bausteine für Abschnitte ---
-
-## Ein Abschnitt: Kasten mit Überschrift, dezenter Unterzeile und (freiwillig) etwas rechts
-## daneben. Liefert den Bereich, in den der Inhalt kommt.
-func make_section(title: String, subtitle: String = "", extra: Control = null) -> VBoxContainer:
-	var panel := make_panel(16.0)
-	panel.name = title.to_pascal_case() if not title.is_empty() else "Section"
-	_box.add_child(panel)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 10)
-	panel.add_child(content)
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 12)
-	content.add_child(head)
-	var names := VBoxContainer.new()
-	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	names.add_theme_constant_override("separation", 0)
-	head.add_child(names)
-	names.add_child(make_label(title, 20))
-	if not subtitle.is_empty():
-		names.add_child(make_label(subtitle, 14, style.muted))
-	if extra:
-		extra.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		head.add_child(extra)
-	return content
+## Wie _photo, aber aus einem festen Blickpunkt (Koordinaten des Modells).
+func _photo_view(tile: FacadeTile, key: String, make_model: Callable, eye: Vector3, target: Vector3) -> void:
+	if tablet == null or tablet.thumbnails == null:
+		return
+	var tile_ref: WeakRef = weakref(tile)
+	tablet.thumbnails.request_view(key, make_model, func(texture: Texture2D) -> void:
+		var target_tile := tile_ref.get_ref() as FacadeTile
+		if target_tile:
+			target_tile.texture = texture, eye, target, 45.0)
 
 
-## Eine Auswahl-Karte: Vorschaubild (Knoten "Box/Preview", Bild setzt der Abschnitt) und Name;
-## die gewählte ist hervorgehoben (Rahmen) und trägt ein Häkchen. style_ids: je Stil ein
-## Farbpunkt oben rechts (leer = stilneutral, kein Punkt).
-func make_option_card(title: String, selected: bool, action: Callable, style_ids: Array[String] = []) -> Button:
-	var card := Button.new()
-	card.custom_minimum_size = CARD_SIZE
-	card.focus_mode = Control.FOCUS_NONE
-	card.toggle_mode = true
-	card.button_pressed = selected
-	card.tooltip_text = title
-	if selected:
-		var chosen := style.make_panel_box(8.0, style.panel.lerp(style.accent, 0.25))
-		chosen.border_color = style.accent
-		chosen.set_border_width_all(2)
-		for state in ["normal", "hover", "pressed", "hover_pressed"]:
-			card.add_theme_stylebox_override(state, chosen)
-	else:
-		card.pressed.connect(action)
-	var box := VBoxContainer.new()
-	box.name = "Box"
-	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 10)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override("separation", 4)
-	card.add_child(box)
-	var preview := TextureRect.new()
-	preview.name = "Preview"
-	preview.custom_minimum_size = PREVIEW_SIZE
-	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(preview)
-	var label := make_label(("✓ " if selected else "") + title, 16, style.accent if selected else style.text)
-	label.name = "Title"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	label.clip_text = true
-	box.add_child(label)
-	var styles := StyleTags.known(style_ids)
-	if not styles.is_empty():
-		var dots := _StyleDots.new()
-		dots.name = "StyleDots"
-		for style_id in styles:
-			dots.colors.append(StyleTags.get_color(style_id))
-		dots.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Oben rechts in der Karte, mit 10 px Abstand zum Rand
-		dots.anchor_left = 1.0
-		dots.anchor_right = 1.0
-		dots.offset_left = -10.0 - 14.0 * styles.size()
-		dots.offset_right = -10.0
-		dots.offset_top = 10.0
-		dots.offset_bottom = 24.0
-		card.add_child(dots)
-	return card
+static func _instance(path: String) -> Node3D:
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return Node3D.new()
+	return (load(path) as PackedScene).instantiate() as Node3D
 
 
-## Farbpunkte der Stile (wie auf den Kacheln im Shop), mit hellem Rand.
-class _StyleDots:
-	extends Control
-	var colors: Array[Color] = []
+## Ein Modell vor einem Stück Hauswand (Briefkasten außen bzw. innen), Wand um die Höhe y.
+static func _with_wall(path: String, y: float, width: float, height: float) -> Node3D:
+	var root := Node3D.new()
+	root.add_child(_instance(path))
+	var wall := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(width, height, 0.04)
+	wall.mesh = box
+	wall.material_override = load(ThumbnailRenderer.WALL_MATERIAL)
+	wall.position = Vector3(0.0, y, -0.02)
+	root.add_child(wall)
+	return root
+
+
+## Ein Reiter oben: Symbol mit einem Wort darunter, der gewählte in der Akzentfarbe.
+class _PageTab:
+	extends Button
+	var icon_key := ""
+	var word := ""
+	var selected := false
+	var _text_color := Color.WHITE
+	var _accent := Color.WHITE
+	var _accent_text := Color.BLACK
+	var _font: Font
+
+	func colors(app_style: TabletAppStyle) -> void:
+		_text_color = app_style.text
+		_accent = app_style.accent
+		_accent_text = app_style.accent_text
+		_font = app_style.font
+		focus_mode = Control.FOCUS_NONE
+		custom_minimum_size = Vector2(118, 78)
+		tooltip_text = word
+		for state in ["normal", "hover", "pressed", "hover_pressed", "focus"]:
+			var box := StyleBoxFlat.new()
+			box.set_corner_radius_all(maxi(app_style.button_radius, 6))
+			box.anti_aliasing = true
+			box.bg_color = _accent if selected else (Color(app_style.panel, 0.9) if state.begins_with("hover") else Color(0, 0, 0, 0))
+			if state == "focus":
+				box.draw_center = false
+			add_theme_stylebox_override(state, box)
 
 	func _draw() -> void:
-		for i in colors.size():
-			var center := Vector2(7.0 + 14.0 * i, 7.0)
-			draw_circle(center, 6.0, Color(0.98, 0.94, 0.86))
-			draw_circle(center, 4.6, colors[i])
+		var color := _accent_text if selected else _text_color
+		var icon_size := 34.0
+		CatalogIcons.draw(self, icon_key, Rect2(Vector2((size.x - icon_size) / 2.0, 8.0), Vector2(icon_size, icon_size)), color)
+		var font: Font = _font if _font else get_theme_default_font()
+		draw_string(font, Vector2(0.0, size.y - 12.0), word, HORIZONTAL_ALIGNMENT_CENTER, size.x, 14, color)

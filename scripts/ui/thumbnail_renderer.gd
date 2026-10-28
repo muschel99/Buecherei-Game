@@ -24,7 +24,7 @@ static var _cache: Dictionary = {}
 var _viewport: SubViewport
 var _camera: Camera3D
 var _stage: Node3D
-var _queue: Array = []  # [Kennung, Callable (baut das Modell), Callable (bekommt das Bild), Blickrichtung]
+var _queue: Array = []  # [Kennung, Callable (baut das Modell), Callable (bekommt das Bild), Blickrichtung, Blickpunkt]
 var _is_busy := false
 
 
@@ -110,9 +110,31 @@ func request_scene(key: String, scene_path: String, icon: Texture2D, callback: C
 		return root, callback, WALL_VIEW_DIRECTION if wall_size.x > 0.0 else VIEW_DIRECTION)
 
 
-func _enqueue(key: String, make_model: Callable, callback: Callable,
+## Bestellt ein Bild eines selbst gebauten Modells (make_model liefert einen Node3D) aus der
+## Blickrichtung view_direction (zum Modell hin gesehen von dort) – z. B. Teile der Fassade.
+func request_model(key: String, make_model: Callable, callback: Callable,
 		view_direction: Vector3 = VIEW_DIRECTION) -> void:
-	_queue.append([key, make_model, callback, view_direction])
+	var ready_image: Texture2D = _cache.get(key)
+	if ready_image:
+		callback.call(ready_image)
+		return
+	_enqueue(key, make_model, callback, view_direction)
+
+
+## Bestellt ein Bild aus einem festen Blickpunkt (Kamera bei eye, Blick auf target, Bildwinkel fov;
+## Koordinaten des Modells) – z. B. eine Nahaufnahme eines Teils der Fassade.
+func request_view(key: String, make_model: Callable, callback: Callable, eye: Vector3, target: Vector3,
+		fov: float = 40.0) -> void:
+	var ready_image: Texture2D = _cache.get(key)
+	if ready_image:
+		callback.call(ready_image)
+		return
+	_enqueue(key, make_model, callback, VIEW_DIRECTION, {"eye": eye, "target": target, "fov": fov})
+
+
+func _enqueue(key: String, make_model: Callable, callback: Callable,
+		view_direction: Vector3 = VIEW_DIRECTION, view: Dictionary = {}) -> void:
+	_queue.append([key, make_model, callback, view_direction, view])
 	if not _is_busy:
 		_work()
 
@@ -124,7 +146,7 @@ func _work() -> void:
 		var key: String = job[0]
 		var texture: Texture2D = _cache.get(key)
 		if texture == null:
-			texture = await _photograph(job[1].call(), job[3])
+			texture = await _photograph(job[1].call(), job[3], job[4])
 			if not is_inside_tree():
 				return
 			_cache[key] = texture
@@ -134,21 +156,30 @@ func _work() -> void:
 
 
 ## Stellt das Modell auf, richtet die Kamera aus und macht ein Foto.
-func _photograph(model: Node3D, view_direction: Vector3) -> Texture2D:
+func _photograph(model: Node3D, view_direction: Vector3, view: Dictionary = {}) -> Texture2D:
 	_stage.add_child(model)
 	FurnitureUtils.make_preview_only(model)
 	# Bücherregale bekommen fürs Foto ein paar Beispielbücher
 	for node in model.find_children("*", "", true, false):
 		if node is BookShelf:
 			node.show_sample_books()
-	var bounds := FurnitureUtils.get_local_aabb(model)
-	var center := bounds.get_center()
-	var radius := maxf(bounds.size.length() / 2.0, 0.05)
-	var distance := radius / sin(deg_to_rad(FIELD_OF_VIEW / 2.0)) * 0.95
-	_camera.position = center + view_direction.normalized() * distance
-	_camera.look_at(center)
-	_camera.near = maxf(distance - radius * 2.0, 0.01)
-	_camera.far = distance + radius * 2.0
+	if view.is_empty():
+		var bounds := FurnitureUtils.get_local_aabb(model)
+		var center := bounds.get_center()
+		var radius := maxf(bounds.size.length() / 2.0, 0.05)
+		var distance := radius / sin(deg_to_rad(FIELD_OF_VIEW / 2.0)) * 0.95
+		_camera.fov = FIELD_OF_VIEW
+		_camera.position = center + view_direction.normalized() * distance
+		_camera.look_at(center)
+		_camera.near = maxf(distance - radius * 2.0, 0.01)
+		_camera.far = distance + radius * 2.0
+	else:
+		# Fester Blickpunkt (Nahaufnahme)
+		var eye: Vector3 = view.eye
+		_camera.fov = view.fov
+		_camera.transform = Transform3D(Basis.looking_at(view.target - eye, Vector3.UP), eye)
+		_camera.near = 0.05
+		_camera.far = 60.0
 
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw

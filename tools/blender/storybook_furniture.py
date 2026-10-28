@@ -1057,6 +1057,7 @@ def write_option_data(kit, glb, force=False):
         "style_ids = Array[String]([%s])" % styles,
         'scene_path = "res://%s"' % os.path.relpath(glb, ROOT).replace(os.sep, "/"),
         "order = %d" % spec.get("order", 0),
+        "price = %d" % spec.get("price", 0),
     ]
     if spec.get("legacy"):
         lines.append("legacy_ids = PackedStringArray(%s)" % ", ".join('"%s"' % s for s in spec["legacy"]))

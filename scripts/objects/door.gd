@@ -11,6 +11,9 @@ extends Node3D
 ## Eine offene Tür bleibt auch im Gestaltungsmodus offen (man kommt weiter durch); solange sie
 ## offen ist, hängt man dort nichts auf und nimmt nichts ab (siehe is_swinging).
 
+## Teile des einfachen Türblatts der Szene (weichen einem Türblatt-Modell, set_leaf).
+const BUILTIN_LEAF_PARTS: Array[String] = ["DoorLeaf", "LeafGlass", "LeafMuntinV", "LeafMuntinH", "Knob", "KnobOutside"]
+
 ## Öffnungsrichtung: 1 = Klinkenseite schwingt nach +Z (in den Raum), -1 = nach -Z.
 @export var open_direction: float = 1.0
 
@@ -102,21 +105,26 @@ func set_leaf(path: String, color: Color) -> void:
 		hinge.remove_child(old)
 		old.queue_free()
 	var builtin := path.is_empty() or not ResourceLoader.exists(path)
-	for part in ["DoorLeaf", "LeafGlass", "LeafMuntinV", "LeafMuntinH", "Knob", "KnobOutside"]:
+	for part in BUILTIN_LEAF_PARTS:
 		var node := hinge.get_node_or_null(part) as Node3D
 		if node:
 			node.visible = builtin
 	if builtin:
 		return
+	hinge.add_child(make_leaf_model(path, color))
+
+
+## Ein Türblatt-Modell in der Türfarbe (Fläche „facade_door“) – auch für die Vorschau der App „Fassade“.
+static func make_leaf_model(path: String, color: Color) -> Node3D:
 	var model := (load(path) as PackedScene).instantiate() as Node3D
 	model.name = "LeafModel"
-	hinge.add_child(model)
 	for node in model.find_children("*", "MeshInstance3D", true, false):
 		var mesh_instance := node as MeshInstance3D
 		for i in mesh_instance.mesh.get_surface_count():
 			var material := mesh_instance.mesh.surface_get_material(i)
 			if material and material.resource_name == "facade_door":
 				mesh_instance.set_surface_override_material(i, FurnitureUtils.tinted_material(material, color))
+	return model
 
 
 func _update_prompt() -> void:

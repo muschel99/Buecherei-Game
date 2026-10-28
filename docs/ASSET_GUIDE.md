@@ -292,6 +292,14 @@ Seit Etappe 6 gibt es je Stil einen Einwurf im Bilderbuch-Stil: Messingklappe (D
 Schlichte Platte (Minimalistisch), Briefkasten mit Dach (Landhaus). Die drei schlichten
 Einwürfe von früher sind weiter wählbar.
 
+**Innen das Gegenstück (seit Etappe 6b):** Im Datenblatt steht unter `inside_path` das Modell für
+innen (Ursprung innen auf der Wand **am Boden**, Vorderseite +Z in den Raum, Klappe in 0,95 m Höhe,
+etwa 40 x 45 cm). Leer = die neutrale Innenklappe
+(`assets/models/objects/return_slots/inside_neutral.glb`). In der App wählt man „passend zum Einwurf“
+oder „neutral“. Außen sitzt der Einwurf 7 cm vor der Wand auf der Montageplatte der Fassade
+(`GameConfig.facade_slot_out`) – ein eigenes Modell braucht dafür nichts zu beachten.
+`price` = Kosten beim Bauen in der App.
+
 ### Theke (fest im Laden, je Stil ein Modell)
 Die Theke (`scenes/furniture/counter.tscn`) hat feste Kollision und Ablagefläche; wie sie aussieht,
 wählt man in der App „Fassade“. Jede Theke ist ein Datenblatt in `data/counters/` mit eigenem
@@ -306,7 +314,8 @@ Modell: Schlichte Holztheke (stilneutral, Start), Bibliothekstheke (Dark Academi
    kommen von selbst obendrauf.
 2. Als `.glb` speichern, z. B. `assets/models/my_models/counter_mine.glb`.
 3. Ein Datenblatt in `data/counters/` kopieren und anpassen: `id`, `display_name`,
-   `description` (Tooltip), `style_ids`, `scene_path` (dein Modell), `order`, freiwillig `icon`.
+   `description` (Tooltip), `style_ids`, `scene_path` (dein Modell), `order`, `price` (Kosten beim
+   Bauen in der App), freiwillig `icon`.
 4. Fertig – die App „Fassade“ zeigt die neue Theke von selbst.
 
 ## Ein Möbelstück durch ein eigenes Modell ersetzen
@@ -642,11 +651,9 @@ Backstein, helle Farben Putz, jedes dritte Rauputz), *As Built* (wie gebaut), *B
 **Wall Color** färbt das Material – ein heller Ton auf Backstein ergibt gestrichenen Backstein.
 
 ### Bücherei-Fassade, Gassen und Laternen (seit Etappe 4g)
-> Fassade der Bücherei und Gassen sind seit dem Stil-Umbau neu (`build_storybook_library.py`,
-> `build_storybook_alleys.py`, siehe „Die Welt im Bilderbuch-Stil“). Laternen und Bank wie hier.
-- **Fassade der Bücherei:** `assets/models/world/library_facade.glb` (Knoten „Facade“ in
-  `scenes/rooms/ground_floor_room.tscn`), gebaut mit
-  `blender -b --factory-startup --python tools/blender/build_library.py`.
+> Fassade der Bücherei und Gassen sind seit dem Stil-Umbau neu (`build_storybook_alleys.py`, siehe
+> „Die Welt im Bilderbuch-Stil“), die Fassade seit Etappe 6b ein Baukasten (siehe nächster Abschnitt).
+> Laternen und Bank wie hier.
 - **Gassen:** `assets/models/world/alley_library.glb` und `alley_opposite.glb`. Neu bauen:
   erst `godot --headless --path . res://scenes/tools/export_layout.tscn` (schreibt die Lage
   nach `assets/models/source/layout.json`), dann
@@ -673,6 +680,34 @@ Backstein, helle Farben Putz, jedes dritte Rauputz), *As Built* (wie gebaut), *B
 - **Kleine Gasse gegenüber:** Boden `assets/materials/alley_setts.tres` (großes Kopfsteinpflaster,
   **Tile Size** = Größe der Steine).
 
+
+### Fassade der Bücherei als Baukasten (seit Etappe 6b)
+Die Fassade besteht aus Teilen, die man in der App „Fassade“ frei kombiniert. Alle Teile liegen in
+`assets/models/facade/` (Quellen in `assets/models/source/facade/`), in **Raumkoordinaten** (wie der
+Laden: Ladenboden y = 0, Gehweg 0,5 m tiefer):
+- `core.glb` – Dach, Gesimse, Schildbänder, Laternen und die Ankerpunkte (leere Knoten
+  `Anchor_awning_…`, `Anchor_box_…`, `Anchor_basket_…`), an die Markisen, Blumenkästen und Ampeln kommen.
+- `ground_*.glb` – Erdgeschoss (Holzverkleidung bzw. Naturstein, mit Montageplatte für den Einwurf).
+- `upper_*.glb` – Obergeschoss mit Fenstern (Bogen, Sprossen, Erker; Erker mit eigenen Kasten-Ankern).
+- `awning_*.glb`, `box_*.glb`, `basket_*.glb` – einzelne Teile, Ursprung am Ankerpunkt, +Z von der Wand
+  weg; Kästen und Ampeln haben Pflanzplätze (`FacadeSpot_box_…`, `FacadeSpot_basket_…`).
+- `door_*.glb` – Türblatt in Scharnier-Koordinaten (Drehachse bei x = 0, Blatt nach -x, draußen -z).
+
+Flächen mit diesen Materialnamen färbt bzw. ersetzt das Spiel nach der Wahl: `facade_paint` (+
+`facade_paint_dark`) = Anstrich unten, `facade_frame` = Fensterrahmen, `facade_door` = Türfarbe,
+`facade_upper_wall` = Wand oben, `facade_stone` = Naturstein unten, `facade_awning` = Markisenstoff,
+`facade_quoin` = Ecksteine (bei Holz ausgeblendet). Ein eigenes Teil (z. B. eine eigene Tür) braucht nur
+diese Materialnamen dort, wo die Farbe wechseln soll.
+
+**Neue Wahl (ohne Code):** ein Datenblatt in `data/facade/` kopieren (`FacadeOption`): `id`,
+`display_name`, `category` (ground, ground_color, upper, window, frame_color, awning, fabric, door,
+door_color, box, box_plant, basket, basket_plant, fullness), `order`, `price` und je nach Art
+`scene_path` (Modell), `material` (Wand oben, Stein, Stoff), `color` (Farben), `plants` (Szenen-Namen aus
+`scenes/world/plants/`), `group` (gleiche Gruppe = eine Kachel mit Farbtupfern) oder `amount` (Fülle).
+Die mitgelieferten Datenblätter schreibt `tools/blender/facade_options.py`; ändert man eines in Godot,
+überschreibt das Script es nicht mehr. Teile neu bauen:
+`blender -b --factory-startup --python tools/blender/build_storybook_facade.py -- [teile]`, danach
+Godot einmal öffnen (Import).
 ### Modegeschäft im Bilderbuch-Stil selbst weiterbauen (seit Etappe 4h)
 Das Modegeschäft „Zwirn und Zwirbel“ ist ein eigenes Modell aus vielen Einzelteilen – jedes ein
 geschlossener Körper, den du in Blender wie gewohnt umformen kannst.
@@ -794,7 +829,7 @@ Nomad Sculpt nachmodellieren kannst.
 |---|---|---|---|
 | 29 Wohn- und Kulissenhäuser | `assets/models/houses/storybook/<Gruppe>_<Name>.glb` | `assets/models/source/houses/storybook/<Gruppe>_<Name>.blend` | `build_storybook_street.py` (Bauteile `storybook_houses.py`) |
 | Läden, Pub, Torhaus | `assets/models/houses/<name>.glb` | `assets/models/source/houses/<name>_storybook.blend` | `build_storybook_<haus>.py` |
-| Bücherei außen | `assets/models/world/library_facade.glb` | `assets/models/source/library_storybook.blend` | `build_storybook_library.py` |
+| Bücherei außen (Baukasten, seit 6b) | `assets/models/facade/*.glb` | `assets/models/source/facade/*.blend` | `build_storybook_facade.py` |
 | Gassen | `assets/models/world/alley_library.glb`, `alley_opposite.glb` | `assets/models/source/alleys_storybook.blend` | `build_storybook_alleys.py` |
 | Pflanzen | `assets/models/plants/<id>.glb` + Szene `scenes/world/plants/<id>.tscn` | `assets/models/source/plants/<id>.blend` | `build_storybook_plants.py` (Formen `storybook_greenery.py`) |
 | Abflussdeckel | `assets/models/props/drain_grate.glb` | `assets/models/source/props/storybook_props.blend` | `build_storybook_props.py` |

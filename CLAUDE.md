@@ -146,9 +146,11 @@ data/
   tips/            Texte der App „Tipps & Tricks“ (tips.txt, Aufbau oben in der Datei)
   tablet_apps/     Datenblätter der Tablet-Apps (.tres) – werden automatisch auf den Startbildschirm geladen
   return_slots/    Datenblätter der Einwurf-Varianten des Rückgabekastens (.tres, App „Fassade“)
+  facade/          Wahl-Datenblätter der Bücherei-Fassade (.tres, FacadeOption, App „Fassade“)
 assets/
   models/          Eigene 3D-Modelle (.glb), templates/ = Vorlagen in echter Größe zum Modellieren,
-                   houses/ = Stil-Modelle der Häuser (aus tools/blender), source/ = .blend-Quellen
+                   houses/ = Stil-Modelle der Häuser (aus tools/blender), facade/ = Teile der
+                   Bücherei-Fassade (Baukasten), source/ = .blend-Quellen
                    (.gdignore)
   textures/        Texturen, style/ = gemeinsame Stil-Texturen (Texture2DArray, layers.json)
   materials/       Gemeinsame Materialien (.tres), surfaces/ = Wand- und Bodenmaterialien
@@ -167,7 +169,9 @@ tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py)
                    export_storybook.py, storybook_gap_check.py = Lochprüfung,
                    storybook_overlap_check.py = Töpfe/Deko in Wänden; Stil-Umbau der Welt:
                    build_storybook_street.py + storybook_houses.py = Wohnhäuser,
-                   build_storybook_library.py, build_storybook_alleys.py, build_storybook_props.py,
+                   build_storybook_library.py (Bausteine) + build_storybook_facade.py +
+                   facade_options.py = Fassaden-Baukasten der Bücherei, build_storybook_alleys.py,
+                   build_storybook_props.py,
                    build_storybook_plants.py + storybook_greenery.py = Pflanzen; Möbelkatalog:
                    build_storybook_furniture.py + storybook_furniture.py, furniture_<stil>.py,
                    furniture_fixtures.py = Theken/Einwürfe; Start: tools/build_furniture.sh)
@@ -229,10 +233,26 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Esc schrumpfen sie zurück (`_back_to_icon`); Zeiten `tablet_app_*` in GameConfig; `open_app(id)` ohne
   Animation. Bilder: `--ui=app:<id>` bzw. `--ui=launch:<id> --seconds=… [--grow=0.5]`.
   Apps: Nest & Nook (furnishing), Bücherladen (books), Lager (storage, nur Übersicht +
-  Sammlung), Fassade (facade; Abschnitte: neue Fassaden-Einstellung = Funktion mit
-  `make_section()` + Eintrag in `SECTIONS`, Auswahlkarten `make_option_card()`), Statistik
+  Sammlung), Fassade (facade, siehe „App Fassade“ unten), Statistik
   (stats; neue Werte über Gruppe `stat_sources` mit `get_stats()`), Tipps & Tricks (tips;
-  Texte in `data/tips/tips.txt`).
+  Texte in `data/tips/tips.txt`). **Bereich neben dem Tablet:** `TabletApp.get_side_view()` (Control,
+  null = keiner) + `side_view_changed(shown)`; das Tablet rückt nach dem Öffnen nach links
+  (`CounterTablet.SIDE_WIDTH`, `_show_side`/`_hide_side`, Zeit `tablet_side_time`), vor dem Zurückschrumpfen
+  wieder in die Mitte. `CounterTablet.close_app()` = App schließen wie Home.
+- **App „Fassade“ (seit Etappe 6b neu):** Reiter `FacadeApp.PAGES` (Reihen = [Schlüssel, Überschrift];
+  Schlüssel = Kategorie von FacadeDesign oder "slot"/"slot_inside"/"counter"), Kacheln `FacadeTile`
+  (Kind PHOTO/MATERIAL/PAINT/FRAME/DOOR/NONE/FULLNESS/SHOPFRONT, Farbtupfer für Optionen mit gleicher
+  `group`, Signal `dot_chosen`), Fotos über `ThumbnailRenderer.request_model`/`request_view` (fester
+  Blickpunkt). Alles geht in den **Entwurf** (`FacadeDesign.set_draft_value`, `get_draft`, Signal
+  `draft_changed`, gespeichert); „Bauen“ = `FacadeDesign.build_draft()` (Kosten `get_draft_cost`/
+  `total_cost`: geänderte Kategorien + `CounterData.price`/`ReturnSlotData.price`, `Wallet.spend`, setzt
+  Fassade, Theke, Einwurf), „Abbrechen“ = `clear_draft()` + `close_app()`. Polaroids (`Polaroid`, schräg,
+  `flash()`) neben dem Tablet: `FacadePreview` (SubViewport, eigene Welt: Vorschau-`LibraryFacade` mit
+  `follow_design = false`, Türblatt `Door.make_leaf_model`, Einwurf; `capture(raum)` kopiert beim Öffnen
+  nur die Optik von Laden/Treppe/Straße im Blickkegel – keine Instanz-Werte, der Speicher dafür ist
+  begrenzt; Blickpunkt `facade_preview_*`) und `TurntablePreview` (drehend: `show_counter`,
+  `show_letterbox` = Wandstück mit Einwurf außen und Gegenstück innen; `facade_turntable_period`). Bilder:
+  `--ui=app:facade --page=<reiter> --draft=k:v,…`.
 - **Jede Aktion hat nur einen Weg** (z. B. getragene Bücher einräumen = Linksklick halten am
   Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü). Einzige Ausnahme:
   Ein im R-Menü gerade genommenes Buch legt ein Klick auf seine Kachel zurück.
@@ -373,7 +393,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Fensterläden: beide oder keiner, 6–15° offen oder zu (`closed_share`, `closed_ground`).
   Gassen: `tools/blender/build_alleys.py` (Lage aus `scenes/tools/export_layout.tscn` →
   `assets/models/source/layout.json`), Kollisionen in Alley/OppositeAlley. Bücherei-Fassade:
-  `tools/blender/build_library.py` (Raumkoordinaten, Knoten "Facade" im Raum). Häuser mit
+  seit Etappe 6b Baukasten (siehe „Fassade der Bücherei“; Raumkoordinaten, Knoten "Facade" im Raum). Häuser mit
   Schaufenstern an zwei Seiten: `HouseFacade.see_through` (sonst erscheinen Passanten
   sichtbar hinter dem Haus). Unsichtbare Grenzen (Körper "Bounds") immer mit Metadaten
   `see_through`, sonst gelten Orte dahinter als verdeckt. Hängende Straßenlaternen:
@@ -460,7 +480,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   nach der Lage im Modell). `T.placed` setzt neue Objekte über `matrix_basis` (sonst landen
   leere Objekte im Ursprung). Boden: Shader `storybook_ground.gdshader` (Materialien cobblestone,
   sidewalk, curb_stone, alley_setts), runde Kanten `WorldMesh.add_round_edge`. Bücherei außen:
-  `build_storybook_library.py`, UpperFloors `build_visuals = false`. **Relief nie über Bildschirm-Ableitungen**
+  Baukasten `build_storybook_facade.py` (Bausteine aus `build_storybook_library.py`), UpperFloors `build_visuals = false`. **Relief nie über Bildschirm-Ableitungen**
   (dFdx/dFdy arbeiten in 2x2-Blöcken → Treppchen und Pixel an Fugen): `storybook.gdshaderinc` rechnet die
   Höhe (`surface_height`) an drei Stellen im Abstand eines Bildpunkts, `storybook_ground.gdshader` die
   Steigung genau aus der Steinform (`slope`); Steine sind Kissen (Rundung je Fugenrichtung malgenommen,
@@ -950,6 +970,28 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (Schlüssel "return_box": Bücher, Einwurf, Ort). Immer geschlossen; Anzahl beim Anschauen
   über `CountBadge.show_count(self, n, voll)`. Alte Spielstände: Möbel-id "return_box" →
   `Room._migrate_legacy_return_box` (Bücher in den festen Kasten, Rest ins Lager).
+  Seit Etappe 6b sitzt der Einwurf `GameConfig.facade_slot_out` vor der Wand auf der Montageplatte der
+  Fassade (Platte + Rahmen bauen die Erdgeschoss-Teile bei `SLOT_X/SLOT_Z` in build_storybook_facade.py);
+  innen ersetzt ein Modell die einfache Klappe der Szene: `ReturnSlotData.inside_path` (passendes
+  Gegenstück, `furniture_fixtures.py` `build_inside_*`, kind "slot_inside") oder die neutrale Klappe
+  (`ReturnBox.NEUTRAL_INSIDE`), Wahl `FacadeDesign.config["slot_inside"]` = "match"/"neutral",
+  `ReturnBox.inside_path_for(slot, wahl)`.
+- **Fassade der Bücherei (seit Etappe 6b, Baukasten):** `tools/blender/build_storybook_facade.py [teile]`
+  baut Teile in Raumkoordinaten nach `assets/models/facade/` (Kern = Dach, Gesimse, Laternen, Ankerpunkte;
+  `ground_*`, `upper_*`, `awning_*`, `door_*` = Türblatt in Scharnier-Koordinaten, `box_*`, `basket_*`) mit
+  den Bausteinen von `build_storybook_library.py` (das alte Gesamtmodell wird nicht mehr benutzt) und schreibt
+  am Ende die Wahl-Datenblätter (`facade_options.py` → `data/facade/<kategorie>_<id>.tres` = `FacadeOption`,
+  Materialien `assets/materials/facade/`; von Hand geänderte Dateien ohne Erzeuger-Zeile bleiben).
+  Flächen mit Rollen-Materialien färbt/ersetzt `LibraryFacade` (`facade_paint`(+`_dark`) = Anstrich unten,
+  `facade_frame`, `facade_door`, `facade_upper_wall`, `facade_stone`, `facade_awning`, `facade_quoin` =
+  Ecksteine, bei Holz aus). Markisen/Kästen/Ampeln hängen an leeren Knoten `Anchor_awning_…`/`Anchor_box_…`/
+  `Anchor_basket_…` (aus Kern und Obergeschoss), Pflanzen setzt LibraryFacade selbst auf `FacadeSpot_box/
+  basket_…` (Szenen aus scenes/world/plants/; Greenery bepflanzt nur den Kübel am Kern). Die Fassade baut
+  sich bei `NOTIFICATION_PARENTED` (vor Greenery). Wahl: Autoload `FacadeDesign` (`CATEGORIES`, `DEFAULTS` =
+  Aussehen wie bisher, `get_option`, `apply`, `cost_of`, Entwurf siehe App „Fassade“; Schlüssel "facade").
+  Neue Option = Datenblatt (Modell, Material, Farbe, Pflanzen, `group`, Preis). Holzverschalung: Shader-
+  Oberfläche `grain = 9` (Bretter). Die Bücherei hat ein eigenes Dachmaterial ("Dachziegel Bücherei"), damit
+  gemeinsame Materialien anderer Häuser nicht überschrieben werden.
 - Sperrzonen (Ebene `build_blocker`) können ihren Hinweis als Metadaten tragen
   (`keep_clear_text`, z. B. „Vor dem Rückgabekasten bitte frei lassen.“).
 - Vorschaubilder beliebiger Szenen: `ThumbnailRenderer.request_scene(key, pfad, icon, callback,

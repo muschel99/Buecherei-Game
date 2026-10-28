@@ -573,6 +573,22 @@ var tablet_app_loading_time: float = 1.0
 var tablet_app_reveal_time: float = 0.25
 ## … und so lange schrumpft sie beim Schließen zurück zu ihrem Symbol.
 var tablet_app_close_time: float = 0.3
+## So lange rückt das Tablet zur Seite, wenn eine App einen Bereich daneben hat (Polaroids der App
+## „Fassade“), Sekunden.
+var tablet_side_time: float = 0.35
+
+## App „Fassade“ (seit Etappe 6b): Vorschau-Polaroids neben dem Tablet. So viele Sekunden braucht die
+## drehende Vorschau (Theke bzw. Wandstück mit Briefkasten) für eine Umdrehung …
+var facade_turntable_period: float = 16.0
+## … und so groß rechnet die Vorschau ihre Bilder (Pixel; das Polaroid zeigt sie verkleinert, das macht
+## sie ruhig und scharf).
+var facade_preview_size: Vector2i = Vector2i(720, 600)
+## Blick auf die Bücherei von gegenüber: Abstand von der schrägen Wand (m), Höhe der Kamera über dem
+## Ladenboden, Höhe des Blickpunkts und Bildwinkel (Grad, senkrecht).
+var facade_preview_distance: float = 11.0
+var facade_preview_eye: float = 1.2
+var facade_preview_target_height: float = 3.1
+var facade_preview_fov: float = 46.0
 
 
 # --- Theke ---

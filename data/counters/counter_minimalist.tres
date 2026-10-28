@@ -13,4 +13,5 @@ description = "Weiß mit runden Ecken, Eichenlamellen vorn und einer Platte aus 
 style_ids = Array[String](["minimalist"])
 scene_path = "res://assets/models/furniture/counter_minimalist.glb"
 order = 30
+price = 200
 legacy_ids = PackedStringArray("painted_light")

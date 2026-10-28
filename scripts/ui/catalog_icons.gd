@@ -229,6 +229,36 @@ static func draw(canvas: CanvasItem, key: String, rect: Rect2, color: Color) -> 
 			p.line(12, 13, 12, 16)
 			p.arc(12, 19.5, 3.2, PI, TAU)
 			p.line(8.8, 19.5, 15.2, 19.5)
+		# Reiter der App „Fassade“ (seit Etappe 6b)
+		"fac_ground":
+			p.rect(3, 6, 18, 15)
+			p.line(3, 10, 21, 10)
+			p.rect(5.5, 12.5, 6, 5.5)
+			p.rect(14, 12.5, 4.5, 8.5)
+		"fac_upper":
+			p.rect(6.5, 3.5, 11, 15)
+			p.line(12, 3.5, 12, 18.5)
+			p.line(6.5, 11, 17.5, 11)
+			p.line(4.5, 20.5, 19.5, 20.5)
+		"fac_awning":
+			p.line(4, 6, 20, 6)
+			p.poly([[4, 6], [2.5, 14], [21.5, 14], [20, 6]])
+			for x in [4.875, 9.625, 14.375, 19.125]:
+				p.arc(x, 14, 2.375, 0.0, PI)
+			p.line(9, 6, 8.2, 14)
+			p.line(15, 6, 15.8, 14)
+		"fac_plants":
+			p.rect(4, 15, 16, 5.5)
+			p.circle(8, 10.5, 2.3)
+			p.circle(12, 7.5, 2.3)
+			p.circle(16, 10.5, 2.3)
+			p.line(12, 9.8, 12, 15)
+			p.line(8, 12.8, 9.5, 15)
+			p.line(16, 12.8, 14.5, 15)
+		"fac_slot":
+			p.rect(4, 5, 16, 14)
+			p.rect(7.5, 9, 9, 2.6)
+			p.line(8.5, 15, 15.5, 15)
 		_:
 			# Unbekannt: der erste Buchstabe in einem Kreis
 			p.circle(12, 12, 8)

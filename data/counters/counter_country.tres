@@ -13,3 +13,4 @@ description = "Salbeigrün gestrichen, Kiefernplatte, gemalte Blumenranke und ei
 style_ids = Array[String](["country"])
 scene_path = "res://assets/models/furniture/counter_country.glb"
 order = 40
+price = 220

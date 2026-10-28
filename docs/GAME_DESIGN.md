@@ -54,6 +54,19 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
   - Ein Klick auf ein Symbol öffnet die App; das **Home-Symbol** oben links führt zurück. Das
     **Kreuz** oben rechts und **Esc** schließen immer das ganze Tablet (nicht nur die App).
     Beim nächsten Öffnen startet es wieder auf dem Startbildschirm.
+  - **Öffnen wie auf einem echten Tablet (seit Etappe 6b):** Das angetippte Symbol wächst weich,
+    bis es den ganzen Bildschirm füllt; darauf erscheinen kurz (etwa 1 Sekunde) das Logo, eine
+    Begrüßung in der Schrift der App (z. B. „Willkommen bei Nest & Nook“) und ein feiner
+    Ladebalken, dann blendet die App ein. Home, Kreuz und Esc lassen sie wieder zu ihrem Symbol
+    zusammenschrumpfen. Zeiten in GameConfig (`tablet_app_*`).
+  - **Jede App hat ihren eigenen Look (seit Etappe 6b)**, alles im gemütlichen Stil: eigene
+    Farben, ein feines Muster im Hintergrund (Leinen, Papier, Linien, Raster, Packpapier, Punkte),
+    eigene Schrift für Überschriften, eigene Rundungen von Kacheln und Knöpfen und eine eigene
+    Begrüßung. Nest & Nook: warmes Leinen mit Terrakotta; Bücherladen: Packpapier mit Serifenschrift;
+    Lager: ruhiges Grün mit Linien; Fassade: helles Architekten-Raster mit feiner Schrift in
+    Großbuchstaben; Statistik: Punkte und klare Zahlen; Tipps & Tricks: cremefarbenes Papier.
+    Festgelegt im Datenblatt der App (`TabletAppData.style`), die Schriften liegen in
+    `assets/ui/fonts/` (DejaVu, frei nutzbar).
   - In den Apps gilt dieselbe Gestaltung wie im Regal-Menü: Symbol-Knöpfe mit kurzem Tooltip,
     wenig Text, bei jeder Auflösung ganz sichtbar.
   - **Neue Apps** (z. B. später Vorbestellungen, Besucher, Einstellungen) sind leicht: eine
@@ -83,18 +96,32 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     warmen Farbe. Später kommen Werte dazu, die es noch nicht gibt (Besucher, ausgeliehene
     Bücher je Genre, Kaffee und Kuchen …): Jedes System meldet sie selbst (Gruppe
     `stat_sources`, `get_stats()`); was es noch nicht gibt, erscheint einfach nicht.
-  - **App „Fassade“** (seit Etappe 3l, Symbol: Hausfront): Hier wird die Hausfront gestaltet.
-    Die App besteht aus Abschnitten (je ein Kasten mit Überschrift):
-    - **Rückgabekasten**: oben rechts dezent ein Buchsymbol mit „12 / 50“ (wie viele Bücher
-      darin liegen), darunter die Einwurf-Varianten als Karten mit Vorschaubild (vor einem
-      Stück Hauswand). Ein Klick wählt den Einwurf; der gewählte ist hervorgehoben. Seit
-      Etappe 6 gibt es je Stil einen Einwurf (Messingklappe, Schlichte Platte, Briefkasten mit
-      Dach), ein kleiner Farbpunkt auf der Karte zeigt den Stil.
-    - **Theke** (seit Etappe 4a, neu in Etappe 6): die Theken als Karten mit Vorschaubild und
-      Stil-Punkt (Schlichte Holztheke, Bibliothekstheke, Helle Theke, Landhaustheke). Ein Klick
-      stellt sofort die andere Theke in den Laden – kein Kaufen nötig.
-    Später kommen weitere Abschnitte dazu, z. B. Wandfarbe außen, Schild, Fenster (im Code:
-    eine Funktion je Abschnitt, eingetragen in `SECTIONS`).
+  - **App „Fassade“** (seit Etappe 3l, seit Etappe 6b ganz neu; Symbol: Hausfront): Hier gestalte
+    ich die Bücherei außen und innen zusammen – Fassade, Pflanzen draußen, Briefkasten und Theke.
+    - Oben sechs Reiter mit Symbol und einem Wort: **Erdgeschoss** (Verkleidung, Anstrich, Tür,
+      Türfarbe), **Obergeschoss** (Wand, Fenster, Rahmenfarbe), **Markise** (Form, Stoff),
+      **Pflanzen** (Blumenkästen, Blumen, Ampeln, Hängepflanzen, Fülle), **Briefkasten** (Einwurf
+      außen, Gegenstück innen) und **Theke**.
+    - Darunter je Reiter Reihen **großer Bild-Kacheln** mit wenig Text: Fotos der Teile (Fenster,
+      Markisen, Türen, Kästen, Pflanzen, Einwürfe, Theken), gezeichnete Proben für Farben, Putz,
+      Ziegel, Bretter, Stein und Stoffmuster. Name und Preis stehen im Tooltip, über der Reihe nur
+      der Name der aktuellen Wahl. Pflanzenarten mit mehreren Farben (z. B. Geranien) sind eine
+      Kachel mit Farbtupfern darunter.
+    - **Neben dem Tablet liegen zwei große, schräg gelegte Polaroids** (das Tablet rückt dafür nach
+      links): oben die Bücherei **live von der anderen Straßenseite** mit Blick auf die schräge
+      Eingangswand – jede Änderung sieht man sofort –, unten langsam drehend entweder die
+      **Theke** (im Reiter Theke) oder ein **Stück Hauswand mit dem Briefkasten** (außen der
+      Einwurf auf der gewählten Fassade, innen das Gegenstück).
+    - Alles, was ich antippe, ist erst ein **Entwurf**. Unten zwei klare Knöpfe: **„Bauen“** zeigt
+      die Kosten (nur, was sich ändert) und baut erst dann wirklich um – die echte Fassade, die
+      Theke und der Briefkasten ändern sich nur hier. **„Abbrechen“** verwirft den Entwurf, es
+      ändert sich nichts, und die App schließt sich. Mache ich das Tablet einfach zu, bleibt der
+      Entwurf erhalten (auch im Spielstand) und wartet beim nächsten Öffnen.
+    - Preise: Erdgeschoss-Verkleidung 160–260, Wand oben 120, Fenster 150 (Erker 300), Markise
+      120, Stoff 30, Tür 90, Farben 30–40, Kästen 40, Ampeln 30, Pflanzen 15–20 (Fülle kostenlos),
+      Einwurf 20–60, Theke 120–260 Taler.
+    - Neue Wahl-Möglichkeiten brauchen keinen Code: Datenblätter in `data/facade/` (FacadeOption),
+      `data/return_slots/` und `data/counters/`.
   - **App „Tipps & Tricks“** (seit Etappe 3h): ein kleines, gemütliches Büchlein auf
     cremefarbenem Papier. Zuerst das Inhaltsverzeichnis (Themen mit kleinem Symbol, Pünktchen
     und Seitenzahl: Steuerung, Bücher einräumen, Regale und Fächer, Dekorieren, Einrichten und
@@ -360,9 +387,13 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   ein Briefkasten-Einwurf. Außen sitzt der
   Einwurf, innen eine Klappe zum Herausnehmen. Er wird nicht aufgestellt, nicht gekauft und
   nicht verkauft; davor bleibt ein kleiner Bereich frei (Möbel und Bücher, Vorschau rot).
-  - Wie der Einwurf außen aussieht, wähle ich in der App „Fassade“ (bisher drei Platzhalter:
-    schlichter Schlitz, Klappe, Holzschild). Der Ort bleibt vorerst fest; weitere Orte und
-    Varianten lassen sich später ergänzen (Varianten: Datenblatt in `data/return_slots/`).
+  - Wie der Einwurf außen aussieht, wähle ich in der App „Fassade“ (schlichter Schlitz, Klappe,
+    Holzschild und je Stil einer). Der Ort bleibt vorerst fest; weitere Orte und Varianten lassen
+    sich später ergänzen (Varianten: Datenblatt in `data/return_slots/`).
+  - **Sauber eingebaut (seit Etappe 6b):** Außen sitzt der Einwurf auf einer eigenen Montageplatte
+    mit Rahmen in der Fassade – ohne Lücken, passend zur gewählten Verkleidung (Holz oder Stein).
+    Innen sitzt das **passende Gegenstück** (Messingklappe, schlichte Platte, Landhaus-Klappe …)
+    oder – wählbar in der App – eine **neutrale Innenklappe**.
   - Platz für **50 Bücher** (`GameConfig.return_box_capacity`). Ist er voll, nimmt er nichts
     mehr an (später regelt das der Kundenverkehr).
   - Er ist immer geschlossen; die Bücher darin sieht man nicht. Schaue ich die Klappe innen
@@ -505,7 +536,8 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
   Backshop-Auslage, Kaffeeautomat) ist vorgesehen (Knoten „Modules“ in der Theken-Szene,
   `CounterStyle.modules`) – umgesetzt ist davon noch nichts.
 - **Welche Theke:** Über das Tablet in der App „Fassade“ wähle ich eine Theke – seit Etappe 6 je
-  Stil eine eigene im Bilderbuch-Stil, kein Kaufen nötig:
+  Stil eine eigene im Bilderbuch-Stil; seit Etappe 6b wie alles in der App erst als Entwurf
+  (drehend auf dem Polaroid neben dem Tablet) und mit „Bauen“ (120–260 Taler):
   - *Schlichte Holztheke* (stilneutral, zum Start): Eiche mit drei Feldern vorn.
   - *Bibliothekstheke* (Dark Academia): Walnuss, Pilaster, grüne Lederauflage mit Goldlinie,
     Messing-Fußstange, Messingschild „Ausleihe“, hinten Karteikasten und Messinggriffe.
@@ -703,6 +735,21 @@ steht kurz sein Name.
   Die Decke im Laden bleibt, wie sie ist. Seit dem Stil-Umbau (Etappe 4h) zeigt das Fassaden-Modell
   das Obergeschoss aus braunen Ziegeln mit Bogenfenstern und Blumenkästen und ein Walmdach aus
   Ziegelreihen (siehe „Die Welt im Bilderbuch-Stil“).
+- **Fassade gestalten (seit Etappe 6b):** Die Fassade ist ein Baukasten, alles frei kombinierbar
+  (App „Fassade“):
+  - *Erdgeschoss:* Holzverkleidung klassisch mit Feldern, Nut und Feder oder viktorianisch (hohe
+    Felder mit Bogen und Goldkante) – in sechs Anstrichen (Bücherei-Grün, Nachtblau, Bordeaux,
+    Creme, Salbei, Kohlschwarz) – oder Naturstein (hell, grau).
+  - *Obergeschoss:* Ziegel (braun, rot), Putz (weiß, creme, rosé), Rauputz, Naturstein oder
+    Holzbretter (natur, gestrichen; dann ohne Ecksteine).
+  - *Fenster oben:* Bogenfenster, Sprossenfenster oder Erker; Rahmen in sechs Farben.
+  - *Markisen* über den Schaufenstern: keine, mit Volant, Korbmarkise oder Kastenmarkise; Stoffe
+    gestreift (rot, grün, blau), uni (Senf, Salbei, Terrakotta), Karo blau oder Blümchen.
+  - *Tür:* Glastür, Kassettentür, Bogentür oder Landhaustür, in sechs Farben.
+  - *Pflanzen draußen:* Blumenkästen (Holz, Zink, Terrakotta, Weidenkorb) mit Geranien, Petunien,
+    Begonien, Fuchsien, Lobelien, Heide, Stiefmütterchen, Kräutern, Efeu oder bunt gemischt (je in
+    mehreren Farben), Ampeln (Tonschale, Draht mit Moos, Weidenkorb) mit Hängepflanzen, dazu die
+    Fülle: dezent, üppig oder überquellend.
 - **Fassade (seit Etappe 4g):** eine alte englische Ladenfront aus dunkelgrün lackiertem Holz:
   Sockelfelder, Pilaster mit Konsolen, Holzvertäfelung neben den Fenstern, ein Schildband mit
   „Bücherei“ (über der Tür „Willkommen“ – beides Bilder, die ich selbst gestalte), Gesims,
