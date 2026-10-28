@@ -690,9 +690,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (`tint=`) immer über `F.lin(farbe)` (sRGB → linear, sonst zu blass). Blender-Koordinaten: Vorderseite
   -y; Wanddinge Ursprung hinten in der Mitte, Deckenlampen oben. Übersicht:
   `scenes/tools/catalog_showroom.tscn` (Reihen je Stil + „Theken und Einwürfe“), Testbilder Gruppen
-  `catalog` (`<stil>_all`, `<stil>_N`) und `catalog_items` (je id) mit
+  `catalog` (`<stil>_N` = 4-m-Ausschnitte, `<stil>_all` = ganze Reihe von weit vorn, **nur mit
+  `--group=<stil>`**, das nur diese Reihe aufbaut) und `catalog_items` (je id) mit
   `--scene=res://scenes/tools/catalog_showroom.tscn`; `--cam` ohne Gruppennamen (sonst die ganze
-  Gruppe). Oberflächen-Bilder (Gestaltungsmodus, Shop: `--ui=build|shop`, `--indoor`) mit
+  Gruppe). Leistung je Stil: `--group=<stil> --stats --quality=0|1|2` – `--stats` zählt alles im
+  Blickfeld, auch hinter Wänden (keine Verdeckungsprüfung). Oberflächen-Bilder (Gestaltungsmodus, Shop: `--ui=build|shop`, `--indoor`) mit
   `--rendering-driver opengl3` (lavapipe stürzt beim Vorschaubild-Rendern ab).
 - **Farbvarianten (seit Etappe 6):** `FurnitureData.color_variants` (`ColorVariant`: id, Name,
   `colors` = Materialname → Farbe, `swatch`); `FurnitureUtils.instantiate_model(data, variante)` /

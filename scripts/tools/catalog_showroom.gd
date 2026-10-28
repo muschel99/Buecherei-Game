@@ -9,7 +9,9 @@ extends Node3D
 ## Ansehen: Szene scenes/tools/catalog_showroom.tscn öffnen und mit F6 starten (Kamera mit der
 ## Maus: rechte Taste halten und ziehen, Mausrad = näher/weiter; Pfeiltasten = Reihe wechseln).
 ## Testbilder: tools/screenshots.sh catalog --scene=res://scenes/tools/catalog_showroom.tscn
-## Mit dem Zusatz --variants (nach "--") stehen hinter jedem Objekt alle seine Farben.
+## Mit dem Zusatz --variants (nach "--") stehen hinter jedem Objekt alle seine Farben; mit
+## --group=<stil> (z. B. minimalist, "neutral" = stilneutral, "fixtures" = Theken und Einwürfe) steht
+## nur diese eine Reihe da (an derselben Stelle) – so lässt sich die Leistung je Stil messen.
 
 const ROW_GAP := 7.0  ## Abstand der Stil-Reihen (m)
 const ITEM_GAP := 0.45  ## Luft zwischen zwei Objekten
@@ -31,10 +33,13 @@ func _ready() -> void:
 	SaveManager.saving_enabled = false
 	_build_environment()
 	var show_variants := OS.get_cmdline_user_args().has("--variants")
+	var only: Variant = _only_group()
 	for entry in plan(show_variants):
-		_place(entry)
+		if only == null or entry.group == only:
+			_place(entry)
 	for group in groups():
-		_add_row_scenery(group)
+		if only == null or group == only:
+			_add_row_scenery(group)
 	if get_viewport().get_camera_3d() == null:
 		_camera = Camera3D.new()
 		add_child(_camera)
@@ -146,6 +151,17 @@ static func plan(show_variants: bool = false) -> Array[Dictionary]:
 	return result
 
 
+## Nur eine Reihe aufbauen? (--group=<stil>; null = alle)
+static func _only_group() -> Variant:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--group="):
+			var value := arg.trim_prefix("--group=")
+			if value == "fixtures":
+				return FIXTURES
+			return "" if value == "neutral" else value
+	return null
+
+
 ## Breite x Tiefe x Höhe eines Modells (gemessen, einmal je Datenblatt).
 static var _sizes := {}
 
@@ -184,8 +200,10 @@ static func views() -> Dictionary:
 		var z := -gi * ROW_GAP
 		var length := row_length(group)
 		var slug := "fixtures" if group == FIXTURES else (group if not group.is_empty() else "neutral")
-		result["%s_all" % slug] = {"pos": Vector3(length / 2.0, 3.2, z + maxf(4.5, length * 0.55)),
-			"target": Vector3(length / 2.0, 0.6, z - 1.0)}
+		# Die ganze Reihe von vorn – steht weit vor der Wand der Reihe davor, darum nur mit
+		# --group=<stil> sinnvoll (dann gibt es die anderen Reihen nicht)
+		result["%s_all" % slug] = {"pos": Vector3(length / 2.0, 5.0, z + maxf(6.0, length * 0.7)),
+			"target": Vector3(length / 2.0, 0.5, z - 1.0), "fov": 45.0}
 		var x := 0.0
 		var part := 1
 		while x < length:

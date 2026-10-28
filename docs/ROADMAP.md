@@ -1099,10 +1099,11 @@ Gestaltungsmodus und im Shop schöne Bild-Kacheln statt Text. Der Stil dient nur
       Bibliothekstheke, Helle Theke, Landhaustheke) als Datenblätter in `data/counters/`, 3 neue Einwürfe
       (Messingklappe, Schlichte Platte, Briefkasten mit Dach); alte Spielstände bekommen die passende Theke
 - [x] Übersichts-Szene mit allen Objekten (`scenes/tools/catalog_showroom.tscn`), Testbilder, Leistung in
-      allen drei Grafikstufen: ein ganzer Stil auf einmal im Bild (≈ 26 Objekte, alle Lampen an) braucht
-      830–1020 / 1020–1320 / 1290–1580 Zeichenaufrufe (Niedrig/Mittel/Hoch) – weniger als halb so viel wie
-      der Blick aus dem Laden auf die Straße (1740 / 3390 / 3380). Lampen-Schatten: Niedrig keine, ab Mittel
-      die 3 Stehlampen, auf Hoch dazu 5 Tisch- und Hängelampen, Kerzen/Wandlampen/Kronleuchter nie
+      allen drei Grafikstufen (je Stil gemessen, `--group`): ein ganzer Stil auf einmal im Bild (≈ 26 Objekte,
+      alle Lampen an) braucht 170–350 / 170–450 / 170–535 Zeichenaufrufe und 30–100 / 60–195 / 80–280 Tsd.
+      Dreiecke (Niedrig/Mittel/Hoch) – etwa ein Fünftel bis Sechstel vom Blick aus dem Laden auf die Straße
+      (1740 / 3390 / 3380 Zeichenaufrufe, 2,5 / 6,2 / 9,7 Mio. Dreiecke). Lampen-Schatten: Niedrig keine, ab
+      Mittel die 3 Stehlampen, auf Hoch dazu 5 Tisch- und Hängelampen, Kerzen/Wandlampen/Kronleuchter nie
 - [x] Kasse und Theken-Tablet im Bilderbuch-Stil (stilneutral, auf jeder Theke)
 - [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md)
 
