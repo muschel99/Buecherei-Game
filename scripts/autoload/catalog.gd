@@ -1,9 +1,11 @@
 extends Node
-## Katalog aller Möbel, Wandfarben, Böden, Buch-Genres und Buchtitel (alles, was es im Spiel gibt).
+## Katalog aller Möbel, Wandfarben, Böden, Buch-Genres und Buchtitel (alles, was es im Spiel gibt),
+## dazu die Varianten von Theke und Rückgabekasten-Einwurf.
 ## Was man davon besitzt, steht im Inventar (Inventory), was man kaufen kann, im Shop.
 ##
 ## Dieses Autoload liest beim Spielstart alle Datenblätter aus den Ordnern
-## data/furniture/, data/surfaces/ und data/genres/ ein, dazu die Bücherlisten der Genres
+## data/furniture/, data/surfaces/, data/genres/, data/counters/ und data/return_slots/ ein,
+## dazu die Bücherlisten der Genres
 ## (data/books/<genre>.txt, eine Zeile pro Buch).
 ## Im Code: Catalog.get_furniture("armchair_velvet"), Catalog.get_genre("crime"),
 ## Catalog.get_book("crime/the-case-of-the-curious-cat").
@@ -12,11 +14,13 @@ const FURNITURE_FOLDER := "res://data/furniture/"
 const SURFACE_FOLDER := "res://data/surfaces/"
 const GENRE_FOLDER := "res://data/genres/"
 const RETURN_SLOT_FOLDER := "res://data/return_slots/"
+const COUNTER_FOLDER := "res://data/counters/"
 
 var _furniture: Dictionary = {}  # id -> FurnitureData
 var _surfaces: Dictionary = {}  # id -> SurfaceData
 var _genres: Dictionary = {}  # id -> GenreData
 var _return_slots: Dictionary = {}  # id -> ReturnSlotData (Einwurf-Varianten des Rückgabekastens)
+var _counters: Dictionary = {}  # id -> CounterData (Theken-Varianten)
 var _books: Dictionary = {}  # id -> BookData
 var _books_by_genre: Dictionary = {}  # genre_id -> Array[BookData] (Reihenfolge wie in der Liste)
 
@@ -34,6 +38,9 @@ func _ready() -> void:
 	for resource in _load_folder(RETURN_SLOT_FOLDER):
 		if resource is ReturnSlotData:
 			_register(_return_slots, resource.get_id(), resource)
+	for resource in _load_folder(COUNTER_FOLDER):
+		if resource is CounterData:
+			_register(_counters, resource.get_id(), resource)
 	for genre in get_all_genres():
 		_load_books(genre)
 	print("Katalog geladen: %d Möbel, %d Oberflächen, %d Genres, %d Bücher" % [_furniture.size(),
@@ -76,6 +83,27 @@ func get_all_return_slots() -> Array[ReturnSlotData]:
 	var result: Array[ReturnSlotData] = []
 	result.assign(_return_slots.values())
 	result.sort_custom(func(a: ReturnSlotData, b: ReturnSlotData) -> bool:
+		if a.order != b.order:
+			return a.order < b.order
+		return a.display_name < b.display_name)
+	return result
+
+
+## Theken-Variante mit dieser id oder einer früheren Kennung (legacy_ids), sonst null.
+func get_counter(id: String) -> CounterData:
+	if _counters.has(id):
+		return _counters[id]
+	for counter: CounterData in _counters.values():
+		if counter.legacy_ids.has(id):
+			return counter
+	return null
+
+
+## Alle Theken-Varianten, sortiert nach "Order" und Name.
+func get_all_counters() -> Array[CounterData]:
+	var result: Array[CounterData] = []
+	result.assign(_counters.values())
+	result.sort_custom(func(a: CounterData, b: CounterData) -> bool:
 		if a.order != b.order:
 			return a.order < b.order
 		return a.display_name < b.display_name)

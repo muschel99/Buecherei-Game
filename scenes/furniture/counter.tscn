@@ -3,18 +3,7 @@
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="5_t0h0b"]
 [ext_resource type="Script" path="res://scripts/objects/counter.gd" id="6_counter"]
 [ext_resource type="PackedScene" path="res://scenes/furniture/cash_register.tscn" id="cash_register"]
-[ext_resource type="Material" path="res://assets/materials/door_paint.tres" id="mat_door_paint"]
-[ext_resource type="Material" path="res://assets/materials/wood_dark.tres" id="mat_wood_dark"]
-[ext_resource type="Material" path="res://assets/materials/wood_light.tres" id="mat_wood_light"]
-
-[sub_resource type="BoxMesh" id="BoxMesh_0"]
-size = Vector3(1.9, 0.95, 0.55)
-
-[sub_resource type="BoxMesh" id="BoxMesh_1"]
-size = Vector3(1.7, 0.7, 0.02)
-
-[sub_resource type="BoxMesh" id="BoxMesh_2"]
-size = Vector3(2, 0.05, 0.65)
+[ext_resource type="PackedScene" path="res://assets/models/furniture/counter_classic.glb" id="counter_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
 size = Vector3(2, 1, 0.65)
@@ -30,20 +19,7 @@ script = ExtResource("6_counter")
 
 [node name="Model" type="Node3D" parent="." unique_id=850529860]
 
-[node name="Cabinet" type="MeshInstance3D" parent="Model" unique_id=1400203919]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.475, 0)
-material_override = ExtResource("mat_wood_dark")
-mesh = SubResource("BoxMesh_0")
-
-[node name="FrontPanel" type="MeshInstance3D" parent="Model" unique_id=613137347]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.285)
-material_override = ExtResource("mat_door_paint")
-mesh = SubResource("BoxMesh_1")
-
-[node name="Top" type="MeshInstance3D" parent="Model" unique_id=1557047369]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.975, 0.02)
-material_override = ExtResource("mat_wood_light")
-mesh = SubResource("BoxMesh_2")
+[node name="CounterModel" parent="Model" instance=ExtResource("counter_model")]
 
 [node name="Body" type="StaticBody3D" parent="." unique_id=600231097]
 

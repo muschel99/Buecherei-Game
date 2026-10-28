@@ -15,8 +15,10 @@ extends Resource
 @export var id: String = ""
 ## Name in der App, z. B. "Schlichter Schlitz".
 @export var display_name: String = "Neuer Einwurf"
+## Passende Einrichtungsstile (freiwillig, leer = stilneutral). Zeigt die App als Farbpunkt.
+@export var style_ids: Array[String] = []
 ## Modell des Einwurfs (.tscn oder .glb): Vorderseite zeigt nach +Z (zur Straße),
-## Ursprung hinten in der Mitte (dort, wo es an der Hauswand anliegt).
+## Ursprung hinten auf der Hauswand, in der Mitte des Schlitzes; etwa 40 x 35 cm.
 @export_file("*.tscn", "*.glb") var scene_path: String = ""
 ## Eigenes Vorschaubild für die App (leer = das Modell wird fotografiert).
 @export var icon: Texture2D
@@ -28,3 +30,9 @@ func get_id() -> String:
 	if not id.is_empty():
 		return id
 	return resource_path.get_file().get_basename()
+
+
+func _validate_property(property: Dictionary) -> void:
+	if property.name == "style_ids":
+		property.hint = PROPERTY_HINT_TYPE_STRING
+		property.hint_string = StyleTags.inspector_hint_string()

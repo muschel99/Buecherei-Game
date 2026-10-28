@@ -2,7 +2,7 @@
 
 Aufruf (Terminal, im Projektordner):
     blender -b --factory-startup --python tools/blender/build_storybook_furniture.py -- [<id> …]
-        [--style=dark_academia|minimalist|country|neutral] [--force] [--adopt] [--list]
+        [--style=dark_academia|minimalist|country|neutral|fixtures] [--force] [--adopt] [--list]
 
 Ohne ids: alle Objekte (bzw. alle eines Stils). Je Objekt entstehen:
     assets/models/furniture/<id>.glb              Spiel-Modell (Teile je Material zusammengefasst)
@@ -15,6 +15,8 @@ Selbst bearbeitete Dateien bleiben: eine .blend, deren Fingerabdruck nicht mehr 
 das ganze Objekt übersprungen, außer mit --force), und Szenen/Datenblätter, die Godot gespeichert
 hat. --adopt überschreibt einmalig die alten Platzhalter-Datenblätter gleicher id.
 Die Objekte selbst stehen in furniture_<stil>.py (je Objekt eine Beschreibung + Bau-Funktion).
+Theken und Einwürfe des Rückgabekastens je Stil: furniture_fixtures.py (kind="counter"/"return_slot",
+Modell + Datenblatt in data/counters/ bzw. data/return_slots/, keine eigene Szene).
 """
 
 import os
@@ -30,7 +32,7 @@ import furniture_dark_academia  # noqa: E402
 STYLES = {
     "dark_academia": furniture_dark_academia.ITEMS,
 }
-for _name in ("minimalist", "country", "neutral"):
+for _name in ("minimalist", "country", "neutral", "fixtures"):
     try:
         STYLES[_name] = __import__("furniture_" + _name).ITEMS
     except ImportError:
@@ -51,8 +53,9 @@ def reset_scene():
 
 
 def build(spec, force=False, adopt=False):
-    blend = os.path.join(F.SOURCE_DIR, spec["id"] + ".blend")
-    stamp = os.path.join(F.SOURCE_DIR, spec["id"] + ".stamp")
+    source = F.dirs(spec)["source"]
+    blend = os.path.join(source, spec["id"] + ".blend")
+    stamp = os.path.join(source, spec["id"] + ".stamp")
     if not force and SC.edited_by_hand(blend, stamp):
         print("  %-26s .blend von Hand bearbeitet – übersprungen (--force baut trotzdem neu)" % spec["id"])
         return 0

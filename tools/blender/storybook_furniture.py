@@ -37,13 +37,26 @@ import storybook_lib as SB  # noqa: E402
 from storybook_lib import Body  # noqa: E402
 
 ROOT = SC.ROOT
-MODEL_DIR = os.path.join(ROOT, "assets", "models", "furniture")
-SOURCE_DIR = os.path.join(ROOT, "assets", "models", "source", "furniture")
-MAT_DIR = os.path.join(ROOT, "assets", "materials", "furniture")
 SCENE_DIR = os.path.join(ROOT, "scenes", "furniture")
 DATA_DIR = os.path.join(ROOT, "data", "furniture")
-TEMPLATE_DIR = os.path.join(ROOT, "assets", "models", "templates", "furniture")
 SHOTS = os.path.join(ROOT, "screenshots", "blender", "furniture")
+
+# Arten (Beschreibung: kind=…): gewöhnliche Möbel (Szene + Datenblatt in data/furniture/), Theken
+# (nur Modell + Datenblatt in data/counters/ – die feste Theken-Szene setzt das Modell ein) und
+# Einwürfe des Rückgabekastens (Modell + Datenblatt in data/return_slots/).
+KINDS = {
+    "furniture": dict(model="assets/models/furniture", source="assets/models/source/furniture",
+                      mat="assets/materials/furniture", template="assets/models/templates/furniture"),
+    "counter": dict(model="assets/models/furniture", source="assets/models/source/furniture",
+                    mat="assets/materials/furniture", template="assets/models/templates/furniture", data="data/counters"),
+    "return_slot": dict(model="assets/models/objects/return_slots", source="assets/models/source/objects",
+                        mat="assets/materials/objects", template="assets/models/templates/objects", data="data/return_slots"),
+}
+
+
+def dirs(spec):
+    """Ordner (absolut) für die Art des Objekts: model, source, mat, template (+ data)."""
+    return {key: os.path.join(ROOT, *rel.split("/")) for key, rel in KINDS[spec.get("kind", "furniture")].items()}
 
 # Steht in jeder erzeugten Datei. Speichert Godot die Datei (z. B. nach einer Änderung im Inspektor),
 # verschwindet die Zeile – dann überschreibt das Bau-Script die Datei nie wieder.
@@ -96,6 +109,7 @@ class Kit:
     def __init__(self, spec):
         self.spec = spec
         self.id = spec["id"]
+        self.dirs = dirs(spec)
         seed = sum(ord(c) * (i + 1) for i, c in enumerate(self.id))
         self.rnd = random.Random(seed)
         self.seed = seed
@@ -755,7 +769,7 @@ def eucalyptus(p, base, d, length, rnd, mat="leaf_silver", pairs=7):
 def write_materials(kit, names):
     """Godot-Materialien des Objekts nach assets/materials/furniture/<id>/<rolle>.tres. Liefert
     {Blender-Name: res-Pfad}."""
-    out_dir = os.path.join(MAT_DIR, kit.id)
+    out_dir = os.path.join(kit.dirs["mat"], kit.id)
     os.makedirs(out_dir, exist_ok=True)
     result = {}
     for name in names:
@@ -1007,6 +1021,43 @@ def write_data(kit, bounds, force=False):
         f.write("\n".join(lines) + "\n")
 
 
+def write_option_data(kit, glb, force=False):
+    """Theke (data/counters/) bzw. Einwurf (data/return_slots/): Datenblatt mit Name, Stil, Modell
+    und Reihenfolge in der App „Fassade“. Theken: legacy = alte Kennungen aus früheren Spielständen."""
+    spec = kit.spec
+    path = os.path.join(kit.dirs["data"], kit.id + ".tres")
+    if not force and not is_generated(path):
+        print("  Datenblatt von Hand bearbeitet – bleibt:", os.path.relpath(path, ROOT))
+        return
+    os.makedirs(kit.dirs["data"], exist_ok=True)
+    script_class, script = {"counter": ("CounterData", "counter_data.gd"),
+                            "return_slot": ("ReturnSlotData", "return_slot_data.gd")}[spec["kind"]]
+    styles = ", ".join('"%s"' % s for s in spec.get("styles", []))
+    lines = [
+        '[gd_resource type="Resource" script_class="%s" load_steps=2 format=3]' % script_class,
+        "",
+        "%s – Werte gern im Inspektor ändern: Speichert Godot das\n; Datenblatt, überschreibt das Bau-Script es nicht mehr." % MARK,
+        "",
+        '[ext_resource type="Script" path="res://scripts/data/%s" id="1_data"]' % script,
+        "",
+        "[resource]",
+        'script = ExtResource("1_data")',
+        'id = "%s"' % kit.id,
+        "display_name = %s" % _gd_string(spec["name"]),
+    ]
+    if spec["kind"] == "counter":
+        lines.append("description = %s" % _gd_string(spec.get("desc", "")))
+    lines += [
+        "style_ids = Array[String]([%s])" % styles,
+        'scene_path = "res://%s"' % os.path.relpath(glb, ROOT).replace(os.sep, "/"),
+        "order = %d" % spec.get("order", 0),
+    ]
+    if spec.get("legacy"):
+        lines.append("legacy_ids = PackedStringArray(%s)" % ", ".join('"%s"' % s for s in spec["legacy"]))
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def bounds_of(objs):
     lo = Vector((1e9, 1e9, 1e9))
     hi = Vector((-1e9, -1e9, -1e9))
@@ -1025,18 +1076,21 @@ def export(kit, force_data=False, render=False):
     objs = kit.objects
     flames = kit.flames
     bounds = bounds_of(objs + flames)
-    os.makedirs(MODEL_DIR, exist_ok=True)
-    os.makedirs(SOURCE_DIR, exist_ok=True)
-    blend = os.path.join(SOURCE_DIR, kit.id + ".blend")
-    glb = os.path.join(MODEL_DIR, kit.id + ".glb")
+    os.makedirs(kit.dirs["model"], exist_ok=True)
+    os.makedirs(kit.dirs["source"], exist_ok=True)
+    blend = os.path.join(kit.dirs["source"], kit.id + ".blend")
+    glb = os.path.join(kit.dirs["model"], kit.id + ".glb")
     tris, parts = SC.export_objects(objs, [], glb, extra=flames)
     names = list(dict.fromkeys(SC.LAST_EXPORT_MATERIALS + [o.data.materials[0].name for o in flames if o.data.materials]))
     mapping = write_materials(kit, names)
     write_import(glb, mapping)
-    write_scene(kit, bounds, force=force_data)
-    write_data(kit, bounds, force=force_data)
-    os.makedirs(TEMPLATE_DIR, exist_ok=True)
-    shutil.copyfile(glb, os.path.join(TEMPLATE_DIR, kit.id + ".glb"))
+    if "data" in kit.dirs:
+        write_option_data(kit, glb, force=force_data)
+    else:
+        write_scene(kit, bounds, force=force_data)
+        write_data(kit, bounds, force=force_data)
+    os.makedirs(kit.dirs["template"], exist_ok=True)
+    shutil.copyfile(glb, os.path.join(kit.dirs["template"], kit.id + ".glb"))
     bpy.ops.wm.save_as_mainfile(filepath=blend, compress=True)
     size = bounds[1] - bounds[0]
     print("  %-26s %6d Dreiecke, %2d Teile, %.2f x %.2f x %.2f m" % (kit.id, tris, parts + len(flames), size.x, size.y, size.z))

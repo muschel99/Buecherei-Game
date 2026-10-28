@@ -561,9 +561,9 @@ var pause_on_focus_loss: bool = true
 
 # --- Theke ---
 
-## Stil der Theke beim allerersten Start (id aus CounterStyle.STYLES). Den Stil wechsle ich
+## Theke beim allerersten Start (id eines Datenblatts in data/counters/). Die Theke wechsle ich
 ## im Spiel über das Theken-Tablet in der App "Fassade".
-var counter_default_style: String = "wood_warm"
+var counter_default_style: String = "counter_classic"
 
 
 # --- Rückgabekasten ---

@@ -1,73 +1,73 @@
 extends Node
-## Der Stil der (fest verbauten) Theke.
+## Welche Theke im Laden steht (die feste Theke, verschiedene Modelle je Stil).
 ##
-## Dieses Autoload ist die eine zentrale Stelle für den Theken-Stil. Es ist bewusst von überall
-## aufrufbar (CounterStyle.set_style("wood_dark")), damit die Stilauswahl später leicht auch an
+## Dieses Autoload ist die eine zentrale Stelle für die Theken-Variante. Es ist bewusst von überall
+## aufrufbar (CounterStyle.set_style("counter_country")), damit die Auswahl später leicht auch an
 ## einer anderen Stelle als der Fassaden-App angeboten werden kann (z. B. direkt beim Anschauen
 ## der Theke). Die Theke selbst (scenes/furniture/counter.tscn, Script counter.gd) hört auf das
-## Signal "changed" und färbt sich entsprechend.
+## Signal "changed" und setzt das passende Modell ein.
 ##
-## Neue Stilvariante: einfach einen Eintrag in STYLES ergänzen (id, Name und die drei Farben
-## für Korpus, Frontblende und Platte). Kein weiterer Code nötig.
+## Die Varianten sind Datenblätter (CounterData) in data/counters/ – neue Theke = Modell +
+## Datenblatt, kein Code. Ältere Spielstände mit den früheren Farb-Varianten ("wood_warm" …)
+## finden ihre Theke über CounterData.legacy_ids.
 ##
 ## Module (z. B. Backshop-Auslage, Kaffeeautomat) sind vorgesehen: Sie hängen in der Theken-
-## Szene unter dem Knoten "Modules" und werden hier in "modules" mitgespeichert. Umgesetzt wird
-## davon in Etappe 4a noch nichts – die Struktur steht aber bereit.
+## Szene unter dem Knoten "Modules" und werden hier in "modules" mitgespeichert. Umgesetzt ist
+## davon noch nichts – die Struktur steht aber bereit.
 
-## Wird gesendet, wenn sich der Stil (oder später die Module) der Theke ändern.
+## Wird gesendet, wenn sich die Theke (oder später die Module) ändern.
 signal changed
-
-## Platzhalter-Stilvarianten der Theke. Farben als Platzhalter – leicht austauschbar.
-const STYLES := [
-	{"id": "wood_warm", "name": "Schlichtes Holz",
-		"cabinet": Color(0.47, 0.33, 0.21), "panel": Color(0.56, 0.41, 0.27), "top": Color(0.69, 0.53, 0.35)},
-	{"id": "wood_dark", "name": "Dunkles Holz",
-		"cabinet": Color(0.23, 0.16, 0.11), "panel": Color(0.30, 0.21, 0.15), "top": Color(0.40, 0.29, 0.20)},
-	{"id": "painted_light", "name": "Hell lackiert",
-		"cabinet": Color(0.90, 0.89, 0.85), "panel": Color(0.82, 0.80, 0.75), "top": Color(0.70, 0.55, 0.37)},
-]
 
 ## Name im Spielstand.
 var save_key: String = "counter"
-## Kennung der gewählten Stilvariante.
+## Kennung der gewählten Theke (CounterData).
 var style_id: String = ""
-## Später aktive Module (Platzhalter für Etappe 4b+). Liste von Modul-Kennungen.
+## Später aktive Module (Platzhalter). Liste von Modul-Kennungen.
 var modules: Array = []
 
 
 func _ready() -> void:
 	if style_id.is_empty():
-		style_id = GameConfig.counter_default_style
+		style_id = _resolve(GameConfig.counter_default_style)
 	add_to_group(SaveManager.PERSIST_GROUP)
 
 
-## Alle Stilvarianten (für die Auswahl in der App).
-func get_all_styles() -> Array:
-	return STYLES
+## Alle Theken-Varianten (für die Auswahl in der App).
+func get_all_styles() -> Array[CounterData]:
+	return Catalog.get_all_counters()
 
 
-## Datenblatt der gewählten Variante (unbekannte Kennung = die erste).
-func get_style() -> Dictionary:
+## Datenblatt der gewählten Theke (null nur, wenn es gar keine gibt).
+func get_style() -> CounterData:
 	return get_style_data(style_id)
 
 
-## Datenblatt einer bestimmten Variante (unbekannte Kennung = die erste).
-func get_style_data(id: String) -> Dictionary:
-	for style in STYLES:
-		if style["id"] == id:
-			return style
-	return STYLES[0]
+## Datenblatt einer bestimmten Theke (unbekannte Kennung = die Standard-Theke bzw. die erste).
+func get_style_data(id: String) -> CounterData:
+	var data := Catalog.get_counter(id)
+	if data == null:
+		data = Catalog.get_counter(GameConfig.counter_default_style)
+	if data == null:
+		var all := Catalog.get_all_counters()
+		data = all[0] if not all.is_empty() else null
+	return data
 
 
-## Wählt eine Stilvariante. notify = false: still (beim Start und Laden – kein Speichern).
+## Wählt eine Theke. notify = false: still (beim Start und Laden – kein Speichern).
 func set_style(id: String, notify: bool = true) -> void:
-	var data := get_style_data(id)
-	if data["id"] == style_id:
+	var resolved := _resolve(id)
+	if resolved == style_id:
 		return
-	style_id = data["id"]
+	style_id = resolved
 	changed.emit()
 	if notify:
 		SaveManager.request_save()
+
+
+## Kennung, unter der die Theke im Katalog steht (frühere Kennungen werden übersetzt).
+func _resolve(id: String) -> String:
+	var data := get_style_data(id)
+	return data.get_id() if data else id
 
 
 # --- Speichern und Laden ---

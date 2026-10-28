@@ -3,7 +3,8 @@ extends Node3D
 ## Übersichts-Szene des Möbelkatalogs (seit Etappe 6): alle Objekte aus dem Shop, aufgereiht nach
 ## Stil (je Stil eine Reihe, zuletzt die stilneutralen) und Kategorie, mit Namensschild davor.
 ## Stehendes steht auf dem Boden, kleine Deko auf einem Sockel, Wanddinge hängen an einer Wand
-## hinter der Reihe, Deckenlampen an einem Balken darüber.
+## hinter der Reihe, Deckenlampen an einem Balken darüber. Die letzte Reihe zeigt die Einbauten aus
+## der App „Fassade“: alle Theken (data/counters/) und Einwürfe des Rückgabekastens (data/return_slots/).
 ##
 ## Ansehen: Szene scenes/tools/catalog_showroom.tscn öffnen und mit F6 starten (Kamera mit der
 ## Maus: rechte Taste halten und ziehen, Mausrad = näher/weiter; Pfeiltasten = Reihe wechseln).
@@ -17,6 +18,7 @@ const BEAM_BACK := 1.1  ## Balken für Deckenlampen
 const BEAM_HEIGHT := 2.7
 const PLINTH_HEIGHT := 0.62
 const VARIANT_GAP := 1.3
+const FIXTURES := "-fixtures-"  ## Reihe der Einbauten (Theken, Einwürfe)
 
 var _camera: Camera3D
 var _row := 0
@@ -40,15 +42,43 @@ func _ready() -> void:
 		_update_camera()
 
 
-## Gruppen in Anzeige-Reihenfolge: die Stile aus data/styles/, dann "" = stilneutral.
+## Gruppen in Anzeige-Reihenfolge: die Stile aus data/styles/, dann "" = stilneutral, zuletzt
+## die Einbauten (FIXTURES).
 static func groups() -> Array[String]:
 	var result: Array[String] = StyleTags.ids()
 	result.append("")
+	result.append(FIXTURES)
 	return result
 
 
 static func group_name(group: String) -> String:
+	if group == FIXTURES:
+		return "Theken und Einwürfe"
 	return StyleTags.get_display_name(group) if not group.is_empty() else "Stilneutral"
+
+
+## Einbauten: alle Theken, dann alle Einwürfe des Rückgabekastens.
+static func fixtures() -> Array[Resource]:
+	var result: Array[Resource] = []
+	result.append_array(Catalog.get_all_counters())
+	result.append_array(Catalog.get_all_return_slots())
+	return result
+
+
+## Wo ein Objekt hinkommt: "floor", "plinth", "wall" oder "ceiling".
+static func _kind_of(data: Resource) -> String:
+	if data is CounterData:
+		return "floor"
+	if data is ReturnSlotData:
+		return "wall"
+	var furniture := data as FurnitureData
+	if furniture.allows(FurnitureData.PLACE_CEILING) and not furniture.allows(FurnitureData.PLACE_FLOOR):
+		return "ceiling"
+	if furniture.is_wall_mounted() and not furniture.allows(FurnitureData.PLACE_FLOOR):
+		return "wall"
+	if not furniture.allows(FurnitureData.PLACE_FLOOR):
+		return "plinth"
+	return "floor"
 
 
 ## Alle Objekte aus dem Shop (ohne Fest-Eingebautes) in Anzeige-Reihenfolge.
@@ -80,15 +110,14 @@ static func plan(show_variants: bool = false) -> Array[Dictionary]:
 		var x_floor := 0.0
 		var x_wall := 0.0
 		var x_ceiling := 0.0
-		for data in items_of(group):
+		var entries: Array[Resource] = []
+		if group == FIXTURES:
+			entries = fixtures()
+		else:
+			entries.assign(items_of(group))
+		for data in entries:
 			var size := _size_of(data)
-			var kind := "floor"
-			if data.allows(FurnitureData.PLACE_CEILING) and not data.allows(FurnitureData.PLACE_FLOOR):
-				kind = "ceiling"
-			elif data.is_wall_mounted() and not data.allows(FurnitureData.PLACE_FLOOR):
-				kind = "wall"
-			elif not data.allows(FurnitureData.PLACE_FLOOR):
-				kind = "plinth"
+			var kind := _kind_of(data)
 			var width := maxf(size.x, 0.25)
 			var pos := Vector3.ZERO
 			match kind:
@@ -102,7 +131,7 @@ static func plan(show_variants: bool = false) -> Array[Dictionary]:
 					pos = Vector3(x_floor + width / 2.0, PLINTH_HEIGHT if kind == "plinth" else 0.0, z)
 					x_floor += maxf(width, 0.5 if kind == "plinth" else 0.0) + ITEM_GAP
 			var variants: Array[String] = [""]
-			if show_variants and data.has_variants():
+			if show_variants and data is FurnitureData and data.has_variants():
 				variants.clear()
 				for variant in data.color_variants:
 					variants.append(variant.id)
@@ -121,13 +150,21 @@ static func plan(show_variants: bool = false) -> Array[Dictionary]:
 static var _sizes := {}
 
 
-static func _size_of(data: FurnitureData) -> Vector3:
-	var id := data.get_id()
+static func _size_of(data: Resource) -> Vector3:
+	var id: String = data.get_id()
 	if not _sizes.has(id):
-		var model := FurnitureUtils.instantiate_model(data)
+		var model := _instantiate(data)
 		_sizes[id] = FurnitureUtils.get_local_aabb(model).size
 		model.free()
 	return _sizes[id]
+
+
+## Modell eines Möbels (in der Farbvariante) bzw. einer Theke/eines Einwurfs.
+static func _instantiate(data: Resource, variant: String = "") -> Node3D:
+	if data is FurnitureData:
+		return FurnitureUtils.instantiate_model(data, variant)
+	var packed := load(data.scene_path) as PackedScene if ResourceLoader.exists(data.scene_path) else null
+	return packed.instantiate() as Node3D if packed else Node3D.new()
 
 
 ## Länge einer Reihe (für die Kamera).
@@ -146,7 +183,7 @@ static func views() -> Dictionary:
 	for group in groups():
 		var z := -gi * ROW_GAP
 		var length := row_length(group)
-		var slug := group if not group.is_empty() else "neutral"
+		var slug := "fixtures" if group == FIXTURES else (group if not group.is_empty() else "neutral")
 		result["%s_all" % slug] = {"pos": Vector3(length / 2.0, 3.2, z + maxf(4.5, length * 0.55)),
 			"target": Vector3(length / 2.0, 0.6, z - 1.0)}
 		var x := 0.0
@@ -164,21 +201,26 @@ static func views() -> Dictionary:
 static func item_views() -> Dictionary:
 	var result := {}
 	for entry in plan():
-		var data: FurnitureData = entry.data
+		var data: Resource = entry.data
 		var size := _size_of(data)
 		var reach := maxf(maxf(size.x, size.y), size.z * 0.8) * 2.4 + 0.35
+		# Nie hinter die Wand der Reihe davor (große Stücke wie Theken: dafür etwas weiter Blick)
+		var fov := 34.0
+		if reach > ROW_GAP - WALL_BACK - 0.8:
+			fov *= reach / (ROW_GAP - WALL_BACK - 0.8)
+			reach = ROW_GAP - WALL_BACK - 0.8
 		var center: Vector3 = entry.pos + Vector3(0, size.y * 0.45, 0)
 		if entry.kind == "ceiling":
 			center = entry.pos - Vector3(0, size.y * 0.5, 0)
 		elif entry.kind == "wall":
 			center = entry.pos
-		result[data.get_id()] = {"pos": center + Vector3(reach * 0.42, reach * 0.32, reach), "target": center, "fov": 34.0}
+		result[data.get_id()] = {"pos": center + Vector3(reach * 0.42, reach * 0.32, reach), "target": center, "fov": fov}
 	return result
 
 
 func _place(entry: Dictionary) -> void:
-	var data: FurnitureData = entry.data
-	var model := FurnitureUtils.instantiate_model(data, entry.variant)
+	var data: Resource = entry.data
+	var model := _instantiate(data, entry.variant)
 	add_child(model)
 	model.position = entry.pos
 	if entry.kind == "plinth":
@@ -189,7 +231,7 @@ func _place(entry: Dictionary) -> void:
 		plinth.material_override = _flat_material(Color(0.86, 0.8, 0.7))
 		plinth.position = entry.pos - Vector3(0, PLINTH_HEIGHT / 2.0, 0)
 		add_child(plinth)
-	if entry.variant.is_empty() or entry.variant == data.resolve_variant(""):
+	if entry.variant.is_empty() or (data is FurnitureData and entry.variant == data.resolve_variant("")):
 		var label := Label3D.new()
 		label.text = data.display_name
 		label.font_size = 26

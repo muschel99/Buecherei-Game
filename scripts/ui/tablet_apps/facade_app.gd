@@ -1,9 +1,10 @@
 extends TabletApp
 ## App "Fassade" auf dem Theken-Tablet: Hier gestalte ich die Hausfront.
 ##
-## Die App besteht aus Abschnitten (je ein Kasten mit Überschrift), von oben nach unten.
-## Bisher gibt es einen: den Rückgabekasten (welcher Einwurf außen in der Hauswand sitzt,
-## dazu dezent, wie viele Bücher gerade darin liegen).
+## Die App besteht aus Abschnitten (je ein Kasten mit Überschrift), von oben nach unten:
+## der Rückgabekasten (welcher Einwurf außen in der Hauswand sitzt, dazu dezent, wie viele Bücher
+## gerade darin liegen) und die Theke (welches Modell im Laden steht). Beide gibt es je Stil;
+## ein Farbpunkt auf der Karte zeigt den Stil, der Tooltip Name, Stil und Beschreibung.
 ##
 ## Neue Fassaden-Einstellung (z. B. Wandfarbe außen, Schild, Fenster): eine Funktion schreiben,
 ## die mit make_section() einen Abschnitt baut, und sie in SECTIONS eintragen. Auswahlen wie
@@ -72,10 +73,13 @@ func _build_return_box_section() -> void:
 	cards.add_theme_constant_override("v_separation", 12)
 	content.add_child(cards)
 	for slot in Catalog.get_all_return_slots():
-		var card := make_option_card(slot.display_name, slot.get_id() == box.slot_id, choose_slot.bind(slot.get_id()))
+		var card := make_option_card(slot.display_name, slot.get_id() == box.slot_id, choose_slot.bind(slot.get_id()),
+			slot.style_ids)
 		card.name = slot.get_id()
+		card.tooltip_text = ItemTile.describe(slot)
 		var preview := card.get_node("Box/Preview") as TextureRect
-		_request_slot_picture(slot, preview)
+		# Mit einem Stück Hauswand dahinter, fast von vorn
+		_request_picture("return_slot/" + slot.get_id(), slot.scene_path, slot.icon, preview, Vector2(0.5, 0.36))
 		cards.add_child(card)
 
 
@@ -90,39 +94,27 @@ func choose_slot(id: String) -> void:
 # --- Abschnitt: Theke ---
 
 func _build_counter_section() -> void:
-	var content := make_section("Theke", "Stil der festen Theke im Laden")
-	content.add_child(make_label("Stil", 15, TabletFrame.MUTED_COLOR))
+	var content := make_section("Theke", "Die feste Theke im Laden")
+	content.add_child(make_label("Modell", 15, TabletFrame.MUTED_COLOR))
 	var cards := HFlowContainer.new()
 	cards.add_theme_constant_override("h_separation", 12)
 	cards.add_theme_constant_override("v_separation", 12)
 	content.add_child(cards)
-	for style in CounterStyle.get_all_styles():
-		var id: String = style["id"]
-		var card := make_option_card(style["name"], id == CounterStyle.style_id, choose_counter_style.bind(id))
+	for counter in CounterStyle.get_all_styles():
+		var id := counter.get_id()
+		var card := make_option_card(counter.display_name, id == CounterStyle.style_id, choose_counter_style.bind(id),
+			counter.style_ids)
 		card.name = id
+		card.tooltip_text = ItemTile.describe(counter)
 		var preview := card.get_node("Box/Preview") as TextureRect
-		preview.stretch_mode = TextureRect.STRETCH_SCALE
-		preview.texture = _counter_swatch(style)
+		_request_picture("counter/" + id, counter.scene_path, counter.icon, preview)
 		cards.add_child(card)
 
 
-## Stil der Theke wählen (Kennung einer CounterStyle-Variante).
+## Theke wählen (Kennung einer CounterData).
 func choose_counter_style(id: String) -> void:
 	CounterStyle.set_style(id)
 	request_refresh()
-
-
-## Kleines Vorschaubild einer Theken-Variante: drei waagerechte Farbbänder (Platte, Front, Korpus).
-func _counter_swatch(style: Dictionary) -> Texture2D:
-	var image := Image.create(32, 48, false, Image.FORMAT_RGBA8)
-	image.fill(style["cabinet"])
-	for y in range(0, 16):
-		for x in range(32):
-			image.set_pixel(x, y, style["top"])
-	for y in range(16, 30):
-		for x in range(32):
-			image.set_pixel(x, y, style["panel"])
-	return ImageTexture.create_from_image(image)
 
 
 ## Buchsymbol und "12 / 50" (voll: in der Hinweisfarbe).
@@ -145,7 +137,10 @@ func _make_count(count: int, capacity: int, full: bool) -> Control:
 	return row
 
 
-func _request_slot_picture(slot: ReturnSlotData, target: TextureRect) -> void:
+## Foto eines Modells für eine Karte (zwischengespeichert unter key; icon = eigenes Bild).
+## wall_size > 0: mit einem Stück Hauswand dahinter, fast von vorn.
+func _request_picture(key: String, scene_path: String, icon: Texture2D, target: TextureRect,
+		wall_size: Vector2 = Vector2.ZERO) -> void:
 	if tablet == null or tablet.thumbnails == null:
 		return
 	# Schwache Referenz: Ist die Karte schon wieder weg, wird das Foto nicht mehr eingesetzt
@@ -154,9 +149,7 @@ func _request_slot_picture(slot: ReturnSlotData, target: TextureRect) -> void:
 		var picture := target_ref.get_ref() as TextureRect
 		if picture:
 			picture.texture = texture
-	# Mit einem Stück Hauswand dahinter, fast von vorn
-	tablet.thumbnails.request_scene("return_slot/" + slot.get_id(), slot.scene_path, slot.icon,
-		show_picture, Vector2(0.5, 0.36))
+	tablet.thumbnails.request_scene(key, scene_path, icon, show_picture, wall_size)
 
 
 # --- Bausteine für Abschnitte ---
@@ -187,8 +180,9 @@ func make_section(title: String, subtitle: String = "", extra: Control = null) -
 
 
 ## Eine Auswahl-Karte: Vorschaubild (Knoten "Box/Preview", Bild setzt der Abschnitt) und Name;
-## die gewählte ist hervorgehoben (Rahmen) und trägt ein Häkchen.
-func make_option_card(title: String, selected: bool, action: Callable) -> Button:
+## die gewählte ist hervorgehoben (Rahmen) und trägt ein Häkchen. style_ids: je Stil ein
+## Farbpunkt oben rechts (leer = stilneutral, kein Punkt).
+func make_option_card(title: String, selected: bool, action: Callable, style_ids: Array[String] = []) -> Button:
 	var card := Button.new()
 	card.custom_minimum_size = CARD_SIZE
 	card.focus_mode = Control.FOCUS_NONE
@@ -223,4 +217,31 @@ func make_option_card(title: String, selected: bool, action: Callable) -> Button
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.clip_text = true
 	box.add_child(label)
+	var styles := StyleTags.known(style_ids)
+	if not styles.is_empty():
+		var dots := _StyleDots.new()
+		dots.name = "StyleDots"
+		for style_id in styles:
+			dots.colors.append(StyleTags.get_color(style_id))
+		dots.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Oben rechts in der Karte, mit 10 px Abstand zum Rand
+		dots.anchor_left = 1.0
+		dots.anchor_right = 1.0
+		dots.offset_left = -10.0 - 14.0 * styles.size()
+		dots.offset_right = -10.0
+		dots.offset_top = 10.0
+		dots.offset_bottom = 24.0
+		card.add_child(dots)
 	return card
+
+
+## Farbpunkte der Stile (wie auf den Kacheln im Shop), mit hellem Rand.
+class _StyleDots:
+	extends Control
+	var colors: Array[Color] = []
+
+	func _draw() -> void:
+		for i in colors.size():
+			var center := Vector2(7.0 + 14.0 * i, 7.0)
+			draw_circle(center, 6.0, Color(0.98, 0.94, 0.86))
+			draw_circle(center, 4.6, colors[i])

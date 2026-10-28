@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CounterData" load_steps=2 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/counter_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = "counter_dark_academia"
+display_name = "Bibliothekstheke"
+description = "Walnuss mit Pilastern, grüner Lederauflage, Messingstange und dem Schild „Ausleihe“."
+style_ids = Array[String](["dark_academia"])
+scene_path = "res://assets/models/furniture/counter_dark_academia.glb"
+order = 20
+legacy_ids = PackedStringArray("wood_dark")
