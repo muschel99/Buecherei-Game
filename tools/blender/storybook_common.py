@@ -45,7 +45,7 @@ def make_material(name, color, glow=0.0, plant=False, **kw):
     z. B. Innenräume, die in Blender von Lampen beleuchtet werden; plant = Blätter/Blüten, im
     Spiel beidseitig sichtbar). Gleicher Name = dasselbe Material."""
     GAME_MATERIALS[name] = dict(kw, color=color, glow=glow, plant=plant)
-    mat = SB.material(name, color, **{k: v for k, v in kw.items() if k != "wind"})
+    mat = SB.material(name, color, **{k: v for k, v in kw.items() if k not in ("wind", "own")})
     mat["spiel_pflanze"] = plant   # export_storybook.py vereinfacht diese Teile fürs Spiel
     # Werte fürs Spiel in der .blend merken (export_storybook.py braucht sie für Sammel-Materialien)
     mat["spiel_werte"] = json.dumps(GAME_MATERIALS[name])
@@ -626,7 +626,9 @@ PALETTE_GRAIN = {
 def palette_key(info):
     """Name des Sammel-Materials für ein Material (None = bleibt eigenes Material: Glas, Bilder,
     Leuchten, Streifen, Wind)."""
-    if not info or info.get("image") or info.get("glass") or info.get("emit", 0) > 0 or info.get("stripes") or info.get("wind"):
+    # own = bleibt eigenes Material (z. B. Autolack: Godot färbt es je Fahrzeug um)
+    if not info or info.get("image") or info.get("glass") or info.get("emit", 0) > 0 or info.get("stripes") or info.get("wind") \
+            or info.get("own"):
         return None
     grain = info.get("grain", "plaster")
     if info.get("plant"):

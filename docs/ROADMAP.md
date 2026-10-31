@@ -39,11 +39,13 @@
 | 5c  | Chibi-Figuren (Mannequins, Gesichter)    | in Arbeit     |
 | 6   | Möbelkatalog im neuen Stil               | fertig        |
 | 6b  | Bedienung, Tablet-Looks, Fassade gestalten | fertig      |
+| 6c  | Fassade in jeder Form, Freischaltungen, Leben auf der Straße, Fahrzeuge im Stil | fertig |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
 | 10  | Erweiterungen und Freischaltungen        | offen         |
 | 11  | Atmosphäre und Sound                     | offen         |
+| 11b | Geräuschkulisse für die Straße (vorgemerkt) | offen      |
 | 12  | Story und Spiegel                        | offen         |
 | 13  | Gasse, Fassade und Jahreszeiten          | offen         |
 | 14  | Feinschliff                              | offen         |
@@ -1188,6 +1190,69 @@ das ich selbst gestalte – außen und innen zusammen, mit Vorschau, bevor gebau
 - Die Live-Vorschau kopiert beim Öffnen der App die Umgebung (Laden, Straße, Nachbarn) nur als Optik
   in eine eigene kleine Welt – die echte Fassade ändert sich nie vor „Bauen“.
 
+## Etappe 6c – Fassade in jeder Form, Freischaltungen und mehr Leben auf der Straße
+Leitgedanke (Wünsche nach dem Test von Etappe 6b): Die Bücherei beginnt als altes, liebenswert
+heruntergekommenes Backsteinhaus und wird Stück für Stück schöner; Fenster und Türen gibt es in
+vielen Formen, und alles passt innen wie außen ohne Lücke. Auf der Straße wird es lebendiger:
+Passanten grüßen, plaudern, strecken sich, und Autos und Fahrräder sind im weichen Weltstil gebaut.
+
+**Teil A – Fassade, Fenster und Türen**
+- [x] 1. Start-Fassade: immer eine vollständige, geschlossene Fassade; zu Beginn ein altes Backsteinhaus
+      (bröckelnder Putz, abgeplatzte Stellen, verwitterte Farbe, Risse, fehlende Steine – charmant, nicht
+      gruselig; Shader-Wert `weather`). Ältere Spielstände bekommen einmalig die neue Start-Fassade.
+- [x] 2. Freischaltungen: jede Variante hat das Feld „frei/gesperrt“ (`FacadeOption.unlocked`); frei sind
+      Backstein beige oder rot, je mit oder ohne Ecksteine (und je Bereich die Start-Wahl); gesperrte
+      Kacheln grau mit Schloss; Testtaste **F11** schaltet alles frei (wie F9/F10 abschaltbar)
+- [x] 3. Ecksteine: alle Wohnhäuser geprüft – acht hatten sie nur an der frei stehenden Ecke, jetzt an
+      beiden Ecken gleich (auch das Haus neben dem Blumenladen)
+- [x] 4. Schildbalken mit der Fassade veränderbar (Farben, Holz, Stein), eigener Platz in der App
+- [x] 5. Pflanzen draußen: 6 fertige Mischungen (Bunt, Grün, Pastell, Wild, Bauerngarten, Weiß), je Kasten
+      und Ampel anders angeordnet, üppig
+- [x] 6. Türen in verschiedenen Formen, auch rund/mit Rundbogen; Fenster um die Tür wählbar (Oberlicht,
+      Seitenfenster, beides, keins); die Maueröffnung passt sich an
+- [x] 7. Fenster unten und oben: Sprossen, ganz Glas, rund, Bogen, Erker; Ausschnitt in Wand, Rahmen,
+      Glas und Fensterbank aus einem einzigen Umriss (innen wie außen ohne Lücken); Vorhänge folgen der
+      Form (bei Bogenfenstern oben im Bogen); alle Kombinationen innen und außen geprüft
+- [x] 8. Vorhänge und Gardinen in „Nest & Nook“ (Gardine, Schals, Scheibengardine, gebunden; je 4 Farben):
+      rasten im Gestaltungsmodus nur an Fenstern ein und passen sich der Fensterform an
+- [x] 9. Türkranz hängt an jeder Tür, auch vor Glas (Haken mit Band); die Vorschau springt nicht mehr
+- [x] 10. Gewählte Markisen bewegen sich im Wind wie bei den anderen Läden
+- [x] 11. Neuer Bereich „Deko vor der Bücherei“: Bank, Töpfe, Pflanzkästen, Kundenstopper, Laterne – mit
+      großen Kacheln und Polaroid-Vorschau; Passanten gehen darum herum
+
+**Teil B – Stadt und Passanten**
+- [x] 12. Alle Parkbänke geprüft: die drei Bänke standen mit der Lehne 9 cm in Wand bzw. Fensterrahmen –
+      jetzt 9 cm Luft dahinter; Pub-Möbel und Gartenbank frei
+- [x] 13. Sitzhöhe: Bänke und Stühle auf 25 cm (passend zu den Chibi-Figuren) – kein Hochrutschen beim
+      Hinsetzen und Herunterrutschen beim Aufstehen mehr
+- [x] 14. Pub-Stühle stehen neben den Tischen mit Blick zur Straße (leicht zum Tisch gedreht): Hinsetzen
+      von vorn, niemand gleitet durch den Tisch
+- [x] 15. Mimik: Grundgesicht neutral/freundlich; andere Ausdrücke nur zu Anlässen (Lächeln beim Grüßen,
+      Staunen am Schaufenster, Lachen beim Plaudern …) – erweiterbare Tabelle `FaceTriggers`
+- [x] 16. Mehr Leben: Grüßen mit kurzem Winken, stehen bleiben und plaudern (abwechselnd erzählen und
+      zuhören), sich umschauen, strecken, auf die Uhr schauen; Sprechblasen mit Symbolen (Herz, Buch,
+      Tasse, Sonne, Blume, Note, Katze, Stern, Kuchen); Gemurmel wie bei Animal Crossing aus selbst
+      erzeugten Silben (eigene Geräusche: siehe ASSET_GUIDE)
+- [x] 17. Autos und Fahrräder neu im weichen Weltstil (geschlossene, runde Körper, Radkästen mit
+      Kotflügel-Rand, Sitze hinter den Scheiben, geflochtener Fahrradkorb); weiches Anfahren und Bremsen,
+      sanfte Kurven, Vorderräder lenken mit, Karosserie nickt und neigt sich, Räder drehen, Radfahrer
+      treten und legen sich in die Kurve
+- [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md, Notion)
+
+**Entscheidungen (selbst getroffen):**
+- In jedem Bereich der App bleibt die Start-Wahl frei (sonst ließe sich z. B. kein Fenster mehr
+  zurückwählen); Theken und Briefkasten-Einwürfe bleiben alle frei.
+- Fenster, Türen und Erdgeschoss-Verkleidung baut das Spiel jetzt selbst aus einem Umriss (statt fester
+  Blender-Teile) – nur so passen Wandausschnitt, Rahmen, Glas, Fensterbank und Vorhang in jeder
+  Kombination genau zusammen.
+- Den Fehler mit den fehlenden Wänden zu Beginn konnte ich im Container nicht nachstellen; die Fassade
+  ist darum komplett neu aufgebaut (Ersatzteile, falls ein Teil fehlt) und alte Spielstände bekommen die
+  neue Start-Fassade.
+- Bänke und Stühle wurden niedriger gemacht statt die Figuren zu ändern (Wunsch: lieber die Möbel).
+- Das Gemurmel sind selbst erzeugte Platzhalter-Silben (28 Stück); eigene Aufnahmen ersetzen sie einfach
+  im Ordner.
+- Die Pub-Stühle drehen sich leicht zum Tisch (12°), damit es nach Plaudern am Tisch aussieht.
+
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
   Verkaufen, Lieferung
@@ -1213,6 +1278,11 @@ das ich selbst gestalte – außen und innen zusammen, mit Vorschau, bevor gebau
 
 ## Etappe 11 – Atmosphäre und Sound
 - Musik, Geräusche, Tageszeit-Licht
+
+## Etappe 11b – Geräuschkulisse für die Straße (vorgemerkt seit Etappe 6c)
+- Eigene Etappe (Wunsch nach dem Test von Etappe 6b): Schritte der Passanten (je Untergrund), Vögel,
+  Wind in Bäumen und Markisen, Autos und Fahrräder (Anfahren, Klingeln), entferntes Stadtgemurmel
+- Grundlage vorhanden: Gemurmel beim Plaudern (`MurmurVoice`, Ordner `assets/audio/sfx/murmur/`)
 
 ## Etappe 12 – Story und Spiegel
 - Kleine unerklärliche Ereignisse, der Spiegel und seine Wesen

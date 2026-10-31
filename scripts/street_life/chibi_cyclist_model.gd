@@ -23,6 +23,9 @@ const BIKE_SCENE := preload("res://assets/models/vehicles/bicycle_chibi.glb")
 const SADDLE_SCENE := preload("res://assets/models/vehicles/bicycle_chibi_saddle.glb")
 const WHEEL_SCENE := preload("res://assets/models/vehicles/bicycle_wheel.glb")
 const CRANK_SCENE := preload("res://assets/models/vehicles/bicycle_chibi_crank.glb")
+const BASKET_SCENE := preload("res://assets/models/vehicles/bicycle_chibi_basket.glb")
+## Material des Rahmens (Blender-Name), das je Fahrrad umgefärbt wird
+const PAINT_NAME := "Fahrradlack"
 
 var _rider: ChibiPasserbyModel
 var _bike: Node3D
@@ -32,6 +35,8 @@ var _saddle: Node3D
 var _crank := 0.0
 var _roll := 0.0
 var _scale := FALLBACK_SCALE
+## Schräglage in Kurven (Bogenmaß)
+var _lean := 0.0
 
 
 func _ready() -> void:
@@ -55,8 +60,7 @@ func build(rng: RandomNumberGenerator, color: Color) -> void:
 	var frame := BIKE_SCENE.instantiate() as Node3D
 	frame.name = "Bicycle"
 	_bike.add_child(frame)
-	for part: GeometryInstance3D in frame.find_children("*", "GeometryInstance3D", true, false):
-		part.set_instance_shader_parameter("accent_color", color)
+	_paint_frame(frame, color)
 	for z in [WHEEL_Z, -WHEEL_Z]:
 		var wheel := WHEEL_SCENE.instantiate() as Node3D
 		wheel.position = Vector3(0.0, WHEEL, z)
@@ -68,12 +72,9 @@ func build(rng: RandomNumberGenerator, color: Color) -> void:
 	_saddle = SADDLE_SCENE.instantiate() as Node3D
 	_bike.add_child(_saddle)
 	if rng.randf() < 0.5:
-		# Korb vorn auf dem Gepäckträger
-		var shapes := StreetShapes.new()
-		shapes.add_round_box(Vector3(0.0, 0.92, 0.56), Vector3(0.32, 0.2, 0.26), StreetShapes.solid(Color(0.72, 0.56, 0.36)), 0.35, 10, 5)
-		var basket := MeshInstance3D.new()
+		# geflochtener Korb vorn auf seinem Träger
+		var basket := BASKET_SCENE.instantiate() as Node3D
 		basket.name = "Basket"
-		basket.mesh = shapes.commit()
 		_bike.add_child(basket)
 	_fit_bike()
 	_crank = rng.randf() * TAU
@@ -89,6 +90,30 @@ func _fit_bike() -> void:
 	var seat := _rider.ride_seat if _rider.ride_seat > 0.0 else FALLBACK_SEAT
 	if _saddle and not is_equal_approx(_saddle.position.y, seat):
 		_saddle.position = Vector3(0.0, seat, SEAT_Z)
+
+
+## Rahmenfarbe: eigene Kopie des Lacks (Bilderbuch-Modell), ältere Modelle über den Instanz-Wert.
+func _paint_frame(frame: Node, color: Color) -> void:
+	for part: GeometryInstance3D in frame.find_children("*", "GeometryInstance3D", true, false):
+		part.set_instance_shader_parameter("accent_color", color)
+		var mesh_part := part as MeshInstance3D
+		if mesh_part == null or mesh_part.mesh == null:
+			continue
+		for i in mesh_part.mesh.get_surface_count():
+			var base := mesh_part.mesh.surface_get_material(i)
+			if base and base.resource_name == PAINT_NAME and base is ShaderMaterial:
+				var own := base.duplicate() as ShaderMaterial
+				own.set_shader_parameter("base_color", color)
+				mesh_part.set_surface_override_material(i, own)
+
+
+## Fahren mit Drehrate (rad/s): in Kurven legt sich das Rad samt Figur hinein.
+func animate_drive(speed: float, delta: float, _accel: float, turn_rate: float) -> void:
+	if delta > 0.0:
+		var want := -atan(speed * turn_rate / 9.81) * GameConfig.cyclist_lean_factor
+		_lean = lerpf(_lean, clampf(want, -0.35, 0.35), minf(1.0, delta * 4.0))
+		rotation.z = _lean
+	animate(speed, delta)
 
 
 ## Treten: Räder und Kurbel drehen sich passend zum Tempo, die Figur folgt der Kurbel.

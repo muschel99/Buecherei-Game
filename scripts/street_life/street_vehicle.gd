@@ -127,6 +127,7 @@ func begin(route: StreetRoute, dir: int, cruise: float) -> void:
 	_target_lat = _lat
 	_extra = 0.0
 	speed = cruise * 0.8
+	_accel = 0.0
 	set_active(true)
 	_place(0.0)
 

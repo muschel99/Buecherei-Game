@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+; Erzeugt von den Bilderbuch-Bau-Scripts (tools/blender/build_storybook_*.py, Blender-Material "Autoglas") – wird beim Neubau
+; überschrieben. Werte gern ausprobieren, dauerhaft aber im Bau-Script ändern.
+
+[resource]
+resource_name = "Autoglas"
+transparency = 1
+albedo_color = Color(0.780, 0.860, 0.900, 0.16)
+metallic_specular = 0.12
+roughness = 0.15

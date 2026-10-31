@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://br13cuoi56jxf"
+uid="uid://bmx7e138loo0h"
 path="res://.godot/imported/traveller_wheel.glb-42b8132e33f4f59c42a479ee43f15888.scn"
 
 [deps]
@@ -24,7 +24,7 @@ nodes/import_as_skeleton_bones=false
 nodes/use_name_suffixes=true
 nodes/use_node_type_suffixes=true
 meshes/ensure_tangents=true
-meshes/generate_lods=false
+meshes/generate_lods=true
 meshes/create_shadow_meshes=true
 meshes/light_baking=1
 meshes/lightmap_texel_size=0.2
@@ -41,26 +41,20 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"glass": {
+"Autolack zwei": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/autolack_zwei.tres",
+"use_external/path": "res://assets/materials/storybook/autolack_zwei.tres"
 },
-"glass_clear": {
+"Sammel Glatt": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass_clear.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_glatt.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_glatt.tres"
 },
-"glass_inner": {
+"Sammel Metall": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass_inner.tres"
-},
-"house": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_style.tres",
-"use_external/path": "res://assets/materials/house_style.tres"
-},
-"plant": {
-"use_external/enabled": true,
-"use_external/path": "res://assets/materials/plant_style.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
 }
 }
 }

@@ -300,6 +300,15 @@ var delivery_van_scene: String = "res://scenes/street_life/delivery_van.tscn"
 ## ohne Bewegung. Schatten werfen sie nur in der Nähe (je Grafikstufe: graphics_presets,
 ## "street_shadow_distance").
 var street_detail_distance: float = 28.0
+## Fahrzeuge federn weich (seit Etappe 6c, VehicleModel): Nicken je m/s² Beschleunigung und Neigen je m/s²
+## Querbeschleunigung (Bogenmaß), Federhärte und Dämpfung (kleiner = schwingt länger nach), größter
+## Lenkeinschlag der Vorderräder; Fahrräder legen sich in Kurven (cyclist_lean_factor, 1 = wie in echt)
+var vehicle_pitch_per_accel: float = 0.008
+var vehicle_roll_per_accel: float = 0.008
+var vehicle_spring: float = 60.0
+var vehicle_damping: float = 9.0
+var vehicle_max_steer: float = 0.45
+var cyclist_lean_factor: float = 0.8
 ## Rand um das Bild (in Grad), der für die Sichtprüfung noch als „sichtbar“ zählt – so
 ## erscheint auch knapp neben dem Bildrand niemand (z. B. beim schnellen Umdrehen).
 var street_view_margin: float = 12.0

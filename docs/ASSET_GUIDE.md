@@ -708,6 +708,35 @@ Die mitgelieferten Datenblätter schreibt `tools/blender/facade_options.py`; än
 überschreibt das Script es nicht mehr. Teile neu bauen:
 `blender -b --factory-startup --python tools/blender/build_storybook_facade.py -- [teile]`, danach
 Godot einmal öffnen (Import).
+
+**Seit Etappe 6c** baut das Spiel Mauer, Obergeschoss, Fenster und Türen selbst – aus einem Umriss je
+Öffnung, damit Wandausschnitt, Rahmen, Glas, Fensterbank und Vorhang innen und außen genau
+zusammenpassen. Aus Blender kommen nur noch Kern (Dach, Gesimse, Schildbalken), die Holz-Erdgeschosse,
+Türblätter, Markisen, Kästen, Ampeln und die Deko vor der Tür (`deco_*.glb`).
+- **Kategorien jetzt:** wall (Mauerwerk), quoins (Ecksteine), ground (Erdgeschoss), ground_color,
+  fascia (Schildbalken), window_ground (Schaufenster), window (Fenster oben), frame_color, door,
+  door_lights (Fenster um die Tür), door_color, awning, fabric, box, basket, plants (Mischung), fullness,
+  deco (Deko vor der Bücherei).
+- **Frei oder gesperrt:** Häkchen **Unlocked** im Datenblatt. Gesperrte Varianten zeigt die App grau mit
+  Schloss; später schaltet die Geschichte sie frei. Zum Ausprobieren schaltet **F11** alles frei.
+- **Fensterformen** (window, window_ground): **Shape** (rect, arch, round), **Opening** (Breite × Höhe in
+  Metern), **Bottom** (Höhe der Unterkante), **Rise** (Bogenhöhe), **Muntins** (Sprossen: Spalten ×
+  Reihen), **Bay Depth** (> 0 = Erker so tief). Ein neues Fenster ist nur ein neues Datenblatt.
+- **Türen:** **Shape** arch = Rundbogen über die ganze Breite (Mauer passt sich an); door_lights mit
+  **Side Width** (Seitenlichter) und **Transom** (Oberlicht-Höhe).
+- **Verwitterung:** **Weather** (0–1) bei Mauer/Anstrichen – 1 = alter Backstein mit Putzresten,
+  Rissen und fehlenden Steinen, bei Farben blätternder Lack.
+- **Pflanzen-Mischungen** (plants): **Plants** = Blumen der Kästen (abwechselnd), **Rim Plants** =
+  Ranken über den Rand, **Basket Plants** = Ampeln (Szenen-Namen aus `scenes/world/plants/`).
+- **Kreidetafel vor der Tür:** Bild `assets/textures/signs/library_chalkboard.png` – wie alle Schilder
+  selbst übermalen und unter demselben Namen speichern.
+
+**Vorhänge und Gardinen (seit Etappe 6c):** Möbel-Datenblätter `data/furniture/curtain_*.tres`
+(Platzierung **Fenster**, Unterkategorie Textilien) mit der Szene `scenes/furniture/curtain_*.tscn`;
+der Knoten **Model** trägt das Script `WindowCurtain` (Stil Gardine, Schals, Scheibengardine,
+gebunden; Material **Fabric** und **Rod Material**). Die Form rechnet das Script aus dem Fenster aus,
+an dem der Vorhang hängt. Farben: Farbvarianten färben das Material „fabric“ (Stoffe in
+`assets/materials/furniture/curtains/`).
 ### Modegeschäft im Bilderbuch-Stil selbst weiterbauen (seit Etappe 4h)
 Das Modegeschäft „Zwirn und Zwirbel“ ist ein eigenes Modell aus vielen Einzelteilen – jedes ein
 geschlossener Körper, den du in Blender wie gewohnt umformen kannst.
@@ -1057,47 +1086,79 @@ Kleidung. So geht's:
 Schatten und Leistung regelt das Spiel selbst: Figuren werfen nur in der Nähe Schatten. Weit
 entfernte Figuren vereinfacht Godot beim Import automatisch (LOD).
 
-### Autos, Fahrräder und Lieferwagen (seit Etappe 5b)
-Alle Fahrzeuge baut `tools/blender/build_vehicles.py` (ohne Markenzeichen):
-**Taxi** (englisches Taxi, immer schwarz, Schild „TAXI“), **Mini** (Wagenfarbe, helles Dach),
-**Kombi mit Holzrahmen** („Traveller“), der **Lieferwagen** (Bulli, unten Wagenfarbe, oben creme,
-großes V vorn, geteilte Frontscheibe, Dachträger mit Paketen) und das **Hollandrad**.
+### Autos, Fahrräder und Lieferwagen (seit Etappe 5b, Bilderbuch-Stil seit Etappe 6c)
+Alle Fahrzeuge baut `tools/blender/build_storybook_vehicles.py` (ohne Markenzeichen), weich und rund
+wie Spielzeug: die Karosserie ist **ein** geschlossener Körper aus Querschnitten (zweimal geglättet),
+mit ausgeschnittenen Radkästen und rundem Kotflügel-Rand; darüber Säulen als runde Röhren, ein weiches
+Dach und Scheiben dazwischen (dahinter Sitze, Armaturenbrett, Lenkrad – rechts, wir haben Linksverkehr).
+Lampen, Grill, Stoßstangen, Türfugen und Griffe sitzen genau auf der Haut.
+**Taxi** (immer schwarz, leuchtendes Schild „TAXI“, Trittbretter), **Mini** (Wagenfarbe, helles Dach),
+**Kombi mit Holzrahmen** („Traveller“, Holzsäulen am Heck), der **Lieferwagen** (Bulli: unten
+Wagenfarbe, oben creme, Logo an beiden Seiten, hinten Kartons im Laderaum, Schiebetür) und das
+**Hollandrad** (runde Rohre, Schutzbleche, Kettenschutz, Gepäckträger, Lampe, Klingel, Ledersattel mit
+Federn, bei jedem zweiten Rad ein geflochtener Korb vorn).
 - Dateien: `assets/models/vehicles/<name>.glb` (Karosserie), `<name>_wheel.glb` (ein Rad – das
   Spiel setzt es viermal ein und dreht es beim Fahren), `delivery_van_door.glb` (Schiebetür),
-  `bicycle_wheel.glb`, `bicycle_crank.glb` (Kurbel mit Pedalen); Blender-Dateien zum Anschauen in
-  `assets/models/source/vehicles/`.
+  `bicycle_chibi.glb` (Rahmen), `bicycle_chibi_saddle.glb`, `bicycle_chibi_crank.glb`,
+  `bicycle_wheel.glb`, `bicycle_chibi_basket.glb` (Korb); Blender-Datei zum Anschauen und
+  Weiterbauen: `assets/models/source/vehicles/storybook_vehicles.blend` (hast du sie in Blender
+  geändert, überschreibt das Bau-Script nichts mehr – nur mit `-- --force`).
 - Szenen: `scenes/street_life/car_taxi.tscn`, `car_mini.tscn`, `car_traveller.tscn`,
   `delivery_van.tscn`, `cyclist.tscn`. Welche Autos fahren, steht in
   `scripts/autoload/game_config.gd` bei `car_scenes` (Anzahl gleichzeitig: `car_count`).
-- **Farben:** Die Autos (außer dem Taxi) bekommen eine Farbe aus `GameConfig.car_colors`. Am
-  Knoten **Model** einer Auto-Szene: **Fixed Color** an = immer **Paint Color** (so beim Taxi);
-  **Second Color** = Dach/obere Hälfte. Lieferwagen: `GameConfig.delivery_van_color`.
+- **Farben:** Die Autos (außer dem Taxi) bekommen eine Farbe aus `GameConfig.car_colors`; das Spiel
+  färbt dafür das Material **„Autolack“** um (je Auto eine eigene Kopie), **„Autolack zwei“** =
+  **Second Color** (Dach, obere Hälfte, Felgen). Am Knoten **Model** einer Auto-Szene: **Fixed
+  Color** an = immer **Paint Color** (so beim Taxi). Lieferwagen: `GameConfig.delivery_van_color`.
+  Fahrräder: Material **„Fahrradlack“**. In deinem eigenen Modell einfach Materialien mit diesen
+  Namen benutzen, dann färbt das Spiel sie genauso.
+- **Bewegung:** Die Fahrzeuge fahren weich an und bremsen weich (die Beschleunigung baut sich
+  langsam auf und ab), folgen Kurven sanft, die Vorderräder lenken mit, die Karosserie nickt beim
+  Bremsen leicht nach vorn und neigt sich in Kurven nach außen; Fahrräder legen sich in die Kurve.
+  Stärke: `GameConfig.vehicle_*` und `cyclist_lean_factor`.
 - **Logo am Lieferwagen:** Das Bild `assets/textures/signs/delivery_van_logo.png` (1024 × 496
-  Pixel, entspricht 0,95 × 0,46 m an beiden Seiten). Selbst gestalten wie bei den Schildern:
-  Bild öffnen, darüber malen oder ein neues im gleichen Seitenverhältnis anlegen, unter
-  **genau demselben Namen** speichern – Godot lädt es von selbst.
+  Pixel, an beiden Seiten 0,86 × 0,42 m auf der cremefarbenen Wand hinten). Selbst gestalten wie
+  bei den Schildern: Bild öffnen, darüber malen oder ein neues im gleichen Seitenverhältnis
+  anlegen, unter **genau demselben Namen** speichern – Godot lädt es von selbst.
 - **Radfahrer (seit Etappe 5c):** `cyclist.tscn` zeigt eine zufällig eingekleidete Chibi-Figur
-  auf dem Chibi-Hollandrad (`ChibiCyclistModel`; Rahmen `bicycle_chibi.glb` mit tiefem Sitzrohr,
-  Sattel `bicycle_chibi_saddle.glb` und Kurbel `bicycle_chibi_crank.glb` als eigene Teile). Das Rad
-  ist für jede Figur eingestellt wie ein echtes Rad: Rahmengröße nach der Beinlänge (0,8 bis 1,0 vom
-  Hollandrad), Sattelhöhe so, dass das Bein am unteren Pedal fast gestreckt ist, und der Oberkörper
-  neigt sich so weit, dass die Arme bequem zum Lenker reichen. Die Figur tritt genau im Takt der
-  Kurbel vorwärts (Bewegung „ride“ in jeder Figur, gebaut von `tools/blender/chibi_ride.py`: eine
-  Kurbelumdrehung, Knie und Ellbogen über IK). **Hand am Griff:** gerade Verlängerung des Unterarms,
-  Handrücken nach außen, die Finger umschließen den Griff unten herum nach innen, der Daumen oben
-  herum nach innen, der kleine Finger ist hinten (am nächsten zum Körper). Einstellungen oben in
-  `chibi_ride.py`. Kontrollbild: `build_chibi.py -- --only=female_medium,male_medium --render
-  --views=ride`. Den alten Platzhalter-Radfahrer bekommst du zurück, indem du in `cyclist.tscn` beim
-  Knoten **Model** das Script `res://scripts/street_life/cyclist_placeholder.gd` einträgst.
-- **Paketanimation:** unverändert; die Schiebetür heißt im Modell **Door** und gleitet beim
-  Ausladen um **Door Slide** nach hinten, die Kartons hüpfen aus der Mitte der Öffnung
-  (**Door Point** am Knoten **DeliveryVan**).
+  auf dem Chibi-Hollandrad (`ChibiCyclistModel`). Das Rad ist für jede Figur eingestellt wie ein
+  echtes Rad: Rahmengröße nach der Beinlänge, Sattelhöhe so, dass das Bein am unteren Pedal fast
+  gestreckt ist, und der Oberkörper neigt sich so weit, dass die Arme bequem zum Lenker reichen.
+  Die Figur tritt genau im Takt der Kurbel (Bewegung „ride“, gebaut von
+  `tools/blender/chibi_ride.py`). Die Maße des Rads (Räder, Tretlager, Sitzrohr, Lenkergriffe)
+  müssen zu `chibi_ride.py` passen – sie stehen oben in `build_storybook_vehicles.py`
+  (`BIKE_R`, `CRANK`, `SEAT_TOP`, `GRIP` …). Den alten Platzhalter-Radfahrer bekommst du zurück,
+  indem du in `cyclist.tscn` beim Knoten **Model** das Script
+  `res://scripts/street_life/cyclist_placeholder.gd` einträgst.
+- **Paketanimation:** die Schiebetür heißt im Modell **Door** und gleitet beim Ausladen um **Door
+  Slide** nach hinten, die Kartons hüpfen aus der Mitte der Öffnung (**Door Point** am Knoten
+  **DeliveryVan**).
 - **Eigenes Modell:** In der Szene unter **Model** die Karosserie (Kind `Car`, `Van`) durch dein
   `.glb` ersetzen (Vorderseite +Z, Räder auf y = 0). Bringt dein Modell eigene Räder mit, bei
   **Model** das Feld **Wheel Scene** leeren. Ist es deutlich länger oder breiter, oben am
   Wurzel-Knoten **Length** und **Width** anpassen und die Kiste in **Body > CollisionShape3D**.
-- Neu bauen: `blender -b --factory-startup --python tools/blender/build_vehicles.py`
-  (Kontrollbilder: `-- taxi --render` → `screenshots/blender/vehicles/`).
+- Neu bauen: `blender -b --factory-startup --python tools/blender/build_storybook_vehicles.py`
+  (nur einzelne: `-- taxi mini`; Kontrollbilder: `-- taxi --render` →
+  `screenshots/blender/storybook/`). Das alte Script `build_vehicles.py` (Stil von Etappe 5b) baut nur
+  noch das Rad des alten Platzhalter-Radfahrers (`bicycle.glb`, `bicycle_crank.glb`).
+
+### Gemurmel und Sprechblasen (seit Etappe 6c)
+Plaudern zwei Passanten, murmeln sie leise und unverständlich (wie bei Animal Crossing oder Die Sims)
+und zeigen kleine Sprechblasen mit Symbolen.
+- **Eigene Geräusche:** Alle Dateien im Ordner `assets/audio/sfx/murmur/` sind Silben (`.wav` oder
+  `.ogg`, kurz: 0,1–0,25 s, leise, ohne Pause am Anfang). Das Spiel spielt sie zufällig in kleinen
+  „Sätzen“ hintereinander, jede Figur mit eigener Tonhöhe. Eigene Aufnahmen (z. B. „ba“, „mi“, „lo“
+  mit eigener Stimme, in Audacity einzeln ausgeschnitten und als WAV exportiert) einfach in den Ordner
+  legen; die mitgelieferten `syl_01.wav` … `syl_28.wav` (selbst erzeugte Platzhalter) darfst du löschen
+  oder ersetzen. Godot importiert neue Dateien beim nächsten Öffnen.
+  Einstellungen in `scripts/autoload/game_config.gd`: `murmur_enabled` (an/aus), `murmur_volume_db`
+  (Lautstärke), `murmur_distance` (Hörweite in Metern), `murmur_pitch_range` (tiefste/höchste Stimme).
+- **Eigene Symbole:** Alle Bilder in `assets/textures/ui/bubbles/` (PNG mit durchsichtigem Rand, etwa
+  256 × 256 Pixel, Blase und Symbol zusammen) sind mögliche Sprechblasen. Neue einfach dazulegen.
+  Größe und Dauer: `chat_bubble_size`, `chat_bubble_time`.
+- Die Platzhalter erzeugt `python3 tools/make_chat_assets.py` – es schreibt nur Dateien, die fehlen,
+  überschreibt also nie deine eigenen.
+- Wie oft geplaudert wird: `passerby_chat_chance`, `passerby_chat_time` (Dauer), `passerby_chat_cooldown`.
 
 ### Wo Passanten stehen bleiben
 Vor den Schaufenstern der Haustypen in `GameConfig.passerby_window_house_types` (Modegeschäft,

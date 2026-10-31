@@ -1,5 +1,8 @@
 """Fahrzeuge im Stil (seit Etappe 5b): englisches Taxi, Mini, Kombi mit Holzrahmen ("Traveller"),
 der Lieferwagen (Bulli mit Nest-&-Nook-Logo) und das Fahrrad – ohne Markenzeichen.
+Seit Etappe 6c ersetzt durch build_storybook_vehicles.py (Bilderbuch-Stil); ohne Angabe baut dieses
+Script nur noch das Rad des alten Platzhalter-Radfahrers (bicycle.glb, bicycle_crank.glb). Autos nur
+auf ausdrücklichen Wunsch (Namen angeben) – das überschreibt die Bilderbuch-Modelle.
 
 Aufruf (Terminal, im Projektordner):
     blender -b --factory-startup --python tools/blender/build_vehicles.py              (alle)
@@ -899,12 +902,10 @@ def save(b, name, signs=None):
 def export(name):
     import build_houses as BH
     if name == "bicycle":
+        # nur noch das Rad des alten Platzhalter-Radfahrers; die Chibi-Räder, das Speichenrad und
+        # alle Autos baut seit Etappe 6c build_storybook_vehicles.py (Bilderbuch-Stil)
         save(build_bicycle()[0], "bicycle")
-        save(build_bicycle_wheel(), "bicycle_wheel")
         save(build_bicycle_crank(), "bicycle_crank")
-        save(build_bicycle_chibi(), "bicycle_chibi")
-        save(build_bicycle_chibi_saddle(), "bicycle_chibi_saddle")
-        save(build_bicycle_chibi_crank(), "bicycle_chibi_crank")
         return
     b, spec = CARS[name]()
     signs = None
@@ -921,7 +922,7 @@ def export(name):
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    names = [a for a in argv if not a.startswith("--")] or list(CARS)
+    names = [a for a in argv if not a.startswith("--")] or ["bicycle"]
     for name in names:
         if "--render" in argv:
             b, spec = CARS[name]()

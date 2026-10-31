@@ -131,11 +131,13 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
   street_life/     Straßenleben (StreetLife, StreetPaths, StreetRoute, Passerby, StreetVehicle,
-                   DeliveryVan, StreetObstacle, StreetShapes, Platzhalter-Modelle)
+                   DeliveryVan, StreetObstacle, StreetShapes, Platzhalter-Modelle; seit 6c
+                   FaceTriggers, ChibiGestureModifier, ChatSession, ChatBubble, MurmurVoice)
   world/           Außenwelt (StreetLayout, WorldMesh, Street, HouseFacade, GatehouseFacade,
-                   CornerHouseFacade, HouseTypes, HousesLayout,
+                   CornerHouseFacade, HouseTypes, HousesLayout, LibraryFacade,
                    Plaza, Alley, AlleyEnd, EntranceSteps; tools/ = Erzeuger für houses.tscn
-                   und die Vorlagen; Szenen in scenes/world/)
+                   und die Vorlagen; openings/ = Fenster/Türen der Bücherei aus einem Umriss
+                   (OpeningShape, OpeningMesh, FacadeLayout, WindowUnit); Szenen in scenes/world/)
 data/
   furniture/       Datenblätter der Möbel (.tres) – werden automatisch in den Katalog geladen
   surfaces/        Datenblätter der Wandfarben und Böden (.tres)
@@ -159,7 +161,8 @@ assets/
   audio/sfx/       Geräusche
   ui/              Oberflächen-Theme, icons/ = Symbole (Farbroller, Teppich)
 docs/              Dokumentation
-tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py),
+tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py,
+                   make_chat_assets.py = Sprechblasen-Symbole und Gemurmel-Silben, schreibt nur Fehlendes),
   blender/         Blender-Scripts der Stil-Modelle (style_lib.py = Bauteile + .glb-Export,
                    build_houses.py = Häuser; Bilderbuch-Stil: storybook_lib.py,
                    storybook_parts.py, storybook_common.py, storybook_plants.py,
@@ -171,7 +174,7 @@ tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py)
                    build_storybook_street.py + storybook_houses.py = Wohnhäuser,
                    build_storybook_library.py (Bausteine) + build_storybook_facade.py +
                    facade_options.py = Fassaden-Baukasten der Bücherei, build_storybook_alleys.py,
-                   build_storybook_props.py,
+                   build_storybook_props.py, build_storybook_vehicles.py = Autos und Fahrräder,
                    build_storybook_plants.py + storybook_greenery.py = Pflanzen; Möbelkatalog:
                    build_storybook_furniture.py + storybook_furniture.py, furniture_<stil>.py,
                    furniture_fixtures.py = Theken/Einwürfe; Start: tools/build_furniture.sh)
@@ -239,8 +242,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   null = keiner) + `side_view_changed(shown)`; das Tablet rückt nach dem Öffnen nach links
   (`CounterTablet.SIDE_WIDTH`, `_show_side`/`_hide_side`, Zeit `tablet_side_time`), vor dem Zurückschrumpfen
   wieder in die Mitte. `CounterTablet.close_app()` = App schließen wie Home.
-- **App „Fassade“ (seit Etappe 6b neu):** Reiter `FacadeApp.PAGES` (Reihen = [Schlüssel, Überschrift];
-  Schlüssel = Kategorie von FacadeDesign oder "slot"/"slot_inside"/"counter"), Kacheln `FacadeTile`
+- **App „Fassade“ (seit Etappe 6b neu, Reiter seit 6c: Mauer, Erdgeschoss, Obergeschoss, Tür, Pflanzen,
+  Draußen, Briefkasten, Theke):** Reiter `FacadeApp.PAGES` (Reihen = [Schlüssel, Überschrift];
+  Schlüssel = Kategorie von FacadeDesign oder "slot"/"slot_inside"/"counter"; gesperrte Optionen =
+  graue Kachel mit Schloss, `FacadeTile.locked`, nicht wählbar; Kacheln auch WINDOW/DOOR_LIGHTS/QUOINS/
+  FASCIA, gezeichnet), Kacheln `FacadeTile`
   (Kind PHOTO/MATERIAL/PAINT/FRAME/DOOR/NONE/FULLNESS/SHOPFRONT, Farbtupfer für Optionen mit gleicher
   `group`, Signal `dot_chosen`), Fotos über `ThumbnailRenderer.request_model`/`request_view` (fester
   Blickpunkt). Alles geht in den **Entwurf** (`FacadeDesign.set_draft_value`, `get_draft`, Signal
@@ -265,7 +271,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (StaticBody3D mit Kollision). Fußpunkt auf Höhe 0, Vorderseite zeigt nach +Z.
   Regale bekommen eine Kollisionsform pro Brett. Ablageflächen sind `PlacementSurface`-Knoten
   (Ursprung = Oberkante). Dinge zum Aufhängen: Ursprung hinten in der Mitte.
-- `FurnitureData.placement`: wohin ein Objekt darf (Boden, Ablagefläche, Wand, Tür, Decke).
+- `FurnitureData.placement`: wohin ein Objekt darf (Boden, Ablagefläche, Wand, Tür, Decke, seit 6c Fenster
+  = 32). Fensterdinge (Vorhänge, Unterkategorie "textile") rasten nur an Schaufenstern ein
+  (`BuildMode._place_on_window`, Ursprung an der Innenseite, je Fenster einer); ihr Modell `WindowCurtain`
+  (@tool, Stil SHEER/DRAPES/CAFE/TIED) sucht das nächste Fenster und folgt dessen Umriss (auch bei
+  `FacadeDesign.changed`). Türkranz: Kollision vor dem Glas, `Door.set_leaf` schließt das Loch im Türblatt.
   Deckenobjekte: Ursprung oben am Aufhängepunkt.
 - Raster: `GameConfig.grid_cell_size` = 1/9 m; Boden/Decke in Abschnitten von 3 x 3 Feldern.
   Raummaße (Breite, Tiefe) sollen Vielfache von 1/3 m sein. Raumhöhe: `GameConfig.room_height`.
@@ -640,12 +650,23 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   chibi_ride), Rad × ride_scale, Sattel auf ride_seat, Figur folgt der Kurbel
   (`ChibiPasserbyModel.pose_ride` = seek); Kurbel 0 = Seite x < 0 vorn, vorwärts =
   `Basis(RIGHT, +Winkel)` wie die Räder. Kontrollbild `--views=ride`.
-  **Mimik:** `ChibiPasserbyModel._update_face`: Grundausdruck NEUTRAL (Augen offen), Ausdrücke mit
-  offenen Augen kurz zwischendurch (`IDLE_MOODS`, Schaufenster `BROWSE_MOODS`), Augen über `look`
+  **Mimik (seit 6c nach Anlässen):** Grundausdruck `FaceTriggers.BASE` (NEUTRAL); andere Ausdrücke nur über
+  `ChibiPasserbyModel.trigger_face(anlass)` → `FaceTriggers.pick` ([Ausdruck, Dauer] aus `TRIGGERS`: greet,
+  wave, window_wonder, window_like, chat_talk, chat_laugh, chat_listen, stretch, watch, sit_rest – neuer
+  Anlass = neue Zeile, nie zufällige Ausdrücke). **Gesten:** `ChibiGestureModifier` (nach der Animation, vor
+  dem Kopf; dreht Arme zu Richtungen im Raum der Figur: +Z vorn, +X links) WAVE/WATCH/STRETCH/TALK über
+  `play_gesture(name, dauer)` und `set_talking`. **Plaudern:** `StreetLife._update_chats` paart alle 0,4 s
+  Entgegenkommende auf derselben Seite (`passerby_chat_*`), `ChatSession` wechselt die Sprecher
+  (`Passerby.chat_turn`), `ChatBubble` (Sprite3D, Bilder `assets/textures/ui/bubbles/*.png`) und
+  `MurmurVoice` (AudioStreamPlayer3D, Silben `assets/audio/sfx/murmur/*.wav|ogg`, `murmur_*`); erzeugt von
+  `tools/make_chat_assets.py` (nur fehlende Dateien). Pausen (stretch/watch/look) plant `_plan_walker`.
+  **Sitzhöhe:** Bänke/Stühle 0,25 m (Sitz-Animation der Chibis 0,22–0,27 m; Modell hebt sich um
+  sit_height − sit_seat) – neue Sitzmöbel für Passanten genauso hoch, Marker auf 0,25.
+  **Blick:** Augen über `look`
   (Setter setzt nur den Shader-Wert); `_scan_focus` (alle 0,3 s): Kamera = Spielfigur hat Vorrang
   (Radius/Winkel, Sichtstrahl gegen world/sight_blocker, `see_through` zählt nicht), sonst andere
   Chibi-Figuren eng vorn (`_everyone`); Kopf über `ChibiHeadModifier`, Rest die Augen; Grüßen =
-  `GREET_MOODS` + Nicken (`_nod_pitch`), je Person höchstens alle `chibi_greet_cooldown` Sekunden.
+  Anlass greet bzw. wave (mit Winken) + Nicken (`_nod_pitch`), je Person höchstens alle `chibi_greet_cooldown` Sekunden.
   **Kleidung/Frisuren** (`chibi_outfit.py`, `build_chibi.build_outfit`): jede Figur enthält alle Stücke
   als eigene Netze „Cloth_<name>“/„Hair_<name>“ (Material cloth_…/hair_…); `ChibiCharacter` blendet ein
   (top/bottom/shoes/hair + Farben als Instanz-Werte, Shader `chibi_cloth`/`chibi_hair`). Kleidung =
@@ -660,15 +681,22 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   immer gefüllt (sonst vervielfacht der Export jede Ecke: 21 statt 6 MB). Passanten:
   `passerby_chibi.tscn` + `ChibiPasserbyModel` (randomize_look, animate = einfache eigene Bewegung über
   `set_bone_turns`, set_shadows; `Passerby.vary_size = false`).
-- **Fahrzeuge (seit Etappe 5b):** `tools/blender/build_vehicles.py`: Karosserie `Body`
-  (Querschnitte entlang z, Radkästen, weiche Normalen, Fenster/Lack je Fläche über
-  `window_mats`), Teile auf der Haut über BVH (`hit`, `round_lamp`, `plate`). Lack = Rolle
-  accent (Godot: Wagenfarbe), zweite Farbe = Rolle door; Räder als eigene .glb, eingesetzt und
-  gedreht von `VehicleModel` (scripts/street_life/vehicle_model.gd), Lieferwagen-Tür = Knoten
-  "Door". Logo des Lieferwagens = Schild-Bild `delivery_van_logo.png` (Startbild `logo_design`,
-  nie überschreiben). Hollandrad: `style_parts.bicycle` (auch vor dem Blumenladen), auf der Straße
-  Rahmen/Räder/Kurbel getrennt (`CyclistPlaceholder`). Stil-Ebenen 20–23: car_paint, chrome,
-  rubber, leather (Shader-Listen jetzt 24 lang).
+- **Fahrzeuge (seit Etappe 6c im Bilderbuch-Stil):** `tools/blender/build_storybook_vehicles.py [namen]
+  [--render]` (taxi, mini, traveller, delivery_van, bicycle; Maße = Szenen `car_*.tscn`): Karosserie =
+  `soft_shell` (Querschnitte als Superellipse, `round_ends`, Subdivision 2, geschlossen), Radkästen als
+  Taschen je Seite (`cylinder_cutter`, nie quer durchs Auto) + Kotflügel-Rand, Säulen-Röhren, weiches Dach,
+  Scheiben `slab_quad` zwischen den Säulen (Unterkante per Sichtstrahl in die Karosserie), innen Sitze/
+  Armaturenbrett/Lenkrad (dünne Ringe nie in einem Body mit Bevel), Lampen/Grill/Stoßstangen/Fugen/Griffe
+  per Sichtstrahl (`hit`) auf der Haut. Body-Größen sind Blender-Achsen (quer, entlang, Höhe)! Materialien
+  „Autolack“/„Autolack zwei“/„Fahrradlack“ mit `own=True` (bleiben eigene Materialien, `palette_key`);
+  `VehicleModel` legt je Wagen eine Kopie an (base_color), hängt die Karosserie an "Sway" (nicken/neigen,
+  Feder `vehicle_*`) und lenkt die Vorderräder; `ChibiCyclistModel` färbt den Rahmen, Korb
+  `bicycle_chibi_basket.glb`, legt sich in Kurven (`cyclist_lean_factor`). Rad-Maße müssen zu
+  `chibi_ride.py` passen (`BIKE_R`, `CRANK`, `SEAT_TOP`, `GRIP`). `StreetVehicle._drive`: Anfahren und
+  Bremsen mit begrenztem Ruck (`JERK`, `JERK_BRAKE`; Sicherheitsnetz `BRAKE_SLACK`), Richtung weich
+  (`TURN_FOLLOW`), `animate_drive(tempo, delta, beschleunigung, drehrate)`. Logo des Lieferwagens =
+  Schild-Bild `delivery_van_logo.png` (nie überschreiben). Altes `build_vehicles.py` baut nur noch das
+  Platzhalter-Rad (`CyclistPlaceholder`).
 - `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
   und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`
@@ -811,7 +839,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (Y/X – Lage der Taste: physisch Z/X), `build_item_prev`/`_next` (C/V), `build_filter` (F),
   `build_toggle_help` (H),
   `build_paint_all` (Umschalt), `toggle_fps` (F3), `debug_fill_return_box` (F9, Testtaste),
-  `debug_add_money` (F10, Testtaste), `book_rotate`/`book_rotate_back` (Mausrad, Buch obenauf
+  `debug_add_money` (F10, Testtaste), `debug_unlock_all` (F11, Testtaste: alle Fassaden-Varianten frei), `book_rotate`/`book_rotate_back` (Mausrad, Buch obenauf
   vor dem Ablegen drehen), `book_take` (rechte Maustaste), `book_place` (linke Maustaste;
   halten am Regal = alle einräumen),
   `store_books` (Q halten: alle getragenen Bücher ins Lager), `open_menu` (R: Menü des
@@ -992,6 +1020,27 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Neue Option = Datenblatt (Modell, Material, Farbe, Pflanzen, `group`, Preis). Holzverschalung: Shader-
   Oberfläche `grain = 9` (Bretter). Die Bücherei hat ein eigenes Dachmaterial ("Dachziegel Bücherei"), damit
   gemeinsame Materialien anderer Häuser nicht überschrieben werden.
+  **Seit Etappe 6c: Öffnungen aus einem Umriss.** `FacadeLayout.openings(config)` liefert je Schaufenster,
+  Obergeschoss-Fenster und Tür ein Dictionary (id, segment, u, bottom, outline, kind "shop"/"upper"/"door",
+  style; Tür: lights, leaf) in Segment-Koordinaten (`segment_frame`: Ursprung p0, x entlang, y oben, z nach
+  außen; Außenseite der Raumwände bei z = 0, innen -0,2). Aus **diesem einen** Umriss entstehen: Löcher
+  der Fassadenhaut (`LibraryFacade`, Haut `SKIN` 6 cm, Obergeschoss 30 cm), CSG-Löcher im Raum
+  (`RoomOpenings.apply`: CSGPolygon3D "OpeningHole_<id>", PaintableWall `set_opening_shapes`,
+  `ShopWindow.configure` = Fensterbank/Glas-Kollision/Erker-Ablage, `Room._update_reveals` sucht die
+  Laibungen selbst), Rahmen, Glas, Sprossen, Vorhänge (oben) und Erker (`WindowUnit.build_window`,
+  `build_door_surround`). Formen `OpeningShape` (RECT/ARCH/ROUND, `offset`, `pieces` = Streifen ohne
+  Polygon-Löcher), Netze `OpeningMesh` (Umlaufsinn je Normale: Godot-Vorderseite = im Uhrzeigersinn).
+  Neue Fensterform = Datenblatt (shape, opening, bottom, rise, muntins, bay_depth) – kein Blender-Teil.
+  Erdgeschoss-Holz (classic/beadboard/victorian) kommt weiter aus Blender (Fenster-/Türzonen frei), Mauer-
+  Erdgeschoss und Obergeschoss baut LibraryFacade selbst. **Verwitterung:** Shader-Wert `weather` (0–1,
+  `storybook.gdshaderinc` `weathering`: Putzflecken, Risse, fehlende Steine, Schmutz, Moos; Farbe blättert)
+  – `LibraryFacade.paint_material(base, farbe, weather)`, Türblatt `Door.set_leaf(pfad, farbe, weather)`.
+  **Freischalten:** `FacadeOption.unlocked` + `FacadeDesign.is_unlocked/unlock/unlock_everything`
+  (Signal `unlocks_changed`, gespeichert), F11 = `debug_unlock_all`; `FacadeDesign.SAVE_VERSION` 2 (ältere
+  Stände bekommen die Start-Fassade „Alter Backstein“). Schildbalken = Rolle `facade_fascia` (Kategorie
+  fascia), Pflanzen-Mischungen = Kategorie plants (box/basket/rim-Listen), Deko vor der Tür = Kategorie deco
+  (`build_storybook_facade.py` `DECO_SETS`, Kollision „-colonly“, Leerobjekte `Obstacle_<cm>` →
+  StreetObstacle, danach `StreetLife.refresh_static_obstacles`). Markisen schwingen über Vertex-Alpha.
 - Sperrzonen (Ebene `build_blocker`) können ihren Hinweis als Metadaten tragen
   (`keep_clear_text`, z. B. „Vor dem Rückgabekasten bitte frei lassen.“).
 - Vorschaubilder beliebiger Szenen: `ThumbnailRenderer.request_scene(key, pfad, icon, callback,

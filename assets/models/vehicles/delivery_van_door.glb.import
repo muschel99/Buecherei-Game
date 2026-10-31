@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://brp465j7yqne0"
+uid="uid://dqwbit5pklkxl"
 path="res://.godot/imported/delivery_van_door.glb-c976553710fe72375f509b8c3edcd87a.scn"
 
 [deps]
@@ -24,7 +24,7 @@ nodes/import_as_skeleton_bones=false
 nodes/use_name_suffixes=true
 nodes/use_node_type_suffixes=true
 meshes/ensure_tangents=true
-meshes/generate_lods=false
+meshes/generate_lods=true
 meshes/create_shadow_meshes=true
 meshes/light_baking=1
 meshes/lightmap_texel_size=0.2
@@ -41,27 +41,25 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"glass": {
+"Autoglas": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_glass.tres",
-"use_external/path": "res://assets/materials/house_glass.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/autoglas.tres",
+"use_external/path": "res://assets/materials/storybook/autoglas.tres"
 },
-"glass_clear": {
+"Autolack": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass_clear.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/autolack.tres",
+"use_external/path": "res://assets/materials/storybook/autolack.tres"
 },
-"glass_inner": {
+"Autolack zwei": {
 "use_external/enabled": true,
-"use_external/path": "res://assets/materials/house_glass_inner.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/autolack_zwei.tres",
+"use_external/path": "res://assets/materials/storybook/autolack_zwei.tres"
 },
-"house": {
+"Sammel Metall": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/house_style.tres",
-"use_external/path": "res://assets/materials/house_style.tres"
-},
-"plant": {
-"use_external/enabled": true,
-"use_external/path": "res://assets/materials/plant_style.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
 }
 }
 }

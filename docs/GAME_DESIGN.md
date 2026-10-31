@@ -98,10 +98,15 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     `stat_sources`, `get_stats()`); was es noch nicht gibt, erscheint einfach nicht.
   - **App „Fassade“** (seit Etappe 3l, seit Etappe 6b ganz neu; Symbol: Hausfront): Hier gestalte
     ich die Bücherei außen und innen zusammen – Fassade, Pflanzen draußen, Briefkasten und Theke.
-    - Oben sechs Reiter mit Symbol und einem Wort: **Erdgeschoss** (Verkleidung, Anstrich, Tür,
-      Türfarbe), **Obergeschoss** (Wand, Fenster, Rahmenfarbe), **Markise** (Form, Stoff),
-      **Pflanzen** (Blumenkästen, Blumen, Ampeln, Hängepflanzen, Fülle), **Briefkasten** (Einwurf
-      außen, Gegenstück innen) und **Theke**.
+    - Oben acht Reiter mit Symbol und einem Wort (seit Etappe 6c): **Mauer** (Wand, Ecksteine),
+      **Erdgeschoss** (Verkleidung, Anstrich, Schildbalken, Schaufenster), **Obergeschoss** (Fenster,
+      Rahmenfarbe), **Tür** (Türform, Fenster um die Tür, Türfarbe), **Pflanzen** (Blumenkästen,
+      Ampeln, Mischung, Fülle), **Draußen** (Markise, Stoff, Deko vor der Bücherei), **Briefkasten**
+      (Einwurf außen, Gegenstück innen) und **Theke**.
+    - **Freischaltungen (seit Etappe 6c):** Jede Variante ist frei oder gesperrt (Datenblatt-Feld
+      „Unlocked“). Gesperrte Kacheln sind grau mit einem kleinen Schloss und lassen sich nicht wählen;
+      später schaltet die Geschichte sie frei. Frei sind zu Beginn Backstein beige oder rot, je mit
+      oder ohne Ecksteine, und in jedem Bereich die Start-Wahl. Testtaste F11 schaltet alles frei.
     - Darunter je Reiter Reihen **großer Bild-Kacheln** mit wenig Text: Fotos der Teile (Fenster,
       Markisen, Türen, Kästen, Pflanzen, Einwürfe, Theken), gezeichnete Proben für Farben, Putz,
       Ziegel, Bretter, Stein und Stoffmuster. Name und Preis stehen im Tooltip, über der Reihe nur
@@ -517,8 +522,8 @@ Erklärungen nur in der Tastenhilfe im Pausenmenü.
 
 ### Testtasten (bis es Besucher und Einnahmen gibt)
 - **F9:** ein paar Bücher in den Rückgabekasten. **F10:** 500 Taler Testgeld
-  (`GameConfig.debug_money_amount`).
-- Beide lassen sich zentral abschalten: `GameConfig.debug_keys_enabled = false`.
+  (`GameConfig.debug_money_amount`). **F11** (seit Etappe 6c): alle Fassaden-Varianten freischalten.
+- Alle lassen sich zentral abschalten: `GameConfig.debug_keys_enabled = false`.
 
 ### Später (Etappe 7)
 - Leihgebühren über Leseausweise (Buch abstempeln statt Wechselgeld).
@@ -658,9 +663,16 @@ steht kurz sein Name.
 - Standard: frei platzieren und stufenlos drehen. Mit G rastet alles am Raster ein.
 - Ein ausgewähltes Objekt zeigt mit der Vorderseite zum Spieler; eine Drehung mit dem Mausrad
   bleibt relativ zur Blickrichtung erhalten, bis es platziert ist.
-- Jedes Objekt legt fest, wo es hindarf: Boden, Ablagefläche, Wand, Tür, Decke.
+- Jedes Objekt legt fest, wo es hindarf: Boden, Ablagefläche, Wand, Tür, Decke, Fenster.
   Jedes Möbelstück legt fest, welche Ablageflächen es hat (Tische, Regalbretter, Sitzflächen,
   Armlehnen). Auch die Fensterbank ist eine Ablagefläche.
+- **Vorhänge und Gardinen (seit Etappe 6c):** in „Nest & Nook“ unter Textilien – Gardine (zart,
+  durchscheinend), Schals (schwerer Stoff seitlich), Scheibengardine (nur unten) und gebundene
+  Vorhänge, je in vier Farben. Sie rasten im Gestaltungsmodus nur an Fenstern ein (innen vor einem
+  Schaufenster, je Fenster einer) und passen sich der Fensterform an: bei Bogen- und Rundfenstern
+  folgen Stange und Stoff dem Bogen, statt mitten im Fenster anzufangen. Wechselt die Fensterform in
+  der App „Fassade“, passen sich die Vorhänge von selbst an.
+- Der **Türkranz** hängt an jeder Tür, auch vor Glas – an einem kleinen Haken mit Band.
 - Was auf einem Möbelstück steht, wandert beim Verschieben mit.
 - Wände werden in senkrechten Abschnitten gestrichen (Standard 1 m breit). Boden und Decke werden
   in Abschnitten von 3 x 3 Rasterfeldern (1/3 m) gestaltet; der Raum (6 x 8 m) geht darin ohne
@@ -735,6 +747,29 @@ steht kurz sein Name.
   Die Decke im Laden bleibt, wie sie ist. Seit dem Stil-Umbau (Etappe 4h) zeigt das Fassaden-Modell
   das Obergeschoss aus braunen Ziegeln mit Bogenfenstern und Blumenkästen und ein Walmdach aus
   Ziegelreihen (siehe „Die Welt im Bilderbuch-Stil“).
+- **Fassade seit Etappe 6c:** Es gibt immer eine vollständige, geschlossene Fassade. Zu Beginn ist
+  die Bücherei ein **altes, heruntergekommenes Backsteinhaus** – bröckelnder Putz, abgeplatzte
+  Stellen, verwitterte Farbe an Tür, Rahmen und Schildbalken, Risse, fehlende Steine, etwas Moos –
+  charmant, nicht gruselig. Nach und nach wird sie schöner:
+  - *Mauer:* Alter Backstein, Backstein beige, rot oder braun, Putz (weiß, creme, rosé), Rauputz,
+    Naturstein, Holzbretter (natur, gestrichen); Ecksteine Sandstein, grau oder keine.
+  - *Erdgeschoss:* „Mauerwerk wie oben“, Holzfront klassisch, Nut und Feder, viktorianisch (in
+    Anstrichen) oder Naturstein; **Schildbalken** eigens wählbar (Anstriche, Eiche natur, Stein hell
+    oder grau); **Schaufenster:** Sprossenfenster, ganz aus Glas, Rundfenster, Bogenfenster oder
+    Erkerfenster.
+  - *Obergeschoss:* dieselben fünf Fensterformen, Rahmen in sieben Farben.
+  - *Tür:* Kassettentür, Glastür, Bogenglas-Tür, Landhaustür, Rundbogentür mit Glas oder
+    Rundbogen-Landhaustür; **Fenster um die Tür:** Oberlicht, Seitenlichter, beides oder keins. Die
+    Maueröffnung passt sich der Tür an.
+  - Wand, Ausschnitt, Rahmen, Glas, Fensterbank und Vorhang entstehen aus **einem** Umriss je Fenster –
+    darum passen sie innen wie außen ohne Lücke zusammen, auch bei Rund- und Bogenfenstern und beim
+    Erker (der innen eine tiefe Fensterbank bekommt).
+  - *Pflanzen draußen:* sechs fertige **Mischungen** – Farbenfroh, Ganz grün, Pastell, Wild und
+    rankend, Bauerngarten, Weiß und Grün –, in jedem Kasten und jeder Ampel anders angeordnet, dazu
+    die Fülle (dezent, üppig, überquellend).
+  - *Draußen:* Markisen (bewegen sich im Wind wie bei den anderen Läden) und **Deko vor der
+    Bücherei**: Bank und Töpfe, Töpfe auf der Treppe, Aufsteller (Kreidetafel „Heute: Vorlesestunde“)
+    und Laterne, Kübelpflanzen oder alles zusammen; Passanten gehen darum herum.
 - **Fassade gestalten (seit Etappe 6b):** Die Fassade ist ein Baukasten, alles frei kombinierbar
   (App „Fassade“):
   - *Erdgeschoss:* Holzverkleidung klassisch mit Feldern, Nut und Feder oder viktorianisch (hohe
@@ -1029,15 +1064,35 @@ Tageszeit abhängen (`StreetLife.activity()`).
     Arme und Beine mit leichter Laufbewegung; jede Figur in eigenen, ruhigen Farben und etwas
     anderer Größe. Eigene Figuren mit Skelett und Animationen (Gehen, Stehen, Umschauen) lassen
     sich einsetzen (docs/ASSET_GUIDE.md, „Eigene Passanten“).
+- **Mehr Leben (seit Etappe 6c):**
+  - *Gesichter:* Grundgesicht neutral und freundlich; andere Ausdrücke nur zu Anlässen – Lächeln beim
+    Grüßen, Staunen und Freude am Schaufenster, Lachen und Zuhören beim Plaudern, zufrieden beim
+    Strecken und auf der Bank. Die Anlässe stehen in einer Tabelle (`FaceTriggers`), neue kommen dort
+    dazu.
+  - *Grüßen:* Begegnet man sich (oder der Spielfigur), nicken sie und winken manchmal kurz.
+  - *Plaudern:* Zwei Bekannte, die sich auf demselben Gehweg entgegenkommen, bleiben manchmal stehen
+    und plaudern ein paar Sekunden: abwechselnd erzählen (mit den Händen) und zuhören, über dem Kopf
+    kleine Sprechblasen mit Symbolen (Herz, Buch, Tasse, Sonne, Blume, Note, Katze, Stern, Kuchen),
+    dazu ein leises, unverständliches **Gemurmel** wie bei Animal Crossing – jede Figur mit eigener
+    Tonhöhe. Danach geht jeder weiter.
+  - *Kleine Pausen:* stehen bleiben und sich umschauen, sich strecken oder auf die Uhr schauen.
+  - *Sitzen:* Bänke und Stühle sind so hoch wie die Sitzhaltung der Figuren (25 cm) – sie rutschen
+    beim Hinsetzen und Aufstehen nicht mehr. Vor dem Pub setzen sie sich von vorn auf die Stühle
+    neben den Tischen.
 - **Fahrräder** fahren in beide Richtungen durch, ohne anzuhalten: nah am Bordstein, um
   Hindernisse fahren sie langsam außen herum (nur wenn die Gegenspur frei ist, sonst bremsen sie).
-  Platzhalter: Rad mit Korb, Fahrerin oder Fahrer tritt in die Pedale.
+  Seit Etappe 6c ein Hollandrad im Bilderbuch-Stil (runde Rohre, Schutzbleche, Lampe, Klingel,
+  Ledersattel, oft ein geflochtener Korb); die Chibi-Figur tritt im Takt, in Kurven legt sich das Rad
+  leicht hinein.
 - **Autos:** höchstens zwei, gelegentlich. Sie fahren links (wie in England), bremsen weich für
   Fußgänger auf der Fahrbahn und für die Spielfigur, wenn sie auf der Fahrbahn steht, und warten,
   bis frei ist – sie fahren nie jemanden um. Unter dem Torbogen fahren alle Fahrzeuge langsam und
   etwas zur Mitte hin. Damit niemand überholen muss, fährt in jeder Richtung nur dann ein neues
-  Fahrzeug los, wenn es kein langsameres einholen würde. Platzhalter: kleines, rundliches Auto
-  in sanften Farben.
+  Fahrzeug los, wenn es kein langsameres einholen würde. Seit Etappe 6c im weichen Weltstil:
+  Taxi, Mini, Kombi mit Holzrahmen und der Lieferwagen – runde, geschlossene Körper mit
+  Kotflügel-Rand, runden Lampen, Chromgrill, Sitzen hinter den Scheiben. Sie fahren weich an und
+  bremsen weich, folgen Kurven sanft, die Vorderräder lenken mit, und die Karosserie nickt beim
+  Bremsen leicht und neigt sich in Kurven.
 - **Leistung:** Alle Figuren und Fahrzeuge entstehen beim Start und werden nur ein- und
   ausgeblendet – kein Zuckeln, wenn jemand erscheint. Alle teilen sich ein Material; ein Auto ist
   ein einziges Teil. Schatten nur in der Nähe (Niedrig: keine; Mittel: bis 12 m, als einfacher
