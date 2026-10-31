@@ -10,6 +10,7 @@ script = ExtResource("1_data")
 id = "lush"
 display_name = "Üppig"
 category = "fullness"
+unlocked = true
 order = 10
 price = 0
 swatch = Color(0.550, 0.600, 0.400, 1)

@@ -114,12 +114,13 @@ func show_design(design: Dictionary) -> void:
 	var color := FacadeDesign.get_option("door_color", design)
 	var leaf_path := door.scene_path if door else ""
 	var leaf_color: Color = color.color if color else Color(0.13, 0.25, 0.18)
-	var key := leaf_path + str(leaf_color)
+	var weather := color.weather if color else 0.0
+	var key := leaf_path + str(leaf_color) + str(weather)
 	if _leaf_holder and key != _leaf_key:
 		_leaf_key = key
 		TabletApp.clear(_leaf_holder)
 		if not leaf_path.is_empty() and ResourceLoader.exists(leaf_path):
-			_leaf_holder.add_child(Door.make_leaf_model(leaf_path, leaf_color))
+			_leaf_holder.add_child(Door.make_leaf_model(leaf_path, leaf_color, weather))
 	# Einwurf auf der Fassade
 	var slot := Catalog.get_return_slot(str(design.get("slot", "")))
 	var slot_path := slot.scene_path if slot else ""

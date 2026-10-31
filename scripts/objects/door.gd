@@ -98,7 +98,7 @@ func is_leaf(collider: Object) -> bool:
 ## Blatts (Scharnier-Koordinaten: Drehachse bei x = 0, Blatt nach -x, draußen -z), Fläche
 ## „facade_door“ in der Türfarbe. Die Kollision (DoorLeaf) bleibt – nur ihre Optik wird ausgeblendet.
 ## Leerer Pfad = das einfache Blatt der Szene.
-func set_leaf(path: String, color: Color) -> void:
+func set_leaf(path: String, color: Color, weather: float = 0.0) -> void:
 	var hinge := get_node("Hinge") as Node3D
 	var old := hinge.get_node_or_null("LeafModel")
 	if old:
@@ -109,13 +109,21 @@ func set_leaf(path: String, color: Color) -> void:
 		var node := hinge.get_node_or_null(part) as Node3D
 		if node:
 			node.visible = builtin
+	# Das Loch der einfachen Scheibe in der Kollision des Türblatts nur beim einfachen Blatt – mit einem
+	# Modell ist die Kollision ganz (sonst fällt der Blick durch die Scheibe und ein Türkranz springt hin und her)
+	var hole := hinge.get_node_or_null("DoorLeaf/WindowHole") as CSGBox3D
+	if hole:
+		if not hole.has_meta("full_size"):
+			hole.set_meta("full_size", hole.size)
+		hole.size = hole.get_meta("full_size") if builtin else Vector3.ZERO
 	if builtin:
 		return
-	hinge.add_child(make_leaf_model(path, color))
+	hinge.add_child(make_leaf_model(path, color, weather))
 
 
-## Ein Türblatt-Modell in der Türfarbe (Fläche „facade_door“) – auch für die Vorschau der App „Fassade“.
-static func make_leaf_model(path: String, color: Color) -> Node3D:
+## Ein Türblatt-Modell in der Türfarbe (Fläche „facade_door“, weather = verwittert) – auch für die
+## Vorschau der App „Fassade“.
+static func make_leaf_model(path: String, color: Color, weather: float = 0.0) -> Node3D:
 	var model := (load(path) as PackedScene).instantiate() as Node3D
 	model.name = "LeafModel"
 	for node in model.find_children("*", "MeshInstance3D", true, false):
@@ -123,7 +131,7 @@ static func make_leaf_model(path: String, color: Color) -> Node3D:
 		for i in mesh_instance.mesh.get_surface_count():
 			var material := mesh_instance.mesh.surface_get_material(i)
 			if material and material.resource_name == "facade_door":
-				mesh_instance.set_surface_override_material(i, FurnitureUtils.tinted_material(material, color))
+				mesh_instance.set_surface_override_material(i, LibraryFacade.paint_material(material, color, weather))
 	return model
 
 

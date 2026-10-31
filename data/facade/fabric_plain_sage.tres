@@ -11,6 +11,7 @@ script = ExtResource("1_data")
 id = "plain_sage"
 display_name = "Salbei"
 category = "fabric"
+unlocked = false
 order = 40
 price = 30
 material = ExtResource("2_mat")

@@ -538,7 +538,16 @@ func _update_placement() -> void:
 	var hang_kind := Room.HangKind.NONE
 	if not hit.is_empty():
 		hang_kind = _room.get_hang_kind(hit.collider)
-	if not hit.is_empty() and hang_kind == Room.HangKind.CEILING and data.allows(hang_kind) \
+	if data.allows(FurnitureData.PLACE_WINDOW):
+		# Vorhänge und Gardinen: nur an Schaufenstern, passend zu ihrer Form (seit Etappe 6c)
+		var window := _window_of(hit.collider) if not hit.is_empty() else null
+		if window == null:
+			_preview.visible = false
+			_update_grid_visibility()
+			_set_status("%s – ein Fenster anschauen" % data.display_name, true)
+			return
+		problem = _place_on_window(window)
+	elif not hit.is_empty() and hang_kind == Room.HangKind.CEILING and data.allows(hang_kind) \
 			and hit.normal.y < -0.5:
 		problem = _place_on_ceiling(hit)
 	elif not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
@@ -671,6 +680,38 @@ func _place_on_wall(hit: Dictionary) -> String:
 	_placement_on_floor = false
 	# Vor der Eingangstür darf etwas hängen – die Sperrzone gilt nur für den Boden
 	return _find_overlap(normal, false)
+
+
+## Das Schaufenster, zu dem ein getroffener Körper gehört (Bank, Glas, Rahmen) – oder null.
+func _window_of(collider: Object) -> ShopWindow:
+	var node := collider as Node
+	while node:
+		if node is ShopWindow:
+			return node as ShopWindow
+		node = node.get_parent()
+	return null
+
+
+## Vorhang an ein Schaufenster: Ursprung Mitte unten an der Innenseite der Wand, +Z in den Raum.
+func _place_on_window(window: ShopWindow) -> String:
+	var segment := "front" if window.name.contains("Front") else "left"
+	var opening: Dictionary = {}
+	for o: Dictionary in FacadeLayout.openings(FacadeDesign.config):
+		if o.id == "shop_" + segment:
+			opening = o
+	if opening.is_empty():
+		return "Hier ist kein Fenster."
+	var frame := _room.global_transform * FacadeLayout.opening_frame(opening)
+	var origin := frame * Vector3(0.0, 0.0, -FacadeLayout.WALL_THICKNESS)
+	var basis := Basis(-frame.basis.x, frame.basis.y, -frame.basis.z).orthonormalized()
+	_placement_transform = Transform3D(basis, origin)
+	_placement_on_floor = false
+	for item in _room.get_placed_furniture():
+		if item == _moving_item or item.data == null or not item.data.allows(FurnitureData.PLACE_WINDOW):
+			continue
+		if item.global_position.distance_to(origin) < 0.15:
+			return "Hier hängt schon ein Vorhang."
+	return ""
 
 
 ## Deckenlampen: Der Aufhängepunkt (Ursprung) liegt an der Decke, die Lampe hängt nach unten.

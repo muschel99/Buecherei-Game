@@ -8,8 +8,10 @@
 [resource]
 script = ExtResource("1_data")
 id = "arched"
-display_name = "Bogentür"
+display_name = "Bogenglas-Tür"
 category = "door"
-order = 20
+unlocked = false
+order = 30
 price = 90
 scene_path = "res://assets/models/facade/door_arched.glb"
+shape = "rect"

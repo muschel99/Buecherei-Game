@@ -548,7 +548,17 @@ def build_wreath(k):
         bow.blob(c + Vector((sg * 0.035, 0, 0.012)), 0.03, subdiv=2, lump=0.1, scale=(1.3, 0.35, 0.8))
         bow.tube([c, c + Vector((sg * 0.025, -0.004, -0.08))], 0.009, segs=5, round_ends=True)
     bow.blob(c, 0.014, subdiv=1, lump=0.05)
-    k.collider((0, -0.03, 0), (0.42, 0.06, 0.44))
+    # Band nach oben zu einem kleinen Haken (seit Etappe 6c): So hängt der Kranz an jeder Tür, auch vor Glas
+    band = k.part("Band", "bow", bevel=0.0)
+    for sg in (-1, 1):
+        band.tube([Vector((sg * 0.014, -0.034, R - 0.01)), Vector((sg * 0.008, -0.02, R + 0.12)), Vector((sg * 0.003, -0.012, R + 0.21))],
+                  0.0065, segs=5, smooth=1, round_ends=True)
+    k.mat("hook", (0.26, 0.24, 0.22), grain="smooth", rough=0.55, metal=0.4)
+    hook = k.part("Haken", "hook", bevel=0.0)
+    hook.tube([Vector((0, -0.004, R + 0.2)), Vector((0, -0.016, R + 0.215)), Vector((0, -0.022, R + 0.235)), Vector((0, -0.012, R + 0.25))],
+              0.005, segs=6, smooth=1, round_ends=True)
+    hook.blob(Vector((0, -0.006, R + 0.25)), 0.012, subdiv=1, lump=0.0, scale=(1, 0.5, 1))
+    k.collider((0, -0.03, 0.06), (0.42, 0.06, 0.56))
 
 
 # --- Stickrahmen-Wand ---

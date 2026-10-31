@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3]
+
+; Vorhang (seit Etappe 6c): Das Modell baut sich aus der Form des Fensters (scripts/objects/window_curtain.gd).
+; Ursprung = Mitte unten an der Innenseite der Wand, +Z in den Raum.
+
+[ext_resource type="Script" path="res://scripts/objects/window_curtain.gd" id="1_curtain"]
+[ext_resource type="Material" path="res://assets/materials/furniture/curtains/fabric_heavy.tres" id="2_fabric"]
+[ext_resource type="Material" path="res://assets/materials/furniture/curtains/rod_wood.tres" id="3_rod"]
+
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(2.6, 1.1, 0.04)
+
+[node name="CurtainDrapes" type="Node3D"]
+
+[node name="Model" type="Node3D" parent="."]
+script = ExtResource("1_curtain")
+style = 1
+fabric = ExtResource("2_fabric")
+rod_material = ExtResource("3_rod")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="Shape0" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0.07)
+shape = SubResource("Shape_0")

@@ -24,3 +24,5 @@ shader_parameter/glow = 0.0
 shader_parameter/pattern = 0
 shader_parameter/pattern_size = 0.040
 shader_parameter/wind_strength = 0.000
+shader_parameter/weather = 0.000
+shader_parameter/weather_color = Color(0.840, 0.780, 0.680, 1)

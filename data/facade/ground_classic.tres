@@ -8,8 +8,10 @@
 [resource]
 script = ExtResource("1_data")
 id = "classic"
-display_name = "Klassisch"
+display_name = "Holzfront klassisch"
 category = "ground"
-order = 0
-price = 0
+unlocked = false
+order = 40
+price = 220
 scene_path = "res://assets/models/facade/ground_classic.glb"
+family = "wood"

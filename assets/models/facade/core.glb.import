@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://d15xqqtbh4jp8"
+uid="uid://csu61l1618u33"
 path="res://.godot/imported/core.glb-eecf1b1bd6ff09d3559ca2eedd8ffd8f.scn"
 
 [deps]
@@ -76,6 +76,16 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/sandstein.tres",
 "use_external/path": "res://assets/materials/storybook/sandstein.tres"
 },
+"Schild library door": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/schild_library_door.tres",
+"use_external/path": "res://assets/materials/storybook/schild_library_door.tres"
+},
+"Schild library fascia": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/schild_library_fascia.tres",
+"use_external/path": "res://assets/materials/storybook/schild_library_fascia.tres"
+},
 "Stuck Gebrochenweiß": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/stuck_gebrochenweiss.tres",
@@ -90,6 +100,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/zimmer_warm_1.tres",
 "use_external/path": "res://assets/materials/storybook/zimmer_warm_1.tres"
+},
+"facade_fascia": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/facade_fascia.tres",
+"use_external/path": "res://assets/materials/storybook/facade_fascia.tres"
 },
 "facade_upper_wall": {
 "use_external/enabled": true,

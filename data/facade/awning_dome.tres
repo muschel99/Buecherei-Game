@@ -10,6 +10,7 @@ script = ExtResource("1_data")
 id = "dome"
 display_name = "Korbmarkise"
 category = "awning"
+unlocked = false
 order = 20
 price = 120
 scene_path = "res://assets/models/facade/awning_dome.glb"

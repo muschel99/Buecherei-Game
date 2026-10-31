@@ -69,6 +69,7 @@ def role_materials(M):
     M["h_join"] = mk("facade_frame", (0.9, 0.86, 0.76), grain="paint", rough=0.72, vary=0.06, bump=0.12)
     M["awning"] = mk("facade_awning", (0.93, 0.88, 0.78), grain="fabric", rough=0.95, vary=0.04, stripes=0.13, color2=(0.62, 0.2, 0.18), wind=0.035)
     M["door"] = mk("facade_door", (0.13, 0.25, 0.18), grain="paint", rough=0.7, vary=0.06, bump=0.12)
+    M["fascia"] = mk("facade_fascia", (0.24, 0.33, 0.27), grain="paint", rough=0.7, vary=0.06, bump=0.12)
     M["stone_wall"] = mk("facade_stone", (0.84, 0.76, 0.62), grain="ashlar", rough=0.92, vary=0.09, bump=0.3, color2=(0.62, 0.58, 0.52))
     M["h_room"] = mk("Zimmer warm 1", SH.ROOMS[0], glow=0.3, rough=0.95, vary=0.05, bump=0.05)
     M["moss"] = mk("Moos Ampel", (0.32, 0.42, 0.2), grain="fabric", rough=1.0, vary=0.15, bump=0.5)
@@ -132,6 +133,15 @@ def build_core():
     # Pflanzplatz für den Kübel an der Gassenwand (wie bisher; Greenery bepflanzt ihn)
     pm = T.canon(*LEFT, 5.78, GROUND, 0.32)
     SH.plant_spot(C, "pot", tuple(pm @ Vector((0, 0, 0))), (0.5, 0.5, 1.0), facing=-90.0)
+    # Schild-Balken (seit Etappe 6c im Kern: Farbe, Holz oder Stein wählbar, Rolle facade_fascia)
+    for seg, win_x, side_name in ((FRONT, L.FRONT_WIN_X, "vorn"), (LEFT, L.LEFT_WIN_X, "links")):
+        p0, p1 = seg
+        seg_l = T.seg_len(p0, p1)
+        signs = [(win_x - seg_l / 2, 3.6, SC.sign_material("library", "fascia"), 2048 / 296)]
+        T.fascia(M, C, "Schildkasten %s" % side_name, T.wall_matrix(p0, p1, seg_l / 2), seg_l + 0.04, FASCIA[0], FASCIA[1] - FASCIA[0],
+                 "fascia", signs=signs, depth=0.22)
+    T.fascia(M, C, "Schildkasten Tür", T.wall_matrix(DIAG[0], DIAG[1], DIAG_LEN / 2), DIAG_LEN + 0.04, FASCIA[0], FASCIA[1] - FASCIA[0],
+             "fascia", signs=[(0.0, 2.6, SC.sign_material("library", "door"), 1536 / 267)], depth=0.22)
     # Anker: Markisen unter dem Schildkasten, Ampeln an den Ecken der Schräge
     anchor(C, "Anchor_awning_front", T.canon(*FRONT, L.FRONT_WIN_X, AWN_TOP, 0.06))
     anchor(C, "Anchor_awning_left", T.canon(*LEFT, L.LEFT_WIN_X, AWN_TOP, 0.06))
@@ -258,30 +268,11 @@ def ground_side(M, C, variant, seg, win_x, side_name):
     fm = T.wall_matrix(p0, p1)
     x0, x1 = win_x - WIN["w"] / 2, win_x + WIN["w"] / 2
     seed = 300 if side_name == "vorn" else 400
-    # Fensterrahmen und Bank (immer gestrichenes Holz)
-    f = Body("Fensterrahmen %s" % side_name, M["green"], C["shop"], seed=seed, vary=0.04, bevel=0.012)
-    gb = _gb(f, fm)
-    gb((win_x, WIN["z"] - 0.05, 0.05), (WIN["w"] + 0.2, 0.1, 0.1))
-    gb((win_x, WIN["z"] + WIN["h"] + 0.05, 0.05), (WIN["w"] + 0.2, 0.1, 0.1))
-    for xx in (x0 - 0.05, x1 + 0.05):
-        gb((xx, WIN["z"] + WIN["h"] / 2, 0.05), (0.1, WIN["h"] + 0.2, 0.1))
-    f.build()
-    if variant == "stone":
-        sill = Body("Fensterbank %s" % side_name, M["stone_wall"], C["walls"], seed=seed + 1, vary=0.06, bevel=0.012)
-        _gb(sill, fm)((win_x, WIN["z"] - 0.13, 0.11), (WIN["w"] + 0.34, 0.08, 0.22))
-        # Sturz mit Schlussstein über dem Fenster
-        _gb(sill, fm)((win_x, WIN["z"] + WIN["h"] + 0.06, 0.08), (WIN["w"] + 0.4, 0.06, 0.16))
-        _gb(sill, fm)((win_x, WIN["z"] + WIN["h"] + 0.06, 0.1), (0.18, 0.08, 0.2))
-        sill.build()
-    else:
-        s = Body("Fensterbank %s" % side_name, M["green_dark"], C["shop"], seed=seed + 1, vary=0.04, bevel=0.01)
-        _gb(s, fm)((win_x, WIN["z"] - 0.13, 0.11), (WIN["w"] + 0.34, 0.06, 0.2))
-        s.build()
+    # Seit Etappe 6c bleibt das Feld um das Fenster frei (x0 - 0,1 … x1 + 0,1, ganze Höhe): Fenster,
+    # Rahmen, Bank und Brüstung baut die Fassade in Godot passend zur gewählten Form.
     regions = [
-        (x0 - 0.1, x1 + 0.1, GROUND, WIN["z"] - 0.1),                 # Brüstung
         (0.0, x0 - 0.1, GROUND, FASCIA[0]),                            # links neben dem Fenster
         (x1 + 0.1, seg_l, GROUND, FASCIA[0]),                          # rechts
-        (x0 - 0.1, x1 + 0.1, WIN["z"] + WIN["h"] + 0.1, FASCIA[0]),     # Streifen über dem Fenster
     ]
     for k, (a, b, z0, z1) in enumerate(regions):
         fill_region(M, C, variant, fm, a, b, z0, z1, "Feld %s %d" % (side_name, k + 1), seed + 10 + k)
@@ -289,9 +280,6 @@ def ground_side(M, C, variant, seg, win_x, side_name):
     if variant == "stone":
         xs = [0.17, seg_l - 0.17]
     pilasters(M, C, variant, fm, xs, "Pilaster %s" % side_name, seed + 20)
-    signs = [(win_x - seg_l / 2, 3.6, SC.sign_material("library", "fascia"), 2048 / 296)]
-    T.fascia(M, C, "Schildkasten %s" % side_name, T.wall_matrix(p0, p1, seg_l / 2), seg_l + 0.04, FASCIA[0], FASCIA[1] - FASCIA[0], "green",
-             signs=signs, depth=0.22)
     if variant == "victorian":
         dent = Body("Zahnschnitt %s" % side_name, M["green_dark"], C["shop"], seed=seed + 30, vary=0.04, bevel=0.006)
         x = 0.1
@@ -309,14 +297,9 @@ def ground_diagonal(M, C, variant):
     fm = T.wall_matrix(p0, p1)
     dc = seg_l / 2
     d0, d1 = dc - DOOR["w"] / 2, dc + DOOR["w"] / 2
-    f = Body("Türrahmen", M["green"], C["shop"], seed=500, vary=0.04, bevel=0.012)
-    gb = _gb(f, fm)
-    for xx in (d0 - 0.06, d1 + 0.06):
-        gb((xx, (GROUND + DOOR["h"] + 0.1) / 2, 0.07), (0.12, DOOR["h"] + 0.1 - GROUND, 0.14))
-    gb((dc, DOOR["h"] + 0.07, 0.07), (DOOR["w"] + 0.24, 0.14, 0.14))
-    f.build()
+    # Seit Etappe 6c bleibt das Feld um die Tür frei (d0 - 0,12 … d1 + 0,12): Türöffnung, Seiten- und
+    # Oberlichter baut die Fassade in Godot passend zur gewählten Tür.
     fill_region(M, C, variant, fm, 0.0, d0 - 0.12, GROUND, FASCIA[0], "Feld Tür links", 510)
-    fill_region(M, C, variant, fm, d0 - 0.12, d1 + 0.12, DOOR["h"] + 0.14, FASCIA[0], "Feld über der Tür", 511)
     # Rechts der Tür: unter und über der Montageplatte das Feld, dazwischen schmale Leisten
     a, b = d1 + 0.12, seg_l
     bw, bh = SLOT_BOARD
@@ -336,123 +319,10 @@ def ground_diagonal(M, C, variant):
     frame.build()
     if variant == "stone":
         pilasters(M, C, variant, fm, [0.17, seg_l - 0.17], "Ecksteine Schräge", 520)
-    T.fascia(M, C, "Schildkasten Tür", T.wall_matrix(p0, p1, seg_l / 2), seg_l + 0.04, FASCIA[0], FASCIA[1] - FASCIA[0], "green",
-             signs=[(0.0, 2.6, SC.sign_material("library", "door"), 1536 / 267)], depth=0.22)
 
 
-# --- Obergeschoss ---
-
-def window_slots():
-    """Fensterplätze oben: (Wandstück, Mitte entlang der Wand) – Schräge 1, vorn 3, links 3."""
-    wins = []
-    for seg in (DIAG, FRONT, LEFT):
-        seg_l = T.seg_len(*seg)
-        n = max(1, int(seg_l / 2.0))
-        for k in range(n):
-            wins.append((seg, seg_l * (k + 0.5) / n))
-    return wins
-
-
-def build_upper(kind):
-    M, C = fresh("Fassade Obergeschoss %s" % kind)
-    rnd = random.Random(31)
-    w = Body("Obergeschoss Wand", M["h_wall"], C["walls"], seed=31, vary=0.03)
-    T.outline_walls(w, OUT, range(5), TOP - 0.02, E + 0.2, thick=0.3, step=0.5)
-    wall = w.build()
-    rise = UP_W * 0.32 if kind == "arched" else 0.0
-    wins = window_slots()
-    SB.boolean_cut(wall, [SH.cutter_for(T.wall_matrix(*seg, x, UP_Z), UP_W, UP_H, rise) for seg, x in wins])
-    SC.add_bevel(wall, 0.02)
-    for k, (seg, x) in enumerate(wins):
-        fm = T.wall_matrix(*seg, x, UP_Z, 0.0, rnd.uniform(-1, 1))
-        name = "Fenster oben %d" % (k + 1)
-        if kind == "bay":
-            bay(M, C, name, fm, seed=600 + k * 10)
-            anchor(C, "Anchor_box_%d" % (k + 1), T.canon(*seg, x, UP_Z - 0.16, 0.36))
-        else:
-            SH.window(M, C, name, fm, UP_W, UP_H, rise, panes=(2, 3), curtains=True, seed=200 + k)
-            SH.surround(M, C, name, fm, UP_W, UP_H, rise, "ashlar", seed=210 + k)
-            anchor(C, "Anchor_box_%d" % (k + 1), T.canon(*seg, x, UP_Z + 0.14, 0.2))
-        room(M, C, name, fm, 240 + k)
-    q = Body("Ecksteine", M["quoin"], C["walls"], seed=32, vary=0.1, bevel=0.014)
-    for k in (2, 3, 4, 0):
-        prev, nxt = T.seg(OUT, k - 1), T.seg(OUT, k)
-        z, j = TOP + 0.15, 0
-        while z + 0.3 < E - 0.4:
-            wdt = 0.4 if j % 2 == 0 else 0.26
-            if k - 1 != 1:
-                q.box((T.seg_len(*prev) - wdt / 2 + 0.005, z + 0.14, 0.025), (wdt, 0.27, 0.06), step=0.6, dent=0.004,
-                      matrix=T.wall_matrix(*prev))
-            if k != 1:
-                q.box((wdt / 2 - 0.005, z + 0.14, 0.025), (wdt, 0.27, 0.06), step=0.6, dent=0.004, matrix=T.wall_matrix(*nxt))
-            z += 0.3
-            j += 1
-    q.build()
-    return C, ("walls", "windows", "inside")
-
-
-def room(M, C, name, fm, seed):
-    """Warmer Raum hinter dem Fenster (es leuchtet ein wenig)."""
-    rm = Body(name + " Raum", M["h_room"], C["inside"], seed=seed, vary=0.04)
-    rm.box((0, 1.35, -1.5), (2.2, 2.9, 0.08), step=1, dent=0.0, matrix=fm)
-    rm.box((0, -0.8, -0.9), (2.2, 0.08, 1.3), step=1, dent=0.0, matrix=fm)
-    rm.box((0, 2.75, -0.9), (2.2, 0.08, 1.3), step=1, dent=0.0, matrix=fm)
-    for sx in (-1.1, 1.1):
-        rm.box((sx, 1.0, -0.9), (0.08, 3.6, 1.3), step=1, dent=0.0, matrix=fm)
-    rm.build()
-
-
-def bay(M, C, name, fm, seed):
-    """Erker: vorn ein breites und seitlich zwei schräge Fenster, Sockel mit Konsolen, kleines Dach
-    aus Zink. Grundriss ein Trapez (bis 34 cm vor der Wand), Rahmen in der Fensterfarbe."""
-    hw, depth = UP_W / 2, 0.34
-    back = [(-hw - 0.2, 0.0), (hw + 0.2, 0.0)]
-    front = [(-hw + 0.06, depth), (hw - 0.06, depth)]
-    plan = [back[0], back[1], front[1], front[0]]
-    z0, z1 = -0.04, UP_H + 0.04
-    fr = Body(name + " Erker Rahmen", M["h_join"], C["windows"], seed=seed, vary=0.035, bevel=0.008)
-    # Boden und Deckel des Erkers (Trapez-Platten in der Wandebene: lokal x quer, Tiefe = lokal z)
-    for zz, th in ((z0 - 0.12, 0.12), (z1, 0.1)):
-        outline = [(x, -y) for x, y in plan]
-        fr.slab(outline[::-1], th, fm @ Matrix.Translation((0, zz, 0)) @ Matrix.Rotation(math.radians(-90), 4, "X"), dent=0.001)
-    # Eckpfosten und Brüstungsleisten
-    corners = [Vector((back[0][0] + 0.03, 0, 0.0)), Vector((front[0][0], 0, depth)), Vector((front[1][0], 0, depth)),
-               Vector((back[1][0] - 0.03, 0, 0.0))]
-    for c in corners:
-        fr.box((c.x, (z0 + z1) / 2, c.z - 0.01), (0.07, z1 - z0, 0.07), step=0.6, dent=0.002, matrix=fm)
-    faces = [(corners[0], corners[1], 1), (corners[1], corners[2], 3), (corners[2], corners[3], 1)]
-    glass = Body(name + " Erker Glas", M["glass"], C["windows"], seed=seed + 1, vary=0.0)
-    for a, b, panes in faces:
-        mid = (a + b) / 2
-        d = (b - a)
-        length = d.length
-        ang = math.atan2(-d.z, d.x)
-        face = fm @ Matrix.Translation((mid.x, 0, mid.z)) @ Matrix.Rotation(ang, 4, "Y")
-        fr.box((0, z0 + 0.05, 0), (length, 0.1, 0.06), step=0.6, dent=0.002, matrix=face)
-        fr.box((0, z1 - 0.05, 0), (length, 0.1, 0.06), step=0.6, dent=0.002, matrix=face)
-        for i in range(1, panes):
-            fr.box((-length / 2 + length * i / panes, (z0 + z1) / 2, 0.006), (0.03, z1 - z0 - 0.1, 0.04), step=1, dent=0.001, matrix=face)
-        fr.box((0, z0 + (z1 - z0) * 0.62, 0.006), (length - 0.04, 0.03, 0.04), step=1, dent=0.001, matrix=face)
-        glass.box((0, (z0 + z1) / 2, -0.015), (length - 0.02, z1 - z0 - 0.12, 0.006), step=1, dent=0.0, matrix=face)
-    fr.build()
-    glass.build()
-    # Konsolen unter dem Erker und Zinkdach darüber
-    kb = Body(name + " Konsolen", M["trim"], C["walls"], seed=seed + 2, vary=0.05, bevel=0.01)
-    for sx in (-hw + 0.02, hw - 0.02):
-        kb.box((sx, z0 - 0.26, 0.12), (0.12, 0.26, 0.24), step=1, dent=0.003, matrix=fm)
-        kb.box((sx, z0 - 0.38, 0.05), (0.1, 0.12, 0.1), step=1, dent=0.003, matrix=fm)
-    kb.build()
-    roof = Body(name + " Erker Dach", M["zinc"], C["walls"], seed=seed + 3, vary=0.05, bevel=0.006)
-    m = fm @ Matrix.Translation((0, z1 + 0.1, 0)) @ Matrix.Rotation(math.radians(-28), 4, "X")
-    roof.box((0, 0.1, depth / 2 + 0.02), (UP_W + 0.5, 0.03, depth + 0.16), step=0.5, dent=0.002, matrix=m)
-    roof.build()
-    cur = Body(name + " Vorhänge", M["curtain"], C["windows"], seed=seed + 4, vary=0.06)
-    for side in (-1, 1):
-        origin = fm @ Vector((side * hw - (0.28 if side > 0 else 0), 0.04, -0.12))
-        u = fm.to_3x3() @ Vector((0.28, 0, 0))
-        v = fm.to_3x3() @ Vector((0, UP_H - 0.1, 0))
-        cur.sheet(origin, u, v, 7, 3, 0.008, offset=lambda uu, vv: 0.022 * math.sin(uu * math.pi * 5) * (0.6 + 0.4 * vv))
-    cur.build()
+# Obergeschoss: seit Etappe 6c in Godot gebaut (scripts/world/library_facade.gd) – Mauerwerk mit Löchern in
+# der Form der gewählten Fenster, Fenster aus WindowUnit.
 
 
 # --- Markisen (im Rahmen canon: Wand bei y = 0, außen -y, Mitte x = 0, Oberkante z = 0) ---
@@ -643,6 +513,86 @@ def build_door(kind):
     return C, ("shop", "windows", "deco")
 
 
+def build_round_door(kind):
+    """Türblatt mit Rundbogen oben (seit Etappe 6c): Halbkreis über die ganze Breite (Radius DOOR_W / 2).
+    round_cottage: senkrechte Bretter, oben im Bogen abgeschnitten, Riegel, kleines rundes Fenster.
+    round_glazed: Rahmen mit Füllungen unten, oben Glas unter dem Bogen mit Sprosse."""
+    M, C = fresh("Türblatt %s" % kind)
+    cx = -0.5
+    r = DOOR_W / 2
+    spring = DOOR_H - r
+    upright = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))   # Umriss in x/z, Dicke nach -y
+    leaf = Body("Türblatt", M["door"], C["shop"], seed=81, vary=0.04, bevel=0.008)
+    glass = Body("Türglas", M["glass"], C["windows"], seed=82, vary=0.0)
+
+    def top(x, inset=0.0):
+        rr = r - inset
+        return spring + math.sqrt(max(rr * rr - x * x, 0.0))
+
+    def column(xa, xb, z0, inset=0.0, steps=6):
+        pts = [(xa, z0), (xb, z0)]
+        pts += [(xb - (xb - xa) * k / steps, top(xb - (xb - xa) * k / steps, inset)) for k in range(steps + 1)]
+        return [(cx + x, z) for x, z in pts]
+
+    def slab(body, pts, thick, y=0.0):
+        body.slab(pts, thick, Matrix.Translation((0, thick / 2 + y, 0)) @ upright, dent=0.0)
+
+    def lb(c, s_):
+        leaf.box((cx + c[0], c[2], c[1]), (s_[0], s_[2], s_[1]), step=0.5, dent=0.0015)
+    if kind == "round_cottage":
+        n = 7
+        for i in range(n):
+            xa = -r + DOOR_W * i / n - 0.001
+            xb = -r + DOOR_W * (i + 1) / n + 0.001
+            slab(leaf, column(max(xa, -r + 0.001), min(xb, r - 0.001), 0.0), DOOR_T)
+        for z in (0.35, 1.35):
+            lb((0, z, -0.035), (DOOR_W - 0.08, 0.12, 0.025))
+        # rundes Fensterchen oben in der Mitte
+        wz = spring + 0.05
+        ring = [(cx + math.cos(math.tau * k / 24) * 0.15, wz + math.sin(math.tau * k / 24) * 0.15) for k in range(24)]
+        inner = [(cx + math.cos(math.tau * k / 24) * 0.12, wz + math.sin(math.tau * k / 24) * 0.12) for k in range(24)]
+        slab(glass, inner, 0.006, -0.001)
+        frame = Body("Fensterring", M["door"], C["shop"], seed=83, vary=0.03)
+        frame.tube([(x, DOOR_T / 2 + 0.006, z) for x, z in ring + ring[:1]], 0.018, segs=8)
+        frame.tube([(x, -DOOR_T / 2 - 0.006, z) for x, z in ring + ring[:1]], 0.018, segs=8)
+        frame.build()
+        straps = Body("Beschläge", M["lamp_iron"], C["deco"], seed=84, vary=0.03, bevel=0.002)
+        for z in (0.35, 1.35):
+            straps.box((cx + 0.26, DOOR_T / 2 + 0.004, z), (0.5, 0.008, 0.05), step=1, dent=0.0)
+        straps.build()
+    else:
+        stile = 0.11
+        inner_w = DOOR_W - 2 * stile
+        # Seitenfriese bis zum Kämpfer, Bogenfries oben, Riegel unten und in der Mitte
+        lb((-r + stile / 2, spring / 2, 0), (stile, spring + 0.01, DOOR_T))
+        lb((r - stile / 2, spring / 2, 0), (stile, spring + 0.01, DOOR_T))
+        lb((0, 0.1, 0), (inner_w + 0.004, 0.2, DOOR_T))
+        lb((0, 0.92, 0), (inner_w + 0.004, 0.12, DOOR_T))
+        band = [(cx + math.cos(math.pi * k / 20) * r, spring + math.sin(math.pi * k / 20) * r) for k in range(21)]
+        band += [(cx + math.cos(math.pi * k / 20) * (r - stile), spring + math.sin(math.pi * k / 20) * (r - stile)) for k in range(20, -1, -1)]
+        slab(leaf, band, DOOR_T)
+        for col in (-1, 1):
+            px = col * inner_w / 4
+            lb((px, 0.53, 0), (inner_w / 2 + 0.01, 0.69, DOOR_T * 0.55))
+            for side in (1, -1):
+                lb((px, 0.53, side * DOOR_T * 0.3), (inner_w / 2 - 0.12, 0.54, 0.014))
+        lb((0, 0.53, 0), (0.06, 0.67, DOOR_T))
+        gz0 = 0.98
+        pts = [(cx - inner_w / 2, gz0), (cx + inner_w / 2, gz0)]
+        pts += [(cx + math.cos(math.pi * k / 20) * (inner_w / 2), spring + math.sin(math.pi * k / 20) * (inner_w / 2)) for k in range(21)]
+        slab(glass, pts, 0.006, -0.003)
+        lb((0, (gz0 + spring + inner_w / 2) / 2, 0.0), (0.025, spring + inner_w / 2 - gz0, DOOR_T * 0.6))
+        lb((0, spring, 0.0), (inner_w, 0.025, DOOR_T * 0.6))
+    leaf.build()
+    glass.build()
+    knobs = Body("Türknäufe", M["gold"], C["deco"], seed=85, vary=0.04)
+    for s_ in (1, -1):
+        knobs.lathe([(0.0, 0.0), (0.022, 0.0), (0.012, 0.03), (0.026, 0.05), (0.02, 0.07), (0.0, 0.072)],
+                    (cx - 0.4, s_ * DOOR_T / 2, 1.0), segs=14, turn=(-90 * s_, 0))
+    knobs.build()
+    return C, ("shop", "windows", "deco")
+
+
 # --- Blumenkästen (Rahmen canon, Oberkante hinten am Anker; Kasten ragt nach außen) ---
 
 BOX_W, BOX_D, BOX_H = UP_W + 0.18, 0.2, 0.2
@@ -784,16 +734,124 @@ def bracket(M, C):
     ir.build()
 
 
+# --- Deko vor der Tür (seit Etappe 6c, Raumkoordinaten wie der Kern) ---
+
+DECO_SETS = {"bench": ("bench", "bench_pots"), "steps": ("steps",), "sign": ("sign", "lantern"), "planters": ("planters",),
+             "all": ("bench", "steps", "sign", "lantern", "planters")}
+
+
+def library_chalkboard_image():
+    """Startbild der Kreidetafel (assets/textures/signs/library_chalkboard.png) – nur, wenn es fehlt;
+    danach ist es das Bild der Entwicklerin und wird nie überschrieben."""
+    import style_lib as S
+    import style_parts as P
+    import build_houses as BH
+    png = os.path.join(SC.ROOT, "assets", "textures", "signs", "library_chalkboard.png")
+    if os.path.exists(png):
+        return
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    b = S.Builder("library_chalkboard")
+    P.chalkboard_design(b, ["Heute:", "Vorlese-", "stunde"], 33)
+    S.to_blender(b, {})
+    BH._sign_lighting()
+    S.render_ortho(png, P.CHALKBOARD_SIZE[0], P.CHALKBOARD_SIZE[1], 360)
+    print("Startbild:", png)
+
+
+def _collider(C, name, center, size):
+    """Kasten nur für die Kollision im Spiel („…-colonly“), in Blender-Koordinaten."""
+    b = Body(name + "-colonly", None, C["deco"], vary=0)
+    b.box(center, size, step=10, dent=0)
+    obj = b.build()
+    obj.display_type = "WIRE"
+    obj.hide_render = True
+
+
+def _obstacle(C, matrix, radius):
+    """Kreis, um den Passanten herumgehen (im Spiel ein StreetObstacle): leeres Objekt „Obstacle_<cm>“."""
+    anchor(C, "Obstacle_%d" % round(radius * 100), matrix)
+
+
+def build_deco(kind):
+    import build_storybook_props as PR
+    if kind in ("sign", "all"):
+        library_chalkboard_image()
+    M, C = fresh("Deko vor der Tür %s" % kind)
+    parts = DECO_SETS[kind]
+    dc = DIAG_LEN / 2
+    # Treppe: Podest (Oberkante = Ladenboden 0) halb so breit wie die Wand minus die Seitenstufen
+    podium_half = DIAG_LEN / 2 - 3 * 0.2
+
+    def world(m, local):
+        return m @ Vector(local)
+    if "bench" in parts:
+        # Parkbank an der Gassenwand (vor dem linken Fenster frei), mit Blick nach draußen
+        m = T.canon(*LEFT, 0.98, GROUND, 0.3)
+        T.placed(C["deco"], m, PR.street_bench, M, C["deco"])
+        _collider(C, "Bank", world(m, (0.0, -0.02, 0.45)), (1.5, 0.5, 0.9))
+        for x in (-0.45, 0.45):
+            _obstacle(C, m @ Matrix.Translation((x, -0.05, 0.0)), 0.42)
+    if "bench_pots" in parts:
+        for k, (u, r, h) in enumerate(((0.12, 0.17, 0.36), (1.84, 0.14, 0.3))):
+            if kind == "all" and k == 0:
+                continue
+            m = T.canon(*LEFT, u, GROUND, 0.32)
+            SC.pot(M, C["pots"], "Bank Topf %d" % k, world(m, (0, 0, 0)), r, h, 900 + k, style="classic")
+            _collider(C, "Bank Topf %d" % k, world(m, (0, 0, h / 2)), (r * 2, r * 2, h))
+    if "steps" in parts:
+        # Töpfe auf dem Podest (vorn an den Ecken) und an den Seiten der Stufen
+        for k, (side, out, z, r, h) in enumerate(((-1, 0.48, 0.0, 0.15, 0.3), (1, 0.48, 0.0, 0.15, 0.3),
+                                                  (-1, 0.62, -0.125, 0.085, 0.18), (1, 0.62, -0.125, 0.085, 0.18),
+                                                  (-1, 0.9, -0.25, 0.08, 0.16), (1, 0.9, -0.25, 0.08, 0.16))):
+            off = podium_half - 0.18 if k < 2 else podium_half + 0.1 if k < 4 else podium_half + 0.3
+            m = T.canon(*DIAG, dc + side * off, z, out)
+            SC.pot(M, C["pots"], "Treppe Topf %d" % k, world(m, (0, 0, 0)), r, h, 910 + k, style="bowl" if k >= 2 else "classic")
+            _collider(C, "Treppe Topf %d" % k, world(m, (0, 0, h / 2)), (r * 2, r * 2, h))
+    if "sign" in parts:
+        # Aufsteller auf dem Gehweg vorn, nahe der Ecke zur Schräge, schräg zur Straße
+        m = T.canon(*FRONT, 3.86, GROUND, 0.62)
+        p = world(m, (0, 0, 0))
+        before = set(bpy.data.objects)
+        SC.chalkboard(M, C["deco"], (p.x, p.y), math.degrees(math.atan2(m[1][0], m[0][0])) + 20, SC.sign_material("library", "chalkboard"))
+        for o in bpy.data.objects:
+            if o not in before and o.parent is None:
+                o.location.z += GROUND
+        _collider(C, "Aufsteller", (p.x, p.y, GROUND + 0.45), (0.5, 0.5, 0.9))
+        _obstacle(C, m, 0.38)
+    if "lantern" in parts:
+        # Laterne auf einem Pfosten am vorderen Rand des Podests (auf der Seite ohne Briefkasten)
+        m = T.canon(*DIAG, dc - podium_half + 0.16, 0.0, 0.2)
+        base = world(m, (0, 0, 0))
+        post = Body("Laterne Pfosten", M["lamp_iron"], C["deco"], seed=930, vary=0.03, bevel=0.004)
+        post.lathe([(0.0, 0.0), (0.09, 0.0), (0.09, 0.03), (0.05, 0.05), (0.03, 0.1), (0.0, 0.1)], base, segs=16)
+        post.tube([base + Vector((0, 0, 0.08)), base + Vector((0, 0, 0.92))], 0.022, segs=10, round_ends=True)
+        post.build()
+        import storybook_parts as SP
+        SP.lantern_head(M, C["deco"], "Laterne", base + Vector((0, 0, 0.92)), scale=0.62, seed=931)
+        _collider(C, "Laterne", base + Vector((0, 0, 0.6)), (0.2, 0.2, 1.2))
+    if "planters" in parts:
+        # zwei große Kübel neben der Treppe (vorn und an der Gasse)
+        for k, (seg, u) in enumerate(((FRONT, 3.62), (LEFT, 0.42 if kind != "all" else 1.95))):
+            if kind == "all" and k == 1:
+                continue
+            m = T.canon(*seg, u, GROUND, 0.42)
+            SC.pot(M, C["pots"], "Kübel %d" % k, world(m, (0, 0, 0)), 0.26, 0.5, 940 + k, mat="terracotta", style="tub", spot="tub")
+            _collider(C, "Kübel %d" % k, world(m, (0, 0, 0.25)), (0.56, 0.56, 0.5))
+            _obstacle(C, m, 0.4)
+    return C, ("deco", "pots")
+
+
 # --- Export ---
 
 PARTS = {
     "core": build_core,
-    **{"ground_" + v: (lambda v=v: build_ground(v)) for v in ("classic", "beadboard", "victorian", "stone")},
-    **{"upper_" + v: (lambda v=v: build_upper(v)) for v in ("sash", "arched", "bay")},
+    **{"ground_" + v: (lambda v=v: build_ground(v)) for v in ("classic", "beadboard", "victorian")},
     **{"awning_" + v: (lambda v=v: build_awning(v)) for v in ("classic", "dome", "box")},
     **{"door_" + v: (lambda v=v: build_door(v)) for v in ("glazed", "panelled", "arched", "cottage")},
+    **{"door_" + v: (lambda v=v: build_round_door(v)) for v in ("round_glazed", "round_cottage")},
     **{"box_" + v: (lambda v=v: build_box(v)) for v in ("wood", "zinc", "terracotta", "wicker")},
     **{"basket_" + v: (lambda v=v: build_basket(v)) for v in ("bowl", "wire", "wicker")},
+    **{"deco_" + v: (lambda v=v: build_deco(v)) for v in DECO_SETS},
 }
 
 
@@ -808,7 +866,7 @@ def export_part(name, C):
         for o in extra:
             if o.name.startswith("PlantSpot_"):
                 o.name = "FacadeSpot_" + o.name.split("_")[1]
-    if name == "core" or name.startswith("ground_") or name.startswith("upper_"):
+    if name == "core" or name.startswith("ground_"):
         # Wie die alte Fassade leicht „gesetzt“ – hängt nur von der Lage ab, darum passen die Teile
         # weiter genau aneinander
         SC.settle(objs, L.SETTLE, 3.2, E, E + L.RISE)

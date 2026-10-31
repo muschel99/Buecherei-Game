@@ -10,6 +10,7 @@ script = ExtResource("1_data")
 id = "none"
 display_name = "Keine Markise"
 category = "awning"
+unlocked = true
 order = 0
 price = 0
 swatch = Color(0.900, 0.900, 0.880, 1)

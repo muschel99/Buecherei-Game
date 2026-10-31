@@ -255,6 +255,18 @@ static func draw(canvas: CanvasItem, key: String, rect: Rect2, color: Color) -> 
 			p.line(12, 9.8, 12, 15)
 			p.line(8, 12.8, 9.5, 15)
 			p.line(16, 12.8, 14.5, 15)
+		"fac_wall":
+			for row in 4:
+				var y := 5.0 + row * 3.6
+				p.line(3, y, 21, y)
+				var off := 0.0 if row % 2 == 0 else 3.0
+				for x in [6.0, 12.0, 18.0]:
+					p.line(x + off - 3.0, y, x + off - 3.0, y + 3.6)
+			p.line(3, 19.4, 21, 19.4)
+		"fac_door":
+			p.poly([[7, 21], [7, 9], [8, 6], [12, 4.5], [16, 6], [17, 9], [17, 21]])
+			p.line(4, 21, 20, 21)
+			p.circle(14.5, 13.5, 0.9, true)
 		"fac_slot":
 			p.rect(4, 5, 16, 14)
 			p.rect(7.5, 9, 9, 2.6)

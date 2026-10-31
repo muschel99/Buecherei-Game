@@ -83,10 +83,11 @@ const SUBCATEGORIES := {
 
 @export_group("Platzierung")
 ## Wo darf es hin? Ein oder mehrere Häkchen:
-## Boden, Ablagefläche (Tisch, Regalbrett, Sitzfläche, Fensterbank …), Wand, Tür, Decke.
+## Boden, Ablagefläche (Tisch, Regalbrett, Sitzfläche, Fensterbank …), Wand, Tür, Decke, Fenster (seit
+## Etappe 6c: Vorhänge und Gardinen – rasten nur an Fenstern ein und passen sich deren Form an).
 ## Welche Ablageflächen ein Möbelstück selbst anbietet, steht in seiner Szene
 ## (Knoten vom Typ PlacementSurface).
-@export_flags("Boden:1", "Ablagefläche:2", "Wand:4", "Tür:8", "Decke:16") var placement: int = PLACE_FLOOR
+@export_flags("Boden:1", "Ablagefläche:2", "Wand:4", "Tür:8", "Decke:16", "Fenster:32") var placement: int = PLACE_FLOOR
 
 @export_group("Bücher")
 ## Bücher lassen sich daran anlehnen (wie an eine Wand): Lehnen von Sofas, Sesseln und Stühlen,
@@ -110,6 +111,7 @@ const PLACE_SURFACE := 2
 const PLACE_WALL := 4
 const PLACE_DOOR := 8
 const PLACE_CEILING := 16
+const PLACE_WINDOW := 32
 
 
 ## Darf es dorthin? (z. B. allows(PLACE_WALL))
@@ -122,9 +124,9 @@ func is_wall_mounted() -> bool:
 	return allows(PLACE_WALL) or allows(PLACE_DOOR)
 
 
-## Wird es aufgehängt (an Wand, Tür oder Decke)?
+## Wird es aufgehängt (an Wand, Tür, Decke oder Fenster)?
 func is_hanging() -> bool:
-	return is_wall_mounted() or allows(PLACE_CEILING)
+	return is_wall_mounted() or allows(PLACE_CEILING) or allows(PLACE_WINDOW)
 
 
 ## Eindeutiger Name (aus dem Feld "id" oder ersatzweise dem Dateinamen).

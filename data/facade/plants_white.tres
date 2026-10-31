@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="FacadeOption" format=3]
+
+; Erzeugt von tools/blender/facade_options.py – im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/facade_option.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = "white"
+display_name = "Weiß und Grün"
+category = "plants"
+unlocked = false
+order = 50
+price = 60
+swatch = Color(0.950, 0.950, 0.900, 1)
+plants = PackedStringArray("box_geranium_white", "box_petunia_white", "box_lobelia_white", "box_heather_white", "box_ivy", "potfill_rose_white", "potfill_hydrangea_white")
+basket_plants = PackedStringArray("potfill_hydrangea_white", "potfill_trailing", "potfill_heather_white")
+rim_plants = PackedStringArray("rim_bacopa", "rim_ivy")

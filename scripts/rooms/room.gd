@@ -28,13 +28,11 @@ signal layout_changed
 	SurfaceData.Kind.FLOOR: $FloorCovering as PaintableGrid,
 	SurfaceData.Kind.CEILING: $CeilingCovering as PaintableGrid,
 }
-## Fenster- und Türlaibung: bekommen die Farbe des Wandabschnitts, in dem sie liegen.
-## Jeder Eintrag: { "node": CSG-Aussparung, "wall": die Wand, zu der sie gehört }.
-@onready var _reveals: Array = [
-	{"node": $Structure/WallFront/WindowHole, "wall": $Walls/Front},
-	{"node": $Structure/WallLeft/WindowHole, "wall": $Walls/Left},
-	{"node": $Structure/WallDiagonal/DoorHole, "wall": $Walls/Diagonal},
-]
+## Fenster- und Türlaibung: bekommen die Farbe des Wandabschnitts, in dem sie liegen. Die Aussparungen
+## (CSG) baut seit Etappe 6c die Fassade passend zur Form (RoomOpenings) – darum werden sie jedes Mal
+## gesucht. CSG-Wand → Farbwand.
+const REVEAL_WALLS := {"Structure/WallFront": "Walls/Front", "Structure/WallLeft": "Walls/Left",
+	"Structure/WallDiagonal": "Walls/Diagonal"}
 ## Hier darf man etwas aufhängen (Wandbilder, Lichtschalter …).
 @onready var _hang_walls: Array[Node] = [
 	$Structure/WallLeft,
@@ -366,13 +364,19 @@ func _paint_everything(id: String) -> void:
 
 ## Fenster- und Türlaibung in der Farbe des Abschnitts streichen, in dem sie liegen.
 func _update_reveals() -> void:
-	for entry in _reveals:
-		var wall: PaintableWall = entry["wall"]
-		var reveal: CSGPrimitive3D = entry["node"]
-		var x := wall.to_local(reveal.global_position).x
-		var surface := Catalog.get_surface(wall.segment_ids[wall.get_segment_index_at_x(x)])
-		if surface:
-			reveal.material = surface.material
+	for combiner_path: String in REVEAL_WALLS:
+		var combiner := get_node_or_null(combiner_path)
+		var wall := get_node_or_null(String(REVEAL_WALLS[combiner_path])) as PaintableWall
+		if combiner == null or wall == null or wall.segment_ids.is_empty():
+			continue
+		for child in combiner.get_children():
+			var reveal := child as CSGPrimitive3D
+			if reveal == null or reveal.operation != CSGShape3D.OPERATION_SUBTRACTION:
+				continue
+			var x := wall.to_local(reveal.global_position).x
+			var surface := Catalog.get_surface(wall.segment_ids[wall.get_segment_index_at_x(x)])
+			if surface:
+				reveal.material = surface.material
 
 
 # --- Speichern und Laden ---

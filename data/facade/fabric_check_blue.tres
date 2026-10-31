@@ -11,6 +11,7 @@ script = ExtResource("1_data")
 id = "check_blue"
 display_name = "Karo blau"
 category = "fabric"
+unlocked = false
 order = 60
 price = 30
 material = ExtResource("2_mat")

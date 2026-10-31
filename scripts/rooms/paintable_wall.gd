@@ -13,6 +13,9 @@ extends Node3D
 @export var height: float = 0.0
 ## Öffnungen wie Fenster und Tür, gemessen vom Wandanfang (x) und vom Boden (y).
 @export var openings: Array[Rect2] = []
+## Öffnungen in beliebiger Form (seit Etappe 6c: Bogen, rund …) – setzt die Fassade über
+## set_opening_shapes; sind welche da, gelten sie statt der Rechtecke.
+var opening_shapes: Array[PackedVector2Array] = []
 
 ## So weit liegen die Farbflächen vor der Wand (verhindert Flackern).
 const OFFSET := 0.003
@@ -64,8 +67,26 @@ func get_segment_center(index: int) -> Vector3:
 	return to_global(Vector3((index + 0.5) * _segment_width, height / 2.0, 0.0))
 
 
+## Neue Öffnungen (in Wand-Koordinaten): Die Farbflächen werden neu geschnitten, die Farben bleiben.
+func set_opening_shapes(shapes: Array[PackedVector2Array]) -> void:
+	opening_shapes = shapes
+	if _segment_parts.is_empty():
+		return  # noch nicht gebaut – _ready nimmt die Formen
+	for i in _segment_parts.size():
+		var material: Material = null
+		for part: MeshInstance3D in _segment_parts[i]:
+			material = part.material_override
+			remove_child(part)
+			part.queue_free()
+		_segment_parts[i] = _build_segment(i)
+		for part: MeshInstance3D in _segment_parts[i]:
+			part.material_override = material
+
+
 ## Baut die Farbflächen eines Abschnitts – mit Aussparungen für Fenster und Tür.
 func _build_segment(index: int) -> Array[MeshInstance3D]:
+	if not opening_shapes.is_empty():
+		return _build_segment_shaped(index)
 	var pieces: Array[Rect2] = [Rect2(index * _segment_width, 0.0, _segment_width, height)]
 	for opening in openings:
 		var remaining: Array[Rect2] = []
@@ -85,6 +106,21 @@ func _build_segment(index: int) -> Array[MeshInstance3D]:
 		add_child(part)
 		parts.append(part)
 	return parts
+
+
+## Wie _build_segment, aber mit Öffnungen in beliebiger Form (ein Netz je Abschnitt).
+func _build_segment_shaped(index: int) -> Array[MeshInstance3D]:
+	var x0 := index * _segment_width
+	var strip := PackedVector2Array([Vector2(x0, 0.0), Vector2(x0 + _segment_width, 0.0), Vector2(x0 + _segment_width, height),
+		Vector2(x0, height)])
+	var mesh := OpeningMesh.new()
+	mesh.face_with_holes(strip, opening_shapes, OFFSET, 1.0)
+	var part := MeshInstance3D.new()
+	part.name = "Segment%dPart1" % (index + 1)
+	part.mesh = mesh.mesh()
+	part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(part)
+	return [part]
 
 
 ## Schneidet ein Loch aus einem Rechteck; übrig bleiben bis zu vier Rechtecke.

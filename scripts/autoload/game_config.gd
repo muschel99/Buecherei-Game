@@ -679,6 +679,29 @@ var chibi_greet_cooldown: float = 30.0
 var chibi_nod_angle: float = 9.0
 var chibi_nod_time: float = 0.8
 var chibi_greet_smile_time: float = 2.5
+## Beim Grüßen winkt jemand mit dieser Wahrscheinlichkeit (sonst Lächeln und Nicken, seit Etappe 6c).
+var chibi_wave_chance: float = 0.35
+
+## Kleine Pausen unterwegs (seit Etappe 6c): Wahrscheinlichkeit je Weg, kurz stehen zu bleiben und sich
+## umzuschauen, zu strecken oder auf die Uhr zu schauen; Dauer der Pause (Sekunden).
+var passerby_pause_chance: float = 0.3
+var passerby_pause_time: Vector2 = Vector2(2.6, 4.0)
+## Plaudern: Kommen sich zwei auf dem Gehweg entgegen, bleiben sie mit dieser Wahrscheinlichkeit stehen
+## und plaudern (Sprechblasen mit Symbolen, Gemurmel). Abstand zum Anhalten, Dauer, Pause bis zum
+## nächsten Plausch derselben Figur.
+var passerby_chat_chance: float = 0.35
+var passerby_chat_distance: float = 1.7
+var passerby_chat_time: Vector2 = Vector2(7.0, 13.0)
+var passerby_chat_cooldown: float = 60.0
+## Sprechblase: wie lange sie zu sehen ist, Größe (m), Höhe über dem Kopf
+var chat_bubble_time: float = 1.8
+var chat_bubble_size: float = 0.32
+var chat_bubble_height: float = 0.32
+## Gemurmel (Silben aus assets/audio/sfx/murmur/): Lautstärke (dB), Hörweite (m), Tonhöhe je Figur
+var murmur_enabled: bool = true
+var murmur_volume_db: float = -14.0
+var murmur_distance: float = 9.0
+var murmur_pitch_range: Vector2 = Vector2(0.85, 1.35)
 
 
 # --- Testtasten (nur zum Ausprobieren) ---

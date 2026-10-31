@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+; Vorhänge und Gardinen (seit Etappe 6c) – Werte gern im Inspektor ändern.
+
+[ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "rod"
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/base_color = Color(0.78, 0.6, 0.3, 1)
+shader_parameter/second_color = Color(0.78, 0.6, 0.3, 1)
+shader_parameter/grain = 6
+shader_parameter/vary = 0.05
+shader_parameter/blot_scale = 4.0
+shader_parameter/bump_strength = 0.25
+shader_parameter/rough = 0.92
+shader_parameter/metal = 0.6

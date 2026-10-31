@@ -10,6 +10,7 @@ script = ExtResource("1_data")
 id = "overflowing"
 display_name = "Überquellend"
 category = "fullness"
+unlocked = false
 order = 20
 price = 0
 swatch = Color(0.650, 0.600, 0.400, 1)

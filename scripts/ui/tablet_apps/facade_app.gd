@@ -18,14 +18,16 @@ extends TabletApp
 ## Die Reiter: Kennung, Name, Symbol (CatalogIcons) und die Reihen darauf ([Schlüssel, Überschrift];
 ## Schlüssel = Kategorie von FacadeDesign oder "slot", "slot_inside", "counter").
 const PAGES := [
+	{"id": "wall", "name": "Mauer", "icon": "fac_wall", "rows": [["wall", "Mauerwerk"], ["quoins", "Ecksteine"]]},
 	{"id": "ground", "name": "Erdgeschoss", "icon": "fac_ground",
-		"rows": [["ground", "Verkleidung"], ["ground_color", "Anstrich"], ["door", "Tür"], ["door_color", "Türfarbe"]]},
-	{"id": "upper", "name": "Obergeschoss", "icon": "fac_upper",
-		"rows": [["upper", "Wand"], ["window", "Fenster"], ["frame_color", "Rahmen"]]},
-	{"id": "awning", "name": "Markise", "icon": "fac_awning", "rows": [["awning", "Form"], ["fabric", "Stoff"]]},
+		"rows": [["ground", "Verkleidung"], ["ground_color", "Anstrich"], ["window_ground", "Fenster"], ["fascia", "Schild-Balken"]]},
+	{"id": "upper", "name": "Obergeschoss", "icon": "fac_upper", "rows": [["window", "Fenster"], ["frame_color", "Rahmen"]]},
+	{"id": "door", "name": "Tür", "icon": "fac_door",
+		"rows": [["door", "Tür"], ["door_lights", "Fenster an der Tür"], ["door_color", "Türfarbe"]]},
 	{"id": "plants", "name": "Pflanzen", "icon": "fac_plants",
-		"rows": [["box", "Blumenkästen"], ["box_plant", "Blumen"], ["basket", "Ampeln"], ["basket_plant", "Hängepflanzen"],
-			["fullness", "Fülle"]]},
+		"rows": [["box", "Blumenkästen"], ["basket", "Ampeln"], ["plants", "Mischung"], ["fullness", "Fülle"]]},
+	{"id": "outside", "name": "Draußen", "icon": "fac_awning",
+		"rows": [["awning", "Markise"], ["fabric", "Stoff"], ["deco", "Deko vor der Tür"]]},
 	{"id": "letterbox", "name": "Briefkasten", "icon": "fac_slot", "rows": [["slot", "Einwurf außen"], ["slot_inside", "Innen"]]},
 	{"id": "counter", "name": "Theke", "icon": "cat_counter", "rows": [["counter", "Theke"]]},
 ]
@@ -37,7 +39,7 @@ const VIEW_FRONT := Vector3(0.55, 0.45, 1.0)     # Markise, Kasten, Ampel, Pflan
 ## Innen am Briefkasten: die beiden Möglichkeiten
 const INSIDE_CHOICES := [["match", "Passend zum Einwurf"], ["neutral", "Neutrale Klappe"]]
 
-var _page := "ground"
+var _page := "wall"
 var _tabs: HBoxContainer
 var _scroll: ScrollContainer
 var _rows: VBoxContainer
@@ -77,6 +79,9 @@ func _ready() -> void:
 	margin.add_child(_rows)
 	layout.add_child(_make_footer())
 	FacadeDesign.draft_changed.connect(_on_draft_changed)
+	FacadeDesign.unlocks_changed.connect(func() -> void:
+		if tablet and tablet.is_open and visible:
+			request_refresh())
 	Wallet.money_changed.connect(func(_money: int, _change: int) -> void: _update_footer())
 
 
@@ -297,12 +302,19 @@ func _build_row(key: String, title: String) -> void:
 		tile.material_sample = entry.get("material")
 		tile.amount = entry.get("amount", 1.0)
 		tile.variant = entry.get("variant", "")
+		tile.window = entry.get("window")
+		tile.weather = entry.get("weather", 0.0)
+		tile.round_top = entry.get("round", false)
+		tile.quoin_sample = entry.get("quoin")
+		tile.locked = entry.get("locked", false)
 		tile.dots = entry.dots
 		tile.selected = entry.ids.has(chosen)
 		tile.dot_selected = chosen
 		tile.tooltip_text = entry.name if entry.price <= 0 else "%s · %s" % [entry.name, Wallet.format(entry.price)]
+		if tile.locked:
+			tile.tooltip_text = entry.name + " · noch gesperrt"
 		tile.setup(style, TILE_SIZE)
-		if not tile.selected:
+		if not tile.selected and not tile.locked:
 			tile.pressed.connect(_choose.bind(key, entry.id))
 		tile.dot_chosen.connect(func(id: String) -> void: _choose(key, id))
 		if entry.has("picture"):
@@ -359,7 +371,7 @@ func _facade_entries(category: String, chosen: String) -> Array[Dictionary]:
 				entry.id = option.id
 			continue
 		entry = {"id": option.id, "ids": [option.id], "name": option.display_name.get_slice(" · ", 0), "price": option.price,
-			"dots": [[option.id, option.get_swatch(), option.display_name]]}
+			"dots": [[option.id, option.get_swatch(), option.display_name]], "locked": not FacadeDesign.is_unlocked(option)}
 		_describe_picture(entry, option, category)
 		result.append(entry)
 		if not option.group.is_empty():
@@ -370,34 +382,51 @@ func _facade_entries(category: String, chosen: String) -> Array[Dictionary]:
 ## Wie die Kachel einer Option aussieht: Probe, Farbe oder Foto.
 func _describe_picture(entry: Dictionary, option: FacadeOption, category: String) -> void:
 	entry.kind = FacadeTile.Kind.PHOTO
-	if option.material:
+	var draft := FacadeDesign.get_draft()
+	if category in ["window_ground", "window"]:
+		# Fensterform gezeichnet (Umriss, Rahmen, Sprossen, Erker) in der Rahmenfarbe des Entwurfs
+		entry.kind = FacadeTile.Kind.WINDOW
+		entry.window = option
+		var frame := FacadeDesign.get_option("ground_color" if category == "window_ground" else "frame_color", draft)
+		entry.color = frame.color if frame else Color(0.9, 0.86, 0.76)
+		entry.material = _wall_sample(draft)
+	elif category == "door_lights":
+		entry.kind = FacadeTile.Kind.DOOR_LIGHTS
+		entry.window = option
+		var door_color := FacadeDesign.get_option("door_color", draft)
+		entry.color = door_color.color if door_color else Color(0.24, 0.33, 0.27)
+		entry.round = FacadeDesign.get_option("door", draft) != null and FacadeDesign.get_option("door", draft).shape == "arch"
+	elif category == "quoins":
+		entry.kind = FacadeTile.Kind.QUOINS
+		entry.material = _wall_sample(draft)
+		entry.quoin = option.material
+	elif option.material:
 		entry.kind = FacadeTile.Kind.MATERIAL
 		entry.material = option.material
-	elif category == "ground":
+		entry.weather = option.weather
+	elif category == "ground" and option.family == "wood":
 		# Holzfronten gezeichnet, im Anstrich des Entwurfs (Fotos wären dunkel und kaum zu unterscheiden)
 		entry.kind = FacadeTile.Kind.SHOPFRONT
 		entry.variant = option.id
-		var paint := FacadeDesign.get_option("ground_color", FacadeDesign.get_draft())
+		var paint := FacadeDesign.get_option("ground_color", draft)
 		entry.color = paint.color if paint else Color(0.13, 0.25, 0.18)
-	elif category == "window":
-		# Nahaufnahme des Fensters über der Tür
-		var path := option.scene_path
-		var door := StreetLayout.door_center()
-		var out := Vector3(-1.0, 0.0, -1.0).normalized()
-		entry.picture = func(tile: FacadeTile) -> void:
-			_photo_view(tile, "facade/window_" + option.id, func() -> Node3D: return _instance(path),
-				door + out * 2.8 + Vector3(0.0, 4.9, 0.0), door + Vector3(0.0, 4.8, 0.0))
-	elif category in ["ground_color", "frame_color", "door_color"]:
+	elif category == "ground":
+		# „Mauerwerk wie oben“: Probe der gewählten Wand
+		entry.kind = FacadeTile.Kind.MATERIAL
+		entry.material = _wall_sample(draft)
+	elif category in ["ground_color", "frame_color", "door_color", "fascia"]:
 		entry.kind = {"ground_color": FacadeTile.Kind.PAINT, "frame_color": FacadeTile.Kind.FRAME,
-			"door_color": FacadeTile.Kind.DOOR}[category]
+			"door_color": FacadeTile.Kind.DOOR, "fascia": FacadeTile.Kind.FASCIA}[category]
 		entry.color = option.color
+		entry.weather = option.weather
+	elif category == "plants":
+		# Pflanzenmischung: ein paar ihrer Pflanzen nebeneinander fotografiert
+		var picks: Array = Array(option.plants).slice(0, 4)
+		entry.picture = func(tile: FacadeTile) -> void:
+			_photo(tile, "facade_mix/" + option.id, func() -> Node3D: return _plant_row(picks), VIEW_FRONT)
 	elif category == "fullness":
 		entry.kind = FacadeTile.Kind.FULLNESS
 		entry.amount = option.amount
-	elif not option.plants.is_empty():
-		var plant := PLANT_FOLDER + option.plants[0] + ".tscn"
-		entry.picture = func(tile: FacadeTile) -> void:
-			_photo(tile, "facade_plant/" + option.plants[0], func() -> Node3D: return _instance(plant), VIEW_FRONT)
 	elif option.scene_path.is_empty():
 		entry.kind = FacadeTile.Kind.NONE
 	else:
@@ -411,6 +440,25 @@ func _describe_picture(entry: Dictionary, option: FacadeOption, category: String
 			key += "_" + (fabric.id if fabric else "")
 		entry.picture = func(tile: FacadeTile) -> void:
 			_photo(tile, key, func() -> Node3D: return _with_fabric(_instance(path), fabric), view)
+
+
+## Material der Wand im Entwurf (für Proben auf den Kacheln).
+static func _wall_sample(draft: Dictionary) -> Material:
+	var wall := FacadeDesign.get_option("wall", draft)
+	return wall.material if wall else null
+
+
+## Ein paar Pflanzen einer Mischung nebeneinander (für das Foto der Kachel).
+static func _plant_row(ids: Array) -> Node3D:
+	var root := Node3D.new()
+	for i in ids.size():
+		var piece := _instance(PLANT_FOLDER + String(ids[i]) + ".tscn")
+		if piece is PlantPiece:
+			var s := 0.28 / maxf((piece as PlantPiece).nominal_size.x, 0.05)
+			piece.scale = Vector3.ONE * s
+		piece.position = Vector3((i - (ids.size() - 1) / 2.0) * 0.24, 0.0, (i % 2) * 0.06)
+		root.add_child(piece)
+	return root
 
 
 ## Bestellt ein Foto für eine Kachel (zwischengespeichert unter key).

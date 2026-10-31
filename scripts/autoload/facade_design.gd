@@ -11,18 +11,28 @@ extends Node
 ## config, dazu "counter" (CounterData-id) und "slot" (ReturnSlotData-id). Er bleibt erhalten, wenn
 ## das Tablet zugeht, und wird mitgespeichert; „Bauen“ setzt ihn um, „Abbrechen“ verwirft ihn.
 
+##
+## Freischaltungen (seit Etappe 6c): Jede Option ist im Datenblatt frei (unlocked) oder gesperrt. Später
+## schaltet die Geschichte nach und nach mehr frei (unlock, gespeichert); die Testtaste F11 schaltet alles
+## frei (unlock_all, nicht gespeichert). Gesperrtes zeigt die App ausgegraut mit Schloss.
+
 ## Die Fassade hat sich geändert (nach „Bauen“ oder beim Laden).
 signal changed
 ## Der Entwurf hat sich geändert (Vorschau in der App).
 signal draft_changed
+## Etwas wurde freigeschaltet.
+signal unlocks_changed
 
 ## Kategorien in der Reihenfolge der App.
-const CATEGORIES: Array[String] = ["ground", "ground_color", "upper", "window", "frame_color", "awning", "fabric", "door",
-	"door_color", "box", "box_plant", "basket", "basket_plant", "fullness"]
-## So sah die Bücherei bisher aus (grüne Holzfront, braune Ziegel, Bogenfenster …).
-const DEFAULTS := {"ground": "classic", "ground_color": "green", "upper": "brick_brown", "window": "arched", "frame_color": "cream",
-	"awning": "none", "fabric": "stripes_red", "door": "glazed", "door_color": "green", "box": "wood", "box_plant": "mixed",
-	"basket": "bowl", "basket_plant": "trailing_mix", "fullness": "lush", "slot_inside": "match"}
+const CATEGORIES: Array[String] = ["wall", "quoins", "ground", "ground_color", "fascia", "window_ground", "window", "frame_color",
+	"door", "door_lights", "door_color", "awning", "fabric", "box", "basket", "plants", "fullness", "deco"]
+## Zum Spielstart: eine alte, heruntergekommene Backsteinfassade (bröckelnder Putz, verwitterte Farbe).
+const DEFAULTS := {"wall": "old_brick", "quoins": "none", "ground": "wall", "ground_color": "weathered_green",
+	"fascia": "weathered", "window_ground": "sash", "window": "sash", "frame_color": "weathered_cream", "door": "panelled",
+	"door_lights": "transom", "door_color": "weathered_green", "awning": "none", "fabric": "stripes_red", "box": "none",
+	"basket": "none", "plants": "colorful", "fullness": "lush", "deco": "none", "slot_inside": "match"}
+## Spielstände vor Etappe 6c (Version 1) bekommen die neue Startfassade.
+const SAVE_VERSION := 2
 
 ## Name im Spielstand.
 var save_key: String = "facade"
@@ -30,6 +40,10 @@ var save_key: String = "facade"
 var config: Dictionary = DEFAULTS.duplicate()
 ## Der Entwurf der App (leer = keiner, siehe oben).
 var draft: Dictionary = {}
+## Von der Geschichte freigeschaltet: "kategorie/id" -> true (gespeichert).
+var unlocked_ids: Dictionary = {}
+## Testtaste F11: alles frei (nicht gespeichert).
+var unlock_all := false
 
 
 func _ready() -> void:
@@ -47,6 +61,29 @@ func get_option(category: String, from: Dictionary = {}) -> FacadeOption:
 		var all := Catalog.get_facade_options(category)
 		option = all[0] if not all.is_empty() else null
 	return option
+
+
+## Ist diese Option frei wählbar?
+func is_unlocked(option: FacadeOption) -> bool:
+	if option == null:
+		return false
+	return option.unlocked or unlock_all or unlocked_ids.has(option.category + "/" + option.id)
+
+
+## Schaltet eine Option frei (später durch die Geschichte).
+func unlock(category: String, id: String) -> void:
+	var key := category + "/" + id
+	if unlocked_ids.has(key):
+		return
+	unlocked_ids[key] = true
+	unlocks_changed.emit()
+	SaveManager.request_save()
+
+
+## Testtaste F11: alles freischalten.
+func unlock_everything() -> void:
+	unlock_all = true
+	unlocks_changed.emit()
 
 
 ## Eine neue Wahl übernehmen (App „Fassade“: Bauen). Unbekannte Schlüssel bleiben weg.
@@ -158,11 +195,19 @@ func clear_draft() -> void:
 # --- Speichern und Laden ---
 
 func get_save_data() -> Dictionary:
-	return {"config": config.duplicate(), "draft": draft.duplicate()}
+	return {"version": SAVE_VERSION, "config": config.duplicate(), "draft": draft.duplicate(), "unlocked": unlocked_ids.keys()}
 
 
 func load_save_data(data: Dictionary) -> void:
-	config = normalized(data.get("config", {}) if data.get("config") is Dictionary else {})
-	draft = (data.get("draft") as Dictionary).duplicate() if data.get("draft") is Dictionary else {}
+	unlocked_ids.clear()
+	for key in data.get("unlocked", []):
+		unlocked_ids[str(key)] = true
+	if int(data.get("version", 1)) < SAVE_VERSION:
+		# Ältere Spielstände: neue Startfassade (die Kategorien haben sich mit Etappe 6c geändert)
+		config = DEFAULTS.duplicate()
+		draft = {}
+	else:
+		config = normalized(data.get("config", {}) if data.get("config") is Dictionary else {})
+		draft = (data.get("draft") as Dictionary).duplicate() if data.get("draft") is Dictionary else {}
 	changed.emit()
 	draft_changed.emit()

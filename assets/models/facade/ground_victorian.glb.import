@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dt1aomvtotcwk"
+uid="uid://hcthb7on43gt"
 path="res://.godot/imported/ground_victorian.glb-98baafb4ea2458c5aa0c3860793e8922.scn"
 
 [deps]
@@ -45,16 +45,6 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/ocker_gold_matt.tres",
 "use_external/path": "res://assets/materials/storybook/ocker_gold_matt.tres"
-},
-"Schild library door": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/schild_library_door.tres",
-"use_external/path": "res://assets/materials/storybook/schild_library_door.tres"
-},
-"Schild library fascia": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/schild_library_fascia.tres",
-"use_external/path": "res://assets/materials/storybook/schild_library_fascia.tres"
 },
 "facade_paint": {
 "use_external/enabled": true,

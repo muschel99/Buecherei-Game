@@ -29,9 +29,7 @@ const BLEND := 0.3
 ## Animationen, die sich wiederholen.
 const LOOPS: Array[StringName] = [&"walk", &"idle", &"idle_2", &"sit_idle", &"ride"]
 ## Ausdrücke mit offenen Augen: ab und zu zwischendurch, vor dem Schaufenster, beim Grüßen.
-const IDLE_MOODS: Array[Mood] = [Mood.HAPPY, Mood.GRIN, Mood.THINKING, Mood.HAPPY]
-const BROWSE_MOODS: Array[Mood] = [Mood.EXCITED, Mood.HAPPY, Mood.LOVE, Mood.THINKING, Mood.SURPRISED]
-const GREET_MOODS: Array[Mood] = [Mood.HAPPY, Mood.GRIN]
+## Ausdrücke kommen seit Etappe 6c nur über Auslöser (FaceTriggers, trigger_face) – sonst neutral-freundlich.
 ## Physik-Ebenen, die den Blick verdecken (world, sight_blocker).
 const SIGHT_MASK := 1 | 128
 
@@ -50,6 +48,12 @@ var ride_seat := 0.0
 
 var _player: AnimationPlayer
 var _head_modifier: ChibiHeadModifier
+## Gesten zusätzlich zur Animation (seit Etappe 6c): welche, wie lange noch, plaudert gerade
+var _gesture_modifier: ChibiGestureModifier
+var _gesture: ChibiGestureModifier.Gesture = ChibiGestureModifier.Gesture.NONE
+var _gesture_left := 0.0
+var _gesture_time := 0.0
+var _talking := false
 ## Tempo, bei dem die Füße der Geh-Animation genau passen; Höhe der Sitzfläche unter dem Po.
 var _walk_speed := 1.0
 var _sit_seat := 0.23
@@ -66,10 +70,12 @@ var _time := 0.0
 var _head_yaw := 0.0
 var _head_pitch := 0.0
 var _head_bone := -1
-## Mimik: Restzeit des anderen Ausdrucks (0 = Grundausdruck), Wartezeit bis zum nächsten
+## Mimik: Restzeit des anderen Ausdrucks (0 = Grundausdruck); vor dem Schaufenster: wann es wieder
+## „gefällt mir“ gibt
 var _mood_left := 0.0
 var _mood_wait := 10.0
 var _was_browsing := false
+var _browse_count := 0
 ## Augen: jetzige Richtung, Ziel des Hin-und-her-Schauens
 var _eyes := Vector2.ZERO
 var _glance := Vector2.ZERO
@@ -123,6 +129,7 @@ func _rebuild() -> void:
 	super._rebuild()
 	_player = null
 	_head_modifier = null
+	_gesture_modifier = null
 	sit_front = 0.0
 	sit_time = 0.0
 	if _model == null:
@@ -147,6 +154,9 @@ func _rebuild() -> void:
 		_player.play(&"idle")
 	_head_bone = _skeleton.find_bone("Head") if _skeleton else -1
 	if _skeleton:
+		_gesture_modifier = ChibiGestureModifier.new()
+		_gesture_modifier.name = "GestureModifier"
+		_skeleton.add_child(_gesture_modifier)
 		_head_modifier = ChibiHeadModifier.new()
 		_head_modifier.name = "HeadModifier"
 		_skeleton.add_child(_head_modifier)
@@ -306,9 +316,10 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 		target_pitch = _focus_turn.y
 	_head_yaw = lerpf(_head_yaw, target_yaw, minf(1.0, delta * 5.0))
 	_head_pitch = lerpf(_head_pitch, target_pitch, minf(1.0, delta * 3.0))
+	_update_gesture(delta)
 	if _head_modifier:
 		_head_modifier.yaw = _head_yaw
-		_head_modifier.pitch = _head_pitch + _nod_pitch
+		_head_modifier.pitch = _head_pitch + _nod_pitch + _gesture_head_pitch()
 	# Sitzen: Figur auf die Höhe der Sitzfläche heben (die Animation sitzt auf ihrer eigenen Höhe)
 	_model.position.y = (sit_height - _sit_seat) * _seated
 
@@ -337,6 +348,62 @@ func pose_ride(crank: float, delta: float) -> void:
 	_model.position.y = 0.0
 
 
+## Eine Geste zusätzlich zur Animation: &"wave" (winken), &"watch" (auf die Uhr schauen), &"stretch"
+## (sich strecken). duration < 0: die übliche Dauer der Geste.
+func play_gesture(gesture_name: StringName, duration: float = -1.0) -> void:
+	var gestures := {&"wave": [ChibiGestureModifier.Gesture.WAVE, 2.2], &"watch": [ChibiGestureModifier.Gesture.WATCH, 2.6],
+		&"stretch": [ChibiGestureModifier.Gesture.STRETCH, 2.4]}
+	if not gestures.has(gesture_name):
+		return
+	_gesture = gestures[gesture_name][0]
+	_gesture_left = duration if duration > 0.0 else float(gestures[gesture_name][1])
+	_gesture_time = 0.0
+	if gesture_name == &"watch":
+		trigger_face(&"watch")
+	elif gesture_name == &"stretch":
+		trigger_face(&"stretch")
+
+
+## Beim Plaudern erzählen die Hände mit (bis set_talking(false)).
+func set_talking(on: bool) -> void:
+	_talking = on
+
+
+func _update_gesture(delta: float) -> void:
+	if _gesture_modifier == null:
+		return
+	_gesture_time += delta
+	var active := _gesture
+	if _gesture != ChibiGestureModifier.Gesture.NONE:
+		_gesture_left -= delta
+		if _gesture_left <= 0.0:
+			_gesture = ChibiGestureModifier.Gesture.NONE
+	elif _talking:
+		active = ChibiGestureModifier.Gesture.TALK
+	var fading_in := _gesture != ChibiGestureModifier.Gesture.NONE or _talking
+	if fading_in and active != ChibiGestureModifier.Gesture.NONE:
+		if _gesture_modifier.gesture != active:
+			_gesture_modifier.weight = 0.0
+			_gesture_modifier.time = 0.0
+		_gesture_modifier.gesture = active
+		var ramp := 0.45 if _gesture_left > 0.4 or _talking else _gesture_left / 0.4 * 0.45
+		_gesture_modifier.weight = move_toward(_gesture_modifier.weight, 1.0 if ramp >= 0.45 else ramp / 0.45, delta / 0.35)
+	else:
+		_gesture_modifier.weight = move_toward(_gesture_modifier.weight, 0.0, delta / 0.35)
+		if _gesture_modifier.weight <= 0.0:
+			_gesture_modifier.gesture = ChibiGestureModifier.Gesture.NONE
+	_gesture_modifier.time = _gesture_time
+	# beim Plaudern ab und zu kurz ruhige Hände
+	_gesture_modifier.talk_energy = clampf(0.6 + 0.6 * sin(_gesture_time * 0.7), 0.0, 1.0)
+
+
+## Beim Blick auf die Uhr schaut der Kopf nach unten.
+func _gesture_head_pitch() -> float:
+	if _gesture_modifier and _gesture_modifier.gesture == ChibiGestureModifier.Gesture.WATCH:
+		return 24.0 * _gesture_modifier.weight
+	return 0.0
+
+
 func _start_transition(clip: StringName) -> void:
 	if _player.has_animation(clip):
 		_transition = clip
@@ -351,16 +418,21 @@ func _update_face(state: StringName, delta: float, max_yaw: float) -> void:
 	if _mood_left > 0.0:
 		_mood_left -= delta
 		if _mood_left <= 0.0:
-			mood = Mood.NEUTRAL
+			mood = FaceTriggers.BASE
+	# Vor dem Schaufenster: erst Staunen, dann ab und zu „gefällt mir“ (sonst kein Wechsel ohne Anlass)
 	var browsing := state == &"browse"
 	if browsing and not _was_browsing:
-		_mood_wait = randf_range(0.8, 2.0)  # vor dem Schaufenster bald ein Ausdruck
+		_mood_wait = randf_range(0.6, 1.4)
+		_browse_count = 0
 	_was_browsing = browsing
-	_mood_wait -= delta
-	if _mood_wait <= 0.0 and _mood_left <= 0.0:
-		var pool := BROWSE_MOODS if browsing else IDLE_MOODS
-		_show_mood(pool[randi() % pool.size()], randf_range(GameConfig.chibi_mood_time.x, GameConfig.chibi_mood_time.y))
-		_mood_wait = randf_range(2.5, 6.0) if browsing else randf_range(GameConfig.chibi_mood_wait.x, GameConfig.chibi_mood_wait.y)
+	if browsing:
+		_mood_wait -= delta
+		if _mood_wait <= 0.0 and _mood_left <= 0.0:
+			trigger_face(&"window_wonder" if _browse_count == 0 else &"window_like")
+			_browse_count += 1
+			_mood_wait = randf_range(3.0, 6.0)
+	elif state == &"sit" and _mood_left <= 0.0 and randf() < delta * 0.05:
+		trigger_face(&"sit_rest")
 	# Wen anschauen? (nicht jedes Bild)
 	_scan_wait -= delta
 	if _scan_wait <= 0.0:
@@ -402,6 +474,13 @@ func _show_mood(new_mood: Mood, duration: float) -> void:
 	_mood_left = duration
 
 
+## Ein Gesichtsausdruck aus einem Anlass (Auslöser aus FaceTriggers.TRIGGERS, z. B. &"greet").
+func trigger_face(trigger: StringName) -> void:
+	var picked := FaceTriggers.pick(trigger)
+	if not picked.is_empty():
+		_show_mood(picked[0], picked[1])
+
+
 ## Wer ist am interessantesten? Die Spielfigur (Kamera) immer zuerst, sonst die nächste andere Figur,
 ## die vor einem ist (nicht direkt daneben – wer nebeneinander geht, starrt sich nicht an); nur, was
 ## nicht verdeckt ist. Beim ersten Nahekommen vielleicht grüßen.
@@ -438,8 +517,12 @@ func _scan_focus() -> void:
 	_greeted[id] = now
 	var chance := GameConfig.chibi_greet_chance_player if best == camera else GameConfig.chibi_greet_chance_others
 	if randf() < chance:
-		_show_mood(GREET_MOODS[randi() % GREET_MOODS.size()], GameConfig.chibi_greet_smile_time)
+		# Grüßen: Lächeln und Nicken, manchmal auch winken
+		var wave := randf() < GameConfig.chibi_wave_chance
+		trigger_face(&"wave" if wave else &"greet")
 		_nod_t = 0.0
+		if wave:
+			play_gesture(&"wave")
 
 
 ## Abstand zu einem Punkt, wenn er nah genug und etwa vor der Figur ist (höchstens angle Grad

@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
+
+; Vorhang (seit Etappe 6c) – rastet nur an Schaufenstern ein (Platzierung „Fenster“) und passt sich ihrer Form an.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "bordeaux"
+display_name = "Bordeaux"
+colors = Dictionary[String, Color]({"fabric": Color(0.45, 0.2, 0.22, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "forest"
+display_name = "Waldgrün"
+colors = Dictionary[String, Color]({"fabric": Color(0.22, 0.34, 0.26, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "navy"
+display_name = "Nachtblau"
+colors = Dictionary[String, Color]({"fabric": Color(0.2, 0.25, 0.4, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "mustard"
+display_name = "Senf"
+colors = Dictionary[String, Color]({"fabric": Color(0.74, 0.58, 0.26, 1)})
+
+[resource]
+script = ExtResource("1_data")
+id = "curtain_drapes"
+display_name = "Vorhang"
+description = "Zwei schwere Vorhangbahnen an den Seiten, oben entlang des Fensters gerafft."
+category = 5
+subcategory = "textile"
+price = 90
+style_ids = Array[String]([])
+scene_path = "res://scenes/furniture/curtain_drapes.tscn"
+footprint = Vector2i(22, 3)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 32
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

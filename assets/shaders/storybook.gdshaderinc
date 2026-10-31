@@ -31,6 +31,11 @@ uniform int pattern = 0;
 // Größe eines Musterfelds in m (ein Karo, eine Blume)
 uniform float pattern_size = 0.04;
 uniform vec4 third_color : source_color = vec4(0.95, 0.91, 0.82, 1.0);
+// Verwitterung (seit Etappe 6c, alte Bücherei-Fassade): 0 = neu … 1 = alt. Mauerwerk: Reste von altem
+// Putz in weather_color, abgeplatzte Stellen, Risse, einzelne fehlende Steine, Schmutzstreifen, ein Hauch
+// Moos unten. Anstrich: abblätternde Farbe (darunter weather_color), ausgeblichen. Putz: Risse und Flecken.
+uniform float weather = 0.0;
+uniform vec4 weather_color : source_color = vec4(0.84, 0.78, 0.68, 1.0);
 
 // Die Häuser bekommen von HouseFacade immer diese Werte – hier ohne Wirkung
 instance uniform vec4 wall_color : source_color = vec4(1.0);
@@ -211,6 +216,36 @@ vec3 fabric_pattern(vec3 col, vec3 p, vec3 n, float px) {
 	return col;
 }
 
+// Verwitterung an der Stelle p: x = alter Putz (1 = Putz liegt noch drauf), y = Riss (1 = mitten im Riss),
+// z = fehlender Stein bzw. abgeblätterte Farbe (1 = weg), w = Schmutz (0 … 1)
+vec4 weathering(vec3 p, vec2 brick_id, float px) {
+	if (weather <= 0.0) {
+		return vec4(0.0);
+	}
+	vec3 q = vec3(p.x - p.z, p.y, p.x + p.z);
+	float fade = detail_fade(px, 30.0);
+	// Putzreste: große, ausgefranste Flächen, an den Rändern kleine abgeplatzte Stücke
+	float patch = fbm(q * vec3(0.55, 0.45, 0.55) + vec3(3.1, 7.7, 1.3), 4);
+	float edge = fbm(q * 7.0 + vec3(1.9), 2) * 0.1;
+	float plaster = smoothstep(0.575, 0.59, patch + edge + 0.02 * weather) * weather;
+	// Risse: schmale, verzweigte Linien
+	float rn = fbm(q * vec3(1.6, 1.1, 1.6) + vec3(8.3, 2.2, 5.1), 4);
+	float crack = (1.0 - smoothstep(0.0, 0.006 + px * 0.5, abs(rn - 0.5))) * smoothstep(0.55, 0.62, fbm(q * 0.8 + vec3(4.4), 2));
+	crack *= weather * fade;
+	// fehlende Steine (Mauerwerk) bzw. abgeblätterte Farbe (Anstrich)
+	float missing = 0.0;
+	if (grain == 3 || grain == 8) {
+		missing = step(hash(vec3(brick_id, 13.0)), 0.022 * weather) * (1.0 - plaster);
+	} else if (grain == 7) {
+		float flake = fbm(q * vec3(7.0, 4.5, 7.0) + vec3(2.7), 3) + fbm(q * 26.0, 2) * 0.1 * fade;
+		missing = smoothstep(0.66, 0.672, flake + 0.03 * weather) * weather;
+	}
+	// Schmutz: senkrechte Streifen (Regen), unten etwas dunkler
+	float streak = fbm(vec3(q.x * 5.0, q.y * 0.35, q.z * 5.0), 3);
+	float dirt = (smoothstep(0.45, 0.8, streak) * 0.7 + smoothstep(0.6, -0.4, p.y) * 0.5) * weather;
+	return vec4(plaster, crack, missing, dirt);
+}
+
 float surface_height(vec3 p, float px) {
 	if (grain == 3 || grain == 8) {
 		bool ashlar = grain == 8;
@@ -222,7 +257,15 @@ float surface_height(vec3 p, float px) {
 		// runde Steinkanten wie ein Kissen: Rundung zu jeder Fuge für sich, malgenommen – so sind auch die
 		// Ecken rund (mit dem kleinsten Abstand allein liefen Knickkanten diagonal von den Ecken zur Mitte)
 		float w = ashlar ? 0.05 : 0.026;
-		return smoothstep(-0.004, w, edges.x) * smoothstep(-0.004, w, edges.y) * (1.0 - far);
+		float h = smoothstep(-0.004, w, edges.x) * smoothstep(-0.004, w, edges.y) * (1.0 - far);
+		if (weather > 0.0) {
+			vec4 wt = weathering(p, id, px);
+			// Putzreste liegen über den Steinen, fehlende Steine sind tief, Risse kleine Kerben
+			h = mix(h, 1.25 + fbm(p * 30.0, 2) * 0.15, wt.x);
+			h *= 1.0 - wt.z * 0.9;
+			h -= wt.y * 0.5;
+		}
+		return h;
 	} else if (grain == 1) {
 		return fbm(p * 9.0, 3) * 0.7 + fbm(p * 45.0, 2) * 0.3 * detail_fade(px, 45.0);
 	} else if (grain == 0) {
@@ -232,7 +275,12 @@ float surface_height(vec3 p, float px) {
 	} else if (grain == 6) {
 		return fbm(p * 25.0, 2) * detail_fade(px, 25.0);
 	} else if (grain == 7) {
-		return fbm(p * 6.0, 3) * 0.7 + fbm(p * 30.0, 2) * 0.3 * detail_fade(px, 30.0);
+		float h7 = fbm(p * 6.0, 3) * 0.7 + fbm(p * 30.0, 2) * 0.3 * detail_fade(px, 30.0);
+		if (weather > 0.0) {
+			vec4 wt = weathering(p, vec2(0.0), px);
+			h7 -= wt.z * 0.8 + wt.y * 0.4;
+		}
+		return h7;
 	} else if (grain == 9) {
 		// jedes Brett unten dicker (liegt über dem nächsten), die Kante weich gerundet
 		vec2 id;
@@ -288,6 +336,30 @@ void fragment() {
 	}
 	if (!masonry) {
 		col *= COLOR.rgb;
+	}
+	if (weather > 0.0) {
+		vec2 wid = vec2(0.0);
+		vec2 wedges;
+		if (masonry) {
+			masonry_d(p, wid, wedges);
+		}
+		vec4 wt = weathering(p, wid, px);
+		// ausgeblichen und leicht grau
+		col = mix(col, vec3(dot(col, vec3(0.33))) * 1.05, 0.18 * weather);
+		if (masonry) {
+			vec3 plaster_col = weather_color.rgb * (0.9 + 0.14 * fbm(p * 5.0, 2));
+			col = mix(col, plaster_col, wt.x);
+			// Schattenkante, wo der alte Putz abgebrochen ist
+			col *= 1.0 - 0.28 * (1.0 - abs(wt.x * 2.0 - 1.0)) * step(0.02, wt.x);
+			col = mix(col, col * 0.35 + vec3(0.06, 0.05, 0.04), wt.z);
+		} else if (grain == 7) {
+			col = mix(col, weather_color.rgb * (0.85 + 0.2 * fbm(p * 9.0, 2)), wt.z);
+		}
+		col *= 1.0 - wt.y * 0.55;
+		col *= 1.0 - wt.w * 0.22;
+		// ein Hauch Moos ganz unten
+		float moss = smoothstep(0.2, -0.45, p.y) * smoothstep(0.45, 0.7, fbm(p * 3.0 + vec3(9.0), 3)) * weather;
+		col = mix(col, vec3(0.32, 0.38, 0.2), moss * 0.45);
 	}
 	float blot = fbm(p * blot_scale, 3);
 	col *= mix(1.0 - vary, 1.0 + vary, smoothstep(0.3, 0.7, blot));

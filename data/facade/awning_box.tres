@@ -10,6 +10,7 @@ script = ExtResource("1_data")
 id = "box"
 display_name = "Kastenmarkise"
 category = "awning"
+unlocked = false
 order = 30
 price = 120
 scene_path = "res://assets/models/facade/awning_box.glb"

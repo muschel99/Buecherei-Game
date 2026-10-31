@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="FacadeOption" format=3]
+
+; Erzeugt von tools/blender/facade_options.py – im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/facade_option.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+id = "navy"
+display_name = "Nachtblau"
+category = "fascia"
+unlocked = false
+order = 20
+price = 50
+color = Color(0.120, 0.160, 0.300, 1)

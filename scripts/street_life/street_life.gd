@@ -365,6 +365,11 @@ func _clear_of_static(a: Vector2, b: Vector2) -> bool:
 	return true
 
 
+## Feste Hindernisse neu einlesen (z. B. nachdem die Deko vor der Bücherei umgebaut wurde, seit Etappe 6c).
+func refresh_static_obstacles() -> void:
+	_collect_static_obstacles()
+
+
 func _collect_static_obstacles() -> void:
 	_static_obstacles.clear()
 	for node: Node3D in get_tree().get_nodes_in_group(OBSTACLE_GROUP):

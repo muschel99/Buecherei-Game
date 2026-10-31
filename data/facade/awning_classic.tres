@@ -10,6 +10,7 @@ script = ExtResource("1_data")
 id = "classic"
 display_name = "Markise mit Volant"
 category = "awning"
+unlocked = false
 order = 10
 price = 120
 scene_path = "res://assets/models/facade/awning_classic.glb"

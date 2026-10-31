@@ -11,6 +11,7 @@ script = ExtResource("1_data")
 id = "stripes_red"
 display_name = "Streifen rot"
 category = "fabric"
+unlocked = true
 order = 0
 price = 30
 material = ExtResource("2_mat")

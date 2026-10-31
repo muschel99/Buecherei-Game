@@ -1,18 +1,20 @@
-"""Die Auswahl für die Bücherei-Fassade (Etappe 6b): Datenblätter data/facade/<kategorie>_<id>.tres
-(FacadeOption) und die Materialien zum Austauschen (Wandputz/Stein/Holz oben, Naturstein unten,
+"""Die Auswahl für die Bücherei-Fassade (Etappe 6b, neu in 6c): Datenblätter data/facade/<kategorie>_<id>.tres
+(FacadeOption) und die Materialien zum Austauschen (Mauerwerk, Naturstein, Ecksteine, Schild-Balken,
 Markisenstoffe) in assets/materials/facade/. Wird am Ende von build_storybook_facade.py geschrieben
-(auch allein: … build_storybook_facade.py -- --data).
+(auch allein: python3 tools/blender/facade_options.py).
 
-Kategorien (in der App „Fassade“ von oben nach unten):
-    ground / ground_color      Erdgeschoss (Modell) und sein Anstrich
-    upper                      Wand im Obergeschoss (Material; Holz ohne Ecksteine)
-    window / frame_color       Fenster oben (Modell) und Rahmenfarbe
-    awning / fabric            Markise (Modell oder keine) und Stoff
-    door / door_color          Türblatt (Modell) und Türfarbe
-    box / box_plant            Blumenkästen oben und was darin wächst (group = Pflanzenart)
-    basket / basket_plant      Ampeln an der Schräge und was darin hängt
-    fullness                   wie voll die Kästen und Ampeln sind
-Preise in Talern – nur Änderungen kosten etwas (die App zählt sie beim „Bauen“ zusammen).
+Kategorien (in der App „Fassade“):
+    wall / quoins              Mauerwerk der ganzen Fassade (Material) und Ecksteine (mit/ohne)
+    ground / ground_color      Erdgeschoss: Mauerwerk wie oben, Naturstein oder Holzfront; Anstrich unten
+    fascia                     Schild-Balken (Farbe, Holz oder Stein)
+    window_ground / window     Fenster unten und oben (Form, Größe, Sprossen, Erker)
+    frame_color                Rahmenfarbe oben
+    door / door_lights / door_color   Türblatt, Seiten-/Oberlichter, Türfarbe
+    awning / fabric            Markise und Stoff
+    box / basket / plants / fullness  Blumenkästen, Ampeln, Pflanzenmischung, Fülle
+    deco                       Deko draußen vor der Tür
+Jede Option ist frei („unlocked“) oder gesperrt – zum Start frei: die alte Fassade, Backstein beige oder
+rot, mit oder ohne Ecksteine. Preise in Talern – nur Änderungen kosten etwas.
 """
 
 import os
@@ -23,8 +25,9 @@ MAT_DIR = os.path.join(ROOT, "assets", "materials", "facade")
 MARK = "; Erzeugt von tools/blender/facade_options.py"
 GRAIN = {"plaster": 0, "stone": 1, "wood": 2, "brick": 3, "fabric": 4, "leaf": 5, "smooth": 6, "paint": 7, "ashlar": 8, "boards": 9}
 PATTERN = {"check": 1, "floral": 2, "tartan": 3}
+M = "res://assets/models/facade/%s.glb"
 
-# Farben (sRGB wie im Inspektor)
+# Farben (sRGB wie im Inspektor); "weathered_*" = alt und verwittert (abblätternde Farbe)
 PAINTS = [("green", "Bücherei-Grün", (0.13, 0.25, 0.18)), ("navy", "Nachtblau", (0.12, 0.16, 0.3)),
           ("bordeaux", "Bordeaux", (0.38, 0.1, 0.13)), ("cream", "Creme", (0.86, 0.82, 0.72)),
           ("sage", "Salbei", (0.42, 0.52, 0.42)), ("black", "Kohlschwarz", (0.11, 0.11, 0.12))]
@@ -33,22 +36,33 @@ FRAMES = [("cream", "Creme", (0.9, 0.86, 0.76)), ("white", "Weiß", (0.95, 0.94,
 DOORS = [("green", "Bücherei-Grün", (0.13, 0.25, 0.18)), ("navy", "Nachtblau", (0.12, 0.16, 0.3)),
          ("red", "Briefkastenrot", (0.62, 0.16, 0.14)), ("yellow", "Senfgelb", (0.85, 0.66, 0.25)),
          ("sage", "Salbei", (0.42, 0.52, 0.42)), ("plum", "Pflaume", (0.36, 0.2, 0.32))]
+OLD_GREEN = (0.24, 0.33, 0.27)
+OLD_CREAM = (0.8, 0.76, 0.66)
+BRICK_JOINT = (0.57, 0.5, 0.42)
 
-# Materialien zum Austauschen: Name -> Werte (wie storybook.gdshader)
+# Mauerwerk (Material; frei = zum Start wählbar)
 WALLS = [
-    ("brick_brown", "Ziegel braun", dict(color=(0.6, 0.38, 0.27), grain="brick", color2=(0.57, 0.5, 0.42), bump=0.28, rough=0.92, vary=0.07)),
-    ("brick_red", "Ziegel rot", dict(color=(0.66, 0.33, 0.24), grain="brick", color2=(0.62, 0.55, 0.47), bump=0.28, rough=0.92, vary=0.07)),
-    ("render_white", "Weißer Putz", dict(color=(0.93, 0.91, 0.86), grain="plaster", bump=0.3, rough=0.93, vary=0.06, scale=1.4)),
-    ("render_cream", "Creme-Putz", dict(color=(0.92, 0.85, 0.7), grain="plaster", bump=0.3, rough=0.93, vary=0.07, scale=1.4)),
-    ("render_rose", "Rosé-Putz", dict(color=(0.9, 0.75, 0.7), grain="plaster", bump=0.3, rough=0.93, vary=0.07, scale=1.4)),
-    ("roughcast", "Rauputz", dict(color=(0.86, 0.82, 0.74), grain="plaster", bump=0.75, rough=0.96, vary=0.1, scale=3.0)),
-    ("stone", "Naturstein", dict(color=(0.8, 0.74, 0.62), grain="ashlar", color2=(0.6, 0.56, 0.5), bump=0.3, rough=0.92, vary=0.09)),
-    ("timber", "Holzbretter", dict(color=(0.56, 0.41, 0.28), grain="boards", bump=0.6, rough=0.75, vary=0.06)),
-    ("timber_painted", "Bretter gestrichen", dict(color=(0.6, 0.66, 0.66), grain="boards", bump=0.6, rough=0.85, vary=0.04)),
+    ("old_brick", "Alter Backstein", True, 0, dict(color=(0.6, 0.36, 0.26), grain="brick", color2=(0.6, 0.55, 0.48), bump=0.32, rough=0.94,
+                                                   vary=0.09, weather=1.0, weather_color=(0.83, 0.77, 0.67))),
+    ("brick_red", "Backstein rot", True, 120, dict(color=(0.66, 0.33, 0.24), grain="brick", color2=(0.62, 0.55, 0.47), bump=0.28, rough=0.92, vary=0.07)),
+    ("brick_beige", "Backstein beige", True, 120, dict(color=(0.84, 0.72, 0.54), grain="brick", color2=(0.66, 0.62, 0.56), bump=0.28, rough=0.92, vary=0.06)),
+    ("brick_brown", "Backstein braun", False, 120, dict(color=(0.6, 0.38, 0.27), grain="brick", color2=BRICK_JOINT, bump=0.28, rough=0.92, vary=0.07)),
+    ("render_white", "Weißer Putz", False, 140, dict(color=(0.93, 0.91, 0.86), grain="plaster", bump=0.3, rough=0.93, vary=0.06, scale=1.4)),
+    ("render_cream", "Creme-Putz", False, 140, dict(color=(0.92, 0.85, 0.7), grain="plaster", bump=0.3, rough=0.93, vary=0.07, scale=1.4)),
+    ("render_rose", "Rosé-Putz", False, 140, dict(color=(0.9, 0.75, 0.7), grain="plaster", bump=0.3, rough=0.93, vary=0.07, scale=1.4)),
+    ("roughcast", "Rauputz", False, 140, dict(color=(0.86, 0.82, 0.74), grain="plaster", bump=0.75, rough=0.96, vary=0.1, scale=3.0)),
+    ("stone", "Naturstein", False, 200, dict(color=(0.8, 0.74, 0.62), grain="ashlar", color2=(0.6, 0.56, 0.5), bump=0.3, rough=0.92, vary=0.09)),
+    ("timber", "Holzbretter", False, 180, dict(color=(0.56, 0.41, 0.28), grain="boards", bump=0.6, rough=0.75, vary=0.06)),
+    ("timber_painted", "Bretter gestrichen", False, 180, dict(color=(0.6, 0.66, 0.66), grain="boards", bump=0.6, rough=0.85, vary=0.04)),
 ]
 STONES = [("sand", "Naturstein hell", dict(color=(0.84, 0.76, 0.62), grain="ashlar", color2=(0.62, 0.58, 0.52), bump=0.3, rough=0.92, vary=0.09)),
           ("grey", "Naturstein grau", dict(color=(0.64, 0.62, 0.58), grain="ashlar", color2=(0.48, 0.46, 0.44), bump=0.3, rough=0.92, vary=0.09))]
-FABRIC = dict(grain="fabric", rough=0.95, vary=0.04, wind=0.035)
+QUOINS = [("sandstone", "Ecksteine Sandstein", True, dict(color=(0.86, 0.78, 0.63), grain="stone", bump=0.3, rough=0.9, vary=0.1)),
+          ("grey", "Ecksteine grau", False, dict(color=(0.66, 0.65, 0.62), grain="stone", bump=0.3, rough=0.9, vary=0.1))]
+FASCIA_MATS = [("oak", "Eiche natur", dict(color=(0.55, 0.38, 0.22), grain="wood", bump=0.1, rough=0.7, vary=0.08)),
+               ("stone_sand", "Stein hell", dict(color=(0.84, 0.77, 0.64), grain="stone", bump=0.25, rough=0.9, vary=0.08)),
+               ("stone_grey", "Stein grau", dict(color=(0.62, 0.61, 0.58), grain="stone", bump=0.25, rough=0.9, vary=0.08))]
+FABRIC = dict(grain="fabric", rough=0.95, vary=0.04, wind=0.04)
 FABRICS = [
     ("stripes_red", "Streifen rot", dict(FABRIC, color=(0.93, 0.88, 0.78), color2=(0.66, 0.2, 0.18), stripes=0.13)),
     ("stripes_green", "Streifen grün", dict(FABRIC, color=(0.93, 0.88, 0.78), color2=(0.25, 0.42, 0.3), stripes=0.13)),
@@ -60,80 +74,114 @@ FABRICS = [
     ("floral_cream", "Blümchen", dict(FABRIC, color=(0.93, 0.89, 0.8), pattern="floral", pattern_size=0.09, color2=(0.86, 0.45, 0.52),
                                        color3=(0.95, 0.82, 0.35))),
 ]
-# Pflanzen: Art (group) -> [(id, Name, Pflanzen-Szenen, Farbtupfer)]
-BOX_PLANTS = [
-    ("mixed", "Bunte Mischung", [("mixed", "Bunte Mischung", ["box_mixed", "box_geranium_red", "box_lobelia", "box_petunia_white", "box_ivy"],
-                                  (0.9, 0.45, 0.5))]),
-    ("geranium", "Geranien", [("geranium_red", "Rot", ["box_geranium_red"], (0.8, 0.15, 0.15)),
-                              ("geranium_pink", "Rosa", ["box_geranium_pink"], (0.92, 0.5, 0.62)),
-                              ("geranium_coral", "Koralle", ["box_geranium_coral"], (0.95, 0.5, 0.38)),
-                              ("geranium_white", "Weiß", ["box_geranium_white"], (0.96, 0.95, 0.92))]),
-    ("petunia", "Petunien", [("petunia_pink", "Rosa", ["box_petunia"], (0.9, 0.45, 0.65)),
-                             ("petunia_purple", "Lila", ["box_petunia_purple"], (0.55, 0.3, 0.65)),
-                             ("petunia_white", "Weiß", ["box_petunia_white"], (0.96, 0.95, 0.92))]),
-    ("begonia", "Begonien", [("begonia_pink", "Rosa", ["box_begonia_pink"], (0.92, 0.55, 0.62)),
-                             ("begonia_red", "Rot", ["box_begonia_red"], (0.78, 0.18, 0.2))]),
-    ("fuchsia", "Fuchsien", [("fuchsia_pink", "Rosa-Lila", ["box_fuchsia"], (0.85, 0.35, 0.6)),
-                             ("fuchsia_red", "Rot", ["box_fuchsia_red"], (0.75, 0.15, 0.25))]),
-    ("lobelia", "Lobelien", [("lobelia_blue", "Blau", ["box_lobelia"], (0.35, 0.42, 0.8)),
-                             ("lobelia_white", "Weiß", ["box_lobelia_white"], (0.96, 0.95, 0.92))]),
-    ("heather", "Heide", [("heather_pink", "Rosa", ["box_heather"], (0.8, 0.45, 0.65)),
-                          ("heather_white", "Weiß", ["box_heather_white"], (0.95, 0.94, 0.9))]),
-    ("pansy", "Stiefmütterchen", [("pansy", "Bunt", ["box_pansy"], (0.6, 0.4, 0.75))]),
-    ("herbs", "Kräuter", [("herbs", "Kräuter", ["box_herbs"], (0.45, 0.6, 0.35))]),
-    ("ivy", "Efeu", [("ivy", "Efeu", ["box_ivy"], (0.25, 0.42, 0.18))]),
+# Fenster: (id, Name, Form, Breite, Höhe, Unterkante, Stich, Sprossen (Spalten, Reihen), Erker-Tiefe, Preis)
+SHOP_WINDOWS = [
+    ("sash", "Sprossenfenster", "rect", 2.4, 2.3, 0.3, 0.0, (4, 4), 0.0, 0),
+    ("glass", "Ganz aus Glas", "rect", 2.4, 2.3, 0.3, 0.0, (1, 1), 0.0, 240),
+    ("arched", "Bogenfenster", "arch", 2.4, 2.3, 0.3, 0.45, (4, 3), 0.0, 280),
+    ("round", "Rundfenster", "round", 2.0, 2.0, 0.45, 0.0, (2, 2), 0.0, 300),
+    ("bay", "Erkerfenster", "rect", 2.4, 2.25, 0.32, 0.0, (4, 3), 0.42, 420),
 ]
-BASKET_PLANTS = [
-    ("trailing", "Hängepetunien", [("trailing_mix", "Gemischt", ["basket_trailing_pink", "basket_trailing_purple", "basket_trailing_blue"],
-                                    (0.75, 0.45, 0.7)),
-                                   ("trailing_pink", "Rosa", ["basket_trailing_pink"], (0.9, 0.5, 0.65)),
-                                   ("trailing_purple", "Lila", ["basket_trailing_purple"], (0.55, 0.3, 0.65)),
-                                   ("trailing_blue", "Blau", ["basket_trailing_blue"], (0.35, 0.42, 0.8)),
-                                   ("trailing_red", "Rot", ["basket_trailing_red"], (0.78, 0.18, 0.2))]),
-    ("fuchsia", "Fuchsien", [("fuchsia", "Fuchsien", ["basket_fuchsia"], (0.85, 0.35, 0.6))]),
+UPPER_WINDOWS = [
+    ("sash", "Sprossenfenster", "rect", 0.95, 1.45, 4.27, 0.0, (2, 3), 0.0, 0),
+    ("glass", "Ganz aus Glas", "rect", 0.95, 1.45, 4.27, 0.0, (2, 1), 0.0, 150),
+    ("arched", "Bogenfenster", "arch", 0.95, 1.45, 4.27, 0.3, (2, 3), 0.0, 150),
+    ("round", "Rundfenster", "round", 0.95, 0.95, 4.52, 0.0, (2, 2), 0.0, 180),
+    ("bay", "Erker", "rect", 1.35, 1.53, 4.23, 0.0, (3, 2), 0.36, 300),
 ]
+# Türblätter: (id, Name, Form des Blatts, Preis)
+DOOR_LEAVES = [("panelled", "Kassettentür", "rect", 0), ("glazed", "Glastür", "rect", 90), ("cottage", "Landhaustür", "rect", 90),
+               ("arched", "Bogenglas-Tür", "rect", 90), ("round_glazed", "Rundbogentür mit Glas", "arch", 140),
+               ("round_cottage", "Rundbogen-Landhaustür", "arch", 140)]
+# Seiten- und Oberlichter: (id, Name, Breite je Seite, Höhe oben, frei, Preis)
+DOOR_LIGHTS = [("transom", "Oberlicht", 0.0, 0.32, True, 0), ("none", "Ohne Fenster", 0.0, 0.0, False, 40),
+               ("sidelights", "Seitenlichter", 0.14, 0.0, False, 120), ("both", "Seiten- und Oberlicht", 0.14, 0.32, False, 150)]
+# Pflanzenmischungen: (id, Name, Farbtupfer, Kasten-Pflanzen, Korb-Pflanzen, Ranken, frei)
+MIXES = [
+    ("colorful", "Farbenfroh", (0.92, 0.38, 0.42),
+     ["box_geranium_red", "box_petunia_purple", "box_lobelia", "box_begonia_pink", "box_mixed", "potfill_marguerite", "box_geranium_coral"],
+     ["basket_trailing_red", "basket_trailing_purple", "basket_trailing_blue", "basket_fuchsia"], ["rim_flowers", "rim_bacopa", "rim_ivy"], True),
+    ("green", "Ganz grün", (0.3, 0.5, 0.28),
+     ["box_ivy", "box_herbs", "potfill_fern", "potfill_hosta", "potfill_grass", "potfill_hosta_lime", "potfill_rosemary"],
+     ["potfill_fern", "potfill_trailing", "potfill_hosta"], ["rim_ivy", "rim_ivy_long", "rim_grass"], False),
+    ("pastel", "Pastell", (0.92, 0.7, 0.8),
+     ["box_geranium_pink", "box_petunia_white", "box_lobelia_white", "box_heather", "box_begonia_pink", "potfill_hydrangea_pink",
+      "potfill_heather_white"],
+     ["basket_trailing_pink", "basket_fuchsia", "potfill_hydrangea_blue"], ["rim_bacopa", "rim_flowers"], False),
+    ("wild", "Wild und rankend", (0.55, 0.62, 0.35),
+     ["box_ivy", "box_fuchsia", "box_pansy", "potfill_marguerite", "box_herbs", "potfill_grass", "potfill_fuchsia"],
+     ["potfill_trailing", "basket_trailing_blue", "basket_fuchsia"], ["rim_ivy_long", "rim_grass_flowers", "rim_ivy", "rim_grass"], False),
+    ("cottage", "Bauerngarten", (0.62, 0.5, 0.8),
+     ["potfill_lavender", "potfill_marguerite", "box_pansy", "potfill_dahlia", "box_geranium_coral", "potfill_rosemary", "potfill_mums"],
+     ["basket_trailing_pink", "basket_trailing_purple", "basket_fuchsia"], ["rim_flowers", "rim_grass_flowers"], False),
+    ("white", "Weiß und Grün", (0.95, 0.95, 0.9),
+     ["box_geranium_white", "box_petunia_white", "box_lobelia_white", "box_heather_white", "box_ivy", "potfill_rose_white",
+      "potfill_hydrangea_white"],
+     ["potfill_hydrangea_white", "potfill_trailing", "potfill_heather_white"], ["rim_bacopa", "rim_ivy"], False),
+]
+# Deko vor der Tür: (id, Name, Modell, Preis)
+DECO = [("bench", "Bank und Töpfe", "deco_bench", 160), ("steps", "Töpfe auf der Treppe", "deco_steps", 90),
+        ("sign", "Aufsteller und Laterne", "deco_sign", 110), ("planters", "Kübelpflanzen", "deco_planters", 140),
+        ("all", "Alles zusammen", "deco_all", 380)]
 
-# (Kategorie, id, Name, Reihenfolge, Preis, Felder)
+
 def options():
+    """(Kategorie, id, Name, Reihenfolge, Preis, frei, Felder)."""
     out = []
-    m = "res://assets/models/facade/%s.glb"
-    for k, (oid, name, scene, price) in enumerate([("classic", "Klassisch", "ground_classic", 0), ("beadboard", "Nut und Feder", "ground_beadboard", 160),
-                                                   ("victorian", "Viktorianisch", "ground_victorian", 220)]):
-        out.append(("ground", oid, name, k * 10, price, dict(scene=m % scene)))
+    for k, (oid, name, free, price, vals) in enumerate(WALLS):
+        out.append(("wall", oid, name, k * 10, price, free, dict(material="facade_wall_" + oid, swatch=vals["color"],
+                                                                 hide_quoins=oid.startswith("timber"))))
+    out.append(("quoins", "none", "Ohne Ecksteine", 0, 0, True, dict(swatch=(0.85, 0.82, 0.76))))
+    for k, (oid, name, free, vals) in enumerate(QUOINS):
+        out.append(("quoins", oid, name, 10 + k * 10, 80, free, dict(material="facade_quoin_" + oid, swatch=vals["color"])))
+    out.append(("ground", "wall", "Mauerwerk wie oben", 0, 0, True, dict(family="masonry")))
     for k, (oid, name, vals) in enumerate(STONES):
-        out.append(("ground", "stone_" + oid, name, 40 + k * 10, 260, dict(scene=m % "ground_stone", material="facade_ground_stone_" + oid,
-                                                                            swatch=vals["color"])))
+        out.append(("ground", "stone_" + oid, name, 10 + k * 10, 260, False, dict(family="masonry", material="facade_ground_stone_" + oid,
+                                                                                    swatch=vals["color"])))
+    for k, (oid, name, price) in enumerate([("classic", "Holzfront klassisch", 220), ("beadboard", "Nut und Feder", 200),
+                                            ("victorian", "Viktorianisch", 280)]):
+        out.append(("ground", oid, name, 40 + k * 10, price, False, dict(family="wood", scene=M % ("ground_" + oid))))
+    out.append(("ground_color", "weathered_green", "Altes Grün (verwittert)", 0, 0, True, dict(color=OLD_GREEN, weather=0.85)))
     for k, (oid, name, col) in enumerate(PAINTS):
-        out.append(("ground_color", oid, name, k * 10, 40, dict(color=col)))
-    for k, (oid, name, vals) in enumerate(WALLS):
-        out.append(("upper", oid, name, k * 10, 120, dict(material="facade_wall_" + oid, swatch=vals["color"], hide_quoins=oid.startswith("timber"))))
-    for k, (oid, name, price) in enumerate([("arched", "Bogenfenster", 150), ("sash", "Sprossenfenster", 150), ("bay", "Erker", 300)]):
-        out.append(("window", oid, name, k * 10, price, dict(scene=m % ("upper_" + oid))))
+        out.append(("ground_color", oid, name, 10 + k * 10, 40, False, dict(color=col)))
+    out.append(("fascia", "weathered", "Altes Grün (verwittert)", 0, 0, True, dict(color=OLD_GREEN, weather=0.85)))
+    for k, (oid, name, col) in enumerate(PAINTS):
+        out.append(("fascia", oid, name, 10 + k * 10, 50, False, dict(color=col)))
+    for k, (oid, name, vals) in enumerate(FASCIA_MATS):
+        out.append(("fascia", oid, name, 80 + k * 10, 90, False, dict(material="facade_fascia_" + oid, swatch=vals["color"])))
+    for cat, rows in (("window_ground", SHOP_WINDOWS), ("window", UPPER_WINDOWS)):
+        for k, (oid, name, shape, w, h, bottom, rise, grid, bay, price) in enumerate(rows):
+            out.append((cat, oid, name, k * 10, price, k == 0, dict(shape=shape, opening=(w, h), bottom=bottom, rise=rise, muntins=grid,
+                                                                    bay_depth=bay)))
+    out.append(("frame_color", "weathered_cream", "Altes Creme (verwittert)", 0, 0, True, dict(color=OLD_CREAM, weather=0.85)))
     for k, (oid, name, col) in enumerate(FRAMES):
-        out.append(("frame_color", oid, name, k * 10, 30, dict(color=col)))
-    out.append(("awning", "none", "Keine Markise", 0, 0, dict(swatch=(0.9, 0.9, 0.88))))
-    for k, (oid, name) in enumerate([("classic", "Markise mit Volant"), ("dome", "Korbmarkise"), ("box", "Kastenmarkise")]):
-        out.append(("awning", oid, name, 10 + k * 10, 120, dict(scene=m % ("awning_" + oid))))
-    for k, (oid, name, vals) in enumerate(FABRICS):
-        out.append(("fabric", oid, name, k * 10, 30, dict(material="facade_fabric_" + oid, swatch=vals["color2"] if "color2" in vals else vals["color"])))
-    for k, (oid, name) in enumerate([("glazed", "Glastür"), ("panelled", "Kassettentür"), ("arched", "Bogentür"), ("cottage", "Landhaustür")]):
-        out.append(("door", oid, name, k * 10, 90, dict(scene=m % ("door_" + oid))))
+        out.append(("frame_color", oid, name, 10 + k * 10, 30, False, dict(color=col)))
+    for k, (oid, name, shape, price) in enumerate(DOOR_LEAVES):
+        out.append(("door", oid, name, k * 10, price, k == 0, dict(scene=M % ("door_" + oid), shape=shape)))
+    for k, (oid, name, side, transom, free, price) in enumerate(DOOR_LIGHTS):
+        out.append(("door_lights", oid, name, k * 10, price, free, dict(side_width=side, transom=transom)))
+    out.append(("door_color", "weathered_green", "Altes Grün (verwittert)", 0, 0, True, dict(color=OLD_GREEN, weather=0.85)))
     for k, (oid, name, col) in enumerate(DOORS):
-        out.append(("door_color", oid, name, k * 10, 30, dict(color=col)))
+        out.append(("door_color", oid, name, 10 + k * 10, 30, False, dict(color=col)))
+    out.append(("awning", "none", "Keine Markise", 0, 0, True, dict(swatch=(0.9, 0.9, 0.88))))
+    for k, (oid, name) in enumerate([("classic", "Markise mit Volant"), ("dome", "Korbmarkise"), ("box", "Kastenmarkise")]):
+        out.append(("awning", oid, name, 10 + k * 10, 120, False, dict(scene=M % ("awning_" + oid))))
+    for k, (oid, name, vals) in enumerate(FABRICS):
+        out.append(("fabric", oid, name, k * 10, 30, k == 0, dict(material="facade_fabric_" + oid,
+                                                                   swatch=vals["color2"] if "color2" in vals else vals["color"])))
+    out.append(("box", "none", "Keine Blumenkästen", 0, 0, True, dict(swatch=(0.9, 0.9, 0.88))))
     for k, (oid, name) in enumerate([("wood", "Holzkasten"), ("zinc", "Zinkkasten"), ("terracotta", "Terrakotta"), ("wicker", "Weidenkorb")]):
-        out.append(("box", oid, name, k * 10, 40, dict(scene=m % ("box_" + oid))))
+        out.append(("box", oid, name, 10 + k * 10, 40, False, dict(scene=M % ("box_" + oid))))
+    out.append(("basket", "none", "Keine Ampeln", 0, 0, True, dict(swatch=(0.9, 0.9, 0.88))))
     for k, (oid, name) in enumerate([("bowl", "Tonschale"), ("wire", "Draht mit Moos"), ("wicker", "Weidenkorb")]):
-        out.append(("basket", oid, name, k * 10, 30, dict(scene=m % ("basket_" + oid))))
-    for g, (group, gname, entries) in enumerate(BOX_PLANTS):
-        for k, (oid, name, plants, sw) in enumerate(entries):
-            out.append(("box_plant", oid, "%s · %s" % (gname, name) if len(entries) > 1 else gname, g * 10 + k, 20,
-                        dict(group=group, plants=plants, swatch=sw)))
-    for g, (group, gname, entries) in enumerate(BASKET_PLANTS):
-        for k, (oid, name, plants, sw) in enumerate(entries):
-            out.append(("basket_plant", oid, "%s · %s" % (gname, name) if len(entries) > 1 else gname, g * 10 + k, 15,
-                        dict(group=group, plants=plants, swatch=sw)))
+        out.append(("basket", oid, name, 10 + k * 10, 30, False, dict(scene=M % ("basket_" + oid))))
+    for k, (oid, name, sw, box, basket, rims, free) in enumerate(MIXES):
+        out.append(("plants", oid, name, k * 10, 60, free, dict(plants=box, basket_plants=basket, rim_plants=rims, swatch=sw)))
     for k, (oid, name, amount) in enumerate([("sparse", "Dezent", 0.7), ("lush", "Üppig", 1.0), ("overflowing", "Überquellend", 1.35)]):
-        out.append(("fullness", oid, name, k * 10, 0, dict(amount=amount, swatch=(0.45 + 0.1 * k, 0.6, 0.4))))
+        out.append(("fullness", oid, name, k * 10, 0, oid == "lush", dict(amount=amount, swatch=(0.45 + 0.1 * k, 0.6, 0.4))))
+    out.append(("deco", "none", "Keine Deko", 0, 0, True, dict(swatch=(0.9, 0.9, 0.88))))
+    for k, (oid, name, scene, price) in enumerate(DECO):
+        out.append(("deco", oid, name, 10 + k * 10, price, False, dict(scene=M % scene)))
     return out
 
 
@@ -141,6 +189,7 @@ def _material_text(name, v):
     c = v["color"]
     c2 = v.get("color2") or c
     c3 = v.get("color3") or (0.95, 0.91, 0.82)
+    wc = v.get("weather_color") or (0.84, 0.78, 0.68)
     return ('[gd_resource type="ShaderMaterial" load_steps=2 format=3]\n\n%s (Auswahl der Fassade „%s“).\n\n'
             '[ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]\n\n'
             '[resource]\nresource_name = "%s"\nrender_priority = 0\nshader = ExtResource("1_shader")\n'
@@ -150,9 +199,11 @@ def _material_text(name, v):
             'shader_parameter/bump_strength = %.3f\nshader_parameter/rough = %.3f\nshader_parameter/metal = 0.0\n'
             'shader_parameter/emission_color = Color(0, 0, 0, 1)\nshader_parameter/emission_energy = 0.0\nshader_parameter/glow = 0.0\n'
             'shader_parameter/pattern = %d\nshader_parameter/pattern_size = %.3f\nshader_parameter/wind_strength = %.3f\n'
+            'shader_parameter/weather = %.3f\nshader_parameter/weather_color = Color(%.3f, %.3f, %.3f, 1)\n'
             % (MARK, name, name, c[0], c[1], c[2], c2[0], c2[1], c2[2], c3[0], c3[1], c3[2], GRAIN[v.get("grain", "plaster")],
                v.get("stripes", 0.0), v.get("vary", 0.08), v.get("scale", 4.0), v.get("bump", 0.25), v.get("rough", 0.85),
-               PATTERN.get(v.get("pattern"), 0), v.get("pattern_size", 0.04), v.get("wind", 0.0)))
+               PATTERN.get(v.get("pattern"), 0), v.get("pattern_size", 0.04), v.get("wind", 0.0), v.get("weather", 0.0),
+               wc[0], wc[1], wc[2]))
 
 
 def _gd_string(s):
@@ -166,10 +217,17 @@ def _is_generated(path):
         return MARK in f.read(400)
 
 
+def _vec(v):
+    return ", ".join("%.3f" % x for x in v)
+
+
 def write_all():
     os.makedirs(MAT_DIR, exist_ok=True)
     os.makedirs(DATA_DIR, exist_ok=True)
-    mats = [("facade_wall_" + oid, vals) for oid, _, vals in WALLS] + [("facade_ground_stone_" + oid, vals) for oid, _, vals in STONES] + \
+    mats = [("facade_wall_" + oid, vals) for oid, _, _, _, vals in WALLS] + \
+           [("facade_ground_stone_" + oid, vals) for oid, _, vals in STONES] + \
+           [("facade_quoin_" + oid, vals) for oid, _, _, vals in QUOINS] + \
+           [("facade_fascia_" + oid, vals) for oid, _, vals in FASCIA_MATS] + \
            [("facade_fabric_" + oid, vals) for oid, _, vals in FABRICS]
     for name, vals in mats:
         path = os.path.join(MAT_DIR, name + ".tres")
@@ -177,38 +235,60 @@ def write_all():
             with open(path, "w", encoding="utf-8") as f:
                 f.write(_material_text(name, vals))
     count = 0
-    for category, oid, name, order, price, extra in options():
+    wanted = set()
+    for category, oid, name, order, price, free, extra in options():
         path = os.path.join(DATA_DIR, "%s_%s.tres" % (category, oid))
+        wanted.add(os.path.basename(path))
         if not _is_generated(path):
             continue
         ext = ['[ext_resource type="Script" path="res://scripts/data/facade_option.gd" id="1_data"]']
         lines = ['script = ExtResource("1_data")', 'id = "%s"' % oid, "display_name = %s" % _gd_string(name),
-                 'category = "%s"' % category, "order = %d" % order, "price = %d" % price]
+                 'category = "%s"' % category, "unlocked = %s" % ("true" if free else "false"), "order = %d" % order, "price = %d" % price]
         if "scene" in extra:
             lines.append('scene_path = "%s"' % extra["scene"])
         if "material" in extra:
             ext.append('[ext_resource type="Material" path="res://assets/materials/facade/%s.tres" id="2_mat"]' % extra["material"])
             lines.append('material = ExtResource("2_mat")')
         if "color" in extra:
-            c = extra["color"]
-            lines.append("color = Color(%.3f, %.3f, %.3f, 1)" % c)
+            lines.append("color = Color(%s, 1)" % _vec(extra["color"]))
         if "swatch" in extra:
-            c = extra["swatch"]
-            lines.append("swatch = Color(%.3f, %.3f, %.3f, 1)" % c)
+            lines.append("swatch = Color(%s, 1)" % _vec(extra["swatch"]))
         if "group" in extra:
             lines.append('group = "%s"' % extra["group"])
-        if "plants" in extra:
-            lines.append("plants = PackedStringArray(%s)" % ", ".join('"%s"' % p for p in extra["plants"]))
+        for key in ("plants", "basket_plants", "rim_plants"):
+            if key in extra:
+                lines.append("%s = PackedStringArray(%s)" % (key, ", ".join('"%s"' % p for p in extra[key])))
         if "amount" in extra:
             lines.append("amount = %.2f" % extra["amount"])
         if extra.get("hide_quoins"):
             lines.append("hide_quoins = true")
+        if extra.get("weather"):
+            lines.append("weather = %.2f" % extra["weather"])
+        if "shape" in extra:
+            lines.append('shape = "%s"' % extra["shape"])
+        if "opening" in extra:
+            lines.append("opening = Vector2(%s)" % _vec(extra["opening"]))
+            lines.append("bottom = %.3f" % extra["bottom"])
+            lines.append("rise = %.3f" % extra["rise"])
+            lines.append("muntins = Vector2i(%d, %d)" % tuple(extra["muntins"]))
+            lines.append("bay_depth = %.3f" % extra["bay_depth"])
+        if "side_width" in extra:
+            lines.append("side_width = %.3f" % extra["side_width"])
+            lines.append("transom = %.3f" % extra["transom"])
+        if "family" in extra:
+            lines.append('family = "%s"' % extra["family"])
         text = '[gd_resource type="Resource" script_class="FacadeOption" format=3]\n\n%s – im Inspektor ändern: Speichert Godot das\n' \
                '; Datenblatt, überschreibt das Script es nicht mehr.\n\n%s\n\n[resource]\n%s\n' % (MARK, "\n".join(ext), "\n".join(lines))
         with open(path, "w", encoding="utf-8") as f:
             f.write(text)
         count += 1
-    print("Fassade: %d Datenblätter, %d Materialien geschrieben." % (count, len(mats)))
+    # Alte, erzeugte Datenblätter, die es nicht mehr gibt (z. B. Kategorien vor Etappe 6c), aufräumen
+    removed = 0
+    for fn in os.listdir(DATA_DIR):
+        if fn.endswith(".tres") and fn not in wanted and _is_generated(os.path.join(DATA_DIR, fn)):
+            os.remove(os.path.join(DATA_DIR, fn))
+            removed += 1
+    print("Fassade: %d Datenblätter, %d Materialien geschrieben, %d alte entfernt." % (count, len(mats), removed))
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ script = ExtResource("1_data")
 id = "sparse"
 display_name = "Dezent"
 category = "fullness"
+unlocked = false
 order = 0
 price = 0
 swatch = Color(0.450, 0.600, 0.400, 1)

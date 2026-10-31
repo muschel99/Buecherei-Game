@@ -9,7 +9,7 @@ extends Button
 ## Ein Farbtupfer wurde angetippt (id der Wahl).
 signal dot_chosen(id: String)
 
-enum Kind { PHOTO, MATERIAL, PAINT, FRAME, DOOR, NONE, FULLNESS, SHOPFRONT }
+enum Kind { PHOTO, MATERIAL, PAINT, FRAME, DOOR, NONE, FULLNESS, SHOPFRONT, WINDOW, DOOR_LIGHTS, QUOINS, FASCIA }
 
 const DOT_SIZE := 17.0
 const DOT_ROW := 24.0
@@ -27,6 +27,15 @@ var material_sample: Material
 var amount: float = 1.0
 ## Art der Holzfront (SHOPFRONT): "classic", "beadboard", "victorian" – gezeichnet in color
 var variant: String = ""
+## Fenster bzw. Türlichter (WINDOW, DOOR_LIGHTS): die Wahl; round_top = Tür mit Rundbogen
+var window: FacadeOption
+var round_top := false
+## Verwittert (0 … 1): Putzreste, Risse, abblätternde Farbe auf der Probe
+var weather: float = 0.0
+## Ecksteine (QUOINS): Material der Steine (null = ohne)
+var quoin_sample: Material
+## Gesperrt: ausgegraut mit Schloss, nicht wählbar
+var locked := false
 var selected := false
 ## Farbtupfer: je [id, Farbe, Name]; dot_selected = id des gewählten
 var dots: Array = []
@@ -118,6 +127,18 @@ func _draw() -> void:
 			_draw_fullness(rect)
 		Kind.SHOPFRONT:
 			_draw_shopfront(rect)
+		Kind.WINDOW:
+			_draw_window(rect)
+		Kind.DOOR_LIGHTS:
+			_draw_door_lights(rect)
+		Kind.QUOINS:
+			_draw_quoins(rect)
+		Kind.FASCIA:
+			_draw_fascia(rect)
+	if weather > 0.0 and kind in [Kind.PAINT, Kind.FRAME, Kind.DOOR, Kind.FASCIA, Kind.MATERIAL]:
+		_draw_weathering(rect.grow(-4.0))
+	if locked:
+		_draw_lock(rect)
 	if selected:
 		# Häkchen oben rechts
 		var center := Vector2(size.x - 15.0, 15.0)
@@ -239,9 +260,9 @@ func _draw_fullness(rect: Rect2) -> void:
 
 ## Probe eines Materials (Shader-Werte des Bilderbuch-Shaders): Putz, Ziegel, Quader, Bretter, Holz,
 ## Stoff mit Streifen, Karo oder Blümchen.
-func _draw_material(rect: Rect2) -> void:
+func _draw_material(rect: Rect2, sample: Material = null) -> void:
 	var area := rect.grow(-4.0)
-	var shader := material_sample as ShaderMaterial
+	var shader := (sample if sample else material_sample) as ShaderMaterial
 	if shader == null:
 		_rounded(area, color, 10)
 		return
@@ -313,6 +334,159 @@ func _draw_material(rect: Rect2) -> void:
 				var point := area.position + Vector2(rng.randf() * area.size.x, rng.randf() * area.size.y)
 				draw_circle(point, rng.randf_range(1.0, 4.0), base * rng.randf_range(0.9, 1.08))
 	draw_rect(area, Color(0.0, 0.0, 0.0, 0.12), false, 1.0)
+
+
+## Fenster: Umriss mit Rahmen, Glas und Sprossen auf einer Probe der Wand (Erker mit Dach und Seiten).
+func _draw_window(rect: Rect2) -> void:
+	_draw_material(rect, material_sample)
+	if window == null:
+		return
+	var outline := FacadeLayout.window_outline(window)
+	var b := OpeningShape.bounds(outline)
+	var area := rect.grow(-14.0)
+	var scale := minf(area.size.x / b.size.x, area.size.y / b.size.y) * (0.78 if window.bay_depth > 0.0 else 0.92)
+	var to_tile := func(p: Vector2) -> Vector2:
+		return area.get_center() + Vector2(p.x - b.get_center().x, -(p.y - b.get_center().y)) * scale
+	var pts := PackedVector2Array()
+	for p in outline:
+		pts.append(to_tile.call(p))
+	var frame_w := (0.09 if window.category == "window_ground" else 0.07) * scale * 1.4
+	draw_colored_polygon(pts, color)
+	var inner := OpeningShape.offset(outline, -frame_w / scale)
+	var ipts := PackedVector2Array()
+	for p in inner:
+		ipts.append(to_tile.call(p))
+	if ipts.size() >= 3:
+		draw_colored_polygon(ipts, Color(0.62, 0.72, 0.78))
+		draw_colored_polygon(PackedVector2Array([ipts[0], ipts[1], (ipts[1] + ipts[ipts.size() / 2]) / 2.0]), Color(1, 1, 1, 0.18))
+	# Sprossen
+	var ib := OpeningShape.bounds(inner)
+	for i in range(1, window.muntins.x):
+		var x := lerpf(ib.position.x, ib.end.x, float(i) / window.muntins.x)
+		var span := WindowUnit.height_at(inner, x)
+		if span.y > span.x:
+			draw_line(to_tile.call(Vector2(x, span.x)), to_tile.call(Vector2(x, span.y)), color, maxf(1.5, 0.035 * scale))
+	for j in range(1, window.muntins.y):
+		var y := lerpf(ib.position.y, ib.end.y, float(j) / window.muntins.y)
+		var span := OpeningShape.width_at(inner, y)
+		if span.y > span.x:
+			draw_line(to_tile.call(Vector2(span.x, y)), to_tile.call(Vector2(span.y, y)), color, maxf(1.5, 0.035 * scale))
+	if window.bay_depth > 0.0:
+		# Erker: Dach oben, Sockel unten, schräge Seiten angedeutet
+		var tl: Vector2 = to_tile.call(Vector2(b.position.x, b.end.y))
+		var tr: Vector2 = to_tile.call(Vector2(b.end.x, b.end.y))
+		var bl: Vector2 = to_tile.call(Vector2(b.position.x, b.position.y))
+		var br: Vector2 = to_tile.call(Vector2(b.end.x, b.position.y))
+		var lift := 9.0
+		draw_colored_polygon(PackedVector2Array([tl + Vector2(-6, 0), tr + Vector2(6, 0), tr + Vector2(-2, -lift), tl + Vector2(2, -lift)]),
+			Color(0.55, 0.58, 0.6))
+		draw_colored_polygon(PackedVector2Array([bl + Vector2(-4, 0), br + Vector2(4, 0), br + Vector2(4, 8), bl + Vector2(-4, 8)]), color.darkened(0.2))
+		for side in [tl, tr]:
+			var bottom: Vector2 = bl if side == tl else br
+			draw_line(side, bottom, color.darkened(0.25), 3.0)
+	else:
+		# Fensterbank
+		var low := WindowUnit.height_at(outline, 0.0).x
+		var sill_w := b.size.x * (0.55 if window.shape == "round" else 1.08)
+		var c: Vector2 = to_tile.call(Vector2(0.0, low))
+		draw_rect(Rect2(c + Vector2(-sill_w * scale / 2.0, 0.0), Vector2(sill_w * scale, 4.0)), Color(0.85, 0.8, 0.7))
+
+
+## Tür mit Seiten- und Oberlichtern (schematisch): Rahmen, Glas, Türblatt in der Türfarbe.
+func _draw_door_lights(rect: Rect2) -> void:
+	_rounded(rect.grow(-4.0), Color(0.86, 0.8, 0.72), 10)
+	if window == null:
+		return
+	var side := window.side_width
+	var transom := window.transom
+	var width := FacadeLayout.LEAF_W + 2.0 * FacadeLayout.CASING + (2.0 * (side + FacadeLayout.MULLION) if side > 0.0 else 0.0)
+	var outline: PackedVector2Array
+	var leaf := OpeningShape.outline(OpeningShape.Kind.ARCH if round_top else OpeningShape.Kind.RECT, FacadeLayout.LEAF_W,
+		FacadeLayout.LEAF_H, FacadeLayout.LEAF_W / 2.0)
+	if round_top:
+		var spring := FacadeLayout.LEAF_H - FacadeLayout.LEAF_W / 2.0 + FacadeLayout.CASING + transom * 0.6
+		outline = OpeningShape.outline(OpeningShape.Kind.ARCH, width, spring + width / 2.0, width / 2.0)
+	else:
+		outline = OpeningShape.outline(OpeningShape.Kind.RECT, width, FacadeLayout.LEAF_H + FacadeLayout.CASING + (transom + 0.04 if transom > 0.0 else 0.0))
+	var area := rect.grow(-12.0)
+	var b := OpeningShape.bounds(outline)
+	var scale := minf(area.size.x / 1.6, area.size.y / 2.75)
+	var origin := Vector2(area.get_center().x, area.end.y)
+	var conv := func(poly: PackedVector2Array) -> PackedVector2Array:
+		var out := PackedVector2Array()
+		for p in poly:
+			out.append(origin + Vector2(p.x, -p.y) * scale)
+		return out
+	draw_colored_polygon(conv.call(outline), Color(0.9, 0.86, 0.76))
+	var inner := OpeningShape.offset(outline, -FacadeLayout.CASING)
+	if inner.size() >= 3:
+		draw_colored_polygon(conv.call(inner), Color(0.62, 0.72, 0.78))
+	draw_colored_polygon(conv.call(OpeningShape.offset(leaf, 0.035)), Color(0.9, 0.86, 0.76))
+	draw_colored_polygon(conv.call(leaf), color)
+	draw_circle(origin + Vector2(-0.38, -1.0) * scale, 2.5, Color(0.85, 0.68, 0.3))
+	if b.size.x > 0.0:
+		pass
+
+
+## Ecke einer Wand mit (oder ohne) Ecksteinen.
+func _draw_quoins(rect: Rect2) -> void:
+	_draw_material(rect, material_sample)
+	var area := rect.grow(-4.0)
+	if quoin_sample is ShaderMaterial:
+		var stone := _param(quoin_sample as ShaderMaterial, "base_color", Color(0.86, 0.78, 0.63))
+		var h := area.size.y / 6.0
+		for j in 6:
+			var w := area.size.x * (0.38 if j % 2 == 0 else 0.25)
+			for side in [0, 1]:
+				var x := area.position.x if side == 0 else area.end.x - w
+				var r := Rect2(x + (2.0 if side == 0 else -2.0), area.position.y + j * h + 1.5, w, h - 3.0)
+				draw_rect(r, stone * (0.95 + 0.06 * (j % 3)))
+				draw_rect(r, stone.darkened(0.25), false, 1.0)
+	else:
+		draw_line(area.get_center() + Vector2(-14, -14), area.get_center() + Vector2(14, 14), Color(1, 1, 1, 0.7), 3.0, true)
+		draw_line(area.get_center() + Vector2(14, -14), area.get_center() + Vector2(-14, 14), Color(1, 1, 1, 0.7), 3.0, true)
+
+
+## Schild-Balken: ein Stück Wand, darauf der Balken in der Farbe bzw. dem Material, goldene Schrift angedeutet.
+func _draw_fascia(rect: Rect2) -> void:
+	var area := rect.grow(-4.0)
+	_rounded(area, Color(0.78, 0.7, 0.6), 8)
+	var band := Rect2(area.position.x, area.position.y + area.size.y * 0.3, area.size.x, area.size.y * 0.4)
+	draw_rect(band, color)
+	draw_rect(Rect2(band.position, Vector2(band.size.x, 4.0)), color.lightened(0.15))
+	draw_rect(Rect2(band.position + Vector2(0.0, band.size.y - 4.0), Vector2(band.size.x, 4.0)), color.darkened(0.3))
+	var y := band.get_center().y
+	draw_line(Vector2(band.position.x + 18.0, y), Vector2(band.end.x - 18.0, y), Color(0.86, 0.7, 0.36), 3.0, true)
+
+
+## Verwitterung auf einer Probe: Putzreste bzw. abgeblätterte Stellen und feine Risse.
+func _draw_weathering(area: Rect2) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 23
+	var pale := Color(0.84, 0.78, 0.68, 0.85)
+	for i in roundi(9 * weather):
+		var c := area.position + Vector2(rng.randf() * area.size.x, rng.randf() * area.size.y)
+		for k in 4:
+			draw_circle(c + Vector2(rng.randf_range(-6, 6), rng.randf_range(-4, 4)), rng.randf_range(2.0, 5.5), pale)
+	for i in 3:
+		var p := area.position + Vector2(rng.randf() * area.size.x, rng.randf() * area.size.y * 0.5)
+		var pts := PackedVector2Array([p])
+		for k in 4:
+			p += Vector2(rng.randf_range(-7, 7), rng.randf_range(4, 9))
+			pts.append(p)
+		draw_polyline(pts, Color(0.2, 0.16, 0.12, 0.6), 1.2, true)
+
+
+## Gesperrt: blass überdeckt, in der Mitte ein kleines Schloss.
+func _draw_lock(rect: Rect2) -> void:
+	_rounded(rect.grow(-2.0), Color(_style.panel, 0.62), maxi(_style.button_radius, 6))
+	var c := rect.get_center()
+	var col := Color(_style.text, 0.85)
+	draw_arc(c + Vector2(0, -6), 8.0, PI, TAU, 16, col, 3.0, true)
+	draw_line(c + Vector2(-8, -6), c + Vector2(-8, 0), col, 3.0)
+	draw_line(c + Vector2(8, -6), c + Vector2(8, 0), col, 3.0)
+	_rounded(Rect2(c + Vector2(-12, -1), Vector2(24, 18)), col, 4)
+	draw_circle(c + Vector2(0, 7), 2.5, Color(_style.panel, 1.0))
 
 
 static func _value(shader: ShaderMaterial, name: String, fallback: Variant) -> Variant:
