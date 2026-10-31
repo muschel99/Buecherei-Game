@@ -129,6 +129,11 @@ var _face_off := 0.0
 var _yield := 0.0
 ## > 0: feste Hindernisse (Laternen, Kübel) halten gerade nicht auf (Sekunden, siehe WEDGED_TIME).
 var ghost_static := 0.0
+## Plaudern (seit Etappe 6c): laufende Runde (ChatSession) und Pause bis zum nächsten Plausch
+var chat: ChatSession
+var chat_cooldown := 0.0
+var _bubble: ChatBubble
+var _voice: MurmurVoice
 
 
 func _ready() -> void:
@@ -269,6 +274,7 @@ func get_action_type() -> String:
 func step(delta: float) -> void:
 	if not active:
 		return
+	chat_cooldown = maxf(0.0, chat_cooldown - delta)
 	var before := pos
 	match String(_action.get("type", "")):
 		"walk":
@@ -456,8 +462,58 @@ func _step_stand(delta: float) -> void:
 	_phase_time += delta
 	_anim_state = _action.get("anim", &"idle")
 	_anim_speed = 0.0
+	# kleine Pause unterwegs: einmal eine Geste (strecken, auf die Uhr schauen)
+	if _phase == 0:
+		_phase = 1
+		var gesture := String(_action.get("gesture", ""))
+		if not gesture.is_empty() and _model and _model.has_method("play_gesture"):
+			_model.call("play_gesture", StringName(gesture))
 	if _phase_time >= float(_action.get("time", 3.0)):
 		_next_action()
+
+
+## Plaudern beginnen (StreetLife): stehen bleiben, zum anderen schauen, danach weitergehen.
+func start_chat(session: ChatSession, face: Vector2, time: float) -> void:
+	chat = session
+	_actions.push_front(_action)
+	_action = {"type": "stand", "face": face, "anim": &"idle", "time": time + 1.0, "chat": true}
+	_phase = 0
+	_phase_time = 0.0
+
+
+## Wer beim Plaudern dran ist: erzählt (Hände, Gemurmel, Sprechblase) oder hört zu. finished = Runde vorbei.
+func chat_turn(speaking: bool, seconds: float, finished: bool = false) -> void:
+	if _model and _model.has_method("set_talking"):
+		_model.call("set_talking", speaking and not finished)
+	if finished:
+		chat = null
+		chat_cooldown = GameConfig.passerby_chat_cooldown
+		if _voice:
+			_voice.stop_talking()
+		if _action.get("chat", false):
+			_action.time = 0.0
+		return
+	if _model and _model.has_method("trigger_face"):
+		if speaking:
+			_model.call("trigger_face", &"chat_laugh" if randf() < 0.25 else &"chat_talk")
+		else:
+			_model.call("trigger_face", &"chat_laugh" if randf() < 0.3 else &"chat_listen")
+	if not speaking:
+		return
+	if _bubble == null:
+		_bubble = ChatBubble.new()
+		_bubble.name = "ChatBubble"
+		add_child(_bubble)
+		_voice = MurmurVoice.new()
+		_voice.name = "Murmur"
+		add_child(_voice)
+	var head := 1.0
+	if _model and _model.has_method("eye_point"):
+		head = to_local(_model.call("eye_point")).y + 0.12
+	if is_visible_in_tree():
+		_bubble.pop(head)
+	_voice.position = Vector3(0.0, head, 0.0)
+	_voice.talk(seconds * 0.85)
 
 
 ## Hinsetzen (Sitzplatz aus StreetLife): vor den Platz gehen, umdrehen, hinsetzen, sitzen,

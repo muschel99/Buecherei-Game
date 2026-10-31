@@ -684,13 +684,13 @@ var chibi_wave_chance: float = 0.35
 
 ## Kleine Pausen unterwegs (seit Etappe 6c): Wahrscheinlichkeit je Weg, kurz stehen zu bleiben und sich
 ## umzuschauen, zu strecken oder auf die Uhr zu schauen; Dauer der Pause (Sekunden).
-var passerby_pause_chance: float = 0.3
+var passerby_pause_chance: float = 0.45
 var passerby_pause_time: Vector2 = Vector2(2.6, 4.0)
 ## Plaudern: Kommen sich zwei auf dem Gehweg entgegen, bleiben sie mit dieser Wahrscheinlichkeit stehen
 ## und plaudern (Sprechblasen mit Symbolen, Gemurmel). Abstand zum Anhalten, Dauer, Pause bis zum
 ## nächsten Plausch derselben Figur.
-var passerby_chat_chance: float = 0.35
-var passerby_chat_distance: float = 1.7
+var passerby_chat_chance: float = 0.6
+var passerby_chat_distance: float = 2.2
 var passerby_chat_time: Vector2 = Vector2(7.0, 13.0)
 var passerby_chat_cooldown: float = 60.0
 ## Sprechblase: wie lange sie zu sehen ist, Größe (m), Höhe über dem Kopf

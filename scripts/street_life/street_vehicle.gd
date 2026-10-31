@@ -35,6 +35,10 @@ signal finished(vehicle: StreetVehicle)
 ## Bremsen und Anfahren (m/s²)
 const BRAKE := 4.0
 const ACCELERATE := 1.6
+## Seit Etappe 6c: so schnell ändert sich die Beschleunigung (m/s³) – Anfahren beginnt sanft und läuft
+## sanft aus; so schnell folgt die Fahrzeugrichtung der Kurve (je Sekunde)
+const JERK := 2.4
+const TURN_FOLLOW := 6.0
 ## Abstand, mit dem vor einem Hindernis gehalten wird (Meter, zwischen den Rändern).
 const STOP_GAP := 1.6
 ## So weit voraus wird geschaut (Meter).
@@ -66,6 +70,11 @@ var _check := 0.0
 var _model: Node3D
 var _body: AnimatableBody3D
 var _anim_player: AnimationPlayer
+## Beschleunigung jetzt (m/s², für weiches Anfahren und das Nicken der Karosserie) und Drehrate (rad/s)
+var _accel := 0.0
+var _turn_rate := 0.0
+var _yaw := 0.0
+var _yaw_ready := false
 
 
 func _ready() -> void:
@@ -197,12 +206,20 @@ func _wanted_speed() -> float:
 
 
 func _drive(delta: float, wanted: float) -> void:
+	var before := speed
 	if wanted < speed:
+		# Bremsen folgt der (schon weichen) Bremskurve vor dem Hindernis – nie später als nötig
 		speed = maxf(wanted, speed - BRAKE * 1.5 * delta)
+		_accel = minf(_accel, 0.0)
 	else:
-		speed = minf(wanted, speed + ACCELERATE * delta)
-	if wanted < 0.05 and speed < 0.3:
+		# Anfahren: Beschleunigung baut sich langsam auf und läuft vor dem Wunschtempo aus
+		var target := minf(ACCELERATE, (wanted - speed) * 1.4)
+		_accel = move_toward(_accel, target, JERK * delta)
+		speed = minf(wanted, speed + maxf(_accel, 0.0) * delta)
+	if wanted < 0.05 and speed < 0.12:
 		speed = 0.0
+		_accel = 0.0
+	var real_accel := (speed - before) / maxf(delta, 0.0001)
 	_lat = move_toward(_lat, _target_lat, SWERVE_SPEED * delta)
 	var ds := speed * delta
 	if ds > 0.0:
@@ -213,7 +230,9 @@ func _drive(delta: float, wanted: float) -> void:
 			ds *= ds / real
 	_s += direction * ds
 	_place(delta)
-	if _model and _model.has_method("animate"):
+	if _model and _model.has_method("animate_drive"):
+		_model.call("animate_drive", speed, delta, real_accel, _turn_rate)
+	elif _model and _model.has_method("animate"):
 		_model.call("animate", speed, delta)
 	elif _anim_player and move_animation != &"" and _anim_player.has_animation(move_animation):
 		if _anim_player.current_animation != move_animation:
@@ -243,4 +262,14 @@ func _place(delta: float) -> void:
 	if delta > 0.0 and moved.length() > 0.001:
 		forward = moved.normalized()
 	position = Vector3(pos.x, -GameConfig.curb_height, pos.y)
-	rotation.y = atan2(forward.x, forward.y)
+	# Richtung weich nachführen (keine Ruckler in Kurven und beim Ausweichen)
+	var target_yaw := atan2(forward.x, forward.y)
+	if not _yaw_ready or delta <= 0.0:
+		_yaw = target_yaw
+		_yaw_ready = true
+		_turn_rate = 0.0
+	else:
+		var turned := lerp_angle(_yaw, target_yaw, minf(1.0, delta * TURN_FOLLOW))
+		_turn_rate = lerpf(_turn_rate, angle_difference(_yaw, turned) / delta, minf(1.0, delta * 4.0))
+		_yaw = turned
+	rotation.y = _yaw

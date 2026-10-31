@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" path="res://assets/models/furniture/wreath.glb" id="1_model"]
 
 [sub_resource type="BoxShape3D" id="Shape_0"]
-size = Vector3(0.4200, 0.4400, 0.0600)
+size = Vector3(0.4200, 0.5600, 0.0600)
 
 [node name="Wreath" type="Node3D"]
 
@@ -15,7 +15,7 @@ size = Vector3(0.4200, 0.4400, 0.0600)
 [node name="Body" type="StaticBody3D" parent="."]
 
 [node name="Shape0" type="CollisionShape3D" parent="Body"]
-transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.0000, 0.0300)
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.0600, 0.0300)
 shape = SubResource("Shape_0")
 
 

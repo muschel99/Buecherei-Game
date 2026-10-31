@@ -47,7 +47,7 @@ def drain_grate(M, coll):
 
 # Parkbank (Godot-Maße: x entlang, z nach vorn): Länge, Sitzhöhe, Sitztiefe
 BENCH_LENGTH = 1.5
-BENCH_SEAT = 0.45
+BENCH_SEAT = 0.25   # passend zu den Chibi-Figuren (seit Etappe 6c; ihre Sitz-Animation sitzt auf 0,22–0,27 m)
 BENCH_DEPTH = 0.42
 
 
@@ -91,7 +91,7 @@ def street_bench(M, coll):
 def bench_collision(coll):
     """Kollision der Bank im Spiel: ein Kasten für Sitz und Lehne (Name „…-colonly“)."""
     b = Body("Bank-colonly", None, coll, vary=0)
-    b.box((0.0, 0.02, 0.45), (BENCH_LENGTH, BENCH_DEPTH + 0.12, 0.9), step=10, dent=0)
+    b.box((0.0, 0.02, (BENCH_SEAT + 0.45) / 2), (BENCH_LENGTH, BENCH_DEPTH + 0.12, BENCH_SEAT + 0.45), step=10, dent=0)
     obj = b.build()
     obj.display_type = "WIRE"
     obj.hide_render = True
@@ -132,8 +132,8 @@ def main():
     SC.write_import_settings(mapping, path)
     print("Spiel: %s (%d Dreiecke, %d Netze), offene Kanten: %s" % (path, tris, n, bad if bad else "keine"))
     if "--render" in argv:
-        SC.render("parkbank", (1.6, -2.2, 1.3), (0, 0, 0.45), 40, (1000, 750))
-        SC.render("parkbank_seite", (2.2, 0.4, 0.8), (0, 0, 0.45), 40, (1000, 750))
+        SC.render("parkbank", (1.6, -2.2, 1.3), (0, 0, BENCH_SEAT), 40, (1000, 750))
+        SC.render("parkbank_seite", (2.2, 0.4, 0.8), (0, 0, BENCH_SEAT), 40, (1000, 750))
     os.makedirs(os.path.dirname(BLEND), exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=BLEND, compress=True)
 

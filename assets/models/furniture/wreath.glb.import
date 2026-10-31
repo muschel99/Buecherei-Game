@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://2wujv1dwtes1"
+uid="uid://361v8q45pxdd"
 path="res://.godot/imported/wreath.glb-6c9090f9cdd7ca5e890bb6c092f03e65.scn"
 
 [deps]
@@ -60,6 +60,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/wreath/dried_leaf.tres",
 "use_external/path": "res://assets/materials/furniture/wreath/dried_leaf.tres"
+},
+"hook": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/wreath/hook.tres",
+"use_external/path": "res://assets/materials/furniture/wreath/hook.tres"
 },
 "lavender": {
 "use_external/enabled": true,

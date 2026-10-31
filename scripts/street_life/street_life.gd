@@ -163,6 +163,7 @@ func step(delta: float) -> void:
 	_collect_obstacles()
 	for walker in _walkers:
 		walker.step(delta)
+	_update_chats(delta)
 	for vehicle in _vehicles.duplicate():
 		vehicle.step(delta)
 	_spawn_walkers(delta)
@@ -171,6 +172,64 @@ func step(delta: float) -> void:
 	if _lod_timer <= 0.0:
 		_lod_timer = 0.3
 		_update_detail()
+
+
+# --- Plaudern (seit Etappe 6c) ---
+
+var _chats: Array[ChatSession] = []
+var _chat_tried := {}
+var _chat_scan := 0.0
+var _chat_forget := 60.0
+
+
+## Laufende Plaudereien weiterführen; ab und zu prüfen, ob sich zwei auf dem Gehweg begegnen.
+func _update_chats(delta: float) -> void:
+	for session in _chats.duplicate():
+		if not session.update(delta):
+			_chats.erase(session)
+	_chat_forget -= delta
+	if _chat_forget <= 0.0:
+		_chat_forget = 60.0
+		_chat_tried.clear()
+	_chat_scan -= delta
+	if _chat_scan > 0.0:
+		return
+	_chat_scan = 0.4
+	for i in _walkers.size():
+		var w1 := _walkers[i]
+		if not _can_chat(w1):
+			continue
+		for j in range(i + 1, _walkers.size()):
+			var w2 := _walkers[j]
+			if w1.side != w2.side or not _can_chat(w2):
+				continue
+			var d := w2.pos - w1.pos
+			var dist := d.length()
+			if dist > GameConfig.passerby_chat_distance or dist < 0.9:
+				continue
+			# einander entgegen
+			if w1.velocity2.dot(d) <= 0.05 or w2.velocity2.dot(-d) <= 0.05:
+				continue
+			var key := Vector2i(mini(w1.get_instance_id(), w2.get_instance_id()) % 1000003, maxi(w1.get_instance_id(), w2.get_instance_id()) % 1000003)
+			if _chat_tried.has(key):
+				continue
+			_chat_tried[key] = true
+			if _rng.randf() > GameConfig.passerby_chat_chance:
+				continue
+			var time := _rng.randf_range(GameConfig.passerby_chat_time.x, GameConfig.passerby_chat_time.y)
+			var session := ChatSession.new(w1, w2, time)
+			w1.start_chat(session, d / dist, time)
+			w2.start_chat(session, -d / dist, time)
+			_chats.append(session)
+			break
+
+
+func _can_chat(walker: Passerby) -> bool:
+	if not walker.active or walker.chat != null or walker.chat_cooldown > 0.0 or walker.on_road:
+		return false
+	var action := walker.get_action()
+	return String(action.get("type", "")) == "walk" and not action.get("visit", false) and not action.has("alley") \
+		and not action.has("half") and sidewalks.values().has(action.get("route"))
 
 
 # --- Vorrat ---
@@ -871,6 +930,11 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		events.append({"s": _library_s, "type": "library"})
 	if garden_seat:
 		events.append({"s": _garden_s, "type": "garden", "seat": garden_seat})
+	# kleine Pause unterwegs: umschauen, strecken oder auf die Uhr schauen (seit Etappe 6c)
+	if _rng.randf() < GameConfig.passerby_pause_chance:
+		var span := (end_s - s0) * dir
+		if span > 8.0:
+			events.append({"s": s0 + dir * _rng.randf_range(3.0, span - 3.0), "type": "pause"})
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a.s - s0) * dir < (b.s - s0) * dir)
 	# Nie rückwärts: jedes Stück Gehweg endet frühestens dort, wo das vorige aufgehört hat
 	var cursor := s0
@@ -915,6 +979,15 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 				actions.append(sit)
 				var back := StreetRoute.from_points(PackedVector2Array([entry.approach, _free_lane_point(side, cursor, comfort)]), 0.35)
 				actions.append({"type": "walk", "route": back, "to": back.length(), "from_here": true})
+			"pause":
+				if (event.s - cursor) * dir < 1.0:
+					continue
+				cursor = _ahead(event.s, cursor, dir)
+				actions.append({"type": "walk", "route": sidewalks[side], "to": cursor})
+				var gesture: String = ["stretch", "watch", "look", "watch", "stretch"][_rng.randi() % 5]
+				actions.append({"type": "stand", "anim": &"look" if gesture == "look" else &"idle",
+					"gesture": "" if gesture == "look" else gesture,
+					"time": _rng.randf_range(GameConfig.passerby_pause_time.x, GameConfig.passerby_pause_time.y)})
 			"library":
 				if side == 1 and (event.s - cursor) * dir > 0.0:
 					cursor = event.s
