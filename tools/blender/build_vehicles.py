@@ -1,8 +1,9 @@
 """Fahrzeuge im Stil (seit Etappe 5b): englisches Taxi, Mini, Kombi mit Holzrahmen ("Traveller"),
 der Lieferwagen (Bulli mit Nest-&-Nook-Logo) und das Fahrrad – ohne Markenzeichen.
-Seit Etappe 6c ersetzt durch build_storybook_vehicles.py (Bilderbuch-Stil); ohne Angabe baut dieses
-Script nur noch das Rad des alten Platzhalter-Radfahrers (bicycle.glb, bicycle_crank.glb). Autos nur
-auf ausdrücklichen Wunsch (Namen angeben) – das überschreibt die Bilderbuch-Modelle.
+Seit Etappe 6d wieder die Autos des Spiels (Wunsch der Entwicklerin: die Bilderbuch-Autos aus 6c
+gefielen weniger), verbessert: Karosserie mit Innenhaut und Kanten an den Fensteröffnungen (Volumen),
+dunkel getönte Scheiben (vehicle_glass.tres), geschlossene Räder; die Person am Steuer setzt Godot ein
+(VehicleModel.driver_seat). Fahrräder baut build_storybook_vehicles.py.
 
 Aufruf (Terminal, im Projektordner):
     blender -b --factory-startup --python tools/blender/build_vehicles.py              (alle)
@@ -35,7 +36,8 @@ PAINT = Mat("car_paint", "accent")
 PAINT2 = Mat("car_paint", "door")
 CHROME = Mat("chrome")
 RUBBER = Mat("rubber")
-GLASS = Mat("glass", glass=True)
+GLASS = Mat("glass", glass="car")       # dunkel getönt (seit Etappe 6d, vehicle_glass.tres)
+INNER = Mat("plain", color=(0.2, 0.17, 0.15))   # Innenseite der Karosserie
 WELL = Mat("plain", color=(0.05, 0.05, 0.05))
 DARK = Mat("plain", color=(0.09, 0.09, 0.1))
 SEAT = Mat("leather", color=(0.42, 0.28, 0.2))
@@ -178,6 +180,7 @@ class Body:
                     nn = -nn
                 row.append(nn.normalized() if nn.length > 1e-9 else (ring[k] - axis).normalized())
             normals.append(row)
+        cells = {}   # (i, k) -> (Ecken außen, Normalen, Art "glass"/"well"/"body")
         for i, ((ra, la), (rb, lb)) in enumerate(zip(rings, rings[1:])):
             n = len(ra)
             for k in range(n):
@@ -187,6 +190,7 @@ class Body:
                 c = sum(q, Vector()) / 4
                 if (q[0] - q[1]).length < 1e-6 and (q[2] - q[3]).length < 1e-6:
                     continue
+                q0, nq0 = list(q), list(nq)
                 # Radkasten: Flächen, deren Ecken (fast) alle auf den Bogen gehoben wurden, und die
                 # innere Wand – die Außenhaut am Bogen bleibt Lack
                 in_well = (la[k] + la[k1] + lb[k] + lb[k1]) >= 3 or \
@@ -199,13 +203,42 @@ class Body:
                     n_out = -n_out
                 if in_well:
                     b.poly(q, WELL)
+                    cells[(i, k)] = (q0, nq0, "well")
                     continue
                 mat = mat_fn(c, n_out.normalized() if n_out.length > 1e-9 else out.normalized(), self)
                 b.poly(q, mat, normals=nq)
+                cells[(i, k)] = (q0, nq0, "glass" if mat is GLASS else "body")
+        self._inner_shell(b, cells, len(rings[0][0]))
         for z, (ring, _) in ((zs[0], rings[0]), (zs[-1], rings[-1])):
-            b.face(ring, mat_fn(sum(ring, Vector()) / len(ring), Vector((0, 0, 1 if z > 0 else -1)), self),
-                   (0, 0, 1 if z > 0 else -1))
+            out_z = 1 if z > 0 else -1
+            b.face(ring, mat_fn(sum(ring, Vector()) / len(ring), Vector((0, 0, out_z)), self), (0, 0, out_z))
+            # Innenseite der Stirnwand
+            b.face([p - Vector((0, 0, out_z * self.THICK)) for p in ring], INNER, (0, 0, -out_z))
         return zs
+
+    # Wandstärke der Karosserie (seit Etappe 6d: geschlossener Körper mit Innenseite)
+    THICK = 0.03
+
+    def _inner_shell(self, b, cells, n):
+        """Innenhaut hinter allem Lack (von innen durch die Scheiben sichtbar) und Kanten an den
+        Fensteröffnungen, die Außen- und Innenhaut verbinden – die Karosserie hat Volumen."""
+        t = self.THICK
+        for (i, k), (q, nq, kind) in cells.items():
+            if kind != "body":
+                continue
+            inner = [p - nn * t for p, nn in zip(q, nq)]
+            center = sum(q, Vector()) / 4
+            axis = Vector((0.0, (self.f("bottom", center.z) + self.f("top", center.z)) / 2, center.z))
+            b.face(inner, INNER, axis - center)
+            # Kanten zu angrenzenden Scheiben: Rand der Öffnung schließen
+            edges = (((i - 1, k), 0, 1), ((i, (k + 1) % n), 1, 2), ((i + 1, k), 2, 3), ((i, (k - 1) % n), 3, 0))
+            for other, e0, e1 in edges:
+                if cells.get(other, (None, None, ""))[2] != "glass":
+                    continue
+                a, c = q[e0], q[e1]
+                rim = [a, c, c - nq[e1] * t, a - nq[e0] * t]
+                glass_center = sum(cells[other][0], Vector()) / 4
+                b.face(rim, INNER, glass_center - (a + c) / 2)
 
     def side_x(self, z, y):
         """x der Außenhaut rechts (x > 0) in Höhe y am Querschnitt z."""
@@ -355,7 +388,8 @@ def wheel(name, radius, width, rim_mat=CHROME, hub="dish", spokes=0):
             b.box((sx * 0.25 * width - 0.012, radius - 0.004, -0.012), (sx * 0.25 * width + 0.012, radius + 0.004, 0.012), RUBBER)
             b.pop()
     # Felge: Scheibe innen, Ring, Radkappe außen
-    b.cylinder(V(-hwid * 0.6, 0, 0), radius * 0.66, hwid * 1.4, rim_mat, segments=seg, axis="x", caps=(False, False))
+    # Felge als geschlossene Trommel (innen und außen zu – der Reifen ist nicht hohl)
+    b.cylinder(V(-hwid * 0.6, 0, 0), radius * 0.66, hwid * 1.4, rim_mat, segments=seg, axis="x", caps=(True, True))
     b.cylinder(V(hwid * 0.6, 0, 0), radius * 0.62, 0.006, rim_mat, segments=seg, axis="x", caps=(True, True))
     if hub == "dish":
         b.push(S.Matrix.Translation((hwid * 0.6 + 0.004, 0, 0)) @ S.Matrix.Diagonal((0.25, 1.0, 1.0, 1.0)))
@@ -922,7 +956,7 @@ def export(name):
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    names = [a for a in argv if not a.startswith("--")] or ["bicycle"]
+    names = [a for a in argv if not a.startswith("--")] or [n for n in CARS if n != "bicycle"]
     for name in names:
         if "--render" in argv:
             b, spec = CARS[name]()

@@ -35,7 +35,7 @@ const SUBCATEGORIES := {
 		["dining_table", "Esstische"]],
 	Category.COUNTER: [],
 	Category.LIGHTING: [["table_lamp", "Tischlampen"], ["floor_lamp", "Stehlampen"], ["ceiling_lamp", "Deckenlampen"],
-		["wall_lamp", "Wandlampen"], ["candle", "Kerzen und Laternen"], ["switch", "Lichtschalter"]],
+		["wall_lamp", "Wandlampen"], ["candle", "Kerzen und Laternen"], ["fireplace", "Kamine"], ["switch", "Lichtschalter"]],
 	Category.DECO: [["plant", "Pflanzen"], ["vase", "Vasen und Blumen"], ["rug", "Teppiche"], ["picture", "Bilder und Wandschmuck"],
 		["figure", "Figuren und Kuriositäten"], ["textile", "Textilien"], ["tableware", "Geschirr"],
 		["storage", "Aufbewahrung und Organisation"], ["books", "Bücher"], ["bookend", "Buchstützen"]],

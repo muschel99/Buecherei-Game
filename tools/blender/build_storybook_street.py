@@ -40,6 +40,8 @@ RES = "res://assets/models/houses/storybook/%s.glb"
 # Neighbor4 (Ende der zurückgesetzten Reihe am kleinen Platz): das Nachbarhaus steht 2,12 m weiter vorn
 # (Hausfront -4,2 statt -2,08 in Godot z).
 CORNERS = {"LibraryRow/Neighbor4": (1, 2.117)}
+# Häuser, die immer Ecksteine bekommen (Wunsch der Entwicklerin: das Haus neben dem Blumenladen)
+QUOIN_HOUSES = {"Opposite/Opposite1_3"}
 
 LANTERNS = {
     "Opposite/Opposite1_1": -0.9, "Opposite/Opposite1_3": 0.3, "Opposite/Opposite2_1": -1.1, "Opposite/Opposite2_5": -0.05,
@@ -72,6 +74,8 @@ def build_one(key, spec, near, argv):
     SB.BEVEL_SEGMENTS = (2, 1) if near else (1, 1)
     M = SC.materials()
     st = SH.house_style(spec, key)
+    if key in QUOIN_HOUSES:
+        st["quoins"] = True
     if key in LANTERNS:
         st["canopy"] = None  # Häuser mit Straßenlaterne: keine Stoffmarkisen (die Laterne hängt sonst darin)
     SH.house_materials(M, st)

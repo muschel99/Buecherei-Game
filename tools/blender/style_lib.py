@@ -95,8 +95,9 @@ class Mat:
 
     def key(self):
         if self.glass:
-            # glass=True: leicht unscharfes Fensterglas, glass="clear": klares Schaufensterglas
-            return {"clear": "glass_clear", "inner": "glass_inner"}.get(self.glass, "glass")
+            # glass=True: leicht unscharfes Fensterglas, glass="clear": klares Schaufensterglas,
+            # glass="car": dunkel getöntes Autoglas (seit Etappe 6d)
+            return {"clear": "glass_clear", "inner": "glass_inner", "car": "glass_car"}.get(self.glass, "glass")
         if self.sign:
             return "sign_" + self.sign
         glow = "_g%02d" % round(self.glow * 99) if self.glow > 0 else ""
@@ -654,7 +655,7 @@ def write_glb(builder, path):
 
     primitives = []
     materials = []
-    for mat_name in ["house", "plant", "glass", "glass_clear", "glass_inner"] + sorted(k for k in tris if k.startswith("sign_")):
+    for mat_name in ["house", "plant", "glass", "glass_clear", "glass_inner", "glass_car"] + sorted(k for k in tris if k.startswith("sign_")):
         verts = tris.get(mat_name)
         if not verts:
             continue
@@ -772,6 +773,7 @@ def write_import_settings(glb_path, signs=None):
     path = glb_path + ".import"
     mapping = {"glass": "res://assets/materials/house_glass.tres", "glass_clear": "res://assets/materials/house_glass_clear.tres",
                "glass_inner": "res://assets/materials/house_glass_inner.tres",
+               "glass_car": "res://assets/materials/vehicle_glass.tres",
                "house": "res://assets/materials/house_style.tres",
                "plant": "res://assets/materials/plant_style.tres"}
     for name, res_path in (signs or {}).items():

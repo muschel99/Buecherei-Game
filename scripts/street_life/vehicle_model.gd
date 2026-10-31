@@ -1,6 +1,7 @@
 class_name VehicleModel
 extends Node3D
-## Aussehen eines Fahrzeugs (seit Etappe 6c im Bilderbuch-Stil, tools/blender/build_storybook_vehicles.py):
+## Aussehen eines Fahrzeugs (Modelle aus tools/blender/build_vehicles.py, seit Etappe 6d mit Innenhaut,
+## dunklen Scheiben, geschlossenen Rädern und einer Person am Steuer):
 ## die Karosserie liegt als Kind darin (.glb), die Räder setzt dieses Script ein (wheel_scene an
 ## wheel_positions, rechts gespiegelt) und dreht sie beim Fahren; die Vorderräder lenken in Kurven mit.
 ## Die Karosserie federt weich: beim Bremsen nickt sie nach vorn, beim Anfahren nach hinten, in Kurven
@@ -24,6 +25,9 @@ const SECOND_NAMES := ["Autolack zwei"]
 @export var paint_color: Color = Color(0.05, 0.05, 0.055)
 ## Zweite Farbe (Dach, obere Hälfte, Felgen).
 @export var second_color: Color = Color(0.93, 0.9, 0.82)
+## Fahrersitz (seit Etappe 6d): Mitte der Sitzfläche (Höhe = Oberkante des Sitzes); dort sitzt eine
+## zufällige Chibi-Figur am Steuer (hinter den dunklen Scheiben nur schemenhaft). Null = niemand.
+@export var driver_seat: Vector3 = Vector3.ZERO
 
 var _wheels: Array[Node3D] = []
 var _mirrored: Array[bool] = []
@@ -37,6 +41,8 @@ var _roll := 0.0
 var _roll_speed := 0.0
 var _steer := 0.0
 var _wheelbase := 2.4
+var _driver: ChibiPasserbyModel
+var _engine: AudioStreamPlayer3D
 
 
 func _ready() -> void:
@@ -63,10 +69,22 @@ func _ready() -> void:
 			_wheelbase = zs.max() - zs.min()
 		animate(0.0, 0.0)
 	_apply(paint_color)
+	if _engine == null and driver_seat != Vector3.ZERO:
+		# Motor (Audio-System: vehicles/car_engine, fehlt die Datei, bleibt es still)
+		_engine = Audio.loop_at(self, "vehicles/car_engine", GameConfig.car_engine_volume_db, 28.0)
+	if _driver == null and driver_seat != Vector3.ZERO:
+		_driver = ChibiPasserbyModel.new()
+		_driver.name = "Driver"
+		_sway.add_child(_driver)
+		_driver.position = Vector3(driver_seat.x, 0.0, driver_seat.z)
+		_driver.sit_height = driver_seat.y
+		_driver.randomize_look(RandomNumberGenerator.new())
 
 
-func build(_rng: RandomNumberGenerator, color: Color) -> void:
+func build(rng: RandomNumberGenerator, color: Color) -> void:
 	_apply(paint_color if fixed_color else color)
+	if _driver:
+		_driver.randomize_look(rng)
 	_pitch = 0.0
 	_pitch_speed = 0.0
 	_roll = 0.0
@@ -136,6 +154,12 @@ func animate_drive(speed: float, delta: float, accel: float, turn_rate: float) -
 			_wheels[i].basis = turn * Basis(Vector3.UP, PI) * Basis(Vector3.RIGHT, -_spin)
 		else:
 			_wheels[i].basis = turn * Basis(Vector3.RIGHT, _spin)
+	if _driver and delta > 0.0:
+		_driver.animate(&"sit", 0.0, delta)
+	if _engine:
+		if not _engine.playing and is_visible_in_tree():
+			_engine.play()
+		_engine.pitch_scale = 0.85 + clampf(speed / 9.0, 0.0, 1.0) * 0.45
 	if _sway:
 		# Drehpunkt in Höhe der Achsen, damit die Räder auf dem Boden bleiben
 		var pivot := Vector3(0.0, wheel_radius, 0.0)
@@ -143,6 +167,13 @@ func animate_drive(speed: float, delta: float, accel: float, turn_rate: float) -
 		_sway.transform = Transform3D(b, pivot - b * pivot)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and _engine and not is_visible_in_tree():
+		_engine.stop()
+
+
 func set_shadows(enabled: bool) -> void:
 	for part: GeometryInstance3D in find_children("*", "GeometryInstance3D", true, false):
 		part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if enabled else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if _driver:
+		_driver.set_shadows(0)   # hinter den dunklen Scheiben: kein eigener Schatten nötig

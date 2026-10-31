@@ -454,6 +454,38 @@ def book_row(kit, cover_slot, pages_slot, start, length, max_h=0.26, depth=0.17,
              tint=tuple(c * 1.05 for c in palette[0]))
 
 
+def fire(kit, base, width=0.5):
+    """Kaminfeuer (seit Etappe 6d): eiserner Rost, drei Holzscheite, Glut dazwischen und mehrere Flammen
+    (jede ein eigenes Teil mit Material „flame“ – im Spiel bewegt sie die gemeinsame Flamme), dazu warmes
+    Licht. base = Mitte auf dem Boden des Feuerraums (Blender: -y = vorn)."""
+    bx, by, bz = base
+    kit.mat("iron", (0.13, 0.12, 0.11), grain="smooth", rough=0.6, metal=0.4, vary=0.03)
+    kit.mat("logs", (0.36, 0.24, 0.15), grain="wood", rough=0.9, vary=0.1)
+    kit.mat("embers", (1.0, 0.42, 0.14), grain="smooth", rough=0.6, vary=0.15, emit=3.0, emit_color=(1.0, 0.36, 0.1))
+    grate = kit.part("Rost", "iron", bevel=0.0)
+    hw = width / 2
+    for x in (-hw * 0.8, hw * 0.8):
+        grate.tube([(bx + x, by - 0.12, bz), (bx + x, by - 0.12, bz + 0.06), (bx + x, by + 0.1, bz + 0.06), (bx + x, by + 0.1, bz)],
+                   0.008, segs=6, round_ends=True)
+    for k in range(5):
+        y = by - 0.1 + 0.05 * k
+        grate.tube([(bx - hw * 0.82, y, bz + 0.06), (bx + hw * 0.82, y, bz + 0.06)], 0.006, segs=6, round_ends=True)
+    logs = kit.part("Holzscheite", "logs", bevel=0.006)
+    top = bz + 0.066
+    for (x0, y0, x1, y1, r, dz) in ((-hw * 0.75, -0.04, hw * 0.75, 0.02, 0.04, 0.0), (-hw * 0.7, 0.09, hw * 0.7, 0.06, 0.038, 0.0),
+                                    (-hw * 0.5, -0.02, hw * 0.55, 0.06, 0.034, 0.068)):
+        logs.tube([(bx + x0, by + y0, top + r + dz), (bx + x1, by + y1, top + r + dz)], r, segs=10, round_ends=True)
+    glow = kit.part("Glut", "embers", bevel=0.0)
+    for (x, y, rr) in ((-0.08, 0.03, 0.03), (0.06, 0.02, 0.028), (0.0, -0.06, 0.025), (0.13, 0.08, 0.022), (-0.15, -0.05, 0.02)):
+        glow.blob((bx + x, by + y, top + 0.012), rr, subdiv=1, lump=0.25, scale=(1.4, 1.0, 0.5))
+    # Flammen verschieden groß, leicht verteilt (jede mit eigenem Takt im Spiel)
+    for (x, y, size) in ((0.0, 0.02, 0.075), (-0.11, 0.0, 0.058), (0.12, 0.03, 0.062), (-0.05, -0.05, 0.045), (0.07, -0.04, 0.05),
+                         (-0.18, 0.05, 0.04), (0.18, 0.06, 0.038)):
+        kit.flame((bx + x * width / 0.5, by + y, top + 0.075), size=size)
+    kit.light_kind = "flame"
+    kit.light((bx, by - 0.05, bz + 0.3), energy=1.5, rng=6.5, color=(1.0, 0.62, 0.32), shadow=True)
+
+
 def candle(kit, wax_slot, base, height, radius, drips=5, flame=True, segs=14):
     """Kerze mit unregelmäßigem Rand, herablaufenden Wachstropfen, Docht und Flamme."""
     rnd = random.Random(kit.seed + int(height * 1000) + int(base[0] * 997))
@@ -892,6 +924,8 @@ def write_scene(kit, bounds, force=False):
         lines.append('script = ExtResource("%s")' % script("light", "res://scripts/objects/light_source.gd"))
         lines.append("kind = %d" % (1 if kit.light_kind == "flame" else 0))
         lines.append("shadow_importance = %d" % {"none": 0, "important": 1, "optional": 2}[kit.shadow])
+        if kit.spec.get("sound"):
+            lines.append('loop_sound = "%s"' % kit.spec["sound"])
     nodes.append("\n".join(lines) + "\n")
     nodes.append('[node name="Model" parent="." instance=ExtResource("1_model")]\n')
     # Kollision (fehlt eine Angabe: ein Kasten um das ganze Modell)

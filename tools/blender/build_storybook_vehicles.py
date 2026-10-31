@@ -589,9 +589,27 @@ def bike_frame(M, coll):
         pts = [g(0, BIKE_R + math.sin(math.radians(a)) * (BIKE_R + 0.034), wz + math.cos(math.radians(a)) * (BIKE_R + 0.034))
                for a in range(a0, a1 + 1, 10)]
         fr.tube(pts, 0.024, segs=10, round_ends=True)
-    # Kettenschutz
-    fr.tube([g(0.06, cy + 0.04, cz + 0.06), g(0.06, BIKE_R + 0.01, -BIKE_WZ + 0.06)], 0.034, segs=12, round_ends=True)
+    # Kettenschutz (seit Etappe 6d): schmale, flache Platte über dem oberen Kettenstrang, zwischen Kette
+    # (x = 0,04) und Kurbelarm (x ≥ 0,073) – nichts stößt aneinander
+    guard = [(cz + 0.13, cy + 0.03), (cz + 0.06, cy + 0.12), (-BIKE_WZ + 0.02, BIKE_R + 0.075), (-BIKE_WZ - 0.04, BIKE_R + 0.04),
+             (-BIKE_WZ + 0.02, BIKE_R + 0.03), (cz - 0.02, cy + 0.075)]
+    plate = [(-z, y) for z, y in guard]   # Blender: x = -Godot z, y = Godot y
+    fr.slab(plate, 0.006, Matrix(((0, 0, 1, 0.054), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1))), dent=0.0)
+    # Halter: vom Kettenschutz zur Kettenstrebe
+    fr.tube([g(0.056, BIKE_R + 0.045, -0.3), g(0.045, BIKE_R + 0.03, -0.3)], 0.006, segs=6, round_ends=True)
     fr.build(smooth_angle=60)
+    # Kette um Kettenblatt (r 0,1) und Ritzel (r 0,035), Ritzel fest an der Hinterachse
+    chain = Body("Kette", M["iron"], coll, seed=85, vary=0.0)
+    pts = []
+    for k in range(13):                      # vorn um das Kettenblatt (von oben nach unten)
+        a = math.pi / 2 - math.pi * k / 12
+        pts.append(g(0.04, cy + math.sin(a) * 0.103, cz + math.cos(a) * 0.103))
+    for k in range(9):                       # hinten um das Ritzel (von unten nach oben)
+        a = -math.pi / 2 - math.pi * k / 8
+        pts.append(g(0.04, BIKE_R + math.sin(a) * 0.038, -BIKE_WZ + math.cos(a) * 0.038))
+    T.loop_tube(chain, pts, 0.0045, segs=5, axis=(1, 0, 0))
+    chain.lathe([(0.0, -0.004), (0.035, -0.004), (0.035, 0.004), (0.0, 0.004)], tuple(g(0.04, BIKE_R, -BIKE_WZ)), segs=16, turn=(0, 90))
+    chain.build()
     ch = Body("Chrom", chrome, coll, seed=81, vary=0.0)
     stem = g(0, BARS[0], BARS[1])
     ch.tube([head_top, stem], 0.015, segs=8, round_ends=True)
@@ -608,9 +626,10 @@ def bike_frame(M, coll):
         ch.tube([g(-0.075, ry, z), g(0.075, ry, z)], 0.006, segs=6, round_ends=True)
     # Klingel und Lampe
     ch.lathe([(0.0, 0.0), (0.026, 0.004), (0.028, 0.018), (0.0, 0.028)], tuple(g(0.09, BARS[0] + 0.02, BARS[1] - 0.02)), segs=12)
-    lamp = g(0, 0.76, 0.44)
+    # Lampe vorn am Steuerrohr – frei über dem Schutzblech (nicht darin)
+    lamp = g(0, 0.795, 0.455)
     lathe_on(ch, [(0.0, -0.035), (0.036, -0.03), (0.042, 0.02), (0.038, 0.03), (0.0, 0.03)], lamp, g(0, 0, 1) - g(0, 0, 0), segs=14)
-    ch.tube([g(0, 0.73, 0.39), lamp], 0.008, segs=6, round_ends=True)
+    ch.tube([g(0, 0.765, 0.36), lamp - (g(0, 0, 1) - g(0, 0, 0)) * 0.02], 0.008, segs=6, round_ends=True)
     ch.build()
     lens = Body("Lampe", M["head"], coll, seed=82)
     lathe_on(lens, [(0.0, 0.0), (0.033, 0.0), (0.03, 0.012), (0.0, 0.016)], lamp + (g(0, 0, 1) - g(0, 0, 0)) * 0.026, g(0, 0, 1) - g(0, 0, 0),
@@ -645,10 +664,11 @@ def bike_crank(M, coll):
     bei Winkel 0 nach vorn."""
     ch = Body("Kurbel", M["chrome"], coll, seed=87, vary=0.0)
     ch.lathe([(0.0, -0.005), (0.092, -0.005), (0.1, 0.0), (0.092, 0.005), (0.0, 0.005)], (0.04, 0, 0), segs=32, turn=(0, 90))
-    ch.tube([g(-0.08, 0, 0), g(0.08, 0, 0)], 0.013, segs=8, round_ends=True)
+    ch.tube([g(-0.09, 0, 0), g(0.09, 0, 0)], 0.013, segs=8, round_ends=True)
     for side, ang in ((-1, 0.0), (1, math.pi)):
-        end = g(side * 0.075, math.sin(ang) * CRANK_ARM, math.cos(ang) * CRANK_ARM)
-        ch.tube([g(side * 0.075, 0, 0), end], 0.012, segs=8, round_ends=True)
+        # Arme bei x = ±0,085: außen am Kettenschutz (x 0,054–0,060) vorbei, innen im Pedal
+        end = g(side * 0.085, math.sin(ang) * CRANK_ARM, math.cos(ang) * CRANK_ARM)
+        ch.tube([g(side * 0.085, 0, 0), end], 0.012, segs=8, round_ends=True)
     ch.build()
     ped = Body("Pedale", M["rubber"], coll, seed=88, vary=0.0, bevel=0.008)
     for side, ang in ((-1, 0.0), (1, math.pi)):
@@ -815,7 +835,9 @@ def main():
     if SC.edited_by_hand(BLEND, STAMP) and "--force" not in argv:
         print("storybook_vehicles.blend wurde in Blender bearbeitet – nichts überschrieben (--force baut neu).")
         return
-    names = [a for a in argv if not a.startswith("--")] or list(CARS) + ["bicycle"]
+    # Seit Etappe 6d nur noch die Fahrräder (die Autos kommen wieder aus build_vehicles.py; die
+    # Bilderbuch-Autos bleiben hier als Grundlage für die spätere Neumodellierung, Namen angeben)
+    names = [a for a in argv if not a.startswith("--")] or ["bicycle"]
     SC.GAME_MATERIALS.clear()
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.preferences.filepaths.save_version = 0

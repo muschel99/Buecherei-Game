@@ -1,0 +1,8 @@
+Ordner für Geräusche: Tür (Lautstärke „Effekte“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
+Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+
+- door_open  – Ladentür geht auf
+- door_close – Ladentür geht zu
+- shop_bell  – Glocke über der Tür beim Öffnen

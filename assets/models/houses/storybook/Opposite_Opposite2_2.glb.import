@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bx2glc6f6h6qu"
+uid="uid://bh6wxu7j6bewe"
 path="res://.godot/imported/Opposite_Opposite2_2.glb-21ff10bffaa523cd68ca0bca3e9c2ba7.scn"
 
 [deps]
@@ -60,6 +60,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
+},
+"Sammel Pflanze": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_pflanze.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_pflanze.tres"
 },
 "Sammel Putz": {
 "use_external/enabled": true,

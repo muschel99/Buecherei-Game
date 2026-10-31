@@ -1,0 +1,7 @@
+Ordner für Geräusche: Bücher (Lautstärke „Effekte“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
+Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+
+- take  – Buch in die Hand nehmen
+- place – Buch ablegen oder einräumen

@@ -1,19 +1,19 @@
 class_name FacadePreview
 extends SubViewport
-## Polaroid 1 der App „Fassade“ (seit Etappe 6b): die Bücherei von der anderen Straßenseite, mit Blick
-## auf die schräge Eingangswand – live mit dem Entwurf (show_design).
+## Polaroid der App „Fassade“ (seit Etappe 6d ein ruhiges Modell): nur das Bücherei-Haus mit seiner
+## Eingangstreppe vor einem ruhigen, hellen Hintergrund – keine Nachbarhäuser, keine Straßenlaterne, keine
+## Bewegung, die Tür immer geschlossen (so erkennt man die gewählte Tür gut). Gezeichnet wird nur, wenn sich
+## am Entwurf etwas ändert (show_design → ein Bild).
 ##
-## Eine eigene kleine Welt (own_world_3d): Die Vorschau-Fassade (LibraryFacade mit follow_design = false)
-## steht genau an ihrem Platz, dazu Türblatt und Einwurf nach dem Entwurf. Drumherum eine Kopie dessen,
-## was man von dort sieht: Laden (Wände, Fenster, Tür, Einrichtung), Eingangstreppe, Straße, Nachbarhäuser
-## und Pflanzen in der Nähe. Kopiert wird nur die Optik (die Netze teilt sie mit dem Spiel), einmal beim
-## Öffnen der App (capture). Sonne, Himmelslicht und Himmel wie im Spiel. Blickpunkt: GameConfig
-## (facade_preview_*). Die echte Fassade ändert sich dabei nie.
+## Eine eigene kleine Welt (own_world_3d): die Vorschau-Fassade (LibraryFacade mit follow_design = false)
+## an ihrem Platz, Türblatt und Einwurf nach dem Entwurf, dahinter ein warmer Innenraum (die Fenster sind
+## nicht leer), darunter ein heller Boden. Kopiert wird nur die Treppe (Optik, einmal bei prepare).
+## Blickpunkt: GameConfig (facade_preview_*). Die echte Fassade ändert sich dabei nie.
 
-## So weit um die Tür herum wird die Umgebung kopiert (m)
-const SURROUNDINGS_RADIUS := 24.0
-## Instanz-Werte (instance uniform) werden nicht mitkopiert: Die Bilderbuch-Häuser tragen ihre Farben im
-## Modell, und der Speicher für Instanz-Werte ist begrenzt (Kompatibilitäts-Renderer: 4096 Einträge).
+## Hintergrund, Boden und Innenraum (ruhig, neutral, warm)
+const BACKGROUND := Color(0.93, 0.9, 0.84)
+const GROUND_COLOR := Color(0.82, 0.79, 0.73)
+const INSIDE_COLOR := Color(0.38, 0.29, 0.21)
 
 var _stage: Node3D
 var _surroundings: Node3D
@@ -40,49 +40,36 @@ func _init() -> void:
 	add_child(_camera)
 
 
-## Läuft die Vorschau (true) oder steht sie (false, spart Rechenzeit)?
+## true = das aktuelle Bild einmal neu zeichnen (z. B. wenn das Polaroid wieder erscheint).
 func set_active(active: bool) -> void:
-	render_target_update_mode = SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
+	if active:
+		render_target_update_mode = SubViewport.UPDATE_ONCE
 
 
-## Kopiert die Umgebung aus dem Spiel (einmal beim Öffnen der App; ein zweiter Aufruf erneuert sie).
-## room = der Laden (GroundFloorRoom), sein Elternknoten ist die Hauptszene. Die Vorschau muss dafür
-## nicht im Baum hängen: Bühne und Welt liegen im Ursprung, Lagen werden direkt als transform gesetzt.
-func capture(room: Node3D) -> void:
+## Ist schon ein Modell gebaut (das Polaroid zeigt ein Bild)?
+func is_ready() -> bool:
+	return _facade != null
+
+
+## Baut die ruhige Bühne (einmal je Öffnen der App, schnell): Licht und Hintergrund, Boden, Innenraum,
+## eine Kopie der Treppe, Halter für Türblatt (geschlossen) und Einwurf an ihren Plätzen.
+## room = der Laden (GroundFloorRoom), sein Elternknoten ist die Hauptszene.
+func prepare(room: Node3D) -> void:
 	if _surroundings:
 		_stage.remove_child(_surroundings)
 		_surroundings.queue_free()
 	_surroundings = Node3D.new()
 	_surroundings.name = "Surroundings"
 	_stage.add_child(_surroundings)
-	var game := room.get_parent()
-	var door := StreetLayout.door_center()
-	var area := AABB(door - Vector3.ONE * SURROUNDINGS_RADIUS, Vector3.ONE * SURROUNDINGS_RADIUS * 2.0)
-	# Nicht kopieren: die echte Fassade, Türblatt-Modell, Rückgabekasten (Einwurf zeigt die Vorschau selbst)
-	# und alles, was sich bewegt (Passanten, Fahrzeuge)
-	var skip: Array[Node] = []
-	for path in ["Facade", "ReturnBox", "Door/Hinge/LeafModel"]:
-		var node := room.get_node_or_null(path)
-		if node:
-			skip.append(node)
-	var door_node := room.get_node_or_null("Door")
-	if door_node:
-		for part in Door.BUILTIN_LEAF_PARTS:
-			var node := door_node.get_node_or_null("Hinge/" + part)
-			if node:
-				skip.append(node)
-	var street_life := game.get_node_or_null("Outside/StreetLife") if game else null
-	if street_life:
-		skip.append(street_life)
-	var sources: Array[Node] = [room]
-	for path in ["EntranceSteps", "Outside", "UpperFloors"]:
-		var node := game.get_node_or_null(path) if game else null
-		if node:
-			sources.append(node)
 	_place_camera()
-	for source in sources:
-		_copy_visuals(source, area, skip)
-	_copy_lights(game)
+	_setup_lights()
+	var game := room.get_parent()
+	var steps := game.get_node_or_null("EntranceSteps") if game else null
+	if steps:
+		_copy_visuals(steps)
+	_surroundings.add_child(_ground())
+	_surroundings.add_child(_inside(room))
+	var door_node := room.get_node_or_null("Door")
 	if door_node:
 		_leaf_holder_at((door_node.get_node("Hinge") as Node3D).global_transform)
 	var box := room.get_node_or_null("ReturnBox") as Node3D
@@ -93,9 +80,11 @@ func capture(room: Node3D) -> void:
 			_slot_holder.name = "Slot"
 			_stage.add_child(_slot_holder)
 		_slot_holder.transform = slot_point.global_transform
+	render_target_update_mode = SubViewport.UPDATE_ONCE
 
 
-## Zeigt den Entwurf (Wahl wie FacadeDesign.get_draft: Fassade, "slot" …). Gleiche Teile bleiben stehen.
+## Zeigt den Entwurf (Wahl wie FacadeDesign.get_draft: Fassade, "slot" …). Gleiche Teile bleiben stehen;
+## danach wird genau ein Bild gezeichnet.
 func show_design(design: Dictionary) -> void:
 	if design == _shown_design and _facade:
 		return
@@ -108,8 +97,7 @@ func show_design(design: Dictionary) -> void:
 		_stage.add_child(_facade)
 	else:
 		_facade.build(design)
-	_mark_outdoor(_facade)
-	# Türblatt in der Türfarbe
+	# Türblatt in der Türfarbe (immer geschlossen)
 	var door := FacadeDesign.get_option("door", design)
 	var color := FacadeDesign.get_option("door_color", design)
 	var leaf_path := door.scene_path if door else ""
@@ -131,6 +119,8 @@ func show_design(design: Dictionary) -> void:
 			var model := (load(slot_path) as PackedScene).instantiate() as Node3D
 			model.position = Vector3(0.0, 0.0, GameConfig.facade_slot_out)
 			_slot_holder.add_child(model)
+	# nur jetzt ein neues Bild (das Modell steht still)
+	render_target_update_mode = SubViewport.UPDATE_ONCE
 
 
 # --- Aufbau ---
@@ -153,116 +143,99 @@ func _place_camera() -> void:
 	_camera.transform = Transform3D(Basis.looking_at(target - eye, Vector3.UP), eye)
 
 
-## Himmel, Sonne und Himmelslicht wie im Spiel.
-func _copy_lights(game: Node) -> void:
+## Ruhiges Licht: helle, warme Sonne schräg von vorn links, weiches Umgebungslicht, heller Hintergrund.
+func _setup_lights() -> void:
 	for child in _stage.get_children():
 		if child is Light3D or child is WorldEnvironment:
 			_stage.remove_child(child)
 			child.queue_free()
-	var world_environment := game.get_node_or_null("WorldEnvironment") as WorldEnvironment if game else null
-	if world_environment and world_environment.environment:
-		var copy := WorldEnvironment.new()
-		var environment := world_environment.environment.duplicate() as Environment
-		# Nebel mit Lichtstrahlen kostet viel und ist von draußen kaum zu sehen
-		environment.volumetric_fog_enabled = false
-		copy.environment = environment
-		copy.camera_attributes = world_environment.camera_attributes
-		_stage.add_child(copy)
-	for light_name in ["Sun", "SkyFill"]:
-		var light := game.get_node_or_null(light_name) as DirectionalLight3D if game else null
-		if light == null or not light.visible:
-			continue
-		var copy := DirectionalLight3D.new()
-		copy.name = light_name
-		copy.light_color = light.light_color
-		copy.light_energy = light.light_energy
-		copy.light_cull_mask = light.light_cull_mask
-		copy.shadow_enabled = light.shadow_enabled
-		copy.shadow_blur = light.shadow_blur
-		copy.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-		copy.directional_shadow_max_distance = 40.0
-		copy.transform = light.global_transform
-		_stage.add_child(copy)
+	var environment := Environment.new()
+	environment.background_mode = Environment.BG_COLOR
+	environment.background_color = BACKGROUND
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	environment.ambient_light_color = Color(0.86, 0.84, 0.8)
+	environment.ambient_light_energy = 0.75
+	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	var world := WorldEnvironment.new()
+	world.environment = environment
+	_stage.add_child(world)
+	var sun := DirectionalLight3D.new()
+	sun.name = "Sun"
+	sun.light_color = Color(1.0, 0.95, 0.86)
+	sun.light_energy = 1.25
+	sun.shadow_enabled = true
+	sun.shadow_blur = 1.5
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_max_distance = 40.0
+	var door := StreetLayout.door_center()
+	var from := door + Vector3(-6.0, 9.0, -3.0)
+	sun.transform = Transform3D(Basis.looking_at(door - from, Vector3.UP), from)
+	_stage.add_child(sun)
 
 
-## Kopiert die Optik aller sichtbaren Teile unter source, die im Bereich area liegen (ohne skip).
-func _copy_visuals(source: Node, area: AABB, skip: Array[Node]) -> void:
-	if skip.has(source):
-		return
+## Heller Boden unter dem Haus (fängt die Schatten).
+func _ground() -> MeshInstance3D:
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(60.0, 60.0)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = GROUND_COLOR
+	material.roughness = 0.95
+	var mi := MeshInstance3D.new()
+	mi.name = "Ground"
+	mi.mesh = plane
+	mi.material_override = material
+	mi.position = StreetLayout.door_center() * Vector3(1.0, 0.0, 1.0) + Vector3(0.0, StreetLayout.ground_y() - 0.01, 0.0)
+	return mi
+
+
+## Warmer Innenraum hinter den Fenstern: Grundriss des Ladens (30 cm nach innen), so hoch wie das
+## Erdgeschoss – damit die Fenster nicht leer wirken.
+func _inside(room: Node3D) -> MeshInstance3D:
+	var outline := PackedVector2Array()
+	for p: Vector2 in FacadeLayout.OUTLINE:
+		outline.append(Vector2(p.x, -p.y))
+	var inner := OpeningShape.offset(outline, -0.3)
+	# Wände, Boden und Decke zeigen nach innen: durch die Fenster sieht man in einen Raum
+	var mesh := OpeningMesh.new()
+	mesh.loop_sides(inner, 0.0, FacadeLayout.TOP - 0.1, true)
+	mesh.face(inner, 0.02, 1.0)
+	mesh.face(inner, FacadeLayout.TOP - 0.1, -1.0)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = INSIDE_COLOR
+	material.emission_enabled = true
+	material.emission = INSIDE_COLOR * 0.6
+	material.roughness = 1.0
+	var mi := mesh.instance(material, "Inside")
+	# Umriss lag in der Bodenebene (x, -z); lokal z (Dicke) wird zur Höhe
+	mi.transform = room.global_transform * Transform3D(Basis(Vector3.RIGHT, -PI / 2.0), Vector3.ZERO)
+	return mi
+
+
+## Kopiert die Optik aller sichtbaren Teile unter source (Treppe).
+func _copy_visuals(source: Node) -> void:
 	if source is Node3D and not (source as Node3D).visible:
 		return
 	if source is GeometryInstance3D:
 		var instance := source as GeometryInstance3D
-		var bounds := instance.global_transform * instance.get_aabb()
-		if bounds.intersects(area) and _in_view(bounds):
-			var copy := _visual_copy(instance)
-			if copy:
-				copy.transform = instance.global_transform
-				_surroundings.add_child(copy)
+		var copy := _visual_copy(instance)
+		if copy:
+			copy.transform = instance.global_transform
+			_surroundings.add_child(copy)
 	for child in source.get_children():
-		_copy_visuals(child, area, skip)
+		_copy_visuals(child)
 
 
-## Liegt etwas (ungefähr) im Blickfeld der Kamera? Kegel um die Blickrichtung, etwas weiter als das
-## Bild (die Ecken sind breiter als der senkrechte Bildwinkel).
-func _in_view(bounds: AABB) -> bool:
-	var eye := _camera.transform.origin
-	var forward := -_camera.transform.basis.z
-	var to_center := bounds.get_center() - eye
-	var radius := bounds.size.length() / 2.0
-	var distance := to_center.length()
-	if distance <= radius:
-		return true
-	var angle := forward.angle_to(to_center) - asin(clampf(radius / distance, 0.0, 1.0))
-	return angle <= deg_to_rad(_camera.fov * 0.5 * 1.7)
-
-
-## Eine Kopie nur der Optik (oder null für Dinge, die nicht in ein Foto gehören). Bei CSG ein Halter mit
-## dem fertig berechneten Netz darin.
+## Eine Kopie nur der Optik (oder null).
 func _visual_copy(source: GeometryInstance3D) -> Node3D:
-	var copy: GeometryInstance3D = null
-	var result: Node3D = null
-	if source is MeshInstance3D:
-		var mesh_instance := source as MeshInstance3D
-		if mesh_instance.mesh == null or mesh_instance.skin:
-			return null
-		var mesh_copy := MeshInstance3D.new()
-		mesh_copy.mesh = mesh_instance.mesh
-		for i in mesh_instance.get_surface_override_material_count():
-			mesh_copy.set_surface_override_material(i, mesh_instance.get_surface_override_material(i))
-		copy = mesh_copy
-		result = copy
-	elif source is MultiMeshInstance3D:
-		var multi := source as MultiMeshInstance3D
-		if multi.multimesh == null:
-			return null
-		var multi_copy := MultiMeshInstance3D.new()
-		multi_copy.multimesh = multi.multimesh
-		copy = multi_copy
-		result = copy
-	elif source is CSGShape3D and (source as CSGShape3D).is_root_shape():
-		# get_meshes: [Lage relativ zum CSG-Knoten, Netz]
-		var meshes := (source as CSGShape3D).get_meshes()
-		if meshes.size() < 2 or meshes[1] == null:
-			return null
-		var mesh_copy := MeshInstance3D.new()
-		mesh_copy.mesh = meshes[1]
-		mesh_copy.transform = meshes[0]
-		copy = mesh_copy
-		result = Node3D.new()
-		result.add_child(mesh_copy)
-	else:
+	if not source is MeshInstance3D:
 		return null
+	var mesh_instance := source as MeshInstance3D
+	if mesh_instance.mesh == null or mesh_instance.skin:
+		return null
+	var copy := MeshInstance3D.new()
+	copy.mesh = mesh_instance.mesh
+	for i in mesh_instance.get_surface_override_material_count():
+		copy.set_surface_override_material(i, mesh_instance.get_surface_override_material(i))
 	copy.material_override = source.material_override
 	copy.cast_shadow = source.cast_shadow
-	copy.layers = source.layers
-	copy.transparency = source.transparency
-	return result
-
-
-## Wie im Spiel (main.gd): Alles draußen bekommt das Himmelslicht (Render-Ebene OUTDOOR_RENDER_LAYER).
-static func _mark_outdoor(node: Node) -> void:
-	if node is VisualInstance3D:
-		(node as VisualInstance3D).set_layer_mask_value(GameConfig.OUTDOOR_RENDER_LAYER, true)
-	for child in node.get_children():
-		_mark_outdoor(child)
+	return copy

@@ -27,13 +27,16 @@ func _process_modification_with_delta(_delta: float) -> void:
 	var t := time
 	match gesture:
 		Gesture.WAVE:
-			# rechte Hand hoch, Unterarm schwingt hin und her
+			# rechte Hand hoch, Unterarm schwingt hin und her; Handfläche nach vorn (Handrücken nach hinten)
 			_aim(skeleton, "RightUpperArm", Vector3(-0.55, 0.78, 0.18), w)
 			_aim(skeleton, "RightLowerArm", Vector3(-0.2 + 0.38 * sin(t * 9.0), 1.0, 0.12), w)
+			_orient_hand(skeleton, "RightHand", "RightLowerArm", Vector3(0.0, 0.15, -1.0), w)
 		Gesture.WATCH:
 			# linker Unterarm vor die Brust, Handgelenk nach oben gedreht
 			_aim(skeleton, "LeftUpperArm", Vector3(0.28, -0.6, 0.75), w)
 			_aim(skeleton, "LeftLowerArm", Vector3(-0.85, 0.32, 0.4), w)
+			# Handrücken (mit der Uhr) nach oben zu den Augen, Handfläche zur Brust
+			_orient_hand(skeleton, "LeftHand", "LeftLowerArm", Vector3(0.0, 0.85, -0.5), w)
 		Gesture.STRETCH:
 			# beide Arme nach oben, ein wenig nach hinten gebeugt
 			var lift := clampf(sin(clampf(t / 2.2, 0.0, 1.0) * PI) * 1.4, 0.0, 1.0)
@@ -41,6 +44,8 @@ func _process_modification_with_delta(_delta: float) -> void:
 				var prefix := "Left" if side > 0.0 else "Right"
 				_aim(skeleton, prefix + "UpperArm", Vector3(0.28 * side, 1.0, -0.08), w * lift)
 				_aim(skeleton, prefix + "LowerArm", Vector3(0.08 * side, 1.0, -0.12), w * lift)
+				# Handflächen zueinander (Handrücken nach außen)
+				_orient_hand(skeleton, prefix + "Hand", prefix + "LowerArm", Vector3(side, 0.0, 0.0), w * lift)
 		Gesture.TALK:
 			# erzählen: Unterarme vor dem Bauch, Hände bewegen sich ruhig
 			var e := talk_energy
@@ -48,6 +53,31 @@ func _process_modification_with_delta(_delta: float) -> void:
 			_aim(skeleton, "RightLowerArm", Vector3(-0.25 + 0.2 * sin(t * 2.7) * e, -0.15 + 0.35 * sin(t * 1.9 + 1.0) * e, 0.95), w)
 			_aim(skeleton, "LeftUpperArm", Vector3(0.18, -0.95, 0.22), w * 0.6)
 			_aim(skeleton, "LeftLowerArm", Vector3(0.3 + 0.12 * sin(t * 2.1 + 2.0) * e, -0.35 + 0.2 * sin(t * 1.5) * e, 0.85), w * 0.7)
+			# Handflächen leicht nach oben und innen (offene, erzählende Hände)
+			_orient_hand(skeleton, "RightHand", "RightLowerArm", Vector3(-0.45, -0.85, 0.0), w)
+			_orient_hand(skeleton, "LeftHand", "LeftLowerArm", Vector3(0.45, -0.85, 0.0), w * 0.7)
+
+
+## Richtet eine Hand aus (seit Etappe 6d – vorher behielt sie die Drehung des hängenden Arms und war
+## verdreht): Finger in Verlängerung des Unterarms (kein abgeknicktes Handgelenk), Handrücken möglichst
+## in Richtung back (Raum der Figur). Achsen der Hände: +Y = Finger, +Z = Handrücken, Daumen rechts -X,
+## links +X (wie in der T-Pose: Handflächen unten, Daumen vorn).
+func _orient_hand(skeleton: Skeleton3D, hand_name: String, forearm_name: String, back: Vector3, amount: float) -> void:
+	var hand := skeleton.find_bone(hand_name)
+	var forearm := skeleton.find_bone(forearm_name)
+	if hand < 0 or forearm < 0 or amount <= 0.0:
+		return
+	var fingers := skeleton.get_bone_global_pose(forearm).basis.y.normalized()
+	var z := back - fingers * back.dot(fingers)
+	if z.length() < 0.001:
+		return
+	z = z.normalized()
+	var wanted := Basis(fingers.cross(z), fingers, z)
+	var parent := skeleton.get_bone_parent(hand)
+	var parent_global := skeleton.get_bone_global_pose(parent) if parent >= 0 else Transform3D.IDENTITY
+	var current := skeleton.get_bone_pose_rotation(hand)
+	var target := (parent_global.basis.orthonormalized().inverse() * wanted).get_rotation_quaternion()
+	skeleton.set_bone_pose_rotation(hand, current.slerp(target, clampf(amount, 0.0, 1.0)))
 
 
 ## Dreht einen Knochen so, dass er in die Richtung dir zeigt (im Raum der Figur), um amount überblendet.

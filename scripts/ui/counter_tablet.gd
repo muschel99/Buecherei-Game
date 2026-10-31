@@ -134,10 +134,15 @@ func close() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-## Esc (über den MenuStack): schließt immer das ganze Tablet, nicht nur die App (die App schrumpft
-## vorher kurz zurück zu ihrem Symbol).
+## Esc (über den MenuStack, seit Etappe 6d): Ist eine App offen, schrumpft nur sie zurück zu ihrem Symbol
+## (wie Home) – erst auf dem Startbildschirm schließt Esc das ganze Tablet.
 func close_from_escape() -> void:
-	_back_to_icon(close)
+	if _animating:
+		return
+	if _current != null:
+		_back_to_icon(go_home)
+	else:
+		close()
 
 
 ## Nach dem Pausenmenü: Mauszeiger wieder sichtbar.

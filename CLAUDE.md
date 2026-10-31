@@ -40,6 +40,13 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
   Texturen per Godot-Script; wo noch nichts gebaut ist, bleiben die einfachen Platzhalter.
   Alles so bauen, dass eigene 3D-Modelle (.glb), Texturen und Sounds leicht austauschbar sind
   (siehe `docs/ASSET_GUIDE.md`).
+- **Würde es in echt funktionieren? (Regel für alle Modelle, Wunsch der Entwicklerin seit Etappe 6d):**
+  Bei jedem Objekt prüfen, ob es so gebaut werden und funktionieren könnte: nichts schwebt in der
+  Luft, nichts steckt ineinander (außer gewollt überlappende Fugen), alle Teile sind sinnvoll
+  verbunden (Streben enden an etwas, Lampen sitzen an Halterungen), nichts ist hohl, wo es nicht hohl
+  sein soll (Reifen, Karosserien, Wände haben Volumen und Innenseiten), bewegliche Teile (Türen,
+  Räder, Pedale, Markisen) stoßen nirgends an und lassen den Weg frei, wo man hindurchgeht oder
+  -fährt. Offen und geschlossen, von innen und außen prüfen.
 - **Git:** Nach jedem funktionierenden Schritt ein Commit mit verständlicher deutscher Nachricht.
 - **Roadmap in Notion (seit Etappe 6):** Jedes Mal, wenn `docs/ROADMAP.md` aktualisiert wird, wird die
   Notion-Seite „Roadmap (aus Claude Code)“ (Unterseite von „Cozy-Bücherei-Spiel (Arbeitstitel)“) auf
@@ -217,7 +224,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Tooltips und aufklappende Listen haben ihren Stil im Theme (`assets/ui/cozy_theme.tres`).
 - **Theken-Tablet** (`CounterTablet`, Gruppe `counter_tablet`, `open_tablet()`, `open_app(id)`,
   `go_home()`): Startbildschirm mit App-Symbolen, Leiste mit Home, Logo + Name (+ Untertitel)
-  der App, Kontostand, Kreuz. Esc schließt immer das ganze Tablet; Öffnen startet immer auf dem
+  der App, Kontostand, Kreuz. Esc (seit 6d): ist eine App offen, schrumpft nur sie zurück zum Symbol
+  (Startbildschirm), erst dort schließt Esc das ganze Tablet; Öffnen startet immer auf dem
   Startbildschirm. **Neue App = neue Szene** in `scenes/ui/tablet_apps/` (Wurzel-Script erbt von
   `TabletApp`: `app_opened()`, `refresh()`, Bausteine `make_label` …; `request_refresh()` statt
   direkt neu aufbauen, wenn ein Knopf sich selbst ersetzen würde) **+ Datenblatt**

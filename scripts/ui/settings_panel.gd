@@ -85,6 +85,25 @@ func _create_control(definition: Dictionary) -> Control:
 				toggle.text = "an" if on else "aus"
 				Settings.set_value(key, on))
 			return _sized(toggle)
+		"slider":
+			# Schieberegler 0–100 % mit Zahl daneben
+			var row := HBoxContainer.new()
+			var slider := HSlider.new()
+			slider.min_value = 0
+			slider.max_value = 100
+			slider.step = 5
+			slider.value = float(Settings.get_value(key))
+			slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			var number := Label.new()
+			number.custom_minimum_size = Vector2(52, 0)
+			number.text = "%d %%" % int(slider.value)
+			slider.value_changed.connect(func(v: float) -> void:
+				number.text = "%d %%" % int(v)
+				Settings.set_value(key, int(v)))
+			row.add_child(slider)
+			row.add_child(number)
+			return _sized(row)
 		"resolution":
 			_resolution_button = OptionButton.new()
 			_resolution_button.item_selected.connect(func(index: int) -> void:

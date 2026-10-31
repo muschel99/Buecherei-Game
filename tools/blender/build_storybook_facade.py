@@ -224,8 +224,9 @@ def fill_region(M, C, variant, fm, a, b, z0, z1, name, seed):
     g.build()
 
 
-def pilasters(M, C, variant, fm, xs, name, seed):
-    """Pilaster in der Art der Front (Stein: Ecksteine an den Enden)."""
+def pilasters(M, C, variant, fm, xs, name, seed, edges=()):
+    """Pilaster in der Art der Front (Stein: Ecksteine an den Enden). edges = Pilaster an den Hauskanten:
+    nur dort trägt die viktorianische Front eine Konsole mit Goldpunkt – vor dem Schildkasten, nicht darin."""
     if variant == "stone":
         q = Body(name + " Ecksteine", M["stone_wall"], C["walls"], seed=seed, vary=0.08, bevel=0.014)
         for x in xs:
@@ -255,8 +256,10 @@ def pilasters(M, C, variant, fm, xs, name, seed):
             for dx in (-0.07, 0.0, 0.07):
                 g.tube([fm @ Vector((x + dx, GROUND + 0.45, 0.165)), fm @ Vector((x + dx, FASCIA[0] - 0.3, 0.165))], 0.014, segs=8,
                        round_ends=True)
-            gb((x, FASCIA[0] + 0.12, 0.2), (0.22, 0.3, 0.2))
-            gold.blob(fm @ Vector((x, FASCIA[0] + 0.05, 0.31)), 0.035, subdiv=1, lump=0.04, scale=(1, 1, 0.6))
+            if x in edges:
+                # Konsole vorn auf dem Schildkasten (Vorderseite bei z = 0,22; 1 cm überlappt)
+                gb((x, FASCIA[0] + 0.12, 0.28), (0.22, 0.3, 0.14))
+                gold.blob(fm @ Vector((x, FASCIA[0] + 0.05, 0.36)), 0.035, subdiv=1, lump=0.04, scale=(1, 1, 0.6))
     g.build()
     gold.build()
 
@@ -279,7 +282,7 @@ def ground_side(M, C, variant, seg, win_x, side_name):
     xs = [x for x in (0.16, x0 - 0.16, x1 + 0.16, seg_l - 0.16) if 0.1 < x < seg_l - 0.1]
     if variant == "stone":
         xs = [0.17, seg_l - 0.17]
-    pilasters(M, C, variant, fm, xs, "Pilaster %s" % side_name, seed + 20)
+    pilasters(M, C, variant, fm, xs, "Pilaster %s" % side_name, seed + 20, edges=(xs[0], xs[-1]))
     if variant == "victorian":
         dent = Body("Zahnschnitt %s" % side_name, M["green_dark"], C["shop"], seed=seed + 30, vary=0.04, bevel=0.006)
         x = 0.1
@@ -339,6 +342,17 @@ def build_awning(shape):
     return C, ("shop", "deco", "walls")
 
 
+def set_wind(obj, weight):
+    """Wie frei jede Stelle im Wind schwingt (wie bei den Markisen der anderen Läden, T.cloth_awning):
+    Alpha der Vertex-Farbe = 1 - weight(Punkt); 0 = fest (Kasten, Stange, Gestell), 1 = ganz frei."""
+    tint = obj.data.color_attributes.get("tint")
+    if tint is None:
+        return
+    for k, v in enumerate(obj.data.vertices):
+        c = tint.data[k].color
+        tint.data[k].color = (c[0], c[1], c[2], 1.0 - max(0.0, min(1.0, weight(v.co))))
+
+
 def dome_awning(M, C, width):
     """Korbmarkise: ein Viertel-Zylinder vom Kasten zur Vorderkante, an den Enden runde Ohren,
     unten eine Bogenkante. Gestell aus Eisen."""
@@ -371,7 +385,7 @@ def dome_awning(M, C, width):
         pts = [(0.0, 0.0)] + [(-math.sin(math.pi / 2 * k / 12) * r, -r + math.cos(math.pi / 2 * k / 12) * r) for k in range(13)]
         m = Matrix.Translation((side * width / 2 - (0.012 if side > 0 else 0.0), 0, 0)) @ Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
         cloth.slab(pts, 0.012, m, dent=0.0)
-    cloth.build()
+    cloth.build()   # straff über das Gestell gespannt: bewegt sich nicht (Alpha 1)
     iron = Body("Markise Gestell", M["lamp_iron"], C["deco"], seed=9, vary=0.03, bevel=0.003)
     for side in (-1, 1):
         x = side * (width / 2 + 0.008)
@@ -386,7 +400,8 @@ def dome_awning(M, C, width):
         cx = -width / 2 + width * (k + 0.5) / n
         pts = [(cx + math.cos(math.pi * t / 8) * width / n / 2, -math.sin(math.pi * t / 8) * 0.09) for t in range(9)]
         val.slab(pts[::-1], 0.012, Matrix.Translation((0, -r + 0.006, -r)) @ Matrix.Rotation(math.radians(90), 4, "X"), dent=0.0)
-    val.build()
+    # die Bogenkante hängt an der Vorderstange: oben fest, unten schwingt sie
+    set_wind(val.build(), lambda co: (-r - co.z) / 0.09 * 0.8)
 
 
 def box_awning(M, C, width):
@@ -407,7 +422,14 @@ def box_awning(M, C, width):
     wave = [(width / 2 - width * k / (n * 4), -0.16 - 0.035 * math.sin(math.pi * 2 * k / 4)) for k in range(n * 4 + 1)]
     cloth.slab([(-width / 2, 0.0), (width / 2, 0.0)] + wave, 0.012,
                Matrix.Translation((0, b.y, b.z)) @ Matrix.Rotation(math.radians(90), 4, "X"), dent=0.0)
-    cloth.build()
+    ab = b - a
+
+    def weight(co):
+        if co.z < b.z - 0.005:
+            return (b.z - co.z) / 0.2 * 0.75            # Volant: an der Stange fest, unten frei
+        t = max(0.0, min(1.0, (co - a).dot(ab) / ab.length_squared))
+        return 0.35 * math.sin(math.pi * t)            # Bahn: am Kasten und an der Stange fest
+    set_wind(cloth.build(), weight)
     iron = Body("Markise Arme", M["lamp_iron"], C["deco"], seed=13, vary=0.03, bevel=0.003)
     iron.tube([(-width / 2 - 0.01, b.y, b.z), (width / 2 + 0.01, b.y, b.z)], 0.014, segs=8, round_ends=True)
     for side in (-1, 1):
@@ -736,8 +758,13 @@ def bracket(M, C):
 
 # --- Deko vor der Tür (seit Etappe 6c, Raumkoordinaten wie der Kern) ---
 
-DECO_SETS = {"bench": ("bench", "bench_pots"), "steps": ("steps",), "sign": ("sign", "lantern"), "planters": ("planters",),
-             "all": ("bench", "steps", "sign", "lantern", "planters")}
+# Deko vor der Bücherei (seit Etappe 6d in vier Bereichen, frei kombinierbar; jeder Bereich hat feste
+# Plätze, die sich nie überschneiden – Treppe = Rechteck 3,0 x 1,54 m vor der Schräge):
+#   steps_*  auf der Treppe     walk_*  auf dem Gehweg     seat_*  Sitzplatz     sign_*  Schild
+DECO_SETS = {"steps_pots": ("steps",), "steps_lantern": ("steps", "lantern"),
+             "walk_tubs": ("tubs",), "walk_pots": ("window_pots",),
+             "seat_bench": ("bench", "bench_pot"), "seat_chair": ("chair",),
+             "sign_board": ("sign",)}
 
 
 def library_chalkboard_image():
@@ -772,9 +799,25 @@ def _obstacle(C, matrix, radius):
     anchor(C, "Obstacle_%d" % round(radius * 100), matrix)
 
 
+def facade_chair(M, C, name, m, seed=950):
+    """Schlichter Holzstuhl (wie vor dem Pub): Sitzbrett auf vier geraden Beinen, die hinteren gehen in
+    die Lehne über, drei Sprossen – keine Streben unter dem Sitz. m = Rahmen am Boden (Front -y)."""
+    seat, back = 0.25, 0.63
+    b = Body(name, M["chair"], C["deco"], seed=seed, vary=0.06, bevel=0.008)
+    b.box((0, 0, seat - 0.02), (0.4, 0.38, 0.04), step=0.3, dent=0.002, matrix=m)
+    for sx in (-0.16, 0.16):
+        for sy in (-0.15, 0.15):
+            top = back - 0.02 if sy > 0 else seat - 0.03
+            b.box((sx, sy, top / 2), (0.034, 0.034, top), step=1, dent=0.001, matrix=m)
+    b.box((0, 0.15, back - 0.04), (0.4, 0.05, 0.08), step=0.3, dent=0.002, matrix=m)
+    for sx in (-0.08, 0.0, 0.08):
+        b.tube([m @ Vector((sx, 0.15, seat - 0.01)), m @ Vector((sx, 0.15, back - 0.07))], 0.01, segs=6, round_ends=True)
+    b.build()
+
+
 def build_deco(kind):
     import build_storybook_props as PR
-    if kind in ("sign", "all"):
+    if kind == "sign_board":
         library_chalkboard_image()
     M, C = fresh("Deko vor der Tür %s" % kind)
     parts = DECO_SETS[kind]
@@ -785,19 +828,26 @@ def build_deco(kind):
     def world(m, local):
         return m @ Vector(local)
     if "bench" in parts:
-        # Parkbank an der Gassenwand (vor dem linken Fenster frei), mit Blick nach draußen
+        # Parkbank an der Gassenwand neben der Treppe (vor dem linken Fenster frei), mit Blick nach draußen;
+        # zwei Sitzplätze (Spielfigur und Passanten)
         m = T.canon(*LEFT, 0.98, GROUND, 0.3)
         T.placed(C["deco"], m, PR.street_bench, M, C["deco"])
         _collider(C, "Bank", world(m, (0.0, -0.02, 0.45)), (1.5, 0.5, 0.9))
-        for x in (-0.45, 0.45):
-            _obstacle(C, m @ Matrix.Translation((x, -0.05, 0.0)), 0.42)
-    if "bench_pots" in parts:
-        for k, (u, r, h) in enumerate(((0.12, 0.17, 0.36), (1.84, 0.14, 0.3))):
-            if kind == "all" and k == 0:
-                continue
-            m = T.canon(*LEFT, u, GROUND, 0.32)
-            SC.pot(M, C["pots"], "Bank Topf %d" % k, world(m, (0, 0, 0)), r, h, 900 + k, style="classic")
-            _collider(C, "Bank Topf %d" % k, world(m, (0, 0, h / 2)), (r * 2, r * 2, h))
+        for k, x in enumerate((-0.37, 0.37)):
+            _obstacle(C, m @ Matrix.Translation((x * 1.2, -0.05, 0.0)), 0.42)
+            anchor(C, "Seat_%d" % k, m @ Matrix.Translation((x, 0.0, PR.BENCH_SEAT)))
+    if "bench_pot" in parts:
+        m = T.canon(*LEFT, 1.9, GROUND, 0.32)
+        SC.pot(M, C["pots"], "Bank Topf", world(m, (0, 0, 0)), 0.14, 0.3, 901, style="classic")
+        _collider(C, "Bank Topf", world(m, (0, 0, 0.15)), (0.28, 0.28, 0.3))
+    if "chair" in parts:
+        # Kleiner Stuhl leicht schräg neben der Treppe auf der Straßenseite – niedriger als die Brüstung,
+        # verdeckt das Schaufenster also nie; Sitzplatz für Spielfigur und Passanten
+        m = T.canon(*FRONT, 3.7, GROUND, 0.5, yaw=25)
+        facade_chair(M, C, "Stuhl", m)
+        _collider(C, "Stuhl", world(m, (0, 0, 0.32)), (0.42, 0.42, 0.64))
+        _obstacle(C, m, 0.32)
+        anchor(C, "Seat_0", m @ Matrix.Translation((0.0, 0.0, 0.25)))
     if "steps" in parts:
         # Töpfe auf dem Podest (vorn an den Ecken) und an den Seiten der Stufen
         for k, (side, out, z, r, h) in enumerate(((-1, 0.48, 0.0, 0.15, 0.3), (1, 0.48, 0.0, 0.15, 0.3),
@@ -808,8 +858,8 @@ def build_deco(kind):
             SC.pot(M, C["pots"], "Treppe Topf %d" % k, world(m, (0, 0, 0)), r, h, 910 + k, style="bowl" if k >= 2 else "classic")
             _collider(C, "Treppe Topf %d" % k, world(m, (0, 0, h / 2)), (r * 2, r * 2, h))
     if "sign" in parts:
-        # Aufsteller auf dem Gehweg vorn, nahe der Ecke zur Schräge, schräg zur Straße
-        m = T.canon(*FRONT, 3.86, GROUND, 0.62)
+        # Aufsteller vorn auf dem Gehweg, schräg neben der Treppe (Stuhl und Treppe bleiben frei)
+        m = T.canon(*FRONT, 4.0, GROUND, 1.15)
         p = world(m, (0, 0, 0))
         before = set(bpy.data.objects)
         SC.chalkboard(M, C["deco"], (p.x, p.y), math.degrees(math.atan2(m[1][0], m[0][0])) + 20, SC.sign_material("library", "chalkboard"))
@@ -829,15 +879,21 @@ def build_deco(kind):
         import storybook_parts as SP
         SP.lantern_head(M, C["deco"], "Laterne", base + Vector((0, 0, 0.92)), scale=0.62, seed=931)
         _collider(C, "Laterne", base + Vector((0, 0, 0.6)), (0.2, 0.2, 1.2))
-    if "planters" in parts:
-        # zwei große Kübel neben der Treppe (vorn und an der Gasse)
-        for k, (seg, u) in enumerate(((FRONT, 3.62), (LEFT, 0.42 if kind != "all" else 1.95))):
-            if kind == "all" and k == 1:
-                continue
-            m = T.canon(*seg, u, GROUND, 0.42)
+    if "tubs" in parts:
+        # zwei große Kübel an den Hausenden: vorn beim Nachbarhaus, an der Gasse hinter dem Fenster
+        for k, (seg, u) in enumerate(((FRONT, 0.45), (LEFT, 4.7))):
+            m = T.canon(*seg, u, GROUND, 0.5)
             SC.pot(M, C["pots"], "Kübel %d" % k, world(m, (0, 0, 0)), 0.26, 0.5, 940 + k, mat="terracotta", style="tub", spot="tub")
             _collider(C, "Kübel %d" % k, world(m, (0, 0, 0.25)), (0.56, 0.56, 0.5))
             _obstacle(C, m, 0.4)
+    if "window_pots" in parts:
+        # Töpfe unter dem vorderen Schaufenster (niedriger als die Brüstung – das Glas bleibt frei)
+        for k, (u, r, h) in enumerate(((1.45, 0.15, 0.34), (2.05, 0.12, 0.26), (2.55, 0.16, 0.38), (3.05, 0.11, 0.24))):
+            m = T.canon(*FRONT, u, GROUND, 0.3 + r)
+            SC.pot(M, C["pots"], "Fenster Topf %d" % k, world(m, (0, 0, 0)), r, h, 960 + k, style="classic" if k % 2 else "bowl")
+            _collider(C, "Fenster Topf %d" % k, world(m, (0, 0, h / 2)), (r * 2, r * 2, h))
+        _obstacle(C, T.canon(*FRONT, 1.75, GROUND, 0.45), 0.4)
+        _obstacle(C, T.canon(*FRONT, 2.8, GROUND, 0.45), 0.4)
     return C, ("deco", "pots")
 
 

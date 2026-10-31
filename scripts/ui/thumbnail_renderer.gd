@@ -7,6 +7,9 @@ extends Node
 ## aufgenommen; das Bild bleibt bis zum Spielende gespeichert. Es wird immer nur ein Bild
 ## pro Bild-Durchgang gemacht, damit das Spiel dabei nicht ruckelt.
 ## Hat ein Datenblatt ein eigenes Bild (FurnitureData.icon), wird stattdessen dieses benutzt.
+## Seit Etappe 6d bleiben Fotos von Möbeln und Modell-Szenen auch über das Spielende hinaus auf der Platte
+## (user://thumbnails/): Beim nächsten Start sind sie sofort da. Ein Foto gilt, solange sich die Dateien
+## des Modells (Szene, .glb, Materialien) nicht geändert haben – sonst wird es neu gemacht.
 
 ## Quadratisch (seit Etappe 6): hohe Regale und flache Teppiche füllen die Bild-Kacheln gleich gut.
 const IMAGE_SIZE := Vector2i(224, 224)
@@ -24,7 +27,12 @@ static var _cache: Dictionary = {}
 var _viewport: SubViewport
 var _camera: Camera3D
 var _stage: Node3D
-var _queue: Array = []  # [Kennung, Callable (baut das Modell), Callable (bekommt das Bild), Blickrichtung, Blickpunkt]
+var _queue: Array = []  # [Kennung, Callable (baut das Modell), Callable (bekommt das Bild), Blickrichtung, Blickpunkt, Quellen]
+
+## Ordner für die gespeicherten Fotos (Name = Kennung + Stand der Quelldateien)
+const DISK_CACHE := "user://thumbnails/"
+## Erhöhen, wenn sich Licht oder Kamera der Fotos ändern (dann werden alle neu gemacht)
+const CACHE_VERSION := 1
 var _is_busy := false
 
 
@@ -80,7 +88,8 @@ func request(data: FurnitureData, callback: Callable, variant: String = "") -> v
 	if ready_image:
 		callback.call(ready_image)
 		return
-	_enqueue(cache_key(data, variant), func() -> Node3D: return FurnitureUtils.instantiate_model(data, variant), callback)
+	_enqueue(cache_key(data, variant), func() -> Node3D: return FurnitureUtils.instantiate_model(data, variant), callback,
+		VIEW_DIRECTION, {}, _furniture_sources(data))
 
 
 ## Bestellt ein Bild einer Modell-Szene (Vorderseite +Z). key muss eindeutig sein
@@ -107,7 +116,7 @@ func request_scene(key: String, scene_path: String, icon: Texture2D, callback: C
 			wall.material_override = load(WALL_MATERIAL)
 			wall.position = Vector3(0.0, 0.0, -0.02)
 			root.add_child(wall)
-		return root, callback, WALL_VIEW_DIRECTION if wall_size.x > 0.0 else VIEW_DIRECTION)
+		return root, callback, WALL_VIEW_DIRECTION if wall_size.x > 0.0 else VIEW_DIRECTION, {}, [scene_path])
 
 
 ## Bestellt ein Bild eines selbst gebauten Modells (make_model liefert einen Node3D) aus der
@@ -133,8 +142,8 @@ func request_view(key: String, make_model: Callable, callback: Callable, eye: Ve
 
 
 func _enqueue(key: String, make_model: Callable, callback: Callable,
-		view_direction: Vector3 = VIEW_DIRECTION, view: Dictionary = {}) -> void:
-	_queue.append([key, make_model, callback, view_direction, view])
+		view_direction: Vector3 = VIEW_DIRECTION, view: Dictionary = {}, sources: Array = []) -> void:
+	_queue.append([key, make_model, callback, view_direction, view, sources])
 	if not _is_busy:
 		_work()
 
@@ -145,14 +154,51 @@ func _work() -> void:
 		var job: Array = _queue.pop_front()
 		var key: String = job[0]
 		var texture: Texture2D = _cache.get(key)
+		var disk := _disk_path(key, job[5])
+		if texture == null and not disk.is_empty() and FileAccess.file_exists(disk):
+			var stored := Image.load_from_file(disk)
+			if stored:
+				texture = ImageTexture.create_from_image(stored)
+				_cache[key] = texture
 		if texture == null:
 			texture = await _photograph(job[1].call(), job[3], job[4])
 			if not is_inside_tree():
 				return
 			_cache[key] = texture
+			if not disk.is_empty():
+				DirAccess.make_dir_recursive_absolute(DISK_CACHE)
+				texture.get_image().save_png(disk)
 		if job[2].is_valid():
 			job[2].call(texture)
 	_is_busy = false
+
+
+## Datei des gespeicherten Fotos (leer = nicht speichern: ohne bekannte Quelldateien, z. B. Fassaden-Teile
+## mit gewähltem Stoff). Im Namen steckt der Stand aller Quelldateien – ändert sich eine, gilt das Foto nicht mehr.
+func _disk_path(key: String, sources: Array) -> String:
+	if sources.is_empty():
+		return ""
+	var stamp := "%d|%s" % [CACHE_VERSION, key]
+	for path: String in sources:
+		stamp += "|%s:%d" % [path, FileAccess.get_modified_time(path) if FileAccess.file_exists(path) else 0]
+	return DISK_CACHE + stamp.md5_text() + ".png"
+
+
+## Quelldateien eines Möbelstücks: Datenblatt, Szene, Modell (.glb) und seine Materialien.
+static func _furniture_sources(data: FurnitureData) -> Array:
+	var sources := [data.resource_path]
+	if not data.scene_path.is_empty():
+		sources.append(data.scene_path)
+	var id := data.get_id()
+	for path in ["res://assets/models/furniture/%s.glb" % id]:
+		if FileAccess.file_exists(path):
+			sources.append(path)
+	var folder := "res://assets/materials/furniture/%s/" % id
+	if DirAccess.dir_exists_absolute(folder):
+		for file in DirAccess.get_files_at(folder):
+			if file.ends_with(".tres"):
+				sources.append(folder + file)
+	return sources
 
 
 ## Stellt das Modell auf, richtet die Kamera aus und macht ein Foto.

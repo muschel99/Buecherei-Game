@@ -355,7 +355,12 @@ func _update_head_bob(delta: float) -> void:
 	# Beim schnellen Laufen werden die Schritte schneller, das Wippen aber nicht stärker
 	var step_ratio := speed / GameConfig.walk_speed
 	if is_on_floor() and speed > 0.1:
+		var before := floori(_head_bob_time / PI)
 		_head_bob_time += delta * GameConfig.head_bob_frequency * step_ratio
+		if floori(_head_bob_time / PI) != before:
+			# ein Schritt: drinnen Holzboden, draußen Stein (Audio-System, fehlt die Datei: still)
+			var surface := "footsteps/wood" if global_position.y > -0.25 else "footsteps/stone"
+			Audio.play_at(surface, global_position, GameConfig.footstep_volume_db, randf_range(0.93, 1.07))
 	var target_y := sin(_head_bob_time) * GameConfig.head_bob_amount * speed_ratio
 	camera.position.y = lerpf(camera.position.y, target_y, 10.0 * delta)
 

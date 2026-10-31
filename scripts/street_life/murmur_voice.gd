@@ -18,6 +18,7 @@ var _in_sentence := 0
 
 func _init() -> void:
 	unit_size = 2.0
+	bus = "Voices"   # Lautstärke „Stimmen“ in den Einstellungen (Audio-System)
 	max_distance = GameConfig.murmur_distance
 	volume_db = GameConfig.murmur_volume_db
 	attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE

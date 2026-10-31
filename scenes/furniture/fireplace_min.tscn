@@ -1,0 +1,67 @@
+[gd_scene format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Modell, Kollision, Ablageflächen, Fächer und Licht. Wird beim Neubau
+; überschrieben, solange die Datei unverändert ist (speichert Godot sie, bleibt sie, wie sie ist).
+
+[ext_resource type="PackedScene" path="res://assets/models/furniture/fireplace_min.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/objects/light_source.gd" id="2_light"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="3_surface"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="4_interact"]
+
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(1.2200, 1.1000, 0.5800)
+
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(1.1600, 0.0300, 0.4400)
+
+[sub_resource type="BoxShape3D" id="Shape_2"]
+size = Vector3(1.2415, 1.1219, 0.6224)
+
+[node name="FireplaceMin" type="Node3D"]
+script = ExtResource("2_light")
+kind = 1
+shadow_importance = 2
+loop_sound = "ambience/fireplace"
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="Shape0" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.5500, 0.0200)
+shape = SubResource("Shape_0")
+
+[node name="Surfaces" type="Node3D" parent="."]
+
+[node name="Surface0" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 1.1000, 0.0300)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_surface")
+max_height = 0.600
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Surface0"]
+shape = SubResource("Shape_1")
+
+[node name="Light0" type="OmniLight3D" parent="."]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.4000, 0.0200)
+light_color = Color(1.000, 0.620, 0.320, 1)
+light_energy = 1.500
+light_size = 0.0
+shadow_enabled = true
+shadow_blur = 2.0
+omni_range = 6.50
+
+[node name="Interactable" type="Area3D" parent="."]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_interact")
+prompt_text = "Löschen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0007, 0.5500, 0.0507)
+shape = SubResource("Shape_2")
+
+[connection signal="interacted" from="Interactable" to="." method="_on_interactable_interacted"]

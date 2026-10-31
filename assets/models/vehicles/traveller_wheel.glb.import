@@ -41,20 +41,30 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"Autolack zwei": {
+"glass": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/autolack_zwei.tres",
-"use_external/path": "res://assets/materials/storybook/autolack_zwei.tres"
+"use_external/path": "res://assets/materials/house_glass.tres"
 },
-"Sammel Glatt": {
+"glass_car": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/sammel_glatt.tres",
-"use_external/path": "res://assets/materials/storybook/sammel_glatt.tres"
+"use_external/path": "res://assets/materials/vehicle_glass.tres"
 },
-"Sammel Metall": {
+"glass_clear": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
-"use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
+"use_external/path": "res://assets/materials/house_glass_clear.tres"
+},
+"glass_inner": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/house_glass_inner.tres"
+},
+"house": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/house_style.tres",
+"use_external/path": "res://assets/materials/house_style.tres"
+},
+"plant": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/plant_style.tres"
 }
 }
 }

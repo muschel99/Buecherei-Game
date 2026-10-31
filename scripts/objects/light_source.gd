@@ -13,6 +13,10 @@ extends Node3D
 ##
 ## Elektrische Lampen blenden sanft auf und ab. Bei Flammen (Kerzen, Laternen)
 ## flackert die Flamme beim Löschen kurz auf und erlischt dann.
+## Seit Etappe 6d bewegen sich alle Flammen wie Feuer: Jedes Teil mit dem Material „flame“ bekommt die
+## gemeinsame Flamme (assets/materials/flame.tres, Shader flame.gdshader: zittert, flackert, wiegt sich,
+## jede etwas anders), und das Licht flackert passend mit (GameConfig.flame_light_flicker). Neue Kerzen
+## und Feuer brauchen dafür nichts weiter als ein Flammen-Teil mit diesem Materialnamen.
 
 enum Kind {
 	ELECTRIC,  ## Elektrische Lampe: wird auch vom Lichtschalter geschaltet
@@ -33,6 +37,9 @@ enum ShadowImportance {
 	IMPORTANT,  ## Wirft ab Grafikstufe "Mittel" Schatten (z. B. Stehlampen)
 	OPTIONAL,  ## Wirft nur bei Grafikstufe "Hoch" Schatten (z. B. Deckenlampen)
 }
+## Geräusch, solange es leuchtet (Name im Audio-System, z. B. "ambience/fireplace"; leer = still).
+@export var loop_sound: String = ""
+
 ## Wie wichtig die Schatten dieser Lampe sind (Schatten kosten viel Rechenleistung).
 ## Lichter, die in der Szene ohne Schatten angelegt sind (Kerzen), bleiben immer ohne.
 @export var shadow_importance: ShadowImportance = ShadowImportance.IMPORTANT
@@ -49,6 +56,12 @@ var _glow_scale: Array[Vector3] = []
 var _interactable: Interactable = null
 var _tween: Tween
 var _flame_tweens: Array[Tween] = []
+## Flackern des Lichts (nur Flammen): eigener Takt je Lichtquelle
+var _flicker_phase := 0.0
+var _flicker_time := 0.0
+var _sound: AudioStreamPlayer3D
+
+const FLAME_MATERIAL := preload("res://assets/materials/flame.tres")
 
 
 func _ready() -> void:
@@ -71,6 +84,14 @@ func _ready() -> void:
 				var property := _glow_property(surface_material)
 				if property.is_empty():
 					continue
+				if kind == Kind.FLAME and surface_material.resource_name == "flame":
+					# gemeinsame, bewegte Flamme (Helligkeit wie im Modell, Höhe aus dem Netz)
+					var flame := FLAME_MATERIAL.duplicate() as ShaderMaterial
+					flame.set_shader_parameter("emission_energy", float(surface_material.get(property)))
+					flame.set_shader_parameter("height", maxf(mesh_instance.get_aabb().end.y, 0.01))
+					mesh_instance.set_surface_override_material(i, flame)
+					_add_glow(mesh_instance, flame, "shader_parameter/emission_energy")
+					continue
 				surface_material = surface_material.duplicate()
 				mesh_instance.set_surface_override_material(i, surface_material)
 				_add_glow(mesh_instance, surface_material, property)
@@ -80,9 +101,27 @@ func _ready() -> void:
 			if not _interactable.interacted.is_connected(_on_interactable_interacted):
 				_interactable.interacted.connect(_on_interactable_interacted)
 			break
+	_flicker_phase = randf() * TAU
+	if not loop_sound.is_empty():
+		_sound = Audio.loop_at(self, loop_sound, 0.0, 9.0)
 	_apply_state(false)
 	_apply_shadow_quality()
 	Settings.setting_changed.connect(_on_setting_changed)
+	set_process(kind == Kind.FLAME and not _lights.is_empty())
+
+
+## Flammen: das Licht flackert sanft (weiche Mischung aus Wellen, je Lichtquelle anders) – nur wenn es
+## brennt und gerade nicht an- oder ausgeht.
+func _process(delta: float) -> void:
+	if not is_on or (_tween and _tween.is_running()):
+		return
+	_flicker_time += delta
+	var t := _flicker_time
+	var p := _flicker_phase
+	var wobble := sin(t * 7.3 + p) * 0.45 + sin(t * 13.1 + p * 2.3) * 0.3 + sin(t * 2.9 + p * 0.7) * 0.25
+	var factor := 1.0 + GameConfig.flame_light_flicker * wobble
+	for i in _lights.size():
+		_lights[i].light_energy = _light_energy[i] * factor
 
 
 func _add_glow(mesh_instance: MeshInstance3D, material: Material, property: String) -> void:
@@ -152,6 +191,11 @@ func _apply_state(animate: bool) -> void:
 			light.visible = true
 		for mesh in _glow_meshes:
 			mesh.visible = true
+	if _sound:
+		if is_on and not _sound.playing:
+			_sound.play()
+		elif not is_on:
+			_sound.stop()
 
 	if not animate:
 		for i in _lights.size():

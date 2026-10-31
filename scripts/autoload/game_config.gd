@@ -74,6 +74,8 @@ var long_interaction_distance: float = 4.0
 var light_fade_time: float = 0.35
 ## Dauer, in der eine Kerzen- oder Laternenflamme erlischt bzw. aufflammt (in Sekunden).
 var flame_fade_time: float = 0.6
+## So stark flackert das Licht einer Flamme (Kerze, Laterne, Kamin; 0 = ruhig, 0,12 = sanft) – seit Etappe 6d
+var flame_light_flicker: float = 0.12
 ## Soll der Lichtschalter auch Kerzen und Laternen mitschalten? (Standard: nur elektrische Lampen)
 var light_switch_includes_flames: bool = false
 ## So lange muss man E gedrückt halten (z. B. am Regal: Regal-Menü öffnen), in Sekunden.
@@ -303,6 +305,11 @@ var street_detail_distance: float = 28.0
 ## Fahrzeuge federn weich (seit Etappe 6c, VehicleModel): Nicken je m/s² Beschleunigung und Neigen je m/s²
 ## Querbeschleunigung (Bogenmaß), Federhärte und Dämpfung (kleiner = schwingt länger nach), größter
 ## Lenkeinschlag der Vorderräder; Fahrräder legen sich in Kurven (cyclist_lean_factor, 1 = wie in echt)
+## Geräusche (seit Etappe 6d, Audio-System): Lautstärke der eigenen Schritte und des Automotors (dB,
+## zusätzlich zu den Reglern in den Einstellungen), Pause zwischen zwei Musikstücken (Sekunden)
+var footstep_volume_db: float = -10.0
+var car_engine_volume_db: float = -14.0
+var music_pause: float = 4.0
 var vehicle_pitch_per_accel: float = 0.008
 var vehicle_roll_per_accel: float = 0.008
 var vehicle_spring: float = 60.0

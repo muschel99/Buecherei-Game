@@ -15,9 +15,12 @@ var _open: Array[Node] = []
 func open(node: Node) -> void:
 	if not _open.has(node):
 		_open.append(node)
+		Audio.play("ui/open")
 
 
 func close(node: Node) -> void:
+	if _open.has(node):
+		Audio.play("ui/close")
 	_open.erase(node)
 
 

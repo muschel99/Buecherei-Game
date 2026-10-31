@@ -5,7 +5,8 @@ extends TabletApp
 ## - Oben Reiter mit Symbol und einem Wort (PAGES), darunter je Reiter Reihen großer Bild-Kacheln
 ##   (FacadeTile, Name und Preis im Tooltip; Farbvarianten als Tupfer unter der Kachel).
 ## - Alles, was ich antippe, landet erst im Entwurf (FacadeDesign.draft) – die echte Fassade bleibt.
-##   Neben dem Tablet liegen zwei schräge Polaroids: die Bücherei von gegenüber, live mit dem Entwurf
+##   Neben dem Tablet liegt ein schräges Polaroid mit einem ruhigen Modell der Bücherei (seit 6d; beim
+##   Briefkasten und bei der Theke ein zweites mit drehendem Modell) – nach dem Entwurf
 ##   (FacadePreview), und eine drehende Theke bzw. ein Wandstück mit dem Briefkasten außen und innen
 ##   (TurntablePreview).
 ## - Unten „Abbrechen“ (Entwurf verwerfen, App schließt) und „Bauen“ mit den Kosten: Erst das baut um
@@ -27,7 +28,8 @@ const PAGES := [
 	{"id": "plants", "name": "Pflanzen", "icon": "fac_plants",
 		"rows": [["box", "Blumenkästen"], ["basket", "Ampeln"], ["plants", "Mischung"], ["fullness", "Fülle"]]},
 	{"id": "outside", "name": "Draußen", "icon": "fac_awning",
-		"rows": [["awning", "Markise"], ["fabric", "Stoff"], ["deco", "Deko vor der Tür"]]},
+		"rows": [["awning", "Markise"], ["fabric", "Stoff"], ["deco_steps", "Pflanzen auf der Treppe"],
+			["deco_walk", "Pflanzen auf dem Gehweg"], ["deco_seat", "Sitzgelegenheit"], ["deco_sign", "Schild"]]},
 	{"id": "letterbox", "name": "Briefkasten", "icon": "fac_slot", "rows": [["slot", "Einwurf außen"], ["slot_inside", "Innen"]]},
 	{"id": "counter", "name": "Theke", "icon": "cat_counter", "rows": [["counter", "Theke"]]},
 ]
@@ -52,6 +54,9 @@ var _polaroid_detail: Polaroid
 var _facade_preview: FacadePreview
 var _detail_preview: TurntablePreview
 var _side_shown := false
+## Vorschau neu bauen, sobald die Oberfläche steht (nie im selben Bild wie ein Klick – die Auswahl bleibt
+## sofort bedienbar, das Polaroid entwickelt sich einen Moment später)
+var _preview_pending := false
 
 
 func _ready() -> void:
@@ -144,15 +149,26 @@ func side_view_changed(shown: bool) -> void:
 		_update_previews()
 	if _facade_preview:
 		_facade_preview.set_active(shown)
-		_detail_preview.set_active(shown)
+		_detail_preview.set_active(shown and _detail_page())
 
 
-## Zwei Polaroids untereinander, leicht überlappend, so groß wie der Platz erlaubt.
+## Zweites Polaroid (drehendes Modell) nur beim Briefkasten und bei der Theke.
+func _detail_page() -> bool:
+	return _page in ["letterbox", "counter"]
+
+
+## Ein großes Fassaden-Polaroid – beim Briefkasten und bei der Theke zwei untereinander, leicht überlappend.
 func _layout_side() -> void:
 	if _side == null:
 		return
 	var area := _side.size
 	var ratio := Polaroid.height_for(1.0)
+	_polaroid_detail.visible = _detail_page()
+	if not _detail_page():
+		var big := minf(area.x * 0.94, area.y * 0.86 / ratio)
+		_polaroid_facade.size = Vector2(big, big * ratio)
+		_polaroid_facade.position = Vector2((area.x - big) / 2.0, (area.y - big * ratio) / 2.0)
+		return
 	var overlap := 0.04
 	var width := minf(area.x * 0.9, area.y / (ratio * 2.0 - overlap))
 	var height := width * ratio
@@ -163,10 +179,24 @@ func _layout_side() -> void:
 
 
 func _update_previews() -> void:
-	if _facade_preview == null or not _side_shown:
+	if _facade_preview == null or not _side_shown or _preview_pending:
+		return
+	_preview_pending = true
+	if not _facade_preview.is_ready():
+		_polaroid_facade.caption = "Einen Moment …"
+	# zwei Bilder warten: erst zeigt das Tablet die Auswahl, dann wird das Modell gebaut
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_preview_pending = false
+	if not _side_shown or not is_inside_tree():
 		return
 	var design := FacadeDesign.get_draft()
 	_facade_preview.show_design(design)
+	_polaroid_facade.caption = "Unsere Bücherei"
+	_layout_side()
+	_detail_preview.set_active(_detail_page())
+	if not _detail_page():
+		return
 	if _page == "counter":
 		_polaroid_detail.caption = "Theke"
 		_detail_preview.show_counter(Catalog.get_counter(str(design.get("counter", ""))))
@@ -180,11 +210,11 @@ func _update_previews() -> void:
 # --- App ---
 
 func app_opened() -> void:
-	# Die Umgebung (Laden, Straße) einmal je Öffnen in die Vorschau kopieren
+	# Die ruhige Bühne (Treppe, Licht, Innenraum) einmal je Öffnen aufbauen – schnell
 	get_side_view()
 	var room := get_tree().root.find_child("GroundFloorRoom", true, false) as Node3D
 	if room:
-		_facade_preview.capture(room)
+		_facade_preview.prepare(room)
 
 
 func _on_draft_changed() -> void:

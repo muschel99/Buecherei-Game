@@ -57,7 +57,6 @@ var config: Dictionary = {}
 var _built := false
 var _scenes := {}  # Pfad -> PackedScene
 static var _paints := {}  # Schlüssel -> eingefärbtes Material
-static var _swaying := {}  # Netz (id) -> Netz mit Wind-Markierung
 
 
 func _notification(what: int) -> void:
@@ -85,11 +84,12 @@ func build(new_config: Dictionary) -> void:
 	_build_openings(openings)
 	_build_quoins()
 	_place_at_anchors("Awnings", "Anchor_awning_", _scene_of("awning") if not _shop_bay() else "")
-	_let_awnings_sway()
 	_place_at_anchors("Boxes", "Anchor_box_", _scene_of("box"))
 	_place_at_anchors("Baskets", "Anchor_basket_", _scene_of("basket"))
-	_set_part("Deco", _scene_of("deco"), "")
-	_deco_obstacles()
+	_drop("Deco")   # vor Etappe 6d: ein einziges Deko-Teil
+	for area in FacadeDesign.DECO_AREAS:
+		_set_part("Deco_" + area.trim_prefix("deco_"), _scene_of(area), "")
+	_deco_extras()
 	_apply_materials(self)
 	_plant_all()
 	if follow_design and is_inside_tree():
@@ -173,45 +173,10 @@ func _place_at_anchors(holder_name: String, prefix: String, path: String) -> voi
 			holder.add_child(model)
 
 
-## Markisen bewegen sich im Wind wie bei den anderen Läden: Der Stoff bekommt im Alpha der Vertex-Farbe,
-## wie frei er schwingt (1 = fest am Kasten, zur Vorderkante hin frei; Shader-Wert wind_strength im Stoff).
-func _let_awnings_sway() -> void:
-	var holder := get_node_or_null("Awnings")
-	if holder == null:
-		return
-	for node in holder.find_children("*", "MeshInstance3D", true, false):
-		var mi := node as MeshInstance3D
-		if mi.mesh == null:
-			continue
-		var key := mi.mesh.get_instance_id()
-		if not _swaying.has(key):
-			_swaying[key] = _with_wind(mi.mesh as ArrayMesh, mi.transform)
-		mi.mesh = _swaying[key]
-
-
-## Kopie eines Netzes, deren Stoff-Flächen (Material facade_awning) die Wind-Markierung tragen.
-static func _with_wind(source: ArrayMesh, node_xform: Transform3D) -> Mesh:
-	if source == null:
-		return source
-	var result := ArrayMesh.new()
-	for i in source.get_surface_count():
-		var arrays := source.surface_get_arrays(i)
-		var material := source.surface_get_material(i)
-		if material and material.resource_name == "facade_awning":
-			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-			var old: Variant = arrays[Mesh.ARRAY_COLOR]
-			var colors := PackedColorArray()
-			colors.resize(verts.size())
-			for k in verts.size():
-				# Im Rahmen der Markise: z = Abstand von der Wand, y = wie weit unter dem Kasten
-				var v := node_xform * verts[k]
-				var free := clampf(v.z / 0.9 + maxf(-v.y, 0.0) * 0.6, 0.0, 1.0)
-				var tint: Color = (old as PackedColorArray)[k] if old is PackedColorArray and (old as PackedColorArray).size() == verts.size() else Color.WHITE
-				colors[k] = Color(tint.r, tint.g, tint.b, 1.0 - pow(free, 1.3))
-			arrays[Mesh.ARRAY_COLOR] = colors
-		result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-		result.surface_set_material(i, material)
-	return result
+## Markisen bewegen sich im Wind wie bei den anderen Läden (seit Etappe 6d genau gleich): Wie frei jede
+## Stelle des Stoffs schwingt, steht schon im Modell (Alpha der Vertex-Farbe aus build_storybook_facade.py:
+## fest an Kasten, Stange und Gestell, frei in der Mitte der Bahn und unten am Volant); der Stoff-Shader
+## (wind_strength) bläht ihn nur nach außen und oben.
 
 
 ## Lage eines Knotens relativ zur Fassade (geht auch, solange sie noch nicht im Baum ist).
@@ -225,21 +190,72 @@ func _relative(node: Node3D) -> Transform3D:
 	return result
 
 
-## Deko vor der Tür: Passanten gehen um Bank, Kübel und Aufsteller herum (leere Objekte „Obstacle_<cm>“ im
-## Modell → StreetObstacle). Nur die echte Fassade – Vorschauen dürfen das Straßenleben nicht stören.
-func _deco_obstacles() -> void:
-	var deco := get_node_or_null("Deco")
+## Deko vor der Tür (vier Bereiche, seit Etappe 6d): Passanten gehen um Bank, Kübel und Aufsteller herum
+## (leere Objekte „Obstacle_<cm>“ im Modell → StreetObstacle), und auf Bank und Stuhl kann man sich setzen –
+## die Spielfigur mit E, Passanten von selbst (leere Objekte „Seat_<n>“ → StreetSeat unter einem Seating).
+## Nur die echte Fassade – Vorschauen dürfen das Straßenleben nicht stören. Schon versorgte Teile (gleiche
+## Wahl, Teil bleibt stehen) bekommen nichts doppelt.
+func _deco_extras() -> void:
 	if not follow_design:
 		return
-	if deco:
+	for area in FacadeDesign.DECO_AREAS:
+		var deco := get_node_or_null("Deco_" + area.trim_prefix("deco_"))
+		if deco == null or deco.has_meta("extras_done"):
+			continue
+		deco.set_meta("extras_done", true)
 		for node in deco.find_children("Obstacle_*", "", true, false):
 			var obstacle := StreetObstacle.new()
 			obstacle.radius = float(String(node.name).get_slice("_", 1).to_int()) / 100.0
 			(node as Node).add_child(obstacle)
+		var seats := deco.find_children("Seat_*", "", true, false)
+		if not seats.is_empty():
+			_add_seating(deco as Node3D, seats)
 	if is_inside_tree():
 		var life := get_tree().get_first_node_in_group(StreetLife.GROUP)
 		if life and life.has_method("refresh_static_obstacles"):
 			life.call_deferred("refresh_static_obstacles")
+
+
+## Sitzmöbel aus den Sitzplätzen eines Deko-Teils: StreetSeat (auch für Passanten) + Interactable über
+## den Sitzen (E: „Sitzen“).
+func _add_seating(deco: Node3D, markers: Array[Node]) -> void:
+	var seating := Seating.new()
+	seating.name = "Seating"
+	var box := AABB()
+	for k in markers.size():
+		var marker := markers[k] as Node3D
+		var seat := StreetSeat.new()
+		seat.name = "Seat%d" % k
+		seat.transform = deco.global_transform.affine_inverse() * marker.global_transform if deco.is_inside_tree() \
+			else _relative_to(marker, deco)
+		seat.approach = Vector3(0.0, 0.0, 0.75)
+		seating.add_child(seat)
+		box = AABB(seat.position, Vector3.ZERO) if k == 0 else box.expand(seat.position)
+	var area := Interactable.new()
+	area.name = "Interactable"
+	area.collision_layer = 2
+	area.collision_mask = 0
+	area.monitoring = false
+	area.prompt_text = "Sitzen"
+	var shape := CollisionShape3D.new()
+	var size := BoxShape3D.new()
+	size.size = Vector3(box.size.x + 0.5, 0.5, box.size.z + 0.5).max(Vector3(0.5, 0.5, 0.5))
+	shape.shape = size
+	shape.position = box.get_center() + Vector3(0.0, 0.15, 0.0)
+	area.add_child(shape)
+	seating.add_child(area)
+	deco.add_child(seating)
+
+
+## Lage von node relativ zu ancestor (auch außerhalb des Baums).
+func _relative_to(node: Node3D, ancestor: Node3D) -> Transform3D:
+	var result := Transform3D.IDENTITY
+	var current: Node = node
+	while current and current != ancestor:
+		if current is Node3D:
+			result = (current as Node3D).transform * result
+		current = current.get_parent()
+	return result
 
 
 # --- Erdgeschoss und Wand oben ---

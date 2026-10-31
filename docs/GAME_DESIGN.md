@@ -52,8 +52,9 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     kleines Logo und ihren Namen – bei Läden den Ladennamen mit kurzem Untertitel, damit es
     sich wie ein richtiger Laden anfühlt.
   - Ein Klick auf ein Symbol öffnet die App; das **Home-Symbol** oben links führt zurück. Das
-    **Kreuz** oben rechts und **Esc** schließen immer das ganze Tablet (nicht nur die App).
-    Beim nächsten Öffnen startet es wieder auf dem Startbildschirm.
+    **Kreuz** oben rechts schließt das ganze Tablet. **Esc** (seit Etappe 6d) schließt zuerst nur die
+    offene App – sie schrumpft zurück zu ihrem Symbol, und ich lande auf dem Startbildschirm; erst
+    dort schließt Esc das ganze Tablet. Beim nächsten Öffnen startet es wieder auf dem Startbildschirm.
   - **Öffnen wie auf einem echten Tablet (seit Etappe 6b):** Das angetippte Symbol wächst weich,
     bis es den ganzen Bildschirm füllt; darauf erscheinen kurz (etwa 1 Sekunde) das Logo, eine
     Begrüßung in der Schrift der App (z. B. „Willkommen bei Nest & Nook“) und ein feiner

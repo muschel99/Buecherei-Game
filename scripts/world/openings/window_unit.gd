@@ -49,7 +49,7 @@ static func build_window(opening: Dictionary, materials: Dictionary) -> Node3D:
 		root.add_child(glass.instance(materials.glass, "Glass"))
 	if upper:
 		if not bay:
-			root.add_child(_curtains(OpeningShape.offset(outline, -fw), z.x - 0.03, materials.curtain))
+			root.add_child(_curtains(outline, materials.curtain, materials.frame))
 		root.add_child(_room(outline, materials.room))
 	return root
 
@@ -85,34 +85,44 @@ static func height_at(poly: PackedVector2Array, x: float) -> Vector2:
 	return Vector2(lo, hi) if lo <= hi else Vector2.ZERO
 
 
-## Gardinen hinter dem Glas: zwei Bahnen an den Seiten, oben genau entlang der Fensterform (auch im
-## Bogen und im Kreis), sanfte Falten.
-static func _curtains(inner: PackedVector2Array, z: float, material: Material) -> MeshInstance3D:
+## Gardinen innen vor dem Fenster oben (seit Etappe 6d bei jeder Fensterform gerade): eine gerade Stange mit
+## Haltern über dem Fenster, zwei Bahnen hängen gerade herunter (sanfte Falten) – vor der Innenseite der
+## 30 cm dicken Wand, nie in der Laibung.
+const CURTAIN_Z := -0.34
+static func _curtains(outline: PackedVector2Array, material: Material, rod_material: Material) -> Node3D:
+	var node := Node3D.new()
+	node.name = "Curtains"
 	var mesh := OpeningMesh.new()
-	var b := OpeningShape.bounds(inner)
-	var panel := b.size.x * 0.26
+	var rod := OpeningMesh.new()
+	var b := OpeningShape.bounds(outline)
+	var panel := b.size.x * 0.3
+	var top := b.end.y + 0.08
+	var bottom := b.position.y + 0.02
 	var steps := 10
 	for side in [-1.0, 1.0]:
-		var x_edge: float = b.position.x if side < 0.0 else b.end.x
+		var x_edge: float = (b.position.x - 0.06) if side < 0.0 else (b.end.x + 0.06)
 		for i in steps:
 			var x0: float = x_edge - side * panel * i / steps
 			var x1: float = x_edge - side * panel * (i + 1) / steps
-			var s0 := height_at(inner, x0 - side * 0.004)
-			var s1 := height_at(inner, x1)
-			if s0.y <= s0.x or s1.y <= s1.x:
-				continue
-			# Falten: Tiefe wechselt je Streifen, unten weiter auseinander
+			# Falten: Tiefe wechselt je Streifen, unten etwas weiter auseinander
 			var f0 := 0.025 * sin(PI * i * 0.9)
 			var f1 := 0.025 * sin(PI * (i + 1) * 0.9)
-			var a := Vector3(x0, s0.x + 0.03, z + f0)
-			var c := Vector3(x1, s1.x + 0.03, z + f1)
-			var d := Vector3(x1, s1.y - 0.01, z + f1 * 0.4)
-			var e := Vector3(x0, s0.y - 0.01, z + f0 * 0.4)
+			var a := Vector3(x0, bottom, CURTAIN_Z - f0)
+			var c := Vector3(x1, bottom, CURTAIN_Z - f1)
+			var d := Vector3(x1, top, CURTAIN_Z - f1 * 0.4)
+			var e := Vector3(x0, top, CURTAIN_Z - f0 * 0.4)
 			var n0 := Vector3(-0.3 * cos(PI * i * 0.9), 0.0, 1.0).normalized()
 			var n1 := Vector3(-0.3 * cos(PI * (i + 1) * 0.9), 0.0, 1.0).normalized()
 			mesh.tri_smooth(a, c, d, n0, n1, n1)
 			mesh.tri_smooth(a, d, e, n0, n1, n0)
-	return mesh.instance(material, "Curtains")
+	var x_lo := b.position.x - 0.14
+	var x_hi := b.end.x + 0.14
+	rod.bar(Vector2(x_lo, top + 0.02), Vector2(x_hi, top + 0.02), 0.025, CURTAIN_Z - 0.012, CURTAIN_Z + 0.012)
+	for x in [x_lo + 0.03, x_hi - 0.03]:
+		rod.bar(Vector2(x, top + 0.008), Vector2(x, top + 0.032), 0.02, CURTAIN_Z - 0.01, -0.295)
+	node.add_child(mesh.instance(material, "Cloth"))
+	node.add_child(rod.instance(rod_material, "Rod"))
+	return node
 
 
 ## Warmer Raum hinter einem Fenster oben (das Obergeschoss hat keine Einrichtung): offener Kasten.
@@ -227,8 +237,27 @@ static func build_door_surround(opening: Dictionary, materials: Dictionary) -> N
 		for band: PackedVector2Array in Geometry2D.clip_polygons(leaf_band, leaf):
 			if not Geometry2D.is_polygon_clockwise(band):
 				frame.slab(band, -0.14, -0.06)
-		for piece: PackedVector2Array in Geometry2D.clip_polygons(inner, leaf_band):
-			if Geometry2D.is_polygon_clockwise(piece) or absf(_area(piece)) < 0.004:
+		# Seit Etappe 6d: das Glas um das Türblatt in linkes und rechtes Seitenlicht und das Oberlicht teilen
+		# (vorher hing es U-förmig zusammen, und die Sprossen liefen quer durch die Türöffnung)
+		var lb := OpeningShape.bounds(leaf_band)
+		var zones := [_zone(-5.0, lb.position.x), _zone(lb.end.x, 5.0), _zone(lb.position.x, lb.end.x)]
+		var parts: Array[PackedVector2Array] = []
+		for whole: PackedVector2Array in Geometry2D.clip_polygons(inner, leaf_band):
+			if Geometry2D.is_polygon_clockwise(whole):
+				continue
+			for zone: PackedVector2Array in zones:
+				for part: PackedVector2Array in Geometry2D.intersect_polygons(whole, zone):
+					if not Geometry2D.is_polygon_clockwise(part):
+						parts.append(part)
+		# Pfosten zwischen Seitenlicht und Oberlicht (über dem Türblatt, nie in der Öffnung)
+		for edge_x: float in [lb.position.x, lb.end.x]:
+			var x := edge_x + (0.001 if edge_x == lb.position.x else -0.001)
+			var above := height_at(leaf_band, x).y
+			var top := height_at(inner, edge_x).y
+			if top > above + 0.05:
+				frame.bar(Vector2(edge_x, above), Vector2(edge_x, top), 0.04, -0.13, -0.07)
+		for piece: PackedVector2Array in parts:
+			if absf(_area(piece)) < 0.004:
 				continue
 			var pb := OpeningShape.bounds(piece)
 			var low_cut := PackedVector2Array([Vector2(-5.0, -1.0), Vector2(5.0, -1.0), Vector2(5.0, DOOR_PANEL_TOP), Vector2(-5.0, DOOR_PANEL_TOP)])
@@ -260,6 +289,11 @@ static func build_door_surround(opening: Dictionary, materials: Dictionary) -> N
 	root.add_child(glass.instance(materials.glass, "Glass"))
 	root.add_child(panels.instance(materials.frame, "Panels"))
 	return root
+
+
+## Senkrechter Streifen von x0 bis x1 (zum Zerlegen des Glases um die Tür).
+static func _zone(x0: float, x1: float) -> PackedVector2Array:
+	return PackedVector2Array([Vector2(x0, -1.0), Vector2(x1, -1.0), Vector2(x1, 10.0), Vector2(x0, 10.0)])
 
 
 static func _pane(mesh: OpeningMesh, poly: PackedVector2Array) -> void:

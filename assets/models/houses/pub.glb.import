@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://do8dk0mi1ibga"
+uid="uid://dpfh654xq7vce"
 path="res://.godot/imported/pub.glb-407c7d2769030d92ab20ebde5843f4e4.scn"
 
 [deps]
@@ -358,7 +358,6 @@ _subresources={
 },
 "Holz Eiche": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/holz_eiche.tres",
 "use_external/path": "res://assets/materials/storybook/holz_eiche.tres"
 },
 "Holz Eiche innen": {
@@ -394,7 +393,6 @@ _subresources={
 },
 "Kreide": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/kreide.tres",
 "use_external/path": "res://assets/materials/storybook/kreide.tres"
 },
 "Lack Blumenkasten Grün": {

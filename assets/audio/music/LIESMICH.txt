@@ -1,0 +1,6 @@
+Ordner für Geräusche: Musik (Lautstärke „Musik“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
+Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+
+- Alle Dateien hier werden nacheinander in zufälliger Reihenfolge gespielt – Name egal.

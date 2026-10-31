@@ -616,13 +616,13 @@ class House:
                     p.box(((a + b) / 2, sb - 0.03, 0.22), (b - a, 0.12, 0.44), step=0.6, dent=0.006)
             p.build()
         exposed = self.spec.get("exposed", {})
-        if st["quoins"] or exposed:
+        # Ecksteine (seit Etappe 6d): nur bei Häusern mit Ecksteinen im Stil oder mit zwei frei stehenden
+        # Seiten – dann immer an beiden Hausecken (nie nur an einer); an freien Seiten laufen sie um die Ecke
+        if st["quoins"] or len(exposed) == 2:
             q = Body("Ecksteine", M["stone"], C["walls"], seed=9, vary=0.1, bevel=0.014)
             ztop = self.zs[1] if st["fachwerk"] else self.E - 0.35
             # die Hausecke liegt bei Fachwerk mit Vorkragung vorn am Pfosten (vor der Erdgeschosswand)
             yc = sb - (self.jetty if post else 0.0)
-            # beide Ecken vorn gleich (seit Etappe 6c): auch wenn nur eine Seitenwand frei steht, bekommen
-            # beide Hausecken Ecksteine – um die Ecke herum laufen sie nur an der freien Seite
             for side in (-1, 1):
                 z, k = 0.5, 0
                 while z + 0.3 < ztop:

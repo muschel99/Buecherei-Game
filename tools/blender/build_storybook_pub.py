@@ -496,19 +496,19 @@ def taproom(M, C):
     lamp.build()
     cord.build()
     add_light("Gaststube Grundlicht", (0, 2.6, 3.0), 2700, 220, C["light"], kind="AREA", size=2.5)
-    # Menütafel im linken Fenster (wie im Vorbild), schräg angelehnt
+    # Menütafel im linken Fenster (wie im Vorbild), schräg angelehnt; darauf das Pub-Schild der
+    # Entwicklerin (assets/textures/signs/pub_chalkboard.png, 360 x 600 Pixel – unverzerrt)
     mb = Body("Menütafel", M["chalkboard"], C["inside"], seed=77, bevel=0.006)
     mfr = Body("Menütafel Rahmen", M["pub_wood_in"], C["inside"], seed=78, bevel=0.006)
-    ch = Body("Menütafel Schrift", M["chalk"], C["inside"], seed=79)
     mm = Matrix.Translation((-1.75, 0.45, SILL + 0.02)) @ Matrix.Rotation(math.radians(-12), 4, "X")
     mfr.box((0, 0, 0.5), (0.62, 0.04, 1.0), step=0.4, dent=0.002, matrix=mm)
     mb.box((0, -0.025, 0.5), (0.52, 0.012, 0.88), step=0.4, dent=0.001, matrix=mm)
-    for k in range(5):
-        ch.tube([mm @ Vector((-0.18, -0.034, 0.82 - k * 0.14)), mm @ Vector((0.12 + 0.05 * (k % 2), -0.034, 0.82 - k * 0.14))], 0.006,
-                segs=6, round_ends=True)
     mb.build()
     mfr.build()
-    ch.build()
+    img = Body("Menütafel Bild", SC.sign_material("pub", "chalkboard"), C["inside"], seed=79)
+    face = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))   # Bild-Vorderseite zur Straße (-y)
+    img.panel(mm @ Matrix.Translation((0, -0.030, 0.5)) @ face, 0.85 * 360 / 600, 0.85, 0.004)
+    img.build()
     # Warmes Zimmer hinter den oberen Fenstern
     up = Body("Zimmer oben", M["in_dark"], C["inside"], seed=80, vary=0.04)
     up.box((0, 3.0, SHOP_TOP + 0.05), (W - 0.6, 5.4, 0.1), step=0.8, dent=0.003)
@@ -538,21 +538,22 @@ def bistro_table(M, C, name, x, y, seed):
 
 
 def chair(M, C, name, x, y, yaw, seed):
-    """Holzstuhl mit gebogener Lehne aus Sprossen (Lehne auf der Seite +y lokal)."""
+    """Schlichter Holzstuhl (seit Etappe 6d): Sitzbrett auf vier geraden Beinen, die hinteren Beine
+    gehen in die Lehne über (Lehnbrett oben, drei Sprossen zum Sitz) – keine Streben unter dem Sitz.
+    Lehne auf der Seite +y lokal; Oberkante des Sitzes genau auf CHAIR_SEAT."""
     m = Matrix.Translation((x, y, 0)) @ Matrix.Rotation(math.radians(yaw), 4, "Z")
     seat = CHAIR_SEAT
     back = seat + 0.38
     b = Body(name, M["chair"], C["deco"], seed=seed, vary=0.06, bevel=0.008)
-    b.box((0, 0, seat), (0.4, 0.38, 0.04), step=0.3, dent=0.002, matrix=m)
+    b.box((0, 0, seat - 0.02), (0.4, 0.38, 0.04), step=0.3, dent=0.002, matrix=m)
     for sx in (-0.16, 0.16):
         for sy in (-0.15, 0.15):
-            top = back if sy > 0 else seat - 0.01
-            b.tube([m @ Vector((sx * 1.02, sy * 1.05, 0.0)), m @ Vector((sx, sy, seat * 0.5)), m @ Vector((sx, sy, top))], 0.016, segs=8,
-                   round_ends=True)
-    b.box((0, 0.16, back - 0.04), (0.4, 0.05, 0.08), step=0.3, dent=0.002, matrix=m)
+            # Beine stecken 1 cm im Sitzbrett; die hinteren reichen bis ins Lehnbrett
+            top = back - 0.02 if sy > 0 else seat - 0.03
+            b.box((sx, sy, top / 2), (0.034, 0.034, top), step=1, dent=0.001, matrix=m)
+    b.box((0, 0.15, back - 0.04), (0.4, 0.05, 0.08), step=0.3, dent=0.002, matrix=m)
     for sx in (-0.08, 0.0, 0.08):
-        b.tube([m @ Vector((sx, 0.16, seat + 0.02)), m @ Vector((sx, 0.17, back - 0.07))], 0.01, segs=6, round_ends=True)
-    b.tube([m @ Vector((-0.16, 0.0, seat * 0.42)), m @ Vector((0.16, 0.0, seat * 0.42))], 0.01, segs=6, round_ends=True)
+        b.tube([m @ Vector((sx, 0.15, seat - 0.01)), m @ Vector((sx, 0.15, back - 0.07))], 0.01, segs=6, round_ends=True)
     b.build()
 
 
@@ -561,12 +562,11 @@ OBSTACLES = {
     "Tisch rechts": ((1.95, -0.62), (1.5, 0.62), 0.9),
     "Topf links": ((-0.95, -0.52), (0.5, 0.5), 0.5),
     "Topf rechts": ((0.95, -0.52), (0.5, 0.5), 0.5),
-    "Kreidetafel": ((-2.52, -0.95), (0.56, 0.45), 0.85),
 }
 
 
 def outside(M, C):
-    """Wie im Vorbild (von der Straße gesehen): links Kreidetafel und Tisch mit Stuhl, rechts
+    """Wie im Vorbild (von der Straße gesehen): links Tisch mit Stuhl, rechts
     Stuhl, Tisch, Stuhl; Töpfe neben der Tür; rundes Hängeschild rechts zum Nachbarhaus."""
     bistro_table(M, C, "Tisch links", -1.62, -0.62, 90)
     # Stühle neben den Tischen mit Blick zur Straße (seit Etappe 6c): vorn ist frei – so setzen sich
@@ -578,7 +578,7 @@ def outside(M, C):
     # frei vor der Brüstung der Schaufenster (sonst steckt der Topf darin)
     SC.pot(M, C["pots"], "Topf links", (-0.95, -0.52, 0.0), 0.23, 0.46, 101, style="bowl", mat="pot")
     SC.pot(M, C["pots"], "Topf rechts", (0.95, -0.52, 0.0), 0.23, 0.46, 102, style="bowl", mat="pot_light")
-    SC.chalkboard(M, C["deco"], (-2.52, -0.95), -12, SC.sign_material("pub", "chalkboard"))
+    # (Der Aufsteller links ist seit Etappe 6d weg – sein Bild steht jetzt innen auf der Menütafel)
     SC.projecting_sign(M, C["deco"], "Hängeschild", (HW - 0.15, 0.0, 5.45), SC.sign_material("pub", "hanging"), 0.64,
                        0.64 * 478 / 512, outline=SB.round_outline(48))
 

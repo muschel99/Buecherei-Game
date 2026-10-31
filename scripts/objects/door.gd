@@ -49,6 +49,10 @@ func set_open(open: bool) -> void:
 	if _tween:
 		_tween.kill()
 	var target := deg_to_rad(GameConfig.door_open_angle * open_direction) if open else 0.0
+	# Geräusche (Audio-System; fehlt die Datei, bleibt es still): Tür auf/zu, beim Öffnen die Ladenglocke
+	Audio.play_at("doors/door_open" if open else "doors/door_close", _hinge.global_position)
+	if open:
+		Audio.play_at("doors/shop_bell", _hinge.global_position + Vector3.UP * 1.9)
 	_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_tween.tween_method(_set_angle, _hinge.rotation.y, target, GameConfig.door_open_time)
 	_update_prompt()

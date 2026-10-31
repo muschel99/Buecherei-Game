@@ -12,6 +12,9 @@ import storybook_furniture as F
 import storybook_greenery as G
 
 STYLE = ["country"]
+FIELDSTONE = (0.74, 0.68, 0.58)
+FIELDSTONE_GREY = (0.6, 0.6, 0.58)
+FIELDSTONE_RED = (0.7, 0.5, 0.4)
 PINE = (0.74, 0.56, 0.36)
 CREAM = (0.93, 0.89, 0.8)
 SAGE = (0.66, 0.74, 0.62)
@@ -820,7 +823,54 @@ def build_teddy(k):
     k.collider((0, -0.03, 0.13), (0.2, 0.2, 0.26))
 
 
+
+# --- Kamin (seit Etappe 6d) ---
+
+def build_fireplace_country(k):
+    """Landhauskamin: unregelmäßige Feldsteine (jeder ein Körper, dicht an dicht, leicht verschieden),
+    dicker Eichenbalken als Sims, Herd aus großen Platten, gerußter Feuerraum."""
+    k.mat("stone", FIELDSTONE, grain="stone", rough=0.95, vary=0.14)
+    k.mat("beam", (0.42, 0.28, 0.17), grain="wood", rough=0.85, vary=0.1)
+    k.mat("soot", (0.13, 0.11, 0.1), grain="stone", rough=0.95, vary=0.05)
+    rnd = random.Random(1717)
+    w, d, h = 1.3, 0.44, 1.12
+    st = k.part("Feldsteine", "stone", bevel=0.02, vary=0.12)
+    # Wangen links/rechts und der Bogen über der Öffnung aus Steinreihen
+    for x0, x1 in ((-w / 2, -0.33), (0.33, w / 2)):
+        z = 0.12
+        row = 0
+        while z < 0.86:
+            hh = rnd.uniform(0.11, 0.16)
+            x = x0 + (0.06 if row % 2 else 0.0)
+            while x < x1 - 0.04:
+                ww = min(rnd.uniform(0.14, 0.24), x1 - x)
+                st.box((x + ww / 2, 0.0, z + hh / 2), (ww - 0.012, d - rnd.uniform(0.0, 0.03), hh - 0.012), step=0.1, dent=0.012,
+                       turn=(0, rnd.uniform(-2, 2), rnd.uniform(-2, 2)))
+                x += ww
+            z += hh
+            row += 1
+    for k2 in range(5):
+        x = -0.36 + 0.18 * k2
+        st.box((x, 0.0, 0.93), (0.17, d, 0.15), step=0.1, dent=0.012, turn=(0, rnd.uniform(-3, 3), 0))
+    sooty = k.part("Feuerraum", "soot", bevel=0.006)
+    sooty.box((0, 0.17, 0.5), (0.68, 0.06, 0.78), step=0.5, dent=0.002)
+    sooty.box((0, 0.03, 0.85), (0.68, 0.3, 0.02), step=0.5, dent=0.002)
+    hearth = k.part("Herd", "stone", bevel=0.015, vary=0.1)
+    for x in (-0.48, 0.0, 0.48):
+        hearth.box((x, -0.06, 0.055), (0.47, d + 0.24, 0.11), step=0.2, dent=0.006)
+    beam = k.part("Balken", "beam", bevel=0.012)
+    beam.box((0, -0.02, h - 0.05), (w + 0.14, d + 0.1, 0.16), step=0.2, dent=0.006)
+    F.fire(k, (0, 0.03, 0.11), width=0.5)
+    k.shadow = "optional"
+    k.surface((0, -0.02, h + 0.03), (w + 0.1, d + 0.06), 0.6)
+    k.collider((0, -0.02, (h + 0.03) / 2), (w + 0.14, d + 0.24, h + 0.03))
+
 ITEMS = [
+    dict(id="fireplace_country", name="Feldsteinkamin", category="lighting", sub="fireplace", price=380,
+         desc="Ein Kamin aus Feldsteinen mit dickem Eichenbalken. Mit E knistert das Feuer.",
+         styles=STYLE, place="floor", sound="ambience/fireplace", build=build_fireplace_country,
+         variants=[("sand", "Sandstein", {"stone": FIELDSTONE}), ("grey", "Grauer Stein", {"stone": FIELDSTONE_GREY}),
+                   ("red", "Rötlicher Stein", {"stone": FIELDSTONE_RED}), ("oak", "Dunkler Balken", {"beam": (0.28, 0.18, 0.11)})]),
     dict(id="bookshelf_country", name="Bemaltes Bücherregal", category="shelf", sub="bookshelf", price=190,
          desc="Gestrichenes Regal mit Bogenkranz, Herzchen, Bogenschürze und Rückwand aus Brettern. Vier Fächer.",
          styles=STYLE, place="floor", build=build_painted_bookshelf, variants=paint_variants()),

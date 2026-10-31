@@ -40,6 +40,7 @@ wheel_radius = 0.34
 wheel_positions = Array[Vector3]([Vector3(0.75, 0.34, 1.2), Vector3(0.75, 0.34, -1.2)])
 paint_color = Color(0.56, 0.74, 0.7, 1)
 second_color = Color(0.94, 0.91, 0.83, 1)
+driver_seat = Vector3(-0.375, 0.74, 1.19)
 
 [node name="Van" parent="Model" instance=ExtResource("3_body")]
 

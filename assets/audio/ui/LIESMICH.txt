@@ -1,0 +1,7 @@
+Ordner für Geräusche: Oberfläche (Lautstärke „Effekte“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
+Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+
+- open  – ein Menü, das Tablet oder der Gestaltungsmodus geht auf
+- close – geht zu

@@ -1,0 +1,6 @@
+Ordner für Geräusche: Stimmen (Lautstärke „Stimmen“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
+Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+
+- (noch frei – für spätere Stimmen; das Gemurmel beim Plaudern liegt in ../sfx/murmur/)

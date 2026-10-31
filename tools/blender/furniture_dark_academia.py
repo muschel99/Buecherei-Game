@@ -14,6 +14,9 @@ import storybook_furniture as F
 import storybook_greenery as G
 
 STYLE = ["dark_academia"]
+MARBLE_GREEN = (0.2, 0.27, 0.24)
+MARBLE_BLACK = (0.13, 0.13, 0.14)
+MARBLE_RED = (0.38, 0.17, 0.15)
 WALNUT = (0.36, 0.22, 0.14)
 MAHOGANY = (0.42, 0.19, 0.13)
 BRASS = (0.8, 0.62, 0.32)
@@ -912,7 +915,49 @@ def build_owl_bookend(k):
     k.collider((0.0, 0, 0.08), (0.09, 0.1, 0.16))
 
 
+
+# --- Kamin (seit Etappe 6d) ---
+
+def build_fireplace_da(k):
+    """Kamin aus dunklem Marmor: Sockel und Herdplatte, zwei Säulen mit Basis und Kapitell, gerader Sturz mit
+    Zahnleiste, breites Sims (Ablage für Deko), gusseiserner Einsatz mit Bogen, Messing-Kaminschutz."""
+    k.mat("stone", MARBLE_GREEN, grain="stone", rough=0.35, vary=0.08)
+    k.mat("iron_insert", (0.1, 0.1, 0.1), grain="smooth", rough=0.55, metal=0.4, vary=0.03)
+    k.mat("brass", BRASS, grain="smooth", rough=0.35, metal=0.7, vary=0.04)
+    st = k.part("Marmor", "stone", bevel=0.008)
+    w, d, h = 1.24, 0.4, 1.12
+    st.box((0, 0.02, 0.05), (w + 0.1, d + 0.16, 0.1), step=0.4, dent=0.0008)           # Herdplatte
+    for x in (-0.47, 0.47):
+        st.box((x, 0.05, 0.16), (0.26, d - 0.02, 0.12), step=0.4, dent=0.0006)       # Basis
+        st.lathe([(0.0, 0.0), (0.075, 0.0), (0.07, 0.62), (0.08, 0.66), (0.0, 0.66)], (x, -0.09, 0.22), segs=18)   # Säule
+        st.box((x, 0.05, 0.9), (0.27, d - 0.02, 0.06), step=0.4, dent=0.0006)        # Kapitell
+        st.box((x, 0.12, 0.55), (0.24, d - 0.16, 0.7), step=0.4, dent=0.0006)        # Wange hinter der Säule
+    st.box((0, 0.05, 0.99), (w - 0.06, d - 0.02, 0.12), step=0.4, dent=0.0006)        # Sturz
+    st.box((0, 0.0, h - 0.04), (w + 0.08, d + 0.08, 0.06), step=0.4, dent=0.0006)    # Sims
+    st.box((0, 0.18, 0.55), (0.72, 0.04, 0.8), step=0.4, dent=0.0006)                 # Rückwand
+    teeth = k.part("Zahnleiste", "stone", bevel=0.003)
+    for k2 in range(15):
+        teeth.box((-0.49 + 0.07 * k2, -0.155, 1.02), (0.035, 0.03, 0.04), step=1, dent=0.0)
+    ins = k.part("Einsatz", "iron_insert", bevel=0.006)
+    outline = [(-0.36, -0.02), (0.36, -0.02), (0.36, 0.8), (-0.36, 0.8)]
+    ins.slab(outline, 0.03, Matrix.Translation((0, 0.15, 0.12)) @ Matrix.Rotation(math.radians(90), 4, "X"), dent=0.0)
+    F.fire(k, (0, 0.02, 0.1), width=0.5)
+    br = k.part("Kaminschutz", "brass", bevel=0.0)
+    br.tube([(-0.38, -0.2, 0.1), (-0.38, -0.2, 0.2), (0.38, -0.2, 0.2), (0.38, -0.2, 0.1)], 0.01, segs=8, round_ends=True)
+    for x in (-0.38, -0.19, 0.0, 0.19, 0.38):
+        br.tube([(x, -0.2, 0.1), (x, -0.2, 0.2)], 0.006, segs=6, round_ends=True)
+    for x in (-0.38, 0.38):
+        br.blob((x, -0.2, 0.215), 0.016, subdiv=1, lump=0.0)
+    k.shadow = "optional"
+    k.surface((0, 0.0, h - 0.01), (w + 0.04, d + 0.04), 0.6)
+    k.collider((0, 0.05, h / 2), (w + 0.08, d + 0.1, h))
+
 ITEMS = [
+    dict(id="fireplace_da", name="Marmorkamin", category="lighting", sub="fireplace", price=420,
+         desc="Ein Kamin aus dunklem Marmor mit Säulen, gusseisernem Bogen und Messinggitter. Mit E knistert das Feuer.",
+         styles=STYLE, place="floor", sound="ambience/fireplace", build=build_fireplace_da,
+         variants=[("green", "Grüner Marmor", {"stone": MARBLE_GREEN}), ("black", "Schwarzer Marmor", {"stone": MARBLE_BLACK}),
+                   ("red", "Roter Marmor", {"stone": MARBLE_RED}), ("ivory", "Elfenbein", {"stone": IVORY})]),
     dict(id="armchair_velvet", name="Chesterfield-Ohrensessel", category="seating", sub="armchair", price=190,
          desc="Tiefer Ledersessel mit Knöpfen, Ohren und Messingnägeln – zum Versinken mit einem dicken Buch.",
          styles=STYLE, place="floor", lean=True, adopt=True, build=build_wingchair,

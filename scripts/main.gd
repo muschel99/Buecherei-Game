@@ -21,6 +21,9 @@ func _ready() -> void:
 	_apply_graphics_quality()
 	_setup_sky_fill()
 	Settings.setting_changed.connect(_on_setting_changed)
+	# Geräuschkulisse und Musik (Audio-System: Dateien in assets/audio/ambience und assets/audio/music)
+	Audio.start_ambience("ambience/outdoor")
+	Audio.start_music()
 	# Alle Knoten der Szene sind jetzt bereit – also können sie ihre Daten übernehmen
 	SaveManager.load_game()
 	# Das Tablet mit dem Shop darf nie fehlen (auch nicht in älteren Spielständen)

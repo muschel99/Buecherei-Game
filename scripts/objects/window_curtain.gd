@@ -120,62 +120,46 @@ func _find_room() -> Node3D:
 func _build(cloth: OpeningMesh, rod: OpeningMesh, outline: PackedVector2Array) -> void:
 	var b := OpeningShape.bounds(outline)
 	var hw := b.size.x / 2.0
-	# Der Stoff reicht etwas über das Fenster hinaus (oben und an den Seiten)
-	var cover := OpeningShape.offset(outline, 0.07)
-	var cb := OpeningShape.bounds(cover)
-	var round := absf(b.size.x - b.size.y) < 0.05 and outline.size() > 30
-	var straight_top := cb.end.y
+	# Seit Etappe 6d bei jeder Fensterform: die Stange sitzt gerade über dem Fenster, die Bahnen hängen
+	# gerade herunter (bei Bogen- und Rundfenstern nicht mehr oben rund abgeschnitten) und enden knapp
+	# über der Fensterbank
+	var rod_y := b.end.y + 0.1
+	var top := rod_y - 0.02
+	var bottom := b.position.y + 0.025
+	var x0 := b.position.x - 0.08
+	var x1 := b.end.x + 0.08
 	match style:
 		Style.SHEER:
-			# Gardine: oben und unten genau entlang der Fensterform (auch beim Rundfenster)
-			_panel(cloth, cover, cb.position.x, cb.end.x, -1.0, INF, 0.018, 9.0, 0.0, true)
-			_rod_along(rod, cover, round)
+			_panel(cloth, x0, x1, top, bottom, -1.0, 0.018, 9.0)
+			_rod(rod, x0 - 0.1, x1 + 0.1, rod_y, 0.03)
 		Style.CAFE:
-			var y := b.position.y + b.size.y * (0.5 if not round else 0.55)
-			var span := OpeningShape.width_at(cover, y)
-			_panel(cloth, cover, span.x, span.y, -1.0, y, 0.015, 11.0)
-			rod.bar(Vector2(span.x - 0.03, y + 0.015), Vector2(span.y + 0.03, y + 0.015), 0.02, HANG - 0.012, HANG + 0.012)
+			var y := b.position.y + b.size.y * 0.5
+			_panel(cloth, x0, x1, y - 0.02, bottom, -1.0, 0.015, 11.0)
+			_rod(rod, x0 - 0.04, x1 + 0.04, y, 0.02)
 		_:
 			var panel_w := hw * (0.42 if style == Style.TIED else 0.48)
 			var tie := b.position.y + b.size.y * 0.42 if style == Style.TIED else -1.0
 			for side in [-1.0, 1.0]:
-				var x_out: float = cb.end.x + 0.08 if side > 0.0 else cb.position.x - 0.08
+				var x_out: float = x1 if side > 0.0 else x0
 				var x_in: float = x_out - side * (panel_w + 0.08)
-				var lo := minf(x_in, x_out)
-				var hi := maxf(x_in, x_out)
-				_panel(cloth, cover, lo, hi, tie, INF, 0.035, 5.5, side)
-			if round or outline.size() > 6:
-				_rod_along(rod, cover, round)
-			else:
-				rod.bar(Vector2(cb.position.x - 0.18, straight_top + 0.02), Vector2(cb.end.x + 0.18, straight_top + 0.02), 0.03,
-					HANG - 0.02, HANG + 0.02)
+				_panel(cloth, minf(x_in, x_out), maxf(x_in, x_out), top, bottom, tie, 0.035, 5.5, side)
+			_rod(rod, x0 - 0.12, x1 + 0.12, rod_y, 0.03)
 
 
-## Eine Stoffbahn zwischen x0 und x1: oben entlang der Fensterform (Umriss cover), unten bis zur Fensterbank
-## bzw. bis y_max. tie > 0: unten zur Seite gerafft (Raffvorhang). Falten in z (Tiefe depth, Anzahl folds).
-func _panel(cloth: OpeningMesh, cover: PackedVector2Array, x0: float, x1: float, tie: float, y_max: float, depth: float,
-		folds: float, side: float = 0.0, follow_bottom: bool = false) -> void:
-	var cb := OpeningShape.bounds(cover)
+## Eine gerade Stoffbahn von x0 bis x1, oben an der Stange (top), unten bis bottom. tie > 0: unten zur Seite
+## gerafft (Raffvorhang). Falten in z (Tiefe depth, Anzahl folds).
+func _panel(cloth: OpeningMesh, x0: float, x1: float, top: float, bottom: float, tie: float, depth: float, folds: float,
+		side: float = 0.0) -> void:
 	var steps := maxi(8, roundi((x1 - x0) * 26.0))
 	var rows := 14
-	var bottom_y := cb.position.y + 0.04
 	var grid := []  # [Zeile][Spalte] = Vector3
 	for j in rows + 1:
 		var row := []
+		var v := float(j) / rows
+		var y := lerpf(top, bottom, v)
 		for i in steps + 1:
 			var u := float(i) / steps
 			var x := lerpf(x0, x1, u)
-			# Oben folgt der Stoff der Fensterform; außerhalb (seitlich) gerade auf Höhe des Scheitels
-			var span := WindowUnit.height_at(cover, clampf(x, cb.position.x + 0.001, cb.end.x - 0.001))
-			var top := span.y if x > cb.position.x and x < cb.end.x else cb.end.y
-			if span.y <= span.x:
-				top = cb.end.y
-			top = minf(top, y_max)
-			var low := bottom_y if y_max == INF else maxf(bottom_y, span.x)
-			if y_max != INF or follow_bottom:
-				low = maxf(span.x, cb.position.y) + 0.02
-			var v := float(j) / rows
-			var y := lerpf(top, low, v)
 			var fold := sin(u * folds * TAU) * depth * (0.6 + 0.4 * v)
 			if tie > 0.0 and side != 0.0:
 				# gerafft: zur Höhe des Bands hin zur Außenkante gezogen, darunter fällt der Stoff wieder auf
@@ -200,18 +184,11 @@ func _panel(cloth: OpeningMesh, cover: PackedVector2Array, x0: float, x1: float,
 			cloth.quad(a + back, b + back, c + back, d + back, -n)
 
 
-## Stange entlang der Oberkante der Fensterform (Bogen, Kreis) bzw. gerade.
-func _rod_along(rod: OpeningMesh, cover: PackedVector2Array, round: bool) -> void:
-	var cb := OpeningShape.bounds(cover)
-	var points := PackedVector2Array()
-	var steps := 24
-	for i in steps + 1:
-		var x := lerpf(cb.position.x + 0.02, cb.end.x - 0.02, float(i) / steps)
-		var span := WindowUnit.height_at(cover, x)
-		points.append(Vector2(x, (span.y if span.y > span.x else cb.end.y) + 0.02))
-	if round:
-		# beim Rundfenster: gerade Stange über dem Kreis
-		rod.bar(Vector2(cb.position.x - 0.1, cb.end.y + 0.03), Vector2(cb.end.x + 0.1, cb.end.y + 0.03), 0.03, HANG - 0.02, HANG + 0.02)
-		return
-	for i in points.size() - 1:
-		rod.bar(points[i], points[i + 1], 0.025, HANG - 0.015, HANG + 0.015)
+## Gerade Stange von x0 bis x1 auf Höhe y, an beiden Enden mit Halter zur Wand und Endknauf.
+func _rod(rod: OpeningMesh, x0: float, x1: float, y: float, thick: float) -> void:
+	rod.bar(Vector2(x0, y), Vector2(x1, y), thick, HANG - thick * 0.5, HANG + thick * 0.5)
+	for x in [x0 + 0.04, x1 - 0.04]:
+		# Halter: von der Wand (z = 0) bis hinter die Stange
+		rod.bar(Vector2(x, y - 0.015), Vector2(x, y + 0.015), 0.022, -0.005, HANG)
+	for x in [x0, x1]:
+		rod.box(Vector3(x, y, HANG), Vector3(0.035, 0.035, 0.035), 0.008)

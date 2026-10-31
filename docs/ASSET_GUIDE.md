@@ -10,10 +10,47 @@ Sie sind so gebaut, dass du sie später leicht durch eigene Dateien ersetzen kan
 | Vorlagen        | `assets/models/templates/` | `.glb` (nur zum Modellieren, siehe unten) |
 | Texturen        | `assets/textures/`      | `.png`, `.jpg`      |
 | Materialien     | `assets/materials/`     | `.tres` (Godot)     |
-| Musik           | `assets/audio/music/`   | `.ogg`              |
-| Geräusche       | `assets/audio/sfx/`     | `.ogg`, `.wav`      |
+| Musik           | `assets/audio/music/`   | `.ogg` (auch `.mp3`, `.wav`) |
+| Geräusche       | `assets/audio/<bereich>/` (siehe „Eigene Geräusche“) | `.ogg` (auch `.wav`, `.mp3`) |
 
 Dateien einfach in den passenden Ordner kopieren. Godot erkennt sie automatisch.
+
+## Eigene Geräusche (seit Etappe 6d)
+Das Spiel hat ein kleines Audio-System (Autoload „Audio“, `scripts/autoload/audio.gd`): Du legst eine
+Datei mit dem richtigen Namen in den richtigen Ordner – fertig. **Fehlt eine Datei, bleibt es einfach
+still**, es gibt keine Fehlermeldung. Nach dem Hineinlegen Godot einmal öffnen (Import).
+
+- **Format:** am besten **`.ogg`** (klein, gute Qualität, läuft in Schleife ohne Lücke). `.wav` und `.mp3`
+  gehen auch. Umwandeln geht z. B. mit Audacity: Datei öffnen → *Exportieren* → *Als OGG exportieren*.
+- **Lautstärke:** Im Pausenmenü unter **Ton** gibt es vier Regler: **Musik**, **Umgebung**, **Effekte**
+  und **Stimmen**. Jeder Ordner spielt über einen dieser Regler (siehe Tabelle).
+- **Abwandlungen:** Damit z. B. Schritte nicht immer gleich klingen, darfst du mehrere Dateien anlegen:
+  `wood.ogg`, `wood_1.ogg`, `wood_2.ogg` … – das Spiel nimmt jedes Mal zufällig eine davon (dazu leicht
+  veränderte Tonhöhe bei Schritten).
+- **Kurz und leise schneiden:** Einzelgeräusche (Schritt, Klick, Buch) möglichst ohne Stille am Anfang;
+  Schleifen (Kamin, Umgebung, Motor) so schneiden, dass Ende und Anfang zusammenpassen.
+
+| Ordner | Regler | Dateiname (ohne Endung) | Wann |
+|---|---|---|---|
+| `assets/audio/ambience/` | Umgebung | `outdoor` | Hintergrund in Schleife (Vögel, ferne Stadt, Wind) |
+| | | `fireplace` | Kaminknistern in Schleife, solange das Feuer brennt (am Kamin, wird mit Abstand leiser) |
+| `assets/audio/footsteps/` | Effekte | `wood`, `stone` | Deine eigenen Schritte: drinnen Holzboden, draußen Stein |
+| `assets/audio/doors/` | Effekte | `door_open`, `door_close`, `shop_bell` | Ladentür auf/zu, Glocke beim Öffnen |
+| `assets/audio/vehicles/` | Effekte | `car_engine` | Motor jedes Autos in Schleife (Tonhöhe folgt dem Tempo) |
+| `assets/audio/ui/` | Effekte | `open`, `close` | Menü, Tablet oder Gestaltungsmodus geht auf/zu |
+| `assets/audio/books/` | Effekte | `take`, `place` | Buch in die Hand nehmen / ablegen oder einräumen |
+| `assets/audio/voices/` | Stimmen | (noch frei) | für spätere Stimmen |
+| `assets/audio/sfx/murmur/` | Stimmen | beliebig | Gemurmel beim Plaudern (siehe „Gemurmel und Sprechblasen“) |
+| `assets/audio/music/` | Musik | beliebig | alle Dateien nacheinander in zufälliger Reihenfolge |
+
+In jedem Ordner liegt eine kleine `LIESMICH.txt` mit denselben Namen. Feineinstellung in
+`scripts/autoload/game_config.gd`: `footstep_volume_db` (Schritte), `car_engine_volume_db` (Motor),
+`music_pause` (Pause zwischen zwei Liedern). Die Geräuschkulisse der Straße (Schritte der Passanten,
+Vögel an bestimmten Stellen, Wind, Hupen, Fahrradklingeln) kommt in einer eigenen Etappe (11b) dazu.
+
+**Für Programmierer:** `Audio.play("ui/open")` (ohne Ort), `Audio.play_at("doors/shop_bell", position)`,
+`Audio.loop_at(knoten, "ambience/fireplace")` (Schleife an einem Knoten) und an Lichtquellen das Feld
+**Loop Sound** (`LightSource.loop_sound`: läuft, solange das Licht an ist).
 
 ## Ein neues Möbelstück anlegen (ohne Code)
 Jedes Möbelstück im Katalog besteht aus zwei Teilen:

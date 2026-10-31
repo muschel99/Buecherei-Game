@@ -597,7 +597,43 @@ def build_arch_bookend(k):
     b.slab(outline, 0.08, m, dent=0.0008)
     k.collider((0.0, 0, 0.08), (0.12, 0.08, 0.16))
 
+
+# --- Kamin (seit Etappe 6d) ---
+
+def build_fireplace_min(k):
+    """Schlichter Kamin: glatter Putzblock mit rechteckiger Öffnung (weich gerundete Kanten), dunkler
+    Feuerraum, ein schmales Eichenbrett als Sims, flache Herdplatte aus Stein."""
+    k.mat("plaster", WHITE, grain="plaster", rough=0.9, vary=0.04)
+    k.mat("oak", OAK, grain="wood", rough=0.7, vary=0.06)
+    k.mat("soot", (0.12, 0.11, 0.1), grain="stone", rough=0.95, vary=0.05)
+    k.mat("slab", GREY, grain="stone", rough=0.6, vary=0.05)
+    pl = k.part("Putz", "plaster", bevel=0.012)
+    w, d, h = 1.1, 0.38, 1.05
+    # Wangen stehen auf der Herdplatte (Oberkante 0,06)
+    pl.box((-0.4, 0.0, (h + 0.06) / 2), (0.3, d, h - 0.06), step=0.5, dent=0.0008)
+    pl.box((0.4, 0.0, (h + 0.06) / 2), (0.3, d, h - 0.06), step=0.5, dent=0.0008)
+    pl.box((0, 0.0, 0.86), (0.5 + 0.02, d, 0.38), step=0.5, dent=0.0008)
+    sooty = k.part("Feuerraum", "soot", bevel=0.006)
+    sooty.box((0, 0.15, 0.4), (0.52, 0.06, 0.6), step=0.5, dent=0.001)
+    sooty.box((0, 0.03, 0.665), (0.52, 0.28, 0.03), step=0.5, dent=0.001)
+    for x in (-0.255, 0.255):
+        sooty.box((x, 0.03, 0.39), (0.02, 0.28, 0.58), step=0.5, dent=0.001)
+    sl = k.part("Herdplatte", "slab", bevel=0.006)
+    sl.box((0, -0.05, 0.03), (w + 0.12, d + 0.22, 0.06), step=0.5, dent=0.0005)
+    sl.box((0, 0.03, 0.08), (0.5, 0.3, 0.04), step=0.5, dent=0.0005)
+    shelf = k.part("Sims", "oak", bevel=0.006)
+    shelf.box((0, -0.03, h + 0.025), (w + 0.1, d + 0.1, 0.05), step=0.5, dent=0.0005)
+    F.fire(k, (0, 0.03, 0.1), width=0.42)
+    k.shadow = "optional"
+    k.surface((0, -0.03, h + 0.05), (w + 0.06, d + 0.06), 0.6)
+    k.collider((0, -0.02, (h + 0.05) / 2), (w + 0.12, d + 0.2, h + 0.05))
+
 ITEMS = [
+    dict(id="fireplace_min", name="Schlichter Kamin", category="lighting", sub="fireplace", price=340,
+         desc="Ein glatter Putzkamin mit schmalem Eichenbrett. Mit E knistert das Feuer.",
+         styles=STYLE, place="floor", sound="ambience/fireplace", build=build_fireplace_min,
+         variants=[("white", "Weiß", {"plaster": WHITE}), ("sand", "Sand", {"plaster": SAND}), ("grey", "Grau", {"plaster": GREY}),
+                   ("sage", "Salbei", {"plaster": SAGE})]),
     dict(id="shelf_cube_white", name="Würfelregal", category="shelf", sub="bookshelf", price=140,
          desc="Sechs offene Würfel mit runden Kanten auf kleinen Füßen – jeder Würfel ein Fach.",
          styles=STYLE, place="floor", adopt=True, build=build_cube_shelf, variants=wood_variants()),

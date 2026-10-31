@@ -155,6 +155,12 @@ static func draw(canvas: CanvasItem, key: String, rect: Rect2, color: Color) -> 
 			p.rect(9, 11, 6, 9)
 			p.line(12, 11, 12, 9)
 			p.poly([[12, 3], [14.5, 7.5], [12, 9], [9.5, 7.5]], true)
+		"fireplace":
+			# Kamin: Sims, zwei Wangen, Öffnung mit Flamme
+			p.line(3, 6, 21, 6)
+			p.rect(5, 6, 14, 14)
+			p.rect(9, 11, 6, 9)
+			p.poly([[12, 13], [14, 17], [12, 19], [10, 17]], true)
 		"switch":
 			p.rect(6, 4, 12, 16)
 			p.rect(10, 7, 4, 7)

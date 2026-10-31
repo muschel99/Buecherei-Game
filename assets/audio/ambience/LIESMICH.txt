@@ -1,0 +1,7 @@
+Ordner für Geräusche: Umgebung (Lautstärke „Umgebung“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
+Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+
+- outdoor  – Hintergrund draußen in Schleife (Vögel, ferne Stadt, Wind)
+- fireplace – Knistern des Kamins (Schleife, nur wenn das Feuer brennt)

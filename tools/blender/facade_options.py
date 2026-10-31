@@ -62,7 +62,9 @@ QUOINS = [("sandstone", "Ecksteine Sandstein", True, dict(color=(0.86, 0.78, 0.6
 FASCIA_MATS = [("oak", "Eiche natur", dict(color=(0.55, 0.38, 0.22), grain="wood", bump=0.1, rough=0.7, vary=0.08)),
                ("stone_sand", "Stein hell", dict(color=(0.84, 0.77, 0.64), grain="stone", bump=0.25, rough=0.9, vary=0.08)),
                ("stone_grey", "Stein grau", dict(color=(0.62, 0.61, 0.58), grain="stone", bump=0.25, rough=0.9, vary=0.08))]
-FABRIC = dict(grain="fabric", rough=0.95, vary=0.04, wind=0.04)
+# Wind wie bei den Markisen der anderen Läden (storybook_common „Markisenstoff“); wie frei jede Stelle
+# schwingt, steht im Alpha der Vertex-Farbe der Markisen-Modelle
+FABRIC = dict(grain="fabric", rough=0.95, vary=0.04, wind=0.035)
 FABRICS = [
     ("stripes_red", "Streifen rot", dict(FABRIC, color=(0.93, 0.88, 0.78), color2=(0.66, 0.2, 0.18), stripes=0.13)),
     ("stripes_green", "Streifen grün", dict(FABRIC, color=(0.93, 0.88, 0.78), color2=(0.25, 0.42, 0.3), stripes=0.13)),
@@ -120,9 +122,15 @@ MIXES = [
      ["potfill_hydrangea_white", "potfill_trailing", "potfill_heather_white"], ["rim_bacopa", "rim_ivy"], False),
 ]
 # Deko vor der Tür: (id, Name, Modell, Preis)
-DECO = [("bench", "Bank und Töpfe", "deco_bench", 160), ("steps", "Töpfe auf der Treppe", "deco_steps", 90),
-        ("sign", "Aufsteller und Laterne", "deco_sign", 110), ("planters", "Kübelpflanzen", "deco_planters", 140),
-        ("all", "Alles zusammen", "deco_all", 380)]
+# Deko vor der Bücherei (seit Etappe 6d): vier Bereiche, je mit „nichts“ – (Kategorie, id, Name, Teil, Preis)
+DECO = [("deco_steps", "pots", "Töpfe auf der Treppe", "deco_steps_pots", 90),
+        ("deco_steps", "lantern", "Töpfe und Laterne", "deco_steps_lantern", 160),
+        ("deco_walk", "tubs", "Kübelpflanzen", "deco_walk_tubs", 140),
+        ("deco_walk", "pots", "Töpfe unter dem Fenster", "deco_walk_pots", 80),
+        ("deco_seat", "bench", "Bank", "deco_seat_bench", 160),
+        ("deco_seat", "chair", "Kleiner Stuhl", "deco_seat_chair", 70),
+        ("deco_sign", "board", "Aufsteller", "deco_sign_board", 60)]
+DECO_NONE = {"deco_steps": "Treppe frei", "deco_walk": "Gehweg frei", "deco_seat": "Kein Sitzplatz", "deco_sign": "Kein Schild"}
 
 
 def options():
@@ -179,9 +187,10 @@ def options():
         out.append(("plants", oid, name, k * 10, 60, free, dict(plants=box, basket_plants=basket, rim_plants=rims, swatch=sw)))
     for k, (oid, name, amount) in enumerate([("sparse", "Dezent", 0.7), ("lush", "Üppig", 1.0), ("overflowing", "Überquellend", 1.35)]):
         out.append(("fullness", oid, name, k * 10, 0, oid == "lush", dict(amount=amount, swatch=(0.45 + 0.1 * k, 0.6, 0.4))))
-    out.append(("deco", "none", "Keine Deko", 0, 0, True, dict(swatch=(0.9, 0.9, 0.88))))
-    for k, (oid, name, scene, price) in enumerate(DECO):
-        out.append(("deco", oid, name, 10 + k * 10, price, False, dict(scene=M % scene)))
+    for cat, name in DECO_NONE.items():
+        out.append((cat, "none", name, 0, 0, True, dict(swatch=(0.9, 0.9, 0.88))))
+    for k, (cat, oid, name, scene, price) in enumerate(DECO):
+        out.append((cat, oid, name, 10 + k * 10, price, False, dict(scene=M % scene)))
     return out
 
 

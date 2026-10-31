@@ -1,5 +1,5 @@
 extends Node
-## Spieler-Einstellungen (Bildschirm, später z. B. Lautstärke und Mausempfindlichkeit).
+## Spieler-Einstellungen (Bildschirm, Grafik, Oberfläche, Lautstärken).
 ##
 ## Die Einstellungen stehen in einer eigenen Datei (user://settings.cfg), getrennt vom
 ## Spielstand, und werden beim Spielstart automatisch geladen und angewendet.
@@ -21,7 +21,7 @@ const RESOLUTIONS: Array[Vector2i] = [
 ]
 
 ## Alle Einstellungen. Arten: "choice" (Auswahlliste), "toggle" (an/aus),
-## "resolution" (Auflösungsliste), später z. B. "slider" (Schieberegler).
+## "resolution" (Auflösungsliste), "slider" (Schieberegler 0–100 %).
 const DEFINITIONS: Array[Dictionary] = [
 	{"key": "display/window_mode", "section": "Bildschirm", "label": "Anzeige",
 		"type": "choice", "options": ["Fenster", "Vollbild"], "default": 0},
@@ -43,6 +43,11 @@ const DEFINITIONS: Array[Dictionary] = [
 		"type": "choice", "options": ["Aus", "Nur Symbole", "Symbol mit Wort"], "default": 2},
 	{"key": "interface/build_key_help", "section": "Oberfläche", "label": "Tastenhilfe im Gestaltungsmodus (H)",
 		"type": "toggle", "default": true},
+	# Lautstärken in Prozent (seit Etappe 6d, Kanäle des Audio-Systems, siehe Autoload „Audio“)
+	{"key": "audio/music_volume", "section": "Ton", "label": "Musik", "type": "slider", "default": 60},
+	{"key": "audio/ambience_volume", "section": "Ton", "label": "Umgebung", "type": "slider", "default": 80},
+	{"key": "audio/effects_volume", "section": "Ton", "label": "Effekte", "type": "slider", "default": 80},
+	{"key": "audio/voices_volume", "section": "Ton", "label": "Stimmen", "type": "slider", "default": 70},
 ]
 
 ## Werte der Einstellung "Hinweise" (Tastensymbole unter der Bildmitte).
