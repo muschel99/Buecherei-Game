@@ -39,6 +39,10 @@ const ACCELERATE := 1.6
 ## sanft aus; so schnell folgt die Fahrzeugrichtung der Kurve (je Sekunde)
 const JERK := 2.4
 const TURN_FOLLOW := 6.0
+## Beim Bremsen baut sich die Verzögerung schneller auf (m/s³); so viel zu schnell (m/s) darf ein
+## Fahrzeug während des weichen Übergangs sein, sonst bremst es sofort
+const JERK_BRAKE := 7.0
+const BRAKE_SLACK := 0.6
 ## Abstand, mit dem vor einem Hindernis gehalten wird (Meter, zwischen den Rändern).
 const STOP_GAP := 1.6
 ## So weit voraus wird geschaut (Meter).
@@ -208,9 +212,13 @@ func _wanted_speed() -> float:
 func _drive(delta: float, wanted: float) -> void:
 	var before := speed
 	if wanted < speed:
-		# Bremsen folgt der (schon weichen) Bremskurve vor dem Hindernis – nie später als nötig
-		speed = maxf(wanted, speed - BRAKE * 1.5 * delta)
-		_accel = minf(_accel, 0.0)
+		# Bremsen: die Verzögerung baut sich weich auf und läuft vor dem Halten aus (kein Ruck)
+		var need := minf(BRAKE * 1.5, (speed - wanted) * 2.2 + 0.3)
+		_accel = move_toward(minf(_accel, 0.0), -need, JERK_BRAKE * delta)
+		speed = maxf(wanted, speed + _accel * delta)
+		# Sicherheitsnetz: deutlich zu schnell (jemand tritt plötzlich auf die Fahrbahn) = sofort bremsen
+		if speed > wanted + BRAKE_SLACK:
+			speed = maxf(wanted + BRAKE_SLACK, speed - BRAKE * 1.5 * delta)
 	else:
 		# Anfahren: Beschleunigung baut sich langsam auf und läuft vor dem Wunschtempo aus
 		var target := minf(ACCELERATE, (wanted - speed) * 1.4)

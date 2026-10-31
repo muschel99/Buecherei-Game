@@ -22,7 +22,7 @@ const YARD_WALL_THICKNESS := 0.3
 ## Sitzplätze von der Stammmitte, Richtungen der Sitzplätze (Winkel in Bogenmaß, 0 = +X, zur
 ## Gasse hin; frei von Kissen und Hocker) und welche davon Passanten nehmen (vom Weg aus
 ## erreichbar, nicht an den Beeten).
-const BENCH_SEAT_HEIGHT := 0.45
+const BENCH_SEAT_HEIGHT := 0.25
 const BENCH_SEAT_RADIUS := 0.68
 const BENCH_SEAT_ANGLES: Array[float] = [1.75, 2.7, 3.65, 4.6, 5.55]
 const BENCH_WALKER_SEATS: Array[float] = [1.75, 4.6, 5.55]

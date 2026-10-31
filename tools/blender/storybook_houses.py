@@ -621,9 +621,9 @@ class House:
             ztop = self.zs[1] if st["fachwerk"] else self.E - 0.35
             # die Hausecke liegt bei Fachwerk mit Vorkragung vorn am Pfosten (vor der Erdgeschosswand)
             yc = sb - (self.jetty if post else 0.0)
+            # beide Ecken vorn gleich (seit Etappe 6c): auch wenn nur eine Seitenwand frei steht, bekommen
+            # beide Hausecken Ecksteine – um die Ecke herum laufen sie nur an der freien Seite
             for side in (-1, 1):
-                if not st["quoins"] and side not in exposed:
-                    continue
                 z, k = 0.5, 0
                 while z + 0.3 < ztop:
                     wdt = (0.42 if k % 2 == 0 else 0.27) if not post else (0.3 if k % 2 == 0 else 0.2)

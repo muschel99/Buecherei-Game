@@ -571,7 +571,7 @@ def outside(M, C):
     bistro_table(M, C, "Tisch links", -1.62, -0.62, 90)
     # Stühle neben den Tischen mit Blick zur Straße (seit Etappe 6c): vorn ist frei – so setzen sich
     # Passanten von vorn hin, ohne durch den Tisch zu gehen
-    chair(M, C, "Stuhl links", -2.17, -0.6, -12, 92)
+    chair(M, C, "Stuhl links", -2.17, -0.6, 12, 92)
     bistro_table(M, C, "Tisch rechts", 1.95, -0.62, 94)
     chair(M, C, "Stuhl rechts 1", 1.4, -0.62, 12, 96)
     chair(M, C, "Stuhl rechts 2", 2.5, -0.64, -12, 98)
