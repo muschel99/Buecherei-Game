@@ -92,6 +92,7 @@ var _framed := false  # wurde die Ansicht diesmal zur Seite gedreht?
 func _ready() -> void:
 	add_to_group(GROUP)
 	_build()
+	TabletSounds.watch(self)
 	hide()
 	BookStock.changed.connect(_queue_refresh)
 	BookStock.carried_changed.connect(_queue_refresh)

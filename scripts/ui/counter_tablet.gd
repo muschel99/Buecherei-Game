@@ -70,6 +70,7 @@ func _ready() -> void:
 	add_child(thumbnails)
 	_apps = load_apps()
 	_build()
+	TabletSounds.watch(self)
 	hide()
 	Wallet.money_changed.connect(func(_money: int, _change: int) -> void: _queue_refresh())
 	Inventory.changed.connect(_queue_refresh)
@@ -503,6 +504,7 @@ func _build() -> void:
 		icon.name = app.id
 		icon.setup(app)
 		icon.pressed.connect(launch_app.bind(app.id))
+		TabletSounds.own_sound(icon)   # ploppt beim Öffnen der App (launch_app)
 		grid.add_child(icon)
 		_app_icons[app.id] = icon
 

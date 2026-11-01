@@ -1,9 +1,10 @@
-Ordner für Geräusche: Musik (Lautstärke „Musik“)
+Ordner für Musik (Lautstärke „Musik“)
 
-Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
-(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Seit Etappe 6f nach Stimmung sortiert – je ein Unterordner:
+- day     tagsüber (Standard; die drei Lo-fi-Stücke)
+- night   abends und nachts (vorbereitet)
+- rain    bei Regen (vorbereitet)
+- winter  im Winter (vorbereitet)
+Alle Dateien eines Ordners (.ogg, auch .wav/.mp3, Name egal) laufen in zufälliger Reihenfolge und gehen weich
+ineinander über, ohne Pause. Ist ein Ordner leer, läuft „day“ (und Dateien direkt hier im Ordner music/).
 Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
-
-- Alle Dateien hier laufen nacheinander in zufälliger Reihenfolge – Name egal.
-
-Vorhanden: calm.ogg, lofi.ogg, optimistic_lofi.ogg

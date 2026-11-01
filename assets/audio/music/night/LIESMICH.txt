@@ -1,0 +1,5 @@
+Musik: Abends und nachts (vorbereitet – noch leer)
+
+Alle Dateien hier (.ogg, auch .wav/.mp3) laufen in zufälliger Reihenfolge und gehen weich ineinander über,
+ohne Pause. Name egal. Ist der Ordner leer, läuft die Musik von „day“ (dann die aus dem Ordner music/ selbst).
+Das Spiel wählt den Ordner später nach Tageszeit, Wetter und Jahreszeit (Audio.set_music_mood).

@@ -20,6 +20,13 @@ const FOLDER_BUS := {"music": "Music", "ambience": "Ambience", "voices": "Voices
 
 ## name -> Array[AudioStream] (leer = gibt es nicht; wird nur einmal gesucht)
 var _cache := {}
+## Musik: zwei Player zum Überblenden, Stücke der aktuellen Stimmung (seit Etappe 6f)
+var _music_players: Array[AudioStreamPlayer] = []
+var _music_active := 0
+var _music_tracks: Array = []
+var _music_index := 0
+var _music_mood := "day"
+var _music_tween: Tween
 
 
 func _ready() -> void:
@@ -112,6 +119,7 @@ func play_at(sound_name: String, position: Vector3, volume_db: float = 0.0, pitc
 	player.bus = bus_for(sound_name)
 	player.volume_db = volume_db
 	player.pitch_scale = pitch
+	_spatial(player, GameConfig.audio_max_distance)
 	get_tree().current_scene.add_child(player)
 	player.global_position = position
 	player.finished.connect(player.queue_free)
@@ -131,31 +139,88 @@ func start_ambience(sound_name: String) -> void:
 	player.play()
 
 
-## Musik: alle Dateien in assets/audio/music/ nacheinander in zufälliger Reihenfolge (mit kurzer Pause).
-func start_music() -> void:
+## Musik (seit Etappe 6f nach Stimmung in Unterordnern von music/: day, night, rain, winter): alle Stücke des
+## Ordners in zufälliger Reihenfolge, ohne Pause – das nächste Stück blendet weich über das Ende des alten
+## (GameConfig.music_crossfade). Ein leerer Ordner nimmt „day“ bzw. die Dateien direkt in music/.
+func start_music(mood: String = "day") -> void:
+	for i in 2:
+		var player := AudioStreamPlayer.new()
+		player.name = "Music%d" % i
+		player.bus = "Music"
+		player.volume_db = -80.0
+		add_child(player)
+		_music_players.append(player)
+	set_music_mood(mood)
+
+
+## Stimmung der Musik wechseln (später nach Tageszeit, Wetter und Jahreszeit): das laufende Stück blendet
+## weich in ein Stück aus dem neuen Ordner über.
+func set_music_mood(mood: String) -> void:
+	_music_mood = mood
+	_music_tracks = _music_files(mood)
+	if _music_tracks.is_empty() and mood != "day":
+		_music_tracks = _music_files("day")
+	if _music_tracks.is_empty():
+		_music_tracks = _music_files("")
+	_music_tracks.shuffle()
+	_music_index = 0
+	if not _music_tracks.is_empty() and not _music_players.is_empty():
+		_next_track()
+
+
+func get_music_mood() -> String:
+	return _music_mood
+
+
+func _music_files(mood: String) -> Array:
 	var tracks := []
-	var dir := ROOT + "music/"
+	var dir := ROOT + "music/" + (mood + "/" if not mood.is_empty() else "")
 	if DirAccess.dir_exists_absolute(dir):
 		for file in DirAccess.get_files_at(dir):
 			var name := file.trim_suffix(".import").trim_suffix(".remap")
 			if name.get_extension().to_lower() in EXTENSIONS and not tracks.has(dir + name):
 				tracks.append(dir + name)
-	if tracks.is_empty():
+	return tracks
+
+
+## Nächstes Stück auf dem freien Player einblenden, das laufende ausblenden.
+func _next_track() -> void:
+	if _music_players.is_empty() or _music_tracks.is_empty():
 		return
-	tracks.shuffle()
-	var player := AudioStreamPlayer.new()
-	player.name = "Music"
-	player.bus = "Music"
-	add_child(player)
-	var index := [0]
-	var play_next := func() -> void:
-		player.stream = load(tracks[index[0] % tracks.size()])
-		index[0] += 1
-		player.play()
-	player.finished.connect(func() -> void:
-		# kurze, jedes Mal etwas andere Pause zwischen den Stücken (die Dateien blenden selbst sanft ein und aus)
-		get_tree().create_timer(GameConfig.music_pause * randf_range(0.6, 1.8)).timeout.connect(play_next))
-	play_next.call()
+	var old: AudioStreamPlayer = _music_players[_music_active]
+	_music_active = 1 - _music_active
+	var player: AudioStreamPlayer = _music_players[_music_active]
+	var path: String = _music_tracks[_music_index % _music_tracks.size()]
+	_music_index += 1
+	if _music_index >= _music_tracks.size():
+		# Runde zu Ende: neu mischen, aber nicht dasselbe Stück zweimal hintereinander
+		_music_index = 0
+		var last := path
+		_music_tracks.shuffle()
+		if _music_tracks.size() > 1 and _music_tracks[0] == last:
+			_music_tracks.append(_music_tracks.pop_front())
+	player.stream = load(path)
+	player.volume_db = -40.0
+	player.play()
+	var fade := GameConfig.music_crossfade
+	if _music_tween:
+		_music_tween.kill()
+	_music_tween = create_tween().set_parallel()
+	_music_tween.tween_property(player, "volume_db", 0.0, fade).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if old.playing:
+		_music_tween.tween_property(old, "volume_db", -60.0, fade).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		_music_tween.chain().tween_callback(old.stop)
+
+
+func _process(_delta: float) -> void:
+	# kurz vor dem Ende des laufenden Stücks das nächste überblenden (keine Pause)
+	if _music_players.is_empty() or _music_tracks.is_empty():
+		return
+	var player: AudioStreamPlayer = _music_players[_music_active]
+	if player.stream == null:
+		return
+	if not player.playing or player.get_playback_position() >= player.stream.get_length() - GameConfig.music_crossfade:
+		_next_track()
 
 
 func _looped(s: AudioStream) -> AudioStream:
@@ -183,7 +248,7 @@ func play_on(owner_node: Node3D, sound_name: String, volume_db: float = 0.0, pit
 	player.bus = bus_for(sound_name)
 	player.volume_db = volume_db
 	player.pitch_scale = pitch
-	player.max_distance = max_distance
+	_spatial(player, max_distance)
 	player.position = offset
 	owner_node.add_child(player)
 	player.finished.connect(player.queue_free)
@@ -208,6 +273,16 @@ func loop_at(owner_node: Node3D, sound_name: String, volume_db: float = 0.0, max
 	player.stream = s
 	player.bus = bus_for(sound_name)
 	player.volume_db = volume_db
-	player.max_distance = max_distance
+	_spatial(player, max_distance)
 	owner_node.add_child(player)
 	return player
+
+
+## Räumlich hören (seit Etappe 6f): leiser mit der Entfernung (unit_size = GameConfig.audio_unit_size statt
+## Godots 10 m – sonst klang alles fast gleich laut und schien „von mir“ zu kommen), in der Ferne dumpfer,
+## ab max_distance still.
+func _spatial(player: AudioStreamPlayer3D, max_distance: float) -> void:
+	player.unit_size = GameConfig.audio_unit_size
+	player.max_distance = max_distance
+	player.attenuation_filter_cutoff_hz = 6000.0
+	player.attenuation_filter_db = -18.0

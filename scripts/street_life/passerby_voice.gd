@@ -7,13 +7,14 @@ extends RefCounted
 
 ## Anlass → [Wahrscheinlichkeit, Laut für Frauen, Laut für Männer] (leer = kein Laut)
 const LINES := {
-	&"chat_laugh": [0.7, ["voices/laugh_female", "voices/giggle_female"], ["voices/laugh_female_2"]],
+	# Männer lachen vorerst nicht (das tiefer gestellte Frauenlachen klang gruselig): „hm“ oder still lächeln
+	&"chat_laugh": [0.7, ["voices/laugh_female", "voices/giggle_female"], ["voices/hmm_male", ""]],
 	&"chat_listen": [0.25, ["voices/hmm_male"], ["voices/hmm_male"]],
 	&"window_wonder": [0.6, ["voices/oh_female"], ["voices/hmm_male"]],
 	&"watch": [0.3, ["voices/hmm_male"], ["voices/hmm_male"]],
 }
-## Tonhöhe je Stimme: Männer ein wenig tiefer (das Lachen ist eine Frauenstimme), Frauen beim „hm“ höher
-const PITCH := {"female_hmm": 1.22, "male_laugh": 0.86}
+## Tonhöhe je Stimme: Frauen beim „hm“ höher (die Aufnahme ist eine Männerstimme)
+const PITCH := {"female_hmm": 1.22}
 
 static var _last_any := -100.0
 
@@ -33,11 +34,11 @@ static func speak(figure: Node3D, trigger: StringName, female: bool, head: float
 	if names.is_empty():
 		return last
 	var sound: String = names[randi() % names.size()]
+	if sound.is_empty():
+		return last   # still lächeln
 	var pitch := Audio.vary(0.05)
 	if female and sound.contains("hmm"):
 		pitch *= PITCH.female_hmm
-	elif not female and sound.contains("laugh"):
-		pitch *= PITCH.male_laugh
 	var player := Audio.play_on(figure, sound, GameConfig.passerby_voice_volume_db, pitch, GameConfig.passerby_voice_distance,
 		Vector3(0.0, head, 0.0))
 	if player == null:

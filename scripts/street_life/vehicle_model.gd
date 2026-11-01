@@ -37,6 +37,8 @@ const SECOND_NAMES := ["Autolack zwei"]
 ## Geräusche (Audio-System): Motor in Schleife und kurzes freundliches Hupen
 @export var engine_sound: String = "vehicles/car_engine"
 @export var horn_sound: String = "vehicles/horn_car"
+## Rumpeln der Reifen auf dem Kopfsteinpflaster (seit Etappe 6f, wird mit dem Tempo lauter; leer = keins)
+@export var rumble_sound: String = "vehicles/road_rumble"
 
 var _wheels: Array[Node3D] = []
 var _mirrored: Array[bool] = []
@@ -52,6 +54,7 @@ var _steer := 0.0
 var _wheelbase := 2.4
 var _driver: ChibiPasserbyModel
 var _engine: AudioStreamPlayer3D
+var _rumble: AudioStreamPlayer3D
 
 
 func _ready() -> void:
@@ -81,6 +84,8 @@ func _ready() -> void:
 	if _engine == null and driver_seat != Vector3.ZERO:
 		# Motor (Audio-System: engine_sound, fehlt die Datei, bleibt es still)
 		_engine = Audio.loop_at(self, engine_sound, GameConfig.car_engine_volume_db, 28.0)
+		if not rumble_sound.is_empty():
+			_rumble = Audio.loop_at(self, rumble_sound, GameConfig.road_rumble_volume_db, 22.0)
 
 
 
@@ -177,6 +182,16 @@ func animate_drive(speed: float, delta: float, accel: float, turn_rate: float) -
 		if not _engine.playing and is_visible_in_tree():
 			_engine.play()
 		_engine.pitch_scale = 0.85 + clampf(speed / 9.0, 0.0, 1.0) * 0.45
+	if _rumble:
+		# Pflaster: im Stehen still, mit dem Tempo lauter und etwas schneller
+		var amount := clampf(speed / 9.0, 0.0, 1.0)
+		if amount > 0.03 and is_visible_in_tree():
+			if not _rumble.playing:
+				_rumble.play()
+			_rumble.volume_db = GameConfig.road_rumble_volume_db + linear_to_db(maxf(amount, 0.05))
+			_rumble.pitch_scale = 0.8 + amount * 0.45
+		elif _rumble.playing:
+			_rumble.stop()
 	if _sway:
 		# Drehpunkt in Höhe der Achsen, damit die Räder auf dem Boden bleiben
 		var pivot := Vector3(0.0, wheel_radius, 0.0)
@@ -192,6 +207,8 @@ func honk() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and _engine and not is_visible_in_tree():
 		_engine.stop()
+		if _rumble:
+			_rumble.stop()
 
 
 func set_shadows(enabled: bool) -> void:

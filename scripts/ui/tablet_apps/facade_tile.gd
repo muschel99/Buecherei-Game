@@ -45,6 +45,10 @@ var _style: TabletAppStyle
 
 
 
+func _init() -> void:
+	TabletSounds.own_sound(self)   # eigener Plopp (unten), kein zweiter vom Tablet
+
+
 func _enter_tree() -> void:
 	# leises Plopp beim Antippen (Audio-System, ui/plop_*)
 	if not pressed.is_connected(_plop):

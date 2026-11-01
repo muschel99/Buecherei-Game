@@ -60,8 +60,10 @@ var camera_fov: float = 72.0
 var camera_max_horizontal_fov: Array[float] = [88.0, 98.0, 108.0]
 ## Stärke des sanften Kopfwippens beim Laufen in Metern (0 = aus).
 var head_bob_amount: float = 0.02
-## Tempo des Kopfwippens (höher = schnellere Schritte).
-var head_bob_frequency: float = 4.5
+## Schritte je Sekunde beim Gehen und beim Rennen (seit Etappe 6f; bestimmt Schrittgeräusch und Kamerawippen –
+## ersetzt das frühere head_bob_frequency)
+var footstep_rate_walk: float = 2.2
+var footstep_rate_sprint: float = 2.67
 
 
 # --- Interaktion ---
@@ -316,10 +318,17 @@ var street_detail_distance: float = 28.0
 var library_occluders: bool = true
 var plant_shadow_min_height: float = 0.5
 ## Geräusche (seit Etappe 6d, Audio-System): Lautstärke der eigenen Schritte und des Automotors (dB,
-## zusätzlich zu den Reglern in den Einstellungen), Pause zwischen zwei Musikstücken (Sekunden)
+## zusätzlich zu den Reglern in den Einstellungen)
 var footstep_volume_db: float = -10.0
-var car_engine_volume_db: float = -14.0
-var music_pause: float = 4.0
+var car_engine_volume_db: float = -7.0
+## Räumliche Geräusche (seit Etappe 6f): bis zu dieser Entfernung (m) volle Lautstärke, danach leiser; ab
+## audio_max_distance (m) nicht mehr zu hören (play_at)
+var audio_unit_size: float = 3.0
+var audio_max_distance: float = 40.0
+## Rumpeln der Reifen auf dem Kopfsteinpflaster (vehicles/road_rumble, wird mit dem Tempo lauter; dB bei 9 m/s)
+var road_rumble_volume_db: float = -9.0
+## Musik (seit Etappe 6f): so viele Sekunden blendet das nächste Stück über das Ende des laufenden (keine Pause)
+var music_crossfade: float = 5.0
 ## Fahrzeuge federn weich (seit Etappe 6c, VehicleModel): Nicken je m/s² Beschleunigung und Neigen je m/s²
 ## Querbeschleunigung (Bogenmaß), Federhärte und Dämpfung (kleiner = schwingt länger nach), größter
 ## Lenkeinschlag der Vorderräder; Fahrräder legen sich in Kurven (cyclist_lean_factor, 1 = wie in echt)
@@ -338,6 +347,9 @@ var street_view_margin: float = 12.0
 
 
 # --- Gestaltungsmodus (Etappe 2) ---
+
+## Dinge an der Tür (Türkranz) rasten in dieser Höhe (Meter über der Unterkante des Türblatts) mittig ein
+var door_hang_height: float = 1.55
 
 ## Kantenlänge eines Rasterfelds in Metern. Mit eingeschaltetem Einrasten (G)
 ## rasten Möbel auf diesem Raster ein. 1/9 m (≈ 11,1 cm) = 9 Felder pro Meter.
@@ -708,6 +720,10 @@ var chibi_greet_radius: float = 3.5
 var chibi_greet_chance_player: float = 0.8
 var chibi_greet_chance_others: float = 0.4
 var chibi_greet_cooldown: float = 30.0
+## Zur Spielfigur schauen Passanten nur kurz (Sekunden), danach eine Weile nicht mehr (seit Etappe 6f) – wer
+## plaudert, wendet sich so wieder dem Gegenüber zu
+var chibi_player_glance_time: float = 3.0
+var chibi_player_glance_rest: float = 25.0
 var chibi_nod_angle: float = 9.0
 var chibi_nod_time: float = 0.8
 var chibi_greet_smile_time: float = 2.5
@@ -746,13 +762,6 @@ var car_horn_volume_db: float = -8.0
 var bike_bell_cooldown: float = 9.0
 var bike_bell_random_interval: Vector2 = Vector2(45.0, 110.0)
 var bike_bell_volume_db: float = -9.0
-## Vögel und Katzen (AmbientSounds): Pause zwischen zwei Vögeln (s), Entfernung der Vögel zur Spielfigur (m),
-## Pause zwischen zwei Katzenlauten (s)
-var bird_interval: Vector2 = Vector2(3.5, 10.0)
-var bird_distance: Vector2 = Vector2(6.0, 28.0)
-var bird_volume_db: float = -4.0
-var cat_interval: Vector2 = Vector2(35.0, 90.0)
-var cat_volume_db: float = -6.0
 var passerby_voice_cooldown: float = 14.0
 var passerby_voice_gap: float = 4.0
 var passerby_voice_volume_db: float = -6.0

@@ -552,7 +552,7 @@ func _update_placement() -> void:
 		problem = _place_on_ceiling(hit)
 	elif not hit.is_empty() and hang_kind != Room.HangKind.NONE and data.allows(hang_kind) \
 			and absf(hit.normal.y) < 0.5:
-		problem = _place_on_wall(hit)
+		problem = _place_on_wall(hit, hang_kind == Room.HangKind.DOOR)
 		if hang_kind == Room.HangKind.DOOR and _door_is_open(hit.collider):
 			problem = "Die Tür ist offen – an eine offene Tür hängt man nichts."
 	elif not hit.is_empty() and hit.normal.y > -0.5 and \
@@ -663,10 +663,18 @@ func _check_surface_fit(surface: PlacementSurface) -> String:
 
 
 ## Hängende Dinge: an der Wand oder an der Tür. Die Rückseite liegt an der Fläche.
-func _place_on_wall(hit: Dictionary) -> String:
+func _place_on_wall(hit: Dictionary, on_door := false) -> String:
 	var normal: Vector3 = Vector3(hit.normal.x, 0.0, hit.normal.z).normalized()
 	var point: Vector3 = hit.position
-	if grid_enabled:
+	if on_door:
+		# Türkranz & Co. (seit Etappe 6f): rastet an jeder Tür fest ein – waagerecht in der Mitte des Türblatts,
+		# in fester Höhe, auf der Seite, auf die man schaut (auch vor Glas) – springt also nicht mehr mit dem Blick
+		var leaf := hit.collider as Node3D
+		var up := leaf.global_basis.y.normalized()
+		var bottom := leaf.global_position - up * (FacadeLayout.LEAF_H / 2.0)
+		point = bottom + up * GameConfig.door_hang_height
+		point += normal * (hit.position - point).dot(normal)
+	elif grid_enabled:
 		var cell := GameConfig.grid_cell_size
 		point.y = snappedf(point.y, cell)
 		# entlang der Wand einrasten

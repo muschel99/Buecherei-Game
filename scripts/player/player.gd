@@ -352,11 +352,16 @@ func _move(delta: float) -> void:
 func _update_head_bob(delta: float) -> void:
 	var speed := Vector2(velocity.x, velocity.z).length()
 	var speed_ratio := clampf(speed / GameConfig.walk_speed, 0.0, 1.0)
-	# Beim schnellen Laufen werden die Schritte schneller, das Wippen aber nicht stärker
-	var step_ratio := speed / GameConfig.walk_speed
+	# Schritte je Sekunde (seit Etappe 6f nach dem Tempo: beim Gehen footstep_rate_walk, beim Rennen
+	# footstep_rate_sprint, dazwischen gleitend, langsamer als Gehen entsprechend weniger); ein halbes Wippen
+	# der Kamera = ein Schritt = ein Schrittgeräusch
+	var rate := GameConfig.footstep_rate_walk * speed_ratio
+	if speed > GameConfig.walk_speed:
+		var t := clampf((speed - GameConfig.walk_speed) / maxf(GameConfig.sprint_speed - GameConfig.walk_speed, 0.01), 0.0, 1.0)
+		rate = lerpf(GameConfig.footstep_rate_walk, GameConfig.footstep_rate_sprint, t)
 	if is_on_floor() and speed > 0.1:
 		var before := floori(_head_bob_time / PI)
-		_head_bob_time += delta * GameConfig.head_bob_frequency * step_ratio
+		_head_bob_time += delta * PI * rate
 		if floori(_head_bob_time / PI) != before:
 			# ein Schritt: drinnen Holzboden, draußen Stein (Audio-System, fehlt die Datei: still)
 			var surface := "footsteps/wood" if global_position.y > -0.25 else "footsteps/stone"

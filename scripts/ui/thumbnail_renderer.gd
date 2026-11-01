@@ -31,8 +31,12 @@ var _queue: Array = []  # [Kennung, Callable (baut das Modell), Callable (bekomm
 
 ## Ordner für die gespeicherten Fotos (Name = Kennung + Stand der Quelldateien)
 const DISK_CACHE := "user://thumbnails/"
-## Erhöhen, wenn sich Licht oder Kamera der Fotos ändern (dann werden alle neu gemacht)
-const CACHE_VERSION := 1
+## Erhöhen, wenn sich Licht oder Kamera der Fotos ändern (dann werden alle neu gemacht). 2 = seit Etappe 6f:
+## früher konnte ein leeres (weißes) Foto gespeichert werden – alle einmal neu machen
+const CACHE_VERSION := 2
+## So viel des Bildes muss das Modell mindestens bedecken (Anteil sichtbarer Bildpunkte), sonst gilt das Foto als
+## leer und wird noch einmal gemacht (nie gespeichert)
+const MIN_COVERAGE := 0.004
 var _is_busy := false
 
 
@@ -164,8 +168,13 @@ func _work() -> void:
 			texture = await _photograph(job[1].call(), job[3], job[4])
 			if not is_inside_tree():
 				return
+			if _covered(texture.get_image()) < MIN_COVERAGE:
+				# leer (Modell noch nicht fertig gezeichnet): einmal nachfotografieren, nie leer speichern
+				texture = await _photograph(job[1].call(), job[3], job[4], 4)
+				if not is_inside_tree():
+					return
 			_cache[key] = texture
-			if not disk.is_empty():
+			if not disk.is_empty() and _covered(texture.get_image()) >= MIN_COVERAGE:
 				DirAccess.make_dir_recursive_absolute(DISK_CACHE)
 				texture.get_image().save_png(disk)
 		if job[2].is_valid():
@@ -202,7 +211,21 @@ static func _furniture_sources(data: FurnitureData) -> Array:
 
 
 ## Stellt das Modell auf, richtet die Kamera aus und macht ein Foto.
-func _photograph(model: Node3D, view_direction: Vector3, view: Dictionary = {}) -> Texture2D:
+## Anteil der Bildpunkte, die nicht durchsichtig sind (grob, jeder vierte Punkt).
+static func _covered(image: Image) -> float:
+	if image == null or image.is_empty():
+		return 0.0
+	var hits := 0
+	var total := 0
+	for y in range(0, image.get_height(), 4):
+		for x in range(0, image.get_width(), 4):
+			total += 1
+			if image.get_pixel(x, y).a > 0.1:
+				hits += 1
+	return float(hits) / maxf(float(total), 1.0)
+
+
+func _photograph(model: Node3D, view_direction: Vector3, view: Dictionary = {}, settle_frames := 2) -> Texture2D:
 	_stage.add_child(model)
 	FurnitureUtils.make_preview_only(model)
 	# Bücherregale bekommen fürs Foto ein paar Beispielbücher
@@ -227,8 +250,11 @@ func _photograph(model: Node3D, view_direction: Vector3, view: Dictionary = {}) 
 		_camera.near = 0.05
 		_camera.far = 60.0
 
-	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-	await RenderingServer.frame_post_draw
+	# ein paar Bilder lang zeichnen (neue Materialien und Shader brauchen manchmal einen Moment), dann das Foto
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	for i in settle_frames:
+		await RenderingServer.frame_post_draw
+	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	var image := _viewport.get_texture().get_image()
 	_stage.remove_child(model)
 	model.queue_free()

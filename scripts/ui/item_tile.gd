@@ -21,6 +21,7 @@ var variant: String = ""
 
 var _thumbnails: ThumbnailRenderer
 var _picture: TextureRect
+var _stage: Control
 var _swatch: Panel
 var _badge: PanelContainer
 var _badge_label: Label
@@ -38,6 +39,7 @@ var _badge_default_color := KEY_COLOR
 func _init(tile_size: Vector2 = Vector2(132, 112), with_dots: bool = false) -> void:
 	# leises Plopp beim Antippen (Audio-System, ui/plop_*)
 	pressed.connect(func() -> void: Audio.play("ui/plop", -6.0, Audio.vary(0.05)))
+	TabletSounds.own_sound(self)
 	custom_minimum_size = tile_size
 	toggle_mode = true
 	focus_mode = Control.FOCUS_NONE
@@ -64,6 +66,16 @@ func _init(tile_size: Vector2 = Vector2(132, 112), with_dots: bool = false) -> v
 		add_theme_stylebox_override(state, box)
 
 	var bottom := DOT_SIZE + 10.0 if with_dots else 6.0
+	# dezenter Untergrund hinter dem Foto (seit Etappe 6f): heller Kreis + weicher Schatten am Boden – so heben
+	# sich auch weiße und helle Möbel von der hellen Kachel ab
+	_stage = _Stage.new()
+	_stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_stage.offset_left = 6
+	_stage.offset_top = 6
+	_stage.offset_right = -6
+	_stage.offset_bottom = -bottom
+	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_stage)
 	_picture = TextureRect.new()
 	_picture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_picture.offset_left = 6
@@ -132,6 +144,7 @@ func setup(new_item: Resource, new_variant: String, thumbnails: ThumbnailRendere
 	variant = new_item.resolve_variant(new_variant) if new_item is FurnitureData else ""
 	if item is SurfaceData:
 		_picture.visible = false
+		_stage.visible = false
 		_swatch.visible = true
 		var box := StyleBoxFlat.new()
 		box.bg_color = item.preview_color
@@ -177,6 +190,11 @@ func set_badge(text: String, color: Color = KEY_COLOR, coin: bool = false) -> vo
 
 ## Im Look einer Tablet-App (seit Etappe 6b): Kachel, Rahmen, Zahl und Tupfer-Ring in ihren Farben.
 func apply_style(style: TabletAppStyle) -> void:
+	if _stage:
+		# Untergrund etwas dunkler als die Kachel (auf dunklen Kacheln etwas heller)
+		var light := style.panel.get_luminance() > 0.5
+		(_stage as _Stage).tint = Color(0.0, 0.0, 0.0, 0.07) if light else Color(1.0, 1.0, 1.0, 0.06)
+		_stage.queue_redraw()
 	var states := {
 		"normal": style.panel,
 		"hover": style.panel.lerp(style.accent, 0.16),
@@ -301,3 +319,19 @@ class _ColorDot:
 		draw_arc(center, radius, 0.0, TAU, 24, Color(0, 0, 0, 0.35), 1.0, true)
 		if tile.variant == color_variant.id or is_hovered():
 			draw_arc(center, radius + 2.5, 0.0, TAU, 28, tile.ring_color, 1.6, true)
+
+
+## Untergrund hinter dem Foto einer Kachel: weicher Kreis und ein flacher Schatten am Boden.
+class _Stage:
+	extends Control
+	var tint := Color(0.0, 0.0, 0.0, 0.07)
+
+	func _draw() -> void:
+		var r := minf(size.x, size.y) * 0.42
+		var center := size / 2.0
+		draw_circle(center, r, tint)
+		draw_circle(center, r * 0.72, Color(tint, tint.a * 0.6))
+		# Schatten am Boden: flache Ellipse unten
+		draw_set_transform(Vector2(center.x, size.y * 0.86), 0.0, Vector2(1.0, 0.22))
+		draw_circle(Vector2.ZERO, r * 0.75, Color(0.0, 0.0, 0.0, 0.1))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

@@ -24,9 +24,7 @@ func _ready() -> void:
 	# Geräuschkulisse und Musik (Audio-System: Dateien in assets/audio/ambience und assets/audio/music)
 	Audio.start_ambience("ambience/outdoor")
 	Audio.start_music()
-	var ambient := AmbientSounds.new()
-	ambient.name = "AmbientSounds"
-	$Outside.add_child(ambient)
+	# Vögel und Katzen sind seit Etappe 6f still: Tiergeräusche kommen nur noch von sichtbaren Tieren (Vögel folgen)
 	_add_library_occluders()
 	# Alle Knoten der Szene sind jetzt bereit – also können sie ihre Daten übernehmen
 	SaveManager.load_game()

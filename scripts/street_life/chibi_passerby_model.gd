@@ -55,6 +55,9 @@ var _head_modifier: ChibiHeadModifier
 var _gesture_modifier: ChibiGestureModifier
 ## Zeit des letzten Lauts dieser Figur (PasserbyVoice)
 var _voice_last := -100.0
+## Seit wann die Figur zur Spielfigur schaut (-1 = gerade nicht) und bis wann sie es nicht wieder tut
+var _player_look_since := -1.0
+var _player_rest_until := 0.0
 var _gesture: ChibiGestureModifier.Gesture = ChibiGestureModifier.Gesture.NONE
 var _gesture_left := 0.0
 var _gesture_time := 0.0
@@ -527,12 +530,25 @@ func _scan_focus() -> void:
 	var best: Node3D = null
 	var best_dist := INF
 	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
-	if camera:
+	var now_s := Time.get_ticks_msec() / 1000.0
+	if camera and now_s >= _player_rest_until:
 		var dist := _focus_distance(me, forward, camera.global_position, GameConfig.chibi_look_player_radius,
 			GameConfig.chibi_look_angle)
 		if dist < INF and _line_clear(me, camera.global_position):
 			best = camera
 			best_dist = dist
+	# Nur kurz zur Spielfigur schauen (seit Etappe 6f): nach chibi_player_glance_time Sekunden wieder zum
+	# Gegenüber bzw. nach vorn, und eine Weile nicht mehr – sonst starrten plaudernde Passanten die ganze Zeit
+	if best == camera and best != null:
+		if _player_look_since < 0.0:
+			_player_look_since = now_s
+		elif now_s - _player_look_since > GameConfig.chibi_player_glance_time:
+			_player_rest_until = now_s + GameConfig.chibi_player_glance_rest
+			_player_look_since = -1.0
+			best = null
+			best_dist = INF
+	else:
+		_player_look_since = -1.0
 	if best == null:
 		for other in _everyone:
 			if other == self or not other.is_visible_in_tree():

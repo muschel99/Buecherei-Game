@@ -251,6 +251,7 @@ func _build_tabs() -> void:
 	clear(_tabs)
 	for page: Dictionary in PAGES:
 		var tab := _PageTab.new()
+		TabletSounds.own_sound(tab)
 		tab.name = page.id
 		tab.icon_key = page.icon
 		tab.word = page.name

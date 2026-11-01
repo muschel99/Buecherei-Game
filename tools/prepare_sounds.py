@@ -91,9 +91,9 @@ JOBS = [
     ("Tastatur_tippen_laut.mp3", "computer/keyboard_loud", "computer", "loop", dict(gain=-3.0)),
     ("mouse klick.mp3", "computer/mouse_click", "computer", "split", dict(n=0)),
     # Musik (ruhig im Hintergrund)
-    ("background_calmmusic.mp3", "music/calm", "music", "music", dict()),
-    ("background_lofi_music.mp3", "music/lofi", "music", "music", dict()),
-    ("background_optimistic lofi.mp3", "music/optimistic_lofi", "music", "music", dict()),
+    ("background_calmmusic.mp3", "music/day/calm", "music", "music", dict()),
+    ("background_lofi_music.mp3", "music/day/lofi", "music", "music", dict()),
+    ("background_optimistic lofi.mp3", "music/day/optimistic_lofi", "music", "music", dict()),
 ]
 # Bewusst nicht verwendet (Wunsch der Entwicklerin): Female_eww.mp3, female_urgh.mp3
 
