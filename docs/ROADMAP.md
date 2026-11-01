@@ -91,9 +91,14 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   (Erdgeschoss, Obergeschoss, Fenster, Markisen, Tür, Blumenkästen, Ampeln, Pflanzen – alles
   kombinierbar), der Briefkasten sauber eingebaut mit Gegenstück innen und die neue App „Fassade“ mit
   Live-Vorschau auf zwei Polaroids, „Bauen“ und „Abbrechen“.
-- **Etappe 6c–6e:** Fenster und Türen in jeder Form, Freischaltungen, Vorhänge, Deko vor der Tür mit
-  Sitzplätzen; Passanten plaudern, grüßen und winken; Fahrräder im Bilderbuch-Stil, Autos mit Fahrer;
-  ein Kamin je Stil mit lebendigen Flammen; spürbar weniger Rechenarbeit (Schatten, Verdecker) und
+- **Etappe 6c:** die Bücherei beginnt als altes Backsteinhaus (bröckelnder Putz, Risse, verwitterte Farbe);
+  Fenster und Türen in vielen Formen (Sprossen, ganz Glas, rund, Bogen, Erker, Rundbogentür, Fenster um die
+  Tür) aus einem Umriss – innen wie außen ohne Lücke; Freischaltungen mit Schloss (Testtaste F11),
+  Schildbalken, Pflanzen-Mischungen, Deko vor der Tür, Vorhänge im Shop; Passanten grüßen, winken, plaudern
+  mit Sprechblasen; Fahrräder im weichen Bilderbuch-Stil mit weichem Fahren.
+- **Etappe 6d und 6e:** Regel „Würde es in echt funktionieren?“ für alle Modelle; Deko vor der Tür in vier
+  Bereichen mit Stuhl zum Sitzen; Autos mit Volumen, dunklen Scheiben und Fahrer; ein Kamin je Stil mit
+  lebendigen Flammen; ruhige, schnelle Fassaden-App; spürbar weniger Rechenarbeit (Schatten, Verdecker) und
   **Geräusche und Musik** aus den eigenen Aufnahmen – räumlich, mit vielen Varianten, vier Lautstärken.
 
 **Wo die wichtigen Dateien liegen**
