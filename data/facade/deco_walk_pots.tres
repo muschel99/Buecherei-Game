@@ -8,7 +8,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "pots"
-display_name = "Töpfe unter dem Fenster"
+display_name = "Töpfe vor dem Fenster"
 category = "deco_walk"
 unlocked = false
 order = 40

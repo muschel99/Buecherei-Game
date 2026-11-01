@@ -23,6 +23,8 @@ extends Node3D
 const CORE_PATH := "res://assets/models/facade/core.glb"
 const PLANT_FOLDER := "res://scenes/world/plants/"
 ## Große Kübel der Deko vor der Tür: Sträucher und Bäumchen
+## Bäumchen im Kübel auf der Treppe (Deko „Bäumchen und Töpfe“)
+const TUBTREE_PLANT := "tubtree_bay"
 const TUB_PLANTS: Array[String] = ["pot_boxball", "pot_olive", "pot_bush", "pot_cone", "tubtree_bay", "pot_hydrangea", "pot_lavender"]
 const MATERIALS := {
 	"paint": "res://assets/materials/storybook/facade_paint.tres",
@@ -597,6 +599,14 @@ func _plant_all() -> void:
 		rng.seed = 1000 + k * 17
 		var base := _relative(spot)
 		var width := float(extras.get("width", 0.3))
+		if spot.name.begins_with("FacadeSpot_tubtree"):
+			# Bäumchen im Kübel (Deko auf der Treppe, seit Etappe 6f): immer der Lorbeer-Hochstamm
+			var tree := _plant(TUBTREE_PLANT)
+			if tree:
+				var tt := clampf(width / tree.nominal_size.x, 0.45, 1.2)
+				tree.transform = base * Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * tt), Vector3.ZERO)
+				holder.add_child(tree)
+			continue
 		if spot.name.begins_with("FacadeSpot_tub"):
 			var tub := _plant(TUB_PLANTS[(k * 3 + (mix.order if mix else 0)) % TUB_PLANTS.size()])
 			if tub:

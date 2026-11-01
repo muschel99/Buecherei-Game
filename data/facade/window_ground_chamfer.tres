@@ -7,10 +7,16 @@
 
 [resource]
 script = ExtResource("1_data")
-id = "lantern"
-display_name = "Töpfe und Laterne"
-category = "deco_steps"
+id = "chamfer"
+display_name = "Fenster mit Schrägecken"
+category = "window_ground"
 unlocked = false
-order = 20
-price = 160
-scene_path = "res://assets/models/facade/deco_steps_lantern.glb"
+order = 50
+price = 340
+shape = "chamfer"
+opening = Vector2(2.400, 2.300)
+bottom = 0.300
+rise = 0.420
+muntins = Vector2i(4, 2)
+bay_depth = 0.000
+pattern = "transom"

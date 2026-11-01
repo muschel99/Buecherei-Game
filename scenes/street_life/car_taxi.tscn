@@ -35,7 +35,8 @@ wheel_positions = Array[Vector3]([Vector3(0.74, 0.35, 1.36), Vector3(0.74, 0.35,
 fixed_color = true
 paint_color = Color(0.05, 0.05, 0.055, 1)
 second_color = Color(0.9, 0.88, 0.82, 1)
-driver_seat = Vector3(-0.37, 0.68, 0.42)
+driver_seat = Vector3(-0.37, 0.68, 0.2)
 driver_scale = 0.9
+driver_headroom = 1.78
 
 [node name="Car" parent="Model" instance=ExtResource("3_body")]

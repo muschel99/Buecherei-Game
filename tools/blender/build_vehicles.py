@@ -205,7 +205,28 @@ class Body:
                     b.poly(q, WELL)
                     cells[(i, k)] = (q0, nq0, "well")
                     continue
-                mat = mat_fn(c, n_out.normalized() if n_out.length > 1e-9 else out.normalized(), self)
+                n_unit = n_out.normalized() if n_out.length > 1e-9 else out.normalized()
+                if isinstance(mat_fn, Glazing):
+                    # Seit Etappe 6f: Fensterumrisse genau aus der Zelle schneiden (glatte Kanten statt Treppe)
+                    pieces = mat_fn.split(q, nq, c, n_unit, self)
+                    if len(pieces) == 1 and not pieces[0]["rims"]:
+                        piece = pieces[0]
+                        if piece["glass"]:
+                            b.poly([p - nn * GLASS_INSET for p, nn in zip(q, nq)], GLASS, normals=nq)
+                        else:
+                            b.poly(q, piece["mat"], normals=nq)
+                        cells[(i, k)] = (q0, nq0, "glass" if piece["glass"] else "body")
+                        continue
+                    for piece in pieces:
+                        if piece["glass"]:
+                            b.poly([p - nn * GLASS_INSET for p, nn in zip(piece["pts"], piece["normals"])], GLASS,
+                                   normals=piece["normals"])
+                        else:
+                            b.poly(piece["pts"], piece["mat"], normals=piece["normals"])
+                            self._piece_shell(b, piece)
+                    cells[(i, k)] = (q0, nq0, "split")
+                    continue
+                mat = mat_fn(c, n_unit, self)
                 b.poly(q, mat, normals=nq)
                 cells[(i, k)] = (q0, nq0, "glass" if mat is GLASS else "body")
         self._inner_shell(b, cells, len(rings[0][0]))
@@ -239,6 +260,17 @@ class Body:
                 rim = [a, c, c - nq[e1] * t, a - nq[e0] * t]
                 glass_center = sum(cells[other][0], Vector()) / 4
                 b.face(rim, INNER, glass_center - (a + c) / 2)
+
+    def _piece_shell(self, b, piece):
+        """Innenhaut eines zugeschnittenen Lack-Stücks und die Kante am Fensterumriss (Außen- zu Innenhaut)."""
+        t = self.THICK
+        pts, nrm = piece["pts"], piece["normals"]
+        inner = [p - nn * t for p, nn in zip(pts, nrm)]
+        center = sum(pts, Vector()) / len(pts)
+        axis = Vector((0.0, (self.f("bottom", center.z) + self.f("top", center.z)) / 2, center.z))
+        b.face(inner, INNER, axis - center)
+        for a, c, na, nc, toward in piece["rims"]:
+            b.face([a, c, c - nc * t, a - na * t], INNER, toward)
 
     def side_x(self, z, y):
         """x der Außenhaut rechts (x > 0) in Höhe y am Querschnitt z."""
@@ -336,14 +368,15 @@ def mirror(b, body, z, y, side=1, mat=CHROME):
     b.cylinder(V(side * (x + 0.1), y + 0.07, z - 0.064), 0.04, 0.004, Mat("glass", glass=True), segments=10, axis="z", caps=(True, True))
 
 
-def interior(b, body, z_front, z_back, floor_y, seat_mat=SEAT, rows=1, wheel_side=-1):
-    """Innenraum hinter dem Glas: Boden, Sitze, Armaturenbrett, Lenkrad (rechts gelenkt = -x)."""
+def interior(b, body, z_front, z_back, floor_y, seat_mat=SEAT, rows=1, wheel_side=-1, seat_back=0.0):
+    """Innenraum hinter dem Glas: Boden, Sitze, Armaturenbrett, Lenkrad (rechts gelenkt = -x). seat_back = Sitze
+    und Lenkrad so weit nach hinten (seit Etappe 6f: der Kopf der Person am Steuer bleibt unter dem flachen Dach)."""
     hw = body.f("hw", (z_front + z_back) / 2) - 0.12
     b.box((-hw, floor_y, z_back), (hw, floor_y + 0.02, z_front), DASH)
     belt = body.f("belt", z_front)
     b.box((-hw, floor_y, z_front - 0.12), (hw, belt - 0.02, z_front), DASH)
     sx = hw * 0.5
-    row_z = [z_front - 0.55 - r * 0.85 for r in range(rows)]
+    row_z = [z_front - 0.55 - seat_back - r * 0.85 for r in range(rows)]
     for rz in row_z:
         if rz < z_back + 0.25:
             continue
@@ -352,62 +385,351 @@ def interior(b, body, z_front, z_back, floor_y, seat_mat=SEAT, rows=1, wheel_sid
             b.box((x - w / 2, floor_y + 0.019, rz - 0.22), (x + w / 2, floor_y + 0.32, rz + 0.22), seat_mat)
             b.box((x - w / 2, floor_y + 0.3, rz - 0.26), (x + w / 2, floor_y + 0.85, rz - 0.2), seat_mat)
     wx = wheel_side * sx
-    ring = [V(wx + math.cos(a) * 0.17, belt + 0.02 + math.sin(a) * 0.17 * 0.85, z_front - 0.32 - math.sin(a) * 0.08)
+    wz = z_front - 0.32 - seat_back
+    ring = [V(wx + math.cos(a) * 0.17, belt + 0.02 + math.sin(a) * 0.17 * 0.85, wz - math.sin(a) * 0.08)
             for a in [2 * math.pi * k / 16 for k in range(17)]]
     b.tube(ring, 0.014, DARK, segments=5, caps=False)
-    b.tube([V(wx, belt - 0.05, z_front - 0.3), V(wx, belt - 0.15, z_front - 0.12)], 0.02, DARK, segments=5)
+    b.tube([V(wx, belt - 0.05, wz + 0.02), V(wx, belt - 0.15, z_front - 0.12)], 0.02, DARK, segments=5)
 
 
 # ---------------------------------------------------------------------------------------------
 # Rad (eigene Datei, Godot setzt es ein und dreht es)
 # ---------------------------------------------------------------------------------------------
 
+def _lathe(b, profile, mat, seg, closed=False):
+    """Drehkörper um die x-Achse: profile = [(x, r), …] gegen den Uhrzeigersinn in der (x, r)-Ebene (x nach
+    rechts, r nach oben) – die Außenseite liegt dann rechts der Laufrichtung. Punkte mit r = 0 liegen auf der Achse."""
+    pts = list(profile) + ([profile[0]] if closed else [])
+    for (x0, r0), (x1, r1) in zip(pts, pts[1:]):
+        # Normale des Profilstücks (in der x/r-Ebene, nach rechts gedreht = nach außen)
+        dx, dr = x1 - x0, r1 - r0
+        nx, nr = dr, -dx
+        for k in range(seg):
+            a0 = 2 * math.pi * k / seg
+            a1 = 2 * math.pi * (k + 1) / seg
+            q = [V(x0, math.cos(a0) * r0, math.sin(a0) * r0), V(x0, math.cos(a1) * r0, math.sin(a1) * r0),
+                 V(x1, math.cos(a1) * r1, math.sin(a1) * r1), V(x1, math.cos(a0) * r1, math.sin(a0) * r1)]
+            if r0 < 1e-6:
+                q = [q[0], q[2], q[3]]
+            elif r1 < 1e-6:
+                q = [q[0], q[1], q[2]]
+            am = (a0 + a1) / 2
+            b.face(q, mat, Vector((nx, math.cos(am) * nr, math.sin(am) * nr)))
+
+
 def wheel(name, radius, width, rim_mat=CHROME, hub="dish", spokes=0):
-    """Ein Rad, Achse = x, Mitte im Ursprung, Außenseite nach +x: Reifen mit runder Flanke und
-    Profilrillen, Felge, Radkappe."""
+    """Ein Rad, Achse = x, Mitte im Ursprung, Außenseite nach +x (seit Etappe 6f ganz geschlossen): der Reifen
+    ist ein Ring-Körper mit runden Flanken, Lauffläche mit Profil und Innenwand auf der Felge; die Felge ist ein
+    eigener Drehkörper (Schüssel mit Rand, Nabe mit Radkappe, innen eine geschlossene Scheibe) – nirgends ein Loch."""
     b = S.Builder(name)
     hwid = width / 2
-    # Reifen: Drehkörper um x (Profil von innen nach außen)
-    prof = [(-hwid, radius * 0.66), (-hwid - 0.004, radius * 0.8), (-hwid + 0.004, radius * 0.94), (-hwid + 0.03, radius),
-            (hwid - 0.03, radius), (hwid - 0.004, radius * 0.94), (hwid + 0.004, radius * 0.8), (hwid, radius * 0.66)]
-    seg = 28
-    rings = []
-    for x, r in prof:
-        rings.append([V(x, math.cos(a) * r, math.sin(a) * r) for a in [2 * math.pi * k / seg for k in range(seg)]])
-    for ra, rb in zip(rings, rings[1:]):
-        for k in range(seg):
-            k1 = (k + 1) % seg
-            q = [ra[k], ra[k1], rb[k1], rb[k]]
-            c = sum(q, Vector()) / 4
-            b.face(q, RUBBER, Vector((0, c.y, c.z)))
-    # Profilrillen (dunkle Blöcke auf der Lauffläche)
+    rin = radius * 0.66
+    seg = 32
+    # Reifen: geschlossenes Profil (Flanke innen, Lauffläche, Flanke außen, zurück an der Felge entlang)
+    tire = [(hwid, rin), (hwid + 0.004, radius * 0.8), (hwid - 0.004, radius * 0.95), (hwid - 0.03, radius),
+            (-hwid + 0.03, radius), (-hwid + 0.004, radius * 0.95), (-hwid - 0.004, radius * 0.8), (-hwid, rin)]
+    _lathe(b, tire, RUBBER, seg, closed=True)
+    # Profilrillen (Blöcke auf der Lauffläche)
     for k in range(seg):
         a = 2 * math.pi * (k + 0.5) / seg
         for sx in (-1, 1):
             b.push(S.Matrix.Rotation(a, 4, "X"))
             b.box((sx * 0.25 * width - 0.012, radius - 0.004, -0.012), (sx * 0.25 * width + 0.012, radius + 0.004, 0.012), RUBBER)
             b.pop()
-    # Felge: Scheibe innen, Ring, Radkappe außen
-    # Felge als geschlossene Trommel (innen und außen zu – der Reifen ist nicht hohl)
-    b.cylinder(V(-hwid * 0.6, 0, 0), radius * 0.66, hwid * 1.4, rim_mat, segments=seg, axis="x", caps=(True, True))
-    b.cylinder(V(hwid * 0.6, 0, 0), radius * 0.62, 0.006, rim_mat, segments=seg, axis="x", caps=(True, True))
+    # Felge: außen Rand (Wulst) und Schüssel nach innen, innen eine flache Scheibe – liegt 2 mm innerhalb des
+    # Reifens (kein Flimmern an der Felgenschulter)
+    r = rin - 0.002
+    rim = [(-hwid * 0.85, 0.0), (-hwid * 0.85, r * 0.55), (-hwid * 0.95, r), (hwid * 0.8, r), (hwid * 0.95, r * 0.96),
+           (hwid * 0.9, r * 0.88), (hwid * 0.45, r * 0.72), (hwid * 0.35, r * 0.42), (hwid * 0.55, r * 0.3)]
+    rim.reverse()
+    _lathe(b, rim, rim_mat, seg)
     if hub == "dish":
-        b.push(S.Matrix.Translation((hwid * 0.6 + 0.004, 0, 0)) @ S.Matrix.Diagonal((0.25, 1.0, 1.0, 1.0)))
-        b.sphere(V(0, 0, 0), radius * 0.4, CHROME, rings=7, segments=24)
-        b.pop()
+        # Radkappe: flache Kuppel mitten auf der Schüssel
+        cap = [(hwid * 0.9, 0.0), (hwid * 0.86, r * 0.16), (hwid * 0.72, r * 0.3), (hwid * 0.5, r * 0.36), (hwid * 0.48, 0.0)]
+        _lathe(b, cap, CHROME, seg)
+    else:
+        b.cylinder(V(hwid * 0.5, 0, 0), r * 0.34, 0.03, CHROME, segments=16, axis="x", caps=(True, True))
     if spokes:
         for k in range(spokes):
             a = 2 * math.pi * k / spokes
             b.push(S.Matrix.Rotation(a, 4, "X"))
-            b.box((hwid * 0.6, -0.012, radius * 0.18), (hwid * 0.6 + 0.012, 0.012, radius * 0.6), rim_mat)
+            b.box((hwid * 0.42, -0.012, r * 0.3), (hwid * 0.42 + 0.012, 0.012, r * 0.72), rim_mat)
             b.pop()
-        b.cylinder(V(hwid * 0.6, 0, 0), radius * 0.18, 0.02, CHROME, segments=14, axis="x", caps=(True, True))
     return b
 
 
 # ---------------------------------------------------------------------------------------------
 # Fenster und Lack je Fläche
 # ---------------------------------------------------------------------------------------------
+
+# So weit liegt das Glas hinter der Außenhaut (die Kante der Öffnung ist sichtbar, kein Flimmern)
+GLASS_INSET = 0.012
+
+
+def _convex_hull(points):
+    """Konvexe Hülle (gegen den Uhrzeigersinn) einer Punktmenge in 2D."""
+    pts = sorted(set((round(p[0], 6), round(p[1], 6)) for p in points))
+    if len(pts) < 3:
+        return pts
+
+    def cross(o, a, b2):
+        return (a[0] - o[0]) * (b2[1] - o[1]) - (a[1] - o[1]) * (b2[0] - o[0])
+    lower, upper = [], []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 1e-12:
+            lower.pop()
+        lower.append(p)
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 1e-12:
+            upper.pop()
+        upper.append(p)
+    return lower[:-1] + upper[:-1]
+
+
+def _clip_half(poly, a, d):
+    """Teil eines Vielecks links der Geraden durch a mit Richtung d (Sutherland-Hodgman)."""
+    out = []
+    n = len(poly)
+    for i in range(n):
+        p, q = poly[i], poly[(i + 1) % n]
+        sp = d[0] * (p[1] - a[1]) - d[1] * (p[0] - a[0])
+        sq = d[0] * (q[1] - a[1]) - d[1] * (q[0] - a[0])
+        if sp >= 0:
+            out.append(p)
+        if (sp >= 0) != (sq >= 0):
+            t = sp / (sp - sq)
+            out.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+    return out
+
+
+def _area(poly):
+    return sum(poly[i][0] * poly[(i + 1) % len(poly)][1] - poly[(i + 1) % len(poly)][0] * poly[i][1] for i in range(len(poly))) / 2
+
+
+def rounded(poly, radius, steps=5):
+    """Konvexes Vieleck mit runden Ecken (erst um radius schrumpfen, dann mit Kreisbögen wachsen)."""
+    poly = _convex_hull(poly)
+    if _area(poly) < 0:
+        poly = poly[::-1]
+    shrunk = [(-50.0, -50.0), (50.0, -50.0), (50.0, 50.0), (-50.0, 50.0)]
+    n = len(poly)
+    for i in range(n):
+        a, c = poly[i], poly[(i + 1) % n]
+        d = (c[0] - a[0], c[1] - a[1])
+        ln = math.hypot(*d)
+        if ln < 1e-9:
+            continue
+        inward = (-d[1] / ln, d[0] / ln)
+        shrunk = _clip_half(shrunk, (a[0] + inward[0] * radius, a[1] + inward[1] * radius), d)
+        if len(shrunk) < 3:
+            return poly
+    out = []
+    m = len(shrunk)
+    for i in range(m):
+        prev, p, nxt = shrunk[i - 1], shrunk[i], shrunk[(i + 1) % m]
+        a0 = math.atan2(-(p[0] - prev[0]), p[1] - prev[1])    # Außennormale der Kante davor
+        a1 = math.atan2(-(nxt[0] - p[0]), nxt[1] - p[1])      # … und danach
+        while a1 < a0:
+            a1 += 2 * math.pi
+        for k in range(steps + 1):
+            a = a0 + (a1 - a0) * k / steps
+            out.append((p[0] + math.cos(a) * radius, p[1] + math.sin(a) * radius))
+    return _convex_hull(out)
+
+
+class Glazing:
+    """Scheiben eines Autos als glatte, konvexe Umrisse (seit Etappe 6f; vorher wurde Kachel für Kachel Glas
+    gewählt – das gab eckige Treppen). front/rear: Umrisse in (x, y) für Flächen, die nach vorn bzw. hinten
+    zeigen (Windschutz- und Heckscheibe), sides: [(Umriss in (z, y), Seiten)] für die Seitenfenster (Seiten =
+    (-1, 1) oder nur eine). Die Zellen der Karosserie werden genau am Umriss geteilt; paint(c, n, body) wählt
+    den Lack der übrigen Stücke."""
+
+    def __init__(self, paint, front=(), rear=(), sides=()):
+        self.paint = paint
+        self.front = [self._ccw(p) for p in front]
+        self.rear = [self._ccw(p) for p in rear]
+        self.sides = [(self._ccw(p), tuple(sd)) for p, sd in sides]
+
+    @staticmethod
+    def _ccw(poly):
+        poly = [tuple(p) for p in poly]
+        return poly if _area(poly) > 0 else poly[::-1]
+
+    def __call__(self, c, n, body):
+        return self.paint(c, n, body)
+
+    def _regions(self, c, n, body):
+        """Welche Umrisse für eine Zelle gelten und wie ihre Punkte in die Ebene der Umrisse kommen."""
+        belt = body.f("belt", c.z)
+        if c.y < belt:
+            return [], None
+        if n.z > 0.4 and n.y < 0.8:
+            return self.front, lambda p: (p.x, p.y)
+        if n.z < -0.4 and n.y < 0.8:
+            return self.rear, lambda p: (p.x, p.y)
+        if abs(n.x) > 0.35:
+            side = 1 if c.x > 0 else -1
+            return [poly for poly, sd in self.sides if side in sd], lambda p: (p.z, p.y)
+        return [], None
+
+    def split(self, q, nq, c, n, body):
+        polys, proj = self._regions(c, n, body)
+        whole = {"pts": q, "normals": nq, "glass": False, "mat": self.paint(c, n, body), "rims": []}
+        if not polys:
+            return [whole]
+        q2 = [proj(p) for p in q]
+        for poly in polys:
+            inside = [self._inside(poly, p) for p in q2]
+            if all(inside):
+                return [dict(whole, glass=True)]
+            if any(inside) or self._overlaps(poly, q2):
+                return self._cut(q, nq, q2, poly, c, n, body)
+        return [whole]
+
+    @staticmethod
+    def _inside(poly, p):
+        n = len(poly)
+        for i in range(n):
+            a, c = poly[i], poly[(i + 1) % n]
+            if (c[0] - a[0]) * (p[1] - a[1]) - (c[1] - a[1]) * (p[0] - a[0]) < 0:
+                return False
+        return True
+
+    @staticmethod
+    def _overlaps(poly, q2):
+        return len(_clip_poly(q2, poly)) >= 3 and abs(_area(_clip_poly(q2, poly))) > 1e-10
+
+    def _cut(self, q, nq, q2, poly, c, n, body):
+        pieces = []
+        for tri in ((0, 1, 2), (0, 2, 3)):
+            P = [q[i] for i in tri]
+            N = [nq[i] for i in tri]
+            T = [q2[i] for i in tri]
+            area = _area(T)
+            if abs(area) < 1e-10:
+                inside = self._inside(poly, ((T[0][0] + T[1][0] + T[2][0]) / 3, (T[0][1] + T[1][1] + T[2][1]) / 3))
+                pieces.append({"pts": P, "normals": N, "glass": inside, "mat": self.paint(c, n, body), "rims": []})
+                continue
+
+            def lift(p2):
+                # Schwerpunktkoordinaten im Dreieck (2D) -> Punkt und Normale auf der Fläche (3D)
+                l1 = ((T[1][1] - T[2][1]) * (p2[0] - T[2][0]) + (T[2][0] - T[1][0]) * (p2[1] - T[2][1])) / \
+                     ((T[1][1] - T[2][1]) * (T[0][0] - T[2][0]) + (T[2][0] - T[1][0]) * (T[0][1] - T[2][1]))
+                l2 = ((T[2][1] - T[0][1]) * (p2[0] - T[2][0]) + (T[0][0] - T[2][0]) * (p2[1] - T[2][1])) / \
+                     ((T[1][1] - T[2][1]) * (T[0][0] - T[2][0]) + (T[2][0] - T[1][0]) * (T[0][1] - T[2][1]))
+                l3 = 1 - l1 - l2
+                return P[0] * l1 + P[1] * l2 + P[2] * l3, (N[0] * l1 + N[1] * l2 + N[2] * l3).normalized()
+            rest = list(T)
+            m = len(poly)
+            for e in range(m):
+                a, b2 = poly[e], poly[(e + 1) % m]
+                d = (b2[0] - a[0], b2[1] - a[1])
+                outside = _clip_half(rest, a, (-d[0], -d[1]))
+                if len(outside) >= 3 and abs(_area(outside)) > 1e-12:
+                    pts3, nrm3 = zip(*[lift(p) for p in outside])
+                    # Kanten auf der Fenstergeraden: dort die Kante der Öffnung bauen (zum Glas hin)
+                    rims = []
+                    ln = math.hypot(*d)
+                    inward = (-d[1] / ln, d[0] / ln)
+                    for k in range(len(outside)):
+                        p0, p1 = outside[k], outside[(k + 1) % len(outside)]
+                        d0 = (d[0] * (p0[1] - a[1]) - d[1] * (p0[0] - a[0])) / ln
+                        d1 = (d[0] * (p1[1] - a[1]) - d[1] * (p1[0] - a[0])) / ln
+                        if abs(d0) < 1e-7 and abs(d1) < 1e-7 and math.hypot(p1[0] - p0[0], p1[1] - p0[1]) > 1e-7:
+                            mid = ((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2)
+                            toward = lift((mid[0] + inward[0] * 0.01, mid[1] + inward[1] * 0.01))[0] - lift(mid)[0]
+                            rims.append((pts3[k], pts3[(k + 1) % len(outside)], nrm3[k], nrm3[(k + 1) % len(outside)], toward))
+                    # Lack wie die ganze Zelle (Farbgrenzen bleiben gerade, keine Zacken)
+                    pieces.append({"pts": list(pts3), "normals": list(nrm3), "glass": False, "mat": self.paint(c, n, body),
+                                   "rims": rims})
+                rest = _clip_half(rest, a, d)
+                if len(rest) < 3:
+                    break
+            if len(rest) >= 3 and abs(_area(rest)) > 1e-12:
+                pts3, nrm3 = zip(*[lift(p) for p in rest])
+                pieces.append({"pts": list(pts3), "normals": list(nrm3), "glass": True, "mat": GLASS, "rims": []})
+        return pieces
+
+
+def _clip_poly(subject, clip):
+    out = list(subject)
+    n = len(clip)
+    for i in range(n):
+        a, c = clip[i], clip[(i + 1) % n]
+        out = _clip_half(out, a, (c[0] - a[0], c[1] - a[1]))
+        if len(out) < 3:
+            return []
+    return out
+
+
+def paint_mats(z_front_glass, z_rear_glass, roof_mat=PAINT, lower=PAINT, upper=None, pillar=None, upper_fn=None):
+    """Lack für die Glazing-Stücke (wie window_mats, aber nie Glas): Dach in roof_mat, in der Fensterzone
+    die Säulen (pillar), darunter Lack; upper/upper_fn = zweifarbig."""
+    def fn(c, n, body):
+        belt = body.f("belt", c.z)
+        up = upper_fn(c, n) if upper_fn else (upper is not None and c.y > belt)
+        body_mat = (upper or lower) if up else lower
+        in_zone = z_rear_glass - 0.05 < c.z < z_front_glass + 0.05 and c.y > belt + 0.02
+        if n.y > 0.6 and c.y > belt and in_zone:
+            return roof_mat
+        if in_zone and pillar is not None:
+            return pillar
+        return body_mat
+    return fn
+
+
+def front_line(body, y, front=True):
+    """z, ab dem die Karosserie in Höhe y beginnt (vorn: von vorn gesucht, sonst von hinten) – die Linie von
+    Windschutz- bzw. Heckscheibe in der Seitenansicht."""
+    L = body.L
+    zs = [L / 2 - L * k / 400 for k in range(401)] if front else [-L / 2 + L * k / 400 for k in range(401)]
+    for z in zs:
+        if body.f("top", z) >= y:
+            return z
+    return None
+
+
+def side_window(body, z0, z1, pillar=0.07, top_gap=0.05, bottom_gap=0.03, radius=0.05, front=False, rear=False):
+    """Seitenfenster zwischen z0 und z1 (Säulenmitte): unten an der Gürtellinie, oben unter der Dachkante;
+    das vorderste Fenster folgt schräg der Windschutzscheibe (front), das hinterste der Heckscheibe (rear)."""
+    pts = []
+    y_bot = max(body.f("belt", z0), body.f("belt", z1)) + bottom_gap
+    y_top = max(body.f("top", z) for z in (z0, (z0 + z1) / 2, z1))
+    for k in range(25):
+        y = y_bot + (y_top - y_bot) * k / 24
+        zf = front_line(body, y + top_gap, True)
+        zr = front_line(body, y + top_gap, False)
+        if zf is None or zr is None:
+            continue
+        lo = z0 + pillar / 2
+        hi = z1 - pillar / 2
+        if front:
+            hi = min(hi, zf - pillar)
+        else:
+            hi = min(hi, zf - 0.02)
+        if rear:
+            lo = max(lo, zr + pillar)
+        else:
+            lo = max(lo, zr + 0.02)
+        if hi - lo > 0.04:
+            pts += [(lo, y), (hi, y)]
+    return rounded(pts, radius) if len(pts) >= 6 else []
+
+
+def end_glass(body, front=True, pillar=0.08, taper=0.1, bottom_gap=0.04, top_gap=0.07, radius=0.07):
+    """Windschutz- (front) bzw. Heckscheibe in (x, y): unten so breit wie die Karosserie dort minus die Säulen,
+    nach oben um taper schmaler (läuft oben schräg zusammen), runde Ecken."""
+    sgn = 1 if front else -1
+    zb = front_line(body, body.f("belt", 0.0) + 0.1, front)
+    belt = body.f("belt", zb)
+    roof = max(body.f("top", zb - sgn * 0.8 * k / 16) for k in range(17))
+    y_bot = belt + bottom_gap
+    y_top = roof - top_gap
+    z_mid = front_line(body, (y_bot + y_top) / 2, front)
+    half = body.f("hw", z_mid) * body.f("rw", z_mid) - pillar
+    top_half = half - taper
+    return rounded([(-half, y_bot), (half, y_bot), (top_half, y_top), (-top_half, y_top)], radius)
+
 
 def window_mats(z_front_glass, z_rear_glass, side_windows, roof_mat=PAINT, lower=PAINT, upper=None, pillar=None,
                 rear_glass=True, split=False, upper_fn=None):
@@ -487,10 +809,24 @@ TAXI = dict(
 )
 
 
+def raised(spec, delta, above):
+    """Kopie der Beschreibung mit höherem Dach (seit Etappe 6f, damit die Figur am Steuer mit jeder Frisur
+    hineinpasst): alle Punkte der Dachlinie über der Höhe above steigen um delta."""
+    out = dict(spec)
+    out["top"] = [(z, y + delta if y > above else y) for z, y in spec["top"]]
+    return out
+
+
+TAXI = raised(TAXI, 0.08, 1.2)
+
+
 def build_taxi():
     b = S.Builder("taxi")
     body = Body(TAXI)
-    fn = window_mats(0.95, -1.62, [(0.12, 0.6), (-0.62, 0.05), (-1.25, -0.7)])
+    both = (-1, 1)
+    fn = Glazing(paint_mats(0.95, -1.62), front=[end_glass(body, True)], rear=[end_glass(body, False, taper=0.08)],
+                 sides=[(side_window(body, 0.085, 0.635, front=True), both), (side_window(body, -0.655, 0.085), both),
+                        (side_window(body, -1.285, -0.665, rear=True), both)])
     body.build(b, fn)
     tree = surface_tree(b)
     # Front: großer Chromgrill, runde Scheinwerfer in den Kotflügeln, Blinker
@@ -504,10 +840,10 @@ def build_taxi():
     plate(b, tree, 0.56, 2.25, text="TX 47 LB")
     plate(b, tree, 0.62, -2.25, front=False, text="TX 47 LB")
     # Taxi-Schild auf dem Dach (leuchtet gelb, kein Markenzeichen)
-    b.box((-0.28, 1.76, 0.05), (0.28, 1.9, 0.2), Mat("plain", color=(0.98, 0.78, 0.25), glow=0.7))
+    b.box((-0.28, 1.84, 0.05), (0.28, 1.98, 0.2), Mat("plain", color=(0.98, 0.78, 0.25), glow=0.7))
     for z, rot in ((0.205, 0), (0.045, 180)):
         b.push(S.Matrix.Translation((0, 0, z)) @ b.turn_y(rot))
-        b.text("TAXI", 0.0, 1.785, 0.0, 0.09, 0.004, Mat("plain", color=(0.12, 0.1, 0.08)),
+        b.text("TAXI", 0.0, 1.865, 0.0, 0.09, 0.004, Mat("plain", color=(0.12, 0.1, 0.08)),
                font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
         b.pop()
     for side in (-1, 1):
@@ -520,7 +856,7 @@ def build_taxi():
         mirror(b, body, 0.85, 1.02, side=side)
         # Trittbrett
         b.box((side * 0.72 - 0.06, 0.28, -0.95), (side * 0.72 + 0.06 * side, 0.31, 0.95), DARK)
-    interior(b, body, 0.95, -1.6, 0.36, rows=2)
+    interior(b, body, 0.95, -1.6, 0.36, rows=2, seat_back=0.2)
     # Scheibenwischer
     for sx in (-0.3, 0.25):
         b.beam(V(sx, 1.1, 0.93), V(sx + 0.35, 1.32, 0.82), 0.012, 0.012, DARK)
@@ -542,10 +878,18 @@ MINI = dict(
 )
 
 
+MINI = raised(MINI, 0.1, 1.0)
+
+
 def build_mini():
     b = S.Builder("mini")
     body = Body(MINI)
-    fn = window_mats(0.78, -1.1, [(-0.05, 0.5), (-0.9, -0.12)], roof_mat=PAINT2, pillar=PAINT2)
+    both = (-1, 1)
+    fn = Glazing(paint_mats(0.78, -1.1, roof_mat=PAINT2, pillar=PAINT2),
+                 front=[end_glass(body, True, pillar=0.07, taper=0.08, top_gap=0.05, radius=0.06)],
+                 rear=[end_glass(body, False, pillar=0.07, taper=0.06, top_gap=0.05, radius=0.06)],
+                 sides=[(side_window(body, -0.085, 0.535, front=True, top_gap=0.04, radius=0.045), both),
+                        (side_window(body, -0.935, -0.085, rear=True, top_gap=0.04, radius=0.045), both)])
     body.build(b, fn)
     tree = surface_tree(b)
     # Dachkante (Regenrinne) und Front
@@ -588,11 +932,17 @@ TRAVELLER = dict(
 )
 
 
+TRAVELLER = raised(TRAVELLER, 0.08, 1.2)
+
+
 def build_traveller():
     b = S.Builder("traveller")
     body = Body(TRAVELLER)
-    side = [(0.0, 0.52), (-0.75, -0.08), (-1.68, -0.85)]
-    fn = window_mats(0.9, -1.85, side, roof_mat=PAINT)
+    both = (-1, 1)
+    fn = Glazing(paint_mats(0.9, -1.85), front=[end_glass(body, True)], rear=[end_glass(body, False, taper=0.02, pillar=0.06)],
+                 sides=[(side_window(body, -0.035, 0.555, front=True), both),
+                        (side_window(body, -0.785, -0.045, top_gap=0.09, radius=0.03), both),
+                        (side_window(body, -1.715, -0.815, rear=True, top_gap=0.09, radius=0.03), both)])
     body.build(b, fn)
     tree = surface_tree(b)
     grille(b, tree, 0.42, 0.7, 0.26, 1.9, bars=9, vertical=False)
@@ -605,10 +955,11 @@ def build_traveller():
     plate(b, tree, 0.5, 1.9, text="TRV 58")
     # Holzfachwerk hinten (Seiten und Heck): Leisten an Gürtellinie, Dachkante und um die Fenster
     for sd in (-1, 1):
-        for y in (0.5, 0.95, 1.42):
+        # obere Leiste über den Fenstern (seit Etappe 6f ist das Dach 8 cm höher)
+        for y in (0.5, 0.95, 1.52):
             belt_strip(b, body, -1.8, -0.04, y, mat=TIMBER, side=sd, radius=0.022, steps=12)
         for z in (-0.04, -0.8, -1.74):
-            pts = [V(sd * (body.side_x(z, y) + 0.004), y, z) for y in [0.42 + 1.02 * k / 8 for k in range(9)]]
+            pts = [V(sd * (body.side_x(z, y) + 0.004), y, z) for y in [0.42 + 1.12 * k / 8 for k in range(9)]]
             b.tube(pts, 0.022, TIMBER, segments=6)
         door_line(b, body, 0.55, 0.32, 0.94, side=sd)
         handle(b, body, 0.45, 0.86, side=sd)
@@ -625,7 +976,7 @@ def build_traveller():
             b.box((x0, 0.92, z - 0.035), (x1, 0.97, z), TIMBER)
             b.quad(V(x0 + 0.05, 0.97, z - 0.02), V(x1 - 0.05, 0.97, z - 0.02), V(x1 - 0.05, 1.3, z - 0.02), V(x0 + 0.05, 1.3, z - 0.02), GLASS)
         plate(b, tree, 0.6, -1.9, front=False, text="TRV 58")
-    interior(b, body, 0.9, -1.8, 0.24, rows=2)
+    interior(b, body, 0.9, -1.8, 0.24, rows=2, seat_back=0.15)
     for sx in (-0.3, 0.22):
         b.beam(V(sx, 0.99, 0.92), V(sx + 0.3, 1.18, 0.82), 0.01, 0.01, DARK)
     return b, TRAVELLER
@@ -690,20 +1041,24 @@ def _van_front_v(b, tree):
 def build_van():
     b = S.Builder("delivery_van")
     body = Body(VAN)
-    side = [(1.35, 1.95), (VAN_DOOR[0] + 0.06, VAN_DOOR[1] - 0.06), (-0.75, -0.12), (-1.5, -0.85)]
-    fn = window_mats(1.6, -2.0, side, roof_mat=PAINT2, upper=PAINT2, upper_fn=_van_upper)
-    base_fn = fn
+    base_fn = paint_mats(1.6, -2.0, roof_mat=PAINT2, upper=PAINT2, upper_fn=_van_upper)
 
-    def fn2(c, n, bd):
+    def paint2(c, n, bd):
         # Hinter der Schiebetür: dunkle Öffnung (zu sieht man die Tür, offen den Laderaum)
         if c.x > 0.5 and VAN_DOOR[0] < c.z < VAN_DOOR[1] and 0.36 < c.y < 1.78 and n.x > 0.5:
             return DARK
-        # Front: geteilte Scheibe mit hellem Rahmen und Mittelsteg
+        # Front: heller Rahmen um die geteilte Scheibe
         if n.z > 0.45 and c.z > 1.6:
-            if 1.28 < c.y < 1.8 and 0.05 < abs(c.x) < 0.72:
-                return GLASS
             return PAINT2 if c.y > 1.22 else PAINT
         return base_fn(c, n, bd)
+    both = (-1, 1)
+    pane = rounded([(0.06, 1.28), (0.72, 1.28), (0.68, 1.8), (0.06, 1.8)], 0.08)
+    fn2 = Glazing(paint2, front=[pane, [(-x, y) for x, y in pane]],
+                  rear=[end_glass(body, False, pillar=0.12, taper=0.06, radius=0.1)],
+                  sides=[(side_window(body, 1.32, 1.98, front=True, radius=0.08), both),
+                         (side_window(body, VAN_DOOR[0] + 0.025, VAN_DOOR[1] - 0.025, radius=0.08), (-1,)),
+                         (side_window(body, -0.785, -0.085, radius=0.08), both),
+                         (side_window(body, -1.535, -0.815, rear=True, radius=0.08), both)])
     body.build(b, fn2)
     tree = surface_tree(b)
     _van_front_v(b, tree)
@@ -763,6 +1118,15 @@ def build_van():
     return b, VAN
 
 
+class _Flat:
+    """Für Glazing an flachen Teilen (Schiebetür): keine Gürtellinie."""
+    def f(self, name, z):
+        return -10.0
+
+
+_FLAT = _Flat()
+
+
 def build_van_door():
     """Schiebetür (eigenes Teil "Door"): folgt der Außenhaut links, mit Fenster und Griff."""
     b = S.Builder("delivery_van_door")
@@ -771,15 +1135,26 @@ def build_van_door():
     ys = [0.36 + (1.8 - 0.36) * k / 12 for k in range(13)]
     zs = [z0 + (z1 - z0) * k / 8 for k in range(9)]
     grid = [[V(body.side_x(z, y) + 0.009, y, z) for z in zs] for y in ys]
+    # Fenster mit runden Ecken (seit Etappe 6f wie die übrigen Scheiben genau aus dem Blech geschnitten)
+    win = rounded([(z0 + 0.07, 1.24), (z1 - 0.07, 1.24), (z1 - 0.07, 1.74), (z0 + 0.07, 1.74)], 0.08)
+    glz = Glazing(lambda c, n, bd: PAINT2 if c.y > 1.12 else PAINT, sides=[(win, (1,))])
+    t = 0.012
     for i in range(len(ys) - 1):
         for j in range(len(zs) - 1):
-            q = [grid[i][j], grid[i + 1][j], grid[i + 1][j + 1], grid[i][j + 1]]
+            q = [grid[i][j], grid[i][j + 1], grid[i + 1][j + 1], grid[i + 1][j]]
+            if (q[1] - q[0]).cross(q[3] - q[0]).x < 0:
+                q = q[::-1]
             c = sum(q, Vector()) / 4
-            win = 1.24 < c.y < 1.74 and z0 + 0.07 < c.z < z1 - 0.07
-            mat = GLASS if win else (PAINT2 if c.y > 1.12 else PAINT)
-            b.face(q, mat, (1, 0, 0))
-            # Innen (Rückseite): dunkel
-            b.face([p - Vector((0.012, 0, 0)) for p in q], DARK, (-1, 0, 0))
+            nq = [Vector((1, 0, 0))] * 4
+            for piece in glz.split(q, nq, c, Vector((1, 0, 0)), _FLAT):
+                if piece["glass"]:
+                    b.face(piece["pts"], GLASS, (1, 0, 0))
+                    continue
+                b.face(piece["pts"], piece["mat"], (1, 0, 0))
+                # Innen (Rückseite): dunkel, am Fenster die Kante des Blechs
+                b.face([p - Vector((t, 0, 0)) for p in piece["pts"]], DARK, (-1, 0, 0))
+                for a, c2, _na, _nc, toward in piece["rims"]:
+                    b.face([a, c2, c2 - Vector((t, 0, 0)), a - Vector((t, 0, 0))], DARK, toward)
     # Kanten
     for row in (grid[0], grid[-1]):
         for a, c2 in zip(row, row[1:]):

@@ -38,6 +38,9 @@ static var _everyone: Array[ChibiPasserbyModel] = []
 
 ## Höhe der Sitzfläche beim Sitzen (Meter; setzt Passerby).
 var sit_height := 0.45
+## Kopfhöhe sitzend = (Kopf oben − Hüfte in Ruhehaltung) × SLOPE + BASE (head_above_seat)
+const SIT_HEAD_SLOPE := 1.31
+const SIT_HEAD_BASE := -0.075
 ## Weg (m) und Dauer (s) des Hinsetzens laut Animation (0 = Passerby nimmt eigene Werte).
 var sit_front := 0.0
 var sit_time := 0.0
@@ -176,6 +179,33 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	_everyone.erase(self)
+
+
+## Wie hoch der Kopf (mit Frisur) über der Sitzfläche ist, wenn die Figur sitzt (Meter, ohne eigene Skalierung) –
+## für Fahrer in Autos (seit Etappe 6f passt VehicleModel die Größe an die Kopffreiheit an). Aus der Ruhehaltung:
+## oberster Punkt von Körper und Frisur über der Hüfte, umgerechnet mit SIT_HEAD_* (an allen sechs Figuren und
+## Frisuren in der Sitz-Animation gemessen, eher etwas zu hoch).
+func head_above_seat() -> float:
+	var m := head_metrics()
+	return (m.x - m.y) * SIT_HEAD_SLOPE + SIT_HEAD_BASE
+
+
+## [oberster Punkt (Körper + sichtbare Frisur), Hüfthöhe] in der Ruhehaltung, Koordinaten der Figur.
+func head_metrics() -> Vector2:
+	if _model == null or _skeleton == null:
+		return Vector2(1.0, 0.5)
+	var top := 0.0
+	for node in _model.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		if not mi.visible or mi.mesh == null:
+			continue
+		if not (mi.name.begins_with("Hair") or mi.name == "Body"):
+			continue
+		var box := mi.mesh.get_aabb()
+		top = maxf(top, box.end.y)
+	var hip := _skeleton.find_bone("LeftUpperLeg")
+	var hip_y := _skeleton.get_bone_global_rest(hip).origin.y if hip >= 0 else top * 0.45
+	return Vector2(top, hip_y)
 
 
 ## Augenhöhe der Figur (Welt).

@@ -7,14 +7,15 @@ extends RefCounted
 ## Ein Umriss ist ein Vieleck (PackedVector2Array, gegen den Uhrzeigersinn) in Wand-Koordinaten:
 ## x entlang der Wand (Mitte der Öffnung = 0), y nach oben (Unterkante = 0).
 
-enum Kind { RECT, ARCH, ROUND }
+enum Kind { RECT, ARCH, ROUND, CHAMFER }
 
 ## Wie fein Bögen und Kreise unterteilt werden (Punkte je Halbkreis)
 const ARC_STEPS := 20
 
 
 ## Umriss einer Öffnung, w breit und h hoch. ARCH: oben ein Bogen mit dem Stich rise (rise = w/2 →
-## Halbkreis), ROUND: Kreis bzw. Ellipse in w x h.
+## Halbkreis), ROUND: Kreis bzw. Ellipse in w x h, CHAMFER (seit Etappe 6f): Rechteck mit oben schräg
+## abgeschnittenen Ecken (Schräge = rise) – unten immer gerade, die Fensterbank reicht über die ganze Breite.
 static func outline(kind: Kind, w: float, h: float, rise: float = 0.0) -> PackedVector2Array:
 	var hw := w / 2.0
 	var points := PackedVector2Array()
@@ -24,6 +25,10 @@ static func outline(kind: Kind, w: float, h: float, rise: float = 0.0) -> Packed
 			for i in steps:
 				var a := TAU * i / steps - PI / 2.0
 				points.append(Vector2(cos(a) * hw, h / 2.0 + sin(a) * h / 2.0))
+		Kind.CHAMFER:
+			var c := clampf(rise, 0.01, minf(hw, h) * 0.9)
+			points = PackedVector2Array([Vector2(-hw, 0.0), Vector2(hw, 0.0), Vector2(hw, h - c), Vector2(hw - c, h),
+				Vector2(-hw + c, h), Vector2(-hw, h - c)])
 		Kind.ARCH:
 			var r := clampf(rise, 0.01, hw)
 			points.append(Vector2(-hw, 0.0))

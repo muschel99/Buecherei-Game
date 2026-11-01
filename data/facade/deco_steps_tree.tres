@@ -7,15 +7,10 @@
 
 [resource]
 script = ExtResource("1_data")
-id = "round"
-display_name = "Rundfenster"
-category = "window"
+id = "tree"
+display_name = "Bäumchen und Töpfe"
+category = "deco_steps"
 unlocked = false
-order = 30
-price = 180
-shape = "round"
-opening = Vector2(0.950, 0.950)
-bottom = 4.520
-rise = 0.000
-muntins = Vector2i(2, 2)
-bay_depth = 0.000
+order = 20
+price = 160
+scene_path = "res://assets/models/facade/deco_steps_tree.glb"

@@ -28,8 +28,12 @@ const SECOND_NAMES := ["Autolack zwei"]
 ## Fahrersitz (seit Etappe 6d): Mitte der Sitzfläche (Höhe = Oberkante des Sitzes); dort sitzt eine
 ## zufällige Chibi-Figur am Steuer (hinter den dunklen Scheiben nur schemenhaft). Null = niemand.
 @export var driver_seat: Vector3 = Vector3.ZERO
-## Größe der Person am Steuer (Chibi-Köpfe sind groß – so passt sie unter das Dach)
+## Größe der Person am Steuer (höchstens; Chibi-Köpfe sind groß)
 @export var driver_scale: float = 0.85
+## Kopffreiheit: so hoch darf der Kopf samt Frisur höchstens reichen (Innenseite des Dachs minus etwas Luft,
+## Koordinaten des Wagens; 0 = ohne Grenze). Seit Etappe 6f wird jede Figur so weit verkleinert, dass sie mit
+## jeder Frisur (auch dem Haarknoten) darunter passt.
+@export var driver_headroom: float = 0.0
 ## Geräusche (Audio-System): Motor in Schleife und kurzes freundliches Hupen
 @export var engine_sound: String = "vehicles/car_engine"
 @export var horn_sound: String = "vehicles/horn_car"
@@ -90,10 +94,14 @@ func build(rng: RandomNumberGenerator, color: Color) -> void:
 		_driver.name = "Driver"
 		_sway.add_child(_driver)
 		_driver.position = Vector3(driver_seat.x, 0.0, driver_seat.z)
-		_driver.scale = Vector3.ONE * driver_scale
-		_driver.sit_height = driver_seat.y / maxf(driver_scale, 0.1)
 	if _driver:
 		_driver.randomize_look(rng)
+		# Größe nach der Kopffreiheit (Kopf + Frisur bleiben unter dem Dach)
+		var size := driver_scale
+		if driver_headroom > 0.0:
+			size = minf(size, (driver_headroom - driver_seat.y) / maxf(_driver.head_above_seat(), 0.3))
+		_driver.scale = Vector3.ONE * size
+		_driver.sit_height = driver_seat.y / maxf(size, 0.1)
 	_pitch = 0.0
 	_pitch_speed = 0.0
 	_roll = 0.0

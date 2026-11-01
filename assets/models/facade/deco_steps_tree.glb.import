@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bwe5gshij6bo8"
-path="res://.godot/imported/deco_steps_lantern.glb-7910de4862c86b42b6882687e42b07c1.scn"
+uid="uid://dpw3xspgvtfsi"
+path="res://.godot/imported/deco_steps_tree.glb-b63a1133df885cd7a34cf2abf5b076a1.scn"
 
 [deps]
 
-source_file="res://assets/models/facade/deco_steps_lantern.glb"
-dest_files=["res://.godot/imported/deco_steps_lantern.glb-7910de4862c86b42b6882687e42b07c1.scn"]
+source_file="res://assets/models/facade/deco_steps_tree.glb"
+dest_files=["res://.godot/imported/deco_steps_tree.glb-b63a1133df885cd7a34cf2abf5b076a1.scn"]
 
 [params]
 
@@ -45,16 +45,6 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/erde.tres",
 "use_external/path": "res://assets/materials/storybook/erde.tres"
-},
-"Laterne Eisen dunkelbraun": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/laterne_eisen_dunkelbraun.tres",
-"use_external/path": "res://assets/materials/storybook/laterne_eisen_dunkelbraun.tres"
-},
-"Laternenglas leuchtend": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/laternenglas_leuchtend.tres",
-"use_external/path": "res://assets/materials/storybook/laternenglas_leuchtend.tres"
 },
 "Terrakotta Topf": {
 "use_external/enabled": true,

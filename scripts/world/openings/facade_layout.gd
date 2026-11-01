@@ -59,7 +59,7 @@ static func upper_slots() -> Array:
 ## Umriss eines Fensters nach seiner Wahl (Mitte unten = 0).
 static func window_outline(style: FacadeOption) -> PackedVector2Array:
 	var kind := shape_kind(style.shape)
-	var rise := style.rise if kind == OpeningShape.Kind.ARCH else 0.0
+	var rise := style.rise if kind == OpeningShape.Kind.ARCH or kind == OpeningShape.Kind.CHAMFER else 0.0
 	return OpeningShape.outline(kind, style.opening.x, style.opening.y, rise)
 
 
@@ -69,6 +69,8 @@ static func shape_kind(shape: String) -> OpeningShape.Kind:
 			return OpeningShape.Kind.ARCH
 		"round":
 			return OpeningShape.Kind.ROUND
+		"chamfer":
+			return OpeningShape.Kind.CHAMFER
 	return OpeningShape.Kind.RECT
 
 

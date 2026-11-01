@@ -369,18 +369,9 @@ func _draw_window(rect: Rect2) -> void:
 	if ipts.size() >= 3:
 		draw_colored_polygon(ipts, Color(0.62, 0.72, 0.78))
 		draw_colored_polygon(PackedVector2Array([ipts[0], ipts[1], (ipts[1] + ipts[ipts.size() / 2]) / 2.0]), Color(1, 1, 1, 0.18))
-	# Sprossen
-	var ib := OpeningShape.bounds(inner)
-	for i in range(1, window.muntins.x):
-		var x := lerpf(ib.position.x, ib.end.x, float(i) / window.muntins.x)
-		var span := WindowUnit.height_at(inner, x)
-		if span.y > span.x:
-			draw_line(to_tile.call(Vector2(x, span.x)), to_tile.call(Vector2(x, span.y)), color, maxf(1.5, 0.035 * scale))
-	for j in range(1, window.muntins.y):
-		var y := lerpf(ib.position.y, ib.end.y, float(j) / window.muntins.y)
-		var span := OpeningShape.width_at(inner, y)
-		if span.y > span.x:
-			draw_line(to_tile.call(Vector2(span.x, y)), to_tile.call(Vector2(span.y, y)), color, maxf(1.5, 0.035 * scale))
+	# Sprossen (dasselbe Bild wie am Modell)
+	for bar: Array in WindowUnit.muntin_bars(inner, window.muntins, window.pattern):
+		draw_line(to_tile.call(bar[0]), to_tile.call(bar[1]), color, maxf(1.5, float(bar[2]) * scale))
 	if window.bay_depth > 0.0:
 		# Erker: Dach oben, Sockel unten, schräge Seiten angedeutet
 		var tl: Vector2 = to_tile.call(Vector2(b.position.x, b.end.y))

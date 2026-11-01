@@ -21,5 +21,5 @@ rod_material = ExtResource("3_rod")
 [node name="Body" type="StaticBody3D" parent="."]
 
 [node name="Shape0" type="CollisionShape3D" parent="Body"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0.07)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0.38)
 shape = SubResource("Shape_0")

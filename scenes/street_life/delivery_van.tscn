@@ -42,6 +42,7 @@ paint_color = Color(0.56, 0.74, 0.7, 1)
 second_color = Color(0.94, 0.91, 0.83, 1)
 driver_seat = Vector3(-0.375, 0.74, 1.19)
 driver_scale = 0.9
+driver_headroom = 1.88
 engine_sound = "vehicles/van_engine"
 horn_sound = "vehicles/horn_van"
 

@@ -20,8 +20,11 @@ enum Style { SHEER, DRAPES, CAFE, TIED }
 @export var fabric: Material
 @export var rod_material: Material
 
-## So weit vor der Wand hängt der Stoff (m)
-const HANG := 0.07
+## Abstand des Stoffs vor der Vorderkante der Fensterbank (m). Seit Etappe 6f hängt der Vorhang vor der
+## ganzen Fensterbank (Tiefe GameConfig.window_sill_depth) – Deko auf der Bank steckt so nie im Stoff.
+const SILL_CLEARANCE := 0.06
+## Tiefe der Fensterbank im Editor (dort gibt es GameConfig nicht)
+const EDITOR_SILL_DEPTH := 0.32
 ## Fenster, wenn keins zu finden ist (Vorschaubild im Shop): Sprossenfenster des Ladens
 const DEFAULT_SIZE := Vector2(2.4, 2.3)
 
@@ -117,6 +120,12 @@ func _find_room() -> Node3D:
 	return get_tree().root.find_child("GroundFloorRoom", true, false) as Node3D
 
 
+## So weit vor der Wand hängt der Stoff (m): vor der Fensterbank.
+static func hang() -> float:
+	var sill := EDITOR_SILL_DEPTH if Engine.is_editor_hint() else maxf(GameConfig.window_sill_depth, 0.15)
+	return sill + SILL_CLEARANCE
+
+
 func _build(cloth: OpeningMesh, rod: OpeningMesh, outline: PackedVector2Array) -> void:
 	var b := OpeningShape.bounds(outline)
 	var hw := b.size.x / 2.0
@@ -167,7 +176,7 @@ func _panel(cloth: OpeningMesh, x0: float, x1: float, top: float, bottom: float,
 				var edge := x1 if side > 0.0 else x0
 				x = lerpf(x, edge, pull * (1.0 - absf(u - (1.0 if side > 0.0 else 0.0))))
 				fold *= 1.0 + pull
-			row.append(Vector3(x, y, HANG + fold))
+			row.append(Vector3(x, y, hang() + fold))
 		grid.append(row)
 	for j in rows:
 		for i in steps:
@@ -186,9 +195,11 @@ func _panel(cloth: OpeningMesh, x0: float, x1: float, top: float, bottom: float,
 
 ## Gerade Stange von x0 bis x1 auf Höhe y, an beiden Enden mit Halter zur Wand und Endknauf.
 func _rod(rod: OpeningMesh, x0: float, x1: float, y: float, thick: float) -> void:
-	rod.bar(Vector2(x0, y), Vector2(x1, y), thick, HANG - thick * 0.5, HANG + thick * 0.5)
+	var z := hang()
+	rod.bar(Vector2(x0, y), Vector2(x1, y), thick, z - thick * 0.5, z + thick * 0.5)
 	for x in [x0 + 0.04, x1 - 0.04]:
-		# Halter: von der Wand (z = 0) bis hinter die Stange
-		rod.bar(Vector2(x, y - 0.015), Vector2(x, y + 0.015), 0.022, -0.005, HANG)
+		# Halter: Wandplatte (z = 0) und ein langer Arm bis hinter die Stange (über die Fensterbank hinweg)
+		rod.box(Vector3(x, y, 0.006), Vector3(0.05, 0.07, 0.016), 0.004)
+		rod.bar(Vector2(x, y - 0.012), Vector2(x, y + 0.012), 0.02, 0.0, z)
 	for x in [x0, x1]:
-		rod.box(Vector3(x, y, HANG), Vector3(0.035, 0.035, 0.035), 0.008)
+		rod.box(Vector3(x, y, z), Vector3(0.035, 0.035, 0.035), 0.008)

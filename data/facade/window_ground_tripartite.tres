@@ -7,15 +7,16 @@
 
 [resource]
 script = ExtResource("1_data")
-id = "round"
-display_name = "Rundfenster"
+id = "tripartite"
+display_name = "Dreiteiliges Fenster"
 category = "window_ground"
 unlocked = false
-order = 30
-price = 300
-shape = "round"
-opening = Vector2(2.000, 2.000)
-bottom = 0.450
+order = 40
+price = 320
+shape = "rect"
+opening = Vector2(2.400, 2.300)
+bottom = 0.300
 rise = 0.000
-muntins = Vector2i(2, 2)
+muntins = Vector2i(1, 4)
 bay_depth = 0.000
+pattern = "tripartite"

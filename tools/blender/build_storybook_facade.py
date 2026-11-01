@@ -758,13 +758,21 @@ def bracket(M, C):
 
 # --- Deko vor der Tür (seit Etappe 6c, Raumkoordinaten wie der Kern) ---
 
-# Deko vor der Bücherei (seit Etappe 6d in vier Bereichen, frei kombinierbar; jeder Bereich hat feste
-# Plätze, die sich nie überschneiden – Treppe = Rechteck 3,0 x 1,54 m vor der Schräge):
-#   steps_*  auf der Treppe     walk_*  auf dem Gehweg     seat_*  Sitzplatz     sign_*  Schild
-DECO_SETS = {"steps_pots": ("steps",), "steps_lantern": ("steps", "lantern"),
+# Deko vor der Bücherei (seit Etappe 6d in vier Bereichen, frei kombinierbar). Seit Etappe 6f hat jeder Bereich
+# einen festen Platz, der mit allen anderen Bereichen, jedem Erdgeschoss (Holzfront ragt bis 24 cm vor) und jedem
+# Fenster (Erker ragt 42 cm vor) frei bleibt (Abstand zur Wand immer mindestens WALL_CLEAR):
+#   steps_*  auf der Treppe (Podest und Stufen vor der Schräge)
+#   walk_*   auf dem Gehweg: Kübel an den Hausenden bzw. Töpfe vor dem vorderen Schaufenster (vor einem Erker)
+#   seat_*   Sitzplatz an der Gassenwand zwischen Schräge und linkem Fenster (Bank oder Stuhl)
+#   sign_*   Aufsteller vorn neben der Treppe, zwischen vorderem Fenster und Schräge
+DECO_SETS = {"steps_pots": ("steps",), "steps_tree": ("steps_tree",),
              "walk_tubs": ("tubs",), "walk_pots": ("window_pots",),
              "seat_bench": ("bench", "bench_pot"), "seat_chair": ("chair",),
              "sign_board": ("sign",)}
+# So weit bleibt jedes Teil von der Wand weg (Rückseite) – vor Holzfront, Sockel und Fensterbänken
+WALL_CLEAR = 0.3
+# vor einem Erkerfenster (Erker 0,42 m + Rahmen)
+BAY_CLEAR = 0.55
 
 
 def library_chalkboard_image():
@@ -828,22 +836,23 @@ def build_deco(kind):
     def world(m, local):
         return m @ Vector(local)
     if "bench" in parts:
-        # Parkbank an der Gassenwand neben der Treppe (vor dem linken Fenster frei), mit Blick nach draußen;
-        # zwei Sitzplätze (Spielfigur und Passanten)
-        m = T.canon(*LEFT, 0.98, GROUND, 0.3)
+        # Parkbank an der Gassenwand zwischen Schräge und linkem Fenster (das Fenster beginnt bei 1,88 m, auch
+        # ein Erker bleibt frei), mit Blick in die Gasse; zwei Sitzplätze (Spielfigur und Passanten)
+        m = T.canon(*LEFT, 1.0, GROUND, WALL_CLEAR + 0.27)
         T.placed(C["deco"], m, PR.street_bench, M, C["deco"])
         _collider(C, "Bank", world(m, (0.0, -0.02, 0.45)), (1.5, 0.5, 0.9))
         for k, x in enumerate((-0.37, 0.37)):
             _obstacle(C, m @ Matrix.Translation((x * 1.2, -0.05, 0.0)), 0.42)
             anchor(C, "Seat_%d" % k, m @ Matrix.Translation((x, 0.0, PR.BENCH_SEAT)))
     if "bench_pot" in parts:
-        m = T.canon(*LEFT, 1.9, GROUND, 0.32)
+        # Topf an der Ecke zur Schräge, neben der Bank (die Stufen der Treppe liegen vor der Schräge)
+        m = T.canon(*LEFT, 0.1, GROUND, WALL_CLEAR + 0.16)
         SC.pot(M, C["pots"], "Bank Topf", world(m, (0, 0, 0)), 0.14, 0.3, 901, style="classic")
         _collider(C, "Bank Topf", world(m, (0, 0, 0.15)), (0.28, 0.28, 0.3))
     if "chair" in parts:
-        # Kleiner Stuhl leicht schräg neben der Treppe auf der Straßenseite – niedriger als die Brüstung,
-        # verdeckt das Schaufenster also nie; Sitzplatz für Spielfigur und Passanten
-        m = T.canon(*FRONT, 3.7, GROUND, 0.5, yaw=25)
+        # Kleiner Stuhl am selben Platz wie die Bank (Gassenwand), leicht zur Straße gedreht – niedriger als die
+        # Brüstung; Sitzplatz für Spielfigur und Passanten
+        m = T.canon(*LEFT, 1.0, GROUND, WALL_CLEAR + 0.24, yaw=-20)
         facade_chair(M, C, "Stuhl", m)
         _collider(C, "Stuhl", world(m, (0, 0, 0.32)), (0.42, 0.42, 0.64))
         _obstacle(C, m, 0.32)
@@ -857,9 +866,24 @@ def build_deco(kind):
             m = T.canon(*DIAG, dc + side * off, z, out)
             SC.pot(M, C["pots"], "Treppe Topf %d" % k, world(m, (0, 0, 0)), r, h, 910 + k, style="bowl" if k >= 2 else "classic")
             _collider(C, "Treppe Topf %d" % k, world(m, (0, 0, h / 2)), (r * 2, r * 2, h))
+    if "steps_tree" in parts:
+        # Lorbeerbäumchen (Hochstamm mit eigenem Kübel, scenes/world/plants/tubtree_bay – die Fassade setzt es auf
+        # den Platz „FacadeSpot_tubtree“, Breite 0,54 = 60 %: Kübel 43 cm breit, etwa 1,8 m hoch) vorn auf dem
+        # Podest auf der Seite ohne Briefkasten, dazu die Töpfe auf den Stufen; der Weg zur Tür bleibt 1 m breit
+        m = T.canon(*DIAG, dc - podium_half + 0.24, 0.0, 0.5)
+        SC.plant_spot("tubtree", tuple(world(m, (0, 0, 0))), (0.54, 0.54, 1.8))
+        _collider(C, "Bäumchen Kübel", world(m, (0, 0, 0.15)), (0.44, 0.44, 0.3))
+        for k, (side, out, z, r, h) in enumerate(((1, 0.48, 0.0, 0.15, 0.3), (-1, 0.62, -0.125, 0.085, 0.18),
+                                                  (1, 0.62, -0.125, 0.085, 0.18), (-1, 0.9, -0.25, 0.08, 0.16),
+                                                  (1, 0.9, -0.25, 0.08, 0.16))):
+            off = podium_half - 0.18 if k < 1 else podium_half + 0.1 if k < 3 else podium_half + 0.3
+            mk = T.canon(*DIAG, dc + side * off, z, out)
+            SC.pot(M, C["pots"], "Treppe Topf %d" % k, world(mk, (0, 0, 0)), r, h, 920 + k, style="bowl" if k >= 1 else "classic")
+            _collider(C, "Treppe Topf %d" % k, world(mk, (0, 0, h / 2)), (r * 2, r * 2, h))
     if "sign" in parts:
-        # Aufsteller vorn auf dem Gehweg, schräg neben der Treppe (Stuhl und Treppe bleiben frei)
-        m = T.canon(*FRONT, 4.0, GROUND, 1.15)
+        # Aufsteller vorn auf dem Gehweg zwischen vorderem Fenster (endet bei 3,4 m) und Schräge, schräg zur
+        # Straße – der Sitzplatz liegt an der Gassenwand, die Töpfe vor dem Fenster enden bei 3,2 m
+        m = T.canon(*FRONT, 3.95, GROUND, 1.0)
         p = world(m, (0, 0, 0))
         before = set(bpy.data.objects)
         SC.chalkboard(M, C["deco"], (p.x, p.y), math.degrees(math.atan2(m[1][0], m[0][0])) + 20, SC.sign_material("library", "chalkboard"))
@@ -868,32 +892,22 @@ def build_deco(kind):
                 o.location.z += GROUND
         _collider(C, "Aufsteller", (p.x, p.y, GROUND + 0.45), (0.5, 0.5, 0.9))
         _obstacle(C, m, 0.38)
-    if "lantern" in parts:
-        # Laterne auf einem Pfosten am vorderen Rand des Podests (auf der Seite ohne Briefkasten)
-        m = T.canon(*DIAG, dc - podium_half + 0.16, 0.0, 0.2)
-        base = world(m, (0, 0, 0))
-        post = Body("Laterne Pfosten", M["lamp_iron"], C["deco"], seed=930, vary=0.03, bevel=0.004)
-        post.lathe([(0.0, 0.0), (0.09, 0.0), (0.09, 0.03), (0.05, 0.05), (0.03, 0.1), (0.0, 0.1)], base, segs=16)
-        post.tube([base + Vector((0, 0, 0.08)), base + Vector((0, 0, 0.92))], 0.022, segs=10, round_ends=True)
-        post.build()
-        import storybook_parts as SP
-        SP.lantern_head(M, C["deco"], "Laterne", base + Vector((0, 0, 0.92)), scale=0.62, seed=931)
-        _collider(C, "Laterne", base + Vector((0, 0, 0.6)), (0.2, 0.2, 1.2))
     if "tubs" in parts:
-        # zwei große Kübel an den Hausenden: vorn beim Nachbarhaus, an der Gasse hinter dem Fenster
-        for k, (seg, u) in enumerate(((FRONT, 0.45), (LEFT, 4.7))):
-            m = T.canon(*seg, u, GROUND, 0.5)
+        # zwei große Kübel an den Hausenden: vorn beim Nachbarhaus, an der Gasse hinter dem linken Fenster
+        for k, (seg, u) in enumerate(((FRONT, 0.45), (LEFT, 4.75))):
+            m = T.canon(*seg, u, GROUND, WALL_CLEAR + 0.26)
             SC.pot(M, C["pots"], "Kübel %d" % k, world(m, (0, 0, 0)), 0.26, 0.5, 940 + k, mat="terracotta", style="tub", spot="tub")
             _collider(C, "Kübel %d" % k, world(m, (0, 0, 0.25)), (0.56, 0.56, 0.5))
             _obstacle(C, m, 0.4)
     if "window_pots" in parts:
-        # Töpfe unter dem vorderen Schaufenster (niedriger als die Brüstung – das Glas bleibt frei)
+        # Töpfe vor dem vorderen Schaufenster (niedriger als die Brüstung – das Glas bleibt frei); so weit vorn,
+        # dass auch ein Erkerfenster frei bleibt
         for k, (u, r, h) in enumerate(((1.45, 0.15, 0.34), (2.05, 0.12, 0.26), (2.55, 0.16, 0.38), (3.05, 0.11, 0.24))):
-            m = T.canon(*FRONT, u, GROUND, 0.3 + r)
+            m = T.canon(*FRONT, u, GROUND, BAY_CLEAR + r)
             SC.pot(M, C["pots"], "Fenster Topf %d" % k, world(m, (0, 0, 0)), r, h, 960 + k, style="classic" if k % 2 else "bowl")
             _collider(C, "Fenster Topf %d" % k, world(m, (0, 0, h / 2)), (r * 2, r * 2, h))
-        _obstacle(C, T.canon(*FRONT, 1.75, GROUND, 0.45), 0.4)
-        _obstacle(C, T.canon(*FRONT, 2.8, GROUND, 0.45), 0.4)
+        _obstacle(C, T.canon(*FRONT, 1.75, GROUND, BAY_CLEAR + 0.15), 0.4)
+        _obstacle(C, T.canon(*FRONT, 2.8, GROUND, BAY_CLEAR + 0.15), 0.4)
     return C, ("deco", "pots")
 
 

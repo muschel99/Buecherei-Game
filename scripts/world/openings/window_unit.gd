@@ -44,7 +44,7 @@ static func build_window(opening: Dictionary, materials: Dictionary) -> Node3D:
 		var gz := (z.x + z.y) / 2.0
 		glass.face(inner, gz, 1.0)
 		glass.face(inner, gz - 0.002, -1.0)
-		_muntins(frame, inner, style.muntins, gz)
+		_muntins(frame, inner, style, gz)
 		if upper and style.shape != "round":
 			# Kämpferholz der Fenster oben (wie bei alten Schiebefenstern)
 			pass
@@ -58,21 +58,67 @@ static func build_window(opening: Dictionary, materials: Dictionary) -> Node3D:
 	return root
 
 
-## Sprossen (Spalten x Reihen) innerhalb des Glases, an der Form abgeschnitten.
-static func _muntins(mesh: OpeningMesh, inner: PackedVector2Array, grid: Vector2i, gz: float) -> void:
-	if grid.x <= 1 and grid.y <= 1:
-		return
+## Sprossen innerhalb des Glases, an der Form abgeschnitten (Bild siehe muntin_bars).
+static func _muntins(mesh: OpeningMesh, inner: PackedVector2Array, style: FacadeOption, gz: float) -> void:
+	for bar: Array in muntin_bars(inner, style.muntins, style.pattern):
+		var z: Vector2 = bar[3]
+		mesh.bar(bar[0], bar[1], bar[2], gz + z.x, gz + z.y)
+
+
+## Breite der kräftigen Pfosten und Kämpfer (Sprossenbilder "transom" und "tripartite")
+const MULLION_BAR := 0.06
+## Höhe des Kämpfers ("transom") als Anteil der Glashöhe
+const TRANSOM_AT := 0.72
+
+## Alle Sprossen eines Fensters als [von, bis, Breite, Tiefe (vorn/hinten relativ zur Glasmitte)] – für das
+## Modell und für die gezeichnete Kachel in der App „Fassade“. Senkrechte und waagerechte Stäbe haben
+## leicht verschiedene Tiefen, damit sich ihre Vorderseiten an Kreuzungen nie genau überdecken.
+static func muntin_bars(inner: PackedVector2Array, grid: Vector2i, pattern: String = "grid") -> Array:
+	var bars := []
 	var b := OpeningShape.bounds(inner)
-	for i in range(1, grid.x):
-		var x := lerpf(b.position.x, b.end.x, float(i) / grid.x)
-		var span := height_at(inner, x)
-		if span.y > span.x:
-			mesh.bar(Vector2(x, span.x), Vector2(x, span.y), MUNTIN, gz - 0.018, gz + 0.022)
-	for j in range(1, grid.y):
-		var y := lerpf(b.position.y, b.end.y, float(j) / grid.y)
-		var span := OpeningShape.width_at(inner, y)
-		if span.y > span.x:
-			mesh.bar(Vector2(span.x, y), Vector2(span.y, y), MUNTIN, gz - 0.02, gz + 0.02)
+	var vz := Vector2(-0.018, 0.022)
+	var hz := Vector2(-0.02, 0.02)
+	var heavy := Vector2(-0.024, 0.026)
+	match pattern:
+		"transom":
+			# kräftiger Kämpfer, darüber kleine Scheiben, darunter wenige große
+			var yt := lerpf(b.position.y, b.end.y, TRANSOM_AT)
+			var span := OpeningShape.width_at(inner, yt)
+			bars.append([Vector2(span.x, yt), Vector2(span.y, yt), MULLION_BAR, heavy])
+			for i in range(1, grid.x):
+				var x := lerpf(b.position.x, b.end.x, float(i) / grid.x)
+				var top := height_at(inner, x).y
+				if top > yt + 0.05:
+					bars.append([Vector2(x, yt), Vector2(x, top), MUNTIN, vz])
+			for i in range(1, grid.y):
+				var x := lerpf(b.position.x, b.end.x, float(i) / grid.y)
+				var low := height_at(inner, x).x
+				bars.append([Vector2(x, low), Vector2(x, yt), MULLION_BAR * 0.8, vz])
+		"tripartite":
+			# große Mittelscheibe, schmale Seitenfelder mit Sprossen
+			var side_w := b.size.x * 0.22
+			for x: float in [b.position.x + side_w, b.end.x - side_w]:
+				var span := height_at(inner, x)
+				bars.append([Vector2(x, span.x), Vector2(x, span.y), MULLION_BAR, heavy])
+			for j in range(1, grid.y):
+				var y := lerpf(b.position.y, b.end.y, float(j) / grid.y)
+				var span := OpeningShape.width_at(inner, y)
+				if span.y <= span.x:
+					continue
+				bars.append([Vector2(span.x, y), Vector2(b.position.x + side_w, y), MUNTIN, hz])
+				bars.append([Vector2(b.end.x - side_w, y), Vector2(span.y, y), MUNTIN, hz])
+		_:
+			for i in range(1, grid.x):
+				var x := lerpf(b.position.x, b.end.x, float(i) / grid.x)
+				var span := height_at(inner, x)
+				if span.y > span.x:
+					bars.append([Vector2(x, span.x), Vector2(x, span.y), MUNTIN, vz])
+			for j in range(1, grid.y):
+				var y := lerpf(b.position.y, b.end.y, float(j) / grid.y)
+				var span := OpeningShape.width_at(inner, y)
+				if span.y > span.x:
+					bars.append([Vector2(span.x, y), Vector2(span.y, y), MUNTIN, hz])
+	return bars
 
 
 ## Höhe des Umrisses an der Stelle x: (unten, oben).
@@ -179,7 +225,8 @@ static func _bay(root: Node3D, outline: PackedVector2Array, style: FacadeOption,
 		var inner := OpeningShape.offset(rect, -fw)
 		var f := OpeningMesh.new()
 		f.ring(rect, inner, -0.03, 0.03)
-		_muntins(f, inner, Vector2i(face_cols, style.muntins.y), 0.0)
+		for bar: Array in muntin_bars(inner, Vector2i(face_cols, style.muntins.y)):
+			f.bar(bar[0], bar[1], bar[2], (bar[3] as Vector2).x, (bar[3] as Vector2).y)
 		var g := OpeningMesh.new()
 		g.face(inner, 0.0, 1.0)
 		g.face(inner, -0.002, -1.0)

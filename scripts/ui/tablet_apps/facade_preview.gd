@@ -1,18 +1,20 @@
 class_name FacadePreview
 extends SubViewport
 ## Polaroid der App „Fassade“ (seit Etappe 6d ein ruhiges Modell): nur das Bücherei-Haus mit seiner
-## Eingangstreppe vor einem ruhigen, hellen Hintergrund – keine Nachbarhäuser, keine Straßenlaterne, keine
+## Eingangstreppe auf dem Gehweg unter blauem Himmel (seit Etappe 6f) – keine Nachbarhäuser, keine Straßenlaterne, keine
 ## Bewegung, die Tür immer geschlossen (so erkennt man die gewählte Tür gut). Gezeichnet wird nur, wenn sich
 ## am Entwurf etwas ändert (show_design → ein Bild).
 ##
 ## Eine eigene kleine Welt (own_world_3d): die Vorschau-Fassade (LibraryFacade mit follow_design = false)
 ## an ihrem Platz, Türblatt und Einwurf nach dem Entwurf, dahinter ein warmer Innenraum (die Fenster sind
-## nicht leer), darunter ein heller Boden. Kopiert wird nur die Treppe (Optik, einmal bei prepare).
+## nicht leer), darunter der Gehweg (Material wie auf der Straße). Kopiert wird nur die Treppe (Optik, einmal
+## bei prepare).
 ## Blickpunkt: GameConfig (facade_preview_*). Die echte Fassade ändert sich dabei nie.
 
-## Hintergrund, Boden und Innenraum (ruhig, neutral, warm)
-const BACKGROUND := Color(0.93, 0.9, 0.84)
-const GROUND_COLOR := Color(0.82, 0.79, 0.73)
+## Himmel (oben kräftiger, zum Horizont heller), Boden = Gehweg, Innenraum warm
+const SKY_TOP := Color(0.33, 0.55, 0.86)
+const SKY_HORIZON := Color(0.74, 0.85, 0.95)
+const GROUND_MATERIAL := preload("res://assets/materials/sidewalk.tres")
 const INSIDE_COLOR := Color(0.38, 0.29, 0.21)
 
 var _stage: Node3D
@@ -150,8 +152,16 @@ func _setup_lights() -> void:
 			_stage.remove_child(child)
 			child.queue_free()
 	var environment := Environment.new()
-	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = BACKGROUND
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = SKY_TOP
+	sky_material.sky_horizon_color = SKY_HORIZON
+	sky_material.ground_horizon_color = SKY_HORIZON
+	sky_material.ground_bottom_color = SKY_HORIZON
+	sky_material.sun_angle_max = 0.0
+	var sky := Sky.new()
+	sky.sky_material = sky_material
+	environment.background_mode = Environment.BG_SKY
+	environment.sky = sky
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.86, 0.84, 0.8)
 	environment.ambient_light_energy = 0.75
@@ -173,17 +183,14 @@ func _setup_lights() -> void:
 	_stage.add_child(sun)
 
 
-## Heller Boden unter dem Haus (fängt die Schatten).
+## Gehweg unter dem Haus (fängt die Schatten; Platten wie auf der Straße).
 func _ground() -> MeshInstance3D:
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(60.0, 60.0)
-	var material := StandardMaterial3D.new()
-	material.albedo_color = GROUND_COLOR
-	material.roughness = 0.95
+	plane.size = Vector2(40.0, 40.0)
 	var mi := MeshInstance3D.new()
 	mi.name = "Ground"
 	mi.mesh = plane
-	mi.material_override = material
+	mi.material_override = GROUND_MATERIAL
 	mi.position = StreetLayout.door_center() * Vector3(1.0, 0.0, 1.0) + Vector3(0.0, StreetLayout.ground_y() - 0.01, 0.0)
 	return mi
 

@@ -43,7 +43,8 @@ extends Resource
 @export_range(0.0, 1.0) var weather: float = 0.0
 
 @export_group("Fenster und Türen")
-## Form der Öffnung: "rect", "arch" (oben ein Bogen, Stich = rise) oder "round".
+## Form der Öffnung: "rect", "arch" (oben ein Bogen, Stich = rise), "chamfer" (oben abgeschrägte Ecken,
+## Schräge = rise) oder "round" (seit Etappe 6f nicht mehr in der Auswahl).
 @export var shape: String = "rect"
 ## Größe der Öffnung (Breite, Höhe) und Höhe der Unterkante über dem Ladenboden (Meter)
 @export var opening: Vector2 = Vector2.ZERO
@@ -51,6 +52,10 @@ extends Resource
 @export var rise: float = 0.0
 ## Sprossen: Spalten x Reihen (1 x 1 = keine)
 @export var muntins: Vector2i = Vector2i.ONE
+## Sprossenbild (seit Etappe 6f, WindowUnit.muntin_bars): "grid" = gleichmäßiges Raster (Spalten x Reihen),
+## "transom" = Kämpfer bei 72 % mit kleinen Scheiben oben (muntins.x Felder) und muntins.y großen Feldern unten,
+## "tripartite" = große Mittelscheibe, zwei schmale Seitenfelder mit muntins.y Reihen
+@export var pattern: String = "grid"
 ## Erker: so weit steht das Fenster vor (0 = kein Erker)
 @export var bay_depth: float = 0.0
 ## Seitenlichter (Breite je Seite) und Oberlicht (Höhe) an der Ladentür

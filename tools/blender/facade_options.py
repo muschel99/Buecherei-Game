@@ -76,19 +76,23 @@ FABRICS = [
     ("floral_cream", "Blümchen", dict(FABRIC, color=(0.93, 0.89, 0.8), pattern="floral", pattern_size=0.09, color2=(0.86, 0.45, 0.52),
                                        color3=(0.95, 0.82, 0.35))),
 ]
-# Fenster: (id, Name, Form, Breite, Höhe, Unterkante, Stich, Sprossen (Spalten, Reihen), Erker-Tiefe, Preis)
+# Fenster: (id, Name, Form, Breite, Höhe, Unterkante, Stich bzw. Schräge, Sprossen (Spalten, Reihen), Erker-Tiefe,
+# Preis[, Sprossenbild]) – seit Etappe 6f ohne Rundfenster (Fensterbank und Vorhänge passten nicht); alle Formen
+# sind unten gerade, damit die Fensterbank über die ganze Breite reicht
 SHOP_WINDOWS = [
     ("sash", "Sprossenfenster", "rect", 2.4, 2.3, 0.3, 0.0, (4, 4), 0.0, 0),
     ("glass", "Ganz aus Glas", "rect", 2.4, 2.3, 0.3, 0.0, (1, 1), 0.0, 240),
     ("arched", "Bogenfenster", "arch", 2.4, 2.3, 0.3, 0.45, (4, 3), 0.0, 280),
-    ("round", "Rundfenster", "round", 2.0, 2.0, 0.45, 0.0, (2, 2), 0.0, 300),
+    ("transom", "Oberlichtfenster", "rect", 2.4, 2.3, 0.3, 0.0, (6, 3), 0.0, 300, "transom"),
+    ("tripartite", "Dreiteiliges Fenster", "rect", 2.4, 2.3, 0.3, 0.0, (1, 4), 0.0, 320, "tripartite"),
+    ("chamfer", "Fenster mit Schrägecken", "chamfer", 2.4, 2.3, 0.3, 0.42, (4, 2), 0.0, 340, "transom"),
     ("bay", "Erkerfenster", "rect", 2.4, 2.25, 0.32, 0.0, (4, 3), 0.42, 420),
 ]
 UPPER_WINDOWS = [
     ("sash", "Sprossenfenster", "rect", 0.95, 1.45, 4.27, 0.0, (2, 3), 0.0, 0),
     ("glass", "Ganz aus Glas", "rect", 0.95, 1.45, 4.27, 0.0, (2, 1), 0.0, 150),
     ("arched", "Bogenfenster", "arch", 0.95, 1.45, 4.27, 0.3, (2, 3), 0.0, 150),
-    ("round", "Rundfenster", "round", 0.95, 0.95, 4.52, 0.0, (2, 2), 0.0, 180),
+    ("chamfer", "Fenster mit Schrägecken", "chamfer", 0.95, 1.45, 4.27, 0.2, (2, 1), 0.0, 180, "transom"),
     ("bay", "Erker", "rect", 1.35, 1.53, 4.23, 0.0, (3, 2), 0.36, 300),
 ]
 # Türblätter: (id, Name, Form des Blatts, Preis)
@@ -124,9 +128,9 @@ MIXES = [
 # Deko vor der Tür: (id, Name, Modell, Preis)
 # Deko vor der Bücherei (seit Etappe 6d): vier Bereiche, je mit „nichts“ – (Kategorie, id, Name, Teil, Preis)
 DECO = [("deco_steps", "pots", "Töpfe auf der Treppe", "deco_steps_pots", 90),
-        ("deco_steps", "lantern", "Töpfe und Laterne", "deco_steps_lantern", 160),
+        ("deco_steps", "tree", "Bäumchen und Töpfe", "deco_steps_tree", 160),
         ("deco_walk", "tubs", "Kübelpflanzen", "deco_walk_tubs", 140),
-        ("deco_walk", "pots", "Töpfe unter dem Fenster", "deco_walk_pots", 80),
+        ("deco_walk", "pots", "Töpfe vor dem Fenster", "deco_walk_pots", 80),
         ("deco_seat", "bench", "Bank", "deco_seat_bench", 160),
         ("deco_seat", "chair", "Kleiner Stuhl", "deco_seat_chair", 70),
         ("deco_sign", "board", "Aufsteller", "deco_sign_board", 60)]
@@ -158,9 +162,10 @@ def options():
     for k, (oid, name, vals) in enumerate(FASCIA_MATS):
         out.append(("fascia", oid, name, 80 + k * 10, 90, False, dict(material="facade_fascia_" + oid, swatch=vals["color"])))
     for cat, rows in (("window_ground", SHOP_WINDOWS), ("window", UPPER_WINDOWS)):
-        for k, (oid, name, shape, w, h, bottom, rise, grid, bay, price) in enumerate(rows):
+        for k, row in enumerate(rows):
+            oid, name, shape, w, h, bottom, rise, grid, bay, price = row[:10]
             out.append((cat, oid, name, k * 10, price, k == 0, dict(shape=shape, opening=(w, h), bottom=bottom, rise=rise, muntins=grid,
-                                                                    bay_depth=bay)))
+                                                                    bay_depth=bay, pattern=row[10] if len(row) > 10 else "grid")))
     out.append(("frame_color", "weathered_cream", "Altes Creme (verwittert)", 0, 0, True, dict(color=OLD_CREAM, weather=0.85)))
     for k, (oid, name, col) in enumerate(FRAMES):
         out.append(("frame_color", oid, name, 10 + k * 10, 30, False, dict(color=col)))
@@ -281,6 +286,8 @@ def write_all():
             lines.append("rise = %.3f" % extra["rise"])
             lines.append("muntins = Vector2i(%d, %d)" % tuple(extra["muntins"]))
             lines.append("bay_depth = %.3f" % extra["bay_depth"])
+            if extra.get("pattern", "grid") != "grid":
+                lines.append('pattern = "%s"' % extra["pattern"])
         if "side_width" in extra:
             lines.append("side_width = %.3f" % extra["side_width"])
             lines.append("transom = %.3f" % extra["transom"])

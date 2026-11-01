@@ -31,8 +31,8 @@ const CATEGORIES: Array[String] = ["wall", "quoins", "ground", "ground_color", "
 const DECO_AREAS: Array[String] = ["deco_steps", "deco_walk", "deco_seat", "deco_sign"]
 ## Alte Wahl „deco“ (Etappe 6c) → die neuen Bereiche
 const LEGACY_DECO := {"bench": {"deco_seat": "bench"}, "steps": {"deco_steps": "pots"},
-	"sign": {"deco_sign": "board", "deco_steps": "lantern"}, "planters": {"deco_walk": "tubs"},
-	"all": {"deco_seat": "bench", "deco_steps": "lantern", "deco_sign": "board", "deco_walk": "tubs"}}
+	"sign": {"deco_sign": "board", "deco_steps": "tree"}, "planters": {"deco_walk": "tubs"},
+	"all": {"deco_seat": "bench", "deco_steps": "tree", "deco_sign": "board", "deco_walk": "tubs"}}
 ## Zum Spielstart: eine alte, heruntergekommene Backsteinfassade (bröckelnder Putz, verwitterte Farbe).
 const DEFAULTS := {"wall": "old_brick", "quoins": "none", "ground": "wall", "ground_color": "weathered_green",
 	"fascia": "weathered", "window_ground": "sash", "window": "sash", "frame_color": "weathered_cream", "door": "panelled",
@@ -121,6 +121,9 @@ static func normalized(source: Dictionary) -> Dictionary:
 	for key in DEFAULTS:
 		if source.has(key):
 			result[key] = str(source[key])
+	# seit Etappe 6f: statt der Laterne auf der Treppe ein Bäumchen im Kübel
+	if result.get("deco_steps") == "lantern":
+		result["deco_steps"] = "tree"
 	return result
 
 
