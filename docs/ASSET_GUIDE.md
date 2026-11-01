@@ -32,8 +32,8 @@ still**, es gibt keine Fehlermeldung. Nach dem Hineinlegen Godot einmal öffnen 
 
 | Ordner | Regler | Dateiname (ohne Endung) | Wann |
 |---|---|---|---|
-| `assets/audio/ambience/` | Umgebung | `bird` (Varianten) | Vögel zwitschern ab und zu an Dachkanten, Blumenkästen, Ampeln und Bäumen in deiner Nähe (räumlich) |
-| | | `cat_meow`, `cat_chatter` | Katzen im Garten hinter der Gasse und in der Gasse gegenüber (gelegentlich) |
+| `assets/audio/ambience/` | Umgebung | `bird` (Varianten) | seit Etappe 6f vorerst still – Vögel zwitschern nur noch an sichtbaren Vögeln (kommen in der nächsten Etappe) |
+| | | `cat_meow`, `cat_chatter`, `cat_purr` | seit Etappe 6f vorerst nicht benutzt (Tiergeräusche nur von sichtbaren Tieren); die Dateien bleiben liegen |
 | | | `fireplace` | Kaminknistern in Schleife, solange das Feuer brennt (fehlt noch) |
 | | | `outdoor` | Hintergrund in Schleife (fehlt noch, freiwillig) |
 | `assets/audio/footsteps/` | Effekte | `wood`, `stone` | deine Schritte: drinnen Holzboden, draußen Stein – je Schritt ein Laut |
@@ -41,17 +41,21 @@ still**, es gibt keine Fehlermeldung. Nach dem Hineinlegen Godot einmal öffnen 
 | `assets/audio/doors/` | Effekte | `door_open`, `door_close`, `shop_bell` | Ladentür auf/zu, Ladenglocke (beim Öffnen, leiser beim Schließen) |
 | `assets/audio/vehicles/` | Effekte | `car_engine`, `van_engine` | Motor der Autos bzw. des Lieferwagens in Schleife (Tonhöhe folgt dem Tempo) |
 | | | `horn_car`, `horn_van` | freundliches „mip mip“, wenn jemand vor dem Auto auf der Fahrbahn steht (selten) |
-| | | `bike_bell` | Fahrradklingel, wenn jemand im Weg ist, und ab und zu einfach so |
-| `assets/audio/ui/` | Effekte | `tablet_open`, `plop`, `tab` | Tablet und Bücher-Menü öffnen, Apps/Kacheln antippen, Reiter/Kategorien wechseln |
+| | | `bike_bell` | Fahrradklingel, wenn jemand auf der Fahrbahn im Weg ist, und ab und zu einfach so |
+| | | `road_rumble` | leichtes Rumpeln der Reifen auf dem Kopfsteinpflaster, unter dem Motor, lauter mit dem Tempo (seit Etappe 6f; von `tools/make_road_rumble.py` erzeugt – eigene Aufnahme einfach austauschen) |
+| `assets/audio/ui/` | Effekte | `tablet_open`, `plop`, `tab` | Tablet und Bücher-Menü öffnen, jedes Antippen in allen Apps (seit 6f auch Lager und Bücherladen), Reiter/Kategorien wechseln |
 | `assets/audio/books/` | Effekte | `take`, `place`, `shelve`, `page` | Buch aufnehmen, frei ablegen, ins Regal stellen, im Stapel blättern |
-| `assets/audio/voices/` | Stimmen | `laugh_female`, `giggle_female`, `hmm_male`, `oh_female` | kurze Laute der Passanten (siehe „Laute der Passanten und Sprechblasen“) |
+| `assets/audio/voices/` | Stimmen | `laugh_female`, `giggle_female`, `hmm_male`, `oh_female` | kurze Laute der Passanten (siehe „Laute der Passanten und Sprechblasen“; Männer lachen seit 6f nicht, sondern sagen „hm“ oder lächeln still) |
 | `assets/audio/computer/` | Effekte | `keyboard_soft`, `keyboard_loud`, `mouse_click` | vorbereitet für die Computer am Arbeitsplatz (noch nicht benutzt) |
-| `assets/audio/music/` | Musik | beliebig | alle Dateien nacheinander in zufälliger Reihenfolge, mit kurzer, wechselnder Pause |
+| `assets/audio/music/day/` | Musik | beliebig | tagsüber (jetzt die drei Lo-fi-Stücke): zufällige Reihenfolge, ohne Pause, weich ineinander übergeblendet |
+| `assets/audio/music/night/`, `rain/`, `winter/` | Musik | beliebig | vorbereitet (seit 6f): Musik für Abend/Nacht, Regen und Winter – das Spiel wechselt später danach; leer = Musik von `day` |
 
 In jedem Ordner liegt eine kleine `LIESMICH.txt` mit denselben Namen und der Liste der vorhandenen Dateien.
 Feineinstellung in `scripts/autoload/game_config.gd`: `footstep_volume_db` (deine Schritte),
 `passerby_step_*` (Schritte der Passanten), `car_engine_volume_db`, `car_horn_*`, `bike_bell_*`,
-`bird_*`, `cat_*`, `passerby_voice_*` (Laute der Passanten), `music_pause` (Pause zwischen den Liedern).
+`road_rumble_volume_db`, `passerby_voice_*` (Laute der Passanten), `music_crossfade` (Sekunden Überblenden zwischen
+den Liedern), `audio_unit_size`/`audio_max_distance` (wie schnell räumliche Geräusche mit der Entfernung leiser
+werden), `footstep_rate_walk`/`footstep_rate_sprint` (Schritte je Sekunde).
 
 **Deine heruntergeladenen Geräusche aufbereiten (seit Etappe 6e):** Die Originale liegen unverändert in
 `Game design/Sounds Cozy Bücherei/`. Das Script `tools/prepare_sounds.py` macht daraus die Dateien oben:
@@ -63,13 +67,15 @@ Motoren und Tastatur als nahtlose Schleifen, alles als `.ogg`. Welche Datei wof�
 `python3 tools/prepare_sounds.py` ausführen (braucht ffmpeg; auf Fedora: `sudo dnf install ffmpeg-free`).
 Bewusst nicht verwendet: `Female_eww`, `female_urgh`.
 
-**Noch fehlende Geräusche (Wunschliste, Stand Etappe 6e):** Bis eine Datei da ist, bleibt es an dieser Stelle still.
+**Noch fehlende Geräusche (Wunschliste, Stand Etappe 6f):** Bis eine Datei da ist, bleibt es an dieser Stelle still.
 - `ambience/fireplace` – Kaminknistern als Schleife (die drei Kamine sind schon vorbereitet)
 - `ambience/outdoor` – sehr leiser Straßen-Hintergrund als Schleife (Wind, fernes Stadtgeräusch; freiwillig)
 - `voices/…` – eine echte Männerstimme (Lachen, „oh“) und mehr Varianten für alle Laute; bis dahin lachen
-  Männer mit der tieferen Frauenstimme etwas tiefer gestellt, Frauen sagen „hm“ mit der höher gestellten
-  Männerstimme
-- `ambience/cat_purr` ist schon da, wird aber erst benutzt, wenn es eine Katze zum Streicheln gibt
+  Männer nicht (nur „hm“ oder stilles Lächeln), Frauen sagen „hm“ mit der höher gestellten Männerstimme
+- Vogel- und Katzengeräusche gibt es schon; sie kommen zurück, sobald es sichtbare Vögel (nächste Etappe) bzw.
+  eine Katze gibt
+- Musik für Abend/Nacht, Regen und Winter (Ordner sind vorbereitet)
+- eine echte Aufnahme für das Pflaster-Rumpeln (jetzt erzeugt)
 - schön wären noch: Wind in Bäumen und Markisen, Lieferwagen-Tür und abgestellte Kartons, Tablet schließen
 
 **Für Programmierer:** `Audio.play("ui/open")` (ohne Ort), `Audio.play_at("doors/shop_bell", position)`,
@@ -779,20 +785,24 @@ Türblätter, Markisen, Kästen, Ampeln und die Deko vor der Tür (`deco_*.glb`)
 - **Kategorien jetzt:** wall (Mauerwerk), quoins (Ecksteine), ground (Erdgeschoss), ground_color,
   fascia (Schildbalken), window_ground (Schaufenster), window (Fenster oben), frame_color, door,
   door_lights (Fenster um die Tür), door_color, awning, fabric, box, basket, plants (Mischung), fullness,
-  deco (Deko vor der Bücherei).
+  deco_steps / deco_walk / deco_seat (Deko vor der Bücherei: Treppe, Gehweg, Sitzplatz – jeder Bereich hat einen
+  festen, freien Platz; das Schild ist seit Etappe 6f vorerst entfernt).
 - **Frei oder gesperrt:** Häkchen **Unlocked** im Datenblatt. Gesperrte Varianten zeigt die App grau mit
   Schloss; später schaltet die Geschichte sie frei. Zum Ausprobieren schaltet **F11** alles frei.
-- **Fensterformen** (window, window_ground): **Shape** (rect, arch, round), **Opening** (Breite × Höhe in
-  Metern), **Bottom** (Höhe der Unterkante), **Rise** (Bogenhöhe), **Muntins** (Sprossen: Spalten ×
-  Reihen), **Bay Depth** (> 0 = Erker so tief). Ein neues Fenster ist nur ein neues Datenblatt.
+- **Fensterformen** (window, window_ground): **Shape** (rect, arch, chamfer = oben abgeschrägte Ecken; „round“ gibt
+  es seit Etappe 6f nicht mehr in der Auswahl), **Opening** (Breite × Höhe in Metern), **Bottom** (Höhe der
+  Unterkante), **Rise** (Bogenhöhe bzw. Länge der Schräge), **Muntins** (Sprossen: Spalten × Reihen), **Pattern**
+  (Sprossenbild: grid = Raster, transom = Kämpfer mit kleinen Scheiben oben, tripartite = große Mittelscheibe mit
+  schmalen Seitenfeldern), **Bay Depth** (> 0 = Erker so tief). Ein neues Fenster ist nur ein neues Datenblatt;
+  bitte unten gerade lassen, damit die Fensterbank über die ganze Breite reicht.
 - **Türen:** **Shape** arch = Rundbogen über die ganze Breite (Mauer passt sich an); door_lights mit
   **Side Width** (Seitenlichter) und **Transom** (Oberlicht-Höhe).
 - **Verwitterung:** **Weather** (0–1) bei Mauer/Anstrichen – 1 = alter Backstein mit Putzresten,
   Rissen und fehlenden Steinen, bei Farben blätternder Lack.
 - **Pflanzen-Mischungen** (plants): **Plants** = Blumen der Kästen (abwechselnd), **Rim Plants** =
   Ranken über den Rand, **Basket Plants** = Ampeln (Szenen-Namen aus `scenes/world/plants/`).
-- **Kreidetafel vor der Tür:** Bild `assets/textures/signs/library_chalkboard.png` – wie alle Schilder
-  selbst übermalen und unter demselben Namen speichern.
+- **Kreidetafel vor der Tür:** seit Etappe 6f vorerst entfernt; das Bild `assets/textures/signs/library_chalkboard.png`
+  bleibt gespeichert, falls der Aufsteller zurückkommt.
 
 **Vorhänge und Gardinen (seit Etappe 6c):** Möbel-Datenblätter `data/furniture/curtain_*.tres`
 (Platzierung **Fenster**, Unterkategorie Textilien) mit der Szene `scenes/furniture/curtain_*.tscn`;

@@ -42,6 +42,8 @@
 | 6c  | Fassade in jeder Form, Freischaltungen, Leben auf der Straße, Fahrzeuge im Stil | fertig |
 | 6d  | Alles wie in echt, Sitzplätze, Kamin, Flammen, Töne vorbereiten | fertig |
 | 6e  | Geräusche und Musik (eigene Aufnahmen, räumlich, Laute der Passanten) | fertig |
+| 6f  | Nichts verschwindet, Tür, neue Fenster, Deko-Plätze, Autos, Kamin, Geräusche feiner | fertig |
+| 6g  | Vögel (sichtbar, mit Zwitschern) | vorgemerkt |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
@@ -55,9 +57,10 @@
 
 (Seit Etappe 6 sind die späteren Etappen eine Nummer weitergerückt: Wirtschaft ist jetzt 7, Café 9,
 Freischaltungen 10 usw.)
-(Zählung der Entwicklerin bei den Testrunden: ihre „Etappe 8“ = 6c, „Etappe 9“ = 6d, „Etappe 10“ = 6e.)
+(Zählung der Entwicklerin bei den Testrunden: ihre „Etappe 8“ = 6c, „Etappe 9“ = 6d, „Etappe 10“ = 6e,
+„Etappe 11“ = 6f.)
 
-## Stand nach dem Stil-Umbau (Überblick, Stand 31.10.2026)
+## Stand nach dem Stil-Umbau (Überblick, Stand 01.11.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
 
 **Was neu ist**
@@ -100,6 +103,10 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   Bereichen mit Stuhl zum Sitzen; Autos mit Volumen, dunklen Scheiben und Fahrer; ein Kamin je Stil mit
   lebendigen Flammen; ruhige, schnelle Fassaden-App; spürbar weniger Rechenarbeit (Schatten, Verdecker) und
   **Geräusche und Musik** aus den eigenen Aufnahmen – räumlich, mit vielen Varianten, vier Lautstärken.
+- **Etappe 6f:** nichts verschwindet mehr hinter Schaufenstern; Tür ohne Spalt; neue breite Schaufenster
+  statt Rundfenster, Vorhänge vor der Fensterbank; Deko mit festen Plätzen und Bäumchen; Autos mit Scheiben
+  nach ihrer Form, geschlossenen Reifen und passenden Fahrern; Kamine mit echter Brennkammer und lodernden
+  Feuerzungen; Geräusche feiner (Schritt-Takt, Pflaster-Rumpeln, Musik ohne Pausen, Plopp überall).
 
 **Wo die wichtigen Dateien liegen**
 
@@ -127,8 +134,9 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   Dateien liegen noch im Projekt.
 - Passanten gehen noch allein (keine Gruppen); sie plaudern seit 6c kurz miteinander. Noch wenig
   Kleidung und Frisuren.
-- Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme – Liste in
-  ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
+- Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme, Musik für Nacht/Regen/
+  Winter – Liste in ASSET_GUIDE); Vögel (sichtbar, mit Zwitschern) kommen in Etappe 6g; die Fahrzeuge werden in
+  Etappe 10b neu modelliert.
 - Kein Tag-Nacht-Wechsel; Besucher kommen noch nicht in die Bücherei.
 
 ## Etappe 1 – Grundgerüst und erster Raum
@@ -1378,6 +1386,56 @@ Bücherei“, Originale bleiben unverändert). Alles leise, weich und nie zweima
 - Fehlende Aufnahmen bleiben still (Liste in ASSET_GUIDE): Kaminknistern, leiser Straßen-Hintergrund,
   eine Männerstimme; bis dahin lachen Männer mit der tieferen Frauenstimme etwas tiefer.
 - ffmpeg (zum Umwandeln) kam im Container über npm in den Zwischenordner – nichts davon liegt im Projekt.
+
+## Etappe 6f – Nichts verschwindet, Tür, neue Fenster, Deko-Plätze, Autos, Kamin und feinere Geräusche
+Leitgedanke (Wünsche nach dem Test von Etappe 6d und 6e): Fehler beheben, die beim Spielen auffallen
+(verschwindende Dinge, Spalten, schwebende Teile), alles „wie in echt“ – und die Geräusche feiner.
+
+- [x] 1. Verschwinden und Flackern: Ursache waren die Verdecker aus Etappe 6d – ein unsichtbarer Kasten füllte
+      jedes Haus, alles hinter Schaufenstern (Lampen, Flaschen, Kerzen, Tafel, Blumen) galt als verdeckt. Jetzt
+      nur noch in den fensterlosen Wänden der Bücherei; Testbilder vor Pub, Bäckerei, Blumenladen, Teeladen,
+      Wolleladen, Torhaus und Modegeschäft
+- [x] 2. Tür: Anschlag (Leiste am Rahmen, die Tür schließt dagegen) – kein Spalt mehr; Pfosten über und neben
+      der Tür bündig im Rahmen (alle Türformen, innen und außen geprüft)
+- [x] 3. Fenster: Rundfenster entfernt; neu Oberlichtfenster, dreiteiliges Fenster, Fenster mit Schrägecken (oben
+      auch Schrägecken statt rund); Vorhänge hängen vor der Fensterbank – Deko steht nie im Stoff und nie in
+      der Luft (alle Formen mit Deko an den Enden geprüft, auch Erker)
+- [x] 4. Deko vor der Bücherei: feste, freie Plätze, alle Kombinationen mit jedem Erdgeschoss und Erker geprüft;
+      Lorbeerbäumchen im Kübel statt Laterne; Stuhl wieder zwischen Fenster und Treppe und Schild vorerst
+      entfernt (Wunsch während der Arbeit)
+- [x] 5. Vorschaubilder: sicher fotografiert (nie mehr leer gespeichert, alle einmal neu), dezenter Untergrund für
+      helle Möbel; Fassaden-Vorschau auf Gehweg unter blauem Himmel; Reiter der Fassaden-App passen aufs Tablet
+- [x] 6. Autos: höher, Fahrer passen mit jeder Frisur (mindestens 4 cm Luft), Scheiben nach der Form des Autos
+      (runde Ecken, oben zusammenlaufend, glatt), geschlossene Reifen mit Felge
+- [x] 7. Fahrräder: halten nur für Menschen auf der Fahrbahn; an Leuten am Bordstein langsam vorbei
+- [x] 8. Straßenlaternen: Ampeln hängen an Haken bis in den Ring der Ketten
+- [x] 9. Kamin: Brennkammer aus Schamottziegeln, warm angeleuchtet; lodernde Feuerzungen, Glut, Funken
+- [x] 10. Türkranz rastet mittig in fester Höhe ein, auch vor Glas
+- [x] 11. Passanten schauen nur ein paar Sekunden zur Spielfigur und wenden sich wieder einander zu
+- [x] 12. Geräusche: Schritt-Takt passend zum Gehen; Motoren lauter mit Pflaster-Rumpeln; Tiergeräusche nur an
+      sichtbaren Tieren (Vögel/Katze vorerst still); Männer lachen nicht; Musik ohne Pausen mit Überblenden und
+      Ordnern day/night/rain/winter; Plopp bei jedem Antippen in allen Apps
+- [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md, Notion)
+
+**Entscheidungen (selbst getroffen):**
+- Verdecker nur noch in massiven Wänden: Sie brachten in Etappe 6d nur 5–7 % weniger Zeichenaufrufe – der große
+  Gewinn kam von den kleinen Pflanzen ohne Schatten (bleibt).
+- Rundfenster auch oben ersetzt (Fenster mit Schrägecken), damit überall dieselben Formen zur Wahl stehen.
+- Vorhänge hängen an langen Haltern vor der Fensterbank (statt die Ablage in Vorhang-Bereiche zu teilen).
+- Das Bäumchen ist der Lorbeer-Hochstamm mit eigenem Holzkübel (etwa 1,8 m hoch) vorn auf dem Podest, auf der
+  Seite ohne Briefkasten; der Weg zur Tür bleibt 1 m breit.
+- Autos: Dach 8–10 cm höher (Taxi, Mini, Kombi) und Sitze unter das flache Dach; wo die Kopffreiheit trotzdem
+  nicht reicht (große Figuren mit Haarknoten), wird nur diese Figur etwas kleiner – gemessen an allen sechs
+  Figuren und Frisuren. Das Fenster der Schiebetür hat jetzt auch runde Ecken.
+- Tiergeräusche: Vögel und Katzen ohne sichtbares Tier sind entfernt; die Dateien bleiben für die nächste
+  Etappe (Vögel, 6g). Räumliche Geräusche werden jetzt mit der Entfernung natürlich leiser (vorher galten
+  bis 10 m fast volle Lautstärke – darum klang alles „nah“).
+- Pflaster-Rumpeln: per Script erzeugt (`tools/make_road_rumble.py`), austauschbar durch eine eigene Aufnahme.
+- Musik: Die drei Lo-fi-Stücke liegen jetzt in `music/day`; die übrigen Ordner sind vorbereitet und leer.
+
+## Etappe 6g – Vögel (vorgemerkt)
+- Sichtbare Vögel (auf Dachkanten, in Bäumen, am Boden pickend, auffliegend), die zwitschern – die Laute hängen
+  am Vogel (räumlich, Dateien `ambience/bird_*` sind schon da); danach vielleicht eine Katze (`cat_*`)
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

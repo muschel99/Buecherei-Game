@@ -114,9 +114,9 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
       der Name der aktuellen Wahl. Pflanzenarten mit mehreren Farben (z. B. Geranien) sind eine
       Kachel mit Farbtupfern darunter.
     - **Neben dem Tablet liegt ein großes, schräg gelegtes Polaroid** (das Tablet rückt dafür nach
-      links; seit Etappe 6d): ein **ruhiges Modell der Bücherei** – nur das Haus mit seiner Treppe vor
-      einem hellen, neutralen Hintergrund, ohne Nachbarhäuser, Laternen und Bewegung, die Tür immer
-      geschlossen. Es wird nur neu gezeichnet, wenn ich etwas ändere. Die App ist sofort bedienbar;
+      links; seit Etappe 6d): ein **ruhiges Modell der Bücherei** – nur das Haus mit seiner Treppe auf
+      dem Gehweg unter blauem Himmel (seit Etappe 6f), ohne Nachbarhäuser, Laternen und Bewegung, die Tür
+      immer geschlossen. Es wird nur neu gezeichnet, wenn ich etwas ändere. Die App ist sofort bedienbar;
       das Bild entwickelt sich einen Moment später („Einen Moment …“). Nur in den Reitern
       **Briefkasten** und **Theke** liegt darunter ein zweites Polaroid, langsam drehend: die
       **Theke** bzw. ein **Stück Hauswand mit dem Briefkasten** (außen der Einwurf auf der gewählten
@@ -673,10 +673,13 @@ steht kurz sein Name.
 - **Vorhänge und Gardinen (seit Etappe 6c):** in „Nest & Nook“ unter Textilien – Gardine (zart,
   durchscheinend), Schals (schwerer Stoff seitlich), Scheibengardine (nur unten) und gebundene
   Vorhänge, je in vier Farben. Sie rasten im Gestaltungsmodus nur an Fenstern ein (innen vor einem
-  Schaufenster, je Fenster einer) und passen sich der Fensterform an: bei Bogen- und Rundfenstern
-  folgen Stange und Stoff dem Bogen, statt mitten im Fenster anzufangen. Wechselt die Fensterform in
-  der App „Fassade“, passen sich die Vorhänge von selbst an.
-- Der **Türkranz** hängt an jeder Tür, auch vor Glas – an einem kleinen Haken mit Band.
+  Schaufenster, je Fenster einer) und passen sich der Fensterform an: gerade Stange über dem Fenster,
+  gerade Bahnen bis knapp über die Fensterbank. Seit Etappe 6f hängen sie **vor** der Fensterbank (lange
+  Halter) – Deko auf der Fensterbank steht nie im Stoff. Wechselt die Fensterform in der App „Fassade“,
+  passen sich die Vorhänge von selbst an.
+- Der **Türkranz** hängt an jeder Tür, auch vor Glas – an einem kleinen Haken mit Band. Seit Etappe 6f rastet
+  er immer **mittig** auf dem Türblatt ein, in fester Höhe (1,55 m), auf der Seite, auf die ich schaue – er
+  springt nicht mehr mit dem Blick hin und her.
 - Was auf einem Möbelstück steht, wandert beim Verschieben mit.
 - Wände werden in senkrechten Abschnitten gestrichen (Standard 1 m breit). Boden und Decke werden
   in Abschnitten von 3 x 3 Rasterfeldern (1/3 m) gestaltet; der Raum (6 x 8 m) geht darin ohne
@@ -717,11 +720,17 @@ steht kurz sein Name.
   Kerzen und Laternen werden einzeln angezündet und gelöscht; die Flamme erlischt sanft.
 - **Flammen wie Feuer (seit Etappe 6d):** Alle Flammen (Kerzen, Kerzenlaternen, Kamin) zittern,
   flackern und wiegen sich sanft – jede ein wenig anders, stilisiert im gezeichneten Look (heller Kern,
-  warmer Rand). Ihr Licht flackert passend mit. Neue Kerzen und Feuer können das von selbst.
+  warmer Rand). Ihr Licht flackert passend mit. Neue Kerzen und Feuer können das von selbst. Das
+  **Kaminfeuer** (seit Etappe 6f) besteht aus vielen breiten Feuerzungen in Orange und Gelb, die nach oben
+  züngeln und lodern.
 - **Kamin (seit Etappe 6d):** in „Nest & Nook“ für jeden Stil einer – Marmorkamin (Dark Academia,
   Säulen, gusseiserner Bogen, Messinggitter), schlichter Putzkamin (Minimalistisch, schmales
-  Eichenbrett), Feldsteinkamin (Landhaus, dicker Eichenbalken) –, je in vier Farben. Mit E brennt das
-  Feuer (Holzscheite, Glut, mehrere Flammen) und erlischt sanft wieder; es wirft warmes, flackerndes
+  Eichenbrett), Feldsteinkamin (Landhaus, dicker Eichenbalken) –, je in vier Farben. Jeder Kamin hat seit
+  Etappe 6f eine echte **Brennkammer** mit Tiefe: Rückwand und schräge Seitenwände aus Schamottziegeln, die
+  unten im Feuerschein warm glühen und oben verrußt sind. Mit E brennt das Feuer (Holzscheite kreuz und
+  quer auf dem Rost, darunter ein Glutbett, glimmende Stellen an den Scheiten, lodernde Feuerzungen und ein
+  paar aufsteigende Funken, die unter der Decke der Brennkammer verglühen) und erlischt sanft wieder – dann
+  wird auch die Glut dunkel; es wirft warmes, flackerndes
   Licht und knistert (sobald eine Datei `assets/audio/ambience/fireplace.ogg` da ist). Auf dem Sims
   lässt sich Deko abstellen. Der Lichtschalter behandelt den Kamin wie Kerzen (nur mit der Option in
   GameConfig). Schatten wirft das Feuer nur auf der Grafikstufe „Hoch“.
@@ -769,27 +778,37 @@ steht kurz sein Name.
     Naturstein, Holzbretter (natur, gestrichen); Ecksteine Sandstein, grau oder keine.
   - *Erdgeschoss:* „Mauerwerk wie oben“, Holzfront klassisch, Nut und Feder, viktorianisch (in
     Anstrichen) oder Naturstein; **Schildbalken** eigens wählbar (Anstriche, Eiche natur, Stein hell
-    oder grau); **Schaufenster:** Sprossenfenster, ganz aus Glas, Rundfenster, Bogenfenster oder
-    Erkerfenster.
-  - *Obergeschoss:* dieselben fünf Fensterformen, Rahmen in sieben Farben.
+    oder grau); **Schaufenster:** Sprossenfenster, ganz aus Glas, Bogenfenster, Oberlichtfenster (große
+    Scheiben unten, eine Reihe kleiner Scheiben oben), dreiteiliges Fenster (große Mittelscheibe, schmale
+    Seitenfelder mit Sprossen), Fenster mit Schrägecken (oben abgeschrägt, kleine Scheiben im Oberlicht) oder
+    Erkerfenster. Alle sind unten gerade, die Fensterbank reicht über die ganze Breite. Das Rundfenster ist
+    seit Etappe 6f entfernt (Fensterbank zu kurz, Deko schwebte und hing im Vorhang).
+  - *Obergeschoss:* Sprossenfenster, ganz aus Glas, Bogenfenster, Fenster mit Schrägecken (statt des
+    Rundfensters) und Erker, Rahmen in sieben Farben.
   - *Tür:* Kassettentür, Glastür, Bogenglas-Tür, Landhaustür, Rundbogentür mit Glas oder
     Rundbogen-Landhaustür; **Fenster um die Tür:** Oberlicht, Seitenlichter, beides oder keins. Die
     Maueröffnung passt sich der Tür an.
   - Wand, Ausschnitt, Rahmen, Glas, Fensterbank und Vorhang entstehen aus **einem** Umriss je Fenster –
-    darum passen sie innen wie außen ohne Lücke zusammen, auch bei Rund- und Bogenfenstern und beim
+    darum passen sie innen wie außen ohne Lücke zusammen, auch bei Bogen- und Schrägeckfenstern und beim
     Erker (der innen eine tiefe Fensterbank bekommt).
+  - Die **Ladentür** schließt seit Etappe 6f gegen einen Anschlag (schmale Leiste am Rahmen) – durch die Fuge
+    zwischen Tür und Rahmen sieht man nicht mehr hindurch; die Pfosten über und neben der Tür laufen bündig
+    aus dem Rahmen weiter.
   - *Pflanzen draußen:* sechs fertige **Mischungen** – Farbenfroh, Ganz grün, Pastell, Wild und
     rankend, Bauerngarten, Weiß und Grün –, in jedem Kasten und jeder Ampel anders angeordnet, dazu
     die Fülle (dezent, üppig, überquellend).
   - *Draußen:* Markisen (bewegen sich im Wind genau wie bei den anderen Läden – der Stoff ist an
     Kasten und Stange fest, nur die Bahn und der Volant schwingen) und **Deko vor der Bücherei** in
-    vier Bereichen, frei kombinierbar, jeder auch mit „nichts“ (seit Etappe 6d):
-    **Pflanzen auf der Treppe** (Töpfe; Töpfe und Laterne), **Pflanzen auf dem Gehweg** (Kübel an den
-    Hausenden; Töpfe unter dem Schaufenster), **Sitzgelegenheit** (Bank an der Gasse; kleiner
-    Holzstuhl leicht schräg neben der Treppe auf der Straßenseite – niedriger als die Brüstung, er
-    verdeckt die Schaufenster nie) und **Schild** (Aufsteller mit Kreidetafel „Heute: Vorlesestunde“).
-    Jeder Bereich hat feste Plätze, nichts überschneidet sich. Auf Bank und Stuhl kann ich mich mit E
-    setzen, Passanten setzen sich von selbst; um alles andere gehen sie herum.
+    drei Bereichen, frei kombinierbar, jeder auch mit „nichts“ (seit Etappe 6d, Plätze seit 6f neu):
+    **Pflanzen auf der Treppe** (Töpfe; oder ein Lorbeerbäumchen im Holzkübel auf dem Podest – statt der
+    früheren Laterne – mit Töpfen auf den Stufen), **Pflanzen auf dem Gehweg** (Kübel an den Hausenden;
+    Töpfe vor dem Schaufenster, so weit vorn, dass auch ein Erker frei bleibt) und **Sitzgelegenheit**
+    (Bank an der Gassenwand zwischen Schräge und linkem Fenster; kleiner Holzstuhl leicht schräg zwischen
+    vorderem Fenster und Treppe – niedriger als die Brüstung, er verdeckt die Schaufenster nie). Jeder
+    Bereich hat einen festen, freien Platz, der mit jeder Kombination, jedem Erdgeschoss und jedem
+    Fenster (auch dem Erker) frei bleibt. Der Aufsteller mit Kreidetafel ist seit Etappe 6f vorerst
+    entfernt (Wunsch). Auf Bank und Stuhl kann ich mich mit E setzen, Passanten setzen sich von selbst; um
+    alles andere gehen sie herum.
 - **Fassade gestalten (seit Etappe 6b):** Die Fassade ist ein Baukasten, alles frei kombinierbar
   (App „Fassade“):
   - *Erdgeschoss:* Holzverkleidung klassisch mit Feldern, Nut und Feder oder viktorianisch (hohe
@@ -953,7 +972,7 @@ steht kurz sein Name.
   verwittert aus (Shabby Chic: Maserung, abgeplatzter Lack), Backstein und Putz mit Ruß- und
   Regenspuren.
   Auf der Bücherei-Seite stehen wenige viktorianische Laternenmasten (dunkelgrün, mit Laterne
-  und zwei Hängekörben; nicht vor der Bücherei); gegenüber ist der Gehweg schmal, dort hängen
+  und zwei Hängekörben, die seit Etappe 6f an Haken an den Armen hängen; nicht vor der Bücherei); gegenüber ist der Gehweg schmal, dort hängen
   die Laternen an geschwungenen Wandarmen an den Häusern. Am Torhaus hängen zwei Wandlaternen.
   Die **Gasse neben der Bücherei** ist länger, zwischen hohen Hauswänden, und endet in einem
   kleinen Garten mit einem Baum, um dessen Stamm eine runde Holzbank läuft (Kissen, Hocker mit
@@ -1091,7 +1110,9 @@ Tageszeit abhängen (`StreetLife.activity()`).
     Grüßen, Staunen und Freude am Schaufenster, Lachen und Zuhören beim Plaudern, zufrieden beim
     Strecken und auf der Bank. Die Anlässe stehen in einer Tabelle (`FaceTriggers`), neue kommen dort
     dazu.
-  - *Grüßen:* Begegnet man sich (oder der Spielfigur), nicken sie und winken manchmal kurz.
+  - *Grüßen:* Begegnet man sich (oder der Spielfigur), nicken sie und winken manchmal kurz. Zur Spielfigur
+    schauen sie seit Etappe 6f nur ein paar Sekunden (3 s), dann eine Weile nicht mehr – wer plaudert,
+    wendet sich wieder dem Gegenüber zu.
   - *Plaudern:* Zwei Bekannte, die sich auf demselben Gehweg entgegenkommen, bleiben manchmal stehen
     und plaudern ein paar Sekunden: abwechselnd erzählen (mit den Händen) und zuhören, über dem Kopf
     kleine Sprechblasen mit Symbolen (Herz, Buch, Tasse, Sonne, Blume, Note, Katze, Stern, Kuchen),
@@ -1105,6 +1126,9 @@ Tageszeit abhängen (`StreetLife.activity()`).
     die Handfläche nach vorn, beim Blick auf die Uhr der Handrücken nach oben.
 - **Fahrräder** fahren in beide Richtungen durch, ohne anzuhalten: nah am Bordstein, um
   Hindernisse fahren sie langsam außen herum (nur wenn die Gegenspur frei ist, sonst bremsen sie).
+  Seit Etappe 6f reagieren sie (wie Autos) nur auf Menschen, die wirklich auf der Fahrbahn sind – an Leuten,
+  die am Bordstein auf dem Gehweg stehen, fahren sie nur etwas langsamer vorbei, ohne zu zittern oder
+  stehen zu bleiben.
   Seit Etappe 6c ein Hollandrad im Bilderbuch-Stil (runde Rohre, Schutzbleche, Lampe, Klingel,
   Ledersattel, oft ein geflochtener Korb); die Chibi-Figur tritt im Takt, in Kurven legt sich das Rad
   leicht hinein.
@@ -1116,7 +1140,11 @@ Tageszeit abhängen (`StreetLife.activity()`).
   Lieferwagen (seit Etappe 6d wieder die Modelle von Etappe 5b, verbessert): Die Karosserie hat
   Volumen (Innenseiten und Kanten an den Fensteröffnungen), die Scheiben sind deutlich dunkel getönt –
   dahinter sieht man nur schemenhaft Sitze, Lenkrad und eine Chibi-Figur am Steuer (rechts, wir haben
-  Linksverkehr); die Räder sind geschlossen. Sie fahren weich an und bremsen weich, folgen Kurven
+  Linksverkehr). Seit Etappe 6f: die Scheiben folgen der Form des Autos (runde Ecken, Windschutz- und
+  Heckscheibe werden nach oben schmaler, glatte Kanten statt Treppchen), die Dächer sind 8–10 cm höher, die
+  Sitze stehen unter dem flachen Dach, und jede Figur wird so groß gewählt, dass sie mit jeder Frisur
+  (auch dem Haarknoten) mit mindestens 4 cm Luft unter das Dach passt; die Räder sind geschlossene Reifen
+  mit Felge und Radkappe. Sie fahren weich an und bremsen weich, folgen Kurven
   sanft, die Vorderräder lenken mit, und die Karosserie nickt beim Bremsen leicht und neigt sich in
   Kurven. Eine gründliche Neumodellierung aller Fahrzeuge kommt in einer eigenen Etappe.
 - **Leistung:** Alle Figuren und Fahrzeuge entstehen beim Start und werden nur ein- und
@@ -1129,8 +1157,10 @@ Tageszeit abhängen (`StreetLife.activity()`).
   Straßenleben, Mittel etwa 15–26, Hoch etwa 35–42 (rund 5–10 %).
   Unter dem engen Torbogen fahren Räder und Autos langsam; an Fußgängern, die dort am Rand der
   Fahrbahn gehen, kommen Räder mit gut 30 cm Abstand im Schritttempo vorbei.
-- **Leistung der ganzen Straße (seit Etappe 6d):** Häuser verdecken, was hinter ihnen liegt – Godot
-  zeichnet es dann gar nicht erst (Verdecker in jedem gewöhnlichen Haus und in der Bücherei). Kleine
+- **Leistung der ganzen Straße (seit Etappe 6d):** Die fensterlosen Wände der Bücherei verdecken, was
+  hinter ihnen liegt – Godot zeichnet es dann gar nicht erst. (Bis Etappe 6f hatte jedes Haus innen einen
+  unsichtbaren Verdecker-Kasten; dadurch verschwanden Lampen, Flaschen, Kerzen, Tafeln und Blumen hinter
+  Schaufenstern oder flackerten beim Gehen – Verdecker gibt es darum nur noch in massiven Wänden.) Kleine
   Pflanzenteile (niedriger als 50 cm: Blumen in Kästen, Gras, kleine Topfpflanzen) werfen keinen
   Sonnenschatten mehr – ihr Schatten war kaum zu sehen, kostete aber rund ein Drittel aller
   Zeichenaufrufe draußen. Bäume, Büsche, Stockrosen und große Kübelpflanzen werfen weiter Schatten.
@@ -1146,30 +1176,36 @@ Spiel nimmt jedes Mal zufällig einen davon und spielt ihn etwas höher oder tie
 schneller oder langsamer). So klingt nichts zweimal genau gleich. Fehlt eine Datei, bleibt es still.
 
 - **Räumlich:** Alles in der Welt klingt von dort, wo es passiert – links, rechts, nah oder fern, und es
-  wandert mit (Autos, Radfahrer, Passanten).
-- **Schritte:** Jeder Schritt macht ein Geräusch. Die Spielfigur geht drinnen auf Holz, draußen auf Stein.
-  Passanten in der Nähe gehen hörbar, im Takt ihrer Schritte – manche mit Absätzen.
+  wandert mit (Autos, Radfahrer, Passanten). Seit Etappe 6f wird es mit der Entfernung natürlich leiser und
+  in der Ferne etwas dumpfer – so lässt sich jedes Geräusch orten.
+- **Schritte:** Jeder Schritt macht ein Geräusch. Die Spielfigur geht drinnen auf Holz, draußen auf Stein;
+  der Takt passt seit Etappe 6f zum Tempo (beim Gehen 2,2 Schritte je Sekunde, beim Rennen wie bisher,
+  dazwischen gleitend – das Kamerawippen geht im selben Takt). Passanten in der Nähe gehen hörbar, im Takt
+  ihrer Schritte – manche mit Absätzen.
 - **Tür:** Öffnen und Schließen klingen verschieden, dazu bimmelt jedes Mal die Ladenglocke über der Tür
   (beim Schließen etwas leiser; fünf Varianten, eine davon die Türklingel-Aufnahme).
 - **Bücher:** Nehmen raschelt, Ablegen klopft leise, Einräumen ins Regal schiebt (beim Einräumen
   vieler Bücher mehrmals hintereinander), Blättern durch die Bücher in der Hand mit E klingt nach
   umgeblätterter Seite.
-- **Tablet:** leises Einschalten beim Öffnen (Theken-Tablet und R-Menü), ein „Plopp“ beim Antippen von
-  Apps und Kacheln, ein leises Klicken beim Wechsel von Reitern und Kategorien – auch im
-  Gestaltungsmodus.
-- **Straße:** Autos brummen sanft (der Motor wird mit dem Tempo höher), der Lieferwagen hat einen eigenen,
-  etwas raueren Motor. Steht jemand auf der Fahrbahn und das Auto muss warten, hupt es kurz und
-  freundlich („mip mip“) – höchstens alle 18 Sekunden. Radfahrer klingeln, wenn jemand vor ihnen ist,
-  und sonst ganz selten einfach so.
-- **Tiere:** Vögel zwitschern ab und zu an Dachkanten, in Blumenkästen, Ampeln und Bäumen in der Nähe
-  (ein- bis dreimal hintereinander). Aus dem Garten hinter der Gasse und aus der kleinen Gasse gegenüber
-  miaut oder schnattert gelegentlich eine Katze.
+- **Tablet:** leises Einschalten beim Öffnen (Theken-Tablet und R-Menü), ein „Plopp“ bei **jedem**
+  Antippen und Aufklappen in allen Apps (seit Etappe 6f auch im Lager und im Bücherladen), ein leises
+  Klicken beim Wechsel von Reitern und Kategorien – auch im Gestaltungsmodus.
+- **Straße:** Autos brummen (seit Etappe 6f etwas lauter, der Motor wird mit dem Tempo höher), darunter ein
+  leichtes Rumpeln der Reifen auf dem Kopfsteinpflaster, das mit dem Tempo lauter wird; der Lieferwagen hat
+  einen eigenen, etwas raueren Motor. Steht jemand auf der Fahrbahn und das Auto muss warten, hupt es kurz
+  und freundlich („mip mip“) – höchstens alle 18 Sekunden. Radfahrer klingeln, wenn jemand auf der Fahrbahn
+  vor ihnen ist, und sonst ganz selten einfach so.
+- **Tiere:** Tiergeräusche kommen nur noch von einem sichtbaren Tier (seit Etappe 6f). Die Vögel ohne Vogel
+  und die Katze ohne Katze sind darum vorerst still; Vögel kommen mit eigenen Vögeln in der nächsten Etappe.
 - **Passanten:** keine Wörter, nur kurze, weiche Laute zum Anlass – Lachen oder Kichern beim Plaudern,
   ein „hm“ beim Zuhören oder beim Blick auf die Uhr, ein „oh“ am Schaufenster. Sparsam: jede Figur
-  höchstens alle 14 Sekunden, nie zwei Laute kurz nacheinander. Männer klingen etwas tiefer.
+  höchstens alle 14 Sekunden, nie zwei Laute kurz nacheinander. Männer lachen vorerst nicht, sondern sagen
+  „hm“ oder lächeln still (seit Etappe 6f).
 - **Kamin:** knistert, solange das Feuer brennt (Datei fehlt noch).
-- **Musik:** drei ruhige Lo-fi-Stücke in zufälliger Reihenfolge, weich ein- und ausgeblendet, dazwischen
-  kurze, wechselnde Pausen.
+- **Musik:** drei ruhige Lo-fi-Stücke in zufälliger Reihenfolge, seit Etappe 6f **ohne Pausen**: das nächste
+  Stück blendet weich über das Ende des alten. Die Musik liegt in Ordnern nach Stimmung (`music/day`,
+  `night`, `rain`, `winter`); später wechselt das Spiel nach Tageszeit, Wetter und Jahreszeit sanft den
+  Ordner (ein leerer Ordner spielt die Tagesmusik).
 - **Vorbereitet:** Tastatur- und Mausklicks für spätere Computer (`assets/audio/computer/`).
 - **Lautstärke:** vier Regler in den Einstellungen (Musik, Umgebung, Effekte, Stimmen), gespeichert.
 - Welche Datei wofür benutzt wird und welche noch fehlen: docs/ASSET_GUIDE.md, „Eigene Geräusche“.

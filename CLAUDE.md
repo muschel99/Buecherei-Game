@@ -169,7 +169,8 @@ assets/
   ui/              Oberflächen-Theme, icons/ = Symbole (Farbroller, Teppich)
 docs/              Dokumentation
 tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py,
-                   make_chat_assets.py = Sprechblasen-Symbole und Gemurmel-Silben, schreibt nur Fehlendes),
+                   make_chat_assets.py = Sprechblasen-Symbole, make_road_rumble.py = Pflaster-Rumpeln der Autos,
+                   prepare_sounds.py = Geräusche der Entwicklerin aufbereiten; schreiben nur Fehlendes),
   blender/         Blender-Scripts der Stil-Modelle (style_lib.py = Bauteile + .glb-Export,
                    build_houses.py = Häuser; Bilderbuch-Stil: storybook_lib.py,
                    storybook_parts.py, storybook_common.py, storybook_plants.py,
@@ -285,7 +286,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   = 32). Fensterdinge (Vorhänge, Unterkategorie "textile") rasten nur an Schaufenstern ein
   (`BuildMode._place_on_window`, Ursprung an der Innenseite, je Fenster einer); ihr Modell `WindowCurtain`
   (@tool, Stil SHEER/DRAPES/CAFE/TIED) sucht das nächste Fenster und folgt dessen Umriss (auch bei
-  `FacadeDesign.changed`). Türkranz: Kollision vor dem Glas, `Door.set_leaf` schließt das Loch im Türblatt.
+  `FacadeDesign.changed`); seit 6f hängt der Stoff vor der Fensterbank (`WindowCurtain.hang()` = Tiefe der Bank +
+  `SILL_CLEARANCE`, lange Halter) – Deko auf der Bank steckt nie im Vorhang. Türkranz: Kollision vor dem Glas,
+  `Door.set_leaf` schließt das Loch im Türblatt; Dinge an der Tür rasten seit 6f mittig in fester Höhe ein
+  (`BuildMode._place_on_wall(hit, on_door)`, `GameConfig.door_hang_height`), auf der angeschauten Seite.
   Deckenobjekte: Ursprung oben am Aufhängepunkt.
 - Raster: `GameConfig.grid_cell_size` = 1/9 m; Boden/Decke in Abschnitten von 3 x 3 Feldern.
   Raummaße (Breite, Tiefe) sollen Vielfache von 1/3 m sein. Raumhöhe: `GameConfig.room_height`.
@@ -696,7 +700,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Innenhaut (`Body._inner_shell`, Wandstärke `THICK`, Kanten an Fensteröffnungen), Scheiben `Mat("glass",
   glass="car")` → Material „glass_car“ → `assets/materials/vehicle_glass.tres` (dunkel, schemenhaft),
   geschlossene Räder, Innenraum `interior()`; Person am Steuer setzt `VehicleModel.driver_seat` ein
-  (`ChibiPasserbyModel` sitzend, rechts). Gründliche Neumodellierung: Etappe 10b.
+  (`ChibiPasserbyModel` sitzend, rechts). Seit 6f: **Scheiben genau aus der Karosserie geschnitten** (`Glazing`:
+  konvexe, runde Umrisse `rounded`, `side_window`/`end_glass` aus der Dachlinie – Windschutz-/Heckscheibe oben
+  schmaler; jede Zelle wird am Umriss geteilt, Kante zur Innenhaut, Glas `GLASS_INSET` zurück), höhere Dächer
+  (`raised`), Räder als geschlossene Drehkörper (`_lathe`: Reifen-Ring + Felge mit Radkappe). Kopffreiheit:
+  `VehicleModel.driver_headroom` (Dach innen minus Luft) – `ChibiPasserbyModel.head_above_seat()` (aus Ruhehaltung,
+  `SIT_HEAD_*` an allen Figuren gemessen) verkleinert die Figur bei Bedarf; Sitze unter dem flachen Dach
+  (`interior(seat_back=…)`). Gründliche Neumodellierung: Etappe 10b.
 - **Fahrräder (Bilderbuch-Stil seit 6c, Bau-Script von 6c auch für die späteren Autos):**
   `tools/blender/build_storybook_vehicles.py [namen] [--render]` (ohne Namen nur bicycle; Kette um
   Kettenblatt und Ritzel, Kettenschutz-Platte zwischen Kette (x 0,04) und Kurbelarmen (x ±0,085)). Die
@@ -756,23 +766,34 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   bekommt eine Kopie von `assets/materials/flame.tres` (Shader `flame.gdshader`: zittert, flackert, wiegt
   sich, Takt aus der Weltlage; Ursprung des Teils = Fuß der Flamme, `height` aus dem Netz), das Licht
   flackert in `_process` (`GameConfig.flame_light_flicker`). `LightSource.loop_sound` = Geräusch, solange es
-  leuchtet. Möbel-Feuer: `storybook_furniture.fire(kit, base, width)` (Rost, Scheite, Glut, Flammen, Licht);
-  Datenblatt-Feld `sound` im Möbel-Script → `loop_sound`. Kamine: `fireplace_da/_min/_country`
-  (Unterkategorie „fireplace“).
+  leuchtet. Möbel-Feuer: `storybook_furniture.fire(kit, base, width)` (Rost, Scheite kreuz und quer, Glutbett,
+  glimmende Stellen, Feuerzungen `Kit.fire_tongue` mit Material „fire“ → `assets/materials/fire.tres` = Flammen-Shader
+  mit `lick` (züngeln), Funken-Marker `Kit.sparks` → „SparkSpot“ → `LightSource._make_sparks` (GPUParticles,
+  `GameConfig.fire_spark_*`), Licht); seit 6f `storybook_furniture.firebox(...)` = Brennkammer aus Schamottziegeln
+  (unten glühend „firebrick_glow“, oben verrußt). LightSource trennt Flammen (wachsen/schrumpfen/verschwinden) von
+  bloß glühenden Teilen (`_glow_is_flame`: Glut, Ziegel, Laternenglas werden nur dunkel). Datenblatt-Feld `sound`
+  im Möbel-Script → `loop_sound`. Kamine: `fireplace_da/_min/_country` (Unterkategorie „fireplace“).
 - **Audio (seit 6d, Autoload `Audio`; Geräuschkulisse seit 6e):** Dateien in
   `assets/audio/<ordner>/<name>.ogg|wav|mp3` (+ Varianten `<name>_1` … – zufällig eine); `Audio.play(name, dB,
   tonhöhe)`, `play_at(name, ort)`, `play_on(knoten, name, …)` (wandert mit), `loop_at(knoten, name)`,
-  `vary(spanne)` (zufällige Tonhöhe = auch Tempo), `start_ambience`, `start_music` (zufällige Reihenfolge,
-  wechselnde Pause); fehlt eine Datei: still. Busse Music/Ambience/Effects/Voices (`FOLDER_BUS`), Lautstärken
+  `vary(spanne)` (zufällige Tonhöhe = auch Tempo), `start_ambience`, `start_music(stimmung)` (seit 6f Ordner
+  music/day|night|rain|winter, zufällige Reihenfolge ohne Pause, weiches Überblenden `music_crossfade`;
+  `set_music_mood` wechselt später nach Tageszeit/Wetter/Jahreszeit, leerer Ordner → day); fehlt eine Datei:
+  still. Räumlich seit 6f mit natürlicher Entfernung (`Audio._spatial`: `audio_unit_size`, `audio_max_distance`,
+  dumpfer in der Ferne). Busse Music/Ambience/Effects/Voices (`FOLDER_BUS`), Lautstärken
   `Settings` „audio/*_volume“ (Art "slider", gespeichert). Aufbereitung der Originale der Entwicklerin
   („Game design/Sounds Cozy Bücherei“, nie verändern): `tools/prepare_sounds.py` (`JOBS`: schneiden an Stille
   bzw. Anschlägen, Blenden, Lautstärke angleichen, Schleifen, .ogg; braucht ffmpeg – im Container per npm
   `@ffmpeg-installer/ffmpeg` in den Scratchpad, `FFMPEG=…`). Verbunden: Tür (door_open/close, shop_bell),
-  Tablet (`CounterTablet`/`ShelfMenu`: ui/tablet_open; Kacheln/Apps ui/plop; Reiter/Kategorien ui/tab),
+  Tablet (`CounterTablet`/`ShelfMenu`: ui/tablet_open; seit 6f Plopp bei **jedem** Knopf in allen Apps über
+  `TabletSounds.watch` – Knöpfe mit eigenem Ton markiert `TabletSounds.own_sound`; Reiter/Kategorien ui/tab),
   Bücher (take, place = `LooseBooks`, shelve = `BookShelf`, page = `BookStock.cycle_active`), Schritte
   (Spielfigur wood/stone; Passanten street/heels je Schrittlänge, nur nah: `Passerby._footsteps`), Fahrzeuge
-  (`VehicleModel.engine_sound`/`horn_sound`/`honk`, `ChibiCyclistModel.ring`, Auslöser `StreetVehicle._sounds`),
-  Vögel/Katzen (`AmbientSounds` unter Outside, von main.gd), Kamin (`LightSource.loop_sound`), Musik.
+  (`VehicleModel.engine_sound`/`horn_sound`/`honk`, Pflaster-Rumpeln `rumble_sound` = vehicles/road_rumble aus
+  `tools/make_road_rumble.py` (erzeugt, nur wenn sie fehlt), `ChibiCyclistModel.ring`, Auslöser
+  `StreetVehicle._sounds`), Kamin (`LightSource.loop_sound`), Musik. **Tiergeräusche nur von sichtbaren Tieren**
+  (Wunsch seit 6f; Vögel/Katzen ohne Tier sind entfernt, Vögel kommen mit eigenen Vögeln). Männer lachen nicht
+  (PasserbyVoice: „hm“ oder still).
   computer/* vorbereitet. Liste: ASSET_GUIDE „Eigene Geräusche“.
 - Grafikstufen (Niedrig/Mittel/Hoch) stehen in `GameConfig.graphics_presets`.
 - Sitzmöbel: Knoten `Seating` mit `SeatPoint`-Markern (Blickrichtung +Z) + Interactable.
@@ -1012,8 +1033,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   plant `StreetLife._plan_walker`; Ausweichen über Bereiche auf dem Streifen (links ausweichen),
   `blocks_move` = nie näher an jemanden. Feste Hindernisse draußen: `StreetObstacle`-Kreise
   (Gruppe `street_obstacles`, z. B. von `EntranceSteps`). Fahrzeuge: Linksverkehr
-  (`StreetPaths.lane_offset`), bremsen nur für Menschen, die auf der Fahrbahn sind
-  (`Passerby.body_on_road`); je Richtung startet nur, wer niemanden einholt
+  (`StreetPaths.lane_offset`), halten/weichen aus nur für Menschen, die wirklich auf der Fahrbahn sind
+  (seit 6f `Passerby.center_on_road`, Körper ≥ `road_person_margin` auf der Fahrbahn; Leute am Bordstein
+  (`body_on_road`) bekommen nur langsames Vorbeifahren, kein Anhalten/Ausweichen/Klingeln); je Richtung startet
+  nur, wer niemanden einholt
   (`direction_free`). Alles ist beim Start gebaut (Vorrat), Platzhalter aus `StreetShapes`
   (ein Material `street_figure.tres`, Alpha der Vertex-Farbe wie bei den Häusern),
   Schatten je Grafikstufe (`street_shadow_distance`), weit weg vereinfacht
@@ -1077,10 +1100,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Freischalten:** `FacadeOption.unlocked` + `FacadeDesign.is_unlocked/unlock/unlock_everything`
   (Signal `unlocks_changed`, gespeichert), F11 = `debug_unlock_all`; `FacadeDesign.SAVE_VERSION` 2 (ältere
   Stände bekommen die Start-Fassade „Alter Backstein“). Schildbalken = Rolle `facade_fascia` (Kategorie
-  fascia), Pflanzen-Mischungen = Kategorie plants (box/basket/rim-Listen), Deko vor der Tür seit 6d in vier
-  Kategorien `FacadeDesign.DECO_AREAS` (deco_steps, deco_walk, deco_seat, deco_sign; je "none"; alte Wahl
-  „deco“ übersetzt `LEGACY_DECO`; Teile `deco_<bereich>_<id>.glb` aus `build_storybook_facade.py` `DECO_SETS`
-  mit festen, überschneidungsfreien Plätzen; Kollision „-colonly“, Leerobjekte `Obstacle_<cm>` →
+  fascia), Pflanzen-Mischungen = Kategorie plants (box/basket/rim-Listen), Deko vor der Tür in Kategorien
+  `FacadeDesign.DECO_AREAS` (deco_steps, deco_walk, deco_seat – der Aufsteller „deco_sign“ ist seit 6f vorerst
+  entfernt; je "none"; alte Wahl „deco“ übersetzt `LEGACY_DECO`, „lantern“ → „tree“; Teile `deco_<bereich>_<id>.glb`
+  aus `build_storybook_facade.py` `DECO_SETS` mit festen Plätzen, die mit jedem Erdgeschoss (`WALL_CLEAR`) und Erker
+  (`BAY_CLEAR`) frei bleiben: Treppe, Gehweg (Kübel an den Hausenden bzw. Töpfe vor dem Fenster), Bank an der
+  Gassenwand bzw. Stuhl zwischen vorderem Fenster und Treppe; Bäumchen = Pflanzplatz „FacadeSpot_tubtree“ →
+  `LibraryFacade.TUBTREE_PLANT`); Kollision „-colonly“, Leerobjekte `Obstacle_<cm>` →
   StreetObstacle, `Seat_<n>` → StreetSeat unter einem `Seating` mit Interactable (Spielfigur und Passanten);
   `LibraryFacade._deco_extras`). Markisen schwingen wie bei den anderen Läden: Gewichte im Vertex-Alpha
   schon in Blender (`set_wind`, fest an Kasten/Stange/Gestell), Stoff-Shader `wind_strength` 0,035.
@@ -1105,9 +1131,21 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Drittel weniger Zeichenaufrufe draußen); Messung: Zeichenaufrufe aus festen Blicken (Etappe 6d in ROADMAP).
 - **Vorschaubilder auf der Platte (seit 6d):** `ThumbnailRenderer` speichert Fotos von Möbeln und Szenen in
   `user://thumbnails/` (Name = Kennung + Stand der Quelldateien, `CACHE_VERSION` erhöhen, wenn Licht/Kamera
-  sich ändern); ohne bekannte Quellen (request_model/request_view) nur im Speicher.
+  sich ändern; seit 6f Version 2); ohne bekannte Quellen (request_model/request_view) nur im Speicher. Seit 6f:
+  ein paar Bilder zeichnen, dann fotografieren; leere Fotos (`MIN_COVERAGE`) werden nachfotografiert und nie
+  gespeichert. Kacheln (`ItemTile`) zeigen das Foto auf einem dezenten Untergrund (`_Stage`), damit helle Möbel auf
+  hellen Kacheln erkennbar sind. Fassaden-Vorschau: Gehweg (`sidewalk.tres`, etwas dunkler) und blauer Himmel.
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
   Daumen rechts −X / links +X; Finger in Verlängerung des Unterarms.
+- **Blick zur Spielfigur (seit 6f):** Passanten schauen höchstens `chibi_player_glance_time` Sekunden zur Spielfigur,
+  dann `chibi_player_glance_rest` Sekunden nicht (plaudernde wenden sich wieder dem Gegenüber zu).
+- **Schaufenster seit 6f:** keine Rundfenster mehr (Fensterbank/Vorhänge passten nicht); alle Formen unten gerade
+  (volle Fensterbank). Neue Form `OpeningShape.Kind.CHAMFER` (oben abgeschrägte Ecken, Schräge = rise) und
+  Sprossenbilder `FacadeOption.pattern` ("grid", "transom" = Kämpfer mit kleinen Scheiben oben, "tripartite" =
+  Mittelscheibe + schmale Seitenfelder) – Modell und Kachel aus `WindowUnit.muntin_bars`.
+- **Ladentür seit 6f:** Anschlag (`WindowUnit.DOOR_STOP`, außen vor dem 98 cm breiten Blatt, die Tür geht nach innen
+  auf) – keine Fuge zum Durchsehen; Pfosten über/neben der Tür genau in Breite und Tiefe des Rahmens ums Blatt.
+- **Laternen-Ampeln seit 6f:** Haken am Arm reicht bis in den Ring der Ketten (`build_storybook_lamps.py`).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 
