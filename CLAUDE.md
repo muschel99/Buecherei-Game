@@ -139,7 +139,7 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   shop/            Lieferdienst (DeliveryManager)
   street_life/     Straßenleben (StreetLife, StreetPaths, StreetRoute, Passerby, StreetVehicle,
                    DeliveryVan, StreetObstacle, StreetShapes, Platzhalter-Modelle; seit 6c
-                   FaceTriggers, ChibiGestureModifier, ChatSession, ChatBubble, MurmurVoice)
+                   FaceTriggers, ChibiGestureModifier, ChatSession, ChatBubble, PasserbyVoice)
   world/           Außenwelt (StreetLayout, WorldMesh, Street, HouseFacade, GatehouseFacade,
                    CornerHouseFacade, HouseTypes, HousesLayout, LibraryFacade,
                    Plaza, Alley, AlleyEnd, EntranceSteps; tools/ = Erzeuger für houses.tscn
@@ -262,10 +262,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `total_cost`: geänderte Kategorien + `CounterData.price`/`ReturnSlotData.price`, `Wallet.spend`, setzt
   Fassade, Theke, Einwurf), „Abbrechen“ = `clear_draft()` + `close_app()`. Polaroids (`Polaroid`, schräg,
   `flash()`) neben dem Tablet: `FacadePreview` (SubViewport, eigene Welt: Vorschau-`LibraryFacade` mit
-  `follow_design = false`, Türblatt `Door.make_leaf_model`, Einwurf; `capture(raum)` kopiert beim Öffnen
-  nur die Optik von Laden/Treppe/Straße im Blickkegel – keine Instanz-Werte, der Speicher dafür ist
-  begrenzt; Blickpunkt `facade_preview_*`) und `TurntablePreview` (drehend: `show_counter`,
-  `show_letterbox` = Wandstück mit Einwurf außen und Gegenstück innen; `facade_turntable_period`). Bilder:
+  `follow_design = false`, Türblatt `Door.make_leaf_model` immer geschlossen, Einwurf; seit 6d ein ruhiges
+  Modell: `prepare(raum)` baut nur Licht/Hintergrund, Boden, warmen Innenraum und eine Kopie der Treppe –
+  keine Nachbarn, keine Bewegung; gezeichnet wird nur nach `show_design` (UPDATE_ONCE); die App baut die
+  Vorschau zwei Bilder nach dem Öffnen/Klick (`_preview_pending`), damit die Auswahl sofort geht;
+  Blickpunkt `facade_preview_*`) und `TurntablePreview` (drehend, nur in den Reitern Briefkasten und Theke
+  sichtbar und aktiv: `show_counter`, `show_letterbox`; `facade_turntable_period`). Bilder:
   `--ui=app:facade --page=<reiter> --draft=k:v,…`.
 - **Jede Aktion hat nur einen Weg** (z. B. getragene Bücher einräumen = Linksklick halten am
   Regal, ins Lager = Q halten – nicht zusätzlich als Knopf im Regal-Menü). Einzige Ausnahme:
@@ -666,7 +668,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `play_gesture(name, dauer)` und `set_talking`. **Plaudern:** `StreetLife._update_chats` paart alle 0,4 s
   Entgegenkommende auf derselben Seite (`passerby_chat_*`), `ChatSession` wechselt die Sprecher
   (`Passerby.chat_turn`), `ChatBubble` (Sprite3D, Bilder `assets/textures/ui/bubbles/*.png`) und
-  `MurmurVoice` (AudioStreamPlayer3D, Silben `assets/audio/sfx/murmur/*.wav|ogg`, `murmur_*`); erzeugt von
+  `PasserbyVoice` (seit 6e statt des Gemurmels: kurze Laute aus assets/audio/voices/ je Anlass, Tabelle `LINES`,
+  ausgelöst in `ChibiPasserbyModel.trigger_face`, sparsam `passerby_voice_*`). Sprechblasen-Bilder erzeugt
   `tools/make_chat_assets.py` (nur fehlende Dateien). Pausen (stretch/watch/look) plant `_plan_walker`.
   **Sitzhöhe:** Bänke/Stühle 0,25 m (Sitz-Animation der Chibis 0,22–0,27 m; Modell hebt sich um
   sit_height − sit_seat) – neue Sitzmöbel für Passanten genauso hoch, Marker auf 0,25.
@@ -689,8 +692,15 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   immer gefüllt (sonst vervielfacht der Export jede Ecke: 21 statt 6 MB). Passanten:
   `passerby_chibi.tscn` + `ChibiPasserbyModel` (randomize_look, animate = einfache eigene Bewegung über
   `set_bone_turns`, set_shadows; `Passerby.vary_size = false`).
-- **Fahrzeuge (seit Etappe 6c im Bilderbuch-Stil):** `tools/blender/build_storybook_vehicles.py [namen]
-  [--render]` (taxi, mini, traveller, delivery_van, bicycle; Maße = Szenen `car_*.tscn`): Karosserie =
+- **Autos (seit Etappe 6d wieder `tools/blender/build_vehicles.py`, Stil 5b, verbessert):** Karosserie mit
+  Innenhaut (`Body._inner_shell`, Wandstärke `THICK`, Kanten an Fensteröffnungen), Scheiben `Mat("glass",
+  glass="car")` → Material „glass_car“ → `assets/materials/vehicle_glass.tres` (dunkel, schemenhaft),
+  geschlossene Räder, Innenraum `interior()`; Person am Steuer setzt `VehicleModel.driver_seat` ein
+  (`ChibiPasserbyModel` sitzend, rechts). Gründliche Neumodellierung: Etappe 10b.
+- **Fahrräder (Bilderbuch-Stil seit 6c, Bau-Script von 6c auch für die späteren Autos):**
+  `tools/blender/build_storybook_vehicles.py [namen] [--render]` (ohne Namen nur bicycle; Kette um
+  Kettenblatt und Ritzel, Kettenschutz-Platte zwischen Kette (x 0,04) und Kurbelarmen (x ±0,085)). Die
+  Bilderbuch-Autos darin (taxi, mini, traveller, delivery_van – nur mit Namen) sind: Karosserie =
   `soft_shell` (Querschnitte als Superellipse, `round_ends`, Subdivision 2, geschlossen), Radkästen als
   Taschen je Seite (`cylinder_cutter`, nie quer durchs Auto) + Kotflügel-Rand, Säulen-Röhren, weiches Dach,
   Scheiben `slab_quad` zwischen den Säulen (Unterkante per Sichtstrahl in die Karosserie), innen Sitze/
@@ -703,8 +713,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `chibi_ride.py` passen (`BIKE_R`, `CRANK`, `SEAT_TOP`, `GRIP`). `StreetVehicle._drive`: Anfahren und
   Bremsen mit begrenztem Ruck (`JERK`, `JERK_BRAKE`; Sicherheitsnetz `BRAKE_SLACK`), Richtung weich
   (`TURN_FOLLOW`), `animate_drive(tempo, delta, beschleunigung, drehrate)`. Logo des Lieferwagens =
-  Schild-Bild `delivery_van_logo.png` (nie überschreiben). Altes `build_vehicles.py` baut nur noch das
-  Platzhalter-Rad (`CyclistPlaceholder`).
+  Schild-Bild `delivery_van_logo.png` (nie überschreiben).
 - `WorldMesh.xform`: Teile in Fassaden-Koordinaten bauen (x entlang der Wand, +z nach draußen)
   und gedreht einsetzen (schräge Fassaden, Seitenwände); danach wieder `Transform3D.IDENTITY`.
 - **Vorlagen zum Modellieren:** `assets/models/templates/{houses,furniture,world}/*.glb`
@@ -743,6 +752,28 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - Alles, was Licht abgibt, bekommt `LightSource` (Art ELECTRIC oder FLAME) + Interactable.
   `shadow_importance` legt fest, ob die Lampe Schatten werfen darf (NONE, IMPORTANT, OPTIONAL
   = nur auf „Hoch“). Kleine Lichter (Kerzen) ohne Schatten.
+  **Flammen (seit 6d, gemeinsames System):** Jedes Teil mit dem Material „flame“ in einer FLAME-LightSource
+  bekommt eine Kopie von `assets/materials/flame.tres` (Shader `flame.gdshader`: zittert, flackert, wiegt
+  sich, Takt aus der Weltlage; Ursprung des Teils = Fuß der Flamme, `height` aus dem Netz), das Licht
+  flackert in `_process` (`GameConfig.flame_light_flicker`). `LightSource.loop_sound` = Geräusch, solange es
+  leuchtet. Möbel-Feuer: `storybook_furniture.fire(kit, base, width)` (Rost, Scheite, Glut, Flammen, Licht);
+  Datenblatt-Feld `sound` im Möbel-Script → `loop_sound`. Kamine: `fireplace_da/_min/_country`
+  (Unterkategorie „fireplace“).
+- **Audio (seit 6d, Autoload `Audio`; Geräuschkulisse seit 6e):** Dateien in
+  `assets/audio/<ordner>/<name>.ogg|wav|mp3` (+ Varianten `<name>_1` … – zufällig eine); `Audio.play(name, dB,
+  tonhöhe)`, `play_at(name, ort)`, `play_on(knoten, name, …)` (wandert mit), `loop_at(knoten, name)`,
+  `vary(spanne)` (zufällige Tonhöhe = auch Tempo), `start_ambience`, `start_music` (zufällige Reihenfolge,
+  wechselnde Pause); fehlt eine Datei: still. Busse Music/Ambience/Effects/Voices (`FOLDER_BUS`), Lautstärken
+  `Settings` „audio/*_volume“ (Art "slider", gespeichert). Aufbereitung der Originale der Entwicklerin
+  („Game design/Sounds Cozy Bücherei“, nie verändern): `tools/prepare_sounds.py` (`JOBS`: schneiden an Stille
+  bzw. Anschlägen, Blenden, Lautstärke angleichen, Schleifen, .ogg; braucht ffmpeg – im Container per npm
+  `@ffmpeg-installer/ffmpeg` in den Scratchpad, `FFMPEG=…`). Verbunden: Tür (door_open/close, shop_bell),
+  Tablet (`CounterTablet`/`ShelfMenu`: ui/tablet_open; Kacheln/Apps ui/plop; Reiter/Kategorien ui/tab),
+  Bücher (take, place = `LooseBooks`, shelve = `BookShelf`, page = `BookStock.cycle_active`), Schritte
+  (Spielfigur wood/stone; Passanten street/heels je Schrittlänge, nur nah: `Passerby._footsteps`), Fahrzeuge
+  (`VehicleModel.engine_sound`/`horn_sound`/`honk`, `ChibiCyclistModel.ring`, Auslöser `StreetVehicle._sounds`),
+  Vögel/Katzen (`AmbientSounds` unter Outside, von main.gd), Kamin (`LightSource.loop_sound`), Musik.
+  computer/* vorbereitet. Liste: ASSET_GUIDE „Eigene Geräusche“.
 - Grafikstufen (Niedrig/Mittel/Hoch) stehen in `GameConfig.graphics_presets`.
 - Sitzmöbel: Knoten `Seating` mit `SeatPoint`-Markern (Blickrichtung +Z) + Interactable.
 - Hervorhebung immer über `FurnitureUtils.get_highlight_material()` (dezent, Stärke in GameConfig).
@@ -1046,9 +1077,16 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Freischalten:** `FacadeOption.unlocked` + `FacadeDesign.is_unlocked/unlock/unlock_everything`
   (Signal `unlocks_changed`, gespeichert), F11 = `debug_unlock_all`; `FacadeDesign.SAVE_VERSION` 2 (ältere
   Stände bekommen die Start-Fassade „Alter Backstein“). Schildbalken = Rolle `facade_fascia` (Kategorie
-  fascia), Pflanzen-Mischungen = Kategorie plants (box/basket/rim-Listen), Deko vor der Tür = Kategorie deco
-  (`build_storybook_facade.py` `DECO_SETS`, Kollision „-colonly“, Leerobjekte `Obstacle_<cm>` →
-  StreetObstacle, danach `StreetLife.refresh_static_obstacles`). Markisen schwingen über Vertex-Alpha.
+  fascia), Pflanzen-Mischungen = Kategorie plants (box/basket/rim-Listen), Deko vor der Tür seit 6d in vier
+  Kategorien `FacadeDesign.DECO_AREAS` (deco_steps, deco_walk, deco_seat, deco_sign; je "none"; alte Wahl
+  „deco“ übersetzt `LEGACY_DECO`; Teile `deco_<bereich>_<id>.glb` aus `build_storybook_facade.py` `DECO_SETS`
+  mit festen, überschneidungsfreien Plätzen; Kollision „-colonly“, Leerobjekte `Obstacle_<cm>` →
+  StreetObstacle, `Seat_<n>` → StreetSeat unter einem `Seating` mit Interactable (Spielfigur und Passanten);
+  `LibraryFacade._deco_extras`). Markisen schwingen wie bei den anderen Läden: Gewichte im Vertex-Alpha
+  schon in Blender (`set_wind`, fest an Kasten/Stange/Gestell), Stoff-Shader `wind_strength` 0,035.
+  Glas um die Tür: `build_door_surround` teilt es in linkes/rechtes Seitenlicht und Oberlicht (Sprossen nie
+  durch die Türöffnung). Vorhänge (`WindowCurtain`, eingebaute oben `WindowUnit._curtains`): gerade Stange mit
+  Haltern über dem Fenster, gerade Bahnen bis knapp über die Fensterbank – bei jeder Fensterform.
 - Sperrzonen (Ebene `build_blocker`) können ihren Hinweis als Metadaten tragen
   (`keep_clear_text`, z. B. „Vor dem Rückgabekasten bitte frei lassen.“).
 - Vorschaubilder beliebiger Szenen: `ThumbnailRenderer.request_scene(key, pfad, icon, callback,
@@ -1058,6 +1096,16 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   den Inhalt mit dem Möbelstück, beim Wegräumen (Mausrad-Klick) geht er ins Lager.
 - Startgeschenke fürs Inventar: `GameConfig.start_furniture_gifts` (jedes nur einmal, auch in
   älteren Spielständen).
+- **Verdecker (seit 6d, Leistung):** main.gd `_add_house_occluders` – OccluderInstance3D (Box) in jedem
+  gewöhnlichen HouseFacade (nicht Eck-/Torhaus, nicht `see_through`) und an Rückwand/Nachbarwand/Obergeschoss der
+  Bücherei; Projekt-Einstellung Occlusion Culling an; `GameConfig.house_occluders`. Pflanzenteile niedriger als
+  `GameConfig.plant_shadow_min_height` (0,5 m) werfen keinen Sonnenschatten (Greenery `_build_batches`, ein
+  Drittel weniger Zeichenaufrufe draußen); Messung: Zeichenaufrufe aus festen Blicken (Etappe 6d in ROADMAP).
+- **Vorschaubilder auf der Platte (seit 6d):** `ThumbnailRenderer` speichert Fotos von Möbeln und Szenen in
+  `user://thumbnails/` (Name = Kennung + Stand der Quelldateien, `CACHE_VERSION` erhöhen, wenn Licht/Kamera
+  sich ändern); ohne bekannte Quellen (request_model/request_view) nur im Speicher.
+- **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
+  Daumen rechts −X / links +X; Finger in Verlängerung des Unterarms.
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

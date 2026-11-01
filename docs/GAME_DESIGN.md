@@ -113,11 +113,14 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
       Ziegel, Bretter, Stein und Stoffmuster. Name und Preis stehen im Tooltip, über der Reihe nur
       der Name der aktuellen Wahl. Pflanzenarten mit mehreren Farben (z. B. Geranien) sind eine
       Kachel mit Farbtupfern darunter.
-    - **Neben dem Tablet liegen zwei große, schräg gelegte Polaroids** (das Tablet rückt dafür nach
-      links): oben die Bücherei **live von der anderen Straßenseite** mit Blick auf die schräge
-      Eingangswand – jede Änderung sieht man sofort –, unten langsam drehend entweder die
-      **Theke** (im Reiter Theke) oder ein **Stück Hauswand mit dem Briefkasten** (außen der
-      Einwurf auf der gewählten Fassade, innen das Gegenstück).
+    - **Neben dem Tablet liegt ein großes, schräg gelegtes Polaroid** (das Tablet rückt dafür nach
+      links; seit Etappe 6d): ein **ruhiges Modell der Bücherei** – nur das Haus mit seiner Treppe vor
+      einem hellen, neutralen Hintergrund, ohne Nachbarhäuser, Laternen und Bewegung, die Tür immer
+      geschlossen. Es wird nur neu gezeichnet, wenn ich etwas ändere. Die App ist sofort bedienbar;
+      das Bild entwickelt sich einen Moment später („Einen Moment …“). Nur in den Reitern
+      **Briefkasten** und **Theke** liegt darunter ein zweites Polaroid, langsam drehend: die
+      **Theke** bzw. ein **Stück Hauswand mit dem Briefkasten** (außen der Einwurf auf der gewählten
+      Fassade, innen das Gegenstück).
     - Alles, was ich antippe, ist erst ein **Entwurf**. Unten zwei klare Knöpfe: **„Bauen“** zeigt
       die Kosten (nur, was sich ändert) und baut erst dann wirklich um – die echte Fassade, die
       Theke und der Briefkasten ändern sich nur hier. **„Abbrechen“** verwirft den Entwurf, es
@@ -712,6 +715,16 @@ steht kurz sein Name.
 - Alle Lichtquellen lassen sich mit E schalten (gemeinsames System `LightSource`).
 - Elektrische Lampen (Steh-, Kugel- und Deckenlampen) blenden sanft auf und ab.
   Kerzen und Laternen werden einzeln angezündet und gelöscht; die Flamme erlischt sanft.
+- **Flammen wie Feuer (seit Etappe 6d):** Alle Flammen (Kerzen, Kerzenlaternen, Kamin) zittern,
+  flackern und wiegen sich sanft – jede ein wenig anders, stilisiert im gezeichneten Look (heller Kern,
+  warmer Rand). Ihr Licht flackert passend mit. Neue Kerzen und Feuer können das von selbst.
+- **Kamin (seit Etappe 6d):** in „Nest & Nook“ für jeden Stil einer – Marmorkamin (Dark Academia,
+  Säulen, gusseiserner Bogen, Messinggitter), schlichter Putzkamin (Minimalistisch, schmales
+  Eichenbrett), Feldsteinkamin (Landhaus, dicker Eichenbalken) –, je in vier Farben. Mit E brennt das
+  Feuer (Holzscheite, Glut, mehrere Flammen) und erlischt sanft wieder; es wirft warmes, flackerndes
+  Licht und knistert (sobald eine Datei `assets/audio/ambience/fireplace.ogg` da ist). Auf dem Sims
+  lässt sich Deko abstellen. Der Lichtschalter behandelt den Kamin wie Kerzen (nur mit der Option in
+  GameConfig). Schatten wirft das Feuer nur auf der Grafikstufe „Hoch“.
 - Ein Lichtschalter an der Wand schaltet alle elektrischen Lampen im Raum: Ist mindestens eine an,
   gehen alle aus, sonst alle an. Auf Wunsch auch Kerzen und Laternen (Option in GameConfig).
 - Deckenlampen hängen an der Decke und lassen sich aus etwas größerer Entfernung schalten.
@@ -768,9 +781,15 @@ steht kurz sein Name.
   - *Pflanzen draußen:* sechs fertige **Mischungen** – Farbenfroh, Ganz grün, Pastell, Wild und
     rankend, Bauerngarten, Weiß und Grün –, in jedem Kasten und jeder Ampel anders angeordnet, dazu
     die Fülle (dezent, üppig, überquellend).
-  - *Draußen:* Markisen (bewegen sich im Wind wie bei den anderen Läden) und **Deko vor der
-    Bücherei**: Bank und Töpfe, Töpfe auf der Treppe, Aufsteller (Kreidetafel „Heute: Vorlesestunde“)
-    und Laterne, Kübelpflanzen oder alles zusammen; Passanten gehen darum herum.
+  - *Draußen:* Markisen (bewegen sich im Wind genau wie bei den anderen Läden – der Stoff ist an
+    Kasten und Stange fest, nur die Bahn und der Volant schwingen) und **Deko vor der Bücherei** in
+    vier Bereichen, frei kombinierbar, jeder auch mit „nichts“ (seit Etappe 6d):
+    **Pflanzen auf der Treppe** (Töpfe; Töpfe und Laterne), **Pflanzen auf dem Gehweg** (Kübel an den
+    Hausenden; Töpfe unter dem Schaufenster), **Sitzgelegenheit** (Bank an der Gasse; kleiner
+    Holzstuhl leicht schräg neben der Treppe auf der Straßenseite – niedriger als die Brüstung, er
+    verdeckt die Schaufenster nie) und **Schild** (Aufsteller mit Kreidetafel „Heute: Vorlesestunde“).
+    Jeder Bereich hat feste Plätze, nichts überschneidet sich. Auf Bank und Stuhl kann ich mich mit E
+    setzen, Passanten setzen sich von selbst; um alles andere gehen sie herum.
 - **Fassade gestalten (seit Etappe 6b):** Die Fassade ist ein Baukasten, alles frei kombinierbar
   (App „Fassade“):
   - *Erdgeschoss:* Holzverkleidung klassisch mit Feldern, Nut und Feder oder viktorianisch (hohe
@@ -917,7 +936,9 @@ steht kurz sein Name.
   Balkon, Efeu, Blumenkästen und ein zurückgesetztes Haus mit Vorgarten und Eisenzaun.
   Hinter der Gasse am Platz steht der Pub **„The Ink & Ivy“** (dunkelgrüne Holzfront,
   große Sprossenfenster mit geätztem Glas unten, Doppeltür, Laternen, Hängekörbe; drinnen
-  warm beleuchtet ein Tresen mit Zapfhähnen und Flaschen). In den Kurven die **Teestube**
+  warm beleuchtet ein Tresen mit Zapfhähnen und Flaschen; im linken Fenster lehnt eine Tafel mit dem
+  selbst gemalten Pub-Schild, seit Etappe 6d; davor schlichte Holzstühle mit vier Beinen an
+  Bistrotischen). In den Kurven die **Teestube**
   und die **Bäckerei** (Eckhäuser mit Ladentür und Schild in der Schräge), am Ende das
   **Torhaus „Alte Torgasse“**: Backstein mit hellem Rundbogen und Schlussstein, gewölbte
   Durchfahrt mit Laternen, darüber vorkragendes Fachwerk mit Blumenkästen und ein Tondach.
@@ -1074,12 +1095,14 @@ Tageszeit abhängen (`StreetLife.activity()`).
   - *Plaudern:* Zwei Bekannte, die sich auf demselben Gehweg entgegenkommen, bleiben manchmal stehen
     und plaudern ein paar Sekunden: abwechselnd erzählen (mit den Händen) und zuhören, über dem Kopf
     kleine Sprechblasen mit Symbolen (Herz, Buch, Tasse, Sonne, Blume, Note, Katze, Stern, Kuchen),
-    dazu ein leises, unverständliches **Gemurmel** wie bei Animal Crossing – jede Figur mit eigener
-    Tonhöhe. Danach geht jeder weiter.
+    dazu ab und zu ein kurzer, leiser Laut – keine Wörter (seit Etappe 6e statt des erzeugten
+    Gemurmels, siehe „Geräusche und Musik“). Danach geht jeder weiter.
   - *Kleine Pausen:* stehen bleiben und sich umschauen, sich strecken oder auf die Uhr schauen.
   - *Sitzen:* Bänke und Stühle sind so hoch wie die Sitzhaltung der Figuren (25 cm) – sie rutschen
     beim Hinsetzen und Aufstehen nicht mehr. Vor dem Pub setzen sie sich von vorn auf die Stühle
-    neben den Tischen.
+    neben den Tischen (der Aufsteller vor dem Pub ist seit Etappe 6d weg – dort blieb man hängen).
+  - *Hände (seit Etappe 6d):* Bei jeder Geste dreht sich auch die Hand natürlich mit – beim Winken zeigt
+    die Handfläche nach vorn, beim Blick auf die Uhr der Handrücken nach oben.
 - **Fahrräder** fahren in beide Richtungen durch, ohne anzuhalten: nah am Bordstein, um
   Hindernisse fahren sie langsam außen herum (nur wenn die Gegenspur frei ist, sonst bremsen sie).
   Seit Etappe 6c ein Hollandrad im Bilderbuch-Stil (runde Rohre, Schutzbleche, Lampe, Klingel,
@@ -1089,11 +1112,13 @@ Tageszeit abhängen (`StreetLife.activity()`).
   Fußgänger auf der Fahrbahn und für die Spielfigur, wenn sie auf der Fahrbahn steht, und warten,
   bis frei ist – sie fahren nie jemanden um. Unter dem Torbogen fahren alle Fahrzeuge langsam und
   etwas zur Mitte hin. Damit niemand überholen muss, fährt in jeder Richtung nur dann ein neues
-  Fahrzeug los, wenn es kein langsameres einholen würde. Seit Etappe 6c im weichen Weltstil:
-  Taxi, Mini, Kombi mit Holzrahmen und der Lieferwagen – runde, geschlossene Körper mit
-  Kotflügel-Rand, runden Lampen, Chromgrill, Sitzen hinter den Scheiben. Sie fahren weich an und
-  bremsen weich, folgen Kurven sanft, die Vorderräder lenken mit, und die Karosserie nickt beim
-  Bremsen leicht und neigt sich in Kurven.
+  Fahrzeug los, wenn es kein langsameres einholen würde. Taxi, Mini, Kombi mit Holzrahmen und der
+  Lieferwagen (seit Etappe 6d wieder die Modelle von Etappe 5b, verbessert): Die Karosserie hat
+  Volumen (Innenseiten und Kanten an den Fensteröffnungen), die Scheiben sind deutlich dunkel getönt –
+  dahinter sieht man nur schemenhaft Sitze, Lenkrad und eine Chibi-Figur am Steuer (rechts, wir haben
+  Linksverkehr); die Räder sind geschlossen. Sie fahren weich an und bremsen weich, folgen Kurven
+  sanft, die Vorderräder lenken mit, und die Karosserie nickt beim Bremsen leicht und neigt sich in
+  Kurven. Eine gründliche Neumodellierung aller Fahrzeuge kommt in einer eigenen Etappe.
 - **Leistung:** Alle Figuren und Fahrzeuge entstehen beim Start und werden nur ein- und
   ausgeblendet – kein Zuckeln, wenn jemand erscheint. Alle teilen sich ein Material; ein Auto ist
   ein einziges Teil. Schatten nur in der Nähe (Niedrig: keine; Mittel: bis 12 m, als einfacher
@@ -1104,13 +1129,58 @@ Tageszeit abhängen (`StreetLife.activity()`).
   Straßenleben, Mittel etwa 15–26, Hoch etwa 35–42 (rund 5–10 %).
   Unter dem engen Torbogen fahren Räder und Autos langsam; an Fußgängern, die dort am Rand der
   Fahrbahn gehen, kommen Räder mit gut 30 cm Abstand im Schritttempo vorbei.
+- **Leistung der ganzen Straße (seit Etappe 6d):** Häuser verdecken, was hinter ihnen liegt – Godot
+  zeichnet es dann gar nicht erst (Verdecker in jedem gewöhnlichen Haus und in der Bücherei). Kleine
+  Pflanzenteile (niedriger als 50 cm: Blumen in Kästen, Gras, kleine Topfpflanzen) werfen keinen
+  Sonnenschatten mehr – ihr Schatten war kaum zu sehen, kostete aber rund ein Drittel aller
+  Zeichenaufrufe draußen. Bäume, Büsche, Stockrosen und große Kübelpflanzen werfen weiter Schatten.
 - **Speichern:** Draußen wird nichts gespeichert – außer dem, was für eine laufende Lieferung
   nötig ist (Bestellungen und was gerade im Lieferwagen ist).
+
+## Geräusche und Musik (seit Etappe 6e)
+Alle Geräusche sind Aufnahmen der Entwicklerin (Originale in „Game design/Sounds Cozy Bücherei“ bleiben
+unverändert). `tools/prepare_sounds.py` schneidet sie zurecht, entfernt Stille, blendet weich ein und aus,
+gleicht die Lautstärke an und speichert sie als .ogg in `assets/audio/…`. Wo eine Aufnahme mehrere Laute
+enthält (Schritte, Bücher, Vögel, Katzen, Klingeln), wird sie an den Pausen in einzelne Laute geteilt – das
+Spiel nimmt jedes Mal zufällig einen davon und spielt ihn etwas höher oder tiefer (und damit etwas
+schneller oder langsamer). So klingt nichts zweimal genau gleich. Fehlt eine Datei, bleibt es still.
+
+- **Räumlich:** Alles in der Welt klingt von dort, wo es passiert – links, rechts, nah oder fern, und es
+  wandert mit (Autos, Radfahrer, Passanten).
+- **Schritte:** Jeder Schritt macht ein Geräusch. Die Spielfigur geht drinnen auf Holz, draußen auf Stein.
+  Passanten in der Nähe gehen hörbar, im Takt ihrer Schritte – manche mit Absätzen.
+- **Tür:** Öffnen und Schließen klingen verschieden, dazu bimmelt jedes Mal die Ladenglocke über der Tür
+  (beim Schließen etwas leiser; fünf Varianten, eine davon die Türklingel-Aufnahme).
+- **Bücher:** Nehmen raschelt, Ablegen klopft leise, Einräumen ins Regal schiebt (beim Einräumen
+  vieler Bücher mehrmals hintereinander), Blättern durch die Bücher in der Hand mit E klingt nach
+  umgeblätterter Seite.
+- **Tablet:** leises Einschalten beim Öffnen (Theken-Tablet und R-Menü), ein „Plopp“ beim Antippen von
+  Apps und Kacheln, ein leises Klicken beim Wechsel von Reitern und Kategorien – auch im
+  Gestaltungsmodus.
+- **Straße:** Autos brummen sanft (der Motor wird mit dem Tempo höher), der Lieferwagen hat einen eigenen,
+  etwas raueren Motor. Steht jemand auf der Fahrbahn und das Auto muss warten, hupt es kurz und
+  freundlich („mip mip“) – höchstens alle 18 Sekunden. Radfahrer klingeln, wenn jemand vor ihnen ist,
+  und sonst ganz selten einfach so.
+- **Tiere:** Vögel zwitschern ab und zu an Dachkanten, in Blumenkästen, Ampeln und Bäumen in der Nähe
+  (ein- bis dreimal hintereinander). Aus dem Garten hinter der Gasse und aus der kleinen Gasse gegenüber
+  miaut oder schnattert gelegentlich eine Katze.
+- **Passanten:** keine Wörter, nur kurze, weiche Laute zum Anlass – Lachen oder Kichern beim Plaudern,
+  ein „hm“ beim Zuhören oder beim Blick auf die Uhr, ein „oh“ am Schaufenster. Sparsam: jede Figur
+  höchstens alle 14 Sekunden, nie zwei Laute kurz nacheinander. Männer klingen etwas tiefer.
+- **Kamin:** knistert, solange das Feuer brennt (Datei fehlt noch).
+- **Musik:** drei ruhige Lo-fi-Stücke in zufälliger Reihenfolge, weich ein- und ausgeblendet, dazwischen
+  kurze, wechselnde Pausen.
+- **Vorbereitet:** Tastatur- und Mausklicks für spätere Computer (`assets/audio/computer/`).
+- **Lautstärke:** vier Regler in den Einstellungen (Musik, Umgebung, Effekte, Stimmen), gespeichert.
+- Welche Datei wofür benutzt wird und welche noch fehlen: docs/ASSET_GUIDE.md, „Eigene Geräusche“.
 
 ## Einstellungen
 - Im Pausenmenü unter „Einstellungen“: Fenster oder Vollbild, Auflösung (gängige Auflösungen
   inklusive Ultrawide), VSync (Standard: an), Bildrate begrenzen (30, 60, 120 oder unbegrenzt;
   Standard: 60). Gespeichert in einer eigenen Datei, getrennt vom Spielstand.
+- **Ton (seit Etappe 6d):** vier Lautstärkeregler – Musik, Umgebung, Effekte, Stimmen (0–100 %),
+  gespeichert. Geräusche kommen aus Dateien in `assets/audio/…` (siehe „Geräusche und Musik“ und
+  docs/ASSET_GUIDE.md, „Eigene Geräusche“); fehlt eine Datei, bleibt es still.
 - Grafikqualität Niedrig, Mittel (Standard) oder Hoch. Die Werte jeder Stufe stehen in
   `GameConfig.graphics_presets` (Schatten, Umgebungslicht, Nebel, Kantenglättung, Staub …).
 - Sparsame Schatten für ruhige Leistung: Nur wichtige Lampen werfen Schatten.
@@ -1132,5 +1202,5 @@ Tageszeit abhängen (`StreetLife.activity()`).
 - Hinweise (Tastensymbole unter der Bildmitte): Aus, Nur Symbole oder Symbol mit Wort
   (Standard).
 - Alle Menüs und Anzeigen passen sich an jede Auflösung und jedes Seitenverhältnis an.
-- Später dazu: Lautstärke, Mausempfindlichkeit, Tageslänge.
+- Später dazu: Mausempfindlichkeit, Tageslänge.
 - Weitere Räume und Obergeschoss werden später freigeschaltet.

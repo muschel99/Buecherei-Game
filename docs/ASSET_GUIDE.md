@@ -32,24 +32,50 @@ still**, es gibt keine Fehlermeldung. Nach dem Hineinlegen Godot einmal öffnen 
 
 | Ordner | Regler | Dateiname (ohne Endung) | Wann |
 |---|---|---|---|
-| `assets/audio/ambience/` | Umgebung | `outdoor` | Hintergrund in Schleife (Vögel, ferne Stadt, Wind) |
-| | | `fireplace` | Kaminknistern in Schleife, solange das Feuer brennt (am Kamin, wird mit Abstand leiser) |
-| `assets/audio/footsteps/` | Effekte | `wood`, `stone` | Deine eigenen Schritte: drinnen Holzboden, draußen Stein |
-| `assets/audio/doors/` | Effekte | `door_open`, `door_close`, `shop_bell` | Ladentür auf/zu, Glocke beim Öffnen |
-| `assets/audio/vehicles/` | Effekte | `car_engine` | Motor jedes Autos in Schleife (Tonhöhe folgt dem Tempo) |
-| `assets/audio/ui/` | Effekte | `open`, `close` | Menü, Tablet oder Gestaltungsmodus geht auf/zu |
-| `assets/audio/books/` | Effekte | `take`, `place` | Buch in die Hand nehmen / ablegen oder einräumen |
-| `assets/audio/voices/` | Stimmen | (noch frei) | für spätere Stimmen |
-| `assets/audio/sfx/murmur/` | Stimmen | beliebig | Gemurmel beim Plaudern (siehe „Gemurmel und Sprechblasen“) |
-| `assets/audio/music/` | Musik | beliebig | alle Dateien nacheinander in zufälliger Reihenfolge |
+| `assets/audio/ambience/` | Umgebung | `bird` (Varianten) | Vögel zwitschern ab und zu an Dachkanten, Blumenkästen, Ampeln und Bäumen in deiner Nähe (räumlich) |
+| | | `cat_meow`, `cat_chatter` | Katzen im Garten hinter der Gasse und in der Gasse gegenüber (gelegentlich) |
+| | | `fireplace` | Kaminknistern in Schleife, solange das Feuer brennt (fehlt noch) |
+| | | `outdoor` | Hintergrund in Schleife (fehlt noch, freiwillig) |
+| `assets/audio/footsteps/` | Effekte | `wood`, `stone` | deine Schritte: drinnen Holzboden, draußen Stein – je Schritt ein Laut |
+| | | `street`, `heels` | Schritte der Passanten in deiner Nähe (manche Passantinnen mit Absatz) |
+| `assets/audio/doors/` | Effekte | `door_open`, `door_close`, `shop_bell` | Ladentür auf/zu, Ladenglocke (beim Öffnen, leiser beim Schließen) |
+| `assets/audio/vehicles/` | Effekte | `car_engine`, `van_engine` | Motor der Autos bzw. des Lieferwagens in Schleife (Tonhöhe folgt dem Tempo) |
+| | | `horn_car`, `horn_van` | freundliches „mip mip“, wenn jemand vor dem Auto auf der Fahrbahn steht (selten) |
+| | | `bike_bell` | Fahrradklingel, wenn jemand im Weg ist, und ab und zu einfach so |
+| `assets/audio/ui/` | Effekte | `tablet_open`, `plop`, `tab` | Tablet und Bücher-Menü öffnen, Apps/Kacheln antippen, Reiter/Kategorien wechseln |
+| `assets/audio/books/` | Effekte | `take`, `place`, `shelve`, `page` | Buch aufnehmen, frei ablegen, ins Regal stellen, im Stapel blättern |
+| `assets/audio/voices/` | Stimmen | `laugh_female`, `giggle_female`, `hmm_male`, `oh_female` | kurze Laute der Passanten (siehe „Laute der Passanten und Sprechblasen“) |
+| `assets/audio/computer/` | Effekte | `keyboard_soft`, `keyboard_loud`, `mouse_click` | vorbereitet für die Computer am Arbeitsplatz (noch nicht benutzt) |
+| `assets/audio/music/` | Musik | beliebig | alle Dateien nacheinander in zufälliger Reihenfolge, mit kurzer, wechselnder Pause |
 
-In jedem Ordner liegt eine kleine `LIESMICH.txt` mit denselben Namen. Feineinstellung in
-`scripts/autoload/game_config.gd`: `footstep_volume_db` (Schritte), `car_engine_volume_db` (Motor),
-`music_pause` (Pause zwischen zwei Liedern). Die Geräuschkulisse der Straße (Schritte der Passanten,
-Vögel an bestimmten Stellen, Wind, Hupen, Fahrradklingeln) kommt in einer eigenen Etappe (11b) dazu.
+In jedem Ordner liegt eine kleine `LIESMICH.txt` mit denselben Namen und der Liste der vorhandenen Dateien.
+Feineinstellung in `scripts/autoload/game_config.gd`: `footstep_volume_db` (deine Schritte),
+`passerby_step_*` (Schritte der Passanten), `car_engine_volume_db`, `car_horn_*`, `bike_bell_*`,
+`bird_*`, `cat_*`, `passerby_voice_*` (Laute der Passanten), `music_pause` (Pause zwischen den Liedern).
+
+**Deine heruntergeladenen Geräusche aufbereiten (seit Etappe 6e):** Die Originale liegen unverändert in
+`Game design/Sounds Cozy Bücherei/`. Das Script `tools/prepare_sounds.py` macht daraus die Dateien oben:
+Sammeldateien („10x_…“ = zehn Klingeln) werden an den stillen Stellen bzw. an den Schritt-Anschlägen in
+einzelne Laute geschnitten (das Spiel nimmt dann jedes Mal zufällig einen, mit leicht anderer Tonhöhe und
+Geschwindigkeit), Stille am Rand entfernt, sanft ein- und ausgeblendet, die Lautstärken angeglichen,
+Motoren und Tastatur als nahtlose Schleifen, alles als `.ogg`. Welche Datei wofür, steht oben im Script
+(`JOBS`). Neue Geräusche: Datei in den Ordner legen, eine Zeile in `JOBS` ergänzen und
+`python3 tools/prepare_sounds.py` ausführen (braucht ffmpeg; auf Fedora: `sudo dnf install ffmpeg`).
+Bewusst nicht verwendet: `Female_eww`, `female_urgh`.
+
+**Noch fehlende Geräusche (Wunschliste, Stand Etappe 6e):** Bis eine Datei da ist, bleibt es an dieser Stelle still.
+- `ambience/fireplace` – Kaminknistern als Schleife (die drei Kamine sind schon vorbereitet)
+- `ambience/outdoor` – sehr leiser Straßen-Hintergrund als Schleife (Wind, fernes Stadtgeräusch; freiwillig)
+- `voices/…` – eine echte Männerstimme (Lachen, „oh“) und mehr Varianten für alle Laute; bis dahin lachen
+  Männer mit der tieferen Frauenstimme etwas tiefer gestellt, Frauen sagen „hm“ mit der höher gestellten
+  Männerstimme
+- `ambience/cat_purr` ist schon da, wird aber erst benutzt, wenn es eine Katze zum Streicheln gibt
+- schön wären noch: Wind in Bäumen und Markisen, Lieferwagen-Tür und abgestellte Kartons, Tablet schließen
 
 **Für Programmierer:** `Audio.play("ui/open")` (ohne Ort), `Audio.play_at("doors/shop_bell", position)`,
-`Audio.loop_at(knoten, "ambience/fireplace")` (Schleife an einem Knoten) und an Lichtquellen das Feld
+`Audio.play_on(knoten, "vehicles/bike_bell")` (wandert mit dem Knoten), `Audio.loop_at(knoten,
+"ambience/fireplace")` (Schleife an einem Knoten), `Audio.vary()` (leicht zufällige Tonhöhe) und an
+Lichtquellen das Feld
 **Loop Sound** (`LightSource.loop_sound`: läuft, solange das Licht an ist).
 
 ## Ein neues Möbelstück anlegen (ohne Code)
@@ -1179,22 +1205,18 @@ Federn, bei jedem zweiten Rad ein geflochtener Korb vorn).
   `screenshots/blender/storybook/`). Das alte Script `build_vehicles.py` (Stil von Etappe 5b) baut nur
   noch das Rad des alten Platzhalter-Radfahrers (`bicycle.glb`, `bicycle_crank.glb`).
 
-### Gemurmel und Sprechblasen (seit Etappe 6c)
-Plaudern zwei Passanten, murmeln sie leise und unverständlich (wie bei Animal Crossing oder Die Sims)
-und zeigen kleine Sprechblasen mit Symbolen.
-- **Eigene Geräusche:** Alle Dateien im Ordner `assets/audio/sfx/murmur/` sind Silben (`.wav` oder
-  `.ogg`, kurz: 0,1–0,25 s, leise, ohne Pause am Anfang). Das Spiel spielt sie zufällig in kleinen
-  „Sätzen“ hintereinander, jede Figur mit eigener Tonhöhe. Eigene Aufnahmen (z. B. „ba“, „mi“, „lo“
-  mit eigener Stimme, in Audacity einzeln ausgeschnitten und als WAV exportiert) einfach in den Ordner
-  legen; die mitgelieferten `syl_01.wav` … `syl_28.wav` (selbst erzeugte Platzhalter) darfst du löschen
-  oder ersetzen. Godot importiert neue Dateien beim nächsten Öffnen.
-  Einstellungen in `scripts/autoload/game_config.gd`: `murmur_enabled` (an/aus), `murmur_volume_db`
-  (Lautstärke), `murmur_distance` (Hörweite in Metern), `murmur_pitch_range` (tiefste/höchste Stimme).
+### Laute der Passanten und Sprechblasen (seit Etappe 6c, Laute seit Etappe 6e)
+Plaudern zwei Passanten, zeigen sie kleine Sprechblasen mit Symbolen. Echte Wörter sprechen sie nie – nur
+ab und zu ein kurzer Laut passend zum Anlass: Lachen oder Kichern beim Plaudern, „hm“ beim Zuhören und
+beim Blick auf die Uhr, „oh“ beim Staunen vor einem Schaufenster. Sparsam: Jede Figur höchstens etwa alle
+14 Sekunden, und nie zwei Laute kurz hintereinander (`PasserbyVoice`, Werte `passerby_voice_*`).
+- **Eigene Laute:** in `assets/audio/voices/` mit den Namen aus der Tabelle oben (Varianten `_1`, `_2` …).
+  Welcher Anlass welchen Laut nimmt, steht oben in `scripts/street_life/passerby_voice.gd` (`LINES`).
+  Männer benutzen das „hm“ und ein tiefer gespieltes Lachen, Frauen alle Laute.
 - **Eigene Symbole:** Alle Bilder in `assets/textures/ui/bubbles/` (PNG mit durchsichtigem Rand, etwa
   256 × 256 Pixel, Blase und Symbol zusammen) sind mögliche Sprechblasen. Neue einfach dazulegen.
-  Größe und Dauer: `chat_bubble_size`, `chat_bubble_time`.
-- Die Platzhalter erzeugt `python3 tools/make_chat_assets.py` – es schreibt nur Dateien, die fehlen,
-  überschreibt also nie deine eigenen.
+  Größe und Dauer: `chat_bubble_size`, `chat_bubble_time`. Die Platzhalter-Bilder erzeugt
+  `python3 tools/make_chat_assets.py` (schreibt nur fehlende Dateien).
 - Wie oft geplaudert wird: `passerby_chat_chance`, `passerby_chat_time` (Dauer), `passerby_chat_cooldown`.
 
 ### Wo Passanten stehen bleiben

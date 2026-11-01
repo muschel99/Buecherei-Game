@@ -40,20 +40,24 @@
 | 6   | Möbelkatalog im neuen Stil               | fertig        |
 | 6b  | Bedienung, Tablet-Looks, Fassade gestalten | fertig      |
 | 6c  | Fassade in jeder Form, Freischaltungen, Leben auf der Straße, Fahrzeuge im Stil | fertig |
+| 6d  | Alles wie in echt, Sitzplätze, Kamin, Flammen, Töne vorbereiten | fertig |
+| 6e  | Geräusche und Musik (eigene Aufnahmen, räumlich, Laute der Passanten) | fertig |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
 | 10  | Erweiterungen und Freischaltungen        | offen         |
-| 11  | Atmosphäre und Sound                     | offen         |
-| 11b | Geräuschkulisse für die Straße (vorgemerkt) | offen      |
+| 10b | Fahrzeuge neu modellieren (vorgemerkt)   | offen         |
+| 11  | Atmosphäre (Tageszeit-Licht; Musik und Geräusche seit 6e) | offen |
+| 11b | Geräuschkulisse für die Straße – in 6e erledigt | fertig |
 | 12  | Story und Spiegel                        | offen         |
 | 13  | Gasse, Fassade und Jahreszeiten          | offen         |
 | 14  | Feinschliff                              | offen         |
 
 (Seit Etappe 6 sind die späteren Etappen eine Nummer weitergerückt: Wirtschaft ist jetzt 7, Café 9,
 Freischaltungen 10 usw.)
+(Zählung der Entwicklerin bei den Testrunden: ihre „Etappe 8“ = 6c, „Etappe 9“ = 6d, „Etappe 10“ = 6e.)
 
-## Stand nach dem Stil-Umbau (Überblick, Stand 28.10.2026)
+## Stand nach dem Stil-Umbau (Überblick, Stand 31.10.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
 
 **Was neu ist**
@@ -87,6 +91,10 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   (Erdgeschoss, Obergeschoss, Fenster, Markisen, Tür, Blumenkästen, Ampeln, Pflanzen – alles
   kombinierbar), der Briefkasten sauber eingebaut mit Gegenstück innen und die neue App „Fassade“ mit
   Live-Vorschau auf zwei Polaroids, „Bauen“ und „Abbrechen“.
+- **Etappe 6c–6e:** Fenster und Türen in jeder Form, Freischaltungen, Vorhänge, Deko vor der Tür mit
+  Sitzplätzen; Passanten plaudern, grüßen und winken; Fahrräder im Bilderbuch-Stil, Autos mit Fahrer;
+  ein Kamin je Stil mit lebendigen Flammen; spürbar weniger Rechenarbeit (Schatten, Verdecker) und
+  **Geräusche und Musik** aus den eigenen Aufnahmen – räumlich, mit vielen Varianten, vier Lautstärken.
 
 **Wo die wichtigen Dateien liegen**
 
@@ -102,6 +110,7 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 | Malfilter | `scripts/rendering/`, `assets/shaders/paint/` |
 | Fassade der Bücherei (Baukasten) | `tools/blender/build_storybook_facade.py` + `facade_options.py` → `assets/models/facade/`, `data/facade/`; im Spiel `scripts/world/library_facade.gd`, Wahl `scripts/autoload/facade_design.gd` |
 | App „Fassade“ | `scripts/ui/tablet_apps/facade_app.gd` (+ `facade_tile.gd`, `facade_preview.gd`, `turntable_preview.gd`, `polaroid.gd`) |
+| Geräusche und Musik | `assets/audio/…` (aus `Game design/Sounds Cozy Bücherei` über `tools/prepare_sounds.py`), Abspielen `scripts/autoload/audio.gd` |
 | Alle einstellbaren Werte | `scripts/autoload/game_config.gd` |
 
 **Was noch offen oder provisorisch ist**
@@ -111,7 +120,10 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   abgestimmt.
 - Die realistischen Figuren aus 5b werden nicht mehr benutzt (die Chibi-Figuren ersetzen sie), ihre
   Dateien liegen noch im Projekt.
-- Passanten gehen noch allein: keine Gruppen, keine Gespräche, wenig Kleidung und Frisuren.
+- Passanten gehen noch allein (keine Gruppen); sie plaudern seit 6c kurz miteinander. Noch wenig
+  Kleidung und Frisuren.
+- Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme – Liste in
+  ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
 - Kein Tag-Nacht-Wechsel; Besucher kommen noch nicht in die Bücherei.
 
 ## Etappe 1 – Grundgerüst und erster Raum
@@ -1253,6 +1265,115 @@ Passanten grüßen, plaudern, strecken sich, und Autos und Fahrräder sind im we
   im Ordner.
 - Die Pub-Stühle drehen sich leicht zum Tisch (12°), damit es nach Plaudern am Tisch aussieht.
 
+## Etappe 6d – Alles wie in echt, Sitzplätze, Kamin, Flammen und Töne vorbereiten
+Leitgedanke (Wünsche nach dem Test von Etappe 6c): Jedes Modell soll so gebaut sein, dass es in echt
+funktionieren würde (neue Regel in CLAUDE.md). Dazu ruhigere, schnellere Fassaden-App, Sitzplätze vor der
+Bücherei, ein Kamin je Stil, Flammen, die wie Feuer leben, und ein Audio-System für die eigenen Geräusche.
+
+- [x] Regel „Würde es in echt funktionieren?“ in CLAUDE.md (nichts schwebt, nichts steckt ineinander, alles
+      verbunden, Volumen, bewegliche Teile frei)
+- [x] 1. Tür: keine Querstreben mehr durch die offene Türöffnung (Glas um die Tür in linkes/rechtes
+      Seitenlicht und Oberlicht geteilt); alle 6 Türformen × 4 Fenster-Varianten offen/zu, innen/außen geprüft
+- [x] 2. Winken mit natürlicher Hand (Handfläche nach vorn); Uhr, Strecken und Erzählen mit passend
+      gedrehten Händen
+- [x] 3. Pub-Stühle: schlichte Holzstühle mit vier Beinen, ohne Streben
+- [x] 4. Viktorianische Vertäfelung: obere Verzierungen nur noch an den Hauskanten, vor dem Schild statt darin
+- [x] 5. Markisen der Bücherei schwingen wie die der anderen Läden (Stoff an Kasten und Stange fest)
+- [x] 6. Deko vor der Bücherei in vier frei kombinierbaren Bereichen (Treppe, Gehweg, Sitzplatz, Schild, je mit
+      „nichts“); neuer kleiner Stuhl schräg neben der Treppe – Spielfigur und Passanten können sich setzen
+      (auch auf die Bank)
+- [x] 7. Autos: zurück zu den Modellen vor Etappe 6c, verbessert (Karosserie mit Volumen und Innenseiten,
+      dunkel getönte Scheiben, geschlossene Räder, Sitze und Lenkrad, Chibi-Figur am Steuer)
+- [x] 8. Fahrräder wie in echt: Kette um Kettenblatt und Ritzel, Kettenschutz zwischen Kette und Kurbel,
+      Lampe frei über dem Schutzblech, Rücklicht am Gepäckträger
+- [x] 9. Ladezeit und Ruckeln gemessen und verbessert (Werte siehe unten)
+- [x] 10. Tablet: Esc schließt zuerst nur die App, erst auf dem Startbildschirm das Tablet
+- [x] 11. Fassaden-App sofort bedienbar; ruhiges Modell der Bücherei statt Live-Bild (nur bei Änderung neu
+      gezeichnet, Tür zu); zweites Polaroid nur bei Briefkasten und Theke
+- [x] 12. Audio-System: Ordner ambience, footsteps, doors, vehicles, ui, books, voices, music; fehlt eine Datei,
+      bleibt es still; vier Lautstärkeregler (Musik, Umgebung, Effekte, Stimmen); Anleitung in ASSET_GUIDE
+- [x] 13. Kamin je Stil (Marmor, Putz, Feldstein) mit Farbvarianten in „Nest & Nook“: Feuer mit E an/aus,
+      warmes flackerndes Licht, Knistern über das Audio-System, Lichtschalter wie bei Kerzen
+- [x] 14. Alle Flammen leben (gemeinsamer Flammen-Shader: zittern, flackern, wiegen sich, jede anders) und
+      ihr Licht flackert mit
+- [x] 15a. Ecksteine: nur noch bei Häusern, die welche haben (dann an beiden Ecken), und am Haus neben dem
+      Blumenladen
+- [x] 15. Pub: Aufsteller weg, das eigene Pub-Schild auf der Tafel im linken Fenster
+- [x] 16. Vorhänge an jeder Fensterform: gerade Stange mit Haltern über dem Fenster, gerade Bahnen
+- [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md, Notion)
+
+**Entscheidungen (selbst getroffen):**
+- Ecksteine: Vor Etappe 6c hatten acht Häuser Ecksteine nur an ihrer frei stehenden Ecke. Jetzt hat kein Haus
+  mehr nur an einer Ecke welche: Häuser mit Ecksteinen im Stil (oder zwei freien Seiten) haben sie an beiden
+  Ecken, das Haus neben dem Blumenladen auch; die übrigen sieben (darunter das zweite Haus rechts vom Pub)
+  haben keine mehr.
+- Die Bilderbuch-Autos aus Etappe 6c bleiben im Bau-Script als Grundlage für die spätere Neumodellierung.
+- Straßen- und Wandlaternen leuchten wie Glühbirnen (keine Flamme) – sie flackern darum nicht.
+- Das Audio-System liest auch .mp3 und .wav; empfohlen bleibt .ogg. Einige Ereignisse sind schon verbunden
+  (Tür, Glocke, Menüs, Bücher, eigene Schritte, Automotor, Umgebung, Musik, Kamin), damit eigene Dateien
+  sofort klingen.
+
+**Leistung (Punkt 9) – was kostet am meisten?**
+- *Laden:* Der Rechen-Teil des Ladens dauert nur etwa 1,5 s (gemessen ohne Bildschirm: 1,5 s vorher,
+  1,6 s nachher – es ist etwas mehr dazugekommen: Geräusche, Fahrer, Deko). Was beim Start auf dem PC
+  länger dauert, ist die Grafikkarte: Beim ersten Start nach einem Update übersetzt Godot alle Shader
+  einmal (danach liegen sie im Zwischenspeicher), und alle Modelle müssen auf die Grafikkarte –
+  allein die Pflanzen haben zusammen etwa 9 Mio. Dreiecke, die Pflanzen sind auch beim Laden der
+  größte Einzelposten (ohne sie 0,2 s schneller).
+- *Im Spiel:* Am meisten kosten die Sonnenschatten – für jede der vier Schattenstufen wird alles, was
+  Schatten wirft, noch einmal gezeichnet (etwa zwei Drittel aller Zeichenaufrufe). Die Hälfte davon
+  waren Pflanzen, vor allem die vielen kleinen Blumen in Kästen, deren Schatten man kaum sieht.
+- *Verbessert:* Kleine Pflanzenteile unter 50 cm werfen keinen Sonnenschatten mehr
+  (`plant_shadow_min_height`), Häuser verdecken, was hinter ihnen liegt (Occlusion Culling,
+  `house_occluders`), die Fassaden-Vorschau zeichnet nur noch bei Änderungen statt jedes Bild die ganze
+  Straße, Vorschaubilder im Shop werden auf der Platte gespeichert (zweites Öffnen sofort), die Fahrer in
+  den Autos entstehen erst, wenn ein Auto losfährt.
+- *Gemessen* (Zeichenaufrufe je Bild, Mittel, Blick wie beim Spielen; weniger = flüssiger):
+
+  | Blick | vorher (Etappe 6c) | nachher | weniger |
+  |---|---|---|---|
+  | Straße nach Westen | 2215 | 1473 | −33 % |
+  | Straße nach Osten | 3320 | 2167 | −35 % |
+  | Vor der Ladentür | 2258 | 1363 | −40 % |
+  | Im Laden | 3329 | 2087 | −37 % |
+
+  Die Zahl der Dreiecke bleibt fast gleich (3,3–5,1 Mio.). Bilder pro Sekunde lassen sich im Container
+  nicht messen (dort rechnet der Prozessor die Grafik, ein Bild dauert mehrere Sekunden); auf dem PC
+  zeigt F3 sie an.
+
+## Etappe 6e – Geräusche und Musik
+Leitgedanke: Die Welt klingt – mit den eigenen Aufnahmen der Entwicklerin (Ordner „Game design/Sounds Cozy
+Bücherei“, Originale bleiben unverändert). Alles leise, weich und nie zweimal genau gleich.
+
+- [x] 1. Geräusche nach Dateinamen sortiert (Unklares nachgefragt), als .ogg in `assets/audio/…`, Lautstärken
+      angeglichen; Liste „was wofür, was fehlt“ in ASSET_GUIDE („Eigene Geräusche“)
+- [x] 2. Sammeldateien („10x_…“) an den Pausen bzw. Schritt-Anschlägen in einzelne Laute geschnitten
+      (123 Dateien), Stille entfernt, weich ein- und ausgeblendet; das Spiel nimmt zufällig einen Laut und
+      verändert Tonhöhe und Tempo leicht (`tools/prepare_sounds.py`, `Audio.vary`)
+- [x] 3. Räumliche Geräusche: Fahrradklingel (wenn jemand im Weg ist, sonst selten), Motoren von Autos und
+      Lieferwagen (Motor „trashy“ sanfter und leiser für den Lieferwagen), freundliches Hupen „mip mip“,
+      wenn jemand auf der Fahrbahn steht (höchstens alle 18 s), Vögel an Dachkanten, Kästen, Ampeln und
+      Bäumen, Katzen im Garten und in der Gasse gegenüber, Bücher (nehmen, ablegen, einräumen, blättern),
+      Tür mit Ladenglocke, Kamin vorbereitet; Tastatur und Maus für spätere Computer vorbereitet
+- [x] Schritte: je Schritt ein Laut – Spielfigur auf Holz/Stein, Passanten in der Nähe (manche mit Absätzen)
+- [x] 4. Passanten: keine Wörter, nur kurze Laute zum Anlass (Lachen, Kichern, „hm“, „oh“), sparsam; das
+      erzeugte Gemurmel ist komplett entfernt
+- [x] 5. Lo-fi-Musik: zufällige Reihenfolge, weiche Übergänge, kurze wechselnde Pausen
+- [x] 6. Tablet: Einschalten, „Plopp“ bei Apps und Kacheln, leises Klicken bei Reitern und Kategorien
+- [x] 7. Eigene Lautstärken für Musik, Umgebung, Effekte und Stimmen (gespeichert)
+- [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md, Notion)
+
+**Entscheidungen (selbst getroffen bzw. mit der Entwicklerin geklärt):**
+- „9X_mechanisch_gehen“ = Schritte der Passanten (zusammen mit den Stein-Schritten); „door bell“ = fünfte
+  Variante der Ladenglocke; die Glocke bimmelt wie in echt beim Öffnen und (leiser) beim Schließen.
+- „Female_eww“ und „female_urgh“ werden nicht verwendet.
+- Motor „soft“ = Autos, Motor „trashy“ = Lieferwagen (tiefer gefiltert, leiser, sanfter).
+- „schnelles durchblättern“ in kurze Stücke geschnitten = Buch aufnehmen; „umblättern“ = blättern mit E.
+- Hupe „kurz“ (zweimal) = Autos, Hupe „tief“ = Lieferwagen.
+- Fehlende Aufnahmen bleiben still (Liste in ASSET_GUIDE): Kaminknistern, leiser Straßen-Hintergrund,
+  eine Männerstimme; bis dahin lachen Männer mit der tieferen Frauenstimme etwas tiefer.
+- ffmpeg (zum Umwandeln) kam im Container über npm in den Zwischenordner – nichts davon liegt im Projekt.
+
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
   Verkaufen, Lieferung
@@ -1277,12 +1398,19 @@ Passanten grüßen, plaudern, strecken sich, und Autos und Fahrräder sind im we
 - Neue Möbel im Shop freischalten (Datenblatt-Feld `is_unlocked`)
 
 ## Etappe 11 – Atmosphäre und Sound
-- Musik, Geräusche, Tageszeit-Licht
+- Tageszeit-Licht (Musik und Geräusche gibt es seit Etappe 6e; später z. B. Geräusche je Tageszeit)
 
-## Etappe 11b – Geräuschkulisse für die Straße (vorgemerkt seit Etappe 6c)
-- Eigene Etappe (Wunsch nach dem Test von Etappe 6b): Schritte der Passanten (je Untergrund), Vögel,
-  Wind in Bäumen und Markisen, Autos und Fahrräder (Anfahren, Klingeln), entferntes Stadtgemurmel
-- Grundlage vorhanden: Gemurmel beim Plaudern (`MurmurVoice`, Ordner `assets/audio/sfx/murmur/`)
+## Etappe 10b – Fahrzeuge neu modellieren (vorgemerkt seit Etappe 6d)
+- Eigene Etappe (Wunsch nach dem Test von Etappe 6c): alle Autos, der Lieferwagen und die Fahrräder werden
+  gründlich neu modelliert (bis dahin fahren die verbesserten Modelle aus Etappe 5b)
+- Grundlage: build_vehicles.py (jetzige Autos), build_storybook_vehicles.py (Bilderbuch-Versuch aus 6c,
+  Fahrräder)
+
+## Etappe 11b – Geräuschkulisse für die Straße (erledigt in Etappe 6e)
+- [x] Schritte der Passanten, Vögel, Autos und Fahrräder (Motor, Hupe, Klingel), Katzen – siehe Etappe 6e
+- [ ] Wind in Bäumen und Markisen, fernes Stadtgeräusch: kommen, sobald es Aufnahmen gibt
+  (`ambience/outdoor`, Wunschliste in ASSET_GUIDE)
+- Das erzeugte Gemurmel (`MurmurVoice`) ist entfernt – Passanten machen kurze Laute (`PasserbyVoice`)
 
 ## Etappe 12 – Story und Spiegel
 - Kleine unerklärliche Ereignisse, der Spiegel und seine Wesen
