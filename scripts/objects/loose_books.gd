@@ -272,6 +272,7 @@ func place_active_book(_interactor: Node = null) -> bool:
 	_set_plan({})
 	var book := BookStock.take_active()
 	place(book, plan.transform, plan.support_uid, plan.pose)
+	Audio.play_at("books/place", global_transform * plan.transform.origin, 0.0, Audio.vary(0.07))
 	turn_degrees = 0.0  # das nächste Buch beginnt wieder gerade
 	return true
 

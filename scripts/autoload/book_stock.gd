@@ -268,7 +268,7 @@ func carry(books: Array) -> Array[Book]:
 	var rest: Array[Book] = []
 	var space := get_free_hand_space()
 	if space > 0 and not books.is_empty():
-		Audio.play("books/take")
+		Audio.play("books/take", -3.0, Audio.vary(0.07))
 	for book: Book in books:
 		if space > 0:
 			carried.append(book)
@@ -311,6 +311,7 @@ func cycle_active(direction: int) -> void:
 	if carried.size() < 2:
 		return
 	active_index = posmod(active_index + direction, carried.size())
+	Audio.play("books/page", -2.0, Audio.vary(0.08))   # im Stapel blättern
 	_carried_changed()
 
 
@@ -318,7 +319,6 @@ func cycle_active(direction: int) -> void:
 func take_active() -> Book:
 	var book := get_active_book()
 	if book:
-		Audio.play("books/place")
 		carried.remove_at(active_index)
 		active_index = clampi(active_index, 0, maxi(carried.size() - 1, 0))
 		_carried_changed()

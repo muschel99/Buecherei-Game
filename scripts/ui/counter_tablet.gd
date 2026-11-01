@@ -115,6 +115,7 @@ func open_tablet() -> void:
 		return
 	is_open = true
 	MenuStack.open(self)
+	Audio.play("ui/tablet_open", -5.0)
 	_player.movement_enabled = false
 	_player.interaction_enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -175,6 +176,7 @@ func launch_app(id: String) -> void:
 	var icon: TabletAppIcon = _app_icons.get(id)
 	if _animating or data == null or icon == null:
 		return
+	Audio.play("ui/plop", -5.0, Audio.vary(0.04))
 	_animating = true
 	var launch := _make_launch(data, icon)
 	var tween := create_tween()

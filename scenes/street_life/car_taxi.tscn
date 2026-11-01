@@ -36,5 +36,6 @@ fixed_color = true
 paint_color = Color(0.05, 0.05, 0.055, 1)
 second_color = Color(0.9, 0.88, 0.82, 1)
 driver_seat = Vector3(-0.37, 0.68, 0.42)
+driver_scale = 0.9
 
 [node name="Car" parent="Model" instance=ExtResource("3_body")]

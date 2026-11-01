@@ -214,6 +214,7 @@ func _deco_extras() -> void:
 		var life := get_tree().get_first_node_in_group(StreetLife.GROUP)
 		if life and life.has_method("refresh_static_obstacles"):
 			life.call_deferred("refresh_static_obstacles")
+			life.call_deferred("refresh_seats")
 
 
 ## Sitzmöbel aus den Sitzplätzen eines Deko-Teils: StreetSeat (auch für Passanten) + Interactable über

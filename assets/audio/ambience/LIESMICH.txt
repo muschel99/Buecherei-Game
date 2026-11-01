@@ -1,7 +1,13 @@
 Ordner für Geräusche: Umgebung (Lautstärke „Umgebung“)
 
-Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
-Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
 
-- outdoor  – Hintergrund draußen in Schleife (Vögel, ferne Stadt, Wind)
-- fireplace – Knistern des Kamins (Schleife, nur wenn das Feuer brennt)
+- bird – Vogelzwitschern an Dachkanten, Blumenkästen, Bäumen (räumlich)
+- cat_meow, cat_chatter – Katzen im Garten und in der Gasse gegenüber
+- cat_purr – Schnurren (vorbereitet, noch nicht benutzt)
+- fireplace – Kaminknistern in Schleife (fehlt noch)
+- outdoor – Hintergrund in Schleife (fehlt noch, optional)
+
+Vorhanden: bird_1.ogg, bird_2.ogg, bird_3.ogg, bird_4.ogg, bird_5.ogg, bird_6.ogg, cat_chatter_1.ogg, cat_chatter_2.ogg, cat_chatter_3.ogg, cat_chatter_4.ogg, cat_chatter_5.ogg, cat_chatter_6.ogg, cat_chatter_7.ogg, cat_chatter_8.ogg, cat_chatter_9.ogg, cat_meow_1.ogg, cat_meow_2.ogg, cat_purr.ogg

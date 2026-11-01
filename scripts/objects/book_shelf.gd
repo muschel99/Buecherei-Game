@@ -447,6 +447,8 @@ func fill_from_storage() -> int:
 			var rest := add_books(taken, true, r)
 			BookStock.put_back_first(rest)
 			count += taken.size() - rest.size()
+	if count > 0:
+		_shelve_sounds(count, 0.15)
 	return count
 
 
@@ -504,8 +506,18 @@ func put_carried_at(row: int, aim_x: float) -> int:
 	_refresh_instances()
 	if placed > 0:
 		_changed()
+		_shelve_sounds(placed, interval)
 	BookStock.return_to_hand(rest)
 	return placed
+
+
+## Einräum-Geräusche, wenn mehrere Bücher nacheinander ins Regal gleiten (höchstens vier, versetzt).
+func _shelve_sounds(count: int, interval: float) -> void:
+	for k in mini(count, 4):
+		if k > 0:
+			await get_tree().create_timer(maxf(interval, 0.12)).timeout
+		if is_inside_tree():
+			Audio.play_at("books/shelve", global_position + Vector3.UP * 1.0, -2.0, Audio.vary(0.08))
 
 
 ## Die anderen Fächer, das nächstgelegene zuerst (gemessen von Brettmitte zu Brettmitte;
@@ -876,6 +888,7 @@ func place_active_book() -> bool:
 	var start := _ghost_transform
 	_set_plan({})
 	var book := BookStock.take_active()
+	Audio.play_at("books/shelve", global_position + Vector3.UP * 1.0, 0.0, Audio.vary(0.07))
 	# Die Nachbarn rücken zur Seite, das Buch gleitet von der Vorschau an seinen Platz
 	for other: Book in moves:
 		_x[other] = moves[other]

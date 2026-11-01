@@ -1,8 +1,10 @@
 Ordner für Geräusche: Tür (Lautstärke „Effekte“)
 
-Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
-Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
 
-- door_open  – Ladentür geht auf
-- door_close – Ladentür geht zu
-- shop_bell  – Glocke über der Tür beim Öffnen
+- door_open, door_close – Ladentür auf/zu
+- shop_bell – Glocke beim Öffnen (5 Varianten)
+
+Vorhanden: door_close.ogg, door_open.ogg, shop_bell_1.ogg, shop_bell_2.ogg, shop_bell_3.ogg, shop_bell_4.ogg, shop_bell_5.ogg

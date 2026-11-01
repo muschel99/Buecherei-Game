@@ -302,14 +302,20 @@ var delivery_van_scene: String = "res://scenes/street_life/delivery_van.tscn"
 ## ohne Bewegung. Schatten werfen sie nur in der Nähe (je Grafikstufe: graphics_presets,
 ## "street_shadow_distance").
 var street_detail_distance: float = 28.0
-## Fahrzeuge federn weich (seit Etappe 6c, VehicleModel): Nicken je m/s² Beschleunigung und Neigen je m/s²
-## Querbeschleunigung (Bogenmaß), Federhärte und Dämpfung (kleiner = schwingt länger nach), größter
-## Lenkeinschlag der Vorderräder; Fahrräder legen sich in Kurven (cyclist_lean_factor, 1 = wie in echt)
+## Leistung (seit Etappe 6d): Häuser verdecken, was hinter ihnen liegt (Occlusion Culling, main.gd);
+## Pflanzenteile, die niedriger als plant_shadow_min_height (Meter) sind – Blumen in Kästen, Gras,
+## kleine Topfpflanzen –, werfen keinen Sonnenschatten (ihr Schatten ist kaum zu sehen, kostet aber
+## etwa ein Drittel aller Zeichenaufrufe draußen; 0 = alle Pflanzen werfen Schatten)
+var house_occluders: bool = true
+var plant_shadow_min_height: float = 0.5
 ## Geräusche (seit Etappe 6d, Audio-System): Lautstärke der eigenen Schritte und des Automotors (dB,
 ## zusätzlich zu den Reglern in den Einstellungen), Pause zwischen zwei Musikstücken (Sekunden)
 var footstep_volume_db: float = -10.0
 var car_engine_volume_db: float = -14.0
 var music_pause: float = 4.0
+## Fahrzeuge federn weich (seit Etappe 6c, VehicleModel): Nicken je m/s² Beschleunigung und Neigen je m/s²
+## Querbeschleunigung (Bogenmaß), Federhärte und Dämpfung (kleiner = schwingt länger nach), größter
+## Lenkeinschlag der Vorderräder; Fahrräder legen sich in Kurven (cyclist_lean_factor, 1 = wie in echt)
 var vehicle_pitch_per_accel: float = 0.008
 var vehicle_roll_per_accel: float = 0.008
 var vehicle_spring: float = 60.0
@@ -713,11 +719,34 @@ var passerby_chat_cooldown: float = 60.0
 var chat_bubble_time: float = 1.8
 var chat_bubble_size: float = 0.32
 var chat_bubble_height: float = 0.32
-## Gemurmel (Silben aus assets/audio/sfx/murmur/): Lautstärke (dB), Hörweite (m), Tonhöhe je Figur
-var murmur_enabled: bool = true
-var murmur_volume_db: float = -14.0
-var murmur_distance: float = 9.0
-var murmur_pitch_range: Vector2 = Vector2(0.85, 1.35)
+## Laute der Passanten (seit Etappe 6e, PasserbyVoice): Grund-Wahrscheinlichkeit, je Figur höchstens alle …
+## Sekunden, mindestens … Sekunden zwischen zwei Lauten überhaupt, Lautstärke (dB) und Hörweite (m)
+var passerby_voice_chance: float = 0.8
+## Schritte der Passanten: Schrittlänge (m), nur bis zu dieser Entfernung zur Spielfigur hörbar (m),
+## Lautstärke (dB), Anteil der Frauen mit Absätzen
+var passerby_stride: float = 0.62
+var passerby_step_hear_distance: float = 9.0
+var passerby_step_volume_db: float = -15.0
+var passerby_heels_share: float = 0.35
+## Fahrzeuge: freundlich hupen („mip mip“), wenn jemand auf der Fahrbahn steht (höchstens alle … Sekunden je
+## Fahrzeug, erst nach … Sekunden Warten); Fahrräder klingeln, wenn jemand vor ihnen ist, und ab und zu einfach so
+var car_horn_cooldown: float = 18.0
+var car_horn_wait: float = 1.6
+var car_horn_volume_db: float = -8.0
+var bike_bell_cooldown: float = 9.0
+var bike_bell_random_interval: Vector2 = Vector2(45.0, 110.0)
+var bike_bell_volume_db: float = -9.0
+## Vögel und Katzen (AmbientSounds): Pause zwischen zwei Vögeln (s), Entfernung der Vögel zur Spielfigur (m),
+## Pause zwischen zwei Katzenlauten (s)
+var bird_interval: Vector2 = Vector2(3.5, 10.0)
+var bird_distance: Vector2 = Vector2(6.0, 28.0)
+var bird_volume_db: float = -4.0
+var cat_interval: Vector2 = Vector2(35.0, 90.0)
+var cat_volume_db: float = -6.0
+var passerby_voice_cooldown: float = 14.0
+var passerby_voice_gap: float = 4.0
+var passerby_voice_volume_db: float = -6.0
+var passerby_voice_distance: float = 12.0
 
 
 # --- Testtasten (nur zum Ausprobieren) ---

@@ -36,6 +36,8 @@ var _badge_default_color := KEY_COLOR
 
 ## tile_size: Größe der Kachel; with_dots: Farbtupfer zum Wählen (Shop).
 func _init(tile_size: Vector2 = Vector2(132, 112), with_dots: bool = false) -> void:
+	# leises Plopp beim Antippen (Audio-System, ui/plop_*)
+	pressed.connect(func() -> void: Audio.play("ui/plop", -6.0, Audio.vary(0.05)))
 	custom_minimum_size = tile_size
 	toggle_mode = true
 	focus_mode = Control.FOCUS_NONE

@@ -350,8 +350,10 @@ func _build_batches() -> void:
 		_apply_range(mmi)
 		if batch.material:
 			mmi.material_override = batch.material
-		mmi.set_meta("casts", batch.shadow)
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows and batch.shadow \
+		# kleine Teile (Blumen im Kasten, Gras) ohne Sonnenschatten: kaum sichtbar, aber teuer
+		var casts: bool = batch.shadow and (batch.mesh as Mesh).get_aabb().size.y >= GameConfig.plant_shadow_min_height
+		mmi.set_meta("casts", casts)
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows and casts \
 			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mmi)
 		_instances.append(mmi)

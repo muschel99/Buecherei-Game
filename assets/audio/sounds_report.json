@@ -1,0 +1,528 @@
+[
+ {
+  "quelle": "10x_fahrradklingel_hell.mp3",
+  "ziel": [
+   "vehicles/bike_bell_1",
+   "vehicles/bike_bell_2",
+   "vehicles/bike_bell_3",
+   "vehicles/bike_bell_4",
+   "vehicles/bike_bell_5",
+   "vehicles/bike_bell_6",
+   "vehicles/bike_bell_7",
+   "vehicles/bike_bell_8",
+   "vehicles/bike_bell_9",
+   "vehicles/bike_bell_10"
+  ],
+  "laengen": [
+   0.73,
+   0.78,
+   0.64,
+   0.3,
+   0.73,
+   0.77,
+   1.22,
+   1.13,
+   0.87,
+   0.68
+  ]
+ },
+ {
+  "quelle": "5x_farradklingel_dumpf.mp3",
+  "ziel": [
+   "vehicles/bike_bell_11",
+   "vehicles/bike_bell_12",
+   "vehicles/bike_bell_13",
+   "vehicles/bike_bell_14",
+   "vehicles/bike_bell_15"
+  ],
+  "laengen": [
+   1.94,
+   1.02,
+   0.93,
+   1.05,
+   0.92
+  ]
+ },
+ {
+  "quelle": "2x_Auto_hupe_kurz.mp3",
+  "ziel": [
+   "vehicles/horn_car"
+  ],
+  "laengen": [
+   0.51
+  ]
+ },
+ {
+  "quelle": "2x_auto_hupe_tief.mp3",
+  "ziel": [
+   "vehicles/horn_van"
+  ],
+  "laengen": [
+   0.62
+  ]
+ },
+ {
+  "quelle": "automotor_soft.mp3",
+  "ziel": [
+   "vehicles/car_engine"
+  ],
+  "laengen": [
+   2.19
+  ]
+ },
+ {
+  "quelle": "automotor_trashy.mp3",
+  "ziel": [
+   "vehicles/van_engine"
+  ],
+  "laengen": [
+   9.19
+  ]
+ },
+ {
+  "quelle": "7x_gehen_auf_holz.mp3",
+  "ziel": [
+   "footsteps/wood_1",
+   "footsteps/wood_2",
+   "footsteps/wood_3",
+   "footsteps/wood_4",
+   "footsteps/wood_5",
+   "footsteps/wood_6",
+   "footsteps/wood_7"
+  ],
+  "laengen": [
+   0.15,
+   0.15,
+   0.16,
+   0.14,
+   0.18,
+   0.16,
+   0.16
+  ]
+ },
+ {
+  "quelle": "11x_gehen_unisex_stein.mp3",
+  "ziel": [
+   "footsteps/stone_1",
+   "footsteps/stone_2",
+   "footsteps/stone_3",
+   "footsteps/stone_4",
+   "footsteps/stone_5",
+   "footsteps/stone_6",
+   "footsteps/stone_7",
+   "footsteps/stone_8",
+   "footsteps/stone_9",
+   "footsteps/stone_10",
+   "footsteps/stone_11"
+  ],
+  "laengen": [
+   0.21,
+   0.24,
+   0.32,
+   0.3,
+   0.13,
+   0.21,
+   0.21,
+   0.21,
+   0.22,
+   0.22,
+   0.27
+  ]
+ },
+ {
+  "quelle": "1x_generic footstep.mp3",
+  "ziel": [
+   "footsteps/stone_12"
+  ],
+  "laengen": [
+   0.19
+  ]
+ },
+ {
+  "quelle": "11x_gehen_unisex_stein.mp3",
+  "ziel": [
+   "footsteps/street_1",
+   "footsteps/street_2",
+   "footsteps/street_3",
+   "footsteps/street_4",
+   "footsteps/street_5",
+   "footsteps/street_6",
+   "footsteps/street_7",
+   "footsteps/street_8",
+   "footsteps/street_9",
+   "footsteps/street_10",
+   "footsteps/street_11"
+  ],
+  "laengen": [
+   0.21,
+   0.24,
+   0.32,
+   0.3,
+   0.13,
+   0.21,
+   0.21,
+   0.21,
+   0.22,
+   0.22,
+   0.27
+  ]
+ },
+ {
+  "quelle": "9X_mechanisch_gehen.mp3",
+  "ziel": [
+   "footsteps/street_12",
+   "footsteps/street_13",
+   "footsteps/street_14",
+   "footsteps/street_15",
+   "footsteps/street_16",
+   "footsteps/street_17",
+   "footsteps/street_18",
+   "footsteps/street_19",
+   "footsteps/street_20"
+  ],
+  "laengen": [
+   0.11,
+   0.12,
+   0.12,
+   0.11,
+   0.12,
+   0.12,
+   0.11,
+   0.11,
+   0.12
+  ]
+ },
+ {
+  "quelle": "8x_gehen_Female_stein_absatz.mp3",
+  "ziel": [
+   "footsteps/heels_1",
+   "footsteps/heels_2",
+   "footsteps/heels_3",
+   "footsteps/heels_4",
+   "footsteps/heels_5",
+   "footsteps/heels_6",
+   "footsteps/heels_7",
+   "footsteps/heels_8"
+  ],
+  "laengen": [
+   0.1,
+   0.11,
+   0.1,
+   0.1,
+   0.11,
+   0.11,
+   0.1,
+   0.1
+  ]
+ },
+ {
+  "quelle": "Tür_auf _zu.mp3",
+  "ziel": [
+   "doors/door_open",
+   "doors/door_close"
+  ],
+  "laengen": [
+   0.98,
+   0.79
+  ]
+ },
+ {
+  "quelle": "4x_shopdoorbell.mp3",
+  "ziel": [
+   "doors/shop_bell_1",
+   "doors/shop_bell_2",
+   "doors/shop_bell_3",
+   "doors/shop_bell_4"
+  ],
+  "laengen": [
+   0.83,
+   0.78,
+   0.67,
+   0.41
+  ]
+ },
+ {
+  "quelle": "door bell.mp3",
+  "ziel": [
+   "doors/shop_bell_5"
+  ],
+  "laengen": [
+   0.85
+  ]
+ },
+ {
+  "quelle": "6x-Vogel Zwitschern.mp3",
+  "ziel": [
+   "ambience/bird_1",
+   "ambience/bird_2",
+   "ambience/bird_3",
+   "ambience/bird_4",
+   "ambience/bird_5",
+   "ambience/bird_6"
+  ],
+  "laengen": [
+   0.86,
+   1.67,
+   1.4,
+   2.76,
+   1.3,
+   1.47
+  ]
+ },
+ {
+  "quelle": "miau_kurz.mp3",
+  "ziel": [
+   "ambience/cat_meow_1"
+  ],
+  "laengen": [
+   0.73
+  ]
+ },
+ {
+  "quelle": "miau_lang.mp3",
+  "ziel": [
+   "ambience/cat_meow_2"
+  ],
+  "laengen": [
+   1.83
+  ]
+ },
+ {
+  "quelle": "cat_chatting.mp3",
+  "ziel": [
+   "ambience/cat_chatter_1",
+   "ambience/cat_chatter_2",
+   "ambience/cat_chatter_3",
+   "ambience/cat_chatter_4",
+   "ambience/cat_chatter_5",
+   "ambience/cat_chatter_6",
+   "ambience/cat_chatter_7",
+   "ambience/cat_chatter_8",
+   "ambience/cat_chatter_9"
+  ],
+  "laengen": [
+   0.73,
+   0.16,
+   1.48,
+   1.07,
+   0.12,
+   0.22,
+   0.13,
+   0.79,
+   0.97
+  ]
+ },
+ {
+  "quelle": "cat_purr.mp3",
+  "ziel": [
+   "ambience/cat_purr"
+  ],
+  "laengen": [
+   6.5
+  ]
+ },
+ {
+  "quelle": "buch_Schließen_u_platzieren.mp3",
+  "ziel": [
+   "books/shelve_1",
+   "books/place_3"
+  ],
+  "laengen": [
+   0.27,
+   0.27
+  ]
+ },
+ {
+  "quelle": "buch_platzieren.mp3",
+  "ziel": [
+   "books/place_1",
+   "books/place_2",
+   "books/shelve_2",
+   "books/shelve_3"
+  ],
+  "laengen": [
+   0.4,
+   0.55,
+   0.4,
+   0.55
+  ]
+ },
+ {
+  "quelle": "umblättern2.mp3",
+  "ziel": [
+   "books/page_1"
+  ],
+  "laengen": [
+   1.46
+  ]
+ },
+ {
+  "quelle": "umblättern3.mp3",
+  "ziel": [
+   "books/page_2"
+  ],
+  "laengen": [
+   1.46
+  ]
+ },
+ {
+  "quelle": "schnelles durchblättern.mp3",
+  "ziel": [
+   "books/take_1",
+   "books/take_2",
+   "books/take_3",
+   "books/take_4",
+   "books/take_5",
+   "books/take_6",
+   "books/take_7",
+   "books/take_8"
+  ],
+  "laengen": [
+   0.39,
+   0.39,
+   0.39,
+   0.39,
+   0.39,
+   0.39,
+   0.39,
+   0.39
+  ]
+ },
+ {
+  "quelle": "menu open.mp3",
+  "ziel": [
+   "ui/tablet_open"
+  ],
+  "laengen": [
+   2.11
+  ]
+ },
+ {
+  "quelle": "plop_hoch.mp3",
+  "ziel": [
+   "ui/plop_1"
+  ],
+  "laengen": [
+   0.13
+  ]
+ },
+ {
+  "quelle": "plop_tief.mp3",
+  "ziel": [
+   "ui/plop_2"
+  ],
+  "laengen": [
+   0.13
+  ]
+ },
+ {
+  "quelle": "tablet tab.mp3",
+  "ziel": [
+   "ui/tab"
+  ],
+  "laengen": [
+   0.12
+  ]
+ },
+ {
+  "quelle": "Female_haha_hell.mp3",
+  "ziel": [
+   "voices/laugh_female_1"
+  ],
+  "laengen": [
+   1.19
+  ]
+ },
+ {
+  "quelle": "female_haha_tief.mp3",
+  "ziel": [
+   "voices/laugh_female_2"
+  ],
+  "laengen": [
+   1.05
+  ]
+ },
+ {
+  "quelle": "female_kichern.mp3",
+  "ziel": [
+   "voices/giggle_female"
+  ],
+  "laengen": [
+   0.9
+  ]
+ },
+ {
+  "quelle": "Male_hmm?_voice.mp3",
+  "ziel": [
+   "voices/hmm_male"
+  ],
+  "laengen": [
+   0.5
+  ]
+ },
+ {
+  "quelle": "female_uh oh.mp3",
+  "ziel": [
+   "voices/oh_female"
+  ],
+  "laengen": [
+   0.47
+  ]
+ },
+ {
+  "quelle": "tastatur_tippen_leise.mp3",
+  "ziel": [
+   "computer/keyboard_soft"
+  ],
+  "laengen": [
+   7.61
+  ]
+ },
+ {
+  "quelle": "Tastatur_tippen_laut.mp3",
+  "ziel": [
+   "computer/keyboard_loud"
+  ],
+  "laengen": [
+   7.49
+  ]
+ },
+ {
+  "quelle": "mouse klick.mp3",
+  "ziel": [
+   "computer/mouse_click_1",
+   "computer/mouse_click_2"
+  ],
+  "laengen": [
+   0.1,
+   0.11
+  ]
+ },
+ {
+  "quelle": "background_calmmusic.mp3",
+  "ziel": [
+   "music/calm"
+  ],
+  "laengen": [
+   106.17
+  ]
+ },
+ {
+  "quelle": "background_lofi_music.mp3",
+  "ziel": [
+   "music/lofi"
+  ],
+  "laengen": [
+   335.6
+  ]
+ },
+ {
+  "quelle": "background_optimistic lofi.mp3",
+  "ziel": [
+   "music/optimistic_lofi"
+  ],
+  "laengen": [
+   97.12
+  ]
+ }
+]

@@ -39,6 +39,8 @@ var is_empty: bool = false:
 
 
 func _init(side: float = 40.0) -> void:
+	# Kategorie/Filter wechseln: leises Tab-Geräusch (Audio-System, ui/tab)
+	pressed.connect(func() -> void: Audio.play("ui/tab", -6.0, Audio.vary(0.04)))
 	toggle_mode = true
 	focus_mode = Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND

@@ -133,7 +133,6 @@ var ghost_static := 0.0
 var chat: ChatSession
 var chat_cooldown := 0.0
 var _bubble: ChatBubble
-var _voice: MurmurVoice
 
 
 func _ready() -> void:
@@ -152,6 +151,9 @@ func _ready() -> void:
 func randomize_look(rng: RandomNumberGenerator) -> void:
 	if _model and _model.has_method("randomize_look"):
 		_model.call("randomize_look", rng)
+	# Absätze: manche Frauen (Chibi-Figuren 0–2 sind Frauen)
+	var figure: Variant = _model.get("figure") if _model else null
+	_heels = figure != null and int(figure) < 3 and rng.randf() < GameConfig.passerby_heels_share
 	var size := rng.randf_range(GameConfig.passerby_height_range.x, GameConfig.passerby_height_range.y)
 	scale = Vector3.ONE * (size if vary_size else 1.0)
 	_shadows = -1
@@ -293,6 +295,27 @@ func step(delta: float) -> void:
 	_place()
 	_update_facing(delta)
 	_animate(delta)
+	_footsteps(pos.distance_to(before))
+
+
+## Schritte hören (seit Etappe 6e): je Schritt ein Laut (zufällige Variante, leicht andere Tonhöhe und
+## Geschwindigkeit) – nur in der Nähe der Spielfigur und leise; manche Frauen gehen mit Absätzen.
+var _step_left := 0.0
+var _heels := false
+
+
+func _footsteps(moved: float) -> void:
+	if moved <= 0.0001 or not is_visible_in_tree():
+		return
+	_step_left -= moved
+	if _step_left > 0.0:
+		return
+	_step_left = GameConfig.passerby_stride * scale.x * randf_range(0.92, 1.08)
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or camera.global_position.distance_to(global_position) > GameConfig.passerby_step_hear_distance:
+		return
+	Audio.play_at("footsteps/heels" if _heels else "footsteps/street", global_position, GameConfig.passerby_step_volume_db,
+		Audio.vary(0.08))
 
 
 # --- Schritte ---
@@ -481,15 +504,14 @@ func start_chat(session: ChatSession, face: Vector2, time: float) -> void:
 	_phase_time = 0.0
 
 
-## Wer beim Plaudern dran ist: erzählt (Hände, Gemurmel, Sprechblase) oder hört zu. finished = Runde vorbei.
+## Wer beim Plaudern dran ist: erzählt (Hände, Sprechblase) oder hört zu (lacht oder brummt manchmal leise,
+## siehe PasserbyVoice). finished = Runde vorbei.
 func chat_turn(speaking: bool, seconds: float, finished: bool = false) -> void:
 	if _model and _model.has_method("set_talking"):
 		_model.call("set_talking", speaking and not finished)
 	if finished:
 		chat = null
 		chat_cooldown = GameConfig.passerby_chat_cooldown
-		if _voice:
-			_voice.stop_talking()
 		if _action.get("chat", false):
 			_action.time = 0.0
 		return
@@ -504,16 +526,11 @@ func chat_turn(speaking: bool, seconds: float, finished: bool = false) -> void:
 		_bubble = ChatBubble.new()
 		_bubble.name = "ChatBubble"
 		add_child(_bubble)
-		_voice = MurmurVoice.new()
-		_voice.name = "Murmur"
-		add_child(_voice)
 	var head := 1.0
 	if _model and _model.has_method("eye_point"):
 		head = to_local(_model.call("eye_point")).y + 0.12
 	if is_visible_in_tree():
 		_bubble.pop(head)
-	_voice.position = Vector3(0.0, head, 0.0)
-	_voice.talk(seconds * 0.85)
 
 
 ## Hinsetzen (Sitzplatz aus StreetLife): vor den Platz gehen, umdrehen, hinsetzen, sitzen,

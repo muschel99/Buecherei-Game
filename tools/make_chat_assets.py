@@ -1,28 +1,25 @@
 #!/usr/bin/env python3
-"""Sprechblasen und Gemurmel für plaudernde Passanten (seit Etappe 6c) – selbst erzeugt, nichts aus dem
-Internet. Schreibt nur Dateien, die noch fehlen: Eigene Bilder und Geräusche (gleicher Name) werden nie
-überschrieben.
+"""Sprechblasen für plaudernde Passanten (seit Etappe 6c) – selbst erzeugt, nichts aus dem Internet.
+Schreibt nur Dateien, die noch fehlen: Eigene Bilder (gleicher Name) werden nie überschrieben.
+(Das selbst erzeugte Gemurmel ist seit Etappe 6e entfernt – die Passanten benutzen die Laute der
+Entwicklerin aus assets/audio/voices/, siehe PasserbyVoice.)
 
     python3 tools/make_chat_assets.py
 
 - assets/textures/ui/bubbles/<symbol>.png  Sprechblase mit Symbol (128 x 128, Hintergrund durchsichtig):
   heart, book, cup, sun, flower, note, cat, star, cake. Eigene Symbole: einfach weitere PNGs dazulegen.
-- assets/audio/sfx/murmur/syl_<nn>.wav     freundliche, unverständliche Silben (wie bei Animal Crossing):
-  aus Vokal-Formanten gerechnet, 22050 Hz mono. Eigene Silben: weitere .wav/.ogg dazulegen oder ersetzen.
 """
 
 import math
 import os
 import random
 import struct
-import wave
 import zlib
 
 import numpy as np
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BUBBLE_DIR = os.path.join(ROOT, "assets", "textures", "ui", "bubbles")
-MURMUR_DIR = os.path.join(ROOT, "assets", "audio", "sfx", "murmur")
 SIZE = 128
 SS = 4  # Überabtastung für weiche Kanten
 
@@ -224,59 +221,5 @@ def make_bubbles():
     print("Sprechblasen: %d neu (%d vorhanden)" % (made, len(ICONS) - made))
 
 
-# --- Gemurmel ---
-
-RATE = 22050
-# Vokale: Formanten (Hz) – a, e, i, o, u, ä, ö
-VOWELS = [(800, 1200, 2500), (420, 2000, 2600), (300, 2250, 3000), (500, 880, 2400), (340, 760, 2300), (620, 1700, 2500), (420, 1500, 2300)]
-
-
-def syllable(rng, base):
-    dur = rng.uniform(0.085, 0.15)
-    n = int(RATE * dur)
-    t = np.arange(n) / RATE
-    f1, f2, f3 = VOWELS[rng.randrange(len(VOWELS))]
-    # Tonhöhe mit kleiner Melodie (hoch oder runter gleitend, wie eine fröhliche Frage)
-    glide = rng.choice([1.0, 1.0, 1.12, 0.9, 1.18])
-    f0 = base * np.linspace(1.0, glide, n) * (1 + 0.012 * np.sin(2 * math.pi * 6 * t))
-    phase = 2 * math.pi * np.cumsum(f0) / RATE
-    out = np.zeros(n)
-    for k in range(1, 22):
-        freq = base * k
-        if freq > 4800:
-            break
-        amp = sum(math.exp(-((freq - f) / bw) ** 2) for f, bw in ((f1, 160), (f2, 220), (f3, 320)))
-        out += (amp + 0.04) / k ** 0.6 * np.sin(phase * k)
-    # weicher Konsonant am Anfang (gefiltertes Rauschen), manchmal
-    if rng.random() < 0.6:
-        m = int(RATE * rng.uniform(0.008, 0.02))
-        noise = np.convolve(np.array([rng.uniform(-1, 1) for _ in range(m)]), np.ones(4) / 4, mode="same")
-        out[:m] += noise * 0.35 * np.linspace(1, 0, m)
-    env = np.minimum(1.0, t / 0.01) * np.exp(-np.maximum(0.0, t - dur * 0.45) / (dur * 0.25))
-    out *= env
-    out /= max(1e-6, np.max(np.abs(out)))
-    return (out * 0.5 * 32767).astype(np.int16)
-
-
-def make_murmur(count=28):
-    os.makedirs(MURMUR_DIR, exist_ok=True)
-    rng = random.Random(1918)
-    made = 0
-    for i in range(count):
-        path = os.path.join(MURMUR_DIR, "syl_%02d.wav" % (i + 1))
-        base = rng.uniform(210, 280)
-        data = syllable(rng, base)
-        if os.path.exists(path):
-            continue
-        with wave.open(path, "wb") as w:
-            w.setnchannels(1)
-            w.setsampwidth(2)
-            w.setframerate(RATE)
-            w.writeframes(data.tobytes())
-        made += 1
-    print("Gemurmel: %d Silben neu (%d vorhanden)" % (made, count - made))
-
-
 if __name__ == "__main__":
     make_bubbles()
-    make_murmur()

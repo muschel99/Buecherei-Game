@@ -121,6 +121,7 @@ func open_for(target: BookShelf) -> void:
 		return
 	shelf = target
 	is_open = true
+	Audio.play("ui/tablet_open", -6.0, 1.05)
 	_opened_frame = Engine.get_process_frames()
 	if shelf:
 		shelf.contents_changed.connect(_queue_refresh)

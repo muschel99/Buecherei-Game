@@ -5,8 +5,8 @@ extends Node
 ## Ordner und Kanal (Lautstärke getrennt in den Einstellungen):
 ##   music/      Musik            → Kanal „Music“
 ##   ambience/   Umgebung         → Kanal „Ambience“ (Vögel, Wind, Kamin, Stadt)
-##   footsteps/, doors/, vehicles/, ui/, books/  → Kanal „Effects“
-##   voices/     Stimmen          → Kanal „Voices“ (auch das Gemurmel aus sfx/murmur/)
+##   footsteps/, doors/, vehicles/, ui/, books/, computer/  → Kanal „Effects“
+##   voices/     Stimmen          → Kanal „Voices“ (kurze Laute der Passanten: Lachen, „hm“, „oh“)
 ##
 ## Namen ohne Endung angeben, z. B. Audio.play_at("doors/shop_bell", position). Gesucht wird
 ## <name>.ogg, .wav, .mp3 – und Abwandlungen <name>_1, <name>_2 … (dann zufällig eine davon, damit
@@ -16,7 +16,7 @@ const ROOT := "res://assets/audio/"
 const EXTENSIONS := ["ogg", "wav", "mp3"]
 ## Kanäle (Busse) und welche Ordner dort hinein spielen
 const BUSES := ["Music", "Ambience", "Effects", "Voices"]
-const FOLDER_BUS := {"music": "Music", "ambience": "Ambience", "voices": "Voices", "sfx/murmur": "Voices"}
+const FOLDER_BUS := {"music": "Music", "ambience": "Ambience", "voices": "Voices"}
 
 ## name -> Array[AudioStream] (leer = gibt es nicht; wird nur einmal gesucht)
 var _cache := {}
@@ -153,7 +153,8 @@ func start_music() -> void:
 		index[0] += 1
 		player.play()
 	player.finished.connect(func() -> void:
-		get_tree().create_timer(GameConfig.music_pause).timeout.connect(play_next))
+		# kurze, jedes Mal etwas andere Pause zwischen den Stücken (die Dateien blenden selbst sanft ein und aus)
+		get_tree().create_timer(GameConfig.music_pause * randf_range(0.6, 1.8)).timeout.connect(play_next))
 	play_next.call()
 
 
@@ -168,6 +169,31 @@ func _looped(s: AudioStream) -> AudioStream:
 		if (s as AudioStreamWAV).loop_end <= 0:
 			(s as AudioStreamWAV).loop_end = int((s as AudioStreamWAV).get_length() * (s as AudioStreamWAV).mix_rate)
 	return s
+
+
+## Kurzes Geräusch, das an einem Knoten hängt und mit ihm wandert (Fahrradklingel, Hupe, Stimme):
+## räumlich, offset = Stelle relativ zum Knoten (z. B. Kopfhöhe). Liefert den Player (oder null).
+func play_on(owner_node: Node3D, sound_name: String, volume_db: float = 0.0, pitch: float = 1.0,
+		max_distance: float = 25.0, offset: Vector3 = Vector3.ZERO) -> AudioStreamPlayer3D:
+	var s := stream(sound_name)
+	if s == null or owner_node == null or not owner_node.is_inside_tree():
+		return null
+	var player := AudioStreamPlayer3D.new()
+	player.stream = s
+	player.bus = bus_for(sound_name)
+	player.volume_db = volume_db
+	player.pitch_scale = pitch
+	player.max_distance = max_distance
+	player.position = offset
+	owner_node.add_child(player)
+	player.finished.connect(player.queue_free)
+	player.play()
+	return player
+
+
+## Tonhöhe leicht zufällig (damit nichts gleichförmig klingt): 1 ± spread.
+static func vary(spread: float = 0.06) -> float:
+	return randf_range(1.0 - spread, 1.0 + spread)
 
 
 ## Dauerndes Geräusch an einem Knoten (Kaminknistern, Vögel im Baum): ein AudioStreamPlayer3D als

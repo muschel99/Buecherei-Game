@@ -50,6 +50,8 @@ var _player: AnimationPlayer
 var _head_modifier: ChibiHeadModifier
 ## Gesten zusätzlich zur Animation (seit Etappe 6c): welche, wie lange noch, plaudert gerade
 var _gesture_modifier: ChibiGestureModifier
+## Zeit des letzten Lauts dieser Figur (PasserbyVoice)
+var _voice_last := -100.0
 var _gesture: ChibiGestureModifier.Gesture = ChibiGestureModifier.Gesture.NONE
 var _gesture_left := 0.0
 var _gesture_time := 0.0
@@ -479,6 +481,9 @@ func trigger_face(trigger: StringName) -> void:
 	var picked := FaceTriggers.pick(trigger)
 	if not picked.is_empty():
 		_show_mood(picked[0], picked[1])
+	# passender kurzer Laut (Lachen, „hm“, „oh“) – sparsam, siehe PasserbyVoice
+	var head := to_local(eye_point()).y + 0.05 if is_inside_tree() else 1.0
+	_voice_last = PasserbyVoice.speak(self, trigger, int(figure) < 3, head, _voice_last)
 
 
 ## Wer ist am interessantesten? Die Spielfigur (Kamera) immer zuerst, sonst die nächste andere Figur,

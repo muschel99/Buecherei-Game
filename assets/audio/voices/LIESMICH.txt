@@ -1,6 +1,11 @@
-Ordner für Geräusche: Stimmen (Lautstärke „Stimmen“)
+Ordner für Geräusche: Stimmen der Passanten (Lautstärke „Stimmen“)
 
-Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
-Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
 
-- (noch frei – für spätere Stimmen; das Gemurmel beim Plaudern liegt in ../sfx/murmur/)
+- laugh_female, giggle_female – Lachen beim Plaudern
+- hmm_male – „hm“ beim Zuhören und Nachdenken
+- oh_female – „oh“ beim Staunen vor dem Schaufenster
+
+Vorhanden: giggle_female.ogg, hmm_male.ogg, laugh_female_1.ogg, laugh_female_2.ogg, oh_female.ogg

@@ -1,7 +1,12 @@
 Ordner für Geräusche: Bücher (Lautstärke „Effekte“)
 
-Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
-Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
 
-- take  – Buch in die Hand nehmen
-- place – Buch ablegen oder einräumen
+- take – Buch aufnehmen
+- place – Buch frei ablegen
+- shelve – Buch ins Regal stellen
+- page – im Stapel blättern (E)
+
+Vorhanden: page_1.ogg, page_2.ogg, place_1.ogg, place_2.ogg, place_3.ogg, shelve_1.ogg, shelve_2.ogg, shelve_3.ogg, take_1.ogg, take_2.ogg, take_3.ogg, take_4.ogg, take_5.ogg, take_6.ogg, take_7.ogg, take_8.ogg

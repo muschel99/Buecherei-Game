@@ -44,6 +44,16 @@ var dot_selected := ""
 var _style: TabletAppStyle
 
 
+
+func _enter_tree() -> void:
+	# leises Plopp beim Antippen (Audio-System, ui/plop_*)
+	if not pressed.is_connected(_plop):
+		pressed.connect(_plop)
+
+
+func _plop() -> void:
+	Audio.play("ui/plop", -6.0, Audio.vary(0.05))
+
 func setup(app_style: TabletAppStyle, tile_size: Vector2) -> void:
 	_style = app_style
 	focus_mode = Control.FOCUS_NONE

@@ -1,7 +1,11 @@
-Ordner für Geräusche: Oberfläche (Lautstärke „Effekte“)
+Ordner für Geräusche: Tablet und Menüs (Lautstärke „Effekte“)
 
-Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
-Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
 
-- open  – ein Menü, das Tablet oder der Gestaltungsmodus geht auf
-- close – geht zu
+- tablet_open – Tablet (Theke) und Bücher-Menü (R) öffnen
+- plop – Antippen von Apps und Kacheln
+- tab – Reiter und Kategorien wechseln
+
+Vorhanden: plop_1.ogg, plop_2.ogg, tab.ogg, tablet_open.ogg

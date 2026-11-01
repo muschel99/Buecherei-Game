@@ -1,0 +1,10 @@
+Ordner für Geräusche: Computer am Arbeitsplatz (vorbereitet, Lautstärke „Effekte“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
+
+- keyboard_soft, keyboard_loud – Tippen in Schleife
+- mouse_click – Mausklick
+
+Vorhanden: keyboard_loud.ogg, keyboard_soft.ogg, mouse_click_1.ogg, mouse_click_2.ogg

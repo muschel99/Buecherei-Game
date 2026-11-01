@@ -28,6 +28,11 @@ const SECOND_NAMES := ["Autolack zwei"]
 ## Fahrersitz (seit Etappe 6d): Mitte der Sitzfläche (Höhe = Oberkante des Sitzes); dort sitzt eine
 ## zufällige Chibi-Figur am Steuer (hinter den dunklen Scheiben nur schemenhaft). Null = niemand.
 @export var driver_seat: Vector3 = Vector3.ZERO
+## Größe der Person am Steuer (Chibi-Köpfe sind groß – so passt sie unter das Dach)
+@export var driver_scale: float = 0.85
+## Geräusche (Audio-System): Motor in Schleife und kurzes freundliches Hupen
+@export var engine_sound: String = "vehicles/car_engine"
+@export var horn_sound: String = "vehicles/horn_car"
 
 var _wheels: Array[Node3D] = []
 var _mirrored: Array[bool] = []
@@ -70,19 +75,23 @@ func _ready() -> void:
 		animate(0.0, 0.0)
 	_apply(paint_color)
 	if _engine == null and driver_seat != Vector3.ZERO:
-		# Motor (Audio-System: vehicles/car_engine, fehlt die Datei, bleibt es still)
-		_engine = Audio.loop_at(self, "vehicles/car_engine", GameConfig.car_engine_volume_db, 28.0)
-	if _driver == null and driver_seat != Vector3.ZERO:
-		_driver = ChibiPasserbyModel.new()
-		_driver.name = "Driver"
-		_sway.add_child(_driver)
-		_driver.position = Vector3(driver_seat.x, 0.0, driver_seat.z)
-		_driver.sit_height = driver_seat.y
-		_driver.randomize_look(RandomNumberGenerator.new())
+		# Motor (Audio-System: engine_sound, fehlt die Datei, bleibt es still)
+		_engine = Audio.loop_at(self, engine_sound, GameConfig.car_engine_volume_db, 28.0)
+
 
 
 func build(rng: RandomNumberGenerator, color: Color) -> void:
 	_apply(paint_color if fixed_color else color)
+	if driver_seat == Vector3.ZERO:
+		return
+	# Person am Steuer erst, wenn der Wagen zum ersten Mal losfährt (spart Ladezeit beim Spielstart)
+	if _driver == null and _sway:
+		_driver = ChibiPasserbyModel.new()
+		_driver.name = "Driver"
+		_sway.add_child(_driver)
+		_driver.position = Vector3(driver_seat.x, 0.0, driver_seat.z)
+		_driver.scale = Vector3.ONE * driver_scale
+		_driver.sit_height = driver_seat.y / maxf(driver_scale, 0.1)
 	if _driver:
 		_driver.randomize_look(rng)
 	_pitch = 0.0
@@ -165,6 +174,11 @@ func animate_drive(speed: float, delta: float, accel: float, turn_rate: float) -
 		var pivot := Vector3(0.0, wheel_radius, 0.0)
 		var b := Basis(Vector3.RIGHT, _pitch) * Basis(Vector3.BACK, _roll)
 		_sway.transform = Transform3D(b, pivot - b * pivot)
+
+
+## Kurz und freundlich hupen („mip mip“), leicht andere Tonhöhe je Mal.
+func honk() -> void:
+	Audio.play_on(self, horn_sound, GameConfig.car_horn_volume_db, Audio.vary(0.04), 35.0, Vector3(0.0, 0.8, 1.0))
 
 
 func _notification(what: int) -> void:

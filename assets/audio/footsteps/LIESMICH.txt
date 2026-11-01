@@ -1,8 +1,12 @@
-Ordner für Geräusche: Eigene Schritte (Lautstärke „Effekte“)
+Ordner für Geräusche: Schritte (Lautstärke „Effekte“)
 
-Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten, z. B. door_open.ogg.
-Fehlt eine Datei, bleibt es einfach still. Mehr dazu: docs/ASSET_GUIDE.md, Abschnitt „Eigene Geräusche“.
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
 
-- wood  – Schritt auf dem Holzboden im Laden
-- stone – Schritt draußen auf Stein
-- Abwandlungen: wood_1, wood_2, … (dann zufällig eine davon)
+- wood – deine Schritte im Laden
+- stone – deine Schritte draußen
+- street – Schritte der Passanten
+- heels – Schritte mit Absatz (manche Passantinnen)
+
+Vorhanden: heels_1.ogg, heels_2.ogg, heels_3.ogg, heels_4.ogg, heels_5.ogg, heels_6.ogg, heels_7.ogg, heels_8.ogg, stone_1.ogg, stone_10.ogg, stone_11.ogg, stone_12.ogg, stone_2.ogg, stone_3.ogg, stone_4.ogg, stone_5.ogg, stone_6.ogg, stone_7.ogg, stone_8.ogg, stone_9.ogg, street_1.ogg, street_10.ogg, street_11.ogg, street_12.ogg, street_13.ogg, street_14.ogg, street_15.ogg, street_16.ogg, street_17.ogg, street_18.ogg, street_19.ogg, street_2.ogg, street_20.ogg, street_3.ogg, street_4.ogg, street_5.ogg, street_6.ogg, street_7.ogg, street_8.ogg, street_9.ogg, wood_1.ogg, wood_2.ogg, wood_3.ogg, wood_4.ogg, wood_5.ogg, wood_6.ogg, wood_7.ogg

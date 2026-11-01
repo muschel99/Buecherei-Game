@@ -24,6 +24,10 @@ func _ready() -> void:
 	# Geräuschkulisse und Musik (Audio-System: Dateien in assets/audio/ambience und assets/audio/music)
 	Audio.start_ambience("ambience/outdoor")
 	Audio.start_music()
+	var ambient := AmbientSounds.new()
+	ambient.name = "AmbientSounds"
+	$Outside.add_child(ambient)
+	_add_house_occluders()
 	# Alle Knoten der Szene sind jetzt bereit – also können sie ihre Daten übernehmen
 	SaveManager.load_game()
 	# Das Tablet mit dem Shop darf nie fehlen (auch nicht in älteren Spielständen)
@@ -126,3 +130,32 @@ func _apply_sun_shadows(preset: Dictionary) -> void:
 	_sun.directional_shadow_split_3 = 0.5
 	_sun.directional_shadow_blend_splits = true
 	_sun.directional_shadow_max_distance = GameConfig.sun_shadow_distance
+
+
+## Leistung (seit Etappe 6d): Jedes gewöhnliche Haus bekommt einen unsichtbaren Kern als Verdecker
+## (OccluderInstance3D) – was ganz dahinter liegt (andere Häuser, Pflanzen, Passanten), wird nicht gezeichnet.
+## Nicht bei Eckhäusern (schräge Ecke), dem Torhaus (Durchfahrt) und Häusern, durch die man hindurchsieht.
+func _add_house_occluders() -> void:
+	if not GameConfig.house_occluders:
+		return
+	for node in $Outside.find_children("*", "HouseFacade", true, false):
+		var house := node as HouseFacade
+		if house is CornerHouseFacade or house is GatehouseFacade or house.see_through:
+			continue
+		var box := BoxOccluder3D.new()
+		box.size = Vector3(maxf(house.width - 0.4, 0.5), maxf(house.eaves_height - 0.3, 0.5), maxf(house.depth - 0.4, 0.5))
+		var occluder := OccluderInstance3D.new()
+		occluder.name = "Occluder"
+		occluder.occluder = box
+		occluder.position = Vector3(0.0, box.size.y / 2.0 + 0.1, -house.depth / 2.0)
+		house.add_child(occluder)
+	# Bücherei: Rückwand und Wand zum Nachbarn (ohne Fenster), Obergeschosse innen (die schräge Ecke frei)
+	var room := $GroundFloorRoom as Node3D
+	for spec in [[Vector3(0.0, 1.6, 4.1), Vector3(6.0, 3.0, 0.15)], [Vector3(3.1, 1.6, 0.0), Vector3(0.15, 3.0, 8.0)],
+			[Vector3(1.1, 4.9, 0.0), Vector3(3.6, 2.4, 7.6)], [Vector3(-2.0, 4.9, 1.0), Vector3(1.6, 2.4, 5.6)]]:
+		var box := BoxOccluder3D.new()
+		box.size = spec[1]
+		var occluder := OccluderInstance3D.new()
+		occluder.occluder = box
+		occluder.position = spec[0]
+		room.add_child(occluder)

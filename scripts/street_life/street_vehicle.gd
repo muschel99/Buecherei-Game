@@ -79,6 +79,12 @@ var _accel := 0.0
 var _turn_rate := 0.0
 var _yaw := 0.0
 var _yaw_ready := false
+## Geräusche (seit Etappe 6e): Abstand zum nächsten Menschen vor mir auf der Fahrbahn (INF = keiner),
+## wie lange ich schon für ihn warte, Pause bis zum nächsten Hupen/Klingeln
+var _person_ahead := INF
+var _waiting := 0.0
+var _sound_cool := 0.0
+var _bell_timer := 0.0
 
 
 func _ready() -> void:
@@ -128,6 +134,8 @@ func begin(route: StreetRoute, dir: int, cruise: float) -> void:
 	_extra = 0.0
 	speed = cruise * 0.8
 	_accel = 0.0
+	_waiting = 0.0
+	_bell_timer = randf_range(GameConfig.bike_bell_random_interval.x * 0.3, GameConfig.bike_bell_random_interval.y)
 	set_active(true)
 	_place(0.0)
 
@@ -164,6 +172,7 @@ func step(delta: float) -> void:
 	if not active:
 		return
 	_drive(delta, _wanted_speed())
+	_sounds(delta)
 	if (_s - _end_s) * direction >= 0.0:
 		_leave(delta)
 
@@ -171,6 +180,7 @@ func step(delta: float) -> void:
 ## Wie schnell darf ich gerade fahren? (Bremsen für Hindernisse vor mir.)
 func _wanted_speed() -> float:
 	var limit := cruise_speed
+	_person_ahead = INF
 	var swerve := lane()
 	# Unter dem Torbogen (und kurz davor/dahinter) gehen Fußgänger am Rand: langsam und mit
 	# Abstand zur Mitte hin fahren
@@ -192,6 +202,8 @@ func _wanted_speed() -> float:
 		var half := width / 2.0 + float(obstacle.radius) + margin
 		if absf(lage.y - _lat) >= half and absf(lage.y - _target_lat) >= half:
 			continue
+		if person:
+			_person_ahead = minf(_person_ahead, along)
 		if can_swerve and obstacle.kind != "vehicle_oncoming":
 			# Fahrrad: zur Straßenmitte hin vorbei, wenn dort Platz ist
 			var around := lage.y - signf(lane()) * (half + 0.1)
@@ -247,6 +259,28 @@ func _drive(delta: float, wanted: float) -> void:
 		if _anim_player.current_animation != move_animation:
 			_anim_player.play(move_animation)
 		_anim_player.speed_scale = speed / maxf(0.1, move_animation_speed)
+
+
+## Hupen und Klingeln (seit Etappe 6e): Autos hupen kurz und freundlich, wenn jemand vor ihnen auf der Fahrbahn
+## steht und sie schon einen Moment warten; Fahrräder klingeln, wenn jemand vor ihnen ist, und ab und zu so.
+func _sounds(delta: float) -> void:
+	_sound_cool = maxf(0.0, _sound_cool - delta)
+	if _model == null or not is_visible_in_tree():
+		return
+	if can_swerve:
+		_bell_timer -= delta
+		var someone := _person_ahead < 8.0
+		if (someone and _sound_cool <= 0.0) or _bell_timer <= 0.0:
+			if _model.has_method("ring"):
+				_model.call("ring")
+			_sound_cool = GameConfig.bike_bell_cooldown
+			_bell_timer = randf_range(GameConfig.bike_bell_random_interval.x, GameConfig.bike_bell_random_interval.y)
+		return
+	_waiting = _waiting + delta if _person_ahead < 10.0 and speed < 2.5 else 0.0
+	if _waiting > GameConfig.car_horn_wait and _sound_cool <= 0.0:
+		if _model.has_method("honk"):
+			_model.call("honk")
+		_sound_cool = GameConfig.car_horn_cooldown
 
 
 ## Am Ende: verschwinden, sobald es niemand sieht – sonst noch ein Stück weiterfahren.

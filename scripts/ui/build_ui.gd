@@ -134,6 +134,7 @@ func _build_tab_buttons() -> void:
 ## Y/X: Kategorie wechseln (rundherum). Was neu in der Hand war, wird abgelegt – ein
 ## aufgenommenes Möbelstück bleibt in der Hand.
 func _step_tab(direction: int) -> void:
+	Audio.play("ui/tab", -8.0, Audio.vary(0.04))
 	_choose_tab(posmod(_current_tab + direction, _tabs.size()))
 
 
@@ -146,6 +147,7 @@ func _choose_tab(index: int) -> void:
 ## C/V: das nächste bzw. vorige Möbel der Kategorie – vor dem ersten und nach dem letzten der
 ## leere Platz „nichts ausgewählt“.
 func _step_item(direction: int) -> void:
+	Audio.play("ui/plop", -10.0, Audio.vary(0.05))
 	if _order.is_empty():
 		_build_mode.clear_selection()
 		return

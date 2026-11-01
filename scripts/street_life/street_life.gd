@@ -124,12 +124,9 @@ func _start() -> void:
 	_collect_places()
 	_collect_windows()
 	_collect_static_obstacles()
-	_seats.clear()
-	_street_seats.clear()
-	for seat: SeatPoint in get_tree().get_nodes_in_group(SEAT_GROUP):
-		_seats.append(seat)
-		if seat is StreetSeat:
-			_add_street_seat(seat as StreetSeat)
+	refresh_seats()
+	# noch einmal, wenn die ganze Szene bereit ist (Sitzplätze an der Bücherei entstehen mit der Fassade)
+	call_deferred("refresh_seats")
 	_started = true
 	if GameConfig.street_life_enabled:
 		_fill_street()
@@ -427,6 +424,19 @@ func _clear_of_static(a: Vector2, b: Vector2) -> bool:
 ## Feste Hindernisse neu einlesen (z. B. nachdem die Deko vor der Bücherei umgebaut wurde, seit Etappe 6c).
 func refresh_static_obstacles() -> void:
 	_collect_static_obstacles()
+
+
+## Sitzplätze neu einsammeln (seit Etappe 6d: z. B. wenn die Bücherei eine Bank oder einen Stuhl bekommt
+## oder ihn abgibt) – Plätze, auf denen gerade jemand sitzt oder zu denen jemand geht, bleiben belegt.
+func refresh_seats() -> void:
+	_seats.clear()
+	_street_seats.clear()
+	for seat: SeatPoint in get_tree().get_nodes_in_group(SEAT_GROUP):
+		if seat.is_queued_for_deletion():
+			continue
+		_seats.append(seat)
+		if seat is StreetSeat:
+			_add_street_seat(seat as StreetSeat)
 
 
 func _collect_static_obstacles() -> void:
@@ -885,7 +895,7 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		for entry in _street_seats:
 			var along: float = (float(entry.s) - s0) * dir
 			var until: float = (end_s - s0) * dir
-			if along < 2.0 or along > until - 2.0 or not (entry.seat as SeatPoint).is_free():
+			if not is_instance_valid(entry.seat) or along < 2.0 or along > until - 2.0 or not (entry.seat as SeatPoint).is_free():
 				continue
 			var side_there := start_side
 			if not is_nan(cross_s) and (float(entry.s) - cross_s) * dir > 0.0:
@@ -1040,14 +1050,14 @@ func _garden_actions(seat: SeatPoint, join: Vector2, rejoin: Vector2) -> Array[D
 
 ## Ein freier Sitzplatz im Garten (zufällig) oder null – die Plätze an der Straße plant _plan_walker.
 func _free_seat() -> SeatPoint:
-	var free := _seats.filter(func(seat: SeatPoint) -> bool: return seat.is_free() and not seat is StreetSeat)
+	var free := _seats.filter(func(seat: SeatPoint) -> bool: return is_instance_valid(seat) and seat.is_free() and not seat is StreetSeat)
 	return free[_rng.randi() % free.size()] if not free.is_empty() else null
 
 
 ## Sitzplatz wieder freigeben (aufgestanden, umgedreht oder verschwunden).
 func release_seat(walker: Passerby) -> void:
 	for seat in _seats:
-		if seat.occupant == walker:
+		if is_instance_valid(seat) and seat.occupant == walker:
 			seat.occupant = null
 
 

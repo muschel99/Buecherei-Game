@@ -107,6 +107,11 @@ func _paint_frame(frame: Node, color: Color) -> void:
 				mesh_part.set_surface_override_material(i, own)
 
 
+## Fahrradklingel (seit Etappe 6e): zufällige Klingel aus vehicles/bike_bell_*, leicht andere Tonhöhe.
+func ring() -> void:
+	Audio.play_on(self, "vehicles/bike_bell", GameConfig.bike_bell_volume_db, Audio.vary(0.05), 30.0, Vector3(0.0, 1.0, 0.3))
+
+
 ## Fahren mit Drehrate (rad/s): in Kurven legt sich das Rad samt Figur hinein.
 func animate_drive(speed: float, delta: float, _accel: float, turn_rate: float) -> void:
 	if delta > 0.0:

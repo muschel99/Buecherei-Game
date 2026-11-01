@@ -241,6 +241,7 @@ func refresh() -> void:
 func show_page(id: String) -> void:
 	if id == _page:
 		return
+	Audio.play("ui/tab", -6.0, Audio.vary(0.04))
 	_page = id
 	_scroll.scroll_vertical = 0
 	request_refresh()
