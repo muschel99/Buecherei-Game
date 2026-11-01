@@ -60,7 +60,7 @@ einzelne Laute geschnitten (das Spiel nimmt dann jedes Mal zufällig einen, mit 
 Geschwindigkeit), Stille am Rand entfernt, sanft ein- und ausgeblendet, die Lautstärken angeglichen,
 Motoren und Tastatur als nahtlose Schleifen, alles als `.ogg`. Welche Datei wofür, steht oben im Script
 (`JOBS`). Neue Geräusche: Datei in den Ordner legen, eine Zeile in `JOBS` ergänzen und
-`python3 tools/prepare_sounds.py` ausführen (braucht ffmpeg; auf Fedora: `sudo dnf install ffmpeg`).
+`python3 tools/prepare_sounds.py` ausführen (braucht ffmpeg; auf Fedora: `sudo dnf install ffmpeg-free`).
 Bewusst nicht verwendet: `Female_eww`, `female_urgh`.
 
 **Noch fehlende Geräusche (Wunschliste, Stand Etappe 6e):** Bis eine Datei da ist, bleibt es an dieser Stelle still.
