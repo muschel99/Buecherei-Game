@@ -338,9 +338,9 @@ var vehicle_spring: float = 60.0
 var vehicle_damping: float = 9.0
 var vehicle_max_steer: float = 0.45
 var cyclist_lean_factor: float = 0.8
-## Fahrzeuge bremsen und klingeln nur für Menschen, die mit der Mitte mindestens so weit (Meter) auf der Fahrbahn
-## stehen oder sie überqueren (seit Etappe 6f; wer am Bordstein auf dem Gehweg steht, zählt nicht)
-var road_person_margin: float = 0.05
+## Fahrzeuge bremsen und klingeln nur für Menschen, die mit dem Körper mindestens so weit (Meter) auf die
+## Fahrbahn ragen oder sie überqueren (seit Etappe 6f; wer am Bordstein auf dem Gehweg steht, zählt nicht)
+var road_person_margin: float = 0.15
 ## Rand um das Bild (in Grad), der für die Sichtprüfung noch als „sichtbar“ zählt – so
 ## erscheint auch knapp neben dem Bildrand niemand (z. B. beim schnellen Umdrehen).
 var street_view_margin: float = 12.0

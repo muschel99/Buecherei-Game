@@ -202,6 +202,11 @@ func _wanted_speed() -> float:
 		var half := width / 2.0 + float(obstacle.radius) + margin
 		if absf(lage.y - _lat) >= half and absf(lage.y - _target_lat) >= half:
 			continue
+		if person and not obstacle.get("on_road", true):
+			# am Bordstein bzw. Rand (seit Etappe 6f): nicht anhalten, nicht ausweichen, nicht klingeln – nur
+			# langsam vorbei
+			limit = minf(limit, PASS_SPEED + maxf(0.0, along) * 0.4)
+			continue
 		if person:
 			_person_ahead = minf(_person_ahead, along)
 		if can_swerve and obstacle.kind != "vehicle_oncoming":

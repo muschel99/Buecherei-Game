@@ -259,14 +259,15 @@ func body_on_road() -> bool:
 	return absf(_lat) - radius * scale.x < GameConfig.street_width / 2.0 + 0.05
 
 
-## Steht die Figur wirklich auf der Fahrbahn (überquert sie oder steht mit der Mitte auf der Straße)? Seit
-## Etappe 6f bremsen Fahrzeuge nur dafür – wer am Bordstein auf dem Gehweg steht, zählt nicht mehr.
+## Ist die Figur wirklich auf der Fahrbahn (überquert sie oder ragt mit dem Körper deutlich hinein, z. B. beim
+## Ausweichen an den Rand)? Seit Etappe 6f bremsen Fahrzeuge nur dafür – wer am Bordstein auf dem Gehweg steht,
+## zählt nicht mehr.
 func center_on_road() -> bool:
 	if on_road:
 		return true
 	if _route == null or not life.is_centerline(_route):
 		return false
-	return absf(_lat) < GameConfig.street_width / 2.0 - GameConfig.road_person_margin
+	return absf(_lat) - radius * scale.x < GameConfig.street_width / 2.0 - GameConfig.road_person_margin
 
 
 ## Zustand als Text (Prüfwerkzeug).
