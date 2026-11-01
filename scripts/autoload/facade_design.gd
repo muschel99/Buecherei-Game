@@ -26,19 +26,20 @@ signal unlocks_changed
 ## Kategorien in der Reihenfolge der App.
 const CATEGORIES: Array[String] = ["wall", "quoins", "ground", "ground_color", "fascia", "window_ground", "window", "frame_color",
 	"door", "door_lights", "door_color", "awning", "fabric", "box", "basket", "plants", "fullness",
-	"deco_steps", "deco_walk", "deco_seat", "deco_sign"]
+	"deco_steps", "deco_walk", "deco_seat"]
 ## Deko vor der Bücherei (seit Etappe 6d): vier frei kombinierbare Bereiche, je mit „none“
-const DECO_AREAS: Array[String] = ["deco_steps", "deco_walk", "deco_seat", "deco_sign"]
+## (seit Etappe 6f ohne den Bereich „Schild“ – der Aufsteller ist vorerst ganz entfernt)
+const DECO_AREAS: Array[String] = ["deco_steps", "deco_walk", "deco_seat"]
 ## Alte Wahl „deco“ (Etappe 6c) → die neuen Bereiche
 const LEGACY_DECO := {"bench": {"deco_seat": "bench"}, "steps": {"deco_steps": "pots"},
-	"sign": {"deco_sign": "board", "deco_steps": "tree"}, "planters": {"deco_walk": "tubs"},
-	"all": {"deco_seat": "bench", "deco_steps": "tree", "deco_sign": "board", "deco_walk": "tubs"}}
+	"sign": {"deco_steps": "tree"}, "planters": {"deco_walk": "tubs"},
+	"all": {"deco_seat": "bench", "deco_steps": "tree", "deco_walk": "tubs"}}
 ## Zum Spielstart: eine alte, heruntergekommene Backsteinfassade (bröckelnder Putz, verwitterte Farbe).
 const DEFAULTS := {"wall": "old_brick", "quoins": "none", "ground": "wall", "ground_color": "weathered_green",
 	"fascia": "weathered", "window_ground": "sash", "window": "sash", "frame_color": "weathered_cream", "door": "panelled",
 	"door_lights": "transom", "door_color": "weathered_green", "awning": "none", "fabric": "stripes_red", "box": "none",
 	"basket": "none", "plants": "colorful", "fullness": "lush", "deco_steps": "none", "deco_walk": "none", "deco_seat": "none",
-	"deco_sign": "none", "slot_inside": "match"}
+	"slot_inside": "match"}
 ## Spielstände vor Etappe 6c (Version 1) bekommen die neue Startfassade.
 const SAVE_VERSION := 2
 

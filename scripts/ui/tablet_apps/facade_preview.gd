@@ -15,6 +15,7 @@ extends SubViewport
 const SKY_TOP := Color(0.33, 0.55, 0.86)
 const SKY_HORIZON := Color(0.74, 0.85, 0.95)
 const GROUND_MATERIAL := preload("res://assets/materials/sidewalk.tres")
+const GROUND_DARKEN := 0.18
 const INSIDE_COLOR := Color(0.38, 0.29, 0.21)
 
 var _stage: Node3D
@@ -190,7 +191,13 @@ func _ground() -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.name = "Ground"
 	mi.mesh = plane
-	mi.material_override = GROUND_MATERIAL
+	# etwas dunkler als auf der Straße: in der hellen Sonne der Vorschau wären die Platten sonst fast weiß
+	var material := GROUND_MATERIAL.duplicate() as ShaderMaterial
+	for key in ["color_a", "color_b", "color_c", "color_accent", "joint_color"]:
+		var color: Variant = material.get_shader_parameter(key)
+		if color is Color:
+			material.set_shader_parameter(key, (color as Color).darkened(GROUND_DARKEN))
+	mi.material_override = material
 	mi.position = StreetLayout.door_center() * Vector3(1.0, 0.0, 1.0) + Vector3(0.0, StreetLayout.ground_y() - 0.01, 0.0)
 	return mi
 

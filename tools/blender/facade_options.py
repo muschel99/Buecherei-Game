@@ -132,9 +132,9 @@ DECO = [("deco_steps", "pots", "Töpfe auf der Treppe", "deco_steps_pots", 90),
         ("deco_walk", "tubs", "Kübelpflanzen", "deco_walk_tubs", 140),
         ("deco_walk", "pots", "Töpfe vor dem Fenster", "deco_walk_pots", 80),
         ("deco_seat", "bench", "Bank", "deco_seat_bench", 160),
-        ("deco_seat", "chair", "Kleiner Stuhl", "deco_seat_chair", 70),
-        ("deco_sign", "board", "Aufsteller", "deco_sign_board", 60)]
-DECO_NONE = {"deco_steps": "Treppe frei", "deco_walk": "Gehweg frei", "deco_seat": "Kein Sitzplatz", "deco_sign": "Kein Schild"}
+        ("deco_seat", "chair", "Kleiner Stuhl", "deco_seat_chair", 70)]
+# (der Bereich „Schild“ mit dem Aufsteller ist seit Etappe 6f vorerst entfernt)
+DECO_NONE = {"deco_steps": "Treppe frei", "deco_walk": "Gehweg frei", "deco_seat": "Kein Sitzplatz"}
 
 
 def options():

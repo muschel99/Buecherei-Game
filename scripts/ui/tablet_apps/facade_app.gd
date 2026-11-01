@@ -29,7 +29,7 @@ const PAGES := [
 		"rows": [["box", "Blumenkästen"], ["basket", "Ampeln"], ["plants", "Mischung"], ["fullness", "Fülle"]]},
 	{"id": "outside", "name": "Draußen", "icon": "fac_awning",
 		"rows": [["awning", "Markise"], ["fabric", "Stoff"], ["deco_steps", "Pflanzen auf der Treppe"],
-			["deco_walk", "Pflanzen auf dem Gehweg"], ["deco_seat", "Sitzgelegenheit"], ["deco_sign", "Schild"]]},
+			["deco_walk", "Pflanzen auf dem Gehweg"], ["deco_seat", "Sitzgelegenheit"]]},
 	{"id": "letterbox", "name": "Briefkasten", "icon": "fac_slot", "rows": [["slot", "Einwurf außen"], ["slot_inside", "Innen"]]},
 	{"id": "counter", "name": "Theke", "icon": "cat_counter", "rows": [["counter", "Theke"]]},
 ]
@@ -67,7 +67,7 @@ func _ready() -> void:
 	_tabs = HBoxContainer.new()
 	_tabs.name = "Tabs"
 	_tabs.alignment = BoxContainer.ALIGNMENT_CENTER
-	_tabs.add_theme_constant_override("separation", 6)
+	_tabs.add_theme_constant_override("separation", 4)
 	layout.add_child(_tabs)
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -564,7 +564,9 @@ class _PageTab:
 		_accent_text = app_style.accent_text
 		_font = app_style.font
 		focus_mode = Control.FOCUS_NONE
-		custom_minimum_size = Vector2(118, 78)
+		# 8 Reiter müssen auf den Bildschirm des Tablets passen (seit Etappe 6f schmaler – vorher rutschte „Theke“
+		# rechts heraus und die Leiste unten wurde breiter als das Tablet)
+		custom_minimum_size = Vector2(100, 78)
 		tooltip_text = word
 		for state in ["normal", "hover", "pressed", "hover_pressed", "focus"]:
 			var box := StyleBoxFlat.new()

@@ -758,17 +758,17 @@ def bracket(M, C):
 
 # --- Deko vor der Tür (seit Etappe 6c, Raumkoordinaten wie der Kern) ---
 
-# Deko vor der Bücherei (seit Etappe 6d in vier Bereichen, frei kombinierbar). Seit Etappe 6f hat jeder Bereich
-# einen festen Platz, der mit allen anderen Bereichen, jedem Erdgeschoss (Holzfront ragt bis 24 cm vor) und jedem
-# Fenster (Erker ragt 42 cm vor) frei bleibt (Abstand zur Wand immer mindestens WALL_CLEAR):
+# Deko vor der Bücherei (seit Etappe 6d in Bereichen, frei kombinierbar). Seit Etappe 6f hat jeder Bereich einen
+# festen Platz, der mit allen anderen Bereichen, jedem Erdgeschoss (Holzfront ragt bis 24 cm vor) und jedem Fenster
+# (Erker ragt 42 cm vor) frei bleibt (Abstand zur Wand immer mindestens WALL_CLEAR):
 #   steps_*  auf der Treppe (Podest und Stufen vor der Schräge)
 #   walk_*   auf dem Gehweg: Kübel an den Hausenden bzw. Töpfe vor dem vorderen Schaufenster (vor einem Erker)
-#   seat_*   Sitzplatz an der Gassenwand zwischen Schräge und linkem Fenster (Bank oder Stuhl)
-#   sign_*   Aufsteller vorn neben der Treppe, zwischen vorderem Fenster und Schräge
+#   seat_*   Bank an der Gassenwand zwischen Schräge und linkem Fenster bzw. Stuhl vorn zwischen Fenster und Treppe
+# Der Aufsteller (Bereich „Schild“) ist seit Etappe 6f vorerst entfernt (Wunsch der Entwicklerin); sein Bild
+# assets/textures/signs/library_chalkboard.png bleibt erhalten.
 DECO_SETS = {"steps_pots": ("steps",), "steps_tree": ("steps_tree",),
              "walk_tubs": ("tubs",), "walk_pots": ("window_pots",),
-             "seat_bench": ("bench", "bench_pot"), "seat_chair": ("chair",),
-             "sign_board": ("sign",)}
+             "seat_bench": ("bench", "bench_pot"), "seat_chair": ("chair",)}
 # So weit bleibt jedes Teil von der Wand weg (Rückseite) – vor Holzfront, Sockel und Fensterbänken
 WALL_CLEAR = 0.3
 # vor einem Erkerfenster (Erker 0,42 m + Rahmen)
@@ -825,8 +825,6 @@ def facade_chair(M, C, name, m, seed=950):
 
 def build_deco(kind):
     import build_storybook_props as PR
-    if kind == "sign_board":
-        library_chalkboard_image()
     M, C = fresh("Deko vor der Tür %s" % kind)
     parts = DECO_SETS[kind]
     dc = DIAG_LEN / 2
@@ -850,9 +848,9 @@ def build_deco(kind):
         SC.pot(M, C["pots"], "Bank Topf", world(m, (0, 0, 0)), 0.14, 0.3, 901, style="classic")
         _collider(C, "Bank Topf", world(m, (0, 0, 0.15)), (0.28, 0.28, 0.3))
     if "chair" in parts:
-        # Kleiner Stuhl am selben Platz wie die Bank (Gassenwand), leicht zur Straße gedreht – niedriger als die
-        # Brüstung; Sitzplatz für Spielfigur und Passanten
-        m = T.canon(*LEFT, 1.0, GROUND, WALL_CLEAR + 0.24, yaw=-20)
+        # Kleiner Stuhl leicht schräg zwischen vorderem Schaufenster (endet bei 3,4 m, auch als Erker) und Treppe –
+        # niedriger als die Brüstung, verdeckt das Fenster also nie; Sitzplatz für Spielfigur und Passanten
+        m = T.canon(*FRONT, 3.75, GROUND, WALL_CLEAR + 0.25, yaw=25)
         facade_chair(M, C, "Stuhl", m)
         _collider(C, "Stuhl", world(m, (0, 0, 0.32)), (0.42, 0.42, 0.64))
         _obstacle(C, m, 0.32)
@@ -880,18 +878,6 @@ def build_deco(kind):
             mk = T.canon(*DIAG, dc + side * off, z, out)
             SC.pot(M, C["pots"], "Treppe Topf %d" % k, world(mk, (0, 0, 0)), r, h, 920 + k, style="bowl" if k >= 1 else "classic")
             _collider(C, "Treppe Topf %d" % k, world(mk, (0, 0, h / 2)), (r * 2, r * 2, h))
-    if "sign" in parts:
-        # Aufsteller vorn auf dem Gehweg zwischen vorderem Fenster (endet bei 3,4 m) und Schräge, schräg zur
-        # Straße – der Sitzplatz liegt an der Gassenwand, die Töpfe vor dem Fenster enden bei 3,2 m
-        m = T.canon(*FRONT, 3.95, GROUND, 1.0)
-        p = world(m, (0, 0, 0))
-        before = set(bpy.data.objects)
-        SC.chalkboard(M, C["deco"], (p.x, p.y), math.degrees(math.atan2(m[1][0], m[0][0])) + 20, SC.sign_material("library", "chalkboard"))
-        for o in bpy.data.objects:
-            if o not in before and o.parent is None:
-                o.location.z += GROUND
-        _collider(C, "Aufsteller", (p.x, p.y, GROUND + 0.45), (0.5, 0.5, 0.9))
-        _obstacle(C, m, 0.38)
     if "tubs" in parts:
         # zwei große Kübel an den Hausenden: vorn beim Nachbarhaus, an der Gasse hinter dem linken Fenster
         for k, (seg, u) in enumerate(((FRONT, 0.45), (LEFT, 4.75))):
