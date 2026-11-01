@@ -613,11 +613,10 @@ def build_fireplace_min(k):
     pl.box((-0.4, 0.0, (h + 0.06) / 2), (0.3, d, h - 0.06), step=0.5, dent=0.0008)
     pl.box((0.4, 0.0, (h + 0.06) / 2), (0.3, d, h - 0.06), step=0.5, dent=0.0008)
     pl.box((0, 0.0, 0.86), (0.5 + 0.02, d, 0.38), step=0.5, dent=0.0008)
+    # Brennkammer aus Schamottziegeln (seit Etappe 6f statt des schwarzen Kastens), oben die verrußte Decke
     sooty = k.part("Feuerraum", "soot", bevel=0.006)
-    sooty.box((0, 0.15, 0.4), (0.52, 0.06, 0.6), step=0.5, dent=0.001)
-    sooty.box((0, 0.03, 0.665), (0.52, 0.28, 0.03), step=0.5, dent=0.001)
-    for x in (-0.255, 0.255):
-        sooty.box((x, 0.03, 0.39), (0.02, 0.28, 0.58), step=0.5, dent=0.001)
+    sooty.box((0, 0.0, 0.685), (0.5, 0.36, 0.03), step=0.5, dent=0.001)
+    F.firebox(k, 0.25, 0.1, 0.67, -0.17, 0.16, 0.19)
     sl = k.part("Herdplatte", "slab", bevel=0.006)
     sl.box((0, -0.05, 0.03), (w + 0.12, d + 0.22, 0.06), step=0.5, dent=0.0005)
     sl.box((0, 0.03, 0.08), (0.5, 0.3, 0.04), step=0.5, dent=0.0005)

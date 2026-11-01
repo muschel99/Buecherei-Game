@@ -129,6 +129,7 @@ class Kit:
         self.seats = []       # (Punkt auf der Sitzfläche, Drehung z)
         self.rows = []        # Fächer: (Mitte Oberkante Brett, Breite, lichte Höhe, Tiefe)
         self.lights = []      # dict(pos, energy, range, color, shadow)
+        self.spark_spots = [] # Funken (Marker „SparkSpot“, seit Etappe 6f)
         self.light_kind = None   # "electric" / "flame"
         self.shadow = "important"
         self.interact = None  # (Mitte, Größe) des E-Bereichs (Lampen, Sitzmöbel)
@@ -186,6 +187,34 @@ class Kit:
 
     def light(self, pos, energy=1.0, rng=4.0, color=(1.0, 0.74, 0.46), shadow=True):
         self.lights.append(dict(pos=Vector(pos), energy=energy, range=rng, color=color, shadow=shadow))
+
+    def sparks(self, pos):
+        """Platz für aufsteigende Funken (im Spiel ein Marker „SparkSpot“, LightSource lässt dort Funken sprühen)."""
+        self.spark_spots.append(Vector(pos))
+
+    def fire_tongue(self, base, height, width, lean=(0.0, 0.0), seed=0):
+        """Feuerzunge für Kaminfeuer (seit Etappe 6f): unten breit und flach, wellig nach oben spitz zulaufend,
+        leicht geneigt; Material „fire“ (im Spiel die bewegte Flamme mit stärkerem Lodern). Ursprung = Fuß."""
+        if "fire" not in self.M:
+            self.mat("fire", (1.0, 0.62, 0.22), grain="smooth", rough=0.4, vary=0.04, emit=6.5, emit_color=(1.0, 0.55, 0.2))
+        rnd = random.Random(self.seed + seed)
+        b = Body("Feuerzunge", self.M["fire"], self.coll, seed=self.seed + 950 + len(self.flames), vary=0.0)
+        w, h = width * 1.2, height
+        prof = [(0.0, 0.0), (w * 0.42, h * 0.04), (w * 0.5, h * 0.18), (w * 0.44, h * 0.36), (w * 0.3, h * 0.58),
+                (w * 0.18, h * 0.76), (w * 0.07, h * 0.92), (0.0, h)]
+        b.lathe(prof, (0, 0, 0), segs=12)
+        o = b.build(smooth_angle=180)
+        # flach (vorn/hinten schmaler) und mit der Spitze etwas zur Seite geneigt
+        ph = rnd.uniform(0, 6)
+        for v in o.data.vertices:
+            t = max(v.co.z, 0.0) / h
+            v.co.y *= 0.55
+            v.co.x += lean[0] * h * t * t + math.sin(t * 5.0 + ph) * w * 0.06 * t
+            v.co.y += lean[1] * h * t * t
+        o.data.update()
+        o.location = Vector(base)
+        self.flames.append(o)
+        return o
 
     def flame(self, base, size=0.022):
         """Kerzenflamme als eigenes Objekt, Ursprung am Docht (LightSource lässt sie wachsen/schrumpfen)."""
@@ -454,13 +483,53 @@ def book_row(kit, cover_slot, pages_slot, start, length, max_h=0.26, depth=0.17,
              tint=tuple(c * 1.05 for c in palette[0]))
 
 
+def firebox(kit, half, z0, z1, y_front, y_back, back_half):
+    """Brennkammer eines Kamins (seit Etappe 6f): Rückwand und schräge Seitenwände aus Schamottziegeln, Boden
+    aus Ziegeln – unten glüht der Stein im Feuerschein warm (leuchtet nur, solange das Feuer brennt), oben ist er
+    verrußt. half = halbe Breite der Öffnung vorn, back_half = hinten (Seitenwände laufen schräg zusammen),
+    z0/z1 = Boden/Oberkante, y_front/y_back = vorn/hinten (Blender: -y = vorn)."""
+    mortar = (0.24, 0.19, 0.16)
+    kit.mat("firebrick", (0.5, 0.29, 0.2), grain="brick", rough=0.95, vary=0.1, color2=mortar)
+    kit.mat("firebrick_glow", (0.6, 0.33, 0.21), grain="brick", rough=0.95, vary=0.1, color2=mortar, emit=0.55,
+            emit_color=(1.0, 0.42, 0.16))
+    kit.mat("firebrick_soot", (0.2, 0.15, 0.12), grain="brick", rough=0.95, vary=0.08, color2=(0.12, 0.1, 0.09))
+    t = 0.03
+    glow_top = z0 + (z1 - z0) * 0.38
+    soot_from = z0 + (z1 - z0) * 0.7
+
+    def wall(part, a, b2, za, zb):
+        # senkrechte Platte von a nach b2 (x, y), Höhe za..zb, Dicke t nach außen (vom Feuer weg)
+        ax, ay = a
+        bx, by = b2
+        length = math.hypot(bx - ax, by - ay)
+        X = Vector((bx - ax, by - ay, 0.0)) / length
+        Y = Vector((0.0, 0.0, 1.0))
+        Z = X.cross(Y)
+        m = Matrix((X.to_4d(), Y.to_4d(), Z.to_4d(), (0, 0, 0, 1))).transposed()
+        m.translation = Vector((ax, ay, 0.0))
+        part.slab([(0.0, za), (length, za), (length, zb), (0.0, zb)], t, m, dent=0.0)
+    back = ((back_half, y_back), (-back_half, y_back))
+    left = ((-back_half, y_back), (-half, y_front))
+    right = ((half, y_front), (back_half, y_back))
+    for slot, za, zb in (("firebrick_glow", z0, glow_top), ("firebrick", glow_top, soot_from), ("firebrick_soot", soot_from, z1)):
+        part = kit.part("Brennkammer", slot, bevel=0.0, settle=False)
+        for a, b2 in (back, left, right):
+            wall(part, a, b2, za, zb)
+    floor = kit.part("Brennkammer Boden", "firebrick", bevel=0.0, settle=False)
+    floor.slab([(-half, y_front), (half, y_front), (back_half, y_back), (-back_half, y_back)], 0.02,
+               Matrix.Translation((0, 0, z0 + 0.004 - 0.02)), dent=0.0)
+
+
 def fire(kit, base, width=0.5):
-    """Kaminfeuer (seit Etappe 6d): eiserner Rost, drei Holzscheite, Glut dazwischen und mehrere Flammen
-    (jede ein eigenes Teil mit Material „flame“ – im Spiel bewegt sie die gemeinsame Flamme), dazu warmes
-    Licht. base = Mitte auf dem Boden des Feuerraums (Blender: -y = vorn)."""
+    """Kaminfeuer (seit Etappe 6d, in 6f lodernder): eiserner Rost, Holzscheite kreuz und quer, darunter ein Bett
+    aus Glut, an den Scheiten glimmende Stellen, darüber viele Feuerzungen in verschiedener Größe (Material
+    „fire“, im Spiel bewegt), Funken (Marker) und warmes Licht, das die Brennkammer anleuchtet.
+    base = Mitte auf dem Boden des Feuerraums (Blender: -y = vorn)."""
     bx, by, bz = base
+    rnd = random.Random(kit.seed + 77)
     kit.mat("iron", (0.13, 0.12, 0.11), grain="smooth", rough=0.6, metal=0.4, vary=0.03)
     kit.mat("logs", (0.36, 0.24, 0.15), grain="wood", rough=0.9, vary=0.1)
+    kit.mat("char", (0.1, 0.08, 0.07), grain="wood", rough=0.95, vary=0.08)
     kit.mat("embers", (1.0, 0.42, 0.14), grain="smooth", rough=0.6, vary=0.15, emit=3.0, emit_color=(1.0, 0.36, 0.1))
     grate = kit.part("Rost", "iron", bevel=0.0)
     hw = width / 2
@@ -470,20 +539,37 @@ def fire(kit, base, width=0.5):
     for k in range(5):
         y = by - 0.1 + 0.05 * k
         grate.tube([(bx - hw * 0.82, y, bz + 0.06), (bx + hw * 0.82, y, bz + 0.06)], 0.006, segs=6, round_ends=True)
-    logs = kit.part("Holzscheite", "logs", bevel=0.006)
     top = bz + 0.066
-    for (x0, y0, x1, y1, r, dz) in ((-hw * 0.75, -0.04, hw * 0.75, 0.02, 0.04, 0.0), (-hw * 0.7, 0.09, hw * 0.7, 0.06, 0.038, 0.0),
-                                    (-hw * 0.5, -0.02, hw * 0.55, 0.06, 0.034, 0.068)):
-        logs.tube([(bx + x0, by + y0, top + r + dz), (bx + x1, by + y1, top + r + dz)], r, segs=10, round_ends=True)
+    # Glutbett auf dem Rost (flache, unregelmäßige Brocken)
     glow = kit.part("Glut", "embers", bevel=0.0)
-    for (x, y, rr) in ((-0.08, 0.03, 0.03), (0.06, 0.02, 0.028), (0.0, -0.06, 0.025), (0.13, 0.08, 0.022), (-0.15, -0.05, 0.02)):
-        glow.blob((bx + x, by + y, top + 0.012), rr, subdiv=1, lump=0.25, scale=(1.4, 1.0, 0.5))
-    # Flammen verschieden groß, leicht verteilt (jede mit eigenem Takt im Spiel)
-    for (x, y, size) in ((0.0, 0.02, 0.075), (-0.11, 0.0, 0.058), (0.12, 0.03, 0.062), (-0.05, -0.05, 0.045), (0.07, -0.04, 0.05),
-                         (-0.18, 0.05, 0.04), (0.18, 0.06, 0.038)):
-        kit.flame((bx + x * width / 0.5, by + y, top + 0.075), size=size)
+    for k in range(14):
+        x = rnd.uniform(-hw * 0.75, hw * 0.75)
+        y = rnd.uniform(-0.08, 0.08)
+        glow.blob((bx + x, by + y, top + 0.008), rnd.uniform(0.018, 0.034), subdiv=1, lump=0.3, scale=(1.4, 1.0, 0.45))
+    # Holzscheite: zwei unten quer, zwei darüber schräg aneinandergelehnt (wie ein kleines Zelt)
+    logs = kit.part("Holzscheite", "logs", bevel=0.006)
+    char = kit.part("Holzscheite verkohlt", "char", bevel=0.004)
+    pieces = [((-hw * 0.78, -0.05, 0.0), (hw * 0.78, -0.02, 0.0), 0.04), ((-hw * 0.72, 0.08, 0.0), (hw * 0.72, 0.06, 0.0), 0.038),
+              ((-hw * 0.55, 0.04, 0.03), (hw * 0.05, -0.01, 0.14), 0.034), ((hw * 0.55, 0.05, 0.03), (-hw * 0.05, 0.0, 0.14), 0.032)]
+    for (a, b2, r) in pieces:
+        pa = Vector((bx + a[0], by + a[1], top + r + a[2]))
+        pb = Vector((bx + b2[0], by + b2[1], top + r + b2[2]))
+        logs.tube([pa, pb], r, segs=10, round_ends=True)
+        # verkohltes Ende (etwas dicker als die Rinde) und eine glimmende Stelle unten am Scheit
+        char.tube([pb, pb.lerp(pa, 0.14)], r * 1.04, segs=10, round_ends=True)
+        mid = pa.lerp(pb, 0.55)
+        glow.blob((mid.x, mid.y, mid.z - r * 0.55), r * 0.62, subdiv=1, lump=0.2, scale=(1.6, 1.0, 0.6))
+    # Feuerzungen: in der Mitte groß, außen kleiner; jede leicht anders geneigt (im Spiel eigener Takt)
+    tongues = [(0.0, 0.01, 0.34, 0.11), (-0.09, -0.01, 0.26, 0.09), (0.1, 0.02, 0.28, 0.09), (-0.04, 0.05, 0.22, 0.08),
+               (0.05, -0.04, 0.2, 0.08), (-0.17, 0.03, 0.16, 0.07), (0.18, 0.0, 0.17, 0.07), (0.0, -0.06, 0.15, 0.07),
+               (-0.12, 0.07, 0.13, 0.06), (0.13, 0.07, 0.12, 0.06)]
+    scale = width / 0.5
+    for k, (x, y, h, w) in enumerate(tongues):
+        lean = (rnd.uniform(-0.12, 0.12) - x * 0.6, rnd.uniform(-0.06, 0.06))
+        kit.fire_tongue((bx + x * scale, by + y, top + 0.05), h * (0.85 + 0.15 * scale), w * scale, lean=lean, seed=k * 13)
+    kit.sparks((bx, by, top + 0.25))
     kit.light_kind = "flame"
-    kit.light((bx, by - 0.05, bz + 0.3), energy=1.5, rng=6.5, color=(1.0, 0.62, 0.32), shadow=True)
+    kit.light((bx, by - 0.05, bz + 0.3), energy=1.8, rng=6.5, color=(1.0, 0.6, 0.3), shadow=True)
 
 
 def candle(kit, wax_slot, base, height, radius, drips=5, flame=True, segs=14):
@@ -982,6 +1068,8 @@ def write_scene(kit, bounds, force=False):
                      'script = ExtResource("%s")\nprompt_text = "%s"\n' % (script("interact", "res://scripts/interaction/interactable.gd"), kit.interact_prompt))
         nodes.append('[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]\ntransform = %s\nshape = SubResource("%s")\n'
                      % (tf(ic), shape(isz)))
+    for i, pos in enumerate(kit.spark_spots):
+        nodes.append('[node name="SparkSpot%d" type="Marker3D" parent="."]\ntransform = %s\n' % (i, tf(pos)))
     if kit.book_spot:
         pos, lean = kit.book_spot
         nodes.append('[node name="BookStand" type="Node3D" parent="."]\nscript = ExtResource("%s")\nlean_angle = %.1f\n'

@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://18j403aex6jn"
+uid="uid://ca8nxeircr4dh"
 path="res://.godot/imported/fireplace_country.glb-ba5f40349d766a61a999477da9189538.scn"
 
 [deps]
@@ -46,15 +46,35 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/fireplace_country/beam.tres",
 "use_external/path": "res://assets/materials/furniture/fireplace_country/beam.tres"
 },
+"char": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_country/char.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_country/char.tres"
+},
 "embers": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/fireplace_country/embers.tres",
 "use_external/path": "res://assets/materials/furniture/fireplace_country/embers.tres"
 },
-"flame": {
+"fire": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/fireplace_country/flame.tres",
-"use_external/path": "res://assets/materials/furniture/fireplace_country/flame.tres"
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_country/fire.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_country/fire.tres"
+},
+"firebrick": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_country/firebrick.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_country/firebrick.tres"
+},
+"firebrick_glow": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_country/firebrick_glow.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_country/firebrick_glow.tres"
+},
+"firebrick_soot": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_country/firebrick_soot.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_country/firebrick_soot.tres"
 },
 "iron": {
 "use_external/enabled": true,

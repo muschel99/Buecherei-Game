@@ -620,13 +620,15 @@ func road_obstacles(vehicle: StreetVehicle) -> Array[Dictionary]:
 	var limit := (StreetVehicle.LOOK_AHEAD + 6.0) * (StreetVehicle.LOOK_AHEAD + 6.0)
 	var half := GameConfig.street_width / 2.0
 	for walker in _walkers:
-		# Nur wer auf der Fahrbahn ist – wer am Bordstein wartet, wartet ja auf das Fahrzeug
-		if walker.body_on_road() and walker.pos.distance_squared_to(vehicle.pos) < limit:
+		# Nur wer wirklich auf der Fahrbahn ist – wer am Bordstein wartet oder nah an der Straße auf dem Gehweg
+		# steht, zählt nicht (sonst blieben Fahrräder stehen und zitterten, seit Etappe 6f)
+		if walker.center_on_road() and walker.pos.distance_squared_to(vehicle.pos) < limit:
 			result.append({"pos": walker.pos, "radius": walker.radius * walker.scale.x, "reach": 0.3,
 				"speed": 0.0, "kind": "walker"})
 	if _player and player_pos().distance_squared_to(vehicle.pos) < limit:
 		var lat := centerline.project(player_pos(), vehicle.get_s() - 30.0, vehicle.get_s() + 30.0).y
-		if absf(lat) - PLAYER_RADIUS < half + 0.3:
+		# Spielfigur: nur, wenn sie mit der Mitte auf der Fahrbahn steht (vorher zählten 30 cm Gehweg mit)
+		if absf(lat) < half - GameConfig.road_person_margin:
 			result.append({"pos": player_pos(), "radius": PLAYER_RADIUS, "reach": 0.3, "speed": 0.0, "kind": "player"})
 	for other in _vehicles:
 		if other == vehicle or other.pos.distance_squared_to(vehicle.pos) > limit:

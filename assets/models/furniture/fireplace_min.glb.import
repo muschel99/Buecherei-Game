@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dhnl646g2li7l"
+uid="uid://oy312kben5wy"
 path="res://.godot/imported/fireplace_min.glb-c7f859176b7447052b9758444f972541.scn"
 
 [deps]
@@ -41,15 +41,35 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
+"char": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_min/char.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_min/char.tres"
+},
 "embers": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/fireplace_min/embers.tres",
 "use_external/path": "res://assets/materials/furniture/fireplace_min/embers.tres"
 },
-"flame": {
+"fire": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/fireplace_min/flame.tres",
-"use_external/path": "res://assets/materials/furniture/fireplace_min/flame.tres"
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_min/fire.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_min/fire.tres"
+},
+"firebrick": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_min/firebrick.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_min/firebrick.tres"
+},
+"firebrick_glow": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_min/firebrick_glow.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_min/firebrick_glow.tres"
+},
+"firebrick_soot": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_min/firebrick_soot.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_min/firebrick_soot.tres"
 },
 "iron": {
 "use_external/enabled": true,

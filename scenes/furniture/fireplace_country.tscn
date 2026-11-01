@@ -15,7 +15,7 @@ size = Vector3(1.4400, 1.1500, 0.6800)
 size = Vector3(1.4000, 0.0300, 0.5000)
 
 [sub_resource type="BoxShape3D" id="Shape_2"]
-size = Vector3(1.4630, 1.1766, 0.7058)
+size = Vector3(1.4622, 1.1788, 0.7048)
 
 [node name="FireplaceCountry" type="Node3D"]
 script = ExtResource("2_light")
@@ -46,8 +46,8 @@ shape = SubResource("Shape_1")
 
 [node name="Light0" type="OmniLight3D" parent="."]
 transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.4100, 0.0200)
-light_color = Color(1.000, 0.620, 0.320, 1)
-light_energy = 1.500
+light_color = Color(1.000, 0.600, 0.300, 1)
+light_energy = 1.800
 light_size = 0.0
 shadow_enabled = true
 shadow_blur = 2.0
@@ -61,7 +61,10 @@ script = ExtResource("4_interact")
 prompt_text = "Löschen"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
-transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0005, 0.5747, 0.0605)
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.0003, 0.5765, 0.0598)
 shape = SubResource("Shape_2")
+
+[node name="SparkSpot0" type="Marker3D" parent="."]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.4260, -0.0300)
 
 [connection signal="interacted" from="Interactable" to="." method="_on_interactable_interacted"]

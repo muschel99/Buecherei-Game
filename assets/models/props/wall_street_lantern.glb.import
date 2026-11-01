@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dhq6tcxxm1g6g"
+uid="uid://b3qdugp5gjm3t"
 path="res://.godot/imported/wall_street_lantern.glb-196d49de1d9d9f5d3b24b0de94fe74c2.scn"
 
 [deps]
@@ -462,6 +462,10 @@ _subresources={
 "Vorhang Leinen": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/vorhang_leinen.tres"
+},
+"Wasser im Eimer": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/wasser_im_eimer.tres"
 },
 "Weidenkorb": {
 "use_external/enabled": true,

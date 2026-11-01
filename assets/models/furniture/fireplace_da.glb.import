@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://ca1ioixmmtbml"
+uid="uid://b0w3gdkcqmta2"
 path="res://.godot/imported/fireplace_da.glb-016e6cefa029e006aff0a0baa6056e7a.scn"
 
 [deps]
@@ -46,25 +46,40 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/brass.tres",
 "use_external/path": "res://assets/materials/furniture/fireplace_da/brass.tres"
 },
+"char": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/char.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_da/char.tres"
+},
 "embers": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/embers.tres",
 "use_external/path": "res://assets/materials/furniture/fireplace_da/embers.tres"
 },
-"flame": {
+"fire": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/flame.tres",
-"use_external/path": "res://assets/materials/furniture/fireplace_da/flame.tres"
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/fire.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_da/fire.tres"
+},
+"firebrick": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/firebrick.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_da/firebrick.tres"
+},
+"firebrick_glow": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/firebrick_glow.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_da/firebrick_glow.tres"
+},
+"firebrick_soot": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/firebrick_soot.tres",
+"use_external/path": "res://assets/materials/furniture/fireplace_da/firebrick_soot.tres"
 },
 "iron": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/iron.tres",
 "use_external/path": "res://assets/materials/furniture/fireplace_da/iron.tres"
-},
-"iron_insert": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/fireplace_da/iron_insert.tres",
-"use_external/path": "res://assets/materials/furniture/fireplace_da/iron_insert.tres"
 },
 "logs": {
 "use_external/enabled": true,

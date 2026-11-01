@@ -1,0 +1,20 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+; Kaminfeuer (seit Etappe 6f, Shader flame.gdshader): wie die gemeinsame Flamme, aber lodernd – die Wellen laufen
+; an jeder Feuerzunge hoch (lick), sie wiegt und streckt sich stärker; LightSource kopiert es für jedes Teil mit
+; dem Material „fire“. Farben und Bewegung hier ausprobieren.
+
+[ext_resource type="Shader" path="res://assets/shaders/flame.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "fire"
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/core_color = Color(1, 0.74, 0.3, 1)
+shader_parameter/edge_color = Color(0.93, 0.3, 0.06, 1)
+shader_parameter/emission_energy = 1.5
+shader_parameter/height = 0.25
+shader_parameter/sway = 0.3
+shader_parameter/flicker = 0.2
+shader_parameter/speed = 1.5
+shader_parameter/lick = 1.0

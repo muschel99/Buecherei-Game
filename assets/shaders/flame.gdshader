@@ -16,6 +16,8 @@ uniform float height = 0.05;
 uniform float sway = 0.22;
 uniform float flicker = 0.14;
 uniform float speed = 1.0;
+// Kaminfeuer (seit Etappe 6f): Wellen laufen an der Flamme hoch – sie leckt und züngelt (0 = ruhige Kerze)
+uniform float lick = 0.0;
 
 varying float rise;
 
@@ -35,6 +37,10 @@ void vertex() {
 	float bend = rise * rise * sway * height;
 	VERTEX.x += wave(t, phase) * bend;
 	VERTEX.z += wave(t * 0.8, phase + 2.4) * bend * 0.7;
+	// Züngeln: nach oben laufende Welle, oben stärker; die Spitze zuckt in der Höhe
+	VERTEX.x += sin(rise * 7.0 - t * 9.0 + phase) * lick * 0.09 * height * rise;
+	VERTEX.z += cos(rise * 6.0 - t * 7.5 + phase * 1.3) * lick * 0.05 * height * rise;
+	VERTEX.y += lick * height * 0.12 * rise * rise * sin(t * 6.3 + phase * 2.0);
 }
 
 void fragment() {

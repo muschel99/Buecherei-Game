@@ -922,7 +922,6 @@ def build_fireplace_da(k):
     """Kamin aus dunklem Marmor: Sockel und Herdplatte, zwei Säulen mit Basis und Kapitell, gerader Sturz mit
     Zahnleiste, breites Sims (Ablage für Deko), gusseiserner Einsatz mit Bogen, Messing-Kaminschutz."""
     k.mat("stone", MARBLE_GREEN, grain="stone", rough=0.35, vary=0.08)
-    k.mat("iron_insert", (0.1, 0.1, 0.1), grain="smooth", rough=0.55, metal=0.4, vary=0.03)
     k.mat("brass", BRASS, grain="smooth", rough=0.35, metal=0.7, vary=0.04)
     st = k.part("Marmor", "stone", bevel=0.008)
     w, d, h = 1.24, 0.4, 1.12
@@ -934,13 +933,12 @@ def build_fireplace_da(k):
         st.box((x, 0.12, 0.55), (0.24, d - 0.16, 0.7), step=0.4, dent=0.0006)        # Wange hinter der Säule
     st.box((0, 0.05, 0.99), (w - 0.06, d - 0.02, 0.12), step=0.4, dent=0.0006)        # Sturz
     st.box((0, 0.0, h - 0.04), (w + 0.08, d + 0.08, 0.06), step=0.4, dent=0.0006)    # Sims
-    st.box((0, 0.18, 0.55), (0.72, 0.04, 0.8), step=0.4, dent=0.0006)                 # Rückwand
+    st.box((0, 0.235, 0.55), (0.72, 0.03, 0.8), step=0.4, dent=0.0006)                # Rückwand (hinter der Brennkammer)
     teeth = k.part("Zahnleiste", "stone", bevel=0.003)
     for k2 in range(15):
         teeth.box((-0.49 + 0.07 * k2, -0.155, 1.02), (0.035, 0.03, 0.04), step=1, dent=0.0)
-    ins = k.part("Einsatz", "iron_insert", bevel=0.006)
-    outline = [(-0.36, -0.02), (0.36, -0.02), (0.36, 0.8), (-0.36, 0.8)]
-    ins.slab(outline, 0.03, Matrix.Translation((0, 0.15, 0.12)) @ Matrix.Rotation(math.radians(90), 4, "X"), dent=0.0)
+    # Brennkammer aus Schamottziegeln zwischen den Wangen (seit Etappe 6f statt der dunklen Eisenplatte)
+    F.firebox(k, 0.35, 0.1, 0.93, 0.0, 0.2, 0.27)
     F.fire(k, (0, 0.02, 0.1), width=0.5)
     br = k.part("Kaminschutz", "brass", bevel=0.0)
     br.tube([(-0.38, -0.2, 0.1), (-0.38, -0.2, 0.2), (0.38, -0.2, 0.2), (0.38, -0.2, 0.1)], 0.01, segs=8, round_ends=True)

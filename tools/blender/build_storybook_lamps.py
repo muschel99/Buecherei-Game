@@ -91,8 +91,13 @@ def street_lamp(M, coll):
             pts.append(Vector((sx * (0.16 + r * math.cos(a)), 0, arm_z - 0.06 + r * math.sin(a))))
         post.tube([Vector((0.0, 0, arm_z - 0.2))] + pts, lambda t: 0.01 * (1 - 0.4 * t), segs=8, smooth=1, round_ends=True)
         post.blob((sx * 0.57, 0, arm_z + 0.005), 0.026, subdiv=2, lump=0.0)
-        post.tube([Vector((sx * 0.5, 0, arm_z)), Vector((sx * 0.5, 0, arm_z - 0.08))], 0.007, segs=6, round_ends=True)
-        hanging_basket(M, coll, "Hängekorb %s" % ("links" if sx < 0 else "rechts"), (sx * 0.5, 0, arm_z - 0.42), 0.17, 50 + sx,
+        # Haken am Arm bis in den Ring der Ketten (seit Etappe 6f – vorher endete der Stab 7 cm darüber, der Korb
+        # hing in der Luft): gerader Stab, unten ein kleiner Bogen, der durch den Ring greift
+        basket_z = arm_z - 0.42
+        ring_z = basket_z + 0.17 * 1.6
+        post.tube([Vector((sx * 0.5, 0, arm_z)), Vector((sx * 0.5, 0, ring_z + 0.02)), Vector((sx * 0.5 + 0.012, 0, ring_z - 0.004)),
+                   Vector((sx * 0.5 + 0.026, 0, ring_z + 0.012))], 0.006, segs=6, smooth=2, round_ends=True)
+        hanging_basket(M, coll, "Hängekorb %s" % ("links" if sx < 0 else "rechts"), (sx * 0.5, 0, basket_z), 0.17, 50 + sx,
                        palette=(("red", "pink", "rose") if sx < 0 else ("pink", "red", "blush_flower")))
     post.build()
     SP.lantern_head(M, coll, "Straßenlaterne Kopf", (0, 0, 3.24), scale=1.0, seed=44)

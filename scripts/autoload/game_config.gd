@@ -74,6 +74,11 @@ var long_interaction_distance: float = 4.0
 var light_fade_time: float = 0.35
 ## Dauer, in der eine Kerzen- oder Laternenflamme erlischt bzw. aufflammt (in Sekunden).
 var flame_fade_time: float = 0.6
+## Funken über einem Kaminfeuer (seit Etappe 6f): wie viele gleichzeitig, wie lange einer glüht (Sekunden), wie
+## schnell er aufsteigt (m/s) – so gewählt, dass sie unter der Decke der Brennkammer verglühen
+var fire_spark_amount: int = 12
+var fire_spark_lifetime: float = 0.7
+var fire_spark_speed: float = 0.32
 ## So stark flackert das Licht einer Flamme (Kerze, Laterne, Kamin; 0 = ruhig, 0,12 = sanft) – seit Etappe 6d
 var flame_light_flicker: float = 0.12
 ## Soll der Lichtschalter auch Kerzen und Laternen mitschalten? (Standard: nur elektrische Lampen)
@@ -324,6 +329,9 @@ var vehicle_spring: float = 60.0
 var vehicle_damping: float = 9.0
 var vehicle_max_steer: float = 0.45
 var cyclist_lean_factor: float = 0.8
+## Fahrzeuge bremsen und klingeln nur für Menschen, die mit der Mitte mindestens so weit (Meter) auf der Fahrbahn
+## stehen oder sie überqueren (seit Etappe 6f; wer am Bordstein auf dem Gehweg steht, zählt nicht)
+var road_person_margin: float = 0.05
 ## Rand um das Bild (in Grad), der für die Sichtprüfung noch als „sichtbar“ zählt – so
 ## erscheint auch knapp neben dem Bildrand niemand (z. B. beim schnellen Umdrehen).
 var street_view_margin: float = 12.0

@@ -852,9 +852,10 @@ def build_fireplace_country(k):
     for k2 in range(5):
         x = -0.36 + 0.18 * k2
         st.box((x, 0.0, 0.93), (0.17, d, 0.15), step=0.1, dent=0.012, turn=(0, rnd.uniform(-3, 3), 0))
+    # Brennkammer aus Schamottziegeln (seit Etappe 6f statt der schwarzen Rückwand), oben die verrußte Decke
     sooty = k.part("Feuerraum", "soot", bevel=0.006)
-    sooty.box((0, 0.17, 0.5), (0.68, 0.06, 0.78), step=0.5, dent=0.002)
-    sooty.box((0, 0.03, 0.85), (0.68, 0.3, 0.02), step=0.5, dent=0.002)
+    sooty.box((0, 0.0, 0.865), (0.66, 0.4, 0.02), step=0.5, dent=0.002)
+    F.firebox(k, 0.33, 0.11, 0.855, -0.18, 0.19, 0.25)
     hearth = k.part("Herd", "stone", bevel=0.015, vary=0.1)
     for x in (-0.48, 0.0, 0.48):
         hearth.box((x, -0.06, 0.055), (0.47, d + 0.24, 0.11), step=0.2, dent=0.006)

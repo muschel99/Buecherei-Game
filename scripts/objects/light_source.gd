@@ -48,6 +48,11 @@ var _lights: Array[Light3D] = []
 var _light_energy: Array[float] = []
 var _light_has_shadow: Array[bool] = []
 var _glow_meshes: Array[MeshInstance3D] = []
+## Ist das leuchtende Teil eine Flamme (wächst, schrumpft, verschwindet) oder nur glühend (Glut, Ziegel im
+## Feuerschein, Laternenglas – hört bloß auf zu leuchten)? Seit Etappe 6f getrennt.
+var _glow_is_flame: Array[bool] = []
+## Funken über einem Kaminfeuer (seit Etappe 6f, an Markern „SparkSpot…“)
+var _sparks: Array[GPUParticles3D] = []
 var _glow_materials: Array[Material] = []
 ## Name des Helligkeits-Werts je leuchtendem Material (normales oder Shader-Material).
 var _glow_properties: Array[String] = []
@@ -62,6 +67,10 @@ var _flicker_time := 0.0
 var _sound: AudioStreamPlayer3D
 
 const FLAME_MATERIAL := preload("res://assets/materials/flame.tres")
+## Kaminfeuer (Material „fire“, seit Etappe 6f): lodernde Feuerzungen
+const FIRE_MATERIAL := preload("res://assets/materials/fire.tres")
+## Funken über einem Kaminfeuer (Marker „SparkSpot…“ im Modell, seit Etappe 6f)
+const SPARK_PREFIX := "SparkSpot"
 
 
 func _ready() -> void:
@@ -84,13 +93,15 @@ func _ready() -> void:
 				var property := _glow_property(surface_material)
 				if property.is_empty():
 					continue
-				if kind == Kind.FLAME and surface_material.resource_name == "flame":
-					# gemeinsame, bewegte Flamme (Helligkeit wie im Modell, Höhe aus dem Netz)
-					var flame := FLAME_MATERIAL.duplicate() as ShaderMaterial
-					flame.set_shader_parameter("emission_energy", float(surface_material.get(property)))
+				if kind == Kind.FLAME and surface_material.resource_name in ["flame", "fire"]:
+					# gemeinsame, bewegte Flamme bzw. lodernde Feuerzunge (Helligkeit wie im Modell, Höhe aus dem Netz)
+					var source := FIRE_MATERIAL if surface_material.resource_name == "fire" else FLAME_MATERIAL
+					var flame := source.duplicate() as ShaderMaterial
+					if source == FLAME_MATERIAL:
+						flame.set_shader_parameter("emission_energy", float(surface_material.get(property)))
 					flame.set_shader_parameter("height", maxf(mesh_instance.get_aabb().end.y, 0.01))
 					mesh_instance.set_surface_override_material(i, flame)
-					_add_glow(mesh_instance, flame, "shader_parameter/emission_energy")
+					_add_glow(mesh_instance, flame, "shader_parameter/emission_energy", true)
 					continue
 				surface_material = surface_material.duplicate()
 				mesh_instance.set_surface_override_material(i, surface_material)
@@ -101,6 +112,10 @@ func _ready() -> void:
 			if not _interactable.interacted.is_connected(_on_interactable_interacted):
 				_interactable.interacted.connect(_on_interactable_interacted)
 			break
+	for node in find_children(SPARK_PREFIX + "*", "Node3D", true, false):
+		var particles := _make_sparks()
+		(node as Node3D).add_child(particles)
+		_sparks.append(particles)
 	_flicker_phase = randf() * TAU
 	if not loop_sound.is_empty():
 		_sound = Audio.loop_at(self, loop_sound, 0.0, 9.0)
@@ -124,8 +139,53 @@ func _process(delta: float) -> void:
 		_lights[i].light_energy = _light_energy[i] * factor
 
 
-func _add_glow(mesh_instance: MeshInstance3D, material: Material, property: String) -> void:
+## Kleine glühende Funken, die aus dem Feuer aufsteigen und verglühen (Werte GameConfig.fire_spark_*).
+func _make_sparks() -> GPUParticles3D:
+	var particles := GPUParticles3D.new()
+	particles.name = "Sparks"
+	particles.amount = GameConfig.fire_spark_amount
+	particles.lifetime = GameConfig.fire_spark_lifetime
+	particles.randomness = 0.7
+	particles.emitting = false
+	particles.visibility_aabb = AABB(Vector3(-0.3, -0.1, -0.3), Vector3(0.6, 0.6, 0.6))
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	process.emission_sphere_radius = 0.08
+	process.direction = Vector3.UP
+	process.spread = 25.0
+	process.initial_velocity_min = GameConfig.fire_spark_speed * 0.5
+	process.initial_velocity_max = GameConfig.fire_spark_speed
+	process.gravity = Vector3(0.0, 0.05, 0.0)
+	process.turbulence_enabled = true
+	process.turbulence_noise_strength = 0.4
+	process.turbulence_noise_scale = 3.0
+	process.scale_min = 0.5
+	process.scale_max = 1.2
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 0.85, 0.45, 1.0))
+	ramp.set_color(1, Color(1.0, 0.3, 0.05, 0.0))
+	var ramp_texture := GradientTexture1D.new()
+	ramp_texture.gradient = ramp
+	process.color_ramp = ramp_texture
+	particles.process_material = process
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.012, 0.012)
+	var look := StandardMaterial3D.new()
+	look.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	look.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	look.vertex_color_use_as_albedo = true
+	look.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	look.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	look.albedo_color = Color(2.0, 1.4, 0.8)
+	quad.material = look
+	particles.draw_pass_1 = quad
+	particles.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return particles
+
+
+func _add_glow(mesh_instance: MeshInstance3D, material: Material, property: String, is_flame := false) -> void:
 	_glow_meshes.append(mesh_instance)
+	_glow_is_flame.append(is_flame)
 	_glow_materials.append(material)
 	_glow_properties.append(property)
 	_glow_energy.append(float(material.get(property)))
@@ -191,6 +251,8 @@ func _apply_state(animate: bool) -> void:
 			light.visible = true
 		for mesh in _glow_meshes:
 			mesh.visible = true
+	for particles in _sparks:
+		particles.emitting = is_on
 	if _sound:
 		if is_on and not _sound.playing:
 			_sound.play()
@@ -203,7 +265,7 @@ func _apply_state(animate: bool) -> void:
 			_lights[i].visible = is_on
 		for i in _glow_materials.size():
 			_glow_materials[i].set(_glow_properties[i], _glow_energy[i] if is_on else 0.0)
-			if kind == Kind.FLAME:
+			if kind == Kind.FLAME and _glow_is_flame[i]:
 				_glow_meshes[i].visible = is_on
 		return
 
@@ -232,8 +294,9 @@ func _animate_flame() -> void:
 	_tween = create_tween().set_parallel().set_trans(Tween.TRANS_SINE)
 	if is_on:
 		for i in _glow_meshes.size():
-			_glow_meshes[i].scale = _glow_scale[i] * 0.2
-			_tween.tween_property(_glow_meshes[i], "scale", _glow_scale[i], duration * 0.7).set_ease(Tween.EASE_OUT)
+			if _glow_is_flame[i]:
+				_glow_meshes[i].scale = _glow_scale[i] * 0.2
+				_tween.tween_property(_glow_meshes[i], "scale", _glow_scale[i], duration * 0.7).set_ease(Tween.EASE_OUT)
 			_tween.tween_property(_glow_materials[i], _glow_properties[i], _glow_energy[i], duration * 0.7)
 		for i in _lights.size():
 			_tween.tween_property(_lights[i], "light_energy", _light_energy[i], duration * 0.7)
@@ -241,6 +304,10 @@ func _animate_flame() -> void:
 
 	var flicker := duration * 0.2
 	for i in _glow_meshes.size():
+		if not _glow_is_flame[i]:
+			# Glut und Ziegel: nur langsam dunkler werden
+			_tween.tween_property(_glow_materials[i], _glow_properties[i], 0.0, duration * 1.6)
+			continue
 		var stretched := _glow_scale[i] * Vector3(0.8, 1.3, 0.8)
 		var gone := _glow_scale[i] * Vector3(0.3, 0.05, 0.3)
 		var flame_tween := create_tween().set_trans(Tween.TRANS_SINE)
@@ -258,8 +325,9 @@ func _hide_lights() -> void:
 	for light in _lights:
 		light.visible = false
 	if kind == Kind.FLAME:
-		for mesh in _glow_meshes:
-			mesh.visible = false
+		for i in _glow_meshes.size():
+			if _glow_is_flame[i]:
+				_glow_meshes[i].visible = false
 
 
 func _update_prompt() -> void:
