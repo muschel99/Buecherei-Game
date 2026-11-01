@@ -16,6 +16,10 @@ const SHOP_Z := Vector2(-0.22, 0.072)
 const UPPER_Z := Vector2(-0.15, -0.035)
 ## Untere Füllung der Seitenlichter an der Tür (kein Glas am Boden) bis zu dieser Höhe
 const DOOR_PANEL_TOP := 0.45
+## Anschlag der Ladentür: so weit greift die Leiste über das Türblatt, Tiefe (außen vor dem Blatt, das in
+## der Mitte des Rahmens bei z = -0,1 sitzt und 5 cm dick ist)
+const DOOR_STOP := 0.03
+const DOOR_STOP_Z := Vector2(-0.073, -0.06)
 
 
 ## Ein Fenster (Schaufenster oder oben). materials: frame, glass, curtain, room, trim, zinc, base.
@@ -237,6 +241,24 @@ static func build_door_surround(opening: Dictionary, materials: Dictionary) -> N
 		for band: PackedVector2Array in Geometry2D.clip_polygons(leaf_band, leaf):
 			if not Geometry2D.is_polygon_clockwise(band):
 				frame.slab(band, -0.14, -0.06)
+		# Anschlag (seit Etappe 6f): außen eine schmale Leiste, die 3 cm über den Rand des Türblatts greift –
+		# das Blatt (98 x 218 cm) schließt dagegen, und durch die Fuge sieht man nicht mehr hindurch. Die Tür
+		# geht nach innen auf, die Leiste außen stört dabei nicht. Unten bleibt die Schwelle frei.
+		var above_floor := PackedVector2Array([Vector2(-5.0, 0.03), Vector2(5.0, 0.03), Vector2(5.0, 10.0), Vector2(-5.0, 10.0)])
+		var leaf_inner := _offset_miter(leaf, -DOOR_STOP)
+		if not leaf_inner.is_empty():
+			# innen nach unten verlängert: so wird der Rest ein unten offenes U (ein Ring käme als Außenform +
+			# Loch zurück, und die Außenform allein würde das ganze Blatt zudecken)
+			var ib := OpeningShape.bounds(leaf_inner)
+			var down := PackedVector2Array([Vector2(ib.position.x, -1.0), Vector2(ib.end.x, -1.0),
+				Vector2(ib.end.x, ib.position.y + 0.1), Vector2(ib.position.x, ib.position.y + 0.1)])
+			leaf_inner = _first(Geometry2D.merge_polygons(leaf_inner, down))
+			for ring: PackedVector2Array in Geometry2D.clip_polygons(leaf, leaf_inner):
+				if Geometry2D.is_polygon_clockwise(ring):
+					continue
+				for stop: PackedVector2Array in Geometry2D.intersect_polygons(ring, above_floor):
+					if not Geometry2D.is_polygon_clockwise(stop):
+						frame.slab(stop, DOOR_STOP_Z.x, DOOR_STOP_Z.y)
 		# Seit Etappe 6d: das Glas um das Türblatt in linkes und rechtes Seitenlicht und das Oberlicht teilen
 		# (vorher hing es U-förmig zusammen, und die Sprossen liefen quer durch die Türöffnung)
 		var lb := OpeningShape.bounds(leaf_band)
@@ -249,13 +271,17 @@ static func build_door_surround(opening: Dictionary, materials: Dictionary) -> N
 				for part: PackedVector2Array in Geometry2D.intersect_polygons(whole, zone):
 					if not Geometry2D.is_polygon_clockwise(part):
 						parts.append(part)
-		# Pfosten zwischen Seitenlicht und Oberlicht (über dem Türblatt, nie in der Öffnung)
-		for edge_x: float in [lb.position.x, lb.end.x]:
-			var x := edge_x + (0.001 if edge_x == lb.position.x else -0.001)
-			var above := height_at(leaf_band, x).y
-			var top := height_at(inner, edge_x).y
+		# Pfosten zwischen Seitenlicht und Oberlicht (über dem Türblatt, nie in der Öffnung): genau die
+		# Verlängerung des Rahmens ums Türblatt – gleiche Breite, gleiche Tiefe, bündig ohne Versatz
+		for side: float in [-1.0, 1.0]:
+			var outer_x: float = lb.position.x if side < 0.0 else lb.end.x
+			var x := outer_x - side * FacadeLayout.MULLION / 2.0
+			# unten bis in den Rahmen hinein (beim Rundbogen ist er schräg – nie eine schwebende Ecke)
+			var half := FacadeLayout.MULLION / 2.0 - 0.001
+			var above := minf(height_at(leaf_band, x - half).y, height_at(leaf_band, x + half).y)
+			var top := height_at(inner, x).y
 			if top > above + 0.05:
-				frame.bar(Vector2(edge_x, above), Vector2(edge_x, top), 0.04, -0.13, -0.07)
+				frame.bar(Vector2(x, above), Vector2(x, top + 0.002), FacadeLayout.MULLION, -0.14, -0.06)
 		for piece: PackedVector2Array in parts:
 			if absf(_area(piece)) < 0.004:
 				continue

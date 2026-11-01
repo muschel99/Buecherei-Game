@@ -1096,9 +1096,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   den Inhalt mit dem Möbelstück, beim Wegräumen (Mausrad-Klick) geht er ins Lager.
 - Startgeschenke fürs Inventar: `GameConfig.start_furniture_gifts` (jedes nur einmal, auch in
   älteren Spielständen).
-- **Verdecker (seit 6d, Leistung):** main.gd `_add_house_occluders` – OccluderInstance3D (Box) in jedem
-  gewöhnlichen HouseFacade (nicht Eck-/Torhaus, nicht `see_through`) und an Rückwand/Nachbarwand/Obergeschoss der
-  Bücherei; Projekt-Einstellung Occlusion Culling an; `GameConfig.house_occluders`. Pflanzenteile niedriger als
+- **Verdecker (seit 6d, Leistung; seit 6f nur noch Bücherei):** main.gd `_add_library_occluders` – OccluderInstance3D
+  (Box) nur in der fensterlosen Rück- und Nachbarwand der Bücherei; Projekt-Einstellung Occlusion Culling an;
+  `GameConfig.library_occluders`. **Nie einen Verdecker in ein Haus mit Fenstern setzen:** alles hinter dem Glas
+  (Einrichtung, Rückwände hinter Fenstern, Tafeln) liegt im Kasten und verschwindet/flackert (Fehler aus 6d: Pub,
+  Blumenladen). Verdecker nur in massive Teile, kleiner als die sichtbare Wand. Pflanzenteile niedriger als
   `GameConfig.plant_shadow_min_height` (0,5 m) werfen keinen Sonnenschatten (Greenery `_build_batches`, ein
   Drittel weniger Zeichenaufrufe draußen); Messung: Zeichenaufrufe aus festen Blicken (Etappe 6d in ROADMAP).
 - **Vorschaubilder auf der Platte (seit 6d):** `ThumbnailRenderer` speichert Fotos von Möbeln und Szenen in

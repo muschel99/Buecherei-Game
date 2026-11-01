@@ -302,11 +302,13 @@ var delivery_van_scene: String = "res://scenes/street_life/delivery_van.tscn"
 ## ohne Bewegung. Schatten werfen sie nur in der Nähe (je Grafikstufe: graphics_presets,
 ## "street_shadow_distance").
 var street_detail_distance: float = 28.0
-## Leistung (seit Etappe 6d): Häuser verdecken, was hinter ihnen liegt (Occlusion Culling, main.gd);
+## Leistung (seit Etappe 6d): die fensterlosen Wände der Bücherei verdecken, was hinter ihnen liegt
+## (Occlusion Culling, main.gd; in Häusern mit Fenstern seit 6f keine Verdecker mehr – dort verschwand sonst
+## alles hinter dem Glas);
 ## Pflanzenteile, die niedriger als plant_shadow_min_height (Meter) sind – Blumen in Kästen, Gras,
 ## kleine Topfpflanzen –, werfen keinen Sonnenschatten (ihr Schatten ist kaum zu sehen, kostet aber
 ## etwa ein Drittel aller Zeichenaufrufe draußen; 0 = alle Pflanzen werfen Schatten)
-var house_occluders: bool = true
+var library_occluders: bool = true
 var plant_shadow_min_height: float = 0.5
 ## Geräusche (seit Etappe 6d, Audio-System): Lautstärke der eigenen Schritte und des Automotors (dB,
 ## zusätzlich zu den Reglern in den Einstellungen), Pause zwischen zwei Musikstücken (Sekunden)

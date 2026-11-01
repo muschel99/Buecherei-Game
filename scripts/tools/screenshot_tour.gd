@@ -10,6 +10,8 @@ extends Node
 ##   --set=<name>       Gruppe von Blickpunkten aus ScreenshotViews (Standard: overview)
 ##   --only=<a,b>       nur diese Blickpunkte der Gruppe
 ##   --cam=x,y,z:tx,ty,tz  zusätzlicher freier Blickpunkt (Kamera : Zielpunkt), Name "cam"
+##   --cams=a@x,y,z:tx,ty,tz;b@…  mehrere freie Blickpunkte mit Namen (seit Etappe 6f)
+##   --facades=v1=k:v,k:v|v2=k:v  mehrere Fassaden nacheinander, je Variante alle Blickpunkte (Name im Dateinamen)
 ##   --out=<ordner>     Ordner für die Bilder (Standard: screenshots/ im Projekt)
 ##   --tag=<wort>       Zusatz im Dateinamen, z. B. "vorher" -> street_end-bound_road-vorher.png
 ##   --fov=<grad>       Bildwinkel (Standard: wie die Spielfigur)
@@ -113,6 +115,28 @@ func _run() -> void:
 	var views := _collect_views()
 	if _args.has("focus"):
 		views = _focus_views(views)
+	if _args.has("facades"):
+		# mehrere Fassaden nacheinander (seit Etappe 6f): je Variante alle Blickpunkte, Name als Zusatz
+		var base := FacadeDesign.config.duplicate()
+		for variant in String(_args.facades).split("|", false):
+			var variant_name := variant.get_slice("=", 0)
+			var wish := base.duplicate()
+			for pair in variant.get_slice("=", 1).split(",", false):
+				var kv := pair.split(":")
+				if kv.size() == 2:
+					wish[kv[0]] = kv[1]
+			FacadeDesign.apply(wish)
+			await _wait_frames(10)
+			await _capture(views, out_dir, variant_name)
+	else:
+		await _capture(views, out_dir, "")
+	if _old_quality != null:
+		Settings.set_value("graphics/quality", _old_quality)
+	get_tree().quit()
+
+
+## Nimmt alle Blickpunkte auf (suffix = zusätzlicher Teil des Dateinamens, z. B. die Fassaden-Variante).
+func _capture(views: Dictionary, out_dir: String, suffix: String) -> void:
 	for view_name in views:
 		var view: Dictionary = views[view_name]
 		_camera.global_position = view.pos
@@ -127,14 +151,13 @@ func _run() -> void:
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)])
 		var image := get_viewport().get_texture().get_image()
 		var file := "%s-%s" % [_args.get("set", "free"), view_name]
+		if not suffix.is_empty():
+			file += "-" + suffix
 		if _args.has("tag"):
 			file += "-" + String(_args.tag)
 		var path := out_dir.path_join(file + ".png")
 		image.save_png(path)
 		print("Bild gespeichert: ", path)
-	if _old_quality != null:
-		Settings.set_value("graphics/quality", _old_quality)
-	get_tree().quit()
 
 
 ## Nimmt die Straße draußen heraus, bevor die Szene startet (nur der Lieferort bleibt).
@@ -221,7 +244,7 @@ func _aim_player_camera() -> void:
 ## Blickpunkte aus der gewählten Gruppe (+ freier Blickpunkt aus --cam).
 func _collect_views() -> Dictionary:
 	var views := {}
-	if not _args.has("cam") or _args.has("set"):
+	if not (_args.has("cam") or _args.has("cams")) or _args.has("set"):
 		var all := ScreenshotViews.get_set(String(_args.get("set", "overview")))
 		var only: PackedStringArray = String(_args.get("only", "")).split(",", false)
 		for view_name in all:
@@ -230,6 +253,11 @@ func _collect_views() -> Dictionary:
 	if _args.has("cam"):
 		var parts := String(_args.cam).split(":")
 		views["cam"] = {"pos": _vec(parts[0]), "target": _vec(parts[1])}
+	if _args.has("cams"):
+		# mehrere freie Blickpunkte: name@x,y,z:tx,ty,tz;name2@…
+		for entry in String(_args.cams).split(";", false):
+			var parts := entry.get_slice("@", 1).split(":")
+			views[entry.get_slice("@", 0)] = {"pos": _vec(parts[0]), "target": _vec(parts[1])}
 	return views
 
 
