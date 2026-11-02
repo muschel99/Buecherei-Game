@@ -1,21 +1,30 @@
 class_name StreetCat
 extends StreetAnimal
-## Eine Katze (seit Etappe 6g). CatLife plant ihren Besuch als Folge von Schritten (wie bei Passanten):
-## laufen ("walk"), über die Straße flitzen ("cross"), sich umdrehen ("turn"), eine Bewegung zeigen ("anim":
-## sitzen, putzen, strecken, liegen, schlafen), springen ("jump": auf Bank, Stuhl, Fensterbank, Sessel und
-## wieder herunter), hinterherrennen ("follow", Fangen), an der Tür warten ("wait_door"), verschwinden
-## ("leave": erst, wenn niemand hinschaut). Dazu kleine Schritte: Sitz belegen/freigeben, Schnurren an/aus,
-## drinnen/draußen, Spielzeug ablegen/aufnehmen, Platz belegen ("claim" … "claim_end").
-##
-## Streicheln: E (Interactable „Streicheln“) oder später ein Passant: pet(wer) – die Katze bleibt stehen,
-## dreht sich zu ihm, reibt den Kopf (Bewegung "pet") und schnurrt. can_be_petted() fragt vorher.
+## Eine Katze (seit Etappe 6g, neu in 6h: weicher Körper, eigenes Skelett, Bewegungen nach echten Katzen,
+## Gesicht). CatLife plant ihren Besuch als Folge von Schritten (wie bei Passanten):
+## - walk (laufen; run = rennen, stalk = anschleichen), turn (umdrehen), anim (sitzen, putzen, liegen, schlafen,
+##   strecken, schnuppern, lauern …; sitzen und hinlegen mit Übergang: erst hinten absetzen),
+## - jump (hinauf/hinunter: Bank, Fensterbank, Sessel, Bordstein, Stufe – vorher immer zur Landestelle drehen,
+##   dann mit dem Kopf voran), pounce (Sprung auf Spielzeug oder Vögel), bat (mit der Pfote anstupsen),
+## - follow (Fangen), wait_road (vor dem Überqueren warten), wait_door (an der Tür warten), leave (verschwinden,
+##   wenn niemand hinschaut), kleine Schritte (Platz belegen „claim“ … „claim_end“, Schnurren, drinnen/draußen,
+##   Spielzeug ablegen/aufnehmen, Miau, „call“ = CatLife fragen).
+## Gesicht (Formvarianten im Modell): blinzeln, „happy“ (zufrieden zugekniffen: beim Streicheln, freundlicher
+## Blick zur Spielfigur), Augen zu beim Schlafen.
+## Streicheln: E (Interactable „Streicheln“) oder später ein Passant: pet(wer).
 
 signal finished(cat: StreetCat)
 signal petted(by: Node3D)
 
-## Natürliches Tempo der Bewegungen (m/s bei speed_scale 1) – danach richtet sich das Abspieltempo
-const WALK_ANIM_SPEED := 0.45
-const RUN_ANIM_SPEED := 1.7
+## Natürliches Tempo der Bewegungen (m/s bei speed_scale 1)
+const WALK_ANIM_SPEED := 0.42
+const RUN_ANIM_SPEED := 1.6
+const STALK_ANIM_SPEED := 0.2
+## Wann sich die Katze bei Sprüngen bewegt (Anteil der Bewegung): [Absprung, Landung]
+const JUMP_WINDOW := {"jump_up": Vector2(0.35, 0.7), "jump_down": Vector2(0.3, 0.66), "hop_up": Vector2(0.3, 0.78),
+	"step_down": Vector2(0.2, 0.85), "pounce": Vector2(0.4, 0.75)}
+## Mundstelle in der Ruhehaltung (unter der Schnauze; Spielzeug im Maul)
+const MOUTH := Vector3(0.0, 0.24, 0.226)
 
 ## Prüfwerkzeug: jeden Schritt ausgeben
 static var debug := false
@@ -28,10 +37,13 @@ var radius := 0.2
 var velocity2 := Vector2.ZERO
 var inside := false
 var seat: SeatPoint
-## Woran die Katze gerade sitzt oder liegt (folgt dem Sitz, falls das Möbel verschoben wird)
+## Haltung: "stand", "sit", "lie"
+var posture := "stand"
+## Jagt gerade (lauern, anschleichen, Sprung) – Vögel bemerken sie erst spät
+var hunting := false
+
 var _rest_on: Node3D
 var _rest_offset := Vector3.ZERO
-
 var _actions: Array[Dictionary] = []
 var _action: Dictionary = {}
 var _t := 0.0
@@ -40,16 +52,21 @@ var _yaw_target := 0.0
 var _blocked := 0.0
 var _jump_from := Vector3.ZERO
 var _purr: AudioStreamPlayer3D
-## Schnurrt auch ohne Streicheln (liegt gemütlich auf dem Sessel)
 var _rest_purr := false
 var _meow_wait := 0.0
 var _pet_left := 0.0
 var _pet_face := Vector3.ZERO
 var _toy: Node3D
 var _toy_holder: Node3D
-var _head: AnimalHeadModifier
-var _look := Vector2.ZERO  # Kopf: (Drehung, Blick nach oben) in Grad
 var _interactable: Interactable
+var _head: AnimalHeadModifier
+var _look := Vector2.ZERO
+var _blink_index := -1
+var _happy_index := -1
+var _blink := 0.0
+var _happy := 0.0
+var _blink_timer := 2.0
+var _friendly := 0.0
 
 
 func _ready() -> void:
@@ -58,9 +75,13 @@ func _ready() -> void:
 		_head = AnimalHeadModifier.new()
 		_head.name = "HeadLook"
 		skeleton.add_child(_head)
+	if mesh:
+		_blink_index = mesh.find_blend_shape_by_name(&"blink")
+		_happy_index = mesh.find_blend_shape_by_name(&"happy")
 	_interactable = get_node_or_null("Interactable") as Interactable
 	if _interactable:
 		_interactable.interacted.connect(func(who: Node) -> void: pet(who as Node3D))
+	add_to_group(Door.KEEPOUT_GROUP)
 	set_active(false)
 
 
@@ -80,6 +101,7 @@ func set_active(enabled: bool) -> void:
 		current_anim = &""
 		_actions.clear()
 		_action = {}
+		hunting = false
 
 
 func begin(start: Vector3, face: Vector3, actions: Array[Dictionary]) -> void:
@@ -90,44 +112,18 @@ func begin(start: Vector3, face: Vector3, actions: Array[Dictionary]) -> void:
 	_action = {}
 	_pet_left = 0.0
 	inside = false
+	posture = "stand"
 	set_outdoor(true)
 	set_active(true)
 	play(&"walk", 0.0)
 	_next()
 
 
-## Neue Schritte statt der restlichen (z. B. umkehren, weil jemand den Weg versperrt).
+## Neue Schritte statt der restlichen (z. B. umkehren, jagen).
 func replace_actions(actions: Array[Dictionary]) -> void:
+	hunting = false
 	_actions = actions
 	_next()
-
-
-## Kleiner Bogen um jemanden herum: erst die Punkte, dann der Rest des Weges ab der Stelle nach dem Bogen.
-func detour(points: PackedVector3Array) -> void:
-	if get_action_type() == "walk":
-		var current := _action.duplicate()
-		var pts: PackedVector3Array = current.points
-		var end := points[-1]
-		var best := _index
-		var best_d := INF
-		for i in range(_index, pts.size()):
-			var d := pts[i].distance_to(end)
-			if d < best_d:
-				best_d = d
-				best = i
-		var rest := PackedVector3Array([end])
-		rest.append_array(pts.slice(best + 1))
-		current.points = rest
-		current.erase("detour")
-		_actions.push_front(current)
-	var path := PackedVector3Array([global_position])
-	path.append_array(points)
-	_actions.push_front({"type": "walk", "points": path, "speed": GameConfig.cat_walk_speed, "detour": true})
-	_next()
-
-
-func in_detour() -> bool:
-	return bool(_action.get("detour", false))
 
 
 ## Schritte vor die restlichen schieben (z. B. hinein in die Bücherei).
@@ -138,25 +134,40 @@ func insert_actions(actions: Array[Dictionary]) -> void:
 	_next()
 
 
+func get_actions() -> Array[Dictionary]:
+	return _actions
+
+
 func get_action_type() -> String:
 	return String(_action.get("type", ""))
 
 
-## Steht die Katze auf dem Boden (nicht auf Bank, Fensterbank oder Sessel)?
+## Steht die Katze auf dem Boden (nicht auf Bank, Fensterbank oder Sessel, nicht mitten im Sprung)?
 func on_ground() -> bool:
-	return active and _rest_on == null and get_action_type() != "jump"
+	return active and _rest_on == null and get_action_type() not in ["jump", "pounce"]
+
+
+## Wie nah Vögel diese Katze an sich heranlassen (m): beim Lauern und Anschleichen bemerken sie sie spät, beim
+## Sprung fliegen sie sofort auf (die Katze fängt nie einen Vogel).
+func bird_scare_radius() -> float:
+	if get_action_type() == "pounce":
+		return 3.5
+	if hunting:
+		return 1.15
+	return GameConfig.bird_flee_radius + 0.5
 
 
 func can_be_petted() -> bool:
-	return active and get_action_type() not in ["jump", "cross", "leave"]
+	return active and get_action_type() not in ["jump", "pounce", "leave"] and not (get_action_type() == "walk" and _action.get("run", false))
 
 
-## Streicheln (Spielfigur mit E, später auch Passanten): Katze hält inne, dreht sich zu by, schnurrt.
+## Streicheln (Spielfigur mit E, später auch Passanten): Katze hält inne, dreht sich zu by, kneift zufrieden die
+## Augen zu und schnurrt; liegt sie, bleibt sie liegen und macht ein kurzes Miau.
 func pet(by: Node3D, seconds: float = -1.0) -> void:
 	if not can_be_petted():
 		return
 	var time := GameConfig.cat_pet_time if seconds < 0.0 else seconds
-	if _pet_left <= 0.0 and randf() < 0.3:
+	if _pet_left <= 0.0 and (posture == "lie" or randf() < 0.3):
 		meow()
 	_pet_left = maxf(_pet_left, time)
 	if by:
@@ -166,19 +177,23 @@ func pet(by: Node3D, seconds: float = -1.0) -> void:
 	petted.emit(by)
 
 
+func is_petted() -> bool:
+	return _pet_left > 0.0
+
+
 func meow() -> void:
 	if _meow_wait > 0.0:
 		return
 	_meow_wait = GameConfig.cat_meow_cooldown
-	Audio.play_on(self, GameConfig.cat_meow_sound, GameConfig.cat_meow_volume_db, Audio.vary(0.05), 16.0, Vector3(0.0, 0.3, 0.15))
+	Audio.play_on(self, GameConfig.cat_meow_sound, GameConfig.cat_meow_volume_db, Audio.vary(0.05), 16.0, Vector3(0.0, 0.25, 0.2))
 
 
-## Spielzeug (Filzmaus) in den Mund nehmen: Knoten hängt am Kopf-Knochen.
+## Spielzeug ins Maul nehmen: Knoten hängt am Kopf-Knochen unter der Schnauze.
 func give_toy(toy: Node3D) -> void:
 	_toy = toy
 	if skeleton == null:
 		add_child(toy)
-		toy.position = Vector3(0.0, 0.27, 0.3)
+		toy.position = MOUTH
 		return
 	if _toy_holder == null:
 		var attach := BoneAttachment3D.new()
@@ -186,10 +201,9 @@ func give_toy(toy: Node3D) -> void:
 		skeleton.add_child(attach)
 		_toy_holder = Node3D.new()
 		attach.add_child(_toy_holder)
-		# Mundstelle in der Ruhehaltung (Modell: unter der Schnauze) relativ zum Kopf-Knochen
 		var bone := skeleton.find_bone("head")
 		if bone >= 0:
-			_toy_holder.transform = skeleton.get_bone_global_rest(bone).affine_inverse() * Transform3D(Basis(), Vector3(0.0, 0.272, 0.292))
+			_toy_holder.transform = skeleton.get_bone_global_rest(bone).affine_inverse() * Transform3D(Basis(), MOUTH)
 	if toy.get_parent():
 		toy.get_parent().remove_child(toy)
 	_toy_holder.add_child(toy)
@@ -209,6 +223,10 @@ func has_toy() -> bool:
 	return _toy != null
 
 
+func get_toy() -> Node3D:
+	return _toy
+
+
 # --- Ablauf ---
 
 func step(delta: float) -> void:
@@ -217,6 +235,7 @@ func step(delta: float) -> void:
 	_meow_wait -= delta
 	velocity2 = Vector2.ZERO
 	_update_look(delta)
+	_update_face(delta)
 	if _pet_left > 0.0:
 		_pet_left -= delta
 		_step_petting(delta)
@@ -228,41 +247,57 @@ func step(delta: float) -> void:
 	if _rest_on and is_instance_valid(_rest_on):
 		global_position = _rest_on.global_position + _rest_offset
 	elif _rest_on:
-		# Sitz ist weg (Möbel weggeräumt): herunterspringen und weiter
+		# Sitz ist weg (Möbel weggeräumt): umdrehen, vorwärts herunterspringen und weiter
 		_rest_on = null
-		var floor := global_position
+		var floor := global_position + global_basis.z * 0.35
 		floor.y = life.floor_y(self)
-		_actions.push_front({"type": "jump", "to": floor + global_basis.z * 0.35, "face": global_basis.z})
+		_actions.push_front({"type": "jump", "to": floor})
+		_actions.push_front({"type": "turn", "face": global_basis.z})
 		_next()
 	match get_action_type():
-		"walk", "cross":
+		"walk":
 			_step_walk(delta)
 		"turn":
 			_turn(delta, 5.0)
 			if absf(angle_difference(rotation.y, _yaw_target)) < 0.08:
 				_next()
-		"anim", "wait_door", "leave":
-			_turn(delta, 4.0)
-			_t -= delta
-			if get_action_type() == "wait_door":
-				if life.door_open():
-					_next()
-				elif _t <= 0.0:
-					_t = randf_range(18.0, 35.0)
-					meow()
-			elif get_action_type() == "leave":
-				if _t <= 0.0:
-					_t = 0.5
-					if not life.is_visible_point(global_position + Vector3.UP * 0.2):
-						finished.emit(self)
-			elif _t <= 0.0:
-				_next()
-		"jump":
+		"anim", "wait_door", "leave", "wait_road":
+			_step_wait(delta)
+		"jump", "pounce":
 			_step_jump(delta)
 		"follow":
 			_step_follow(delta)
+		"bat":
+			_step_bat(delta)
 		_:
 			_next()
+
+
+func _step_wait(delta: float) -> void:
+	_turn(delta, 4.0)
+	_t -= delta
+	match get_action_type():
+		"wait_door":
+			if life.door_open():
+				_next()
+			elif _t <= 0.0:
+				_t = randf_range(18.0, 35.0)
+				meow()
+		"wait_road":
+			if life.road_clear(global_position):
+				_next()
+		"leave":
+			if _t <= 0.0:
+				_t = 0.5
+				if not life.is_visible_point(global_position + Vector3.UP * 0.2):
+					finished.emit(self)
+		_:
+			# Übergang (hinsetzen/aufstehen) vorbei? Dann die eigentliche Bewegung
+			if _action.has("then") and anim and not anim.is_playing():
+				play(StringName(_action.then), 0.25)
+				_action.erase("then")
+			if _t <= 0.0:
+				_next()
 
 
 func _next() -> void:
@@ -274,56 +309,81 @@ func _next() -> void:
 	finished.emit(self)
 
 
+## Haltung wechseln: aus dem Sitzen erst aufstehen, aus dem Liegen erst strecken – liefert true, wenn ein Übergang
+## eingeschoben wurde (dann kommt die Aktion danach wieder dran).
+func _need_stand() -> bool:
+	if posture == "sit":
+		_actions.push_front(_action)
+		_action = {"type": "anim", "anim": "stand_up", "time": anim_length(&"stand_up")}
+		return true
+	if posture == "lie":
+		_actions.push_front(_action)
+		_action = {"type": "anim", "anim": "stretch", "time": anim_length(&"stretch")}
+		return true
+	return false
+
+
 ## Schritt beginnen; false = sofort erledigt (kleine Schritte ohne Dauer).
 func _start_action() -> bool:
 	var type := String(_action.get("type", ""))
+	if type in ["walk", "jump", "pounce", "follow"] and _need_stand():
+		type = "anim"
 	_t = float(_action.get("time", 0.0))
 	if debug:
 		var info := String(_action.get("anim", "")) if type == "anim" else ""
-		if type in ["walk", "cross"]:
+		if type == "walk":
 			var pts: PackedVector3Array = _action.points
 			info = "%d Punkte bis %s" % [pts.size(), pts[-1].snapped(Vector3.ONE * 0.01) if not pts.is_empty() else Vector3.ZERO]
-		elif type == "jump":
+		elif type in ["jump", "pounce"]:
 			info = str((_action.to as Vector3).snapped(Vector3.ONE * 0.01))
 		print("[Katze %s] %s %s  (bei %s)" % [name, type, info, global_position.snapped(Vector3.ONE * 0.01)])
 	match type:
-		"walk", "cross":
+		"walk":
 			_index = 1
 			_blocked = 0.0
 			var points: PackedVector3Array = _action.points
 			if points.size() < 2:
 				return false
-			play(&"run" if _action.get("run", false) else &"walk", 0.2, _anim_speed())
+			hunting = bool(_action.get("stalk", false))
+			play(_walk_anim(), 0.2, _anim_speed())
 			return true
 		"turn":
 			_yaw_target = StreetAnimal.yaw_of(_action.face)
-			play(&"idle", 0.25)
+			if posture == "stand":
+				play(&"idle", 0.25)
 			return true
 		"anim":
-			if _action.has("face"):
-				_yaw_target = StreetAnimal.yaw_of(_action.face)
-			play(StringName(_action.anim), float(_action.get("blend", 0.35)))
-			if _action.anim == "stretch":
-				_t = maxf(_t, anim_length(&"stretch"))
-			return true
-		"wait_door":
-			if life.door_open():
+			return _start_anim()
+		"wait_door", "wait_road":
+			if type == "wait_door" and life.door_open():
 				return false
-			_yaw_target = StreetAnimal.yaw_of(_action.face)
-			play(&"sit", 0.35)
+			if type == "wait_road" and life.road_clear(global_position):
+				return false
+			_yaw_target = StreetAnimal.yaw_of(_action.get("face", global_basis.z))
 			_t = randf_range(4.0, 10.0)
+			if posture != "sit" and type == "wait_door":
+				_action["then"] = "sit"
+				play(&"sit_down", 0.2)
+				posture = "sit"
+			else:
+				play(&"idle", 0.3)
 			return true
 		"leave":
-			play(&"sit", 0.3)
+			play(&"sit" if posture == "sit" else &"idle", 0.3)
 			_t = 0.0
 			return true
-		"jump":
+		"jump", "pounce":
 			_jump_from = global_position
 			_t = 0.0
 			_rest_on = null
-			if _action.has("face"):
-				_yaw_target = StreetAnimal.yaw_of(_action.face)
-			play(&"jump", 0.1)
+			var to: Vector3 = _action.to
+			var anim_name: StringName = &"pounce" if type == "pounce" else StringName(_action.get("anim", _jump_anim(to)))
+			_action["anim"] = anim_name
+			var flat := Vector3(to.x - _jump_from.x, 0.0, to.z - _jump_from.z)
+			if flat.length() > 0.02:
+				_yaw_target = StreetAnimal.yaw_of(flat)
+			hunting = type == "pounce" and bool(_action.get("hunt", false))
+			play(anim_name, 0.08)
 			if anim:
 				anim.seek(0.0, true)
 			return true
@@ -331,8 +391,22 @@ func _start_action() -> bool:
 			_t = float(_action.get("time", 6.0))
 			play(&"run", 0.2, GameConfig.cat_run_speed / RUN_ANIM_SPEED)
 			return true
+		"bat":
+			_t = 0.0
+			_action["hit"] = false
+			var toy: Node3D = _action.get("toy")
+			if toy and is_instance_valid(toy):
+				var d := toy.global_position - global_position
+				d.y = 0.0
+				if d.length() > 0.02:
+					_yaw_target = StreetAnimal.yaw_of(d)
+			posture = "stand"
+			play(&"bat", 0.15)
+			if anim:
+				anim.seek(0.0, true)
+			return true
 		"claim":
-			# Platz belegen (Sitz, Fensterbank); schon besetzt → alles bis "claim_end" auslassen
+			# Platz belegen (Sitz, Fensterbank, Körbchen); schon besetzt → alles bis "claim_end" auslassen
 			if not bool((_action.callable as Callable).call(self)):
 				while not _actions.is_empty() and _actions[0].get("type") != "claim_end":
 					_actions.pop_front()
@@ -362,18 +436,18 @@ func _start_action() -> bool:
 		"toy_drop":
 			if _toy:
 				var toy := take_toy_away()
-				life.add_child(toy)
-				toy.global_transform = Transform3D(global_basis, global_position + global_basis.z * 0.22 + Vector3.UP * 0.018)
-				_action["toy"] = toy
-				_actions_toy_hold(toy)
+				life.drop_toy(self, toy, global_position + global_basis.z * 0.22)
 			return false
 		"toy_take":
-			var held: Node3D = _action.get("toy")
-			if held and is_instance_valid(held):
-				give_toy(held)
+			var held: Node3D = _action.get("toy", life.toy_near(self))
+			if held and is_instance_valid(held) and held.global_position.distance_to(global_position) < 0.7:
+				life.pick_toy(self, held)
 			return false
 		"meow":
 			meow()
+			return false
+		"hunting":
+			hunting = bool(_action.value)
 			return false
 		"call":
 			(_action.callable as Callable).call(self)
@@ -381,42 +455,87 @@ func _start_action() -> bool:
 	return false
 
 
-## Abgelegtes Spielzeug merkt sich der nächste "toy_take"-Schritt.
-func _actions_toy_hold(toy: Node3D) -> void:
-	for a in _actions:
-		if a.get("type") == "toy_take":
-			a["toy"] = toy
-			return
+## Bewegung mit Haltung: Sitzen und Liegen mit Übergang (erst hinten absetzen), danach die Schleife.
+func _start_anim() -> bool:
+	var want := StringName(_action.anim)
+	if _action.has("face"):
+		_yaw_target = StreetAnimal.yaw_of(_action.face)
+	var blend := float(_action.get("blend", 0.3))
+	if want in [&"sit", &"groom"] and posture == "stand":
+		_action["then"] = String(want)
+		play(&"sit_down", 0.2)
+		if anim:
+			anim.seek(0.0, true)
+		posture = "sit"
+		_t = maxf(_t, anim_length(&"sit_down"))
+		return true
+	if want in [&"lie", &"sleep"]:
+		if posture == "stand":
+			_action["then"] = String(want)
+			play(&"sit_down", 0.2)
+			if anim:
+				anim.seek(0.0, true)
+			_t = maxf(_t, anim_length(&"sit_down"))
+		else:
+			play(want, 0.8)
+		posture = "lie"
+		return true
+	if want == &"sit":
+		posture = "sit"
+	elif want != &"groom":
+		posture = "stand"
+	if want in [&"stand_up", &"stretch"]:
+		_t = maxf(_t, anim_length(want))
+	if want == &"crouch":
+		hunting = bool(_action.get("hunt", false))
+	play(want, blend)
+	if want in StreetAnimal.ONCE and anim:
+		anim.seek(0.0, true)
+	return true
+
+
+func _walk_anim() -> StringName:
+	if _action.get("stalk", false):
+		return &"stalk"
+	return &"run" if _action.get("run", false) else &"walk"
 
 
 func _anim_speed() -> float:
 	var speed := float(_action.get("speed", GameConfig.cat_walk_speed))
+	if _action.get("stalk", false):
+		return speed / STALK_ANIM_SPEED
 	return speed / (RUN_ANIM_SPEED if _action.get("run", false) else WALK_ANIM_SPEED)
+
+
+## Welche Sprung-Bewegung: nach oben hoch springen bzw. hüpfen, nach unten herunterspringen bzw. absteigen.
+func _jump_anim(to: Vector3) -> StringName:
+	var dy := to.y - global_position.y
+	if dy > 0.2:
+		return &"jump_up"
+	if dy > 0.03:
+		return &"hop_up"
+	if dy < -0.2:
+		return &"jump_down"
+	if dy < -0.03:
+		return &"step_down"
+	return &"hop_up"
 
 
 func _step_walk(delta: float) -> void:
 	var points: PackedVector3Array = _action.points
-	if get_action_type() == "cross" and _index == 1 and not _action.get("started", false):
-		# erst loslaufen, wenn die Fahrbahn frei ist
-		if not life.road_clear(global_position):
-			play(&"sit", 0.3)
-			return
-		_action["started"] = true
-		play(&"run", 0.15, _anim_speed())
 	var speed := float(_action.get("speed", GameConfig.cat_walk_speed))
 	var target := points[_index]
 	var to := target - global_position
 	var flat := Vector3(to.x, 0.0, to.z)
 	if flat.length() < 0.02 and absf(to.y) < 0.02:
-		# schon da: nächster Punkt
 		_index += 1
 		if _index >= points.size():
 			_next()
 		return
 	if flat.length() > 0.01:
 		_yaw_target = StreetAnimal.yaw_of(flat)
-	# versperrt? kurz warten, dann außen herum, sonst umkehren (nicht beim Überqueren: dort zügig weiter)
-	if get_action_type() == "walk" and flat.length() > 0.01 and life.blocked_ahead(self, flat.normalized()):
+	# versperrt? kurz warten, dann außen herum, sonst umkehren (auf der Fahrbahn zügig weiter)
+	if flat.length() > 0.01 and not _action.get("road", false) and life.blocked_ahead(self, flat.normalized()):
 		_blocked += delta
 		play(&"idle", 0.25)
 		_turn(delta, 6.0)
@@ -426,7 +545,7 @@ func _step_walk(delta: float) -> void:
 		return
 	if _blocked > 0.0:
 		_blocked = 0.0
-		play(&"run" if _action.get("run", false) else &"walk", 0.2, _anim_speed())
+		play(_walk_anim(), 0.2, _anim_speed())
 	var move := speed * delta
 	var dist := to.length()
 	var before := global_position
@@ -443,22 +562,27 @@ func _step_walk(delta: float) -> void:
 	_turn(delta, 7.0)
 
 
+## Sprung: bis zum Absprung bleibt die Katze am Platz (ansetzen), dann in einem Bogen zur Landestelle, danach
+## federt sie ab. Die Blickrichtung steht vorher fest (zur Landestelle) – nie rückwärts springen.
 func _step_jump(delta: float) -> void:
-	var length := maxf(0.3, anim_length(&"jump"))
+	var anim_name := StringName(_action.get("anim", "jump_up"))
+	var length := maxf(0.3, anim_length(anim_name))
+	var window: Vector2 = JUMP_WINDOW.get(String(anim_name), Vector2(0.3, 0.7))
 	_t += delta
 	var k := clampf(_t / length, 0.0, 1.0)
-	# Absprung nach einem Viertel der Bewegung, Landung bei drei Vierteln
-	var u := smoothstep(0.22, 0.78, k)
+	var u := clampf((k - window.x) / (window.y - window.x), 0.0, 1.0)
+	if anim_name in [&"step_down", &"hop_up"]:
+		u = u * u * (3.0 - 2.0 * u)
 	var target: Vector3 = _action.to
 	var p := _jump_from.lerp(target, u)
-	p.y += sin(u * PI) * (maxf(0.0, target.y - _jump_from.y) * 0.35 + 0.12)
+	var height := maxf(0.0, target.y - _jump_from.y)
+	p.y += sin(u * PI) * (height * 0.3 + (0.04 if anim_name in [&"hop_up", &"step_down"] else 0.1))
 	global_position = p
-	var flat := Vector3(target.x - _jump_from.x, 0.0, target.z - _jump_from.z)
-	if not _action.has("face") and flat.length() > 0.02:
-		_yaw_target = StreetAnimal.yaw_of(flat)
-	_turn(delta, 8.0)
+	_turn(delta, 9.0)
 	if k >= 1.0:
 		global_position = target
+		hunting = false
+		posture = "stand"
 		_next()
 
 
@@ -479,17 +603,30 @@ func _step_follow(delta: float) -> void:
 		play(&"run" if speed > 1.0 else &"walk", 0.2, speed / (RUN_ANIM_SPEED if speed > 1.0 else WALK_ANIM_SPEED))
 		velocity2 = Vector2(to.x, to.z).normalized() * speed
 	else:
-		play(&"sit" if other.get_action_type() == "anim" else &"idle", 0.3)
+		play(&"crouch" if other.get_action_type() in ["anim", "bat"] else &"idle", 0.3)
 	if dist > 0.05:
 		_yaw_target = StreetAnimal.yaw_of(to)
 	_turn(delta, 7.0)
 
 
+## Mit der Pfote anstupsen: beim Treffer rollt/rutscht das Spielzeug ein Stück weg.
+func _step_bat(delta: float) -> void:
+	_t += delta
+	_turn(delta, 8.0)
+	if not _action.hit and _t > anim_length(&"bat") * 0.35:
+		_action.hit = true
+		var toy: Node3D = _action.get("toy")
+		if toy and is_instance_valid(toy):
+			life.push_toy(toy, global_basis.z, float(_action.get("strength", 0.6)))
+	if _t >= anim_length(&"bat"):
+		_next()
+
+
 func _step_petting(delta: float) -> void:
-	var resting := _rest_on != null or get_action_type() in ["anim", "wait_door"] and String(_action.get("anim", "")) in ["lie", "sleep"]
+	var lying := posture == "lie" or _rest_on != null
 	if _rest_on and is_instance_valid(_rest_on):
 		global_position = _rest_on.global_position + _rest_offset
-	if not resting:
+	if not lying and posture != "sit":
 		if _pet_face.length() > 0.05:
 			_yaw_target = StreetAnimal.yaw_of(_pet_face)
 		play(&"pet", 0.3)
@@ -499,11 +636,49 @@ func _step_petting(delta: float) -> void:
 func _resume_anim() -> void:
 	match get_action_type():
 		"walk":
-			play(&"run" if _action.get("run", false) else &"walk", 0.3, _anim_speed())
+			play(_walk_anim(), 0.3, _anim_speed())
 		"anim":
-			play(StringName(_action.anim), 0.4)
-		"wait_door", "leave", "turn":
-			play(&"sit" if get_action_type() != "turn" else &"idle", 0.4)
+			play(StringName(_action.get("then", _action.anim)), 0.4)
+		"wait_door", "leave", "wait_road":
+			play(&"sit" if posture == "sit" else &"idle", 0.4)
+		"turn":
+			play(&"idle", 0.4)
+
+
+func _turn(delta: float, rate: float) -> void:
+	rotation.y = lerp_angle(rotation.y, _yaw_target, minf(1.0, delta * rate))
+
+
+# --- Gesicht und Kopf ---
+
+## Augen: ab und zu blinzeln; zufrieden zugekniffen beim Streicheln und als freundlicher Blick zur Spielfigur
+## (langsames Blinzeln – so zeigen Katzen Vertrauen); zu beim Schlafen.
+func _update_face(delta: float) -> void:
+	var now_anim := String(_action.get("then", _action.get("anim", ""))) if get_action_type() == "anim" else ""
+	var want_blink := 0.0
+	var want_happy := 0.0
+	if _pet_left > 0.0:
+		want_happy = 1.0
+	elif now_anim == "sleep":
+		want_blink = 1.0
+	else:
+		_blink_timer -= delta
+		if _blink_timer <= 0.0:
+			_blink_timer = randf_range(2.5, 6.5)
+		if _blink_timer < 0.14:
+			want_blink = 1.0
+		_friendly -= delta
+		if _friendly > 0.0 and _friendly < 1.4:
+			want_happy = 0.85
+		elif _friendly < -6.0 and _look.length() > 5.0 and randf() < delta * 0.25:
+			_friendly = 2.0   # langsames Blinzeln zur Spielfigur
+	_blink = move_toward(_blink, want_blink, delta * (12.0 if want_blink > _blink else 6.0))
+	_happy = move_toward(_happy, want_happy, delta * 4.0)
+	if mesh:
+		if _blink_index >= 0:
+			mesh.set_blend_shape_value(_blink_index, _blink * (1.0 - _happy))
+		if _happy_index >= 0:
+			mesh.set_blend_shape_value(_happy_index, _happy)
 
 
 ## Kopf: beim Blick ins Schaufenster nach oben, sonst im Sitzen/Stehen zur Spielfigur, wenn sie nah ist.
@@ -514,24 +689,21 @@ func _update_look(delta: float) -> void:
 	var anim_name := String(_action.get("anim", "")) if get_action_type() == "anim" else ""
 	if bool(_action.get("look_up", false)):
 		want = Vector2(0.0, 26.0)
-	elif _pet_left > 0.0 or get_action_type() in ["wait_door", "turn"] or anim_name in ["sit", "idle"]:
+	elif _pet_left > 0.0 or get_action_type() in ["wait_door", "turn", "leave"] or anim_name in ["sit", "idle"]:
 		var player := life.street.get_player() if life else null
 		if player and player.global_position.distance_to(global_position) < 3.2:
 			var eye := player.global_position + Vector3.UP * 1.5
 			var local := global_transform.affine_inverse() * eye
-			var head_y := 0.32 * scale.y
+			var head_y := 0.3 * scale.y
 			var flat := Vector2(local.x, local.z)
-			want.x = clampf(rad_to_deg(atan2(local.x, local.z)), -65.0, 65.0)
+			var yaw := rad_to_deg(atan2(local.x, local.z))
+			want.x = clampf(yaw, -65.0, 65.0)
 			want.y = clampf(rad_to_deg(atan2(local.y - head_y, flat.length())), -10.0, 30.0)
-			if absf(rad_to_deg(atan2(local.x, local.z))) > 110.0:
+			if absf(yaw) > 110.0:
 				want = Vector2.ZERO
 	_look = _look.lerp(want, minf(1.0, delta * 3.0))
 	_head.yaw = _look.x
 	_head.pitch = _look.y
-
-
-func _turn(delta: float, rate: float) -> void:
-	rotation.y = lerp_angle(rotation.y, _yaw_target, minf(1.0, delta * rate))
 
 
 func _release_seat() -> void:

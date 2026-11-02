@@ -775,6 +775,7 @@ var passerby_voice_distance: float = 12.0
 ## Tiere ein/aus (Vögel und Katzen; zum Vergleich der Leistung)
 var animals_enabled: bool = true
 var bird_scene: String = "res://scenes/animals/bird.tscn"
+var pigeon_scene: String = "res://scenes/animals/pigeon.tscn"
 var cat_scene: String = "res://scenes/animals/cat.tscn"
 var birdhouse_scene: String = "res://assets/models/animals/birdhouse.glb"
 ## Vögel: höchstens so viele gleichzeitig, kleine Schwärme (Anzahl je Schwarm von–bis), so oft kommt ein
@@ -790,12 +791,23 @@ var bird_birdhouse_share: float = 0.22
 var bird_lamp_share: float = 0.15
 ## Nach dem Sitzen: so oft fliegen sie zu einem anderen Platz in der Nähe statt weg
 var bird_stay_nearby_share: float = 0.55
+## So oft verteilt sich ein Schwarm beim Landen auf einzelne Plätze (sonst sitzen sie beieinander)
+var bird_scatter_share: float = 0.3
+## Durchflug: ab und zu zieht ein Schwarm über die Straße, ohne zu landen (Sekunden von–bis, Vögel von–bis)
+var bird_flyover_interval: Vector2 = Vector2(45.0, 110.0)
+var bird_flyover_size: Vector2i = Vector2i(4, 9)
+## Tauben: höchstens so viele, Schwarmgröße, so oft kommt ein Schwarm, Anteil am Boden (sonst auf Dächern)
+var pigeon_count: int = 6
+var pigeon_flock_size: Vector2i = Vector2i(2, 5)
+var pigeon_spawn_interval: Vector2 = Vector2(25.0, 70.0)
+var pigeon_ground_share: float = 0.65
 ## Plätze nur so weit von der Kamera (Meter) – dort, wo man sie auch sieht
 var bird_near_distance: float = 26.0
 ## Fluggeschwindigkeit (m/s), beim Auffliegen schneller
 var bird_speed: float = 4.2
 var bird_flee_speed: float = 6.0
-## Auffliegen, wenn jemand näher kommt (Meter): Spielfigur, Passant, Katze – Fahrzeuge
+## Auffliegen, wenn jemand näher kommt (Kugel um den Vogel, Meter bis Füße/Kopf): Spielfigur, Passant, Katze –
+## Fahrzeuge. Auf Laternen und am Vogelhäuschen nur, wenn die Spielfigur dort springt.
 var bird_flee_radius: float = 2.3
 var bird_vehicle_flee_radius: float = 4.5
 ## Zwitschern am Vogel (räumlich): Abstand zwischen zwei Lauten je Vogel (s), Lautstärke, Reichweite (m)
@@ -805,16 +817,30 @@ var bird_chirp_distance: float = 22.0
 ## Flattern beim Auffliegen (Geräusch ambience/bird_flap aus den Aufnahmen der Entwicklerin – fehlt die Datei, bleibt
 ## das Auffliegen still; tools/prepare_sounds.py erkennt Dateien mit „flattern“/„flap“ im Namen)
 var bird_flap_volume_db: float = -12.0
-## Vogelarten: Farben der Materialien (Gefieder, Flügel, Brust, Schnabel) – neue Art = neue Zeile
+## Vogelarten: Farben (Gefieder, Flügel, Brust/Kehle, Kappe, Schnabel, Beine) und eigener Laut (fehlt die Datei,
+## zwitschern sie mit „ambience/bird“) – neue Art = neue Zeile
 var bird_species: Array[Dictionary] = [
-	{"name": "Spatz", "plumage": Color(0.55, 0.42, 0.3), "wing": Color(0.42, 0.3, 0.2), "breast": Color(0.82, 0.74, 0.62),
-		"beak": Color(0.36, 0.3, 0.26)},
-	{"name": "Rotkehlchen", "plumage": Color(0.48, 0.4, 0.3), "wing": Color(0.4, 0.33, 0.25), "breast": Color(0.9, 0.48, 0.24),
-		"beak": Color(0.25, 0.2, 0.17)},
-	{"name": "Blaumeise", "plumage": Color(0.5, 0.62, 0.42), "wing": Color(0.3, 0.48, 0.72), "breast": Color(0.95, 0.84, 0.36),
-		"beak": Color(0.22, 0.22, 0.24)},
-	{"name": "Buchfink", "plumage": Color(0.56, 0.42, 0.36), "wing": Color(0.32, 0.3, 0.3), "breast": Color(0.82, 0.55, 0.45),
-		"beak": Color(0.7, 0.68, 0.62)},
+	{"name": "Spatz", "plumage": Color(0.55, 0.42, 0.3), "wing": Color(0.42, 0.3, 0.2), "breast": Color(0.82, 0.76, 0.66),
+		"cap": Color(0.5, 0.5, 0.52), "beak": Color(0.3, 0.26, 0.22), "legs": Color(0.62, 0.48, 0.42),
+		"sound": "ambience/bird_sparrow"},
+	{"name": "Rotkehlchen", "plumage": Color(0.5, 0.42, 0.32), "wing": Color(0.42, 0.34, 0.26), "breast": Color(0.92, 0.48, 0.22),
+		"cap": Color(0.5, 0.42, 0.32), "beak": Color(0.22, 0.18, 0.15), "legs": Color(0.45, 0.36, 0.3),
+		"sound": "ambience/bird_robin"},
+	{"name": "Blaumeise", "plumage": Color(0.52, 0.64, 0.42), "wing": Color(0.32, 0.5, 0.75), "breast": Color(0.96, 0.85, 0.36),
+		"cap": Color(0.3, 0.5, 0.8), "beak": Color(0.2, 0.2, 0.22), "legs": Color(0.4, 0.45, 0.55),
+		"sound": "ambience/bird_tit"},
+	{"name": "Buchfink", "plumage": Color(0.56, 0.44, 0.36), "wing": Color(0.3, 0.28, 0.28), "breast": Color(0.84, 0.56, 0.46),
+		"cap": Color(0.45, 0.52, 0.62), "beak": Color(0.68, 0.66, 0.6), "legs": Color(0.6, 0.5, 0.45),
+		"sound": "ambience/bird_finch"},
+]
+## Tauben: Farben (Gefieder, Flügel, Hals, Schimmer des Halses, Beine)
+var pigeon_looks: Array[Dictionary] = [
+	{"name": "Stadttaube", "plumage": Color(0.55, 0.58, 0.64), "wing": Color(0.5, 0.53, 0.6), "neck": Color(0.36, 0.5, 0.42),
+		"shimmer": Color(0.5, 0.32, 0.55), "legs": Color(0.78, 0.36, 0.36)},
+	{"name": "Helle Taube", "plumage": Color(0.78, 0.78, 0.8), "wing": Color(0.66, 0.66, 0.7), "neck": Color(0.5, 0.6, 0.55),
+		"shimmer": Color(0.6, 0.45, 0.65), "legs": Color(0.8, 0.4, 0.4)},
+	{"name": "Braune Taube", "plumage": Color(0.55, 0.45, 0.4), "wing": Color(0.62, 0.5, 0.42), "neck": Color(0.45, 0.42, 0.36),
+		"shimmer": Color(0.55, 0.42, 0.5), "legs": Color(0.76, 0.38, 0.36)},
 ]
 ## Katzen: höchstens so viele gleichzeitig, so oft kommt eine vorbei (s von–bis; die erste nach …)
 var cat_count: int = 2
@@ -832,6 +858,11 @@ var cat_window_chance: float = 0.5
 var cat_enter_chance: float = 0.55
 var cat_play_chance: float = 0.5
 var cat_toy_chance: float = 0.3
+## Vögel am Boden: so oft lauert eine Katze ihnen auf (sie fängt nie einen), Tempo beim Anschleichen (m/s)
+var cat_hunt_chance: float = 0.55
+var cat_stalk_speed: float = 0.18
+## So oft (je Minute) lässt eine Katze ihr Spielzeug an einer Hauswand liegen
+var cat_toy_leave_chance: float = 0.35
 ## So lange (s) bleiben sie: auf einem Platz draußen, in der Bücherei auf dem Sessel
 var cat_rest_time: Vector2 = Vector2(25.0, 70.0)
 var cat_inside_time: Vector2 = Vector2(80.0, 220.0)
@@ -843,15 +874,15 @@ var cat_purr_volume_db: float = -9.0
 var cat_meow_sound: String = "ambience/cat_meow_1"
 var cat_meow_volume_db: float = -15.0
 var cat_meow_cooldown: float = 30.0
-## Katzen: Aussehen (Fell, Fell hell = Brust/Bauch/Pfoten, Augen, Tigerstreifen 0–1, Größe) – neue Katze =
-## neue Zeile
+## Katzen: Aussehen (Fell, helles Fell, dunkler Rücken, Augen, Tigerstreifen 0–1, Größe) – neue Katze = neue Zeile.
+## patches = wie viel helles Fell (kleiner = mehr: 0,3 Brust, Bauch, Pfoten und Schnauze; 0,8 nur Schnauze und Kinn)
 var cat_looks: Array[Dictionary] = [
-	{"name": "Mandarine", "fur": Color(0.86, 0.52, 0.25), "fur2": Color(0.97, 0.9, 0.78), "eye": Color(0.62, 0.66, 0.2),
-		"tabby": 0.55, "tabby_color": Color(0.62, 0.45, 0.35), "size": 1.0},
-	{"name": "Nebel", "fur": Color(0.5, 0.53, 0.57), "fur2": Color(0.84, 0.84, 0.83), "eye": Color(0.85, 0.66, 0.2),
-		"tabby": 0.35, "tabby_color": Color(0.62, 0.63, 0.66), "size": 1.05},
-	{"name": "Socke", "fur": Color(0.13, 0.12, 0.12), "fur2": Color(0.95, 0.93, 0.88), "eye": Color(0.45, 0.66, 0.3),
-		"tabby": 0.0, "tabby_color": Color(1, 1, 1), "size": 0.94},
+	{"name": "Mandarine", "fur": Color(0.86, 0.52, 0.25), "fur2": Color(0.97, 0.9, 0.78), "back": Color(0.78, 0.45, 0.2),
+		"eye": Color(0.62, 0.66, 0.2), "tabby": 0.55, "tabby_color": Color(0.62, 0.45, 0.35), "patches": 0.62, "size": 1.0},
+	{"name": "Nebel", "fur": Color(0.5, 0.53, 0.57), "fur2": Color(0.86, 0.86, 0.85), "back": Color(0.4, 0.42, 0.46),
+		"eye": Color(0.85, 0.66, 0.2), "tabby": 0.35, "tabby_color": Color(0.62, 0.63, 0.66), "patches": 0.78, "size": 1.05},
+	{"name": "Socke", "fur": Color(0.13, 0.12, 0.12), "fur2": Color(0.95, 0.93, 0.88), "back": Color(0.11, 0.1, 0.1),
+		"eye": Color(0.45, 0.66, 0.3), "tabby": 0.0, "tabby_color": Color(1, 1, 1), "patches": 0.3, "size": 0.94},
 ]
 
 

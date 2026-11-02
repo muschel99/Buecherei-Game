@@ -14,7 +14,7 @@ extends Node
 ## Angaben nach "--": --seconds=<je Stelle> (Standard 45), --seed=<zahl>, --only=<stelle,…>,
 ## --deliver=<n> (Testlieferung mit n Kartons, sobald die erste Stelle beginnt), --door_open (Ladentür offen),
 ## --cats (Katzen kommen alle paar Sekunden, --enter=<0..1> Chance hineinzugehen; seit Etappe 6g), --no_animals,
-## --cat_log (jeden Schritt der Katzen ausgeben).
+## --cat_log (jeden Schritt der Katzen ausgeben), --hunt (Jagd und Spielzeug erzwingen).
 
 const STEP := 1.0 / 30.0
 const TURN_SPEED := deg_to_rad(40.0)
@@ -67,6 +67,13 @@ func _run() -> void:
 		if door:
 			door.set_open(true)
 	StreetCat.debug = _args.has("cat_log")
+	if _args.has("hunt"):
+		# Prüfen: viele Vögel am Boden, Katzen jagen immer, tragen oft Spielzeug und lassen es liegen
+		GameConfig.bird_ground_share = 0.9
+		GameConfig.pigeon_ground_share = 1.0
+		GameConfig.cat_hunt_chance = 1.0
+		GameConfig.cat_toy_chance = 1.0
+		GameConfig.cat_toy_leave_chance = 20.0
 	if _args.has("cats"):
 		# Katzen öfter (zum Prüfen): alle paar Sekunden eine neue
 		GameConfig.cat_interval = Vector2(4.0, 8.0)
@@ -93,6 +100,12 @@ func _run() -> void:
 			_camera.global_rotation = Vector3(-0.05, yaw, 0.0)
 			_life.step(STEP)
 			time += STEP
+			if _args.has("hunt") and fmod(time, 20.0) < STEP and _life.cats and _life.birds:
+				# Prüfen der Jagd: Vögel vor einer laufenden Katze absetzen
+				for cat in _life.cats.get_cats():
+					if cat.get_action_type() == "walk" and not cat.inside:
+						_life.birds.debug_ground_flock(cat.global_position + cat.global_basis.z * 5.5)
+						break
 			sample += STEP
 			if sample >= SAMPLE:
 				sample = 0.0
@@ -293,12 +306,12 @@ func _print_report() -> void:
 	if _life.birds:
 		var b := _life.birds
 		print("=== Tiere (seit Etappe 6g) ===")
-		print("Vögel: Flüge %d, gerade unterwegs %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d" % [
-			b.flights, b.get_birds().size(), b.visible_spawns, b.visible_exits])
+		print("Vögel: Flüge %d, Durchflüge %d, gerade unterwegs %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d" % [
+			b.flights, b.flyovers, b.get_birds().size(), b.visible_spawns, b.visible_exits])
 	if _life.cats:
 		var c := _life.cats
-		print("Katzen: Besuche %d, in der Bücherei %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, festgefahren %d" % [
-			c.visits, c.entered, c.visible_spawns, c.visible_exits, _cat_stuck.size()])
+		print("Katzen: Besuche %d, in der Bücherei %d, gejagt %d, gespielt %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, festgefahren %d" % [
+			c.visits, c.entered, c.hunts, c.plays, c.visible_spawns, c.visible_exits, _cat_stuck.size()])
 		for line in _cat_stuck:
 			print("  ", line)
 	print("=== Bericht Straßenleben ===")

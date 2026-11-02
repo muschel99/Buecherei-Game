@@ -45,7 +45,8 @@ extends Node
 ##                      Spielfigur dem Blickpunkt (Hervorheben und Blaupause zielen mit ihr)
 ##   --give             zum Testen von jedem Möbelstück 1–3 Stück (in allen Farben) ins Inventar
 ##   --spots            Plätze der Tiere aus data/animals/spots.json als kleine Kugeln zeigen (seit Etappe 6g:
-##                      rot = Dach, gelb = Gesims, blau = unten, grün = Katze, weiß = Vogelhäuschen)
+##                      rot = Dach, gelb = Gesims, blau = unten, grün = Katze, weiß = Vogelhäuschen; seit 6h
+##                      türkis = dünne Kante, pink = Rand von Kasten/Topf, dunkelgrün = Efeu)
 ##   --indoor           ohne Straße draußen (Häuser, Pflanzen, Passanten) – schnell, für Bilder vom Laden
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
 
@@ -107,7 +108,8 @@ func _show_spots(main: Node) -> void:
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/animals/spots.json"))
 	if outside == null or not data is Dictionary:
 		return
-	var colors := {"roof": Color(0.9, 0.2, 0.2), "ledge": Color(0.95, 0.85, 0.2), "low": Color(0.2, 0.4, 0.95)}
+	var colors := {"roof": Color(0.9, 0.2, 0.2), "ledge": Color(0.95, 0.85, 0.2), "low": Color(0.2, 0.4, 0.95),
+		"rim": Color(0.95, 0.3, 0.9), "ivy": Color(0.1, 0.45, 0.15)}
 	var sphere := SphereMesh.new()
 	sphere.radius = 0.035
 	sphere.height = 0.07
@@ -124,7 +126,9 @@ func _show_spots(main: Node) -> void:
 		var size := 4.0 if e.kind == "birdhouse" else 1.0
 		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * size),
 			Vector3(e.pos[0], e.pos[1] + 0.035, e.pos[2])))
-		var color: Color = Color.WHITE if e.kind == "birdhouse" else (Color(0.2, 0.9, 0.3) if e.get("cat", false) else colors[e.kind])
+		var color: Color = Color.WHITE if e.kind == "birdhouse" else (Color(0.2, 0.9, 0.3) if e.get("cat", false) else colors.get(e.kind, Color.GRAY))
+		if e.get("edge", "") != "" and e.kind != "rim":
+			color = Color(0.2, 0.9, 0.95)   # dünne Kante (Geländer, Fensterladen, Stange)
 		mm.set_instance_color(i, color)
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

@@ -84,6 +84,24 @@ def weave(b, center, r_bottom, r_top, height, rnd, staves=24, rows=7, wall=0.006
         b.tube(pts, height / rows * 0.32, segs=5)
 
 
+# --- Katzenkörbchen (seit Etappe 6h) ---
+
+def build_cat_basket_country(k):
+    """Weidenkorb mit niedrigem Rand und Karokissen; Liegeplatz für Katzen auf dem Kissen."""
+    wicker(k)
+    check(k)
+    rnd = random.Random(31)
+    b = k.part("Korb", "wicker", bevel=0.0, settle=False)
+    b.lathe([(0.0, 0.0), (0.2, 0.0), (0.2, 0.014), (0.0, 0.014)], (0, 0, 0.002), segs=36)     # Boden
+    weave(b, (0, 0, 0.012), 0.2, 0.235, 0.115, rnd, staves=28, rows=6)
+    b.tube([Vector((math.cos(a) * 0.236, math.sin(a) * 0.236, 0.13)) for a in [i / 40 * math.tau for i in range(42)]],
+           0.012, segs=8)                                                                         # Rand
+    cushion = k.part("Kissen", "fabric", bevel=0.0)
+    F.pillow(cushion, (0, 0, 0.042), (0.37, 0.37, 0.05), roundness=2.6, puff=0.008)
+    k.collider((0, 0, 0.07), (0.5, 0.5, 0.14))
+    k.cat_spot((0, 0, 0.068))
+
+
 # --- Bemaltes Bücherregal ---
 
 def build_painted_bookshelf(k):
@@ -921,6 +939,9 @@ ITEMS = [
     dict(id="wall_lamp_country", name="Wandleuchte mit Karoschirm", category="lighting", sub="wall_lamp", price=50,
          desc="Ein gestrichenes Wandbrett mit geschwungenem Arm und kleinem Karoschirm.",
          styles=STYLE, place="wall", build=build_fabric_wall_lamp, variants=check_variants("shade")),
+    dict(id="cat_basket_country", name="Weidenkörbchen für Katzen", category="deco", sub="pet", price=48,
+         desc="Ein runder Weidenkorb mit weichem Karokissen – Katzen legen sich am liebsten hier hinein.",
+         styles=STYLE, place="floor", build=build_cat_basket_country, variants=check_variants()),
     dict(id="rug_braided", name="Geflochtener Flickenteppich", category="deco", sub="rug", price=85,
          desc="Ein ovaler Teppich aus geflochtenen Stoffzöpfen in Rosé, Salbei, Creme und Hellblau.",
          styles=STYLE, place="floor", build=build_braided_rug,

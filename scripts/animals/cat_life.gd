@@ -1,45 +1,61 @@
 class_name CatLife
 extends Node3D
-## Katzen auf der Straße (seit Etappe 6g). Entsteht beim Start des Straßenlebens als Kind von StreetLife
-## ("Outside/StreetLife/Cats") und wird von StreetLife.step mitbewegt.
+## Katzen auf der Straße (seit Etappe 6g, verfeinert in 6h). Entsteht beim Start des Straßenlebens als Kind von
+## StreetLife ("Outside/StreetLife/Cats") und wird von StreetLife.step mitbewegt.
 ##
-## Jede Katze hat ihr eigenes Aussehen (GameConfig.cat_looks, je Aussehen genau eine Katze). Ab und zu
-## (GameConfig.cat_interval) kommt eine vorbei – wie Passanten nur von den verdeckten Straßenenden her und
-## nur dorthin zurück (verschwindet erst, wenn niemand hinschaut). Unterwegs (Chancen in GameConfig):
-## - setzt sie sich auf eine Bank oder einen Stuhl (StreetSeat) oder auf eine breite Fensterbank
-##   (data/animals/spots.json, "cat"), putzt sich, streckt sich, schläft,
-## - schaut durchs Schaufenster in die Bücherei (Punkt WindowSpots/LibraryFront),
-## - kommt bei offener Tür herein, legt sich auf einen freien Sessel oder ein Sofa (sonst auf einen Teppich),
-##   schnurrt und geht irgendwann wieder (bei geschlossener Tür wartet sie davor und miaut leise),
-## - spielt mit einer zweiten Katze Fangen oder trägt eine kleine Filzmaus.
-## Katzen gehen nah an den Hauswänden, warten, wenn jemand im Weg ist, und überqueren die Straße nur, wenn
-## kein Fahrzeug kommt; Fahrzeuge bremsen für sie (StreetLife.road_obstacles), Passanten gehen um sie herum.
+## Jede Katze hat ihr eigenes Aussehen (GameConfig.cat_looks). Ab und zu (cat_interval) kommt eine vorbei – nur von
+## den verdeckten Straßenenden her und nur dorthin zurück (verschwindet erst, wenn niemand hinschaut). Unterwegs:
+## - läuft frei: mal an der Hauswand, mal mitten auf dem Gehweg, in Bögen; bleibt stehen und schnuppert,
+## - setzt sich auf Bänke, Stühle, Fensterbänke und Stufen (ausgemessen: nur, was an der Hauswand hängt), putzt
+##   sich, streckt sich, schläft eingerollt; springt immer vorwärts hinauf und herunter (vorher umdrehen),
+## - schaut durchs Schaufenster der Bücherei (Kopf hoch),
+## - kommt bei offener Tür herein: Stufen hinaufhüpfen, Weg zwischen den Möbeln, in ein Katzenkörbchen (bevorzugt),
+##   sonst auf einen Sessel/ein Sofa, sonst auf einen Teppich; schnurrt, geht irgendwann wieder. Ist die Tür zu,
+##   wartet sie seitlich unter dem Einwurf (draußen) bzw. neben der Tür (drinnen) – nie im Schwenkbereich,
+## - spielt mit Spielzeug (Maus, Wollknäuel, Federbüschel, Ball): anstupsen, hinterher, draufspringen, tragen;
+##   lässt es manchmal an einer Hauswand oder Laterne liegen – eine andere Katze findet es später,
+## - lauert Vögeln am Boden auf (geduckt, anschleichen, Sprung) – die Vögel fliegen immer rechtzeitig weg,
+## - spielt mit einer zweiten Katze Fangen.
+## Über die Straße: am Bordstein warten, bis kein Fahrzeug kommt, hinunter auf die Fahrbahn, hinüber, hinauf.
 
 const SPOTS_FILE := "res://data/animals/spots.json"
-const TOY_SCENE := "res://assets/models/animals/cat_toy.glb"
+## Spielzeuge: Szene je Art
+const TOYS := {"mouse": "res://assets/models/animals/cat_toy.glb", "yarn": "res://assets/models/animals/toy_yarn.glb",
+	"feather": "res://assets/models/animals/toy_feather.glb", "ball": "res://assets/models/animals/toy_ball.glb"}
 ## Raster für Wege in der Bücherei (m) und was dort im Weg ist (world, furniture)
 const GRID_CELL := 0.15
 const FURNITURE_MASK := 1 | 8
 ## Abstand der Wege zur Hauswand und zu festen Hindernissen (m)
 const WALL_GAP := 0.1
 const STATIC_GAP := 0.24
+const BLOCK_AHEAD := 0.55
+const BLOCK_SIDE := 0.22
+## Gruppe der Katzenkörbchen-Plätze (Marker „CatSpot“ in Möbeln) und Unterkategorie der Körbchen
+const CAT_SPOT_GROUP := "cat_spots"
 
 var street: StreetLife
-## Zähler für das Prüfwerkzeug: Erscheinen bzw. Verschwinden im Blickfeld (muss 0 bleiben)
+## Zähler für das Prüfwerkzeug
 var visible_spawns := 0
 var visible_exits := 0
 var visits := 0
 var entered := 0
+var hunts := 0
+var plays := 0
 
 var _outside: Node3D
 var _rng := RandomNumberGenerator.new()
 var _pool: Array[StreetCat] = []
 var _cats: Array[StreetCat] = []
 var _timer := 0.0
-## Fensterbänke für Katzen: { pos (Welt), out, taken }
+var _scan := 0.0
+## Fensterbänke und Stufen für Katzen: { pos (Welt), out, taken }
 var _sills: Array[Dictionary] = []
 var _door: Door
 var _room: Room
+## Spielzeug: alle Knoten, liegende ({ node, pos }), Besitzerin je Spielzeug
+var _toys: Array[Node3D] = []
+var _toy_tweens := {}
+var _hunted := {}
 
 
 func setup(life: StreetLife) -> void:
@@ -55,6 +71,7 @@ func setup(life: StreetLife) -> void:
 	_door = get_tree().get_first_node_in_group("doors") as Door
 	_room = _outside.get_parent().get_node_or_null("GroundFloorRoom") as Room
 	_build_pool()
+	_build_toys()
 	_timer = _rng.randf_range(GameConfig.cat_first_delay.x, GameConfig.cat_first_delay.y)
 
 
@@ -70,7 +87,6 @@ func _build_pool() -> void:
 	var scene := load(GameConfig.cat_scene) as PackedScene
 	if scene == null:
 		return
-	var toy_scene := load(TOY_SCENE) as PackedScene
 	for i in GameConfig.cat_looks.size():
 		var cat := scene.instantiate() as StreetCat
 		cat.name = "Cat%d" % (i + 1)
@@ -78,25 +94,28 @@ func _build_pool() -> void:
 		cat.look = i
 		add_child(cat)
 		var look: Dictionary = GameConfig.cat_looks[i]
-		cat.apply_look("cat_%d" % i, {"Katze Fell": look.fur, "Katze Fell hell": look.fur2, "Katze Auge": look.eye},
-			{"Katze Fell": {"tabby": float(look.get("tabby", 0.0)), "tabby_color": look.get("tabby_color", Color.WHITE)}})
+		cat.apply_look("cat_%d" % i, {"Katze Fell": look.fur, "Katze Auge": look.eye},
+			{"Katze Fell": {"tabby": float(look.get("tabby", 0.0)), "tabby_color": look.get("tabby_color", Color.WHITE),
+				"second_color": look.fur2, "third_color": look.get("back", look.fur), "mask_from": float(look.get("patches", 0.55)),
+				"mask_soft": 0.18}})
 		cat.scale = Vector3.ONE * float(look.get("size", 1.0))
 		cat.radius = 0.2 * cat.scale.x
 		cat.finished.connect(_on_finished)
-		if toy_scene:
-			var toy := toy_scene.instantiate() as Node3D
-			toy.name = "Toy%d" % (i + 1)
-			_store_toy(toy)
-			cat.set_meta("toy", toy)
 		_pool.append(cat)
 
 
-## Spielzeug, das gerade niemand trägt: versteckt unter CatLife.
-func _store_toy(toy: Node3D) -> void:
-	if toy.get_parent():
-		toy.get_parent().remove_child(toy)
-	add_child(toy)
-	toy.visible = false
+func _build_toys() -> void:
+	for kind in TOYS:
+		var scene := load(TOYS[kind]) as PackedScene
+		if scene == null:
+			continue
+		var toy := scene.instantiate() as Node3D
+		toy.name = "Toy_" + kind
+		toy.set_meta("kind", kind)
+		toy.set_meta("loose", false)
+		add_child(toy)
+		toy.visible = false
+		_toys.append(toy)
 
 
 # --- Ablauf ---
@@ -108,6 +127,10 @@ func step(delta: float) -> void:
 	if _timer <= 0.0:
 		_timer = _rng.randf_range(GameConfig.cat_interval.x, GameConfig.cat_interval.y)
 		_spawn()
+	_scan -= delta
+	if _scan <= 0.0:
+		_scan = 0.4
+		_look_around()
 
 
 func _spawn() -> void:
@@ -126,19 +149,21 @@ func _spawn() -> void:
 	var from := _side_point(start.side, start.s)
 	actions.append(_walk([_ground(start.pos), from]))
 	if pair:
-		# Fangen: die erste rennt ein Stück, wartet, rennt weiter; die zweite rennt hinterher
+		# Fangen: die erste rennt ein Stück, wartet geduckt, rennt weiter; die zweite rennt hinterher
 		var dir := signf(exit.s - start.s) if exit.s != start.s else 1.0
 		var s1: float = start.s + dir * _rng.randf_range(5.0, 7.0)
 		var s2: float = s1 + dir * _rng.randf_range(4.0, 6.0)
 		actions.append(_walk_along(start.side, start.s, s1, GameConfig.cat_run_speed, true))
-		actions.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(1.2, 2.0)})
+		actions.append({"type": "anim", "anim": "crouch", "time": _rng.randf_range(1.0, 1.8)})
 		actions.append(_walk_along(start.side, s1, s2, GameConfig.cat_run_speed, true))
 		actions.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(3.0, 5.0)})
 		actions.append_array(_visit(start.side, s2, exit))
 	else:
 		actions.append_array(_visit(start.side, start.s, exit))
-	if _rng.randf() < GameConfig.cat_toy_chance and leader.has_meta("toy"):
-		leader.give_toy(leader.get_meta("toy"))
+	var toy := _free_toy()
+	if toy and _rng.randf() < GameConfig.cat_toy_chance:
+		leader.give_toy(toy)
+	leader.set_meta("plays", 0)
 	leader.begin(_ground(start.pos), from - _ground(start.pos), actions)
 	visits += 1
 	if is_visible_point(leader.global_position + Vector3.UP * 0.2):
@@ -149,6 +174,7 @@ func _spawn() -> void:
 			{"type": "follow", "cat": leader, "time": _rng.randf_range(9.0, 13.0), "distance": 0.65},
 			{"type": "anim", "anim": "sit", "time": _rng.randf_range(2.0, 3.5)},
 			{"type": "call", "callable": _continue_visit}]
+		chaser.set_meta("plays", 0)
 		chaser.begin(_ground(start.pos), from - _ground(start.pos), follow)
 		visits += 1
 
@@ -167,11 +193,7 @@ func _on_finished(cat: StreetCat) -> void:
 	_release_claims(cat)
 	var toy := cat.take_toy_away()
 	if toy:
-		cat.set_meta("toy", toy)
-	# abgelegt und nicht wieder aufgenommen (Besuch abgebrochen): auch zurück
-	var own: Node3D = cat.get_meta("toy", null)
-	if own:
-		_store_toy(own)
+		_store_toy(toy)
 	cat.reset()
 	_cats.erase(cat)
 	_pool.append(cat)
@@ -182,7 +204,7 @@ func _on_finished(cat: StreetCat) -> void:
 func blocked(cat: StreetCat, dir: Vector3) -> void:
 	if cat.inside:
 		return
-	if not cat.in_detour():
+	if not bool(cat._action.get("detour", false)):
 		var local := _outside.to_local(cat.global_position)
 		var lage := street.centerline.project(Vector2(local.x, local.z))
 		var side := 1.0 if lage.y > 0.0 else -1.0
@@ -198,7 +220,22 @@ func blocked(cat: StreetCat, dir: Vector3) -> void:
 			if absf(lat) < GameConfig.street_width / 2.0 + 0.35 or not street.clear_of_static(Vector2(l.x, l.z), STATIC_GAP):
 				ok = false
 		if ok:
-			cat.detour(PackedVector3Array([p1, p2, p3]))
+			var rest := cat.get_actions().duplicate()
+			var walk := cat._action.duplicate()
+			var path := PackedVector3Array([cat.global_position, p1, p2, p3])
+			var actions: Array[Dictionary] = [{"type": "walk", "points": path, "speed": GameConfig.cat_walk_speed, "detour": true}]
+			var pts: PackedVector3Array = walk.get("points", PackedVector3Array())
+			if not pts.is_empty():
+				var best := 0
+				for i in pts.size():
+					if pts[i].distance_to(p3) < pts[best].distance_to(p3):
+						best = i
+				var tail := PackedVector3Array([p3])
+				tail.append_array(pts.slice(best + 1))
+				walk.points = tail
+				actions.append(walk)
+			actions.append_array(rest)
+			cat.replace_actions(actions)
 			return
 	_release_claims(cat)
 	_continue_visit(cat, true)
@@ -220,18 +257,31 @@ func _continue_visit(cat: StreetCat, turn_back: bool = false) -> void:
 	cat.replace_actions(actions)
 
 
-## Release: Fensterbank und Sitz wieder frei.
+## Fensterbank und Sitz wieder frei.
 func _release_claims(cat: StreetCat) -> void:
 	for sill in _sills:
 		if sill.taken == cat:
 			sill.taken = null
 	cat._release_seat()
+	for spot in get_tree().get_nodes_in_group(CAT_SPOT_GROUP):
+		if spot.get_meta("occupant", null) == cat:
+			spot.set_meta("occupant", null)
+
+
+## Alle 0,4 s: Vögel am Boden in der Nähe (jagen) oder liegendes Spielzeug (spielen)?
+func _look_around() -> void:
+	for cat in _cats:
+		if cat.inside or cat.get_action_type() != "walk" or cat.hunting or cat._action.get("run", false) \
+				or cat._action.get("detour", false):
+			continue
+		if _try_hunt(cat):
+			continue
+		_try_toy(cat)
 
 
 # --- Besuch planen ---
 
 ## Ein verdecktes Straßenende (Ort zum Erscheinen/Verschwinden der Passanten): { pos (x, z), s, side, place }.
-## Mit from: möglichst das andere Ende (bzw. das hinter der Katze, wenn away gesetzt ist).
 func _pick_end(from: Dictionary, away: Vector3 = Vector3.ZERO) -> Dictionary:
 	var options: Array[Dictionary] = []
 	for place in street.get_places():
@@ -247,7 +297,6 @@ func _pick_end(from: Dictionary, away: Vector3 = Vector3.ZERO) -> Dictionary:
 		return options[_rng.randi() % options.size()]
 	options.shuffle()
 	if away != Vector3.ZERO:
-		# umkehren: das Ende in Blickrichtung zurück (Katze schaut gerade nach vorn – also das andere)
 		var ahead := street.centerline.direction_at(from.s)
 		var going := signf(Vector2(away.x, away.z).dot(ahead))
 		for o in options:
@@ -296,6 +345,8 @@ func _visit(side: int, s0: float, exit: Dictionary, stops: bool = true) -> Array
 			var ws := street.centerline.project(Vector2(w.x, w.z)).x
 			if ws > lo and ws < hi:
 				plan.append({"kind": "window", "s": ws, "side": 1, "node": window})
+		if _rng.randf() < 0.5:
+			plan.append({"kind": "pause", "s": s0 + dir * _rng.randf_range(3.0, 9.0), "side": side})
 		if plan.is_empty():
 			plan.append({"kind": "pause", "s": s0 + dir * _rng.randf_range(4.0, 9.0), "side": side})
 		plan.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a.s - b.s) * dir < 0.0)
@@ -305,7 +356,7 @@ func _visit(side: int, s0: float, exit: Dictionary, stops: bool = true) -> Array
 	for stop in plan:
 		if stop.side != cur_side:
 			actions.append(_walk_along(cur_side, cur_s, stop.s))
-			actions.append(_cross(cur_side, stop.s))
+			actions.append_array(_cross(cur_side, stop.s))
 			cur_side = stop.side
 			cur_s = stop.s
 		actions.append(_walk_along(cur_side, cur_s, stop.s))
@@ -316,7 +367,7 @@ func _visit(side: int, s0: float, exit: Dictionary, stops: bool = true) -> Array
 	if exit.side != cur_side:
 		var cross_s: float = cur_s + (exit.s - cur_s) * 0.3
 		actions.append(_walk_along(cur_side, cur_s, cross_s))
-		actions.append(_cross(cur_side, cross_s))
+		actions.append_array(_cross(cur_side, cross_s))
 		cur_side = exit.side
 		cur_s = cross_s
 	actions.append(_walk_along(cur_side, cur_s, exit.s))
@@ -325,13 +376,27 @@ func _visit(side: int, s0: float, exit: Dictionary, stops: bool = true) -> Array
 	return actions
 
 
+## Kurze Pause: schnuppern, sitzen, putzen oder strecken.
 func _pause() -> Dictionary:
 	var roll := _rng.randf()
-	if roll < 0.4:
+	if roll < 0.35:
+		return {"type": "anim", "anim": "sniff", "time": _rng.randf_range(1.5, 3.5)}
+	if roll < 0.6:
 		return {"type": "anim", "anim": "sit", "time": _rng.randf_range(2.0, 5.0)}
-	if roll < 0.75:
+	if roll < 0.85:
 		return {"type": "anim", "anim": "groom", "time": _rng.randf_range(3.0, 6.0)}
 	return {"type": "anim", "anim": "stretch", "time": 0.0}
+
+
+## Hinauf auf einen Platz und wieder herunter: vorher zur Landestelle drehen, dann vorwärts springen.
+func _jump_on(a: Array[Dictionary], ground: Vector3, top: Vector3) -> void:
+	a.append({"type": "turn", "face": top - ground})
+	a.append({"type": "jump", "to": top})
+
+
+func _jump_off(a: Array[Dictionary], top: Vector3, ground: Vector3) -> void:
+	a.append({"type": "turn", "face": ground - top})
+	a.append({"type": "jump", "to": ground})
 
 
 ## Schritte für einen Halt; beginnt und endet am Punkt back auf dem Gehweg.
@@ -346,8 +411,9 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			var face := Vector3(e.face.x, 0.0, e.face.y)
 			a.append(_walk([back, approach]))
 			a.append({"type": "claim", "callable": func(cat: StreetCat) -> bool: return _claim_seat(cat, seat)})
-			a.append({"type": "jump", "to": seat.global_position, "face": face})
+			_jump_on(a, approach, seat.global_position)
 			a.append({"type": "rest_on", "node": seat})
+			a.append({"type": "turn", "face": face})
 			a.append({"type": "toy_drop"})
 			a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(3.0, 6.0)})
 			a.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(4.0, 7.0)})
@@ -355,32 +421,28 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			var along := _bench_along(seat)
 			if along != Vector3.ZERO:
 				a.append({"type": "turn", "face": along})
-			a.append({"type": "anim", "anim": "lie" if _rng.randf() < 0.4 else "sleep", "time": rest, "blend": 0.6})
-			if along != Vector3.ZERO:
-				a.append({"type": "turn", "face": face})
-			a.append({"type": "anim", "anim": "sit", "time": 1.5, "blend": 0.6})
+			a.append({"type": "anim", "anim": "lie" if _rng.randf() < 0.4 else "sleep", "time": rest})
+			a.append({"type": "anim", "anim": "sit", "time": 1.5})
 			a.append({"type": "toy_take"})
 			a.append({"type": "rest_off"})
-			a.append({"type": "jump", "to": approach, "face": -face})
+			_jump_off(a, seat.global_position, approach + face * 0.1)
 			a.append({"type": "release_seat"})
-			a.append({"type": "anim", "anim": "stretch", "time": 0.0})
 			a.append({"type": "claim_end"})
-			a.append(_walk([approach, back]))
+			a.append(_walk([approach + face * 0.1, back]))
 		"sill":
 			var sill: Dictionary = stop.sill
 			var out: Vector3 = sill.out
 			var front: Vector3 = _ground_at(sill.pos + out * 0.45)
 			a.append(_walk([back, front]))
 			a.append({"type": "claim", "callable": func(cat: StreetCat) -> bool: return _claim_sill(cat, sill)})
-			a.append({"type": "turn", "face": -out})
-			a.append({"type": "jump", "to": sill.pos, "face": -out})
+			_jump_on(a, front, sill.pos)
 			a.append({"type": "turn", "face": out.rotated(Vector3.UP, _rng.randf_range(-0.6, 0.6))})
 			a.append({"type": "toy_drop"})
 			a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(3.0, 6.0)})
 			a.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(3.0, 6.0)})
-			a.append({"type": "anim", "anim": "lie", "time": rest * 0.7, "blend": 0.6})
+			a.append({"type": "anim", "anim": "lie", "time": rest * 0.7})
 			a.append({"type": "toy_take"})
-			a.append({"type": "jump", "to": front + out * 0.15, "face": out})
+			_jump_off(a, sill.pos, front + out * 0.15)
 			a.append({"type": "call", "callable": func(cat: StreetCat) -> void: _release_claims(cat)})
 			a.append({"type": "claim_end"})
 			a.append(_walk([front + out * 0.15, back]))
@@ -397,28 +459,13 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			a.append(_walk([spot, back]))
 		"door":
 			var entrance := _ground(StreetPaths.library_entrance())
-			var inward := -StreetLayout.door_outward()
 			a.append(_walk([back, entrance]))
-			a.append({"type": "turn", "face": inward})
-			a.append({"type": "call", "callable": func(cat: StreetCat) -> void: _door_choice(cat, 0)})
+			a.append({"type": "turn", "face": -StreetLayout.door_outward()})
+			a.append({"type": "call", "callable": func(cat: StreetCat) -> void: _door_choice(cat)})
 			a.append(_walk([entrance, back]))
 		"pause":
 			a.append(_pause())
 	return a
-
-
-## Bank (mehrere Sitzplätze nebeneinander): Richtung längs der Bank (zufällig links/rechts), sonst null.
-func _bench_along(seat: SeatPoint) -> Vector3:
-	var parent := seat.get_parent()
-	var count := 0
-	for child in parent.get_children():
-		if child is SeatPoint:
-			count += 1
-	if count < 2:
-		return Vector3.ZERO
-	var along := seat.global_basis.x
-	along.y = 0.0
-	return along.normalized() * (1.0 if _rng.randf() < 0.5 else -1.0)
 
 
 func _claim_sill(cat: StreetCat, sill: Dictionary) -> bool:
@@ -436,30 +483,52 @@ func _claim_seat(cat: StreetCat, seat: SeatPoint) -> bool:
 	return true
 
 
-## Vor der Treppe der Bücherei: Tür offen → hinein; sonst kurz warten und noch einmal schauen.
-func _door_choice(cat: StreetCat, tries: int) -> void:
-	if door_open():
-		var inside := _inside_actions(cat)
-		if not inside.is_empty():
-			entered += 1
-			cat.insert_actions(inside)
-			return
-	if tries == 0:
-		cat.insert_actions([{"type": "anim", "anim": "sit", "time": _rng.randf_range(5.0, 10.0)},
-			{"type": "call", "callable": func(c: StreetCat) -> void: _door_choice(c, 1)}])
+func _claim_basket(cat: StreetCat, spot: Node3D) -> bool:
+	if not is_instance_valid(spot) or spot.get_meta("occupant", null) not in [null, cat]:
+		return false
+	spot.set_meta("occupant", cat)
+	return true
 
 
-# --- Wege ---
+## Bank (mehrere Sitzplätze nebeneinander): Richtung längs der Bank (zufällig links/rechts), sonst null.
+func _bench_along(seat: SeatPoint) -> Vector3:
+	var parent := seat.get_parent()
+	var count := 0
+	for child in parent.get_children():
+		if child is SeatPoint:
+			count += 1
+	if count < 2:
+		return Vector3.ZERO
+	var along := seat.global_basis.x
+	along.y = 0.0
+	return along.normalized() * (1.0 if _rng.randf() < 0.5 else -1.0)
+
+
+## Vor der Treppe der Bücherei: hinaufhüpfen; Tür offen → hinein; zu → seitlich unter dem Einwurf warten
+## (außerhalb des Schwenkbereichs), dann hinein; sonst nach einer Weile wieder hinunter.
+func _door_choice(cat: StreetCat) -> void:
+	var inside := _inside_target()
+	if inside.is_empty():
+		return
+	entered += 1
+	cat.insert_actions(_inside_actions(cat, inside))
+
+
+# --- Wege draußen ---
 
 func _route(side: int) -> StreetRoute:
 	return street.sidewalks[side]
 
 
-## Gehweg-Punkt (Welt) an der Stelle s: nah an der Hauswand, mit Abstand zu Laternen, Bänken, Treppe.
-func _side_point(side: int, s: float) -> Vector3:
+## Gehweg-Punkt (Welt) an der Stelle s; lat_share 0 = an der Hauswand, 1 = mitten auf dem Gehweg. Hält Abstand zu
+## Laternen, Bänken und der Treppe.
+func _side_point(side: int, s: float, lat_share: float = 0.0) -> Vector3:
 	var route := _route(side)
 	var band := route.band_at(s)
-	var lat := band.y + WALL_GAP if side > 0 else band.x - WALL_GAP
+	var comfort := route.comfort_at(s)
+	var wall := band.y + WALL_GAP if side > 0 else band.x - WALL_GAP
+	var mid := (comfort.x + comfort.y) / 2.0
+	var lat := lerpf(wall, mid, clampf(lat_share, 0.0, 1.0))
 	var p := route.point_at(s, lat)
 	for i in 14:
 		if street.clear_of_static(p, STATIC_GAP):
@@ -469,11 +538,20 @@ func _side_point(side: int, s: float) -> Vector3:
 	return _ground(p)
 
 
+## Freier Gang: mal an der Wand, mal mitten auf dem Gehweg, in sanften Bögen (Lage folgt einer weichen Welle).
 func _walk_along(side: int, s0: float, s1: float, speed: float = -1.0, run: bool = false) -> Dictionary:
 	var points := PackedVector3Array()
 	var n := maxi(1, int(absf(s1 - s0) / 0.4))
+	var phase := _rng.randf() * TAU
+	var freq := _rng.randf_range(0.18, 0.45)
+	var base := _rng.randf_range(0.0, 0.45)
 	for i in n + 1:
-		points.append(_side_point(side, lerpf(s0, s1, float(i) / n)))
+		var s := lerpf(s0, s1, float(i) / n)
+		var wave := 0.5 + 0.5 * sin(phase + s * freq * TAU / 4.0)
+		var share := clampf(base + wave * 0.6, 0.0, 0.85)
+		# Anfang und Ende an der Wand (dort schließen die nächsten Schritte an)
+		var edge := minf(float(i), float(n - i)) / 3.0
+		points.append(_side_point(side, s, share * clampf(edge, 0.0, 1.0)))
 	return {"type": "walk", "points": points, "speed": speed if speed > 0.0 else GameConfig.cat_walk_speed, "run": run}
 
 
@@ -484,11 +562,36 @@ func _walk(list: Array, speed: float = -1.0) -> Dictionary:
 	return {"type": "walk", "points": points, "speed": speed if speed > 0.0 else GameConfig.cat_walk_speed}
 
 
-## Über die Straße flitzen (gerade hinüber, erst wenn frei).
-func _cross(side: int, s: float) -> Dictionary:
+## Über die Straße: zur Bordsteinkante, warten bis frei, hinunter auf die Fahrbahn (Fahrbahnhöhe), zügig hinüber,
+## am anderen Bordstein hinauf, ein Stück auf den Gehweg.
+func _cross(side: int, s: float) -> Array[Dictionary]:
+	var half := GameConfig.street_width / 2.0
 	var a := _side_point(side, s)
+	var curb_a := _lane(s, side * (half + 0.14), 0.0)
+	var road_a := _lane(s, side * (half - 0.16), _road_y())
+	var road_b := _lane(s, -side * (half - 0.16), _road_y())
+	var curb_b := _lane(s, -side * (half + 0.14), 0.0)
 	var b := _side_point(-side, s)
-	return {"type": "cross", "points": PackedVector3Array([a, b]), "speed": GameConfig.cat_run_speed, "run": true}
+	var out: Array[Dictionary] = [_walk([a, curb_a])]
+	out.append({"type": "turn", "face": road_a - curb_a})
+	out.append({"type": "wait_road", "face": road_a - curb_a})
+	out.append({"type": "jump", "to": road_a})
+	var run := {"type": "walk", "points": PackedVector3Array([road_a, road_b]), "speed": GameConfig.cat_run_speed * 0.8,
+		"run": true, "road": true}
+	out.append(run)
+	out.append({"type": "jump", "to": curb_b})
+	out.append(_walk([curb_b, b]))
+	return out
+
+
+func _lane(s: float, lat: float, height: float) -> Vector3:
+	var p := street.centerline.point_at(s, lat)
+	return _outside.to_global(Vector3(p.x, height, p.y))
+
+
+## Höhe der Fahrbahn unter "Outside" (Gehweg = 0).
+func _road_y() -> float:
+	return StreetLayout.road_y() - StreetLayout.ground_y()
 
 
 func _ground(p: Variant) -> Vector3:
@@ -501,86 +604,394 @@ func _ground_at(p: Vector3) -> Vector3:
 	return Vector3(p.x, _outside.global_position.y, p.z)
 
 
+# --- Jagd auf Vögel ---
+
+## Vögel am Boden in der Nähe und auf demselben Gehweg? Dann lauern, anschleichen, springen (Vögel fliegen weg).
+func _try_hunt(cat: StreetCat) -> bool:
+	if street.birds == null:
+		return false
+	for bird in street.birds.get_birds():
+		if not bird.is_on_ground() or bird.flock.is_empty():
+			continue
+		var flock: Dictionary = bird.flock
+		var key := "%d_%d" % [int(flock.get("id", 0)), cat.get_instance_id()]
+		if _hunted.has(key):
+			continue
+		var center: Vector3 = bird.spot.get("center", bird.global_position)
+		var d := Vector3(center.x - cat.global_position.x, 0.0, center.z - cat.global_position.z)
+		if d.length() > 8.0 or d.length() < 2.6 or absf(center.y - cat.global_position.y) > 0.3:
+			continue
+		_hunted[key] = true
+		if _rng.randf() > GameConfig.cat_hunt_chance:
+			continue
+		var dir := d.normalized()
+		var ground_y := cat.global_position.y
+		var a := center - dir * 3.0
+		var b := center - dir * 1.3
+		var c := center - dir * 0.25
+		# nur auf dem Gehweg jagen (nie auf die Fahrbahn)
+		var on_road := false
+		for p: Vector3 in [a, b, c]:
+			var l := _outside.to_local(p)
+			if absf(street.centerline.project(Vector2(l.x, l.z)).y) < GameConfig.street_width / 2.0 + 0.25:
+				on_road = true
+		if on_road:
+			continue
+		a.y = ground_y
+		b.y = ground_y
+		c.y = ground_y
+		var actions: Array[Dictionary] = []
+		if cat.has_toy():
+			actions.append({"type": "toy_drop"})
+		actions.append(_walk([cat.global_position, a]))
+		actions.append({"type": "hunting", "value": true})
+		actions.append({"type": "turn", "face": dir})
+		actions.append({"type": "anim", "anim": "crouch", "time": _rng.randf_range(2.0, 3.5), "hunt": true})
+		actions.append({"type": "walk", "points": PackedVector3Array([a, b]), "speed": GameConfig.cat_stalk_speed, "stalk": true})
+		actions.append({"type": "anim", "anim": "crouch", "time": _rng.randf_range(0.6, 1.4), "hunt": true})
+		actions.append({"type": "pounce", "to": c, "hunt": true})
+		actions.append({"type": "hunting", "value": false})
+		actions.append({"type": "anim", "anim": "sit", "time": 2.5, "look_up": true})
+		actions.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(2.5, 4.0)})
+		actions.append({"type": "toy_take"})
+		actions.append({"type": "call", "callable": _continue_visit})
+		cat.replace_actions(actions)
+		hunts += 1
+		return true
+	return false
+
+
+# --- Spielzeug ---
+
+func _free_toy() -> Node3D:
+	var free := _toys.filter(func(t: Node3D) -> bool: return not t.visible)
+	return free[_rng.randi() % free.size()] if not free.is_empty() else null
+
+
+func _store_toy(toy: Node3D) -> void:
+	if toy.get_parent() != self:
+		if toy.get_parent():
+			toy.get_parent().remove_child(toy)
+		add_child(toy)
+	toy.visible = false
+	toy.set_meta("loose", false)
+
+
+## Spielzeug ablegen (aus dem Maul): liegt dann frei in der Welt (auch für andere Katzen).
+func drop_toy(_cat: StreetCat, toy: Node3D, at: Vector3) -> void:
+	toy.set_meta("left_by", _cat)
+	if toy.get_parent() != self:
+		if toy.get_parent():
+			toy.get_parent().remove_child(toy)
+		add_child(toy)
+	toy.visible = true
+	var ground := Vector3(at.x, _cat.global_position.y + 0.015, at.z)
+	toy.global_transform = Transform3D(Basis(Vector3.UP, _rng.randf() * TAU), ground)
+	toy.set_meta("loose", true)
+
+
+func pick_toy(cat: StreetCat, toy: Node3D) -> void:
+	toy.set_meta("left_by", null)
+	if _toy_tweens.has(toy):
+		(_toy_tweens[toy] as Tween).kill()
+		_toy_tweens.erase(toy)
+	toy.set_meta("loose", false)
+	cat.give_toy(toy)
+
+
+## Liegendes Spielzeug in der Nähe der Katze (oder null).
+func toy_near(cat: StreetCat, reach: float = 0.7) -> Node3D:
+	for toy in _toys:
+		if toy.visible and toy.get_meta("loose", false) and toy.global_position.distance_to(cat.global_position) < reach:
+			return toy
+	return null
+
+
+## Angestupstes Spielzeug rollt (Ball, Wollknäuel) bzw. rutscht (Maus, Federn) ein Stück – nie in Wände, auf die
+## Fahrbahn oder in Hindernisse.
+func push_toy(toy: Node3D, dir: Vector3, strength: float) -> void:
+	dir.y = 0.0
+	dir = dir.normalized().rotated(Vector3.UP, _rng.randf_range(-0.5, 0.5))
+	var kind := String(toy.get_meta("kind", "mouse"))
+	var rolls := kind in ["ball", "yarn"]
+	var dist := _rng.randf_range(0.35, 0.9) * strength * (1.6 if rolls else 1.0)
+	var start := toy.global_position
+	var space := get_world_3d().direct_space_state
+	var want := dist
+	# an einer Wand: zur Seite (oder zurück) statt in die Wand
+	for turn in [0.0, 1.4, -1.4, PI]:
+		var d := dir.rotated(Vector3.UP, turn)
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(start + Vector3.UP * 0.03, start + Vector3.UP * 0.03 + d * (want + 0.05), 1 | 8))
+		dist = want if hit.is_empty() else maxf(0.0, start.distance_to(hit.position) - 0.06)
+		if dist > want * 0.5:
+			dir = d
+			break
+	var end := start + dir * dist
+	var l := _outside.to_local(end)
+	if not toy_inside(toy):
+		var lat := street.centerline.project(Vector2(l.x, l.z)).y
+		if absf(lat) < GameConfig.street_width / 2.0 + 0.2 or not street.clear_of_static(Vector2(l.x, l.z), 0.1):
+			end = start + dir * dist * 0.3
+	if _toy_tweens.has(toy):
+		(_toy_tweens[toy] as Tween).kill()
+	var tween := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	var time := 0.45 + dist * 0.6
+	tween.tween_property(toy, "global_position", end, time)
+	if rolls:
+		var axis := Vector3.UP.cross(dir).normalized()
+		var turns := dist / 0.045
+		var base := toy.global_basis
+		tween.parallel().tween_method(func(k: float) -> void:
+			if is_instance_valid(toy):
+				toy.global_basis = Basis(axis, k * turns) * base, 0.0, 1.0, time)
+	_toy_tweens[toy] = tween
+
+
+func toy_inside(toy: Node3D) -> bool:
+	return _room != null and _room.is_inside_build_area(toy.global_position) and absf(toy.global_position.y - floor_y_room()) < 0.6
+
+
+func floor_y_room() -> float:
+	return _room.global_position.y + _room.floor_height if _room else 0.0
+
+
+## Spielen: anstupsen, hinterher, draufspringen – ein paar Runden, dann mitnehmen oder liegen lassen.
+func _play_actions(cat: StreetCat, toy: Node3D, rounds: int) -> Array[Dictionary]:
+	var a: Array[Dictionary] = []
+	a.append({"type": "call", "callable": func(c: StreetCat) -> void: _play_round(c, toy, rounds)})
+	return a
+
+
+func _play_round(cat: StreetCat, toy: Node3D, rounds: int) -> void:
+	if not is_instance_valid(toy) or not toy.visible:
+		return
+	var a: Array[Dictionary] = []
+	var to_toy := toy.global_position - cat.global_position
+	to_toy.y = 0.0
+	if to_toy.length() > 0.32:
+		# hinterher (rennen, wenn es weit gerollt ist)
+		var stop := toy.global_position - to_toy.normalized() * 0.24
+		stop.y = cat.global_position.y
+		if to_toy.length() > 0.9 and _rng.randf() < 0.5:
+			a.append({"type": "turn", "face": to_toy})
+			a.append({"type": "anim", "anim": "crouch", "time": _rng.randf_range(0.5, 1.2)})
+			var land := toy.global_position - to_toy.normalized() * 0.12
+			land.y = cat.global_position.y
+			a.append({"type": "pounce", "to": land})
+		else:
+			a.append(_walk([cat.global_position, stop], GameConfig.cat_run_speed * 0.7 if to_toy.length() > 0.8 else -1.0))
+	a.append({"type": "bat", "toy": toy, "strength": _rng.randf_range(0.5, 1.1)})
+	if rounds > 1:
+		a.append({"type": "call", "callable": func(c: StreetCat) -> void: _play_round(c, toy, rounds - 1)})
+	else:
+		a.append({"type": "call", "callable": func(c: StreetCat) -> void: _end_play(c, toy)})
+	cat.insert_actions(a)
+
+
+func _end_play(cat: StreetCat, toy: Node3D) -> void:
+	if not is_instance_valid(toy) or not toy.visible:
+		return
+	var a: Array[Dictionary] = []
+	if _rng.randf() < 0.55:
+		# mitnehmen
+		var stop := toy.global_position
+		stop.y = cat.global_position.y
+		a.append(_walk([cat.global_position, stop + (cat.global_position - stop).normalized() * 0.18]))
+		a.append({"type": "toy_take", "toy": toy})
+	else:
+		a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(1.5, 3.0)})
+		a.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(2.0, 4.0)})
+	if not cat.inside:
+		a.append({"type": "call", "callable": _continue_visit})
+	cat.insert_actions(a)
+
+
+## Liegendes Spielzeug in Sicht? Hingehen, schnuppern, spielen. Trägt die Katze selbst etwas, lässt sie es manchmal
+## an einer Hauswand oder Laterne liegen.
+func _try_toy(cat: StreetCat) -> void:
+	if cat.has_toy():
+		# Wahrscheinlichkeit je Minute → je Blick (alle 0,4 s)
+		if _rng.randf() < GameConfig.cat_toy_leave_chance * 0.4 / 60.0:
+			_leave_toy(cat)
+		return
+	if int(cat.get_meta("plays", 0)) >= 2:
+		return   # höchstens zweimal je Besuch spielen
+	for toy in _toys:
+		if not toy.visible or not toy.get_meta("loose", false) or toy_inside(toy):
+			continue
+		if toy.get_meta("left_by", null) == cat:
+			continue   # das eigene, gerade liegen gelassene Spielzeug nicht gleich wieder holen
+		var d := toy.global_position - cat.global_position
+		d.y = 0.0
+		if d.length() > 3.5 or d.length() < 0.2 or absf(toy.global_position.y - cat.global_position.y) > 0.3:
+			continue
+		var stop := toy.global_position - d.normalized() * 0.24
+		stop.y = cat.global_position.y
+		var a: Array[Dictionary] = [_walk([cat.global_position, stop])]
+		a.append({"type": "turn", "face": d})
+		a.append({"type": "anim", "anim": "sniff", "time": _rng.randf_range(1.2, 2.5)})
+		a.append_array(_play_actions(cat, toy, _rng.randi_range(2, 4)))
+		cat.replace_actions(a)
+		cat.set_meta("plays", int(cat.get_meta("plays", 0)) + 1)
+		plays += 1
+		return
+
+
+## Spielzeug an der Hauswand oder am Fuß einer Laterne liegen lassen (bleibt dort, bis eine Katze es findet).
+func _leave_toy(cat: StreetCat) -> void:
+	var local := _outside.to_local(cat.global_position)
+	var lage := street.centerline.project(Vector2(local.x, local.z))
+	var side := 1 if lage.y > 0.0 else -1
+	var spot := _side_point(side, lage.x + cat.global_basis.z.dot(Vector3(1, 0, 0)) * 0.5, 0.0)
+	var a: Array[Dictionary] = [_walk([cat.global_position, spot])]
+	a.append({"type": "toy_drop"})
+	a.append({"type": "anim", "anim": "sniff", "time": 1.5})
+	a.append({"type": "call", "callable": _continue_visit})
+	cat.replace_actions(a)
+
+
 # --- In der Bücherei ---
 
-## Hinein, auf einen Sessel (oder Teppich), schlafen und schnurren, wieder hinaus. Leer = geht nicht.
-func _inside_actions(cat: StreetCat) -> Array[Dictionary]:
-	var target := _inside_target()
-	if target.is_empty():
-		return []
+## Hinein (Stufen hinaufhüpfen, an der Tür warten, wenn sie zu ist), ins Körbchen bzw. auf Sessel/Sofa/Teppich,
+## schlafen und schnurren, wieder hinaus (drinnen neben der Tür warten, wenn sie zu ist), Stufen hinab.
+func _inside_actions(cat: StreetCat, target: Dictionary) -> Array[Dictionary]:
 	var door := StreetLayout.door_center()
 	var out := StreetLayout.door_outward()
-	var room_y := _room.global_position.y + _room.floor_height
+	var room_y := floor_y_room()
 	var door_point := Vector3(door.x, room_y, door.z)
-	var door_in := door_point - out * 0.55
+	var door_in := door_point - out * 0.6
 	var grid := _room_grid()
 	var path := _find_path(grid, door_in, target.front)
 	if path.is_empty():
 		return []
-	var stairs := _stairs_up(door_point, out, room_y)
 	var a: Array[Dictionary] = []
-	a.append(_walk(stairs))
+	a.append_array(_stairs(door_point, out, room_y, true))
+	var wait_out := _wait_spot(false)
+	a.append(_walk([_podium_point(door_point, out), wait_out]))
+	a.append({"type": "wait_door", "face": door_point - wait_out})
+	a.append(_walk([wait_out, door_point + out * 0.15]))
 	a.append({"type": "inside", "value": true})
 	var walk_in: Array = [door_point, door_in]
 	walk_in.append_array(path)
 	a.append(_walk(walk_in))
 	var rest := _rng.randf_range(GameConfig.cat_inside_time.x, GameConfig.cat_inside_time.y)
-	if target.has("seat"):
-		var seat: SeatPoint = target.seat
-		var face := seat.global_basis.z
-		face.y = 0.0
-		a.append({"type": "claim", "callable": func(c: StreetCat) -> bool: return _claim_seat(c, seat)})
-		a.append({"type": "jump", "to": seat.global_position, "face": face})
-		a.append({"type": "rest_on", "node": seat})
-	else:
-		a.append({"type": "turn", "face": target.face})
+	var top: Vector3 = target.top
+	var face: Vector3 = target.face
+	a.append({"type": "claim", "callable": target.claim})
+	_jump_on(a, target.front, top)
+	if target.has("node"):
+		a.append({"type": "rest_on", "node": target.node})
+	a.append({"type": "turn", "face": face})
 	a.append({"type": "toy_drop"})
-	a.append({"type": "anim", "anim": "lie", "time": _rng.randf_range(4.0, 8.0), "blend": 0.6})
+	a.append({"type": "anim", "anim": "lie", "time": _rng.randf_range(4.0, 8.0)})
 	a.append({"type": "purr_on"})
-	a.append({"type": "anim", "anim": "sleep", "time": rest, "blend": 0.8})
+	a.append({"type": "anim", "anim": "sleep", "time": rest})
 	a.append({"type": "purr_off"})
-	a.append({"type": "anim", "anim": "sit", "time": 2.0, "blend": 0.6})
+	a.append({"type": "anim", "anim": "sit", "time": 2.0})
 	a.append({"type": "toy_take"})
-	if target.has("seat"):
-		a.append({"type": "rest_off"})
-		a.append({"type": "jump", "to": target.front, "face": -(target.seat as SeatPoint).global_basis.z})
-		a.append({"type": "release_seat"})
-		a.append({"type": "claim_end"})
-	a.append({"type": "anim", "anim": "stretch", "time": 0.0})
+	a.append({"type": "rest_off"})
+	_jump_off(a, top, target.front)
+	a.append({"type": "release_seat"})
+	a.append({"type": "call", "callable": func(c: StreetCat) -> void: _release_claims(c)})
+	a.append({"type": "claim_end"})
 	var walk_out: Array = path.duplicate()
 	walk_out.reverse()
-	walk_out.append(door_in)
+	var wait_in := _wait_spot(true)
+	walk_out.append(wait_in)
 	a.append(_walk(walk_out))
-	a.append({"type": "wait_door", "face": out})
-	a.append(_walk([door_in, door_point]))
+	a.append({"type": "wait_door", "face": door_point - wait_in})
+	a.append(_walk([wait_in, door_in, door_point]))
 	a.append({"type": "inside", "value": false})
-	var down := stairs.duplicate()
-	down.reverse()
-	a.append(_walk(down))
+	a.append_array(_stairs(door_point, out, room_y, false))
 	return a
 
 
-## Punkte von der Stelle vor der Treppe hinauf bis zur Tür: an jeder Stufe ein kleiner Hüpfer.
-func _stairs_up(door_point: Vector3, out: Vector3, room_y: float) -> Array:
+func _podium_point(door_point: Vector3, out: Vector3) -> Vector3:
+	return door_point + out * (GameConfig.entrance_podium_depth * 0.55)
+
+
+## Warteplatz an der Tür: draußen auf dem Podest seitlich unter dem Einwurf, drinnen neben der Tür – immer
+## außerhalb des Schwenkbereichs der Tür (die Tür geht nach innen auf).
+func _wait_spot(inside_room: bool) -> Vector3:
+	var door := StreetLayout.door_center()
+	var out := StreetLayout.door_outward()
+	var room_y := floor_y_room()
+	var door_point := Vector3(door.x, room_y, door.z)
+	var along := Vector3.UP.cross(out).normalized()
+	var box := ReturnBox.find(get_tree())
+	var side := 1.0
+	if box:
+		side = signf((box.global_position - door_point).dot(along))
+		if side == 0.0:
+			side = 1.0
+	var candidates: Array[Vector3] = []
+	if inside_room:
+		for s in [side, -side]:
+			for reach in [0.95, 1.2, 1.45]:
+				candidates.append(door_point + along * s * reach - out * 0.35)
+	else:
+		for s in [side, -side]:
+			for reach in [0.7, 0.55, 0.85]:
+				candidates.append(door_point + along * s * reach + out * 0.3)
+	for p in candidates:
+		if _door and _door.in_swing(p + Vector3.UP * 0.1):
+			continue
+		if inside_room and _room and not _room.is_inside_build_area(p):
+			continue
+		return p
+	return candidates[0]
+
+
+## Treppe der Bücherei: an jeder Stufe hinaufhüpfen bzw. vorwärts hinuntersteigen.
+func _stairs(door_point: Vector3, out: Vector3, room_y: float, up: bool) -> Array[Dictionary]:
 	var count := GameConfig.entrance_step_count
 	var tread := GameConfig.entrance_step_depth
 	var rise := GameConfig.shop_floor_rise / float(count + 1)
 	var podium := GameConfig.entrance_podium_depth
 	var ground := room_y - GameConfig.shop_floor_rise
-	var points: Array = [_ground(StreetPaths.library_entrance())]
-	# Kanten von außen nach innen: unterste Stufe … Podest
+	var steps: Array = []    # [Punkt vor der Kante (unten), Punkt nach der Kante (oben)]
 	for k in count + 1:
 		var edge := podium + (count - k) * tread
 		var below := ground + k * rise
-		points.append(door_point + out * (edge + 0.1) + Vector3.UP * (below - room_y))
-		points.append(door_point + out * (edge - 0.08) + Vector3.UP * (below + rise - room_y))
-	points.append(door_point)
-	return points
+		steps.append([door_point + out * (edge + 0.12) + Vector3.UP * (below - room_y),
+			door_point + out * (edge - 0.1) + Vector3.UP * (below + rise - room_y)])
+	var a: Array[Dictionary] = []
+	var entrance := _ground(StreetPaths.library_entrance())
+	if up:
+		var last := entrance
+		for st: Array in steps:
+			a.append(_walk([last, st[0]]))
+			a.append({"type": "turn", "face": -out})
+			a.append({"type": "jump", "to": st[1]})
+			last = st[1]
+		a.append(_walk([last, _podium_point(door_point, out)]))
+	else:
+		var last := _podium_point(door_point, out)
+		for i in range(steps.size() - 1, -1, -1):
+			var st: Array = steps[i]
+			a.append(_walk([last, st[1]]))
+			a.append({"type": "turn", "face": out})
+			a.append({"type": "jump", "to": st[0]})
+			last = st[0]
+		a.append(_walk([last, entrance]))
+	return a
 
 
-## Ziel in der Bücherei: freier Sitz eines Sessels oder Sofas, sonst die Mitte eines Teppichs.
-## { seat, front (Boden vor dem Sitz) } bzw. { front, face }.
+## Ziel in der Bücherei: ein freies Katzenkörbchen (bevorzugt), sonst ein freier Sitz eines Sessels oder Sofas,
+## sonst die Mitte eines Teppichs. { top (Liegeplatz), front (Boden davor), face, claim, node }.
 func _inside_target() -> Dictionary:
+	if _room == null or _door == null:
+		return {}
+	var room_y := floor_y_room()
+	for spot: Node3D in get_tree().get_nodes_in_group(CAT_SPOT_GROUP):
+		if not spot.is_inside_tree() or spot.get_meta("occupant", null) != null or not _room.is_ancestor_of(spot):
+			continue
+		var fwd := spot.global_basis.z
+		fwd.y = 0.0
+		fwd = fwd.normalized()
+		var front := Vector3(spot.global_position.x, room_y, spot.global_position.z) + fwd * 0.42
+		return {"top": spot.global_position, "front": front, "face": -fwd.rotated(Vector3.UP, _rng.randf_range(-0.8, 0.8)),
+			"node": spot, "claim": func(c: StreetCat) -> bool: return _claim_basket(c, spot)}
 	var seats: Array[SeatPoint] = []
 	var rugs: Array[PlacedFurniture] = []
 	for item in _room.get_placed_furniture():
@@ -593,17 +1004,19 @@ func _inside_target() -> Dictionary:
 		elif sub == "rug":
 			rugs.append(item)
 	seats.shuffle()
-	var room_y := _room.global_position.y + _room.floor_height
 	for seat in seats:
 		var forward := seat.global_basis.z
 		forward.y = 0.0
 		forward = forward.normalized()
 		var front := Vector3(seat.global_position.x, room_y, seat.global_position.z) + forward * 0.5
-		return {"seat": seat, "front": front}
+		return {"top": seat.global_position, "front": front, "face": forward, "node": seat,
+			"claim": func(c: StreetCat) -> bool: return _claim_seat(c, seat)}
 	if not rugs.is_empty():
 		var rug: PlacedFurniture = rugs[_rng.randi() % rugs.size()]
 		var a := _rng.randf() * TAU
-		return {"front": Vector3(rug.global_position.x, room_y, rug.global_position.z), "face": Vector3(sin(a), 0.0, cos(a))}
+		var p := Vector3(rug.global_position.x, room_y, rug.global_position.z)
+		return {"top": p, "front": p + Vector3(sin(a), 0.0, cos(a)) * 0.3, "face": Vector3(sin(a), 0.0, cos(a)),
+			"claim": func(_c: StreetCat) -> bool: return true}
 	return {}
 
 
@@ -671,7 +1084,7 @@ func _find_path(grid: Dictionary, from: Vector3, to: Vector3) -> Array:
 		return []
 	var result: Array = []
 	for i in cells.size():
-		# nur jede zweite Zelle und alle Ecken (weniger Zickzack)
+		# nur jede zweite Zelle (weniger Zickzack)
 		if i == cells.size() - 1 or i % 2 == 0:
 			result.append(_cell_pos(cells[i]))
 	result.append(to)
@@ -686,7 +1099,7 @@ func door_open() -> bool:
 
 func floor_y(cat: StreetCat) -> float:
 	if cat.inside and _room:
-		return _room.global_position.y + _room.floor_height
+		return floor_y_room()
 	return _outside.global_position.y
 
 
@@ -718,10 +1131,6 @@ func blocked_ahead(cat: StreetCat, dir: Vector3) -> bool:
 		if (d - dir * along).length() < BLOCK_SIDE + float(o[1]):
 			return true
 	return false
-
-
-const BLOCK_AHEAD := 0.55
-const BLOCK_SIDE := 0.22
 
 
 ## Fahrbahn frei zum Überqueren (kein Fahrzeug in der Nähe oder im Kommen)?

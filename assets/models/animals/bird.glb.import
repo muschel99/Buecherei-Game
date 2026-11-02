@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://b4nsy7lct48mo"
+uid="uid://cy5a8iklufaya"
 path="res://.godot/imported/bird.glb-f6428e4d961b4282f7bfa2933baaecfb.scn"
 
 [deps]
@@ -46,10 +46,10 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/vogel_auge.tres",
 "use_external/path": "res://assets/materials/storybook/vogel_auge.tres"
 },
-"Vogel Brust": {
+"Vogel Beine": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/vogel_brust.tres",
-"use_external/path": "res://assets/materials/storybook/vogel_brust.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/vogel_beine.tres",
+"use_external/path": "res://assets/materials/storybook/vogel_beine.tres"
 },
 "Vogel Flügel": {
 "use_external/enabled": true,

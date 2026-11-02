@@ -209,6 +209,12 @@ static func draw(canvas: CanvasItem, key: String, rect: Rect2, color: Color) -> 
 			p.rect(4, 15, 16, 4)
 			p.rect(6, 11, 13, 4)
 			p.rect(5, 7, 12, 4)
+		"pet":
+			# Körbchen mit zwei Katzenohren darüber
+			p.poly([[3, 13], [21, 13], [19, 20], [5, 20]], true)
+			p.arc(12, 13, 9, PI, TAU)
+			p.poly([[8, 9], [9.5, 4.5], [11, 8]], true)
+			p.poly([[13, 8], [14.5, 4.5], [16, 9]], true)
 		"bookend":
 			p.poly([[5, 4], [5, 20], [11, 20]])
 			p.poly([[9, 19], [14, 6], [17.5, 7.5], [12.5, 20.5]], true)

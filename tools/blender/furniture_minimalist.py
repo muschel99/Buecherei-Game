@@ -627,6 +627,21 @@ def build_fireplace_min(k):
     k.surface((0, -0.03, h + 0.05), (w + 0.06, d + 0.06), 0.6)
     k.collider((0, -0.02, (h + 0.05) / 2), (w + 0.12, d + 0.2, h + 0.05))
 
+
+# --- Katzenbett aus Filz (seit Etappe 6h) ---
+
+def build_cat_bed_min(k):
+    """Rundes Bett aus dickem Filz mit weichem Wulst und flachem Kissen; Liegeplatz für Katzen."""
+    k.mat("felt", GREY, grain="fabric", rough=0.98, vary=0.04, bump=0.35)
+    k.mat("fabric", CREAM, grain="fabric", rough=0.95, vary=0.04, bump=0.3)
+    b = k.part("Filzbett", "felt", bevel=0.0, settle=False)
+    b.lathe([(0.0, 0.0), (0.2, 0.0), (0.238, 0.012), (0.25, 0.05), (0.244, 0.1), (0.226, 0.122), (0.205, 0.118),
+             (0.192, 0.09), (0.186, 0.04), (0.17, 0.026), (0.0, 0.026)], (0, 0, 0), segs=40)
+    cushion = k.part("Kissen", "fabric", bevel=0.0)
+    F.pillow(cushion, (0, 0, 0.044), (0.34, 0.34, 0.036), roundness=2.4, puff=0.006)
+    k.collider((0, 0, 0.06), (0.5, 0.5, 0.12))
+    k.cat_spot((0, 0, 0.064))
+
 ITEMS = [
     dict(id="fireplace_min", name="Schlichter Kamin", category="lighting", sub="fireplace", price=340,
          desc="Ein glatter Putzkamin mit schmalem Eichenbrett. Mit E knistert das Feuer.",
@@ -667,6 +682,11 @@ ITEMS = [
     dict(id="divider_shelf", name="Lamellen-Raumteiler", category="divider", sub="", price=180,
          desc="Senkrechte Holzstäbe auf einem flachen Fuß – trennt, ohne zu verschließen.",
          styles=STYLE, place="floor", adopt=True, build=build_slat_divider, variants=wood_variants()),
+    dict(id="cat_bed_min", name="Katzenbett aus Filz", category="deco", sub="pet", price=55,
+         desc="Ein rundes Bett aus dickem Filz mit flachem Kissen – schlicht, weich und warm.",
+         styles=STYLE, place="floor", build=build_cat_bed_min,
+         variants=[("grey", "Grau", {"felt": GREY}), ("sand", "Sand", {"felt": SAND}), ("sage", "Salbei", {"felt": SAGE}),
+                   ("charcoal", "Anthrazit", {"felt": CHARCOAL})]),
     dict(id="rug_round", name="Runder Wollteppich", category="deco", sub="rug", price=90,
          desc="Ein weicher, runder Teppich mit einem feinen hellen Ring.",
          styles=STYLE, place="floor", build=build_round_rug,

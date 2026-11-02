@@ -950,6 +950,29 @@ def build_fireplace_da(k):
     k.surface((0, 0.0, h - 0.01), (w + 0.04, d + 0.04), 0.6)
     k.collider((0, 0.05, h / 2), (w + 0.08, d + 0.1, h))
 
+
+# --- Katzenbett mit Samtkissen (seit Etappe 6h) ---
+
+def build_cat_bed_da(k):
+    """Ovales Bettchen aus dunklem Holz auf vier Kugelfüßen, innen ein Samtkissen mit Keder."""
+    k.mat("wood", WALNUT, grain="wood", rough=0.6, vary=0.06)
+    k.mat("velvet", BORDEAUX, grain="fabric", rough=0.75, vary=0.05, bump=0.25)
+    k.mat("brass", BRASS, grain="smooth", rough=0.35, metal=0.8, vary=0.03)
+    b = k.part("Bettchen", "wood", bevel=0.004)
+    sq = Matrix.Diagonal((1.0, 0.82, 1.0, 1.0))
+    ring = [(0.0, 0.04), (0.22, 0.04), (0.235, 0.05), (0.24, 0.13), (0.228, 0.145), (0.212, 0.14), (0.205, 0.06),
+            (0.0, 0.06)]
+    b.lathe(ring, (0, 0, 0), segs=44)
+    for v in b.bm.verts:
+        v.co = sq @ v.co
+    feet = k.part("Füße", "brass", bevel=0.0)
+    for x, y in ((0.15, 0.1), (-0.15, 0.1), (0.15, -0.1), (-0.15, -0.1)):
+        feet.blob((x, y, 0.022), 0.022, subdiv=2, lump=0.0, scale=(1, 1, 0.95))
+    cushion = k.part("Samtkissen", "velvet", bevel=0.0)
+    F.pillow(cushion, (0, 0, 0.083), (0.4, 0.32, 0.05), roundness=2.6, puff=0.008)
+    k.collider((0, 0, 0.072), (0.5, 0.42, 0.145))
+    k.cat_spot((0, 0, 0.105))
+
 ITEMS = [
     dict(id="fireplace_da", name="Marmorkamin", category="lighting", sub="fireplace", price=420,
          desc="Ein Kamin aus dunklem Marmor mit Säulen, gusseisernem Bogen und Messinggitter. Mit E knistert das Feuer.",
@@ -1049,6 +1072,11 @@ ITEMS = [
     dict(id="writing_set", name="Schreibset", category="deco", sub="figure", price=32,
          desc="Tintenfass mit Federkiel, Briefe mit Band und Siegel, Petschaft und Siegellack auf einem Tablett.",
          styles=STYLE, place="surface", build=build_writing_set, variants=wood_variants()),
+    dict(id="cat_bed_da", name="Katzenbett mit Samtkissen", category="deco", sub="pet", price=68,
+         desc="Ein ovales Bettchen aus dunklem Holz auf Messingfüßen mit Samtkissen – für die Bibliothekskatze.",
+         styles=STYLE, place="floor", build=build_cat_bed_da,
+         variants=[("bordeaux", "Bordeaux", {"velvet": BORDEAUX}), ("bottle", "Flaschengrün", {"velvet": BOTTLE}),
+                   ("navy", "Marine", {"velvet": NAVY}), ("cognac", "Cognac", {"velvet": COGNAC})]),
     dict(id="rug_persian", name="Perserteppich", category="deco", sub="rug", price=170,
          desc="Großer Teppich mit Bordüre, Medaillon und Fransen.",
          styles=STYLE, place="floor", build=build_persian_rug,

@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+; Taube (Etappe 6h): Script StreetBird mit kind = "pigeon" (geht und pickt am Boden, sitzt auf Dächern),
+; Modell austauschbar (Kind "Model": eigene .glb mit Skelett, Formvariante „spread“ und den Bewegungen idle,
+; peck, walk, fly, glide, takeoff, land – siehe docs/ASSET_GUIDE.md „Eigene Tiere“).
+
+[ext_resource type="Script" path="res://scripts/animals/street_bird.gd" id="1_bird"]
+[ext_resource type="PackedScene" path="res://assets/models/animals/pigeon.glb" id="2_model"]
+
+[node name="Pigeon" type="Node3D"]
+script = ExtResource("1_bird")
+kind = "pigeon"
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

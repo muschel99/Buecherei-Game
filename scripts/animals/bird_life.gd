@@ -1,52 +1,60 @@
 class_name BirdLife
 extends Node3D
-## Vögel auf der Straße (seit Etappe 6g). Entsteht beim Start des Straßenlebens als Kind von StreetLife
-## ("Outside/StreetLife/Birds") und wird von StreetLife.step mitbewegt (auch beim Vorspulen im Prüfwerkzeug).
+## Vögel auf der Straße (seit Etappe 6g, verfeinert in 6h). Entsteht beim Start des Straßenlebens als Kind von
+## StreetLife ("Outside/StreetLife/Birds") und wird von StreetLife.step mitbewegt (auch beim Vorspulen).
 ##
-## Kleine Schwärme (GameConfig.bird_flock_size) einer Art (GameConfig.bird_species) fliegen hinter einem Dach
-## hervor – nie sichtbar aus dem Nichts: Der Weg beginnt hinter einem Haus (von der Straße verdeckt), führt
-## über den First und zu einem Platz in der Nähe der Kamera:
-## - Dachrinnen, Firste, Gesimse, Schildkästen, Fensterbänke: ausgemessen in data/animals/spots.json
-##   (Werkzeug scenes/tools/bake_animal_spots.tscn),
-## - Querarme der Straßenlaternen (zwei Plätze je Seite),
-## - das Vogelhäuschen an einer Hauswand gegenüber der Bücherei (Futterbrett, Rand, Sitzstange, First),
-## - der Gehweg: picken und hüpfen.
-## Nach einer Weile fliegen sie zu einem anderen Platz oder wieder hinter ein Dach (erst außer Sicht
-## verschwinden sie). Kommt jemand Vögeln am Boden (oder auf niedrigen Fensterbänken) zu nahe – Spielfigur,
-## Passant, Katze, Fahrzeug –, flattern sie mit Geräusch auf und landen woanders. Zwitschern hängt am Vogel.
+## Kleine Singvögel (GameConfig.bird_species) und Tauben (pigeon_looks) kommen in Schwärmen – nie sichtbar aus
+## dem Nichts: Der Weg beginnt hinter einem Haus (von der Straße verdeckt), führt über den First und in einem
+## Bogen schräg hinab zum Platz. Mal landen sie zusammen (nebeneinander auf einer Rinne, einem Kastenrand), mal
+## verteilen sie sich einzeln. Plätze:
+## - an den Häusern ausgemessen (data/animals/spots.json, Werkzeug scenes/tools/bake_animal_spots.tscn):
+##   Dachrinnen, Firste, Gesimse, Fensterbänke, Geländer, Fensterläden, Markisenstangen, Efeu, Rand von
+##   Blumenkästen und Töpfen – Tauben nur auf breiten Dachplätzen und am Boden,
+## - Querarme der Straßenlaternen und das Vogelhäuschen (nur Singvögel),
+## - der Gehweg: Singvögel picken und hüpfen, Tauben gehen und picken.
+## Ab und zu zieht ein Schwarm einfach über die Straße, ohne zu landen.
+## Auffliegen: Kommt jemand einem sitzenden Vogel nahe (Kugel um den Vogel, gemessen bis zu Kopf und Füßen der
+## Spielfigur, Passanten, Katzen, Fahrzeuge), fliegt der Schwarm auf und landet woanders. Auf Laternen und am
+## Vogelhäuschen bleiben sie sitzen, wenn man nur vorbeigeht – dort erschreckt sie nur ein Sprung der Spielfigur.
+## Zwitschern hängt am Vogel (eigene Laute je Art, sobald es Aufnahmen gibt; sonst „ambience/bird“).
 
 const SPOTS_FILE := "res://data/animals/spots.json"
 ## Querarme der Straßenlaterne (Modell aus build_storybook_lamps.py): Oberkante je Abstand vom Mast
 const LAMP_ARM_SPOTS := [[0.27, 2.784], [0.4, 2.779]]
 ## Ebenen, an denen Flugwege nicht vorbeikommen (Häuser: world und sight_blocker)
 const HOUSE_MASK := 1 | 128
-## Niedrige Plätze (Meter über dem Gehweg): Vögel dort fliegen auch auf, wenn jemand vorbeigeht
-const LOW_PERCH := 1.5
-## Abstand zwischen zwei Vögeln am Boden (m)
+## Abstand zwischen zwei Vögeln am Boden (m) – Tauben brauchen mehr Platz
 const GROUND_GAP := 0.17
+const PIGEON_GAP := 0.4
+## Plätze, an denen nur ein Sprung die Vögel erschreckt (Laternenarme, Vogelhäuschen)
+const JUMP_ONLY := ["lamp", "birdhouse", "feed"]
+## Plätze, die Tauben nehmen (sonst nur der Boden)
+const PIGEON_KINDS := ["roof"]
 
 var street: StreetLife
 ## Zähler für das Prüfwerkzeug: Erscheinen bzw. Verschwinden im Blickfeld (muss 0 bleiben)
 var visible_spawns := 0
 var visible_exits := 0
 var flights := 0
+var flyovers := 0
 
 var _outside: Node3D
 var _rng := RandomNumberGenerator.new()
-var _pool: Array[StreetBird] = []
+var _pool := {"bird": [], "pigeon": []}
 var _birds: Array[StreetBird] = []
-## Plätze: { pos (Welt), face, out (waagerecht, Welt), kind, house, taken }
+## Plätze: { pos (Welt), face, out (waagerecht), kind, house, edge, wide, taken }
 var _perches: Array[Dictionary] = []
 var _lamps: Array[Dictionary] = []
 var _feeder: Array[Dictionary] = []
 ## Häuser: { front (Welt, Fußpunkt), out, along, width, depth, eaves, top (Welt-y) }
 var _houses: Array[Dictionary] = []
-## Schwärme: { birds, area, timer, landed }
+## Schwärme: { birds, timer, landed, kind }
 var _flocks: Array[Dictionary] = []
-var _spawn := 0.0
+var _spawn := {"bird": 0.0, "pigeon": 0.0, "flyover": 0.0}
 var _scan := 0.0
 var _chirp_gap := 0.0
 var _birdhouse: Node3D
+var _flock_id := 0
 
 
 func setup(life: StreetLife) -> void:
@@ -55,8 +63,11 @@ func setup(life: StreetLife) -> void:
 	_rng.randomize()
 	_load_spots()
 	_collect_lamps()
-	_build_pool()
-	_spawn = _rng.randf_range(1.5, 5.0)
+	_build_pool("bird", GameConfig.bird_scene, GameConfig.bird_count + 2)
+	_build_pool("pigeon", GameConfig.pigeon_scene, GameConfig.pigeon_count + 1)
+	_spawn.bird = _rng.randf_range(1.5, 5.0)
+	_spawn.pigeon = _rng.randf_range(4.0, 12.0)
+	_spawn.flyover = _rng.randf_range(GameConfig.bird_flyover_interval.x * 0.4, GameConfig.bird_flyover_interval.y * 0.6)
 
 
 func seed_random(value: int) -> void:
@@ -86,8 +97,12 @@ func _load_spots() -> void:
 			"depth": float(h.depth), "eaves": front.y + float(h.eaves), "top": front.y + float(h.top)})
 	for p: Dictionary in data.get("perches", []):
 		var out := Vector3(p.out[0], 0.0, p.out[1]).normalized()
-		_perches.append({"pos": _outside.to_global(Vector3(p.pos[0], p.pos[1], p.pos[2])), "face": out, "out": out,
-			"kind": String(p.kind), "house": String(p.house), "taken": null})
+		var face := out
+		if String(p.get("edge", "")) == "along_v":
+			# Kante läuft nach vorn (offener Fensterladen): quer darauf sitzen
+			face = Vector3.UP.cross(out).normalized() * (1.0 if _rng.randf() < 0.5 else -1.0)
+		_perches.append({"pos": _outside.to_global(Vector3(p.pos[0], p.pos[1], p.pos[2])), "face": face, "out": out,
+			"kind": String(p.kind), "house": String(p.house), "wide": bool(p.get("wide", false)), "taken": null})
 	var box: Dictionary = data.get("birdhouse", {})
 	if not box.is_empty():
 		_place_birdhouse(_outside.to_global(Vector3(box.pos[0], box.pos[1], box.pos[2])), Vector3(box.out[0], 0.0, box.out[1]).normalized())
@@ -132,17 +147,18 @@ func _collect_lamps() -> void:
 					"kind": "lamp", "house": "lamp_%s_%d" % [lamp.name, int(sx)], "taken": null})
 
 
-func _build_pool() -> void:
-	var scene := load(GameConfig.bird_scene) as PackedScene
+func _build_pool(kind: String, path: String, count: int) -> void:
+	var scene := load(path) as PackedScene
 	if scene == null:
 		return
-	for i in GameConfig.bird_count + 2:
+	for i in count:
 		var bird := scene.instantiate() as StreetBird
-		bird.name = "Bird%d" % (i + 1)
+		bird.name = "%s%d" % [kind.capitalize(), i + 1]
+		bird.kind = kind
 		bird.life = self
 		add_child(bird)
 		bird.path_done.connect(_on_path_done)
-		_pool.append(bird)
+		(_pool[kind] as Array).append(bird)
 
 
 # --- Ablauf ---
@@ -151,10 +167,16 @@ func step(delta: float) -> void:
 	for bird in _birds:
 		bird.step(delta)
 	_chirp_gap -= delta
-	_spawn -= delta
-	if _spawn <= 0.0:
-		_spawn = _rng.randf_range(GameConfig.bird_spawn_interval.x, GameConfig.bird_spawn_interval.y)
-		_spawn_flock()
+	for kind in ["bird", "pigeon"]:
+		_spawn[kind] -= delta
+		if _spawn[kind] <= 0.0:
+			var gap: Vector2 = GameConfig.bird_spawn_interval if kind == "bird" else GameConfig.pigeon_spawn_interval
+			_spawn[kind] = _rng.randf_range(gap.x, gap.y)
+			_spawn_flock(kind)
+	_spawn.flyover -= delta
+	if _spawn.flyover <= 0.0:
+		_spawn.flyover = _rng.randf_range(GameConfig.bird_flyover_interval.x, GameConfig.bird_flyover_interval.y)
+		_spawn_flyover()
 	for flock in _flocks.duplicate():
 		if not flock.landed:
 			continue
@@ -163,25 +185,36 @@ func step(delta: float) -> void:
 			_move_on(flock)
 	_scan -= delta
 	if _scan <= 0.0:
-		_scan = 0.15
+		_scan = 0.12
 		_check_threats()
 
 
-func _spawn_flock() -> void:
-	var size := _rng.randi_range(GameConfig.bird_flock_size.x, GameConfig.bird_flock_size.y)
-	size = mini(size, mini(_pool.size(), GameConfig.bird_count - _birds.size()))
+func _count(kind: String) -> int:
+	var n := 0
+	for b in _birds:
+		if b.kind == kind:
+			n += 1
+	return n
+
+
+func _spawn_flock(kind: String) -> void:
+	var limit := GameConfig.bird_count if kind == "bird" else GameConfig.pigeon_count
+	var range_size: Vector2i = GameConfig.bird_flock_size if kind == "bird" else GameConfig.pigeon_flock_size
+	var size := _rng.randi_range(range_size.x, range_size.y)
+	size = mini(size, mini((_pool[kind] as Array).size(), limit - _count(kind)))
 	if size <= 0 or _houses.is_empty():
 		return
-	var spots := _pick_area(size, _camera_pos(), GameConfig.bird_near_distance, true)
+	var spots := _pick_area(kind, size, _camera_pos(), GameConfig.bird_near_distance)
 	if spots.is_empty():
 		return
 	var entry := _hidden_entry(spots[0].pos)
 	if entry.is_empty():
 		return
-	var flock := {"birds": [], "timer": 0.0, "landed": false}
-	var species := _rng.randi() % maxi(1, GameConfig.bird_species.size())
+	_flock_id += 1
+	var flock := {"birds": [], "timer": 0.0, "landed": false, "kind": kind, "id": _flock_id}
+	var species := _pick_species(kind)
 	for i in spots.size():
-		var bird: StreetBird = _pool.pop_back()
+		var bird: StreetBird = (_pool[kind] as Array).pop_back()
 		_birds.append(bird)
 		_dress(bird, species)
 		bird.flock = flock
@@ -192,21 +225,107 @@ func _spawn_flock() -> void:
 		bird.leaving = false
 		# jeder Vogel etwas versetzt hinter dem Dach hervor
 		var offset: Vector3 = entry.along * _rng.randf_range(-0.8, 0.8) + Vector3.UP * _rng.randf_range(-0.3, 0.3)
-		var path := _entry_path(entry, offset, spot)
-		bird.fly_path(path, GameConfig.bird_speed * _rng.randf_range(0.92, 1.08), i * _rng.randf_range(0.15, 0.45))
+		var path := _entry_path(entry, offset, spot, kind)
+		bird.fly_path(path, _speed(kind) * _rng.randf_range(0.92, 1.08), i * _rng.randf_range(0.15, 0.45))
 		flights += 1
 		if is_visible_point(path[0]):
 			visible_spawns += 1
 	_flocks.append(flock)
 
 
+## Ein Schwarm zieht über die Straße, ohne zu landen: hinter einem Haus hervor, quer oder schräg über die
+## Straße und hinter einem Haus gegenüber (oder weiter vorn) wieder verschwinden.
+func _spawn_flyover() -> void:
+	var size := _rng.randi_range(GameConfig.bird_flyover_size.x, GameConfig.bird_flyover_size.y)
+	size = mini(size, mini((_pool.bird as Array).size(), GameConfig.bird_count + 2 - _count("bird")))
+	if size < 2 or _houses.is_empty():
+		return
+	var cam := _camera_pos()
+	var near := _houses.filter(func(h: Dictionary) -> bool: return h.front.distance_to(cam) < 28.0)
+	if near.size() < 2:
+		return
+	near.shuffle()
+	var a: Dictionary = near[0]
+	var b: Dictionary = {}
+	for h: Dictionary in near:
+		if h.out.dot(a.out) < -0.3 and h.front.distance_to(a.front) > 8.0:
+			b = h
+			break
+	if b.is_empty():
+		return
+	var start := _behind(a, _rng.randf_range(-a.width / 3.0, a.width / 3.0))
+	var end := _behind(b, _rng.randf_range(-b.width / 3.0, b.width / 3.0))
+	if is_visible_point(start) or is_visible_point(end):
+		return
+	var height := maxf(a.top, b.top) + _rng.randf_range(1.2, 3.0)
+	var ra: Vector3 = a.front - a.out * (a.depth * 0.45)
+	var rb: Vector3 = b.front - b.out * (b.depth * 0.45)
+	var mid := (ra + rb) / 2.0
+	ra.y = a.top + 1.2
+	rb.y = b.top + 1.2
+	mid.y = height
+	_flock_id += 1
+	var flock := {"birds": [], "timer": 0.0, "landed": false, "kind": "bird", "flyover": true, "id": _flock_id}
+	var species := _pick_species("bird")
+	for i in size:
+		var bird: StreetBird = (_pool.bird as Array).pop_back()
+		_birds.append(bird)
+		_dress(bird, species)
+		bird.flock = flock
+		bird.spot = {}
+		bird.leaving = true
+		flock.birds.append(bird)
+		var off := Vector3(_rng.randf_range(-1.2, 1.2), _rng.randf_range(-0.5, 0.5), _rng.randf_range(-1.2, 1.2))
+		var points: Array[Vector3] = [start + off, ra + off * 0.8, mid + off, rb + off * 0.8, end + off]
+		bird.fly_path(_smooth(points, true), GameConfig.bird_speed * 1.25 * _rng.randf_range(0.95, 1.05), i * _rng.randf_range(0.05, 0.2))
+	flyovers += 1
+	flights += size
+	_flocks.append(flock)
+
+
+## Prüfwerkzeug: einen Schwarm direkt am Boden an pos absetzen (ohne Anflug – nur zum Testen der Katzen-Jagd).
+func debug_ground_flock(pos: Vector3, size: int = 3) -> void:
+	_flock_id += 1
+	var flock := {"birds": [], "timer": 60.0, "landed": true, "kind": "bird", "id": _flock_id}
+	var center := Vector3(pos.x, _outside.global_position.y, pos.z)
+	for i in mini(size, (_pool.bird as Array).size()):
+		var bird: StreetBird = (_pool.bird as Array).pop_back()
+		_birds.append(bird)
+		_dress(bird, 0)
+		bird.flock = flock
+		flock.birds.append(bird)
+		var spot := {"pos": center + Vector3(0.2 * i, 0.0, 0.15 * i), "face": Vector3.FORWARD, "out": Vector3.FORWARD,
+			"kind": "ground", "house": "ground", "center": center, "taken": bird}
+		bird.spot = spot
+		bird.visible = true
+		bird.settle(spot)
+	_flocks.append(flock)
+
+
+func _pick_species(kind: String) -> int:
+	var list: Array = GameConfig.bird_species if kind == "bird" else GameConfig.pigeon_looks
+	return _rng.randi() % maxi(1, list.size())
+
+
+func _speed(kind: String) -> float:
+	return GameConfig.bird_speed * (1.35 if kind == "pigeon" else 1.0)
+
+
 func _dress(bird: StreetBird, species: int) -> void:
 	bird.species = species
+	if bird.kind == "pigeon":
+		if GameConfig.pigeon_looks.is_empty():
+			return
+		var p: Dictionary = GameConfig.pigeon_looks[species]
+		bird.apply_look("pigeon_%d" % species, {"Taube Gefieder": p.plumage, "Taube Flügel": p.wing, "Taube Beine": p.legs},
+			{"Taube Gefieder": {"third_color": p.neck, "shimmer_color": p.shimmer, "mask_shimmer": 0.8, "second_color": p.plumage}})
+		return
 	if GameConfig.bird_species.is_empty():
 		return
 	var look: Dictionary = GameConfig.bird_species[species]
 	bird.apply_look("bird_%d" % species, {"Vogel Gefieder": look.plumage, "Vogel Flügel": look.wing,
-		"Vogel Brust": look.breast, "Vogel Schnabel": look.beak})
+		"Vogel Schnabel": look.beak, "Vogel Beine": look.get("legs", Color(0.62, 0.48, 0.42))},
+		{"Vogel Gefieder": {"second_color": look.breast, "third_color": look.get("cap", look.plumage)}})
 
 
 func _on_path_done(bird: StreetBird) -> void:
@@ -217,7 +336,8 @@ func _on_path_done(bird: StreetBird) -> void:
 			var away := end - _camera_pos()
 			away.y = 0.0
 			away = away.normalized() if away.length() > 0.1 else Vector3.FORWARD
-			bird.fly_path(PackedVector3Array([end, end + away * 6.0 + Vector3.UP * 1.5]), GameConfig.bird_speed)
+			bird.fly_path(PackedVector3Array([end, end + away * 3.0 + Vector3.UP * 0.6, end + away * 6.0 + Vector3.UP * 1.5]),
+				GameConfig.bird_speed)
 			return
 		if is_visible_point(end):
 			visible_exits += 1
@@ -244,23 +364,26 @@ func _release(bird: StreetBird) -> void:
 			_flocks.erase(flock)
 	bird.hide_bird()
 	_birds.erase(bird)
-	_pool.append(bird)
+	(_pool[bird.kind] as Array).append(bird)
 
 
-## Nach dem Sitzen: zu einem anderen Platz in der Nähe oder hinter ein Dach.
-func _move_on(flock: Dictionary, flee: bool = false) -> void:
+## Nach dem Sitzen: zu einem anderen Platz in der Nähe oder hinter ein Dach. Bei Gefahr (flee) weg vom Grund
+## (away = Richtung weg von der Gefahr) und höher hinauf.
+func _move_on(flock: Dictionary, flee: bool = false, away: Vector3 = Vector3.ZERO) -> void:
 	var birds: Array = flock.birds.duplicate()
 	if birds.is_empty():
 		_flocks.erase(flock)
 		return
+	var kind := String(flock.get("kind", "bird"))
 	var first: StreetBird = birds[0]
 	var stay := flee or _rng.randf() < GameConfig.bird_stay_nearby_share
 	var spots: Array[Dictionary] = []
 	if stay:
-		spots = _pick_area(birds.size(), first.global_position, 16.0, not flee, flee)
+		spots = _pick_area(kind, birds.size(), first.global_position + away * 4.0, 16.0, not flee, flee)
 	flock.landed = false
-	var speed := GameConfig.bird_flee_speed if flee else GameConfig.bird_speed
+	var speed := _speed(kind) * (GameConfig.bird_flee_speed / GameConfig.bird_speed if flee else 1.0)
 	if flee or _camera_pos().distance_to(first.global_position) < 14.0:
+		# Flattern (eigene Aufnahme der Entwicklerin – fehlt sie, bleibt es still)
 		Audio.play_on(first, "ambience/bird_flap", GameConfig.bird_flap_volume_db + (4.0 if flee else 0.0), Audio.vary(0.08),
 			20.0, Vector3(0.0, 0.05, 0.0))
 	for i in birds.size():
@@ -268,128 +391,170 @@ func _move_on(flock: Dictionary, flee: bool = false) -> void:
 		var from: Dictionary = bird.spot
 		if from.get("taken") == bird:
 			from.taken = null
-		var delay := (i * _rng.randf_range(0.05, 0.15)) if flee else (i * _rng.randf_range(0.3, 0.9))
+		var delay := (i * _rng.randf_range(0.04, 0.12)) if flee else (i * _rng.randf_range(0.3, 0.9))
 		if i < spots.size():
 			var spot: Dictionary = spots[i]
 			spot.taken = bird
 			bird.spot = spot
-			bird.fly_path(_hop_path(bird.global_position, from, spot), speed * _rng.randf_range(0.92, 1.08), delay)
+			bird.fly_path(_hop_path(bird.global_position, from, spot, away), speed * _rng.randf_range(0.92, 1.08), delay)
 		else:
 			var exit := _hidden_entry(bird.global_position)
 			if exit.is_empty():
 				# kein verdeckter Platz zum Wegfliegen: einfach sitzen bleiben
 				bird.spot = from
 				from.taken = bird
-				bird.settle(from)
 				continue
 			bird.leaving = true
 			var offset: Vector3 = exit.along * _rng.randf_range(-0.8, 0.8)
-			var path := _entry_path(exit, offset, from)
-			path.reverse()
-			path[0] = bird.global_position
-			bird.fly_path(path, speed * _rng.randf_range(0.92, 1.08), delay)
+			bird.fly_path(_exit_path(bird.global_position, from, exit, offset, away), speed * _rng.randf_range(0.92, 1.08), delay)
 		flights += 1
 	if flock.birds.is_empty():
 		_flocks.erase(flock)
 
 
-## Kommt jemand Vögeln am Boden (oder auf niedrigen Plätzen) zu nahe, fliegt der ganze Schwarm auf.
+## Kommt jemand einem sitzenden Vogel zu nahe (Kugel um den Vogel), fliegt der ganze Schwarm auf. Auf Laternen
+## und am Vogelhäuschen nur, wenn die Spielfigur dort springt.
 func _check_threats() -> void:
 	var threats := _threats()
 	for flock in _flocks.duplicate():
+		if flock.get("flyover", false):
+			continue
 		for bird: StreetBird in flock.birds:
-			if bird.state != StreetBird.State.PERCH:
-				continue
-			var low := bird.is_on_ground() or bird.global_position.y - _outside.global_position.y < LOW_PERCH
-			if not low:
+			if bird.state != StreetBird.State.PERCH or bird.is_waiting():
 				continue
 			var p := bird.global_position
+			var jump_only := String(bird.spot.get("kind", "")) in JUMP_ONLY
 			var scared := false
-			for t: Array in threats:
-				var q: Vector3 = t[0]
-				var r: float = t[1]
-				if not bird.is_on_ground():
-					r = minf(r, 1.2)
-				if Vector2(p.x - q.x, p.z - q.z).length() < r:
+			var away := Vector3.ZERO
+			for t: Dictionary in threats:
+				if jump_only and not t.get("jumping", false):
+					continue
+				var d := _segment_distance(p, t.a, t.b)
+				if d < float(t.radius):
 					scared = true
+					away = p - t.a
+					away.y = 0.0
+					away = away.normalized() if away.length() > 0.01 else Vector3.ZERO
 					break
 			if scared:
-				_move_on(flock, true)
+				_move_on(flock, true, away)
 				break
 
 
-## [Ort, Fluchtabstand] aller, vor denen Vögel auffliegen.
+## Alle, vor denen Vögel auffliegen: { a, b (Füße, Kopf), radius, jumping }.
 func _threats() -> Array:
 	var result := []
+	var r := GameConfig.bird_flee_radius
 	var player := street.get_player()
 	if player:
-		result.append([player.global_position, GameConfig.bird_flee_radius])
+		var jumping := false
+		if player is CharacterBody3D:
+			var body := player as CharacterBody3D
+			jumping = not body.is_on_floor() and body.velocity.y > -4.0
+		result.append({"a": player.global_position, "b": player.global_position + Vector3.UP * 1.7, "radius": r,
+			"jumping": jumping})
 	for walker in street.get_walkers():
-		result.append([walker.global_position, GameConfig.bird_flee_radius])
+		result.append({"a": walker.global_position, "b": walker.global_position + Vector3.UP * 1.25, "radius": r})
 	for vehicle in street.get_vehicles():
-		result.append([vehicle.global_position, GameConfig.bird_vehicle_flee_radius + vehicle.length * 0.3])
+		var c := vehicle.global_position + Vector3.UP * 0.7
+		result.append({"a": c, "b": c, "radius": GameConfig.bird_vehicle_flee_radius + vehicle.length * 0.3})
 	if street.cats:
 		for cat in street.cats.get_cats():
-			result.append([cat.global_position, GameConfig.bird_flee_radius + 0.5])
+			result.append({"a": cat.global_position, "b": cat.global_position + Vector3.UP * 0.3,
+				"radius": cat.bird_scare_radius()})
 	return result
 
 
-## Zwitschern (räumlich am Vogel), nicht zu viele gleichzeitig.
+static func _segment_distance(p: Vector3, a: Vector3, b: Vector3) -> float:
+	var ab := b - a
+	var t := 0.0 if ab.length_squared() < 1e-6 else clampf((p - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+	return p.distance_to(a + ab * t)
+
+
+## Zwitschern (räumlich am Vogel), nicht zu viele gleichzeitig; eigene Laute je Art, wenn es sie gibt.
 func chirp(bird: StreetBird) -> void:
 	if _chirp_gap > 0.0 or bird.global_position.distance_to(_camera_pos()) > GameConfig.bird_chirp_distance:
 		return
+	var sound := "ambience/pigeon"
+	if bird.kind == "bird":
+		sound = "ambience/bird"
+		if bird.species < GameConfig.bird_species.size():
+			var own := String((GameConfig.bird_species[bird.species] as Dictionary).get("sound", ""))
+			if own != "" and Audio.has_sound(own):
+				sound = own
+	if not Audio.has_sound(sound):
+		return
 	_chirp_gap = 0.9
-	Audio.play_on(bird, "ambience/bird", GameConfig.bird_chirp_volume_db, Audio.vary(0.1),
-		GameConfig.bird_chirp_distance, Vector3(0.0, 0.07, 0.0))
+	Audio.play_on(bird, sound, GameConfig.bird_chirp_volume_db, Audio.vary(0.1), GameConfig.bird_chirp_distance,
+		Vector3(0.0, 0.07, 0.0))
 
 
-## Darf ein Vogel am Boden dorthin hüpfen (kein anderer Vogel zu nah)?
+## Darf ein Vogel am Boden dorthin (kein anderer Vogel zu nah)?
 func ground_free(target: Vector3, bird: StreetBird) -> bool:
+	var gap := PIGEON_GAP if bird.kind == "pigeon" else GROUND_GAP
 	for other in _birds:
-		if other != bird and other.is_on_ground() and other.global_position.distance_to(target) < GROUND_GAP:
+		if other != bird and other.is_on_ground() and other.global_position.distance_to(target) < gap:
 			return false
 	return true
 
 
 # --- Plätze wählen ---
 
-## Plätze für einen Schwarm von size Vögeln in der Nähe von near (höchstens radius Meter): Gehweg,
-## Vogelhäuschen, Laternenarme oder Plätze an den Häusern. high_only = nur oberhalb der Köpfe (Flucht).
-func _pick_area(size: int, near: Vector3, radius: float, allow_ground: bool = true, high_only: bool = false) -> Array[Dictionary]:
+## Plätze für einen Schwarm von size Vögeln in der Nähe von near (höchstens radius Meter). Singvögel: Gehweg,
+## Vogelhäuschen, Laternenarme oder Plätze an den Häusern (zusammen oder einzeln verteilt); Tauben: Gehweg oder
+## breite Dachplätze. high_only = nur oberhalb der Köpfe (Flucht).
+func _pick_area(kind: String, size: int, near: Vector3, radius: float, allow_ground: bool = true, high_only: bool = false) -> Array[Dictionary]:
 	var roll := _rng.randf()
 	var result: Array[Dictionary] = []
+	if kind == "pigeon":
+		if allow_ground and not high_only and roll < GameConfig.pigeon_ground_share:
+			result = _ground_spots(size, near, radius, PIGEON_GAP * 1.4, 1.1)
+		if result.is_empty():
+			result = _group_from(_perches.filter(func(s: Dictionary) -> bool: return s.wide and s.kind in PIGEON_KINDS),
+				size, near, radius * 1.4, 3.0, high_only, PIGEON_GAP)
+		return result
 	if allow_ground and not high_only and roll < GameConfig.bird_ground_share:
-		result = _ground_spots(size, near, radius)
+		result = _ground_spots(size, near, radius, GROUND_GAP * 1.4, 0.45)
 	elif roll < GameConfig.bird_ground_share + GameConfig.bird_birdhouse_share:
 		result = _group_from(_feeder, size, near, radius, 0.5)
 	elif roll < GameConfig.bird_ground_share + GameConfig.bird_birdhouse_share + GameConfig.bird_lamp_share:
 		result = _group_from(_lamps, size, near, radius, 0.6)
 	if result.is_empty():
-		result = _group_from(_perches, size, near, radius, 1.3, high_only)
+		if size > 1 and _rng.randf() < GameConfig.bird_scatter_share:
+			result = _scattered(size, near, radius, high_only)
+		else:
+			result = _group_from(_perches, size, near, radius, 1.3, high_only)
 	return result
 
 
-## Ein freier Platz (bevorzugt sichtbar) und freie Nachbarn am selben Haus bzw. derselben Laterne.
-func _group_from(list: Array[Dictionary], size: int, near: Vector3, radius: float, spread: float, high_only: bool = false) -> Array[Dictionary]:
-	var candidates: Array[Dictionary] = []
-	var ground := _outside.global_position.y
+func _cat_positions() -> Array[Vector3]:
 	var cats: Array[Vector3] = []
 	if street.cats:
 		for cat in street.cats.get_cats():
 			cats.append(cat.global_position)
-	for spot in list:
-		if spot.taken != null or spot.pos.distance_to(near) > radius:
-			continue
-		if high_only and spot.pos.y - ground < 2.2:
-			continue
-		# nie neben einer Katze landen
-		var near_cat := false
-		for c in cats:
-			if c.distance_to(spot.pos) < 1.8:
-				near_cat = true
-		if near_cat:
-			continue
-		candidates.append(spot)
+	return cats
+
+
+func _free(spot: Dictionary, near: Vector3, radius: float, high_only: bool, cats: Array[Vector3]) -> bool:
+	if spot.taken != null or spot.pos.distance_to(near) > radius:
+		return false
+	if high_only and spot.pos.y - _outside.global_position.y < 2.2:
+		return false
+	# nie neben einer Katze landen
+	for c in cats:
+		if c.distance_to(spot.pos) < 1.8:
+			return false
+	return true
+
+
+## Ein freier Platz (bevorzugt sichtbar) und freie Nachbarn am selben Haus bzw. derselben Laterne.
+func _group_from(list: Array, size: int, near: Vector3, radius: float, spread: float, high_only: bool = false,
+		gap: float = 0.0) -> Array[Dictionary]:
+	var cats := _cat_positions()
+	var candidates: Array[Dictionary] = []
+	for spot: Dictionary in list:
+		if _free(spot, near, radius, high_only, cats):
+			candidates.append(spot)
 	if candidates.is_empty():
 		return []
 	var first: Dictionary = {}
@@ -399,23 +564,51 @@ func _group_from(list: Array[Dictionary], size: int, near: Vector3, radius: floa
 		if is_visible_point(pick.pos + Vector3.UP * 0.05):
 			break
 	var result: Array[Dictionary] = [first]
-	for spot in candidates:
-		if result.size() >= size:
-			break
-		if spot != first and spot.house == first.house and spot.kind == first.kind and spot.pos.distance_to(first.pos) < spread:
-			result.append(spot)
-	# nicht genug Nachbarn: weitere Plätze am selben Haus
-	for spot in candidates:
-		if result.size() >= size:
-			break
-		if not spot in result and spot.house == first.house and spot.pos.distance_to(first.pos) < 4.0:
-			result.append(spot)
+	for pass_spread in [spread, 4.0]:
+		for spot in candidates:
+			if result.size() >= size:
+				break
+			if spot in result or spot.house != first.house or spot.pos.distance_to(first.pos) > pass_spread:
+				continue
+			if pass_spread == spread and spot.kind != first.kind:
+				continue
+			var ok := true
+			for other in result:
+				if gap > 0.0 and other.pos.distance_to(spot.pos) < gap:
+					ok = false
+			if ok:
+				result.append(spot)
 	return result
 
 
-## Plätze auf dem Gehweg (picken): ein Fleck auf einem der beiden Gehwege nahe der Kamera, weit genug
-## von Leuten, Laternen, Bänken und Treppe; die Vögel verteilen sich darum herum.
-func _ground_spots(size: int, near: Vector3, radius: float) -> Array[Dictionary]:
+## Einzelne Vögel verteilt auf verschiedene Plätze in der Nähe (je mindestens 1 m auseinander).
+func _scattered(size: int, near: Vector3, radius: float, high_only: bool) -> Array[Dictionary]:
+	var cats := _cat_positions()
+	var pool: Array = _perches + _lamps
+	pool.shuffle()
+	var result: Array[Dictionary] = []
+	var center := Vector3.INF
+	for spot: Dictionary in pool:
+		if result.size() >= size:
+			break
+		if not _free(spot, near, radius, high_only, cats):
+			continue
+		if center != Vector3.INF and spot.pos.distance_to(center) > 8.0:
+			continue
+		var ok := true
+		for other in result:
+			if other.pos.distance_to(spot.pos) < 1.0:
+				ok = false
+		if ok:
+			result.append(spot)
+			if center == Vector3.INF:
+				center = spot.pos
+	return result
+
+
+## Plätze auf dem Gehweg: ein Fleck auf einem der beiden Gehwege nahe der Kamera, weit genug von Leuten,
+## Laternen, Bänken und Treppe; die Vögel verteilen sich darum herum.
+func _ground_spots(size: int, near: Vector3, radius: float, gap: float, spread: float) -> Array[Dictionary]:
 	var local := _outside.to_local(near)
 	var s0 := street.centerline.project(Vector2(local.x, local.z)).x
 	var threats := _threats()
@@ -429,12 +622,11 @@ func _ground_spots(size: int, near: Vector3, radius: float) -> Array[Dictionary]
 		var lat := _rng.randf_range(comfort.x + 0.5, comfort.y - 0.5)
 		var c2 := route.point_at(s, lat)
 		var center := _outside.to_global(Vector3(c2.x, 0.0, c2.y))
-		if center.distance_to(near) > radius or not street.clear_of_static(c2, 0.9):
+		if center.distance_to(near) > radius or not street.clear_of_static(c2, 0.9 + spread):
 			continue
 		var far := true
-		for t: Array in threats:
-			var q: Vector3 = t[0]
-			if Vector2(center.x - q.x, center.z - q.z).length() < float(t[1]) * 1.8:
+		for t: Dictionary in threats:
+			if Vector2(center.x - t.a.x, center.z - t.a.z).length() < float(t.radius) * 1.8:
 				far = false
 				break
 		if not far:
@@ -442,13 +634,13 @@ func _ground_spots(size: int, near: Vector3, radius: float) -> Array[Dictionary]
 		var result: Array[Dictionary] = []
 		for i in size:
 			var p := center
-			for k in 8:
+			for k in 10:
 				var a := _rng.randf() * TAU
-				var r := 0.0 if i == 0 else _rng.randf_range(0.18, 0.45)
+				var r := 0.0 if i == 0 else _rng.randf_range(gap, spread)
 				p = center + Vector3(cos(a) * r, 0.0, sin(a) * r)
 				var ok := true
 				for other in result:
-					if other.pos.distance_to(p) < GROUND_GAP * 1.4:
+					if other.pos.distance_to(p) < gap:
 						ok = false
 				if ok:
 					break
@@ -462,7 +654,7 @@ func _ground_spots(size: int, near: Vector3, radius: float) -> Array[Dictionary]
 # --- Flugwege ---
 
 ## Verdeckter Ort hinter einem Haus nahe target (von dort fliegen Vögel über den First herein bzw.
-## dorthin hinaus). Liefert { pos, house, along } oder leer.
+## dorthin hinaus). Liefert { pos, house, along, lateral } oder leer.
 func _hidden_entry(target: Vector3) -> Dictionary:
 	var houses := _houses.duplicate()
 	houses.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -470,42 +662,72 @@ func _hidden_entry(target: Vector3) -> Dictionary:
 	for i in mini(8, houses.size()):
 		var h: Dictionary = houses[i]
 		var lateral: float = _rng.randf_range(-h.width / 3.0, h.width / 3.0)
-		var pos: Vector3 = h.front - h.out * (h.depth + 1.8) + h.along * lateral
-		pos.y = h.front.y + (h.eaves - h.front.y) * 0.7
+		var pos := _behind(h, lateral)
 		if not is_visible_point(pos):
 			return {"pos": pos, "house": h, "along": h.along, "lateral": lateral}
 	return {}
 
 
-## Weg von einem verdeckten Ort hinter einem Haus über den First zum Platz.
-func _entry_path(entry: Dictionary, offset: Vector3, spot: Dictionary) -> PackedVector3Array:
+## Punkt hinter einem Haus (von der Straße verdeckt), weit genug zurück für einen flachen Steigflug.
+func _behind(h: Dictionary, lateral: float) -> Vector3:
+	var pos: Vector3 = h.front - h.out * (h.depth + 3.5) + h.along * lateral
+	pos.y = h.front.y + (h.eaves - h.front.y) * 0.8
+	return pos
+
+
+## Weg von hinter einem Haus über den First und in einem Bogen hinab zum Platz.
+func _entry_path(entry: Dictionary, offset: Vector3, spot: Dictionary, kind: String) -> PackedVector3Array:
 	var h: Dictionary = entry.house
 	var lateral: Vector3 = h.along * float(entry.lateral)
 	var ridge: Vector3 = h.front - h.out * (h.depth * 0.45) + lateral
 	ridge.y = h.top + 1.0
-	var over: Vector3 = h.front + h.out * 0.9 + lateral
-	over.y = maxf(h.top + 0.3, spot.pos.y + 1.2)
+	var over: Vector3 = h.front + h.out * 1.2 + lateral
+	over.y = maxf(h.top + 0.3, spot.pos.y + 1.5)
 	var points: Array[Vector3] = [entry.pos + offset, ridge + offset * 0.6, over + offset * 0.4]
-	points.append_array(_approach(over, spot))
-	return _smooth(_clear_route(points))
+	points.append_array(_landing(over, spot))
+	return _smooth(_clear_route(points), kind == "bird")
+
+
+## Weg vom Platz über den First hinter ein Haus (Wegfliegen außer Sicht).
+func _exit_path(from_pos: Vector3, from: Dictionary, exit: Dictionary, offset: Vector3, away: Vector3) -> PackedVector3Array:
+	var h: Dictionary = exit.house
+	var lateral: Vector3 = h.along * float(exit.lateral)
+	var ridge: Vector3 = h.front - h.out * (h.depth * 0.45) + lateral
+	ridge.y = h.top + 1.0
+	var over: Vector3 = h.front + h.out * 1.2 + lateral
+	over.y = maxf(h.top + 0.3, from_pos.y + 1.5)
+	var points: Array[Vector3] = _takeoff(from_pos, from, away)
+	points.append_array([over + offset * 0.4, ridge + offset * 0.6, exit.pos + offset])
+	return _smooth(_clear_route(points, 2), true)
 
 
 ## Weg von einem Platz zum nächsten.
-func _hop_path(from_pos: Vector3, from: Dictionary, spot: Dictionary) -> PackedVector3Array:
-	var out: Vector3 = from.get("out", Vector3.UP)
-	var lift := from_pos + Vector3.UP * 0.9 + (out * 0.9 if from.get("kind", "") != "ground" else Vector3.ZERO)
-	var points: Array[Vector3] = [from_pos, lift]
-	var approach := _approach(lift, spot)
-	var mid := (lift + approach[0]) / 2.0
-	if lift.distance_to(approach[0]) > 6.0:
-		mid.y = maxf(mid.y, maxf(lift.y, approach[0].y) + 1.0)
+func _hop_path(from_pos: Vector3, from: Dictionary, spot: Dictionary, away: Vector3 = Vector3.ZERO) -> PackedVector3Array:
+	var points: Array[Vector3] = _takeoff(from_pos, from, away)
+	var lift := points[-1]
+	var landing := _landing(lift, spot)
+	if lift.distance_to(landing[0]) > 5.0:
+		var mid := (lift + landing[0]) / 2.0
+		mid.y = maxf(mid.y, maxf(lift.y, landing[0].y) + 0.8)
 		points.append(mid)
-	points.append_array(approach)
-	return _smooth(_clear_route(points))
+	points.append_array(landing)
+	return _smooth(_clear_route(points), String(from.get("kind", "")) != "pigeon")
 
 
-## Die letzten beiden Punkte vor der Landung: schräg von vorn oben auf den Platz.
-func _approach(from: Vector3, spot: Dictionary) -> Array[Vector3]:
+## Abheben in einem flachen Bogen: nach vorn (vom Haus weg) bzw. weg von der Gefahr, dabei steigen.
+func _takeoff(from_pos: Vector3, from: Dictionary, away: Vector3) -> Array[Vector3]:
+	var dir: Vector3 = away if away != Vector3.ZERO else from.get("out", Vector3.FORWARD)
+	if String(from.get("kind", "")) == "ground" and away == Vector3.ZERO:
+		dir = from.get("face", Vector3.FORWARD)
+	dir.y = 0.0
+	dir = dir.normalized() if dir.length() > 0.01 else Vector3.FORWARD
+	dir = dir.rotated(Vector3.UP, _rng.randf_range(-0.6, 0.6))
+	return [from_pos, from_pos + dir * 0.45 + Vector3.UP * 0.2, from_pos + dir * 1.6 + Vector3.UP * 0.75]
+
+
+## Die letzten Punkte vor der Landung: in flachem Bogen schräg von vorn oben auf den Platz (etwa 25°), kurz vor
+## dem Aufsetzen fast waagerecht.
+func _landing(from: Vector3, spot: Dictionary) -> Array[Vector3]:
 	var target: Vector3 = spot.pos
 	var dir: Vector3
 	if spot.kind == "ground":
@@ -513,17 +735,18 @@ func _approach(from: Vector3, spot: Dictionary) -> Array[Vector3]:
 		dir.y = 0.0
 		dir = dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD
 	else:
-		dir = spot.out
-	return [target + dir * 1.5 + Vector3.UP * 1.0, target + dir * 0.35 + Vector3.UP * 0.22, target]
+		dir = (spot.out as Vector3).rotated(Vector3.UP, _rng.randf_range(-0.5, 0.5))
+	return [target + dir * 2.6 + Vector3.UP * 1.1, target + dir * 0.9 + Vector3.UP * 0.3,
+		target + dir * 0.18 + Vector3.UP * 0.04, target]
 
 
-## Teilstücke, die durch ein Haus führen würden: über die Dächer heben.
-func _clear_route(points: Array[Vector3]) -> Array[Vector3]:
+## Teilstücke, die durch ein Haus führen würden: über die Dächer heben (Landung und Abflug bleiben).
+func _clear_route(points: Array[Vector3], keep_start: int = 0) -> Array[Vector3]:
 	var result: Array[Vector3] = [points[0]]
 	for i in range(1, points.size()):
 		var a := result[-1]
 		var b := points[i]
-		if i < points.size() - 2 and not _segment_clear(a, b):
+		if i > keep_start and i < points.size() - 3 and not _segment_clear(a, b):
 			var high := maxf(_roofs_near((a + b) / 2.0), maxf(a.y, b.y)) + 1.5
 			var m1 := a.lerp(b, 0.25)
 			var m2 := a.lerp(b, 0.75)
@@ -551,8 +774,9 @@ func _roofs_near(p: Vector3) -> float:
 	return top
 
 
-## Glatter Weg durch die Punkte (Catmull-Rom), Abtastung etwa alle 0,25 m.
-func _smooth(points: Array[Vector3]) -> PackedVector3Array:
+## Glatter Weg durch die Punkte (Catmull-Rom), Abtastung etwa alle 0,2 m. waves = kleine Vögel fliegen in
+## sanften Wellen (Flügelschläge – Gleiten), nicht am Anfang und vor der Landung.
+func _smooth(points: Array[Vector3], waves: bool = false) -> PackedVector3Array:
 	var result := PackedVector3Array()
 	if points.size() < 2:
 		for p in points:
@@ -563,12 +787,22 @@ func _smooth(points: Array[Vector3]) -> PackedVector3Array:
 		var p1 := points[i]
 		var p2 := points[i + 1]
 		var p3 := points[i + 2] if i + 2 < points.size() else points[i + 1] * 2.0 - points[i]
-		var n := maxi(1, int(p1.distance_to(p2) / 0.25))
+		var n := maxi(1, int(p1.distance_to(p2) / 0.2))
 		for k in n:
 			var t := float(k) / n
 			result.append(0.5 * ((2.0 * p1) + (-p0 + p2) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t
 				+ (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t * t * t))
 	result.append(points[-1])
+	if waves and result.size() > 4:
+		var total := 0.0
+		var lengths := PackedFloat32Array([0.0])
+		for i in range(1, result.size()):
+			total += result[i].distance_to(result[i - 1])
+			lengths.append(total)
+		for i in result.size():
+			var s := lengths[i]
+			var fade := smoothstep(0.0, 2.5, s) * smoothstep(0.0, 3.5, total - s)
+			result[i].y += sin(s / 1.7 * TAU) * 0.12 * fade
 	return result
 
 

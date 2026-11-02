@@ -134,6 +134,7 @@ class Kit:
         self.shadow = "important"
         self.interact = None  # (Mitte, Größe) des E-Bereichs (Lampen, Sitzmöbel)
         self.book_spot = None  # Buch-Aufsteller: (Punkt, Neigung)
+        self.cat_spots = []    # Liegeplätze für Katzen (Marker „CatSpot“, Gruppe cat_spots, seit Etappe 6h)
         self.root_script = None  # eigenes Skript am obersten Knoten (z. B. Lichtschalter)
         self.interact_prompt = None  # Wort neben E (mit root_script: E ruft _on_interactable_interacted)
         self.settle_amount = spec.get("settle", 1.0)
@@ -172,6 +173,10 @@ class Kit:
         return objs
 
     # --- Angaben für die Godot-Szene (Blender-Koordinaten) ---
+
+    def cat_spot(self, pos, turn=0.0):
+        """Liegeplatz für Katzen (seit Etappe 6h): Punkt auf dem Kissen, turn = Blickrichtung (Grad um z)."""
+        self.cat_spots.append((Vector(pos), turn))
 
     def collider(self, center, size, turn=0.0):
         self.colliders.append((Vector(center), Vector(size), turn))
@@ -1068,6 +1073,8 @@ def write_scene(kit, bounds, force=False):
                      'script = ExtResource("%s")\nprompt_text = "%s"\n' % (script("interact", "res://scripts/interaction/interactable.gd"), kit.interact_prompt))
         nodes.append('[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]\ntransform = %s\nshape = SubResource("%s")\n'
                      % (tf(ic), shape(isz)))
+    for i, (pos, turn) in enumerate(kit.cat_spots):
+        nodes.append('[node name="CatSpot%d" type="Marker3D" parent="." groups=["cat_spots"]]\ntransform = %s\n' % (i, tf(pos, turn)))
     for i, pos in enumerate(kit.spark_spots):
         nodes.append('[node name="SparkSpot%d" type="Marker3D" parent="."]\ntransform = %s\n' % (i, tf(pos)))
     if kit.book_spot:

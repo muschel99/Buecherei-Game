@@ -38,7 +38,7 @@ const SUBCATEGORIES := {
 		["wall_lamp", "Wandlampen"], ["candle", "Kerzen und Laternen"], ["fireplace", "Kamine"], ["switch", "Lichtschalter"]],
 	Category.DECO: [["plant", "Pflanzen"], ["vase", "Vasen und Blumen"], ["rug", "Teppiche"], ["picture", "Bilder und Wandschmuck"],
 		["figure", "Figuren und Kuriositäten"], ["textile", "Textilien"], ["tableware", "Geschirr"],
-		["storage", "Aufbewahrung und Organisation"], ["books", "Bücher"], ["bookend", "Buchstützen"]],
+		["storage", "Aufbewahrung und Organisation"], ["books", "Bücher"], ["bookend", "Buchstützen"], ["pet", "Für Katzen"]],
 	Category.DIVIDER: [],
 }
 

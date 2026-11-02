@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://lhwbrqwfxkkf"
+uid="uid://bro22ir5a75v3"
 path="res://.godot/imported/cat.glb-b493f1c3400a430a6cfbf4f3cf4f4241.scn"
 
 [deps]
@@ -51,15 +51,25 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/katze_fell.tres",
 "use_external/path": "res://assets/materials/storybook/katze_fell.tres"
 },
-"Katze Fell hell": {
+"Katze Glanz": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/katze_fell_hell.tres",
-"use_external/path": "res://assets/materials/storybook/katze_fell_hell.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/katze_glanz.tres",
+"use_external/path": "res://assets/materials/storybook/katze_glanz.tres"
+},
+"Katze Mund": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/katze_mund.tres",
+"use_external/path": "res://assets/materials/storybook/katze_mund.tres"
 },
 "Katze Nase": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/katze_nase.tres",
 "use_external/path": "res://assets/materials/storybook/katze_nase.tres"
+},
+"Katze Ohr innen": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/katze_ohr_innen.tres",
+"use_external/path": "res://assets/materials/storybook/katze_ohr_innen.tres"
 },
 "Katze Pupille": {
 "use_external/enabled": true,

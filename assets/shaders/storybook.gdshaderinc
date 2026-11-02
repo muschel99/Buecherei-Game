@@ -61,11 +61,20 @@ varying vec3 model_normal;
 uniform float tabby = 0.0;
 uniform vec4 tabby_color : source_color = vec4(0.55, 0.4, 0.3, 1.0);
 uniform float tabby_scale = 13.0;
+// Farbmaske im Netz (UV2.y, seit Etappe 6h): > 0 = Brust/Kehle bzw. helles Fell (second_color), < 0 = Kappe/Hals
+// (third_color); mask_from = ab welchem Maskenwert die Farbe beginnt, mask_soft = wie weich der Übergang ist.
+// Mit mask_shimmer > 0 schillert die dritte Farbe je nach Blickwinkel nach shimmer_color (Taubenhals).
+uniform float mask_from = 0.25;
+uniform float mask_soft = 0.35;
+uniform float mask_shimmer = 0.0;
+uniform vec4 shimmer_color : source_color = vec4(0.45, 0.25, 0.55, 1.0);
+varying float animal_mask;
 #endif
 
 void vertex() {
 #ifdef REST_POSITION
 	model_pos = vec3(UV.x, 1.0 - UV.y, UV2.x);
+	animal_mask = 1.0 - UV2.y;
 #else
 	model_pos = VERTEX;
 #endif
@@ -317,6 +326,19 @@ void fragment() {
 		col = s > 0.5 ? second_color.rgb : base_color.rgb;
 	}
 #ifdef REST_POSITION
+	{
+		// Glatter Übergang zwischen den Farben (Brust, Kappe; Taubenhals schillernd)
+		float m = animal_mask;
+		float w2 = smoothstep(mask_from, mask_from + mask_soft, m);
+		float w3 = smoothstep(mask_from, mask_from + mask_soft, -m);
+		vec3 third = third_color.rgb;
+		if (mask_shimmer > 0.0) {
+			float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
+			third = mix(third, shimmer_color.rgb, mask_shimmer * (1.0 - facing));
+		}
+		col = mix(col, second_color.rgb, w2);
+		col = mix(col, third, w3);
+	}
 	if (tabby > 0.0) {
 		// Streifen quer zum Körper (Rumpf: entlang z, Beine und Schwanz: entlang y), unruhig wie gemalt,
 		// zum Bauch hin blasser

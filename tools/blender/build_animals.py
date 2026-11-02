@@ -34,6 +34,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import storybook_lib as SB  # noqa: E402
 import storybook_common as SC  # noqa: E402
 from storybook_lib import Body  # noqa: E402
+import animal_birds as AB  # noqa: E402
+import animal_cat as ACAT  # noqa: E402
+import animal_cat_anim as ACA  # noqa: E402
 
 ROOT = SC.ROOT
 OUT = os.path.join(ROOT, "assets", "models", "animals")
@@ -128,6 +131,36 @@ class Animal:
             pb.rotation_mode = "QUATERNION"
         self.mesh, self.arm = mesh, arm
         return mesh, arm
+
+
+def assemble(name, parts, bones, coll):
+    """Netz aus animal_lib.Parts + Skelett (Knochen: [(Name, Kopf, Ende, Eltern)]) – wie Animal.build für die
+    weichen Tiere (seit Etappe 6h)."""
+    mesh = parts.build(name, coll)
+    arm_data = bpy.data.armatures.new(name + " Skelett")
+    arm = bpy.data.objects.new(name + " Skelett", arm_data)
+    coll.objects.link(arm)
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.mode_set(mode="EDIT")
+    for bname, head, tail, parent in bones:
+        eb = arm_data.edit_bones.new(bname)
+        eb.head = Vector(head)
+        eb.tail = Vector(tail)
+        eb.roll = 0.0
+        if parent:
+            eb.parent = arm_data.edit_bones[parent]
+    bpy.ops.object.mode_set(mode="OBJECT")
+    mesh.parent = arm
+    mod = mesh.modifiers.new("Skelett", "ARMATURE")
+    mod.object = arm
+    for pb in arm.pose.bones:
+        pb.rotation_mode = "QUATERNION"
+
+    class Holder:
+        pass
+    a = Holder()
+    a.name, a.mesh, a.arm = name, mesh, arm
+    return a
 
 
 def rest_uvs(me):
@@ -238,100 +271,111 @@ def action(arm, name, length, keys, loop=True):
 # Vogel (kleiner Singvogel, etwa 14 cm lang)
 # ---------------------------------------------------------------------------------------------
 
-def bird_materials():
+def bird_materials(kind="bird"):
+    """Materialien der Vögel. Das Spiel färbt sie je Art (GameConfig.bird_species bzw. pigeon_looks): Gefieder =
+    Grundfarbe + Brust (zweite Farbe) + Kappe/Hals (dritte Farbe) über die Maske im Netz."""
+    if kind == "pigeon":
+        return {
+            "plumage": SC.make_material("Taube Gefieder", (0.55, 0.58, 0.64), grain="smooth", rough=0.8, vary=0.05),
+            "wing": SC.make_material("Taube Flügel", (0.5, 0.53, 0.58), grain="smooth", rough=0.8, vary=0.07),
+            "beak": SC.make_material("Taube Schnabel", (0.25, 0.22, 0.22), grain="smooth", rough=0.6, vary=0.03),
+            "eye": SC.make_material("Taube Auge", (0.6, 0.25, 0.08), grain="smooth", rough=0.15, vary=0.0),
+            "leg": SC.make_material("Taube Beine", (0.75, 0.35, 0.35), grain="smooth", rough=0.6, vary=0.03),
+        }
     return {
         "plumage": SC.make_material("Vogel Gefieder", (0.55, 0.42, 0.3), grain="smooth", rough=0.85, vary=0.05),
         "wing": SC.make_material("Vogel Flügel", (0.42, 0.3, 0.2), grain="smooth", rough=0.85, vary=0.06),
-        "breast": SC.make_material("Vogel Brust", (0.86, 0.76, 0.6), grain="smooth", rough=0.9, vary=0.04),
-        "beak": SC.make_material("Vogel Schnabel", (0.85, 0.6, 0.3), grain="smooth", rough=0.6, vary=0.03),
+        "beak": SC.make_material("Vogel Schnabel", (0.35, 0.3, 0.26), grain="smooth", rough=0.6, vary=0.03),
         "eye": SC.make_material("Vogel Auge", (0.03, 0.025, 0.02), grain="smooth", rough=0.15, vary=0.0),
+        "leg": SC.make_material("Vogel Beine", (0.62, 0.48, 0.42), grain="smooth", rough=0.7, vary=0.03),
     }
 
 
-def build_bird():
-    M = bird_materials()
-    a = Animal("bird")
-    a.bone("root", (0, 0, 0), (0, 0, 0.02))
-    a.bone("body", (0, 0.01, 0.035), (0, 0.01, 0.065), "root")
-    a.bone("head", (0, -0.028, 0.074), (0, -0.04, 0.1), "body")
-    a.bone("wing_l", (0.026, -0.012, 0.066), (0.03, 0.045, 0.055), "body")
-    a.bone("wing_r", (-0.026, -0.012, 0.066), (-0.03, 0.045, 0.055), "body")
-    a.bone("tail", (0, 0.042, 0.052), (0, 0.085, 0.067), "body")
-    a.bone("leg_l", (0.011, 0.002, 0.03), (0.011, 0.0, 0.004), "root")
-    a.bone("leg_r", (-0.011, 0.002, 0.03), (-0.011, 0.0, 0.004), "root")
-    # Körper: rundlich, vorn die Brust in eigener Farbe (überlappt leicht)
-    body = a.part("Körper", M["plumage"], rigid("body"))
-    body.blob((0, 0.004, 0.052), 0.04, subdiv=3, lump=0.02, scale=(0.78, 1.15, 0.85))
-    breast = a.part("Brust", M["breast"], rigid("body"))
-    breast.blob((0, -0.014, 0.046), 0.031, subdiv=3, lump=0.02, scale=(0.86, 0.9, 0.86))
-    head = a.part("Kopf", M["plumage"], rigid("head"))
-    head.blob((0, -0.034, 0.087), 0.026, subdiv=3, lump=0.015, scale=(0.95, 1.0, 0.95))
-    cap = a.part("Kappe", M["wing"], rigid("head"))
-    cap.blob((0, -0.033, 0.098), 0.021, subdiv=3, lump=0.01, scale=(0.92, 1.08, 0.58))
-    cheek = a.part("Wangen", M["breast"], rigid("head"))
-    for sx in (-1, 1):
-        cheek.blob((sx * 0.0175, -0.044, 0.081), 0.0075, subdiv=2, lump=0.0, scale=(0.55, 1.0, 0.85))
-    beak = a.part("Schnabel", M["beak"], rigid("head"))
-    beak.tube([(0, -0.054, 0.0855), (0, -0.07, 0.0835)], lambda t: 0.0062 * (1 - t) + 0.0009, segs=10, round_ends=True)
-    eyes = a.part("Augen", M["eye"], rigid("head"))
-    for sx in (-1, 1):
-        eyes.blob((sx * 0.0175, -0.049, 0.0925), 0.0048, subdiv=2, lump=0.0)
-    for sx, bone in ((1, "wing_l"), (-1, "wing_r")):
-        w = a.part("Flügel", M["wing"], rigid(bone))
-        w.leaf((sx * 0.027, -0.012, 0.066), (0, 1.0, -0.28), (sx * 1.0, 0.0, 0.25), 0.062, 0.034, shape="oval",
-               thick=0.007, curl=0.1)
-    tail = a.part("Schwanz", M["wing"], rigid("tail"))
-    tail.leaf((0, 0.042, 0.054), (0, 1.0, 0.36), (0, -0.2, 1.0), 0.048, 0.03, shape="oval", thick=0.006, curl=0.05)
-    for sx, bone in ((1, "leg_l"), (-1, "leg_r")):
-        leg = a.part("Bein", M["beak"], rigid(bone))
-        x = sx * 0.011
-        leg.tube([(x, 0.002, 0.03), (x, 0.0, 0.004)], 0.0024, segs=7, round_ends=True)
-        for tx, ty in ((-0.006, -0.014), (0.0, -0.016), (0.006, -0.014), (0.0, 0.011)):
-            leg.tube([(x, 0.0, 0.0035), (x + tx * sx, ty, 0.0018)], 0.0017, segs=6, round_ends=True)
-    mesh, arm = a.build()
-    # Bewegungen
-    spread_l = [("z", -82), ("x", -90)]
-    spread_r = [("z", 82), ("x", -90)]
+def build_bird(kind="bird"):
+    """Singvogel („bird“, etwa 14 cm) oder Taube („pigeon“, etwa 32 cm) im weichen Stil (animal_birds.py)."""
+    M = bird_materials(kind)
+    spec = AB.SONGBIRD if kind == "bird" else AB.PIGEON
+    coll = SB.collection(kind)
+    parts, bones = AB.build(spec, M, coll)
+    a = assemble(kind, parts, bones, coll)
+    arm = a.arm
+    s = 1.0 if kind == "bird" else 2.3
+    tuck = [("x", 70)]
+    # Ruhe: umschauen (kurze, ruckartige Kopfdrehungen), Schwanz wippt
     action(arm, "idle", 72, {
         0: {"head": [], "tail": []},
-        14: {"head": [("z", 28)]},
-        24: {"head": [("z", 28), ("x", 6)], "tail": [("x", 16)]},
-        28: {"tail": []},
-        36: {"head": []},
-        48: {"head": [("z", -32)]},
-        58: {"head": [("z", -32), ("y", 10)]},
-        66: {"head": []},
+        10: {"head": [("z", 30)]},
+        22: {"head": [("z", 30), ("x", 6)], "tail": [("x", 14)]},
+        26: {"tail": []},
+        34: {"head": []},
+        46: {"head": [("z", -34)]},
+        56: {"head": [("z", -34), ("y", 10)]},
+        64: {"head": []},
     })
+    # Picken: Körper kippt nach vorn, Kopf schnell zweimal hinunter
     action(arm, "peck", 24, {
         0: {"body": [], "head": []},
-        5: {"body": [("x", 28)], "head": [("x", 30)]},
-        8: {"body": [("x", 30)], "head": [("x", 48)]},
-        11: {"body": [("x", 28)], "head": [("x", 26)]},
-        14: {"body": [("x", 30)], "head": [("x", 50)]},
+        5: {"body": [("x", 26)], "head": [("x", 30)]},
+        8: {"body": [("x", 28)], "head": [("x", 50)]},
+        11: {"body": [("x", 26)], "head": [("x", 26)]},
+        14: {"body": [("x", 28)], "head": [("x", 52)]},
         19: {"body": [("x", 8)], "head": [("x", 6)]},
     })
+    # Hüpfen (Singvogel): ganzer Körper springt, Beine falten sich, Flügel heben sich kurz
     action(arm, "hop", 12, {
-        0: {"root": {"rot": [], "loc": (0, 0, 0)}, "leg_l": [], "leg_r": [], "wing_l": [], "wing_r": [], "tail": []},
-        3: {"root": {"rot": [], "loc": (0, 0, 0.018)}, "leg_l": [("x", 22)], "leg_r": [("x", 22)],
-            "wing_l": [("z", -12)], "wing_r": [("z", 12)], "tail": [("x", 12)]},
-        6: {"root": {"rot": [], "loc": (0, 0, 0.026)}, "leg_l": [("x", 30)], "leg_r": [("x", 30)],
-            "wing_l": [("z", -18)], "wing_r": [("z", 18)], "tail": [("x", 16)]},
-        9: {"root": {"rot": [], "loc": (0, 0, 0.01)}, "leg_l": [("x", 8)], "leg_r": [("x", 8)],
-            "wing_l": [("z", -6)], "wing_r": [("z", 6)], "tail": [("x", 4)]},
+        0: {"root": {"rot": [], "loc": (0, 0, 0)}},
+        3: {"root": {"rot": [], "loc": (0, 0, 0.018 * s)}, "leg_l": [("x", 22)], "leg_r": [("x", 22)], "tail": [("x", 12)]},
+        6: {"root": {"rot": [], "loc": (0, 0, 0.026 * s)}, "leg_l": [("x", 30)], "leg_r": [("x", 30)], "tail": [("x", 16)]},
+        9: {"root": {"rot": [], "loc": (0, 0, 0.01 * s)}, "leg_l": [("x", 8)], "leg_r": [("x", 8)], "tail": [("x", 4)]},
     })
-    tuck = [("x", 70)]
-    action(arm, "fly", 8, {
-        0: {"wing_l": spread_l + [("y", -55)], "wing_r": spread_r + [("y", 55)], "leg_l": tuck, "leg_r": tuck,
-            "tail": [("x", -6)], "head": [("x", -6)], "body": [("x", -4)]},
-        4: {"wing_l": spread_l + [("y", 35)], "wing_r": spread_r + [("y", -35)], "leg_l": tuck, "leg_r": tuck,
-            "tail": [("x", -2)], "head": [("x", -6)], "body": [("x", -2)]},
+    # Gehen (Taube): Beine abwechselnd, Kopf nickt vor und zurück (Kopf bleibt stehen, während der Körper aufholt)
+    action(arm, "walk", 20, {
+        0: {"leg_l": [("x", -24)], "leg_r": [("x", 22)], "head": {"rot": [], "loc": (0, -0.016 * s, 0)},
+            "body": [("y", 3)], "root": {"rot": [], "loc": (0, 0, 0.002 * s)}},
+        5: {"leg_l": [], "leg_r": [], "head": {"rot": [], "loc": (0, 0.012 * s, 0)}, "body": [],
+            "root": {"rot": [], "loc": (0, 0, 0)}},
+        10: {"leg_l": [("x", 22)], "leg_r": [("x", -24)], "head": {"rot": [], "loc": (0, -0.016 * s, 0)},
+             "body": [("y", -3)], "root": {"rot": [], "loc": (0, 0, 0.002 * s)}},
+        15: {"leg_l": [], "leg_r": [], "head": {"rot": [], "loc": (0, 0.012 * s, 0)}, "body": [],
+             "root": {"rot": [], "loc": (0, 0, 0)}},
     })
+    # Flügelschlag (mit ausgebreiteten Flügeln – Formvariante „spread“ setzt das Spiel): Spitze schwingt nach
+    up_l, up_r = [("y", -52)], [("y", 52)]
+    down_l, down_r = [("y", 42)], [("y", -42)]
+    action(arm, "fly", 10, {
+        0: {"wing_l": up_l, "wing_r": up_r, "wingtip_l": [("y", 12)], "wingtip_r": [("y", -12)], "leg_l": tuck,
+            "leg_r": tuck, "tail": [("x", -6)], "head": [("x", -8)], "body": [("x", -4)]},
+        5: {"wing_l": down_l, "wing_r": down_r, "wingtip_l": [("y", -20)], "wingtip_r": [("y", 20)], "leg_l": tuck,
+            "leg_r": tuck, "tail": [("x", -2)], "head": [("x", -8)], "body": [("x", -1)]},
+    })
+    # Gleiten: Flügel ruhig ausgebreitet, leicht nach oben (V-Form)
     action(arm, "glide", 40, {
-        0: {"wing_l": spread_l + [("y", -8)], "wing_r": spread_r + [("y", 8)], "leg_l": tuck, "leg_r": tuck,
-            "tail": [("x", -4)], "head": [("x", -6)]},
-        20: {"wing_l": spread_l + [("y", -2)], "wing_r": spread_r + [("y", 2)], "leg_l": tuck, "leg_r": tuck,
-             "tail": [("x", -8)], "head": [("x", -4)]},
+        0: {"wing_l": [("y", -8)], "wing_r": [("y", 8)], "wingtip_l": [("y", -4)], "wingtip_r": [("y", 4)],
+            "leg_l": tuck, "leg_r": tuck, "tail": [("x", -4)], "head": [("x", -8)]},
+        20: {"wing_l": [("y", -3)], "wing_r": [("y", 3)], "wingtip_l": [("y", -1)], "wingtip_r": [("y", 1)],
+             "leg_l": tuck, "leg_r": tuck, "tail": [("x", -8)], "head": [("x", -6)]},
     })
+    # Abheben: ducken, abspringen, erste kräftige Schläge
+    action(arm, "takeoff", 12, {
+        0: {"body": [("x", 18)], "leg_l": [("x", 25)], "leg_r": [("x", 25)], "wing_l": [("y", -30)], "wing_r": [("y", 30)],
+            "root": {"rot": [], "loc": (0, 0, -0.004 * s)}},
+        3: {"body": [("x", -10)], "leg_l": [("x", -15)], "leg_r": [("x", -15)], "wing_l": up_l, "wing_r": up_r,
+            "wingtip_l": [("y", 10)], "wingtip_r": [("y", -10)], "root": {"rot": [], "loc": (0, 0, 0.01 * s)}},
+        7: {"body": [("x", -14)], "leg_l": tuck, "leg_r": tuck, "wing_l": down_l, "wing_r": down_r,
+            "wingtip_l": [("y", -18)], "wingtip_r": [("y", 18)], "root": {"rot": [], "loc": (0, 0, 0.012 * s)}},
+        11: {"body": [("x", -6)], "leg_l": tuck, "leg_r": tuck, "wing_l": up_l, "wing_r": up_r,
+             "root": {"rot": [], "loc": (0, 0, 0.0)}},
+    }, loop=False)
+    # Landen: Körper aufgerichtet, Flügel bremsen (nach vorn oben), Schwanz gefächert nach unten, Beine vor
+    action(arm, "land", 12, {
+        0: {"body": [("x", -30)], "wing_l": [("y", -40), ("z", -18)], "wing_r": [("y", 40), ("z", 18)],
+            "wingtip_l": [("y", -10)], "wingtip_r": [("y", 10)], "tail": [("x", 28)], "leg_l": [("x", -35)],
+            "leg_r": [("x", -35)], "head": [("x", 12)]},
+        5: {"body": [("x", -34)], "wing_l": [("y", 10), ("z", -24)], "wing_r": [("y", -10), ("z", 24)],
+            "tail": [("x", 30)], "leg_l": [("x", -30)], "leg_r": [("x", -30)], "head": [("x", 14)]},
+        11: {"body": [("x", -8)], "wing_l": [("y", -20)], "wing_r": [("y", 20)], "tail": [("x", 10)],
+             "leg_l": [], "leg_r": [], "head": [("x", 4)]},
+    }, loop=False)
     return a, M
 
 
@@ -340,185 +384,27 @@ def build_bird():
 # ---------------------------------------------------------------------------------------------
 
 def cat_materials():
+    """Materialien der Katze. Das Spiel färbt sie je Katze (GameConfig.cat_looks): Fell = Grundfarbe, helles
+    Fell (Maske > 0, ab mask_from) und dunkler Rücken (Maske < 0) im selben Material, Tigerstreifen im Shader."""
     return {
         "fur": SC.make_material("Katze Fell", (0.85, 0.5, 0.24), grain="smooth", rough=0.95, vary=0.07),
-        "fur2": SC.make_material("Katze Fell hell", (0.96, 0.9, 0.8), grain="smooth", rough=0.95, vary=0.05),
+        "ear": SC.make_material("Katze Ohr innen", (0.9, 0.62, 0.62), grain="smooth", rough=0.8, vary=0.03),
         "nose": SC.make_material("Katze Nase", (0.86, 0.5, 0.52), grain="smooth", rough=0.6, vary=0.03),
         "eye": SC.make_material("Katze Auge", (0.45, 0.62, 0.22), grain="smooth", rough=0.12, vary=0.0),
         "pupil": SC.make_material("Katze Pupille", (0.03, 0.025, 0.02), grain="smooth", rough=0.1, vary=0.0),
+        "shine": SC.make_material("Katze Glanz", (0.98, 0.97, 0.95), grain="smooth", rough=0.1, vary=0.0),
+        "mouth": SC.make_material("Katze Mund", (0.25, 0.14, 0.12), grain="smooth", rough=0.7, vary=0.0),
     }
 
 
-TAIL = [("tail1", Vector((0, 0.19, 0.22)), Vector((0, 0.25, 0.255))),
-        ("tail2", Vector((0, 0.25, 0.255)), Vector((0, 0.29, 0.33))),
-        ("tail3", Vector((0, 0.29, 0.33)), Vector((0, 0.3, 0.41)))]
-
-
-def build_cat():
+def build_cat(only=None):
+    """Katze im weichen Stil (animal_cat.py) mit eigenem Skelett und Bewegungen (animal_cat_anim.py)."""
     M = cat_materials()
-    a = Animal("cat")
-    a.bone("root", (0, 0, 0), (0, 0, 0.05))
-    a.bone("hips", (0, 0.1, 0.19), (0, 0.0, 0.2), "root")
-    a.bone("chest", (0, 0.0, 0.2), (0, -0.12, 0.22), "hips")
-    a.bone("neck", (0, -0.12, 0.22), (0, -0.17, 0.29), "chest")
-    a.bone("head", (0, -0.17, 0.29), (0, -0.2, 0.42), "neck")
-    for sx, s in ((1, "l"), (-1, "r")):
-        a.bone("fl_upper_" + s, (sx * 0.05, -0.11, 0.17), (sx * 0.05, -0.12, 0.09), "chest")
-        a.bone("fl_lower_" + s, (sx * 0.05, -0.12, 0.09), (sx * 0.05, -0.125, 0.02), "fl_upper_" + s)
-        a.bone("bl_upper_" + s, (sx * 0.058, 0.12, 0.17), (sx * 0.058, 0.14, 0.085), "hips")
-        a.bone("bl_lower_" + s, (sx * 0.058, 0.14, 0.085), (sx * 0.056, 0.13, 0.02), "bl_upper_" + s)
-    parent = "hips"
-    for name, p0, p1 in TAIL:
-        a.bone(name, p0, p1, parent)
-        parent = name
-    torso = blend("chest", "hips", 1, -0.04, 0.06)
-
-    def trunk_w(co):
-        # Rumpf: hinten Hüfte, vorn Brust, oben am Hals in den Hals übergehend
-        w = torso(co)
-        up = smoothstep(0.235, 0.29, co.z) * smoothstep(-0.08, -0.13, co.y)
-        return {"hips": w["hips"] * (1 - up), "chest": w["chest"] * (1 - up), "neck": up}
-    # Rumpf als EIN weicher Körper vom Hinterteil bis zum Hals (keine Kugeln hintereinander)
-    profile = [(0.0, 0.07), (0.12, 0.088), (0.35, 0.094), (0.6, 0.09), (0.8, 0.08), (1.0, 0.062)]
-
-    def trunk_r(t):
-        for (t0, r0), (t1, r1) in zip(profile, profile[1:]):
-            if t <= t1:
-                return r0 + (r1 - r0) * smoothstep(t0, t1, t)
-        return profile[-1][1]
-    spine = [(0, 0.17, 0.205), (0, 0.125, 0.198), (0, 0.08, 0.195), (0, 0.03, 0.196), (0, -0.02, 0.2), (0, -0.06, 0.206),
-             (0, -0.1, 0.215), (0, -0.128, 0.236), (0, -0.15, 0.262)]
-    a.part("Rumpf", M["fur"], trunk_w).tube(spine, trunk_r, segs=24, smooth=2, round_ends=True)
-    a.part("Brustfleck", M["fur2"], rigid("chest")).blob((0, -0.132, 0.185), 0.06, subdiv=3, lump=0.02,
-                                                         scale=(0.85, 0.62, 1.0))
-    a.part("Bauch", M["fur2"], torso).blob((0, 0.01, 0.135), 0.07, subdiv=3, lump=0.02, scale=(0.9, 1.6, 0.5))
-    h = rigid("head")
-    a.part("Kopf", M["fur"], h).blob((0, -0.19, 0.34), 0.1, subdiv=3, lump=0.015, scale=(1.08, 0.95, 0.92))
-    a.part("Schnauze", M["fur2"], h).blob((0, -0.268, 0.312), 0.042, subdiv=3, lump=0.01, scale=(1.18, 0.7, 0.78))
-    a.part("Nase", M["nose"], h).blob((0, -0.296, 0.332), 0.011, subdiv=2, lump=0.0, scale=(1.35, 0.8, 0.8))
-    eyes = a.part("Augen", M["eye"], h)
-    pupils = a.part("Pupillen", M["pupil"], h)
-    for sx in (-1, 1):
-        eyes.blob((sx * 0.043, -0.27, 0.352), 0.02, subdiv=2, lump=0.0, scale=(1.0, 0.55, 1.15))
-        pupils.blob((sx * 0.043, -0.281, 0.353), 0.0085, subdiv=2, lump=0.0, scale=(0.75, 0.5, 1.35))
-    ears = a.part("Ohren", M["fur"], h)
-    inner = a.part("Ohren innen", M["nose"], h)
-    for sx in (-1, 1):
-        ears.tube([(sx * 0.055, -0.18, 0.405), (sx * 0.077, -0.172, 0.486)], lambda t: 0.036 * (1 - t) + 0.004,
-                  segs=10, round_ends=True)
-        inner.tube([(sx * 0.056, -0.196, 0.412), (sx * 0.074, -0.188, 0.474)], lambda t: 0.022 * (1 - t) + 0.003,
-                   segs=8, round_ends=True)
-    for sx, s in ((1, "l"), (-1, "r")):
-        x = sx * 0.05
-        fleg = a.part("Vorderbein", M["fur"], blend("fl_lower_" + s, "fl_upper_" + s, 2, 0.07, 0.11))
-        fleg.tube([(x * 0.96, -0.11, 0.175), (x, -0.12, 0.09), (x, -0.125, 0.032)], 0.026, segs=10, smooth=1,
-                  round_ends=True)
-        a.part("Pfote", M["fur2"], rigid("fl_lower_" + s)).blob((x, -0.136, 0.022), 0.03, subdiv=2, lump=0.02,
-                                                              scale=(1.0, 1.25, 0.62))
-        bx = sx * 0.058
-        a.part("Keule", M["fur"], blend("bl_upper_" + s, "hips", 2, 0.17, 0.215)).blob(
-            (sx * 0.062, 0.115, 0.16), 0.062, subdiv=3, lump=0.02, scale=(0.7, 1.1, 1.0))
-        bleg = a.part("Hinterbein", M["fur"], blend("bl_lower_" + s, "bl_upper_" + s, 2, 0.06, 0.1))
-        bleg.tube([(bx, 0.12, 0.13), (bx, 0.14, 0.072), (bx * 0.97, 0.13, 0.03)], 0.025, segs=10, smooth=1,
-                  round_ends=True)
-        a.part("Pfote", M["fur2"], rigid("bl_lower_" + s)).blob((bx * 0.97, 0.122, 0.022), 0.03, subdiv=2, lump=0.02,
-                                                              scale=(1.0, 1.25, 0.62))
-    tail_w = chain([("hips", Vector((0, 0.12, 0.2)), Vector((0, 0.19, 0.22)))] + TAIL)
-    a.part("Schwanz", M["fur"], tail_w).tube([(0, 0.17, 0.215), (0, 0.25, 0.255), (0, 0.29, 0.33), (0, 0.3, 0.41)],
-                                             lambda t: 0.026 - 0.01 * t, segs=12, smooth=3, round_ends=True)
-    mesh, arm = a.build()
-    cat_actions(arm)
+    coll = SB.collection("cat")
+    parts, bones = ACAT.build(M, coll)
+    a = assemble("cat", parts, bones, coll)
+    ACA.build_all(a.arm, only)
     return a, M
-
-
-def cat_actions(arm):
-    sway = lambda d: {"tail1": [("z", d)], "tail2": [("z", d * 1.4)], "tail3": [("z", d * 1.8)]}  # noqa: E731
-    action(arm, "idle", 90, {
-        0: dict(sway(0), head=[]),
-        22: dict(sway(10), head=[("z", 14)]),
-        45: dict(sway(0), head=[("z", 14), ("x", 6)]),
-        68: dict(sway(-10), head=[("z", -12)]),
-    })
-
-    # Gehen: diagonale Paare (vorn links mit hinten rechts)
-    def legs(fl, fr, bl, br, kfl=0, kfr=0, kbl=0, kbr=0):
-        return {"fl_upper_l": [("x", fl)], "fl_upper_r": [("x", fr)], "bl_upper_l": [("x", bl)], "bl_upper_r": [("x", br)],
-                "fl_lower_l": [("x", kfl)], "fl_lower_r": [("x", kfr)], "bl_lower_l": [("x", kbl)], "bl_lower_r": [("x", kbr)]}
-    walk = {}
-    for f, (a_, b_, ka, kb) in {0: (-22, 22, 0, 0), 6: (0, 0, 28, 0), 12: (22, -22, 0, 0), 18: (0, 0, 0, 28)}.items():
-        k = legs(a_, b_, b_, a_, kfl=ka, kfr=kb, kbl=-kb, kbr=-ka)
-        k["root"] = {"rot": [], "loc": (0, 0, 0.006 if f in (6, 18) else 0.0)}
-        k.update(sway(8 if f < 12 else -8))
-        k["head"] = [("x", 4 if f in (6, 18) else 0)]
-        walk[f] = k
-    action(arm, "walk", 24, walk)
-    run = {}
-    for f, (fa, ba, up) in {0: (-38, 34, 0.0), 3: (-10, 10, 0.03), 6: (34, -38, 0.012), 9: (8, -8, 0.025)}.items():
-        k = legs(fa, fa, ba, ba, kfl=20 if fa > 0 else 0, kfr=20 if fa > 0 else 0, kbl=-25 if ba < 0 else 0,
-                 kbr=-25 if ba < 0 else 0)
-        k["root"] = {"rot": [], "loc": (0, 0, up)}
-        k["chest"] = [("x", -8 if f in (0, 9) else 8)]
-        k["hips"] = [("x", 6 if f in (0, 9) else -6)]
-        k["tail1"] = [("x", 20)]
-        run[f] = k
-    action(arm, "run", 12, run)
-
-    # Sitzen: Hinterteil nach unten, Vorderbeine gerade, Schwanz um die Pfoten
-    def sit_pose(extra=None, tail=12):
-        k = {"root": {"rot": [], "loc": (0, 0.02, -0.055)}, "hips": [("x", -38)],
-             "chest": [("x", -6)], "neck": [("x", 24)], "head": [("x", 16)],
-             "fl_upper_l": [("x", 44)], "fl_upper_r": [("x", 44)],
-             "bl_upper_l": [("x", -58)], "bl_upper_r": [("x", -58)], "bl_lower_l": [("x", 96)], "bl_lower_r": [("x", 96)],
-             "tail1": [("x", -42), ("z", 25)], "tail2": [("z", 45 + tail)], "tail3": [("z", 50 + tail)]}
-        if extra:
-            k.update(extra)
-        return k
-    action(arm, "sit", 90, {0: sit_pose(), 30: sit_pose({"head": [("x", 16), ("z", 18)]}, 4),
-                            60: sit_pose({"head": [("x", 12), ("z", -10)]}, 16)})
-    # Putzen im Sitzen: eine Vorderpfote zum Mund, Kopf leckt
-    groom = {}
-    for f in range(0, 48, 6):
-        lick = 10 if (f // 6) % 2 else 0
-        groom[f] = sit_pose({"fl_upper_l": [("x", -30)], "fl_lower_l": [("x", -70)],
-                             "neck": [("x", 30)], "head": [("x", 22 + lick), ("z", 14)]})
-    action(arm, "groom", 48, groom)
-    # Gestreichelt: im Sitzen den Kopf heben und reiben, Schwanz hoch
-    action(arm, "pet", 48, {0: sit_pose({"head": [("x", -10), ("z", 10)], "tail1": [("x", 30)]}),
-                            24: sit_pose({"head": [("x", -14), ("z", -12)], "tail1": [("x", 36)]})})
-
-    # Liegen („Brotlaib“): Körper unten, Beine untergeschlagen, Pfoten vorn
-    def lie_pose(extra=None):
-        k = {"root": {"rot": [], "loc": (0, 0, -0.105)}, "neck": [("x", 8)],
-             "fl_upper_l": [("x", 84)], "fl_upper_r": [("x", 84)], "fl_lower_l": [("x", -170)], "fl_lower_r": [("x", -170)],
-             "bl_upper_l": [("x", -80)], "bl_upper_r": [("x", -80)], "bl_lower_l": [("x", 150)], "bl_lower_r": [("x", 150)],
-             "tail1": [("x", -50), ("z", 30)], "tail2": [("z", 55)], "tail3": [("z", 55)]}
-        if extra:
-            k.update(extra)
-        return k
-    action(arm, "lie", 90, {0: lie_pose(), 45: lie_pose({"head": [("z", 16)], "tail3": [("z", 70)]})})
-    # Schlafen: eingerollt, Kopf auf den Pfoten, ruhiges Atmen
-    sleep = lie_pose({"chest": [("z", 26)], "hips": [("z", -22)], "neck": [("x", 40), ("z", 18)], "head": [("x", 20), ("z", 28)],
-                      "tail1": [("x", -50), ("z", -40)], "tail2": [("z", -60)], "tail3": [("z", -60)]})
-    sleep2 = dict(sleep)
-    sleep2["root"] = {"rot": [], "loc": (0, 0, -0.1)}
-    action(arm, "sleep", 120, {0: sleep, 60: sleep2})
-    # Strecken: vorn tief, Hinterteil hoch, Schwanz hoch (einmal, dann gehalten)
-    stretch = {"root": {"rot": [], "loc": (0, 0, -0.02)}, "chest": [("x", 22)], "hips": [("x", -12)],
-               "fl_upper_l": [("x", -62)], "fl_upper_r": [("x", -62)], "fl_lower_l": [("x", -10)], "fl_lower_r": [("x", -10)],
-               "neck": [("x", -10)], "head": [("x", -14)], "tail1": [("x", 48)], "tail2": [("x", 10)]}
-    action(arm, "stretch", 60, {0: {"root": {"rot": [], "loc": (0, 0, 0)}}, 24: stretch, 48: stretch,
-                                60: {"root": {"rot": [], "loc": (0, 0, 0)}}}, loop=False)
-    # Sprung (auf eine Bank): ducken, strecken, landen
-    action(arm, "jump", 16, {
-        0: {"root": {"rot": [], "loc": (0, 0, 0)}},
-        4: {"root": {"rot": [], "loc": (0, 0, -0.04)}, "hips": [("x", 8)], "chest": [("x", 6)],
-            "bl_upper_l": [("x", -30)], "bl_upper_r": [("x", -30)], "bl_lower_l": [("x", 50)], "bl_lower_r": [("x", 50)]},
-        8: {"root": {"rot": [], "loc": (0, 0, 0.01)}, "chest": [("x", -14)],
-            "fl_upper_l": [("x", -50)], "fl_upper_r": [("x", -50)], "bl_upper_l": [("x", 40)], "bl_upper_r": [("x", 40)],
-            "tail1": [("x", 20)]},
-        12: {"root": {"rot": [], "loc": (0, 0, -0.02)}, "fl_upper_l": [("x", -10)], "fl_upper_r": [("x", -10)]},
-        16: {"root": {"rot": [], "loc": (0, 0, 0)}},
-    }, loop=False)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -645,6 +531,72 @@ def build_toy():
     return [o for o in coll.objects if o.type == "MESH"]
 
 
+def build_more_toys():
+    """Weitere Spielzeuge (seit Etappe 6h): Wollknäuel (gewickelte Fäden auf einer Kugel, ein loses Fadenende),
+    Federbüschel (kleiner Korken mit drei Federn) und Ball (weich, zweifarbig). Ursprung = Mitte, liegen mit
+    dem Boden bei −Radius (im Spiel 1,5 cm über dem Boden abgelegt)."""
+    rnd = random.Random(8)
+    result = {}
+    # Wollknäuel: Kugel + gewickelte Fadenringe darauf (schräg in mehreren Richtungen)
+    M = {"wool": SC.make_material("Spielzeug Wolle", (0.82, 0.32, 0.36), grain="fabric", rough=0.95, vary=0.06),
+         "cork": SC.make_material("Spielzeug Korken", (0.72, 0.56, 0.38), grain="wood", rough=0.9, vary=0.1),
+         "feather": SC.make_material("Spielzeug Feder", (0.35, 0.62, 0.82), grain="smooth", rough=0.8, vary=0.08),
+         "feather2": SC.make_material("Spielzeug Feder hell", (0.95, 0.85, 0.4), grain="smooth", rough=0.8, vary=0.08),
+         "ball": SC.make_material("Spielzeug Ball", (0.95, 0.75, 0.25), grain="smooth", rough=0.6, vary=0.04),
+         "ball2": SC.make_material("Spielzeug Ball Streifen", (0.3, 0.6, 0.85), grain="smooth", rough=0.6, vary=0.04)}
+    coll = SB.collection("toy_yarn")
+    r = 0.022
+    wool = Body("Wolle", M["wool"], coll, seed=61, vary=0.0)
+    wool.blob((0, 0, 0), r * 0.94, subdiv=3, lump=0.02)
+    for k in range(9):
+        axis = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-1, 1))).normalized()
+        u = axis.orthogonal().normalized()
+        v = axis.cross(u)
+        pts = [(u * math.cos(t) + v * math.sin(t)) * r for t in [i / 24 * math.tau for i in range(26)]]
+        wool.tube(pts, 0.0024, segs=6, round_ends=True)
+    # loses Fadenende, das auf dem Boden liegt
+    wool.tube([Vector((0.0, -r * 0.9, -r * 0.3)), Vector((0.006, -r * 1.6, -r * 0.88)), Vector((0.02, -r * 2.6, -r * 0.92)),
+               Vector((0.035, -r * 3.2, -r * 0.92))], 0.0018, segs=6, smooth=2, round_ends=True)
+    wool.build(smooth_angle=180)
+    result["toy_yarn"] = coll
+    # Federbüschel: Korken mit drei Federn (je ein Kiel und eine Fahne aus zwei Blättern)
+    coll = SB.collection("toy_feather")
+    cork = Body("Korken", M["cork"], coll, seed=62, vary=0.0, bevel=0.002)
+    cork.lathe([(0.0, -0.012), (0.011, -0.012), (0.012, 0.012), (0.0, 0.012)], (0, 0, 0), segs=18, turn=(90, 0))
+    cork.build(smooth_angle=40)
+    for k, (yaw, mat) in enumerate(((0, "feather"), (22, "feather2"), (-22, "feather"))):
+        f = Body("Feder", M[mat], coll, seed=63 + k, vary=0.0)
+        d = Vector((math.sin(math.radians(yaw)), 1.0, 0.25)).normalized()
+        base = Vector((0, 0.008, 0))
+        f.tube([base, base + d * 0.075], lambda t: 0.0016 * (1 - t) + 0.0006, segs=6, round_ends=True)
+        f.leaf(base + d * 0.012, d, Vector((0, -0.25, 1)), 0.068, 0.022, shape="oval", thick=0.0016, curl=0.1)
+        f.build(smooth_angle=180)
+    result["toy_feather"] = coll
+    # Ball: weich, mit einem farbigen Ring
+    coll = SB.collection("toy_ball")
+    ball = Body("Ball", M["ball"], coll, seed=66, vary=0.0)
+    ball.blob((0, 0, 0), 0.02, subdiv=3, lump=0.0)
+    ball.build(smooth_angle=180)
+    ring = Body("Streifen", M["ball2"], coll, seed=67, vary=0.0)
+    pts = [Vector((math.cos(t) * 0.0198, math.sin(t) * 0.0198, 0.0)) for t in [i / 30 * math.tau for i in range(32)]]
+    ring.tube(pts, 0.0035, segs=8)
+    ring.build(smooth_angle=180)
+    result["toy_ball"] = coll
+    return result
+
+
+def export_more_toys():
+    for name, coll in build_more_toys().items():
+        objs = [o for o in coll.objects if o.type == "MESH"]
+        path = os.path.join(OUT, name + ".glb")
+        tris, n = SC.export_objects(objs, [], path, extra=[])
+        mapping = SC.write_game_materials(only=list(SC.LAST_EXPORT_MATERIALS))
+        SC.write_import_settings(mapping, path)
+        shutil.copyfile(path, os.path.join(TEMPLATES, name + ".glb"))
+        print("%s: %d Dreiecke" % (name, tris))
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SRC, "toys.blend"), compress=True)
+
+
 def export_toy():
     objs = build_toy()
     path = os.path.join(OUT, "cat_toy.glb")
@@ -690,6 +642,7 @@ def export(a, M):
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", use_selection=True, export_skins=True,
                               export_animations=True, export_nla_strips=True, export_force_sampling=True,
                               export_colors=True, export_extras=True, export_apply=False, export_yup=True,
+                              export_morph=True, export_morph_normal=True,
                               export_lights=False, export_cameras=False, export_image_format="NONE")
     names = [m.name for m in a.mesh.data.materials]
     mapping = SC.write_game_materials(only=names)
@@ -727,6 +680,10 @@ def render_poses(name, poses):
         for pb in arm.pose.bones:
             pb.rotation_quaternion = Quaternion()
             pb.location = Vector()
+        # Flügel ausbreiten (Formvariante „spread“), wie im Spiel beim Fliegen
+        keys = mesh.data.shape_keys
+        if keys and "spread" in keys.key_blocks:
+            keys.key_blocks["spread"].value = 1.0 if pose in ("fly", "glide", "takeoff", "land") else 0.0
         sc.frame_set(frame)
         for view, d in (("vorn", Vector((0.9, -1.6, 0.7))), ("seite", Vector((1.8, 0.1, 0.5))), ("oben", Vector((0.3, -0.5, 1.9)))):
             tgt = Vector((0, 0, size * 0.3))
@@ -734,12 +691,58 @@ def render_poses(name, poses):
             SC.render("%s_%s_%d_%s" % (name, pose or "ruhe", frame, view), tuple(cam), tuple(tgt), 50, (640, 480))
 
 
+def render_sequences(name, anims, count=8, views=("seite",)):
+    """Bewegungen als Einzelbilder hintereinander (zum Prüfen, ob sie natürlich aussehen): je Bewegung count Bilder
+    gleichmäßig verteilt, Ansicht von der Seite (und schräg vorn). Dateien <tier>_seq_<bewegung>_<ansicht>_<n>.png."""
+    bpy.ops.wm.open_mainfile(filepath=os.path.join(SRC, name + ".blend"))
+    arm = [o for o in bpy.data.objects if o.type == "ARMATURE"][0]
+    mesh = [o for o in bpy.data.objects if o.type == "MESH"][0]
+    SC.setup_render(True)
+    sc = bpy.context.scene
+    sc.cycles.samples = 24
+    floor = bpy.data.meshes.new("Boden")
+    floor.from_pydata([(-3, -3, 0), (3, -3, 0), (3, 3, 0), (-3, 3, 0)], [], [(0, 1, 2, 3)])
+    sc.collection.objects.link(bpy.data.objects.new("Boden", floor))
+    os.makedirs(SHOTS, exist_ok=True)
+    SC.SHOTS = SHOTS
+    size = max(mesh.dimensions)
+    cams = {"seite": Vector((1.7, -0.15, 0.35)), "vorn": Vector((0.8, -1.5, 0.55)), "oben": Vector((0.5, 0.6, 1.7))}
+    for anim in anims:
+        track = arm.animation_data.nla_tracks.get(anim)
+        if track is None:
+            continue
+        for t in arm.animation_data.nla_tracks:
+            t.mute = t.name != anim
+        strip = track.strips[0]
+        length = int(strip.frame_end)
+        for k in range(count):
+            frame = round(k * length / max(1, count - (0 if anim in LOOPING else 1)))
+            sc.frame_set(min(frame, length))
+            for view in views:
+                tgt = Vector((0, -0.03, 0.06 if anim in ("sleep", "lie") else 0.14))
+                cam = cams[view].normalized() * size * 1.7 + tgt
+                SC.render("%s_seq_%s_%s_%d" % (name, anim, view, k), tuple(cam), tuple(tgt), 45, (360, 300))
+
+
+LOOPING = {"idle", "walk", "run", "sit", "groom", "pet", "lie", "sleep", "crouch", "stalk", "sniff", "bat", "fly", "glide", "peck",
+           "hop"}
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    names = [n for n in argv if not n.startswith("--")] or ["bird", "cat", "birdhouse", "cat_toy"]
+    names = [n for n in argv if not n.startswith("--")] or ["bird", "pigeon", "cat", "birdhouse", "cat_toy", "toys"]
     for name in names:
         bpy.ops.wm.read_factory_settings(use_empty=True)
         SC.GAME_MATERIALS.clear()
+        if name == "toys":
+            os.makedirs(OUT, exist_ok=True)
+            os.makedirs(TEMPLATES, exist_ok=True)
+            export_more_toys()
+            if "--render" in argv:
+                SC.setup_render(True)
+                SC.SHOTS = SHOTS
+                SC.render("toys", (0.0, -0.3, 0.16), (0, 0.0, 0.0), 50, (640, 400))
+            continue
         if name == "cat_toy":
             export_toy()
             if "--render" in argv:
@@ -758,10 +761,22 @@ def main():
                 SC.render("birdhouse_seite", (0.75, -0.25, 0.05), (0, -0.1, 0.0), 50, (640, 640))
                 SC.render("birdhouse_unten", (0.25, -0.6, -0.45), (0, -0.1, -0.05), 50, (640, 640))
             continue
-        a, M = build_bird() if name == "bird" else build_cat()
+        only = None
+        for arg in argv:
+            if arg.startswith("--only="):
+                only = arg[7:].split(",")
+        a, M = build_bird(name) if name in ("bird", "pigeon") else build_cat(only)
         export(a, M)
+        views = ("seite", "vorn")
+        for arg in argv:
+            if arg.startswith("--seqview="):
+                views = tuple(arg[10:].split(","))
+        for arg in argv:
+            if arg.startswith("--seq="):
+                render_sequences(name, arg[6:].split(","), views=views)
         if "--render" in argv:
-            poses = [("", 0), ("idle", 24), ("peck", 8), ("hop", 6), ("fly", 0), ("fly", 4)] if name == "bird" else \
+            poses = [("", 0), ("idle", 24), ("peck", 8), ("walk", 0), ("fly", 0), ("fly", 5), ("land", 5),
+                     ("takeoff", 7)] if name in ("bird", "pigeon") else \
                 [("", 0), ("walk", 6), ("sit", 0), ("lie", 0), ("sleep", 0), ("groom", 6), ("stretch", 30), ("pet", 0),
                  ("run", 3)]
             render_poses(name, poses)

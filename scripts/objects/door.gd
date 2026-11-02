@@ -11,6 +11,12 @@ extends Node3D
 ## Eine offene Tür bleibt auch im Gestaltungsmodus offen (man kommt weiter durch); solange sie
 ## offen ist, hängt man dort nichts auf und nimmt nichts ab (siehe is_swinging).
 
+## Tiere (seit Etappe 6h): Knoten dieser Gruppe halten sich nie im Schwenkbereich auf – und solange doch einer
+## darin ist (z. B. eine Katze geht gerade durch die Tür), schließt die Tür erst, wenn er draußen ist.
+const KEEPOUT_GROUP := "door_keepout"
+## Schwenkbereich: Radius um das Scharnier (Breite des Türblatts + etwas Luft)
+const SWING_RADIUS := 1.12
+
 ## Teile des einfachen Türblatts der Szene (weichen einem Türblatt-Modell, set_leaf).
 const BUILTIN_LEAF_PARTS: Array[String] = ["DoorLeaf", "LeafGlass", "LeafMuntinV", "LeafMuntinH", "Knob", "KnobOutside"]
 
@@ -25,6 +31,8 @@ var is_open: bool = false
 
 var _closed_hinge: Transform3D
 var _tween: Tween
+## Schließen gewünscht, aber jemand ist im Schwenkbereich: sobald er draußen ist
+var _close_pending := false
 var _hung_items: Array[PlacedFurniture] = []
 
 
@@ -39,8 +47,39 @@ func _on_interacted(_interactor: Node) -> void:
 	set_open(not is_open)
 
 
-## Öffnet oder schließt die Tür (sanft).
+## Liegt ein Punkt (Welt) im Schwenkbereich der Tür (Viertelkreis um das Scharnier auf der Seite, zu der sie
+## aufgeht)?
+func in_swing(point: Vector3) -> bool:
+	# in Koordinaten des geschlossenen Scharniers (z = Richtung, in die die Tür aufgeht)
+	var local := (global_transform * _closed_hinge).affine_inverse() * point
+	if absf(local.y) > 2.4:
+		return false
+	if Vector2(local.x, local.z).length() > SWING_RADIUS:
+		return false
+	return local.z * open_direction > -0.05
+
+
+## Ist gerade ein Tier im Schwenkbereich?
+func swing_blocked() -> bool:
+	for node in get_tree().get_nodes_in_group(KEEPOUT_GROUP):
+		var n := node as Node3D
+		if n and n.is_visible_in_tree() and in_swing(n.global_position):
+			return true
+	return false
+
+
+func _process(_delta: float) -> void:
+	if _close_pending and not swing_blocked():
+		_close_pending = false
+		set_open(false)
+
+
+## Öffnet oder schließt die Tür (sanft). Schließen wartet, solange ein Tier im Schwenkbereich ist.
 func set_open(open: bool) -> void:
+	if not open and is_open and swing_blocked():
+		_close_pending = true
+		return
+	_close_pending = false
 	if open == is_open:
 		return
 	is_open = open
