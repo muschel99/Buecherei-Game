@@ -1208,7 +1208,8 @@ Startwerte sind ruhig.
     Schnattern passen nicht zu einer gemütlichen Katze und bleiben unbenutzt).
 - **Leistung:** Vögel sind sehr klein (gut 2 000 Dreiecke) und werfen keinen Schatten; alle Vögel einer Art
   und jede Katze teilen sich ihre Materialien. Die Sitzplätze an den Häusern sind einmal ausgemessen
-  (keine Rechnung beim Spielen).
+  (keine Rechnung beim Spielen). Gemessen (zwei Blicke auf die Straße, mit und ohne Tiere): 1660 statt 1609
+  bzw. 1341 statt 1380 Zeichenaufrufe – die Tiere kosten höchstens etwa 3 %, der Rest ist Zufall der Passanten.
 
 ## Geräusche und Musik (seit Etappe 6e)
 Alle Geräusche sind Aufnahmen der Entwicklerin (Originale in „Game design/Sounds Cozy Bücherei“ bleiben

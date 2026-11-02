@@ -1459,7 +1459,7 @@ passend zu den Chibi-Figuren –, in Blender modelliert und animiert. Nichts ers
 - [x] 9. Ausweichen: Katzen warten oder gehen außen herum, Passanten gehen um Katzen herum, Autos und Fahrräder
       bremsen für Katzen auf der Fahrbahn (ohne Hupe)
 - [x] 10. Leistung und Einstellungen: Anzahl und Häufigkeit in GameConfig (ruhige Startwerte), Vögel ohne
-      Schatten, gemeinsame Materialien
+      Schatten, gemeinsame Materialien; gemessen höchstens etwa 3 % mehr Zeichenaufrufe (1660 statt 1609)
 - [x] 11. Vorlagen (`assets/models/templates/animals/`) und Anleitung „Eigene Tiere“ in ASSET_GUIDE
 - [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md, Notion)
 
