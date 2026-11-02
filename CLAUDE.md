@@ -1156,11 +1156,14 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   claim_end = Platz belegen, sonst überspringen), nah an der Wand (`_side_point`), Bogen um Wartende (`blocked` →
   `detour`), in der Bücherei Weg per `AStarGrid2D` (`_room_grid`, Ebenen world+furniture) zum freien Sessel/Sofa
   (`SeatPoint.occupant` = Katze), Treppe mit kleinen Hüpfern (`_stairs_up`). Streicheln: Interactable „Streicheln“ →
-  `StreetCat.pet(wer)` (auch für Passanten gedacht, `can_be_petted`). Passanten weichen Katzen aus (Hindernis "cat"),
+  `StreetCat.pet(wer)` (auch für Passanten gedacht, `can_be_petted`). Kopf: `AnimalHeadModifier` (nach der Animation;
+  Blick zum Schaufenster hinauf = Schritt mit "look_up", sonst zur nahen Spielfigur). Auf Bänken liegen sie längs
+  (`_bench_along`). Vogelhäuschen-Plätze `Perch_<n>` mit extras kind (feed/rim/roof) und face (in/out/along). Passanten weichen Katzen aus (Hindernis "cat"),
   Fahrzeuge bremsen ohne Hupe (road_obstacles, Art "cat"). Geräusche: `ambience/bird`, `ambience/bird_flap`,
   `ambience/cat_purr`, nur `GameConfig.cat_meow_sound` = cat_meow_1 (sanft). Prüfen: street_life_check zeigt „Tiere“
-  (Erscheinen/Verschwinden im Blickfeld = 0, festgefahren = 0), `--cats --door_open --enter=1 --cat_log`; Testbilder
-  `--focus_cat`/`--focus_bird`, `--cats`, `--door_open`.
+  (Erscheinen/Verschwinden im Blickfeld = 0, festgefahren = 0), `--cats --door_open --enter=1 --cat_log`, `--no_animals`;
+  Testbilder `--focus_cat`/`--focus_bird`, `--cats`, `--door_open`, `--bird_area=ground|birdhouse|lamp|perch`,
+  `--no_animals` (Leistung vergleichen).
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
   Daumen rechts −X / links +X; Finger in Verlängerung des Unterarms.
 - **Blick zur Spielfigur (seit 6f):** Passanten schauen höchstens `chibi_player_glance_time` Sekunden zur Spielfigur,
