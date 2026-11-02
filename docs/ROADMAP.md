@@ -1543,9 +1543,14 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
   sich von selbst, sobald die Katze durch ist.
 - Ohne Katzenkörbchen nimmt die Katze wie bisher Sessel/Sofa, dann Teppich.
 - Spielzeuge liegen nur während des Spielens draußen (nicht gespeichert, wie alles draußen).
+- Steht jemand der Katze im Weg und sie kommt nicht außen herum, geht sie erst ein Stück zurück und kehrt dann um
+  (vorher lief sie seitlich zur Wand – genau dorthin, wo der Passant vor dem Schaufenster stand: beide warteten).
 
 ## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
 - Inhalt folgt mit den Wünschen der Entwicklerin
+- Schon bekannt (gefunden beim Abschluss von 6h, auch ganz ohne Tiere): An engen Stellen – Tische vor dem Pub,
+  kurze Wege zu Schaufenster oder Bank, Ende der Gasse gegenüber – stehen sich zwei oder drei Passanten manchmal
+  2–3 Sekunden gegenüber, bevor einer ausweicht (`street_life_check`: „stall“)
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

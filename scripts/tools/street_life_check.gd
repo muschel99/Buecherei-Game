@@ -263,7 +263,8 @@ func _measure() -> void:
 			_stall[a] = float(_stall.get(a, 0.0)) + SAMPLE
 			if is_equal_approx(float(_stall[a]), 2.5):
 				_report.stall.append("%s bei %s (%s): %s | nah: %s" % [a.name, a.pos, _spot_name, a.debug_text(),
-					_life.obstacles_near(a, 1.6).map(func(o): return "%s@%s r%.2f" % [o.kind, o.pos, o.radius])])
+					_life.obstacles_near(a, 1.6).map(func(o): return "%s@%s r%.2f%s" % [o.kind, o.pos, o.radius,
+						(" (%s, v=%s)" % [o.agent.get_action_type(), o.vel]) if o.kind == "cat" else ""])])
 		else:
 			_stall[a] = 0.0
 		# Hängt jemand fest?

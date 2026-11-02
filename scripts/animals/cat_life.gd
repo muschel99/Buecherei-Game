@@ -238,23 +238,47 @@ func blocked(cat: StreetCat, dir: Vector3) -> void:
 			cat.replace_actions(actions)
 			return
 	_release_claims(cat)
-	_continue_visit(cat, true)
+	_continue_visit(cat, true, dir)
 
 
 ## Vom jetzigen Ort aus weiter: vielleicht noch ein Halt, dann zu einem verdeckten Ende.
-func _continue_visit(cat: StreetCat, turn_back: bool = false) -> void:
-	var local := _outside.to_local(cat.global_position)
+## blocked_dir: Dorthin ging es nicht weiter (jemand stand im Weg) – dann erst ein Stück zurück, weg von der Person
+## (nicht seitlich zur Wand: dort steht oft gerade der, der vor dem Schaufenster wartet), dann umkehren.
+func _continue_visit(cat: StreetCat, turn_back: bool = false, blocked_dir: Vector3 = Vector3.ZERO) -> void:
+	var start := cat.global_position
+	var actions: Array[Dictionary] = []
+	if blocked_dir != Vector3.ZERO:
+		var back := _step_back(cat, blocked_dir)
+		if back != start:
+			actions.append(_walk([start, back]))
+			start = back
+	var local := _outside.to_local(start)
 	var lage := street.centerline.project(Vector2(local.x, local.z))
 	var side := 1 if lage.y > 0.0 else -1
 	var here := {"s": lage.x}
-	var exit := _pick_end(here, cat.global_basis.z if turn_back else Vector3.ZERO)
+	var exit := _pick_end(here, blocked_dir if blocked_dir != Vector3.ZERO else (cat.global_basis.z if turn_back else Vector3.ZERO))
 	if exit.is_empty():
 		exit = _pick_end({})
 	if exit.is_empty():
 		return
-	var actions: Array[Dictionary] = [_walk([cat.global_position, _side_point(side, lage.x)])]
+	if blocked_dir == Vector3.ZERO:
+		actions.append(_walk([start, _side_point(side, lage.x)]))
 	actions.append_array(_visit(side, lage.x, exit, not turn_back))
 	cat.replace_actions(actions)
+
+
+## Ein Stück zurück, weg von dem, der im Weg steht (auf dem Gehweg, frei von Laternen und Kübeln); sonst bleibt die
+## Katze, wo sie ist.
+func _step_back(cat: StreetCat, blocked_dir: Vector3) -> Vector3:
+	var flat := Vector3(blocked_dir.x, 0.0, blocked_dir.z).normalized()
+	for dist in [0.8, 0.5]:
+		var p := cat.global_position - flat * float(dist)
+		var l := _outside.to_local(p)
+		var lat := street.centerline.project(Vector2(l.x, l.z)).y
+		if absf(lat) < GameConfig.street_width / 2.0 + 0.35 or not street.clear_of_static(Vector2(l.x, l.z), STATIC_GAP):
+			continue
+		return p
+	return cat.global_position
 
 
 ## Fensterbank und Sitz wieder frei.
