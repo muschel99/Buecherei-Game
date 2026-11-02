@@ -42,10 +42,11 @@ const MAX_PER_KIND := {"roof": 70, "ledge": 45, "low": 30, "ivy": 30, "rim": 30}
 const CAT_DEPTH := 0.15
 const CAT_WIDTH := 0.34
 const CAT_HEIGHT := Vector2(0.12, 1.3)
-## Ebenen der Mess-Kollision: fest, Laub, wehender Stoff
-const SOLID := 1
-const FOLIAGE := 2
-const SWAY := 4
+## Ebenen der Mess-Kollision: fest, Laub, wehender Stoff – eigene Ebenen (10–12), damit die groben
+## Kollisionskästen der Häuser (Spiel-Kollision, oben auf Traufhöhe im Dach) nicht mitgemessen werden
+const SOLID := 512
+const FOLIAGE := 1024
+const SWAY := 2048
 const FOLIAGE_WORDS := ["blatt", "pflanze", "blüte", "bluete", "efeu", "laub", "ranke", "stiel", "zweig", "moos", "glyzin"]
 ## Vogelhäuschen: Platz an der Wand (Breite, Höhe, Tiefe) und Höhe der Mitte
 const BIRDHOUSE_SIZE := Vector3(0.46, 0.62, 0.4)
@@ -73,8 +74,12 @@ func _ready() -> void:
 			var shape := single.create_trimesh_shape()
 			if shape == null:
 				continue
+			# von beiden Seiten fest – sonst gehen Prüfstrahlen von unten durch Dachziegel hindurch, und Plätze
+			# unter dem Dach (auf Böden im Dachstuhl) gälten als frei
+			shape.backface_collision = true
 			var body := StaticBody3D.new()
 			body.collision_layer = _layer_of(mesh_instance.get_active_material(surface))
+			body.collision_mask = 0
 			var collision := CollisionShape3D.new()
 			collision.shape = shape
 			body.add_child(collision)
@@ -295,6 +300,13 @@ func _layer_of(material: Material) -> int:
 func _check_spot(p: Vector3, out3: Vector3, along: Vector3) -> Dictionary:
 	if _in_plants(p):
 		return {}
+	# Nie mitten auf einer schrägen Dachfläche (einzelne Ziegelkanten sind waagerecht, aber aus der Ferne zeichnet
+	# Godot das Dach vereinfacht – dann schwebt der Vogel): dahinter höher und davor tiefer = Dachschräge
+	for d in [out3, -out3, along, -along]:
+		var behind := _height_at(p - d * 0.12, p.y)
+		var ahead := _height_at(p + d * 0.12, p.y)
+		if behind > p.y + 0.035 and ahead < p.y - 0.035 and ahead > -INF:
+			return {}
 	# Halt: entlang (u) und quer (v) dieselbe Höhe – oder nur entlang einer Richtung (dünne Kante)
 	var u_ok := _same_height(p + along * FOOT_U, p.y) and _same_height(p - along * FOOT_U, p.y)
 	var v_ok := _same_height(p + out3 * FOOT_V, p.y) and _same_height(p - out3 * FOOT_V, p.y)
@@ -309,11 +321,11 @@ func _check_spot(p: Vector3, out3: Vector3, along: Vector3) -> Dictionary:
 			edge = "along_v"      # Kante nach vorn (offener Fensterladen): Vogel sitzt quer
 		else:
 			return {}
-	# Kopf frei (Laub darf drumherum sein)
-	if _blocked(p + Vector3.UP * (HEAD_RADIUS + 0.025), HEAD_RADIUS, SOLID | SWAY):
+	# Kopf frei (Laub darf drumherum sein); der Vogel sitzt eher vorn auf der Kante
+	if _blocked(p + Vector3.UP * (HEAD_RADIUS + 0.025) + out3 * 0.015, HEAD_RADIUS, SOLID | SWAY):
 		return {}
-	# Anflug schräg nach vorn oben frei
-	var from := p + Vector3.UP * 0.07
+	# Anflug schräg nach vorn oben frei (Start etwas vor der Wand, nicht im Fensterrahmen)
+	var from := p + Vector3.UP * 0.07 + out3 * 0.04
 	if not _ray(from, p + out3 * 1.7 + Vector3.UP * 1.1, SOLID | SWAY).is_empty():
 		return {}
 	if not _ray(from, p + out3 * 0.4 + Vector3.UP * 1.2, SOLID | SWAY).is_empty():
@@ -340,6 +352,12 @@ func _check_spot(p: Vector3, out3: Vector3, along: Vector3) -> Dictionary:
 		if deep and wall and not _blocked(p + Vector3.UP * 0.2, 0.15, SOLID | SWAY):
 			spot["cat"] = true
 	return spot
+
+
+## Höhe der festen Fläche an dieser Stelle (in der Nähe von height), -INF = nichts darunter.
+func _height_at(p: Vector3, height: float) -> float:
+	var hit := _ray(Vector3(p.x, height + 0.25, p.z), Vector3(p.x, height - 0.25, p.z), SOLID)
+	return hit.position.y if not hit.is_empty() else -INF
 
 
 func _same_height(p: Vector3, height: float) -> bool:
@@ -441,6 +459,7 @@ func _flat_wall(center: Vector3, out3: Vector3, along: Vector3) -> float:
 	box.size = Vector3(BIRDHOUSE_SIZE.x + 0.2, BIRDHOUSE_SIZE.y + 0.3, BIRDHOUSE_SIZE.z)
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = box
+	query.collision_mask = SOLID | FOLIAGE | SWAY
 	query.transform = Transform3D(Basis(along, Vector3.UP, out3), center + out3 * (wall + 0.03 + BIRDHOUSE_SIZE.z / 2.0))
 	if not _space.intersect_shape(query, 1).is_empty():
 		return NAN

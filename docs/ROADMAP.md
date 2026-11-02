@@ -44,7 +44,7 @@
 | 6e  | Geräusche und Musik (eigene Aufnahmen, räumlich, Laute der Passanten) | fertig |
 | 6f  | Nichts verschwindet, Tür, neue Fenster, Deko-Plätze, Autos, Kamin, Geräusche feiner | fertig |
 | 6g  | Tiere: Vögel und Katzen (Blender-Modelle mit Bewegungen, Vogelhäuschen, Streicheln) | fertig |
-| 6h  | Vögel und Katzen verfeinern (weiche Modelle, Flug, Tauben, Gesichter, Spielzeug, Katzenkörbchen) | in Arbeit |
+| 6h  | Vögel und Katzen verfeinern (weiche Modelle, Flug, Tauben, Gesichter, Spielzeug, Katzenkörbchen) | fertig |
 | 6i  | Leben in der Straße (nächste Testrunde der Entwicklerin) | vorgemerkt |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
@@ -149,9 +149,9 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   Kleidung und Frisuren.
 - Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme, Musik für Nacht/Regen/
   Winter – Liste in ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
-- Tiere (seit 6g): Vögel sitzen noch nicht in Bäumen und nicht auf dem Dach der Bücherei; Katzen kommen nur über
-  die Straßenenden (nicht aus den Gassen) und schauen beim Blick ins Schaufenster geradeaus (ohne Kopf zu heben);
-  Passanten streicheln Katzen noch nicht (vorbereitet).
+- Tiere (seit 6g/6h): Vögel sitzen noch nicht in Bäumen und nicht auf dem Dach der Bücherei; Katzen kommen nur über
+  die Straßenenden (nicht aus den Gassen); Passanten streicheln Katzen noch nicht (vorbereitet); eigene Laute je
+  Vogelart, Tauben und Flattern warten auf Aufnahmen.
 - Kein Tag-Nacht-Wechsel; Besucher kommen noch nicht in die Bücherei.
 
 ## Etappe 1 – Grundgerüst und erster Raum
@@ -1491,6 +1491,61 @@ passend zu den Chibi-Figuren –, in Blender modelliert und animiert. Nichts ers
 - Katzen kommen wie Passanten nur über die verdeckten Straßenenden; über die Straße flitzen sie nur, wenn kein
   Fahrzeug kommt.
 - Fangen: Eine Katze rennt voraus, wartet, rennt weiter, die zweite hinterher (ohne Rollentausch).
+
+## Etappe 6h – Vögel und Katzen verfeinern (Testrunde „12b“ der Entwicklerin)
+Leitgedanke (Wünsche nach dem Test von 6g): weiche, organische Tiere wie die Chibi-Figuren, natürliche Bewegungen
+nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit Einzelbildern geprüft.
+
+**Vögel**
+- [x] 1. Neue Modelle aus einem weichen Körper (Metaballs); Flügel als dünne Schale genau auf dem Körper (nichts
+      steckt darin), beim Fliegen ausgebreitet (Formvariante „spread“, Flügelspitzen schwingen nach)
+- [x] 2. Flug in sanften Bögen: schräg abheben, Wellenflug (Schläge und Gleiten), schräg von vorn oben anfliegen,
+      bremsend landen; ab und zu ein Durchflug ohne Landen
+- [x] 3. Tauben (drei Färbungen, schillernder Hals): gehen mit nickendem Kopf und picken am Boden, sitzen auf
+      Dächern – nie in Kübeln oder Kästen
+- [x] 4. Mehr Sitzplätze: Ränder von Blumenkästen und Töpfen (auch oben), Geländer, Fensterläden, Markisenstangen,
+      Efeu; mal allein, mal zu zweit, mal in Gruppen; nie mitten auf schrägen Dachflächen (dort schwebten Vögel,
+      weil Godot das Dach aus der Ferne vereinfacht zeichnet) – alle Häuser mit Testbildern geprüft
+- [x] 5. Wegfliegen: Kugel um den Vogel, egal wo er sitzt; auf Laternen und am Vogelhäuschen nur, wenn man dort springt
+- [x] 6. Geräusche: erzeugtes Flattern entfernt (still bis zur eigenen Aufnahme); eigene Aufnahmen für Flattern, Tauben
+      und jede Vogelart erkennt `prepare_sounds.py` am Dateinamen
+
+**Katzen**
+- [x] 7. Neues Modell aus einem weichen Körper (großer runder Kopf, dreieckige Ohren, Schwanz in fünf Gliedern),
+      eigenes Skelett (Wirbelsäule, Hals, Kopf, Ohren, Beine mit Pfoten, Schwanz) – keine fertige Katze nötig
+- [x] 8. 20 eigene Bewegungen nach echten Katzen (Beine mit IK: Pfoten bleiben stehen): federnder Gang, Rennen,
+      hinten zuerst hinsetzen, aufstehen, Strecken mit Buckel, Putzen, Liegen, eingerollt schlafen, Schnuppern,
+      Lauern, Anschleichen, Sprung, Anstupsen, Hoch-/Herunterspringen, Stufen – jede mit Einzelbildern geprüft
+- [x] 9. Gesicht: blinzeln, freundlich schauen, Augen zu beim Schlafen, zufrieden beim Streicheln (auf dem Sessel
+      mit kurzem Miau)
+- [x] 10. Freier Gang (mal Wand, mal Mitte, Bögen, Schnuppern); über die Straße auf Fahrbahnhöhe mit Bordstein;
+      Treppe hinaufhüpfen und hinuntersteigen; immer vorwärts herunterspringen
+- [x] 11. Tür: Warten seitlich unter dem Einwurf bzw. neben der Tür, nie im Schwenkbereich; Tür schließt erst, wenn
+      keine Katze darin ist
+- [x] 12. Liegeplätze geprüft: nur an der Hauswand (Fensterbänke, Stufen), Bänke, Stühle – nie auf Aufstellern
+- [x] 13. Jagd auf Vögel am Boden (lauern, anschleichen, Sprung – Vögel fliegen immer rechtzeitig weg)
+- [x] 14. Spielzeug: Maus, Wollknäuel, Federbüschel, Ball – anstupsen, hinterher, draufspringen, tragen, liegen lassen,
+      von anderen Katzen gefunden
+- [x] 15. Katzenkörbchen in allen drei Stilen mit je vier Farben (Shop, Deko → „Für Katzen“); Katzen nehmen sie zuerst
+- [x] Roadmap aufgeräumt (Zählung der Testrunden als Tabelle, Wetter als Etappe 11c), Dokumentation, Notion
+
+**Entscheidungen (selbst getroffen):**
+- Weiche Körper aus Metaballs (Blender) statt einzelner Kugeln: so fließen Kopf, Hals, Rumpf und Beine ohne Nähte
+  ineinander. Kleine Tiere werden zehnmal so groß gebaut und dann verkleinert (Blender rechnet Metaballs nur auf
+  5 mm genau).
+- Flügel als Formvariante statt zweier Modelle: angelegt liegen sie genau auf dem Körper, ausgebreitet sind es
+  richtige Flügel; das Spiel blendet in 0,14 s um.
+- Katzen-Bewegungen mit IK gebaut und dann in einfache Drehungen umgerechnet: Die Pfoten rutschen nicht, und das
+  Spiel braucht keine IK.
+- Sprünge: Die Bewegung zeigt Ansetzen, Flug und Landen; das Spiel trägt die Katze im passenden Zeitfenster in einem
+  Bogen (`JUMP_WINDOW`), immer nach vorn.
+- Tür: Tiere melden sich in der Gruppe `door_keepout`; schließt man die Tür, während eine Katze durchgeht, schließt sie
+  sich von selbst, sobald die Katze durch ist.
+- Ohne Katzenkörbchen nimmt die Katze wie bisher Sessel/Sofa, dann Teppich.
+- Spielzeuge liegen nur während des Spielens draußen (nicht gespeichert, wie alles draußen).
+
+## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
+- Inhalt folgt mit den Wünschen der Entwicklerin
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

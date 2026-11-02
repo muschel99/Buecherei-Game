@@ -1167,49 +1167,77 @@ Tageszeit abhängen (`StreetLife.activity()`).
 - **Speichern:** Draußen wird nichts gespeichert – außer dem, was für eine laufende Lieferung
   nötig ist (Bestellungen und was gerade im Lieferwagen ist).
 
-### Tiere: Vögel und Katzen (seit Etappe 6g)
-Im weichen Bilderbuch-Stil der Welt: runde, geschlossene Körper wie bei den Chibi-Figuren, jedes Tier mit
-Skelett und eigenen Bewegungen. Alle Mengen und Zeiten stehen in GameConfig (Abschnitt „Tiere“), die
-Startwerte sind ruhig.
-- **Vögel:** kleine Singvögel in vier Arten (Spatz, Rotkehlchen, Blaumeise, Buchfink), meist in kleinen
-  Schwärmen von ein bis vier Vögeln, höchstens zehn gleichzeitig.
-  - *Wo sie sitzen:* auf Dachrinnen, Firsten, Gesimsen, Schildkästen und Fensterbänken der Häuser (die
-    Plätze sind an jedem Haus ausgemessen – nie mitten in Blumenkästen, nie unter einer Markise), auf den
-    Querarmen der Straßenlaternen und am **Vogelhäuschen** an einem Wohnhaus gegenüber der Bücherei
-    (Futterbrett mit Körnern, Rand, Sitzstange, Dachfirst – dort landen sie, picken, sitzen und fliegen
-    wieder weg). Auf dem Gehweg picken sie Körner und hüpfen herum.
-  - *Kommen und gehen:* Vögel tauchen nie aus dem Nichts auf: Sie fliegen hinter einem Dach hervor (von dort
-    aus, wo man nicht hinsieht) und landen sanft; nach einer Weile fliegen sie zu einem anderen Platz in der
-    Nähe oder wieder hinter ein Dach – verschwinden erst außer Sicht.
-  - *Auffliegen:* Kommt die Spielfigur, ein Passant, eine Katze oder ein Fahrzeug Vögeln am Boden (oder auf
-    niedrigen Fensterbänken) zu nahe, flattert der ganze Schwarm mit Flattergeräusch auf und landet weiter
-    oben woanders.
-  - *Zwitschern:* jeder Vogel ab und zu für sich, räumlich am Vogel (nah lauter, fern leiser).
-- **Katzen:** drei Katzen mit eigenem Aussehen – „Mandarine“ (rot getigert mit cremefarbener Brust),
-  „Nebel“ (grau mit hellen Streifen) und „Socke“ (schwarz mit weißer Brust und weißen Pfoten). Ab und zu
-  kommt eine vorbei (höchstens zwei gleichzeitig), wie Passanten nur von den verdeckten Straßenenden.
-  - *Was sie tun:* nah an den Hauswänden laufen; sich auf eine Bank, einen Stuhl (auch vor dem Pub und vor
-    der Bücherei) oder eine breite Fensterbank setzen; sich putzen, strecken und schlafen; durchs
-    Schaufenster in die Bücherei schauen; manchmal spielen zwei Katzen **Fangen** (die eine rennt voraus,
-    wartet, rennt weiter, die andere hinterher), manchmal trägt eine eine kleine **Filzmaus** im Maul (beim
-    Hinsetzen legt sie sie vor sich ab und nimmt sie wieder mit).
-  - *In der Bücherei:* Ist die Ladentür offen, kommt manchmal eine Katze die Stufen herauf (kleine Hüpfer)
-    und herein, sucht sich einen Weg zwischen den Möbeln hindurch und legt sich auf einen freien Sessel oder
-    ein Sofa (ohne Sessel: auf einen Teppich), rollt sich ein und **schnurrt**. Nach ein paar Minuten
-    streckt sie sich und geht wieder; ist die Tür zu, wartet sie davor und miaut ab und zu leise, bis ich
-    aufmache. Solange sie auf dem Sessel liegt, kann ich mich dort nicht hinsetzen.
-  - *Streicheln:* mit **E** (Symbol „Streicheln“): Die Katze bleibt stehen, dreht sich zu mir, reibt den
-    Kopf und schnurrt (liegt sie, schnurrt sie im Liegen). Vorbereitet: Später können auch Passanten Katzen
-    streicheln (dieselbe Funktion, `StreetCat.pet`).
-  - *Rücksicht:* Katzen warten, wenn jemand im Weg ist, gehen in einem kleinen Bogen außen herum oder kehren
-    um; Passanten gehen um sie herum; über die Straße flitzen sie nur, wenn kein Fahrzeug kommt – Autos und
-    Fahrräder bremsen für Katzen auf der Fahrbahn (ohne zu hupen oder zu klingeln).
-  - *Geräusche:* Schnurren und nur ein kurzes, sanftes Miau aus den eigenen Aufnahmen (das lange Miau und das
-    Schnattern passen nicht zu einer gemütlichen Katze und bleiben unbenutzt).
-- **Leistung:** Vögel sind sehr klein (gut 2 000 Dreiecke) und werfen keinen Schatten; alle Vögel einer Art
-  und jede Katze teilen sich ihre Materialien. Die Sitzplätze an den Häusern sind einmal ausgemessen
-  (keine Rechnung beim Spielen). Gemessen (zwei Blicke auf die Straße, mit und ohne Tiere): 1660 statt 1609
-  bzw. 1341 statt 1380 Zeichenaufrufe – die Tiere kosten höchstens etwa 3 %, der Rest ist Zufall der Passanten.
+### Tiere: Vögel und Katzen (seit Etappe 6g, verfeinert in 6h)
+Im weichen Bilderbuch-Stil der Welt: Seit Etappe 6h ist jedes Tier ein einziger weicher Körper (aus
+„Metaballs“ – Kugeln und Ellipsoide, die ohne Nähte ineinanderfließen, wie bei den Chibi-Figuren) mit Skelett
+und eigenen Bewegungen. Alle Mengen und Zeiten stehen in GameConfig (Abschnitt „Tiere“), die Startwerte sind
+ruhig.
+- **Vögel:** kleine Singvögel in vier Arten (Spatz, Rotkehlchen, Blaumeise, Buchfink: eigene Farben für
+  Gefieder, Brust/Kehle, Kappe, Flügel, Schnabel und Beine) und **Tauben** (drei Färbungen, Hals schillert je
+  nach Blickwinkel). Mal kommen sie zu zweit oder in kleinen Schwärmen, mal ganz allein; ein Schwarm setzt sich
+  nebeneinander auf eine Rinne oder verteilt sich einzeln. Höchstens zehn kleine Vögel und sechs Tauben.
+  - *Körper und Flügel:* Die Flügel liegen beim Sitzen als dünne Schale genau auf dem Körper (nichts steckt
+    darin) und breiten sich beim Fliegen zu richtigen Flügeln aus (Flügelspitzen schwingen nach).
+  - *Fliegen:* in sanften Bögen – schräg abheben (nach vorn, vom Haus weg), kleine Vögel fliegen in Wellen
+    (ein paar Schläge, kurz gleiten), schräg von vorn oben anfliegen und mit gespreizten Flügeln bremsend
+    landen. Tauben fliegen gerader und gleiten mehr. Ab und zu zieht ein Schwarm einfach hoch über die
+    Straße, ohne zu landen.
+  - *Wo sie sitzen:* kleine Vögel überall, wo man es erwartet – Dachrinnen, Firste, Schornsteine, Gesimse,
+    Schildkästen, Fensterbänke, Geländer vor Fenstern, offene Fensterläden, Markisenstangen, im Efeu, auf dem
+    Rand von Blumenkästen und Töpfen (auch im zweiten Stock), Querarme der Straßenlaternen und am
+    **Vogelhäuschen**. Tauben nur am Boden und auf Dächern (nie in Kübeln oder Kästen). Alle Plätze sind an
+    jedem Haus ausgemessen: Vögel sitzen immer wirklich auf etwas – nie mitten auf einer schrägen Dachfläche,
+    nie in der Erde, nie unter einer Markise.
+  - *Am Boden:* kleine Vögel picken und hüpfen, Tauben gehen mit nickendem Kopf und picken.
+  - *Kommen und gehen:* nie aus dem Nichts – hinter einem Dach hervor und wieder dorthin (erst außer Sicht).
+  - *Auffliegen:* Kommt jemand einem sitzenden Vogel nahe (eine Kugel um den Vogel – egal ob am Boden, auf
+    der Fensterbank oder dem Dach), fliegt der Schwarm auf, weg von der Gefahr, und landet woanders. Auf den
+    **Laternen und am Vogelhäuschen** bleiben sie sitzen, wenn man nur vorbeigeht – dort erschreckt sie nur,
+    wenn ich in ihrer Nähe springe.
+  - *Geräusche:* jeder Vogel zwitschert für sich (räumlich); eigene Laute je Art und Gurren der Tauben,
+    sobald es Aufnahmen gibt. Das Auffliegen ist still, bis es eine eigene Flatter-Aufnahme gibt (das erzeugte
+    Geräusch klang wie ein Maschinengewehr und ist entfernt).
+- **Katzen:** drei Katzen mit eigenem Aussehen – „Mandarine“ (rot getigert, helle Schnauze und Brust),
+  „Nebel“ (grau getigert, dunklerer Rücken) und „Socke“ (schwarz mit weißer Brust, weißem Bauch und weißen
+  Pfoten). Ab und zu kommt eine vorbei (höchstens zwei gleichzeitig), nur von den verdeckten Straßenenden.
+  - *Körper und Bewegungen (seit 6h selbst gebaut und animiert, nach dem Vorbild echter Katzen):* weicher
+    Körper mit großem runden Kopf, dreieckigen Ohren und Schwanz in fünf Gliedern; Beine mit festen Pfoten
+    (sie rutschen nicht). Weicher, federnder Gang (Kopf bleibt ruhig, Schwanz erhoben und schwingt mit),
+    Rennen, beim Hinsetzen erst hinten absetzen, Aufstehen, Strecken mit Buckel, Putzen (Pfote zum Mund,
+    übers Gesicht), Liegen, eingerollt Schlafen (Kopf am Schwanz), Schnuppern, Lauern, Anschleichen,
+    Sprung auf Beute, mit der Pfote Anstupsen, Hochspringen (ansetzen, abspringen, weich landen),
+    Herunterspringen (immer vorwärts: erst umdrehen, dann mit dem Kopf voran), Stufen hinaufhüpfen und
+    hinuntersteigen.
+  - *Gesicht:* blinzelt ab und zu, schaut freundlich (langsames Blinzeln zur Spielfigur), Augen zu beim
+    Schlafen; beim Streicheln kneift sie zufrieden die Augen zu.
+  - *Unterwegs:* läuft frei – mal an der Hauswand, mal mitten auf dem Gehweg, in Bögen –, bleibt stehen und
+    schnuppert; setzt sich auf Bänke (zum Liegen längs), Stühle, Fensterbänke und Stufen (nur, was an der
+    Hauswand hängt – nie auf Aufsteller oder Ständer); schaut durchs Schaufenster der Bücherei (Kopf hoch);
+    über die Straße: am Bordstein warten, bis nichts kommt, hinunter auf die Fahrbahn, hinüber, hinauf.
+  - *Jagd:* Sitzen Vögel auf dem Gehweg, lauert sie geduckt, schleicht sich an und springt – die Vögel fliegen
+    immer rechtzeitig auf, sie fängt nie einen. Danach sitzt sie und schaut ihnen nach.
+  - *Spielzeug:* Filzmaus, Wollknäuel, Federbüschel und Ball. Sie trägt es im Maul, legt es beim Hinsetzen vor
+    sich, spielt richtig damit (anstupsen – Ball und Wolle rollen, Maus und Federn rutschen –, hinterher,
+    draufspringen) und lässt es manchmal an einer Hauswand liegen; eine andere Katze findet es später,
+    schnuppert, spielt damit und nimmt es vielleicht mit. Manchmal spielen zwei Katzen **Fangen**.
+  - *In der Bücherei:* Ist die Ladentür offen, hüpft sie die Stufen hinauf und kommt herein, sucht sich einen
+    Weg zwischen den Möbeln und legt sich am liebsten in ein **Katzenkörbchen**, sonst auf einen freien
+    Sessel oder ein Sofa, sonst auf einen Teppich; rollt sich ein und **schnurrt**. Ist die Tür zu, wartet sie
+    draußen seitlich unter dem Einwurf bzw. drinnen neben der Tür – nie im Schwenkbereich – und miaut ab und
+    zu leise. Tiere halten sich nie im Schwenkbereich auf; geht gerade eine Katze durch die Tür, schließt die
+    Tür erst, wenn sie durch ist.
+  - *Katzenkörbchen (Shop „Nest & Nook“, Deko → „Für Katzen“):* Weidenkörbchen mit Karokissen (Landhaus),
+    Katzenbett aus Filz (Minimalistisch), Katzenbett mit Samtkissen auf Messingfüßen (Dark Academia), je in
+    vier Farben. So bleiben die Sessel für spätere Besucher frei.
+  - *Streicheln:* mit **E** („Streicheln“): Die Katze bleibt stehen, dreht sich zu mir, reibt den Kopf,
+    kneift die Augen zu und schnurrt; liegt sie (z. B. auf dem Sessel), bleibt sie liegen, macht ein kurzes
+    Miau und schnurrt weiter. Vorbereitet für Passanten (`StreetCat.pet`).
+  - *Rücksicht:* Katzen warten, gehen in einem Bogen außen herum oder kehren um; Passanten gehen um sie herum;
+    Autos und Fahrräder bremsen für Katzen auf der Fahrbahn (ohne Hupe oder Klingel).
+  - *Geräusche:* Schnurren und nur das kurze, sanfte Miau aus den eigenen Aufnahmen.
+- **Leistung:** Vögel werfen keinen Schatten, alle Vögel einer Art und jede Katze teilen sich ihre Materialien,
+  die Sitzplätze sind einmal ausgemessen (keine Rechnung beim Spielen). Gemessen in 6g: höchstens etwa 3 % mehr
+  Zeichenaufrufe.
 
 ## Geräusche und Musik (seit Etappe 6e)
 Alle Geräusche sind Aufnahmen der Entwicklerin (Originale in „Game design/Sounds Cozy Bücherei“ bleiben
@@ -1240,8 +1268,9 @@ schneller oder langsamer). So klingt nichts zweimal genau gleich. Fehlt eine Dat
   und freundlich („mip mip“) – höchstens alle 18 Sekunden. Radfahrer klingeln, wenn jemand auf der Fahrbahn
   vor ihnen ist, und sonst ganz selten einfach so.
 - **Tiere:** Tiergeräusche kommen nur von einem sichtbaren Tier (seit Etappe 6f). Seit Etappe 6g zwitschern
-  die Vögel einzeln an ihrem Platz, flattern beim Auffliegen, und Katzen schnurren beim Streicheln und auf dem
-  Sessel; ab und zu ein kurzes, sanftes Miau (z. B. vor der geschlossenen Tür).
+  die Vögel einzeln an ihrem Platz, Katzen schnurren beim Streicheln und auf dem Sessel; ab und zu ein kurzes,
+  sanftes Miau (z. B. vor der geschlossenen Tür). Seit 6h: Auffliegen still bis zur eigenen Flatter-Aufnahme;
+  eigene Laute je Vogelart und Gurren der Tauben werden automatisch genutzt, sobald die Aufnahmen da sind.
 - **Passanten:** keine Wörter, nur kurze, weiche Laute zum Anlass – Lachen oder Kichern beim Plaudern,
   ein „hm“ beim Zuhören oder beim Blick auf die Uhr, ein „oh“ am Schaufenster. Sparsam: jede Figur
   höchstens alle 14 Sekunden, nie zwei Laute kurz nacheinander. Männer lachen vorerst nicht, sondern sagen
