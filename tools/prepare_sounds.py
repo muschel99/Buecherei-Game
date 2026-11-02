@@ -14,6 +14,9 @@ Aufruf (Terminal, im Projektordner; braucht ffmpeg):
     FFMPEG=/pfad/zu/ffmpeg python3 tools/prepare_sounds.py
 Vorhandene Ziel-Dateien werden überschrieben (sie stammen ja aus diesem Script) – eigene, von Hand
 abgelegte Dateien mit anderen Namen bleiben unberührt.
+Neue Tiergeräusche (Flattern, Tauben, einzelne Vogelarten) erkennt das Script am Dateinamen (ANIMAL_RULES), z. B.
+„flattern_3x.mp3“ → ambience/bird_flap_1, _2 …, „taube_gurren.mp3“ → ambience/pigeon_…, „spatz.mp3“ →
+ambience/bird_sparrow_….
 """
 
 import json
@@ -96,6 +99,44 @@ JOBS = [
     ("background_optimistic lofi.mp3", "music/day/optimistic_lofi", "music", "music", dict()),
 ]
 # Bewusst nicht verwendet (Wunsch der Entwicklerin): Female_eww.mp3, female_urgh.mp3
+
+# Tiergeräusche, die die Entwicklerin nach und nach dazulegt (seit Etappe 6h): Dateien im Sounds-Ordner (auch in
+# Unterordnern), deren Name eines dieser Wörter enthält, werden automatisch aufbereitet – an stillen Stellen
+# geschnitten, jedes Stück eine Variante. Reihenfolge zählt (das erste passende Wort gewinnt).
+#   (Wörter im Dateinamen, Ziel)
+ANIMAL_RULES = [
+    (("flatter", "flap", "flügel", "fluegel", "wing"), "ambience/bird_flap"),
+    (("taube", "pigeon", "gurr", "dove"), "ambience/pigeon"),
+    (("spatz", "sperling", "sparrow"), "ambience/bird_sparrow"),
+    (("rotkehlchen", "robin"), "ambience/bird_robin"),
+    (("meise", "blue tit", "bluetit", "great tit"), "ambience/bird_tit"),
+    (("fink", "finch"), "ambience/bird_finch"),
+    (("amsel", "blackbird"), "ambience/bird_blackbird"),
+    (("vogel", "bird", "zwitscher", "chirp"), "ambience/bird"),
+]
+
+
+def animal_jobs():
+    """Zusätzliche Aufträge für neu dazugelegte Tiergeräusche (siehe ANIMAL_RULES)."""
+    known = {j[0] for j in JOBS}
+    counters = {"ambience/bird": 6}  # bird_1..6 kommen aus „6x-Vogel Zwitschern.mp3“
+    jobs = []
+    for folder, _dirs, files in sorted(os.walk(SOURCE)):
+        for name in sorted(files):
+            if not name.lower().endswith((".mp3", ".wav", ".ogg", ".flac", ".m4a")):
+                continue
+            rel = os.path.relpath(os.path.join(folder, name), SOURCE)
+            if rel in known:
+                continue
+            low = name.lower()
+            for words, dest in ANIMAL_RULES:
+                if any(w in low for w in words):
+                    start = counters.get(dest, 0) + 1
+                    jobs.append((rel, dest, "birds", "split", dict(n=0, start=start, auto=True)))
+                    # Platz für bis zu 30 Stücke je Datei lassen
+                    counters[dest] = start + 29
+                    break
+    return jobs
 
 STEREO = {"music"}
 
@@ -230,7 +271,7 @@ def out_path(name):
 
 def main():
     report = []
-    for src, dest, kind, mode, opt in JOBS:
+    for src, dest, kind, mode, opt in JOBS + animal_jobs():
         path = os.path.join(SOURCE, src)
         if not os.path.exists(path):
             print("FEHLT:", src)

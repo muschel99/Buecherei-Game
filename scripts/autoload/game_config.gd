@@ -802,7 +802,8 @@ var bird_vehicle_flee_radius: float = 4.5
 var bird_chirp_interval: Vector2 = Vector2(7.0, 20.0)
 var bird_chirp_volume_db: float = -7.0
 var bird_chirp_distance: float = 22.0
-## Flattern beim Auffliegen (Geräusch ambience/bird_flap, per Script erzeugt: tools/make_wing_flap.py)
+## Flattern beim Auffliegen (Geräusch ambience/bird_flap aus den Aufnahmen der Entwicklerin – fehlt die Datei, bleibt
+## das Auffliegen still; tools/prepare_sounds.py erkennt Dateien mit „flattern“/„flap“ im Namen)
 var bird_flap_volume_db: float = -12.0
 ## Vogelarten: Farben der Materialien (Gefieder, Flügel, Brust, Schnabel) – neue Art = neue Zeile
 var bird_species: Array[Dictionary] = [

@@ -44,6 +44,8 @@
 | 6e  | Geräusche und Musik (eigene Aufnahmen, räumlich, Laute der Passanten) | fertig |
 | 6f  | Nichts verschwindet, Tür, neue Fenster, Deko-Plätze, Autos, Kamin, Geräusche feiner | fertig |
 | 6g  | Tiere: Vögel und Katzen (Blender-Modelle mit Bewegungen, Vogelhäuschen, Streicheln) | fertig |
+| 6h  | Vögel und Katzen verfeinern (weiche Modelle, Flug, Tauben, Gesichter, Spielzeug, Katzenkörbchen) | in Arbeit |
+| 6i  | Leben in der Straße (nächste Testrunde der Entwicklerin) | vorgemerkt |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
@@ -51,14 +53,25 @@
 | 10b | Fahrzeuge neu modellieren (vorgemerkt)   | offen         |
 | 11  | Atmosphäre (Tageszeit-Licht; Musik und Geräusche seit 6e) | offen |
 | 11b | Geräuschkulisse für die Straße – in 6e erledigt | fertig |
+| 11c | Wetter (Regen, Wind, Wolken, Schnee – passend zu Jahreszeit und Tageszeit) | offen |
 | 12  | Story und Spiegel                        | offen         |
 | 13  | Gasse, Fassade und Jahreszeiten          | offen         |
 | 14  | Feinschliff                              | offen         |
 
 (Seit Etappe 6 sind die späteren Etappen eine Nummer weitergerückt: Wirtschaft ist jetzt 7, Café 9,
 Freischaltungen 10 usw.)
-(Zählung der Entwicklerin bei den Testrunden: ihre „Etappe 8“ = 6c, „Etappe 9“ = 6d, „Etappe 10“ = 6e,
-„Etappe 11“ = 6f, „Etappe 12“ = 6g.)
+**Testrunden der Entwicklerin und Etappen hier** (sie zählt ihre Testrunden fortlaufend; hier haben sie
+saubere Nummern unter Etappe 6, damit sich nichts mit den späteren Etappen 7–14 überschneidet):
+
+| Testrunde (Zählung der Entwicklerin) | Etappe hier | Inhalt |
+|---|---|---|
+| 8 | 6c | Fassade in jeder Form, Freischaltungen, Leben auf der Straße, Fahrzeuge im Stil |
+| 9 | 6d | Alles wie in echt, Sitzplätze, Kamin, Flammen |
+| 10 | 6e | Geräusche und Musik |
+| 11 | 6f | Fehler und Feinschliff |
+| 12 | 6g | Vögel und Katzen |
+| 12b | 6h | Verfeinerung Vögel und Katzen |
+| 13 | 6i | Leben in der Straße (kommt danach) |
 
 ## Stand nach dem Stil-Umbau (Überblick, Stand 01.11.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
@@ -1510,6 +1523,13 @@ passend zu den Chibi-Figuren –, in Blender modelliert und animiert. Nichts ers
   gründlich neu modelliert (bis dahin fahren die verbesserten Modelle aus Etappe 5b)
 - Grundlage: build_vehicles.py (jetzige Autos), build_storybook_vehicles.py (Bilderbuch-Versuch aus 6c,
   Fahrräder)
+
+## Etappe 11c – Wetter (Wunsch der Entwicklerin seit Etappe 6h)
+- Regen (Pfützen, nasse Straße, Tropfen an Markisen, Schirme der Passanten), Wind (Bäume, Markisen, Blätter,
+  Fahnen), Wolken (Himmel und Licht), Schnee (liegt auf Dächern, Fensterbänken und Gehwegen)
+- Passend zu Jahreszeit und Tageszeit (baut auf Etappe 7 – Tagesablauf – und 11 – Tageszeit-Licht – auf);
+  Musik wechselt dann in die Ordner `music/rain` und `music/winter` (seit 6f vorbereitet)
+- Tiere passen sich an (bei Regen weniger Vögel, Katzen suchen Unterschlupf)
 
 ## Etappe 11b – Geräuschkulisse für die Straße (erledigt in Etappe 6e)
 - [x] Schritte der Passanten, Vögel, Autos und Fahrräder (Motor, Hupe, Klingel), Katzen – siehe Etappe 6e

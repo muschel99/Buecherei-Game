@@ -5,11 +5,14 @@ Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; V
 Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
 
 - bird – Zwitschern am einzelnen Vogel (seit Etappe 6g, räumlich)
-- bird_flap – Flattern beim Auffliegen (per Script erzeugt: tools/make_wing_flap.py)
+- bird_flap – Flattern beim Auffliegen (fehlt noch: eigene Aufnahme mit „flattern“ oder „flap“ im Namen in den
+  Sounds-Ordner legen und tools/prepare_sounds.py starten; bis dahin fliegen Vögel still auf)
+- bird_sparrow, bird_robin, bird_tit, bird_finch – eigene Laute je Vogelart (fehlen noch; sonst nimmt jede Art „bird“)
+- pigeon – Gurren der Tauben (fehlt noch; bis dahin sind Tauben still)
 - cat_purr – Schnurren der Katze (beim Streicheln und auf dem Sessel)
 - cat_meow_1 – kurzes, sanftes Miau der Katze (GameConfig.cat_meow_sound)
 - cat_meow_2, cat_chatter – vorhanden, aber unbenutzt (zu lang bzw. zu aufgeregt)
 - fireplace – Kaminknistern in Schleife (fehlt noch)
 - outdoor – Hintergrund in Schleife (fehlt noch, optional)
 
-Vorhanden: bird_1.ogg, bird_2.ogg, bird_3.ogg, bird_4.ogg, bird_5.ogg, bird_6.ogg, bird_flap_1.ogg, bird_flap_2.ogg, bird_flap_3.ogg, cat_chatter_1.ogg, cat_chatter_2.ogg, cat_chatter_3.ogg, cat_chatter_4.ogg, cat_chatter_5.ogg, cat_chatter_6.ogg, cat_chatter_7.ogg, cat_chatter_8.ogg, cat_chatter_9.ogg, cat_meow_1.ogg, cat_meow_2.ogg, cat_purr.ogg
+Vorhanden: bird_1.ogg, bird_2.ogg, bird_3.ogg, bird_4.ogg, bird_5.ogg, bird_6.ogg, cat_chatter_1.ogg, cat_chatter_2.ogg, cat_chatter_3.ogg, cat_chatter_4.ogg, cat_chatter_5.ogg, cat_chatter_6.ogg, cat_chatter_7.ogg, cat_chatter_8.ogg, cat_chatter_9.ogg, cat_meow_1.ogg, cat_meow_2.ogg, cat_purr.ogg
