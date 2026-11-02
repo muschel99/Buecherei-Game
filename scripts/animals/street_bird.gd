@@ -79,6 +79,9 @@ func settle(new_spot: Dictionary) -> void:
 func hide_bird() -> void:
 	state = State.POOL
 	visible = false
+	if anim:
+		anim.stop()
+	current_anim = &""
 	spot = {}
 	flock = {}
 	leaving = false

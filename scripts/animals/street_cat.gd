@@ -47,11 +47,17 @@ var _pet_left := 0.0
 var _pet_face := Vector3.ZERO
 var _toy: Node3D
 var _toy_holder: Node3D
+var _head: AnimalHeadModifier
+var _look := Vector2.ZERO  # Kopf: (Drehung, Blick nach oben) in Grad
 var _interactable: Interactable
 
 
 func _ready() -> void:
 	super._ready()
+	if skeleton:
+		_head = AnimalHeadModifier.new()
+		_head.name = "HeadLook"
+		skeleton.add_child(_head)
 	_interactable = get_node_or_null("Interactable") as Interactable
 	if _interactable:
 		_interactable.interacted.connect(func(who: Node) -> void: pet(who as Node3D))
@@ -69,6 +75,9 @@ func set_active(enabled: bool) -> void:
 	if not enabled:
 		_rest_purr = false
 		_stop_purr()
+		if anim:
+			anim.stop()
+		current_anim = &""
 		_actions.clear()
 		_action = {}
 
@@ -207,6 +216,7 @@ func step(delta: float) -> void:
 		return
 	_meow_wait -= delta
 	velocity2 = Vector2.ZERO
+	_update_look(delta)
 	if _pet_left > 0.0:
 		_pet_left -= delta
 		_step_petting(delta)
@@ -494,6 +504,30 @@ func _resume_anim() -> void:
 			play(StringName(_action.anim), 0.4)
 		"wait_door", "leave", "turn":
 			play(&"sit" if get_action_type() != "turn" else &"idle", 0.4)
+
+
+## Kopf: beim Blick ins Schaufenster nach oben, sonst im Sitzen/Stehen zur Spielfigur, wenn sie nah ist.
+func _update_look(delta: float) -> void:
+	if _head == null:
+		return
+	var want := Vector2.ZERO
+	var anim_name := String(_action.get("anim", "")) if get_action_type() == "anim" else ""
+	if bool(_action.get("look_up", false)):
+		want = Vector2(0.0, 26.0)
+	elif _pet_left > 0.0 or get_action_type() in ["wait_door", "turn"] or anim_name in ["sit", "idle"]:
+		var player := life.street.get_player() if life else null
+		if player and player.global_position.distance_to(global_position) < 3.2:
+			var eye := player.global_position + Vector3.UP * 1.5
+			var local := global_transform.affine_inverse() * eye
+			var head_y := 0.32 * scale.y
+			var flat := Vector2(local.x, local.z)
+			want.x = clampf(rad_to_deg(atan2(local.x, local.z)), -65.0, 65.0)
+			want.y = clampf(rad_to_deg(atan2(local.y - head_y, flat.length())), -10.0, 30.0)
+			if absf(rad_to_deg(atan2(local.x, local.z))) > 110.0:
+				want = Vector2.ZERO
+	_look = _look.lerp(want, minf(1.0, delta * 3.0))
+	_head.yaw = _look.x
+	_head.pitch = _look.y
 
 
 func _turn(delta: float, rate: float) -> void:

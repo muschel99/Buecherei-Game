@@ -529,8 +529,8 @@ def build_birdhouse():
     """Vogelhäuschen zum Anschrauben: Rückenbrett an der Wand (zwei Schrauben), darunter zwei Winkelstützen,
     darauf das Futterbrett mit Rand und Körnern, hinten auf dem Brett das Häuschen (Giebel, Dach aus zwei
     Brettern mit Firstleiste, Flugloch, Sitzstange). Ursprung = Mitte des Rückenbretts auf der Wand, vorn = -y.
-    Plätze für Vögel: leere Objekte „Perch_<n>“ mit extras kind = rim (Brettrand), feed (auf dem Brett, picken),
-    stick (Sitzstange), roof (First)."""
+    Plätze für Vögel: leere Objekte „Perch_<n>“ mit extras kind = feed (Seitenrand, picken), rim (Rand vorn),
+    roof (First) und face = in (zur Mitte), out (nach vorn), along (längs). Die Sitzstange ist nur Schmuck."""
     M = {
         "wood": SC.make_material("Holz Vogelhaus", (0.66, 0.48, 0.31), grain="wood", rough=0.85, vary=0.08),
         "roof": SC.make_material("Lack Vogelhaus Dach", (0.42, 0.52, 0.42), grain="paint", rough=0.75, vary=0.06),
@@ -544,20 +544,21 @@ def build_birdhouse():
     back = -0.02         # Vorderseite des Rückenbretts
     wood = Body("Holz", M["wood"], coll, seed=3, vary=0.02, bevel=0.003)
     # Rückenbrett an der Wand
-    wood.box((0, -0.01, z0 + 0.065), (0.27, 0.02, 0.43), step=0.05, dent=0.001)
+    wood.box((0, -0.01, z0 + 0.065), (0.3, 0.02, 0.43), step=0.05, dent=0.001)
     # Futterbrett (liegt auf den Stützen, hinten am Rückenbrett)
-    tray_front = -0.245
-    wood.box((0, (back + tray_front) / 2, z0 - 0.008), (0.29, back - tray_front, 0.016), step=0.05, dent=0.001)
+    tray_front = -0.27
+    tray_half = 0.18
+    wood.box((0, (back + tray_front) / 2, z0 - 0.008), (tray_half * 2, back - tray_front, 0.016), step=0.05, dent=0.001)
     # Rand vorn und an den Seiten (auf dem Brett)
-    wood.box((0, tray_front + 0.006, z0 + 0.011), (0.29, 0.012, 0.022), step=0.05, dent=0.0005)
+    wood.box((0, tray_front + 0.006, z0 + 0.011), (tray_half * 2, 0.012, 0.022), step=0.05, dent=0.0005)
     for sx in (-1, 1):
-        wood.box((sx * 0.139, (back + tray_front) / 2, z0 + 0.011), (0.012, back - tray_front - 0.002, 0.022), step=0.05,
-                 dent=0.0005)
+        wood.box((sx * (tray_half - 0.006), (back + tray_front) / 2, z0 + 0.011), (0.012, back - tray_front - 0.002, 0.022),
+                 step=0.05, dent=0.0005)
     # Winkelstützen unter dem Brett (Dreiecke in der Seitenebene, Dicke 12 mm)
     side = Matrix(((0, 0, -1, 0), (-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
     for sx in (-1, 1):
-        m = Matrix.Translation((sx * 0.1 + 0.006, back, z0 - 0.016)) @ side
-        wood.slab([(0.0, 0.0), (0.0, -0.12), (0.17, 0.0)], 0.012, m, dent=0.0005)
+        m = Matrix.Translation((sx * 0.11 + 0.006, back, z0 - 0.016)) @ side
+        wood.slab([(0.0, 0.0), (0.0, -0.13), (0.2, 0.0)], 0.012, m, dent=0.0005)
     # Häuschen: Fünfeck (Giebel) von hinten (am Rückenbrett) nach vorn, 12 cm tief
     front = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
     wood.slab([(-0.085, 0.0), (0.085, 0.0), (0.085, 0.15), (0.0, 0.235), (-0.085, 0.15)], 0.12,
@@ -590,26 +591,28 @@ def build_birdhouse():
     ring.build(smooth_angle=180)
     # Schrauben im Rückenbrett (oben neben dem Dach, unten unter den Stützen)
     screws = Body("Schrauben", M["iron"], coll, seed=11, vary=0.0)
-    for x, z in ((-0.105, z0 + 0.25), (0.105, z0 + 0.25), (-0.06, z0 - 0.125), (0.06, z0 - 0.125)):
+    for x, z in ((-0.115, z0 + 0.25), (0.115, z0 + 0.25), (-0.065, z0 - 0.125), (0.065, z0 - 0.125)):
         screws.blob((x, back + 0.001, z), 0.0065, subdiv=2, lump=0.0, scale=(1, 0.4, 1))
     screws.build(smooth_angle=180)
     # Körner auf dem Brett vor dem Häuschen
     seeds = Body("Körner", M["seed"], coll, seed=12, vary=0.0)
     for k in range(46):
-        x = rnd.uniform(-0.115, 0.115)
+        x = rnd.uniform(-0.15, 0.15)
         y = rnd.uniform(tray_front + 0.02, house_front - 0.01)
         seeds.blob((x, y, z0 + 0.0025), rnd.uniform(0.0035, 0.005), subdiv=1, lump=0.1, scale=(1.3, 0.8, 0.55))
     seeds.build(smooth_angle=180)
-    # Plätze für Vögel
+    # Plätze für Vögel – so verteilt, dass sich vier Vögel nie berühren und keiner in die Wand ragt: an den
+    # Seitenrändern nach innen (picken Körner), vorn auf dem Rand nach draußen, auf dem First längs
     perches = []
-    for name, pos, kind in (("Perch_1", (-0.07, tray_front + 0.006, z0 + 0.022), "rim"),
-                            ("Perch_2", (0.07, tray_front + 0.006, z0 + 0.022), "rim"),
-                            ("Perch_3", (0.0, tray_front + 0.06, z0), "feed"),
-                            ("Perch_4", (0.0, house_front - 0.04, z0 + 0.0655), "stick"),
-                            ("Perch_5", (0.0, (back + depth_front) / 2, z0 + 0.261), "roof")):
+    side_y = (tray_front + house_front) / 2 - 0.01
+    for name, pos, kind, face in (("Perch_1", (-(tray_half - 0.006), side_y, z0 + 0.022), "feed", "in"),
+                                  ("Perch_2", (tray_half - 0.006, side_y, z0 + 0.022), "feed", "in"),
+                                  ("Perch_3", (0.0, tray_front + 0.006, z0 + 0.022), "rim", "out"),
+                                  ("Perch_4", (0.0, (back + depth_front) / 2, z0 + 0.261), "roof", "along")):
         e = bpy.data.objects.new(name, None)
         e.location = pos
         e["kind"] = kind
+        e["face"] = face
         coll.objects.link(e)
         perches.append(e)
     objs = [o for o in coll.objects if o.type == "MESH"]

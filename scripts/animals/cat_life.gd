@@ -351,7 +351,13 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			a.append({"type": "toy_drop"})
 			a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(3.0, 6.0)})
 			a.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(4.0, 7.0)})
+			# auf einer Bank zum Liegen längs drehen (sonst ragt sie in die Lehne)
+			var along := _bench_along(seat)
+			if along != Vector3.ZERO:
+				a.append({"type": "turn", "face": along})
 			a.append({"type": "anim", "anim": "lie" if _rng.randf() < 0.4 else "sleep", "time": rest, "blend": 0.6})
+			if along != Vector3.ZERO:
+				a.append({"type": "turn", "face": face})
 			a.append({"type": "anim", "anim": "sit", "time": 1.5, "blend": 0.6})
 			a.append({"type": "toy_take"})
 			a.append({"type": "rest_off"})
@@ -385,7 +391,7 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			var spot := _ground_at(node.global_position + face.normalized() * 0.3)
 			a.append(_walk([back, spot]))
 			a.append({"type": "turn", "face": face})
-			a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(10.0, 20.0), "face": face})
+			a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(10.0, 20.0), "face": face, "look_up": true})
 			if _rng.randf() < 0.5:
 				a.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(3.0, 5.0), "face": face})
 			a.append(_walk([spot, back]))
@@ -399,6 +405,20 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 		"pause":
 			a.append(_pause())
 	return a
+
+
+## Bank (mehrere Sitzplätze nebeneinander): Richtung längs der Bank (zufällig links/rechts), sonst null.
+func _bench_along(seat: SeatPoint) -> Vector3:
+	var parent := seat.get_parent()
+	var count := 0
+	for child in parent.get_children():
+		if child is SeatPoint:
+			count += 1
+	if count < 2:
+		return Vector3.ZERO
+	var along := seat.global_basis.x
+	along.y = 0.0
+	return along.normalized() * (1.0 if _rng.randf() < 0.5 else -1.0)
 
 
 func _claim_sill(cat: StreetCat, sill: Dictionary) -> bool:

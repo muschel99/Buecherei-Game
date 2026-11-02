@@ -25,7 +25,8 @@ extends Node
 ##                      Blickpunkts am nächsten ist (aus so vielen Metern, schräg von vorn)
 ##   --focus_vehicle    dasselbe für das nächste Fahrzeug (Fahrrad, Auto, Lieferwagen)
 ##   --focus_cat, --focus_bird  dasselbe für die nächste Katze bzw. den nächsten sitzenden Vogel (seit Etappe 6g);
-##                      --cats = Katzen kommen gleich und oft (--enter=<0..1>), --door_open = Ladentür offen
+##                      --cats = Katzen kommen gleich und oft (--enter=<0..1>), --door_open = Ladentür offen,
+##                      --bird_area=ground|birdhouse|lamp|perch = Vögel nur dorthin, --no_animals = ohne Tiere
 ##   --focus_cross      dasselbe für einen Passanten, der gerade über die Straße geht
 ##   --stats            je Bild die Zeichenaufrufe und Objekte ausgeben (Leistung)
 ##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
@@ -62,6 +63,8 @@ var _old_quality: Variant = null
 func _ready() -> void:
 	_args = _parse_args()
 	SaveManager.saving_enabled = false
+	if _args.has("no_animals"):
+		GameConfig.animals_enabled = false
 	if _args.has("no_street_life"):
 		GameConfig.street_life_enabled = false
 	if _args.has("quality"):
@@ -346,6 +349,13 @@ func _prepare_street_life() -> void:
 		var door := get_tree().get_first_node_in_group("doors") as Door
 		if door:
 			door.set_open(true)
+	if _args.has("bird_area"):
+		# Vögel nur an diese Art Platz schicken (ground, birdhouse, lamp, perch)
+		var area := String(_args.bird_area)
+		GameConfig.bird_ground_share = 1.0 if area == "ground" else 0.0
+		GameConfig.bird_birdhouse_share = 1.0 if area == "birdhouse" else 0.0
+		GameConfig.bird_lamp_share = 1.0 if area == "lamp" else 0.0
+		GameConfig.bird_stay_time = Vector2(200.0, 300.0)
 	if _args.has("cats"):
 		GameConfig.cat_interval = Vector2(4.0, 8.0)
 		GameConfig.cat_first_delay = Vector2(1.0, 2.0)

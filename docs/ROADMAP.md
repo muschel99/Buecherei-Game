@@ -43,7 +43,7 @@
 | 6d  | Alles wie in echt, Sitzplätze, Kamin, Flammen, Töne vorbereiten | fertig |
 | 6e  | Geräusche und Musik (eigene Aufnahmen, räumlich, Laute der Passanten) | fertig |
 | 6f  | Nichts verschwindet, Tür, neue Fenster, Deko-Plätze, Autos, Kamin, Geräusche feiner | fertig |
-| 6g  | Vögel (sichtbar, mit Zwitschern) | vorgemerkt |
+| 6g  | Tiere: Vögel und Katzen (Blender-Modelle mit Bewegungen, Vogelhäuschen, Streicheln) | fertig |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
@@ -58,7 +58,7 @@
 (Seit Etappe 6 sind die späteren Etappen eine Nummer weitergerückt: Wirtschaft ist jetzt 7, Café 9,
 Freischaltungen 10 usw.)
 (Zählung der Entwicklerin bei den Testrunden: ihre „Etappe 8“ = 6c, „Etappe 9“ = 6d, „Etappe 10“ = 6e,
-„Etappe 11“ = 6f.)
+„Etappe 11“ = 6f, „Etappe 12“ = 6g.)
 
 ## Stand nach dem Stil-Umbau (Überblick, Stand 01.11.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
@@ -135,8 +135,10 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 - Passanten gehen noch allein (keine Gruppen); sie plaudern seit 6c kurz miteinander. Noch wenig
   Kleidung und Frisuren.
 - Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme, Musik für Nacht/Regen/
-  Winter – Liste in ASSET_GUIDE); Vögel (sichtbar, mit Zwitschern) kommen in Etappe 6g; die Fahrzeuge werden in
-  Etappe 10b neu modelliert.
+  Winter – Liste in ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
+- Tiere (seit 6g): Vögel sitzen noch nicht in Bäumen und nicht auf dem Dach der Bücherei; Katzen kommen nur über
+  die Straßenenden (nicht aus den Gassen) und schauen beim Blick ins Schaufenster geradeaus (ohne Kopf zu heben);
+  Passanten streicheln Katzen noch nicht (vorbereitet).
 - Kein Tag-Nacht-Wechsel; Besucher kommen noch nicht in die Bücherei.
 
 ## Etappe 1 – Grundgerüst und erster Raum
@@ -1433,9 +1435,49 @@ Leitgedanke (Wünsche nach dem Test von Etappe 6d und 6e): Fehler beheben, die b
 - Pflaster-Rumpeln: per Script erzeugt (`tools/make_road_rumble.py`), austauschbar durch eine eigene Aufnahme.
 - Musik: Die drei Lo-fi-Stücke liegen jetzt in `music/day`; die übrigen Ordner sind vorbereitet und leer.
 
-## Etappe 6g – Vögel (vorgemerkt)
-- Sichtbare Vögel (auf Dachkanten, in Bäumen, am Boden pickend, auffliegend), die zwitschern – die Laute hängen
-  am Vogel (räumlich, Dateien `ambience/bird_*` sind schon da); danach vielleicht eine Katze (`cat_*`)
+## Etappe 6g – Tiere: Vögel und Katzen machen die Straße lebendig
+Leitgedanke (Wunsch der Entwicklerin): Tiere im weichen Stil der Welt – geschlossene, runde Körper, liebevoll,
+passend zu den Chibi-Figuren –, in Blender modelliert und animiert. Nichts erscheint oder verschwindet sichtbar.
+
+- [x] 1. Vogel in Blender: runder Körper mit Brust, Kappe, Wangen, Schnabel, Flügeln, Schwanz, Beinen; Skelett
+      (8 Knochen) und Bewegungen sitzen/umschauen, picken, hüpfen, flattern, gleiten; vier Arten (Spatz,
+      Rotkehlchen, Blaumeise, Buchfink)
+- [x] 2. Sitzplätze: an allen Häusern einmal ausgemessen (Dachrinnen, Firste, Gesimse, Schildkästen,
+      Fensterbänke – Halt, Kopf frei, Anflug frei, nie in Blumenkästen, nie unter Markisen), Querarme der
+      Laternen, neues **Vogelhäuschen** mit Futterbrett an einem Wohnhaus gegenüber der Bücherei
+- [x] 3. Vögel in kleinen Schwärmen: fliegen hinter einem Dach hervor und wieder dorthin (nie im Blickfeld),
+      picken und hüpfen auf dem Gehweg, flattern mit Geräusch auf, wenn Spielfigur, Passant, Katze oder Fahrzeug
+      näherkommt, landen woanders; Zwitschern einzeln am Vogel (eigene Aufnahmen)
+- [x] 4. Katze in Blender: großer runder Kopf, glatter Rumpf, Skelett (16 Knochen), Bewegungen stehen, gehen,
+      rennen, sitzen, putzen, Kopf reiben, liegen, schlafen, strecken, springen; Fellmuster läuft mit dem Fell mit
+- [x] 5. Drei Katzen mit eigenem Aussehen (Mandarine: rot getigert, Nebel: grau getigert, Socke: schwarz-weiß)
+- [x] 6. Katzen kommen ab und zu vorbei: Bänke, Stühle, Fensterbänke, Blick ins Schaufenster, putzen, strecken,
+      schlafen, Fangen spielen, Filzmaus tragen
+- [x] 7. Bei offener Tür in die Bücherei: Stufen hinauf, Weg zwischen den Möbeln, auf einen freien Sessel/ein Sofa,
+      schnurren, nach ein paar Minuten wieder hinaus; bei geschlossener Tür wartet sie und miaut leise
+- [x] 8. Streicheln mit E (Katze schnurrt), vorbereitet für Passanten (`StreetCat.pet`)
+- [x] 9. Ausweichen: Katzen warten oder gehen außen herum, Passanten gehen um Katzen herum, Autos und Fahrräder
+      bremsen für Katzen auf der Fahrbahn (ohne Hupe)
+- [x] 10. Leistung und Einstellungen: Anzahl und Häufigkeit in GameConfig (ruhige Startwerte), Vögel ohne
+      Schatten, gemeinsame Materialien
+- [x] 11. Vorlagen (`assets/models/templates/animals/`) und Anleitung „Eigene Tiere“ in ASSET_GUIDE
+- [x] Dokumentation (GAME_DESIGN, ROADMAP, ASSET_GUIDE, CLAUDE.md, Notion)
+
+**Entscheidungen (selbst getroffen):**
+- Die Sitzplätze werden einmal mit einem Werkzeug ausgemessen (`scenes/tools/bake_animal_spots.tscn`, Ergebnis
+  `data/animals/spots.json`) statt beim Spielen gerechnet – das kostet beim Spielen nichts. Nach Änderungen an
+  Häusern einmal neu starten.
+- Vögel kommen hinter den Dächern hervor (von dort, wo man von der Straße aus nicht hinsieht) und fliegen dorthin
+  zurück; ist der Ort gerade doch zu sehen, fliegen sie weiter, bis er verdeckt ist.
+- Katzen-Geräusche: nur das Schnurren und das kurze Miau („miau_kurz“) – beide sanft. Das lange Miau und das
+  Schnattern (aufgeregt, wie beim Vogelbeobachten) passen nicht zu einer gemütlichen Katze und bleiben unbenutzt.
+- Ein Flattergeräusch gab es unter den Aufnahmen nicht: Es wird per Script erzeugt (`tools/make_wing_flap.py`),
+  austauschbar durch eine eigene Aufnahme.
+- Ohne Sessel oder Sofa legt sich die Katze auf einen Teppich; gibt es beides nicht, kommt sie nicht herein.
+  Liegt sie auf dem Sessel, ist er besetzt (ich kann mich dort nicht hinsetzen).
+- Katzen kommen wie Passanten nur über die verdeckten Straßenenden; über die Straße flitzen sie nur, wenn kein
+  Fahrzeug kommt.
+- Fangen: Eine Katze rennt voraus, wartet, rennt weiter, die zweite hinterher (ohne Rollentausch).
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

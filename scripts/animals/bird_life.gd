@@ -23,7 +23,7 @@ const HOUSE_MASK := 1 | 128
 ## Niedrige Plätze (Meter über dem Gehweg): Vögel dort fliegen auch auf, wenn jemand vorbeigeht
 const LOW_PERCH := 1.5
 ## Abstand zwischen zwei Vögeln am Boden (m)
-const GROUND_GAP := 0.13
+const GROUND_GAP := 0.17
 
 var street: StreetLife
 ## Zähler für das Prüfwerkzeug: Erscheinen bzw. Verschwinden im Blickfeld (muss 0 bleiben)
@@ -104,12 +104,15 @@ func _place_birdhouse(wall: Vector3, out: Vector3) -> void:
 	var along := Vector3.UP.cross(out).normalized()
 	_birdhouse.global_transform = Transform3D(Basis(along, Vector3.UP, out), wall)
 	for node: Node3D in _birdhouse.find_children("Perch_*", "Node3D", true, false):
-		var kind := String((node.get_meta("extras", {}) as Dictionary).get("kind", "rim"))
+		var extras: Dictionary = node.get_meta("extras", {})
+		var kind := String(extras.get("kind", "rim"))
+		# Blickrichtung: in = zur Mitte des Häuschens, out = nach vorn, along = längs (zufällig links/rechts)
 		var face := out
-		if kind in ["rim", "feed"]:
-			face = -out if kind == "feed" or _rng.randf() < 0.5 else out
-		elif kind == "roof":
-			face = along if _rng.randf() < 0.5 else -along
+		match String(extras.get("face", "out")):
+			"in":
+				face = -along if node.position.x > 0.0 else along
+			"along":
+				face = along if _rng.randf() < 0.5 else -along
 		_feeder.append({"pos": node.global_position, "face": face, "out": out, "kind": "feed" if kind == "feed" else "birdhouse",
 			"house": "birdhouse", "taken": null})
 
@@ -441,7 +444,7 @@ func _ground_spots(size: int, near: Vector3, radius: float) -> Array[Dictionary]
 			var p := center
 			for k in 8:
 				var a := _rng.randf() * TAU
-				var r := 0.0 if i == 0 else _rng.randf_range(0.14, 0.42)
+				var r := 0.0 if i == 0 else _rng.randf_range(0.18, 0.45)
 				p = center + Vector3(cos(a) * r, 0.0, sin(a) * r)
 				var ok := true
 				for other in result:

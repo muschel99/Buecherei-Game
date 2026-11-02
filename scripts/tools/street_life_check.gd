@@ -13,7 +13,8 @@ extends Node
 ##   godot --headless --path . res://scenes/tools/street_life_check.tscn -- --seconds=40 --seed=1
 ## Angaben nach "--": --seconds=<je Stelle> (Standard 45), --seed=<zahl>, --only=<stelle,…>,
 ## --deliver=<n> (Testlieferung mit n Kartons, sobald die erste Stelle beginnt), --door_open (Ladentür offen),
-## --cats (Katzen kommen alle paar Sekunden, --enter=<0..1> Chance hineinzugehen; seit Etappe 6g).
+## --cats (Katzen kommen alle paar Sekunden, --enter=<0..1> Chance hineinzugehen; seit Etappe 6g), --no_animals,
+## --cat_log (jeden Schritt der Katzen ausgeben).
 
 const STEP := 1.0 / 30.0
 const TURN_SPEED := deg_to_rad(40.0)
@@ -40,6 +41,8 @@ var _spot_name := ""
 
 func _ready() -> void:
 	_args = _parse_args()
+	if _args.has("no_animals"):
+		GameConfig.animals_enabled = false
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	add_child(_main)
 	_player = _main.get_node("Player")
