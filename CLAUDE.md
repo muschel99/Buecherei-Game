@@ -121,6 +121,7 @@ scenes/            Szenen (.tscn)
   effects/         Effekte (z. B. Staubpartikel)
   street_life/     Leben auf der Straße (Passant, Fahrrad, Auto, Lieferwagen – je Szene mit
                    Body + austauschbarem Model)
+  animals/         Tiere (seit 6g): bird.tscn, cat.tscn (Script + austauschbares Model)
   world/           Außenwelt (Straße, houses.tscn = alle Häuser, houses/ = Haustypen, Platz,
                    Gasse, Gassenende, Eingangstreppe, tools/ = Erzeuger-Szenen)
   ui/              Oberfläche (HUD mit Tastensymbolen, Pausenmenü, Inventar, Theken-Tablet, Hinweise,
@@ -137,6 +138,7 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
                    BookData, Book, LooseBook, TabletAppData, ReturnSlotData, CounterData)
   rooms/           Raum-Logik (Room, PaintableWall, PaintableGrid: Möbel, Wände, Boden, Decke, Speichern)
   shop/            Lieferdienst (DeliveryManager)
+  animals/         Tiere (seit 6g): StreetAnimal (Grundlage), StreetBird + BirdLife, StreetCat + CatLife
   street_life/     Straßenleben (StreetLife, StreetPaths, StreetRoute, Passerby, StreetVehicle,
                    DeliveryVan, StreetObstacle, StreetShapes, Platzhalter-Modelle; seit 6c
                    FaceTriggers, ChibiGestureModifier, ChatSession, ChatBubble, PasserbyVoice)
@@ -156,6 +158,7 @@ data/
   tablet_apps/     Datenblätter der Tablet-Apps (.tres) – werden automatisch auf den Startbildschirm geladen
   return_slots/    Datenblätter der Einwurf-Varianten des Rückgabekastens (.tres, App „Fassade“)
   facade/          Wahl-Datenblätter der Bücherei-Fassade (.tres, FacadeOption, App „Fassade“)
+  animals/         spots.json = Sitzplätze der Tiere an den Häusern (aus bake_animal_spots.tscn)
 assets/
   models/          Eigene 3D-Modelle (.glb), templates/ = Vorlagen in echter Größe zum Modellieren,
                    houses/ = Stil-Modelle der Häuser (aus tools/blender), facade/ = Teile der
@@ -170,6 +173,7 @@ assets/
 docs/              Dokumentation
 tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py,
                    make_chat_assets.py = Sprechblasen-Symbole, make_road_rumble.py = Pflaster-Rumpeln der Autos,
+                   make_wing_flap.py = Flattern der Vögel,
                    prepare_sounds.py = Geräusche der Entwicklerin aufbereiten; schreiben nur Fehlendes),
   blender/         Blender-Scripts der Stil-Modelle (style_lib.py = Bauteile + .glb-Export,
                    build_houses.py = Häuser; Bilderbuch-Stil: storybook_lib.py,
@@ -1135,6 +1139,28 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   ein paar Bilder zeichnen, dann fotografieren; leere Fotos (`MIN_COVERAGE`) werden nachfotografiert und nie
   gespeichert. Kacheln (`ItemTile`) zeigen das Foto auf einem dezenten Untergrund (`_Stage`), damit helle Möbel auf
   hellen Kacheln erkennbar sind. Fassaden-Vorschau: Gehweg (`sidewalk.tres`, etwas dunkler) und blauer Himmel.
+- **Tiere (seit Etappe 6g):** Modelle `tools/blender/build_animals.py` (bird, cat, birdhouse, cat_toy; je Tier EIN Netz
+  mit Skelett, Gewichte je Teil `rigid`/`blend`/`chain`, Bewegungen als NLA-Spuren – **in jeder Bewegung alle Knochen
+  schlüsseln**, sonst bleibt die Haltung der vorigen; Ruhehaltung als UV/UV2 → Shader `storybook_animal.gdshader`
+  (`#define REST_POSITION` in storybook.gdshaderinc: Flecken/Tigerstreifen `tabby` laufen mit dem Fell); Vorlagen in
+  `assets/models/templates/animals/`). Godot: `StreetAnimal` (play, `apply_look(id, farben, extra)` = gemeinsame
+  Material-Kopien je Aussehen, set_outdoor), `StreetBird`/`BirdLife` und `StreetCat`/`CatLife` als Kinder von StreetLife
+  (`StreetLife.birds`/`cats`, bewegt in `StreetLife.step`). **Nie sichtbar erscheinen/verschwinden:** Vögel fliegen
+  hinter einem Haus hervor (`_hidden_entry`: hinter der Rückwand, `StreetLife.is_visible_point`) und wieder dorthin;
+  Katzen nur an den verdeckten Straßenenden (`get_places`, "leave" wartet, bis niemand hinschaut). Plätze an Häusern:
+  `scenes/tools/bake_animal_spots.tscn` → `data/animals/spots.json` (genaue Kollision aus den Modellen, Halt, Kopf frei,
+  Anflug frei, nicht in PlantSpots; "cat" = breite Fensterbank unten; Vogelhäuschen = glatte Mauer eines Wohnhauses
+  gegenüber) – **nach Änderungen an Häusern neu ausmessen**; Testbilder `--spots`. Laternen-Querarme `LAMP_ARM_SPOTS`.
+  Vögel fliehen vor Spielfigur/Passanten/Katzen/Fahrzeugen (`_threats`), Flugwege über Dächer, wo ein Haus im Weg ist
+  (`_clear_route`). Katzen: Schritte wie Passanten (walk, cross, turn, anim, jump, follow, wait_door, leave; claim …
+  claim_end = Platz belegen, sonst überspringen), nah an der Wand (`_side_point`), Bogen um Wartende (`blocked` →
+  `detour`), in der Bücherei Weg per `AStarGrid2D` (`_room_grid`, Ebenen world+furniture) zum freien Sessel/Sofa
+  (`SeatPoint.occupant` = Katze), Treppe mit kleinen Hüpfern (`_stairs_up`). Streicheln: Interactable „Streicheln“ →
+  `StreetCat.pet(wer)` (auch für Passanten gedacht, `can_be_petted`). Passanten weichen Katzen aus (Hindernis "cat"),
+  Fahrzeuge bremsen ohne Hupe (road_obstacles, Art "cat"). Geräusche: `ambience/bird`, `ambience/bird_flap`,
+  `ambience/cat_purr`, nur `GameConfig.cat_meow_sound` = cat_meow_1 (sanft). Prüfen: street_life_check zeigt „Tiere“
+  (Erscheinen/Verschwinden im Blickfeld = 0, festgefahren = 0), `--cats --door_open --enter=1 --cat_log`; Testbilder
+  `--focus_cat`/`--focus_bird`, `--cats`, `--door_open`.
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
   Daumen rechts −X / links +X; Finger in Verlängerung des Unterarms.
 - **Blick zur Spielfigur (seit 6f):** Passanten schauen höchstens `chibi_player_glance_time` Sekunden zur Spielfigur,

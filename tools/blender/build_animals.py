@@ -10,11 +10,13 @@ Farben: Materialien „Vogel Gefieder“, „Vogel Flügel“, „Vogel Brust“
 (scripts/animals/animal_model.gd). Blender-Koordinaten: vorn = -y, oben = z, Ursprung zwischen den Füßen.
 
 Aufruf (Terminal, im Projektordner):
-    blender -b --factory-startup --python tools/blender/build_animals.py               beide Tiere
+    blender -b --factory-startup --python tools/blender/build_animals.py               beide Tiere + Vogelhäuschen
     blender -b --factory-startup --python tools/blender/build_animals.py -- cat        nur die Katze
     blender -b --factory-startup --python tools/blender/build_animals.py -- --render   dazu Kontrollbilder
 Ausgabe:
     assets/models/animals/<tier>.glb                     Spiel-Modell (+ .glb.import mit den Materialien)
+    assets/models/animals/birdhouse.glb                  Vogelhäuschen (Plätze „Perch_<n>“, siehe build_birdhouse)
+    assets/models/animals/cat_toy.glb                    Filzmaus, Spielzeug der Katzen (siehe build_toy)
     assets/models/source/animals/<tier>.blend            Quelle zum Weiterbauen
     assets/models/templates/animals/<tier>.glb           Vorlage in echter Größe (gleich dem Spiel-Modell)
     screenshots/blender/animals/<tier>_<pose>.png        Kontrollbilder (mit --render)
@@ -104,6 +106,7 @@ class Animal:
         if ca:
             mesh.data.color_attributes.active_color = ca
             mesh.data.color_attributes.render_color_index = list(mesh.data.color_attributes).index(ca)
+        rest_uvs(mesh.data)
         # Skelett
         arm_data = bpy.data.armatures.new(self.name + " Skelett")
         arm = bpy.data.objects.new(self.name + " Skelett", arm_data)
@@ -125,6 +128,33 @@ class Animal:
             pb.rotation_mode = "QUATERNION"
         self.mesh, self.arm = mesh, arm
         return mesh, arm
+
+
+def rest_uvs(me):
+    """Lage in der Ruhehaltung als Texturkoordinaten (Godot-Achsen): UV = (x, y), UV2 = (z, 0). Der Shader
+    storybook_animal.gdshader rechnet Flecken und Tigerstreifen daraus – so bleibt das Muster beim Laufen am
+    Fell (die Lage nach dem Skelett würde unter den Mustern hindurchrutschen)."""
+    while me.uv_layers:
+        me.uv_layers.remove(me.uv_layers[0])
+    uv1 = me.uv_layers.new(name="rest_xy")
+    uv2 = me.uv_layers.new(name="rest_z")
+    for loop in me.loops:
+        co = me.vertices[loop.vertex_index].co
+        uv1.data[loop.index].uv = (co.x, co.z)
+        uv2.data[loop.index].uv = (-co.y, 0.0)
+
+
+def animal_shader(names):
+    """Godot-Materialien der Tiere auf den Tier-Shader umstellen (Muster aus der Ruhehaltung)."""
+    for name in names:
+        path = os.path.join(SC.GAME_MAT_DIR, SC.slug(name) + ".tres")
+        if not os.path.exists(path):
+            continue
+        with open(path) as f:
+            text = f.read()
+        text = text.replace("res://assets/shaders/storybook.gdshader", "res://assets/shaders/storybook_animal.gdshader")
+        with open(path, "w") as f:
+            f.write(text)
 
 
 def rigid(bone):
@@ -492,6 +522,156 @@ def cat_actions(arm):
 
 
 # ---------------------------------------------------------------------------------------------
+# Vogelhäuschen (an einer Hauswand, mit Futterbrett)
+# ---------------------------------------------------------------------------------------------
+
+def build_birdhouse():
+    """Vogelhäuschen zum Anschrauben: Rückenbrett an der Wand (zwei Schrauben), darunter zwei Winkelstützen,
+    darauf das Futterbrett mit Rand und Körnern, hinten auf dem Brett das Häuschen (Giebel, Dach aus zwei
+    Brettern mit Firstleiste, Flugloch, Sitzstange). Ursprung = Mitte des Rückenbretts auf der Wand, vorn = -y.
+    Plätze für Vögel: leere Objekte „Perch_<n>“ mit extras kind = rim (Brettrand), feed (auf dem Brett, picken),
+    stick (Sitzstange), roof (First)."""
+    M = {
+        "wood": SC.make_material("Holz Vogelhaus", (0.66, 0.48, 0.31), grain="wood", rough=0.85, vary=0.08),
+        "roof": SC.make_material("Lack Vogelhaus Dach", (0.42, 0.52, 0.42), grain="paint", rough=0.75, vary=0.06),
+        "hole": SC.make_material("Vogelhaus Loch", (0.035, 0.028, 0.022), grain="smooth", rough=0.9, vary=0.0),
+        "iron": SC.make_material("Vogelhaus Schrauben", (0.2, 0.19, 0.18), grain="smooth", rough=0.5, vary=0.02, metal=0.6),
+        "seed": SC.make_material("Vogelhaus Körner", (0.78, 0.66, 0.45), grain="smooth", rough=0.9, vary=0.12),
+    }
+    coll = SB.collection("birdhouse")
+    rnd = random.Random(5)
+    z0 = -0.06           # Oberkante des Futterbretts
+    back = -0.02         # Vorderseite des Rückenbretts
+    wood = Body("Holz", M["wood"], coll, seed=3, vary=0.02, bevel=0.003)
+    # Rückenbrett an der Wand
+    wood.box((0, -0.01, z0 + 0.065), (0.27, 0.02, 0.43), step=0.05, dent=0.001)
+    # Futterbrett (liegt auf den Stützen, hinten am Rückenbrett)
+    tray_front = -0.245
+    wood.box((0, (back + tray_front) / 2, z0 - 0.008), (0.29, back - tray_front, 0.016), step=0.05, dent=0.001)
+    # Rand vorn und an den Seiten (auf dem Brett)
+    wood.box((0, tray_front + 0.006, z0 + 0.011), (0.29, 0.012, 0.022), step=0.05, dent=0.0005)
+    for sx in (-1, 1):
+        wood.box((sx * 0.139, (back + tray_front) / 2, z0 + 0.011), (0.012, back - tray_front - 0.002, 0.022), step=0.05,
+                 dent=0.0005)
+    # Winkelstützen unter dem Brett (Dreiecke in der Seitenebene, Dicke 12 mm)
+    side = Matrix(((0, 0, -1, 0), (-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    for sx in (-1, 1):
+        m = Matrix.Translation((sx * 0.1 + 0.006, back, z0 - 0.016)) @ side
+        wood.slab([(0.0, 0.0), (0.0, -0.12), (0.17, 0.0)], 0.012, m, dent=0.0005)
+    # Häuschen: Fünfeck (Giebel) von hinten (am Rückenbrett) nach vorn, 12 cm tief
+    front = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    wood.slab([(-0.085, 0.0), (0.085, 0.0), (0.085, 0.15), (0.0, 0.235), (-0.085, 0.15)], 0.12,
+              Matrix.Translation((0, back - 0.001, z0)) @ front, dent=0.0008)
+    house_front = back - 0.121
+    # Sitzstange (steckt 1 cm in der Vorderwand)
+    wood.tube([(0, house_front + 0.01, z0 + 0.06), (0, house_front - 0.05, z0 + 0.06)], 0.0055, segs=10, round_ends=True)
+    wood.build(smooth_angle=40)
+    # Dach: zwei Bretter auf den Giebelkanten, vorn 3 cm über, hinten bis knapp ans Rückenbrett; Firstleiste
+    roof = Body("Dach", M["roof"], coll, seed=7, vary=0.02, bevel=0.003)
+    depth_front = house_front - 0.03
+    for sx in (-1, 1):
+        d = Vector((sx * 0.7071, -0.7071))
+        n = Vector((sx * 0.7071, 0.7071))
+        s_a, s_b = -0.012, 0.12 + 0.032
+        c = Vector((0.0, 0.235)) + d * ((s_a + s_b) / 2) + n * 0.0075
+        roof.box((c.x, (back - 0.002 + depth_front) / 2, z0 + c.y), (s_b - s_a, back - 0.002 - depth_front, 0.015),
+                 step=0.05, turn=(0, 45 if sx > 0 else 135, 0), dent=0.0008)
+    roof.tube([(0, back - 0.004, z0 + 0.252), (0, depth_front, z0 + 0.252)], 0.009, segs=10, round_ends=True)
+    roof.build(smooth_angle=40)
+    # Flugloch: dunkle Scheibe, eingelassen in die Vorderwand (ragt 1,5 mm vor)
+    hole = Body("Flugloch", M["hole"], coll, seed=9, vary=0.0)
+    hole.lathe([(0.0, 0.0), (0.024, 0.0), (0.024, 0.0045), (0.0, 0.0045)], (0, 0, 0), segs=24)
+    hole_obj = hole.build(smooth_angle=40)
+    hole_obj.matrix_world = Matrix.Translation((0, house_front + 0.003, z0 + 0.105)) @ Matrix.Rotation(math.radians(90), 4, "X")
+    # Rand ums Loch: runder Wulst (Röhre im Kreis, die Enden überlappen im Inneren)
+    ring = Body("Lochrand", M["wood"], coll, seed=10, vary=0.0)
+    ring.tube([(0.0275 * math.cos(2 * math.pi * k / 28), house_front - 0.0005, z0 + 0.105 + 0.0275 * math.sin(2 * math.pi * k / 28))
+               for k in range(30)], 0.0042, segs=8)
+    ring.build(smooth_angle=180)
+    # Schrauben im Rückenbrett (oben neben dem Dach, unten unter den Stützen)
+    screws = Body("Schrauben", M["iron"], coll, seed=11, vary=0.0)
+    for x, z in ((-0.105, z0 + 0.25), (0.105, z0 + 0.25), (-0.06, z0 - 0.125), (0.06, z0 - 0.125)):
+        screws.blob((x, back + 0.001, z), 0.0065, subdiv=2, lump=0.0, scale=(1, 0.4, 1))
+    screws.build(smooth_angle=180)
+    # Körner auf dem Brett vor dem Häuschen
+    seeds = Body("Körner", M["seed"], coll, seed=12, vary=0.0)
+    for k in range(46):
+        x = rnd.uniform(-0.115, 0.115)
+        y = rnd.uniform(tray_front + 0.02, house_front - 0.01)
+        seeds.blob((x, y, z0 + 0.0025), rnd.uniform(0.0035, 0.005), subdiv=1, lump=0.1, scale=(1.3, 0.8, 0.55))
+    seeds.build(smooth_angle=180)
+    # Plätze für Vögel
+    perches = []
+    for name, pos, kind in (("Perch_1", (-0.07, tray_front + 0.006, z0 + 0.022), "rim"),
+                            ("Perch_2", (0.07, tray_front + 0.006, z0 + 0.022), "rim"),
+                            ("Perch_3", (0.0, tray_front + 0.06, z0), "feed"),
+                            ("Perch_4", (0.0, house_front - 0.04, z0 + 0.0655), "stick"),
+                            ("Perch_5", (0.0, (back + depth_front) / 2, z0 + 0.261), "roof")):
+        e = bpy.data.objects.new(name, None)
+        e.location = pos
+        e["kind"] = kind
+        coll.objects.link(e)
+        perches.append(e)
+    objs = [o for o in coll.objects if o.type == "MESH"]
+    return objs, perches
+
+
+def build_toy():
+    """Kleine Filzmaus (Spielzeug der Katzen, etwa 7 cm mit Schwanz): Körper, Ohren, Näschen, Augen, Schwanz aus
+    Wollfaden. Ursprung = Mitte des Körpers (dort hält die Katze sie im Maul), vorn = -y."""
+    M = {
+        "felt": SC.make_material("Spielzeug Filz", (0.62, 0.6, 0.64), grain="fabric", rough=0.95, vary=0.06),
+        "pink": SC.make_material("Spielzeug Rosa", (0.9, 0.56, 0.6), grain="fabric", rough=0.9, vary=0.04),
+        "eye": SC.make_material("Spielzeug Augen", (0.04, 0.035, 0.03), grain="smooth", rough=0.3, vary=0.0),
+    }
+    coll = SB.collection("cat_toy")
+    felt = Body("Filz", M["felt"], coll, seed=21, vary=0.02)
+    felt.blob((0, 0, 0), 0.026, subdiv=3, lump=0.03, scale=(0.72, 1.28, 0.66))
+    felt.build(smooth_angle=180)
+    pink = Body("Rosa", M["pink"], coll, seed=22, vary=0.0)
+    for sx in (-1, 1):
+        pink.blob((sx * 0.0115, -0.019, 0.0155), 0.0085, subdiv=2, lump=0.0, scale=(1.0, 0.42, 1.0))
+    pink.blob((0, -0.0335, -0.001), 0.0042, subdiv=2, lump=0.0)
+    pink.tube([(0, 0.031, -0.004), (0.006, 0.048, -0.008), (0.018, 0.062, -0.012), (0.03, 0.068, -0.0155)], 0.0021,
+              segs=6, smooth=2, round_ends=True)
+    pink.build(smooth_angle=180)
+    eyes = Body("Augen", M["eye"], coll, seed=23, vary=0.0)
+    for sx in (-1, 1):
+        eyes.blob((sx * 0.0072, -0.0275, 0.0068), 0.0026, subdiv=2, lump=0.0)
+    eyes.build(smooth_angle=180)
+    return [o for o in coll.objects if o.type == "MESH"]
+
+
+def export_toy():
+    objs = build_toy()
+    path = os.path.join(OUT, "cat_toy.glb")
+    os.makedirs(OUT, exist_ok=True)
+    tris, n = SC.export_objects(objs, [], path, extra=[])
+    mapping = SC.write_game_materials(only=list(SC.LAST_EXPORT_MATERIALS))
+    SC.write_import_settings(mapping, path)
+    os.makedirs(TEMPLATES, exist_ok=True)
+    shutil.copyfile(path, os.path.join(TEMPLATES, "cat_toy.glb"))
+    os.makedirs(SRC, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SRC, "cat_toy.blend"), compress=True)
+    print("cat_toy: %d Dreiecke, %d Materialien" % (tris, n))
+
+
+def export_birdhouse():
+    objs, perches = build_birdhouse()
+    path = os.path.join(OUT, "birdhouse.glb")
+    os.makedirs(OUT, exist_ok=True)
+    tris, n = SC.export_objects(objs, [], path, extra=perches)
+    names = list(SC.LAST_EXPORT_MATERIALS)
+    mapping = SC.write_game_materials(only=names)
+    SC.write_import_settings(mapping, path)
+    os.makedirs(TEMPLATES, exist_ok=True)
+    shutil.copyfile(path, os.path.join(TEMPLATES, "birdhouse.glb"))
+    os.makedirs(SRC, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SRC, "birdhouse.blend"), compress=True)
+    print("birdhouse: %d Dreiecke, %d Materialien" % (tris, n))
+
+
+# ---------------------------------------------------------------------------------------------
 # Export, Kontrollbilder
 # ---------------------------------------------------------------------------------------------
 
@@ -510,6 +690,7 @@ def export(a, M):
                               export_lights=False, export_cameras=False, export_image_format="NONE")
     names = [m.name for m in a.mesh.data.materials]
     mapping = SC.write_game_materials(only=names)
+    animal_shader(names)
     SC.write_import_settings(mapping, path)
     os.makedirs(TEMPLATES, exist_ok=True)
     gd = os.path.join(os.path.dirname(TEMPLATES), ".gdignore")
@@ -552,10 +733,28 @@ def render_poses(name, poses):
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    names = [n for n in argv if not n.startswith("--")] or ["bird", "cat"]
+    names = [n for n in argv if not n.startswith("--")] or ["bird", "cat", "birdhouse", "cat_toy"]
     for name in names:
         bpy.ops.wm.read_factory_settings(use_empty=True)
         SC.GAME_MATERIALS.clear()
+        if name == "cat_toy":
+            export_toy()
+            if "--render" in argv:
+                SC.setup_render(True)
+                os.makedirs(SHOTS, exist_ok=True)
+                SC.SHOTS = SHOTS
+                SC.render("cat_toy", (0.12, -0.16, 0.1), (0, 0.01, 0.0), 50, (480, 480))
+            continue
+        if name == "birdhouse":
+            export_birdhouse()
+            if "--render" in argv:
+                SC.setup_render(True)
+                os.makedirs(SHOTS, exist_ok=True)
+                SC.SHOTS = SHOTS
+                SC.render("birdhouse_vorn", (0.35, -0.7, 0.25), (0, -0.1, 0.0), 50, (640, 640))
+                SC.render("birdhouse_seite", (0.75, -0.25, 0.05), (0, -0.1, 0.0), 50, (640, 640))
+                SC.render("birdhouse_unten", (0.25, -0.6, -0.45), (0, -0.1, -0.05), 50, (640, 640))
+            continue
         a, M = build_bird() if name == "bird" else build_cat()
         export(a, M)
         if "--render" in argv:

@@ -97,6 +97,9 @@ var _street_seats: Array[Dictionary] = []
 var _crossing := Vector2.ZERO
 var _lod_timer := 0.0
 var _started := false
+## Tiere (seit Etappe 6g): Vögel und Katzen, beim Start angelegt (GameConfig.animals_enabled)
+var birds: BirdLife
+var cats: CatLife
 
 
 func _ready() -> void:
@@ -128,13 +131,34 @@ func _start() -> void:
 	# noch einmal, wenn die ganze Szene bereit ist (Sitzplätze an der Bücherei entstehen mit der Fassade)
 	call_deferred("refresh_seats")
 	_started = true
+	if GameConfig.animals_enabled:
+		_start_animals.call_deferred()
 	if GameConfig.street_life_enabled:
 		_fill_street()
+
+
+## Vögel und Katzen (seit Etappe 6g) – nach den Sitzplätzen, damit Katzen sie kennen.
+func _start_animals() -> void:
+	birds = BirdLife.new()
+	birds.name = "Birds"
+	add_child(birds)
+	birds.setup(self)
+	cats = CatLife.new()
+	cats.name = "Cats"
+	add_child(cats)
+	cats.setup(self)
+	if _seed >= 0:
+		birds.seed_random(_seed + 11)
+		cats.seed_random(_seed + 23)
 
 
 ## Zufall festlegen (Prüfwerkzeug, Testbilder): gleiche Zahl = gleicher Ablauf.
 func seed_random(value: int) -> void:
 	_rng.seed = value
+	_seed = value
+
+
+var _seed := -1
 
 
 ## Gleiche Mittellinie (Gehwege, Fahrbahn, Überqueren)? Dann ist lat der Abstand zur Straßenmitte.
@@ -163,6 +187,10 @@ func step(delta: float) -> void:
 	_update_chats(delta)
 	for vehicle in _vehicles.duplicate():
 		vehicle.step(delta)
+	if birds:
+		birds.step(delta)
+	if cats:
+		cats.step(delta)
 	_spawn_walkers(delta)
 	_spawn_vehicles(delta)
 	_lod_timer -= delta
@@ -521,6 +549,12 @@ func _collect_obstacles() -> void:
 	for box in _box_positions():
 		_obstacles.append({"pos": box, "radius": BOX_RADIUS, "vel": Vector2.ZERO, "kind": "box"})
 	_obstacles.append_array(_static_obstacles)
+	# Katzen (seit Etappe 6g): Passanten gehen um sie herum (nicht, wenn sie oben auf Bank oder Fensterbank sitzen)
+	if cats:
+		for cat in cats.get_cats():
+			if cat.on_ground():
+				_obstacles.append({"pos": _to_local2(cat.global_position), "radius": cat.radius, "vel": cat.velocity2,
+					"kind": "cat", "agent": cat})
 
 
 ## Kartonstapel vor der Tür (je Stapel ein Punkt).
@@ -548,6 +582,35 @@ func obstacles_near(walker: Passerby, distance: float) -> Array[Dictionary]:
 
 func player_pos() -> Vector2:
 	return _to_local2(_player.global_position) if _player else Vector2(INF, INF)
+
+
+## Spielfigur (für Tiere: Ausweichen, Auffliegen, Streicheln).
+func get_player() -> Node3D:
+	return _player
+
+
+## Liegt ein Punkt (x, z unter "Outside") mindestens radius Meter von allen festen Hindernissen (Laternen,
+## Bänke, Kübel, Treppe) entfernt?
+func clear_of_static(point: Vector2, radius: float) -> bool:
+	for obstacle in _static_obstacles:
+		if point.distance_to(obstacle.pos) < float(obstacle.radius) + radius:
+			return false
+	return true
+
+
+## Feste Hindernisse (für Tiere): { pos, radius } unter "Outside".
+func get_static_obstacles() -> Array[Dictionary]:
+	return _static_obstacles
+
+
+## Sitzplätze an der Straße (für Katzen): { seat, pos, approach, face, height, front, s, side }.
+func get_street_seats() -> Array[Dictionary]:
+	return _street_seats
+
+
+## Orte zum Erscheinen und Verschwinden (für Katzen): { kind, place, pos, side }.
+func get_places() -> Array[Dictionary]:
+	return _places
 
 
 ## Würde der Passant an dieser Stelle jemandem zu nahe kommen (Spielfigur, andere Passanten,
@@ -631,6 +694,16 @@ func road_obstacles(vehicle: StreetVehicle) -> Array[Dictionary]:
 		if absf(lat) - PLAYER_RADIUS < half + 0.3:
 			result.append({"pos": player_pos(), "radius": PLAYER_RADIUS, "reach": 0.3, "speed": 0.0, "kind": "player",
 				"on_road": absf(lat) - PLAYER_RADIUS < half - GameConfig.road_person_margin})
+	# Katzen auf der Fahrbahn (seit Etappe 6g): Autos und Fahrräder bremsen für sie
+	if cats:
+		for cat in cats.get_cats():
+			var cat_pos := _to_local2(cat.global_position)
+			if cat.on_ground() and cat_pos.distance_squared_to(vehicle.pos) < limit:
+				var cat_lat := centerline.project(cat_pos, vehicle.get_s() - 30.0, vehicle.get_s() + 30.0).y
+				# nur auf der Fahrbahn; Art "cat": bremsen und warten, aber nie hupen oder klingeln
+				if absf(cat_lat) - cat.radius < half:
+					result.append({"pos": cat_pos, "radius": cat.radius, "reach": 0.3, "speed": 0.0, "kind": "cat",
+						"on_road": true})
 	for other in _vehicles:
 		if other == vehicle or other.pos.distance_squared_to(vehicle.pos) > limit:
 			continue
@@ -683,6 +756,15 @@ func is_visible_spot(spot: Vector2, height: float = 1.8, radius: float = 0.4) ->
 		if _in_view(camera, point) and _line_of_sight(camera.global_position, point):
 			return true
 	return false
+
+
+## Liegt ein Punkt (Welt) gerade im Blickfeld (im Bild mit Rand und nicht von Häusern verdeckt)? Für
+## Tiere (Vögel in der Luft, Katzen): wie is_visible_spot, aber für genau einen Punkt.
+func is_visible_point(point: Vector3) -> bool:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return false
+	return _in_view(camera, point) and _line_of_sight(camera.global_position, point)
 
 
 func _in_view(camera: Camera3D, point: Vector3) -> bool:

@@ -3,7 +3,7 @@
 ; Erzeugt von den Bilderbuch-Bau-Scripts (tools/blender/build_storybook_*.py, Blender-Material "Katze Nase") – wird beim Neubau
 ; überschrieben. Werte gern ausprobieren, dauerhaft aber im Bau-Script ändern.
 
-[ext_resource type="Shader" path="res://assets/shaders/storybook.gdshader" id="1_shader"]
+[ext_resource type="Shader" path="res://assets/shaders/storybook_animal.gdshader" id="1_shader"]
 
 [resource]
 resource_name = "Katze Nase"

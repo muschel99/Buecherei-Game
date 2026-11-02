@@ -12,7 +12,8 @@ extends Node
 ## Starten (Godot ohne Bildschirm):
 ##   godot --headless --path . res://scenes/tools/street_life_check.tscn -- --seconds=40 --seed=1
 ## Angaben nach "--": --seconds=<je Stelle> (Standard 45), --seed=<zahl>, --only=<stelle,…>,
-## --deliver=<n> (Testlieferung mit n Kartons, sobald die erste Stelle beginnt).
+## --deliver=<n> (Testlieferung mit n Kartons, sobald die erste Stelle beginnt), --door_open (Ladentür offen),
+## --cats (Katzen kommen alle paar Sekunden, --enter=<0..1> Chance hineinzugehen; seit Etappe 6g).
 
 const STEP := 1.0 / 30.0
 const TURN_SPEED := deg_to_rad(40.0)
@@ -31,6 +32,8 @@ var _report := {
 	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {}, "crossing": 0, "browsing": 0, "alley": 0, "sitting": 0,
 }
 var _track := {}  # Passant -> [letzte Stelle, Zeit seit Bewegung]
+var _cat_track := {}  # Katze -> [letzte Stelle, Zeit ohne Bewegung beim Laufen]
+var _cat_stuck: Array[String] = []
 var _stall := {}  # Passant -> Sekunden, die er beim Gehen auf der Stelle tritt
 var _spot_name := ""
 
@@ -56,6 +59,16 @@ func _ready() -> void:
 func _run() -> void:
 	for i in 10:
 		await get_tree().physics_frame
+	if _args.has("door_open"):
+		var door := get_tree().get_first_node_in_group("doors") as Door
+		if door:
+			door.set_open(true)
+	StreetCat.debug = _args.has("cat_log")
+	if _args.has("cats"):
+		# Katzen öfter (zum Prüfen): alle paar Sekunden eine neue
+		GameConfig.cat_interval = Vector2(4.0, 8.0)
+		GameConfig.cat_first_delay = Vector2(1.0, 2.0)
+		GameConfig.cat_enter_chance = float(_args.get("enter", GameConfig.cat_enter_chance))
 	if _args.has("deliver"):
 		var manager := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
 		manager.place_order([{"kind": "furniture", "id": "armchair_velvet", "count": int(_args.deliver)}], 0.0)
@@ -170,6 +183,18 @@ func _open_view(spot: Vector2) -> bool:
 
 func _measure() -> void:
 	_report.samples += 1
+	# Katzen: laufen, kommen aber nicht vom Fleck (12 s)?
+	if _life.cats:
+		for cat in _life.cats.get_cats():
+			var last: Array = _cat_track.get(cat, [cat.global_position, 0.0])
+			if cat.get_action_type() in ["walk", "follow"] and cat.global_position.distance_to(last[0]) < 0.05:
+				last[1] += SAMPLE
+				if last[1] >= 12.0:
+					_cat_stuck.append("%s bei %s (%s, Stelle %s)" % [cat.name, cat.global_position, cat.get_action_type(), _spot_name])
+					last[1] = -1000.0
+			else:
+				last = [cat.global_position, 0.0 if last[1] >= 0.0 else last[1]]
+			_cat_track[cat] = last
 	var walkers := _life.get_walkers()
 	var player := _life.player_pos()
 	var space := _main.get_world_3d().direct_space_state
@@ -262,6 +287,17 @@ func _measure() -> void:
 
 func _print_report() -> void:
 	print("")
+	if _life.birds:
+		var b := _life.birds
+		print("=== Tiere (seit Etappe 6g) ===")
+		print("Vögel: Flüge %d, gerade unterwegs %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d" % [
+			b.flights, b.get_birds().size(), b.visible_spawns, b.visible_exits])
+	if _life.cats:
+		var c := _life.cats
+		print("Katzen: Besuche %d, in der Bücherei %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, festgefahren %d" % [
+			c.visits, c.entered, c.visible_spawns, c.visible_exits, _cat_stuck.size()])
+		for line in _cat_stuck:
+			print("  ", line)
 	print("=== Bericht Straßenleben ===")
 	print("Messungen: %d" % _report.samples)
 	print("Erschienen: %d, im Blickfeld: %d, mit freier Sicht (beim Umdrehen): %d" % [

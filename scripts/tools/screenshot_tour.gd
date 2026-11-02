@@ -24,6 +24,8 @@ extends Node
 ##   --focus=<abstand>  statt der Blickpunkte: Nahaufnahme des Passanten, der dem Ziel des ersten
 ##                      Blickpunkts am nächsten ist (aus so vielen Metern, schräg von vorn)
 ##   --focus_vehicle    dasselbe für das nächste Fahrzeug (Fahrrad, Auto, Lieferwagen)
+##   --focus_cat, --focus_bird  dasselbe für die nächste Katze bzw. den nächsten sitzenden Vogel (seit Etappe 6g);
+##                      --cats = Katzen kommen gleich und oft (--enter=<0..1>), --door_open = Ladentür offen
 ##   --focus_cross      dasselbe für einen Passanten, der gerade über die Straße geht
 ##   --stats            je Bild die Zeichenaufrufe und Objekte ausgeben (Leistung)
 ##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
@@ -41,6 +43,8 @@ extends Node
 ##                      Kategorie in der Hand (Blaupause). Im Gestaltungsmodus folgt die Kamera der
 ##                      Spielfigur dem Blickpunkt (Hervorheben und Blaupause zielen mit ihr)
 ##   --give             zum Testen von jedem Möbelstück 1–3 Stück (in allen Farben) ins Inventar
+##   --spots            Plätze der Tiere aus data/animals/spots.json als kleine Kugeln zeigen (seit Etappe 6g:
+##                      rot = Dach, gelb = Gesims, blau = unten, grün = Katze, weiß = Vogelhäuschen)
 ##   --indoor           ohne Straße draußen (Häuser, Pflanzen, Passanten) – schnell, für Bilder vom Laden
 ## Die Spielfigur bleibt stehen, wo sie ist; gespeichert wird nichts.
 
@@ -80,6 +84,8 @@ func _ready() -> void:
 	var life := main.get_node_or_null("Outside/StreetLife") as StreetLife
 	if life and _args.has("seed"):
 		life.seed_random(int(_args.seed))
+	if _args.has("spots"):
+		_show_spots(main)
 	_camera = Camera3D.new()
 	_camera.name = "TourCamera"
 	_camera.fov = float(_args.get("fov", Player.fitted_fov(get_viewport().get_visible_rect().size)))
@@ -90,6 +96,40 @@ func _ready() -> void:
 	if not _args.has("hud") and not _args.has("ui"):
 		_hide_interface(get_tree().root)
 	_run.call_deferred()
+
+
+## Plätze der Tiere als kleine farbige Kugeln (Prüfung der ausgemessenen Plätze).
+func _show_spots(main: Node) -> void:
+	var outside := main.get_node_or_null("Outside") as Node3D
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/animals/spots.json"))
+	if outside == null or not data is Dictionary:
+		return
+	var colors := {"roof": Color(0.9, 0.2, 0.2), "ledge": Color(0.95, 0.85, 0.2), "low": Color(0.2, 0.4, 0.95)}
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.035
+	sphere.height = 0.07
+	var entries: Array = data.perches.duplicate()
+	if not (data.birdhouse as Dictionary).is_empty():
+		entries.append({"pos": data.birdhouse.pos, "kind": "birdhouse"})
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = sphere
+	mm.instance_count = entries.size()
+	for i in entries.size():
+		var e: Dictionary = entries[i]
+		var size := 4.0 if e.kind == "birdhouse" else 1.0
+		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * size),
+			Vector3(e.pos[0], e.pos[1] + 0.035, e.pos[2])))
+		var color: Color = Color.WHITE if e.kind == "birdhouse" else (Color(0.2, 0.9, 0.3) if e.get("cat", false) else colors[e.kind])
+		mm.set_instance_color(i, color)
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.vertex_color_use_as_albedo = true
+	var instance := MultiMeshInstance3D.new()
+	instance.multimesh = mm
+	instance.material_override = material
+	outside.add_child.call_deferred(instance)
 
 
 func _run() -> void:
@@ -269,6 +309,10 @@ func _focus_views(views: Dictionary) -> Dictionary:
 	var target: Vector3 = views[views.keys()[0]].target
 	var best: Node3D = null
 	var candidates: Array = life.get_vehicles() if _args.has("focus_vehicle") else life.get_walkers()
+	if _args.has("focus_cat") and life.cats:
+		candidates = life.cats.get_cats()
+	elif _args.has("focus_bird") and life.birds:
+		candidates = life.birds.get_birds().filter(func(b: StreetBird) -> bool: return b.state == StreetBird.State.PERCH)
 	if _args.has("focus_cross"):
 		candidates = life.get_walkers().filter(func(w: Passerby) -> bool: return w.on_road)
 	for who: Node3D in candidates:
@@ -277,7 +321,7 @@ func _focus_views(views: Dictionary) -> Dictionary:
 	if best == null:
 		return views
 	var distance := float(_args.focus)
-	var chest := best.global_position + Vector3.UP * 1.2
+	var chest := best.global_position + Vector3.UP * (0.2 if _args.has("focus_cat") else (0.05 if _args.has("focus_bird") else 1.2))
 	var forward := best.global_basis.z.normalized()
 	var result := {}
 	for item in [["front", 0.0], ["half", 0.7], ["side", 1.57], ["back", 3.14]]:
@@ -298,6 +342,14 @@ func _prepare_street_life() -> void:
 	var life := get_tree().get_first_node_in_group(StreetLife.GROUP) as StreetLife
 	if life == null:
 		return
+	if _args.has("door_open"):
+		var door := get_tree().get_first_node_in_group("doors") as Door
+		if door:
+			door.set_open(true)
+	if _args.has("cats"):
+		GameConfig.cat_interval = Vector2(4.0, 8.0)
+		GameConfig.cat_first_delay = Vector2(1.0, 2.0)
+		GameConfig.cat_enter_chance = float(_args.get("enter", GameConfig.cat_enter_chance))
 	if _args.has("deliver"):
 		var manager := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
 		if manager:

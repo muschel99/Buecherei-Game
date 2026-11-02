@@ -768,6 +768,92 @@ var passerby_voice_volume_db: float = -6.0
 var passerby_voice_distance: float = 12.0
 
 
+# --- Tiere: Vögel und Katzen (Etappe 6g) ---
+# Startwerte ruhig und gemütlich. Modelle: tools/blender/build_animals.py, Plätze an den Häusern:
+# scenes/tools/bake_animal_spots.tscn → data/animals/spots.json. Mehr in docs/ASSET_GUIDE.md („Eigene Tiere“).
+
+## Tiere ein/aus (Vögel und Katzen; zum Vergleich der Leistung)
+var animals_enabled: bool = true
+var bird_scene: String = "res://scenes/animals/bird.tscn"
+var cat_scene: String = "res://scenes/animals/cat.tscn"
+var birdhouse_scene: String = "res://assets/models/animals/birdhouse.glb"
+## Vögel: höchstens so viele gleichzeitig, kleine Schwärme (Anzahl je Schwarm von–bis), so oft kommt ein
+## neuer Schwarm (Sekunden von–bis), so lange bleiben sie sitzen, bevor sie weiterfliegen
+var bird_count: int = 10
+var bird_flock_size: Vector2i = Vector2i(1, 4)
+var bird_spawn_interval: Vector2 = Vector2(7.0, 22.0)
+var bird_stay_time: Vector2 = Vector2(18.0, 55.0)
+## Wohin ein Schwarm fliegt (Anteile): Gehweg (picken), Vogelhäuschen, Laternenarme – sonst Dachrinnen,
+## Firste, Gesimse und Fensterbänke
+var bird_ground_share: float = 0.35
+var bird_birdhouse_share: float = 0.22
+var bird_lamp_share: float = 0.15
+## Nach dem Sitzen: so oft fliegen sie zu einem anderen Platz in der Nähe statt weg
+var bird_stay_nearby_share: float = 0.55
+## Plätze nur so weit von der Kamera (Meter) – dort, wo man sie auch sieht
+var bird_near_distance: float = 26.0
+## Fluggeschwindigkeit (m/s), beim Auffliegen schneller
+var bird_speed: float = 4.2
+var bird_flee_speed: float = 6.0
+## Auffliegen, wenn jemand näher kommt (Meter): Spielfigur, Passant, Katze – Fahrzeuge
+var bird_flee_radius: float = 2.3
+var bird_vehicle_flee_radius: float = 4.5
+## Zwitschern am Vogel (räumlich): Abstand zwischen zwei Lauten je Vogel (s), Lautstärke, Reichweite (m)
+var bird_chirp_interval: Vector2 = Vector2(7.0, 20.0)
+var bird_chirp_volume_db: float = -7.0
+var bird_chirp_distance: float = 22.0
+## Flattern beim Auffliegen (Geräusch ambience/bird_flap, per Script erzeugt: tools/make_wing_flap.py)
+var bird_flap_volume_db: float = -12.0
+## Vogelarten: Farben der Materialien (Gefieder, Flügel, Brust, Schnabel) – neue Art = neue Zeile
+var bird_species: Array[Dictionary] = [
+	{"name": "Spatz", "plumage": Color(0.55, 0.42, 0.3), "wing": Color(0.42, 0.3, 0.2), "breast": Color(0.82, 0.74, 0.62),
+		"beak": Color(0.36, 0.3, 0.26)},
+	{"name": "Rotkehlchen", "plumage": Color(0.48, 0.4, 0.3), "wing": Color(0.4, 0.33, 0.25), "breast": Color(0.9, 0.48, 0.24),
+		"beak": Color(0.25, 0.2, 0.17)},
+	{"name": "Blaumeise", "plumage": Color(0.5, 0.62, 0.42), "wing": Color(0.3, 0.48, 0.72), "breast": Color(0.95, 0.84, 0.36),
+		"beak": Color(0.22, 0.22, 0.24)},
+	{"name": "Buchfink", "plumage": Color(0.56, 0.42, 0.36), "wing": Color(0.32, 0.3, 0.3), "breast": Color(0.82, 0.55, 0.45),
+		"beak": Color(0.7, 0.68, 0.62)},
+]
+## Katzen: höchstens so viele gleichzeitig, so oft kommt eine vorbei (s von–bis; die erste nach …)
+var cat_count: int = 2
+var cat_interval: Vector2 = Vector2(70.0, 170.0)
+var cat_first_delay: Vector2 = Vector2(15.0, 45.0)
+## Tempo (m/s): gehen, rennen (beim Fangenspielen und über die Straße)
+var cat_walk_speed: float = 0.6
+var cat_run_speed: float = 1.9
+## Was eine Katze unterwegs tut (Chancen je Besuch): Sitzplatz (Bank, Stuhl), Fensterbank, durchs Schaufenster
+## der Bücherei schauen, in die Bücherei kommen (nur bei offener Tür), mit einer zweiten Katze Fangen spielen,
+## Spielzeug tragen
+var cat_seat_chance: float = 0.45
+var cat_sill_chance: float = 0.35
+var cat_window_chance: float = 0.5
+var cat_enter_chance: float = 0.55
+var cat_play_chance: float = 0.5
+var cat_toy_chance: float = 0.3
+## So lange (s) bleiben sie: auf einem Platz draußen, in der Bücherei auf dem Sessel
+var cat_rest_time: Vector2 = Vector2(25.0, 70.0)
+var cat_inside_time: Vector2 = Vector2(80.0, 220.0)
+## Streicheln (E): so lange genießt sie es (s)
+var cat_pet_time: float = 4.0
+## Geräusche an der Katze: Schnurren (Schleife) und nur ein sanftes, kurzes Miau (die übrigen Katzen-Laute
+## passen nicht: zu lang bzw. zu aufgeregt), höchstens alle … Sekunden je Katze
+var cat_purr_volume_db: float = -9.0
+var cat_meow_sound: String = "ambience/cat_meow_1"
+var cat_meow_volume_db: float = -15.0
+var cat_meow_cooldown: float = 30.0
+## Katzen: Aussehen (Fell, Fell hell = Brust/Bauch/Pfoten, Augen, Tigerstreifen 0–1, Größe) – neue Katze =
+## neue Zeile
+var cat_looks: Array[Dictionary] = [
+	{"name": "Mandarine", "fur": Color(0.86, 0.52, 0.25), "fur2": Color(0.97, 0.9, 0.78), "eye": Color(0.62, 0.66, 0.2),
+		"tabby": 0.55, "tabby_color": Color(0.62, 0.45, 0.35), "size": 1.0},
+	{"name": "Nebel", "fur": Color(0.5, 0.53, 0.57), "fur2": Color(0.84, 0.84, 0.83), "eye": Color(0.85, 0.66, 0.2),
+		"tabby": 0.35, "tabby_color": Color(0.62, 0.63, 0.66), "size": 1.05},
+	{"name": "Socke", "fur": Color(0.13, 0.12, 0.12), "fur2": Color(0.95, 0.93, 0.88), "eye": Color(0.45, 0.66, 0.3),
+		"tabby": 0.0, "tabby_color": Color(1, 1, 1), "size": 0.94},
+]
+
+
 # --- Testtasten (nur zum Ausprobieren) ---
 
 ## Schaltet alle Testtasten auf einmal ein oder aus (F9 = Bücher in den Rückgabekasten,

@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+; Kleiner Vogel (Etappe 6g): Script StreetBird, Modell austauschbar (Kind "Model": eigene .glb mit
+; Skelett und den Bewegungen idle, peck, hop, fly, glide – siehe docs/ASSET_GUIDE.md „Eigene Tiere“).
+
+[ext_resource type="Script" path="res://scripts/animals/street_bird.gd" id="1_bird"]
+[ext_resource type="PackedScene" path="res://assets/models/animals/bird.glb" id="2_model"]
+
+[node name="Bird" type="Node3D"]
+script = ExtResource("1_bird")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]

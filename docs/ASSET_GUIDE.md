@@ -32,8 +32,9 @@ still**, es gibt keine Fehlermeldung. Nach dem Hineinlegen Godot einmal öffnen 
 
 | Ordner | Regler | Dateiname (ohne Endung) | Wann |
 |---|---|---|---|
-| `assets/audio/ambience/` | Umgebung | `bird` (Varianten) | seit Etappe 6f vorerst still – Vögel zwitschern nur noch an sichtbaren Vögeln (kommen in der nächsten Etappe) |
-| | | `cat_meow`, `cat_chatter`, `cat_purr` | seit Etappe 6f vorerst nicht benutzt (Tiergeräusche nur von sichtbaren Tieren); die Dateien bleiben liegen |
+| `assets/audio/ambience/` | Umgebung | `bird` (Varianten) | Zwitschern am einzelnen Vogel (seit Etappe 6g, räumlich) |
+| | | `bird_flap` (Varianten) | Flattern beim Auffliegen (per Script erzeugt: `tools/make_wing_flap.py`) |
+| | | `cat_purr`, `cat_meow_1` | Schnurren und kurzes, sanftes Miau an der Katze (seit Etappe 6g); `cat_meow_2` (lang) und `cat_chatter` bleiben unbenutzt |
 | | | `fireplace` | Kaminknistern in Schleife, solange das Feuer brennt (fehlt noch) |
 | | | `outdoor` | Hintergrund in Schleife (fehlt noch, freiwillig) |
 | `assets/audio/footsteps/` | Effekte | `wood`, `stone` | deine Schritte: drinnen Holzboden, draußen Stein – je Schritt ein Laut |
@@ -72,8 +73,7 @@ Bewusst nicht verwendet: `Female_eww`, `female_urgh`.
 - `ambience/outdoor` – sehr leiser Straßen-Hintergrund als Schleife (Wind, fernes Stadtgeräusch; freiwillig)
 - `voices/…` – eine echte Männerstimme (Lachen, „oh“) und mehr Varianten für alle Laute; bis dahin lachen
   Männer nicht (nur „hm“ oder stilles Lächeln), Frauen sagen „hm“ mit der höher gestellten Männerstimme
-- Vogel- und Katzengeräusche gibt es schon; sie kommen zurück, sobald es sichtbare Vögel (nächste Etappe) bzw.
-  eine Katze gibt
+- Vogel- und Katzengeräusche hängen seit Etappe 6g an sichtbaren Vögeln und Katzen (siehe „Eigene Tiere“)
 - Musik für Abend/Nacht, Regen und Winter (Ordner sind vorbereitet)
 - eine echte Aufnahme für das Pflaster-Rumpeln (jetzt erzeugt)
 - schön wären noch: Wind in Bäumen und Markisen, Lieferwagen-Tür und abgestellte Kartons, Tablet schließen
@@ -1247,6 +1247,78 @@ Passant schaut in die Gegenrichtung).
   `GameConfig.passerby_seat_chance` und `passerby_seat_time`. Ein neuer Sitzplatz ist ein Knoten mit
   dem Script `res://scripts/street_life/street_seat.gd` (mitten auf der Sitzfläche, Z = Blickrichtung;
   **Approach** = Stelle, von der aus man sich setzt).
+
+## Eigene Tiere: Vögel und Katzen (seit Etappe 6g)
+Die Tiere sind wie die Häuser per Blender-Script gebaut (`tools/blender/build_animals.py`): je Tier **ein Netz
+mit Skelett** und mehreren **Bewegungen** (Animationen). Das Spiel färbt sie je Vogelart bzw. je Katze selbst
+ein – darum haben die Materialien feste Namen.
+
+### Wo liegt was?
+| Was | Datei |
+|---|---|
+| Vogel, Katze (Spiel-Modelle) | `assets/models/animals/bird.glb`, `cat.glb` |
+| Vogelhäuschen, Filzmaus (Spielzeug) | `assets/models/animals/birdhouse.glb`, `cat_toy.glb` |
+| **Vorlagen** zum Modellieren (echte Größe, gleich dem Spiel-Modell) | `assets/models/templates/animals/` |
+| Blender-Quellen zum Weiterbauen | `assets/models/source/animals/<tier>.blend` |
+| Szenen (Script + austauschbares Kind „Model“) | `scenes/animals/bird.tscn`, `scenes/animals/cat.tscn` |
+| Farben der Vogelarten und Katzen, Anzahl, Häufigkeit, Tempo, Lautstärke | `scripts/autoload/game_config.gd`, Abschnitt „Tiere“ |
+| Sitzplätze an den Häusern (ausgemessen) | `data/animals/spots.json` (Werkzeug `scenes/tools/bake_animal_spots.tscn`) |
+
+### Ein eigenes Tier-Modell einsetzen
+1. In Blender die Vorlage öffnen (`assets/models/templates/animals/bird.glb` bzw. `cat.glb` über
+   *Datei → Importieren → glTF*). Sie zeigt Größe, Lage und das Skelett. Ursprung = zwischen den Füßen auf
+   dem Boden, **vorn = −Y** in Blender (im Spiel +Z).
+2. Eigenes Modell bauen und an das Skelett hängen (*Objekt auswählen, dann Skelett, Strg+P → Mit automatischen
+   Gewichten*). Die **Knochennamen** müssen bleiben, sonst passen die Bewegungen nicht:
+   - Vogel: `root`, `body`, `head`, `wing_l`, `wing_r`, `tail`, `leg_l`, `leg_r`
+   - Katze: `root`, `hips`, `chest`, `neck`, `head`, `fl_upper_l/r`, `fl_lower_l/r` (Vorderbeine),
+     `bl_upper_l/r`, `bl_lower_l/r` (Hinterbeine), `tail1`, `tail2`, `tail3`
+     (`head` braucht auch die Filzmaus: sie hängt am Kopf-Knochen unter der Schnauze.)
+3. **Bewegungen** (Aktionen in Blender, als NLA-Spuren mit genau diesen Namen):
+   - Vogel: `idle` (sitzen, umschauen), `peck` (picken), `hop` (ein Hüpfer), `fly` (Flügelschlag),
+     `glide` (gleiten)
+   - Katze: `idle` (stehen), `walk`, `run`, `sit`, `groom` (putzen), `pet` (Kopf reiben beim Streicheln),
+     `lie` (liegen), `sleep` (eingerollt), `stretch` (strecken, einmal), `jump` (Sprung, einmal)
+   Wichtig: In **jeder** Bewegung alle Knochen mit einem Schlüsselbild versehen – sonst behält ein Knochen die
+   Haltung der vorigen Bewegung (z. B. bleiben die Flügel offen).
+4. **Materialnamen** (das Spiel färbt diese um): Vogel „Vogel Gefieder“, „Vogel Flügel“, „Vogel Brust“,
+   „Vogel Schnabel“, „Vogel Auge“; Katze „Katze Fell“, „Katze Fell hell“ (Brust, Bauch, Pfoten), „Katze Nase“,
+   „Katze Auge“, „Katze Pupille“. Andere Materialien bleiben, wie sie sind.
+5. Exportieren als glTF-Binär (.glb) mit *Skinning*, *Animationen* und *NLA-Spuren* nach
+   `assets/models/animals/` – entweder die alte Datei ersetzen oder unter neuem Namen speichern und in Godot in
+   `scenes/animals/cat.tscn` den Knoten **Model** durch das neue Modell ersetzen (Rechtsklick → *Szene
+   ersetzen*). Das Script der Szene bleibt.
+6. In Godot testen: Spiel starten, warten (oder in GameConfig `cat_first_delay` kurz stellen).
+
+Tipp: Die Tempi der Bewegungen passen zu den Laufgeschwindigkeiten (`StreetCat.WALK_ANIM_SPEED` = 0,45 m/s,
+`RUN_ANIM_SPEED` = 1,7 m/s). Läuft eine eigene Katze schneller oder langsamer, dort anpassen.
+
+### Neue Vogelart oder neue Katze (ohne Modell)
+- **Vogelart:** in `game_config.gd` bei `bird_species` eine Zeile mit Name und vier Farben (Gefieder, Flügel,
+  Brust, Schnabel) ergänzen.
+- **Katze:** bei `cat_looks` eine Zeile ergänzen: Fell, Fell hell, Augen, Tigerstreifen (`tabby` 0 = keine …
+  1 = kräftig, `tabby_color` = Farbe der Streifen) und Größe. Jede Zeile ist genau eine Katze; höchstens
+  `cat_count` sind gleichzeitig unterwegs.
+
+### Vogelhäuschen und Sitzplätze
+- Das **Vogelhäuschen** hängt an der glatten Wand eines Wohnhauses gegenüber der Bücherei (die Stelle sucht das
+  Werkzeug selbst). Eigenes Häuschen: `birdhouse.glb` ersetzen (Ursprung = Mitte der Rückwand auf der Mauer,
+  vorn = −Y in Blender) und leere Objekte `Perch_1`, `Perch_2` … als Plätze für die Vögel setzen; die
+  Eigenschaft `kind` sagt, was sie dort tun: `feed` = picken (auf dem Futterbrett), `rim`, `stick`, `roof` =
+  sitzen.
+- **Plätze an den Häusern** (Dachrinnen, Firste, Gesimse, Fensterbänke; breite Fensterbänke unten auch für
+  Katzen): nach jeder Änderung an Häusern einmal neu ausmessen:
+  `godot --headless --path . res://scenes/tools/bake_animal_spots.tscn` (etwa eine halbe Minute).
+  Ansehen: Testbilder mit `--spots` (rot = Dach, gelb = Gesims, blau = unten, grün = Katze, weiß =
+  Vogelhäuschen).
+
+### Geräusche der Tiere
+- Zwitschern: `assets/audio/ambience/bird_*` (aus „6x-Vogel Zwitschern.mp3“), hängt am einzelnen Vogel.
+- Flattern beim Auffliegen: `assets/audio/ambience/bird_flap_1..3.ogg` – per Script erzeugt
+  (`tools/make_wing_flap.py`), weil es unter den Aufnahmen keins gab. Eigene Aufnahme: Dateien ersetzen.
+- Katze: Schnurren `ambience/cat_purr` und nur das kurze, sanfte Miau `ambience/cat_meow_1` (aus
+  „miau_kurz.mp3“; Einstellung `cat_meow_sound`). Das lange Miau und das Schnattern passen nicht zu einer
+  gemütlichen Katze und bleiben unbenutzt.
 
 ## Farben und Texturen von Wänden und Böden
 Die Materialien liegen in `assets/materials/` (z. B. `wall_plaster.tres`, `floor_wood.tres`).

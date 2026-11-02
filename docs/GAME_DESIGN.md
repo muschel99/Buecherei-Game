@@ -594,7 +594,7 @@ Nur wenn nichts offen ist, öffnet Esc das Pausenmenü.
 | Leertaste      | Springen (etwa 0,8 m hoch, weich); im Sitzen: aufstehen |
 | Strg           | Hocken (gedrückt halten), langsamer laufen     |
 | Maus           | Umsehen                                        |
-| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Theken-Tablet öffnen, Bücher aus dem Rückgabekasten nehmen (Klappe innen neben der Tür) |
+| E              | Interagieren (Objekt in der Bildmitte): Lampen und Kerzen schalten, hinsetzen, Tür öffnen/schließen, Karton auspacken, Theken-Tablet öffnen, Bücher aus dem Rückgabekasten nehmen (Klappe innen neben der Tür), Katzen streicheln |
 | E beim Tragen  | Anderes Buch obenauf (Umschalt + E: zurück) – wenn das Angeschaute nichts mit E macht |
 | R              | Bücher-Menü als Tablet, überall: Bücher aus dem Lager nehmen; am Regal auch Genre je Fach, auffüllen, sortieren (noch einmal R, Esc oder das Kreuz schließt es) |
 | Rechtsklick    | Buch nehmen (Regal, Tisch, Boden, Rückgabekasten) – bis zu 7 tragen |
@@ -1167,6 +1167,49 @@ Tageszeit abhängen (`StreetLife.activity()`).
 - **Speichern:** Draußen wird nichts gespeichert – außer dem, was für eine laufende Lieferung
   nötig ist (Bestellungen und was gerade im Lieferwagen ist).
 
+### Tiere: Vögel und Katzen (seit Etappe 6g)
+Im weichen Bilderbuch-Stil der Welt: runde, geschlossene Körper wie bei den Chibi-Figuren, jedes Tier mit
+Skelett und eigenen Bewegungen. Alle Mengen und Zeiten stehen in GameConfig (Abschnitt „Tiere“), die
+Startwerte sind ruhig.
+- **Vögel:** kleine Singvögel in vier Arten (Spatz, Rotkehlchen, Blaumeise, Buchfink), meist in kleinen
+  Schwärmen von ein bis vier Vögeln, höchstens zehn gleichzeitig.
+  - *Wo sie sitzen:* auf Dachrinnen, Firsten, Gesimsen, Schildkästen und Fensterbänken der Häuser (die
+    Plätze sind an jedem Haus ausgemessen – nie mitten in Blumenkästen, nie unter einer Markise), auf den
+    Querarmen der Straßenlaternen und am **Vogelhäuschen** an einem Wohnhaus gegenüber der Bücherei
+    (Futterbrett mit Körnern, Rand, Sitzstange, Dachfirst – dort landen sie, picken, sitzen und fliegen
+    wieder weg). Auf dem Gehweg picken sie Körner und hüpfen herum.
+  - *Kommen und gehen:* Vögel tauchen nie aus dem Nichts auf: Sie fliegen hinter einem Dach hervor (von dort
+    aus, wo man nicht hinsieht) und landen sanft; nach einer Weile fliegen sie zu einem anderen Platz in der
+    Nähe oder wieder hinter ein Dach – verschwinden erst außer Sicht.
+  - *Auffliegen:* Kommt die Spielfigur, ein Passant, eine Katze oder ein Fahrzeug Vögeln am Boden (oder auf
+    niedrigen Fensterbänken) zu nahe, flattert der ganze Schwarm mit Flattergeräusch auf und landet weiter
+    oben woanders.
+  - *Zwitschern:* jeder Vogel ab und zu für sich, räumlich am Vogel (nah lauter, fern leiser).
+- **Katzen:** drei Katzen mit eigenem Aussehen – „Mandarine“ (rot getigert mit cremefarbener Brust),
+  „Nebel“ (grau mit hellen Streifen) und „Socke“ (schwarz mit weißer Brust und weißen Pfoten). Ab und zu
+  kommt eine vorbei (höchstens zwei gleichzeitig), wie Passanten nur von den verdeckten Straßenenden.
+  - *Was sie tun:* nah an den Hauswänden laufen; sich auf eine Bank, einen Stuhl (auch vor dem Pub und vor
+    der Bücherei) oder eine breite Fensterbank setzen; sich putzen, strecken und schlafen; durchs
+    Schaufenster in die Bücherei schauen; manchmal spielen zwei Katzen **Fangen** (die eine rennt voraus,
+    wartet, rennt weiter, die andere hinterher), manchmal trägt eine eine kleine **Filzmaus** im Maul (beim
+    Hinsetzen legt sie sie vor sich ab und nimmt sie wieder mit).
+  - *In der Bücherei:* Ist die Ladentür offen, kommt manchmal eine Katze die Stufen herauf (kleine Hüpfer)
+    und herein, sucht sich einen Weg zwischen den Möbeln hindurch und legt sich auf einen freien Sessel oder
+    ein Sofa (ohne Sessel: auf einen Teppich), rollt sich ein und **schnurrt**. Nach ein paar Minuten
+    streckt sie sich und geht wieder; ist die Tür zu, wartet sie davor und miaut ab und zu leise, bis ich
+    aufmache. Solange sie auf dem Sessel liegt, kann ich mich dort nicht hinsetzen.
+  - *Streicheln:* mit **E** (Symbol „Streicheln“): Die Katze bleibt stehen, dreht sich zu mir, reibt den
+    Kopf und schnurrt (liegt sie, schnurrt sie im Liegen). Vorbereitet: Später können auch Passanten Katzen
+    streicheln (dieselbe Funktion, `StreetCat.pet`).
+  - *Rücksicht:* Katzen warten, wenn jemand im Weg ist, gehen in einem kleinen Bogen außen herum oder kehren
+    um; Passanten gehen um sie herum; über die Straße flitzen sie nur, wenn kein Fahrzeug kommt – Autos und
+    Fahrräder bremsen für Katzen auf der Fahrbahn (ohne zu hupen oder zu klingeln).
+  - *Geräusche:* Schnurren und nur ein kurzes, sanftes Miau aus den eigenen Aufnahmen (das lange Miau und das
+    Schnattern passen nicht zu einer gemütlichen Katze und bleiben unbenutzt).
+- **Leistung:** Vögel sind sehr klein (gut 2 000 Dreiecke) und werfen keinen Schatten; alle Vögel einer Art
+  und jede Katze teilen sich ihre Materialien. Die Sitzplätze an den Häusern sind einmal ausgemessen
+  (keine Rechnung beim Spielen).
+
 ## Geräusche und Musik (seit Etappe 6e)
 Alle Geräusche sind Aufnahmen der Entwicklerin (Originale in „Game design/Sounds Cozy Bücherei“ bleiben
 unverändert). `tools/prepare_sounds.py` schneidet sie zurecht, entfernt Stille, blendet weich ein und aus,
@@ -1195,8 +1238,9 @@ schneller oder langsamer). So klingt nichts zweimal genau gleich. Fehlt eine Dat
   einen eigenen, etwas raueren Motor. Steht jemand auf der Fahrbahn und das Auto muss warten, hupt es kurz
   und freundlich („mip mip“) – höchstens alle 18 Sekunden. Radfahrer klingeln, wenn jemand auf der Fahrbahn
   vor ihnen ist, und sonst ganz selten einfach so.
-- **Tiere:** Tiergeräusche kommen nur noch von einem sichtbaren Tier (seit Etappe 6f). Die Vögel ohne Vogel
-  und die Katze ohne Katze sind darum vorerst still; Vögel kommen mit eigenen Vögeln in der nächsten Etappe.
+- **Tiere:** Tiergeräusche kommen nur von einem sichtbaren Tier (seit Etappe 6f). Seit Etappe 6g zwitschern
+  die Vögel einzeln an ihrem Platz, flattern beim Auffliegen, und Katzen schnurren beim Streicheln und auf dem
+  Sessel; ab und zu ein kurzes, sanftes Miau (z. B. vor der geschlossenen Tür).
 - **Passanten:** keine Wörter, nur kurze, weiche Laute zum Anlass – Lachen oder Kichern beim Plaudern,
   ein „hm“ beim Zuhören oder beim Blick auf die Uhr, ein „oh“ am Schaufenster. Sparsam: jede Figur
   höchstens alle 14 Sekunden, nie zwei Laute kurz nacheinander. Männer lachen vorerst nicht, sondern sagen

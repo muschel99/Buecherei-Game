@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+; Plätze für Tiere ausmessen (Etappe 6g). Ohne Bildschirm starten:
+;   godot --headless --path . res://scenes/tools/bake_animal_spots.tscn
+; Schreibt data/animals/spots.json (siehe scripts/tools/bake_animal_spots.gd).
+
+[ext_resource type="Script" path="res://scripts/tools/bake_animal_spots.gd" id="1_bake"]
+
+[node name="BakeAnimalSpots" type="Node"]
+script = ExtResource("1_bake")

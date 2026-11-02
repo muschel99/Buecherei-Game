@@ -38,10 +38,12 @@ uniform float weather = 0.0;
 uniform vec4 weather_color : source_color = vec4(0.84, 0.78, 0.68, 1.0);
 
 // Die Häuser bekommen von HouseFacade immer diese Werte – hier ohne Wirkung
+#ifndef REST_POSITION
 instance uniform vec4 wall_color : source_color = vec4(1.0);
 instance uniform vec4 door_color : source_color = vec4(1.0);
 instance uniform vec4 accent_color : source_color = vec4(1.0);
 instance uniform int wall_layer = -1;
+#endif
 
 // Wind (Markisenstoff): so weit (m) schwingt der Stoff; wie stark jede Ecke mitgeht, steht im
 // Alpha der Vertex-Farbe (1 = fest, z. B. am Kasten und an der Stange; 0 = frei, unten am Volant).
@@ -51,8 +53,22 @@ uniform float wind_strength = 0.0;
 varying vec3 model_pos;
 varying vec3 model_normal;
 
+#ifdef REST_POSITION
+// Tiere (seit Etappe 6g, storybook_animal.gdshader): Muster aus der Ruhehaltung (UV = x, y; UV2.x = z – vom
+// Bau-Script tools/blender/build_animals.py eingetragen), sonst rutscht das Fell beim Laufen unter den
+// Flecken hindurch. Tigerstreifen (Katzen): tabby = Stärke (0 = keine), tabby_color = Farbe der Streifen
+// (wird mit der Fellfarbe malgenommen), tabby_scale = Streifen je Meter.
+uniform float tabby = 0.0;
+uniform vec4 tabby_color : source_color = vec4(0.55, 0.4, 0.3, 1.0);
+uniform float tabby_scale = 13.0;
+#endif
+
 void vertex() {
+#ifdef REST_POSITION
+	model_pos = vec3(UV.x, 1.0 - UV.y, UV2.x);
+#else
 	model_pos = VERTEX;
+#endif
 	model_normal = NORMAL;
 	float sway = (1.0 - COLOR.a) * wind_strength;
 	if (sway > 0.0) {
@@ -300,6 +316,16 @@ void fragment() {
 		float s = fract((p.x + 0.012 * value_noise(p * 3.0)) / (stripe_width * 2.0));
 		col = s > 0.5 ? second_color.rgb : base_color.rgb;
 	}
+#ifdef REST_POSITION
+	if (tabby > 0.0) {
+		// Streifen quer zum Körper (Rumpf: entlang z, Beine und Schwanz: entlang y), unruhig wie gemalt,
+		// zum Bauch hin blasser
+		float f = p.z * tabby_scale + p.y * tabby_scale * 0.45 + 0.9 * value_noise(p * 7.0) + 0.35 * abs(p.x) * tabby_scale;
+		float band = smoothstep(0.62, 0.8, 0.5 + 0.5 * sin(f * 6.2832));
+		float back = smoothstep(0.1, 0.24, p.y) * 0.7 + 0.3;
+		col = mix(col, col * tabby_color.rgb, band * tabby * back * detail_fade(px, tabby_scale));
+	}
+#endif
 	bool masonry = grain == 3 || grain == 8;
 	if (masonry) {
 		// Mauerwerk im Läuferverband, waagerecht auf allen Seiten (Länge entlang x - z), runde
@@ -389,7 +415,11 @@ void fragment() {
 	// Bildpunkt – so ist das Relief an jedem Bildpunkt genau und weich (die frühere Rechnung über
 	// Bildschirm-Ableitungen arbeitete in 2x2-Blöcken und machte Treppchen und Pixel an Fugen und Kanten).
 	// Holz (Maserung nur in der Farbe) und Blätter (glatt) ohne Relief.
+#ifdef REST_POSITION
+	if (false) {
+#else
 	if (bump_strength > 0.0 && grain != 2 && grain != 5) {
+#endif
 		vec3 n = normalize(model_normal);
 		vec3 t = normalize(cross(abs(n.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0), n));
 		vec3 b = cross(n, t);

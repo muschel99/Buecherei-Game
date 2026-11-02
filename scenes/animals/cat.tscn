@@ -1,0 +1,39 @@
+[gd_scene load_steps=6 format=3]
+
+; Katze (Etappe 6g): Script StreetCat, Modell austauschbar (Kind "Model": eigene .glb mit Skelett und den
+; Bewegungen idle, walk, run, sit, groom, pet, lie, sleep, stretch, jump – siehe docs/ASSET_GUIDE.md
+; „Eigene Tiere“). Body = Körper, an dem die Spielfigur anstößt (Ebene street_life), Interactable =
+; Streicheln mit E.
+
+[ext_resource type="Script" path="res://scripts/animals/street_cat.gd" id="1_cat"]
+[ext_resource type="PackedScene" path="res://assets/models/animals/cat.glb" id="2_model"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="3_interact"]
+
+[sub_resource type="CapsuleShape3D" id="Capsule_body"]
+radius = 0.1
+height = 0.42
+
+[sub_resource type="SphereShape3D" id="Sphere_pet"]
+radius = 0.24
+
+[node name="Cat" type="Node3D"]
+script = ExtResource("1_cat")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="Body" type="AnimatableBody3D" parent="."]
+collision_layer = 64
+collision_mask = 0
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.16, 0)
+shape = SubResource("Capsule_body")
+
+[node name="Interactable" type="Area3D" parent="."]
+script = ExtResource("3_interact")
+prompt_text = "Streicheln"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0.02)
+shape = SubResource("Sphere_pet")
