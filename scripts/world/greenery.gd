@@ -13,6 +13,11 @@ extends Node3D
 ## Liegt in main.tscn als erstes Kind von "Outside" (läuft vor dem Start des Straßenlebens).
 
 const SPOT_PREFIX := "PlantSpot_"
+## Gruppe zum Finden (Rascheln: Spielfigur und Katzen fragen plant_near)
+const GROUP := "greenery"
+## Pflanzen, an denen es raschelt, wenn man dicht vorbeigeht (Bäume, Ampeln und Ranken hoch oben nicht)
+const RUSTLE_KINDS := ["bed", "hedge", "walltuft", "tuft", "pot", "potfill", "rim", "bucket", "box", "climber"]
+const RUSTLE_CELL := 2.0
 
 ## Ordner mit den Pflanzen-Szenen.
 @export_dir var plants_dir := "res://scenes/world/plants"
@@ -40,11 +45,14 @@ var _instances: Array[MultiMeshInstance3D] = []
 var placed_count := 0
 ## Schon gesetzte Pflanzen: [Lage, id] (für die Vielfalt unter Nachbarn)
 var _placed_ids: Array = []
+## Raschel-Pflanzen nach Gebiet (2 m): Zelle -> Array von [Lage, Halbmesser, Höhe]
+var _rustle := {}
 
 
 func _ready() -> void:
 	if Engine.is_editor_hint() or not enabled:
 		return
+	add_to_group(GROUP)
 	_load_catalog()
 	_place_all.call_deferred()
 	Settings.setting_changed.connect(_on_setting_changed)
@@ -293,6 +301,12 @@ func _pick(entries: Array, hint: String, rng: RandomNumberGenerator) -> Dictiona
 
 func _add_piece(entry: Dictionary, xform: Transform3D) -> void:
 	placed_count += 1
+	if entry.kind in RUSTLE_KINDS:
+		var size: Vector3 = (entry.size as Vector3) * xform.basis.get_scale()
+		var cell := Vector2i(floori(xform.origin.x / RUSTLE_CELL), floori(xform.origin.z / RUSTLE_CELL))
+		if not _rustle.has(cell):
+			_rustle[cell] = []
+		(_rustle[cell] as Array).append([xform.origin, maxf(size.x, size.z) * 0.5, size.y])
 	var path: String = entry.path
 	if not _parts.has(path):
 		_parts[path] = _collect_parts(entry.scene)
@@ -309,6 +323,22 @@ func _add_piece(entry: Dictionary, xform: Transform3D) -> void:
 		(_batches[key].transforms as Array).append(Transform3D(Basis(), -center) * xform * (part.xform as Transform3D))
 	if float(entry.radius) > 0.0:
 		_add_collision(xform, float(entry.radius) * xform.basis.get_scale().x, (entry.size as Vector3).y * xform.basis.get_scale().y)
+
+
+## Ist eine niedrige Pflanze in Reichweite (Abstand zum Rand der Pflanze, waagerecht) und reicht sie in die Höhe
+## zwischen pos und pos + 1,2 m? (Rascheln beim Vorbeigehen)
+func plant_near(world_pos: Vector3, reach: float) -> bool:
+	var pos := to_local(world_pos)
+	var cell := Vector2i(floori(pos.x / RUSTLE_CELL), floori(pos.z / RUSTLE_CELL))
+	for dx in range(-1, 2):
+		for dz in range(-1, 2):
+			for p: Array in _rustle.get(cell + Vector2i(dx, dz), []):
+				var at: Vector3 = p[0]
+				if at.y > pos.y + 1.2 or at.y + float(p[2]) < pos.y + 0.05:
+					continue
+				if Vector2(at.x - pos.x, at.z - pos.z).length() < float(p[1]) + reach:
+					return true
+	return false
 
 
 ## Alle MeshInstance3D einer Szene mit ihrer Lage relativ zur Wurzel.

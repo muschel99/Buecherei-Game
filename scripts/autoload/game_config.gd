@@ -320,6 +320,18 @@ var plant_shadow_min_height: float = 0.5
 ## Geräusche (seit Etappe 6d, Audio-System): Lautstärke der eigenen Schritte und des Automotors (dB,
 ## zusätzlich zu den Reglern in den Einstellungen)
 var footstep_volume_db: float = -10.0
+## Landen nach dem Sprung (innen Holz, draußen Stein), Hinsetzen, Rascheln an Pflanzen (seit Etappe 6h)
+var land_volume_db: float = -9.0
+var sit_down_volume_db: float = -11.0
+var plant_rustle_volume_db: float = -15.0
+## Höchstens so oft raschelt es (s) – Spielfigur bzw. Katze
+var plant_rustle_cooldown: float = 0.9
+## So nah (m, Abstand zum Rand der Pflanze) muss die Spielfigur an einer Pflanze sein, damit es raschelt
+var player_radius_for_plants: float = 0.32
+var cat_plant_rustle_cooldown: float = 2.5
+## Kerzen und Kamin anzünden/löschen, Kaufen am Tablet („Kaching“)
+var candle_sound_volume_db: float = -12.0
+var kaching_volume_db: float = -10.0
 var car_engine_volume_db: float = -7.0
 ## Räumliche Geräusche (seit Etappe 6f): bis zu dieser Entfernung (m) volle Lautstärke, danach leiser; ab
 ## audio_max_distance (m) nicht mehr zu hören (play_at)
@@ -874,6 +886,15 @@ var cat_purr_volume_db: float = -9.0
 var cat_meow_sound: String = "ambience/cat_meow_1"
 var cat_meow_volume_db: float = -15.0
 var cat_meow_cooldown: float = 30.0
+## Langes Miau (an der geschlossenen Tür: „lass mich rein“), Schnattern beim Belauern von Vögeln (seit Etappe 6h)
+var cat_meow_long_sound: String = "ambience/cat_meow_2"
+var cat_chatter_sound: String = "ambience/cat_chatter"
+var cat_chatter_volume_db: float = -15.0
+## Begrüßen: Kommt die Spielfigur näher als … m und schaut die Katze sie an, miaut sie manchmal (Anteil je Begegnung)
+var cat_greet_distance: float = 2.6
+var cat_greet_chance: float = 0.45
+## Schnurren im Körbchen bzw. auf dem Sessel, wenn die Spielfigur näher als … m ist
+var cat_purr_near_distance: float = 1.8
 ## Katzen: Aussehen (Fell, helles Fell, dunkler Rücken, Augen, Tigerstreifen 0–1, Größe) – neue Katze = neue Zeile.
 ## patches = wie viel helles Fell (kleiner = mehr: 0,3 Brust, Bauch, Pfoten und Schnauze; 0,8 nur Schnauze und Kinn)
 var cat_looks: Array[Dictionary] = [

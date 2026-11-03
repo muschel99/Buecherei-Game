@@ -33,11 +33,16 @@ still**, es gibt keine Fehlermeldung. Nach dem Hineinlegen Godot einmal öffnen 
 | Ordner | Regler | Dateiname (ohne Endung) | Wann |
 |---|---|---|---|
 | `assets/audio/ambience/` | Umgebung | `bird` (Varianten) | Zwitschern am einzelnen Vogel (seit Etappe 6g, räumlich) |
-| | | `bird_flap`, `pigeon`, `bird_<art>` | Flattern, Tauben, eigene Laute je Vogelart (fehlen noch; seit 6h werden sie am Dateinamen erkannt, siehe „Eigene Tiere“) |
-| | | `cat_purr`, `cat_meow_1` | Schnurren und kurzes, sanftes Miau an der Katze (seit Etappe 6g); `cat_meow_2` (lang) und `cat_chatter` bleiben unbenutzt |
-| | | `fireplace` | Kaminknistern in Schleife, solange das Feuer brennt (fehlt noch) |
+| | | `bird_flap`, `pigeon_flap` | Flattern beim Auffliegen (Singvögel bzw. Tauben, seit 6h aus deinen Aufnahmen) |
+| | | `pigeon`, `bird_<art>` | Gurren der Tauben, eigene Laute je Vogelart (fehlen noch; werden am Dateinamen erkannt, siehe „Eigene Tiere“) |
+| | | `cat_purr`, `cat_meow_1`, `cat_meow_2`, `cat_chatter` | Schnurren (Streicheln, Ruhen), kurzes Miau (Begrüßen der Spielfigur), langes Miau (an der geschlossenen Tür), Schnattern (beim Belauern von Vögeln) |
+| | | `fireplace` | Kaminknistern in Schleife, solange das Feuer brennt |
+| | | `plant_rustle` | Rascheln, wenn du (oder eine Katze) dicht an Beeten, Hecken, Töpfen und Grasbüscheln vorbeigehst (seit 6h) |
 | | | `outdoor` | Hintergrund in Schleife (fehlt noch, freiwillig) |
 | `assets/audio/footsteps/` | Effekte | `wood`, `stone` | deine Schritte: drinnen Holzboden, draußen Stein – je Schritt ein Laut |
+| | | `land_wood`, `land_stone` | Landen nach einem Sprung (drinnen bzw. draußen, seit 6h) |
+| `assets/audio/lights/` | Effekte | `candle_on`, `candle_off` | Kerzen und Kamin anzünden bzw. löschen (seit 6h) |
+| `assets/audio/furniture/` | Effekte | `sit_down` | Hinsetzen auf Sessel, Sofa, Stuhl, Bank (seit 6h) |
 | | | `street`, `heels` | Schritte der Passanten in deiner Nähe (manche Passantinnen mit Absatz) |
 | `assets/audio/doors/` | Effekte | `door_open`, `door_close`, `shop_bell` | Ladentür auf/zu, Ladenglocke (beim Öffnen, leiser beim Schließen) |
 | `assets/audio/vehicles/` | Effekte | `car_engine`, `van_engine` | Motor der Autos bzw. des Lieferwagens in Schleife (Tonhöhe folgt dem Tempo) |
@@ -45,6 +50,7 @@ still**, es gibt keine Fehlermeldung. Nach dem Hineinlegen Godot einmal öffnen 
 | | | `bike_bell` | Fahrradklingel, wenn jemand auf der Fahrbahn im Weg ist, und ab und zu einfach so |
 | | | `road_rumble` | leichtes Rumpeln der Reifen auf dem Kopfsteinpflaster, unter dem Motor, lauter mit dem Tempo (seit Etappe 6f; von `tools/make_road_rumble.py` erzeugt – eigene Aufnahme einfach austauschen) |
 | `assets/audio/ui/` | Effekte | `tablet_open`, `plop`, `tab` | Tablet und Bücher-Menü öffnen, jedes Antippen in allen Apps (seit 6f auch Lager und Bücherladen), Reiter/Kategorien wechseln |
+| | | `kaching` | Bezahlen: „Bestellen“ im Shop, „Bauen“ in der App Fassade (seit 6h) |
 | `assets/audio/books/` | Effekte | `take`, `place`, `shelve`, `page` | Buch aufnehmen, frei ablegen, ins Regal stellen, im Stapel blättern |
 | `assets/audio/voices/` | Stimmen | `laugh_female`, `giggle_female`, `hmm_male`, `oh_female` | kurze Laute der Passanten (siehe „Laute der Passanten und Sprechblasen“; Männer lachen seit 6f nicht, sondern sagen „hm“ oder lächeln still) |
 | `assets/audio/computer/` | Effekte | `keyboard_soft`, `keyboard_loud`, `mouse_click` | vorbereitet für die Computer am Arbeitsplatz (noch nicht benutzt) |
@@ -69,7 +75,6 @@ Motoren und Tastatur als nahtlose Schleifen, alles als `.ogg`. Welche Datei wof�
 Bewusst nicht verwendet: `Female_eww`, `female_urgh`.
 
 **Noch fehlende Geräusche (Wunschliste, Stand Etappe 6f):** Bis eine Datei da ist, bleibt es an dieser Stelle still.
-- `ambience/fireplace` – Kaminknistern als Schleife (die drei Kamine sind schon vorbereitet)
 - `ambience/outdoor` – sehr leiser Straßen-Hintergrund als Schleife (Wind, fernes Stadtgeräusch; freiwillig)
 - `voices/…` – eine echte Männerstimme (Lachen, „oh“) und mehr Varianten für alle Laute; bis dahin lachen
   Männer nicht (nur „hm“ oder stilles Lächeln), Frauen sagen „hm“ mit der höher gestellten Männerstimme
@@ -1334,7 +1339,8 @@ Neue Aufnahmen einfach in den Sounds-Ordner („Game design/Sounds Cozy Büchere
 `python3 tools/prepare_sounds.py` starten – das Script erkennt Tiergeräusche am **Dateinamen**:
 | Wort im Dateinamen | wird zu | gespielt |
 |---|---|---|
-| flattern, flap, flügel, wing | `ambience/bird_flap_…` | beim Auffliegen eines Schwarms (bis dahin still) |
+| tauben_flügel, pigeon wing | `ambience/pigeon_flap_…` | beim Auffliegen der Tauben |
+| flattern, flap, flügel, wing | `ambience/bird_flap_…` | beim Auffliegen eines Schwarms (Stücke unter 0,25 s fallen weg) |
 | taube, pigeon, gurr, dove | `ambience/pigeon_…` | Gurren der Tauben (bis dahin still) |
 | spatz, sperling, sparrow | `ambience/bird_sparrow_…` | Spatz |
 | rotkehlchen, robin | `ambience/bird_robin_…` | Rotkehlchen |

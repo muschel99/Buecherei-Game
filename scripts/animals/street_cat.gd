@@ -54,6 +54,10 @@ var _jump_from := Vector3.ZERO
 var _purr: AudioStreamPlayer3D
 var _rest_purr := false
 var _meow_wait := 0.0
+## Schnattern beim Belauern, Begrüßen der Spielfigur, Rascheln an Pflanzen (seit Etappe 6h)
+var _chatter_wait := 0.0
+var _greeted := false
+var _rustle_wait := 0.0
 var _pet_left := 0.0
 var _pet_face := Vector3.ZERO
 var _toy: Node3D
@@ -178,11 +182,38 @@ func is_petted() -> bool:
 	return _pet_left > 0.0
 
 
-func meow() -> void:
+## Miauen (höchstens alle cat_meow_cooldown Sekunden): kurz, oder lang („lass mich rein“ an der Tür).
+func meow(long := false) -> void:
 	if _meow_wait > 0.0:
 		return
 	_meow_wait = GameConfig.cat_meow_cooldown
-	Audio.play_on(self, GameConfig.cat_meow_sound, GameConfig.cat_meow_volume_db, Audio.vary(0.05), 16.0, Vector3(0.0, 0.25, 0.2))
+	Audio.play_on(self, GameConfig.cat_meow_long_sound if long else GameConfig.cat_meow_sound, GameConfig.cat_meow_volume_db,
+		Audio.vary(0.05), 16.0, Vector3(0.0, 0.2, 0.16))
+
+
+## Laute je Bild: Schnattern beim Belauern von Vögeln, Begrüßen der Spielfigur, Rascheln an Pflanzen.
+func _update_voice(delta: float) -> void:
+	_chatter_wait -= delta
+	if hunting and _chatter_wait <= 0.0 and (current_anim == &"crouch" or current_anim == &"stalk"):
+		_chatter_wait = randf_range(3.0, 7.0)
+		Audio.play_on(self, GameConfig.cat_chatter_sound, GameConfig.cat_chatter_volume_db, Audio.vary(0.06), 12.0,
+			Vector3(0.0, 0.18, 0.15))
+	var player := life.street.get_player() if life else null
+	if player:
+		var dist := player.global_position.distance_to(global_position)
+		if dist > GameConfig.cat_greet_distance * 1.8:
+			_greeted = false
+		elif not _greeted and dist < GameConfig.cat_greet_distance and not hunting and _look.length() > 5.0:
+			_greeted = true
+			if randf() < GameConfig.cat_greet_chance:
+				meow()
+	_rustle_wait -= delta
+	if _rustle_wait <= 0.0 and velocity2.length() > 0.2 and on_ground():
+		var greenery := get_tree().get_first_node_in_group(Greenery.GROUP) as Greenery
+		if greenery and greenery.plant_near(global_position, 0.06):
+			_rustle_wait = GameConfig.cat_plant_rustle_cooldown
+			Audio.play_at("ambience/plant_rustle", global_position + Vector3.UP * 0.15, GameConfig.plant_rustle_volume_db - 4.0,
+				Audio.vary(0.12) * 1.15)
 
 
 ## Spielzeug ins Maul nehmen: Knoten hängt am Kopf-Knochen unter der Schnauze.
@@ -230,6 +261,7 @@ func step(delta: float) -> void:
 	if not active:
 		return
 	_meow_wait -= delta
+	_update_voice(delta)
 	velocity2 = Vector2.ZERO
 	_update_look(delta)
 	_update_face(delta)
@@ -354,6 +386,8 @@ func _start_action() -> bool:
 		"wait_door", "wait_road":
 			if type == "wait_door" and life.door_open():
 				return false
+			if type == "wait_door":
+				meow(true)       # „lass mich rein“
 			if type == "wait_road" and life.road_clear(global_position):
 				return false
 			_yaw_target = StreetAnimal.yaw_of(_action.get("face", global_basis.z))

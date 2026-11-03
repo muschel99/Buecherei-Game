@@ -1,0 +1,8 @@
+Ordner für Geräusche: Kerzen und Kamin (Lautstärke „Effekte“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
+
+- candle_on – Kerze oder Kamin anzünden (aus „kerze-an.mp3“)
+- candle_off – Kerze oder Kamin löschen (aus „candle-off.mp3“ und „candle-off-make-it-faster.mp3“, schneller abgespielt)

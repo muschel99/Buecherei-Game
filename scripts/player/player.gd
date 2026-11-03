@@ -53,6 +53,7 @@ var _world_placer: LooseBooks = null
 var _place_hold_time := 0.0
 var _place_hold_done := false
 var _head_bob_time: float = 0.0
+var _rustle_wait := 0.0
 # Sitzen: aktueller Sitzplatz, Stehposition davor und laufende Bewegung
 var _seat: SeatPoint = null
 var _stand_position := Vector3.ZERO
@@ -195,8 +196,15 @@ func _physics_process(delta: float) -> void:
 	_apply_gravity(delta)
 	_update_crouch(delta)
 	_jump()
+	var fall_speed := -velocity.y
+	var was_on_floor := is_on_floor()
 	_move(delta)
+	if not was_on_floor and is_on_floor() and fall_speed > 1.6:
+		# Landung nach einem Sprung (nicht auf Stufen): innen Holz, draußen Stein
+		var land := "footsteps/land_wood" if global_position.y > -0.25 else "footsteps/land_stone"
+		Audio.play_at(land, global_position, GameConfig.land_volume_db, Audio.vary(0.06))
 	_update_head_bob(delta)
+	_update_rustle(delta)
 	_update_interaction_target()
 
 
@@ -280,6 +288,7 @@ func sit_down(seat: SeatPoint) -> void:
 	var start_yaw := rotation.y
 	var end_yaw := start_yaw + wrapf(target_yaw - start_yaw, -PI, PI)
 	_move_body(seat.global_position, end_yaw, GameConfig.seated_eye_height)
+	Audio.play_at("furniture/sit_down", seat.global_position, GameConfig.sit_down_volume_db, Audio.vary(0.05))
 	# Blick sanft geradeaus richten (leicht nach unten, wie man eben sitzt)
 	_sit_tween.tween_property(head, "rotation:x", deg_to_rad(-8.0), GameConfig.sit_transition_time)
 	_update_interaction_target()
@@ -346,6 +355,17 @@ func _move(delta: float) -> void:
 	velocity.z = horizontal.z
 
 	move_and_slide()
+
+
+## Rascheln, wenn die Figur dicht an Pflanzen (Beete, Hecken, Töpfe, Grasbüschel) vorbeigeht.
+func _update_rustle(delta: float) -> void:
+	_rustle_wait = maxf(0.0, _rustle_wait - delta)
+	if _rustle_wait > 0.0 or Vector2(velocity.x, velocity.z).length() < 0.5:
+		return
+	var greenery := get_tree().get_first_node_in_group(Greenery.GROUP) as Greenery
+	if greenery and greenery.plant_near(global_position, GameConfig.player_radius_for_plants):
+		_rustle_wait = GameConfig.plant_rustle_cooldown
+		Audio.play_at("ambience/plant_rustle", global_position + Vector3.UP * 0.5, GameConfig.plant_rustle_volume_db, Audio.vary(0.1))
 
 
 ## Leichtes Auf und Ab der Kamera beim Gehen.

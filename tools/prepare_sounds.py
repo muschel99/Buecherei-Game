@@ -36,7 +36,8 @@ FFMPEG = os.environ.get("FFMPEG") or shutil.which("ffmpeg") or "ffmpeg"
 
 # Ziel-Lautheit (RMS des hörbaren Teils in dBFS) je Art – leise und angenehm, nichts sticht heraus
 LEVEL = {"ui": -27.0, "books": -25.0, "doors": -24.0, "bell": -25.0, "steps": -27.0, "vehicle": -24.0, "engine": -27.0,
-         "birds": -25.0, "cats": -25.0, "voices": -27.0, "music": -25.0, "computer": -27.0}
+         "birds": -25.0, "cats": -25.0, "voices": -27.0, "music": -25.0, "computer": -27.0, "fire": -28.0,
+         "lights": -27.0, "furniture": -27.0, "plants": -30.0}
 
 # (Quelle, Ziel ohne Endung, Art, Modus, Optionen)
 #   Modus: "split" = an stillen Stellen schneiden (n = erwartete Anzahl, Ziele <ziel>_1 …),
@@ -100,11 +101,26 @@ JOBS = [
 ]
 # Bewusst nicht verwendet (Wunsch der Entwicklerin): Female_eww.mp3, female_urgh.mp3
 
+# Seit Etappe 6h (Dateien vom 2. November): Kamin, Kerzen, Kaufen, Landen, Hinsetzen, Pflanzen
+JOBS += [
+    ("fire.mp3", "ambience/fireplace", "fire", "loop", dict()),
+    ("kerze-an.mp3", "lights/candle_on", "lights", "pick", dict(parts={"all": "lights/candle_on"})),
+    ("candle-off.mp3", "lights/candle_off", "lights", "pick", dict(parts={"all": "lights/candle_off_1"})),
+    # Name sagt „make it faster“: 1,6-mal so schnell abspielen
+    ("candle-off-make-it-faster.mp3", "lights/candle_off", "lights", "pick", dict(parts={"all": "lights/candle_off_2"}, tempo=1.6)),
+    ("kaching-tablet.mp3", "ui/kaching", "ui", "pick", dict(parts={"all": "ui/kaching"})),
+    ("Sprunglandung-auf-holz.mp3", "footsteps/land_wood", "steps", "pick", dict(parts={"all": "footsteps/land_wood"})),
+    ("sprunglandung.mp3", "footsteps/land_stone", "steps", "pick", dict(parts={"all": "footsteps/land_stone"})),
+    ("sit-down-only-2.mp3", "furniture/sit_down", "furniture", "split", dict(n=0, min_len=0.3)),
+    ("walk-against-plants.mp3", "ambience/plant_rustle", "plants", "split", dict(n=0)),
+]
+
 # Tiergeräusche, die die Entwicklerin nach und nach dazulegt (seit Etappe 6h): Dateien im Sounds-Ordner (auch in
 # Unterordnern), deren Name eines dieser Wörter enthält, werden automatisch aufbereitet – an stillen Stellen
 # geschnitten, jedes Stück eine Variante. Reihenfolge zählt (das erste passende Wort gewinnt).
 #   (Wörter im Dateinamen, Ziel)
 ANIMAL_RULES = [
+    (("tauben_flügel", "tauben-flügel", "taubenflügel", "taube_flügel", "pigeon_wing", "pigeon wing"), "ambience/pigeon_flap"),
     (("flatter", "flap", "flügel", "fluegel", "wing"), "ambience/bird_flap"),
     (("taube", "pigeon", "gurr", "dove"), "ambience/pigeon"),
     (("spatz", "sperling", "sparrow"), "ambience/bird_sparrow"),
@@ -132,7 +148,7 @@ def animal_jobs():
             for words, dest in ANIMAL_RULES:
                 if any(w in low for w in words):
                     start = counters.get(dest, 0) + 1
-                    jobs.append((rel, dest, "birds", "split", dict(n=0, start=start, auto=True)))
+                    jobs.append((rel, dest, "birds", "split", dict(n=0, start=start, auto=True, limit=30, min_len=0.25)))
                     # Platz für bis zu 30 Stücke je Datei lassen
                     counters[dest] = start + 29
                     break
@@ -141,11 +157,16 @@ def animal_jobs():
 STEREO = {"music"}
 
 
-def decode(path, channels, lowpass=0.0):
+def decode(path, channels, lowpass=0.0, tempo=1.0):
     cmd = [FFMPEG, "-v", "error", "-i", path]
+    filters = []
     if lowpass > 0:
         # weicher Tiefpass (zweimal = sanfter Abfall), z. B. für den rauen Motor
-        cmd += ["-af", "lowpass=f=%d,lowpass=f=%d" % (lowpass, lowpass)]
+        filters.append("lowpass=f=%d,lowpass=f=%d" % (lowpass, lowpass))
+    if tempo != 1.0:
+        filters.append("atempo=%.3f" % tempo)     # schneller abspielen, Tonhöhe bleibt
+    if filters:
+        cmd += ["-af", ",".join(filters)]
     cmd += ["-f", "f32le", "-acodec", "pcm_f32le", "-ac", str(channels), "-ar", str(RATE), "-"]
     raw = subprocess.run(cmd, capture_output=True, check=True).stdout
     data = np.frombuffer(raw, dtype=np.float32)
@@ -277,7 +298,7 @@ def main():
             print("FEHLT:", src)
             continue
         channels = 2 if kind in STEREO else 1
-        data = decode(path, channels, opt.get("lowpass", 0.0))
+        data = decode(path, channels, opt.get("lowpass", 0.0), opt.get("tempo", 1.0))
         made = []
         if mode == "music":
             # Stille am Rand weg, 2 s ein- und 4 s ausblenden (sanfte Übergänge zwischen den Stücken)
@@ -325,6 +346,9 @@ def main():
                         step = int(opt["max_len"] * RATE)
                         cut += [[x, min(b, x + step)] for x in range(a, b, step) if min(b, x + step) - x > step // 2]
                     segs = cut
+                if opt.get("min_len"):
+                    # zu kurze Schnipsel weglassen (ein einzelner Flügelschlag klingt wie ein Klicken)
+                    segs = [sg for sg in segs if sg[1] - sg[0] >= opt["min_len"] * RATE]
                 if opt.get("limit"):
                     segs = segs[:opt["limit"]]
                 if mode == "pick":
@@ -340,8 +364,31 @@ def main():
         note = "" if not expected or mode != "split" or len(made) == expected else "  (erwartet %d, gefunden %d)" % (expected, len(made))
         report.append({"quelle": src, "ziel": [m[0] for m in made], "laengen": [round(m[1], 2) for m in made]})
         print("%-34s -> %2d Datei(en) %s%s" % (src, len(made), ", ".join("%s (%.2f s)" % m for m in made[:3]) + (" …" if len(made) > 3 else ""), note))
+    compact_auto()
     with open(os.path.join(AUDIO, "sounds_report.json"), "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=1)
+
+
+def compact_auto():
+    """Automatisch erkannte Tiergeräusche lückenlos durchnummerieren (<ziel>_1, _2 …): Das Spiel sucht die
+    Abwandlungen der Reihe nach und hört bei der ersten Lücke auf."""
+    import re
+    for _words, dest in ANIMAL_RULES:
+        folder = os.path.dirname(out_path(dest))
+        base = os.path.basename(dest)
+        if not os.path.isdir(folder):
+            continue
+        found = []
+        for name in os.listdir(folder):
+            m = re.fullmatch(re.escape(base) + r"_(\d+)\.ogg", name)
+            if m:
+                found.append(int(m.group(1)))
+        for new, old in enumerate(sorted(found), start=1):
+            if new != old:
+                os.replace(os.path.join(folder, "%s_%d.ogg" % (base, old)), os.path.join(folder, "%s_%d.ogg" % (base, new)))
+                stale = os.path.join(folder, "%s_%d.ogg.import" % (base, old))
+                if os.path.exists(stale):
+                    os.remove(stale)
 
 
 if __name__ == "__main__":

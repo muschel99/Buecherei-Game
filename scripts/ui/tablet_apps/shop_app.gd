@@ -78,6 +78,7 @@ func order() -> void:
 		request_refresh()
 		return
 	deliveries.place_order(cart)
+	Audio.play("ui/kaching", GameConfig.kaching_volume_db)
 	cart.clear()
 	_order_text = "Danke! In etwa %d Sekunden steht der Karton vor der Tür." % roundi(GameConfig.delivery_time)
 	request_refresh()
@@ -105,6 +106,7 @@ func build_cart(parent: Container) -> Control:
 	_cart_message = make_label("", 15, style.muted)
 	box.add_child(_cart_message)
 	_order_button = make_primary_button("Bestellen", order)
+	TabletSounds.own_sound(_order_button)      # klingt beim Bezahlen „kaching“ (siehe order)
 	box.add_child(_order_button)
 	return panel
 

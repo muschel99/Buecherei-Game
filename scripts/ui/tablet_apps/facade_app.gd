@@ -107,6 +107,7 @@ func _make_footer() -> Control:
 	_cancel_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(_cancel_button)
 	_build_button = make_primary_button("Bauen", _on_build)
+	TabletSounds.own_sound(_build_button)
 	_build_button.name = "Build"
 	_build_button.custom_minimum_size.x = 190
 	row.add_child(_build_button)
@@ -279,7 +280,9 @@ func _update_footer() -> void:
 
 
 func _on_build() -> void:
+	var cost := FacadeDesign.get_draft_cost()
 	if FacadeDesign.build_draft():
+		Audio.play("ui/kaching" if cost > 0 else "ui/plop", GameConfig.kaching_volume_db)
 		if _polaroid_facade:
 			_polaroid_facade.flash()
 	request_refresh()

@@ -795,7 +795,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (Spielfigur wood/stone; Passanten street/heels je Schrittlänge, nur nah: `Passerby._footsteps`), Fahrzeuge
   (`VehicleModel.engine_sound`/`horn_sound`/`honk`, Pflaster-Rumpeln `rumble_sound` = vehicles/road_rumble aus
   `tools/make_road_rumble.py` (erzeugt, nur wenn sie fehlt), `ChibiCyclistModel.ring`, Auslöser
-  `StreetVehicle._sounds`), Kamin (`LightSource.loop_sound`), Musik. **Tiergeräusche nur von sichtbaren Tieren**
+  `StreetVehicle._sounds`), Kamin (`LightSource.loop_sound`), Musik. Seit 6h: Kerzen/Kamin an/aus (`lights/candle_on|off`
+  in `LightSource.set_on`), „Kaching“ beim Bezahlen (`ui/kaching`, Knöpfe mit `TabletSounds.own_sound`), Landen der
+  Spielfigur (`footsteps/land_wood|stone`), Hinsetzen (`furniture/sit_down`), Rascheln an Pflanzen (`ambience/plant_rustle`
+  über `Greenery.plant_near`, Gruppe `Greenery.GROUP`), Tauben-Flügel (`ambience/pigeon_flap`), Katzen: Begrüßungs-Miau,
+  langes Miau an der Tür, Schnattern beim Belauern (`StreetCat._update_voice`). `prepare_sounds.py`: Option `tempo`
+  (schneller abspielen), `min_len` (zu kurze Schnipsel weg); automatisch erkannte Tierlaute werden am Ende lückenlos
+  nummeriert (`compact_auto`) – das Spiel sucht Varianten der Reihe nach. **Tiergeräusche nur von sichtbaren Tieren**
   (Wunsch seit 6f; Vögel/Katzen ohne Tier sind entfernt, Vögel kommen mit eigenen Vögeln). Männer lachen nicht
   (PasserbyVoice: „hm“ oder still).
   computer/* vorbereitet. Liste: ASSET_GUIDE „Eigene Geräusche“.

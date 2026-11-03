@@ -233,6 +233,10 @@ func set_on(value: bool) -> void:
 		return
 	is_on = value
 	_apply_state(true)
+	if kind == Kind.FLAME:
+		# Streichholz/Ausblasen (Aufnahmen der Entwicklerin; fehlt eine, bleibt es still)
+		Audio.play_at("lights/candle_on" if is_on else "lights/candle_off", global_position,
+			GameConfig.candle_sound_volume_db, Audio.vary(0.05))
 
 
 func _on_interactable_interacted(_interactor: Node) -> void:

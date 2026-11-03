@@ -384,7 +384,9 @@ func _move_on(flock: Dictionary, flee: bool = false, away: Vector3 = Vector3.ZER
 	var speed := _speed(kind) * (GameConfig.bird_flee_speed / GameConfig.bird_speed if flee else 1.0)
 	if flee or _camera_pos().distance_to(first.global_position) < 14.0:
 		# Flattern (eigene Aufnahme der Entwicklerin – fehlt sie, bleibt es still)
-		Audio.play_on(first, "ambience/bird_flap", GameConfig.bird_flap_volume_db + (4.0 if flee else 0.0), Audio.vary(0.08),
+		var flap := "ambience/pigeon_flap" if kind == "pigeon" and not Audio.streams("ambience/pigeon_flap").is_empty() \
+			else "ambience/bird_flap"
+		Audio.play_on(first, flap, GameConfig.bird_flap_volume_db + (4.0 if flee else 0.0), Audio.vary(0.08),
 			20.0, Vector3(0.0, 0.05, 0.0))
 	for i in birds.size():
 		var bird: StreetBird = birds[i]

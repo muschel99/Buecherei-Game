@@ -1,0 +1,7 @@
+Ordner für Geräusche: Möbel (Lautstärke „Effekte“)
+
+Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; Varianten mit _1, _2 …
+(das Spiel nimmt jedes Mal zufällig eine). Fehlt eine Datei, bleibt es still.
+Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
+
+- sit_down – Hinsetzen auf Sessel, Sofa, Stuhl, Bank (aus „sit-down-only-2.mp3“, sechs Varianten)
