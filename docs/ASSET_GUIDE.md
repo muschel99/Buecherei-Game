@@ -1290,12 +1290,13 @@ Einzelbilder jeder Bewegung in `screenshots/blender/animals/` (zum Prüfen, ob s
    Haltung der vorigen Bewegung. Sprünge bewegen sich nicht selbst vom Fleck – das Spiel trägt die Katze in einem
    Bogen (Zeitfenster `StreetCat.JUMP_WINDOW`: wann sie abspringt und landet).
 4. **Formvarianten** (Shape Keys): Vögel `spread` (Flügel ausgebreitet – das Spiel blendet beim Fliegen auf 1),
-   Katze `blink` (Augen zu, Linie leicht nach unten) und `happy` (zufrieden zugekniffen, Bogen nach oben).
+   Die Katze braucht keine: Ihre Augen sind gemalt (Shader `storybook_cat.gdshader`), Blinzeln und zufriedenes
+   Zukneifen stellt das Spiel über die Material-Werte `eye_blink` und `eye_happy` ein.
 5. **Materialnamen** (das Spiel färbt diese um): „Vogel Gefieder“ (mit Farbmaske: Brust = zweite Farbe, Kappe =
    dritte Farbe), „Vogel Flügel“, „Vogel Schnabel“, „Vogel Auge“, „Vogel Beine“; Taube „Taube Gefieder“ (Hals =
    dritte Farbe, schillert), „Taube Flügel“, „Taube Beine“ …; Katze „Katze Fell“ (helles Fell und dunkler
-   Rücken über die Farbmaske, Tigerstreifen im Shader), „Katze Auge“, „Katze Pupille“, „Katze Glanz“, „Katze
-   Nase“, „Katze Mund“, „Katze Ohr innen“. Die **Farbmaske** steckt in der zweiten Texturkoordinate (UV2.y);
+   Rücken über die Farbmaske; Augen, rosa Innenohren, Mund, Wangenröte und Tigerstreifen malt der Katzen-Shader –
+   ein eigenes Modell bekommt sie, wenn es das Material „Katze Fell“ mit diesem Shader nutzt), „Katze Nase“. Die **Farbmaske** steckt in der zweiten Texturkoordinate (UV2.y);
    eigene Modelle ohne Maske bekommen einfach die Grundfarbe.
 6. Exportieren als glTF-Binär (.glb) mit *Skinning*, *Animationen*, *NLA-Spuren* und *Shape Keys* nach
    `assets/models/animals/` – die alte Datei ersetzen oder in Godot in `scenes/animals/cat.tscn` den Knoten

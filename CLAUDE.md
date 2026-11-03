@@ -1143,8 +1143,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   cat_toy, toys) mit `animal_lib.py` (`Blobs` = weicher Körper aus Metaballs, klein in `scale`-facher Größe gebaut – Blender
   rechnet höchstens 5 mm genau; `Parts` = Sammel-Netz mit Gewichten, Farbmaske UV2.y (> 0 zweite, < 0 dritte Farbe) und
   Shape Keys; `surface_shell` = dünne Schale genau auf der Körperoberfläche, z. B. angelegter Flügel), `animal_birds.py`
-  (SONGBIRD/PIGEON, Flügel-Formvariante „spread“, Knochen wing/wingtip), `animal_cat.py` (Körper, Ohren, Augen mit
-  Formvarianten „blink“/„happy“, Gewichte nach Abstand zu den Knochen + Glätten) und `animal_cat_anim.py` (Beine mit IK:
+  (SONGBIRD/PIGEON, Flügel-Formvariante „spread“, Knochen wing/wingtip), `animal_cat.py` (Chibi-Form nach den Vorlagen der
+  Entwicklerin: großer runder Kopf, schräge Dreieck-Ohren aus Metaballs (`EAR_IN/OUT/TIP`), kurze Beine, runde Pfoten;
+  Gewichte nach Abstand zu den Knochen + Glätten; Augen, Innenohren, Mund, Wangen, Streifen GEMALT vom Shader
+  `storybook_cat.gdshader` (`CAT_FACE` in storybook.gdshaderinc, Lage aus `face_params` → Material „Katze Fell“),
+  Blinzeln über die Material-Werte `eye_blink`/`eye_happy`; im Sitzen gleiten die Schulterblätter (`SIT_SHOULDER`)) und `animal_cat_anim.py` (Beine mit IK:
   Ziel-Knochen ik_fl/ik_bl + Pol, Pose-Bausteine `Pose`, `gait_feet`, `tail_curve`; danach mit `bake_action` in
   einfache Drehungen gebacken, IK entfernt). **In jeder Bewegung alle Knochen schlüsseln.** Prüfen: `-- cat --seq=<bew.>
   [--seqview=seite,vorn,oben]` = Einzelbilder je Bewegung (immer ansehen und nachbessern). Ruhehaltung als UV/UV2 →

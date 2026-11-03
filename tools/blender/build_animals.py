@@ -6,7 +6,7 @@ Gewichten) und mehreren Bewegungen (NLA-Spuren → Animationen in der .glb):
     Vogel:  idle, peck, hop, fly, glide
     Katze:  idle, walk, run, sit, lie, sleep, groom, stretch, pet, jump
 Farben: Materialien „Vogel Gefieder“, „Vogel Flügel“, „Vogel Brust“, „Vogel Schnabel“, „Vogel Auge“ bzw.
-„Katze Fell“, „Katze Fell hell“, „Katze Nase“, „Katze Auge“ – das Spiel färbt sie je Art bzw. je Katze
+„Katze Fell“ (mit gemaltem Gesicht und Innenohr), „Katze Nase“ – das Spiel färbt sie je Art bzw. je Katze
 (scripts/animals/animal_model.gd). Blender-Koordinaten: vorn = -y, oben = z, Ursprung zwischen den Füßen.
 
 Aufruf (Terminal, im Projektordner):
@@ -388,12 +388,7 @@ def cat_materials():
     Fell (Maske > 0, ab mask_from) und dunkler Rücken (Maske < 0) im selben Material, Tigerstreifen im Shader."""
     return {
         "fur": SC.make_material("Katze Fell", (0.85, 0.5, 0.24), grain="smooth", rough=0.95, vary=0.07),
-        "ear": SC.make_material("Katze Ohr innen", (0.9, 0.62, 0.62), grain="smooth", rough=0.8, vary=0.03),
         "nose": SC.make_material("Katze Nase", (0.86, 0.5, 0.52), grain="smooth", rough=0.6, vary=0.03),
-        "eye": SC.make_material("Katze Auge", (0.45, 0.62, 0.22), grain="smooth", rough=0.12, vary=0.0),
-        "pupil": SC.make_material("Katze Pupille", (0.03, 0.025, 0.02), grain="smooth", rough=0.1, vary=0.0),
-        "shine": SC.make_material("Katze Glanz", (0.98, 0.97, 0.95), grain="smooth", rough=0.1, vary=0.0),
-        "mouth": SC.make_material("Katze Mund", (0.25, 0.14, 0.12), grain="smooth", rough=0.7, vary=0.0),
     }
 
 
@@ -401,10 +396,31 @@ def build_cat(only=None):
     """Katze im weichen Stil (animal_cat.py) mit eigenem Skelett und Bewegungen (animal_cat_anim.py)."""
     M = cat_materials()
     coll = SB.collection("cat")
-    parts, bones = ACAT.build(M, coll)
+    parts, bones, face = ACAT.build(M, coll)
     a = assemble("cat", parts, bones, coll)
+    a.face = face
     ACA.build_all(a.arm, only)
     return a, M
+
+
+def cat_face_material(face):
+    """Material „Katze Fell“ auf den Katzen-Shader umstellen (malt Augen, Mund, Wangen, Streifen) und die Lage des
+    Gesichts eintragen (aus animal_cat.face_params)."""
+    path = os.path.join(SC.GAME_MAT_DIR, SC.slug("Katze Fell") + ".tres")
+    with open(path) as f:
+        text = f.read()
+    text = text.replace("res://assets/shaders/storybook_animal.gdshader", "res://assets/shaders/storybook_cat.gdshader")
+    lines = []
+    for key, v in face.items():
+        if isinstance(v, (int, float)):
+            lines.append("shader_parameter/%s = %.4f" % (key, v))
+        elif len(v) == 2:
+            lines.append("shader_parameter/%s = Vector2(%.4f, %.4f)" % (key, v[0], v[1]))
+        else:
+            lines.append("shader_parameter/%s = Vector3(%.4f, %.4f, %.4f)" % (key, v[0], v[1], v[2]))
+    lines.append("shader_parameter/tabby_scale = 30.0")
+    with open(path, "w") as f:
+        f.write(text.rstrip("\n") + "\n" + "\n".join(lines) + "\n")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -647,6 +663,8 @@ def export(a, M):
     names = [m.name for m in a.mesh.data.materials]
     mapping = SC.write_game_materials(only=names)
     animal_shader(names)
+    if getattr(a, "face", None):
+        cat_face_material(a.face)
     SC.write_import_settings(mapping, path)
     os.makedirs(TEMPLATES, exist_ok=True)
     gd = os.path.join(os.path.dirname(TEMPLATES), ".gdignore")

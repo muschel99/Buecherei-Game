@@ -266,9 +266,9 @@ def anim_walk():
     for f in range(n):
         t = f / n
         p = Pose()
-        gait_feet(p, t, 0.21, 0.03, offsets, 0.62, rest)
+        gait_feet(p, t, WALK_STRIDE, 0.022, offsets, 0.62, rest)
         w = math.sin(t * math.tau * 2)
-        p.move("hips", (0, 0, 0.004 * w))
+        p.move("hips", (0, 0, 0.003 * w))
         p.r("hips", ("z", 5 * math.sin(t * math.tau)), ("y", 3 * math.sin(t * math.tau)))
         p.r("chest", ("z", -5 * math.sin(t * math.tau + 0.8)), ("y", -3 * math.sin(t * math.tau + 0.8)))
         # Kopf ruhig: Drehungen von Becken und Brust ausgleichen
@@ -288,12 +288,12 @@ def anim_run():
     for f in range(n):
         t = f / n
         p = Pose()
-        gait_feet(p, t, 0.34, 0.06, offsets, 0.38, rest)
+        gait_feet(p, t, 0.24, 0.042, offsets, 0.38, rest)
         flex = math.sin(t * math.tau)
         p.r("hips", ("x", -8 * flex))
         p.r("spine1", ("x", 6 * flex))
         p.r("chest", ("x", 6 * flex))
-        p.move("hips", (0, 0, 0.012 * max(0.0, math.sin(t * math.tau * 2))))
+        p.move("hips", (0, 0, 0.009 * max(0.0, math.sin(t * math.tau * 2))))
         p.r("head", ("x", -6 * flex))
         tail_curve(p, 12, -4, sway=6, phase=t * math.tau)
         poses[f] = p
@@ -301,33 +301,54 @@ def anim_run():
 
 
 def _sit_pose(p=None, breathe=0.0, tail_phase=0.0):
-    """Sitzen: Becken am Boden, Hinterbeine gefaltet (Mittelfuß flach), Vorderbeine gerade, Brust aufrecht,
-    Schwanz um die Pfoten gelegt."""
+    """Sitzen wie in den Vorlagen (aufrecht, birnenförmig): Becken am Boden, Hinterbeine gefaltet (Mittelfuß und
+    Zehen flach), Oberkörper aufgerichtet, Kopf obenauf. Die Schulterblätter gleiten am Brustkorb hinunter (Katzen
+    haben kein Schlüsselbein) – so reichen die kurzen Vorderbeine senkrecht bis auf den Boden. Schwanz um die Pfoten."""
     rest = rest_points()
     p = p or Pose()
-    p.move("hips", (0, 0.03, -0.112))
-    p.r("hips", ("x", -42))
-    p.r("spine1", ("x", -6))
-    p.r("chest", ("x", 4 + breathe))
-    p.r("neck", ("x", 14))
-    p.r("head", ("x", 30))
+    p.move("hips", (0, 0.024, -0.035))
+    p.r("hips", ("x", SIT_HIPS))
+    p.r("spine1", ("x", SIT_SPINE))
+    p.r("chest", ("x", SIT_CHEST + breathe))
+    p.r("neck", ("x", SIT_NECK))
+    p.r("head", ("x", SIT_HEAD))
     for s, side in (("l", 1), ("r", -1)):
         h = rest["bl_" + s]
-        p.foot("bl_" + s, h + Vector((0, 0.03, -0.028)), ("x", -62))
+        p.foot("bl_" + s, h + Vector((side * 0.012, 0.008, -0.017)), ("x", -56))   # Hinterbeine leicht gespreizt
+        p.r("bl_paw_" + s, ("x", 50))          # Zehen flach auf dem Boden (Mittelfuß liegt)
+        p.move("fl_upper_" + s, SIT_SHOULDER)
         fr = rest["fl_" + s]
-        p.foot("fl_" + s, fr + Vector((0, -0.01, 0)))
+        p.foot("fl_" + s, fr + Vector((0, SIT_PAW_Y, 0.0)))
     # Schwanz liegt am Boden und legt sich seitlich nach vorn um die Pfoten
     tail_curve(p, -34, 4, bend=-44, sway=3, phase=tail_phase)
     return p
+
+
+# Sitzen: Neigung von Becken, Rücken, Brust (− = aufrichten), Hals und Kopf (+ = nach vorn/unten), Gleiten der
+# Schultern (im Raum der Brust) und Lage der Vorderpfoten
+SIT_HIPS, SIT_SPINE, SIT_CHEST, SIT_NECK, SIT_HEAD = -34, -2, 4, 22, 10
+SIT_SHOULDER = (0.0, 0.042, -0.03)
+SIT_PAW_Y = 0.03
+# Schrittlänge beim Gehen (m; das Spiel rechnet daraus das Tempo der Bewegung: StreetCat.WALK_ANIM_SPEED), Absenken
+# des Beckens beim Liegen
+WALK_STRIDE = 0.15
+# Putzen: Lage des Handgelenks vor dem Mund bzw. an der Wange (Armatur-Raum, im Sitzen mit geneigtem Kopf)
+GROOM_PAW = Vector((0.014, -0.102, 0.146))
+GROOM_WIPE = Vector((0.03, -0.096, 0.176))
+LIE_DROP = -0.05
 
 
 def anim_sit_down():
     """Hinsetzen: erst hinten absetzen (Becken sinkt, Hinterbeine falten), Vorderbeine bleiben stehen."""
     rest = rest_points()
     poses = {0: stand(tail_curve(Pose(), 30, 6))}
-    mid = Pose().move("hips", (0, 0.015, -0.06)).r("hips", ("x", -20)).r("neck", ("x", 6)).r("head", ("x", 14))
-    for s in ("l", "r"):
-        mid.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.02, -0.012)), ("x", -30))
+    mid = Pose().move("hips", (0, 0.012, -0.022)).r("hips", ("x", -18)).r("chest", ("x", 2)).r("neck", ("x", 10))
+    mid.r("head", ("x", 6))
+    for s, side in (("l", 1), ("r", -1)):
+        mid.foot("bl_" + s, rest["bl_" + s] + Vector((side * 0.006, 0.006, -0.008)), ("x", -30))
+        mid.r("bl_paw_" + s, ("x", 20))
+        mid.move("fl_upper_" + s, tuple(v * 0.5 for v in SIT_SHOULDER))
+        mid.foot("fl_" + s, rest["fl_" + s] + Vector((0, SIT_PAW_Y * 0.5, 0)))
     tail_curve(mid, 10, 0)
     poses[12] = mid
     poses[26] = _sit_pose()
@@ -352,20 +373,21 @@ def anim_sit():
 
 
 def anim_groom():
-    """Putzen im Sitzen: Pfote zum Mund, lecken (Kopf nickt), dann übers Gesicht wischen."""
+    """Putzen im Sitzen: Pfote zum Mund (die Schulter gleitet dabei wieder hinauf, der Kopf neigt sich der Pfote
+    entgegen), lecken (Kopf nickt), dann übers Gesicht wischen."""
     rest = rest_points()
     poses = {}
     keys = [(0, 0.0, 0.0), (8, 1.0, 0.0), (16, 1.0, 1.0), (24, 1.0, 0.0), (32, 1.0, 1.0), (44, 0.4, 2.0), (52, 1.0, 0.0),
             (60, 0.0, 0.0)]
     for f, up, lick in keys:
         p = _sit_pose()
-        # Pfote vor den Mund (Kopf neigt sich leicht hin), lecken = kleines Nicken
-        paw = rest["fl_l"].lerp(Vector((0.012, -0.175, 0.215)), up)
+        p.move("fl_upper_l", tuple(v * (1.0 - min(up, 1.0)) for v in SIT_SHOULDER))
+        paw = rest["fl_l"].lerp(GROOM_PAW, up)
         if lick >= 2.0:
-            paw = Vector((0.03, -0.17, 0.255))      # übers Gesicht wischen
+            paw = GROOM_WIPE                     # übers Gesicht wischen
         p.foot("fl_l", paw, ("x", -95 * up))
-        p.r("head", ("x", 30 + 10 * up + 7 * min(lick, 1.0)), ("z", 12 * up), ("y", -14 * up if lick >= 2.0 else 0.0))
-        p.r("neck", ("x", 14 + 4 * up))
+        p.r("neck", ("x", 12 * up))
+        p.r("head", ("x", 14 * up + 7 * min(lick, 1.0)), ("z", 12 * up), ("y", -14 * up if lick >= 2.0 else 0.0))
         poses[f] = p
     return 60, poses, True
 
@@ -390,14 +412,16 @@ def _lie_pose(p=None, breathe=0.0):
     """Liegen (wie ein Brotlaib): Bauch am Boden, Vorderpfoten untergeschlagen, Hinterbeine gefaltet."""
     rest = rest_points()
     p = p or Pose()
-    p.move("hips", (0, 0.0, -0.12))
+    p.move("hips", (0, 0.0, LIE_DROP))
     p.r("hips", ("x", -4))
-    p.r("chest", ("x", 6 + breathe))
-    p.r("neck", ("x", 14))
-    p.r("head", ("x", 14))
-    for s in ("l", "r"):
-        p.foot("fl_" + s, rest["fl_" + s] + Vector((0, 0.06, 0.035)), ("x", 80))
-        p.foot("bl_" + s, rest["bl_" + s] + Vector((0, -0.02, -0.025)), ("x", -70))
+    p.r("chest", ("x", 4 + breathe))
+    p.r("neck", ("x", -6))
+    p.r("head", ("x", 12))
+    for s, side in (("l", 1), ("r", -1)):
+        p.move("fl_upper_" + s, (0, 0.0, 0.012))
+        p.foot("fl_" + s, rest["fl_" + s] + Vector((0, 0.03, 0.013)), ("x", 70))
+        p.foot("bl_" + s, rest["bl_" + s] + Vector((side * 0.012, -0.004, -0.017)), ("x", -56))
+        p.r("bl_paw_" + s, ("x", 50))
     tail_curve(p, -16, 0, bend=-30)
     return p
 
@@ -421,16 +445,16 @@ def anim_sleep():
         # stark eingerollt: Rücken als Bogen, Kopf liegt am Schwanz, leicht auf der Seite
         # Rücken biegt sich nach links (+z dreht ein nach vorn zeigendes Glied nach links), der Schwanz ebenfalls
         # nach links (für nach hinten zeigende Glieder: −z) – Kopf und Schwanz treffen sich vorn
-        p.move("hips", (0.0, 0.0, -0.13))
+        p.move("hips", (0.0, 0.0, LIE_DROP - 0.004))
         p.r("hips", ("y", 8), ("z", 38))
         p.r("spine1", ("z", 46))
         p.r("chest", ("z", 46), ("x", 4 + b))
         p.r("neck", ("z", 36), ("x", 22))
         p.r("head", ("z", 26), ("x", 26), ("y", 18))
-        p.foot("fl_l", rest["fl_l"] + Vector((-0.03, 0.05, 0.03)), ("x", 85))
-        p.foot("fl_r", rest["fl_r"] + Vector((-0.02, 0.07, 0.03)), ("x", 85))
-        p.foot("bl_l", rest["bl_l"] + Vector((-0.01, -0.03, -0.02)), ("x", -75))
-        p.foot("bl_r", rest["bl_r"] + Vector((0.03, -0.04, -0.015)), ("x", -75))
+        p.foot("fl_l", rest["fl_l"] + Vector((-0.02, 0.035, 0.006)), ("x", 75))
+        p.foot("fl_r", rest["fl_r"] + Vector((-0.014, 0.05, 0.006)), ("x", 75))
+        p.foot("bl_l", rest["bl_l"] + Vector((-0.007, -0.02, -0.012)), ("x", -60))
+        p.foot("bl_r", rest["bl_r"] + Vector((0.02, -0.028, -0.01)), ("x", -60))
         tail_curve(p, -22, 0, bend=-60)
         p.r("ear_l", ("y", -18))
         p.r("ear_r", ("y", 18))
@@ -443,14 +467,16 @@ def anim_stretch():
     oben, Kopf hinunter), zurück in den Stand."""
     rest = rest_points()
     poses = {0: Pose()}
-    fwd = Pose().move("hips", (0, 0.01, 0.0)).r("hips", ("x", 16)).r("spine1", ("x", 8)).r("chest", ("x", 8))
+    fwd = Pose().move("hips", (0, 0.007, 0.0)).r("hips", ("x", 16)).r("spine1", ("x", 8)).r("chest", ("x", 8))
     fwd.r("neck", ("x", -24)).r("head", ("x", -20))
     for s in ("l", "r"):
-        fwd.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.11, 0.0)), ("x", -10))
+        fwd.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.075, 0.0)), ("x", -10))
     tail_curve(fwd, 56, 14)
     poses[18] = fwd
     poses[30] = fwd
-    arch = Pose().move("hips", (0, 0, 0.012)).r("hips", ("x", -18)).r("spine1", ("x", 10)).r("chest", ("x", 18))
+    arch = Pose().move("hips", (0, 0, 0.006)).r("hips", ("x", -18)).r("spine1", ("x", 10)).r("chest", ("x", 18))
+    for s in ("l", "r"):
+        arch.move("fl_upper_" + s, (0, 0.012, -0.024))   # Schulterblätter gleiten (Buckel), Pfoten bleiben am Boden
     arch.r("neck", ("x", 16)).r("head", ("x", 18))
     tail_curve(arch, -10, -8)
     poses[48] = arch
@@ -461,7 +487,7 @@ def anim_stretch():
 
 def _crouch_pose(p=None, low=1.0):
     p = p or Pose()
-    p.move("hips", (0, 0.0, -0.06 * low))
+    p.move("hips", (0, 0.0, -0.033 * low))
     p.r("chest", ("x", 6 * low))
     p.r("neck", ("x", -12 * low))
     p.r("head", ("x", -6 * low))
@@ -489,7 +515,7 @@ def anim_stalk():
     for f in range(n):
         t = f / n
         p = _crouch_pose()
-        gait_feet(p, t, 0.16, 0.02, offsets, 0.7, rest)
+        gait_feet(p, t, 0.11, 0.014, offsets, 0.7, rest)
         p.r("hips", ("z", 3 * math.sin(t * math.tau)))
         p.r("head", ("z", -2 * math.sin(t * math.tau)))
         poses[f] = p
@@ -507,13 +533,13 @@ def anim_pounce():
         poses[f] = p
     jump = Pose().r("hips", ("x", -10)).r("chest", ("x", -12)).r("neck", ("x", -10))
     for s in ("l", "r"):
-        jump.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.08, 0.06)), ("x", -40))
-        jump.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.07, 0.02)), ("x", 30))
+        jump.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.055, 0.04)), ("x", -40))
+        jump.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.05, 0.014)), ("x", 30))
     tail_curve(jump, 6, -2)
     poses[17] = jump
     land = _crouch_pose(low=0.8)
     for s in ("l", "r"):
-        land.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.06, 0)), ("x", -15))
+        land.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.04, 0.002)))
     poses[22] = land
     poses[30] = _crouch_pose(low=0.5)
     return 30, poses, False
@@ -526,13 +552,13 @@ def anim_jump_up():
     crouch = _crouch_pose(low=0.9).r("neck", ("x", -24)).r("head", ("x", -10))
     up = Pose().r("hips", ("x", -26)).r("spine1", ("x", -8)).r("chest", ("x", -10)).r("neck", ("x", -10))
     for s in ("l", "r"):
-        up.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.05, 0.1)), ("x", -50))
-        up.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.06, -0.01)), ("x", 25))
+        up.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.035, 0.07)), ("x", -50))
+        up.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.04, 0.004)), ("x", 10))
     tail_curve(up, 10, -6)
     tuck = Pose().r("hips", ("x", -6))
     for s in ("l", "r"):
-        tuck.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.03, 0.03)), ("x", -20))
-        tuck.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.02, 0.05)), ("x", -20))
+        tuck.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.02, 0.02)), ("x", -20))
+        tuck.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.014, 0.035)), ("x", -20))
     land = _crouch_pose(low=0.6)
     poses = {0: Pose(), 6: crouch, 10: crouch, 13: up, 17: tuck, 21: land, 28: Pose()}
     return 28, poses, False
@@ -544,17 +570,17 @@ def anim_jump_down():
     rest = rest_points()
     lean = Pose().r("hips", ("x", 10)).r("chest", ("x", 14)).r("neck", ("x", 14)).r("head", ("x", 8))
     for s in ("l", "r"):
-        lean.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.04, -0.02)), ("x", 10))
+        lean.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.028, -0.014)), ("x", 10))
     tail_curve(lean, 30, 8)
     reach = Pose().r("hips", ("x", 18)).r("chest", ("x", 10)).r("neck", ("x", 6))
     for s in ("l", "r"):
-        reach.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.07, -0.05)), ("x", 25))
-        reach.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.05, 0.04)), ("x", 30))
+        reach.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.05, -0.035)), ("x", 25))
+        reach.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.035, 0.028)), ("x", 30))
     tail_curve(reach, 46, 10)
     land = Pose().move("hips", (0, 0, 0.0)).r("hips", ("x", 14)).r("chest", ("x", 10))
     for s in ("l", "r"):
-        land.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.02, 0)), ("x", 5))
-        land.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.03, 0.03)), ("x", 10))
+        land.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.014, 0)), ("x", 5))
+        land.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.02, 0.02)), ("x", 10))
     soft = _crouch_pose(low=0.5)
     poses = {0: Pose(), 5: lean, 9: lean, 13: reach, 18: land, 22: soft, 28: Pose()}
     return 28, poses, False
@@ -571,10 +597,10 @@ def anim_step_down():
     rest = rest_points()
     a = Pose().r("hips", ("x", 6)).r("chest", ("x", 8)).r("neck", ("x", 10))
     for s in ("l", "r"):
-        a.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.05, -0.06)), ("x", 12))
+        a.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.04, -0.05)), ("x", 12))
     b = Pose().r("hips", ("x", 12))
     for s in ("l", "r"):
-        b.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.0, 0.05)), ("x", 10))
+        b.foot("bl_" + s, rest["bl_" + s] + Vector((0, 0.0, 0.035)), ("x", 10))
     return 16, {0: Pose(), 5: a, 10: b, 16: Pose()}, False
 
 
@@ -583,7 +609,7 @@ def anim_sniff():
     poses = {}
     for f in range(0, 61, 6):
         t = f / 60
-        p = Pose().r("neck", ("x", 30)).r("head", ("x", 30 + 4 * math.sin(t * math.tau * 4))).r("chest", ("x", 6))
+        p = Pose().r("neck", ("x", 26)).r("head", ("x", 18 + 4 * math.sin(t * math.tau * 4))).r("chest", ("x", 8))
         p.r("head", ("z", 8 * math.sin(t * math.tau)))
         tail_curve(p, 28, 6, sway=6, phase=t * math.tau)
         poses[f] = p
@@ -596,7 +622,7 @@ def anim_bat():
     poses = {}
     for f, k in ((0, 0.0), (6, 1.0), (10, 0.3), (14, 0.0), (20, 0.0)):
         p = _crouch_pose(low=0.5)
-        p.foot("fl_r", rest["fl_r"] + Vector((0, -0.07 * k - 0.02 * (k > 0.5), 0.06 * k)), ("x", -40 * k))
+        p.foot("fl_r", rest["fl_r"] + Vector((0, -0.05 * k - 0.014 * (k > 0.5), 0.04 * k)), ("x", -40 * k))
         p.r("head", ("x", 10), ("z", -6))
         poses[f] = p
     return 20, poses, True

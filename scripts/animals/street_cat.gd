@@ -16,15 +16,15 @@ extends StreetAnimal
 signal finished(cat: StreetCat)
 signal petted(by: Node3D)
 
-## Natürliches Tempo der Bewegungen (m/s bei speed_scale 1)
-const WALK_ANIM_SPEED := 0.42
-const RUN_ANIM_SPEED := 1.6
-const STALK_ANIM_SPEED := 0.2
+## Natürliches Tempo der Bewegungen (m/s bei speed_scale 1; aus den Schrittlängen in animal_cat_anim.py)
+const WALK_ANIM_SPEED := 0.3
+const RUN_ANIM_SPEED := 1.13
+const STALK_ANIM_SPEED := 0.14
 ## Wann sich die Katze bei Sprüngen bewegt (Anteil der Bewegung): [Absprung, Landung]
 const JUMP_WINDOW := {"jump_up": Vector2(0.35, 0.7), "jump_down": Vector2(0.3, 0.66), "hop_up": Vector2(0.3, 0.78),
 	"step_down": Vector2(0.2, 0.85), "pounce": Vector2(0.4, 0.75)}
-## Mundstelle in der Ruhehaltung (unter der Schnauze; Spielzeug im Maul)
-const MOUTH := Vector3(0.0, 0.24, 0.226)
+## Mundstelle in der Ruhehaltung (unter dem Schnäuzchen; Spielzeug im Maul)
+const MOUTH := Vector3(0.0, 0.166, 0.19)
 
 ## Prüfwerkzeug: jeden Schritt ausgeben
 static var debug := false
@@ -61,8 +61,8 @@ var _toy_holder: Node3D
 var _interactable: Interactable
 var _head: AnimalHeadModifier
 var _look := Vector2.ZERO
-var _blink_index := -1
-var _happy_index := -1
+## Fell-Material dieser Katze (eigene Kopie, siehe CatLife._build_pool): malt die Augen (eye_blink, eye_happy)
+var _face: ShaderMaterial
 var _blink := 0.0
 var _happy := 0.0
 var _blink_timer := 2.0
@@ -75,9 +75,6 @@ func _ready() -> void:
 		_head = AnimalHeadModifier.new()
 		_head.name = "HeadLook"
 		skeleton.add_child(_head)
-	if mesh:
-		_blink_index = mesh.find_blend_shape_by_name(&"blink")
-		_happy_index = mesh.find_blend_shape_by_name(&"happy")
 	_interactable = get_node_or_null("Interactable") as Interactable
 	if _interactable:
 		_interactable.interacted.connect(func(who: Node) -> void: pet(who as Node3D))
@@ -675,11 +672,14 @@ func _update_face(delta: float) -> void:
 			_friendly = 2.0   # langsames Blinzeln zur Spielfigur
 	_blink = move_toward(_blink, want_blink, delta * (12.0 if want_blink > _blink else 6.0))
 	_happy = move_toward(_happy, want_happy, delta * 4.0)
-	if mesh:
-		if _blink_index >= 0:
-			mesh.set_blend_shape_value(_blink_index, _blink * (1.0 - _happy))
-		if _happy_index >= 0:
-			mesh.set_blend_shape_value(_happy_index, _happy)
+	if _face == null and mesh and mesh.mesh:
+		for i in mesh.mesh.get_surface_count():
+			var mat := mesh.get_surface_override_material(i) as ShaderMaterial
+			if mat and mat.resource_name == "Katze Fell":
+				_face = mat
+	if _face:
+		_face.set_shader_parameter(&"eye_blink", _blink * (1.0 - _happy))
+		_face.set_shader_parameter(&"eye_happy", _happy)
 
 
 ## Kopf: beim Blick ins Schaufenster nach oben, sonst im Sitzen/Stehen zur Spielfigur, wenn sie nah ist.

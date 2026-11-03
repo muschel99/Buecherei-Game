@@ -62,6 +62,19 @@ class Blobs:
         e.use_negative = negative
         return e
 
+    def add_axes(self, center, size, axes, stiffness=2.0, negative=False):
+        """Ellipsoid mit Halbachsen size entlang der Achsen axes = (X, Y, Z) (Einheitsvektoren, rechtwinklig)."""
+        e = self.mb.elements.new(type="ELLIPSOID")
+        k = self.scale / self.SURFACE
+        r = max(size) * k
+        e.co = Vector(center) * self.scale
+        e.radius = r
+        e.size_x, e.size_y, e.size_z = (s * k / r for s in size)
+        e.rotation = Matrix((axes[0], axes[1], axes[2])).transposed().to_quaternion()
+        e.stiffness = stiffness
+        e.use_negative = negative
+        return e
+
     def capsule(self, a, b, radius, stiffness=2.0):
         """Röhre (Kapsel) von a nach b mit Radius (der Oberfläche)."""
         a, b = Vector(a) * self.scale, Vector(b) * self.scale

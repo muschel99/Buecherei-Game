@@ -41,40 +41,15 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"Katze Auge": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/katze_auge.tres",
-"use_external/path": "res://assets/materials/storybook/katze_auge.tres"
-},
 "Katze Fell": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/katze_fell.tres",
 "use_external/path": "res://assets/materials/storybook/katze_fell.tres"
 },
-"Katze Glanz": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/katze_glanz.tres",
-"use_external/path": "res://assets/materials/storybook/katze_glanz.tres"
-},
-"Katze Mund": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/katze_mund.tres",
-"use_external/path": "res://assets/materials/storybook/katze_mund.tres"
-},
 "Katze Nase": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/katze_nase.tres",
 "use_external/path": "res://assets/materials/storybook/katze_nase.tres"
-},
-"Katze Ohr innen": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/katze_ohr_innen.tres",
-"use_external/path": "res://assets/materials/storybook/katze_ohr_innen.tres"
-},
-"Katze Pupille": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/katze_pupille.tres",
-"use_external/path": "res://assets/materials/storybook/katze_pupille.tres"
 }
 }
 }

@@ -1,61 +1,104 @@
-"""Katze im weichen Stil (seit Etappe 6h): ein Körper aus Metaballs (Rumpf, Hals, großer runder Kopf, Beine,
-Pfoten und Schwanz fließen ohne Nähte ineinander), Ohren, Augen, Nase und Mund als eigene geschlossene Körper.
+"""Katze im weichen Chibi-Stil (seit Etappe 6h, Form nach den Vorlagen der Entwicklerin): ein Körper aus Metaballs –
+sehr großer runder Kopf mit Pausbacken, kleiner runder Rumpf, kurze Beinchen mit runden Pfoten, buschiger Schwanz –,
+große dreieckige Ohren (wachsen aus dem Kopf, vorn eine Mulde) – und eine kleine Nase als eigener geschlossener Körper.
+
+Augen, rosa Innenohren, Mund, Wangenröte und Tigerstreifen sind GEMALT (wie bei den Chibi-Passanten): der Katzen-Shader
+(assets/shaders/storybook_cat.gdshader) malt sie nach der Ruhehaltung aufs Fell. Wo sie sitzen, rechnet
+face_params() aus und das Bau-Script schreibt es ins Material „Katze Fell“. Blinzeln/zufrieden schauen stellt das
+Spiel über die Material-Werte eye_blink und eye_happy ein (StreetCat._update_face).
 
 Skelett nach dem Vorbild einer echten Katze: Becken (hips) – Rücken (spine1) – Brust (chest) – Hals – Kopf,
 Ohren, Vorderbeine (Oberarm, Unterarm, Pfote), Hinterbeine (Oberschenkel, Unterschenkel, Mittelfuß, Pfote),
 Schwanz in fünf Gliedern. Gewichte: je Ecke die nächsten Knochen (weich verteilt, dann über das Netz geglättet).
 
-Augen: Formvarianten „blink“ (geschlossen, Linie leicht nach unten gebogen – schlafen, blinzeln) und „happy“
-(zufrieden zugekniffen, Bogen nach oben – streicheln, freundlich schauen). Farbmaske im Fell: > 0 = helles Fell
-(Schnauze, Kinn, Brust, Bauch, Pfoten, Schwanzspitze; je Katze ab einem anderen Wert), < 0 = dunkler Rücken.
+Farbmaske im Fell: > 0 = helles Fell (Schnauze, Kinn, untere Wangen, Brustlatz, Pfoten, Bauch; je Katze ab einem
+anderen Wert), < 0 = dunkler Rücken.
 
-Blender-Koordinaten: vorn = -y, oben = z, Ursprung zwischen den Pfoten auf dem Boden.
+Blender-Koordinaten: vorn = -y, oben = z, Ursprung zwischen den Pfoten auf dem Boden. Godot: x gleich, y = z,
+z = -y (godot()).
 """
 import math
 
-import bmesh
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Vector
 
 import animal_lib as AL
 from animal_lib import smoothstep
 from storybook_lib import Body
 
-# Gelenke (linke Seite, x > 0; rechts gespiegelt)
-FRONT = [Vector((0.04, -0.072, 0.168)), Vector((0.043, -0.068, 0.1)), Vector((0.043, -0.083, 0.032)),
-         Vector((0.043, -0.108, 0.006))]
-HIND = [Vector((0.046, 0.108, 0.175)), Vector((0.05, 0.066, 0.104)), Vector((0.047, 0.138, 0.046)),
-        Vector((0.046, 0.112, 0.012)), Vector((0.046, 0.088, 0.004))]
-SPINE = [Vector((0, 0.13, 0.205)), Vector((0, 0.06, 0.208)), Vector((0, -0.02, 0.212)), Vector((0, -0.092, 0.218))]
-NECK = [Vector((0, -0.092, 0.218)), Vector((0, -0.13, 0.262))]
-HEAD = [Vector((0, -0.13, 0.262)), Vector((0, -0.2, 0.33))]
-HEAD_CENTER = Vector((0, -0.165, 0.302))
-TAIL = [Vector((0, 0.15, 0.213)), Vector((0, 0.205, 0.212)), Vector((0, 0.26, 0.205)), Vector((0, 0.31, 0.196)),
-        Vector((0, 0.355, 0.19)), Vector((0, 0.395, 0.188))]
-# Ohren oben auf dem Kopf, Vorderkante etwa über den Augen, ganz leicht nach hinten geneigt (entspannt); weiter
-# hinten wirkten sie wie in den Nacken gerutscht
-EAR = (Vector((0.038, -0.178, 0.336)), Vector((0.05, -0.181, 0.378)))
+# Gelenke (linke Seite, x > 0; rechts gespiegelt). Chibi-Maß: Beine kurz, Kopf groß und weit vorn.
+FRONT = [Vector((0.034, -0.05, 0.114)), Vector((0.036, -0.038, 0.068)), Vector((0.037, -0.054, 0.024)),
+         Vector((0.037, -0.074, 0.006))]
+HIND = [Vector((0.04, 0.08, 0.108)), Vector((0.043, 0.05, 0.068)), Vector((0.042, 0.098, 0.033)),
+        Vector((0.042, 0.082, 0.009)), Vector((0.042, 0.064, 0.004))]
+SPINE = [Vector((0, 0.085, 0.12)), Vector((0, 0.035, 0.122)), Vector((0, -0.015, 0.124)), Vector((0, -0.06, 0.128))]
+NECK = [Vector((0, -0.06, 0.128)), Vector((0, -0.088, 0.162))]
+HEAD = [Vector((0, -0.088, 0.162)), Vector((0, -0.15, 0.236))]
+HEAD_CENTER = Vector((0, -0.112, 0.205))
+HEAD_SIZE = (0.083, 0.064, 0.066)          # Halbachsen des Kopfs (breit, tief, hoch)
+TAIL = [Vector((0, 0.112, 0.126)), Vector((0, 0.142, 0.127)), Vector((0, 0.171, 0.128)), Vector((0, 0.199, 0.13)),
+        Vector((0, 0.225, 0.132)), Vector((0, 0.248, 0.134))]
+# Ohren wie in den Vorlagen: breite, weiche Dreiecke, schräg auf den Kopf gesetzt – die innere untere Ecke hoch auf
+# der Kuppel, die äußere untere Ecke tief an der Kopfseite (etwa auf Höhe der Augen-Oberkante), die Außenkante steigt
+# fast senkrecht zur runden Spitze und setzt so den runden Kopfumriss fort. Öffnung nach vorn, leicht nach außen.
+# Ecken (linkes Ohr): innen unten, außen unten, Spitze. Kanten = dicker Fellrand, die Mitte dünner (Mulde).
+EAR_IN = Vector((0.033, -0.114, 0.265))
+EAR_OUT = Vector((0.079, -0.126, 0.222))
+EAR_TIP = Vector((0.071, -0.12, 0.303))
+EAR = ((EAR_IN + EAR_OUT) / 2, EAR_TIP)
 
-
-def _lower(v):
-    """Kürzere Beine (Chibi-Maß): alles über den Pfoten etwas tiefer."""
-    v = Vector(v)
-    v.z -= 0.022 * smoothstep(0.03, 0.12, v.z)
-    return v
-
-
-FRONT = [_lower(v) for v in FRONT]
-HIND = [_lower(v) for v in HIND]
-SPINE = [_lower(v) for v in SPINE]
-NECK = [_lower(v) for v in NECK]
-HEAD = [_lower(v) for v in HEAD]
-HEAD_CENTER = _lower(HEAD_CENTER)
-TAIL = [_lower(v) for v in TAIL]
-EAR = (_lower(EAR[0]), _lower(EAR[1]))
+# Gemaltes Gesicht: Augen (Richtung vom Kopfmittelpunkt; groß, etwas unter der Kopfmitte, weit auseinander),
+# Halbachsen der Augen, Mund (Höhe), Nase
+EYE_DIR = (0.5, -0.86, -0.1)
+EYE_SIZE = (0.0165, 0.0185)
+MOUTH_Z = 0.174
+MOUTH_SIZE = (0.0085, 0.0035)
+NOSE_Z = 0.187
 
 
 def _mirror(v):
     return Vector((-v.x, v.y, v.z))
+
+
+def ear_frame(side):
+    """Ebene eines Ohrs: Ecke innen unten, Achse e1 (zur äußeren Ecke), e2 (in der Ebene zur Spitze), n (vorn),
+    2D-Lage der äußeren Ecke und der Spitze in (e1, e2)."""
+    m = (lambda v: v) if side > 0 else _mirror
+    i, o, t = m(EAR_IN), m(EAR_OUT), m(EAR_TIP)
+    e1 = (o - i).normalized()
+    e2 = (t - i) - e1 * (t - i).dot(e1)
+    e2.normalize()
+    n = e1.cross(e2) if side > 0 else e2.cross(e1)
+    return i, e1, e2, n, Vector(((o - i).dot(e1), 0.0)), Vector(((t - i).dot(e1), (t - i).dot(e2)))
+
+
+def _ear_coords(co, side):
+    """Lage im Ohr: Höhe über der Grundlinie (0 = Grund, 1 = Spitze), Abstand zur Ebene, Abstand außerhalb des
+    Dreiecks in der Ebene (0 = innen)."""
+    i, e1, e2, n, o2, t2 = ear_frame(side)
+    d = Vector(co) - i
+    a, b, w = d.dot(e1), d.dot(e2), d.dot(n)
+    h = b / t2.y
+    # Abstand zum Dreieck (grob): links/rechts der Seitenkanten
+    def side_out(p0, p1):
+        e = p1 - p0
+        nrm = Vector((e.y, -e.x)).normalized()
+        return (Vector((a, b)) - p0).dot(nrm)
+    out = max(side_out(Vector((0, 0)), t2) * -1.0, side_out(o2, t2), -b)
+    return h, w, out
+
+
+def ear_weight(co, side):
+    """Wie stark eine Ecke am Ohr-Knochen hängt (0 = Kopf): von der Grundlinie weich zur Spitze."""
+    h, w, out = _ear_coords(co, side)
+    if abs(w) > 0.03 or out > 0.014 or h < 0.05:
+        return 0.0
+    return smoothstep(0.12, 0.42, h)
+
+
+def godot(v):
+    """Blender-Lage → Godot-Lage (x gleich, y oben, z vorn)."""
+    return Vector((v[0], v[2], -v[1]))
 
 
 def bones():
@@ -87,49 +130,73 @@ def bones():
 
 
 def body_blobs(coll):
-    """Weicher Körper: Rumpf, Hals, Kopf, Schnauze, Beine, Pfoten, Schwanz."""
+    """Weicher Körper: Rumpf, Hals, großer Kopf mit Pausbacken und Schnäuzchen, kurze Beine, runde Pfoten,
+    buschiger Schwanz."""
     bl = AL.Blobs(coll, scale=4.0)
-    L = _lower   # feste Zahlen unten werden abgesenkt (die Gelenk-Listen oben sind es schon)
-    bl.add(L((0, -0.056, 0.205)), (0.058, 0.074, 0.068), (-6, 0, 0))       # Brust
-    bl.add(L((0, 0.035, 0.192)), (0.052, 0.08, 0.058))                      # Bauch/Taille
-    bl.add(L((0, 0.112, 0.2)), (0.058, 0.056, 0.062))                       # Becken
-    bl.add(L((0, -0.118, 0.247)), (0.038, 0.04, 0.046), (-35, 0, 0))        # Hals
-    bl.add(tuple(HEAD_CENTER), (0.066, 0.058, 0.056))                   # Kopf (groß und rund)
-    bl.add(L((0, -0.196, 0.279)), (0.05, 0.03, 0.032))                      # Wangen
-    bl.add(L((0, -0.219, 0.276)), (0.026, 0.02, 0.019))                     # Schnauze
-    bl.add(L((0, -0.207, 0.259)), (0.018, 0.016, 0.011))                    # Kinn
+    bl.add((0, -0.038, 0.118), (0.05, 0.058, 0.054), (-6, 0, 0))          # Brust
+    bl.add((0, 0.02, 0.112), (0.048, 0.06, 0.048))                         # Bauch
+    bl.add((0, 0.074, 0.116), (0.052, 0.05, 0.054))                        # Becken
+    bl.add((0, -0.07, 0.145), (0.032, 0.03, 0.036), (-30, 0, 0))           # Hals (kurz, der Kopf sitzt auf der Brust)
+    bl.add((0, -0.07, 0.115), (0.03, 0.026, 0.04))                         # Brustlatz (flauschig vorgewölbt)
+    bl.add(tuple(HEAD_CENTER), HEAD_SIZE)                                  # Kopf (groß und rund)
+    for side in (1, -1):
+        bl.add((side * 0.04, -0.122, 0.185), (0.036, 0.034, 0.026), stiffness=1.2)   # Pausbacken (weich, knapp unter den Augen)
+    bl.add((0, -0.164, 0.181), (0.023, 0.016, 0.016))                      # Schnäuzchen
+    bl.add((0, -0.152, 0.167), (0.015, 0.014, 0.01))                       # Kinn
     for side in (1, -1):
         m = (lambda v: v) if side > 0 else _mirror
-        bl.add(L(m(Vector((0.037, -0.066, 0.185)))), (0.03, 0.04, 0.05))          # Schulter
-        bl.add(L(m(Vector((0.04, 0.104, 0.158)))), (0.034, 0.052, 0.058), (18, 0, 0))  # Oberschenkel
+        bl.add(m(Vector((0.032, -0.05, 0.1))), (0.028, 0.032, 0.038))                      # Schulter
+        bl.add(m(Vector((0.044, 0.07, 0.088))), (0.039, 0.049, 0.052), (18, 0, 0))        # Oberschenkel (rund, voll)
         f = [m(v) for v in FRONT]
-        bl.capsule(f[0], f[1], 0.022, stiffness=3.0)
-        bl.capsule(f[1], f[2], 0.0185, stiffness=3.0)
-        bl.add(L(m(Vector((0.043, -0.1, 0.015)))), (0.019, 0.027, 0.0135), stiffness=3.0)    # Vorderpfote
+        bl.capsule(f[0], f[1], 0.0195, stiffness=3.0)
+        bl.capsule(f[1], f[2], 0.0182, stiffness=3.0)
+        bl.add(m(Vector((0.037, -0.064, 0.0165))), (0.021, 0.025, 0.0125), stiffness=3.0)  # Vorderpfote (rund)
         h = [m(v) for v in HIND]
-        bl.capsule(h[1], h[2], 0.0195, stiffness=3.0)
+        bl.capsule(h[1], h[2], 0.018, stiffness=3.0)
         bl.capsule(h[2], h[3], 0.016, stiffness=3.0)
-        bl.add(L(m(Vector((0.046, 0.098, 0.014)))), (0.019, 0.029, 0.013), stiffness=3.0)    # Hinterpfote
+        bl.add(m(Vector((0.042, 0.075, 0.0155))), (0.02, 0.027, 0.0125), stiffness=3.0)   # Hinterpfote (rund)
     for i in range(len(TAIL) - 1):
-        r = 0.0165 - 0.004 * i / (len(TAIL) - 2)
+        r = 0.0175 + 0.003 * math.sin(math.pi * i / (len(TAIL) - 2))       # buschig, in der Mitte am dicksten
         bl.capsule(TAIL[i], TAIL[i + 1], r, stiffness=3.0)
+    bl.add(tuple(TAIL[-1] + Vector((0, -0.004, 0))), (0.0185, 0.02, 0.0185))  # runde Schwanzspitze
+    for side in (1, -1):
+        # Ohr: dicker Rand entlang der Kanten (Röhren), die Mitte als flache Füllung etwas zurückgesetzt (Mulde)
+        m = (lambda v: v) if side > 0 else _mirror
+        i, o, t = m(EAR_IN), m(EAR_OUT), m(EAR_TIP)
+        base, e1, e2, n, o2, t2 = ear_frame(side)
+        bl.capsule(i, t, 0.0095, stiffness=3.0)
+        bl.capsule(o, t, 0.0105, stiffness=3.0)
+        bl.capsule(i + (o - i) * 0.1, o - (o - i) * 0.1, 0.01, stiffness=3.0)
+        for k, (wa, wb, wt) in enumerate(((0.33, 0.33, 0.34), (0.5, 0.35, 0.15), (0.2, 0.25, 0.55))):
+            c = i * wa + o * wb + t * wt - n * 0.004
+            bl.add_axes(c, (0.017, 0.017, 0.0065), (e1, e2, n if side > 0 else -n))
     return bl
 
 
 def fur_mask(co):
     """Farbmaske: helles Fell (+, je stärker, desto „sicherer“ hell) und dunkler Rücken (−)."""
     x, y, z = co
-    z += 0.022 * smoothstep(0.01, 0.1, z)
     ax = abs(x)
-    muzzle = smoothstep(-0.19, -0.215, y) * smoothstep(0.3, 0.282, z)
-    chin = smoothstep(-0.17, -0.2, y) * smoothstep(0.27, 0.25, z) * smoothstep(0.04, 0.02, ax)
-    chest = smoothstep(-0.085, -0.115, y) * smoothstep(0.255, 0.235, z) * smoothstep(0.1, 0.12, z) * smoothstep(0.05, 0.025, ax)
-    belly = smoothstep(0.15, 0.135, z) * smoothstep(-0.08, -0.05, y) * smoothstep(0.12, 0.09, y) * smoothstep(0.042, 0.022, ax)
-    paws = smoothstep(0.04, 0.022, z)
-    tip = smoothstep(0.36, 0.39, y) * smoothstep(0.25, 0.22, z)
-    light = max(muzzle * 1.0, chin * 0.95, chest * 0.88, paws * 0.8, belly * 0.68, tip * 0.5)
-    back = smoothstep(0.235, 0.26, z) * smoothstep(-0.09, -0.04, y) * smoothstep(0.17, 0.12, y)
-    return light if light > 0.05 else -0.7 * back
+    face = smoothstep(-0.13, -0.165, y)                                    # Vorderseite des Kopfs
+    muzzle = face * smoothstep(0.2, 0.184, z) * smoothstep(0.142, 0.158, z) * smoothstep(0.04, 0.018, ax)
+    chin = smoothstep(-0.125, -0.15, y) * smoothstep(0.176, 0.158, z) * smoothstep(0.036, 0.014, ax)
+    cheeks = face * smoothstep(0.204, 0.186, z) * smoothstep(0.066, 0.036, ax) * smoothstep(0.145, 0.162, z)
+    bib_w = 0.012 + 0.03 * smoothstep(0.06, 0.15, z)                       # Latz: unten schmal, oben breit (V)
+    bib = smoothstep(-0.064, -0.09, y) * smoothstep(0.165, 0.145, z) * smoothstep(0.045, 0.068, z) \
+        * smoothstep(bib_w + 0.016, bib_w, ax)
+    paws = smoothstep(0.034, 0.016, z)
+    belly = smoothstep(0.09, 0.066, z) * smoothstep(-0.075, -0.04, y) * smoothstep(0.105, 0.065, y) \
+        * smoothstep(0.046, 0.018, ax)
+    light = max(muzzle * 1.0, chin * 0.97, bib * 0.92, paws * 0.85, belly * 0.72, cheeks * 0.68)
+    back = smoothstep(0.155, 0.17, z) * smoothstep(-0.05, -0.02, y) * smoothstep(0.11, 0.08, y)
+    tips = 0.0
+    for side in (1, -1):
+        if ear_weight(co, side) > 0.0:
+            h, w, out = _ear_coords(co, side)
+            tips = max(tips, smoothstep(0.7, 0.92, h) * smoothstep(-0.001, -0.006, w))  # Ohrspitzen hinten dunkler
+    if light > 0.05:
+        return light
+    return -max(0.7 * back, 0.85 * tips)
 
 
 def _neighbors(me):
@@ -143,15 +210,29 @@ def _neighbors(me):
 
 def body_weights(me, bone_list):
     """Gewichte des Körpers: nächste Knochen (Abstand zur Knochenstrecke), nur Knochen der eigenen Seite, weich
-    über das Netz geglättet. Liefert je Ecke {knochen: gewicht}."""
+    über das Netz geglättet. Der ganze Kopf (bis zu den Pausbacken) hängt am Kopf-Knochen. Liefert je Ecke
+    {knochen: gewicht}."""
     segs = []
     for name, head, tail, parent in bone_list:
         if name in ("root",) or name.startswith("ear"):
             continue
         segs.append((name, Vector(head), Vector(tail)))
+    hx, hy, hz = HEAD_SIZE
     raw = []
     for v in me.vertices:
         co = v.co
+        ear = [(s, ear_weight(co, side)) for side, s in ((1, "l"), (-1, "r"))]
+        ear = [e for e in ear if e[1] > 0.0]
+        if ear:
+            s, w = ear[0]
+            raw.append({"ear_" + s: w, "head": 1.0 - w} if w < 0.999 else {"ear_" + s: 1.0})
+            continue
+        # im Kopf (Ellipsoid etwas größer als der Kopf, vorn bis zum Schnäuzchen): fest am Kopf
+        d = co - HEAD_CENTER
+        inside = (d.x / (hx * 1.35)) ** 2 + (d.y / (hy * 1.25)) ** 2 + (d.z / (hz * 1.2)) ** 2
+        if inside < 0.75 or (d.y < -0.02 and inside < 1.0):
+            raw.append({"head": 1.0})
+            continue
         ds = []
         for name, a, b in segs:
             side = name[-2:]
@@ -159,11 +240,11 @@ def body_weights(me, bone_list):
                 continue
             if side == "_r" and co.x > 0.012:
                 continue
-            d = b - a
-            t = max(0.0, min(1.0, (co - a).dot(d) / d.length_squared))
-            ds.append((name, (a + d * t - co).length))
-        dmin = min(d for _, d in ds)
-        w = {n: 1.0 / (d + 0.006) ** 5 for n, d in ds if d < dmin + 0.03}
+            dd = b - a
+            t = max(0.0, min(1.0, (co - a).dot(dd) / dd.length_squared))
+            ds.append((name, (a + dd * t - co).length))
+        dmin = min(dist for _, dist in ds)
+        w = {n: 1.0 / (dist + 0.005) ** 5 for n, dist in ds if dist < dmin + 0.025}
         total = sum(w.values())
         raw.append({n: x / total for n, x in w.items()})
     nb = _neighbors(me)
@@ -185,68 +266,6 @@ def body_weights(me, bone_list):
     return out
 
 
-# Richtung vom Kopfmittelpunkt zum Auge (x seitlich, y nach vorn = -y, z hoch): z klein = Augen etwa auf halber
-# Kopfhöhe, knapp über der Nase (Chibi-Gesicht; höher wirkten sie wie unter die Ohren gerutscht)
-EYE_DIR = (0.53, -0.8, 0.08)
-
-
-def _eye_frame(tree, side):
-    d = Vector((side * EYE_DIR[0], EYE_DIR[1], EYE_DIR[2])).normalized()
-    hit = tree.ray_cast(HEAD_CENTER + d * 0.3, -d, 0.6)
-    p, n = hit[0], hit[1]
-    up = (Vector((0, 0, 1)) - n * n.z).normalized()
-    right = up.cross(n).normalized()
-    return p, n, up, right
-
-
-def eye_parts(tree, M, coll):
-    """Augen: Iris (Farbe der Katze), Pupille, Glanzpunkt – mit Formvarianten blink und happy.
-    Liefert [(Netz, Material, Formvarianten)]."""
-    result = []
-    for side in (1, -1):
-        p, n, up, right = _eye_frame(tree, side)
-        frame = Matrix((right, up, n)).transposed()   # Spalten: rechts, oben, außen
-        to_world = Matrix.Translation(p) @ frame.to_4x4()
-        w, h = 0.0165, 0.017                          # halbe Breite/Höhe des Auges
-
-        def blob(center, size, mat, seed):
-            b = Body("Auge", mat, coll, seed=seed, vary=0.0)
-            b.blob(center, 1.0, subdiv=3, lump=0.0, scale=size)
-            o = b.build(smooth_angle=180)
-            dg = bpy.context.evaluated_depsgraph_get()
-            me = bpy.data.meshes.new_from_object(o.evaluated_get(dg), depsgraph=dg)
-            bpy.data.objects.remove(o)
-            me.transform(to_world)
-            return me
-
-        def keys(me, layer):
-            """Formvarianten: Ecken in Augen-Koordinaten (x rechts, y oben, z außen) verschieben."""
-            inv = to_world.inverted()
-            blink, happy = [], []
-            for v in me.vertices:
-                q = inv @ v.co
-                xn = max(-1.0, min(1.0, q.x / w))
-                for key, sign in ((blink, -1.0), (happy, 1.0)):
-                    if layer == "pupil":
-                        # Pupille wird zur dunklen, gebogenen Linie über die ganze Breite des Auges
-                        x = xn * w * 1.12
-                        arc = sign * 0.45 * h * (1.0 - xn * xn) - sign * 0.12 * h
-                        y = arc + q.y * 0.2
-                        key.append(to_world @ Vector((x, y, q.z + 0.0006)))
-                    else:
-                        # Iris und Glanz verschwinden im Kopf
-                        key.append(to_world @ Vector((q.x * 0.6, q.y * 0.3 - 0.003, q.z - 0.0065)))
-            return {"blink": blink, "happy": happy}
-
-        iris = blob((0, 0, -0.0035), (w, h, 0.0052), M["eye"], 31)
-        pupil = blob((0, 0, 0.0011), (w * 0.42, h * 0.78, 0.0024), M["pupil"], 32)
-        shine = blob((w * 0.32 * side, h * 0.38, 0.0028), (0.0034, 0.0034, 0.0014), M["shine"], 33)
-        result.append((iris, M["eye"], keys(iris, "iris")))
-        result.append((pupil, M["pupil"], keys(pupil, "pupil")))
-        result.append((shine, M["shine"], keys(shine, "shine")))
-    return result
-
-
 def surface_point(tree, start, direction, embed=0.0):
     d = Vector(direction).normalized()
     hit = tree.ray_cast(Vector(start) - d * 0.2, d, 0.5)
@@ -255,47 +274,43 @@ def surface_point(tree, start, direction, embed=0.0):
     return hit[0] - hit[1] * embed, hit[1]
 
 
+def face_params(tree):
+    """Lage des gemalten Gesichts für den Katzen-Shader (Godot-Koordinaten der Ruhehaltung): linkes Auge
+    (Mitte auf der Haut, Achsen quer/hoch), Mund, Kopf, Beginn von Schwanz und Beinen. Liefert {Name: Wert}."""
+    d = Vector(EYE_DIR).normalized()
+    hit = tree.ray_cast(HEAD_CENTER + d * 0.3, -d, 0.6)
+    p, n = hit[0], hit[1]
+    up = (Vector((0, 0, 1)) - n * n.z).normalized()
+    right = up.cross(n).normalized()                  # zur Außenseite (+x)
+    mouth, _ = surface_point(tree, (0, -0.25, MOUTH_Z), (0, 1, 0))
+    ear_i, e1, e2, ear_n, o2, t2 = ear_frame(1)
+    return {
+        "ear_origin": godot(ear_i), "ear_e1": godot(e1), "ear_e2": godot(e2), "ear_n": godot(ear_n),
+        "ear_out": tuple(o2), "ear_tip": tuple(t2),
+        "eye_center": godot(p), "eye_right": godot(right), "eye_up": godot(up),
+        "eye_size": EYE_SIZE, "mouth_center": godot(mouth), "mouth_size": MOUTH_SIZE,
+        "head_center": godot(HEAD_CENTER), "head_radius": HEAD_SIZE[0],
+        "tail_start": -(TAIL[0].y + 0.012), "leg_top": 0.062,
+    }
+
+
 def build(M, coll):
-    """Alle Teile der Katze: liefert (Parts, Knochen)."""
+    """Alle Teile der Katze: liefert (Parts, Knochen, Gesichts-Werte für den Shader)."""
     parts = AL.Parts()
     bone_list = bones()
     body = body_blobs(coll).mesh(target_faces=9000, smooth=2)
+    for v in body.vertices:
+        # Pfotensohlen flach auf dem Boden (wie echte Pfoten, die aufliegen) – nichts ragt in den Boden
+        if v.co.z < 0.0015:
+            v.co.z = 0.0015
     tree = AL.bvh_of(body)
     weights = body_weights(body, bone_list)
     parts.add_mesh(body, M["fur"], weights, fur_mask)
 
-    # Ohren: Muschel (Fell) und Innenohr (rosa), Wurzel im Kopf
-    for side, s in ((1, "l"), (-1, "r")):
-        m = (lambda v: v) if side > 0 else _mirror
-        base, tip = m(EAR[0]), m(EAR[1])
-        out = Vector((side * 0.35, -1.0, 0.1)).normalized()
-        ear = Body("Ohr", M["fur"], coll, seed=40 + side, vary=0.0)
-        ear.leaf(base - (tip - base).normalized() * 0.014, (tip - base), out, (tip - base).length + 0.018, 0.06,
-                 shape="blade", thick=0.009, curl=0.25)
-        parts.add_body(ear, lambda co, s=s: {"ear_" + s: 1.0}, mask=-0.2)
-        inner = Body("Innenohr", M["ear"], coll, seed=42 + side, vary=0.0)
-        inner.leaf(base + out * 0.0045 - (tip - base).normalized() * 0.002, (tip - base), out, (tip - base).length * 0.8,
-                   0.04, shape="blade", thick=0.003, curl=0.25)
-        parts.add_body(inner, lambda co, s=s: {"ear_" + s: 1.0})
 
-    # Augen mit Formvarianten
-    for me, mat, keys in eye_parts(tree, M, coll):
-        parts.add_mesh(me, mat, lambda co: {"head": 1.0}, 0.0, keys=keys)
-
-    # Nase: kleines rosa Dreieck-Kissen, leicht eingelassen
-    tip_pt, tip_n = surface_point(tree, _lower((0, -0.25, 0.287)), (0, 1, -0.15), embed=0.0012)
+    # Nase: kleines rosa Kissen (Dreieck-Form), leicht eingelassen
+    tip_pt, tip_n = surface_point(tree, (0, -0.25, NOSE_Z), (0, 1, -0.1), embed=0.0012)
     nose = Body("Nase", M["nose"], coll, seed=50, vary=0.0)
-    nose.blob(tip_pt, 1.0, subdiv=3, lump=0.0, scale=(0.0085, 0.0055, 0.0058))
+    nose.blob(tip_pt, 1.0, subdiv=3, lump=0.0, scale=(0.0075, 0.005, 0.0052))
     parts.add_body(nose, lambda co: {"head": 1.0})
-
-    # Mund: feine dunkle Linie („w“) unter der Nase, auf der Haut
-    mouth_pts = []
-    for x, z in ((-0.013, 0.267), (-0.0065, 0.2635), (0.0, 0.2665), (0.0065, 0.2635), (0.013, 0.267)):
-        p, n = surface_point(tree, _lower((x, -0.26, z)), (0, 1, 0), embed=0.0004)
-        mouth_pts.append(p)
-    mouth = Body("Mund", M["mouth"], coll, seed=51, vary=0.0)
-    mouth.tube(mouth_pts, 0.0011, segs=6, round_ends=True)
-    top, _ = surface_point(tree, _lower((0, -0.26, 0.279)), (0, 1, 0), embed=0.0004)
-    mouth.tube([top, mouth_pts[2]], 0.001, segs=6, round_ends=True)
-    parts.add_body(mouth, lambda co: {"head": 1.0})
-    return parts, bone_list
+    return parts, bone_list, face_params(tree)

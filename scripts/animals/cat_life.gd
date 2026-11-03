@@ -94,10 +94,11 @@ func _build_pool() -> void:
 		cat.look = i
 		add_child(cat)
 		var look: Dictionary = GameConfig.cat_looks[i]
-		cat.apply_look("cat_%d" % i, {"Katze Fell": look.fur, "Katze Auge": look.eye},
+		# je Katze eigene Material-Kopien (Kennung cat_<n>): das Fell malt auch Augen und Blinzeln dieser Katze
+		cat.apply_look("cat_%d" % i, {"Katze Fell": look.fur},
 			{"Katze Fell": {"tabby": float(look.get("tabby", 0.0)), "tabby_color": look.get("tabby_color", Color.WHITE),
 				"second_color": look.fur2, "third_color": look.get("back", look.fur), "mask_from": float(look.get("patches", 0.55)),
-				"mask_soft": 0.18}})
+				"mask_soft": 0.3, "eye_color": look.eye}})
 		cat.scale = Vector3.ONE * float(look.get("size", 1.0))
 		cat.radius = 0.2 * cat.scale.x
 		cat.finished.connect(_on_finished)

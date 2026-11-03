@@ -71,6 +71,39 @@ uniform vec4 shimmer_color : source_color = vec4(0.45, 0.25, 0.55, 1.0);
 varying float animal_mask;
 #endif
 
+#ifdef CAT_FACE
+// Gemaltes Katzengesicht (storybook_cat.gdshader). Lage in der Ruhehaltung (Godot: x = links der Katze, y oben,
+// z vorn), eingetragen vom Bau-Script: linkes Auge (das rechte ist gespiegelt), Achsen quer (nach außen) und hoch.
+uniform vec3 eye_center = vec3(0.034, 0.198, 0.167);
+uniform vec3 eye_right = vec3(0.86, 0.0, -0.5);
+uniform vec3 eye_up = vec3(0.0, 1.0, 0.0);
+uniform vec2 eye_size = vec2(0.0165, 0.0185);
+uniform vec4 eye_color : source_color = vec4(0.7, 0.42, 0.16, 1.0);      // Iris (je Katze)
+uniform vec4 pupil_color : source_color = vec4(0.07, 0.045, 0.035, 1.0);
+uniform vec4 line_color : source_color = vec4(0.22, 0.12, 0.08, 1.0);    // Lidrand, Mund
+// 0 = offen … 1 = zu: blink = Linie nach unten gebogen (schlafen, blinzeln), happy = Bogen nach oben (zufrieden)
+uniform float eye_blink = 0.0;
+uniform float eye_happy = 0.0;
+uniform vec3 mouth_center = vec3(0.0, 0.174, 0.176);
+uniform vec2 mouth_size = vec2(0.0085, 0.0035);
+uniform vec4 blush_color : source_color = vec4(1.0, 0.62, 0.62, 1.0);
+uniform float blush = 0.35;
+// Linkes Ohr (rechtes gespiegelt): schräges Dreieck – Ecke innen unten (Ursprung), Achsen e1 (zur äußeren Ecke),
+// e2 (zur Spitze), n (vorn); 2D-Lage der äußeren Ecke und der Spitze. Innenseite rosa gemalt.
+uniform vec3 ear_origin = vec3(0.036, 0.262, 0.098);
+uniform vec3 ear_e1 = vec3(0.73, -0.66, 0.23);
+uniform vec3 ear_e2 = vec3(0.66, 0.75, 0.0);
+uniform vec3 ear_n = vec3(0.0, 0.0, 1.0);
+uniform vec2 ear_out = vec2(0.06, 0.0);
+uniform vec2 ear_tip = vec2(0.045, 0.05);
+uniform vec4 ear_color : source_color = vec4(0.96, 0.66, 0.66, 1.0);
+// Streifen: Kopf (Mitte, Halbmesser), Schwanz ab z < tail_start, Beine unter y < leg_top
+uniform vec3 head_center = vec3(0.0, 0.205, 0.112);
+uniform float head_radius = 0.07;
+uniform float tail_start = -0.124;
+uniform float leg_top = 0.062;
+#endif
+
 void vertex() {
 #ifdef REST_POSITION
 	model_pos = vec3(UV.x, 1.0 - UV.y, UV2.x);
@@ -315,6 +348,124 @@ float surface_height(vec3 p, float px) {
 	return 0.0;
 }
 
+#ifdef CAT_FACE
+// Weiche Kante: 1 innen, 0 außen (aa = Breite des Übergangs)
+float cat_inside(float d, float r, float aa) {
+	return 1.0 - smoothstep(r - aa, r + aa, d);
+}
+
+// Abstand zu einem Dreieck in der Ebene (negativ = innen), nach Inigo Quilez
+float cat_triangle(vec2 p, vec2 p0, vec2 p1, vec2 p2) {
+	vec2 e0 = p1 - p0, e1 = p2 - p1, e2 = p0 - p2;
+	vec2 v0 = p - p0, v1 = p - p1, v2 = p - p2;
+	vec2 pq0 = v0 - e0 * clamp(dot(v0, e0) / dot(e0, e0), 0.0, 1.0);
+	vec2 pq1 = v1 - e1 * clamp(dot(v1, e1) / dot(e1, e1), 0.0, 1.0);
+	vec2 pq2 = v2 - e2 * clamp(dot(v2, e2) / dot(e2, e2), 0.0, 1.0);
+	float s = sign(e0.x * e2.y - e0.y * e2.x);
+	vec2 d = min(min(vec2(dot(pq0, pq0), s * (v0.x * e0.y - v0.y * e0.x)),
+		vec2(dot(pq1, pq1), s * (v1.x * e1.y - v1.y * e1.x))),
+		vec2(dot(pq2, pq2), s * (v2.x * e2.y - v2.y * e2.x)));
+	return -sqrt(d.x) * sign(d.y);
+}
+
+// Streifen-Band (0..1) aus einer Größe f (Streifen je Einheit), breit = Anteil des Streifens
+float cat_band(float f, float wide) {
+	return smoothstep(1.0 - wide - 0.12, 1.0 - wide + 0.05, 0.5 + 0.5 * cos(f * 6.2832));
+}
+
+// Tigerstreifen wie in den Vorlagen: auf dem Kopf oben längs (3 Streifen, nach unten schmaler), an den Wangen quer,
+// am Rumpf quer um den Körper (oben kräftiger), an Beinen und Schwanz als Ringe.
+float cat_stripes(vec3 p) {
+	float n = value_noise(p * 55.0) - 0.5;
+	vec3 dh = p - head_center;
+	float head = 1.0 - smoothstep(head_radius * 1.02, head_radius * 1.25, length(dh * vec3(0.9, 1.0, 1.0)));
+	float tail = smoothstep(tail_start + 0.008, tail_start - 0.008, p.z) * (1.0 - head);
+	float leg = smoothstep(leg_top + 0.008, leg_top - 0.012, p.y) * (1.0 - head) * (1.0 - tail);
+	float body = (1.0 - head) * (1.0 - tail) * (1.0 - leg);
+	// Kopf oben: Streifen längs (Funktion von x), von hinten über die Stirn bis knapp über die Augen
+	float top = smoothstep(0.018, 0.04, dh.y) * smoothstep(0.034, 0.022, abs(p.x));
+	float fore = cat_band(p.x / 0.0135 + n * 0.25, 0.3 + 0.12 * smoothstep(0.02, 0.05, dh.y)) * top;
+	// Wangen: zwei Streifen quer (Funktion von y), nur an den Seiten
+	float side = smoothstep(0.04, 0.058, abs(p.x)) * smoothstep(0.03, 0.0, dh.z) * smoothstep(-0.04, -0.025, dh.y)
+		* smoothstep(0.02, 0.008, dh.y);
+	float cheek = cat_band(dh.y / 0.012 + n * 0.3, 0.3) * side;
+	float h = max(fore, cheek);
+	// Rumpf: quer um den Körper (Funktion von z, leicht gebogen), oben kräftiger
+	float b = cat_band(p.z / 0.03 + 0.25 * abs(p.x) / 0.03 + n * 0.6, 0.32) * (0.45 + 0.55 * smoothstep(0.09, 0.15, p.y));
+	float l = cat_band(p.y / 0.022 + n * 0.4, 0.3) * 0.85;
+	float t = cat_band(p.z / 0.03 + n * 0.3, 0.4);
+	return h * head + b * body + l * leg + t * tail;
+}
+
+// Augen, Mund und Wangenröte aufs Fell malen; gloss = wie glänzend (Augen)
+vec3 cat_face(vec3 p, vec3 col, float px, inout float gloss) {
+	float side = p.x < 0.0 ? -1.0 : 1.0;
+	vec3 q = vec3(abs(p.x), p.y, p.z);
+	vec3 d = q - eye_center;
+	vec3 nrm = normalize(cross(eye_right, eye_up));
+	if (abs(dot(d, nrm)) < 0.02) {
+		vec2 e = vec2(dot(d, normalize(eye_right)) / eye_size.x, dot(d, normalize(eye_up)) / eye_size.y);
+		float r = length(e);
+		if (r < 1.6) {
+			float aa = clamp(length(fwidth(e)) * 0.75, 0.02, 0.6);
+			// Lider: offen zwischen lower und upper; zu = beide auf der Linie c (blink ∪, happy ∩)
+			float k = clamp(max(eye_blink, eye_happy), 0.0, 1.0);
+			float hw = eye_happy / (eye_blink + eye_happy + 1e-4);
+			float c = mix(-0.32 + 0.38 * e.x * e.x, 0.12 - 0.5 * e.x * e.x, hw);
+			float upper = mix(1.25, c, k);
+			float lower = mix(-1.25, c, k);
+			float open = smoothstep(lower - aa, lower + aa, e.y) * (1.0 - smoothstep(upper - aa, upper + aa, e.y));
+			float inside = cat_inside(r, 1.0, aa);
+			// Iris (unten heller), große Pupille, dunkler Rand (oben breiter = Oberlid), Glanzpunkte
+			vec3 iris = mix(eye_color.rgb * 0.5, eye_color.rgb * 1.12, smoothstep(0.35, -0.85, e.y));
+			vec3 eye = mix(iris, pupil_color.rgb, cat_inside(length(e - vec2(0.0, 0.08)), 0.63, aa));
+			eye = mix(eye, line_color.rgb, smoothstep(0.85 - aa, 0.85 + aa, r + 0.08 * smoothstep(0.0, 0.8, e.y)));
+			vec2 ew = vec2(e.x * side, e.y);   // in der Welt: Glanz bei beiden Augen auf derselben Seite
+			float g1 = cat_inside(length((ew - vec2(-0.3, 0.36)) * vec2(1.0, 1.15)), 0.27, aa);
+			float g2 = cat_inside(length(ew - vec2(0.3, -0.38)), 0.12, aa);
+			eye = mix(eye, vec3(0.98, 0.97, 0.95), max(g1, g2 * 0.85));
+			float shown = inside * open;
+			col = mix(col, eye, shown);
+			gloss = max(gloss, shown);
+			// Lidstrich an der Lidkante (beim Schließen), nur über dem Auge
+			float lid = cat_inside(abs(e.y - upper), 0.13, aa) * cat_inside(abs(e.x), 0.98, aa)
+				* smoothstep(0.03, 0.2, k) * step(r, 1.3);
+			col = mix(col, line_color.rgb, lid);
+		}
+	}
+	// Rosa Innenohr: das Ohr-Dreieck, nach innen versetzt und abgerundet, nur auf der Vorderseite (Mulde)
+	{
+		vec3 de = q - ear_origin;
+		vec2 e = vec2(dot(de, ear_e1), dot(de, ear_e2));
+		float w = dot(de, ear_n);
+		if (abs(w) < 0.02 && e.y > -0.01 && e.y < ear_tip.y + 0.01) {
+			float d = cat_triangle(e, vec2(0.0), ear_out, ear_tip);
+			float h = e.y / ear_tip.y;
+			float inner = cat_inside(d, -0.0052, max(px, 0.0007)) * smoothstep(0.04, 0.12, h) * smoothstep(-0.005, -0.001, w);
+			vec3 pink = mix(ear_color.rgb, ear_color.rgb * vec3(0.9, 0.78, 0.8), cat_inside(d, -0.012, 0.004));
+			col = mix(col, pink, inner);
+		}
+	}
+	// Wangenröte: weich, schräg unter den Augen
+	vec3 bc = eye_center + vec3(0.012, -0.022, -0.008);
+	float bl = 1.0 - smoothstep(0.004, 0.014, length((q - bc) * vec3(1.0, 1.4, 1.0)));
+	col = mix(col, col * blush_color.rgb, bl * blush);
+	// Mund: „w“ (je Seite ein Bogen nach unten) und ein kurzer Strich hinauf zur Nase
+	vec3 dm = p - mouth_center;
+	if (abs(dm.x) < mouth_size.x * 1.4 && abs(dm.y) < 0.014 && dm.z > -0.012) {
+		float X = abs(dm.x) / mouth_size.x;
+		float arc = -mouth_size.y * (1.0 - pow((X - 0.5) / 0.5, 2.0));
+		float w = 0.0008;
+		float dist = abs(dm.y - arc) + max(0.0, abs(dm.x) - mouth_size.x);
+		float line = cat_inside(dist, w, px) * clamp(w * 2.0 / px, 0.0, 1.0);
+		float stem = cat_inside(abs(dm.x), w * 0.9, px) * step(0.0, dm.y) * cat_inside(dm.y, 0.006, px)
+			* clamp(w * 2.0 / px, 0.0, 1.0);
+		col = mix(col, line_color.rgb, max(line, stem));
+	}
+	return col;
+}
+#endif
+
 void fragment() {
 	vec3 p = model_pos;
 	vec3 col = base_color.rgb;
@@ -326,10 +477,13 @@ void fragment() {
 		col = s > 0.5 ? second_color.rgb : base_color.rgb;
 	}
 #ifdef REST_POSITION
+	float light_fur = 0.0;
+	float gloss = 0.0;
 	{
 		// Glatter Übergang zwischen den Farben (Brust, Kappe; Taubenhals schillernd)
 		float m = animal_mask;
 		float w2 = smoothstep(mask_from, mask_from + mask_soft, m);
+		light_fur = w2;
 		float w3 = smoothstep(mask_from, mask_from + mask_soft, -m);
 		vec3 third = third_color.rgb;
 		if (mask_shimmer > 0.0) {
@@ -340,13 +494,22 @@ void fragment() {
 		col = mix(col, third, w3);
 	}
 	if (tabby > 0.0) {
+#ifdef CAT_FACE
+		// Katze: Streifen wie in den Vorlagen, nie auf dem hellen Fell (Latz, Schnauze, Pfoten)
+		float st = clamp(cat_stripes(p), 0.0, 1.0) * (1.0 - light_fur);
+		col = mix(col, col * tabby_color.rgb, st * tabby * detail_fade(px, tabby_scale));
+#else
 		// Streifen quer zum Körper (Rumpf: entlang z, Beine und Schwanz: entlang y), unruhig wie gemalt,
 		// zum Bauch hin blasser
 		float f = p.z * tabby_scale + p.y * tabby_scale * 0.45 + 0.9 * value_noise(p * 7.0) + 0.35 * abs(p.x) * tabby_scale;
 		float band = smoothstep(0.62, 0.8, 0.5 + 0.5 * sin(f * 6.2832));
 		float back = smoothstep(0.1, 0.24, p.y) * 0.7 + 0.3;
 		col = mix(col, col * tabby_color.rgb, band * tabby * back * detail_fade(px, tabby_scale));
+#endif
 	}
+#ifdef CAT_FACE
+	col = cat_face(p, col, px, gloss);
+#endif
 #endif
 	bool masonry = grain == 3 || grain == 8;
 	if (masonry) {
@@ -452,7 +615,11 @@ void fragment() {
 		NORMAL = normalize(NORMAL - g * bump_strength * 0.02);
 	}
 	ALBEDO = col;
+#ifdef REST_POSITION
+	ROUGHNESS = mix(rough, 0.18, gloss);
+#else
 	ROUGHNESS = rough;
+#endif
 	METALLIC = metal;
 	SPECULAR = 0.3;
 	EMISSION = emission_color.rgb * emission_energy + col * glow;

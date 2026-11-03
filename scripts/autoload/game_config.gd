@@ -878,7 +878,7 @@ var cat_meow_cooldown: float = 30.0
 ## patches = wie viel helles Fell (kleiner = mehr: 0,3 Brust, Bauch, Pfoten und Schnauze; 0,8 nur Schnauze und Kinn)
 var cat_looks: Array[Dictionary] = [
 	{"name": "Mandarine", "fur": Color(0.86, 0.52, 0.25), "fur2": Color(0.97, 0.9, 0.78), "back": Color(0.78, 0.45, 0.2),
-		"eye": Color(0.62, 0.66, 0.2), "tabby": 0.55, "tabby_color": Color(0.62, 0.45, 0.35), "patches": 0.62, "size": 1.0},
+		"eye": Color(0.72, 0.46, 0.16), "tabby": 0.55, "tabby_color": Color(0.62, 0.45, 0.35), "patches": 0.62, "size": 1.0},
 	{"name": "Nebel", "fur": Color(0.5, 0.53, 0.57), "fur2": Color(0.86, 0.86, 0.85), "back": Color(0.4, 0.42, 0.46),
 		"eye": Color(0.85, 0.66, 0.2), "tabby": 0.35, "tabby_color": Color(0.62, 0.63, 0.66), "patches": 0.78, "size": 1.05},
 	{"name": "Socke", "fur": Color(0.13, 0.12, 0.12), "fur2": Color(0.95, 0.93, 0.88), "back": Color(0.11, 0.1, 0.1),
