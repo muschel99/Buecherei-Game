@@ -1529,6 +1529,19 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 - [x] 15. Katzenkörbchen in allen drei Stilen mit je vier Farben (Shop, Deko → „Für Katzen“); Katzen nehmen sie zuerst
 - [x] Roadmap aufgeräumt (Zählung der Testrunden als Tabelle, Wetter als Etappe 11c), Dokumentation, Notion
 
+**Nachbesserung nach den Vorlagen der Entwicklerin (zwei Bilder einer Chibi-Katze)**
+- [x] Neue Form: sehr großer runder Kopf (breit wie ein Mochi, am breitesten an den Wangen), kurze Beine, runde
+      weiße Pfoten, buschiger Schwanz, weißes Lätzchen und weiße Schnauze
+- [x] Ohren wie in den Vorlagen: breite Dreiecke mit runder Spitze, schräg aus der Kopfseite gewachsen (äußere Ecke
+      tief an der Seite, innere hoch auf der Kuppel), dicker Fellrand, rosa Mulde; weiter vorn und breiter
+- [x] Augen, Innenohren, Mund („w“), Wangenröte und Tigerstreifen (Stirn, Wangen, Rücken, Ringel an Beinen und
+      Schwanz) GEMALT wie bei den Passanten (Shader `storybook_cat`); Blinzeln/Schlafen = Lidbogen nach unten,
+      zufrieden = „^ ^“; Mandarine mit bernsteinfarbenen Augen
+- [x] Alle 20 Bewegungen an die kürzeren Beine angepasst und mit Bilderfolgen geprüft: aufrechtes Sitzen (die
+      Schulterblätter gleiten wie bei echten Katzen), Putzen mit der Pfote am Mund, Liegen wie eine Sphinx, Schlafen
+      eingerollt mittig (passt in alle drei Körbchen), kein Teil im Boden
+- [x] Nebel und Socke mit dem neuen Fellmuster geprüft, Spielzeug im Maul an der neuen Mundstelle
+
 **Entscheidungen (selbst getroffen):**
 - Weiche Körper aus Metaballs (Blender) statt einzelner Kugeln: so fließen Kopf, Hals, Rumpf und Beine ohne Nähte
   ineinander. Kleine Tiere werden zehnmal so groß gebaut und dann verkleinert (Blender rechnet Metaballs nur auf
@@ -1543,6 +1556,10 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
   sich von selbst, sobald die Katze durch ist.
 - Ohne Katzenkörbchen nimmt die Katze wie bisher Sessel/Sofa, dann Teppich.
 - Spielzeuge liegen nur während des Spielens draußen (nicht gespeichert, wie alles draußen).
+- Gemalte statt eingesetzter Augen: Wunsch der Entwicklerin („wie bei den Passanten“) – scharf in jeder Größe, ohne
+  Kanten; Lage und Größe stehen im Bau-Script (`animal_cat.face_params`), der Shader malt sie nach der Ruhehaltung.
+- Im Sitzen gleiten die Schulterblätter nach unten (Katzen haben kein Schlüsselbein): Nur so reichen die kurzen
+  Chibi-Beine bei aufrechtem Oberkörper bis auf den Boden.
 - Steht jemand der Katze im Weg und sie kommt nicht außen herum, geht sie erst ein Stück zurück und kehrt dann um
   (vorher lief sie seitlich zur Wand – genau dorthin, wo der Passant vor dem Schaufenster stand: beide warteten).
 

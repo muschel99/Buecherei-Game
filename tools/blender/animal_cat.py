@@ -242,13 +242,25 @@ def body_weights(me, bone_list):
                 continue
             dd = b - a
             t = max(0.0, min(1.0, (co - a).dot(dd) / dd.length_squared))
-            ds.append((name, (a + dd * t - co).length))
-        dmin = min(dist for _, dist in ds)
-        w = {n: 1.0 / (dist + 0.005) ** 5 for n, dist in ds if dist < dmin + 0.025}
+            ds.append((name, (a + dd * t - co).length, t))
+        dmin = min(dist for _, dist, _ in ds)
+        w = {}
+        for n, dist, t in ds:
+            if dist >= dmin + 0.032:
+                continue
+            x = 1.0 / (dist + 0.006) ** 4
+            if "_upper_" in n:
+                # Oberbein: nah am Körper wirkt es nur wenig, den Rest trägt Brust bzw. Becken – so verteilt sich das
+                # Schwingen über das ganze Oberbein (sonst knickt die Haut an Schulter und Oberschenkel ein)
+                keep = 0.3 + 0.7 * smoothstep(0.0, 0.65, t)
+                parent = "chest" if n.startswith("fl") else "hips"
+                w[parent] = w.get(parent, 0.0) + x * (1.0 - keep)
+                x *= keep
+            w[n] = w.get(n, 0.0) + x
         total = sum(w.values())
         raw.append({n: x / total for n, x in w.items()})
     nb = _neighbors(me)
-    for _ in range(4):
+    for _ in range(7):          # weich verteilt: keine Falten an Schulter und Oberschenkel beim Schwingen
         new = []
         for i, w in enumerate(raw):
             acc = dict(w)

@@ -314,8 +314,8 @@ def _sit_pose(p=None, breathe=0.0, tail_phase=0.0):
     p.r("head", ("x", SIT_HEAD))
     for s, side in (("l", 1), ("r", -1)):
         h = rest["bl_" + s]
-        p.foot("bl_" + s, h + Vector((side * 0.012, 0.008, -0.017)), ("x", -56))   # Hinterbeine leicht gespreizt
-        p.r("bl_paw_" + s, ("x", 50))          # Zehen flach auf dem Boden (Mittelfuß liegt)
+        p.foot("bl_" + s, h + Vector((side * 0.012, 0.008, -0.016)), ("x", -56))   # Hinterbeine leicht gespreizt
+        p.r("bl_paw_" + s, ("x", 66))          # Zehen flach auf dem Boden (Mittelfuß liegt)
         p.move("fl_upper_" + s, SIT_SHOULDER)
         fr = rest["fl_" + s]
         p.foot("fl_" + s, fr + Vector((0, SIT_PAW_Y, 0.0)))
@@ -336,6 +336,9 @@ WALK_STRIDE = 0.15
 GROOM_PAW = Vector((0.014, -0.102, 0.146))
 GROOM_WIPE = Vector((0.03, -0.096, 0.176))
 LIE_DROP = -0.05
+# Schlafen: so weit wird das Becken versetzt, damit die eingerollte Katze mittig liegt (gemessen: Mitte sonst bei
+# x +0,07, y +0,125)
+SLEEP_SHIFT = (-0.07, -0.125)
 
 
 def anim_sit_down():
@@ -409,19 +412,18 @@ def anim_pet():
 
 
 def _lie_pose(p=None, breathe=0.0):
-    """Liegen (wie ein Brotlaib): Bauch am Boden, Vorderpfoten untergeschlagen, Hinterbeine gefaltet."""
+    """Liegen wie eine Sphinx: Brust und Bauch am Boden, Unterarme flach nach vorn (Pfoten vorn), Hinterbeine
+    gefaltet (Mittelfuß und Zehen flach), Kopf ruhig darüber."""
     rest = rest_points()
     p = p or Pose()
     p.move("hips", (0, 0.0, LIE_DROP))
     p.r("hips", ("x", -4))
     p.r("chest", ("x", 4 + breathe))
-    p.r("neck", ("x", -6))
-    p.r("head", ("x", 12))
+    p.r("neck", ("x", 4))
     for s, side in (("l", 1), ("r", -1)):
-        p.move("fl_upper_" + s, (0, 0.0, 0.012))
-        p.foot("fl_" + s, rest["fl_" + s] + Vector((0, 0.03, 0.013)), ("x", 70))
-        p.foot("bl_" + s, rest["bl_" + s] + Vector((side * 0.012, -0.004, -0.017)), ("x", -56))
-        p.r("bl_paw_" + s, ("x", 50))
+        p.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.035, 0.001)), ("x", -40))
+        p.foot("bl_" + s, rest["bl_" + s] + Vector((side * 0.012, -0.004, -0.016)), ("x", -56))
+        p.r("bl_paw_" + s, ("x", 66))
     tail_curve(p, -16, 0, bend=-30)
     return p
 
@@ -445,14 +447,15 @@ def anim_sleep():
         # stark eingerollt: Rücken als Bogen, Kopf liegt am Schwanz, leicht auf der Seite
         # Rücken biegt sich nach links (+z dreht ein nach vorn zeigendes Glied nach links), der Schwanz ebenfalls
         # nach links (für nach hinten zeigende Glieder: −z) – Kopf und Schwanz treffen sich vorn
-        p.move("hips", (0.0, 0.0, LIE_DROP - 0.004))
+        # Mitte der eingerollten Katze genau über dem Bezugspunkt (Körbchen, Sessel): Becken entsprechend versetzt
+        p.move("hips", (SLEEP_SHIFT[0], SLEEP_SHIFT[1], LIE_DROP - 0.004))
         p.r("hips", ("y", 8), ("z", 38))
         p.r("spine1", ("z", 46))
         p.r("chest", ("z", 46), ("x", 4 + b))
-        p.r("neck", ("z", 36), ("x", 22))
-        p.r("head", ("z", 26), ("x", 26), ("y", 18))
-        p.foot("fl_l", rest["fl_l"] + Vector((-0.02, 0.035, 0.006)), ("x", 75))
-        p.foot("fl_r", rest["fl_r"] + Vector((-0.014, 0.05, 0.006)), ("x", 75))
+        p.r("neck", ("z", 36), ("x", 12))
+        p.r("head", ("z", 26), ("x", 38), ("y", 18))
+        p.foot("fl_l", rest["fl_l"] + Vector((-0.02, 0.035, 0.012)), ("x", 75))
+        p.foot("fl_r", rest["fl_r"] + Vector((-0.014, 0.05, 0.008)), ("x", 75))
         p.foot("bl_l", rest["bl_l"] + Vector((-0.007, -0.02, -0.012)), ("x", -60))
         p.foot("bl_r", rest["bl_r"] + Vector((0.02, -0.028, -0.01)), ("x", -60))
         tail_curve(p, -22, 0, bend=-60)
