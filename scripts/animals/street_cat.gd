@@ -669,7 +669,8 @@ func _update_face(delta: float) -> void:
 			want_blink = 1.0
 		_friendly -= delta
 		if _friendly > 0.0 and _friendly < 1.4:
-			want_happy = 0.85
+			# ganz zu (zufriedene Bögen): halb geschlossen wurden die Augen zu dunklen Flecken
+			want_happy = 1.0
 		elif _friendly < -6.0 and _look.length() > 5.0 and randf() < delta * 0.25:
 			_friendly = 2.0   # langsames Blinzeln zur Spielfigur
 	_blink = move_toward(_blink, want_blink, delta * (12.0 if want_blink > _blink else 6.0))

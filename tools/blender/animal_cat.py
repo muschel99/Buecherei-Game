@@ -32,7 +32,9 @@ HEAD = [Vector((0, -0.13, 0.262)), Vector((0, -0.2, 0.33))]
 HEAD_CENTER = Vector((0, -0.165, 0.302))
 TAIL = [Vector((0, 0.15, 0.213)), Vector((0, 0.205, 0.212)), Vector((0, 0.26, 0.205)), Vector((0, 0.31, 0.196)),
         Vector((0, 0.355, 0.19)), Vector((0, 0.395, 0.188))]
-EAR = (Vector((0.038, -0.148, 0.342)), Vector((0.05, -0.151, 0.384)))
+# Ohren oben auf dem Kopf, Vorderkante etwa über den Augen, ganz leicht nach hinten geneigt (entspannt); weiter
+# hinten wirkten sie wie in den Nacken gerutscht
+EAR = (Vector((0.038, -0.178, 0.336)), Vector((0.05, -0.181, 0.378)))
 
 
 def _lower(v):
@@ -183,8 +185,13 @@ def body_weights(me, bone_list):
     return out
 
 
+# Richtung vom Kopfmittelpunkt zum Auge (x seitlich, y nach vorn = -y, z hoch): z klein = Augen etwa auf halber
+# Kopfhöhe, knapp über der Nase (Chibi-Gesicht; höher wirkten sie wie unter die Ohren gerutscht)
+EYE_DIR = (0.53, -0.8, 0.08)
+
+
 def _eye_frame(tree, side):
-    d = Vector((side * 0.52, -0.78, 0.33)).normalized()
+    d = Vector((side * EYE_DIR[0], EYE_DIR[1], EYE_DIR[2])).normalized()
     hit = tree.ray_cast(HEAD_CENTER + d * 0.3, -d, 0.6)
     p, n = hit[0], hit[1]
     up = (Vector((0, 0, 1)) - n * n.z).normalized()
