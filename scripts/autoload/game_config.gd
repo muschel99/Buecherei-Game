@@ -866,6 +866,19 @@ var cat_run_speed: float = 1.9
 ## Spielzeug tragen
 var cat_seat_chance: float = 0.45
 var cat_sill_chance: float = 0.35
+## Seit Etappe 6h (Wünsche der Entwicklerin): Anteil der Besuche mit einem Gang über eine Gartenmauer (hinaufspringen,
+## oben entlang laufen, sitzen oder sonnen), mit kurzem Rennen auf dem Gehweg, mit Reiben an Laternen/Kübeln/Bänken;
+## Anteil der Pausen, in denen sich die Katze auf dem Rücken wälzt
+var cat_wall_chance: float = 0.55
+var cat_wall_speed: float = 0.32
+var cat_rub_speed: float = 0.1
+var cat_run_chance: float = 0.3
+var cat_rub_chance: float = 0.4
+var cat_roll_chance: float = 0.18
+## Treffen sich zwei Katzen näher als … m auf demselben Gehweg, beschnuppern sie sich (dann spielen sie Fangen, setzen
+## sich zusammen oder gehen nach einem Miau weiter); dieselben beiden höchstens alle … Sekunden
+var cat_meet_distance: float = 2.2
+var cat_meet_cooldown: float = 50.0
 var cat_window_chance: float = 0.5
 var cat_enter_chance: float = 0.55
 var cat_play_chance: float = 0.5

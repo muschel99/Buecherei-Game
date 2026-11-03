@@ -1170,7 +1170,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   stand_up/stretch), jump (vorher `turn` zur Landestelle – nie rückwärts; Fenster `JUMP_WINDOW`), pounce, bat,
   follow, wait_road, wait_door, leave, claim … claim_end; Straße mit Bordstein-Schritten auf Fahrbahnhöhe (`_cross`),
   Treppe Stufe für Stufe (`_stairs`), freier Gang (`_walk_along` Welle über den Gehweg), Jagd (`_try_hunt`, Vögel
-  bemerken `hunting`-Katzen erst bei 1,15 m, beim Sprung sofort), Spielzeug (`push_toy`, `_play_round`, liegen lassen
+  bemerken `hunting`-Katzen erst bei 1,15 m, beim Sprung sofort; Lauern/Anschleichen/Sprung tragen "prey" = Schwarm –
+  `CatLife.prey_gone` → `StreetCat._abort_hunt`: sind die Vögel weg, kein Sprung ins Leere, sie schaut ihnen nach),
+  seit 6h außerdem: Gartenmauern (`_collect_walls` aus spots.json „low“ in Kronenhöhe je Haus, Halt "wall": hinauf,
+  oben entlang, sitzen/sonnen, vorwärts herunter), kurzes Rennen (`_leg`), zwischen Deko und Wand hindurch (`DECO_GAP`,
+  Strecken außen herum), Reiben (`_rub_spots` beim Start ausgemessen, `_rub_arc` → Gang mit Anim „rub“/„rub_r“ +
+  Schnurren), Wälzen (Pause „roll“: hinlegen, auf den Rücken, wälzen), Begegnungen (`_try_meet`: Nase an Nase, dann
+  Fangen/zusammen sitzen/weiter), Türschwelle (`_threshold`: darüber statt hindurch), Spielzeug (`push_toy`, `_play_round`, liegen lassen
   `_leave_toy`, andere finden es), Körbchen = Marker in Gruppe `cat_spots` (Kit `cat_spot`) vor Sessel/Sofa/Teppich.
   **Türen:** Tiere in Gruppe `Door.KEEPOUT_GROUP`; `Door.in_swing`, Schließen wartet (`_close_pending`); Warteplätze
   `CatLife._wait_spot` außerhalb des Schwenkbereichs (draußen unter dem Einwurf). Gesicht `StreetCat._update_face`,

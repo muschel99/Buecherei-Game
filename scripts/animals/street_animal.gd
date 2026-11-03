@@ -9,7 +9,7 @@ extends Node3D
 
 ## Bewegungen, die nicht in Schleife laufen (alle übrigen wiederholen sich)
 const ONCE := [&"stretch", &"jump", &"sit_down", &"stand_up", &"pounce", &"jump_up", &"jump_down", &"hop_up",
-	&"step_down", &"takeoff", &"land"]
+	&"step_down", &"takeoff", &"land", &"roll"]
 
 ## Kopien der Materialien je Aussehen: "aussehen|material" -> Material
 static var _materials := {}

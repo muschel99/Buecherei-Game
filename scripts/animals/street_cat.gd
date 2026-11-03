@@ -20,6 +20,7 @@ signal petted(by: Node3D)
 const WALK_ANIM_SPEED := 0.3
 const RUN_ANIM_SPEED := 1.13
 const STALK_ANIM_SPEED := 0.14
+const RUB_ANIM_SPEED := 0.095
 ## Wann sich die Katze bei Sprüngen bewegt (Anteil der Bewegung): [Absprung, Landung]
 const JUMP_WINDOW := {"jump_up": Vector2(0.35, 0.7), "jump_down": Vector2(0.3, 0.66), "hop_up": Vector2(0.3, 0.78),
 	"step_down": Vector2(0.2, 0.85), "pounce": Vector2(0.4, 0.75)}
@@ -58,6 +59,7 @@ var _meow_wait := 0.0
 var _chatter_wait := 0.0
 var _greeted := false
 var _rustle_wait := 0.0
+var _prey_check := 0.0
 var _pet_left := 0.0
 var _pet_face := Vector3.ZERO
 var _toy: Node3D
@@ -283,6 +285,15 @@ func step(delta: float) -> void:
 		_actions.push_front({"type": "jump", "to": floor})
 		_actions.push_front({"type": "turn", "face": global_basis.z})
 		_next()
+	if _action.has("prey") and get_action_type() != "pounce":
+		# Lauern/Anschleichen: Sind die Vögel weg, nicht ins Leere springen
+		_prey_check -= delta
+		if _prey_check <= 0.0:
+			_prey_check = 0.25
+			if life.prey_gone(_action):
+				_abort_hunt()
+				_next()
+				return
 	match get_action_type():
 		"walk":
 			_step_walk(delta)
@@ -352,9 +363,22 @@ func _need_stand() -> bool:
 	return false
 
 
+## Jagd abbrechen (die Vögel sind weg): alles bis zum Ende der Jagd auslassen – danach setzt sich die Katze und
+## schaut ihnen nach.
+func _abort_hunt() -> void:
+	hunting = false
+	while not _actions.is_empty():
+		var a: Dictionary = _actions.pop_front()
+		if a.get("type") == "hunting" and not bool(a.get("value", true)):
+			break
+
+
 ## Schritt beginnen; false = sofort erledigt (kleine Schritte ohne Dauer).
 func _start_action() -> bool:
 	var type := String(_action.get("type", ""))
+	if _action.has("prey") and life and life.prey_gone(_action):
+		_abort_hunt()
+		return false
 	if type in ["walk", "jump", "pounce", "follow"] and _need_stand():
 		type = "anim"
 	_t = float(_action.get("time", 0.0))
@@ -500,6 +524,17 @@ func _start_anim() -> bool:
 		posture = "sit"
 		_t = maxf(_t, anim_length(&"sit_down"))
 		return true
+	if want == &"roll":
+		# Wälzen: erst hinlegen (aus dem Stand über das Hinsetzen), dann auf den Rücken rollen; danach liegt sie
+		if posture != "lie":
+			_actions.push_front(_action)
+			_action = {"type": "anim", "anim": "lie", "time": 1.2}
+			return _start_anim()
+		_t = maxf(_t, anim_length(&"roll"))
+		play(&"roll", 0.4)
+		if anim:
+			anim.seek(0.0, true)
+		return true
 	if want in [&"lie", &"sleep"]:
 		if posture == "stand":
 			_action["then"] = String(want)
@@ -526,6 +561,8 @@ func _start_anim() -> bool:
 
 
 func _walk_anim() -> StringName:
+	if _action.has("anim"):
+		return StringName(_action.anim)          # z. B. „rub“: reibend um eine Laterne
 	if _action.get("stalk", false):
 		return &"stalk"
 	return &"run" if _action.get("run", false) else &"walk"
@@ -535,6 +572,8 @@ func _anim_speed() -> float:
 	var speed := float(_action.get("speed", GameConfig.cat_walk_speed))
 	if _action.get("stalk", false):
 		return speed / STALK_ANIM_SPEED
+	if String(_action.get("anim", "")).begins_with("rub"):
+		return speed / RUB_ANIM_SPEED
 	return speed / (RUN_ANIM_SPEED if _action.get("run", false) else WALK_ANIM_SPEED)
 
 

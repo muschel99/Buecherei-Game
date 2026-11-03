@@ -332,6 +332,10 @@ SIT_PAW_Y = 0.03
 # Schrittlänge beim Gehen (m; das Spiel rechnet daraus das Tempo der Bewegung: StreetCat.WALK_ANIM_SPEED), Absenken
 # des Beckens beim Liegen
 WALK_STRIDE = 0.15
+# Reiben: kurze Schritte (StreetCat.RUB_ANIM_SPEED = Schrittlänge / (Standanteil × Dauer))
+RUB_STRIDE = 0.08
+# Wälzen: so weit wird die Katze auf der Seite angehoben (m; dort ist sie breiter als hoch)
+ROLL_LIFT = 0.034
 # Putzen: Lage des Handgelenks vor dem Mund bzw. an der Wange (Armatur-Raum, im Sitzen mit geneigtem Kopf)
 GROOM_PAW = Vector((0.014, -0.102, 0.146))
 GROOM_WIPE = Vector((0.03, -0.096, 0.176))
@@ -631,11 +635,91 @@ def anim_bat():
     return 20, poses, True
 
 
+def anim_rub(side=1.0):
+    """Reiben (seit 6h): langsamer Gang im Bogen um ein Hindernis, das links liegt (side = −1: rechts, „rub_r“) – die
+    Flanke lehnt daran, der Körper biegt sich herum, Wange voran (Kopf zur Seite gedreht und geneigt), Schwanz steil
+    mit Haken an der Spitze."""
+    rest = rest_points()
+    m = side
+    n = 36
+    poses = {}
+    offsets = {"bl_l": 0.0, "fl_l": 0.25, "bl_r": 0.5, "fl_r": 0.75}
+    for f in range(n):
+        t = f / n
+        w = math.sin(t * math.tau)
+        p = Pose()
+        gait_feet(p, t, RUB_STRIDE, 0.014, offsets, 0.7, rest)
+        p.r("hips", ("y", 7 * m), ("z", 3 * w))
+        p.r("spine1", ("z", 5 * m))
+        p.r("chest", ("y", 5 * m), ("z", 7 * m))
+        p.r("neck", ("z", 12 * m), ("x", 4))
+        p.r("head", ("z", (16 + 6 * math.sin(t * math.tau * 2)) * m), ("y", -16 * m), ("x", 6))
+        tail_curve(p, 72, 14, sway=5, phase=t * math.tau)
+        p.r("tail5", ("x", 34))
+        p.r("ear_l" if m > 0 else "ear_r", ("y", -10 * m))
+        p.r("ear_r" if m > 0 else "ear_l", ("y", 6 * m))
+        poses[f] = p
+    return n, poses, True
+
+
+def _rolled(point, angle, axis_z):
+    """Punkt um die Längsachse (y, durch die Höhe axis_z) gedreht – Pfoten-Ziele folgen beim Wälzen dem Körper."""
+    from mathutils import Matrix
+    c = Vector((0.0, point.y, axis_z))
+    return c + Matrix.Rotation(math.radians(angle), 3, "Y") @ (point - c)
+
+
+def _roll_pose(angle, wiggle=0.0, paw=0.0):
+    """Wälzen: angle = wie weit auf den Rücken gerollt (0 = Bauch, 90 = Seite, 130 = Rücken, leicht schräg); der Kopf
+    rollt nur ein Drittel mit (liegt auf der Seite, sonst gingen die Ohren in den Boden), Beine angewinkelt nach oben
+    und außen, mit dem Körper gedreht. Auf der Seite ist die Katze breiter als hoch: dort ein Stück angehoben."""
+    rest = rest_points()
+    k = min(1.0, angle / 130.0)
+    lift = ROLL_LIFT * math.sin(math.radians(min(angle, 180.0)))
+    p = Pose()
+    p.move("hips", (0, 0.0, LIE_DROP + lift))
+    axis_z = AC.SPINE[0].z + LIE_DROP + lift
+    p.r("hips", ("x", -4), ("y", angle))
+    p.r("spine1", ("z", 9 * wiggle))
+    p.r("chest", ("z", -7 * wiggle), ("x", 4))
+    p.r("neck", ("y", -0.48 * angle), ("x", 6 * k))
+    p.r("head", ("y", -0.2 * angle + 6 * wiggle), ("x", 4))
+    for s, side in (("l", 1), ("r", -1)):
+        lie_f = rest["fl_" + s] + Vector((0, -0.035, 0.001))
+        fold_f = rest["fl_" + s] + Vector((side * 0.012, 0.008, 0.05 + 0.012 * paw * side))
+        f = lie_f.lerp(fold_f, k)
+        p.foot("fl_" + s, _rolled(f, angle, axis_z), ("x", -40 + 90 * k), ("y", angle))
+        lie_h = rest["bl_" + s] + Vector((side * 0.012, -0.004, -0.016))
+        fold_h = rest["bl_" + s] + Vector((side * 0.03, -0.02, 0.055 - 0.012 * paw * side))
+        h = lie_h.lerp(fold_h, k)
+        p.foot("bl_" + s, _rolled(h, angle, axis_z), ("x", -56 + 40 * k), ("y", angle))
+        p.r("bl_paw_" + s, ("x", 66 * (1.0 - k)))
+    tail_curve(p, -18 + 10 * k, 0, bend=-30 * (1.0 - k) + 18 * wiggle)
+    p.r("ear_l", ("y", -14 * k))
+    p.r("ear_r", ("y", 14 * k))
+    return p
+
+
+def anim_roll():
+    """Wälzen (seit 6h): aus dem Liegen auf die Seite, auf den Rücken (Pfoten angewinkelt in der Luft), hin und her
+    wälzen, zurück auf die Seite und auf den Bauch."""
+    poses = {0: _roll_pose(0), 12: _roll_pose(0), 26: _roll_pose(80), 40: _roll_pose(125)}
+    for i, f in enumerate(range(52, 104, 12)):
+        sign = 1.0 if i % 2 == 0 else -1.0
+        poses[f] = _roll_pose(125 + 14 * sign, wiggle=sign, paw=sign)
+    poses[110] = _roll_pose(125)
+    poses[124] = _roll_pose(80)
+    poses[138] = _roll_pose(0)
+    poses[150] = _roll_pose(0)
+    return 150, poses, False
+
+
 ANIMS = [("idle", anim_idle), ("walk", anim_walk), ("run", anim_run), ("sit_down", anim_sit_down),
          ("stand_up", anim_stand_up), ("sit", anim_sit), ("groom", anim_groom), ("pet", anim_pet), ("lie", anim_lie),
          ("sleep", anim_sleep), ("stretch", anim_stretch), ("crouch", anim_crouch), ("stalk", anim_stalk),
          ("pounce", anim_pounce), ("jump_up", anim_jump_up), ("jump_down", anim_jump_down), ("hop_up", anim_hop_up),
-         ("step_down", anim_step_down), ("sniff", anim_sniff), ("bat", anim_bat)]
+         ("step_down", anim_step_down), ("sniff", anim_sniff), ("bat", anim_bat), ("rub", anim_rub), ("rub_r", lambda: anim_rub(-1.0)),
+         ("roll", anim_roll)]
 
 
 def build_all(arm, only=None):

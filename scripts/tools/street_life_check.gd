@@ -313,6 +313,8 @@ func _print_report() -> void:
 		var c := _life.cats
 		print("Katzen: Besuche %d, in der Bücherei %d, gejagt %d, gespielt %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, festgefahren %d" % [
 			c.visits, c.entered, c.hunts, c.plays, c.visible_spawns, c.visible_exits, _cat_stuck.size()])
+		print("Katzen (seit 6h): Gartenmauern %d (bekannt: %d), gerieben %d, Begegnungen %d" % [c.wall_walks, c.get_walls().size(),
+			c.rubs, c.meetings])
 		for line in _cat_stuck:
 			print("  ", line)
 	print("=== Bericht Straßenleben ===")

@@ -1290,7 +1290,8 @@ Einzelbilder jeder Bewegung in `screenshots/blender/animals/` (zum Prüfen, ob s
    - Vogel/Taube: `idle`, `peck`, `hop` (Singvogel), `walk` (Taube), `fly`, `glide`, `takeoff`, `land`
    - Katze: `idle`, `walk`, `run`, `sit_down` (hinsetzen, einmal), `stand_up` (aufstehen, einmal), `sit`, `groom`,
      `pet`, `lie`, `sleep`, `stretch` (einmal), `crouch` (lauern), `stalk` (anschleichen), `pounce` (Sprung, einmal),
-     `jump_up`, `jump_down`, `hop_up`, `step_down` (einmal), `sniff`, `bat` (anstupsen)
+     `jump_up`, `jump_down`, `hop_up`, `step_down` (einmal), `sniff`, `bat` (anstupsen); seit 6h `rub` und `rub_r`
+     (reibend um einen Gegenstand links bzw. rechts, Schleife) und `roll` (aus dem Liegen auf den Rücken wälzen, einmal)
    Wichtig: In **jeder** Bewegung alle Knochen mit einem Schlüsselbild versehen – sonst behält ein Knochen die
    Haltung der vorigen Bewegung. Sprünge bewegen sich nicht selbst vom Fleck – das Spiel trägt die Katze in einem
    Bogen (Zeitfenster `StreetCat.JUMP_WINDOW`: wann sie abspringt und landet).
