@@ -16,7 +16,9 @@ extends StreetAnimal
 signal finished(cat: StreetCat)
 signal petted(by: Node3D)
 
-## Natürliches Tempo der Bewegungen (m/s bei speed_scale 1; aus den Schrittlängen in animal_cat_anim.py)
+## Natürliches Tempo der Bewegungen (m/s bei speed_scale 1; aus den Schrittlängen in animal_cat_anim.py) – für die
+## junge Katze; die erwachsene (adult) macht längere Schritte: alles × ADULT_STRIDE
+const ADULT_STRIDE := 1.5
 const WALK_ANIM_SPEED := 0.3
 const RUN_ANIM_SPEED := 1.13
 const STALK_ANIM_SPEED := 0.14
@@ -24,8 +26,12 @@ const RUB_ANIM_SPEED := 0.095
 ## Wann sich die Katze bei Sprüngen bewegt (Anteil der Bewegung): [Absprung, Landung]
 const JUMP_WINDOW := {"jump_up": Vector2(0.35, 0.7), "jump_down": Vector2(0.3, 0.66), "hop_up": Vector2(0.3, 0.78),
 	"step_down": Vector2(0.2, 0.85), "pounce": Vector2(0.4, 0.75)}
-## Mundstelle in der Ruhehaltung (unter dem Schnäuzchen; Spielzeug im Maul)
+## Mundstelle in der Ruhehaltung (unter dem Schnäuzchen; Spielzeug im Maul) – junge bzw. erwachsene Katze
 const MOUTH := Vector3(0.0, 0.166, 0.19)
+const MOUTH_ADULT := Vector3(0.0, 0.222, 0.211)
+
+## Erwachsene Katze (cat_adult.tscn): längere Schritte, eigene Mundstelle, Treppe Stufe für Stufe, keine Körbchen
+@export var adult := false
 
 ## Prüfwerkzeug: jeden Schritt ausgeben
 static var debug := false
@@ -223,7 +229,7 @@ func give_toy(toy: Node3D) -> void:
 	_toy = toy
 	if skeleton == null:
 		add_child(toy)
-		toy.position = MOUTH
+		toy.position = MOUTH_ADULT if adult else MOUTH
 		return
 	if _toy_holder == null:
 		var attach := BoneAttachment3D.new()
@@ -233,7 +239,7 @@ func give_toy(toy: Node3D) -> void:
 		attach.add_child(_toy_holder)
 		var bone := skeleton.find_bone("head")
 		if bone >= 0:
-			_toy_holder.transform = skeleton.get_bone_global_rest(bone).affine_inverse() * Transform3D(Basis(), MOUTH)
+			_toy_holder.transform = skeleton.get_bone_global_rest(bone).affine_inverse() * Transform3D(Basis(), MOUTH_ADULT if adult else MOUTH)
 	if toy.get_parent():
 		toy.get_parent().remove_child(toy)
 	_toy_holder.add_child(toy)
@@ -444,7 +450,7 @@ func _start_action() -> bool:
 			return true
 		"follow":
 			_t = float(_action.get("time", 6.0))
-			play(&"run", 0.2, GameConfig.cat_run_speed / RUN_ANIM_SPEED)
+			play(&"run", 0.2, GameConfig.cat_run_speed / (RUN_ANIM_SPEED * _stride()))
 			return true
 		"bat":
 			_t = 0.0
@@ -571,10 +577,15 @@ func _walk_anim() -> StringName:
 func _anim_speed() -> float:
 	var speed := float(_action.get("speed", GameConfig.cat_walk_speed))
 	if _action.get("stalk", false):
-		return speed / STALK_ANIM_SPEED
+		return speed / (STALK_ANIM_SPEED * _stride())
 	if String(_action.get("anim", "")).begins_with("rub"):
-		return speed / RUB_ANIM_SPEED
-	return speed / (RUN_ANIM_SPEED if _action.get("run", false) else WALK_ANIM_SPEED)
+		return speed / (RUB_ANIM_SPEED * _stride())
+	return speed / ((RUN_ANIM_SPEED if _action.get("run", false) else WALK_ANIM_SPEED) * _stride())
+
+
+## Schrittlänge gegenüber der jungen Katze (Erwachsene: längere Beine)
+func _stride() -> float:
+	return ADULT_STRIDE if adult else 1.0
 
 
 ## Welche Sprung-Bewegung: nach oben hoch springen bzw. hüpfen, nach unten herunterspringen bzw. absteigen.
@@ -670,7 +681,7 @@ func _step_follow(delta: float) -> void:
 		var speed := GameConfig.cat_run_speed * clampf((dist - keep) / 0.8, 0.35, 1.15)
 		global_position += to / dist * minf(speed * delta, dist - keep)
 		global_position.y = other.global_position.y if other.on_ground() else global_position.y
-		play(&"run" if speed > 1.0 else &"walk", 0.2, speed / (RUN_ANIM_SPEED if speed > 1.0 else WALK_ANIM_SPEED))
+		play(&"run" if speed > 1.0 else &"walk", 0.2, speed / ((RUN_ANIM_SPEED if speed > 1.0 else WALK_ANIM_SPEED) * _stride()))
 		velocity2 = Vector2(to.x, to.z).normalized() * speed
 	else:
 		play(&"crouch" if other.get_action_type() in ["anim", "bat"] else &"idle", 0.3)
@@ -748,7 +759,7 @@ func _update_face(delta: float) -> void:
 	if _face == null and mesh and mesh.mesh:
 		for i in mesh.mesh.get_surface_count():
 			var mat := mesh.get_surface_override_material(i) as ShaderMaterial
-			if mat and mat.resource_name == "Katze Fell":
+			if mat and mat.resource_name in ["Katze Fell", "Katze Fell groß"]:
 				_face = mat
 	if _face:
 		_face.set_shader_parameter(&"eye_blink", _blink * (1.0 - _happy))

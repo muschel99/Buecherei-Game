@@ -1153,7 +1153,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Entwicklerin: großer runder Kopf, schräge Dreieck-Ohren aus Metaballs (`EAR_IN/OUT/TIP`), kurze Beine, runde Pfoten;
   Gewichte nach Abstand zu den Knochen + Glätten; Augen, Innenohren, Mund, Wangen, Streifen GEMALT vom Shader
   `storybook_cat.gdshader` (`CAT_FACE` in storybook.gdshaderinc, Lage aus `face_params` → Material „Katze Fell“),
-  Blinzeln über die Material-Werte `eye_blink`/`eye_happy`; im Sitzen gleiten die Schulterblätter (`SIT_SHOULDER`)) und `animal_cat_anim.py` (Beine mit IK:
+  Blinzeln über die Material-Werte `eye_blink`/`eye_happy`; im Sitzen gleiten die Schulterblätter (`SIT_SHOULDER`);
+  seit 6h zwei Profile: junge Katze „kitten“ (cat.glb) und erwachsene „adult“ (`use_profile`, Umformung `T`/`T_inv`:
+  Beine ×1,5, Rumpf ×1,3, Schwanz ×1,45, Kopf ×0,9; cat_adult.glb, eigenes Fell-Material „Katze Fell groß“, Szene
+  cat_adult.tscn mit `StreetCat.adult` = längere Schritte `ADULT_STRIDE`, Mundstelle `MOUTH_ADULT`, Treppe Stufe für
+  Stufe (`_stairs(..., climb)`), keine Körbchen); Bewegungen: Verschiebungen wachsen mit `AC.P["leg"]`, Werte je
+  Profil in `SIT`, `GROOM`, `SLEEP_SHIFT`, `LIE_FRONT_Z`, `ROLL_LIFT` (Pose `absolute=True` = nicht mitwachsen);
+  Aussehen mit `"adult": true` in `GameConfig.cat_looks`) und `animal_cat_anim.py` (Beine mit IK:
   Ziel-Knochen ik_fl/ik_bl + Pol, Pose-Bausteine `Pose`, `gait_feet`, `tail_curve`; danach mit `bake_action` in
   einfache Drehungen gebacken, IK entfernt). **In jeder Bewegung alle Knochen schlüsseln.** Prüfen: `-- cat --seq=<bew.>
   [--seqview=seite,vorn,oben]` = Einzelbilder je Bewegung (immer ansehen und nachbessern). Ruhehaltung als UV/UV2 →

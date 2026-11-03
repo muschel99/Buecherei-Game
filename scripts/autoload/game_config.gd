@@ -789,6 +789,8 @@ var animals_enabled: bool = true
 var bird_scene: String = "res://scenes/animals/bird.tscn"
 var pigeon_scene: String = "res://scenes/animals/pigeon.tscn"
 var cat_scene: String = "res://scenes/animals/cat.tscn"
+## Erwachsene Katze (seit 6h, für Aussehen mit "adult": true)
+var cat_adult_scene: String = "res://scenes/animals/cat_adult.tscn"
 var birdhouse_scene: String = "res://assets/models/animals/birdhouse.glb"
 ## Vögel: höchstens so viele gleichzeitig, kleine Schwärme (Anzahl je Schwarm von–bis), so oft kommt ein
 ## neuer Schwarm (Sekunden von–bis), so lange bleiben sie sitzen, bevor sie weiterfliegen
@@ -855,7 +857,7 @@ var pigeon_looks: Array[Dictionary] = [
 		"shimmer": Color(0.55, 0.42, 0.5), "legs": Color(0.76, 0.38, 0.36)},
 ]
 ## Katzen: höchstens so viele gleichzeitig, so oft kommt eine vorbei (s von–bis; die erste nach …)
-var cat_count: int = 2
+var cat_count: int = 3
 var cat_interval: Vector2 = Vector2(70.0, 170.0)
 var cat_first_delay: Vector2 = Vector2(15.0, 45.0)
 ## Tempo (m/s): gehen, rennen (beim Fangenspielen und über die Straße)
@@ -871,6 +873,8 @@ var cat_sill_chance: float = 0.35
 ## Anteil der Pausen, in denen sich die Katze auf dem Rücken wälzt
 var cat_wall_chance: float = 0.55
 var cat_wall_speed: float = 0.32
+## Große Katzen auf der Treppe (Stufe für Stufe)
+var cat_stair_speed: float = 0.3
 var cat_rub_speed: float = 0.1
 var cat_run_chance: float = 0.3
 var cat_rub_chance: float = 0.4
@@ -917,6 +921,16 @@ var cat_looks: Array[Dictionary] = [
 		"eye": Color(0.85, 0.66, 0.2), "tabby": 0.35, "tabby_color": Color(0.62, 0.63, 0.66), "patches": 0.78, "size": 1.05},
 	{"name": "Socke", "fur": Color(0.13, 0.12, 0.12), "fur2": Color(0.95, 0.93, 0.88), "back": Color(0.11, 0.1, 0.1),
 		"eye": Color(0.45, 0.66, 0.3), "tabby": 0.0, "tabby_color": Color(1, 1, 1), "patches": 0.3, "size": 0.94},
+	# Erwachsene Katzen (seit Etappe 6h, Modell cat_adult): größer, längere Beine – "adult": true
+	{"name": "Brummel", "fur": Color(0.47, 0.44, 0.4), "fur2": Color(0.9, 0.88, 0.84), "back": Color(0.37, 0.34, 0.31),
+		"eye": Color(0.8, 0.63, 0.2), "tabby": 0.55, "tabby_color": Color(0.55, 0.5, 0.46), "patches": 0.5, "size": 1.08,
+		"adult": true},
+	{"name": "Karamell", "fur": Color(0.92, 0.74, 0.52), "fur2": Color(0.98, 0.95, 0.9), "back": Color(0.85, 0.64, 0.42),
+		"eye": Color(0.5, 0.68, 0.32), "tabby": 0.3, "tabby_color": Color(0.8, 0.66, 0.56), "patches": 0.55, "size": 1.0,
+		"adult": true},
+	{"name": "Schoko", "fur": Color(0.42, 0.3, 0.22), "fur2": Color(0.88, 0.82, 0.74), "back": Color(0.33, 0.23, 0.17),
+		"eye": Color(0.86, 0.7, 0.26), "tabby": 0.5, "tabby_color": Color(0.6, 0.5, 0.45), "patches": 0.7, "size": 1.03,
+		"adult": true},
 ]
 
 

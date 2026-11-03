@@ -383,30 +383,36 @@ def build_bird(kind="bird"):
 # Katze (etwa 45 cm lang, großer runder Kopf wie die Chibi-Figuren)
 # ---------------------------------------------------------------------------------------------
 
-def cat_materials():
+def cat_materials(adult=False):
     """Materialien der Katze. Das Spiel färbt sie je Katze (GameConfig.cat_looks): Fell = Grundfarbe, helles
     Fell (Maske > 0, ab mask_from) und dunkler Rücken (Maske < 0) im selben Material, Tigerstreifen im Shader."""
     return {
-        "fur": SC.make_material("Katze Fell", (0.85, 0.5, 0.24), grain="smooth", rough=0.95, vary=0.07),
+        # eigenes Fell-Material für die Erwachsene: der Shader malt das Gesicht an einer anderen Stelle
+        "fur": SC.make_material("Katze Fell groß" if adult else "Katze Fell", (0.85, 0.5, 0.24), grain="smooth", rough=0.95,
+                                vary=0.07),
         "nose": SC.make_material("Katze Nase", (0.86, 0.5, 0.52), grain="smooth", rough=0.6, vary=0.03),
     }
 
 
-def build_cat(only=None):
-    """Katze im weichen Stil (animal_cat.py) mit eigenem Skelett und Bewegungen (animal_cat_anim.py)."""
-    M = cat_materials()
-    coll = SB.collection("cat")
+def build_cat(only=None, adult=False):
+    """Katze im weichen Stil (animal_cat.py) mit eigenem Skelett und Bewegungen (animal_cat_anim.py); adult = die
+    größere, erwachsene Katze (Profil „adult“, Datei cat_adult.glb)."""
+    ACAT.use_profile("adult" if adult else "kitten")
+    M = cat_materials(adult)
+    name = "cat_adult" if adult else "cat"
+    coll = SB.collection(name)
     parts, bones, face = ACAT.build(M, coll)
-    a = assemble("cat", parts, bones, coll)
+    a = assemble(name, parts, bones, coll)
+    a.fur_name = M["fur"].name
     a.face = face
     ACA.build_all(a.arm, only)
     return a, M
 
 
-def cat_face_material(face):
-    """Material „Katze Fell“ auf den Katzen-Shader umstellen (malt Augen, Mund, Wangen, Streifen) und die Lage des
-    Gesichts eintragen (aus animal_cat.face_params)."""
-    path = os.path.join(SC.GAME_MAT_DIR, SC.slug("Katze Fell") + ".tres")
+def cat_face_material(face, fur_name="Katze Fell"):
+    """Fell-Material auf den Katzen-Shader umstellen (malt Augen, Mund, Wangen, Streifen) und die Lage des Gesichts
+    eintragen (aus animal_cat.face_params)."""
+    path = os.path.join(SC.GAME_MAT_DIR, SC.slug(fur_name) + ".tres")
     with open(path) as f:
         text = f.read()
     text = text.replace("res://assets/shaders/storybook_animal.gdshader", "res://assets/shaders/storybook_cat.gdshader")
@@ -664,7 +670,7 @@ def export(a, M):
     mapping = SC.write_game_materials(only=names)
     animal_shader(names)
     if getattr(a, "face", None):
-        cat_face_material(a.face)
+        cat_face_material(a.face, getattr(a, "fur_name", "Katze Fell"))
     SC.write_import_settings(mapping, path)
     os.makedirs(TEMPLATES, exist_ok=True)
     gd = os.path.join(os.path.dirname(TEMPLATES), ".gdignore")
@@ -748,7 +754,7 @@ LOOPING = {"idle", "walk", "run", "sit", "groom", "pet", "lie", "sleep", "crouch
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    names = [n for n in argv if not n.startswith("--")] or ["bird", "pigeon", "cat", "birdhouse", "cat_toy", "toys"]
+    names = [n for n in argv if not n.startswith("--")] or ["bird", "pigeon", "cat", "cat_adult", "birdhouse", "cat_toy", "toys"]
     for name in names:
         bpy.ops.wm.read_factory_settings(use_empty=True)
         SC.GAME_MATERIALS.clear()
@@ -783,7 +789,7 @@ def main():
         for arg in argv:
             if arg.startswith("--only="):
                 only = arg[7:].split(",")
-        a, M = build_bird(name) if name in ("bird", "pigeon") else build_cat(only)
+        a, M = build_bird(name) if name in ("bird", "pigeon") else build_cat(only, adult=(name == "cat_adult"))
         export(a, M)
         views = ("seite", "vorn")
         for arg in argv:

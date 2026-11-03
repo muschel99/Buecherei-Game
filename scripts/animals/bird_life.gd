@@ -223,9 +223,14 @@ func _spawn_flock(kind: String) -> void:
 		spot.taken = bird
 		bird.spot = spot
 		bird.leaving = false
-		# jeder Vogel etwas versetzt hinter dem Dach hervor
+		# jeder Vogel etwas versetzt hinter dem Dach hervor – aber nur, wo auch der versetzte Start verdeckt ist
+		# (am Rand des Blickfelds kann er sonst schon sichtbar sein); sonst kleiner, zuletzt genau in der Mitte
 		var offset: Vector3 = entry.along * _rng.randf_range(-0.8, 0.8) + Vector3.UP * _rng.randf_range(-0.3, 0.3)
 		var path := _entry_path(entry, offset, spot, kind)
+		for shrink in [0.4, 0.0]:
+			if not is_visible_point(path[0]):
+				break
+			path = _entry_path(entry, offset * shrink, spot, kind)
 		bird.fly_path(path, _speed(kind) * _rng.randf_range(0.92, 1.08), i * _rng.randf_range(0.15, 0.45))
 		flights += 1
 		if is_visible_point(path[0]):

@@ -97,24 +97,33 @@ class Pose:
         self.rot = {}
         self.pos = {}
         self.loc = {}
+        # Ziele/Verschiebungen, die schon fürs Profil gelten (nicht mit der Beinlänge mitwachsen, siehe apply_pose)
+        self.absolute = set()
 
     def r(self, bone, *steps):
         self.rot.setdefault(bone, []).extend(steps)
         return self
 
-    def foot(self, name, pos, *steps):
+    def foot(self, name, pos, *steps, absolute=False):
         self.pos[name] = Vector(pos)
+        if absolute:
+            self.absolute.add("ik_" + name)
         if steps:
             self.rot["ik_" + name] = list(steps)
         return self
 
-    def move(self, bone, offset):
+    def move(self, bone, offset, absolute=False):
         self.loc[bone] = Vector(offset)
+        if absolute:
+            self.absolute.add(bone)
         return self
 
 
 def apply_pose(arm, pose, frame):
+    """Haltung als Schlüsselbild. Verschiebungen (Pfoten-Ziele gegenüber der Ruhelage, Becken) sind für die junge
+    Katze geschrieben und wachsen mit der Beinlänge des Profils mit (AC.P["leg"]) – außer als absolut markierte."""
     rest = rest_points()
+    sc = AC.P["leg"]
     for pb in arm.pose.bones:
         name = pb.name
         if name.startswith("pole"):
@@ -126,9 +135,11 @@ def apply_pose(arm, pose, frame):
         if name.startswith("ik_"):
             key = name[3:]
             target = pose.pos.get(key, rest[key])
+            if name not in pose.absolute:
+                target = rest[key] + (target - rest[key]) * sc
             loc = rest_q.inverted() @ (target - pb.bone.head_local)
         elif name in pose.loc:
-            loc = rest_q.inverted() @ pose.loc[name]
+            loc = rest_q.inverted() @ (pose.loc[name] * (1.0 if name in pose.absolute else sc))
         pb.location = loc
         pb.keyframe_insert("rotation_quaternion", frame=frame)
         pb.keyframe_insert("location", frame=frame)
@@ -306,19 +317,20 @@ def _sit_pose(p=None, breathe=0.0, tail_phase=0.0):
     haben kein Schlüsselbein) – so reichen die kurzen Vorderbeine senkrecht bis auf den Boden. Schwanz um die Pfoten."""
     rest = rest_points()
     p = p or Pose()
-    p.move("hips", (0, 0.024, -0.035))
-    p.r("hips", ("x", SIT_HIPS))
-    p.r("spine1", ("x", SIT_SPINE))
-    p.r("chest", ("x", SIT_CHEST + breathe))
-    p.r("neck", ("x", SIT_NECK))
-    p.r("head", ("x", SIT_HEAD))
+    p.move("hips", (0, 0.024, SIT[AC.PROFILE]["drop"]))
+    sp = SIT[AC.PROFILE]
+    p.r("hips", ("x", sp["hips"]))
+    p.r("spine1", ("x", sp["spine"]))
+    p.r("chest", ("x", sp["chest"] + breathe))
+    p.r("neck", ("x", sp["neck"]))
+    p.r("head", ("x", sp["head"]))
     for s, side in (("l", 1), ("r", -1)):
         h = rest["bl_" + s]
         p.foot("bl_" + s, h + Vector((side * 0.012, 0.008, -0.016)), ("x", -56))   # Hinterbeine leicht gespreizt
         p.r("bl_paw_" + s, ("x", 66))          # Zehen flach auf dem Boden (Mittelfuß liegt)
-        p.move("fl_upper_" + s, SIT_SHOULDER)
+        p.move("fl_upper_" + s, sp["shoulder"], absolute=True)
         fr = rest["fl_" + s]
-        p.foot("fl_" + s, fr + Vector((0, SIT_PAW_Y, 0.0)))
+        p.foot("fl_" + s, fr + Vector((0, sp["paw_y"], 0.0)))
     # Schwanz liegt am Boden und legt sich seitlich nach vorn um die Pfoten
     tail_curve(p, -34, 4, bend=-44, sway=3, phase=tail_phase)
     return p
@@ -326,23 +338,31 @@ def _sit_pose(p=None, breathe=0.0, tail_phase=0.0):
 
 # Sitzen: Neigung von Becken, Rücken, Brust (− = aufrichten), Hals und Kopf (+ = nach vorn/unten), Gleiten der
 # Schultern (im Raum der Brust) und Lage der Vorderpfoten
-SIT_HIPS, SIT_SPINE, SIT_CHEST, SIT_NECK, SIT_HEAD = -34, -2, 4, 22, 10
-SIT_SHOULDER = (0.0, 0.042, -0.03)
-SIT_PAW_Y = 0.03
+# (je Profil: junge Katze mit kurzen Beinen – die Schultern gleiten weit; Erwachsene: längere Beine, aufrechter)
+SIT = {
+    "kitten": dict(hips=-34, spine=-2, chest=4, neck=22, head=10, shoulder=(0.0, 0.042, -0.03), paw_y=0.03,
+                   drop=-0.035),
+    "adult": dict(hips=-44, spine=-4, chest=2, neck=26, head=20, shoulder=(0.0, 0.05, -0.058), paw_y=0.02,
+                  drop=-0.042),
+}
+SIT_SHOULDER = SIT["kitten"]["shoulder"]
+SIT_PAW_Y = SIT["kitten"]["paw_y"]
 # Schrittlänge beim Gehen (m; das Spiel rechnet daraus das Tempo der Bewegung: StreetCat.WALK_ANIM_SPEED), Absenken
 # des Beckens beim Liegen
 WALK_STRIDE = 0.15
 # Reiben: kurze Schritte (StreetCat.RUB_ANIM_SPEED = Schrittlänge / (Standanteil × Dauer))
 RUB_STRIDE = 0.08
 # Wälzen: so weit wird die Katze auf der Seite angehoben (m; dort ist sie breiter als hoch)
-ROLL_LIFT = 0.034
+ROLL_LIFT = {"kitten": 0.034, "adult": 0.026}
 # Putzen: Lage des Handgelenks vor dem Mund bzw. an der Wange (Armatur-Raum, im Sitzen mit geneigtem Kopf)
-GROOM_PAW = Vector((0.014, -0.102, 0.146))
-GROOM_WIPE = Vector((0.03, -0.096, 0.176))
+GROOM = {"kitten": (Vector((0.014, -0.102, 0.146)), Vector((0.03, -0.096, 0.176))),
+         "adult": (Vector((0.008, -0.024, 0.191)), Vector((0.024, -0.01, 0.232)))}
 LIE_DROP = -0.05
 # Schlafen: so weit wird das Becken versetzt, damit die eingerollte Katze mittig liegt (gemessen: Mitte sonst bei
 # x +0,07, y +0,125)
-SLEEP_SHIFT = (-0.07, -0.125)
+SLEEP_SHIFT = {"kitten": (-0.07, -0.125), "adult": (-0.056, -0.093)}
+# Liegen: Höhe der Vorderpfoten (Sphinx) gegenüber der Ruhelage
+LIE_FRONT_Z = {"kitten": 0.001, "adult": -0.005}
 
 
 def anim_sit_down():
@@ -354,8 +374,8 @@ def anim_sit_down():
     for s, side in (("l", 1), ("r", -1)):
         mid.foot("bl_" + s, rest["bl_" + s] + Vector((side * 0.006, 0.006, -0.008)), ("x", -30))
         mid.r("bl_paw_" + s, ("x", 20))
-        mid.move("fl_upper_" + s, tuple(v * 0.5 for v in SIT_SHOULDER))
-        mid.foot("fl_" + s, rest["fl_" + s] + Vector((0, SIT_PAW_Y * 0.5, 0)))
+        mid.move("fl_upper_" + s, tuple(v * 0.5 for v in SIT[AC.PROFILE]["shoulder"]), absolute=True)
+        mid.foot("fl_" + s, rest["fl_" + s] + Vector((0, SIT[AC.PROFILE]["paw_y"] * 0.5, 0)))
     tail_curve(mid, 10, 0)
     poses[12] = mid
     poses[26] = _sit_pose()
@@ -388,11 +408,14 @@ def anim_groom():
             (60, 0.0, 0.0)]
     for f, up, lick in keys:
         p = _sit_pose()
-        p.move("fl_upper_l", tuple(v * (1.0 - min(up, 1.0)) for v in SIT_SHOULDER))
-        paw = rest["fl_l"].lerp(GROOM_PAW, up)
+        sp = SIT[AC.PROFILE]
+        p.move("fl_upper_l", tuple(v * (1.0 - min(up, 1.0)) for v in sp["shoulder"]), absolute=True)
+        g_paw, g_wipe = GROOM[AC.PROFILE]
+        sit_paw = rest["fl_l"] + Vector((0, sp["paw_y"] * AC.P["leg"], 0.0))
+        paw = sit_paw.lerp(g_paw, up)
         if lick >= 2.0:
-            paw = GROOM_WIPE                     # übers Gesicht wischen
-        p.foot("fl_l", paw, ("x", -95 * up))
+            paw = g_wipe                         # übers Gesicht wischen
+        p.foot("fl_l", paw, ("x", -95 * up), absolute=True)
         p.r("neck", ("x", 12 * up))
         p.r("head", ("x", 14 * up + 7 * min(lick, 1.0)), ("z", 12 * up), ("y", -14 * up if lick >= 2.0 else 0.0))
         poses[f] = p
@@ -425,7 +448,7 @@ def _lie_pose(p=None, breathe=0.0):
     p.r("chest", ("x", 4 + breathe))
     p.r("neck", ("x", 4))
     for s, side in (("l", 1), ("r", -1)):
-        p.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.035, 0.001)), ("x", -40))
+        p.foot("fl_" + s, rest["fl_" + s] + Vector((0, -0.035, LIE_FRONT_Z[AC.PROFILE])), ("x", -40))
         p.foot("bl_" + s, rest["bl_" + s] + Vector((side * 0.012, -0.004, -0.016)), ("x", -56))
         p.r("bl_paw_" + s, ("x", 66))
     tail_curve(p, -16, 0, bend=-30)
@@ -452,7 +475,8 @@ def anim_sleep():
         # Rücken biegt sich nach links (+z dreht ein nach vorn zeigendes Glied nach links), der Schwanz ebenfalls
         # nach links (für nach hinten zeigende Glieder: −z) – Kopf und Schwanz treffen sich vorn
         # Mitte der eingerollten Katze genau über dem Bezugspunkt (Körbchen, Sessel): Becken entsprechend versetzt
-        p.move("hips", (SLEEP_SHIFT[0], SLEEP_SHIFT[1], LIE_DROP - 0.004))
+        shift = SLEEP_SHIFT[AC.PROFILE]
+        p.move("hips", (shift[0], shift[1], LIE_DROP - 0.004))
         p.r("hips", ("y", 8), ("z", 38))
         p.r("spine1", ("z", 46))
         p.r("chest", ("z", 46), ("x", 4 + b))
@@ -674,25 +698,26 @@ def _roll_pose(angle, wiggle=0.0, paw=0.0):
     rollt nur ein Drittel mit (liegt auf der Seite, sonst gingen die Ohren in den Boden), Beine angewinkelt nach oben
     und außen, mit dem Körper gedreht. Auf der Seite ist die Katze breiter als hoch: dort ein Stück angehoben."""
     rest = rest_points()
+    sc = AC.P["leg"]
     k = min(1.0, angle / 130.0)
-    lift = ROLL_LIFT * math.sin(math.radians(min(angle, 180.0)))
+    lift = ROLL_LIFT[AC.PROFILE] * math.sin(math.radians(min(angle, 180.0)))
     p = Pose()
     p.move("hips", (0, 0.0, LIE_DROP + lift))
-    axis_z = AC.SPINE[0].z + LIE_DROP + lift
+    axis_z = AC.SPINE[0].z + (LIE_DROP + lift) * sc
     p.r("hips", ("x", -4), ("y", angle))
     p.r("spine1", ("z", 9 * wiggle))
     p.r("chest", ("z", -7 * wiggle), ("x", 4))
     p.r("neck", ("y", -0.48 * angle), ("x", 6 * k))
     p.r("head", ("y", -0.2 * angle + 6 * wiggle), ("x", 4))
     for s, side in (("l", 1), ("r", -1)):
-        lie_f = rest["fl_" + s] + Vector((0, -0.035, 0.001))
-        fold_f = rest["fl_" + s] + Vector((side * 0.012, 0.008, 0.05 + 0.012 * paw * side))
+        lie_f = rest["fl_" + s] + Vector((0, -0.035, 0.001)) * sc
+        fold_f = rest["fl_" + s] + Vector((side * 0.012, 0.008, 0.05 + 0.012 * paw * side)) * sc
         f = lie_f.lerp(fold_f, k)
-        p.foot("fl_" + s, _rolled(f, angle, axis_z), ("x", -40 + 90 * k), ("y", angle))
-        lie_h = rest["bl_" + s] + Vector((side * 0.012, -0.004, -0.016))
-        fold_h = rest["bl_" + s] + Vector((side * 0.03, -0.02, 0.055 - 0.012 * paw * side))
+        p.foot("fl_" + s, _rolled(f, angle, axis_z), ("x", -40 + 90 * k), ("y", angle), absolute=True)
+        lie_h = rest["bl_" + s] + Vector((side * 0.012, -0.004, -0.016)) * sc
+        fold_h = rest["bl_" + s] + Vector((side * 0.03, -0.02, 0.055 - 0.012 * paw * side)) * sc
         h = lie_h.lerp(fold_h, k)
-        p.foot("bl_" + s, _rolled(h, angle, axis_z), ("x", -56 + 40 * k), ("y", angle))
+        p.foot("bl_" + s, _rolled(h, angle, axis_z), ("x", -56 + 40 * k), ("y", angle), absolute=True)
         p.r("bl_paw_" + s, ("x", 66 * (1.0 - k)))
     tail_curve(p, -18 + 10 * k, 0, bend=-30 * (1.0 - k) + 18 * wiggle)
     p.r("ear_l", ("y", -14 * k))

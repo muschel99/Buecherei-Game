@@ -169,22 +169,25 @@ func get_cats() -> Array[StreetCat]:
 
 func _build_pool() -> void:
 	var scene := load(GameConfig.cat_scene) as PackedScene
+	var adult_scene := load(GameConfig.cat_adult_scene) as PackedScene
 	if scene == null:
 		return
 	for i in GameConfig.cat_looks.size():
-		var cat := scene.instantiate() as StreetCat
+		var big := bool(GameConfig.cat_looks[i].get("adult", false)) and adult_scene != null
+		var cat := (adult_scene if big else scene).instantiate() as StreetCat
 		cat.name = "Cat%d" % (i + 1)
 		cat.life = self
 		cat.look = i
 		add_child(cat)
 		var look: Dictionary = GameConfig.cat_looks[i]
 		# je Katze eigene Material-Kopien (Kennung cat_<n>): das Fell malt auch Augen und Blinzeln dieser Katze
-		cat.apply_look("cat_%d" % i, {"Katze Fell": look.fur},
-			{"Katze Fell": {"tabby": float(look.get("tabby", 0.0)), "tabby_color": look.get("tabby_color", Color.WHITE),
+		var fur := "Katze Fell groß" if big else "Katze Fell"
+		cat.apply_look("cat_%d" % i, {fur: look.fur},
+			{fur: {"tabby": float(look.get("tabby", 0.0)), "tabby_color": look.get("tabby_color", Color.WHITE),
 				"second_color": look.fur2, "third_color": look.get("back", look.fur), "mask_from": float(look.get("patches", 0.55)),
 				"mask_soft": 0.3, "eye_color": look.eye}})
 		cat.scale = Vector3.ONE * float(look.get("size", 1.0))
-		cat.radius = 0.2 * cat.scale.x
+		cat.radius = (0.24 if big else 0.2) * cat.scale.x
 		cat.finished.connect(_on_finished)
 		_pool.append(cat)
 
@@ -861,7 +864,7 @@ func _bench_along(seat: SeatPoint) -> Vector3:
 ## Vor der Treppe der Bücherei: hinaufhüpfen; Tür offen → hinein; zu → seitlich unter dem Einwurf warten
 ## (außerhalb des Schwenkbereichs), dann hinein; sonst nach einer Weile wieder hinunter.
 func _door_choice(cat: StreetCat) -> void:
-	var inside := _inside_target()
+	var inside := _inside_target(cat)
 	if inside.is_empty():
 		return
 	entered += 1
@@ -1263,7 +1266,7 @@ func _inside_actions(cat: StreetCat, target: Dictionary) -> Array[Dictionary]:
 	if path.is_empty():
 		return []
 	var a: Array[Dictionary] = []
-	a.append_array(_stairs(door_point, out, room_y, true))
+	a.append_array(_stairs(door_point, out, room_y, true, cat.adult))
 	var wait_out := _wait_spot(false)
 	a.append(_walk([_podium_point(door_point, out), wait_out]))
 	a.append({"type": "wait_door", "face": door_point - wait_out})
@@ -1305,7 +1308,7 @@ func _inside_actions(cat: StreetCat, target: Dictionary) -> Array[Dictionary]:
 	walk_back.append(door_point + out * 0.15)
 	a.append(_walk(walk_back))
 	a.append({"type": "inside", "value": false})
-	a.append_array(_stairs(door_point, out, room_y, false))
+	a.append_array(_stairs(door_point, out, room_y, false, cat.adult))
 	return a
 
 
@@ -1357,7 +1360,7 @@ func _wait_spot(inside_room: bool) -> Vector3:
 
 
 ## Treppe der Bücherei: an jeder Stufe hinaufhüpfen bzw. vorwärts hinuntersteigen.
-func _stairs(door_point: Vector3, out: Vector3, room_y: float, up: bool) -> Array[Dictionary]:
+func _stairs(door_point: Vector3, out: Vector3, room_y: float, up: bool, climb: bool = false) -> Array[Dictionary]:
 	var count := GameConfig.entrance_step_count
 	var tread := GameConfig.entrance_step_depth
 	var rise := GameConfig.shop_floor_rise / float(count + 1)
@@ -1371,6 +1374,18 @@ func _stairs(door_point: Vector3, out: Vector3, room_y: float, up: bool) -> Arra
 			door_point + out * (edge - 0.1) + Vector3.UP * (below + rise - room_y)])
 	var a: Array[Dictionary] = []
 	var entrance := _ground(StreetPaths.library_entrance())
+	if climb:
+		# Große Katzen steigen Stufe für Stufe (ohne Hüpfen): vor jeder Kante unten, dahinter oben – im Gang
+		var path: Array = [entrance]
+		for st: Array in steps:
+			path.append(st[0])
+			path.append(st[1])
+		path.append(_podium_point(door_point, out))
+		if not up:
+			path.reverse()
+		a.append({"type": "turn", "face": (-out if up else out)})
+		a.append(_walk(path, GameConfig.cat_stair_speed))
+		return a
 	if up:
 		var last := entrance
 		for st: Array in steps:
@@ -1393,11 +1408,15 @@ func _stairs(door_point: Vector3, out: Vector3, room_y: float, up: bool) -> Arra
 
 ## Ziel in der Bücherei: ein freies Katzenkörbchen (bevorzugt), sonst ein freier Sitz eines Sessels oder Sofas,
 ## sonst die Mitte eines Teppichs. { top (Liegeplatz), front (Boden davor), face, claim, node }.
-func _inside_target() -> Dictionary:
+func _inside_target(cat: StreetCat = null) -> Dictionary:
 	if _room == null or _door == null:
 		return {}
 	var room_y := floor_y_room()
-	for spot: Node3D in get_tree().get_nodes_in_group(CAT_SPOT_GROUP):
+	# Körbchen sind für die jungen Katzen gebaut – die großen nehmen Sessel, Sofa oder Teppich
+	var baskets: Array[Node] = []
+	if cat == null or not cat.adult:
+		baskets = get_tree().get_nodes_in_group(CAT_SPOT_GROUP)
+	for spot: Node3D in baskets:
 		if not spot.is_inside_tree() or spot.get_meta("occupant", null) != null or not _room.is_ancestor_of(spot):
 			continue
 		var fwd := spot.global_basis.z

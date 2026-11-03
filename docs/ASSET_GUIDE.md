@@ -1296,7 +1296,8 @@ Einzelbilder jeder Bewegung in `screenshots/blender/animals/` (zum Prüfen, ob s
    Haltung der vorigen Bewegung. Sprünge bewegen sich nicht selbst vom Fleck – das Spiel trägt die Katze in einem
    Bogen (Zeitfenster `StreetCat.JUMP_WINDOW`: wann sie abspringt und landet).
 4. **Formvarianten** (Shape Keys): Vögel `spread` (Flügel ausgebreitet – das Spiel blendet beim Fliegen auf 1),
-   Die Katze braucht keine: Ihre Augen sind gemalt (Shader `storybook_cat.gdshader`), Blinzeln und zufriedenes
+   Die Katzen brauchen keine (junge `cat.glb` und erwachsene `cat_adult.glb` mit Material „Katze Fell groß“, seit 6h):
+   Ihre Augen sind gemalt (Shader `storybook_cat.gdshader`), Blinzeln und zufriedenes
    Zukneifen stellt das Spiel über die Material-Werte `eye_blink` und `eye_happy` ein.
 5. **Materialnamen** (das Spiel färbt diese um): „Vogel Gefieder“ (mit Farbmaske: Brust = zweite Farbe, Kappe =
    dritte Farbe), „Vogel Flügel“, „Vogel Schnabel“, „Vogel Auge“, „Vogel Beine“; Taube „Taube Gefieder“ (Hals =

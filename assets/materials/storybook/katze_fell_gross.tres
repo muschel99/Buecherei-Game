@@ -1,0 +1,41 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+; Erzeugt von den Bilderbuch-Bau-Scripts (tools/blender/build_storybook_*.py, Blender-Material "Katze Fell groß") – wird beim Neubau
+; überschrieben. Werte gern ausprobieren, dauerhaft aber im Bau-Script ändern.
+
+[ext_resource type="Shader" path="res://assets/shaders/storybook_cat.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "Katze Fell groß"
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/base_color = Color(0.850, 0.500, 0.240, 1)
+shader_parameter/second_color = Color(0.850, 0.500, 0.240, 1)
+shader_parameter/grain = 6
+shader_parameter/stripe_width = 0.000
+shader_parameter/vary = 0.070
+shader_parameter/blot_scale = 4.000
+shader_parameter/bump_strength = 0.250
+shader_parameter/rough = 0.950
+shader_parameter/metal = 0.000
+shader_parameter/emission_color = Color(0.850, 0.500, 0.240, 1)
+shader_parameter/emission_energy = 0.000
+shader_parameter/glow = 0.000
+shader_parameter/wind_strength = 0.000
+shader_parameter/ear_origin = Vector3(0.0297, 0.3115, 0.1423)
+shader_parameter/ear_e1 = Vector3(0.7176, -0.6708, 0.1872)
+shader_parameter/ear_e2 = Vector3(0.6629, 0.7403, 0.1117)
+shader_parameter/ear_n = Vector3(-0.2135, 0.0440, 0.9760)
+shader_parameter/ear_out = Vector2(0.0577, 0.0000)
+shader_parameter/ear_tip = Vector2(-0.0054, 0.0575)
+shader_parameter/eye_center = Vector3(0.0318, 0.2511, 0.1952)
+shader_parameter/eye_right = Vector3(0.9591, -0.0000, -0.2830)
+shader_parameter/eye_up = Vector3(-0.0084, 0.9996, -0.0283)
+shader_parameter/eye_size = Vector2(0.0129, 0.0144)
+shader_parameter/mouth_center = Vector3(0.0000, 0.2296, 0.2041)
+shader_parameter/mouth_size = Vector2(0.0077, 0.0032)
+shader_parameter/head_center = Vector3(0.0000, 0.2575, 0.1405)
+shader_parameter/head_radius = 0.0747
+shader_parameter/tail_start = -0.1501
+shader_parameter/leg_top = 0.0930
+shader_parameter/tabby_scale = 30.0

@@ -56,6 +56,109 @@ MOUTH_SIZE = (0.0085, 0.0035)
 NOSE_Z = 0.187
 
 
+# --- Junge und erwachsene Katze (seit 6h): dieselbe Bauanleitung, die Erwachsene ist eine Umformung ---
+# Die Zahlen oben (und in body_blobs, fur_mask) beschreiben die junge Katze („kitten“). use_profile("adult") formt
+# alle Gelenke und Körperteile um (T): Beine länger (alles unter LEG_TOP gestreckt, darüber angehoben), Rumpf
+# länger (zwischen Brust und Becken), Schwanz länger, Kopf etwas kleiner (um seine Mitte); dazu kleinere Augen und
+# etwas höhere Ohren. Die Fellmaske rechnet mit der Rückformung (T_inv) – Lätzchen, Schnauze, Pfoten bleiben richtig.
+PROFILES = {
+    "kitten": dict(leg=1.0, body=1.0, tail=1.0, head=1.0, eyes=1.0, ear_up=0.0),
+    "adult": dict(leg=1.5, body=1.3, tail=1.45, head=0.9, eyes=0.78, ear_up=0.012),
+}
+PROFILE = "kitten"
+P = PROFILES["kitten"]
+LEG_TOP = 0.105          # bis hierher reichen die Beine (junge Katze)
+BODY_FRONT, BODY_BACK = -0.07, 0.12   # Rumpf zwischen Brust und Becken (y)
+_KITTEN = {}
+
+
+def T(v):
+    """Lage der jungen Katze → Lage im gewählten Profil."""
+    v = Vector(v)
+    if PROFILE == "kitten":
+        return v
+    z = v.z * P["leg"] if v.z <= LEG_TOP else LEG_TOP * P["leg"] + (v.z - LEG_TOP)
+    y = v.y
+    mid = (BODY_FRONT + BODY_BACK) / 2.0
+    front = mid + (BODY_FRONT - mid) * P["body"]
+    back = mid + (BODY_BACK - mid) * P["body"]
+    if y < BODY_FRONT:
+        y = front + (y - BODY_FRONT)
+    elif y > BODY_BACK:
+        y = back + (y - BODY_BACK) * P["tail"]
+    else:
+        y = mid + (y - mid) * P["body"]
+    out = Vector((v.x, y, z))
+    # Kopf (vor der Brust, über dem Hals) etwas kleiner um seine Mitte
+    w = smoothstep(-0.07, -0.09, v.y) * smoothstep(0.12, 0.15, v.z)
+    if w > 0.0:
+        hc = T_body(_KITTEN["HEAD_CENTER"])
+        out = out.lerp(hc + (out - hc) * P["head"], w)
+    return out
+
+
+def T_body(v):
+    """Wie T, nur ohne die Verkleinerung des Kopfs (für die Kopfmitte selbst)."""
+    global PROFILE
+    keep = PROFILE
+    if keep == "kitten":
+        return Vector(v)
+    z = v.z * P["leg"] if v.z <= LEG_TOP else LEG_TOP * P["leg"] + (v.z - LEG_TOP)
+    mid = (BODY_FRONT + BODY_BACK) / 2.0
+    front = mid + (BODY_FRONT - mid) * P["body"]
+    y = front + (v.y - BODY_FRONT) if v.y < BODY_FRONT else mid + (v.y - mid) * P["body"]
+    return Vector((v.x, y, z))
+
+
+def T_inv(v):
+    """Rückformung (Profil → junge Katze), durch Nähern: x ← x + (v − T(x))."""
+    v = Vector(v)
+    if PROFILE == "kitten":
+        return v
+    x = Vector(v)
+    for _ in range(12):
+        x += (v - T(x)) * 0.8
+    return x
+
+
+def S(size, part="body"):
+    """Halbachsen eines Körperteils im Profil: Rumpf länger, Kopf kleiner."""
+    if PROFILE == "kitten":
+        return tuple(size)
+    if part == "torso":
+        return (size[0], size[1] * P["body"], size[2])
+    if part == "head":
+        return tuple(c * P["head"] for c in size)
+    return tuple(size)
+
+
+def use_profile(name):
+    """Profil wählen („kitten“ oder „adult“): setzt alle Gelenke und Maße dieses Moduls neu."""
+    global PROFILE, P, FRONT, HIND, SPINE, NECK, HEAD, HEAD_CENTER, HEAD_SIZE, TAIL, EAR_IN, EAR_OUT, EAR_TIP, EAR
+    global EYE_SIZE, MOUTH_Z, NOSE_Z, MOUTH_SIZE
+    if not _KITTEN:
+        for k in ("FRONT", "HIND", "SPINE", "NECK", "HEAD", "HEAD_CENTER", "HEAD_SIZE", "TAIL", "EAR_IN", "EAR_OUT",
+                  "EAR_TIP", "EYE_SIZE", "MOUTH_Z", "NOSE_Z", "MOUTH_SIZE"):
+            _KITTEN[k] = globals()[k]
+    PROFILE, P = name, PROFILES[name]
+    K = _KITTEN
+    FRONT = [T(v) for v in K["FRONT"]]
+    HIND = [T(v) for v in K["HIND"]]
+    SPINE = [T(v) for v in K["SPINE"]]
+    NECK = [T(v) for v in K["NECK"]]
+    HEAD = [T(v) for v in K["HEAD"]]
+    HEAD_CENTER = T_body(K["HEAD_CENTER"])
+    HEAD_SIZE = S(K["HEAD_SIZE"], "head")
+    TAIL = [T(v) for v in K["TAIL"]]
+    EAR_IN, EAR_OUT = T(K["EAR_IN"]), T(K["EAR_OUT"])
+    EAR_TIP = T(K["EAR_TIP"]) + Vector((0, 0, P["ear_up"]))
+    EAR = ((EAR_IN + EAR_OUT) / 2, EAR_TIP)
+    EYE_SIZE = tuple(c * P["eyes"] for c in K["EYE_SIZE"])
+    MOUTH_SIZE = tuple(c * P["head"] for c in K["MOUTH_SIZE"])
+    MOUTH_Z = T((0, -0.17, K["MOUTH_Z"])).z
+    NOSE_Z = T((0, -0.17, K["NOSE_Z"])).z
+
+
 def _mirror(v):
     return Vector((-v.x, v.y, v.z))
 
@@ -133,48 +236,57 @@ def body_blobs(coll):
     """Weicher Körper: Rumpf, Hals, großer Kopf mit Pausbacken und Schnäuzchen, kurze Beine, runde Pfoten,
     buschiger Schwanz."""
     bl = AL.Blobs(coll, scale=4.0)
-    bl.add((0, -0.038, 0.118), (0.05, 0.058, 0.054), (-6, 0, 0))          # Brust
-    bl.add((0, 0.02, 0.112), (0.048, 0.06, 0.048))                         # Bauch
-    bl.add((0, 0.074, 0.116), (0.052, 0.05, 0.054))                        # Becken
-    bl.add((0, -0.07, 0.145), (0.032, 0.03, 0.036), (-30, 0, 0))           # Hals (kurz, der Kopf sitzt auf der Brust)
-    bl.add((0, -0.07, 0.115), (0.03, 0.026, 0.04))                         # Brustlatz (flauschig vorgewölbt)
-    bl.add(tuple(HEAD_CENTER), HEAD_SIZE)                                  # Kopf (groß und rund)
+    bl.add(T((0, -0.038, 0.118)), S((0.05, 0.058, 0.054), "torso"), (-6, 0, 0))     # Brust
+    bl.add(T((0, 0.02, 0.112)), S((0.048, 0.06, 0.048), "torso"))                  # Bauch
+    bl.add(T((0, 0.074, 0.116)), S((0.052, 0.05, 0.054), "torso"))                 # Becken
+    bl.add(T((0, -0.07, 0.145)), (0.032, 0.03, 0.036), (-30, 0, 0))                # Hals (kurz, der Kopf sitzt auf der Brust)
+    bl.add(T((0, -0.07, 0.115)), (0.03, 0.026, 0.04))                              # Brustlatz (flauschig vorgewölbt)
+    bl.add(tuple(HEAD_CENTER), HEAD_SIZE)                                          # Kopf (groß und rund)
     for side in (1, -1):
-        bl.add((side * 0.04, -0.122, 0.185), (0.036, 0.034, 0.026), stiffness=1.2)   # Pausbacken (weich, knapp unter den Augen)
-    bl.add((0, -0.164, 0.181), (0.023, 0.016, 0.016))                      # Schnäuzchen
-    bl.add((0, -0.152, 0.167), (0.015, 0.014, 0.01))                       # Kinn
+        bl.add(T((side * 0.04, -0.122, 0.185)), S((0.036, 0.034, 0.026), "head"), stiffness=1.2)   # Pausbacken
+    bl.add(T((0, -0.164, 0.181)), S((0.023, 0.016, 0.016), "head"))               # Schnäuzchen
+    bl.add(T((0, -0.152, 0.167)), S((0.015, 0.014, 0.01), "head"))                # Kinn
     for side in (1, -1):
         m = (lambda v: v) if side > 0 else _mirror
-        bl.add(m(Vector((0.032, -0.05, 0.1))), (0.028, 0.032, 0.038))                      # Schulter
-        bl.add(m(Vector((0.044, 0.07, 0.088))), (0.039, 0.049, 0.052), (18, 0, 0))        # Oberschenkel (rund, voll)
+        bl.add(T(m(Vector((0.032, -0.05, 0.1)))), (0.028, 0.032, 0.038))                      # Schulter
+        bl.add(T(m(Vector((0.044, 0.07, 0.088)))), S((0.039, 0.049, 0.052), "torso"), (18, 0, 0))   # Oberschenkel
         f = [m(v) for v in FRONT]
-        bl.capsule(f[0], f[1], 0.0195, stiffness=3.0)
-        bl.capsule(f[1], f[2], 0.0182, stiffness=3.0)
-        bl.add(m(Vector((0.037, -0.064, 0.0165))), (0.021, 0.025, 0.0125), stiffness=3.0)  # Vorderpfote (rund)
+        lt = 1.0 if PROFILE == "kitten" else 1.14          # Erwachsene: kräftigere Beine
+        bl.capsule(f[0], f[1], 0.0195 * lt, stiffness=3.0)
+        bl.capsule(f[1], f[2], 0.0182 * lt, stiffness=3.0)
+        bl.add(T(m(Vector((0.037, -0.064, 0.0165)))) - Vector((0, 0, 0.0165 * (P["leg"] - 1.0))),
+               (0.021, 0.025, 0.0125), stiffness=3.0)                                      # Vorderpfote (rund)
         h = [m(v) for v in HIND]
-        bl.capsule(h[1], h[2], 0.018, stiffness=3.0)
-        bl.capsule(h[2], h[3], 0.016, stiffness=3.0)
-        bl.add(m(Vector((0.042, 0.075, 0.0155))), (0.02, 0.027, 0.0125), stiffness=3.0)   # Hinterpfote (rund)
+        bl.capsule(h[1], h[2], 0.018 * lt, stiffness=3.0)
+        bl.capsule(h[2], h[3], 0.016 * lt, stiffness=3.0)
+        bl.add(T(m(Vector((0.042, 0.075, 0.0155)))) - Vector((0, 0, 0.0155 * (P["leg"] - 1.0))),
+               (0.02, 0.027, 0.0125), stiffness=3.0)                                       # Hinterpfote (rund)
     for i in range(len(TAIL) - 1):
         r = 0.0175 + 0.003 * math.sin(math.pi * i / (len(TAIL) - 2))       # buschig, in der Mitte am dicksten
+        if PROFILE != "kitten":
+            r *= 0.98 - 0.12 * i / (len(TAIL) - 2)                         # Erwachsene: zur Spitze etwas dünner
         bl.capsule(TAIL[i], TAIL[i + 1], r, stiffness=3.0)
-    bl.add(tuple(TAIL[-1] + Vector((0, -0.004, 0))), (0.0185, 0.02, 0.0185))  # runde Schwanzspitze
+    bl.add(tuple(TAIL[-1] + Vector((0, -0.004, 0))), (0.0185, 0.02, 0.0185) if PROFILE == "kitten" else (0.015, 0.016, 0.015))
     for side in (1, -1):
         # Ohr: dicker Rand entlang der Kanten (Röhren), die Mitte als flache Füllung etwas zurückgesetzt (Mulde)
         m = (lambda v: v) if side > 0 else _mirror
         i, o, t = m(EAR_IN), m(EAR_OUT), m(EAR_TIP)
         base, e1, e2, n, o2, t2 = ear_frame(side)
-        bl.capsule(i, t, 0.0095, stiffness=3.0)
-        bl.capsule(o, t, 0.0105, stiffness=3.0)
-        bl.capsule(i + (o - i) * 0.1, o - (o - i) * 0.1, 0.01, stiffness=3.0)
+        hs = P["head"]
+        bl.capsule(i, t, 0.0095 * hs, stiffness=3.0)
+        bl.capsule(o, t, 0.0105 * hs, stiffness=3.0)
+        bl.capsule(i + (o - i) * 0.1, o - (o - i) * 0.1, 0.01 * hs, stiffness=3.0)
         for k, (wa, wb, wt) in enumerate(((0.33, 0.33, 0.34), (0.5, 0.35, 0.15), (0.2, 0.25, 0.55))):
-            c = i * wa + o * wb + t * wt - n * 0.004
-            bl.add_axes(c, (0.017, 0.017, 0.0065), (e1, e2, n if side > 0 else -n))
+            c = i * wa + o * wb + t * wt - n * 0.004 * hs
+            bl.add_axes(c, (0.017 * hs, 0.017 * hs, 0.0065 * hs), (e1, e2, n if side > 0 else -n))
     return bl
 
 
 def fur_mask(co):
-    """Farbmaske: helles Fell (+, je stärker, desto „sicherer“ hell) und dunkler Rücken (−)."""
+    """Farbmaske: helles Fell (+, je stärker, desto „sicherer“ hell) und dunkler Rücken (−). Zahlen für die junge
+    Katze – bei der Erwachsenen wird die Lage vorher zurückgeformt (T_inv)."""
+    ear_co = Vector(co)
+    co = T_inv(co)
     x, y, z = co
     ax = abs(x)
     face = smoothstep(-0.13, -0.165, y)                                    # Vorderseite des Kopfs
@@ -191,8 +303,8 @@ def fur_mask(co):
     back = smoothstep(0.155, 0.17, z) * smoothstep(-0.05, -0.02, y) * smoothstep(0.11, 0.08, y)
     tips = 0.0
     for side in (1, -1):
-        if ear_weight(co, side) > 0.0:
-            h, w, out = _ear_coords(co, side)
+        if ear_weight(ear_co, side) > 0.0:
+            h, w, out = _ear_coords(ear_co, side)
             tips = max(tips, smoothstep(0.7, 0.92, h) * smoothstep(-0.001, -0.006, w))  # Ohrspitzen hinten dunkler
     if light > 0.05:
         return light
@@ -302,7 +414,7 @@ def face_params(tree):
         "eye_center": godot(p), "eye_right": godot(right), "eye_up": godot(up),
         "eye_size": EYE_SIZE, "mouth_center": godot(mouth), "mouth_size": MOUTH_SIZE,
         "head_center": godot(HEAD_CENTER), "head_radius": HEAD_SIZE[0],
-        "tail_start": -(TAIL[0].y + 0.012), "leg_top": 0.062,
+        "tail_start": -(TAIL[0].y + 0.012), "leg_top": T((0, 0, 0.062)).z,
     }
 
 
