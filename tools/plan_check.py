@@ -23,7 +23,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 # Grenze am geraden Ende (StreetLayout.straight_bound_x) und Bereich davor
 BOUND_X = 20.1
 BOUND_SIDE = 1
-NEAR_Z, FAR_Z = -4.5, -13.7
+NEAR_Z, FAR_Z = -4.5, -15.11          # seit der Nachbesserung 3 von 6h: Gehwege breiter, Häuser gegenüber bei z -15,41
 # Bücherei, Gasse daneben (Hofmauern, Mauer am Ende mit Haus dahinter) als Hindernisse
 LIBRARY = [(-3.2, -2.0828), (-1.0828, -4.2), (3.2, -4.2), (3.2, 4.2), (-3.2, 4.2)]
 ALLEY_BLOCKS = [[(-6.3, 8.92), (-2.9, 8.92), (-2.9, 15.0), (-6.3, 15.0)],
@@ -31,8 +31,8 @@ ALLEY_BLOCKS = [[(-6.3, 8.92), (-2.9, 8.92), (-2.9, 15.0), (-6.3, 15.0)],
                 [(-6.3, 5.9), (-6.0, 5.9), (-6.0, 8.92), (-6.3, 8.92)],
                 # Kleine Gasse gegenüber (GameConfig.opposite_alley_x/_width/_depth): Mauer am Ende
                 # und das Haus dahinter
-                [(3.0, -22.3), (5.4, -22.3), (5.4, -22.0), (3.0, -22.0)],
-                [(0.3, -31.0), (8.1, -31.0), (8.1, -25.0), (0.3, -25.0)]]
+                [(3.0, -23.71), (5.4, -23.71), (5.4, -23.41), (3.0, -23.41)],
+                [(0.3, -32.41), (8.1, -32.41), (8.1, -26.41), (0.3, -26.41)]]
 # Ladentür (StreetLayout.door_center) und Richtung nach draußen
 DOOR = (-2.1414, -3.1414)
 DOOR_OUT = (-0.7071, -0.7071)
@@ -179,7 +179,7 @@ def check_gate(houses, gate):
 def _blockers(houses, gate):
     """Alles, wo man nicht hinkommt: Häuser, Bücherei, Gasse, die beiden Grenzen."""
     blocks = [poly for *_, poly in houses] + [LIBRARY] + ALLEY_BLOCKS
-    blocks.append([(BOUND_X - 0.3, -3.7), (BOUND_X + 0.3, -3.7), (BOUND_X + 0.3, -14.5), (BOUND_X - 0.3, -14.5)])
+    blocks.append([(BOUND_X - 0.3, -3.7), (BOUND_X + 0.3, -3.7), (BOUND_X + 0.3, FAR_Z - 0.9), (BOUND_X - 0.3, FAR_Z - 0.9)])
     origin, ax, az, _ = gate
     mid = (origin[0] - az[0] * 0.8, origin[1] - az[1] * 0.8)  # Grenze im Bogen (Street.GATE_BOUND_INSIDE)
     corners = []

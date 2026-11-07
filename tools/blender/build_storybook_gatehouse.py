@@ -6,8 +6,9 @@ Fachwerk-Obergeschoss mit Terrakotta-Gefachen, vier Fenster mit Blumenkästen (n
 Pflanzen), Ziegeldach mit Gaube und Schornstein, Wandlaternen und Töpfe an den Pfeilern. Vorder-
 und Rückseite sind gleich gestaltet (man sieht das Tor von beiden Seiten).
 
-Haus "GateStreet/Gatehouse" (Haustyp gatehouse: 9,8 m breit, 6 m tief, Traufe 9,4 m; Bogen 6,5 m
-breit, Kämpfer 2,6 m, Scheitel 5,85 m – die Öffnung bleibt frei, die Straße baut das Spiel).
+Haus "GateStreet/Gatehouse" (Haustyp gatehouse: 11,21 m breit – seit der Nachbesserung 3 von 6h, die Gehwege wurden
+breiter, das Torhaus reicht weiter von Hausfront zu Hausfront –, 6 m tief, Traufe 9,4 m; Bogen 6,5 m breit, Kämpfer
+2,6 m, Scheitel 5,85 m – die Öffnung bleibt frei, die Straße baut das Spiel).
 
 Aufruf:
   blender -b --factory-startup --python tools/blender/build_storybook_gatehouse.py [-- --render [--quick] [--only=a,b]] [--no-game] [--force]
@@ -34,7 +35,7 @@ BLEND = os.path.join(SC.ROOT, "assets", "models", "source", "houses", "gatehouse
 STAMP = os.path.join(os.path.dirname(BLEND), "gatehouse_storybook.stamp")
 GAME_GLB = os.path.join(SC.ROOT, "assets", "models", "houses", "gatehouse.glb")
 
-W, D, E = 9.8, 6.0, 9.4
+W, D, E = 11.21, 6.0, 9.4          # Breite = Hausfronten links und rechts (Gehwege + Fahrbahn, scenes/world/houses/gatehouse.tscn)
 HW = W / 2
 A = 6.5 / 2                         # halbe Durchfahrt
 SPRING = 2.6                        # Kämpferlinie
@@ -110,7 +111,9 @@ def facade(M, C, tag):
     z0, z1 = MASON + BAND, E
     tb.box((0, y, z0 + 0.09), (W + 0.04, 0.08, 0.18), step=0.3, dent=0.004)
     tb.box((0, y, z1 - 0.09), (W + 0.04, 0.08, 0.18), step=0.3, dent=0.004)
-    posts = [-HW + 0.08, -3.85, -2.75, -1.65, -0.55, 0.55, 1.65, 2.75, 3.85, HW - 0.08]
+    # Ständer im Abstand von 1,1 m (Fenster in den Feldern um ±1,1 und ±3,3 m), außen an den Hauskanten
+    inner = [0.55 + 1.1 * k for k in range(8) if 0.55 + 1.1 * k < HW - 0.4]
+    posts = [-HW + 0.08] + [-x for x in reversed(inner)] + inner + [HW - 0.08]
     for x in posts:
         tb.box((x, y, (z0 + z1) / 2), (0.16, 0.07, z1 - z0), step=0.3, dent=0.004)
     for k in range(len(posts) - 1):

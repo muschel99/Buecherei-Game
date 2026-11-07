@@ -373,7 +373,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   einer sichtbaren Seitenwand, im Plan als "props"). Neu erzeugen nur über
   `scenes/world/tools/generate_houses.tscn` (Planung `HousesLayout`, Typen-Maße `HouseTypes`;
   GameConfig: `neighbor_house_types`, `alley_house_types`, `opposite_feature_house`,
-  `terrace_house_types`) – überschreibt Handänderungen. Gleiche Maße = ein gemeinsames Mesh
+  `terrace_house_types`) – überschreibt Handänderungen. **Nur verschieben** (nach geänderten Maßen, seit
+  Nachbesserung 3 von 6h): `godot --headless --path . res://scenes/world/tools/generate_houses.tscn -- --move
+  [--type=Gruppe/Name:typ] [--add=Gruppe/Name:typ]` – `HousesLayout.plan(keep)` behält Typ und Reihenfolge jedes Hauses
+  (eigene Modelle), ersetzt nur die Zeilen `transform = …`; getauschte/neue Häuser danach mit
+  `build_storybook_street.py -- Gruppe/Name` bauen. Vorher Überlappung der Nachbarn prüfen (Lücken = Typ tauschen oder
+  Länge anpassen), danach `plan_check.py bound/gate/unseen`, spots.json neu ausmessen. Gleiche Maße = ein gemeinsames Mesh
   (Cache in HouseFacade), Material `house_facade.tres`: Alpha der Vertex-Farbe wählt die Farbe
   (1 fest, 0,75 Wand, 0,5 Tür, 0,25 Akzent), Farben je Haus als `instance uniform`
   (`set_instance_shader_parameter`). Häuser gegenüber/hinter der Grenze/an den Seitenstraßen
@@ -669,6 +674,14 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   chibi_ride), Rad × ride_scale, Sattel auf ride_seat, Figur folgt der Kurbel
   (`ChibiPasserbyModel.pose_ride` = seek); Kurbel 0 = Seite x < 0 vorn, vorwärts =
   `Basis(RIGHT, +Winkel)` wie die Räder. Kontrollbild `--views=ride`.
+  **Anhalten (seit Nachbesserung 3 von 6h):** Haltung "ride_stop" (`chibi_ride.stop_pose`: Rad um `STOP_LEAN` nach links
+  geneigt – im Rahmen des Rads liegt der Boden schräg –, linker Fuß flach auf dem Boden, rechter auf dem Pedal bei
+  `STOP_PHI`, Oberkörper aufrecht) → Extras `ride_stop_crank`/`ride_stop_lean`; `ChibiCyclistModel`: `_stop` wächst, wenn das
+  Rad 0,25 s langsamer als `cyclist_stop_speed` ist (`cyclist_stop_time`), Neigung über `rotation.z`; `pose_ride(crank,
+  delta, stop)` legt die Haltung als Ebene „RideStopLayer“ (ChibiGestureModifier CLIP, auch die Lage der Hüfte) mit
+  Gewicht stop über "ride" – nie über das Überblenden des AnimationPlayers (bei Tempo 0 bleibt es halb hängen).
+  **Skelett prüfen:** `get_bone_global_pose` zeigt außerhalb der Modifikatoren die Pose ohne sie – Lage von Füßen/Händen
+  im Signal `Skeleton3D.skeleton_updated` ablesen.
   **Mimik (seit 6c nach Anlässen):** Grundausdruck `FaceTriggers.BASE` (NEUTRAL); andere Ausdrücke nur über
   `ChibiPasserbyModel.trigger_face(anlass)` → `FaceTriggers.pick` ([Ausdruck, Dauer] aus `TRIGGERS`: greet,
   wave, window_wonder, window_like, chat_talk, chat_laugh, chat_listen, stretch, watch, sit_rest – neuer
@@ -1216,6 +1229,30 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `ambience/bird_flap` (still bis zur Aufnahme), `ambience/cat_purr`, `GameConfig.cat_meow_sound`; neue Aufnahmen
   erkennt `prepare_sounds.py` am Dateinamen (`ANIMAL_RULES`). Prüfen: street_life_check „Tiere“ (Erscheinen/
   Verschwinden im Blickfeld = 0, festgefahren = 0), `--cats --door_open --enter=1 --cat_log --hunt`, `--no_animals`.
+- **Nachbesserungen 2 und 3 von 6h (Tests der Entwicklerin):** Passanten gehen zu zweit (`Passerby.companion`/`follows`,
+  `PAIR_GAP` nebeneinander, an Engstellen hintereinander `PAIR_LAG`, `passerby_pair_chance`, `StreetLife._launch_companion`;
+  `blocks_move` übersieht den Begleiter) und plaudern dabei (`join_walking_chat`). Gehwege seit Nachbesserung 3 30 % breiter
+  (`sidewalk_width` 3,38, `opposite_sidewalk_width` 2,73; Straße gleich, Häuser gegenüber 1,41 m weiter außen; am geraden
+  Ende beginnt die Kurve `straight_curve_delay` später, die Reihe gegenüber endet davor, außen ein Haus mehr
+  (`StraightEnd/Outer6`); `gate_bend_radius` so, dass die Hausfronten der Bücherei-Seite bleiben; Torhaus 11,21 m).
+  Grüßen der Spielfigur: Winken nur mit Stehenbleiben (`Passerby.greet_stop`), sonst Nicken; Fahrer werden nicht gegrüßt;
+  am Bordstein schauen Wartende dem Auto nach (`StreetLife.vehicle_coming`, `look_at_node`). **Ebenen (Teil C):** Reden,
+  Lachen, Nicken, Zeigen, Pausen bewegen nur Oberkörper/Kopf/Arme (`ChibiPasserbyModel._layer` „UpperLayer“, weich
+  `LAYER_BLEND`; ganze Figur nur `FULL_BODY`), im Sitzen manchmal Beine übereinander („LegsLayer“, sit_talk_legs bei
+  `LEGS_CROSSED_TIME`, `passerby_cross_legs_*`). Katzen: Gartenmauern/Fensterbänke direkt ausgemessen (bake_animal_spots
+  `walls`/`sills`, `CatLife._ledge_sit`: Schwanz baumelt, Blick hinein oder zur Straße), an Passanten-Beinen reiben
+  (`_try_leg_rub` → `Passerby.hold_for_cat`/`pet_from_rub`), Treppe (anim stairs_up/down), offene Tür direkt; Jagd mit
+  `hunting` schon auf dem Weg zum Lauerplatz (Vögel fliegen erst beim Sprung auf). **Spielzeug der Spielfigur:** je
+  Spielzeug ein Interactable „Nehmen“ (`CatLife._update_toy_pickups`), `Player.hold_toy`, E wirft (`_throw_toy` →
+  `CatLife.throw_toy`: Flugbahn mit Aufprall, nie unter den Gehweg, in `CatLife.step` gerechnet `_fly`/`_step_flights`);
+  Katzen, die es landen sehen, rennen zur Ruhelage (`_toy_landed`); auf Sitz/Fensterbank legen sie ihr Spielzeug vorher
+  ab (`toy_drop`/`toy_take`, fällt sonst hinunter). **Gartenhof der Baumgasse (Teil E):** Singvögel landen oft dort
+  (`BirdLife._court_spots`, `bird_court_*`; unter dem Blätterdach nur tief durch die Gasse `_court_way`, Rasen hinter dem
+  Baum quer vom Gang her `_court_arrival`/`_lane_above`); Katzen machen Abstecher (Halt "garden", `CatLife._garden_actions`,
+  `cat_garden_*`; Wege nur über `in_alley`/`_alley_walkable`/`_alley_path`/`_alley_way_out`, nie quer durch Mauern, Beete
+  oder die Rundbank). Fahrräder bremsen für Katzen und vor dem Ausweichen auf die andere Seite (`bike_swerve_speed`).
+  Gassen: Passanten erscheinen dort nur, wenn die Spielfigur ≥ `passerby_spawn_player_distance` weg ist; Bogengasse ohne
+  Grenze bis kurz vor die Tür (`opposite_alley_bound_before_door`). Prüfen: street_life_check `--garden`, `--throw`, `--hunt`.
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
   Daumen rechts −X / links +X; Finger in Verlängerung des Unterarms.
 - **Blick zur Spielfigur (seit 6f):** Passanten schauen höchstens `chibi_player_glance_time` Sekunden zur Spielfigur,

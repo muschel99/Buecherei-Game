@@ -181,7 +181,7 @@ static func row_end_x(side: int) -> float:
 ## festen Nachbarhäusern.
 static func end_start_x(side: int) -> float:
 	if is_straight(side):
-		return straight_bound_x() + side * GameConfig.straight_street_length
+		return straight_bound_x() + side * (GameConfig.straight_street_length + GameConfig.straight_curve_delay)
 	return row_end_x(side) + side * GameConfig.gate_bend_offset
 
 

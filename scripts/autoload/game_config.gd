@@ -148,10 +148,11 @@ var entrance_podium_depth: float = 0.7
 ## So weit steht der Sockel des Hauses unten vor der Wand.
 var plinth_proud: float = 0.03
 
-## Gehweg vor der Bücherei (von der Hauswand bis zur Bordsteinkante).
-var sidewalk_width: float = 2.6
-## Gehweg auf der gegenüberliegenden Straßenseite.
-var opposite_sidewalk_width: float = 2.1
+## Gehweg vor der Bücherei (von der Hauswand bis zur Bordsteinkante; seit der Nachbesserung 3 von 6h 30 % breiter, damit
+## Paare nebeneinander gehen – die Straße blieb gleich breit, die Häuser gegenüber rückten nach außen).
+var sidewalk_width: float = 3.38
+## Gehweg auf der gegenüberliegenden Straßenseite (ebenfalls 30 % breiter).
+var opposite_sidewalk_width: float = 2.73
 ## Fahrbahn (seit Etappe 4e etwa 50 % breiter als vorher, Gehwege etwa 30 %).
 var street_width: float = 5.1
 ## So viel tiefer als der Gehweg liegt die Fahrbahn (Höhe des Bordsteins).
@@ -170,8 +171,14 @@ var straight_bound_offset: float = 6.0
 ## So gewählt, dass man von der Grenze aus gerade eben nicht um die Kurve schauen kann (das
 ## Ende der Seitenstraße bleibt immer verdeckt).
 var straight_street_length: float = 8.0
+## Seit der Nachbesserung 3 von 6h (Gehwege 30 % breiter, die Häuser gegenüber rückten nach außen): so viel später (m)
+## beginnt die Kurve am geraden Ende – das Eckhaus innen bleibt so, wo es war; die Reihe gegenüber endet weiter an der
+## alten Stelle, von dort folgen die Häuser außen der Kurve.
+var straight_curve_delay: float = 0.78
 var straight_curve_radius: float = 8.0
-var straight_side_street_length: float = 8.0
+## (seit der Nachbesserung 3 von 6h 12 m und ein Haus mehr außen: vom breiteren Gehweg gegenüber sieht man an der
+## Grenze weiter in die Seitenstraße hinein; so schließen die Häuser lückenlos aneinander)
+var straight_side_street_length: float = 12.0
 var straight_corner_house: String = "corner_90"
 ## Am abbiegenden Ende (seit Etappe 4f): Die Straße läuft geradeaus weiter und macht
 ## gate_bend_offset Meter hinter den festen Nachbarhäusern eine sanfte Kurve (Winkel in Grad,
@@ -181,7 +188,9 @@ var straight_corner_house: String = "corner_90"
 ## gate_corner_house). Laufen kann man bis an den Bogen des Torhauses.
 var gate_bend_offset: float = 9.5
 var gate_bend_angle: float = 30.0
-var gate_bend_radius: float = 12.0
+## (seit der Nachbesserung 3 von 6h 0,78 m kleiner: so bleibt die Kurve der Hausfronten auf der Bücherei-Seite genau, wo
+## sie war, obwohl der Gehweg breiter wurde – die Straßenmitte rückte um so viel zur Innenseite)
+var gate_bend_radius: float = 11.22
 var gate_approach_length: float = 4.0
 var gate_corner_house: String = "corner_30"
 ## Torhaus am abbiegenden Ende: Haustyp (Szene scenes/world/houses/<id>.tscn, Breite und

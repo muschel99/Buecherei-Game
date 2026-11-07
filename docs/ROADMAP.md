@@ -1613,7 +1613,39 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
       eigener Bewegung, Schnurren drinnen leise; Passanten schauen Autos nach, winken keinen Fahrern; Torbogen ohne Haken
 - [x] Teil 3: Passanten zu zweit spazieren und plaudern
 - [x] Teil 4: Spielzeug aufheben und werfen (E), Katzen rennen hinterher, schubsen es selbst hoch
-- [ ] offen: CLAUDE.md/ASSET_GUIDE für Nachbesserung 2 ergänzen; neue „Petting Animal“-Höhen der Entwicklerin einbauen
+- [x] CLAUDE.md für Nachbesserung 2 ergänzt
+- [ ] offen: neue „Petting Animal“-Höhen der Entwicklerin einbauen (sobald die Dateien da sind)
+
+**Nachbesserung 3 (Test der Entwicklerin)**
+- [x] Teil A: Geworfenes Spielzeug lässt sich wieder aufheben und fällt nie mehr unter den Gehweg; Katzen springen dorthin,
+      wo es nach dem Rollen liegt (nicht auf den Landepunkt); auf Stühlen und Fensterbänken legen Katzen ihr Spielzeug
+      vorher unten ab; Vögel fliegen erst beim Sprung der Katze auf und starten/landen sanfter; Fahrräder bremsen für Katzen
+      und bremsen, bevor sie auf die andere Seite ausweichen; im Vorbeigehen nicken, wer winkt, bleibt stehen; Lenkrad der
+      Autos 12 cm weiter vorn (hing in den Köpfen)
+- [x] Bogengasse: unsichtbare Grenze erst kurz vor der Tür ganz hinten; Passanten erscheinen in Gassen nur, wenn die
+      Spielfigur mindestens 7 m weg ist
+- [x] Teil C: weichere Übergänge – Reden, Lachen, Nicken, Zeigen und Pausen bewegen nur Oberkörper, Kopf und Arme, die
+      Beine bleiben ruhig; im Sitzen schlagen manche die Beine übereinander und behalten sie so
+- [x] Teil D: Radfahrer halten an – linker Fuß auf dem Boden, das Rad neigt sich leicht (eigene Haltung, in Blender gebaut)
+- [x] Teil E: Vögel landen oft im Gartenhof der Baumgasse (picken im Gras und auf dem Pflaster, fliegen tief durch die
+      Gasse unter dem Blätterdach); Katzen machen Abstecher dorthin (umschauen, im Gras liegen, auf die Rundbank) und jagen
+      dort – viel öfter, wenn dort Vögel sind
+- [x] Teil B: Gehwege 30 % breiter (Bücherei-Seite 3,38 m, gegenüber 2,73 m), die Straße bleibt gleich breit: die Häuser
+      gegenüber rückten 1,41 m nach außen, Bogengasse mit; Torhaus 1,41 m breiter (neu gebaut); am geraden Ende ein Haus
+      mehr außen in der Kurve; Plätze der Tiere neu ausgemessen
+- [x] Dokumentation, Notion
+
+**Entscheidungen (selbst getroffen, Nachbesserung 3):**
+- Breitere Gehwege: Die Bücherei und ihre Nachbarn bleiben stehen; Straße und Häuser gegenüber rücken nach außen. Jedes
+  Haus behält Typ und Modell (Werkzeug „nur verschieben“), nur die Lage wird neu berechnet.
+- Am Torhaus-Ende ist die Kurve der Straßenmitte etwas enger (Radius 11,22 statt 12 m): So bleiben die Häuser auf der
+  Bücherei-Seite genau, wo sie waren (sonst klafften Lücken zwischen ihnen), das Torhaus wächst nur zur anderen Seite.
+- Am geraden Ende sieht man vom breiteren Gehweg gegenüber weiter in die Seitenstraße: dort steht jetzt ein sechstes
+  Haus, die Seitenstraße ist 12 m lang (die Kurve beginnt 0,78 m später, damit das Eckhaus innen stehen bleibt).
+- Anhalten auf dem Rad: eine feste Haltung, die weich über das Treten gelegt wird (wie die Oberkörper-Ebenen beim
+  Plaudern) – so steht der Fuß genau auf dem Boden, egal wo die Kurbel gerade war.
+- Vögel im Gartenhof fliegen nie von oben hinein: Die Baumkrone füllt den Hof von Mauer zu Mauer (ab etwa 3 m), darum
+  kommen sie tief durch die Gasse.
 
 ## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
 - Inhalt folgt mit den Wünschen der Entwicklerin

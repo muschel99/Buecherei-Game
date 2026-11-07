@@ -43,13 +43,31 @@ const DOOR_COLORS: Array[Color] = [
 
 ## Alle Häuser: Liste von { "group", "name", "type", "position", "yaw", "wall_color",
 ## "door_color", "casts_shadow", "solid" }.
-static func plan() -> Array[Dictionary]:
+## keep (seit der Nachbesserung 3 von 6h): "Gruppe/Name" → Haustyp der vorhandenen Häuser – dann behalten alle Reihen
+## ihre Typen in derselben Reihenfolge (jedes Haus hat sein eigenes Modell), nur die Lage wird neu berechnet (Verschieben
+## nach geänderten Maßen, Erzeuger mit --move).
+static func plan(keep: Dictionary = {}) -> Array[Dictionary]:
+	_keep = keep
 	var houses: Array[Dictionary] = []
 	_library_row(houses)
 	_opposite_row(houses)
 	_straight_end(houses, StreetLayout.straight_side())
 	_gate_end(houses, StreetLayout.turning_side())
+	_keep = {}
 	return houses
+
+
+static var _keep := {}
+
+
+## Typen einer Reihe: die vorhandenen (keep), sonst neu gewählt (_choose).
+static func _types_for(group: String, prefix: String, length: float, seed: int) -> Array:
+	var kept := []
+	while _keep.has("%s/%s%d" % [group, prefix, kept.size() + 1]):
+		kept.append(_keep["%s/%s%d" % [group, prefix, kept.size() + 1]])
+	if not kept.is_empty():
+		return kept
+	return _choose(length, seed)
 
 
 ## Die festen Nachbarn links und rechts der Bücherei (Vorderseite zur Straße = -Z).
@@ -94,8 +112,11 @@ static func _opposite_row(houses: Array[Dictionary]) -> void:
 static func _opposite_part(houses: Array[Dictionary], part: Vector2, feature: String, index: int) -> void:
 	var z := StreetLayout.opposite_front_z()
 	var length := part.y - part.x
-	var types := _choose(length - (HouseTypes.width_of(feature) if feature != "" else 0.0), 11 + index * 5)
-	if feature != "":
+	var types := _types_for("Opposite", "Opposite%d_" % (index + 1), -1.0, 0)
+	var kept := not types.is_empty()
+	if not kept:
+		types = _choose(length - (HouseTypes.width_of(feature) if feature != "" else 0.0), 11 + index * 5)
+	if feature != "" and not kept:
 		# An die Stelle, an der es der Ladentür am nächsten steht
 		var best := 0
 		var best_distance := INF
@@ -121,7 +142,7 @@ static func _opposite_part(houses: Array[Dictionary], part: Vector2, feature: St
 ## Häuser der Kurve), am abbiegenden Ende am Eckhaus innen in der Kurve.
 static func _opposite_row_end(side: int) -> float:
 	if StreetLayout.is_straight(side):
-		return StreetLayout.end_start_x(side)
+		return StreetLayout.end_start_x(side) - side * GameConfig.straight_curve_delay
 	return _corner_placement(side).main_end.x
 
 
@@ -143,7 +164,8 @@ static func _straight_end(houses: Array[Dictionary], side: int) -> void:
 	# Außen: Häuser folgen der Kurve in die Seitenstraße. Innen in der Seitenstraße und quer an
 	# ihrem Ende stehen bewusst keine Häuser – die sieht man von nirgends (geprüft mit
 	# tools/plan_check.py unseen); die Seitenstraße ist nur so lang, wie man hineinsieht.
-	var outer := PackedVector2Array()
+	# (beginnt dort, wo die Reihe gegenüber endet – straight_curve_delay vor der Kurve)
+	var outer := PackedVector2Array([Vector2(_opposite_row_end(side), StreetLayout.road_center_z() - opp)])
 	for point in path:
 		outer.append(StreetLayout.end_offset(point, -opp, side))
 	_fill_curve(houses, group, "Outer", outer, path, FAR_COLORS, 0, false)
@@ -285,7 +307,7 @@ static func _fill_curve(houses: Array[Dictionary], group: String, prefix: String
 	var length := 0.0
 	for i in line.size() - 1:
 		length += line[i].distance_to(line[i + 1])
-	var types := _choose(length, int(absf(line[0].x * 7.0 + line[0].y * 13.0)))
+	var types := _types_for(group, prefix, length, int(absf(line[0].x * 7.0 + line[0].y * 13.0)))
 	if types.is_empty():
 		return
 	var total := 0.0
@@ -356,7 +378,7 @@ static func _fill(houses: Array[Dictionary], group: String, prefix: String, a: V
 	# sie) – sonst stünde dort ein ganzes Haus quer in den Nachbarhäusern.
 	if a.distance_to(b) < MIN_ROW_LENGTH:
 		return
-	var types := _choose(a.distance_to(b), int(absf(a.x * 7.0 + a.y * 13.0)))
+	var types := _types_for(group, prefix, a.distance_to(b), int(absf(a.x * 7.0 + a.y * 13.0)))
 	var start := houses.size()
 	_place(houses, group, prefix, types, a, b, yaw, colors, color_offset)
 	for i in range(start, houses.size()):

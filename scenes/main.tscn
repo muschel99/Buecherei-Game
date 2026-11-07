@@ -125,10 +125,10 @@ script = ExtResource("33_greenery")
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 12.4, 0, -4.76)
 
 [node name="BenchOppositeWest" parent="Outside/Benches" instance=ExtResource("34_bench")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.9, 0, -13.44)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.52, 0, -14.85)
 
 [node name="BenchOppositeEast" parent="Outside/Benches" instance=ExtResource("34_bench")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.6, 0, -13.43)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.6, 0, -14.84)
 
 [node name="StreetLife" type="Node3D" parent="Outside"]
 script = ExtResource("32_street_life")

@@ -8,7 +8,8 @@
 ; verschwindet der Platzhalter. WICHTIG: Das eigene Modell muss die Öffnung des Bogens frei
 ; lassen (Breite passage_width, Scheitel arch_spring + passage_width / 2), die Straße darunter
 ; baut das Spiel. Kollision: nur die beiden Pfeiler links und rechts. So breit wie die Straße
-; zwischen den Hausfronten (9,8 m); es steht mittig zwischen ihnen (StreetLayout.gate_center_offset).
+; zwischen den Hausfronten (11,21 m, seit der Nachbesserung 3 von 6h mit breiteren Gehwegen); es steht mittig zwischen
+; ihnen (StreetLayout.gate_center_offset).
 ; Wo es steht: scenes/world/houses.tscn (Gruppe GateStreet).
 
 [ext_resource type="Script" path="res://scripts/world/gatehouse_facade.gd" id="1_gate"]
@@ -20,7 +21,7 @@ arch_spring = 2.6
 masonry_height = 6.4
 sign_band_height = 0.5
 jetty = 0.25
-width = 9.8
+width = 11.21
 depth = 6.0
 eaves_height = 9.4
 roof_rise = 2.4
