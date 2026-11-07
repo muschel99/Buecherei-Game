@@ -539,12 +539,15 @@ func _step_approach(delta: float) -> void:
 		_anim_state = &"idle"
 		_anim_speed = 0.0
 		return
-	var step := speed_pref * 0.55
+	var step := float(_action.get("approach_speed", speed_pref * 0.55))
 	var next := pos.move_toward(target, step * delta)
 	if not life.blocks_move(self, next):
+		# geht es von der Blickrichtung weg (Schritt zurück), läuft die Geh-Animation rückwärts
+		var face: Vector2 = _action.get("face", Vector2.ZERO)
+		var backwards := face.dot(target - pos) < 0.0
 		pos = next
 		_anim_state = &"walk"
-		_anim_speed = step
+		_anim_speed = -step if backwards else step
 	else:
 		_anim_state = &"idle"
 		_anim_speed = 0.0
@@ -574,6 +577,21 @@ func start_seat_chat(session: ChatSession, time: float) -> void:
 func _set_partner(other: Passerby) -> void:
 	if _model and _model.has_method("set_chat_partner"):
 		_model.call("set_chat_partner", other._model if other else null)
+
+
+## Nach dem Händeschütteln wieder ein Stück auseinander (bis passerby_chat_gap zwischen beiden): jeder geht die
+## Hälfte des fehlenden Stücks langsam rückwärts.
+func chat_back_off(partner: Passerby) -> void:
+	if not _action.get("chat", false) or partner == null:
+		return
+	var away := pos - partner.pos
+	var dist := away.length()
+	var want := GameConfig.passerby_chat_gap * scale.x
+	if dist < 0.01 or dist >= want:
+		return
+	_action.approach = life.keep_on_sidewalk(side, pos + away / dist * (want - dist) / 2.0)
+	_action.approach_speed = GameConfig.passerby_step_back_speed
+	_phase_time = 0.0
 
 
 ## Steht man schon am Platz fürs Plaudern? (ChatSession wartet darauf mit der Begrüßung)

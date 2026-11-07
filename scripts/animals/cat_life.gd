@@ -187,7 +187,7 @@ func _build_pool() -> void:
 				"second_color": look.fur2, "third_color": look.get("back", look.fur), "mask_from": float(look.get("patches", 0.55)),
 				"mask_soft": 0.3, "eye_color": look.eye}})
 		cat.scale = Vector3.ONE * float(look.get("size", 1.0))
-		cat.radius = (0.24 if big else 0.2) * cat.scale.x
+		cat.radius = (0.2 if big else 0.2) * cat.scale.x  # große Katzen sind größer gesetzt (size)
 		cat.finished.connect(_on_finished)
 		_pool.append(cat)
 
@@ -441,8 +441,9 @@ func _meet(a: StreetCat, b: StreetCat, d: Vector3) -> void:
 	_release_claims(a)
 	_release_claims(b)
 	var m := (a.global_position + b.global_position) / 2.0
-	var pa := _ground_at(m - d * 0.21)
-	var pb := _ground_at(m + d * 0.21)
+	# Nase an Nase: jede so weit von der Mitte, wie ihre Nase vor ihr ist (große Katzen weiter)
+	var pa := _ground_at(m - d * (a.nose_reach() + 0.02))
+	var pb := _ground_at(m + d * (b.nose_reach() + 0.02))
 	var sniff := _rng.randf_range(1.8, 3.0)
 	var plan_a: Array[Dictionary] = [_walk([a.global_position, pa], 0.35), {"type": "turn", "face": d},
 		{"type": "anim", "anim": "sniff", "time": sniff}]

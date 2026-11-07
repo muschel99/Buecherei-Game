@@ -8,7 +8,7 @@ extends SkeletonModifier3D
 ##
 ## Figur schaut nach +Z, ihre linke Seite ist +X, oben +Y.
 
-enum Gesture { NONE, WAVE, WATCH, STRETCH, TALK }
+enum Gesture { NONE, WAVE, WATCH, STRETCH, TALK, CLIP }
 
 var gesture: Gesture = Gesture.NONE
 ## 0 = keine Geste, 1 = ganz
@@ -17,6 +17,32 @@ var weight: float = 0.0
 var time: float = 0.0
 ## Sprechpause beim Plaudern (Hände ruhig): 0 … 1
 var talk_energy: float = 1.0
+## Gesture.CLIP (seit Etappe 6h): die Arm-Bewegung aus einer Animation der Figur über die laufende Bewegung legen
+## (z. B. die Wink-Animation im Gehen und Sitzen) – Animation, Zeit darin, Knochen → Spur der Drehung
+var clip: Animation
+var clip_time: float = 0.0
+## Erhobener Oberarm etwas weiter nach außen (Grad) – die Animationen sind für Menschen gemacht, bei den großen
+## Chibi-Köpfen käme die winkende Hand sonst ans Gesicht
+var clip_arm_out: float = 20.0
+## … und die Hand bleibt seitlich neben dem Kopf: höchstens bis hierhin zur Mitte (x im Raum der Figur, rechts
+## negativ; Kopf samt Frisur ist etwa 0,46 m breit)
+var clip_hand_min_x: float = -0.29
+var _clip_tracks: Dictionary = {}
+
+
+## Animation für Gesture.CLIP: nur diese Knochen (Namen) werden übernommen; prefix = Pfad zum Skelett in der
+## Animation (z. B. "Skeleton/Skeleton3D").
+func set_clip(anim: Animation, prefix: String, bone_names: PackedStringArray) -> void:
+	clip = anim
+	_clip_tracks.clear()
+	var skeleton := get_skeleton()
+	if anim == null or skeleton == null:
+		return
+	for bone_name in bone_names:
+		var bone := skeleton.find_bone(bone_name)
+		var track := anim.find_track(NodePath(prefix + ":" + bone_name), Animation.TYPE_ROTATION_3D)
+		if bone >= 0 and track >= 0:
+			_clip_tracks[bone] = track
 
 
 func _process_modification_with_delta(_delta: float) -> void:
@@ -46,6 +72,30 @@ func _process_modification_with_delta(_delta: float) -> void:
 				_aim(skeleton, prefix + "LowerArm", Vector3(0.08 * side, 1.0, -0.12), w * lift)
 				# Handflächen zueinander (Handrücken nach außen)
 				_orient_hand(skeleton, prefix + "Hand", prefix + "LowerArm", Vector3(side, 0.0, 0.0), w * lift)
+		Gesture.CLIP:
+			# Drehungen der Knochen aus der Animation (lokal zum Elternknochen) – der Rest bewegt sich weiter
+			if clip:
+				for bone: int in _clip_tracks:
+					var q := clip.rotation_track_interpolate(_clip_tracks[bone], clip_time)
+					skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_pose_rotation(bone).slerp(q, w))
+				# je weiter der Arm angehoben ist (hängend: nichts, waagerecht und höher: ganz), desto weiter nach außen
+				# (rechter Arm: zur Seite -X, Drehung um +Z) …
+				var upper := skeleton.find_bone("RightUpperArm")
+				var hand := skeleton.find_bone("RightHand")
+				if upper >= 0 and hand >= 0:
+					var up := skeleton.get_bone_global_pose(upper).basis.y.normalized().y
+					_turn(skeleton, upper, Vector3.BACK, deg_to_rad(clip_arm_out) * clampf(up + 1.0, 0.0, 1.0) * w)
+					# … und schwingt die Hand beim Winken zur Mitte, schwenkt der Arm waagerecht (um die Senkrechte durch die
+					# Schulter) so weit nach außen, dass sie neben dem Kopf bleibt – nie vor Gesicht oder Brust
+					var shoulder := skeleton.get_bone_global_pose(upper).origin
+					var h := skeleton.get_bone_global_pose(hand).origin
+					var dx := h.x - shoulder.x
+					var dz := h.z - shoulder.z
+					var r := Vector2(dx, dz).length()
+					var want := clip_hand_min_x - shoulder.x
+					if r > 0.05 and dx > want and dz > -0.05:
+						var swing := asin(clampf(want / r, -1.0, 1.0)) - atan2(dx, dz)
+						_turn(skeleton, upper, Vector3.UP, swing * w)
 		Gesture.TALK:
 			# erzählen: Unterarme vor dem Bauch, Hände bewegen sich ruhig
 			var e := talk_energy
@@ -78,6 +128,17 @@ func _orient_hand(skeleton: Skeleton3D, hand_name: String, forearm_name: String,
 	var current := skeleton.get_bone_pose_rotation(hand)
 	var target := (parent_global.basis.orthonormalized().inverse() * wanted).get_rotation_quaternion()
 	skeleton.set_bone_pose_rotation(hand, current.slerp(target, clampf(amount, 0.0, 1.0)))
+
+
+## Dreht einen Knochen um eine Achse im Raum der Figur (Bogenmaß).
+func _turn(skeleton: Skeleton3D, bone: int, axis: Vector3, angle: float) -> void:
+	if absf(angle) < 0.0001:
+		return
+	var parent := skeleton.get_bone_parent(bone)
+	var parent_global := skeleton.get_bone_global_pose(parent) if parent >= 0 else Transform3D.IDENTITY
+	var global_basis := (parent_global.basis * skeleton.get_bone_pose(bone).basis).orthonormalized()
+	var turned := Basis(axis, angle) * global_basis
+	skeleton.set_bone_pose_rotation(bone, (parent_global.basis.inverse() * turned).orthonormalized().get_rotation_quaternion())
 
 
 ## Dreht einen Knochen so, dass er in die Richtung dir zeigt (im Raum der Figur), um amount überblendet.

@@ -261,8 +261,8 @@ func _update_chats(delta: float) -> void:
 				var h2 := w2.handshake_hand()
 				gap = u * (h1.y + h2.y) + left * (h1.x + h2.x)
 			var mid := (w1.pos + w2.pos) / 2.0
-			w1.start_chat(session, u, time, _keep_on_sidewalk(w1.side, mid - gap / 2.0))
-			w2.start_chat(session, -u, time, _keep_on_sidewalk(w2.side, mid + gap / 2.0))
+			w1.start_chat(session, u, time, keep_on_sidewalk(w1.side, mid - gap / 2.0))
+			w2.start_chat(session, -u, time, keep_on_sidewalk(w2.side, mid + gap / 2.0))
 			_chats.append(session)
 			stat_chats += 1
 			stat_handshakes += 1 if session.handshake else 0
@@ -271,7 +271,7 @@ func _update_chats(delta: float) -> void:
 
 
 ## Punkt innerhalb des erlaubten Streifens des Gehwegs (nie Richtung Fahrbahn oder Hauswand hinaus).
-func _keep_on_sidewalk(side: int, point: Vector2) -> Vector2:
+func keep_on_sidewalk(side: int, point: Vector2) -> Vector2:
 	var route: StreetRoute = sidewalks[side]
 	var on := route.project(point)
 	var band := route.band_at(on.x)

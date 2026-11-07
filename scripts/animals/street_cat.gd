@@ -600,8 +600,15 @@ func _anim_speed() -> float:
 
 
 ## Schrittlänge gegenüber der jungen Katze (Erwachsene: längere Beine)
+## Schrittlänge gegenüber der jungen Katze in Größe 1 (seit Etappe 6h auch nach der Größe – große Katzen
+## sind größer gebaut und größer gesetzt, die Pfoten rutschen nicht).
 func _stride() -> float:
-	return ADULT_STRIDE if adult else 1.0
+	return (ADULT_STRIDE if adult else 1.0) * scale.x
+
+
+## Wie weit die Nase vor der Mitte ist (m, mit Größe) – für Begegnungen Nase an Nase.
+func nose_reach() -> float:
+	return (0.209 if adult else 0.188) * scale.x
 
 
 ## Welche Sprung-Bewegung: nach oben hoch springen bzw. hüpfen, nach unten herunterspringen bzw. absteigen.

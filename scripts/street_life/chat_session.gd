@@ -4,7 +4,8 @@ extends RefCounted
 ## den Händen, murmelt und zeigt eine Sprechblase mit Symbol; der andere hört zu, lächelt, lacht manchmal
 ## mit. StreetLife startet die Runde (beide bleiben stehen) und ruft update() in jedem Schritt.
 ## Seit Etappe 6h: erst gehen beide aufeinander zu (Passerby.chat_ready), dann Begrüßung – Händeschütteln
-## (handshake, beide gleichzeitig) oder einer winkt –, dann wird geplaudert; zum Abschied winken sie manchmal.
+## (handshake, beide gleichzeitig; danach tritt jeder einen Schritt zurück, chat_back_off) oder einer winkt –, dann
+## wird geplaudert; zum Abschied winken sie manchmal.
 ## Im Sitzen (seated, zwei auf einer Bank) ohne Annähern und Begrüßung; vorbei, sobald einer aufsteht.
 
 var a: Passerby
@@ -14,7 +15,7 @@ var handshake := false
 var seated := false
 var _speaker := 0
 var _turn_left := 0.0
-## 0 = aufeinander zu, 1 = Begrüßung, 2 = plaudern
+## 0 = aufeinander zu, 1 = Begrüßung, 2 = nach dem Händeschütteln auseinander, 3 = plaudern
 var _phase := 0
 var _phase_left := 4.0
 
@@ -39,20 +40,30 @@ func update(delta: float) -> bool:
 		end()
 		return false
 	if seated and _phase == 0:
-		_phase = 2
+		_phase = 3
 	_phase_left -= delta
 	match _phase:
 		0:  # aufeinander zu
 			if (a.chat_ready() and b.chat_ready()) or _phase_left <= 0.0:
 				# Hände treffen sich nur, wenn beide am Platz sind
 				var shake := handshake and a.chat_ready() and b.chat_ready()
+				handshake = shake
 				var waver := randi() % 2
 				_phase_left = maxf(a.chat_greet(shake, waver == 0), b.chat_greet(shake, waver == 1))
 				_phase = 1
 			return true
 		1:  # Begrüßung
 			if _phase_left <= 0.0:
-				_phase = 2
+				_phase = 3
+				if handshake:
+					a.chat_back_off(b)
+					b.chat_back_off(a)
+					_phase = 2
+					_phase_left = 2.5
+			return true
+		2:  # einen Schritt zurück
+			if (a.chat_ready() and b.chat_ready()) or _phase_left <= 0.0:
+				_phase = 3
 			return true
 	time_left -= delta
 	if time_left <= 0.0:

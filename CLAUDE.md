@@ -688,10 +688,15 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Griffpunkt; `_update_bag`: hängt senkrecht an der rechten Hand, Pendel, vom Bein weggedrückt) – Taschenträger
   setzen sich nicht, streicheln nicht, winken nicht, reden ohne Hände. Einzelne Auftritte `play_clip(name, max,
   hold, hold_time, back)` (nur im Stehen bzw. Sitzen bei "sit_…", Losgehen bricht ab; `hold` = Abschnitt hin und
-  her, `back` = rückwärts zum Anfang), Pausen `play_pause` (`passerby_pause_clips`), Winken im Stehen `wave_hello`.
+  her, `back` = rückwärts zum Anfang), Pausen `play_pause` (`passerby_pause_clips`). **Winken** (`wave_hello`,
+  `play_gesture(&"wave")`) = nur der rechte Arm aus der Animation wave über Gehen/Stehen/Sitzen gelegt
+  (`ChibiGestureModifier` Gesture.CLIP, `set_clip`, Abschnitt `WAVE_CLIP`; Oberarm `clip_arm_out` nach außen, Hand nie
+  näher zur Mitte als `clip_hand_min_x` – sonst vor dem großen Chibi-Gesicht); die Spielfigur wird mit
+  `chibi_wave_chance_player` gegrüßt. Negatives Tempo in `animate` = Geh-Animation rückwärts.
   Schleifen `LOOPS`, gekürzte `PINGPONG`. Plaudern: erst aufeinander zu (`start_chat(…, spot)`, `_step_approach`,
-  Abstand `passerby_chat_gap`), dann Begrüßung (`ChatSession` Phase 0/1: Händeschütteln = beide `handshake`
-  gleichzeitig, rechte Hände treffen sich über `HANDSHAKE_HAND` × Hüfthöhe, leicht versetzt; sonst winkt einer),
+  Abstand `passerby_chat_gap` 1,3 m), dann Begrüßung (`ChatSession` Phase 0/1: Händeschütteln = beide `handshake`
+  gleichzeitig, rechte Hände treffen sich über `HANDSHAKE_HAND` × Hüfthöhe, leicht versetzt; danach Phase 2: beide
+  treten rückwärts auseinander, `chat_back_off`, `passerby_step_back_speed`; sonst winkt einer),
   Reden mit talk-Clips (`set_talking`, Zuhörer `chat_react`: nicken/Kopf wiegen/lachen – Männer lachen nicht),
   Abschied winken. Zwei auf einer Bank (`_seat_chats`, `passerby_join_seat_chance` setzt sich gern dazu):
   sit_talk…/sit_laugh, Blick über `set_chat_partner`. **Katzen streicheln:** `StreetLife._update_pets` (ruhende
@@ -1179,7 +1184,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   cat_adult.tscn mit `StreetCat.adult` = längere Schritte `ADULT_STRIDE`, Mundstelle `MOUTH_ADULT`, Treppe Stufe für
   Stufe (`_stairs(..., climb)`), keine Körbchen); Bewegungen: Verschiebungen wachsen mit `AC.P["leg"]`, Werte je
   Profil in `SIT`, `GROOM`, `SLEEP_SHIFT`, `LIE_FRONT_Z`, `ROLL_LIFT` (Pose `absolute=True` = nicht mitwachsen);
-  Aussehen mit `"adult": true` in `GameConfig.cat_looks`) und `animal_cat_anim.py` (Beine mit IK:
+  Aussehen mit `"adult": true` in `GameConfig.cat_looks`, dort auch `size` ≈ 1,3 – größer gesetzt, Wunsch der
+  Entwicklerin; Schrittlänge `_stride()` und Nase `nose_reach()` wachsen mit der Größe) und `animal_cat_anim.py` (Beine mit IK:
   Ziel-Knochen ik_fl/ik_bl + Pol, Pose-Bausteine `Pose`, `gait_feet`, `tail_curve`; danach mit `bake_action` in
   einfache Drehungen gebacken, IK entfernt). **In jeder Bewegung alle Knochen schlüsseln.** Prüfen: `-- cat --seq=<bew.>
   [--seqview=seite,vorn,oben]` = Einzelbilder je Bewegung (immer ansehen und nachbessern). Ruhehaltung als UV/UV2 →

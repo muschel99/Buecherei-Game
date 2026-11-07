@@ -1597,6 +1597,14 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 - Männer lachen beim Plaudern nicht mit dem ganzen Körper (wie bei den Lauten), sie nicken stattdessen.
 - Lange Animationen (Umschauen 13 s, Uhr 14 s) enden nach höchstens 7 s weich in der Grundhaltung.
 
+**Nachbesserung nach dem Test der Teile A–D**
+- [x] Große Katzen deutlich größer (etwa 1,3-mal so groß gesetzt; vorher so groß wie die jungen, nur schlanker);
+      Schritte wachsen mit (keine rutschenden Pfoten), Begegnung Nase an Nase nach der Größe
+- [x] Plaudern mit mehr Abstand (1,3 m); nach dem Händeschütteln treten beide langsam einen Schritt zurück
+- [x] Grüßen der Spielfigur öfter mit Winken, und zwar mit der neuen Wink-Animation – auch im Gehen und Sitzen
+      (nur der rechte Arm wird übernommen; die Hand bleibt neben dem großen Chibi-Kopf, nie vor dem Gesicht)
+- [x] Anleitung: welche Mixamo-Regler man vorher einstellt und was Claude später noch ändern kann (ASSET_GUIDE)
+
 ## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
 - Inhalt folgt mit den Wünschen der Entwicklerin
 - Schon bekannt (gefunden beim Abschluss von 6h, auch ganz ohne Tiere): An engen Stellen – Tische vor dem Pub,

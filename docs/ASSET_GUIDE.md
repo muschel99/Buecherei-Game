@@ -1143,6 +1143,20 @@ Mixamo kann nur im Browser benutzt werden – das machst du, den Rest Claude:
    Skin**, 30 fps). Gebraucht werden: Gehen (*Walking*), Stehen (*Idle*), Umschauen
    (*Looking Around*), Sitzen (*Sitting Idle*), gern auch Lesen, Winken, Ins-Schaufenster-Schauen.
    Bei Geh-Animationen **In Place** anhaken.
+
+   **Die Regler in Mixamo – vorher einstellen oder kann Claude das später?** (seit Etappe 6h)
+
+   | Regler in Mixamo | Später in der Datei änderbar? |
+   |---|---|
+   | *Overdrive* (Tempo) | ja – Claude kann jede Animation schneller oder langsamer abspielen |
+   | *Trim* (Anfang/Ende abschneiden) | ja – `CLIP_TRIM` in `chibi_anim.py`, oder nur einen Abschnitt abspielen |
+   | *In Place* (auf der Stelle) | ja – das seitliche Wandern entfernt `chibi_anim.py` ohnehin |
+   | *Mirror* (links und rechts tauschen) | ja, mit etwas Arbeit (linke und rechte Knochen tauschen) |
+   | *Character Arm-Space* (Arme weiter vom Körper) | nur teilweise – besser **in Mixamo** einstellen: Unsere Chibis haben einen runden Körper und einen großen Kopf; eher etwas mehr Abstand wählen, damit die Arme nicht durch Bauch oder Gesicht gehen |
+   | Regler, die die Bewegung selbst ändern (z. B. Energie, Schrittweite, Sprunghöhe, „Emotion“) | nein – **in Mixamo** so einstellen, wie es gebraucht wird |
+
+   Kurz: Was die Bewegung selbst verändert, in Mixamo einstellen; Tempo, Länge, auf der Stelle und Spiegeln kann
+   Claude auch nachher noch.
 4. Die Dateien in den Ordner `assets/models/characters/animations/` legen (oder in den Ordner
    „Game design“ – dann holt Claude sie dort ab) und Claude Bescheid sagen. Einmal herunterladen
    genügt: Alle Chibi-Figuren haben dasselbe Skelett, `build_chibi.py` überträgt die Bewegungen

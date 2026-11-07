@@ -739,8 +739,10 @@ var chibi_player_glance_rest: float = 25.0
 var chibi_nod_angle: float = 9.0
 var chibi_nod_time: float = 0.8
 var chibi_greet_smile_time: float = 2.5
-## Beim Grüßen winkt jemand mit dieser Wahrscheinlichkeit (sonst Lächeln und Nicken, seit Etappe 6c).
+## Beim Grüßen winkt jemand mit dieser Wahrscheinlichkeit (sonst Lächeln und Nicken, seit Etappe 6c); die
+## Spielfigur wird öfter mit Winken gegrüßt (seit Etappe 6h mit der Wink-Animation, im Gehen nur der Arm).
 var chibi_wave_chance: float = 0.35
+var chibi_wave_chance_player: float = 0.6
 
 ## Kleine Pausen unterwegs (seit Etappe 6c): Wahrscheinlichkeit je Weg, kurz stehen zu bleiben und sich
 ## umzuschauen, zu strecken oder auf die Uhr zu schauen; Dauer der Pause (Sekunden; mit Animation mindestens
@@ -778,9 +780,11 @@ var passerby_style_speed_limits: Vector2 = Vector2(0.65, 1.15)
 var passerby_pause_clips: Dictionary = {"look_around": 1.0, "stretch_arms": 0.5, "stretch_neck": 0.6, "yawn": 0.5,
 	"sigh": 0.4, "watch": 1.0}
 var passerby_pause_clip_max: float = 7.0
-## Plaudern: Abstand beim Reden (m zwischen den Figuren), Händeschütteln zur Begrüßung (Wahrscheinlichkeit),
-## Erzähler zeigt oder gestikuliert, Zuhörer nickt oder wiegt den Kopf, zum Abschied winken
-var passerby_chat_gap: float = 0.95
+## Plaudern: Abstand beim Reden (m zwischen den Figuren; nach dem Händeschütteln treten beide wieder so weit
+## auseinander, mit diesem Tempo in m/s), Händeschütteln zur Begrüßung (Wahrscheinlichkeit), Erzähler zeigt oder
+## gestikuliert, Zuhörer nickt oder wiegt den Kopf, zum Abschied winken
+var passerby_chat_gap: float = 1.3
+var passerby_step_back_speed: float = 0.35
 var passerby_handshake_chance: float = 0.4
 var passerby_chat_gesture_chance: float = 0.22
 var passerby_chat_nod_chance: float = 0.45
@@ -961,15 +965,16 @@ var cat_looks: Array[Dictionary] = [
 		"eye": Color(0.85, 0.66, 0.2), "tabby": 0.35, "tabby_color": Color(0.62, 0.63, 0.66), "patches": 0.78, "size": 1.05},
 	{"name": "Socke", "fur": Color(0.13, 0.12, 0.12), "fur2": Color(0.95, 0.93, 0.88), "back": Color(0.11, 0.1, 0.1),
 		"eye": Color(0.45, 0.66, 0.3), "tabby": 0.0, "tabby_color": Color(1, 1, 1), "patches": 0.3, "size": 0.94},
-	# Erwachsene Katzen (seit Etappe 6h, Modell cat_adult): größer, längere Beine – "adult": true
+	# Erwachsene Katzen (seit Etappe 6h, Modell cat_adult): längere Beine, längerer Körper – "adult": true; seit dem
+	# Test der Entwicklerin auch deutlich größer gesetzt (size um 1,3: sonst wirkten sie wie schlanke Junge)
 	{"name": "Brummel", "fur": Color(0.47, 0.44, 0.4), "fur2": Color(0.9, 0.88, 0.84), "back": Color(0.37, 0.34, 0.31),
-		"eye": Color(0.8, 0.63, 0.2), "tabby": 0.55, "tabby_color": Color(0.55, 0.5, 0.46), "patches": 0.5, "size": 1.08,
+		"eye": Color(0.8, 0.63, 0.2), "tabby": 0.55, "tabby_color": Color(0.55, 0.5, 0.46), "patches": 0.5, "size": 1.36,
 		"adult": true},
 	{"name": "Karamell", "fur": Color(0.92, 0.74, 0.52), "fur2": Color(0.98, 0.95, 0.9), "back": Color(0.85, 0.64, 0.42),
-		"eye": Color(0.5, 0.68, 0.32), "tabby": 0.3, "tabby_color": Color(0.8, 0.66, 0.56), "patches": 0.55, "size": 1.0,
+		"eye": Color(0.5, 0.68, 0.32), "tabby": 0.3, "tabby_color": Color(0.8, 0.66, 0.56), "patches": 0.55, "size": 1.27,
 		"adult": true},
 	{"name": "Schoko", "fur": Color(0.42, 0.3, 0.22), "fur2": Color(0.88, 0.82, 0.74), "back": Color(0.33, 0.23, 0.17),
-		"eye": Color(0.86, 0.7, 0.26), "tabby": 0.5, "tabby_color": Color(0.6, 0.5, 0.45), "patches": 0.7, "size": 1.03,
+		"eye": Color(0.86, 0.7, 0.26), "tabby": 0.5, "tabby_color": Color(0.6, 0.5, 0.45), "patches": 0.7, "size": 1.31,
 		"adult": true},
 ]
 

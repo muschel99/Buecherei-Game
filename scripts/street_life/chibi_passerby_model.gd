@@ -48,6 +48,12 @@ const PET_REACH_HOLD := Vector2(1.7, 2.5)
 ## Zeitpunkt (s), an dem die Hand die Katze erreicht
 const PET_REACH_TOUCH := 1.2
 const PET_KNEEL_TOUCH := 2.3
+## Winken im Gehen und Sitzen: nur der rechte Arm aus der Animation wave (Abschnitt in Sekunden)
+const WAVE_CLIP := Vector2(0.45, 3.35)
+const RIGHT_ARM: PackedStringArray = ["RightShoulder", "RightUpperArm", "RightLowerArm", "RightHand",
+	"RightThumbMetacarpal", "RightThumbProximal", "RightThumbDistal", "RightIndexProximal", "RightIndexIntermediate",
+	"RightIndexDistal", "RightMiddleProximal", "RightMiddleIntermediate", "RightMiddleDistal", "RightRingProximal",
+	"RightRingIntermediate", "RightRingDistal", "RightLittleProximal", "RightLittleIntermediate", "RightLittleDistal"]
 ## Ausdrücke mit offenen Augen: ab und zu zwischendurch, vor dem Schaufenster, beim Grüßen.
 ## Ausdrücke kommen seit Etappe 6c nur über Auslöser (FaceTriggers, trigger_face) – sonst neutral-freundlich.
 ## Physik-Ebenen, die den Blick verdecken (world, sight_blocker).
@@ -427,7 +433,8 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 		clip = _transition
 		if _transition_t >= length:
 			_transition = &""
-	var walking := state == &"walk" and speed > 0.05
+	# negatives Tempo = rückwärts (ein Schritt zurück beim Plaudern): die Geh-Animation läuft rückwärts
+	var walking := state == &"walk" and absf(speed) > 0.05
 	if _transition == &"":
 		var walk_name := walk_clip if _player.has_animation(walk_clip) else &"walk"
 		var idle_name := idle_clip if _player.has_animation(idle_clip) else &"idle"
@@ -435,7 +442,7 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 			&"walk":
 				clip = walk_name if walking else idle_name
 				var natural := float(_walk_speeds.get(String(walk_name), _walk_speed))
-				clip_speed = clampf(speed / maxf(natural, 0.1), 0.5, 2.0)
+				clip_speed = signf(speed) * clampf(absf(speed) / maxf(natural, 0.1), 0.5, 2.0)
 			&"sit":
 				clip = sit_clip if _player.has_animation(sit_clip) else &"sit_idle"
 				_seated = 1.0
@@ -628,6 +635,14 @@ func play_gesture(gesture_name: StringName, duration: float = -1.0) -> void:
 		&"stretch": [ChibiGestureModifier.Gesture.STRETCH, 2.4]}
 	if not gestures.has(gesture_name):
 		return
+	# Winken seit Etappe 6h mit der Wink-Animation: nur der rechte Arm, über Gehen oder Sitzen gelegt
+	if gesture_name == &"wave" and _gesture_modifier and _player and _player.has_animation(&"wave"):
+		var prefix := str(_player.get_node(_player.root_node).get_path_to(_skeleton))
+		_gesture_modifier.set_clip(_player.get_animation(&"wave"), prefix, RIGHT_ARM)
+		_gesture = ChibiGestureModifier.Gesture.CLIP
+		_gesture_left = minf(duration, WAVE_CLIP.y - WAVE_CLIP.x) if duration > 0.0 else WAVE_CLIP.y - WAVE_CLIP.x
+		_gesture_time = 0.0
+		return
 	_gesture = gestures[gesture_name][0]
 	_gesture_left = duration if duration > 0.0 else float(gestures[gesture_name][1])
 	_gesture_time = 0.0
@@ -699,6 +714,7 @@ func _update_gesture(delta: float) -> void:
 		if _gesture_modifier.weight <= 0.0:
 			_gesture_modifier.gesture = ChibiGestureModifier.Gesture.NONE
 	_gesture_modifier.time = _gesture_time
+	_gesture_modifier.clip_time = WAVE_CLIP.x + _gesture_time
 	# beim Plaudern ab und zu kurz ruhige Hände
 	_gesture_modifier.talk_energy = clampf(0.6 + 0.6 * sin(_gesture_time * 0.7), 0.0, 1.0)
 
@@ -843,20 +859,18 @@ func _scan_focus() -> void:
 	var chance := GameConfig.chibi_greet_chance_player if best == camera else GameConfig.chibi_greet_chance_others
 	if randf() < chance:
 		# Grüßen: Lächeln und Nicken, manchmal auch winken
-		var wave := randf() < GameConfig.chibi_wave_chance and not carries_bag
+		var wave_chance := GameConfig.chibi_wave_chance_player if best == camera else GameConfig.chibi_wave_chance
+		var wave := randf() < wave_chance and not carries_bag
 		trigger_face(&"wave" if wave else &"greet")
 		_nod_t = 0.0
 		if wave:
 			wave_hello()
 
 
-## Winken: im Stehen die Animation (wave), im Gehen und Sitzen die Geste.
+## Winken (seit Etappe 6h immer mit der Wink-Animation: der rechte Arm wird über Gehen, Stehen oder Sitzen gelegt,
+## der Oberarm etwas weiter außen – siehe ChibiGestureModifier.clip_arm_out).
 func wave_hello(max_time: float = 3.0) -> void:
-	if _prev_state in [&"idle", &"look", &"browse"] and _transition == &"" and _shot.is_empty() \
-			and _player and _player.has_animation(&"wave"):
-		play_clip(&"wave", max_time)
-	else:
-		play_gesture(&"wave")
+	play_gesture(&"wave", max_time)
 
 
 ## Abstand zu einem Punkt, wenn er nah genug und etwa vor der Figur ist (höchstens angle Grad
