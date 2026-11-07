@@ -735,8 +735,11 @@ func _step_bat(delta: float) -> void:
 	if not _action.hit and _t > anim_length(&"bat") * 0.35:
 		_action.hit = true
 		var toy: Node3D = _action.get("toy")
-		if toy and is_instance_valid(toy):
-			life.push_toy(toy, global_basis.z, float(_action.get("strength", 0.6)))
+		if toy and is_instance_valid(toy) and not toy.get_meta("held", false):
+			if _action.has("toss"):
+				life.toss_toy(toy, _action.toss)        # hochschubsen (danach springt sie hinterher)
+			else:
+				life.push_toy(toy, global_basis.z, float(_action.get("strength", 0.6)))
 	if _t >= anim_length(&"bat"):
 		_next()
 

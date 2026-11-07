@@ -74,7 +74,37 @@ var interaction_enabled: bool = true:
 			_update_interaction_target()
 
 
+## Gehaltenes Spielzeug (seit der Nachbesserung von 6h): liegendes Katzenspielzeug mit E aufheben, mit E werfen –
+## eine Katze, die das sieht, rennt hinterher und spielt damit.
+var held_toy: Node3D
+
+
+func hold_toy(toy: Node3D) -> void:
+	held_toy = toy
+	if toy.get_parent():
+		toy.get_parent().remove_child(toy)
+	camera.add_child(toy)
+	toy.transform = Transform3D(Basis(Vector3.UP, 0.6), GameConfig.toy_hold_offset)
+	# in der Hand: nicht mehr anvisierbar (sonst träfe der Blick zuerst das eigene Spielzeug)
+	var pick := toy.get_node_or_null("Interactable") as Area3D
+	if pick:
+		pick.collision_layer = 0
+
+
+## E mit Spielzeug in der Hand: in hohem Bogen nach vorn werfen (Katzen sehen es).
+func _throw_toy() -> void:
+	var toy := held_toy
+	held_toy = null
+	var forward := -camera.global_basis.z
+	var start := camera.global_position + forward * 0.35 + Vector3.DOWN * 0.12
+	var velocity3 := (forward + Vector3.UP * GameConfig.toy_throw_lift).normalized() * GameConfig.toy_throw_speed
+	var life := get_tree().get_first_node_in_group(&"street_life") as StreetLife
+	if life and life.cats:
+		life.cats.throw_toy(toy, start, velocity3)
+
+
 func _ready() -> void:
+	add_to_group(&"player")
 	# Werte aus der zentralen Konfiguration übernehmen
 	head.position.y = GameConfig.eye_height
 	apply_field_of_view()
@@ -446,6 +476,9 @@ func _update_interaction_target() -> void:
 ## Hat das angeschaute Objekt keine eigene E-Aktion (z. B. Regal, Boden, ausgelegtes Buch),
 ## blättert E durch die Bücher in der Hand (mit Umschalt rückwärts).
 func _start_interact(backwards: bool = false) -> void:
+	if held_toy and is_instance_valid(held_toy):
+		_throw_toy()
+		return
 	if not is_instance_valid(_current_target) or not _current_target.reacts_to_interact():
 		BookStock.cycle_active(-1 if backwards else 1)
 		return

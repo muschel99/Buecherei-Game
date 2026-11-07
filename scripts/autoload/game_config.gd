@@ -941,6 +941,17 @@ var cat_leg_rub_chance: float = 0.5
 var cat_leg_rub_distance: float = 3.0
 var cat_leg_rub_cooldown: float = 40.0
 var cat_road_wait_gap: float = 2.5
+## Spielzeug (seit der Nachbesserung von 6h): Spielfigur hält es hier (vor der Kamera: rechts, unten, vorn), wirft mit
+## diesem Tempo (m/s) und so viel nach oben; eine Katze, die es landen sieht (höchstens so weit, m), rennt mit dieser
+## Wahrscheinlichkeit hin; beim Spielen schubsen Katzen es manchmal hoch und springen hinterher
+var toy_hold_offset: Vector3 = Vector3(0.2, -0.2, -0.45)
+var toy_throw_speed: float = 5.0
+var toy_throw_lift: float = 0.35
+var cat_chase_distance: float = 9.0
+var cat_chase_chance: float = 0.9
+var cat_toy_toss_chance: float = 0.4
+## So viele Spielzeuge liegen zum Start auf dem Gehweg nahe der Bücherei
+var toy_start_count: int = 2
 ## Fahrzeuge: so nah am Bordstein (m auf dem Gehweg) zählt eine Katze als „an der Straße“ – dann höchstens so schnell
 ## (m/s, plus etwas je Meter Abstand)
 var vehicle_cat_near_distance: float = 1.4

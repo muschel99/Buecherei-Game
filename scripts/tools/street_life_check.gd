@@ -14,7 +14,8 @@ extends Node
 ## Angaben nach "--": --seconds=<je Stelle> (Standard 45), --seed=<zahl>, --only=<stelle,…>,
 ## --deliver=<n> (Testlieferung mit n Kartons, sobald die erste Stelle beginnt), --door_open (Ladentür offen),
 ## --cats (Katzen kommen alle paar Sekunden, --enter=<0..1> Chance hineinzugehen; seit Etappe 6g), --no_animals,
-## --cat_log (jeden Schritt der Katzen ausgeben), --hunt (Jagd und Spielzeug erzwingen).
+## --cat_log (jeden Schritt der Katzen ausgeben), --hunt (Jagd und Spielzeug erzwingen), --throw (alle 15 s wirft die
+## Spielfigur ein Spielzeug in Richtung der nächsten Katze).
 
 const STEP := 1.0 / 30.0
 const TURN_SPEED := deg_to_rad(40.0)
@@ -100,6 +101,8 @@ func _run() -> void:
 			_camera.global_rotation = Vector3(-0.05, yaw, 0.0)
 			_life.step(STEP)
 			time += STEP
+			if _args.has("throw") and fmod(time, 15.0) < STEP and _life.cats:
+				_test_throw()
 			if _args.has("hunt") and fmod(time, 20.0) < STEP and _life.cats and _life.birds:
 				# Prüfen der Jagd: Vögel vor einer laufenden Katze absetzen
 				for cat in _life.cats.get_cats():
@@ -305,6 +308,28 @@ func _measure() -> void:
 				_report.vehicle_close.append("%s nah an der Spielfigur (%s, %.1f m/s)" % [vehicle.name, _spot_name, vehicle.speed])
 
 
+## Prüfen: die Spielfigur wirft ein Spielzeug zur nächsten Katze (wie mit E).
+func _test_throw() -> void:
+	var c := _life.cats
+	var player := _life.get_player()
+	if player == null or c.get_cats().is_empty():
+		return
+	var toy: Node3D = null
+	for t in c._toys:
+		if not t.get_meta("held", false) and not t.get_parent() is StreetCat:
+			toy = t
+			break
+	if toy == null:
+		return
+	var cat: StreetCat = c.get_cats()[0]
+	var to := cat.global_position - player.global_position
+	to.y = 0.0
+	if to.length() > 12.0:
+		return
+	var start := player.global_position + Vector3.UP * 1.4
+	c.throw_toy(toy, start, (to.normalized() * minf(to.length(), 6.0) * 0.8 + Vector3.UP * 2.5))
+
+
 func _print_report() -> void:
 	print("")
 	if _life.birds:
@@ -318,8 +343,8 @@ func _print_report() -> void:
 		var c := _life.cats
 		print("Katzen: Besuche %d, in der Bücherei %d, gejagt %d, gespielt %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, festgefahren %d" % [
 			c.visits, c.entered, c.hunts, c.plays, c.visible_spawns, c.visible_exits, _cat_stuck.size()])
-		print("Katzen (seit 6h): Gartenmauern %d (bekannt: %d), Fensterbänke %d, gerieben %d, Begegnungen %d" % [c.wall_walks,
-			c.get_walls().size(), c.sill_sits, c.rubs, c.meetings])
+		print("Katzen (seit 6h): Gartenmauern %d (bekannt: %d), Fensterbänke %d, gerieben %d, Begegnungen %d, Würfe %d (hinterher %d)" % [
+			c.wall_walks, c.get_walls().size(), c.sill_sits, c.rubs, c.meetings, c.throws, c.chases])
 		for line in _cat_stuck:
 			print("  ", line)
 	print("Passanten (seit 6h): geplaudert %d (davon Hände geschüttelt %d), auf der Bank geplaudert %d, Katzen gestreichelt %d, zu zweit %d" % [

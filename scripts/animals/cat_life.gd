@@ -79,8 +79,10 @@ var _walls: Array[Dictionary] = []
 var _rub_spots: Array[Dictionary] = []
 ## Begegnungen zweier Katzen: "id_id" -> Zeit bis zur nächsten möglichen
 var _met := {}
-## Prüfwerkzeug: so oft auf eine Fensterbank gesprungen
+## Prüfwerkzeug: so oft auf eine Fensterbank gesprungen; Spielzeug geworfen, Katze hinterher
 var sill_sits := 0
+var throws := 0
+var chases := 0
 
 
 func setup(life: StreetLife) -> void:
@@ -121,7 +123,24 @@ func setup(life: StreetLife) -> void:
 	_room = _outside.get_parent().get_node_or_null("GroundFloorRoom") as Room
 	_build_pool()
 	_build_toys()
+	_place_start_toys()
 	_timer = _rng.randf_range(GameConfig.cat_first_delay.x, GameConfig.cat_first_delay.y)
+
+
+## Zum Start liegen ein paar Spielzeuge auf dem Gehweg in der Nähe der Bücherei (zum Aufheben und Werfen, seit der
+## Nachbesserung von 6h) – an der Hauswand, nicht auf der Fahrbahn.
+func _place_start_toys() -> void:
+	var entrance_s := street.centerline.project(StreetPaths.library_entrance()).x
+	for k in GameConfig.toy_start_count:
+		var toy := _free_toy()
+		if toy == null:
+			return
+		var side := 1 if k % 2 == 0 else -1
+		var spot := _side_point(side, entrance_s + _rng.randf_range(-7.0, 7.0), 0.15)
+		toy.visible = true
+		toy.global_transform = Transform3D(Basis(Vector3.UP, _rng.randf() * TAU), spot + Vector3.UP * 0.015)
+		toy.set_meta("loose", true)
+		toy.set_meta("left_by", null)
 
 
 ## Gartenmauern aus den ausgemessenen Plätzen: niedrige Plätze (Art "low") in Kronenhöhe je Haus, entlang der
@@ -185,6 +204,11 @@ func _add_measured_wall(w: Dictionary) -> void:
 		"s_a": la.x, "s_b": lb.x, "side": 1 if la.y > 0.0 else -1, "width": float(w.get("width", 0.3)), "taken": null})
 
 
+## Metadaten lesen, die fehlen dürfen (set_meta(…, null) löscht sie – dann gilt null).
+static func _meta(obj: Object, key: String) -> Variant:
+	return obj.get_meta(key) if obj.has_meta(key) else null
+
+
 ## Höhe des Gehwegs (Welt-y).
 func street_level_y() -> float:
 	return _outside.global_position.y
@@ -246,6 +270,19 @@ func _build_toys() -> void:
 		add_child(toy)
 		toy.visible = false
 		_toys.append(toy)
+		# zum Aufheben für die Spielfigur (seit der Nachbesserung von 6h; nur, wenn es frei liegt)
+		var pick := Interactable.new()
+		pick.name = "Interactable"
+		pick.prompt_text = "Nehmen"
+		pick.is_enabled = false
+		var shape := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 0.13
+		shape.shape = sphere
+		shape.position = Vector3(0.0, 0.05, 0.0)
+		pick.add_child(shape)
+		toy.add_child(pick)
+		pick.interacted.connect(func(who: Node) -> void: _player_takes(toy, who))
 
 
 # --- Ablauf ---
@@ -253,6 +290,7 @@ func _build_toys() -> void:
 func step(delta: float) -> void:
 	for cat in _cats.duplicate():
 		cat.step(delta)
+	_step_flights(delta)
 	_timer -= delta
 	if _timer <= 0.0:
 		_timer = _rng.randf_range(GameConfig.cat_interval.x, GameConfig.cat_interval.y)
@@ -261,6 +299,7 @@ func step(delta: float) -> void:
 	if _scan <= 0.0:
 		_scan = 0.4
 		_look_around()
+		_update_toy_pickups()
 
 
 func _spawn() -> void:
@@ -421,7 +460,7 @@ func _release_claims(cat: StreetCat) -> void:
 			w.taken = null
 	cat._release_seat()
 	for spot in get_tree().get_nodes_in_group(CAT_SPOT_GROUP):
-		if spot.get_meta("occupant", null) == cat:
+		if _meta(spot, "occupant") == cat:
 			spot.set_meta("occupant", null)
 
 
@@ -982,7 +1021,7 @@ func _claim_seat(cat: StreetCat, seat: SeatPoint) -> bool:
 
 
 func _claim_basket(cat: StreetCat, spot: Node3D) -> bool:
-	if not is_instance_valid(spot) or spot.get_meta("occupant", null) not in [null, cat]:
+	if not is_instance_valid(spot) or _meta(spot, "occupant") not in [null, cat]:
 		return false
 	spot.set_meta("occupant", cat)
 	return true
@@ -1330,6 +1369,192 @@ func push_toy(toy: Node3D, dir: Vector3, strength: float) -> void:
 	_toy_tweens[toy] = tween
 
 
+## Wohin ein hochgeschubstes Spielzeug fällt (vor der Katze, 0,45–1 m; nie in Wände, auf die Fahrbahn oder in
+## Hindernisse), sonst Vector3.INF.
+func _toss_landing(cat: StreetCat, toy: Node3D) -> Vector3:
+	var dir := cat.global_basis.z
+	dir.y = 0.0
+	dir = dir.normalized().rotated(Vector3.UP, _rng.randf_range(-0.4, 0.4))
+	var start := toy.global_position
+	var dist := _rng.randf_range(0.45, 1.0) * cat.scale.x
+	var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(start + Vector3.UP * 0.1,
+		start + Vector3.UP * 0.1 + dir * (dist + 0.15), 1 | 8))
+	if not hit.is_empty():
+		return Vector3.INF
+	var end := start + dir * dist
+	if not toy_inside(toy):
+		var l := _outside.to_local(end)
+		if absf(street.centerline.project(Vector2(l.x, l.z)).y) < GameConfig.street_width / 2.0 + 0.2 \
+				or not street.clear_of_static(Vector2(l.x, l.z), 0.15):
+			return Vector3.INF
+	return end
+
+
+## Hochgeschubstes Spielzeug fliegt in einem kleinen Bogen (dreht sich dabei) und landet bei landing.
+func toss_toy(toy: Node3D, landing: Vector3) -> void:
+	var start := toy.global_position
+	var height := _rng.randf_range(0.3, 0.55)
+	var points := PackedVector3Array()
+	for k in 21:
+		var t := k / 20.0
+		points.append(start.lerp(landing, t) + Vector3.UP * (4.0 * height * t * (1.0 - t)))
+	_fly(toy, points, 0.6, Callable())
+
+
+## Flüge von Spielzeug (geworfen, hochgeschubst): im Schritt des Straßenlebens bewegt (so stimmt es auch beim Vorspulen
+## im Prüfwerkzeug). Eintrag: toy, points, time, t, spin, base, landed (Callable).
+var _flights: Array[Dictionary] = []
+
+
+func _fly(toy: Node3D, points: PackedVector3Array, time: float, landed: Callable) -> void:
+	if _toy_tweens.has(toy):
+		(_toy_tweens[toy] as Tween).kill()
+		_toy_tweens.erase(toy)
+	for f in _flights.duplicate():
+		if f.toy == toy:
+			_flights.erase(f)
+	_flights.append({"toy": toy, "points": points, "time": maxf(time, 0.05), "t": 0.0,
+		"spin": Vector3(_rng.randf_range(-1, 1), 0.5, _rng.randf_range(-1, 1)).normalized(),
+		"base": Basis(Vector3.UP, _rng.randf() * TAU), "landed": landed})
+
+
+func _step_flights(delta: float) -> void:
+	for f in _flights.duplicate():
+		var toy: Node3D = f.toy
+		if not is_instance_valid(toy) or toy.get_meta("held", false):
+			_flights.erase(f)
+			continue
+		f.t = float(f.t) + delta
+		var k := clampf(float(f.t) / float(f.time), 0.0, 1.0)
+		var points: PackedVector3Array = f.points
+		var x := k * (points.size() - 1)
+		var i := mini(int(x), points.size() - 2)
+		toy.global_position = points[i].lerp(points[i + 1], x - i)
+		toy.global_basis = Basis(f.spin, k * TAU * 2.0) * (f.base as Basis)
+		if k >= 1.0:
+			_flights.erase(f)
+			toy.global_basis = Basis(Vector3.UP, _rng.randf() * TAU)
+			if (f.landed as Callable).is_valid():
+				(f.landed as Callable).call()
+
+
+func is_flying(toy: Node3D) -> bool:
+	for f in _flights:
+		if f.toy == toy:
+			return true
+	return false
+
+
+## Die Spielfigur hebt ein Spielzeug auf: Katzen, die gerade damit spielen, lassen es (und gehen weiter).
+func _player_takes(toy: Node3D, who: Node) -> void:
+	if not who is Player or is_instance_valid((who as Player).held_toy) or not toy.get_meta("loose", false):
+		return
+	if _toy_tweens.has(toy):
+		(_toy_tweens[toy] as Tween).kill()
+		_toy_tweens.erase(toy)
+	toy.set_meta("loose", false)
+	toy.set_meta("held", true)
+	(toy.get_node("Interactable") as Interactable).is_enabled = false
+	for cat in _cats:
+		if _meta(cat, "playing_toy") == toy and not cat.inside:
+			cat.set_meta("playing_toy", null)
+			_continue_visit(cat)
+	(who as Player).hold_toy(toy)
+
+
+## Aufheben nur, wenn das Spielzeug frei und ruhig liegt.
+func _update_toy_pickups() -> void:
+	for toy in _toys:
+		var pick := toy.get_node_or_null("Interactable") as Interactable
+		if pick:
+			pick.is_enabled = toy.visible and toy.get_meta("loose", false) and not toy.get_meta("held", false) \
+				and not _toy_tweens.has(toy) and not is_flying(toy)
+
+
+## Die Spielfigur wirft ein Spielzeug (start, Geschwindigkeit in der Welt): Flugbahn mit Schwerkraft, an Wänden prallt
+## es ab, am Boden landet es (Bälle rollen noch ein Stück). Danach rennt eine Katze, die es sieht, hinterher.
+func throw_toy(toy: Node3D, start: Vector3, velocity3: Vector3) -> void:
+	if toy.get_parent():
+		toy.get_parent().remove_child(toy)
+	add_child(toy)
+	toy.visible = true
+	toy.set_meta("held", false)
+	toy.set_meta("left_by", null)
+	var pick := toy.get_node_or_null("Interactable") as Interactable
+	if pick:
+		pick.set_collision_layer_value(Interactable.INTERACTABLE_LAYER, true)
+	var space := get_world_3d().direct_space_state
+	var points := PackedVector3Array([start])
+	var p := start
+	var v := velocity3
+	var dt := 0.03
+	for i in 220:
+		var np := p + v * dt
+		v.y -= 9.8 * dt
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(p, np, 1 | 8))
+		if not hit.is_empty():
+			var n: Vector3 = hit.normal
+			if n.y > 0.6:
+				points.append(hit.position + n * 0.012)
+				break
+			np = hit.position + n * 0.04
+			v = v.bounce(n) * 0.4
+		points.append(np)
+		p = np
+	_fly(toy, points, points.size() * dt, func() -> void:
+		if not is_instance_valid(toy):
+			return
+		toy.set_meta("loose", true)
+		if String(toy.get_meta("kind", "")) in ["ball", "yarn"]:
+			push_toy(toy, Vector3(velocity3.x, 0.0, velocity3.z), 0.7)
+		_toy_landed(toy))
+	throws += 1
+
+
+## Gelandetes Spielzeug: die nächste Katze, die es sehen kann (frei, auf dem Boden, gleiche Höhe), rennt hin,
+## springt drauf und spielt damit.
+func _toy_landed(toy: Node3D) -> void:
+	var best: StreetCat = null
+	var best_d := GameConfig.cat_chase_distance
+	var space := get_world_3d().direct_space_state
+	for cat in _cats:
+		if not cat.active or cat.has_toy() or cat._rest_on != null or not cat.on_ground():
+			continue
+		if cat.get_action_type() in ["jump", "pounce", "leave", "wait_door"] or _meta(cat, "playing_toy") != null:
+			continue
+		var d := toy.global_position - cat.global_position
+		if absf(d.y) > 0.5:
+			continue
+		d.y = 0.0
+		if d.length() > best_d:
+			continue
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(cat.global_position + Vector3.UP * 0.2,
+			toy.global_position + Vector3.UP * 0.05, 1 | 8))
+		if not hit.is_empty():
+			continue
+		best = cat
+		best_d = d.length()
+	if best == null or _rng.randf() > GameConfig.cat_chase_chance:
+		return
+	_release_claims(best)
+	var to := toy.global_position - best.global_position
+	to.y = 0.0
+	var dir := to.normalized()
+	var a: Array[Dictionary] = [{"type": "turn", "face": to}, {"type": "anim", "anim": "crouch", "time": _rng.randf_range(0.35, 0.7)}]
+	if to.length() > 0.9:
+		var stop := toy.global_position - dir * 0.45
+		stop.y = best.global_position.y
+		var run := _walk([best.global_position, stop], GameConfig.cat_run_speed)
+		run["run"] = true
+		a.append(run)
+	var catch := toy.global_position - dir * 0.1
+	catch.y = best.global_position.y
+	a.append({"type": "pounce", "to": catch})
+	a.append_array(_play_actions(best, toy, _rng.randi_range(2, 4)))
+	best.replace_actions(a)
+	chases += 1
+
+
 func toy_inside(toy: Node3D) -> bool:
 	return _room != null and _room.is_inside_build_area(toy.global_position) and absf(toy.global_position.y - floor_y_room()) < 0.6
 
@@ -1341,12 +1566,13 @@ func floor_y_room() -> float:
 ## Spielen: anstupsen, hinterher, draufspringen – ein paar Runden, dann mitnehmen oder liegen lassen.
 func _play_actions(cat: StreetCat, toy: Node3D, rounds: int) -> Array[Dictionary]:
 	var a: Array[Dictionary] = []
+	a.append({"type": "call", "callable": func(c: StreetCat) -> void: c.set_meta("playing_toy", toy)})
 	a.append({"type": "call", "callable": func(c: StreetCat) -> void: _play_round(c, toy, rounds)})
 	return a
 
 
 func _play_round(cat: StreetCat, toy: Node3D, rounds: int) -> void:
-	if not is_instance_valid(toy) or not toy.visible:
+	if not is_instance_valid(toy) or not toy.visible or toy.get_meta("held", false):
 		return
 	var a: Array[Dictionary] = []
 	var to_toy := toy.global_position - cat.global_position
@@ -1363,7 +1589,19 @@ func _play_round(cat: StreetCat, toy: Node3D, rounds: int) -> void:
 			a.append({"type": "pounce", "to": land})
 		else:
 			a.append(_walk([cat.global_position, stop], GameConfig.cat_run_speed * 0.7 if to_toy.length() > 0.8 else -1.0))
-	a.append({"type": "bat", "toy": toy, "strength": _rng.randf_range(0.5, 1.1)})
+	# manchmal hochschubsen und hinterherspringen (fangen), sonst anstupsen
+	var land := _toss_landing(cat, toy) if _rng.randf() < GameConfig.cat_toy_toss_chance else Vector3.INF
+	if land != Vector3.INF:
+		a.append({"type": "bat", "toy": toy, "strength": 1.0, "toss": land})
+		var away := land - cat.global_position
+		away.y = 0.0
+		a.append({"type": "turn", "face": away})
+		a.append({"type": "anim", "anim": "crouch", "time": 0.3})
+		var catch := land - away.normalized() * 0.1
+		catch.y = cat.global_position.y
+		a.append({"type": "pounce", "to": catch})
+	else:
+		a.append({"type": "bat", "toy": toy, "strength": _rng.randf_range(0.5, 1.1)})
 	if rounds > 1:
 		a.append({"type": "call", "callable": func(c: StreetCat) -> void: _play_round(c, toy, rounds - 1)})
 	else:
@@ -1372,7 +1610,8 @@ func _play_round(cat: StreetCat, toy: Node3D, rounds: int) -> void:
 
 
 func _end_play(cat: StreetCat, toy: Node3D) -> void:
-	if not is_instance_valid(toy) or not toy.visible:
+	cat.set_meta("playing_toy", null)
+	if not is_instance_valid(toy) or not toy.visible or toy.get_meta("held", false):
 		return
 	var a: Array[Dictionary] = []
 	if _rng.randf() < 0.55:
@@ -1402,7 +1641,7 @@ func _try_toy(cat: StreetCat) -> void:
 	for toy in _toys:
 		if not toy.visible or not toy.get_meta("loose", false) or toy_inside(toy):
 			continue
-		if toy.get_meta("left_by", null) == cat:
+		if _meta(toy, "left_by") == cat:
 			continue   # das eigene, gerade liegen gelassene Spielzeug nicht gleich wieder holen
 		var d := toy.global_position - cat.global_position
 		d.y = 0.0
@@ -1633,7 +1872,7 @@ func _inside_target(cat: StreetCat = null) -> Dictionary:
 	if cat == null or not cat.adult:
 		baskets = get_tree().get_nodes_in_group(CAT_SPOT_GROUP)
 	for spot: Node3D in baskets:
-		if not spot.is_inside_tree() or spot.get_meta("occupant", null) != null or not _room.is_ancestor_of(spot):
+		if not spot.is_inside_tree() or _meta(spot, "occupant") != null or not _room.is_ancestor_of(spot):
 			continue
 		var fwd := spot.global_basis.z
 		fwd.y = 0.0

@@ -70,6 +70,10 @@ func _process(_delta: float) -> void:
 func _current_hints() -> Array:
 	if _seated:
 		return [{"input": "interact", "word": "Aufstehen"}]
+	# Spielzeug in der Hand: E wirft es (hat Vorrang vor allem anderen auf E)
+	var player := get_tree().get_first_node_in_group(&"player") as Player
+	if player and is_instance_valid(player.held_toy):
+		return [{"input": "interact", "word": "Werfen"}]
 	if not is_instance_valid(_target):
 		return []
 	var hints := []
