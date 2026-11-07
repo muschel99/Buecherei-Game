@@ -50,6 +50,12 @@ const PET_REACH_TOUCH := 1.2
 const PET_KNEEL_TOUCH := 2.3
 ## Winken im Gehen und Sitzen: nur der rechte Arm aus der Animation wave (Abschnitt in Sekunden)
 const WAVE_CLIP := Vector2(0.45, 3.35)
+## Auftritte über den ganzen Körper (Schritt, Bücken, Knien, Tür, Gießen, Heben) – alle anderen nur Oberkörper
+const FULL_BODY: Array[StringName] = [&"handshake", &"pet_reach", &"pet_cat", &"door_in", &"door_out", &"water", &"pick_up",
+	&"lift"]
+## Überblenden der Ebenen (s); Zeitpunkt in sit_talk_legs mit übereinandergeschlagenen Beinen
+const LAYER_BLEND := 0.4
+const LEGS_CROSSED_TIME := 2.0
 const RIGHT_ARM: PackedStringArray = ["RightShoulder", "RightUpperArm", "RightLowerArm", "RightHand",
 	"RightThumbMetacarpal", "RightThumbProximal", "RightThumbDistal", "RightIndexProximal", "RightIndexIntermediate",
 	"RightIndexDistal", "RightMiddleProximal", "RightMiddleIntermediate", "RightMiddleDistal", "RightRingProximal",
@@ -103,7 +109,14 @@ var _prev_state: StringName = &""
 var _shot: Dictionary = {}
 ## Beim Plaudern: Animation des Erzählens (leer = Gesten über den GestureModifier), beim Start an zufälliger Stelle
 var _talk_clip: StringName = &""
-var _talk_seek := false
+## Ebenen über der Grundbewegung (seit der Nachbesserung 3 von 6h, weichere Übergänge): Oberkörper aus Rede-, Lach-,
+## Nick- und Zeige-Animationen (die Beine bleiben aus Stehen bzw. Sitzen – nichts rutscht mehr); im Sitzen manchmal
+## übereinandergeschlagene Beine (aus sit_talk_legs, weich hinein und wieder heraus)
+var _upper_mod: ChibiGestureModifier
+var _legs_mod: ChibiGestureModifier
+var _upper: Dictionary = {}  # clip, t, left, loop
+var _legs_cross := false
+var _legs_wait := 0.0
 ## Gesprächspartner (wird angeschaut, auch wenn er daneben sitzt); etwas, das gezielt angeschaut wird (look_at_node)
 var _chat_partner: Node3D
 var _attention: Node3D
@@ -285,6 +298,15 @@ func _rebuild() -> void:
 		_player.play(&"idle")
 	_head_bone = _skeleton.find_bone("Head") if _skeleton else -1
 	if _skeleton:
+		var upper_bones := PackedStringArray()
+		for i in _skeleton.get_bone_count():
+			var bone_name := _skeleton.get_bone_name(i)
+			if bone_name == "Hips" or bone_name.contains("Leg") or bone_name.contains("Foot") or bone_name.contains("Toes"):
+				continue
+			upper_bones.append(bone_name)
+		_upper_mod = _layer("UpperLayer", upper_bones)
+		_legs_mod = _layer("LegsLayer", PackedStringArray(["LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "LeftToes",
+			"RightUpperLeg", "RightLowerLeg", "RightFoot", "RightToes"]))
 		_gesture_modifier = ChibiGestureModifier.new()
 		_gesture_modifier.name = "GestureModifier"
 		_skeleton.add_child(_gesture_modifier)
@@ -296,6 +318,8 @@ func _rebuild() -> void:
 	_transition = &""
 	_seated = 0.0
 	_shot = {}
+	_upper = {}
+	_legs_cross = false
 	_hand_bone = _skeleton.find_bone("RightHand") if _skeleton else -1
 	_hand_last = Vector3.INF
 	if not visibility_changed.is_connected(_on_visibility_changed):
@@ -466,9 +490,6 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 				clip = idle_name
 		if state != &"sit":
 			_seated = 0.0
-		# Plaudern: die Hände erzählen mit (im Stehen talk…, im Sitzen sit_talk…)
-		if _talking and _talk_clip != &"" and not walking and String(_talk_clip).begins_with("sit_") == (state == &"sit"):
-			clip = _talk_clip
 		# Einzelner Auftritt hat Vorrang – solange die Haltung passt (Gehen beendet ihn)
 		if not _shot.is_empty():
 			if bool(_shot.seated) != (state == &"sit") or walking:
@@ -479,11 +500,9 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 		_shot = {}
 	var restart: bool = not _player.is_playing() and (_shot.is_empty() or clip != _shot.clip)
 	if _player.has_animation(clip) and (_player.current_animation != clip or restart):
-		_player.play(clip, BLEND)
-		if clip == _talk_clip and _talk_seek:
-			_player.seek(randf() * _player.get_animation(clip).length)
-	if clip == _talk_clip:
-		_talk_seek = false
+		# ins Sitzen und zwischen Sitz-Haltungen langsamer überblenden (weicher)
+		_player.play(clip, BLEND * (2.0 if state == &"sit" or _seated > 0.0 else 1.0))
+	_update_layers(state, walking, delta)
 	if not _shot.is_empty() and clip == _shot.clip:
 		_player.speed_scale = _update_shot(delta)
 	else:
@@ -605,6 +624,11 @@ func play_clip(clip: StringName, max_time: float = -1.0, hold: Vector2 = Vector2
 		return 0.0
 	var length := _player.get_animation(clip).length
 	var duration := length
+	if not clip in FULL_BODY and hold_time <= 0.0 and not back:
+		# nur Oberkörper, Kopf und Arme – die Beine bleiben in der Grundhaltung
+		duration = minf(length, max_time) if max_time > 0.0 else length
+		_upper = {"clip": clip, "t": 0.0, "left": duration, "loop": false, "seated": String(clip).begins_with("sit_")}
+		return duration
 	if hold_time > 0.0 or back:
 		# rückwärts endet er von selbst am Anfang (die Zeit ist nur eine Obergrenze)
 		duration = hold.y + hold_time + (hold.y + 1.0 if back else length - hold.y)
@@ -619,7 +643,75 @@ func play_clip(clip: StringName, max_time: float = -1.0, hold: Vector2 = Vector2
 
 ## Läuft gerade ein einzelner Auftritt?
 func is_playing_clip() -> bool:
-	return not _shot.is_empty()
+	return not _shot.is_empty() or (not _upper.is_empty() and not bool(_upper.loop))
+
+
+## Eine Ebene über der Grundbewegung (übernimmt die Drehungen dieser Knochen aus einer Animation, weich ein-/ausgeblendet).
+func _layer(layer_name: String, bones: PackedStringArray) -> ChibiGestureModifier:
+	var layer := ChibiGestureModifier.new()
+	layer.name = layer_name
+	layer.clip_wave_fix = false
+	layer.set_meta("bones", bones)
+	_skeleton.add_child(layer)
+	return layer
+
+
+## Ebenen je Bild: Oberkörper (Auftritt oder Reden), Beine im Sitzen übereinander.
+func _update_layers(state: StringName, walking: bool, delta: float) -> void:
+	if _upper_mod == null or _player == null:
+		return
+	var seated := state == &"sit" and _transition == &""
+	# Reden als Schleife (solange niemand einen Auftritt hat)
+	if _talking and _talk_clip != &"" and (_upper.is_empty() or bool(_upper.loop)) and not walking:
+		if _upper.get("clip", &"") != _talk_clip:
+			_upper = {"clip": _talk_clip, "t": randf() * _player.get_animation(_talk_clip).length, "left": INF, "loop": true,
+				"seated": String(_talk_clip).begins_with("sit_")}
+	elif not _talking and not _upper.is_empty() and bool(_upper.loop):
+		_upper.left = minf(float(_upper.left), 0.35)  # ausblenden
+	var want := 0.0
+	if not _upper.is_empty():
+		var fits := not walking and bool(_upper.seated) == seated and _transition == &""
+		var anim := _player.get_animation(_upper.clip)
+		_upper.t = float(_upper.t) + delta
+		_upper.left = float(_upper.left) - delta
+		if not fits or float(_upper.left) <= 0.0:
+			_upper = {}
+		else:
+			if _upper_mod.clip != anim:
+				_upper_mod.set_clip(anim, _clip_prefix(), _upper_mod.get_meta("bones"))
+			var t := float(_upper.t)
+			if anim.loop_mode == Animation.LOOP_PINGPONG:
+				t = pingpong(t, anim.length)
+			elif bool(_upper.loop):
+				t = fposmod(t, anim.length)
+			_upper_mod.clip_time = minf(t, anim.length)
+			_upper_mod.gesture = ChibiGestureModifier.Gesture.CLIP
+			want = clampf(float(_upper.left) / LAYER_BLEND, 0.0, 1.0)
+	_upper_mod.weight = move_toward(_upper_mod.weight, want, delta / LAYER_BLEND)
+	if _upper_mod.weight <= 0.0 and _upper.is_empty():
+		_upper_mod.gesture = ChibiGestureModifier.Gesture.NONE
+	# Beine übereinander: im Sitzen nach ein paar Sekunden manchmal, beim Aufstehen weich wieder auseinander
+	if seated:
+		_legs_wait -= delta
+		if _legs_wait <= 0.0:
+			_legs_wait = randf_range(8.0, 20.0)
+			_legs_cross = randf() < GameConfig.passerby_cross_legs_chance
+	else:
+		_legs_cross = false
+		_legs_wait = randf_range(2.0, 5.0)
+	if _legs_cross and _player.has_animation(&"sit_talk_legs") and _legs_mod.clip == null:
+		_legs_mod.set_clip(_player.get_animation(&"sit_talk_legs"), _clip_prefix(), _legs_mod.get_meta("bones"))
+		_legs_mod.clip_time = LEGS_CROSSED_TIME
+		_legs_mod.gesture = ChibiGestureModifier.Gesture.CLIP
+	_legs_mod.weight = move_toward(_legs_mod.weight, 1.0 if _legs_cross else 0.0,
+		delta / (GameConfig.passerby_cross_legs_time if _legs_cross or seated else 0.35))
+	if _legs_mod.weight <= 0.0 and not _legs_cross:
+		_legs_mod.gesture = ChibiGestureModifier.Gesture.NONE
+		_legs_mod.clip = null
+
+
+func _clip_prefix() -> String:
+	return str(_player.get_node(_player.root_node).get_path_to(_skeleton))
 
 
 ## Eine Pause unterwegs (StreetLife): &"watch" = auf die Uhr schauen (mit Tasche watch_bag, sonst die Geste),
@@ -676,7 +768,6 @@ func set_talking(on: bool) -> void:
 			if _player != null and _player.has_animation(c):
 				options.append(c)
 		_talk_clip = &"" if options.is_empty() or (carries_bag and not seated) else options.pick_random()
-		_talk_seek = true
 	_talking = on
 	# der Mund spricht mit (ChibiCharacter.talking: wechselnde Mundbilder a/e/o, dazwischen geschlossen)
 	talking = on

@@ -27,6 +27,8 @@ var clip_arm_out: float = 20.0
 ## … und die Hand bleibt seitlich neben dem Kopf: höchstens bis hierhin zur Mitte (x im Raum der Figur, rechts
 ## negativ; Kopf samt Frisur ist etwa 0,46 m breit)
 var clip_hand_min_x: float = -0.29
+## Nur beim Winken: Oberarm nach außen, Hand neben dem Kopf (die Ebenen für Oberkörper und Beine übernehmen genau)
+var clip_wave_fix: bool = true
 var _clip_tracks: Dictionary = {}
 
 
@@ -82,7 +84,7 @@ func _process_modification_with_delta(_delta: float) -> void:
 				# (rechter Arm: zur Seite -X, Drehung um +Z) …
 				var upper := skeleton.find_bone("RightUpperArm")
 				var hand := skeleton.find_bone("RightHand")
-				if upper >= 0 and hand >= 0:
+				if clip_wave_fix and upper >= 0 and hand >= 0:
 					var up := skeleton.get_bone_global_pose(upper).basis.y.normalized().y
 					_turn(skeleton, upper, Vector3.BACK, deg_to_rad(clip_arm_out) * clampf(up + 1.0, 0.0, 1.0) * w)
 					# … und schwingt die Hand beim Winken zur Mitte, schwenkt der Arm waagerecht (um die Senkrechte durch die

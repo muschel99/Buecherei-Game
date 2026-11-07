@@ -807,6 +807,9 @@ var passerby_goodbye_wave_chance: float = 0.5
 var passerby_join_seat_chance: float = 0.6
 ## Zu zweit spazieren und dabei plaudern (seit der Nachbesserung von 6h): Wahrscheinlichkeit je neuem Passanten
 var passerby_pair_chance: float = 0.3
+## Im Sitzen die Beine übereinanderschlagen (Wahrscheinlichkeit je Weile) und wie lange das Übereinanderschlagen dauert (s)
+var passerby_cross_legs_chance: float = 0.45
+var passerby_cross_legs_time: float = 1.1
 var passerby_seat_chat_chance: float = 0.8
 ## Katzen streicheln: Wahrscheinlichkeit, wenn eine ruhende Katze nah am Weg ist (höchstens so weit vorn, m),
 ## Pause bis zum nächsten Mal (s), wie lange die Katze stillhält (s)
