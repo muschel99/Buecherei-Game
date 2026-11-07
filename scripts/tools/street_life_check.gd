@@ -15,7 +15,7 @@ extends Node
 ## --deliver=<n> (Testlieferung mit n Kartons, sobald die erste Stelle beginnt), --door_open (Ladentür offen),
 ## --cats (Katzen kommen alle paar Sekunden, --enter=<0..1> Chance hineinzugehen; seit Etappe 6g), --no_animals,
 ## --cat_log (jeden Schritt der Katzen ausgeben), --hunt (Jagd und Spielzeug erzwingen), --throw (alle 15 s wirft die
-## Spielfigur ein Spielzeug in Richtung der nächsten Katze).
+## Spielfigur ein Spielzeug in Richtung der nächsten Katze), --garden (Vögel und Katzen in den Gartenhof der Baumgasse).
 
 const STEP := 1.0 / 30.0
 const TURN_SPEED := deg_to_rad(40.0)
@@ -75,6 +75,12 @@ func _run() -> void:
 		GameConfig.cat_hunt_chance = 1.0
 		GameConfig.cat_toy_chance = 1.0
 		GameConfig.cat_toy_leave_chance = 20.0
+	if _args.has("garden"):
+		# Gartenhof der Baumgasse prüfen: Singvögel fast immer dorthin, Katzen gehen immer hin und jagen
+		GameConfig.bird_court_share = 0.9
+		GameConfig.cat_garden_chance = 1.0
+		GameConfig.cat_garden_birds_chance = 1.0
+		GameConfig.cat_hunt_chance = 1.0
 	if _args.has("cats"):
 		# Katzen öfter (zum Prüfen): alle paar Sekunden eine neue
 		GameConfig.cat_interval = Vector2(4.0, 8.0)
@@ -339,12 +345,14 @@ func _print_report() -> void:
 			b.flights, b.flyovers, b.get_birds().size(), b.visible_spawns, b.visible_exits, b.below_ground])
 		for line in b.below_ground_log:
 			print("  BODEN: ", line)
+		print("Vögel im Gartenhof der Baumgasse: gelandet %d Schwärme, gerade dort %d" % [b.court_flocks, b.court_birds()])
 	if _life.cats:
 		var c := _life.cats
 		print("Katzen: Besuche %d, in der Bücherei %d, gejagt %d, gespielt %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, festgefahren %d" % [
 			c.visits, c.entered, c.hunts, c.plays, c.visible_spawns, c.visible_exits, _cat_stuck.size()])
 		print("Katzen (seit 6h): Gartenmauern %d (bekannt: %d), Fensterbänke %d, gerieben %d, Begegnungen %d, Würfe %d (hinterher %d)" % [
 			c.wall_walks, c.get_walls().size(), c.sill_sits, c.rubs, c.meetings, c.throws, c.chases])
+		print("Katzen im Gartenhof: Abstecher %d, dort gejagt %d" % [c.garden_visits, c.court_hunts])
 		for line in _cat_stuck:
 			print("  ", line)
 	print("Passanten (seit 6h): geplaudert %d (davon Hände geschüttelt %d), auf der Bank geplaudert %d, Katzen gestreichelt %d, zu zweit %d" % [

@@ -11,7 +11,10 @@ extends Node3D
 ##   Dachrinnen, Firste, Gesimse, Fensterbänke, Geländer, Fensterläden, Markisenstangen, Efeu, Rand von
 ##   Blumenkästen und Töpfen – Tauben nur auf breiten Dachplätzen und am Boden,
 ## - Querarme der Straßenlaternen und das Vogelhäuschen (nur Singvögel),
-## - der Gehweg: Singvögel picken und hüpfen, Tauben gehen und picken.
+## - der Gehweg: Singvögel picken und hüpfen, Tauben gehen und picken,
+## - der Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h): Singvögel picken auf dem Pflaster und im Gras hinter
+##   dem Baum. Das Blätterdach reicht dort von Mauer zu Mauer (ab etwa 3 m) – darum fliegen sie nie von oben, sondern
+##   tief durch die Gasse hinein und hinaus (Wegpunkte "mouth" und "low"). Dort ist es ruhig, Katzen treffen sie öfter.
 ## Ab und zu zieht ein Schwarm einfach über die Straße, ohne zu landen.
 ## Auffliegen: Kommt jemand einem sitzenden Vogel nahe (Kugel um den Vogel, gemessen bis zu Kopf und Füßen der
 ## Spielfigur, Passanten, Katzen, Fahrzeuge), fliegt der Schwarm auf und landet woanders. Auf Laternen und am
@@ -37,6 +40,8 @@ var visible_spawns := 0
 var visible_exits := 0
 var flights := 0
 var flyovers := 0
+## Prüfwerkzeug: so viele Schwärme sind im Gartenhof gelandet
+var court_flocks := 0
 ## Prüfwerkzeug: Vögel im Flug unter dem Boden (tiefer als die Fahrbahn) – muss 0 bleiben; letzte Fälle als Text
 var below_ground := 0
 var below_ground_log: Array[String] = []
@@ -58,6 +63,8 @@ var _scan := 0.0
 var _chirp_gap := 0.0
 var _birdhouse: Node3D
 var _flock_id := 0
+## Gartenhof der Baumgasse (unter "Outside", x/z): siehe _setup_court
+var _court := {}
 
 
 func setup(life: StreetLife) -> void:
@@ -66,6 +73,7 @@ func setup(life: StreetLife) -> void:
 	_rng.randomize()
 	_load_spots()
 	_collect_lamps()
+	_setup_court()
 	_build_pool("bird", GameConfig.bird_scene, GameConfig.bird_count + 2)
 	_build_pool("pigeon", GameConfig.pigeon_scene, GameConfig.pigeon_count + 1)
 	_spawn.bird = _rng.randf_range(1.5, 5.0)
@@ -216,10 +224,16 @@ func _spawn_flock(kind: String) -> void:
 	size = mini(size, mini((_pool[kind] as Array).size(), limit - _count(kind)))
 	if size <= 0 or _houses.is_empty():
 		return
-	var spots := _pick_area(kind, size, _camera_pos(), GameConfig.bird_near_distance)
+	var spots: Array[Dictionary] = []
+	# in den Gartenhof der Baumgasse (auch weiter weg von der Spielfigur – dort finden die Katzen sie)
+	if kind == "bird" and _rng.randf() < GameConfig.bird_court_share:
+		spots = _court_spots(size)
+	if spots.is_empty():
+		spots = _pick_area(kind, size, _camera_pos(), GameConfig.bird_near_distance)
 	if spots.is_empty():
 		return
-	var entry := _hidden_entry(spots[0].pos)
+	var court := bool(spots[0].get("court", false))
+	var entry := _court_entry() if court else _hidden_entry(spots[0].pos)
 	if entry.is_empty():
 		return
 	_flock_id += 1
@@ -369,6 +383,11 @@ func _on_path_done(bird: StreetBird) -> void:
 			return
 	flock.landed = true
 	flock.timer = _rng.randf_range(GameConfig.bird_stay_time.x, GameConfig.bird_stay_time.y)
+	if bool(bird.spot.get("court", false)):
+		flock.timer *= GameConfig.bird_court_stay_factor
+		if not flock.get("counted", false):
+			flock.counted = true
+			court_flocks += 1
 
 
 func _release(bird: StreetBird) -> void:
@@ -393,9 +412,13 @@ func _move_on(flock: Dictionary, flee: bool = false, away: Vector3 = Vector3.ZER
 		return
 	var kind := String(flock.get("kind", "bird"))
 	var first: StreetBird = birds[0]
+	var in_court := bool(first.spot.get("court", false))
 	var stay := flee or _rng.randf() < GameConfig.bird_stay_nearby_share
 	var spots: Array[Dictionary] = []
-	if stay:
+	if in_court and not flee and _rng.randf() < GameConfig.bird_court_stay_share:
+		# im Hof bleiben: ein Stück weiter picken (eigene Plätze zählen nicht als besetzt)
+		spots = _court_spots(birds.size(), flock)
+	if spots.is_empty() and stay:
 		spots = _pick_area(kind, birds.size(), first.global_position + away * 4.0, 16.0, not flee, flee)
 	flock.landed = false
 	var speed := _speed(kind) * (GameConfig.bird_flee_speed / GameConfig.bird_speed if flee else 1.0)
@@ -417,7 +440,7 @@ func _move_on(flock: Dictionary, flee: bool = false, away: Vector3 = Vector3.ZER
 			bird.spot = spot
 			bird.fly_path(_hop_path(bird.global_position, from, spot, away), speed * _rng.randf_range(0.92, 1.08), delay)
 		else:
-			var exit := _hidden_entry(bird.global_position)
+			var exit := _court_entry() if bool(from.get("court", false)) else _hidden_entry(bird.global_position)
 			if exit.is_empty():
 				# kein verdeckter Platz zum Wegfliegen: einfach sitzen bleiben
 				bird.spot = from
@@ -670,12 +693,166 @@ func _ground_spots(size: int, near: Vector3, radius: float, gap: float, spread: 
 	return []
 
 
+# --- Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h) ---
+
+## Lage des Hofs aus StreetLayout (unter "Outside", x/z): wo Schwärme picken (Mitte; die Vögel hüpfen bis 0,55 m darum),
+## was dort im Weg ist (Rundbank um den Baum, Trittsteine, Beete, Töpfe an der Bücherei) und die Wegpunkte durch die Gasse.
+func _setup_court() -> void:
+	# nur mit Garten (Gassen-Modell mit Baum und Rundbank)
+	var alley := _outside.get_node_or_null("Alley")
+	if alley == null or alley.get("model_scene") == null:
+		return
+	var lx := StreetLayout.HOUSE_LEFT
+	var fx := StreetLayout.alley_far_x()
+	var end := StreetLayout.alley_end_z()
+	var gz := end - GameConfig.alley_garden_depth
+	var gx := fx - GameConfig.alley_garden_extra_width
+	var tree := StreetLayout.garden_tree()
+	var mid := (lx + fx) / 2.0
+	_court = {
+		# Pflaster der Gasse (vor und im Hof; nicht an den Töpfen der Bücherei) und Rasen hinter dem Baum
+		"areas": [Rect2(fx + 0.7, gz - 2.0, (lx - 1.15) - (fx + 0.7), (end - 0.6) - (gz - 2.0)),
+			Rect2(gx + 1.5, tree.y + 2.0, (fx - 0.6) - (gx + 1.5), (end - 0.6) - (tree.y + 2.0))],
+		"lawn": Rect2(gx, gz, fx - gx, end - gz),
+		"tree": tree,
+		# Trittsteine zur Bank: quer von der Gasse (fx + 0,2) zum Baum, um tree.y + 0,9
+		"stones": Rect2(gx, tree.y + 0.9 - 1.1, fx + 1.05 - gx, 2.2),
+		"inside": Rect2(gx, gz - 1.5, lx - gx, end - gz + 1.8),
+		# tief vor dem Blätterdach (das bei gz beginnt) und über der Mündung der Gasse
+		"low": Vector3(mid, 2.3, gz - 3.4),
+		"mouth": Vector3(mid, 4.8, StreetLayout.recess_z() + 0.8),
+	}
+
+
+## Wegpunkt des Hofs in Weltkoordinaten ("low" oder "mouth").
+func _court_point(key: String) -> Vector3:
+	return _outside.to_global(_court[key])
+
+
+## Durch die Gasse: hinaus (Hof → tief → Mündung) oder hinein (Mündung → tief).
+func _court_way(outward: bool) -> Array[Vector3]:
+	var low := _court_point("low") + Vector3(_rng.randf_range(-0.3, 0.3), _rng.randf_range(-0.15, 0.15), _rng.randf_range(-0.6, 0.6))
+	var mouth := _court_point("mouth") + Vector3(_rng.randf_range(-0.4, 0.4), _rng.randf_range(-0.3, 0.4), 0.0)
+	return [low, mouth] if outward else [mouth, low]
+
+
+## Verdeckter Ort zum Hinein- und Hinausfliegen: hinter einem Haus gegenüber der Gasse (der Weg führt dann über die
+## Straße zur Mündung der Gasse).
+func _court_entry() -> Dictionary:
+	if _court.is_empty():
+		return {}
+	var toward_library := Vector3(_court.mouth.x, 0.0, _court.mouth.z) - Vector3(_court.mouth.x, 0.0, StreetLayout.opposite_front_z())
+	return _hidden_entry(_court_point("mouth"), toward_library.normalized())
+
+
+## Platz auf dem Rasen hinter dem Baum (im seitlichen Teil des Hofs)?
+func _on_lawn(spot: Dictionary) -> bool:
+	if _court.is_empty() or not bool(spot.get("court", false)):
+		return false
+	var l := _outside.to_local(spot.pos)
+	return (_court.lawn as Rect2).has_point(Vector2(l.x, l.z))
+
+
+## Punkt über dem Gang der Gasse auf gleicher Höhe (z) wie p – von dort aus geht es quer zum Rasen bzw. vom Rasen weg.
+func _lane_above(p: Vector3) -> Vector3:
+	var l := _outside.to_local(p)
+	var lawn: Rect2 = _court.lawn
+	return _outside.to_global(Vector3(lawn.end.x + 0.9, 1.5, clampf(l.z, lawn.position.y + 2.0, lawn.end.y - 0.5)))
+
+
+## Die letzten Punkte zu einem Platz im Hof: auf den Rasen hinter dem Baum quer aus der Gasse (vom Gang her), sonst
+## direkt.
+func _court_arrival(spot: Dictionary) -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	var from := _court_point("low")
+	if _on_lawn(spot):
+		from = _lane_above(spot.pos)
+		points.append(from)
+	points.append_array(_landing(from, spot))
+	return points
+
+
+## Liegt ein Punkt (Welt) im Hof oder in der Gasse davor?
+func in_court(point: Vector3) -> bool:
+	if _court.is_empty():
+		return false
+	var l := _outside.to_local(point)
+	return (_court.inside as Rect2).has_point(Vector2(l.x, l.z))
+
+
+## Wie viele Vögel picken gerade im Hof (oder fliegen dorthin)?
+func court_birds() -> int:
+	var n := 0
+	for b in _birds:
+		if bool(b.spot.get("court", false)) and not b.leaving:
+			n += 1
+	return n
+
+
+## Ist hier Platz für die Mitte eines Schwarms (nicht an Bank, Trittsteinen)?
+func _court_center_ok(c: Vector2) -> bool:
+	if c.distance_to(_court.tree) < 1.6:
+		return false
+	return not (_court.stones as Rect2).has_point(c)
+
+
+## Plätze für einen Schwarm im Hof: eine freie Stelle (weit weg von Leuten und Katzen), die Vögel verteilen sich darum.
+## Nur ein Schwarm zur Zeit (außer own = der Schwarm, der dort gerade umzieht).
+func _court_spots(size: int, own: Dictionary = {}) -> Array[Dictionary]:
+	if _court.is_empty():
+		return []
+	for b in _birds:
+		if bool(b.spot.get("court", false)) and not b.leaving and int(b.flock.get("id", -1)) != int(own.get("id", -2)):
+			return []
+	var threats := _threats()
+	var cats := _cat_positions()
+	var gap := GROUND_GAP * 1.4
+	var spread := 0.45
+	for attempt in 16:
+		var area: Rect2 = _court.areas[0 if _rng.randf() < 0.65 else 1]
+		var c := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
+		if not _court_center_ok(c):
+			continue
+		var y := 0.024 if (_court.lawn as Rect2).has_point(c) else 0.0   # Rasen liegt 2,4 cm hoch
+		var center := _outside.to_global(Vector3(c.x, y, c.y))
+		var far := true
+		for t: Dictionary in threats:
+			if Vector2(center.x - t.a.x, center.z - t.a.z).length() < float(t.radius) * 1.8:
+				far = false
+				break
+		for cp in cats:
+			if cp.distance_to(center) < 3.5:
+				far = false
+		if not far:
+			continue
+		var result: Array[Dictionary] = []
+		for i in size:
+			var p := center
+			for k in 10:
+				var a := _rng.randf() * TAU
+				var r := 0.0 if i == 0 else _rng.randf_range(gap, spread)
+				p = center + Vector3(cos(a) * r, 0.0, sin(a) * r)
+				var ok := true
+				for other in result:
+					if other.pos.distance_to(p) < gap:
+						ok = false
+				if ok:
+					break
+			var b := _rng.randf() * TAU
+			result.append({"pos": p, "face": Vector3(sin(b), 0.0, cos(b)), "out": Vector3(sin(b), 0.0, cos(b)), "kind": "ground",
+				"house": "court", "center": center, "court": true, "taken": null})
+		return result
+	return []
+
+
 # --- Flugwege ---
 
 ## Verdeckter Ort hinter einem Haus nahe target (von dort fliegen Vögel über den First herein bzw.
 ## dorthin hinaus). Liefert { pos, house, along, lateral } oder leer.
-func _hidden_entry(target: Vector3) -> Dictionary:
+func _hidden_entry(target: Vector3, facing: Vector3 = Vector3.ZERO) -> Dictionary:
 	var houses := _houses.duplicate()
+	if facing != Vector3.ZERO:
+		houses = houses.filter(func(h: Dictionary) -> bool: return (h.out as Vector3).dot(facing) > 0.5)
 	houses.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.front.distance_squared_to(target) < b.front.distance_squared_to(target))
 	for i in mini(8, houses.size()):
@@ -703,6 +880,11 @@ func _entry_path(entry: Dictionary, offset: Vector3, spot: Dictionary, kind: Str
 	var over: Vector3 = h.front + h.out * 1.2 + lateral
 	over.y = maxf(h.top + 0.3, spot.pos.y + 1.5)
 	var points: Array[Vector3] = [entry.pos + offset, ridge + offset * 0.6, over + offset * 0.4]
+	if bool(spot.get("court", false)):
+		# über die Straße zur Mündung der Gasse, tief hindurch und unter dem Blätterdach zum Platz
+		points.append_array(_court_way(false))
+		points.append_array(_court_arrival(spot))
+		return _smooth(_clear_route(points), kind == "bird")
 	points.append_array(_landing(over, spot))
 	return _smooth(_clear_route(points), kind == "bird")
 
@@ -716,6 +898,8 @@ func _exit_path(from_pos: Vector3, from: Dictionary, exit: Dictionary, offset: V
 	var over: Vector3 = h.front + h.out * 1.2 + lateral
 	over.y = maxf(h.top + 0.3, from_pos.y + 1.5)
 	var points: Array[Vector3] = _takeoff(from_pos, from, away)
+	if bool(from.get("court", false)):
+		points.append_array(_court_way(true))
 	points.append_array([over + offset * 0.4, ridge + offset * 0.6, exit.pos + offset])
 	return _smooth(_clear_route(points, 2), true)
 
@@ -723,6 +907,25 @@ func _exit_path(from_pos: Vector3, from: Dictionary, exit: Dictionary, offset: V
 ## Weg von einem Platz zum nächsten.
 func _hop_path(from_pos: Vector3, from: Dictionary, spot: Dictionary, away: Vector3 = Vector3.ZERO) -> PackedVector3Array:
 	var points: Array[Vector3] = _takeoff(from_pos, from, away)
+	var from_court := bool(from.get("court", false))
+	var to_court := bool(spot.get("court", false))
+	if from_court and to_court:
+		# im Hof ein Stück weiter: flach unter dem Blätterdach (bleibt unter 2 m)
+		var lift2 := points[-1]
+		if _on_lawn(spot):
+			points.append_array(_court_arrival(spot))
+			return _smooth(points, false)
+		var mid := (lift2 + (spot.pos as Vector3)) / 2.0
+		mid.y = minf(maxf(lift2.y, (spot.pos as Vector3).y) + 0.5, _outside.global_position.y + 2.0)
+		points.append(mid)
+		points.append_array(_landing(mid, spot))
+		return _smooth(points, false)
+	if from_court:
+		points.append_array(_court_way(true))
+	elif to_court:
+		points.append_array(_court_way(false))
+		points.append_array(_court_arrival(spot))
+		return _smooth(_clear_route(points), String(from.get("kind", "")) != "pigeon")
 	var lift := points[-1]
 	var landing := _landing(lift, spot)
 	if lift.distance_to(landing[0]) > 5.0:
@@ -735,6 +938,13 @@ func _hop_path(from_pos: Vector3, from: Dictionary, spot: Dictionary, away: Vect
 
 ## Abheben in einem flachen Bogen: nach vorn (vom Haus weg) bzw. weg von der Gefahr, dabei steigen.
 func _takeoff(from_pos: Vector3, from: Dictionary, away: Vector3) -> Array[Vector3]:
+	if bool(from.get("court", false)):
+		# im Hof: zur Gasse hin auffliegen (nie in Bank, Stamm oder Blätterdach), etwas steiler
+		# vom Rasen hinter dem Baum erst quer zur Gasse (nie dicht am Stamm vorbei)
+		var to_low: Vector3 = (_lane_above(from_pos) if _on_lawn(from) else _court_point("low")) - from_pos
+		to_low.y = 0.0
+		var d := to_low.normalized() if to_low.length() > 0.1 else Vector3.BACK
+		return [from_pos, from_pos + d * 0.4 + Vector3.UP * 0.35, from_pos + d * 1.5 + Vector3.UP * 1.2]
 	var dir: Vector3 = away if away != Vector3.ZERO else from.get("out", Vector3.FORWARD)
 	if String(from.get("kind", "")) == "ground" and away == Vector3.ZERO:
 		dir = from.get("face", Vector3.FORWARD)

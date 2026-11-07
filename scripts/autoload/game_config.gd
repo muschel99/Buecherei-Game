@@ -880,6 +880,12 @@ var pigeon_spawn_interval: Vector2 = Vector2(25.0, 70.0)
 var pigeon_ground_share: float = 0.65
 ## Plätze nur so weit von der Kamera (Meter) – dort, wo man sie auch sieht
 var bird_near_distance: float = 26.0
+## Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h): so oft landet ein neuer Schwarm Singvögel dort zum Picken
+## (auch wenn die Spielfigur weiter weg ist; unter dem Blätterdach, nur durch die Gasse hinein und hinaus) – dort ist es
+## ruhig (keine Fahrzeuge, selten Passanten), sie bleiben länger sitzen (× Sitzdauer) und ziehen danach eher im Hof um
+var bird_court_share: float = 0.4
+var bird_court_stay_factor: float = 1.8
+var bird_court_stay_share: float = 0.5
 ## Fluggeschwindigkeit (m/s), beim Auffliegen schneller
 var bird_speed: float = 4.2
 var bird_flee_speed: float = 6.0
@@ -941,6 +947,10 @@ var cat_stair_speed: float = 0.3
 var cat_rub_speed: float = 0.1
 var cat_run_chance: float = 0.3
 var cat_rub_chance: float = 0.65
+## Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h): Anteil der Besuche mit einem Abstecher durch die Gasse in
+## den Hof (umschauen, im Gras liegen, auf die Rundbank) – viel öfter, wenn dort gerade Vögel picken
+var cat_garden_chance: float = 0.3
+var cat_garden_birds_chance: float = 0.85
 ## An den Beinen von Passanten reiben (seit der Nachbesserung von 6h): Wahrscheinlichkeit je Begegnung, so nah (m),
 ## Pause bis zum nächsten Mal je Katze (s); Überqueren: nur warten, wenn ein Fahrzeug näher als das ist (m + Tempo)
 var cat_leg_rub_chance: float = 0.5

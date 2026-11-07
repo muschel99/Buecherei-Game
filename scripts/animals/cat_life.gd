@@ -83,6 +83,11 @@ var _met := {}
 var sill_sits := 0
 var throws := 0
 var chases := 0
+## Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h): Abstecher dorthin, Jagden dort
+var garden_visits := 0
+var court_hunts := 0
+## Lage von Gasse und Hof (unter "Outside", x/z), siehe _setup_garden; leer = Gasse ohne Garten
+var _garden := {}
 
 
 func setup(life: StreetLife) -> void:
@@ -121,6 +126,7 @@ func setup(life: StreetLife) -> void:
 			_rub_spots.append(o)
 	_door = get_tree().get_first_node_in_group("doors") as Door
 	_room = _outside.get_parent().get_node_or_null("GroundFloorRoom") as Room
+	_setup_garden()
 	_build_pool()
 	_build_toys()
 	_place_start_toys()
@@ -373,7 +379,7 @@ func _on_finished(cat: StreetCat) -> void:
 func blocked(cat: StreetCat, dir: Vector3) -> void:
 	if cat.inside:
 		return
-	if not bool(cat._action.get("detour", false)):
+	if not bool(cat._action.get("detour", false)) and not in_alley(cat.global_position):
 		var local := _outside.to_local(cat.global_position)
 		var lage := street.centerline.project(Vector2(local.x, local.z))
 		var side := 1.0 if lage.y > 0.0 else -1.0
@@ -421,6 +427,12 @@ func _continue_visit(cat: StreetCat, turn_back: bool = false, blocked_dir: Vecto
 		if back != start:
 			actions.append(_walk([start, back]))
 			start = back
+	if in_alley(start):
+		# erst durch die Gasse zurück auf den Platz davor (nie quer durch Mauern)
+		var out := _alley_way_out(start)
+		actions.append(_walk(out))
+		start = out[-1]
+		blocked_dir = Vector3.ZERO
 	var local := _outside.to_local(start)
 	var lage := street.centerline.project(Vector2(local.x, local.z))
 	var side := 1 if lage.y > 0.0 else -1
@@ -475,7 +487,9 @@ func _look_around() -> void:
 			continue
 		if _try_leg_rub(cat):
 			continue
-		_try_toy(cat)
+		# in der Gasse und im Hof nicht spielen (das Spielzeug rollte sonst in Beete, Bank und Mauern)
+		if not in_alley(cat.global_position):
+			_try_toy(cat)
 
 
 ## An den Beinen eines Passanten reiben (seit der Nachbesserung von 6h): steht jemand in der Nähe (Pause, Schaufenster,
@@ -566,6 +580,8 @@ func _try_meet() -> void:
 
 func _free_to_meet(cat: StreetCat) -> bool:
 	if not (cat.active and not cat.inside and cat.on_ground() and not cat.hunting and not cat.has_toy()):
+		return false
+	if in_alley(cat.global_position):
 		return false
 	if absf(cat.global_position.y - _outside.global_position.y) > 0.05 or cat._action.get("road", false):
 		return false
@@ -707,6 +723,13 @@ func _visit(side: int, s0: float, exit: Dictionary, stops: bool = true) -> Array
 				var forward := (float(w.s_b) - float(w.s_a)) * dir > 0.0
 				plan.append({"kind": "wall", "s": w.s_a if forward else w.s_b, "s_end": w.s_b if forward else w.s_a,
 					"side": w.side, "wall": w, "from_a": forward})
+		if not _garden.is_empty():
+			# Abstecher in den Gartenhof der Baumgasse (öfter, wenn dort Vögel picken)
+			var birds_there := street.birds != null and street.birds.court_birds() > 0
+			var chance := GameConfig.cat_garden_birds_chance if birds_there else GameConfig.cat_garden_chance
+			var gs := float(_garden.s)
+			if _rng.randf() < chance and gs > lo + 0.5 and gs < hi - 0.5:
+				plan.append({"kind": "garden", "s": gs, "side": 1})
 		if _rng.randf() < GameConfig.cat_rub_chance:
 			# an einer Laterne, einem Kübel oder einer Bank reiben
 			var rubs: Array[Dictionary] = []
@@ -1004,6 +1027,8 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			a.append(_walk([entrance, back]))
 		"pause":
 			a.append(_pause())
+		"garden":
+			a.append_array(_garden_actions(back))
 	return a
 
 
@@ -1211,6 +1236,147 @@ func _ground_at(p: Vector3) -> Vector3:
 	return Vector3(p.x, _outside.global_position.y, p.z)
 
 
+# --- Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h) ---
+
+## Lage von Gasse und Hof aus StreetLayout (unter "Outside", x/z): die Gasse ist ein gerader Gang zwischen Bücherei und
+## Pub, am Ende öffnet sich der Hof zur Seite (Rasen, Beete an Rück- und Seitenwand, Baum mit Rundbank, Trittsteine).
+func _setup_garden() -> void:
+	var alley := _outside.get_node_or_null("Alley")
+	if alley == null or alley.get("model_scene") == null:
+		return
+	var lx := StreetLayout.HOUSE_LEFT
+	var fx := StreetLayout.alley_far_x()
+	var end := StreetLayout.alley_end_z()
+	var gz := end - GameConfig.alley_garden_depth
+	var gx := fx - GameConfig.alley_garden_extra_width
+	var points := StreetPaths.library_alley_points()
+	_garden = {
+		"lx": lx, "fx": fx, "end": end, "gz": gz, "gx": gx, "tree": StreetLayout.garden_tree(),
+		"mouth_z": StreetLayout.recess_z(),
+		"s": street.centerline.project(points[2]).x,
+	}
+
+
+## Liegt ein Punkt (Welt) in der Gasse neben der Bücherei (hinter ihrer Mündung) oder im Hof?
+func in_alley(point: Vector3) -> bool:
+	if _garden.is_empty():
+		return false
+	var l := _outside.to_local(point)
+	if l.z < float(_garden.mouth_z) + 0.3 or l.z > float(_garden.end) + 0.3:
+		return false
+	return l.x <= float(_garden.lx) + 0.1 and (l.x >= float(_garden.fx) - 0.1 or (l.z >= float(_garden.gz) and l.x >= float(_garden.gx)))
+
+
+## Darf eine Katze hier stehen (x/z unter "Outside")? Gang der Gasse (nicht an den Töpfen der Bücherei) oder Rasen im Hof
+## (nicht in den Beeten), nie auf der Rundbank um den Baum.
+func _alley_walkable(p: Vector2) -> bool:
+	if p.distance_to(_garden.tree) < 1.15:
+		return false
+	var lane := p.x >= float(_garden.fx) + 0.25 and p.x <= float(_garden.lx) - 0.7 and p.y >= float(_garden.mouth_z) - 0.5 \
+		and p.y <= float(_garden.end) - 0.3
+	var yard := p.x >= float(_garden.gx) + 1.0 and p.x <= float(_garden.fx) + 0.3 and p.y >= float(_garden.gz) + 1.0 \
+		and p.y <= float(_garden.end) - 0.3
+	return lane or yard
+
+
+## Ist der gerade Weg von a nach b (Welt) überall begehbar (alle 0,2 m geprüft)?
+func _alley_segment_ok(a: Vector3, b: Vector3) -> bool:
+	var la := _outside.to_local(a)
+	var lb := _outside.to_local(b)
+	var n := maxi(1, int(Vector2(lb.x - la.x, lb.z - la.z).length() / 0.2))
+	for i in n + 1:
+		var q := la.lerp(lb, float(i) / n)
+		if not _alley_walkable(Vector2(q.x, q.z)):
+			return false
+	return true
+
+
+## Wegpunkt im Gang der Gasse auf der Höhe z (dort, wo man seitlich in den Hof hinein- bzw. herauskommt).
+func _lane_point(z: float) -> Vector3:
+	return _ground(Vector2(float(_garden.fx) + 0.55, clampf(z, float(_garden.gz) + 1.3, float(_garden.end) - 0.6)))
+
+
+func _in_yard(p: Vector3) -> bool:
+	return _outside.to_local(p).x < float(_garden.fx) + 0.2
+
+
+## Weg innerhalb von Gasse und Hof: im Gang gerade, in den Hof hinein und heraus über einen Punkt im Gang auf gleicher Höhe.
+func _alley_path(from: Vector3, to: Vector3) -> Array:
+	var points := [from]
+	if _in_yard(from):
+		points.append(_lane_point(_outside.to_local(from).z))
+	if _in_yard(to):
+		points.append(_lane_point(_outside.to_local(to).z))
+	points.append(to)
+	return points
+
+
+## Von einem Punkt in Gasse oder Hof hinaus auf den Platz vor der Gasse.
+func _alley_way_out(start: Vector3) -> Array:
+	var alley := StreetPaths.library_alley_points()
+	var points := _alley_path(start, _ground(alley[1]))
+	points.append(_ground(alley[2]))
+	return points
+
+
+## Abstecher in den Hof: durch die Gasse hinein, am Eingang des Hofs sitzen und hinaufschauen (zum Baum), dann ins Gras
+## hinter dem Baum, hinten in den Gang oder auf die Rundbank – und wieder hinaus. Picken dort Vögel, jagt sie (beim Gehen,
+## _look_around → _try_hunt); danach geht es mit _continue_visit durch die Gasse hinaus.
+func _garden_actions(back: Vector3) -> Array[Dictionary]:
+	var alley := StreetPaths.library_alley_points()
+	var plaza := _ground(alley[2])
+	var mouth := _ground(alley[1])
+	var fx := float(_garden.fx)
+	var lx := float(_garden.lx)
+	var gz := float(_garden.gz)
+	var end := float(_garden.end)
+	var tree: Vector2 = _garden.tree
+	var look := _ground(Vector2(alley[1].x + _rng.randf_range(-0.3, 0.3), gz - 2.4))
+	var rest := _rng.randf_range(GameConfig.cat_rest_time.x, GameConfig.cat_rest_time.y)
+	var a: Array[Dictionary] = []
+	a.append({"type": "call", "callable": func(_c: StreetCat) -> void: garden_visits += 1})
+	a.append(_walk([back, plaza, mouth, look]))
+	var into := _outside.global_basis * Vector3.BACK   # die Gasse läuft nach +z in den Hof
+	a.append({"type": "turn", "face": into})
+	a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(3.0, 6.0), "look_up": true})
+	var seats: Array[SeatPoint] = []
+	for node in get_tree().get_nodes_in_group(StreetLife.SEAT_GROUP):
+		var seat := node as SeatPoint
+		if seat and not seat is StreetSeat and seat.is_free() and seat.has_meta("approach") and in_alley(seat.global_position):
+			seats.append(seat)
+	var roll := _rng.randf()
+	if roll < 0.35 and not seats.is_empty():
+		# auf die Rundbank unter dem Baum (wie auf eine Bank an der Straße)
+		var seat: SeatPoint = seats[_rng.randi() % seats.size()]
+		var approach: Vector2 = seat.get_meta("approach")
+		var lane := _lane_point(approach.y)
+		a.append(_walk([look, lane]))
+		a.append_array(_stop_actions({"kind": "seat", "entry": {"seat": seat, "approach": approach, "face": seat.get_meta("face")}},
+			lane))
+		a.append(_walk([lane, look]))
+	else:
+		var spot: Vector3
+		if roll < 0.7:
+			# ins Gras hinter dem Baum
+			spot = _ground(Vector2(_rng.randf_range(float(_garden.gx) + 1.6, fx - 0.7), _rng.randf_range(tree.y + 1.9, end - 0.5)))
+		else:
+			spot = _ground(Vector2(_rng.randf_range(fx + 0.6, lx - 0.9), _rng.randf_range(gz + 1.5, end - 0.8)))
+		var way := _alley_path(look, spot)
+		a.append(_walk(way))
+		a.append(_pause())
+		var what := _rng.randf()
+		if what < 0.45:
+			a.append({"type": "anim", "anim": "lie", "time": rest * 0.5})     # im Schatten unter dem Baum
+		elif what < 0.75:
+			a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(6.0, 12.0), "look_up": true})
+		else:
+			a.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(4.0, 7.0)})
+		way.reverse()
+		a.append(_walk(way))
+	a.append(_walk([look, mouth, plaza, back]))
+	return a
+
+
 # --- Jagd auf Vögel ---
 
 ## Vögel am Boden in der Nähe und auf demselben Gehweg? Dann lauern, anschleichen, springen (Vögel fliegen weg).
@@ -1247,11 +1413,16 @@ func _try_hunt(cat: StreetCat) -> bool:
 		a.y = ground_y
 		b.y = ground_y
 		c.y = ground_y
+		# in der Gasse und im Hof: nur, wenn der ganze Weg frei ist (Mauern, Beete, Rundbank um den Baum)
+		var court := in_alley(cat.global_position) or in_alley(center)
+		if court and not (_alley_segment_ok(cat.global_position, a) and _alley_segment_ok(a, b) and _alley_segment_ok(b, c)):
+			continue
 		var actions: Array[Dictionary] = []
 		if cat.has_toy():
 			actions.append({"type": "toy_drop"})
-		actions.append(_walk([cat.global_position, a]))
+		# schon auf dem Weg zum Lauerplatz auf der Jagd: geduckt und leise, die Vögel bleiben sitzen (erst beim Sprung weg)
 		actions.append({"type": "hunting", "value": true})
+		actions.append(_walk([cat.global_position, a]))
 		actions.append({"type": "turn", "face": dir})
 		# Lauern, Anschleichen und Sprung merken sich ihren Schwarm: Sind die Vögel weg, bricht die Katze ab (kein
 		# Sprung ins Leere) und schaut ihnen nach (siehe prey_gone, StreetCat._abort_hunt)
@@ -1269,6 +1440,8 @@ func _try_hunt(cat: StreetCat) -> bool:
 		actions.append({"type": "call", "callable": _continue_visit})
 		cat.replace_actions(actions)
 		hunts += 1
+		if court:
+			court_hunts += 1
 		return true
 	return false
 
