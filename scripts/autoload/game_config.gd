@@ -969,6 +969,9 @@ var vehicle_cat_near_distance: float = 1.4
 var vehicle_cat_near_speed: float = 2.2
 ## Fahrräder: so langsam (m/s, plus etwas je Meter Abstand) beim Ausweichen auf die andere Straßenseite
 var bike_swerve_speed: float = 1.6
+## Radfahrer: unter diesem Tempo (m/s) gilt das Rad als stehend (Fuß auf den Boden), Dauer des Übergangs (s)
+var cyclist_stop_speed: float = 0.3
+var cyclist_stop_time: float = 0.6
 var cat_roll_chance: float = 0.18
 ## Treffen sich zwei Katzen näher als … m auf demselben Gehweg, beschnuppern sie sich (dann spielen sie Fangen, setzen
 ## sich zusammen oder gehen nach einem Miau weiter); dieselben beiden höchstens alle … Sekunden

@@ -906,6 +906,19 @@ def ride_sheet(figs, size=420):
             bpy.context.view_layer.update()
             for cam in ((2.4, -0.15, 0.95), (1.5, -1.9, 1.35), (0.0, -2.6, 1.0)):
                 tiles.append(shot(Vector(cam) + x, Vector((x0, 0.0, 0.78)), size=size))
+        # Anhalten (ride_stop): Rad und Figur nach links geneigt, linker Fuß auf dem Boden
+        arm.animation_data.action = bpy.data.actions[action_name + "_stop"]
+        bpy.context.scene.frame_set(1)
+        crank.rotation_euler = (RD.STOP_PHI, 0.0, 0.0)
+        tilt = math.radians(RD.STOP_LEAN)
+        for o in (arm, bike):
+            o.rotation_euler = (o.rotation_euler[0], tilt, o.rotation_euler[2])
+        bpy.context.view_layer.update()
+        for cam in ((0.0, -2.6, 0.7), (2.0, -1.4, 0.8), (-2.4, -0.2, 0.7)):
+            tiles.append(shot(Vector(cam) + x, Vector((x0, 0.0, 0.55)), size=size))
+        for o in (arm, bike):
+            o.rotation_euler = (o.rotation_euler[0], 0.0, o.rotation_euler[2])
+        arm.animation_data.action = bpy.data.actions[action_name]
         # Nahaufnahmen bei Bild 1: Hand von oben und von außen, Füße auf den Pedalen
         bpy.context.scene.frame_set(1)
         crank.rotation_euler = (0.0, 0.0, 0.0)

@@ -30,6 +30,8 @@ var clip_hand_min_x: float = -0.29
 ## Nur beim Winken: Oberarm nach außen, Hand neben dem Kopf (die Ebenen für Oberkörper und Beine übernehmen genau)
 var clip_wave_fix: bool = true
 var _clip_tracks: Dictionary = {}
+## … und die Spur der Lage der Hüfte, falls sie dabei ist (z. B. bei der Anhalte-Haltung auf dem Rad)
+var _clip_positions: Dictionary = {}
 
 
 ## Animation für Gesture.CLIP: nur diese Knochen (Namen) werden übernommen; prefix = Pfad zum Skelett in der
@@ -37,6 +39,7 @@ var _clip_tracks: Dictionary = {}
 func set_clip(anim: Animation, prefix: String, bone_names: PackedStringArray) -> void:
 	clip = anim
 	_clip_tracks.clear()
+	_clip_positions.clear()
 	var skeleton := get_skeleton()
 	if anim == null or skeleton == null:
 		return
@@ -45,6 +48,10 @@ func set_clip(anim: Animation, prefix: String, bone_names: PackedStringArray) ->
 		var track := anim.find_track(NodePath(prefix + ":" + bone_name), Animation.TYPE_ROTATION_3D)
 		if bone >= 0 and track >= 0:
 			_clip_tracks[bone] = track
+		# Lage nur für die Hüfte: die Lage von Armen und Beinen setzen die Formregler (ChibiShapeModifier)
+		var moved := anim.find_track(NodePath(prefix + ":" + bone_name), Animation.TYPE_POSITION_3D) if bone_name == "Hips" else -1
+		if bone >= 0 and moved >= 0:
+			_clip_positions[bone] = moved
 
 
 func _process_modification_with_delta(_delta: float) -> void:
@@ -80,6 +87,9 @@ func _process_modification_with_delta(_delta: float) -> void:
 				for bone: int in _clip_tracks:
 					var q := clip.rotation_track_interpolate(_clip_tracks[bone], clip_time)
 					skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_pose_rotation(bone).slerp(q, w))
+				for bone: int in _clip_positions:
+					var p := clip.position_track_interpolate(_clip_positions[bone], clip_time)
+					skeleton.set_bone_pose_position(bone, skeleton.get_bone_pose_position(bone).lerp(p, w))
 				# je weiter der Arm angehoben ist (hängend: nichts, waagerecht und höher: ganz), desto weiter nach außen
 				# (rechter Arm: zur Seite -X, Drehung um +Z) …
 				var upper := skeleton.find_bone("RightUpperArm")

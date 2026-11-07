@@ -62,6 +62,16 @@ ELBOW_POLE = (0.35, 0.2, 1.0)        # Ellbogen zeigt nach (außen, hinten, unte
 KNEE_POLE = (0.15, -1.0, 0.1)        # Knie zeigt nach (außen, vorn, oben)
 
 FINGERS = ("Thumb", "Index", "Middle", "Ring", "Little")
+# Anhalten (seit der Nachbesserung 3 von 6h, Bewegung "ride_stop"): das Rad neigt sich nach links (Grad), die Figur
+# rutscht vor den Sattel (Hüfte so weit vor dem Sitzpunkt, × Rahmengröße), der linke Fuß steht neben dem Rad auf dem
+# Boden (seitlich, vor der Hüfte; × Rahmengröße), der rechte bleibt auf dem Pedal (Kurbel bei STOP_PHI: rechtes Pedal
+# vorn unten); Oberkörper aufrechter und in der Welt senkrecht (gegen die Neigung gedreht)
+STOP_LEAN = 11.0
+STOP_HIP_FORWARD = 0.17
+STOP_FOOT = (0.26, 0.05)
+STOP_PHI = math.pi / 4.0
+STOP_UPRIGHT = 0.45
+STOP_LEG_REACH = 0.95
 
 
 def g2b(p, s=1.0):
@@ -259,51 +269,141 @@ def pose(rig, phi, setup):
         D[up] = frame(knee - pos[up], n_new) @ frame(a_rest, n_rest).inverted()
         D[low] = frame(end - knee, n_new) @ frame(rig.head[foot] - rig.head[low], n_rest).inverted()
         D[foot] = d_foot
-        # Arme: Hand als gerade Verlängerung des Unterarms um den Griff (Handgelenk hängt von der
-        # Richtung des Unterarms ab, darum ein paar Mal hin und her)
-        upper, lower, hand = side + "UpperArm", side + "LowerArm", side + "Hand"
-        l1, l2 = rig.length(upper, lower), rig.length(lower, hand)
-        grip = g2b((GRIP[0] * sx, GRIP[1], GRIP[2]), s)
-        palm_len = rig.length(hand, side + "MiddleProximal")
-        pole = _side_dir(ELBOW_POLE, sx)
-        wrist = grip
-        for _ in range(8):
-            elbow, end, n_new = two_bone(pos[upper], l1, l2, wrist, pole)
-            h = (end - elbow).normalized()
-            palm = _palm_normal(h, sx)
-            wrist = grip - h * (GRIP_ALONG * palm_len) - palm * (GRIP_RADIUS * s + PALM_HALF)
+        _arm_on_grip(rig, D, pos, s, side, sx)
+    return D, offset
+
+
+def _arm_on_grip(rig, D, pos, s, side, sx):
+    """Arm einer Seite an den Griff, Hand um den Griff (Finger, Daumen)."""
+    # Arme: Hand als gerade Verlängerung des Unterarms um den Griff (Handgelenk hängt von der
+    # Richtung des Unterarms ab, darum ein paar Mal hin und her)
+    upper, lower, hand = side + "UpperArm", side + "LowerArm", side + "Hand"
+    l1, l2 = rig.length(upper, lower), rig.length(lower, hand)
+    grip = g2b((GRIP[0] * sx, GRIP[1], GRIP[2]), s)
+    palm_len = rig.length(hand, side + "MiddleProximal")
+    pole = _side_dir(ELBOW_POLE, sx)
+    wrist = grip
+    for _ in range(8):
         elbow, end, n_new = two_bone(pos[upper], l1, l2, wrist, pole)
         h = (end - elbow).normalized()
         palm = _palm_normal(h, sx)
-        a_rest = rig.head[lower] - rig.head[upper]
-        n_rest = a_rest.normalized().cross(Vector((0.0, -1.0, 0.0))).normalized()
-        D[upper] = frame(elbow - pos[upper], n_new) @ frame(a_rest, n_rest).inverted()
-        # Unterarm dreht sich halb zur Hand hin (so verdreht sich das Handgelenk nicht)
-        D[lower] = frame(end - elbow, n_new + palm) @ frame(rig.head[hand] - rig.head[lower], n_rest).inverted()
-        rest_dir = rig.head[side + "MiddleProximal"] - rig.head[hand]
-        D[hand] = frame(h, palm) @ frame(rest_dir, Vector((0.0, 0.0, -1.0))).inverted()
-        # Finger unten herum nach innen um den Griff (zur Handfläche hin gekrümmt)
-        for finger in FINGERS[1:]:
-            total = 0.0
-            for seg, deg in zip(("Proximal", "Intermediate", "Distal"), FINGER_CURL):
-                bone = side + finger + seg
-                if bone not in rig.head:
-                    continue
-                d = (rig.tail[bone] - rig.head[bone]).normalized()
-                axis = d.cross(Vector((0.0, 0.0, -1.0)))
-                total += deg
-                D[bone] = D[hand] @ (Matrix.Rotation(math.radians(total), 3, axis.normalized())
-                                     if axis.length > 1e-6 else Matrix.Identity(3))
-        # Daumen oben herum nach innen: jedes Glied in seine Richtung (Handrahmen) gedreht
-        thumb_side = -sx * h.cross(palm)
-        for seg, (ch, cp, ct) in zip(("Metacarpal", "Proximal", "Distal"), THUMB_DIRS):
-            bone = side + "Thumb" + seg
+        wrist = grip - h * (GRIP_ALONG * palm_len) - palm * (GRIP_RADIUS * s + PALM_HALF)
+    elbow, end, n_new = two_bone(pos[upper], l1, l2, wrist, pole)
+    h = (end - elbow).normalized()
+    palm = _palm_normal(h, sx)
+    a_rest = rig.head[lower] - rig.head[upper]
+    n_rest = a_rest.normalized().cross(Vector((0.0, -1.0, 0.0))).normalized()
+    D[upper] = frame(elbow - pos[upper], n_new) @ frame(a_rest, n_rest).inverted()
+    # Unterarm dreht sich halb zur Hand hin (so verdreht sich das Handgelenk nicht)
+    D[lower] = frame(end - elbow, n_new + palm) @ frame(rig.head[hand] - rig.head[lower], n_rest).inverted()
+    rest_dir = rig.head[side + "MiddleProximal"] - rig.head[hand]
+    D[hand] = frame(h, palm) @ frame(rest_dir, Vector((0.0, 0.0, -1.0))).inverted()
+    # Finger unten herum nach innen um den Griff (zur Handfläche hin gekrümmt)
+    for finger in FINGERS[1:]:
+        total = 0.0
+        for seg, deg in zip(("Proximal", "Intermediate", "Distal"), FINGER_CURL):
+            bone = side + finger + seg
             if bone not in rig.head:
                 continue
-            d = D[hand] @ (rig.tail[bone] - rig.head[bone]).normalized()
-            target = (h * ch + palm * cp + thumb_side * ct).normalized()
-            D[bone] = d.rotation_difference(target).to_matrix() @ D[hand]
+            d = (rig.tail[bone] - rig.head[bone]).normalized()
+            axis = d.cross(Vector((0.0, 0.0, -1.0)))
+            total += deg
+            D[bone] = D[hand] @ (Matrix.Rotation(math.radians(total), 3, axis.normalized())
+                                 if axis.length > 1e-6 else Matrix.Identity(3))
+    # Daumen oben herum nach innen: jedes Glied in seine Richtung (Handrahmen) gedreht
+    thumb_side = -sx * h.cross(palm)
+    for seg, (ch, cp, ct) in zip(("Metacarpal", "Proximal", "Distal"), THUMB_DIRS):
+        bone = side + "Thumb" + seg
+        if bone not in rig.head:
+            continue
+        d = D[hand] @ (rig.tail[bone] - rig.head[bone]).normalized()
+        target = (h * ch + palm * cp + thumb_side * ct).normalized()
+        D[bone] = d.rotation_difference(target).to_matrix() @ D[hand]
+
+
+def _leg_to(rig, D, pos, side, sx, ankle, d_foot):
+    """Bein einer Seite: Knöchel nach ankle (Zwei-Glieder-IK, Knie nach vorn außen), Fuß gedreht d_foot."""
+    up, low, foot = side + "UpperLeg", side + "LowerLeg", side + "Foot"
+    knee, end, n_new = two_bone(pos[up], rig.length(up, low), rig.length(low, foot), ankle,
+                                Vector((KNEE_POLE[0] * sx, KNEE_POLE[1], KNEE_POLE[2])))
+    a_rest = rig.head[low] - rig.head[up]
+    n_rest = a_rest.normalized().cross(Vector((0.0, 1.0, 0.0))).normalized()
+    D[up] = frame(knee - pos[up], n_new) @ frame(a_rest, n_rest).inverted()
+    D[low] = frame(end - knee, n_new) @ frame(rig.head[foot] - rig.head[low], n_rest).inverted()
+    D[foot] = d_foot
+
+
+def stop_pose(rig, setup):
+    """Anhalten: im Rahmen des (nach links geneigten) Rads – der Boden liegt dort schräg (z = x · tan Neigung)."""
+    s = setup.s
+    tilt = math.tan(math.radians(STOP_LEAN))
+    upright = Setup(s, setup.seat, setup.lean * STOP_UPRIGHT)
+    counter = rot("Y", -STOP_LEAN)
+    D = {n: counter @ m for n, m in _torso(upright, 0.0).items()}
+    hips = rig.head["Hips"]
+    mid_rest = (rig.head["LeftUpperLeg"] + rig.head["RightUpperLeg"]) / 2.0
+    hip_y = -(SEAT_Z + STOP_HIP_FORWARD) * s
+    # linker Fuß auf dem schrägen Boden, Knöchel darüber (Höhe wie in der Ruhehaltung)
+    foot_x = STOP_FOOT[0] * s
+    ankle_h = rig.head["LeftFoot"].z
+    ankle = Vector((foot_x, hip_y - STOP_FOOT[1] * s, foot_x * tilt)) + counter @ Vector((0.0, 0.0, ankle_h))
+    # Hüfte so hoch, dass das linke Bein (fast gestreckt) bis dorthin reicht
+    left_off = D["Hips"] @ (rig.head["LeftUpperLeg"] - mid_rest)
+    leg = STOP_LEG_REACH * rig.leg_length("Left")
+    dx = ankle.x - left_off.x
+    dy = ankle.y - (hip_y + left_off.y)
+    dz = math.sqrt(max(leg * leg - dx * dx - dy * dy, 0.0))
+    hip_target = Vector((0.0, hip_y, ankle.z + dz - left_off.z))
+    offset = hip_target - hips - D["Hips"] @ (mid_rest - hips)
+    pos = _fk(rig, D, offset)
+    _leg_to(rig, D, pos, "Left", 1.0, ankle, counter)
+    d_foot, pedal_ankle = _foot(rig, "Right", STOP_PHI, s)
+    _leg_to(rig, D, pos, "Right", -1.0, pedal_ankle, d_foot)
+    for side, sx in (("Left", 1.0), ("Right", -1.0)):
+        _arm_on_grip(rig, D, pos, s, side, sx)
     return D, offset
+
+
+def _bake_frames(target, rig, name, poses, frames):
+    """Haltungen (je Bild D, offset) als Aktion + stumm geschaltete NLA-Spur name."""
+    action = bpy.data.actions.new(name)
+    rots = {n: [] for n in rig.names}
+    locs = []
+    for D, offset in poses:
+        full = {}
+        for n in rig.order:
+            p = rig.parent[n]
+            full[n] = D.get(n, full[p] if p else Matrix.Identity(3))
+        for n in rig.order:
+            p = rig.parent[n]
+            d = full[n] if p is None else full[p].inverted() @ full[n]
+            r = rig.rest[n]
+            q = (r.inverted() @ d @ r).to_quaternion()
+            if rots[n] and rots[n][-1].dot(q) < 0:
+                q.negate()
+            rots[n].append(q)
+        locs.append(rig.rest["Hips"].inverted() @ offset)
+    for n, qs in rots.items():
+        path = f'pose.bones["{n}"].rotation_quaternion'
+        for i in range(4):
+            fc = action.fcurves.new(path, index=i, action_group=n)
+            fc.keyframe_points.add(len(frames))
+            for k, (f, q) in enumerate(zip(frames, qs)):
+                fc.keyframe_points[k].co = (f, q[i])
+                fc.keyframe_points[k].interpolation = "LINEAR"
+    for i in range(3):
+        fc = action.fcurves.new('pose.bones["Hips"].location', index=i, action_group="Hips")
+        fc.keyframe_points.add(len(frames))
+        for k, (f, v) in enumerate(zip(frames, locs)):
+            fc.keyframe_points[k].co = (f, v[i])
+            fc.keyframe_points[k].interpolation = "LINEAR"
+    target.animation_data_create()
+    track = target.animation_data.nla_tracks.new()
+    track.name = name
+    strip = track.strips.new(name, frames[0], action)
+    strip.name = name
+    track.mute = True
+    action.use_fake_user = True
 
 
 def add_ride(target, name="ride"):
@@ -354,7 +454,11 @@ def add_ride(target, name="ride"):
     action.use_fake_user = True
     print(f"  Animation {name}: {len(frames)} Bilder, Fahrrad {setup.s:.3f}, Sitzpunkt {setup.seat:.3f}, "
           f"Oberkörper {setup.lean:.2f}")
-    return {"ride_scale": setup.s, "ride_seat": setup.seat, "ride_frames": FRAMES}
+    # Anhalten: eine feste Haltung (zwei gleiche Bilder)
+    stop = stop_pose(rig, setup)
+    _bake_frames(target, rig, name + "_stop", [stop, stop], [1, 2])
+    return {"ride_scale": setup.s, "ride_seat": setup.seat, "ride_frames": FRAMES, "ride_stop_crank": STOP_PHI,
+            "ride_stop_lean": STOP_LEAN}
 
 
 def ride_angle(frame_no):

@@ -80,6 +80,12 @@ var sit_time := 0.0
 ## Rahmengröße gegenüber dem Hollandrad in voller Größe und Höhe des Sitzpunkts (volle Größe).
 var ride_scale := 0.0
 var ride_seat := 0.0
+## Anhalten auf dem Rad (seit der Nachbesserung 3 von 6h, Haltung "ride_stop"): Kurbelstellung und Neigung des Rads
+## nach links (Grad), aus der Figur
+var ride_stop_crank := PI / 4.0
+var ride_stop_lean := 0.0
+## Ebene für die Anhalte-Haltung (erst beim ersten Anhalten angelegt)
+var _ride_mod: ChibiGestureModifier
 ## Gangart, Art zu stehen und zu sitzen (randomize_look), Einkaufstasche in der rechten Hand
 var walk_clip: StringName = &"walk"
 var idle_clip: StringName = &"idle"
@@ -295,6 +301,8 @@ func _rebuild() -> void:
 		sit_time = float(info.get("sit_down_time", 0.0))
 		ride_scale = float(info.get("ride_scale", 0.0))
 		ride_seat = float(info.get("ride_seat", 0.0))
+		ride_stop_crank = float(info.get("ride_stop_crank", PI / 4.0))
+		ride_stop_lean = float(info.get("ride_stop_lean", 0.0)) if _player.has_animation(&"ride_stop") else 0.0
 		_player.play(&"idle")
 	_head_bone = _skeleton.find_bone("Head") if _skeleton else -1
 	if _skeleton:
@@ -593,14 +601,32 @@ func _update_bag(delta: float) -> void:
 ## Radfahren: Haltung zur Kurbelstellung crank (Bogenmaß; 0 = Kurbel auf der Seite x < 0 vorn,
 ## wachsend = vorwärts treten). Die Animation "ride" ist genau eine Kurbelumdrehung; der Kopf schaut
 ## ab und zu ein wenig zur Seite.
-func pose_ride(crank: float, delta: float) -> void:
+func pose_ride(crank: float, delta: float, stop: float = 0.0) -> void:
 	if _player == null or not _player.has_animation(&"ride"):
 		return
 	_time += delta
 	if _player.current_animation != &"ride":
-		_player.play(&"ride")
+		_player.play(&"ride", 0.0)
 	_player.speed_scale = 0.0
 	_player.seek(fposmod(crank / TAU, 1.0) * _player.get_animation(&"ride").length, true)
+	# Anhalten: die Haltung mit dem Fuß auf dem Boden als eigene Ebene darüber, Gewicht = stop (weich hin und zurück).
+	# Nicht über das Überblenden des AnimationPlayers – das steht bei Tempo 0 still und bliebe halb hängen.
+	if stop > 0.0 and _player.has_animation(&"ride_stop"):
+		if _ride_mod == null:
+			var bones := PackedStringArray()
+			for i in _skeleton.get_bone_count():
+				bones.append(_skeleton.get_bone_name(i))
+			_ride_mod = _layer("RideStopLayer", bones)
+			# gleich nach den Formreglern, vor allen anderen Ebenen (Kopf und Blick wirken weiter)
+			var shape := _skeleton.get_node_or_null("ShapeModifier")
+			_skeleton.move_child(_ride_mod, shape.get_index() + 1 if shape else 0)
+			_ride_mod.set_clip(_player.get_animation(&"ride_stop"), _clip_prefix(), bones)
+			_ride_mod.clip_time = 0.0
+		_ride_mod.gesture = ChibiGestureModifier.Gesture.CLIP
+		_ride_mod.weight = smoothstep(0.0, 1.0, stop)
+	elif _ride_mod:
+		_ride_mod.gesture = ChibiGestureModifier.Gesture.NONE
+		_ride_mod.weight = 0.0
 	# Kopf schaut ab und zu zur Seite – oder zu dem, der in der Nähe ist (weniger weit als zu Fuß)
 	_update_face(&"ride", delta, GameConfig.chibi_look_max_yaw * 0.7)
 	var target := Vector2(sin(_time * GameConfig.chibi_rider_glance_rate) * GameConfig.chibi_rider_glance, 0.0)

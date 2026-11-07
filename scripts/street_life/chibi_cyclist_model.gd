@@ -37,6 +37,10 @@ var _roll := 0.0
 var _scale := FALLBACK_SCALE
 ## Schräglage in Kurven (Bogenmaß)
 var _lean := 0.0
+## Anhalten (seit der Nachbesserung 3 von 6h): 0 = fährt, 1 = steht mit dem linken Fuß auf dem Boden (Rad nach links
+## geneigt); so lange steht das Rad schon fast still
+var _stop := 0.0
+var _still := 0.0
 
 
 func _ready() -> void:
@@ -117,7 +121,12 @@ func animate_drive(speed: float, delta: float, _accel: float, turn_rate: float) 
 	if delta > 0.0:
 		var want := -atan(speed * turn_rate / 9.81) * GameConfig.cyclist_lean_factor
 		_lean = lerpf(_lean, clampf(want, -0.35, 0.35), minf(1.0, delta * 4.0))
-		rotation.z = _lean
+		# fast still: Fuß auf den Boden, Rad neigt sich nach links (Drehung um die Fahrtrichtung, oben nach +x)
+		_still = _still + delta if speed < GameConfig.cyclist_stop_speed else 0.0
+		var stopping := _still > 0.25 and _rider != null and _rider.ride_stop_lean > 0.0
+		_stop = move_toward(_stop, 1.0 if stopping else 0.0, delta / GameConfig.cyclist_stop_time)
+		var k := smoothstep(0.0, 1.0, _stop)
+		rotation.z = lerpf(_lean, -deg_to_rad(_rider.ride_stop_lean if _rider else 0.0), k)
 	animate(speed, delta)
 
 
@@ -129,12 +138,15 @@ func animate(speed: float, delta: float) -> void:
 	var wheel := WHEEL * _scale
 	_roll = fmod(_roll + speed / wheel * delta, TAU)
 	_crank = fmod(_crank + speed / (wheel * GEAR) * delta, TAU)
+	if _stop > 0.0 and _rider:
+		# beim Anhalten die Kurbel in die Stellung der Haltung (rechtes Pedal vorn unten)
+		_crank = lerp_angle(_crank, _rider.ride_stop_crank, minf(1.0, delta * 4.0))
 	for w in _wheels:
 		w.basis = Basis(Vector3.RIGHT, _roll)
 	# Kurbel dreht wie die Räder (oben nach vorn); bei 0 zeigt die Kurbel auf der Seite x < 0 nach vorn
 	if _crank_node:
 		_crank_node.basis = Basis(Vector3.RIGHT, _crank)
-	_rider.pose_ride(_crank, delta)
+	_rider.pose_ride(_crank, delta, _stop)
 
 
 func set_shadows(enabled: bool) -> void:
