@@ -307,8 +307,10 @@ func _print_report() -> void:
 	if _life.birds:
 		var b := _life.birds
 		print("=== Tiere (seit Etappe 6g) ===")
-		print("Vögel: Flüge %d, Durchflüge %d, gerade unterwegs %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d" % [
-			b.flights, b.flyovers, b.get_birds().size(), b.visible_spawns, b.visible_exits])
+		print("Vögel: Flüge %d, Durchflüge %d, gerade unterwegs %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, unter dem Boden %d" % [
+			b.flights, b.flyovers, b.get_birds().size(), b.visible_spawns, b.visible_exits, b.below_ground])
+		for line in b.below_ground_log:
+			print("  BODEN: ", line)
 	if _life.cats:
 		var c := _life.cats
 		print("Katzen: Besuche %d, in der Bücherei %d, gejagt %d, gespielt %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, festgefahren %d" % [

@@ -37,13 +37,13 @@ const LOOPS: Array[StringName] = [&"walk", &"idle", &"idle_2", &"sit_idle", &"ri
 	&"stroll", &"walk_bag", &"idle_happy", &"idle_foot", &"talk", &"talk_one", &"talk_two", &"sit_restless"]
 const PINGPONG: Array[StringName] = [&"idle_shift", &"idle_bag", &"sit_talk", &"sit_talk_legs", &"sit_talk_hands"]
 ## Händeschütteln: Lage der rechten Hand beim Schütteln (x seitlich, z vorn; × Hüfthöhe der Figur, gemessen in
-## der Animation handshake zwischen 1,6 und 2,7 s: 0,48) plus eine halbe Handdicke – sonst stecken die Hände
-## ineinander und die großen Köpfe stoßen beim Vorbeugen fast zusammen
-const HANDSHAKE_HAND := Vector2(-0.085, 0.52)
+## der Animation handshake zwischen 1,6 und 2,5 s – seit der Nachbesserung mit dem kleinen Schritt nach vorn: 0,73)
+## plus eine halbe Handdicke, sonst stecken die Hände ineinander
+const HANDSHAKE_HAND := Vector2(-0.025, 0.775)
 ## Katze streicheln: dort ist die Hand (x seitlich, z vorn; × Hüfthöhe): kurz bücken (pet_reach, Hand nah am
 ## Boden, Abschnitt PET_REACH_HOLD hin und her) bzw. hinknien (pet_cat, Hand auf etwa 0,55 × Hüfthöhe)
-const PET_REACH_HAND := Vector2(-0.12, 0.36)
-const PET_KNEEL_HAND := Vector2(-0.26, 0.87)
+const PET_REACH_HAND := Vector2(-0.033, 0.32)
+const PET_KNEEL_HAND := Vector2(-0.29, 0.85)
 const PET_REACH_HOLD := Vector2(1.7, 2.5)
 ## Zeitpunkt (s), an dem die Hand die Katze erreicht
 const PET_REACH_TOUCH := 1.2
@@ -168,16 +168,7 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 	top_color = _pick(rng, GameConfig.chibi_top_colors)
 	bottom_color = _pick(rng, GameConfig.chibi_bottom_colors)
 	shoe_color = _pick(rng, GameConfig.chibi_shoe_colors)
-	# Gangart, Stehen, Sitzen (seit Etappe 6h); mit Einkaufstasche gehen und stehen sie anders
-	carries_bag = rng.randf() < GameConfig.passerby_bag_share
-	if carries_bag:
-		walk_clip = &"walk_bag"
-		idle_clip = &"idle_bag"
-	else:
-		walk_clip = _weighted(rng, GameConfig.passerby_walk_styles.get("female" if female else "male", {}), &"walk")
-		idle_clip = _weighted(rng, GameConfig.passerby_idle_styles, &"idle")
-	sit_clip = _weighted(rng, GameConfig.passerby_sit_styles, &"sit_idle")
-	_set_bag(rng)
+	restyle(rng)
 	# Grundausdruck neutral (Augen offen – so läuft und fährt man); andere Ausdrücke kommen ab und zu
 	mood = Mood.NEUTRAL
 	_mood_left = 0.0
@@ -187,6 +178,21 @@ func randomize_look(rng: RandomNumberGenerator) -> void:
 
 func _pick(rng: RandomNumberGenerator, colors: Array[Color]) -> Color:
 	return colors[rng.randi_range(0, colors.size() - 1)] if not colors.is_empty() else Color.WHITE
+
+
+## Gangart, Art zu stehen und zu sitzen, Einkaufstasche neu auswürfeln (seit Etappe 6h; StreetLife ruft das bei
+## jedem Losgehen – so ist nicht immer dieselbe Figur mit Tasche unterwegs). Mit Tasche gehen und stehen sie anders.
+func restyle(rng: RandomNumberGenerator) -> void:
+	var female := int(figure) < 3
+	carries_bag = rng.randf() < GameConfig.passerby_bag_share
+	if carries_bag:
+		walk_clip = &"walk_bag"
+		idle_clip = &"idle_bag"
+	else:
+		walk_clip = _weighted(rng, GameConfig.passerby_walk_styles.get("female" if female else "male", {}), &"walk")
+		idle_clip = _weighted(rng, GameConfig.passerby_idle_styles, &"idle")
+	sit_clip = _weighted(rng, GameConfig.passerby_sit_styles, &"sit_idle")
+	_set_bag(rng)
 
 
 ## Ein Eintrag aus {Name: Gewicht}, zufällig nach Gewicht.
@@ -234,6 +240,12 @@ func handshake_hand() -> Vector2:
 	return HANDSHAKE_HAND * _hip_height
 
 
+## Höhe der rechten Hand beim Händeschütteln (m; × Hüfthöhe, gemessen) – sehr verschieden große Figuren schütteln
+## sich nicht die Hand (die Animation passt die Höhe nicht an).
+func handshake_height() -> float:
+	return 1.13 * _hip_height
+
+
 func pet_hand(kneel: bool) -> Vector2:
 	return (PET_KNEEL_HAND if kneel else PET_REACH_HAND) * _hip_height
 
@@ -277,6 +289,7 @@ func _rebuild() -> void:
 		_skeleton.add_child(_gesture_modifier)
 		_head_modifier = ChibiHeadModifier.new()
 		_head_modifier.name = "HeadModifier"
+		_head_modifier.head_scale = GameConfig.chibi_head_scale
 		_skeleton.add_child(_head_modifier)
 	_prev_state = &""
 	_transition = &""
@@ -664,6 +677,8 @@ func set_talking(on: bool) -> void:
 		_talk_clip = &"" if options.is_empty() or (carries_bag and not seated) else options.pick_random()
 		_talk_seek = true
 	_talking = on
+	# der Mund spricht mit (ChibiCharacter.talking: wechselnde Mundbilder a/e/o, dazwischen geschlossen)
+	talking = on
 
 
 ## Plaudern: Wer erzählt, zeigt manchmal irgendwohin oder gestikuliert; wer zuhört, nickt, wiegt den Kopf oder
@@ -858,11 +873,17 @@ func _scan_focus() -> void:
 	_greeted[id] = now
 	var chance := GameConfig.chibi_greet_chance_player if best == camera else GameConfig.chibi_greet_chance_others
 	if randf() < chance:
-		# Grüßen: Lächeln und Nicken, manchmal auch winken
-		var wave_chance := GameConfig.chibi_wave_chance_player if best == camera else GameConfig.chibi_wave_chance
+		# Grüßen: Lächeln und Nicken, manchmal auch winken; die Spielfigur seit der Nachbesserung von 6h auch mit Nicken
+		# und Lachen (Augen zu) – und dafür meist kurz stehen bleiben und sich zu ihr drehen (nie beim Winken wegdrehen)
+		var to_player := best == camera
+		var wave_chance := GameConfig.chibi_wave_chance_player if to_player else GameConfig.chibi_wave_chance
 		var wave := randf() < wave_chance and not carries_bag
-		trigger_face(&"wave" if wave else &"greet")
+		trigger_face(&"wave" if wave else (&"greet_laugh" if to_player and randf() < 0.5 else &"greet"))
 		_nod_t = 0.0
+		if to_player and randf() < GameConfig.chibi_greet_stop_chance:
+			var walker := get_parent()
+			if walker and walker.has_method("greet_stop"):
+				walker.call("greet_stop", camera.global_position, GameConfig.chibi_greet_stop_time)
 		if wave:
 			wave_hello()
 

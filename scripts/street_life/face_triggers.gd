@@ -12,6 +12,7 @@ const BASE := ChibiCharacter.Mood.NEUTRAL
 const TRIGGERS := {
 	&"greet": [[Mood.HAPPY, Mood.GRIN], 2.0, 3.0],              # jemanden grüßen
 	&"wave": [[Mood.HAPPY, Mood.LAUGH], 1.6, 2.4],              # winken
+	&"greet_laugh": [[Mood.LAUGH], 1.6, 2.4],                   # Spielfigur grüßen: nicken und lachen (Augen zu)
 	&"window_wonder": [[Mood.SURPRISED, Mood.EXCITED], 1.0, 1.8],  # Staunen vor dem Schaufenster
 	&"window_like": [[Mood.HAPPY, Mood.CONTENT, Mood.STARSTRUCK], 1.8, 3.0],  # Gefällt mir!
 	&"chat_talk": [[Mood.HAPPY, Mood.CONTENT], 1.5, 2.6],       # erzählt etwas

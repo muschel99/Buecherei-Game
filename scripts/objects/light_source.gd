@@ -37,7 +37,8 @@ enum ShadowImportance {
 	IMPORTANT,  ## Wirft ab Grafikstufe "Mittel" Schatten (z. B. Stehlampen)
 	OPTIONAL,  ## Wirft nur bei Grafikstufe "Hoch" Schatten (z. B. Deckenlampen)
 }
-## Geräusch, solange es leuchtet (Name im Audio-System, z. B. "ambience/fireplace"; leer = still).
+## Geräusch, solange es leuchtet (Name im Audio-System, z. B. "ambience/fireplace"; leer = still), Lautstärke in
+## GameConfig.light_loop_volume_db.
 @export var loop_sound: String = ""
 
 ## Wie wichtig die Schatten dieser Lampe sind (Schatten kosten viel Rechenleistung).
@@ -118,7 +119,7 @@ func _ready() -> void:
 		_sparks.append(particles)
 	_flicker_phase = randf() * TAU
 	if not loop_sound.is_empty():
-		_sound = Audio.loop_at(self, loop_sound, 0.0, 9.0)
+		_sound = Audio.loop_at(self, loop_sound, GameConfig.light_loop_volume_db, 9.0)
 	_apply_state(false)
 	_apply_shadow_quality()
 	Settings.setting_changed.connect(_on_setting_changed)

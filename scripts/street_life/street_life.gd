@@ -255,6 +255,7 @@ func _update_chats(delta: float) -> void:
 			var left := Vector2(u.y, -u.x)
 			var gap := u * minf(dist, GameConfig.passerby_chat_gap)
 			session.handshake = not w1.carries_bag() and not w2.carries_bag() \
+				and absf(w1.handshake_height() - w2.handshake_height()) < GameConfig.passerby_handshake_height_diff \
 				and _rng.randf() < GameConfig.passerby_handshake_chance
 			if session.handshake:
 				var h1 := w1.handshake_hand()
@@ -333,7 +334,7 @@ func _update_pets(delta: float) -> void:
 			if dist > GameConfig.passerby_pet_reach or dist < 0.4 or walker.velocity2.length() < 0.2:
 				continue
 			# vor einem und auf demselben Gehweg (nicht auf der Fahrbahn)
-			if walker.velocity2.normalized().dot(d / dist) < 0.55:
+			if walker.velocity2.normalized().dot(d / dist) < 0.3:
 				continue
 			var route: StreetRoute = sidewalks[walker.side]
 			var on := route.project(cat_pos)
@@ -1023,16 +1024,13 @@ func _crowded(spot: Vector2) -> bool:
 
 
 func _launch(plan: Dictionary) -> void:
-	# Wer sich setzen will, trägt keine Einkaufstasche (die hängt an der Hand)
-	var choices: Array[int] = []
+	var walker: Passerby = _idle_walkers.pop_at(_rng.randi() % _idle_walkers.size())
+	# Gangart und Tasche bei jedem Losgehen neu (seit der Nachbesserung von 6h). Wer sich setzen will, trägt möglichst
+	# keine Einkaufstasche (die hängt an der Hand): dann noch einmal würfeln, sonst setzt er sich eben nicht
 	var sits := (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.type == "sit")
-	for i in _idle_walkers.size():
-		if not sits or not _idle_walkers[i].carries_bag():
-			choices.append(i)
-	if choices.is_empty():
-		for i in _idle_walkers.size():
-			choices.append(i)
-	var walker: Passerby = _idle_walkers.pop_at(choices[_rng.randi() % choices.size()])
+	walker.restyle(_rng)
+	if sits and walker.carries_bag():
+		walker.restyle(_rng)
 	if sits and walker.carries_bag():
 		var kept: Array = (plan.actions as Array).filter(func(a: Dictionary) -> bool: return a.type != "sit")
 		plan.actions = kept

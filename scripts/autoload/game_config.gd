@@ -249,9 +249,10 @@ var street_life_enabled: bool = true
 var street_activity: float = 1.0
 
 ## So viele Passanten sind höchstens gleichzeitig unterwegs (auf der ganzen Straße).
-var passerby_count: int = 8
-## Abstand zwischen zwei neuen Passanten (Sekunden, zufällig zwischen den beiden Werten).
-var passerby_spawn_interval: Vector2 = Vector2(4.0, 11.0)
+var passerby_count: int = 12
+## Abstand zwischen zwei neuen Passanten (Sekunden, zufällig zwischen den beiden Werten; seit der Nachbesserung von 6h
+## belebter: 12 statt 8 gleichzeitig, öfter neue).
+var passerby_spawn_interval: Vector2 = Vector2(2.5, 7.0)
 ## Gehtempo (m/s, jeder Passant zufällig dazwischen; die Spielfigur geht 2,6).
 var passerby_speed_range: Vector2 = Vector2(0.95, 1.45)
 ## Größe der Passanten (1 = 1,72 m, jeder zufällig dazwischen).
@@ -322,7 +323,9 @@ var plant_shadow_min_height: float = 0.5
 var footstep_volume_db: float = -10.0
 ## Landen nach dem Sprung (innen Holz, draußen Stein), Hinsetzen, Rascheln an Pflanzen (seit Etappe 6h)
 var land_volume_db: float = -9.0
-var sit_down_volume_db: float = -11.0
+var sit_down_volume_db: float = -17.0
+## Dauergeräusch von Lichtquellen (Kaminfeuer, LightSource.loop_sound; dB, seit der Nachbesserung von 6h dezenter)
+var light_loop_volume_db: float = -7.0
 var plant_rustle_volume_db: float = -15.0
 ## Höchstens so oft raschelt es (s) – Spielfigur bzw. Katze
 var plant_rustle_cooldown: float = 0.9
@@ -743,6 +746,12 @@ var chibi_greet_smile_time: float = 2.5
 ## Spielfigur wird öfter mit Winken gegrüßt (seit Etappe 6h mit der Wink-Animation, im Gehen nur der Arm).
 var chibi_wave_chance: float = 0.35
 var chibi_wave_chance_player: float = 0.6
+## Größe der Köpfe der Passanten (1 = wie gebaut; seit der Nachbesserung von 6h etwas kleiner, Wunsch der Entwicklerin)
+var chibi_head_scale: float = 0.92
+## Grüßen der Spielfigur: kurz stehen bleiben und zu ihr drehen (Sekunden), damit sich niemand beim Winken wegdreht;
+## Wahrscheinlichkeit, dass jemand dafür stehen bleibt (sonst im Gehen, solange sie vorn ist)
+var chibi_greet_stop_time: float = 2.4
+var chibi_greet_stop_chance: float = 0.75
 
 ## Kleine Pausen unterwegs (seit Etappe 6c): Wahrscheinlichkeit je Weg, kurz stehen zu bleiben und sich
 ## umzuschauen, zu strecken oder auf die Uhr zu schauen; Dauer der Pause (Sekunden; mit Animation mindestens
@@ -764,7 +773,7 @@ var passerby_walk_styles: Dictionary = {"female": {"walk": 0.3, "walk_female": 0
 	"male": {"walk": 0.35, "walk_male": 0.45, "stroll": 0.2}}
 var passerby_idle_styles: Dictionary = {"idle": 0.4, "idle_happy": 0.2, "idle_shift": 0.2, "idle_foot": 0.2}
 var passerby_sit_styles: Dictionary = {"sit_idle": 0.75, "sit_restless": 0.25}
-var passerby_bag_share: float = 0.18
+var passerby_bag_share: float = 0.25
 var passerby_bag_models: Array[String] = ["res://assets/models/characters/props/shopping_bag_paper.glb",
 	"res://assets/models/characters/props/shopping_bag_tote.glb"]
 ## Tasche: Abstand nach außen von der Körpermitte (m, die Tasche wird vom Bein weggedrückt), Pendellänge (m),
@@ -786,6 +795,8 @@ var passerby_pause_clip_max: float = 7.0
 var passerby_chat_gap: float = 1.3
 var passerby_step_back_speed: float = 0.35
 var passerby_handshake_chance: float = 0.4
+## … nur wenn die Hände etwa gleich hoch sind (m Unterschied; klein und groß schütteln sich nicht die Hand)
+var passerby_handshake_height_diff: float = 0.1
 var passerby_chat_gesture_chance: float = 0.22
 var passerby_chat_nod_chance: float = 0.45
 var passerby_goodbye_wave_chance: float = 0.5
@@ -794,8 +805,8 @@ var passerby_join_seat_chance: float = 0.6
 var passerby_seat_chat_chance: float = 0.8
 ## Katzen streicheln: Wahrscheinlichkeit, wenn eine ruhende Katze nah am Weg ist (höchstens so weit vorn, m),
 ## Pause bis zum nächsten Mal (s), wie lange die Katze stillhält (s)
-var passerby_pet_chance: float = 0.55
-var passerby_pet_reach: float = 2.8
+var passerby_pet_chance: float = 0.85
+var passerby_pet_reach: float = 3.5
 var passerby_pet_cooldown: float = 90.0
 ## Sprechblase: wie lange sie zu sehen ist, Größe (m), Höhe über dem Kopf
 var chat_bubble_time: float = 1.8

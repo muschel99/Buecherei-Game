@@ -37,6 +37,9 @@ var visible_spawns := 0
 var visible_exits := 0
 var flights := 0
 var flyovers := 0
+## Prüfwerkzeug: Vögel im Flug unter dem Boden (tiefer als die Fahrbahn) – muss 0 bleiben; letzte Fälle als Text
+var below_ground := 0
+var below_ground_log: Array[String] = []
 
 var _outside: Node3D
 var _rng := RandomNumberGenerator.new()
@@ -164,8 +167,17 @@ func _build_pool(kind: String, path: String, count: int) -> void:
 # --- Ablauf ---
 
 func step(delta: float) -> void:
+	var lowest := _outside.global_position.y - GameConfig.curb_height - 0.03
 	for bird in _birds:
 		bird.step(delta)
+		if bird.state == StreetBird.State.FLY and bird.global_position.y < lowest and not bird.get_meta("below", false):
+			bird.set_meta("below", true)
+			below_ground += 1
+			if below_ground_log.size() < 8:
+				below_ground_log.append("%s bei %s (Weg %s → %s)" % [bird.name, bird.global_position.snapped(Vector3.ONE * 0.01),
+					bird.debug_path_start().snapped(Vector3.ONE * 0.01), bird.debug_path_end().snapped(Vector3.ONE * 0.01)])
+		elif bird.state != StreetBird.State.FLY:
+			bird.set_meta("below", false)
 	_chirp_gap -= delta
 	for kind in ["bird", "pigeon"]:
 		_spawn[kind] -= delta
@@ -800,6 +812,9 @@ func _smooth(points: Array[Vector3], waves: bool = false) -> PackedVector3Array:
 			result.append(0.5 * ((2.0 * p1) + (-p0 + p2) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t
 				+ (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t * t * t))
 	result.append(points[-1])
+	# Nie tiefer als Start oder Ziel (die weiche Kurve schwingt an scharfen Ecken sonst unter den Boden aus – Vögel
+	# tauchten beim Abheben vom Gehweg bis zu 30 cm in den Boden)
+	var floor_y := minf(points[0].y, points[-1].y)
 	if waves and result.size() > 4:
 		var total := 0.0
 		var lengths := PackedFloat32Array([0.0])
@@ -810,6 +825,8 @@ func _smooth(points: Array[Vector3], waves: bool = false) -> PackedVector3Array:
 			var s := lengths[i]
 			var fade := smoothstep(0.0, 2.5, s) * smoothstep(0.0, 3.5, total - s)
 			result[i].y += sin(s / 1.7 * TAU) * 0.12 * fade
+	for i in result.size():
+		result[i].y = maxf(result[i].y, floor_y)
 	return result
 
 

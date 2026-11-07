@@ -49628,5 +49628,453 @@
 			1.0
 		],
 		"house": "Opposite/Opposite1_3"
-	}
+	},
+	"walls": [
+		{
+			"a": [
+				-15.077,
+				0.671,
+				-14.129
+			],
+			"b": [
+				-11.377,
+				0.671,
+				-14.129
+			],
+			"out": [
+				0.0,
+				1.0
+			],
+			"width": 0.3,
+			"length": 3.7,
+			"house": "Opposite/Opposite1_2"
+		},
+		{
+			"a": [
+				14.95,
+				0.672,
+				-14.125
+			],
+			"b": [
+				16.95,
+				0.672,
+				-14.125
+			],
+			"out": [
+				0.0,
+				1.0
+			],
+			"width": 0.3,
+			"length": 2.0,
+			"house": "Opposite/Opposite2_3"
+		}
+	],
+	"sills": [
+		{
+			"pos": [
+				13.19,
+				0.819,
+				-4.296
+			],
+			"out": [
+				0.0,
+				-1.0
+			],
+			"length": 1.2,
+			"depth": 0.1,
+			"house": "LibraryRow/Neighbor2"
+		},
+		{
+			"pos": [
+				11.35,
+				0.82,
+				-4.276
+			],
+			"out": [
+				0.0,
+				-1.0
+			],
+			"length": 1.2,
+			"depth": 0.1,
+			"house": "LibraryRow/Neighbor2"
+		},
+		{
+			"pos": [
+				-7.21,
+				0.529,
+				-2.763
+			],
+			"out": [
+				0.0,
+				-1.0
+			],
+			"length": 0.36,
+			"depth": 0.46,
+			"house": "LibraryRow/Neighbor3"
+		},
+		{
+			"pos": [
+				-10.73,
+				0.532,
+				-2.753
+			],
+			"out": [
+				0.0,
+				-1.0
+			],
+			"length": 0.36,
+			"depth": 0.48,
+			"house": "LibraryRow/Neighbor3"
+		},
+		{
+			"pos": [
+				-20.079,
+				0.827,
+				-13.916
+			],
+			"out": [
+				0.0,
+				1.0
+			],
+			"length": 0.96,
+			"depth": 0.1,
+			"house": "Opposite/Opposite1_1"
+		},
+		{
+			"pos": [
+				-18.079,
+				0.828,
+				-13.916
+			],
+			"out": [
+				0.0,
+				1.0
+			],
+			"length": 0.96,
+			"depth": 0.1,
+			"house": "Opposite/Opposite1_1"
+		},
+		{
+			"pos": [
+				-9.975,
+				0.81,
+				-13.928
+			],
+			"out": [
+				0.0,
+				1.0
+			],
+			"length": 1.04,
+			"depth": 0.1,
+			"house": "Opposite/Opposite1_3"
+		},
+		{
+			"pos": [
+				8.85,
+				0.821,
+				-13.927
+			],
+			"out": [
+				0.0,
+				1.0
+			],
+			"length": 1.04,
+			"depth": 0.1,
+			"house": "Opposite/Opposite2_1"
+		},
+		{
+			"pos": [
+				11.21,
+				0.816,
+				-13.92
+			],
+			"out": [
+				0.0,
+				1.0
+			],
+			"length": 1.2,
+			"depth": 0.1,
+			"house": "Opposite/Opposite2_2"
+		},
+		{
+			"pos": [
+				20.23,
+				0.819,
+				-13.917
+			],
+			"out": [
+				0.0,
+				1.0
+			],
+			"length": 1.16,
+			"depth": 0.1,
+			"house": "Opposite/Opposite2_4"
+		},
+		{
+			"pos": [
+				18.67,
+				0.817,
+				-4.294
+			],
+			"out": [
+				0.0,
+				-1.0
+			],
+			"length": 1.0,
+			"depth": 0.1,
+			"house": "StraightEnd/Street1"
+		},
+		{
+			"pos": [
+				17.03,
+				0.822,
+				-4.274
+			],
+			"out": [
+				0.0,
+				-1.0
+			],
+			"length": 0.68,
+			"depth": 0.1,
+			"house": "StraightEnd/Street1"
+		},
+		{
+			"pos": [
+				31.016,
+				0.851,
+				-0.57
+			],
+			"out": [
+				1.0,
+				0.0
+			],
+			"length": 1.08,
+			"depth": 0.12,
+			"house": "StraightEnd/Corner"
+		},
+		{
+			"pos": [
+				28.989,
+				0.829,
+				-13.716
+			],
+			"out": [
+				-0.218,
+				0.976
+			],
+			"length": 1.08,
+			"depth": 0.1,
+			"house": "StraightEnd/Outer1"
+		},
+		{
+			"pos": [
+				30.768,
+				0.823,
+				-13.329
+			],
+			"out": [
+				-0.218,
+				0.976
+			],
+			"length": 1.12,
+			"depth": 0.12,
+			"house": "StraightEnd/Outer1"
+		},
+		{
+			"pos": [
+				37.285,
+				0.821,
+				-9.637
+			],
+			"out": [
+				-0.625,
+				0.781
+			],
+			"length": 0.88,
+			"depth": 0.1,
+			"house": "StraightEnd/Outer2"
+		},
+		{
+			"pos": [
+				39.249,
+				0.815,
+				-6.331
+			],
+			"out": [
+				-0.913,
+				0.407
+			],
+			"length": 1.2,
+			"depth": 0.12,
+			"house": "StraightEnd/Outer3"
+		},
+		{
+			"pos": [
+				40.064,
+				0.818,
+				-4.505
+			],
+			"out": [
+				-0.913,
+				0.407
+			],
+			"length": 1.2,
+			"depth": 0.12,
+			"house": "StraightEnd/Outer3"
+		},
+		{
+			"pos": [
+				40.564,
+				0.814,
+				-0.876
+			],
+			"out": [
+				-0.999,
+				0.035
+			],
+			"length": 0.52,
+			"depth": 0.1,
+			"house": "StraightEnd/Outer4"
+		},
+		{
+			"pos": [
+				40.582,
+				0.819,
+				-0.357
+			],
+			"out": [
+				-0.999,
+				0.035
+			],
+			"length": 0.44,
+			"depth": 0.1,
+			"house": "StraightEnd/Outer4"
+		},
+		{
+			"pos": [
+				40.643,
+				0.82,
+				1.362
+			],
+			"out": [
+				-0.999,
+				0.035
+			],
+			"length": 1.0,
+			"depth": 0.1,
+			"house": "StraightEnd/Outer4"
+		},
+		{
+			"pos": [
+				40.661,
+				0.828,
+				3.446
+			],
+			"out": [
+				-1.0,
+				0.0
+			],
+			"length": 1.16,
+			"depth": 0.1,
+			"house": "StraightEnd/Outer5"
+		},
+		{
+			"pos": [
+				-17.51,
+				0.817,
+				-4.29
+			],
+			"out": [
+				0.0,
+				-1.0
+			],
+			"length": 1.12,
+			"depth": 0.1,
+			"house": "GateStreet/Bend1"
+		},
+		{
+			"pos": [
+				-27.081,
+				0.827,
+				-4.368
+			],
+			"out": [
+				0.02,
+				-1.0
+			],
+			"length": 1.04,
+			"depth": 0.1,
+			"house": "GateStreet/Bend2"
+		},
+		{
+			"pos": [
+				-30.924,
+				0.812,
+				-5.26
+			],
+			"out": [
+				0.288,
+				-0.958
+			],
+			"length": 0.88,
+			"depth": 0.1,
+			"house": "GateStreet/Bend3"
+		},
+		{
+			"pos": [
+				-37.028,
+				0.813,
+				-7.953
+			],
+			"out": [
+				0.495,
+				-0.869
+			],
+			"length": 1.16,
+			"depth": 0.1,
+			"house": "GateStreet/Bend4"
+		},
+		{
+			"pos": [
+				-41.448,
+				0.831,
+				-22.155
+			],
+			"out": [
+				-0.729,
+				0.684
+			],
+			"length": 0.96,
+			"depth": 0.1,
+			"house": "GateStreet/BehindInner1"
+		},
+		{
+			"pos": [
+				-41.806,
+				0.824,
+				-26.069
+			],
+			"out": [
+				-0.996,
+				-0.095
+			],
+			"length": 1.12,
+			"depth": 0.1,
+			"house": "GateStreet/BehindInner2"
+		},
+		{
+			"pos": [
+				-50.474,
+				0.817,
+				-25.194
+			],
+			"out": [
+				0.99,
+				0.141
+			],
+			"length": 1.12,
+			"depth": 0.12,
+			"house": "GateStreet/BehindOuter4"
+		}
+	]
 }

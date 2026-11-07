@@ -16,6 +16,9 @@ extends Node
 ## "edge" = Halt nur entlang der Kante, "along" = Kante läuft nach vorn → Vogel sitzt quer), auf dem Rand von
 ## Blumenkästen und Töpfen ("rim", auch im zweiten Stock) – nie in der Erde. "wide" = breit genug für Tauben.
 ## Katzenplätze ("cat") nur, wo die Fläche an der Hauswand hängt (Fensterbänke, Stufen – keine Schilder/Ständer).
+## Seit der Nachbesserung von 6h außerdem für Katzen: Gartenmauern ("walls": Mittellinie der Mauerkrone von a nach b,
+## Höhe, Breite, Richtung zur Straße) und Fensterbänke ("sills": Mitte, Länge, Tiefe, Richtung nach draußen) – direkt
+## mit Strahlen gemessen (vorher aus den Vogelplätzen zusammengesetzt: zu lückenhaft, nur zwei Mauern).
 ## Nach Änderungen an Häusern einfach neu starten.
 
 const HOUSES_SCENE := "res://scenes/world/houses.tscn"
@@ -48,6 +51,15 @@ const SOLID := 512
 const FOLIAGE := 1024
 const SWAY := 2048
 const FOLIAGE_WORDS := ["blatt", "pflanze", "blüte", "bluete", "efeu", "laub", "ranke", "stiel", "zweig", "moos", "glyzin"]
+## Katzen: Gartenmauern (Höhe der Krone über dem Gehweg, Breite, Mindestlänge, Abtastung) und Fensterbänke (Höhe,
+## Mindesttiefe und -länge)
+const WALL_HEIGHT := Vector2(0.4, 1.0)
+const WALL_WIDTH := Vector2(0.1, 0.5)
+const WALL_LENGTH := 1.0
+const WALL_STEP := 0.05
+const SILL_HEIGHT := Vector2(0.3, 1.45)
+const SILL_DEPTH := 0.1
+const SILL_LENGTH := 0.34
 ## Vogelhäuschen: Platz an der Wand (Breite, Höhe, Tiefe) und Höhe der Mitte
 const BIRDHOUSE_SIZE := Vector3(0.46, 0.62, 0.4)
 const BIRDHOUSE_HEIGHT := Vector2(2.1, 2.9)
@@ -98,7 +110,7 @@ func _ready() -> void:
 	for i in 3:
 		await get_tree().physics_frame
 	_space = get_viewport().world_3d.direct_space_state
-	var result := {"perches": [], "houses": [], "birdhouse": {}}
+	var result := {"perches": [], "houses": [], "birdhouse": {}, "walls": [], "sills": []}
 	var library := StreetPaths.library_entrance()
 	var best_box := {}
 	for house: Node3D in houses.find_children("*", "HouseFacade", true, false):
@@ -114,6 +126,8 @@ func _ready() -> void:
 		var spots := _scan_house(house, width, depth, eaves, top)
 		spots.append_array(_rims(house, out, eaves, spots))
 		result.perches.append_array(_limit(spots))
+		result.walls.append_array(_scan_walls(house, width))
+		result.sills.append_array(_scan_sills(house, width))
 		var box := _birdhouse_spot(house, width, eaves, library)
 		if not box.is_empty() and (best_box.is_empty() or box.score < best_box.score):
 			best_box = box
@@ -133,7 +147,177 @@ func _ready() -> void:
 	file.close()
 	print("Plätze: %d (davon %d für Katzen), Häuser: %d, Vogelhäuschen: %s" % [result.perches.size(), cats,
 		result.houses.size(), "ja" if not result.birdhouse.is_empty() else "nein"])
+	print("Katzen: Gartenmauern %d, Fensterbänke %d" % [result.walls.size(), result.sills.size()])
+	for w: Dictionary in result.walls:
+		print("  Mauer %s: %.2f m lang, %.2f m hoch, %.2f m breit" % [w.house, float(w.length), float(w.a[1]), float(w.width)])
 	get_tree().quit()
+
+
+## Gartenmauern vor dem Haus: Raster aus senkrechten Strahlen (fest, waagerecht, in Mauerhöhe, nicht in Pflanzen). Je
+## Spalte (entlang der Hausfront) schmale Streifen quer dazu = Mauerkrone; Streifen mit gleicher Lage und Höhe
+## nebeneinander ergeben eine Mauer. Nur Mauern parallel zur Hausfront (die Katze läuft entlang der Straße).
+func _scan_walls(house: Node3D, width: float) -> Array:
+	var tops := {}  # Vector2i(iu, iv) -> Höhe
+	var iu0 := floori((-width / 2.0 - 0.6) / WALL_STEP)
+	var iu1 := ceili((width / 2.0 + 0.6) / WALL_STEP)
+	# Häuser mit Vorgarten: die Mauer liegt vorn an der Grundstückskante (z = 0), das Haus dahinter
+	var iv0 := floori(-3.0 / WALL_STEP)
+	var iv1 := ceili(1.5 / WALL_STEP)
+	for iu in range(iu0, iu1 + 1):
+		for iv in range(iv0, iv1 + 1):
+			var base := house.to_global(Vector3(iu * WALL_STEP, 0.0, iv * WALL_STEP))
+			var hit := _ray(Vector3(base.x, WALL_HEIGHT.y + 0.4, base.z), Vector3(base.x, WALL_HEIGHT.x - 0.05, base.z))
+			if hit.is_empty() or hit.normal.y < FLAT:
+				continue
+			var p: Vector3 = hit.position
+			if p.y < WALL_HEIGHT.x or p.y > WALL_HEIGHT.y or _in_plants(p):
+				continue
+			tops[Vector2i(iu, iv)] = p.y
+	# je Spalte: schmale Streifen quer (Breite der Mauerkrone)
+	var cells: Array = []  # [u, v Mitte, Höhe, Breite]
+	for iu in range(iu0, iu1 + 1):
+		var iv := iv0
+		while iv <= iv1:
+			if not tops.has(Vector2i(iu, iv)):
+				iv += 1
+				continue
+			var h: float = tops[Vector2i(iu, iv)]
+			var first := iv
+			while tops.has(Vector2i(iu, iv + 1)) and absf(float(tops[Vector2i(iu, iv + 1)]) - h) < 0.02:
+				iv += 1
+			var w := (iv - first + 1) * WALL_STEP
+			if w >= WALL_WIDTH.x and w <= WALL_WIDTH.y:
+				cells.append([iu * WALL_STEP, (first + iv) * 0.5 * WALL_STEP, h, w])
+			iv += 1
+	# nebeneinander zu Mauern verbinden
+	cells.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	var runs: Array = []
+	for c: Array in cells:
+		var joined := false
+		for run: Array in runs:
+			var last: Array = run[-1]
+			if c[0] - last[0] <= WALL_STEP * 2.5 and c[0] > last[0] and absf(c[1] - last[1]) < 0.07 and absf(c[2] - last[2]) < 0.03:
+				run.append(c)
+				joined = true
+				break
+		if not joined:
+			runs.append([c])
+	var walls: Array = []
+	var basis := house.global_basis.orthonormalized()
+	var out3 := Vector3(basis.z.x, 0.0, basis.z.z).normalized()
+	for run: Array in runs:
+		# Enden etwas zurück (Pfeiler, Pforte, Nachbarhaus)
+		var u0: float = run[0][0] + 0.25
+		var u1: float = run[-1][0] - 0.25
+		if u1 - u0 < WALL_LENGTH:
+			continue
+		var v := 0.0
+		var h := 0.0
+		var w := 0.0
+		for c: Array in run:
+			v += c[1]
+			h += c[2]
+			w += c[3]
+		v /= run.size()
+		h /= run.size()
+		w /= run.size()
+		# oben frei für eine Katze (nichts Festes darüber, kein Pfeiler mitten drin)
+		var free := true
+		var steps := int((u1 - u0) / 0.2) + 1
+		for k in steps + 1:
+			var q := house.to_global(Vector3(lerpf(u0, u1, float(k) / steps), h + 0.24, v))
+			if _blocked(q, 0.13, SOLID | SWAY):
+				free = false
+				break
+		# davor (zur Straße) ebener Boden zum Hinaufspringen
+		for k in 3:
+			var g := house.to_global(Vector3(lerpf(u0, u1, k / 2.0), 0.0, v + w / 2.0 + 0.35))
+			var hit := _ray(Vector3(g.x, 0.6, g.z), Vector3(g.x, -0.05, g.z))
+			if not hit.is_empty() and hit.position.y > 0.15:
+				free = false
+		if not free:
+			continue
+		var a := house.to_global(Vector3(u0, h, v))
+		var b := house.to_global(Vector3(u1, h, v))
+		walls.append({"a": _v3(a), "b": _v3(b), "out": [snappedf(out3.x, 0.001), snappedf(out3.z, 0.001)],
+			"width": snappedf(w, 0.01), "length": snappedf(u1 - u0, 0.01), "house": String(house.get_meta("bake_path"))})
+	return walls
+
+
+## Fensterbänke für Katzen: waagerechte Flächen an der Hauswand (dahinter Wand oder Glas), tief und lang genug, darüber
+## frei; je Fensterbank ein Eintrag (Mitte, Länge, Tiefe).
+func _scan_sills(house: Node3D, width: float) -> Array:
+	var basis := house.global_basis.orthonormalized()
+	var out3 := Vector3(basis.z.x, 0.0, basis.z.z).normalized()
+	var cols: Array = []  # [u, Höhe, v vorn, Tiefe]
+	var front_v := _facade_v(house)
+	var u := -width / 2.0 + 0.05
+	while u <= width / 2.0 - 0.05:
+		var v := front_v + 0.9
+		var found := {}
+		while v >= front_v - 0.4:
+			var base := house.to_global(Vector3(u, 0.0, v))
+			var hit := _ray(Vector3(base.x, SILL_HEIGHT.y + 0.3, base.z), Vector3(base.x, SILL_HEIGHT.x - 0.05, base.z))
+			if not hit.is_empty() and hit.normal.y > FLAT and hit.position.y >= SILL_HEIGHT.x and hit.position.y <= SILL_HEIGHT.y:
+				var h: float = hit.position.y
+				if found.is_empty():
+					found = {"h": h, "front": v, "back": v}
+				elif absf(h - float(found.h)) > 0.02:
+					break  # dahinter beginnt etwas anderes (Rahmen, Wand): die vorderste Fläche zählt
+				else:
+					found.back = v
+			elif not found.is_empty():
+				break
+			v -= 0.02
+		if not found.is_empty():
+			var depth := float(found.front) - float(found.back) + 0.02
+			var p := house.to_global(Vector3(u, float(found.h), (float(found.front) + float(found.back)) / 2.0))
+			# dahinter die Wand (oder Glas), Fläche nicht in Pflanzen (Blumenkästen)
+			var wall := not _ray(p + Vector3.UP * 0.1, p + Vector3.UP * 0.1 - out3 * (depth / 2.0 + 0.25), SOLID | SWAY).is_empty()
+			if depth >= SILL_DEPTH and wall and not _in_plants(p):
+				cols.append([u, float(found.h), float(found.front), depth])
+		u += 0.04
+	var sills: Array = []
+	var start := 0
+	for i in range(1, cols.size() + 1):
+		if i < cols.size() and cols[i][0] - cols[i - 1][0] < 0.06 and absf(cols[i][1] - cols[i - 1][1]) < 0.02 \
+				and absf(cols[i][2] - cols[i - 1][2]) < 0.04:
+			continue
+		var run := cols.slice(start, i)
+		start = i
+		var length: float = run[-1][0] - run[0][0] + 0.04
+		if length < SILL_LENGTH:
+			continue
+		var h: float = run[0][1]
+		var depth := 1.0
+		var front := -INF
+		for c: Array in run:
+			depth = minf(depth, c[3])
+			front = maxf(front, c[2])
+		var center := house.to_global(Vector3((run[0][0] + run[-1][0]) / 2.0, h, front - depth / 2.0 + 0.01))
+		# oben frei (sitzende Katze), auch eine große
+		if _blocked(center + Vector3.UP * 0.26, 0.14, SOLID | SWAY):
+			continue
+		sills.append({"pos": _v3(center), "out": [snappedf(out3.x, 0.001), snappedf(out3.z, 0.001)],
+			"length": snappedf(length, 0.01), "depth": snappedf(depth, 0.01), "house": String(house.get_meta("bake_path"))})
+	return sills
+
+
+## Wo die Hausfront liegt (z im Haus; 0, außer bei Häusern mit Vorgarten): waagerechter Strahl in 1,8 m Höhe von vorn.
+func _facade_v(house: Node3D) -> float:
+	var basis := house.global_basis.orthonormalized()
+	var out3 := Vector3(basis.z.x, 0.0, basis.z.z).normalized()
+	var best := 0.0
+	var hits := []
+	for u in [-0.25, 0.0, 0.25]:
+		var a := house.to_global(Vector3(u * float(house.get("width")), 1.8, 2.0))
+		var hit := _ray(a, a - out3 * 6.0)
+		if not hit.is_empty():
+			hits.append(house.to_local(hit.position).z)
+	if not hits.is_empty():
+		hits.sort()
+		best = minf(0.0, float(hits[hits.size() / 2]))
+	return best
 
 
 ## Höchster Punkt eines Hauses (First, Schornstein) über der Mitte seiner Breite.

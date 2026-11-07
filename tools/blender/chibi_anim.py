@@ -20,7 +20,9 @@ from mathutils import Quaternion, Vector
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 ANIM_DIR = os.path.join(ROOT, "assets", "models", "characters", "animations")
 FPS = 30
-# Animationen: Name → (Schleife, seitliches Wandern der Hüfte entfernen)
+# Animationen: Name → (Schleife, seitliches Wandern der Hüfte entfernen: True = ganz (Hüfte bleibt waagerecht an ihrem
+# Platz), "drift" = nur das gleichmäßige Wegwandern vom Anfang bis zum Ende – Wiegen und Gewichtverlagern bleiben, die
+# Füße stehen fest; seit der Nachbesserung von 6h für alle Animationen der Entwicklerin)
 CLIPS = {
     "walk": (True, False),
     "idle": (True, False),
@@ -30,18 +32,18 @@ CLIPS = {
     "stand_up": (False, True),
     # Seit Etappe 6h (Animationen der Entwicklerin, „Game design/Animationen“, Name = wofür): Gangarten, Stehen,
     # Gesten beim Plaudern, im Sitzen, Katze streicheln, für spätere Besucher (Tür, Gießen, Aufheben, Heben)
-    "walk_female": (True, True), "walk_male": (True, True), "stroll": (True, True), "walk_bag": (True, True),
-    "idle_happy": (True, True), "idle_shift": (True, True), "idle_foot": (True, True), "idle_bag": (True, True),
-    "look_around": (False, True), "watch_bag": (False, True), "yawn": (False, True), "stretch_arms": (False, True),
-    "stretch_neck": (False, True), "wave": (False, True), "nod": (False, True), "nod_think": (False, True),
-    "shake_head": (False, True), "shake_think": (False, True), "talk": (True, True), "talk_one": (True, True),
-    "talk_two": (True, True), "laugh": (False, True), "point": (False, True), "point_back": (False, True),
-    "handshake": (False, True), "gesture": (False, True), "sigh": (False, True),
-    "sit_talk": (True, True), "sit_talk_legs": (True, True), "sit_talk_hands": (True, True), "sit_laugh": (False, True),
-    "sit_restless": (True, True),
-    "pet_reach": (False, True), "pet_cat": (True, True),
-    "door_in": (False, True), "door_out": (False, True), "water": (True, True), "pick_up": (False, True),
-    "lift": (False, True),
+    "walk_female": (True, "drift"), "walk_male": (True, "drift"), "stroll": (True, "drift"), "walk_bag": (True, "drift"),
+    "idle_happy": (True, "drift"), "idle_shift": (True, "drift"), "idle_foot": (True, "drift"), "idle_bag": (True, "drift"),
+    "look_around": (False, "drift"), "watch_bag": (False, "drift"), "yawn": (False, "drift"), "stretch_arms": (False, "drift"),
+    "stretch_neck": (False, "drift"), "wave": (False, "drift"), "nod": (False, "drift"), "nod_think": (False, "drift"),
+    "shake_head": (False, "drift"), "shake_think": (False, "drift"), "talk": (True, "drift"), "talk_one": (True, "drift"),
+    "talk_two": (True, "drift"), "laugh": (False, "drift"), "point": (False, "drift"), "point_back": (False, "drift"),
+    "handshake": (False, "drift"), "gesture": (False, "drift"), "sigh": (False, "drift"),
+    "sit_talk": (True, "drift"), "sit_talk_legs": (True, "drift"), "sit_talk_hands": (True, "drift"), "sit_laugh": (False, "drift"),
+    "sit_restless": (True, "drift"),
+    "pet_reach": (False, "drift"), "pet_cat": (True, "drift"),
+    "door_in": (False, "drift"), "door_out": (False, "drift"), "water": (True, "drift"), "pick_up": (False, "drift"),
+    "lift": (False, "drift"),
 }
 # Lange Aufnahmen kürzen (Bilder): die Gespräche im Sitzen dauern 45 s – 12 s reichen (Godot spielt gekürzte
 # Schleifen vor und zurück, siehe ChibiPasserbyModel.PINGPONG); Stehen hin und her 10 s
@@ -121,7 +123,16 @@ def bake(target, source, name, strip_horizontal, max_frames=0):
         hips_world.append(Vector(hw))
         off = (hw - s_hips_rest) * ratio
         hips_loc.append(off)
-    if strip_horizontal:
+    if strip_horizontal == "drift":
+        # gleichmäßiges Wegwandern (Anfang → Ende) abziehen: beginnt und endet an derselben Stelle, dazwischen bleibt
+        # die Bewegung der Hüfte (sonst stünde der Oberkörper still und die Füße rutschten hin und her)
+        a, b = Vector(hips_loc[0]), Vector(hips_loc[-1])
+        n = max(1, len(hips_loc) - 1)
+        for i, v in enumerate(hips_loc):
+            t = i / n
+            v.x -= a.x + (b.x - a.x) * t
+            v.y -= a.y + (b.y - a.y) * t
+    elif strip_horizontal:
         for v in hips_loc:
             v.x, v.y = 0.0, 0.0
     action = bpy.data.actions.new(name)

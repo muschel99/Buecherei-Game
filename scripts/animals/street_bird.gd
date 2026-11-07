@@ -135,6 +135,15 @@ func hide_bird() -> void:
 	_apply_spread()
 
 
+## Prüfwerkzeug: Anfang und Ende des aktuellen Flugwegs.
+func debug_path_start() -> Vector3:
+	return _points[0] if not _points.is_empty() else global_position
+
+
+func debug_path_end() -> Vector3:
+	return _points[_points.size() - 1] if not _points.is_empty() else global_position
+
+
 func is_on_ground() -> bool:
 	return state == State.PERCH and String(spot.get("kind", "")) == "ground"
 

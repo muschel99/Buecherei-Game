@@ -619,6 +619,28 @@ func chat_greet(handshake: bool, wave: bool) -> float:
 	return 0.8
 
 
+## Gangart und Tasche neu auswürfeln (StreetLife, bei jedem Losgehen).
+func restyle(rng: RandomNumberGenerator) -> void:
+	if _model and _model.has_method("restyle"):
+		_model.call("restyle", rng)
+
+
+## Die Spielfigur grüßen (seit der Nachbesserung von 6h): kurz stehen bleiben und zu ihr drehen (target = Welt),
+## danach weitergehen – nur im normalen Gehen auf dem Gehweg.
+func greet_stop(target: Vector3, seconds: float) -> void:
+	if get_action_type() != "walk" or on_road or chat != null or ignore_agent != null:
+		return
+	if _action.get("visit", false) or _action.has("half") or _action.has("alley") or _action.get("from_here", false):
+		return
+	var d := life.to_local2(target) - pos
+	if d.length() < 0.3:
+		return
+	_actions.push_front(_action)
+	_action = {"type": "stand", "face": d.normalized(), "anim": &"idle", "time": seconds}
+	_phase = 0
+	_phase_time = 0.0
+
+
 ## Trägt die Figur eine Einkaufstasche? (die Hand ist dann belegt)
 func carries_bag() -> bool:
 	return _model != null and bool(_model.get("carries_bag"))
@@ -627,6 +649,11 @@ func carries_bag() -> bool:
 ## Tempo der Gangart gegenüber normalem Gehen (StreetLife setzt damit das Wunschtempo).
 func speed_factor() -> float:
 	return float(_model.call("speed_factor")) if _model and _model.has_method("speed_factor") else 1.0
+
+
+## Höhe der Hand beim Händeschütteln (m).
+func handshake_height() -> float:
+	return float(_model.call("handshake_height")) * scale.y if _model and _model.has_method("handshake_height") else 0.7
 
 
 ## Lage der rechten Hand beim Händeschütteln (x seitlich, z vorn, Meter; StreetLife stellt die beiden passend hin).
