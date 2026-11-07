@@ -257,7 +257,8 @@ func _build_ground_collision() -> void:
 	])
 	var alley := StreetLayout.opposite_alley()
 	if alley != Vector2.ZERO:
-		points.append(Vector2(alley.x, StreetLayout.opposite_alley_end_z()))
+		# bis zur Tür ganz hinten in der Bogengasse (dort kann man seit 6h hinlaufen)
+		points.append(Vector2(alley.x, StreetLayout.opposite_alley_end_z() - GameConfig.opposite_alley_back_depth))
 	var side := StreetLayout.turning_side()
 	for point in StreetLayout.end_path(side):
 		if point.part in ["bend", "approach", "passage"]:

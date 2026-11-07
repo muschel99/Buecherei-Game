@@ -1044,7 +1044,8 @@ func _start_walker() -> bool:
 	options.append(_pick_street_end())
 	options.append(_pick_street_end())
 	for start in options:
-		if start.is_empty() or is_visible_spot(start.pos) or _crowded(start.pos):
+		if start.is_empty() or is_visible_spot(start.pos) or _crowded(start.pos) \
+				or player_pos().distance_to(start.pos) < GameConfig.passerby_spawn_player_distance:
 			continue
 		var plan := _plan_walker(start)
 		if not plan.is_empty():

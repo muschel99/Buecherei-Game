@@ -214,6 +214,10 @@ var opposite_alley_depth: float = 8.0
 ## Hinter dem Ende der kleinen Gasse gegenüber geht es (nur zum Anschauen, seit Etappe 4g)
 ## noch so weit zwischen Steinbögen weiter – bis zu einer Tür, aus der Passanten kommen.
 var opposite_alley_back_depth: float = 13.0
+## Unsichtbare Grenze in der Bogengasse: so weit vor der Tür ganz hinten (m)
+var opposite_alley_bound_before_door: float = 3.0
+## Passanten erscheinen in Gassen nur, wenn die Spielfigur mindestens so weit weg ist (m)
+var passerby_spawn_player_distance: float = 7.0
 
 ## Häuser (seit Etappe 4e): Jedes Haus ist ein Haustyp = eine Szene mit festen Maßen in
 ## scenes/world/houses/<id>.tscn (z. B. "terrace_50", "pub"). Die Häuser selbst stehen fest in

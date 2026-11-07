@@ -48,7 +48,9 @@ func _ready() -> void:
 		shape.size = Vector3(span.y - span.x + 0.6, 4.0, 0.3)
 		var collision := CollisionShape3D.new()
 		collision.shape = shape
-		collision.position = Vector3((span.x + span.y) / 2.0, 2.0, end - 0.15)
+		# seit der Nachbesserung 3 von 6h erst kurz vor der Tür ganz hinten (vorher am Anfang der Bögen): man kann durch
+		# die Bögen laufen; Passanten erscheinen an der Tür nur, wenn die Spielfigur weit genug weg ist
+		collision.position = Vector3((span.x + span.y) / 2.0, 2.0, paving_end + GameConfig.opposite_alley_bound_before_door)
 		body.add_child(collision)
 		add_child(body)
 	elif end_scene:
