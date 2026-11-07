@@ -185,6 +185,7 @@ func step(delta: float) -> void:
 	for walker in _walkers:
 		walker.step(delta)
 	_update_chats(delta)
+	_update_pets(delta)
 	for vehicle in _vehicles.duplicate():
 		vehicle.step(delta)
 	if birds:
@@ -202,6 +203,11 @@ func step(delta: float) -> void:
 # --- Plaudern (seit Etappe 6c) ---
 
 var _chats: Array[ChatSession] = []
+## Zähler fürs Prüfwerkzeug (seit Etappe 6h)
+var stat_chats := 0
+var stat_handshakes := 0
+var stat_seat_chats := 0
+var stat_pets := 0
 var _chat_tried := {}
 var _chat_scan := 0.0
 var _chat_forget := 60.0
@@ -243,14 +249,146 @@ func _update_chats(delta: float) -> void:
 				continue
 			var time := _rng.randf_range(GameConfig.passerby_chat_time.x, GameConfig.passerby_chat_time.y)
 			var session := ChatSession.new(w1, w2, time)
-			w1.start_chat(session, d / dist, time)
-			w2.start_chat(session, -d / dist, time)
+			# Seit Etappe 6h: aufeinander zu – zum Händeschütteln so nah, dass sich die rechten Hände treffen
+			# (leicht versetzt), sonst bis zum Abstand fürs Reden
+			var u := d / dist
+			var left := Vector2(u.y, -u.x)
+			var gap := u * minf(dist, GameConfig.passerby_chat_gap)
+			session.handshake = not w1.carries_bag() and not w2.carries_bag() \
+				and _rng.randf() < GameConfig.passerby_handshake_chance
+			if session.handshake:
+				var h1 := w1.handshake_hand()
+				var h2 := w2.handshake_hand()
+				gap = u * (h1.y + h2.y) + left * (h1.x + h2.x)
+			var mid := (w1.pos + w2.pos) / 2.0
+			w1.start_chat(session, u, time, _keep_on_sidewalk(w1.side, mid - gap / 2.0))
+			w2.start_chat(session, -u, time, _keep_on_sidewalk(w2.side, mid + gap / 2.0))
 			_chats.append(session)
+			stat_chats += 1
+			stat_handshakes += 1 if session.handshake else 0
 			break
+	_seat_chats()
+
+
+## Punkt innerhalb des erlaubten Streifens des Gehwegs (nie Richtung Fahrbahn oder Hauswand hinaus).
+func _keep_on_sidewalk(side: int, point: Vector2) -> Vector2:
+	var route: StreetRoute = sidewalks[side]
+	var on := route.project(point)
+	var band := route.band_at(on.x)
+	return route.point_at(on.x, clampf(on.y, band.x, band.y))
+
+
+## Zwei sitzen nebeneinander (Bank, Stühle am Pub): manchmal plaudern sie (seit Etappe 6h).
+func _seat_chats() -> void:
+	for i in _walkers.size():
+		var w1 := _walkers[i]
+		if not w1.is_sitting() or w1.chat != null or w1.chat_cooldown > 0.0:
+			continue
+		for j in range(i + 1, _walkers.size()):
+			var w2 := _walkers[j]
+			if not w2.is_sitting() or w2.chat != null or w2.chat_cooldown > 0.0 or w1.pos.distance_to(w2.pos) > 1.4:
+				continue
+			var key := Vector2i(mini(w1.get_instance_id(), w2.get_instance_id()) % 1000003, maxi(w1.get_instance_id(), w2.get_instance_id()) % 1000003)
+			if _chat_tried.has(key):
+				continue
+			_chat_tried[key] = true
+			if _rng.randf() > GameConfig.passerby_seat_chat_chance:
+				continue
+			var time := _rng.randf_range(GameConfig.passerby_chat_time.x, GameConfig.passerby_chat_time.y) * 1.5
+			var session := ChatSession.new(w1, w2, time)
+			session.seated = true
+			w1.start_seat_chat(session, time)
+			w2.start_seat_chat(session, time)
+			_chats.append(session)
+			stat_seat_chats += 1
+			return
+
+
+# --- Katzen streicheln (seit Etappe 6h) ---
+
+var _pet_scan := 0.0
+var _pet_tried := {}
+var _pet_forget := 120.0
+
+
+## Ruht eine Katze auf dem Gehweg nah vor jemandem, bleibt er manchmal stehen und streichelt sie.
+func _update_pets(delta: float) -> void:
+	_pet_forget -= delta
+	if _pet_forget <= 0.0:
+		_pet_forget = 120.0
+		_pet_tried.clear()
+	_pet_scan -= delta
+	if _pet_scan > 0.0 or cats == null:
+		return
+	_pet_scan = 0.5
+	for cat in cats.get_cats():
+		if not cat.is_resting() or _pet_claimed(cat):
+			continue
+		var cat_pos := _to_local2(cat.global_position)
+		for walker in _walkers:
+			if not _can_pet(walker):
+				continue
+			var d := cat_pos - walker.pos
+			var dist := d.length()
+			if dist > GameConfig.passerby_pet_reach or dist < 0.4 or walker.velocity2.length() < 0.2:
+				continue
+			# vor einem und auf demselben Gehweg (nicht auf der Fahrbahn)
+			if walker.velocity2.normalized().dot(d / dist) < 0.55:
+				continue
+			var route: StreetRoute = sidewalks[walker.side]
+			var on := route.project(cat_pos)
+			var band := route.band_at(on.x)
+			if on.y < band.x - 0.35 or on.y > band.y + 0.35:
+				continue
+			var key := Vector2i(walker.get_instance_id() % 1000003, cat.get_instance_id() % 1000003)
+			if _pet_tried.has(key):
+				continue
+			_pet_tried[key] = true
+			if _rng.randf() > GameConfig.passerby_pet_chance:
+				continue
+			# große Katze (sitzt oder steht): hinknien; kleine oder liegende: bücken
+			var kneel := cat.adult and cat.posture != "lie"
+			if walker.start_pet(cat, kneel):
+				cat.wait_for(8.0)
+				stat_pets += 1
+				break
+
+
+func _can_pet(walker: Passerby) -> bool:
+	if not walker.active or walker.chat != null or walker.pet_cooldown > 0.0 or walker.on_road or walker.carries_bag():
+		return false
+	var action := walker.get_action()
+	return String(action.get("type", "")) == "walk" and not action.get("visit", false) and not action.has("alley") \
+		and not action.has("half") and sidewalks.values().has(action.get("route"))
+
+
+## Geht schon jemand zu dieser Katze?
+func _pet_claimed(cat: StreetCat) -> bool:
+	for walker in _walkers:
+		if walker.get_action_type() == "pet" and walker.get_action().get("cat") == cat:
+			return true
+	return false
+
+
+## Darf man hier stehen, um eine Katze zu streicheln? Auf dem eigenen Gehweg (im Streifen), nicht auf der
+## Fahrbahn, nicht an Laterne, Kübel oder Bank.
+func pet_spot_ok(walker: Passerby, spot: Vector2) -> bool:
+	var own := walker.radius * walker.scale.x
+	if absf(centerline.project(spot).y) - own < GameConfig.street_width / 2.0 + 0.05:
+		return false
+	var route: StreetRoute = sidewalks[walker.side]
+	var on := route.project(spot)
+	var band := route.band_at(on.x)
+	if on.y < band.x - 0.05 or on.y > band.y + 0.05:
+		return false
+	for obstacle in _static_obstacles:
+		if spot.distance_to(obstacle.pos) < own + float(obstacle.radius) - 0.03:
+			return false
+	return true
 
 
 func _can_chat(walker: Passerby) -> bool:
-	if not walker.active or walker.chat != null or walker.chat_cooldown > 0.0 or walker.on_road:
+	if not walker.active or walker.chat != null or walker.chat_cooldown > 0.0 or walker.on_road or walker.ignore_agent != null:
 		return false
 	var action := walker.get_action()
 	return String(action.get("type", "")) == "walk" and not action.get("visit", false) and not action.has("alley") \
@@ -479,6 +617,11 @@ func _to_local2(global_point: Vector3) -> Vector2:
 	return Vector2(local.x, local.z)
 
 
+## Lage unter "Outside" (x, z) eines Punkts in der Welt (für Passanten, z. B. Katzen streicheln).
+func to_local2(global_point: Vector3) -> Vector2:
+	return _to_local2(global_point)
+
+
 ## Passt den Gehweg-Streifen an die Häuser an: An jedem Punkt wird mit der Physik gemessen,
 ## wie weit man zur Hausseite hin gehen kann, ohne eine Wand, einen Pfeiler oder die Treppe zu
 ## berühren (Ebenen world und sight_blocker, auch bei eigenen Haus-Modellen). So bleiben
@@ -618,8 +761,8 @@ func get_places() -> Array[Dictionary]:
 func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 	var own := walker.radius * walker.scale.x
 	for obstacle in _obstacles:
-		if obstacle.get("agent") == walker:
-			continue
+		if obstacle.get("agent") == walker or (walker.ignore_agent != null and obstacle.get("agent") == walker.ignore_agent):
+			continue  # sich selbst und die Katze, die man gerade streicheln will
 		if walker.ghost_static > 0.0 and obstacle.kind == "static":
 			continue  # Sicherheitsnetz: steckte fest, darf hindurch (siehe Passerby.WEDGED_TIME)
 		if obstacle.kind == "static" and walker.get_action_type() == "sit":
@@ -880,8 +1023,21 @@ func _crowded(spot: Vector2) -> bool:
 
 
 func _launch(plan: Dictionary) -> void:
-	var walker: Passerby = _idle_walkers.pop_at(_rng.randi() % _idle_walkers.size())
-	walker.speed_pref = plan.speed
+	# Wer sich setzen will, trägt keine Einkaufstasche (die hängt an der Hand)
+	var choices: Array[int] = []
+	var sits := (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.type == "sit")
+	for i in _idle_walkers.size():
+		if not sits or not _idle_walkers[i].carries_bag():
+			choices.append(i)
+	if choices.is_empty():
+		for i in _idle_walkers.size():
+			choices.append(i)
+	var walker: Passerby = _idle_walkers.pop_at(choices[_rng.randi() % choices.size()])
+	if sits and walker.carries_bag():
+		var kept: Array = (plan.actions as Array).filter(func(a: Dictionary) -> bool: return a.type != "sit")
+		plan.actions = kept
+	# Tempo passend zur Gangart (schlendern und mit Tasche langsamer)
+	walker.speed_pref = plan.speed * walker.speed_factor()
 	walker.comfort_pref = plan.comfort
 	walker.side = plan.side
 	_walkers.append(walker)
@@ -989,6 +1145,10 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 				seats.append(entry)
 		if not seats.is_empty():
 			street_seat = seats[_rng.randi() % seats.size()]
+			# Seit Etappe 6h: gern neben jemanden, der schon dort sitzt (dann wird manchmal geplaudert)
+			var beside := seats.filter(func(entry: Dictionary) -> bool: return _seat_taken_near(entry))
+			if not beside.is_empty() and _rng.randf() < GameConfig.passerby_join_seat_chance:
+				street_seat = beside[_rng.randi() % beside.size()]
 
 	# Garten am Ende der Gasse neben der Bücherei: manchmal hinein und auf die Bank setzen
 	var garden_seat: SeatPoint = null
@@ -1079,9 +1239,9 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 					continue
 				cursor = _ahead(event.s, cursor, dir)
 				actions.append({"type": "walk", "route": sidewalks[side], "to": cursor})
-				var gesture: String = ["stretch", "watch", "look", "watch", "stretch"][_rng.randi() % 5]
-				actions.append({"type": "stand", "anim": &"look" if gesture == "look" else &"idle",
-					"gesture": "" if gesture == "look" else gesture,
+				# Seit Etappe 6h: eine Animation (umschauen, strecken, gähnen, seufzen, auf die Uhr schauen)
+				var pause := ChibiPasserbyModel._weighted(_rng, GameConfig.passerby_pause_clips, &"look_around")
+				actions.append({"type": "stand", "anim": &"idle", "pause": pause,
 					"time": _rng.randf_range(GameConfig.passerby_pause_time.x, GameConfig.passerby_pause_time.y)})
 			"library":
 				if side == 1 and (event.s - cursor) * dir > 0.0:
@@ -1134,6 +1294,15 @@ func _garden_actions(seat: SeatPoint, join: Vector2, rejoin: Vector2) -> Array[D
 
 
 ## Ein freier Sitzplatz im Garten (zufällig) oder null – die Plätze an der Straße plant _plan_walker.
+## Sitzt (oder setzt sich gleich) jemand auf einem Platz direkt daneben?
+func _seat_taken_near(entry: Dictionary) -> bool:
+	for other in _street_seats:
+		if other != entry and is_instance_valid(other.seat) and not (other.seat as SeatPoint).is_free() \
+				and (other.pos as Vector2).distance_to(entry.pos) < 1.3:
+			return true
+	return false
+
+
 func _free_seat() -> SeatPoint:
 	var free := _seats.filter(func(seat: SeatPoint) -> bool: return is_instance_valid(seat) and seat.is_free() and not seat is StreetSeat)
 	return free[_rng.randi() % free.size()] if not free.is_empty() else null

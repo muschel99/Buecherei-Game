@@ -1084,6 +1084,26 @@ Gesicht: `chibi_face.py`).
   **Neue Animation:** von Mixamo herunterladen (wie unten), als `<name>.fbx` in den Ordner legen,
   in `CLIPS` eintragen (Schleife ja/nein, seitliches Wandern der Hüfte entfernen ja/nein), Figuren
   neu bauen; in Godot heißt sie dann im AnimationPlayer der Figur genauso.
+- **Deine Animationen aus Etappe 6h** (aus „Game design/Animationen“, englische Namen im Ordner oben):
+
+  | Animation | wofür im Spiel |
+  |---|---|
+  | `walk_female`, `walk_male`, `stroll` (schlendern) | Gangart je Figur (`passerby_walk_styles`) |
+  | `walk_bag`, `idle_bag`, `watch_bag` | Passanten mit Einkaufstasche (gehen, stehen, auf die Uhr schauen) |
+  | `idle_happy`, `idle_shift`, `idle_foot` | Art zu stehen je Figur (`passerby_idle_styles`) |
+  | `look_around`, `stretch_arms`, `stretch_neck`, `yawn`, `sigh` | Pausen unterwegs (`passerby_pause_clips`) |
+  | `wave` | Winken im Stehen (Grüßen, Begrüßung und Abschied beim Plaudern) |
+  | `handshake` | Händeschütteln zur Begrüßung beim Plaudern |
+  | `talk`, `talk_one`, `talk_two`, `point`, `point_back`, `gesture` | Erzählen beim Plaudern |
+  | `nod`, `nod_think`, `shake_head`, `shake_think`, `laugh` | Zuhören beim Plaudern |
+  | `sit_talk`, `sit_talk_legs`, `sit_talk_hands`, `sit_laugh`, `sit_restless` | auf der Bank (plaudern, unruhig sitzen) |
+  | `pet_reach`, `pet_cat` | Katze streicheln (bücken bzw. hinknien) |
+  | `door_in`, `door_out`, `water`, `pick_up`, `lift` | schon in den Figuren, für die Besucher der Bücherei (Etappe 8) |
+
+  **Einkaufstaschen:** `tools/blender/build_storybook_bags.py` baut die Papiertüte und den Stoffbeutel
+  (`assets/models/characters/props/shopping_bag_paper.glb`, `shopping_bag_tote.glb`, Ursprung = dort, wo die Hand die
+  Henkel hält). Eine eigene Tasche: .glb mit demselben Ursprung dort hinlegen und in `GameConfig.passerby_bag_models`
+  eintragen.
 - **Dünn und dick in Bewegung:** Bei dünnen und dicken Figuren rücken Arme und Beine samt Gelenken nach
   innen bzw. außen. Das macht in Godot der Knoten **ShapeModifier** unter `Skeleton3D` (legt
   ChibiCharacter selbst an) – auch während Animationen.

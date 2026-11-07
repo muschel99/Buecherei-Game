@@ -1147,7 +1147,8 @@ def export_figure(gender, height):
     anim = A.add_animations(arm, parts[0])
     anim.update(RD.add_ride(arm))
     arm["chibi_anim"] = anim
-    print("  Bewegungen:", {k: round(v, 3) for k, v in anim.items()})
+    print("  Bewegungen:", {k: (round(v, 3) if isinstance(v, (int, float)) else
+                                {n: round(x, 3) for n, x in v.items()}) for k, v in anim.items()})
     for im in bpy.data.images:
         if im.source == "GENERATED":
             im.pack()
@@ -1161,6 +1162,7 @@ def export_figure(gender, height):
     bpy.ops.export_scene.gltf(filepath=os.path.join(OUT_DIR, name + ".glb"), export_format="GLB", use_selection=True,
                               export_skins=True, export_morph=True, export_morph_normal=True, export_colors=False,
                               export_animations=True, export_nla_strips=True, export_force_sampling=True,
+                              export_frame_step=2, export_optimize_animation_size=True,
                               export_extras=True, export_apply=False, export_yup=True, export_image_format="AUTO")
     mixamo = os.path.join(OUT_DIR, "mixamo")
     os.makedirs(mixamo, exist_ok=True)

@@ -190,6 +190,22 @@ func is_petted() -> bool:
 	return _pet_left > 0.0
 
 
+## Ruht die Katze gerade auf dem Boden (sitzt, putzt sich, schnuppert)? Dann streicheln Passanten sie manchmal
+## (seit Etappe 6h).
+const REST_ANIMS: Array[String] = ["sit", "groom", "sniff", "idle", "lie", "sleep"]
+
+
+func is_resting() -> bool:
+	return on_ground() and not hunting and _pet_left <= 0.0 and get_action_type() == "anim" \
+		and String(_action.get("anim", "")) in REST_ANIMS
+
+
+## Noch mindestens so lange hierbleiben (ein Passant kommt zum Streicheln).
+func wait_for(seconds: float) -> void:
+	if get_action_type() == "anim":
+		_t = maxf(_t, seconds)
+
+
 ## Miauen (höchstens alle cat_meow_cooldown Sekunden): kurz, oder lang („lass mich rein“ an der Tür).
 func meow(long := false) -> void:
 	if _meow_wait > 0.0:

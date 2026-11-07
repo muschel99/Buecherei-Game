@@ -133,6 +133,9 @@ var ghost_static := 0.0
 var chat: ChatSession
 var chat_cooldown := 0.0
 var _bubble: ChatBubble
+## Katzen streicheln (seit Etappe 6h): Pause bis zum nächsten Mal; diese Katze ist beim Gehen kein Hindernis
+var pet_cooldown := 0.0
+var ignore_agent: Object = null
 
 
 func _ready() -> void:
@@ -288,6 +291,7 @@ func step(delta: float) -> void:
 	if not active:
 		return
 	chat_cooldown = maxf(0.0, chat_cooldown - delta)
+	pet_cooldown = maxf(0.0, pet_cooldown - delta)
 	var before := pos
 	match String(_action.get("type", "")):
 		"walk":
@@ -300,6 +304,8 @@ func step(delta: float) -> void:
 			_step_sit(delta)
 		"leave":
 			_step_leave(delta)
+		"pet":
+			_step_pet(delta)
 		_:
 			_next_action()
 	velocity2 = (pos - before) / maxf(delta, 0.0001)
@@ -332,6 +338,7 @@ func _footsteps(moved: float) -> void:
 # --- Schritte ---
 
 func _next_action() -> void:
+	ignore_agent = null
 	if _actions.is_empty():
 		_action = {"type": "leave", "gate": false}
 	else:
@@ -493,44 +500,148 @@ func _step_cross(delta: float) -> void:
 
 ## Stehen bleiben und schauen (Schaufenster: "browse").
 func _step_stand(delta: float) -> void:
+	# Plaudern: erst aufeinander zu (bis zum Abstand fürs Reden bzw. Händeschütteln)
+	if _action.has("approach"):
+		_step_approach(delta)
+		return
 	_phase_time += delta
 	_anim_state = _action.get("anim", &"idle")
 	_anim_speed = 0.0
-	# kleine Pause unterwegs: einmal eine Geste (strecken, auf die Uhr schauen)
+	# kleine Pause unterwegs: einmal eine Animation (umschauen, strecken, gähnen, auf die Uhr schauen …)
 	if _phase == 0:
 		_phase = 1
+		var pause := StringName(_action.get("pause", ""))
 		var gesture := String(_action.get("gesture", ""))
+		if pause != &"" and _model and _model.has_method("play_pause"):
+			var duration := float(_model.call("play_pause", pause))
+			if duration > 0.0:
+				_action.time = maxf(float(_action.get("time", 3.0)), duration + 0.2)
+			elif pause == &"look_around" or pause == &"watch":
+				_action.anim = &"look"
+		elif pause != &"":
+			# Figur ohne diese Animationen: Umschauen bzw. die einfache Geste
+			if pause == &"look_around":
+				_action.anim = &"look"
+			gesture = "watch" if pause == &"watch" else ("" if pause == &"look_around" else "stretch")
 		if not gesture.is_empty() and _model and _model.has_method("play_gesture"):
 			_model.call("play_gesture", StringName(gesture))
 	if _phase_time >= float(_action.get("time", 3.0)):
 		_next_action()
 
 
-## Plaudern beginnen (StreetLife): stehen bleiben, zum anderen schauen, danach weitergehen.
-func start_chat(session: ChatSession, face: Vector2, time: float) -> void:
+## Zum Plaudern aufeinander zugehen (höchstens ein paar Sekunden; wer nicht hinkommt, redet von dort aus).
+func _step_approach(delta: float) -> void:
+	_phase_time += delta
+	var target: Vector2 = _action.approach
+	if pos.distance_to(target) < 0.02 or _phase_time > 3.5:
+		_action.erase("approach")
+		_phase_time = 0.0
+		_anim_state = &"idle"
+		_anim_speed = 0.0
+		return
+	var step := speed_pref * 0.55
+	var next := pos.move_toward(target, step * delta)
+	if not life.blocks_move(self, next):
+		pos = next
+		_anim_state = &"walk"
+		_anim_speed = step
+	else:
+		_anim_state = &"idle"
+		_anim_speed = 0.0
+
+
+## Plaudern beginnen (StreetLife): stehen bleiben, zum anderen schauen (seit Etappe 6h vorher bis spot aufeinander
+## zugehen, z. B. zum Händeschütteln), danach weitergehen.
+func start_chat(session: ChatSession, face: Vector2, time: float, spot: Vector2 = Vector2.INF) -> void:
 	chat = session
 	_actions.push_front(_action)
-	_action = {"type": "stand", "face": face, "anim": &"idle", "time": time + 1.0, "chat": true}
+	_action = {"type": "stand", "face": face, "anim": &"idle", "time": time + 8.0, "chat": true}
+	if spot != Vector2.INF and spot.distance_to(pos) > 0.03:
+		_action.approach = spot
 	_phase = 0
 	_phase_time = 0.0
+	_set_partner(session.other(self))
+
+
+## Plaudern im Sitzen (zwei auf derselben Bank): sitzen bleiben, bis die Runde vorbei ist.
+func start_seat_chat(session: ChatSession, time: float) -> void:
+	chat = session
+	if _action.get("type") == "sit":
+		_action.time = maxf(float(_action.get("time", 0.0)), _phase_time + time + 1.0)
+	_set_partner(session.other(self))
+
+
+func _set_partner(other: Passerby) -> void:
+	if _model and _model.has_method("set_chat_partner"):
+		_model.call("set_chat_partner", other._model if other else null)
+
+
+## Steht man schon am Platz fürs Plaudern? (ChatSession wartet darauf mit der Begrüßung)
+func chat_ready() -> bool:
+	return chat != null and not _action.has("approach")
+
+
+## Sitzt man gerade (nicht beim Hinsetzen oder Aufstehen)?
+func is_sitting() -> bool:
+	return get_action_type() == "sit" and _phase == 3
+
+
+## Begrüßung beim Plaudern: Händeschütteln (beide gleichzeitig) oder winken; liefert die Dauer.
+func chat_greet(handshake: bool, wave: bool) -> float:
+	if _model == null or not _model.has_method("play_clip"):
+		return 0.8
+	_model.call("trigger_face", &"handshake" if handshake else &"greet")
+	if handshake:
+		var duration := float(_model.call("play_clip", &"handshake"))
+		if duration > 0.0:
+			return duration
+	if wave and not carries_bag():
+		_model.call("wave_hello", 2.4)
+		return 2.0
+	return 0.8
+
+
+## Trägt die Figur eine Einkaufstasche? (die Hand ist dann belegt)
+func carries_bag() -> bool:
+	return _model != null and bool(_model.get("carries_bag"))
+
+
+## Tempo der Gangart gegenüber normalem Gehen (StreetLife setzt damit das Wunschtempo).
+func speed_factor() -> float:
+	return float(_model.call("speed_factor")) if _model and _model.has_method("speed_factor") else 1.0
+
+
+## Lage der rechten Hand beim Händeschütteln (x seitlich, z vorn, Meter; StreetLife stellt die beiden passend hin).
+func handshake_hand() -> Vector2:
+	return Vector2(_model.call("handshake_hand")) * scale.x if _model and _model.has_method("handshake_hand") else Vector2(-0.05, 0.3)
 
 
 ## Wer beim Plaudern dran ist: erzählt (Hände, Sprechblase) oder hört zu (lacht oder brummt manchmal leise,
 ## siehe PasserbyVoice). finished = Runde vorbei.
-func chat_turn(speaking: bool, seconds: float, finished: bool = false) -> void:
+func chat_turn(speaking: bool, seconds: float, finished: bool = false, goodbye: bool = false) -> void:
 	if _model and _model.has_method("set_talking"):
 		_model.call("set_talking", speaking and not finished)
 	if finished:
 		chat = null
 		chat_cooldown = GameConfig.passerby_chat_cooldown
+		_set_partner(null)
 		if _action.get("chat", false):
+			_action.erase("approach")
 			_action.time = 0.0
+			# zum Abschied noch kurz winken
+			if goodbye and _model and _model.has_method("wave_hello") and not carries_bag():
+				_model.call("trigger_face", &"goodbye")
+				_model.call("wave_hello", 1.8)
+				_action.time = _phase_time + 1.6
 		return
+	var laughing := randf() < (0.25 if speaking else 0.3)
 	if _model and _model.has_method("trigger_face"):
 		if speaking:
-			_model.call("trigger_face", &"chat_laugh" if randf() < 0.25 else &"chat_talk")
+			_model.call("trigger_face", &"chat_laugh" if laughing else &"chat_talk")
 		else:
-			_model.call("trigger_face", &"chat_laugh" if randf() < 0.3 else &"chat_listen")
+			_model.call("trigger_face", &"chat_laugh" if laughing else &"chat_listen")
+	if _model and _model.has_method("chat_react"):
+		_model.call("chat_react", speaking, laughing)
 	if not speaking:
 		return
 	if _bubble == null:
@@ -542,6 +653,103 @@ func chat_turn(speaking: bool, seconds: float, finished: bool = false) -> void:
 		head = to_local(_model.call("eye_point")).y + 0.12
 	if is_visible_in_tree():
 		_bubble.pop(head)
+
+
+## Eine Katze streicheln (seit Etappe 6h, StreetLife): hingehen, sich zu ihr drehen, bücken (kleine Katze oder
+## liegend: pet_reach, die Hand streicht hin und her) bzw. hinknien (große Katze: pet_cat), danach weiter.
+## false = geht gerade nicht (Figur ohne diese Animationen, kein Platz).
+func start_pet(cat: StreetCat, kneel: bool) -> bool:
+	if _model == null or not _model.has_method("pet_hand") or carries_bag():
+		return false
+	_actions.push_front(_action)
+	_action = {"type": "pet", "cat": cat, "kneel": kneel, "from": life.to_local2(cat.global_position)}
+	_phase = 0
+	_phase_time = 0.0
+	ignore_agent = cat
+	pet_cooldown = GameConfig.passerby_pet_cooldown
+	return true
+
+
+## Platz zum Streicheln: so stehen, dass die rechte Hand (pet_hand) über der Katze ist; der direkte Weg zuerst,
+## sonst etwas weiter herum (nie auf der Fahrbahn, nicht an Laterne oder Kübel).
+func _pet_spot(cat_pos: Vector2, kneel: bool) -> Dictionary:
+	var hand: Vector2 = Vector2(_model.call("pet_hand", kneel)) * scale.x
+	var to_me := pos - cat_pos
+	if to_me.length() < 0.01:
+		to_me = Vector2(0.0, 1.0)
+	to_me = to_me.normalized()
+	for turn in [0.0, 0.6, -0.6, 1.2, -1.2, 1.8, -1.8]:
+		var away := to_me.rotated(turn)
+		var face := -away
+		var target := cat_pos + away * (0.06 if kneel else 0.03)
+		# Hand = Lage + face × z + links × x (links = (face.y, -face.x))
+		var spot := target - face * hand.y - Vector2(face.y, -face.x) * hand.x
+		if life.pet_spot_ok(self, spot):
+			return {"spot": spot, "face": face}
+	return {}
+
+
+func _step_pet(delta: float) -> void:
+	_phase_time += delta
+	var cat: StreetCat = _action.cat if is_instance_valid(_action.get("cat")) else null
+	var kneel: bool = _action.kneel
+	match _phase:
+		0:  # hingehen
+			if cat == null or not cat.active or (not cat.is_resting() and not cat.is_petted()) \
+					or life.to_local2(cat.global_position).distance_to(_action.from) > 0.5 or _phase_time > 7.0:
+				_next_action()
+				return
+			var there := _pet_spot(life.to_local2(cat.global_position), kneel)
+			if there.is_empty():
+				_next_action()
+				return
+			_action.face = there.face
+			var spot: Vector2 = there.spot
+			var step := speed_pref * 0.6
+			var next := pos.move_toward(spot, step * delta)
+			_anim_state = &"walk"
+			_anim_speed = step
+			if life.blocks_move(self, next):
+				_anim_state = &"idle"
+				_anim_speed = 0.0
+			else:
+				pos = next
+			if pos.distance_to(spot) < 0.02:
+				_phase = 1
+				_phase_time = 0.0
+				cat.wait_for(4.0)
+		1:  # zur Katze drehen
+			_anim_state = &"idle"
+			_anim_speed = 0.0
+			if _phase_time > 0.45:
+				if cat == null or not cat.can_be_petted():
+					_next_action()
+					return
+				var duration := 0.0
+				if kneel:
+					duration = float(_model.call("play_clip", &"pet_cat"))
+				else:
+					duration = float(_model.call("play_clip", &"pet_reach", -1.0, ChibiPasserbyModel.PET_REACH_HOLD,
+						randf_range(2.0, 4.0), true))
+				if duration <= 0.0:
+					_next_action()
+					return
+				_action.time = duration
+				_action.touch = ChibiPasserbyModel.PET_KNEEL_TOUCH if kneel else ChibiPasserbyModel.PET_REACH_TOUCH
+				_phase = 2
+				_phase_time = 0.0
+				cat.wait_for(duration + 1.0)
+				_model.call("trigger_face", &"pet")
+		2:  # streicheln (die Katze hält still und schnurrt, solange die Hand bei ihr ist)
+			_anim_state = &"idle"
+			_anim_speed = 0.0
+			if _action.has("touch") and _phase_time >= float(_action.touch):
+				_action.erase("touch")
+				if cat and cat.can_be_petted():
+					cat.pet(self, maxf(1.0, float(_action.time) - _phase_time - (1.4 if kneel else 1.0)))
+			var playing := bool(_model.call("is_playing_clip"))
+			if _phase_time >= float(_action.time) or (not playing and _phase_time > 0.5):
+				_next_action()
 
 
 ## Hinsetzen (Sitzplatz aus StreetLife): vor den Platz gehen, umdrehen, hinsetzen, sitzen,
@@ -823,6 +1031,9 @@ func _update_facing(delta: float) -> void:
 	elif _action.get("type") == "cross" and _phase in [1, 2]:
 		var normal := _route.normal_at(_s) * -float(side)
 		target = atan2(normal.x, normal.y)
+	elif _action.get("type") == "pet" and _action.has("face"):
+		var face: Vector2 = _action.face
+		target = atan2(face.x, face.y)
 	elif _action.get("type") == "sit" and _phase in [1, 2, 3, 4]:
 		var face: Vector2 = _action.face
 		target = atan2(face.x, face.y)

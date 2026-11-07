@@ -187,6 +187,7 @@ tools/             Shell-Skripte (setup_godot.sh, screenshots.sh, plan_check.py,
                    build_storybook_library.py (Bausteine) + build_storybook_facade.py +
                    facade_options.py = Fassaden-Baukasten der Bücherei, build_storybook_alleys.py,
                    build_storybook_props.py, build_storybook_vehicles.py = Autos und Fahrräder,
+                   build_storybook_bags.py = Einkaufstaschen der Passanten,
                    build_storybook_plants.py + storybook_greenery.py = Pflanzen; Möbelkatalog:
                    build_storybook_furniture.py + storybook_furniture.py, furniture_<stil>.py,
                    furniture_fixtures.py = Theken/Einwürfe; Start: tools/build_furniture.sh)
@@ -679,6 +680,25 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `PasserbyVoice` (seit 6e statt des Gemurmels: kurze Laute aus assets/audio/voices/ je Anlass, Tabelle `LINES`,
   ausgelöst in `ChibiPasserbyModel.trigger_face`, sparsam `passerby_voice_*`). Sprechblasen-Bilder erzeugt
   `tools/make_chat_assets.py` (nur fehlende Dateien). Pausen (stretch/watch/look) plant `_plan_walker`.
+  **Animationen der Entwicklerin (seit 6h, Teil 8):** 45 Clips in jeder Figur (`chibi_anim.CLIPS`, gekürzt
+  `CLIP_TRIM`, Tempo je Gangart `walk_speeds` in den Extras; .glb mit `export_frame_step=2`). Je Figur
+  (`randomize_look`): `walk_clip` (walk/walk_female/walk_male/stroll; Gewichte `passerby_walk_styles`, Tempo
+  `speed_factor()` → `StreetLife._launch`), `idle_clip`, `sit_clip`; `carries_bag` (`passerby_bag_share`) = walk_bag/
+  idle_bag/watch_bag + Tasche `assets/models/characters/props/shopping_bag_*.glb` (`build_storybook_bags.py`, Ursprung =
+  Griffpunkt; `_update_bag`: hängt senkrecht an der rechten Hand, Pendel, vom Bein weggedrückt) – Taschenträger
+  setzen sich nicht, streicheln nicht, winken nicht, reden ohne Hände. Einzelne Auftritte `play_clip(name, max,
+  hold, hold_time, back)` (nur im Stehen bzw. Sitzen bei "sit_…", Losgehen bricht ab; `hold` = Abschnitt hin und
+  her, `back` = rückwärts zum Anfang), Pausen `play_pause` (`passerby_pause_clips`), Winken im Stehen `wave_hello`.
+  Schleifen `LOOPS`, gekürzte `PINGPONG`. Plaudern: erst aufeinander zu (`start_chat(…, spot)`, `_step_approach`,
+  Abstand `passerby_chat_gap`), dann Begrüßung (`ChatSession` Phase 0/1: Händeschütteln = beide `handshake`
+  gleichzeitig, rechte Hände treffen sich über `HANDSHAKE_HAND` × Hüfthöhe, leicht versetzt; sonst winkt einer),
+  Reden mit talk-Clips (`set_talking`, Zuhörer `chat_react`: nicken/Kopf wiegen/lachen – Männer lachen nicht),
+  Abschied winken. Zwei auf einer Bank (`_seat_chats`, `passerby_join_seat_chance` setzt sich gern dazu):
+  sit_talk…/sit_laugh, Blick über `set_chat_partner`. **Katzen streicheln:** `StreetLife._update_pets` (ruhende
+  Katze `StreetCat.is_resting()` vor einem auf dem eigenen Gehweg) → `Passerby.start_pet` → `_step_pet`: Platz so,
+  dass die rechte Hand über der Katze ist (`pet_hand`, `StreetLife.pet_spot_ok`), kleine/liegende Katze pet_reach
+  (bücken, `PET_REACH_HOLD` hin und her, rückwärts aufrichten), große pet_cat (hinknien); `cat.wait_for`, dann
+  `cat.pet(passant, …)`. Für Besucher (Etappe 8) liegen bereit: door_in/door_out, water, pick_up, lift.
   **Sitzhöhe:** Bänke/Stühle 0,25 m (Sitz-Animation der Chibis 0,22–0,27 m; Modell hebt sich um
   sit_height − sit_seat) – neue Sitzmöbel für Passanten genauso hoch, Marker auf 0,25.
   **Blick:** Augen über `look`

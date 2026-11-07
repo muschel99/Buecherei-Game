@@ -28,7 +28,26 @@ CLIPS = {
     "sit_down": (False, True),
     "sit_idle": (True, True),
     "stand_up": (False, True),
+    # Seit Etappe 6h (Animationen der Entwicklerin, „Game design/Animationen“, Name = wofür): Gangarten, Stehen,
+    # Gesten beim Plaudern, im Sitzen, Katze streicheln, für spätere Besucher (Tür, Gießen, Aufheben, Heben)
+    "walk_female": (True, True), "walk_male": (True, True), "stroll": (True, True), "walk_bag": (True, True),
+    "idle_happy": (True, True), "idle_shift": (True, True), "idle_foot": (True, True), "idle_bag": (True, True),
+    "look_around": (False, True), "watch_bag": (False, True), "yawn": (False, True), "stretch_arms": (False, True),
+    "stretch_neck": (False, True), "wave": (False, True), "nod": (False, True), "nod_think": (False, True),
+    "shake_head": (False, True), "shake_think": (False, True), "talk": (True, True), "talk_one": (True, True),
+    "talk_two": (True, True), "laugh": (False, True), "point": (False, True), "point_back": (False, True),
+    "handshake": (False, True), "gesture": (False, True), "sigh": (False, True),
+    "sit_talk": (True, True), "sit_talk_legs": (True, True), "sit_talk_hands": (True, True), "sit_laugh": (False, True),
+    "sit_restless": (True, True),
+    "pet_reach": (False, True), "pet_cat": (True, True),
+    "door_in": (False, True), "door_out": (False, True), "water": (True, True), "pick_up": (False, True),
+    "lift": (False, True),
 }
+# Lange Aufnahmen kürzen (Bilder): die Gespräche im Sitzen dauern 45 s – 12 s reichen (Godot spielt gekürzte
+# Schleifen vor und zurück, siehe ChibiPasserbyModel.PINGPONG); Stehen hin und her 10 s
+CLIP_TRIM = {"sit_talk": 360, "sit_talk_legs": 360, "sit_talk_hands": 360, "idle_shift": 300, "idle_bag": 300}
+# Gangarten: für jede wird das passende Tempo gemessen (Extras walk_speeds)
+WALKS = ("walk", "walk_female", "walk_male", "stroll", "walk_bag")
 
 
 def import_source(path):
@@ -56,7 +75,7 @@ def world_rot(m):
     return m.to_3x3().normalized()
 
 
-def bake(target, source, name, strip_horizontal):
+def bake(target, source, name, strip_horizontal, max_frames=0):
     """Animation von source (Mixamo-Skelett) auf target übertragen → Aktion name. Liefert dict mit
     Hüftbahn (Welt) und Länge."""
     import build_chibi as B
@@ -68,6 +87,8 @@ def bake(target, source, name, strip_horizontal):
     act_src = source.animation_data.action
     f0, f1 = int(act_src.frame_range[0]), int(act_src.frame_range[1])
     frames = list(range(f0, f1 + 1))
+    if max_frames:
+        frames = frames[:max_frames]
     sw = source.matrix_world
     src_rest = {s: world_rot(sw @ source.data.bones[s].matrix_local) for s in mapping.values()}
     tgt_rest = {b.name: b.matrix_local.to_3x3().normalized() for b in target.data.bones}
@@ -189,11 +210,13 @@ def add_animations(target, body_obj):
             print("  Animation fehlt:", path)
             continue
         src = import_source(path)
-        res = bake(target, src, name, strip)
+        res = bake(target, src, name, strip, CLIP_TRIM.get(name, 0))
         remove_source(src)
         action = res["action"]
         if name == "walk":
             info["walk_speed"] = walk_speed(target, action, res["frames"])
+        if name in WALKS:
+            info.setdefault("walk_speeds", {})[name] = walk_speed(target, action, res["frames"])
         if name == "sit_idle":
             info["sit_seat"] = sit_seat_height(target, body_obj, action, res["frames"])
         if name in ("sit_down", "stand_up"):

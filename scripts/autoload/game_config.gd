@@ -743,7 +743,8 @@ var chibi_greet_smile_time: float = 2.5
 var chibi_wave_chance: float = 0.35
 
 ## Kleine Pausen unterwegs (seit Etappe 6c): Wahrscheinlichkeit je Weg, kurz stehen zu bleiben und sich
-## umzuschauen, zu strecken oder auf die Uhr zu schauen; Dauer der Pause (Sekunden).
+## umzuschauen, zu strecken oder auf die Uhr zu schauen; Dauer der Pause (Sekunden; mit Animation mindestens
+## so lange wie sie, siehe passerby_pause_clips).
 var passerby_pause_chance: float = 0.45
 var passerby_pause_time: Vector2 = Vector2(2.6, 4.0)
 ## Plaudern: Kommen sich zwei auf dem Gehweg entgegen, bleiben sie mit dieser Wahrscheinlichkeit stehen
@@ -753,6 +754,45 @@ var passerby_chat_chance: float = 0.6
 var passerby_chat_distance: float = 2.2
 var passerby_chat_time: Vector2 = Vector2(7.0, 13.0)
 var passerby_chat_cooldown: float = 60.0
+
+## Animationen der Passanten (seit Etappe 6h, Teil 8; Animationen der Entwicklerin, siehe chibi_anim.CLIPS).
+## Gangart je Figur (Gewichte; Frauen/Männer), Art zu stehen und zu sitzen; Anteil mit Einkaufstasche
+## (gehen walk_bag, stehen idle_bag, Uhr watch_bag; setzen sich nicht, streicheln keine Katzen).
+var passerby_walk_styles: Dictionary = {"female": {"walk": 0.3, "walk_female": 0.45, "stroll": 0.25},
+	"male": {"walk": 0.35, "walk_male": 0.45, "stroll": 0.2}}
+var passerby_idle_styles: Dictionary = {"idle": 0.4, "idle_happy": 0.2, "idle_shift": 0.2, "idle_foot": 0.2}
+var passerby_sit_styles: Dictionary = {"sit_idle": 0.75, "sit_restless": 0.25}
+var passerby_bag_share: float = 0.18
+var passerby_bag_models: Array[String] = ["res://assets/models/characters/props/shopping_bag_paper.glb",
+	"res://assets/models/characters/props/shopping_bag_tote.glb"]
+## Tasche: Abstand nach außen von der Körpermitte (m, die Tasche wird vom Bein weggedrückt), Pendellänge (m),
+## Dämpfung, größter Ausschlag (Grad)
+var passerby_bag_clear: float = 0.2
+var passerby_bag_pendulum: float = 0.17
+var passerby_bag_damping: float = 3.0
+var passerby_bag_max_swing: float = 24.0
+## Tempo je Gangart: Wunschtempo × (Tempo der Animation / Tempo von "walk"), höchstens in diesen Grenzen
+var passerby_style_speed_limits: Vector2 = Vector2(0.65, 1.15)
+## Pausen unterwegs: welche Animation (Gewichte; "watch" = Blick auf die Uhr, mit Tasche watch_bag) und
+## höchstens so lange (Sekunden, lange Animationen enden weich vorher)
+var passerby_pause_clips: Dictionary = {"look_around": 1.0, "stretch_arms": 0.5, "stretch_neck": 0.6, "yawn": 0.5,
+	"sigh": 0.4, "watch": 1.0}
+var passerby_pause_clip_max: float = 7.0
+## Plaudern: Abstand beim Reden (m zwischen den Figuren), Händeschütteln zur Begrüßung (Wahrscheinlichkeit),
+## Erzähler zeigt oder gestikuliert, Zuhörer nickt oder wiegt den Kopf, zum Abschied winken
+var passerby_chat_gap: float = 0.95
+var passerby_handshake_chance: float = 0.4
+var passerby_chat_gesture_chance: float = 0.22
+var passerby_chat_nod_chance: float = 0.45
+var passerby_goodbye_wave_chance: float = 0.5
+## Auf Bänken: Wahrscheinlichkeit, sich neben jemanden zu setzen, der schon sitzt, und dann zu plaudern
+var passerby_join_seat_chance: float = 0.6
+var passerby_seat_chat_chance: float = 0.8
+## Katzen streicheln: Wahrscheinlichkeit, wenn eine ruhende Katze nah am Weg ist (höchstens so weit vorn, m),
+## Pause bis zum nächsten Mal (s), wie lange die Katze stillhält (s)
+var passerby_pet_chance: float = 0.55
+var passerby_pet_reach: float = 2.8
+var passerby_pet_cooldown: float = 90.0
 ## Sprechblase: wie lange sie zu sehen ist, Größe (m), Höhe über dem Kopf
 var chat_bubble_time: float = 1.8
 var chat_bubble_size: float = 0.32

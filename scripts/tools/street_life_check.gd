@@ -317,6 +317,8 @@ func _print_report() -> void:
 			c.rubs, c.meetings])
 		for line in _cat_stuck:
 			print("  ", line)
+	print("Passanten (seit 6h): geplaudert %d (davon Hände geschüttelt %d), auf der Bank geplaudert %d, Katzen gestreichelt %d" % [
+		_life.stat_chats, _life.stat_handshakes, _life.stat_seat_chats, _life.stat_pets])
 	print("=== Bericht Straßenleben ===")
 	print("Messungen: %d" % _report.samples)
 	print("Erschienen: %d, im Blickfeld: %d, mit freier Sicht (beim Umdrehen): %d" % [
