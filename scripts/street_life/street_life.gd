@@ -247,6 +247,9 @@ func _update_chats(delta: float) -> void:
 			_chat_tried[key] = true
 			if _rng.randf() > GameConfig.passerby_chat_chance:
 				continue
+			# nicht im Gedränge stehen bleiben (vor Schaufenstern, an Engstellen)
+			if _walkers_near((w1.pos + w2.pos) / 2.0, 2.0, [w1, w2]) > 1:
+				continue
 			var time := _rng.randf_range(GameConfig.passerby_chat_time.x, GameConfig.passerby_chat_time.y)
 			var session := ChatSession.new(w1, w2, time)
 			# Seit Etappe 6h: aufeinander zu – zum Händeschütteln so nah, dass sich die rechten Hände treffen
@@ -269,6 +272,35 @@ func _update_chats(delta: float) -> void:
 			stat_handshakes += 1 if session.handshake else 0
 			break
 	_seat_chats()
+
+
+## Wie viele andere Passanten sind höchstens radius Meter von point entfernt?
+func _walkers_near(point: Vector2, radius: float, skip: Array) -> int:
+	var count := 0
+	for walker in _walkers:
+		if not skip.has(walker) and walker.pos.distance_to(point) < radius:
+			count += 1
+	return count
+
+
+## Ist es um den Passanten herum eng (jemand ganz nah)?
+func crowded_near(walker: Passerby, radius: float) -> bool:
+	return _walkers_near(walker.pos, radius, [walker]) > 0
+
+
+## Das nächste Fahrzeug, das auf die Stelle des Passanten zukommt (zum Nachschauen beim Warten am Bordstein), sonst null.
+func vehicle_coming(walker: Passerby) -> StreetVehicle:
+	var s := centerline.project(walker.pos).x
+	var best: StreetVehicle = null
+	var best_d := 25.0
+	for vehicle in _vehicles:
+		if not vehicle.active:
+			continue
+		var ahead := (s - vehicle.get_s()) * vehicle.direction
+		if ahead > -vehicle.length and ahead < best_d:
+			best_d = ahead
+			best = vehicle
+	return best
 
 
 ## Punkt innerhalb des erlaubten Streifens des Gehwegs (nie Richtung Fahrbahn oder Hauswand hinaus).
@@ -389,7 +421,8 @@ func pet_spot_ok(walker: Passerby, spot: Vector2) -> bool:
 
 
 func _can_chat(walker: Passerby) -> bool:
-	if not walker.active or walker.chat != null or walker.chat_cooldown > 0.0 or walker.on_road or walker.ignore_agent != null:
+	if not walker.active or walker.chat != null or walker.chat_cooldown > 0.0 or walker.on_road or walker.ignore_agent != null \
+			or walker.body_on_road():
 		return false
 	var action := walker.get_action()
 	return String(action.get("type", "")) == "walk" and not action.get("visit", false) and not action.has("alley") \
@@ -844,10 +877,14 @@ func road_obstacles(vehicle: StreetVehicle) -> Array[Dictionary]:
 			var cat_pos := _to_local2(cat.global_position)
 			if cat.on_ground() and cat_pos.distance_squared_to(vehicle.pos) < limit:
 				var cat_lat := centerline.project(cat_pos, vehicle.get_s() - 30.0, vehicle.get_s() + 30.0).y
-				# nur auf der Fahrbahn; Art "cat": bremsen und warten, aber nie hupen oder klingeln
+				# auf der Fahrbahn; Art "cat": früh und sanft bremsen und warten, aber nie hupen oder klingeln; am Rand
+				# (Gehweg nah am Bordstein, seit der Nachbesserung von 6h – Katzen laufen ohne zu warten los): langsamer
 				if absf(cat_lat) - cat.radius < half:
 					result.append({"pos": cat_pos, "radius": cat.radius, "reach": 0.3, "speed": 0.0, "kind": "cat",
 						"on_road": true})
+				elif absf(cat_lat) - cat.radius < half + GameConfig.vehicle_cat_near_distance:
+					result.append({"pos": cat_pos, "radius": cat.radius, "reach": 0.3, "speed": 0.0, "kind": "cat_near",
+						"on_road": false})
 	for other in _vehicles:
 		if other == vehicle or other.pos.distance_squared_to(vehicle.pos) > limit:
 			continue

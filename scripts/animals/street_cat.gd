@@ -132,7 +132,8 @@ func begin(start: Vector3, face: Vector3, actions: Array[Dictionary]) -> void:
 func replace_actions(actions: Array[Dictionary]) -> void:
 	hunting = false
 	_actions = actions
-	_next()
+	if not _in_call:
+		_next()
 
 
 ## Schritte vor die restlichen schieben (z. B. hinein in die Bücherei).
@@ -140,7 +141,13 @@ func insert_actions(actions: Array[Dictionary]) -> void:
 	var rest := _actions.duplicate()
 	_actions = actions
 	_actions.append_array(rest)
-	_next()
+	# aus einer "call"-Aktion heraus: der laufende Ablauf holt die neuen Schritte selbst (sonst ginge der erste verloren)
+	if not _in_call:
+		_next()
+
+
+var _in_call := false
+var _look_seed := randf() * 10.0
 
 
 func get_actions() -> Array[Dictionary]:
@@ -196,8 +203,13 @@ const REST_ANIMS: Array[String] = ["sit", "groom", "sniff", "idle", "lie", "slee
 
 
 func is_resting() -> bool:
-	return on_ground() and not hunting and _pet_left <= 0.0 and get_action_type() == "anim" \
+	return on_ground() and on_street_level() and not hunting and _pet_left <= 0.0 and get_action_type() == "anim" \
 		and String(_action.get("anim", "")) in REST_ANIMS
+
+
+## Auf Gehweg-Höhe (nicht oben auf einer Gartenmauer oder Treppe)?
+func on_street_level() -> bool:
+	return life != null and absf(global_position.y - life.street_level_y()) < 0.08
 
 
 ## Noch mindestens so lange hierbleiben (ein Passant kommt zum Streicheln).
@@ -286,6 +298,7 @@ func step(delta: float) -> void:
 		return
 	_meow_wait -= delta
 	_update_voice(delta)
+	_update_purr_volume()
 	velocity2 = Vector2.ZERO
 	_update_look(delta)
 	_update_face(delta)
@@ -527,7 +540,9 @@ func _start_action() -> bool:
 			hunting = bool(_action.value)
 			return false
 		"call":
+			_in_call = true
 			(_action.callable as Callable).call(self)
+			_in_call = false
 			return false
 	return false
 
@@ -538,7 +553,7 @@ func _start_anim() -> bool:
 	if _action.has("face"):
 		_yaw_target = StreetAnimal.yaw_of(_action.face)
 	var blend := float(_action.get("blend", 0.3))
-	if want in [&"sit", &"groom"] and posture == "stand":
+	if want in [&"sit", &"groom", &"sit_ledge"] and posture == "stand":
 		_action["then"] = String(want)
 		play(&"sit_down", 0.2)
 		if anim:
@@ -568,7 +583,7 @@ func _start_anim() -> bool:
 			play(want, 0.8)
 		posture = "lie"
 		return true
-	if want == &"sit":
+	if want == &"sit" or want == &"sit_ledge":
 		posture = "sit"
 	elif want != &"groom":
 		posture = "stand"
@@ -797,6 +812,12 @@ func _update_look(delta: float) -> void:
 	var anim_name := String(_action.get("anim", "")) if get_action_type() == "anim" else ""
 	if bool(_action.get("look_up", false)):
 		want = Vector2(0.0, 26.0)
+	elif _action.has("look") and _pet_left <= 0.0:
+		# feste Blickrichtung (Grad: drehen, nicken), langsam etwas hin und her – in den Garten, durchs Fenster, zur Straße
+		var t := Time.get_ticks_msec() / 1000.0
+		var look: Vector2 = _action.look
+		want = look + Vector2(sin(t * 0.37 + _look_seed) * 14.0, sin(t * 0.23 + _look_seed) * 5.0)
+		want.x = clampf(want.x, -82.0, 82.0)
 	elif _pet_left > 0.0 or get_action_type() in ["wait_door", "turn", "leave"] or anim_name in ["sit", "idle"]:
 		var player := life.street.get_player() if life else null
 		if player and player.global_position.distance_to(global_position) < 3.2:
@@ -809,7 +830,7 @@ func _update_look(delta: float) -> void:
 			want.y = clampf(rad_to_deg(atan2(local.y - head_y, flat.length())), -10.0, 30.0)
 			if absf(yaw) > 110.0:
 				want = Vector2.ZERO
-	_look = _look.lerp(want, minf(1.0, delta * 3.0))
+	_look = _look.lerp(want, minf(1.0, delta * (1.5 if _action.has("look") else 3.0)))
 	_head.yaw = _look.x
 	_head.pitch = _look.y
 
@@ -826,7 +847,21 @@ func _start_purr() -> void:
 	_purr = Audio.loop_at(self, "ambience/cat_purr", GameConfig.cat_purr_volume_db, 6.0)
 	if _purr:
 		_purr.position = Vector3(0.0, 0.2, 0.1)
+		_update_purr_volume()
 		_purr.play()
+
+
+## Schnurren in der Bücherei (seit der Nachbesserung von 6h): leise und nur, wenn die Spielfigur auch drinnen ist (die
+## Hauswand dämpft den Ton im Spiel nicht von selbst); draußen wie bisher.
+func _update_purr_volume() -> void:
+	if _purr == null or not is_instance_valid(_purr):
+		return
+	if inside:
+		var near := life != null and life.player_inside()
+		_purr.volume_db = GameConfig.cat_purr_inside_volume_db if near else -80.0
+		_purr.max_distance = GameConfig.cat_purr_inside_distance
+	else:
+		_purr.volume_db = GameConfig.cat_purr_volume_db
 
 
 func _stop_purr() -> void:

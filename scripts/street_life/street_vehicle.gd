@@ -55,6 +55,11 @@ const PASS_SPEED := 2.0
 ## Unter dem Torbogen: höchstens so schnell (m/s) und so viel der normalen Spur (näher zur Mitte).
 const PASSAGE_SPEED := 3.0
 const PASSAGE_LANE := 0.72
+## … und zwar weich: so viele Meter vor und hinter dem Bogen beginnt bzw. endet der Übergang (seit der Nachbesserung
+## von 6h – vorher sprang die Spur am Bogen, die Fahrzeuge schlugen einen Haken)
+const PASSAGE_EASE := 12.0
+## Bereich des Torbogens auf der Mittellinie (s von – bis, samt Vorlauf; einmal ausgemessen)
+static var _passage := Vector2(NAN, NAN)
 
 var life: StreetLife
 var active := false
@@ -149,6 +154,26 @@ func get_lat() -> float:
 	return _lat
 
 
+## Wie sehr gilt der Torbogen hier (0 = gar nicht, 1 = darunter): weich über PASSAGE_EASE Meter davor und dahinter.
+func _passage_blend() -> float:
+	if is_nan(_passage.x):
+		_passage = Vector2(INF, -INF)
+		var s := 0.0
+		var total := _route.length()
+		while s <= total:
+			if _route.part_at(s) in ["passage", "before_passage", "after_passage"]:
+				_passage = Vector2(minf(_passage.x, s), maxf(_passage.y, s))
+			s += 0.25
+	if _passage.x > _passage.y:
+		return 0.0
+	# vorn am Fahrzeug messen (es soll schon gerade stehen, wenn die Nase hineinfährt)
+	var front := _s + direction * length / 2.0
+	var d := maxf(maxf(_passage.x - front, front - _passage.y), 0.0)
+	var back := _s - direction * length / 2.0
+	d = minf(d, maxf(maxf(_passage.x - back, back - _passage.y), 0.0))
+	return 1.0 - smoothstep(0.0, PASSAGE_EASE, d)
+
+
 func lane() -> float:
 	return StreetPaths.lane_offset(direction, lane_offset)
 
@@ -184,15 +209,19 @@ func _wanted_speed() -> float:
 	var swerve := lane()
 	# Unter dem Torbogen (und kurz davor/dahinter) gehen Fußgänger am Rand: langsam und mit
 	# Abstand zur Mitte hin fahren
-	var part := _route.part_at(_s + direction * length)
-	if part in ["passage", "before_passage", "after_passage"] or _route.part_at(_s) in ["passage", "before_passage", "after_passage"]:
-		limit = minf(limit, PASSAGE_SPEED)
-		swerve = lane() * PASSAGE_LANE
+	var gate := _passage_blend()
+	if gate > 0.0:
+		limit = minf(limit, lerpf(cruise_speed, PASSAGE_SPEED, gate))
+		swerve = lane() * lerpf(1.0, PASSAGE_LANE, gate)
 	for obstacle in life.road_obstacles(self):
 		var lage := _route.project(obstacle.pos, _s - 2.0, _s + LOOK_AHEAD) if direction > 0 \
 			else _route.project(obstacle.pos, _s - LOOK_AHEAD, _s + 2.0)
 		var along := (lage.x - _s) * direction - length / 2.0 - float(obstacle.reach)
 		if along < -0.3 or along > LOOK_AHEAD:
+			continue
+		if obstacle.kind == "cat_near":
+			# Katze am Straßenrand: rechtzeitig langsamer (sie könnte loslaufen)
+			limit = minf(limit, GameConfig.vehicle_cat_near_speed + maxf(0.0, along) * 0.35)
 			continue
 		# Menschen bekommen mehr Abstand als Fahrzeuge
 		var person: bool = obstacle.kind in ["walker", "player"]
@@ -220,9 +249,12 @@ func _wanted_speed() -> float:
 					# Noch nicht weit genug zur Seite: so bremsen, dass es vorher reicht
 					limit = minf(limit, sqrt(2.0 * BRAKE * maxf(0.0, along - 0.6)))
 				continue
-		var stop := maxf(0.0, along - STOP_GAP)
+		# Katzen: früh und sanft bremsen (mehr Abstand, halbe Verzögerung)
+		var cat: bool = obstacle.kind == "cat"
+		var stop := maxf(0.0, along - (STOP_GAP + 1.0 if cat else STOP_GAP))
 		var their: float = obstacle.get("speed", 0.0)
-		limit = minf(limit, maxf(sqrt(2.0 * BRAKE * stop), 0.0) + maxf(0.0, their) * clampf(stop / 6.0, 0.0, 1.0))
+		var brake := BRAKE * (0.5 if cat else 1.0)
+		limit = minf(limit, maxf(sqrt(2.0 * brake * stop), 0.0) + maxf(0.0, their) * clampf(stop / 6.0, 0.0, 1.0))
 	_target_lat = swerve
 	return limit
 

@@ -339,6 +339,7 @@ func _footsteps(moved: float) -> void:
 
 func _next_action() -> void:
 	ignore_agent = null
+	_attend(null)
 	if _actions.is_empty():
 		_action = {"type": "leave", "gate": false}
 	else:
@@ -457,9 +458,12 @@ func _step_cross(delta: float) -> void:
 			_anim_speed = 0.0
 			if _phase_time > float(_action.get("look_time", 1.6)):
 				_phase = 2
-		2:  # warten, bis kein Fahrzeug kommt
-			_anim_state = &"idle" if _phase_time < 4.0 else &"look"
+		2:  # warten, bis kein Fahrzeug kommt – und dem nächsten, das kommt, nachschauen, bis es vorbei ist
+			var car := life.vehicle_coming(self)
+			_attend(car)
+			_anim_state = &"idle" if _phase_time < 4.0 or car != null else &"look"
 			if life.road_clear_for(self):
+				_attend(null)
 				_phase = 3
 				on_road = true
 		3:  # hinüber (leicht schräg in Laufrichtung) – steht dort jemand, ein Stück daneben
@@ -628,8 +632,10 @@ func restyle(rng: RandomNumberGenerator) -> void:
 ## Die Spielfigur grüßen (seit der Nachbesserung von 6h): kurz stehen bleiben und zu ihr drehen (target = Welt),
 ## danach weitergehen – nur im normalen Gehen auf dem Gehweg.
 func greet_stop(target: Vector3, seconds: float) -> void:
-	if get_action_type() != "walk" or on_road or chat != null or ignore_agent != null:
+	if get_action_type() != "walk" or on_road or body_on_road() or chat != null or ignore_agent != null:
 		return
+	if life.crowded_near(self, 1.3):
+		return  # nicht mitten im Gedränge stehen bleiben
 	if _action.get("visit", false) or _action.has("half") or _action.has("alley") or _action.get("from_here", false):
 		return
 	var d := life.to_local2(target) - pos
@@ -639,6 +645,34 @@ func greet_stop(target: Vector3, seconds: float) -> void:
 	_action = {"type": "stand", "face": d.normalized(), "anim": &"idle", "time": seconds}
 	_phase = 0
 	_phase_time = 0.0
+
+
+## Wie lange das Stehen noch dauert (s; 0 = steht nicht).
+func stand_time_left() -> float:
+	return float(_action.get("time", 0.0)) - _phase_time if get_action_type() == "stand" else 0.0
+
+
+## Eine Katze reibt sich an den Beinen (CatLife): noch eine Weile stehen bleiben, zu ihr hinunterschauen, freuen.
+func hold_for_cat(cat: StreetCat, seconds: float) -> void:
+	if get_action_type() != "stand":
+		return
+	_action.time = maxf(float(_action.get("time", 0.0)), _phase_time + seconds)
+	_attend(cat)
+	if _model and _model.has_method("trigger_face"):
+		_model.call("trigger_face", &"pet")
+
+
+## Nach dem Reiben: die Katze streicheln (mit freien Händen und wenn gerade kein Gespräch läuft), sonst weiter anschauen.
+func pet_from_rub(cat: StreetCat) -> void:
+	if get_action_type() == "stand" and chat == null and not carries_bag() and cat.can_be_petted() and pet_cooldown <= 0.0:
+		if start_pet(cat, cat.adult and cat.posture != "lie"):
+			life.stat_pets += 1
+
+
+## Wen die Figur gerade anschaut (Katze, Auto; null = wieder wie sonst).
+func _attend(node: Node3D) -> void:
+	if _model and _model.has_method("look_at_node"):
+		_model.call("look_at_node", node)
 
 
 ## Trägt die Figur eine Einkaufstasche? (die Hand ist dann belegt)
@@ -711,6 +745,7 @@ func start_pet(cat: StreetCat, kneel: bool) -> bool:
 	_phase = 0
 	_phase_time = 0.0
 	ignore_agent = cat
+	_attend(cat)
 	pet_cooldown = GameConfig.passerby_pet_cooldown
 	return true
 

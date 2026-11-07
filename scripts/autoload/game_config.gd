@@ -921,18 +921,28 @@ var cat_run_speed: float = 1.9
 ## Was eine Katze unterwegs tut (Chancen je Besuch): Sitzplatz (Bank, Stuhl), Fensterbank, durchs Schaufenster
 ## der Bücherei schauen, in die Bücherei kommen (nur bei offener Tür), mit einer zweiten Katze Fangen spielen,
 ## Spielzeug tragen
-var cat_seat_chance: float = 0.45
-var cat_sill_chance: float = 0.35
+var cat_seat_chance: float = 0.5
+var cat_sill_chance: float = 0.65
 ## Seit Etappe 6h (Wünsche der Entwicklerin): Anteil der Besuche mit einem Gang über eine Gartenmauer (hinaufspringen,
 ## oben entlang laufen, sitzen oder sonnen), mit kurzem Rennen auf dem Gehweg, mit Reiben an Laternen/Kübeln/Bänken;
 ## Anteil der Pausen, in denen sich die Katze auf dem Rücken wälzt
-var cat_wall_chance: float = 0.55
+var cat_wall_chance: float = 0.9
 var cat_wall_speed: float = 0.32
 ## Große Katzen auf der Treppe (Stufe für Stufe)
 var cat_stair_speed: float = 0.3
 var cat_rub_speed: float = 0.1
 var cat_run_chance: float = 0.3
-var cat_rub_chance: float = 0.4
+var cat_rub_chance: float = 0.65
+## An den Beinen von Passanten reiben (seit der Nachbesserung von 6h): Wahrscheinlichkeit je Begegnung, so nah (m),
+## Pause bis zum nächsten Mal je Katze (s); Überqueren: nur warten, wenn ein Fahrzeug näher als das ist (m + Tempo)
+var cat_leg_rub_chance: float = 0.5
+var cat_leg_rub_distance: float = 3.0
+var cat_leg_rub_cooldown: float = 40.0
+var cat_road_wait_gap: float = 2.5
+## Fahrzeuge: so nah am Bordstein (m auf dem Gehweg) zählt eine Katze als „an der Straße“ – dann höchstens so schnell
+## (m/s, plus etwas je Meter Abstand)
+var vehicle_cat_near_distance: float = 1.4
+var vehicle_cat_near_speed: float = 2.2
 var cat_roll_chance: float = 0.18
 ## Treffen sich zwei Katzen näher als … m auf demselben Gehweg, beschnuppern sie sich (dann spielen sie Fangen, setzen
 ## sich zusammen oder gehen nach einem Miau weiter); dieselben beiden höchstens alle … Sekunden
@@ -955,6 +965,9 @@ var cat_pet_time: float = 4.0
 ## Geräusche an der Katze: Schnurren (Schleife) und nur ein sanftes, kurzes Miau (die übrigen Katzen-Laute
 ## passen nicht: zu lang bzw. zu aufgeregt), höchstens alle … Sekunden je Katze
 var cat_purr_volume_db: float = -9.0
+## Schnurren in der Bücherei (seit der Nachbesserung von 6h): leiser, nur drinnen zu hören, Hörweite (m)
+var cat_purr_inside_volume_db: float = -21.0
+var cat_purr_inside_distance: float = 3.5
 var cat_meow_sound: String = "ambience/cat_meow_1"
 var cat_meow_volume_db: float = -15.0
 var cat_meow_cooldown: float = 30.0

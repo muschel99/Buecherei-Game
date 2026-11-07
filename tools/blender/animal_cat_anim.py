@@ -365,6 +365,88 @@ SLEEP_SHIFT = {"kitten": (-0.07, -0.125), "adult": (-0.056, -0.093)}
 LIE_FRONT_Z = {"kitten": 0.001, "adult": -0.005}
 
 
+def anim_sit_ledge():
+    """Sitzen auf einer Kante (Gartenmauer, Fensterbank; seit der Nachbesserung von 6h): wie Sitzen, aber der Schwanz
+    geht hinten über die Kante und hängt senkrecht hinunter, pendelt langsam hin und her (baumeln), die Spitze biegt
+    sich ein wenig nach außen. Das Spiel setzt die Katze so, dass ihr Hinterteil an der Kante ist (TAIL_EDGE)."""
+    poses = {}
+    sp = SIT[AC.PROFILE]
+    for f in range(0, 121, 8):
+        t = f / 120
+        p = _sit_pose(breathe=1.2 * math.sin(t * math.tau))
+        swing = math.sin(t * math.tau)
+        # Ansatz etwas nach hinten unten (das Becken ist beim Sitzen schon um sp["hips"] gekippt), dann senkrecht hinab
+        downs = [-42.0 - sp["hips"], -34.0 + 4.0 * math.sin(t * math.tau + 1.2), -12.0, -4.0, 12.0]
+        for i in range(5):
+            # ersetzen (nicht anhängen): der Schwanz der Sitzhaltung liegt seitlich um die Pfoten
+            p.rot["tail%d" % (i + 1)] = [("x", downs[i]), ("z", 10.0 * swing * (0.3 + 0.25 * i))]
+        poses[f] = p
+    return 120, poses, True
+
+
+# Treppe (Eingang der Bücherei, große Katzen): Neigung wie die Stufen (Höhe 0,125 m, Tiefe 0,28 m – GameConfig
+# shop_floor_rise / (entrance_step_count + 1), entrance_step_depth), Fußhub vorn beim Hinaufsteigen
+STAIRS_SLOPE = math.degrees(math.atan2(0.125, 0.28))
+
+
+def _stairs_gait(up):
+    """Treppe hinauf bzw. hinunter (seit der Nachbesserung von 6h): Gang wie walk, aber der Körper folgt der Neigung der
+    Treppe (vorn höher bzw. tiefer), die Pfoten setzen auf die geneigte Linie; hinauf heben die Vorderbeine weit an
+    (über die Stufenkante), hinunter greifen sie tief nach vorn unten. Das Spiel führt die Katze dabei gerade die
+    Treppe entlang (Mitte auf der Linie über den Stufenkanten)."""
+    rest = rest_points()
+    sc = AC.P["leg"]
+    n = 30
+    poses = {}
+    offsets = {"bl_l": 0.0, "fl_l": 0.25, "bl_r": 0.5, "fl_r": 0.75}
+    slope = STAIRS_SLOPE if up else -STAIRS_SLOPE
+    tan = math.tan(math.radians(slope))
+    front_lift = 0.058 if up else 0.03
+    hind_lift = 0.04 if up else 0.02
+    for f in range(n):
+        t = f / n
+        p = Pose()
+        for foot, phi in offsets.items():
+            q = (t - phi) % 1.0
+            duty = 0.62
+            if q < duty:
+                k = q / duty
+                y = -WALK_STRIDE / 2 + WALK_STRIDE * k
+                z = 0.0
+            else:
+                k = (q - duty) / (1.0 - duty)
+                sm = k * k * (3 - 2 * k)
+                if up and foot.startswith("fl"):
+                    # hinauf: die Vorderpfote geht zuerst nach vorn, dann hoch über die Kante (sonst faltet sich das
+                    # Bein hinten an die Brust)
+                    sm = 1.0 - (1.0 - k) ** 2
+                y = WALK_STRIDE / 2 - WALK_STRIDE * sm
+                z = (front_lift if foot.startswith("fl") else hind_lift) * math.sin(math.pi * k)
+                if not up and foot.startswith("fl"):
+                    # hinunter: die Vorderpfote greift weiter nach vorn (und damit tiefer auf der Linie)
+                    y -= 0.015 * math.sin(math.pi * k)
+            # auf der geneigten Linie (vorn = -y): Höhe aus der wirklichen Lage (Ruhelage + Schritt × Beinlänge)
+            z_line = -(rest[foot].y + y * sc) * tan
+            p.foot(foot, rest[foot] + Vector((0, y, z + z_line / sc)))
+        # Körper geneigt (Becken kippt vorn hoch bzw. runter), Kopf schaut wieder etwa geradeaus
+        p.r("hips", ("x", -slope * 0.85))
+        p.move("hips", (0, 0, -AC.SPINE[0][1] * tan + 0.004 * math.sin(t * math.tau * 2)), absolute=True)
+        p.r("chest", ("z", -4 * math.sin(t * math.tau + 0.8)))
+        p.r("neck", ("x", slope * 0.45))
+        p.r("head", ("x", slope * 0.25))
+        tail_curve(p, 30 + slope * 0.5, 6, sway=6, phase=t * math.tau)
+        poses[f] = p
+    return n, poses, True
+
+
+def anim_stairs_up():
+    return _stairs_gait(True)
+
+
+def anim_stairs_down():
+    return _stairs_gait(False)
+
+
 def anim_sit_down():
     """Hinsetzen: erst hinten absetzen (Becken sinkt, Hinterbeine falten), Vorderbeine bleiben stehen."""
     rest = rest_points()
@@ -744,7 +826,8 @@ ANIMS = [("idle", anim_idle), ("walk", anim_walk), ("run", anim_run), ("sit_down
          ("sleep", anim_sleep), ("stretch", anim_stretch), ("crouch", anim_crouch), ("stalk", anim_stalk),
          ("pounce", anim_pounce), ("jump_up", anim_jump_up), ("jump_down", anim_jump_down), ("hop_up", anim_hop_up),
          ("step_down", anim_step_down), ("sniff", anim_sniff), ("bat", anim_bat), ("rub", anim_rub), ("rub_r", lambda: anim_rub(-1.0)),
-         ("roll", anim_roll)]
+         ("roll", anim_roll), ("sit_ledge", anim_sit_ledge), ("stairs_up", anim_stairs_up),
+         ("stairs_down", anim_stairs_down)]
 
 
 def build_all(arm, only=None):

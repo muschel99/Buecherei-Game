@@ -104,8 +104,9 @@ var _shot: Dictionary = {}
 ## Beim Plaudern: Animation des Erzählens (leer = Gesten über den GestureModifier), beim Start an zufälliger Stelle
 var _talk_clip: StringName = &""
 var _talk_seek := false
-## Gesprächspartner (wird angeschaut, auch wenn er daneben sitzt)
+## Gesprächspartner (wird angeschaut, auch wenn er daneben sitzt); etwas, das gezielt angeschaut wird (look_at_node)
 var _chat_partner: Node3D
+var _attention: Node3D
 ## Einkaufstasche: Modell, Pendel (Ausschlag x/z in Bogenmaß, Geschwindigkeit), letzte Lage/Geschwindigkeit der Hand
 var _bag: Node3D
 var _bag_swing := Vector2.ZERO
@@ -705,6 +706,12 @@ func set_chat_partner(partner: Node3D) -> void:
 	_chat_partner = partner
 
 
+## Etwas gezielt anschauen (Katze an den Beinen, Auto beim Warten am Bordstein; null = wieder wie sonst) – hat Vorrang
+## vor allem anderen, auch vor der Spielfigur.
+func look_at_node(node: Node3D) -> void:
+	_attention = node
+
+
 func _update_gesture(delta: float) -> void:
 	if _gesture_modifier == null:
 		return
@@ -832,6 +839,9 @@ func _scan_focus() -> void:
 	var best: Node3D = null
 	var best_dist := INF
 	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
+	if _attention and is_instance_valid(_attention) and _attention.is_visible_in_tree():
+		_focus = _attention
+		return
 	var now_s := Time.get_ticks_msec() / 1000.0
 	if camera and now_s >= _player_rest_until:
 		var dist := _focus_distance(me, forward, camera.global_position, GameConfig.chibi_look_player_radius,
@@ -865,6 +875,9 @@ func _scan_focus() -> void:
 				best_dist = dist
 	_focus = best
 	if best == null or best_dist > GameConfig.chibi_greet_radius:
+		return
+	# Wer im Auto oder auf dem Rad sitzt, wird angeschaut, aber nicht gegrüßt (kein Winken zu Autofahrern)
+	if best is ChibiPasserbyModel and not (best.get_parent() is Passerby):
 		return
 	var id := best.get_instance_id()
 	var now := Time.get_ticks_msec() / 1000.0
@@ -910,6 +923,10 @@ func _focus_distance(me: Vector3, forward: Vector3, point: Vector3, radius: floa
 func _focus_point() -> Vector3:
 	if _focus is ChibiPasserbyModel:
 		return (_focus as ChibiPasserbyModel).eye_point()
+	if _focus is StreetCat:
+		return _focus.global_position + Vector3.UP * 0.15 * _focus.scale.y
+	if _focus is StreetVehicle:
+		return _focus.global_position + Vector3.UP * 0.8
 	return _focus.global_position
 
 
