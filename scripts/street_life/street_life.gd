@@ -60,6 +60,8 @@ const SIGHT_MASK := 1 | 128
 const FIT_RADIUS := 0.36
 ## So viele Figuren mehr im Vorrat, als gleichzeitig unterwegs sind (mehr Abwechslung).
 const EXTRA_LOOKS := 4
+## Zu zweit unterwegs: so nah dürfen sich die beiden kommen (m, Mitte zu Mitte)
+const PAIR_MIN_GAP := 0.24
 
 ## Spielfigur (für Ausweichen und Bremsen). Die Sichtprüfung nimmt immer die aktive Kamera.
 @export var player_path: NodePath
@@ -208,6 +210,7 @@ var stat_chats := 0
 var stat_handshakes := 0
 var stat_seat_chats := 0
 var stat_pets := 0
+var stat_pairs := 0
 var _chat_tried := {}
 var _chat_scan := 0.0
 var _chat_forget := 60.0
@@ -804,6 +807,9 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 		var p: Vector2 = obstacle.pos
 		var limit := own + float(obstacle.radius)
 		limit += PLAYER_GAP if obstacle.kind == "player" else -0.03
+		if walker.companion != null and obstacle.get("agent") == walker.companion and walker.companion.companion == walker:
+			# zu zweit unterwegs: sie stimmen sich selbst ab (sonst hielten sie sich gegenseitig auf); nur nie ineinander
+			limit = PAIR_MIN_GAP
 		var new_dist := new_pos.distance_to(p)
 		if new_dist < limit and new_dist < walker.pos.distance_to(p) - 0.0005:
 			return true
@@ -1042,9 +1048,66 @@ func _start_walker() -> bool:
 			continue
 		var plan := _plan_walker(start)
 		if not plan.is_empty():
-			_launch(plan)
+			# manchmal zu zweit (seit der Nachbesserung von 6h): nur auf einfachen Wegen (ohne Schaufenster, Bank,
+			# Gasse), ohne Pausen; der zweite startet ein Stück dahinter
+			var pair := _idle_walkers.size() >= 2 and _rng.randf() < GameConfig.passerby_pair_chance and _pairable(plan)
+			var behind := Vector2.INF
+			if pair:
+				var first: Dictionary = plan.actions[0]
+				var route: StreetRoute = first.route
+				var at := route.project(plan.start)
+				var back := route.point_at(at.x - signf(float(first.to) - at.x) * 0.9, at.y)
+				if is_visible_spot(back) or _crowded(back):
+					pair = false
+				else:
+					behind = back
+					var kept: Array = (plan.actions as Array).filter(func(a: Dictionary) -> bool: return a.type != "stand")
+					plan.actions = kept
+			var leader := _launch(plan)
+			if pair and leader:
+				_launch_companion(leader, plan, behind)
 			return true
 	return false
+
+
+## Kann man diesen Weg zu zweit gehen? (nur gehen, überqueren, Pausen, verschwinden – keine Gasse, kein Schaufenster,
+## keine Bank)
+func _pairable(plan: Dictionary) -> bool:
+	if (plan.actions as Array).is_empty() or String(plan.actions[0].type) != "walk" or not is_centerline(plan.actions[0].route):
+		return false
+	for a: Dictionary in plan.actions:
+		if not String(a.type) in ["walk", "cross", "leave", "stand"] or a.get("visit", false) or a.has("half") \
+				or a.has("alley") or a.get("from_here", false):
+			return false
+	return true
+
+
+## Der Begleiter: dieselben Schritte, dasselbe Tempo, folgt dem ersten (neben ihm, wo Platz ist), und beide plaudern
+## im Gehen (ChatSession mit walking).
+func _launch_companion(leader: Passerby, plan: Dictionary, start: Vector2) -> void:
+	var follower: Passerby = _idle_walkers.pop_at(_rng.randi() % _idle_walkers.size())
+	follower.restyle(_rng)
+	var speed := minf(leader.speed_pref, plan.speed * follower.speed_factor())
+	leader.speed_pref = speed
+	follower.speed_pref = speed
+	follower.comfort_pref = plan.comfort
+	follower.side = plan.side
+	_walkers.append(follower)
+	var actions: Array[Dictionary] = []
+	for a: Dictionary in plan.actions:
+		actions.append(a.duplicate())
+	follower.begin(start, actions, plan.face)
+	follower.set_shadows(0)
+	leader.companion = follower
+	follower.companion = leader
+	follower.follows = true
+	appeared.emit(follower, follower.pos)
+	var session := ChatSession.new(leader, follower, 100000.0)
+	session.walking = true
+	leader.join_walking_chat(session)
+	follower.join_walking_chat(session)
+	_chats.append(session)
+	stat_pairs += 1
 
 
 func _pick_street_end() -> Dictionary:
@@ -1060,7 +1123,7 @@ func _crowded(spot: Vector2) -> bool:
 	return player_pos().distance_to(spot) < 1.5
 
 
-func _launch(plan: Dictionary) -> void:
+func _launch(plan: Dictionary) -> Passerby:
 	var walker: Passerby = _idle_walkers.pop_at(_rng.randi() % _idle_walkers.size())
 	# Gangart und Tasche bei jedem Losgehen neu (seit der Nachbesserung von 6h). Wer sich setzen will, trägt möglichst
 	# keine Einkaufstasche (die hängt an der Hand): dann noch einmal würfeln, sonst setzt er sich eben nicht
@@ -1084,6 +1147,7 @@ func _launch(plan: Dictionary) -> void:
 	walker.begin(plan.start, actions, plan.face)
 	walker.set_shadows(0)
 	appeared.emit(walker, walker.pos)
+	return walker
 
 
 ## Plant den ganzen Weg eines Passanten vom Ort "start" aus. Ergebnis: { "start", "face",

@@ -229,6 +229,9 @@ func _measure() -> void:
 		for j in range(i + 1, walkers.size()):
 			var b := walkers[j]
 			var gap := a.pos.distance_to(b.pos) - a.radius * a.scale.x - b.radius * b.scale.x
+			# zu zweit unterwegs: dürfen enger nebeneinander (Körper sind schmaler als der Ausweich-Kreis)
+			if a.companion == b:
+				gap += 0.24
 			_report.min_walker_gap = minf(_report.min_walker_gap, gap)
 			if gap < -0.08:
 				_report.overlap.append("%s/%s %.2f m bei %s (%s)" % [a.name, b.name, gap, a.pos, _spot_name])
@@ -319,8 +322,8 @@ func _print_report() -> void:
 			c.get_walls().size(), c.sill_sits, c.rubs, c.meetings])
 		for line in _cat_stuck:
 			print("  ", line)
-	print("Passanten (seit 6h): geplaudert %d (davon Hände geschüttelt %d), auf der Bank geplaudert %d, Katzen gestreichelt %d" % [
-		_life.stat_chats, _life.stat_handshakes, _life.stat_seat_chats, _life.stat_pets])
+	print("Passanten (seit 6h): geplaudert %d (davon Hände geschüttelt %d), auf der Bank geplaudert %d, Katzen gestreichelt %d, zu zweit %d" % [
+		_life.stat_chats, _life.stat_handshakes, _life.stat_seat_chats, _life.stat_pets, _life.stat_pairs])
 	print("=== Bericht Straßenleben ===")
 	print("Messungen: %d" % _report.samples)
 	print("Erschienen: %d, im Blickfeld: %d, mit freier Sicht (beim Umdrehen): %d" % [

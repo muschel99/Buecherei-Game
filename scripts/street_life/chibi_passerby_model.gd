@@ -688,6 +688,11 @@ func chat_react(speaking: bool, laughing: bool) -> void:
 	var seated := _prev_state == &"sit"
 	if not _shot.is_empty():
 		return
+	if _prev_state == &"walk":
+		# im Gehen keine Auftritte (die Beine gehen weiter): nur nicken
+		if not speaking and randf() < GameConfig.passerby_chat_nod_chance:
+			_nod_t = 0.0
+		return
 	if speaking:
 		if not seated and not carries_bag and randf() < GameConfig.passerby_chat_gesture_chance:
 			play_clip([&"point", &"point_back", &"gesture"].pick_random())
@@ -721,8 +726,8 @@ func _update_gesture(delta: float) -> void:
 		_gesture_left -= delta
 		if _gesture_left <= 0.0:
 			_gesture = ChibiGestureModifier.Gesture.NONE
-	elif _talking and _talk_clip == &"" and not carries_bag:
-		active = ChibiGestureModifier.Gesture.TALK
+	elif _talking and (_talk_clip == &"" or _prev_state == &"walk") and not carries_bag:
+		active = ChibiGestureModifier.Gesture.TALK  # im Gehen (zu zweit) erzählen die Hände über die Geste
 	var fading_in := _gesture != ChibiGestureModifier.Gesture.NONE or active == ChibiGestureModifier.Gesture.TALK
 	if fading_in and active != ChibiGestureModifier.Gesture.NONE:
 		if _gesture_modifier.gesture != active:
@@ -730,7 +735,8 @@ func _update_gesture(delta: float) -> void:
 			_gesture_modifier.time = 0.0
 		_gesture_modifier.gesture = active
 		var ramp := 0.45 if _gesture_left > 0.4 or active == ChibiGestureModifier.Gesture.TALK else _gesture_left / 0.4 * 0.45
-		_gesture_modifier.weight = move_toward(_gesture_modifier.weight, 1.0 if ramp >= 0.45 else ramp / 0.45, delta / 0.35)
+		var full := 0.65 if _prev_state == &"walk" else 1.0  # im Gehen schwingen die Arme noch etwas mit
+		_gesture_modifier.weight = move_toward(_gesture_modifier.weight, full if ramp >= 0.45 else ramp / 0.45 * full, delta / 0.35)
 	else:
 		_gesture_modifier.weight = move_toward(_gesture_modifier.weight, 0.0, delta / 0.35)
 		if _gesture_modifier.weight <= 0.0:

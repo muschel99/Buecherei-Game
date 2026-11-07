@@ -136,6 +136,13 @@ var _bubble: ChatBubble
 ## Katzen streicheln (seit Etappe 6h): Pause bis zum nächsten Mal; diese Katze ist beim Gehen kein Hindernis
 var pet_cooldown := 0.0
 var ignore_agent: Object = null
+## Zu zweit unterwegs (seit der Nachbesserung von 6h): der Begleiter; follows = ich gehe neben (bzw. hinter) ihm
+var companion: Passerby
+var follows := false
+var _pair_side := 1.0
+## Abstand nebeneinander (m, Mitte zu Mitte) bzw. hintereinander, wo der Gehweg zu schmal ist
+const PAIR_GAP := 0.62
+const PAIR_LAG := 0.9
 
 
 func _ready() -> void:
@@ -207,6 +214,9 @@ func begin(start: Vector2, actions: Array[Dictionary], face: Vector2) -> void:
 	_face_off = 0.0
 	_yield = 0.0
 	ghost_static = 0.0
+	companion = null
+	follows = false
+	_pair_side = 1.0 if randf() < 0.5 else -1.0
 	_actions = actions
 	_action = {}
 	_yaw = atan2(face.x, face.y)
@@ -400,7 +410,7 @@ func _set_route(route: StreetRoute) -> void:
 func _step_walk(delta: float) -> void:
 	var action := _action
 	var before := pos
-	_walk_along(delta, _comfort_lat())
+	_walk_along(delta, _pair_want(_comfort_lat()))
 	# Unterwegs umgedreht (neue Schritte von StreetLife)? Dann gilt schon der neue Weg – nicht
 	# mit dem alten Ziel vergleichen (sonst fiele der neue Weg weg und er verschwände mitten
 	# auf der Straße)
@@ -645,6 +655,55 @@ func greet_stop(target: Vector3, seconds: float) -> void:
 	_action = {"type": "stand", "face": d.normalized(), "anim": &"idle", "time": seconds}
 	_phase = 0
 	_phase_time = 0.0
+
+
+## Gehen beide gerade auf demselben Weg (dann gehen sie zusammen)?
+func _paired_walking() -> bool:
+	return companion != null and is_instance_valid(companion) and companion.active and companion.companion == self \
+		and get_action_type() == "walk" and companion.get_action_type() == "walk" and companion._route == _route
+
+
+## Wohin der Begleiter will: neben den ersten (auf die Seite, wo Platz ist), sonst genau hinter ihn.
+func _pair_want(want: float) -> float:
+	if not follows or not _paired_walking():
+		return want
+	var band := _band_here()
+	var gap := PAIR_GAP * scale.x
+	for k in 2:
+		var lat := companion._lat + _pair_side * gap
+		if lat >= band.x and lat <= band.y:
+			return lat
+		_pair_side = -_pair_side
+	return companion._lat
+
+
+## Tempo zu zweit: der Begleiter hält sich neben (bzw. hinter) dem ersten, der erste wartet, wenn er zurückfällt.
+func _pair_speed() -> float:
+	if not _paired_walking():
+		return speed_pref
+	var ahead := (companion._s - _s) * float(_dir)
+	if follows:
+		# erst seitlich neben den ersten, dann aufholen (sonst ginge man durch ihn hindurch); hintereinander mit Abstand
+		var side_by_side := absf(companion._lat - _lat) > PAIR_GAP * 0.75 * scale.x
+		if not side_by_side and ahead < -0.2:
+			return speed_pref  # hintereinander und ich bin vorn (Engstelle): einfach weiter, der andere folgt
+		var lag := 0.0 if side_by_side else PAIR_LAG
+		return clampf(companion.velocity2.length() + (ahead - lag) * 1.2, 0.0, speed_pref * 1.5)
+	if ahead < -1.3 and absf(companion._lat - _lat) > PAIR_GAP * 0.75 * scale.x:
+		return speed_pref * 0.55  # der Begleiter fällt zurück: etwas langsamer
+	return speed_pref
+
+
+## Pause beim Plaudern im Gehen: keiner erzählt.
+func chat_quiet() -> void:
+	if _model and _model.has_method("set_talking"):
+		_model.call("set_talking", false)
+
+
+## Plaudern im Gehen (zu zweit): Runde gilt, so lange beide unterwegs sind; den anderen dabei anschauen.
+func join_walking_chat(session: ChatSession) -> void:
+	chat = session
+	_set_partner(session.other(self))
 
 
 ## Wie lange das Stehen noch dauert (s; 0 = steht nicht).
@@ -955,7 +1014,7 @@ func _walk_along(delta: float, want: float) -> void:
 	# Zurück vom Fahrbahnrand nach und nach (nie ein Sprung) – aber nie über ihn hinaus
 	var old := clampf(_old_lat, wide.x, wide.y)
 	_lat = clampf(_lat, minf(band.x, old), maxf(band.y, old))
-	var speed := minf(speed_pref, _speed_limit)
+	var speed := minf(_pair_speed(), _speed_limit)
 	if speed < 0.02:
 		speed = 0.0
 	var ds := speed * delta
@@ -1036,6 +1095,8 @@ func _avoid(want: float, band: Vector2) -> float:
 	_front_walker = null
 	var intervals: Array[Vector4] = []  # (von, bis, entgegenkommend 0/1, Abstand voraus)
 	for obstacle in life.obstacles_near(self, LOOK_AHEAD + 1.5):
+		if companion != null and obstacle.get("agent") == companion and _paired_walking():
+			continue  # mit dem Begleiter stimmt man sich selbst ab (nebeneinander)
 		var lage := _route.project(obstacle.pos, _s - 2.0, _s + 2.0 + LOOK_AHEAD) if _dir > 0 \
 			else _route.project(obstacle.pos, _s - 2.0 - LOOK_AHEAD, _s + 2.0)
 		var along := (lage.x - _s) * _dir

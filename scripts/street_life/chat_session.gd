@@ -13,6 +13,9 @@ var b: Passerby
 var time_left := 10.0
 var handshake := false
 var seated := false
+## Zu zweit im Gehen (seit der Nachbesserung von 6h): ohne Stehenbleiben und Begrüßung, mit Pausen; vorbei, wenn einer
+## verschwindet
+var walking := false
 var _speaker := 0
 var _turn_left := 0.0
 ## 0 = aufeinander zu, 1 = Begrüßung, 2 = nach dem Händeschütteln auseinander, 3 = plaudern
@@ -36,11 +39,13 @@ func other(walker: Passerby) -> Passerby:
 ## false = vorbei (beide gehen weiter).
 func update(delta: float) -> bool:
 	if not is_instance_valid(a) or not is_instance_valid(b) or not a.active or not b.active \
-			or (seated and (not a.is_sitting() or not b.is_sitting())):
+			or (seated and (not a.is_sitting() or not b.is_sitting())) or (walking and a.companion != b):
 		end()
 		return false
-	if seated and _phase == 0:
+	if (seated or walking) and _phase == 0:
 		_phase = 3
+	if walking:
+		return _update_walking(delta)
 	_phase_left -= delta
 	match _phase:
 		0:  # aufeinander zu
@@ -77,6 +82,27 @@ func update(delta: float) -> bool:
 		var listener := b if _speaker == 0 else a
 		speaker.chat_turn(true, _turn_left)
 		listener.chat_turn(false, _turn_left)
+	return true
+
+
+## Im Gehen: abwechselnd erzählen, ab und zu eine Pause; weit auseinander (Engstelle, Überqueren) – leise.
+func _update_walking(delta: float) -> bool:
+	_turn_left -= delta
+	if _turn_left > 0.0:
+		return true
+	var near := a.pos.distance_to(b.pos) < 2.2 and not a.on_road and not b.on_road
+	_turn_left = randf_range(2.0, 4.0)
+	if not near or randf() < 0.3:
+		a.chat_turn(false, _turn_left)
+		b.chat_turn(false, _turn_left)
+		a.chat_quiet()
+		b.chat_quiet()
+		return true
+	_speaker = 1 - _speaker
+	var speaker := a if _speaker == 0 else b
+	var listener := b if _speaker == 0 else a
+	speaker.chat_turn(true, _turn_left)
+	listener.chat_turn(false, _turn_left)
 	return true
 
 
