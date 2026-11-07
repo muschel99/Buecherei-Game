@@ -897,12 +897,16 @@ func _scan_focus() -> void:
 		var to_player := best == camera
 		var wave_chance := GameConfig.chibi_wave_chance_player if to_player else GameConfig.chibi_wave_chance
 		var wave := randf() < wave_chance and not carries_bag
+		# Nicken geht im Vorbeigehen; wer winkt, bleibt dafür stehen und dreht sich zu dem Gegrüßten (seit der Nachbesserung
+		# von 6h) – geht das gerade nicht (über die Straße, Gedränge), wird genickt statt gewinkt
+		if wave and _prev_state == &"walk":
+			var walker := get_parent()
+			var stopped := false
+			if to_player and walker and walker.has_method("greet_stop"):
+				stopped = bool(walker.call("greet_stop", camera.global_position, GameConfig.chibi_greet_stop_time))
+			wave = stopped
 		trigger_face(&"wave" if wave else (&"greet_laugh" if to_player and randf() < 0.5 else &"greet"))
 		_nod_t = 0.0
-		if to_player and randf() < GameConfig.chibi_greet_stop_chance:
-			var walker := get_parent()
-			if walker and walker.has_method("greet_stop"):
-				walker.call("greet_stop", camera.global_position, GameConfig.chibi_greet_stop_time)
 		if wave:
 			wave_hello()
 

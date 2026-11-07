@@ -238,13 +238,13 @@ func _wanted_speed() -> float:
 			continue
 		if person:
 			_person_ahead = minf(_person_ahead, along)
-		if can_swerve and obstacle.kind != "vehicle_oncoming":
-			# Fahrrad: zur Straßenmitte hin vorbei, wenn dort Platz ist
+		if can_swerve and obstacle.kind not in ["vehicle_oncoming", "cat"]:
+			# Fahrrad: zur Straßenmitte hin vorbei, wenn dort Platz ist – vorher abbremsen (seit der Nachbesserung von 6h
+			# auch bei Dingen, nicht nur bei Menschen); für Katzen bremsen Fahrräder wie Autos
 			var around := lage.y - signf(lane()) * (half + 0.1)
 			if absf(around) < GameConfig.street_width / 2.0 - 0.35 and life.lane_free(self, around, along + 8.0):
 				swerve = around
-				if person:
-					limit = minf(limit, PASS_SPEED + along * 0.4)  # an Menschen langsam vorbei
+				limit = minf(limit, GameConfig.bike_swerve_speed + maxf(0.0, along) * 0.3)
 				if absf(lage.y - _lat) < half:
 					# Noch nicht weit genug zur Seite: so bremsen, dass es vorher reicht
 					limit = minf(limit, sqrt(2.0 * BRAKE * maxf(0.0, along - 0.6)))
@@ -278,7 +278,8 @@ func _drive(delta: float, wanted: float) -> void:
 		speed = 0.0
 		_accel = 0.0
 	var real_accel := (speed - before) / maxf(delta, 0.0001)
-	_lat = move_toward(_lat, _target_lat, SWERVE_SPEED * delta)
+	# seitlich nie schneller als es zum Tempo passt (langsam fahrend kein Sprung zur Seite)
+	_lat = move_toward(_lat, _target_lat, minf(SWERVE_SPEED, maxf(0.25, speed * 0.45)) * delta)
 	var ds := speed * delta
 	if ds > 0.0:
 		var p0 := _route.point_at(_s, _lat)

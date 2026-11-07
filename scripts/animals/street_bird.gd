@@ -183,9 +183,11 @@ func _step_fly(delta: float) -> void:
 	var total := _lengths[-1] if not _lengths.is_empty() else 0.0
 	var left := total - _s
 	# sanft anfahren und vor der Landung langsamer (nicht bei Durchflügen und beim Wegfliegen)
-	var v := _speed * clampf(0.4 + _s / 1.2, 0.0, 1.0)
+	# seit der Nachbesserung von 6h ruhiger: die ersten Meter langsam steigend, vor der Landung deutlich abbremsen
+	var start := GameConfig.bird_takeoff_ease
+	var v := _speed * clampf(0.25 + 0.75 * smoothstep(0.0, start, _s), 0.0, 1.0)
 	if not leaving:
-		v = minf(v, maxf(1.0, left * 1.5))
+		v = minf(v, maxf(GameConfig.bird_landing_speed, left * GameConfig.bird_landing_brake))
 	_s = minf(_s + v * delta, total)
 	var p := _sample(_s)
 	var ahead := _sample(minf(_s + 0.3, total))

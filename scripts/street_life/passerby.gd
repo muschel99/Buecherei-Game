@@ -641,20 +641,21 @@ func restyle(rng: RandomNumberGenerator) -> void:
 
 ## Die Spielfigur grüßen (seit der Nachbesserung von 6h): kurz stehen bleiben und zu ihr drehen (target = Welt),
 ## danach weitergehen – nur im normalen Gehen auf dem Gehweg.
-func greet_stop(target: Vector3, seconds: float) -> void:
+func greet_stop(target: Vector3, seconds: float) -> bool:
 	if get_action_type() != "walk" or on_road or body_on_road() or chat != null or ignore_agent != null:
-		return
+		return false
 	if life.crowded_near(self, 1.3):
-		return  # nicht mitten im Gedränge stehen bleiben
+		return false  # nicht mitten im Gedränge stehen bleiben
 	if _action.get("visit", false) or _action.has("half") or _action.has("alley") or _action.get("from_here", false):
-		return
+		return false
 	var d := life.to_local2(target) - pos
 	if d.length() < 0.3:
-		return
+		return false
 	_actions.push_front(_action)
 	_action = {"type": "stand", "face": d.normalized(), "anim": &"idle", "time": seconds}
 	_phase = 0
 	_phase_time = 0.0
+	return true
 
 
 ## Gehen beide gerade auf demselben Weg (dann gehen sie zusammen)?

@@ -385,7 +385,9 @@ def interior(b, body, z_front, z_back, floor_y, seat_mat=SEAT, rows=1, wheel_sid
             b.box((x - w / 2, floor_y + 0.019, rz - 0.22), (x + w / 2, floor_y + 0.32, rz + 0.22), seat_mat)
             b.box((x - w / 2, floor_y + 0.3, rz - 0.26), (x + w / 2, floor_y + 0.85, rz - 0.2), seat_mat)
     wx = wheel_side * sx
-    wz = z_front - 0.32 - seat_back
+    # Lenkrad dicht hinter dem Armaturenbrett (seit der Nachbesserung von 6h 12 cm weiter vorn – es hing im großen
+    # Chibi-Kopf der Person am Steuer)
+    wz = z_front - 0.2 - seat_back
     ring = [V(wx + math.cos(a) * 0.17, belt + 0.02 + math.sin(a) * 0.17 * 0.85, wz - math.sin(a) * 0.08)
             for a in [2 * math.pi * k / 16 for k in range(17)]]
     b.tube(ring, 0.014, DARK, segments=5, caps=False)

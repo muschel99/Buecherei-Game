@@ -169,7 +169,7 @@ func bird_scare_radius() -> float:
 	if get_action_type() == "pounce":
 		return 3.5
 	if hunting:
-		return 1.15
+		return 0.35  # beim Lauern und Anschleichen bleiben die Vögel sitzen – erst beim Sprung fliegen sie auf
 	return GameConfig.bird_flee_radius + 0.5
 
 

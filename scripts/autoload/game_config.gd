@@ -748,10 +748,9 @@ var chibi_wave_chance: float = 0.35
 var chibi_wave_chance_player: float = 0.6
 ## Größe der Köpfe der Passanten (1 = wie gebaut; seit der Nachbesserung von 6h etwas kleiner, Wunsch der Entwicklerin)
 var chibi_head_scale: float = 0.92
-## Grüßen der Spielfigur: kurz stehen bleiben und zu ihr drehen (Sekunden), damit sich niemand beim Winken wegdreht;
-## Wahrscheinlichkeit, dass jemand dafür stehen bleibt (sonst im Gehen, solange sie vorn ist)
+## Grüßen der Spielfigur mit Winken: so lange stehen bleiben und zu ihr drehen (Sekunden), damit sich niemand beim
+## Winken wegdreht (Nicken geht im Vorbeigehen)
 var chibi_greet_stop_time: float = 2.4
-var chibi_greet_stop_chance: float = 0.75
 
 ## Kleine Pausen unterwegs (seit Etappe 6c): Wahrscheinlichkeit je Weg, kurz stehen zu bleiben und sich
 ## umzuschauen, zu strecken oder auf die Uhr zu schauen; Dauer der Pause (Sekunden; mit Animation mindestens
@@ -941,6 +940,11 @@ var cat_leg_rub_chance: float = 0.5
 var cat_leg_rub_distance: float = 3.0
 var cat_leg_rub_cooldown: float = 40.0
 var cat_road_wait_gap: float = 2.5
+## Vögel: so viele Meter nach dem Abheben erreichen sie ihr Flugtempo; vor der Landung höchstens Abstand × brake
+## (m/s), aber nie langsamer als landing_speed
+var bird_takeoff_ease: float = 2.2
+var bird_landing_brake: float = 0.9
+var bird_landing_speed: float = 0.55
 ## Spielzeug (seit der Nachbesserung von 6h): Spielfigur hält es hier (vor der Kamera: rechts, unten, vorn), wirft mit
 ## diesem Tempo (m/s) und so viel nach oben; eine Katze, die es landen sieht (höchstens so weit, m), rennt mit dieser
 ## Wahrscheinlichkeit hin; beim Spielen schubsen Katzen es manchmal hoch und springen hinterher
@@ -956,6 +960,8 @@ var toy_start_count: int = 2
 ## (m/s, plus etwas je Meter Abstand)
 var vehicle_cat_near_distance: float = 1.4
 var vehicle_cat_near_speed: float = 2.2
+## Fahrräder: so langsam (m/s, plus etwas je Meter Abstand) beim Ausweichen auf die andere Straßenseite
+var bike_swerve_speed: float = 1.6
 var cat_roll_chance: float = 0.18
 ## Treffen sich zwei Katzen näher als … m auf demselben Gehweg, beschnuppern sie sich (dann spielen sie Fangen, setzen
 ## sich zusammen oder gehen nach einem Miau weiter); dieselben beiden höchstens alle … Sekunden
