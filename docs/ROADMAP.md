@@ -44,7 +44,7 @@
 | 6e  | Geräusche und Musik (eigene Aufnahmen, räumlich, Laute der Passanten) | fertig |
 | 6f  | Nichts verschwindet, Tür, neue Fenster, Deko-Plätze, Autos, Kamin, Geräusche feiner | fertig |
 | 6g  | Tiere: Vögel und Katzen (Blender-Modelle mit Bewegungen, Vogelhäuschen, Streicheln) | fertig |
-| 6h  | Vögel und Katzen verfeinern (weiche Modelle, Flug, Tauben, Gesichter, Spielzeug, Katzenkörbchen) | fertig |
+| 6h  | Vögel und Katzen verfeinern (weiche Modelle, Flug, Tauben, Gesichter, Spielzeug, Katzenkörbchen); dazu neue Geräusche, große Katzen, Katzen-Verhalten, Animationen der Passanten | fertig |
 | 6i  | Leben in der Straße (nächste Testrunde der Entwicklerin) | vorgemerkt |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
@@ -73,7 +73,7 @@ saubere Nummern unter Etappe 6, damit sich nichts mit den späteren Etappen 7–
 | 12b | 6h | Verfeinerung Vögel und Katzen |
 | 13 | 6i | Leben in der Straße (kommt danach) |
 
-## Stand nach dem Stil-Umbau (Überblick, Stand 01.11.2026)
+## Stand nach dem Stil-Umbau (Überblick, Stand 06.11.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
 
 **Was neu ist**
@@ -120,6 +120,10 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   statt Rundfenster, Vorhänge vor der Fensterbank; Deko mit festen Plätzen und Bäumchen; Autos mit Scheiben
   nach ihrer Form, geschlossenen Reifen und passenden Fahrern; Kamine mit echter Brennkammer und lodernden
   Feuerzungen; Geräusche feiner (Schritt-Takt, Pflaster-Rumpeln, Musik ohne Pausen, Plopp überall).
+- **Etappe 6g und 6h:** Vögel, Tauben und Katzen als weiche Bilderbuch-Tiere mit eigenen Bewegungen (Katzen nach
+  den Vorlagen der Entwicklerin, dazu drei große Katzen); Katzen jagen, spielen, reiben sich, wälzen sich, laufen
+  auf Gartenmauern und begegnen sich; neue Geräusche (Kamin, Kerzen, Kaching, Rascheln, Miauen); Passanten mit
+  eigener Gangart, Einkaufstaschen, Händeschütteln, Plaudern auf der Bank und Katzen-Streicheln.
 
 **Wo die wichtigen Dateien liegen**
 
@@ -150,8 +154,10 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 - Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme, Musik für Nacht/Regen/
   Winter – Liste in ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
 - Tiere (seit 6g/6h): Vögel sitzen noch nicht in Bäumen und nicht auf dem Dach der Bücherei; Katzen kommen nur über
-  die Straßenenden (nicht aus den Gassen); Passanten streicheln Katzen noch nicht (vorbereitet); eigene Laute je
-  Vogelart, Tauben und Flattern warten auf Aufnahmen.
+  die Straßenenden (nicht aus den Gassen); eigene Laute je Vogelart warten auf Aufnahmen.
+- Passanten (seit 6h): Wer eine Einkaufstasche trägt, setzt sich nicht, streichelt keine Katzen und redet ohne Hände
+  (die Tasche hängt an der rechten Hand). Bei großen Figuren schwebt die Hand beim Streicheln einer großen Katze ein
+  paar Zentimeter über dem Kopf (die Animation ist für Menschen gemacht).
 - Kein Tag-Nacht-Wechsel; Besucher kommen noch nicht in die Bücherei.
 
 ## Etappe 1 – Grundgerüst und erster Raum
@@ -1563,6 +1569,34 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 - Steht jemand der Katze im Weg und sie kommt nicht außen herum, geht sie erst ein Stück zurück und kehrt dann um
   (vorher lief sie seitlich zur Wand – genau dorthin, wo der Passant vor dem Schaufenster stand: beide warteten).
 
+**Wünsche nach dem Katzen-Test (Teile A–D, Dateien der Entwicklerin aus „Game design“)**
+- [x] A. Neue Geräusche: Kamin, Kerzen an/aus, „Kaching“ beim Bezahlen, Landen nach dem Sprung, Hinsetzen, Rascheln
+      beim Gehen durch Pflanzen, Flattern der Vögel und Tauben; Katzen miauen zur Begrüßung und lange an der Tür,
+      schnattern beim Belauern von Vögeln
+- [x] B. Katzen-Verhalten: springen öfter auf Gartenmauern und laufen oben entlang, rennen ab und zu über den Gehweg,
+      gehen zwischen Deko und Hauswand hindurch, wenn Platz ist, reiben sich schnurrend an Laternen, Kübeln und Bänken,
+      wälzen sich auf dem Gehweg (nie auf der Straße), begegnen sich (beschnuppern, Fangen, zusammen sitzen); die
+      Jagd bricht ab, wenn die Vögel schon weg sind (kein Sprung ins Leere); über die Türschwelle statt hindurch
+- [x] C. Drei große Katzen (Brummel, Karamell, Schoko) aus derselben Bauanleitung: längere Beine, längerer Körper,
+      Kopf im Verhältnis kleiner; steigen die Eingangstreppe Stufe für Stufe hinauf; alle Bewegungen angepasst
+- [x] D. Animationen der Passanten (45 je Figur): eigene Gangart (normal, weiblich, männlich, schlendern, mit
+      Einkaufstasche), eigene Art zu stehen und zu sitzen; Pausen (umschauen, strecken, gähnen, seufzen, auf die Uhr
+      schauen); Plaudern mit Annähern, Händeschütteln oder Winken, Reden mit den Händen, Nicken, Kopfwiegen, Lachen,
+      Zeigen, Abschiedswinken; zu zweit auf der Bank plaudern (man setzt sich gern dazu); Katzen streicheln (bücken
+      bzw. hinknien, die Katze hält still und schnurrt); Papiertüte und Stoffbeutel als neue Modelle
+- [x] Dokumentation, Notion
+
+**Entscheidungen (selbst getroffen, Teile A–D):**
+- Tür öffnen, Gießen, Aufheben und Heben sind schon in den Figuren, werden aber erst von den Besuchern der Bücherei
+  benutzt (Etappe 8) – auf der Straße gibt es dafür keinen Anlass.
+- Händeschütteln: Beide stehen leicht versetzt (rechte Schulter zur rechten Schulter), so dass sich die rechten Hände
+  treffen; der Abstand kommt aus der Größe der Figuren. Mit den großen Chibi-Köpfen stehen sie eine halbe Handbreit
+  weiter auseinander, sonst stießen die Köpfe beim Vorbeugen fast zusammen.
+- Wer eine Tasche trägt, hält sie in der rechten Hand wie in der Animation; die Tasche hängt immer senkrecht, pendelt
+  und wird vom Bein nach außen gedrückt.
+- Männer lachen beim Plaudern nicht mit dem ganzen Körper (wie bei den Lauten), sie nicken stattdessen.
+- Lange Animationen (Umschauen 13 s, Uhr 14 s) enden nach höchstens 7 s weich in der Grundhaltung.
+
 ## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
 - Inhalt folgt mit den Wünschen der Entwicklerin
 - Schon bekannt (gefunden beim Abschluss von 6h, auch ganz ohne Tiere): An engen Stellen – Tische vor dem Pub,
@@ -1578,6 +1612,8 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 - Preise und Startgeld ausbalancieren
 
 ## Etappe 8 – Besuchervielfalt
+- Animationen liegen schon in den Figuren bereit (seit 6h): Tür nach innen/außen öffnen (`door_in`, `door_out`),
+  Gießen (`water`), etwas aufheben (`pick_up`), etwas Schweres heben (`lift`)
 - Verschiedene Besucher mit eigenen Vorlieben (z. B. Lieblingsgenres – Genres tragen schon einen
   passenden Stil im Datenblatt)
 - Verworfen (seit Etappe 6): Der Einrichtungsstil bestimmt nicht, welche Besucher kommen oder welche
