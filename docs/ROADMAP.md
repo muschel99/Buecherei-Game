@@ -1605,6 +1605,16 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
       (nur der rechte Arm wird übernommen; die Hand bleibt neben dem großen Chibi-Kopf, nie vor dem Gesicht)
 - [x] Anleitung: welche Mixamo-Regler man vorher einstellt und was Claude später noch ändern kann (ASSET_GUIDE)
 
+**Nachbesserung 2 (Test der Entwicklerin)**
+- [x] Teil 1: Füße der Passanten fest am Boden, Vögel nie im Boden, mehr Passanten, Taschen bei jedem Losgehen neu,
+      öfter streicheln, Hinsetzen/Kamin leiser, Mund spricht mit, Köpfe etwas kleiner, Spielfigur grüßen mit Stehenbleiben
+- [x] Teil 2: Katzen auf Gartenmauern (Schwanz baumelt) und Fensterbänken (direkt gemessen), schmieren an Passanten-Beinen,
+      laufen weich und gerade, über die Straße ohne Warten (Autos bremsen früh), direkt durch die offene Tür, Treppe mit
+      eigener Bewegung, Schnurren drinnen leise; Passanten schauen Autos nach, winken keinen Fahrern; Torbogen ohne Haken
+- [x] Teil 3: Passanten zu zweit spazieren und plaudern
+- [x] Teil 4: Spielzeug aufheben und werfen (E), Katzen rennen hinterher, schubsen es selbst hoch
+- [ ] offen: CLAUDE.md/ASSET_GUIDE für Nachbesserung 2 ergänzen; neue „Petting Animal“-Höhen der Entwicklerin einbauen
+
 ## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
 - Inhalt folgt mit den Wünschen der Entwicklerin
 - Schon bekannt (gefunden beim Abschluss von 6h, auch ganz ohne Tiere): An engen Stellen – Tische vor dem Pub,
