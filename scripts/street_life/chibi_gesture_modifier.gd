@@ -31,8 +31,8 @@ var clip_hand_min_x: float = -0.29
 var clip_wave_fix: bool = true
 ## Stelle auf dem Oberschenkel für die Handwurzel: Anteil von der Hüfte zum Knie; so weit nach außen (m)
 const THIGH_SPOT := 0.62
-## Beine übereinander: so weit (m) liegen die Handwurzeln entlang des oberen Beins auseinander (je zur Hälfte)
-const CROSSED_HAND_GAP := 0.05
+## Die Handwurzel bleibt mindestens so weit (m) auf der eigenen Körperseite
+const HAND_MIN_X := 0.05
 const THIGH_SPOT_MIN := 0.3
 ## Arm nie weiter als dieser Anteil seiner Länge gestreckt (Ellenbogen bleibt gebeugt), Finger so weit gestreckt (0…1)
 const ARM_BENT := 0.86
@@ -169,7 +169,7 @@ func _orient_hand(skeleton: Skeleton3D, hand_name: String, forearm_name: String,
 ## Dreht einen Knochen um eine Achse im Raum der Figur (Bogenmaß).
 ## Sitzen: beide Hände flach auf die Oberschenkel, Finger Richtung Knie und gestreckt, Ellbogen immer gebeugt und locker nach
 ## hinten außen. Ist die Stelle zu weit weg (zurückgelehnt), rutscht die Hand am Bein Richtung Hüfte, statt den Arm zu strecken.
-## Beine übereinander: beide Hände auf dem oberen Bein (das untere ist verdeckt), hintereinander.
+## Beine übereinander: jede Hand bleibt auf ihrer Körperseite, liegt aber auf dem oberen Bein, wo es darüberliegt.
 func _apply_hands(skeleton: Skeleton3D) -> void:
 	var left_hip := skeleton.find_bone("LeftUpperLeg")
 	var left_knee := skeleton.find_bone("LeftLowerLeg")
@@ -202,13 +202,11 @@ func _apply_hands(skeleton: Skeleton3D) -> void:
 		var k := lk if sx > 0.0 else rk
 		var reach := (a + b) * ARM_BENT
 		var lift := Vector3(sx * THIGH_OUT, thigh_lift, 0.0)
-		# die Hand auf der Seite des oberen Beins liegt weiter vorn, die andere näher an der Hüfte
-		var nudge := CROSSED_HAND_GAP if (sx > 0.0) == left_on_top else -CROSSED_HAND_GAP
 		var spot := THIGH_SPOT
-		var target := _thigh_target(h, k, top_h, top_k, spot, nudge, crossed) + lift
+		var target := _thigh_target(h, k, top_h, top_k, spot, sx, crossed) + lift
 		while spot > THIGH_SPOT_MIN and shoulder.distance_to(target) > reach:
 			spot -= 0.04
-			target = _thigh_target(h, k, top_h, top_k, spot, nudge, crossed) + lift
+			target = _thigh_target(h, k, top_h, top_k, spot, sx, crossed) + lift
 		var to := target - shoulder
 		var dist := clampf(to.length(), absf(a - b) + 0.002, reach)
 		var along := to.normalized()
@@ -227,15 +225,19 @@ func _apply_hands(skeleton: Skeleton3D) -> void:
 		_flatten_fingers(skeleton, prefix, w)
 
 
-## Stelle für die Handwurzel: auf dem eigenen Oberschenkel; bei übereinandergeschlagenen Beinen auf gleicher Tiefe auf dem
-## oberen Bein, damit die Hand nicht im Spalt darunter hängt (nudge = etwas davor oder dahinter, Hände nebeneinander).
-func _thigh_target(h: Vector3, k: Vector3, top_h: Vector3, top_k: Vector3, spot: float, nudge: float, crossed: float) -> Vector3:
+## Stelle für die Handwurzel: auf dem eigenen Oberschenkel, immer auf der eigenen Körperseite (sonst griffe der Arm quer durch
+## den Bauch). Liegt dort das andere Bein darüber (Beine übereinander), wird die Hand so weit angehoben, dass sie darauf liegt.
+func _thigh_target(h: Vector3, k: Vector3, top_h: Vector3, top_k: Vector3, spot: float, sx: float, crossed: float) -> Vector3:
 	var own := h.lerp(k, spot)
+	own.x = sx * maxf(own.x * sx, HAND_MIN_X)
 	if crossed <= 0.0:
 		return own
-	var depth := own.z + nudge
-	var t := clampf(inverse_lerp(top_h.z, top_k.z, depth), 0.15, 0.9)
-	return own.lerp(top_h.lerp(top_k, t), crossed)
+	var line := Vector2(top_k.x - top_h.x, top_k.z - top_h.z)
+	var t := clampf(Vector2(own.x - top_h.x, own.z - top_h.z).dot(line) / maxf(line.length_squared(), 0.0001), 0.0, 1.0)
+	var on_top := top_h.lerp(top_k, t)
+	var away := Vector2(own.x - on_top.x, own.z - on_top.z).length()
+	own.y = lerpf(own.y, maxf(own.y, on_top.y), crossed * (1.0 - smoothstep(0.07, 0.14, away)))
+	return own
 
 
 ## Hand so drehen, dass die Finger in Richtung fingers zeigen, der Handrücken nach back (im Raum der Figur).
