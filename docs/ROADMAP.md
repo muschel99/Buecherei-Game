@@ -124,6 +124,9 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   den Vorlagen der Entwicklerin, dazu drei große Katzen); Katzen jagen, spielen, reiben sich, wälzen sich, laufen
   auf Gartenmauern und begegnen sich; neue Geräusche (Kamin, Kerzen, Kaching, Rascheln, Miauen); Passanten mit
   eigener Gangart, Einkaufstaschen, Händeschütteln, Plaudern auf der Bank und Katzen-Streicheln.
+- **Etappe 6i:** Die Straße lebt auch in den Häusern: sieben Anwohner gehen durch ihre Haustür ein und aus, gießen, fegen und schauen aus
+  dem Fenster; alle Türen und Gartenpforten bewegen sich; jeder Laden hat Theke und Bedienung, Passanten kaufen ein und tragen die Tüte;
+  Wollladen neu eingerichtet; Pub mit Gästen, Getränken und Kuchen; Umarmen, zusammen weitergehen, über die Straße winken.
 
 **Wo die wichtigen Dateien liegen**
 
@@ -149,8 +152,7 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   abgestimmt.
 - Die realistischen Figuren aus 5b werden nicht mehr benutzt (die Chibi-Figuren ersetzen sie), ihre
   Dateien liegen noch im Projekt.
-- Passanten gehen noch allein (keine Gruppen); sie plaudern seit 6c kurz miteinander. Noch wenig
-  Kleidung und Frisuren.
+- Noch wenig Kleidung und Frisuren der Figuren.
 - Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme, Musik für Nacht/Regen/
   Winter – Liste in ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
 - Tiere (seit 6g/6h): Vögel sitzen noch nicht in Bäumen und nicht auf dem Dach der Bücherei; Katzen kommen nur über
@@ -1675,7 +1677,7 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 
 ## Etappe 6i – Leben in der Straße (Testrunde „13“ der Entwicklerin)
 **Anwohner**
-- [x] Haus- und Ladentüren als bewegliche Teile (Türblatt und Scharnier aus Blender), öffnen und schließen sich mit Geräusch
+- [x] Haus- und Ladentüren als bewegliche Teile (Türblatt und Scharnier aus Blender), öffnen und schließen sich mit Geräusch; Gartenpforten ebenso
 - [x] Sieben Anwohner, jeder in einem eigenen Haus: gehen durch die Haustür hinaus und kommen später wieder heim
 - [x] Blumen gießen (Blumenkästen, Vorgarten), fegen vor der Tür, aus dem Fenster schauen
 **Läden**
@@ -1695,6 +1697,7 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 Zwei-Glieder-Rechnung an Besen, Partner und Mund), Gießen nutzt `water`, die Tür Abschnitte von `door_in`/`door_out`.
 
 **Noch offen:** An engen Stellen stehen sich Passanten manchmal 2–3 Sekunden gegenüber (schon seit 6h bekannt).
+Noch nicht eingebaut: `Waving.fbx` und `Shaking Hands 2.fbx` (zweite Varianten von Winken und Händeschütteln; dafür müssten alle Figuren neu gebaut werden).
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

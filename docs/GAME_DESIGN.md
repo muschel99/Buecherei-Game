@@ -1172,7 +1172,8 @@ Die Straße lebt jetzt auch in den Häusern. **Niemand erscheint oder verschwind
 geschlossenen Haustür auf und verschwinden dort wieder, ans Fenster treten sie nur, wenn man das Fenster gerade nicht sieht. Alle
 Häufigkeiten stehen in GameConfig (Abschnitte „Anwohner und Türen“, „Läden“, „Begegnungen“).
 - **Türen:** Jede Haus- und Ladentür ist ein eigenes bewegliches Teil. Wer hindurchgeht, streckt die Hand aus, die Tür schwingt nach
-  innen auf und schließt sich hinter ihm wieder, mit Geräusch; Ladentüren klingeln zusätzlich.
+  innen auf und schließt sich hinter ihm wieder, mit Geräusch; Ladentüren klingeln zusätzlich. Bei Häusern mit Vorgarten geht auch die
+  Pforte auf (Weg über die Gartenplatten).
 - **Anwohner** (7 Stück, jeder wohnt in einem eigenen Haus und behält sein Aussehen): Sie kommen durch die Haustür heraus und gehen
   zum Straßenende, später kommen sie wieder heim. Sie gießen die Blumenkästen und Beete an ihrem Haus (mit Gießkanne), fegen vor der
   Tür (mit Reisigbesen) oder schauen aus einem Fenster ihres Hauses auf die Straße. Unterwegs zählen sie wie Passanten: Sie grüßen,
