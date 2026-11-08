@@ -30,12 +30,20 @@ var clip_hand_min_x: float = -0.29
 ## Nur beim Winken: Oberarm nach außen, Hand neben dem Kopf (die Ebenen für Oberkörper und Beine übernehmen genau)
 var clip_wave_fix: bool = true
 ## Stelle auf dem Oberschenkel für die Handwurzel: Anteil von der Hüfte zum Knie; so weit nach außen (m)
-const THIGH_SPOT := 0.68
+const THIGH_SPOT := 0.62
+## Beine übereinander: so weit (m) liegen die Handwurzeln entlang des oberen Beins auseinander (je zur Hälfte)
+const CROSSED_HAND_GAP := 0.05
+const THIGH_SPOT_MIN := 0.3
+## Arm nie weiter als dieser Anteil seiner Länge gestreckt (Ellenbogen bleibt gebeugt), Finger so weit gestreckt (0…1)
+const ARM_BENT := 0.86
+const FINGERS_FLAT := 0.85
 const THIGH_OUT := 0.012
 var _clip_tracks: Dictionary = {}
 ## Oberkörper zurückgelehnt (Grad; im Sitzen, seit Nachbesserung 4 von 6h): Rücken und Brust nach hinten, der Hals gleicht
 ## einen Teil davon aus (der Blick bleibt geradeaus)
 var lean: float = 0.0
+## Runder Rücken (Grad; im Sitzen, seit Nachbesserung 6): Brust und Schultern sinken nach vorn – die Arme hängen dann locker
+var round_back: float = 0.0
 ## Hände auf den Oberschenkeln (0…1, im Sitzen; seit Nachbesserung 5 von 6h): Arme per Zwei-Glieder-Rechnung zu einer Stelle
 ## auf dem Oberschenkel; thigh_lift = so weit über der Knochenlinie liegt die Handwurzel (Dicke des Beins, m)
 var hands_on_thighs: float = 0.0
@@ -68,7 +76,7 @@ func _process_modification_with_delta(_delta: float) -> void:
 	var skeleton := get_skeleton()
 	if skeleton == null:
 		return
-	if absf(lean) > 0.05:
+	if absf(lean) > 0.05 or absf(round_back) > 0.05:
 		_apply_lean(skeleton)
 	if hands_on_thighs > 0.001:
 		_apply_hands(skeleton)
@@ -159,28 +167,50 @@ func _orient_hand(skeleton: Skeleton3D, hand_name: String, forearm_name: String,
 
 
 ## Dreht einen Knochen um eine Achse im Raum der Figur (Bogenmaß).
-## Sitzen: beide Hände flach auf die Oberschenkel, Finger Richtung Knie, Ellbogen hängen locker nach hinten außen.
+## Sitzen: beide Hände flach auf die Oberschenkel, Finger Richtung Knie und gestreckt, Ellbogen immer gebeugt und locker nach
+## hinten außen. Ist die Stelle zu weit weg (zurückgelehnt), rutscht die Hand am Bein Richtung Hüfte, statt den Arm zu strecken.
+## Beine übereinander: beide Hände auf dem oberen Bein (das untere ist verdeckt), hintereinander.
 func _apply_hands(skeleton: Skeleton3D) -> void:
+	var left_hip := skeleton.find_bone("LeftUpperLeg")
+	var left_knee := skeleton.find_bone("LeftLowerLeg")
+	var right_hip := skeleton.find_bone("RightUpperLeg")
+	var right_knee := skeleton.find_bone("RightLowerLeg")
+	if left_hip < 0 or left_knee < 0 or right_hip < 0 or right_knee < 0:
+		return
+	var lh := skeleton.get_bone_global_pose(left_hip).origin
+	var lk := skeleton.get_bone_global_pose(left_knee).origin
+	var rh := skeleton.get_bone_global_pose(right_hip).origin
+	var rk := skeleton.get_bone_global_pose(right_knee).origin
+	var left_on_top := lk.y > rk.y
+	var crossed := smoothstep(0.02, 0.07, absf(lk.y - rk.y))
+	var top_h := lh if left_on_top else rh
+	var top_k := lk if left_on_top else rk
 	for side: Array in [["Left", 1.0], ["Right", -1.0]]:
 		var prefix := String(side[0])
 		var sx := float(side[1])
 		var upper := skeleton.find_bone(prefix + "UpperArm")
 		var lower := skeleton.find_bone(prefix + "LowerArm")
 		var hand := skeleton.find_bone(prefix + "Hand")
-		var hip := skeleton.find_bone(prefix + "UpperLeg")
-		var knee := skeleton.find_bone(prefix + "LowerLeg")
-		if upper < 0 or lower < 0 or hand < 0 or hip < 0 or knee < 0:
+		if upper < 0 or lower < 0 or hand < 0:
 			continue
 		var shoulder := skeleton.get_bone_global_pose(upper).origin
 		var elbow_now := skeleton.get_bone_global_pose(lower).origin
 		var wrist_now := skeleton.get_bone_global_pose(hand).origin
 		var a := shoulder.distance_to(elbow_now)
 		var b := elbow_now.distance_to(wrist_now)
-		var h := skeleton.get_bone_global_pose(hip).origin
-		var k := skeleton.get_bone_global_pose(knee).origin
-		var target := h.lerp(k, THIGH_SPOT) + Vector3(sx * THIGH_OUT, thigh_lift, 0.0)
+		var h := lh if sx > 0.0 else rh
+		var k := lk if sx > 0.0 else rk
+		var reach := (a + b) * ARM_BENT
+		var lift := Vector3(sx * THIGH_OUT, thigh_lift, 0.0)
+		# die Hand auf der Seite des oberen Beins liegt weiter vorn, die andere näher an der Hüfte
+		var nudge := CROSSED_HAND_GAP if (sx > 0.0) == left_on_top else -CROSSED_HAND_GAP
+		var spot := THIGH_SPOT
+		var target := _thigh_target(h, k, top_h, top_k, spot, nudge, crossed) + lift
+		while spot > THIGH_SPOT_MIN and shoulder.distance_to(target) > reach:
+			spot -= 0.04
+			target = _thigh_target(h, k, top_h, top_k, spot, nudge, crossed) + lift
 		var to := target - shoulder
-		var dist := clampf(to.length(), absf(a - b) + 0.002, a + b - 0.002)
+		var dist := clampf(to.length(), absf(a - b) + 0.002, reach)
 		var along := to.normalized()
 		var x := (a * a - b * b + dist * dist) / (2.0 * dist)
 		var pole := Vector3(sx * 0.6, -0.15, -0.8)
@@ -189,16 +219,56 @@ func _apply_hands(skeleton: Skeleton3D) -> void:
 		var w := hands_on_thighs
 		_aim(skeleton, prefix + "UpperArm", elbow - shoulder, w)
 		var elbow_real := skeleton.get_bone_global_pose(lower).origin
-		_aim(skeleton, prefix + "LowerArm", shoulder + to.normalized() * dist - elbow_real, w)
-		_orient_hand(skeleton, prefix + "Hand", prefix + "LowerArm", Vector3(sx * 0.25, 1.0, 0.1), w)
+		_aim(skeleton, prefix + "LowerArm", shoulder + along * dist - elbow_real, w)
+		# die Hand liegt flach auf dem Bein: Finger entlang des Oberschenkels (leicht nach innen), Handrücken oben
+		var thigh_dir := (k - h).normalized().lerp((top_k - top_h).normalized(), crossed)
+		var fingers := thigh_dir.normalized() + Vector3(-sx * 0.22, 0.0, 0.0)
+		_orient_hand_along(skeleton, hand, fingers.normalized(), Vector3(sx * 0.15, 1.0, 0.0), w)
+		_flatten_fingers(skeleton, prefix, w)
+
+
+## Stelle für die Handwurzel: auf dem eigenen Oberschenkel; bei übereinandergeschlagenen Beinen auf gleicher Tiefe auf dem
+## oberen Bein, damit die Hand nicht im Spalt darunter hängt (nudge = etwas davor oder dahinter, Hände nebeneinander).
+func _thigh_target(h: Vector3, k: Vector3, top_h: Vector3, top_k: Vector3, spot: float, nudge: float, crossed: float) -> Vector3:
+	var own := h.lerp(k, spot)
+	if crossed <= 0.0:
+		return own
+	var depth := own.z + nudge
+	var t := clampf(inverse_lerp(top_h.z, top_k.z, depth), 0.15, 0.9)
+	return own.lerp(top_h.lerp(top_k, t), crossed)
+
+
+## Hand so drehen, dass die Finger in Richtung fingers zeigen, der Handrücken nach back (im Raum der Figur).
+func _orient_hand_along(skeleton: Skeleton3D, hand: int, fingers: Vector3, back: Vector3, amount: float) -> void:
+	var z := back - fingers * back.dot(fingers)
+	if z.length() < 0.001:
+		return
+	z = z.normalized()
+	var wanted := Basis(fingers.cross(z), fingers, z)
+	var parent := skeleton.get_bone_parent(hand)
+	var parent_global := skeleton.get_bone_global_pose(parent) if parent >= 0 else Transform3D.IDENTITY
+	var target := (parent_global.basis.orthonormalized().inverse() * wanted).get_rotation_quaternion()
+	skeleton.set_bone_pose_rotation(hand, skeleton.get_bone_pose_rotation(hand).slerp(target, clampf(amount, 0.0, 1.0)))
+
+
+## Finger fast gestreckt (wie in der Ruhehaltung) – sonst krallen sie sich aus der Sitz-Animation ins Bein.
+func _flatten_fingers(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
+	for finger: String in ["Thumb", "Index", "Middle", "Ring", "Little"]:
+		for joint: String in ["Metacarpal", "Proximal", "Intermediate", "Distal"]:
+			var bone := skeleton.find_bone(prefix + finger + joint)
+			if bone >= 0:
+				var rest := skeleton.get_bone_rest(bone).basis.get_rotation_quaternion()
+				skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_pose_rotation(bone).slerp(rest, clampf(amount, 0.0, 1.0) * FINGERS_FLAT))
 
 
 ## Zurücklehnen: Drehung um die Achse quer durch die Figur (+X = links; negativ = der Oberkörper geht nach hinten).
 func _apply_lean(skeleton: Skeleton3D) -> void:
-	for part: Array in [["Spine", 0.45], ["Chest", 0.3], ["UpperChest", 0.25], ["Neck", -0.65]]:
+	# unten nach hinten (zurücklehnen), oben nach vorn (runder Rücken); der Hals gleicht aus, der Blick bleibt geradeaus
+	var net := round_back - lean
+	for part: Array in [["Spine", -lean], ["Chest", round_back * 0.5], ["UpperChest", round_back * 0.5], ["Neck", -net * 0.8]]:
 		var bone := skeleton.find_bone(String(part[0]))
 		if bone >= 0:
-			_turn(skeleton, bone, Vector3.RIGHT, -deg_to_rad(lean) * float(part[1]))
+			_turn(skeleton, bone, Vector3.RIGHT, deg_to_rad(float(part[1])))
 
 
 func _turn(skeleton: Skeleton3D, bone: int, axis: Vector3, angle: float) -> void:

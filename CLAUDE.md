@@ -1274,7 +1274,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Aktions-Flag `"chatter"`. Efeu an Häusern raschelt (`Greenery._add_ivy_rustle` aus spots.json). Prüfen: street_life_check
   `floor` (schweben/einsinken), `vehicle_cat`, `--sills`.
   **Nachbesserung 5:** Sitzen: `ChibiGestureModifier.hands_on_thighs` (Zwei-Glieder-Rechnung zur Stelle `THIGH_SPOT` auf dem Oberschenkel,
-  löst sich beim Reden mit den Händen), Anlehnen je Figur (`passerby_lean_back_share`, `StreetSeat.backrest` = Abstand der Lehne: Bank 0,24,
+  löst sich beim Reden mit den Händen; Arm nie weiter gestreckt als `ARM_BENT`, sonst rutscht die Hand Richtung Hüfte; Hand flach entlang
+  des Oberschenkels `_orient_hand_along`, Finger gestreckt `_flatten_fingers`; Beine übereinander: auf das obere Bein `_thigh_target`), Rücken:
+  `lean` + `round_back` (`passerby_sit_lean*`, `passerby_sit_round*`: gerade Beine zurückgelehnt, Schultern über der Hüfte; gekreuzt runder Rücken), Anlehnen je Figur (`passerby_lean_back_share`, `StreetSeat.backrest` = Abstand der Lehne: Bank 0,24,
   Holzstuhl 0,13, 0 = keine; `_update_sit_rest` schiebt das Modell zurück und neigt mehr). **Katzen enden nur mit dem Schritt "leave":**
   sind die Schritte sonst aus, geht es weiter (`StreetCat._next` → `CatLife.resume`), von drinnen und von der Treppe über `_way_down`;
   Spielzeug bleibt nie auf der Treppe liegen (`on_stairs`, `_tumble_down`); Jagd/Spielen nur auf einer ebenen Fläche (`on_street_level`).

@@ -1060,13 +1060,20 @@ func _scan_focus() -> void:
 func _update_sit_rest(state: StringName, delta: float) -> void:
 	var sitting := relaxed_sit and state == &"sit" and _transition == &""
 	var lean_want := GameConfig.passerby_sit_lean if sitting else 0.0
+	var round_want := GameConfig.passerby_sit_round if sitting else 0.0
 	var shift_want := 0.0
 	if sitting and sit_leans and sit_backrest > 0.0:
 		var t := clampf(inverse_lerp(0.13, 0.24, sit_backrest), 0.0, 1.0)
 		lean_want = lerpf(GameConfig.passerby_sit_lean_chair, GameConfig.passerby_sit_lean_bench, t)
+		round_want = GameConfig.passerby_sit_round_lean
 		shift_want = maxf(0.0, sit_backrest - (GameConfig.passerby_sit_back_depth + 0.03 * maxf(body_shape, 0.0)))
+	# Beine übereinander: runder Rücken, nach vorn gebeugt; sonst zurückgelehnt, die Schultern über der Hüfte
+	if sitting and _legs_mod:
+		lean_want = lerpf(lean_want, GameConfig.passerby_sit_lean_crossed, _legs_mod.weight)
+		round_want = lerpf(round_want, GameConfig.passerby_sit_round_crossed, _legs_mod.weight)
 	var step := delta / GameConfig.passerby_sit_lean_time
 	_gesture_modifier.lean = move_toward(_gesture_modifier.lean, lean_want, step * 25.0)
+	_gesture_modifier.round_back = move_toward(_gesture_modifier.round_back, round_want, step * 25.0)
 	_back_shift = move_toward(_back_shift, shift_want, step * 0.2)
 	_model.position.z = -_back_shift
 	var talking_hands := _upper_mod.weight if _upper_mod else 0.0

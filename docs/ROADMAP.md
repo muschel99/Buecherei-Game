@@ -1667,7 +1667,8 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 - Fahrräder warten nun auch hinter stehenden Autos und dem Lieferwagen, wie Autos es tun (Wunsch: nie außen herum).
 
 **Nachbesserung 5 (Test der Entwicklerin)**
-- [x] Sitzende Passanten legen die Hände auf die Oberschenkel; etwa sechs von zehn lehnen sich an die Lehne von Bank oder Stuhl an
+- [x] Sitzende Passanten legen die Hände flach auf die Oberschenkel (Ellenbogen gebeugt, Finger auf dem Bein); etwa sechs von zehn
+      lehnen sich an die Lehne von Bank oder Stuhl an; gerade Beine: zurückgelehnt, Schultern über der Hüfte; Beine übereinander: runder Rücken
 - [x] Fehler behoben: Eine Katze, die an der Tür oder drinnen fertig gespielt hatte, verschwand samt Spielzeug – jetzt geht sie weiter
 - [x] Spielzeug kullert von der Treppe auf den Gehweg; auf Stufen wird nicht mehr gespielt oder gejagt
 - [x] Dokumentation, Notion
