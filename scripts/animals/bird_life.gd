@@ -733,7 +733,10 @@ func _court_point(key: String) -> Vector3:
 func _court_way(outward: bool) -> Array[Vector3]:
 	var low := _court_point("low") + Vector3(_rng.randf_range(-0.3, 0.3), _rng.randf_range(-0.15, 0.15), _rng.randf_range(-0.6, 0.6))
 	var mouth := _court_point("mouth") + Vector3(_rng.randf_range(-0.4, 0.4), _rng.randf_range(-0.3, 0.4), 0.0)
-	return [low, mouth] if outward else [mouth, low]
+	# (zwei getrennte Rückgaben: ein Ausdruck „… if … else …“ mit Listen ergibt in Godot 4.6 eine Liste ohne Typ)
+	if outward:
+		return [low, mouth]
+	return [mouth, low]
 
 
 ## Verdeckter Ort zum Hinein- und Hinausfliegen: hinter einem Haus gegenüber der Gasse (der Weg führt dann über die
@@ -850,9 +853,10 @@ func _court_spots(size: int, own: Dictionary = {}) -> Array[Dictionary]:
 ## Verdeckter Ort hinter einem Haus nahe target (von dort fliegen Vögel über den First herein bzw.
 ## dorthin hinaus). Liefert { pos, house, along, lateral } oder leer.
 func _hidden_entry(target: Vector3, facing: Vector3 = Vector3.ZERO) -> Dictionary:
-	var houses := _houses.duplicate()
-	if facing != Vector3.ZERO:
-		houses = houses.filter(func(h: Dictionary) -> bool: return (h.out as Vector3).dot(facing) > 0.5)
+	var houses: Array[Dictionary] = []
+	for h in _houses:
+		if facing == Vector3.ZERO or (h.out as Vector3).dot(facing) > 0.5:
+			houses.append(h)
 	houses.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.front.distance_squared_to(target) < b.front.distance_squared_to(target))
 	for i in mini(8, houses.size()):

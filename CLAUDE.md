@@ -12,6 +12,12 @@ Die Gesamtidee steht in `docs/GAME_DESIGN.md`, der Etappenplan in `docs/ROADMAP.
 ## Umgebung (seit Etappe 4g: Dev-Container auf ihrem PC)
 - Claude läuft in einem Docker-Dev-Container (`.devcontainer/`), Projektordner `/workspace`.
 - Firewall: nur GitHub, npm und Anthropic sind erreichbar (nichts sonst herunterladen).
+- **Godot-Version:** Die Entwicklerin spielt mit **Godot 4.6.2**, im Container ist `godot` neuer (4.7.2) und verzeiht
+  manches, was 4.6 als Fehler meldet (z. B. `return [a, b] if x else [b, a]` bei typisierter Rückgabe `Array[Vector3]`
+  → „Trying to return an array of type Array …“, das Spiel hält an). Vor dem Hochladen darum auch mit 4.6.2 prüfen:
+  Release von GitHub (`https://github.com/godotengine/godot/releases/download/4.6.2-stable/Godot_v4.6.2-stable_linux.x86_64.zip`)
+  in den Scratchpad laden, das Projekt dorthin kopieren (ohne .git, „Game design“, screenshots) und dort importieren und
+  street_life_check laufen lassen (`SCRIPT ERROR` muss 0 sein) – nie mit 4.6 im Projektordner selbst (Import-Cache).
 - Godot ist installiert (`godot`), es gibt keinen Bildschirm: `godot --headless` zum Prüfen,
   Importieren und für Werkzeug-Scripts. Testbilder aus Godot brauchen Xvfb und Software-Vulkan
   (`xvfb`, `mesa-vulkan-drivers`, seit 4g im Dockerfile – nach dem Neubau des Containers geht
