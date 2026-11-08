@@ -24,6 +24,8 @@ const RUN_ANIM_SPEED := 1.13
 const STALK_ANIM_SPEED := 0.14
 const RUB_ANIM_SPEED := 0.095
 ## Wann sich die Katze bei Sprüngen bewegt (Anteil der Bewegung): [Absprung, Landung]
+## Größte Neigung des ganzen Körpers beim Sprung hinauf und hinunter (Bogenmaß; zusätzlich zur Bewegung)
+const JUMP_PITCH := 0.62
 const JUMP_WINDOW := {"jump_up": Vector2(0.35, 0.7), "jump_down": Vector2(0.3, 0.66), "hop_up": Vector2(0.3, 0.78),
 	"step_down": Vector2(0.2, 0.85), "pounce": Vector2(0.4, 0.75)}
 ## Mundstelle in der Ruhehaltung (unter dem Schnäuzchen; Spielzeug im Maul) – junge bzw. erwachsene Katze
@@ -230,8 +232,11 @@ func meow(long := false) -> void:
 ## Laute je Bild: Schnattern beim Belauern von Vögeln, Begrüßen der Spielfigur, Rascheln an Pflanzen.
 func _update_voice(delta: float) -> void:
 	_chatter_wait -= delta
-	if hunting and _chatter_wait <= 0.0 and (current_anim == &"crouch" or current_anim == &"stalk"):
-		_chatter_wait = randf_range(3.0, 7.0)
+	# Schnattern: beim Belauern von Vögeln – und seit Nachbesserung 4 auch, wenn eine Handlung es wünscht ("chatter": durchs
+	# Fenster schauen, vor dem Spielzeug lauern, zwei Katzen begegnen sich)
+	var chatters := bool(_action.get("chatter", false))
+	if _chatter_wait <= 0.0 and (chatters or (hunting and (current_anim == &"crouch" or current_anim == &"stalk"))):
+		_chatter_wait = randf_range(1.2, 3.5) if chatters else randf_range(3.0, 7.0)
 		Audio.play_on(self, GameConfig.cat_chatter_sound, GameConfig.cat_chatter_volume_db, Audio.vary(0.06), 12.0,
 			Vector3(0.0, 0.18, 0.15))
 	var player := life.street.get_player() if life else null
@@ -376,6 +381,7 @@ func _step_wait(delta: float) -> void:
 
 
 func _next() -> void:
+	rotation.x = 0.0   # nach einem (auch abgebrochenen) Sprung wieder waagerecht
 	while not _actions.is_empty():
 		_action = _actions.pop_front()
 		if _start_action():
@@ -693,13 +699,27 @@ func _step_jump(delta: float) -> void:
 	if anim_name in [&"step_down", &"hop_up"]:
 		u = u * u * (3.0 - 2.0 * u)
 	var target: Vector3 = _action.to
-	var p := _jump_from.lerp(target, u)
-	var height := maxf(0.0, target.y - _jump_from.y)
-	p.y += sin(u * PI) * (height * 0.3 + (0.04 if anim_name in [&"hop_up", &"step_down"] else 0.1))
+	# Hinunter: erst über die Kante nach vorn, dann fallen (das Hinterteil bleibt über der Mauer und fällt nicht hindurch);
+	# hinauf: erst hoch, dann nach vorn auf die Kante (nicht durch Bank oder Mauer)
+	var forward_part := u
+	var rise_part := u
+	if anim_name == &"jump_down":
+		forward_part = 1.0 - (1.0 - u) * (1.0 - u)
+		rise_part = u * u
+	elif anim_name == &"jump_up":
+		forward_part = u * u
+		rise_part = 1.0 - (1.0 - u) * (1.0 - u)
+	var p := _jump_from.lerp(target, forward_part)
+	var dy := target.y - _jump_from.y
+	p.y = _jump_from.y + dy * rise_part + sin(u * PI) * (maxf(0.0, dy) * 0.3 + (0.04 if anim_name in [&"hop_up", &"step_down"] else 0.1))
 	global_position = p
+	# Körper in Sprungrichtung: hinauf der Vorderkörper oben, hinunter der Vorderkörper unten
+	var flat := maxf(Vector2(target.x - _jump_from.x, target.z - _jump_from.z).length(), 0.15)
+	rotation.x = clampf(atan2(-dy, flat), -JUMP_PITCH, JUMP_PITCH) * sin(u * PI)
 	_turn(delta, 9.0)
 	if k >= 1.0:
 		global_position = target
+		rotation.x = 0.0
 		hunting = false
 		posture = "stand"
 		_next()

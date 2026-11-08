@@ -341,6 +341,8 @@ var sit_down_volume_db: float = -17.0
 var light_loop_volume_db: float = -7.0
 var plant_rustle_volume_db: float = -15.0
 ## Höchstens so oft raschelt es (s) – Spielfigur bzw. Katze
+## Efeu an Häusern: so weit (m) um eine ausgemessene Efeu-Stelle raschelt es beim Vorbeigehen
+var ivy_rustle_radius: float = 0.4
 var plant_rustle_cooldown: float = 0.9
 ## So nah (m, Abstand zum Rand der Pflanze) muss die Spielfigur an einer Pflanze sein, damit es raschelt
 var player_radius_for_plants: float = 0.32
@@ -970,7 +972,7 @@ var cat_sill_chance: float = 0.65
 var cat_wall_chance: float = 0.9
 var cat_wall_speed: float = 0.32
 ## Große Katzen auf der Treppe (Stufe für Stufe)
-var cat_stair_speed: float = 0.3
+var cat_stair_speed: float = 0.55
 var cat_rub_speed: float = 0.1
 var cat_run_chance: float = 0.3
 var cat_rub_chance: float = 0.65

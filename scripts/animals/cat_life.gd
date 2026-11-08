@@ -43,6 +43,10 @@ const TAIL_EDGE_ADULT := 0.195
 const PAWS := 0.05
 const PAWS_ADULT := 0.08
 const BLOCK_AHEAD := 0.55
+## So weit vor der Kante landet eine Katze beim Sprung von einer Mauer (m ab der Mauerkante)
+const JUMP_CLEAR := 0.5
+## Eine Bank (Sitzplatz) so nah (m) vor der Stelle unter einer Fensterbank: erst auf die Bank, dann hinauf
+const SILL_SEAT_REACH := 0.75
 const BLOCK_SIDE := 0.22
 ## Gruppe der Katzenkörbchen-Plätze (Marker „CatSpot“ in Möbeln) und Unterkategorie der Körbchen
 const CAT_SPOT_GROUP := "cat_spots"
@@ -85,6 +89,8 @@ var throws := 0
 var chases := 0
 ## Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h): Abstecher dorthin, Jagden dort
 var garden_visits := 0
+## Prüfwerkzeug: über eine Bank aufs Fensterbrett gesprungen
+var bench_hops := 0
 var court_hunts := 0
 ## Lage von Gasse und Hof (unter "Outside", x/z), siehe _setup_garden; leer = Gasse ohne Garten
 var _garden := {}
@@ -601,9 +607,9 @@ func _meet(a: StreetCat, b: StreetCat, d: Vector3) -> void:
 	var pb := _ground_at(m + d * (b.nose_reach() + 0.02))
 	var sniff := _rng.randf_range(1.8, 3.0)
 	var plan_a: Array[Dictionary] = [_walk([a.global_position, pa], 0.35), {"type": "turn", "face": d},
-		{"type": "anim", "anim": "sniff", "time": sniff}]
+		{"type": "anim", "anim": "sniff", "time": sniff, "chatter": true}]
 	var plan_b: Array[Dictionary] = [_walk([b.global_position, pb], 0.35), {"type": "turn", "face": -d},
-		{"type": "anim", "anim": "sniff", "time": sniff}]
+		{"type": "anim", "anim": "sniff", "time": sniff, "chatter": true}]
 	var greeter := a if _rng.randf() < 0.5 else b
 	(plan_a if greeter == a else plan_b).append({"type": "call", "callable": func(c: StreetCat) -> void: c.meow()})
 	var what := _rng.randf()
@@ -699,7 +705,13 @@ func _visit(side: int, s0: float, exit: Dictionary, stops: bool = true) -> Array
 				var l := _outside.to_local(sill.pos)
 				var lage := street.centerline.project(Vector2(l.x, l.z))
 				if sill.taken == null and lage.x > lo + 1.0 and lage.x < hi - 1.0:
-					free.append({"kind": "sill", "s": lage.x, "side": 1 if lage.y > 0.0 else -1, "sill": sill})
+					# Steht etwas davor? Eine Bank: erst darauf, dann aufs Fensterbrett. Anderes (Kübel, Tisch): nicht hier.
+					var below: Vector3 = _ground_at(sill.pos + (sill.out as Vector3) * 0.45)
+					var seat_below := _seat_near(below)
+					var lb := _outside.to_local(below)
+					if seat_below.is_empty() and not street.clear_of_static(Vector2(lb.x, lb.z), 0.18):
+						continue
+					free.append({"kind": "sill", "s": lage.x, "side": 1 if lage.y > 0.0 else -1, "sill": sill, "via_seat": seat_below})
 			if not free.is_empty():
 				plan.append(free[_rng.randi() % free.size()])
 		var window := street.get_node_or_null("WindowSpots/LibraryFront") as Node3D
@@ -889,14 +901,14 @@ func _ledge_sit(cat: StreetCat, center: Vector3, out: Vector3, depth: float, inw
 		var along := out.cross(Vector3.UP).normalized() * (1.0 if _rng.randf() < 0.5 else -1.0)
 		var yaw := rad_to_deg(atan2(face.dot(Vector3.UP.cross(along)), face.dot(along)))
 		a.append({"type": "turn", "face": along})
-		a.append({"type": "anim", "anim": "sit", "time": time, "look": Vector2(clampf(yaw, -80.0, 80.0), pitch)})
+		a.append({"type": "anim", "anim": "sit", "time": time, "look": Vector2(clampf(yaw, -80.0, 80.0), pitch), "chatter": inward})
 		return a
 	var spot := center - face * (depth / 2.0) + face * tail
 	var moved := speed > 0.0 and spot.distance_to(center) > 0.03
 	if moved:
 		a.append(_walk([center, spot], speed))
 	a.append({"type": "turn", "face": face})
-	a.append({"type": "anim", "anim": "sit_ledge", "time": time, "look": Vector2(_rng.randf_range(-20.0, 20.0), pitch)})
+	a.append({"type": "anim", "anim": "sit_ledge", "time": time, "look": Vector2(_rng.randf_range(-20.0, 20.0), pitch), "chatter": inward})
 	if moved:
 		a.append(_walk([spot, center], speed))
 	return a
@@ -913,7 +925,8 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			var p1: Vector3 = w.b if stop.from_a else w.a
 			var out: Vector3 = w.out
 			var ground0 := _ground_at(p0 + out * 0.45)
-			var ground1 := _ground_at(p1 + out * 0.45)
+			# weit genug von der Mauer landen: das Hinterteil muss beim Absprung frei bleiben
+			var ground1 := _ground_at(p1 + out * (float(w.get("width", 0.3)) / 2.0 + JUMP_CLEAR))
 			a.append(_walk([back, ground0]))
 			a.append({"type": "claim", "callable": func(cat: StreetCat) -> bool:
 				var ok := _claim_wall(cat, w)
@@ -987,11 +1000,31 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			var sill: Dictionary = stop.sill
 			var out: Vector3 = sill.out
 			var front: Vector3 = _ground_at(sill.pos + out * 0.45)
+			# Bank davor: erst auf die Bank, dann aufs Fensterbrett (und auf dem gleichen Weg zurück)
+			var via: Dictionary = stop.get("via_seat", {})
+			var seat_top := Vector3.INF
+			if not via.is_empty():
+				front = _ground(via.approach)
+				seat_top = (via.seat as SeatPoint).global_position
 			a.append(_walk([back, front]))
-			a.append({"type": "claim", "callable": func(cat: StreetCat) -> bool: return _claim_sill(cat, sill)})
+			var claim_seat: SeatPoint = via.seat if not via.is_empty() else null
+			a.append({"type": "claim", "callable": func(cat: StreetCat) -> bool:
+				if claim_seat != null and not claim_seat.is_free():
+					return false
+				if not _claim_sill(cat, sill):
+					return false
+				if claim_seat != null:
+					_claim_seat(cat, claim_seat)
+					bench_hops += 1
+				return true})
 			a.append({"type": "turn", "face": out})
 			a.append({"type": "toy_drop"})
-			_jump_on(a, front, sill.pos)
+			if seat_top != Vector3.INF:
+				_jump_on(a, front, seat_top)
+				a.append({"type": "anim", "anim": "idle", "time": 0.35})
+				_jump_on(a, seat_top, sill.pos)
+			else:
+				_jump_on(a, front, sill.pos)
 			# durchs Fenster hineinschauen oder die Straße beobachten (seit der Nachbesserung von 6h; auf schmalen
 			# Fensterbänken längs sitzend, den Kopf zur Seite gedreht)
 			var depth := float(sill.get("depth", 0.15))
@@ -1003,11 +1036,18 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 				a.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(3.0, 6.0)})
 			if float(sill.get("length", 0.4)) > 0.6 and _rng.randf() < 0.4:
 				a.append({"type": "anim", "anim": "lie", "time": rest * 0.5})
-			_jump_off(a, sill.pos, front + out * 0.15)
+			var landing := front + out * 0.15
+			if seat_top != Vector3.INF:
+				_jump_off(a, sill.pos, seat_top)
+				a.append({"type": "anim", "anim": "idle", "time": 0.3})
+				_jump_off(a, seat_top, landing)
+				a.append({"type": "release_seat"})
+			else:
+				_jump_off(a, sill.pos, landing)
 			a.append({"type": "toy_take"})
 			a.append({"type": "call", "callable": func(cat: StreetCat) -> void: _release_claims(cat)})
 			a.append({"type": "claim_end"})
-			a.append(_walk([front + out * 0.15, back]))
+			a.append(_walk([landing, back]))
 		"window":
 			var node: Node3D = stop.node
 			var face := -node.global_basis.z
@@ -1015,7 +1055,7 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 			var spot := _ground_at(node.global_position + face.normalized() * 0.3)
 			a.append(_walk([back, spot]))
 			a.append({"type": "turn", "face": face})
-			a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(10.0, 20.0), "face": face, "look_up": true})
+			a.append({"type": "anim", "anim": "sit", "time": _rng.randf_range(10.0, 20.0), "face": face, "look_up": true, "chatter": true})
 			if _rng.randf() < 0.5:
 				a.append({"type": "anim", "anim": "groom", "time": _rng.randf_range(3.0, 5.0), "face": face})
 			a.append(_walk([spot, back]))
@@ -1030,6 +1070,20 @@ func _stop_actions(stop: Dictionary, back: Vector3) -> Array[Dictionary]:
 		"garden":
 			a.append_array(_garden_actions(back))
 	return a
+
+
+## Sitzplatz einer Bank nah an einer Stelle am Boden (Eintrag von get_street_seats) oder leer.
+func _seat_near(ground: Vector3) -> Dictionary:
+	var l := _outside.to_local(ground)
+	var spot := Vector2(l.x, l.z)
+	var best := {}
+	var best_d := SILL_SEAT_REACH
+	for e: Dictionary in street.get_street_seats():
+		var d := (e.pos as Vector2).distance_to(spot)
+		if d < best_d and (e.seat as SeatPoint).is_free():
+			best_d = d
+			best = e
+	return best
 
 
 func _claim_sill(cat: StreetCat, sill: Dictionary) -> bool:
@@ -1782,7 +1836,7 @@ func _play_round(cat: StreetCat, toy: Node3D, rounds: int) -> void:
 		stop.y = cat.global_position.y
 		if to_toy.length() > 0.9 and _rng.randf() < 0.5:
 			a.append({"type": "turn", "face": to_toy})
-			a.append({"type": "anim", "anim": "crouch", "time": _rng.randf_range(0.5, 1.2)})
+			a.append({"type": "anim", "anim": "crouch", "time": _rng.randf_range(0.7, 1.5), "chatter": true})
 			var land := toy.global_position - to_toy.normalized() * 0.12
 			land.y = cat.global_position.y
 			a.append({"type": "pounce", "to": land})
