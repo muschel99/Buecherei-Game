@@ -998,8 +998,10 @@ var toy_start_count: int = 2
 ## (m/s, plus etwas je Meter Abstand)
 var vehicle_cat_near_distance: float = 1.4
 var vehicle_cat_near_speed: float = 2.2
-## Fahrräder: so langsam (m/s, plus etwas je Meter Abstand) beim Ausweichen auf die andere Straßenseite
-var bike_swerve_speed: float = 1.6
+## Fahrräder halten vor jedem Hindernis an, statt außen herumzufahren (seit Nachbesserung 4): Verzögerung (m/s²; klein =
+## schon einige Meter vorher langsamer), Abstand beim Halten (m)
+var bike_brake: float = 1.1
+var bike_stop_gap: float = 1.2
 ## Radfahrer: unter diesem Tempo (m/s) gilt das Rad als stehend (Fuß auf den Boden), Dauer des Übergangs (s)
 var cyclist_stop_speed: float = 0.3
 var cyclist_stop_time: float = 0.6

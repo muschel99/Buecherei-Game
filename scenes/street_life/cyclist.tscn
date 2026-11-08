@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
-; Ein Fahrrad mit Fahrerin oder Fahrer (seit Etappe 5a). Fährt nah am Bordstein und weicht
-; Hindernissen zur Straßenmitte hin aus (can_swerve). Austauschbar: "Model" ist das Aussehen –
+; Ein Fahrrad mit Fahrerin oder Fahrer (seit Etappe 5a). Fährt nah am Bordstein, weicht
+; Hindernissen nicht aus, sondern hält davor an (is_bike). Austauschbar: "Model" ist das Aussehen –
 ; seit Etappe 5c eine Chibi-Figur auf dem verkleinerten Hollandrad (ChibiCyclistModel, tritt im
 ; Takt der Kurbel). Der alte Platzhalter: Script von "Model" auf
 ; res://scripts/street_life/cyclist_placeholder.gd stellen. Eigenes Modell: "Model" löschen, die
@@ -20,7 +20,7 @@ script = ExtResource("1_vehicle")
 length = 1.8
 width = 0.6
 lane_offset = 1.9
-can_swerve = true
+is_bike = true
 
 [node name="Body" type="AnimatableBody3D" parent="."]
 collision_layer = 64

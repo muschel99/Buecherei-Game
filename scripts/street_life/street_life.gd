@@ -881,7 +881,9 @@ func road_obstacles(vehicle: StreetVehicle) -> Array[Dictionary]:
 	if cats:
 		for cat in cats.get_cats():
 			var cat_pos := _to_local2(cat.global_position)
-			if cat.on_ground() and cat_pos.distance_squared_to(vehicle.pos) < limit:
+			# auch mitten im Sprung vom Bordstein (nur nicht oben auf Mauern, Bänken, Fensterbänken)
+			var low := to_local(cat.global_position).y < 0.3 and not cat.inside
+			if low and cat_pos.distance_squared_to(vehicle.pos) < limit:
 				var cat_lat := centerline.project(cat_pos, vehicle.get_s() - 30.0, vehicle.get_s() + 30.0).y
 				# auf der Fahrbahn; Art "cat": früh und sanft bremsen und warten, aber nie hupen oder klingeln; am Rand
 				# (Gehweg nah am Bordstein, seit der Nachbesserung von 6h – Katzen laufen ohne zu warten los): langsamer

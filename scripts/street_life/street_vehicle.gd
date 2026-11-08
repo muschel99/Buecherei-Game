@@ -4,7 +4,8 @@ extends Node3D
 ## einem versteckten Straßenende zum anderen auf der Mittellinie der Straße (StreetPaths), im
 ## Linksverkehr wie in England. Bremst weich für alles, was vor ihm auf der Fahrbahn ist
 ## (Fußgänger beim Überqueren, die Spielfigur, langsamere Fahrzeuge) und fährt nie jemanden um.
-## Fahrräder (can_swerve) fahren um Hindernisse herum, wenn Platz ist, statt anzuhalten.
+## Fahrräder (is_bike) fahren nie um Hindernisse herum (seit Nachbesserung 4 von 6h): schon einige Meter vorher werden
+## sie langsamer und halten davor an.
 ##
 ## Aufbau der Szenen (scenes/street_life/cyclist.tscn, car.tscn, delivery_van.tscn):
 ##   <Fahrzeug>  (dieses Script oder DeliveryVan)
@@ -24,7 +25,7 @@ signal finished(vehicle: StreetVehicle)
 ## Abstand der Fahrspur von der Straßenmitte (Meter, im Linksverkehr).
 @export var lane_offset: float = 1.25
 ## Fährt um Hindernisse herum (Fahrrad), statt anzuhalten.
-@export var can_swerve: bool = false
+@export var is_bike: bool = false
 
 @export_group("Animation (eigenes Modell)")
 ## Name der Fahr-Animation im AnimationPlayer des Modells ("" = keine) und das Tempo (m/s), bei
@@ -223,13 +224,16 @@ func _wanted_speed() -> float:
 			# Katze am Straßenrand: rechtzeitig langsamer (sie könnte loslaufen)
 			limit = minf(limit, GameConfig.vehicle_cat_near_speed + maxf(0.0, along) * 0.35)
 			continue
+		# Katzen auf der Fahrbahn laufen quer hinüber: für sie zählt die ganze Breite (sonst fährt man hindurch, wenn sie
+		# gerade noch auf der anderen Seite der Fahrbahn sind)
+		var cat: bool = obstacle.kind == "cat"
 		# Menschen bekommen mehr Abstand als Fahrzeuge
 		var person: bool = obstacle.kind in ["walker", "player"]
 		# Entgegenkommende fahren in ihrer eigenen Spur vorbei: nur bremsen, wenn sie sich berühren
 		# würden (sonst warten im engen Torbogen beide aufeinander)
 		var margin := PERSON_GAP if person else (0.05 if obstacle.kind == "vehicle_oncoming" else 0.25)
 		var half := width / 2.0 + float(obstacle.radius) + margin
-		if absf(lage.y - _lat) >= half and absf(lage.y - _target_lat) >= half:
+		if not cat and absf(lage.y - _lat) >= half and absf(lage.y - _target_lat) >= half:
 			continue
 		if person and not obstacle.get("on_road", true):
 			# am Bordstein bzw. Rand (seit Etappe 6f): nicht anhalten, nicht ausweichen, nicht klingeln – nur
@@ -238,22 +242,11 @@ func _wanted_speed() -> float:
 			continue
 		if person:
 			_person_ahead = minf(_person_ahead, along)
-		if can_swerve and obstacle.kind not in ["vehicle_oncoming", "cat"]:
-			# Fahrrad: zur Straßenmitte hin vorbei, wenn dort Platz ist – vorher abbremsen (seit der Nachbesserung von 6h
-			# auch bei Dingen, nicht nur bei Menschen); für Katzen bremsen Fahrräder wie Autos
-			var around := lage.y - signf(lane()) * (half + 0.1)
-			if absf(around) < GameConfig.street_width / 2.0 - 0.35 and life.lane_free(self, around, along + 8.0):
-				swerve = around
-				limit = minf(limit, GameConfig.bike_swerve_speed + maxf(0.0, along) * 0.3)
-				if absf(lage.y - _lat) < half:
-					# Noch nicht weit genug zur Seite: so bremsen, dass es vorher reicht
-					limit = minf(limit, sqrt(2.0 * BRAKE * maxf(0.0, along - 0.6)))
-				continue
-		# Katzen: früh und sanft bremsen (mehr Abstand, halbe Verzögerung)
-		var cat: bool = obstacle.kind == "cat"
-		var stop := maxf(0.0, along - (STOP_GAP + 1.0 if cat else STOP_GAP))
+		# Vor dem Hindernis anhalten: Katzen mit mehr Abstand und sanft, Fahrräder bremsen schon einige Meter vorher
+		var gap := STOP_GAP + 1.0 if cat else (GameConfig.bike_stop_gap if is_bike else STOP_GAP)
+		var stop := maxf(0.0, along - gap)
 		var their: float = obstacle.get("speed", 0.0)
-		var brake := BRAKE * (0.5 if cat else 1.0)
+		var brake := GameConfig.bike_brake if is_bike else (BRAKE * (0.5 if cat else 1.0))
 		limit = minf(limit, maxf(sqrt(2.0 * brake * stop), 0.0) + maxf(0.0, their) * clampf(stop / 6.0, 0.0, 1.0))
 	_target_lat = swerve
 	return limit
@@ -305,7 +298,7 @@ func _sounds(delta: float) -> void:
 	_sound_cool = maxf(0.0, _sound_cool - delta)
 	if _model == null or not is_visible_in_tree():
 		return
-	if can_swerve:
+	if is_bike:
 		_bell_timer -= delta
 		var someone := _person_ahead < 8.0
 		if (someone and _sound_cool <= 0.0) or _bell_timer <= 0.0:

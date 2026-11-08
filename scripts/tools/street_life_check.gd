@@ -30,7 +30,7 @@ var _camera: Camera3D
 var _report := {
 	"appeared": 0, "vanished": 0, "appear_in_view": [], "vanish_in_view": [],
 	"appear_open": 0, "vanish_open": 0, "places": {},
-	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "stall": [], "vehicle_close": [],
+	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "stall": [], "vehicle_close": [], "vehicle_cat": [],
 	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {}, "crossing": 0, "browsing": 0, "alley": 0, "sitting": 0,
 }
 var _track := {}  # Passant -> [letzte Stelle, Zeit seit Bewegung]
@@ -300,6 +300,15 @@ func _measure() -> void:
 				_report.stuck.append("seit 30 s: %s (%s)%s" % [vehicle.debug_text(), _spot_name, waits])
 				vtrack = [vehicle.pos, -1000.0]
 		_track[vehicle] = vtrack
+		if _life.cats and vehicle.speed > 0.5:
+			var forward2 := Vector2(sin(vehicle.rotation.y), cos(vehicle.rotation.y))
+			for cat in _life.cats.get_cats():
+				var cp := Vector2(_life.to_local(cat.global_position).x, _life.to_local(cat.global_position).z)
+				var cd := cp - vehicle.pos
+				var cx := maxf(absf(cd.dot(forward2)) - vehicle.length / 2.0, 0.0)
+				var cy := maxf(absf(cd.dot(Vector2(forward2.y, -forward2.x))) - vehicle.width / 2.0, 0.0)
+				if sqrt(cx * cx + cy * cy) < 0.15 and _life.to_local(cat.global_position).y < 0.3:
+					_report.vehicle_cat.append("%s (%.1f m/s) durch %s (%s)" % [vehicle.name, vehicle.speed, cat.name, _spot_name])
 		for walker in walkers:
 			if vehicle.speed > 0.8 and vehicle.distance_to_walker(walker) < 0.5:
 				_report.vehicle_close.append("%s (s=%.1f lat=%.2f %.1f m/s) nah an %s (%s, %s)" % [vehicle.name,
@@ -373,7 +382,7 @@ func _print_report() -> void:
 	print("Messungen mit Passanten beim Überqueren: %d, vor einem Schaufenster: %d, in einer Gasse: %d, auf der Bank: %d" % [
 		_report.crossing, _report.browsing, _report.alley, _report.sitting])
 	print("Kleinster Abstand zwischen Passanten: %.2f m, zur Spielfigur: %.2f m" % [_report.min_walker_gap, _report.min_player_gap])
-	for key in ["overlap", "player_bump", "solid", "stuck", "stall", "vehicle_close"]:
+	for key in ["overlap", "player_bump", "solid", "stuck", "stall", "vehicle_close", "vehicle_cat"]:
 		var list: Array = _report[key]
 		print("%s: %d" % [key, list.size()])
 		for i in mini(list.size(), 12):
