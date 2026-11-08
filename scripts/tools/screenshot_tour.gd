@@ -57,6 +57,7 @@ const WARMUP_FRAMES := 40
 const SETTLE_FRAMES := 12
 
 var _args := {}
+var _focus_wait := false
 var _camera: Camera3D
 var _old_quality: Variant = null
 
@@ -66,6 +67,10 @@ func _ready() -> void:
 	SaveManager.saving_enabled = false
 	if _args.has("no_animals"):
 		GameConfig.animals_enabled = false
+	if _args.has("no_homes"):
+		# Vergleich (Leistung): ohne Anwohner und Gäste, Verkäufer bleiben
+		GameConfig.resident_count = 0
+		GameConfig.pub_guest_count = 0
 	if _args.has("no_street_life"):
 		GameConfig.street_life_enabled = false
 	if _args.has("quality"):
@@ -162,6 +167,8 @@ func _run() -> void:
 	var views := _collect_views()
 	if _args.has("focus"):
 		views = _focus_views(views)
+	if _args.has("shop_view"):
+		views = _shop_views(String(_args.shop_view))
 	if _args.has("facades"):
 		# mehrere Fassaden nacheinander (seit Etappe 6f): je Variante alle Blickpunkte, Name als Zusatz
 		var base := FacadeDesign.config.duplicate()
@@ -190,6 +197,7 @@ func _capture(views: Dictionary, out_dir: String, suffix: String) -> void:
 		_camera.look_at(view.target, Vector3.UP)
 		_camera.fov = float(view.get("fov", _camera.fov))
 		_aim_player_camera()
+		_refresh_indoor_figures()
 		await _wait_frames(SETTLE_FRAMES)
 		if _args.has("stats"):
 			print("Zeichenaufrufe %s: %d, Objekte: %d, Dreiecke: %d" % [view_name,
@@ -316,6 +324,10 @@ func _focus_views(views: Dictionary) -> Dictionary:
 	var target: Vector3 = views[views.keys()[0]].target
 	var best: Node3D = null
 	var candidates: Array = life.get_vehicles() if _args.has("focus_vehicle") else life.get_walkers()
+	if _args.has("focus_action"):
+		# Nur Passanten, die gerade das tun (door, chore, buy …)
+		candidates = life.get_walkers().filter(func(w: Passerby) -> bool:
+			return w.get_action_type() == String(_args.focus_action) and w._phase >= 1)
 	if _args.has("focus_cat") and life.cats:
 		candidates = life.cats.get_cats()
 	elif _args.has("focus_bird") and life.birds:
@@ -335,6 +347,37 @@ func _focus_views(views: Dictionary) -> Dictionary:
 		var dir := forward.rotated(Vector3.UP, float(item[1]))
 		result["focus_" + item[0]] = {"pos": chest + dir * distance + Vector3.UP * 0.2, "target": chest}
 	print("Nahaufnahme: ", best.name)
+	return result
+
+
+## Figuren in Läden und Häusern blendet StreetHomes je nach Blickrichtung aus: für diesen Blick neu entscheiden.
+func _refresh_indoor_figures() -> void:
+	var life := get_tree().get_first_node_in_group(StreetLife.GROUP) as StreetLife
+	if life and life.homes:
+		life.homes.refresh_indoor(0.0001)
+
+
+## Blicke von draußen durch Tür und Schaufenster in einen Laden (--shop_view=<Name des Hauses>, z. B. Neighbor3).
+func _shop_views(house_name: String) -> Dictionary:
+	var life := get_tree().get_first_node_in_group(StreetLife.GROUP) as StreetLife
+	var result := {}
+	for shop: Dictionary in life.homes.shops:
+		if String((shop.house as Node).name) != house_name:
+			continue
+		var door: HouseDoor = shop.door
+		var c := door.center()
+		var out := door.out_dir
+		var side := out.cross(Vector3.UP).normalized()
+		var eye := Vector3.UP * 1.45
+		result["%s_vorn" % house_name] = {"pos": c + out * 4.2 + eye, "target": c - out * 2.0 + Vector3.UP * 1.0}
+		result["%s_links" % house_name] = {"pos": c + out * 3.4 + side * 3.0 + eye, "target": c - out * 2.0 - side * 0.6 + Vector3.UP}
+		result["%s_rechts" % house_name] = {"pos": c + out * 3.4 - side * 3.0 + eye, "target": c - out * 2.0 + side * 0.6 + Vector3.UP}
+		result["%s_innen" % house_name] = {"pos": c - out * 0.9 + eye, "target": c - out * 4.0 + Vector3.UP}
+	var only: PackedStringArray = String(_args.get("shop_only", "")).split(",", false)
+	if not only.is_empty():
+		for key: String in result.keys():
+			if not key.get_slice("_", 1) in only:
+				result.erase(key)
 	return result
 
 
@@ -377,11 +420,27 @@ func _prepare_street_life() -> void:
 		_camera.global_position = first.pos
 		_camera.look_at(first.target, Vector3.UP)
 	var seconds := float(_args.get("simulate", 0.0))
+	if _args.has("resident"):
+		# Anwohner sollen sofort genau das tun (Testbilder)
+		GameConfig.resident_activity_weights = {String(_args.resident): 1.0}
+		GameConfig.resident_home_time = Vector2(0.5, 1.5)
+		if _args.has("resident_at") and life.homes:
+			# den ersten Anwohner in dieses Haus setzen (Testbilder)
+			for home: Dictionary in life.homes.homes:
+				if String((home.house as Node).name) == String(_args.resident_at):
+					life.homes.residents[0].home = home
+					life.homes.residents[0].timer = 0.5
 	var step := 1.0 / 30.0
 	var done := 0.0
 	while done < seconds:
 		life.step(step)
 		done += step
+		# --focus_action: anhalten, sobald jemand diese Tätigkeit wirklich tut
+		if _args.has("focus_action") and life.get_walkers().any(func(w: Passerby) -> bool:
+				return w.get_action_type() == String(_args.focus_action) and w._phase >= 1):
+			if not _focus_wait:
+				_focus_wait = true
+				seconds = minf(seconds, done + float(_args.get("focus_after", 1.5)))
 		# --focus_cross: anhalten, sobald jemand mitten auf der Fahrbahn ist
 		if _args.has("focus_cross") and life.get_walkers().any(func(w: Passerby) -> bool:
 				return w.on_road and absf(w.get_route().project(w.pos).y) < 1.0):
@@ -394,6 +453,9 @@ func _prepare_street_life() -> void:
 	await get_tree().process_frame
 	for walker in life.get_walkers():
 		walker.step(0.0001)
+	if _args.has("clip_wait"):
+		# Animationen laufen in echter Zeit weiter (--focus_action): kurz warten, bis die Haltung stimmt
+		await get_tree().create_timer(float(_args.clip_wait)).timeout
 
 
 ## Spielfigur anhalten und ihre Kamera abgeben (sie bleibt sonst die aktive Kamera).

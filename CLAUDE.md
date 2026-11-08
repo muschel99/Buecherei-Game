@@ -146,7 +146,7 @@ scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   shop/            Lieferdienst (DeliveryManager)
   animals/         Tiere (seit 6g): StreetAnimal (Grundlage), StreetBird + BirdLife, StreetCat + CatLife,
                    AnimalHeadModifier
-  street_life/     Straßenleben (StreetLife, StreetPaths, StreetRoute, Passerby, StreetVehicle,
+  street_life/     Straßenleben (StreetLife, StreetHomes = Anwohner/Läden, HouseDoor, StreetPaths, StreetRoute, Passerby, StreetVehicle,
                    DeliveryVan, StreetObstacle, StreetShapes, Platzhalter-Modelle; seit 6c
                    FaceTriggers, ChibiGestureModifier, ChatSession, ChatBubble, PasserbyVoice)
   world/           Außenwelt (StreetLayout, WorldMesh, Street, HouseFacade, GatehouseFacade,
@@ -1280,6 +1280,19 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Holzstuhl 0,13, 0 = keine; `_update_sit_rest` schiebt das Modell zurück und neigt mehr). **Katzen enden nur mit dem Schritt "leave":**
   sind die Schritte sonst aus, geht es weiter (`StreetCat._next` → `CatLife.resume`), von drinnen und von der Treppe über `_way_down`;
   Spielzeug bleibt nie auf der Treppe liegen (`on_stairs`, `_tumble_down`); Jagd/Spielen nur auf einer ebenen Fläche (`on_street_level`).
+- **Anwohner, Türen, Läden (seit Etappe 6i):** `StreetHomes` (Kind von StreetLife, `life.homes`) sucht beim Start in den Hausmodellen leere
+  Knoten: `DoorHinge_0` (Scharnier; Extras swing/width/height/dir_x,y/out_x,y) und Netze `DoorLeaf …` → `HouseDoor` (`attach`, `request`/`release`,
+  `step`), `WindowSpot_n`, `PlantSpot_…`, im Laden `ShopSpot_<counter|vendor|browse|seat>_<n>` (Extras face_x/y, Pub-Sitze height/floor/backrest/via/table).
+  In Blender: Türblatt-Teile mit `SC.door_leaf(obj)`, `SC.door_hinge(fm, hinge_x, dz, width, height)`, `SC.shop_spot(…)`, `SC.game_spot(…)` – Export legt sie in
+  eigene Knoten (`GAME_SPOTS`). Passanten-Schritte: `door` (from_pos/to_pos/middle; `vanish` = nach Hause: verschwindet erst hinter der geschlossenen Tür; `floor`),
+  `chore` (water/sweep), `buy` (Theke, Tüte `give_bag`). Laden-Besuch plant `StreetHomes.shop_visit_actions` (Flag `shop_visit`, `skip_shop`, höchstens
+  `shop_capacity`). Anwohner: `residents` (state home/out/away/window), kehren nicht in den Vorrat zurück (`Passerby.resident`); Fensterblick nur, wenn `is_visible_point(outer)` false ist
+  (Punkt VOR dem Fenster – drinnen verdeckt die Hauskollision den Sichtstrahl). `indoor` = Figuren drinnen (Verkäufer, Gäste, Fenster): nicht in `_walkers`, außerhalb des Bilds `visible = false`
+  (`_update_indoor_lod`). Gegenstände: `ChibiPasserbyModel.set_prop(&"can"…)` (BoneAttachment, `GameConfig.passerby_prop_hold`; `broom` setzt `sweep_points` zwischen die Hände),
+  Modelle `build_storybook_chore_props.py`. Gesten per Zwei-Glieder-Rechnung `ChibiGestureModifier._reach`: SWEEP, HUG, DRINK; Finger greifen `_grip`. Im Pub und in Läden gilt die Höhe der
+  Figuren: Sitz 0,25 m über dem Boden, Tisch ca. 0,46 m, Theke ca. 0,95 m. Haltungen ohne ganze Straße prüfen: `scenes/tools/pose_probe.tscn -- water|doors|sweep|hug|drink`
+  (Start siehe Kopf von `scripts/tools/pose_probe.gd`, 3 s statt Minuten). Testbilder: `--shop_view=<Haus> [--shop_only=vorn,innen]`, `--resident=water|sweep|errand|window`,
+  `--focus=<m> --focus_action=door|chore|buy --clip_wait=<s>`. street_life_check zählt Anwohner, Läden, Begegnungen.
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
   Daumen rechts −X / links +X; Finger in Verlängerung des Unterarms.
 - **Blick zur Spielfigur (seit 6f):** Passanten schauen höchstens `chibi_player_glance_time` Sekunden zur Spielfigur,

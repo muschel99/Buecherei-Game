@@ -184,6 +184,11 @@ def tea_inside(M, C, ops):
     for t in tins.values():
         t.build()
     china.build()
+    # Plätze im Laden fürs Spiel (seit Etappe 6i)
+    SC.shop_spot("counter", 0, (-0.75, 3.8, 0.06), (-1, 0))
+    SC.shop_spot("vendor", 0, (-2.05, 3.8, 0.06), (1, 0))
+    SC.shop_spot("browse", 0, (1.0, 5.6, 0.06), (0, 1))
+    SC.shop_spot("browse", 1, (1.65, 4.6, 0.06), (1, 0))
     for p, x in ((S2, 1.5), (S2, 3.8), (S0, 2.4)):
         SC.add_light("Ladenlicht", tuple(T.canon(*p, x, 2.9, -1.5) @ Vector((0, 0, 0))), 2900, 55, C["light"], radius=0.2)
     for p, x, z, w, h, _ in WINDOWS:

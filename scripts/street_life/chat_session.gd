@@ -12,6 +12,10 @@ var a: Passerby
 var b: Passerby
 var time_left := 10.0
 var handshake := false
+## Umarmung zur Begrüßung (seit Etappe 6i): stehen nebeneinander; a hat b links (+1), b hat a rechts (-1)
+var hug := false
+## Nach dem Plaudern ein Stück zusammen weitergehen (seit Etappe 6i)
+var walk_after := false
 var seated := false
 ## Zu zweit im Gehen (seit der Nachbesserung von 6h): ohne Stehenbleiben und Begrüßung, mit Pausen; vorbei, wenn einer
 ## verschwindet
@@ -54,13 +58,13 @@ func update(delta: float) -> bool:
 				var shake := handshake and a.chat_ready() and b.chat_ready()
 				handshake = shake
 				var waver := randi() % 2
-				_phase_left = maxf(a.chat_greet(shake, waver == 0), b.chat_greet(shake, waver == 1))
+				_phase_left = maxf(a.chat_greet(shake, waver == 0, 1.0 if hug else 0.0), b.chat_greet(shake, waver == 1, -1.0 if hug else 0.0))
 				_phase = 1
 			return true
 		1:  # Begrüßung
 			if _phase_left <= 0.0:
 				_phase = 3
-				if handshake:
+				if handshake or hug:
 					a.chat_back_off(b)
 					b.chat_back_off(a)
 					_phase = 2
@@ -72,7 +76,9 @@ func update(delta: float) -> bool:
 			return true
 	time_left -= delta
 	if time_left <= 0.0:
-		end(randf() < GameConfig.passerby_goodbye_wave_chance and not seated)
+		end(randf() < GameConfig.passerby_goodbye_wave_chance and not seated and not walk_after)
+		if walk_after and a.life:
+			a.life.walk_together(a, b)
 		return false
 	_turn_left -= delta
 	if _turn_left <= 0.0:

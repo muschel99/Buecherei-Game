@@ -43,6 +43,7 @@ var _spot_name := ""
 
 func _ready() -> void:
 	_args = _parse_args()
+	StreetHomes.debug = true
 	if _args.has("no_animals"):
 		GameConfig.animals_enabled = false
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
@@ -259,6 +260,10 @@ func _measure() -> void:
 		if a.get_action_type() == "sit":
 			_track[a] = [a.pos, 0.0]
 			continue
+		# Durch eine Tür oder im Laden/Haus (seit Etappe 6i): das Gebäude ist dort das Ziel, kein Fehler
+		if a.floor_y > 0.0 or a.get_action_type() in ["door", "chore", "buy"] or a.get_action().get("yard", false):
+			_track[a] = [a.pos, 0.0]
+			continue
 		# In etwas Festes hinein? (Häuser, Mauern, Treppe, Kartons; nicht die Grenzen der Spielfigur)
 		var query := PhysicsShapeQueryParameters3D.new()
 		var capsule := CapsuleShape3D.new()
@@ -376,6 +381,14 @@ func _print_report() -> void:
 			print("  ", line)
 	print("Passanten (seit 6h): geplaudert %d (davon Hände geschüttelt %d), auf der Bank geplaudert %d, Katzen gestreichelt %d, zu zweit %d" % [
 		_life.stat_chats, _life.stat_handshakes, _life.stat_seat_chats, _life.stat_pets, _life.stat_pairs])
+	if _life.homes:
+		var h := _life.homes
+		print("Anwohner (seit 6i): Häuser %d, Anwohner %d, durch die Tür %d, Wege %d, gegossen %d, gefegt %d, am Fenster %d, gerade draußen %d" % [
+			h.homes.size(), h.residents.size(), h.stat_doors_used, h.stat_errands, h.stat_water, h.stat_sweep, h.stat_windows, h.residents_outside()])
+	print("Begegnungen (seit 6i): Umarmungen %d, zusammen weiter %d, über die Straße gewinkt %d" % [_life.stat_hugs, _life.stat_together, _life.stat_waves])
+	if _life.homes:
+		print("Läden (seit 6i): Läden %d, Besuche %d, Tüten %d, im Pub gesetzt %d, feste Gäste %d, Figuren drinnen %d" % [_life.homes.shops.size(),
+			_life.homes.stat_shop_visits, _life.homes.stat_bags, _life.homes.stat_pub_visits, _life.homes.guests.size(), _life.homes.indoor.size()])
 	print("=== Bericht Straßenleben ===")
 	print("Messungen: %d" % _report.samples)
 	print("Erschienen: %d, im Blickfeld: %d, mit freier Sicht (beim Umdrehen): %d" % [
@@ -416,8 +429,8 @@ func _check_floor(walkers: Array) -> void:
 	var half := GameConfig.street_width / 2.0
 	var door := StreetLayout.door_center()
 	for w in walkers:
-		if w.get_action_type() in ["sit", "leave"] or not w.visible:
-			continue
+		if w.get_action_type() in ["sit", "leave"] or not w.visible or w.floor_y > 0.0:
+			continue  # (floor_y > 0: geht drinnen auf dem Ladenboden, dort gibt es keine Bodenkollision)
 		_floor_case(space, w.name, w.global_position, w.get_action_type(), half, door, [])
 	if _life.cats:
 		for cat in _life.cats.get_cats():

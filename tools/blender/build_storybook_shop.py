@@ -448,16 +448,21 @@ def door(M, C):
         if side < 0:
             pts = list(reversed(pts))
         b.slab(pts, 0.04, fm @ Matrix.Translation((0, 0, dz - 0.02)), dent=0.002)
-    # Türblatt (steht auf der Platte, 2,5 cm höher)
-    # Türblatt überlappt die Zarge ringsum um 5 mm (keine Lücke)
-    fb((-0.435, 1.155 + lift, dz), (0.1, 2.25, 0.05))
-    fb((0.435, 1.155 + lift, dz), (0.1, 2.25, 0.05))
-    fb((0, 0.18 + lift, dz), (0.78, 0.36, 0.05))
-    fb((0, 0.95 + lift, dz), (0.78, 0.1, 0.05))
-    fb((0, 2.21 + lift, dz), (0.78, 0.1, 0.05))
-    fb((0, 0.62 + lift, dz - 0.005), (0.78, 0.56, 0.04))
-    fb((0, 0.62 + lift, dz + 0.03), (0.52, 0.38, 0.02))
+    # Türblatt (steht auf der Platte, 2,5 cm höher) als eigener Körper (dreht sich im Spiel, seit Etappe 6i)
     b.build()
+    # Türblatt überlappt die Zarge ringsum um 5 mm (keine Lücke)
+    lf = Body("Türblatt", M["blue"], C["shop"], seed=108, vary=0.04, bevel=0.008)
+
+    def lb(c, s, step=0.3):
+        lf.box(c, s, step=step, dent=0.003, matrix=fm)
+    lb((-0.435, 1.155 + lift, dz), (0.1, 2.25, 0.05))
+    lb((0.435, 1.155 + lift, dz), (0.1, 2.25, 0.05))
+    lb((0, 0.18 + lift, dz), (0.78, 0.36, 0.05))
+    lb((0, 0.95 + lift, dz), (0.78, 0.1, 0.05))
+    lb((0, 2.21 + lift, dz), (0.78, 0.1, 0.05))
+    lb((0, 0.62 + lift, dz - 0.005), (0.78, 0.56, 0.04))
+    lb((0, 0.62 + lift, dz + 0.03), (0.52, 0.38, 0.02))
+    SC.door_leaf(lf.build())
     # Türzarge (cremefarben) rund um das Türblatt
     z = Body("Türzarge", M["frame"], C["shop"], seed=105, vary=0.03, bevel=0.012)
     for side in (-1, 1):
@@ -466,9 +471,11 @@ def door(M, C):
     z.build()
     g = Body("Tür Glas", M["glass"], C["shop"], seed=101)
     # Scheibe reicht ringsum in Rahmen und Riegel hinein (keine Spalten)
-    g.box((0, 1.6 + lift, dz), (0.8, 1.22, 0.006), step=10, dent=0, matrix=fm)
     g.box((0, hb + ay / 2, dz), (2 * ax + 0.06, ay, 0.006), step=10, dent=0, matrix=fm)
     g.build()
+    pane = Body("Tür Scheibe", M["glass"], C["shop"], seed=109)
+    pane.box((0, 1.6 + lift, dz), (0.8, 1.22, 0.006), step=10, dent=0, matrix=fm)
+    SC.door_leaf(pane.build())
     ar = Body("Oberlicht Sprossen", M["frame"], C["shop"], seed=102, vary=0.03)
     arc = [fm @ Vector((ax * math.cos(math.pi * k / 20), hb + ay * math.sin(math.pi * k / 20), dz)) for k in range(21)]
     ar.tube(arc, 0.022, segs=8)
@@ -482,17 +489,18 @@ def door(M, C):
     # "Geöffnet"-Kärtchen vor der Türscheibe an einer Schnur (Bild fashion_shop_open.png)
     card = Body("Tür Geöffnet-Schild", SC.sign_material("fashion_shop", "open"), C["shop"], seed=106, vary=0.0)
     card.panel(fm @ Matrix.Translation((0, 1.62 + lift, dz + 0.006)), 0.26, 0.26 * 152 / 360, 0.008)
-    card.build()
+    SC.door_leaf(card.build())
     cord = Body("Tür Geöffnet-Schild Schnur", M["iron"], C["shop"], seed=107)
     for sx in (-0.1, 0.1):
         cord.tube([fm @ Vector((sx, 1.62 + lift + 0.05, dz + 0.01)), fm @ Vector((0.0, 1.95 + lift, dz + 0.01))], 0.0015, segs=5,
                   round_ends=True)
     cord.blob(fm @ Vector((0.0, 1.95 + lift, dz + 0.012)), 0.006, subdiv=1, lump=0.0)
-    cord.build()
+    SC.door_leaf(cord.build())
     k = Body("Tür Knauf und Briefschlitz", M["gold"], C["shop"], seed=103)
     k.blob(fm @ Vector((0.33, 1.02 + lift, dz + 0.06)), 0.03, subdiv=2, lump=0.05)
     k.box((0, 0.98 + lift, dz + 0.035), (0.28, 0.04, 0.02), step=1, dent=0.001, matrix=fm)
-    k.build()
+    SC.door_leaf(k.build())
+    SC.door_hinge(fm, -0.485, dz, 0.97, 2.25 + lift)
     # Eine flache Steinplatte vor und in der Türnische (2,5 cm hoch, keine Treppe): darüber
     # läuft man ohne Stolpern, sie braucht im Spiel keine eigene Kollision
     st = Body("Türplatte", M["stone"], C["shop"], seed=104, vary=0.06, bevel=0.012)
@@ -542,6 +550,17 @@ def window_display(M, C):
     sh.build()
     for body in stack.values():
         body.build()
+    # Ladentheke (seit Etappe 6i): links hinten, durch das Schaufenster gut zu sehen; dahinter steht die Verkäuferin
+    ct = Body("Ladentheke", M["wood_in"], C["inside"], seed=122, vary=0.05, bevel=0.01)
+    ct.box((-0.85, 3.9, 0.5), (1.9, 0.62, 0.88), step=0.4, dent=0.003)
+    ct.box((-0.85, 3.9, 0.96), (2.02, 0.7, 0.05), step=0.4, dent=0.002)
+    ct.build()
+    # Plätze im Laden fürs Spiel: Kunde vor der Theke, Verkäuferin dahinter, Regal und Auslage anschauen
+    SC.shop_spot("counter", 0, (-0.85, 3.2, 0.08), (0, 1))
+    SC.shop_spot("vendor", 0, (-0.85, 4.5, 0.08), (0, -1))
+    SC.shop_spot("browse", 0, (1.15, 4.8, 0.08), (0, 1))
+    SC.shop_spot("browse", 1, (1.5, 1.55, 0.08), (0, -1))
+    SC.shop_spot("browse", 2, (-1.6, 1.55, 0.08), (0, -1))
     # Pendelleuchten
     lamp = Body("Pendelleuchten", M["bulb"], C["inside"], seed=120)
     cord = Body("Pendelleuchten Kabel", M["iron"], C["inside"], seed=121)

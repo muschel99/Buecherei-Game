@@ -1167,6 +1167,34 @@ Tageszeit abhängen (`StreetLife.activity()`).
 - **Speichern:** Draußen wird nichts gespeichert – außer dem, was für eine laufende Lieferung
   nötig ist (Bestellungen und was gerade im Lieferwagen ist).
 
+### Anwohner, Läden und Begegnungen (seit Etappe 6i)
+Die Straße lebt jetzt auch in den Häusern. **Niemand erscheint oder verschwindet sichtbar:** Anwohner tauchen nur hinter ihrer
+geschlossenen Haustür auf und verschwinden dort wieder, ans Fenster treten sie nur, wenn man das Fenster gerade nicht sieht. Alle
+Häufigkeiten stehen in GameConfig (Abschnitte „Anwohner und Türen“, „Läden“, „Begegnungen“).
+- **Türen:** Jede Haus- und Ladentür ist ein eigenes bewegliches Teil. Wer hindurchgeht, streckt die Hand aus, die Tür schwingt nach
+  innen auf und schließt sich hinter ihm wieder, mit Geräusch; Ladentüren klingeln zusätzlich.
+- **Anwohner** (7 Stück, jeder wohnt in einem eigenen Haus und behält sein Aussehen): Sie kommen durch die Haustür heraus und gehen
+  zum Straßenende, später kommen sie wieder heim. Sie gießen die Blumenkästen und Beete an ihrem Haus (mit Gießkanne), fegen vor der
+  Tür (mit Reisigbesen) oder schauen aus einem Fenster ihres Hauses auf die Straße. Unterwegs zählen sie wie Passanten: Sie grüßen,
+  plaudern und weichen aus.
+- **Läden:** Modegeschäft, Pub, Blumenladen, Wollladen, Bäckerei und Teeladen haben eine Theke, dahinter steht eine Verkäuferin oder ein
+  Verkäufer (immer da, durchs Schaufenster zu sehen; schaut sich ab und zu um oder nickt). Passanten gehen hinein, schauen sich ein,
+  zwei Regale an, reden an der Theke mit der Bedienung (Sprechblasen, abwechselnd) und kommen mit einer Tüte wieder heraus, die sie
+  dann tragen. Höchstens zwei Kunden sind gleichzeitig drinnen; ist die Theke besetzt, warten sie kurz. Die Läden selbst sind für die
+  Spielfigur nicht betretbar.
+- **Wollladen neu eingerichtet** (nach den Vorlagen der Entwicklerin): Würfelregale voller Wollknäuel an drei Wänden, Theke hinten in
+  der Mitte, niedriger Tisch mit Korb, Sessel mit Strickdecke und Kissen, runder Teppich, Körbe mit Wolle, Wandbretter mit Pflanzen,
+  Kranz und gehäkelte Beutel, Hängelampen. Hinter den Schaufenstern nur noch niedrige Auslagen, damit man hineinsieht.
+- **Pub:** Innen sitzen fünf feste Gäste auf den Lederbänken an ihren Tischen, vor sich ein Bier, eine Tasse Tee oder ein Stück
+  Kuchen. Sie nehmen ab und zu einen Schluck oder einen Bissen und unterhalten sich mit den Nachbarn (Gesten, Nicken, Lachen,
+  Sprechblasen). Passanten kommen dazu, setzen sich an freie Plätze und gehen nach einer Weile wieder. Hinter dem Tresen steht jemand
+  (Bänke und Tische haben dafür seit 6i die Höhe wie die Stühle draußen, der Tresen ist niedriger und weiter vorn).
+- **Begegnungen:** Bekannte umarmen sich manchmal zur Begrüßung (von der Seite, die Köpfe nah beieinander) und gehen nach dem Plaudern
+  ab und zu ein Stück gemeinsam weiter. Zwei, die auf verschiedenen Gehwegen gehen, winken sich über die Straße zu. Paare setzen sich
+  gemeinsam auf eine Bank und reden dort mit Gesten, Nicken und Lachen. Beim Reden zeigen sie öfter auf etwas.
+- **Leistung:** Figuren in Häusern und Läden werden ausgeblendet, solange sie nicht im Bild sind (dann rechnet auch keine Animation),
+  werfen keine Schatten und zählen nicht zur Menge der Passanten.
+
 ### Tiere: Vögel und Katzen (seit Etappe 6g, verfeinert in 6h)
 Im weichen Bilderbuch-Stil der Welt: Seit Etappe 6h ist jedes Tier ein einziger weicher Körper (aus
 „Metaballs“ – Kugeln und Ellipsoide, die ohne Nähte ineinanderfließen, wie bei den Chibi-Figuren) mit Skelett

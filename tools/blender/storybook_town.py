@@ -344,21 +344,26 @@ def door(M, C, name, fm, half, head, mat, mat_frame, glazed=True, transom="bars"
         fb((sx * (half + 0.09), head / 2, 0.0), (0.18, head, 0.2))
         fb((sx * (half - 0.02), head / 2, -0.16), (0.04, head, 0.28))
     fb((0, head - 0.02, -0.18), (2 * half, 0.04, 0.36))
-    # Türblatt
+    # Türblatt (eigener Körper: dreht sich im Spiel, seit Etappe 6i)
+    lf = Body(name + " Türblatt", M[mat], C["shop"], seed=seed + 6, vary=0.04, bevel=0.008)
+
+    def lb(c, s):
+        lf.box(c, s, step=0.3, dent=0.003, matrix=fm)
     for sx in (-1, 1):
-        fb((sx * (zi - 0.05), 1.1 + lift, dz), (0.11, 2.2, 0.05))
+        lb((sx * (zi - 0.05), 1.1 + lift, dz), (0.11, 2.2, 0.05))
     for z, h in ((0.17, 0.34), (0.98, 0.1), (2.15, 0.12)):
-        fb((0, z + lift, dz), (2 * (zi - 0.1), h, 0.05))
-    fb((0, 0.635 + lift, dz - 0.004), (2 * (zi - 0.09), 0.62, 0.04))
-    fb((0, 0.62 + lift, dz + 0.028), (2 * (zi - 0.21), 0.38, 0.02))
+        lb((0, z + lift, dz), (2 * (zi - 0.1), h, 0.05))
+    lb((0, 0.635 + lift, dz - 0.004), (2 * (zi - 0.09), 0.62, 0.04))
+    lb((0, 0.62 + lift, dz + 0.028), (2 * (zi - 0.21), 0.38, 0.02))
     if glazed:
         for i in range(1, panes[0]):
-            fb((-(zi - 0.1) + 2 * (zi - 0.1) * i / panes[0], 1.56 + lift, dz), (0.03, 1.1, 0.045))
+            lb((-(zi - 0.1) + 2 * (zi - 0.1) * i / panes[0], 1.56 + lift, dz), (0.03, 1.1, 0.045))
         for i in range(1, panes[1]):
-            fb((0, 1.03 + 1.06 * i / panes[1] + lift, dz), (2 * (zi - 0.1), 0.03, 0.045))
+            lb((0, 1.03 + 1.06 * i / panes[1] + lift, dz), (2 * (zi - 0.1), 0.03, 0.045))
     else:
-        fb((0, 1.56 + lift, dz - 0.004), (2 * (zi - 0.09), 1.12, 0.04))
-        fb((0, 1.56 + lift, dz + 0.028), (2 * (zi - 0.21), 0.82, 0.02))
+        lb((0, 1.56 + lift, dz - 0.004), (2 * (zi - 0.09), 1.12, 0.04))
+        lb((0, 1.56 + lift, dz + 0.028), (2 * (zi - 0.21), 0.82, 0.02))
+    SC.door_leaf(lf.build())
     # Oberlicht über der Tür, in der Ebene des Türblatts
     has_transom = head - 0.07 - top > 0.12
     if has_transom:
@@ -391,18 +396,22 @@ def door(M, C, name, fm, half, head, mat, mat_frame, glazed=True, transom="bars"
                     lat.tube([fm @ Vector((a.x, top + a.y, dz)), fm @ Vector((c.x, top + c.y, dz))], 0.008, segs=6)
         lat.build()
     g = Body(name + " Glas", M["glass"], C["shop"], seed=seed + 3)
-    if glazed:
-        g.box((0, 1.565 + lift, dz), (2 * (zi - 0.09), 1.13, 0.006), step=10, dent=0, matrix=fm)
     if has_transom and transom != "none":
         g.box((0, (top + head - 0.07) / 2, dz), (2 * half - 0.04, head - 0.07 - top + 0.02, 0.006), step=10, dent=0, matrix=fm)
     if g.bm.verts:
         g.build()
     else:
         g.bm.free()
+    if glazed:
+        pane = Body(name + " Türscheibe", M["glass"], C["shop"], seed=seed + 7)
+        pane.box((0, 1.565 + lift, dz), (2 * (zi - 0.09), 1.13, 0.006), step=10, dent=0, matrix=fm)
+        SC.door_leaf(pane.build())
     k = Body(name + " Knauf und Briefschlitz", M["gold"], C["shop"], seed=seed + 4, bevel=0.003)
     k.blob(fm @ Vector((zi - 0.18, 1.02 + lift, dz + 0.06)), 0.03, subdiv=2, lump=0.05)
     k.box((0, 0.95 + lift, dz + 0.035), (0.26, 0.04, 0.02), step=1, dent=0.001, matrix=fm)
-    k.build()
+    SC.door_leaf(k.build())
+    # Scharnier auf der Seite gegenüber dem Knauf: die Tür geht nach innen auf
+    SC.door_hinge(fm, -(zi + 0.005), dz, 2 * zi + 0.01, 2.2 + lift)
     st = Body(name + " Platte", M["stone"], C["shop"], seed=seed + 5, vary=0.06, bevel=0.012)
     st.box((0, 0.0125, 0.06), (2 * half + 0.16, 0.025, 0.62), step=0.3, dent=0.002, matrix=fm)
     st.build()

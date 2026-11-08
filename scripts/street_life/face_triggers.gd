@@ -26,6 +26,11 @@ const TRIGGERS := {
 	&"handshake": [[Mood.HAPPY, Mood.GRIN], 2.5, 3.5],          # Händeschütteln zur Begrüßung
 	&"goodbye": [[Mood.HAPPY], 1.6, 2.4],                       # winkt zum Abschied
 	&"pet": [[Mood.HAPPY, Mood.LOVE, Mood.CONTENT], 3.0, 5.0],  # streichelt eine Katze
+	&"water": [[Mood.CONTENT, Mood.HAPPY], 3.0, 5.0],           # gießt Blumen (seit Etappe 6i)
+	&"sweep": [[Mood.CONTENT], 3.0, 5.0],                       # fegt vor der Tür
+	&"hug": [[Mood.LOVE, Mood.HAPPY, Mood.CONTENT], 2.5, 4.0],  # umarmt jemanden
+	&"sip": [[Mood.CONTENT, Mood.HAPPY], 1.5, 2.5],             # trinkt oder isst etwas
+	&"buy": [[Mood.HAPPY, Mood.GRIN], 2.0, 3.0],                # bedankt sich an der Theke
 }
 
 

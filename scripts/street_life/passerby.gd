@@ -143,6 +143,16 @@ var _pair_side := 1.0
 ## Abstand nebeneinander (m, Mitte zu Mitte) bzw. hintereinander, wo der Gehweg zu schmal ist
 const PAIR_GAP := 0.62
 const PAIR_LAG := 0.9
+## Anwohner und Ladenbesucher (seit Etappe 6i): Höhe des Bodens, auf dem man gerade geht (Laden, Zimmer)
+var floor_y := 0.0
+## Gehört dieser Passant zu einem Haus (StreetHomes)? Dann kehrt er nicht in den allgemeinen Vorrat zurück.
+var resident: Dictionary = {}
+var _turn_left := 0.0
+var _say_me := false
+## Laden, in dem man gerade ist (für den Abschied von dort)
+var _visiting: Dictionary = {}
+## Beim Durchgehen durch eine Tür: nach so vielen Metern hinter der Türmitte gibt man sie wieder frei
+const DOOR_RELEASE_PAST := 0.55
 
 
 func _ready() -> void:
@@ -201,8 +211,10 @@ func set_detail_distance(distance: float) -> void:
 
 
 ## Startet mit einer neuen Liste von Schritten (von StreetLife geplant) an der Stelle start.
-func begin(start: Vector2, actions: Array[Dictionary], face: Vector2) -> void:
+func begin(start: Vector2, actions: Array[Dictionary], face: Vector2, start_floor: float = 0.0) -> void:
 	pos = start
+	floor_y = start_floor
+	_visiting = {}
 	# Alles vom letzten Weg vergessen (die Figur kommt aus dem Vorrat) – sonst suchte sie ihre
 	# Lage auf der Straße dort, wo sie zuletzt war
 	_route = null
@@ -220,7 +232,7 @@ func begin(start: Vector2, actions: Array[Dictionary], face: Vector2) -> void:
 	_actions = actions
 	_action = {}
 	_yaw = atan2(face.x, face.y)
-	_height = 0.0
+	_height = start_floor
 	set_active(true)
 	_place()
 	_next_action()
@@ -316,6 +328,12 @@ func step(delta: float) -> void:
 			_step_leave(delta)
 		"pet":
 			_step_pet(delta)
+		"door":
+			_step_door(delta)
+		"chore":
+			_step_chore(delta)
+		"buy":
+			_step_buy(delta)
 		_:
 			_next_action()
 	velocity2 = (pos - before) / maxf(delta, 0.0001)
@@ -358,6 +376,14 @@ func _next_action() -> void:
 	_phase = 0
 	_phase_time = 0.0
 	_wait = 0.0
+	if _action.has("shop_enter"):
+		# Laden voll? Dann eben nicht hinein (der Rest des Besuchs fällt weg)
+		var shop: Dictionary = _action.shop_enter
+		if not life.homes.shop_has_room(shop):
+			skip_shop()
+			return
+		life.homes.shop_enter(shop, self)
+		_visiting = shop
 	match String(_action.type):
 		"walk":
 			if _action.get("visit", false):
@@ -518,6 +544,147 @@ func _step_cross(delta: float) -> void:
 	pos = _route.point_at(_s, _lat)
 
 
+## Durch eine Tür (seit Etappe 6i): zum Startpunkt gehen, die Hand zur Tür (door_in/door_out), die Tür geht auf,
+## hindurch; hinter der Türmitte gibt man sie frei. Mit "vanish" (nach Hause) wartet man, bis sie zu ist – erst dann
+## verschwindet man, ungesehen hinter der geschlossenen Tür.
+func _step_door(delta: float) -> void:
+	var door: HouseDoor = _action.door
+	var from: Vector2 = _action.from_pos
+	var to: Vector2 = _action.to_pos
+	_phase_time += delta
+	match _phase:
+		0:  # zum Startpunkt vor bzw. hinter der Tür
+			var step := speed_pref * 0.75
+			var next := pos.move_toward(from, step * delta)
+			var free := not life.blocks_move(self, next)
+			if free:
+				pos = next
+			_anim_state = &"walk" if free and pos.distance_to(from) > 0.01 else &"idle"
+			_anim_speed = step
+			if pos.distance_to(from) < 0.02 or _phase_time > 8.0:
+				_phase = 1
+				_phase_time = 0.0
+				_action.face = (to - from).normalized()
+		1:  # Tür öffnen
+			_anim_state = &"idle"
+			_anim_speed = 0.0
+			if not _action.get("started", false):
+				if _phase_time < 0.35:
+					return  # erst zur Tür drehen
+				_action.started = true
+				door.request(self)
+				if _model and _model.has_method("play_clip"):
+					# nur der Abschnitt mit der Hand an der Tür (Anfang, Länge in Sekunden)
+					var clip: StringName = &"door_in" if bool(_action.get("push", true)) else &"door_out"
+					var part: Vector2 = GameConfig.house_door_clip_in if clip == &"door_in" else GameConfig.house_door_clip_out
+					_model.call("play_clip", clip, part.y, Vector2.ZERO, 0.0, false, part.x)
+			if door.is_open():
+				_phase = 2
+				_phase_time = 0.0
+				if _action.has("floor"):
+					floor_y = float(_action.floor)
+		2:  # hindurch (steht jemand im Weg, z. B. die Spielfigur vor der Tür: warten, die Tür bleibt offen)
+			var step := speed_pref * 0.8
+			var next := pos.move_toward(to, step * delta)
+			if life.blocks_move(self, next) and _phase_time < 12.0:
+				_anim_state = &"idle"
+				_anim_speed = 0.0
+				return
+			pos = next
+			_anim_state = &"walk"
+			_anim_speed = step
+			var past: Vector2 = pos - _action.middle
+			if not _action.get("released", false) and past.dot(to - from) > 0.0 and past.length() > DOOR_RELEASE_PAST:
+				_action.released = true
+				door.release(self)
+			if pos.distance_to(to) < 0.02:
+				if not _action.get("released", false):
+					_action.released = true
+					door.release(self)
+				_phase = 3
+				_phase_time = 0.0
+		3:  # drinnen hinter der Tür: warten, bis sie zu ist (nach Hause) – sonst gleich weiter
+			_anim_state = &"idle"
+			_anim_speed = 0.0
+			if not bool(_action.get("vanish", false)):
+				if _action.has("shop_exit"):
+					life.homes.shop_leave(_action.shop_exit, self)
+					_visiting = {}
+				_next_action()
+				return
+			if door.is_closed():
+				active = false
+				finished.emit(self)
+
+
+## Eine kleine Arbeit (seit Etappe 6i): Blumen gießen oder fegen. Steht schon am Platz (Weg davor als "walk").
+## An der Theke (seit Etappe 6i): zum Platz gehen (ist er besetzt, kurz warten), Verkäufer und Kunde schauen sich an und reden
+## abwechselnd, am Ende bekommt man die Tüte (im Pub keine).
+func _step_buy(delta: float) -> void:
+	var shop: Dictionary = _action.shop
+	var spot: Vector2 = _action.spot
+	var vendor: Passerby = shop.get("vendor")
+	_phase_time += delta
+	match _phase:
+		0:  # hin zur Theke
+			if not life.homes.claim_counter(shop, self):
+				_anim_state = &"idle"
+				_anim_speed = 0.0
+				if _phase_time > 15.0:
+					_next_action()  # lange besetzt: ohne Einkauf weiter
+				return
+			var step := speed_pref * 0.75
+			pos = pos.move_toward(spot, step * delta)
+			_anim_state = &"walk"
+			_anim_speed = step
+			if pos.distance_to(spot) < 0.02:
+				_phase = 1
+				_phase_time = 0.0
+				_turn_left = 0.0
+				if vendor and vendor._model and _model:
+					_model.call("set_chat_partner", vendor._model)
+					vendor._model.call("set_chat_partner", _model)
+		1:  # reden und bezahlen
+			_anim_state = &"idle"
+			_anim_speed = 0.0
+			_turn_left -= delta
+			if _turn_left <= 0.0:
+				_turn_left = randf_range(1.8, 3.0)
+				_say_me = not _say_me
+				chat_turn(_say_me, _turn_left)
+				if vendor:
+					vendor.chat_turn(not _say_me, _turn_left)
+			if _phase_time >= float(_action.get("time", 5.0)):
+				chat_turn(false, 0.0, true)
+				if vendor:
+					vendor.chat_turn(false, 0.0, true)
+				var bag := String(shop.get("bag", ""))
+				if not bag.is_empty():
+					give_bag(true, bag)
+					life.homes.stat_bags += 1
+				if _model and _model.has_method("trigger_face"):
+					_model.call("trigger_face", &"buy")
+				life.homes.release_counter(shop, self)
+				_next_action()
+
+
+func _step_chore(delta: float) -> void:
+	_phase_time += delta
+	_anim_state = &"idle"
+	_anim_speed = 0.0
+	if _phase == 0:
+		if _phase_time < 0.45:
+			return  # erst hindrehen
+		_phase = 1
+		if _model and _model.has_method("start_chore"):
+			var left := float(_model.call("start_chore", String(_action.kind), float(_action.time)))
+			_action.time = maxf(float(_action.time), left)
+	if _phase_time >= float(_action.time):
+		if _model and _model.has_method("stop_chore"):
+			_model.call("stop_chore")
+		_next_action()
+
+
 ## Stehen bleiben und schauen (Schaufenster: "browse").
 func _step_stand(delta: float) -> void:
 	# Plaudern: erst aufeinander zu (bis zum Abstand fürs Reden bzw. Händeschütteln)
@@ -599,6 +766,16 @@ func _set_partner(other: Passerby) -> void:
 		_model.call("set_chat_partner", other._model if other else null)
 
 
+## Jemandem über die Straße zuwinken (nur kurz, man bleibt nicht stehen): hinschauen und mit der rechten Hand winken.
+func wave_across(other: Passerby) -> void:
+	if _model == null or not _model.has_method("wave_hello"):
+		return
+	_model.call("wave_hello", 2.2)
+	_model.call("trigger_face", &"wave")
+	_attend(other)
+	get_tree().create_timer(2.4).timeout.connect(func() -> void: _attend(null))
+
+
 ## Nach dem Händeschütteln wieder ein Stück auseinander (bis passerby_chat_gap zwischen beiden): jeder geht die
 ## Hälfte des fehlenden Stücks langsam rückwärts.
 func chat_back_off(partner: Passerby) -> void:
@@ -611,6 +788,7 @@ func chat_back_off(partner: Passerby) -> void:
 		return
 	_action.approach = life.keep_on_sidewalk(side, pos + away / dist * (want - dist) / 2.0)
 	_action.approach_speed = GameConfig.passerby_step_back_speed
+	_action.face = -away / dist  # einander zugewandt (nach der Umarmung standen sie nebeneinander)
 	_phase_time = 0.0
 
 
@@ -625,9 +803,12 @@ func is_sitting() -> bool:
 
 
 ## Begrüßung beim Plaudern: Händeschütteln (beide gleichzeitig) oder winken; liefert die Dauer.
-func chat_greet(handshake: bool, wave: bool) -> float:
+func chat_greet(handshake: bool, wave: bool, hug_side: float = 0.0) -> float:
 	if _model == null or not _model.has_method("play_clip"):
 		return 0.8
+	if hug_side != 0.0:
+		_model.call("start_hug", hug_side, GameConfig.passerby_hug_time)
+		return GameConfig.passerby_hug_time
 	_model.call("trigger_face", &"handshake" if handshake else &"greet")
 	if handshake:
 		var duration := float(_model.call("play_clip", &"handshake"))
@@ -701,6 +882,28 @@ func _pair_speed() -> float:
 	return speed_pref
 
 
+## Können die restlichen Schritte zu zweit gegangen werden (nur gehen, überqueren, verschwinden)?
+func can_walk_on_with_someone() -> bool:
+	if _actions.is_empty():
+		return false
+	for a: Dictionary in _actions:
+		if not String(a.get("type", "")) in ["walk", "cross", "leave", "stand"]:
+			return false
+		if a.get("visit", false) or a.has("half") or a.has("alley") or a.get("from_here", false):
+			return false
+	return true
+
+
+## Dieselben restlichen Schritte wie der andere (StreetLife.walk_together) – man geht mit ihm mit.
+func adopt_plan_of(other: Passerby) -> void:
+	_actions.clear()
+	for a: Dictionary in other._actions:
+		_actions.append(a.duplicate())
+	speed_pref = minf(speed_pref, other.speed_pref)
+	other.speed_pref = speed_pref
+	comfort_pref = other.comfort_pref
+
+
 ## Pause beim Plaudern im Gehen: keiner erzählt.
 func chat_quiet() -> void:
 	if _model and _model.has_method("set_talking"):
@@ -744,6 +947,18 @@ func _set_road_scan(on: bool) -> void:
 func _attend(node: Node3D) -> void:
 	if _model and _model.has_method("look_at_node"):
 		_model.call("look_at_node", node)
+
+
+## Einkaufstasche geben oder wegnehmen (Anwohner bei der Arbeit: nie; nach dem Einkauf: mit der Tüte des Ladens).
+func give_bag(on: bool, model_path: String = "") -> void:
+	if _model and _model.has_method("give_bag"):
+		_model.call("give_bag", on, model_path)
+
+
+## Gegenstand in die rechte Hand (siehe ChibiPasserbyModel.set_prop).
+func set_prop(kind: StringName) -> void:
+	if _model and _model.has_method("set_prop"):
+		_model.call("set_prop", kind)
 
 
 ## Trägt die Figur eine Einkaufstasche? (die Hand ist dann belegt)
@@ -917,13 +1132,7 @@ func _step_sit(delta: float) -> void:
 		0:  # vor den Platz
 			if not _action.has("back"):
 				_action.back = pos
-				if _model and "sit_height" in _model:
-					_model.set("sit_height", float(_action.get("height", 0.45)) / scale.y)
-				if _model and "relaxed_sit" in _model:
-					var chair: Variant = _action.get("seat")
-					_model.set("relaxed_sit", true)
-					_model.set("sit_backrest", (chair as StreetSeat).backrest if chair is StreetSeat else 0.0)
-					_model.set("sit_leans", randf() < GameConfig.passerby_lean_back_share)
+				_prepare_sit()
 			_anim_state = &"walk"
 			_anim_speed = speed_pref * 0.7
 			var next := pos.move_toward(front, speed_pref * 0.7 * delta)
@@ -943,12 +1152,16 @@ func _step_sit(delta: float) -> void:
 			if _phase_time >= sit_time:
 				_phase = 3
 				_phase_time = 0.0
+				if _action.has("pub_seat"):
+					life.homes.pub_sat_down(self, _action.pub_seat)
 		3:  # sitzen
 			_anim_state = &"sit"
 			if _phase_time >= float(_action.get("time", 20.0)):
 				_phase = 4
 				_phase_time = 0.0
 				life.release_seat(self)
+				if _action.has("pub_seat"):
+					life.homes.pub_stood_up(self, _action.pub_seat)
 		4:  # aufstehen
 			_anim_state = &"idle"
 			pos = spot.lerp(front, smoothstep(0.0, 1.0, _phase_time / sit_time))
@@ -963,6 +1176,52 @@ func _step_sit(delta: float) -> void:
 				pos = next
 			if pos.distance_to(back) < 0.01:
 				_next_action()
+
+
+## Sitzhöhe und Lehne ans Modell geben.
+func _prepare_sit() -> void:
+	if _model and "sit_height" in _model:
+		_model.set("sit_height", float(_action.get("height", 0.45)) / scale.y)
+	if _model and "relaxed_sit" in _model:
+		var chair: Variant = _action.get("seat")
+		_model.set("relaxed_sit", true)
+		var backrest := float(_action.get("backrest", (chair as StreetSeat).backrest if chair is StreetSeat else 0.0))
+		_model.set("sit_backrest", backrest)
+		_model.set("sit_leans", randf() < GameConfig.passerby_lean_back_share)
+
+
+## Sitzt schon beim Start (feste Pub-Gäste): gleich in der Sitzhaltung, ohne Hinsetzen.
+func begin_seated(spot: Vector2, face: Vector2, height: float, start_floor: float, backrest: float) -> void:
+	var actions: Array[Dictionary] = [{"type": "sit", "seat": null, "spot": spot, "face": face, "height": height, "time": INF,
+		"front": 0.25, "back": spot, "backrest": backrest}]
+	begin(spot, actions, face, start_floor)
+	_prepare_sit()
+	_phase = 3
+	_yaw = atan2(face.x, face.y)
+	if _model and _model.has_method("snap_seated"):
+		_model.call("snap_seated")
+
+
+## Im Sitzen einen Schluck trinken oder essen (StreetHomes).
+func take_sip() -> void:
+	if _model and _model.has_method("take_sip"):
+		_model.call("take_sip")
+		_model.call("trigger_face", &"sip")
+
+
+## Kleine Bewegung im Stehen (Verkäufer: umschauen, nicken …), wenn gerade nichts anderes läuft.
+func play_idle_clip(clip: StringName) -> void:
+	if _model and _model.has_method("play_clip"):
+		_model.call("play_clip", clip, 3.2)
+
+
+## Laden-Besuch abbrechen (kein Platz drinnen): die Schritte davon auslassen und auf dem Gehweg weiter.
+func skip_shop() -> void:
+	while not _actions.is_empty() and _actions[0].get("shop_visit", false):
+		var dropped: Dictionary = _actions.pop_front()
+		if dropped.has("pub_seat"):
+			(dropped.pub_seat as Dictionary).occupant = null  # reservierter Platz wird wieder frei
+	_next_action()
 
 
 ## Weg (m) bzw. Zeit (s) des Hinsetzens: vom Modell, wenn es sie vorgibt (seine Sitz-Animation),
@@ -1172,7 +1431,7 @@ func _avoid(want: float, band: Vector2) -> float:
 # --- Darstellung ---
 
 func _place() -> void:
-	var y := 0.0
+	var y := floor_y
 	if _route and _route.parts.size() > 0 and life and life.is_centerline(_route):
 		if absf(_lat) < GameConfig.street_width / 2.0:
 			y = -GameConfig.curb_height
@@ -1189,9 +1448,10 @@ func _update_facing(delta: float) -> void:
 	elif _action.get("type") == "cross" and _phase in [1, 2]:
 		var normal := _route.normal_at(_s) * -float(side)
 		target = atan2(normal.x, normal.y)
-	elif _action.get("type") == "pet" and _action.has("face"):
+	elif _action.get("type") in ["pet", "door", "chore", "buy"] and _action.has("face"):
 		var face: Vector2 = _action.face
 		target = atan2(face.x, face.y)
+		# beim Hindurchgehen (door, Phase 2) in Gehrichtung – die Seiten bleiben gleich
 	elif _action.get("type") == "sit" and _phase in [1, 2, 3, 4]:
 		var face: Vector2 = _action.face
 		target = atan2(face.x, face.y)

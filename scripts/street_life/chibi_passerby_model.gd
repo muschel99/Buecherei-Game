@@ -144,6 +144,15 @@ var _bag_spin := Vector2.ZERO
 var _hand_last := Vector3.INF
 var _hand_vel := Vector3.ZERO
 var _hand_bone := -1
+## Gegenstand in der Hand (seit Etappe 6i): Art (&"can", &"broom", &"mug", &"cup", &"cake" …), Modell, Halter an der Hand
+var _prop_kind: StringName = &""
+var _prop: Node3D
+var _prop_mount: BoneAttachment3D
+## Arbeit gerade (Gießen/Fegen): "" = keine, sonst "water"/"sweep"; Umarmung läuft; im Sitzen: Schluck trinken bzw. essen
+var _chore := ""
+var _chore_time := 0.0
+var _hugging := false
+var _sip_t := -1.0
 ## Übergänge Hinsetzen/Aufstehen: welcher läuft gerade und seit wann
 var _transition: StringName = &""
 var _transition_t := 0.0
@@ -237,6 +246,33 @@ static func _weighted(rng: RandomNumberGenerator, weights: Dictionary, fallback:
 		if r <= 0.0:
 			return StringName(key)
 	return fallback
+
+
+## Einkaufstasche geben oder wegnehmen (seit Etappe 6i: nach dem Einkauf, Anwohner bei der Arbeit); Gangart passt sich an.
+func give_bag(on: bool, model_path: String = "") -> void:
+	carries_bag = on
+	if on:
+		walk_clip = &"walk_bag"
+		idle_clip = &"idle_bag"
+	elif walk_clip == &"walk_bag":
+		walk_clip = &"walk"
+		idle_clip = &"idle"
+	if _bag:
+		_bag.queue_free()
+		_bag = null
+	if not on:
+		return
+	var path := model_path if not model_path.is_empty() else GameConfig.passerby_bag_models[randi() % GameConfig.passerby_bag_models.size()]
+	var scene := load(path) as PackedScene
+	if scene == null:
+		return
+	_bag = scene.instantiate() as Node3D
+	_bag.name = "Bag"
+	_bag.top_level = true
+	add_child(_bag)
+	_bag_swing = Vector2.ZERO
+	_bag_spin = Vector2.ZERO
+	_hand_last = Vector3.INF
 
 
 ## Einkaufstasche an- oder ablegen (zufällig eine der Taschen aus GameConfig.passerby_bag_models).
@@ -341,6 +377,9 @@ func _rebuild() -> void:
 	_legs_cross = false
 	_hand_bone = _skeleton.find_bone("RightHand") if _skeleton else -1
 	_hand_last = Vector3.INF
+	_prop = null
+	_prop_mount = null
+	_prop_kind = &""
 	if not visibility_changed.is_connected(_on_visibility_changed):
 		visibility_changed.connect(_on_visibility_changed)
 
@@ -554,6 +593,7 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 	# Sitzen: Figur auf die Höhe der Sitzfläche heben (die Animation sitzt auf ihrer eigenen Höhe)
 	_model.position.y = (sit_height - _sit_seat) * _seated
 	_update_bag(delta)
+	_update_chore(delta)
 
 
 ## Einzelner Auftritt je Bild: Abschnitt hin und her, danach vorwärts zu Ende oder rückwärts zum Anfang.
@@ -615,6 +655,126 @@ func _update_bag(delta: float) -> void:
 	_bag.global_transform = Transform3D(yaw * Basis(Vector3.RIGHT, -_bag_swing.y) * Basis(Vector3.BACK, swing_x), grip)
 
 
+## Gegenstand in die rechte Hand nehmen (&"" = weglegen). Die Figur nimmt ihn nur, wo es niemand sieht (Anwohner hinter der
+## geschlossenen Tür, Gäste an der Theke). &"broom" hängt nicht an der Hand: der Stiel wird beim Fegen zwischen die Hände gesetzt.
+func set_prop(kind: StringName) -> void:
+	if kind == _prop_kind:
+		return
+	if _prop:
+		_prop.queue_free()
+		_prop = null
+	if _prop_mount:
+		_prop_mount.queue_free()
+		_prop_mount = null
+	if _gesture_modifier:
+		_gesture_modifier.grip_right = 0.0
+	_prop_kind = kind
+	if kind == &"" or _skeleton == null:
+		return
+	var scene := load(String(GameConfig.passerby_prop_models.get(String(kind), ""))) as PackedScene
+	if scene == null:
+		return
+	_prop = scene.instantiate() as Node3D
+	_prop.name = "Prop"
+	if kind == &"broom":
+		_skeleton.add_child(_prop)
+		return
+	_prop_mount = BoneAttachment3D.new()
+	_prop_mount.name = "PropMount"
+	_prop_mount.bone_name = "RightHand"
+	_skeleton.add_child(_prop_mount)
+	_prop_mount.add_child(_prop)
+	var place: Dictionary = GameConfig.passerby_prop_hold.get(String(kind), {})
+	_prop.position = place.get("pos", Vector3.ZERO)
+	_prop.basis = (place.get("basis", Basis()) as Basis).scaled(Vector3.ONE * float(place.get("scale", 1.0)))
+	if _gesture_modifier:
+		_gesture_modifier.grip_right = 1.0
+
+
+func get_prop() -> StringName:
+	return _prop_kind
+
+
+## Sitzt sofort (feste Gäste beim Start), ohne Hinsetz-Bewegung.
+func snap_seated() -> void:
+	_prev_state = &"sit"
+	_seated = 1.0
+	_transition = &""
+	if _player and _player.has_animation(sit_clip):
+		_player.play(sit_clip, 0.0)
+
+
+## Eine Arbeit beginnen: "water" (gießen, Animation water hin und her) oder "sweep" (fegen, Geste über der Grundhaltung).
+## Liefert die Dauer.
+func start_chore(kind: String, seconds: float) -> float:
+	_chore = kind
+	_chore_time = 0.0
+	if kind == "water":
+		trigger_face(&"water")
+		return play_clip(&"water", -1.0, GameConfig.chore_water_hold, seconds)
+	if _gesture_modifier:
+		trigger_face(&"sweep")
+		_gesture_modifier.body_scale = _hip_height / 0.607
+		_gesture = ChibiGestureModifier.Gesture.SWEEP
+		_gesture_left = seconds
+		_gesture_time = 0.0
+	return seconds
+
+
+func stop_chore() -> void:
+	_chore = ""
+	if _gesture == ChibiGestureModifier.Gesture.SWEEP:
+		_gesture = ChibiGestureModifier.Gesture.NONE
+
+
+## Umarmung beginnen (Partner seitlich: side = +1 links, -1 rechts).
+func start_hug(side: float, seconds: float) -> void:
+	if _gesture_modifier == null:
+		return
+	_hugging = true
+	_gesture_modifier.body_scale = _hip_height / 0.607
+	_gesture_modifier.hug_side = side
+	_gesture = ChibiGestureModifier.Gesture.HUG
+	_gesture_left = seconds
+	_gesture_time = 0.0
+	trigger_face(&"hug")
+
+
+## Im Sitzen einen Schluck trinken bzw. ein Stück essen (rechte Hand mit dem Gegenstand zum Mund und zurück).
+func take_sip() -> void:
+	if _gesture_modifier == null or _prev_state != &"sit":
+		return
+	_gesture_modifier.body_scale = _hip_height / 0.607
+	_gesture = ChibiGestureModifier.Gesture.DRINK
+	_gesture_left = 2.6
+	_gesture_time = 0.0
+	_sip_t = 0.0
+
+
+func _update_chore(delta: float) -> void:
+	if _prop_kind == &"broom" and _prop and _gesture_modifier:
+		# Besen zwischen den Händen (solange gefegt wird, sonst aufrecht in der Hand neben der Figur)
+		if _chore == "sweep":
+			_chore_time += delta
+			var p := ChibiGestureModifier.sweep_points(_gesture_time, _gesture_modifier.body_scale)
+			var head: Vector3 = p.head
+			var top: Vector3 = p.top
+			var along := top - head
+			var y := along.normalized()
+			var x := y.cross(Vector3.FORWARD).normalized()
+			# der Stiel reicht bis knapp über die obere Hand (Modell: 1,02 m)
+			_prop.transform = Transform3D(Basis(x, y, x.cross(y)).scaled(Vector3.ONE * ((along.length() + 0.07) / 1.02)), head)
+		else:
+			_prop.transform = Transform3D(Basis(), Vector3(-0.28 * _gesture_modifier.body_scale, 0.0, 0.05))
+	if _gesture_modifier and _gesture == ChibiGestureModifier.Gesture.DRINK and _sip_t >= 0.0:
+		_sip_t += delta
+		_gesture_modifier.sip = sin(clampf(_sip_t / 2.4, 0.0, 1.0) * PI)
+		if _sip_t >= 2.4:
+			_sip_t = -1.0
+	if _hugging and _gesture != ChibiGestureModifier.Gesture.HUG:
+		_hugging = false
+
+
 ## Radfahren: Haltung zur Kurbelstellung crank (Bogenmaß; 0 = Kurbel auf der Seite x < 0 vorn,
 ## wachsend = vorwärts treten). Die Animation "ride" ist genau eine Kurbelumdrehung; der Kopf schaut
 ## ab und zu ein wenig zur Seite.
@@ -662,7 +822,7 @@ func pose_ride(crank: float, delta: float, stop: float = 0.0) -> void:
 ## [von, bis] (s), der hold_time Sekunden hin und her läuft; back = danach rückwärts zum Anfang (bücken und wieder
 ## aufrichten). Liefert die Dauer (0 = gibt es nicht). Losgehen beendet den Auftritt sofort.
 func play_clip(clip: StringName, max_time: float = -1.0, hold: Vector2 = Vector2.ZERO, hold_time: float = 0.0,
-		back: bool = false) -> float:
+		back: bool = false, start: float = 0.0) -> float:
 	if _player == null or not _player.has_animation(clip):
 		return 0.0
 	var length := _player.get_animation(clip).length
@@ -680,7 +840,7 @@ func play_clip(clip: StringName, max_time: float = -1.0, hold: Vector2 = Vector2
 	_shot = {"clip": clip, "left": duration, "hold": hold, "hold_left": hold_time, "back": back, "dir": 1.0,
 		"holding": false, "seated": String(clip).begins_with("sit_")}
 	_player.play(clip, BLEND)
-	_player.seek(0.0)
+	_player.seek(start)
 	return duration
 
 

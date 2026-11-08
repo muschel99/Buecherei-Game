@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dud56vc6733o1"
+uid="uid://c0xx70e7242ad"
 path="res://.godot/imported/fashion_shop.glb-fe117c62c9ede263865f39365d079e3f.scn"
 
 [deps]
@@ -45,10 +45,6 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/backstein.tres",
 "use_external/path": "res://assets/materials/storybook/backstein.tres"
-},
-"Backstein Bogen hell": {
-"use_external/enabled": true,
-"use_external/path": "res://assets/materials/storybook/backstein_bogen_hell.tres"
 },
 "Backstein Seitenwand": {
 "use_external/enabled": true,
@@ -117,6 +113,10 @@ _subresources={
 "Blüte Zartrosa": {
 "use_external/enabled": true,
 "use_external/path": "res://assets/materials/storybook/bluete_zartrosa.tres"
+},
+"Bogenstein Terrakotta": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/bogenstein_terrakotta.tres"
 },
 "Bordstein": {
 "use_external/enabled": true,
@@ -512,6 +512,10 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/vorhang_leinen.tres",
 "use_external/path": "res://assets/materials/storybook/vorhang_leinen.tres"
+},
+"Wasser im Eimer": {
+"use_external/enabled": true,
+"use_external/path": "res://assets/materials/storybook/wasser_im_eimer.tres"
 },
 "Weidenkorb": {
 "use_external/enabled": true,

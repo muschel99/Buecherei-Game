@@ -337,7 +337,7 @@ def plank_door(M, C, name, fm, w, h, rise, seed=1):
         t0 = (arc_y(x0, hx, hs, rise, f - 0.006) if rise > 0 else h - f + 0.006)
         t1 = (arc_y(x1, hx, hs, rise, f - 0.006) if rise > 0 else h - f + 0.006)
         leaf.slab([(x0, lift), (x1, lift), (x1, t1), (x0, t0)], 0.05, fm @ Matrix.Translation((0, 0, dz - 0.025)), dent=0.002)
-    leaf.build()
+    SC.door_leaf(leaf.build())
     # Rückwand hinter den Brettern: durch die Fugen sieht man dunkles Holz statt ins Leere
     back = Body(name + " Türrückwand", M["h_join_dark"], C["shop"], seed=seed + 4, vary=0.03)
     ox = inner / 2
@@ -346,7 +346,7 @@ def plank_door(M, C, name, fm, w, h, rise, seed=1):
     else:
         outline = [(-ox, lift), (ox, lift), (ox, h - f + 0.006), (-ox, h - f + 0.006)]
     back.slab(outline, 0.018, fm @ Matrix.Translation((0, 0, dz - 0.045)), dent=0.0)
-    back.build()
+    SC.door_leaf(back.build())
     ir = Body(name + " Beschläge", M["lamp_iron"], C["shop"], seed=seed + 2, vary=0.03, bevel=0.003)
     for yy in (0.42, hs - 0.38):
         ir.box((-0.04, yy, dz + 0.03), (inner - 0.14, 0.045, 0.012), step=1, dent=0.001, matrix=fm)
@@ -361,7 +361,9 @@ def plank_door(M, C, name, fm, w, h, rise, seed=1):
                 segs=6, axis=tuple(ax))
     ir.lathe([(0.0, 0.0), (0.035, 0.0), (0.03, 0.012), (0.0, 0.016)], tuple(fm @ Vector((hx - f - 0.14, 1.045, dz + 0.025))), segs=12,
              turn=(-90, 0))
-    ir.build()
+    SC.door_leaf(ir.build())
+    # Die Tür hängt auf der Seite gegenüber dem Ringgriff und geht nach innen auf (seit Etappe 6i)
+    SC.door_hinge(fm, -inner / 2, dz, inner, h)
     pl = Body(name + " Platte", M["stone"], C["shop"], seed=seed + 3, vary=0.06, bevel=0.012)
     pl.box((0, 0.0125, 0.2), (w + 0.3, 0.025, 0.8), step=0.6, dent=0.002, matrix=fm)
     pl.build()
@@ -1052,7 +1054,9 @@ class House:
                       Matrix.Translation((x, 0.25, 0)) @ Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1))), dent=0.001)
         for zz in (0.2, 0.6):
             gate.box((px, 0.24, zz), (0.84, 0.03, 0.06), step=1, dent=0.002)
-        gate.build()
+        SC.door_leaf(gate.build(), "GateLeaf")
+        # Die Pforte dreht sich (seit Etappe 6i): Scharnier am linken Pfeiler, geht in den Garten hinein auf
+        SC.door_hinge(T.wall_matrix((-hw, 0.24), (hw, 0.24), px + hw), -0.42, 0.0, 0.84, 0.85, name="DoorHinge_gate")
         pv = Body("Gartenweg", M["slab"], C["walls"], seed=18, vary=0.1, bevel=0.015)
         y = 0.35
         while y < sb - 0.1:
@@ -1085,6 +1089,21 @@ class House:
             if self.near and self.st["window"] and f < len(self.storeys):
                 SC.add_light("Zimmerlicht", (0.0, y0 + 0.9, z0 + 2.2), 2700, 25, C["light"], radius=0.15)
         rm.build()
+        self.window_spots()
+
+    def window_spots(self):
+        """Stellen hinter den Fenstern, an denen Anwohner hinausschauen (seit Etappe 6i): leere Knoten „WindowSpot_n“,
+        Boden des Zimmers, kurz hinter der Scheibe, Blick nach außen."""
+        if not self.near:
+            return
+        for n, o in enumerate(self.ground + self.upper):
+            f = int(o.get("floor", 0))
+            front = self.upper_front if (f > 0 and self.st["fachwerk"]) else self.front
+            m = T.wall_matrix(*front, self.fx(o["x"]))
+            yF = (self.sb - self.jetty) if f > 0 else self.sb
+            local = m @ Vector((0.0, self.zs[f] + 0.08, 0.0))
+            SC.game_spot("WindowSpot_%d" % n, (local.x, yF + 0.3 + 0.42, local.z), width=round(float(o["w"]), 3),
+                         sill=round(float(o["z"] - self.zs[f]), 3))
 
     def place_spots(self):
         """Pflanzplätze an der Front: Kübel neben der Tür (nur nahe Häuser, genug Gehweg), Kletter-

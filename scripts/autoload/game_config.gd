@@ -285,7 +285,7 @@ var passerby_garden_chance: float = 0.06
 var passerby_garden_time: Vector2 = Vector2(20.0, 50.0)
 ## Bänke an der Straße und Stühle vor dem Pub (StreetSeat, seit Etappe 5c): wie oft sich jemand, der
 ## daran vorbeikommt, hinsetzt – und wie lange (Sekunden).
-var passerby_seat_chance: float = 0.18
+var passerby_seat_chance: float = 0.3
 var passerby_seat_time: Vector2 = Vector2(15.0, 40.0)
 ## Vor den Schaufenstern dieser Haustypen bleiben Passanten stehen (dazu die Punkte unter
 ## "Outside/StreetLife/WindowSpots" in der Hauptszene, z. B. vor dem Fenster der Bücherei).
@@ -293,6 +293,80 @@ var passerby_window_house_types: Array[String] = ["fashion_shop", "pub"]
 ## Szenen der Passanten (eigene Figuren hier eintragen, mehrere = abwechselnd; siehe
 ## docs/ASSET_GUIDE.md, „Eigene Passanten“).
 var passerby_scenes: Array[String] = ["res://scenes/street_life/passerby_chibi.tscn"]
+
+## --- Anwohner und Türen (seit Etappe 6i) ---
+## Türen an Häusern und Läden: Öffnungswinkel (Grad), Dauer des Auf- und Zuschwingens (s), so lange bleibt sie nach dem
+## Letzten noch offen (s), Lautstärken (dB) und so lange (s) läuft die Hand-zur-Tür-Bewegung höchstens.
+var house_door_open_angle: float = 98.0
+var house_door_swing_time: float = 0.75
+var house_door_hold_time: float = 0.6
+var house_door_volume_db: float = -6.0
+var house_door_bell_volume_db: float = -9.0
+## Abschnitt der Animationen door_in/door_out mit der Hand an der Tür: Anfang (s), Länge (s).
+var house_door_clip_in: Vector2 = Vector2(2.3, 1.5)
+var house_door_clip_out: Vector2 = Vector2(0.3, 1.5)
+## So weit vor der Türmitte steht man draußen (m), so weit dahinter ist man drinnen (m).
+var house_door_front_step: float = 0.95
+var house_door_inside_step: float = 0.95
+## Wie viele Anwohner es gibt (zusätzlich zu den Passanten; jeder wohnt in einem anderen Haus) und wie lange sie im Haus
+## bleiben, bevor sie wieder etwas unternehmen (Sekunden).
+var resident_count: int = 7
+var resident_home_time: Vector2 = Vector2(8.0, 30.0)
+## Was sie dann tun (Gewichte): "errand" = aus dem Haus gehen und später wiederkommen, "water" = Blumen gießen,
+## "sweep" = vor der Tür fegen, "window" = aus dem Fenster schauen.
+var resident_activity_weights: Dictionary = {"errand": 3.0, "water": 3.0, "sweep": 2.0, "window": 2.0}
+## Unterwegs (Sekunden, bis sie wieder heimkommen), Dauer der Arbeiten und des Fensterblicks.
+var resident_away_time: Vector2 = Vector2(20.0, 60.0)
+var resident_water_time: Vector2 = Vector2(9.0, 16.0)
+var resident_sweep_time: Vector2 = Vector2(8.0, 14.0)
+var resident_window_time: Vector2 = Vector2(18.0, 40.0)
+## Gießen: Abschnitt der Animation "water" (s), der hin und her läuft (der Arm mit der Kanne wiegt sich).
+var chore_water_hold: Vector2 = Vector2(1.4, 4.0)
+## Gegenstände in der Hand: Modelle und wie sie in der rechten Hand liegen (Lage/Drehung relativ zum Handknochen).
+var passerby_prop_models: Dictionary = {"can": "res://assets/models/characters/props/watering_can.glb",
+	"broom": "res://assets/models/characters/props/broom.glb", "mug": "res://assets/models/characters/props/mug.glb",
+	"cup": "res://assets/models/characters/props/tea_cup.glb", "cake": "res://assets/models/characters/props/cake_plate.glb"}
+## Hand-Achsen: +y Finger, +z Handrücken (Handfläche -z), Daumen rechts -x: Kanne hängt unter der Hand, Tülle in Fingerrichtung.
+var passerby_prop_hold: Dictionary = {
+	"can": {"pos": Vector3(0.0, 0.07, -0.02), "basis": Basis(Vector3(0, 0, -1), Vector3(-1, 0, 0), Vector3(0, 1, 0)), "scale": 0.8},
+	"mug": {"pos": Vector3(0.06, 0.055, -0.06), "basis": Basis(Vector3.UP, deg_to_rad(-25.0)) * Basis(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), "scale": 1.0},
+	"cup": {"pos": Vector3(0.06, 0.055, -0.06), "basis": Basis(Vector3.UP, deg_to_rad(-25.0)) * Basis(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), "scale": 1.0},
+	"cake": {"pos": Vector3(-0.02, 0.05, -0.05), "basis": Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(-1, 0, 0)), "scale": 0.5},
+}
+
+## --- Begegnungen (seit Etappe 6i) ---
+## Umarmen zur Begrüßung statt Händeschütteln (Chance, Dauer in Sekunden, Abstand nebeneinander in Metern), nach dem Plaudern ein
+## Stück zusammen weitergehen, über die Straße winken (Chance, höchstens so weit versetzt in Metern).
+var passerby_hug_chance: float = 0.25
+var passerby_hug_time: float = 3.2
+var passerby_hug_gap: float = 0.5
+var passerby_walk_together_chance: float = 0.3
+var passerby_street_wave_chance: float = 0.35
+var passerby_street_wave_distance: float = 5.0
+
+## --- Läden (seit Etappe 6i) ---
+## Wie oft jemand, der an einem Laden vorbeikommt, hineingeht, wie viele Kunden höchstens drinnen sind, wie lange sie stöbern und
+## an der Theke stehen (Sekunden). Tüten je Laden (Teil des Modellnamens → Modell der Tüte).
+var shop_visit_chance: float = 0.32
+var shop_capacity: int = 2
+var shop_browse_time: Vector2 = Vector2(4.0, 10.0)
+var shop_counter_time: Vector2 = Vector2(4.0, 8.0)
+var shop_bag_models: Dictionary = {"bakery": "res://assets/models/characters/props/shopping_bag_paper.glb",
+	"flower": "res://assets/models/characters/props/shopping_bag_tote.glb",
+	"fashion": "res://assets/models/characters/props/shopping_bag_tote.glb",
+	"tea": "res://assets/models/characters/props/shopping_bag_paper.glb",
+	"wool": "res://assets/models/characters/props/shopping_bag_tote.glb"}
+## Verkäuferinnen und Verkäufer: Pause zwischen kleinen Bewegungen (Sekunden) und welche (Gewichte).
+var shop_vendor_pause: Vector2 = Vector2(8.0, 22.0)
+var shop_vendor_clips: Dictionary = {"look_around": 2.0, "nod_think": 1.0, "stretch_neck": 1.0, "idle_happy": 1.0}
+## Pub: feste Gäste (sitzen schon beim Start), Getränk oder Kuchen (Gewichte), Abstand zwischen zwei Schlucken (Sekunden),
+## wie oft Besucher sich setzen statt an den Tresen zu gehen, wie lange sie bleiben, Abstand vor dem Sitz beim Hinsetzen (m).
+var pub_guest_count: int = 5
+var pub_table_weights: Dictionary = {"mug": 3.0, "cup": 2.0, "cake": 2.0}
+var pub_sip_interval: Vector2 = Vector2(7.0, 18.0)
+var pub_sit_chance: float = 0.8
+var pub_visit_time: Vector2 = Vector2(30.0, 75.0)
+var pub_seat_front: float = 0.25
 
 ## Fahrräder: So viele Sekunden (zufällig dazwischen) vergehen zwischen zwei Fahrrädern, und so
 ## schnell fahren sie (m/s).
@@ -831,7 +905,7 @@ var passerby_step_back_speed: float = 0.35
 var passerby_handshake_chance: float = 0.4
 ## … nur wenn die Hände etwa gleich hoch sind (m Unterschied; klein und groß schütteln sich nicht die Hand)
 var passerby_handshake_height_diff: float = 0.1
-var passerby_chat_gesture_chance: float = 0.22
+var passerby_chat_gesture_chance: float = 0.32
 var passerby_chat_nod_chance: float = 0.45
 var passerby_goodbye_wave_chance: float = 0.5
 ## Auf Bänken: Wahrscheinlichkeit, sich neben jemanden zu setzen, der schon sitzt, und dann zu plaudern

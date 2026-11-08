@@ -427,6 +427,26 @@ Ist deine Form deutlich anders, passe unter `Body` die Kollisionskästen (`Colli
 grob an. Ablageflächen (`Surfaces`) müssen oben genau auf der Fläche liegen, auf die man etwas
 stellen kann.
 
+## Türen, Läden und Gegenstände der Figuren (seit Etappe 6i)
+Eigene Haus- und Ladenmodelle können mitspielen, wenn ihre `.glb` diese **leeren Objekte** (Empties) und Teile enthält:
+
+| Name im Modell | Wofür | Angaben (Benutzerdefinierte Eigenschaften in Blender) |
+|---|---|---|
+| Teile `DoorLeaf …` | Türblatt: dreht sich mit | – (Scharnier siehe nächste Zeile) |
+| `DoorHinge_0` | Scharnier der Tür | `swing` (1 oder -1: Drehsinn nach innen), `width`, `height`, `dir_x`/`dir_y` (vom Scharnier zum Griff), `out_x`/`out_y` (nach außen) |
+| `WindowSpot_<n>` | Stelle hinter einem Fenster: Anwohner schaut hinaus | Boden des Zimmers, etwa 40 cm hinter dem Glas |
+| `ShopSpot_counter_0` | Kundin an der Theke | `face_x`, `face_y` (Blickrichtung) |
+| `ShopSpot_vendor_0` | Verkäuferin hinter der Theke | `face_x`, `face_y` |
+| `ShopSpot_browse_<n>` | Regal oder Auslage anschauen | `face_x`, `face_y` |
+| `ShopSpot_seat_<n>` | Sitzplatz (Pub) | `face_x`, `face_y`, `height`, `floor`, `backrest`, `via_x`/`via_y` (Weg am Tisch vorbei), `table_x`/`table_y`/`table_z` (Stelle für Getränk oder Kuchen) |
+
+Hinter der Tür muss etwas sein (Raum oder dunkler Flur), die Tür geht nach innen auf und braucht etwa 1 m Platz. Sitzplätze: Sitzfläche 25 cm über dem Boden,
+Tischplatte etwa 46 cm, Theke etwa 95 cm (passend zu den Chibi-Figuren).
+
+**Gegenstände der Figuren** (`tools/blender/build_storybook_chore_props.py`, Dateien in `assets/models/characters/props/`): `watering_can` (Ursprung = Griff), `broom` (Ursprung = Unterkante der
+Borsten, Stiel nach oben), `mug`, `tea_cup`, `cake_plate` (Ursprung = Unterseite). Wie sie in der Hand liegen, steht in `GameConfig.passerby_prop_hold`; welche Tüte es in welchem Laden gibt, in `GameConfig.shop_bag_models`.
+Alle Häufigkeiten: `GameConfig`, Abschnitte „Anwohner und Türen“, „Läden“, „Begegnungen“.
+
 ## Vorlagen zum Modellieren
 Für jedes Möbelstück, jeden Haustyp, das Gassenende, die Eingangstreppe und (seit Etappe 5a)
 den Lieferwagen, das Auto, das Fahrrad und einen Passanten gibt es eine

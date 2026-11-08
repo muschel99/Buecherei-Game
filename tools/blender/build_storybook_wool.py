@@ -130,9 +130,52 @@ def shopfront(M, C):
              signs=[((WIN2[0] + WIN2[1]) / 2 - (a + b) / 2, 2.4, sign, SIGN[0] / SIGN[1])], depth=FASCIA_D)
 
 
+YARN = ("yarn_blue", "yarn_lilac", "yarn_mint", "mustard", "sage", "rust", "blush", "linen")
+
+
+def cubbies(wood, yarn, m, x0, x1, z0, rows, cell_h, depth, rnd):
+    """Würfelregal an einer Wand (m = Wandebene, x entlang, y oben, z nach außen; depth = Lage der Rückwand vor der Wand):
+    Fächer ca. 44 cm breit, in jedem Fach eine Farbe, Knäuel dicht in zwei Reihen übereinander."""
+    width = x1 - x0
+    cols = max(1, int(round(width / 0.46)))
+    cw = width / cols
+    top = z0 + rows * cell_h
+    d = 0.34
+    mid = depth - d / 2
+    for r in range(rows + 1):
+        wood.box(((x0 + x1) / 2, z0 + r * cell_h, mid), (width + 0.03, 0.03, d), step=0.5, dent=0.002, matrix=m)
+    for c in range(cols + 1):
+        wood.box((x0 + c * cw, (z0 + top) / 2, mid), (0.03, top - z0, d), step=0.5, dent=0.002, matrix=m)
+    wood.box(((x0 + x1) / 2, (z0 + top) / 2, depth - 0.01), (width, top - z0, 0.02), step=0.6, dent=0.002, matrix=m)
+    for r in range(rows):
+        base = z0 + r * cell_h + 0.016
+        for c in range(cols):
+            key = YARN[rnd.randrange(len(YARN))]
+            cx = x0 + (c + 0.5) * cw
+            ball = min((cw - 0.05) / 6.0, (cell_h - 0.05) / 4.0, 0.075)
+            for row in range(2):
+                for i in range(3):
+                    px = cx + (i - 1) * ball * 2.02 + rnd.uniform(-0.005, 0.005)
+                    yarn[key].blob(m @ Vector((px, base + ball * (1.0 + 1.86 * row), mid + 0.05 + rnd.uniform(-0.03, 0.03))), ball,
+                                   subdiv=2, lump=0.05)
+
+
+def yarn_basket(M, C, yarn, name, pos, size, seed, rnd, count=7):
+    """Geflochtener Korb mit Knäueln obenauf."""
+    T.basket(M, C, name, Vector(pos), size, seed)
+    sx, sy, sz = size
+    for i in range(count):
+        a = i * 2.4
+        k = 0.35 + 0.55 * rnd.random()
+        p = Vector((pos[0] + math.cos(a) * sx * 0.3 * k, pos[1] + math.sin(a) * sy * 0.3 * k, pos[2] + sz + 0.015 + (i % 2) * 0.03))
+        yarn[YARN[rnd.randrange(len(YARN))]].blob(p, rnd.uniform(0.05, 0.065), subdiv=2, lump=0.06)
+
+
 def wool_inside(M, C, ops):
-    """Laden: cremefarbene Wände, Dielen, hinter jedem Schaufenster ein Regal voller Wollknäuel in
-    vielen Farben, unten Stoffballen; oben warme Zimmer."""
+    """Laden neu (seit Etappe 6i, nach den Vorlagen der Entwicklerin): cremefarbene Wände, Dielen, Würfelregale voller Wollknäuel an
+    Brandwand, Rückwand und Seite, Theke hinten in der Mitte, niedriger Tisch mit Korb und Strickzeug, Sessel mit Decke in der Ecke,
+    Wandbretter mit Pflanzen und Kerze, gehäkelte Beutel und Kranz, Hängelampen; hinter den Schaufenstern nur niedrige Auslagen
+    (Körbe, Stoffballen), damit man hineinsieht. Oben warme Zimmer."""
     lin = Body("Laden Wände", M["wool_wall_in"], C["inside"], seed=50, vary=0.03)
     T.outline_walls(lin, OUT, range(6), 0.0, 3.35, thick=0.03, inset=0.3, step=0.6)
     T.cut(lin.build(), [o for o in ops if o[3] < 2.0], bevel=0)
@@ -144,40 +187,120 @@ def wool_inside(M, C, ops):
     T.floor_slab(M, C, "Zimmer oben Boden", "in_dark", OUT, 0.29, 3.44, 0.06)
     T.floor_slab(M, C, "Zimmer oben Decke", "in_dark", OUT, 0.29, E - 0.45, 0.06)
     wood = Body("Wollregale", M["wood_in"], C["inside"], seed=52, vary=0.06, bevel=0.006)
-    colors = ("yarn_blue", "yarn_lilac", "yarn_mint", "mustard", "sage", "rust", "blush", "linen")
-    yarn = {k: Body("Wolle %s" % k, M[k], C["inside"], seed=60 + i, vary=0.08) for i, k in enumerate(colors)}
+    yarn = {k: Body("Wolle %s" % k, M[k], C["inside"], seed=60 + i, vary=0.08) for i, k in enumerate(YARN)}
     rnd = T.RND
+    # Würfelregale: Rückwand S4, Brandwand S5, Seite S3 (Lage der Regal-Rückwand 0,32 m vor der Mauer)
+    cubbies(wood, yarn, T.wall_matrix(*S4), 0.5, 6.4, 0.08, 5, 0.46, -0.32, rnd)
+    cubbies(wood, yarn, T.wall_matrix(*S5), 0.5, 3.1, 0.08, 5, 0.46, -0.32, rnd)
+    cubbies(wood, yarn, T.wall_matrix(*S3), 0.9, 4.2, 0.08, 5, 0.46, -0.32, rnd)
+    # Theke (seit Etappe 6i): hinten in der Mitte, Platte 0,95 m hoch
+    wood.box((0.6, 5.72, 0.5), (2.4, 0.6, 0.88), step=0.4, dent=0.003)
+    wood.box((0.6, 5.72, 0.965), (2.52, 0.68, 0.05), step=0.4, dent=0.002)
+    for k in range(4):
+        wood.box((-0.27 + k * 0.58, 5.41, 0.5), (0.48, 0.03, 0.66), step=0.4, dent=0.002)
+    # Niedriger Tisch mit zwei Schubladenfronten (Vorlage: Strickzeug auf dem Tisch)
+    wood.box((-1.0, 2.6, 0.5), (1.6, 0.8, 0.05), step=0.4, dent=0.002)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            wood.box((-1.0 + sx * 0.72, 2.6 + sy * 0.32, 0.27), (0.06, 0.06, 0.44), step=0.4, dent=0.001)
+    wood.box((-1.0, 2.6, 0.42), (1.46, 0.66, 0.1), step=0.4, dent=0.002)
+    # Sessel-Gestell, Beistelltisch
+    wood.box((-1.9, 1.15, 0.3), (0.05, 0.05, 0.5), step=0.4, dent=0.001)
+    # Wandbretter über dem Sessel (an der Brandwand vorn)
+    shelf_m = T.wall_matrix(*S5)
+    for zz in (1.45, 1.95):
+        wood.box((6.95, zz, -0.42), (1.0, 0.03, 0.22), step=0.4, dent=0.001, matrix=shelf_m)
+    # Holzleiste mit Haken für Beutel
+    wood.box((6.95, 1.2, -0.33), (1.1, 0.05, 0.03), step=0.4, dent=0.001, matrix=shelf_m)
+    # Niedrige Auslagen hinter den Schaufenstern
     for p, (x0, x1) in ((S0, WIN0), (S2, WIN2)):
         m = T.wall_matrix(*p)
-        a, b = x0 + 0.15, x1 - 0.15
-        depth = -1.15
-        for zz in (0.45, 0.8, 1.15, 1.5, 1.85, 2.2):
-            wood.box(((a + b) / 2, zz, depth), (b - a, 0.035, 0.34), step=0.5, dent=0.002, matrix=m)
-            x = a + 0.08
-            k = rnd.randrange(len(colors))
-            while x < b - 0.08:
-                r = rnd.uniform(0.05, 0.062)
-                if zz < 0.5:
-                    # Stoffballen liegend
-                    yarn[colors[k % len(colors)]].tube([m @ Vector((x, zz + 0.07, depth - 0.15)), m @ Vector((x, zz + 0.07, depth + 0.15))],
-                                                       0.06, segs=12, round_ends=True)
-                    x += 0.14
-                else:
-                    yarn[colors[k % len(colors)]].blob(m @ Vector((x + r, zz + 0.018 + r * 0.92, depth + rnd.uniform(-0.05, 0.05))), r,
-                                                       subdiv=1, lump=0.08)
-                    x += 2 * r + 0.01
-                if rnd.random() < 0.35:
-                    k += 1
-        for xs in (a, (a + b) / 2, b):
-            wood.box((xs, 1.25, depth), (0.04, 2.5, 0.36), step=0.5, dent=0.002, matrix=m)
-        wood.box(((a + b) / 2, 1.25, depth - 0.18), (b - a, 2.5, 0.02), step=0.5, dent=0.002, matrix=m)
+        mid_x = (x0 + x1) / 2
+        half = (x1 - x0) / 2 - 0.35
+        wood.box((mid_x, 0.22, -0.72), (2 * half, 0.32, 0.36), step=0.4, dent=0.002, matrix=m)
+        wood.box((mid_x, 0.44, -0.86), (2 * half, 0.14, 0.26), step=0.4, dent=0.002, matrix=m)
     wood.build()
+    # Körbe mit Wolle
+    basket_spots = [("Korb Tisch", (-0.65, 2.6, 0.525), (0.34, 0.26, 0.14), 71), ("Korb Boden links", (-1.45, 3.35, 0.06), (0.42, 0.34, 0.26), 72),
+                    ("Korb Boden rechts", (2.3, 2.9, 0.06), (0.46, 0.36, 0.28), 73), ("Korb Theke", (-0.15, 5.72, 0.99), (0.3, 0.24, 0.12), 74)]
+    for name, pos, size, seed in basket_spots:
+        yarn_basket(M, C, yarn, name, pos, size, seed, rnd, count=8 if size[2] > 0.2 else 5)
+    # Auslagen: Körbe und Stoffballen
+    fabrics = ("sage", "blush", "linen", "mustard", "rust", "yarn_lilac", "yarn_blue")
+    for p, (x0, x1) in ((S0, WIN0), (S2, WIN2)):
+        m = T.wall_matrix(*p)
+        x = x0 + 0.5
+        while x < x1 - 0.5:
+            key = fabrics[rnd.randrange(len(fabrics))]
+            top = m @ Vector((x, 0.52, -0.86))
+            yarn[YARN[YARN.index(key) if key in YARN else 0]].tube([m @ Vector((x, 0.52, -0.99)), m @ Vector((x, 0.52, -0.73))], 0.06, segs=12,
+                                                                    round_ends=True)
+            x += 0.15
+            del top
+        yarn_basket(M, C, yarn, "Korb Fenster %s" % str(x0), tuple(m @ Vector(((x0 + x1) / 2 - 0.3, 0.38, -0.6))), (0.34, 0.26, 0.13), 80 + int(x0 * 10),
+                    rnd, count=6)
     for y in yarn.values():
-        y.build()
-    for p, x in ((S0, 2.75), (S2, 1.9), (S1, 1.1)):
-        SC.add_light("Ladenlicht", tuple(T.canon(*p, x, 2.9, -0.7) @ Vector((0, 0, 0))), 3100, 50, C["light"], radius=0.2)
+        y.build(smooth_angle=180)
+    # Sessel mit Strickdecke (cremefarben), Kissen, Beistelltisch mit Lampe; runder Teppich
+    chair = Body("Sessel", M["linen"], C["inside"], seed=90, vary=0.04, bevel=0.03)
+    chair.box((-1.9, 1.15, 0.32), (0.72, 0.68, 0.18), step=0.3, dent=0.006)
+    chair.box((-1.9, 1.46, 0.68), (0.72, 0.14, 0.72), step=0.3, dent=0.006)
+    for sx in (-1, 1):
+        chair.box((-1.9 + sx * 0.31, 1.15, 0.52), (0.12, 0.68, 0.3), step=0.3, dent=0.006)
+    chair.build()
+    blanket = Body("Strickdecke", M["blush"], C["inside"], seed=91, vary=0.05, bevel=0.012)
+    blanket.box((-1.9, 1.22, 0.43), (0.5, 0.5, 0.05), step=0.2, dent=0.008)
+    blanket.box((-1.9, 0.86, 0.26), (0.5, 0.05, 0.36), step=0.2, dent=0.008)
+    blanket.build()
+    pil = Body("Kissen", M["mustard"], C["inside"], seed=92, vary=0.04, bevel=0.03)
+    pil.box((-1.9, 1.34, 0.6), (0.34, 0.1, 0.28), step=0.2, dent=0.006)
+    pil.build()
+    rug = Body("Teppich", M["linen"], C["inside"], seed=93, vary=0.06)
+    rug.lathe([(0.0, 0.0), (1.05, 0.0), (1.1, 0.012), (1.05, 0.024), (0.0, 0.024)], (-0.9, 1.9, 0.06), segs=40, wave=0.008, waves=30)
+    rug.build()
+    # Wanddeko: Kerze und Topfpflanze auf den Brettern, Kranz, gehäkelte Beutel an der Leiste
+    deco = Body("Wanddeko Pflanzen", M["sage"], C["inside"], seed=94, vary=0.08, bevel=0.01)
+    for zz, dx in ((1.46, -0.3), (1.96, 0.2)):
+        c = shelf_m @ Vector((6.95 + dx, zz + 0.03, -0.42))
+        deco.blob(tuple(c + Vector((0.0, 0.0, 0.14))), 0.11, subdiv=2, lump=0.2)
+    deco.build()
+    pots = Body("Wanddeko Töpfe", M["rust"], C["inside"], seed=95, vary=0.05, bevel=0.004)
+    for zz, dx in ((1.46, -0.3), (1.96, 0.2)):
+        c = shelf_m @ Vector((6.95 + dx, zz + 0.015, -0.42))
+        pots.lathe([(0.0, 0.0), (0.05, 0.0), (0.065, 0.1), (0.0, 0.1)], tuple(c), segs=14)
+    pots.build()
+    wreath = Body("Kranz", M["sage"], C["inside"], seed=96, vary=0.1)
+    wm = shelf_m @ Matrix.Translation((6.1, 1.55, -0.33))
+    for k in range(14):
+        a = k / 14 * math.tau
+        wreath.blob(tuple(wm @ Vector((math.cos(a) * 0.17, math.sin(a) * 0.17, 0.0))), 0.05, subdiv=1, lump=0.25)
+    wreath.build()
+    bags = Body("Beutel gehäkelt", M["linen"], C["inside"], seed=97, vary=0.05, bevel=0.012)
+    for dx in (-0.35, 0.05, 0.42):
+        c = shelf_m @ Vector((6.95 + dx, 0.9, -0.3))
+        bags.blob(tuple(c), 0.13, subdiv=2, lump=0.08, scale=(1.0, 0.45, 1.25))
+    bags.build()
+    # Lampen: Korb-Pendelleuchten über Tisch und Theke
+    lamp = Body("Pendelleuchten", M["bulb"], C["inside"], seed=98)
+    cord = Body("Pendelleuchten Kabel", M["iron"], C["inside"], seed=99)
+    for x, y in ((-1.0, 2.6), (0.6, 5.2), (3.2, 3.6)):
+        cord.tube([(x, y, 3.33), (x, y, 2.55)], 0.006, segs=5)
+        lamp.lathe([(0.0, 0.0), (0.2, 0.05), (0.2, 0.17), (0.08, 0.27), (0.0, 0.28)], (x, y, 2.3), segs=18)
+    lamp.build()
+    cord.build()
+    for x, y in ((-1.0, 2.6), (0.6, 5.2), (3.2, 3.6)):
+        SC.add_light("Ladenlicht", (x, y, 2.25), 3000, 55, C["light"], radius=0.15)
     for p, x, w, _ in UPPER:
         SC.add_light("Zimmerlicht", tuple(T.canon(*p, x, 5.5, -1.2) @ Vector((0, 0, 0))), 2700, 18, C["light"], radius=0.15)
+    # Plätze im Laden fürs Spiel
+    SC.shop_spot("counter", 0, (0.6, 5.05, 0.06), (0, 1))
+    SC.shop_spot("vendor", 0, (0.6, 6.38, 0.06), (0, -1))
+    SC.shop_spot("browse", 0, (-1.6, 4.5, 0.06), (-1, 0))
+    SC.shop_spot("browse", 1, (2.0, 6.3, 0.06), (0, 1))
+    m3 = T.wall_matrix(*S3)
+    b2 = m3 @ Vector((2.5, 0.06, -1.3))
+    n3 = (m3.to_3x3() @ Vector((0, 0, 1)))
+    SC.shop_spot("browse", 2, (b2.x, b2.y, 0.06), (n3.x, n3.y))
 
 
 OBSTACLES = {}

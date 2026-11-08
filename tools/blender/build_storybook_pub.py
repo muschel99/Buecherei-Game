@@ -355,31 +355,40 @@ def door(M, C):
     fb((0, HEAD - 0.07, dz), (2 * DOOR_HALF - 0.02, 0.06, 0.06))
     for i in (1, 2):
         fb((-DOOR_HALF + 2 * DOOR_HALF * i / 3, (top + HEAD - 0.07) / 2, dz), (0.03, HEAD - 0.07 - top, 0.045))
-    # Türblatt füllt die Zarge ganz aus (überlappt sie 5 mm), keine Lücke oben und seitlich
-    for sx in (-1, 1):
-        fb((sx * 0.41, 1.1 + lift, dz), (0.11, 2.2, 0.05))
-    for z, h in ((0.17, 0.34), (0.98, 0.1), (2.15, 0.12)):
-        fb((0, z + lift, dz), (0.72, h, 0.05))
-    fb((0, 0.635 + lift, dz - 0.004), (0.72, 0.62, 0.04))
-    fb((0, 0.62 + lift, dz + 0.028), (0.48, 0.38, 0.02))
-    for i in (1,):
-        fb((0, 1.55 + lift, dz), (0.03, 1.05, 0.045))
-    fb((0, 1.55 + lift, dz), (0.7, 0.03, 0.045))
     b.build()
+    # Türblatt füllt die Zarge ganz aus (überlappt sie 5 mm), keine Lücke oben und seitlich; eigener Körper (dreht sich
+    # im Spiel, seit Etappe 6i)
+    lf = Body("Türblatt", M["bottle"], C["shop"], seed=35, vary=0.04, bevel=0.008)
+
+    def lb(c, s, step=0.3):
+        lf.box(c, s, step=step, dent=0.003, matrix=fm)
+    for sx in (-1, 1):
+        lb((sx * 0.41, 1.1 + lift, dz), (0.11, 2.2, 0.05))
+    for z, h in ((0.17, 0.34), (0.98, 0.1), (2.15, 0.12)):
+        lb((0, z + lift, dz), (0.72, h, 0.05))
+    lb((0, 0.635 + lift, dz - 0.004), (0.72, 0.62, 0.04))
+    lb((0, 0.62 + lift, dz + 0.028), (0.48, 0.38, 0.02))
+    for i in (1,):
+        lb((0, 1.55 + lift, dz), (0.03, 1.05, 0.045))
+    lb((0, 1.55 + lift, dz), (0.7, 0.03, 0.045))
+    SC.door_leaf(lf.build())
     z = Body("Türzarge", M["bottle_dark"], C["shop"], seed=31, vary=0.03, bevel=0.012)
     for sx in (-1, 1):
         z.box((sx * 0.5, 1.1 + lift, dz), (0.08, 2.2, 0.14), step=0.3, dent=0.002, matrix=fm)
     z.box((0, 2.24 + lift, dz), (1.08, 0.08, 0.14), step=0.3, dent=0.002, matrix=fm)
     z.build()
-    g = Body("Tür Glas", M["glass"], C["shop"], seed=32)
+    g = Body("Oberlicht Glas", M["glass"], C["shop"], seed=32)
     # Scheibe reicht ringsum in Rahmen und Riegel hinein (keine Spalten)
-    g.box((0, 1.565 + lift, dz), (0.74, 1.13, 0.006), step=10, dent=0, matrix=fm)
     g.box((0, (top + HEAD - 0.07) / 2, dz), (2 * DOOR_HALF - 0.04, HEAD - 0.07 - top, 0.006), step=10, dent=0, matrix=fm)
     g.build()
+    pane = Body("Tür Glas", M["glass"], C["shop"], seed=36)
+    pane.box((0, 1.565 + lift, dz), (0.74, 1.13, 0.006), step=10, dent=0, matrix=fm)
+    SC.door_leaf(pane.build())
     k = Body("Tür Griff und Briefschlitz", M["gold"], C["shop"], seed=33, bevel=0.003)
     k.blob(fm @ Vector((0.28, 1.02 + lift, dz + 0.06)), 0.03, subdiv=2, lump=0.05)
     k.box((0, 0.95 + lift, dz + 0.035), (0.26, 0.04, 0.02), step=1, dent=0.001, matrix=fm)
-    k.build()
+    SC.door_leaf(k.build())
+    SC.door_hinge(fm, -0.465, dz, 0.93, 2.2 + lift)
     st = Body("Türplatte", M["stone"], C["shop"], seed=34, vary=0.06, bevel=0.012)
     st.box((0, -0.06, 0.012), (1.2, 0.62, 0.025), step=0.3, dent=0.002)
     st.build()
@@ -435,20 +444,22 @@ def taproom(M, C):
     sill = Body("Gaststube Fensterbrett", M["pub_wood_in"], C["inside"], seed=58, vary=0.05, bevel=0.006)
     sill.box((-xi + 0.06, 2.2, 0.78), (0.24, 1.26, 0.04), step=0.4, dent=0.002)
     sill.build()
-    # Tresen und Flaschenregal an der Rückwand
+    # Tresen und Flaschenregal an der Rückwand (seit Etappe 6i: Tresen niedriger und weiter vorn, dahinter steht jemand)
     t = Body("Tresen", M["pub_wood_in"], C["inside"], seed=55, vary=0.06, bevel=0.012)
-    t.box((0.3, 4.75, 0.55), (3.4, 0.6, 1.1), step=0.4, dent=0.003)
-    t.box((0.3, 4.72, 1.13), (3.55, 0.72, 0.06), step=0.4, dent=0.003)
+    t.box((0.3, 4.42, 0.5), (3.4, 0.6, 0.88), step=0.4, dent=0.003)
+    t.box((0.3, 4.39, 0.96), (3.55, 0.72, 0.06), step=0.4, dent=0.003)
     for k in range(5):
-        t.box((-1.2 + k * 0.75, 4.43, 0.6), (0.6, 0.03, 0.7), step=1, dent=0.002)
+        t.box((-1.2 + k * 0.75, 4.1, 0.5), (0.6, 0.03, 0.62), step=1, dent=0.002)
     for z in (1.5, 1.95, 2.4):
         t.box((0.3, yb - 0.2, z), (3.6, 0.28, 0.04), step=0.6, dent=0.002)
     t.build()
     rail = Body("Tresen Messing", M["brass_in"], C["inside"], seed=56)
-    rail.tube([(-1.45, 4.38, 0.18), (2.05, 4.38, 0.18)], 0.02, segs=10, round_ends=True)
+    rail.tube([(-1.45, 4.03, 0.18), (2.05, 4.03, 0.18)], 0.02, segs=10, round_ends=True)
     for k in range(3):
-        rail.lathe([(0.0, 0.0), (0.03, 0.0), (0.02, 0.2), (0.03, 0.32), (0.0, 0.34)], (-0.4 + k * 0.4, 4.7, 1.16), segs=12)
+        rail.lathe([(0.0, 0.0), (0.03, 0.0), (0.02, 0.2), (0.03, 0.32), (0.0, 0.34)], (-0.4 + k * 0.4, 4.39, 0.99), segs=12)
     rail.build()
+    SC.shop_spot("counter", 0, (0.3, 3.45, 0.08), (0, 1))
+    SC.shop_spot("vendor", 0, (0.3, 5.02, 0.08), (0, -1))
     bottles = {k: Body("Flaschen %s" % k, M["bottle_" + k], C["inside"], seed=60 + i, vary=0.12)
                for i, k in enumerate(("amber", "green", "blue", "red", "cream"))}
     for z in (1.52, 1.97, 2.42):
@@ -461,20 +472,28 @@ def taproom(M, C):
             x += 2 * r + RND.uniform(0.02, 0.06)
     for body in bottles.values():
         body.build()
-    # Sitznischen mit grünem Leder an den Seiten, Tische mit Kerzen
+    # Sitznischen mit grünem Leder an den Seiten, Tische mit Kerzen. Seit Etappe 6i Sitzhöhe 0,25 m über dem Boden und
+    # niedrigere Tische (wie die Stühle draußen, passend zu den Figuren); je Bank zwei Sitzplätze fürs Spiel
     lb = Body("Sitzbänke Leder", M["leather"], C["inside"], seed=70, vary=0.06, bevel=0.03)
     wood = Body("Sitzbänke und Tische Holz", M["pub_wood_in"], C["inside"], seed=71, vary=0.06, bevel=0.01)
     candles = Body("Kerzen", M["candle"], C["inside"], seed=72)
+    seat_n = 0
     for sx in (-1, 1):
         for y in (1.4, 3.0):
             bx = sx * (xi - 0.3)
-            lb.box((bx, y, 0.45), (0.5, 1.1, 0.12), step=0.3, dent=0.006)
-            lb.box((sx * (xi - 0.1), y, 0.85), (0.14, 1.1, 0.75), step=0.3, dent=0.006)
-            wood.box((bx, y, 0.2), (0.48, 1.06, 0.4), step=0.4, dent=0.003)
+            lb.box((bx, y, 0.27), (0.5, 1.1, 0.12), step=0.3, dent=0.006)
+            lb.box((sx * (xi - 0.1), y, 0.72), (0.14, 1.1, 0.8), step=0.3, dent=0.006)
+            wood.box((bx, y, 0.15), (0.48, 1.06, 0.2), step=0.4, dent=0.003)
             tx = sx * (xi - 0.95)
-            wood.lathe([(0.0, 0.0), (0.22, 0.0), (0.22, 0.03), (0.04, 0.05), (0.035, 0.7), (0.3, 0.72), (0.3, 0.76), (0.0, 0.76)],
+            wood.lathe([(0.0, 0.0), (0.22, 0.0), (0.22, 0.03), (0.04, 0.05), (0.035, 0.42), (0.3, 0.44), (0.3, 0.46), (0.0, 0.46)],
                        (tx, y, 0.08), segs=24)
-            candles.lathe([(0.0, 0.0), (0.02, 0.0), (0.02, 0.09), (0.0, 0.1)], (tx, y, 0.84), segs=10)
+            candles.lathe([(0.0, 0.0), (0.02, 0.0), (0.02, 0.09), (0.0, 0.1)], (tx, y, 0.54), segs=10)
+            for k, dy in enumerate((-0.28, 0.28)):
+                # Weg zum Sitz: am Tisch vorbei von der Seite (via)
+                via_y = y + dy * 2.6
+                SC.shop_spot("seat", seat_n, (bx, y + dy, 0.33), (-sx, 0), height=0.33, floor=0.08, backrest=0.13,
+                             via_x=sx * 1.72, via_y=via_y, table_x=tx + sx * 0.08, table_y=y + dy * 0.75, table_z=0.54)
+                seat_n += 1
     lb.build()
     wood.build()
     candles.build()

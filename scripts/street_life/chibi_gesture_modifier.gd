@@ -8,7 +8,7 @@ extends SkeletonModifier3D
 ##
 ## Figur schaut nach +Z, ihre linke Seite ist +X, oben +Y.
 
-enum Gesture { NONE, WAVE, WATCH, STRETCH, TALK, CLIP }
+enum Gesture { NONE, WAVE, WATCH, STRETCH, TALK, CLIP, SWEEP, HUG, DRINK }
 
 var gesture: Gesture = Gesture.NONE
 ## 0 = keine Geste, 1 = ganz
@@ -38,6 +38,19 @@ const THIGH_SPOT_MIN := 0.3
 const ARM_BENT := 0.86
 const FINGERS_FLAT := 0.85
 const THIGH_OUT := 0.012
+## Fegen (seit Etappe 6i): der Besen schwingt vor der Figur hin und her; so viele Schwünge je Sekunde (Bogenmaß)
+const SWEEP_RATE := 2.6
+## Finger beim Greifen so weit eingeknickt (Grad je Glied)
+const GRIP_ANGLE := 65.0
+## Fegen: Größe der Figur gegenüber der mittleren (Schulterhöhe), setzt ChibiPasserbyModel
+var body_scale: float = 1.0
+## Umarmen (seit Etappe 6i): Partner steht seitlich daneben (+1 = links von mir, -1 = rechts)
+var hug_side: float = 1.0
+## Trinken/Essen im Sitzen (seit Etappe 6i): 0…1 = wie weit die Hand am Mund ist
+var sip: float = 0.0
+## Hände greifen etwas (0…1; rechts: Gegenstand in der Hand, beide beim Fegen) – Finger krümmen sich
+var grip_right: float = 0.0
+var grip_left: float = 0.0
 var _clip_tracks: Dictionary = {}
 ## Oberkörper zurückgelehnt (Grad; im Sitzen, seit Nachbesserung 4 von 6h): Rücken und Brust nach hinten, der Hals gleicht
 ## einen Teil davon aus (der Blick bleibt geradeaus)
@@ -80,6 +93,10 @@ func _process_modification_with_delta(_delta: float) -> void:
 		_apply_lean(skeleton)
 	if hands_on_thighs > 0.001:
 		_apply_hands(skeleton)
+	if grip_right > 0.001:
+		_grip(skeleton, "Right", grip_right)
+	if grip_left > 0.001:
+		_grip(skeleton, "Left", grip_left)
 	if gesture == Gesture.NONE or weight <= 0.001:
 		return
 	var w := weight
@@ -132,6 +149,36 @@ func _process_modification_with_delta(_delta: float) -> void:
 					if r > 0.05 and dx > want and dz > -0.05:
 						var swing := asin(clampf(want / r, -1.0, 1.0)) - atan2(dx, dz)
 						_turn(skeleton, upper, Vector3.UP, swing * w)
+		Gesture.SWEEP:
+			# Beide Hände am Stiel des Besens (Lage aus sweep_points, Modell und Hände passen immer zusammen)
+			_grip(skeleton, "Left", w)
+			_grip(skeleton, "Right", w)
+			var p := sweep_points(t, body_scale)
+			_reach(skeleton, "Right", (p.head as Vector3).lerp(p.top, 0.8), Vector3(-0.8, -0.3, -0.4), w)
+			_reach(skeleton, "Left", (p.head as Vector3).lerp(p.top, 1.0), Vector3(0.8, -0.3, -0.4), w)
+			_orient_hand_along(skeleton, skeleton.find_bone("RightHand"), Vector3(0.15, 0.1, 1.0).normalized(), Vector3(-1.0, 0.2, 0.0), w)
+			_orient_hand_along(skeleton, skeleton.find_bone("LeftHand"), Vector3(-0.15, 0.1, 1.0).normalized(), Vector3(1.0, 0.2, 0.0), w)
+			# der Oberkörper dreht ein wenig mit dem Besen
+			_turn(skeleton, skeleton.find_bone("Spine"), Vector3.UP, sin(t * SWEEP_RATE) * 0.14 * w)
+		Gesture.HUG:
+			# Umarmung von der Seite: der innere Arm um den Rücken des anderen, Hand auf seiner fernen Schulter
+			var outer := "Left" if hug_side > 0.0 else "Right"
+			var lift := 0.98 if hug_side > 0.0 else 0.82  # die Arme liegen über- und untereinander
+			_reach(skeleton, outer, Vector3(hug_side * 0.45 * body_scale, lift * body_scale, -0.13 * body_scale), Vector3(hug_side * 0.1, -0.4, -1.0), w)
+			_orient_hand_along(skeleton, skeleton.find_bone(outer + "Hand"), Vector3(hug_side, 0.0, 0.0), Vector3(0.0, 0.2, -1.0), w)
+			# etwas zum anderen hin neigen
+			_turn(skeleton, skeleton.find_bone("Spine"), Vector3.BACK, -hug_side * 0.08 * w)
+			_turn(skeleton, skeleton.find_bone("Neck"), Vector3.BACK, -hug_side * 0.2 * w)
+		Gesture.DRINK:
+			# rechte Hand vom Tisch zum Mund und zurück (sip: 0 = Hand am Tisch, 1 = am Mund)
+			# Mund: vor dem großen Kopf, etwas über dem Halsansatz (Lage des Kopfknochens in dieser Haltung)
+			var head := skeleton.find_bone("Head")
+			var neck := skeleton.get_bone_global_pose(head).origin if head >= 0 else Vector3(0.0, 1.1, 0.0)
+			var mouth := neck + Vector3(-0.06, 0.03 * body_scale, 0.29 * body_scale)
+			var rest := Vector3(-0.16 * body_scale, neck.y - 0.42 * body_scale, 0.3 * body_scale)
+			_reach(skeleton, "Right", rest.lerp(mouth, sip), Vector3(-0.9, -0.7, -0.3), w)
+			# Finger zeigen zur Körpermitte, Daumen oben, Handrücken nach vorn – so hält man eine Tasse
+			_orient_hand_along(skeleton, skeleton.find_bone("RightHand"), Vector3(0.9, 0.15, 0.2).normalized(), Vector3(-0.2, 0.2, 1.0), w)
 		Gesture.TALK:
 			# erzählen: Unterarme vor dem Bauch, Hände bewegen sich ruhig
 			var e := talk_energy
@@ -142,6 +189,54 @@ func _process_modification_with_delta(_delta: float) -> void:
 			# Handflächen leicht nach oben und innen (offene, erzählende Hände)
 			_orient_hand(skeleton, "RightHand", "RightLowerArm", Vector3(-0.45, -0.85, 0.0), w)
 			_orient_hand(skeleton, "LeftHand", "LeftLowerArm", Vector3(0.45, -0.85, 0.0), w * 0.7)
+
+
+## Finger krümmen (um einen Stiel oder Griff): die Fingerglieder gegenüber der Ruhehaltung einknicken, der Daumen weniger.
+func _grip(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
+	for finger: String in ["Index", "Middle", "Ring", "Little"]:
+		for joint: String in ["Proximal", "Intermediate", "Distal"]:
+			_bend_joint(skeleton, prefix + finger + joint, GRIP_ANGLE, amount)
+	_bend_joint(skeleton, prefix + "ThumbProximal", GRIP_ANGLE * 0.4, amount)
+	_bend_joint(skeleton, prefix + "ThumbDistal", GRIP_ANGLE * 0.5, amount)
+
+
+func _bend_joint(skeleton: Skeleton3D, bone_name: String, degrees: float, amount: float) -> void:
+	var bone := skeleton.find_bone(bone_name)
+	if bone < 0:
+		return
+	var rest := skeleton.get_bone_rest(bone).basis.get_rotation_quaternion()
+	var bent := rest * Quaternion(Vector3.RIGHT, deg_to_rad(degrees))
+	skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_pose_rotation(bone).slerp(bent, clampf(amount, 0.0, 1.0)))
+
+
+## Besen beim Fegen zur Zeit t: Unterkante der Borsten (auf dem Boden) und oberes Ende des Stiels, im Raum der Figur.
+static func sweep_points(t: float, scale_y: float) -> Dictionary:
+	var a := sin(t * SWEEP_RATE)
+	var head := Vector3(0.24 * a, 0.0, 0.5 * scale_y)
+	var top := Vector3(0.07 * a * 0.4, 0.9 * scale_y, 0.17 * scale_y)
+	return {"head": head, "top": top}
+
+
+## Hand einer Seite ("Left"/"Right") zu einem Punkt im Raum der Figur führen (Zwei-Glieder-Rechnung); pole = wohin der
+## Ellbogen zeigt.
+func _reach(skeleton: Skeleton3D, prefix: String, target: Vector3, pole: Vector3, amount: float) -> void:
+	var upper := skeleton.find_bone(prefix + "UpperArm")
+	var lower := skeleton.find_bone(prefix + "LowerArm")
+	var hand := skeleton.find_bone(prefix + "Hand")
+	if upper < 0 or lower < 0 or hand < 0 or amount <= 0.0:
+		return
+	var shoulder := skeleton.get_bone_global_pose(upper).origin
+	var a := shoulder.distance_to(skeleton.get_bone_global_pose(lower).origin)
+	var b := skeleton.get_bone_global_pose(lower).origin.distance_to(skeleton.get_bone_global_pose(hand).origin)
+	var to := target - shoulder
+	var dist := clampf(to.length(), absf(a - b) + 0.002, (a + b) * 0.995)
+	var along := to.normalized()
+	var x := (a * a - b * b + dist * dist) / (2.0 * dist)
+	var perp := (pole - along * pole.dot(along)).normalized()
+	var elbow := shoulder + along * x + perp * sqrt(maxf(a * a - x * x, 0.0))
+	_aim(skeleton, prefix + "UpperArm", elbow - shoulder, amount)
+	var elbow_real := skeleton.get_bone_global_pose(lower).origin
+	_aim(skeleton, prefix + "LowerArm", shoulder + along * dist - elbow_real, amount)
 
 
 ## Richtet eine Hand aus (seit Etappe 6d – vorher behielt sie die Drehung des hängenden Arms und war

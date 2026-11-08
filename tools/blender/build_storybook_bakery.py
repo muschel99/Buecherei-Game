@@ -225,6 +225,11 @@ def bakery_inside(M, C):
     wood.build()
     loaves.build()
     dark.build()
+    # Plätze im Laden fürs Spiel (seit Etappe 6i)
+    SC.shop_spot("counter", 0, (0.0, yb - 1.85, 0.08), (0, 1))
+    SC.shop_spot("vendor", 0, (0.0, yb - 0.7, 0.08), (0, -1))
+    SC.shop_spot("browse", 0, (-0.82, 1.78, 0.08), (0, -1))
+    SC.shop_spot("browse", 1, (0.82, 1.78, 0.08), (0, -1))
     # Zimmer oben
     up = Body("Zimmer oben", M["in_dark"], C["inside"], seed=58, vary=0.04)
     up.box((0, 2.6, 3.42), (W - 0.6, 4.6, 0.1), step=0.8, dent=0.003)

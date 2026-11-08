@@ -58,6 +58,57 @@ def make_material(name, color, glow=0.0, plant=False, **kw):
 SPOTS = {"coll": None, "n": 0}
 
 
+# Türblätter (seit Etappe 6i): Teile mit dieser Eigenschaft kommen beim Export in eigene Knoten „DoorLeaf …“ – die Tür
+# dreht sich im Spiel um den Punkt „DoorHinge_…“ (HouseDoor). Leere Knoten mit diesen Namen gehen mit in die .glb.
+DOOR_LEAF = "cozy_door_leaf"
+GAME_SPOTS = ("PlantSpot_", "DoorHinge_", "ShopSpot_", "WindowSpot_")
+
+
+def door_leaf(obj, group="DoorLeaf"):
+    """Dieses Teil gehört zum Türblatt (dreht sich mit, siehe door_hinge); group = Name der Knoten (Tür oder „GateLeaf“ = Gartenpforte)."""
+    obj[DOOR_LEAF] = group
+    return obj
+
+
+def _spot_collection():
+    if SPOTS["coll"] is None or SPOTS["coll"].name not in bpy.data.collections:
+        SPOTS["coll"] = SB.collection("Pflanzplätze")
+    return SPOTS["coll"]
+
+
+def game_spot(name, pos, **props):
+    """Leerer Knoten mit Angaben fürs Spiel (name z. B. „ShopSpot_counter_0“, Angaben kommen als Extras mit)."""
+    e = bpy.data.objects.new(name, None)
+    e.empty_display_type = "ARROWS"
+    e.empty_display_size = 0.2
+    e.location = pos
+    for key, value in props.items():
+        e[key] = value
+    _spot_collection().objects.link(e)
+    return e
+
+
+def door_hinge(fm, hinge_x, dz, width, height, name="DoorHinge_0"):
+    """Scharnier einer Tür: fm = Ebene der Tür (lokal x entlang der Wand, y oben, z nach außen), hinge_x = Seite des
+    Scharniers, dz = Lage des Türblatts, width/height = Maße des Blatts. Die Tür geht nach innen auf."""
+    pos = fm @ Vector((hinge_x, 0.0, dz))
+    rot = fm.to_3x3()
+    to_latch = (rot @ Vector((-math.copysign(1.0, hinge_x), 0.0, 0.0))).normalized()
+    out = (rot @ Vector((0.0, 0.0, 1.0))).normalized()
+    inward = -out
+    # Drehsinn (Blender um +z = Godot um +y): das freie Ende schwingt nach innen
+    swing = 1.0 if to_latch.x * inward.y - to_latch.y * inward.x > 0.0 else -1.0
+    return game_spot(name, tuple(pos), swing=swing, width=round(float(width), 3), height=round(float(height), 3),
+                     dir_x=round(to_latch.x, 4), dir_y=round(to_latch.y, 4), out_x=round(out.x, 4), out_y=round(out.y, 4))
+
+
+def shop_spot(kind, n, pos, face, **props):
+    """Platz im Laden für das Spiel (seit Etappe 6i): kind = "counter" (Kunde an der Theke), "vendor" (hinter der Theke),
+    "browse" (Regal anschauen), "seat" (Sitzplatz im Pub); pos in Blender-Koordinaten, face = Blickrichtung (x, y)."""
+    d = Vector((face[0], face[1], 0.0)).normalized()
+    return game_spot("ShopSpot_%s_%d" % (kind, n), tuple(pos), face_x=round(d.x, 4), face_y=round(d.y, 4), **props)
+
+
 def plant_spot(kind, pos, size, facing=0.0, hint=""):
     """Pflanzplatz anlegen (Blender-Koordinaten, facing = Drehung um z in Grad: 0 = Vorderseite -y)."""
     if SPOTS["coll"] is None or SPOTS["coll"].name not in bpy.data.collections:
@@ -200,7 +251,7 @@ def materials():
         "clay": M("Dachziegel Ton", (0.72, 0.4, 0.27), grain="stone", rough=0.9, vary=0.1, bump=0.2),
         "clay_dark": M("Dachziegel Ton dunkel", (0.6, 0.32, 0.22), grain="stone", rough=0.9, vary=0.1, bump=0.2),
         "vault": M("Gewölbe Sandstein", (0.8, 0.72, 0.58), grain="stone", rough=0.92, vary=0.1, bump=0.3),
-        "wool_wall_in": M("Wolleladen Wand Creme", (0.66, 0.6, 0.52), rough=0.9, vary=0.04, glow=0.15),
+        "wool_wall_in": M("Wolleladen Wand Creme", (0.82, 0.69, 0.5), rough=0.9, vary=0.04, glow=0.22),
         "flower_wall_in": M("Blumenladen Wand Hellgrün", (0.5, 0.56, 0.46), rough=0.9, vary=0.05, glow=0.15),
         "bakery_wall_in": M("Bäckerei Wand Honig", (0.66, 0.54, 0.38), rough=0.9, vary=0.05, glow=0.16),
         "yarn_blue": M("Wolle Blau", (0.42, 0.55, 0.78), grain="fabric", rough=0.95, vary=0.08, glow=0.22),
@@ -676,17 +727,20 @@ def export_objects(objs, cols, path, simplify=None, palette=False, extra=None):
     zusammenlegen (Farbe in den Ecken). extra = weitere Objekte, die unverändert mitkommen
     (ohne Angabe: alle Pflanzplätze „PlantSpot_…“ der Szene). Die Einzelteile bleiben unverändert."""
     if extra is None:
-        extra = [o for o in bpy.data.objects if o.name.startswith("PlantSpot_")]
+        extra = [o for o in bpy.data.objects if o.name.startswith(GAME_SPOTS)]
     tmp = SB.collection("_export")
     groups = {}
     for obj in objs:
         if obj.type == "MESH" and obj.data.materials and obj.data.materials[0] is not None:
             mname = obj.data.materials[0].name
             key = palette_key(GAME_MATERIALS.get(mname)) if palette else None
-            groups.setdefault(key or mname, []).append(obj)
+            # Türblätter bleiben eigene Knoten (je Material einer): „DoorLeaf|<Material>“
+            group = key or mname
+            groups.setdefault(str(obj[DOOR_LEAF]) + "|" + group if obj.get(DOOR_LEAF) else group, []).append(obj)
     dg = bpy.context.evaluated_depsgraph_get()
     merged = []
-    for name, objs in groups.items():
+    for group_name, objs in groups.items():
+        name = group_name.split("|")[-1]
         copies = []
         pal = name.startswith("Sammel ")
         for o in objs:
@@ -707,7 +761,7 @@ def export_objects(objs, cols, path, simplify=None, palette=False, extra=None):
                                        selected_editable_objects=copies):
             bpy.ops.object.join()
         obj = copies[0]
-        obj.name = name
+        obj.name = group_name.replace("|", " ")
         ca = obj.data.color_attributes.get("tint")
         if ca:
             obj.data.color_attributes.active_color = ca

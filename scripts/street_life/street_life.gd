@@ -102,6 +102,8 @@ var _started := false
 ## Tiere (seit Etappe 6g): Vögel und Katzen, beim Start angelegt (GameConfig.animals_enabled)
 var birds: BirdLife
 var cats: CatLife
+## Anwohner, Türen und Läden (seit Etappe 6i), beim Start angelegt
+var homes: StreetHomes
 
 
 func _ready() -> void:
@@ -132,6 +134,10 @@ func _start() -> void:
 	refresh_seats()
 	# noch einmal, wenn die ganze Szene bereit ist (Sitzplätze an der Bücherei entstehen mit der Fassade)
 	call_deferred("refresh_seats")
+	homes = StreetHomes.new()
+	homes.name = "Homes"
+	add_child(homes)
+	homes.setup(self, _seed + 37 if _seed >= 0 else -1)
 	_started = true
 	if GameConfig.animals_enabled:
 		_start_animals.call_deferred()
@@ -186,7 +192,10 @@ func step(delta: float) -> void:
 	_collect_obstacles()
 	for walker in _walkers:
 		walker.step(delta)
+	if homes:
+		homes.step(delta)
 	_update_chats(delta)
+	_update_street_waves(delta)
 	_update_pets(delta)
 	for vehicle in _vehicles.duplicate():
 		vehicle.step(delta)
@@ -211,6 +220,9 @@ var stat_handshakes := 0
 var stat_seat_chats := 0
 var stat_pets := 0
 var stat_pairs := 0
+var stat_hugs := 0
+var stat_together := 0
+var stat_waves := 0
 var _chat_tried := {}
 var _chat_scan := 0.0
 var _chat_forget := 60.0
@@ -268,13 +280,72 @@ func _update_chats(delta: float) -> void:
 				var h2 := w2.handshake_hand()
 				gap = u * (h1.y + h2.y) + left * (h1.x + h2.x)
 			var mid := (w1.pos + w2.pos) / 2.0
-			w1.start_chat(session, u, time, keep_on_sidewalk(w1.side, mid - gap / 2.0))
-			w2.start_chat(session, -u, time, keep_on_sidewalk(w2.side, mid + gap / 2.0))
+			# Seit Etappe 6i: Bekannte umarmen sich manchmal (stehen dafür nebeneinander, der eine links vom anderen)
+			session.hug = not session.handshake and not w1.carries_bag() and not w2.carries_bag() and _rng.randf() < GameConfig.passerby_hug_chance
+			session.walk_after = w1.companion == null and w2.companion == null and _rng.randf() < GameConfig.passerby_walk_together_chance
+			if session.hug:
+				var between := left * GameConfig.passerby_hug_gap / 2.0
+				var same_way := Vector2(-left.y, left.x)  # beide schauen in dieselbe Richtung, w2 links von w1
+				w1.start_chat(session, same_way, time, keep_on_sidewalk(w1.side, mid - between))
+				w2.start_chat(session, same_way, time, keep_on_sidewalk(w2.side, mid + between))
+				stat_hugs += 1
+			else:
+				w1.start_chat(session, u, time, keep_on_sidewalk(w1.side, mid - gap / 2.0))
+				w2.start_chat(session, -u, time, keep_on_sidewalk(w2.side, mid + gap / 2.0))
 			_chats.append(session)
 			stat_chats += 1
 			stat_handshakes += 1 if session.handshake else 0
 			break
 	_seat_chats()
+
+
+## Nach dem Plaudern ein Stück zusammen weiter (seit Etappe 6i): b geht denselben Weg wie a, neben ihm, und sie erzählen weiter.
+func walk_together(a: Passerby, b: Passerby) -> void:
+	if not a.active or not b.active or a.side != b.side or a.companion != null or b.companion != null:
+		return
+	if not a.can_walk_on_with_someone():
+		return
+	b.adopt_plan_of(a)
+	a.companion = b
+	b.companion = a
+	b.follows = true
+	var session := ChatSession.new(a, b, 100000.0)
+	session.walking = true
+	a.join_walking_chat(session)
+	b.join_walking_chat(session)
+	_chats.append(session)
+	stat_together += 1
+
+
+## Winken über die Straße (seit Etappe 6i): zwei, die auf verschiedenen Gehwegen fast auf gleicher Höhe gehen, winken sich manchmal zu.
+func _update_street_waves(delta: float) -> void:
+	_wave_scan -= delta
+	if _wave_scan > 0.0:
+		return
+	_wave_scan = 1.2
+	for i in _walkers.size():
+		var w1 := _walkers[i]
+		if not _can_chat(w1) or w1.carries_bag():
+			continue
+		for j in range(i + 1, _walkers.size()):
+			var w2 := _walkers[j]
+			if w1.side == w2.side or not _can_chat(w2) or w2.carries_bag():
+				continue
+			if absf(centerline.project(w1.pos).x - centerline.project(w2.pos).x) > GameConfig.passerby_street_wave_distance:
+				continue
+			var key := Vector2i(mini(w1.get_instance_id(), w2.get_instance_id()) % 1000003, maxi(w1.get_instance_id(), w2.get_instance_id()) % 1000003)
+			if _chat_tried.has(key):
+				continue
+			_chat_tried[key] = true
+			if _rng.randf() > GameConfig.passerby_street_wave_chance:
+				continue
+			w1.wave_across(w2)
+			w2.wave_across(w1)
+			stat_waves += 1
+			return
+
+
+var _wave_scan := 2.0
 
 
 ## Wie viele andere Passanten sind höchstens radius Meter von point entfernt?
@@ -316,12 +387,16 @@ func keep_on_sidewalk(side: int, point: Vector2) -> Vector2:
 
 ## Zwei sitzen nebeneinander (Bank, Stühle am Pub): manchmal plaudern sie (seit Etappe 6h).
 func _seat_chats() -> void:
-	for i in _walkers.size():
-		var w1 := _walkers[i]
+	var sitters: Array[Passerby] = []
+	sitters.append_array(_walkers)
+	if homes:
+		sitters.append_array(homes.indoor)
+	for i in sitters.size():
+		var w1 := sitters[i]
 		if not w1.is_sitting() or w1.chat != null or w1.chat_cooldown > 0.0:
 			continue
-		for j in range(i + 1, _walkers.size()):
-			var w2 := _walkers[j]
+		for j in range(i + 1, sitters.size()):
+			var w2 := sitters[j]
 			if not w2.is_sitting() or w2.chat != null or w2.chat_cooldown > 0.0 or w1.pos.distance_to(w2.pos) > 1.4:
 				continue
 			var key := Vector2i(mini(w1.get_instance_id(), w2.get_instance_id()) % 1000003, maxi(w1.get_instance_id(), w2.get_instance_id()) % 1000003)
@@ -505,7 +580,37 @@ func _on_walker_finished(walker: Passerby) -> void:
 	vanished.emit(walker, walker.pos)
 	walker.set_active(false)
 	_walkers.erase(walker)
-	_idle_walkers.append(walker)
+	if walker.resident.is_empty():
+		_idle_walkers.append(walker)
+	else:
+		homes.resident_finished(walker)
+
+
+## Ein Anwohner geht los (StreetHomes): er zählt mit, aber nicht zur Menge der Passanten.
+func resident_goes_out(walker: Passerby) -> void:
+	if not _walkers.has(walker):
+		_walkers.append(walker)
+	appeared.emit(walker, walker.pos)
+
+
+## Bereich der Straße (s von, bis), den man erreichen und sehen kann (zwischen den beiden Grenzen).
+func walkable_span() -> Vector2:
+	return Vector2(minf(_hidden.x, _hidden.y), maxf(_hidden.x, _hidden.y))
+
+
+## Steht jemand (Spielfigur, Passant) so dicht vor einer Tür, dass man sie jetzt nicht öffnen sollte?
+func door_blocked(front: Vector2) -> bool:
+	return player_pos().distance_to(front) < 0.7 or _walkers_near(front, 0.6, []) > 0
+
+
+## Liegt ein Punkt im Bildausschnitt (ohne Prüfung, ob etwas davor ist)?
+func in_view_point(point: Vector3) -> bool:
+	var camera := get_viewport().get_camera_3d()
+	return camera != null and _in_view(camera, point)
+
+
+func spot_crowded(spot: Vector2) -> bool:
+	return _crowded(spot)
 
 
 # --- Orte ---
@@ -993,7 +1098,8 @@ func _line_of_sight(from: Vector3, to: Vector3) -> bool:
 
 func _spawn_walkers(delta: float) -> void:
 	var wanted := roundi(GameConfig.passerby_count * activity())
-	if _walkers.size() >= wanted or _idle_walkers.is_empty():
+	var outside := homes.residents_outside() if homes else 0
+	if _walkers.size() - outside >= wanted or _idle_walkers.is_empty():
 		_walker_timer = minf(_walker_timer, GameConfig.passerby_spawn_interval.y)
 		return
 	_walker_timer -= delta
@@ -1066,6 +1172,10 @@ func _start_walker() -> bool:
 					behind = back
 					var kept: Array = (plan.actions as Array).filter(func(a: Dictionary) -> bool: return a.type != "stand")
 					plan.actions = kept
+					for a: Dictionary in plan.actions:
+						if a.type == "sit" and a.seat != null and _neighbor_seat(a.seat).is_empty():
+							_without_bench(plan)
+							break
 			var leader := _launch(plan)
 			if pair and leader:
 				_launch_companion(leader, plan, behind)
@@ -1078,11 +1188,29 @@ func _start_walker() -> bool:
 func _pairable(plan: Dictionary) -> bool:
 	if (plan.actions as Array).is_empty() or String(plan.actions[0].type) != "walk" or not is_centerline(plan.actions[0].route):
 		return false
+	var sits := (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.type == "sit")
 	for a: Dictionary in plan.actions:
-		if not String(a.type) in ["walk", "cross", "leave", "stand"] or a.get("visit", false) or a.has("half") \
-				or a.has("alley") or a.get("from_here", false):
+		if not String(a.type) in ["walk", "cross", "leave", "stand", "sit"] or a.get("visit", false) or a.has("half") \
+				or a.has("alley") or (a.get("from_here", false) and not sits):
 			return false
 	return true
+
+
+## Zu zweit auf die Bank (seit Etappe 6i): braucht zwei freie Plätze nebeneinander. Liefert den Platz neben dem ersten oder leer.
+func _neighbor_seat(seat: SeatPoint) -> Dictionary:
+	for entry in _street_seats:
+		if entry.seat == seat:
+			for other in _street_seats:
+				if other != entry and is_instance_valid(other.seat) and (other.seat as SeatPoint).is_free() \
+						and (other.pos as Vector2).distance_to(entry.pos) < 1.3:
+					return other
+	return {}
+
+
+## Nimmt den Besuch einer Bank aus dem Plan (kein zweiter Platz frei).
+func _without_bench(plan: Dictionary) -> void:
+	var kept: Array = (plan.actions as Array).filter(func(a: Dictionary) -> bool: return a.type != "sit" and not a.get("from_here", false))
+	plan.actions = kept
 
 
 ## Der Begleiter: dieselben Schritte, dasselbe Tempo, folgt dem ersten (neben ihm, wo Platz ist), und beide plaudern
@@ -1098,7 +1226,17 @@ func _launch_companion(leader: Passerby, plan: Dictionary, start: Vector2) -> vo
 	_walkers.append(follower)
 	var actions: Array[Dictionary] = []
 	for a: Dictionary in plan.actions:
-		actions.append(a.duplicate())
+		var copy := a.duplicate()
+		if copy.type == "sit":
+			var there := _neighbor_seat(a.seat)
+			if there.is_empty():
+				continue
+			copy.seat = there.seat
+			copy.spot = there.pos
+			copy.face = there.face
+			copy.height = there.height
+			(there.seat as SeatPoint).occupant = follower
+		actions.append(copy)
 	follower.begin(start, actions, plan.face)
 	follower.set_shadows(0)
 	leader.companion = follower
@@ -1130,12 +1268,15 @@ func _launch(plan: Dictionary) -> Passerby:
 	var walker: Passerby = _idle_walkers.pop_at(_rng.randi() % _idle_walkers.size())
 	# Gangart und Tasche bei jedem Losgehen neu (seit der Nachbesserung von 6h). Wer sich setzen will, trägt möglichst
 	# keine Einkaufstasche (die hängt an der Hand): dann noch einmal würfeln, sonst setzt er sich eben nicht
-	var sits := (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.type == "sit")
+	var sits := (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.type == "sit" and a.seat != null)
 	walker.restyle(_rng)
+	# Wer im Pub Platz nehmen will, kommt ohne Einkaufstasche (die hinge sonst an der Hand am Tisch)
+	if (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.has("pub_seat")):
+		walker.give_bag(false)
 	if sits and walker.carries_bag():
 		walker.restyle(_rng)
 	if sits and walker.carries_bag():
-		var kept: Array = (plan.actions as Array).filter(func(a: Dictionary) -> bool: return a.type != "sit")
+		var kept: Array = (plan.actions as Array).filter(func(a: Dictionary) -> bool: return a.type != "sit" or a.seat == null)
 		plan.actions = kept
 	# Tempo passend zur Gangart (schlendern und mit Tasche langsamer)
 	walker.speed_pref = plan.speed * walker.speed_factor()
@@ -1145,7 +1286,7 @@ func _launch(plan: Dictionary) -> Passerby:
 	var actions: Array[Dictionary] = []
 	actions.assign(plan.actions)
 	for action in actions:
-		if action.type == "sit":
+		if action.type == "sit" and action.seat != null:
 			(action.seat as SeatPoint).occupant = walker  # Platz freihalten, bis er dort sitzt
 	walker.begin(plan.start, actions, plan.face)
 	walker.set_shadows(0)
@@ -1231,6 +1372,11 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		if not choices.is_empty():
 			window = choices[_rng.randi() % choices.size()]
 
+	# Laden besuchen (seit Etappe 6i): hineingehen, stöbern, an die Theke, mit Tüte wieder heraus
+	var shop := {}
+	if homes and _rng.randf() < GameConfig.shop_visit_chance:
+		shop = homes.pick_shop(s0, end_s, dir, start_side, cross_s, end_side)
+
 	# Bank oder Stuhl an der Straße auf dem Weg (auf der Seite, auf der man dort gerade geht)
 	var street_seat := {}
 	if _rng.randf() < GameConfig.passerby_seat_chance:
@@ -1283,6 +1429,8 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 		events.append({"s": float(window.s), "type": "window", "spot": window})
 	if not street_seat.is_empty():
 		events.append({"s": float(street_seat.s), "type": "seat", "entry": street_seat})
+	if not shop.is_empty():
+		events.append({"s": float(shop.s), "type": "shop", "shop": shop})
 	if (_library_s - s0) * dir > 0.0 and (end_s - _library_s) * dir > 0.0:
 		events.append({"s": _library_s, "type": "library"})
 	if garden_seat:
@@ -1336,6 +1484,14 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 				actions.append(sit)
 				var back := StreetRoute.from_points(PackedVector2Array([entry.approach, _free_lane_point(side, cursor, comfort)]), 0.35)
 				actions.append({"type": "walk", "route": back, "to": back.length(), "from_here": true})
+			"shop":
+				if side != int(event.shop.side):
+					continue
+				var lane_before := _ahead(float(event.s) - dir * 1.2, cursor, dir)
+				actions.append({"type": "walk", "route": sidewalks[side], "to": lane_before})
+				cursor = lane_before + dir * 2.4
+				actions.append_array(homes.shop_visit_actions(event.shop, _free_lane_point(side, lane_before, comfort),
+					_free_lane_point(side, cursor, comfort)))
 			"pause":
 				if (event.s - cursor) * dir < 1.0:
 					continue

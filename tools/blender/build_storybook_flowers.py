@@ -258,6 +258,11 @@ def flower_inside(M, C):
                        mat=rnd.choice(("pot", "pot_light", "pot_dark")), style=rnd.choice(("classic", "bowl")))
                 y += 2 * r + rnd.uniform(0.015, 0.04)
                 k += 1
+    # Plätze im Laden fürs Spiel (seit Etappe 6i): Werktisch = Theke
+    SC.shop_spot("counter", 0, (0.0, yb - 2.0, 0.08), (0, 1))
+    SC.shop_spot("vendor", 0, (0.0, yb - 0.75, 0.08), (0, -1))
+    SC.shop_spot("browse", 0, (-1.05, 1.75, 0.08), (-1, 0.25))
+    SC.shop_spot("browse", 1, (1.05, 1.75, 0.08), (1, 0.25))
     for side in (-1, 1):
         cx = side * (DOOR_HALF + 0.14 + SHOP_X) / 2
         for k, (yy, zz) in enumerate(((0.55, 0.3), (0.85, 0.6), (1.15, 0.9))):

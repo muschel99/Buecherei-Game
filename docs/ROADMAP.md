@@ -45,7 +45,7 @@
 | 6f  | Nichts verschwindet, Tür, neue Fenster, Deko-Plätze, Autos, Kamin, Geräusche feiner | fertig |
 | 6g  | Tiere: Vögel und Katzen (Blender-Modelle mit Bewegungen, Vogelhäuschen, Streicheln) | fertig |
 | 6h  | Vögel und Katzen verfeinern (weiche Modelle, Flug, Tauben, Gesichter, Spielzeug, Katzenkörbchen); dazu neue Geräusche, große Katzen, Katzen-Verhalten, Animationen der Passanten | fertig |
-| 6i  | Leben in der Straße (nächste Testrunde der Entwicklerin) | vorgemerkt |
+| 6i  | Leben in der Straße: Anwohner, Läden mit Verkäufern, Pub, Wollladen neu, Umarmen und mehr Begegnungen | fertig |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
@@ -71,7 +71,7 @@ saubere Nummern unter Etappe 6, damit sich nichts mit den späteren Etappen 7–
 | 11 | 6f | Fehler und Feinschliff |
 | 12 | 6g | Vögel und Katzen |
 | 12b | 6h | Verfeinerung Vögel und Katzen |
-| 13 | 6i | Leben in der Straße (kommt danach) |
+| 13 | 6i | Leben in der Straße |
 
 ## Stand nach dem Stil-Umbau (Überblick, Stand 06.11.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
@@ -1673,11 +1673,28 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 - [x] Spielzeug kullert von der Treppe auf den Gehweg; auf Stufen wird nicht mehr gespielt oder gejagt
 - [x] Dokumentation, Notion
 
-## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
-- Inhalt folgt mit den Wünschen der Entwicklerin
-- Schon bekannt (gefunden beim Abschluss von 6h, auch ganz ohne Tiere): An engen Stellen – Tische vor dem Pub,
-  kurze Wege zu Schaufenster oder Bank, Ende der Gasse gegenüber – stehen sich zwei oder drei Passanten manchmal
-  2–3 Sekunden gegenüber, bevor einer ausweicht (`street_life_check`: „stall“)
+## Etappe 6i – Leben in der Straße (Testrunde „13“ der Entwicklerin)
+**Anwohner**
+- [x] Haus- und Ladentüren als bewegliche Teile (Türblatt und Scharnier aus Blender), öffnen und schließen sich mit Geräusch
+- [x] Sieben Anwohner, jeder in einem eigenen Haus: gehen durch die Haustür hinaus und kommen später wieder heim
+- [x] Blumen gießen (Blumenkästen, Vorgarten), fegen vor der Tür, aus dem Fenster schauen
+**Läden**
+- [x] Jeder Laden (Pub, Modegeschäft, Blumenladen, Wollladen, Bäckerei, Teeladen) mit Theke und Verkäuferin/Verkäufer, durchs Schaufenster sichtbar
+- [x] Passanten gehen hinein, stöbern, reden an der Theke und kommen mit Tüte heraus (die sie dann tragen); nicht betretbar für die Spielfigur
+- [x] Wollladen neu eingerichtet: Theke, Würfelregale voller Knäuel, Tisch, Sessel, Körbe, Deko
+- [x] Pub: Gäste an Tischen und auf Bänken mit Getränk oder Kuchen, trinken und unterhalten sich; Bänke, Tische und Tresen in Figuren-Höhe
+**Gespräche und Interaktion**
+- [x] Zu zweit auf die Bank setzen und plaudern (Gesten, Nicken, Lachen, Sprechblasen)
+- [x] Umarmen zur Begrüßung, nach dem Plaudern ein Stück zusammen gehen, über die Straße winken, öfter auf etwas zeigen
+**Allgemein**
+- [x] Häufigkeiten in GameConfig (Anwohner und Türen, Läden, Begegnungen); niemand erscheint oder verschwindet sichtbar (auch nicht an Häusern und Fenstern)
+- [x] Leistung: Figuren drinnen nur, wenn sie im Bild sind, ohne Schatten
+- [x] Dokumentation, Notion, Test-Checkliste
+
+**Animationen:** Neue Mixamo-Dateien gab es nicht; Fegen, Umarmen und Trinken/Essen hat Claude selbst gebaut (`ChibiGestureModifier`: Hände per
+Zwei-Glieder-Rechnung an Besen, Partner und Mund), Gießen nutzt `water`, die Tür Abschnitte von `door_in`/`door_out`.
+
+**Noch offen:** An engen Stellen stehen sich Passanten manchmal 2–3 Sekunden gegenüber (schon seit 6h bekannt).
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
