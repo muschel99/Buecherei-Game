@@ -15,7 +15,10 @@ extends Node3D
 ## - der Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h): Singvögel picken auf dem Pflaster und im Gras hinter
 ##   dem Baum. Das Blätterdach reicht dort von Mauer zu Mauer (ab etwa 3 m) – darum fliegen sie nie von oben, sondern
 ##   tief durch die Gasse hinein und hinaus (Wegpunkte "mouth" und "low"). Dort ist es ruhig, Katzen treffen sie öfter.
-## Ab und zu zieht ein Schwarm einfach über die Straße, ohne zu landen.
+## Immer wieder ziehen Schwärme und einzelne Vögel über den Himmel, ohne zu landen: hoch über die Dächer, knapp über die
+## Dächer quer über die Straße oder längs durch die Straße – in jeder Richtung und Höhe (seit Nachbesserung 4).
+## Flugbahnen (seit Nachbesserung 4): weiche Kurven (_route) mit begrenzter Steigung, die Höhe richtet sich nach dem, was
+## unter dem Weg steht (_ceiling) – nie senkrecht hinauf oder hinunter.
 ## Auffliegen: Kommt jemand einem sitzenden Vogel nahe (Kugel um den Vogel, gemessen bis zu Kopf und Füßen der
 ## Spielfigur, Passanten, Katzen, Fahrzeuge), fliegt der Schwarm auf und landet woanders. Auf Laternen und am
 ## Vogelhäuschen bleiben sie sitzen, wenn man nur vorbeigeht – dort erschreckt sie nur ein Sprung der Spielfigur.
@@ -24,8 +27,13 @@ extends Node3D
 const SPOTS_FILE := "res://data/animals/spots.json"
 ## Querarme der Straßenlaterne (Modell aus build_storybook_lamps.py): Oberkante je Abstand vom Mast
 const LAMP_ARM_SPOTS := [[0.27, 2.784], [0.4, 2.779]]
-## Ebenen, an denen Flugwege nicht vorbeikommen (Häuser: world und sight_blocker)
-const HOUSE_MASK := 1 | 128
+## So weit weg (m) ist ein Vogel nur noch ein Punkt von ein, zwei Bildpunkten: dort darf er auftauchen und verschwinden
+const FAR_ENOUGH := 65.0
+## Abstand über Dächern und Mauern (m) und Größe der Zellen der Höhenkarte (m)
+const ROOF_CLEARANCE := 0.8
+const CEILING_CELL := 0.5
+## So weit (m) gilt die Höhe eines Hauses über seinen Grundriss hinaus (schmal: die Gasse ist keine 3 m breit)
+const CEILING_MARGIN := 0.3
 ## Abstand zwischen zwei Vögeln am Boden (m) – Tauben brauchen mehr Platz
 const GROUND_GAP := 0.17
 const PIGEON_GAP := 0.4
@@ -40,6 +48,10 @@ var visible_spawns := 0
 var visible_exits := 0
 var flights := 0
 var flyovers := 0
+## Prüfwerkzeug: Flugbahnen mit einem steilen Stück (über 2 m steiler als 60 Grad), längstes solches Stück
+var steep_paths := 0
+var steepest_stretch := 0.0
+var steep_log: Array[String] = []
 ## Prüfwerkzeug: so viele Schwärme sind im Gartenhof gelandet
 var court_flocks := 0
 ## Prüfwerkzeug: Vögel im Flug unter dem Boden (tiefer als die Fahrbahn) – muss 0 bleiben; letzte Fälle als Text
@@ -65,6 +77,8 @@ var _birdhouse: Node3D
 var _flock_id := 0
 ## Gartenhof der Baumgasse (unter "Outside", x/z): siehe _setup_court
 var _court := {}
+## Höhenkarte: Zelle (x, z in Welt) -> Höhe, über der man dort frei fliegt (Welt-y)
+var _ceiling := {}
 
 
 func setup(life: StreetLife) -> void:
@@ -74,11 +88,12 @@ func setup(life: StreetLife) -> void:
 	_load_spots()
 	_collect_lamps()
 	_setup_court()
-	_build_pool("bird", GameConfig.bird_scene, GameConfig.bird_count + 2)
-	_build_pool("pigeon", GameConfig.pigeon_scene, GameConfig.pigeon_count + 1)
+	_build_ceiling()
+	_build_pool("bird", GameConfig.bird_scene, GameConfig.bird_count + 2 + GameConfig.bird_sky_count)
+	_build_pool("pigeon", GameConfig.pigeon_scene, GameConfig.pigeon_count + 1 + 6)
 	_spawn.bird = _rng.randf_range(1.5, 5.0)
 	_spawn.pigeon = _rng.randf_range(4.0, 12.0)
-	_spawn.flyover = _rng.randf_range(GameConfig.bird_flyover_interval.x * 0.4, GameConfig.bird_flyover_interval.y * 0.6)
+	_spawn.flyover = _rng.randf_range(1.0, GameConfig.bird_flyover_interval.x)
 
 
 func seed_random(value: int) -> void:
@@ -212,7 +227,16 @@ func step(delta: float) -> void:
 func _count(kind: String) -> int:
 	var n := 0
 	for b in _birds:
-		if b.kind == kind:
+		if b.kind == kind and not bool(b.flock.get("flyover", false)):
+			n += 1
+	return n
+
+
+## Vögel, die gerade über den Himmel ziehen.
+func _sky_count() -> int:
+	var n := 0
+	for b in _birds:
+		if bool(b.flock.get("flyover", false)):
 			n += 1
 	return n
 
@@ -239,6 +263,7 @@ func _spawn_flock(kind: String) -> void:
 	_flock_id += 1
 	var flock := {"birds": [], "timer": 0.0, "landed": false, "kind": kind, "id": _flock_id}
 	var species := _pick_species(kind)
+	var bow: Array = []   # gemeinsamer Bogen: der ganze Schwarm nimmt dieselbe Kurve
 	for i in spots.size():
 		var bird: StreetBird = (_pool[kind] as Array).pop_back()
 		_birds.append(bird)
@@ -252,11 +277,12 @@ func _spawn_flock(kind: String) -> void:
 		# jeder Vogel etwas versetzt hinter dem Dach hervor – aber nur, wo auch der versetzte Start verdeckt ist
 		# (am Rand des Blickfelds kann er sonst schon sichtbar sein); sonst kleiner, zuletzt genau in der Mitte
 		var offset: Vector3 = entry.along * _rng.randf_range(-0.8, 0.8) + Vector3.UP * _rng.randf_range(-0.3, 0.3)
-		var path := _entry_path(entry, offset, spot, kind)
+		var path := _entry_path(entry, offset, spot, kind, bow)
 		for shrink in [0.4, 0.0]:
 			if not is_visible_point(path[0]):
 				break
-			path = _entry_path(entry, offset * shrink, spot, kind)
+			path = _entry_path(entry, offset * shrink, spot, kind, bow)
+		_note_path(path, "Anflug zu %s" % spot.kind)
 		bird.fly_path(path, _speed(kind) * _rng.randf_range(0.92, 1.08), i * _rng.randf_range(0.15, 0.45))
 		flights += 1
 		if is_visible_point(path[0]):
@@ -264,17 +290,145 @@ func _spawn_flock(kind: String) -> void:
 	_flocks.append(flock)
 
 
-## Ein Schwarm zieht über die Straße, ohne zu landen: hinter einem Haus hervor, quer oder schräg über die
-## Straße und hinter einem Haus gegenüber (oder weiter vorn) wieder verschwinden.
+## Über den Himmel, ohne zu landen: mal ein Schwarm, mal ein oder zwei Vögel (Kurs: _sky_course). Jeder Vogel fliegt
+## leicht versetzt und schlingert ein wenig – nicht wie auf Schienen.
 func _spawn_flyover() -> void:
+	var kind := "bird"
+	if _rng.randf() < GameConfig.bird_sky_pigeon_share and not (_pool.pigeon as Array).is_empty():
+		kind = "pigeon"
 	var size := _rng.randi_range(GameConfig.bird_flyover_size.x, GameConfig.bird_flyover_size.y)
-	size = mini(size, mini((_pool.bird as Array).size(), GameConfig.bird_count + 2 - _count("bird")))
-	if size < 2 or _houses.is_empty():
+	if _rng.randf() < GameConfig.bird_sky_single_share:
+		size = _rng.randi_range(1, 2)
+	size = mini(size, mini((_pool[kind] as Array).size(), GameConfig.bird_sky_count - _sky_count()))
+	if size < 1 or _houses.is_empty():
 		return
+	var course := _sky_course()
+	if course.size() < 2:
+		return
+	_flock_id += 1
+	var flock := {"birds": [], "timer": 0.0, "landed": false, "kind": kind, "flyover": true, "id": _flock_id}
+	var species := _pick_species(kind)
+	var spread := 1.0 + size * 0.22
+	var speed := _rng.randf_range(GameConfig.bird_sky_speed.x, GameConfig.bird_sky_speed.y) * (0.85 if kind == "pigeon" else 1.0)
+	for i in size:
+		var bird: StreetBird = (_pool[kind] as Array).pop_back()
+		_birds.append(bird)
+		_dress(bird, species)
+		bird.flock = flock
+		bird.spot = {}
+		bird.leaving = true
+		flock.birds.append(bird)
+		var off := Vector3(_rng.randf_range(-spread, spread), _rng.randf_range(-0.7, 0.7), _rng.randf_range(-spread, spread))
+		var phase := _rng.randf() * TAU
+		var amp := _rng.randf_range(0.15, 0.7)
+		var points: Array[Vector3] = []
+		for j in course.size():
+			var u := float(j) / (course.size() - 1)
+			points.append(course[j] + off + Vector3(sin(u * 9.0 + phase), 0.45 * sin(u * 7.0 + phase * 1.3), cos(u * 8.0 + phase)) * amp)
+		# versetzter Start wäre sichtbar: dann genau am geprüften Punkt beginnen
+		if not _hidden_or_far(points[0]):
+			points[0] = course[0]
+		var path := _smooth(points, kind == "bird")
+		_note_path(path, "Himmel")
+		bird.fly_path(path, speed * _rng.randf_range(0.96, 1.04), i * _rng.randf_range(0.05, 0.28))
+		if path[0].distance_to(_camera_pos()) < FAR_ENOUGH and is_visible_point(path[0]):
+			visible_spawns += 1
+	flyovers += 1
+	flights += size
+	_flocks.append(flock)
+
+
+## Ein Kurs über den Himmel: hoch über die Dächer in beliebiger Richtung, knapp über die Dächer quer über die Straße oder
+## längs durch die Straße. Anfang und Ende sind verdeckt oder so weit weg, dass man nur noch einen Punkt sähe.
+func _sky_course() -> Array[Vector3]:
+	for attempt in 8:
+		var roll := _rng.randf()
+		var course: Array[Vector3] = []
+		if roll < 0.5:
+			course = _course_high()
+		elif roll < 0.75:
+			course = _course_along_street()
+		else:
+			course = _course_over_roofs()
+		if course.size() >= 2 and _hidden_or_far(course[0]) and _hidden_or_far(course[-1]):
+			return course
+	var none: Array[Vector3] = []
+	return none
+
+
+func _hidden_or_far(point: Vector3) -> bool:
+	return point.distance_to(_camera_pos()) >= FAR_ENOUGH or not is_visible_point(point)
+
+
+## Hoch über die Dächer: an der Kamera vorbei, in Straßenrichtung, quer dazu oder ganz beliebig, sanft gekrümmt und nicht
+## überall gleich hoch.
+func _course_high() -> Array[Vector3]:
 	var cam := _camera_pos()
-	var near := _houses.filter(func(h: Dictionary) -> bool: return h.front.distance_to(cam) < 28.0)
+	var roll := _rng.randf()
+	var angle := _rng.randf() * TAU
+	if roll < 0.35:
+		angle = (0.0 if _rng.randf() < 0.5 else PI) + _rng.randf_range(-0.4, 0.4)
+	elif roll < 0.65:
+		angle = (PI / 2.0 if _rng.randf() < 0.5 else -PI / 2.0) + _rng.randf_range(-0.4, 0.4)
+	var dir := Vector3(cos(angle), 0.0, sin(angle))
+	var r := sqrt(_rng.randf()) * 35.0
+	var a2 := _rng.randf() * TAU
+	var center := cam + Vector3(cos(a2), 0.0, sin(a2)) * r
+	var reach := FAR_ENOUGH + r + _rng.randf_range(10.0, 30.0)
+	var y0 := _outside.global_position.y + _rng.randf_range(GameConfig.bird_sky_height.x, GameConfig.bird_sky_height.y)
+	var a := center - dir * reach
+	var b := center + dir * reach
+	a.y = y0
+	b.y = y0 + _rng.randf_range(-6.0, 6.0)
+	var points: Array[Vector3] = [a]
+	var route := _route(a, dir.rotated(Vector3.UP, _rng.randf_range(-0.35, 0.35)), b, dir.rotated(Vector3.UP, _rng.randf_range(-0.35, 0.35)),
+		0.28, _rng.randf_range(-0.2, 0.2), 4.0)
+	points.append_array(route.points)
+	return points
+
+
+## Längs durch die Straße, den Kurven folgend, auf einer Höhe zwischen Fenstern und Dächern (Häuser überfliegen sie).
+func _course_along_street() -> Array[Vector3]:
+	var line: StreetRoute = street.centerline
+	var total := line.length()
+	var s0 := 2.0
+	var s1 := total - 2.0
+	if _rng.randf() < 0.5:
+		var t := s0
+		s0 = s1
+		s1 = t
+	var y0 := _rng.randf_range(GameConfig.bird_street_height.x, GameConfig.bird_street_height.y)
+	var y1 := _rng.randf_range(GameConfig.bird_street_height.x, GameConfig.bird_street_height.y)
+	var lat := _rng.randf_range(-3.0, 3.0)
+	var phase := _rng.randf() * TAU
+	var count := maxi(8, int(absf(s1 - s0) / 3.0))
+	var xz := PackedVector2Array()
+	var dist := PackedFloat32Array()
+	for i in count + 1:
+		var u := float(i) / count
+		var q := line.point_at(lerpf(s0, s1, u), lat + sin(u * 11.0 + phase) * 2.0)
+		var w := _outside.to_global(Vector3(q.x, 0.0, q.y))
+		xz.append(Vector2(w.x, w.z))
+		dist.append(0.0 if i == 0 else dist[i - 1] + xz[i].distance_to(xz[i - 1]))
+	var base := _outside.global_position.y
+	var heights: Dictionary = _heights(xz, dist, base + y0, base + y1, 0.35, 0.0)
+	var h: PackedFloat32Array = heights.h
+	var points: Array[Vector3] = []
+	for i in xz.size():
+		points.append(Vector3(xz[i].x, h[i], xz[i].y))
+	return points
+
+
+## Knapp über die Dächer quer oder schräg über die Straße: von hinter einem Haus zu hinter einem Haus gegenüber.
+func _course_over_roofs() -> Array[Vector3]:
+	var none: Array[Vector3] = []
+	var cam := _camera_pos()
+	var near: Array[Dictionary] = []
+	for h: Dictionary in _houses:
+		if h.front.distance_to(cam) < 45.0:
+			near.append(h)
 	if near.size() < 2:
-		return
+		return none
 	near.shuffle()
 	var a: Dictionary = near[0]
 	var b: Dictionary = {}
@@ -283,35 +437,15 @@ func _spawn_flyover() -> void:
 			b = h
 			break
 	if b.is_empty():
-		return
+		return none
 	var start := _behind(a, _rng.randf_range(-a.width / 3.0, a.width / 3.0))
 	var end := _behind(b, _rng.randf_range(-b.width / 3.0, b.width / 3.0))
-	if is_visible_point(start) or is_visible_point(end):
-		return
-	var height := maxf(a.top, b.top) + _rng.randf_range(1.2, 3.0)
-	var ra: Vector3 = a.front - a.out * (a.depth * 0.45)
-	var rb: Vector3 = b.front - b.out * (b.depth * 0.45)
-	var mid := (ra + rb) / 2.0
-	ra.y = a.top + 1.2
-	rb.y = b.top + 1.2
-	mid.y = height
-	_flock_id += 1
-	var flock := {"birds": [], "timer": 0.0, "landed": false, "kind": "bird", "flyover": true, "id": _flock_id}
-	var species := _pick_species("bird")
-	for i in size:
-		var bird: StreetBird = (_pool.bird as Array).pop_back()
-		_birds.append(bird)
-		_dress(bird, species)
-		bird.flock = flock
-		bird.spot = {}
-		bird.leaving = true
-		flock.birds.append(bird)
-		var off := Vector3(_rng.randf_range(-1.2, 1.2), _rng.randf_range(-0.5, 0.5), _rng.randf_range(-1.2, 1.2))
-		var points: Array[Vector3] = [start + off, ra + off * 0.8, mid + off, rb + off * 0.8, end + off]
-		bird.fly_path(_smooth(points, true), GameConfig.bird_speed * 1.25 * _rng.randf_range(0.95, 1.05), i * _rng.randf_range(0.05, 0.2))
-	flyovers += 1
-	flights += size
-	_flocks.append(flock)
+	start.y = a.top + _rng.randf_range(0.5, 3.5)
+	end.y = b.top + _rng.randf_range(0.5, 3.5)
+	var points: Array[Vector3] = [start]
+	var route := _route(start, a.out, end, -(b.out as Vector3), 0.35, _rng.randf_range(-0.35, 0.35), 2.0)
+	points.append_array(route.points)
+	return points
 
 
 ## Prüfwerkzeug: einen Schwarm direkt am Boden an pos absetzen (ohne Anflug – nur zum Testen der Katzen-Jagd).
@@ -363,14 +497,14 @@ func _on_path_done(bird: StreetBird) -> void:
 	if bird.leaving:
 		# erst verschwinden, wenn niemand hinschaut – sonst noch ein Stück weiter weg fliegen
 		var end := bird.global_position
-		if is_visible_point(end) and bird.global_position.distance_to(_camera_pos()) < 70.0:
+		if is_visible_point(end) and bird.global_position.distance_to(_camera_pos()) < FAR_ENOUGH:
 			var away := end - _camera_pos()
 			away.y = 0.0
 			away = away.normalized() if away.length() > 0.1 else Vector3.FORWARD
 			bird.fly_path(PackedVector3Array([end, end + away * 3.0 + Vector3.UP * 0.6, end + away * 6.0 + Vector3.UP * 1.5]),
 				GameConfig.bird_speed)
 			return
-		if is_visible_point(end):
+		if is_visible_point(end) and bird.global_position.distance_to(_camera_pos()) < FAR_ENOUGH:
 			visible_exits += 1
 		_release(bird)
 		return
@@ -422,6 +556,7 @@ func _move_on(flock: Dictionary, flee: bool = false, away: Vector3 = Vector3.ZER
 		spots = _pick_area(kind, birds.size(), first.global_position + away * 4.0, 16.0, not flee, flee)
 	flock.landed = false
 	var speed := _speed(kind) * (GameConfig.bird_flee_speed / GameConfig.bird_speed if flee else 1.0)
+	var bow: Array = []   # gemeinsamer Bogen des Schwarms
 	if flee or _camera_pos().distance_to(first.global_position) < 14.0:
 		# Flattern (eigene Aufnahme der Entwicklerin – fehlt sie, bleibt es still)
 		var flap := "ambience/pigeon_flap" if kind == "pigeon" and not Audio.streams("ambience/pigeon_flap").is_empty() \
@@ -434,12 +569,18 @@ func _move_on(flock: Dictionary, flee: bool = false, away: Vector3 = Vector3.ZER
 		if from.get("taken") == bird:
 			from.taken = null
 		var delay := (i * _rng.randf_range(0.04, 0.12)) if flee else (i * _rng.randf_range(0.3, 0.9))
+		var placed := false
 		if i < spots.size():
 			var spot: Dictionary = spots[i]
-			spot.taken = bird
-			bird.spot = spot
-			bird.fly_path(_hop_path(bird.global_position, from, spot, away), speed * _rng.randf_range(0.92, 1.08), delay)
-		else:
+			var hop := _hop_path(bird.global_position, from, spot, away, bow)
+			# ein Platz direkt über oder unter dem Vogel ließe sich nur senkrecht erreichen: dann lieber wegfliegen
+			if _steep_stretch(hop) <= 3.0:
+				_note_path(hop, "Umzug %s→%s" % [from.get("kind", ""), spot.kind])
+				spot.taken = bird
+				bird.spot = spot
+				bird.fly_path(hop, speed * _rng.randf_range(0.92, 1.08), delay)
+				placed = true
+		if not placed:
 			var exit := _court_entry() if bool(from.get("court", false)) else _hidden_entry(bird.global_position)
 			if exit.is_empty():
 				# kein verdeckter Platz zum Wegfliegen: einfach sitzen bleiben
@@ -448,7 +589,9 @@ func _move_on(flock: Dictionary, flee: bool = false, away: Vector3 = Vector3.ZER
 				continue
 			bird.leaving = true
 			var offset: Vector3 = exit.along * _rng.randf_range(-0.8, 0.8)
-			bird.fly_path(_exit_path(bird.global_position, from, exit, offset, away), speed * _rng.randf_range(0.92, 1.08), delay)
+			var away_path := _exit_path(bird.global_position, from, exit, offset, away, bow)
+			_note_path(away_path, "Abflug von %s" % from.get("kind", ""))
+			bird.fly_path(away_path, speed * _rng.randf_range(0.92, 1.08), delay)
 		flights += 1
 	if flock.birds.is_empty():
 		_flocks.erase(flock)
@@ -859,60 +1002,66 @@ func _hidden_entry(target: Vector3, facing: Vector3 = Vector3.ZERO) -> Dictionar
 			houses.append(h)
 	houses.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return a.front.distance_squared_to(target) < b.front.distance_squared_to(target))
-	for i in mini(8, houses.size()):
+	# am liebsten ein Haus, das weit genug weg ist, um in flachem Bogen vom Dach bis zum Platz zu kommen
+	var slope := tan(deg_to_rad(GameConfig.bird_flight_pitch))
+	var fallback := {}
+	for i in mini(14, houses.size()):
 		var h: Dictionary = houses[i]
 		var lateral: float = _rng.randf_range(-h.width / 3.0, h.width / 3.0)
 		var pos := _behind(h, lateral)
-		if not is_visible_point(pos):
-			return {"pos": pos, "house": h, "along": h.along, "lateral": lateral}
-	return {}
+		if is_visible_point(pos):
+			continue
+		var entry := {"pos": pos, "house": h, "along": h.along, "lateral": lateral}
+		var flat := Vector2(h.front.x - target.x, h.front.z - target.z).length()
+		if flat >= (float(h.top) + ROOF_CLEARANCE - target.y) / slope + 3.0:
+			return entry
+		fallback = entry
+	return fallback
 
 
 ## Punkt hinter einem Haus (von der Straße verdeckt), weit genug zurück für einen flachen Steigflug.
 func _behind(h: Dictionary, lateral: float) -> Vector3:
-	var pos: Vector3 = h.front - h.out * (h.depth + 3.5) + h.along * lateral
-	pos.y = h.front.y + (h.eaves - h.front.y) * 0.8
+	var pos: Vector3 = h.front - h.out * (h.depth + _rng.randf_range(4.0, 10.0)) + h.along * lateral
+	pos.y = float(h.top) - _rng.randf_range(0.2, 1.4)
 	return pos
 
 
 ## Weg von hinter einem Haus über den First und in einem Bogen hinab zum Platz.
-func _entry_path(entry: Dictionary, offset: Vector3, spot: Dictionary, kind: String) -> PackedVector3Array:
+func _entry_path(entry: Dictionary, offset: Vector3, spot: Dictionary, kind: String, bow: Array = []) -> PackedVector3Array:
 	var h: Dictionary = entry.house
-	var lateral: Vector3 = h.along * float(entry.lateral)
-	var ridge: Vector3 = h.front - h.out * (h.depth * 0.45) + lateral
-	ridge.y = h.top + 1.0
-	var over: Vector3 = h.front + h.out * 1.2 + lateral
-	over.y = maxf(h.top + 0.3, spot.pos.y + 1.5)
-	var points: Array[Vector3] = [entry.pos + offset, ridge + offset * 0.6, over + offset * 0.4]
+	var points: Array[Vector3] = [entry.pos + offset]
+	var k := tan(deg_to_rad(GameConfig.bird_flight_pitch))
 	if bool(spot.get("court", false)):
 		# über die Straße zur Mündung der Gasse, tief hindurch und unter dem Blätterdach zum Platz
-		points.append_array(_court_way(false))
+		var way := _court_way(false)
+		_append_route(points, h.out, way[0], way[1] - way[0], tan(deg_to_rad(GameConfig.bird_flee_pitch)), bow)
+		points.append(way[1])
 		points.append_array(_court_arrival(spot))
-		return _smooth(_clear_route(points), kind == "bird")
-	points.append_array(_landing(over, spot))
-	return _smooth(_clear_route(points), kind == "bird")
+	else:
+		var landing := _landing(entry.pos, spot)
+		_append_route(points, h.out, landing[0], landing[1] - landing[0], k, bow)
+		points.append_array(landing.slice(1))
+	return _smooth(points, kind == "bird")
 
 
 ## Weg vom Platz über den First hinter ein Haus (Wegfliegen außer Sicht).
-func _exit_path(from_pos: Vector3, from: Dictionary, exit: Dictionary, offset: Vector3, away: Vector3) -> PackedVector3Array:
+func _exit_path(from_pos: Vector3, from: Dictionary, exit: Dictionary, offset: Vector3, away: Vector3, bow: Array = []) -> PackedVector3Array:
 	var h: Dictionary = exit.house
-	var lateral: Vector3 = h.along * float(exit.lateral)
-	var ridge: Vector3 = h.front - h.out * (h.depth * 0.45) + lateral
-	ridge.y = h.top + 1.0
-	var over: Vector3 = h.front + h.out * 1.2 + lateral
-	over.y = maxf(h.top + 0.3, from_pos.y + 1.5)
-	var points: Array[Vector3] = _takeoff(from_pos, from, away)
+	# erst über die Straße zum Haus hin, dann übers Dach (nicht schräg in die Häuserreihe hinein)
+	var points: Array[Vector3] = _takeoff(from_pos, from, away, h.front + h.out * 5.0)
 	if bool(from.get("court", false)):
 		points.append_array(_court_way(true))
-	points.append_array([over + offset * 0.4, ridge + offset * 0.6, exit.pos + offset])
-	return _smooth(_clear_route(points, 2), true)
+	_append_route(points, points[-1] - points[-2], exit.pos + offset, -(h.out as Vector3), _pitch_slope(away), bow)
+	return _smooth(points, true)
 
 
 ## Weg von einem Platz zum nächsten.
-func _hop_path(from_pos: Vector3, from: Dictionary, spot: Dictionary, away: Vector3 = Vector3.ZERO) -> PackedVector3Array:
-	var points: Array[Vector3] = _takeoff(from_pos, from, away)
+func _hop_path(from_pos: Vector3, from: Dictionary, spot: Dictionary, away: Vector3 = Vector3.ZERO, bow: Array = []) -> PackedVector3Array:
+	var points: Array[Vector3] = _takeoff(from_pos, from, away, spot.pos)
+	var waves := String(from.get("kind", "")) != "pigeon"
 	var from_court := bool(from.get("court", false))
 	var to_court := bool(spot.get("court", false))
+	var k := _pitch_slope(away)
 	if from_court and to_court:
 		# im Hof ein Stück weiter: flach unter dem Blätterdach (bleibt unter 2 m)
 		var lift2 := points[-1]
@@ -926,22 +1075,20 @@ func _hop_path(from_pos: Vector3, from: Dictionary, spot: Dictionary, away: Vect
 		return _smooth(points, false)
 	if from_court:
 		points.append_array(_court_way(true))
-	elif to_court:
-		points.append_array(_court_way(false))
+	if to_court:
+		var way := _court_way(false)
+		_append_route(points, points[-1] - points[-2], way[0], way[1] - way[0], k, bow)
+		points.append(way[1])
 		points.append_array(_court_arrival(spot))
-		return _smooth(_clear_route(points), String(from.get("kind", "")) != "pigeon")
-	var lift := points[-1]
-	var landing := _landing(lift, spot)
-	if lift.distance_to(landing[0]) > 5.0:
-		var mid := (lift + landing[0]) / 2.0
-		mid.y = maxf(mid.y, maxf(lift.y, landing[0].y) + 0.8)
-		points.append(mid)
-	points.append_array(landing)
-	return _smooth(_clear_route(points), String(from.get("kind", "")) != "pigeon")
+		return _smooth(points, waves)
+	var landing := _landing(points[-1], spot)
+	_append_route(points, points[-1] - points[-2], landing[0], landing[1] - landing[0], k, bow)
+	points.append_array(landing.slice(1))
+	return _smooth(points, waves)
 
 
 ## Abheben in einem flachen Bogen: nach vorn (vom Haus weg) bzw. weg von der Gefahr, dabei steigen.
-func _takeoff(from_pos: Vector3, from: Dictionary, away: Vector3) -> Array[Vector3]:
+func _takeoff(from_pos: Vector3, from: Dictionary, away: Vector3, toward: Vector3 = Vector3.INF) -> Array[Vector3]:
 	if bool(from.get("court", false)):
 		# im Hof: zur Gasse hin auffliegen (nie in Bank, Stamm oder Blätterdach), etwas steiler
 		# vom Rasen hinter dem Baum erst quer zur Gasse (nie dicht am Stamm vorbei)
@@ -951,7 +1098,10 @@ func _takeoff(from_pos: Vector3, from: Dictionary, away: Vector3) -> Array[Vecto
 		return [from_pos, from_pos + d * 0.4 + Vector3.UP * 0.35, from_pos + d * 1.5 + Vector3.UP * 1.2]
 	var dir: Vector3 = away if away != Vector3.ZERO else from.get("out", Vector3.FORWARD)
 	if String(from.get("kind", "")) == "ground" and away == Vector3.ZERO:
-		dir = from.get("face", Vector3.FORWARD)
+		# vom Boden aus grob in die Richtung, in die es geht (nicht in die nächste Hauswand)
+		dir = from.get("face", Vector3.FORWARD) if toward == Vector3.INF else toward - from_pos
+		dir.y = 0.0
+		dir = _free_dir(from_pos, dir.normalized() if dir.length() > 0.01 else Vector3.FORWARD)
 	dir.y = 0.0
 	dir = dir.normalized() if dir.length() > 0.01 else Vector3.FORWARD
 	dir = dir.rotated(Vector3.UP, _rng.randf_range(-0.6, 0.6))
@@ -966,45 +1116,193 @@ func _landing(from: Vector3, spot: Dictionary) -> Array[Vector3]:
 	if spot.kind == "ground":
 		dir = from - target
 		dir.y = 0.0
-		dir = dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD
+		dir = _free_dir(target, dir.normalized() if dir.length() > 0.1 else Vector3.FORWARD)
 	else:
 		dir = (spot.out as Vector3).rotated(Vector3.UP, _rng.randf_range(-0.5, 0.5))
 	return [target + dir * 2.6 + Vector3.UP * 1.1, target + dir * 0.9 + Vector3.UP * 0.3,
 		target + dir * 0.18 + Vector3.UP * 0.04, target]
 
 
-## Teilstücke, die durch ein Haus führen würden: über die Dächer heben (Landung und Abflug bleiben).
-func _clear_route(points: Array[Vector3], keep_start: int = 0) -> Array[Vector3]:
-	var result: Array[Vector3] = [points[0]]
-	for i in range(1, points.size()):
-		var a := result[-1]
-		var b := points[i]
-		if i > keep_start and i < points.size() - 3 and not _segment_clear(a, b):
-			var high := maxf(_roofs_near((a + b) / 2.0), maxf(a.y, b.y)) + 1.5
-			var m1 := a.lerp(b, 0.25)
-			var m2 := a.lerp(b, 0.75)
-			m1.y = high
-			m2.y = high
-			result.append(Vector3(a.x, high, a.z))
-			result.append(m1)
-			result.append(m2)
-			result.append(Vector3(b.x, high, b.z))
-		result.append(b)
-	return result
+# --- Weiche Flugbahnen (seit Nachbesserung 4 von 6h) ---
+
+## Höhenkarte aller Hindernisse von oben: Häuser, Bücherei, Baumkrone im Hof und die Giebelhäuser dahinter.
+func _build_ceiling() -> void:
+	_ceiling.clear()
+	for h: Dictionary in _houses:
+		var a: float = -h.width / 2.0 - CEILING_MARGIN
+		while a <= h.width / 2.0 + CEILING_MARGIN:
+			var b := -CEILING_MARGIN
+			while b <= h.depth + CEILING_MARGIN:
+				# Dach: an Traufe und Rückseite niedrig, in der Mitte am First
+				var ridge := 1.0 - clampf(absf(b - h.depth / 2.0) / (h.depth / 2.0), 0.0, 1.0)
+				_mark_ceiling(h.front + h.along * a - h.out * b, lerpf(float(h.eaves), float(h.top), ridge) + ROOF_CLEARANCE)
+				b += CEILING_CELL * 0.5
+			a += CEILING_CELL * 0.5
+	var base := _outside.global_position.y
+	var library_top := base + GameConfig.shop_floor_rise + GameConfig.room_height + 0.2 \
+		+ GameConfig.upper_floor_count * GameConfig.upper_floor_height + 4.0
+	_mark_rect(Rect2(StreetLayout.HOUSE_LEFT - CEILING_MARGIN, StreetLayout.HOUSE_FRONT - CEILING_MARGIN,
+		StreetLayout.HOUSE_RIGHT - StreetLayout.HOUSE_LEFT + 2.0 * CEILING_MARGIN,
+		StreetLayout.HOUSE_BACK - StreetLayout.HOUSE_FRONT + 2.0 * CEILING_MARGIN), library_top)
+	if not _court.is_empty():
+		var inside: Rect2 = _court.inside
+		_mark_rect(Rect2(inside.position.x - 0.5, inside.position.y + 1.5, inside.size.x + 1.0, inside.size.y + 1.6), base + 11.0)
+		_mark_rect(Rect2(inside.position.x - 1.0, inside.end.y + 2.0, inside.size.x + 3.0, 10.0), base + 10.5)
 
 
-func _segment_clear(a: Vector3, b: Vector3) -> bool:
-	var space := get_world_3d().direct_space_state
-	var query := PhysicsRayQueryParameters3D.create(a, b, HOUSE_MASK)
-	return space.intersect_ray(query).is_empty()
+## Richtung ab pos, in der 3 m lang kein Haus steht: dir, sonst schrittweise weiter zur Seite gedreht.
+func _free_dir(pos: Vector3, dir: Vector3) -> Vector3:
+	for angle: float in [0.0, 0.5, -0.5, 1.0, -1.0, 1.5, -1.5, 2.1, -2.1, 2.7, -2.7, PI]:
+		var d := dir.rotated(Vector3.UP, angle)
+		var free := true
+		for r: float in [1.0, 2.0, 3.0]:
+			var q := pos + d * r
+			if _ceiling_at(Vector2(q.x, q.z)) > pos.y + 1.0:
+				free = false
+		if free:
+			return d
+	return dir
 
 
-func _roofs_near(p: Vector3) -> float:
-	var top := p.y
-	for h in _houses:
-		if h.front.distance_to(p) < 14.0:
-			top = maxf(top, h.top)
-	return top
+func _mark_ceiling(p: Vector3, top: float) -> void:
+	var cell := Vector2i(floori(p.x / CEILING_CELL), floori(p.z / CEILING_CELL))
+	_ceiling[cell] = maxf(float(_ceiling.get(cell, -INF)), top)
+
+
+## Rechteck unter "Outside" (x, z).
+func _mark_rect(r: Rect2, top: float) -> void:
+	var x := r.position.x
+	while x <= r.end.x:
+		var z := r.position.y
+		while z <= r.end.y:
+			_mark_ceiling(_outside.to_global(Vector3(x, 0.0, z)), top)
+			z += CEILING_CELL * 0.5
+		x += CEILING_CELL * 0.5
+
+
+func _ceiling_at(p: Vector2) -> float:
+	return float(_ceiling.get(Vector2i(floori(p.x / CEILING_CELL), floori(p.y / CEILING_CELL)), -INF))
+
+
+## Steigung (Höhe je Meter), die ein Vogel höchstens fliegt – auf der Flucht steiler.
+func _pitch_slope(away: Vector3) -> float:
+	return tan(deg_to_rad(GameConfig.bird_flee_pitch if away != Vector3.ZERO else GameConfig.bird_flight_pitch))
+
+
+## Hängt an points einen weichen Weg bis target an (Ankunft in Richtung dir_b). bow = gemeinsamer Bogen eines Schwarms:
+## leer = der erste Vogel sucht ihn aus und trägt ihn ein, die anderen nehmen denselben.
+func _append_route(points: Array[Vector3], dir_a: Vector3, target: Vector3, dir_b: Vector3, k: float, bow: Array) -> void:
+	var a := points[-1]
+	if Vector2(target.x - a.x, target.z - a.z).length() < 3.0 and absf(target.y - a.y) < 1.5:
+		points.append(target)
+		return
+	var best: Dictionary
+	if not bow.is_empty():
+		best = _route(a, dir_a, target, dir_b, k, float(bow[0]))
+	else:
+		var side := 1.0 if _rng.randf() < 0.5 else -1.0
+		var first := side * _rng.randf_range(0.1, 0.3)
+		var chosen := first
+		for t: float in [first, -first, side * 0.5, -side * 0.5, side * 0.85, -side * 0.85, side * 1.2, -side * 1.2]:
+			var r := _route(a, dir_a, target, dir_b, k, t)
+			if best.is_empty() or float(r.steep) < float(best.steep):
+				best = r
+				chosen = t
+			if float(r.steep) <= k * 1.1:
+				break
+		bow.append(chosen)
+	points.append_array(best.points)
+
+
+## Weicher Weg von a (Abflugrichtung dir_a) nach b (Ankunft in Richtung dir_b): von oben gesehen eine Kurve (Hermite), um
+## bow × Entfernung seitlich ausgebogen und leicht schlingernd, die Höhe aus _heights. Ergebnis: { points (ohne a), steep }.
+func _route(a: Vector3, dir_a: Vector3, b: Vector3, dir_b: Vector3, k: float, bow: float, wander: float = 0.5) -> Dictionary:
+	var pa := Vector2(a.x, a.z)
+	var pb := Vector2(b.x, b.z)
+	var chord := pb - pa
+	var d := maxf(chord.length(), 0.01)
+	var ta := Vector2(dir_a.x, dir_a.z)
+	ta = ta.normalized() if ta.length() > 0.01 else chord / d
+	var tb := Vector2(dir_b.x, dir_b.z)
+	tb = tb.normalized() if tb.length() > 0.01 else chord / d
+	var side := Vector2(-chord.y, chord.x) / d
+	# bow zählt von der Strecke, die der Höhenunterschied braucht: nah, aber viel höher/tiefer = ein weiter Bogen
+	var reach := maxf(d, absf(a.y - b.y) / maxf(k, 0.05) * 0.65)
+	var m := clampf(reach * 0.9, 2.0, 40.0)
+	var count := clampi(int(reach * (1.0 + 2.0 * absf(bow)) / 0.7), 8, 160)
+	var phase := _rng.randf() * TAU
+	var cycles := _rng.randf_range(1.0, 2.5)
+	var xz := PackedVector2Array()
+	var dist := PackedFloat32Array()
+	for i in count + 1:
+		var t := float(i) / count
+		var t2 := t * t
+		var t3 := t2 * t
+		var p := pa * (2.0 * t3 - 3.0 * t2 + 1.0) + ta * m * (t3 - 2.0 * t2 + t) + pb * (3.0 * t2 - 2.0 * t3) + tb * m * (t3 - t2)
+		p += side * (bow * reach * sin(PI * t) + wander * sin(TAU * t * cycles + phase) * sin(PI * t))
+		xz.append(p)
+		dist.append(0.0 if i == 0 else dist[i - 1] + p.distance_to(xz[i - 1]))
+	var result: Dictionary = _heights(xz, dist, a.y, b.y, k)
+	var h: PackedFloat32Array = result.h
+	var points: Array[Vector3] = []
+	for i in range(1, xz.size()):
+		points.append(Vector3(xz[i].x, h[i], xz[i].y))
+	return {"points": points, "steep": result.steep}
+
+
+## Höhe entlang eines Weges: gleichmäßig von y0 nach y1 mit einem kleinen Buckel, darf nie unter die Höhenkarte (außer
+## ganz am Anfang und Ende: dort sitzt der Vogel ja an einem Haus), steigt und sinkt höchstens mit k. Ergebnis { h, steep }.
+func _heights(xz: PackedVector2Array, dist: PackedFloat32Array, y0: float, y1: float, k: float, ends: float = 4.0) -> Dictionary:
+	var n := xz.size() - 1
+	var total := maxf(dist[n], 0.01)
+	var hump := clampf((k - absf(y1 - y0) / total) * total / PI, 0.0, 1.8)
+	var h := PackedFloat32Array()
+	var need := PackedFloat32Array()
+	for i in n + 1:
+		var t := dist[i] / total
+		var ceiling := _ceiling_at(xz[i]) if dist[i] >= ends and total - dist[i] >= ends else -INF
+		need.append(ceiling)
+		h.append(maxf(lerpf(y0, y1, t) + hump * sin(PI * t), ceiling))
+	# nur anheben: vor und hinter einem Dach gleichmäßig an- und absteigen
+	for i in range(1, n + 1):
+		h[i] = maxf(h[i], h[i - 1] - k * (dist[i] - dist[i - 1]))
+	for i in range(n - 1, -1, -1):
+		h[i] = maxf(h[i], h[i + 1] - k * (dist[i + 1] - dist[i]))
+	h[0] = y0
+	h[n] = y1
+	for pass_no in 10:
+		var copy := h.duplicate()
+		for i in range(1, n):
+			h[i] = maxf((copy[i - 1] + 2.0 * copy[i] + copy[i + 1]) / 4.0, need[i])
+	var steep := 0.0
+	for i in n:
+		steep = maxf(steep, absf(h[i + 1] - h[i]) / maxf(dist[i + 1] - dist[i], 0.01))
+	return {"h": h, "steep": steep}
+
+
+## Prüfwerkzeug: Wie lang ist das längste Stück dieser Flugbahn, das steiler als 60 Grad ist?
+func _note_path(path: PackedVector3Array, what: String) -> void:
+	var longest := _steep_stretch(path)
+	steepest_stretch = maxf(steepest_stretch, longest)
+	if longest > 2.0:
+		steep_paths += 1
+		if steep_log.size() < 12:
+			steep_log.append("%s: %.1f m steil (Weg %s → %s)" % [what, longest, path[0].snapped(Vector3.ONE * 0.1),
+				path[-1].snapped(Vector3.ONE * 0.1)])
+
+
+## Längstes Stück der Flugbahn, das steiler als 60 Grad ist (m).
+func _steep_stretch(path: PackedVector3Array) -> float:
+	var run := 0.0
+	var longest := 0.0
+	for i in range(1, path.size()):
+		var d := path[i] - path[i - 1]
+		if absf(d.y) > Vector2(d.x, d.z).length() * 1.73:
+			run += d.length()
+			longest = maxf(longest, run)
+		else:
+			run = 0.0
+	return longest
 
 
 ## Glatter Weg durch die Punkte (Catmull-Rom), Abtastung etwa alle 0,2 m. waves = kleine Vögel fliegen in

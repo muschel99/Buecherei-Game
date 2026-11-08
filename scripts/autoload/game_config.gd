@@ -880,8 +880,20 @@ var bird_stay_nearby_share: float = 0.55
 ## So oft verteilt sich ein Schwarm beim Landen auf einzelne Plätze (sonst sitzen sie beieinander)
 var bird_scatter_share: float = 0.3
 ## Durchflug: ab und zu zieht ein Schwarm über die Straße, ohne zu landen (Sekunden von–bis, Vögel von–bis)
-var bird_flyover_interval: Vector2 = Vector2(45.0, 110.0)
-var bird_flyover_size: Vector2i = Vector2i(4, 9)
+var bird_flyover_interval: Vector2 = Vector2(7.0, 18.0)
+var bird_flyover_size: Vector2i = Vector2i(3, 9)
+## Himmel (seit Nachbesserung 4 von 6h): höchstens so viele Vögel gleichzeitig unterwegs, so oft nur ein oder zwei Vögel
+## statt eines Schwarms, Anteil Tauben, Tempo (m/s von–bis), Höhe über dem Gehweg (m von–bis) hoch über den Dächern
+## bzw. längs durch die Straße
+var bird_sky_count: int = 22
+var bird_sky_single_share: float = 0.3
+var bird_sky_pigeon_share: float = 0.2
+var bird_sky_speed: Vector2 = Vector2(5.5, 8.5)
+var bird_sky_height: Vector2 = Vector2(14.0, 30.0)
+var bird_street_height: Vector2 = Vector2(5.5, 15.0)
+## Flugbahnen: steilster Anstieg bzw. Sinkflug (Grad) im normalen Flug und auf der Flucht
+var bird_flight_pitch: float = 27.0
+var bird_flee_pitch: float = 40.0
 ## Tauben: höchstens so viele, Schwarmgröße, so oft kommt ein Schwarm, Anteil am Boden (sonst auf Dächern)
 var pigeon_count: int = 6
 var pigeon_flock_size: Vector2i = Vector2i(2, 5)

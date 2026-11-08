@@ -346,6 +346,9 @@ func _print_report() -> void:
 		for line in b.below_ground_log:
 			print("  BODEN: ", line)
 		print("Vögel im Gartenhof der Baumgasse: gelandet %d Schwärme, gerade dort %d" % [b.court_flocks, b.court_birds()])
+		print("Flugbahnen: mit steilem Stück (über 2 m steiler als 60°) %d, längstes solches Stück %.1f m" % [b.steep_paths, b.steepest_stretch])
+		for line in b.steep_log:
+			print("  STEIL: ", line)
 	if _life.cats:
 		var c := _life.cats
 		print("Katzen: Besuche %d, in der Bücherei %d, gejagt %d, gespielt %d, Erscheinen im Blickfeld %d, Verschwinden im Blickfeld %d, festgefahren %d" % [
