@@ -1256,9 +1256,23 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (`BirdLife._court_spots`, `bird_court_*`; unter dem Blätterdach nur tief durch die Gasse `_court_way`, Rasen hinter dem
   Baum quer vom Gang her `_court_arrival`/`_lane_above`); Katzen machen Abstecher (Halt "garden", `CatLife._garden_actions`,
   `cat_garden_*`; Wege nur über `in_alley`/`_alley_walkable`/`_alley_path`/`_alley_way_out`, nie quer durch Mauern, Beete
-  oder die Rundbank). Fahrräder bremsen für Katzen und vor dem Ausweichen auf die andere Seite (`bike_swerve_speed`).
+  oder die Rundbank).
   Gassen: Passanten erscheinen dort nur, wenn die Spielfigur ≥ `passerby_spawn_player_distance` weg ist; Bogengasse ohne
   Grenze bis kurz vor die Tür (`opposite_alley_bound_before_door`). Prüfen: street_life_check `--garden`, `--throw`, `--hunt`.
+- **Nachbesserung 4 von 6h:** **Vögel:** Flugbahnen nur noch über `BirdLife._route`/`_append_route` (Hermite-Kurve von oben,
+  `bow` = seitlicher Bogen × nötige Strecke, Schwarm teilt ihn) + `_heights` (Höhenkarte `_ceiling` aus Häusern mit Traufe/First,
+  Bücherei, Baumkrone; Steigung höchstens `bird_flight_pitch`/`bird_flee_pitch`, nur anheben, dann glätten) – nie Punkte senkrecht
+  übereinander setzen. Abflug/Landung am Boden weg von Hauswänden (`_free_dir`); ein Platz, der nur senkrecht erreichbar wäre, wird
+  nicht genommen (`_steep_stretch`, Prüfwerkzeug „Flugbahnen“). Himmel: `_sky_course` (hoch `_course_high`, längs `_course_along_street`,
+  über die Dächer `_course_over_roofs`), Werte `bird_sky_*`, `bird_flyover_*`; weiter als `FAR_ENOUGH` darf ein Vogel sichtbar anfangen und enden.
+  **Fahrzeuge:** Für Katzen auf der Fahrbahn zählt die ganze Breite (auch mitten im Sprung vom Bordstein); Fahrräder (`is_bike`)
+  fahren nie um etwas herum, sie bremsen früh (`bike_brake`) und halten davor (`bike_stop_gap`). **Passanten:** beim gemeinsamen
+  Gehen abwechselnd zum Gegenüber und nach vorn (`passerby_walk_look_time`/`_away_time`), beim Überqueren `road_scan`; im Sitzen
+  zurückgelehnt (`ChibiGestureModifier.lean`, `passerby_sit_lean`). **Katzen:** Sprung hinunter erst nach vorn, dann fallen, hinauf erst
+  hoch, dann nach vorn; ganzer Körper geneigt (`JUMP_PITCH`, hinauf Vorderkörper oben); Mauern: Landung `JUMP_CLEAR` vor der Kante;
+  Bank vor dem Fenster: `_seat_near` → erst auf die Bank (`via_seat`), sonst versperrte Fensterbänke auslassen; Schnattern über
+  Aktions-Flag `"chatter"`. Efeu an Häusern raschelt (`Greenery._add_ivy_rustle` aus spots.json). Prüfen: street_life_check
+  `floor` (schweben/einsinken), `vehicle_cat`, `--sills`.
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
   Daumen rechts −X / links +X; Finger in Verlängerung des Unterarms.
 - **Blick zur Spielfigur (seit 6f):** Passanten schauen höchstens `chibi_player_glance_time` Sekunden zur Spielfigur,

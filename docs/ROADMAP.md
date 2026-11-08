@@ -1647,6 +1647,25 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
 - Vögel im Gartenhof fliegen nie von oben hinein: Die Baumkrone füllt den Hof von Mauer zu Mauer (ab etwa 3 m), darum
   kommen sie tief durch die Gasse.
 
+**Nachbesserung 4 (Test der Entwicklerin)**
+- [x] Teil A: Flugbahnen der Vögel neu: weiche Kurven statt Haken, nie mehr senkrecht hinauf oder hinunter; viel mehr Schwärme
+      und einzelne Vögel am Himmel: hoch über den Dächern, knapp darüber quer und schräg, längs durch die Straße, verschiedene Höhen
+- [x] Teil B: Autos halten für Katzen an (ganze Fahrbahnbreite); Radfahrer werden einige Meter vorher langsamer und halten vor
+      jedem Hindernis an, statt außen herumzufahren
+- [x] Teil C: Passanten schauen beim gemeinsamen Gehen mal zueinander, mal nach vorn, beim Überqueren nach links und rechts oder
+      dem Auto nach; im Sitzen lehnen sie sich zurück
+- [x] Teil D: Katzen: Bank vor dem Fenster = erst auf die Bank, dann aufs Fensterbrett; Sprung von der Mauer ohne Durchs-Wand-
+      Fallen; hinauf Vorderkörper oben, hinunter unten; große Katzen schneller auf der Treppe; öfter Schnattern (Fenster, Spielzeug,
+      Begegnung)
+- [x] Teil E: Boden-Prüfung für alle Figuren (nur der Schritt über die Bordsteinkante weicht ab); Efeu am Pub raschelt
+- [x] Dokumentation, Notion
+
+**Entscheidungen (selbst getroffen, Nachbesserung 4):**
+- Vögel, deren Ziel nur senkrecht erreichbar wäre (z. B. Dachrinne direkt über dem Gehweg), fliegen stattdessen weg.
+- Vögel dürfen weit weg (ab 65 m, dort nur noch ein Punkt von ein, zwei Bildpunkten) sichtbar auftauchen und verschwinden –
+  so können sie auch hoch am freien Himmel herkommen.
+- Fahrräder warten nun auch hinter stehenden Autos und dem Lieferwagen, wie Autos es tun (Wunsch: nie außen herum).
+
 ## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
 - Inhalt folgt mit den Wünschen der Entwicklerin
 - Schon bekannt (gefunden beim Abschluss von 6h, auch ganz ohne Tiere): An engen Stellen – Tische vor dem Pub,

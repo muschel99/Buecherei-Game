@@ -15,7 +15,8 @@ extends Node
 ## --deliver=<n> (Testlieferung mit n Kartons, sobald die erste Stelle beginnt), --door_open (Ladentür offen),
 ## --cats (Katzen kommen alle paar Sekunden, --enter=<0..1> Chance hineinzugehen; seit Etappe 6g), --no_animals,
 ## --cat_log (jeden Schritt der Katzen ausgeben), --hunt (Jagd und Spielzeug erzwingen), --throw (alle 15 s wirft die
-## Spielfigur ein Spielzeug in Richtung der nächsten Katze), --garden (Vögel und Katzen in den Gartenhof der Baumgasse).
+## Spielfigur ein Spielzeug in Richtung der nächsten Katze), --garden (Vögel und Katzen in den Gartenhof der Baumgasse),
+## --sills (Katzen gehen fast immer auf Fensterbänke).
 
 const STEP := 1.0 / 30.0
 const TURN_SPEED := deg_to_rad(40.0)
@@ -30,7 +31,7 @@ var _camera: Camera3D
 var _report := {
 	"appeared": 0, "vanished": 0, "appear_in_view": [], "vanish_in_view": [],
 	"appear_open": 0, "vanish_open": 0, "places": {},
-	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "stall": [], "vehicle_close": [], "vehicle_cat": [],
+	"overlap": [], "player_bump": [], "solid": [], "stuck": [], "stall": [], "vehicle_close": [], "vehicle_cat": [], "floor": [],
 	"min_walker_gap": INF, "min_player_gap": INF, "samples": 0, "vehicles": {}, "crossing": 0, "browsing": 0, "alley": 0, "sitting": 0,
 }
 var _track := {}  # Passant -> [letzte Stelle, Zeit seit Bewegung]
@@ -75,6 +76,11 @@ func _run() -> void:
 		GameConfig.cat_hunt_chance = 1.0
 		GameConfig.cat_toy_chance = 1.0
 		GameConfig.cat_toy_leave_chance = 20.0
+	if _args.has("sills"):
+		# Fensterbänke prüfen (auch über Bänke): Katzen gehen möglichst immer dorthin
+		GameConfig.cat_sill_chance = 1.0
+		GameConfig.cat_seat_chance = 0.0
+		GameConfig.cat_wall_chance = 0.0
 	if _args.has("garden"):
 		# Gartenhof der Baumgasse prüfen: Singvögel fast immer dorthin, Katzen gehen immer hin und jagen
 		GameConfig.bird_court_share = 0.9
@@ -233,6 +239,7 @@ func _measure() -> void:
 			_report.alley += 1
 		if walker.get_action_type() == "sit":
 			_report.sitting += 1
+	_check_floor(walkers)
 	for i in walkers.size():
 		var a := walkers[i]
 		for j in range(i + 1, walkers.size()):
@@ -364,7 +371,7 @@ func _print_report() -> void:
 			c.visits, c.entered, c.hunts, c.plays, c.visible_spawns, c.visible_exits, _cat_stuck.size()])
 		print("Katzen (seit 6h): Gartenmauern %d (bekannt: %d), Fensterbänke %d, gerieben %d, Begegnungen %d, Würfe %d (hinterher %d)" % [
 			c.wall_walks, c.get_walls().size(), c.sill_sits, c.rubs, c.meetings, c.throws, c.chases])
-		print("Katzen im Gartenhof: Abstecher %d, dort gejagt %d" % [c.garden_visits, c.court_hunts])
+		print("Katzen im Gartenhof: Abstecher %d, dort gejagt %d; über eine Bank aufs Fensterbrett: %d" % [c.garden_visits, c.court_hunts, c.bench_hops])
 		for line in _cat_stuck:
 			print("  ", line)
 	print("Passanten (seit 6h): geplaudert %d (davon Hände geschüttelt %d), auf der Bank geplaudert %d, Katzen gestreichelt %d, zu zweit %d" % [
@@ -382,7 +389,7 @@ func _print_report() -> void:
 	print("Messungen mit Passanten beim Überqueren: %d, vor einem Schaufenster: %d, in einer Gasse: %d, auf der Bank: %d" % [
 		_report.crossing, _report.browsing, _report.alley, _report.sitting])
 	print("Kleinster Abstand zwischen Passanten: %.2f m, zur Spielfigur: %.2f m" % [_report.min_walker_gap, _report.min_player_gap])
-	for key in ["overlap", "player_bump", "solid", "stuck", "stall", "vehicle_close", "vehicle_cat"]:
+	for key in ["overlap", "player_bump", "solid", "stuck", "stall", "vehicle_close", "vehicle_cat", "floor"]:
 		var list: Array = _report[key]
 		print("%s: %d" % [key, list.size()])
 		for i in mini(list.size(), 12):
@@ -399,3 +406,56 @@ func _parse_args() -> Dictionary:
 		else:
 			result[clean.substr(0, eq)] = clean.substr(eq + 1)
 	return result
+
+
+## Stehen alle auf einem Boden? Boden = was ein Strahl nach unten trifft (Gehweg, Laden, Möbel), auf der Fahrbahn deren
+## Höhe (sie liegt nur optisch tiefer); Fensterbänke und Mauerkronen (ohne Kollision) aus der Vermessung, die Treppe wird
+## ausgelassen (die Kollision dort ist eine Rampe). Meldet Figuren, die mehr als 5 cm schweben oder einsinken.
+func _check_floor(walkers: Array) -> void:
+	var space := _main.get_world_3d().direct_space_state
+	var half := GameConfig.street_width / 2.0
+	var door := StreetLayout.door_center()
+	for w in walkers:
+		if w.get_action_type() in ["sit", "leave"] or not w.visible:
+			continue
+		_floor_case(space, w.name, w.global_position, w.get_action_type(), half, door, [])
+	if _life.cats:
+		for cat in _life.cats.get_cats():
+			if not cat.active or cat.get_action_type() in ["jump", "pounce", "leave"] or cat._rest_on != null or cat.seat != null:
+				continue
+			var ledges: Array[float] = []
+			for sill in _life.cats._sills:
+				if Vector2(sill.pos.x - cat.global_position.x, sill.pos.z - cat.global_position.z).length() < 0.8:
+					ledges.append(float(sill.pos.y))
+			for wall in _life.cats.get_walls():
+				if wall.taken == cat:
+					ledges.append(float(wall.a.y))
+			_floor_case(space, cat.name, cat.global_position, cat.get_action_type(), half, door, ledges)
+	if _life.birds:
+		for bird in _life.birds.get_birds():
+			if bird.is_on_ground():
+				_floor_case(space, bird.name, bird.global_position, "ground", half, door, [])
+
+
+func _floor_case(space: PhysicsDirectSpaceState3D, who: String, p: Vector3, what: String, half: float, door: Vector3, ledges: Array) -> void:
+	var local := _life.to_local(p)
+	if Vector2(local.x - door.x, local.z - door.z).length() < 3.2:
+		return  # Treppe
+	var query := PhysicsRayQueryParameters3D.create(p + Vector3.UP * 0.4, p + Vector3.DOWN * 1.2, 1 | 8)
+	var hit := space.intersect_ray(query)
+	var ground: float = hit.position.y if not hit.is_empty() else p.y
+	var lat := _life.centerline.project(Vector2(local.x, local.z)).y
+	var road := _life.to_global(Vector3(local.x, -GameConfig.curb_height, local.z)).y
+	if absf(lat) < half and not hit.is_empty():
+		ground = road
+	var diff := p.y - ground
+	if absf(diff) <= 0.05:
+		return
+	# genau an der Bordsteinkante zählen beide Höhen
+	if absf(absf(lat) - half) < 0.15 and absf(p.y - road) <= 0.05:
+		return
+	for y: float in ledges:
+		if absf(p.y - y) < 0.05:
+			return
+	if _report.floor.size() < 40:
+		_report.floor.append("%s (%s) %+.2f m über dem Boden bei %s (%s)" % [who, what, diff, Vector3(local.x, local.y, local.z).snapped(Vector3.ONE * 0.01), _spot_name])

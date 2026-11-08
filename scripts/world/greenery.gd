@@ -18,6 +18,7 @@ const GROUP := "greenery"
 ## Pflanzen, an denen es raschelt, wenn man dicht vorbeigeht (Bäume, Ampeln und Ranken hoch oben nicht)
 const RUSTLE_KINDS := ["bed", "hedge", "walltuft", "tuft", "pot", "potfill", "rim", "bucket", "box", "climber"]
 const RUSTLE_CELL := 2.0
+const IVY_SPOTS := "res://data/animals/spots.json"
 
 ## Ordner mit den Pflanzen-Szenen.
 @export_dir var plants_dir := "res://scenes/world/plants"
@@ -81,6 +82,7 @@ func _load_catalog() -> void:
 
 
 func _place_all() -> void:
+	_add_ivy_rustle()
 	var inverse := global_transform.affine_inverse()
 	for spot: Node in get_tree().root.find_children(SPOT_PREFIX + "*", "", true, false):
 		if not spot is Node3D or not spot.has_meta("extras"):
@@ -323,6 +325,22 @@ func _add_piece(entry: Dictionary, xform: Transform3D) -> void:
 		(_batches[key].transforms as Array).append(Transform3D(Basis(), -center) * xform * (part.xform as Transform3D))
 	if float(entry.radius) > 0.0:
 		_add_collision(xform, float(entry.radius) * xform.basis.get_scale().x, (entry.size as Vector3).y * xform.basis.get_scale().y)
+
+
+## Efeu an den Häusern (Pub, Torhaus, Blumenladen …) gehört zum Haus-Modell, nicht zu den gesetzten Pflanzen: Damit er
+## beim Vorbeigehen auch raschelt, zählen seine ausgemessenen Stellen (spots.json, Art "ivy") als Säulen vom Boden bis dort.
+func _add_ivy_rustle() -> void:
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(IVY_SPOTS)) if FileAccess.file_exists(IVY_SPOTS) else null
+	if not data is Dictionary:
+		return
+	for spot: Dictionary in data.get("perches", []):
+		if String(spot.get("kind", "")) != "ivy":
+			continue
+		var at := Vector3(float(spot.pos[0]), 0.0, float(spot.pos[2]))
+		var cell := Vector2i(floori(at.x / RUSTLE_CELL), floori(at.z / RUSTLE_CELL))
+		if not _rustle.has(cell):
+			_rustle[cell] = []
+		(_rustle[cell] as Array).append([at, GameConfig.ivy_rustle_radius, maxf(float(spot.pos[1]), 1.5)])
 
 
 ## Ist eine niedrige Pflanze in Reichweite (Abstand zum Rand der Pflanze, waagerecht) und reicht sie in die Höhe
