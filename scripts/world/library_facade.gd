@@ -232,6 +232,7 @@ func _add_seating(deco: Node3D, markers: Array[Node]) -> void:
 		seat.transform = deco.global_transform.affine_inverse() * marker.global_transform if deco.is_inside_tree() \
 			else _relative_to(marker, deco)
 		seat.approach = Vector3(0.0, 0.0, 0.75)
+		seat.backrest = 0.13 if String(deco.name).contains("chair") else 0.24   # Stuhl oder Bank
 		seating.add_child(seat)
 		box = AABB(seat.position, Vector3.ZERO) if k == 0 else box.expand(seat.position)
 	var area := Interactable.new()

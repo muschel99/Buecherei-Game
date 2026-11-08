@@ -1666,6 +1666,12 @@ nach echten Vorbildern, alles sitzt wirklich auf etwas – und jede Bewegung mit
   so können sie auch hoch am freien Himmel herkommen.
 - Fahrräder warten nun auch hinter stehenden Autos und dem Lieferwagen, wie Autos es tun (Wunsch: nie außen herum).
 
+**Nachbesserung 5 (Test der Entwicklerin)**
+- [x] Sitzende Passanten legen die Hände auf die Oberschenkel; etwa sechs von zehn lehnen sich an die Lehne von Bank oder Stuhl an
+- [x] Fehler behoben: Eine Katze, die an der Tür oder drinnen fertig gespielt hatte, verschwand samt Spielzeug – jetzt geht sie weiter
+- [x] Spielzeug kullert von der Treppe auf den Gehweg; auf Stufen wird nicht mehr gespielt oder gejagt
+- [x] Dokumentation, Notion
+
 ## Etappe 6i – Leben in der Straße (vorgemerkt, Testrunde „13“ der Entwicklerin)
 - Inhalt folgt mit den Wünschen der Entwicklerin
 - Schon bekannt (gefunden beim Abschluss von 6h, auch ganz ohne Tiere): An engen Stellen – Tische vor dem Pub,

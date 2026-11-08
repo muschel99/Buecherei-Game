@@ -130,6 +130,12 @@ var _walk_look_on := true
 var _walk_look_until := 0.0
 ## Beim Überqueren der Fahrbahn nach links und rechts schauen (Passerby setzt das)
 var road_scan := false
+## Sitzen (Passanten, nicht am Steuer): entspannt, Hände auf den Oberschenkeln. Lehne hinter dem Sitz (Abstand von der
+## Sitzmitte in m, 0 = keine) und ob sich diese Figur gerade daran anlehnt (Passerby setzt das beim Hinsetzen).
+var relaxed_sit := false
+var sit_backrest := 0.0
+var sit_leans := false
+var _back_shift := 0.0
 var _attention: Node3D
 ## Einkaufstasche: Modell, Pendel (Ausschlag x/z in Bogenmaß, Geschwindigkeit), letzte Lage/Geschwindigkeit der Hand
 var _bag: Node3D
@@ -518,8 +524,7 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 	_update_layers(state, walking, delta)
 	# Im Sitzen entspannt zurückgelehnt (nur Passanten, nicht am Steuer; weich hin und zurück)
 	if _gesture_modifier:
-		var lean_want := GameConfig.passerby_sit_lean if state == &"sit" and _transition == &"" and get_parent() is Passerby else 0.0
-		_gesture_modifier.lean = move_toward(_gesture_modifier.lean, lean_want, delta * GameConfig.passerby_sit_lean / GameConfig.passerby_sit_lean_time)
+		_update_sit_rest(state, delta)
 	if not _shot.is_empty() and clip == _shot.clip:
 		_player.speed_scale = _update_shot(delta)
 	else:
@@ -1048,6 +1053,25 @@ func _scan_focus() -> void:
 		_nod_t = 0.0
 		if wave:
 			wave_hello()
+
+
+## Sitzen entspannt: zurückgelehnt, Hände auf den Oberschenkeln; wer sich anlehnt, rutscht auf dem Sitz nach hinten bis an
+## die Lehne. Weich hin und zurück; beim Reden (Ebene mit Handbewegungen) lösen sich die Hände.
+func _update_sit_rest(state: StringName, delta: float) -> void:
+	var sitting := relaxed_sit and state == &"sit" and _transition == &""
+	var lean_want := GameConfig.passerby_sit_lean if sitting else 0.0
+	var shift_want := 0.0
+	if sitting and sit_leans and sit_backrest > 0.0:
+		var t := clampf(inverse_lerp(0.13, 0.24, sit_backrest), 0.0, 1.0)
+		lean_want = lerpf(GameConfig.passerby_sit_lean_chair, GameConfig.passerby_sit_lean_bench, t)
+		shift_want = maxf(0.0, sit_backrest - (GameConfig.passerby_sit_back_depth + 0.03 * maxf(body_shape, 0.0)))
+	var step := delta / GameConfig.passerby_sit_lean_time
+	_gesture_modifier.lean = move_toward(_gesture_modifier.lean, lean_want, step * 25.0)
+	_back_shift = move_toward(_back_shift, shift_want, step * 0.2)
+	_model.position.z = -_back_shift
+	var talking_hands := _upper_mod.weight if _upper_mod else 0.0
+	_gesture_modifier.thigh_lift = GameConfig.passerby_sit_hand_lift + 0.02 * maxf(body_shape, 0.0)
+	_gesture_modifier.hands_on_thighs = move_toward(_gesture_modifier.hands_on_thighs, (1.0 if sitting else 0.0) * (1.0 - talking_hands), step * 2.0)
 
 
 ## Winken (seit Etappe 6h immer mit der Wink-Animation: der rechte Arm wird über Gehen, Stehen oder Sitzen gelegt,

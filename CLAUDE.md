@@ -1273,6 +1273,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Bank vor dem Fenster: `_seat_near` → erst auf die Bank (`via_seat`), sonst versperrte Fensterbänke auslassen; Schnattern über
   Aktions-Flag `"chatter"`. Efeu an Häusern raschelt (`Greenery._add_ivy_rustle` aus spots.json). Prüfen: street_life_check
   `floor` (schweben/einsinken), `vehicle_cat`, `--sills`.
+  **Nachbesserung 5:** Sitzen: `ChibiGestureModifier.hands_on_thighs` (Zwei-Glieder-Rechnung zur Stelle `THIGH_SPOT` auf dem Oberschenkel,
+  löst sich beim Reden mit den Händen), Anlehnen je Figur (`passerby_lean_back_share`, `StreetSeat.backrest` = Abstand der Lehne: Bank 0,24,
+  Holzstuhl 0,13, 0 = keine; `_update_sit_rest` schiebt das Modell zurück und neigt mehr). **Katzen enden nur mit dem Schritt "leave":**
+  sind die Schritte sonst aus, geht es weiter (`StreetCat._next` → `CatLife.resume`), von drinnen und von der Treppe über `_way_down`;
+  Spielzeug bleibt nie auf der Treppe liegen (`on_stairs`, `_tumble_down`); Jagd/Spielen nur auf einer ebenen Fläche (`on_street_level`).
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
   Daumen rechts −X / links +X; Finger in Verlängerung des Unterarms.
 - **Blick zur Spielfigur (seit 6f):** Passanten schauen höchstens `chibi_player_glance_time` Sekunden zur Spielfigur,

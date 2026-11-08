@@ -11,6 +11,9 @@ extends SeatPoint
 ## So weit vor dem Sitz stellt man sich vor dem Hinsetzen hin (Meter; -1 = so weit wie in der
 ## Sitz-Animation – vor einem Tisch weniger, sonst steht man im Tisch).
 @export var front := -1.0
+## Lehne: Abstand von der Sitzmitte bis zur Lehne in Brusthöhe (m), 0 = keine – daran lehnen sich manche Passanten an
+## (Bank 0,24, Holzstuhl 0,13).
+@export var backrest := 0.0
 
 
 func _ready() -> void:

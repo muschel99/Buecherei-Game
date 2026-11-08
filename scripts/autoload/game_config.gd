@@ -811,8 +811,16 @@ var passerby_chat_gap: float = 1.3
 var passerby_walk_look_time: Vector2 = Vector2(1.0, 2.6)
 var passerby_walk_away_time: Vector2 = Vector2(2.0, 5.0)
 ## Im Sitzen lehnen sich Passanten so weit zurück (Grad, sehen dann entspannter aus), Dauer des Zurücklehnens (s)
-var passerby_sit_lean: float = 17.0
+var passerby_sit_lean: float = 7.0
 var passerby_sit_lean_time: float = 1.2
+## Anlehnen an die Lehne (seit Nachbesserung 5 von 6h): so viele Passanten tun es, Neigung (Grad) am Holzstuhl bzw. an der Bank,
+## so tief ist der Rücken hinter der Wirbelsäule (m; so weit rutschen sie nach hinten); Hand auf dem Oberschenkel: Höhe
+## der Handwurzel über der Knochenlinie (m)
+var passerby_lean_back_share: float = 0.6
+var passerby_sit_lean_chair: float = 12.0
+var passerby_sit_lean_bench: float = 19.0
+var passerby_sit_back_depth: float = 0.145
+var passerby_sit_hand_lift: float = 0.085
 var passerby_step_back_speed: float = 0.35
 var passerby_handshake_chance: float = 0.4
 ## … nur wenn die Hände etwa gleich hoch sind (m Unterschied; klein und groß schütteln sich nicht die Hand)

@@ -387,6 +387,10 @@ func _next() -> void:
 		if _start_action():
 			return
 	_action = {}
+	# Am Straßenende endet ein Besuch mit dem Schritt "leave". Sind die Schritte einfach aus (z. B. wurde der Plan fürs
+	# Spielen ersetzt), geht die Katze weiter, statt dort zu verschwinden, wo sie gerade steht
+	if life and life.resume(self):
+		return
 	finished.emit(self)
 
 

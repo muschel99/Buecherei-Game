@@ -89,6 +89,8 @@ var throws := 0
 var chases := 0
 ## Gartenhof der Baumgasse (seit der Nachbesserung 3 von 6h): Abstecher dorthin, Jagden dort
 var garden_visits := 0
+## Katzen, die gerade weitergeschickt werden (resume)
+var _resuming := {}
 ## Prüfwerkzeug: über eine Bank aufs Fensterbrett gesprungen
 var bench_hops := 0
 var court_hunts := 0
@@ -422,10 +424,25 @@ func blocked(cat: StreetCat, dir: Vector3) -> void:
 	_continue_visit(cat, true, dir)
 
 
+## Die Schritte einer Katze sind aus, ohne dass sie an einem Straßenende ist: von hier aus weiter (false = geht nicht, dann
+## endet der Besuch).
+func resume(cat: StreetCat) -> bool:
+	if _resuming.has(cat):
+		return false
+	_resuming[cat] = true
+	_continue_visit(cat)
+	_resuming.erase(cat)
+	return cat.get_action_type() != "" or not cat.get_actions().is_empty()
+
+
 ## Vom jetzigen Ort aus weiter: vielleicht noch ein Halt, dann zu einem verdeckten Ende.
 ## blocked_dir: Dorthin ging es nicht weiter (jemand stand im Weg) – dann erst ein Stück zurück, weg von der Person
 ## (nicht seitlich zur Wand: dort steht oft gerade der, der vor dem Schaufenster wartet), dann umkehren.
 func _continue_visit(cat: StreetCat, turn_back: bool = false, blocked_dir: Vector3 = Vector3.ZERO) -> void:
+	# drinnen erst durch die Tür und die Treppe hinunter, von der Treppe erst hinunter (nie quer durch die Stufen)
+	if cat.inside or on_stairs(cat.global_position):
+		cat.replace_actions(_way_down(cat))
+		return
 	var start := cat.global_position
 	var actions: Array[Dictionary] = []
 	if blocked_dir != Vector3.ZERO:
@@ -487,7 +504,7 @@ func _look_around() -> void:
 	_try_meet()
 	for cat in _cats:
 		if cat.inside or cat.get_action_type() != "walk" or cat.hunting or cat._action.get("run", false) \
-				or cat._action.get("detour", false):
+				or cat._action.get("detour", false) or not cat.on_street_level():
 			continue
 		if _try_hunt(cat):
 			continue
@@ -1756,12 +1773,74 @@ func throw_toy(toy: Node3D, start: Vector3, velocity3: Vector3) -> void:
 	_fly(toy, points, points.size() * dt, func() -> void:
 		if not is_instance_valid(toy):
 			return
+		# auf der Treppe bleibt nichts liegen: es kullert die Stufen hinunter
+		if on_stairs(toy.global_position):
+			_tumble_down(toy)
+			return
 		toy.set_meta("loose", true)
 		var rest := toy.global_position
 		if String(toy.get_meta("kind", "")) in ["ball", "yarn"]:
 			rest = push_toy(toy, Vector3(velocity3.x, 0.0, velocity3.z), 0.7)
 		_toy_landed(toy, rest))
 	throws += 1
+
+
+## Liegt ein Punkt (Welt) auf der Eingangstreppe der Bücherei (Podest oder Stufen, oberhalb des Gehwegs)?
+func on_stairs(point: Vector3) -> bool:
+	if point.y < _outside.global_position.y + 0.04 or (_room and _room.is_inside_build_area(point)):
+		return false
+	var door := StreetLayout.door_center()
+	var out := StreetLayout.door_outward()
+	var l := _outside.to_local(point)
+	var d := Vector3(l.x - door.x, 0.0, l.z - door.z)
+	var depth := GameConfig.entrance_podium_depth + GameConfig.entrance_step_count * GameConfig.entrance_step_depth
+	return d.dot(out) > -0.1 and d.dot(out) < depth + 0.1 and absf(d.dot(out.cross(Vector3.UP))) < StreetLayout.diagonal_width() / 2.0 + 0.1
+
+
+## Spielzeug kullert von der Treppe auf den Gehweg davor (in kleinen Hüpfern von Stufe zu Stufe).
+func _tumble_down(toy: Node3D) -> void:
+	var out := StreetLayout.door_outward()
+	var depth := GameConfig.entrance_podium_depth + GameConfig.entrance_step_count * GameConfig.entrance_step_depth
+	var door := _ground(Vector2(StreetLayout.door_center().x, StreetLayout.door_center().z))
+	var start := toy.global_position
+	var side := out.cross(Vector3.UP)
+	var end := door + out * (depth + _rng.randf_range(0.35, 0.8)) + side * (start - door).dot(side)
+	end.y = _outside.global_position.y + 0.015
+	var points := PackedVector3Array()
+	for k in 25:
+		var t := k / 24.0
+		var p := start.lerp(end, t)
+		p.y = lerpf(start.y, end.y, t) + absf(sin(t * PI * 3.0)) * 0.07 * (1.0 - t)
+		points.append(p)
+	_fly(toy, points, 0.8, func() -> void:
+		if is_instance_valid(toy):
+			toy.set_meta("loose", true)
+			_toy_landed(toy, toy.global_position))
+
+
+## Von drinnen oder von der Treppe hinunter auf den Gehweg, danach weiter wie immer.
+func _way_down(cat: StreetCat) -> Array[Dictionary]:
+	var door := StreetLayout.door_center()
+	var out := StreetLayout.door_outward()
+	var room_y := floor_y_room()
+	var door_point := Vector3(door.x, room_y, door.z)
+	var door_in := door_point - out * 0.6
+	var a: Array[Dictionary] = []
+	if cat.inside:
+		var way: Array = [cat.global_position]
+		var route := _find_path(_room_grid(), cat.global_position, door_in)
+		way.append_array(route)
+		if route.is_empty():
+			way.append(door_in)
+		a.append(_walk(way))
+		a.append({"type": "call", "callable": func(c: StreetCat) -> void:
+			c.insert_actions(_door_leave(door_point, out, door_in, _wait_spot(true)))})
+		a.append({"type": "inside", "value": false})
+	else:
+		a.append(_walk([cat.global_position, _podium_point(door_point, out)]))
+	a.append_array(_stairs(door_point, out, room_y, false, cat.adult))
+	a.append({"type": "call", "callable": _continue_visit})
+	return a
 
 
 ## Gelandetes Spielzeug: die nächste Katze, die es sehen kann (frei, auf dem Boden, gleiche Höhe), rennt hin,
@@ -1775,8 +1854,11 @@ func _toy_landed(toy: Node3D, rest: Vector3) -> void:
 			continue
 		if cat.get_action_type() in ["jump", "pounce", "leave", "wait_door"] or _meta(cat, "playing_toy") != null:
 			continue
+		# nur auf derselben Ebene hinterher (nicht von der Treppe hinunter oder hinauf – dort liefe sie durch die Stufen)
+		if not (cat.inside or cat.on_street_level()):
+			continue
 		var d := rest - cat.global_position
-		if absf(d.y) > 0.5:
+		if absf(d.y) > 0.15:
 			continue
 		d.y = 0.0
 		if d.length() > best_d:

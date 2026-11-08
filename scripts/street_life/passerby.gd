@@ -919,6 +919,11 @@ func _step_sit(delta: float) -> void:
 				_action.back = pos
 				if _model and "sit_height" in _model:
 					_model.set("sit_height", float(_action.get("height", 0.45)) / scale.y)
+				if _model and "relaxed_sit" in _model:
+					var chair: Variant = _action.get("seat")
+					_model.set("relaxed_sit", true)
+					_model.set("sit_backrest", (chair as StreetSeat).backrest if chair is StreetSeat else 0.0)
+					_model.set("sit_leans", randf() < GameConfig.passerby_lean_back_share)
 			_anim_state = &"walk"
 			_anim_speed = speed_pref * 0.7
 			var next := pos.move_toward(front, speed_pref * 0.7 * delta)

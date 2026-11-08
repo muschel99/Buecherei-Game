@@ -17,10 +17,12 @@
 [node name="SeatLeft" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.37, 0.25, 0.0)
 script = ExtResource("2_seat")
+backrest = 0.24
 
 [node name="SeatRight" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.37, 0.25, 0.0)
 script = ExtResource("2_seat")
+backrest = 0.24
 
 [node name="ObstacleLeft" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.05)
