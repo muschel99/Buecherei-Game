@@ -805,6 +805,12 @@ var passerby_pause_clip_max: float = 7.0
 ## auseinander, mit diesem Tempo in m/s), Händeschütteln zur Begrüßung (Wahrscheinlichkeit), Erzähler zeigt oder
 ## gestikuliert, Zuhörer nickt oder wiegt den Kopf, zum Abschied winken
 var passerby_chat_gap: float = 1.3
+## Beim gemeinsamen Gehen (seit Nachbesserung 4 von 6h): so lange zum Gegenüber schauen bzw. auf den Weg (s von–bis)
+var passerby_walk_look_time: Vector2 = Vector2(1.0, 2.6)
+var passerby_walk_away_time: Vector2 = Vector2(2.0, 5.0)
+## Im Sitzen lehnen sich Passanten so weit zurück (Grad, sehen dann entspannter aus), Dauer des Zurücklehnens (s)
+var passerby_sit_lean: float = 17.0
+var passerby_sit_lean_time: float = 1.2
 var passerby_step_back_speed: float = 0.35
 var passerby_handshake_chance: float = 0.4
 ## … nur wenn die Hände etwa gleich hoch sind (m Unterschied; klein und groß schütteln sich nicht die Hand)

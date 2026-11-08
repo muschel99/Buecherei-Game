@@ -350,6 +350,7 @@ func _footsteps(moved: float) -> void:
 func _next_action() -> void:
 	ignore_agent = null
 	_attend(null)
+	_set_road_scan(false)
 	if _actions.is_empty():
 		_action = {"type": "leave", "gate": false}
 	else:
@@ -476,9 +477,14 @@ func _step_cross(delta: float) -> void:
 				_attend(null)
 				_phase = 3
 				on_road = true
+				_set_road_scan(true)
 		3:  # hinüber (leicht schräg in Laufrichtung) – steht dort jemand, ein Stück daneben
 			if not _action.has("from_s"):
 				_action.from_s = _s
+			# beim Hinübergehen nach links und rechts schauen; kommt ein Auto, ihm nachschauen
+			var coming := life.vehicle_coming(self)
+			_attend(coming)
+			_set_road_scan(coming == null)
 			var lat := move_toward(_lat, far_curb, speed_pref * delta)
 			# Schräg höchstens CROSS_DRIFT weit (die freie Stelle drüben ist so viel breiter)
 			var s_next := _s
@@ -730,6 +736,11 @@ func pet_from_rub(cat: StreetCat) -> void:
 
 
 ## Wen die Figur gerade anschaut (Katze, Auto; null = wieder wie sonst).
+func _set_road_scan(on: bool) -> void:
+	if _model and "road_scan" in _model:
+		_model.set("road_scan", on)
+
+
 func _attend(node: Node3D) -> void:
 	if _model and _model.has_method("look_at_node"):
 		_model.call("look_at_node", node)

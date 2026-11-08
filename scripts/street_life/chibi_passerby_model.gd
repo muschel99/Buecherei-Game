@@ -125,6 +125,11 @@ var _legs_cross := false
 var _legs_wait := 0.0
 ## Gesprächspartner (wird angeschaut, auch wenn er daneben sitzt); etwas, das gezielt angeschaut wird (look_at_node)
 var _chat_partner: Node3D
+## Beim gemeinsamen Gehen abwechselnd zum Gegenüber und nach vorn schauen (seit Nachbesserung 4 von 6h)
+var _walk_look_on := true
+var _walk_look_until := 0.0
+## Beim Überqueren der Fahrbahn nach links und rechts schauen (Passerby setzt das)
+var road_scan := false
 var _attention: Node3D
 ## Einkaufstasche: Modell, Pendel (Ausschlag x/z in Bogenmaß, Geschwindigkeit), letzte Lage/Geschwindigkeit der Hand
 var _bag: Node3D
@@ -511,6 +516,10 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 		# ins Sitzen und zwischen Sitz-Haltungen langsamer überblenden (weicher)
 		_player.play(clip, BLEND * (2.0 if state == &"sit" or _seated > 0.0 else 1.0))
 	_update_layers(state, walking, delta)
+	# Im Sitzen entspannt zurückgelehnt (nur Passanten, nicht am Steuer; weich hin und zurück)
+	if _gesture_modifier:
+		var lean_want := GameConfig.passerby_sit_lean if state == &"sit" and _transition == &"" and get_parent() is Passerby else 0.0
+		_gesture_modifier.lean = move_toward(_gesture_modifier.lean, lean_want, delta * GameConfig.passerby_sit_lean / GameConfig.passerby_sit_lean_time)
 	if not _shot.is_empty() and clip == _shot.clip:
 		_player.speed_scale = _update_shot(delta)
 	else:
@@ -523,9 +532,12 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 	elif state == &"browse":
 		target_yaw = sin(_time * 0.5) * 14.0
 		target_pitch = 10.0
-	# Wer in der Nähe ist, wird angeschaut (hat Vorrang vor dem Umschauen)
+	elif road_scan:
+		target_yaw = sin(_time * 1.3) * 40.0
+	# Wer in der Nähe ist, wird angeschaut (hat Vorrang vor dem Umschauen) – beim Umschauen an der Bordsteinkante nur das
+	# Auto, dem man nachschaut, nicht der Begleiter
 	_update_face(state, delta, GameConfig.chibi_look_max_yaw)
-	if _focus:
+	if _focus and (state != &"look" or _attention != null):
 		target_yaw = _focus_turn.x
 		target_pitch = _focus_turn.y
 	_head_yaw = lerpf(_head_yaw, target_yaw, minf(1.0, delta * 5.0))
@@ -984,12 +996,22 @@ func _scan_focus() -> void:
 			best_dist = INF
 	else:
 		_player_look_since = -1.0
-	if best == null and _chat_partner and is_instance_valid(_chat_partner) and _chat_partner.is_visible_in_tree():
+	# Beim gemeinsamen Gehen mal zum Gegenüber, mal auf den Weg schauen (sonst starren sie sich die ganze Strecke an),
+	# beim Überqueren der Fahrbahn gar nicht
+	var partner_ok: bool = _chat_partner != null and is_instance_valid(_chat_partner) and _chat_partner.is_visible_in_tree() \
+		and not road_scan
+	if partner_ok and _prev_state == &"walk":
+		if now_s >= _walk_look_until:
+			_walk_look_on = not _walk_look_on
+			var span: Vector2 = GameConfig.passerby_walk_look_time if _walk_look_on else GameConfig.passerby_walk_away_time
+			_walk_look_until = now_s + randf_range(span.x, span.y)
+		partner_ok = _walk_look_on
+	if best == null and partner_ok:
 		best = _chat_partner
 		best_dist = me.distance_to(_chat_partner.global_position)
 	if best == null:
 		for other in _everyone:
-			if other == self or not other.is_visible_in_tree():
+			if other == self or not other.is_visible_in_tree() or other == _chat_partner:
 				continue
 			var dist := _focus_distance(me, forward, other.eye_point(), GameConfig.chibi_look_others_radius,
 				GameConfig.chibi_look_others_angle)

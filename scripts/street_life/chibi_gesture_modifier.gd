@@ -30,6 +30,9 @@ var clip_hand_min_x: float = -0.29
 ## Nur beim Winken: Oberarm nach außen, Hand neben dem Kopf (die Ebenen für Oberkörper und Beine übernehmen genau)
 var clip_wave_fix: bool = true
 var _clip_tracks: Dictionary = {}
+## Oberkörper zurückgelehnt (Grad; im Sitzen, seit Nachbesserung 4 von 6h): Rücken und Brust nach hinten, der Hals gleicht
+## einen Teil davon aus (der Blick bleibt geradeaus)
+var lean: float = 0.0
 ## … und die Spur der Lage der Hüfte, falls sie dabei ist (z. B. bei der Anhalte-Haltung auf dem Rad)
 var _clip_positions: Dictionary = {}
 
@@ -56,7 +59,11 @@ func set_clip(anim: Animation, prefix: String, bone_names: PackedStringArray) ->
 
 func _process_modification_with_delta(_delta: float) -> void:
 	var skeleton := get_skeleton()
-	if skeleton == null or gesture == Gesture.NONE or weight <= 0.001:
+	if skeleton == null:
+		return
+	if absf(lean) > 0.05:
+		_apply_lean(skeleton)
+	if gesture == Gesture.NONE or weight <= 0.001:
 		return
 	var w := weight
 	var t := time
@@ -143,6 +150,14 @@ func _orient_hand(skeleton: Skeleton3D, hand_name: String, forearm_name: String,
 
 
 ## Dreht einen Knochen um eine Achse im Raum der Figur (Bogenmaß).
+## Zurücklehnen: Drehung um die Achse quer durch die Figur (+X = links; negativ = der Oberkörper geht nach hinten).
+func _apply_lean(skeleton: Skeleton3D) -> void:
+	for part: Array in [["Spine", 0.45], ["Chest", 0.3], ["UpperChest", 0.25], ["Neck", -0.65]]:
+		var bone := skeleton.find_bone(String(part[0]))
+		if bone >= 0:
+			_turn(skeleton, bone, Vector3.RIGHT, -deg_to_rad(lean) * float(part[1]))
+
+
 func _turn(skeleton: Skeleton3D, bone: int, axis: Vector3, angle: float) -> void:
 	if absf(angle) < 0.0001:
 		return
