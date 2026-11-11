@@ -1314,3 +1314,17 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - For Blender models, render previews from several angles (Cycles, CPU) and look at them before exporting.
 - After every visual change, check screenshots for floating parts, gaps, clipping through walls and wrong scale.
 - When exporting from Blender: apply all transforms and put the origin at the base of the object.
+
+## Agent skills
+
+### Issue tracker
+
+Aufgaben-Zettel (Tickets, Specs) liegen als Markdown-Dateien in `.scratch/<feature>/` (Text auf Deutsch, einfache Worte); `docs/ROADMAP.md` + Notion bleiben der Überblick. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Standard-Namen (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) als `Status:`-Zeile in jedem Zettel. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: ein `GLOSSARY.md` + `docs/adr/` im Hauptordner (entstehen erst bei Bedarf). See `docs/agents/domain.md`.
