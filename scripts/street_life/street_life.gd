@@ -106,6 +106,8 @@ var birds: BirdLife
 var cats: CatLife
 ## Anwohner, Türen und Läden (seit Etappe 6i), beim Start angelegt
 var homes: StreetHomes
+## Besucher der Bücherei (seit Etappe 7)
+var library: LibraryVisits
 
 
 func _ready() -> void:
@@ -140,6 +142,11 @@ func _start() -> void:
 	homes.name = "Homes"
 	add_child(homes)
 	homes.setup(self, _seed + 37 if _seed >= 0 else -1)
+	# Besucher der Bücherei (seit Etappe 7)
+	library = LibraryVisits.new()
+	library.name = "Library"
+	add_child(library)
+	library.setup(self, _seed + 53 if _seed >= 0 else -1)
 	_started = true
 	if GameConfig.animals_enabled:
 		_start_animals.call_deferred()
@@ -207,6 +214,8 @@ func step(delta: float) -> void:
 		walker.step(delta)
 	if homes:
 		homes.step(delta)
+	if library:
+		library.step(delta)
 	_update_chats(delta)
 	_update_street_waves(delta)
 	_update_pets(delta)
@@ -1552,6 +1561,10 @@ func _plan_walker(start: Dictionary) -> Dictionary:
 				if side == 1 and (event.s - cursor) * dir > 0.0:
 					cursor = event.s
 					actions.append({"type": "walk", "route": sidewalks[side], "to": cursor, "passing": "library"})
+					# Seit Etappe 7: vielleicht hinein (entscheidet die Bücherei erst hier – Öffnungszeit, Schild, Platz)
+					var rejoin := _free_lane_point(side, cursor + dir * 1.5, comfort)
+					actions.append({"type": "call", "callable": func(w: Passerby) -> Array:
+						return library.offer_visit(w, rejoin) if library else []})
 			"garden":
 				var join_s: float = event.s - dir * 1.5
 				if side != 1 or (join_s - cursor) * dir < 0.0:

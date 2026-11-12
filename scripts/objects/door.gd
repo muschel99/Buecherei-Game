@@ -132,6 +132,16 @@ func is_ajar() -> bool:
 	return is_open or not is_zero_approx(_hinge.rotation.y)
 
 
+## Wie weit ist die Tür offen (0 = zu, 1 = ganz offen)?
+func open_amount() -> float:
+	return clampf(absf(_hinge.rotation.y) / deg_to_rad(maxf(GameConfig.door_open_angle, 1.0)), 0.0, 1.0)
+
+
+## Scharnier (für Dinge, die mit dem Türblatt schwingen, z. B. das Schild „Geöffnet“).
+func get_hinge() -> Node3D:
+	return _hinge
+
+
 ## Gehört dieser Körper zum Türblatt?
 func is_leaf(collider: Object) -> bool:
 	return collider == _leaf

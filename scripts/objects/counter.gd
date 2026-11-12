@@ -11,6 +11,9 @@ extends Node3D
 ## Module (z. B. später eine Backshop-Auslage oder ein Kaffeeautomat) hängen unter dem Knoten
 ## "Modules" – die Struktur steht bereit, umgesetzt wird davon noch nichts.
 
+## Gruppe der Theke (Besucher, Rückgaben auf die Theke)
+const GROUP := &"counters"
+
 ## Pfad des gerade eingesetzten Modells (getauscht wird nur, wenn sich etwas ändert).
 var _model_path: String = ""
 
@@ -25,6 +28,8 @@ func _notification(what: int) -> void:
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
+	if get_parent() is PlacedFurniture:
+		add_to_group(GROUP)  # nicht die Vorschau im Gestaltungsmodus
 	CounterStyle.changed.connect(_apply_style)
 	_apply_style()
 

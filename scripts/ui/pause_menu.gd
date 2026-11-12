@@ -39,6 +39,8 @@ const CONTROLS := {
 		["E beim Tragen", "Anderes Buch obenauf (Umschalt + E: zurück), wenn das Angeschaute nichts mit E macht"],
 		["Q halten", "Alle getragenen Bücher ins Lager legen"],
 		["E am Rückgabekasten", "Innen neben der Tür: so viele Bücher nehmen, wie in die Hände passen"],
+		["E am Türschild", "Bücherei öffnen oder schließen (Besucher kommen von 7 bis 20 Uhr, wenn geöffnet)"],
+		["E an der Theke", "Hinter der Theke: Leseausweis des wartenden Besuchers stempeln – die Bücher sind ausgeliehen"],
 	],
 	"Gestalten": [
 		["Tab", "Gestaltungsmodus öffnen und schließen"],

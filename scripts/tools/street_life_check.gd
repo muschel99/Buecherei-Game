@@ -96,6 +96,27 @@ func _run() -> void:
 	if _args.has("deliver"):
 		var manager := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
 		manager.place_order([{"kind": "furniture", "id": "armchair_velvet", "count": int(_args.deliver)}], 0.0)
+	if _args.has("visitors"):
+		# Bücherei-Besucher prüfen (seit Etappe 7): geöffnet, Besuche sofort fällig, an der Theke wird selbst gestempelt
+		GameClock.load_save_data({"day": 1, "minute": 10.0 * 60.0})
+		GameClock.running = false
+		Lending.set_open(true)
+		Lending.debug_add_visits(int(_args.visitors))
+		var room := Lending.find_room()
+		for entry: Array in [["bookshelf_country", Vector3(2.7, 0, -1.0), -PI / 2.0], ["bookshelf_min_tall", Vector3(-2.75, 0, 1.6), PI / 2.0],
+				["armchair_velvet", Vector3(0.6, 0, 1.0), PI]]:
+			var data := Catalog.get_furniture(String(entry[0]))
+			if data and room:
+				room.add_furniture(data, Transform3D(Basis(Vector3.UP, float(entry[2])), entry[1]), null)
+		await get_tree().physics_frame
+		for shelf in get_tree().get_nodes_in_group(BookStock.SHELF_GROUP):
+			(shelf as BookShelf).set_genre(BookShelf.MIXED)
+			print("Regal gefüllt: %d Bücher" % (shelf as BookShelf).fill_from_storage())
+		if _args.has("read"):
+			GameConfig.visitor_read_chance = 1.0
+		LibraryVisits.debug = true
+		if _life.library:
+			_life.library.auto_stamp = true
 	var seconds := float(_args.get("seconds", 45.0))
 	var only: PackedStringArray = String(_args.get("only", "")).split(",", false)
 	var spots := _spots()
@@ -114,6 +135,12 @@ func _run() -> void:
 			_camera.global_rotation = Vector3(-0.05, yaw, 0.0)
 			_life.step(STEP)
 			time += STEP
+			if _args.has("visitors") and fmod(time, 6.0) < STEP:
+				for v in get_tree().get_nodes_in_group(LibraryVisits.VISITOR_GROUP):
+					var w := v as Passerby
+					var d := _life.library.door
+					print("  Besucher t=%.0f pos=(%.2f, %.2f) y=%.2f %s phase=%d tür=%s %.2f" % [time, w.pos.x, w.pos.y, w.floor_y,
+						w.get_action_type(), w._phase, d.is_open, d.open_amount()])
 			if _args.has("throw") and fmod(time, 15.0) < STEP and _life.cats:
 				_test_throw()
 			if _args.has("hunt") and fmod(time, 20.0) < STEP and _life.cats and _life.birds:
@@ -394,6 +421,10 @@ func _print_report() -> void:
 	if _life.homes:
 		print("Läden (seit 6i): Läden %d, Besuche %d, Tüten %d, im Pub gesetzt %d, feste Gäste %d, Figuren drinnen %d" % [_life.homes.shops.size(),
 			_life.homes.stat_shop_visits, _life.homes.stat_bags, _life.homes.stat_pub_visits, _life.homes.guests.size(), _life.homes.indoor.size()])
+	if _life.library:
+		var t := Lending.today
+		print("Bücherei (seit 7): Besucher %d, ausgeliehen %d, nichts gefunden %d, neue Ausweise %d, Einnahmen %d, %s" % [
+			int(t.visitors), int(t.borrowed), int(t.nothing_found), int(t.cards), int(t.income), _life.library.stats_text()])
 	print("=== Bericht Straßenleben ===")
 	print("Messungen: %d" % _report.samples)
 	print("Erschienen: %d, im Blickfeld: %d, mit freier Sicht (beim Umdrehen): %d" % [

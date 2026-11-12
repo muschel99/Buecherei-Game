@@ -1049,6 +1049,14 @@ func set_pet_target(cat: Node3D) -> void:
 	_pet_target = cat
 
 
+var _show_at: Variant = null
+
+
+## Rechte Hand zu einer Stelle (Welt) heben, z. B. den Leseausweis über die Theke halten (seit Etappe 7); null = nicht.
+func show_hand_at(point: Variant) -> void:
+	_show_at = point
+
+
 func _update_pet(delta: float) -> void:
 	if _gesture_modifier == null:
 		return
@@ -1056,6 +1064,10 @@ func _update_pet(delta: float) -> void:
 		and _shot.clip in [&"pet_reach", &"pet_cat"]
 	if petting and _pet_target.has_method("head_top"):
 		_gesture_modifier.pet_point = _skeleton.global_transform.affine_inverse() * (_pet_target.call("head_top") as Vector3)
+	var showing := _show_at is Vector3
+	if showing:
+		_gesture_modifier.show_point = _skeleton.global_transform.affine_inverse() * (_show_at as Vector3)
+	_gesture_modifier.show_weight = move_toward(_gesture_modifier.show_weight, 1.0 if showing else 0.0, delta / 0.4)
 	_gesture_modifier.body_scale = _hip_height / 0.607
 	_gesture_modifier.pet_weight = move_toward(_gesture_modifier.pet_weight, 1.0 if petting else 0.0, delta / 0.3)
 

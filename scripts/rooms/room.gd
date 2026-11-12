@@ -76,6 +76,11 @@ func _ready() -> void:
 		add_child(back)
 		back.build(self)
 		extra_build_areas.append(BackRoom.back_area())
+		add_to_group(Lending.ROOM_GROUP)  # der Laden (für Besucher und Ausleihe)
+		# Schild „Geöffnet/Geschlossen“ innen an der Ladentür
+		for door: Node in find_children("*", "Door", true, false):
+			OpenSign.attach(door as Door)
+			break
 	add_to_group(SaveManager.PERSIST_GROUP)
 	for item in get_placed_furniture():
 		_assign_uid(item)

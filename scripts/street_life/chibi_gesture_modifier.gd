@@ -68,6 +68,10 @@ var _clip_positions: Dictionary = {}
 ## in kleinen. Nur in der Nähe (PET_CATCH) und nur, solange die Hand ohnehin unten ist.
 var pet_point: Vector3 = Vector3.ZERO
 var pet_weight: float = 0.0
+## Etwas zeigen (seit Etappe 7: Leseausweis über die Theke): rechtes Handgelenk zu diesem Punkt (Raum des Skeletts),
+## Handfläche nach vorn, Finger nach oben
+var show_point: Vector3 = Vector3.ZERO
+var show_weight: float = 0.0
 const PET_CATCH := 0.22
 const PET_PALM := 0.05
 const PET_REST := 0.012
@@ -107,6 +111,8 @@ func _process_modification_with_delta(_delta: float) -> void:
 		_grip(skeleton, "Left", grip_left)
 	if pet_weight > 0.001:
 		_apply_pet(skeleton)
+	if show_weight > 0.001:
+		_apply_show(skeleton)
 	if gesture == Gesture.NONE or weight <= 0.001:
 		return
 	var w := weight
@@ -253,6 +259,15 @@ func _apply_pet(skeleton: Skeleton3D) -> void:
 	var fingers := wrist_pose.basis.y.normalized()
 	fingers.y = minf(fingers.y, -0.15)
 	_orient_hand_along(skeleton, hand, fingers.normalized(), Vector3.UP, pet_weight * 0.7)
+
+
+## Rechte Hand zeigt etwas vor: Handgelenk zu show_point, Ellbogen hängt nach unten außen, Handfläche nach vorn.
+func _apply_show(skeleton: Skeleton3D) -> void:
+	var hand := skeleton.find_bone("RightHand")
+	if hand < 0:
+		return
+	_reach(skeleton, "Right", show_point, Vector3(-0.6, -1.0, -0.2), show_weight)
+	_orient_hand_along(skeleton, hand, Vector3(0.0, 1.0, 0.3).normalized(), Vector3(0.0, 0.0, -1.0), show_weight)
 
 
 func _reach(skeleton: Skeleton3D, prefix: String, target: Vector3, pole: Vector3, amount: float) -> void:

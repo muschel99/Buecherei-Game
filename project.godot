@@ -32,6 +32,7 @@ CounterStyle="*res://scripts/autoload/counter_style.gd"
 FacadeDesign="*res://scripts/autoload/facade_design.gd"
 DebugKeys="*res://scripts/autoload/debug_keys.gd"
 GameClock="*res://scripts/autoload/game_clock.gd"
+Lending="*res://scripts/autoload/lending.gd"
 
 [display]
 

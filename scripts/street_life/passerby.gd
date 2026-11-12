@@ -365,6 +365,10 @@ func step(delta: float) -> void:
 			_step_chore(delta)
 		"buy":
 			_step_buy(delta)
+		"call":
+			_step_call()
+		"wait":
+			_step_wait(delta)
 		_:
 			_next_action()
 	velocity2 = (pos - before) / maxf(delta, 0.0001)
@@ -481,6 +485,10 @@ func _step_walk(delta: float) -> void:
 		# Hindernis-Kreise daneben (Blumenständer, Kübel) halten hier nicht auf (seit Etappe 6j)
 		ghost_static = maxf(ghost_static, 0.2)
 	_walk_along(delta, _pair_want(_comfort_lat()))
+	if _action.has("floor_to") and _route:
+		# Treppe (seit Etappe 7, Bücherei): die Bodenhöhe wächst gleichmäßig entlang des Wegs
+		var t := clampf(_s / maxf(_route.length(), 0.01), 0.0, 1.0)
+		floor_y = lerpf(float(_action.get("floor_from", floor_y)), float(_action.floor_to), t)
 	# Unterwegs umgedreht (neue Schritte von StreetLife)? Dann gilt schon der neue Weg – nicht
 	# mit dem alten Ziel vergleichen (sonst fiele der neue Weg weg und er verschwände mitten
 	# auf der Straße)
@@ -607,6 +615,8 @@ func _step_door(delta: float) -> void:
 	var from: Vector2 = _action.from_pos
 	var to: Vector2 = _action.to_pos
 	_phase_time += delta
+	if _action.get("fixed_path", false):
+		ghost_static = maxf(ghost_static, 0.2)  # Bücherei: Stufen und Kübel neben der Treppe halten nicht auf
 	match _phase:
 		0:  # zum Startpunkt vor bzw. hinter der Tür
 			var step := speed_pref * 0.75
@@ -686,6 +696,35 @@ func _step_door(delta: float) -> void:
 			if door.is_closed():
 				active = false
 				finished.emit(self)
+
+
+## Rückfrage (seit Etappe 7, Bücherei-Besucher): "callable" wird mit dieser Figur aufgerufen; liefert es eine Liste von
+## Schritten, kommen sie gleich als Nächstes dran (so plant die Bücherei erst dann, wenn man wirklich dort ist).
+func _step_call() -> void:
+	var action := _action
+	var more: Variant = (_action.callable as Callable).call(self)
+	if not is_same(action, _action):
+		return  # die Rückfrage hat schon neue Schritte gesetzt (replace_actions)
+	if more is Array:
+		var list: Array[Dictionary] = []
+		for entry: Variant in more:
+			if entry is Dictionary:
+				list.append(entry)
+		list.append_array(_actions)
+		_actions = list
+	_next_action()
+
+
+## Warten (seit Etappe 7): stehen bleiben (Blick "face", Animation "anim"), bis "until" (Callable mit dieser Figur) true
+## liefert – z. B. an der Theke, bis gestempelt ist. "every" (Callable) wird dabei jedes Bild aufgerufen.
+func _step_wait(delta: float) -> void:
+	_phase_time += delta
+	_anim_state = StringName(_action.get("anim", &"idle"))
+	_anim_speed = 0.0
+	if _action.has("every"):
+		(_action.every as Callable).call(self, delta)
+	if (_action.until as Callable).call(self):
+		_next_action()
 
 
 ## Eine kleine Arbeit (seit Etappe 6i): Blumen gießen oder fegen. Steht schon am Platz (Weg davor als "walk").
@@ -1555,7 +1594,7 @@ func _update_facing(delta: float) -> void:
 	elif _action.get("type") == "cross" and _phase in [1, 2]:
 		var normal := _route.normal_at(_s) * -float(side)
 		target = atan2(normal.x, normal.y)
-	elif _action.get("type") in ["pet", "door", "chore", "buy"] and _action.has("face"):
+	elif _action.get("type") in ["pet", "door", "chore", "buy", "wait"] and _action.has("face"):
 		var face: Vector2 = _action.face
 		target = atan2(face.x, face.y)
 		# beim Hindurchgehen (door, Phase 2) in Gehrichtung – die Seiten bleiben gleich

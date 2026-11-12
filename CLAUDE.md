@@ -137,7 +137,8 @@ scenes/            Szenen (.tscn)
     tablet_apps/   Apps des Theken-Tablets (je eine kleine Szene)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
-                   Wallet, Inventory, BookStock, BookArt, CounterStyle, DebugKeys)
+                   Wallet, Inventory, BookStock, BookArt, CounterStyle, DebugKeys, seit 7: GameClock, Lending)
+  library/         Bücherei-Besucher (seit 7): LibraryVisits, LibraryDoorLink
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
   data/            Datenformate (FurnitureData, ColorVariant, SurfaceData, StyleData + StyleTags, GenreData,
@@ -1316,6 +1317,32 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Katzen** auch aus der Gasse (`CatLife._spawn_from_alley`, `cat_alley_start_chance`). **Prüfbilder ohne Straße:**
   `pose_probe.tscn -- grid [clip] | close <fig> <form> <clip> <t> <höhe> <abstand> | animal <cat|cat_adult|bird|pigeon> [clips] |
   pet <fig> <katze> <clip> <t> [aus] | bagsit | bench_chat`.
+- **Tagesablauf (seit Etappe 7, Spec `.scratch/day-cycle-7/spec.md`):** Autoload `GameClock` (Tag, Uhrzeit; Tageslänge =
+  Einstellung „gameplay/day_length“ aus `GameConfig.clock_day_length_options`; Signale minute_passed/hour_changed/day_started/
+  morning/woke_up; `sleep_until(stunde)`, `is_between(von, bis)` auch über Mitternacht; F2 = eine Stunde vor; Uhr im HUD).
+  `DayCycle` (main.gd, `day_cycle_enabled`): Sonne/Mond über `GameConfig.day_light_keys` (Stützpunkte, weich gemischt), ein
+  Licht für beide, Himmel-Shader `storybook_sky.gdshader` (Wolken, Mond, Sterne), Laternen abends, Fensterlicht (Gruppe
+  `RoomOpenings.DAYLIGHT_GROUP`); Straße nach `street_activity_by_hour`, Vögel nachts nicht. Testbilder `--time=<stunde>`.
+  **Pausenmenü** = aufgeklapptes Buch (`pause_menu.gd` baut alles im Code: links Inhaltsverzeichnis, rechts die Seite; je
+  Settings-Abschnitt eine Seite, Steuerung aus `CONTROLS`), Bilder `--ui=pause:<Seite>`.
+  **Hinterzimmer** `BackRoom` (Room `with_back_room`, `back_area()` hinter der Theke, Durchgang mit Vorhang, Dachfenster,
+  Sperrzonen auf beiden Seiten, `clear_doorway` nach dem Laden); die Backsteinhaut der Fassade wird im Durchgang über die
+  globalen Shader-Werte `library_cut_min/max` (storybook.gdshaderinc) nicht gezeichnet. Bett `bed_backroom` (bed.gd): schlafen
+  20–4 Uhr ohne Besucher (Gruppe `library_visitors`), aufwachen `clock_morning_hour`.
+  **Besucher und Ausleihe:** Autoload `Lending` (Schild `is_open`/`set_open`, Tickets je Tag nach `fullness()` = Bücher in
+  Regalen + Sitzplätze, `want_visitor()`, `lend(bücher, neu)` → Wallet.earn, Ausweise, `loans` → Rückgabe nach `loan_days` in
+  den ReturnBox, sonst flach auf die Theke (Gruppe `Counter.GROUP`), sonst Lager; Zahlen `today`/`history`, Signale
+  `stats_changed`/`day_closed`; Raum in Gruppe `Lending.ROOM_GROUP`). Schild `OpenSign` (innen und außen am Türblatt, E =
+  „Umdrehen“). `LibraryVisits` (Kind von StreetLife, `life.library`): Passanten auf der Bücherei-Seite bekommen im Plan einen
+  Schritt "call" → `offer_visit` (Treppe mit `floor_from/floor_to`, Tür über `LibraryDoorLink` = HouseDoor-Ersatz für die
+  echte `Door`, Besucher in `Door.KEEPOUT_GROUP`); drinnen plant alles erst vor Ort (Schritte "call", "wait" mit `until`/`every`
+  in Passerby): Regale (Lieblings-Genre, `visitor_*`), lesen auf freien `Seating`-Plätzen (nicht im Hinterzimmer), Schlange an
+  der Theke (Kundenseite = +Z der Theke), Glocke `ui/counter_bell`, Ausweis zeigen (`ChibiPasserbyModel.show_hand_at` →
+  `ChibiGestureModifier.show_point`), E „Stempeln“ nur hinter der Theke (`player_behind_counter`), Stempel `ui/stamp`
+  (Geräusche aus `tools/make_counter_sounds.py`). Wege im Laden: AStarGrid2D aus Kollisionen (world + furniture, Abstand
+  `visitor_clearance`), neu bei `Room.layout_changed`. Requisiten `book`/`card` (`scenes/street_life/props/`). Bücher in der
+  Hand von Besuchern speichert Lending als sofort fällige Rückgabe. Prüfen: street_life_check `--visitors=<n> [--read]`
+  (stellt Regale/Sessel auf, stempelt selbst; Spielstand vorher löschen), Haltung `pose_probe -- card|book`.
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

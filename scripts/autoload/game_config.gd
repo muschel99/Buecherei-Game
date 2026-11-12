@@ -325,13 +325,17 @@ var chore_water_hold: Vector2 = Vector2(1.4, 4.0)
 ## Gegenstände in der Hand: Modelle und wie sie in der rechten Hand liegen (Lage/Drehung relativ zum Handknochen).
 var passerby_prop_models: Dictionary = {"can": "res://assets/models/characters/props/watering_can.glb",
 	"broom": "res://assets/models/characters/props/broom.glb", "mug": "res://assets/models/characters/props/mug.glb",
-	"cup": "res://assets/models/characters/props/tea_cup.glb", "cake": "res://assets/models/characters/props/cake_plate.glb"}
+	"cup": "res://assets/models/characters/props/tea_cup.glb", "cake": "res://assets/models/characters/props/cake_plate.glb",
+	"book": "res://scenes/street_life/props/held_book.tscn", "card": "res://scenes/street_life/props/library_card.tscn"}
 ## Hand-Achsen: +y Finger, +z Handrücken (Handfläche -z), Daumen rechts -x: Kanne hängt unter der Hand, Tülle in Fingerrichtung.
 var passerby_prop_hold: Dictionary = {
 	"can": {"pos": Vector3(0.0, 0.07, -0.02), "basis": Basis(Vector3(0, 0, -1), Vector3(-1, 0, 0), Vector3(0, 1, 0)), "scale": 0.8},
 	"mug": {"pos": Vector3(0.06, 0.055, -0.06), "basis": Basis(Vector3.UP, deg_to_rad(-25.0)) * Basis(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), "scale": 1.0},
 	"cup": {"pos": Vector3(0.06, 0.055, -0.06), "basis": Basis(Vector3.UP, deg_to_rad(-25.0)) * Basis(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), "scale": 1.0},
 	"cake": {"pos": Vector3(-0.02, 0.05, -0.05), "basis": Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(-1, 0, 0)), "scale": 0.5},
+	# Bücherei (seit Etappe 7): Buch flach in der Hand, Leseausweis zwischen Daumen und Fingern
+	"book": {"pos": Vector3(0.0, 0.07, -0.035), "basis": Basis.IDENTITY, "scale": 1.0},
+	"card": {"pos": Vector3(0.0, 0.07, -0.022), "basis": Basis.IDENTITY, "scale": 1.0},
 }
 
 ## --- Begegnungen (seit Etappe 6i) ---
@@ -1314,3 +1318,45 @@ var back_room_door_height: float = 2.15
 var back_room_skylight: Vector2 = Vector2(0.9, 1.2)
 var back_room_curtain_color: Color = Color(0.56, 0.24, 0.2)
 
+
+## --- Bücherei-Besucher und Ausleihe (seit Etappe 7, Teil 4: Lending, LibraryVisits) ---
+## Besucher kommen von … bis … Uhr, solange das Schild an der Tür auf „Geöffnet“ steht (die letzten werden noch fertig).
+var library_open_from_hour: float = 7.0
+var library_open_until_hour: float = 20.0
+## Besucher am Tag: anfangs zufällig zwischen x und y, mit vollen Regalen und vielen Sitzplätzen bis visitors_per_day_full.
+var visitors_per_day_start: Vector2i = Vector2i(8, 12)
+var visitors_per_day_full: int = 25
+## Höchstens so viele gleichzeitig (anfangs … mit vollen Regalen).
+var visitors_at_once_start: int = 3
+var visitors_at_once_full: int = 6
+## Ab so vielen Büchern in den Regalen bzw. Sitzplätzen gilt die Bücherei als „voll“ (Anteil Bücher : Sitze = 70 : 30).
+var visitors_books_for_full: int = 220
+var visitors_seats_for_full: int = 6
+## Ein geplanter Besuch verfällt, wenn so lange (Spielstunden) niemand passend vorbeikam.
+var visitor_ticket_expiry_hours: float = 1.5
+## Gebühren (Taler): Leseausweis einmalig, je ausgeliehenes Buch.
+var library_card_fee: int = 15
+var book_lend_fee: int = 3
+## Neue Leser: Anteil der Besucher ohne Ausweis = 1 − Ausweise / library_regulars, aber mindestens library_new_share_min.
+var library_regulars: int = 40
+var library_new_share_min: float = 0.12
+## Bücher je Besucher (von … bis) und Rückgabe nach so vielen Tagen (von … bis; Uhrzeit zufällig).
+var visitor_books: Vector2i = Vector2i(1, 3)
+var loan_days: Vector2i = Vector2i(1, 3)
+## Am Regal stöbern: so viele Regale (von … bis), Sekunden je Regal.
+var visitor_shelf_stops: Vector2i = Vector2i(1, 3)
+var visitor_browse_time: Vector2 = Vector2(4.0, 9.0)
+## Findet jemand sein Lieblings-Genre nicht, nimmt er mit dieser Chance trotzdem etwas anderes mit.
+var visitor_other_genre_chance: float = 0.55
+## Hinsetzen und lesen (wenn ein Sitzplatz frei ist): Chance, Dauer in Sekunden (echte Zeit).
+var visitor_read_chance: float = 0.35
+var visitor_read_time: Vector2 = Vector2(40.0, 90.0)
+## Wegnetz im Laden: Rastergröße (m) und Abstand zu Möbeln/Wänden (Radius einer Figur, m).
+var visitor_grid_step: float = 0.15
+var visitor_clearance: float = 0.26
+## Theke: Glocke (Lautstärke dB), Ausweis so hoch über der Platte zeigen, Spielfigur zählt bis so weit hinter der Theke.
+var counter_bell_volume_db: float = -4.0
+var counter_card_height: float = 0.12
+var counter_staff_reach: float = 1.6
+## Besucher-Figuren drinnen etwas langsamer als draußen (Anteil).
+var visitor_indoor_speed: float = 0.75

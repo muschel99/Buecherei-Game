@@ -65,6 +65,29 @@ func _go():
 				m._update_chore(0.0)
 				for d in [Vector3(1,0.3,1), Vector3(0.1,0.3,1), Vector3(-1,0.2,0.1)]:
 					await _shot(m, d, "sweep_%.1f_%d" % [tt, int(d.x * 10)])
+		"card", "book":
+			# Bücherei (seit Etappe 7): Leseausweis über die Theke halten bzw. Buch in der Hand (stehend und sitzend)
+			var counter := MeshInstance3D.new()
+			var box := BoxMesh.new(); box.size = Vector3(1.2, 1.0, 0.65); counter.mesh = box
+			counter.position = Vector3(0.0, 0.5, 0.625)
+			if which == "card":
+				add_child(counter)
+				m.set_prop(&"card")
+			else:
+				m.set_prop(&"book")
+			for i in 40:
+				if which == "card":
+					m.show_hand_at(m.global_transform * Vector3(-0.1, 1.0 + GameConfig.counter_card_height, 0.245))
+				m.animate(&"idle", 0.0, 1.0 / 30.0)
+				await get_tree().process_frame
+			await _shot(m, Vector3(1, 0.3, 1.2), which + "_front")
+			await _shot(m, Vector3(-1.2, 0.25, 0.2), which + "_side")
+			if which == "book":
+				m.sit_height = 0.45
+				for i in 60:
+					m.animate(&"sit", 0.0, 1.0 / 30.0)
+					await get_tree().process_frame
+				await _shot(m, Vector3(1, 0.4, 1.2), "book_sit")
 		"hug":
 			var other := ChibiPasserbyModel.new()
 			add_child(other)

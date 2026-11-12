@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="card"]
+albedo_color = Color(0.92, 0.86, 0.68, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="card_mesh"]
+material = SubResource("card")
+size = Vector3(0.056, 0.086, 0.003)
+
+[sub_resource type="StandardMaterial3D" id="stripe"]
+albedo_color = Color(0.36, 0.22, 0.4, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="stripe_mesh"]
+material = SubResource("stripe")
+size = Vector3(0.058, 0.018, 0.0034)
+
+[node name="LibraryCard" type="Node3D"]
+
+[node name="Card" type="MeshInstance3D" parent="."]
+mesh = SubResource("card_mesh")
+
+[node name="Stripe" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.026, 0)
+mesh = SubResource("stripe_mesh")

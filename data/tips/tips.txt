@@ -164,3 +164,25 @@ Gardinen und Vorhänge gibt es bei „Nest & Nook“. Im Gestaltungsmodus hänge
 Alles, was du auswählst, ist erst ein Entwurf. „Bauen“ zeigt, was der Umbau kostet, und baut erst dann wirklich um.
 
 „Abbrechen“ verwirft den Entwurf – dann bleibt alles, wie es war.
+
+= Tag und Besucher | heart
+== Die Uhr läuft
+Oben neben dem Geld steht die Uhr. Ein Tag vergeht ganz gemütlich – wie lang er dauert, stellst du im Pausenmenü unter „Spiel“ ein.
+
+Abends gehen die Laternen an, nachts leuchten Mond und Sterne.
+
+== Geöffnet oder geschlossen
+An der Ladentür hängt ein kleines Schild. Drücke <E>, um es umzudrehen.
+
+Steht es auf „Geöffnet“, kommen von 7 bis 20 Uhr Besucher herein. Je mehr Bücher in den Regalen stehen und je mehr Plätze es zum Sitzen gibt, desto mehr kommen.
+
+== Besucher an der Theke
+Besucher stöbern in den Regalen, manche setzen sich zum Lesen. Mit ihren Büchern stellen sie sich an die Theke – eine kleine Glocke klingelt.
+
+Geh hinter die Theke und drücke <E>: ein Stempel in den Leseausweis, und die Bücher sind ausgeliehen. Niemand hat es eilig – sie warten geduldig.
+
+== Zurück in den Kasten
+Ausgeliehene Bücher kommen nach ein bis drei Tagen über den Rückgabekasten zurück. Ist er voll, liegen sie auf der Theke.
+
+== Schlafen
+Im Hinterzimmer hinter der Theke steht dein Bett. Ab 20 Uhr – wenn kein Besucher mehr da ist – kannst du dich mit <E> schlafen legen und wachst um 6 Uhr wieder auf.
