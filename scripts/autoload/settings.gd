@@ -39,6 +39,9 @@ const DEFINITIONS: Array[Dictionary] = [
 		"type": "choice", "options": ["Normal", "Aquarell"], "default": 1},
 	{"key": "graphics/show_fps", "section": "Grafik", "label": "Bilder pro Sekunde anzeigen (F3)",
 		"type": "toggle", "default": false},
+	# Tageslänge (seit Etappe 7): so viele Minuten echter Zeit dauert ein Spieltag (GameConfig.clock_day_length_options)
+	{"key": "gameplay/day_length", "section": "Spiel", "label": "Tageslänge (Minuten)",
+		"type": "choice", "options": ["16", "20", "24", "30", "40"], "default": 2},
 	{"key": "interface/hints", "section": "Oberfläche", "label": "Hinweise",
 		"type": "choice", "options": ["Aus", "Nur Symbole", "Symbol mit Wort"], "default": 2},
 	{"key": "interface/build_key_help", "section": "Oberfläche", "label": "Tastenhilfe im Gestaltungsmodus (H)",

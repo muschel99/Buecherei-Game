@@ -32,6 +32,7 @@ var _carry_indicator: CarryIndicator
 var _world_placer: LooseBooks
 var _tween: Tween
 var _money_tween: Tween
+var _clock_label: Label
 
 
 func _ready() -> void:
@@ -39,6 +40,7 @@ func _ready() -> void:
 	_money_change_label.modulate.a = 0.0
 	_money_label.text = Wallet.format(Wallet.money)
 	Wallet.money_changed.connect(_on_money_changed)
+	_add_clock()
 	# Ring um die Bildmitte beim Gedrückthalten von E
 	_hold_ring = HoldRing.new()
 	_hold_ring.set_anchors_preset(Control.PRESET_CENTER)
@@ -54,6 +56,32 @@ func _ready() -> void:
 	_key_hints.offset_top = 16.0
 	_key_hints.offset_bottom = 56.0
 	add_child(_key_hints)
+
+
+## Uhr neben dem Geld (seit Etappe 7): Wochentag und Uhrzeit, z. B. „Mo 9:40“ (in Schritten von 10 Spielminuten).
+func _add_clock() -> void:
+	var box := _money_label.get_parent()
+	var dot := Label.new()
+	dot.text = "·"
+	dot.add_theme_color_override("font_color", Color(1, 0.96, 0.88, 0.5))
+	dot.add_theme_font_size_override("font_size", 17)
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(dot)
+	_clock_label = Label.new()
+	_clock_label.name = "ClockLabel"
+	_clock_label.add_theme_color_override("font_color", Color(1, 0.96, 0.88, 0.92))
+	_clock_label.add_theme_font_size_override("font_size", 17)
+	_clock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(_clock_label)
+	GameClock.minute_passed.connect(func(_m: int) -> void: _update_clock())
+	_update_clock()
+
+
+func _update_clock() -> void:
+	var m := int(GameClock.minute_of_day()) / 10 * 10
+	var text := "%s %s" % [GameClock.weekday_name(true), GameClock.time_text(m)]
+	if _clock_label.text != text:
+		_clock_label.text = text
 
 
 func _process(_delta: float) -> void:

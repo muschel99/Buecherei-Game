@@ -1225,3 +1225,17 @@ var debug_money_amount: int = 500
 # Hier kommen nach und nach weitere Werte dazu, z. B.:
 # Tageslänge (Etappe 5), Leihgebühren (Etappe 5),
 # Freischaltintervalle (Etappe 10).
+
+
+# --- Tagesablauf (seit Etappe 7) ---
+
+## Tageslängen zur Auswahl (Minuten echter Zeit je Spieltag; Einstellung „Tageslänge“, gleiche Reihenfolge wie dort).
+var clock_day_length_options: Array[int] = [16, 20, 24, 30, 40]
+## Uhrzeit beim Start eines neuen Spiels (Stunde; Tag 1 ist ein Montag).
+var clock_start_hour: float = 8.0
+## Um diese Stunde erscheint der Notizzettel vom Vortag (und man wacht auf).
+var clock_morning_hour: int = 6
+## Nacht von … bis … (Stunden; Sterne, Mond, schlafen erlaubt).
+var clock_night_start: float = 20.0
+var clock_night_end: float = 4.0
+
