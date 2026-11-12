@@ -320,8 +320,28 @@ func _way_in(home: Dictionary, lane: Vector2) -> Array:
 
 
 func _route_to(a: Vector2, b: Vector2) -> Dictionary:
-	var route := StreetRoute.from_points(PackedVector2Array([a, b]), 0.3)
+	var points := PackedVector2Array([a, b])
+	# Steht etwas Festes auf dem geraden Weg (das Fahrrad vor dem Blumenladen), über einen Punkt daneben (seit Etappe 6j)
+	if _path_hits_solid(a, b):
+		var across := (b - a).orthogonal().normalized()
+		for side: float in [0.6, -0.6, 1.0, -1.0]:
+			var mid := (a + b) / 2.0 + across * side
+			if not _path_hits_solid(a, mid) and not _path_hits_solid(mid, b):
+				points = PackedVector2Array([a, mid, b])
+				break
+	# schmal: neben kurzen Wegen zur Tür stehen oft Töpfe und Fahrräder (seit Etappe 6j)
+	var route := StreetRoute.from_points(points, GameConfig.passerby_short_path_half_width)
 	return {"type": "walk", "route": route, "to": route.length(), "from_here": true, "fixed_path": true}
+
+
+## Liegt etwas Festes auf dem geraden Weg von a nach b (alle 0,25 m geprüft, Anfang und Ende ausgenommen – dort sind
+## Tür und Gehweg)?
+func _path_hits_solid(a: Vector2, b: Vector2) -> bool:
+	var steps := int(a.distance_to(b) / 0.25)
+	for k in range(1, steps):
+		if life._spot_in_solid(a.lerp(b, float(k) / steps), 0.18):
+			return true
+	return false
 
 
 ## Aus dem Haus, zu einem Ende der Straße (dort verschwindet man wie jeder Passant); später kommt man wieder (_come_home).

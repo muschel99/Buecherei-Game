@@ -908,6 +908,13 @@ var passerby_bag_models: Array[String] = ["res://assets/models/characters/props/
 ## Dämpfung, größter Ausschlag (Grad)
 var passerby_bag_clear: float = 0.2
 var passerby_bag_pendulum: float = 0.17
+## Tasche im Sitzen (seit Etappe 6j): so lange dauert das Abstellen bzw. Aufnehmen (s), dort steht sie (m, Raum der Figur:
+## x < 0 = rechts, z > 0 = vorn; mal Größe der Figur).
+## Kurze Wege zu Türen und Schaufenstern (seit Etappe 6j): so weit (m) darf man zum Ausweichen neben der Linie gehen – schmal,
+## weil daneben oft Töpfe, Kübel und Fahrräder stehen (wird es eng, drückt man sich aneinander vorbei).
+var passerby_short_path_half_width: float = 0.18
+var passerby_bag_set_down_time: float = 0.9
+var passerby_bag_ground_spot: Vector2 = Vector2(-0.3, 0.3)
 var passerby_bag_damping: float = 3.0
 var passerby_bag_max_swing: float = 24.0
 ## Tempo je Gangart: Wunschtempo × (Tempo der Animation / Tempo von "walk"), höchstens in diesen Grenzen
@@ -1084,6 +1091,8 @@ var pigeon_looks: Array[Dictionary] = [
 ]
 ## Katzen: höchstens so viele gleichzeitig, so oft kommt eine vorbei (s von–bis; die erste nach …)
 var cat_count: int = 3
+## Anteil der Katzen, die aus der Gasse neben der Bücherei kommen statt über ein Straßenende (seit Etappe 6j).
+var cat_alley_start_chance: float = 0.3
 var cat_interval: Vector2 = Vector2(70.0, 170.0)
 var cat_first_delay: Vector2 = Vector2(15.0, 45.0)
 ## Tempo (m/s): gehen, rennen (beim Fangenspielen und über die Straße)

@@ -164,6 +164,9 @@ var _sit := 0.0
 var _time := 0.0
 var _head_yaw := 0.0
 var _skirt_sit := 0.0
+var _pet_target: Node3D
+var _bag_down := 0.0
+var _bag_height := 0.0
 var _head_pitch := 0.0
 var _head_bone := -1
 ## Mimik: Restzeit des anderen Ausdrucks (0 = Grundausdruck); vor dem Schaufenster: wann es wieder
@@ -271,6 +274,7 @@ func give_bag(on: bool, model_path: String = "") -> void:
 	_bag.name = "Bag"
 	_bag.top_level = true
 	add_child(_bag)
+	_bag_height = 0.0
 	_bag_swing = Vector2.ZERO
 	_bag_spin = Vector2.ZERO
 	_hand_last = Vector3.INF
@@ -290,6 +294,7 @@ func _set_bag(rng: RandomNumberGenerator) -> void:
 	_bag.name = "Bag"
 	_bag.top_level = true
 	add_child(_bag)
+	_bag_height = 0.0
 	_bag_swing = Vector2.ZERO
 	_bag_spin = Vector2.ZERO
 	_hand_last = Vector3.INF
@@ -588,6 +593,7 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 	_head_yaw = lerpf(_head_yaw, target_yaw, minf(1.0, delta * 5.0))
 	_head_pitch = lerpf(_head_pitch, target_pitch, minf(1.0, delta * 3.0))
 	_update_gesture(delta)
+	_update_pet(delta)
 	if _head_modifier:
 		_head_modifier.yaw = _head_yaw
 		_head_modifier.pitch = _head_pitch + _nod_pitch + _gesture_head_pitch()
@@ -636,6 +642,15 @@ func _update_bag(delta: float) -> void:
 	_bag.visible = is_visible_in_tree()
 	if _skeleton == null or _hand_bone < 0 or not _bag.visible or delta <= 0.0:
 		return
+	# Im Sitzen steht die Tasche neben einem auf dem Boden (seit Etappe 6j – vorher setzten sich Taschenträger nie):
+	# beim Hinsetzen wandert sie aus der Hand hinunter, beim Aufstehen wieder hinauf
+	_bag_down = move_toward(_bag_down, 1.0 if _seated > 0.5 else 0.0, delta / GameConfig.passerby_bag_set_down_time)
+	if _bag_down >= 1.0:
+		_bag.global_transform = _bag_ground()
+		_hand_last = Vector3.INF
+		_bag_swing = Vector2.ZERO
+		_bag_spin = Vector2.ZERO
+		return
 	var hand := _skeleton.global_transform * _skeleton.get_bone_global_pose(_hand_bone)
 	var grip := hand * Vector3(0.0, 0.05, -0.02)
 	if _hand_last == Vector3.INF:
@@ -660,6 +675,28 @@ func _update_bag(delta: float) -> void:
 	var away := clampf((-GameConfig.passerby_bag_clear * scale.x - local_grip.x) / length, -0.8, 0.8)
 	var swing_x := minf(_bag_swing.x, asin(away)) if away < 0.8 else _bag_swing.x
 	_bag.global_transform = Transform3D(yaw * Basis(Vector3.RIGHT, -_bag_swing.y) * Basis(Vector3.BACK, swing_x), grip)
+	if _bag_down > 0.0:
+		_bag.global_transform = _bag.global_transform.interpolate_with(_bag_ground(), smoothstep(0.0, 1.0, _bag_down))
+
+
+## Wo die Tasche im Sitzen steht: rechts neben den Füßen auf dem Boden, leicht schräg (Ursprung der Tasche = Griff oben).
+func _bag_ground() -> Transform3D:
+	if _bag_height <= 0.0:
+		_bag_height = _measure_bag()
+	var spot: Vector2 = GameConfig.passerby_bag_ground_spot * scale.x
+	var floor_point := global_transform * Vector3(spot.x, 0.0, spot.y)
+	var basis := global_basis.orthonormalized() * Basis(Vector3.UP, deg_to_rad(-20.0))
+	return Transform3D(basis, floor_point + Vector3.UP * _bag_height)
+
+
+## Höhe der Tasche vom Griff bis zum Boden der Tasche (aus den Netzen; ohne Netz 0,3 m).
+func _measure_bag() -> float:
+	var lowest := 0.0
+	for node in _bag.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		var box := _bag.global_transform.affine_inverse() * mi.global_transform * mi.get_aabb()
+		lowest = minf(lowest, box.position.y)
+	return -lowest if lowest < -0.05 else 0.3
 
 
 ## Gegenstand in die rechte Hand nehmen (&"" = weglegen). Die Figur nimmt ihn nur, wo es niemand sieht (Anwohner hinter der
@@ -1005,6 +1042,22 @@ func chat_react(speaking: bool, laughing: bool) -> void:
 			_nod_t = 0.0
 		else:
 			play_clip([&"nod", &"nod", &"nod_think", &"shake_think", &"shake_head"].pick_random())
+
+
+## Katze, die gerade gestreichelt wird (seit Etappe 6j: die rechte Hand legt sich auf ihren Kopf; null = keine).
+func set_pet_target(cat: Node3D) -> void:
+	_pet_target = cat
+
+
+func _update_pet(delta: float) -> void:
+	if _gesture_modifier == null:
+		return
+	var petting: bool = _pet_target != null and is_instance_valid(_pet_target) and not _shot.is_empty() \
+		and _shot.clip in [&"pet_reach", &"pet_cat"]
+	if petting and _pet_target.has_method("head_top"):
+		_gesture_modifier.pet_point = _skeleton.global_transform.affine_inverse() * (_pet_target.call("head_top") as Vector3)
+	_gesture_modifier.body_scale = _hip_height / 0.607
+	_gesture_modifier.pet_weight = move_toward(_gesture_modifier.pet_weight, 1.0 if petting else 0.0, delta / 0.3)
 
 
 ## Wen die Figur beim Plaudern anschaut (null = niemand Bestimmtes).

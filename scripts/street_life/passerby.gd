@@ -166,7 +166,7 @@ var _visiting: Dictionary = {}
 ## Beim Durchgehen durch eine Tür: nach so vielen Metern hinter der Türmitte gibt man sie wieder frei
 const DOOR_RELEASE_PAST := 0.55
 ## So weit neben der Tür wartet man, wenn gerade jemand anderes hindurchgeht (m)
-const DOOR_WAIT_ASIDE := 0.7
+const DOOR_WAIT_ASIDE := 0.9
 
 
 func _ready() -> void:
@@ -398,6 +398,8 @@ func _footsteps(moved: float) -> void:
 
 func _next_action() -> void:
 	ignore_agent = null
+	if _model and _model.has_method("set_pet_target"):
+		_model.call("set_pet_target", null)
 	_attend(null)
 	_set_road_scan(false)
 	if _actions.is_empty():
@@ -431,9 +433,15 @@ func _next_action() -> void:
 				_action.route = StreetPaths.alley_route(points, float(_action.half))
 				_action.to = (_action.route as StreetRoute).length()
 			elif _action.get("from_here", false):
-				# Kurzer Weg: dort beginnen, wo man gerade wirklich steht
+				# Kurzer Weg: dort beginnen, wo man gerade wirklich steht (Zwischenpunkte bleiben – z. B. der Bogen um das
+				# Fahrrad vor dem Blumenladen, seit Etappe 6j)
 				var route: StreetRoute = _action.route
-				var there := StreetRoute.from_points(PackedVector2Array([pos, route.points[route.points.size() - 1]]), 0.35)
+				var points: PackedVector2Array = route.points.duplicate()
+				points[0] = pos
+				var there := StreetRoute.from_points(points, GameConfig.passerby_short_path_half_width)
+				if points.size() == 2 and life.homes:
+					# gerade erst geplant (vielleicht vor dem ersten Physik-Bild): jetzt noch einmal auf Festes prüfen
+					there = (life.homes._route_to(pos, points[1]).route as StreetRoute)
 				_action.route = there
 				_action.to = there.length()
 			_set_route(_action.route)
@@ -608,7 +616,7 @@ func _step_door(delta: float) -> void:
 			var waiting := door.busy_for(self)
 			if waiting:
 				var through := (to - from).normalized()
-				goal = from + Vector2(-through.y, through.x) * DOOR_WAIT_ASIDE - through * 0.1
+				goal = from + Vector2(-through.y, through.x) * DOOR_WAIT_ASIDE - through * 0.35
 				_phase_time = minf(_phase_time, 2.0)
 			var next := pos.move_toward(goal, step * delta)
 			var free := not life.blocks_move(self, next)
@@ -1164,6 +1172,7 @@ func _step_pet(delta: float) -> void:
 					_next_action()
 					return
 				_action.time = duration
+				_model.call("set_pet_target", cat)
 				_action.touch = ChibiPasserbyModel.PET_KNEEL_TOUCH if kneel else ChibiPasserbyModel.PET_REACH_TOUCH
 				_phase = 2
 				_phase_time = 0.0
@@ -1462,8 +1471,8 @@ func _avoid(want: float, band: Vector2) -> float:
 	for obstacle in life.obstacles_near(self, LOOK_AHEAD + 1.5):
 		if companion != null and obstacle.get("agent") == companion and _paired_walking():
 			continue  # mit dem Begleiter stimmt man sich selbst ab (nebeneinander)
-		if ghost_static > 0.0 and obstacle.kind == "static":
-			continue  # darf gerade hindurch (Sicherheitsnetz bzw. fester Weg) – dann bremst es auch nicht
+		if obstacle.kind == "static" and _action.get("fixed_path", false):
+			continue  # fester kurzer Weg zur Tür: er ist so gebaut, dass er passt (Kreise daneben bremsen nicht)
 		var lage := _route.project(obstacle.pos, _s - 2.0, _s + 2.0 + LOOK_AHEAD) if _dir > 0 \
 			else _route.project(obstacle.pos, _s - 2.0 - LOOK_AHEAD, _s + 2.0)
 		var along := (lage.x - _s) * _dir
@@ -1484,8 +1493,9 @@ func _avoid(want: float, band: Vector2) -> float:
 		intervals.append(Vector4(lage.y - gap, lage.y + gap, 1.0 if their_speed < -0.2 else 0.0, along))
 		if along > 0.0 and along < gap + 0.6 and absf(_lat - lage.y) < gap and obstacle.kind == "walker" and their_speed < 0.2:
 			_front_walker = obstacle.agent
-		if along > 0.0 and absf(_lat - lage.y) < gap - 0.02:
-			# Es steht direkt vor mir: bremsen (hinter Langsameren her: deren Tempo)
+		if along > 0.0 and absf(_lat - lage.y) < gap - 0.02 and not (squeeze > 0.0 and obstacle.kind == "walker"):
+			# Es steht direkt vor mir: bremsen (hinter Langsameren her: deren Tempo) – nicht beim Vorbeidrücken, da hält
+			# nur blocks_move den kleinen Abstand
 			var limit := speed_pref * clampf((along - gap - 0.05) / 0.9, 0.0, 1.0)
 			if their_speed > 0.1:
 				limit = maxf(limit, minf(their_speed, speed_pref))

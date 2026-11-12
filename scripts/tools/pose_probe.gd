@@ -227,6 +227,59 @@ func _go():
 						get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + "%s_%s_%d_%d.png" % [mode[1], an, int(part * 100), k]))
 						k += 1
 			print("Tier fertig: ", list)
+		"pet":
+			# Streicheln mit Hand auf dem Kopf: pet <figur 0-5> <cat|cat_adult> <pet_reach|pet_cat> <zeit> [aus = ohne Ausgleich]
+			m.figure = int(mode[1]) as ChibiCharacter.Figure
+			m.give_bag(false)
+			var cs := load("res://scenes/animals/%s.tscn" % mode[2]) as PackedScene
+			var cat := cs.instantiate() as StreetAnimal
+			add_child(cat)
+			cat.set_process(false)
+			cat.set_physics_process(false)
+			cat.scale = Vector3.ONE * (1.36 if mode[2] == "cat_adult" else 1.0)
+			await get_tree().process_frame
+			await get_tree().process_frame
+			var clip := StringName(mode[3])
+			cat.anim.play(&"sit" if clip == &"pet_reach" else &"lie"); cat.anim.seek(0.6, true); cat.anim.speed_scale = 0.0
+			# Katze vor der rechten Hand (wie Passerby.pet_hand)
+			var hand: Vector2 = m.pet_hand(clip == &"pet_cat")
+			cat.position = Vector3(hand.x, 0.0, hand.y + (0.06 if clip == &"pet_cat" else 0.03))
+			cat.rotation.y = PI * 0.5
+			m.play_clip(clip)
+			if mode.size() <= 5:
+				m.set_pet_target(cat)
+			var tt := float(mode[4])
+			for i in int(tt * 30.0):
+				m.animate(&"idle", 0.0, 1.0 / 30.0)
+				await get_tree().process_frame
+			print("Clip: ", m._player.current_animation, " shot=", m._shot, " upper=", m._upper, " pet=", m._gesture_modifier.pet_weight, " katze sichtbar=", cat.visible)
+			cat.visible = true
+			m._player.speed_scale = 0.0
+			var cp: Camera3D = get_node("Cam")
+			var c := cat.position + Vector3(0, 0.35, 0)
+			for view: Array in [["seite", Vector3(0.1, 0.25, 1.0)], ["vorn", Vector3(-1.0, 0.3, 0.3)]]:
+				cp.look_at_from_position(c + (view[1] as Vector3).normalized() * 1.5, c, Vector3.UP)
+				for k in 3:
+					m.animate(&"idle", 0.0, 0.0001)
+					await get_tree().process_frame
+				await RenderingServer.frame_post_draw
+				get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + "pet_%s_%s_%s_%s%s.png" % [mode[1], mode[2], mode[3], view[0], "_aus" if mode.size() > 5 else ""]))
+		"bagsit":
+			# Taschenträger setzt sich: Tasche wandert auf den Boden neben die Füße (seit 6j)
+			m.give_bag(true)
+			m.sit_height = 0.25
+			await get_tree().process_frame
+			var cb: Camera3D = get_node("Cam")
+			for step: Array in [["steht", &"idle", 1.0], ["sitzt", &"sit", 2.5], ["auf", &"idle", 2.0]]:
+				for i in int(float(step[2]) * 30.0):
+					m.animate(step[1], 0.0, 1.0 / 30.0)
+					await get_tree().process_frame
+				for view: Array in [["vorn", Vector3(-0.3, 0.3, 1.0)], ["seite", Vector3(-1.0, 0.25, 0.2)]]:
+					var c := Vector3(-0.1, 0.45, 0.1)
+					cb.look_at_from_position(c + (view[1] as Vector3).normalized() * 2.2, c, Vector3.UP)
+					await get_tree().process_frame
+					await RenderingServer.frame_post_draw
+					get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + "bagsit_%s_%s.png" % [step[0], view[0]]))
 		"drink":
 			m.set_prop(&"mug")
 			m._gesture_modifier.body_scale = m._hip_height / 0.607

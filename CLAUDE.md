@@ -1295,6 +1295,27 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - **Ladentür seit 6f:** Anschlag (`WindowUnit.DOOR_STOP`, außen vor dem 98 cm breiten Blatt, die Tür geht nach innen
   auf) – keine Fuge zum Durchsehen; Pfosten über/neben der Tür genau in Breite und Tiefe des Rahmens ums Blatt.
 - **Laternen-Ampeln seit 6f:** Haken am Arm reicht bis in den Ring der Ketten (`build_storybook_lamps.py`).
+- **Etappe 6j (Rundgang und Feinschliff, Plan `.scratch/polish-6j/map.md`):** **Innenraum:** `surface_pattern.gdshader` im
+  Bilderbuch-Stil (Dielen mit Maserung/weichen Kanten, Putz mit Kellenstrichen, `handmade`, Relief ohne dFdx, Muster entlang
+  schräger Wände); Standard-Belag `floor_wood`/`wall_plaster`/`ceiling_plaster` = ShaderMaterial; Stuckleiste `RoomTrim`
+  (`Room._build_trim`, folgt dem Fünfeck); Tageslicht je Öffnung `RoomOpenings._window_daylight` (OmniLight ohne Schatten nur auf
+  Render-Ebene `GameConfig.INDOOR_RENDER_LAYER` = 3, main.gd `_mark_indoor`; `window_daylight_*`); Fensterrahmen/Tür innen ohne
+  Verwitterung (`weather_clean_side` in storybook.gdshaderinc, `LibraryFacade.paint_material(…, clean_side)`). **Licht:** alle Werte
+  `GameConfig.light_*` (main.gd `_apply_light_mood`), Sonne 42°/36°; Laternen tagsüber aus (`street_lanterns_lit`,
+  `main.gd set_street_lanterns(an)` – für den Abend); Rauch `ChimneySmoke` (Outside, Schornsteinköpfe aus spots.json, `chimney_smoke_*`).
+  **Passanten:** `Passerby.squeeze` (nach `SQUEEZE_AFTER` s Stillstand vor jemandem dürfen beide bis `StreetLife.SQUEEZE_GAP`
+  aneinander vorbei), Türen: `HouseDoor.busy_for` → daneben warten (`DOOR_WAIT_ASIDE`), feste kurze Wege (`fixed_path`, aus
+  `StreetHomes._route_to`) ignorieren Hindernis-Kreise, Paare: der Vordere wird vom Begleiter nicht blockiert, beim Hinsetzen
+  `SIT_PATIENCE`; Schaufenster-Wege prüfen Kreise und Kollision (`_spot_in_solid`); Überqueren nach `CROSS_WAIT_MAX` aufgegeben;
+  Fahrzeuge fahren an Leuten bis `StreetVehicle.PASS_EXTRA` neben der Spur langsam vorbei. Prüfwerkzeug: `Passerby.pair_text()`
+  (Grund für Stockungen). **Figuren:** Kopf höchstens `ChibiHeadModifier.max_total_yaw` gegen die Hüfte (`hold` = Blick ersetzt
+  die Animations-Drehung); Säume: `chibi_outfit.shell` behält eine Reihe über die Schnittlinie, UV.x = Abstand zur Linie,
+  `chibi_cloth.gdshader` verwirft < 0 (beidseitig); lange Hose → Haut darunter in Hosenfarbe (`lower_cloth_color.a = 0`);
+  Rock-Form „sit“ (`ChibiCharacter.set_skirt_sit`); Streicheln: `ChibiGestureModifier.pet_point/pet_weight` + `StreetCat.head_top()`
+  (`set_pet_target`); Taschenträger setzen sich, Tasche auf den Boden (`passerby_bag_set_down_time`, `passerby_bag_ground_spot`).
+  **Katzen** auch aus der Gasse (`CatLife._spawn_from_alley`, `cat_alley_start_chance`). **Prüfbilder ohne Straße:**
+  `pose_probe.tscn -- grid [clip] | close <fig> <form> <clip> <t> <höhe> <abstand> | animal <cat|cat_adult|bird|pigeon> [clips] |
+  pet <fig> <katze> <clip> <t> [aus] | bagsit | bench_chat`.
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

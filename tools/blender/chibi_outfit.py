@@ -249,12 +249,17 @@ def garment_specs(body):
     def neckline(drop, high):
         return lambda p: (nb - high - drop * front(p, 0.01)) - p[:, 2]
 
+    def shoulder(p):
+        # oben an den Schultern etwas mehr Luft (seit Etappe 6j: beim Hinknien mit Armen nach vorn drückte dort die Haut
+        # durch den Stoff)
+        return 0.0065 * smoothstep(nb - 0.085, nb - 0.035, p[:, 2]) * smoothstep(0.025, 0.055, np.abs(p[:, 0]))
+
     def tshirt_off(p, n):
         # Ärmel etwas weiter
-        return 0.0088 + 0.0025 * smoothstep(sx - 0.02, sx + 0.03, np.abs(p[:, 0]))
+        return 0.0088 + 0.0025 * smoothstep(sx - 0.02, sx + 0.03, np.abs(p[:, 0])) + shoulder(p)
 
     def sweater_off(p, n):
-        return 0.0108 + 0.002 * smoothstep(sx - 0.02, sx + 0.03, np.abs(p[:, 0]))
+        return 0.0108 + 0.002 * smoothstep(sx - 0.02, sx + 0.03, np.abs(p[:, 0])) + shoulder(p)
 
     def trousers_off(p, n):
         # unten weiter (gerades Bein), oben eng am Bund
@@ -355,9 +360,14 @@ def skirt(bodies, names, limb_offsets, body_P, body_W):
     # Seit Etappe 6j: schon knapp unter dem Hüftgelenk fast ganz mit den Oberschenkeln (vorher erst am Saum) – im
     # Sitzen drehen sich die Schenkel um 90° nach vorn; der Rock blieb als Ring um die Hüfte stehen und die Beine
     # stießen vorn hindurch. Jetzt legt er sich mit auf die Oberschenkel.
+    # Nur VORN (dort liegen im Sitzen die Oberschenkel): hinten bleibt es wie vorher (erst zum Saum hin die Beine) – sonst
+    # zieht der nach hinten schwingende Oberschenkel den Stoff beim Gehen in den Po hinein.
     z_joint = body.hip_z
-    leg = 0.93 * smoothstep(z_joint + 0.035, z_joint - 0.05, z)
     rad = base[:, :2] - np.array((0.0, axis_y))
+    front_share = smoothstep(-0.2, 0.6, -rad[:, 1] / np.maximum(np.linalg.norm(rad, axis=1), 1e-9))   # -y = vorn
+    leg_front = 0.93 * smoothstep(z_joint + 0.035, z_joint - 0.05, z)
+    leg_back = 0.95 * smoothstep(z_wide, z_hem, z)
+    leg = leg_back + (leg_front - leg_back) * front_share
     left = smoothstep(-0.4, 0.4, rad[:, 0] / np.maximum(np.linalg.norm(rad, axis=1), 1e-9))   # +x = links
     # dazu mindestens so stark wie die Haut darunter (sonst stößt der Oberschenkel beim großen
     # Schritt vorn durch den Stoff): Gewichte der nächsten Körper-Ecken, rundum und nach unten geglättet

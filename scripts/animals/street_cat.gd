@@ -631,6 +631,21 @@ func _stride() -> float:
 	return (ADULT_STRIDE if adult else 1.0) * scale.x
 
 
+## Scheitel des Kopfs im Raum des Kopf-Knochens (in Godot ausgemessen, seit Etappe 6j) – dort liegt beim Streicheln die Hand.
+const HEAD_TOP_KITTEN := Vector3(0.0, 0.111, -0.038)
+const HEAD_TOP_ADULT := Vector3(0.0, 0.099, -0.035)
+
+
+## Scheitel des Kopfs in der Welt (folgt der Bewegung; ohne Skelett: grob über der Mitte).
+func head_top() -> Vector3:
+	if skeleton:
+		var bone := skeleton.find_bone("head")
+		if bone >= 0:
+			var pose := skeleton.get_bone_global_pose(bone)
+			return skeleton.global_transform * (pose * (HEAD_TOP_ADULT if adult else HEAD_TOP_KITTEN))
+	return global_position + Vector3.UP * 0.27 * scale.y
+
+
 ## Wie weit die Nase vor der Mitte ist (m, mit Größe) – für Begegnungen Nase an Nase.
 func nose_reach() -> float:
 	return (0.209 if adult else 0.188) * scale.x

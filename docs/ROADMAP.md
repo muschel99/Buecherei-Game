@@ -46,6 +46,7 @@
 | 6g  | Tiere: Vögel und Katzen (Blender-Modelle mit Bewegungen, Vogelhäuschen, Streicheln) | fertig |
 | 6h  | Vögel und Katzen verfeinern (weiche Modelle, Flug, Tauben, Gesichter, Spielzeug, Katzenkörbchen); dazu neue Geräusche, große Katzen, Katzen-Verhalten, Animationen der Passanten | fertig |
 | 6i  | Leben in der Straße: Anwohner, Läden mit Verkäufern, Pub, Wollladen neu, Umarmen und mehr Begegnungen | fertig |
+| 6j  | Rundgang und Feinschliff: Passanten ohne Stau, Figuren sauber, Innenraum im Bilderbuch-Stil, neues Licht | fertig |
 | 7   | Wirtschaft und Tagesablauf               | offen         |
 | 8   | Besuchervielfalt                         | offen         |
 | 9   | Café                                     | offen         |
@@ -72,8 +73,9 @@ saubere Nummern unter Etappe 6, damit sich nichts mit den späteren Etappen 7–
 | 12 | 6g | Vögel und Katzen |
 | 12b | 6h | Verfeinerung Vögel und Katzen |
 | 13 | 6i | Leben in der Straße |
+| (Auftrag „/grill-me“) | 6j | Rundgang und Feinschliff |
 
-## Stand nach dem Stil-Umbau (Überblick, Stand 06.11.2026)
+## Stand nach dem Stil-Umbau (Überblick, Stand 12.11.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
 
 **Was neu ist**
@@ -127,6 +129,10 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 - **Etappe 6i:** Die Straße lebt auch in den Häusern: sieben Anwohner gehen durch ihre Haustür ein und aus, gießen, fegen und schauen aus
   dem Fenster; alle Türen und Gartenpforten bewegen sich; jeder Laden hat Theke und Bedienung, Passanten kaufen ein und tragen die Tüte;
   Wollladen neu eingerichtet; Pub mit Gästen, Getränken und Kuchen; Umarmen, zusammen weitergehen, über die Straße winken.
+- **Etappe 6j:** Rundgang durch das ganze Spiel: Passanten kommen nicht mehr ins Stocken (vorbeidrücken, an der Tür warten), Kopf
+  dreht sich beim Plaudern nicht mehr nach hinten, saubere Säume an der Kleidung, Rock im Sitzen, Hand liegt beim Streicheln auf der
+  Katze, Taschen werden im Sitzen abgestellt; Innenraum mit Dielen, Putz, Stuckleiste und Tageslicht; warmes Nachmittagslicht,
+  Laternen tagsüber aus, Rauch aus Schornsteinen, Katzen auch aus der Gasse.
 
 **Wo die wichtigen Dateien liegen**
 
@@ -147,19 +153,17 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 
 **Was noch offen oder provisorisch ist**
 - Möbel, Deko, Theke (mit Kasse und Tablet) und Rückgabe-Einwurf gibt es seit **Etappe 6** im
-  Bilderbuch-Stil. Noch Platzhalter: Wände, Boden, Decke und Fenster der Bücherei innen.
-- Das Licht der ganzen Welt (warm, mildes Leuchten, leichte Unschärfe in der Ferne) ist noch nicht
-  abgestimmt.
-- Die realistischen Figuren aus 5b werden nicht mehr benutzt (die Chibi-Figuren ersetzen sie), ihre
-  Dateien liegen noch im Projekt.
+  Bilderbuch-Stil, Wände, Boden und Decke der Bücherei innen seit **6j** (Dielen, Putz, Stuckleiste). Die
+  übrigen Wand- und Bodenbeläge zur Auswahl haben schon den neuen Shader, aber noch ihre alten Farben/Muster.
+- Das Licht ist seit 6j abgestimmt (warmer Nachmittag); Tag und Nacht gibt es noch nicht (die Laternen
+  sind darauf vorbereitet: `main.gd set_street_lanterns`).
 - Noch wenig Kleidung und Frisuren der Figuren.
 - Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme, Musik für Nacht/Regen/
   Winter – Liste in ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
-- Tiere (seit 6g/6h): Vögel sitzen noch nicht in Bäumen und nicht auf dem Dach der Bücherei; Katzen kommen nur über
-  die Straßenenden (nicht aus den Gassen); eigene Laute je Vogelart warten auf Aufnahmen.
-- Passanten (seit 6h): Wer eine Einkaufstasche trägt, setzt sich nicht, streichelt keine Katzen und redet ohne Hände
-  (die Tasche hängt an der rechten Hand). Bei großen Figuren schwebt die Hand beim Streicheln einer großen Katze ein
-  paar Zentimeter über dem Kopf (die Animation ist für Menschen gemacht).
+- Tiere (seit 6g/6h): Vögel sitzen noch nicht in Bäumen und nicht auf dem Dach der Bücherei; Katzen kommen seit 6j
+  auch aus der Gasse neben der Bücherei (nicht aus der Gasse gegenüber); eigene Laute je Vogelart warten auf Aufnahmen.
+- Passanten (seit 6h): Wer eine Einkaufstasche trägt, streichelt keine Katzen und redet im Stehen ohne Hände (die Tasche
+  hängt an der rechten Hand); hinsetzen dürfen sie sich seit 6j (die Tasche steht dann neben ihnen).
 - Kein Tag-Nacht-Wechsel; Besucher kommen noch nicht in die Bücherei.
 
 ## Etappe 1 – Grundgerüst und erster Raum
@@ -1698,6 +1702,44 @@ Zwei-Glieder-Rechnung an Besen, Partner und Mund), Gießen nutzt `water`, die T�
 
 **Noch offen:** An engen Stellen stehen sich Passanten manchmal 2–3 Sekunden gegenüber (schon seit 6h bekannt).
 Noch nicht eingebaut: `Waving.fbx` und `Shaking Hands 2.fbx` (zweite Varianten von Winken und Händeschütteln; dafür müssten alle Figuren neu gebaut werden).
+
+## Etappe 6j – Rundgang und Feinschliff (Auftrag „/grill-me“ vom 11.11.2026)
+Auftrag der Entwicklerin: das ganze Spiel genau anschauen und es schöner, natürlicher, flüssiger und besser machen – Claude
+entscheidet selbst und setzt um. Plan und Entscheidungen: `.scratch/polish-6j/map.md`.
+
+**Fehler, die die Entwicklerin genannt hat**
+- [x] Kopf beim Plaudern auf der Bank dreht nicht mehr fast nach hinten (höchstens 68° gegen die Hüfte; der Blick ersetzt die
+  Kopfdrehung der Sitz-Animation, statt sie zu verdoppeln)
+- [x] Passanten blockieren sich nicht mehr: an Engstellen drücken sie sich Schulter an Schulter vorbei, zu zweit und auf der Bank
+  halten sie sich nicht mehr gegenseitig fest, an Haus- und Ladentüren wartet man daneben, bis der andere heraus ist, Wege zu
+  Schaufenstern führen nie durch Kübel oder das Fahrrad vor dem Blumenladen, am Bordstein wird nicht ewig gewartet
+- [x] Netzfehler an Figuren: Säume an T-Shirt, Pullover, Hose und Schuhen glatt statt zackig (im Shader genau an der
+  Schnittlinie abgeschnitten), keine Haut mehr, die durch die Hose drückt, mehr Luft an den Schultern, Rock legt sich im Sitzen
+  um die Oberschenkel (vorher stießen die Beine hindurch)
+- [x] Tiere und Möbel in Stichproben durchgesehen (Katzen, Vögel, Tauben in mehreren Bewegungen; Möbel-Übersicht von Dark
+  Academia ganz, von den anderen Stilen Teile): dabei nichts falsch Zusammengebautes gefunden
+
+**Logik und Welt**
+- [x] Hand liegt beim Streicheln wirklich auf dem Katzenkopf (vorher schwebte sie bei großen Figuren darüber)
+- [x] Taschenträger setzen sich auf Bänke und stellen die Tasche neben sich ab
+- [x] Autos fahren langsam an Leuten vorbei, die dicht am Fahrbahnrand gehen
+- [x] Katzen kommen manchmal aus der Gasse neben der Bücherei
+- [x] Laternen brennen tagsüber nicht (vorbereitet für den Abend in Etappe 7)
+- [x] Dünner Rauch aus den Schornsteinen einiger Häuser
+
+**Licht und Innenraum**
+- [x] Innenraum im Bilderbuch-Stil: Dielen mit Maserung und weichen Kanten, Putz mit Kellenstrichen, Stuckleiste rund um die
+  Decke (auch an der Schräge), Tageslicht durch Fenster und Tür, Fensterrahmen und Tür innen ohne abblätternde Farbe
+- [x] Lichtstimmung: warme Nachmittagssonne etwas tiefer (längere Schatten), blauerer Himmel, kräftigere Farben, mehr Schatten
+  in Ecken, sanftes Leuchten – alle Werte in GameConfig (`light_*`, alte Werte daneben)
+
+**Aufräumen und Werkzeuge**
+- [x] Alte Figuren aus Etappe 5b entfernt
+- [x] Prüfbilder ohne ganze Straße: `pose_probe.tscn -- grid|close|animal|pet|bagsit|bench_chat`; street_life_check nennt bei
+  Stockungen den Grund (zu zweit, plaudert, versperrt …)
+
+**Noch offen:** An der Halsöffnung des T-Shirts kann in sehr gebückter Haltung (Hinknien zum Streicheln) noch ein wenig Haut
+durchscheinen. Vögel auf dem Dach der Bücherei und in Bäumen.
 
 ## Etappe 7 – Wirtschaft und Tagesablauf
 - Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und

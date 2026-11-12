@@ -63,6 +63,14 @@ var hands_on_thighs: float = 0.0
 var thigh_lift: float = 0.085
 ## … und die Spur der Lage der Hüfte, falls sie dabei ist (z. B. bei der Anhalte-Haltung auf dem Rad)
 var _clip_positions: Dictionary = {}
+## Streicheln (seit Etappe 6j): Scheitel des Katzenkopfs (Raum des Skeletts) und wie stark die rechte Handfläche dorthin
+## gezogen wird – die Animation ist für Menschen gemacht, ohne Ausgleich schwebte die Hand über großen Katzen oder steckte
+## in kleinen. Nur in der Nähe (PET_CATCH) und nur, solange die Hand ohnehin unten ist.
+var pet_point: Vector3 = Vector3.ZERO
+var pet_weight: float = 0.0
+const PET_CATCH := 0.22
+const PET_PALM := 0.05
+const PET_REST := 0.012
 
 
 ## Animation für Gesture.CLIP: nur diese Knochen (Namen) werden übernommen; prefix = Pfad zum Skelett in der
@@ -97,6 +105,8 @@ func _process_modification_with_delta(_delta: float) -> void:
 		_grip(skeleton, "Right", grip_right)
 	if grip_left > 0.001:
 		_grip(skeleton, "Left", grip_left)
+	if pet_weight > 0.001:
+		_apply_pet(skeleton)
 	if gesture == Gesture.NONE or weight <= 0.001:
 		return
 	var w := weight
@@ -219,6 +229,32 @@ static func sweep_points(t: float, scale_y: float) -> Dictionary:
 
 ## Hand einer Seite ("Left"/"Right") zu einem Punkt im Raum der Figur führen (Zwei-Glieder-Rechnung); pole = wohin der
 ## Ellbogen zeigt.
+## Rechte Handfläche auf den Katzenkopf legen: Handfläche = ein Stück vor dem Handgelenk in Fingerrichtung; sie wird auf
+## die Höhe des Scheitels gebracht (hoch oder runter) und ein Stück zu ihm hin geschoben. Der Ellbogen bleibt, wo er ist.
+func _apply_pet(skeleton: Skeleton3D) -> void:
+	var hand := skeleton.find_bone("RightHand")
+	var lower := skeleton.find_bone("RightLowerArm")
+	var upper := skeleton.find_bone("RightUpperArm")
+	if hand < 0 or lower < 0 or upper < 0:
+		return
+	var wrist_pose := skeleton.get_bone_global_pose(hand)
+	var palm := wrist_pose.origin + wrist_pose.basis.y.normalized() * PET_PALM * body_scale
+	var want := pet_point + Vector3.UP * PET_REST * body_scale
+	var delta := want - palm
+	var flat := Vector2(delta.x, delta.z)
+	if flat.length() > PET_CATCH * body_scale or absf(delta.y) > PET_CATCH * body_scale:
+		return  # die Hand ist (noch) nicht bei der Katze
+	var shift := Vector3(delta.x * 0.6, delta.y, delta.z * 0.6)
+	var elbow := skeleton.get_bone_global_pose(lower).origin
+	var shoulder := skeleton.get_bone_global_pose(upper).origin
+	var middle := (shoulder + wrist_pose.origin) / 2.0
+	_reach(skeleton, "Right", wrist_pose.origin + shift, elbow - middle, pet_weight)
+	# die Hand liegt flach auf: Handrücken nach oben, Finger nach vorn wie vorher
+	var fingers := wrist_pose.basis.y.normalized()
+	fingers.y = minf(fingers.y, -0.15)
+	_orient_hand_along(skeleton, hand, fingers.normalized(), Vector3.UP, pet_weight * 0.7)
+
+
 func _reach(skeleton: Skeleton3D, prefix: String, target: Vector3, pole: Vector3, amount: float) -> void:
 	var upper := skeleton.find_bone(prefix + "UpperArm")
 	var lower := skeleton.find_bone(prefix + "LowerArm")

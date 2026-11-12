@@ -319,6 +319,9 @@ func step(delta: float) -> void:
 func _spawn() -> void:
 	if _cats.size() >= GameConfig.cat_count or _pool.is_empty():
 		return
+	# Manchmal kommt eine Katze aus der Gasse neben der Bücherei (seit Etappe 6j; vorher nur über die Straßenenden)
+	if _rng.randf() < GameConfig.cat_alley_start_chance and _spawn_from_alley():
+		return
 	var start := _pick_end({})
 	if start.is_empty():
 		_timer = 3.0
@@ -362,6 +365,31 @@ func _spawn() -> void:
 		visits += 1
 
 
+## Eine Katze kommt hinten aus der Gasse (wo auch Passanten erscheinen: außer Sicht und weit weg von der Spielfigur), läuft
+## durch die Gasse auf den Platz und macht dann ihren Besuch wie sonst. false = geht gerade nicht.
+func _spawn_from_alley() -> bool:
+	if _garden.is_empty():
+		return false
+	var alley := StreetPaths.library_alley_points()
+	if street.is_visible_spot(alley[0], 0.4, 0.3) or street.player_pos().distance_to(alley[0]) < GameConfig.passerby_spawn_player_distance:
+		return false
+	var plaza := alley[2]
+	var s := street.centerline.project(plaza).x
+	var exit := _pick_end({"s": s})
+	if exit.is_empty():
+		return false
+	var cat := _take_cat()
+	var start := _ground(alley[0])
+	var actions: Array[Dictionary] = [_walk(_alley_way_out(start))]
+	actions.append_array(_visit(1, s, exit))
+	cat.set_meta("plays", 0)
+	cat.begin(start, _ground(alley[1]) - start, actions)
+	visits += 1
+	if is_visible_point(cat.global_position + Vector3.UP * 0.2):
+		visible_spawns += 1
+	return true
+
+
 func _take_cat() -> StreetCat:
 	var cat: StreetCat = _pool.pop_at(_rng.randi() % _pool.size())
 	_cats.append(cat)
@@ -385,7 +413,41 @@ func _on_finished(cat: StreetCat) -> void:
 ## Jemand versperrt den Weg: draußen in einem kleinen Bogen zur Straße hin außen herum; klappt das nicht
 ## (oder ist auch der Bogen versperrt), umkehren zum nächsten verdeckten Ende. Drinnen weiter warten.
 func blocked(cat: StreetCat, dir: Vector3) -> void:
+	# Auf dem Weg zum Warteplatz an der Tür steht jemand (seit Etappe 6j: z. B. jemand auf dem Stuhl neben der Treppe –
+	# vorher blieb die Katze dort stehen und die nächste dahinter auf der Treppe auch): gleich hier auf die Tür warten
+	var queued := cat.get_actions()
+	if cat.get_action_type() == "walk" and not queued.is_empty() and String(queued[0].get("type", "")) == "wait_door":
+		var door := StreetLayout.door_center()
+		var face := Vector3(door.x, cat.global_position.y, door.z) - cat.global_position
+		var waiting: Dictionary = queued[0].duplicate()
+		waiting.face = face if face.length() > 0.05 else waiting.get("face", Vector3.FORWARD)
+		var after: Array[Dictionary] = []
+		after.assign(queued.slice(1))
+		if not after.is_empty() and String(after[0].get("type", "")) == "walk":
+			var pts: PackedVector3Array = after[0].get("points", PackedVector3Array())
+			if pts.size() > 0:
+				pts[0] = cat.global_position
+				after[0] = after[0].duplicate()
+				after[0].points = pts
+		var actions: Array[Dictionary] = [waiting]
+		actions.append_array(after)
+		cat.replace_actions(actions)
+		return
 	if cat.inside:
+		return
+	# Auf der Treppe (seit Etappe 6j): oben wartet jemand an der Tür – hinsetzen, kurz warten, dann weiter (statt im Laufen
+	# stehen zu bleiben; außen herum geht es auf der Treppe nicht)
+	if on_stairs(cat.global_position) and cat.get_action_type() == "walk":
+		var again: Dictionary = cat._action.duplicate()
+		var pts: PackedVector3Array = again.get("points", PackedVector3Array())
+		if pts.size() > 0:
+			# vom jetzigen Platz aus weiter (schon gelaufene Punkte fallen weg)
+			var left := PackedVector3Array([cat.global_position])
+			left.append_array(pts.slice(clampi(cat._index, 1, pts.size())))
+			again.points = left
+		var retry: Array[Dictionary] = [{"type": "anim", "anim": "sit", "time": _rng.randf_range(2.5, 4.0)}, again]
+		retry.append_array(cat.get_actions())
+		cat.replace_actions(retry)
 		return
 	if not bool(cat._action.get("detour", false)) and not in_alley(cat.global_position):
 		var local := _outside.to_local(cat.global_position)

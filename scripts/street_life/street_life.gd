@@ -920,7 +920,7 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 			if walker.get_action_type() == "sit":
 				continue  # beim Hinsetzen nebeneinander und Aufstehen stören sie sich nicht
 			if not walker.follows and walker.get_action_type() == "walk":
-				limit = 0.1  # der Vordere geht einfach los, der Begleiter ordnet sich ein (sonst hielten sie sich fest)
+				limit = 0.2  # der Vordere geht einfach los, der Begleiter ordnet sich ein (sonst hielten sie sich fest)
 		elif obstacle.kind == "walker" and walker.squeeze > 0.0 and (obstacle.agent as Passerby).squeeze > 0.0:
 			# Engstelle: beide drücken sich Schulter an Schulter aneinander vorbei (Passerby.squeeze)
 			limit = SQUEEZE_GAP
@@ -931,15 +931,16 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 
 
 ## Steht an dieser Stelle etwas Festes (Fahrrad vor dem Blumenladen, Bank, Kiste)? Dann stellt sich dort niemand hin.
-func _spot_in_solid(spot: Vector2) -> bool:
+func _spot_in_solid(spot: Vector2, radius: float = 0.24) -> bool:
 	if not is_inside_tree():
 		return false
 	var query := PhysicsShapeQueryParameters3D.new()
 	var shape := CapsuleShape3D.new()
-	shape.radius = 0.24
+	shape.radius = radius
 	shape.height = 1.2
 	query.shape = shape
-	query.transform = Transform3D(Basis.IDENTITY, to_global(Vector3(spot.x, 0.95, spot.y)))
+	# von 15 cm über dem Gehweg an (auch niedrige Töpfe zählen) bis über Kopfhöhe
+	query.transform = Transform3D(Basis.IDENTITY, to_global(Vector3(spot.x, 0.75, spot.y)))
 	query.collision_mask = SIGHT_MASK
 	for hit in get_world_3d().direct_space_state.intersect_shape(query, 4):
 		if hit.collider and (hit.collider as Node).name != "Bounds":
@@ -977,8 +978,13 @@ func window_route(from: Vector2, spot: Vector2, face: Vector2) -> StreetRoute:
 				var on := Geometry2D.get_closest_point_to_segment(blocker.pos, from, spot)
 				room = minf(room, on.distance_to(blocker.pos) - float(blocker.radius))
 			free = room >= 0.3 and not _spot_in_solid(spot)
+			# auch nicht durch etwas Festes hindurch (das Fahrrad vor dem Blumenladen hat keinen Hindernis-Kreis)
+			var steps := int(from.distance_to(spot) / 0.25)
+			for k in range(1, steps):
+				if free and _spot_in_solid(from.lerp(spot, float(k) / steps), 0.2):
+					free = false
 		if free:
-			return StreetRoute.from_points(PackedVector2Array([from, spot]), clampf(room - 0.29, 0.02, 0.35))
+			return StreetRoute.from_points(PackedVector2Array([from, spot]), clampf(room - 0.29, 0.02, GameConfig.passerby_short_path_half_width))
 		spot -= face * 0.1
 		if (spot - from).dot(face) < 0.3:
 			return null  # der Platz läge schon auf dem eigenen Weg: kein Abstecher
@@ -1302,18 +1308,12 @@ func _crowded(spot: Vector2) -> bool:
 
 func _launch(plan: Dictionary) -> Passerby:
 	var walker: Passerby = _idle_walkers.pop_at(_rng.randi() % _idle_walkers.size())
-	# Gangart und Tasche bei jedem Losgehen neu (seit der Nachbesserung von 6h). Wer sich setzen will, trägt möglichst
-	# keine Einkaufstasche (die hängt an der Hand): dann noch einmal würfeln, sonst setzt er sich eben nicht
-	var sits := (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.type == "sit" and a.seat != null)
+	# Gangart und Tasche bei jedem Losgehen neu (seit der Nachbesserung von 6h). Wer mit Tasche auf eine Bank will, stellt
+	# sie im Sitzen neben sich ab (seit Etappe 6j, ChibiPasserbyModel._update_bag)
 	walker.restyle(_rng)
 	# Wer im Pub Platz nehmen will, kommt ohne Einkaufstasche (die hinge sonst an der Hand am Tisch)
 	if (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.has("pub_seat")):
 		walker.give_bag(false)
-	if sits and walker.carries_bag():
-		walker.restyle(_rng)
-	if sits and walker.carries_bag():
-		var kept: Array = (plan.actions as Array).filter(func(a: Dictionary) -> bool: return a.type != "sit" or a.seat == null)
-		plan.actions = kept
 	# Tempo passend zur Gangart (schlendern und mit Tasche langsamer)
 	walker.speed_pref = plan.speed * walker.speed_factor()
 	walker.comfort_pref = plan.comfort

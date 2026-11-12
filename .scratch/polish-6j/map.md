@@ -1,6 +1,6 @@
 # Etappe 6j – Rundgang und Feinschliff (Karte)
 
-Status: claimed
+Status: resolved
 
 ## Auftrag (aus /grill-me am 11.11.2026)
 Das ganze Spiel genau anschauen und es schöner, natürlicher, flüssiger und einfach besser machen.
@@ -35,6 +35,9 @@ Claude entscheidet selbst, was sinnvoll ist, und setzt es um. Die Entwicklerin p
   Hosenfarbe, Rock-Form "sit" im Sitzen; pose_probe grid/close/animal. Tiere: keine Netzfehler gefunden.
 - Teil 3: Lichtstimmung in GameConfig (light_*), Sonne 42°/36°, Laternen tagsüber aus (street_lanterns_lit), Rauch aus
   Schornsteinen (ChimneySmoke), alte 5b-Figuren gelöscht.
+- Teil 4: Hand beim Streicheln auf dem Katzenkopf, Taschenträger setzen sich (Tasche auf den Boden), Katzen aus der Gasse,
+  Rock vorn mit den Oberschenkeln (hinten wie vorher), mehr Luft an den Schultern, kurze Wege zu Türen/Fenstern schmal und
+  um Festes herum (Fahrrad, Töpfe), Katzen warten an der Tür bzw. auf der Treppe statt festzustecken. Roadmap + Notion.
 
 ## Fog
 - Welche Netzfehler genau gemeint sind: selbst suchen (Posen-Prüfungen, Testbilder)
