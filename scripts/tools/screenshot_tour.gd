@@ -31,6 +31,7 @@ extends Node
 ##   --stats            je Bild die Zeichenaufrufe und Objekte ausgeben (Leistung)
 ##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
 ##   --no_street_life   ohne Straßenleben (zum Vergleich)
+##   --time=<stunde>    Uhrzeit (z. B. 7.5 = 7:30; Standard 16.5), die Uhr steht dann still
 ##   --ui=build|shop    Gestaltungsmodus bzw. Theken-Tablet mit „Nest & Nook“ öffnen (seit Etappe 6,
 ##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0);
 ##   --ui=app:<id>      Theken-Tablet mit einer anderen App öffnen, z. B. app:facade; --page=<id> wählt
@@ -89,6 +90,9 @@ func _ready() -> void:
 		_strip_outside(main)
 	add_child(main)
 	_freeze_player(main)
+	# Uhrzeit (seit Etappe 7): fest für wiederholbare Bilder, Standard 16:30 (Licht wie in Etappe 6j); --time=7.5 = 7:30
+	GameClock.load_save_data({"day": 1, "minute": float(_args.get("time", 16.5)) * 60.0})
+	GameClock.running = false
 	# Zufall des Straßenlebens festlegen, bevor es die ersten Passanten verteilt
 	var life := main.get_node_or_null("Outside/StreetLife") as StreetLife
 	if life and _args.has("seed"):

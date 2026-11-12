@@ -203,13 +203,16 @@ func step(delta: float) -> void:
 			bird.set_meta("below", false)
 	_chirp_gap -= delta
 	for kind in ["bird", "pigeon"]:
+		# nachts schlafen die Vögel (seit Etappe 7): keine neuen Schwärme, keine Durchflüge
+		if GameClock.is_night() and GameConfig.day_cycle_enabled:
+			continue
 		_spawn[kind] -= delta
 		if _spawn[kind] <= 0.0:
 			var gap: Vector2 = GameConfig.bird_spawn_interval if kind == "bird" else GameConfig.pigeon_spawn_interval
 			_spawn[kind] = _rng.randf_range(gap.x, gap.y)
 			_spawn_flock(kind)
 	_spawn.flyover -= delta
-	if _spawn.flyover <= 0.0:
+	if _spawn.flyover <= 0.0 and not (GameClock.is_night() and GameConfig.day_cycle_enabled):
 		_spawn.flyover = _rng.randf_range(GameConfig.bird_flyover_interval.x, GameConfig.bird_flyover_interval.y)
 		_spawn_flyover()
 	for flock in _flocks.duplicate():

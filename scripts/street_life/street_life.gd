@@ -180,7 +180,18 @@ func is_centerline(route: StreetRoute) -> bool:
 ## Wie belebt die Straße gerade ist (1 = normal). Später kann das von der Tageszeit abhängen
 ## (Etappe 7): dann hier die Uhrzeit einrechnen – Anzahl und Abstände richten sich danach.
 func activity() -> float:
-	return maxf(0.0, GameConfig.street_activity)
+	return maxf(0.0, GameConfig.street_activity * time_activity())
+
+
+## Wie belebt die Straße zur jetzigen Uhrzeit ist (seit Etappe 7, Kurve GameConfig.street_activity_by_hour: je Stunde ein
+## Wert, dazwischen gemischt) – nachts fast leer, nachmittags am meisten.
+static func time_activity() -> float:
+	var curve: Array[float] = GameConfig.street_activity_by_hour
+	if curve.size() < 24 or not GameConfig.day_cycle_enabled:
+		return 1.0
+	var h := GameClock.minute_of_day() / 60.0
+	var i := int(h) % 24
+	return lerpf(curve[i], curve[(i + 1) % 24], h - floorf(h))
 
 
 func _physics_process(delta: float) -> void:

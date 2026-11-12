@@ -22,6 +22,12 @@ func _ready() -> void:
 	_setup_paint_filter()
 	_apply_graphics_quality()
 	_setup_sky_fill()
+	# Licht und Himmel über den Tag (seit Etappe 7)
+	if GameConfig.day_cycle_enabled:
+		var cycle := DayCycle.new()
+		cycle.name = "DayCycle"
+		add_child(cycle)
+		cycle.setup(self, _sun, _sky_fill, _environment)
 	Settings.setting_changed.connect(_on_setting_changed)
 	# Geräuschkulisse und Musik (Audio-System: Dateien in assets/audio/ambience und assets/audio/music)
 	Audio.start_ambience("ambience/outdoor")
