@@ -29,6 +29,7 @@ static func apply(room: Node, openings: Array[Dictionary]) -> void:
 				for o: Dictionary in here:
 					if o.kind == "shop":
 						window.configure(o, _relative(window as Node3D, room).affine_inverse() * FacadeLayout.opening_frame(o))
+	_window_daylight(room, openings)
 	# Laibungen wieder in der Farbe der Wand (die Aussparungen sind neu)
 	if room.is_inside_tree() and room.has_method("_update_reveals"):
 		room.call("_update_reveals")
@@ -76,3 +77,40 @@ static func _relative(node: Node3D, room: Node) -> Transform3D:
 			result = (current as Node3D).transform * result
 		current = current.get_parent()
 	return result
+
+
+## Tageslicht durch Fenster und Tür (seit Etappe 6j): Durch jede Öffnung fällt nicht nur die Sonne, sondern auch das
+## helle Licht des Himmels und der Straße – ein weiches Licht ohne Schatten ein Stück hinter jeder Scheibe, so hell wie
+## die Öffnung groß ist. Vorher war der Laden am hellen Tag düster braun. Trifft nur Dinge im Raum
+## (GameConfig.INDOOR_RENDER_LAYER), nie die Straße.
+static func _window_daylight(room: Node, openings: Array[Dictionary]) -> void:
+	if room.has_meta("window_daylight"):
+		var old: Variant = room.get_meta("window_daylight")
+		if is_instance_valid(old):
+			(old as Node).queue_free()
+		room.remove_meta("window_daylight")
+	if GameConfig.window_daylight_energy <= 0.0:
+		return
+	var holder := Node3D.new()
+	holder.name = "WindowDaylight"
+	room.set_meta("window_daylight", holder)
+	# (verzögert: beim ersten Aufbau richtet der Raum gerade seine Kinder ein)
+	room.add_child.call_deferred(holder)
+	for o: Dictionary in openings:
+		if o.kind == "upper":
+			continue
+		var box := OpeningShape.bounds(o.outline)
+		var area := box.size.x * box.size.y * (0.35 if o.kind == "door" else 1.0)
+		var light := OmniLight3D.new()
+		light.name = "Daylight_%s" % o.id
+		light.shadow_enabled = false
+		light.light_color = GameConfig.window_daylight_color
+		light.light_energy = GameConfig.window_daylight_energy * sqrt(area)
+		light.light_specular = 0.0
+		light.omni_range = GameConfig.window_daylight_range
+		light.omni_attenuation = 1.3
+		light.light_cull_mask = 1 << (GameConfig.INDOOR_RENDER_LAYER - 1)
+		var center := box.get_center()
+		light.transform = FacadeLayout.opening_frame(o) * Transform3D(Basis.IDENTITY,
+			Vector3(center.x, center.y, -FacadeLayout.WALL_THICKNESS - GameConfig.window_daylight_inset))
+		holder.add_child(light)

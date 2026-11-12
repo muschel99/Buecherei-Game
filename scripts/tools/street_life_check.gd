@@ -249,9 +249,12 @@ func _measure() -> void:
 			# zu zweit unterwegs: dürfen enger nebeneinander (Körper sind schmaler als der Ausweich-Kreis)
 			if a.companion == b:
 				gap += 0.24
+			elif a.squeeze > 0.0 and b.squeeze > 0.0:
+				gap += 0.5 - StreetLife.SQUEEZE_GAP  # Engstelle: Schulter an Schulter vorbei
 			_report.min_walker_gap = minf(_report.min_walker_gap, gap)
 			if gap < -0.08:
-				_report.overlap.append("%s/%s %.2f m bei %s (%s)" % [a.name, b.name, gap, a.pos, _spot_name])
+				_report.overlap.append("%s/%s %.2f m bei %s (%s): %s%s / %s%s" % [a.name, b.name, gap, a.pos, _spot_name,
+					a.debug_text(), a.pair_text(), b.debug_text(), b.pair_text()])
 		var player_gap := a.pos.distance_to(player) - a.radius * a.scale.x - StreetLife.PLAYER_RADIUS
 		_report.min_player_gap = minf(_report.min_player_gap, player_gap)
 		if player_gap < -0.02:
@@ -288,7 +291,9 @@ func _measure() -> void:
 			if is_equal_approx(float(_stall[a]), 2.5):
 				_report.stall.append("%s bei %s (%s): %s | nah: %s" % [a.name, a.pos, _spot_name, a.debug_text(),
 					_life.obstacles_near(a, 1.6).map(func(o): return "%s@%s r%.2f%s" % [o.kind, o.pos, o.radius,
-						(" (%s, v=%s)" % [o.agent.get_action_type(), o.vel]) if o.kind == "cat" else ""])])
+						(" (%s, v=%s)" % [o.agent.get_action_type(), o.vel]) if o.kind == "cat" else (
+						" (%s %s%s)" % [o.agent.name, o.agent.get_action_type(), o.agent.pair_text()] if o.kind == "walker" else "")])]
+					+ a.pair_text())
 		else:
 			_stall[a] = 0.0
 		# Hängt jemand fest?

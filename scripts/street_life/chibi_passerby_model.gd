@@ -590,6 +590,8 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 	if _head_modifier:
 		_head_modifier.yaw = _head_yaw
 		_head_modifier.pitch = _head_pitch + _nod_pitch + _gesture_head_pitch()
+		# Wer jemanden anschaut, hält den Kopf dorthin (die Animation dreht ihn nicht gleichzeitig weg)
+		_head_modifier.hold = move_toward(_head_modifier.hold, 0.85 if _focus else 0.0, delta * 2.0)
 	# Sitzen: Figur auf die Höhe der Sitzfläche heben (die Animation sitzt auf ihrer eigenen Höhe)
 	_model.position.y = (sit_height - _sit_seat) * _seated
 	_update_bag(delta)

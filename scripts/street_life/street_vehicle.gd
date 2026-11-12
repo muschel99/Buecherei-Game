@@ -53,6 +53,8 @@ const SWERVE_SPEED := 1.2
 ## Seitlicher Abstand zu Menschen (Meter, zwischen den Rändern) und Tempo beim Vorbeifahren (m/s).
 const PERSON_GAP := 0.55
 const PASS_SPEED := 2.0
+## So viel weiter neben der Spur zählen Menschen noch für das langsame Vorbeifahren (m)
+const PASS_EXTRA := 0.45
 ## Unter dem Torbogen: höchstens so schnell (m/s) und so viel der normalen Spur (näher zur Mitte).
 const PASSAGE_SPEED := 3.0
 const PASSAGE_LANE := 0.72
@@ -233,9 +235,13 @@ func _wanted_speed() -> float:
 		# würden (sonst warten im engen Torbogen beide aufeinander)
 		var margin := PERSON_GAP if person else (0.05 if obstacle.kind == "vehicle_oncoming" else 0.25)
 		var half := width / 2.0 + float(obstacle.radius) + margin
-		if not cat and absf(lage.y - _lat) >= half and absf(lage.y - _target_lat) >= half:
+		# Menschen dicht neben der Spur (bis PASS_EXTRA weiter weg): nicht bremsen bis zum Halt, aber langsam vorbei
+		# (seit Etappe 6j – vorher fuhren Autos mit vollem Tempo eine Handbreit an Leuten am Fahrbahnrand vorbei)
+		var beside := absf(lage.y - _lat) >= half and absf(lage.y - _target_lat) >= half
+		var reach_side := half + (PASS_EXTRA if person else 0.0)
+		if not cat and absf(lage.y - _lat) >= reach_side and absf(lage.y - _target_lat) >= reach_side:
 			continue
-		if person and not obstacle.get("on_road", true):
+		if person and (beside or not obstacle.get("on_road", true)):
 			# am Bordstein bzw. Rand (seit Etappe 6f): nicht anhalten, nicht ausweichen, nicht klingeln – nur
 			# langsam vorbei
 			limit = minf(limit, PASS_SPEED + maxf(0.0, along) * 0.4)

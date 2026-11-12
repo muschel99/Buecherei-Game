@@ -702,6 +702,14 @@ var outdoor_fill_energy: float = 0.55
 var outdoor_fill_color: Color = Color(0.8, 0.86, 1.0)
 ## Render-Ebene für alles draußen (nur sie empfängt das Himmelslicht; 1 = alles andere).
 const OUTDOOR_RENDER_LAYER := 2
+## Render-Ebene für alles im Raum (seit Etappe 6j; nur sie empfängt das Tageslicht der Fenster).
+const INDOOR_RENDER_LAYER := 3
+## Tageslicht durch Fenster und Tür (seit Etappe 6j): weiches Licht ohne Schatten hinter jeder Scheibe. Stärke (mal
+## Wurzel der Fensterfläche; 0 = aus, wie vorher), Farbe, Reichweite in Metern und Abstand hinter der Wand.
+var window_daylight_energy: float = 0.38
+var window_daylight_color: Color = Color(1.0, 0.95, 0.86)
+var window_daylight_range: float = 8.0
+var window_daylight_inset: float = 0.9
 ## Höchstens so viele Bilder pro Sekunde, solange das Pausenmenü offen ist (spart Strom).
 var paused_max_fps: int = 30
 

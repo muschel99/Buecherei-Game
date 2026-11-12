@@ -44,6 +44,9 @@ func _setup_sky_fill() -> void:
 	_sky_fill.visible = GameConfig.outdoor_fill_energy > 0.0
 	for root: Node in _outdoor_roots():
 		_mark_outdoor(root)
+	var room := get_node_or_null("GroundFloorRoom")
+	if room:
+		_mark_indoor(room)
 	get_tree().node_added.connect(_on_node_added)
 
 
@@ -69,6 +72,19 @@ func _on_node_added(node: Node) -> void:
 		if root.is_ancestor_of(node):
 			(node as VisualInstance3D).set_layer_mask_value(GameConfig.OUTDOOR_RENDER_LAYER, true)
 			return
+	var room := get_node_or_null("GroundFloorRoom")
+	if room and room.is_ancestor_of(node) and not node is Light3D:
+		(node as VisualInstance3D).set_layer_mask_value(GameConfig.INDOOR_RENDER_LAYER, true)
+
+
+## Alles im Raum (ohne die Fassade) bekommt die Innen-Ebene – nur das trifft das Tageslicht der Fenster.
+func _mark_indoor(node: Node) -> void:
+	if node.name == "Facade" and node.get_parent() == get_node_or_null("GroundFloorRoom"):
+		return
+	if node is VisualInstance3D and not node is Light3D:
+		(node as VisualInstance3D).set_layer_mask_value(GameConfig.INDOOR_RENDER_LAYER, true)
+	for child in node.get_children():
+		_mark_indoor(child)
 
 
 func _on_setting_changed(key: String, _value: Variant) -> void:

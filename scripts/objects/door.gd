@@ -174,7 +174,9 @@ static func make_leaf_model(path: String, color: Color, weather: float = 0.0) ->
 		for i in mesh_instance.mesh.get_surface_count():
 			var material := mesh_instance.mesh.surface_get_material(i)
 			if material and material.resource_name == "facade_door":
-				mesh_instance.set_surface_override_material(i, LibraryFacade.paint_material(material, color, weather))
+				# innen (im Raum, z > 0 im Scharnier) blättert keine Farbe ab
+				mesh_instance.set_surface_override_material(i, LibraryFacade.paint_material(material, color, weather,
+					Vector4(0.0, 0.0, 1.0, 0.0)))
 	return model
 
 

@@ -57,6 +57,14 @@ func request(who: Object) -> void:
 		_users.append(who)
 
 
+## Geht gerade jemand anderes durch die Tür? (Dann wartet man daneben, statt sich im Türrahmen zu begegnen.)
+func busy_for(who: Object) -> bool:
+	for user: Object in _users:
+		if user != who and is_instance_valid(user):
+			return true
+	return false
+
+
 func release(who: Object) -> void:
 	_users.erase(who)
 	_hold = GameConfig.house_door_hold_time

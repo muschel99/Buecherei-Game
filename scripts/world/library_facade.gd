@@ -360,6 +360,13 @@ func _build_openings(openings: Array[Dictionary]) -> void:
 	var holder := _holder("Openings")
 	var shop_frame := _paint_of("ground_color", MATERIALS.paint)
 	var upper_frame := _paint_of("frame_color", MATERIALS.frame)
+	# Rahmen der Schaufenster und der Tür: innen (hinter der Scheibe, z < Mitte des Rahmens) sauber gestrichen
+	var shop_option := option("ground_color")
+	var shop_unit_frame := shop_frame
+	if shop_option and shop_option.material == null and shop_option.weather > 0.0:
+		var glass_z := (WindowUnit.SHOP_Z.x + WindowUnit.SHOP_Z.y) / 2.0
+		shop_unit_frame = paint_material(load(MATERIALS.paint), shop_option.color if shop_option.color.a > 0.0 else Color(0.13, 0.25, 0.18),
+			shop_option.weather, Vector4(0.0, 0.0, -1.0, -glass_z + 0.004))
 	var common := {"glass": load(MATERIALS.glass), "curtain": load(MATERIALS.curtain), "room": load(MATERIALS.room),
 		"trim": load(MATERIALS.trim), "zinc": load(MATERIALS.zinc)}
 	var ground := option("ground")
@@ -367,7 +374,7 @@ func _build_openings(openings: Array[Dictionary]) -> void:
 	var k := 0
 	for o: Dictionary in openings:
 		var materials := common.duplicate()
-		materials.frame = upper_frame if o.kind == "upper" else shop_frame
+		materials.frame = upper_frame if o.kind == "upper" else shop_unit_frame
 		var unit: Node3D
 		if o.kind == "door":
 			unit = WindowUnit.build_door_surround(o, materials)
@@ -520,14 +527,17 @@ func _paint_of(category: String, base_path: String) -> Material:
 
 
 ## Eingefärbtes (und ggf. verwittertes) Material – zwischengespeichert, für alle Teile gleich.
-static func paint_material(base: Material, color: Color, weather: float) -> Material:
+## clean_side (seit Etappe 6j): Ebene (Richtung xyz, Abstand w) in den Koordinaten des Teils – dahinter verwittert
+## nichts (Innenseite von Fensterrahmen und Türblatt).
+static func paint_material(base: Material, color: Color, weather: float, clean_side: Vector4 = Vector4.ZERO) -> Material:
 	if base == null:
 		return null
-	var key := "%d|%s|%.2f" % [base.get_instance_id(), color.to_html(), weather]
+	var key := "%d|%s|%.2f|%s" % [base.get_instance_id(), color.to_html(), weather, clean_side]
 	if not _paints.has(key):
 		var copy := FurnitureUtils.tinted_material(base, color).duplicate() as Material
 		if copy is ShaderMaterial:
 			(copy as ShaderMaterial).set_shader_parameter("weather", weather)
+			(copy as ShaderMaterial).set_shader_parameter("weather_clean_side", clean_side)
 		_paints[key] = copy
 	return _paints[key]
 

@@ -35,6 +35,9 @@ uniform vec4 third_color : source_color = vec4(0.95, 0.91, 0.82, 1.0);
 // Putz in weather_color, abgeplatzte Stellen, Risse, einzelne fehlende Steine, Schmutzstreifen, ein Hauch
 // Moos unten. Anstrich: abblätternde Farbe (darunter weather_color), ausgeblichen. Putz: Risse und Flecken.
 uniform float weather = 0.0;
+// Saubere Seite (seit Etappe 6j): wo dot(Lage, xyz) > w gilt, verwittert nichts – die Innenseite von Fensterrahmen
+// und Türblatt der Bücherei (drinnen regnet es nicht; vorher blätterte die Farbe auch innen ab). xyz = 0: aus.
+uniform vec4 weather_clean_side = vec4(0.0);
 uniform vec4 weather_color : source_color = vec4(0.84, 0.78, 0.68, 1.0);
 
 // Die Häuser bekommen von HouseFacade immer diese Werte – hier ohne Wirkung
@@ -278,6 +281,9 @@ vec3 fabric_pattern(vec3 col, vec3 p, vec3 n, float px) {
 // z = fehlender Stein bzw. abgeblätterte Farbe (1 = weg), w = Schmutz (0 … 1)
 vec4 weathering(vec3 p, vec2 brick_id, float px) {
 	if (weather <= 0.0) {
+		return vec4(0.0);
+	}
+	if (dot(weather_clean_side.xyz, weather_clean_side.xyz) > 0.0 && dot(p, weather_clean_side.xyz) > weather_clean_side.w) {
 		return vec4(0.0);
 	}
 	vec3 q = vec3(p.x - p.z, p.y, p.x + p.z);

@@ -76,6 +76,8 @@ const STEP_OFF_LOOK := 3.0
 const CROSS_GIVE_UP := 4.0
 ## So weit (Meter) geht man beim Überqueren höchstens schräg in Laufrichtung.
 const CROSS_DRIFT := 0.3
+## So lange wartet man am Bordstein höchstens auf stehende Fahrzeuge (s), dann geht man auf dieser Seite weiter
+const CROSS_WAIT_MAX := 15.0
 ## Stehen sich zwei an einer Engstelle gegenüber, geht nach so vielen Sekunden einer so lange
 ## (YIELD_TIME) ganz an seinen linken Rand – so kommen beide aneinander vorbei.
 const FACE_OFF_TIME := 1.0
@@ -87,6 +89,8 @@ const WEDGED_TIME := 1.5
 ## bzw. Aufstehen (Sekunden).
 const SIT_FRONT := 0.5
 const SIT_TIME := 0.9
+## So lange wartet man höchstens, wenn beim Hinsetzen oder Aufstehen jemand im Weg steht (s)
+const SIT_PATIENCE := 4.0
 
 var life: StreetLife
 var active := false
@@ -127,6 +131,14 @@ var _squeezed := false
 var _front_walker: Passerby = null
 var _face_off := 0.0
 var _yield := 0.0
+## Sich aneinander vorbeidrücken (seit Etappe 6j): Zeit, in der zwei Passanten enger aneinander vorbei dürfen
+## (StreetLife.SQUEEZE_GAP statt der vollen Kreise); _stand_off = wie lange schon jemand direkt davor steht
+var squeeze := 0.0
+var _stand_off := 0.0
+const SQUEEZE_AFTER := 1.6
+const SQUEEZE_TIME := 2.5
+## Für das Prüfwerkzeug: warum es gerade nicht weitergeht
+var _why := ""
 ## > 0: feste Hindernisse (Laternen, Kübel) halten gerade nicht auf (Sekunden, siehe WEDGED_TIME).
 var ghost_static := 0.0
 ## Plaudern (seit Etappe 6c): laufende Runde (ChatSession) und Pause bis zum nächsten Plausch
@@ -153,6 +165,8 @@ var _say_me := false
 var _visiting: Dictionary = {}
 ## Beim Durchgehen durch eine Tür: nach so vielen Metern hinter der Türmitte gibt man sie wieder frei
 const DOOR_RELEASE_PAST := 0.55
+## So weit neben der Tür wartet man, wenn gerade jemand anderes hindurchgeht (m)
+const DOOR_WAIT_ASIDE := 0.7
 
 
 func _ready() -> void:
@@ -303,6 +317,22 @@ func debug_text() -> String:
 		_route.part_at(_s) if _route else "", _dir]
 
 
+## Für das Prüfwerkzeug: mit wem unterwegs, plaudert er, was bremst.
+func pair_text() -> String:
+	var text := ""
+	if companion != null and is_instance_valid(companion):
+		text += " [zu zweit mit %s%s]" % [companion.name, ", folgt" if follows else ""]
+	if chat != null:
+		text += " [plaudert]"
+	if _yield > 0.0:
+		text += " [weicht aus]"
+	if squeeze > 0.0:
+		text += " [drückt sich vorbei]"
+	if _why != "":
+		text += " [%s]" % _why
+	return text
+
+
 ## Was gerade passiert ("walk", "cross", "stand", "sit", "leave").
 func get_action_type() -> String:
 	return String(_action.get("type", ""))
@@ -314,6 +344,7 @@ func step(delta: float) -> void:
 		return
 	chat_cooldown = maxf(0.0, chat_cooldown - delta)
 	pet_cooldown = maxf(0.0, pet_cooldown - delta)
+	squeeze = maxf(0.0, squeeze - delta)
 	var before := pos
 	match String(_action.get("type", "")):
 		"walk":
@@ -437,6 +468,10 @@ func _set_route(route: StreetRoute) -> void:
 func _step_walk(delta: float) -> void:
 	var action := _action
 	var before := pos
+	if _action.get("fixed_path", false):
+		# Fester, kurzer Weg (zur Ladentür, im Laden, zur Haustür): er ist so gebaut, dass er passt – die groben
+		# Hindernis-Kreise daneben (Blumenständer, Kübel) halten hier nicht auf (seit Etappe 6j)
+		ghost_static = maxf(ghost_static, 0.2)
 	_walk_along(delta, _pair_want(_comfort_lat()))
 	# Unterwegs umgedreht (neue Schritte von StreetLife)? Dann gilt schon der neue Weg – nicht
 	# mit dem alten Ziel vergleichen (sonst fiele der neue Weg weg und er verschwände mitten
@@ -504,6 +539,13 @@ func _step_cross(delta: float) -> void:
 				_phase = 3
 				on_road = true
 				_set_road_scan(true)
+			elif _phase_time > CROSS_WAIT_MAX:
+				# Es wird nicht frei (z. B. stehen Fahrzeuge davor und warten vor der Spielfigur): nicht ewig am
+				# Bordstein stehen, sondern auf dieser Seite weitergehen (seit Etappe 6j)
+				_attend(null)
+				var to_end := -0.5 if _dir < 0 else life.centerline.length() + 0.5
+				replace_actions([{"type": "walk", "route": life.sidewalks[side], "to": to_end}, {"type": "leave", "gate": false}])
+				return
 		3:  # hinüber (leicht schräg in Laufrichtung) – steht dort jemand, ein Stück daneben
 			if not _action.has("from_s"):
 				_action.from_s = _s
@@ -544,6 +586,11 @@ func _step_cross(delta: float) -> void:
 	pos = _route.point_at(_s, _lat)
 
 
+## Mitte der Tür, durch die man gerade will (zum Hinschauen beim Warten).
+func door_point() -> Vector2:
+	return _action.get("middle", pos)
+
+
 ## Durch eine Tür (seit Etappe 6i): zum Startpunkt gehen, die Hand zur Tür (door_in/door_out), die Tür geht auf,
 ## hindurch; hinter der Türmitte gibt man sie frei. Mit "vanish" (nach Hause) wartet man, bis sie zu ist – erst dann
 ## verschwindet man, ungesehen hinter der geschlossenen Tür.
@@ -555,12 +602,25 @@ func _step_door(delta: float) -> void:
 	match _phase:
 		0:  # zum Startpunkt vor bzw. hinter der Tür
 			var step := speed_pref * 0.75
-			var next := pos.move_toward(from, step * delta)
+			# Kommt gerade jemand anderes durch die Tür, wartet man einen Schritt daneben und lässt ihn heraus
+			# (seit Etappe 6j – vorher standen sich beide im Türrahmen gegenüber und gingen dann durcheinander hindurch)
+			var goal := from
+			var waiting := door.busy_for(self)
+			if waiting:
+				var through := (to - from).normalized()
+				goal = from + Vector2(-through.y, through.x) * DOOR_WAIT_ASIDE - through * 0.1
+				_phase_time = minf(_phase_time, 2.0)
+			var next := pos.move_toward(goal, step * delta)
 			var free := not life.blocks_move(self, next)
 			if free:
 				pos = next
-			_anim_state = &"walk" if free and pos.distance_to(from) > 0.01 else &"idle"
+			_anim_state = &"walk" if free and pos.distance_to(goal) > 0.01 else &"idle"
 			_anim_speed = step
+			if waiting:
+				if pos.distance_to(goal) < 0.05:
+					_action.face = (door_point() - pos).normalized()  # zur Tür schauen, bis sie frei ist
+				return
+			_action.erase("face")
 			if pos.distance_to(from) < 0.02 or _phase_time > 8.0:
 				_phase = 1
 				_phase_time = 0.0
@@ -569,6 +629,9 @@ func _step_door(delta: float) -> void:
 			_anim_state = &"idle"
 			_anim_speed = 0.0
 			if not _action.get("started", false):
+				if door.busy_for(self):
+					_phase = 0  # jemand kommt gerade heraus: daneben warten
+					return
 				if _phase_time < 0.35:
 					return  # erst zur Tür drehen
 				_action.started = true
@@ -1136,7 +1199,9 @@ func _step_sit(delta: float) -> void:
 			_anim_state = &"walk"
 			_anim_speed = speed_pref * 0.7
 			var next := pos.move_toward(front, speed_pref * 0.7 * delta)
-			if not life.blocks_move(self, next):
+			# (nach ein paar Sekunden trotzdem weiter: zwei, die sich nebeneinander setzen wollen, hielten sich sonst
+			# für immer gegenseitig auf – seit Etappe 6j)
+			if not life.blocks_move(self, next) or _phase_time > SIT_PATIENCE:
 				pos = next
 			if pos.distance_to(front) < 0.01:
 				_phase = 1
@@ -1174,7 +1239,8 @@ func _step_sit(delta: float) -> void:
 			var next := pos.move_toward(back, speed_pref * 0.7 * delta)
 			if not life.blocks_move(self, next):
 				pos = next
-			if pos.distance_to(back) < 0.01:
+			# Steht dort schon jemand (der Banknachbar ist gleichzeitig aufgestanden): von hier aus weiter
+			if pos.distance_to(back) < 0.01 or _phase_time > sit_time + SIT_PATIENCE * 0.5:
 				_next_action()
 
 
@@ -1290,7 +1356,11 @@ func _walk_along(delta: float, want: float) -> void:
 	# Zurück vom Fahrbahnrand nach und nach (nie ein Sprung) – aber nie über ihn hinaus
 	var old := clampf(_old_lat, wide.x, wide.y)
 	_lat = clampf(_lat, minf(band.x, old), maxf(band.y, old))
-	var speed := minf(_pair_speed(), _speed_limit)
+	var pair_speed := _pair_speed()
+	var speed := minf(pair_speed, _speed_limit)
+	_why = ""
+	if speed < 0.15:
+		_why = "paar %.2f, limit %.2f" % [pair_speed, _speed_limit]
 	if speed < 0.02:
 		speed = 0.0
 	var ds := speed * delta
@@ -1304,13 +1374,21 @@ func _walk_along(delta: float, want: float) -> void:
 	var new_s := _s + _dir * ds
 	var new_pos := _route.point_at(new_s, _lat)
 	if life.blocks_move(self, new_pos):
-		# Nie in jemanden hinein: nur zur Seite, sonst stehen bleiben
-		new_s = _s
-		new_pos = _route.point_at(_s, _lat)
-		if life.blocks_move(self, new_pos):
-			new_pos = pos
+		# Nie in jemanden hinein. Erst nur geradeaus versuchen (ohne den Seitenschritt – seit Etappe 6j: zwei, die
+		# zusammen gehen, hielten sich sonst gegenseitig fest, wenn der eine zur Seite des anderen wollte), dann nur
+		# zur Seite, sonst stehen bleiben
+		var straight := _route.point_at(new_s, _old_lat)
+		if ds > 0.0 and not life.blocks_move(self, straight):
+			new_pos = straight
 			_lat = _old_lat
-		speed = 0.0
+		else:
+			new_s = _s
+			new_pos = _route.point_at(_s, _lat)
+			if life.blocks_move(self, new_pos):
+				new_pos = pos
+				_lat = _old_lat
+			speed = 0.0
+			_why += " versperrt"
 	var moved := pos.distance_to(new_pos)
 	_s = new_s
 	pos = new_pos
@@ -1318,13 +1396,23 @@ func _walk_along(delta: float, want: float) -> void:
 	# bzw. das Schaufenster auslassen
 	ghost_static = maxf(0.0, ghost_static - delta)
 	# Gegenüber steht jemand und keiner kommt weiter: einer (fest ausgewählt) tritt beiseite
-	if moved < 0.12 * delta and is_instance_valid(_front_walker) and _yield <= 0.0:
-		_face_off += delta
-		if _face_off > FACE_OFF_TIME and get_instance_id() < _front_walker.get_instance_id():
-			_yield = YIELD_TIME
-			_face_off = 0.0
+	if moved < 0.12 * delta and is_instance_valid(_front_walker):
+		# Hilft auch das Beiseitetreten nicht (Engstelle zwischen Kübeln, der andere steht auf einem schmalen Weg zum
+		# Schaufenster): beide drücken sich Schulter an Schulter aneinander vorbei (seit Etappe 6j – vorher standen
+		# sie sich bis zu 6 s gegenüber und einer drehte um)
+		_stand_off += delta
+		if _stand_off > SQUEEZE_AFTER:
+			squeeze = SQUEEZE_TIME
+			_front_walker.squeeze = SQUEEZE_TIME
+			_stand_off = 0.0
+		if _yield <= 0.0:
+			_face_off += delta
+			if _face_off > FACE_OFF_TIME and get_instance_id() < _front_walker.get_instance_id():
+				_yield = YIELD_TIME
+				_face_off = 0.0
 	elif moved >= 0.12 * delta:
 		_face_off = 0.0
+		_stand_off = 0.0
 	if moved < 0.12 * delta:
 		_blocked_time += delta
 		if _blocked_time > WEDGED_TIME and ghost_static <= 0.0 and life.touches_static(self):
@@ -1369,10 +1457,13 @@ func _avoid(want: float, band: Vector2) -> float:
 	_speed_limit = INF
 	_squeezed = false
 	_front_walker = null
+	var narrow := band.y - band.x < 0.8
 	var intervals: Array[Vector4] = []  # (von, bis, entgegenkommend 0/1, Abstand voraus)
 	for obstacle in life.obstacles_near(self, LOOK_AHEAD + 1.5):
 		if companion != null and obstacle.get("agent") == companion and _paired_walking():
 			continue  # mit dem Begleiter stimmt man sich selbst ab (nebeneinander)
+		if ghost_static > 0.0 and obstacle.kind == "static":
+			continue  # darf gerade hindurch (Sicherheitsnetz bzw. fester Weg) – dann bremst es auch nicht
 		var lage := _route.project(obstacle.pos, _s - 2.0, _s + 2.0 + LOOK_AHEAD) if _dir > 0 \
 			else _route.project(obstacle.pos, _s - 2.0 - LOOK_AHEAD, _s + 2.0)
 		var along := (lage.x - _s) * _dir
@@ -1384,6 +1475,12 @@ func _avoid(want: float, band: Vector2) -> float:
 		if along > 0.0 and their_speed > 0.2 and their_speed >= speed_pref * 0.95:
 			continue
 		var gap: float = radius * scale.x + float(obstacle.radius) + (0.06 if obstacle.kind == "walker" else 0.12)
+		if squeeze > 0.0 and obstacle.kind == "walker":
+			gap = StreetLife.SQUEEZE_GAP + 0.02
+		elif obstacle.kind == "static" and narrow:
+			# Schmaler Weg zum Schaufenster: der Platz dort ist geprüft frei; was knapp neben dem Weg steht
+			# (Kübel, Blumenständer), bremst nicht (sonst blieb man 6 s davor stehen und kehrte um)
+			gap = radius * scale.x + float(obstacle.radius) - 0.03
 		intervals.append(Vector4(lage.y - gap, lage.y + gap, 1.0 if their_speed < -0.2 else 0.0, along))
 		if along > 0.0 and along < gap + 0.6 and absf(_lat - lage.y) < gap and obstacle.kind == "walker" and their_speed < 0.2:
 			_front_walker = obstacle.agent

@@ -62,6 +62,8 @@ const FIT_RADIUS := 0.36
 const EXTRA_LOOKS := 4
 ## Zu zweit unterwegs: so nah dürfen sich die beiden kommen (m, Mitte zu Mitte)
 const PAIR_MIN_GAP := 0.24
+## So nah kommen sich die Mitten zweier Passanten, die sich an einer Engstelle aneinander vorbeidrücken (seit 6j)
+const SQUEEZE_GAP := 0.32
 
 ## Spielfigur (für Ausweichen und Bremsen). Die Sichtprüfung nimmt immer die aktive Kamera.
 @export var player_path: NodePath
@@ -915,8 +917,32 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 		if walker.companion != null and obstacle.get("agent") == walker.companion and walker.companion.companion == walker:
 			# zu zweit unterwegs: sie stimmen sich selbst ab (sonst hielten sie sich gegenseitig auf); nur nie ineinander
 			limit = PAIR_MIN_GAP
+			if walker.get_action_type() == "sit":
+				continue  # beim Hinsetzen nebeneinander und Aufstehen stören sie sich nicht
+			if not walker.follows and walker.get_action_type() == "walk":
+				limit = 0.1  # der Vordere geht einfach los, der Begleiter ordnet sich ein (sonst hielten sie sich fest)
+		elif obstacle.kind == "walker" and walker.squeeze > 0.0 and (obstacle.agent as Passerby).squeeze > 0.0:
+			# Engstelle: beide drücken sich Schulter an Schulter aneinander vorbei (Passerby.squeeze)
+			limit = SQUEEZE_GAP
 		var new_dist := new_pos.distance_to(p)
 		if new_dist < limit and new_dist < walker.pos.distance_to(p) - 0.0005:
+			return true
+	return false
+
+
+## Steht an dieser Stelle etwas Festes (Fahrrad vor dem Blumenladen, Bank, Kiste)? Dann stellt sich dort niemand hin.
+func _spot_in_solid(spot: Vector2) -> bool:
+	if not is_inside_tree():
+		return false
+	var query := PhysicsShapeQueryParameters3D.new()
+	var shape := CapsuleShape3D.new()
+	shape.radius = 0.24
+	shape.height = 1.2
+	query.shape = shape
+	query.transform = Transform3D(Basis.IDENTITY, to_global(Vector3(spot.x, 0.95, spot.y)))
+	query.collision_mask = SIGHT_MASK
+	for hit in get_world_3d().direct_space_state.intersect_shape(query, 4):
+		if hit.collider and (hit.collider as Node).name != "Bounds":
 			return true
 	return false
 
@@ -937,15 +963,25 @@ func window_route(from: Vector2, spot: Vector2, face: Vector2) -> StreetRoute:
 	for box in _box_positions():
 		blockers.append({"pos": box, "radius": BOX_RADIUS})
 	blockers.append_array(_static_obstacles)
-	for i in 9:
+	for i in 14:
 		var free := true
 		for blocker in blockers:
 			if spot.distance_to(blocker.pos) < float(blocker.radius) + 0.32:
 				free = false
 				break
+		# Auch der Weg dorthin muss frei sein (seit Etappe 6j: sonst blieb man zwischen zwei Kübeln stecken) – sonst
+		# weiter weg vom Fenster stehen bleiben. Der Weg ist so breit, wie neben ihm Platz ist.
+		var room := INF
 		if free:
-			return StreetRoute.from_points(PackedVector2Array([from, spot]), 0.35)
+			for blocker in blockers:
+				var on := Geometry2D.get_closest_point_to_segment(blocker.pos, from, spot)
+				room = minf(room, on.distance_to(blocker.pos) - float(blocker.radius))
+			free = room >= 0.3 and not _spot_in_solid(spot)
+		if free:
+			return StreetRoute.from_points(PackedVector2Array([from, spot]), clampf(room - 0.29, 0.02, 0.35))
 		spot -= face * 0.1
+		if (spot - from).dot(face) < 0.3:
+			return null  # der Platz läge schon auf dem eigenen Weg: kein Abstecher
 	return null  # zu weit weg vom Fenster: lieber auslassen
 
 

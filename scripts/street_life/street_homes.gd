@@ -321,7 +321,7 @@ func _way_in(home: Dictionary, lane: Vector2) -> Array:
 
 func _route_to(a: Vector2, b: Vector2) -> Dictionary:
 	var route := StreetRoute.from_points(PackedVector2Array([a, b]), 0.3)
-	return {"type": "walk", "route": route, "to": route.length(), "from_here": true}
+	return {"type": "walk", "route": route, "to": route.length(), "from_here": true, "fixed_path": true}
 
 
 ## Aus dem Haus, zu einem Ende der Straße (dort verschwindet man wie jeder Passant); später kommt man wieder (_come_home).

@@ -93,6 +93,21 @@ func _apply_room_height(height: float) -> void:
 	# Die Decke ist ein CSG-Container (abgeschrägte Ecke): sein Ursprung liegt an der Unterkante.
 	($Structure/Ceiling as Node3D).position.y = height
 	($CeilingCovering as Node3D).position.y = height
+	_build_trim(height)
+
+
+## Stuckleiste rund um die Decke (seit Etappe 6j, RoomTrim): folgt dem Grundriss mit der abgeschrägten Ecke.
+func _build_trim(height: float) -> void:
+	var old := $Structure.get_node_or_null("Cornice")
+	if old:
+		$Structure.remove_child(old)
+		old.queue_free()
+	var area := build_area
+	var cut := GameConfig.corner_cut
+	var outline := PackedVector2Array([
+		Vector2(area.position.x, area.position.y + cut), Vector2(area.position.x + cut, area.position.y),
+		Vector2(area.end.x, area.position.y), area.end, Vector2(area.position.x, area.end.y)])
+	$Structure.add_child(RoomTrim.build_cornice(outline, height))
 
 
 # --- Möbel ---

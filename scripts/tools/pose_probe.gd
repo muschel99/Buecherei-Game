@@ -82,6 +82,109 @@ func _go():
 				f._player.play(&"idle", 0.0); f._player.seek(1.0, true); f._player.speed_scale = 0.0
 			await _shot(m, Vector3(0.2, 0.3, 1), "hug_front")
 			await _shot(m, Vector3(-0.3, 0.6, -1), "hug_back")
+		"bench_chat":
+			# Zwei auf der Bank im Gespräch (seit 6j): misst, wie weit sich der Kopf gegenüber der Brust dreht
+			var other := ChibiPasserbyModel.new()
+			add_child(other)
+			var rng2 := RandomNumberGenerator.new(); rng2.seed = 11
+			other.randomize_look(rng2)
+			await get_tree().process_frame
+			await get_tree().process_frame
+			other.position = Vector3(-0.62, 0.0, 0.0)
+			for f: ChibiPasserbyModel in [m, other]:
+				f.sit_height = 0.25
+				f._player_rest_until = 1e9
+				f.relaxed_sit = true
+			# Die fertige Haltung (mit Kopfdrehung) gibt es nur im Signal skeleton_updated
+			for f: ChibiPasserbyModel in [m, other]:
+				var sk: Skeleton3D = f._skeleton
+				sk.skeleton_updated.connect(func() -> void:
+					var hz := sk.get_bone_global_pose(sk.find_bone("Head")).basis.z
+					var cz := sk.get_bone_global_pose(sk.find_bone("Hips")).basis.z
+					f.set_meta("yaw", rad_to_deg(Vector2(cz.x, cz.z).angle_to(Vector2(hz.x, hz.z)))))
+			m.set_chat_partner(other)
+			other.set_chat_partner(m)
+			m.set_talking(true)
+			var worst := 0.0
+			for i in 600:
+				m.animate(&"sit", 0.0, 1.0 / 30.0)
+				other.animate(&"sit", 0.0, 1.0 / 30.0)
+				if i == 300:
+					m.set_talking(false); other.set_talking(true)
+				await get_tree().process_frame
+				for f: ChibiPasserbyModel in [m, other]:
+					var a: float = f.get_meta("yaw", 0.0)
+					worst = maxf(worst, absf(a))
+					if i % 60 == 0:
+						print("t=%d kopf-gegen-huefte=%.0f blick=%.0f clip=%s" % [i, a, f._head_yaw, f._player.current_animation])
+				if i % 100 == 50:
+					cam.look_at_from_position(Vector3(-0.31, 1.0, 2.6), Vector3(-0.31, 0.6, 0), Vector3.UP)
+					await RenderingServer.frame_post_draw
+					get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + "bench_chat_%d.png" % i))
+			print("groesste Kopfdrehung gegen Hüfte: %.0f Grad" % worst)
+		"grid":
+			# Alle sechs Grundfiguren in drei Körperformen und mehreren Haltungen (seit 6j: Netzfehler suchen)
+			m.queue_free()
+			var cam2: Camera3D = get_node("Cam")
+			var figs: Array[ChibiPasserbyModel] = []
+			for i in 6:
+				var f := ChibiPasserbyModel.new()
+				add_child(f)
+				var r := RandomNumberGenerator.new(); r.seed = 20 + i
+				f.randomize_look(r)
+				f.figure = i as ChibiCharacter.Figure
+				f.skin_color = f.skin_color
+				f.top = ChibiCharacter.Top.TSHIRT if i % 2 == 0 else ChibiCharacter.Top.SWEATER
+				f.bottom = ChibiCharacter.Bottom.SKIRT if i == 1 or i == 2 else ChibiCharacter.Bottom.TROUSERS
+				f.hair = [ChibiCharacter.Hair.BOB, ChibiCharacter.Hair.BUN, ChibiCharacter.Hair.PIGTAILS, ChibiCharacter.Hair.SHORT, ChibiCharacter.Hair.SHORT, ChibiCharacter.Hair.BUN][i]
+				f.give_bag(false)
+				f.position = Vector3((i % 3) * 0.8, 0.0, 0.0 if i < 3 else 50.0)
+				figs.append(f)
+			await get_tree().process_frame
+			await get_tree().process_frame
+			var only := String(mode[1]) if mode.size() > 1 else ""
+			for shape: float in [-0.9, 0.0, 1.0]:
+				for f in figs:
+					f.body_shape = shape
+				for pose: Array in [[&"walk", 0.35, false], [&"sit_idle", 1.0, true], [&"talk", 1.2, false], [&"pet_reach", 1.6, false], [&"wave", 1.2, false]]:
+					if only != "" and only != String(pose[0]):
+						continue
+					for f in figs:
+						f.sit_height = 0.25
+						f._player.play(pose[0], 0.0); f._player.seek(pose[1], true); f._player.speed_scale = 0.0
+					for group in 2:
+						var c := Vector3(0.8, 0.6, 50.0 * group)
+						for view: Array in [["vorn", Vector3(0.0, 0.25, 1.0)], ["hinten", Vector3(0.2, 0.3, -1.0)], ["seite", Vector3(1.0, 0.2, 0.15)]]:
+							cam2.look_at_from_position(c + (view[1] as Vector3).normalized() * 3.1, c, Vector3.UP)
+							for k in 3:
+								await get_tree().process_frame
+							await RenderingServer.frame_post_draw
+							var file := "grid_%s_%s_%s_%s.png" % [pose[0], "duenn" if shape < 0.0 else ("mittel" if shape == 0.0 else "dick"), "f" if group == 0 else "m", view[0]]
+							get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + file))
+			print("Raster fertig")
+		"close":
+			# Nahaufnahme einer Figur: close <figur 0-5> <form> <clip> <zeit> <höhe> <abstand> [top] [bottom]
+			var fi := int(mode[1]); var shape := float(mode[2])
+			m.figure = fi as ChibiCharacter.Figure
+			m.body_shape = shape
+			m.skin_color = m.skin_color
+			if mode.size() > 7:
+				m.top = int(mode[7]) as ChibiCharacter.Top
+			if mode.size() > 8:
+				m.bottom = int(mode[8]) as ChibiCharacter.Bottom
+			m.give_bag(false)
+			m.sit_height = 0.25
+			await get_tree().process_frame
+			await get_tree().process_frame
+			m._player.play(StringName(mode[3]), 0.0); m._player.seek(float(mode[4]), true); m._player.speed_scale = 0.0
+			var cc: Camera3D = get_node("Cam")
+			var c := Vector3(0, float(mode[5]), 0)
+			for view: Array in [["vorn", Vector3(0.0, 0.15, 1.0)], ["hinten", Vector3(0.0, 0.2, -1.0)], ["links", Vector3(1.0, 0.15, 0.2)], ["rechts", Vector3(-1.0, 0.15, 0.2)], ["unten", Vector3(0.3, -0.5, 1.0)]]:
+				cc.look_at_from_position(c + (view[1] as Vector3).normalized() * float(mode[6]), c, Vector3.UP)
+				for k in 3:
+					await get_tree().process_frame
+				await RenderingServer.frame_post_draw
+				get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + "close_%d_%s_%s_%s.png" % [fi, mode[3], mode[5], view[0]]))
 		"drink":
 			m.set_prop(&"mug")
 			m._gesture_modifier.body_scale = m._hip_height / 0.607
