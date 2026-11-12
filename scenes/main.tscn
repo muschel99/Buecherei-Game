@@ -44,6 +44,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/opposite_alley.tscn" id="31_opposite_alley"]
 [ext_resource type="Script" path="res://scripts/street_life/street_life.gd" id="32_street_life"]
 [ext_resource type="Script" path="res://scripts/world/greenery.gd" id="33_greenery"]
+[ext_resource type="Script" path="res://scripts/world/chimney_smoke.gd" id="60_smoke"]
 [ext_resource type="PackedScene" path="res://scenes/world/street_bench.tscn" id="34_bench"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
@@ -118,6 +119,9 @@ script = ExtResource("33_greenery")
 [node name="Alley" parent="Outside" instance=ExtResource("29_alley")]
 
 [node name="OppositeAlley" parent="Outside" instance=ExtResource("31_opposite_alley")]
+
+[node name="ChimneySmoke" type="Node3D" parent="Outside"]
+script = ExtResource("60_smoke")
 
 [node name="Benches" type="Node3D" parent="Outside"]
 

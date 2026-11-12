@@ -26,7 +26,15 @@ Claude entscheidet selbst, was sinnvoll ist, und setzt es um. Die Entwicklerin p
 5. Roadmap und Notion, Test-Liste
 
 ## Decisions-so-far
-(wird während der Arbeit ergänzt)
+- Teil 1 (Commit 09557d8): Kopf beim Plaudern auf der Bank höchstens 68° gegen die Hüfte (ChibiHeadModifier, Blick ersetzt die
+  Kopfdrehung der Animation); Passanten drücken sich an Engstellen vorbei (Passerby.squeeze), warten neben der Tür, Paare und
+  Bank-Nachbarn halten sich nicht mehr fest, Schaufenster-Wege frei von Kübeln/Fahrrädern, Überqueren nach 15 s aufgegeben;
+  Autos fahren langsam an Leuten am Fahrbahnrand vorbei. Innenraum: Dielen/Putz-Shader, Stuckleiste (RoomTrim), Tageslicht
+  durch die Fenster (Render-Ebene 3), Rahmen und Tür innen ohne Verwitterung.
+- Teil 2 (Commit f6b86a8): Säume im Shader abgeschnitten (UV.x = Abstand zur Schnittlinie), Haut unter langen Hosen in
+  Hosenfarbe, Rock-Form "sit" im Sitzen; pose_probe grid/close/animal. Tiere: keine Netzfehler gefunden.
+- Teil 3: Lichtstimmung in GameConfig (light_*), Sonne 42°/36°, Laternen tagsüber aus (street_lanterns_lit), Rauch aus
+  Schornsteinen (ChimneySmoke), alte 5b-Figuren gelöscht.
 
 ## Fog
 - Welche Netzfehler genau gemeint sind: selbst suchen (Posen-Prüfungen, Testbilder)

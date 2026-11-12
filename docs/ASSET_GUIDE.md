@@ -1128,26 +1128,11 @@ Gesicht: `chibi_face.py`).
   innen bzw. außen. Das macht in Godot der Knoten **ShapeModifier** unter `Skeleton3D` (legt
   ChibiCharacter selbst an) – auch während Animationen.
 
-### Die Figuren (seit Etappe 5b)
-Sechs Figuren im Stil des Spiels (Kopf etwas größer, Frisuren aus dicken Strähnen):
-**Mila** (Pullover, Leggings, Stiefeletten), **Rosa** (Bluse, Mieder, langer Rock), **Hanna**
-(Strickjacke, Rock, Dutt), **Theo** (Pullover, Jeans, Turnschuhe), **Bruno** (Hemd, Weste,
-Schiebermütze, Bart) und **Arthur** (Mantel, Schal, Schnurrbart). Grundlage sind die
-Quaternius-Grundkörper (CC0, frei verwendbar) – sie liegen unverändert in
-`assets/models/characters/base_quaternius/` (zum Anschauen in Blender).
-- **Fertige Figuren:** `assets/models/characters/<name>.glb` (Skelett + Körper, Kleidung, Haare,
-  T-Pose). Alle nebeneinander in Godot: `scenes/tools/character_lineup.tscn` öffnen.
-- **Baukasten:** `kit_female.glb` und `kit_male.glb` – der Körper in Teilen (Kopf, Rumpf, Arme,
-  Beine, Füße …) mit **Formreglern** (Blend Shapes „Rundlich“, „Schlank“, beim Mann auch
-  „Kraeftig“), dazu alle Kleidungsstücke und Frisuren, alle am selben Skelett. Jedes
-  Kleidungsstück hat dieselben Formregler, passt also zu jeder Körperform. Die Blender-Dateien
-  dazu: `assets/models/source/characters/kit_female.blend`, `kit_male.blend`, je Figur
-  `<name>.blend`.
-- **Neue Figur:** in `tools/blender/build_characters.py` bei `CHARACTERS` einen Eintrag
-  ergänzen (Körper, Hautton, Formregler, Größe, Frisur + Farbe, Kleidungsstücke + Farben) und
-  das Script laufen lassen: `blender -b --factory-startup --python
-  tools/blender/build_characters.py` (Kontrollbilder: `-- --render mila` →
-  `screenshots/blender/characters/`).
+### Die alten Figuren aus Etappe 5b (entfernt in Etappe 6j)
+Die sechs realistischeren Figuren (Mila, Rosa, Hanna, Theo, Bruno, Arthur) und ihr Baukasten sind seit Etappe 6j
+nicht mehr im Projekt – das Spiel benutzt nur noch die Chibi-Figuren (siehe oben). Die Quaternius-Grundkörper
+(CC0) liegen weiter unverändert in `assets/models/characters/base_quaternius/`. Wer die alten Figuren noch einmal
+braucht, findet sie in der Git-Geschichte (vor dem Commit „Etappe 6j, Teil 3“).
 
 ### Animationen von Mixamo (Bewegungen für die Figuren)
 Mixamo kann nur im Browser benutzt werden – das machst du, den Rest Claude:

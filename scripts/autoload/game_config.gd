@@ -686,8 +686,40 @@ var paint_wash: float = 0.12
 ## Stand der Sonne (seit Etappe 4h, Wunsch: höher und etwas nach rechts): Höhe über dem Horizont
 ## in Grad (90 = genau von oben) und Richtung in Grad – 0 = genau hinter den Häusern gegenüber der
 ## Bücherei, positiv = nach rechts (vom Laden aus auf die Straße geschaut). Vorher 35 und 15.
-var sun_elevation: float = 47.0
-var sun_azimuth: float = 30.0
+## Seit Etappe 6j etwas tiefer und weiter rechts (vorher 47 und 30): längere Schatten, das Licht streift die Fassaden
+## und fällt tiefer in den Laden – die Bücherei-Seite und ihr Gehweg bleiben in der Sonne.
+var sun_elevation: float = 42.0
+var sun_azimuth: float = 36.0
+## Lichtstimmung (seit Etappe 6j, vorher fest in main.tscn; alte Werte jeweils dahinter): warme Nachmittagssonne
+## (etwa 3500 K), kühleres Licht in den Schatten, blauerer Himmel, etwas kräftigere Farben, sanftes Leuchten.
+var light_sun_color: Color = Color(1.0, 0.82, 0.6)          # vorher (1, 0.85, 0.66)
+var light_sun_energy: float = 2.05                           # vorher 2.2
+var light_ambient_color: Color = Color(0.56, 0.54, 0.52)     # vorher (0.58, 0.52, 0.46)
+var light_ambient_energy: float = 0.7                        # vorher 0.7
+var light_exposure: float = 1.0                              # vorher 1.1 (helle Gehwege waren fast weiß)
+var light_saturation: float = 1.16                           # vorher 1.08
+var light_contrast: float = 1.06                             # vorher 1.05
+var light_glow_intensity: float = 0.7                        # vorher 0.6
+var light_glow_bloom: float = 0.1                            # vorher 0.06
+var light_ssao_intensity: float = 3.0                        # vorher 2.5 (mehr Schatten in Ecken)
+var light_ssao_radius: float = 1.4                           # vorher 1.2
+var light_sky_top_color: Color = Color(0.3, 0.52, 0.84)      # vorher (0.42, 0.58, 0.78)
+var light_sky_horizon_color: Color = Color(0.96, 0.84, 0.68) # vorher (0.86, 0.8, 0.72)
+## Rauch aus den Schornsteinen (seit Etappe 6j, ChimneySmoke): an/aus, Anteil der Häuser, Wölkchen je Schornstein,
+## Lebensdauer (s), Steigtempo (m/s), Wind (m/s² – trägt den Rauch zur Seite), Größe am Ende (m), Farbe mit Deckkraft.
+var chimney_smoke_enabled: bool = true
+var chimney_smoke_share: float = 0.4
+var chimney_smoke_amount: int = 10
+var chimney_smoke_lifetime: float = 7.0
+var chimney_smoke_speed: float = 0.42
+var chimney_smoke_wind: Vector3 = Vector3(0.09, 0.03, 0.03)
+var chimney_smoke_size: float = 1.5
+var chimney_smoke_color: Color = Color(0.95, 0.93, 0.9, 0.2)
+## Brennen die Straßen- und Wandlaternen? Am Tag nicht (seit Etappe 6j; vorher leuchteten sie in der Mittagssonne) –
+## der spätere Tagesablauf schaltet sie abends ein (main.gd set_street_lanterns). Farbe des Glases, wenn sie aus sind.
+var street_lanterns_lit: bool = false
+var lantern_glass_off_color: Color = Color(0.86, 0.87, 0.82)
+var light_sky_curve: float = 0.12                            # (wie schnell der Himmel nach oben blau wird; Godot: 0.15)
 ## Bis zu dieser Entfernung (in Metern) wirft die Sonne Schatten. Seit Etappe 4g so weit wie
 ## die Straße (vorher 20 m). Die erste Schattenstufe bleibt fein (Fensterlicht im Laden).
 var sun_shadow_distance: float = 70.0

@@ -2,6 +2,8 @@ extends Node3D
 ## Hauptszene. Lädt beim Start den gespeicherten Spielstand (falls vorhanden) und
 ## stellt die Effekte der Umgebung passend zur gewählten Grafikstufe ein.
 
+const LANTERN_GLASS := "res://assets/materials/storybook/laternenglas_leuchtend.tres"
+
 @onready var _environment: Environment = $WorldEnvironment.environment
 @onready var _dust: GPUParticles3D = $GroundFloorRoom/WindowDust
 @onready var _sun: DirectionalLight3D = $Sun
@@ -122,6 +124,44 @@ func _apply_sun_direction() -> void:
 	# Richtung zur Sonne: gegenüber liegt bei -Z, rechts (vom Laden aus) bei +X
 	var to_sun := Vector3(cos(el) * sin(az), sin(el), -cos(el) * cos(az))
 	_sun.basis = Basis.looking_at(-to_sun, Vector3.UP)
+	_apply_light_mood()
+
+
+## Straßen- und Wandlaternen an oder aus (seit Etappe 6j): Am hellen Tag brennen sie nicht – das Glas ist dann matt
+## und hell statt leuchtend. Für den späteren Tagesablauf (Etappe 7): abends set_street_lanterns(true).
+func set_street_lanterns(lit: bool) -> void:
+	var glass := load(LANTERN_GLASS) as ShaderMaterial
+	if glass == null:
+		return
+	if not glass.has_meta("lit_energy"):
+		glass.set_meta("lit_energy", glass.get_shader_parameter("emission_energy"))
+		glass.set_meta("lit_color", glass.get_shader_parameter("base_color"))
+	glass.set_shader_parameter("emission_energy", glass.get_meta("lit_energy") if lit else 0.0)
+	glass.set_shader_parameter("base_color", glass.get_meta("lit_color") if lit else GameConfig.lantern_glass_off_color)
+	glass.set_shader_parameter("second_color", glass.get_meta("lit_color") if lit else GameConfig.lantern_glass_off_color)
+
+
+## Lichtstimmung (seit Etappe 6j, alle Werte in GameConfig "light_*"): warme Nachmittagssonne, kühleres Himmelslicht in
+## den Schatten, blauer Himmel mit warmem Horizont, sanftes Leuchten um helle Stellen.
+func _apply_light_mood() -> void:
+	set_street_lanterns(GameConfig.street_lanterns_lit)
+	_sun.light_color = GameConfig.light_sun_color
+	_sun.light_energy = GameConfig.light_sun_energy
+	_environment.ambient_light_color = GameConfig.light_ambient_color
+	_environment.ambient_light_energy = GameConfig.light_ambient_energy
+	_environment.tonemap_exposure = GameConfig.light_exposure
+	_environment.adjustment_saturation = GameConfig.light_saturation
+	_environment.adjustment_contrast = GameConfig.light_contrast
+	_environment.glow_intensity = GameConfig.light_glow_intensity
+	_environment.glow_bloom = GameConfig.light_glow_bloom
+	_environment.ssao_intensity = GameConfig.light_ssao_intensity
+	_environment.ssao_radius = GameConfig.light_ssao_radius
+	var sky := _environment.sky.sky_material as ProceduralSkyMaterial if _environment.sky else null
+	if sky:
+		sky.sky_top_color = GameConfig.light_sky_top_color
+		sky.sky_horizon_color = GameConfig.light_sky_horizon_color
+		sky.ground_horizon_color = GameConfig.light_sky_horizon_color
+		sky.sky_curve = GameConfig.light_sky_curve
 
 
 ## Sonnenschatten: Die Sonne verteilt ihre Schatten auf mehrere Stufen ("Kaskaden") – nah

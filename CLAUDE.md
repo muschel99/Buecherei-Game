@@ -603,19 +603,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `planes` (Punkt, Richtung ins Freie, Abstand) nehmen. geo_check meldet auch Flimmern (zwei
   Flächen genau aufeinander: die kleinere 2–3 mm zurücksetzen, Deckel/Böden in anderen Teilen
   mit `skip`, Rückseiten in der Wand weglassen) und Gefäße, die in festen Teilen stecken.
-- **Figuren (seit Etappe 5b):** `tools/blender/build_characters.py` (Figuren `CHARACTERS`,
-  Kleidungsstücke `make_part`, Frisuren `make_hair`) mit `character_lib.py`. Grundkörper:
-  Quaternius (CC0) in `assets/models/characters/base_quaternius/` (.gdignore, nie verändern);
-  Blenders glTF-Import braucht den numpy-Kniff am Anfang von character_lib (np.bool …).
-  Nähte verschweißen (`weld`), Kleidung = `shell` (Körperkopie, Normale nach außen, glätten,
-  `cuts` = gerade Säume per bisect, `neck_cuts` mit Bereich), Röcke `bell`, Schuhe `shoe`,
-  Haare `long_hair`/`bun_hair`/`cropped_hair` (Strähnen über `HeadShape.surface_dir`, Gesicht
-  bleibt frei), Schichten `_layer_clothes` + `push_out_of`. Farbtöne in Texturen einrechnen
-  (`tinted_image`) – der glTF-Export übernimmt keine Farb-Knoten. Export: Figuren mit fest
-  angewandten Formreglern (`<name>.glb`, JPEG-Texturen), Baukasten `kit_<körper>.glb` (Körper in
-  Teilen `SEGMENTS`, Formregler bleiben, Teile mit Extra "covers"), Mixamo `mixamo/<name>.fbx`
-  (nur Netze, .gdignore). Ansicht: `scenes/tools/character_lineup.tscn`.
-- **Chibi-Figuren (seit Etappe 5c, Körper neu gebaut; ersetzen später die Figuren aus 5b):**
+- **Figuren aus Etappe 5b:** in Etappe 6j entfernt (Modelle, `build_characters.py`, `character_lineup.tscn`); es gibt
+  nur noch die Chibi-Figuren. `character_lib.py` bleibt (build_chibi nutzt den numpy-Kniff, Export und Kontrollbilder),
+  ebenso die Quaternius-Grundkörper in `assets/models/characters/base_quaternius/` (.gdignore, nie verändern).
+- **Chibi-Figuren (seit Etappe 5c, Körper neu gebaut):**
   `tools/blender/build_chibi.py` baut 6 Grundkörper in drei Stufen: **Form** = Abstandsfeld
   `chibi_sdf.Body` (Grundformen; Teile in einer Linie – Ober-/Unterarm, Schenkel, Fingerglieder –
   hart vereinigt, sonst Beulen; Kopf für alle gleich, `HEAD_HEIGHT`; Maße `DIMS`, Formen
