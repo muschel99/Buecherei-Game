@@ -452,7 +452,7 @@ def piece_object(name, data, arm, names, mat):
     obj = mesh_from_arrays(name, data["P"]["Basis"], data["faces"])
     if len(data["P"]) > 1:
         obj.shape_key_add(name="Basis", from_mix=False)
-        for key_name in ("thin", "fat"):
+        for key_name in [k for k in data["P"] if k != "Basis"]:
             key = obj.shape_key_add(name=key_name, from_mix=False)
             key.data.foreach_set("co", data["P"][key_name].astype(np.float32).ravel())
             key.value = 0.0
@@ -462,7 +462,11 @@ def piece_object(name, data, arm, names, mat):
     # erste Texturkoordinate überall 0 (neue Ebenen bekommen sonst je Fläche eigene Ecken – der
     # Export müsste dann jede Ecke vervielfachen)
     first = me.uv_layers.new(name="UVMap")
-    first.data.foreach_set("uv", np.zeros(len(li) * 2, np.float32))
+    first_uv = np.zeros((len(li), 2), np.float32)
+    if "margin" in data:
+        # Abstand zur Schnittlinie des Kleidungsstücks (m, negativ = wird im Shader abgeschnitten; seit Etappe 6j)
+        first_uv[:, 0] = data["margin"][li]
+    first.data.foreach_set("uv", first_uv.ravel())
     layer = me.uv_layers.new(name="AO")
     uv = np.stack([data["ao"][li], data["height"][li]], axis=1)
     layer.data.foreach_set("uv", uv.astype(np.float32).ravel())

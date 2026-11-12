@@ -152,6 +152,7 @@ func _go():
 					for f in figs:
 						f.sit_height = 0.25
 						f._player.play(pose[0], 0.0); f._player.seek(pose[1], true); f._player.speed_scale = 0.0
+						f.set_skirt_sit(1.0 if pose[2] else 0.0)
 					for group in 2:
 						var c := Vector3(0.8, 0.6, 50.0 * group)
 						for view: Array in [["vorn", Vector3(0.0, 0.25, 1.0)], ["hinten", Vector3(0.2, 0.3, -1.0)], ["seite", Vector3(1.0, 0.2, 0.15)]]:
@@ -177,6 +178,7 @@ func _go():
 			await get_tree().process_frame
 			await get_tree().process_frame
 			m._player.play(StringName(mode[3]), 0.0); m._player.seek(float(mode[4]), true); m._player.speed_scale = 0.0
+			m.set_skirt_sit(1.0 if String(mode[3]).begins_with("sit") else 0.0)
 			var cc: Camera3D = get_node("Cam")
 			var c := Vector3(0, float(mode[5]), 0)
 			for view: Array in [["vorn", Vector3(0.0, 0.15, 1.0)], ["hinten", Vector3(0.0, 0.2, -1.0)], ["links", Vector3(1.0, 0.15, 0.2)], ["rechts", Vector3(-1.0, 0.15, 0.2)], ["unten", Vector3(0.3, -0.5, 1.0)]]:
@@ -185,6 +187,46 @@ func _go():
 					await get_tree().process_frame
 				await RenderingServer.frame_post_draw
 				get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + "close_%d_%s_%s_%s.png" % [fi, mode[3], mode[5], view[0]]))
+		"animal":
+			# Tier in allen Bewegungen: animal <cat|cat_adult|bird|pigeon> [bewegung,…] [aussehen]
+			m.queue_free()
+			var scene := load("res://scenes/animals/%s.tscn" % mode[1]) as PackedScene
+			var a := scene.instantiate() as StreetAnimal
+			add_child(a)
+			await get_tree().process_frame
+			a.visible = true
+			a.set_process(false)
+			a.set_physics_process(false)
+			var looks: Array = GameConfig.cat_looks
+			if String(mode[1]).begins_with("cat") and a.has_method("apply_look"):
+				var li := int(mode[3]) if mode.size() > 3 else (3 if mode[1] == "cat_adult" else 0)
+				var look: Dictionary = looks[li]
+				var fur := "Katze Fell groß" if mode[1] == "cat_adult" else "Katze Fell"
+				a.apply_look("probe", {fur: look.fur},
+					{fur: {"tabby": float(look.get("tabby", 0.0)), "tabby_color": look.get("tabby_color", Color.WHITE),
+						"second_color": look.fur2, "third_color": look.get("back", look.fur), "mask_from": float(look.get("patches", 0.55)),
+						"mask_soft": 0.3, "eye_color": look.eye}})
+			var list: Array = Array(a.anim.get_animation_list())
+			if mode.size() > 2 and String(mode[2]) != "all":
+				list = Array(String(mode[2]).split(","))
+			var ca: Camera3D = get_node("Cam")
+			var size := 0.42 if String(mode[1]).begins_with("cat") else 0.22
+			for an: String in list:
+				if an == "RESET" or not a.anim.has_animation(an):
+					continue
+				var length := a.anim.get_animation(an).length
+				for part: float in [0.25, 0.7]:
+					a.anim.play(an, 0.0); a.anim.seek(length * part, true); a.anim.speed_scale = 0.0
+					var k := 0
+					for dir: Vector3 in [Vector3(1, 0.35, 0.6), Vector3(-0.2, 0.3, 1.0)]:
+						var c := Vector3(0, size * 0.22, 0)
+						ca.look_at_from_position(c + dir.normalized() * size * 1.5, c, Vector3.UP)
+						for q in 3:
+							await get_tree().process_frame
+						await RenderingServer.frame_post_draw
+						get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + "%s_%s_%d_%d.png" % [mode[1], an, int(part * 100), k]))
+						k += 1
+			print("Tier fertig: ", list)
 		"drink":
 			m.set_prop(&"mug")
 			m._gesture_modifier.body_scale = m._hip_height / 0.607

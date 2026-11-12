@@ -23,7 +23,14 @@ void fragment() {
 	float cloth = clamp(0.5 - d / w, 0.0, 1.0);
 	// feiner Saum am Rand der Wäsche
 	float hem = cloth * (1.0 - smoothstep(0.0, 0.0025, -d)) * 0.12;
-	vec3 fabric = (1.0 - UV.y) < LOWER_SPLIT ? lower_cloth_color.rgb : cloth_color.rgb;
+	bool lower = (1.0 - UV.y) < LOWER_SPLIT;
+	vec3 fabric = lower ? lower_cloth_color.rgb : cloth_color.rgb;
+	// Lange Hose (lower_cloth_color.a = 0, seit Etappe 6j): alle Haut unter dem Bund hat die Farbe der Hose – wo sie in
+	// der Hüftbeuge oder am Knie durch den Stoff drückt, sieht man es nicht mehr (vorher ein hautfarbener Strich)
+	if (lower && lower_cloth_color.a < 0.5) {
+		cloth = 1.0;
+		hem = 0.0;
+	}
 	ALBEDO = mix(base_color.rgb, fabric * (1.0 - hem), cloth) * ao;
 	ROUGHNESS = mix(roughness, 0.85, cloth);
 	SPECULAR = 0.3;

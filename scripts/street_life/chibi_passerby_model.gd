@@ -163,6 +163,7 @@ var _swing := 0.0
 var _sit := 0.0
 var _time := 0.0
 var _head_yaw := 0.0
+var _skirt_sit := 0.0
 var _head_pitch := 0.0
 var _head_bone := -1
 ## Mimik: Restzeit des anderen Ausdrucks (0 = Grundausdruck); vor dem Schaufenster: wann es wieder
@@ -594,6 +595,10 @@ func _animate_clips(state: StringName, speed: float, delta: float) -> void:
 		_head_modifier.hold = move_toward(_head_modifier.hold, 0.85 if _focus else 0.0, delta * 2.0)
 	# Sitzen: Figur auf die Höhe der Sitzfläche heben (die Animation sitzt auf ihrer eigenen Höhe)
 	_model.position.y = (sit_height - _sit_seat) * _seated
+	# Rock: im Sitzen eng um die Oberschenkel (weich hinein und heraus)
+	if bottom == Bottom.SKIRT:
+		_skirt_sit = move_toward(_skirt_sit, 1.0 if state == &"sit" else 0.0, delta / 0.6)
+		set_skirt_sit(_skirt_sit)
 	_update_bag(delta)
 	_update_chore(delta)
 

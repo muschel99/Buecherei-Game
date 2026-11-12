@@ -245,6 +245,10 @@ func _rebuild() -> void:
 			_body = mi
 		elif mi.name.begins_with("Cloth_") or mi.name.begins_with("Hair_"):
 			_pieces[String(mi.name)] = mi
+			if String(mi.name).begins_with("Cloth_") and mi.name != &"Cloth_skirt":
+				# Kleidung nie vereinfachen (seit Etappe 6j): der Saum wird im Shader genau an der Schnittlinie
+				# abgeschnitten – vereinfachte Netze in der Ferne hätten wieder einen zackigen Saum
+				mi.lod_bias = 100.0
 	_apply_shape()
 	_apply_colors()
 	_apply_face()
@@ -385,10 +389,20 @@ func _apply_colors() -> void:
 		_body.set_instance_shader_parameter("lower_cloth_color", _lower_cloth_color())
 
 
+## Rock im Sitzen (seit Etappe 6j): 0 = weite Glocke (stehen, gehen), 1 = eng um die Oberschenkel gelegt.
+func set_skirt_sit(value: float) -> void:
+	var mi: MeshInstance3D = _pieces.get("Cloth_skirt")
+	if mi and mi.visible:
+		_set_blend(mi, "sit", clampf(value, 0.0, 1.0))
+
+
 ## Unterhose: unter Rock und Hose in deren Farbe (etwas dunkler, unter dem Rock wie ein Hosenrock) –
 ## beim Sitzen sieht man unter dem Rock nur Stoff im Schatten, und wo die Wäsche in der Hüftbeuge
 ## durch die Hose drückt, fällt sie nicht auf.
 func _lower_cloth_color() -> Color:
+	if bottom == Bottom.TROUSERS and shoes:
+		# lange Hose: die Beine darunter ganz in ihrer Farbe (Deckkraft 0 = Zeichen für den Haut-Shader)
+		return Color(bottom_color.r, bottom_color.g, bottom_color.b, 0.0)
 	return bottom_color.darkened(GameConfig.chibi_skort_darken) if bottom != Bottom.NONE else cloth_color
 
 

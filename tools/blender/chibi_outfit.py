@@ -126,7 +126,11 @@ def shell(P, faces, W, ao, cuts, offset, fields, shifts, smooth=10, floor=False)
     n_all = len(base)
     fv = np.stack([f(base) for f in cuts], axis=1)
     keep_v = (fv >= 0).all(axis=1)
-    keep_f = keep_v[faces].all(axis=1)
+    # Seit Etappe 6j: eine Reihe Flächen über die Schnittlinie hinaus behalten und den Saum im Shader genau auf der
+    # Linie abschneiden ("margin" = Abstand zur Schnittlinie je Ecke, negativ = jenseits; chibi_cloth.gdshader
+    # verwirft dort). Vorher wurden die Randecken auf die Linie geschoben – der Saum blieb zackig wie gerissen.
+    margin_all = fv.min(axis=1)
+    keep_f = keep_v[faces].any(axis=1)
     kf = faces[keep_f]
     used = np.unique(kf)
     remap = np.full(n_all, -1, np.int64)
@@ -147,7 +151,7 @@ def shell(P, faces, W, ao, cuts, offset, fields, shifts, smooth=10, floor=False)
     aog = ao[used].copy()
     # Randecken genau auf die Schnittlinie schieben (entlang einer Kante oder Flächendiagonale)
     body_nbrs = face_neighbor_lists(n_all, faces)
-    for gv in bverts:
+    for gv in ():  # (Randecken bleiben, wo sie sind – der Shader schneidet)
         v = used[gv]
         i = int(np.argmin(fv[v]))
         fvi = fv[v, i]
@@ -174,7 +178,7 @@ def shell(P, faces, W, ao, cuts, offset, fields, shifts, smooth=10, floor=False)
     # Saumlinie glätten (keine Zacken)
     loop_nb = boundary_loops_neighbors(boundary, m)
     for s in P:
-        for _ in range(4):
+        for _ in range(0):
             q = Pg[s].copy()
             for gv in bverts:
                 if len(loop_nb[gv]) == 2:
@@ -203,7 +207,7 @@ def shell(P, faces, W, ao, cuts, offset, fields, shifts, smooth=10, floor=False)
     # Stoff – so bleibt die Datei klein)
     near = np.zeros(m, bool)
     near[bverts] = True
-    for _ in range(INNER_BAND):
+    for _ in range(INNER_BAND + 1):
         near[np.unique(gf[near[gf].any(axis=1)])] = True
     band_f = gf[near[gf].all(axis=1)]
     band_v = np.unique(band_f)
@@ -213,7 +217,9 @@ def shell(P, faces, W, ao, cuts, offset, fields, shifts, smooth=10, floor=False)
     rim = np.stack([boundary[:, 1], boundary[:, 0], inner_index[boundary[:, 0]], inner_index[boundary[:, 1]]], axis=1)
     out_faces = np.concatenate([gf, inner_index[band_f][:, ::-1], rim])
     height = Pg["Basis"][:, 2]
+    margin = margin_all[used]
     return {"P": {s: np.concatenate([outer[s], inner[s][band_v]]) for s in P}, "faces": out_faces,
+            "margin": np.concatenate([margin, margin[band_v]]),
             "W": np.concatenate([Wg, Wg[band_v]]), "ao": np.concatenate([aog, aog[band_v]]),
             "height": np.concatenate([height, height[band_v]])}
 
@@ -316,7 +322,7 @@ def skirt(bodies, names, limb_offsets, body_P, body_W):
     for shape, b in bodies.items():
         lower = S.Group("lower", [("union", b.parts["torso"], 0.0), ("union", b.parts["legfoot_Left"], 0.045),
                                   ("union", b.parts["legfoot_Right"], 0.045)])
-        pts, r_prev, z_prev = [], None, None
+        pts, tight, r_prev, z_prev = [], [], None, None
         for z in rows:
             c = np.array((0.0, axis_y, z))
             hit, ok = S.raycast(lower, c + dirs * 0.45, -dirs, tmax=0.45)
@@ -332,14 +338,25 @@ def skirt(bodies, names, limb_offsets, body_P, body_W):
                 r = np.maximum(r, 0.5 * r + 0.25 * (np.roll(r, 1) + np.roll(r, -1)))
             r_prev, z_prev = r, z
             pts.append(np.stack([r * np.cos(ang), axis_y + r * np.sin(ang), np.full_like(ang, z)], axis=1))
+            # eng anliegend (für die Form "sit"): ohne die Glocke, nur knapp um Rumpf und Beine
+            rt = np.minimum(r, r_body + 0.017)
+            for _ in range(3):
+                rt = np.maximum(rt, 0.5 * rt + 0.25 * (np.roll(rt, 1) + np.roll(rt, -1)))
+            tight.append(np.stack([rt * np.cos(ang), axis_y + rt * np.sin(ang), np.full_like(ang, z)], axis=1))
         out[shape] = np.concatenate(pts)
+        if shape == "medium":
+            sit_shape = np.concatenate(tight)
     n_seg = SKIRT_SEGMENTS
     # Gewichte: oben Becken, nach unten immer mehr die Oberschenkel (nach Seite)
     base = out["medium"]
     z = base[:, 2]
     # (unten fast ganz mit den Beinen – beim Sitzen und bei großen Schritten bleiben die
     # Oberschenkel so unter dem Stoff; vorn und hinten in der Mitte je zur Hälfte)
-    leg = 0.95 * smoothstep(z_wide, z_hem, z)
+    # Seit Etappe 6j: schon knapp unter dem Hüftgelenk fast ganz mit den Oberschenkeln (vorher erst am Saum) – im
+    # Sitzen drehen sich die Schenkel um 90° nach vorn; der Rock blieb als Ring um die Hüfte stehen und die Beine
+    # stießen vorn hindurch. Jetzt legt er sich mit auf die Oberschenkel.
+    z_joint = body.hip_z
+    leg = 0.93 * smoothstep(z_joint + 0.035, z_joint - 0.05, z)
     rad = base[:, :2] - np.array((0.0, axis_y))
     left = smoothstep(-0.4, 0.4, rad[:, 0] / np.maximum(np.linalg.norm(rad, axis=1), 1e-9))   # +x = links
     # dazu mindestens so stark wie die Haut darunter (sonst stößt der Oberschenkel beim großen
@@ -369,6 +386,9 @@ def skirt(bodies, names, limb_offsets, body_P, body_W):
             if bone in idx:
                 p -= W[:, idx[bone]][:, None] * np.asarray(d)[None, :]
         keys[shape] = p
+    # Form "sit" (seit Etappe 6j): Im Sitzen liegt der Rock eng um die Oberschenkel statt als weite Glocke nach unten
+    # abzustehen (ChibiCharacter blendet sie beim Hinsetzen ein)
+    keys["sit"] = sit_shape
     # Außen- und Innenseite, Saum unten, Bund oben
     # Außenseite: Umlauf so, dass die Flächen nach außen zeigen (Ringe laufen nach unten,
     # Segmente gegen den Uhrzeiger); Innenseite umgekehrt; Bund oben und Saum unten passend dazu
