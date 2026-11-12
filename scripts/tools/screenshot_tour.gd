@@ -32,6 +32,7 @@ extends Node
 ##   --quality=<0|1|2>  Grafikstufe Niedrig/Mittel/Hoch (am Ende wird die alte Stufe zurückgestellt)
 ##   --no_street_life   ohne Straßenleben (zum Vergleich)
 ##   --time=<stunde>    Uhrzeit (z. B. 7.5 = 7:30; Standard 16.5), die Uhr steht dann still
+##   --ui=pause[:Seite] Pausenmenü (Buch) mit dieser Seite, z. B. --ui=pause:Grafik
 ##   --ui=build|shop    Gestaltungsmodus bzw. Theken-Tablet mit „Nest & Nook“ öffnen (seit Etappe 6,
 ##                      zeigt die Oberfläche mit; --tab=<nr> wählt die Kategorie, Standard 0);
 ##   --ui=app:<id>      Theken-Tablet mit einer anderen App öffnen, z. B. app:facade; --page=<id> wählt
@@ -258,6 +259,11 @@ func _open_ui(which: String, tab: int) -> void:
 			build_mode.set_filter_open(true)
 		elif which == "build_hold":
 			build_ui.call("_step_item", 1)
+	elif which.begins_with("pause"):
+		# Pausenmenü als Buch (seit Etappe 7), ohne das Spiel anzuhalten; pause:<Seite>, z. B. pause:Grafik
+		var menu := get_tree().root.find_child("PauseMenu", true, false)
+		menu.show()
+		menu.call("_show_page", which.get_slice(":", 1) if which.contains(":") else "Laufen", false)
 	elif which == "shop":
 		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
 		tablet.open_tablet()

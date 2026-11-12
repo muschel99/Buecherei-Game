@@ -140,4 +140,5 @@ func load_save_data(data: Dictionary) -> void:
 	_minute = clampf(float(data.get("minute", GameConfig.clock_start_hour * 60.0)), 0.0, MINUTES_PER_DAY - 0.01)
 	_last_minute = int(_minute)
 	_last_hour = hour()
+	minute_passed.emit(_last_minute)
 	hour_changed.emit(_last_hour)
