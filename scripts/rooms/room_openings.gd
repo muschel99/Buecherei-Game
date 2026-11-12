@@ -4,6 +4,9 @@ extends RefCounted
 ## (CSG), die Aussparungen der Innenfarbe (PaintableWall) und die Fensterbänke (ShopWindow). Alles aus
 ## denselben Umrissen wie die Fassade (FacadeLayout) – so passen innen und außen genau zusammen.
 
+## Gruppe aller Tageslicht-Lampen an Fenstern und Dachfenstern (DayCycle macht sie mit dem Tag heller und dunkler).
+const DAYLIGHT_GROUP := &"window_daylight"
+
 ## Wand → [CSG-Wand, Farbfläche innen, Schaufenster-Szene]
 const WALLS := {
 	"front": ["Structure/WallFront", "Walls/Front", "WindowFront"],
@@ -110,6 +113,7 @@ static func _window_daylight(room: Node, openings: Array[Dictionary]) -> void:
 		light.omni_range = GameConfig.window_daylight_range
 		light.omni_attenuation = 1.3
 		light.light_cull_mask = 1 << (GameConfig.INDOOR_RENDER_LAYER - 1)
+		light.add_to_group(DAYLIGHT_GROUP)
 		var center := box.get_center()
 		light.transform = FacadeLayout.opening_frame(o) * Transform3D(Basis.IDENTITY,
 			Vector3(center.x, center.y, -FacadeLayout.WALL_THICKNESS - GameConfig.window_daylight_inset))

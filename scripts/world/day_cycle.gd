@@ -151,15 +151,11 @@ func _values_at(hour: float) -> Dictionary:
 
 ## Tageslicht durch die Fenster der Bücherei mit der Helligkeit draußen.
 func _update_window_light(factor: float) -> void:
-	var room := main.get_node_or_null("GroundFloorRoom")
-	if room == null or not room.has_meta("window_daylight"):
-		return
-	var holder: Variant = room.get_meta("window_daylight")
-	if not is_instance_valid(holder):
-		return
-	for light: Node in (holder as Node).get_children():
-		if light is Light3D:
-			if not light.has_meta("base_energy"):
-				light.set_meta("base_energy", (light as Light3D).light_energy)
-			(light as Light3D).light_energy = float(light.get_meta("base_energy")) * factor
-			(light as Light3D).visible = factor > 0.02
+	for node: Node in get_tree().get_nodes_in_group(RoomOpenings.DAYLIGHT_GROUP):
+		var light := node as Light3D
+		if light == null:
+			continue
+		if not light.has_meta("base_energy"):
+			light.set_meta("base_energy", light.light_energy)
+		light.light_energy = float(light.get_meta("base_energy")) * factor
+		light.visible = factor > 0.02

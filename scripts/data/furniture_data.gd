@@ -30,7 +30,7 @@ const _CATEGORY_NAMES := {
 const SUBCATEGORIES := {
 	Category.SHELF: [["bookshelf", "Bücherregale"], ["deco_shelf", "Deko-Regale"], ["wall_shelf", "Wandregale"],
 		["display_case", "Vitrinen"], ["cabinet", "Schränke und Kommoden"]],
-	Category.SEATING: [["armchair", "Sessel"], ["sofa", "Sofas"], ["chair", "Stühle"], ["stool", "Hocker"]],
+	Category.SEATING: [["armchair", "Sessel"], ["sofa", "Sofas"], ["chair", "Stühle"], ["stool", "Hocker"], ["bed", "Betten"]],
 	Category.TABLE: [["side_table", "Beistelltische"], ["coffee_table", "Couchtische"], ["desk", "Schreibtische"],
 		["dining_table", "Esstische"]],
 	Category.COUNTER: [],

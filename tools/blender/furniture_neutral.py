@@ -396,6 +396,65 @@ def build_open_sign(k):
     k.collider((0, -0.012, -0.04), (0.32, 0.03, 0.22))
 
 
+
+# --- Bett im Hinterzimmer (seit Etappe 7, fest verbaut) ---
+
+def build_bed(k):
+    """Ein gemütliches Bett (1,0 × 2,0 m): Holzrahmen mit gedrechselten Pfosten und Kopfteil, dicke Matratze, Steppdecke mit
+    Flicken, zwei Kissen, gefaltete Wolldecke am Fußende. Vorderseite (-y) = Fußende, Kopfteil an der Wand (+y)."""
+    wood(k, OAK_MID)
+    k.mat("linen", (0.95, 0.93, 0.88), grain="fabric", rough=0.95, vary=0.03, bump=0.2)
+    k.mat("quilt", (0.62, 0.72, 0.84), grain="fabric", rough=0.95, vary=0.05, bump=0.35)
+    k.mat("patch", (1, 1, 1), grain="fabric", rough=0.95, vary=0.02, bump=0.3, pattern="floral", pattern_size=0.03,
+          color2=(0.95, 0.95, 0.92), color3=(0.95, 0.85, 0.4))
+    k.mat("throw", (0.72, 0.36, 0.3), grain="fabric", rough=0.95, vary=0.05, bump=0.5, scale=2.0)
+    W, L = 1.0, 2.0
+    head_y, foot_y = L / 2.0, -L / 2.0
+    frame = k.part("Rahmen", "wood", bevel=0.008)
+    # vier gedrechselte Pfosten (am Kopfende höher)
+    for sx in (-1, 1):
+        F.turned_leg(frame, (sx * (W / 2 + 0.02), head_y - 0.03, 0.0), 1.02, 0.035, style="baluster")
+        F.turned_leg(frame, (sx * (W / 2 + 0.02), foot_y + 0.03, 0.0), 0.62, 0.035, style="baluster")
+    # Seitenbretter und Querbretter (tragen den Lattenrost)
+    for sx in (-1, 1):
+        frame.box((sx * (W / 2 + 0.02), 0.0, 0.27), (0.035, L - 0.06, 0.16), step=0.3, dent=0.001)
+    frame.box((0, foot_y + 0.03, 0.3), (W + 0.02, 0.035, 0.22), step=0.3, dent=0.001)
+    # Kopfteil mit Sprossen und Bogen oben
+    frame.box((0, head_y - 0.03, 0.36), (W + 0.02, 0.035, 0.12), step=0.3, dent=0.001)
+    frame.box((0, head_y - 0.03, 0.9), (W + 0.02, 0.045, 0.08), step=0.3, dent=0.001)
+    for i in range(7):
+        x = -0.39 + i * 0.13
+        frame.box((x, head_y - 0.03, 0.63), (0.04, 0.025, 0.44), step=0.3, dent=0.0008)
+    # Lattenrost (unter der Matratze, nur als Brett)
+    frame.box((0, 0, 0.345), (W - 0.02, L - 0.12, 0.02), step=0.4, dent=0.0)
+    # Matratze und Laken
+    linen = k.part("Matratze", "linen", bevel=0.0)
+    F.pillow(linen, (0, -0.01, 0.43), (W - 0.04, L - 0.1, 0.17), roundness=5.0, puff=0.006, step=0.05)
+    # zwei Kissen am Kopfende
+    for sx in (-1, 1):
+        F.pillow(linen, (sx * 0.22, head_y - 0.26, 0.57), (0.42, 0.3, 0.13), roundness=2.6, puff=0.02, step=0.03, turn=sx * 4.0)
+    # Steppdecke über zwei Drittel, mit Flicken
+    quilt = k.part("Steppdecke", "quilt", bevel=0.0)
+    F.pillow(quilt, (0, -0.22, 0.53), (W + 0.04, 1.36, 0.07), roundness=5.0, puff=0.012, step=0.04)
+    # umgeschlagener Rand oben
+    F.pillow(quilt, (0, 0.45, 0.565), (W + 0.02, 0.16, 0.05), roundness=4.0, puff=0.006, step=0.03)
+    patches = k.part("Flicken", "patch", bevel=0.0)
+    cols = [(0.86, 0.56, 0.52), (0.94, 0.84, 0.6), (0.66, 0.76, 0.62), (0.7, 0.78, 0.9), (0.92, 0.72, 0.62)]
+    for ix in range(5):
+        for iy in range(6):
+            x = -0.4 + ix * 0.2
+            y = -0.8 + iy * 0.2
+            patches.box((x, y, 0.568), (0.17, 0.17, 0.004), step=0.5, dent=0.0004, tint=F.lin(cols[(ix * 2 + iy) % len(cols)]))
+    # gefaltete Wolldecke quer am Fußende
+    throw = k.part("Wolldecke", "throw", bevel=0.0)
+    F.pillow(throw, (0, foot_y + 0.3, 0.6), (W - 0.06, 0.34, 0.05), roundness=4.0, puff=0.006, step=0.03)
+    k.collider((0, 0, 0.3), (W + 0.1, L, 0.6))
+    k.collider((0, head_y - 0.03, 0.5), (W + 0.1, 0.05, 1.0))
+    k.surface((0, -0.1, 0.6), (W - 0.12, 1.4))
+    k.root_script = "res://scripts/objects/bed.gd"
+    k.interact_prompt = "Schlafen"
+    k.interact = (Vector((0, 0, 0.5)), Vector((W + 0.1, L, 1.0)))
+
 ITEMS = [
     dict(id="book_stand", name="Buch-Aufsteller", category="deco", sub="books", price=18,
          desc="Ein kleiner Holzaufsteller, in dem ein Buch mit dem Cover nach vorn steht.",
@@ -462,6 +521,11 @@ ITEMS = [
     dict(id="photo_frame", name="Bilderrahmen zum Hinstellen", category="deco", sub="picture", price=12,
          desc="Ein kleiner Holzrahmen mit Stütze und einem Foto von einer Sommerwiese.",
          styles=STYLE, place=["surface", "floor"], adopt=True, build=build_photo_frame, variants=wood_variants()),
+    dict(id="bed_backroom", name="Bett", category="seating", sub="bed", price=0,
+         desc="Das gemütliche Bett im Hinterzimmer – hier schläft man nachts, bis der nächste Morgen beginnt.",
+         styles=STYLE, place="floor", essential=True, fixed=True, lie=True, build=build_bed,
+         variants=[("blue", "Hellblau", {"quilt": (0.62, 0.72, 0.84)}), ("rose", "Rosé", {"quilt": (0.88, 0.68, 0.66)}),
+                   ("sage", "Salbei", {"quilt": (0.66, 0.74, 0.6)}), ("butter", "Butter", {"quilt": (0.94, 0.84, 0.58)})]),
     dict(id="open_sign", name="Türschild „Geöffnet“", category="deco", sub="picture", price=15,
          desc="Ein kleines Holzschild an einer Kordel – für die Ladentür.",
          styles=STYLE, place=["door", "wall"], build=build_open_sign,

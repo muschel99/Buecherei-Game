@@ -17,6 +17,10 @@ signal layout_changed
 @export var default_ceiling_id: String = "ceiling_warm_white"
 ## Innenfläche des Raums (x und z in Metern), in der Möbel stehen dürfen.
 @export var build_area: Rect2 = Rect2(-3.0, -4.0, 6.0, 8.0)
+## Hinterzimmer anbauen (seit Etappe 7, BackRoom): dann gehört seine Fläche auch zum Bauen.
+@export var with_back_room: bool = false
+## Weitere Flächen zum Bauen (x/z), z. B. das Hinterzimmer.
+var extra_build_areas: Array[Rect2] = []
 ## Höhe des Fußbodens.
 @export var floor_height: float = 0.0
 
@@ -66,6 +70,12 @@ func _ready() -> void:
 	add_child(loose_books)
 	_corner_cut = GameConfig.corner_cut
 	_apply_room_height(GameConfig.room_height)
+	if with_back_room:
+		var back := BackRoom.new()
+		back.name = "BackRoom"
+		add_child(back)
+		back.build(self)
+		extra_build_areas.append(BackRoom.back_area())
 	add_to_group(SaveManager.PERSIST_GROUP)
 	for item in get_placed_furniture():
 		_assign_uid(item)
@@ -259,8 +269,16 @@ func get_switchable_lights() -> Array[LightSource]:
 
 ## Liegt dieser Punkt (in Weltkoordinaten) innerhalb der Raumfläche? Die abgeschrägte vordere
 ## linke Ecke (schräge Eingangswand) zählt nicht dazu – dort lässt sich nichts aufstellen.
+## Weitere Wände zum Aufhängen (z. B. die des Hinterzimmers).
+func add_hang_walls(walls: Array[Node]) -> void:
+	_hang_walls.append_array(walls)
+
+
 func is_inside_build_area(world_position: Vector3) -> bool:
 	var local := to_local(world_position)
+	for extra in extra_build_areas:
+		if extra.has_point(Vector2(local.x, local.z)):
+			return true
 	if not build_area.has_point(Vector2(local.x, local.z)):
 		return false
 	# Abgeschnittene Ecke: der Dreiecks-Bereich an der Ecke mit den kleinsten x/z bleibt frei.
@@ -446,6 +464,9 @@ func load_save_data(save_data: Dictionary) -> void:
 	# Was im Raum zu sehen ist, gehört mir (wichtig für Spielstände von vor dem Inventar)
 	for id in _get_used_surface_ids():
 		Inventory.add_surface(id)
+	var back := get_node_or_null("BackRoom") as BackRoom
+	if back:
+		back.clear_doorway()
 	layout_changed.emit()
 
 

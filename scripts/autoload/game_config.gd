@@ -541,8 +541,8 @@ var books_per_package: int = 10
 var start_books_per_genre: int = 12
 ## Das besitze ich zum Start zusätzlich im Inventar (id aus data/furniture/ -> Anzahl).
 ## Kommt auch in ältere Spielstände, aber nur einmal. (Der Rückgabekasten ist seit Etappe 3l
-## fest in der Wand eingebaut und kein Geschenk mehr.)
-var start_furniture_gifts: Dictionary = {}
+## fest in der Wand eingebaut und kein Geschenk mehr.) Seit Etappe 7: eine Stehlampe fürs Hinterzimmer (nachts dunkel).
+var start_furniture_gifts: Dictionary = {"floor_lamp_country": 1}
 ## Ein Buch gleitet in so vielen Sekunden ins Regal (bzw. heraus).
 var book_slide_time: float = 0.35
 ## Abstand zwischen zwei Büchern, die nacheinander ins Regal gleiten (in Sekunden).
@@ -1299,4 +1299,18 @@ var day_light_keys: Array[Dictionary] = [
 ## morgens Anwohner zur Arbeit, nachmittags am meisten, abends ruhiger.
 var street_activity_by_hour: Array[float] = [0.08, 0.05, 0.04, 0.04, 0.05, 0.1, 0.25, 0.5, 0.75, 0.8, 0.85, 0.95,
 	1.0, 1.0, 1.0, 1.05, 1.1, 1.05, 0.95, 0.8, 0.6, 0.4, 0.25, 0.14]
+
+## Schlafen am Bett (seit Etappe 7): erlaubt von … bis … Uhr (über Mitternacht), Abdunkeln in Sekunden.
+var sleep_from_hour: float = 20.0
+var sleep_until_hour: float = 4.0
+var sleep_fade_time: float = 1.2
+
+## Hinterzimmer (seit Etappe 7, BackRoom): Innenmaße (Breite x entlang der Rückwand ab der linken Wand, Tiefe nach hinten),
+## Durchgang (Mitte x, Breite, Höhe), Dachfenster (Breite, Länge) und Farbe des Vorhangs im Durchgang.
+var back_room_size: Vector2 = Vector2(3.0, 4.0)
+var back_room_door_x: float = 1.5
+var back_room_door_width: float = 0.95
+var back_room_door_height: float = 2.15
+var back_room_skylight: Vector2 = Vector2(0.9, 1.2)
+var back_room_curtain_color: Color = Color(0.56, 0.24, 0.2)
 

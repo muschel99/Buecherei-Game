@@ -472,7 +472,18 @@ vec3 cat_face(vec3 p, vec3 col, float px, inout float gloss) {
 }
 #endif
 
+// Ausschnitt in der Welt, der nicht gezeichnet wird (seit Etappe 7): der Durchgang zum Hinterzimmer durch die Rückwand der
+// Fassade (BackRoom setzt die Ecken; min = max = kein Ausschnitt).
+global uniform vec3 library_cut_min;
+global uniform vec3 library_cut_max;
+
 void fragment() {
+	if (library_cut_max.x > library_cut_min.x) {
+		vec3 wpos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
+		if (all(greaterThan(wpos, library_cut_min)) && all(lessThan(wpos, library_cut_max))) {
+			discard;
+		}
+	}
 	vec3 p = model_pos;
 	vec3 col = base_color.rgb;
 	// Größe eines Bildpunkts auf der Fläche (m): feine Muster blenden sich aus, bevor sie flimmern

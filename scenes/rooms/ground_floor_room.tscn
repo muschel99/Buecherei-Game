@@ -31,6 +31,7 @@
 [ext_resource type="PackedScene" path="res://scenes/objects/shop_window.tscn" id="24_window"]
 [ext_resource type="PackedScene" path="res://scenes/objects/shop_door.tscn" id="25_door"]
 [ext_resource type="Script" path="res://scripts/world/library_facade.gd" id="40_facade"]
+[ext_resource type="Resource" path="res://data/furniture/bed_backroom.tres" id="41_bed"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_skirting_z8"]
 size = Vector3(0.02, 0.1, 8)
@@ -43,6 +44,7 @@ size = Vector3(1.4, 2, 1.2)
 
 [node name="GroundFloorRoom" type="Node3D"]
 script = ExtResource("15_room")
+with_back_room = true
 
 [node name="Structure" type="Node3D" parent="."]
 
@@ -180,6 +182,7 @@ length = 8.0
 [node name="Back" type="Node3D" parent="Walls"]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 3, 0, 4)
 script = ExtResource("18_wall")
+openings = Array[Rect2]([Rect2(1.025, 0, 0.95, 2.15)])
 
 [node name="Front" type="Node3D" parent="Walls"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -4)
@@ -238,6 +241,12 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.7, 0, 2.7)
 script = ExtResource("16_placed")
 data = ExtResource("12_counter")
 uid = 5
+
+[node name="Bed" type="Node3D" parent="Furniture"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2.4, 0, 7.18)
+script = ExtResource("16_placed")
+data = ExtResource("41_bed")
+uid = 8
 
 [node name="Tablet" type="Node3D" parent="Furniture"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 1, 2.77)
