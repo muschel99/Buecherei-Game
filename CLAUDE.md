@@ -1343,6 +1343,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `visitor_clearance`), neu bei `Room.layout_changed`. Requisiten `book`/`card` (`scenes/street_life/props/`). Bücher in der
   Hand von Besuchern speichert Lending als sofort fällige Rückgabe. Prüfen: street_life_check `--visitors=<n> [--read]`
   (stellt Regale/Sessel auf, stempelt selbst; Spielstand vorher löschen), Haltung `pose_probe -- card|book`.
+  **Notizzettel:** `MorningNote` (im HUD) zeigt um 6 Uhr den Vortag (`Lending.history`, einmal je Tag: `note_shown_day`),
+  weg mit Klick/E/Esc; `MorningNote.NotePaper` zeichnet den Zettel, auch klein in der App „Statistik“ (alte Zettel; Lending
+  liefert dort Kacheln über `stat_sources`). Prüfen: street_life_check `--day_test`, Bilder `--ui=note` / `--ui=app:stats`
+  (immer mit `--cam=…`, sonst nimmt die Tour alle Blickpunkte auf).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

@@ -264,6 +264,23 @@ func _open_ui(which: String, tab: int) -> void:
 		var menu := get_tree().root.find_child("PauseMenu", true, false)
 		menu.show()
 		menu.call("_show_page", which.get_slice(":", 1) if which.contains(":") else "Laufen", false)
+	elif which == "note" or which == "app:stats":
+		# Notizzettel (seit Etappe 7) mit Beispielzahlen; bei app:stats stehen sie als alte Zettel in der App
+		for d in [1, 2, 3]:
+			Lending.history.append({"day": d, "visitors": 6 + d * 3, "borrowed": 4 + d * 2, "returned": d * 2, "cards": 3 - d,
+				"income": (4 + d * 2) * 3 + (3 - d) * 15, "nothing_found": d % 2, "to_counter": 1 if d == 3 else 0})
+		if which == "note":
+			var note := get_tree().root.find_children("*", "MorningNote", true, false)
+			var hud_note: Node = note[0] if not note.is_empty() else null
+			if hud_note == null:
+				for n in get_tree().root.find_children("*", "CanvasLayer", true, false):
+					if n is MorningNote:
+						hud_note = n
+			hud_note.call("show_note", Lending.history[2])
+		else:
+			var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
+			tablet.open_tablet()
+			tablet.open_app("stats")
 	elif which == "shop":
 		var tablet := get_tree().get_first_node_in_group("counter_tablet") as CounterTablet
 		tablet.open_tablet()

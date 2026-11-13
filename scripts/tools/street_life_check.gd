@@ -117,6 +117,18 @@ func _run() -> void:
 		LibraryVisits.debug = true
 		if _life.library:
 			_life.library.auto_stamp = true
+	if _args.has("day_test"):
+		# Tageswechsel prüfen (seit Etappe 7): Zahlen gehen in die Geschichte, um 6 Uhr erscheint der Notizzettel
+		GameClock.running = false
+		GameClock.load_save_data({"day": 1, "minute": 23.0 * 60.0})
+		Lending.today.visitors = 5
+		Lending.today.borrowed = 3
+		GameClock.sleep_until(GameConfig.clock_morning_hour)
+		await get_tree().process_frame
+		print("Tagestest: Tag %d, %s, Geschichte %s, Zettel gezeigt bis Tag %d" % [GameClock.day, GameClock.time_text(),
+			Lending.history, Lending.note_shown_day])
+		get_tree().quit()
+		return
 	var seconds := float(_args.get("seconds", 45.0))
 	var only: PackedStringArray = String(_args.get("only", "")).split(",", false)
 	var spots := _spots()

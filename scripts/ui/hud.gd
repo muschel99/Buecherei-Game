@@ -41,6 +41,8 @@ func _ready() -> void:
 	_money_label.text = Wallet.format(Wallet.money)
 	Wallet.money_changed.connect(_on_money_changed)
 	_add_clock()
+	# Notizzettel am Morgen (seit Etappe 7)
+	add_child(MorningNote.new())
 	# Ring um die Bildmitte beim Gedrückthalten von E
 	_hold_ring = HoldRing.new()
 	_hold_ring.set_anchors_preset(Control.PRESET_CENTER)

@@ -27,6 +27,8 @@ var today: Dictionary = {}
 ## Abgeschlossene Tage (neueste zuletzt), höchstens HISTORY_DAYS
 var history: Array[Dictionary] = []
 const HISTORY_DAYS := 60
+## Bis zu welchem Tag der Notizzettel schon gezeigt wurde (MorningNote)
+var note_shown_day: int = 0
 
 ## Heute geplante Besuche (Spielminuten des Tages, aufsteigend) und wie viele gerade da sind
 var _tickets: Array[float] = []
@@ -38,6 +40,7 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.randomize()
 	add_to_group(SaveManager.PERSIST_GROUP)
+	add_to_group(&"stat_sources")
 	today = _empty_day(GameClock.day)
 	GameClock.minute_passed.connect(_on_minute)
 	GameClock.day_started.connect(_on_day_started)
@@ -263,6 +266,17 @@ func _count(key: String, amount: int = 1) -> void:
 	stats_changed.emit()
 
 
+## Werte für die App „Statistik“ (Kacheln).
+func get_stats() -> Array:
+	return [
+		{"label": "Besucher heute", "value": int(today.get("visitors", 0)), "order": 60},
+		{"label": "Heute ausgeliehen", "value": int(today.get("borrowed", 0)), "order": 61},
+		{"label": "Gerade verliehen", "value": books_on_loan(), "note": "Bücher", "order": 62},
+		{"label": "Leseausweise", "value": cards, "order": 63},
+		{"label": "Einnahmen heute", "value": Wallet.format(int(today.get("income", 0))), "order": 64},
+	]
+
+
 ## Der Raum der Bücherei (Erdgeschoss).
 func find_room() -> Room:
 	return get_tree().get_first_node_in_group(ROOM_GROUP) as Room
@@ -279,12 +293,14 @@ func get_save_data() -> Dictionary:
 		var held: Array[Book] = node.call("held_books")
 		if not held.is_empty():
 			saved_loans.append({"books": Book.list_to_save_data(held), "day": 0, "minute": 0.0})
-	return {"open": is_open, "cards": cards, "loans": saved_loans, "today": today, "history": history}
+	return {"open": is_open, "cards": cards, "loans": saved_loans, "today": today, "history": history,
+		"note_shown": note_shown_day}
 
 
 func load_save_data(data: Dictionary) -> void:
 	is_open = bool(data.get("open", true))
 	cards = int(data.get("cards", 0))
+	note_shown_day = int(data.get("note_shown", 0))
 	loans.clear()
 	for entry: Variant in data.get("loans", []):
 		if entry is Dictionary:

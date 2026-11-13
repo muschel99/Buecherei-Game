@@ -62,6 +62,26 @@ func refresh() -> void:
 		else:
 			tiles.append(entry)
 	_add_tiles(tiles)
+	_add_notes()
+
+
+## Alte Notizzettel (seit Etappe 7): die letzten Tage, neueste zuerst, als kleine Zettel nebeneinander.
+func _add_notes() -> void:
+	if Lending.history.is_empty():
+		return
+	_box.add_child(make_title("Notizzettel", 17, style.muted))
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 18)
+	flow.add_theme_constant_override("v_separation", 18)
+	_box.add_child(flow)
+	var days := Lending.history.duplicate()
+	days.reverse()
+	for day_stats: Dictionary in days.slice(0, 14):
+		var paper := MorningNote.NotePaper.new()
+		paper.stats = day_stats
+		paper.custom_minimum_size = Vector2(198, 242)
+		paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		flow.add_child(paper)
 
 
 ## Die Werte zu den Büchern (alles, was es im Spiel schon gibt).
