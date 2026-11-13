@@ -1,6 +1,6 @@
 # Etappe 7 – Tagesablauf und erste Besucher (Spec aus /grill-me vom 12.11.2026)
 
-Status: claimed
+Status: done
 
 ## Zeit
 - 24 Minuten echte Zeit = 24 Spielstunden (Tageslänge in den Einstellungen: 16/20/24/30/40 min). Kein Pausieren, kein Vorspulen

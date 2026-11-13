@@ -133,6 +133,8 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   dreht sich beim Plaudern nicht mehr nach hinten, saubere Säume an der Kleidung, Rock im Sitzen, Hand liegt beim Streicheln auf der
   Katze, Taschen werden im Sitzen abgestellt; Innenraum mit Dielen, Putz, Stuckleiste und Tageslicht; warmes Nachmittagslicht,
   Laternen tagsüber aus, Rauch aus Schornsteinen, Katzen auch aus der Gasse.
+- **Etappe 7:** Die Uhr läuft (24 Minuten = ein Tag), Sonne, Wolken, Mond und Sterne; Hinterzimmer mit Bett zum Schlafen;
+  Schild an der Tür, erste Besucher leihen Bücher aus (Stempel an der Theke), Rückgabe über den Kasten, Notizzettel am Morgen.
 
 **Wo die wichtigen Dateien liegen**
 
@@ -155,8 +157,7 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 - Möbel, Deko, Theke (mit Kasse und Tablet) und Rückgabe-Einwurf gibt es seit **Etappe 6** im
   Bilderbuch-Stil, Wände, Boden und Decke der Bücherei innen seit **6j** (Dielen, Putz, Stuckleiste). Die
   übrigen Wand- und Bodenbeläge zur Auswahl haben schon den neuen Shader, aber noch ihre alten Farben/Muster.
-- Das Licht ist seit 6j abgestimmt (warmer Nachmittag); Tag und Nacht gibt es noch nicht (die Laternen
-  sind darauf vorbereitet: `main.gd set_street_lanterns`).
+- Tag und Nacht gibt es seit Etappe 7; Wetter und Jahreszeiten fehlen noch (vorbereitet).
 - Noch wenig Kleidung und Frisuren der Figuren.
 - Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme, Musik für Nacht/Regen/
   Winter – Liste in ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
@@ -164,7 +165,7 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   auch aus der Gasse neben der Bücherei (nicht aus der Gasse gegenüber); eigene Laute je Vogelart warten auf Aufnahmen.
 - Passanten (seit 6h): Wer eine Einkaufstasche trägt, streichelt keine Katzen und redet im Stehen ohne Hände (die Tasche
   hängt an der rechten Hand); hinsetzen dürfen sie sich seit 6j (die Tasche steht dann neben ihnen).
-- Kein Tag-Nacht-Wechsel; Besucher kommen noch nicht in die Bücherei.
+- Besucher (seit Etappe 7) sind noch alle gleich (Vorlieben, Gespräche, Kinder: Etappe 8).
 
 ## Etappe 1 – Grundgerüst und erster Raum
 - [x] Godot-4-Projekt mit Ordnerstruktur
@@ -1741,13 +1742,38 @@ entscheidet selbst und setzt um. Plan und Entscheidungen: `.scratch/polish-6j/ma
 **Noch offen:** An der Halsöffnung des T-Shirts kann in sehr gebückter Haltung (Hinknien zum Streicheln) noch ein wenig Haut
 durchscheinen. Vögel auf dem Dach der Bücherei und in Bäumen.
 
-## Etappe 7 – Wirtschaft und Tagesablauf
-- Grundlage schon vorhanden (Etappe 2f): Geld (`Wallet`), Inventar, Shop mit Kaufen und
-  Verkaufen, Lieferung
-- Einnahmen: Leseausweise, Abstempeln, Leihgebühren, Mitgliedschaften (über `Wallet.earn`)
-- Beschädigte Bücher und Reparatur (Feld `Book.condition` ist schon vorhanden)
-- Tag mit Öffnen-Schild, Pause und Vorspulen; Tagesabrechnung aus den Buchungen
-- Preise und Startgeld ausbalancieren
+## Etappe 7 – Tagesablauf und erste Besucher (Auftrag „/grill-me“ vom 12.11.2026)
+Spec: `.scratch/day-cycle-7/spec.md`. Gemütlich statt echter Wirtschaft: keine laufenden Kosten, keine Reparaturen, nie Zeitdruck.
+
+**Teil 1 – Uhr und Tag**
+- [x] Ein Spieltag dauert 24 Minuten (Einstellung „Tageslänge“ 16–40 Minuten), kein Pausieren und kein Vorspulen (nur im
+  Pausenmenü steht die Zeit); Uhr mit Wochentag neben dem Geld; Tag und Uhrzeit werden gespeichert; Testtaste F2 = eine Stunde vor
+
+**Teil 2 – Licht und Himmel**
+- [x] Sonne wandert von morgens bis abends, gemalte Wolken ziehen (morgens und abends angestrahlt), nachts Mond und Sterne und
+  bläuliches Licht, Laternen gehen abends an, Fensterlicht in der Bücherei folgt dem Tag
+- [x] Straße nach der Uhr: nachts fast leer, nachmittags am vollsten; Vögel schlafen nachts
+- [x] Pausenmenü als aufgeklapptes Buch mit Inhaltsverzeichnis und einer Seite je Bereich (Steuerung, Grafik, Ton, Spiel …)
+
+**Teil 3 – Hinterzimmer und Bett**
+- [x] Hinterzimmer (3 × 4 m) hinter der Theke: Durchgang mit Vorhang, Dachfenster, Backsteinwand, im Gestaltungsmodus einrichtbar
+- [x] Bett: schlafen von 20 bis 4 Uhr (nur ohne Besucher), aufwachen um 6 Uhr; Stehlampe als Geschenk fürs Hinterzimmer
+
+**Teil 4 – Besucher und Ausleihe**
+- [x] Schild „Geöffnet/Geschlossen“ innen und außen an der Ladentür (E)
+- [x] Besucher kommen von 7 bis 20 Uhr die Treppe hinauf herein – anfangs 8–12 am Tag (höchstens 3 gleichzeitig), mit vollen
+  Regalen und vielen Sitzplätzen bis 25 (höchstens 6)
+- [x] Sie stöbern an Regalen (am liebsten ihr Lieblings-Genre), lesen manchmal in einem freien Sessel, stellen sich an der Theke
+  an: Glocke, Ausweis hochhalten, geduldig warten – E hinter der Theke stempelt; nichts gefunden: freundlich wieder gehen
+- [x] Leseausweis 15 Taler (einmal), je Buch 3 Taler; Bücher kommen nach 1–3 Tagen über den Rückgabekasten zurück (voll: auf die
+  Theke); Wege im Laden führen um alle Möbel herum, nie ins Hinterzimmer
+
+**Teil 5 – Notizzettel und Statistik**
+- [x] Um 6 Uhr ein abgerissener, linierter Zettel mit den Zahlen des Vortags (Handschrift), weg mit Klick oder E
+- [x] App „Statistik“: Besucher, Ausleihen, verliehene Bücher, Leseausweise, Einnahmen und die alten Zettel
+
+**Später (nicht in dieser Etappe):** beschädigte Bücher und Reparatur (Feld `Book.condition` ist da), weitere Räume und
+Stockwerke, Wetter und Jahreszeiten (Himmel und Licht sind vorbereitet: `cloud_cover`, `cloud_darkness`, Sonnenbahn).
 
 ## Etappe 8 – Besuchervielfalt
 - Animationen liegen schon in den Figuren bereit (seit 6h): Tür nach innen/außen öffnen (`door_in`, `door_out`),
