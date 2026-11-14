@@ -2,7 +2,13 @@
 """Geräusche an der Theke (seit Etappe 7): erzeugt
   assets/audio/ui/counter_bell.wav – Tischklingel „Pling“ (heller Glockenton mit Obertönen, klingt aus),
   assets/audio/ui/stamp.wav        – Stempel auf Papier (kurzer, dumpfer Stoß mit etwas Holz),
-  assets/audio/ui/scan.wav         – Scanner an der Theke (kurzes Piepen, seit Testrunde 7b).
+  assets/audio/ui/scan.wav         – Scanner an der Theke (kurzes Piepen, seit Testrunde 7b),
+  seit Etappe 8 (Theken-Ansicht, Gespräche):
+  assets/audio/ui/card_insert.wav  – Ausweis gleitet in den Kartenleser (weiches Schaben, dann Klick),
+  assets/audio/ui/card_beep.wav    – Kartenleser hat gelesen (ein sanfter, runder Piepton),
+  assets/audio/ui/stamp_pop.wav    – Stempel ploppt auf dem Bildschirm auf (weiches „Plopp“),
+  assets/audio/ui/slide.wav        – Bücher über die Theke schieben (sanftes Rutschen),
+  assets/audio/ui/type.wav, type_1 … type_5.wav – leises, angenehmes Tastaturklackern beim Reden (Varianten).
 Eigene Aufnahme? Einfach die Datei ersetzen (auch als .ogg mit gleichem Namen) – das Script schreibt nur, wenn die Datei
 fehlt (--force: neu). Braucht nur Python (kein ffmpeg).
 
@@ -81,9 +87,87 @@ def scan():
     return out
 
 
+def card_insert():
+    """Ausweis in den Leser: kurzes, gefiltertes Schaben (Karte gleitet), am Ende ein kleiner Klick."""
+    seconds = 0.32
+    out = []
+    low = 0.0
+    random.seed(11)
+    for i in range(int(RATE * seconds)):
+        t = i / RATE
+        noise = random.uniform(-1, 1)
+        low += (noise - low) * 0.25
+        slide = 0.5 * low * min(1.0, t / 0.03) * max(0.0, 1.0 - t / 0.24)
+        click = math.exp(-max(0.0, t - 0.25) / 0.006) * (0.9 * math.sin(2 * math.pi * 2400.0 * t) + noise * 0.5) if t > 0.25 else 0.0
+        out.append(slide + click)
+    return out
+
+
+def card_beep():
+    """Kartenleser: ein runder, sanfter Piepton (Sinus mit weichem Ein- und Ausblenden)."""
+    seconds = 0.22
+    out = []
+    for i in range(int(RATE * seconds)):
+        t = i / RATE
+        env = min(1.0, t / 0.01) * min(1.0, (seconds - t) / 0.06)
+        out.append(env * math.sin(2 * math.pi * 1318.5 * t))
+    return out
+
+
+def stamp_pop():
+    """Stempel auf dem Bildschirm: weiches „Plopp“ (Ton fällt schnell von hoch nach tief)."""
+    seconds = 0.18
+    out = []
+    phase = 0.0
+    for i in range(int(RATE * seconds)):
+        t = i / RATE
+        freq = 380.0 + 900.0 * math.exp(-t / 0.025)
+        phase += 2 * math.pi * freq / RATE
+        out.append(math.exp(-t / 0.05) * min(1.0, t / 0.002) * math.sin(phase))
+    return out
+
+
+def slide():
+    """Bücher schieben: sanftes, tiefes Rutschen (Rauschen, stark gefiltert, an- und abschwellend)."""
+    seconds = 0.45
+    out = []
+    low = 0.0
+    low2 = 0.0
+    random.seed(19)
+    for i in range(int(RATE * seconds)):
+        t = i / RATE
+        low += (random.uniform(-1, 1) - low) * 0.06
+        low2 += (low - low2) * 0.2
+        env = math.sin(math.pi * t / seconds) ** 1.5
+        out.append(low2 * env)
+    return out
+
+
+def type_click(seed):
+    """Eine Taste: kurzer, weicher Anschlag (gefiltertes Rauschen + kleiner Holzton), jede Variante etwas anders."""
+    rnd = random.Random(seed)
+    seconds = 0.07
+    tone = rnd.uniform(500.0, 900.0)
+    out = []
+    low = 0.0
+    for i in range(int(RATE * seconds)):
+        t = i / RATE
+        low += (rnd.uniform(-1, 1) - low) * 0.35
+        env = math.exp(-t / 0.012)
+        out.append(env * (0.8 * low + 0.35 * math.sin(2 * math.pi * tone * t)) + math.exp(-max(0.0, t - 0.03) / 0.008) * 0.15 * low
+                   * (t > 0.03))
+    return out
+
+
 if __name__ == "__main__":
     os.makedirs(OUT_DIR, exist_ok=True)
     random.seed(3)
     write("counter_bell.wav", bell(), 0.55)
     write("stamp.wav", stamp(), 0.7)
     write("scan.wav", scan(), 0.35)
+    write("card_insert.wav", card_insert(), 0.45)
+    write("card_beep.wav", card_beep(), 0.3)
+    write("stamp_pop.wav", stamp_pop(), 0.5)
+    write("slide.wav", slide(), 0.4)
+    for n in range(6):
+        write("type.wav" if n == 0 else "type_%d.wav" % n, type_click(100 + n), 0.22)

@@ -2,14 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="5_t0h0b"]
 [ext_resource type="Script" path="res://scripts/objects/counter.gd" id="6_counter"]
-[ext_resource type="PackedScene" path="res://scenes/furniture/cash_register.tscn" id="cash_register"]
+[ext_resource type="PackedScene" path="res://scenes/furniture/counter_pc.tscn" id="counter_pc"]
 [ext_resource type="PackedScene" path="res://assets/models/furniture/counter_classic.glb" id="counter_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
 size = Vector3(2, 0.85, 0.65)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_d8k5h"]
-size = Vector3(0.4, 0.26, 0.38)
+size = Vector3(0.36, 0.32, 0.26)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_igu70"]
 size = Vector3(2, 0.03, 0.65)
@@ -28,13 +28,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.425, 0.02)
 shape = SubResource("BoxShape3D_body")
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="Body" unique_id=764582128]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.98, -0.08)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.62, 1.01, 0.03)
 shape = SubResource("BoxShape3D_d8k5h")
 
 [node name="Modules" type="Node3D" parent="." unique_id=412668264]
 
-[node name="CashRegister" type="Node3D" parent="Modules" unique_id=905558602 instance=ExtResource("cash_register")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.5, 0.85, -0.08)
+[node name="CounterPc" type="Node3D" parent="Modules" unique_id=905558602 instance=ExtResource("counter_pc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.62, 0.85, 0.02)
 
 [node name="Surfaces" type="Node3D" parent="." unique_id=1575451325]
 

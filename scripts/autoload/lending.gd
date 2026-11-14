@@ -20,6 +20,9 @@ var save_key: String = "lending"
 var is_open: bool = true
 ## So viele Leseausweise gibt es schon
 var cards: int = 0
+## Ausweise mit Stempelkarte (seit Etappe 8): Kennung → {"name", "stamps" (0 bis stamp_card_size-1), "visits", "full" (volle
+## Karten), "friendship"}. Neue Leser bekommen einen neuen Ausweis, wiederkommende einen vorhandenen.
+var readers: Dictionary = {}
 ## Verliehen: [{books: Array[Book], day: int, minute: float}] – zurück ab diesem Tag und dieser Uhrzeit
 var loans: Array[Dictionary] = []
 ## Zahlen des laufenden Tages: day, visitors, borrowed, returned, cards, income, nothing_found, to_counter
@@ -144,14 +147,14 @@ func _plan_day() -> void:
 # --- Ausleihe ---
 
 ## Ein Besucher ist an der Theke gestempelt: Bücher sind verliehen, Gebühren gehen ins Portemonnaie. Liefert die Einnahme.
-func lend(books: Array[Book], new_card: bool) -> int:
+func lend(books: Array[Book], new_card: bool, extra_days: int = 0) -> int:
 	var income := books.size() * GameConfig.book_lend_fee
 	if new_card:
 		cards += 1
 		income += GameConfig.library_card_fee
 		_count("cards")
 	if not books.is_empty():
-		var days := _rng.randi_range(GameConfig.loan_days.x, GameConfig.loan_days.y)
+		var days := _rng.randi_range(GameConfig.loan_days.x, GameConfig.loan_days.y) + extra_days
 		loans.append({"books": books.duplicate(), "day": GameClock.day + days, "minute": _rng.randf_range(0.0, 1439.0)})
 		_count("borrowed", books.size())
 	if income > 0:
@@ -159,6 +162,47 @@ func lend(books: Array[Book], new_card: bool) -> int:
 		_count("income", income)
 	SaveManager.request_save()
 	return income
+
+
+## Neuer Ausweis mit leerer Stempelkarte; liefert die Kennung. name leer = ausgedachter Name.
+func new_reader(reader_name: String = "") -> String:
+	var id := "r%d" % (readers.size() + 1)
+	while readers.has(id):
+		id += "x"
+	if reader_name.is_empty():
+		reader_name = "%s %s" % [BookData.FIRST_NAMES[_rng.randi() % BookData.FIRST_NAMES.size()],
+			BookData.LAST_NAMES[_rng.randi() % BookData.LAST_NAMES.size()]]
+	readers[id] = {"name": reader_name, "stamps": 0, "visits": 0, "full": 0, "friendship": 0}
+	return id
+
+
+## Ein vorhandener Ausweis (wiederkommender Leser); gibt es noch keinen, einen neuen.
+func returning_reader() -> String:
+	if readers.is_empty():
+		return new_reader()
+	var ids := readers.keys()
+	return ids[_rng.randi() % ids.size()]
+
+
+func reader_info(id: String) -> Dictionary:
+	return readers.get(id, {})
+
+
+## Ausweis eingelesen: ein Stempel auf die Karte. Liefert true, wenn die Karte damit voll ist (Bonus für den Gast:
+## Lesezeichen und länger Zeit) – dann beginnt eine neue Karte.
+func add_stamp(id: String) -> bool:
+	if not readers.has(id):
+		return false
+	var info: Dictionary = readers[id]
+	info.visits = int(info.get("visits", 0)) + 1
+	info.stamps = int(info.get("stamps", 0)) + 1
+	var full: bool = int(info.stamps) >= GameConfig.stamp_card_size
+	if full:
+		info.stamps = 0
+		info.full = int(info.get("full", 0)) + 1
+		_count("bonus")
+	SaveManager.request_save()
+	return full
 
 
 ## Ist dieser Besucher neu (noch kein Ausweis)? Je mehr Ausweise es gibt, desto seltener.
@@ -256,7 +300,7 @@ func _on_day_started(day: int) -> void:
 
 
 func _empty_day(day: int) -> Dictionary:
-	return {"day": day, "visitors": 0, "borrowed": 0, "returned": 0, "cards": 0, "income": 0, "nothing_found": 0, "to_counter": 0}
+	return {"day": day, "visitors": 0, "borrowed": 0, "returned": 0, "cards": 0, "income": 0, "nothing_found": 0, "to_counter": 0, "bonus": 0}
 
 
 func _count(key: String, amount: int = 1) -> void:
@@ -294,13 +338,22 @@ func get_save_data() -> Dictionary:
 		if not held.is_empty():
 			saved_loans.append({"books": Book.list_to_save_data(held), "day": 0, "minute": 0.0})
 	return {"open": is_open, "cards": cards, "loans": saved_loans, "today": today, "history": history,
-		"note_shown": note_shown_day}
+		"note_shown": note_shown_day, "readers": readers}
 
 
 func load_save_data(data: Dictionary) -> void:
 	is_open = bool(data.get("open", true))
 	cards = int(data.get("cards", 0))
 	note_shown_day = int(data.get("note_shown", 0))
+	readers.clear()
+	var saved_readers: Variant = data.get("readers", {})
+	if saved_readers is Dictionary:
+		for id: String in saved_readers:
+			var entry: Variant = saved_readers[id]
+			if entry is Dictionary:
+				readers[id] = {"name": str(entry.get("name", "")), "stamps": int(entry.get("stamps", 0)),
+					"visits": int(entry.get("visits", 0)), "full": int(entry.get("full", 0)),
+					"friendship": int(entry.get("friendship", 0))}
 	loans.clear()
 	for entry: Variant in data.get("loans", []):
 		if entry is Dictionary:

@@ -1388,6 +1388,20 @@ var library_new_share_min: float = 0.12
 ## Bücher je Besucher (von … bis) und Rückgabe nach so vielen Tagen (von … bis; Uhrzeit zufällig).
 var visitor_books: Vector2i = Vector2i(1, 3)
 var loan_days: Vector2i = Vector2i(1, 3)
+## Stempelkarte (seit Etappe 8): so viele Felder; ist sie voll, bekommt der Gast ein Lesezeichen und so viele Tage mehr Zeit
+var stamp_card_size: int = 10
+var stamp_bonus_extra_days: int = 3
+## Theken-Ansicht (Etappe 8): Kamera rückt in so vielen Sekunden heran; Bewegungen der Dinge auf der Theke
+var desk_camera_time: float = 0.7
+var desk_card_time: float = 0.55
+var desk_book_time: float = 0.42
+var desk_push_time: float = 0.6
+## Blickpunkt der Theken-Ansicht im Raum der Theke (Spielfigur auf -Z): Auge und Ziel, Sichtfeld
+var desk_camera_eye: Vector3 = Vector3(0.2, 0.62, -0.68)
+var desk_camera_target: Vector3 = Vector3(0.25, 0.0, -0.02)
+var desk_camera_fov: float = 52.0
+## So weit (Bildpunkte bei 900 Bildhöhe) um ein Ding auf der Theke zählt die Maus als „darauf“
+var desk_pick_radius: float = 70.0
 ## Am Regal stöbern: so viele Regale (von … bis), Sekunden je Regal.
 var visitor_shelf_stops: Vector2i = Vector2i(1, 3)
 var visitor_browse_time: Vector2 = Vector2(4.0, 9.0)

@@ -179,7 +179,10 @@ Steht es auf „Geöffnet“, kommen von 7 bis 20 Uhr Besucher herein. Je mehr B
 == Besucher an der Theke
 Besucher stöbern in den Regalen, manche setzen sich zum Lesen. Mit ihren Büchern stellen sie sich an die Theke – eine kleine Glocke klingelt.
 
-Geh hinter die Theke und drücke <E>: ein Stempel in den Leseausweis, und die Bücher sind ausgeliehen. Niemand hat es eilig – sie warten geduldig.
+Geh hinter die Theke und drücke <E>: Die Kamera rückt an die Theke. Klicke den Ausweis an – er gleitet in den Kartenleser, und am PC ploppt ein Stempel auf. Dann klickst du die Bücher an, eins nach dem anderen über den Scanner, und zum Schluss den Stapel: Er rutscht dem Gast in den Korb. Niemand hat es eilig – sie warten geduldig.
+
+== Die Stempelkarte
+Jeder Ausweis hat eine Stempelkarte mit zehn Feldern. Ist sie voll, bekommt der Gast ein Lesezeichen und darf seine Bücher länger behalten. Am PC siehst du alle Ausweise mit ihren Stempeln.
 
 == Zurück in den Kasten
 Ausgeliehene Bücher kommen nach ein bis drei Tagen über den Rückgabekasten zurück. Ist er voll, liegen sie auf der Theke.

@@ -66,7 +66,9 @@ und Garten Blatt, Reisen Koffer, Kunst Pinsel, Geschichte Sanduhr, Philosophie E
 - [x] 2. Bücher neu: weiche Buchform (`BookLook`), dicker (~35 %) und etwas höher/tiefer (~8–10 % – die Fächer sind nur
   23–40 cm hoch), sanftere Farben, Genre-Zeichen (`GenreSymbols`) auf Rücken, Cover und Kistenschild; Kisten zeigen echte Titel
   des Lagers; Besucher tragen die neue Buchform
-- [ ] 3. Theke: PC statt Kasse, Theken-Ansicht, Stempelkarte, Lesezeichen-Bonus
+- [x] 3. Theke: PC statt Kasse (`CounterPc`, Bildschirm mit Stempelkarte), Theken-Ansicht (`CounterDesk`: Ausweis in den
+  Kartenleser, Bücher über den Scanner, zuschieben), Stempelkarten (`Lending.readers`), volle Karte = Lesezeichen + 3 Tage mehr;
+  neue Geräusche (Kartenleser, Piep, Plopp, Rutschen, Tastaturklackern für Schritt 4)
 - [ ] 4. Gespräche: Ansprechen, Fokus, Sprechblase unten, getippte Schrift + Klackern, Textdatei, Antworten
 - [ ] 5. Besucher: Stammgäste, Lieblingsgenre, Arten des Besuchs, Lesen am Tisch, Bücken, Freundschaft
 - [ ] 6. Wünsche: Fragezeichen, annehmen/ablehnen, Genre-Zeichen in der Gedankenblase, übergeben, Trinkgeld
