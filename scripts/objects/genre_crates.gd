@@ -8,7 +8,9 @@ extends Node3D
 ## das Buch obenauf zurück in seine Kiste (nur in die passende).
 ## Hängt an der Theke (Counter). Lage im Raum der Theke: Kundenseite +Z, Spielfigur -Z.
 
-# Maße des Würfelregals – genau wie tools/blender/furniture_fixtures.py (CUBE_*, CRATE_*), dort gleich halten
+# Maße des Würfelregals – genau wie tools/blender/furniture_fixtures.py (CUBE_*, CRATE_*), dort gleich halten; die Höhen
+# gelten vor dem Stauchen der Theke (seit Etappe 8 alles × HEIGHT_SCALE, Platte auf Counter.TOP_HEIGHT)
+const HEIGHT_SCALE := 0.85
 const HALF_W := 0.94
 const BOARD := 0.025
 const BASE_Z := 0.09
@@ -64,14 +66,14 @@ static func cell_position(column: int, row: int) -> Vector3:
 	var ch := (UNDER_TOP - z0 - (CUBE_ROWS - 1) * CUBE_T) / CUBE_ROWS
 	# Die Spielfigur schaut von -Z nach +Z: ihr „links“ ist +X
 	var x := -(x0 + cw / 2.0 + column * (cw + CUBE_T))
-	var bottom := z0 + (CUBE_ROWS - 1 - row) * (ch + CUBE_T)
+	var bottom := (z0 + (CUBE_ROWS - 1 - row) * (ch + CUBE_T)) * HEIGHT_SCALE
 	return Vector3(x, bottom, -(BACK_Y - 0.01 - CRATE_SIZE.z / 2.0))
 
 
 static func cell_size() -> Vector2:
 	var cw := (2.0 * (HALF_W - BOARD) - (CUBE_COLS - 1) * CUBE_T) / CUBE_COLS
 	var ch := (UNDER_TOP - BASE_Z - BOARD - (CUBE_ROWS - 1) * CUBE_T) / CUBE_ROWS
-	return Vector2(cw, ch)
+	return Vector2(cw, ch * HEIGHT_SCALE)
 
 
 ## Kisten neu aufbauen bzw. füllen (beim Start, wenn sich Lager, freigeschaltete Genres oder die Theke ändern).

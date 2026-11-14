@@ -1,3 +1,4 @@
+class_name Counter
 extends Node3D
 ## Die Theke im Laden. Sie gehört fest zum Laden (siehe data/furniture/counter_register.tres:
 ## is_fixed, is_essential) und lässt sich nur verschieben, nicht wegräumen.
@@ -6,13 +7,15 @@ extends Node3D
 ## Datenblatt (CounterData in data/counters/) mit eigenem Modell, das hier unter "Model"
 ## eingesetzt wird. Wähle ich am Tablet (App "Fassade") eine andere Theke, meldet CounterStyle das
 ## über sein Signal "changed", und das Modell wird sofort getauscht. Kollision und Ablagefläche
-## bleiben gleich (alle Theken sind gleich groß, Platte genau auf 1 m).
+## bleiben gleich (alle Theken sind gleich groß, Platte auf TOP_HEIGHT – seit Etappe 8 Chibi-Maß 0,85 m statt 1 m).
 ##
 ## Module (z. B. später eine Backshop-Auslage oder ein Kaffeeautomat) hängen unter dem Knoten
 ## "Modules" – die Struktur steht bereit, umgesetzt wird davon noch nichts.
 
 ## Gruppe der Theke (Besucher, Rückgaben auf die Theke)
 const GROUP := &"counters"
+## Höhe der Thekenplatte (m) – passt zu Modell (furniture_fixtures COUNTER_SCALE), counter.tscn und GenreCrates
+const TOP_HEIGHT := 0.85
 
 ## Pfad des gerade eingesetzten Modells (getauscht wird nur, wenn sich etwas ändert).
 var _model_path: String = ""

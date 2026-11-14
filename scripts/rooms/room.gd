@@ -36,7 +36,7 @@ var extra_build_areas: Array[Rect2] = []
 ## (CSG) baut seit Etappe 6c die Fassade passend zur Form (RoomOpenings) – darum werden sie jedes Mal
 ## gesucht. CSG-Wand → Farbwand.
 ## Nachrutschen nach dem Laden (_settle_on_supports): so weit darf die Fläche entfernt sein, ab so viel wird verschoben.
-const SETTLE_RANGE := 0.3
+const SETTLE_RANGE := 0.4
 const SETTLE_MIN := 0.004
 
 const REVEAL_WALLS := {"Structure/WallFront": "Walls/Front", "Structure/WallLeft": "Walls/Left",

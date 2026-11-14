@@ -61,7 +61,7 @@ var _sit_tween: Tween
 # Hocken: aktueller Zustand, Körperform und Höhe im Stehen
 var _is_crouching := false
 var _capsule: CapsuleShape3D
-var _stand_body_height: float = 1.7
+var _stand_body_height: float = 1.6
 ## Aktuelles Höchsttempo: gleitet weich zwischen walk_speed und sprint_speed hin und her.
 var _current_max_speed: float = 0.0
 ## Laufen, Springen und Hocken (z. B. aus, solange der Shop offen ist).

@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" path="res://assets/models/furniture/counter_classic.glb" id="counter_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
-size = Vector3(2, 1, 0.65)
+size = Vector3(2, 0.85, 0.65)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_d8k5h"]
 size = Vector3(0.4, 0.26, 0.38)
@@ -24,22 +24,22 @@ script = ExtResource("6_counter")
 [node name="Body" type="StaticBody3D" parent="." unique_id=600231097]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body" unique_id=160630831]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.02)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.425, 0.02)
 shape = SubResource("BoxShape3D_body")
 
 [node name="CollisionShape3D2" type="CollisionShape3D" parent="Body" unique_id=764582128]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.13, -0.08)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.98, -0.08)
 shape = SubResource("BoxShape3D_d8k5h")
 
 [node name="Modules" type="Node3D" parent="." unique_id=412668264]
 
 [node name="CashRegister" type="Node3D" parent="Modules" unique_id=905558602 instance=ExtResource("cash_register")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.5, 1, -0.08)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.5, 0.85, -0.08)
 
 [node name="Surfaces" type="Node3D" parent="." unique_id=1575451325]
 
 [node name="Top" type="Area3D" parent="Surfaces" unique_id=972760100]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.02)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0.02)
 collision_layer = 32
 collision_mask = 0
 monitoring = false

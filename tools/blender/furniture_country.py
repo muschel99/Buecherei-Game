@@ -912,7 +912,7 @@ ITEMS = [
     dict(id="table_oak", name="Bauerntisch", category="table", sub="dining_table", price=160,
          desc="Platte aus breiten Holzdielen auf gedrechselten, gestrichenen Beinen.",
          styles=STYLE, place="floor", adopt=True, build=build_farm_table, variants=paint_variants()),
-    dict(id="tea_table", name="Teetisch mit Spitzendecke", category="table", sub="side_table", price=65,
+    dict(id="tea_table", name="Teetisch mit Spitzendecke", category="table", sub="side_table", top_height=0.5, price=65,
          desc="Ein runder Tisch, über den eine Spitzendecke mit gewelltem Saum fällt.",
          styles=STYLE, place="floor", build=build_tea_table,
          variants=[("white", "Weiß", {"lace": (0.97, 0.95, 0.9)}), ("cream", "Creme", {"lace": CREAM}), ("rose", "Rosé", {"lace": ROSE}),

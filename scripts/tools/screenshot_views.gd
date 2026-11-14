@@ -50,7 +50,7 @@ static func get_set(set_name: String) -> Dictionary:
 
 ## Augenhöhe der Spielfigur draußen.
 static func eye() -> float:
-	return StreetLayout.ground_y() + 1.6
+	return StreetLayout.ground_y() + GameConfig.eye_height
 
 
 ## Blickpunkt in Augenhöhe: Kamera bei (x, z), Blick in Richtung (dx, dz).

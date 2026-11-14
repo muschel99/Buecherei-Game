@@ -906,7 +906,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (`BuildMode` prüft `is_fixed` beim Aufheben, Verschieben und Wegräumen). Sinnvoll mit
   `is_essential` zusammen.
 - **Theke** (`scenes/furniture/counter.tscn`, Script `Counter`): fest verbaut
-  (is_essential + is_fixed), Kollision und Ablagefläche fest (2 x 0,65 m, Platte auf 1 m). Welche
+  (is_essential + is_fixed), Kollision und Ablagefläche fest (2 x 0,65 m, Platte auf `Counter.TOP_HEIGHT` = 0,85 m seit Etappe 8). Welche
   Theke dasteht, liegt zentral im Autoload `CounterStyle` (`set_style`, `get_style` → `CounterData`,
   Signal `changed`, gespeichert, Gruppe `persist`); seit Etappe 6 ist jede Theke ein Datenblatt
   `data/counters/<id>.tres` (`CounterData`: Name, Beschreibung, `style_ids`, Modell, Reihenfolge,
@@ -1373,6 +1373,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `ChibiPasserbyModel.set_reading`, `ChibiGestureModifier.read_point/read_weight`, Buch `_make_open_book`); Schritt "stand" mit
   "clip"/"cue". Türschild nur innen (Straßenseite = Stand, innen die Rückseite). **Sitzmöbel** in Chibi-Höhe:
   `storybook_furniture.SEAT_HEIGHT` 0,3 m (`Kit.lower_seat` staucht alles unter dem Sitz; `low_seat=False` schaltet ab).
+  Seit Etappe 8 einheitlich: Tische `Kit.lower_table` (`TABLE_HEIGHTS` je Unterkategorie: Ess-/Schreibtisch 0,5 m, Beistell-/
+  Couchtisch 0,3 m, `top_height` je Möbel), Theken `z_scale` 0,85 (`Kit.scale_height`, Platte `Counter.TOP_HEIGHT` 0,85 m),
+  Spielfigur `eye_height` 1,45 m.
   Bilder: `--visitors=<n> [--at_counter]`, `pose_probe -- read`. **Hinterzimmer** seit 7b ein Anbau: `BackRoom._exterior`
   (Backstein, Sandsteinsockel, Zinkdach mit Dachfenster-Aufsatz, Hof) und Holztür `BackRoomDoor` (E, schwingt ins Hinterzimmer;
   nicht in der Gruppe "doors"). Besucher: Plätze vor Regalen werden reserviert (`_shelf_spots`), Tempo `visitor_speed_range`,

@@ -1,7 +1,7 @@
 """Feste Einbauten je Stil (Etappe 6): die Theke und der Einwurf des Rückgabekastens.
 
 Theken (kind="counter"): alle gleich groß, damit Kollision und Ablagefläche der festen Theken-Szene
-(scenes/furniture/counter.tscn) passen – 2 m breit, Platte genau auf 1 m, Blender-y von -0,345
+(scenes/furniture/counter.tscn) passen – 2 m breit, Platte auf 0,85 m (gebaut für 1 m, gestaucht), Blender-y von -0,345
 (Kundenseite, vorn) bis 0,305 (hinten, wo ich stehe). Vorn Zierde, hinten offene Fächer und Schübe.
 Einwürfe (kind="return_slot"): Ursprung hinten auf der Hauswand in der Mitte des Schlitzes,
 Vorderseite -y, etwa 34 x 30 cm. Ergebnis: Modell + Datenblatt in data/counters/ bzw.
@@ -21,7 +21,10 @@ import furniture_dark_academia as FD
 import furniture_minimalist as FM
 import furniture_neutral as FN
 
-# Maße der Theke (Blender-Koordinaten)
+# Seit Etappe 8 sind die Theken niedriger (Chibi-Maß): gebaut wird mit den Maßen unten (Platte auf 1 m), danach staucht
+# Kit.scale_height alles auf COUNTER_SCALE – die Platte liegt dann auf 0,85 m (Counter.TOP_HEIGHT, GenreCrates.HEIGHT_SCALE).
+COUNTER_SCALE = 0.85
+# Maße der Theke (Blender-Koordinaten, vor dem Stauchen)
 TOP_Z = 1.0                  # Oberkante der Platte (Ablagefläche der Theken-Szene)
 TOP_Y = (-0.345, 0.305)      # Platte vorn/hinten
 HALF_W = 0.94                # Korpus: halbe Breite
@@ -690,7 +693,7 @@ def build_crate_book(k):
     book_mats(k)
     cover = k.part("Buchdeckel", "cover", bevel=0.0015, vary=0.0)
     pages = k.part("Buchseiten", "pages", bevel=0.0008, vary=0.02)
-    F.book(cover, pages, (0, 0, 0), (0.024, 0.15, 0.15), turn=90)
+    F.book(cover, pages, (0, 0, 0), (0.024, 0.15, 0.13), turn=90)
 
 
 def inside_frame(k, slot, hatch_slot, depth=0.035, hatch_depth=0.022, bevel=0.006):
@@ -788,16 +791,16 @@ def build_inside_country(k):
 
 
 ITEMS = [
-    dict(id="counter_classic", crate="crate_oak", price=120, kind="counter", name="Schlichte Holztheke", order=10, legacy=["wood_warm"], settle=0.35,
+    dict(id="counter_classic", z_scale=COUNTER_SCALE, crate="crate_oak", price=120, kind="counter", name="Schlichte Holztheke", order=10, legacy=["wood_warm"], settle=0.35,
          desc="Eine ehrliche Theke aus Eiche mit drei Feldern vorn – passt zu allem.",
          styles=[], build=build_counter_classic),
-    dict(id="counter_dark_academia", crate="crate_walnut", price=260, kind="counter", name="Bibliothekstheke", order=20, legacy=["wood_dark"], settle=0.35,
+    dict(id="counter_dark_academia", z_scale=COUNTER_SCALE, crate="crate_walnut", price=260, kind="counter", name="Bibliothekstheke", order=20, legacy=["wood_dark"], settle=0.35,
          desc="Walnuss mit Pilastern, grüner Lederauflage, Messingstange und dem Schild „Ausleihe“.",
          styles=["dark_academia"], build=build_counter_dark_academia),
-    dict(id="counter_minimalist", crate="crate_linen", price=200, kind="counter", name="Helle Theke", order=30, legacy=["painted_light"], settle=0.35,
+    dict(id="counter_minimalist", z_scale=COUNTER_SCALE, crate="crate_linen", price=200, kind="counter", name="Helle Theke", order=30, legacy=["painted_light"], settle=0.35,
          desc="Weiß mit runden Ecken, Eichenlamellen vorn und einer Platte aus heller Eiche.",
          styles=["minimalist"], build=build_counter_minimalist),
-    dict(id="counter_country", crate="crate_wicker", price=220, kind="counter", name="Landhaustheke", order=40, settle=0.35,
+    dict(id="counter_country", z_scale=COUNTER_SCALE, crate="crate_wicker", price=220, kind="counter", name="Landhaustheke", order=40, settle=0.35,
          desc="Salbeigrün gestrichen, Kiefernplatte, gemalte Blumenranke und ein Karovorhang hinten.",
          styles=["country"], build=build_counter_country),
     dict(id="slot_dark_academia", price=55, kind="return_slot", inside="inside_dark_academia", name="Messingklappe", order=40, settle=0.3,

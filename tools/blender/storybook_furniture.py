@@ -252,8 +252,79 @@ class Kit:
                 settled.append(o)
         settle(settled, self.seed, self.settle_amount)
         self.lower_seat()
+        self.lower_table()
+        self.scale_height()
         self.attach_feet()
         return self.objects
+
+    def _compress(self, top, target, keep):
+        """Staucht alles unter top - keep so, dass top auf target liegt (weicher Übergang SEAT_BLEND); darüber wird nur
+        verschoben. Mit Kollision, Ablagen, Sitzen, Fächern, Lichtern, Katzenplätzen, Funken und E-Bereich."""
+        k = (target - keep) / (top - keep)
+        a = top - keep
+        w = min(SEAT_BLEND, a * 0.5)
+
+        def f(z):
+            # unten gestaucht (Faktor k), oben unverändert; dazwischen ein weicher Übergang über 2·w – sonst entsteht auf
+            # Polstern, die über diese Höhe reichen, eine sichtbare Knickkante
+            if z <= a - w:
+                return z * k
+            if z >= a + w:
+                return z - a * (1.0 - k)
+            u = (z - (a - w)) / (2.0 * w)
+            return z * k + (1.0 - k) * 2.0 * w * (u ** 3 - u ** 4 / 2.0)
+
+        for o in self.objects:
+            inv = o.matrix_world.inverted()
+            for v in o.data.vertices:
+                p = o.matrix_world @ v.co
+                v.co = inv @ Vector((p.x, p.y, f(p.z)))
+            o.data.update()
+
+        def box(center, size):
+            z0, z1 = f(center.z - size.z / 2.0), f(center.z + size.z / 2.0)
+            return Vector((center.x, center.y, (z0 + z1) / 2.0)), Vector((size.x, size.y, z1 - z0))
+
+        self.colliders = [box(c, s) + (t,) for c, s, t in self.colliders]
+        self.surfaces = [(Vector((c.x, c.y, f(c.z))), size, h) for c, size, h in self.surfaces]
+        self.seats = [(Vector((c.x, c.y, f(c.z))), t) for c, t in self.seats]
+        self.rows = [(Vector((c.x, c.y, f(c.z))), w, h, d) for c, w, h, d in self.rows]
+        for light in self.lights:
+            light["pos"] = Vector((light["pos"].x, light["pos"].y, f(light["pos"].z)))
+        self.cat_spots = [(Vector((c.x, c.y, f(c.z))), t) for c, t in self.cat_spots]
+        self.spark_spots = [Vector((c.x, c.y, f(c.z))) for c in self.spark_spots]
+        if self.interact:
+            self.interact = box(Vector(self.interact[0]), Vector(self.interact[1]))
+
+    def lower_table(self):
+        """Tische in Chibi-Höhe (seit Etappe 8, einheitlich mit den Sitzmöbeln): alles unter der Platte wird gestaucht, die
+        Platte selbst bleibt; Plattenhöhe nach Unterkategorie (TABLE_HEIGHTS) oder "top_height" in der Beschreibung."""
+        if self.spec.get("category") != "table" or not self.surfaces or not self.spec.get("low_table", True):
+            return
+        target = self.spec.get("top_height", TABLE_HEIGHTS.get(self.spec.get("sub", "")))
+        if target is None:
+            return
+        top = max(c.z for c, _size, _h in self.surfaces)
+        if top <= target + 0.02:
+            return
+        self._compress(top, target, TABLE_KEEP)
+        print("  Tischplatte von %.2f auf %.2f m gesenkt" % (top, target))
+
+    def scale_height(self):
+        """Gleichmäßig niedriger (z. B. die Theken seit Etappe 8: Platte 1,0 → 0,85 m, "z_scale" in der Beschreibung)."""
+        k = self.spec.get("z_scale", 1.0)
+        if abs(k - 1.0) < 1e-6:
+            return
+        for o in self.objects:
+            inv = o.matrix_world.inverted()
+            for v in o.data.vertices:
+                p = o.matrix_world @ v.co
+                v.co = inv @ Vector((p.x, p.y, p.z * k))
+            o.data.update()
+        self.colliders = [(Vector((c.x, c.y, c.z * k)), Vector((s.x, s.y, s.z * k)), t) for c, s, t in self.colliders]
+        self.surfaces = [(Vector((c.x, c.y, c.z * k)), size, h * k) for c, size, h in self.surfaces]
+        self.seats = [(Vector((c.x, c.y, c.z * k)), t) for c, t in self.seats]
+        print("  Höhe auf %.0f %%" % (k * 100))
 
     def attach_feet(self):
         """Jedes Bein muss am Grundkörper befestigt sein (Wunsch der Entwicklerin, Testrunde 7b): Beine und Füße, die oben knapp
@@ -319,42 +390,7 @@ class Kit:
         target = self.spec.get("seat_height", SEAT_HEIGHT)
         if top <= target + 0.02:
             return
-        keep = SEAT_KEEP   # so viel unter der Sitzfläche bleibt ungestaucht (Sitzbrett, Polster)
-        k = (target - keep) / (top - keep)
-        a = top - keep
-        w = min(SEAT_BLEND, a * 0.5)
-
-        def f(z):
-            # unten gestaucht (Faktor k), oben unverändert; dazwischen ein weicher Übergang über 2·w – sonst entsteht auf
-            # Polstern, die über diese Höhe reichen, eine sichtbare Knickkante
-            if z <= a - w:
-                return z * k
-            if z >= a + w:
-                return z - a * (1.0 - k)
-            u = (z - (a - w)) / (2.0 * w)
-            return z * k + (1.0 - k) * 2.0 * w * (u ** 3 - u ** 4 / 2.0)
-
-        for o in self.objects:
-            inv = o.matrix_world.inverted()
-            for v in o.data.vertices:
-                p = o.matrix_world @ v.co
-                v.co = inv @ Vector((p.x, p.y, f(p.z)))
-            o.data.update()
-
-        def box(center, size):
-            z0, z1 = f(center.z - size.z / 2.0), f(center.z + size.z / 2.0)
-            return Vector((center.x, center.y, (z0 + z1) / 2.0)), Vector((size.x, size.y, z1 - z0))
-
-        self.colliders = [box(c, s) + (t,) for c, s, t in self.colliders]
-        self.surfaces = [(Vector((c.x, c.y, f(c.z))), size, h) for c, size, h in self.surfaces]
-        self.seats = [(Vector((c.x, c.y, f(c.z))), t) for c, t in self.seats]
-        self.rows = [(Vector((c.x, c.y, f(c.z))), w, h, d) for c, w, h, d in self.rows]
-        for light in self.lights:
-            light["pos"] = Vector((light["pos"].x, light["pos"].y, f(light["pos"].z)))
-        self.cat_spots = [(Vector((c.x, c.y, f(c.z))), t) for c, t in self.cat_spots]
-        self.spark_spots = [Vector((c.x, c.y, f(c.z))) for c in self.spark_spots]
-        if self.interact:
-            self.interact = box(Vector(self.interact[0]), Vector(self.interact[1]))
+        self._compress(top, target, SEAT_KEEP)
         print("  Sitz von %.2f auf %.2f m gesenkt" % (top, target))
 
 
@@ -400,6 +436,9 @@ def _touches(point, trees, own):
 SEAT_HEIGHT = 0.3
 SEAT_KEEP = 0.07
 SEAT_BLEND = 0.04   # halbe Breite des weichen Übergangs zwischen gestaucht und unverändert (m)
+# Tischplatten in Chibi-Höhe (seit Etappe 8) je Unterkategorie; TABLE_KEEP = so viel unter der Platte bleibt ungestaucht
+TABLE_HEIGHTS = {"dining_table": 0.5, "desk": 0.5, "side_table": 0.3, "coffee_table": 0.3}
+TABLE_KEEP = 0.06
 
 
 def settle(objs, seed, amount=1.0):

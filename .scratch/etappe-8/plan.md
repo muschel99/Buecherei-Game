@@ -59,7 +59,10 @@ und Garten Blatt, Reisen Koffer, Kunst Pinsel, Geschichte Sanduhr, Philosophie E
 - [x] 0. Ladezeit: gemessen (ohne Grafik 3 s; die Zeit geht in die erste Bildvorbereitung der Grafikkarte, ~220 Pipelines);
   gemütlicher Ladebildschirm statt eingefrorenem Fenster, Buchrücken-Atlas wird zwischengespeichert, Zeitmessung „Start: …“
   in der Ausgabe (die Entwicklerin kann ihre Zahlen nennen)
-- [ ] 1. Größen: Theke 0,85 m (Würfelregal, Kollision, Ablage, Besucher-Punkte), Tische, Augenhöhe 1,45 m
+- [x] 1. Größen: Theke 0,85 m (Modelle gestaucht `z_scale`, counter.tscn, `Counter.TOP_HEIGHT`, GenreCrates `HEIGHT_SCALE`),
+  Tische (`Kit.lower_table`, `TABLE_HEIGHTS`: Ess-/Schreib-/Teetisch 0,5 m, Beistelltische 0,3 m), Spielfigur Augen 1,45 m,
+  Körper 1,6 m, Hocke 0,85/1,0 m, sitzend 0,62 m über dem Sitz; alte Spielstände: Dinge auf Theke/Tischen rutschen nach
+  (`Room.SETTLE_RANGE` 0,4). Besucher greifen nur bis ~1,4 m: kommt in Schritt 5
 - [ ] 2. Bücher neu: größer, weicher, Genre-Zeichen
 - [ ] 3. Theke: PC statt Kasse, Theken-Ansicht, Stempelkarte, Lesezeichen-Bonus
 - [ ] 4. Gespräche: Ansprechen, Fokus, Sprechblase unten, getippte Schrift + Klackern, Textdatei, Antworten

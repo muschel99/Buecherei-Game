@@ -222,7 +222,7 @@ func _queue_step(walker: Passerby) -> Array:
 		return [{"type": "wait", "face": _counter_face(), "until": func(w: Passerby) -> bool: return queue.find(w) < index},
 			_call(_queue_step)]
 	# vorn an der Theke: Korb auf die Theke, einmal klingeln, Ausweis hochhalten
-	Audio.play_at("ui/counter_bell", _counter_node().global_transform * Vector3(-0.3, 1.0, 0.25), GameConfig.counter_bell_volume_db,
+	Audio.play_at("ui/counter_bell", _counter_node().global_transform * Vector3(-0.3, Counter.TOP_HEIGHT, 0.25), GameConfig.counter_bell_volume_db,
 		Audio.vary(0.03))
 	_checkout[walker] = 0
 	_put_basket_on_counter(walker)
@@ -375,7 +375,7 @@ func _counter_face() -> Vector2:
 
 ## Wo der Ausweis über der Theke gezeigt wird (Welt).
 func _card_point() -> Vector3:
-	return _counter_node().global_transform * Vector3(-0.35, 1.0 + GameConfig.counter_card_height, 0.38)
+	return _counter_node().global_transform * Vector3(-0.35, Counter.TOP_HEIGHT + GameConfig.counter_card_height, 0.38)
 
 
 ## E-Bereich auf der Theke („Stempeln“, nur wenn jemand wartet und man hinter der Theke steht).
@@ -392,7 +392,7 @@ func _add_stamp_interactable() -> void:
 	_stamp_shape.shape = box
 	_stamp_shape.disabled = true
 	_stamp_interactable.add_child(_stamp_shape)
-	_stamp_interactable.position = Vector3(-0.2, 1.05, -0.15)
+	_stamp_interactable.position = Vector3(-0.2, Counter.TOP_HEIGHT + 0.05, -0.15)
 	_counter.add_child(_stamp_interactable)
 	_stamp_interactable.interacted.connect(_on_stamp)
 
@@ -485,14 +485,14 @@ func _checkout_step(walker: Passerby) -> void:
 		0:  # Ausweis nehmen: er liegt jetzt vor der Spielfigur auf der Theke
 			walker.set_prop(&"")
 			_counter_card = _place_on_counter(load("res://scenes/street_life/props/library_card.tscn").instantiate(),
-				Vector3(-0.15, 1.003, -0.12), Basis(Vector3.RIGHT, -PI / 2.0) * Basis(Vector3.FORWARD, 0.2))
+				Vector3(-0.15, Counter.TOP_HEIGHT + 0.003, -0.12), Basis(Vector3.RIGHT, -PI / 2.0) * Basis(Vector3.FORWARD, 0.2))
 			Audio.play_at("books/page", _card_point(), -6.0, Audio.vary(0.1))
 			_checkout[walker] = 1
 		1:  # stempeln: der Stempel hebt sich, drückt auf den Ausweis und geht zurück
 			_checkout[walker] = 2
 			if _stamp_tool == null:
-				_stamp_tool = _place_on_counter(_make_stamp(), Vector3(0.12, 1.0, -0.16), Basis.IDENTITY)
-			var target := counter.global_transform * Vector3(-0.15, 1.004, -0.12)
+				_stamp_tool = _place_on_counter(_make_stamp(), Vector3(0.12, Counter.TOP_HEIGHT, -0.16), Basis.IDENTITY)
+			var target := counter.global_transform * Vector3(-0.15, Counter.TOP_HEIGHT + 0.004, -0.12)
 			var rest := _stamp_tool.global_position
 			var tween := create_tween().set_trans(Tween.TRANS_SINE)
 			tween.tween_property(_stamp_tool, "global_position", target + Vector3.UP * 0.08, 0.18)
@@ -540,7 +540,7 @@ func _put_basket_on_counter(walker: Passerby) -> void:
 	var model := load(BASKET_MODELS[mini(3, _book_count(walker))]) as PackedScene
 	if model == null:
 		return
-	_counter_basket = _place_on_counter(model.instantiate(), Vector3(0.0, 1.0 + BASKET_DROP, 0.15), Basis(Vector3.UP, 0.4))
+	_counter_basket = _place_on_counter(model.instantiate(), Vector3(0.0, Counter.TOP_HEIGHT + BASKET_DROP, 0.15), Basis(Vector3.UP, 0.4))
 	Audio.play_at("books/place", _counter_basket.global_position, -6.0, Audio.vary(0.08))
 
 

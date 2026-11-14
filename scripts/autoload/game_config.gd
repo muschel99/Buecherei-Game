@@ -20,7 +20,7 @@ var acceleration: float = 9.0
 ## Wie schnell die Figur wieder stehen bleibt (höher = abrupter).
 var deceleration: float = 11.0
 ## Augenhöhe der Kamera über dem Boden in Metern.
-var eye_height: float = 1.6
+var eye_height: float = 1.45
 
 # --- Spielfigur: Springen und Hocken ---
 
@@ -30,15 +30,15 @@ var jump_height: float = 0.8
 ## Gilt beim Springen und Fallen, damit sich beides gemütlich anfühlt.
 var air_gravity_scale: float = 0.7
 ## Augenhöhe in der Hocke (in Metern über dem Boden).
-var crouch_eye_height: float = 1.0
+var crouch_eye_height: float = 0.85
 ## Körperhöhe in der Hocke (in Metern) – so niedrig kann man sich bücken.
-var crouch_body_height: float = 1.15
+var crouch_body_height: float = 1.0
 ## Laufgeschwindigkeit in der Hocke (Meter pro Sekunde).
 var crouch_speed: float = 1.3
 ## Wie schnell sich die Kamera beim Hocken senkt und hebt (Meter pro Sekunde).
 var crouch_transition_speed: float = 3.0
 ## Augenhöhe im Sitzen, gemessen über der Sitzfläche (in Metern).
-var seated_eye_height: float = 0.72
+var seated_eye_height: float = 0.62
 ## Wie lange das Hinsetzen bzw. Aufstehen dauert (in Sekunden).
 var sit_transition_time: float = 0.6
 
