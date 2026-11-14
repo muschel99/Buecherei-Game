@@ -6,7 +6,8 @@ Theken (kind="counter"): alle gleich groß, damit Kollision und Ablagefläche de
 Einwürfe (kind="return_slot"): Ursprung hinten auf der Hauswand in der Mitte des Schlitzes,
 Vorderseite -y, etwa 34 x 30 cm. Ergebnis: Modell + Datenblatt in data/counters/ bzw.
 data/return_slots/ (siehe storybook_furniture.write_option_data), Auswahl in der App „Fassade“.
-Teile (kind="part"): Kasse und Tablet auf der Theke – nur Modell, ihre Szenen binden die .glb ein.
+Teile (kind="part"): Kasse und Tablet auf der Theke, Bücherkisten und ihr Buch (crate_*) – nur Modell, ihre Szenen bzw.
+GenreCrates binden die .glb ein. Theken tragen "crate" = Kiste für ihr Würfelregal (Datenblatt: crate_path).
 """
 
 import math
@@ -32,15 +33,25 @@ DIVIDER_X = 0.32             # Trennwände zwischen offenen Fächern (außen) un
 SHELF_Z = 0.5                # Zwischenboden in den offenen Fächern
 UP = Matrix.Rotation(math.radians(90), 4, "X")  # lokale xy-Ebene -> senkrecht, lokales +z -> vorn (-y)
 
+# Würfelregal hinten unter der Platte (seit Testrunde 7b, Wunsch der Entwicklerin: „wie ein Kallax mit Kisten drin“):
+# 6 x 3 Fächer, je eine Bücherkiste pro Genre. GenreCrates (scripts/objects/genre_crates.gd) rechnet die Fächer genauso –
+# CUBE_* und CRATE_* dort gleich halten.
+CUBE_COLS, CUBE_ROWS = 6, 3
+CUBE_T = 0.028               # Stärke der Trennwände und Böden
+CUBE_DEPTH = 0.33            # Tiefe der Fächer ab der Rückseite (BACK_Y)
+CRATE_W, CRATE_D, CRATE_H = 0.25, 0.29, 0.15   # Bücherkiste (Breite, Tiefe, Höhe), Vorderseite -y
+LABEL_Z, LABEL_W, LABEL_H = 0.105, 0.12, 0.045  # Schild vorn an der Kiste (Mitte, Größe)
+
 
 def book_mats(k):
     k.mat("cover", (1, 1, 1), grain="paint", rough=0.7, vary=0.0, bump=0.05)
     k.mat("pages", (0.93, 0.88, 0.76), grain="paint", rough=0.85, vary=0.04)
 
 
-def carcass(k, slot, inner=None):
-    """Korpus mit offener Rückseite: Front, Seiten, Boden, zwei Trennwände, Zwischenböden links und
-    rechts, in der Mitte ein Schubkasten-Block (Schübe setzt drawers())."""
+def carcass(k, slot, inner=None, cubes=True):
+    """Korpus mit offener Rückseite: Front, Seiten, Boden; hinten das Würfelregal für die Bücherkisten (cubes, seit
+    Testrunde 7b). cubes=False = alte Einteilung: zwei Trennwände, Zwischenböden links und rechts, in der Mitte ein
+    Schubkasten-Block (Schübe setzt drawers())."""
     inner = inner or slot
     c = k.part("Korpus", slot, bevel=0.004)
     h = UNDER_TOP - BASE_Z
@@ -52,6 +63,9 @@ def carcass(k, slot, inner=None):
     depth = BACK_Y - (FRONT_Y + BOARD)
     yc = (BACK_Y + FRONT_Y + BOARD) / 2
     i.box((0, yc, BASE_Z + BOARD / 2), (HALF_W * 2 - BOARD * 2 + 0.004, depth, BOARD), step=0.3, dent=0.0006)
+    if cubes:
+        cube_back(k, inner)
+        return
     for side in (-1, 1):
         i.box((side * DIVIDER_X, yc, (UNDER_TOP + BASE_Z + BOARD) / 2), (0.022, depth, UNDER_TOP - BASE_Z - BOARD + 0.002),
               step=0.3, dent=0.0006)
@@ -60,6 +74,35 @@ def carcass(k, slot, inner=None):
     # Block hinter den Schüben (geschlossen, damit nichts durchscheint)
     i.box((0, yc - 0.01, (UNDER_TOP + BASE_Z + BOARD) / 2), (DIVIDER_X * 2 - 0.02, depth - 0.02, UNDER_TOP - BASE_Z - BOARD),
           step=0.3, dent=0.0)
+
+
+def cube_cells():
+    """Mitten (x) der Spalten, Bodenhöhen (z) der Reihen von unten, Breite und Höhe eines Fachs."""
+    x0, x1 = -HALF_W + BOARD, HALF_W - BOARD
+    z0, z1 = BASE_Z + BOARD, UNDER_TOP
+    cw = (x1 - x0 - (CUBE_COLS - 1) * CUBE_T) / CUBE_COLS
+    ch = (z1 - z0 - (CUBE_ROWS - 1) * CUBE_T) / CUBE_ROWS
+    return ([x0 + cw / 2 + i * (cw + CUBE_T) for i in range(CUBE_COLS)],
+            [z0 + r * (ch + CUBE_T) for r in range(CUBE_ROWS)], cw, ch)
+
+
+def cube_back(k, slot):
+    """Würfelregal hinten unter der Platte: Trennwände und Böden bündig mit der Rückseite, Rückwand der Fächer
+    CUBE_DEPTH tief (davor bleibt der Korpus geschlossen)."""
+    c = k.part("Würfelregal", slot, bevel=0.004)
+    x0, x1 = -HALF_W + BOARD, HALF_W - BOARD
+    z0, z1 = BASE_Z + BOARD, UNDER_TOP
+    _xs, _zs, cw, ch = cube_cells()
+    y_in = BACK_Y - CUBE_DEPTH
+    yc = (BACK_Y + y_in) / 2
+    c.box((0, y_in - 0.008, (z0 + z1) / 2), (x1 - x0 + 0.004, 0.016, z1 - z0 + 0.002), step=0.3, dent=0.0006)
+    for i in range(1, CUBE_COLS):
+        x = x0 + i * cw + (i - 0.5) * CUBE_T
+        c.box((x, yc, (z0 + z1) / 2), (CUBE_T, CUBE_DEPTH, z1 - z0 + 0.002), step=0.3, dent=0.0006)
+    for r in range(1, CUBE_ROWS):
+        z = z0 + r * ch + (r - 0.5) * CUBE_T
+        # 2 mm hinter der Rückseite der Trennwände (keine Flächen genau aufeinander)
+        c.box((0, yc - 0.001, z), (x1 - x0 + 0.004, CUBE_DEPTH - 0.002, CUBE_T), step=0.3, dent=0.0006)
 
 
 def drawers(k, slot, handle_slot, handle="knob"):
@@ -156,18 +199,7 @@ def build_counter_classic(k):
     framed_panels(k, "wood", "wood")
     top = k.part("Platte", "wood", bevel=0.009)
     top.box((0, sum(TOP_Y) / 2, (UNDER_TOP + TOP_Z) / 2), (2.0, TOP_Y[1] - TOP_Y[0], TOP_Z - UNDER_TOP), step=0.3, dent=0.0008)
-    drawers(k, "wood", "metal", handle="bar")
-    # Hinten: Bücher, ein Karton, Papierstapel
-    back_books(k, -HALF_W + 0.04, -DIVIDER_X - 0.05, BASE_Z + BOARD, rnd)
-    back_books(k, -HALF_W + 0.06, -DIVIDER_X - 0.2, SHELF_Z + 0.011, rnd, max_h=0.22)
-    bx = k.part("Karton", "box", bevel=0.004)
-    bx.box((0.62, 0.02, BASE_Z + BOARD + 0.11), (0.42, 0.34, 0.22), step=0.3, dent=0.002)
-    paper = k.part("Papier", "paper", bevel=0.001)
-    for i in range(5):
-        paper.box((0.55 + rnd.uniform(-0.01, 0.01), 0.04, SHELF_Z + 0.013 + i * 0.012), (0.21, 0.297, 0.01), step=0.5, dent=0.0004,
-                  turn=(0, 0, rnd.uniform(-4, 4)))
-    book_pile(k, 0.8, 0.05, SHELF_Z + 0.011, 3, rnd)
-
+    # Hinten: Würfelregal mit den Bücherkisten (carcass), sonst nichts
 
 # --- Bibliothekstheke (Dark Academia) ---
 
@@ -224,24 +256,7 @@ def build_counter_dark_academia(k):
     letters = k.part("Schrift", "letters", bevel=0.0, settle=False)
     letters.text("AUSLEIHE", 0.042, 0.003, Matrix.Translation((0, FRONT_Y - 0.0185, 0.676)) @ UP, font="DejaVuSerif.ttf",
                  spacing=1.15, resolution=4)
-    # Hinten: Messing-Bügelgriffe mit Kärtchen, Bücher, Karteikasten, Papiere
-    drawers(k, "wood", "brass", handle="bar")
-    lab = k.part("Kärtchen", "paper", bevel=0.0)
-    span = UNDER_TOP - BASE_Z - BOARD
-    for j in range(3):
-        z = BASE_Z + BOARD + span / 3 * (j + 0.5)
-        lab.box((0, BACK_Y + 0.0095, z - (span / 3 - 0.018) * 0.15), (0.05, 0.002, 0.016), step=0.5, dent=0.0)
-    palette = [FD.BORDEAUX, FD.BOTTLE, FD.NAVY, FD.CHOCOLATE, FD.COGNAC]
-    back_books(k, -HALF_W + 0.04, -DIVIDER_X - 0.03, BASE_Z + BOARD, rnd, palette=palette)
-    back_books(k, -HALF_W + 0.04, -DIVIDER_X - 0.03, SHELF_Z + 0.011, rnd, max_h=0.26, palette=palette)
-    back_books(k, DIVIDER_X + 0.04, HALF_W - 0.24, BASE_Z + BOARD, rnd, palette=palette, lean=False)
-    box = k.part("Karteikasten", "wood", bevel=0.004)
-    box.box((0.76, 0.06, SHELF_Z + 0.011 + 0.08), (0.24, 0.3, 0.16), step=0.3, dent=0.0008)
-    hw2 = k.part("Beschläge", "brass", bevel=0.0)
-    F.bar_handle(hw2, (0.76, 0.21, SHELF_Z + 0.12), 0.06, r=0.0035, depth=0.014, normal_y=1)
-    hw2.box((0.76, 0.212, SHELF_Z + 0.07), (0.07, 0.003, 0.03), step=0.5, dent=0.0)
-    book_pile(k, 0.48, 0.04, SHELF_Z + 0.011, 4, rnd, palette=palette)
-
+    # Hinten: Würfelregal mit den Bücherkisten (carcass)
 
 # --- Helle Theke (Minimalistisch) ---
 
@@ -265,20 +280,11 @@ def build_counter_minimalist(k):
         c.box((side * (HALF_W - BOARD / 2), (y0 + BACK_Y) / 2, zc), (BOARD, BACK_Y - y0, h), step=0.3, dent=0.0006)
         m = Matrix.Translation((side * (HALF_W - R), FRONT_Y + R, zc)) @ Matrix.Rotation(math.radians(-90), 4, "Y")
         F.arc_shell(c, m, h, R, BOARD, 0 if side < 0 else -90, 90 if side < 0 else 0, seg_a=14, seg_l=6)
+    # Innen: Boden und Würfelregal für die Bücherkisten (seit Testrunde 7b)
     i = k.part("Innenleben", "white", bevel=0.003)
-    depth = BACK_Y - (FRONT_Y + BOARD)
-    yc = (BACK_Y + FRONT_Y + BOARD) / 2
-    for side in (-1, 1):
-        i.box((side * DIVIDER_X, yc, (UNDER_TOP + BASE_Z) / 2), (0.022, depth, UNDER_TOP - BASE_Z), step=0.3, dent=0.0006)
-    sh = k.part("Böden", "wood", bevel=0.003)
-    for side in (-1, 1):
-        x0, x1 = DIVIDER_X + 0.011, HALF_W - BOARD
-        # Boden unten und Zwischenboden in Eiche; in der runden Ecke bleibt vorn etwas Luft
-        for z in (BASE_Z + BOARD / 2, SHELF_Z):
-            sh.box((side * (x0 + x1) / 2, (BACK_Y + FRONT_Y + R) / 2, z), (x1 - x0 + 0.004, BACK_Y - FRONT_Y - R, 0.022),
-                   step=0.3, dent=0.0004)
-            sh.box((side * (x0 + HALF_W - R) / 2, yc, z), (HALF_W - R - x0, depth, 0.022), step=0.3, dent=0.0004)
-    i.box((0, yc - 0.01, (UNDER_TOP + BASE_Z) / 2), (DIVIDER_X * 2 - 0.02, depth - 0.02, UNDER_TOP - BASE_Z), step=0.3, dent=0.0)
+    y0 = FRONT_Y + R
+    i.box((0, (y0 + BACK_Y) / 2, BASE_Z + BOARD / 2), (HALF_W * 2 - BOARD * 2 + 0.004, BACK_Y - y0, BOARD), step=0.3, dent=0.0006)
+    cube_back(k, "white")
     # Sockel (zurückgesetzt, dunkel) und Platte (Eiche, runde Ecken wie der Korpus)
     pl = k.part("Sockel", "plinth", bevel=0.002)
     pl.slab(_rounded_rect(HALF_W - 0.03, FRONT_Y + 0.03, BACK_Y - 0.02, R - 0.03), BASE_Z + 0.002, Matrix.Identity(4), dent=0.0)
@@ -291,20 +297,7 @@ def build_counter_minimalist(k):
     for j in range(n + 1):
         x = -(HALF_W - R - 0.02) + (HALF_W - R - 0.02) * 2 * j / n
         fl.tube([(x, FRONT_Y - 0.002, BASE_Z + 0.03), (x, FRONT_Y - 0.002, UNDER_TOP - 0.03)], 0.0135, segs=8, round_ends=True)
-    # Hinten: grifflose Schübe mit Eichen-Leiste, Keramik, Leinenkiste, ein paar Bücher
-    drawers(k, "white", "wood", handle="tab")
-    cer = k.part("Vasen", "ceramic", bevel=0.0)
-    cer.lathe([(0.0, 0.0), (0.05, 0.0), (0.07, 0.06), (0.06, 0.14), (0.03, 0.2), (0.032, 0.23), (0.026, 0.23), (0.0, 0.2)],
-              (-0.75, 0.06, SHELF_Z + 0.011), segs=20)
-    cl = k.part("Schale", "clay", bevel=0.0)
-    cl.lathe([(0.0, 0.0), (0.04, 0.0), (0.085, 0.03), (0.09, 0.05), (0.08, 0.052), (0.035, 0.012), (0.0, 0.012)],
-             (-0.53, 0.04, SHELF_Z + 0.011), segs=22)
-    ln = k.part("Leinenkiste", "linen", bevel=0.01)
-    F.pillow(ln, (0.62, 0.03, BASE_Z + BOARD + 0.1), (0.42, 0.32, 0.2), roundness=6.0, puff=0.004, step=0.05)
-    back_books(k, DIVIDER_X + 0.05, HALF_W - 0.25, SHELF_Z + 0.011, rnd, max_h=0.22,
-               palette=[FM.SAND, FM.SAGE, FM.DUSTY_BLUE, FM.CREAM, FM.CLAY], lean=False)
-    book_pile(k, -0.62, 0.05, BASE_Z + BOARD, 3, rnd, palette=[FM.SAGE, FM.CREAM, FM.DUSTY_BLUE])
-
+    # Hinten: Würfelregal mit den Bücherkisten
 
 def _rounded_rect(half_w, y_front, y_back, r, back_r=0.0, n=8):
     """Umriss (gegen den Uhrzeigersinn) mit runden vorderen Ecken (r) und leicht runden hinteren (back_r)."""
@@ -368,39 +361,7 @@ def build_counter_country(k):
     top.box((0, yc, (UNDER_TOP + TOP_Z) / 2), (1.86 + 0.004, d - 0.01, TOP_Z - UNDER_TOP), step=0.3, dent=0.0008)
     for side in (-1, 1):
         top.box((side * 0.965, yc, (UNDER_TOP + TOP_Z) / 2 - 0.0005), (0.07, d, TOP_Z - UNDER_TOP - 0.001), step=0.3, dent=0.0006)
-    # Hinten: Porzellanknäufe, Karo-Vorhang links, rechts Leinen, Emaillekanne, Bücher
-    drawers(k, "paint", "porcelain", handle="knob")
-    cur = k.part("Vorhang", "curtain", bevel=0.0)
-    x0, x1 = -HALF_W + BOARD + 0.005, -DIVIDER_X - 0.016
-    z_top, z_bot = UNDER_TOP - 0.03, BASE_Z + BOARD + 0.02
-    folds = 9
-
-    def wave(u, v):
-        return 0.012 * math.sin(u * folds * 2 * math.pi) + 0.004 * v
-
-    cur.sheet((x0, BACK_Y + 0.012, z_bot), (x1 - x0, 0, 0), (0, 0, z_top - z_bot), 72, 8, 0.004, offset=wave)
-    rod = k.part("Stange", "porcelain", bevel=0.0)
-    rod.tube([(x0 - 0.004, BACK_Y + 0.012, z_top + 0.008), (x1 + 0.004, BACK_Y + 0.012, z_top + 0.008)], 0.006, segs=8, round_ends=True)
-    l1 = k.part("Leinen", "linen", bevel=0.0)
-    l2 = k.part("Leinen geblümt", "linen_b", bevel=0.0)
-    z = SHELF_Z + 0.011
-    for j, part in enumerate((l1, l2, l1)):
-        F.pillow(part, (0.78, 0.05, z + 0.016), (0.24, 0.26, 0.032), roundness=5.0, puff=0.003, step=0.04)
-        z += 0.03
-    en = k.part("Kanne", "enamel", bevel=0.0)
-    en.lathe([(0.0, 0.0), (0.06, 0.0), (0.068, 0.04), (0.066, 0.12), (0.05, 0.17), (0.045, 0.2), (0.05, 0.215), (0.0, 0.215)],
-             (0.5, 0.06, BASE_Z + BOARD), segs=20)
-    en.tube([(0.5, 0.06 + 0.06, BASE_Z + BOARD + 0.17), (0.5, 0.06 + 0.11, BASE_Z + BOARD + 0.13),
-             (0.5, 0.06 + 0.065, BASE_Z + BOARD + 0.06)], 0.007, segs=6, smooth=2)
-    rim = k.part("Kannenrand", "enamel_rim", bevel=0.0)
-    F.ring(rim, (0.5, 0.06, BASE_Z + BOARD + 0.212), 0.049, 0.004, n=24, segs=5)
-    back_books(k, DIVIDER_X + 0.05, HALF_W - 0.42, SHELF_Z + 0.011, rnd, max_h=0.22,
-               palette=[FC.CHECK_RED, FC.CHECK_GREEN, FC.CHECK_BLUE, FC.BUTTER, FC.ROSE])
-    FC.wicker(k)
-    basket = k.part("Korb", "wicker", bevel=0.0)
-    FC.weave(basket, (0.76, 0.03, BASE_Z + BOARD + 0.004), 0.13, 0.15, 0.17, rnd, staves=22, rows=6)
-    basket.lathe([(0.0, 0.0), (0.13, 0.0), (0.13, 0.008), (0.0, 0.008)], (0.76, 0.03, BASE_Z + BOARD), segs=22)
-
+    # Hinten: Würfelregal mit den Bücherkisten (carcass)
 
 # --- Einwurf: Messingklappe (Dark Academia) ---
 
@@ -577,6 +538,161 @@ INSIDE_Z = 0.95
 INSIDE_W, INSIDE_H = 0.46, 0.56
 
 
+# --- Bücherkisten für das Würfelregal unter der Theke (seit Testrunde 7b, je Thekenstil eine passende) ---
+# Ursprung unten in der Mitte, Vorderseite -y (im Spiel zur Spielfigur gedreht), außen CRATE_W x CRATE_D x CRATE_H.
+# Vorn ein Schild (Mitte LABEL_Z, Vorderfläche höchstens 4 mm vor der Kiste – Korb: 11 mm); GenreCrates schreibt den
+# Genre-Namen in Handschrift davor und stellt Bücher (crate_book) hinein.
+
+def _paper(k):
+    k.mat("paper", (0.96, 0.93, 0.85), grain="paint", rough=0.85, vary=0.03)
+
+
+def _rounded_path(half_w, half_d, r, z, n_corner=6):
+    """Geschlossener Weg um ein Rechteck mit runden Ecken (gegen den Uhrzeigersinn) auf Höhe z."""
+    pts = []
+    for (cx, cy), a0 in (((half_w - r, -half_d + r), -90), ((half_w - r, half_d - r), 0), ((-half_w + r, half_d - r), 90),
+                         ((-half_w + r, -half_d + r), 180)):
+        for j in range(n_corner + 1):
+            a = math.radians(a0 + 90 * j / n_corner)
+            pts.append(Vector((cx + math.cos(a) * r, cy + math.sin(a) * r, z)))
+    pts.append(pts[0].copy())
+    return pts
+
+
+def _along(path, t):
+    """Punkt und Normale (nach außen, waagerecht) bei Anteil t (0..1) des Wegs."""
+    lengths = [(b - a).length for a, b in zip(path, path[1:])]
+    total = sum(lengths)
+    goal = (t % 1.0) * total
+    last = len(lengths) - 1
+    for idx, ((a, b), ln) in enumerate(zip(zip(path, path[1:]), lengths)):
+        if goal <= ln or idx == last:
+            u = goal / max(ln, 1e-6)
+            p = a.lerp(b, min(u, 1.0))
+            d = (b - a).normalized()
+            return p, Vector((d.y, -d.x, 0.0))
+        goal -= ln
+    return path[0], Vector((0, -1, 0))
+
+
+def build_crate_oak(k):
+    """Obstkiste aus heller Kiefer (Schlichte Holztheke – heller als die Eiche, damit man sie im Regal sieht): Stirnbretter,
+    je zwei Latten vorn und hinten, Papierschild."""
+    FN.wood(k, (0.86, 0.71, 0.5))
+    _paper(k)
+    k.mat("nail", (0.3, 0.29, 0.27), grain="smooth", rough=0.5, metal=0.6, vary=0.02)
+    w, d, h = CRATE_W, CRATE_D, CRATE_H
+    b = k.part("Kiste", "wood", bevel=0.003)
+    b.box((0, 0, 0.006), (w - 0.032, d - 0.004, 0.012), step=0.3, dent=0.0006)
+    for sx in (-1, 1):
+        b.box((sx * (w / 2 - 0.009), 0, h / 2), (0.018, d, h), step=0.3, dent=0.0006)
+    for sy in (-1, 1):
+        for z0, z1 in ((0.012, 0.064), (0.086, h)):
+            b.box((0, sy * (d / 2 - 0.0085), (z0 + z1) / 2), (w - 0.036 + 0.004, 0.013, z1 - z0), step=0.3, dent=0.0006)
+    card = k.part("Schild", "paper", bevel=0.0015)
+    card.box((0, -d / 2 - 0.001, LABEL_Z), (LABEL_W, 0.006, LABEL_H), step=0.5, dent=0.0003)
+    nails = k.part("Nägel", "nail", bevel=0.0)
+    for sx in (-1, 1):
+        nails.blob((sx * (LABEL_W / 2 - 0.012), -d / 2 - 0.0042, LABEL_Z + LABEL_H / 2 - 0.009), 0.0032, subdiv=1, lump=0.0,
+                   scale=(1, 0.5, 1))
+
+
+def build_crate_walnut(k):
+    """Kasten aus Kirschholz mit Messingecken und Messing-Schildhalter (Bibliothekstheke – wärmer und heller als die
+    Walnuss, damit man ihn im Regal sieht)."""
+    FD.wood(k, (0.6, 0.33, 0.2))
+    FD.brass(k)
+    _paper(k)
+    w, d, h = CRATE_W, CRATE_D, CRATE_H
+    wall = 0.012
+    b = k.part("Kasten", "wood", bevel=0.003)
+    b.box((0, 0, 0.006), (w - 2 * wall + 0.004, d - 2 * wall + 0.004, 0.012), step=0.3, dent=0.0006)
+    for sy in (-1, 1):
+        b.box((0, sy * (d / 2 - wall / 2), h / 2), (w, wall, h), step=0.3, dent=0.0006)
+    for sx in (-1, 1):
+        b.box((sx * (w / 2 - wall / 2 - 0.0015), 0, h / 2), (wall, d - 2 * wall + 0.004, h), step=0.3, dent=0.0006)
+    br = k.part("Messingecken", "brass", bevel=0.0015)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            br.box((sx * (w / 2 - 0.009), sy * (d / 2 - 0.009), h - 0.014), (0.022, 0.022, 0.03), step=0.5, dent=0.0)
+    # Schildhalter: Rahmen aus Messing um die Karte, oben offen
+    hold = k.part("Schildhalter", "brass", bevel=0.001)
+    y = -d / 2 - 0.002
+    hold.box((0, y, LABEL_Z - LABEL_H / 2 - 0.003), (LABEL_W + 0.012, 0.004, 0.006), step=0.5, dent=0.0)
+    for sx in (-1, 1):
+        hold.box((sx * (LABEL_W / 2 + 0.003), y, LABEL_Z), (0.006, 0.004, LABEL_H + 0.006), step=0.5, dent=0.0)
+        hold.blob((sx * (LABEL_W / 2 + 0.003), y - 0.002, LABEL_Z + LABEL_H / 2 - 0.004), 0.003, subdiv=1, lump=0.0,
+                  scale=(1, 0.5, 1))
+    card = k.part("Schild", "paper", bevel=0.001)
+    card.box((0, -d / 2 - 0.0015, LABEL_Z), (LABEL_W, 0.003, LABEL_H), step=0.5, dent=0.0)
+
+
+def build_crate_wicker(k):
+    """Geflochtener Korb mit Leinen-Anhänger an einer Schnur (Landhaustheke)."""
+    FC.wicker(k)
+    k.mat("linen", FC.CREAM, grain="fabric", rough=0.95, vary=0.05, bump=0.25)
+    k.mat("string", (0.7, 0.6, 0.45), grain="fabric", rough=0.9, vary=0.04)
+    rnd = random.Random(k.seed)
+    w, d, h = CRATE_W - 0.012, CRATE_D - 0.012, CRATE_H
+    r = 0.035
+    b = k.part("Korb", "wicker", bevel=0.0)
+    b.slab([(p.x, p.y) for p in _rounded_path(w / 2 - 0.004, d / 2 - 0.004, r, 0.0)[:-1]], 0.012, Matrix.Identity(4), dent=0.0)
+    path = _rounded_path(w / 2, d / 2, r, 0.0)
+    staves = 34
+    for i in range(staves):
+        p, _n = _along(path, i / staves)
+        b.tube([p + Vector((0, 0, 0.006)), p + Vector((0, 0, h - 0.006))], 0.0032, segs=5)
+    rows = 8
+    for j in range(rows):
+        z = 0.014 + (h - 0.024) * (j + 0.5) / rows
+        pts = []
+        for i in range(staves * 2 + 1):
+            p, n = _along(path, i / (staves * 2))
+            off = 0.0036 * (1 if (i + j) % 2 else -1)
+            pts.append(p + n * off + Vector((0, 0, z + rnd.uniform(-0.001, 0.001))))
+        b.tube(pts, (h - 0.024) / rows * 0.36, segs=5)
+    b.tube(_rounded_path(w / 2, d / 2, r, h - 0.004), 0.0075, segs=8)
+    # Leinen-Anhänger an einer Schnur vom Rand
+    tag = k.part("Anhänger", "linen", bevel=0.002)
+    tag.box((0, -d / 2 - 0.0095, LABEL_Z), (LABEL_W, 0.004, LABEL_H), step=0.5, dent=0.0004)
+    st = k.part("Schnur", "string", bevel=0.0)
+    for sx in (-1, 1):
+        st.tube([(sx * 0.03, -d / 2 - 0.0095, LABEL_Z + LABEL_H / 2 - 0.004), (sx * 0.012, -d / 2 - 0.006, h - 0.002),
+                 (sx * 0.004, -d / 2 + 0.002, h + 0.004)], 0.0016, segs=4, smooth=1, round_ends=True)
+
+
+def build_crate_linen(k):
+    """Weiche Leinenbox mit gerolltem Rand, Lederschlaufen an den Seiten und Lederschild vorn (Helle Theke)."""
+    k.mat("linen", FM.SAND, grain="fabric", rough=0.95, vary=0.06, bump=0.3)
+    k.mat("leather", (0.55, 0.36, 0.22), grain="smooth", rough=0.6, vary=0.05, bump=0.1)
+    _paper(k)
+    w, d, h = CRATE_W - 0.008, CRATE_D - 0.008, CRATE_H - 0.006
+    wall = 0.01
+    b = k.part("Stoffbox", "linen", bevel=0.005)
+    b.box((0, 0, 0.006), (w - 0.004, d - 0.004, 0.012), step=0.06, dent=0.0012)
+    for sy in (-1, 1):
+        b.box((0, sy * (d / 2 - wall / 2), h / 2), (w, wall, h), step=0.06, dent=0.0012)
+    for sx in (-1, 1):
+        b.box((sx * (w / 2 - wall / 2 - 0.0015), 0, h / 2), (wall, d - 2 * wall + 0.004, h), step=0.06, dent=0.0012)
+    b.tube(_rounded_path(w / 2 - 0.004, d / 2 - 0.004, 0.012, h), 0.008, segs=8)
+    lth = k.part("Leder", "leather", bevel=0.0015)
+    lth.box((0, -d / 2 - 0.0012, LABEL_Z), (LABEL_W + 0.016, 0.003, LABEL_H + 0.014), step=0.5, dent=0.0)
+    for sx in (-1, 1):
+        lth.tube([(sx * (w / 2 + 0.001), -0.035, h - 0.03), (sx * (w / 2 + 0.009), -0.02, h - 0.045), (sx * (w / 2 + 0.009), 0.02, h - 0.045),
+                  (sx * (w / 2 + 0.001), 0.035, h - 0.03)], 0.0045, segs=6, smooth=2, round_ends=True)
+    card = k.part("Schild", "paper", bevel=0.001)
+    card.box((0, -d / 2 - 0.003, LABEL_Z), (LABEL_W, 0.002, LABEL_H), step=0.5, dent=0.0)
+
+
+def build_crate_book(k):
+    """Ein Buch für die Kisten (aufrecht, Einband nach vorn, Rücken zur Seite); GenreCrates färbt den Einband (Material
+    „cover“) je Genre und stellt bis zu sieben hintereinander."""
+    book_mats(k)
+    cover = k.part("Buchdeckel", "cover", bevel=0.0015, vary=0.0)
+    pages = k.part("Buchseiten", "pages", bevel=0.0008, vary=0.02)
+    F.book(cover, pages, (0, 0, 0), (0.026, 0.16, 0.2), turn=90)
+
+
 def inside_frame(k, slot, hatch_slot, depth=0.035, hatch_depth=0.022, bevel=0.006):
     """Rahmen (vier Leisten, überlappend) und die Klappe darin."""
     fr = k.part("Rahmen", slot, bevel=bevel)
@@ -672,16 +788,16 @@ def build_inside_country(k):
 
 
 ITEMS = [
-    dict(id="counter_classic", price=120, kind="counter", name="Schlichte Holztheke", order=10, legacy=["wood_warm"], settle=0.35,
+    dict(id="counter_classic", crate="crate_oak", price=120, kind="counter", name="Schlichte Holztheke", order=10, legacy=["wood_warm"], settle=0.35,
          desc="Eine ehrliche Theke aus Eiche mit drei Feldern vorn – passt zu allem.",
          styles=[], build=build_counter_classic),
-    dict(id="counter_dark_academia", price=260, kind="counter", name="Bibliothekstheke", order=20, legacy=["wood_dark"], settle=0.35,
+    dict(id="counter_dark_academia", crate="crate_walnut", price=260, kind="counter", name="Bibliothekstheke", order=20, legacy=["wood_dark"], settle=0.35,
          desc="Walnuss mit Pilastern, grüner Lederauflage, Messingstange und dem Schild „Ausleihe“.",
          styles=["dark_academia"], build=build_counter_dark_academia),
-    dict(id="counter_minimalist", price=200, kind="counter", name="Helle Theke", order=30, legacy=["painted_light"], settle=0.35,
+    dict(id="counter_minimalist", crate="crate_linen", price=200, kind="counter", name="Helle Theke", order=30, legacy=["painted_light"], settle=0.35,
          desc="Weiß mit runden Ecken, Eichenlamellen vorn und einer Platte aus heller Eiche.",
          styles=["minimalist"], build=build_counter_minimalist),
-    dict(id="counter_country", price=220, kind="counter", name="Landhaustheke", order=40, settle=0.35,
+    dict(id="counter_country", crate="crate_wicker", price=220, kind="counter", name="Landhaustheke", order=40, settle=0.35,
          desc="Salbeigrün gestrichen, Kiefernplatte, gemalte Blumenranke und ein Karovorhang hinten.",
          styles=["country"], build=build_counter_country),
     dict(id="slot_dark_academia", price=55, kind="return_slot", inside="inside_dark_academia", name="Messingklappe", order=40, settle=0.3,
@@ -692,6 +808,11 @@ ITEMS = [
          desc="", styles=["country"], build=build_slot_country),
     dict(id="cash_register", kind="part", name="Kasse", settle=0.3, styles=[], build=build_cash_register),
     dict(id="tablet", kind="part", name="Theken-Tablet", settle=0.2, styles=[], build=build_tablet),
+    dict(id="crate_oak", kind="part", name="Bücherkiste Eiche", settle=0.3, styles=[], build=build_crate_oak),
+    dict(id="crate_walnut", kind="part", name="Bücherkiste Kirschholz", settle=0.3, styles=[], build=build_crate_walnut),
+    dict(id="crate_wicker", kind="part", name="Bücherkorb", settle=0.3, styles=[], build=build_crate_wicker),
+    dict(id="crate_linen", kind="part", name="Leinenbox", settle=0.3, styles=[], build=build_crate_linen),
+    dict(id="crate_book", kind="part", name="Buch für die Kisten", settle=0.15, styles=[], build=build_crate_book),
     dict(id="inside_neutral", kind="slot_inside", name="Innenklappe neutral", settle=0.2, styles=[], build=build_inside_neutral),
     dict(id="inside_dark_academia", kind="slot_inside", name="Innenklappe Dark Academia", settle=0.2, styles=[],
          build=build_inside_dark_academia),

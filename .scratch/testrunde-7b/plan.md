@@ -61,3 +61,13 @@ Luft.“ – „Achte auf die Möbel, bei denen die Beine nicht am Grundkörper 
 - [x] Weicher Übergang beim Absenken der Sitze (keine Knickkante auf Polstern)
 - [x] Was auf niedriger gewordenen Sitzmöbeln lag (Kissen, Decken, Bücher), rutscht beim Laden nach (`Room._settle_on_supports`)
 - [x] Fassaden-Vorschau: Hänger beim Öffnen – Vorschau-Fenster zeichnen mit derselben Kantenglättung wie das Spiel (`Settings.match_preview_quality`; mit TAA ein paar Bilder je Änderung); gemessen: längstes Stocken etwa ein Fünftel
+
+## Teil 8 – Nachtest 2 der Entwicklerin
+„Das Regal hinter der Theke soll unter der Theke sein, wie ein Kallax oder Würfelregal mit Kisten drin.“ – „Das Menü sieht noch
+nicht natürlich/gemütlich genug aus“ (Pausenmenü: Schrift zu digital, zu blockig, Animationen viel zu schnell – passt nicht zum
+weichen, süßen Cozy-Stil). Kisten: je Thekenstil die passende.
+- [x] Würfelregal 6 x 3 hinten in allen vier Theken (`furniture_fixtures.cube_back`), Kisten je Stil (crate_oak/walnut/wicker/linen),
+  Bücher `crate_book`, `CounterData.crate_path`, GenreCrates neu (Fächer, Schild in Handschrift)
+- [x] Notizbuch: Schriften Caveat + Patrick Hand (npm @fontsource, OFL), SoftShapes, Papier-Thema, InkCheck, Blümchen, langsame
+  weiche Bewegungen (GameConfig pause_*), Esc während des Aufklappens klappt danach zu
+- [x] Tipps & Tricks: „Aus dem Lager holen“ erklärt die Kisten unter der Theke

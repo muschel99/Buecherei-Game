@@ -14,3 +14,4 @@ style_ids = Array[String](["country"])
 scene_path = "res://assets/models/furniture/counter_country.glb"
 order = 40
 price = 220
+crate_path = "res://assets/models/furniture/crate_wicker.glb"

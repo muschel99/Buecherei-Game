@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bkuhisx50ixdf"
+uid="uid://b4jem76ws25lt"
 path="res://.godot/imported/counter_minimalist.glb-5a1a887315b5df943eb0265bf75f813d.scn"
 
 [deps]
@@ -41,31 +41,6 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"ceramic": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_minimalist/ceramic.tres",
-"use_external/path": "res://assets/materials/furniture/counter_minimalist/ceramic.tres"
-},
-"clay": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_minimalist/clay.tres",
-"use_external/path": "res://assets/materials/furniture/counter_minimalist/clay.tres"
-},
-"cover": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_minimalist/cover.tres",
-"use_external/path": "res://assets/materials/furniture/counter_minimalist/cover.tres"
-},
-"linen": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_minimalist/linen.tres",
-"use_external/path": "res://assets/materials/furniture/counter_minimalist/linen.tres"
-},
-"pages": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_minimalist/pages.tres",
-"use_external/path": "res://assets/materials/furniture/counter_minimalist/pages.tres"
-},
 "plinth": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/counter_minimalist/plinth.tres",

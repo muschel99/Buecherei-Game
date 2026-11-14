@@ -1813,6 +1813,14 @@ Plan und Haken: `.scratch/testrunde-7b/plan.md` (Foto der Liste daneben).
   Regalbretter, Schal, Lamellen, Ringe, Teddy-Sohlen, Fransen, Bilderstütze); Pouf mit Zopfmuster
 - [x] Was auf niedriger gewordenen Sitzmöbeln lag (Kissen, Decken, Bücher), rutscht beim Laden auf das Polster
 
+**Nachtest 2 (14.11.2026): Bücherkisten und Notizbuch**
+- [x] Bücherkisten stehen jetzt in einem Würfelregal (6 x 3 Fächer, wie ein Kallax) hinten unter der Theke; je Thekenstil eine
+  passende Kiste: Kiefernkiste (schlicht), Kirschholzkasten mit Messing (Bibliothek), Weidenkorb (Landhaus), Leinenbox (hell);
+  Genre in Handschrift auf dem Schild, die Bücher stehen in den Genre-Farben darin
+- [x] Pausenmenü weich, süß und gemütlich: Handschrift, runde und leicht unregelmäßige Formen, Steppnaht am Einband, Haftnotizen
+  mit Washi-Tape, Bedienelemente aus Papier (Kästchen zum Ankreuzen statt Schalter), kleine Blümchen; alle Bewegungen langsam
+  und sanft (Hereingleiten, Aufklappen, Umblättern, Notizen erscheinen nacheinander)
+
 **Noch offen:** Tische sind noch in Erwachsenen-Höhe.
 
 ## Etappe 8 – Besuchervielfalt

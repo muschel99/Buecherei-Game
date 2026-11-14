@@ -15,3 +15,4 @@ scene_path = "res://assets/models/furniture/counter_dark_academia.glb"
 order = 20
 price = 260
 legacy_ids = PackedStringArray("wood_dark")
+crate_path = "res://assets/models/furniture/crate_walnut.glb"

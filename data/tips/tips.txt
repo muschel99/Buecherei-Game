@@ -42,11 +42,11 @@ Mit einem <Rechtsklick> nimmst du ein Buch – aus dem Regal, vom Tisch oder aus
 Bis zu sieben Bücher passen in deine Hände.
 
 == Aus dem Lager holen
-Drücke <R>, egal wo du stehst: Dort wählst du Bücher aus dem Lager über ihre Cover.
+Unter der Theke steht ein Würfelregal mit einer Kiste für jedes Genre. Darin liegt dein Lager.
 
-Das Menü bleibt offen, bis deine Hände voll sind.
+Ein <Rechtsklick> auf eine Kiste nimmt ein Buch dieses Genres heraus. Ein <Linksklick> legt das oberste Buch in deiner Hand wieder in seine Kiste.
 
-Bücher in deiner Hand tragen dort ein kleines Handsymbol. Ein Klick darauf legt sie zurück ins Lager.
+Wo welches Buch gerade steht, verrät dir <R>, wenn du auf kein Regal schaust.
 
 == Genau an die richtige Stelle
 Ein <Linksklick> stellt das oberste Buch genau dorthin, wo du hinschaust.

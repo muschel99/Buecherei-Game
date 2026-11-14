@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cie8bdaqeba4i"
+uid="uid://cff2hw01ydf0j"
 path="res://.godot/imported/counter_country.glb-dac31ce85832fb92d5998491bd23fabb.scn"
 
 [deps]
@@ -51,45 +51,10 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/counter_country/bloom_b.tres",
 "use_external/path": "res://assets/materials/furniture/counter_country/bloom_b.tres"
 },
-"cover": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/cover.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/cover.tres"
-},
-"curtain": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/curtain.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/curtain.tres"
-},
-"enamel": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/enamel.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/enamel.tres"
-},
-"enamel_rim": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/enamel_rim.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/enamel_rim.tres"
-},
 "leafpaint": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/counter_country/leafpaint.tres",
 "use_external/path": "res://assets/materials/furniture/counter_country/leafpaint.tres"
-},
-"linen": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/linen.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/linen.tres"
-},
-"linen_b": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/linen_b.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/linen_b.tres"
-},
-"pages": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/pages.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/pages.tres"
 },
 "paint": {
 "use_external/enabled": true,
@@ -100,16 +65,6 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/counter_country/paint_dark.tres",
 "use_external/path": "res://assets/materials/furniture/counter_country/paint_dark.tres"
-},
-"porcelain": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/porcelain.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/porcelain.tres"
-},
-"wicker": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_country/wicker.tres",
-"use_external/path": "res://assets/materials/furniture/counter_country/wicker.tres"
 },
 "wood": {
 "use_external/enabled": true,

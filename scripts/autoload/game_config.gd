@@ -749,8 +749,19 @@ var window_daylight_energy: float = 0.38
 var window_daylight_color: Color = Color(1.0, 0.95, 0.86)
 var window_daylight_range: float = 8.0
 var window_daylight_inset: float = 0.9
-## Höchstens so viele Bilder pro Sekunde, solange das Pausenmenü offen ist (spart Strom).
+## Höchstens so viele Bilder pro Sekunde, solange das Pausenmenü offen ist (spart Strom; nicht während seiner Bewegungen).
 var paused_max_fps: int = 30
+## Notizbuch-Pausenmenü (seit Testrunde 7b langsam und weich, Wunsch der Entwicklerin): Hereingleiten, Aufklappen des Deckels,
+## eine halbe Seite umblättern (bei mehreren Seiten je Blatt schneller: pause_turn_more_factor), Haftnotizen erscheinen
+## nacheinander (Abstand pause_tab_stagger) und wandern beim Umblättern (pause_tab_move_time); Zuklappen = Faktor der Zeiten.
+var pause_slide_time: float = 1.0
+var pause_cover_time: float = 0.85
+var pause_turn_time: float = 0.42
+var pause_turn_more_factor: float = 0.65
+var pause_tab_pop_time: float = 0.34
+var pause_tab_stagger: float = 0.07
+var pause_tab_move_time: float = 0.5
+var pause_close_factor: float = 0.75
 
 
 # --- Menü und Fenster ---

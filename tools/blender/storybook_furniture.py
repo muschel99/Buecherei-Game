@@ -1359,6 +1359,8 @@ def write_option_data(kit, glb, force=False):
         lines.append("legacy_ids = PackedStringArray(%s)" % ", ".join('"%s"' % s for s in spec["legacy"]))
     if spec.get("inside"):
         lines.append('inside_path = "res://assets/models/objects/return_slots/%s.glb"' % spec["inside"])
+    if spec.get("crate"):
+        lines.append('crate_path = "res://assets/models/furniture/%s.glb"' % spec["crate"])
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 

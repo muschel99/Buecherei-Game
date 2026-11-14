@@ -223,9 +223,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   alle zurück in die Kisten) und je Fach EINE Auswahl (`ShelfMenu.AUTO` „Automatisch“, „Gemischt“, Genre) mit Inhalt des Fachs;
   ohne Regal im Blick (`ShelfMenu.open_for(null)`) das **Bücherverzeichnis** (Suchfeld, Genre, je Buch der Ort:
   `ShelfMenu.collect_book_places()`). Code im ShelfMenu muss immer mit `shelf == null` klarkommen.
-  **Bücher aus dem Lager** nimmt man seit 7b nur aus den **Bücherkisten hinter der Theke** (`GenreCrates`, an der Theke,
-  je freigeschaltetem Genre eine Kiste; Rechtsklick nimmt ein Buch, Linksklick legt das obere Buch in die passende Kiste zurück;
-  die Kisten zeigen den Lagerbestand). Kein Auswahl-Fenster mehr im R-Menü (eine Aktion, ein Weg).
+  **Bücher aus dem Lager** nimmt man seit 7b nur aus den **Bücherkisten unter der Theke** (`GenreCrates`: Würfelregal 6 x 3
+  hinten in jeder Theke – `furniture_fixtures.cube_back`, Maße `CUBE_*`/`CRATE_*` dort und in genre_crates.gd gleich halten –,
+  je freigeschaltetem Genre eine Kiste, Kiste je Thekenstil `CounterData.crate_path` (crate_oak/walnut/wicker/linen), Genre in
+  Handschrift auf dem Schild, Bücher `crate_book.glb` in Genre-Farben; Rechtsklick nimmt ein Buch, Linksklick legt das obere Buch
+  in die passende Kiste zurück; die Kisten zeigen den Lagerbestand). Kein Auswahl-Fenster mehr im R-Menü (eine Aktion, ein Weg).
+  Bilder: `furniture_probe.tscn -- theke`.
 - **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit Apps), nutzt die
   gemeinsame Vorlage `TabletFrame` (Gehäuse + Bildschirm, Farben `TabletFrame.TEXT_COLOR` …,
   `make_label`, `make_close_button` = Kreuz oben rechts). Knöpfe sind Symbol-Knöpfe
@@ -1323,7 +1326,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `DayCycle` (main.gd, `day_cycle_enabled`): Sonne/Mond über `GameConfig.day_light_keys` (Stützpunkte, weich gemischt), ein
   Licht für beide, Himmel-Shader `storybook_sky.gdshader` (Wolken, Mond, Sterne), Laternen abends, Fensterlicht (Gruppe
   `RoomOpenings.DAYLIGHT_GROUP`); Straße nach `street_activity_by_hour`, Vögel nachts nicht. Testbilder `--time=<stunde>`.
-  **Pausenmenü** = Notizbuch (seit Testrunde 7b, `pause_menu.gd` baut alles im Code): zugeklappt gleitet es herein und klappt
+  **Pausenmenü** = Notizbuch (seit Testrunde 7b, `pause_menu.gd` baut alles im Code; Nachtest: weich, süß, gemütlich –
+  Handschrift Caveat/Patrick Hand in assets/ui/fonts (OFL), runde, leicht unregelmäßige Formen aus `SoftShapes`, Bedienelemente aus
+  Papier `_paper_theme`/`InkCheck`, Blümchen; alle Bewegungen langsam, Zeiten `GameConfig.pause_*`, während einer Bewegung ohne
+  FPS-Bremse `Settings.apply_frame_limit(true)`): zugeklappt gleitet es herein und klappt
   auf (`_play_open`/`_play_close`), Doppelseiten `SPREADS` (Start = Weiterspielen/Speichern/Beenden + der Tag, Steuerung,
   Gestalten, Bild, Ton & Spiel; neue Settings-Abschnitte bekommen eine eigene Doppelseite), Haftnotizen `TabNote` am Rand
   (umgeblätterte links), Umblättern `_turn_to`, Erklärungen `SETTING_NOTES`. Schnelle Prüfbilder ohne Welt:

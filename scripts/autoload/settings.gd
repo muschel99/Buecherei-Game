@@ -124,9 +124,11 @@ func _apply(key: String) -> void:
 
 
 ## Bildrate begrenzen. Im Pausenmenü zusätzlich auf GameConfig.paused_max_fps.
-func apply_frame_limit() -> void:
+## smooth = true: gerade läuft eine Bewegung im Pausenmenü (Notizbuch klappt auf, Seite blättert) – dann ohne die Bremse
+## für das Pausenmenü, sonst ruckelt sie.
+func apply_frame_limit(smooth: bool = false) -> void:
 	var limit := MAX_FPS_OPTIONS[clampi(int(get_value("display/max_fps")), 0, MAX_FPS_OPTIONS.size() - 1)]
-	if get_tree().paused and GameConfig.paused_max_fps > 0:
+	if get_tree().paused and GameConfig.paused_max_fps > 0 and not smooth:
 		limit = GameConfig.paused_max_fps if limit == 0 else mini(limit, GameConfig.paused_max_fps)
 	Engine.max_fps = limit
 

@@ -10,7 +10,7 @@ extends CanvasLayer
 ##   EINE Auswahlliste für sein Genre („Automatisch“ = das Fach nimmt alles und erkennt sein Genre selbst, „Gemischt“ oder ein
 ##   Genre); ganz oben dieselbe Liste für alle Fächer zugleich.
 ## Ohne Regal im Blick (open_for(null)) – das Bücherverzeichnis: alle eigenen Bücher mit Suchfeld und Genre-Auswahl, zu
-## jedem Buch, wo es gerade ist (Regal und Fach, Kiste hinter der Theke, Rückgabekasten, ausgelegt, in der Hand, verliehen).
+## jedem Buch, wo es gerade ist (Regal und Fach, Kiste unter der Theke, Rückgabekasten, ausgelegt, in der Hand, verliehen).
 ## Getragene Bücher räumt man nicht hier ein (Linksklick halten am Regal) und legt sie hier auch nicht ins Lager (Q halten) –
 ## jede Aktion hat nur einen Weg. Fahre ich über die Auswahlliste eines Fachs, leuchtet es im Regal auf
 ## (BookShelf.highlight_rows); die Ansicht rückt beim Öffnen sanft zur Seite, sodass das Regal neben dem Tablet bleibt.
@@ -463,7 +463,7 @@ func collect_book_places() -> Array[Dictionary]:
 			result.append({"book": book, "place": "%s · %s" % [s.get_display_name(), s.get_row_label(s.get_book_row(book))]})
 	for genre in Catalog.get_all_genres():
 		for book in BookStock.get_stored_books(genre.get_id()):
-			result.append({"book": book, "place": "Kiste hinter der Theke"})
+			result.append({"book": book, "place": "Kiste unter der Theke"})
 	var box := ReturnBox.find(get_tree())
 	if box:
 		for book in box.get_books():

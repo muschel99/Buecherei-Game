@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bqebf3p1sfkkg"
+uid="uid://ctygoo0uvrg2g"
 path="res://.godot/imported/counter_dark_academia.glb-cc88fed088787d7cd854f55122cdc882.scn"
 
 [deps]
@@ -46,11 +46,6 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/counter_dark_academia/brass.tres",
 "use_external/path": "res://assets/materials/furniture/counter_dark_academia/brass.tres"
 },
-"cover": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_dark_academia/cover.tres",
-"use_external/path": "res://assets/materials/furniture/counter_dark_academia/cover.tres"
-},
 "leather": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/counter_dark_academia/leather.tres",
@@ -60,16 +55,6 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/counter_dark_academia/letters.tres",
 "use_external/path": "res://assets/materials/furniture/counter_dark_academia/letters.tres"
-},
-"pages": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_dark_academia/pages.tres",
-"use_external/path": "res://assets/materials/furniture/counter_dark_academia/pages.tres"
-},
-"paper": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/counter_dark_academia/paper.tres",
-"use_external/path": "res://assets/materials/furniture/counter_dark_academia/paper.tres"
 },
 "wood": {
 "use_external/enabled": true,

@@ -1,7 +1,8 @@
 extends Node3D
 ## Prüfbilder von Möbeln in Godot ohne die ganze Welt (seit Testrunde 7b): Möbel-Szenen in einem Raster, Licht, Kamera.
 ## Start: xvfb-run -a -s "-screen 0 1600x1000x24" godot --path . --resolution 1600x1000 --audio-driver Dummy
-##   res://scenes/tools/furniture_probe.tscn -- [seite=0] [je=12] | ids=sofa_min,pouf
+##   res://scenes/tools/furniture_probe.tscn -- [seite=0] [je=12] | ids=sofa_min,pouf | theke
+## theke = jede Theke mit ihrem Würfelregal und den Bücherkisten von der Seite der Spielfigur (theke_<id>.png).
 ## Bilder: screenshots/furniture_probe/seite_<n>.png bzw. mit ids= je Möbel <id>.png (nah, vier Blickwinkel
 ## nebeneinander: schräg vorn links, von der Seite, schräg von hinten, von unten vorn in Bodenhöhe – so sieht man
 ## schwebende Teile und Lücken).
@@ -40,6 +41,10 @@ func _run() -> void:
 	var per := 12
 	var pages: Array[int] = []
 	for arg in args:
+		if arg == "theke":
+			await _counters()
+			get_tree().quit()
+			return
 		if arg.begins_with("ids="):
 			await _close_ups(arg.trim_prefix("ids=").split(","))
 			get_tree().quit()
@@ -155,3 +160,35 @@ func _bounds(root: Node3D) -> AABB:
 		box = b if first else box.merge(b)
 		first = false
 	return box
+
+
+## Jede Theke mit Würfelregal und Bücherkisten: von hinten (Spielfigur, Augenhöhe) und nah vor den Kisten.
+func _counters() -> void:
+	var size := get_viewport().get_visible_rect().size
+	var counter := (load("res://scenes/furniture/counter.tscn") as PackedScene).instantiate() as Node3D
+	add_child(counter)
+	GenreCrates.attach(counter)
+	var cam := Camera3D.new()
+	cam.fov = 50
+	add_child(cam)
+	cam.make_current()
+	for style in CounterStyle.get_all_styles():
+		CounterStyle.set_style(style.get_id())
+		for f in 6:
+			await get_tree().process_frame
+		var tiles: Array[Image] = []
+		for view: Array in [[Vector3(0.3, 1.55, -1.25), Vector3(0.0, 0.45, 0.0)], [Vector3(-0.35, 0.75, -0.75), Vector3(-0.35, 0.5, 0.0)],
+				[Vector3(1.6, 1.0, -1.4), Vector3(0.2, 0.5, 0.0)], [Vector3(0.0, 1.3, 1.6), Vector3(0.0, 0.6, 0.0)]]:
+			cam.look_at_from_position(view[0], view[1])
+			for f in 4:
+				await get_tree().process_frame
+			await RenderingServer.frame_post_draw
+			var img := get_viewport().get_texture().get_image()
+			img.resize(int(size.x / 2), int(size.y / 2))
+			tiles.append(img)
+		var sheet := Image.create(int(size.x / 2) * 2, int(size.y / 2) * 2, false, tiles[0].get_format())
+		for i in tiles.size():
+			sheet.blit_rect(tiles[i], Rect2i(Vector2i.ZERO, tiles[i].get_size()),
+				Vector2i((i % 2) * tiles[i].get_width(), (i / 2) * tiles[i].get_height()))
+		sheet.save_png(ProjectSettings.globalize_path(OUT + "theke_" + style.get_id() + ".png"))
+		print("Bild: theke_", style.get_id())

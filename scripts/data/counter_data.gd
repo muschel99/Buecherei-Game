@@ -29,6 +29,9 @@ extends Resource
 @export var order: int = 0
 ## Kosten beim Bauen in der App „Fassade“ (nur, wenn diese Theke neu gewählt wird).
 @export var price: int = 0
+## Bücherkiste für das Würfelregal hinten unter der Platte (seit Testrunde 7b, je Stil eine passende; leer = Eichenkiste).
+## Modell: Ursprung unten in der Mitte, Vorderseite +Z, 0,25 x 0,29 x 0,15 m, Schild vorn (siehe GenreCrates).
+@export_file("*.glb", "*.tscn") var crate_path: String = ""
 ## Frühere Kennungen dieser Theke (ältere Spielstände), z. B. "wood_warm".
 @export var legacy_ids: PackedStringArray = []
 
