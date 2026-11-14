@@ -135,6 +135,8 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
   Laternen tagsüber aus, Rauch aus Schornsteinen, Katzen auch aus der Gasse.
 - **Etappe 7:** Die Uhr läuft (24 Minuten = ein Tag), Sonne, Wolken, Mond und Sterne; Hinterzimmer mit Bett zum Schlafen;
   Schild an der Tür, erste Besucher leihen Bücher aus (Stempel an der Theke), Rückgabe über den Kasten, Notizzettel am Morgen.
+- **Testrunde 7b:** ruhige Nächte mit Laternenlicht, Besucher mit Körben und Lese-Haltung, Theke in drei Schritten, Hinterzimmer
+  als Anbau mit Tür, Pausenmenü als Notizbuch, Bücherkisten hinter der Theke, einfacheres Regal-Menü mit Bücherverzeichnis.
 
 **Wo die wichtigen Dateien liegen**
 
@@ -1774,6 +1776,34 @@ Spec: `.scratch/day-cycle-7/spec.md`. Gemütlich statt echter Wirtschaft: keine 
 
 **Später (nicht in dieser Etappe):** beschädigte Bücher und Reparatur (Feld `Book.condition` ist da), weitere Räume und
 Stockwerke, Wetter und Jahreszeiten (Himmel und Licht sind vorbereitet: `cloud_cover`, `cloud_darkness`, Sonnenbahn).
+
+## Testrunde 7b – Liste der Entwicklerin nach Etappe 7 (13.11.2026)
+Plan und Haken: `.scratch/testrunde-7b/plan.md` (Foto der Liste daneben).
+
+**Nacht**
+- [x] Ab 22 Uhr bis 5 Uhr Ruhe in der Straße (Anwohner zu Hause, höchstens mal eine Katze), Läden und Pub schließen um 22 Uhr
+- [x] Nur manche Fenster leuchten, Laternen werfen warmes Licht, wärmerer Mond, Sterne später und gedämpft, Sternschnuppen
+- [x] Malfilter: nachts dunkelblaue Linien, in der Ferne feiner
+
+**Besucher**
+- [x] Korb vom Stapel an der Tür, Bücher kommen hinein; Lesen im Sitzen mit aufgeschlagenem Buch
+- [x] Theke in drei Schritten: Ausweis nehmen, stempeln, scannen; Geld ploppt nur beim Kontostand auf
+- [x] Vorfahrt an der Tür für wer hinaus will, kein Stau an der Theke, keiner steht am selben Platz vorm Regal, zügigeres Tempo
+- [x] Sitzmöbel auf Chibi-Höhe (0,3 m); Türschild nur innen
+
+**Hinterzimmer und Straße**
+- [x] Hinterzimmer als richtiger Anbau (Backstein, Sockel, Zinkdach, Dachfenster) mit Holztür statt Vorhang
+- [x] Katzen versperren die Treppe nicht mehr; Lieferwagen ruckelt nicht; Kartons nie in der Deko
+- [x] Gießen, Fegen und die Handbewegung an Türen entfernt (Wunsch)
+
+**Bedienung und Bücher**
+- [x] Pausenmenü als Notizbuch mit Haftnotizen (gleitet herein, klappt auf, blättert um)
+- [x] Bücherkisten je Genre hinter der Theke (statt Bücherauswahl im R-Menü); Regal-Menü schlichter, Bücherverzeichnis mit Suche
+- [x] Tooltips in den Tablet-Apps lesbar; Mausrad wählt im Gestaltungsmodus Möbel bei leerer Hand; Theke und Katzen leuchten nicht auf;
+  Stempel-Bereich verdeckt nichts mehr
+
+**Noch offen / Rückfrage:** Hänger in der App „Fassade“ (im Container nicht nachzustellen – wann genau?), „Möbel verbessern“
+(welche?); Tische sind noch in Erwachsenen-Höhe.
 
 ## Etappe 8 – Besuchervielfalt
 - Animationen liegen schon in den Figuren bereit (seit 6h): Tür nach innen/außen öffnen (`door_in`, `door_out`),
