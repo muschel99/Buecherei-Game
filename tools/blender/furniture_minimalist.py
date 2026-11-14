@@ -149,9 +149,9 @@ def build_shell_chair(k):
 def build_lounge_chair(k):
     fabric(k)
     wood(k)
-    legs = k.part("Füße", "wood", bevel=0.004)
-    for x in (-0.28, 0.28):
-        for y in (-0.26, 0.26):
+    legs = k.part("Füße", "wood", bevel=0.004)   # unter dem flachen Teil des Sockels (an den runden Ecken hingen sie frei)
+    for x in (-0.22, 0.22):
+        for y in (-0.2, 0.2):
             legs.lathe([(0.0, 0.0), (0.026, 0.0), (0.03, 0.05), (0.03, 0.09), (0.0, 0.09)], (x, y, 0.0), segs=14)
     base = k.part("Sockel", "fabric", bevel=0.0)
     F.pillow(base, (0, 0, 0.215), (0.78, 0.74, 0.26), roundness=3.0, puff=0.006, step=0.04)

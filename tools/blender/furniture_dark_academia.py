@@ -52,9 +52,9 @@ def build_wingchair(k):
     wood(k)
     leather(k)
     brass(k)
-    feet = k.part("Füße", "wood", bevel=0.004)
-    for x in (-0.33, 0.33):
-        for y in (-0.3, 0.3):
+    feet = k.part("Füße", "wood", bevel=0.004)   # unter dem flachen Teil des Polsters (an den runden Ecken hingen sie frei)
+    for x in (-0.28, 0.28):
+        for y in (-0.24, 0.28):
             F.turned_leg(feet, (x, y, 0.0), 0.09, 0.034, style="bun")
     up = k.part("Polster", "leather", bevel=0.0)
     base = ((0, 0.02, 0.225), (0.8, 0.74, 0.27))
@@ -292,9 +292,9 @@ def build_chesterfield_sofa(k):
     wood(k)
     leather(k)
     brass(k)
-    feet = k.part("Füße", "wood", bevel=0.004)
-    for x in (-0.85, 0.85):
-        for y in (-0.33, 0.33):
+    feet = k.part("Füße", "wood", bevel=0.004)   # unter dem Polster (vorher standen sie außerhalb der runden Ecken)
+    for x in (-0.78, 0.78):
+        for y in (-0.3, 0.3):
             F.turned_leg(feet, (x, y, 0.0), 0.08, 0.034, style="bun")
     base = k.part("Polster", "leather", bevel=0.0)
     base_box = ((0, 0.0, 0.215), (1.84, 0.82, 0.27))
@@ -799,11 +799,17 @@ def build_tartan_throw(k):
         F.pillow(b, (0.006 * i, -0.004 * i, 0.016 + i * 0.03), (0.5, 0.34, 0.034), roundness=5.0, puff=0.005, step=0.03, turn=(i - 1) * 1.5)
     fold = k.part("Faltkante", "fabric", bevel=0.0)
     fold.tube([(-0.25, -0.17, 0.05), (0.25, -0.17, 0.05)], 0.031, segs=12, round_ends=True)
+    # Fransen an den offenen Kanten: aus der Decke heraus, an der Seite hinunter und auf dem Boden auslaufend (vorher
+    # standen sie waagerecht in die Luft)
     tassels = k.part("Fransen", "fabric", bevel=0.0)
     for i in range(14):
         x = -0.24 + i * 0.037
-        for zz in (0.012, 0.072):
-            tassels.tube([(x, 0.17, zz), (x + 0.004, 0.2, zz - 0.006), (x + 0.002, 0.22, zz - 0.012)], 0.003, segs=4, smooth=1, round_ends=True)
+        tassels.tube([(x, 0.165, 0.012), (x + 0.002, 0.185, 0.006), (x + 0.004, 0.215, 0.003)], 0.003, segs=4, smooth=1,
+                     round_ends=True)
+        if i < 13:
+            xt = x + 0.0185
+            tassels.tube([(xt, 0.165, 0.072), (xt, 0.182, 0.066), (xt + 0.002, 0.19, 0.035), (xt + 0.003, 0.198, 0.006),
+                          (xt + 0.004, 0.226, 0.003)], 0.003, segs=4, smooth=1, round_ends=True)
     k.collider((0, 0.01, 0.05), (0.52, 0.38, 0.1))
     k.surface((0, 0, 0.1), (0.46, 0.3))
 

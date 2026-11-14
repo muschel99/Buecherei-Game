@@ -30,7 +30,7 @@ Status: claimed
 - [x] Kartons stehen in der Deko
 
 ## Teil 5 – Bedienung
-- [ ] Hänger in der App „Fassade“
+- [x] Hänger in der App „Fassade“ (siehe Teil 7)
 - [x] Tooltip-Schrift bei Nest & Nook kaum lesbar
 - [x] Gestaltungsmodus: Mausrad wählt Möbel, wenn nichts in der Hand
 - [x] Theke und Katzen leuchten nicht mehr auf
@@ -45,3 +45,19 @@ Status: claimed
 ## Teil 6 – Büchersystem (Antworten der Entwicklerin)
 - [x] Bücherkisten je Genre unter der Theke: gezielt Bücher aus den Kisten nehmen (statt aus dem Lager über das R-Menü)
 - [x] Regal-Menü: weniger Knöpfe, zeigt, was wo steht; Bücher leichter finden
+
+## Teil 7 – Nachtest der Entwicklerin (Fassaden-Vorschau, Möbel)
+„Die Fassadenvorschau hing und hat sehr lange geladen. Die Möbel sind zum Großteil falsch zusammengebaut und schweben in der
+Luft.“ – „Achte auf die Möbel, bei denen die Beine nicht am Grundkörper befestigt sind.“
+- [x] Alle 107 Möbel einzeln aus vier Blickwinkeln angesehen (`furniture_probe.tscn -- ids=…`)
+- [x] Beinprüfung `tools/blender/leg_check.py` (jedes Bein steckt oben im Körper, alles steht auf dem Boden) – alle in Ordnung
+- [x] Bau-Regel `Kit.attach_feet`: Beine knapp unter dem Körper werden bis in ihn verlängert (Sitzmöbel, Tische, Regale)
+- [x] Füße unter die runden Polster gerückt: Chesterfield-Sessel/-Sofa, Bouclé-Sessel, Blümchensofa; Weintisch und Garderobe
+  standen 1 cm über dem Boden (`curved_leg` hob den Fuß an)
+- [x] Rückenlehne von Korbsessel und Schreibtischstuhl lag vorn; Armstützen tragen jetzt die Lehne
+- [x] Freie Teile: Querstrebe Schalenstuhl, Ziernägel Chesterfield, Regalbretter schmales Regal, Schal an der Garderobe,
+  Lamellen/Griff Sideboard, Ringe Planetenmodell, Teddy-Sohlen, Fransen der Schottenkaro-Decke, Stütze Bilderrahmen
+- [x] Pouf: Zopfmuster statt abstehender Perlen; runde Armlehnen-Enden (Bouclé-Sessel, Blümchensofa)
+- [x] Weicher Übergang beim Absenken der Sitze (keine Knickkante auf Polstern)
+- [x] Was auf niedriger gewordenen Sitzmöbeln lag (Kissen, Decken, Bücher), rutscht beim Laden nach (`Room._settle_on_supports`)
+- [x] Fassaden-Vorschau: Hänger beim Öffnen – Vorschau-Fenster zeichnen mit derselben Kantenglättung wie das Spiel (`Settings.match_preview_quality`; mit TAA ein paar Bilder je Änderung); gemessen: längstes Stocken etwa ein Fünftel

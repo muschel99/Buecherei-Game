@@ -29,7 +29,7 @@ var _key := ""
 func _init() -> void:
 	own_world_3d = true
 	size = GameConfig.facade_preview_size
-	msaa_3d = Viewport.MSAA_4X
+	Settings.match_preview_quality(self)  # gleiche Kantenglättung wie das Spiel (kein zweites Vorbereiten der Materialien)
 	render_target_update_mode = SubViewport.UPDATE_DISABLED
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR

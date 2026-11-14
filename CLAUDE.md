@@ -259,6 +259,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   null = keiner) + `side_view_changed(shown)`; das Tablet rückt nach dem Öffnen nach links
   (`CounterTablet.SIDE_WIDTH`, `_show_side`/`_hide_side`, Zeit `tablet_side_time`), vor dem Zurückschrumpfen
   wieder in die Mitte. `CounterTablet.close_app()` = App schließen wie Home.
+- **Vorschau-Fenster (SubViewports mit eigener Welt: Fassaden-Polaroid, Drehteller, ThumbnailRenderer, seit Testrunde 7b):**
+  immer `Settings.match_preview_quality(viewport)` (gleiche MSAA/TAA/FXAA wie das Spiel – sonst bereitet die Grafikkarte jedes
+  Material ein zweites Mal vor: langer Hänger beim ersten Öffnen); stehende Bilder mit TAA `Settings.preview_frames()` Bilder
+  lang zeichnen (`FacadePreview._redraw`). Messen: `scenes/tools/facade_probe.tscn [-- msaa=old|taa]` (mit xvfb).
 - **App „Fassade“ (seit Etappe 6b neu, Reiter seit 6c: Mauer, Erdgeschoss, Obergeschoss, Tür, Pflanzen,
   Draußen, Briefkasten, Theke):** Reiter `FacadeApp.PAGES` (Reihen = [Schlüssel, Überschrift];
   Schlüssel = Kategorie von FacadeDesign oder "slot"/"slot_inside"/"counter"; gesperrte Optionen =
@@ -1369,6 +1373,18 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Katzen halten Abstand zur Treppe (`cat_meet_entrance_gap`), Besucher steigen über Katzen. Anwohner gießen/fegen nicht mehr
   (`resident_activity_weights`), keine Handbewegung an Türen. Kartons meiden Deko (`DeliveryManager._deco_blocked`),
   street_life_check `--facade=…`. Fahrzeuge rutschen im Stand nicht seitwärts (StreetVehicle._drive/_place).
+- **Möbel richtig zusammengebaut (Nachtest 7b, Wunsch der Entwicklerin: „Beine am Grundkörper befestigt“):** Nach jedem Möbel-
+  Umbau `blender -b --factory-startup --python tools/blender/leg_check.py [-- ids]` (jedes Bein/Fuß steckt oben im Teil darüber,
+  alles steht auf dem Boden; muss „0 … mit Befund“ melden) und `geo_check.py -- <glb>` (schwebende Teile). Bau-Regel
+  `Kit.attach_feet` (in `finish()`, Sitzmöbel/Tische/Regale): Beine, die bis `LEG_REACH` unter einem großen Teil enden, werden
+  bis in es verlängert – Füße trotzdem unter den flachen Teil runder Polster setzen (sonst werden sie lang). Kleine Teile auf
+  gerundeten Polstern (Nägel, Lamellen, Griffe) mit `F.pillow_front(center, size, roundness, x, z)` auf die Fläche setzen.
+  `Kit.lower_seat` staucht mit weichem Übergang (`SEAT_BLEND`, sonst Knickkante auf Polstern). Dicke Röhren mit runden Enden:
+  `tube(..., round_ends=True, dome=True)`. Rücken von Stühlen liegen bei +y (Blender-Rückseite; Winkel 20–160°, nicht 200–340°).
+  Nahaufnahmen in Godot: `scenes/tools/furniture_probe.tscn -- ids=a,b` (vier Blickwinkel je Möbel nach
+  `screenshots/furniture_probe/<id>.png`; Wand-/Deckendinge werden passend aufgehängt). Der Raum setzt nach dem Laden alles,
+  was auf einem Möbel steht oder liegt, auf dessen Ablagefläche (`Room._settle_on_supports`, `LooseBooks.settle_on`) – so
+  schweben Dinge nicht, wenn ein Modell niedriger wird.
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

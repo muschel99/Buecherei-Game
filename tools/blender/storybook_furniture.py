@@ -27,8 +27,10 @@ import random
 import shutil
 import sys
 
+import bmesh
 import bpy
 from mathutils import Matrix, Vector, noise
+from mathutils.bvhtree import BVHTree
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import storybook_common as SC  # noqa: E402
@@ -250,7 +252,62 @@ class Kit:
                 settled.append(o)
         settle(settled, self.seed, self.settle_amount)
         self.lower_seat()
+        self.attach_feet()
         return self.objects
+
+    def attach_feet(self):
+        """Jedes Bein muss am Grundkörper befestigt sein (Wunsch der Entwicklerin, Testrunde 7b): Beine und Füße, die oben knapp
+        unter dem Körper darüber enden (gerundete Polster an den Ecken, gestauchte Sitzmöbel), werden bis in ihn hinein
+        verlängert. Ein Bein = Stück, das auf dem Boden steht und oben schmal endet; verlängert wird nur, wenn direkt darüber
+        (bis LEG_REACH) ein großes Teil mit Unterseite liegt. Gilt für Sitzmöbel, Tische und Regale (spec "attach_feet")."""
+        if not self.spec.get("attach_feet", self.spec.get("category") in ("seating", "table", "shelf")):
+            return
+        bpy.context.view_layer.update()
+        trees = {}
+        for o in self.objects:
+            bm = bmesh.new()
+            bm.from_mesh(o.data)
+            bm.transform(o.matrix_world)
+            dims = [max(v.co[a] for v in bm.verts) - min(v.co[a] for v in bm.verts) for a in (0, 1)] if bm.verts else [0, 0]
+            trees[o.name] = (BVHTree.FromBMesh(bm), min(dims) > 0.15)
+            bm.free()
+        for o in self.objects:
+            bm = bmesh.new()
+            bm.from_mesh(o.data)
+            bm.verts.ensure_lookup_table()
+            mw, inv = o.matrix_world, o.matrix_world.inverted()
+            changed = False
+            for island in _islands(bm):
+                pts = [mw @ v.co for v in island]
+                zmin, zmax = min(p.z for p in pts), max(p.z for p in pts)
+                if zmin > 0.01 or zmax - zmin < 0.02:
+                    continue
+                top = [p for p in pts if p.z > zmax - 0.012]
+                if max(max(p.x for p in top) - min(p.x for p in top), max(p.y for p in top) - min(p.y for p in top)) > 0.11:
+                    continue
+                c = sum(top, Vector()) / len(top)
+                start = Vector((c.x, c.y, zmax - 0.002))
+                if _touches(start, trees, o.name):
+                    continue
+                gap = None
+                for name, (tree, big) in trees.items():
+                    if name == o.name or not big:
+                        continue
+                    hit = tree.ray_cast(start, Vector((0, 0, 1)), LEG_REACH)
+                    if hit[0] is not None and hit[1].z < -0.2 and (gap is None or hit[3] < gap):
+                        gap = hit[3]
+                if gap is None:
+                    continue
+                scale = (zmax + gap + LEG_SINK) / zmax
+                for v in island:
+                    p = mw @ v.co
+                    v.co = inv @ Vector((p.x, p.y, p.z * scale))
+                changed = True
+                print("  Bein bei (%.2f, %.2f) um %.1f cm bis in den Körper verlängert" % (c.x, c.y, (gap + LEG_SINK) * 100))
+            if changed:
+                bm.to_mesh(o.data)
+                o.data.update()
+            bm.free()
 
     def lower_seat(self):
         """Sitzmöbel in Chibi-Höhe (seit Testrunde 7b: die Sitze waren für die Figuren zu hoch). Alles unter der Sitzfläche
@@ -264,9 +321,18 @@ class Kit:
             return
         keep = SEAT_KEEP   # so viel unter der Sitzfläche bleibt ungestaucht (Sitzbrett, Polster)
         k = (target - keep) / (top - keep)
+        a = top - keep
+        w = min(SEAT_BLEND, a * 0.5)
 
         def f(z):
-            return z * k if z <= top - keep else z - (top - keep) * (1.0 - k)
+            # unten gestaucht (Faktor k), oben unverändert; dazwischen ein weicher Übergang über 2·w – sonst entsteht auf
+            # Polstern, die über diese Höhe reichen, eine sichtbare Knickkante
+            if z <= a - w:
+                return z * k
+            if z >= a + w:
+                return z - a * (1.0 - k)
+            u = (z - (a - w)) / (2.0 * w)
+            return z * k + (1.0 - k) * 2.0 * w * (u ** 3 - u ** 4 / 2.0)
 
         for o in self.objects:
             inv = o.matrix_world.inverted()
@@ -292,9 +358,48 @@ class Kit:
         print("  Sitz von %.2f auf %.2f m gesenkt" % (top, target))
 
 
+# Beine verlängern (Kit.attach_feet): so weit darf der Körper über dem Bein liegen, so tief steckt es danach in ihm
+LEG_REACH = 0.08
+LEG_SINK = 0.008
+
+
+def _islands(bm):
+    """Zusammenhängende Stücke eines bmesh als Listen von Ecken."""
+    seen = set()
+    result = []
+    for v in bm.verts:
+        if v.index in seen:
+            continue
+        stack = [v]
+        seen.add(v.index)
+        group = []
+        while stack:
+            cur = stack.pop()
+            group.append(cur)
+            for e in cur.link_edges:
+                nb = e.other_vert(cur)
+                if nb.index not in seen:
+                    seen.add(nb.index)
+                    stack.append(nb)
+        result.append(group)
+    return result
+
+
+def _touches(point, trees, own):
+    """Steckt der Punkt in einem anderen Teil oder berührt er es (4 mm)?"""
+    for name, (tree, _big) in trees.items():
+        if name == own:
+            continue
+        hit = tree.find_nearest(point, 0.05)
+        if hit[0] is not None and (hit[3] < 0.004 or (point - hit[0]).dot(hit[1]) < 0.0):
+            return True
+    return False
+
+
 # Sitzhöhe der Sitzmöbel (m, Oberkante Sitz) – passend zu den Chibi-Figuren (Sitz-Animation 0,22–0,27 m, seit Testrunde 7b)
 SEAT_HEIGHT = 0.3
 SEAT_KEEP = 0.07
+SEAT_BLEND = 0.04   # halbe Breite des weichen Übergangs zwischen gestaucht und unverändert (m)
 
 
 def settle(objs, seed, amount=1.0):
@@ -465,7 +570,9 @@ def curved_leg(b, top, foot, r_top, r_foot, bow=0.05, outward=(0, 0, 0)):
     t, f = Vector(top), Vector(foot)
     out = Vector(outward)
     mid = t.lerp(f, 0.5) + out * bow
-    pts = [t, t.lerp(mid, 0.6), mid, mid.lerp(f, 0.6), f + out * bow * 0.4]
+    tail = out * bow * 0.4
+    tail.z = min(tail.z, 0.0)   # der Fuß bleibt auf dem Boden (vorher hob ein Bogen nach oben ihn um 1 cm an)
+    pts = [t, t.lerp(mid, 0.6), mid, mid.lerp(f, 0.6), f + tail]
     return b.tube(pts, lambda u: r_top + (r_foot - r_top) * u, segs=10, smooth=2, round_ends=True)
 
 

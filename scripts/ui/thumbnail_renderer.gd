@@ -45,7 +45,7 @@ func _ready() -> void:
 	_viewport.size = IMAGE_SIZE
 	_viewport.own_world_3d = true
 	_viewport.transparent_bg = true
-	_viewport.msaa_3d = Viewport.MSAA_4X
+	Settings.match_preview_quality(_viewport)  # gleiche Kantenglättung wie das Spiel
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	add_child(_viewport)
 
@@ -252,7 +252,7 @@ func _photograph(model: Node3D, view_direction: Vector3, view: Dictionary = {}, 
 
 	# ein paar Bilder lang zeichnen (neue Materialien und Shader brauchen manchmal einen Moment), dann das Foto
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	for i in settle_frames:
+	for i in maxi(settle_frames, Settings.preview_frames()):  # mit TAA ein paar Bilder mehr, bis das Foto scharf ist
 		await RenderingServer.frame_post_draw
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	var image := _viewport.get_texture().get_image()

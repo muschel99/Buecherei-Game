@@ -136,7 +136,8 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 - **Etappe 7:** Die Uhr läuft (24 Minuten = ein Tag), Sonne, Wolken, Mond und Sterne; Hinterzimmer mit Bett zum Schlafen;
   Schild an der Tür, erste Besucher leihen Bücher aus (Stempel an der Theke), Rückgabe über den Kasten, Notizzettel am Morgen.
 - **Testrunde 7b:** ruhige Nächte mit Laternenlicht, Besucher mit Körben und Lese-Haltung, Theke in drei Schritten, Hinterzimmer
-  als Anbau mit Tür, Pausenmenü als Notizbuch, Bücherkisten hinter der Theke, einfacheres Regal-Menü mit Bücherverzeichnis.
+  als Anbau mit Tür, Pausenmenü als Notizbuch, Bücherkisten hinter der Theke, einfacheres Regal-Menü mit Bücherverzeichnis;
+  Nachtest: Fassaden-Vorschau ohne langen Hänger, alle Möbel geprüft (Beine fest, nichts schwebt).
 
 **Wo die wichtigen Dateien liegen**
 
@@ -1802,8 +1803,17 @@ Plan und Haken: `.scratch/testrunde-7b/plan.md` (Foto der Liste daneben).
 - [x] Tooltips in den Tablet-Apps lesbar; Mausrad wählt im Gestaltungsmodus Möbel bei leerer Hand; Theke und Katzen leuchten nicht auf;
   Stempel-Bereich verdeckt nichts mehr
 
-**Noch offen / Rückfrage:** Hänger in der App „Fassade“ (im Container nicht nachzustellen – wann genau?), „Möbel verbessern“
-(welche?); Tische sind noch in Erwachsenen-Höhe.
+**Nachtest (14.11.2026): Fassaden-Vorschau und Möbel**
+- [x] App „Fassade“ hängt beim Öffnen nicht mehr so lange: Vorschau und Kachel-Fotos zeichnen mit derselben Kantenglättung wie
+  das Spiel (gemessen: längstes Stocken etwa ein Fünftel)
+- [x] Alle 107 Möbel einzeln geprüft; neue Beinprüfung: jedes Bein steckt im Körper, alles steht auf dem Boden
+- [x] Füße unter die Polster gerückt bzw. bis in den Körper verlängert (Chesterfield-Sessel/-Sofa, Bouclé-Sessel/-Sofa,
+  Blümchensofa), Weintisch und Garderobe stehen wieder auf dem Boden
+- [x] Rückenlehne von Korbsessel und Schreibtischstuhl hinten statt vorn; keine freien Teile mehr (Strebe, Ziernägel,
+  Regalbretter, Schal, Lamellen, Ringe, Teddy-Sohlen, Fransen, Bilderstütze); Pouf mit Zopfmuster
+- [x] Was auf niedriger gewordenen Sitzmöbeln lag (Kissen, Decken, Bücher), rutscht beim Laden auf das Polster
+
+**Noch offen:** Tische sind noch in Erwachsenen-Höhe.
 
 ## Etappe 8 – Besuchervielfalt
 - Animationen liegen schon in den Figuren bereit (seit 6h): Tür nach innen/außen öffnen (`door_in`, `door_out`),

@@ -12,6 +12,8 @@ extends Node
 ## Wird gesendet, wenn sich eine Einstellung geändert hat.
 signal setting_changed(key: String, value: Variant)
 
+var _preview_viewports: Array = []  # WeakRef auf Vorschau-Fenster (match_preview_quality)
+
 const FILE_PATH := "user://settings.cfg"
 
 ## Gängige Auflösungen (Breite x Höhe), inklusive Ultrawide.
@@ -156,6 +158,32 @@ func _apply_graphics_quality() -> void:
 	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if not taa and (preset.fxaa or paint) else Viewport.SCREEN_SPACE_AA_DISABLED
 	viewport.scaling_3d_scale = preset.render_scale
 	viewport.mesh_lod_threshold = float(preset.get("lod_threshold", 1.0))
+	for ref: WeakRef in _preview_viewports:
+		var preview := ref.get_ref() as SubViewport
+		if preview:
+			match_preview_quality(preview)
+
+
+## Vorschau-Fenster (Fassaden-Polaroid, Drehteller, Fotos für Kacheln) zeichnen mit derselben Kantenglättung wie das Spiel
+## (seit Testrunde 7b): Mit eigener (MSAA 2x/4x, ohne TAA) musste die Grafikkarte jedes Material ein zweites Mal vorbereiten –
+## beim ersten Öffnen der App „Fassade“ ein langer Hänger (gemessen: halb so lang mit gleicher Einstellung). Mit TAA braucht ein
+## stehendes Bild ein paar Bilder, bis es scharf ist: preview_frames().
+## Wechselt später die Grafikstufe, ziehen die Vorschau-Fenster mit (_preview_viewports).
+func match_preview_quality(viewport: SubViewport) -> void:
+	var root := get_tree().root if is_inside_tree() else null
+	if root == null:
+		return
+	viewport.msaa_3d = root.msaa_3d
+	viewport.use_taa = root.use_taa
+	viewport.screen_space_aa = root.screen_space_aa
+	_preview_viewports = _preview_viewports.filter(func(ref: WeakRef) -> bool: return ref.get_ref() != null)
+	if not _preview_viewports.any(func(ref: WeakRef) -> bool: return ref.get_ref() == viewport):
+		_preview_viewports.append(weakref(viewport))
+
+
+## So viele Bilder zeichnet ein Vorschau-Fenster nach einer Änderung (TAA braucht ein paar, bis das Bild steht).
+func preview_frames() -> int:
+	return GameConfig.preview_taa_frames if get_tree().root.use_taa else 1
 
 
 ## Vollbild nutzt die Auflösung des Bildschirms; im Fenster gilt die gewählte Auflösung.

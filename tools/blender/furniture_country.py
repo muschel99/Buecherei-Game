@@ -248,9 +248,10 @@ def build_ladder_chair(k):
 def build_floral_sofa(k):
     floral(k, CREAM)
     pine(k)
+    # Füße unter dem Volant (weiter innen – an den runden Ecken des Polsters hingen sie frei)
     feet = k.part("Füße", "wood", bevel=0.004)
-    for x in (-0.7, 0.7):
-        for y in (-0.3, 0.3):
+    for x in (-0.6, 0.6):
+        for y in (-0.24, 0.24):
             F.turned_leg(feet, (x, y, 0.0), 0.08, 0.03, style="bun")
     base = k.part("Polster", "fabric", bevel=0.0)
     F.pillow(base, (0, 0, 0.24), (1.6, 0.8, 0.26), roundness=3.6, puff=0.006, step=0.045)

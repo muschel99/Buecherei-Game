@@ -388,7 +388,7 @@ def build_photo_frame(k):
     land = k.part("Foto Wiese", "photo_land", bevel=0.0, settle=False)
     land.box((0, -0.0015, -0.04), (W - 0.06, 0.002, 0.05), step=0.5, dent=0.0, matrix=m)
     # Stütze hinten: oben an der Rückseite des schrägen Rahmens, unten auf dem Tisch
-    fr.box((0, 0.08, 0.075), (0.03, 0.012, 0.16), step=0.5, dent=0.0004, turn=(25, 0, 0))
+    fr.box((0, 0.075, 0.075), (0.03, 0.012, 0.16), step=0.5, dent=0.0004, turn=(25, 0, 0))   # oben in die Rückseite des Rahmens
     k.collider((0, 0.02, 0.1), (W, 0.1, 0.2))
 
 

@@ -778,6 +778,8 @@ var facade_turntable_period: float = 16.0
 ## … und so groß rechnet die Vorschau ihre Bilder (Pixel; das Polaroid zeigt sie verkleinert, das macht
 ## sie ruhig und scharf).
 var facade_preview_size: Vector2i = Vector2i(720, 600)
+## Vorschau-Fenster mit TAA (wie das Spiel): so viele Bilder nach einer Änderung zeichnen, bis es scharf ist (Testrunde 7b)
+var preview_taa_frames := 10
 ## Blick auf die Bücherei von gegenüber: Abstand von der schrägen Wand (m), Höhe der Kamera über dem
 ## Ladenboden, Höhe des Blickpunkts und Bildwinkel (Grad, senkrecht).
 var facade_preview_distance: float = 11.0

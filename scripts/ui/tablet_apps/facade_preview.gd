@@ -27,12 +27,13 @@ var _slot_holder: Node3D
 var _slot_path := ""
 var _leaf_key := ""
 var _shown_design := {}
+var _frames_left := 0  # noch zu zeichnende Bilder (mit TAA mehrere, bis das Bild steht)
 
 
 func _init() -> void:
 	own_world_3d = true
 	size = GameConfig.facade_preview_size
-	msaa_3d = Viewport.MSAA_2X
+	Settings.match_preview_quality(self)  # gleiche Kantenglättung wie das Spiel (kein zweites Vorbereiten der Materialien)
 	render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_stage = Node3D.new()
 	_stage.name = "Stage"
@@ -46,7 +47,7 @@ func _init() -> void:
 ## true = das aktuelle Bild einmal neu zeichnen (z. B. wenn das Polaroid wieder erscheint).
 func set_active(active: bool) -> void:
 	if active:
-		render_target_update_mode = SubViewport.UPDATE_ONCE
+		_redraw()
 
 
 ## Ist schon ein Modell gebaut (das Polaroid zeigt ein Bild)?
@@ -83,7 +84,7 @@ func prepare(room: Node3D) -> void:
 			_slot_holder.name = "Slot"
 			_stage.add_child(_slot_holder)
 		_slot_holder.transform = slot_point.global_transform
-	render_target_update_mode = SubViewport.UPDATE_ONCE
+	_redraw()
 
 
 ## Zeigt den Entwurf (Wahl wie FacadeDesign.get_draft: Fassade, "slot" …). Gleiche Teile bleiben stehen;
@@ -123,7 +124,20 @@ func show_design(design: Dictionary) -> void:
 			model.position = Vector3(0.0, 0.0, GameConfig.facade_slot_out)
 			_slot_holder.add_child(model)
 	# nur jetzt ein neues Bild (das Modell steht still)
-	render_target_update_mode = SubViewport.UPDATE_ONCE
+	_redraw()
+
+
+## Neu zeichnen: ohne TAA ein Bild, mit TAA ein paar (Settings.preview_frames), dann wieder still.
+func _redraw() -> void:
+	_frames_left = Settings.preview_frames()
+	render_target_update_mode = SubViewport.UPDATE_ALWAYS
+
+
+func _process(_delta: float) -> void:
+	if _frames_left > 0:
+		_frames_left -= 1
+		if _frames_left == 0:
+			render_target_update_mode = SubViewport.UPDATE_DISABLED
 
 
 # --- Aufbau ---
