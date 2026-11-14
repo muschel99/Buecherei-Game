@@ -27,6 +27,8 @@ signal selection_changed(selected: Resource)
 signal filter_open_changed(open: bool)
 ## Symbol in der Bildmitte: "" = normaler Punkt, "roller" = Farbroller, "carpet" = Teppich.
 signal cursor_icon_changed(icon: String)
+## Mausrad bei leerer Hand (seit Testrunde 7b): BuildUI wählt das nächste/vorige Möbel der Leiste
+signal item_step_requested(direction: int)
 
 enum Tool { NONE, PLACE_NEW, MOVE, PAINT }
 
@@ -126,9 +128,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("build_toggle_grid"):
 		_set_grid_enabled(not grid_enabled)
 	elif event.is_action_pressed("build_rotate"):
-		_rotate(1.0)
+		if _tool == Tool.NONE:
+			item_step_requested.emit(1)  # nichts in der Hand: das Mausrad wählt ein Möbel (seit Testrunde 7b)
+		else:
+			_rotate(1.0)
 	elif event.is_action_pressed("build_rotate_back"):
-		_rotate(-1.0)
+		if _tool == Tool.NONE:
+			item_step_requested.emit(-1)
+		else:
+			_rotate(-1.0)
 	elif event.is_action_pressed("build_place"):
 		_on_primary_click()
 	elif event.is_action_released("build_place"):

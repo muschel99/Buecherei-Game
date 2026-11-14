@@ -108,6 +108,17 @@ func make_theme() -> Theme:
 		theme.set_stylebox(state, "Button", box)
 	theme.set_stylebox("focus", "Button", StyleBoxEmpty.new())
 	theme.set_stylebox("panel", "PanelContainer", make_panel_box())
+	# Tooltips im Look der App (seit Testrunde 7b: sonst erbten sie die dunkle Schrift auf dem dunklen Standard-Kasten)
+	var tip := make_panel_box(7.0, Color(panel.r, panel.g, panel.b, 0.98))
+	tip.border_color = Color(accent, 0.7)
+	tip.set_border_width_all(1)
+	tip.content_margin_left = 10
+	tip.content_margin_right = 10
+	tip.content_margin_top = 5
+	tip.content_margin_bottom = 6
+	theme.set_stylebox("panel", "TooltipPanel", tip)
+	theme.set_color("font_color", "TooltipLabel", text)
+	theme.set_font_size("font_size", "TooltipLabel", 15)
 	var grabber := StyleBoxFlat.new()
 	grabber.bg_color = Color(text, 0.35)
 	grabber.set_corner_radius_all(4)

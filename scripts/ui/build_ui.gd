@@ -75,6 +75,7 @@ func _ready() -> void:
 	_build_mode.status_changed.connect(_on_status_changed)
 	_build_mode.grid_changed.connect(_on_grid_changed)
 	_build_mode.selection_changed.connect(_on_selection_changed)
+	_build_mode.item_step_requested.connect(_step_item)
 	_build_mode.filter_open_changed.connect(_on_filter_open_changed)
 	_on_grid_changed(_build_mode.grid_enabled)
 	# Anzahlen neu zeigen, wenn sich Inventar oder Einrichtung ändern

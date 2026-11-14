@@ -48,7 +48,7 @@ const CONTROLS := {
 		["C / V", "Möbel zurück / vor (dazwischen: nichts ausgewählt)"],
 		["Rechtsklick", "Angeschautes Möbel aufnehmen"],
 		["Linksklick", "Abstellen bzw. streichen"],
-		["Mausrad", "Drehen"],
+		["Mausrad", "Drehen – mit leerer Hand: Möbel auswählen"],
 		["Mausrad-Klick", "Weglegen (ins Inventar)"],
 		["F · G · H", "Filter (Mauszeiger frei) · Raster · Tastenhilfe am unteren Rand"],
 	],

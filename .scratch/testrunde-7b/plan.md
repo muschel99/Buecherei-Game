@@ -31,8 +31,8 @@ Status: claimed
 
 ## Teil 5 – Bedienung
 - [ ] Hänger in der App „Fassade“
-- [ ] Tooltip-Schrift bei Nest & Nook kaum lesbar
-- [ ] Gestaltungsmodus: Mausrad wählt Möbel, wenn nichts in der Hand
+- [x] Tooltip-Schrift bei Nest & Nook kaum lesbar
+- [x] Gestaltungsmodus: Mausrad wählt Möbel, wenn nichts in der Hand
 - [x] Theke und Katzen leuchten nicht mehr auf
 - [ ] Pausenmenü: Aufbau und Aussehen gefallen noch nicht
 - [x] Hitboxen: Stempel-Bereich auf der Theke nur noch klein und nur, wenn jemand wartet (verdeckte Tablet/Bücher)
