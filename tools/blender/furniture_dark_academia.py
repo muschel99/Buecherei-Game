@@ -87,10 +87,14 @@ def build_wingchair(k):
         for i in range(9):
             a = math.radians(-60 + i * 30)
             nails.blob((side * 0.36 + math.sin(a) * 0.064, -0.398, 0.54 + math.cos(a) * 0.064), 0.0055, subdiv=1, lump=0.05, scale=(1, 0.6, 1))
+    # Nagelreihe vorn am Sockel: genau auf der Polsterfläche (sie folgt der Rundung), nur wo die Front fast senkrecht steht
     nails = k.part("Ziernägel Sockel", "brass", bevel=0.0)
-    x = -0.36
-    while x <= 0.361:
-        nails.blob((x, -0.36, 0.13), 0.0055, subdiv=1, lump=0.05, scale=(1, 0.6, 1))
+    zn = base[0][2] - base[1][2] * 0.25
+    x = -0.374
+    while x <= 0.375:
+        y = F.pillow_front(base[0], base[1], 4.5, x, zn)
+        if y is not None:
+            nails.blob((x, y + 0.0012, zn), 0.0055, subdiv=1, lump=0.05, scale=(1, 0.6, 1))
         x += 0.034
     k.collider((0, 0.0, 0.18), (0.84, 0.78, 0.36))
     k.collider((0, -0.06, 0.245), (0.56, 0.6, 0.49))
@@ -293,8 +297,9 @@ def build_chesterfield_sofa(k):
         for y in (-0.33, 0.33):
             F.turned_leg(feet, (x, y, 0.0), 0.08, 0.034, style="bun")
     base = k.part("Polster", "leather", bevel=0.0)
-    F.pillow(base, (0, 0.0, 0.215), (1.84, 0.82, 0.27), roundness=5.0, puff=0.004, step=0.045)
-    F.piping(base, (0, 0.0, 0.215), (1.84, 0.82, 0.27), -0.095, r=0.0065, roundness=5.0)
+    base_box = ((0, 0.0, 0.215), (1.84, 0.82, 0.27))
+    F.pillow(base, base_box[0], base_box[1], roundness=5.0, puff=0.004, step=0.045)
+    F.piping(base, base_box[0], base_box[1], -0.095, r=0.0065, roundness=5.0)
     back = k.part("Rückenlehne", "leather", bevel=0.0)
     F.pillow(back, (0, 0.32, 0.56), (1.6, 0.2, 0.44), roundness=5.0, puff=0.012, step=0.04)
     buttons = k.part("Knöpfe", "leather", bevel=0.0)
@@ -306,24 +311,31 @@ def build_chesterfield_sofa(k):
     for side in (-1, 1):
         arm = k.part("Armlehne", "leather", bevel=0.0)
         F.pillow(arm, (side * 0.84, 0.0, 0.47), (0.18, 0.82, 0.44), roundness=5.0, puff=0.006, step=0.04)
-        # Rolle oben außen über die ganze Tiefe
-        arm.tube([(side * 0.86, -0.41, 0.69), (side * 0.86, 0.41, 0.69)], 0.075, segs=16, round_ends=True)
+        # Rolle oben außen über die ganze Tiefe, vorn eine runde Stirnscheibe (darauf die Messingnägel)
+        arm.tube([(side * 0.86, -0.40, 0.69), (side * 0.86, 0.41, 0.69)], 0.075, segs=16, round_ends=True)
+        roll = k.part("Armrolle", "leather", bevel=0.0)
+        roll.lathe([(0.0, 0.0), (0.075, 0.0), (0.083, 0.009), (0.083, 0.026), (0.075, 0.035), (0.0, 0.035)],
+                   (side * 0.86, -0.415, 0.69), segs=22, turn=(90, 0))
         for row, zz in enumerate((0.43, 0.55)):
             for i in range(4):
                 F.button(buttons, (side * 0.748, -0.27 + i * 0.18 + (0.09 if row else 0.0), zz), r=0.01, normal=(-side, 0, 0))
         nails = k.part("Ziernägel", "brass", bevel=0.0)
         for i in range(11):
             a = math.radians(-90 + i * 18)
-            nails.blob((side * 0.86 + math.sin(a) * 0.079, -0.415, 0.69 + math.cos(a) * 0.079), 0.0055, subdiv=1, lump=0.04, scale=(1, 0.6, 1))
+            nails.blob((side * 0.86 + math.sin(a) * 0.068, -0.4512, 0.69 + math.cos(a) * 0.068), 0.0055, subdiv=1, lump=0.04, scale=(1, 0.6, 1))
     for i, xx in enumerate((-0.52, 0.0, 0.52)):
         cush = k.part("Sitzkissen", "leather", bevel=0.0)
         F.pillow(cush, (xx, -0.06, 0.41), (0.52, 0.62, 0.13), roundness=4.0, puff=0.018, step=0.032)
         for zz in (0.04, -0.04):
             F.piping(cush, (xx, -0.06, 0.41), (0.52, 0.62, 0.13), zz, r=0.005, roundness=4.0)
+    # Nagelreihe vorn am Sockel genau auf der Polsterfläche, nur wo die Front fast senkrecht steht
     nails = k.part("Ziernägel Sockel", "brass", bevel=0.0)
-    x = -0.86
-    while x <= 0.861:
-        nails.blob((x, -0.412, 0.12), 0.0055, subdiv=1, lump=0.04, scale=(1, 0.6, 1))
+    zn = base_box[0][2] - base_box[1][2] * 0.25
+    x = -0.882
+    while x <= 0.883:
+        y = F.pillow_front(base_box[0], base_box[1], 5.0, x, zn)
+        if y is not None:
+            nails.blob((x, y + 0.0012, zn), 0.0055, subdiv=1, lump=0.04, scale=(1, 0.6, 1))
         x += 0.036
     k.collider((0, 0, 0.175), (1.88, 0.84, 0.35))
     k.collider((0, -0.06, 0.24), (1.56, 0.62, 0.475))
@@ -406,14 +418,18 @@ def build_desk_chair(k):
         rr = (abs(cs) ** 2.8 + abs(sn) ** 2.8) ** (-1 / 2.8)
         nails.blob((cs * rr * 0.222, -0.015 + sn * rr * 0.202, 0.458), 0.0045, subdiv=1, lump=0.03, scale=(1, 1, 0.6))
     back = k.part("Lehne", "wood", bevel=0.0)
-    arc = [Vector((math.cos(math.radians(a)) * 0.25, 0.04 + math.sin(math.radians(a)) * 0.2, 0.73)) for a in range(200, 341, 10)]
+    # Lehne im Halbkreis hinten (+y in Blender; bis Testrunde 7b lag sie versehentlich vorn)
+    arc = [Vector((math.cos(math.radians(a)) * 0.25, -0.04 + math.sin(math.radians(a)) * 0.2, 0.73)) for a in range(20, 161, 10)]
     back.tube(arc, 0.022, segs=10, smooth=1, round_ends=True)
-    for a in (205, 230, 255, 270, 285, 310, 335):
+    for a in (25, 50, 75, 90, 105, 130, 155):
         x = math.cos(math.radians(a)) * 0.25
-        y = 0.04 + math.sin(math.radians(a)) * 0.2
-        back.tube([(x * 0.92, y * 0.92 + 0.004, 0.47), (x, y, 0.72)], 0.0085, segs=7)
+        y = -0.04 + math.sin(math.radians(a)) * 0.2
+        back.tube([(x * 0.92, y * 0.92 - 0.004, 0.47), (x, y, 0.72)], 0.0085, segs=7)
     for side in (-1, 1):
-        back.tube([(side * 0.235, -0.04, 0.47), (side * 0.235, -0.1, 0.62), (side * 0.235, -0.0, 0.7)], 0.014, segs=8, smooth=2, round_ends=True)
+        # Armstütze: vorn vom Sitzrahmen leicht geschwungen nach hinten hinauf bis unter das Ende der Lehne (trägt sie)
+        end = arc[0] if arc[0].x * side > 0 else arc[-1]
+        back.tube([(side * 0.235, -0.11, 0.462), (side * 0.24, -0.08, 0.62), (end.x, end.y - 0.005, end.z - 0.004)],
+                  0.014, segs=8, smooth=2, round_ends=True)
     k.collider((0, -0.01, 0.235), (0.5, 0.46, 0.5))
     k.collider((0, 0.08, 0.62), (0.52, 0.16, 0.26))
     k.surface((0, -0.03, 0.5), (0.38, 0.32))
@@ -883,8 +899,16 @@ def build_orrery(k):
         k.mat("planet_%d" % i, col, grain="paint", rough=0.6, vary=0.08)
         F.sphere(pl, d * dist + Vector((0, 0, h + 0.03 + r)), r, segs=14, rings=8)
         if i == 4:
-            F.ring(arm, d * dist + Vector((0, 0, h + 0.03 + r)), r * 1.7, 0.003, matrix=Matrix.Rotation(math.radians(20), 4, "X"), n=24)
+            c = d * dist + Vector((0, 0, h + 0.03 + r))
+            F.ring(arm, c, r * 1.7, 0.003, matrix=Matrix.Rotation(math.radians(20), 4, "X"), n=24)
+            # zwei feine Stege halten den Ring am Planeten (sonst schwebt er)
+            for side in (-1, 1):
+                arm.tube([c + Vector((side * r * 0.8, 0, 0)), c + Vector((side * r * 1.75, 0, 0))], 0.0018, segs=5)
+    # Ekliptik-Ring mit vier Speichen an der Achse (vorher hing er frei in der Luft)
     F.ring(stem, (0, 0, 0.16), 0.255, 0.0025, n=48)
+    for a in (45, 135, 225, 315):
+        d = Vector((math.cos(math.radians(a)), math.sin(math.radians(a)), 0))
+        stem.tube([Vector((0, 0, 0.16)) + d * 0.004, d * 0.256 + Vector((0, 0, 0.16))], 0.0018, segs=5)
     k.collider((0, 0, 0.14), (0.52, 0.52, 0.28))
 
 

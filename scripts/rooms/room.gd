@@ -35,6 +35,10 @@ var extra_build_areas: Array[Rect2] = []
 ## Fenster- und Türlaibung: bekommen die Farbe des Wandabschnitts, in dem sie liegen. Die Aussparungen
 ## (CSG) baut seit Etappe 6c die Fassade passend zur Form (RoomOpenings) – darum werden sie jedes Mal
 ## gesucht. CSG-Wand → Farbwand.
+## Nachrutschen nach dem Laden (_settle_on_supports): so weit darf die Fläche entfernt sein, ab so viel wird verschoben.
+const SETTLE_RANGE := 0.3
+const SETTLE_MIN := 0.004
+
 const REVEAL_WALLS := {"Structure/WallFront": "Walls/Front", "Structure/WallLeft": "Walls/Left",
 	"Structure/WallDiagonal": "Walls/Diagonal"}
 ## Hier darf man etwas aufhängen (Wandbilder, Lichtschalter …).
@@ -475,10 +479,67 @@ func load_save_data(save_data: Dictionary) -> void:
 	# Was im Raum zu sehen ist, gehört mir (wichtig für Spielstände von vor dem Inventar)
 	for id in _get_used_surface_ids():
 		Inventory.add_surface(id)
+	_settle_on_supports()
 	var back := get_node_or_null("BackRoom") as BackRoom
 	if back:
 		back.clear_doorway()
 	layout_changed.emit()
+
+
+## Nach dem Laden: Was auf einem Möbelstück steht oder liegt, rutscht auf dessen Ablagefläche nach, falls sie sich verschoben
+## hat (seit Testrunde 7b sind die Sitzmöbel niedriger – Kissen, Decken und Bücher darauf schwebten sonst in der Luft). Erst
+## die Träger, dann was darauf steht; was auf dem Verschobenen steht, wandert mit.
+func _settle_on_supports() -> void:
+	var by_uid := {}
+	for item in get_placed_furniture():
+		by_uid[item.uid] = item
+	var done := {}
+	for item in get_placed_furniture():
+		_settle_item(item, by_uid, done)
+	for item in get_placed_furniture():
+		var support := item
+		loose_books.settle_on(item.uid, func(at: Vector3, bottom: float) -> float:
+			return _surface_top_near(support, at, bottom))
+
+
+func _settle_item(item: PlacedFurniture, by_uid: Dictionary, done: Dictionary) -> void:
+	if done.has(item.uid):
+		return
+	done[item.uid] = true
+	var support: PlacedFurniture = by_uid.get(item.support_uid)
+	if support == null or support == item or item.data == null or item.data.is_hanging():
+		return
+	_settle_item(support, by_uid, done)
+	var top := _surface_top_near(support, item.global_position, item.global_position.y)
+	if is_nan(top) or absf(top - item.global_position.y) < SETTLE_MIN:
+		return
+	var shift := Transform3D(Basis(), Vector3(0, top - item.global_position.y, 0))
+	var dependents := get_dependents(item)
+	for dependent in dependents:
+		dependent.global_transform = shift * dependent.global_transform
+	loose_books.move_with(get_uids(item, dependents), shift)
+	item.global_transform = shift * item.global_transform
+
+
+## Oberkante der Ablagefläche eines Möbelstücks unter dem Punkt at, die near_y am nächsten liegt (höchstens SETTLE_RANGE
+## entfernt), sonst NAN.
+func _surface_top_near(support: PlacedFurniture, at: Vector3, near_y: float) -> float:
+	var best := NAN
+	for node in support.find_children("*", "PlacementSurface", true, false):
+		var surface := node as PlacementSurface
+		var top := surface.get_surface_height()
+		if absf(top - near_y) > SETTLE_RANGE or (not is_nan(best) and absf(top - near_y) >= absf(best - near_y)):
+			continue
+		for child in surface.get_children():
+			var shape_node := child as CollisionShape3D
+			if shape_node == null or not shape_node.shape is BoxShape3D:
+				continue
+			var local := shape_node.global_transform.affine_inverse() * at
+			var half := (shape_node.shape as BoxShape3D).size / 2.0
+			if absf(local.x) <= half.x + 0.03 and absf(local.z) <= half.z + 0.03:
+				best = top
+				break
+	return best
 
 
 func _load_walls(save_data: Dictionary) -> void:

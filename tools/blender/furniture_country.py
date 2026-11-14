@@ -183,20 +183,20 @@ def build_wicker_chair(k):
     weave(b, (0, 0, 0.05), 0.3, 0.32, 0.36, rnd, staves=30, rows=8)
     b.lathe([(0.0, 0.0), (0.3, 0.0), (0.3, 0.05), (0.0, 0.05)], (0, 0, 0.0), segs=30)
     F.ring(b, (0, 0, 0.41), 0.325, 0.02, n=48, segs=8)
-    # hohe, runde Rückenlehne aus Geflecht (Bogen hinten)
+    # hohe, runde Rückenlehne aus Geflecht (Bogen hinten = +y in Blender; bis Testrunde 7b lag er versehentlich vorn)
     back = k.part("Lehne", "wicker", bevel=0.0)
     for i in range(17):
-        a = math.radians(200 + 140 * i / 16)
+        a = math.radians(20 + 140 * i / 16)
         d = Vector((math.cos(a), math.sin(a), 0))
         h = 0.36 + 0.42 * math.sin(math.pi * i / 16)
         back.tube([d * 0.31 + Vector((0, 0, 0.41)), d * 0.3 + Vector((0, 0, 0.41 + h))], 0.004, segs=5)
-    arc = [Vector((math.cos(math.radians(a)) * 0.3, math.sin(math.radians(a)) * 0.3, 0.41 + 0.36 + 0.42 * math.sin(math.pi * (a - 200) / 140)))
-           for a in range(200, 341, 7)]
+    arc = [Vector((math.cos(math.radians(a)) * 0.3, math.sin(math.radians(a)) * 0.3, 0.41 + 0.36 + 0.42 * math.sin(math.pi * (a - 20) / 140)))
+           for a in range(20, 161, 7)]
     back.tube(arc, 0.022, segs=8, smooth=1, round_ends=True)
     for j in range(6):
         pts = []
         for i in range(29):
-            a = math.radians(200 + 140 * i / 28)
+            a = math.radians(20 + 140 * i / 28)
             h = (0.36 + 0.42 * math.sin(math.pi * i / 28)) * (j + 0.5) / 6
             pts.append(Vector((math.cos(a) * (0.305 + (0.004 if (i + j) % 2 else -0.004)), math.sin(a) * (0.305 + (0.004 if (i + j) % 2 else -0.004)), 0.41 + h)))
         back.tube(pts, 0.012, segs=5)
@@ -264,7 +264,7 @@ def build_floral_sofa(k):
     for side in (-1, 1):
         arm = k.part("Armlehne", "fabric", bevel=0.0)
         F.pillow(arm, (side * 0.74, 0.0, 0.45), (0.2, 0.8, 0.38), roundness=3.0, puff=0.008, step=0.04)
-        arm.tube([(side * 0.76, -0.4, 0.62), (side * 0.76, 0.38, 0.62)], 0.07, segs=16, round_ends=True)
+        arm.tube([(side * 0.76, -0.4, 0.62), (side * 0.76, 0.38, 0.62)], 0.07, segs=16, round_ends=True, dome=True)
     for x in (-0.34, 0.34):
         cush = k.part("Sitzkissen", "fabric", bevel=0.0)
         F.pillow(cush, (x, -0.06, 0.42), (0.66, 0.6, 0.14), roundness=3.0, puff=0.02, step=0.035)
@@ -828,7 +828,7 @@ def build_teddy(k):
     m.blob(head + Vector((0, -0.055, -0.012)), 0.028, subdiv=2, lump=0.03, scale=(1.1, 0.7, 0.8))
     for sg in (-1, 1):
         m.blob(head + Vector((sg * 0.05, -0.01, 0.048)), 0.012, subdiv=1, lump=0.03, scale=(1, 0.5, 1))
-        m.blob(Vector((sg * 0.05, -0.128, 0.03)), 0.018, subdiv=1, lump=0.03, scale=(1, 0.4, 1))
+        m.blob(Vector((sg * 0.05, -0.12, 0.029)), 0.018, subdiv=1, lump=0.03, scale=(1, 0.4, 1))   # Sohle sitzt am Fuß
     e = k.part("Augen", "eyes", bevel=0.0)
     for sg in (-1, 1):
         e.blob(head + Vector((sg * 0.024, -0.058, 0.014)), 0.007, subdiv=1, lump=0.01)

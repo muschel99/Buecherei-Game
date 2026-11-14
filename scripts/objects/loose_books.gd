@@ -199,6 +199,38 @@ func move_with(uids: Array[int], change: Transform3D) -> void:
 		_changed()
 
 
+## Liegt die Fläche unter den Büchern eines Möbelstücks inzwischen woanders (das Modell ist niedriger geworden, z. B. die
+## Sitzmöbel seit Testrunde 7b), rücken sie nach: height_at(Weltpunkt, Unterkante) liefert die Oberkante der Fläche darunter
+## (NAN = keine). Alle Bücher auf derselben Fläche rücken um dieselbe Strecke – ein Stapel bleibt ein Stapel.
+func settle_on(uid: int, height_at: Callable) -> void:
+	var groups := {}  # Flächenhöhe → {"top", "lowest", "entries"}
+	for entry in _entries:
+		if entry.support_uid != uid or entry.hidden or entry.pose == LooseBook.Pose.DISPLAYED:
+			continue
+		var world := global_transform * entry.transform
+		var bottom := world.origin.y - _vertical_half(world)
+		var top: float = height_at.call(world.origin, bottom)
+		if is_nan(top):
+			continue
+		var key := snappedf(top, 0.001)
+		if not groups.has(key):
+			groups[key] = {"top": top, "lowest": bottom, "entries": []}
+		groups[key].lowest = minf(groups[key].lowest, bottom)
+		groups[key].entries.append(entry)
+	var moved: Array[LooseBook] = []
+	for group: Dictionary in groups.values():
+		var dy: float = group.top + LIFT - group.lowest
+		if absf(dy) < 0.004:
+			continue
+		var shift := global_transform.affine_inverse() * Transform3D(Basis(), Vector3(0, dy, 0)) * global_transform
+		for entry: LooseBook in group.entries:
+			entry.transform = shift * entry.transform
+			moved.append(entry)
+	if not moved.is_empty():
+		_queue_refresh()
+		_changed()
+
+
 ## Ein Möbelstück wird weggeräumt: Liefert die Bücher, die darauf lagen (der Aufrufer legt sie
 ## ins Lager).
 func release_on(uids: Array[int]) -> Array[Book]:

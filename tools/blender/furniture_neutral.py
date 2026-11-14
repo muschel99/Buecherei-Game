@@ -171,14 +171,27 @@ def build_knit_pouf(k):
     k.mat("knit", (0.86, 0.8, 0.7), grain="fabric", rough=0.95, vary=0.05, bump=0.5, scale=3.0)
     b = k.part("Pouf", "knit", bevel=0.0)
     b.lathe([(0.0, 0.0), (0.2, 0.0), (0.26, 0.04), (0.28, 0.2), (0.26, 0.36), (0.2, 0.4), (0.0, 0.41)], (0, 0, 0), segs=48, wave=0.025, waves=16)
+    # Zopfmuster: je Streifen zwei Stränge, die sich umeinander winden und halb im Strick stecken (vorher einzelne
+    # Perlen, die an den Rändern frei in der Luft standen)
     braid = k.part("Zopfmuster", "knit", bevel=0.0)
+    profile = [(0.04, 0.26), (0.2, 0.28), (0.36, 0.26)]
+
+    def surf_r(z):
+        for (z0, r0), (z1, r1) in zip(profile, profile[1:]):
+            if z <= z1:
+                return r0 + (r1 - r0) * (z - z0) / (z1 - z0)
+        return profile[-1][1]
     for i in range(16):
         a = 2 * math.pi * (i + 0.5) / 16
         d = Vector((math.cos(a), math.sin(a), 0))
-        for j in range(7):
-            z = 0.06 + j * 0.045
-            r = 0.27 + 0.012 * math.sin(math.pi * z / 0.4)
-            braid.blob(d * r + Vector((0, 0, z)), 0.022, subdiv=1, lump=0.1, scale=(0.7, 0.7, 1.1))
+        t = Vector((-math.sin(a), math.cos(a), 0))
+        for strand in (0.0, math.pi):
+            path = []
+            for j in range(29):
+                z = 0.06 + 0.28 * j / 28
+                ph = 2 * math.pi * z / 0.1 + strand
+                path.append(d * (surf_r(z) + 0.002 + 0.004 * math.cos(ph)) + t * 0.011 * math.sin(ph) + Vector((0, 0, z)))
+            braid.tube(path, 0.0085, segs=8, round_ends=True)
     k.collider((0, 0, 0.2), (0.56, 0.56, 0.41))
     k.surface((0, 0, 0.41), (0.3, 0.3))
     k.seat((0, 0, 0.41))
@@ -259,7 +272,7 @@ def build_coat_rack(k):
               segs=28, turn=(10, 0))
     scarf = k.part("Schal", "scarf", bevel=0.0)
     sd = Vector((math.cos(math.radians(150)), math.sin(math.radians(150)), 0))
-    top = sd * 0.13 + Vector((0, 0, 1.6))
+    top = sd * 0.13 + Vector((0, 0, 1.67))   # liegt über dem Haken (der Haken steckt im Schal), hängt nicht daneben
     scarf.tube([top + sd * 0.03 + Vector((0, -0.04, -0.6)), top + Vector((0, -0.04, -0.05)), top + Vector((0, 0.02, 0.03)), top + Vector((0, 0.06, -0.04)),
                 top + sd * 0.02 + Vector((0, 0.07, -0.5))], 0.03, segs=8, smooth=2, round_ends=True)
     k.collider((0, 0, 0.9), (0.4, 0.4, 1.8))

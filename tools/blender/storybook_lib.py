@@ -336,10 +336,11 @@ class Body:
         self._finish_island(low + high, faces, tint)
         return faces
 
-    def tube(self, points, radius, segs=7, tint=None, wobble=0.0, smooth=0, round_ends=False):
+    def tube(self, points, radius, segs=7, tint=None, wobble=0.0, smooth=0, round_ends=False, dome=False):
         """Röhre entlang einer Punktfolge, an beiden Enden geschlossen (Stiele, Äste, Eisen).
         smooth = so oft die Bahn runden (Ecken abschneiden, Chaikin), round_ends = Enden als
-        kleine Kuppel statt flachem Deckel."""
+        kleine Kuppel statt flachem Deckel; mit dome=True eine echte Halbkugel (vier Ringe – für dicke
+        Röhren wie Polsterwülste, wo der einfache Deckel als Kante zu sehen wäre)."""
         pts = [Vector(p) for p in points]
         if len(pts) < 2:
             return []
@@ -349,7 +350,23 @@ class Body:
                 out += [a.lerp(b2, 0.25), a.lerp(b2, 0.75)]
             out.append(pts[-1])
             pts = out
-        if round_ends and len(pts) >= 2:
+        if round_ends and dome and len(pts) >= 2:
+            m = len(pts)
+            base = [radius(i / (m - 1)) if callable(radius) else radius for i in range(m)]
+            d0 = (pts[0] - pts[1]).normalized()
+            d1 = (pts[-1] - pts[-2]).normalized()
+            head, tail, r_head, r_tail = [], [], [], []
+            for th in (0.45, 0.85, 1.2, 1.47):
+                head.insert(0, pts[0] + d0 * base[0] * math.sin(th))
+                r_head.insert(0, base[0] * math.cos(th))
+                tail.append(pts[-1] + d1 * base[-1] * math.sin(th))
+                r_tail.append(base[-1] * math.cos(th))
+            pts = head + pts + tail
+            radii = r_head + base + r_tail
+
+            def radius(t, rr=radii):
+                return rr[min(len(rr) - 1, int(round(t * (len(rr) - 1))))]
+        elif round_ends and len(pts) >= 2:
             r0 = radius(0.0) if callable(radius) else radius
             r1 = radius(1.0) if callable(radius) else radius
             pts.insert(0, pts[0] - (pts[1] - pts[0]).normalized() * r0 * 0.6)

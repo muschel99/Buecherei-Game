@@ -340,6 +340,21 @@ def pillow(b, center, size, roundness=3.2, puff=0.0, sag=0.0, step=0.03, tint=No
     return faces
 
 
+def pillow_front(center, size, roundness, x, z, side=-1, min_depth=0.88):
+    """y der Vorder- (side=-1) bzw. Rückseite eines Kissens (pillow, ohne Drehung) an der Stelle x, z – für kleine Teile,
+    die genau auf der Polsterfläche sitzen sollen (Ziernägel). None, wo die Fläche schon stark nach hinten weicht
+    (weniger als min_depth der halben Tiefe) – dort säßen sie schräg oder in der Luft."""
+    qx = abs((x - center[0]) / (size[0] / 2.0))
+    qz = abs((z - center[2]) / (size[2] / 2.0))
+    rest = 1.0 - qx ** roundness - qz ** roundness
+    if rest <= 0.0:
+        return None
+    depth = rest ** (1.0 / roundness)
+    if depth < min_depth:
+        return None
+    return center[1] + side * size[1] / 2.0 * depth
+
+
 def _grid_box(b, size, counts, tint=None):
     """Geschlossener Kasten um den Ursprung mit eigener Unterteilung je Richtung."""
     sx, sy, sz = size

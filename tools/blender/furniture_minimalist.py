@@ -89,9 +89,11 @@ def build_slim_shelf(k):
     wood(k)
     metal(k)
     W, D, H = 0.9, 0.34, 1.9
+    # Die Stäbe laufen durch die Böden (vorher standen sie neben den runden Ecken, die Böden schwebten)
+    IN = 0.035
     posts = k.part("Stäbe", "metal", bevel=0.0)
-    for x in (-W / 2 + 0.02, W / 2 - 0.02):
-        for y in (-D / 2 + 0.02, D / 2 - 0.02):
+    for x in (-W / 2 + IN, W / 2 - IN):
+        for y in (-D / 2 + IN, D / 2 - IN):
             posts.tube([(x, y, 0.0), (x, y, H)], 0.011, segs=10, round_ends=True)
     tops = [0.12, 0.5, 0.88, 1.26, 1.62]
     boards = k.part("Böden", "wood", bevel=0.007)
@@ -99,13 +101,13 @@ def build_slim_shelf(k):
         F.pillow(boards, (0, 0, z - 0.012), (W, D, 0.026), roundness=8.0, step=0.06)
     stops = k.part("Rückenleiste", "metal", bevel=0.0)
     for z in tops:
-        stops.tube([(-W / 2 + 0.02, D / 2 - 0.02, z + 0.08), (W / 2 - 0.02, D / 2 - 0.02, z + 0.08)], 0.005, segs=6)
+        stops.tube([(-W / 2 + IN, D / 2 - IN, z + 0.08), (W / 2 - IN, D / 2 - IN, z + 0.08)], 0.005, segs=6)
     clear = tops[1:] + [H - 0.02]
     for i in range(len(tops) - 1, -1, -1):
-        k.row((0, -0.01, tops[i]), W - 0.08, clear[i] - tops[i] - 0.026, D - 0.04)
+        k.row((0, -0.01, tops[i]), W - 0.1, clear[i] - tops[i] - 0.026, D - 0.04)
     for z in tops + [H - 0.02]:
         k.collider((0, 0, z - 0.012), (W, D, 0.026))
-    for x in (-W / 2 + 0.02, W / 2 - 0.02):
+    for x in (-W / 2 + IN, W / 2 - IN):
         k.collider((x, 0, H / 2), (0.03, D, H))
     k.surface((0, 0, H - 0.0), (W - 0.04, D - 0.04))
 
@@ -119,7 +121,15 @@ def build_shell_chair(k):
     for x in (-0.19, 0.19):
         for y in (-0.17, 0.17):
             F.tapered_leg(legs, (x * 0.8, y * 0.75, 0.42), (x, y, 0.0), 0.018, 0.012)
-    legs.tube([(-0.17, -0.0, 0.18), (0.17, 0.0, 0.18)], 0.009, segs=8, round_ends=True)
+    # H-Strebe: an jeder Seite eine Strebe von Bein zu Bein, dazwischen die Querstrebe (endet an den Seitenstreben)
+    def leg_at(x, y, z):
+        t = z / 0.42
+        return Vector((x + (x * 0.8 - x) * t, y + (y * 0.75 - y) * t, z))
+    zs = 0.18
+    for x in (-0.19, 0.19):
+        legs.tube([leg_at(x, -0.17, zs), leg_at(x, 0.17, zs)], 0.009, segs=8, round_ends=True)
+    inner = leg_at(0.19, 0.0, zs).x
+    legs.tube([(-inner, 0.0, zs), (inner, 0.0, zs)], 0.009, segs=8)
     seat = k.part("Schale", "shell", bevel=0.0)
     F.pillow(seat, (0, -0.02, 0.45), (0.46, 0.44, 0.05), roundness=2.6, puff=0.0, sag=0.02, step=0.03)
     # Rückenschale: ein Stück Röhre mit senkrechter Achse, sitzt hinten auf dem Sitz auf und
@@ -150,7 +160,7 @@ def build_lounge_chair(k):
     for a in range(-15, 196, 10):
         r = math.radians(a)
         path.append(Vector((math.cos(r) * 0.27, 0.04 + math.sin(r) * 0.25, 0.4 + 0.2 * max(0.0, math.sin(r)) ** 1.5)))
-    shell.tube(path, lambda t: 0.11 + 0.06 * math.sin(math.pi * t), segs=20, smooth=2, round_ends=True)
+    shell.tube(path, lambda t: 0.11 + 0.06 * math.sin(math.pi * t), segs=20, smooth=2, round_ends=True, dome=True)
     seat = k.part("Sitzkissen", "fabric", bevel=0.0)
     F.pillow(seat, (0, -0.06, 0.37), (0.5, 0.5, 0.13), roundness=2.8, puff=0.02, step=0.03)
     k.collider((0, 0, 0.21), (0.78, 0.74, 0.42))
@@ -260,17 +270,33 @@ def build_sideboard(k):
     metal(k)
     W, D, H = 1.5, 0.42, 0.62
     body = k.part("Korpus", "wood", bevel=0.01)
-    F.pillow(body, (0, 0, 0.17 + (H - 0.17) / 2), (W, D, H - 0.17), roundness=7.0, step=0.06)
+    box = ((0, 0, 0.17 + (H - 0.17) / 2), (W, D, H - 0.17))
+    F.pillow(body, box[0], box[1], roundness=7.0, step=0.06)
+
+    def front(x, z):
+        """Vorderseite des gerundeten Korpus an der Stelle x, z (None am stark gerundeten Rand)."""
+        return F.pillow_front(box[0], box[1], 7.0, x, z, min_depth=0.93)
+    # Lamellen liegen genau auf der Vorderseite und folgen ihrer Rundung (vorher standen sie an den Enden frei vor)
     doors = k.part("Lamellentüren", "wood", bevel=0.0)
     x = -W / 2 + 0.07
     while x < W / 2 - 0.05:
-        doors.tube([(x, -D / 2 + 0.002, 0.21), (x, -D / 2 + 0.002, H - 0.04)], 0.009, segs=8, round_ends=True)
+        path = []
+        for j in range(9):
+            z = 0.21 + (H - 0.25) * j / 8
+            y = front(x, z)
+            if y is not None:
+                path.append((x, y + 0.002, z))
+        if len(path) >= 4:
+            doors.tube(path, 0.009, segs=8, round_ends=True)
         x += 0.026
-    for xc in (-0.36, 0.0, 0.36):
-        doors.box((xc + 0.17, -D / 2 - 0.004, (0.21 + H - 0.04) / 2), (0.006, 0.006, H - 0.27), step=0.5, dent=0.0)
+    # vier gleich breite Türen: Fugen dazwischen, je Tür ein Knopf in der Mitte
+    for xc in (-0.325, 0.0, 0.325):
+        y = front(xc, 0.395)
+        doors.box((xc, y - 0.002, (0.21 + H - 0.04) / 2), (0.006, 0.02, H - 0.27), step=0.5, dent=0.0)
     handles = k.part("Griffe", "metal", bevel=0.0)
-    for xc in (-0.54, -0.18, 0.18, 0.54):
-        handles.lathe([(0.0, 0.0), (0.012, 0.0), (0.012, 0.016), (0.0, 0.016)], (xc + 0.14, -D / 2 - 0.004, 0.42), segs=12, turn=(90, 0))
+    for xc in (-0.4875, -0.1625, 0.1625, 0.4875):
+        y = front(xc, 0.42)
+        handles.lathe([(0.0, 0.0), (0.012, 0.0), (0.012, 0.026), (0.0, 0.026)], (xc, y + 0.003, 0.42), segs=12, turn=(90, 0))
     legs = k.part("Beine", "wood", bevel=0.0)
     for x in (-W / 2 + 0.1, W / 2 - 0.1):
         for y in (-D / 2 + 0.07, D / 2 - 0.07):
