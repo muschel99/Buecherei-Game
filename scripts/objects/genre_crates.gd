@@ -16,6 +16,7 @@ const WOOD_DARK := Color(0.45, 0.3, 0.18)
 
 var _crates: Dictionary = {}  # genre_id → {node, books: Node3D, interactable, genre}
 var _rack: Node3D
+var _levels := 0
 var _dirty := true
 
 
@@ -31,7 +32,6 @@ func _ready() -> void:
 	position = Vector3(0.0, 0.0, -0.325 - RACK_DEPTH / 2.0 - 0.01)
 	BookStock.changed.connect(func() -> void: _dirty = true)
 	BookStock.carried_changed.connect(func() -> void: _dirty = true)
-	_build_rack()
 
 
 func _process(_delta: float) -> void:
@@ -40,21 +40,26 @@ func _process(_delta: float) -> void:
 		_rebuild()
 
 
-## Regal: zwei Böden, Seitenwände, Deckbrett, Rückwand zur Theke (mit Kollision).
-func _build_rack() -> void:
+## Offenes, niedriges Regal: Boden, Seitenwände, Rückwand zur Theke (mit Kollision) – ohne Deckbrett, damit man von oben in
+## die Kisten sieht. Eine zweite Ebene kommt nur dazu, wenn es mehr Genres gibt, als in eine Reihe passen.
+func _build_rack(levels: int = 1) -> void:
+	if _rack:
+		_rack.queue_free()
+	_levels = levels
 	_rack = Node3D.new()
 	_rack.name = "Rack"
 	add_child(_rack)
 	var wood := _material(WOOD)
 	var dark := _material(WOOD_DARK)
-	var h := LEVEL_HEIGHT * 2.0 + 0.04
-	for part: Array in [
+	var h := LEVEL_HEIGHT * levels + 0.01
+	var parts: Array = [
 			[Vector3(RACK_WIDTH, 0.025, RACK_DEPTH), Vector3(0, 0.0125, 0), dark],              # Boden
-			[Vector3(RACK_WIDTH, 0.022, RACK_DEPTH), Vector3(0, LEVEL_HEIGHT + 0.011, 0), wood],  # Zwischenboden
-			[Vector3(RACK_WIDTH + 0.04, 0.03, RACK_DEPTH + 0.02), Vector3(0, h, 0), wood],       # Deckbrett
 			[Vector3(0.025, h, RACK_DEPTH), Vector3(-RACK_WIDTH / 2.0 - 0.0125, h / 2.0, 0), wood],
 			[Vector3(0.025, h, RACK_DEPTH), Vector3(RACK_WIDTH / 2.0 + 0.0125, h / 2.0, 0), wood],
-			[Vector3(RACK_WIDTH, h, 0.015), Vector3(0, h / 2.0, RACK_DEPTH / 2.0 - 0.0075), dark]]:  # Rückwand (zur Theke)
+			[Vector3(RACK_WIDTH, h, 0.015), Vector3(0, h / 2.0, RACK_DEPTH / 2.0 - 0.0075), dark]]  # Rückwand (zur Theke)
+	if levels > 1:
+		parts.append([Vector3(RACK_WIDTH, 0.022, RACK_DEPTH), Vector3(0, LEVEL_HEIGHT + 0.011, 0), wood])  # Zwischenboden
+	for part: Array in parts:
 		_rack.add_child(_box(part[0], part[1], part[2]))
 	var body := StaticBody3D.new()
 	body.name = "Body"
@@ -62,9 +67,9 @@ func _build_rack() -> void:
 	body.collision_mask = 0
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(RACK_WIDTH + 0.05, h + 0.015, RACK_DEPTH)
+	box.size = Vector3(RACK_WIDTH + 0.05, h, RACK_DEPTH)
 	shape.shape = box
-	shape.position = Vector3(0, (h + 0.015) / 2.0, 0)
+	shape.position = Vector3(0, h / 2.0, 0)
 	body.add_child(shape)
 	_rack.add_child(body)
 
@@ -84,6 +89,9 @@ func _rebuild() -> void:
 		if not id in ids:
 			(_crates[id].node as Node).queue_free()
 			_crates.erase(id)
+	var levels := 1 if genres.size() <= PER_ROW else 2
+	if levels != _levels:
+		_build_rack(levels)
 	var slot_width := RACK_WIDTH / PER_ROW
 	for i in genres.size():
 		var genre := genres[i]
@@ -92,7 +100,8 @@ func _rebuild() -> void:
 		var crate: Dictionary = _crates[genre.id]
 		var row := i / PER_ROW
 		var column := i % PER_ROW
-		(crate.node as Node3D).position = Vector3(-RACK_WIDTH / 2.0 + slot_width * (column + 0.5),
+		var in_row := mini(PER_ROW, genres.size() - row * PER_ROW)  # Reihe mittig im Regal
+		(crate.node as Node3D).position = Vector3(-in_row * slot_width / 2.0 + slot_width * (column + 0.5),
 			0.025 + row * (LEVEL_HEIGHT + 0.022) * (1.0 if row < 2 else 0.0), 0.0)
 		(crate.node as Node3D).visible = row < 2
 		_fill_crate(crate)
@@ -118,8 +127,8 @@ func _make_crate(genre: GenreData) -> Dictionary:
 	var label := Label3D.new()
 	label.text = genre.display_name
 	label.font = load("res://assets/ui/fonts/DejaVuSansCondensed-Bold.ttf")
-	label.font_size = 64
-	label.pixel_size = 0.0003
+	label.font_size = 80
+	label.pixel_size = 0.00028
 	label.modulate = Color(0.12, 0.08, 0.05) if color.get_luminance() > 0.45 else Color(0.98, 0.95, 0.88)
 	label.outline_size = 0
 	label.double_sided = false
