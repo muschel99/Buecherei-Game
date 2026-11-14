@@ -1391,6 +1391,14 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `screenshots/furniture_probe/<id>.png`; Wand-/Deckendinge werden passend aufgehängt). Der Raum setzt nach dem Laden alles,
   was auf einem Möbel steht oder liegt, auf dessen Ablagefläche (`Room._settle_on_supports`, `LooseBooks.settle_on`) – so
   schweben Dinge nicht, wenn ein Modell niedriger wird.
+- **Start und Ladebildschirm (seit Etappe 8, „das Spiel braucht ewig zum Starten“):** Startszene des Projekts ist
+  `scenes/ui/loading_screen.tscn` (`LoadingScreen`: Papier, umblätterndes Buch, Sätze in Handschrift, Bleistiftstrich) – lädt
+  main.tscn im Vordergrund (im Hintergrund-Faden scheitern @tool-Scripts der Häuser – darum auch keine `preload`-Standardwerte in
+  `@export`, siehe HouseFacade `DEFAULT_*`), setzt sie als current_scene ein und liegt darüber, bis die Bilder ruhig kommen (die
+  Grafikkarte bereitet ~220 Pipelines vor, nach Updates am längsten), dann blendet er aus und schreibt „Start: Programm …, Laden
+  …, Aufbauen …, erste Bilder …“ in die Ausgabe. Prüfwerkzeuge laden main.tscn weiter direkt. Messen: `scenes/tools/startup_probe.tscn`
+  (Zeiten je Schritt, Pipelines, Zeichenaufrufe; mit xvfb inkl. Grafik). Buchrücken-Atlas: Zwischenspeicher
+  `user://cache/spines_<stand>.png` (`BookArt._atlas_cache_path`, neu bei geänderten Büchern/Genres/Zeichen-Scripts).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

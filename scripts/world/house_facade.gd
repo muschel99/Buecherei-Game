@@ -38,6 +38,9 @@ enum GroundFloor {
 	SHOPFRONT,  ## Ladenfront: große Schaufenster, Ladentür, Schild darüber
 }
 
+const DEFAULT_LANTERN := "res://assets/models/props/wall_street_lantern.glb"
+const DEFAULT_MATERIAL := "res://assets/materials/house_facade.tres"
+
 @export_group("Maße")
 @export var width: float = 5.0:
 	set(value):
@@ -161,9 +164,11 @@ enum GroundFloor {
 		lanterns = value
 		_queue_rebuild()
 ## Modell der hängenden Laterne (Ursprung = Befestigung an der Wand, +Z von der Wand weg).
-@export var lantern_scene: PackedScene = preload("res://assets/models/props/wall_street_lantern.glb")
+## (leer = die Standard-Laterne; seit Etappe 8 ohne preload – das scheiterte beim Laden im Hintergrund, Ladebildschirm)
+@export var lantern_scene: PackedScene
 
-@export var material: Material = preload("res://assets/materials/house_facade.tres")
+## (leer = house_facade.tres, siehe oben)
+@export var material: Material
 
 ## Physik-Ebenen: "world" (fest) und "sight_blocker" (verdeckt nur die Sicht, seit Etappe 5a)
 const WORLD_LAYER := 1
@@ -277,6 +282,8 @@ func _rebuild() -> void:
 
 ## Hängende Laternen an den Punkten aus "lanterns" (nur Optik, hoch über den Köpfen).
 func _build_lanterns() -> void:
+	if lantern_scene == null:
+		lantern_scene = load(DEFAULT_LANTERN) as PackedScene
 	if lanterns.is_empty() or lantern_scene == null:
 		return
 	_lanterns = Node3D.new()
@@ -397,13 +404,13 @@ func _get_mesh() -> Mesh:
 		_build_front(builder)
 		_build_side_windows(builder)
 		_build_roof(builder)
-		_mesh_cache[key] = builder.commit(material)
+		_mesh_cache[key] = builder.commit(_material())
 	return _mesh_cache[key]
 
 
 func _mesh_key() -> String:
 	return str([width, depth, eaves_height, roof_rise, storeys, window_columns, door_side,
-		ground_floor, awning, porch, chimney, plinth_height, plinth_proud, material, side_windows])
+		ground_floor, awning, porch, chimney, plinth_height, plinth_proud, _material(), side_windows])
 
 
 ## Das reine Mesh des Platzhalters (z. B. für die Vorlagen zum Modellieren).
@@ -629,3 +636,10 @@ func _door_range() -> Vector2:
 			var x := _column_x(column, columns)
 			return Vector2(x - DOOR_WIDTH / 2.0 - FRAME, x + DOOR_WIDTH / 2.0 + FRAME)
 	return Vector2.ZERO
+
+
+## Material des einfachen Hauses (Feld material, sonst house_facade.tres).
+func _material() -> Material:
+	if material == null:
+		material = load(DEFAULT_MATERIAL) as Material
+	return material

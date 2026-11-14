@@ -144,9 +144,37 @@ func _spine_area(book: BookData) -> Rect2:
 
 
 ## Zeichnet alle Buchrücken in einem Durchgang in ein unsichtbares Bild.
+## Zwischenspeicher des Rücken-Atlas (seit Etappe 8, schnellerer Start): gezeichnet wird nur, wenn sich Bücher, Genres oder
+## die Zeichen-Scripts geändert haben – sonst lädt der Start das gespeicherte Bild.
+const ATLAS_CACHE := "user://cache/"
+const ATLAS_CACHE_VERSION := 1
+
+
+func _atlas_cache_path() -> String:
+	var stamp := "%d|%s" % [ATLAS_CACHE_VERSION, _atlas_size]
+	for book in Catalog.get_all_books():
+		stamp += "|%s:%d" % [book.id, book.spine_cell]
+	var sources: Array[String] = ["res://scripts/ui/book_cover.gd", "res://scripts/ui/book_motifs.gd", "res://scripts/data/book_data.gd"]
+	for folder in ["res://data/genres/", "res://data/books/"]:
+		for file in DirAccess.get_files_at(folder):
+			sources.append(folder + file)
+	for path in sources:
+		stamp += "|%s:%d" % [path, FileAccess.get_modified_time(path)]
+	return ATLAS_CACHE + "spines_%s.png" % stamp.md5_text()
+
+
 func _build_atlas() -> void:
 	if DisplayServer.get_name() == "headless":
 		return  # ohne Grafik (z. B. automatische Tests) gibt es nichts zu zeichnen
+	var cache_path := _atlas_cache_path()
+	if FileAccess.file_exists(cache_path):
+		var stored := Image.load_from_file(cache_path)
+		if stored and stored.get_size() == _atlas_size:
+			stored.generate_mipmaps()
+			_atlas.set_image(stored)
+			_is_atlas_ready = true
+			atlas_ready.emit()
+			return
 	var viewport := SubViewport.new()
 	viewport.size = _atlas_size
 	viewport.disable_3d = true
@@ -173,6 +201,12 @@ func _build_atlas() -> void:
 	if image == null or image.is_empty():
 		push_warning("BookArt: Buchrücken konnten nicht gezeichnet werden.")
 		return
+	# für den nächsten Start merken (alte Fassungen weg)
+	DirAccess.make_dir_recursive_absolute(ATLAS_CACHE)
+	for old_file in DirAccess.get_files_at(ATLAS_CACHE):
+		if old_file.begins_with("spines_"):
+			DirAccess.remove_absolute(ATLAS_CACHE + old_file)
+	image.save_png(cache_path)
 	image.generate_mipmaps()
 	_atlas.set_image(image)
 	_is_atlas_ready = true

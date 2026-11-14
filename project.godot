@@ -12,7 +12,9 @@ config_version=5
 
 config/name="Cozy Bücherei"
 config/description="Ein gemütlicher Bücherei-Simulator in der Ego-Perspektive."
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/ui/loading_screen.tscn"
+boot_splash/show_image=false
+boot_splash/bg_color=Color(0.99, 0.96, 0.9, 1)
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
