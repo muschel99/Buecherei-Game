@@ -168,6 +168,8 @@ func _counters() -> void:
 	var counter := (load("res://scenes/furniture/counter.tscn") as PackedScene).instantiate() as Node3D
 	add_child(counter)
 	GenreCrates.attach(counter)
+	for genre in Catalog.get_all_genres():  # alle Genres frei: so sieht man das volle Regal
+		BookStock.unlock_genre(genre.get_id())
 	var cam := Camera3D.new()
 	cam.fov = 50
 	add_child(cam)

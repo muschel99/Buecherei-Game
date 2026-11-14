@@ -34,13 +34,13 @@ SHELF_Z = 0.5                # Zwischenboden in den offenen Fächern
 UP = Matrix.Rotation(math.radians(90), 4, "X")  # lokale xy-Ebene -> senkrecht, lokales +z -> vorn (-y)
 
 # Würfelregal hinten unter der Platte (seit Testrunde 7b, Wunsch der Entwicklerin: „wie ein Kallax mit Kisten drin“):
-# 6 x 3 Fächer, je eine Bücherkiste pro Genre. GenreCrates (scripts/objects/genre_crates.gd) rechnet die Fächer genauso –
-# CUBE_* und CRATE_* dort gleich halten.
-CUBE_COLS, CUBE_ROWS = 6, 3
-CUBE_T = 0.028               # Stärke der Trennwände und Böden
+# 7 x 4 = 28 Fächer (Wunsch der Entwicklerin: Platz für weitere Genres), je eine Bücherkiste pro Genre. GenreCrates
+# (scripts/objects/genre_crates.gd) rechnet die Fächer genauso – CUBE_* und CRATE_* dort gleich halten.
+CUBE_COLS, CUBE_ROWS = 7, 4
+CUBE_T = 0.026               # Stärke der Trennwände und Böden
 CUBE_DEPTH = 0.33            # Tiefe der Fächer ab der Rückseite (BACK_Y)
-CRATE_W, CRATE_D, CRATE_H = 0.25, 0.29, 0.15   # Bücherkiste (Breite, Tiefe, Höhe), Vorderseite -y
-LABEL_Z, LABEL_W, LABEL_H = 0.105, 0.12, 0.045  # Schild vorn an der Kiste (Mitte, Größe)
+CRATE_W, CRATE_D, CRATE_H = 0.22, 0.29, 0.125  # Bücherkiste (Breite, Tiefe, Höhe), Vorderseite -y
+LABEL_Z, LABEL_W, LABEL_H = 0.085, 0.11, 0.04   # Schild vorn an der Kiste (Mitte, Größe)
 
 
 def book_mats(k):
@@ -587,7 +587,7 @@ def build_crate_oak(k):
     for sx in (-1, 1):
         b.box((sx * (w / 2 - 0.009), 0, h / 2), (0.018, d, h), step=0.3, dent=0.0006)
     for sy in (-1, 1):
-        for z0, z1 in ((0.012, 0.064), (0.086, h)):
+        for z0, z1 in ((0.012, 0.056), (0.072, h)):
             b.box((0, sy * (d / 2 - 0.0085), (z0 + z1) / 2), (w - 0.036 + 0.004, 0.013, z1 - z0), step=0.3, dent=0.0006)
     card = k.part("Schild", "paper", bevel=0.0015)
     card.box((0, -d / 2 - 0.001, LABEL_Z), (LABEL_W, 0.006, LABEL_H), step=0.5, dent=0.0003)
@@ -642,7 +642,7 @@ def build_crate_wicker(k):
     for i in range(staves):
         p, _n = _along(path, i / staves)
         b.tube([p + Vector((0, 0, 0.006)), p + Vector((0, 0, h - 0.006))], 0.0032, segs=5)
-    rows = 8
+    rows = 7
     for j in range(rows):
         z = 0.014 + (h - 0.024) * (j + 0.5) / rows
         pts = []
@@ -690,7 +690,7 @@ def build_crate_book(k):
     book_mats(k)
     cover = k.part("Buchdeckel", "cover", bevel=0.0015, vary=0.0)
     pages = k.part("Buchseiten", "pages", bevel=0.0008, vary=0.02)
-    F.book(cover, pages, (0, 0, 0), (0.026, 0.16, 0.2), turn=90)
+    F.book(cover, pages, (0, 0, 0), (0.024, 0.15, 0.15), turn=90)
 
 
 def inside_frame(k, slot, hatch_slot, depth=0.035, hatch_depth=0.022, bevel=0.006):

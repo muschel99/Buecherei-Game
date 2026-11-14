@@ -1,7 +1,7 @@
 class_name GenreCrates
 extends Node3D
 ## Bücherkisten im Würfelregal unter der Theke (seit Testrunde 7b, Wunsch der Entwicklerin: „wie ein Kallax mit Kisten
-## drin“): Die Theken haben hinten (Seite der Spielfigur) 6 x 3 Fächer; in jedem Fach steht die Kiste eines freigeschalteten
+## drin“, genug Fächer für weitere Genres): Die Theken haben hinten (Seite der Spielfigur) 7 x 4 = 28 Fächer; in jedem Fach steht die Kiste eines freigeschalteten
 ## Genres – je Thekenstil eine passende (CounterData.crate_path: Eichenkiste, Walnusskasten, Weidenkorb, Leinenbox) mit dem
 ## Genre-Namen in Handschrift auf dem Schild. Die Kisten SIND das Lager (BookStock): so viele Bücher, wie im Lager liegen,
 ## stehen darin (höchstens BOOKS_SHOWN). Rechtsklick auf eine Kiste nimmt ein Buch dieses Genres in die Hand, Linksklick legt
@@ -14,12 +14,12 @@ const BOARD := 0.025
 const BASE_Z := 0.09
 const UNDER_TOP := 0.955
 const BACK_Y := 0.25          # Rückseite des Korpus (Blender-y) = Öffnung der Fächer
-const CUBE_COLS := 6
-const CUBE_ROWS := 3
-const CUBE_T := 0.028
-const CRATE_SIZE := Vector3(0.25, 0.15, 0.29)  # Breite, Höhe, Tiefe
-const LABEL_Z := 0.105
-const LABEL_W := 0.12
+const CUBE_COLS := 7
+const CUBE_ROWS := 4
+const CUBE_T := 0.026
+const CRATE_SIZE := Vector3(0.22, 0.125, 0.29)  # Breite, Höhe, Tiefe
+const LABEL_Z := 0.085
+const LABEL_W := 0.11
 ## Vorderfläche des Schilds je Kiste (Abstand von der Kistenmitte nach vorn), die Schrift sitzt knapp davor
 const LABEL_FRONT := {"crate_wicker": 0.1505, "crate_linen": 0.145}
 const LABEL_FRONT_DEFAULT := 0.149
@@ -171,7 +171,7 @@ func _fill_crate(crate: Dictionary) -> void:
 			# von hinten nach vorn, das vorderste Buch zeigt seinen Einband
 			book.position = Vector3(rng.randf_range(-0.012, 0.012), 0.012, -CRATE_SIZE.z / 2.0 + 0.04 + i * step)
 			book.rotation = Vector3(deg_to_rad(-rng.randf_range(6.0, 14.0)), deg_to_rad(rng.randf_range(-4.0, 4.0)), 0.0)
-			book.scale = Vector3.ONE * rng.randf_range(0.9, 1.05)
+			book.scale = Vector3.ONE * rng.randf_range(0.92, 1.04)
 			var cover_colors: Dictionary[String, Color] = {}
 			cover_colors["cover"] = colors[(i + rng.randi() % colors.size()) % colors.size()]
 			var variant := ColorVariant.new()

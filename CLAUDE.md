@@ -223,7 +223,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   alle zurück in die Kisten) und je Fach EINE Auswahl (`ShelfMenu.AUTO` „Automatisch“, „Gemischt“, Genre) mit Inhalt des Fachs;
   ohne Regal im Blick (`ShelfMenu.open_for(null)`) das **Bücherverzeichnis** (Suchfeld, Genre, je Buch der Ort:
   `ShelfMenu.collect_book_places()`). Code im ShelfMenu muss immer mit `shelf == null` klarkommen.
-  **Bücher aus dem Lager** nimmt man seit 7b nur aus den **Bücherkisten unter der Theke** (`GenreCrates`: Würfelregal 6 x 3
+  **Bücher aus dem Lager** nimmt man seit 7b nur aus den **Bücherkisten unter der Theke** (`GenreCrates`: Würfelregal 7 x 4 = 28 Fächer
   hinten in jeder Theke – `furniture_fixtures.cube_back`, Maße `CUBE_*`/`CRATE_*` dort und in genre_crates.gd gleich halten –,
   je freigeschaltetem Genre eine Kiste, Kiste je Thekenstil `CounterData.crate_path` (crate_oak/walnut/wicker/linen), Genre in
   Handschrift auf dem Schild, Bücher `crate_book.glb` in Genre-Farben; Rechtsklick nimmt ein Buch, Linksklick legt das obere Buch
