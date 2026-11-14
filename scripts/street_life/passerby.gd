@@ -657,11 +657,7 @@ func _step_door(delta: float) -> void:
 					return  # erst zur Tür drehen
 				_action.started = true
 				door.request(self)
-				if _model and _model.has_method("play_clip"):
-					# nur der Abschnitt mit der Hand an der Tür (Anfang, Länge in Sekunden)
-					var clip: StringName = &"door_in" if bool(_action.get("push", true)) else &"door_out"
-					var part: Vector2 = GameConfig.house_door_clip_in if clip == &"door_in" else GameConfig.house_door_clip_out
-					_model.call("play_clip", clip, part.y, Vector2.ZERO, 0.0, false, part.x)
+				# (seit Testrunde 7b ohne Handbewegung zur Tür – Wunsch der Entwicklerin; die Tür geht einfach auf)
 			if door.is_open():
 				_phase = 2
 				_phase_time = 0.0
@@ -1543,8 +1539,11 @@ func _avoid(want: float, band: Vector2) -> float:
 		if along > 0.0 and their_speed > 0.2 and their_speed >= speed_pref * 0.95:
 			continue
 		var gap: float = radius * scale.x + float(obstacle.radius) + (0.06 if obstacle.kind == "walker" else 0.12)
+		var library_pass: bool = in_library and obstacle.kind == "walker" and (obstacle.agent as Passerby).in_library
 		if squeeze > 0.0 and obstacle.kind == "walker":
 			gap = StreetLife.SQUEEZE_GAP + 0.02
+		elif library_pass:
+			gap = StreetLife.LIBRARY_GAP + 0.02  # in der Bücherei drückt man sich vorbei (seit Testrunde 7b)
 		elif obstacle.kind == "static" and narrow:
 			# Schmaler Weg zum Schaufenster: der Platz dort ist geprüft frei; was knapp neben dem Weg steht
 			# (Kübel, Blumenständer), bremst nicht (sonst blieb man 6 s davor stehen und kehrte um)
@@ -1552,7 +1551,7 @@ func _avoid(want: float, band: Vector2) -> float:
 		intervals.append(Vector4(lage.y - gap, lage.y + gap, 1.0 if their_speed < -0.2 else 0.0, along))
 		if along > 0.0 and along < gap + 0.6 and absf(_lat - lage.y) < gap and obstacle.kind == "walker" and their_speed < 0.2:
 			_front_walker = obstacle.agent
-		if along > 0.0 and absf(_lat - lage.y) < gap - 0.02 and not (squeeze > 0.0 and obstacle.kind == "walker"):
+		if along > 0.0 and absf(_lat - lage.y) < gap - 0.02 and not (squeeze > 0.0 and obstacle.kind == "walker") and not library_pass:
 			# Es steht direkt vor mir: bremsen (hinter Langsameren her: deren Tempo) – nicht beim Vorbeidrücken, da hält
 			# nur blocks_move den kleinen Abstand
 			var limit := speed_pref * clampf((along - gap - 0.05) / 0.9, 0.0, 1.0)

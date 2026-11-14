@@ -65,6 +65,10 @@ func _go():
 				m._update_chore(0.0)
 				for d in [Vector3(1,0.3,1), Vector3(0.1,0.3,1), Vector3(-1,0.2,0.1)]:
 					await _shot(m, d, "sweep_%.1f_%d" % [tt, int(d.x * 10)])
+		"clips":
+			# Längen der Animationen (Prüfen, seit Testrunde 7b)
+			for clip in [&"door_in", &"door_out", &"pick_up", &"water", &"walk"]:
+				print("Clip %s: %.2f s" % [clip, m._player.get_animation(clip).length if m._player.has_animation(clip) else -1.0])
 		"read":
 			# Lesen im Sitzen (seit Testrunde 7b): aufgeschlagenes Buch in beiden Händen, Blick darauf
 			m.sit_height = 0.3

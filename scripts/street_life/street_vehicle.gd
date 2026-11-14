@@ -277,8 +277,9 @@ func _drive(delta: float, wanted: float) -> void:
 		speed = 0.0
 		_accel = 0.0
 	var real_accel := (speed - before) / maxf(delta, 0.0001)
-	# seitlich nie schneller als es zum Tempo passt (langsam fahrend kein Sprung zur Seite)
-	_lat = move_toward(_lat, _target_lat, minf(SWERVE_SPEED, maxf(0.25, speed * 0.45)) * delta)
+	# seitlich nie schneller als es zum Tempo passt (langsam fahrend kein Sprung zur Seite; im Stand gar nicht – sonst rutschte
+	# der Lieferwagen beim Losfahren vom Halteplatz seitwärts, seit Testrunde 7b)
+	_lat = move_toward(_lat, _target_lat, minf(SWERVE_SPEED, maxf(0.25 * clampf(speed / 0.8, 0.0, 1.0), speed * 0.45)) * delta)
 	var ds := speed * delta
 	if ds > 0.0:
 		var p0 := _route.point_at(_s, _lat)
@@ -339,7 +340,8 @@ func _place(delta: float) -> void:
 	pos = _route.point_at(_s, _lat)
 	var forward := _route.direction_at(_s) * float(direction)
 	var moved := pos - before
-	if delta > 0.0 and moved.length() > 0.001:
+	# Fahrtrichtung aus der Bewegung erst ab etwas Tempo (beim Anfahren wackelte sie sonst hin und her)
+	if delta > 0.0 and moved.length() > 0.25 * delta:
 		forward = moved.normalized()
 	position = Vector3(pos.x, -GameConfig.curb_height, pos.y)
 	# Richtung weich nachführen (keine Ruckler in Kurven und beim Ausweichen)

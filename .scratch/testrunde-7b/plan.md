@@ -20,22 +20,24 @@ Status: claimed
 - [x] Türschild nur innen, Vorderseite zur Straße (innen die Rückseite)
 
 ## Teil 3 – Hinterzimmer
-- [ ] Bücherei nach hinten verlängern (Außenmauern, Dach, Sockel bis zum Boden), echte Tür statt Vorhang, prüfen gegen Haus hinter dem Modegeschäft
+- [x] Bücherei nach hinten verlängern (Außenmauern, Dach, Sockel bis zum Boden), echte Tür statt Vorhang, prüfen gegen Haus hinter dem Modegeschäft
 
 ## Teil 4 – Straße
-- [ ] Katzen blockieren sich und den Eingang auf der Treppe
-- [ ] Gießkanne falsch gebaut
-- [ ] Tür öffnen/schließen: Animation fehlt
-- [ ] Lieferwagen ruckelt beim Start
-- [ ] Kartons stehen in der Deko
+- [x] Katzen blockieren sich und den Eingang auf der Treppe
+- [x] Gießkanne falsch gebaut (entfällt: Gießen und Fegen ganz entfernt, Wunsch der Entwicklerin)
+- [x] Tür öffnen/schließen: Handbewegung der Passanten entfernt (Wunsch der Entwicklerin)
+- [x] Lieferwagen ruckelt beim Start
+- [x] Kartons stehen in der Deko
 
 ## Teil 5 – Bedienung
 - [ ] Hänger in der App „Fassade“
 - [ ] Tooltip-Schrift bei Nest & Nook kaum lesbar
 - [ ] Gestaltungsmodus: Mausrad wählt Möbel, wenn nichts in der Hand
-- [ ] Theke und Katzen leuchten auf – nur im Gestaltungsmodus
+- [x] Theke und Katzen leuchten nicht mehr auf
 - [ ] Pausenmenü: Aufbau und Aussehen gefallen noch nicht
-- [ ] Rückfragen: „Hitboxen“, „Laufgeschwindigkeit in B“, „Möbel verbessern“, „Gießen + Fegen weg“
+- [x] Hitboxen: Stempel-Bereich auf der Theke nur noch klein und nur, wenn jemand wartet (verdeckte Tablet/Bücher)
+- [x] Besucher in der Bücherei zu langsam: Tempo 1,05–1,35 m/s, kein Abbremsen voreinander
+- [x] Gießen + Fegen ganz entfernt
 
 ## Teil 6 – Büchersystem (eigene Fragerunde)
 - Regal-Menü unübersichtlich, kein Überblick, Bücher aus dem Lager holen umständlich

@@ -46,6 +46,7 @@ var auto_stamp := false
 ## Theke: Wer gerade dran ist und wie weit (0 = Ausweis hochhalten, 1 = Ausweis liegt da, 2 = gestempelt, 3 = fertig)
 var _checkout: Dictionary = {}
 ## Dinge auf der Theke beim Ausleihen (Korb, Ausweis, Stempel) und der Korbstapel an der Wand
+var _stamp_shape: CollisionShape3D
 var _counter_basket: Node3D
 var _counter_card: Node3D
 var _stamp_tool: Node3D
@@ -56,6 +57,8 @@ const BASKET_MODELS := ["res://assets/models/characters/props/library_basket_0.g
 ## Abstand Griff – Boden des Korbs (m, wie im Blender-Script: Hängen + Höhe)
 const BASKET_DROP := 0.2
 const CHECKOUT_WORDS := ["Ausweis", "Stempeln", "Scannen"]
+## Plätze vor Regalen, die Besucher gerade belegen (walker → Welt-Punkt)
+var _shelf_spots: Dictionary = {}
 ## Was ein Besucher gerade trägt / will: walker → {books, genre, new}
 var _visit: Dictionary = {}
 
@@ -106,6 +109,8 @@ func offer_visit(walker: Passerby, rejoin: Vector2) -> Array:
 	walker.add_to_group(VISITOR_GROUP)
 	walker.add_to_group(Door.KEEPOUT_GROUP)
 	walker.in_library = true
+	_visit[walker].speed = walker.speed_pref
+	walker.speed_pref = clampf(walker.speed_pref, GameConfig.visitor_speed_range.x, GameConfig.visitor_speed_range.y)
 	var p := _entrance_points()
 	var actions: Array = []
 	actions.append(_line([walker.pos, p.foot], 0.0, 0.0, STREET_HALF_WIDTH))
@@ -167,15 +172,7 @@ func _plan_inside(walker: Passerby) -> Array:
 	if debug:
 		print("Bücherei: %s will %s, Regale %d" % [walker.name, (_visit.get(walker, {}) as Dictionary).get("genre", "?"), stops.size()])
 	for shelf in stops:
-		var spot := _shelf_spot(shelf)
-		if debug:
-			print("  Regal %s Bücher %d Platz %s" % [shelf.get_path(), shelf.get_books().size(), spot])
-		if spot.is_empty():
-			continue
-		actions.append(_call(_go_to.bind(spot.pos)))
-		actions.append({"type": "stand", "anim": &"browse", "face": spot.face,
-			"time": _rng.randf_range(GameConfig.visitor_browse_time.x, GameConfig.visitor_browse_time.y)})
-		actions.append(_call(_take_books.bind(shelf)))
+		actions.append(_call(_visit_shelf.bind(shelf)))
 	actions.append(_call(_after_browsing))
 	return actions
 
@@ -273,6 +270,8 @@ func _left_library(walker: Passerby) -> Array:
 	walker.remove_from_group(VISITOR_GROUP)
 	walker.remove_from_group(Door.KEEPOUT_GROUP)
 	walker.in_library = false
+	_shelf_spots.erase(walker)
+	walker.speed_pref = float((_visit.get(walker, {}) as Dictionary).get("speed", walker.speed_pref))
 	walker.give_bag(false)  # (die ausgeliehenen Bücher bleiben in der Hand – StreetLife._launch räumt sie später weg)
 	queue.erase(walker)
 	_visit.erase(walker)
@@ -381,15 +380,19 @@ func _card_point() -> Vector3:
 
 ## E-Bereich auf der Theke („Stempeln“, nur wenn jemand wartet und man hinter der Theke steht).
 func _add_stamp_interactable() -> void:
+	# Nur ein schmaler Streifen über der Platte auf der Seite der Spielfigur, nur aktiv, wenn jemand wartet (sonst verdeckte er
+	# Tablet und Bücher auf der Theke – seit Testrunde 7b), und die Theke leuchtet dabei nicht auf
 	_stamp_interactable = Interactable.new()
 	_stamp_interactable.name = "StampInteractable"
 	_stamp_interactable.prompt_text = ""
-	var shape := CollisionShape3D.new()
+	_stamp_interactable.highlight_owner = false
+	_stamp_shape = CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(2.0, 0.3, 0.65)
-	shape.shape = box
-	_stamp_interactable.add_child(shape)
-	_stamp_interactable.position = Vector3(0.0, 1.12, 0.02)
+	box.size = Vector3(1.2, 0.08, 0.3)
+	_stamp_shape.shape = box
+	_stamp_shape.disabled = true
+	_stamp_interactable.add_child(_stamp_shape)
+	_stamp_interactable.position = Vector3(-0.2, 1.05, -0.15)
 	_counter.add_child(_stamp_interactable)
 	_stamp_interactable.interacted.connect(_on_stamp)
 
@@ -453,6 +456,7 @@ func _update_counter() -> void:
 	if waiting and player_behind_counter() and not _scanning:
 		word = CHECKOUT_WORDS[int(_checkout[waiting])]
 	_stamp_interactable.prompt_text = word
+	_stamp_shape.disabled = word.is_empty()
 	if debug and not queue.is_empty():
 		_debug_wait -= get_physics_process_delta_time()
 		if _debug_wait <= 0.0:
@@ -658,18 +662,47 @@ func _in_back_room(point: Vector3) -> bool:
 
 
 ## Stelle vor einem Regal (Welt) und Blickrichtung dorthin (2D), oder leer.
-func _shelf_spot(shelf: BookShelf) -> Dictionary:
+## Zum Regal: einen freien Platz davor wählen (links, Mitte, rechts – nie dort, wo schon jemand steht oder hingeht), stöbern,
+## Bücher nehmen, Platz wieder freigeben (seit Testrunde 7b; vorher standen zwei am selben Fleck).
+func _visit_shelf(walker: Passerby, shelf: BookShelf) -> Array:
+	if not is_instance_valid(shelf):
+		return []
+	var spot := _shelf_spot(shelf, walker)
+	if debug:
+		print("  Regal %s Bücher %d Platz %s" % [shelf.get_path(), shelf.get_books().size(), spot])
+	if spot.is_empty():
+		return []
+	_shelf_spots[walker] = spot.pos
+	return [_call(_go_to.bind(spot.pos)),
+		{"type": "stand", "anim": &"browse", "face": spot.face,
+			"time": _rng.randf_range(GameConfig.visitor_browse_time.x, GameConfig.visitor_browse_time.y)},
+		_call(_take_books.bind(shelf)),
+		_call(func(w: Passerby) -> Array:
+			_shelf_spots.erase(w)
+			return [])]
+
+
+func _shelf_spot(shelf: BookShelf, walker: Passerby) -> Dictionary:
 	var item := FurnitureUtils.find_placed_furniture(shelf)
 	var base := item if item else shelf as Node3D
 	var forward := base.global_basis.z
 	forward.y = 0.0
 	forward = forward.normalized()
-	var desired := base.global_position + forward * 0.75
-	var spot := _nearest_free(desired)
-	if spot.distance_to(desired) > 0.9:
-		return {}
+	var across := forward.cross(Vector3.UP).normalized()
 	var face := Vector2(-forward.x, -forward.z)
-	return {"pos": spot, "face": face}
+	for offset: float in [0.0, -0.55, 0.55]:
+		var desired := base.global_position + forward * 0.75 + across * offset
+		var spot := _nearest_free(desired)
+		if spot.distance_to(desired) > 0.9:
+			continue
+		var taken := false
+		for other: Variant in _shelf_spots:
+			if other != walker and is_instance_valid(other) and (_shelf_spots[other] as Vector3).distance_to(spot) < 0.5:
+				taken = true
+				break
+		if not taken:
+			return {"pos": spot, "face": face}
+	return {}
 
 
 # --- Raster ---

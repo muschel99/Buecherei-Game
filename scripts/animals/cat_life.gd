@@ -670,6 +670,10 @@ func _free_to_meet(cat: StreetCat) -> bool:
 		return false
 	if in_alley(cat.global_position):
 		return false
+	# nie vor der Treppe der Bücherei (seit Testrunde 7b: dort versperrten zwei Katzen den Eingang)
+	var near_door := _outside.to_local(cat.global_position)
+	if Vector2(near_door.x, near_door.z).distance_to(StreetPaths.library_entrance()) < GameConfig.cat_meet_entrance_gap:
+		return false
 	if absf(cat.global_position.y - _outside.global_position.y) > 0.05 or cat._action.get("road", false):
 		return false
 	var type := cat.get_action_type()

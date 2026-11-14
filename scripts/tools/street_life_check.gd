@@ -93,6 +93,16 @@ func _run() -> void:
 		GameConfig.cat_interval = Vector2(4.0, 8.0)
 		GameConfig.cat_first_delay = Vector2(1.0, 2.0)
 		GameConfig.cat_enter_chance = float(_args.get("enter", GameConfig.cat_enter_chance))
+	if _args.has("facade"):
+		# andere Fassade/Deko (z. B. --facade=deco_walk:tubs,deco_seat:bench), wie in screenshot_tour
+		var wish := FacadeDesign.config.duplicate()
+		for pair in String(_args.facade).split(",", false):
+			var kv := pair.split(":")
+			if kv.size() == 2:
+				wish[kv[0]] = kv[1]
+		FacadeDesign.apply(wish)
+		for i in 10:
+			await get_tree().physics_frame
 	if _args.has("deliver"):
 		var manager := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
 		manager.place_order([{"kind": "furniture", "id": "armchair_velvet", "count": int(_args.deliver)}], 0.0)
@@ -437,6 +447,9 @@ func _print_report() -> void:
 	if _life.homes:
 		print("Läden (seit 6i): Läden %d, Besuche %d, Tüten %d, im Pub gesetzt %d, feste Gäste %d, Figuren drinnen %d" % [_life.homes.shops.size(),
 			_life.homes.stat_shop_visits, _life.homes.stat_bags, _life.homes.stat_pub_visits, _life.homes.guests.size(), _life.homes.indoor.size()])
+	if _args.has("deliver"):
+		var dm := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
+		print("Lieferung (seit 7b): Kartons %d, Plätze in der Deko gesperrt %s" % [dm.get_box_spots().size(), dm._deco_blocked()])
 	if _life.library:
 		var t := Lending.today
 		print("Bücherei (seit 7): Besucher %d, ausgeliehen %d, nichts gefunden %d, neue Ausweise %d, Einnahmen %d, %s" % [

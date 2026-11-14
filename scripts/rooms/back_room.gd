@@ -1,7 +1,8 @@
 class_name BackRoom
 extends Node3D
-## Hinterzimmer der Bücherei (seit Etappe 7): ein kleiner Raum hinter dem Laden (GameConfig.back_room_*), durch einen
-## Durchgang mit Holzrahmen und Vorhang in der Rückwand erreichbar. Gebaut beim Start (Kind des Raums): Boden, Wände und
+## Hinterzimmer der Bücherei (seit Etappe 7): ein kleiner Raum hinter dem Laden (GameConfig.back_room_*), durch eine Holztür
+## in der Rückwand erreichbar (BackRoomDoor, seit Testrunde 7b; vorher ein Vorhang). Seit Testrunde 7b ein richtiger Anbau:
+## außen Backstein mit Sandsteinsockel bis unter den Boden draußen, Flachdach aus Zink mit Dachfenster-Aufsatz. Gebaut beim Start (Kind des Raums): Boden, Wände und
 ## Decke mit Kollision (Möbel stellen und Deko aufhängen geht wie im Laden – Room.extra_build_areas, Room.add_hang_walls),
 ## Sockelleiste, Stuckleiste, Dachfenster mit Tageslicht. Besucher kommen nie hinein (sie planen nur Wege im Laden).
 ## Umstreichen und andere Böden kommen mit den späteren Raum-Erweiterungen.
@@ -68,6 +69,7 @@ func build(owner_room: Room) -> void:
 	cut.material = WALL_MAT
 	ceiling.add_child(cut)
 	_skylight(sky_center, sky)
+	_exterior(x0, x1, z0, z1, height, sky_center, sky)
 	# 3. Leisten
 	_skirting(Vector3(x0, 0, z0), Vector3(x0, 0, z1), true)
 	_skirting(Vector3(x1, 0, z1), Vector3(x1, 0, z0), true)
@@ -198,31 +200,12 @@ func _doorway(x: float, width: float, height: float, wall_z: float) -> void:
 	frame.mesh = tool.commit()
 	frame.material_override = TRIM_MAT
 	add_child(frame)
-	# Vorhang: zwei Bahnen, an den Seiten gerafft – die Mitte bleibt frei zum Hindurchgehen
-	var cloth := StandardMaterial3D.new()
-	cloth.albedo_color = GameConfig.back_room_curtain_color
-	cloth.roughness = 0.95
-	cloth.cull_mode = BaseMaterial3D.CULL_DISABLED
-	for side: float in [-1.0, 1.0]:
-		var drape := MeshInstance3D.new()
-		var plane := PlaneMesh.new()
-		plane.size = Vector2(0.26, height - 0.05)
-		plane.orientation = PlaneMesh.FACE_Z
-		plane.subdivide_width = 6
-		drape.mesh = plane
-		drape.material_override = cloth
-		drape.position = Vector3(x + side * (width / 2.0 - 0.14), (height - 0.05) / 2.0 + 0.02, wall_z - WALL / 2.0 - 0.03)
-		add_child(drape)
-	# Stange
-	var rod := MeshInstance3D.new()
-	var cylinder := CylinderMesh.new()
-	cylinder.top_radius = 0.012
-	cylinder.bottom_radius = 0.012
-	cylinder.height = width + 0.1
-	rod.mesh = cylinder
-	rod.material_override = TRIM_MAT
-	rod.transform = Transform3D(Basis(Vector3.FORWARD, PI / 2.0), Vector3(x, height - 0.03, wall_z - WALL / 2.0 - 0.03))
-	add_child(rod)
+	# Holztür (seit Testrunde 7b statt des Vorhangs): geht mit E auf und schwingt ins Hinterzimmer
+	var leaf := BackRoomDoor.new()
+	leaf.name = "BackDoor"
+	add_child(leaf)
+	leaf.position = Vector3(x, 0.0, wall_z + WALL / 2.0 - BackRoomDoor.LEAF_THICKNESS / 2.0 - 0.005)
+	leaf.setup(width, height)
 
 
 func _add_box(tool: SurfaceTool, box: AABB) -> void:
@@ -233,6 +216,87 @@ func _add_box(tool: SurfaceTool, box: AABB) -> void:
 	for f: Array in [[0, 1, 2, 3], [7, 6, 5, 4], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]:
 		tool.add_vertex(c[f[0]]); tool.add_vertex(c[f[2]]); tool.add_vertex(c[f[1]])
 		tool.add_vertex(c[f[0]]); tool.add_vertex(c[f[3]]); tool.add_vertex(c[f[2]])
+
+
+const BRICK_MAT := preload("res://assets/materials/storybook/backstein_ziegelrot.tres")
+const PLINTH_MAT := preload("res://assets/materials/storybook/sandstein.tres")
+const ZINC_MAT := preload("res://assets/materials/storybook/zink.tres")
+const YARD_MAT := preload("res://assets/materials/storybook/kopfsteinpflaster.tres")
+## Dachfenster-Aufsatz über dem Zinkdach (m)
+const SKYLIGHT_CURB := 0.14
+
+
+## Außenhaut des Anbaus (seit Testrunde 7b – vorher hing ein heller Kasten ohne Dach hinten an der Bücherei): Backstein auf den
+## drei Außenwänden bis unter den Boden draußen, Sandsteinsockel, Flachdach aus Zink mit Überstand und Tropfkante, Aufsatz
+## um das Dachfenster.
+func _exterior(x0: float, x1: float, z0: float, z1: float, height: float, sky_center: Vector3, sky: Vector2) -> void:
+	var ground := -GameConfig.shop_floor_rise - 0.12
+	var top := height + 0.2
+	var skin := 0.03
+	var outer_x0 := x0 - WALL
+	var outer_x1 := x1 + WALL
+	var outer_z1 := z1 + WALL
+	var wall_h := top - ground
+	# Backstein: links, rechts, hinten
+	_mesh_box("BrickLeft", Vector3(outer_x0 - skin / 2.0, ground + wall_h / 2.0, (z0 + outer_z1) / 2.0),
+		Vector3(skin, wall_h, outer_z1 - z0), BRICK_MAT)
+	_mesh_box("BrickRight", Vector3(outer_x1 + skin / 2.0, ground + wall_h / 2.0, (z0 + outer_z1) / 2.0),
+		Vector3(skin, wall_h, outer_z1 - z0), BRICK_MAT)
+	_mesh_box("BrickBack", Vector3((outer_x0 + outer_x1) / 2.0, ground + wall_h / 2.0, outer_z1 + skin / 2.0),
+		Vector3(outer_x1 - outer_x0 + skin * 2.0, wall_h, skin), BRICK_MAT)
+	# Sockel (etwas dicker, bis knapp über den Boden draußen)
+	var plinth_h := GameConfig.shop_floor_rise + 0.12 + 0.35
+	var p := 0.06
+	_mesh_box("PlinthLeft", Vector3(outer_x0 - p / 2.0, ground + plinth_h / 2.0, (z0 + outer_z1 + p) / 2.0),
+		Vector3(p, plinth_h, outer_z1 + p - z0), PLINTH_MAT)
+	_mesh_box("PlinthRight", Vector3(outer_x1 + p / 2.0, ground + plinth_h / 2.0, (z0 + outer_z1 + p) / 2.0),
+		Vector3(p, plinth_h, outer_z1 + p - z0), PLINTH_MAT)
+	_mesh_box("PlinthBack", Vector3((outer_x0 + outer_x1) / 2.0, ground + plinth_h / 2.0, outer_z1 + p / 2.0),
+		Vector3(outer_x1 - outer_x0 + p * 2.0, plinth_h, p), PLINTH_MAT)
+	# kleiner gepflasterter Hof unter und um den Anbau (dahinter war vorher nichts – nur von weit oben zu sehen)
+	_mesh_box("Yard", Vector3(0.0, -GameConfig.shop_floor_rise - 0.06, (z0 + outer_z1) / 2.0 + 0.8),
+		Vector3(6.6, 0.1, outer_z1 - z0 + 1.6), YARD_MAT)
+	# Zinkdach mit Überstand (vorn stößt es an die Rückwand des Ladens), Loch fürs Dachfenster
+	var over := 0.14
+	var roof := CSGCombiner3D.new()
+	roof.name = "Roof"
+	add_child(roof)
+	var cover := CSGBox3D.new()
+	cover.size = Vector3(outer_x1 - outer_x0 + over * 2.0, 0.05, outer_z1 + over - z0)
+	cover.position = Vector3((outer_x0 + outer_x1) / 2.0, top + 0.025, (z0 + outer_z1 + over) / 2.0)
+	cover.material = ZINC_MAT
+	roof.add_child(cover)
+	var hole := CSGBox3D.new()
+	hole.operation = CSGShape3D.OPERATION_SUBTRACTION
+	hole.size = Vector3(sky.x, 0.3, sky.y)
+	hole.position = Vector3(sky_center.x, top, sky_center.z)
+	hole.material = ZINC_MAT
+	roof.add_child(hole)
+	# Tropfkante rundherum (außer vorn)
+	for edge: Array in [[Vector3(outer_x0 - over + 0.01, top - 0.02, (z0 + outer_z1 + over) / 2.0), Vector3(0.02, 0.09, outer_z1 + over - z0)],
+			[Vector3(outer_x1 + over - 0.01, top - 0.02, (z0 + outer_z1 + over) / 2.0), Vector3(0.02, 0.09, outer_z1 + over - z0)],
+			[Vector3((outer_x0 + outer_x1) / 2.0, top - 0.02, outer_z1 + over - 0.01), Vector3(outer_x1 - outer_x0 + over * 2.0, 0.09, 0.02)]]:
+		_mesh_box("Drip", edge[0], edge[1], ZINC_MAT)
+	# Aufsatz ums Dachfenster
+	var t := 0.06
+	var cy := top + 0.05 + SKYLIGHT_CURB / 2.0
+	for curb: Array in [[Vector3(sky_center.x, cy, sky_center.z - sky.y / 2.0 - t / 2.0), Vector3(sky.x + t * 2.0, SKYLIGHT_CURB, t)],
+			[Vector3(sky_center.x, cy, sky_center.z + sky.y / 2.0 + t / 2.0), Vector3(sky.x + t * 2.0, SKYLIGHT_CURB, t)],
+			[Vector3(sky_center.x - sky.x / 2.0 - t / 2.0, cy, sky_center.z), Vector3(t, SKYLIGHT_CURB, sky.y)],
+			[Vector3(sky_center.x + sky.x / 2.0 + t / 2.0, cy, sky_center.z), Vector3(t, SKYLIGHT_CURB, sky.y)]]:
+		_mesh_box("SkylightCurb", curb[0], curb[1], ZINC_MAT)
+
+
+func _mesh_box(box_name: String, center: Vector3, size: Vector3, material: Material) -> MeshInstance3D:
+	var mesh := MeshInstance3D.new()
+	mesh.name = box_name
+	var box := BoxMesh.new()
+	box.size = size
+	mesh.mesh = box
+	mesh.position = center
+	mesh.material_override = material
+	add_child(mesh)
+	return mesh
 
 
 ## Dachfenster: Holzrahmen in der Deckenöffnung, Glas obendrauf, ein weiches Tageslicht darunter (folgt dem Tag, DayCycle).
@@ -265,7 +329,8 @@ func _skylight(center: Vector3, size: Vector2) -> void:
 	glass_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	glass.position = center + Vector3.UP * 0.2
+	glass.position = center + Vector3.UP * (0.25 + SKYLIGHT_CURB)
+	pane.size = Vector3(size.x + 0.08, 0.012, size.y + 0.08)  # liegt auf dem Aufsatz
 	add_child(glass)
 	var light := OmniLight3D.new()
 	light.name = "SkylightDaylight"

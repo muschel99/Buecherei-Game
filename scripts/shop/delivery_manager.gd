@@ -289,6 +289,11 @@ func _add_box(contents: Array, turn: float, animate: bool, delay: float = 0.0, s
 func _find_free_stack(avoid: Array[Vector2i] = []) -> Vector2i:
 	var per_row := maxi(1, GameConfig.delivery_stacks_per_row)
 	var height := maxi(1, GameConfig.delivery_stack_height)
+	# Plätze in der Deko vor der Bücherei (Kübel, Bank, Töpfe) nie benutzen – solange es andere gibt (seit Testrunde 7b)
+	var blocked := _deco_blocked()
+	if blocked.size() < per_row * MAX_ROWS:
+		avoid = avoid.duplicate()
+		avoid.append_array(blocked)
 	for row in MAX_ROWS:
 		for level in height:
 			for column in per_row:
@@ -305,6 +310,42 @@ func _find_free_stack(avoid: Array[Vector2i] = []) -> Vector2i:
 			if best.x < 0 or _stack_size(key) < _stack_size(best):
 				best = key
 	return best if best.x >= 0 else Vector2i(0, 0) if avoid.is_empty() else avoid[0]
+
+
+## Plätze, an denen Deko steht: ein StreetObstacle-Kreis (Kübel, Töpfe, Bank) oder etwas Festes (Kollision der Ebene world)
+## im Raum, den ein Karton braucht.
+func _deco_blocked() -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	if not is_inside_tree():
+		return result
+	var obstacles := get_tree().get_nodes_in_group(StreetLife.OBSTACLE_GROUP)
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsShapeQueryParameters3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.5, 0.4, 0.5)
+	query.shape = box
+	query.collision_mask = 1
+	for row in MAX_ROWS:
+		for column in maxi(1, GameConfig.delivery_stacks_per_row):
+			var key := Vector2i(column, row)
+			var spot := global_transform * _slot_origin(key)
+			var hit := false
+			for node in obstacles:
+				var obstacle := node as StreetObstacle
+				if obstacle and Vector2(obstacle.global_position.x - spot.x, obstacle.global_position.z - spot.z).length() \
+						< obstacle.radius + 0.3:
+					hit = true
+					break
+			if not hit:
+				query.transform = Transform3D(Basis.IDENTITY, spot + Vector3.UP * 0.28)
+				for found in space.intersect_shape(query, 4):
+					var body := found.collider as Node
+					if body and body.name != "Bounds" and not body is DeliveryBox and not (body.get_parent() is DeliveryBox):
+						hit = true
+						break
+			if hit:
+				result.append(key)
+	return result
 
 
 ## Fußpunkt eines Stapels (ohne die kleine Verschiebung je Karton), lokal.

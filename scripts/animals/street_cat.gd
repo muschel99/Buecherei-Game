@@ -92,6 +92,7 @@ func _ready() -> void:
 	_interactable = get_node_or_null("Interactable") as Interactable
 	if _interactable:
 		_interactable.interacted.connect(func(who: Node) -> void: pet(who as Node3D))
+		_interactable.highlight_owner = false  # Katzen leuchten beim Anschauen nicht auf (Wunsch seit Testrunde 7b)
 	add_to_group(Door.KEEPOUT_GROUP)
 	set_active(false)
 

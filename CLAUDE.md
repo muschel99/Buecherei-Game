@@ -1364,7 +1364,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `ChibiPasserbyModel.set_reading`, `ChibiGestureModifier.read_point/read_weight`, Buch `_make_open_book`); Schritt "stand" mit
   "clip"/"cue". Türschild nur innen (Straßenseite = Stand, innen die Rückseite). **Sitzmöbel** in Chibi-Höhe:
   `storybook_furniture.SEAT_HEIGHT` 0,3 m (`Kit.lower_seat` staucht alles unter dem Sitz; `low_seat=False` schaltet ab).
-  Bilder: `--visitors=<n> [--at_counter]`, `pose_probe -- read`.
+  Bilder: `--visitors=<n> [--at_counter]`, `pose_probe -- read`. **Hinterzimmer** seit 7b ein Anbau: `BackRoom._exterior`
+  (Backstein, Sandsteinsockel, Zinkdach mit Dachfenster-Aufsatz, Hof) und Holztür `BackRoomDoor` (E, schwingt ins Hinterzimmer;
+  nicht in der Gruppe "doors"). Besucher: Plätze vor Regalen werden reserviert (`_shelf_spots`), Tempo `visitor_speed_range`,
+  Katzen halten Abstand zur Treppe (`cat_meet_entrance_gap`), Besucher steigen über Katzen. Anwohner gießen/fegen nicht mehr
+  (`resident_activity_weights`), keine Handbewegung an Türen. Kartons meiden Deko (`DeliveryManager._deco_blocked`),
+  street_life_check `--facade=…`. Fahrzeuge rutschen im Stand nicht seitwärts (StreetVehicle._drive/_place).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

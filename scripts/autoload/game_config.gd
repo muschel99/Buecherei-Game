@@ -314,7 +314,8 @@ var resident_count: int = 7
 var resident_home_time: Vector2 = Vector2(8.0, 30.0)
 ## Was sie dann tun (Gewichte): "errand" = aus dem Haus gehen und später wiederkommen, "water" = Blumen gießen,
 ## "sweep" = vor der Tür fegen, "window" = aus dem Fenster schauen.
-var resident_activity_weights: Dictionary = {"errand": 3.0, "water": 3.0, "sweep": 2.0, "window": 2.0}
+## Seit Testrunde 7b ohne Gießen ("water") und Fegen ("sweep") – Wunsch der Entwicklerin (die Bewegungen bleiben im Code).
+var resident_activity_weights: Dictionary = {"errand": 3.0, "window": 2.0}
 ## Unterwegs (Sekunden, bis sie wieder heimkommen), Dauer der Arbeiten und des Fensterblicks.
 var resident_away_time: Vector2 = Vector2(20.0, 60.0)
 var resident_water_time: Vector2 = Vector2(9.0, 16.0)
@@ -1328,6 +1329,8 @@ var night_quiet_hours: Vector2 = Vector2(22.0, 5.0)
 var shop_hours: Vector2 = Vector2(7.0, 22.0)
 var resident_chore_hours: Vector2 = Vector2(7.0, 20.0)
 var cat_night_interval_factor: float = 2.5
+## Katzen begegnen sich nie näher als so viele Meter vor der Treppe der Bücherei (seit Testrunde 7b).
+var cat_meet_entrance_gap: float = 3.0
 var street_activity_by_hour: Array[float] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.08, 0.25, 0.5, 0.75, 0.8, 0.85, 0.95,
 	1.0, 1.0, 1.0, 1.05, 1.1, 1.05, 0.95, 0.8, 0.6, 0.35, 0.0, 0.0]
 
@@ -1337,13 +1340,12 @@ var sleep_until_hour: float = 4.0
 var sleep_fade_time: float = 1.2
 
 ## Hinterzimmer (seit Etappe 7, BackRoom): Innenmaße (Breite x entlang der Rückwand ab der linken Wand, Tiefe nach hinten),
-## Durchgang (Mitte x, Breite, Höhe), Dachfenster (Breite, Länge) und Farbe des Vorhangs im Durchgang.
+## Durchgang mit Holztür (Mitte x, Breite, Höhe) und Dachfenster (Breite, Länge).
 var back_room_size: Vector2 = Vector2(3.0, 4.0)
 var back_room_door_x: float = 1.5
 var back_room_door_width: float = 0.95
 var back_room_door_height: float = 2.15
 var back_room_skylight: Vector2 = Vector2(0.9, 1.2)
-var back_room_curtain_color: Color = Color(0.56, 0.24, 0.2)
 
 
 ## --- Bücherei-Besucher und Ausleihe (seit Etappe 7, Teil 4: Lending, LibraryVisits) ---
@@ -1387,5 +1389,5 @@ var counter_card_height: float = 0.12
 var counter_staff_reach: float = 1.6
 ## Korbstapel für Besucher (seit Testrunde 7b): Lage im Laden (x, z; an der linken Wand gleich neben der Schräge).
 var visitor_basket_stack: Vector2 = Vector2(-2.8, -1.5)
-## Besucher-Figuren drinnen etwas langsamer als draußen (Anteil).
-var visitor_indoor_speed: float = 0.75
+## Besucher gehen in der Bücherei mindestens/höchstens so schnell (m/s; seit Testrunde 7b – manche schlenderten sehr langsam).
+var visitor_speed_range: Vector2 = Vector2(1.05, 1.35)

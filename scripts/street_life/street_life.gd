@@ -923,7 +923,7 @@ func get_places() -> Array[Dictionary]:
 ## Würde der Passant an dieser Stelle jemandem zu nahe kommen (Spielfigur, andere Passanten,
 ## Kartons, Treppe)? Wegbewegen ist immer erlaubt – so kann sich nie jemand festlaufen.
 ## Abstand (Mitte zu Mitte), bis zu dem sich Besucher in der Bücherei aneinander vorbeidrücken (seit Testrunde 7b).
-const LIBRARY_GAP := 0.3
+const LIBRARY_GAP := 0.42
 
 
 func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
@@ -935,6 +935,8 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 			continue  # Sicherheitsnetz: steckte fest, darf hindurch (siehe Passerby.WEDGED_TIME)
 		if obstacle.kind == "static" and walker.get_action_type() == "sit":
 			continue  # wer sich setzt, geht dicht an Bank, Stuhl und Tisch heran
+		if obstacle.kind == "cat" and walker.in_library:
+			continue  # Bücherei-Besucher steigen über Katzen auf der Treppe hinweg (die Katzen weichen selbst aus)
 		var p: Vector2 = obstacle.pos
 		var limit := own + float(obstacle.radius)
 		limit += PLAYER_GAP if obstacle.kind == "player" else -0.03
