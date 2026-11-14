@@ -138,7 +138,7 @@ void main() {
 	// ausgeblendet – dort sind die Formen kleiner als ein paar Bildpunkte und würden nur flimmern
 	float r0 = raw_depth(px);
 	float dist = params.z_near / max(r0, 1e-7);
-	float near = 1.0 - smoothstep(params.line_fade * 0.3, params.line_fade, dist);
+	float near = 1.0 - smoothstep(params.line_fade * 0.2, params.line_fade, dist);
 
 	// 3. Farbränder dunkler (wie getrocknete Aquarellfarbe am Rand einer Fläche) – nur an deutlichen
 	// Farbgrenzen, nicht an feinen Mustern wie Pflaster oder Ziegeln
@@ -150,7 +150,8 @@ void main() {
 	// 4. Tuschelinien: Sprünge in der Tiefe (Umrisse) und Knicke in der Flächenrichtung
 	r0 = raw_depth(p);
 	vec3 n0 = normal_at(p);
-	float w = params.line_width * scale;
+	// in der Ferne feinere Linien (seit Testrunde 7b: sonst wirken sie dort zu dick)
+	float w = params.line_width * scale * mix(1.0, 0.5, smoothstep(params.line_fade * 0.12, params.line_fade * 0.45, dist));
 	float edge = 0.0;
 	for (int k = 0; k < 2; k++) {
 		vec2 o = (k == 0) ? vec2(w, 0.0) : vec2(0.0, w);

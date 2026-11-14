@@ -29,6 +29,11 @@ func setup(main_node: Node3D, sun_light: DirectionalLight3D, fill_light: Directi
 	environment = env
 	_sky_material = ShaderMaterial.new()
 	_sky_material.shader = SKY_SHADER
+	_sky_material.set_shader_parameter("star_color", GameConfig.star_color)
+	_sky_material.set_shader_parameter("star_brightness", GameConfig.star_brightness)
+	_sky_material.set_shader_parameter("shooting_period", GameConfig.shooting_star_period)
+	_sky_material.set_shader_parameter("shooting_chance", GameConfig.shooting_star_chance)
+	RenderingServer.global_shader_parameter_set(&"night_glow_boost", GameConfig.night_glow_boost)
 	var sky := Sky.new()
 	sky.sky_material = _sky_material
 	sky.radiance_size = Sky.RADIANCE_SIZE_64
@@ -106,6 +111,19 @@ func apply(delta: float) -> void:
 		if main.has_method("set_street_lanterns"):
 			main.call("set_street_lanterns", lit == 1)
 	_update_window_light(float(v.window_light))
+	# Nacht (seit Testrunde 7b): Licht nur in manchen Fenstern, Tusche des Malfilters nachtblau
+	var night := clampf(1.0 - float(v.window_light), 0.0, 1.0)
+	RenderingServer.global_shader_parameter_set(&"night_glow", night)
+	RenderingServer.global_shader_parameter_set(&"window_lit_share", _lit_share(hour))
+	if main.has_method("set_paint_night"):
+		main.call("set_paint_night", night)
+
+
+## Anteil der Häuser/Stockwerke mit Licht im Fenster (GameConfig.window_lit_share_by_hour, zwischen den Stunden gemischt).
+func _lit_share(hour: float) -> float:
+	var table: Array[float] = GameConfig.window_lit_share_by_hour
+	var h0 := int(floor(hour)) % 24
+	return lerpf(table[h0], table[(h0 + 1) % 24], hour - floor(hour))
 
 
 ## Licht so drehen, dass es aus Richtung "to" einfällt.

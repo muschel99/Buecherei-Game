@@ -249,7 +249,52 @@ class Kit:
             if does_settle:
                 settled.append(o)
         settle(settled, self.seed, self.settle_amount)
+        self.lower_seat()
         return self.objects
+
+    def lower_seat(self):
+        """Sitzmöbel in Chibi-Höhe (seit Testrunde 7b: die Sitze waren für die Figuren zu hoch). Alles unter der Sitzfläche
+        (Beine, Sockel, Gestell) wird gestaucht, Sitz, Lehne und Kissen bleiben, wie sie sind – die Sitzfläche liegt dann auf
+        SEAT_HEIGHT. Möbel ohne Sitzplatz und mit low_seat=False in der Beschreibung bleiben unverändert."""
+        if not self.seats or not self.spec.get("low_seat", True):
+            return
+        top = max(pos.z for pos, _turn in self.seats)
+        target = self.spec.get("seat_height", SEAT_HEIGHT)
+        if top <= target + 0.02:
+            return
+        keep = SEAT_KEEP   # so viel unter der Sitzfläche bleibt ungestaucht (Sitzbrett, Polster)
+        k = (target - keep) / (top - keep)
+
+        def f(z):
+            return z * k if z <= top - keep else z - (top - keep) * (1.0 - k)
+
+        for o in self.objects:
+            inv = o.matrix_world.inverted()
+            for v in o.data.vertices:
+                p = o.matrix_world @ v.co
+                v.co = inv @ Vector((p.x, p.y, f(p.z)))
+            o.data.update()
+
+        def box(center, size):
+            z0, z1 = f(center.z - size.z / 2.0), f(center.z + size.z / 2.0)
+            return Vector((center.x, center.y, (z0 + z1) / 2.0)), Vector((size.x, size.y, z1 - z0))
+
+        self.colliders = [box(c, s) + (t,) for c, s, t in self.colliders]
+        self.surfaces = [(Vector((c.x, c.y, f(c.z))), size, h) for c, size, h in self.surfaces]
+        self.seats = [(Vector((c.x, c.y, f(c.z))), t) for c, t in self.seats]
+        self.rows = [(Vector((c.x, c.y, f(c.z))), w, h, d) for c, w, h, d in self.rows]
+        for light in self.lights:
+            light["pos"] = Vector((light["pos"].x, light["pos"].y, f(light["pos"].z)))
+        self.cat_spots = [(Vector((c.x, c.y, f(c.z))), t) for c, t in self.cat_spots]
+        self.spark_spots = [Vector((c.x, c.y, f(c.z))) for c in self.spark_spots]
+        if self.interact:
+            self.interact = box(Vector(self.interact[0]), Vector(self.interact[1]))
+        print("  Sitz von %.2f auf %.2f m gesenkt" % (top, target))
+
+
+# Sitzhöhe der Sitzmöbel (m, Oberkante Sitz) – passend zu den Chibi-Figuren (Sitz-Animation 0,22–0,27 m, seit Testrunde 7b)
+SEAT_HEIGHT = 0.3
+SEAT_KEEP = 0.07
 
 
 def settle(objs, seed, amount=1.0):

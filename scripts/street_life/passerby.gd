@@ -134,6 +134,8 @@ var _yield := 0.0
 ## Sich aneinander vorbeidrücken (seit Etappe 6j): Zeit, in der zwei Passanten enger aneinander vorbei dürfen
 ## (StreetLife.SQUEEZE_GAP statt der vollen Kreise); _stand_off = wie lange schon jemand direkt davor steht
 var squeeze := 0.0
+## In der Bücherei unterwegs (seit Testrunde 7b, setzt LibraryVisits): Besucher drücken sich dort aneinander vorbei
+var in_library := false
 var _stand_off := 0.0
 const SQUEEZE_AFTER := 1.6
 const SQUEEZE_TIME := 2.5
@@ -240,6 +242,7 @@ func begin(start: Vector2, actions: Array[Dictionary], face: Vector2, start_floo
 	_face_off = 0.0
 	_yield = 0.0
 	ghost_static = 0.0
+	in_library = false
 	companion = null
 	follows = false
 	_pair_side = 1.0 if randf() < 0.5 else -1.0
@@ -822,7 +825,20 @@ func _step_stand(delta: float) -> void:
 			gesture = "watch" if pause == &"watch" else ("" if pause == &"look_around" else "stretch")
 		if not gesture.is_empty() and _model and _model.has_method("play_gesture"):
 			_model.call("play_gesture", StringName(gesture))
+		# eine ganze Animation (seit Testrunde 7b, z. B. pick_up = Korb nehmen); die Zeit wächst mit ihr
+		var clip := StringName(_action.get("clip", ""))
+		if clip != &"" and _model and _model.has_method("play_clip"):
+			var length := float(_model.call("play_clip", clip, float(_action.get("clip_max", -1.0))))
+			if length > 0.0:
+				_action.time = maxf(float(_action.get("time", 0.0)), length + 0.1)
+	# Rückruf mitten im Stehen (seit Testrunde 7b): "cue" = [Sekunden, Callable mit dieser Figur] – einmal
+	if _action.has("cue") and _phase_time >= float(_action.cue[0]):
+		var cue: Array = _action.cue
+		_action.erase("cue")
+		(cue[1] as Callable).call(self)
 	if _phase_time >= float(_action.get("time", 3.0)):
+		if _action.has("cue"):
+			(_action.cue[1] as Callable).call(self)
 		_next_action()
 
 
@@ -1265,6 +1281,8 @@ func _step_sit(delta: float) -> void:
 			if _phase_time >= sit_time:
 				_phase = 3
 				_phase_time = 0.0
+				if _action.get("read", false) and _model and _model.has_method("set_reading"):
+					_model.call("set_reading", true)  # Bücherei: im Sitzen lesen (seit Testrunde 7b)
 				if _action.has("pub_seat"):
 					life.homes.pub_sat_down(self, _action.pub_seat)
 		3:  # sitzen
@@ -1272,6 +1290,8 @@ func _step_sit(delta: float) -> void:
 			if _phase_time >= float(_action.get("time", 20.0)):
 				_phase = 4
 				_phase_time = 0.0
+				if _action.get("read", false) and _model and _model.has_method("set_reading"):
+					_model.call("set_reading", false)
 				life.release_seat(self)
 				if _action.has("pub_seat"):
 					life.homes.pub_stood_up(self, _action.pub_seat)

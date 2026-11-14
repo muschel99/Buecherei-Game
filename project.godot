@@ -250,3 +250,23 @@ library_cut_max={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+night_glow={
+"type": "float",
+"value": 0.0
+}
+window_lit_share={
+"type": "float",
+"value": 1.0
+}
+night_glow_boost={
+"type": "float",
+"value": 1.0
+}
+library_area_min={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+library_area_max={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}

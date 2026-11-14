@@ -117,6 +117,10 @@ func _run() -> void:
 		LibraryVisits.debug = true
 		if _life.library:
 			_life.library.auto_stamp = true
+	if _args.has("hour"):
+		# Uhrzeit fest (seit Testrunde 7b), z. B. --hour=23 für die Nachtruhe
+		GameClock.load_save_data({"day": 1, "minute": float(_args.hour) * 60.0})
+		GameClock.running = false
 	if _args.has("day_test"):
 		# Tageswechsel prüfen (seit Etappe 7): Zahlen gehen in die Geschichte, um 6 Uhr erscheint der Notizzettel
 		GameClock.running = false

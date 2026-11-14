@@ -23,6 +23,9 @@ const SOURCE := &"source"
 @export var line_darkness := 0.3
 @export var line_pressure := 0.15
 @export var line_fade_distance := 24.0
+## Nacht (0–1, setzt der Tagesablauf): die Tusche wird von Braun zu Nachtblau (night_line_color)
+@export var night := 0.0
+@export var night_line_color := Color(0.1, 0.13, 0.3)
 @export var paper_strength := 0.5
 @export var edge_darkening := 0.35
 @export var wobble := 1.2
@@ -64,6 +67,7 @@ func apply_config(preset: Dictionary) -> void:
 	line_darkness = GameConfig.paint_line_darkness
 	line_pressure = GameConfig.paint_line_pressure
 	line_fade_distance = GameConfig.paint_line_fade_distance
+	night_line_color = GameConfig.paint_night_line_color
 	paper_strength = GameConfig.paint_paper_strength
 	edge_darkening = GameConfig.paint_edge_darkening
 	wobble = GameConfig.paint_wobble
@@ -115,7 +119,7 @@ func _render_callback(callback_type: int, render_data: RenderData) -> void:
 	var groups := Vector3i(ceili(size.x / 8.0), ceili(size.y / 8.0), 1)
 	var z_near := scene_data.get_cam_projection().get_z_near()
 	var copy_params := PackedFloat32Array([size.x, size.y, 0.0, 0.0]).to_byte_array()
-	var c := line_color.srgb_to_linear()
+	var c := line_color.lerp(night_line_color, clampf(night, 0.0, 1.0)).srgb_to_linear()
 	var paint_params := PackedFloat32Array([
 		size.x, size.y, z_near, brush_radius,
 		line_strength, line_width, paper_strength, edge_darkening,

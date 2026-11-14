@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Geräusche an der Theke (seit Etappe 7): erzeugt
   assets/audio/ui/counter_bell.wav – Tischklingel „Pling“ (heller Glockenton mit Obertönen, klingt aus),
-  assets/audio/ui/stamp.wav        – Stempel auf Papier (kurzer, dumpfer Stoß mit etwas Holz).
+  assets/audio/ui/stamp.wav        – Stempel auf Papier (kurzer, dumpfer Stoß mit etwas Holz),
+  assets/audio/ui/scan.wav         – Scanner an der Theke (kurzes Piepen, seit Testrunde 7b).
 Eigene Aufnahme? Einfach die Datei ersetzen (auch als .ogg mit gleichem Namen) – das Script schreibt nur, wenn die Datei
 fehlt (--force: neu). Braucht nur Python (kein ffmpeg).
 
@@ -68,8 +69,21 @@ def stamp():
     return out
 
 
+def scan():
+    """Scanner an der Theke: kurzes, freundliches Piepen (zwei Töne knapp nacheinander)."""
+    seconds = 0.16
+    out = []
+    for i in range(int(RATE * seconds)):
+        t = i / RATE
+        freq = 1760.0 if t < 0.075 else 2349.0
+        env = min(1.0, t / 0.004) * min(1.0, (seconds - t) / 0.02)
+        out.append(env * (math.sin(2 * math.pi * freq * t) + 0.25 * math.sin(4 * math.pi * freq * t)))
+    return out
+
+
 if __name__ == "__main__":
     os.makedirs(OUT_DIR, exist_ok=True)
     random.seed(3)
     write("counter_bell.wav", bell(), 0.55)
     write("stamp.wav", stamp(), 0.7)
+    write("scan.wav", scan(), 0.35)

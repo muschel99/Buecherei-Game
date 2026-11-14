@@ -202,18 +202,41 @@ func step(delta: float) -> void:
 	if _lod_timer <= 0.0:
 		_lod_timer = 0.25
 		_update_indoor_lod()
+	var quiet := is_quiet_time()
 	for res in residents:
 		res.timer = float(res.timer) - delta
 		if float(res.timer) > 0.0:
 			continue
 		match String(res.state):
 			"home":
-				_next_activity(res)
+				if quiet:
+					res.timer = 20.0  # nachts bleibt man zu Hause (seit Testrunde 7b)
+				else:
+					_next_activity(res)
 			"away":
-				if not _come_home(res):
+				if quiet:
+					# Wer nachts noch unterwegs war, ist ungesehen heimgekommen (nachts kommt niemand mehr durch die Straße)
+					res.state = "home"
+					res.timer = 20.0
+				elif not _come_home(res):
 					res.timer = 1.5  # Straßenende gerade im Blick: kurz warten
 			"window":
 				_leave_window(res)
+
+
+## Nachtruhe (seit Testrunde 7b): von GameConfig.night_quiet_hours.x bis .y Uhr kommt niemand mehr in die Straße, Anwohner
+## bleiben zu Hause.
+static func is_quiet_time() -> bool:
+	if not GameConfig.day_cycle_enabled:
+		return false
+	return GameClock.is_between(GameConfig.night_quiet_hours.x, GameConfig.night_quiet_hours.y)
+
+
+## Haben die Läden gerade auf? (GameConfig.shop_hours; ohne Tagesablauf immer)
+static func shops_open() -> bool:
+	if not GameConfig.day_cycle_enabled:
+		return true
+	return GameClock.is_between(GameConfig.shop_hours.x, GameConfig.shop_hours.y)
 
 
 ## Wie viele Anwohner gerade draußen sind (sie zählen nicht zur Passanten-Menge, siehe StreetLife).
@@ -234,6 +257,10 @@ func _next_activity(res: Dictionary) -> void:
 		weights.erase("water")
 	if (home.windows as Array).is_empty():
 		weights.erase("window")
+	if not GameClock.is_between(GameConfig.resident_chore_hours.x, GameConfig.resident_chore_hours.y) \
+			and GameConfig.day_cycle_enabled:
+		weights.erase("water")  # im Dunkeln gießt und fegt niemand
+		weights.erase("sweep")
 	if door.is_in_use() or life.door_blocked(home.front):
 		weights.erase("errand")
 		weights.erase("water")
@@ -518,6 +545,7 @@ func _add_shop(shop: Dictionary, house: Node3D) -> void:
 	seats.shuffle()
 	for i in mini(GameConfig.pub_guest_count, seats.size()):
 		_seat_guest(seats[i])
+		guests[guests.size() - 1].shop = shop
 
 
 func _spot_entry(spot: Node3D) -> Dictionary:
@@ -588,6 +616,7 @@ func _set_table_prop(seat: Dictionary, kind: String) -> void:
 
 
 func _update_shops(delta: float) -> void:
+	_update_opening()
 	for shop in shops:
 		var vendor: Passerby = shop.get("vendor")
 		if vendor == null or not vendor.visible:
@@ -598,6 +627,65 @@ func _update_shops(delta: float) -> void:
 			vendor.play_idle_clip(ChibiPasserbyModel._weighted(_rng, GameConfig.shop_vendor_clips, &"look_around"))
 	for guest in guests:
 		_update_guest(guest, delta)
+
+
+## Ladenschluss (seit Testrunde 7b): Nach GameConfig.shop_hours.y gehen Verkäufer und feste Gäste – aber erst, wenn gerade
+## niemand hinsieht (nie sichtbar verschwinden); morgens sind sie genauso unbemerkt wieder da.
+var _opening_check := 0.0
+
+
+func _update_opening() -> void:
+	_opening_check -= get_physics_process_delta_time()
+	if _opening_check > 0.0:
+		return
+	_opening_check = 1.0
+	var open := shops_open()
+	for shop in shops:
+		var figures: Array[Passerby] = []
+		if shop.get("vendor"):
+			figures.append(shop.vendor)
+		for guest in guests:
+			if guest.get("shop") == shop:
+				figures.append(guest.walker)
+		for walker in figures:
+			if walker.active == open or _figure_seen(walker):
+				continue
+			if open:
+				_reopen(shop, walker)
+			else:
+				walker.set_active(false)
+				for guest in guests:
+					if guest.walker == walker:
+						_set_table_prop(guest.seat, "")
+	# niemand mehr drinnen, der einkaufen will
+	if not open:
+		for shop in shops:
+			(shop.customers as Array).clear()
+
+
+func _figure_seen(walker: Passerby) -> bool:
+	var camera := life.get_viewport().get_camera_3d()
+	if camera == null:
+		return false
+	var near := camera.global_position.distance_to(walker.global_position) < 7.0
+	return near or life.in_view_point(walker.global_position + Vector3.UP)
+
+
+func _reopen(shop: Dictionary, walker: Passerby) -> void:
+	if walker == shop.get("vendor"):
+		var spot: Dictionary = shop.vendor_spot
+		var actions: Array[Dictionary] = [{"type": "stand", "anim": &"idle", "face": spot.face, "time": INF}]
+		walker.begin(spot.pos, actions, spot.face, float(spot.floor))
+		walker.set_shadows(0)
+		return
+	for guest in guests:
+		if guest.walker == walker:
+			var seat: Dictionary = guest.seat
+			walker.begin_seated(seat.pos, seat.face, float(seat.height), float(seat.floor), float(seat.backrest))
+			walker.set_shadows(0)
+			seat.occupant = walker
+			guest.kind = _table_kind()
+			_set_table_prop(seat, String(guest.kind))
 
 
 ## Fester Gast: ab und zu ein Schluck oder ein Bissen (nur wenn er gerade nicht erzählt).
@@ -627,7 +715,7 @@ func _update_guest(guest: Dictionary, delta: float) -> void:
 
 ## Frei, zum Laden hineinzugehen?
 func shop_has_room(shop: Dictionary) -> bool:
-	return (shop.customers as Array).size() < GameConfig.shop_capacity
+	return shops_open() and (shop.customers as Array).size() < GameConfig.shop_capacity
 
 
 func shop_enter(shop: Dictionary, walker: Passerby) -> void:
@@ -710,6 +798,8 @@ func shop_visit_actions(shop: Dictionary, lane_in: Vector2, lane_out: Vector2) -
 
 ## Ein Laden auf dem Weg (Seite und Richtung wie bei den Schaufenstern) oder leer.
 func pick_shop(s0: float, end_s: float, dir: int, start_side: int, cross_s: float, end_side: int) -> Dictionary:
+	if not shops_open():
+		return {}
 	var choices: Array[Dictionary] = []
 	for shop in shops:
 		var along := (float(shop.s) - s0) * dir

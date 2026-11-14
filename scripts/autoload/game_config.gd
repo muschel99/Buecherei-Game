@@ -677,6 +677,8 @@ var paint_line_color: Color = Color(0.4, 0.24, 0.13)
 var paint_line_darkness: float = 0.3
 var paint_line_pressure: float = 0.15
 var paint_line_fade_distance: float = 24.0
+## Tusche nachts (seit Testrunde 7b: Braun sah nachts komisch aus) – der Tagesablauf blendet dorthin über
+var paint_night_line_color: Color = Color(0.1, 0.13, 0.3)
 ## Papierstruktur (ungleichmäßig aufgetragene Farbe, Körnung, Fasern; 0 = glatt).
 var paint_paper_strength: float = 0.8
 ## Farbränder dunkler wie bei getrocknetem Aquarell (0 = aus).
@@ -1259,50 +1261,75 @@ var sky_cloud_wind: Vector2 = Vector2(0.012, 0.004)
 ## Laternen an (abends) und aus (morgens), Stunden.
 var lanterns_on_hour: float = 19.75
 var lanterns_off_hour: float = 6.5
+## Licht der Laternen (seit Testrunde 7b): warme Lichtkegel ohne Schatten – Farbe, Stärke, Reichweite (m), ab dieser
+## Entfernung zur Kamera blenden sie aus (spart Rechenzeit).
+var lantern_light_color: Color = Color(1.0, 0.7, 0.4)
+var lantern_light_energy: float = 1.4
+var lantern_light_range: float = 6.0
+var lantern_light_fade_distance: float = 32.0
+## Licht in den Fenstern nachts: so viel heller leuchten die bewohnten Fenster, Anteil der Häuser/Stockwerke mit Licht je
+## Stunde (0 Uhr … 23 Uhr; tagsüber egal).
+var night_glow_boost: float = 1.7
+var window_lit_share_by_hour: Array[float] = [0.3, 0.18, 0.1, 0.08, 0.08, 0.15, 0.35, 0.5, 0.5, 0.5, 0.5, 0.5,
+	0.5, 0.5, 0.5, 0.5, 0.55, 0.65, 0.75, 0.8, 0.8, 0.7, 0.55, 0.42]
+## Sternschnuppen: eine Gelegenheit alle so viele Sekunden (echte Zeit), mit dieser Chance
+var shooting_star_period: float = 23.0
+var shooting_star_chance: float = 0.35
+## Sterne: Farbe (warm) und Helligkeit (seit Testrunde 7b etwas dunkler)
+var star_color: Color = Color(1.0, 0.86, 0.66)
+var star_brightness: float = 0.6
 ## Stützpunkte des Lichts (Stunde → Farben/Stärken; dazwischen weich gemischt, über Mitternacht weiter). window_light =
 ## Tageslicht durch die Fenster der Bücherei (Anteil von window_daylight_energy).
 var day_light_keys: Array[Dictionary] = [
-	{"hour": 0.0, "sun_color": Color(1.0, 0.6, 0.4), "sun_energy": 0.0, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.32,
-		"ambient_color": Color(0.2, 0.25, 0.4), "ambient_energy": 0.5, "sky_top": Color(0.03, 0.05, 0.13),
+	{"hour": 0.0, "sun_color": Color(1.0, 0.6, 0.4), "sun_energy": 0.0, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.4,
+		"ambient_color": Color(0.24, 0.24, 0.36), "ambient_energy": 0.5, "sky_top": Color(0.03, 0.05, 0.13),
 		"sky_horizon": Color(0.1, 0.13, 0.25), "fill_color": Color(0.5, 0.6, 0.95), "fill_energy": 0.22, "exposure": 1.3,
-		"cloud_lit": Color(0.3, 0.33, 0.46), "cloud_shade": Color(0.11, 0.13, 0.22), "stars": 1.0, "window_light": 0.0},
-	{"hour": 4.8, "sun_color": Color(1.0, 0.6, 0.4), "sun_energy": 0.0, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.3,
-		"ambient_color": Color(0.2, 0.25, 0.4), "ambient_energy": 0.5, "sky_top": Color(0.03, 0.05, 0.13),
+		"cloud_lit": Color(0.3, 0.33, 0.46), "cloud_shade": Color(0.11, 0.13, 0.22), "stars": 0.85, "window_light": 0.0},
+	{"hour": 4.8, "sun_color": Color(1.0, 0.6, 0.4), "sun_energy": 0.0, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.4,
+		"ambient_color": Color(0.24, 0.24, 0.36), "ambient_energy": 0.5, "sky_top": Color(0.03, 0.05, 0.13),
 		"sky_horizon": Color(0.12, 0.15, 0.27), "fill_color": Color(0.5, 0.6, 0.95), "fill_energy": 0.22, "exposure": 1.3,
-		"cloud_lit": Color(0.3, 0.33, 0.46), "cloud_shade": Color(0.11, 0.13, 0.22), "stars": 1.0, "window_light": 0.0},
-	{"hour": 6.0, "sun_color": Color(1.0, 0.62, 0.42), "sun_energy": 1.0, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.2,
+		"cloud_lit": Color(0.3, 0.33, 0.46), "cloud_shade": Color(0.11, 0.13, 0.22), "stars": 0.35, "window_light": 0.0},
+	{"hour": 6.0, "sun_color": Color(1.0, 0.62, 0.42), "sun_energy": 1.0, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.2,
 		"ambient_color": Color(0.5, 0.44, 0.5), "ambient_energy": 0.55, "sky_top": Color(0.34, 0.44, 0.7),
 		"sky_horizon": Color(1.0, 0.7, 0.55), "fill_color": Color(0.75, 0.75, 0.95), "fill_energy": 0.38, "exposure": 1.12,
-		"cloud_lit": Color(1.0, 0.76, 0.66), "cloud_shade": Color(0.55, 0.5, 0.62), "stars": 0.15, "window_light": 0.45},
-	{"hour": 8.0, "sun_color": Color(1.0, 0.87, 0.72), "sun_energy": 1.9, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.0,
+		"cloud_lit": Color(1.0, 0.76, 0.66), "cloud_shade": Color(0.55, 0.5, 0.62), "stars": 0.0, "window_light": 0.45},
+	{"hour": 8.0, "sun_color": Color(1.0, 0.87, 0.72), "sun_energy": 1.9, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
 		"ambient_color": Color(0.55, 0.56, 0.58), "ambient_energy": 0.66, "sky_top": Color(0.32, 0.54, 0.86),
 		"sky_horizon": Color(0.86, 0.86, 0.85), "fill_color": Color(0.8, 0.86, 1.0), "fill_energy": 0.52, "exposure": 1.0,
 		"cloud_lit": Color(1.0, 0.98, 0.95), "cloud_shade": Color(0.72, 0.76, 0.86), "stars": 0.0, "window_light": 0.9},
-	{"hour": 13.0, "sun_color": Color(1.0, 0.93, 0.83), "sun_energy": 2.1, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.0,
+	{"hour": 13.0, "sun_color": Color(1.0, 0.93, 0.83), "sun_energy": 2.1, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
 		"ambient_color": Color(0.56, 0.56, 0.56), "ambient_energy": 0.7, "sky_top": Color(0.28, 0.52, 0.88),
 		"sky_horizon": Color(0.86, 0.88, 0.9), "fill_color": Color(0.8, 0.86, 1.0), "fill_energy": 0.55, "exposure": 1.0,
 		"cloud_lit": Color(1.0, 1.0, 0.98), "cloud_shade": Color(0.74, 0.78, 0.88), "stars": 0.0, "window_light": 1.0},
-	{"hour": 16.5, "sun_color": Color(1.0, 0.82, 0.6), "sun_energy": 2.05, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.0,
+	{"hour": 16.5, "sun_color": Color(1.0, 0.82, 0.6), "sun_energy": 2.05, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
 		"ambient_color": Color(0.56, 0.54, 0.52), "ambient_energy": 0.7, "sky_top": Color(0.3, 0.52, 0.84),
 		"sky_horizon": Color(0.96, 0.84, 0.68), "fill_color": Color(0.8, 0.86, 1.0), "fill_energy": 0.55, "exposure": 1.0,
 		"cloud_lit": Color(1.0, 0.95, 0.88), "cloud_shade": Color(0.72, 0.72, 0.82), "stars": 0.0, "window_light": 1.0},
-	{"hour": 19.0, "sun_color": Color(1.0, 0.62, 0.38), "sun_energy": 1.6, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.0,
+	{"hour": 19.0, "sun_color": Color(1.0, 0.62, 0.38), "sun_energy": 1.6, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
 		"ambient_color": Color(0.6, 0.48, 0.44), "ambient_energy": 0.6, "sky_top": Color(0.32, 0.42, 0.7),
 		"sky_horizon": Color(1.0, 0.62, 0.42), "fill_color": Color(0.85, 0.75, 0.85), "fill_energy": 0.45, "exposure": 1.05,
 		"cloud_lit": Color(1.0, 0.68, 0.5), "cloud_shade": Color(0.5, 0.42, 0.56), "stars": 0.0, "window_light": 0.75},
-	{"hour": 20.5, "sun_color": Color(1.0, 0.5, 0.35), "sun_energy": 0.6, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.15,
+	{"hour": 20.5, "sun_color": Color(1.0, 0.5, 0.35), "sun_energy": 0.6, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.15,
 		"ambient_color": Color(0.32, 0.3, 0.44), "ambient_energy": 0.52, "sky_top": Color(0.12, 0.16, 0.36),
 		"sky_horizon": Color(0.66, 0.44, 0.44), "fill_color": Color(0.6, 0.62, 0.95), "fill_energy": 0.3, "exposure": 1.18,
-		"cloud_lit": Color(0.78, 0.52, 0.52), "cloud_shade": Color(0.25, 0.24, 0.35), "stars": 0.35, "window_light": 0.2},
-	{"hour": 21.7, "sun_color": Color(1.0, 0.6, 0.4), "sun_energy": 0.0, "moon_color": Color(0.62, 0.72, 1.0), "moon_energy": 0.32,
-		"ambient_color": Color(0.2, 0.25, 0.4), "ambient_energy": 0.5, "sky_top": Color(0.03, 0.05, 0.13),
+		"cloud_lit": Color(0.78, 0.52, 0.52), "cloud_shade": Color(0.25, 0.24, 0.35), "stars": 0.0, "window_light": 0.2},
+	{"hour": 21.7, "sun_color": Color(1.0, 0.6, 0.4), "sun_energy": 0.0, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.4,
+		"ambient_color": Color(0.24, 0.24, 0.36), "ambient_energy": 0.5, "sky_top": Color(0.03, 0.05, 0.13),
 		"sky_horizon": Color(0.1, 0.13, 0.25), "fill_color": Color(0.5, 0.6, 0.95), "fill_energy": 0.22, "exposure": 1.3,
-		"cloud_lit": Color(0.3, 0.33, 0.46), "cloud_shade": Color(0.11, 0.13, 0.22), "stars": 1.0, "window_light": 0.0},
+		"cloud_lit": Color(0.3, 0.33, 0.46), "cloud_shade": Color(0.11, 0.13, 0.22), "stars": 0.4, "window_light": 0.0},
 ]
-## Belebtheit der Straße je Stunde (0 Uhr … 23 Uhr; 1 = so viel wie bisher, mal street_activity) – nachts fast leer,
+## Belebtheit der Straße je Stunde (0 Uhr … 23 Uhr; 1 = so viel wie bisher, mal street_activity) – ab 22 Uhr bis 5 Uhr
+## kommt niemand mehr (Wunsch seit Testrunde 7b; Anwohner bleiben zu Hause, Läden sind zu),
 ## morgens Anwohner zur Arbeit, nachmittags am meisten, abends ruhiger.
-var street_activity_by_hour: Array[float] = [0.08, 0.05, 0.04, 0.04, 0.05, 0.1, 0.25, 0.5, 0.75, 0.8, 0.85, 0.95,
-	1.0, 1.0, 1.0, 1.05, 1.1, 1.05, 0.95, 0.8, 0.6, 0.4, 0.25, 0.14]
+## Nachtruhe (seit Testrunde 7b): von … bis … Uhr bleiben Anwohner zu Hause; Läden (auch der Pub) haben von … bis … Uhr
+## offen (danach gehen Verkäufer und Gäste, unbemerkt); gegossen und gefegt wird nur von … bis … Uhr; nachts kommen Katzen
+## so viel seltener.
+var night_quiet_hours: Vector2 = Vector2(22.0, 5.0)
+var shop_hours: Vector2 = Vector2(7.0, 22.0)
+var resident_chore_hours: Vector2 = Vector2(7.0, 20.0)
+var cat_night_interval_factor: float = 2.5
+var street_activity_by_hour: Array[float] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.08, 0.25, 0.5, 0.75, 0.8, 0.85, 0.95,
+	1.0, 1.0, 1.0, 1.05, 1.1, 1.05, 0.95, 0.8, 0.6, 0.35, 0.0, 0.0]
 
 ## Schlafen am Bett (seit Etappe 7): erlaubt von … bis … Uhr (über Mitternacht), Abdunkeln in Sekunden.
 var sleep_from_hour: float = 20.0
@@ -1358,5 +1385,7 @@ var visitor_clearance: float = 0.26
 var counter_bell_volume_db: float = -4.0
 var counter_card_height: float = 0.12
 var counter_staff_reach: float = 1.6
+## Korbstapel für Besucher (seit Testrunde 7b): Lage im Laden (x, z; an der linken Wand gleich neben der Schräge).
+var visitor_basket_stack: Vector2 = Vector2(-2.8, -1.5)
 ## Besucher-Figuren drinnen etwas langsamer als draußen (Anteil).
 var visitor_indoor_speed: float = 0.75

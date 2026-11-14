@@ -72,6 +72,11 @@ var pet_weight: float = 0.0
 ## Handfläche nach vorn, Finger nach oben
 var show_point: Vector3 = Vector3.ZERO
 var show_weight: float = 0.0
+## Lesen (seit Testrunde 7b): beide Hände halten ein aufgeschlagenes Buch an read_point (Mitte des Buchs, Raum des Skeletts)
+var read_point: Vector3 = Vector3.ZERO
+var read_weight: float = 0.0
+## halbe Breite des offenen Buchs (m, wächst mit body_scale): so weit seitlich liegen die Handgelenke
+const READ_HALF_WIDTH := 0.07
 const PET_CATCH := 0.22
 const PET_PALM := 0.05
 const PET_REST := 0.012
@@ -113,6 +118,8 @@ func _process_modification_with_delta(_delta: float) -> void:
 		_apply_pet(skeleton)
 	if show_weight > 0.001:
 		_apply_show(skeleton)
+	if read_weight > 0.001:
+		_apply_read(skeleton)
 	if gesture == Gesture.NONE or weight <= 0.001:
 		return
 	var w := weight
@@ -268,6 +275,19 @@ func _apply_show(skeleton: Skeleton3D) -> void:
 		return
 	_reach(skeleton, "Right", show_point, Vector3(-0.6, -1.0, -0.2), show_weight)
 	_orient_hand_along(skeleton, hand, Vector3(0.0, 1.0, 0.3).normalized(), Vector3(0.0, 0.0, -1.0), show_weight)
+
+
+## Lesen: beide Handgelenke links und rechts unter die Ränder des Buchs, Ellbogen hängen nach unten außen, Handflächen
+## nach oben, Finger nach vorn und leicht nach innen (das Buch liegt in den Händen).
+func _apply_read(skeleton: Skeleton3D) -> void:
+	for side: float in [-1.0, 1.0]:  # rechts liegt bei -x, links bei +x
+		var prefix := "Right" if side < 0.0 else "Left"
+		var hand := skeleton.find_bone(prefix + "Hand")
+		if hand < 0:
+			continue
+		var target := read_point + Vector3(side * READ_HALF_WIDTH, -0.025, -0.035) * body_scale
+		_reach(skeleton, prefix, target, Vector3(side * 0.8, -1.0, -0.3), read_weight)
+		_orient_hand_along(skeleton, hand, Vector3(-side * 0.45, 0.25, 1.0).normalized(), Vector3(0.0, -1.0, 0.0), read_weight)
 
 
 func _reach(skeleton: Skeleton3D, prefix: String, target: Vector3, pole: Vector3, amount: float) -> void:

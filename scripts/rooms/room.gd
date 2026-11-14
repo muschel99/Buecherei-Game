@@ -77,6 +77,12 @@ func _ready() -> void:
 		back.build(self)
 		extra_build_areas.append(BackRoom.back_area())
 		add_to_group(Lending.ROOM_GROUP)  # der Laden (für Besucher und Ausleihe)
+		# Nachts gehen zufällig Fenster aus (storybook.gdshaderinc window_glow) – nie im Laden selbst
+		var corner_a := to_global(Vector3(build_area.position.x - 0.5, -0.2, build_area.position.y - 0.5))
+		var back_end := BackRoom.back_area().end.y
+		var corner_b := to_global(Vector3(build_area.end.x + 0.5, GameConfig.room_height + 0.4, back_end + 0.5))
+		RenderingServer.global_shader_parameter_set(&"library_area_min", corner_a.min(corner_b))
+		RenderingServer.global_shader_parameter_set(&"library_area_max", corner_a.max(corner_b))
 		# Schild „Geöffnet/Geschlossen“ innen an der Ladentür
 		for door: Node in find_children("*", "Door", true, false):
 			OpenSign.attach(door as Door)

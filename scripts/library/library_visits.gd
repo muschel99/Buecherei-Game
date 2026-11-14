@@ -6,6 +6,9 @@ extends Node
 ## Lieblings-Genre), manchmal auf einem freien Sitzplatz lesen, an der Theke anstellen (einmal „Pling“, Ausweis
 ## hochhalten) und warten, bis die Spielfigur hinter der Theke mit E stempelt – dann ist ausgeliehen (Lending.lend), und er
 ## geht wieder auf die Straße und seinen Weg weiter. Findet er nichts, geht er freundlich wieder.
+## Seit Testrunde 7b: Besucher nehmen sich drinnen einen Korb vom Stapel an der linken Wand (GameConfig.visitor_basket_stack),
+## legen die Bücher hinein, stellen ihn an der Theke ab; die Spielfigur nimmt den Ausweis (E „Ausweis“), stempelt (E
+## „Stempeln“) und scannt die Bücher (E „Scannen“). Den Korb bringen sie beim Gehen zurück und tragen die Bücher hinaus.
 ##
 ## Alle Wege im Laden plant ein Raster (AStarGrid2D) um Möbel und Wände herum; es wird neu vermessen, sobald sich die
 ## Einrichtung ändert (Room.layout_changed). Das Hinterzimmer gehört nicht dazu – Besucher gehen nie hinein.
@@ -40,8 +43,19 @@ var _counter: Node3D
 static var debug := false
 ## Prüfwerkzeug: an der Theke selbst stempeln (ohne Spielfigur)
 var auto_stamp := false
-## Wer an der Theke gerade gestempelt wurde (bis er losgeht)
-var _stamped: Dictionary = {}
+## Theke: Wer gerade dran ist und wie weit (0 = Ausweis hochhalten, 1 = Ausweis liegt da, 2 = gestempelt, 3 = fertig)
+var _checkout: Dictionary = {}
+## Dinge auf der Theke beim Ausleihen (Korb, Ausweis, Stempel) und der Korbstapel an der Wand
+var _counter_basket: Node3D
+var _counter_card: Node3D
+var _stamp_tool: Node3D
+var _basket_stack: Node3D
+const BASKET_MODELS := ["res://assets/models/characters/props/library_basket_0.glb",
+	"res://assets/models/characters/props/library_basket_1.glb", "res://assets/models/characters/props/library_basket_2.glb",
+	"res://assets/models/characters/props/library_basket_3.glb"]
+## Abstand Griff – Boden des Korbs (m, wie im Blender-Script: Hängen + Höhe)
+const BASKET_DROP := 0.2
+const CHECKOUT_WORDS := ["Ausweis", "Stempeln", "Scannen"]
 ## Was ein Besucher gerade trägt / will: walker → {books, genre, new}
 var _visit: Dictionary = {}
 
@@ -64,6 +78,7 @@ func setup(street_life: StreetLife, seed_value: int = -1) -> void:
 		add_child(door_link)
 	room.layout_changed.connect(func() -> void: _grid_dirty = true)
 	add_to_group(GROUP)
+	_build_basket_stack()
 	_floor = life.to_local(room.global_position).y
 
 
@@ -75,6 +90,8 @@ func step(delta: float) -> void:
 	if door_link:
 		door_link.step(delta)
 	_update_counter()
+	if _counter_node():
+		_update_scan(delta)
 
 
 # --- Vom Gehweg herein ---
@@ -82,12 +99,13 @@ func step(delta: float) -> void:
 ## Schritt "call" an der Treppe: kommt dieser Passant herein? Dann die Schritte hinein (der Rest des Besuchs wird drinnen
 ## geplant); sonst nichts (er geht einfach weiter).
 func offer_visit(walker: Passerby, rejoin: Vector2) -> Array:
-	if not is_ready() or walker.companion != null or walker.carries_bag() or not Lending.want_visitor():
+	if not is_ready() or walker.companion != null or walker.chat != null or walker.carries_bag() or not Lending.want_visitor():
 		return []
 	Lending.visitor_entered(walker)
 	_visit[walker] = {"books": [] as Array[Book], "genre": _pick_genre(), "new": Lending.roll_new_reader(), "rejoin": rejoin}
 	walker.add_to_group(VISITOR_GROUP)
 	walker.add_to_group(Door.KEEPOUT_GROUP)
+	walker.in_library = true
 	var p := _entrance_points()
 	var actions: Array = []
 	actions.append(_line([walker.pos, p.foot], 0.0, 0.0, STREET_HALF_WIDTH))
@@ -144,7 +162,7 @@ func _call(callable: Callable) -> Dictionary:
 
 ## Drinnen angekommen: Regale, vielleicht lesen, Theke (oder ohne Buch wieder hinaus).
 func _plan_inside(walker: Passerby) -> Array:
-	var actions: Array = []
+	var actions: Array = _basket_actions(true)
 	var stops := _pick_shelves(walker)
 	if debug:
 		print("Bücherei: %s will %s, Regale %d" % [walker.name, (_visit.get(walker, {}) as Dictionary).get("genre", "?"), stops.size()])
@@ -171,7 +189,6 @@ func _after_browsing(walker: Passerby) -> Array:
 		if walker._model and walker._model.has_method("trigger_face"):
 			walker._model.call("trigger_face", &"window_wonder")
 		return _leave_actions(walker)
-	walker.set_prop(&"book")
 	var actions: Array = []
 	if _rng.randf() < GameConfig.visitor_read_chance:
 		var seat := _free_seat(walker)
@@ -183,7 +200,7 @@ func _after_browsing(walker: Passerby) -> Array:
 			var face := Vector2(face3.x, face3.z).normalized()
 			var spot := _to2(seat.global_position)
 			actions.append(_call(_go_to.bind(seat.global_position + face3 * 0.5)))
-			actions.append({"type": "sit", "seat": seat, "spot": spot, "face": face, "floor": _floor,
+			actions.append({"type": "sit", "seat": seat, "spot": spot, "face": face, "floor": _floor, "read": true,
 				"height": seat.global_position.y - room.global_position.y,
 				"time": _rng.randf_range(GameConfig.visitor_read_time.x, GameConfig.visitor_read_time.y)})
 			actions.append(_call(func(w: Passerby) -> Array:
@@ -207,26 +224,30 @@ func _queue_step(walker: Passerby) -> Array:
 	if index > 0:
 		return [{"type": "wait", "face": _counter_face(), "until": func(w: Passerby) -> bool: return queue.find(w) < index},
 			_call(_queue_step)]
-	# vorn an der Theke
+	# vorn an der Theke: Korb auf die Theke, einmal klingeln, Ausweis hochhalten
 	Audio.play_at("ui/counter_bell", _counter_node().global_transform * Vector3(-0.3, 1.0, 0.25), GameConfig.counter_bell_volume_db,
 		Audio.vary(0.03))
+	_checkout[walker] = 0
+	_put_basket_on_counter(walker)
 	walker.set_prop(&"card")
-	return [{"type": "wait", "face": _counter_face(), "until": func(w: Passerby) -> bool: return _stamped.has(w),
+	return [{"type": "wait", "face": _counter_face(), "until": func(w: Passerby) -> bool: return int(_checkout.get(w, 0)) >= 3,
 		"every": _hold_card}, _call(_after_stamp)]
 
 
 func _hold_card(walker: Passerby, _delta: float) -> void:
 	if walker._model and walker._model.has_method("show_hand_at"):
-		walker._model.call("show_hand_at", _card_point())
+		walker._model.call("show_hand_at", _card_point() if int(_checkout.get(walker, 0)) == 0 else null)
 
 
-## Gestempelt: ausgeliehen, Ausweis weg, Buch in der Hand, hinaus.
+## Fertig an der Theke: Ausweis zurück, Korb wieder in die Hand, hinaus (unterwegs den Korb zum Stapel zurück).
 func _after_stamp(walker: Passerby) -> Array:
-	_stamped.erase(walker)
+	_checkout.erase(walker)
 	queue.erase(walker)
 	if walker._model and walker._model.has_method("show_hand_at"):
 		walker._model.call("show_hand_at", null)
-	walker.set_prop(&"book")
+	walker.set_prop(&"")
+	_clear_counter()
+	walker.give_bag(true, BASKET_MODELS[mini(3, _book_count(walker))])
 	if walker._model and walker._model.has_method("trigger_face"):
 		walker._model.call("trigger_face", &"buy")
 	return _leave_actions(walker)
@@ -236,20 +257,23 @@ func _after_stamp(walker: Passerby) -> Array:
 func _leave_actions(walker: Passerby) -> Array:
 	var p := _entrance_points()
 	var rejoin: Vector2 = (_visit.get(walker, {}) as Dictionary).get("rejoin", p.foot)
-	return [
+	var steps: Array = _basket_actions(false)
+	steps.append_array([
 		_call(_go_to.bind(Vector3(p.inside.x, 0.0, p.inside.y))),
 		{"type": "door", "door": door_link, "from_pos": p.inside, "to_pos": p.landing, "middle": p.middle, "push": false,
 			"floor": _floor, "fixed_path": true},
 		_line([p.landing, p.foot], _floor, 0.0),
 		_call(_left_library),
 		_line([p.foot, rejoin], 0.0, 0.0, STREET_HALF_WIDTH),
-	]
+	])
+	return steps
 
 
 func _left_library(walker: Passerby) -> Array:
 	walker.remove_from_group(VISITOR_GROUP)
 	walker.remove_from_group(Door.KEEPOUT_GROUP)
-	walker.set_prop(&"")
+	walker.in_library = false
+	walker.give_bag(false)  # (die ausgeliehenen Bücher bleiben in der Hand – StreetLife._launch räumt sie später weg)
 	queue.erase(walker)
 	_visit.erase(walker)
 	Lending.visitor_left(walker)
@@ -322,6 +346,7 @@ func _take_books(walker: Passerby, shelf: BookShelf) -> Array:
 		return []
 	shelf.remove_books(choice, true)
 	held.append_array(choice)
+	walker.give_bag(true, BASKET_MODELS[mini(3, held.size())])  # die Bücher liegen jetzt im Korb
 	Audio.play_at("books/take", shelf.global_position + Vector3.UP, -4.0, Audio.vary(0.08))
 	return []
 
@@ -373,7 +398,8 @@ func _waiting_at_counter() -> Passerby:
 	if queue.is_empty():
 		return null
 	var first := queue[0]
-	if not is_instance_valid(first) or _stamped.has(first) or first.get_action_type() != "wait":
+	if not is_instance_valid(first) or not _checkout.has(first) or int(_checkout[first]) >= 3 \
+			or first.get_action_type() != "wait":
 		return null
 	return first
 
@@ -388,36 +414,222 @@ func player_behind_counter() -> bool:
 	return local.z < -0.2 and absf(local.x) < 1.4 and local.z > -GameConfig.counter_staff_reach
 
 
+var _auto_wait := 0.0
+var _scanning := false
+var _scan_walker: Passerby
+var _scan_left := 0
+var _scan_timer := 0.0
+## Abstand der Piepser beim Scannen (Sekunden)
+const SCAN_GAP := 0.35
+
+
+## Scannen läuft in Spielzeit (nicht über Tweens – das Prüfwerkzeug spult schneller vor als die echte Zeit).
+func _update_scan(delta: float) -> void:
+	if not _scanning:
+		return
+	_scan_timer -= delta
+	if _scan_timer > 0.0:
+		return
+	if _scan_left > 0:
+		_scan_left -= 1
+		_scan_timer = SCAN_GAP
+		Audio.play_at("ui/scan", _counter_node().global_transform * Vector3(-0.5, 1.1, 0.1), -6.0, Audio.vary(0.02))
+		if _counter_basket:
+			var bump := create_tween()
+			bump.tween_property(_counter_basket, "scale", Vector3(1.04, 0.97, 1.04), 0.06)
+			bump.tween_property(_counter_basket, "scale", Vector3.ONE, 0.1)
+		return
+	_scanning = false
+	_finish_lending(_scan_walker)
+	_scan_walker = null
+var _debug_wait := 0.0
+
+
 func _update_counter() -> void:
 	if _counter_node() == null or _stamp_interactable == null:
 		return
 	var waiting := _waiting_at_counter()
-	_stamp_interactable.prompt_text = "Stempeln" if waiting and player_behind_counter() else ""
-	if auto_stamp and waiting and waiting.get_action().get("type") == "wait":
-		_stamp(waiting)
+	var word := ""
+	if waiting and player_behind_counter() and not _scanning:
+		word = CHECKOUT_WORDS[int(_checkout[waiting])]
+	_stamp_interactable.prompt_text = word
+	if debug and not queue.is_empty():
+		_debug_wait -= get_physics_process_delta_time()
+		if _debug_wait <= 0.0:
+			_debug_wait = 5.0
+			var first := queue[0]
+			print("  Theke: vorn %s, Schritt %s, Aktion %s, scannt %s, Schlange %d" % [first.name, _checkout.get(first, "-"),
+				first.get_action_type(), _scanning, queue.size()])
+	if auto_stamp and waiting and not _scanning:
+		_auto_wait -= get_physics_process_delta_time()
+		if _auto_wait <= 0.0:
+			_auto_wait = 0.4
+			_checkout_step(waiting)
 
 
 func _on_stamp(_who: Node) -> void:
 	var walker := _waiting_at_counter()
-	if walker == null or not player_behind_counter():
+	if walker == null or not player_behind_counter() or _scanning:
 		return
-	_stamp(walker)
+	_checkout_step(walker)
 
 
-func _stamp(walker: Passerby) -> void:
+## Ein Schritt an der Theke: Ausweis nehmen → stempeln → Bücher scannen (dann ist ausgeliehen).
+func _checkout_step(walker: Passerby) -> void:
+	var counter := _counter_node()
+	match int(_checkout.get(walker, 0)):
+		0:  # Ausweis nehmen: er liegt jetzt vor der Spielfigur auf der Theke
+			walker.set_prop(&"")
+			_counter_card = _place_on_counter(load("res://scenes/street_life/props/library_card.tscn").instantiate(),
+				Vector3(-0.15, 1.003, -0.12), Basis(Vector3.RIGHT, -PI / 2.0) * Basis(Vector3.FORWARD, 0.2))
+			Audio.play_at("books/page", _card_point(), -6.0, Audio.vary(0.1))
+			_checkout[walker] = 1
+		1:  # stempeln: der Stempel hebt sich, drückt auf den Ausweis und geht zurück
+			_checkout[walker] = 2
+			if _stamp_tool == null:
+				_stamp_tool = _place_on_counter(_make_stamp(), Vector3(0.12, 1.0, -0.16), Basis.IDENTITY)
+			var target := counter.global_transform * Vector3(-0.15, 1.004, -0.12)
+			var rest := _stamp_tool.global_position
+			var tween := create_tween().set_trans(Tween.TRANS_SINE)
+			tween.tween_property(_stamp_tool, "global_position", target + Vector3.UP * 0.08, 0.18)
+			tween.tween_property(_stamp_tool, "global_position", target, 0.08)
+			tween.tween_callback(func() -> void: Audio.play_at("ui/stamp", target, -2.0, Audio.vary(0.06)))
+			tween.tween_interval(0.12)
+			tween.tween_property(_stamp_tool, "global_position", rest, 0.22)
+		2:  # scannen: ein Piepen je Buch (in _update_scan), dann ist ausgeliehen
+			_scanning = true
+			_scan_walker = walker
+			_scan_left = maxi(1, _book_count(walker))
+			_scan_timer = SCAN_GAP
+
+
+## Ausgeliehen: Gebühren (das Geld ploppt oben links beim Kontostand auf – kein Text), Besucher geht.
+func _finish_lending(walker: Passerby) -> void:
+	if not is_instance_valid(walker):
+		return
 	var visit: Dictionary = _visit.get(walker, {})
 	var books: Array[Book] = []
 	for book: Book in visit.get("books", []):
 		books.append(book)
-	var income := Lending.lend(books, bool(visit.get("new", false)))
+	Lending.lend(books, bool(visit.get("new", false)))
 	visit.lent = true
-	Audio.play_at("ui/stamp", _card_point(), -2.0, Audio.vary(0.06))
 	Audio.play("ui/kaching", -12.0)
-	var text := "%d %s ausgeliehen" % [books.size(), "Buch" if books.size() == 1 else "Bücher"]
-	if bool(visit.get("new", false)):
-		text += ", neuer Leseausweis"
-	Notice.post(self, "%s (+%s)" % [text, Wallet.format(income)])
-	_stamped[walker] = true
+	_checkout[walker] = 3
+
+
+func _book_count(walker: Passerby) -> int:
+	return ((_visit.get(walker, {}) as Dictionary).get("books", []) as Array).size()
+
+
+## Etwas auf die Theke legen (Lage im Raum der Theke).
+func _place_on_counter(node: Node3D, local: Vector3, basis: Basis) -> Node3D:
+	var counter := _counter_node()
+	counter.add_child(node)
+	node.transform = Transform3D(basis, local)
+	return node
+
+
+## Korb des Besuchers auf die Kundenseite der Theke stellen (aus der Hand).
+func _put_basket_on_counter(walker: Passerby) -> void:
+	_clear_counter()
+	walker.give_bag(false)
+	var model := load(BASKET_MODELS[mini(3, _book_count(walker))]) as PackedScene
+	if model == null:
+		return
+	_counter_basket = _place_on_counter(model.instantiate(), Vector3(0.0, 1.0 + BASKET_DROP, 0.15), Basis(Vector3.UP, 0.4))
+	Audio.play_at("books/place", _counter_basket.global_position, -6.0, Audio.vary(0.08))
+
+
+func _clear_counter() -> void:
+	for node in [_counter_basket, _counter_card]:
+		if node and is_instance_valid(node):
+			(node as Node).queue_free()
+	_counter_basket = null
+	_counter_card = null
+
+
+## Stempel aus Holz mit Gummiplatte (einfache Körper).
+func _make_stamp() -> Node3D:
+	var stamp := Node3D.new()
+	stamp.name = "Stamp"
+	var wood := StandardMaterial3D.new()
+	wood.albedo_color = Color(0.52, 0.34, 0.2)
+	wood.roughness = 0.7
+	var rubber := StandardMaterial3D.new()
+	rubber.albedo_color = Color(0.25, 0.2, 0.35)
+	rubber.roughness = 0.9
+	var parts := [[CylinderMesh.new(), Vector3(0, 0.055, 0), 0.014, 0.06, wood], [SphereMesh.new(), Vector3(0, 0.095, 0), 0.022, 0.044, wood],
+		[BoxMesh.new(), Vector3(0, 0.014, 0), 0.0, 0.0, wood], [BoxMesh.new(), Vector3(0, 0.003, 0), 0.0, 0.0, rubber]]
+	for part: Array in parts:
+		var mesh_instance := MeshInstance3D.new()
+		var mesh: PrimitiveMesh = part[0]
+		if mesh is CylinderMesh:
+			(mesh as CylinderMesh).top_radius = part[2]
+			(mesh as CylinderMesh).bottom_radius = part[2]
+			(mesh as CylinderMesh).height = part[3]
+		elif mesh is SphereMesh:
+			(mesh as SphereMesh).radius = part[2]
+			(mesh as SphereMesh).height = part[3]
+		else:
+			(mesh as BoxMesh).size = Vector3(0.06, 0.02, 0.035) if part[4] == wood else Vector3(0.056, 0.006, 0.031)
+		mesh.material = part[4]
+		mesh_instance.mesh = mesh
+		mesh_instance.position = part[1]
+		stamp.add_child(mesh_instance)
+	return stamp
+
+
+# --- Körbe ---
+
+## Korbstapel an der Wand (drei Körbe ineinander) und eine Sperrzone davor, damit dort nichts hingestellt wird.
+func _build_basket_stack() -> void:
+	var model := load(BASKET_MODELS[0]) as PackedScene
+	if model == null:
+		return
+	var at := GameConfig.visitor_basket_stack
+	_basket_stack = Node3D.new()
+	_basket_stack.name = "BasketStack"
+	room.add_child(_basket_stack)
+	_basket_stack.position = Vector3(at.x, 0.0, at.y)
+	for i in 3:
+		var basket := model.instantiate() as Node3D
+		_basket_stack.add_child(basket)
+		basket.position = Vector3(0.0, BASKET_DROP + 0.002 + i * 0.026, 0.0)
+		basket.rotation.y = 0.5 + i * 1.3
+	var area := Area3D.new()
+	area.name = "KeepClear"
+	area.collision_layer = 16
+	area.collision_mask = 0
+	area.monitoring = false
+	area.set_meta("keep_clear_text", "Hier stehen die Körbe für die Besucher – bitte frei lassen.")
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.6, 1.0, 0.9)
+	shape.shape = box
+	area.add_child(shape)
+	area.position = Vector3(0.25, 0.5, 0.0)
+	_basket_stack.add_child(area)
+
+
+## Korb nehmen (take) bzw. zurückstellen: zum Stapel, bücken (Animation pick_up), dabei den Korb greifen bzw. abstellen.
+func _basket_actions(take: bool) -> Array:
+	if _basket_stack == null:
+		return [_call(func(w: Passerby) -> Array:
+			w.give_bag(take, BASKET_MODELS[0] if take else "")
+			return [])]
+	var stack := _basket_stack.global_position
+	var stand := _nearest_free(stack + Vector3(0.5, 0.0, 0.0))
+	var face := Vector2(stack.x - stand.x, stack.z - stand.z).normalized()
+	var cue := func(w: Passerby) -> void:
+		if take:
+			w.give_bag(true, BASKET_MODELS[0])
+		else:
+			w.give_bag(false)
+			if ((_visit.get(w, {}) as Dictionary).get("lent", false)):
+				w.set_prop(&"book")  # die ausgeliehenen Bücher trägt man hinaus
+		Audio.play_at("books/place", stack + Vector3.UP * 0.2, -10.0, Audio.vary(0.1))
+	return [_call(_go_to.bind(stand)),
+		{"type": "stand", "anim": &"idle", "face": face, "clip": &"pick_up", "clip_max": 2.2, "time": 1.2, "cue": [0.9, cue]}]
 
 
 # --- Sitzplätze ---

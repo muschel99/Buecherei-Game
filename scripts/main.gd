@@ -102,6 +102,11 @@ func _on_setting_changed(key: String, _value: Variant) -> void:
 		_paint.enabled = int(Settings.get_value("graphics/paint_style")) == 1
 
 
+## Malfilter nachts (seit Testrunde 7b): Tusche nachtblau statt braun (0 = Tag, 1 = Nacht; setzt DayCycle).
+func set_paint_night(amount: float) -> void:
+	_paint.night = amount
+
+
 ## Malfilter als Nachbearbeitung der Kamera-Bilder dieser Welt (Compositor der WorldEnvironment).
 func _setup_paint_filter() -> void:
 	var compositor := Compositor.new()
@@ -136,6 +141,7 @@ func _apply_sun_direction() -> void:
 ## Straßen- und Wandlaternen an oder aus (seit Etappe 6j): Am hellen Tag brennen sie nicht – das Glas ist dann matt
 ## und hell statt leuchtend. Für den späteren Tagesablauf (Etappe 7): abends set_street_lanterns(true).
 func set_street_lanterns(lit: bool) -> void:
+	_set_lantern_lights(lit)
 	var glass := load(LANTERN_GLASS) as ShaderMaterial
 	if glass == null:
 		return
@@ -145,6 +151,74 @@ func set_street_lanterns(lit: bool) -> void:
 	glass.set_shader_parameter("emission_energy", glass.get_meta("lit_energy") if lit else 0.0)
 	glass.set_shader_parameter("base_color", glass.get_meta("lit_color") if lit else GameConfig.lantern_glass_off_color)
 	glass.set_shader_parameter("second_color", glass.get_meta("lit_color") if lit else GameConfig.lantern_glass_off_color)
+
+
+## Echte Lichter in den Laternen (seit Testrunde 7b: warme Lichtkegel auf dem Pflaster, nachts mehr Stimmung). Beim ersten
+## Einschalten sucht es alle Flächen mit dem Laternenglas (auch mehrere Laternen in einem Modell) und setzt je Laterne ein
+## OmniLight ohne Schatten in die Mitte des Glases.
+var _lantern_lights: Array[OmniLight3D] = []
+var _lantern_lights_built := false
+
+
+func _set_lantern_lights(lit: bool) -> void:
+	if lit and not _lantern_lights_built:
+		_lantern_lights_built = true
+		_build_lantern_lights()
+	for light in _lantern_lights:
+		light.visible = lit
+
+
+func _build_lantern_lights() -> void:
+	var centers_by_mesh := {}
+	for root: Node in [get_node_or_null("Outside"), get_node_or_null("GroundFloorRoom")]:
+		if root == null:
+			continue
+		for node in root.find_children("*", "MeshInstance3D", true, false):
+			var instance := node as MeshInstance3D
+			var mesh := instance.mesh
+			if mesh == null:
+				continue
+			if not centers_by_mesh.has(mesh):
+				centers_by_mesh[mesh] = _glass_centers(instance)
+			for center: Vector3 in centers_by_mesh[mesh]:
+				var light := OmniLight3D.new()
+				light.name = "LanternLight"
+				light.light_color = GameConfig.lantern_light_color
+				light.light_energy = GameConfig.lantern_light_energy
+				light.omni_range = GameConfig.lantern_light_range
+				light.omni_attenuation = 1.3
+				light.shadow_enabled = false
+				light.distance_fade_enabled = true
+				light.distance_fade_begin = GameConfig.lantern_light_fade_distance
+				light.distance_fade_length = 8.0
+				instance.add_child(light)
+				light.position = center
+				_lantern_lights.append(light)
+
+
+## Mitten der Glasflächen eines Modells (je Laterne eine; Ecken, die weiter als 0,5 m auseinander liegen, sind zwei Laternen).
+func _glass_centers(instance: MeshInstance3D) -> Array[Vector3]:
+	var result: Array[Vector3] = []
+	var mesh := instance.mesh
+	for i in mesh.get_surface_count():
+		var material := instance.get_surface_override_material(i)
+		if material == null:
+			material = mesh.surface_get_material(i)
+		if material == null or material.resource_path != LANTERN_GLASS:
+			continue
+		var clusters: Array[AABB] = []
+		for v: Vector3 in mesh.surface_get_arrays(i)[Mesh.ARRAY_VERTEX]:
+			var placed := false
+			for c in clusters.size():
+				if clusters[c].get_center().distance_to(v) < 0.5:
+					clusters[c] = clusters[c].expand(v)
+					placed = true
+					break
+			if not placed:
+				clusters.append(AABB(v, Vector3.ZERO))
+		for box in clusters:
+			result.append(box.get_center())
+	return result
 
 
 ## Lichtstimmung (seit Etappe 6j, alle Werte in GameConfig "light_*"): warme Nachmittagssonne, kühleres Himmelslicht in

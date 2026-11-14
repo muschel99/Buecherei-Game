@@ -23,7 +23,7 @@ import os
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import storybook_common as SC  # noqa: E402
@@ -70,6 +70,10 @@ def materials():
         "pink": mk("Blüte Rosa", (0.93, 0.46, 0.6), grain="fabric", rough=0.7, vary=0.12, plant=True),
         "cream": mk("Blüte Creme", (0.96, 0.93, 0.85), grain="fabric", rough=0.7, vary=0.05, plant=True),
         "stalk": mk("Stiel grün", (0.3, 0.42, 0.18), grain="smooth", rough=0.8, vary=0.06),
+        # Bücherkorb der Bücherei-Besucher (seit Testrunde 7b)
+        "wicker": mk("Weidenkorb", (0.68, 0.5, 0.3), grain="fabric", rough=0.9, vary=0.1, bump=0.4),
+        "book_blue": mk("Buch Leinen blau", (0.24, 0.33, 0.52), grain="fabric", rough=0.85, vary=0.05),
+        "book_green": mk("Buch Leinen grün", (0.27, 0.43, 0.3), grain="fabric", rough=0.85, vary=0.05),
     }
 
 
@@ -197,7 +201,47 @@ def tote_bag(M, coll):
         b.build()
 
 
+# Bücherkorb (seit Testrunde 7b): kleiner runder Weidenkorb mit Bügel, den Bücherei-Besucher am Arm tragen; vier Varianten
+# mit 0 bis 3 Büchern (library_basket_0 … _3), das Spiel tauscht sie, wenn ein Buch dazukommt. Ursprung = Griff oben am Bügel.
+BASKET_R = (0.062, 0.078)   # Radius unten, oben
+BASKET_H = 0.085
+BASKET_HANG = 0.115          # Griff – Oberkante des Korbs
+BOOKS = [  # (Farbe, quer, entlang, Höhe, Neigung zur Seite)
+    ("book", -0.022, -0.02, 0.105, -0.18),
+    ("book_blue", 0.006, 0.012, 0.095, 0.1),
+    ("book_green", 0.028, -0.006, 0.11, 0.24),
+]
+
+
+def library_basket(M, coll, books):
+    import storybook_town as T
+    top = -BASKET_HANG
+    base_y = top - BASKET_H
+    T.round_basket(M, {"deco": coll}, "Korb", g(0, base_y, 0), BASKET_R[0], BASKET_R[1], BASKET_H, seed=41, stakes=14)
+    # Bügel: von der einen Seite des Rands (entlang z) hoch über den Griff zur anderen Seite
+    h = Body("Bügel", M["wicker"], coll, seed=42, vary=0.06)
+    r = BASKET_R[1]
+    pts = [g(0, top - 0.004, -r + 0.004), g(0, top + 0.05, -r * 0.82), g(0, -0.012, -0.03), g(0, -0.004, 0.0),
+           g(0, -0.012, 0.03), g(0, top + 0.05, r * 0.82), g(0, top - 0.004, r - 0.004)]
+    h.tube(pts, 0.006, segs=7, smooth=2, round_ends=True)
+    h.build()
+    # Bücher stehen schräg im Korb, oben schauen sie heraus
+    for i in range(books):
+        mat, x, z, height, lean = BOOKS[i]
+        bk = Body("Buch%d" % i, M[mat], coll, seed=50 + i, vary=0.03, bevel=0.0012)
+        bk.box(g(x, base_y + 0.012 + height / 2, z), gsize(0.016, height, 0.068), step=0.05, dent=0.0)
+        pg = Body("Seiten%d" % i, M["pages"], coll, seed=60 + i, vary=0.02)
+        pg.box(g(x, base_y + 0.012 + height / 2 + 0.001, z), gsize(0.0125, height - 0.006, 0.0695), step=0.05, dent=0.0)
+        # um die Unterkante zur Seite neigen (Blender: Drehung um die y-Achse = Spiel-z)
+        pivot = g(x, base_y + 0.012, z)
+        tilt = Matrix.Translation(pivot) @ Matrix.Rotation(lean, 4, "Y") @ Matrix.Translation(-pivot)
+        for o in (bk.build(), pg.build()):
+            o.data.transform(tilt)
+
+
 BAGS = {"shopping_bag_paper": paper_bag, "shopping_bag_tote": tote_bag}
+for _n in range(4):
+    BAGS["library_basket_%d" % _n] = (lambda M, coll, n=_n: library_basket(M, coll, n))
 
 
 def export(name, coll):
@@ -231,10 +275,16 @@ def main():
         # beide nebeneinander (die Tüten liegen sonst am selben Platz)
         for o in colls["shopping_bag_tote"].all_objects:
             o.location.x += 0.22
+        # Bücherkorb mit drei Büchern daneben, die anderen Varianten nicht im Bild
+        for o in colls["library_basket_3"].all_objects:
+            o.location.x += 0.44
+        for n in range(3):
+            for o in colls["library_basket_%d" % n].all_objects:
+                o.hide_render = True
         SC.setup_render(True)
-        SC.render("taschen_schraeg", (0.55, -0.55, 0.05), (0.11, 0.0, -0.15), 50, (900, 650))
-        SC.render("taschen_seite", (0.11, -0.7, -0.12), (0.11, 0.0, -0.15), 50, (900, 650))
-        SC.render("taschen_oben", (0.3, -0.35, 0.35), (0.11, 0.0, -0.12), 50, (900, 650))
+        SC.render("taschen_schraeg", (0.75, -0.75, 0.05), (0.22, 0.0, -0.15), 50, (1100, 650))
+        SC.render("taschen_seite", (0.22, -0.95, -0.12), (0.22, 0.0, -0.15), 50, (1100, 650))
+        SC.render("taschen_oben", (0.45, -0.45, 0.4), (0.22, 0.0, -0.12), 50, (1100, 650))
         for o in colls["shopping_bag_tote"].all_objects:
             o.location.x -= 0.22
     os.makedirs(os.path.dirname(BLEND), exist_ok=True)

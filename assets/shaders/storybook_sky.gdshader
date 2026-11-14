@@ -21,6 +21,11 @@ uniform float moon_size = 0.99955;
 uniform vec3 moon_color : source_color = vec3(0.95, 0.94, 0.86);
 // Sterne (0 = keine)
 uniform float stars = 0.0;
+// Sterne warm und gedämpft (seit Testrunde 7b), Sternschnuppen: alle shooting_period Sekunden mit shooting_chance eine
+uniform vec3 star_color : source_color = vec3(1.0, 0.86, 0.66);
+uniform float star_brightness = 0.6;
+uniform float shooting_period = 23.0;
+uniform float shooting_chance = 0.35;
 // Wolken: Bedeckung, Versatz (wandert mit dem Wind), Farbe von unten/oben, Schatten, wie stark Sonne/Mond sie anstrahlen
 uniform float cloud_cover = 0.42;
 uniform vec2 cloud_offset = vec2(0.0);
@@ -77,7 +82,27 @@ void sky() {
 				float d = length(p - center);
 				float twinkle = 0.75 + 0.25 * sin(TIME * (1.5 + h * 3.0) + h * 40.0);
 				float star = smoothstep(0.35, 0.0, d) * twinkle * (0.5 + 0.5 * fract(h * 97.0));
-				col += vec3(1.0, 0.97, 0.9) * star * stars * smoothstep(-0.02, 0.15, up);
+				col += star_color * star * stars * star_brightness * smoothstep(-0.02, 0.15, up);
+			}
+			// Sternschnuppe: ein kurzer Strich, der schräg nach unten zieht (ab und zu, nur bei klarer Nacht)
+			float slot = floor(TIME / shooting_period);
+			if (stars > 0.3 && hash2(vec2(slot, 7.3)) < shooting_chance) {
+				float t = (TIME - slot * shooting_period) / 0.9;
+				if (t < 1.0) {
+					float az = hash2(vec2(slot, 1.7)) * 6.2832;
+					float el = mix(0.5, 1.05, hash2(vec2(slot, 3.1)));
+					vec3 a = vec3(cos(el) * cos(az), sin(el), cos(el) * sin(az));
+					vec3 east = normalize(cross(vec3(0.0, 1.0, 0.0), a));
+					float side = hash2(vec2(slot, 5.9)) < 0.5 ? -1.0 : 1.0;
+					vec3 b = normalize(a + east * side * 0.32 - vec3(0.0, 0.16, 0.0));
+					vec3 head = normalize(mix(a, b, t));
+					vec3 tail = normalize(mix(a, b, max(t - 0.3, 0.0)));
+					vec3 seg = head - tail;
+					float k = clamp(dot(dir - tail, seg) / max(dot(seg, seg), 1e-6), 0.0, 1.0);
+					float d = length(dir - (tail + seg * k));
+					float streak = smoothstep(0.0022, 0.0, d) * k * sin(3.14159 * t);
+					col += star_color * 1.6 * streak * stars;
+				}
 			}
 		}
 		// Sonnenscheibe (weich)

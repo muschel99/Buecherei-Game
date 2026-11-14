@@ -14,6 +14,36 @@ func _init(the_door: Door = null) -> void:
 	door = the_door
 
 
+## Vorfahrt (seit Testrunde 7b): Wer hinaus will, geht zuerst. Wer herein will, wartet daneben, solange jemand anderes durch
+## die Tür geht oder drinnen schon zur Tür unterwegs ist; wer hinaus will, wartet nur auf andere, die hinausgehen, oder auf
+## jemanden, der schon mitten in der Tür steht.
+func busy_for(who: Object) -> bool:
+	var leaving := _is_leaving(who)
+	for user: Object in _users:
+		if user == who or not is_instance_valid(user):
+			continue
+		if not leaving or _is_leaving(user) or _in_doorway(user):
+			return true
+	if not leaving:
+		for node in (who as Node).get_tree().get_nodes_in_group(LibraryVisits.VISITOR_GROUP):
+			if node != who and _is_leaving(node) and int(node.get("_phase")) <= 1:
+				return true
+	return false
+
+
+## Ist diese Figur gerade beim Hinausgehen durch die Ladentür (Schritt "door" ohne "push")?
+func _is_leaving(who: Object) -> bool:
+	if not who is Passerby:
+		return false
+	var action: Dictionary = (who as Passerby).get_action()
+	return action.get("type") == "door" and action.get("door") == self and not bool(action.get("push", true))
+
+
+## Geht sie schon durch die Tür (nicht mehr nur davor)?
+func _in_doorway(who: Object) -> bool:
+	return who is Passerby and (who as Passerby).get_action().get("type") == "door" and int(who.get("_phase")) >= 2
+
+
 func is_closed() -> bool:
 	return door == null or not door.is_ajar()
 

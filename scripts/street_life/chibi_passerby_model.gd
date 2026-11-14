@@ -1057,6 +1057,53 @@ func show_hand_at(point: Variant) -> void:
 	_show_at = point
 
 
+## Lesen (seit Testrunde 7b, Bücherei): ein aufgeschlagenes Buch mit beiden Händen vor der Brust, der Blick ruht darauf.
+var _reading := false
+var _read_book: Node3D
+
+
+func set_reading(on: bool) -> void:
+	_reading = on
+	if on and _read_book == null:
+		_read_book = _make_open_book()
+		add_child(_read_book)
+		_read_book.top_level = true
+		look_at_node(_read_book)
+	if not on and _read_book and _attention == _read_book:
+		look_at_node(null)
+
+
+## Aufgeschlagenes Buch: zwei Seitenblöcke in flachem V auf einem Einband (einfache Körper).
+func _make_open_book() -> Node3D:
+	var book := Node3D.new()
+	book.name = "OpenBook"
+	var cover := StandardMaterial3D.new()
+	cover.albedo_color = Color.from_hsv(randf(), 0.45, 0.55)
+	cover.roughness = 0.85
+	var paper := StandardMaterial3D.new()
+	paper.albedo_color = Color(0.94, 0.9, 0.8)
+	paper.roughness = 0.9
+	for side: float in [-1.0, 1.0]:
+		var half := Node3D.new()
+		half.rotation.z = side * deg_to_rad(9.0)
+		book.add_child(half)
+		var c := MeshInstance3D.new()
+		var cb := BoxMesh.new()
+		cb.size = Vector3(0.078, 0.004, 0.105)
+		c.mesh = cb
+		c.material_override = cover
+		c.position = Vector3(side * 0.04, -0.002, 0.0)
+		half.add_child(c)
+		var p := MeshInstance3D.new()
+		var pb := BoxMesh.new()
+		pb.size = Vector3(0.072, 0.012, 0.098)
+		p.mesh = pb
+		p.material_override = paper
+		p.position = Vector3(side * 0.038, 0.006, 0.0)
+		half.add_child(p)
+	return book
+
+
 func _update_pet(delta: float) -> void:
 	if _gesture_modifier == null:
 		return
@@ -1064,6 +1111,22 @@ func _update_pet(delta: float) -> void:
 		and _shot.clip in [&"pet_reach", &"pet_cat"]
 	if petting and _pet_target.has_method("head_top"):
 		_gesture_modifier.pet_point = _skeleton.global_transform.affine_inverse() * (_pet_target.call("head_top") as Vector3)
+	# Lesen: Buch vor der Brust, leicht zum Gesicht gekippt; die Hände halten es (ChibiGestureModifier.read_point)
+	if _read_book:
+		var chest := _skeleton.find_bone("UpperChest")
+		if chest < 0:
+			chest = _skeleton.find_bone("Chest")
+		var base := _skeleton.get_bone_global_pose(chest).origin if chest >= 0 else Vector3(0, _hip_height * 1.4, 0)
+		var scale_now := _hip_height / 0.607
+		var point := base + Vector3(0.0, -0.13, 0.2) * scale_now
+		_gesture_modifier.read_point = point
+		_gesture_modifier.read_weight = move_toward(_gesture_modifier.read_weight, 1.0 if _reading else 0.0, delta / 0.6)
+		_read_book.global_transform = _skeleton.global_transform * Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-28.0))
+			.scaled(Vector3.ONE * scale_now * 1.25), point)
+		_read_book.visible = _gesture_modifier.read_weight > 0.3
+		if not _reading and _gesture_modifier.read_weight <= 0.0:
+			_read_book.queue_free()
+			_read_book = null
 	var showing := _show_at is Vector3
 	if showing:
 		_gesture_modifier.show_point = _skeleton.global_transform.affine_inverse() * (_show_at as Vector3)

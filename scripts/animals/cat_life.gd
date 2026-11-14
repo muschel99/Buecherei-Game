@@ -308,6 +308,8 @@ func step(delta: float) -> void:
 	_timer -= delta
 	if _timer <= 0.0:
 		_timer = _rng.randf_range(GameConfig.cat_interval.x, GameConfig.cat_interval.y)
+		if StreetHomes.is_quiet_time():
+			_timer *= GameConfig.cat_night_interval_factor  # nachts nur ab und zu eine Katze
 		_spawn()
 	_scan -= delta
 	if _scan <= 0.0:

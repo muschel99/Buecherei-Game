@@ -1,8 +1,9 @@
 class_name OpenSign
 extends Node3D
-## Schild „Geöffnet / Geschlossen“ an der Ladentür (seit Etappe 7): je eins innen und außen, an einer Kordel an einem Haken
-## oben am Türblatt, schwingt mit der Tür. E dreht es um (Lending.set_open) – drinnen und draußen. Besucher kommen nur, wenn es
-## auf „Geöffnet“ steht.
+## Schild „Geöffnet / Geschlossen“ innen an der Ladentür (seit Etappe 7; seit Testrunde 7b nur noch innen, wie im echten
+## Laden): Es hängt an einer Kordel an einem Haken oben am Türblatt und schwingt mit der Tür. Die Seite zur Straße zeigt den
+## Stand (durch Glas in der Tür von draußen lesbar), innen sieht man die Rückseite – also das andere Wort. E dreht es um
+## (Lending.set_open). Besucher kommen nur, wenn zur Straße „Geöffnet“ zeigt.
 ## Es baut sich selbst (Brett, Rand, Kordel, Haken, zwei Schriftzüge) und setzt sich vor die Innenseite des Türblatts
 ## (auch, wenn die Fassade ein anderes Türblatt einsetzt).
 
@@ -22,19 +23,19 @@ var door: Door
 var side := 1.0
 var _board: Node3D
 var _front: Label3D
+var _back: Label3D
 var _interactable: Interactable
 var _flip: Tween
 var _check := 0.0
 
 
-## Hängt die Schilder an die Ladentür (innen und außen).
+## Hängt das Schild innen an die Ladentür.
 static func attach(the_door: Door) -> void:
-	for side_value: float in [1.0, -1.0]:
-		var sign_node := OpenSign.new()
-		sign_node.name = "OpenSignInside" if side_value > 0.0 else "OpenSignOutside"
-		sign_node.door = the_door
-		sign_node.side = side_value
-		the_door.get_hinge().add_child(sign_node)
+	var sign_node := OpenSign.new()
+	sign_node.name = "OpenSign"
+	sign_node.door = the_door
+	sign_node.side = 1.0
+	the_door.get_hinge().add_child(sign_node)
 
 
 func _ready() -> void:
@@ -70,9 +71,11 @@ func _build() -> void:
 	knob.material_override = _material(Color(0.62, 0.5, 0.28), 0.35, 0.8)
 	knob.position = hook
 	_board.add_child(knob)
-	# Schrift vorn
-	_front = _label(font)
+	# Schrift: vorn (in den Raum) die Rückseite, hinten (zur Straße) der Stand
+	_front = _label(font, false)
+	_back = _label(font, true)
 	_board.add_child(_front)
+	_board.add_child(_back)
 	# E-Bereich: etwas tiefer als das Brett, damit der Blick ihn vor der Tür trifft
 	_interactable = Interactable.new()
 	_interactable.name = "Interactable"
@@ -120,7 +123,7 @@ func _material(color: Color, roughness: float, metallic: float) -> StandardMater
 	return material
 
 
-func _label(font: Font) -> Label3D:
+func _label(font: Font, back: bool) -> Label3D:
 	var label := Label3D.new()
 	label.font = font
 	label.font_size = 96
@@ -129,7 +132,9 @@ func _label(font: Font) -> Label3D:
 	label.double_sided = false
 	label.shaded = true
 	label.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	label.position = Vector3(0.0, -0.004, 0.0065)
+	label.position = Vector3(0.0, -0.004, -0.0065 if back else 0.0065)
+	if back:
+		label.rotation.y = PI
 	return label
 
 
@@ -185,8 +190,9 @@ func _on_open_changed(open: bool) -> void:
 
 
 func _show(open: bool) -> void:
-	var text := "Geöffnet" if open else "Geschlossen"
-	var color := OPEN_COLOR if open else CLOSED_COLOR
-	_front.text = text
-	_front.modulate = color
+	# zur Straße der Stand, innen die Rückseite (das andere Wort)
+	_back.text = "Geöffnet" if open else "Geschlossen"
+	_back.modulate = OPEN_COLOR if open else CLOSED_COLOR
+	_front.text = "Geschlossen" if open else "Geöffnet"
+	_front.modulate = CLOSED_COLOR if open else OPEN_COLOR
 	_interactable.prompt_text = "Umdrehen"

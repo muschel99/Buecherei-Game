@@ -476,6 +476,27 @@ vec3 cat_face(vec3 p, vec3 col, float px, inout float gloss) {
 // Fassade (BackRoom setzt die Ecken; min = max = kein Ausschnitt).
 global uniform vec3 library_cut_min;
 global uniform vec3 library_cut_max;
+// Licht in den Fenstern nachts (seit Testrunde 7b): night_glow 0 = Tag … 1 = Nacht (setzt DayCycle); dann leuchten nur
+// noch so viele Häuser/Stockwerke, wie window_lit_share sagt (zufällig, aber fest je Haus und Stockwerk), die anderen sind
+// dunkel; die leuchtenden etwas heller (night_glow_boost). Der Laden der Bücherei (library_area) bleibt, wie er ist.
+global uniform float night_glow;
+global uniform float window_lit_share;
+global uniform float night_glow_boost;
+global uniform vec3 library_area_min;
+global uniform vec3 library_area_max;
+
+float window_glow(float g, vec3 wpos, vec3 origin) {
+	if (g <= 0.0 || night_glow <= 0.001) {
+		return g;
+	}
+	if (library_area_max.x > library_area_min.x && all(greaterThan(wpos, library_area_min)) && all(lessThan(wpos, library_area_max))) {
+		return g;
+	}
+	vec3 cell = vec3(floor(origin.x * 0.5), floor(wpos.y / 2.6), floor(origin.z * 0.5));
+	float h = fract(sin(dot(cell, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+	float lit = step(h, window_lit_share);
+	return g * mix(1.0, mix(0.03, night_glow_boost, lit), night_glow);
+}
 
 void fragment() {
 	if (library_cut_max.x > library_cut_min.x) {
@@ -639,5 +660,9 @@ void fragment() {
 #endif
 	METALLIC = metal;
 	SPECULAR = 0.3;
-	EMISSION = emission_color.rgb * emission_energy + col * glow;
+	float glow_now = glow;
+	if (glow > 0.0) {
+		glow_now = window_glow(glow, (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, MODEL_MATRIX[3].xyz);
+	}
+	EMISSION = emission_color.rgb * emission_energy + col * glow_now;
 }

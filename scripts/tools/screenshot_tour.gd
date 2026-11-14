@@ -19,6 +19,8 @@ extends Node
 ##   --scene=res://…    andere Szene statt der Hauptszene laden (z. B. ein einzelnes Haus)
 ##   --list             nur die Gruppen und Blickpunkte auflisten
 ##   --simulate=<sek>   Straßenleben vor den Bildern so viele Sekunden vorspulen (seit Etappe 5a)
+##   --visitors=<n>     Bücherei-Besucher (Regale/Sessel werden aufgestellt), --at_counter = anhalten, sobald jemand an der
+##                      Theke wartet (seit Testrunde 7b)
 ##   --seed=<zahl>      Zufall des Straßenlebens festlegen (gleiche Bilder bei jedem Lauf)
 ##   --deliver=<n>      eine Testlieferung mit n Kartons bestellen (sofort fällig, Lieferwagen)
 ##   --focus=<abstand>  statt der Blickpunkte: Nahaufnahme des Passanten, der dem Ziel des ersten
@@ -447,6 +449,21 @@ func _prepare_street_life() -> void:
 		_camera.global_position = first.pos
 		_camera.look_at(first.target, Vector3.UP)
 	var seconds := float(_args.get("simulate", 0.0))
+	if _args.has("visitors") and life.library:
+		# Bücherei-Besucher (seit Testrunde 7b): Regale und Sessel aufstellen, Regale füllen, Besuche sofort fällig; mit
+		# --at_counter hält die Zeit an, sobald jemand an der Theke den Ausweis hochhält
+		Lending.set_open(true)
+		var room := Lending.find_room()
+		for entry: Array in [["bookshelf_country", Vector3(2.7, 0, -1.0), -PI / 2.0], ["bookshelf_min_tall", Vector3(-2.75, 0, 1.6), PI / 2.0],
+				["armchair_velvet", Vector3(0.6, 0, 1.0), PI]]:
+			var data := Catalog.get_furniture(String(entry[0]))
+			if data and room:
+				room.add_furniture(data, Transform3D(Basis(Vector3.UP, float(entry[2])), entry[1]), null)
+		await get_tree().physics_frame
+		for shelf in get_tree().get_nodes_in_group(BookStock.SHELF_GROUP):
+			(shelf as BookShelf).set_genre(BookShelf.MIXED)
+			(shelf as BookShelf).fill_from_storage()
+		Lending.debug_add_visits(int(_args.visitors))
 	if _args.has("resident"):
 		# Anwohner sollen sofort genau das tun (Testbilder)
 		GameConfig.resident_activity_weights = {String(_args.resident): 1.0}
@@ -462,6 +479,9 @@ func _prepare_street_life() -> void:
 	while done < seconds:
 		life.step(step)
 		done += step
+		if _args.has("at_counter") and life.library and life.library._waiting_at_counter() and not _focus_wait:
+			_focus_wait = true
+			seconds = minf(seconds, done + 2.0)
 		# --focus_action: anhalten, sobald jemand diese Tätigkeit wirklich tut
 		if _args.has("focus_action") and life.get_walkers().any(func(w: Passerby) -> bool:
 				return w.get_action_type() == String(_args.focus_action) and w._phase >= 1):

@@ -415,11 +415,11 @@ func _seat_chats() -> void:
 		sitters.append_array(homes.indoor)
 	for i in sitters.size():
 		var w1 := sitters[i]
-		if not w1.is_sitting() or w1.chat != null or w1.chat_cooldown > 0.0:
-			continue
+		if not w1.is_sitting() or w1.chat != null or w1.chat_cooldown > 0.0 or w1.in_library:
+			continue  # (in der Bücherei wird gelesen, nicht geplaudert)
 		for j in range(i + 1, sitters.size()):
 			var w2 := sitters[j]
-			if not w2.is_sitting() or w2.chat != null or w2.chat_cooldown > 0.0 or w1.pos.distance_to(w2.pos) > 1.4:
+			if not w2.is_sitting() or w2.chat != null or w2.chat_cooldown > 0.0 or w2.in_library or w1.pos.distance_to(w2.pos) > 1.4:
 				continue
 			var key := Vector2i(mini(w1.get_instance_id(), w2.get_instance_id()) % 1000003, maxi(w1.get_instance_id(), w2.get_instance_id()) % 1000003)
 			if _chat_tried.has(key):
@@ -922,6 +922,10 @@ func get_places() -> Array[Dictionary]:
 
 ## Würde der Passant an dieser Stelle jemandem zu nahe kommen (Spielfigur, andere Passanten,
 ## Kartons, Treppe)? Wegbewegen ist immer erlaubt – so kann sich nie jemand festlaufen.
+## Abstand (Mitte zu Mitte), bis zu dem sich Besucher in der Bücherei aneinander vorbeidrücken (seit Testrunde 7b).
+const LIBRARY_GAP := 0.3
+
+
 func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 	var own := walker.radius * walker.scale.x
 	for obstacle in _obstacles:
@@ -941,6 +945,10 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 				continue  # beim Hinsetzen nebeneinander und Aufstehen stören sie sich nicht
 			if not walker.follows and walker.get_action_type() == "walk":
 				limit = 0.2  # der Vordere geht einfach los, der Begleiter ordnet sich ein (sonst hielten sie sich fest)
+		elif obstacle.kind == "walker" and walker.in_library and (obstacle.agent as Passerby).in_library:
+			# In der Bücherei (seit Testrunde 7b): die Wege sind eng – man drückt sich aneinander vorbei, statt sich an der
+			# Theke oder zwischen Regalen gegenseitig festzuhalten
+			limit = LIBRARY_GAP
 		elif obstacle.kind == "walker" and walker.squeeze > 0.0 and (obstacle.agent as Passerby).squeeze > 0.0:
 			# Engstelle: beide drücken sich Schulter an Schulter aneinander vorbei (Passerby.squeeze)
 			limit = SQUEEZE_GAP
@@ -1331,6 +1339,7 @@ func _launch(plan: Dictionary) -> Passerby:
 	# Gangart und Tasche bei jedem Losgehen neu (seit der Nachbesserung von 6h). Wer mit Tasche auf eine Bank will, stellt
 	# sie im Sitzen neben sich ab (seit Etappe 6j, ChibiPasserbyModel._update_bag)
 	walker.restyle(_rng)
+	walker.set_prop(&"")  # z. B. Bücher aus der Bücherei vom letzten Weg
 	# Wer im Pub Platz nehmen will, kommt ohne Einkaufstasche (die hinge sonst an der Hand am Tisch)
 	if (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.has("pub_seat")):
 		walker.give_bag(false)

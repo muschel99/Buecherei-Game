@@ -1347,6 +1347,24 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   weg mit Klick/E/Esc; `MorningNote.NotePaper` zeichnet den Zettel, auch klein in der App „Statistik“ (alte Zettel; Lending
   liefert dort Kacheln über `stat_sources`). Prüfen: street_life_check `--day_test`, Bilder `--ui=note` / `--ui=app:stats`
   (immer mit `--cam=…`, sonst nimmt die Tour alle Blickpunkte auf).
+- **Testrunde 7b (Liste der Entwicklerin, `.scratch/testrunde-7b/plan.md`):** **Nacht:** Nachtruhe `night_quiet_hours` (22–5:
+  `street_activity_by_hour` 0, Anwohner bleiben zu Hause – `StreetHomes.is_quiet_time()`, Katzen seltener `cat_night_interval_factor`),
+  Läden `shop_hours` (7–22; `StreetHomes.shops_open()`, Verkäufer/Pub-Gäste gehen und kommen nur ungesehen, `_update_opening`),
+  gießen/fegen nur `resident_chore_hours`. Fensterlicht nachts: globale Shader-Werte `night_glow`/`window_lit_share`/
+  `night_glow_boost` (DayCycle, `window_lit_share_by_hour`) → `storybook.gdshaderinc window_glow` (je Haus und Stockwerk an/aus,
+  der Laden selbst `library_area_min/max` nie). Laternen mit echten Lichtern (main.gd `_build_lantern_lights`: je Glasfläche
+  `laternenglas_leuchtend` ein OmniLight ohne Schatten, `lantern_light_*`). Mond warm, Sterne später/gedämpft/warm (`star_color`,
+  `star_brightness`), Sternschnuppen im Himmel-Shader (`shooting_star_*`). Malfilter: nachts Tusche `paint_night_line_color`
+  (main.gd `set_paint_night`), in der Ferne feinere Linien. Prüfen: street_life_check `--hour=23`.
+  **Bücherei:** Korbstapel `visitor_basket_stack` (LibraryVisits `_build_basket_stack`, Sperrzone), Körbe
+  `library_basket_0…3.glb` (build_storybook_bags.py, als Tasche in der rechten Hand), Theke in drei Schritten (`CHECKOUT_WORDS`
+  Ausweis/Stempeln/Scannen, `_checkout_step`, Scannen in Spielzeit `_update_scan`, Ton `ui/scan`), Geld nur als Aufploppen
+  am Kontostand; Vorfahrt an der Tür (`LibraryDoorLink.busy_for`: wer hinaus will, zuerst); drinnen drücken sich Besucher
+  aneinander vorbei (`Passerby.in_library`, `StreetLife.LIBRARY_GAP`); Lesen im Sitzen (`sit` mit "read" →
+  `ChibiPasserbyModel.set_reading`, `ChibiGestureModifier.read_point/read_weight`, Buch `_make_open_book`); Schritt "stand" mit
+  "clip"/"cue". Türschild nur innen (Straßenseite = Stand, innen die Rückseite). **Sitzmöbel** in Chibi-Höhe:
+  `storybook_furniture.SEAT_HEIGHT` 0,3 m (`Kit.lower_seat` staucht alles unter dem Sitz; `low_seat=False` schaltet ab).
+  Bilder: `--visitors=<n> [--at_counter]`, `pose_probe -- read`.
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 
