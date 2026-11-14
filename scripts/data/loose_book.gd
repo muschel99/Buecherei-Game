@@ -69,6 +69,13 @@ static func from_save_data(saved: Variant) -> LooseBook:
 		return null
 	var v: Array = values.map(func(value) -> float: return float(value))
 	var basis := Basis(Vector3(v[0], v[1], v[2]), Vector3(v[3], v[4], v[5]), Vector3(v[6], v[7], v[8]))
+	var origin := Vector3(v[9], v[10], v[11])
+	# Größe des Titels hat sich geändert (Etappe 8: dickere, weichere Bücher): Lage behalten, Größe anpassen, Unterkante bleibt
+	var size := saved_book.data.size
+	var fitted := Basis(basis.x.normalized() * size.x, basis.y.normalized() * size.y, basis.z.normalized() * size.z)
+	var old_half := (absf(basis.x.y) + absf(basis.y.y) + absf(basis.z.y)) / 2.0
+	var new_half := (absf(fitted.x.y) + absf(fitted.y.y) + absf(fitted.z.y)) / 2.0
+	origin.y += new_half - old_half
 	var pose_value: Variant = _POSE_IDS.find_key(str(saved.get("pose", "flat")))
-	return create(saved_book, Transform3D(basis, Vector3(v[9], v[10], v[11])),
+	return create(saved_book, Transform3D(fitted, origin),
 		int(saved.get("support_uid", 0)), pose_value if pose_value != null else Pose.FLAT)

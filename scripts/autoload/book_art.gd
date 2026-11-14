@@ -70,7 +70,10 @@ func _ready() -> void:
 	blank.fill(Color(0.5, 0.45, 0.4))
 	_atlas = ImageTexture.create_from_image(blank)
 	_assign_cells()
+	var empty := Image.create(SYMBOL_CELL * GenreSymbols.NAMES.size(), SYMBOL_CELL, false, Image.FORMAT_RGBA8)
+	_symbol_atlas = ImageTexture.create_from_image(empty)
 	_build_atlas.call_deferred()
+	_build_symbol_atlas.call_deferred()
 
 
 # --- Schriften ---
@@ -144,17 +147,66 @@ func _spine_area(book: BookData) -> Rect2:
 
 
 ## Zeichnet alle Buchrücken in einem Durchgang in ein unsichtbares Bild.
+## Genre-Zeichen als Bilder (seit Etappe 8: Kistenschilder, Gedankenblasen) – ein Atlas, ein Feld je Zeichen.
+const SYMBOL_CELL := 96
+const SYMBOL_INK := Color(0.33, 0.23, 0.19)
+var _symbol_atlas: ImageTexture
+var _symbol_textures := {}
+
+
+## Bild eines Genre-Zeichens (GenreSymbols.NAMES) in dunkler Tinte auf durchsichtigem Grund.
+func get_symbol_texture(symbol_name: String) -> Texture2D:
+	var index := GenreSymbols.NAMES.find(symbol_name)
+	if index < 0:
+		return null
+	if not _symbol_textures.has(symbol_name):
+		var atlas := AtlasTexture.new()
+		atlas.atlas = _symbol_atlas
+		atlas.region = Rect2(index * SYMBOL_CELL, 0, SYMBOL_CELL, SYMBOL_CELL)
+		_symbol_textures[symbol_name] = atlas
+	return _symbol_textures[symbol_name]
+
+
+func _build_symbol_atlas() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(SYMBOL_CELL * GenreSymbols.NAMES.size(), SYMBOL_CELL)
+	viewport.disable_3d = true
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	add_child(viewport)
+	var painter := _SymbolPainter.new()
+	painter.size = Vector2(viewport.size)
+	viewport.add_child(painter)
+	viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	await RenderingServer.frame_post_draw
+	var image := viewport.get_texture().get_image()
+	viewport.queue_free()
+	if image and not image.is_empty():
+		image.generate_mipmaps()
+		_symbol_atlas.set_image(image)
+
+
+class _SymbolPainter extends Control:
+	func _draw() -> void:
+		for i in GenreSymbols.NAMES.size():
+			var c := Vector2((i + 0.5) * SYMBOL_CELL, SYMBOL_CELL / 2.0)
+			GenreSymbols.draw(self, GenreSymbols.NAMES[i], c, SYMBOL_CELL * 0.72, SYMBOL_INK, Color(1.0, 0.97, 0.9))
+
+
 ## Zwischenspeicher des Rücken-Atlas (seit Etappe 8, schnellerer Start): gezeichnet wird nur, wenn sich Bücher, Genres oder
 ## die Zeichen-Scripts geändert haben – sonst lädt der Start das gespeicherte Bild.
 const ATLAS_CACHE := "user://cache/"
-const ATLAS_CACHE_VERSION := 1
+const ATLAS_CACHE_VERSION := 2
 
 
 func _atlas_cache_path() -> String:
 	var stamp := "%d|%s" % [ATLAS_CACHE_VERSION, _atlas_size]
 	for book in Catalog.get_all_books():
 		stamp += "|%s:%d" % [book.id, book.spine_cell]
-	var sources: Array[String] = ["res://scripts/ui/book_cover.gd", "res://scripts/ui/book_motifs.gd", "res://scripts/data/book_data.gd"]
+	var sources: Array[String] = ["res://scripts/ui/book_cover.gd", "res://scripts/ui/book_motifs.gd", "res://scripts/data/book_data.gd",
+		"res://scripts/ui/genre_symbols.gd", "res://scripts/ui/soft_shapes.gd", "res://scripts/autoload/game_config.gd"]
 	for folder in ["res://data/genres/", "res://data/books/"]:
 		for file in DirAccess.get_files_at(folder):
 			sources.append(folder + file)

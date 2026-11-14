@@ -31,6 +31,10 @@ extends Resource
 @export var is_unlocked: bool = true
 ## Reihenfolge in Listen (kleiner = weiter vorn).
 @export var sort_order: int = 100
+## Erkennungszeichen (seit Etappe 8): eines von GenreSymbols.NAMES – heart, magnifier, dragon, rocket, feather, note_flower,
+## teddy, speech, cake, leaf, suitcase, brush, hourglass, owl, teacup, bulb. Steht unten auf jedem Buchrücken, auf dem Cover,
+## auf dem Kistenschild und in der Gedankenblase der Gäste.
+@export var symbol: String = ""
 ## Textdatei mit den Büchern dieses Genres (eine Zeile pro Buch: Titel | Motiv).
 ## Leer = data/books/<id>.txt
 @export_file("*.txt") var books_path: String = ""

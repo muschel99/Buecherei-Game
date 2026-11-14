@@ -63,7 +63,9 @@ und Garten Blatt, Reisen Koffer, Kunst Pinsel, Geschichte Sanduhr, Philosophie E
   Tische (`Kit.lower_table`, `TABLE_HEIGHTS`: Ess-/Schreib-/Teetisch 0,5 m, Beistelltische 0,3 m), Spielfigur Augen 1,45 m,
   Körper 1,6 m, Hocke 0,85/1,0 m, sitzend 0,62 m über dem Sitz; alte Spielstände: Dinge auf Theke/Tischen rutschen nach
   (`Room.SETTLE_RANGE` 0,4). Besucher greifen nur bis ~1,4 m: kommt in Schritt 5
-- [ ] 2. Bücher neu: größer, weicher, Genre-Zeichen
+- [x] 2. Bücher neu: weiche Buchform (`BookLook`), dicker (~35 %) und etwas höher/tiefer (~8–10 % – die Fächer sind nur
+  23–40 cm hoch), sanftere Farben, Genre-Zeichen (`GenreSymbols`) auf Rücken, Cover und Kistenschild; Kisten zeigen echte Titel
+  des Lagers; Besucher tragen die neue Buchform
 - [ ] 3. Theke: PC statt Kasse, Theken-Ansicht, Stempelkarte, Lesezeichen-Bonus
 - [ ] 4. Gespräche: Ansprechen, Fokus, Sprechblase unten, getippte Schrift + Klackern, Textdatei, Antworten
 - [ ] 5. Besucher: Stammgäste, Lieblingsgenre, Arten des Besuchs, Lesen am Tisch, Bücken, Freundschaft

@@ -100,8 +100,11 @@ func _make_colors(rng: RandomNumberGenerator, genre: GenreData) -> void:
 	cover_color.h = fposmod(cover_color.h + rng.randf_range(-0.03, 0.03) * amount, 1.0)
 	cover_color.s = clampf(cover_color.s + rng.randf_range(-0.08, 0.08) * amount, 0.0, 1.0)
 	cover_color.v = clampf(cover_color.v + rng.randf_range(-0.1, 0.1) * amount, 0.08, 0.95)
+	# weicher und sanfter (seit Etappe 8): etwas zu warmem Creme hin gemischt
+	cover_color = cover_color.lerp(GameConfig.book_soft_color, GameConfig.book_soften)
 	# Eine zweite Farbe aus der Palette (nicht dieselbe) für Schmuck und Motiv
 	var second: Color = palette[(index + 1 + rng.randi() % maxi(palette.size() - 1, 1)) % palette.size()]
+	second = second.lerp(GameConfig.book_soft_color, GameConfig.book_soften)
 	paper_color = PAPER.lerp(Color(1.0, 0.97, 0.9), rng.randf() * 0.5)
 	match style:
 		"classic":

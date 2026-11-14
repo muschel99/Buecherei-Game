@@ -557,11 +557,14 @@ var book_slide_interval: float = 0.035
 var book_slide_max_total: float = 2.5
 ## Buchgrößen im Regal in Metern: Höhe, Dicke (Rücken) und Tiefe – jeweils von bis.
 ## Jedes Buch bekommt feste Werte dazwischen (passend zur Fachhöhe).
-var book_height_range: Vector2 = Vector2(0.19, 0.31)
-var book_thickness_range: Vector2 = Vector2(0.022, 0.048)
-var book_depth_range: Vector2 = Vector2(0.15, 0.21)
+var book_height_range: Vector2 = Vector2(0.21, 0.33)
+var book_thickness_range: Vector2 = Vector2(0.03, 0.064)
+var book_depth_range: Vector2 = Vector2(0.165, 0.23)
 ## Wie stark der Farbton der Buchrücken schwankt (0 = alle Bücher eines Genres gleich).
 var book_color_variation: float = 1.0
+## Weichere Farben (seit Etappe 8): so viel wird jede Einbandfarbe zu warmem Creme hin gemischt (0 = kräftig wie früher)
+var book_soften: float = 0.22
+var book_soft_color: Color = Color(0.97, 0.93, 0.86)
 
 ## So viele Bücher kann ich höchstens gleichzeitig tragen.
 var max_carried_books: int = 7

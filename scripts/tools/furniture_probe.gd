@@ -41,6 +41,10 @@ func _run() -> void:
 	var per := 12
 	var pages: Array[int] = []
 	for arg in args:
+		if arg == "buch":
+			await _books()
+			get_tree().quit()
+			return
 		if arg == "theke":
 			await _counters()
 			get_tree().quit()
@@ -114,6 +118,9 @@ func _close_ups(ids: PackedStringArray) -> void:
 			continue
 		var model := FurnitureUtils.instantiate_model(data, "")
 		add_child(model)
+		for node in model.find_children("*", "", true, false):
+			if node is BookShelf:
+				node.show_sample_books()  # Regale mit Beispielbüchern (wie auf den Kacheln)
 		if data.allows(FurnitureData.PLACE_CEILING):
 			model.position.y = 2.6  # Ursprung oben am Aufhängepunkt
 		elif data.is_wall_mounted() or data.allows(FurnitureData.PLACE_WINDOW):
@@ -194,3 +201,45 @@ func _counters() -> void:
 				Vector2i((i % 2) * tiles[i].get_width(), (i / 2) * tiles[i].get_height()))
 		sheet.save_png(ProjectSettings.globalize_path(OUT + "theke_" + style.get_id() + ".png"))
 		print("Bild: theke_", style.get_id())
+
+
+## Nahaufnahme der Bücher: ein Regalfach mit Beispielbüchern von vorn und schräg, dazu einzelne Bücher mit Cover.
+func _books() -> void:
+	var size := get_viewport().get_visible_rect().size
+	var data := Catalog.get_furniture("bookshelf_oak")
+	var shelf := FurnitureUtils.instantiate_model(data, "")
+	add_child(shelf)
+	for node in shelf.find_children("*", "", true, false):
+		if node is BookShelf:
+			node.show_sample_books()
+	# einzelne Bücher liegend und stehend (MultiMesh wie ausgelegte Bücher wäre aufwendiger: Einzelmaterial mit Rücken)
+	var books := Catalog.get_all_books()
+	for i in 4:
+		var b: BookData = books[i * 37 % books.size()]
+		var mi := MeshInstance3D.new()
+		mi.mesh = BookLook.get_mesh()
+		mi.material_override = BookLook.create_single_material(b)
+		var basis := Basis(Vector3.FORWARD, PI / 2.0) if i < 2 else Basis(Vector3.UP, 0.5 * i)
+		mi.transform = Transform3D(basis.scaled_local(b.size), Vector3(1.0 + i * 0.3, b.size.x / 2.0 if i < 2 else b.size.y / 2.0, 0.6))
+		add_child(mi)
+	for f in 20:
+		await get_tree().process_frame
+	var cam := Camera3D.new()
+	cam.fov = 40
+	add_child(cam)
+	cam.make_current()
+	var tiles: Array[Image] = []
+	for view: Array in [[Vector3(0.0, 1.1, 0.9), Vector3(0.0, 1.05, 0.0)], [Vector3(0.45, 0.75, 0.55), Vector3(0.0, 0.62, 0.0)],
+			[Vector3(1.4, 0.7, 1.3), Vector3(1.45, 0.05, 0.6)], [Vector3(-0.2, 1.6, 0.7), Vector3(0.0, 1.4, 0.0)]]:
+		cam.look_at_from_position(view[0], view[1])
+		for f in 4:
+			await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		var img := get_viewport().get_texture().get_image()
+		img.resize(int(size.x / 2), int(size.y / 2))
+		tiles.append(img)
+	var sheet := Image.create(int(size.x / 2) * 2, int(size.y / 2) * 2, false, tiles[0].get_format())
+	for i in tiles.size():
+		sheet.blit_rect(tiles[i], Rect2i(Vector2i.ZERO, tiles[i].get_size()), Vector2i((i % 2) * tiles[i].get_width(), (i / 2) * tiles[i].get_height()))
+	sheet.save_png(ProjectSettings.globalize_path(OUT + "buecher.png"))
+	print("Bild: buecher")

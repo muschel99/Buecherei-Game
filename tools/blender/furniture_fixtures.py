@@ -6,8 +6,8 @@ Theken (kind="counter"): alle gleich groß, damit Kollision und Ablagefläche de
 Einwürfe (kind="return_slot"): Ursprung hinten auf der Hauswand in der Mitte des Schlitzes,
 Vorderseite -y, etwa 34 x 30 cm. Ergebnis: Modell + Datenblatt in data/counters/ bzw.
 data/return_slots/ (siehe storybook_furniture.write_option_data), Auswahl in der App „Fassade“.
-Teile (kind="part"): Kasse und Tablet auf der Theke, Bücherkisten und ihr Buch (crate_*) – nur Modell, ihre Szenen bzw.
-GenreCrates binden die .glb ein. Theken tragen "crate" = Kiste für ihr Würfelregal (Datenblatt: crate_path).
+Teile (kind="part"): Kasse und Tablet auf der Theke, Bücherkisten (crate_*) – nur Modell, ihre Szenen bzw. GenreCrates
+binden die .glb ein (die Bücher in den Kisten sind seit Etappe 8 die weiche Buchform BookLook). Theken tragen "crate" = Kiste für ihr Würfelregal (Datenblatt: crate_path).
 """
 
 import math
@@ -544,7 +544,7 @@ INSIDE_W, INSIDE_H = 0.46, 0.56
 # --- Bücherkisten für das Würfelregal unter der Theke (seit Testrunde 7b, je Thekenstil eine passende) ---
 # Ursprung unten in der Mitte, Vorderseite -y (im Spiel zur Spielfigur gedreht), außen CRATE_W x CRATE_D x CRATE_H.
 # Vorn ein Schild (Mitte LABEL_Z, Vorderfläche höchstens 4 mm vor der Kiste – Korb: 11 mm); GenreCrates schreibt den
-# Genre-Namen in Handschrift davor und stellt Bücher (crate_book) hinein.
+# Genre-Namen in Handschrift davor (mit Genre-Zeichen) und stellt die Bücher des Lagers hinein.
 
 def _paper(k):
     k.mat("paper", (0.96, 0.93, 0.85), grain="paint", rough=0.85, vary=0.03)
@@ -687,15 +687,6 @@ def build_crate_linen(k):
     card.box((0, -d / 2 - 0.003, LABEL_Z), (LABEL_W, 0.002, LABEL_H), step=0.5, dent=0.0)
 
 
-def build_crate_book(k):
-    """Ein Buch für die Kisten (aufrecht, Einband nach vorn, Rücken zur Seite); GenreCrates färbt den Einband (Material
-    „cover“) je Genre und stellt bis zu sieben hintereinander."""
-    book_mats(k)
-    cover = k.part("Buchdeckel", "cover", bevel=0.0015, vary=0.0)
-    pages = k.part("Buchseiten", "pages", bevel=0.0008, vary=0.02)
-    F.book(cover, pages, (0, 0, 0), (0.024, 0.15, 0.13), turn=90)
-
-
 def inside_frame(k, slot, hatch_slot, depth=0.035, hatch_depth=0.022, bevel=0.006):
     """Rahmen (vier Leisten, überlappend) und die Klappe darin."""
     fr = k.part("Rahmen", slot, bevel=bevel)
@@ -815,7 +806,6 @@ ITEMS = [
     dict(id="crate_walnut", kind="part", name="Bücherkiste Kirschholz", settle=0.3, styles=[], build=build_crate_walnut),
     dict(id="crate_wicker", kind="part", name="Bücherkorb", settle=0.3, styles=[], build=build_crate_wicker),
     dict(id="crate_linen", kind="part", name="Leinenbox", settle=0.3, styles=[], build=build_crate_linen),
-    dict(id="crate_book", kind="part", name="Buch für die Kisten", settle=0.15, styles=[], build=build_crate_book),
     dict(id="inside_neutral", kind="slot_inside", name="Innenklappe neutral", settle=0.2, styles=[], build=build_inside_neutral),
     dict(id="inside_dark_academia", kind="slot_inside", name="Innenklappe Dark Academia", settle=0.2, styles=[],
          build=build_inside_dark_academia),

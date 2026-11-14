@@ -2,7 +2,8 @@ shader_type spatial;
 // Ausgelegte Bücher (auf Tischen, der Theke, dem Boden …) – alle eines Raums in einem
 // Rutsch (MultiMesh), wie book_spine.gdshader, aber mit echtem Cover auf dem vorderen
 // Einband (aus dem Cover-Atlas von BookArt).
-// Jedes Buch ist ein Würfel der Größe 1: +Z = Buchrücken, +X = vorderer Einband (Cover).
+// Jedes Buch ist die weiche Buchform aus BookLook: +Z = Buchrücken, +X = vorderer Einband (Cover); Teil = UV2.x
+// (0 Rücken, 1 vorn, 2 hinten, 3 Kanten, 4 Seiten), Lage auf der Fläche = UV.
 // Je Buch (Instanz):
 //   COLOR.rgb       Farbe des Einbands
 //   COLOR.a         Nummer: 0 = kein Cover; 1–127 = Cover im Atlasfeld (Nummer − 1);
@@ -17,11 +18,13 @@ uniform vec3 page_color : source_color = vec3(0.9, 0.86, 0.76);
 uniform float roughness_value = 0.78;
 uniform float highlight_strength = 0.18;
 
-varying vec3 local_pos;
+varying float part;
+varying vec2 face_uv;
 varying vec4 spine_rect;
 
 void vertex() {
-	local_pos = VERTEX;
+	part = UV2.x;
+	face_uv = UV;
 	spine_rect = INSTANCE_CUSTOM;
 }
 
@@ -32,27 +35,24 @@ void fragment() {
 	int cover_slot = (code % 128) - 1;
 	vec3 base = COLOR.rgb;
 	vec3 col = base;
-	if (local_pos.z > 0.499) {
-		// Buchrücken aus dem Atlas
+	if (part < 0.5) {
 		if (spine_rect.z > 0.0) {
-			vec2 face_uv = vec2(local_pos.x + 0.5, 0.5 - local_pos.y);
 			col = texture(spine_atlas, spine_rect.xy + clamp(face_uv, 0.002, 0.998) * spine_rect.zw).rgb;
 		}
-	} else if (local_pos.x > 0.499) {
-		// Vorderer Einband: Cover aus dem Atlas oder Einbandfarbe mit feinem Rand
+	} else if (part < 1.5) {
 		if (cover_slot >= 0) {
 			vec2 cell = vec2(float(cover_slot % int(cover_grid.x)), float(cover_slot / int(cover_grid.x)));
-			vec2 face_uv = clamp(vec2(0.5 - local_pos.z, 0.5 - local_pos.y), 0.004, 0.996);
-			col = texture(cover_atlas, (cell + face_uv) / cover_grid).rgb;
-		} else if (abs(local_pos.y) > 0.46 || local_pos.z < -0.46) {
-			col = base * 0.82;
+			col = texture(cover_atlas, (cell + clamp(face_uv, 0.004, 0.996)) / cover_grid).rgb;
+		} else {
+			float edge = min(min(face_uv.y, 1.0 - face_uv.y), 1.0 - face_uv.x);
+			col = base * mix(0.86, 1.0, smoothstep(0.02, 0.06, edge));
 		}
-	} else if (local_pos.x < -0.499) {
-		col = base * 0.92;
-	} else if (abs(local_pos.y) > 0.499 || local_pos.z < -0.499) {
-		// Seiten (Buchblock), rundherum ein schmaler Rand vom Einband
-		bool inside = abs(local_pos.x) < 0.42 && local_pos.z < 0.46;
-		col = inside ? page_color * 0.94 : base;
+	} else if (part < 2.5) {
+		col = base * 0.93;
+	} else if (part < 3.5) {
+		col = base * 0.82;
+	} else {
+		col = page_color * (0.95 + 0.03 * sin(face_uv.x * 220.0));
 	}
 	if (highlighted == 1) {
 		col = mix(col, vec3(1.0, 0.96, 0.86), highlight_strength);

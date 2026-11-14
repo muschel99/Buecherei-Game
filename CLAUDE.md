@@ -226,7 +226,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Bücher aus dem Lager** nimmt man seit 7b nur aus den **Bücherkisten unter der Theke** (`GenreCrates`: Würfelregal 7 x 4 = 28 Fächer
   hinten in jeder Theke – `furniture_fixtures.cube_back`, Maße `CUBE_*`/`CRATE_*` dort und in genre_crates.gd gleich halten –,
   je freigeschaltetem Genre eine Kiste, Kiste je Thekenstil `CounterData.crate_path` (crate_oak/walnut/wicker/linen), Genre in
-  Handschrift auf dem Schild, Bücher `crate_book.glb` in Genre-Farben; Rechtsklick nimmt ein Buch, Linksklick legt das obere Buch
+  Handschrift auf dem Schild, Bücher = die obersten Titel des Lagers in der weichen Buchform (MultiMesh je Kiste), Genre-Zeichen auf dem Schild; Rechtsklick nimmt ein Buch, Linksklick legt das obere Buch
   in die passende Kiste zurück; die Kisten zeigen den Lagerbestand). Kein Auswahl-Fenster mehr im R-Menü (eine Aktion, ein Weg).
   Bilder: `furniture_probe.tscn -- theke`.
 - **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit Apps), nutzt die
@@ -971,8 +971,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   immer FXAA; Linien aus Tiefe +
   normal_roughness, Papier, warme Farbstimmung). Alle Werte in GameConfig (`paint_*`), Pinselgröße je
   Grafikstufe (`graphics_presets` "paint_radius"). Die Oberfläche (HUD, Menüs) bleibt scharf.
-- **Bücher:** Neues Genre = neues Datenblatt in `data/genres/` + Bücherliste
-  `data/books/<id>.txt` (kein Code). Neues Buch = neue Zeile `Titel | Motiv` (Motive:
+- **Bücher:** Neues Genre = neues Datenblatt in `data/genres/` (mit Erkennungszeichen `symbol`, eines von
+  `GenreSymbols.NAMES`) + Bücherliste `data/books/<id>.txt` (kein Code). **Buchform seit Etappe 8:** `BookLook.get_mesh()` =
+  weiche Form im Würfel der Größe 1 (gewölbter Rücken, überstehende Deckel mit runden Ecken; UV2.x = Teil `BookLook.Part`,
+  UV = Lage auf der Fläche) – die Shader book_spine/book_loose lesen die Teile daraus; Einzelbücher ohne MultiMesh:
+  `BookLook.create_single_material(data)`. Genre-Zeichen zeichnet `GenreSymbols.draw` (Rücken/Cover über `BookCover._badge`),
+  als Bild `BookArt.get_symbol_texture(name)`. Größen `book_*_range`, sanfte Farben `book_soften`. Neues Buch = neue Zeile `Titel | Motiv` (Motive:
   `BookMotifs`, Liste in docs/ASSET_GUIDE.md). Titel sind gemütlich, erfunden, nie düster.
   Ein Titel ist `BookData` (Katalog, `Catalog.get_book(id)`, id = "genre/titel-slug"),
   ein Exemplar ist `Book` (`book.data`, Zustand). Bücher sind keine Knoten, sondern Daten;

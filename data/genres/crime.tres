@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_genre")
 id = "crime"
+symbol = "magnifier"
 display_name = "Krimi"
 description = "Spannende Fälle, Nebel und eine Tasse Tee zum Mitraten."
 spine_colors = Array[Color]([Color(0.45, 0.13, 0.12, 1), Color(0.17, 0.16, 0.18, 1), Color(0.7, 0.56, 0.22, 1), Color(0.27, 0.31, 0.37, 1)])

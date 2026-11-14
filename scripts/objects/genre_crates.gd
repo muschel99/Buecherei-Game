@@ -22,11 +22,14 @@ const CUBE_T := 0.026
 const CRATE_SIZE := Vector3(0.22, 0.125, 0.29)  # Breite, Höhe, Tiefe
 const LABEL_Z := 0.085
 const LABEL_W := 0.11
+const SYMBOL_SIZE := 0.03
 ## Vorderfläche des Schilds je Kiste (Abstand von der Kistenmitte nach vorn), die Schrift sitzt knapp davor
 const LABEL_FRONT := {"crate_wicker": 0.1505, "crate_linen": 0.145}
 const LABEL_FRONT_DEFAULT := 0.149
 const DEFAULT_CRATE := "res://assets/models/furniture/crate_oak.glb"
-const BOOK_MODEL := "res://assets/models/furniture/crate_book.glb"
+## Bücher in der Kiste höchstens so tief (quer in der Kiste) und so hoch (unter dem Fach darüber)
+const BOOK_MAX_DEPTH := 0.17
+const BOOK_MAX_HEIGHT := 0.135
 const LABEL_FONT := "res://assets/ui/fonts/Caveat-Bold.woff2"
 const INK := Color(0.2, 0.13, 0.09)
 const BOOKS_SHOWN := 7
@@ -50,6 +53,7 @@ func _ready() -> void:
 	BookStock.changed.connect(func() -> void: _dirty = true)
 	BookStock.carried_changed.connect(func() -> void: _dirty = true)
 	CounterStyle.changed.connect(func() -> void: _dirty = true)
+	BookArt.atlas_ready.connect(func() -> void: _dirty = true)
 
 
 func _process(_delta: float) -> void:
@@ -118,16 +122,32 @@ func _make_crate(genre: GenreData) -> Dictionary:
 	var label := Label3D.new()
 	label.text = genre.display_name
 	label.font = load(LABEL_FONT)
-	label.font_size = 72
+	label.font_size = 64
 	label.pixel_size = 0.00026
 	label.modulate = INK
 	label.outline_size = 0
 	label.double_sided = false
-	label.width = (LABEL_W - 0.012) / label.pixel_size
+	var front: float = LABEL_FRONT.get(_crate_path.get_file().get_basename(), LABEL_FRONT_DEFAULT)
+	# links auf dem Schild das Genre-Zeichen (seit Etappe 8), rechts daneben der Name
+	var symbol := BookArt.get_symbol_texture(genre.symbol)
+	var text_x := 0.0
+	var text_w := LABEL_W - 0.012
+	if symbol:
+		var sprite := Sprite3D.new()
+		sprite.texture = symbol
+		sprite.pixel_size = SYMBOL_SIZE / float(BookArt.SYMBOL_CELL)
+		sprite.double_sided = false
+		sprite.shaded = true
+		sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
+		sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		sprite.position = Vector3(-LABEL_W / 2.0 + SYMBOL_SIZE / 2.0 + 0.004, LABEL_Z, front + 0.0012)
+		node.add_child(sprite)
+		text_x = SYMBOL_SIZE / 2.0 + 0.002
+		text_w = LABEL_W - SYMBOL_SIZE - 0.014
+	label.width = text_w / label.pixel_size
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.line_spacing = -12.0
-	var front: float = LABEL_FRONT.get(_crate_path.get_file().get_basename(), LABEL_FRONT_DEFAULT)
-	label.position = Vector3(0.0, LABEL_Z, front + 0.0015)
+	label.position = Vector3(text_x, LABEL_Z, front + 0.0015)
 	node.add_child(label)
 	var books := Node3D.new()
 	books.name = "Books"
@@ -157,29 +177,35 @@ func _fill_crate(crate: Dictionary) -> void:
 	var genre: GenreData = crate.genre
 	var books: Node3D = crate.books
 	var count := BookStock.get_stored_count(genre.id)
-	var shown := mini(count, BOOKS_SHOWN)
-	if books.get_child_count() != shown:
+	# die obersten Bücher des Lagers dieses Genres – echte Titel in der weichen Buchform (BookLook), ein MultiMesh je Kiste
+	var stored := BookStock.get_stored_books(genre.id).slice(0, BOOKS_SHOWN)
+	var key := "%s|%s" % [BookArt.is_atlas_ready(), ",".join(stored.map(func(b: Book) -> String: return b.data.id))]
+	if crate.get("key", "") != key:
+		crate["key"] = key
 		for child in books.get_children():
 			child.queue_free()
-		var packed := load(BOOK_MODEL) as PackedScene
-		var rng := RandomNumberGenerator.new()
-		rng.seed = hash(genre.id)
-		var colors: Array = genre.spine_colors if not genre.spine_colors.is_empty() else [Color(0.55, 0.4, 0.3)]
-		var step := (CRATE_SIZE.z - 0.07) / maxf(1.0, BOOKS_SHOWN - 1)
-		for i in shown:
-			if packed == null:
-				break
-			var book := packed.instantiate() as Node3D
-			# von hinten nach vorn, das vorderste Buch zeigt seinen Einband
-			book.position = Vector3(rng.randf_range(-0.012, 0.012), 0.012, -CRATE_SIZE.z / 2.0 + 0.04 + i * step)
-			book.rotation = Vector3(deg_to_rad(-rng.randf_range(6.0, 14.0)), deg_to_rad(rng.randf_range(-4.0, 4.0)), 0.0)
-			book.scale = Vector3.ONE * rng.randf_range(0.92, 1.04)
-			var cover_colors: Dictionary[String, Color] = {}
-			cover_colors["cover"] = colors[(i + rng.randi() % colors.size()) % colors.size()]
-			var variant := ColorVariant.new()
-			variant.colors = cover_colors
-			FurnitureUtils.apply_variant(book, variant)
-			books.add_child(book)
+		if not stored.is_empty():
+			var mm := BookLook.create_multimesh()
+			mm.instance_count = stored.size()
+			var rng := RandomNumberGenerator.new()
+			rng.seed = hash(genre.id)
+			var step := (CRATE_SIZE.z - 0.08) / maxf(1.0, BOOKS_SHOWN - 1)
+			for i in stored.size():
+				var data: BookData = stored[i].data
+				# kleiner, wenn es sonst nicht in die Kiste bzw. unter das Fach darüber passt
+				var fit := minf(1.0, minf(BOOK_MAX_DEPTH / data.size.z, BOOK_MAX_HEIGHT / data.size.y))
+				var size := data.size * fit
+				# Einband (+X der Buchform) nach vorn (+Z der Kiste), leicht nach hinten gelehnt; von hinten nach vorn
+				var basis := Basis(Vector3.RIGHT, deg_to_rad(-rng.randf_range(6.0, 13.0))) * Basis(Vector3.UP, -PI / 2.0 +
+					deg_to_rad(rng.randf_range(-4.0, 4.0)))
+				var pos := Vector3(rng.randf_range(-0.01, 0.01), 0.012 + size.y / 2.0, -CRATE_SIZE.z / 2.0 + 0.045 + i * step)
+				mm.set_instance_transform(i, Transform3D(basis.scaled_local(size), pos))
+				mm.set_instance_color(i, Color(data.cover_color, 1.0))
+				mm.set_instance_custom_data(i, BookArt.get_spine_uv(data))
+			var instance := MultiMeshInstance3D.new()
+			instance.multimesh = mm
+			instance.material_override = BookLook.get_material()
+			books.add_child(instance)
 	var interactable: Interactable = crate.interactable
 	interactable.take_text = "Nehmen" if count > 0 else ""
 	var active := BookStock.get_active_book()

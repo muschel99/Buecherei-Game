@@ -115,6 +115,20 @@ static func draw_cover(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 		_:
 			ci.draw_rect(r, col)
 			_title(ci, book, r.grow(-w * 0.1), font, book.text_color, w * 0.1, HORIZONTAL_ALIGNMENT_CENTER)
+	# Genre-Zeichen (seit Etappe 8) als kleines rundes Abzeichen unten rechts
+	_badge(ci, book, r.position + Vector2(w * 0.84, r.size.y * 0.92), w * 0.085)
+
+
+## Rundes Abzeichen mit dem Genre-Zeichen (Papierfarbe, feiner Ring, Zeichen in Einbandfarbe).
+static func _badge(ci: CanvasItem, book: BookData, center: Vector2, radius: float) -> void:
+	var genre := book.get_genre()
+	if genre == null or genre.symbol.is_empty():
+		return
+	var paper := book.paper_color
+	var ink := book.cover_color if book.cover_color.get_luminance() < 0.6 else book.cover_color.darkened(0.5)
+	ci.draw_circle(center, radius, paper)
+	ci.draw_arc(center, radius, 0.0, TAU, 24, Color(ink, 0.55), maxf(1.0, radius * 0.1), true)
+	GenreSymbols.draw(ci, genre.symbol, center, radius * 1.25, ink, paper)
 
 
 # --- Buchrücken ---
@@ -133,22 +147,23 @@ static func draw_spine(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 	match book.style:
 		"classic":
 			ci.draw_rect(r, col)
-			for y in [0.05, 0.075, 0.915, 0.94]:
+			for y in [0.05, 0.075, 0.835, 0.85]:
 				ci.draw_rect(Rect2(r.position + Vector2(0, h * y), Vector2(w, maxf(h * 0.008, 1.0))), acc)
 			text_color = acc
 			text_from = 0.11
-			text_to = 0.89
+			text_to = 0.82
 		"picture":
 			ci.draw_rect(r, col)
-			BookMotifs.draw(ci, book.motif, Rect2(r.position + Vector2(w * 0.1, h * 0.85), Vector2(w * 0.8, w * 0.8)),
+			BookMotifs.draw(ci, book.motif, Rect2(r.position + Vector2(w * 0.1, h * 0.7), Vector2(w * 0.8, w * 0.8)),
 				paper if col.get_luminance() < 0.55 else col.darkened(0.55), acc)
+			text_to = 0.68
 		"minimal":
 			ci.draw_rect(r, paper)
 			ci.draw_rect(Rect2(r.position, Vector2(w, h * 0.06)), col)
 			ci.draw_rect(Rect2(r.position + Vector2(0, h * 0.94), Vector2(w, h * 0.06)), col)
 			text_color = col if col.get_luminance() < 0.55 else col.darkened(0.45)
 			text_from = 0.1
-			text_to = 0.9
+			text_to = 0.84
 		"pattern":
 			ci.draw_rect(r, col)
 			_pattern(ci, r, book.pattern, col.lightened(0.14))
@@ -161,7 +176,6 @@ static func draw_spine(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 			ci.draw_rect(r, col)
 			ci.draw_rect(Rect2(r.position + Vector2(0, h * 0.8), Vector2(w, h * 0.2)), paper)
 			ci.draw_rect(Rect2(r.position + Vector2(0, h * 0.8), Vector2(w, maxf(h * 0.01, 1.0))), acc)
-			BookMotifs.draw(ci, book.motif, Rect2(r.position + Vector2(w * 0.12, h * 0.85), Vector2(w * 0.76, w * 0.76)), col, acc)
 			text_to = 0.77
 		"comic":
 			ci.draw_rect(r, col)
@@ -169,11 +183,13 @@ static func draw_spine(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 			BookMotifs.draw(ci, book.motif, Rect2(r.position + Vector2(w * 0.1, h * 0.02), Vector2(w * 0.8, h * 0.12)), col.darkened(0.3), paper)
 			text_color = paper
 			text_from = 0.19
-			text_to = 0.96
+			text_to = 0.84
 		_:
 			ci.draw_rect(r, col)
 	_spine_title(ci, book, Rect2(r.position + Vector2(0, h * text_from), Vector2(w, h * (text_to - text_from))),
 		text_color, book.style == "comic")
+	# Genre-Zeichen unten auf dem Rücken (seit Etappe 8): so sieht man im Regal sofort, was für ein Buch es ist
+	_badge(ci, book, r.position + Vector2(w * 0.5, h * 0.915), minf(w * 0.4, h * 0.06))
 
 
 ## Titel um 90° gedreht (liest sich von oben nach unten), passend verkleinert.
