@@ -217,19 +217,15 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (`Interactable.reacts_to_interact()` = `prompt_text` nicht leer), blättert E durch die
   Bücher in der Hand (`BookStock.cycle_active`, Umschalt + E rückwärts). Objekte mit E-Aktion
   haben immer Vorrang.
-- **Menüs von Objekten öffnet R** (Aktion `open_menu`): Interactable mit `menu_text` (Wort neben
-  dem R-Symbol, leer = kein Menü) und Signal `menu_requested`. Kurzer Druck, kein Halten, nie E –
-  so öffnet sich nie aus Versehen ein Menü. Bisher: Regal-Menü (schließt mit R, Esc oder Kreuz).
-  **R geht überall:** Hat das Angeschaute kein Menü (`Interactable.has_menu()`), öffnet R
-  dasselbe Menü ohne Regal (`ShelfMenu.open_for(null)`): Regal-Teile ausgegraut, Bücherauswahl
-  aktiv. Bücher aus dem Lager in die Hand nimmt man **nur** dort (Menü bleibt offen, bis die
-  Hände voll sind). Code im ShelfMenu muss immer mit `shelf == null` klarkommen.
-  Bücherauswahl: erst „Alle Bücher“ (`ShelfMenu.ALL_GENRES`), dann die Genres; Kacheln dezent
-  in Genre-Farbe (`BookPicker`-Eintrag `tint`, Stärke `GameConfig.book_picker_tint`); im
-  offenen Menü genommene Bücher bleiben als Kachel mit Handsymbol (`held`), ein Klick
-  (`entry_chosen`) legt sie zurück ins Lager (`ShelfMenu.return_book`) – bewusste Ausnahme
-  von „nur ein Weg“ (macht nur den eigenen Griff ins Lager rückgängig; volle Hände schließen
-  das Menü, das letzte Buch geht dann mit Q ins Lager).
+- **Menüs von Objekten öffnet R** (Aktion `open_menu`): Interactable mit `menu_text` (Wort neben dem R-Symbol, leer = kein
+  Menü) und Signal `menu_requested`. Kurzer Druck, kein Halten, nie E – so öffnet sich nie aus Versehen ein Menü. Bisher:
+  Regal-Menü (schließt mit R, Esc oder Kreuz). **Seit Testrunde 7b schlicht:** am Regal drei Knöpfe (Auffüllen, Sortieren,
+  alle zurück in die Kisten) und je Fach EINE Auswahl (`ShelfMenu.AUTO` „Automatisch“, „Gemischt“, Genre) mit Inhalt des Fachs;
+  ohne Regal im Blick (`ShelfMenu.open_for(null)`) das **Bücherverzeichnis** (Suchfeld, Genre, je Buch der Ort:
+  `ShelfMenu.collect_book_places()`). Code im ShelfMenu muss immer mit `shelf == null` klarkommen.
+  **Bücher aus dem Lager** nimmt man seit 7b nur aus den **Bücherkisten hinter der Theke** (`GenreCrates`, an der Theke,
+  je freigeschaltetem Genre eine Kiste; Rechtsklick nimmt ein Buch, Linksklick legt das obere Buch in die passende Kiste zurück;
+  die Kisten zeigen den Lagerbestand). Kein Auswahl-Fenster mehr im R-Menü (eine Aktion, ein Weg).
 - **Tablets:** Alles, was als Tablet erscheint (Regal-Menü, Theken-Tablet mit Apps), nutzt die
   gemeinsame Vorlage `TabletFrame` (Gehäuse + Bildschirm, Farben `TabletFrame.TEXT_COLOR` …,
   `make_label`, `make_close_button` = Kreuz oben rechts). Knöpfe sind Symbol-Knöpfe
@@ -1323,8 +1319,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `DayCycle` (main.gd, `day_cycle_enabled`): Sonne/Mond über `GameConfig.day_light_keys` (Stützpunkte, weich gemischt), ein
   Licht für beide, Himmel-Shader `storybook_sky.gdshader` (Wolken, Mond, Sterne), Laternen abends, Fensterlicht (Gruppe
   `RoomOpenings.DAYLIGHT_GROUP`); Straße nach `street_activity_by_hour`, Vögel nachts nicht. Testbilder `--time=<stunde>`.
-  **Pausenmenü** = aufgeklapptes Buch (`pause_menu.gd` baut alles im Code: links Inhaltsverzeichnis, rechts die Seite; je
-  Settings-Abschnitt eine Seite, Steuerung aus `CONTROLS`), Bilder `--ui=pause:<Seite>`.
+  **Pausenmenü** = Notizbuch (seit Testrunde 7b, `pause_menu.gd` baut alles im Code): zugeklappt gleitet es herein und klappt
+  auf (`_play_open`/`_play_close`), Doppelseiten `SPREADS` (Start = Weiterspielen/Speichern/Beenden + der Tag, Steuerung,
+  Gestalten, Bild, Ton & Spiel; neue Settings-Abschnitte bekommen eine eigene Doppelseite), Haftnotizen `TabNote` am Rand
+  (umgeblätterte links), Umblättern `_turn_to`, Erklärungen `SETTING_NOTES`. Schnelle Prüfbilder ohne Welt:
+  `scenes/tools/ui_probe.tscn -- pause:<Notiz> open:<sek>,…` (→ screenshots/ui_probe/), im Spiel `--ui=pause:<Notiz>`.
   **Hinterzimmer** `BackRoom` (Room `with_back_room`, `back_area()` hinter der Theke, Durchgang mit Vorhang, Dachfenster,
   Sperrzonen auf beiden Seiten, `clear_doorway` nach dem Laden); die Backsteinhaut der Fassade wird im Durchgang über die
   globalen Shader-Werte `library_cut_min/max` (storybook.gdshaderinc) nicht gezeichnet. Bett `bed_backroom` (bed.gd): schlafen

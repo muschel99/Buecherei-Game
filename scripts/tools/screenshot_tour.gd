@@ -264,8 +264,7 @@ func _open_ui(which: String, tab: int) -> void:
 	elif which.begins_with("pause"):
 		# Pausenmenü als Buch (seit Etappe 7), ohne das Spiel anzuhalten; pause:<Seite>, z. B. pause:Grafik
 		var menu := get_tree().root.find_child("PauseMenu", true, false)
-		menu.show()
-		menu.call("_show_page", which.get_slice(":", 1) if which.contains(":") else "Laufen", false)
+		menu.call("open_instant", which.get_slice(":", 1) if which.contains(":") else "Start")
 	elif which == "note" or which == "app:stats":
 		# Notizzettel (seit Etappe 7) mit Beispielzahlen; bei app:stats stehen sie als alte Zettel in der App
 		for d in [1, 2, 3]:

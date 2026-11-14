@@ -34,10 +34,14 @@ Status: claimed
 - [x] Tooltip-Schrift bei Nest & Nook kaum lesbar
 - [x] Gestaltungsmodus: Mausrad wählt Möbel, wenn nichts in der Hand
 - [x] Theke und Katzen leuchten nicht mehr auf
-- [ ] Pausenmenü: Aufbau und Aussehen gefallen noch nicht
+- [x] Pausenmenü als Notizbuch (Antworten der Entwicklerin): zugeklapptes Buch gleitet ins Bild und öffnet sich mit schöner
+  Animation, das Spiel steht still; erste Seite nur das Wichtigste (Weiter, Speichern, Beenden); bunte Haftnotizen an der Seite
+  je Kategorie – Klick blättert dorthin, Notizen umgeblätterter Seiten wandern auf die linke Seite; Seiten gut gefüllt und
+  übersichtlich; es soll wie ein richtiges, schönes Buch aussehen
 - [x] Hitboxen: Stempel-Bereich auf der Theke nur noch klein und nur, wenn jemand wartet (verdeckte Tablet/Bücher)
 - [x] Besucher in der Bücherei zu langsam: Tempo 1,05–1,35 m/s, kein Abbremsen voreinander
 - [x] Gießen + Fegen ganz entfernt
 
-## Teil 6 – Büchersystem (eigene Fragerunde)
-- Regal-Menü unübersichtlich, kein Überblick, Bücher aus dem Lager holen umständlich
+## Teil 6 – Büchersystem (Antworten der Entwicklerin)
+- [x] Bücherkisten je Genre unter der Theke: gezielt Bücher aus den Kisten nehmen (statt aus dem Lager über das R-Menü)
+- [x] Regal-Menü: weniger Knöpfe, zeigt, was wo steht; Bücher leichter finden

@@ -30,6 +30,7 @@ func _ready() -> void:
 		return
 	if get_parent() is PlacedFurniture:
 		add_to_group(GROUP)  # nicht die Vorschau im Gestaltungsmodus
+		GenreCrates.attach(self)  # Bücherkisten hinter der Theke (seit Testrunde 7b)
 	CounterStyle.changed.connect(_apply_style)
 	_apply_style()
 

@@ -1028,6 +1028,11 @@ func _clear_rows() -> void:
 	_targets.clear()
 
 
+## In welchem Fach steht dieses Buch? (-1 = nicht in diesem Regal; seit Testrunde 7b für das Regal-Menü)
+func get_book_row(book: Book) -> int:
+	return _row_of(book)
+
+
 func _row_of(book: Book) -> int:
 	for r in _row_books.size():
 		if _row_books[r].has(book):

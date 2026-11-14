@@ -1,43 +1,35 @@
 class_name ShelfMenu
 extends CanvasLayer
 ## Das Regal-Menü (R) – als Tablet am rechten Bildrand (TabletFrame, wie das Tablet an der Theke).
+## Seit Testrunde 7b deutlich schlichter (Wunsch der Entwicklerin: zu viele Knöpfe, man fand Bücher schwer, man sah nicht,
+## was wo steht). Bücher aus dem Lager nimmt man jetzt aus den Bücherkisten hinter der Theke (GenreCrates), nicht mehr hier.
 ##
-## R öffnet es überall: Schaue ich ein Regal an, gehört es zu diesem Regal (open_for(regal)).
-## Schaue ich kein Regal an, ist es dasselbe Menü ohne Regal (open_for(null)): Die Regal-Teile
-## (Genre je Fach, "Alle Fächer gleich", Auffüllen, Sortieren, alles ins Lager) sind dann dezent
-## ausgegraut, die Bücherauswahl geht immer – z. B. um Bücher zum Dekorieren zu holen.
-##
-## Bewusst schlicht, wenige klare Aktionen:
-## - Oben eine Leiste mit Symbol-Knöpfen (Tooltip beim Darüberfahren): Buch aus dem Lager
-##   wählen, aus dem Lager auffüllen, sortieren (Filtersymbol: kleine Auswahl, wonach) und alle
-##   Bücher zurück ins Lager.
-## - Darunter "Fächer": "Alle Fächer gleich" und jedes Fach (Fach 1, Fach 2 … von oben links
-##   nach unten rechts) mit einer Auswahlliste für sein Genre oder "Gemischt".
-## - "Buch aus dem Lager wählen" zeigt die Cover der passenden Bücher im Lager auf dem Tablet –
-##   ein Klick legt das Buch obenauf in die Hand, dann stellt man es mit der linken Maustaste an
-##   genau die Stelle, die man möchte. Das Menü bleibt dabei offen (so kann ich nacheinander
-##   mehrere Bücher nehmen) und schließt sich erst, wenn die Hände voll sind. Oben rechts zeigt
-##   ein kleiner Stapel, wie viele Bücher ich trage.
-## Bücher nimmt man nur hier aus dem Lager (nicht am Theken-Tablet).
-## Getragene Bücher räumt man nicht hier ein (Linksklick halten am Regal) und legt sie hier auch
-## nicht ins Lager (Q halten) – jede Aktion hat nur einen Weg.
-## Das Tablet ist immer gleich groß (fast so hoch wie das Bild) und passt so bei jeder Auflösung;
-## wird die Fächerliste zu lang, lässt sie sich scrollen.
-## Fahre ich über die Auswahlliste eines Fachs oder klappe sie auf, leuchtet genau dieses Fach im
-## Regal dezent auf (BookShelf.highlight_rows). Damit ich das sehe, rückt die Ansicht beim Öffnen
-## sanft zur Seite (und zoomt bei Bedarf etwas heraus), sodass das Regal neben dem Tablet bleibt.
-## Schließen: Kreuz oben rechts, Esc oder R (Esc-Regel über MenuStack). Solange es offen ist,
-## ist der Mauszeiger sichtbar und die Spielfigur steht still.
+## Am Regal (open_for(regal)):
+## - oben drei Symbol-Knöpfe: aus dem Lager auffüllen, sortieren (kleine Auswahl, wonach), alle Bücher zurück ins Lager;
+## - darunter je Fach eine Zeile (Fach 1, Fach 2 … von oben links nach unten rechts): was darin steht (Zahl, Genres) und
+##   EINE Auswahlliste für sein Genre („Automatisch“ = das Fach nimmt alles und erkennt sein Genre selbst, „Gemischt“ oder ein
+##   Genre); ganz oben dieselbe Liste für alle Fächer zugleich.
+## Ohne Regal im Blick (open_for(null)) – das Bücherverzeichnis: alle eigenen Bücher mit Suchfeld und Genre-Auswahl, zu
+## jedem Buch, wo es gerade ist (Regal und Fach, Kiste hinter der Theke, Rückgabekasten, ausgelegt, in der Hand, verliehen).
+## Getragene Bücher räumt man nicht hier ein (Linksklick halten am Regal) und legt sie hier auch nicht ins Lager (Q halten) –
+## jede Aktion hat nur einen Weg. Fahre ich über die Auswahlliste eines Fachs, leuchtet es im Regal auf
+## (BookShelf.highlight_rows); die Ansicht rückt beim Öffnen sanft zur Seite, sodass das Regal neben dem Tablet bleibt.
+## Schließen: Kreuz oben rechts, Esc oder R (Esc-Regel über MenuStack). Solange es offen ist, ist der Mauszeiger sichtbar
+## und die Spielfigur steht still.
 
 const GROUP := "shelf_menu"
 const TEXT_COLOR := TabletFrame.TEXT_COLOR
 const MUTED_COLOR := TabletFrame.MUTED_COLOR
 const KEY_COLOR := TabletFrame.KEY_COLOR
-## Breite des Tablets und Abstand zum oberen/unteren Bildrand (Anteil der Bildhöhe)
+## Breite des Tablets (Bildpunkte bei 1600 x 900) und Abstand zum oberen/unteren Rand (Anteil der Bildhöhe)
 const TABLET_WIDTH := 520.0
 const SCREEN_MARGIN := 0.06
-## Abstand des Tablets zum rechten Bildrand (Anteil der Bildbreite)
+## Abstand zum rechten Bildrand (Anteil der Bildbreite)
 const RIGHT_MARGIN := 0.02
+## Eintrag „Automatisch“ in den Auswahllisten der Fächer
+const AUTO := "__auto__"
+## Höchstens so viele Bücher zeigt das Verzeichnis auf einmal (Suchfeld grenzt ein)
+const FINDER_LIMIT := 250
 
 ## Pfad zur Spielfigur (im Inspektor der Hauptszene eingetragen).
 @export var player_path: NodePath
@@ -53,28 +45,21 @@ var _info: Label
 var _carried_box: HBoxContainer
 var _carried_icon: TextureRect
 var _carried_label: Label
-var _shelf_section: VBoxContainer
 var _main_view: VBoxContainer
-var _picker_view: VBoxContainer
-var _pick_button: TabletIconButton
+var _finder_view: VBoxContainer
 var _fill_button: TabletIconButton
 var _sort_button: TabletIconButton
 var _return_button: TabletIconButton
 var _sort_popup: PopupMenu
 var _all_choice: OptionButton
-var _all_auto: CheckBox
 var _rows_scroll: ScrollContainer
 var _rows_box: VBoxContainer
 var _row_choices: Dictionary = {}  # Fach (row) -> OptionButton
-var _row_autos: Dictionary = {}  # Fach (row) -> CheckBox "Auto"
-var _picker_title: Label
-var _picker_genre_choice: OptionButton
-var _picker: BookPicker
-var _picker_genre := ""
-## In der Bücherauswahl: "Alle Bücher" statt eines Genres
-const ALL_GENRES := "*"
-# Bücher, die ich in diesem Menü aus dem Lager genommen habe (bleiben als "in der Hand" sichtbar)
-var _taken_here: Array[Book] = []
+var _row_infos: Dictionary = {}  # Fach (row) -> Label (was darin steht)
+var _search: LineEdit
+var _finder_genre: OptionButton
+var _finder_list: VBoxContainer
+var _finder_count: Label
 var _message: Label
 var _opened_frame := -1
 var _refresh_queued := false
@@ -106,17 +91,16 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# R schließt das Menü wieder (aber nicht derselbe Tastendruck, der es geöffnet hat)
+	# R schließt das Menü wieder (aber nicht derselbe Tastendruck, der es geöffnet hat; nicht beim Tippen im Suchfeld)
 	if is_open and event.is_action_pressed("open_menu") and Engine.get_process_frames() != _opened_frame \
-			and not get_tree().paused:
+			and not get_tree().paused and not _search.has_focus():
 		close()
 		get_viewport().set_input_as_handled()
 
 
 # --- Öffnen und Schließen ---
 
-## Öffnet das Menü: vom Regal aufgerufen (R) mit diesem Regal, sonst von der Spielfigur mit
-## null (kein Regal im Blick – nur die Bücherauswahl ist dann aktiv).
+## Öffnet das Menü: vom Regal aufgerufen (R) mit diesem Regal, sonst von der Spielfigur mit null (Bücherverzeichnis).
 func open_for(target: BookShelf) -> void:
 	if is_open:
 		return
@@ -131,8 +115,11 @@ func open_for(target: BookShelf) -> void:
 	_player.interaction_enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_message.text = ""
-	_taken_here.clear()
-	_show_main()
+	_main_view.visible = shelf != null
+	_finder_view.visible = shelf == null
+	if shelf == null:
+		_search.text = ""
+		_fill_finder_genres()
 	_rebuild_rows()
 	_queue_refresh()
 	if shelf:
@@ -145,6 +132,7 @@ func close() -> void:
 	is_open = false
 	hide()
 	_sort_popup.hide()
+	_search.release_focus()
 	_hover_rows = []
 	_open_rows = []
 	if is_instance_valid(shelf):
@@ -171,49 +159,39 @@ func restore_mouse_mode() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
-# --- Aktionen ---
+# --- Aktionen am Regal ---
 
-## "Alle Fächer gleich": ein Genre für das ganze Regal.
-func choose_genre(genre_id: String) -> void:
-	if shelf == null or genre_id.is_empty() or (genre_id == shelf.genre_id and not shelf.row_auto.has(true)):
+## Auswahl „für alle Fächer“: Automatisch, Gemischt oder ein Genre.
+func choose_all(value: String) -> void:
+	if shelf == null or value.is_empty():
 		return
-	var returned := shelf.set_genre(genre_id)
-	_message.text = "Alle Fächer: %s." % BookShelf.genre_display_name(genre_id)
-	_add_returned_note(returned)
+	if value == AUTO:
+		shelf.set_all_auto(true)
+		_message.text = "Alle Fächer: automatisch."
+	else:
+		var returned := shelf.set_genre(value)
+		_message.text = "Alle Fächer: %s." % BookShelf.genre_display_name(value)
+		_add_returned_note(returned)
 	_queue_refresh()
 
 
-## "Auto" für alle Fächer ein- oder ausschalten.
-func choose_all_auto(auto: bool) -> void:
-	if shelf == null:
+## Auswahl eines Fachs: Automatisch, Gemischt oder ein Genre.
+func choose_row(row: int, value: String) -> void:
+	if shelf == null or value.is_empty():
 		return
-	shelf.set_all_auto(auto)
-	_message.text = "Alle Fächer: %s." % ("Auto" if auto else "festgelegt")
-	_queue_refresh()
-
-
-## "Auto" für ein Fach ein- oder ausschalten (aus = es bleibt beim Genre, das es gerade hat).
-func choose_row_auto(row: int, auto: bool) -> void:
-	if shelf == null:
-		return
-	shelf.set_row_auto(row, auto)
-	_message.text = "%s: %s." % [shelf.get_row_label(row), "Auto" if auto else "festgelegt"]
-	_queue_refresh()
-
-
-## Genre eines einzelnen Fachs von Hand ("Auto" geht dabei aus).
-func choose_row_genre(row: int, genre_id: String) -> void:
-	if shelf == null or (genre_id == shelf.get_row_genre(row) and not shelf.is_row_auto(row)):
-		return
-	var returned := shelf.set_row_genre(row, genre_id)
-	_message.text = "%s: %s." % [shelf.get_row_label(row), BookShelf.genre_display_name(genre_id)]
-	_add_returned_note(returned)
+	if value == AUTO:
+		shelf.set_row_auto(row, true)
+		_message.text = "%s: automatisch." % shelf.get_row_label(row)
+	else:
+		var returned := shelf.set_row_genre(row, value)
+		_message.text = "%s: %s." % [shelf.get_row_label(row), BookShelf.genre_display_name(value)]
+		_add_returned_note(returned)
 	_queue_refresh()
 
 
 func _add_returned_note(returned: int) -> void:
 	if returned > 0:
-		_message.text += " %d %s ins Lager." % [returned, "Buch passte nicht und ging" if returned == 1 \
+		_message.text += " %d %s in die Kisten." % [returned, "Buch passte nicht und ging" if returned == 1 \
 			else "Bücher passten nicht und gingen"]
 
 
@@ -230,7 +208,7 @@ func return_all() -> void:
 	if shelf == null:
 		return
 	var count := shelf.return_all_to_storage()
-	_message.text = "%d %s zurück ins Lager." % [count, "Buch" if count == 1 else "Bücher"]
+	_message.text = "%d %s zurück in die Kisten." % [count, "Buch" if count == 1 else "Bücher"]
 	_queue_refresh()
 
 
@@ -251,56 +229,10 @@ func open_sort_popup() -> void:
 		return
 	for i in _sort_popup.item_count:
 		_sort_popup.set_item_checked(i, BookShelf.SORT_MODES[i][0] == shelf.sort_mode)
-	# Direkt unter dem Knopf (so rechnet Godot es auch bei seinen Auswahllisten)
 	var canvas_scale := _sort_button.get_global_transform_with_canvas().get_scale().y
 	var below := _sort_button.get_screen_position() + Vector2(0.0, (_sort_button.size.y + 4.0) * canvas_scale)
 	_sort_popup.reset_size()
 	_sort_popup.popup(Rect2i(Vector2i(below), Vector2i.ZERO))
-
-
-## Zeigt die Auswahl "Buch aus dem Lager wählen" auf dem Tablet.
-func open_picker() -> void:
-	_picker_genre = ALL_GENRES
-	_main_view.hide()
-	_picker_view.show()
-	_refresh_picker()
-
-
-func _show_main() -> void:
-	_picker_view.hide()
-	_main_view.show()
-
-
-## Ein Buch aus dem Lager obenauf in die Hand nehmen – dann kann ich es mit der linken
-## Maustaste genau dort abstellen, wo ich hinschaue. Das Menü bleibt offen, bis die Hände
-## voll sind (so kann ich mehrere Bücher nacheinander nehmen).
-func choose_book(data: BookData) -> void:
-	if BookStock.is_hand_full():
-		BookStock.show_hands_full()
-		close()
-		return
-	for book in BookStock.get_stored_books(data.genre_id):
-		if book.data == data and BookStock.take_stored_book(book):
-			BookStock.carry([book])
-			_taken_here.append(book)
-			if BookStock.is_hand_full():
-				close()
-			return
-
-
-## Ein Buch, das ich hier genommen habe, wieder zurück ins Lager legen (Klick auf die Kachel
-## mit dem Handsymbol) – so lässt sich die Auswahl direkt im Menü korrigieren.
-func return_book(book: Book) -> void:
-	var back := BookStock.take_carried_where(func(carried: Book) -> bool: return carried == book)
-	BookStock.store_books(back)
-	_taken_here.erase(book)
-
-
-func _on_entry_chosen(entry: Dictionary) -> void:
-	if entry.get("held", false):
-		return_book(entry.book)
-	else:
-		choose_book(entry.data)
 
 
 # --- Anzeige ---
@@ -317,72 +249,53 @@ func _refresh() -> void:
 	if not is_open:
 		return
 	if shelf != null and not is_instance_valid(shelf):
-		shelf = null  # das Regal ist inzwischen weg: weiter ohne Regal
+		shelf = null  # das Regal ist inzwischen weg: weiter mit dem Verzeichnis
+		_main_view.visible = false
+		_finder_view.visible = true
+		_fill_finder_genres()
 	_refresh_carried()
-	_refresh_picker_button()
 	_message.visible = not _message.text.is_empty()
-	if _picker_view.visible:
-		_refresh_picker()
 	if shelf == null:
-		_refresh_without_shelf()
+		_title.text = "Bücherverzeichnis"
+		_info.text = "Wo steht welches Buch?"
+		_refresh_finder()
 		return
-	_shelf_section.modulate.a = 1.0
 	_title.text = shelf.get_display_name()
 	var count := shelf.get_books().size()
 	_info.text = "%d %s · Platz für etwa %d" % [count, "Buch" if count == 1 else "Bücher", shelf.get_free_estimate()]
-
 	# Symbol-Knöpfe: ausgegraut, wenn sie gerade nichts tun könnten (Tooltip sagt kurz, warum)
 	var available := _available_in_storage()
-	_fill_button.disabled = not shelf.has_genre() or available == 0 or shelf.get_free_estimate() == 0
-	if not shelf.has_genre():
-		_fill_button.tooltip_text = "Auffüllen – erst Bücher oder Genre"
-	elif available == 0:
-		_fill_button.tooltip_text = "Auffüllen – nichts Passendes im Lager"
-	else:
-		_fill_button.tooltip_text = "Auffüllen (%d im Lager)" % available
+	_fill_button.disabled = available == 0 or shelf.get_free_estimate() == 0
+	_fill_button.tooltip_text = "Auffüllen – nichts Passendes in den Kisten" if available == 0 \
+		else "Auffüllen (%d in den Kisten)" % available
 	_sort_button.disabled = count < 2
 	_sort_button.tooltip_text = TabletIconButton.DEFAULT_TIPS[TabletIconButton.Icon.SORT]
 	_return_button.disabled = count == 0
-	_return_button.tooltip_text = TabletIconButton.DEFAULT_TIPS[TabletIconButton.Icon.STORE]
-	_all_choice.disabled = false
-	_all_auto.disabled = false
-
-	# Genres der Fächer (die Liste selbst baut _rebuild_rows, hier nur die Auswahl)
+	_return_button.tooltip_text = "Alle zurück in die Kisten"
 	var genres := _genre_choices()
-	_all_auto.set_pressed_no_signal(shelf.is_all_auto())
-	var all_empty := "Verschieden" if shelf.has_genre() else ("Noch leer" if shelf.is_all_auto() else "Noch kein Genre")
-	_fill_choice(_all_choice, genres, shelf.genre_id, all_empty)
+	var all_value := AUTO if shelf.is_all_auto() else (shelf.genre_id if shelf.has_genre() else "")
+	_fill_choice(_all_choice, genres, all_value, "Verschieden")
 	for r in _row_choices:
-		(_row_autos[r] as CheckBox).set_pressed_no_signal(shelf.is_row_auto(r))
-		_fill_choice(_row_choices[r], genres, shelf.get_row_genre(r),
-			"Noch leer" if shelf.is_row_auto(r) else "Noch kein Genre")
+		_fill_choice(_row_choices[r], genres, AUTO if shelf.is_row_auto(r) else shelf.get_row_genre(r), "Noch kein Genre")
+		(_row_infos[r] as Label).text = _row_summary(r)
 
 
-## Kein Regal im Blick: Regal-Teile dezent ausgegraut und nicht anklickbar.
-func _refresh_without_shelf() -> void:
-	_title.text = "Bücher"
-	_info.text = "Kein Regal im Blick"
-	for button: TabletIconButton in [_fill_button, _sort_button, _return_button]:
-		button.disabled = true
-		button.tooltip_text = "Nur am Regal"
-	_all_choice.disabled = true
-	_all_choice.clear()
-	_all_choice.add_item("Nur am Regal")
-	_all_auto.disabled = true
-	_all_auto.set_pressed_no_signal(true)
-	_shelf_section.modulate.a = 0.45
-
-
-## "Buch aus dem Lager": ausgegraut, wenn die Hände voll sind oder nichts Passendes im Lager liegt.
-func _refresh_picker_button() -> void:
-	var choosable := _choosable_genres()
-	_pick_button.disabled = choosable.is_empty() or BookStock.is_hand_full()
-	if BookStock.is_hand_full():
-		_pick_button.tooltip_text = "Buch aus dem Lager – Hände voll"
-	elif choosable.is_empty():
-		_pick_button.tooltip_text = "Buch aus dem Lager – nichts Passendes da"
-	else:
-		_pick_button.tooltip_text = "Buch aus dem Lager"
+## Was in einem Fach steht: „7 Bücher · Krimi 5, Roman 2“ bzw. „leer“.
+func _row_summary(row: int) -> String:
+	var counts := {}
+	var total := 0
+	for book in shelf.get_books():
+		if shelf.get_book_row(book) == row:
+			counts[book.genre_id] = int(counts.get(book.genre_id, 0)) + 1
+			total += 1
+	if total == 0:
+		return "leer"
+	var parts: Array[String] = []
+	var ids := counts.keys()
+	ids.sort_custom(func(a: String, b: String) -> bool: return counts[a] > counts[b])
+	for id: String in ids:
+		parts.append("%s %d" % [BookShelf.genre_display_name(id), counts[id]])
+	return "%d %s · %s" % [total, "Buch" if total == 1 else "Bücher", ", ".join(parts)]
 
 
 ## Oben rechts: wie viele Bücher ich trage (Stapel im Genre des Buchs obenauf).
@@ -396,60 +309,60 @@ func _refresh_carried() -> void:
 	_carried_box.modulate.a = 1.0 if carried > 0 else 0.45
 
 
-## Je Fach eine Zeile (Lesereihenfolge): "Fach 1" und eine Auswahlliste für sein Genre.
-## Ohne Regal bleibt die Liste leer.
+## Je Fach eine Zeile (Lesereihenfolge): Name, was darin steht, eine Auswahlliste für sein Genre.
 func _rebuild_rows() -> void:
 	for child in _rows_box.get_children():
 		_rows_box.remove_child(child)
 		child.queue_free()
 	_row_choices.clear()
-	_row_autos.clear()
+	_row_infos.clear()
 	if shelf == null:
 		return
 	for r in shelf.get_fach_order():
 		var line := PanelContainer.new()
 		line.add_theme_stylebox_override("panel", _row_style)
-		var box := HBoxContainer.new()
-		box.add_theme_constant_override("separation", 12)
+		var box := VBoxContainer.new()
+		box.add_theme_constant_override("separation", 4)
 		line.add_child(box)
+		var top := HBoxContainer.new()
+		top.add_theme_constant_override("separation", 12)
+		box.add_child(top)
 		var label := TabletFrame.make_label(shelf.get_row_label(r), 17, TEXT_COLOR)
 		label.custom_minimum_size.x = 80
 		label.autowrap_mode = TextServer.AUTOWRAP_OFF
-		box.add_child(label)
+		top.add_child(label)
 		var row := r
-		var auto := _make_auto_box()
-		auto.toggled.connect(func(on: bool) -> void: choose_row_auto(row, on))
-		_watch_hover(auto, [row])
-		box.add_child(auto)
-		_row_autos[r] = auto
 		var choice := _make_choice()
-		choice.item_selected.connect(func(index: int) -> void:
-			choose_row_genre(row, str(choice.get_item_metadata(index))))
+		choice.item_selected.connect(func(index: int) -> void: choose_row(row, str(choice.get_item_metadata(index))))
 		_watch_choice(choice, [row])
-		box.add_child(choice)
+		top.add_child(choice)
 		_row_choices[r] = choice
+		var info := TabletFrame.make_label("", 14, MUTED_COLOR)
+		box.add_child(info)
+		_row_infos[r] = info
 		_rows_box.add_child(line)
 	_rows_scroll.scroll_vertical = 0
 
 
-## Füllt eine Auswahlliste: "Gemischt" und die freigeschalteten Genres (+ das gewählte, falls
-## gesperrt). Ohne Genre: ein grauer Eintrag empty_text ("Noch leer" bei "Auto", "Noch kein
-## Genre", bei "Alle Fächer gleich" auch "Verschieden", wenn die Fächer unterschiedlich sind).
-func _fill_choice(choice: OptionButton, genres: Array[GenreData], current: String, empty_text: String) -> void:
+## Füllt eine Auswahlliste: „Automatisch“, „Gemischt“ und die freigeschalteten Genres (+ das gewählte, falls gesperrt).
+## Ist nichts davon gewählt (value leer): ein grauer Eintrag empty_text.
+func _fill_choice(choice: OptionButton, genres: Array[GenreData], value: String, empty_text: String) -> void:
 	if choice.get_popup().visible:
 		return  # nicht umbauen, während die Liste aufgeklappt ist
 	choice.clear()
-	if current.is_empty():
+	if value.is_empty():
 		choice.add_item(empty_text)
 		choice.set_item_metadata(0, "")
 		choice.set_item_disabled(0, true)
+	choice.add_icon_item(_dot(KEY_COLOR, true), "Automatisch")
+	choice.set_item_metadata(choice.item_count - 1, AUTO)
 	choice.add_icon_item(_dot(MUTED_COLOR, true), "Gemischt")
 	choice.set_item_metadata(choice.item_count - 1, BookShelf.MIXED)
 	for genre in genres:
 		choice.add_icon_item(_dot(genre.get_main_color().lightened(0.35), false), genre.display_name)
 		choice.set_item_metadata(choice.item_count - 1, genre.get_id())
 	for i in choice.item_count:
-		if str(choice.get_item_metadata(i)) == current:
+		if str(choice.get_item_metadata(i)) == value:
 			choice.select(i)
 
 
@@ -464,90 +377,7 @@ func _genre_choices() -> Array[GenreData]:
 	return genres
 
 
-## Genres, aus denen hier Bücher passen und die im Lager liegen (ohne Regal: alle im Lager).
-func _choosable_genres() -> Array[GenreData]:
-	var result: Array[GenreData] = []
-	for genre in Catalog.get_all_genres():
-		if (shelf == null or shelf.accepts(genre.get_id())) and BookStock.get_stored_count(genre.get_id()) > 0:
-			result.append(genre)
-	return result
-
-
-## Die Auswahl neu zeigen: "Alle Bücher" und die Genres, darunter die Cover der Titel im Lager
-## (dezent in der Farbe ihres Genres) und die Bücher, die ich hier schon genommen habe
-## (ausgegraut mit Handsymbol).
-func _refresh_picker() -> void:
-	var held := _held_here()
-	# Genres mit Büchern im Lager oder in der Hand – immer in der Reihenfolge des Katalogs,
-	# so springt nichts, wenn das letzte Buch eines Genres in die Hand wandert
-	var choosable := _choosable_genres()
-	var held_genres := held.map(func(book: Book) -> GenreData: return book.get_genre())
-	var genres: Array[GenreData] = []
-	for genre in Catalog.get_all_genres():
-		if choosable.has(genre) or (held_genres.has(genre) and (shelf == null or shelf.accepts(genre.get_id()))):
-			genres.append(genre)
-	if genres.is_empty():
-		_show_main()
-		return
-	var ids: Array = genres.map(func(genre: GenreData) -> String: return genre.get_id())
-	if _picker_genre != ALL_GENRES and not ids.has(_picker_genre):
-		_picker_genre = ALL_GENRES
-	_picker_genre_choice.clear()
-	_picker_genre_choice.add_item("Alle Bücher")
-	_picker_genre_choice.set_item_metadata(0, ALL_GENRES)
-	for genre in genres:
-		_picker_genre_choice.add_icon_item(_dot(genre.get_main_color().lightened(0.35), false), genre.display_name)
-		_picker_genre_choice.set_item_metadata(_picker_genre_choice.item_count - 1, genre.get_id())
-	_picker_genre_choice.select(0 if _picker_genre == ALL_GENRES else ids.find(_picker_genre) + 1)
-	var shown: Array = ids if _picker_genre == ALL_GENRES else [_picker_genre]
-	# Gleiche Titel im Lager zusammenfassen ("×2 im Lager")
-	var counts := {}
-	var titles: Array[BookData] = []
-	for id in shown:
-		for book in BookStock.get_stored_books(id):
-			if not counts.has(book.data):
-				titles.append(book.data)
-			counts[book.data] = int(counts.get(book.data, 0)) + 1
-	var held_shown := held.filter(func(book: Book) -> bool: return shown.has(book.genre_id))
-	for book in held_shown:
-		if not titles.has(book.data):
-			titles.append(book.data)
-	# Feste Reihenfolge (Genre, dann Titel) – so springt nichts, wenn ein Buch genommen wird
-	titles.sort_custom(func(a: BookData, b: BookData) -> bool:
-		if a.genre_id != b.genre_id:
-			return ids.find(a.genre_id) < ids.find(b.genre_id)
-		return a.title.naturalnocasecmp_to(b.title) < 0)
-	var entries := []
-	for data in titles:
-		var genre := Catalog.get_genre(data.genre_id)
-		var tint := genre.get_main_color() if genre else Color(0.5, 0.4, 0.3)
-		var count := int(counts.get(data, 0))
-		if count > 0:
-			entries.append({"data": data, "tint": tint,
-				"note": "×%d im Lager" % count if count > 1 else "im Lager"})
-		for book in held_shown:
-			if book.data == data:
-				entries.append({"data": data, "tint": tint, "held": true, "book": book, "note": "in der Hand"})
-	var stored_titles := titles.filter(func(data: BookData) -> bool: return counts.has(data)).size()
-	var genre := Catalog.get_genre(_picker_genre)
-	_picker_title.text = "Buch aus dem Lager (%d)" % stored_titles if genre == null \
-		else "%s aus dem Lager (%d)" % [genre.display_name, stored_titles]
-	# Nach dem Nehmen an derselben Stelle weiterschauen
-	var scroll := _picker.scroll_vertical
-	_picker.show_entries(entries, "Im Lager liegt gerade nichts davon.")
-	_picker.set_deferred("scroll_vertical", scroll)
-
-
-## Die Bücher, die ich in diesem Menü genommen habe und noch trage.
-func _held_here() -> Array[Book]:
-	var result: Array[Book] = []
-	for book in _taken_here:
-		if BookStock.carried.has(book):
-			result.append(book)
-	return result
-
-
-## Wie viele Bücher, die hierher passen, liegen im Lager?
+## Wie viele Bücher, die hierher passen, liegen in den Kisten (im Lager)?
 func _available_in_storage() -> int:
 	var genres := {}
 	for r in shelf.get_row_count():
@@ -555,7 +385,7 @@ func _available_in_storage() -> int:
 		if id == BookShelf.MIXED and shelf.is_row_auto(r):
 			for present in shelf.genres_in_row(r):
 				genres[present] = true  # gemischtes Auto-Fach: nur Genres, die schon darin stehen
-		elif id == BookShelf.MIXED:
+		elif id == BookShelf.MIXED or (id.is_empty() and shelf.is_row_auto(r)):
 			return BookStock.get_stored_total()
 		elif not id.is_empty():
 			genres[id] = true
@@ -563,6 +393,90 @@ func _available_in_storage() -> int:
 	for id in genres:
 		count += BookStock.get_stored_count(id)
 	return count
+
+
+# --- Bücherverzeichnis (ohne Regal) ---
+
+func _fill_finder_genres() -> void:
+	_finder_genre.clear()
+	_finder_genre.add_item("Alle Genres")
+	_finder_genre.set_item_metadata(0, "")
+	for genre in Catalog.get_all_genres():
+		_finder_genre.add_icon_item(_dot(genre.get_main_color().lightened(0.35), false), genre.display_name)
+		_finder_genre.set_item_metadata(_finder_genre.item_count - 1, genre.get_id())
+	_finder_genre.select(0)
+
+
+## Alle eigenen Bücher mit ihrem Ort (Suchtext im Titel, Genre-Auswahl), sortiert nach Genre und Titel.
+func _refresh_finder() -> void:
+	for child in _finder_list.get_children():
+		_finder_list.remove_child(child)
+		child.queue_free()
+	var query := _search.text.strip_edges().to_lower()
+	var genre_id := str(_finder_genre.get_item_metadata(_finder_genre.selected)) if _finder_genre.selected >= 0 else ""
+	var entries: Array[Dictionary] = []
+	for entry: Dictionary in collect_book_places():
+		var book: Book = entry.book
+		if not genre_id.is_empty() and book.genre_id != genre_id:
+			continue
+		if not query.is_empty() and not book.title.to_lower().contains(query):
+			continue
+		entries.append(entry)
+	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var ga := (a.book as Book).genre_id
+		var gb := (b.book as Book).genre_id
+		if ga != gb:
+			return BookShelf.genre_display_name(ga) < BookShelf.genre_display_name(gb)
+		return (a.book as Book).title.naturalnocasecmp_to((b.book as Book).title) < 0)
+	_finder_count.text = "%d %s" % [entries.size(), "Buch" if entries.size() == 1 else "Bücher"]
+	for i in mini(entries.size(), FINDER_LIMIT):
+		var entry: Dictionary = entries[i]
+		var book: Book = entry.book
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation", 8)
+		var dot := TextureRect.new()
+		var genre := book.get_genre()
+		dot.texture = _dot(genre.get_main_color().lightened(0.35) if genre else MUTED_COLOR, false)
+		dot.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		dot.custom_minimum_size = Vector2(14, 22)
+		line.add_child(dot)
+		var texts := VBoxContainer.new()
+		texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		texts.add_theme_constant_override("separation", 0)
+		line.add_child(texts)
+		texts.add_child(TabletFrame.make_label(book.title, 16, TEXT_COLOR))
+		texts.add_child(TabletFrame.make_label(String(entry.place), 13, MUTED_COLOR))
+		_finder_list.add_child(line)
+	if entries.size() > FINDER_LIMIT:
+		_finder_list.add_child(TabletFrame.make_label("… und %d weitere – das Suchfeld grenzt ein." % (entries.size() - FINDER_LIMIT),
+			14, MUTED_COLOR))
+
+
+## Alle eigenen Bücher mit Ort (auch für spätere Apps): [{book, place}].
+func collect_book_places() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for node in get_tree().get_nodes_in_group(BookStock.SHELF_GROUP):
+		var s := node as BookShelf
+		if s == null:
+			continue
+		for book in s.get_books():
+			result.append({"book": book, "place": "%s · %s" % [s.get_display_name(), s.get_row_label(s.get_book_row(book))]})
+	for genre in Catalog.get_all_genres():
+		for book in BookStock.get_stored_books(genre.get_id()):
+			result.append({"book": book, "place": "Kiste hinter der Theke"})
+	var box := ReturnBox.find(get_tree())
+	if box:
+		for book in box.get_books():
+			result.append({"book": book, "place": "Rückgabekasten"})
+	for node in get_tree().get_nodes_in_group(LooseBooks.GROUP):
+		for entry in (node as LooseBooks).get_entries():
+			result.append({"book": entry.book, "place": "ausgelegt"})
+	for book in BookStock.carried:
+		result.append({"book": book, "place": "in der Hand"})
+	for loan in Lending.loans:
+		for book: Book in loan.books:
+			result.append({"book": book, "place": "verliehen (zurück an Tag %d)" % int(loan.day)})
+	return result
 
 
 # --- Aufbau ---
@@ -573,10 +487,8 @@ func _build() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_row_style = TabletFrame.make_panel_style(TabletFrame.PANEL_COLOR, 9, 6.0)
 	_row_style.content_margin_left = 12.0
-
 	_panel = TabletFrame.new()
 	_panel.name = "Tablet"
-	# Am rechten Rand, feste Breite, fast so hoch wie das Bild
 	_panel.anchor_left = 1.0 - RIGHT_MARGIN
 	_panel.anchor_right = 1.0 - RIGHT_MARGIN
 	_panel.anchor_top = SCREEN_MARGIN
@@ -584,12 +496,10 @@ func _build() -> void:
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_panel.custom_minimum_size.x = TABLET_WIDTH
 	add_child(_panel)
-
 	var screen := VBoxContainer.new()
 	screen.add_theme_constant_override("separation", 12)
 	_panel.add_child(screen)
-
-	# Kopf: Name des Regals, kurze Info, Kreuz zum Schließen
+	# Kopf: Name, kurze Info, getragene Bücher, Kreuz
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 10)
 	screen.add_child(header)
@@ -601,7 +511,6 @@ func _build() -> void:
 	titles.add_child(_title)
 	_info = TabletFrame.make_label("", 15, MUTED_COLOR)
 	titles.add_child(_info)
-	# Getragene Bücher (Stapel mit Zahl), dann das Kreuz
 	_carried_box = HBoxContainer.new()
 	_carried_box.name = "Carried"
 	_carried_box.add_theme_constant_override("separation", 6)
@@ -626,11 +535,8 @@ func _build() -> void:
 	close_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	close_button.pressed.connect(close)
 	header.add_child(close_button)
-
 	_build_main(screen)
-	_build_picker(screen)
-
-	# Rückmeldung (z. B. "12 Bücher eingeräumt.") fest unten
+	_build_finder(screen)
 	_message = TabletFrame.make_label("", 16, KEY_COLOR)
 	screen.add_child(_message)
 
@@ -640,13 +546,9 @@ func _build_main(screen: VBoxContainer) -> void:
 	_main_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_main_view.add_theme_constant_override("separation", 12)
 	screen.add_child(_main_view)
-
-	# Symbol-Leiste
 	var toolbar := HBoxContainer.new()
 	toolbar.add_theme_constant_override("separation", 12)
 	_main_view.add_child(toolbar)
-	_pick_button = _icon_button(TabletIconButton.Icon.PICK, open_picker)
-	toolbar.add_child(_pick_button)
 	_fill_button = _icon_button(TabletIconButton.Icon.FILL, fill)
 	toolbar.add_child(_fill_button)
 	_sort_button = _icon_button(TabletIconButton.Icon.SORT, open_sort_popup)
@@ -660,70 +562,65 @@ func _build_main(screen: VBoxContainer) -> void:
 		_sort_popup.add_radio_check_item(BookShelf.SORT_MODES[i][1], i)
 	_sort_popup.id_pressed.connect(func(id: int) -> void: sort_shelf(BookShelf.SORT_MODES[id][0]))
 	add_child(_sort_popup)
-
-	# Fächer (ohne Regal dezent ausgegraut)
-	_shelf_section = VBoxContainer.new()
-	_shelf_section.name = "ShelfSection"
-	_shelf_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_shelf_section.add_theme_constant_override("separation", 12)
-	_main_view.add_child(_shelf_section)
-	_shelf_section.add_child(TabletFrame.make_label("Fächer", 18, KEY_COLOR))
+	_main_view.add_child(TabletFrame.make_label("Fächer", 18, KEY_COLOR))
 	var all_line := HBoxContainer.new()
 	all_line.add_theme_constant_override("separation", 12)
-	_shelf_section.add_child(all_line)
-	var all_label := TabletFrame.make_label("Alle Fächer gleich", 17, TEXT_COLOR)
+	_main_view.add_child(all_line)
+	var all_label := TabletFrame.make_label("Alle Fächer", 17, TEXT_COLOR)
 	all_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	all_label.custom_minimum_size.x = 92
 	all_line.add_child(all_label)
-	_all_auto = _make_auto_box()
-	_all_auto.toggled.connect(choose_all_auto)
-	_watch_hover(_all_auto, [])
-	all_line.add_child(_all_auto)
 	_all_choice = _make_choice()
-	_all_choice.item_selected.connect(func(index: int) -> void:
-		choose_genre(str(_all_choice.get_item_metadata(index))))
+	_all_choice.item_selected.connect(func(index: int) -> void: choose_all(str(_all_choice.get_item_metadata(index))))
 	_watch_choice(_all_choice, [])  # leer = alle Fächer
 	all_line.add_child(_all_choice)
-
 	_rows_scroll = ScrollContainer.new()
 	_rows_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_rows_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_shelf_section.add_child(_rows_scroll)
+	_main_view.add_child(_rows_scroll)
 	_rows_box = VBoxContainer.new()
 	_rows_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_rows_box.add_theme_constant_override("separation", 6)
 	_rows_scroll.add_child(_rows_box)
 
 
-## "Buch aus dem Lager wählen": Cover-Kacheln auf dem Tablet, Pfeil zurück.
-func _build_picker(screen: VBoxContainer) -> void:
-	_picker_view = VBoxContainer.new()
-	_picker_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_picker_view.add_theme_constant_override("separation", 10)
-	_picker_view.hide()
-	screen.add_child(_picker_view)
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 10)
-	_picker_view.add_child(header)
-	header.add_child(_icon_button(TabletIconButton.Icon.BACK, _show_main))
-	_picker_title = TabletFrame.make_label("", 18, TEXT_COLOR)
-	_picker_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_picker_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	header.add_child(_picker_title)
-	_picker_genre_choice = _make_choice()
-	_picker_genre_choice.item_selected.connect(func(index: int) -> void:
-		_picker_genre = str(_picker_genre_choice.get_item_metadata(index))
-		_refresh_picker.call_deferred())
-	_picker_view.add_child(_picker_genre_choice)
-	_picker_view.add_child(TabletFrame.make_label("Klick auf ein Buch: Es liegt dann obenauf in deiner Hand. Noch ein Klick legt es zurück.", 15, MUTED_COLOR))
-	_picker = BookPicker.new()
-	_picker.entry_chosen.connect(_on_entry_chosen)
-	_picker_view.add_child(_picker)
+## Bücherverzeichnis: Suchfeld, Genre-Auswahl, Liste (scrollt).
+func _build_finder(screen: VBoxContainer) -> void:
+	_finder_view = VBoxContainer.new()
+	_finder_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_finder_view.add_theme_constant_override("separation", 10)
+	_finder_view.hide()
+	screen.add_child(_finder_view)
+	_search = LineEdit.new()
+	_search.placeholder_text = "Titel suchen …"
+	_search.clear_button_enabled = true
+	_search.add_theme_font_size_override("font_size", 17)
+	_search.text_changed.connect(func(_text: String) -> void: _queue_refresh())
+	_finder_view.add_child(_search)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 10)
+	_finder_view.add_child(line)
+	_finder_genre = _make_choice()
+	_finder_genre.item_selected.connect(func(_index: int) -> void: _queue_refresh())
+	line.add_child(_finder_genre)
+	_finder_count = TabletFrame.make_label("", 15, MUTED_COLOR)
+	_finder_count.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_finder_count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.add_child(_finder_count)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_finder_view.add_child(scroll)
+	_finder_list = VBoxContainer.new()
+	_finder_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_finder_list.add_theme_constant_override("separation", 6)
+	scroll.add_child(_finder_list)
 
 
 # --- Fach hervorheben ---
 
 ## Maus über der Auswahlliste oder Liste aufgeklappt: diese Fächer hervorheben
-## (rows leer = alle Fächer, für "Alle Fächer gleich").
+## (rows leer = alle Fächer, für „Alle Fächer“).
 func _watch_choice(choice: OptionButton, rows: Array[int]) -> void:
 	_watch_hover(choice, rows)
 	choice.get_popup().about_to_popup.connect(func() -> void:
@@ -840,27 +737,6 @@ func _icon_button(kind: TabletIconButton.Icon, action: Callable) -> TabletIconBu
 	button.icon_kind = kind
 	button.pressed.connect(action)
 	return button
-
-
-## Tickbox "Auto": Das Fach übernimmt sein Genre aus den Büchern darin.
-func _make_auto_box() -> CheckBox:
-	var box := CheckBox.new()
-	box.text = "Auto"
-	box.focus_mode = Control.FOCUS_NONE
-	box.tooltip_text = "Genre aus den Büchern"
-	box.add_theme_font_size_override("font_size", 16)
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
-		box.add_theme_color_override(state, TEXT_COLOR)
-	box.add_theme_color_override("font_disabled_color", MUTED_COLOR)
-	# Schlicht, ohne eigenen Kasten (nur beim Darüberfahren ein Hauch Hintergrund)
-	var hover := TabletFrame.make_panel_style(Color(1.0, 0.95, 0.85, 0.08), 8, 6.0)
-	for state in ["normal", "pressed", "disabled", "focus"]:
-		var empty := StyleBoxEmpty.new()
-		empty.set_content_margin_all(6.0)
-		box.add_theme_stylebox_override(state, empty)
-	box.add_theme_stylebox_override("hover", hover)
-	box.add_theme_stylebox_override("hover_pressed", hover)
-	return box
 
 
 func _make_choice() -> OptionButton:
