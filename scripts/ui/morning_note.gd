@@ -20,7 +20,11 @@ func _ready() -> void:
 	_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_paper.visible = false
 	add_child(_paper)
-	GameClock.morning.connect(func(_day: int) -> void: _show_latest.call_deferred())
+	GameClock.morning.connect(_on_morning)
+
+
+func _on_morning(_day: int) -> void:
+	_show_latest.call_deferred()
 
 
 ## Zettel des Vortags zeigen (nur einmal je Tag, nur wenn es ihn gibt).

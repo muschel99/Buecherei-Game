@@ -60,8 +60,12 @@ func set_open(open: bool) -> void:
 
 
 ## Kommen gerade Besucher? (Schild auf „Geöffnet“ und Öffnungszeit)
+## Besucher kurz anhalten (z. B. während die Maklerin das Haus übergibt) – nicht gespeichert.
+var hold_visitors := false
+
+
 func accepts_visitors() -> bool:
-	return is_open and GameClock.is_between(GameConfig.library_open_from_hour, GameConfig.library_open_until_hour)
+	return is_open and not hold_visitors and GameClock.is_between(GameConfig.library_open_from_hour, GameConfig.library_open_until_hour)
 
 
 # --- Besuche planen ---

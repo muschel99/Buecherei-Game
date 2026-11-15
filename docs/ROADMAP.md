@@ -50,6 +50,7 @@
 | 7   | Tagesablauf und erste Besucher (Uhr, Licht, Hinterzimmer, Ausleihe, Notizzettel) | fertig |
 | 7b  | Testrunde nach Etappe 7: Nacht, Besucher, Anbau, Notizbuch, Bücherkisten, Möbel geprüft | fertig |
 | 8   | Besuchervielfalt: Ladebildschirm, Chibi-Größen, weiche Bücher, Theke mit PC, Gespräche, Stammgäste, Wünsche | fertig |
+| 8b  | Hauptmenü, Story-Anfang mit der Maklerin, To-do-Zettel, passende Namen | fertig |
 | 9   | Café                                     | offen         |
 | 10  | Erweiterungen und Freischaltungen        | offen         |
 | 10b | Fahrzeuge neu modellieren (vorgemerkt)   | offen         |
@@ -1904,6 +1905,23 @@ Plan und Haken: `.scratch/etappe-8-nachtest/plan.md`.
 - [x] Pausenmenü im Buchformat, Haftnotizen kleben an ihren Seiten (die anderen stecken zwischen den Blättern), ein Umblättern
   je Sprung
 - [x] Tippgeräusch der Sprechblasen aus der eigenen Aufnahme (weicher und leiser)
+
+## Etappe 8b – Hauptmenü, Story-Anfang und To-do-Zettel (Wunsch der Entwicklerin, 15.11.2026)
+Plan und Haken: `.scratch/start-story-tutorial/plan.md`.
+
+- [x] **Namen passen zur Figur:** Vornamen nach Frau/Mann (`data/visitors/names.txt`), jeder Ausweis merkt sich das Aussehen;
+  bekannte Gäste kommen so wieder, wie sie beim ersten Mal aussahen; Stammgäste mit fester Spalte w/m
+- [x] **Hauptmenü:** rechts der große Gartenbaum mit der Rundbank als einzelnes Modell – eine schwebende Rasen-Insel mit Blumen,
+  Hocker und Trittsteinen vor einem weichen Abendhimmel mit Wolkenmeer und Lichtpünktchen –, links ein Notizzettel
+  (Weiterspielen, Neues Spiel mit Nachfrage, Einstellungen im Notizbuch, Beenden); Weiterspielen = der Garten blendet weich ins
+  Spiel über; Neues Spiel setzt alles auf Anfang
+- [x] **Story-Anfang:** Ein neues Spiel beginnt draußen vor der Bücherei. Die Maklerin Frau Lindemann übergibt das Haus, geht
+  voraus und zeigt, was der alte Herr Quast dagelassen hat (Theke mit Tablet, Bücherkisten, Sessel und Deko-Regal,
+  Hinterzimmer, Rückgabekasten und Türschild); die Kamera schaut bei jedem Satz auf das, was sie zeigt; dann der Schlüssel
+  und sie geht. Texte zum Selbständern: `data/story/intro.txt`
+- [x] **To-do-Zettel am Rand:** danach kleine Zettel nacheinander (Ein Regal für die Bücher, Bücher einräumen, Die Tür auf!,
+  Ankommen in der Straße) mit Kästchen und Tastensymbolen; sie haken sich von selbst ab, ein fertiger Zettel gleitet hinaus
+  und der nächste herein; abschaltbar unter Einstellungen → „To-do-Zettel“. Texte: `data/tutorial/todo.txt`
 
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)

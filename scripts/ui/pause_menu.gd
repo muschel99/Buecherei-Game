@@ -92,6 +92,7 @@ const SETTING_NOTES := {
 	"graphics/paint_style": "Aquarell: alles wie gemalt, mit feinen Tuschelinien.",
 	"graphics/show_fps": "Kleine Zahl oben in der Ecke – nur zum Nachschauen.",
 	"interface/hints": "Was unter der Bildmitte neben den Tasten steht.",
+	"interface/todo": "Kleine Aufgaben am Rand für den Anfang – sie haken sich von selbst ab.",
 	"interface/build_key_help": "Tastenleiste am unteren Rand im Gestaltungsmodus.",
 	"audio/music_volume": "Die ruhige Musik im Hintergrund.",
 	"audio/ambience_volume": "Straße, Vögel, Wind und Kaminfeuer.",
@@ -104,6 +105,8 @@ const SETTING_NOTES := {
 const EXTRA_COLORS := [Color(0.99, 0.8, 0.62), Color(0.72, 0.9, 0.88), Color(0.96, 0.78, 0.88)]
 
 var _spreads: Array[Dictionary] = []
+## Geöffnet vom Hauptmenü aus (open_from_title): erste Seite ohne Speichern
+var title_mode := false
 var _current := 0
 var _busy := false
 var _close_pending := false  # Esc während des Aufklappens: danach gleich wieder zu
@@ -146,19 +149,30 @@ func _notification(what: int) -> void:
 
 
 ## Öffnen: das zugeklappte Notizbuch gleitet von unten herein, dann klappt der Deckel auf (erste Doppelseite).
-func open() -> void:
+## start_tab = Haftnotiz, bei der es aufgeschlagen wird (leer = erste Doppelseite).
+func open(start_tab: String = "") -> void:
 	if visible:
 		return
 	show()
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_current = 0
+	for i in _spreads.size():
+		if not start_tab.is_empty() and String(_spreads[i].tab) == start_tab:
+			_current = i
 	_close_pending = false
-	_fill_spread(0)
+	_fill_spread(_current)
 	_fit_book()
 	await get_tree().process_frame  # Größen stehen erst jetzt fest
 	_place_pages()
 	_play_open()
+
+
+## Vom Hauptmenü aus (TitleScreen „Einstellungen“): aufgeschlagen bei „Bild“; auf der ersten Seite nur „Zurück“ und „Beenden“
+## (auf dem Hauptmenü gibt es nichts zu speichern).
+func open_from_title() -> void:
+	title_mode = true
+	open("Bild")
 
 
 ## Für Testbilder: sofort offen auf der Doppelseite mit diesem Namen (Haftnotiz oder Seitentitel).
@@ -190,6 +204,7 @@ func resume() -> void:
 
 func _finish_close() -> void:
 	hide()
+	title_mode = false
 	get_tree().paused = false
 	Settings.apply_frame_limit()
 	# Maus so einstellen, wie es das gerade Geöffnete braucht (z. B. Katalog = Mauszeiger sichtbar)
@@ -682,9 +697,15 @@ func _fill_start(box: VBoxContainer) -> void:
 ## Erste Seite rechts: die wichtigsten Knöpfe, groß und handschriftlich unterstrichen.
 func _fill_actions(box: VBoxContainer) -> void:
 	box.add_child(_spacer(34))
-	var resume_button := _action_button("Weiterspielen")
+	var resume_button := _action_button("Zurück" if title_mode else "Weiterspielen")
 	resume_button.pressed.connect(resume)
 	box.add_child(resume_button)
+	if title_mode:
+		var leave := _action_button("Beenden")
+		leave.pressed.connect(func() -> void: get_tree().quit())
+		box.add_child(leave)
+		resume_button.call_deferred("grab_focus")
+		return
 	var save := _action_button("Speichern")
 	save.pressed.connect(func() -> void:
 		SaveManager.save_game()

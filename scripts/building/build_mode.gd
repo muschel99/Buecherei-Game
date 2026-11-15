@@ -258,6 +258,7 @@ func _on_primary_click() -> void:
 		Tool.PLACE_NEW:
 			if _placement_ok and Inventory.take_furniture(_selected_data.get_id(), 1, _selected_variant):
 				_room.add_furniture(_selected_data, _placement_transform, _placement_support, _selected_variant)
+				Tutorial.report("furniture_placed")
 				var verb := "aufgehängt" if _selected_data.is_hanging() else "aufgestellt"
 				_flash_status("%s %s." % [_selected_data.display_name, verb])
 				# Ist noch eins im Inventar, bleibt es in der Hand (gleiche Drehung) – sonst nichts mehr

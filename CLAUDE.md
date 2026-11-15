@@ -137,7 +137,9 @@ scenes/            Szenen (.tscn)
     tablet_apps/   Apps des Theken-Tablets (je eine kleine Szene)
 scripts/           GDScript-Dateien, gleiche Unterordner wie scenes/
   autoload/        Global verfügbare Scripts (GameConfig, Catalog, SaveManager, MenuStack, Settings,
-                   Wallet, Inventory, BookStock, BookArt, CounterStyle, DebugKeys, seit 7: GameClock, Lending)
+                   Wallet, Inventory, BookStock, BookArt, CounterStyle, DebugKeys, seit 7: GameClock, Lending,
+                   Tutorial)
+  story/           Story-Anfang (StoryIntro: die Maklerin übergibt das Haus)
   library/         Bücherei-Besucher (seit 7): LibraryVisits, LibraryDoorLink
   interaction/     Interaktionssystem (Interactable)
   building/        Gestaltungsmodus (BuildMode, PlacedFurniture, PlacementSurface, Vorschau)
@@ -163,13 +165,16 @@ data/
   genres/          Datenblätter der Buch-Genres (.tres)
   books/           Bücherlisten (.txt, eine je Genre, eine Zeile pro Buch: Titel | Motiv)
   tips/            Texte der App „Tipps & Tricks“ (tips.txt, Aufbau oben in der Datei)
+  story/           Texte des Story-Anfangs (intro.txt: Stationen der Maklerin, Sätze, @blick)
+  tutorial/        To-do-Zettel nach der Übergabe (todo.txt: Überschrift, Aufgaben mit Kennung)
   tablet_apps/     Datenblätter der Tablet-Apps (.tres) – werden automatisch auf den Startbildschirm geladen
   return_slots/    Datenblätter der Einwurf-Varianten des Rückgabekastens (.tres, App „Fassade“)
   facade/          Wahl-Datenblätter der Bücherei-Fassade (.tres, FacadeOption, App „Fassade“)
   animals/         spots.json = Sitzplätze der Tiere an den Häusern (aus bake_animal_spots.tscn)
 assets/
   models/          Eigene 3D-Modelle (.glb), templates/ = Vorlagen in echter Größe zum Modellieren,
-                   houses/ = Stil-Modelle der Häuser (aus tools/blender), facade/ = Teile der
+                   houses/ = Stil-Modelle der Häuser (aus tools/blender), title/ = Gartenstück des
+                   Hauptmenüs (build_title_garden.py), facade/ = Teile der
                    Bücherei-Fassade (Baukasten), source/ = .blend-Quellen
                    (.gdignore)
   textures/        Texturen, style/ = gemeinsame Stil-Texturen (Texture2DArray, layers.json)
@@ -1456,6 +1461,44 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   …, Aufbauen …, erste Bilder …“ in die Ausgabe. Prüfwerkzeuge laden main.tscn weiter direkt. Messen: `scenes/tools/startup_probe.tscn`
   (Zeiten je Schritt, Pipelines, Zeichenaufrufe; mit xvfb inkl. Grafik). Buchrücken-Atlas: Zwischenspeicher
   `user://cache/spines_<stand>.png` (`BookArt._atlas_cache_path`, neu bei geänderten Büchern/Genres/Zeichen-Scripts).
+- **Hauptmenü (seit dem Story-Anfang, Wunsch: rechts Baum mit Bank – als einzelnes Modell auf einem cozy Hintergrund –, links
+  ein Notizzettel):** `TitleScreen` (scripts/ui/title_screen.gd; nur beim echten Start – LoadingScreen setzt
+  `TitleScreen.show_on_start`, main.gd legt es an). Hinter dem Zettel eine eigene kleine Welt in einem SubViewport
+  (`TitleBackdrop`, scenes/ui/title_backdrop.tscn): schwebende Rasen-Insel mit Rundbank, Hocker und Trittsteinen
+  (`tools/blender/build_title_garden.py` → assets/models/title/title_garden.glb, Bank aus `build_storybook_alleys.round_bench`),
+  Gartenbaum (volle Größe, um den Stamm gedreht `TREE_TURN`, so neigt sich die Krone nach links zum Zettel und ist oben
+  angeschnitten – Wunsch der Entwicklerin), Blumenbeete (`TitleBackdrop.PLANTS`), Abendhimmel mit Wolken, Wolkenmeer und goldenem Schein
+  (assets/shaders/title_sky.gdshader), Lichtpünktchen, Malstil; Kamera `GameConfig.title_camera_*` (Mitte der Bank = Ursprung,
+  wiegt sich). Die Spielwelt wird solange nicht gezeichnet (`disable_3d`, erst nach dem Ladebildschirm). Zettel links
+  (Weiterspielen = Garten blendet ins Spiel über, Neues Spiel mit Nachfrage, Einstellungen = Notizbuch
+  `PauseMenu.open_from_title` – der Zettel gleitet solange zur Seite –, Beenden); HUD `suppressed`, Uhr steht,
+  `SaveManager.saving_enabled` aus. Garten allein ansehen: title_backdrop.tscn starten. **Neues Spiel:**
+  `TitleScreen.ScreenFade.new_game()` = Szene entladen → `SaveManager.reset_to_start()` (Autoloads auf den Stand vor dem ersten
+  `load_game`) → `Tutorial.start_new_game()` → main.tscn neu laden. **Signale von Autoloads und SceneTree nie mit Lambdas
+  verbinden** (sie bleiben nach dem Neuladen der Szene verbunden → „Lambda capture … was freed“) – Methoden nehmen.
+  Prüfen: `scenes/tools/title_probe.tscn -- shot` (xvfb, Bilder nach screenshots/title_probe/), `-- new` (Zurücksetzen),
+  `-- story` (Story-Anfang und To-do-Zettel headless durchspielen), `-- todo` (xvfb, Zettel im Laden); schneller:
+  `scenes/tools/ui_probe.tscn -- todo` (Zettel ohne Welt).
+- **Story-Anfang (Wunsch: die Maklerin übergibt das Haus und zeigt, was der Vorbesitzer dagelassen hat):** Autoload `Tutorial`
+  (`intro_done`, gespeichert; ohne Eintrag = true, so sehen alte Spielstände nichts davon). `StoryIntro` (scripts/story/; main.gd
+  legt es an, solange `intro_done` false ist – mittendrin gespeichert = beginnt von vorn): Spielfigur draußen vor die Treppe
+  (`story_player_start_distance`), Maklerin aus dem Vorrat über `StreetLife.launch_scripted` (fester Name/Aussehen
+  `story_agent_*`, Passerby `scripted`/`custom_name`: kein „Reden“, plaudert und streichelt nicht), Stationen `STATIONS`
+  (Orte `_station_point`, Blickpunkte `_focus_point`); dort wartet sie, das Gespräch beginnt von selbst in
+  `story_talk_distance` bei freier Sicht. Gesprächsschritte mit `"focus"` (Kamera schaut darauf, Signal
+  `Conversation.line_started` → sie dreht sich hin und zeigt, Clip „point“). Texte `data/story/intro.txt`. Währenddessen
+  `Lending.hold_visitors`. Bausteine: `LibraryVisits.enter_actions/go_to_actions/exit_house_actions/entrance_points`,
+  `StreetLife.exit_actions`.
+- **To-do-Zettel (Tutorial nach der Übergabe, Wunsch: kleine Listen für die kleinen Schritte am Rand):** Zettel nacheinander
+  aus `data/tutorial/todo.txt` (Überschrift, Aufgaben `kennung | Text | Taste`). Erledigt = `Tutorial.report(kennung)` an der
+  Stelle im Spiel (tablet: CounterTablet.open_tablet, order/shelf_ordered: DeliveryManager.place_order, unpack: DeliveryBox,
+  furniture_placed: BuildMode, crate_book: GenreCrates, guest_served/wish: LibraryVisits, talked: Conversation (nicht die
+  Maklerin), sat_down: Player.sit_down, slept: GameClock.woke_up) oder per Nachsehen alle 0,5 s (`Tutorial._poll`:
+  shelf_placed, shelved, open_sign). Schon Erledigtes ist gleich abgehakt, fertige Zettel werden übersprungen, fertiger
+  Zettel bleibt `todo_next_delay` hängen. Ein neues Spiel beginnt mit geschlossenem Schild. Gespeichert: `intro_done`, `list`,
+  `events` (alte Stände: keine Zettel). Anzeige `TodoNote` (im HUD, rechts oben; Papier, Häkchen wächst, Text weich
+  durchgestrichen, eigene Tastensymbole in Tinte `InkKey`, tritt in Menüs/Gesprächen zurück), Einstellung „interface/todo“.
+  Neue Aufgabe = Zeile in todo.txt + `Tutorial.report` an der passenden Stelle (oder eine Prüfung in `_poll`).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

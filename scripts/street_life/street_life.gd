@@ -488,7 +488,8 @@ func _update_pets(delta: float) -> void:
 
 
 func _can_pet(walker: Passerby) -> bool:
-	if not walker.active or walker.chat != null or walker.pet_cooldown > 0.0 or walker.on_road or walker.carries_bag():
+	if not walker.active or walker.scripted or walker.chat != null or walker.pet_cooldown > 0.0 or walker.on_road \
+			or walker.carries_bag():
 		return false
 	var action := walker.get_action()
 	return String(action.get("type", "")) == "walk" and not action.get("visit", false) and not action.has("alley") \
@@ -521,7 +522,7 @@ func pet_spot_ok(walker: Passerby, spot: Vector2) -> bool:
 
 
 func _can_chat(walker: Passerby) -> bool:
-	if not walker.active or walker.chat != null or walker.chat_cooldown > 0.0 or walker.on_road or walker.ignore_agent != null \
+	if not walker.active or walker.scripted or walker.chat != null or walker.chat_cooldown > 0.0 or walker.on_road or walker.ignore_agent != null \
 			or walker.body_on_road():
 		return false
 	var action := walker.get_action()
@@ -1342,6 +1343,8 @@ func _launch(plan: Dictionary) -> Passerby:
 	# sie im Sitzen neben sich ab (seit Etappe 6j, ChibiPasserbyModel._update_bag)
 	walker.restyle(_rng)
 	walker.set_prop(&"")  # z. B. Bücher aus der Bücherei vom letzten Weg
+	walker.custom_name = ""
+	walker.scripted = false
 	# Weg an der Bücherei vorbei: vielleicht ein Stammgast (seit Etappe 8; Aussehen wechselt nur hier, noch ungesehen)
 	var passes_library: bool = (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.get("passing", "") == "library")
 	if library and passes_library:
@@ -1365,6 +1368,44 @@ func _launch(plan: Dictionary) -> Passerby:
 	walker.set_shadows(0)
 	appeared.emit(walker, walker.pos)
 	return walker
+
+
+## Eine Figur aus der Geschichte losschicken (seit dem Story-Anfang: die Maklerin): fester Name, festes Aussehen (seed, Frau 1 /
+## Mann 0), eigene Schritte (Lagen wie bei allen Passanten: x/z unter StreetLife, floor = Höhe des Bodens). null = keine frei.
+func launch_scripted(start: Vector2, face: Vector2, actions: Array, start_floor: float, seed: int, female: int,
+		who: String) -> Passerby:
+	if _idle_walkers.is_empty():
+		return null
+	var walker: Passerby = _idle_walkers.pop_back()
+	walker.set_prop(&"")
+	var look := RandomNumberGenerator.new()
+	look.seed = seed
+	walker.randomize_look(look, female)
+	walker.give_bag(false)
+	walker.regular_id = ""
+	walker.reader_id = ""
+	walker.look_seed = seed
+	walker.custom_name = who
+	walker.scripted = true
+	walker.speed_pref = GameConfig.story_walk_speed
+	walker.comfort_pref = 0.5
+	walker.side = 1
+	_walkers.append(walker)
+	var typed: Array[Dictionary] = []
+	typed.assign(actions)
+	walker.begin(start, typed, face, start_floor)
+	walker.set_shadows(0)
+	appeared.emit(walker, walker.pos)
+	return walker
+
+
+## Von hier auf dem Gehweg der Bücherei-Seite zum näheren Straßenende und hinaus (Schritte für launch_scripted).
+func exit_actions(from: Vector2) -> Array:
+	var route: StreetRoute = sidewalks[1]
+	var length := centerline.length()
+	var s := centerline.project(from).x
+	var end_s := -0.5 if s < length / 2.0 else length + 0.5
+	return [{"type": "walk", "route": route, "to": end_s}, {"type": "leave", "gate": false}]
 
 
 ## War der Passant ein Stammgast oder bekannter Gast, geht er jetzt als Unbekannter los (neues Aussehen, nichts gemerkt).

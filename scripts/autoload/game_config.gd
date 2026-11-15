@@ -1432,6 +1432,26 @@ var wish_chance: float = 0.3
 var wish_tip: int = 10
 var wish_friendship: int = 2
 var wish_bubble_height: float = 0.45
+## Hauptmenü (TitleScreen): Kamera auf den großen Baum mit der Rundbank (eigene kleine Welt TitleBackdrop, Mitte der Bank =
+## Ursprung; Auge, Ziel, Sichtfeld – das Ziel liegt links neben der Insel, so stehen Baum und Bank rechts im Bild, die Krone
+## neigt sich nach links und ist oben angeschnitten – so gefällt es der Entwicklerin am besten), Zeit zum
+## Hereingleiten des Notizzettels und zum Überblenden ins Spiel bei „Weiterspielen“ (Sekunden).
+var title_camera_eye: Vector3 = Vector3(-1.0, 2.5, 12.5)
+var title_camera_target: Vector3 = Vector3(-4.4, 3.9, 0.0)
+var title_camera_fov: float = 48.0
+var title_note_time: float = 0.9
+var title_fly_time: float = 1.6
+## Story-Anfang (StoryIntro, neues Spiel): Maklerin (Name, fester Zufallswert fürs Aussehen; immer eine Frau), ihr Gehtempo
+## (m/s), ab welchem Abstand zur Spielfigur sie an einer Station zu reden beginnt (m), Start der Spielfigur draußen (Abstand
+## vor der Treppe, m) und so lange wartet sie nach dem letzten Satz, bevor sie geht (s). Texte: data/story/intro.txt
+var story_agent_name: String = "Frau Lindemann"
+var story_agent_seed: int = 4711
+var story_walk_speed: float = 1.1
+var story_talk_distance: float = 3.2
+var story_player_start_distance: float = 2.6
+var story_goodbye_wait: float = 1.0
+## To-do-Zettel (Tutorial, nach der Übergabe): so lange bleibt ein fertiger Zettel hängen, bevor der nächste kommt (s)
+var todo_next_delay: float = 2.5
 ## Stempelkarte (seit Etappe 8): so viele Felder; ist sie voll, bekommt der Gast ein Lesezeichen und so viele Tage mehr Zeit
 var stamp_card_size: int = 10
 ## Lautstärke des „Kaching“, wenn eine Bedienung an der Theke fertig ist (dB; seit dem Nachtest von Etappe 8 deutlich hörbar)

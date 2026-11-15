@@ -1,0 +1,36 @@
+# To-do-Zettel am Rand (Wunsch der Entwicklerin: nach der Übergabe durch die Maklerin kleine Listen für die kleinen Schritte).
+# Einfach hier ändern. Die Zettel kommen nacheinander; ist einer abgehakt, gleitet der nächste herein.
+#
+# Aufbau:
+#   == Überschrift              beginnt einen Zettel
+#   kennung | Text | Taste      eine Aufgabe; die Taste ist freiwillig (Name der Eingabe-Aktion, z. B. interact = E,
+#                               toggle_build_mode = Gestalten, book_take = rechte Maustaste, book_place = linke Maustaste,
+#                               open_menu = Menü)
+# Kennungen (woran das Spiel merkt, dass es erledigt ist):
+#   tablet         Tablet auf der Theke geöffnet          shelf_ordered  ein Bücherregal gekauft
+#   unpack         einen Lieferkarton ausgepackt          shelf_placed   ein Bücherregal steht im Laden
+#   crate_book     ein Buch aus einer Bücherkiste genommen
+#   shelved        Bücher stehen im Regal                 open_sign      das Schild zeigt „Geöffnet“
+#   guest_served   einen Gast an der Theke bedient        talked         mit jemandem geredet
+#   sat_down       sich hingesetzt                        slept          im Hinterzimmer geschlafen
+#   furniture_placed  etwas im Gestaltungsmodus aufgestellt   order  etwas bestellt   wish  einen Wunsch erfüllt
+# Zeilen mit # sind Notizen.
+
+== Ein Regal für die Bücher
+tablet | Das Tablet auf der Theke öffnen | interact
+shelf_ordered | Bei „Nest & Nook“ ein Bücherregal kaufen
+unpack | Den Karton vor der Tür auspacken | interact
+shelf_placed | Das Regal im Laden aufstellen | toggle_build_mode
+
+== Bücher einräumen
+crate_book | Ein Buch aus einer Kiste unter der Theke nehmen | book_take
+shelved | Bücher ins Regal stellen | book_place
+
+== Die Tür auf!
+open_sign | Das Türschild auf „Geöffnet“ drehen | interact
+guest_served | Den ersten Gast an der Theke bedienen | interact
+
+== Ankommen in der Straße
+talked | Mit jemandem plaudern | interact
+sat_down | Im Sessel ein Weilchen sitzen | interact
+slept | Abends im Hinterzimmer schlafen gehen

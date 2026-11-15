@@ -84,10 +84,8 @@ func _ready() -> void:
 	margin.add_child(_rows)
 	layout.add_child(_make_footer())
 	FacadeDesign.draft_changed.connect(_on_draft_changed)
-	FacadeDesign.unlocks_changed.connect(func() -> void:
-		if tablet and tablet.is_open and visible:
-			request_refresh())
-	Wallet.money_changed.connect(func(_money: int, _change: int) -> void: _update_footer())
+	FacadeDesign.unlocks_changed.connect(_on_unlocks_changed)
+	Wallet.money_changed.connect(_on_money_changed)
 
 
 ## Unten: Kosten, „Abbrechen“ und „Bauen“.
@@ -216,6 +214,15 @@ func app_opened() -> void:
 	var room := get_tree().root.find_child("GroundFloorRoom", true, false) as Node3D
 	if room:
 		_facade_preview.prepare(room)
+
+
+func _on_unlocks_changed() -> void:
+	if tablet and tablet.is_open and visible:
+		request_refresh()
+
+
+func _on_money_changed(_money: int, _change: int) -> void:
+	_update_footer()
 
 
 func _on_draft_changed() -> void:

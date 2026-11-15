@@ -159,6 +159,40 @@ func offer_visit(walker: Passerby, rejoin: Vector2) -> Array:
 	return actions
 
 
+# --- Für die Geschichte (Maklerin, StoryIntro) ---
+
+## Punkte vor der Tür (siehe _entrance_points).
+func entrance_points() -> Dictionary:
+	return _entrance_points()
+
+
+## Von pos die Treppe hinauf und durch die Tür hinein.
+func enter_actions(from: Vector2) -> Array:
+	var p := _entrance_points()
+	return [_line([from, p.foot], 0.0, 0.0, STREET_HALF_WIDTH), _line([p.foot, p.landing], 0.0, _floor),
+		{"type": "door", "door": door_link, "from_pos": p.landing, "to_pos": p.inside, "middle": p.middle, "push": true,
+			"floor": _floor, "fixed_path": true}]
+
+
+## Im Laden zu einem Punkt (Welt) gehen – um alle Möbel herum.
+func go_to_actions(target: Vector3) -> Array:
+	return [_call(_go_to.bind(target))]
+
+
+## Zur Tür, hinaus und die Treppe hinunter bis auf den Gehweg (dort geht es mit StreetLife.exit_actions weiter).
+func exit_house_actions() -> Array:
+	var p := _entrance_points()
+	return [_call(_go_to.bind(Vector3(p.inside.x, 0.0, p.inside.y))),
+		{"type": "door", "door": door_link, "from_pos": p.inside, "to_pos": p.landing, "middle": p.middle, "push": false,
+			"floor": _floor, "fixed_path": true},
+		_line([p.landing, p.foot], _floor, 0.0)]
+
+
+## Höhe des Ladenbodens (unter StreetLife).
+func shop_floor() -> float:
+	return _floor
+
+
 ## Punkte vor der Tür: am Fuß der Treppe, oben auf dem Podest, Mitte der Tür, drinnen hinter dem Schwenkbereich.
 func _entrance_points() -> Dictionary:
 	var center := StreetLayout.door_center()
@@ -588,6 +622,7 @@ func complete_checkout(walker: Passerby, bonus: bool) -> void:
 	Lending.lend(books, bool(visit.get("new", false)), GameConfig.stamp_bonus_extra_days if bonus else 0)
 	visit.lent = true
 	Audio.play("ui/kaching", GameConfig.checkout_kaching_db)
+	Tutorial.report("guest_served")
 	_checkout[walker] = 3
 
 
@@ -1051,6 +1086,7 @@ func give_book(walker: Passerby) -> void:
 	walker.give_bag(true, BASKET_MODELS[mini(3, (visit.books as Array).size())])
 	wish.state = "fulfilled"
 	Wallet.earn(GameConfig.wish_tip, "Trinkgeld")
+	Tutorial.report("wish")
 	if not walker.regular_id.is_empty():
 		Lending.add_friendship(walker.regular_id, GameConfig.wish_friendship)
 	Audio.play_at("books/place", walker.global_position + Vector3.UP, -4.0, Audio.vary(0.08))

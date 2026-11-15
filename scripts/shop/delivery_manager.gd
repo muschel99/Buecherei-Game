@@ -85,6 +85,13 @@ func place_order(contents: Array, wait: float = -1.0) -> void:
 		return
 	_orders.append({"contents": contents.duplicate(true), "remaining": GameConfig.delivery_time if wait < 0.0 else wait})
 	SaveManager.request_save()
+	# To-do-Zettel (Tutorial): bestellt – und war ein Bücherregal dabei?
+	Tutorial.report("order")
+	for entry: Dictionary in contents:
+		if entry.get("kind") == "furniture":
+			var data := Catalog.get_furniture(str(entry.get("id", "")))
+			if data and data.subcategory == "bookshelf":
+				Tutorial.report("shelf_ordered")
 
 
 func _process(delta: float) -> void:

@@ -13,7 +13,13 @@ const OWN_SOUND := &"tablet_sound"
 static func watch(root: Node) -> void:
 	for node in root.find_children("*", "BaseButton", true, false):
 		_hook(root, node)
-	root.get_tree().node_added.connect(func(node: Node) -> void: _hook(root, node))
+	var tree := root.get_tree()
+	var hook := func(node: Node) -> void: _hook(root, node)
+	tree.node_added.connect(hook)
+	# verschwindet root (z. B. beim Neuladen der Szene: Neues Spiel), die Verbindung wieder lösen
+	root.tree_exiting.connect(func() -> void:
+		if tree.node_added.is_connected(hook):
+			tree.node_added.disconnect(hook), CONNECT_ONE_SHOT)
 
 
 ## Markiert einen Knopf, der seinen eigenen Ton spielt (bekommt keinen Plopp dazu).

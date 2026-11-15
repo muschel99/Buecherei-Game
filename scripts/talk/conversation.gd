@@ -7,10 +7,13 @@ extends CanvasLayer
 ## falsch). Esc hat im Gespräch keine Funktion; es endet, wenn alles gesagt ist. Sätze: data/talk/talk.txt (TalkLines).
 ##
 ## Conversation.begin(figur, spielfigur[, schritte]) – schritte = [{"text": …}, {"text": Frage, "answers": [{text, reply}]}]
+## (je Schritt optional "focus": Punkt in der Welt, auf den die Kamera bei diesem Satz schaut – z. B. die Maklerin zeigt aufs Tablet)
 ## (leer = Gruß, Plaudern, ab und zu eine Frage, Abschied). Die Figur braucht start_talk(spielfigur), end_talk(),
 ## talk_name() und talk_focus() (Punkt, auf den die Kamera schaut).
 
 signal ended(speaker: Node)
+## Ein neuer Satz beginnt (z. B. für die Geschichte: die Maklerin zeigt auf etwas)
+signal line_started(index: int, step: Dictionary)
 
 const PAPER := Color(0.99, 0.96, 0.9)
 const INK := Color(0.33, 0.23, 0.19)
@@ -119,6 +122,7 @@ func _next() -> void:
 	if _index >= _steps.size():
 		_end()
 		return
+	line_started.emit(_index, _steps[_index] as Dictionary)
 	_say(String((_steps[_index] as Dictionary).text))
 
 
@@ -236,6 +240,8 @@ func _end() -> void:
 		MenuStack.close(self)
 		if speaker and is_instance_valid(speaker):
 			speaker.call("end_talk")
+			if speaker.get("scripted") != true:
+				Tutorial.report("talked")  # To-do-Zettel (die Maklerin zählt nicht)
 		if player and is_instance_valid(player):
 			player.set("movement_enabled", true)
 			player.set("interaction_enabled", true)
@@ -255,6 +261,8 @@ func _focus(delta: float) -> void:
 	if head == null:
 		return
 	var target: Vector3 = speaker.call("talk_focus")
+	if _index >= 0 and _index < _steps.size() and (_steps[_index] as Dictionary).get("focus") is Vector3:
+		target = (_steps[_index] as Dictionary).focus
 	var from := head.global_position
 	var d := target - from
 	var flat := Vector2(d.x, d.z)

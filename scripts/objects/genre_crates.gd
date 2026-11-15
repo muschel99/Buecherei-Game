@@ -50,10 +50,15 @@ static func attach(counter: Node3D) -> GenreCrates:
 
 
 func _ready() -> void:
-	BookStock.changed.connect(func() -> void: _dirty = true)
-	BookStock.carried_changed.connect(func() -> void: _dirty = true)
-	CounterStyle.changed.connect(func() -> void: _dirty = true)
-	BookArt.atlas_ready.connect(func() -> void: _dirty = true)
+	# (Methoden statt kleiner Funktionen: Godot trennt sie, wenn der Knoten verschwindet – wichtig beim Neuladen der Szene)
+	BookStock.changed.connect(_mark_dirty)
+	BookStock.carried_changed.connect(_mark_dirty)
+	CounterStyle.changed.connect(_mark_dirty)
+	BookArt.atlas_ready.connect(_mark_dirty)
+
+
+func _mark_dirty() -> void:
+	_dirty = true
 
 
 func _process(_delta: float) -> void:
@@ -223,6 +228,7 @@ func _take(genre_id: String) -> void:
 	if not rest.is_empty():
 		BookStock.put_back_first(rest)
 	Audio.play_at("books/take", global_position + Vector3.UP * 0.3, -4.0, Audio.vary(0.08))
+	Tutorial.report("crate_book")
 
 
 func _put_back(genre_id: String) -> void:

@@ -1,0 +1,35 @@
+# Story-Anfang (neues Spiel): Die Maklerin übergibt das Haus und zeigt, was der Vorbesitzer dagelassen hat.
+# Einfach hier ändern oder ergänzen.
+#
+# Aufbau:
+#   == name      beginnt eine Station; die Maklerin geht nacheinander zu: start (draußen an der Treppe), theke,
+#                einrichtung (Sessel und Deko-Regal), hinterzimmer (Tür hinten rechts), eingang (Rückgabekasten, Schild)
+#   Text …       ein Satz (eine Sprechblase)
+#   @blick Text  bei diesem Satz schaut die Kamera auf etwas: haus, theke, tablet, kisten, sessel, regal, hintertuer,
+#                rueckgabe, schild (ohne @ schaut sie auf die Maklerin)
+# Zeilen mit # sind Notizen. Name und Aussehen der Maklerin: GameConfig.story_agent_*.
+
+== start
+Ah, da sind Sie ja! Herzlich willkommen – und herzlichen Glückwunsch zu Ihrem neuen Haus!
+Ich bin Frau Lindemann, Ihre Maklerin. Heute bekommen Sie ganz offiziell die Schlüssel.
+@haus Der alte Herr Quast hatte hier über vierzig Jahre lang eine kleine Bücherei. Einiges hat er Ihnen dagelassen.
+Kommen Sie, ich zeige Ihnen alles!
+
+== theke
+@theke Das hier ist Ihre Theke. Hier bedienen Sie später Ihre Gäste.
+@tablet Das Tablet hat Herr Quast noch ganz neu gekauft. Damit bestellen Sie Möbel und Bücher.
+@kisten Und unter der Theke stehen seine Bücherkisten – ein paar Bücher sind sogar noch drin. Ein schöner Anfang!
+
+== einrichtung
+@sessel Den gemütlichen Sessel hat er auch hiergelassen …
+@regal … und das kleine Regal für Deko.
+Alles andere richten Sie ganz nach Ihrem Geschmack ein. Ich bin schon gespannt!
+
+== hinterzimmer
+@hintertuer Da hinten ist ein kleines Zimmer mit einem Bett – falls es abends mal spät wird.
+
+== eingang
+@rueckgabe Neben der Tür ist der Rückgabekasten. Dort werfen Ihre Gäste die Bücher ein, wenn sie sie zurückbringen.
+@schild Und das Schild an der Tür zeigt allen, ob Sie geöffnet haben.
+So – hier ist Ihr Schlüssel. Ich wünsche Ihnen ganz viel Freude mit Ihrer Bücherei!
+Und keine Sorge: Die Leute hier in der Straße sind wirklich nett. Sie werden sich wohlfühlen.

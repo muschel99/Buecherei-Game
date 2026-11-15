@@ -590,7 +590,7 @@ func _try_leg_rub(cat: StreetCat) -> bool:
 	if float(_leg_rub_wait.get(cat.get_instance_id(), 0.0)) > now or not cat.on_street_level():
 		return false
 	for walker in street.get_walkers():
-		if not walker.active or walker.get_action_type() != "stand" or walker.stand_time_left() < 4.0 \
+		if not walker.active or walker.scripted or walker.get_action_type() != "stand" or walker.stand_time_left() < 4.0 \
 				or walker.get_action().has("approach"):
 			continue
 		var w := walker.global_position

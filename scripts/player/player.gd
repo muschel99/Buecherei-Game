@@ -111,9 +111,7 @@ func _ready() -> void:
 	head.position.y = GameConfig.eye_height
 	apply_field_of_view()
 	get_viewport().size_changed.connect(apply_field_of_view)
-	Settings.setting_changed.connect(func(key: String, _value: Variant) -> void:
-		if key == "graphics/field_of_view":
-			apply_field_of_view())
+	Settings.setting_changed.connect(_on_setting_changed)
 	# Der Strahl reicht so weit wie die größte Reichweite; ob ein Ziel nah genug ist,
 	# wird danach je nach Objekt geprüft (siehe _update_interaction_target)
 	var reach := maxf(GameConfig.interaction_distance, GameConfig.long_interaction_distance)
@@ -134,6 +132,11 @@ func _ready() -> void:
 ## Sichtfeld der Kamera: oben/unten GameConfig.camera_fov – aber nie breiter als die Einstellung
 ## „Sichtfeld“ erlaubt (GameConfig.camera_max_horizontal_fov). Auf breiten Bildschirmen zeigt die Kamera
 ## dann oben und unten etwas weniger, statt das Bild an den Rändern zu verzerren.
+func _on_setting_changed(key: String, _value: Variant) -> void:
+	if key == "graphics/field_of_view":
+		apply_field_of_view()
+
+
 func apply_field_of_view() -> void:
 	camera.fov = fitted_fov(get_viewport().get_visible_rect().size)
 
@@ -311,6 +314,7 @@ func sit_down(seat: SeatPoint) -> void:
 		return
 	_seat = seat
 	seat.occupant = self
+	Tutorial.report("sat_down")
 	_stand_position = global_position
 	velocity = Vector3.ZERO
 	_collision.disabled = true

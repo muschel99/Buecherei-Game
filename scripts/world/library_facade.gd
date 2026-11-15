@@ -70,12 +70,16 @@ func _notification(what: int) -> void:
 func _ready() -> void:
 	if Engine.is_editor_hint() or not follow_design:
 		return
-	FacadeDesign.changed.connect(func() -> void: build(FacadeDesign.config))
+	FacadeDesign.changed.connect(_on_design_changed)
 	_apply_door()
 	_apply_room()
 
 
 ## Baut die Fassade nach dieser Wahl (fehlende Kategorien: Standard).
+func _on_design_changed() -> void:
+	build(FacadeDesign.config)
+
+
 func build(new_config: Dictionary) -> void:
 	config = FacadeDesign.normalized(new_config)
 	_built = true

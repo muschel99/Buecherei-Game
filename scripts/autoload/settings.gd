@@ -45,6 +45,7 @@ const DEFINITIONS: Array[Dictionary] = [
 		"type": "choice", "options": ["Aus", "Nur Symbole", "Symbol mit Wort"], "default": 2},
 	{"key": "interface/build_key_help", "section": "Oberfläche", "label": "Tastenhilfe im Gestaltungsmodus (H)",
 		"type": "toggle", "default": true},
+	{"key": "interface/todo", "section": "Oberfläche", "label": "To-do-Zettel", "type": "toggle", "default": true},
 	# Lautstärken in Prozent (seit Etappe 6d, Kanäle des Audio-Systems, siehe Autoload „Audio“)
 	{"key": "audio/music_volume", "section": "Ton", "label": "Musik", "type": "slider", "default": 60},
 	{"key": "audio/ambience_volume", "section": "Ton", "label": "Umgebung", "type": "slider", "default": 80},

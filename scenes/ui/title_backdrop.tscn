@@ -1,0 +1,62 @@
+[gd_scene load_steps=8 format=3]
+
+; Bild hinter dem Hauptmenü (TitleBackdrop): Rasen-Insel mit Rundbank und dem großen Gartenbaum vor einem weichen
+; Abendhimmel. Austauschbar: "Garden" (assets/models/title/title_garden.glb) und "Tree" durch eigene Modelle ersetzen,
+; Farben des Himmels im Material unten, Blumen in scripts/ui/title_backdrop.gd (PLANTS), Kamera in GameConfig.title_camera_*.
+
+[ext_resource type="Script" path="res://scripts/ui/title_backdrop.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/title/title_garden.glb" id="2_garden"]
+[ext_resource type="PackedScene" path="res://scenes/world/plants/tree_garden_big.tscn" id="3_tree"]
+[ext_resource type="Shader" path="res://assets/shaders/title_sky.gdshader" id="4_sky"]
+
+[sub_resource type="ShaderMaterial" id="SkyMaterial_title"]
+shader = ExtResource("4_sky")
+
+[sub_resource type="Sky" id="Sky_title"]
+sky_material = SubResource("SkyMaterial_title")
+
+[sub_resource type="Environment" id="Environment_title"]
+background_mode = 2
+sky = SubResource("Sky_title")
+ambient_light_source = 3
+ambient_light_color = Color(0.98, 0.86, 0.78, 1)
+ambient_light_sky_contribution = 0.6
+ambient_light_energy = 0.9
+reflected_light_source = 2
+tonemap_mode = 4
+tonemap_exposure = 1.1
+ssao_enabled = true
+ssao_radius = 1.0
+ssao_intensity = 2.0
+glow_enabled = true
+glow_intensity = 0.5
+glow_bloom = 0.08
+glow_hdr_threshold = 0.9
+adjustment_enabled = true
+adjustment_contrast = 1.04
+adjustment_saturation = 1.08
+
+[node name="TitleBackdrop" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_title")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+light_color = Color(1, 0.86, 0.7, 1)
+light_energy = 1.35
+shadow_enabled = true
+shadow_blur = 1.5
+directional_shadow_mode = 0
+directional_shadow_max_distance = 30.0
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 2.5, 12.5)
+current = true
+fov = 48.0
+
+[node name="Garden" parent="." instance=ExtResource("2_garden")]
+
+[node name="Tree" parent="." instance=ExtResource("3_tree")]
+
+[node name="Plants" type="Node3D" parent="."]

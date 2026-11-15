@@ -24,6 +24,8 @@ var saving_enabled := true
 
 var _autosave_timer: Timer
 var _is_loading := false
+## Anfangszustand der Autoloads (Geld, Lager, Uhr …), gemerkt beim ersten Laden – für „Neues Spiel“ (reset_to_start)
+var _start_state := {}
 
 
 func _ready() -> void:
@@ -80,6 +82,7 @@ func save_game() -> void:
 ## Lädt den Spielstand (falls vorhanden) in alle Knoten der Gruppe "persist".
 ## Wird von der Hauptszene aufgerufen, sobald alles bereit ist.
 func load_game() -> void:
+	_remember_start_state()
 	if not has_save():
 		return
 	var text := FileAccess.get_file_as_string(GameConfig.save_file_path)
@@ -101,6 +104,29 @@ func load_game() -> void:
 		if nodes.has(node.save_key) and nodes[node.save_key] is Dictionary:
 			node.load_save_data(nodes[node.save_key])
 	_is_loading = false
+
+
+## Merkt sich einmal den Zustand der Autoloads, bevor ein Spielstand geladen wird (= wie bei einem frischen Spiel).
+func _remember_start_state() -> void:
+	if not _start_state.is_empty():
+		return
+	for node in get_tree().get_nodes_in_group(PERSIST_GROUP):
+		if _is_autoload(node):
+			_start_state[node.save_key] = node.get_save_data()
+
+
+## Neues Spiel (Hauptmenü): alle Autoloads zurück auf den Anfangszustand; die Hauptszene lädt danach frisch (Raum, Fassade …).
+func reset_to_start() -> void:
+	_is_loading = true
+	for node in get_tree().get_nodes_in_group(PERSIST_GROUP):
+		if _is_autoload(node) and _start_state.has(node.save_key):
+			node.load_save_data(_start_state[node.save_key])
+	_is_loading = false
+
+
+## Autoloads hängen direkt an der Wurzel (die Knoten der Hauptszene tiefer darin).
+func _is_autoload(node: Node) -> bool:
+	return node.get_parent() == get_tree().root and node != get_tree().current_scene
 
 
 ## Löscht den Spielstand (beim nächsten Start ist alles wieder wie am Anfang).

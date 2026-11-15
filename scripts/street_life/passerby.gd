@@ -143,6 +143,10 @@ var regular_id := ""
 ## Gast mit eigenem Ausweis, der wiederkommt (seit dem Nachtest von Etappe 8; Kennung in Lending.readers) – er sieht so aus wie
 ## beim ersten Besuch (look_seed des Ausweises). Leer = kein bekannter Gast.
 var reader_id := ""
+## Fester Name und eigene Schritte aus der Geschichte (seit dem Story-Anfang: die Maklerin, StreetLife.launch_scripted) –
+## dann redet man nicht von selbst mit ihr (die Geschichte startet die Gespräche)
+var custom_name := ""
+var scripted := false
 ## Zufallszahl, aus der das Aussehen stammt (LibraryVisits merkt sie sich mit dem Ausweis)
 var look_seed := 0
 var _talk_interactable: Interactable
@@ -222,13 +226,14 @@ func _add_talk_interactable() -> void:
 
 ## Kann man gerade mit ihr reden? Nicht auf der Fahrbahn, nicht an Türen, nicht beim Plaudern mit anderen.
 func can_talk() -> bool:
-	if not active or talking or chat != null or on_road or body_on_road() or ignore_agent != null:
+	if not active or talking or chat != null or on_road or body_on_road() or ignore_agent != null or scripted:
 		return false
 	return get_action_type() in ["walk", "stand", "wait", "sit"]
 
 
 func start_talk(player: Node3D) -> bool:
-	if not can_talk():
+	# Figuren aus der Geschichte (Maklerin) zeigen kein „Reden“, die Geschichte beginnt ihre Gespräche selbst
+	if not can_talk() and not (scripted and active and not talking):
 		return false
 	talking = true
 	var face := life.to_local2(player.global_position) - pos if life else Vector2.ZERO
@@ -265,6 +270,8 @@ func set_talking_now(on: bool) -> void:
 ## Name in der Sprechblase (Unbekannte: keiner; Stammgäste ab Etappe 8, Schritt 5).
 ## Name im Gespräch: Stammgast, bekannter Gast oder der Ausweis dieses Besuchs – immer derselbe Name wie auf dem Ausweis.
 func talk_name() -> String:
+	if not custom_name.is_empty():
+		return custom_name
 	if not regular_id.is_empty():
 		return String(Regulars.find(regular_id).get("name", ""))
 	var card := reader_id

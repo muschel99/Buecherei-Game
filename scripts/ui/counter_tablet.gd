@@ -72,7 +72,7 @@ func _ready() -> void:
 	_build()
 	TabletSounds.watch(self)
 	hide()
-	Wallet.money_changed.connect(func(_money: int, _change: int) -> void: _queue_refresh())
+	Wallet.money_changed.connect(_on_money_changed)
 	Inventory.changed.connect(_queue_refresh)
 	BookStock.changed.connect(_queue_refresh)
 
@@ -117,6 +117,7 @@ func open_tablet() -> void:
 	is_open = true
 	MenuStack.open(self)
 	Audio.play("ui/tablet_open", -5.0)
+	Tutorial.report("tablet")
 	_player.movement_enabled = false
 	_player.interaction_enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -389,6 +390,10 @@ func get_current_app_id() -> String:
 
 ## Alles neu zeigen – erst am Ende des Bilds (einmal, auch wenn viel auf einmal passiert).
 func queue_refresh() -> void:
+	_queue_refresh()
+
+
+func _on_money_changed(_money: int, _change: int) -> void:
 	_queue_refresh()
 
 

@@ -45,6 +45,7 @@ var _loaded_scene: PackedScene
 
 func _ready() -> void:
 	_ready_ticks = Time.get_ticks_msec()
+	TitleScreen.show_on_start = true  # nach dem Laden erscheint das Hauptmenü
 	layer = 120
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_canvas = Painting.new()

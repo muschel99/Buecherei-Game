@@ -40,6 +40,17 @@ func _ready() -> void:
 	($GroundFloorRoom as Room).ensure_essentials()
 	# Startgeschenke (z. B. ein Rückgabekasten) kommen einmal ins Inventar
 	BookStock.give_start_gifts()
+	# Story-Anfang: Die Maklerin übergibt das Haus (neues Spiel; mittendrin gespeichert = beginnt von vorn)
+	if not Tutorial.intro_done:
+		var story := StoryIntro.new()
+		story.name = "StoryIntro"
+		add_child(story)
+	# Hauptmenü (nur beim echten Start über den Ladebildschirm – Prüfwerkzeuge laden die Szene ohne)
+	if TitleScreen.show_on_start:
+		TitleScreen.show_on_start = false
+		var title := TitleScreen.new()
+		title.name = "TitleScreen"
+		add_child(title)
 
 
 ## Himmelslicht (GameConfig.outdoor_fill_*): wirkt nur auf die Render-Ebene "draußen". Alles

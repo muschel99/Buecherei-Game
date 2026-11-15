@@ -35,6 +35,7 @@ FacadeDesign="*res://scripts/autoload/facade_design.gd"
 DebugKeys="*res://scripts/autoload/debug_keys.gd"
 GameClock="*res://scripts/autoload/game_clock.gd"
 Lending="*res://scripts/autoload/lending.gd"
+Tutorial="*res://scripts/autoload/tutorial.gd"
 
 [display]
 

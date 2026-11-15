@@ -3,6 +3,7 @@ extends Node
 ## Start: xvfb-run -a -s "-screen 0 1600x900x24" godot --path . --resolution 1600x900 --audio-driver Dummy
 ##   res://scenes/tools/ui_probe.tscn -- pause:<Doppelseite> [pause:<…> …] | open:<sek>,… | app:<id> | note
 ##   (app:<id> = Theken-Tablet mit dieser App, note = Notizzettel am Morgen; seit dem Nachtest von Etappe 8)
+##   | todo  (To-do-Zettel am Rand: todo.png, dann eine Aufgabe abgehakt: todo_tick.png; seit dem Story-Anfang)
 ## Bilder: screenshots/ui_probe/<name>.png
 
 const OUT := "res://screenshots/ui_probe/"
@@ -34,6 +35,24 @@ func _run() -> void:
 			print("Bild: ", name_)
 			menu.queue_free()
 			await get_tree().process_frame
+		elif arg == "todo":
+			SaveManager.saving_enabled = false
+			var layer := CanvasLayer.new()
+			add_child(layer)
+			Tutorial.start_new_game()
+			Tutorial.finish_intro()
+			Tutorial.report("tablet")
+			layer.add_child(TodoNote.new())
+			for shot in ["todo", "todo_tick"]:
+				if shot == "todo_tick":
+					Tutorial.report("shelf_ordered")
+				var started := Time.get_ticks_msec()
+				while Time.get_ticks_msec() - started < 1600:
+					await get_tree().process_frame
+				await RenderingServer.frame_post_draw
+				get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + shot + ".png"))
+				print("Bild: ", shot)
+			layer.queue_free()
 		elif arg.begins_with("app:") or arg == "note":
 			var node: Node
 			if arg == "note":

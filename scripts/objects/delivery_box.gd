@@ -77,6 +77,7 @@ func unpack() -> void:
 	if not _interactable.is_enabled:
 		return
 	_interactable.is_enabled = false
+	Tutorial.report("unpack")
 	if _move_tween:
 		_move_tween.kill()
 	show()
