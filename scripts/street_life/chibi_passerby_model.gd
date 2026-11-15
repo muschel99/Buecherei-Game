@@ -192,8 +192,11 @@ var _leg_length := LEG_REFERENCE
 
 
 ## Neues, zufälliges Aussehen.
-func randomize_look(rng: RandomNumberGenerator) -> void:
-	var female := rng.randf() < 0.5
+## female_wish: 1 = Frau, 0 = Mann, -1 = zufällig (seit dem Nachtest von Etappe 8: Stammgäste und Gäste mit Ausweis haben ein
+## festes Geschlecht passend zum Namen). Gleiche Zufallszahlen = gleiches Aussehen.
+func randomize_look(rng: RandomNumberGenerator, female_wish: int = -1) -> void:
+	var roll := rng.randf()
+	var female := roll < 0.5 if female_wish < 0 else female_wish == 1
 	figure = ((0 if female else 3) + rng.randi_range(0, 2)) as Figure
 	body_shape = clampf(rng.randfn(0.0, 0.45), -0.9, 1.0)
 	skin_color = _pick(rng, GameConfig.chibi_skin_colors)

@@ -77,7 +77,7 @@ func _ready() -> void:
 
 
 ## Neues Aussehen: Farben, Frisur, Kleidung, Größe.
-func randomize_look(rng: RandomNumberGenerator) -> void:
+func randomize_look(rng: RandomNumberGenerator, _female: int = -1) -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()

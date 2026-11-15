@@ -1,0 +1,87 @@
+# Namen für Gäste mit Leseausweis (seit dem Nachtest von Etappe 8) – einfach hier ändern oder ergänzen.
+# Jeder Gast bekommt einen Vornamen, der zu seiner Figur passt (Frau oder Mann), und einen Nachnamen.
+# Aufbau: "== frauen", "== maenner", "== nachnamen" beginnen einen Abschnitt, darunter ein Name je Zeile.
+# Zeilen mit # sind Notizen. (Stammgäste stehen in data/visitors/regulars.txt.)
+
+== frauen
+Anna
+Charlotte
+Clara
+Elisabeth
+Emma
+Erna
+Frida
+Hanna
+Helene
+Hilde
+Inge
+Johanna
+Käthe
+Lene
+Lina
+Luise
+Marie
+Martha
+Nora
+Paula
+Rieke
+Ruth
+Sophie
+Tilda
+Wilma
+
+== maenner
+Albert
+Arthur
+Ben
+Bruno
+Carl
+Emil
+Ernst
+Felix
+Franz
+Fritz
+Hans
+Heinrich
+Jakob
+Karl
+Konrad
+Leo
+Ludwig
+Max
+Moritz
+Oskar
+Otto
+Rudi
+Simon
+Vincent
+Willi
+
+== nachnamen
+Bauer
+Berger
+Blum
+Engel
+Fischer
+Fuchs
+Graf
+Hartmann
+Herzog
+Kaiser
+Keller
+Klein
+König
+Krause
+Lang
+Lorenz
+Möller
+Neumann
+Peters
+Roth
+Schäfer
+Schubert
+Sommerfeld
+Vogel
+Winter
+Wolf
+Ziegler

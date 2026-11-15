@@ -110,9 +110,13 @@ func offer_visit(walker: Passerby, rejoin: Vector2) -> Array:
 		return []
 	Lending.visitor_entered(walker)
 	if regular.is_empty():
-		var is_new := Lending.roll_new_reader()
+		# bekannter Gast (beim Losgehen ausgewählt, sieht aus wie damals) oder ein neuer Ausweis mit passendem Namen und dem
+		# Aussehen dieser Figur (seit dem Nachtest von Etappe 8 – vorher bekam eine fremde Figur einen alten Ausweis)
+		var is_new := walker.reader_id.is_empty() or not Lending.readers.has(walker.reader_id)
+		var card: String = Lending.new_reader("", walker.look_seed, 1 if walker.is_female() else 0) if is_new else walker.reader_id
 		_visit[walker] = {"books": [] as Array[Book], "genre": _pick_genre(), "new": is_new, "rejoin": rejoin,
-			"card": Lending.new_reader() if is_new else Lending.returning_reader(), "style": _pick_style()}
+			"card": card, "style": _pick_style()}
+		walker.reader_id = card
 	else:
 		# Stammgast (seit Etappe 8): eigener Ausweis, Lieblingsgenre, Art des Besuchs; Freunde bringen manchmal jemanden mit
 		var created := Lending.ensure_reader(regular.id, regular.name)
@@ -123,6 +127,12 @@ func offer_visit(walker: Passerby, rejoin: Vector2) -> Array:
 		info.last_day = GameClock.day
 		if Lending.friendship(regular.id) >= GameConfig.friend_bring_level and _rng.randf() < GameConfig.friend_bring_chance:
 			Lending.add_visit_ticket()
+	# Prüfwerkzeug: passt der Name auf dem Ausweis zur Figur? Sieht ein bekannter Gast aus wie beim ersten Mal?
+	var card_info := Lending.reader_info(String(_visit[walker].card))
+	var gender: int = PersonNames.gender_of(str(card_info.get("name", ""))) if regular.is_empty() else int(regular.female)
+	_note("name_ok" if gender < 0 or (gender == 1) == walker.is_female() else "name_wrong")
+	if regular.is_empty() and not bool(_visit[walker].new):
+		_note("known_again")
 	if String(_visit[walker].style) == "zurueck" and Lending.loans.is_empty():
 		_visit[walker].style = "zielstrebig"  # nichts zum Zurückbringen da
 	_note("styles", String(_visit[walker].style))
@@ -850,9 +860,11 @@ func held_books() -> Array[Book]:
 
 ## Für das Prüfwerkzeug: Besucher gerade drinnen, wartend an der Theke.
 func stats_text() -> String:
-	return "drinnen %d, an der Theke %d, Stammgäste %d, Arten %s, am Tisch gelesen %d, gebückt %d, Wünsche %d (erfüllt %d)" % [
+	return ("drinnen %d, an der Theke %d, Stammgäste %d, Arten %s, am Tisch gelesen %d, gebückt %d, Wünsche %d (erfüllt %d), " +
+		"Name passt zur Figur %d von %d, bekannte Gäste wieder da %d") % [
 		Lending.visitors_inside(), queue.size(), counts.get("regular", 0), counts.get("styles", {}), counts.get("table", 0),
-		counts.get("bend", 0), counts.get("wish", 0), counts.get("wish_done", 0)]
+		counts.get("bend", 0), counts.get("wish", 0), counts.get("wish_done", 0), counts.get("name_ok", 0),
+		int(counts.get("name_ok", 0)) + int(counts.get("name_wrong", 0)), counts.get("known_again", 0)]
 
 
 ## Zahlen für das Prüfwerkzeug (seit Etappe 8)
@@ -895,30 +907,53 @@ func visitors_full() -> bool:
 ## Beim Losgehen eines Passanten, dessen Weg an der Bücherei vorbeiführt (StreetLife._launch, noch ungesehen): manchmal
 ## wird er ein Stammgast (festes Aussehen aus dem Namen); wer vorher einer war, bekommt ein neues, zufälliges Aussehen.
 func assign_regular(walker: Passerby) -> void:
-	if not walker.regular_id.is_empty():
-		walker.regular_id = ""
-		walker.randomize_look(_rng)
-	if not Lending.accepts_visitors() or _rng.randf() > GameConfig.regular_chance:
-		return
+	# Seit dem Nachtest von Etappe 8: jeder, der an der Bücherei vorbeikommt, bekommt hier (noch ungesehen) ein Aussehen, das sich
+	# merken lässt – Stammgäste und bekannte Gäste ihr eigenes, alle anderen ein neues (mit Ausweis gemerkt, falls sie hereinkommen)
+	var was_known := not walker.regular_id.is_empty() or not walker.reader_id.is_empty()
+	walker.regular_id = ""
+	walker.reader_id = ""
 	var busy := {}
 	for other: Passerby in life._walkers:
 		if other.active:
 			busy[other.regular_id] = true
-	var candidates: Array[Dictionary] = []
-	var weights: Array[float] = []
-	for regular in Regulars.all():
-		var info := Lending.reader_info(regular.id)
-		if busy.has(regular.id) or int(info.get("last_day", -1)) == GameClock.day:
-			continue
-		candidates.append(regular)
-		weights.append(1.0 + Lending.friendship(regular.id) * 0.3)
-	if candidates.is_empty():
-		return
-	var pick := candidates[_rng.rand_weighted(PackedFloat32Array(weights))]
+			busy[other.reader_id] = true
+	if Lending.accepts_visitors() and _rng.randf() < GameConfig.regular_chance:
+		var candidates: Array[Dictionary] = []
+		var weights: Array[float] = []
+		for regular in Regulars.all():
+			var info := Lending.reader_info(regular.id)
+			if busy.has(regular.id) or int(info.get("last_day", -1)) == GameClock.day:
+				continue
+			candidates.append(regular)
+			weights.append(1.0 + Lending.friendship(regular.id) * 0.3)
+		if not candidates.is_empty():
+			var pick := candidates[_rng.rand_weighted(PackedFloat32Array(weights))]
+			_apply_look(walker, int(pick.seed), int(pick.female))
+			walker.regular_id = pick.id
+			return
+	# ein Gast, der schon einen Ausweis hat, kommt wieder – genauso, wie er beim ersten Mal aussah
+	if Lending.accepts_visitors() and not Lending.roll_new_reader():
+		var id := Lending.known_reader(busy)
+		if not id.is_empty():
+			var info := Lending.reader_info(id)
+			_apply_look(walker, int(info.look), int(info.female))
+			walker.reader_id = id
+			return
+	# sonst ein Unbekannter: neues Aussehen nur, wenn er bisher jemand Bekanntes war oder noch keines gemerkt hat
+	if was_known or walker.look_seed == 0:
+		_apply_look(walker, _rng.randi(), -1)
+		walker.restyle(_rng)  # Unbekannte tragen manchmal eine Einkaufstasche
+
+
+## Aussehen aus einer Zahl (immer gleich), Frau/Mann fest (1/0) oder zufällig (-1). Stammgäste und bekannte Gäste kommen ohne
+## Einkaufstasche (sonst kämen sie nicht herein).
+func _apply_look(walker: Passerby, seed: int, female: int) -> void:
 	var look := RandomNumberGenerator.new()
-	look.seed = int(pick.seed)
-	walker.randomize_look(look)
-	walker.regular_id = pick.id
+	look.seed = seed
+	walker.randomize_look(look, female)
+	walker.look_seed = seed
+	if female >= 0:
+		walker.give_bag(false)
 
 
 ## Nur zurückbringen: zur Theke, Bücher auf die Kundenseite legen (bücken), wieder gehen.

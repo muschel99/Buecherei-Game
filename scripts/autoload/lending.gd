@@ -164,15 +164,33 @@ func lend(books: Array[Book], new_card: bool, extra_days: int = 0) -> int:
 	return income
 
 
-## Neuer Ausweis mit leerer Stempelkarte; liefert die Kennung. name leer = ausgedachter Name.
-func new_reader(reader_name: String = "") -> String:
+## Neuer Ausweis mit leerer Stempelkarte; liefert die Kennung. name leer = ausgedachter Name (passend zu female). look = Zufallszahl
+## des Aussehens der Person (seit dem Nachtest von Etappe 8: kommt sie wieder, sieht sie genauso aus), female 1/0 (-1 = zufällig).
+func new_reader(reader_name: String = "", look: int = 0, female: int = -1) -> String:
 	var id := "r%d" % (readers.size() + 1)
 	while readers.has(id):
 		id += "x"
+	if female < 0:
+		female = 1 if _rng.randf() < 0.5 else 0
 	if reader_name.is_empty():
-		reader_name = "%s %s" % [BookData.FIRST_NAMES[_rng.randi() % BookData.FIRST_NAMES.size()],
-			BookData.LAST_NAMES[_rng.randi() % BookData.LAST_NAMES.size()]]
-	readers[id] = {"name": reader_name, "stamps": 0, "visits": 0, "full": 0, "friendship": 0}
+		reader_name = PersonNames.random_name(female == 1, _rng)
+	readers[id] = {"name": reader_name, "stamps": 0, "visits": 0, "full": 0, "friendship": 0,
+		"look": look if look != 0 else _rng.randi(), "female": female}
+	return id
+
+
+## Ein vorhandener Ausweis eines Gasts, der wiederkommt (kein Stammgast, nicht gerade unterwegs) – oder leer. Alte Ausweise ohne
+## gemerktes Aussehen bekommen eines (Frau/Mann nach dem Vornamen).
+func known_reader(busy: Dictionary) -> String:
+	var ids := readers.keys().filter(func(id: String) -> bool: return not id.begins_with("stamm_") and not busy.has(id))
+	if ids.is_empty():
+		return ""
+	var id: String = ids[_rng.randi() % ids.size()]
+	var info: Dictionary = readers[id]
+	if not info.has("look"):
+		info.look = hash(str(info.get("name", id)))
+		var g: int = PersonNames.gender_of(str(info.get("name", "")))
+		info.female = g if g >= 0 else (1 if _rng.randf() < 0.5 else 0)
 	return id
 
 
@@ -219,14 +237,6 @@ func return_oldest_to_counter() -> int:
 	_count("returned", books.size())
 	SaveManager.request_save()
 	return books.size()
-
-
-## Ein vorhandener Ausweis (wiederkommender Leser); gibt es noch keinen, einen neuen.
-func returning_reader() -> String:
-	var ids := readers.keys().filter(func(id: String) -> bool: return not id.begins_with("stamm_"))  # nie der Ausweis eines Stammgasts
-	if ids.is_empty():
-		return new_reader()
-	return ids[_rng.randi() % ids.size()]
 
 
 func reader_info(id: String) -> Dictionary:
@@ -400,6 +410,10 @@ func load_save_data(data: Dictionary) -> void:
 					"visits": int(entry.get("visits", 0)), "full": int(entry.get("full", 0)),
 					"friendship": int(entry.get("friendship", 0)), "last_day": int(entry.get("last_day", -1)),
 					"talk_day": int(entry.get("talk_day", -1))}
+				# Aussehen der Person (seit dem Nachtest von Etappe 8; ältere Ausweise bekommen es in known_reader)
+				if entry.has("look"):
+					readers[id].look = int(entry.look)
+					readers[id].female = int(entry.get("female", -1))
 	loans.clear()
 	for entry: Variant in data.get("loans", []):
 		if entry is Dictionary:

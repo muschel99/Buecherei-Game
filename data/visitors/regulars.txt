@@ -1,17 +1,17 @@
 # Stammgäste der Bücherei (seit Etappe 8) – einfach hier ändern oder ergänzen.
-# Eine Zeile je Gast:  Name | Lieblingsgenre | Art
+# Eine Zeile je Gast:  Name | Lieblingsgenre | Art | w oder m (Frau oder Mann – die Figur passt dazu)
 #   Lieblingsgenre = Kennung aus data/genres/ (novel, crime, fantasy, scifi, classics, poetry, children, comics, cooking,
 #                    nature_garden, travel, art, history, philosophy, mindfulness, nonfiction)
 #   Art = zielstrebig (holt schnell ein Buch), stoebert (stöbert lange), liest (setzt sich und liest), zurueck (bringt Bücher
 #         zurück und geht wieder)
-# Jeder Stammgast sieht immer gleich aus (aus dem Namen ausgewürfelt). Eigene Kleidung entwirft die Entwicklerin später.
-Greta Sommer | novel | liest
-Theo Brandt | crime | zielstrebig
-Mila Hoffmann | fantasy | stoebert
-Anton Albrecht | history | liest
-Frieda Kolb | cooking | zielstrebig
-Jonas Weber | scifi | stoebert
-Lotte Marquardt | poetry | liest
-Paul Ebert | nonfiction | zurueck
-Rosa Lindner | nature_garden | stoebert
-Ida Feldmann | mindfulness | liest
+# Jeder Stammgast sieht immer gleich aus (aus dem Namen ausgewürfelt, Frau oder Mann wie angegeben). Eigene Kleidung entwirft die Entwicklerin später.
+Greta Sommer | novel | liest | w
+Theo Brandt | crime | zielstrebig | m
+Mila Hoffmann | fantasy | stoebert | w
+Anton Albrecht | history | liest | m
+Frieda Kolb | cooking | zielstrebig | w
+Jonas Weber | scifi | stoebert | m
+Lotte Marquardt | poetry | liest | w
+Paul Ebert | nonfiction | zurueck | m
+Rosa Lindner | nature_garden | stoebert | w
+Ida Feldmann | mindfulness | liest | w

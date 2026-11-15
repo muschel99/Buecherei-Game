@@ -140,6 +140,11 @@ var in_library := false
 var talking := false
 ## Stammgast der Bücherei (Kennung aus Regulars, leer = Unbekannter; seit Etappe 8)
 var regular_id := ""
+## Gast mit eigenem Ausweis, der wiederkommt (seit dem Nachtest von Etappe 8; Kennung in Lending.readers) – er sieht so aus wie
+## beim ersten Besuch (look_seed des Ausweises). Leer = kein bekannter Gast.
+var reader_id := ""
+## Zufallszahl, aus der das Aussehen stammt (LibraryVisits merkt sie sich mit dem Ausweis)
+var look_seed := 0
 var _talk_interactable: Interactable
 var _talk_check := 0.0
 var _stand_off := 0.0
@@ -258,8 +263,20 @@ func set_talking_now(on: bool) -> void:
 
 
 ## Name in der Sprechblase (Unbekannte: keiner; Stammgäste ab Etappe 8, Schritt 5).
+## Name im Gespräch: Stammgast, bekannter Gast oder der Ausweis dieses Besuchs – immer derselbe Name wie auf dem Ausweis.
 func talk_name() -> String:
-	return String(Regulars.find(regular_id).get("name", "")) if not regular_id.is_empty() else ""
+	if not regular_id.is_empty():
+		return String(Regulars.find(regular_id).get("name", ""))
+	var card := reader_id
+	if card.is_empty() and life and life.library:
+		card = life.library.visit_card(self)
+	return str(Lending.reader_info(card).get("name", "")) if not card.is_empty() else ""
+
+
+## Ist die Figur eine Frau? (Chibi-Figuren 0–2 sind Frauen)
+func is_female() -> bool:
+	var figure: Variant = _model.get("figure") if _model else null
+	return figure != null and int(figure) < 3
 
 
 ## Vertraut genug für persönlichere Sätze (Stammgast mit Freundschaft ab GameConfig.friend_close_level)?
@@ -275,9 +292,10 @@ func talk_focus() -> Vector3:
 
 
 ## Neues Aussehen (Platzhalter: Farben, Frisur, Kleidung) und etwas andere Größe.
-func randomize_look(rng: RandomNumberGenerator) -> void:
+## female: 1 = Frau, 0 = Mann, -1 = zufällig (siehe ChibiPasserbyModel.randomize_look).
+func randomize_look(rng: RandomNumberGenerator, female: int = -1) -> void:
 	if _model and _model.has_method("randomize_look"):
-		_model.call("randomize_look", rng)
+		_model.call("randomize_look", rng, female)
 	# Absätze: manche Frauen (Chibi-Figuren 0–2 sind Frauen)
 	var figure: Variant = _model.get("figure") if _model else null
 	_heels = figure != null and int(figure) < 3 and rng.randf() < GameConfig.passerby_heels_share

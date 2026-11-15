@@ -1425,7 +1425,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Stempelkarte:** `Lending.readers` (Ausweis → Name, Stempel, Besuche, volle Karten, Freundschaft), `new_reader`/
   `returning_reader`/`add_stamp` (voll bei `stamp_card_size` → Lesezeichen + `stamp_bonus_extra_days`). Prüfbilder ohne Gast:
   `scenes/tools/desk_probe.tscn` (xvfb). Geräusche: `tools/make_counter_sounds.py`.
-- **Besucher seit Etappe 8:** Stammgäste `Regulars` aus `data/visitors/regulars.txt` (Name | Lieblingsgenre | Art), fester
+- **Namen (seit dem Nachtest von Etappe 8, „Namen passen nicht zur Figur“):** Name und Figur gehören zusammen: Vornamen nach Frau/Mann aus `data/visitors/names.txt` (`PersonNames.random_name(female)`, `gender_of`), jeder Ausweis merkt sich das Aussehen (`Lending.readers[id].look` = Zufallszahl, `female`); bekannte Gäste wählt `LibraryVisits.assign_regular` beim Losgehen (ungesehen) und gibt ihnen ihr altes Aussehen (`Passerby.reader_id`, `look_seed`, `_apply_look`); Stammgäste mit Spalte w/m; Name im Gespräch = Name auf dem Ausweis (`Passerby.talk_name`). Prüfen: street_life_check zeigt „Name passt zur Figur n von n“.
+- **Besucher seit Etappe 8:** Stammgäste `Regulars` aus `data/visitors/regulars.txt` (Name | Lieblingsgenre | Art | w/m), fester
   Ausweis "stamm_<n>" in `Lending.readers` (Freundschaft `add_friendship`, `friendship_max`), festes Aussehen aus dem Namen –
   `LibraryVisits.assign_regular` beim Losgehen (StreetLife._launch, nur wenn der Weg an der Bücherei vorbeiführt; sonst bekommt
   ein früherer Stammgast ein neues Aussehen), `Passerby.regular_id`/`talk_name`/`talk_close` (vertraute Sätze ab

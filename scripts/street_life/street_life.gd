@@ -1346,7 +1346,7 @@ func _launch(plan: Dictionary) -> Passerby:
 	var passes_library: bool = (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.get("passing", "") == "library")
 	if library and passes_library:
 		library.assign_regular(walker)
-	elif not walker.regular_id.is_empty():
+	elif not walker.regular_id.is_empty() or not walker.reader_id.is_empty():
 		_forget_regular(walker)
 	# Wer im Pub Platz nehmen will, kommt ohne Einkaufstasche (die hinge sonst an der Hand am Tisch)
 	if (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.has("pub_seat")):
@@ -1367,9 +1367,11 @@ func _launch(plan: Dictionary) -> Passerby:
 	return walker
 
 
-## War der Passant ein Stammgast, geht er jetzt als Unbekannter los (neues Aussehen).
+## War der Passant ein Stammgast oder bekannter Gast, geht er jetzt als Unbekannter los (neues Aussehen, nichts gemerkt).
 func _forget_regular(walker: Passerby) -> void:
 	walker.regular_id = ""
+	walker.reader_id = ""
+	walker.look_seed = 0
 	walker.randomize_look(_rng)
 
 
