@@ -1375,8 +1375,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `laternenglas_leuchtend` ein OmniLight ohne Schatten, `lantern_light_*`). Mond warm, Sterne später/gedämpft/warm (`star_color`,
   `star_brightness`), Sternschnuppen im Himmel-Shader (`shooting_star_*`). Malfilter: nachts Tusche `paint_night_line_color`
   (main.gd `set_paint_night`), in der Ferne feinere Linien. Prüfen: street_life_check `--hour=23`.
-  **Bücherei:** Korbstapel `visitor_basket_stack` (LibraryVisits `_build_basket_stack`, Sperrzone), Körbe
-  `library_basket_0…3.glb` (build_storybook_bags.py, als Tasche in der rechten Hand), Theke in drei Schritten (`CHECKOUT_WORDS`
+  **Bücherei:** Körbe `library_basket_0…3.glb` (build_storybook_bags.py, als Tasche in der rechten Hand; seit dem Nachtest von
+  Etappe 8 ohne Korbstapel), Theke in drei Schritten (`CHECKOUT_WORDS`
   Ausweis/Stempeln/Scannen – seit Etappe 8 die Theken-Ansicht `CounterDesk`, siehe unten), Geld nur als Aufploppen
   am Kontostand; Vorfahrt an der Tür (`LibraryDoorLink.busy_for`: wer hinaus will, zuerst); drinnen drücken sich Besucher
   aneinander vorbei (`Passerby.in_library`, `StreetLife.LIBRARY_GAP`); Lesen im Sitzen (`sit` mit "read" →
@@ -1405,13 +1405,23 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `screenshots/furniture_probe/<id>.png`; Wand-/Deckendinge werden passend aufgehängt). Der Raum setzt nach dem Laden alles,
   was auf einem Möbel steht oder liegt, auf dessen Ablagefläche (`Room._settle_on_supports`, `LooseBooks.settle_on`) – so
   schweben Dinge nicht, wenn ein Modell niedriger wird.
-- **Theke bedienen (seit Etappe 8):** `CounterPc` (scenes/furniture/counter_pc.tscn, ersetzt die Kasse; Modell
-  `furniture_fixtures.build_counter_pc`, Lagen `SCREEN_*`/`READER_SLOT`/`SCANNER` passend zum Modell; Bildschirm = SubViewport
-  mit `PcScreen` auf einer Fläche ohne Licht, gezeichnet nur bei Änderung). **Theken-Ansicht** `CounterDesk` (an der Theke,
-  von LibraryVisits angelegt; E „Bedienen“ hinter der Theke): Kamera rückt heran (`desk_camera_*`), Maus frei, Spielfigur
-  angehalten, MenuStack (Esc verlässt, Gast wartet weiter, Fortschritt je Gast bleibt); Klicks über die Bildschirmlage der Dinge
-  (`desk_pick_radius`): Ausweis → Kartenleser (`ui/card_insert`, `ui/card_beep`, Stempel am PC `ui/stamp_pop`), Bücher einzeln →
-  Scanner (`ui/scan`) → Stapel, Stapel → in den Korb (`ui/slide`) → `LibraryVisits.complete_checkout`; der nächste Gast rückt nach.
+- **Theke bedienen (seit Etappe 8, neu aufgeteilt im Nachtest):** Kein PC mehr. **Tablet** (`ShopTablet`, scenes/furniture/
+  tablet.tscn, verschiebbares Möbel, Standardplatz rechts auf der Theke; Modell `furniture_fixtures.build_tablet`: Holzständer,
+  `TABLET_TILT` 50°, links der Kartenleser mit Kabel – Lagen `SCREEN_*`/`READER_SLOT` in shop_tablet.gd passend halten):
+  „Bücherei-Ausleihe“ (`LoanScreen` im SubViewport, unbeleuchtete Fläche vor dem Bildschirm) nur beim Bedienen
+  (`show_loan`); die Liste aller Ausweise ist die App „Ausleihe“ (`loans`, LoansApp). Auf der Theke (counter.tscn `Modules`):
+  Scanner `counter_scanner` (Glasstreifen quer, um 90° gedreht) und Tütenstapel `paper_bag_stack`. **Theken-Ansicht**
+  `CounterDesk` (E „Bedienen“ hinter der Theke): Kamera mittig und gerade (`desk_camera_eye`, Sichtfeld links–rechts
+  `desk_camera_hfov`, Neigung so, dass der untere Bildrand an der Thekenkante `NEAR_EDGE` liegt), Maus frei, MenuStack (Esc
+  verlässt, Gast wartet weiter, Fortschritt je Gast bleibt). Aufteilung aus Sicht der Spielfigur (rechts = -X der Theke):
+  rechts Tablet + Kartenleser, Korb des Gasts (`BASKET`) mit dem Bücherstapel davor (`BOOKS`), Mitte Scanner (`SCANNER`), links
+  offene Tüte (`BAG`, Modell `library_bag_empty.glb`, Griffpunkt `BAG_DROP` über der Unterkante). Ablauf: Ausweis → Kartenleser
+  (`ui/card_insert`, `ui/card_beep`, Stempel auf dem Tablet `ui/stamp_pop`) → hüpft in die Tüte; Bücher (immer das oberste)
+  von rechts nach links über den Scanner (`ui/scan`), dann senkrecht hoch und von oben in die Tüte; Tüte anklicken → rutscht zum
+  Gast (`complete_checkout`: Kaching `checkout_kaching_db`, der Gast trägt `LibraryVisits.LIBRARY_BAG` hinaus), der Korb gleitet
+  unten rechts aus dem Bild hinter die Theke (`BASKET_OUT`, `clear_counter_basket`). Körbe: kein Stapel mehr – sie sind beim
+  Hereinkommen in der Hand und verschwinden an der Theke (ohne Ausleihe an der Tür). Alte Spielstände: Tablet am alten
+  Standardplatz rückt an den neuen (`Room._migrate_tablet_spot`).
   **Stempelkarte:** `Lending.readers` (Ausweis → Name, Stempel, Besuche, volle Karten, Freundschaft), `new_reader`/
   `returning_reader`/`add_stamp` (voll bei `stamp_card_size` → Lesezeichen + `stamp_bonus_extra_days`). Prüfbilder ohne Gast:
   `scenes/tools/desk_probe.tscn` (xvfb). Geräusche: `tools/make_counter_sounds.py`.

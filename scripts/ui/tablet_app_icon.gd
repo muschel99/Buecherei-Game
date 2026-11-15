@@ -159,6 +159,13 @@ func _draw_symbol(c: Vector2, symbol: TabletAppData.Symbol) -> void:
 				c + Vector2(17, 24)]), LINE_COLOR, w, true)
 			draw_rect(Rect2(c + Vector2(-18, -2), Vector2(14, 12)), LINE_COLOR, false, 2.5)
 			draw_line(c + Vector2(-16, 17), c + Vector2(-6, 17), LINE_COLOR, 3.0, true)
+		TabletAppData.Symbol.LOANS:
+			# Ausleihe (seit dem Nachtest von Etappe 8): Leseausweis mit Zeilen und einem runden Herz-Stempel
+			_rect(Rect2(c + Vector2(-28, -18), Vector2(56, 36)), w)
+			for i in 3:
+				draw_line(c + Vector2(-20, -8 + i * 9), c + Vector2(-2 - i * 4, -8 + i * 9), LINE_COLOR, 2.5, true)
+			draw_arc(c + Vector2(14, 4), 9.0, 0.0, TAU, 20, LINE_COLOR, 2.5, true)
+			_heart(c + Vector2(14, 4), 5.0)
 		_:
 			draw_circle(c, 18.0, LINE_COLOR)
 

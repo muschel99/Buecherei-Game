@@ -47,6 +47,11 @@ func _run() -> void:
 				player.name = "ProbePlayer"
 				player.process_mode = Node.PROCESS_MODE_DISABLED
 				add_child(player)
+				if arg == "app:loans" and Lending.readers.is_empty():
+					# Beispiel-Ausweise (nur im Prüfwerkzeug)
+					Lending.readers = {"stamm_1": {"name": "Greta Sommer", "stamps": 7, "visits": 12, "full": 1, "friendship": 7},
+						"karte_1": {"name": "Hattie Bramwell", "stamps": 3, "visits": 3, "full": 0, "friendship": 0},
+						"karte_2": {"name": "Milo Fenwick", "stamps": 9, "visits": 19, "full": 1, "friendship": 0}}
 				node = (load("res://scenes/ui/counter_tablet.tscn") as PackedScene).instantiate()
 				node.set("player_path", NodePath("../ProbePlayer"))
 				add_child(node)

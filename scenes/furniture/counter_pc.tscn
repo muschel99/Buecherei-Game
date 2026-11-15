@@ -1,9 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://scripts/library/counter_pc.gd" id="1_pc"]
-[ext_resource type="PackedScene" path="res://assets/models/furniture/counter_pc.glb" id="2_model"]
-
-[node name="CounterPc" type="Node3D"]
-script = ExtResource("1_pc")
-
-[node name="Model" parent="." instance=ExtResource("2_model")]

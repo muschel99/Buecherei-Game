@@ -5,10 +5,13 @@
 [ext_resource type="PackedScene" path="res://assets/models/furniture/tablet.glb" id="4_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
-size = Vector3(0.27, 0.2, 0.14)
+size = Vector3(0.28, 0.15, 0.18)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_reader"]
+size = Vector3(0.1, 0.04, 0.08)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
-size = Vector3(0.4, 0.34, 0.3)
+size = Vector3(0.36, 0.26, 0.26)
 
 [node name="Tablet" type="Node3D"]
 script = ExtResource("1_tablet")
@@ -18,8 +21,12 @@ script = ExtResource("1_tablet")
 [node name="Body" type="StaticBody3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.01)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, -0.02)
 shape = SubResource("BoxShape3D_body")
+
+[node name="ReaderShape" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24, 0.02, 0.02)
+shape = SubResource("BoxShape3D_reader")
 
 [node name="Interactable" type="Area3D" parent="."]
 collision_layer = 2
@@ -29,7 +36,7 @@ script = ExtResource("3_interactable")
 prompt_text = "Tablet"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.02)
 shape = SubResource("BoxShape3D_interact")
 
 [connection signal="interacted" from="Interactable" to="." method="_on_interactable_interacted"]

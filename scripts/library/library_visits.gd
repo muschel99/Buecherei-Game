@@ -6,9 +6,11 @@ extends Node
 ## Lieblings-Genre), manchmal auf einem freien Sitzplatz lesen, an der Theke anstellen (einmal „Pling“, Ausweis
 ## hochhalten) und warten, bis die Spielfigur hinter der Theke bedient – dann ist ausgeliehen (Lending.lend), und er
 ## geht wieder auf die Straße und seinen Weg weiter. Findet er nichts, geht er freundlich wieder.
-## Seit Testrunde 7b: Besucher nehmen sich drinnen einen Korb vom Stapel an der linken Wand (GameConfig.visitor_basket_stack),
-## legen die Bücher hinein, stellen ihn an der Theke ab. Seit Etappe 8 bedient man in der Theken-Ansicht (CounterDesk, E
-## „Bedienen“): Ausweis in den Kartenleser (Stempel am PC), Bücher scannen, zuschieben. Den Korb bringen sie beim Gehen zurück.
+## Besucher tragen drinnen einen Korb (seit dem Nachtest von Etappe 8 ohne Stapel: er ist da, sobald sie hereinkommen), legen die
+## Bücher hinein und stellen ihn an der Theke ab (rechts, CounterDesk.BASKET). Man bedient in der Theken-Ansicht (CounterDesk, E
+## „Bedienen“): Ausweis in den Kartenleser (Stempel auf dem Tablet), Bücher über den Scanner in die Papiertüte, Tüte zum Gast;
+## der Korb gleitet hinter die Theke. Der Gast trägt die Bücherei-Tüte hinaus (LIBRARY_BAG). Wer nichts findet, lässt den Korb an
+## der Tür zurück.
 ##
 ## Alle Wege im Laden plant ein Raster (AStarGrid2D) um Möbel und Wände herum; es wird neu vermessen, sobald sich die
 ## Einrichtung ändert (Room.layout_changed). Das Hinterzimmer gehört nicht dazu – Besucher gehen nie hinein.
@@ -49,7 +51,8 @@ var _checkout: Dictionary = {}
 var _stamp_shape: CollisionShape3D
 var _counter_basket: Node3D
 var _desk: CounterDesk
-var _basket_stack: Node3D
+## Tüte, mit der Gäste nach der Ausleihe hinausgehen (seit dem Nachtest von Etappe 8, build_storybook_bags.py)
+const LIBRARY_BAG := "res://assets/models/characters/props/library_bag.glb"
 const BASKET_MODELS := ["res://assets/models/characters/props/library_basket_0.glb",
 	"res://assets/models/characters/props/library_basket_1.glb", "res://assets/models/characters/props/library_basket_2.glb",
 	"res://assets/models/characters/props/library_basket_3.glb"]
@@ -79,7 +82,6 @@ func setup(street_life: StreetLife, seed_value: int = -1) -> void:
 		add_child(door_link)
 	room.layout_changed.connect(func() -> void: _grid_dirty = true)
 	add_to_group(GROUP)
-	_build_basket_stack()
 	_floor = life.to_local(room.global_position).y
 
 
@@ -271,15 +273,15 @@ func _hold_card(walker: Passerby, _delta: float) -> void:
 		walker._model.call("show_hand_at", _card_point() if int(_checkout.get(walker, 0)) == 0 else null)
 
 
-## Fertig an der Theke: Ausweis zurück, Korb wieder in die Hand, hinaus (unterwegs den Korb zum Stapel zurück).
+## Fertig an der Theke: Ausweis und Bücher stecken in der Tüte – sie in die Hand, hinaus.
 func _after_stamp(walker: Passerby) -> Array:
 	_checkout.erase(walker)
 	queue.erase(walker)
 	if walker._model and walker._model.has_method("show_hand_at"):
 		walker._model.call("show_hand_at", null)
 	walker.set_prop(&"")
-	_clear_counter()
-	walker.give_bag(true, BASKET_MODELS[mini(3, _book_count(walker))])
+	# die Bücher stecken in der Bücherei-Tüte (den Korb räumt die Theken-Ansicht hinter die Theke)
+	walker.give_bag(true, LIBRARY_BAG)
 	if walker._model and walker._model.has_method("trigger_face"):
 		walker._model.call("trigger_face", &"buy")
 	return _leave_actions(walker)
@@ -289,15 +291,19 @@ func _after_stamp(walker: Passerby) -> Array:
 func _leave_actions(walker: Passerby) -> Array:
 	var p := _entrance_points()
 	var rejoin: Vector2 = (_visit.get(walker, {}) as Dictionary).get("rejoin", p.foot)
-	var steps: Array = _basket_actions(false)
-	steps.append_array([
+	var steps: Array = [
 		_call(_go_to.bind(Vector3(p.inside.x, 0.0, p.inside.y))),
+		# ohne Ausleihe bleibt der Korb an der Tür (mit Ausleihe trägt man die Tüte)
+		_call(func(w: Passerby) -> Array:
+			if not bool((_visit.get(w, {}) as Dictionary).get("lent", false)):
+				w.give_bag(false)
+			return []),
 		{"type": "door", "door": door_link, "from_pos": p.inside, "to_pos": p.landing, "middle": p.middle, "push": false,
 			"floor": _floor, "fixed_path": true},
 		_line([p.landing, p.foot], _floor, 0.0),
 		_call(_left_library),
 		_line([p.foot, rejoin], 0.0, 0.0, STREET_HALF_WIDTH),
-	])
+	]
 	return steps
 
 
@@ -307,7 +313,7 @@ func _left_library(walker: Passerby) -> Array:
 	walker.in_library = false
 	_shelf_spots.erase(walker)
 	walker.speed_pref = float((_visit.get(walker, {}) as Dictionary).get("speed", walker.speed_pref))
-	walker.give_bag(false)  # (die ausgeliehenen Bücher bleiben in der Hand – StreetLife._launch räumt sie später weg)
+	# (die Bücherei-Tüte bleibt in der Hand – StreetLife._launch räumt sie später weg)
 	queue.erase(walker)
 	_visit.erase(walker)
 	Lending.visitor_left(walker)
@@ -594,7 +600,8 @@ func _put_basket_on_counter(walker: Passerby) -> void:
 	var model := load(BASKET_MODELS[mini(3, _book_count(walker))]) as PackedScene
 	if model == null:
 		return
-	_counter_basket = _place_on_counter(model.instantiate(), Vector3(0.0, Counter.TOP_HEIGHT + BASKET_DROP, 0.15), Basis(Vector3.UP, 0.4))
+	_counter_basket = _place_on_counter(model.instantiate(), CounterDesk.BASKET + Vector3(0.0, Counter.TOP_HEIGHT + BASKET_DROP, 0.0),
+		Basis(Vector3.UP, 0.4))
 	Audio.play_at("books/place", _counter_basket.global_position, -6.0, Audio.vary(0.08))
 
 
@@ -604,55 +611,24 @@ func _clear_counter() -> void:
 	_counter_basket = null
 
 
-## Korbstapel an der Wand (drei Körbe ineinander) und eine Sperrzone davor, damit dort nichts hingestellt wird.
-func _build_basket_stack() -> void:
-	var model := load(BASKET_MODELS[0]) as PackedScene
-	if model == null:
-		return
-	var at := GameConfig.visitor_basket_stack
-	_basket_stack = Node3D.new()
-	_basket_stack.name = "BasketStack"
-	room.add_child(_basket_stack)
-	_basket_stack.position = Vector3(at.x, 0.0, at.y)
-	for i in 3:
-		var basket := model.instantiate() as Node3D
-		_basket_stack.add_child(basket)
-		basket.position = Vector3(0.0, BASKET_DROP + 0.002 + i * 0.026, 0.0)
-		basket.rotation.y = 0.5 + i * 1.3
-	var area := Area3D.new()
-	area.name = "KeepClear"
-	area.collision_layer = 16
-	area.collision_mask = 0
-	area.monitoring = false
-	area.set_meta("keep_clear_text", "Hier stehen die Körbe für die Besucher – bitte frei lassen.")
-	var shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = Vector3(0.6, 1.0, 0.9)
-	shape.shape = box
-	area.add_child(shape)
-	area.position = Vector3(0.25, 0.5, 0.0)
-	_basket_stack.add_child(area)
+## Der Korb des Gasts auf der Theke (oder null) – die Theken-Ansicht lässt ihn am Ende hinter die Theke gleiten.
+func counter_basket() -> Node3D:
+	return _counter_basket if _counter_basket and is_instance_valid(_counter_basket) else null
 
 
-## Korb nehmen (take) bzw. zurückstellen: zum Stapel, bücken (Animation pick_up), dabei den Korb greifen bzw. abstellen.
+## Korb weg (hinter die Theke geräumt).
+func clear_counter_basket() -> void:
+	_clear_counter()
+
+
+## Korb nehmen (take): seit dem Nachtest von Etappe 8 ohne Stapel – er ist einfach in der Hand, sobald der Gast hereinkommt
+## (Wunsch der Entwicklerin). Zurückstellen gibt es nicht mehr (ohne Ausleihe bleibt er an der Tür, siehe _leave_actions).
 func _basket_actions(take: bool) -> Array:
-	if _basket_stack == null:
-		return [_call(func(w: Passerby) -> Array:
-			w.give_bag(take, BASKET_MODELS[0] if take else "")
-			return [])]
-	var stack := _basket_stack.global_position
-	var stand := _nearest_free(stack + Vector3(0.5, 0.0, 0.0))
-	var face := Vector2(stack.x - stand.x, stack.z - stand.z).normalized()
-	var cue := func(w: Passerby) -> void:
-		if take:
-			w.give_bag(true, BASKET_MODELS[0])
-		else:
-			w.give_bag(false)
-			if ((_visit.get(w, {}) as Dictionary).get("lent", false)):
-				w.set_prop(&"book")  # die ausgeliehenen Bücher trägt man hinaus
-		Audio.play_at("books/place", stack + Vector3.UP * 0.2, -10.0, Audio.vary(0.1))
-	return [_call(_go_to.bind(stand)),
-		{"type": "stand", "anim": &"idle", "face": face, "clip": &"pick_up", "clip_max": 2.2, "time": 1.2, "cue": [0.9, cue]}]
+	if not take:
+		return []
+	return [_call(func(w: Passerby) -> Array:
+		w.give_bag(true, BASKET_MODELS[0])
+		return [])]
 
 
 # --- Sitzplätze ---

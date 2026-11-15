@@ -1876,6 +1876,35 @@ Plan und Entscheidungen: `.scratch/etappe-8/plan.md`. Schritt für Schritt gebau
 (`door_in`, `door_out`, `water`, `lift`). Verworfen (seit Etappe 6): Der Einrichtungsstil bestimmt nicht, welche Besucher
 kommen oder welche Musik läuft.
 
+## Nachtest nach Etappe 8 (Liste der Entwicklerin, 14./15.11.2026)
+Plan und Haken: `.scratch/etappe-8-nachtest/plan.md`.
+
+**Theke**
+- [x] Kein PC mehr: das Tablet steht schräg auf einem Holzständer weiter rechts, daneben der Kartenleser (mit Kabel); „Bücherei-
+  Ausleihe“ erscheint nur beim Bedienen auf dem Tablet, die Liste aller Ausweise ist die neue App „Ausleihe“
+- [x] Bedien-Ansicht mittig und gerade, der untere Bildrand an der Thekenkante; Scanner um 90° gedreht, Bücher wandern von rechts
+  nach links über den Scanner in eine Papiertüte, die Tüte bekommt der Gast, der Korb gleitet unten rechts hinter die Theke,
+  dazu ein deutliches Kaching
+- [x] Körbe ohne Stapel: sie sind beim Hereinkommen da und verschwinden an der Theke (ohne Ausleihe an der Tür); Gäste tragen die
+  Bücherei-Tüte hinaus
+
+**Hinterzimmer**
+- [x] Rechts neben der Bücherei im hinteren Teil des Modegeschäfts (dessen Laden bleibt gleich groß), Tür in der rechten Wand
+  hinter der Theke, Bett unter dem Dachfenster, Holzbalken; hinter der Bücherei bleibt Platz für Erweiterungen
+- [x] „Andere Dimension“ behoben (Verdecker vor der Tür), Türrahmen ohne Flimmern; alte Spielstände ziehen mit um
+
+**Schriften und Bücher**
+- [x] Alle Schriften gemütlich und passend: Nunito (rund, gut lesbar) für Tablet, Uhr, Hinweise, Sprechblase; Handschrift für
+  Notizbuch, Notizzettel, Tipps, Polaroids, Schilder; Überschriften Fredoka/Playfair
+- [x] Bücher mit verschiedenen Schriftarten (keine Handschrift), Titel nicht mehr verzerrt (gewölbter Rücken), lange Titel auf
+  dicken Rücken in zwei Zeilen; vorher schon: süßere Farben, Farbschnitt
+
+**Kleinigkeiten**
+- [x] Nachts schwarze Linien im Malstil; Notizzettel immer mittig; Buch beim Lesen weiter vom Körper
+- [x] Pausenmenü im Buchformat, Haftnotizen kleben an ihren Seiten (die anderen stecken zwischen den Blättern), ein Umblättern
+  je Sprung
+- [x] Tippgeräusch der Sprechblasen aus der eigenen Aufnahme (weicher und leiser)
+
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)
 

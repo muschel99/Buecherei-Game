@@ -79,6 +79,11 @@ def materials():
 
 def shell(M, coll, wall, inside, rim, seed):
     """Hohle Tasche: vier Wände, Boden, umgeschlagener Rand oben, Füllung innen (2,5 cm unter dem Rand)."""
+    bag_shell(M, coll, wall, inside, rim, seed, DEPTH, HEIGHT, WIDTH, 0.025)
+
+
+def bag_shell(M, coll, wall, inside, rim, seed, DEPTH, HEIGHT, WIDTH, fill):
+    """Wie shell, mit eigenen Maßen; fill = Füllung so tief unter dem Rand (None = keine: die Tüte ist innen leer und offen)."""
     top = -HANG
     mid = top - HEIGHT / 2
     b = Body("Wände", M[wall], coll, seed=seed, vary=0.03, bevel=0.0015)
@@ -95,8 +100,14 @@ def shell(M, coll, wall, inside, rim, seed):
     for sz in (-1, 1):
         r.box(g(0, top - band / 2, sz * (WIDTH / 2 + 0.0012)), gsize(DEPTH, band, WALL + 0.0024), step=0.05, dent=0.0)
     r.build()
+    if fill is None:
+        # innen dunkler Boden (sonst sieht man in der leeren Tüte nur die helle Außenfarbe)
+        f = Body("Boden innen", M[inside], coll, seed=seed + 2, vary=0.02)
+        f.box(g(0, top - HEIGHT + WALL + 0.002, 0), gsize(DEPTH - 2 * WALL - 0.002, 0.004, WIDTH - 2 * WALL - 0.002), step=0.05, dent=0.0)
+        f.build()
+        return
     f = Body("Füllung", M[inside], coll, seed=seed + 2, vary=0.02)
-    f.box(g(0, top - 0.025 - 0.05, 0), gsize(DEPTH - 2 * WALL + 0.002, 0.1, WIDTH - 2 * WALL + 0.002), step=0.05, dent=0.002)
+    f.box(g(0, top - fill - 0.05, 0), gsize(DEPTH - 2 * WALL + 0.002, 0.1, WIDTH - 2 * WALL + 0.002), step=0.05, dent=0.002)
     f.build()
 
 
@@ -239,7 +250,68 @@ def library_basket(M, coll, books):
             o.data.transform(tilt)
 
 
-BAGS = {"shopping_bag_paper": paper_bag, "shopping_bag_tote": tote_bag}
+# Bücherei-Tüte (seit dem Nachtest von Etappe 8): an der Theke packt man die ausgeliehenen Bücher hinein, der Gast trägt sie
+# hinaus. Größer als die Einkaufstüte (die Bücher sind 21–33 cm hoch), Packpapier, Kordelhenkel, rundes Etikett mit rosa Herz.
+# library_bag_empty = leer und offen (steht an der Theke, CounterDesk legt die echten Bücher hinein), library_bag = mit drei
+# Büchern, die oben herausschauen (trägt der Gast). Ursprung wie bei allen Taschen = Griffpunkt; Unterkante LIB_HANG + LIB_HEIGHT
+# darunter (CounterDesk.BAG_DROP).
+LIB_DEPTH, LIB_HEIGHT, LIB_WIDTH = 0.19, 0.26, 0.27
+LIB_BOOKS = [("book", -0.05, 0.03, 0.29, 0.2, 4.0), ("book_blue", 0.0, -0.02, 0.25, 0.18, -2.0), ("book_green", 0.052, 0.01, 0.31, 0.21, 3.0)]
+
+
+def lib_handles(M, coll):
+    """Gedrehte Papierkordeln von den breiten Wänden hoch zum Griffpunkt (wie cord_handles, für die große Tüte)."""
+    h = Body("Henkel", M["cord"], coll, seed=7, vary=0.02)
+    top = -HANG
+    for sx in (-1, 1):
+        x0 = sx * (LIB_DEPTH / 2 - WALL / 2)
+        pts = [g(x0, top - 0.024, -0.06), g(x0 * 0.92, top + 0.006, -0.058), g(sx * 0.03, top * 0.45, -0.032),
+               g(sx * 0.007, -0.004, -0.009), g(sx * 0.007, -0.004, 0.009), g(sx * 0.03, top * 0.45, 0.032),
+               g(x0 * 0.92, top + 0.006, 0.058), g(x0, top - 0.024, 0.06)]
+        h.tube(pts, 0.0036, segs=6, smooth=2, round_ends=True)
+        for sz in (-1, 1):
+            h.blob(g(x0 - sx * 0.007, top - 0.024, sz * 0.06), 0.0065, subdiv=1, lump=0.1)
+    h.build()
+
+
+def lib_label(M, coll):
+    """Rundes cremefarbenes Etikett mit einem rosa Herz auf beiden breiten Seiten (leicht vor der Wand)."""
+    lab = Body("Etikett", M["cream"], coll, seed=8, vary=0.02)
+    heart = Body("Herz", M["pink"], coll, seed=9, vary=0.04)
+    top = -HANG
+    y = top - LIB_HEIGHT * 0.5
+    for sx in (-1, 1):
+        x = sx * (LIB_DEPTH / 2 + 0.0004)
+        # Scheibe als flacher Drehkörper, Achse nach außen (Blender: Drehachse z um y nach ±x gedreht)
+        lab.lathe([(0.0, 0.0), (0.034, 0.0), (0.034, 0.0016), (0.0, 0.0016)], g(x, y, 0), segs=24, turn=(0, 90 * sx))
+        for dz in (-0.009, 0.009):
+            heart.blob(g(x + sx * 0.0018, y + 0.004, dz), 0.0105, subdiv=1, lump=0.0, scale=(0.25, 1.0, 1.0))
+        heart.blob(g(x + sx * 0.0018, y - 0.007, 0.0), 0.0115, subdiv=1, lump=0.0, scale=(0.25, 1.0, 0.9))
+    lab.build()
+    heart.build()
+
+
+def library_bag(M, coll, books=True):
+    bag_shell(M, coll, "paper", "paper_in", "paper", 71, LIB_DEPTH, LIB_HEIGHT, LIB_WIDTH, None)
+    lib_handles(M, coll)
+    lib_label(M, coll)
+    if not books:
+        return
+    base = -HANG - LIB_HEIGHT + WALL + 0.004
+    for i, (mat, x, z, height, depth, lean) in enumerate(LIB_BOOKS):
+        bk = Body("Buch%d" % i, M[mat], coll, seed=80 + i, vary=0.03, bevel=0.0015)
+        bk.box(g(x, base + height / 2, z), gsize(0.042, height, depth), step=0.05, dent=0.0)
+        pg = Body("Seiten%d" % i, M["pages"], coll, seed=90 + i, vary=0.02)
+        pg.box(g(x, base + height / 2 + 0.0015, z), gsize(0.036, height - 0.008, depth + 0.0015), step=0.05, dent=0.0)
+        pivot = g(x, base, z)
+        tilt = Matrix.Translation(pivot) @ Matrix.Rotation(math.radians(lean), 4, "Y") @ Matrix.Translation(-pivot)
+        for o in (bk.build(), pg.build()):
+            o.data.transform(tilt)
+
+
+BAGS = {"shopping_bag_paper": paper_bag, "shopping_bag_tote": tote_bag,
+        "library_bag": lambda M, coll: library_bag(M, coll, True),
+        "library_bag_empty": lambda M, coll: library_bag(M, coll, False)}
 for _n in range(4):
     BAGS["library_basket_%d" % _n] = (lambda M, coll, n=_n: library_basket(M, coll, n))
 
@@ -281,8 +353,14 @@ def main():
         for n in range(3):
             for o in colls["library_basket_%d" % n].all_objects:
                 o.hide_render = True
+        # Bücherei-Tüte (mit Büchern) rechts daneben, die leere etwas weiter
+        for o in colls["library_bag"].all_objects:
+            o.location.x += 0.7
+        for o in colls["library_bag_empty"].all_objects:
+            o.location.x += 1.0
         SC.setup_render(True)
         SC.render("taschen_schraeg", (0.75, -0.75, 0.05), (0.22, 0.0, -0.15), 50, (1100, 650))
+        SC.render("buecherei_tueten", (0.95, -0.9, 0.12), (0.85, 0.0, -0.2), 40, (1000, 700))
         SC.render("taschen_seite", (0.22, -0.95, -0.12), (0.22, 0.0, -0.15), 50, (1100, 650))
         SC.render("taschen_oben", (0.45, -0.45, 0.4), (0.22, 0.0, -0.12), 50, (1100, 650))
         for o in colls["shopping_bag_tote"].all_objects:

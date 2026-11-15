@@ -46,6 +46,21 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/tablet/case.tres",
 "use_external/path": "res://assets/materials/furniture/tablet/case.tres"
 },
+"glass_dark": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/tablet/glass_dark.tres",
+"use_external/path": "res://assets/materials/furniture/tablet/glass_dark.tres"
+},
+"led_green": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/tablet/led_green.tres",
+"use_external/path": "res://assets/materials/furniture/tablet/led_green.tres"
+},
+"plastic_dark": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/tablet/plastic_dark.tres",
+"use_external/path": "res://assets/materials/furniture/tablet/plastic_dark.tres"
+},
 "screen": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/tablet/screen.tres",

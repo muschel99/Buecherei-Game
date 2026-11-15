@@ -1441,15 +1441,18 @@ var checkout_kaching_db: float = -3.0
 var passerby_read_offset: Vector3 = Vector3(0.0, -0.05, 0.28)
 var passerby_read_tilt: float = -42.0
 var stamp_bonus_extra_days: int = 3
-## Theken-Ansicht (Etappe 8): Kamera rückt in so vielen Sekunden heran; Bewegungen der Dinge auf der Theke
+## Theken-Ansicht (Etappe 8): Kamera rückt in so vielen Sekunden heran; Bewegungen der Dinge auf der Theke (Ausweis, Buch über
+## den Scanner, Tüte zum Gast, Korb hinter die Theke)
 var desk_camera_time: float = 0.7
 var desk_card_time: float = 0.55
-var desk_book_time: float = 0.42
+var desk_book_time: float = 0.5
 var desk_push_time: float = 0.6
-## Blickpunkt der Theken-Ansicht im Raum der Theke (Spielfigur auf -Z): Auge und Ziel, Sichtfeld
-var desk_camera_eye: Vector3 = Vector3(0.2, 0.62, -0.68)
-var desk_camera_target: Vector3 = Vector3(0.25, 0.0, -0.02)
-var desk_camera_fov: float = 52.0
+var desk_basket_time: float = 0.7
+## Blickpunkt der Theken-Ansicht (seit dem Nachtest von Etappe 8 mittig und gerade): Auge über der Mitte der Platte (x seitlich,
+## y über der Platte, z = Abstand zur Spielfigur hin, Spielfigur auf -Z); die Neigung ergibt sich so, dass der untere Bildrand
+## an der Thekenkante liegt. Sichtfeld links bis rechts (Grad) – bei jedem Bildformat ist die ganze Theke zu sehen.
+var desk_camera_eye: Vector3 = Vector3(0.0, 0.6, -0.62)
+var desk_camera_hfov: float = 92.0
 ## So weit (Bildpunkte bei 900 Bildhöhe) um ein Ding auf der Theke zählt die Maus als „darauf“
 var desk_pick_radius: float = 70.0
 ## Am Regal stöbern: so viele Regale (von … bis), Sekunden je Regal.
@@ -1467,7 +1470,5 @@ var visitor_clearance: float = 0.26
 var counter_bell_volume_db: float = -4.0
 var counter_card_height: float = 0.12
 var counter_staff_reach: float = 1.6
-## Korbstapel für Besucher (seit Testrunde 7b): Lage im Laden (x, z; an der linken Wand gleich neben der Schräge).
-var visitor_basket_stack: Vector2 = Vector2(-2.8, -1.5)
 ## Besucher gehen in der Bücherei mindestens/höchstens so schnell (m/s; seit Testrunde 7b – manche schlenderten sehr langsam).
 var visitor_speed_range: Vector2 = Vector2(1.05, 1.35)

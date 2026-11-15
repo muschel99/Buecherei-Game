@@ -179,7 +179,7 @@ Steht es auf „Geöffnet“, kommen von 7 bis 20 Uhr Besucher herein. Je mehr B
 == Besucher an der Theke
 Besucher stöbern in den Regalen, manche setzen sich zum Lesen. Mit ihren Büchern stellen sie sich an die Theke – eine kleine Glocke klingelt.
 
-Geh hinter die Theke und drücke <E>: Die Kamera rückt an die Theke. Klicke den Ausweis an – er gleitet in den Kartenleser, und am PC ploppt ein Stempel auf. Dann klickst du die Bücher an, eins nach dem anderen über den Scanner, und zum Schluss den Stapel: Er rutscht dem Gast in den Korb. Niemand hat es eilig – sie warten geduldig.
+Geh hinter die Theke und drücke <E>: Die Kamera rückt an die Theke. Klicke den Ausweis an – er gleitet in den Kartenleser neben dem Tablet, und auf dem Tablet ploppt ein Stempel auf. Dann klickst du die Bücher an, eins nach dem anderen: Sie wandern von rechts nach links über den Scanner in die Papiertüte. Zum Schluss klickst du die Tüte an – sie rutscht dem Gast hinüber, und der Korb wandert hinter die Theke. Niemand hat es eilig – sie warten geduldig.
 
 == Reden
 Mit allen auf der Straße und in der Bücherei kannst du reden: Schau jemanden an und drücke <E>.
@@ -192,7 +192,7 @@ Manche Gäste haben einen Wunsch – du erkennst sie an der kleinen Gedankenblas
 Nimmst du den Wunsch an, zeigt die Blase das Zeichen des Genres. Hol ein passendes Buch (zum Beispiel aus den Kisten unter der Theke) und klicke den Gast mit der linken Maustaste an. Er freut sich – und gibt dir ein Trinkgeld.
 
 == Die Stempelkarte
-Jeder Ausweis hat eine Stempelkarte mit zehn Feldern. Ist sie voll, bekommt der Gast ein Lesezeichen und darf seine Bücher länger behalten. Am PC siehst du alle Ausweise mit ihren Stempeln.
+Jeder Ausweis hat eine Stempelkarte mit zehn Feldern. Ist sie voll, bekommt der Gast ein Lesezeichen und darf seine Bücher länger behalten. In der App „Ausleihe“ auf dem Tablet siehst du alle Ausweise mit ihren Stempeln.
 
 == Zurück in den Kasten
 Ausgeliehene Bücher kommen nach ein bis drei Tagen über den Rückgabekasten zurück. Ist er voll, liegen sie auf der Theke.

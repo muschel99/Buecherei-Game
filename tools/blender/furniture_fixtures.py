@@ -516,73 +516,79 @@ def build_cash_register(k):
                     turn=(0, 90))
 
 
-# --- PC an der Theke (seit Etappe 8, ersetzt die Kasse): Röhrenbildschirm, Tastatur, Kartenleser, Scanner ---
-# Ursprung unten in der Mitte des Fußes, Bildschirm nach -y. Lagen müssen zu scripts/library/counter_pc.gd passen
-# (SCREEN_*, READER_SLOT, SCANNER): Bildschirm-Mitte (0, -0.102, 0.18), 0,25 x 0,19 m; Kartenschlitz (0.24, -0.2, 0.04);
-# Scanner-Fenster (0.44, -0.14, 0.014).
-
-def build_counter_pc(k):
-    k.mat("plastic", (0.93, 0.89, 0.8), grain="paint", rough=0.55, vary=0.03)
-    k.mat("plastic_dark", (0.76, 0.72, 0.64), grain="paint", rough=0.6, vary=0.03)
-    k.mat("glass_dark", (0.16, 0.19, 0.18), grain="smooth", rough=0.25, vary=0.01)
-    k.mat("key", (0.97, 0.94, 0.87), grain="smooth", rough=0.45, vary=0.03)
-    k.mat("led_green", (0.45, 0.9, 0.5), grain="smooth", rough=0.3, vary=0.0, emit=2.0, emit_color=(0.45, 1.0, 0.55))
-    k.mat("led_red", (0.95, 0.35, 0.3), grain="smooth", rough=0.3, vary=0.0, emit=2.4, emit_color=(1.0, 0.3, 0.25))
-    # Fuß und Bildschirm (weiche, runde Formen)
-    body = k.part("Gehäuse", "plastic", bevel=0.0)
-    F.pillow(body, (0, -0.01, 0.016), (0.2, 0.17, 0.032), roundness=5.0, step=0.04)
-    F.pillow(body, (0, -0.06, 0.18), (0.34, 0.08, 0.3), roundness=6.0, puff=0.004, step=0.04)
-    F.pillow(body, (0, 0.04, 0.17), (0.27, 0.16, 0.24), roundness=4.0, puff=0.01, step=0.04)
-    neck = k.part("Hals", "plastic_dark", bevel=0.0)
-    F.pillow(neck, (0, 0.0, 0.04), (0.1, 0.08, 0.04), roundness=4.0, step=0.03)
-    # Bildschirmglas (dunkel; im Spiel liegt das Bild als eigene Fläche 2 mm davor)
-    glass = k.part("Bildschirmglas", "glass_dark", bevel=0.0, settle=False)
-    F.pillow(glass, (0, -0.0985, 0.18), (0.27, 0.01, 0.21), roundness=6.0, step=0.03)
-    # Tastatur vor dem Bildschirm
-    kb = k.part("Tastatur", "plastic", bevel=0.0)
-    F.pillow(kb, (0, -0.22, 0.012), (0.32, 0.12, 0.024), roundness=6.0, step=0.04)
-    keys = k.part("Tasten", "key", bevel=0.0)
-    for row in range(3):
-        for col in range(10):
-            x = -0.135 + col * 0.03
-            y = -0.25 + row * 0.03
-            F.pillow(keys, (x, y, 0.027), (0.024, 0.024, 0.012), roundness=4.0, puff=0.002, step=0.012)
-    # Kartenleser rechts neben der Tastatur (Schlitz oben, grünes Lämpchen)
-    reader = k.part("Kartenleser", "plastic_dark", bevel=0.0)
-    F.pillow(reader, (0.24, -0.2, 0.02), (0.1, 0.08, 0.04), roundness=5.0, step=0.02)
-    slot = k.part("Schlitz", "glass_dark", bevel=0.0, settle=False)
-    slot.box((0.24, -0.2, 0.0405), (0.075, 0.008, 0.004), step=0.5, dent=0.0)
-    led = k.part("Lämpchen", "led_green", bevel=0.0, settle=False)
-    led.blob((0.27, -0.236, 0.028), 0.0045, subdiv=1, lump=0.0, scale=(1, 0.6, 1))
-    # Scanner: flaches Feld mit dunklem Fenster und rotem Lichtstreifen
-    sc = k.part("Scanner", "plastic", bevel=0.0)
-    F.pillow(sc, (0.44, -0.14, 0.007), (0.17, 0.13, 0.014), roundness=6.0, step=0.03)
-    win = k.part("Scannerfenster", "glass_dark", bevel=0.0, settle=False)
-    win.box((0.44, -0.14, 0.0145), (0.12, 0.08, 0.002), step=0.5, dent=0.0)
-    line = k.part("Lichtstreifen", "led_red", bevel=0.0, settle=False)
-    line.box((0.44, -0.14, 0.0157), (0.11, 0.004, 0.0012), step=0.5, dent=0.0)
-    # Kabel vom Bildschirm zu Tastatur und Kartenleser
-    cable = k.part("Kabel", "plastic_dark", bevel=0.0)
-    cable.tube([(0.0, 0.07, 0.03), (0.06, 0.08, 0.006), (0.14, -0.05, 0.004), (0.12, -0.16, 0.006)], 0.004, segs=6, smooth=2)
-    cable.tube([(0.1, 0.06, 0.03), (0.2, 0.0, 0.004), (0.26, -0.12, 0.004), (0.25, -0.16, 0.01)], 0.004, segs=6, smooth=2)
-
+# (Der PC an der Theke aus Etappe 8 ist seit dem Nachtest entfernt: Tablet mit Kartenleser und Scanner ersetzen ihn.)
 
 # --- Theken-Tablet (stilneutral; Bildschirm -y, leicht nach hinten gekippt) ---
 
 def build_tablet(k):
+    """Theken-Tablet (seit dem Nachtest von Etappe 8): auf einem Holzständer deutlich nach hinten gekippt (TABLET_TILT), damit
+    man den Bildschirm hinter der Theke gut sieht; links daneben der Kartenleser (Schlitz oben, grünes Lämpchen), mit einem
+    Kabel zum Tablet verbunden. Lagen von Bildschirm und Schlitz in scripts/objects/shop_tablet.gd (SCREEN_*, READER_SLOT)."""
     FN.wood(k, FN.OAK_MID)
     k.mat("case", (0.33, 0.24, 0.19), grain="smooth", rough=0.5, vary=0.08, scale=5.0, bump=0.12)
     k.mat("screen", (0.98, 0.9, 0.74), grain="smooth", rough=0.3, vary=0.02, emit=1.2, emit_color=(1.0, 0.86, 0.62))
+    k.mat("plastic_dark", (0.42, 0.36, 0.32), grain="paint", rough=0.6, vary=0.03)
+    k.mat("glass_dark", (0.16, 0.19, 0.18), grain="smooth", rough=0.25, vary=0.01)
+    k.mat("led_green", (0.45, 0.9, 0.5), grain="smooth", rough=0.3, vary=0.0, emit=2.0, emit_color=(0.45, 1.0, 0.55))
+    # Ständer: Bodenplatte, vorn eine Leiste (hält die Unterkante), hinten eine schräge Stütze bis an die Rückseite
     stand = k.part("Ständer", "wood", bevel=0.005)
-    stand.box((0, 0.0, 0.008), (0.16, 0.11, 0.016), step=0.3, dent=0.0004)
-    stand.box((0, -0.044, 0.022), (0.17, 0.02, 0.022), step=0.3, dent=0.0004)
-    stand.span((0, 0.045, 0.012), (0, 0.03, 0.124), 0.04, 0.012, step=0.3, dent=0.0003)
-    tilt = Matrix.Translation((0, -0.034, 0.026)) @ Matrix.Rotation(math.radians(-25), 4, "X")
+    stand.box((0, 0.03, 0.008), (0.18, 0.16, 0.016), step=0.3, dent=0.0004)
+    stand.box((0, -0.044, 0.024), (0.17, 0.02, 0.026), step=0.3, dent=0.0004)
+    stand.span((0, 0.092, 0.012), (0, 0.054, 0.084), 0.05, 0.014, step=0.3, dent=0.0003)
+    tilt = Matrix.Translation((0, -0.034, 0.026)) @ Matrix.Rotation(math.radians(-TABLET_TILT), 4, "X")
     case = k.part("Hülle", "case", bevel=0.007)
     case.box((0, 0, 0.096), (0.27, 0.014, 0.19), step=0.3, dent=0.0004, matrix=tilt)
     screen = k.part("Bildschirm", "screen", bevel=0.0, settle=False)
     screen.box((0, -0.0075, 0.1), (0.236, 0.004, 0.152), step=0.5, dent=0.0, matrix=tilt)
     case.blob(tilt @ Vector((0, -0.007, 0.183)), 0.003, subdiv=1, lump=0.0)
+    # Kartenleser links (Schlitz längs, der Ausweis steckt aufrecht darin) und das Kabel hinüber zum Tablet
+    reader = k.part("Kartenleser", "plastic_dark", bevel=0.0)
+    F.pillow(reader, (READER_X, -0.02, 0.02), (0.1, 0.08, 0.04), roundness=5.0, step=0.02)
+    slot = k.part("Schlitz", "glass_dark", bevel=0.0, settle=False)
+    slot.box((READER_X, -0.02, 0.0405), (0.075, 0.008, 0.004), step=0.5, dent=0.0)
+    led = k.part("Lämpchen", "led_green", bevel=0.0, settle=False)
+    led.blob((READER_X + 0.03, -0.056, 0.028), 0.0045, subdiv=1, lump=0.0, scale=(1, 0.6, 1))
+    cable = k.part("Kabel", "plastic_dark", bevel=0.0)
+    cable.tube([(READER_X + 0.02, 0.018, 0.012), (READER_X + 0.05, 0.06, 0.004), (-0.12, 0.1, 0.004), (-0.07, 0.1, 0.012),
+                (-0.05, 0.085, 0.03)], 0.0035, segs=6, smooth=2, round_ends=True)
+
+
+## Kippwinkel des Tablets (Grad nach hinten) und Lage des Kartenlesers (x) – passend zu shop_tablet.gd
+TABLET_TILT = 50.0
+READER_X = -0.24
+
+
+def build_counter_scanner(k):
+    """Scanner auf der Theke (seit dem Nachtest von Etappe 8, um 90° gedreht): flaches Feld, Glasstreifen und roter Lichtstreifen
+    QUER (entlang y), so zieht man die Bücher von rechts nach links darüber. Vorderseite -y (zur Spielfigur)."""
+    k.mat("plastic", (0.93, 0.89, 0.8), grain="paint", rough=0.55, vary=0.03)
+    k.mat("glass_dark", (0.16, 0.19, 0.18), grain="smooth", rough=0.25, vary=0.01)
+    k.mat("led_red", (0.95, 0.35, 0.3), grain="smooth", rough=0.3, vary=0.0, emit=2.4, emit_color=(1.0, 0.3, 0.25))
+    sc = k.part("Scanner", "plastic", bevel=0.0)
+    F.pillow(sc, (0, 0, 0.008), (0.13, 0.2, 0.016), roundness=6.0, step=0.03)
+    win = k.part("Scannerfenster", "glass_dark", bevel=0.0, settle=False)
+    win.box((0, 0, 0.0162), (0.07, 0.15, 0.002), step=0.5, dent=0.0)
+    line = k.part("Lichtstreifen", "led_red", bevel=0.0, settle=False)
+    line.box((0, 0, 0.0174), (0.004, 0.14, 0.0012), step=0.5, dent=0.0)
+
+
+def build_paper_bag_stack(k):
+    """Stapel gefalteter Papiertüten der Bücherei (Packpapier, oben ein kleiner rosa Herz-Stempel) – liegt links auf der Theke."""
+    k.mat("kraft", (0.71, 0.53, 0.34), grain="fabric", rough=0.95, vary=0.06)
+    k.mat("stamp", (0.86, 0.47, 0.5), grain="paint", rough=0.8, vary=0.03)
+    bags = k.part("Tüten", "kraft", bevel=0.002)
+    z = 0.0
+    for i in range(5):
+        t = 0.007
+        turn = (0, 0, (-3.0, 2.0, -1.0, 3.5, -2.0)[i])
+        bags.box((0.002 * (i % 2), 0.003 * ((i + 1) % 3) - 0.003, z + t / 2), (0.17, 0.27, t), step=0.05, dent=0.0006, turn=turn)
+        z += t - 0.0004
+    stamp = k.part("Stempel", "stamp", bevel=0.0, settle=False)
+    # kleines Herz aus zwei Kreisen und einer Spitze, flach auf der obersten Tüte
+    top = z + 0.0006
+    stamp.lathe([(0.0, 0.0), (0.012, 0.0), (0.012, 0.0012), (0.0, 0.0012)], (-0.008, -0.05, top), segs=16)
+    stamp.lathe([(0.0, 0.0), (0.012, 0.0), (0.012, 0.0012), (0.0, 0.0012)], (0.008, -0.05, top), segs=16)
+    stamp.box((0.0, -0.06, top + 0.0006), (0.022, 0.014, 0.0012), step=1.0, dent=0.0, turn=(0, 0, 45))
 
 
 # --- Innenseite des Rückgabekastens (seit Etappe 6b): Ursprung innen auf der Wand am Boden, Mitte;
@@ -853,7 +859,8 @@ ITEMS = [
          desc="", styles=["country"], build=build_slot_country),
     dict(id="cash_register", kind="part", name="Kasse", settle=0.3, styles=[], build=build_cash_register),
     dict(id="tablet", kind="part", name="Theken-Tablet", settle=0.2, styles=[], build=build_tablet),
-    dict(id="counter_pc", kind="part", name="PC an der Theke", settle=0.2, styles=[], build=build_counter_pc),
+    dict(id="counter_scanner", kind="part", name="Scanner an der Theke", settle=0.2, styles=[], build=build_counter_scanner),
+    dict(id="paper_bag_stack", kind="part", name="Papiertüten (Stapel)", settle=0.2, styles=[], build=build_paper_bag_stack),
     dict(id="crate_oak", kind="part", name="Bücherkiste Eiche", settle=0.3, styles=[], build=build_crate_oak),
     dict(id="crate_walnut", kind="part", name="Bücherkiste Kirschholz", settle=0.3, styles=[], build=build_crate_walnut),
     dict(id="crate_wicker", kind="part", name="Bücherkorb", settle=0.3, styles=[], build=build_crate_wicker),

@@ -248,7 +248,7 @@ data = ExtResource("41_bed")
 uid = 8
 
 [node name="Tablet" type="Node3D" parent="Furniture"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0.85, 2.77)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.32, 0.85, 2.78)
 script = ExtResource("16_placed")
 data = ExtResource("22_tablet")
 uid = 7

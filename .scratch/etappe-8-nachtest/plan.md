@@ -1,6 +1,6 @@
 # Nachtest nach Etappe 8 (Liste der Entwicklerin vom 14.11.2026)
 
-Status: claimed
+Status: done
 
 ## Wünsche (Wortlaut zusammengefasst)
 - Nachts schwarze Linien (Malfilter; vorher dunkelblau)
@@ -36,5 +36,5 @@ Status: claimed
 - [x] 6. Pausenmenü: schmaleres, normales Buchformat (nicht quadratisch); Haftnotizen kleben sichtbar an IHREN Seiten (die
   anderen stecken zwischen den Seiten im Buch, links bzw. rechts im Seitenstapel); Sprung zwischen Notizen = EIN Umblättern
 - [x] 7. Tippgeräusch der Sprechblasen aus „clicking tastatur.mp3“ (Game design, Sounds): leiser und gemütlicher aufbereitet
-- [ ] 4. Theke neu: PC weg, Tablet rechts schräg mit Kartenleser (Kabel), Scanner gedreht, Tüte links, Korb rechts;
+- [x] 4. Theke neu: PC weg, Tablet rechts schräg mit Kartenleser (Kabel), Scanner gedreht, Tüte links, Korb rechts;
   Ansicht mittig und gerade; App „Ausleihe“; Körbe erscheinen/verschwinden, Gäste gehen mit der Papiertüte

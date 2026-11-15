@@ -6,9 +6,9 @@
 script = ExtResource("1_tablet")
 id = "tablet"
 display_name = "Tablet (Shop)"
-description = "Steht auf der Theke. Mit E öffnest du den Shop."
+description = "Steht schräg auf der Theke, daneben der Kartenleser. Mit E öffnest du die Apps."
 scene_path = "res://scenes/furniture/tablet.tscn"
-footprint = Vector2i(3, 2)
+footprint = Vector2i(4, 2)
 placement = 2
 is_essential = true
 category = 3

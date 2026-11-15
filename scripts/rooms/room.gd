@@ -248,6 +248,25 @@ func ensure_essentials() -> void:
 		add_furniture(data, world, support)
 
 
+## Seit dem Nachtest von Etappe 8 steht das Tablet weiter rechts auf der Theke (Platz für die Bedien-Ansicht, Kartenleser daneben):
+## Steht es in einem älteren Spielstand noch genau am alten Standardplatz, rückt es an den neuen (sonst hat man es selbst gestellt).
+const OLD_TABLET_SPOT := Vector3(-0.5, 0.85, -0.07)
+
+func _migrate_tablet_spot() -> void:
+	var spot := essential_spot("tablet")
+	if spot.is_empty() or str(spot.support_id).is_empty():
+		return
+	for item in get_placed_furniture():
+		if item.data == null or item.data.get_id() != "tablet" or item.support_uid <= 0:
+			continue
+		for support in get_placed_furniture():
+			if support.uid != item.support_uid or support.data == null or support.data.get_id() != str(spot.support_id):
+				continue
+			var local := support.global_transform.affine_inverse() * item.global_position
+			if local.distance_to(OLD_TABLET_SPOT) < 0.03:
+				move_furniture(item, support.global_transform * (spot.transform as Transform3D), support)
+
+
 ## Platz eines unverzichtbaren Möbelstücks aus der Szene ({support_id, transform}; leer = keiner).
 func essential_spot(id: String) -> Dictionary:
 	return _essential_spots.get(id, {})
@@ -485,6 +504,7 @@ func load_save_data(save_data: Dictionary) -> void:
 	for id in _get_used_surface_ids():
 		Inventory.add_surface(id)
 	_settle_on_supports()
+	_migrate_tablet_spot()
 	var back := get_node_or_null("BackRoom") as BackRoom
 	if back:
 		back.migrate_old_area()
