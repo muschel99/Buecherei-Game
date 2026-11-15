@@ -1,5 +1,7 @@
 [gd_resource type="Theme" format=3]
 
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Nunito-SemiBold.woff2" id="1_font"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 36.0
 content_margin_top = 28.0
@@ -107,6 +109,7 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
 [resource]
+default_font = ExtResource("1_font")
 default_font_size = 22
 Button/colors/font_color = Color(0.95, 0.9, 0.8, 1)
 Button/colors/font_focus_color = Color(1, 0.95, 0.85, 1)

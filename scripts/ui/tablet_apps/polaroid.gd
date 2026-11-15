@@ -12,7 +12,7 @@ const BORDER := 0.055
 const BOTTOM := 0.2
 const PAPER_COLOR := Color(0.98, 0.96, 0.91)
 const INK_COLOR := Color(0.27, 0.22, 0.2)
-const CAPTION_FONT := "res://assets/ui/fonts/DejaVuSerif-Italic.ttf"
+const CAPTION_FONT := "res://assets/ui/fonts/Caveat-Bold.woff2"  # Bildunterschrift von Hand
 
 ## Das Bild auf dem Foto.
 var texture: Texture2D:

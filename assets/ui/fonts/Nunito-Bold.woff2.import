@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://ddkmssimmy8ed"
-path="res://.godot/imported/DejaVuSansCondensed-Bold.ttf-acd97235424c9f2b24efba999f4c3779.fontdata"
+uid="uid://dvxxboo0l7n6j"
+path="res://.godot/imported/Nunito-Bold.woff2-05d552d541b95da3f7f8c6cd0835eb64.fontdata"
 
 [deps]
 
-source_file="res://assets/ui/fonts/DejaVuSansCondensed-Bold.ttf"
-dest_files=["res://.godot/imported/DejaVuSansCondensed-Bold.ttf-acd97235424c9f2b24efba999f4c3779.fontdata"]
+source_file="res://assets/ui/fonts/Nunito-Bold.woff2"
+dest_files=["res://.godot/imported/Nunito-Bold.woff2-05d552d541b95da3f7f8c6cd0835eb64.fontdata"]
 
 [params]
 

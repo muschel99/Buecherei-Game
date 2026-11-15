@@ -17,8 +17,10 @@ const INK := Color(0.33, 0.23, 0.19)
 const INK_SOFT := Color(0.5, 0.39, 0.32)
 const ROSE := Color(0.96, 0.72, 0.74)
 const ACCENT := Color(0.84, 0.47, 0.47)
-const HAND := preload("res://assets/ui/fonts/PatrickHand-Regular.woff2")
 const TITLE := preload("res://assets/ui/fonts/Caveat-Bold.woff2")
+## Getippte Schrift in der Sprechblase (seit dem Nachtest von Etappe 8: rund und gut lesbar – passt zum Tippgeräusch)
+const TYPED := preload("res://assets/ui/fonts/Nunito-SemiBold.woff2")
+const TYPED_BOLD := preload("res://assets/ui/fonts/Nunito-Bold.woff2")
 
 static var current: Conversation
 
@@ -181,8 +183,8 @@ func _show_answers(answers: Array) -> void:
 	for answer: Dictionary in answers:
 		var button := Button.new()
 		button.text = String(answer.text)
-		button.add_theme_font_override("font", TITLE)
-		button.add_theme_font_size_override("font_size", 30)
+		button.add_theme_font_override("font", TYPED_BOLD)
+		button.add_theme_font_size_override("font_size", 25)
 		for state in ["font_color", "font_pressed_color", "font_focus_color"]:
 			button.add_theme_color_override(state, INK)
 		button.add_theme_color_override("font_hover_color", ACCENT.darkened(0.15))
@@ -285,10 +287,10 @@ func _build() -> void:
 	_bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_bubble)
 	_label = Label.new()
-	_label.add_theme_font_override("font", HAND)
-	_label.add_theme_font_size_override("font_size", 32)
+	_label.add_theme_font_override("font", TYPED)
+	_label.add_theme_font_size_override("font_size", 27)
 	_label.add_theme_color_override("font_color", INK)
-	_label.add_theme_constant_override("line_spacing", -4)
+	_label.add_theme_constant_override("line_spacing", 2)
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_label.offset_left = 44

@@ -21,8 +21,9 @@ signal atlas_ready
 signal cover_atlas_changed
 
 ## Größe eines Feldes im Atlas (Breite, Höhe in Pixeln). Der Buchrücken wird darin im
-## passenden Seitenverhältnis gezeichnet.
-const CELL := Vector2i(40, 256)
+## passenden Seitenverhältnis gezeichnet (seit dem Nachtest von Etappe 8 größer: die dickeren Bücher bekamen sonst nur
+## 40 Bildpunkte Breite – die Titel wurden unscharf und unlesbar).
+const CELL := Vector2i(56, 288)
 ## So breit ist der Atlas höchstens (Pixel).
 const ATLAS_WIDTH := 4096
 ## Größe der Cover-Bilder (Breite in Pixeln; die Höhe ergibt sich aus dem Buch).
@@ -35,12 +36,17 @@ const COVER_CACHE_SIZE := 48
 const COVER_ATLAS_GRID := Vector2i(16, 7)
 const COVER_ATLAS_CELL := Vector2i(96, 192)
 
-const _SERIF := ["Noto Serif", "DejaVu Serif", "Liberation Serif", "FreeSerif", "Georgia", "serif"]
-const _SANS := ["Noto Sans", "Inter", "Cantarell", "DejaVu Sans", "Liberation Sans", "Arial", "sans-serif"]
-const _PLAYFUL := ["Comic Neue", "Nunito", "Quicksand", "Comfortaa", "Ubuntu", "Cantarell", "Noto Sans",
-	"DejaVu Sans", "sans-serif"]
+## Titelschriften (seit dem Nachtest von Etappe 8 mitgeliefert, assets/ui/fonts, OFL – vorher Systemschriften, die auf jedem
+## Rechner anders aussahen): je Art des Genres (GenreData.cover_font) mehrere, jedes Buch bekommt fest eine davon. Keine
+## Handschrift (Wunsch der Entwicklerin), nur gut lesbare Schnitte (auch klein auf dem Buchrücken).
+const TITLE_FONTS := {
+	GenreData.CoverFont.SERIF: ["Lora-SemiBold", "PlayfairDisplay-Bold", "EBGaramond-SemiBold", "LibreBaskerville-Bold", "Alegreya-Bold"],
+	GenreData.CoverFont.SANS: ["Nunito-ExtraBold", "Quicksand-Bold", "Comfortaa-Bold", "Fredoka-SemiBold"],
+	GenreData.CoverFont.PLAYFUL: ["Fredoka-SemiBold", "Baloo2-Bold", "BreeSerif-Regular", "Comfortaa-Bold", "Quicksand-Bold"],
+}
+const FONT_DIR := "res://assets/ui/fonts/"
 
-var _fonts := {}  # GenreData.CoverFont -> Font
+var _fonts := {}  # GenreData.CoverFont -> Array[Font]
 var _author_font: Font
 var _atlas: ImageTexture
 var _atlas_size := Vector2i(ATLAS_WIDTH, CELL.y)
@@ -61,10 +67,12 @@ var _cover_atlas_dirty := false
 
 
 func _ready() -> void:
-	_fonts[GenreData.CoverFont.SERIF] = _system_font(_SERIF, 600, false)
-	_fonts[GenreData.CoverFont.SANS] = _system_font(_SANS, 700, false)
-	_fonts[GenreData.CoverFont.PLAYFUL] = _system_font(_PLAYFUL, 800, false)
-	_author_font = _system_font(_SERIF, 400, true)
+	for kind: int in TITLE_FONTS:
+		var list: Array[Font] = []
+		for font_name: String in TITLE_FONTS[kind]:
+			list.append(_font_file(font_name))
+		_fonts[kind] = list
+	_author_font = _font_file("Lora-Italic")
 	# Platzhalter, bis der Atlas gezeichnet ist (die Regale zeigen solange einfarbige Rücken)
 	var blank := Image.create(4, 4, false, Image.FORMAT_RGBA8)
 	blank.fill(Color(0.5, 0.45, 0.4))
@@ -78,11 +86,15 @@ func _ready() -> void:
 
 # --- Schriften ---
 
-## Die Titelschrift eines Buchs (je nach Genre).
+## Die Titelschrift eines Buchs: nach der Art des Genres, fest je Titel eine aus TITLE_FONTS (jedes Buch sieht immer gleich aus).
 func get_title_font(book: BookData) -> Font:
 	var genre := book.get_genre() if book else null
 	var kind: int = genre.cover_font if genre else GenreData.CoverFont.SERIF
-	return _fonts.get(kind, ThemeDB.fallback_font)
+	var list: Array = _fonts.get(kind, [])
+	if list.is_empty():
+		return ThemeDB.fallback_font
+	var pick := absi(book.seed / 7 if book else 0) % list.size()
+	return list[pick]
 
 
 ## Schrift für Autorennamen (schlicht, kursiv).
@@ -90,13 +102,13 @@ func get_author_font() -> Font:
 	return _author_font if _author_font else ThemeDB.fallback_font
 
 
-func _system_font(names: Array, weight: int, italic: bool) -> Font:
-	var font := SystemFont.new()
-	font.font_names = PackedStringArray(names)
-	font.font_weight = weight
-	font.font_italic = italic
-	font.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
-	font.fallbacks = [ThemeDB.fallback_font]
+## Eine mitgelieferte Schrift (assets/ui/fonts/<name>.woff2); fehlende Zeichen kommen aus der Standardschrift.
+func _font_file(font_name: String) -> Font:
+	var font := load(FONT_DIR + font_name + ".woff2") as FontFile
+	if font == null:
+		return ThemeDB.fallback_font
+	if font.fallbacks.is_empty():
+		font.fallbacks = [ThemeDB.fallback_font]
 	return font
 
 
@@ -198,7 +210,7 @@ class _SymbolPainter extends Control:
 ## Zwischenspeicher des Rücken-Atlas (seit Etappe 8, schnellerer Start): gezeichnet wird nur, wenn sich Bücher, Genres oder
 ## die Zeichen-Scripts geändert haben – sonst lädt der Start das gespeicherte Bild.
 const ATLAS_CACHE := "user://cache/"
-const ATLAS_CACHE_VERSION := 2
+const ATLAS_CACHE_VERSION := 3
 
 
 func _atlas_cache_path() -> String:

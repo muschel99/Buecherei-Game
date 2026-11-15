@@ -247,7 +247,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Eigener Look je App (seit Etappe 6b):** `TabletAppData.style` (`TabletAppStyle`: Farben background/
   panel/text/muted/accent/accent_text/second, Muster `pattern` LINEN/PAPER/LINES/GRID/KRAFT/DOTS – gemalt
   von `TabletAppBackdrop.paint`, auch auf dem Bildschirm des Rahmens `TabletFrame.screen_style` –, Rundungen,
-  Schrift `font`/`title_font` aus `assets/ui/fonts/` (DejaVu, Lizenz daneben), `welcome`). Apps nie feste
+  Schrift `font`/`title_font` aus `assets/ui/fonts/` (OFL, Lizenz daneben), `welcome`). **Schriften (seit dem Nachtest von Etappe 8, Wunsch: alles gemütlich und passend):** Grundschrift des Spiels Nunito (Theme `cozy_theme.tres` – Tablet, Uhr, Hinweise, Tasten, Sprechblase = „technisch, aber cozy“), Überschriften Fredoka/Playfair je App, Handschrift Caveat/Patrick Hand, wo sie passt (Notizbuch, Notizzettel, Tipps, Polaroids, Türschild, Kistenschilder, Gedankenblasen); Buchtitel aus `BookArt.TITLE_FONTS` (keine Handschrift). Neue Schriften nur frei (OFL) über npm `@fontsource/<name>` (latin-Teil, .woff2). Apps nie feste
   Farben: `style.text` … und die Bausteine `make_label`/`make_title`/`make_panel`/`make_primary_button`/
   `make_choice_button`/`make_icon_button`; Kacheln `ItemTile.apply_style`, Symbol-Knöpfe
   `IconToggle.apply_style`, `FilterBar.app_style`, `TabletIconButton.set_colors`. Das Tablet setzt den

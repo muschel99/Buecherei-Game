@@ -46,7 +46,7 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	var font := load("res://assets/ui/fonts/DejaVuSerif-Bold.ttf") as Font
+	var font := load("res://assets/ui/fonts/Caveat-Bold.woff2") as Font  # wie von Hand aufs Schild gemalt
 	_board = Node3D.new()
 	_board.name = "Board"
 	_board.position = Vector3(0.0, CENTER_Y, 0.0)

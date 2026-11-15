@@ -104,8 +104,10 @@ static func _build_mesh() -> ArrayMesh:
 	for i in steps:
 		var a0 := outer_curve[i]
 		var a1 := outer_curve[i + 1]
-		var u0 := float(i) / steps
-		var u1 := float(i + 1) / steps
+		# Lage auf dem Rücken nach der sichtbaren Breite (von vorn gesehen gleichmäßig) – nicht nach dem Winkel, sonst wird die
+		# Schrift in der Mitte gedehnt und am Rand gestaucht (Nachtest von Etappe 8: „Titel verzerrt“)
+		var u0 := 0.5 + a0.x
+		var u1 := 0.5 + a1.x
 		# Außenseite (weich schattiert)
 		_vertex(st, a0 + y0, normals[i], Vector2(u0, 1.0), Part.SPINE)
 		_vertex(st, a0 + y1, normals[i], Vector2(u0, 0.0), Part.SPINE)

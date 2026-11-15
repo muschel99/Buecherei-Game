@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://d2wsgnicihfq8"
-path="res://.godot/imported/DejaVuSans-ExtraLight.ttf-14f263b61b9f197a9ea630a60faa22e4.fontdata"
+uid="uid://doh21rty807pu"
+path="res://.godot/imported/EBGaramond-SemiBold.woff2-10fd0aae2361a99ecb58a0a393960b9e.fontdata"
 
 [deps]
 
-source_file="res://assets/ui/fonts/DejaVuSans-ExtraLight.ttf"
-dest_files=["res://.godot/imported/DejaVuSans-ExtraLight.ttf-14f263b61b9f197a9ea630a60faa22e4.fontdata"]
+source_file="res://assets/ui/fonts/EBGaramond-SemiBold.woff2"
+dest_files=["res://.godot/imported/EBGaramond-SemiBold.woff2-10fd0aae2361a99ecb58a0a393960b9e.fontdata"]
 
 [params]
 

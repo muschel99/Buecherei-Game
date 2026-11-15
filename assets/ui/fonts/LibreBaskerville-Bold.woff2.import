@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bk1cmg7048is3"
-path="res://.godot/imported/DejaVuSansCondensed.ttf-0689d8ecbf302f8b84a7b76e63dac206.fontdata"
+uid="uid://b4bhqo78k3sk8"
+path="res://.godot/imported/LibreBaskerville-Bold.woff2-9cd2b9230b6bd442083f5e82fd8b24ad.fontdata"
 
 [deps]
 
-source_file="res://assets/ui/fonts/DejaVuSansCondensed.ttf"
-dest_files=["res://.godot/imported/DejaVuSansCondensed.ttf-0689d8ecbf302f8b84a7b76e63dac206.fontdata"]
+source_file="res://assets/ui/fonts/LibreBaskerville-Bold.woff2"
+dest_files=["res://.godot/imported/LibreBaskerville-Bold.woff2-9cd2b9230b6bd442083f5e82fd8b24ad.fontdata"]
 
 [params]
 

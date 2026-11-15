@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bubstov7gn0hd"
-path="res://.godot/imported/DejaVuSansMono.ttf-dbf1e9ed24a3c327e050c16352f62708.fontdata"
+uid="uid://dl5oxnhcsokyv"
+path="res://.godot/imported/Alegreya-Bold.woff2-2bcfcf6abbb76a2c8aa422854e6c90e7.fontdata"
 
 [deps]
 
-source_file="res://assets/ui/fonts/DejaVuSansMono.ttf"
-dest_files=["res://.godot/imported/DejaVuSansMono.ttf-dbf1e9ed24a3c327e050c16352f62708.fontdata"]
+source_file="res://assets/ui/fonts/Alegreya-Bold.woff2"
+dest_files=["res://.godot/imported/Alegreya-Bold.woff2-2bcfcf6abbb76a2c8aa422854e6c90e7.fontdata"]
 
 [params]
 

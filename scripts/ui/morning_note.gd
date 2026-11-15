@@ -96,7 +96,7 @@ class NotePaper:
 	const SHADOW := Color(0, 0, 0, 0.22)
 
 	var stats: Dictionary = {}
-	var _font: Font = load("res://assets/ui/fonts/DejaVuSerif-Italic.ttf")
+	var _font: Font = load("res://assets/ui/fonts/PatrickHand-Regular.woff2")  # handgeschriebener Zettel
 
 	func _draw() -> void:
 		var w := size.x

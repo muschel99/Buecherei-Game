@@ -67,7 +67,7 @@ Obergeschoss werden mit verdientem Geld freigeschaltet und renoviert.
     Lager: ruhiges Grün mit Linien; Fassade: helles Architekten-Raster mit feiner Schrift in
     Großbuchstaben; Statistik: Punkte und klare Zahlen; Tipps & Tricks: cremefarbenes Papier.
     Festgelegt im Datenblatt der App (`TabletAppData.style`), die Schriften liegen in
-    `assets/ui/fonts/` (DejaVu, frei nutzbar).
+    `assets/ui/fonts/` (frei nutzbar, OFL: Nunito, Fredoka, Playfair, Caveat, Patrick Hand …).
   - In den Apps gilt dieselbe Gestaltung wie im Regal-Menü: Symbol-Knöpfe mit kurzem Tooltip,
     wenig Text, bei jeder Auflösung ganz sichtbar.
   - **Neue Apps** (z. B. später Vorbestellungen, Besucher, Einstellungen) sind leicht: eine

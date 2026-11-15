@@ -310,11 +310,12 @@ Ein neues Motiv zeichnen: In `scripts/ui/book_motifs.gd` eine Funktion `_motif_<
 nach dem Vorbild der anderen ergänzen (Koordinaten von 0 bis 1). Danach kann der Name in
 den Bücherlisten benutzt werden.
 
-**Schriften:** Die Titel nutzen Schriften, die auf dem PC installiert sind (z. B. Noto Serif,
-DejaVu Serif; ohne Serifen: Noto Sans, Cantarell; verspielt: Nunito, Comfortaa – fehlt eine,
-nimmt Godot eine ähnliche). Welche Art ein Genre benutzt, steht im Genre-Datenblatt bei
-**Cover Font** (Serif, Sans, Playful). Die Listen der Schriftnamen stehen oben in
-`scripts/autoload/book_art.gd`.
+**Schriften:** Die Titel nutzen mitgelieferte freie Schriften aus `assets/ui/fonts/` (Lizenz OFL daneben; seit dem
+Nachtest von Etappe 8 – vorher Systemschriften): Serifen (Lora, Playfair Display, EB Garamond, Libre Baskerville,
+Alegreya), rund (Nunito, Quicksand, Comfortaa, Fredoka), verspielt (Fredoka, Baloo 2, Bree Serif …) – bewusst keine
+Handschrift. Welche Art ein Genre benutzt, steht im Genre-Datenblatt bei **Cover Font** (Serif, Sans, Playful); jedes
+Buch bekommt fest eine Schrift dieser Art. Die Listen stehen oben in `scripts/autoload/book_art.gd` (`TITLE_FONTS`).
+Eine neue Schrift: freie Schrift (OFL) als .woff2 nach `assets/ui/fonts/` legen und in die Liste schreiben.
 
 ### Ein Bücherregal bauen
 Ein Regal bekommt Bücher, wenn seine Szene einen Knoten `BookShelf`

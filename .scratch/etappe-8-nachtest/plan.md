@@ -28,7 +28,7 @@ Status: claimed
 - [x] 2. Hinterzimmer neu: rechts neben der Bücherei im hinteren Teil des Modegeschäfts (Laden des Modegeschäfts bleibt),
   Tür in der rechten Wand hinter der Theke, Verdecker mit Loch an der Tür, Türrahmen ohne Flimmern, alte Tür zu;
   hinter der Bücherei bleibt Platz für spätere Erweiterungen; alte Spielstände: Möbel ziehen mit um
-- [ ] 3. Schriften: freie Schriften (npm @fontsource, OFL) – Handschrift für Notizen/Überschriften/Schilder, runde
+- [x] 3. Schriften: freie Schriften (npm @fontsource, OFL) – Handschrift für Notizen/Überschriften/Schilder, runde
   gemütliche Schrift für Tablet, Zahlen, Hinweise; Bücher mit mehreren Schriftarten (Serifen, schlicht, verspielt –
   keine Handschrift), verzerrte Titel beheben
 - [x] 5. Nachtrag der Entwicklerin: Notizzettel am Morgen hängt manchmal oben links in der Ecke; nachts wirklich schwarze

@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://crbah0w4bemon"
-path="res://.godot/imported/DejaVuSansMono-Bold.ttf-ab4c236a0bcd0acbc8ee7e717edf9e7f.fontdata"
+uid="uid://c88vaccw8ic7r"
+path="res://.godot/imported/PlayfairDisplay-Bold.woff2-5829c35f72b07e86fead1850100ff697.fontdata"
 
 [deps]
 
-source_file="res://assets/ui/fonts/DejaVuSansMono-Bold.ttf"
-dest_files=["res://.godot/imported/DejaVuSansMono-Bold.ttf-ab4c236a0bcd0acbc8ee7e717edf9e7f.fontdata"]
+source_file="res://assets/ui/fonts/PlayfairDisplay-Bold.woff2"
+dest_files=["res://.godot/imported/PlayfairDisplay-Bold.woff2-5829c35f72b07e86fead1850100ff697.fontdata"]
 
 [params]
 

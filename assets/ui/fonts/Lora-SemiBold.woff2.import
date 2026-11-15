@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bx3cwc0n4t82s"
-path="res://.godot/imported/DejaVuSerif-Bold.ttf-6c54128d57d1c1b24429cdf08533d5de.fontdata"
+uid="uid://dm3rx3o1umle6"
+path="res://.godot/imported/Lora-SemiBold.woff2-d266ea4e45a1973e3d1d8df8e5bcc9f1.fontdata"
 
 [deps]
 
-source_file="res://assets/ui/fonts/DejaVuSerif-Bold.ttf"
-dest_files=["res://.godot/imported/DejaVuSerif-Bold.ttf-6c54128d57d1c1b24429cdf08533d5de.fontdata"]
+source_file="res://assets/ui/fonts/Lora-SemiBold.woff2"
+dest_files=["res://.godot/imported/Lora-SemiBold.woff2-d266ea4e45a1973e3d1d8df8e5bcc9f1.fontdata"]
 
 [params]
 

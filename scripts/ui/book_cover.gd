@@ -197,32 +197,67 @@ static func draw_spine(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 	_badge(ci, book, r.position + Vector2(w * 0.5, h * 0.915), minf(w * 0.4, h * 0.06))
 
 
-## Titel um 90° gedreht (liest sich von oben nach unten), passend verkleinert.
+## Titel um 90° gedreht (liest sich von oben nach unten), passend verkleinert. Seit dem Nachtest von Etappe 8: Zu lange Titel
+## auf dicken Rücken in zwei Zeilen, und nie kleiner als SPINE_MIN_FONT (vorher bis 6 Bildpunkte – unlesbar); was dann noch
+## zu lang ist, endet mit „…“.
+const SPINE_MIN_FONT := 10
+
 static func _spine_title(ci: CanvasItem, book: BookData, r: Rect2, color: Color, outline: bool) -> void:
 	var font := BookArt.get_title_font(book)
-	var text := book.title
 	var length := r.size.y
+	var lines := PackedStringArray([book.title])
 	var font_size := int(r.size.x * 0.52)
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	if width > length:
-		font_size = maxi(int(font_size * length / width), 6)
-		width = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	# Immer noch zu lang? Dann mit "…" kürzen
-	while width > length and text.length() > 4:
-		text = text.substr(0, text.length() - 2).strip_edges() + "…"
-		width = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var widest := _widest(font, lines, font_size)
+	if widest > length:
+		var single := int(font_size * length / widest)
+		font_size = single
+		var words := book.title.split(" ", false)
+		if words.size() > 1:
+			# zwei Zeilen: an dem Leerzeichen teilen, das die Zeilen am ähnlichsten lang macht
+			var best := PackedStringArray()
+			var best_len := INF
+			for cut in range(1, words.size()):
+				var pair := PackedStringArray([" ".join(words.slice(0, cut)), " ".join(words.slice(cut))])
+				var w := _widest(font, pair, 100)
+				if w < best_len:
+					best_len = w
+					best = pair
+			var two_max := int(r.size.x * 0.4)
+			var two := mini(two_max, int(two_max * length / maxf(1.0, _widest(font, best, two_max))))
+			if two > single + 1:
+				lines = best
+				font_size = two
+	font_size = maxi(font_size, mini(SPINE_MIN_FONT, int(r.size.x * 0.62)))
+	# Immer noch zu lang? Dann mit "…" kürzen (je Zeile)
+	for i in lines.size():
+		var text := lines[i]
+		while font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > length and text.length() > 4:
+			text = text.substr(0, text.length() - 2).strip_edges() + "…"
+		lines[i] = text
 	var ascent := font.get_ascent(font_size)
 	var descent := font.get_descent(font_size)
-	# Gedreht: Die Schrift läuft nach unten, die Buchstaben zeigen nach rechts.
-	# Grundlinie so legen, dass die Zeile mittig in der Breite sitzt.
-	var baseline_x := r.position.x + r.size.x / 2.0 - (ascent - descent) / 2.0
-	var start_y := r.position.y + (length - width) / 2.0
-	ci.draw_set_transform(Vector2(baseline_x, start_y), PI / 2.0)
-	if outline:
-		ci.draw_string_outline(font, Vector2.ZERO, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
-			maxi(int(font_size * 0.25), 2), Color(0.12, 0.1, 0.12))
-	ci.draw_string(font, Vector2.ZERO, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	var line_h := (ascent + descent) * 0.98
+	var total := line_h * lines.size()
+	var center := r.position.x + r.size.x / 2.0
+	# Gedreht: Die Schrift läuft nach unten, die Buchstaben zeigen nach rechts – die erste Zeile liegt also rechts.
+	for k in lines.size():
+		var text := lines[k]
+		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		var baseline_x := center + total / 2.0 - (k + 1) * line_h + descent
+		var start_y := r.position.y + (length - width) / 2.0
+		ci.draw_set_transform(Vector2(baseline_x, start_y), PI / 2.0)
+		if outline:
+			ci.draw_string_outline(font, Vector2.ZERO, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+				maxi(int(font_size * 0.25), 2), Color(0.12, 0.1, 0.12))
+		ci.draw_string(font, Vector2.ZERO, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 	ci.draw_set_transform(Vector2.ZERO)
+
+
+static func _widest(font: Font, lines: PackedStringArray, font_size: int) -> float:
+	var widest := 0.0
+	for line in lines:
+		widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+	return widest
 
 
 # --- Schrift auf dem Cover ---

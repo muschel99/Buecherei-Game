@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" path="res://scripts/data/tablet_app_data.gd" id="1_app"]
 [ext_resource type="Script" path="res://scripts/data/tablet_app_style.gd" id="2_style"]
-[ext_resource type="FontFile" path="res://assets/ui/fonts/DejaVuSerif.ttf" id="3_font"]
-[ext_resource type="FontFile" path="res://assets/ui/fonts/DejaVuSerif-Bold.ttf" id="4_font"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Nunito-SemiBold.woff2" id="3_font"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/PlayfairDisplay-Bold.woff2" id="4_font"]
 
 [sub_resource type="Resource" id="Style"]
 script = ExtResource("2_style")

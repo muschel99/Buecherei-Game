@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://iiyk66u7ma86"
-path="res://.godot/imported/DejaVuSerif-Italic.ttf-c06f749df329571c289e3201ca64d417.fontdata"
+uid="uid://vivfpdfcfcr"
+path="res://.godot/imported/Comfortaa-Bold.woff2-2b6c0c149c0f1440b1317cf9b1c4d179.fontdata"
 
 [deps]
 
-source_file="res://assets/ui/fonts/DejaVuSerif-Italic.ttf"
-dest_files=["res://.godot/imported/DejaVuSerif-Italic.ttf-c06f749df329571c289e3201ca64d417.fontdata"]
+source_file="res://assets/ui/fonts/Comfortaa-Bold.woff2"
+dest_files=["res://.godot/imported/Comfortaa-Bold.woff2-2b6c0c149c0f1440b1317cf9b1c4d179.fontdata"]
 
 [params]
 
