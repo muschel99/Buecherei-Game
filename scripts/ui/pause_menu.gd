@@ -1,8 +1,10 @@
 extends CanvasLayer
 ## Pausenmenü als Notizbuch (seit Testrunde 7b, Wunsch der Entwicklerin): Ein zugeklapptes Notizbuch gleitet von unten ins
 ## Bild und klappt auf. Die erste Doppelseite zeigt nur das Wichtigste (Weiterspielen, Speichern, Speichern und beenden, dazu
-## der heutige Tag). Bunte Haftnotizen am Rand führen zu den Kategorien: ein Klick blättert dorthin – die Notizen der
-## umgeblätterten Seiten kleben danach auf der linken Seite, die übrigen rechts (wie in einem echten Buch).
+## der heutige Tag). Bunte Haftnotizen am Rand führen zu den Kategorien: ein Klick blättert dorthin (immer nur ein Blatt). Jede
+## Notiz klebt an IHRER Seite (Nachtest von Etappe 8): die der aufgeschlagenen Doppelseite oben auf der rechten Seite, die der
+## anderen stecken zwischen den Blättern – umgeblätterte links, kommende rechts, hinter der aufgeschlagenen Seite (Ebene
+## PagesShape über den Notizen). Normales Buchformat (GameConfig.pause_book_ratio), passt sich jeder Bildgröße an (_fit_book).
 ## Jede Kategorie ist eine Doppelseite (SPREADS). Die Einstellungen kommen aus Settings.DEFINITIONS (je „section“ eine Seite);
 ## ein neuer Abschnitt, der in SPREADS fehlt, bekommt von selbst eine eigene Doppelseite.
 ## Aussehen (Nachtest 7b: „weich, süß, gemütlich“): Handschrift (Caveat, Patrick Hand – assets/ui/fonts, OFL), runde und leicht
@@ -110,6 +112,7 @@ var _left: VBoxContainer
 var _right: VBoxContainer
 var _cover: CoverShape
 var _flip: PageShape
+var _pages: PagesShape
 var _tabs: Array[TabNote] = []
 var _dimmer: ColorRect
 var _resolution_button: OptionButton
@@ -152,6 +155,7 @@ func open() -> void:
 	_current = 0
 	_close_pending = false
 	_fill_spread(0)
+	_fit_book()
 	await get_tree().process_frame  # Größen stehen erst jetzt fest
 	_place_pages()
 	_play_open()
@@ -166,6 +170,7 @@ func open_instant(page_name: String = "") -> void:
 		if spread.tab == page_name or String(spread.left).ends_with(page_name) or String(spread.right).contains(page_name):
 			_current = i
 	_fill_spread(_current)
+	_fit_book()
 	_cover.visible = false
 	_book.closed = false
 	_book.queue_redraw()
@@ -326,30 +331,27 @@ func _turn_to(index: int) -> void:
 	_begin_motion()
 	Audio.play("books/page", -6.0, Audio.vary(0.08))
 	var forward := index > _current
-	var flips := mini(absi(index - _current), 3)
 	var half := _book.page_rect(true).size.x
+	var t := GameConfig.pause_turn_time
+	# immer nur EIN Blatt, auch beim Sprung über mehrere Doppelseiten (Wunsch: sonst zu unruhig)
 	var tween := create_tween().set_trans(Tween.TRANS_SINE)
-	for i in flips:
-		var last := i == flips - 1
-		var t := GameConfig.pause_turn_time * (1.0 if flips == 1 else GameConfig.pause_turn_more_factor)
-		tween.tween_callback(func() -> void:
-			_flip.visible = true
-			_flip.forward = forward
-			_flip.position = (_book.page_rect(false) if forward else _book.page_rect(true)).position
-			_flip.size = Vector2(half, _book.page_rect(true).size.y)
-			_flip.pivot_offset = Vector2(0.0 if forward else half, 0.0)
-			_flip.scale = Vector2.ONE
-			_flip.queue_redraw())
-		tween.tween_property(_flip, "scale:x", 0.0, t).set_ease(Tween.EASE_IN)
-		if last:
-			tween.tween_callback(func() -> void:
-				_current = index
-				_fill_spread(index)
-				_layout_tabs(false))
-		tween.tween_callback(func() -> void:
-			_flip.position = (_book.page_rect(true) if forward else _book.page_rect(false)).position
-			_flip.pivot_offset = Vector2(half if forward else 0.0, 0.0))
-		tween.tween_property(_flip, "scale:x", 1.0, t).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(func() -> void:
+		_flip.visible = true
+		_flip.forward = forward
+		_flip.position = (_book.page_rect(false) if forward else _book.page_rect(true)).position
+		_flip.size = Vector2(half, _book.page_rect(true).size.y)
+		_flip.pivot_offset = Vector2(0.0 if forward else half, 0.0)
+		_flip.scale = Vector2.ONE
+		_flip.queue_redraw())
+	tween.tween_property(_flip, "scale:x", 0.0, t).set_ease(Tween.EASE_IN)
+	tween.tween_callback(func() -> void:
+		_current = index
+		_fill_spread(index)
+		_layout_tabs(false))
+	tween.tween_callback(func() -> void:
+		_flip.position = (_book.page_rect(true) if forward else _book.page_rect(false)).position
+		_flip.pivot_offset = Vector2(half if forward else 0.0, 0.0))
+	tween.tween_property(_flip, "scale:x", 1.0, t).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func() -> void:
 		_flip.visible = false
 		_end_motion())
@@ -387,14 +389,17 @@ func _build() -> void:
 	_dimmer.color = Color(0.2, 0.13, 0.09, 0.45)
 	_dimmer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_dimmer)
-	# Das Notizbuch: feste Anteile des Bildes (passt bei jeder Größe aufs Bild); rechts Platz für die Haftnotizen
+	# Das Notizbuch: normales Buchformat, mittig, so groß wie es aufs Bild passt (links und rechts Platz für die Haftnotizen)
 	_book = NotebookShape.new()
-	_book.anchor_left = 0.09
-	_book.anchor_right = 0.88
-	_book.anchor_top = 0.07
-	_book.anchor_bottom = 0.93
 	_book.theme = _paper_theme()
 	add_child(_book)
+	_fit_book()
+	get_viewport().size_changed.connect(_fit_book)
+	# Ebene der aufgeschlagenen Seiten: Die Haftnotizen der anderen Seiten liegen darunter (zwischen den Blättern)
+	_pages = PagesShape.new()
+	_pages.name = "Pages"
+	_pages.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_book.add_child(_pages)
 	for side: String in ["Left", "Right"]:
 		var holder := MarginContainer.new()
 		holder.name = side + "Page"
@@ -425,6 +430,25 @@ func _build() -> void:
 		tab.pressed.connect(func() -> void: _turn_to(tab.index))
 		_book.add_child(tab)
 		_tabs.append(tab)
+
+
+## Größe des Notizbuchs: Doppelseite im Format pause_book_ratio, höchstens 86 % der Bildhöhe und so schmal, dass links und
+## rechts die Haftnotizen Platz haben; mittig verankert (passt sich an, wenn sich die Fenstergröße ändert).
+func _fit_book() -> void:
+	if _book == null or not is_inside_tree():
+		return
+	var view := get_viewport().get_visible_rect().size
+	var height := view.y * 0.86
+	var width := minf(height * GameConfig.pause_book_ratio, view.x * 0.74)
+	height = width / GameConfig.pause_book_ratio
+	_book.anchor_left = 0.5
+	_book.anchor_right = 0.5
+	_book.anchor_top = 0.5
+	_book.anchor_bottom = 0.5
+	_book.offset_left = -width / 2.0
+	_book.offset_right = width / 2.0
+	_book.offset_top = -height / 2.0
+	_book.offset_bottom = height / 2.0
 
 
 ## Thema der Seiten: Bedienelemente wie aus Papier – helle, runde Felder mit Bleistiftrand, Handschrift, rosa Punkte.
@@ -541,9 +565,11 @@ func _place_pages() -> void:
 	_layout_tabs(true)
 
 
-## Haftnotizen: die der schon umgeblätterten Doppelseiten (bis zur aktuellen) links, die übrigen rechts; untereinander
-## versetzt und jede etwas schief wie echte Notizen. Die aktuelle ist etwas weiter herausgezogen. instant = sofort, sonst
-## wandern sie weich an ihren neuen Platz.
+## Haftnotizen an IHREN Seiten (Nachtest von Etappe 8): Die der aufgeschlagenen Doppelseite klebt oben auf der rechten Seite
+## (mit Washi-Tape, über den Seiten). Die der anderen Doppelseiten stecken zwischen den Blättern – umgeblätterte links, kommende
+## rechts – und liegen darum UNTER der Ebene der aufgeschlagenen Seiten (PagesShape): man sieht nur, was über den Rand des
+## Seitenstapels hinausragt. Untereinander versetzt, jede etwas schief wie echte Notizen. instant = sofort, sonst wandern sie
+## weich an ihren neuen Platz.
 func _layout_tabs(instant: bool) -> void:
 	if _tabs.is_empty() or _book.size.x <= 0.0:
 		return
@@ -558,15 +584,21 @@ func _layout_tabs(instant: bool) -> void:
 		_tab_tween.kill()
 	if not instant:
 		_tab_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# Reihenfolge der Ebenen: Notizen zwischen den Blättern – Seiten – Inhalt – Notiz der aufgeschlagenen Seite – Blatt – Deckel
 	for tab in _tabs:
-		var on_left := tab.index <= _current
+		_book.move_child(tab, 0 if tab.index != _current else -1)
+	_book.move_child(_flip, -1)
+	_book.move_child(_cover, -1)
+	for tab in _tabs:
+		var on_left := tab.index < _current
 		tab.on_left = on_left
 		tab.selected = tab.index == _current
+		tab.tucked = not tab.selected
 		tab.size = Vector2(tab_width, step - 10.0)
 		tab.pivot_offset = Vector2(tab_width if on_left else 0.0, tab.size.y / 2.0)
 		var y := right_rect.position.y + 30.0 + tab.index * step
-		var target := Vector2(left_rect.position.x - tab.size.x + (30.0 if not tab.selected else 12.0), y) if on_left \
-			else Vector2(right_rect.end.x - 30.0, y)
+		# 30 Bildpunkte liegen auf bzw. unter der Seite (dort klebt das Tape), der Rest ragt über den Rand
+		var target := Vector2(left_rect.position.x - tab.size.x + 30.0, y) if on_left else Vector2(right_rect.end.x - 30.0, y)
 		var tilt := deg_to_rad((-1.0 if on_left else 1.0) * (1.6 if tab.index % 2 == 0 else -1.1))
 		if instant:
 			tab.position = target
@@ -969,7 +1001,14 @@ class WavyRule extends Control:
 ## Das Notizbuch: weicher Einband aus salbeigrünem Leinen mit Steppnaht, zwei linierte Seiten mit runden Ecken, Schatten zum
 ## Falz, Blattkanten, Lesebändchen, ein paar gezeichnete Blümchen in den Ecken. Alle Ränder leicht unregelmäßig (handgemacht).
 class NotebookShape extends Control:
-	var closed := false
+	## zugeklappt zeichnet nur der Deckel (CoverShape); die Seiten (PagesShape) verschwinden mit
+	var closed := false:
+		set(value):
+			closed = value
+			queue_redraw()
+			for child in get_children():
+				if child is PagesShape:
+					(child as Control).queue_redraw()
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
@@ -981,9 +1020,11 @@ class NotebookShape extends Control:
 		var mid := size.x / 2.0
 		return Rect2(inset, inset, mid - inset, size.y - inset * 2.0) if left else Rect2(mid, inset, mid - inset, size.y - inset * 2.0)
 
+	## Einband mit Steppnaht, Blattkanten des Seitenstapels und Lesebändchen. Die aufgeschlagenen Seiten zeichnet PagesShape
+	## (eine Ebene darüber – dazwischen stecken die Haftnotizen der anderen Seiten).
 	func _draw() -> void:
 		if closed:
-			return  # zugeklappt zeichnet nur der Deckel (CoverShape)
+			return
 		var r := Rect2(Vector2.ZERO, size)
 		var cover := SoftShapes.rounded_all(r, 30.0, 1.6, 11)
 		SoftShapes.shadow(self, cover, Vector2(10, 16), Color(0.2, 0.12, 0.06, 0.06), 5, 4.0)
@@ -1001,6 +1042,27 @@ class NotebookShape extends Control:
 				Vector4(outer, 0, 0, outer), 0.8, 20 + k), edge)
 			draw_colored_polygon(SoftShapes.rounded(Rect2(right.position + Vector2(0, shift), right.size + Vector2(shift, 0)),
 				Vector4(0, outer, outer, 0), 0.8, 30 + k), edge)
+		# Lesebändchen unten aus dem Falz (rund ausgeschnitten)
+		var ribbon := PackedVector2Array([Vector2(mid + 10, size.y - 30), Vector2(mid + 26, size.y - 30), Vector2(mid + 26, size.y + 20),
+			Vector2(mid + 22, size.y + 16), Vector2(mid + 18, size.y + 12), Vector2(mid + 14, size.y + 16), Vector2(mid + 10, size.y + 20)])
+		draw_colored_polygon(ribbon, ACCENT)
+
+
+## Die beiden aufgeschlagenen Seiten (eigene Ebene über den Haftnotizen, die zwischen den Blättern stecken): Papier, Linien,
+## rosa Rand, weicher Schatten zum Falz, Blümchen, Papierkorn.
+class PagesShape extends Control:
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		resized.connect(queue_redraw)
+
+	func _draw() -> void:
+		var book := get_parent() as NotebookShape
+		if book == null or book.closed:
+			return
+		var mid := size.x / 2.0
+		var left := book.page_rect(true)
+		var right := book.page_rect(false)
+		var outer := 22.0
 		draw_colored_polygon(SoftShapes.rounded(left, Vector4(outer, 3, 3, outer), 0.8, 41), PAGE)
 		draw_colored_polygon(SoftShapes.rounded(right, Vector4(3, outer, outer, 3), 0.8, 42), PAGE)
 		# Linien wie im Notizbuch (leicht wellig), ein rosa Rand je Seite
@@ -1032,10 +1094,6 @@ class NotebookShape extends Control:
 		SoftShapes.star(self, Vector2(right.end.x - 74.0, right.end.y - 54.0), 8.0, Color(BUTTER, 0.8))
 		SoftShapes.star(self, Vector2(right.end.x - 52.0, right.end.y - 38.0), 5.0, Color(ROSE, 0.75), 0.3)
 		SoftShapes.heart(self, Vector2(right.end.x - 92.0, right.end.y - 34.0), 6.0, Color(ROSE, 0.6))
-		# Lesebändchen unten aus dem Falz (rund ausgeschnitten)
-		var ribbon := PackedVector2Array([Vector2(mid + 10, size.y - 30), Vector2(mid + 26, size.y - 30), Vector2(mid + 26, size.y + 20),
-			Vector2(mid + 22, size.y + 16), Vector2(mid + 18, size.y + 12), Vector2(mid + 14, size.y + 16), Vector2(mid + 10, size.y + 20)])
-		draw_colored_polygon(ribbon, ACCENT)
 		# leichtes Papierkorn
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 7
@@ -1124,6 +1182,8 @@ class TabNote extends Button:
 	var index := 0
 	var on_left := false
 	var selected := false
+	## steckt zwischen den Blättern (nicht die aufgeschlagene Seite): ohne Tape, etwas im Schatten der Seite darüber
+	var tucked := false
 	var lift := 0.0:
 		set(value):
 			lift = value
@@ -1154,15 +1214,23 @@ class TabNote extends Button:
 		var radii := Vector4(12, 3, 3, 12) if on_left else Vector4(3, 12, 12, 3)
 		var note := SoftShapes.rounded(r, radii, 0.9, index * 7 + 3)
 		SoftShapes.shadow(self, note, Vector2(3, 5), Color(0.25, 0.15, 0.08, 0.07), 3, 2.0)
-		draw_colored_polygon(note, color.lightened(0.12) if selected else color)
-		# Washi-Tape an der Klebekante (halb durchsichtig, feine Streifen)
-		var tape_x := r.end.x - 30.0 if on_left else r.position.x - 2.0
-		var tape := Rect2(Vector2(tape_x, r.position.y + 6.0), Vector2(32.0, size.y - 12.0))
-		draw_colored_polygon(SoftShapes.rounded_all(tape, 3.0, 0.5, index), Color(1, 1, 1, 0.42))
-		var stripe := tape.position.x + 4.0
-		while stripe < tape.end.x - 2.0:
-			draw_line(Vector2(stripe, tape.position.y + 1.0), Vector2(stripe + 6.0, tape.end.y - 1.0), Color(color.darkened(0.25), 0.18), 2.0, true)
-			stripe += 8.0
+		draw_colored_polygon(note, color.lightened(0.12) if selected else (color.darkened(0.05) if tucked else color))
+		if not tucked:
+			# Washi-Tape an der Klebekante (halb durchsichtig, feine Streifen) – nur die Notiz der aufgeschlagenen Seite
+			var tape_x := r.end.x - 30.0 if on_left else r.position.x - 2.0
+			var tape := Rect2(Vector2(tape_x, r.position.y + 6.0), Vector2(32.0, size.y - 12.0))
+			draw_colored_polygon(SoftShapes.rounded_all(tape, 3.0, 0.5, index), Color(1, 1, 1, 0.42))
+			var stripe := tape.position.x + 4.0
+			while stripe < tape.end.x - 2.0:
+				draw_line(Vector2(stripe, tape.position.y + 1.0), Vector2(stripe + 6.0, tape.end.y - 1.0), Color(color.darkened(0.25), 0.18), 2.0, true)
+				stripe += 8.0
+		else:
+			# Schatten der Seite darüber am Rand des Seitenstapels
+			var edge_x := r.end.x - 30.0 if on_left else r.position.x + 30.0
+			for i in 6:
+				var w := 2.0
+				var x := edge_x - (i + 1) * w if on_left else edge_x + i * w
+				draw_rect(Rect2(x, r.position.y + 2.0, w, size.y - 4.0), Color(0.3, 0.2, 0.1, 0.07 * (1.0 - i / 6.0)))
 		var text_width := TITLE_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
 		var room := size.x - 44.0
 		var text_x := (10.0 if on_left else 36.0) + shift.x + maxf(0.0, (room - text_width) / 2.0)

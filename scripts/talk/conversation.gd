@@ -140,7 +140,7 @@ func _process(delta: float) -> void:
 	if now != before:
 		_label.visible_characters = now
 		for i in range(before, now):
-			if i % 2 == 0 and _label.text[i] != " ":
+			if i % maxi(1, GameConfig.talk_clack_every) == 0 and _label.text[i] != " ":
 				Audio.play("ui/type", GameConfig.talk_clack_db, _rng.randf_range(0.9, 1.1))
 	if now >= _label.text.length():
 		_finish_line()

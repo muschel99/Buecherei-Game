@@ -11,6 +11,7 @@ Liest die Originale aus „Game design/Sounds Cozy Bücherei/“ (werden nie ver
 
 Aufruf (Terminal, im Projektordner; braucht ffmpeg):
     python3 tools/prepare_sounds.py            (alle)
+    python3 tools/prepare_sounds.py "clicking tastatur.mp3"   (nur diese Quelle(n); der Bericht bleibt dann unverändert)
     FFMPEG=/pfad/zu/ffmpeg python3 tools/prepare_sounds.py
 Vorhandene Ziel-Dateien werden überschrieben (sie stammen ja aus diesem Script) – eigene, von Hand
 abgelegte Dateien mit anderen Namen bleiben unberührt.
@@ -113,6 +114,12 @@ JOBS += [
     ("sprunglandung.mp3", "footsteps/land_stone", "steps", "pick", dict(parts={"all": "footsteps/land_stone"})),
     ("sit-down-only-2.mp3", "furniture/sit_down", "furniture", "split", dict(n=0, min_len=0.3)),
     ("walk-against-plants.mp3", "ambience/plant_rustle", "plants", "split", dict(n=0)),
+]
+
+# Seit dem Nachtest von Etappe 8: Tippen in den Sprechblasen (Gespräche) aus der Aufnahme der Entwicklerin – einzelne
+# Anschläge (das Spiel nimmt je Anschlag zufällig einen), weicher (Tiefpass) und leiser, damit es gemütlich klingt
+JOBS += [
+    ("clicking tastatur.mp3", "ui/type", "ui", "onset", dict(n=14, min_dist=0.09, lowpass=2600.0, gain=-6.0)),
 ]
 
 # Tiergeräusche, die die Entwicklerin nach und nach dazulegt (seit Etappe 6h): Dateien im Sounds-Ordner (auch in
@@ -292,7 +299,10 @@ def out_path(name):
 
 def main():
     report = []
+    only = set(sys.argv[1:])
     for src, dest, kind, mode, opt in JOBS + animal_jobs():
+        if only and src not in only:
+            continue
         path = os.path.join(SOURCE, src)
         if not os.path.exists(path):
             print("FEHLT:", src)
@@ -323,7 +333,7 @@ def main():
             made.append((dest, len(data) / RATE))
         elif mode == "onset":
             start = opt.get("start", 1)
-            for k, seg in enumerate(onsets(data, opt["n"])):
+            for k, seg in enumerate(onsets(data, opt["n"], opt.get("min_dist", 0.28))):
                 name = "%s_%d" % (dest, start + k)
                 piece = finish(data, kind, seg, gain=opt.get("gain", 0.0), fade_out=0.04)
                 encode(piece, out_path(name))
@@ -365,6 +375,8 @@ def main():
         report.append({"quelle": src, "ziel": [m[0] for m in made], "laengen": [round(m[1], 2) for m in made]})
         print("%-34s -> %2d Datei(en) %s%s" % (src, len(made), ", ".join("%s (%.2f s)" % m for m in made[:3]) + (" …" if len(made) > 3 else ""), note))
     compact_auto()
+    if only:
+        return  # nur einzelne Quellen: der Bericht über alle bleibt, wie er ist
     with open(os.path.join(AUDIO, "sounds_report.json"), "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=1)
 

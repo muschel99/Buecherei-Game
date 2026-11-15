@@ -23,9 +23,12 @@ const SOURCE := &"source"
 @export var line_darkness := 0.3
 @export var line_pressure := 0.15
 @export var line_fade_distance := 24.0
-## Nacht (0–1, setzt der Tagesablauf): die Tusche wird von Braun zu Nachtblau (night_line_color)
+## Nacht (0–1, setzt der Tagesablauf): die Tusche wird von Braun zu night_line_color, und weil der Shader nur ihren Farbton
+## nimmt (die Helligkeit kommt von der Fläche darunter), auch dunkler (night_line_darkness) – sonst wäre „Schwarz“ unter dem
+## bläulichen Mondlicht ein blaues Grau (Nachtest von Etappe 8)
 @export var night := 0.0
 @export var night_line_color := Color(0.1, 0.13, 0.3)
+@export var night_line_darkness := 0.05
 @export var paper_strength := 0.5
 @export var edge_darkening := 0.35
 @export var wobble := 1.2
@@ -68,6 +71,7 @@ func apply_config(preset: Dictionary) -> void:
 	line_pressure = GameConfig.paint_line_pressure
 	line_fade_distance = GameConfig.paint_line_fade_distance
 	night_line_color = GameConfig.paint_night_line_color
+	night_line_darkness = GameConfig.paint_night_line_darkness
 	paper_strength = GameConfig.paint_paper_strength
 	edge_darkening = GameConfig.paint_edge_darkening
 	wobble = GameConfig.paint_wobble
@@ -125,7 +129,7 @@ func _render_callback(callback_type: int, render_data: RenderData) -> void:
 		line_strength, line_width, paper_strength, edge_darkening,
 		wobble, warmth, saturation, wash,
 		c.r, c.g, c.b, line_fade_distance,
-		line_darkness, line_pressure, 0.0, 0.0,
+		lerpf(line_darkness, night_line_darkness, clampf(night, 0.0, 1.0)), line_pressure, 0.0, 0.0,
 	]).to_byte_array()
 	for view in buffers.get_view_count():
 		var color := buffers.get_color_layer(view)

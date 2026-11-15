@@ -1338,9 +1338,15 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Gestalten, Bild, Ton & Spiel; neue Settings-Abschnitte bekommen eine eigene Doppelseite), Haftnotizen `TabNote` am Rand
   (umgeblätterte links), Umblättern `_turn_to`, Erklärungen `SETTING_NOTES`. Schnelle Prüfbilder ohne Welt:
   `scenes/tools/ui_probe.tscn -- pause:<Notiz> open:<sek>,…` (→ screenshots/ui_probe/), im Spiel `--ui=pause:<Notiz>`.
-  **Hinterzimmer** `BackRoom` (Room `with_back_room`, `back_area()` hinter der Theke, Durchgang mit Vorhang, Dachfenster,
-  Sperrzonen auf beiden Seiten, `clear_doorway` nach dem Laden); die Backsteinhaut der Fassade wird im Durchgang über die
-  globalen Shader-Werte `library_cut_min/max` (storybook.gdshaderinc) nicht gezeichnet. Bett `bed_backroom` (bed.gd): schlafen
+  **Hinterzimmer** `BackRoom` (Room `with_back_room`; seit dem Nachtest von Etappe 8 RECHTS NEBEN dem Laden im hinteren Teil
+  des Modegeschäfts – `back_area()` aus `back_room_size`/`back_room_front_z`, Tür in der rechten Ladenwand hinter der Theke
+  `back_room_door_z`, `door_frame()`; Modegeschäft hinten unten ausgeschnitten: `NOTCH` in build_storybook_shop.py +
+  `HouseFacade.collision_notch` in fashion_shop.tscn, Holzbalken trägt dessen Rückwand; hinter dem Laden bleibt Platz für
+  Erweiterungen; Dachfenster im Teil hinter dem Modegeschäft; Sperrzonen auf beiden Seiten, `clear_doorway` und
+  `migrate_old_area` (alte Lage `OLD_AREA`) nach dem Laden). **Verdecker nie vor einer Tür:** main.gd `_add_library_occluders`
+  spart die Tür aus (sonst „andere Dimension“: hinter der offenen Tür fehlt alles). Türfutter liegt 2,5 cm in der Öffnung (nie
+  Fläche auf Fläche mit dem CSG-Loch). Die Fassadenhaut wird im Durchgang über die globalen Shader-Werte `library_cut_min/max`
+  (storybook.gdshaderinc) nicht gezeichnet. Bett `bed_backroom` (bed.gd): schlafen
   20–4 Uhr ohne Besucher (Gruppe `library_visitors`), aufwachen `clock_morning_hour`.
   **Besucher und Ausleihe:** Autoload `Lending` (Schild `is_open`/`set_open`, Tickets je Tag nach `fullness()` = Bücher in
   Regalen + Sitzplätze, `want_visitor()`, `lend(bücher, neu)` → Wallet.earn, Ausweise, `loans` → Rückgabe nach `loan_days` in
@@ -1381,7 +1387,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Couchtisch 0,3 m, `top_height` je Möbel), Theken `z_scale` 0,85 (`Kit.scale_height`, Platte `Counter.TOP_HEIGHT` 0,85 m),
   Spielfigur `eye_height` 1,45 m.
   Bilder: `--visitors=<n> [--at_counter]`, `pose_probe -- read`. **Hinterzimmer** seit 7b ein Anbau: `BackRoom._exterior`
-  (Backstein, Sandsteinsockel, Zinkdach mit Dachfenster-Aufsatz, Hof) und Holztür `BackRoomDoor` (E, schwingt ins Hinterzimmer;
+  (Backstein, Sandsteinsockel, Zinkdach mit Dachfenster-Aufsatz – seit dem Nachtest von Etappe 8 nur am Teil hinter dem
+  Modegeschäft) und Holztür `BackRoomDoor` (E, schwingt ins Hinterzimmer;
   nicht in der Gruppe "doors"). Besucher: Plätze vor Regalen werden reserviert (`_shelf_spots`), Tempo `visitor_speed_range`,
   Katzen halten Abstand zur Treppe (`cat_meet_entrance_gap`), Besucher steigen über Katzen. Anwohner gießen/fegen nicht mehr
   (`resident_activity_weights`), keine Handbewegung an Türen. Kartons meiden Deko (`DeliveryManager._deco_blocked`),

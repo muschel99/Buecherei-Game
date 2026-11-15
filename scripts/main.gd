@@ -275,7 +275,17 @@ func _add_library_occluders() -> void:
 	if not GameConfig.library_occluders:
 		return
 	var room := $GroundFloorRoom as Node3D
-	for spec in [[Vector3(0.0, 1.6, 4.1), Vector3(6.0, 3.0, 0.15)], [Vector3(3.1, 1.6, 0.0), Vector3(0.15, 3.0, 8.0)]]:
+	# Rückwand ganz; rechte Wand (zum Modegeschäft) mit Loch an der Tür zum Hinterzimmer (seit dem Nachtest von Etappe 8 –
+	# ein Verdecker vor einer offenen Tür lässt alles dahinter verschwinden)
+	var door_from := GameConfig.back_room_door_z - GameConfig.back_room_door_width / 2.0 - 0.1
+	var door_to := GameConfig.back_room_door_z + GameConfig.back_room_door_width / 2.0 + 0.1
+	var above := GameConfig.back_room_door_height + 0.1
+	var specs := [[Vector3(0.0, 1.6, 4.1), Vector3(6.0, 3.0, 0.15)],
+		[Vector3(3.1, 1.6, (-4.0 + door_from) / 2.0), Vector3(0.15, 3.0, door_from + 4.0)],
+		[Vector3(3.1, (above + 3.1) / 2.0, (door_from + door_to) / 2.0), Vector3(0.15, 3.1 - above, door_to - door_from)]]
+	if door_to < 3.9:
+		specs.append([Vector3(3.1, 1.6, (door_to + 4.0) / 2.0), Vector3(0.15, 3.0, 4.0 - door_to)])
+	for spec in specs:
 		var box := BoxOccluder3D.new()
 		box.size = spec[1]
 		var occluder := OccluderInstance3D.new()

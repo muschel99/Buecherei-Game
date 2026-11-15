@@ -156,6 +156,13 @@ const DEFAULT_MATERIAL := "res://assets/materials/house_facade.tres"
 		see_through = value
 		_queue_rebuild()
 
+## Ausschnitt aus der Kollision (Hauskoordinaten; leer = keiner): Dort steht etwas anderes im Haus, z. B. seit dem Nachtest
+## von Etappe 8 das Hinterzimmer der Bücherei hinten im Modegeschäft (passend zu NOTCH in build_storybook_shop.py).
+@export var collision_notch: AABB = AABB():
+	set(value):
+		collision_notch = value
+		_queue_rebuild()
+
 ## Hängende Straßenlaternen an der Front (seit Etappe 4g): Befestigungspunkte an der Wand in
 ## Hauskoordinaten (x entlang der Front, y Höhe, z Wandebene). Trägt tools/blender/build_street.py
 ## ein (es sucht eine freie Stelle zwischen Fenstern und Schildern).
@@ -381,13 +388,39 @@ func _build_collision() -> void:
 	_body.name = "Body"
 	_body.collision_layer = _collision_layer()
 	_body.collision_mask = 0
-	var shape := BoxShape3D.new()
-	shape.size = Vector3(width, eaves_height, depth)
-	var collision := CollisionShape3D.new()
-	collision.shape = shape
-	collision.position = Vector3(0.0, eaves_height / 2.0, -depth / 2.0)
-	_body.add_child(collision)
+	var whole := AABB(Vector3(-width / 2.0, 0.0, -depth), Vector3(width, eaves_height, depth))
+	for box in _boxes_without(whole, collision_notch):
+		var shape := BoxShape3D.new()
+		shape.size = box.size
+		var collision := CollisionShape3D.new()
+		collision.shape = shape
+		collision.position = box.get_center()
+		_body.add_child(collision)
 	add_child(_body)
+
+
+## Quader minus Ausschnitt als höchstens sechs Quader (Scheiben entlang x, dann z, dann y).
+static func _boxes_without(whole: AABB, notch: AABB) -> Array[AABB]:
+	var cut := whole.intersection(notch) if notch.has_volume() else AABB()
+	if not cut.has_volume():
+		return [whole]
+	var result: Array[AABB] = []
+	var rest := whole
+	for axis in 3:
+		var lo := rest.position[axis]
+		var hi := rest.end[axis]
+		if cut.position[axis] > lo + 0.001:
+			var piece := rest
+			piece.size[axis] = cut.position[axis] - lo
+			result.append(piece)
+		if cut.end[axis] < hi - 0.001:
+			var piece := rest
+			piece.position[axis] = cut.end[axis]
+			piece.size[axis] = hi - cut.end[axis]
+			result.append(piece)
+		rest.position[axis] = cut.position[axis]
+		rest.size[axis] = cut.size[axis]
+	return result
 
 
 ## Fest (Ebene "world") oder nur Sichtblocker (Ebene "sight_blocker"), siehe solid.

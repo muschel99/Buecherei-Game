@@ -8,7 +8,7 @@
   assets/audio/ui/card_beep.wav    – Kartenleser hat gelesen (ein sanfter, runder Piepton),
   assets/audio/ui/stamp_pop.wav    – Stempel ploppt auf dem Bildschirm auf (weiches „Plopp“),
   assets/audio/ui/slide.wav        – Bücher über die Theke schieben (sanftes Rutschen),
-  assets/audio/ui/type.wav, type_1 … type_5.wav – leises, angenehmes Tastaturklackern beim Reden (Varianten).
+  (früher auch ui/type*.wav – seit dem Nachtest von Etappe 8 aus der Aufnahme der Entwicklerin, siehe prepare_sounds.py)
 Eigene Aufnahme? Einfach die Datei ersetzen (auch als .ogg mit gleichem Namen) – das Script schreibt nur, wenn die Datei
 fehlt (--force: neu). Braucht nur Python (kein ffmpeg).
 
@@ -169,5 +169,5 @@ if __name__ == "__main__":
     write("card_beep.wav", card_beep(), 0.3)
     write("stamp_pop.wav", stamp_pop(), 0.5)
     write("slide.wav", slide(), 0.4)
-    for n in range(6):
-        write("type.wav" if n == 0 else "type_%d.wav" % n, type_click(100 + n), 0.22)
+    # Tippen in den Sprechblasen kommt seit dem Nachtest von Etappe 8 aus der Aufnahme der Entwicklerin
+    # (tools/prepare_sounds.py, „clicking tastatur.mp3“ → ui/type_1 …); type_click bleibt als Vorlage

@@ -182,7 +182,6 @@ length = 8.0
 [node name="Back" type="Node3D" parent="Walls"]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 3, 0, 4)
 script = ExtResource("18_wall")
-openings = Array[Rect2]([Rect2(1.025, 0, 0.95, 2.15)])
 
 [node name="Front" type="Node3D" parent="Walls"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -4)
@@ -243,7 +242,7 @@ data = ExtResource("12_counter")
 uid = 5
 
 [node name="Bed" type="Node3D" parent="Furniture"]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2.4, 0, 7.18)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 5.56, 0, 4.14)
 script = ExtResource("16_placed")
 data = ExtResource("41_bed")
 uid = 8

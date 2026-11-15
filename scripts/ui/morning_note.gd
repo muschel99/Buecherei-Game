@@ -14,8 +14,7 @@ func _ready() -> void:
 	_paper = NotePaper.new()
 	_paper.custom_minimum_size = Vector2(360, 440)
 	_paper.size = _paper.custom_minimum_size
-	_paper.set_anchors_preset(Control.PRESET_CENTER)
-	_paper.position = -_paper.size / 2.0
+	_center_paper()
 	_paper.pivot_offset = _paper.size / 2.0
 	_paper.rotation_degrees = -3.0
 	_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -38,6 +37,7 @@ func _show_latest() -> void:
 func show_note(stats: Dictionary) -> void:
 	_paper.stats = stats
 	_paper.queue_redraw()
+	_center_paper()
 	_paper.visible = true
 	_paper.modulate.a = 0.0
 	_paper.scale = Vector2.ONE * 0.9
@@ -63,7 +63,13 @@ func hide_note() -> void:
 	_tween.tween_property(_paper, "position:y", _paper.position.y + 40.0, 0.3)
 	_tween.chain().tween_callback(func() -> void:
 		_paper.visible = false
-		_paper.position = -_paper.size / 2.0)
+		_center_paper())
+
+
+## Mitten ins Bild (an der Bildmitte verankert, feste Größe – seit dem Nachtest von Etappe 8; vorher stand die Lage fest in
+## Bildpunkten, und je nach Startreihenfolge hing der Zettel oben links in der Ecke).
+func _center_paper() -> void:
+	_paper.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_KEEP_SIZE)
 
 
 func close_from_escape() -> void:

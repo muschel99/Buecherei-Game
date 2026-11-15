@@ -168,9 +168,9 @@ void main() {
 	// Strichdruck schwankt leicht (gleichmäßig entlang der Bildfläche, keine Brüche in der Linie)
 	edge *= 1.0 - params.pressure * vnoise(suv * 18.0);
 	// Tusche: dunkles Braun, so hell wie ein Teil der Fläche darunter – auf hellen Wänden mittelbraun,
-	// im Schatten dunkelbraun, nie schwarz
+	// im Schatten dunkelbraun; nachts fast schwarz (line_dark klein, Wunsch der Entwicklerin)
 	vec3 hue = params.line_color / max(lum(params.line_color), 1e-4);
-	vec3 ink = hue * max(lum(col) * params.line_dark, 0.02);
+	vec3 ink = hue * max(lum(col) * params.line_dark, 0.004);
 	ink = mix(ink, col * params.line_dark, 0.25);
 	col = mix(col, ink, clamp(edge * params.line_strength, 0.0, 1.0));
 

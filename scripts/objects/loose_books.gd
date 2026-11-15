@@ -232,6 +232,18 @@ func settle_on(uid: int, height_at: Callable) -> void:
 		_changed()
 
 
+## Bücher, die frei (ohne Möbel darunter) in diesem Bereich liegen (x/z im Raum), kommen ins Lager – für alte Spielstände,
+## z. B. das frühere Hinterzimmer. Liefert die Zahl der Bücher.
+func release_in_area(area: Rect2) -> int:
+	var books: Array[Book] = []
+	for entry: LooseBook in _entries.duplicate():
+		var p := entry.transform.origin
+		if entry.support_uid == 0 and area.has_point(Vector2(p.x, p.z)):
+			books.append(remove(entry))
+	BookStock.store_books(books)
+	return books.size()
+
+
 ## Ein Möbelstück wird weggeräumt: Liefert die Bücher, die darauf lagen (der Aufrufer legt sie
 ## ins Lager).
 func release_on(uids: Array[int]) -> Array[Book]:

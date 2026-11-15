@@ -693,6 +693,8 @@ var paint_line_fade_distance: float = 24.0
 ## Tusche nachts – der Tagesablauf blendet dorthin über (Testrunde 7b: Braun sah nachts komisch aus, erst Dunkelblau;
 ## seit dem Nachtest von Etappe 8 Schwarz, Wunsch der Entwicklerin)
 var paint_night_line_color: Color = Color(0.02, 0.02, 0.025)
+## Helligkeit der Tusche nachts im Verhältnis zur Fläche darunter (wie paint_line_darkness; klein = fast schwarz)
+var paint_night_line_darkness: float = 0.05
 ## Papierstruktur (ungleichmäßig aufgetragene Farbe, Körnung, Fasern; 0 = glatt).
 var paint_paper_strength: float = 0.8
 ## Farbränder dunkler wie bei getrocknetem Aquarell (0 = aus).
@@ -765,12 +767,13 @@ var window_daylight_inset: float = 0.9
 ## Höchstens so viele Bilder pro Sekunde, solange das Pausenmenü offen ist (spart Strom; nicht während seiner Bewegungen).
 var paused_max_fps: int = 30
 ## Notizbuch-Pausenmenü (seit Testrunde 7b langsam und weich, Wunsch der Entwicklerin): Hereingleiten, Aufklappen des Deckels,
-## eine halbe Seite umblättern (bei mehreren Seiten je Blatt schneller: pause_turn_more_factor), Haftnotizen erscheinen
-## nacheinander (Abstand pause_tab_stagger) und wandern beim Umblättern (pause_tab_move_time); Zuklappen = Faktor der Zeiten.
+## eine halbe Seite umblättern (seit dem Nachtest von Etappe 8 immer nur EIN Blatt, auch bei Sprüngen über mehrere Seiten),
+## Haftnotizen erscheinen nacheinander (Abstand pause_tab_stagger) und wandern beim Umblättern (pause_tab_move_time);
+## Zuklappen = Faktor der Zeiten. Format der aufgeschlagenen Doppelseite: Breite zu Höhe (zwei Seiten etwa im Format A5).
 var pause_slide_time: float = 1.0
 var pause_cover_time: float = 0.85
 var pause_turn_time: float = 0.42
-var pause_turn_more_factor: float = 0.65
+var pause_book_ratio: float = 1.42
 var pause_tab_pop_time: float = 0.34
 var pause_tab_stagger: float = 0.07
 var pause_tab_move_time: float = 0.5
@@ -1365,13 +1368,16 @@ var sleep_from_hour: float = 20.0
 var sleep_until_hour: float = 4.0
 var sleep_fade_time: float = 1.2
 
-## Hinterzimmer (seit Etappe 7, BackRoom): Innenmaße (Breite x entlang der Rückwand ab der linken Wand, Tiefe nach hinten),
-## Durchgang mit Holztür (Mitte x, Breite, Höhe) und Dachfenster (Breite, Länge).
-var back_room_size: Vector2 = Vector2(3.0, 4.0)
-var back_room_door_x: float = 1.5
+## Hinterzimmer (seit Etappe 7, BackRoom; seit dem Nachtest von Etappe 8 rechts neben dem Laden im hinteren Teil des
+## Modegeschäfts): Innenmaße (Breite x ab der rechten Ladenwand, Tiefe z), Innenseite der Wand zum Modegeschäft (z; dessen
+## Laden endet davor – passt zu NOTCH in build_storybook_shop.py), Holztür in der rechten Ladenwand (Mitte z, Breite, Höhe)
+## und Dachfenster (Breite, Länge; im Teil hinter dem Modegeschäft).
+var back_room_size: Vector2 = Vector2(3.4, 3.0)
+var back_room_front_z: float = 1.72
+var back_room_door_z: float = 3.5
 var back_room_door_width: float = 0.95
 var back_room_door_height: float = 2.15
-var back_room_skylight: Vector2 = Vector2(0.9, 1.2)
+var back_room_skylight: Vector2 = Vector2(1.0, 0.6)
 
 
 ## --- Bücherei-Besucher und Ausleihe (seit Etappe 7, Teil 4: Lending, LibraryVisits) ---
@@ -1401,7 +1407,10 @@ var loan_days: Vector2i = Vector2i(1, 3)
 ## Gespräche (seit Etappe 8): Tippgeschwindigkeit (Zeichen je Sekunde), Lautstärke des Tastaturklackerns, wie oft ein zweiter
 ## Satz zum Plaudern bzw. eine Frage mit Antworten kommt, wie schnell die Kamera der Figur folgt
 var talk_chars_per_second: float = 38.0
-var talk_clack_db: float = -17.0
+var talk_clack_db: float = -18.0
+## Tippgeräusch (seit dem Nachtest von Etappe 8 aus der Aufnahme der Entwicklerin, ui/type_1 …): bei jedem n-ten Buchstaben
+## ein Anschlag (größer = ruhiger)
+var talk_clack_every: int = 3
 var talk_second_line_chance: float = 0.45
 var talk_question_chance: float = 0.35
 var talk_focus_speed: float = 6.0

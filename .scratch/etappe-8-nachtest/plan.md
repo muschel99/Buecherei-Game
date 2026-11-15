@@ -25,11 +25,16 @@ Status: claimed
 
 ## Schritte (je Schritt hochladen, dann weiter)
 - [x] 1. Kleinigkeiten: schwarze Linien nachts, Kaching am Ende der Bedienung, Lesehaltung (Buch weiter vom Körper)
-- [ ] 2. Hinterzimmer neu: rechts neben der Bücherei im hinteren Teil des Modegeschäfts (Laden des Modegeschäfts bleibt),
+- [x] 2. Hinterzimmer neu: rechts neben der Bücherei im hinteren Teil des Modegeschäfts (Laden des Modegeschäfts bleibt),
   Tür in der rechten Wand hinter der Theke, Verdecker mit Loch an der Tür, Türrahmen ohne Flimmern, alte Tür zu;
   hinter der Bücherei bleibt Platz für spätere Erweiterungen; alte Spielstände: Möbel ziehen mit um
 - [ ] 3. Schriften: freie Schriften (npm @fontsource, OFL) – Handschrift für Notizen/Überschriften/Schilder, runde
   gemütliche Schrift für Tablet, Zahlen, Hinweise; Bücher mit mehreren Schriftarten (Serifen, schlicht, verspielt –
   keine Handschrift), verzerrte Titel beheben
+- [x] 5. Nachtrag der Entwicklerin: Notizzettel am Morgen hängt manchmal oben links in der Ecke; nachts wirklich schwarze
+  Linien prüfen (auch bei bläulichem Mondlicht)
+- [x] 6. Pausenmenü: schmaleres, normales Buchformat (nicht quadratisch); Haftnotizen kleben sichtbar an IHREN Seiten (die
+  anderen stecken zwischen den Seiten im Buch, links bzw. rechts im Seitenstapel); Sprung zwischen Notizen = EIN Umblättern
+- [x] 7. Tippgeräusch der Sprechblasen aus „clicking tastatur.mp3“ (Game design, Sounds): leiser und gemütlicher aufbereitet
 - [ ] 4. Theke neu: PC weg, Tablet rechts schräg mit Kartenleser (Kabel), Scanner gedreht, Tüte links, Korb rechts;
   Ansicht mittig und gerade; App „Ausleihe“; Körbe erscheinen/verschwinden, Gäste gehen mit der Papiertüte

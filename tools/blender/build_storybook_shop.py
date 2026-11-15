@@ -56,6 +56,12 @@ WIN_X = (-1.7, 0.0, 1.7)          # Fenster im Obergeschoss
 WIN_W, WIN_Z0, WIN_H = 0.92, 4.3, 1.58
 DORMER_X, DORMER_FY = (-1.85, 1.85), 0.62   # Gauben: Mitte und Lage der Front
 
+# Ausschnitt hinten unten links (seit dem Nachtest von Etappe 8): Dort liegt das Hinterzimmer der Bücherei (BackRoom). Der
+# Laden bleibt gleich groß (seine Rückwand steht bei y 5,6); Seiten- und Rückwand darüber ruhen auf der Decke des Zimmers
+# (Holzbalken innen). Grenzen in Hauskoordinaten (x, y, z) von bis – passend zu GameConfig.back_room_* und
+# HouseFacade.collision_notch in scenes/world/houses/fashion_shop.tscn (Godot: x, z, -y).
+NOTCH = ((-0.92, 5.72, -0.1), (2.75, 8.05, 3.9))
+
 # Wölbung dieses Hauses (jedes Haus bekommt eigene Werte)
 SETTLE = {"wave": 0.018, "wavelength": 3.4, "lean": 0.004, "roof_sag": 0.075, "ridge_tilt": 0.035, "eaves_sag": 0.025}
 
@@ -706,9 +712,29 @@ def build_scene():
     SC.chalkboard(M, C["deco"], (1.78, -0.6), -14, SC.sign_material("fashion_shop", "chalkboard"))
     house = [o for k, c in C.items() if k != "env" for o in c.objects]
     SC.settle(house, SETTLE, HW, E, RIDGE)
+    cut_notch(C)
     cols = SC.colliders(C, OBSTACLES)
     SC.pavement(M, C)
     return M, C, cols
+
+
+def cut_notch(C):
+    """Hinterzimmer der Bücherei: alles, was in den Ausschnitt NOTCH ragt, wird dort weggeschnitten (nach dem Setzen, damit die
+    Schnittkanten gerade an den Wänden des Zimmers liegen). Danach bleibt jedes Teil ein geschlossener Körper."""
+    lo, hi = NOTCH
+    center = tuple((a + b) / 2 for a, b in zip(lo, hi))
+    size = tuple(b - a for a, b in zip(lo, hi))
+    for key, coll in C.items():
+        if key in ("env", "collision", "light"):
+            continue
+        for obj in list(coll.objects):
+            if obj.type != "MESH":
+                continue
+            box = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+            if any(min(p[i] for p in box) > hi[i] or max(p[i] for p in box) < lo[i] for i in range(3)):
+                continue
+            SB.boolean_cut(obj, [SB.cutter(center, size)])
+            print("Ausschnitt Hinterzimmer:", obj.name)
 
 
 def main():

@@ -82,9 +82,9 @@ func _ready() -> void:
 		extra_build_areas.append(BackRoom.back_area())
 		add_to_group(Lending.ROOM_GROUP)  # der Laden (für Besucher und Ausleihe)
 		# Nachts gehen zufällig Fenster aus (storybook.gdshaderinc window_glow) – nie im Laden selbst
-		var corner_a := to_global(Vector3(build_area.position.x - 0.5, -0.2, build_area.position.y - 0.5))
-		var back_end := BackRoom.back_area().end.y
-		var corner_b := to_global(Vector3(build_area.end.x + 0.5, GameConfig.room_height + 0.4, back_end + 0.5))
+		var lit := build_area.merge(BackRoom.back_area()).grow(0.5)
+		var corner_a := to_global(Vector3(lit.position.x, -0.2, lit.position.y))
+		var corner_b := to_global(Vector3(lit.end.x, GameConfig.room_height + 0.4, lit.end.y))
 		RenderingServer.global_shader_parameter_set(&"library_area_min", corner_a.min(corner_b))
 		RenderingServer.global_shader_parameter_set(&"library_area_max", corner_a.max(corner_b))
 		# Schild „Geöffnet/Geschlossen“ innen an der Ladentür
@@ -246,6 +246,11 @@ func ensure_essentials() -> void:
 		if support:
 			world = support.global_transform * world
 		add_furniture(data, world, support)
+
+
+## Platz eines unverzichtbaren Möbelstücks aus der Szene ({support_id, transform}; leer = keiner).
+func essential_spot(id: String) -> Dictionary:
+	return _essential_spots.get(id, {})
 
 
 func _remember_essential_spots() -> void:
@@ -482,6 +487,7 @@ func load_save_data(save_data: Dictionary) -> void:
 	_settle_on_supports()
 	var back := get_node_or_null("BackRoom") as BackRoom
 	if back:
+		back.migrate_old_area()
 		back.clear_doorway()
 	layout_changed.emit()
 
