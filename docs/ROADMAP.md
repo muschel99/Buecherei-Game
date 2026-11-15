@@ -1844,6 +1844,8 @@ Plan und Entscheidungen: `.scratch/etappe-8/plan.md`. Schritt für Schritt gebau
 - [x] Gewölbter Rücken, Deckel mit runden Ecken, dicker und etwas größer, sanftere Farben
 - [x] Jedes Genre hat ein gemaltes Erkennungszeichen (Herz, Lupe, Drache, Rakete …) auf Rücken, Cover und Kistenschild;
   in den Kisten stehen die echten Bücher aus dem Lager
+- [x] Nachtest: süßer, mehr Farbe, weniger Weiß – kräftigere Genre-Farben, Titelschilder und Abzeichen in Pastell statt
+  Papierweiß, Buchschnitt in der Farbe des Einbands
 
 **Schritt 3 – Bedienen an der Theke**
 - [x] Gemütlicher alter PC statt der Kasse (Röhrenbildschirm, Kartenleser, Scanner); E „Bedienen“ öffnet die Theken-Ansicht
