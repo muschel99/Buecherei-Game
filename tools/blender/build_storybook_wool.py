@@ -193,11 +193,11 @@ def wool_inside(M, C, ops):
     cubbies(wood, yarn, T.wall_matrix(*S4), 0.5, 6.4, 0.08, 5, 0.46, -0.32, rnd)
     cubbies(wood, yarn, T.wall_matrix(*S5), 0.5, 3.1, 0.08, 5, 0.46, -0.32, rnd)
     cubbies(wood, yarn, T.wall_matrix(*S3), 0.9, 4.2, 0.08, 5, 0.46, -0.32, rnd)
-    # Theke (seit Etappe 6i): hinten in der Mitte, Platte 0,95 m hoch
-    wood.box((0.6, 5.72, 0.5), (2.4, 0.6, 0.88), step=0.4, dent=0.003)
-    wood.box((0.6, 5.72, 0.965), (2.52, 0.68, 0.05), step=0.4, dent=0.002)
+    # Theke (seit Etappe 6i): hinten in der Mitte; seit Etappe 8 Platte 0,85 m über dem Boden wie in der Bücherei
+    wood.box((0.6, 5.72, 0.46), (2.4, 0.6, 0.8), step=0.4, dent=0.003)
+    wood.box((0.6, 5.72, 0.885), (2.52, 0.68, 0.05), step=0.4, dent=0.002)
     for k in range(4):
-        wood.box((-0.27 + k * 0.58, 5.41, 0.5), (0.48, 0.03, 0.66), step=0.4, dent=0.002)
+        wood.box((-0.27 + k * 0.58, 5.41, 0.46), (0.48, 0.03, 0.6), step=0.4, dent=0.002)
     # Niedriger Tisch mit zwei Schubladenfronten (Vorlage: Strickzeug auf dem Tisch)
     wood.box((-1.0, 2.6, 0.5), (1.6, 0.8, 0.05), step=0.4, dent=0.002)
     for sx in (-1, 1):
@@ -222,7 +222,7 @@ def wool_inside(M, C, ops):
     wood.build()
     # Körbe mit Wolle
     basket_spots = [("Korb Tisch", (-0.65, 2.6, 0.525), (0.34, 0.26, 0.14), 71), ("Korb Boden links", (-1.45, 3.35, 0.06), (0.42, 0.34, 0.26), 72),
-                    ("Korb Boden rechts", (2.3, 2.9, 0.06), (0.46, 0.36, 0.28), 73), ("Korb Theke", (-0.15, 5.72, 0.99), (0.3, 0.24, 0.12), 74)]
+                    ("Korb Boden rechts", (2.3, 2.9, 0.06), (0.46, 0.36, 0.28), 73), ("Korb Theke", (-0.15, 5.72, 0.91), (0.3, 0.24, 0.12), 74)]
     for name, pos, size, seed in basket_spots:
         yarn_basket(M, C, yarn, name, pos, size, seed, rnd, count=8 if size[2] > 0.2 else 5)
     # Auslagen: Körbe und Stoffballen

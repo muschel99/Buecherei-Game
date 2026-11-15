@@ -550,10 +550,11 @@ def window_display(M, C):
     sh.build()
     for body in stack.values():
         body.build()
-    # Ladentheke (seit Etappe 6i): links hinten, durch das Schaufenster gut zu sehen; dahinter steht die Verkäuferin
+    # Ladentheke (seit Etappe 6i): links hinten, durch das Schaufenster gut zu sehen; dahinter steht die Verkäuferin.
+    # Seit Etappe 8 Platte 0,85 m über dem Boden wie in der Bücherei
     ct = Body("Ladentheke", M["wood_in"], C["inside"], seed=122, vary=0.05, bevel=0.01)
-    ct.box((-0.85, 3.9, 0.5), (1.9, 0.62, 0.88), step=0.4, dent=0.003)
-    ct.box((-0.85, 3.9, 0.96), (2.02, 0.7, 0.05), step=0.4, dent=0.002)
+    ct.box((-0.85, 3.9, 0.4725), (1.9, 0.62, 0.825), step=0.4, dent=0.003)
+    ct.box((-0.85, 3.9, 0.905), (2.02, 0.7, 0.05), step=0.4, dent=0.002)
     ct.build()
     # Plätze im Laden fürs Spiel: Kunde vor der Theke, Verkäuferin dahinter, Regal und Auslage anschauen
     SC.shop_spot("counter", 0, (-0.85, 3.2, 0.08), (0, 1))

@@ -163,12 +163,12 @@ def tea_inside(M, C, ops):
                 x += 2 * r + rnd.uniform(0.015, 0.04)
         for xs in (x0, (x0 + x1) / 2, x1):
             wood.box((xs, 1.9, -0.48), (0.04, 2.0, 0.34), step=0.5, dent=0.002, matrix=m)
-    # Theke mit Kannen
+    # Theke mit Kannen (seit Etappe 8: Platte 0,85 m über dem Boden wie in der Bücherei)
     tm = T.wall_matrix(*S4, 3.2)
-    wood.box((0, 0.5, -1.6), (2.2, 1.0, 0.6), step=0.4, dent=0.003, matrix=tm)
-    wood.box((0, 1.02, -1.6), (2.3, 0.05, 0.66), step=0.4, dent=0.002, matrix=tm)
+    wood.box((0, 0.4325, -1.6), (2.2, 0.865, 0.6), step=0.4, dent=0.003, matrix=tm)
+    wood.box((0, 0.885, -1.6), (2.3, 0.05, 0.66), step=0.4, dent=0.002, matrix=tm)
     for k, dx in enumerate((-0.7, 0.0, 0.7)):
-        T.teapot(china, tm @ Vector((dx, 1.05, -1.6)), 0.16, rnd, yaw=rnd.uniform(0, 360))
+        T.teapot(china, tm @ Vector((dx, 0.915, -1.6)), 0.16, rnd, yaw=rnd.uniform(0, 360))
     # Auslage hinter dem Schaufenster: Tisch mit Kannen und Dosen
     am = T.wall_matrix(*S2, 3.3)
     wood.box((0, 0.42, -0.75), (2.4, 0.84, 0.5), step=0.4, dent=0.003, matrix=am)

@@ -444,19 +444,20 @@ def taproom(M, C):
     sill = Body("Gaststube Fensterbrett", M["pub_wood_in"], C["inside"], seed=58, vary=0.05, bevel=0.006)
     sill.box((-xi + 0.06, 2.2, 0.78), (0.24, 1.26, 0.04), step=0.4, dent=0.002)
     sill.build()
-    # Tresen und Flaschenregal an der Rückwand (seit Etappe 6i: Tresen niedriger und weiter vorn, dahinter steht jemand)
+    # Tresen und Flaschenregal an der Rückwand (seit Etappe 6i: Tresen niedriger und weiter vorn, dahinter steht jemand;
+    # seit Etappe 8 Platte 0,85 m über dem Boden wie in der Bücherei)
     t = Body("Tresen", M["pub_wood_in"], C["inside"], seed=55, vary=0.06, bevel=0.012)
-    t.box((0.3, 4.42, 0.5), (3.4, 0.6, 0.88), step=0.4, dent=0.003)
-    t.box((0.3, 4.39, 0.96), (3.55, 0.72, 0.06), step=0.4, dent=0.003)
+    t.box((0.3, 4.42, 0.47), (3.4, 0.6, 0.82), step=0.4, dent=0.003)
+    t.box((0.3, 4.39, 0.9), (3.55, 0.72, 0.06), step=0.4, dent=0.003)
     for k in range(5):
-        t.box((-1.2 + k * 0.75, 4.1, 0.5), (0.6, 0.03, 0.62), step=1, dent=0.002)
+        t.box((-1.2 + k * 0.75, 4.1, 0.47), (0.6, 0.03, 0.56), step=1, dent=0.002)
     for z in (1.5, 1.95, 2.4):
         t.box((0.3, yb - 0.2, z), (3.6, 0.28, 0.04), step=0.6, dent=0.002)
     t.build()
     rail = Body("Tresen Messing", M["brass_in"], C["inside"], seed=56)
     rail.tube([(-1.45, 4.03, 0.18), (2.05, 4.03, 0.18)], 0.02, segs=10, round_ends=True)
     for k in range(3):
-        rail.lathe([(0.0, 0.0), (0.03, 0.0), (0.02, 0.2), (0.03, 0.32), (0.0, 0.34)], (-0.4 + k * 0.4, 4.39, 0.99), segs=12)
+        rail.lathe([(0.0, 0.0), (0.03, 0.0), (0.02, 0.2), (0.03, 0.32), (0.0, 0.34)], (-0.4 + k * 0.4, 4.39, 0.93), segs=12)
     rail.build()
     SC.shop_spot("counter", 0, (0.3, 3.45, 0.08), (0, 1))
     SC.shop_spot("vendor", 0, (0.3, 5.02, 0.08), (0, -1))

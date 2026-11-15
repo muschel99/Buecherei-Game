@@ -77,4 +77,4 @@ und Garten Blatt, Reisen Koffer, Kunst Pinsel, Geschichte Sanduhr, Philosophie E
   Herzen am PC, vertraute Sätze, Freunde mitbringen)
 - [x] 6. Wünsche: Gedankenblase mit „?“ über dem Kopf, im Gespräch annehmen/ablehnen, danach das Genre-Zeichen in der Blase,
   Buch per Linksklick übergeben (in den Korb, Trinkgeld, Freundschaft, Dankeschön)
-- [ ] 7. Theken der anderen Läden auf 0,85 m
+- [x] 7. Theken der anderen Läden auf 0,85 m (Bäckerei, Teestube, Wolle & Stoff, Pub, Modegeschäft; Blumenladen hatte 0,87 m)

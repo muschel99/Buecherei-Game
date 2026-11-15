@@ -214,9 +214,9 @@ def bakery_inside(M, C):
         T.basket(M, C, "Korb %s" % ("links" if side < 0 else "rechts"), Vector((cx, 0.3, 0.08)), (0.4, 0.28, 0.16), 57 + side)
         for i in range(6):
             loaves.blob((cx - 0.12 + 0.08 * (i % 4), 0.25 + 0.08 * (i // 4), 0.22), 0.045, subdiv=1, lump=0.1, scale=(1, 1, 0.7))
-    # Theke hinten und Regal an der Rückwand
-    wood.box((0, yb - 1.2, 0.5), (1.8, 0.5, 1.0), step=0.4, dent=0.003)
-    wood.box((0, yb - 1.2, 1.03), (1.9, 0.56, 0.05), step=0.4, dent=0.002)
+    # Theke hinten und Regal an der Rückwand (seit Etappe 8: Platte 0,85 m über dem Boden wie in der Bücherei)
+    wood.box((0, yb - 1.2, 0.4375), (1.8, 0.5, 0.875), step=0.4, dent=0.003)
+    wood.box((0, yb - 1.2, 0.905), (1.9, 0.56, 0.05), step=0.4, dent=0.002)
     for zz in (1.2, 1.6, 2.0):
         wood.box((0, yb - 0.2, zz), (2.6, 0.3, 0.035), step=0.4, dent=0.002)
         for i in range(7):

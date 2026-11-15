@@ -47,8 +47,9 @@
 | 6h  | Vögel und Katzen verfeinern (weiche Modelle, Flug, Tauben, Gesichter, Spielzeug, Katzenkörbchen); dazu neue Geräusche, große Katzen, Katzen-Verhalten, Animationen der Passanten | fertig |
 | 6i  | Leben in der Straße: Anwohner, Läden mit Verkäufern, Pub, Wollladen neu, Umarmen und mehr Begegnungen | fertig |
 | 6j  | Rundgang und Feinschliff: Passanten ohne Stau, Figuren sauber, Innenraum im Bilderbuch-Stil, neues Licht | fertig |
-| 7   | Wirtschaft und Tagesablauf               | offen         |
-| 8   | Besuchervielfalt                         | offen         |
+| 7   | Tagesablauf und erste Besucher (Uhr, Licht, Hinterzimmer, Ausleihe, Notizzettel) | fertig |
+| 7b  | Testrunde nach Etappe 7: Nacht, Besucher, Anbau, Notizbuch, Bücherkisten, Möbel geprüft | fertig |
+| 8   | Besuchervielfalt: Ladebildschirm, Chibi-Größen, weiche Bücher, Theke mit PC, Gespräche, Stammgäste, Wünsche | fertig |
 | 9   | Café                                     | offen         |
 | 10  | Erweiterungen und Freischaltungen        | offen         |
 | 10b | Fahrzeuge neu modellieren (vorgemerkt)   | offen         |
@@ -75,7 +76,7 @@ saubere Nummern unter Etappe 6, damit sich nichts mit den späteren Etappen 7–
 | 13 | 6i | Leben in der Straße |
 | (Auftrag „/grill-me“) | 6j | Rundgang und Feinschliff |
 
-## Stand nach dem Stil-Umbau (Überblick, Stand 12.11.2026)
+## Stand nach dem Stil-Umbau (Überblick, Stand 14.11.2026)
 Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was noch offen ist.
 
 **Was neu ist**
@@ -138,6 +139,9 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 - **Testrunde 7b:** ruhige Nächte mit Laternenlicht, Besucher mit Körben und Lese-Haltung, Theke in drei Schritten, Hinterzimmer
   als Anbau mit Tür, Pausenmenü als Notizbuch, Bücherkisten hinter der Theke, einfacheres Regal-Menü mit Bücherverzeichnis;
   Nachtest: Fassaden-Vorschau ohne langen Hänger, alle Möbel geprüft (Beine fest, nichts schwebt).
+- **Etappe 8:** Ladebildschirm beim Start, einheitliche Chibi-Größen (Theken 0,85 m, niedrigere Tische, Spielfigur 1,45 m),
+  weiche Bücher mit Genre-Zeichen, Theke mit altem PC (Kartenleser, Scanner, Stempelkarte), Gespräche mit allen Figuren,
+  zehn Stammgäste mit Freundschaft, vier Arten des Besuchs, Wünsche in der Gedankenblase.
 
 **Wo die wichtigen Dateien liegen**
 
@@ -154,21 +158,22 @@ Kurz zusammengefasst, was seit Etappe 4f dazugekommen ist, wo es liegt und was n
 | Fassade der Bücherei (Baukasten) | `tools/blender/build_storybook_facade.py` + `facade_options.py` → `assets/models/facade/`, `data/facade/`; im Spiel `scripts/world/library_facade.gd`, Wahl `scripts/autoload/facade_design.gd` |
 | App „Fassade“ | `scripts/ui/tablet_apps/facade_app.gd` (+ `facade_tile.gd`, `facade_preview.gd`, `turntable_preview.gd`, `polaroid.gd`) |
 | Geräusche und Musik | `assets/audio/…` (aus `Game design/Sounds Cozy Bücherei` über `tools/prepare_sounds.py`), Abspielen `scripts/autoload/audio.gd` |
+| Besucher, Theke, Gespräche | `scripts/library/` (LibraryVisits, CounterDesk, CounterPc), `scripts/talk/`, Sätze `data/talk/talk.txt`, Stammgäste `data/visitors/regulars.txt`, Ausleihe `scripts/autoload/lending.gd` |
 | Alle einstellbaren Werte | `scripts/autoload/game_config.gd` |
 
 **Was noch offen oder provisorisch ist**
-- Möbel, Deko, Theke (mit Kasse und Tablet) und Rückgabe-Einwurf gibt es seit **Etappe 6** im
+- Möbel, Deko, Theke (mit PC und Tablet) und Rückgabe-Einwurf gibt es seit **Etappe 6** im
   Bilderbuch-Stil, Wände, Boden und Decke der Bücherei innen seit **6j** (Dielen, Putz, Stuckleiste). Die
   übrigen Wand- und Bodenbeläge zur Auswahl haben schon den neuen Shader, aber noch ihre alten Farben/Muster.
 - Tag und Nacht gibt es seit Etappe 7; Wetter und Jahreszeiten fehlen noch (vorbereitet).
-- Noch wenig Kleidung und Frisuren der Figuren.
+- Noch wenig Kleidung und Frisuren der Figuren (Kleidung der Stammgäste entwirft die Entwicklerin).
 - Einige Geräusche fehlen noch (Kaminknistern, leiser Straßen-Hintergrund, Männerstimme, Musik für Nacht/Regen/
   Winter – Liste in ASSET_GUIDE); die Fahrzeuge werden in Etappe 10b neu modelliert.
 - Tiere (seit 6g/6h): Vögel sitzen noch nicht in Bäumen und nicht auf dem Dach der Bücherei; Katzen kommen seit 6j
   auch aus der Gasse neben der Bücherei (nicht aus der Gasse gegenüber); eigene Laute je Vogelart warten auf Aufnahmen.
 - Passanten (seit 6h): Wer eine Einkaufstasche trägt, streichelt keine Katzen und redet im Stehen ohne Hände (die Tasche
   hängt an der rechten Hand); hinsetzen dürfen sie sich seit 6j (die Tasche steht dann neben ihnen).
-- Besucher (seit Etappe 7) sind noch alle gleich (Vorlieben, Gespräche, Kinder: Etappe 8).
+- Besucher (seit Etappe 8): Stammgäste tragen noch zufällige Kleidung aus dem Vorrat; Kinder gibt es bewusst nicht.
 
 ## Etappe 1 – Grundgerüst und erster Raum
 - [x] Godot-4-Projekt mit Ordnerstruktur
@@ -1821,15 +1826,53 @@ Plan und Haken: `.scratch/testrunde-7b/plan.md` (Foto der Liste daneben).
   mit Washi-Tape, Bedienelemente aus Papier (Kästchen zum Ankreuzen statt Schalter), kleine Blümchen; alle Bewegungen langsam
   und sanft (Hereingleiten, Aufklappen, Umblättern, Notizen erscheinen nacheinander)
 
-**Noch offen:** Tische sind noch in Erwachsenen-Höhe.
+**Erledigt in Etappe 8:** Tische auf Chibi-Höhe.
 
-## Etappe 8 – Besuchervielfalt
-- Animationen liegen schon in den Figuren bereit (seit 6h): Tür nach innen/außen öffnen (`door_in`, `door_out`),
-  Gießen (`water`), etwas aufheben (`pick_up`), etwas Schweres heben (`lift`)
-- Verschiedene Besucher mit eigenen Vorlieben (z. B. Lieblingsgenres – Genres tragen schon einen
-  passenden Stil im Datenblatt)
-- Verworfen (seit Etappe 6): Der Einrichtungsstil bestimmt nicht, welche Besucher kommen oder welche
-  Musik läuft – der Stil dient nur dem Einrichten
+## Etappe 8 – Besuchervielfalt (Auftrag „/grill-me“ vom 14.11.2026)
+Plan und Entscheidungen: `.scratch/etappe-8/plan.md`. Schritt für Schritt gebaut und hochgeladen.
+
+**Schritt 0 – Schneller ins Spiel**
+- [x] Gemütlicher Ladebildschirm (Papier, umblätterndes Buch, Sätze in Handschrift) statt eines eingefrorenen Fensters; er
+  bleibt, bis die ersten Bilder ruhig laufen (die Grafikkarte bereitet beim ersten Start rund 220 Darstellungen vor)
+- [x] Buchrücken werden zwischengespeichert; die Ausgabe zeigt „Start: Programm …, Laden …, Aufbauen …, erste Bilder …“
+
+**Schritt 1 – Einheitliche Chibi-Größen**
+- [x] Theke 0,85 m (alle vier Theken, Würfelregal und Kisten passen sich an), Ess-, Schreib- und Teetisch 0,5 m,
+  Beistell- und Couchtische 0,3 m, Spielfigur mit Augen auf 1,45 m; Dinge auf Theke und Tischen rutschen in alten Spielständen mit
+
+**Schritt 2 – Weiche Bücher**
+- [x] Gewölbter Rücken, Deckel mit runden Ecken, dicker und etwas größer, sanftere Farben
+- [x] Jedes Genre hat ein gemaltes Erkennungszeichen (Herz, Lupe, Drache, Rakete …) auf Rücken, Cover und Kistenschild;
+  in den Kisten stehen die echten Bücher aus dem Lager
+
+**Schritt 3 – Bedienen an der Theke**
+- [x] Gemütlicher alter PC statt der Kasse (Röhrenbildschirm, Kartenleser, Scanner); E „Bedienen“ öffnet die Theken-Ansicht
+- [x] Ausweis in den Kartenleser (Stempel ploppt am Bildschirm auf), Bücher einzeln scannen, alles in den Korb schieben –
+  jeder Handgriff mit eigenem Geräusch
+- [x] Stempelkarte mit 10 Feldern je Ausweis; volle Karte = Lesezeichen und 3 Tage mehr Zeit für den Gast
+
+**Schritt 4 – Gespräche**
+- [x] Mit allen Passanten und Gästen reden (E „Reden“): sie bleiben stehen und schauen dich an, die Kamera hält den Blick
+- [x] Weiche Sprechblase unten, Schrift wird getippt (sanftes Tastaturklackern), ab und zu Antworten zum Anklicken,
+  Esc ohne Funktion; alle Sätze in `data/talk/talk.txt` (einfach änderbar)
+
+**Schritt 5 – Stammgäste und Arten des Besuchs**
+- [x] Zehn Stammgäste mit Namen, festem Aussehen, eigenem Ausweis und Lieblingsgenre (`data/visitors/regulars.txt`)
+- [x] Freundschaft wächst beim Reden (Herzen am PC, vertraute Sätze, Freunde bringen jemanden mit)
+- [x] Vier Arten des Besuchs: zielstrebig, stöbert, liest (gern am Tisch, das Buch auf der Platte), bringt zurück;
+  Bücken zum untersten Fach, Besucher greifen nur bis 1,4 m
+
+**Schritt 6 – Wünsche**
+- [x] Manche Gäste haben eine Gedankenblase mit „?“; im Gespräch nennen sie ein Genre, annehmen oder ablehnen
+- [x] Angenommen: die Blase zeigt das Genre-Zeichen; passendes Buch per Linksklick übergeben = Trinkgeld, Freundschaft, Dankeschön
+
+**Schritt 7 – Theken der anderen Läden**
+- [x] Bäckerei, Teestube, Wolle & Stoff, Pub und Modegeschäft: Theken-Platte 0,85 m über dem Boden wie in der Bücherei
+  (der Werktisch im Blumenladen hatte die Höhe schon)
+
+**Später:** Kleidung der Stammgäste entwirft die Entwicklerin (dann eingebaut). Animationen für Besucher liegen bereit
+(`door_in`, `door_out`, `water`, `lift`). Verworfen (seit Etappe 6): Der Einrichtungsstil bestimmt nicht, welche Besucher
+kommen oder welche Musik läuft.
 
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)

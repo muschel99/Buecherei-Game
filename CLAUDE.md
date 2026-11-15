@@ -1289,7 +1289,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (Punkt VOR dem Fenster – drinnen verdeckt die Hauskollision den Sichtstrahl). `indoor` = Figuren drinnen (Verkäufer, Gäste, Fenster): nicht in `_walkers`, außerhalb des Bilds `visible = false`
   (`_update_indoor_lod`). Gegenstände: `ChibiPasserbyModel.set_prop(&"can"…)` (BoneAttachment, `GameConfig.passerby_prop_hold`; `broom` setzt `sweep_points` zwischen die Hände),
   Modelle `build_storybook_chore_props.py`. Gesten per Zwei-Glieder-Rechnung `ChibiGestureModifier._reach`: SWEEP, HUG, DRINK; Finger greifen `_grip`. Im Pub und in Läden gilt die Höhe der
-  Figuren: Sitz 0,25 m über dem Boden, Tisch ca. 0,46 m, Theke ca. 0,95 m. Haltungen ohne ganze Straße prüfen: `scenes/tools/pose_probe.tscn -- water|doors|sweep|hug|drink`
+  Figuren: Sitz 0,25 m über dem Boden, Tisch ca. 0,46 m, Theke 0,85 m (seit Etappe 8, wie in der Bücherei). Haltungen ohne ganze Straße prüfen: `scenes/tools/pose_probe.tscn -- water|doors|sweep|hug|drink`
   (Start siehe Kopf von `scripts/tools/pose_probe.gd`, 3 s statt Minuten). Testbilder: `--shop_view=<Haus> [--shop_only=vorn,innen]`, `--resident=water|sweep|errand|window`,
   `--focus=<m> --focus_action=door|chore|buy --clip_wait=<s>`. street_life_check zählt Anwohner, Läden, Begegnungen.
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,
