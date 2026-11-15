@@ -277,9 +277,11 @@ func _measure() -> void:
 	if _life.cats:
 		for cat in _life.cats.get_cats():
 			var last: Array = _cat_track.get(cat, [cat.global_position, 0.0])
-			if cat.get_action_type() in ["walk", "follow"] and cat.global_position.distance_to(last[0]) < 0.05:
+			var waits_at_curb := cat.get_action_type() == "wait_road"
+			if (cat.get_action_type() in ["walk", "follow"] and cat.global_position.distance_to(last[0]) < 0.05) or waits_at_curb:
 				last[1] += SAMPLE
-				if last[1] >= 12.0:
+				# am Bordstein: 15 s warten ist zu lang (seit dem Straßen-Patt nach Etappe 8b – Katze und Fahrzeuge warteten aufeinander)
+				if last[1] >= (15.0 if waits_at_curb else 12.0):
 					_cat_stuck.append("%s bei %s (%s, Stelle %s)" % [cat.name, cat.global_position, cat.get_action_type(), _spot_name])
 					last[1] = -1000.0
 			else:

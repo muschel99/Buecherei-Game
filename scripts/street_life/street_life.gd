@@ -1064,8 +1064,10 @@ func road_obstacles(vehicle: StreetVehicle) -> Array[Dictionary]:
 			if low and cat_pos.distance_squared_to(vehicle.pos) < limit:
 				var cat_lat := centerline.project(cat_pos, vehicle.get_s() - 30.0, vehicle.get_s() + 30.0).y
 				# auf der Fahrbahn; Art "cat": früh und sanft bremsen und warten, aber nie hupen oder klingeln; am Rand
-				# (Gehweg nah am Bordstein, seit der Nachbesserung von 6h – Katzen laufen ohne zu warten los): langsamer
-				if absf(cat_lat) - cat.radius < half:
+				# (Gehweg nah am Bordstein, seit der Nachbesserung von 6h – Katzen laufen ohne zu warten los): langsamer.
+				# Halten nur, wenn sie wirklich hinüber will oder mitten auf der Fahrbahn ist (seit dem Straßen-Patt nach 8b:
+				# eine am Bordstein wartende Katze ragte 6 cm über die Kante, Fahrzeug und Katze warteten aufeinander)
+				if absf(cat_lat) < half or cat.crossing_road():
 					result.append({"pos": cat_pos, "radius": cat.radius, "reach": 0.3, "speed": 0.0, "kind": "cat",
 						"on_road": true})
 				elif absf(cat_lat) - cat.radius < half + GameConfig.vehicle_cat_near_distance:

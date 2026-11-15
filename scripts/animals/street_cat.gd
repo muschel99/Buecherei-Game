@@ -161,6 +161,12 @@ func get_action_type() -> String:
 	return String(_action.get("type", ""))
 
 
+## Ist die Katze gerade auf dem Weg über die Fahrbahn (Sprung hinunter, hinüberlaufen, Sprung hinauf)? Nur dann halten
+## Fahrzeuge für sie an – wartet sie noch am Bordstein, fahren sie langsam vorbei.
+func crossing_road() -> bool:
+	return bool(_action.get("crossing", false))
+
+
 ## Steht die Katze auf dem Boden (nicht auf Bank, Fensterbank oder Sessel, nicht mitten im Sprung)?
 func on_ground() -> bool:
 	return active and _rest_on == null and get_action_type() not in ["jump", "pounce"]

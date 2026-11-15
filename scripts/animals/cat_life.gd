@@ -436,6 +436,9 @@ func blocked(cat: StreetCat, dir: Vector3) -> void:
 		cat.replace_actions(actions)
 		return
 	if cat.inside:
+		# drinnen kein Platz für Umwege: zwei Katzen auf demselben Weg warteten sonst ewig aufeinander (seit dem Test nach
+		# Etappe 8b, vor dem Sessel) – nach kurzem Warten schlüpfen sie aneinander vorbei
+		cat._action["pass_cats"] = true
 		return
 	# Auf der Treppe (seit Etappe 6j): oben wartet jemand an der Tür – hinsetzen, kurz warten, dann weiter (statt im Laufen
 	# stehen zu bleiben; außen herum geht es auf der Treppe nicht)
@@ -1345,12 +1348,15 @@ func _cross(side: int, s: float) -> Array[Dictionary]:
 	out.append({"type": "turn", "face": road_a - curb_a})
 	# Katzen warten nicht, bis ein Auto vorbei ist (die Autos bremsen früh für sie) – nur wenn eins schon ganz nah ist
 	out.append({"type": "wait_road", "face": road_a - curb_a})
-	out.append({"type": "jump", "to": road_a})
+	# "crossing" = jetzt wirklich auf dem Weg über die Fahrbahn: nur dafür halten Fahrzeuge an (StreetLife.road_obstacles);
+	# für eine Katze, die am Bordstein wartet, fahren sie bloß langsam (sonst warteten beide aufeinander)
+	out.append({"type": "jump", "to": road_a, "crossing": true})
 	var trot := _rng.randf() < 0.4
 	var run := {"type": "walk", "points": PackedVector3Array([road_a, road_b]),
-		"speed": GameConfig.cat_walk_speed * 1.5 if trot else GameConfig.cat_run_speed * 0.8, "run": not trot, "road": true}
+		"speed": GameConfig.cat_walk_speed * 1.5 if trot else GameConfig.cat_run_speed * 0.8, "run": not trot, "road": true,
+		"crossing": true}
 	out.append(run)
-	out.append({"type": "jump", "to": curb_b})
+	out.append({"type": "jump", "to": curb_b, "crossing": true})
 	out.append(_walk([curb_b, b]))
 	return out
 
@@ -2409,9 +2415,10 @@ func blocked_ahead(cat: StreetCat, dir: Vector3) -> bool:
 		for walker in street.get_walkers():
 			if walker != cat._action.get("ignore"):
 				others.append([walker.global_position, walker.radius * walker.scale.x])
-	for other in _cats:
-		if other != cat and other.on_ground() and other.inside == cat.inside:
-			others.append([other.global_position, other.radius])
+	if not cat._action.get("pass_cats", false):
+		for other in _cats:
+			if other != cat and other.on_ground() and other.inside == cat.inside:
+				others.append([other.global_position, other.radius])
 	for o: Array in others:
 		var q: Vector3 = o[0]
 		var d := Vector3(q.x - p.x, 0.0, q.z - p.z)
@@ -2431,6 +2438,17 @@ func road_clear(pos: Vector3) -> bool:
 	var s := street.centerline.project(Vector2(local.x, local.z)).x
 	for vehicle in street.get_vehicles():
 		var ahead := (s - vehicle.get_s()) * vehicle.direction
-		if ahead > -vehicle.length - 1.0 and ahead < GameConfig.cat_road_wait_gap + vehicle.speed * 0.8:
+		# ein stehendes Fahrzeug hält nur auf, wenn es genau auf dem Weg hinüber steht – davor läuft sie einfach über die
+		# Straße wie echte Katzen auch (es wartet ja schon); sonst warteten Katze und Fahrrad ewig aufeinander
+		if vehicle.speed < 0.3:
+			if absf(ahead) < vehicle.length / 2.0 + 0.6:
+				return false
+			continue
+		# ein fahrendes: so weit weg, dass es vor ihr sanft anhalten kann (es bremst erst, wenn sie losläuft – am
+		# Bordstein fährt es nur langsam); Bremsweg wie in StreetVehicle._wanted_speed für Katzen
+		var brake := GameConfig.bike_brake if vehicle.is_bike else StreetVehicle.BRAKE * 0.5
+		var need := vehicle.length / 2.0 + StreetVehicle.STOP_GAP + 1.0 + vehicle.speed * vehicle.speed / (2.0 * brake) \
+			+ vehicle.speed * 0.5
+		if ahead > -vehicle.length - 1.0 and ahead < maxf(need, GameConfig.cat_road_wait_gap + vehicle.speed * 0.8):
 			return false
 	return true
