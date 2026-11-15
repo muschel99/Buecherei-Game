@@ -1417,6 +1417,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   lange), liest (immer setzen, gern am Tisch: `_table_in_front` → Schritt "sit" mit `read_table` → Buch auf der Platte,
   `ChibiPasserbyModel.set_reading(on, tisch)`), zurueck (`Lending.return_oldest_to_counter`). Regale: nur bis
   `visitor_reach_height`, unterhalb `visitor_bend_height` bücken (pick_up). Zahlen: `LibraryVisits.counts` (street_life_check).
+- **Wünsche (seit Etappe 8):** Gast in der Bücherei mit Wunsch (`wish_chance`, immer ein Genre): `visit.wish` = {genre,
+  state open/accepted/declined/fulfilled}; Gedankenblase über dem Kopf (`LibraryVisits._update_wish_bubbles`, Wolke aus einem
+  SubViewport, „?“ bzw. Genre-Zeichen `BookArt.get_symbol_texture`); Reden → `wish_steps` (annehmen/ablehnen über Antworten mit
+  `then`); angenommen + Buch in der Hand → Linksklick auf den Gast (`Interactable.handles_placing` → `give_book`): passendes Genre
+  = in den Korb, `wish_tip` Trinkgeld, Freundschaft `wish_friendship`, Dankeschön-Satz; sonst verwundertes Gesicht. Gilt nur für
+  diesen Besuch. Prüfen: street_life_check `--wishes`, Bilder `talk_probe -- wunsch`.
 - **Gespräche (seit Etappe 8):** `Conversation.begin(figur, spielfigur[, schritte])` (scripts/talk/): Figur braucht
   `start_talk`/`end_talk`/`talk_name`/`talk_focus` (Passerby: E „Reden“ über `_talk_interactable`, bleibt stehen = Schritt
   "wait" bis `talking` false, schaut über `_attend`); Spielfigur `movement_enabled`/`interaction_enabled` aus, `look_locked`

@@ -95,6 +95,12 @@ static func default_steps(rng: RandomNumberGenerator, close: bool = false) -> Ar
 	return steps
 
 
+func _exit_tree() -> void:
+	MenuStack.close(self)
+	if current == self:
+		current = null
+
+
 func close_from_escape() -> void:
 	pass  # im Gespräch hat Esc keine Funktion (Wunsch der Entwicklerin)
 

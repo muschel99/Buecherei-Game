@@ -46,4 +46,8 @@ func restore_mouse_mode() -> void:
 
 
 func _forget_freed() -> void:
-	_open = _open.filter(func(node: Node) -> bool: return is_instance_valid(node))
+	var alive: Array[Node] = []
+	for node: Variant in _open:
+		if is_instance_valid(node):
+			alive.append(node)
+	_open = alive

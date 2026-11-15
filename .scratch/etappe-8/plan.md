@@ -75,5 +75,6 @@ und Garten Blatt, Reisen Koffer, Kunst Pinsel, Geschichte Sanduhr, Philosophie E
 - [x] 5. Besucher: 10 Stammgäste (`data/visitors/regulars.txt`, feste Namen/Aussehen/Ausweise), Lieblingsgenre, vier Arten
   des Besuchs, Lesen am Tisch (Buch auf der Platte), Bücken zum untersten Fach, Griff nur bis 1,4 m, Freundschaft (Gespräche;
   Herzen am PC, vertraute Sätze, Freunde mitbringen)
-- [ ] 6. Wünsche: Fragezeichen, annehmen/ablehnen, Genre-Zeichen in der Gedankenblase, übergeben, Trinkgeld
+- [x] 6. Wünsche: Gedankenblase mit „?“ über dem Kopf, im Gespräch annehmen/ablehnen, danach das Genre-Zeichen in der Blase,
+  Buch per Linksklick übergeben (in den Korb, Trinkgeld, Freundschaft, Dankeschön)
 - [ ] 7. Theken der anderen Läden auf 0,85 m

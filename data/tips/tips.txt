@@ -186,6 +186,11 @@ Mit allen auf der Straße und in der Bücherei kannst du reden: Schau jemanden a
 
 Die Schrift erscheint unten in einer Sprechblase. Mit einem Klick oder <E> geht es weiter. Manchmal fragt dich jemand etwas – dann klickst du eine Antwort an.
 
+== Wünsche
+Manche Gäste haben einen Wunsch – du erkennst sie an der kleinen Gedankenblase mit Fragezeichen über dem Kopf. Sprich sie an, dann erzählen sie dir, welches Genre sie suchen.
+
+Nimmst du den Wunsch an, zeigt die Blase das Zeichen des Genres. Hol ein passendes Buch (zum Beispiel aus den Kisten unter der Theke) und klicke den Gast mit der linken Maustaste an. Er freut sich – und gibt dir ein Trinkgeld.
+
 == Die Stempelkarte
 Jeder Ausweis hat eine Stempelkarte mit zehn Feldern. Ist sie voll, bekommt der Gast ein Lesezeichen und darf seine Bücher länger behalten. Am PC siehst du alle Ausweise mit ihren Stempeln.
 

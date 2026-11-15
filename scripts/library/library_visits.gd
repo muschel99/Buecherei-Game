@@ -91,6 +91,7 @@ func step(delta: float) -> void:
 	if door_link:
 		door_link.step(delta)
 	_update_counter()
+	_update_wish_bubbles(delta)
 
 
 # --- Vom Gehweg herein ---
@@ -125,6 +126,12 @@ func offer_visit(walker: Passerby, rejoin: Vector2) -> Array:
 	_note("styles", String(_visit[walker].style))
 	if not regular.is_empty():
 		_note("regular")
+	# Manche haben einen Wunsch (seit Etappe 8): immer ein Genre; Gedankenblase mit Fragezeichen über dem Kopf
+	if _rng.randf() < GameConfig.wish_chance and String(_visit[walker].style) != "zurueck":
+		var genres := BookStock.get_unlocked_genres()
+		if not genres.is_empty():
+			_visit[walker].wish = {"genre": genres[_rng.randi() % genres.size()].get_id(), "state": "open"}
+			_note("wish")
 	walker.add_to_group(VISITOR_GROUP)
 	walker.add_to_group(Door.KEEPOUT_GROUP)
 	walker.in_library = true
@@ -867,8 +874,9 @@ func held_books() -> Array[Book]:
 
 ## Für das Prüfwerkzeug: Besucher gerade drinnen, wartend an der Theke.
 func stats_text() -> String:
-	return "drinnen %d, an der Theke %d, Stammgäste %d, Arten %s, am Tisch gelesen %d, gebückt %d" % [Lending.visitors_inside(),
-		queue.size(), counts.get("regular", 0), counts.get("styles", {}), counts.get("table", 0), counts.get("bend", 0)]
+	return "drinnen %d, an der Theke %d, Stammgäste %d, Arten %s, am Tisch gelesen %d, gebückt %d, Wünsche %d (erfüllt %d)" % [
+		Lending.visitors_inside(), queue.size(), counts.get("regular", 0), counts.get("styles", {}), counts.get("table", 0),
+		counts.get("bend", 0), counts.get("wish", 0), counts.get("wish_done", 0)]
 
 
 ## Zahlen für das Prüfwerkzeug (seit Etappe 8)
@@ -973,3 +981,172 @@ func _table_in_front(seat: SeatPoint) -> Variant:
 			var point := seat.global_position + forward * minf(ahead, 0.38)
 			best = Vector3(point.x, surface.get_surface_height() + 0.012, point.z)
 	return best
+
+
+# --- Wünsche (seit Etappe 8) ---
+
+var _wish_bubbles := {}        # Gast → Node3D (Gedankenblase)
+var _wish_viewport: SubViewport
+var _wish_time := 0.0
+const WISH_FONT := preload("res://assets/ui/fonts/Caveat-Bold.woff2")
+
+
+## Hat der Gast einen angenommenen Wunsch, und hält die Spielfigur ein Buch? (dann zählt ein Linksklick auf ihn als Geben)
+func wants_book_from_player(walker: Passerby) -> bool:
+	var wish: Dictionary = (_visit.get(walker, {}) as Dictionary).get("wish", {})
+	return String(wish.get("state", "")) == "accepted" and BookStock.get_active_book() != null
+
+
+## Schritte fürs Gespräch: offener Wunsch → er sagt ihn (annehmen oder ablehnen); angenommener → er wartet; sonst leer
+## (dann das übliche Gespräch).
+func wish_steps(walker: Passerby) -> Array:
+	var visit: Dictionary = _visit.get(walker, {})
+	var wish: Dictionary = visit.get("wish", {})
+	var state := String(wish.get("state", ""))
+	var hour := GameClock.minute_of_day() / 60.0
+	var genre := Catalog.get_genre(String(wish.get("genre", "")))
+	if genre == null or not state in ["open", "accepted"]:
+		return []
+	var line := func(section: String) -> String:
+		return String(TalkLines.pick(section, hour, _rng).get("text", "")).replace("{genre}", "„%s“" % genre.display_name)
+	var steps: Array = []
+	if state == "accepted":
+		steps.append({"text": line.call("wunsch_wartet")})
+		return steps
+	var hello := String(TalkLines.pick("gruss", hour, _rng).get("text", "Hallo!"))
+	steps.append({"text": hello})
+	steps.append({"text": line.call("wunsch"), "answers": [
+		{"text": "Ich suche dir etwas heraus!", "reply": line.call("wunsch_ja"), "then": func() -> void: wish.state = "accepted"},
+		{"text": "Leider gerade nicht.", "reply": line.call("wunsch_nein"), "then": func() -> void: wish.state = "declined"}]})
+	return steps
+
+
+## Linksklick mit Buch auf einen Gast: passt das Genre zum Wunsch, nimmt er es (in den Korb), stöbert weiter und gibt
+## Trinkgeld; sonst schüttelt er freundlich den Kopf.
+func give_book(walker: Passerby) -> void:
+	var visit: Dictionary = _visit.get(walker, {})
+	var wish: Dictionary = visit.get("wish", {})
+	var book := BookStock.get_active_book()
+	if book == null or String(wish.get("state", "")) != "accepted":
+		return
+	if book.genre_id != String(wish.genre):
+		if walker._model and walker._model.has_method("trigger_face"):
+			walker._model.call("trigger_face", &"window_wonder")
+		if walker._model and walker._model.has_method("shake_head"):
+			walker._model.call("shake_head")
+		return
+	BookStock.take_active()
+	(visit.books as Array).append(book)
+	walker.give_bag(true, BASKET_MODELS[mini(3, (visit.books as Array).size())])
+	wish.state = "fulfilled"
+	Wallet.earn(GameConfig.wish_tip, "Trinkgeld")
+	if not walker.regular_id.is_empty():
+		Lending.add_friendship(walker.regular_id, GameConfig.wish_friendship)
+	Audio.play_at("books/place", walker.global_position + Vector3.UP, -4.0, Audio.vary(0.08))
+	if walker._model and walker._model.has_method("trigger_face"):
+		walker._model.call("trigger_face", &"window_like")
+	_note("wish_done")
+	# kleines Dankeschön in der Sprechblase
+	var thanks := String(TalkLines.pick("wunsch_danke", GameClock.minute_of_day() / 60.0, _rng).get("text", "Danke!"))
+	Conversation.begin(walker, life.get_player(), [{"text": thanks}])
+
+
+func _update_wish_bubbles(delta: float) -> void:
+	_wish_time += delta
+	for walker: Variant in _visit.keys():
+		var w := walker as Passerby
+		if w == null or not is_instance_valid(w):
+			continue
+		var wish: Dictionary = (_visit[w] as Dictionary).get("wish", {})
+		var state := String(wish.get("state", ""))
+		var show := state in ["open", "accepted"] and w.active and w.in_library
+		var bubble: Node3D = _wish_bubbles.get(w)
+		if show and bubble == null:
+			bubble = _make_wish_bubble()
+			_wish_bubbles[w] = bubble
+		if bubble == null:
+			continue
+		if not show:
+			bubble.queue_free()
+			_wish_bubbles.erase(w)
+			continue
+		var symbol_sprite := bubble.get_node("Symbol") as Sprite3D
+		var question := bubble.get_node("Question") as Label3D
+		if state == "accepted" and symbol_sprite.texture == null:
+			var genre := Catalog.get_genre(String(wish.genre))
+			symbol_sprite.texture = BookArt.get_symbol_texture(genre.symbol) if genre else null
+		symbol_sprite.visible = state == "accepted"
+		question.visible = state == "open"
+		var eye: Vector3 = w._model.call("eye_point") if w._model and w._model.has_method("eye_point") else w.global_position + Vector3.UP * 1.3
+		bubble.global_position = eye + Vector3.UP * (GameConfig.wish_bubble_height + sin(_wish_time * 2.0 + hash(w) % 7) * 0.02)
+	for walker: Variant in _wish_bubbles.keys():
+		if not is_instance_valid(walker) or not _visit.has(walker):
+			(_wish_bubbles[walker] as Node).queue_free()
+			_wish_bubbles.erase(walker)
+
+
+## Gedankenblase: weiße Wolke mit zwei kleinen Kreisen (immer zur Kamera gedreht), darin „?“ oder das Genre-Zeichen.
+func _make_wish_bubble() -> Node3D:
+	var root := Node3D.new()
+	root.name = "WishBubble"
+	life.add_child(root)
+	root.top_level = true
+	var cloud := Sprite3D.new()
+	cloud.texture = _wish_cloud_texture()
+	cloud.pixel_size = 0.34 / 256.0
+	cloud.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	cloud.shaded = false
+	cloud.no_depth_test = false
+	cloud.render_priority = 1
+	root.add_child(cloud)
+	var question := Label3D.new()
+	question.name = "Question"
+	question.text = "?"
+	question.font = WISH_FONT
+	question.font_size = 140
+	question.pixel_size = 0.0011
+	question.modulate = Color(0.84, 0.47, 0.47)
+	question.outline_size = 0
+	question.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	question.position = Vector3(0.0, 0.015, 0.0)
+	question.render_priority = 2
+	root.add_child(question)
+	var symbol := Sprite3D.new()
+	symbol.name = "Symbol"
+	symbol.pixel_size = 0.13 / float(BookArt.SYMBOL_CELL)
+	symbol.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	symbol.shaded = false
+	symbol.position = Vector3(0.0, 0.015, 0.0)
+	symbol.render_priority = 2
+	symbol.visible = false
+	root.add_child(symbol)
+	return root
+
+
+func _wish_cloud_texture() -> Texture2D:
+	if _wish_viewport == null:
+		_wish_viewport = SubViewport.new()
+		_wish_viewport.size = Vector2i(256, 256)
+		_wish_viewport.transparent_bg = true
+		_wish_viewport.disable_3d = true
+		_wish_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+		add_child(_wish_viewport)
+		var painter := _CloudPainter.new()
+		painter.size = Vector2(256, 256)
+		_wish_viewport.add_child(painter)
+	return _wish_viewport.get_texture()
+
+
+class _CloudPainter extends Control:
+	func _draw() -> void:
+		var paper := Color(1.0, 0.985, 0.95)
+		var line := Color(0.5, 0.39, 0.32, 0.5)
+		var c := Vector2(128, 104)
+		var puffs := [[Vector2(-52, 6), 44.0], [Vector2(0, -18), 54.0], [Vector2(52, 4), 44.0], [Vector2(-22, 34), 40.0], [Vector2(28, 34), 40.0]]
+		for p: Array in puffs:
+			draw_circle(c + (p[0] as Vector2), float(p[1]) + 3.0, line)
+		for p: Array in puffs:
+			draw_circle(c + (p[0] as Vector2), float(p[1]), paper)
+		for small: Array in [[Vector2(70, 196), 14.0], [Vector2(52, 228), 8.0]]:
+			draw_circle(small[0], float(small[1]) + 2.5, line)
+			draw_circle(small[0], float(small[1]), paper)

@@ -1407,6 +1407,12 @@ var visit_style_weights: Dictionary = {"zielstrebig": 3.0, "stoebert": 3.0, "lie
 ## So hoch greifen Besucher noch ins Regal (Fachboden über dem Boden, m); darunter bücken sie sich
 var visitor_reach_height: float = 1.4
 var visitor_bend_height: float = 0.45
+## Wünsche der Gäste (seit Etappe 8): so oft hat ein Gast einen (immer ein Genre), so viel Trinkgeld gibt es fürs Erfüllen,
+## so viele Freundschaftsherzen bei Stammgästen; Gedankenblase so hoch über den Augen
+var wish_chance: float = 0.3
+var wish_tip: int = 10
+var wish_friendship: int = 2
+var wish_bubble_height: float = 0.45
 ## Stempelkarte (seit Etappe 8): so viele Felder; ist sie voll, bekommt der Gast ein Lesezeichen und so viele Tage mehr Zeit
 var stamp_card_size: int = 10
 var stamp_bonus_extra_days: int = 3

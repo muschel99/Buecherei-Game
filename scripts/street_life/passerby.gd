@@ -206,7 +206,13 @@ func _add_talk_interactable() -> void:
 	add_child(_talk_interactable)
 	_talk_interactable.interacted.connect(func(who: Node) -> void:
 		if who is Node3D:
-			Conversation.begin(self, who as Node3D))
+			# Gäste in der Bücherei mit Wunsch erzählen davon (LibraryVisits.wish_steps), sonst das übliche Gespräch
+			var steps: Array = life.library.wish_steps(self) if life and life.library else []
+			Conversation.begin(self, who as Node3D, steps))
+	# Linksklick mit einem Buch auf einen Gast mit angenommenem Wunsch: das Buch geben (seit Etappe 8)
+	_talk_interactable.place_requested.connect(func(_who: Node) -> void:
+		if life and life.library:
+			life.library.give_book(self))
 
 
 ## Kann man gerade mit ihr reden? Nicht auf der Fahrbahn, nicht an Türen, nicht beim Plaudern mit anderen.
@@ -440,6 +446,8 @@ func step(delta: float) -> void:
 	if _talk_check <= 0.0 and _talk_interactable:
 		_talk_check = 0.25
 		_talk_interactable.prompt_text = "Reden" if can_talk() else ""
+		_talk_interactable.handles_placing = in_library and life != null and life.library != null \
+			and life.library.wants_book_from_player(self)
 	squeeze = maxf(0.0, squeeze - delta)
 	var before := pos
 	match String(_action.get("type", "")):

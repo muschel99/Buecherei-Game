@@ -2,7 +2,8 @@
 #
 # So ist diese Datei aufgebaut:
 #   == name             beginnt einen Abschnitt: gruss, plaudern, frage, tschuess, vertraut (Stammgäste, mit denen man
-#                       befreundet ist, erzählen Persönlicheres)
+#                       befreundet ist, erzählen Persönlicheres); Wünsche der Gäste in der Bücherei: wunsch ({genre} wird
+#                       durch das Genre ersetzt), wunsch_ja / wunsch_nein (Antwort des Gasts), wunsch_wartet, wunsch_danke
 #   Text …              ein Satz (eine Zeile = eine Sprechblase)
 #   @morgen Text …      gilt nur zu dieser Tageszeit: @morgen (5–11 Uhr), @mittag (11–17), @abend (17–22), @nacht (22–5)
 #   > Antwort | Satz    nur bei „frage“: eine Antwort der Spielfigur (zum Anklicken) und was der Gast darauf sagt
@@ -74,3 +75,29 @@ Schönen Tag noch!
 Bis zum nächsten Mal!
 @abend Schönen Abend noch!
 @nacht Gute Nacht!
+
+== wunsch
+Sag mal … hast du vielleicht etwas aus {genre}? Ich hätte so Lust darauf.
+Ich suche etwas Schönes aus {genre}. Kannst du mir helfen?
+Weißt du, worauf ich heute Lust habe? Auf etwas aus {genre}!
+Ich habe ein bisschen gestöbert, aber ich hätte so gern etwas aus {genre}.
+
+== wunsch_ja
+Oh, wie lieb von dir! Ich schaue so lange noch ein bisschen.
+Danke! Ich warte gern.
+Wunderbar – ich freue mich schon!
+
+== wunsch_nein
+Macht nichts! Dann stöbere ich einfach weiter.
+Kein Problem, ich finde bestimmt etwas anderes.
+Schade – aber hier gibt es ja so viel anderes!
+
+== wunsch_wartet
+Hast du schon etwas gefunden? Ich warte gern noch ein bisschen.
+Ich bin so gespannt, was du mir bringst!
+
+== wunsch_danke
+Oh, genau so etwas habe ich gesucht! Danke!
+Wie schön! Das nehme ich gleich mit.
+Perfekt! Du kennst dich wirklich aus.
+

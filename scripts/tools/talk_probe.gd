@@ -35,6 +35,19 @@ func _run(main: Node) -> void:
 	# Spielfigur vor den Passanten stellen
 	var front := best.global_position + best.global_basis.z * 1.4
 	player.global_position = Vector3(front.x, best.global_position.y, front.z)
+	if "wunsch" in OS.get_cmdline_user_args():
+		# Gedankenblase eines Gasts mit Wunsch (seit Etappe 8): erst „?“, dann das Genre-Zeichen
+		var lib := life.library
+		lib._visit[best] = {"books": [] as Array[Book], "wish": {"genre": "crime", "state": "open"}, "style": "stoebert"}
+		best.in_library = true
+		Conversation.begin(best, player, [{"text": "…"}])
+		await _wait(1.5)
+		await _shot("w1_frage")
+		(lib._visit[best].wish as Dictionary).state = "accepted"
+		await _wait(1.0)
+		await _shot("w2_zeichen")
+		get_tree().quit()
+		return
 	var steps := Conversation.default_steps(RandomNumberGenerator.new())
 	var question := TalkLines.pick("frage", 12.0, RandomNumberGenerator.new())
 	steps.insert(steps.size() - 1, {"text": question.text, "answers": question.answers})

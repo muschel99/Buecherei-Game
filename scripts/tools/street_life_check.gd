@@ -125,6 +125,8 @@ func _run() -> void:
 			print("Regal gefüllt: %d Bücher" % (shelf as BookShelf).fill_from_storage())
 		if _args.has("read"):
 			GameConfig.visitor_read_chance = 1.0
+		if _args.has("wishes"):
+			GameConfig.wish_chance = 1.0  # Wünsche prüfen (seit Etappe 8): jeder Gast hat einen
 		LibraryVisits.debug = true
 		if _life.library:
 			_life.library.auto_stamp = true
@@ -168,6 +170,8 @@ func _run() -> void:
 					var d := _life.library.door
 					print("  Besucher t=%.0f pos=(%.2f, %.2f) y=%.2f %s phase=%d tür=%s %.2f" % [time, w.pos.x, w.pos.y, w.floor_y,
 						w.get_action_type(), w._phase, d.is_open, d.open_amount()])
+			if _args.has("wishes") and fmod(time, 3.0) < STEP and _life.library:
+				_test_wishes()
 			if _args.has("throw") and fmod(time, 15.0) < STEP and _life.cats:
 				_test_throw()
 			if _args.has("hunt") and fmod(time, 20.0) < STEP and _life.cats and _life.birds:
@@ -538,3 +542,24 @@ func _floor_case(space: PhysicsDirectSpaceState3D, who: String, p: Vector3, what
 			return
 	if _report.floor.size() < 40:
 		_report.floor.append("%s (%s) %+.2f m über dem Boden bei %s (%s)" % [who, what, diff, Vector3(local.x, local.y, local.z).snapped(Vector3.ONE * 0.01), _spot_name])
+
+
+## Wünsche prüfen (seit Etappe 8): offene annehmen, angenommene mit einem passenden Buch aus dem Lager erfüllen.
+func _test_wishes() -> void:
+	var lib := _life.library
+	for v in get_tree().get_nodes_in_group(LibraryVisits.VISITOR_GROUP):
+		var w := v as Passerby
+		var wish: Dictionary = (lib._visit.get(w, {}) as Dictionary).get("wish", {})
+		match String(wish.get("state", "")):
+			"open":
+				wish.state = "accepted"
+			"accepted":
+				var books := BookStock.take_books(String(wish.genre), 1)
+				if books.is_empty():
+					continue
+				BookStock.carry(books)
+				lib.give_book(w)
+				if Conversation.current:
+					Conversation.current.queue_free()
+					Conversation.current = null
+					w.end_talk()
