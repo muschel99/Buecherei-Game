@@ -54,7 +54,7 @@ static func draw_cover(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 	var w := r.size.x
 	var col := book.cover_color
 	var acc := book.accent_color
-	var paper := book.paper_color
+	var paper := book.label_color  # helle Felder: Pastell der zweiten Buchfarbe statt Papierweiß
 	var font := BookArt.get_title_font(book)
 	match book.style:
 		"classic":
@@ -78,7 +78,7 @@ static func draw_cover(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 			_author(ci, book, r, 0.9, book.text_color, HORIZONTAL_ALIGNMENT_CENTER)
 		"minimal":
 			ci.draw_rect(r, paper)
-			var ink := col if col.get_luminance() < 0.55 else col.darkened(0.45)
+			var ink := _ink(col)
 			ci.draw_rect(Rect2(r.position + Vector2(w * 0.1, r.size.y * 0.08), Vector2(w * 0.8, r.size.y * 0.025)), col)
 			_title(ci, book, Rect2(r.position + Vector2(w * 0.1, r.size.y * 0.15), Vector2(w * 0.8, r.size.y * 0.42)),
 				font, ink, w * 0.12, HORIZONTAL_ALIGNMENT_LEFT)
@@ -89,7 +89,7 @@ static func draw_cover(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 			_pattern(ci, r, book.pattern, col.lightened(0.14))
 			var label := Rect2(r.position + Vector2(w * 0.12, r.size.y * 0.28), Vector2(w * 0.76, r.size.y * 0.46))
 			_rounded(ci, label, paper, w * 0.04)
-			var ink := col if col.get_luminance() < 0.5 else col.darkened(0.5)
+			var ink := _ink(col)
 			BookMotifs.draw(ci, book.motif, _box(r, 0.5, 0.37, 0.16), col, acc)
 			_title(ci, book, Rect2(label.position + Vector2(w * 0.06, label.size.y * 0.32), Vector2(label.size.x - w * 0.12, label.size.y * 0.46)),
 				font, ink, w * 0.095, HORIZONTAL_ALIGNMENT_CENTER)
@@ -100,7 +100,7 @@ static func draw_cover(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 			BookMotifs.draw(ci, book.motif, _box(r, 0.5, 0.31, 0.46), paper if col.get_luminance() < 0.55 else col.darkened(0.55), acc)
 			ci.draw_rect(Rect2(r.position + Vector2(0, split), Vector2(w, r.size.y - split)), paper)
 			ci.draw_rect(Rect2(r.position + Vector2(0, split - w * 0.015), Vector2(w, w * 0.03)), acc)
-			var ink := col if col.get_luminance() < 0.5 else col.darkened(0.5)
+			var ink := _ink(col)
 			_title(ci, book, Rect2(r.position + Vector2(w * 0.08, split + r.size.y * 0.04), Vector2(w * 0.84, r.size.y * 0.24)),
 				font, ink, w * 0.1, HORIZONTAL_ALIGNMENT_CENTER)
 			_author(ci, book, r, 0.92, Color(ink, 0.8), HORIZONTAL_ALIGNMENT_CENTER)
@@ -124,11 +124,16 @@ static func _badge(ci: CanvasItem, book: BookData, center: Vector2, radius: floa
 	var genre := book.get_genre()
 	if genre == null or genre.symbol.is_empty():
 		return
-	var paper := book.paper_color
-	var ink := book.cover_color if book.cover_color.get_luminance() < 0.6 else book.cover_color.darkened(0.5)
+	var paper := book.label_color  # helle Felder: Pastell der zweiten Buchfarbe statt Papierweiß
+	var ink := _ink(book.cover_color)
 	ci.draw_circle(center, radius, paper)
 	ci.draw_arc(center, radius, 0.0, TAU, 24, Color(ink, 0.55), maxf(1.0, radius * 0.1), true)
 	GenreSymbols.draw(ci, genre.symbol, center, radius * 1.25, ink, paper)
+
+
+## Dunkle Schrift auf hellen Pastellfeldern: die Einbandfarbe, deutlich abgedunkelt (bleibt farbig, aber gut lesbar).
+static func _ink(col: Color) -> Color:
+	return col if col.get_luminance() < 0.25 else col.darkened(0.55)
 
 
 # --- Buchrücken ---
@@ -140,7 +145,7 @@ static func draw_spine(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 	var h := r.size.y
 	var col := book.cover_color
 	var acc := book.accent_color
-	var paper := book.paper_color
+	var paper := book.label_color  # helle Felder: Pastell der zweiten Buchfarbe statt Papierweiß
 	var text_color := book.text_color
 	var text_from := 0.08
 	var text_to := 0.8
@@ -161,7 +166,7 @@ static func draw_spine(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 			ci.draw_rect(r, paper)
 			ci.draw_rect(Rect2(r.position, Vector2(w, h * 0.06)), col)
 			ci.draw_rect(Rect2(r.position + Vector2(0, h * 0.94), Vector2(w, h * 0.06)), col)
-			text_color = col if col.get_luminance() < 0.55 else col.darkened(0.45)
+			text_color = _ink(col)
 			text_from = 0.1
 			text_to = 0.84
 		"pattern":
@@ -169,7 +174,7 @@ static func draw_spine(ci: CanvasItem, book: BookData, r: Rect2) -> void:
 			_pattern(ci, r, book.pattern, col.lightened(0.14))
 			var label := Rect2(r.position + Vector2(w * 0.12, h * 0.1), Vector2(w * 0.76, h * 0.72))
 			ci.draw_rect(label, paper)
-			text_color = col if col.get_luminance() < 0.5 else col.darkened(0.5)
+			text_color = _ink(col)
 			text_from = 0.12
 			text_to = 0.8
 		"band":

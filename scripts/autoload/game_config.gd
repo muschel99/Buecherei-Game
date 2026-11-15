@@ -562,9 +562,18 @@ var book_thickness_range: Vector2 = Vector2(0.03, 0.064)
 var book_depth_range: Vector2 = Vector2(0.165, 0.23)
 ## Wie stark der Farbton der Buchrücken schwankt (0 = alle Bücher eines Genres gleich).
 var book_color_variation: float = 1.0
-## Weichere Farben (seit Etappe 8): so viel wird jede Einbandfarbe zu warmem Creme hin gemischt (0 = kräftig wie früher)
-var book_soften: float = 0.22
+## Ein Hauch Wärme (seit Etappe 8): so viel wird jede Einbandfarbe zu warmem Creme hin gemischt (0 = ganz kräftig).
+## Seit dem Wunsch „süßer, mehr Farbe, weniger Weiß“ nur noch wenig – die Farben kommen aus den Genre-Paletten.
+var book_soften: float = 0.04
 var book_soft_color: Color = Color(0.97, 0.93, 0.86)
+## Jedes Buch bleibt farbig: Sättigung mindestens so viel, Helligkeit zwischen x und y (nie fast Weiß, nie fast Schwarz).
+var book_min_saturation: float = 0.36
+var book_value_range: Vector2 = Vector2(0.45, 0.9)
+## Helle Felder (Titelschild, Streifen, Abzeichen) in einem Pastell der zweiten Buchfarbe statt Papierweiß:
+## so viel wird zu Hell gemischt (0 = volle Farbe, 1 = Weiß).
+var book_label_lightness: float = 0.42
+## Buchschnitt in der Farbe des Einbands (Farbschnitt): so viel Einbandfarbe kommt in die Seiten (0 = Papier).
+var book_page_tint: float = 0.42
 
 ## So viele Bücher kann ich höchstens gleichzeitig tragen.
 var max_carried_books: int = 7

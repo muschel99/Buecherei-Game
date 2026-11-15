@@ -15,6 +15,8 @@ uniform sampler2D cover_atlas : source_color, filter_linear_mipmap_anisotropic, 
 // Felder im Cover-Atlas (Spalten, Zeilen) – siehe BookArt.COVER_ATLAS_GRID
 uniform vec2 cover_grid = vec2(16.0, 7.0);
 uniform vec3 page_color : source_color = vec3(0.9, 0.86, 0.76);
+// Farbschnitt: so viel Einbandfarbe kommt in den Buchblock (GameConfig.book_page_tint)
+uniform float page_tint = 0.42;
 uniform float roughness_value = 0.78;
 uniform float highlight_strength = 0.18;
 
@@ -52,7 +54,7 @@ void fragment() {
 	} else if (part < 3.5) {
 		col = base * 0.82;
 	} else {
-		col = page_color * (0.95 + 0.03 * sin(face_uv.x * 220.0));
+		col = mix(page_color, base, page_tint) * (0.95 + 0.03 * sin(face_uv.x * 220.0));
 	}
 	if (highlighted == 1) {
 		col = mix(col, vec3(1.0, 0.96, 0.86), highlight_strength);

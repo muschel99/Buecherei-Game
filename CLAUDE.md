@@ -976,7 +976,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   weiche Form im Würfel der Größe 1 (gewölbter Rücken, überstehende Deckel mit runden Ecken; UV2.x = Teil `BookLook.Part`,
   UV = Lage auf der Fläche) – die Shader book_spine/book_loose lesen die Teile daraus; Einzelbücher ohne MultiMesh:
   `BookLook.create_single_material(data)`. Genre-Zeichen zeichnet `GenreSymbols.draw` (Rücken/Cover über `BookCover._badge`),
-  als Bild `BookArt.get_symbol_texture(name)`. Größen `book_*_range`, sanfte Farben `book_soften`. Neues Buch = neue Zeile `Titel | Motiv` (Motive:
+  als Bild `BookArt.get_symbol_texture(name)`. Größen `book_*_range`. **Farben süß und bunt, kaum Weiß** (Wunsch der Entwicklerin): Paletten der Genres (`spine_colors`, keine Creme-/Grautöne), `BookData._sweet` (Sättigung ≥ `book_min_saturation`, Helligkeit `book_value_range`, nur ein Hauch `book_soften`), helle Felder (Titelschild, Streifen, Abzeichen) in Pastell `BookData.label_color` (`book_label_lightness`) statt Papierweiß, Schrift auf Pastell `BookCover._ink`, Buchschnitt in der Einbandfarbe (`book_page_tint`, Shader-Wert `page_tint`). Neues Buch = neue Zeile `Titel | Motiv` (Motive:
   `BookMotifs`, Liste in docs/ASSET_GUIDE.md). Titel sind gemütlich, erfunden, nie düster.
   Ein Titel ist `BookData` (Katalog, `Catalog.get_book(id)`, id = "genre/titel-slug"),
   ein Exemplar ist `Book` (`book.data`, Zustand). Bücher sind keine Knoten, sondern Daten;

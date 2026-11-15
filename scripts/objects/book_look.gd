@@ -166,6 +166,7 @@ static func get_material() -> ShaderMaterial:
 		_material = ShaderMaterial.new()
 		_material.shader = load("res://assets/shaders/book_spine.gdshader")
 		_material.set_shader_parameter("spine_atlas", BookArt.get_spine_atlas())
+		_material.set_shader_parameter("page_tint", GameConfig.book_page_tint)
 	return _material
 
 

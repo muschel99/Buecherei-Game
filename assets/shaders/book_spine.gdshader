@@ -18,6 +18,8 @@ uniform bool use_single = false;
 uniform vec3 single_color : source_color = vec3(0.5, 0.4, 0.3);
 uniform vec4 single_spine_rect = vec4(0.0);
 uniform vec3 page_color : source_color = vec3(0.9, 0.86, 0.76);
+// Farbschnitt: so viel Einbandfarbe kommt in den Buchblock (GameConfig.book_page_tint)
+uniform float page_tint = 0.42;
 uniform float roughness_value = 0.78;
 uniform float highlight_strength = 0.18;
 
@@ -52,8 +54,8 @@ void fragment() {
 	} else if (part < 3.5) {
 		col = base * 0.82;
 	} else {
-		// Buchblock: Papier mit ganz feinen Blattlinien
-		col = page_color * (0.95 + 0.03 * sin(face_uv.x * 220.0));
+		// Buchblock: Papier in der Einbandfarbe getönt (Farbschnitt) mit ganz feinen Blattlinien
+		col = mix(page_color, base, page_tint) * (0.95 + 0.03 * sin(face_uv.x * 220.0));
 	}
 	if (!use_cover && COLOR.a < 0.99) {
 		col = mix(col, vec3(1.0, 0.96, 0.86), highlight_strength);

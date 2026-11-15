@@ -36,11 +36,13 @@ var motif: String = ""
 var style: String = "classic"
 ## Größe in Metern: x = Dicke (Rücken), y = Höhe, z = Tiefe.
 var size: Vector3 = Vector3(0.03, 0.24, 0.17)
-## Farben: Einband, Schmuckfarbe (Rahmen, Bänder, Motiv), Papier, Schrift auf dem Einband.
+## Farben: Einband, Schmuckfarbe (Rahmen, Bänder, Motiv), Papier, Schrift auf dem Einband und Pastell für helle Felder
+## (Titelschild, Streifen, Abzeichen – seit dem Wunsch „mehr Farbe, weniger Weiß“ statt Papierweiß).
 var cover_color: Color = Color(0.5, 0.4, 0.3)
 var accent_color: Color = GOLD
 var paper_color: Color = PAPER
 var text_color: Color = PAPER
+var label_color: Color = PAPER
 ## Muster für die Gestaltung "pattern" (0 = Punkte, 1 = Streifen, 2 = Karos, 3 = Wellen)
 var pattern: int = 0
 ## Feste Zufallszahl des Titels (für kleine Unterschiede in der Gestaltung).
@@ -100,15 +102,16 @@ func _make_colors(rng: RandomNumberGenerator, genre: GenreData) -> void:
 	cover_color.h = fposmod(cover_color.h + rng.randf_range(-0.03, 0.03) * amount, 1.0)
 	cover_color.s = clampf(cover_color.s + rng.randf_range(-0.08, 0.08) * amount, 0.0, 1.0)
 	cover_color.v = clampf(cover_color.v + rng.randf_range(-0.1, 0.1) * amount, 0.08, 0.95)
-	# weicher und sanfter (seit Etappe 8): etwas zu warmem Creme hin gemischt
-	cover_color = cover_color.lerp(GameConfig.book_soft_color, GameConfig.book_soften)
+	cover_color = _sweet(cover_color)
 	# Eine zweite Farbe aus der Palette (nicht dieselbe) für Schmuck und Motiv
-	var second: Color = palette[(index + 1 + rng.randi() % maxi(palette.size() - 1, 1)) % palette.size()]
-	second = second.lerp(GameConfig.book_soft_color, GameConfig.book_soften)
+	var second: Color = _sweet(palette[(index + 1 + rng.randi() % maxi(palette.size() - 1, 1)) % palette.size()])
 	paper_color = PAPER.lerp(Color(1.0, 0.97, 0.9), rng.randf() * 0.5)
+	# helle Felder: Pastell der zweiten Farbe (noch deutlich farbig, nie Papierweiß)
+	label_color = second.lerp(Color(1.0, 0.97, 0.93), GameConfig.book_label_lightness)
+	label_color.s = maxf(label_color.s, GameConfig.book_min_saturation * 0.7)
 	match style:
 		"classic":
-			accent_color = GOLD if rng.randf() < 0.7 else paper_color
+			accent_color = GOLD if rng.randf() < 0.7 else label_color
 			if cover_color.get_luminance() > 0.45:
 				accent_color = cover_color.darkened(0.6)  # heller Einband: dunkle Schrift
 		"comic":
@@ -117,8 +120,18 @@ func _make_colors(rng: RandomNumberGenerator, genre: GenreData) -> void:
 			accent_color = Color(1.0, 0.86, 0.3) if cover_color.h < 0.1 or cover_color.h > 0.2 else Color(0.95, 0.35, 0.3)
 		_:
 			accent_color = second if absf(second.get_luminance() - cover_color.get_luminance()) > 0.18 \
-				else (paper_color if cover_color.get_luminance() < 0.5 else cover_color.darkened(0.45))
-	text_color = Color(0.15, 0.11, 0.09) if cover_color.get_luminance() > 0.55 else paper_color
+				else (label_color if cover_color.get_luminance() < 0.5 else cover_color.darkened(0.45))
+	# Schrift: auf hellen Einbänden dunkel in der Einbandfarbe, auf dunklen ein ganz helles Pastell der Einbandfarbe
+	text_color = cover_color.darkened(0.72) if cover_color.get_luminance() > 0.45 \
+		else cover_color.lerp(Color(1.0, 0.97, 0.93), 0.86)
+
+
+## Süße Farbe: ein Hauch warmes Creme, aber immer deutlich farbig (Sättigung und Helligkeit in GameConfig).
+static func _sweet(color: Color) -> Color:
+	var c := color.lerp(GameConfig.book_soft_color, GameConfig.book_soften)
+	c.s = maxf(c.s, GameConfig.book_min_saturation)
+	c.v = clampf(c.v, GameConfig.book_value_range.x, GameConfig.book_value_range.y)
+	return c
 
 
 ## Kurzer, sicherer Name aus einem Titel: "Das Rätsel der Teekanne" -> "das-raetsel-der-teekanne".

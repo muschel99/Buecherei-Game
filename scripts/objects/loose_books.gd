@@ -77,6 +77,7 @@ func _ready() -> void:
 	_material.set_shader_parameter("spine_atlas", BookArt.get_spine_atlas())
 	_material.set_shader_parameter("cover_atlas", BookArt.get_cover_atlas())
 	_material.set_shader_parameter("cover_grid", Vector2(BookArt.COVER_ATLAS_GRID))
+	_material.set_shader_parameter("page_tint", GameConfig.book_page_tint)
 	instance.material_override = _material
 	add_child(instance)
 	# Ziel für den Blick auf ausgelegte Bücher (ohne Kollisionsform – getroffen wird über
