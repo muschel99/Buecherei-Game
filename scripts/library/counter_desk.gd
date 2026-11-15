@@ -25,7 +25,7 @@ const BAG_MODEL := "res://assets/models/characters/props/library_bag_empty.glb"
 const SCANNER := Vector3(0.1, 0.0, -0.04)
 const BAG := Vector3(0.36, 0.0, -0.03)
 const BASKET := Vector3(-0.3, 0.0, 0.2)
-const BOOKS := Vector3(-0.17, 0.0, -0.06)
+const BOOKS := Vector3(-0.12, 0.0, -0.06)
 const CARD_START := Vector3(-0.42, 0.0, 0.06)
 ## Griffpunkt der Tüte über ihrer Unterkante (build_storybook_bags.py: HANG + LIB_HEIGHT) und Innenmaße (quer zur Spielfigur, tief)
 const BAG_DROP := 0.335
@@ -46,6 +46,8 @@ var _camera: Camera3D
 var _player: Node3D
 var _player_camera: Camera3D
 var _step := Step.CARD
+## kleine Anleitung oben links (bei den ersten Bedienungen, Tutorial.desk_help_wanted)
+var _steps_note: DeskSteps
 var _busy := false
 var _card: Node3D
 var _bag: Node3D
@@ -107,7 +109,16 @@ func open(guest: Passerby) -> void:
 	_tween.chain().tween_callback(func() -> void: _moving = false)
 	if tablet:
 		tablet.show_loan(true)
+	Tutorial.report("desk_open")
+	_show_steps_note()
 	_begin_guest()
+
+
+## Die kleine Anleitung „So bedienst du“ (bei den ersten Bedienungen).
+func _show_steps_note() -> void:
+	if Tutorial.desk_help_wanted() and _steps_note == null:
+		_steps_note = DeskSteps.new()
+		add_child(_steps_note)
 
 
 func close_from_escape() -> void:
@@ -124,6 +135,9 @@ func _close() -> void:
 	is_open = false
 	MenuStack.close(self)
 	_clear_props()
+	if _steps_note:
+		_steps_note.queue_free()
+		_steps_note = null
 	if tablet and is_instance_valid(tablet):
 		tablet.show_loan(false)
 	_kill_tween()
@@ -220,6 +234,9 @@ func _process(_delta: float) -> void:
 		_camera.global_transform = _view_transform()  # bleibt richtig, auch wenn sich die Fenstergröße ändert
 		_camera.fov = _view_fov()
 	_update_hover()
+	if _steps_note:
+		var index: int = {Step.CARD: 0, Step.READING: 1, Step.SCAN: 1, Step.BAG: 2, Step.DONE: 3}[_step]
+		_steps_note.set_state(index, _scanned_count(), _books.size())
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -251,6 +268,7 @@ func _click(target: Node3D) -> void:
 func _read_card() -> void:
 	_busy = true
 	_step = Step.READING
+	Tutorial.report("card_read")
 	var slot := tablet.reader_slot_global() if tablet else counter.global_transform * Vector3(-0.4, Counter.TOP_HEIGHT + 0.04, -0.1)
 	var upright := (tablet.global_transform.basis if tablet else counter.global_transform.basis).orthonormalized()
 	Audio.play_at("ui/card_insert", slot, -4.0, Audio.vary(0.04))
@@ -319,7 +337,8 @@ func _scan_book(entry: Dictionary) -> void:
 		_put_in_bag(node, book, index)
 		_busy = false
 		if _scanned_count() >= _books.size():
-			_step = Step.BAG)
+			_step = Step.BAG
+			Tutorial.report("books_scanned"))
 
 
 ## 3. Die Tüte rutscht dem Gast hinüber (er trägt sie hinaus); der Korb gleitet unten rechts aus dem Bild hinter die Theke.
@@ -576,6 +595,7 @@ func open_preview() -> void:
 	_camera.make_current()
 	if tablet:
 		tablet.show_loan(true)
+	_show_steps_note()
 	_begin_guest()
 
 

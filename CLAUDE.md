@@ -1269,7 +1269,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   übereinander setzen. Abflug/Landung am Boden weg von Hauswänden (`_free_dir`); ein Platz, der nur senkrecht erreichbar wäre, wird
   nicht genommen (`_steep_stretch`, Prüfwerkzeug „Flugbahnen“). Himmel: `_sky_course` (hoch `_course_high`, längs `_course_along_street`,
   über die Dächer `_course_over_roofs`), Werte `bird_sky_*`, `bird_flyover_*`; weiter als `FAR_ENOUGH` darf ein Vogel sichtbar anfangen und enden.
-  **Fahrzeuge:** Für Katzen auf der Fahrbahn zählt die ganze Breite (auch mitten im Sprung vom Bordstein); Fahrräder (`is_bike`)
+  **Fahrzeuge:** Für Katzen auf der Fahrbahn zählt die ganze Breite (auch mitten im Sprung vom Bordstein; seit dem Straßen-Patt
+  nach 8b halten Fahrzeuge nur für Katzen, die wirklich hinüber wollen – `StreetCat.crossing_road`, Schritte mit "crossing" –, an
+  einer wartenden Katze am Bordstein fahren sie langsam vorbei; `CatLife.road_clear` rechnet mit dem Bremsweg, ein stehendes
+  Fahrzeug hält nur auf, wenn es auf ihrem Weg steht; drinnen schlüpfen Katzen nach kurzem Warten aneinander vorbei
+  `pass_cats`); Fahrräder (`is_bike`)
   fahren nie um etwas herum, sie bremsen früh (`bike_brake`) und halten davor (`bike_stop_gap`). **Passanten:** beim gemeinsamen
   Gehen abwechselnd zum Gegenüber und nach vorn (`passerby_walk_look_time`/`_away_time`), beim Überqueren `road_scan`; im Sitzen
   zurückgelehnt (`ChibiGestureModifier.lean`, `passerby_sit_lean`). **Katzen:** Sprung hinunter erst nach vorn, dann fallen, hinauf erst
@@ -1382,11 +1386,13 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (main.gd `set_paint_night`), in der Ferne feinere Linien. Prüfen: street_life_check `--hour=23`.
   **Bücherei:** Körbe `library_basket_0…3.glb` (build_storybook_bags.py, als Tasche in der rechten Hand; seit dem Nachtest von
   Etappe 8 ohne Korbstapel), Theke in drei Schritten (`CHECKOUT_WORDS`
-  Ausweis/Stempeln/Scannen – seit Etappe 8 die Theken-Ansicht `CounterDesk`, siehe unten), Geld nur als Aufploppen
+  Ausweis/Stempeln/Scannen – seit Etappe 8 die Theken-Ansicht `CounterDesk`, siehe unten; Körbe seit dem Nachtest nach 8b
+  anderthalbmal so groß: `BASKET_SCALE` in build_storybook_bags.py, im Spiel `LibraryVisits.BASKET_DROP`), Geld nur als Aufploppen
   am Kontostand; Vorfahrt an der Tür (`LibraryDoorLink.busy_for`: wer hinaus will, zuerst); drinnen drücken sich Besucher
   aneinander vorbei (`Passerby.in_library`, `StreetLife.LIBRARY_GAP`); Lesen im Sitzen (`sit` mit "read" →
   `ChibiPasserbyModel.set_reading`, `ChibiGestureModifier.read_point/read_weight`, Buch `_make_open_book`); Schritt "stand" mit
-  "clip"/"cue". Türschild nur innen (Straßenseite = Stand, innen die Rückseite). **Sitzmöbel** in Chibi-Höhe:
+  "clip"/"cue". Türschild seit dem Wunsch nach Etappe 8b nur AUSSEN (`OpenSign.side` -1, Seiten farbig: grün „Geöffnet“,
+  rot „Geschlossen“, Schrift Creme – den Stand sieht man von der Straße; durchs Türglas innen die Rückseite). **Sitzmöbel** in Chibi-Höhe:
   `storybook_furniture.SEAT_HEIGHT` 0,3 m (`Kit.lower_seat` staucht alles unter dem Sitz; `low_seat=False` schaltet ab).
   Seit Etappe 8 einheitlich: Tische `Kit.lower_table` (`TABLE_HEIGHTS` je Unterkategorie: Ess-/Schreibtisch 0,5 m, Beistell-/
   Couchtisch 0,3 m, `top_height` je Möbel), Theken `z_scale` 0,85 (`Kit.scale_height`, Platte `Counter.TOP_HEIGHT` 0,85 m),
@@ -1412,7 +1418,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   schweben Dinge nicht, wenn ein Modell niedriger wird.
 - **Theke bedienen (seit Etappe 8, neu aufgeteilt im Nachtest):** Kein PC mehr. **Tablet** (`ShopTablet`, scenes/furniture/
   tablet.tscn, verschiebbares Möbel, Standardplatz rechts auf der Theke; Modell `furniture_fixtures.build_tablet`: Holzständer,
-  `TABLET_TILT` 50°, links der Kartenleser mit Kabel – Lagen `SCREEN_*`/`READER_SLOT` in shop_tablet.gd passend halten):
+  `TABLET_TILT` 50°, links der Kartenleser mit Kabel – Lagen `SCREEN_*`/`READER_SLOT` in shop_tablet.gd passend halten; seit dem
+  Nachtest nach 8b um 26° zur Bedien-Kamera gedreht, alte Spielstände dreht `Room._migrate_tablet_spot` mit):
   „Bücherei-Ausleihe“ (`LoanScreen` im SubViewport, unbeleuchtete Fläche vor dem Bildschirm) nur beim Bedienen
   (`show_loan`); die Liste aller Ausweise ist die App „Ausleihe“ (`loans`, LoansApp). Auf der Theke (counter.tscn `Modules`):
   Scanner `counter_scanner` (Glasstreifen quer, um 90° gedreht) und Tütenstapel `paper_bag_stack`. **Theken-Ansicht**
@@ -1478,7 +1485,12 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   verbinden** (sie bleiben nach dem Neuladen der Szene verbunden → „Lambda capture … was freed“) – Methoden nehmen.
   Prüfen: `scenes/tools/title_probe.tscn -- shot` (xvfb, Bilder nach screenshots/title_probe/), `-- new` (Zurücksetzen),
   `-- story` (Story-Anfang und To-do-Zettel headless durchspielen), `-- todo` (xvfb, Zettel im Laden); schneller:
-  `scenes/tools/ui_probe.tscn -- todo` (Zettel ohne Welt).
+  `scenes/tools/ui_probe.tscn -- todo[:<n>]` (Zettel ohne Welt).
+- **Mauszeiger (seit dem Wunsch nach Etappe 8b):** `CozyCursor.apply()` (Settings._ready): runder Pfeil in Creme mit warmbraunem
+  Rand, über Knöpfen (Zeigerform „Hand“) zartrosa; Bilder `assets/ui/cursors/` aus `tools/make_cursor.py` (schreibt nur
+  Fehlendes, `--force` neu; Spitze `HOTSPOT` in beiden gleich).
+- **Wünsche natürlich formuliert (seit dem Nachtest nach 8b):** je Genre Wendungen in `data/talk/genre_wishes.txt`
+  („einen spannenden Krimi“ …), in talk.txt `wunsch` mit `{wunsch}` (`TalkLines.genre_wish`).
 - **Story-Anfang (Wunsch: die Maklerin übergibt das Haus und zeigt, was der Vorbesitzer dagelassen hat):** Autoload `Tutorial`
   (`intro_done`, gespeichert; ohne Eintrag = true, so sehen alte Spielstände nichts davon). `StoryIntro` (scripts/story/; main.gd
   legt es an, solange `intro_done` false ist – mittendrin gespeichert = beginnt von vorn): Spielfigur draußen vor die Treppe
@@ -1487,18 +1499,26 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (Orte `_station_point`, Blickpunkte `_focus_point`); dort wartet sie, das Gespräch beginnt von selbst in
   `story_talk_distance` bei freier Sicht. Gesprächsschritte mit `"focus"` (Kamera schaut darauf, Signal
   `Conversation.line_started` → sie dreht sich hin und zeigt, Clip „point“). Texte `data/story/intro.txt`. Währenddessen
-  `Lending.hold_visitors`. Bausteine: `LibraryVisits.enter_actions/go_to_actions/exit_house_actions/entrance_points`,
+  `Lending.hold_visitors`. Die letzte Station (eingang) ist wieder draußen neben der Treppe (Einwurf, Türschild außen).
+  Bausteine: `LibraryVisits.enter_actions/go_to_actions/exit_house_actions/entrance_points/street_line`,
   `StreetLife.exit_actions`.
 - **To-do-Zettel (Tutorial nach der Übergabe, Wunsch: kleine Listen für die kleinen Schritte am Rand):** Zettel nacheinander
-  aus `data/tutorial/todo.txt` (Überschrift, Aufgaben `kennung | Text | Taste`). Erledigt = `Tutorial.report(kennung)` an der
-  Stelle im Spiel (tablet: CounterTablet.open_tablet, order/shelf_ordered: DeliveryManager.place_order, unpack: DeliveryBox,
-  furniture_placed: BuildMode, crate_book: GenreCrates, guest_served/wish: LibraryVisits, talked: Conversation (nicht die
-  Maklerin), sat_down: Player.sit_down, slept: GameClock.woke_up) oder per Nachsehen alle 0,5 s (`Tutorial._poll`:
-  shelf_placed, shelved, open_sign). Schon Erledigtes ist gleich abgehakt, fertige Zettel werden übersprungen, fertiger
+  aus `data/tutorial/todo.txt` (Überschrift, Aufgaben `kennung | Text | Taste[,Taste]`; seit dem Nachtest nach 8b in kleinen
+  Einzelschritten, z. B. Gestaltungsmodus öffnen → Regal wählen (C/V) → Linksklick/Mausrad → schließen). Erledigt =
+  `Tutorial.report(kennung)` an der Stelle im Spiel (tablet: CounterTablet.open_tablet, order/shelf_ordered:
+  DeliveryManager.place_order, unpack: DeliveryBox, build_open/build_close/build_selected/furniture_placed: BuildMode,
+  crate_book: GenreCrates, guest_waiting (Glocke)/guest_served/wish: LibraryVisits, desk_open/card_read/books_scanned:
+  CounterDesk, talked: Conversation (nicht die Maklerin), sat_down: Player.sit_down, slept: GameClock.woke_up) oder per
+  Nachsehen alle 0,5 s (`Tutorial._poll`: shelf_placed, shelved, open_sign). Schon Erledigtes ist gleich abgehakt, fertige Zettel werden übersprungen, fertiger
   Zettel bleibt `todo_next_delay` hängen. Ein neues Spiel beginnt mit geschlossenem Schild. Gespeichert: `intro_done`, `list`,
   `events` (alte Stände: keine Zettel). Anzeige `TodoNote` (im HUD, rechts oben; Papier, Häkchen wächst, Text weich
-  durchgestrichen, eigene Tastensymbole in Tinte `InkKey`, tritt in Menüs/Gesprächen zurück), Einstellung „interface/todo“.
-  Neue Aufgabe = Zeile in todo.txt + `Tutorial.report` an der passenden Stelle (oder eine Prüfung in `_poll`).
+  durchgestrichen, eigene Tastensymbole in Tinte `InkKey` – auch Mausrad –, Zeilen über `TodoNote.make_row`, tritt in
+  Menüs/Gesprächen zurück), Einstellung „interface/todo“. **Theken-Ansicht:** `DeskSteps` (scripts/ui/desk_steps.gd, oben
+  rechts „So bedienst du“: Ausweis, Bücher, Tüte – jetziger Schritt rosa, Erledigtes abgehakt, „x von y Büchern“) bei den ersten
+  `GameConfig.desk_help_servings` Bedienungen (`Tutorial.desk_help_wanted`, Zähler `desk_served`). **Gast mit Wunsch + Buch
+  in der Hand:** unten neben der linken Maustaste „Geben“ (`Interactable.place_text`, HUD `_carry_hints`).
+  Neue Aufgabe = Zeile in todo.txt + `Tutorial.report` an der passenden Stelle (oder eine Prüfung in `_poll`). Prüfbild eines
+  Zettels: `ui_probe.tscn -- todo:<n>`.
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

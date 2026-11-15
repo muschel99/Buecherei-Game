@@ -56,8 +56,8 @@ const LIBRARY_BAG := "res://assets/models/characters/props/library_bag.glb"
 const BASKET_MODELS := ["res://assets/models/characters/props/library_basket_0.glb",
 	"res://assets/models/characters/props/library_basket_1.glb", "res://assets/models/characters/props/library_basket_2.glb",
 	"res://assets/models/characters/props/library_basket_3.glb"]
-## Abstand Griff – Boden des Korbs (m, wie im Blender-Script: Hängen + Höhe)
-const BASKET_DROP := 0.2
+## Abstand Griff – Boden des Korbs (m, wie im Blender-Script: (Hängen + Höhe) × BASKET_SCALE)
+const BASKET_DROP := 0.3
 ## Plätze vor Regalen, die Besucher gerade belegen (walker → Welt-Punkt)
 var _shelf_spots: Dictionary = {}
 ## Was ein Besucher gerade trägt / will: walker → {books, genre, new}
@@ -188,6 +188,11 @@ func exit_house_actions() -> Array:
 		_line([p.landing, p.foot], _floor, 0.0)]
 
 
+## Gerader, fester Weg auf dem Gehweg (Punkte unter StreetLife), z. B. vom Fuß der Treppe zur Seite.
+func street_line(points: Array) -> Dictionary:
+	return _line(points, 0.0, 0.0, STREET_HALF_WIDTH)
+
+
 ## Höhe des Ladenbodens (unter StreetLife).
 func shop_floor() -> float:
 	return _floor
@@ -303,6 +308,7 @@ func _queue_step(walker: Passerby) -> Array:
 		return [{"type": "wait", "face": _counter_face(), "until": func(w: Passerby) -> bool: return queue.find(w) < index},
 			_call(_queue_step)]
 	# vorn an der Theke: Korb auf die Theke, einmal klingeln, Ausweis hochhalten
+	Tutorial.report("guest_waiting")
 	Audio.play_at("ui/counter_bell", _counter_node().global_transform * Vector3(-0.3, Counter.TOP_HEIGHT, 0.25), GameConfig.counter_bell_volume_db,
 		Audio.vary(0.03))
 	_checkout[walker] = 0
@@ -623,6 +629,7 @@ func complete_checkout(walker: Passerby, bonus: bool) -> void:
 	visit.lent = true
 	Audio.play("ui/kaching", GameConfig.checkout_kaching_db)
 	Tutorial.report("guest_served")
+	Tutorial.note_served()
 	_checkout[walker] = 3
 
 
@@ -1053,8 +1060,11 @@ func wish_steps(walker: Passerby) -> Array:
 	var genre := Catalog.get_genre(String(wish.get("genre", "")))
 	if genre == null or not state in ["open", "accepted"]:
 		return []
+	# was er sucht, als natürliche Wendung (data/talk/genre_wishes.txt), z. B. „einen spannenden Krimi“
+	var wanted := TalkLines.genre_wish(genre, _rng)
 	var line := func(section: String) -> String:
-		return String(TalkLines.pick(section, hour, _rng).get("text", "")).replace("{genre}", "„%s“" % genre.display_name)
+		return String(TalkLines.pick(section, hour, _rng).get("text", "")).replace("{wunsch}", wanted) \
+			.replace("{genre}", genre.display_name)
 	var steps: Array = []
 	if state == "accepted":
 		steps.append({"text": line.call("wunsch_wartet")})

@@ -1923,6 +1923,21 @@ Plan und Haken: `.scratch/start-story-tutorial/plan.md`.
   Ankommen in der Straße) mit Kästchen und Tastensymbolen; sie haken sich von selbst ab, ein fertiger Zettel gleitet hinaus
   und der nächste herein; abschaltbar unter Einstellungen → „To-do-Zettel“. Texte: `data/tutorial/todo.txt`
 
+## Nachtest nach Etappe 8b (Liste der Entwicklerin, 15.11.2026)
+Plan und Haken: `.scratch/nachtest-8b/plan.md`.
+
+- [x] **Straße nicht mehr blockiert:** Katzen am Bordstein und Fahrzeuge warten nicht mehr ewig aufeinander (Fahrzeuge halten
+  nur für Katzen, die wirklich über die Straße laufen; Katzen achten auf den Bremsweg); drinnen schlüpfen Katzen aneinander vorbei
+- [x] **Türschild außen** an der Ladentür: grün „Geöffnet“, rot „Geschlossen“, groß genug, um es von der Straße zu lesen; Frau
+  Lindemann zeigt Schild und Einwurf zum Schluss draußen
+- [x] **Tutorial in kleinen Schritten:** eigener Zettel „Das Regal aufstellen“ (Gestaltungsmodus öffnen, Regal wählen mit C/V,
+  Linksklick – Mausrad dreht, wieder schließen); „Die Tür auf!“ mit Glocke, Bedienen und den Handgriffen; in der Theken-Ansicht
+  oben rechts der Zettel „So bedienst du“ (Ausweis, Bücher, Tüte – haken sich ab); beim Gast mit Wunsch unten „Geben“
+- [x] **Tablet** um 26° zur Bedien-Ansicht gedreht und etwas nach links gerückt (ganz im Bild)
+- [x] **Wünsche natürlich formuliert** („Hast du vielleicht einen spannenden Krimi für mich?“)
+- [x] **Körbe** anderthalbmal so groß
+- [x] **Mauszeiger:** runder Pfeil in Creme mit warmbraunem Rand, über Knöpfen zartrosa
+
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)
 

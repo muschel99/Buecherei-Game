@@ -3,7 +3,8 @@
 #
 # Aufbau:
 #   == name      beginnt eine Station; die Maklerin geht nacheinander zu: start (draußen an der Treppe), theke,
-#                einrichtung (Sessel und Deko-Regal), hinterzimmer (Tür hinten rechts), eingang (Rückgabekasten, Schild)
+#                einrichtung (Sessel und Deko-Regal), hinterzimmer (Tür hinten rechts), eingang (wieder draußen vor der
+#                Tür: Einwurf des Rückgabekastens, Türschild, Schlüssel, Abschied)
 #   Text …       ein Satz (eine Sprechblase)
 #   @blick Text  bei diesem Satz schaut die Kamera auf etwas: haus, theke, tablet, kisten, sessel, regal, hintertuer,
 #                rueckgabe, schild (ohne @ schaut sie auf die Maklerin)
@@ -29,7 +30,7 @@ Alles andere richten Sie ganz nach Ihrem Geschmack ein. Ich bin schon gespannt!
 @hintertuer Da hinten ist ein kleines Zimmer mit einem Bett – falls es abends mal spät wird.
 
 == eingang
-@rueckgabe Neben der Tür ist der Rückgabekasten. Dort werfen Ihre Gäste die Bücher ein, wenn sie sie zurückbringen.
-@schild Und das Schild an der Tür zeigt allen, ob Sie geöffnet haben.
+@rueckgabe Hier neben der Tür ist der Einwurf für den Rückgabekasten. Dort werfen Ihre Gäste die Bücher ein, wenn sie sie zurückbringen.
+@schild Und das Schild an der Tür zeigt allen auf der Straße, ob Sie geöffnet haben. Noch steht es auf „Geschlossen“.
 So – hier ist Ihr Schlüssel. Ich wünsche Ihnen ganz viel Freude mit Ihrer Bücherei!
 Und keine Sorge: Die Leute hier in der Straße sind wirklich nett. Sie werden sich wohlfühlen.

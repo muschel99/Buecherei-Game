@@ -212,9 +212,12 @@ def tote_bag(M, coll):
         b.build()
 
 
-# Bücherkorb (seit Testrunde 7b): kleiner runder Weidenkorb mit Bügel, den Bücherei-Besucher am Arm tragen; vier Varianten
+# Bücherkorb (seit Testrunde 7b): runder Weidenkorb mit Bügel, den Bücherei-Besucher am Arm tragen; vier Varianten
 # mit 0 bis 3 Büchern (library_basket_0 … _3), das Spiel tauscht sie, wenn ein Buch dazukommt. Ursprung = Griff oben am Bügel.
-BASKET_R = (0.062, 0.078)   # Radius unten, oben
+# Seit dem Wunsch nach Etappe 8b („die Körbe müssen größer sein“) anderthalbmal so groß: BASKET_SCALE wirkt auf alle Maße
+# (Spiel: LibraryVisits.BASKET_DROP = (BASKET_HANG + BASKET_H) × BASKET_SCALE).
+BASKET_SCALE = 1.5
+BASKET_R = (0.062, 0.078)   # Radius unten, oben (vor BASKET_SCALE)
 BASKET_H = 0.085
 BASKET_HANG = 0.115          # Griff – Oberkante des Korbs
 BOOKS = [  # (Farbe, quer, entlang, Höhe, Neigung zur Seite)
@@ -226,25 +229,31 @@ BOOKS = [  # (Farbe, quer, entlang, Höhe, Neigung zur Seite)
 
 def library_basket(M, coll, books):
     import storybook_town as T
-    top = -BASKET_HANG
-    base_y = top - BASKET_H
-    T.round_basket(M, {"deco": coll}, "Korb", g(0, base_y, 0), BASKET_R[0], BASKET_R[1], BASKET_H, seed=41, stakes=14)
+    k = BASKET_SCALE
+    top = -BASKET_HANG * k
+    height_b = BASKET_H * k
+    base_y = top - height_b
+    T.round_basket(M, {"deco": coll}, "Korb", g(0, base_y, 0), BASKET_R[0] * k, BASKET_R[1] * k, height_b, seed=41,
+                   stakes=18)
     # Bügel: von der einen Seite des Rands (entlang z) hoch über den Griff zur anderen Seite
     h = Body("Bügel", M["wicker"], coll, seed=42, vary=0.06)
-    r = BASKET_R[1]
-    pts = [g(0, top - 0.004, -r + 0.004), g(0, top + 0.05, -r * 0.82), g(0, -0.012, -0.03), g(0, -0.004, 0.0),
-           g(0, -0.012, 0.03), g(0, top + 0.05, r * 0.82), g(0, top - 0.004, r - 0.004)]
-    h.tube(pts, 0.006, segs=7, smooth=2, round_ends=True)
+    r = BASKET_R[1] * k
+    pts = [g(0, top - 0.004 * k, -r + 0.004 * k), g(0, top + 0.05 * k, -r * 0.82), g(0, -0.012 * k, -0.03 * k),
+           g(0, -0.004 * k, 0.0), g(0, -0.012 * k, 0.03 * k), g(0, top + 0.05 * k, r * 0.82),
+           g(0, top - 0.004 * k, r - 0.004 * k)]
+    h.tube(pts, 0.006 * k, segs=7, smooth=2, round_ends=True)
     h.build()
     # Bücher stehen schräg im Korb, oben schauen sie heraus
+    floor_y = base_y + 0.012 * k
     for i in range(books):
         mat, x, z, height, lean = BOOKS[i]
-        bk = Body("Buch%d" % i, M[mat], coll, seed=50 + i, vary=0.03, bevel=0.0012)
-        bk.box(g(x, base_y + 0.012 + height / 2, z), gsize(0.016, height, 0.068), step=0.05, dent=0.0)
+        x, z, height = x * k, z * k, height * k
+        bk = Body("Buch%d" % i, M[mat], coll, seed=50 + i, vary=0.03, bevel=0.0012 * k)
+        bk.box(g(x, floor_y + height / 2, z), gsize(0.016 * k, height, 0.068 * k), step=0.05, dent=0.0)
         pg = Body("Seiten%d" % i, M["pages"], coll, seed=60 + i, vary=0.02)
-        pg.box(g(x, base_y + 0.012 + height / 2 + 0.001, z), gsize(0.0125, height - 0.006, 0.0695), step=0.05, dent=0.0)
+        pg.box(g(x, floor_y + height / 2 + 0.001, z), gsize(0.0125 * k, height - 0.006 * k, 0.0695 * k), step=0.05, dent=0.0)
         # um die Unterkante zur Seite neigen (Blender: Drehung um die y-Achse = Spiel-z)
-        pivot = g(x, base_y + 0.012, z)
+        pivot = g(x, floor_y, z)
         tilt = Matrix.Translation(pivot) @ Matrix.Rotation(lean, 4, "Y") @ Matrix.Translation(-pivot)
         for o in (bk.build(), pg.build()):
             o.data.transform(tilt)

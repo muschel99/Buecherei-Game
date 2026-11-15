@@ -1452,6 +1452,8 @@ var story_player_start_distance: float = 2.6
 var story_goodbye_wait: float = 1.0
 ## To-do-Zettel (Tutorial, nach der Übergabe): so lange bleibt ein fertiger Zettel hängen, bevor der nächste kommt (s)
 var todo_next_delay: float = 2.5
+## So viele Bedienungen lang zeigt die Theken-Ansicht die kleine Anleitung „So bedienst du“ (DeskSteps)
+var desk_help_servings: int = 5
 ## Stempelkarte (seit Etappe 8): so viele Felder; ist sie voll, bekommt der Gast ein Lesezeichen und so viele Tage mehr Zeit
 var stamp_card_size: int = 10
 ## Lautstärke des „Kaching“, wenn eine Bedienung an der Theke fertig ist (dB; seit dem Nachtest von Etappe 8 deutlich hörbar)

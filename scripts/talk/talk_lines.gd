@@ -8,6 +8,9 @@ const PATH := "res://data/talk/talk.txt"
 const TIMES := {"morgen": Vector2(5, 11), "mittag": Vector2(11, 17), "abend": Vector2(17, 22), "nacht": Vector2(22, 5)}
 
 static var _sections: Dictionary = {}  # Abschnitt → Array[{text, time, answers: Array[{text, reply}]}]
+## Wie Gäste nach einem Genre fragen (data/talk/genre_wishes.txt): Genre → PackedStringArray („einen spannenden Krimi“ …)
+const WISHES_PATH := "res://data/talk/genre_wishes.txt"
+static var _wishes: Dictionary = {}
 
 
 static func _load() -> void:
@@ -44,6 +47,27 @@ static func _load() -> void:
 
 
 ## Ein zufälliger Eintrag aus dem Abschnitt, der zur Uhrzeit passt (leer, wenn es keinen gibt).
+## Was ein Gast sucht, als Wendung für {wunsch} (z. B. „einen spannenden Krimi“); fehlt das Genre in der Datei: „etwas aus dem
+## Bereich Krimi“.
+static func genre_wish(genre: GenreData, rng: RandomNumberGenerator) -> String:
+	if _wishes.is_empty():
+		var file := FileAccess.open(WISHES_PATH, FileAccess.READ)
+		while file and not file.eof_reached():
+			var line := file.get_line().strip_edges()
+			if line.is_empty() or line.begins_with("#") or not line.contains("|"):
+				continue
+			var parts := line.split("|", true, 1)
+			var options := PackedStringArray()
+			for option in parts[1].split(";", false):
+				if not option.strip_edges().is_empty():
+					options.append(option.strip_edges())
+			_wishes[parts[0].strip_edges()] = options
+	var list: PackedStringArray = _wishes.get(genre.get_id(), PackedStringArray())
+	if list.is_empty():
+		return "etwas aus dem Bereich %s" % genre.display_name
+	return list[rng.randi() % list.size()]
+
+
 static func pick(section: String, hour: float, rng: RandomNumberGenerator) -> Dictionary:
 	_load()
 	var fitting: Array = []

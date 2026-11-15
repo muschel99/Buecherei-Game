@@ -128,16 +128,25 @@ func _fit_paper() -> void:
 
 
 func _make_row(task: Dictionary) -> Control:
+	var row := make_row(String(task.text), String(task.get("action", "")), Tutorial.is_done(String(task.id)))
+	_checks[String(task.id)] = row.get_meta("check")
+	return row
+
+
+## Eine Zeile: Kästchen, Text in Handschrift, Tastensymbole (Aktionen mit Komma getrennt, z. B. "build_item_prev,build_item_next").
+## Das Kästchen steht als Metadatum "check" an der Zeile (auch für die Bedien-Anleitung an der Theke, DeskSteps).
+static func make_row(text: String, actions: String, done: bool) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var check := Check.new()
-	check.done = Tutorial.is_done(String(task.id))
+	check.mouse_filter = Control.MOUSE_FILTER_IGNORE  # (in der Theken-Ansicht ist die Maus frei – Klicks gehen in die Welt)
+	check.done = done
 	check.custom_minimum_size = Vector2(24, 24)
 	check.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(check)
 	var label := Label.new()
-	label.text = String(task.text)
+	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.add_theme_font_override("font", HAND)
@@ -147,13 +156,14 @@ func _make_row(task: Dictionary) -> Control:
 	row.add_child(label)
 	check.label = label
 	check.apply_done_look(false)
-	var action := StringName(String(task.get("action", "")))
-	if action != &"" and InputMap.has_action(action):
-		var key := InkKey.new()
-		key.setup(action)
-		key.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		row.add_child(key)
-	_checks[String(task.id)] = check
+	for entry in actions.split(",", false):
+		var action := StringName(entry.strip_edges())
+		if InputMap.has_action(action):
+			var key := InkKey.new()
+			key.setup(action)
+			key.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+			row.add_child(key)
+	row.set_meta("check", check)
 	return row
 
 
@@ -286,6 +296,10 @@ class InkKey extends Control:
 			var x0 := body.position.x + (1.5 if left else body.size.x / 2.0)
 			var button := Rect2(x0, body.position.y + 1.5, body.size.x / 2.0 - 1.5, 9.0)
 			draw_rect(button, Color(TICK, 0.85))
+		elif kind in [KeyHintIcon.Kind.MOUSE_WHEEL, KeyHintIcon.Kind.MOUSE_MIDDLE]:
+			# Mausrad: kleines rundes Rad in der Mitte
+			var wheel := Rect2(center.x - 2.5, body.position.y + 3.0, 5.0, 8.0)
+			draw_colored_polygon(SoftShapes.rounded_all(wheel, 2.4, 0.0, 2), Color(TICK, 0.9))
 		draw_polyline(SoftShapes.closed(shape), INK_SOFT, 1.6, true)
 		draw_line(Vector2(body.position.x + 1.0, body.position.y + 11.0), Vector2(body.end.x - 1.0, body.position.y + 11.0),
 			INK_SOFT, 1.3, true)

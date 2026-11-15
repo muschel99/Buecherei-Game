@@ -183,6 +183,11 @@ func set_active(active: bool) -> void:
 		SaveManager.request_save()
 	_apply_mouse_mode()
 	_update_grid_visibility()
+	# To-do-Zettel: Gestaltungsmodus geöffnet bzw. (danach) wieder geschlossen
+	if active:
+		Tutorial.report("build_open")
+	elif Tutorial.is_done("build_open"):
+		Tutorial.report("build_close")
 	active_changed.emit(active)
 
 
@@ -229,6 +234,7 @@ func select_furniture(data: FurnitureData, variant: String = "") -> void:
 	_rotation_offset = 0.0  # Vorderseite zeigt zu mir
 	_preview.setup(data)
 	_enter_placing_state()
+	Tutorial.report("build_selected")
 	selection_changed.emit(data)
 
 

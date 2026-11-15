@@ -132,7 +132,10 @@ func _current_hints() -> Array:
 func _carry_hints() -> Array:
 	if BookStock.carried.is_empty() or _seated:
 		return []
-	var hints := [{"input": "place", "word": "Ablegen"}]
+	var place_word := "Ablegen"
+	if is_instance_valid(_target) and _target.handles_placing and not _target.place_text.is_empty():
+		place_word = _target.place_text  # z. B. „Geben“ bei einem Gast, der auf ein Buch wartet
+	var hints := [{"input": "place", "word": place_word}]
 	if is_instance_valid(_target) and _target.supports_place_all:
 		hints.append({"input": "place_all", "word": "Einräumen"})
 	var placer := _get_world_placer()

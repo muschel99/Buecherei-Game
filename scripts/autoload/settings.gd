@@ -69,6 +69,7 @@ var _values := {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	CozyCursor.apply()  # runder Mauszeiger im Cozy-Stil (seit dem Wunsch nach Etappe 8b)
 	_load()
 	for definition in DEFINITIONS:
 		_apply(definition.key)

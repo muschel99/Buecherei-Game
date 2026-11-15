@@ -140,8 +140,14 @@ class Runner extends Node:
 					[{"kind": "furniture", "id": "bookshelf_oak", "count": 1}]),
 			func() -> void: Tutorial.report("unpack"),
 			func() -> void:
+				var build := get_tree().current_scene.get_node("BuildMode")
+				Inventory.add_furniture("bookshelf_oak", 1)  # (wie nach dem Auspacken)
+				build.call("set_active", true)
+				build.call("select_furniture", Catalog.get_furniture("bookshelf_oak")),
+			func() -> void:
 				room.add_furniture(Catalog.get_furniture("bookshelf_oak"), room.global_transform * Transform3D(Basis.IDENTITY,
 					Vector3(-0.5, 0.0, 3.5)), null),
+			func() -> void: get_tree().current_scene.get_node("BuildMode").call("set_active", false),
 			func() -> void:
 				var crates := room.find_children("*", "GenreCrates", true, false)
 				crates[0].call("_take", BookStock.get_unlocked_genres()[0].get_id()),
@@ -150,6 +156,9 @@ class Runner extends Node:
 					if room.is_ancestor_of(shelf):
 						shelf.call("put_carried"),  # wie Linksklick halten am Regal
 			func() -> void: Lending.set_open(true),
+			func() -> void:
+				Tutorial.report("guest_waiting")  # (Glocke – braucht einen echten Gast)
+				Tutorial.report("desk_open"),
 			func() -> void: Tutorial.report("guest_served"),
 			func() -> void: Tutorial.report("talked"),
 			func() -> void: Tutorial.report("sat_down"),

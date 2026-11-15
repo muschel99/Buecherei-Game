@@ -3,7 +3,8 @@ extends Node
 ## Der Story-Anfang (Wunsch der Entwicklerin): Bei einem neuen Spiel steht man draußen vor dem Haus, das man gekauft hat. Die
 ## Maklerin (GameConfig.story_agent_*) begrüßt einen, geht voraus und zeigt an Stationen, was der Vorbesitzer dagelassen hat:
 ## Theke mit Tablet und Bücherkisten, Sessel und Deko-Regal, das Hinterzimmer, Rückgabekasten und Türschild – dann gibt sie den
-## Schlüssel und geht. Texte: data/story/intro.txt (Stationen, Sätze, @blick = die Kamera schaut bei diesem Satz auf etwas).
+## Schlüssel und geht. Die letzte Station (eingang) ist draußen vor der Tür – dort hängen Türschild und Einwurf des Rückgabe-
+## kastens. Texte: data/story/intro.txt (Stationen, Sätze, @blick = die Kamera schaut bei diesem Satz auf etwas).
 ##
 ## Ablauf: Die Maklerin ist eine Figur aus dem Vorrat des Straßenlebens (StreetLife.launch_scripted) mit festen Schritten:
 ## zur Station gehen, dort warten (Blick zur Spielfigur), bis das Gespräch dort vorbei ist. Das Gespräch beginnt von selbst,
@@ -12,8 +13,6 @@ extends Node
 
 const TEXT_PATH := "res://data/story/intro.txt"
 const STATIONS := ["start", "theke", "einrichtung", "hinterzimmer", "eingang"]
-## Mitte des Ladens (Raumkoordinaten) – von Türen aus ein Stück dorthin treten
-const ROOM_MIDDLE := Vector3(-0.2, 0.0, -0.2)
 ## Erst so lange nach der Ankunft reden (umdrehen, ankommen); an der ersten Station länger (Bild blendet noch auf)
 const SETTLE_TIME := 0.5
 const FIRST_DELAY := 2.0
@@ -33,6 +32,8 @@ var _settle := FIRST_DELAY
 var _since_done := 0.0
 var _talk_index := -1
 var _finished := false
+## Platz der Maklerin draußen neben der Treppe (am Anfang und bei der letzten Station; unter StreetLife)
+var _outside_spot := Vector2.ZERO
 var _leave_timer := 0.0
 
 
@@ -88,17 +89,25 @@ func _try_setup() -> void:
 	var side := Vector2(-out.y, out.x)
 	var foot: Vector2 = p.foot
 	var agent_start := foot + out * 0.55 + side * 0.45
+	_outside_spot = agent_start
 	var player_spot := foot + out * GameConfig.story_player_start_distance
+	var last := STATIONS.size() - 1
 	var actions: Array = [_arrive_step(0), _wait_step(0)]
 	actions.append_array(_visits.enter_actions(agent_start))
 	actions.append(_call(_went_inside))
-	for i in range(1, STATIONS.size()):
+	# drinnen: Theke, Einrichtung, Hinterzimmer
+	for i in range(1, last):
 		actions.append(_call(_go_station.bind(i)))
 		actions.append(_arrive_step(i))
 		actions.append(_wait_step(i))
-	actions.append(_call(_goodbye_pause))
+	# hinaus und draußen neben der Treppe: Türschild, Rückgabekasten, Schlüssel, Abschied
 	actions.append_array(_visits.exit_house_actions())
 	actions.append(_call(_went_outside))
+	actions.append(_call(_go_outside_spot))
+	actions.append(_arrive_step(last))
+	actions.append(_wait_step(last))
+	actions.append(_call(_goodbye_pause))
+	actions.append(_call(_walk_away))
 	_agent = _life.launch_scripted(agent_start, player_spot - agent_start, actions, 0.0, GameConfig.story_agent_seed, 1,
 		GameConfig.story_agent_name)
 	if _agent == null:
@@ -154,8 +163,18 @@ func _went_inside(walker: Passerby) -> Array:
 func _went_outside(walker: Passerby) -> Array:
 	walker.remove_from_group(Door.KEEPOUT_GROUP)
 	walker.in_library = false
+	return []
+
+
+## Vom Fuß der Treppe ein paar Schritte zur Seite (dort steht sie bei der letzten Station).
+func _go_outside_spot(walker: Passerby) -> Array:
+	return [_visits.street_line([walker.pos, _outside_spot])]
+
+
+## Zum näheren Straßenende und hinaus; ab hier geht sie allein (dieser Knoten wird nicht mehr gebraucht).
+func _walk_away(walker: Passerby) -> Array:
 	var rest := _life.exit_actions(walker.pos)
-	queue_free.call_deferred()  # ab hier geht sie allein die Straße hinunter
+	queue_free.call_deferred()
 	return rest
 
 
@@ -167,7 +186,7 @@ func _go_station(_walker: Passerby, index: int) -> Array:
 	return _visits.go_to_actions(point as Vector3)
 
 
-## Kurz stehen bleiben, dann zur Tür.
+## Kurz stehen bleiben, dann geht sie.
 func _goodbye_pause(walker: Passerby) -> Array:
 	var d := _life.to_local2(_player.global_position) - walker.pos
 	return [{"type": "stand", "face": d.normalized() if d.length() > 0.05 else Vector2.ZERO, "anim": &"idle",
@@ -255,10 +274,7 @@ func _station_point(station: String) -> Variant:
 				return null
 			return _room.to_global(BackRoom.door_frame().origin + Vector3(-1.3, 0.0, 0.0))
 		"eingang":
-			var p := _visits.entrance_points()
-			var inside: Vector2 = p.inside
-			var point := _life.to_global(Vector3(inside.x, _visits.shop_floor(), inside.y))
-			return point + (_room.to_global(ROOM_MIDDLE) - point).normalized() * 0.5
+			return _life.to_global(Vector3(_outside_spot.x, 0.0, _outside_spot.y))
 	return null
 
 
@@ -285,8 +301,10 @@ func _focus_point(look: String) -> Variant:
 		"hintertuer":
 			return _room.to_global(BackRoom.door_frame().origin + Vector3(-0.05, 1.1, 0.0))
 		"rueckgabe":
+			# der Einwurf draußen an der Hauswand neben der Tür
 			var box := ReturnBox.find(get_tree())
-			return box.global_position + Vector3.UP * 0.95 if box else null
+			var out := (_room.global_basis * StreetLayout.door_outward()).normalized()
+			return box.global_position + out * 0.25 + Vector3.UP * 0.95 if box else null
 		"schild":
 			var signs := _room.find_children("*", "OpenSign", true, false)
 			return (signs[0] as Node3D).global_position if not signs.is_empty() else null

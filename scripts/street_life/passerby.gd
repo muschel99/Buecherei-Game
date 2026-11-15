@@ -473,6 +473,8 @@ func step(delta: float) -> void:
 		_talk_interactable.prompt_text = "Reden" if can_talk() else ""
 		_talk_interactable.handles_placing = in_library and life != null and life.library != null \
 			and life.library.wants_book_from_player(self)
+		# unten neben der linken Maustaste „Geben“ (seit dem Wunsch nach Etappe 8b: wie man dem Gast das Buch überreicht)
+		_talk_interactable.place_text = "Geben" if _talk_interactable.handles_placing else ""
 	squeeze = maxf(0.0, squeeze - delta)
 	var before := pos
 	match String(_action.get("type", "")):

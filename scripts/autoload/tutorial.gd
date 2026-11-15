@@ -20,6 +20,8 @@ var intro_done := true
 var list_index := -1
 ## Schon erledigte Kennungen (auch die, deren Zettel noch nicht dran ist)
 var events: Dictionary = {}
+## So oft wurde schon an der Theke bedient (die kleine Anleitung in der Theken-Ansicht erscheint nur bei den ersten)
+var desk_served := 0
 
 var _lists: Array[Dictionary] = []
 var _next_timer := -1.0
@@ -51,6 +53,7 @@ func start_new_game() -> void:
 	intro_done = false
 	list_index = 0
 	events = {}
+	desk_served = 0
 	_next_timer = -1.0
 	Lending.set_open(false)
 
@@ -80,6 +83,15 @@ func current_list() -> Dictionary:
 
 func is_done(id: String) -> bool:
 	return events.has(id)
+
+
+## Soll die Theken-Ansicht die kleine Anleitung zeigen? (bei den ersten Bedienungen, Einstellung „To-do-Zettel“)
+func desk_help_wanted() -> bool:
+	return desk_served < GameConfig.desk_help_servings and bool(Settings.get_value("interface/todo"))
+
+
+func note_served() -> void:
+	desk_served += 1
 
 
 ## Etwas ist passiert (Kennung aus data/tutorial/todo.txt). Wird auch schon während der Geschichte gezählt.
@@ -139,12 +151,13 @@ func _on_woke_up() -> void:
 
 
 func get_save_data() -> Dictionary:
-	return {"intro_done": intro_done, "list": list_index, "events": events.keys()}
+	return {"intro_done": intro_done, "list": list_index, "events": events.keys(), "desk_served": desk_served}
 
 
 func load_save_data(data: Dictionary) -> void:
 	intro_done = bool(data.get("intro_done", true))
 	list_index = int(data.get("list", -1))
+	desk_served = int(data.get("desk_served", 0))
 	events = {}
 	for id: Variant in data.get("events", []):
 		events[str(id)] = true

@@ -251,6 +251,10 @@ func ensure_essentials() -> void:
 ## Seit dem Nachtest von Etappe 8 steht das Tablet weiter rechts auf der Theke (Platz für die Bedien-Ansicht, Kartenleser daneben):
 ## Steht es in einem älteren Spielstand noch genau am alten Standardplatz, rückt es an den neuen (sonst hat man es selbst gestellt).
 const OLD_TABLET_SPOT := Vector3(-0.5, 0.85, -0.07)
+## Platz und Blickrichtung des Tablets im Raum der Theke, bevor es zur Bedien-Ansicht hin gedreht und etwas nach links gerückt
+## wurde (nach Etappe 8b: gerade nach hinten)
+const PREV_TABLET_SPOT := Vector3(-0.62, 0.85, -0.08)
+const PREV_TABLET_FACING := Vector3(0.0, 0.0, -1.0)
 
 func _migrate_tablet_spot() -> void:
 	var spot := essential_spot("tablet")
@@ -262,8 +266,11 @@ func _migrate_tablet_spot() -> void:
 		for support in get_placed_furniture():
 			if support.uid != item.support_uid or support.data == null or support.data.get_id() != str(spot.support_id):
 				continue
-			var local := support.global_transform.affine_inverse() * item.global_position
-			if local.distance_to(OLD_TABLET_SPOT) < 0.03:
+			var relative := support.global_transform.affine_inverse() * item.global_transform
+			var prev_spot := relative.origin.distance_to(PREV_TABLET_SPOT) < 0.03 \
+				and relative.basis.z.normalized().distance_to(PREV_TABLET_FACING) < 0.05
+			# alter Platz (vor dem Nachtest von Etappe 8) oder der Platz danach (gerade, noch nicht zur Bedien-Ansicht gedreht)
+			if relative.origin.distance_to(OLD_TABLET_SPOT) < 0.03 or prev_spot:
 				move_furniture(item, support.global_transform * (spot.transform as Transform3D), support)
 
 

@@ -1,0 +1,23 @@
+# Wie Gäste nach einem Genre fragen (Wünsche in der Bücherei; seit dem Nachtest nach Etappe 8b – vorher stand der Genre-Name
+# in Anführungszeichen im Satz, das klang komisch). Einfach hier ändern oder ergänzen.
+# Aufbau: kennung des Genres | was der Gast sucht ; noch eine Wendung ; …
+# Die Wendungen passen in die Sätze aus data/talk/talk.txt, Abschnitt „wunsch“ (dort steht {wunsch}), z. B.
+# „Sag mal … hast du vielleicht {wunsch} für mich?“ → „… hast du vielleicht einen spannenden Krimi für mich?“
+# Also immer mit „einen/eine/ein/etwas …“ (wen oder was?). Zeilen mit # sind Notizen.
+
+art | ein schönes Buch über Kunst ; einen Bildband mit Gemälden ; etwas über Malerei
+children | ein Kinderbuch zum Vorlesen ; ein Bilderbuch für meine Nichte ; eine Gutenachtgeschichte
+classics | einen Klassiker ; einen großen alten Roman ; etwas Klassisches zum Schmökern
+comics | einen Comic ; eine schöne Graphic Novel ; etwas mit vielen Bildern
+cooking | ein Kochbuch ; ein Backbuch mit Kuchenrezepten ; neue Rezepte zum Ausprobieren
+crime | einen spannenden Krimi ; einen gemütlichen Krimi zum Miträtseln ; etwas Spannendes zum Miträtseln
+fantasy | ein Fantasy-Buch ; eine Geschichte mit Drachen und Magie ; etwas Magisches
+history | ein Buch über Geschichte ; etwas über früher ; ein Buch über alte Zeiten
+mindfulness | ein Buch über Achtsamkeit ; etwas zum Durchatmen ; ein ruhiges Buch für die Seele
+nature_garden | ein Gartenbuch ; ein Buch über Pflanzen und Natur ; etwas über Vögel und Blumen
+nonfiction | ein spannendes Sachbuch ; ein Buch, aus dem ich etwas lernen kann ; ein schlaues Sachbuch
+novel | einen schönen Roman ; eine gute Geschichte zum Schmökern ; einen Roman für lange Abende
+philosophy | etwas Philosophisches ; ein Buch zum Nachdenken ; ein Philosophiebuch
+poetry | einen Gedichtband ; ein paar schöne Gedichte ; etwas Poetisches
+scifi | ein Science-Fiction-Buch ; eine Geschichte im Weltall ; etwas über die Zukunft
+travel | einen Reiseführer ; ein Buch über ferne Länder ; etwas gegen das Fernweh

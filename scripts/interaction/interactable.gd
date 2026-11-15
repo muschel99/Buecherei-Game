@@ -55,6 +55,9 @@ signal aim_ended
 ## Nimmt dieses Objekt Bücher selbst entgegen (linke Maustaste, z. B. Regal)? Sonst legt die
 ## Spielfigur das Buch frei in die Welt (LooseBooks).
 @export var handles_placing: bool = false
+## Wort neben der linken Maustaste, wenn dieses Objekt Bücher selbst nimmt (z. B. „Geben“ bei einem Gast mit Wunsch); leer = das
+## übliche „Ablegen“.
+@export var place_text: String = ""
 ## Kann man die linke Maustaste gedrückt halten, um alle passenden Bücher einzuräumen?
 ## Dann zählt ein kurzer Klick erst beim Loslassen.
 @export var supports_place_all: bool = false
