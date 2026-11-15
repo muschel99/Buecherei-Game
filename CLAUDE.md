@@ -1408,6 +1408,22 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   **Stempelkarte:** `Lending.readers` (Ausweis → Name, Stempel, Besuche, volle Karten, Freundschaft), `new_reader`/
   `returning_reader`/`add_stamp` (voll bei `stamp_card_size` → Lesezeichen + `stamp_bonus_extra_days`). Prüfbilder ohne Gast:
   `scenes/tools/desk_probe.tscn` (xvfb). Geräusche: `tools/make_counter_sounds.py`.
+- **Besucher seit Etappe 8:** Stammgäste `Regulars` aus `data/visitors/regulars.txt` (Name | Lieblingsgenre | Art), fester
+  Ausweis "stamm_<n>" in `Lending.readers` (Freundschaft `add_friendship`, `friendship_max`), festes Aussehen aus dem Namen –
+  `LibraryVisits.assign_regular` beim Losgehen (StreetLife._launch, nur wenn der Weg an der Bücherei vorbeiführt; sonst bekommt
+  ein früherer Stammgast ein neues Aussehen), `Passerby.regular_id`/`talk_name`/`talk_close` (vertraute Sätze ab
+  `friend_close_level`, Abschnitt „vertraut“), befreundete bringen jemanden mit (`friend_bring_*` → `Lending.add_visit_ticket`).
+  Arten des Besuchs (`visit.style`, `visit_style_weights`): zielstrebig (ein Regal, 1–2 Bücher, nie lesen), stoebert (3 Regale,
+  lange), liest (immer setzen, gern am Tisch: `_table_in_front` → Schritt "sit" mit `read_table` → Buch auf der Platte,
+  `ChibiPasserbyModel.set_reading(on, tisch)`), zurueck (`Lending.return_oldest_to_counter`). Regale: nur bis
+  `visitor_reach_height`, unterhalb `visitor_bend_height` bücken (pick_up). Zahlen: `LibraryVisits.counts` (street_life_check).
+- **Gespräche (seit Etappe 8):** `Conversation.begin(figur, spielfigur[, schritte])` (scripts/talk/): Figur braucht
+  `start_talk`/`end_talk`/`talk_name`/`talk_focus` (Passerby: E „Reden“ über `_talk_interactable`, bleibt stehen = Schritt
+  "wait" bis `talking` false, schaut über `_attend`); Spielfigur `movement_enabled`/`interaction_enabled` aus, `look_locked`
+  (Kamera folgt `talk_focus`, `talk_focus_speed`); Sprechblase unten (einzige Ausnahme von „keine Sätze im Spielbild“), Schrift
+  getippt (`talk_chars_per_second`, Klackern `ui/type` + Varianten), Klick/E weiter, Antworten zum Anklicken (`answers`: text,
+  reply, optional `then` = Callable), Esc ohne Funktion (MenuStack, `close_from_escape` leer). Sätze: `data/talk/talk.txt`
+  (`TalkLines`, Abschnitte gruss/plaudern/frage/tschuess, Tageszeiten @morgen …). Prüfbilder: `scenes/tools/talk_probe.tscn`.
 - **Start und Ladebildschirm (seit Etappe 8, „das Spiel braucht ewig zum Starten“):** Startszene des Projekts ist
   `scenes/ui/loading_screen.tscn` (`LoadingScreen`: Papier, umblätterndes Buch, Sätze in Handschrift, Bleistiftstrich) – lädt
   main.tscn im Vordergrund (im Hintergrund-Faden scheitern @tool-Scripts der Häuser – darum auch keine `preload`-Standardwerte in

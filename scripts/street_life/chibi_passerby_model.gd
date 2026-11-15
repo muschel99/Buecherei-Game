@@ -1060,10 +1060,14 @@ func show_hand_at(point: Variant) -> void:
 ## Lesen (seit Testrunde 7b, Bücherei): ein aufgeschlagenes Buch mit beiden Händen vor der Brust, der Blick ruht darauf.
 var _reading := false
 var _read_book: Node3D
+var _read_table: Variant = null
 
 
-func set_reading(on: bool) -> void:
+## table = Punkt auf einer Tischplatte (Welt): dann liegt das Buch dort aufgeschlagen, die Hände ruhen darauf (seit Etappe 8).
+func set_reading(on: bool, table: Variant = null) -> void:
 	_reading = on
+	if on:
+		_read_table = table
 	if on and _read_book == null:
 		_read_book = _make_open_book()
 		add_child(_read_book)
@@ -1119,9 +1123,14 @@ func _update_pet(delta: float) -> void:
 		var base := _skeleton.get_bone_global_pose(chest).origin if chest >= 0 else Vector3(0, _hip_height * 1.4, 0)
 		var scale_now := _hip_height / 0.607
 		var point := base + Vector3(0.0, -0.13, 0.2) * scale_now
+		var tilt := deg_to_rad(-28.0)
+		if _read_table is Vector3:
+			# am Tisch: das Buch liegt aufgeschlagen auf der Platte, die Hände ruhen darauf
+			point = _skeleton.global_transform.affine_inverse() * (_read_table as Vector3)
+			tilt = deg_to_rad(-6.0)
 		_gesture_modifier.read_point = point
 		_gesture_modifier.read_weight = move_toward(_gesture_modifier.read_weight, 1.0 if _reading else 0.0, delta / 0.6)
-		_read_book.global_transform = _skeleton.global_transform * Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-28.0))
+		_read_book.global_transform = _skeleton.global_transform * Transform3D(Basis(Vector3.RIGHT, tilt)
 			.scaled(Vector3.ONE * scale_now * 1.25), point)
 		_read_book.visible = _gesture_modifier.read_weight > 0.3
 		if not _reading and _gesture_modifier.read_weight <= 0.0:

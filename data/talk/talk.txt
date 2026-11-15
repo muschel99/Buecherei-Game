@@ -1,0 +1,76 @@
+# Gespräche mit Passanten und Gästen (seit Etappe 8) – einfach hier ändern, ergänzen oder umsortieren.
+#
+# So ist diese Datei aufgebaut:
+#   == name             beginnt einen Abschnitt: gruss, plaudern, frage, tschuess, vertraut (Stammgäste, mit denen man
+#                       befreundet ist, erzählen Persönlicheres)
+#   Text …              ein Satz (eine Zeile = eine Sprechblase)
+#   @morgen Text …      gilt nur zu dieser Tageszeit: @morgen (5–11 Uhr), @mittag (11–17), @abend (17–22), @nacht (22–5)
+#   > Antwort | Satz    nur bei „frage“: eine Antwort der Spielfigur (zum Anklicken) und was der Gast darauf sagt
+# Zeilen, die mit # beginnen, sind Notizen. Ein Gespräch: ein Gruß, ein bis zwei Sätze zum Plaudern, ab und zu eine Frage
+# mit zwei, drei Antworten (keine ist falsch), dann der Abschied.
+
+== gruss
+Oh, hallo!
+Hallo, schön dich zu sehen!
+Ach, du bist es! Hallo!
+Hallöchen!
+@morgen Guten Morgen!
+@morgen Morgen! Schon wach?
+@mittag Guten Tag!
+@abend Guten Abend!
+@abend Na, auch noch unterwegs?
+@nacht Oh – so spät noch wach?
+
+== plaudern
+Die Luft ist heute so schön frisch.
+Hast du die Katze gesehen? Sie sitzt schon wieder auf der Mauer.
+Im Teeladen gibt es eine neue Sorte – mit Honig!
+Die Bäckerei riecht heute nach Zimtschnecken. Ich konnte nicht widerstehen.
+Ich mag diese Straße. Hier hat es nie jemand eilig.
+Die Blumen vor dem Blumenladen sind dieses Jahr besonders schön.
+Ich habe gehört, im Pub gibt es bald wieder einen Rätselabend.
+Bücher sind wie kleine Reisen, findest du nicht?
+Ich habe neulich ein Buch gelesen, das ich nicht weglegen konnte. Bis spät in die Nacht!
+Deine Bücherei sieht so gemütlich aus. Man möchte gleich hineingehen.
+Wenn es regnet, gibt es nichts Schöneres als ein Buch und eine Tasse Tee.
+Die Tauben auf dem Dach haben mich heute angeschaut, als wüssten sie etwas.
+@morgen Ich hole mir gleich ein frisches Brötchen. Das gehört einfach zum Morgen.
+@morgen Die Sonne kommt gerade über die Dächer. Wie schön das aussieht.
+@mittag Ich mache gerade eine kleine Pause. Die Sonne tut gut.
+@abend Die Laternen machen die Straße so gemütlich.
+@abend Gleich gibt es Abendessen. Ich freue mich schon.
+@nacht Die Sterne sind heute so klar.
+@nacht Ich konnte nicht schlafen. Ein kleiner Spaziergang hilft immer.
+
+== frage
+Liest du gerade etwas Schönes?
+> Ja, einen Krimi! | Oh, wie spannend! Verrat mir bloß nicht, wer es war.
+> Etwas über Gärten. | Wie schön! Vielleicht bekomme ich dann auch Lust auf Blumen.
+> Gerade nicht. | Dann such dir doch etwas Gemütliches aus – du sitzt ja direkt an der Quelle!
+Trinkst du lieber Tee oder Kaffee?
+> Tee! | Ich auch. Am liebsten mit einem Löffel Honig.
+> Kaffee. | Ein guter Kaffee am Morgen – das kann ich verstehen.
+> Kakao! | Oh ja, Kakao mit Sahne. Du hast recht, das ist das Beste.
+Magst du Katzen?
+> Sehr! | Ich auch. Die kleine Graue hier ist mein Liebling.
+> Lieber Hunde. | Hunde sind auch wunderbar. Treu und lieb.
+Wie gefällt dir die Straße?
+> Wunderschön. | Nicht wahr? Ich möchte nirgendwo anders wohnen.
+> Sehr gemütlich. | Genau das Wort, das ich gesucht habe!
+
+== vertraut
+Weißt du, ich komme so gern hierher. Es fühlt sich ein bisschen an wie zu Hause.
+Ich habe meiner Schwester von deiner Bücherei erzählt. Sie will unbedingt mal vorbeikommen.
+Manchmal lese ich abends laut vor – für meine Katze. Ich glaube, sie mag Gedichte.
+Das letzte Buch von dir hat mich so berührt. Ich habe es gleich zweimal gelesen.
+Ich habe neulich einen alten Brief in einem Buch gefunden. Ich frage mich, wem er gehörte …
+Wenn ich traurig bin, gehe ich hier vorbei und schaue in dein Schaufenster. Dann geht es mir besser.
+@abend Weißt du, was ich an Abenden wie diesem mag? Eine Decke, Tee und ein Buch von dir.
+
+== tschuess
+Bis bald!
+Mach's gut!
+Schönen Tag noch!
+Bis zum nächsten Mal!
+@abend Schönen Abend noch!
+@nacht Gute Nacht!

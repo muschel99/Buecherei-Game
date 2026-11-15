@@ -98,12 +98,33 @@ func step(delta: float) -> void:
 ## Schritt "call" an der Treppe: kommt dieser Passant herein? Dann die Schritte hinein (der Rest des Besuchs wird drinnen
 ## geplant); sonst nichts (er geht einfach weiter).
 func offer_visit(walker: Passerby, rejoin: Vector2) -> Array:
-	if not is_ready() or walker.companion != null or walker.chat != null or walker.carries_bag() or not Lending.want_visitor():
+	if not is_ready() or walker.companion != null or walker.chat != null or walker.carries_bag() or walker.talking:
+		return []
+	var regular := Regulars.find(walker.regular_id)
+	if regular.is_empty() and not Lending.want_visitor():
+		return []
+	if not regular.is_empty() and (not Lending.accepts_visitors() or visitors_full()):
 		return []
 	Lending.visitor_entered(walker)
-	var is_new := Lending.roll_new_reader()
-	_visit[walker] = {"books": [] as Array[Book], "genre": _pick_genre(), "new": is_new, "rejoin": rejoin,
-		"card": Lending.new_reader() if is_new else Lending.returning_reader()}
+	if regular.is_empty():
+		var is_new := Lending.roll_new_reader()
+		_visit[walker] = {"books": [] as Array[Book], "genre": _pick_genre(), "new": is_new, "rejoin": rejoin,
+			"card": Lending.new_reader() if is_new else Lending.returning_reader(), "style": _pick_style()}
+	else:
+		# Stammgast (seit Etappe 8): eigener Ausweis, Lieblingsgenre, Art des Besuchs; Freunde bringen manchmal jemanden mit
+		var created := Lending.ensure_reader(regular.id, regular.name)
+		var genre := String(regular.genre) if BookStock.is_genre_unlocked(String(regular.genre)) else _pick_genre()
+		_visit[walker] = {"books": [] as Array[Book], "genre": genre, "new": created, "rejoin": rejoin, "card": regular.id,
+			"style": regular.style}
+		var info: Dictionary = Lending.readers[regular.id]
+		info.last_day = GameClock.day
+		if Lending.friendship(regular.id) >= GameConfig.friend_bring_level and _rng.randf() < GameConfig.friend_bring_chance:
+			Lending.add_visit_ticket()
+	if String(_visit[walker].style) == "zurueck" and Lending.loans.is_empty():
+		_visit[walker].style = "zielstrebig"  # nichts zum Zurückbringen da
+	_note("styles", String(_visit[walker].style))
+	if not regular.is_empty():
+		_note("regular")
 	walker.add_to_group(VISITOR_GROUP)
 	walker.add_to_group(Door.KEEPOUT_GROUP)
 	walker.in_library = true
@@ -165,6 +186,8 @@ func _call(callable: Callable) -> Dictionary:
 
 ## Drinnen angekommen: Regale, vielleicht lesen, Theke (oder ohne Buch wieder hinaus).
 func _plan_inside(walker: Passerby) -> Array:
+	if _style(walker) == "zurueck":
+		return _return_actions(walker)
 	var actions: Array = _basket_actions(true)
 	var stops := _pick_shelves(walker)
 	if debug:
@@ -185,7 +208,8 @@ func _after_browsing(walker: Passerby) -> Array:
 			walker._model.call("trigger_face", &"window_wonder")
 		return _leave_actions(walker)
 	var actions: Array = []
-	if _rng.randf() < GameConfig.visitor_read_chance:
+	var read_chance := 1.0 if _style(walker) == "liest" else (0.0 if _style(walker) == "zielstrebig" else GameConfig.visitor_read_chance)
+	if _rng.randf() < read_chance:
 		var seat := _free_seat(walker)
 		if debug:
 			print("  %s setzt sich: %s" % [walker.name, seat.get_path() if seat else "kein Platz"])
@@ -194,10 +218,16 @@ func _after_browsing(walker: Passerby) -> Array:
 			var face3 := seat.global_basis.z
 			var face := Vector2(face3.x, face3.z).normalized()
 			var spot := _to2(seat.global_position)
-			actions.append(_call(_go_to.bind(seat.global_position + face3 * 0.5)))
-			actions.append({"type": "sit", "seat": seat, "spot": spot, "face": face, "floor": _floor, "read": true,
+			actions.append(_call(_go_to.bind(_seat_approach(seat).get("pos", seat.global_position + face3 * 0.5))))
+			var sit := {"type": "sit", "seat": seat, "spot": spot, "face": face, "floor": _floor, "read": true,
 				"height": seat.global_position.y - room.global_position.y,
-				"time": _rng.randf_range(GameConfig.visitor_read_time.x, GameConfig.visitor_read_time.y)})
+				"time": _rng.randf_range(GameConfig.visitor_read_time.x, GameConfig.visitor_read_time.y) *
+					(1.5 if _style(walker) == "liest" else 1.0)}
+			var table: Variant = _table_in_front(seat)
+			if table is Vector3:
+				sit.read_table = table  # Buch aufgeschlagen auf dem Tisch (seit Etappe 8)
+				_note("table")
+			actions.append(sit)
 			actions.append(_call(func(w: Passerby) -> Array:
 				if is_instance_valid(seat) and seat.occupant == w:
 					seat.occupant = null
@@ -313,7 +343,13 @@ func _pick_shelves(walker: Passerby) -> Array[BookShelf]:
 	with_genre.shuffle()
 	others.shuffle()
 	var all := with_genre + others
-	var count := mini(all.size(), _rng.randi_range(GameConfig.visitor_shelf_stops.x, GameConfig.visitor_shelf_stops.y))
+	var stops := _rng.randi_range(GameConfig.visitor_shelf_stops.x, GameConfig.visitor_shelf_stops.y)
+	match _style(walker):
+		"zielstrebig":
+			stops = 1
+		"stoebert":
+			stops = maxi(stops, 3)
+	var count := mini(all.size(), stops)
 	return all.slice(0, count)
 
 
@@ -324,13 +360,16 @@ func _take_books(walker: Passerby, shelf: BookShelf) -> Array:
 		return []
 	if not visit.has("want"):
 		visit.want = _rng.randi_range(GameConfig.visitor_books.x, GameConfig.visitor_books.y)
-		visit.other_ok = _rng.randf() < GameConfig.visitor_other_genre_chance
+		if String(visit.get("style", "")) == "zielstrebig":
+			visit.want = mini(int(visit.want), 2)
+		visit.other_ok = _rng.randf() < GameConfig.visitor_other_genre_chance and String(visit.get("style", "")) != "zielstrebig"
 	var held: Array[Book] = visit.books
 	var missing := int(visit.want) - held.size()
 	if missing <= 0:
 		return []
 	var choice: Array[Book] = []
-	var candidates := shelf.get_books().duplicate()
+	# nur, was sie erreichen (Chibi-Größe: obere Fächer sind für die Spielfigur, seit Etappe 8)
+	var candidates := shelf.get_books().filter(func(b: Book) -> bool: return _row_height(shelf, b) <= GameConfig.visitor_reach_height)
 	candidates.shuffle()
 	for book: Book in candidates:
 		if choice.size() < missing and book.genre_id == String(visit.genre):
@@ -341,11 +380,37 @@ func _take_books(walker: Passerby, shelf: BookShelf) -> Array:
 				choice.append(book)
 	if choice.is_empty():
 		return []
-	shelf.remove_books(choice, true)
-	held.append_array(choice)
-	walker.give_bag(true, BASKET_MODELS[mini(3, held.size())])  # die Bücher liegen jetzt im Korb
-	Audio.play_at("books/take", shelf.global_position + Vector3.UP, -4.0, Audio.vary(0.08))
+	var take := func(_w: Passerby = null) -> void:
+		if not is_instance_valid(shelf):
+			return
+		var still: Array[Book] = []
+		var on_shelf := shelf.get_books()
+		for b in choice:
+			if on_shelf.has(b):
+				still.append(b)
+		if still.is_empty():
+			return
+		shelf.remove_books(still, true)
+		held.append_array(still)
+		walker.give_bag(true, BASKET_MODELS[mini(3, held.size())])  # die Bücher liegen jetzt im Korb
+		Audio.play_at("books/take", shelf.global_position + Vector3.UP, -4.0, Audio.vary(0.08))
+	# ganz unten: bücken (Animation pick_up), sonst gleich nehmen
+	if choice.any(func(b: Book) -> bool: return _row_height(shelf, b) <= GameConfig.visitor_bend_height):
+		var face: Vector2 = visit.get("face", Vector2.ZERO)
+		_note("bend")
+		return [{"type": "stand", "anim": &"idle", "face": face, "clip": &"pick_up", "clip_max": 2.2, "time": 1.3,
+			"cue": [0.9, take]}]
+	take.call()
 	return []
+
+
+## Höhe des Fachs, in dem ein Buch steht (über dem Boden des Raums).
+func _row_height(shelf: BookShelf, book: Book) -> float:
+	var row := shelf.get_book_row(book)
+	var rows := shelf.find_children("*", "BookRow", true, false)
+	if row < 0 or row >= rows.size():
+		return 0.8
+	return (rows[row] as Node3D).global_position.y - room.global_position.y
 
 
 # --- Theke ---
@@ -595,12 +660,28 @@ func _free_seat(walker: Passerby) -> SeatPoint:
 			if not _in_back_room(seat.global_position):
 				seats.append(seat)
 	seats.shuffle()
+	# wer gern liest, nimmt lieber einen Platz am Tisch (seit Etappe 8)
+	if _style(walker) == "liest":
+		seats.sort_custom(func(a: SeatPoint, b: SeatPoint) -> bool: return _table_in_front(a) != null and _table_in_front(b) == null)
 	for seat in seats:
-		# nur, wenn man davor stehen kann
-		var front := seat.global_position + seat.global_basis.z * 0.5
-		if _to2(_nearest_free(front)).distance_to(_to2(front)) < 0.35:
+		if not _seat_approach(seat).is_empty():
 			return seat
 	return null
+
+
+## Wo man vor dem Hinsetzen steht: vor dem Sitz – steht dort ein Tisch, seitlich daneben. Leer, wenn kein Platz ist.
+func _seat_approach(seat: SeatPoint) -> Dictionary:
+	var front := seat.global_position + seat.global_basis.z * 0.5
+	if _to2(_nearest_free(front)).distance_to(_to2(front)) < 0.35:
+		return {"pos": front}
+	if _table_in_front(seat) == null:
+		return {}
+	for side: float in [1.0, -1.0]:
+		var aside := seat.global_position + seat.global_basis.x * side * 0.55 + seat.global_basis.z * 0.15
+		var free := _nearest_free(aside)
+		if _to2(free).distance_to(_to2(aside)) < 0.45:
+			return {"pos": free}
+	return {}
 
 
 func _in_back_room(point: Vector3) -> bool:
@@ -620,9 +701,11 @@ func _visit_shelf(walker: Passerby, shelf: BookShelf) -> Array:
 	if spot.is_empty():
 		return []
 	_shelf_spots[walker] = spot.pos
+	(_visit.get(walker, {}) as Dictionary)["face"] = spot.face
+	var browse := _rng.randf_range(GameConfig.visitor_browse_time.x, GameConfig.visitor_browse_time.y)
+	browse *= {"zielstrebig": 0.5, "stoebert": 1.6}.get(_style(walker), 1.0)
 	return [_call(_go_to.bind(spot.pos)),
-		{"type": "stand", "anim": &"browse", "face": spot.face,
-			"time": _rng.randf_range(GameConfig.visitor_browse_time.x, GameConfig.visitor_browse_time.y)},
+		{"type": "stand", "anim": &"browse", "face": spot.face, "time": browse},
 		_call(_take_books.bind(shelf)),
 		_call(func(w: Passerby) -> Array:
 			_shelf_spots.erase(w)
@@ -784,4 +867,109 @@ func held_books() -> Array[Book]:
 
 ## Für das Prüfwerkzeug: Besucher gerade drinnen, wartend an der Theke.
 func stats_text() -> String:
-	return "drinnen %d, an der Theke %d" % [Lending.visitors_inside(), queue.size()]
+	return "drinnen %d, an der Theke %d, Stammgäste %d, Arten %s, am Tisch gelesen %d, gebückt %d" % [Lending.visitors_inside(),
+		queue.size(), counts.get("regular", 0), counts.get("styles", {}), counts.get("table", 0), counts.get("bend", 0)]
+
+
+## Zahlen für das Prüfwerkzeug (seit Etappe 8)
+var counts := {"styles": {}}
+
+
+func _note(key: String, sub: String = "") -> void:
+	if sub.is_empty():
+		counts[key] = int(counts.get(key, 0)) + 1
+	else:
+		var d: Dictionary = counts.get(key, {})
+		d[sub] = int(d.get(sub, 0)) + 1
+		counts[key] = d
+
+
+# --- Stammgäste und Arten des Besuchs (seit Etappe 8) ---
+
+func _style(walker: Passerby) -> String:
+	return String((_visit.get(walker, {}) as Dictionary).get("style", "stoebert"))
+
+
+func _pick_style() -> String:
+	var weights: Dictionary = GameConfig.visit_style_weights
+	var total := 0.0
+	for key: String in weights:
+		total += float(weights[key])
+	var roll := _rng.randf() * total
+	for key: String in weights:
+		roll -= float(weights[key])
+		if roll <= 0.0:
+			return key
+	return "stoebert"
+
+
+## Sind schon so viele Besucher drinnen, wie hineinpassen?
+func visitors_full() -> bool:
+	return Lending.visitors_inside() >= Lending.max_at_once()
+
+
+## Beim Losgehen eines Passanten, dessen Weg an der Bücherei vorbeiführt (StreetLife._launch, noch ungesehen): manchmal
+## wird er ein Stammgast (festes Aussehen aus dem Namen); wer vorher einer war, bekommt ein neues, zufälliges Aussehen.
+func assign_regular(walker: Passerby) -> void:
+	if not walker.regular_id.is_empty():
+		walker.regular_id = ""
+		walker.randomize_look(_rng)
+	if not Lending.accepts_visitors() or _rng.randf() > GameConfig.regular_chance:
+		return
+	var busy := {}
+	for other: Passerby in life._walkers:
+		if other.active:
+			busy[other.regular_id] = true
+	var candidates: Array[Dictionary] = []
+	var weights: Array[float] = []
+	for regular in Regulars.all():
+		var info := Lending.reader_info(regular.id)
+		if busy.has(regular.id) or int(info.get("last_day", -1)) == GameClock.day:
+			continue
+		candidates.append(regular)
+		weights.append(1.0 + Lending.friendship(regular.id) * 0.3)
+	if candidates.is_empty():
+		return
+	var pick := candidates[_rng.rand_weighted(PackedFloat32Array(weights))]
+	var look := RandomNumberGenerator.new()
+	look.seed = int(pick.seed)
+	walker.randomize_look(look)
+	walker.regular_id = pick.id
+
+
+## Nur zurückbringen: zur Theke, Bücher auf die Kundenseite legen (bücken), wieder gehen.
+func _return_actions(walker: Passerby) -> Array:
+	var counter := _counter_node()
+	if counter == null:
+		return _leave_actions(walker)
+	var spot := _nearest_free(counter.global_transform * Vector3(0.55, 0.0, 0.325 + 0.35))
+	return [_call(_go_to.bind(spot)),
+		{"type": "stand", "anim": &"idle", "face": _counter_face(), "clip": &"pick_up", "clip_max": 2.0, "time": 1.4,
+			"cue": [0.8, func(_w: Passerby) -> void: Lending.return_oldest_to_counter()]},
+		_call(_leave_actions)]
+
+
+## Steht vor diesem Sitzplatz ein Tisch (Ablagefläche eines Tischs, 0,3–0,7 m hoch, bis 0,8 m vor dem Sitz)? Dann der Punkt
+## auf der Platte, wo das Buch aufgeschlagen liegt – sonst null.
+func _table_in_front(seat: SeatPoint) -> Variant:
+	var forward := seat.global_basis.z
+	forward.y = 0.0
+	forward = forward.normalized()
+	var best: Variant = null
+	var best_d := 0.8
+	for item in room.get_placed_furniture():
+		if item.data == null or item.data.category != FurnitureData.Category.TABLE:
+			continue
+		for surface in FurnitureUtils.find_surfaces(item):
+			var top := surface.get_surface_height() - room.global_position.y
+			if top < 0.3 or top > 0.7:
+				continue
+			var to := surface.global_position - seat.global_position
+			to.y = 0.0
+			var ahead := to.dot(forward)
+			if ahead < 0.15 or ahead > best_d or absf(to.dot(forward.cross(Vector3.UP))) > 0.6:
+				continue
+			best_d = ahead
+			var point := seat.global_position + forward * minf(ahead, 0.38)
+			best = Vector3(point.x, surface.get_surface_height() + 0.012, point.z)
+	return best

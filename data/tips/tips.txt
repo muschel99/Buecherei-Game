@@ -181,6 +181,11 @@ Besucher stöbern in den Regalen, manche setzen sich zum Lesen. Mit ihren Büche
 
 Geh hinter die Theke und drücke <E>: Die Kamera rückt an die Theke. Klicke den Ausweis an – er gleitet in den Kartenleser, und am PC ploppt ein Stempel auf. Dann klickst du die Bücher an, eins nach dem anderen über den Scanner, und zum Schluss den Stapel: Er rutscht dem Gast in den Korb. Niemand hat es eilig – sie warten geduldig.
 
+== Reden
+Mit allen auf der Straße und in der Bücherei kannst du reden: Schau jemanden an und drücke <E>.
+
+Die Schrift erscheint unten in einer Sprechblase. Mit einem Klick oder <E> geht es weiter. Manchmal fragt dich jemand etwas – dann klickst du eine Antwort an.
+
 == Die Stempelkarte
 Jeder Ausweis hat eine Stempelkarte mit zehn Feldern. Ist sie voll, bekommt der Gast ein Lesezeichen und darf seine Bücher länger behalten. Am PC siehst du alle Ausweise mit ihren Stempeln.
 

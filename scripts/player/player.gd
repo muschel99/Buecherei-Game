@@ -66,6 +66,8 @@ var _stand_body_height: float = 1.6
 var _current_max_speed: float = 0.0
 ## Laufen, Springen und Hocken (z. B. aus, solange der Shop offen ist).
 var movement_enabled: bool = true
+## Blick festgehalten (seit Etappe 8: im Gespräch schaut die Kamera auf die Figur, die Maus dreht sie nicht)
+var look_locked: bool = false
 ## Im Gestaltungsmodus wird das Interagieren mit E abgeschaltet.
 var interaction_enabled: bool = true:
 	set(value):
@@ -148,7 +150,7 @@ static func fitted_fov(view_size: Vector2) -> float:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not look_locked:
 		_look_around(event.relative)
 	elif (event.is_action_pressed("interact") or event.is_action_pressed("jump")) and is_seated() and movement_enabled:
 		stand_up()

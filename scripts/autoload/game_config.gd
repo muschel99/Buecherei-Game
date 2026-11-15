@@ -1388,6 +1388,25 @@ var library_new_share_min: float = 0.12
 ## Bücher je Besucher (von … bis) und Rückgabe nach so vielen Tagen (von … bis; Uhrzeit zufällig).
 var visitor_books: Vector2i = Vector2i(1, 3)
 var loan_days: Vector2i = Vector2i(1, 3)
+## Gespräche (seit Etappe 8): Tippgeschwindigkeit (Zeichen je Sekunde), Lautstärke des Tastaturklackerns, wie oft ein zweiter
+## Satz zum Plaudern bzw. eine Frage mit Antworten kommt, wie schnell die Kamera der Figur folgt
+var talk_chars_per_second: float = 38.0
+var talk_clack_db: float = -17.0
+var talk_second_line_chance: float = 0.45
+var talk_question_chance: float = 0.35
+var talk_focus_speed: float = 6.0
+## Besucher (seit Etappe 8): so oft ist ein Passant auf dem Weg zur Bücherei ein Stammgast; Freundschaft (höchstens
+## friendship_max) – ab friend_close_level erzählen sie Vertrauteres, ab friend_bring_level bringen sie ab und zu jemanden mit
+var regular_chance: float = 0.3
+var friendship_max: int = 10
+var friend_close_level: int = 3
+var friend_bring_level: int = 5
+var friend_bring_chance: float = 0.4
+## Arten des Besuchs für Unbekannte (Gewichte): zielstrebig, stoebert, liest, zurueck
+var visit_style_weights: Dictionary = {"zielstrebig": 3.0, "stoebert": 3.0, "liest": 2.0, "zurueck": 1.0}
+## So hoch greifen Besucher noch ins Regal (Fachboden über dem Boden, m); darunter bücken sie sich
+var visitor_reach_height: float = 1.4
+var visitor_bend_height: float = 0.45
 ## Stempelkarte (seit Etappe 8): so viele Felder; ist sie voll, bekommt der Gast ein Lesezeichen und so viele Tage mehr Zeit
 var stamp_card_size: int = 10
 var stamp_bonus_extra_days: int = 3

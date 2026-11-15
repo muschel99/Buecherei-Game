@@ -136,6 +136,12 @@ var _yield := 0.0
 var squeeze := 0.0
 ## In der Bücherei unterwegs (seit Testrunde 7b, setzt LibraryVisits): Besucher drücken sich dort aneinander vorbei
 var in_library := false
+## Redet gerade mit der Spielfigur (seit Etappe 8: Conversation) – bleibt stehen und schaut sie an
+var talking := false
+## Stammgast der Bücherei (Kennung aus Regulars, leer = Unbekannter; seit Etappe 8)
+var regular_id := ""
+var _talk_interactable: Interactable
+var _talk_check := 0.0
 var _stand_off := 0.0
 const SQUEEZE_AFTER := 1.6
 const SQUEEZE_TIME := 2.5
@@ -180,7 +186,86 @@ func _ready() -> void:
 			_anim_player = players[0]
 		if model_faces_back:
 			_model.rotation.y = PI
+	_add_talk_interactable()
 	set_active(false)
+
+
+## E „Reden“ an der Figur (seit Etappe 8): ein schlanker Bereich um den Körper.
+func _add_talk_interactable() -> void:
+	_talk_interactable = Interactable.new()
+	_talk_interactable.name = "TalkInteractable"
+	_talk_interactable.prompt_text = ""
+	_talk_interactable.highlight_owner = false
+	var shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.3
+	capsule.height = 1.4
+	shape.shape = capsule
+	shape.position = Vector3(0.0, 0.75, 0.0)
+	_talk_interactable.add_child(shape)
+	add_child(_talk_interactable)
+	_talk_interactable.interacted.connect(func(who: Node) -> void:
+		if who is Node3D:
+			Conversation.begin(self, who as Node3D))
+
+
+## Kann man gerade mit ihr reden? Nicht auf der Fahrbahn, nicht an Türen, nicht beim Plaudern mit anderen.
+func can_talk() -> bool:
+	if not active or talking or chat != null or on_road or body_on_road() or ignore_agent != null:
+		return false
+	return get_action_type() in ["walk", "stand", "wait", "sit"]
+
+
+func start_talk(player: Node3D) -> bool:
+	if not can_talk():
+		return false
+	talking = true
+	var face := life.to_local2(player.global_position) - pos if life else Vector2.ZERO
+	if get_action_type() != "sit":
+		_actions.push_front(_action)
+		_action = {"type": "wait", "face": face.normalized() if face.length() > 0.01 else Vector2.ZERO, "anim": &"idle",
+			"until": func(w: Passerby) -> bool: return not w.talking}
+		_phase = 0
+		_phase_time = 0.0
+	var camera := player.get("camera") as Node3D
+	_attend(camera if camera else player)
+	if _model and _model.has_method("trigger_face"):
+		_model.call("trigger_face", &"greet")
+	return true
+
+
+func end_talk() -> void:
+	talking = false
+	if not regular_id.is_empty():
+		Lending.add_friendship(regular_id, 1, "talk_day")  # einmal am Tag zählt ein Gespräch
+	_attend(null)
+	set_talking_now(false)
+	chat_cooldown = maxf(chat_cooldown, 4.0)
+	if _model and _model.has_method("trigger_face"):
+		_model.call("trigger_face", &"greet")
+
+
+## Während ein Satz getippt wird: Mund und Hände bewegen sich (Taschenträger reden ohne Hände).
+func set_talking_now(on: bool) -> void:
+	if _model and _model.has_method("set_talking"):
+		_model.call("set_talking", on)
+
+
+## Name in der Sprechblase (Unbekannte: keiner; Stammgäste ab Etappe 8, Schritt 5).
+func talk_name() -> String:
+	return String(Regulars.find(regular_id).get("name", "")) if not regular_id.is_empty() else ""
+
+
+## Vertraut genug für persönlichere Sätze (Stammgast mit Freundschaft ab GameConfig.friend_close_level)?
+func talk_close() -> bool:
+	return not regular_id.is_empty() and Lending.friendship(regular_id) >= GameConfig.friend_close_level
+
+
+## Punkt, auf den die Kamera im Gespräch schaut (Augenhöhe der Figur).
+func talk_focus() -> Vector3:
+	if _model and _model.has_method("eye_point"):
+		return _model.call("eye_point")
+	return global_position + Vector3.UP * 1.3
 
 
 ## Neues Aussehen (Platzhalter: Farben, Frisur, Kleidung) und etwas andere Größe.
@@ -204,6 +289,10 @@ func set_active(enabled: bool) -> void:
 	velocity2 = Vector2.ZERO
 	if _body:
 		for shape: CollisionShape3D in _body.find_children("*", "CollisionShape3D", true, false):
+			shape.set_deferred("disabled", not enabled)
+	if _talk_interactable:
+		_talk_interactable.prompt_text = ""
+		for shape: CollisionShape3D in _talk_interactable.find_children("*", "CollisionShape3D", true, false):
 			shape.set_deferred("disabled", not enabled)
 
 
@@ -347,6 +436,10 @@ func step(delta: float) -> void:
 		return
 	chat_cooldown = maxf(0.0, chat_cooldown - delta)
 	pet_cooldown = maxf(0.0, pet_cooldown - delta)
+	_talk_check -= delta
+	if _talk_check <= 0.0 and _talk_interactable:
+		_talk_check = 0.25
+		_talk_interactable.prompt_text = "Reden" if can_talk() else ""
 	squeeze = maxf(0.0, squeeze - delta)
 	var before := pos
 	match String(_action.get("type", "")):
@@ -1278,7 +1371,7 @@ func _step_sit(delta: float) -> void:
 				_phase = 3
 				_phase_time = 0.0
 				if _action.get("read", false) and _model and _model.has_method("set_reading"):
-					_model.call("set_reading", true)  # Bücherei: im Sitzen lesen (seit Testrunde 7b)
+					_model.call("set_reading", true, _action.get("read_table"))  # Bücherei: im Sitzen lesen (am Tisch: Buch auf der Platte)
 				if _action.has("pub_seat"):
 					life.homes.pub_sat_down(self, _action.pub_seat)
 		3:  # sitzen

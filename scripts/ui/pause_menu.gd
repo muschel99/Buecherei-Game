@@ -41,6 +41,7 @@ const CONTROLS := {
 		["Maus", "Umsehen"],
 		["E", "Benutzen: Lampen, Türen, Türschild, Sitzen, Kartons, Tablet, Bett, Katze streicheln, Spielzeug nehmen und werfen"],
 		["E an der Theke", "Bedienen: Ausweis in den Leser, Bücher scannen, zuschieben (alles mit der Maus)"],
+		["E an einer Figur", "Reden – Klick oder E: weiter"],
 		["Esc", "Schließt, was offen ist – sonst dieses Notizbuch"],
 		["F3", "Bilder pro Sekunde anzeigen"],
 	],

@@ -176,11 +176,56 @@ func new_reader(reader_name: String = "") -> String:
 	return id
 
 
+## Ausweis mit fester Kennung (Stammgäste); legt ihn an, wenn es ihn noch nicht gibt. Liefert true, wenn er neu ist.
+func ensure_reader(id: String, reader_name: String) -> bool:
+	if readers.has(id):
+		return false
+	readers[id] = {"name": reader_name, "stamps": 0, "visits": 0, "full": 0, "friendship": 0}
+	return true
+
+
+## Freundschaft wächst (Gespräch: höchstens einmal am Tag, erfüllter Wunsch: immer). Liefert die neue Stufe.
+func add_friendship(id: String, amount: int, once_a_day: String = "") -> int:
+	if not readers.has(id):
+		return 0
+	var info: Dictionary = readers[id]
+	if not once_a_day.is_empty():
+		if int(info.get(once_a_day, -1)) == GameClock.day:
+			return int(info.get("friendship", 0))
+		info[once_a_day] = GameClock.day
+	info.friendship = mini(int(info.get("friendship", 0)) + amount, GameConfig.friendship_max)
+	SaveManager.request_save()
+	return int(info.friendship)
+
+
+func friendship(id: String) -> int:
+	return int((readers.get(id, {}) as Dictionary).get("friendship", 0))
+
+
+## Ein Besucher mehr heute (ein befreundeter Stammgast bringt jemanden mit).
+func add_visit_ticket() -> void:
+	var at := GameClock.minute_of_day() + _rng.randf_range(10.0, 60.0)
+	_tickets.insert(_tickets.bsearch(at), at)
+
+
+## Ein Stammgast bringt Bücher zurück: die älteste Ausleihe kommt auf die Theke (was nicht passt, ins Lager).
+func return_oldest_to_counter() -> int:
+	if loans.is_empty():
+		return 0
+	var loan: Dictionary = loans.pop_front()
+	var books: Array[Book] = []
+	books.assign(loan.books)
+	BookStock.store_books(_put_on_counter(books))
+	_count("returned", books.size())
+	SaveManager.request_save()
+	return books.size()
+
+
 ## Ein vorhandener Ausweis (wiederkommender Leser); gibt es noch keinen, einen neuen.
 func returning_reader() -> String:
-	if readers.is_empty():
+	var ids := readers.keys().filter(func(id: String) -> bool: return not id.begins_with("stamm_"))  # nie der Ausweis eines Stammgasts
+	if ids.is_empty():
 		return new_reader()
-	var ids := readers.keys()
 	return ids[_rng.randi() % ids.size()]
 
 
@@ -353,7 +398,8 @@ func load_save_data(data: Dictionary) -> void:
 			if entry is Dictionary:
 				readers[id] = {"name": str(entry.get("name", "")), "stamps": int(entry.get("stamps", 0)),
 					"visits": int(entry.get("visits", 0)), "full": int(entry.get("full", 0)),
-					"friendship": int(entry.get("friendship", 0))}
+					"friendship": int(entry.get("friendship", 0)), "last_day": int(entry.get("last_day", -1)),
+					"talk_day": int(entry.get("talk_day", -1))}
 	loans.clear()
 	for entry: Variant in data.get("loans", []):
 		if entry is Dictionary:

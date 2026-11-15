@@ -135,8 +135,12 @@ class PcScreen extends Control:
 				var y := 136.0
 				for info: Dictionary in list.slice(0, 7):
 					_text(str(info.name), Vector2(30, y), HAND, 21, INK)
+					# Freundschaft als kleine Herzen (Stammgäste, seit Etappe 8), dahinter die Stempelkarte
+					var hearts := mini(5, int(ceil(int(info.get("friendship", 0)) / 2.0)))
+					for h in hearts:
+						SoftShapes.heart(self, Vector2(206 + h * 11, y - 8), 4.5, STAMP)
 					for k in GameConfig.stamp_card_size:
-						var c := Vector2(260 + k * 21, y - 7)
+						var c := Vector2(272 + k * 20, y - 7)
 						draw_circle(c, 7.0, STAMP if k < int(info.stamps) else Color(SOFT, 0.25))
 					y += 32.0
 				if list.is_empty():

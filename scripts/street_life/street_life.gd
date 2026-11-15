@@ -1342,6 +1342,12 @@ func _launch(plan: Dictionary) -> Passerby:
 	# sie im Sitzen neben sich ab (seit Etappe 6j, ChibiPasserbyModel._update_bag)
 	walker.restyle(_rng)
 	walker.set_prop(&"")  # z. B. Bücher aus der Bücherei vom letzten Weg
+	# Weg an der Bücherei vorbei: vielleicht ein Stammgast (seit Etappe 8; Aussehen wechselt nur hier, noch ungesehen)
+	var passes_library: bool = (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.get("passing", "") == "library")
+	if library and passes_library:
+		library.assign_regular(walker)
+	elif not walker.regular_id.is_empty():
+		_forget_regular(walker)
 	# Wer im Pub Platz nehmen will, kommt ohne Einkaufstasche (die hinge sonst an der Hand am Tisch)
 	if (plan.actions as Array).any(func(a: Dictionary) -> bool: return a.has("pub_seat")):
 		walker.give_bag(false)
@@ -1359,6 +1365,12 @@ func _launch(plan: Dictionary) -> Passerby:
 	walker.set_shadows(0)
 	appeared.emit(walker, walker.pos)
 	return walker
+
+
+## War der Passant ein Stammgast, geht er jetzt als Unbekannter los (neues Aussehen).
+func _forget_regular(walker: Passerby) -> void:
+	walker.regular_id = ""
+	walker.randomize_look(_rng)
 
 
 ## Plant den ganzen Weg eines Passanten vom Ort "start" aus. Ergebnis: { "start", "face",

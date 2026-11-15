@@ -69,7 +69,11 @@ und Garten Blatt, Reisen Koffer, Kunst Pinsel, Geschichte Sanduhr, Philosophie E
 - [x] 3. Theke: PC statt Kasse (`CounterPc`, Bildschirm mit Stempelkarte), Theken-Ansicht (`CounterDesk`: Ausweis in den
   Kartenleser, Bücher über den Scanner, zuschieben), Stempelkarten (`Lending.readers`), volle Karte = Lesezeichen + 3 Tage mehr;
   neue Geräusche (Kartenleser, Piep, Plopp, Rutschen, Tastaturklackern für Schritt 4)
-- [ ] 4. Gespräche: Ansprechen, Fokus, Sprechblase unten, getippte Schrift + Klackern, Textdatei, Antworten
-- [ ] 5. Besucher: Stammgäste, Lieblingsgenre, Arten des Besuchs, Lesen am Tisch, Bücken, Freundschaft
+- [x] 4. Gespräche: E „Reden“ an jeder Figur (`Passerby` + `Conversation`), sie bleibt stehen und schaut dich an, Kamera
+  hält den Blick, Sprechblase unten mit getippter Schrift und Tastaturklackern, ab und zu Antworten, Esc ohne Funktion, Sätze in
+  `data/talk/talk.txt`
+- [x] 5. Besucher: 10 Stammgäste (`data/visitors/regulars.txt`, feste Namen/Aussehen/Ausweise), Lieblingsgenre, vier Arten
+  des Besuchs, Lesen am Tisch (Buch auf der Platte), Bücken zum untersten Fach, Griff nur bis 1,4 m, Freundschaft (Gespräche;
+  Herzen am PC, vertraute Sätze, Freunde mitbringen)
 - [ ] 6. Wünsche: Fragezeichen, annehmen/ablehnen, Genre-Zeichen in der Gedankenblase, übergeben, Trinkgeld
 - [ ] 7. Theken der anderen Läden auf 0,85 m

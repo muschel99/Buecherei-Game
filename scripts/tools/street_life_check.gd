@@ -114,7 +114,8 @@ func _run() -> void:
 		Lending.debug_add_visits(int(_args.visitors))
 		var room := Lending.find_room()
 		for entry: Array in [["bookshelf_country", Vector3(2.7, 0, -1.0), -PI / 2.0], ["bookshelf_min_tall", Vector3(-2.75, 0, 1.6), PI / 2.0],
-				["armchair_velvet", Vector3(0.6, 0, 1.0), PI]]:
+				["armchair_velvet", Vector3(0.6, 0, 1.0), PI], ["table_bistro", Vector3(-0.6, 0, -1.2), 0.0],
+				["chair_country", Vector3(-0.6, 0, -0.55), PI]]:
 			var data := Catalog.get_furniture(String(entry[0]))
 			if data and room:
 				room.add_furniture(data, Transform3D(Basis(Vector3.UP, float(entry[2])), entry[1]), null)
