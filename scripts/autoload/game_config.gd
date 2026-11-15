@@ -690,8 +690,9 @@ var paint_line_color: Color = Color(0.4, 0.24, 0.13)
 var paint_line_darkness: float = 0.3
 var paint_line_pressure: float = 0.15
 var paint_line_fade_distance: float = 24.0
-## Tusche nachts (seit Testrunde 7b: Braun sah nachts komisch aus) – der Tagesablauf blendet dorthin über
-var paint_night_line_color: Color = Color(0.1, 0.13, 0.3)
+## Tusche nachts – der Tagesablauf blendet dorthin über (Testrunde 7b: Braun sah nachts komisch aus, erst Dunkelblau;
+## seit dem Nachtest von Etappe 8 Schwarz, Wunsch der Entwicklerin)
+var paint_night_line_color: Color = Color(0.02, 0.02, 0.025)
 ## Papierstruktur (ungleichmäßig aufgetragene Farbe, Körnung, Fasern; 0 = glatt).
 var paint_paper_strength: float = 0.8
 ## Farbränder dunkler wie bei getrocknetem Aquarell (0 = aus).
@@ -1424,6 +1425,12 @@ var wish_friendship: int = 2
 var wish_bubble_height: float = 0.45
 ## Stempelkarte (seit Etappe 8): so viele Felder; ist sie voll, bekommt der Gast ein Lesezeichen und so viele Tage mehr Zeit
 var stamp_card_size: int = 10
+## Lautstärke des „Kaching“, wenn eine Bedienung an der Theke fertig ist (dB; seit dem Nachtest von Etappe 8 deutlich hörbar)
+var checkout_kaching_db: float = -3.0
+## Lesen im Sitzen: Lage des Buchs gegenüber der Brust (x seitlich, y hoch, z nach vorn; m bei normaler Figurgröße) und
+## Neigung zum Gesicht (Grad, negativ = Oberkante zum Gesicht)
+var passerby_read_offset: Vector3 = Vector3(0.0, -0.05, 0.28)
+var passerby_read_tilt: float = -42.0
 var stamp_bonus_extra_days: int = 3
 ## Theken-Ansicht (Etappe 8): Kamera rückt in so vielen Sekunden heran; Bewegungen der Dinge auf der Theke
 var desk_camera_time: float = 0.7

@@ -571,7 +571,7 @@ func complete_checkout(walker: Passerby, bonus: bool) -> void:
 	var books := visit_books(walker)
 	Lending.lend(books, bool(visit.get("new", false)), GameConfig.stamp_bonus_extra_days if bonus else 0)
 	visit.lent = true
-	Audio.play("ui/kaching", -12.0)
+	Audio.play("ui/kaching", GameConfig.checkout_kaching_db)
 	_checkout[walker] = 3
 
 

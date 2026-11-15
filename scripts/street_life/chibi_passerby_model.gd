@@ -1122,8 +1122,9 @@ func _update_pet(delta: float) -> void:
 			chest = _skeleton.find_bone("Chest")
 		var base := _skeleton.get_bone_global_pose(chest).origin if chest >= 0 else Vector3(0, _hip_height * 1.4, 0)
 		var scale_now := _hip_height / 0.607
-		var point := base + Vector3(0.0, -0.13, 0.2) * scale_now
-		var tilt := deg_to_rad(-28.0)
+		# seit dem Nachtest von Etappe 8 weiter vom Körper (vorher zu nah an der Brust): vor dem Gesicht, steiler gekippt
+		var point := base + GameConfig.passerby_read_offset * scale_now
+		var tilt := deg_to_rad(GameConfig.passerby_read_tilt)
 		if _read_table is Vector3:
 			# am Tisch: das Buch liegt aufgeschlagen auf der Platte, die Hände ruhen darauf
 			point = _skeleton.global_transform.affine_inverse() * (_read_table as Vector3)
