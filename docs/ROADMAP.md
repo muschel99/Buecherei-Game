@@ -1956,6 +1956,21 @@ Plan und Haken: `.scratch/nachtest-8b-2/plan.md`.
 - [x] **Katzen streicheln:** die Zone zum Streicheln folgt dem Körper (Kopf und Rücken) in jeder Haltung – sitzend, liegend,
   schlafend
 
+## Große Überarbeitung: schöner, gemütlicher, befriedigender (Auftrag vom 16.11.2026)
+Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitung` auf GitHub. Plan: `.scratch/ueberarbeitung/plan.md`.
+
+- [x] **Flüssiger:** Spielfigur, Passanten, Fahrzeuge und Tiere bewegen sich in jedem Bild weich (vorher im 60er-Physik-Takt –
+  Stottern bei 60–144 Bildern pro Sekunde, z. B. beim Umkreisen eines Passanten); Musik lädt das nächste Stück im Hintergrund
+- [x] **Ruckel-Protokoll:** lange Bilder werden mit Ursache in `hitches.log` notiert (Hänger von ein paar Sekunden finden)
+- [x] **Licht und Farbe:** Bilderbuch-Farbabstimmung (warme Lichter, Lavendel-Schatten, weiche Tiefen), Dunst in der Ferne,
+  Lichtstrahlen im Laden, leichte Tiefenunschärfe, Gehwege weniger grell
+- [x] **Herbst** (erste Jahreszeit, Einstellung „Jahreszeit“): Laub färbt sich, Efeu wie wilder Wein, fallende Blätter (landen
+  auf Straße, Dächern, Rasen), Laub am Bordstein und an Hauswänden, wirbelt beim Durchlaufen auf, Kürbisse, Hauptmenü im Herbst
+- [x] **Bücherei alt, aber liebenswert:** kleine Putzreste und Moos statt großer heller Flecken
+- [x] **Befriedigende Rückmeldung:** Möbel plumpsen weich (Staub, Funken, Holz-Ton), Aufheben ploppt, Streichen breitet sich vom
+  Pinsel aus, volles Regalfach funkelt, Geld zählt hoch und klimpert, Knöpfe federn; abends Licht aus den Schaufenstern
+- [ ] Nächste Ideen: Innenraum gemütlicher (Startzustand), weitere Jahreszeiten (Winter, Frühling), Wetter
+
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)
 
