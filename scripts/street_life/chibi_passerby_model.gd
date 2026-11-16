@@ -1389,6 +1389,16 @@ func _update_sit_rest(state: StringName, delta: float) -> void:
 	_gesture_modifier.hands_on_thighs = move_toward(_gesture_modifier.hands_on_thighs, (1.0 if sitting else 0.0) * (1.0 - talking_hands), step * 2.0)
 
 
+## Grüßen, ohne dass die Figur es selbst entscheidet (z. B. ein Gast an der Theke, wenn man ihn bedient): lächeln, kurz
+## nicken, mit wave auch winken (nicht mit einer Tasche in der Hand).
+func greet_now(wave: bool) -> void:
+	wave = wave and not carries_bag
+	trigger_face(&"wave" if wave else &"greet")
+	_nod_t = 0.0
+	if wave:
+		wave_hello(2.2)
+
+
 ## Winken (seit Etappe 6h immer mit der Wink-Animation: der rechte Arm wird über Gehen, Stehen oder Sitzen gelegt,
 ## der Oberarm etwas weiter außen – siehe ChibiGestureModifier.clip_arm_out).
 func wave_hello(max_time: float = 3.0) -> void:

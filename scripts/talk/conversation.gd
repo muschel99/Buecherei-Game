@@ -61,7 +61,9 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_rng.randomize()
 	if _steps.is_empty():
-		_steps = default_steps(_rng, speaker.has_method("talk_close") and bool(speaker.call("talk_close")))
+		_steps = default_steps(_rng, speaker.has_method("talk_close") and bool(speaker.call("talk_close")),
+			bool(speaker.get("in_library")) if "in_library" in speaker else false,
+			speaker.has_method("talked_recently") and bool(speaker.call("talked_recently")))
 	MenuStack.open(self)
 	if player:
 		player.set("movement_enabled", false)
@@ -73,30 +75,29 @@ func _ready() -> void:
 	_next()
 
 
-## Das übliche Gespräch: Gruß, ein bis zwei Sätze zum Plaudern, ab und zu eine Frage, Abschied.
-static func default_steps(rng: RandomNumberGenerator, close: bool = false) -> Array:
+## Das übliche Gespräch: Gruß, ein bis zwei Sätze zum Plaudern (manche sind kleine Geschichten über mehrere Sprechblasen),
+## ab und zu eine Frage, Abschied. inside = Gast in der Bücherei (erzählt oft von Büchern und dem Laden, Abschnitt „drinnen“);
+## again = man hat eben schon mit ihm geredet (Gruß aus „wieder“). Zuletzt Gesagtes kommt eine Weile nicht wieder (TalkLines).
+static func default_steps(rng: RandomNumberGenerator, close: bool = false, inside: bool = false, again: bool = false) -> Array:
 	var hour := GameClock.minute_of_day() / 60.0
 	var steps: Array = []
-	for section: String in ["gruss", "plaudern"]:
-		var entry := TalkLines.pick(section, hour, rng)
-		if not entry.is_empty():
-			steps.append({"text": entry.text})
+	var add := func(entry: Dictionary) -> void:
+		for part in TalkLines.bubbles(String(entry.get("text", ""))):
+			steps.append({"text": part})
+	add.call(TalkLines.pick("wieder" if again and TalkLines.has_section("wieder") else "gruss", hour, rng))
+	var chat := "drinnen" if inside and TalkLines.has_section("drinnen") and rng.randf() < GameConfig.talk_inside_share \
+		else "plaudern"
+	add.call(TalkLines.pick(chat, hour, rng))
 	if close:
 		# Stammgäste, mit denen man befreundet ist, erzählen Persönlicheres (Abschnitt „vertraut“)
-		var personal := TalkLines.pick("vertraut", hour, rng)
-		if not personal.is_empty():
-			steps.append({"text": personal.text})
+		add.call(TalkLines.pick("vertraut", hour, rng))
 	elif rng.randf() < GameConfig.talk_second_line_chance:
-		var more := TalkLines.pick("plaudern", hour, rng)
-		if not more.is_empty() and steps.all(func(s: Dictionary) -> bool: return s.text != more.text):
-			steps.append({"text": more.text})
+		add.call(TalkLines.pick("plaudern", hour, rng))
 	if rng.randf() < GameConfig.talk_question_chance:
 		var question := TalkLines.pick("frage", hour, rng)
 		if not question.is_empty() and not (question.answers as Array).is_empty():
 			steps.append({"text": question.text, "answers": question.answers})
-	var bye := TalkLines.pick("tschuess", hour, rng)
-	if not bye.is_empty():
-		steps.append({"text": bye.text})
+	add.call(TalkLines.pick("tschuess", hour, rng))
 	return steps
 
 

@@ -32,8 +32,9 @@ var _queue: Array = []  # [Kennung, Callable (baut das Modell), Callable (bekomm
 ## Ordner für die gespeicherten Fotos (Name = Kennung + Stand der Quelldateien)
 const DISK_CACHE := "user://thumbnails/"
 ## Erhöhen, wenn sich Licht oder Kamera der Fotos ändern (dann werden alle neu gemacht). 2 = seit Etappe 6f:
-## früher konnte ein leeres (weißes) Foto gespeichert werden – alle einmal neu machen
-const CACHE_VERSION := 2
+## früher konnte ein leeres (weißes) Foto gespeichert werden – alle einmal neu machen. 3 = seit dem zweiten Nachtest nach 8b:
+## mit TAA (Grafikstufe Mittel/Hoch) hatten die Fotos einen schwarzen Hintergrund – alle einmal neu machen
+const CACHE_VERSION := 3
 ## So viel des Bildes muss das Modell mindestens bedecken (Anteil sichtbarer Bildpunkte), sonst gilt das Foto als
 ## leer und wird noch einmal gemacht (nie gespeichert)
 const MIN_COVERAGE := 0.004
@@ -45,7 +46,8 @@ func _ready() -> void:
 	_viewport.size = IMAGE_SIZE
 	_viewport.own_world_3d = true
 	_viewport.transparent_bg = true
-	Settings.match_preview_quality(_viewport)  # gleiche Kantenglättung wie das Spiel
+	# gleiche Kantenglättung wie das Spiel – nur ohne TAA (das macht den durchsichtigen Hintergrund schwarz; dann FXAA)
+	Settings.match_preview_quality(_viewport, true)
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	add_child(_viewport)
 
@@ -252,7 +254,8 @@ func _photograph(model: Node3D, view_direction: Vector3, view: Dictionary = {}, 
 
 	# ein paar Bilder lang zeichnen (neue Materialien und Shader brauchen manchmal einen Moment), dann das Foto
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	for i in maxi(settle_frames, Settings.preview_frames()):  # mit TAA ein paar Bilder mehr, bis das Foto scharf ist
+	var frames := Settings.preview_frames() if _viewport.use_taa else 1  # mit TAA ein paar Bilder mehr, bis das Foto scharf ist
+	for i in maxi(settle_frames, frames):
 		await RenderingServer.frame_post_draw
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	var image := _viewport.get_texture().get_image()

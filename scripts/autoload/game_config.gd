@@ -1413,6 +1413,10 @@ var talk_clack_db: float = -18.0
 var talk_clack_every: int = 3
 var talk_second_line_chance: float = 0.45
 var talk_question_chance: float = 0.35
+## Gäste in der Bücherei erzählen so oft von Büchern und dem Laden (Abschnitt „drinnen“ in talk.txt), sonst Alltägliches
+var talk_inside_share: float = 0.65
+## So lange (Sekunden, echte Zeit) gilt ein erneutes Gespräch mit derselben Figur als „noch mal“ (Gruß aus „wieder“)
+var talk_again_time: float = 240.0
 var talk_focus_speed: float = 6.0
 ## Besucher (seit Etappe 8): so oft ist ein Passant auf dem Weg zur Bücherei ein Stammgast; Freundschaft (höchstens
 ## friendship_max) – ab friend_close_level erzählen sie Vertrauteres, ab friend_bring_level bringen sie ab und zu jemanden mit
@@ -1470,6 +1474,11 @@ var desk_card_time: float = 0.55
 var desk_book_time: float = 0.5
 var desk_push_time: float = 0.6
 var desk_basket_time: float = 0.7
+## Neuer Gast an der Theke (seit dem Test nach 8b): die Kamera schaut erst zu ihm hoch (so viele Sekunden hin), er grüßt
+## (lächelt, nickt, winkt manchmal), so lange bleibt der Blick bei ihm; dann geht es hinunter auf die Theke
+var desk_greet_turn_time: float = 0.6
+var desk_greet_hold_time: float = 1.3
+var desk_greet_wave_chance: float = 0.6
 ## Blickpunkt der Theken-Ansicht (seit dem Nachtest von Etappe 8 mittig und gerade): Auge über der Mitte der Platte (x seitlich,
 ## y über der Platte, z = Abstand zur Spielfigur hin, Spielfigur auf -Z); die Neigung ergibt sich so, dass der untere Bildrand
 ## an der Thekenkante liegt. Sichtfeld links bis rechts (Grad) – bei jedem Bildformat ist die ganze Theke zu sehen.

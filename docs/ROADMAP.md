@@ -1938,6 +1938,24 @@ Plan und Haken: `.scratch/nachtest-8b/plan.md`.
 - [x] **Körbe** anderthalbmal so groß
 - [x] **Mauszeiger:** runder Pfeil in Creme mit warmbraunem Rand, über Knöpfen zartrosa
 
+## Zweiter Nachtest nach Etappe 8b (Liste der Entwicklerin, 16.11.2026)
+Plan und Haken: `.scratch/nachtest-8b-2/plan.md`.
+
+- [x] **Maklerin zeigt das Türschild:** die Kamera schaut jetzt auf das Schild statt auf den Boden
+- [x] **Türschild beim Anschauen:** keine hellen Kästchen mehr über den Buchstaben (die Hervorhebung lässt Schrift aus)
+- [x] **To-do-Zettel über dem Tablet:** am Tablet und im Gestaltungsmodus bleibt der Zettel gut lesbar obenauf; das Tablet rückt
+  dafür ein Stück nach links
+- [x] **Möbel-Vorschau in Farbe:** die Fotos im Shop hatten auf den Grafikstufen Mittel und Hoch einen schwarzen Hintergrund
+  (die Kantenglättung TAA machte ihn undurchsichtig) – jetzt wieder durchsichtig, alte Fotos werden einmal neu gemacht
+- [x] **Möbelfarben:** Vorhänge und Gardinen übernehmen jetzt die gekaufte Farbe; beim Rankgitter mit Kletterrose ließen sich die
+  Rosen nicht umfärben (falscher Materialname) – neu gebaut
+- [x] **Theke:** kommt ein neuer Gast dran, schaut man ihn zuerst an und er grüßt (lächelt, nickt, winkt manchmal), dann geht der
+  Blick auf die Theke; mit W A S D geht man von der Theke weg (wie mit Esc)
+- [x] **Mehr Gespräche:** viel mehr Sätze, kleine Geschichten über zwei Sprechblasen, eigene Sätze für Gäste in der Bücherei,
+  „Noch mal hallo!“, wenn man gleich wieder mit jemandem redet; Gesagtes wiederholt sich eine ganze Weile nicht
+- [x] **Katzen streicheln:** die Zone zum Streicheln folgt dem Körper (Kopf und Rücken) in jeder Haltung – sitzend, liegend,
+  schlafend
+
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)
 

@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c3qi0la78xg3c"
+uid="uid://cmbt7h06uphle"
 path="res://.godot/imported/planter_divider.glb-f060a84cfe0cfb7eaafe965cb59b560e.scn"
 
 [deps]
@@ -41,35 +41,20 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
-"b": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/b.tres",
-"use_external/path": "res://assets/materials/furniture/planter_divider/b.tres"
-},
 "bark": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/planter_divider/bark.tres",
 "use_external/path": "res://assets/materials/furniture/planter_divider/bark.tres"
 },
-"l": {
+"bloom": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/l.tres",
-"use_external/path": "res://assets/materials/furniture/planter_divider/l.tres"
+"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/bloom.tres",
+"use_external/path": "res://assets/materials/furniture/planter_divider/bloom.tres"
 },
 "leaf_dark": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/planter_divider/leaf_dark.tres",
 "use_external/path": "res://assets/materials/furniture/planter_divider/leaf_dark.tres"
-},
-"m": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/m.tres",
-"use_external/path": "res://assets/materials/furniture/planter_divider/m.tres"
-},
-"o": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/planter_divider/o.tres",
-"use_external/path": "res://assets/materials/furniture/planter_divider/o.tres"
 },
 "paint": {
 "use_external/enabled": true,

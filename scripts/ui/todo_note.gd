@@ -4,7 +4,10 @@ extends Control
 ## Schritte): ein kleiner, leicht schräger Papierzettel mit Washi-Tape, Überschrift in Handschrift, Kästchen und – wo es
 ## hilft – dem Tastensymbol. Erledigtes hakt sich von selbst ab (Häkchen wird gezeichnet, Text durchgestrichen); ist der Zettel
 ## fertig, gleitet er nach rechts hinaus und der nächste herein (Tutorial.todo_changed). Inhalt: data/tutorial/todo.txt.
-## Ausblenden: Einstellung „interface/todo“; in Menüs und Gesprächen tritt er zurück. Liegt im HUD (dort mit ausgeblendet).
+## Ausblenden: Einstellung „interface/todo“; in Menüs und Gesprächen tritt er zurück – aber nicht am Theken-Tablet und im
+## Gestaltungsmodus (Wunsch der Entwicklerin nach dem Test von 8b: „damit man die Todos lesen kann“): Dort liegt er obenauf
+## (eigene Ebene über dem Tablet, HUD.TodoLayer), das Tablet rückt für ihn nach links (room_needed, CounterTablet).
+## Liegt im HUD (wird mit ihm ausgeblendet).
 
 const PAPER := Color(1.0, 0.975, 0.9)
 const MARGIN_LINE := Color(0.93, 0.62, 0.64, 0.55)
@@ -16,6 +19,10 @@ const TITLE_FONT := preload("res://assets/ui/fonts/Caveat-Bold.woff2")
 const HAND := preload("res://assets/ui/fonts/PatrickHand-Regular.woff2")
 const WIDTH := 350.0
 const SLIDE := 360.0
+## Abstand zum rechten Bildrand und Luft zum Tablet daneben (px)
+const EDGE := 26.0
+const GAP := 16.0
+const GROUP := &"todo_note"
 
 var _paper: Paper
 var _title: Label
@@ -27,11 +34,12 @@ var _quiet := 0.0  # 0 = voll sichtbar, 1 = zurückgetreten (Menü, Gespräch)
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	anchor_left = 1.0
 	anchor_right = 1.0
-	offset_left = -WIDTH - 26.0
-	offset_right = -26.0
+	offset_left = -WIDTH - EDGE
+	offset_right = -EDGE
 	offset_top = 118.0
 	offset_bottom = 118.0
 	_paper = Paper.new()
@@ -67,10 +75,30 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	# In Menüs, Gesprächen und an der Theke tritt der Zettel zurück
-	var quiet := MenuStack.has_open() or Conversation.current != null
+	# In Menüs, Gesprächen und an der Theke tritt der Zettel zurück – am Tablet und im Gestaltungsmodus bleibt er lesbar
+	var quiet := Conversation.current != null or _covering_menu_open()
 	_quiet = move_toward(_quiet, 1.0 if quiet else 0.0, delta * 4.0)
 	modulate.a = 1.0 - _quiet * 0.85
+
+
+## Ist etwas offen, über dem der Zettel nicht liegen soll? Tablet (ohne Bereich daneben, z. B. Polaroids) und
+## Gestaltungsmodus zählen nicht – dort braucht man die Aufgaben gerade.
+func _covering_menu_open() -> bool:
+	for node in MenuStack.open_nodes():
+		if node is BuildMode or node.name == "BuildUI":
+			continue
+		if node is CounterTablet and not (node as CounterTablet).has_side_view():
+			continue
+		return true
+	return false
+
+
+## So viel Platz (px vom rechten Bildrand) braucht der Zettel gerade – 0, wenn keiner zu sehen ist (CounterTablet rückt
+## so weit nach links).
+func room_needed() -> float:
+	if not is_visible_in_tree() or not _paper.visible or _shown_index < 0:
+		return 0.0
+	return WIDTH + EDGE + GAP
 
 
 func _on_setting_changed(key: String, _value: Variant) -> void:

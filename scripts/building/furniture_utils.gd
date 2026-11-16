@@ -36,6 +36,12 @@ static func instantiate_model(data: FurnitureData, variant_id: String = "") -> N
 static func apply_variant(root: Node, variant: ColorVariant) -> void:
 	if root == null or variant == null or variant.colors.is_empty():
 		return
+	# Modelle, die sich ihr Netz erst selbst bauen (Vorhang: WindowCurtain), merken sich die Farbe und färben beim Bauen
+	var builders: Array[Node] = root.find_children("*", "", true, false)
+	builders.append(root)
+	for node in builders:
+		if node.has_method("set_color_variant"):
+			node.call("set_color_variant", variant)
 	var meshes: Array[Node] = root.find_children("*", "MeshInstance3D", true, false)
 	if root is MeshInstance3D:
 		meshes.append(root)
@@ -130,6 +136,9 @@ static func find_placed_furniture(node: Node) -> PlacedFurniture:
 ## Legt über alle sichtbaren Teile eine zusätzliche Material-Schicht (null = entfernen).
 static func set_overlay(root: Node, material: Material) -> void:
 	for node in _geometry_nodes(root):
+		# Schrift und Bilder (Label3D, Sprite3D) nie: die Schicht läge als helles Kästchen über jedem Buchstaben (Türschild)
+		if node is SpriteBase3D or node is Label3D:
+			continue
 		node.material_overlay = material
 
 

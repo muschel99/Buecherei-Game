@@ -30,6 +30,26 @@ const DEFAULT_SIZE := Vector2(2.4, 2.3)
 
 
 var _built_at := Vector3.INF
+## Farbe aus dem Shop (Farbvariante, FurnitureUtils.apply_variant) – der Stoff wird erst in rebuild gebaut, darum hier gemerkt
+var _color_variant: ColorVariant
+
+
+## Farbvariante merken und den Stoff gleich einfärben (auch wenn er schon gebaut ist).
+func set_color_variant(variant: ColorVariant) -> void:
+	_color_variant = variant
+	var cloth := get_node_or_null("Cloth") as MeshInstance3D
+	if cloth and variant:
+		_tint(cloth)
+
+
+func _tint(cloth: MeshInstance3D) -> void:
+	if _color_variant == null or Engine.is_editor_hint():
+		return
+	for i in cloth.mesh.get_surface_count():
+		var material := cloth.mesh.surface_get_material(i)
+		var color: Variant = _color_variant.color_for(material.resource_name) if material else null
+		if color != null and cloth.material_override == null:
+			cloth.set_surface_override_material(i, FurnitureUtils.tinted_material(material, color))
 
 
 func _ready() -> void:
@@ -80,6 +100,8 @@ func rebuild() -> void:
 	for i in overrides:
 		if i < mi.get_surface_override_material_count():
 			mi.set_surface_override_material(i, overrides[i])
+	if overrides.is_empty():
+		_tint(mi)
 
 
 ## Umriss des Fensters in eigenen Koordinaten (x quer, y hoch ab Unterkante, Mitte 0).

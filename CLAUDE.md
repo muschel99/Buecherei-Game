@@ -270,7 +270,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - **Vorschau-Fenster (SubViewports mit eigener Welt: Fassaden-Polaroid, Drehteller, ThumbnailRenderer, seit Testrunde 7b):**
   immer `Settings.match_preview_quality(viewport)` (gleiche MSAA/TAA/FXAA wie das Spiel – sonst bereitet die Grafikkarte jedes
   Material ein zweites Mal vor: langer Hänger beim ersten Öffnen); stehende Bilder mit TAA `Settings.preview_frames()` Bilder
-  lang zeichnen (`FacadePreview._redraw`). Messen: `scenes/tools/facade_probe.tscn [-- msaa=old|taa]` (mit xvfb).
+  lang zeichnen (`FacadePreview._redraw`). **Ausnahme: durchsichtiger Hintergrund** (ThumbnailRenderer) nie mit TAA – TAA macht
+  ihn undurchsichtig schwarz (Möbelfotos im Shop, zweiter Nachtest nach 8b): `match_preview_quality(viewport, true)` = FXAA statt TAA. Messen: `scenes/tools/facade_probe.tscn [-- msaa=old|taa]` (mit xvfb).
 - **App „Fassade“ (seit Etappe 6b neu, Reiter seit 6c: Mauer, Erdgeschoss, Obergeschoss, Tür, Pflanzen,
   Draußen, Briefkasten, Theke):** Reiter `FacadeApp.PAGES` (Reihen = [Schlüssel, Überschrift];
   Schlüssel = Kategorie von FacadeDesign oder "slot"/"slot_inside"/"counter"; gesperrte Optionen =
@@ -851,7 +852,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   computer/* vorbereitet. Liste: ASSET_GUIDE „Eigene Geräusche“.
 - Grafikstufen (Niedrig/Mittel/Hoch) stehen in `GameConfig.graphics_presets`.
 - Sitzmöbel: Knoten `Seating` mit `SeatPoint`-Markern (Blickrichtung +Z) + Interactable.
-- Hervorhebung immer über `FurnitureUtils.get_highlight_material()` (dezent, Stärke in GameConfig).
+- Hervorhebung immer über `FurnitureUtils.get_highlight_material()` (dezent, Stärke in GameConfig). `set_overlay` lässt Schrift
+  und Bilder (Label3D, Sprite3D) aus – sonst läge über jedem Buchstaben ein helles Kästchen (Türschild).
 - Möbel im Raum sind `PlacedFurniture`-Knoten (unter `Furniture` im Raum) mit einem
   Datenblatt (`FurnitureData`); das Modell wird daraus erzeugt.
 - Neue Möbel/Oberflächen = neues Datenblatt in `data/furniture/` bzw. `data/surfaces/`, kein Code.
@@ -886,7 +888,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
 - **Farbvarianten (seit Etappe 6):** `FurnitureData.color_variants` (`ColorVariant`: id, Name,
   `colors` = Materialname → Farbe, `swatch`); `FurnitureUtils.instantiate_model(data, variante)` /
   `apply_variant` färben Materialien gleichen Namens (Endung ".001" egal; Shader-Wert `base_color`
-  bzw. `albedo_color`). Erste Variante = Standard (`resolve_variant`). Inventar-Schlüssel
+  bzw. `albedo_color`; Modelle, die ihr Netz erst im Baum bauen – Vorhang `WindowCurtain` –, bekommen die Variante über
+  `set_color_variant` und färben beim Bauen). Prüfen, ob jede Variante wirkt: alle Datenblätter mit instantiate_model laden
+  und Ersatz-Materialien zählen (Materialnamen im Bau-Script als Text übergeben, nie einzelne Buchstaben). Erste Variante =
+  Standard (`resolve_variant`). Inventar-Schlüssel
   "id:variante" (`FurnitureData.make_key`/`split_key`, `Inventory.get_count(id, variante)`,
   `get_stored_entries()`); `PlacedFurniture.variant`, Raum speichert "variant"; Bestellungen und
   Kartons tragen "variant". **Kacheln:** `ItemTile` (Vorschaubild in der Farbe, Zähl-/Preis-Abzeichen,
@@ -1234,7 +1239,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Fangen/zusammen sitzen/weiter), Türschwelle (`_threshold`: darüber statt hindurch), Spielzeug (`push_toy`, `_play_round`, liegen lassen
   `_leave_toy`, andere finden es), Körbchen = Marker in Gruppe `cat_spots` (Kit `cat_spot`) vor Sessel/Sofa/Teppich.
   **Türen:** Tiere in Gruppe `Door.KEEPOUT_GROUP`; `Door.in_swing`, Schließen wartet (`_close_pending`); Warteplätze
-  `CatLife._wait_spot` außerhalb des Schwenkbereichs (draußen unter dem Einwurf). Gesicht `StreetCat._update_face`,
+  `CatLife._wait_spot` außerhalb des Schwenkbereichs (draußen unter dem Einwurf). Streichel-Zone (E) folgt seit dem zweiten
+  Nachtest nach 8b der Haltung: Kugel um den Kopf + Kapsel Hüfte–Hals aus den Knochen (`StreetCat._update_pet_shapes`,
+  `PET_*_RADIUS`). Gesicht `StreetCat._update_face`,
   Kopf `AnimalHeadModifier`. Geräusche: `ambience/bird` bzw. Art-Laut aus `bird_species[].sound`, `ambience/pigeon`,
   `ambience/bird_flap` (still bis zur Aufnahme), `ambience/cat_purr`, `GameConfig.cat_meow_sound`; neue Aufnahmen
   erkennt `prepare_sounds.py` am Dateinamen (`ANIMAL_RULES`). Prüfen: street_life_check „Tiere“ (Erscheinen/
@@ -1392,7 +1399,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   aneinander vorbei (`Passerby.in_library`, `StreetLife.LIBRARY_GAP`); Lesen im Sitzen (`sit` mit "read" →
   `ChibiPasserbyModel.set_reading`, `ChibiGestureModifier.read_point/read_weight`, Buch `_make_open_book`); Schritt "stand" mit
   "clip"/"cue". Türschild seit dem Wunsch nach Etappe 8b nur AUSSEN (`OpenSign.side` -1, Seiten farbig: grün „Geöffnet“,
-  rot „Geschlossen“, Schrift Creme – den Stand sieht man von der Straße; durchs Türglas innen die Rückseite). **Sitzmöbel** in Chibi-Höhe:
+  rot „Geschlossen“, Schrift Creme – den Stand sieht man von der Straße; durchs Türglas innen die Rückseite; Blickpunkt aufs Brett
+  `OpenSign.focus_point()` – der Knoten selbst liegt unten am Scharnier). **Sitzmöbel** in Chibi-Höhe:
   `storybook_furniture.SEAT_HEIGHT` 0,3 m (`Kit.lower_seat` staucht alles unter dem Sitz; `low_seat=False` schaltet ab).
   Seit Etappe 8 einheitlich: Tische `Kit.lower_table` (`TABLE_HEIGHTS` je Unterkategorie: Ess-/Schreibtisch 0,5 m, Beistell-/
   Couchtisch 0,3 m, `top_height` je Möbel), Theken `z_scale` 0,85 (`Kit.scale_height`, Platte `Counter.TOP_HEIGHT` 0,85 m),
@@ -1425,7 +1433,11 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Scanner `counter_scanner` (Glasstreifen quer, um 90° gedreht) und Tütenstapel `paper_bag_stack`. **Theken-Ansicht**
   `CounterDesk` (E „Bedienen“ hinter der Theke): Kamera mittig und gerade (`desk_camera_eye`, Sichtfeld links–rechts
   `desk_camera_hfov`, Neigung so, dass der untere Bildrand an der Thekenkante `NEAR_EDGE` liegt), Maus frei, MenuStack (Esc
-  verlässt, Gast wartet weiter, Fortschritt je Gast bleibt). Aufteilung aus Sicht der Spielfigur (rechts = -X der Theke):
+  verlässt – seit dem zweiten Nachtest nach 8b auch W A S D –, Gast wartet weiter, Fortschritt je Gast bleibt). Neuer Gast an der
+  Reihe (Öffnen bzw. `_next_guest`): Kamera schaut erst zu seinem Gesicht hoch, er grüßt (`Passerby.greet_player` →
+  `ChibiPasserbyModel.greet_now`: lächeln, nicken, manchmal winken), dann hinunter auf die Theke (`_look_at_guest_then_desk`, eigener
+  Tween `_cam_tween`, solange `_greeting` keine Klicks; Werte `desk_greet_*`; je Gast nur einmal, `_progress[gast].greeted`).
+  Aufteilung aus Sicht der Spielfigur (rechts = -X der Theke):
   rechts Tablet + Kartenleser, Korb des Gasts (`BASKET`) mit dem Bücherstapel davor (`BOOKS`), Mitte Scanner (`SCANNER`), links
   offene Tüte (`BAG`, Modell `library_bag_empty.glb`, Griffpunkt `BAG_DROP` über der Unterkante). Ablauf: Ausweis → Kartenleser
   (`ui/card_insert`, `ui/card_beep`, Stempel auf dem Tablet `ui/stamp_pop`) → hüpft in die Tüte; Bücher (immer das oberste)
@@ -1460,6 +1472,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   getippt (`talk_chars_per_second`, Klackern `ui/type` + Varianten), Klick/E weiter, Antworten zum Anklicken (`answers`: text,
   reply, optional `then` = Callable), Esc ohne Funktion (MenuStack, `close_from_escape` leer). Sätze: `data/talk/talk.txt`
   (`TalkLines`, Abschnitte gruss/plaudern/frage/tschuess, Tageszeiten @morgen …). Prüfbilder: `scenes/tools/talk_probe.tscn`.
+  **Abwechslung (seit dem zweiten Nachtest nach 8b, „nicht mehrmals hintereinander dasselbe Gespräch“):** `TalkLines.pick` lässt
+  zuletzt Gesagtes aus (`RECENT_SHARE` des Abschnitts), „Satz // Satz“ = kleine Geschichte über mehrere Sprechblasen
+  (`TalkLines.bubbles`), Abschnitt `drinnen` für Gäste in der Bücherei (`talk_inside_share`), `wieder` als Gruß, wenn man eben schon
+  mit derselben Figur geredet hat (`Passerby.talked_recently`, `talk_again_time`). Mehr Gespräche = mehr Zeilen in talk.txt.
 - **Start und Ladebildschirm (seit Etappe 8, „das Spiel braucht ewig zum Starten“):** Startszene des Projekts ist
   `scenes/ui/loading_screen.tscn` (`LoadingScreen`: Papier, umblätterndes Buch, Sätze in Handschrift, Bleistiftstrich) – lädt
   main.tscn im Vordergrund (im Hintergrund-Faden scheitern @tool-Scripts der Häuser – darum auch keine `preload`-Standardwerte in
@@ -1513,7 +1529,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Zettel bleibt `todo_next_delay` hängen. Ein neues Spiel beginnt mit geschlossenem Schild. Gespeichert: `intro_done`, `list`,
   `events` (alte Stände: keine Zettel). Anzeige `TodoNote` (im HUD, rechts oben; Papier, Häkchen wächst, Text weich
   durchgestrichen, eigene Tastensymbole in Tinte `InkKey` – auch Mausrad –, Zeilen über `TodoNote.make_row`, tritt in
-  Menüs/Gesprächen zurück), Einstellung „interface/todo“. **Theken-Ansicht:** `DeskSteps` (scripts/ui/desk_steps.gd, oben
+  Menüs/Gesprächen zurück – seit dem zweiten Nachtest nach 8b NICHT am Theken-Tablet und im Gestaltungsmodus: eigene Ebene
+  `HUD.TodoLayer` (5) über dem Tablet (Ebene 4), das Tablet rückt nach links (`CounterTablet._make_room_for_todo`,
+  `TodoNote.room_needed`); mit Polaroids neben dem Tablet tritt er zurück), Einstellung „interface/todo“. **Theken-Ansicht:** `DeskSteps` (scripts/ui/desk_steps.gd, oben
   rechts „So bedienst du“: Ausweis, Bücher, Tüte – jetziger Schritt rosa, Erledigtes abgehakt, „x von y Büchern“) bei den ersten
   `GameConfig.desk_help_servings` Bedienungen (`Tutorial.desk_help_wanted`, Zähler `desk_served`). **Gast mit Wunsch + Buch
   in der Hand:** unten neben der linken Maustaste „Geben“ (`Interactable.place_text`, HUD `_carry_hints`).

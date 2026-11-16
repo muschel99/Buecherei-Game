@@ -30,6 +30,12 @@ const JUMP_WINDOW := {"jump_up": Vector2(0.35, 0.7), "jump_down": Vector2(0.3, 0
 	"step_down": Vector2(0.2, 0.85), "pounce": Vector2(0.4, 0.75)}
 ## Mundstelle in der Ruhehaltung (unter dem Schnäuzchen; Spielzeug im Maul) – junge bzw. erwachsene Katze
 const MOUTH := Vector3(0.0, 0.166, 0.19)
+## Streichel-Zone (seit dem Test nach 8b, „Hitboxen bei Katzen streicheln“): folgt dem Körper in jeder Haltung – eine Kugel um
+## den Kopf, eine Kapsel von der Hüfte bis zum Hals (Maße im Modell, die Größe der Katze kommt dazu). Etwas größer als die
+## Katze, damit man sie gut trifft, aber nie mehr ein großer Ball mitten in der Luft.
+const PET_HEAD_RADIUS := 0.1
+const PET_BODY_RADIUS := 0.085
+const PET_BODY_RADIUS_ADULT := 0.1
 const MOUTH_ADULT := Vector3(0.0, 0.222, 0.211)
 
 ## Erwachsene Katze (cat_adult.tscn): längere Schritte, eigene Mundstelle, Treppe Stufe für Stufe, keine Körbchen
@@ -73,6 +79,9 @@ var _pet_face := Vector3.ZERO
 var _toy: Node3D
 var _toy_holder: Node3D
 var _interactable: Interactable
+var _pet_head: CollisionShape3D
+var _pet_body: CollisionShape3D
+var _pet_bones := PackedInt32Array()  # hips, neck, head, Ohren
 var _head: AnimalHeadModifier
 var _look := Vector2.ZERO
 ## Fell-Material dieser Katze (eigene Kopie, siehe CatLife._build_pool): malt die Augen (eye_blink, eye_happy)
@@ -93,6 +102,7 @@ func _ready() -> void:
 	if _interactable:
 		_interactable.interacted.connect(func(who: Node) -> void: pet(who as Node3D))
 		_interactable.highlight_owner = false  # Katzen leuchten beim Anschauen nicht auf (Wunsch seit Testrunde 7b)
+		_build_pet_shapes()
 	add_to_group(Door.KEEPOUT_GROUP)
 	set_active(false)
 
@@ -308,6 +318,7 @@ func get_toy() -> Node3D:
 func step(delta: float) -> void:
 	if not active:
 		return
+	_update_pet_shapes()
 	_meow_wait -= delta
 	_update_voice(delta)
 	_update_purr_volume()
@@ -644,6 +655,62 @@ const HEAD_TOP_ADULT := Vector3(0.0, 0.099, -0.035)
 
 
 ## Scheitel des Kopfs in der Welt (folgt der Bewegung; ohne Skelett: grob über der Mitte).
+## Statt der festen Kugel aus der Szene: Kopf-Kugel und Körper-Kapsel, die _update_pet_shapes nach den Knochen ausrichtet.
+func _build_pet_shapes() -> void:
+	if skeleton == null:
+		return
+	for name in ["hips", "neck", "head", "ear_l", "ear_r"]:
+		var bone := skeleton.find_bone(name)
+		if bone < 0:
+			return  # eigenes Modell ohne diese Knochen: feste Kugel aus der Szene bleibt
+		_pet_bones.append(bone)
+	for child in _interactable.get_children():
+		if child is CollisionShape3D:
+			child.queue_free()
+	var sphere := SphereShape3D.new()
+	sphere.radius = PET_HEAD_RADIUS
+	_pet_head = CollisionShape3D.new()
+	_pet_head.name = "PetHead"
+	_pet_head.shape = sphere
+	_interactable.add_child(_pet_head)
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = PET_BODY_RADIUS_ADULT if adult else PET_BODY_RADIUS
+	_pet_body = CollisionShape3D.new()
+	_pet_body.name = "PetBody"
+	_pet_body.shape = capsule
+	_interactable.add_child(_pet_body)
+	_interactable.transform = Transform3D.IDENTITY
+	_update_pet_shapes()
+
+
+## Lage von Kopf und Körper aus der jetzigen Haltung (sitzen, liegen, putzen, springen …) – in Koordinaten der Katze.
+func _update_pet_shapes() -> void:
+	if _pet_head == null:
+		return
+	var to_local := _interactable.global_transform.affine_inverse() * skeleton.global_transform
+	var hips := to_local * skeleton.get_bone_global_pose(_pet_bones[0]).origin
+	var neck := to_local * skeleton.get_bone_global_pose(_pet_bones[1]).origin
+	var head := to_local * skeleton.get_bone_global_pose(_pet_bones[2]).origin
+	var ears := to_local * ((skeleton.get_bone_global_pose(_pet_bones[3]).origin
+		+ skeleton.get_bone_global_pose(_pet_bones[4]).origin) * 0.5)
+	# Kopfmitte zwischen Kopfansatz und Ohren
+	_pet_head.position = head.lerp(ears, 0.5)
+	# Körper von der Hüfte (etwas dahinter: Po) bis zum Hals
+	var along := neck - hips
+	var length := along.length()
+	if length < 0.01:
+		return
+	var axis := along / length
+	var back := hips - axis * 0.03
+	var capsule := _pet_body.shape as CapsuleShape3D
+	capsule.height = length + 0.03 + capsule.radius * 2.0
+	var side := axis.cross(Vector3.UP)
+	if side.length() < 0.01:
+		side = axis.cross(Vector3.FORWARD)
+	side = side.normalized()
+	_pet_body.transform = Transform3D(Basis(side, axis, side.cross(axis)), (back + neck) * 0.5)
+
+
 func head_top() -> Vector3:
 	if skeleton:
 		var bone := skeleton.find_bone("head")

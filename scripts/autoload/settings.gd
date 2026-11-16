@@ -173,13 +173,18 @@ func _apply_graphics_quality() -> void:
 ## beim ersten Öffnen der App „Fassade“ ein langer Hänger (gemessen: halb so lang mit gleicher Einstellung). Mit TAA braucht ein
 ## stehendes Bild ein paar Bilder, bis es scharf ist: preview_frames().
 ## Wechselt später die Grafikstufe, ziehen die Vorschau-Fenster mit (_preview_viewports).
-func match_preview_quality(viewport: SubViewport) -> void:
+## no_taa (Fotos mit durchsichtigem Hintergrund, ThumbnailRenderer): TAA macht den Hintergrund undurchsichtig schwarz
+## (seit dem zweiten Nachtest nach 8b gemessen: mit TAA Alpha 1, mit FXAA/MSAA 0) – dann FXAA statt TAA.
+func match_preview_quality(viewport: SubViewport, no_taa: bool = false) -> void:
 	var root := get_tree().root if is_inside_tree() else null
 	if root == null:
 		return
+	if no_taa:
+		viewport.set_meta(&"no_taa", true)
+	no_taa = bool(viewport.get_meta(&"no_taa", false))
 	viewport.msaa_3d = root.msaa_3d
-	viewport.use_taa = root.use_taa
-	viewport.screen_space_aa = root.screen_space_aa
+	viewport.use_taa = root.use_taa and not no_taa
+	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if no_taa and root.use_taa else root.screen_space_aa
 	_preview_viewports = _preview_viewports.filter(func(ref: WeakRef) -> bool: return ref.get_ref() != null)
 	if not _preview_viewports.any(func(ref: WeakRef) -> bool: return ref.get_ref() == viewport):
 		_preview_viewports.append(weakref(viewport))

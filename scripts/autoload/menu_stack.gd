@@ -27,6 +27,12 @@ func has_open() -> bool:
 	return not _open.is_empty()
 
 
+## Alles, was gerade offen ist (das Oberste zuletzt).
+func open_nodes() -> Array[Node]:
+	_forget_freed()
+	return _open.duplicate()
+
+
 ## Schließt das Oberste. Liefert true, wenn etwas geschlossen wurde.
 func close_top() -> bool:
 	_forget_freed()

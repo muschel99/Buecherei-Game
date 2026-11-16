@@ -138,6 +138,8 @@ var squeeze := 0.0
 var in_library := false
 ## Redet gerade mit der Spielfigur (seit Etappe 8: Conversation) – bleibt stehen und schaut sie an
 var talking := false
+## Wann zuletzt mit der Spielfigur geredet (Time.get_ticks_msec, -1 = noch nie; talked_recently)
+var _last_talk_msec := -1
 ## Stammgast der Bücherei (Kennung aus Regulars, leer = Unbekannter; seit Etappe 8)
 var regular_id := ""
 ## Gast mit eigenem Ausweis, der wiederkommt (seit dem Nachtest von Etappe 8; Kennung in Lending.readers) – er sieht so aus wie
@@ -252,6 +254,7 @@ func start_talk(player: Node3D) -> bool:
 
 func end_talk() -> void:
 	talking = false
+	_last_talk_msec = Time.get_ticks_msec()
 	if not regular_id.is_empty():
 		Lending.add_friendship(regular_id, 1, "talk_day")  # einmal am Tag zählt ein Gespräch
 	_attend(null)
@@ -287,6 +290,11 @@ func is_female() -> bool:
 
 
 ## Vertraut genug für persönlichere Sätze (Stammgast mit Freundschaft ab GameConfig.friend_close_level)?
+## Hat man eben schon mit dieser Figur geredet (GameConfig.talk_again_time)? Dann grüßt sie mit „Noch mal hallo!“.
+func talked_recently() -> bool:
+	return _last_talk_msec >= 0 and Time.get_ticks_msec() - _last_talk_msec < GameConfig.talk_again_time * 1000.0
+
+
 func talk_close() -> bool:
 	return not regular_id.is_empty() and Lending.friendship(regular_id) >= GameConfig.friend_close_level
 
@@ -351,6 +359,7 @@ func begin(start: Vector2, actions: Array[Dictionary], face: Vector2, start_floo
 	pos = start
 	floor_y = start_floor
 	_visiting = {}
+	_last_talk_msec = -1  # ein neuer Mensch aus dem Vorrat
 	# Alles vom letzten Weg vergessen (die Figur kommt aus dem Vorrat) – sonst suchte sie ihre
 	# Lage auf der Straße dort, wo sie zuletzt war
 	_route = null
@@ -1192,6 +1201,12 @@ func pet_from_rub(cat: StreetCat) -> void:
 func _set_road_scan(on: bool) -> void:
 	if _model and "road_scan" in _model:
 		_model.set("road_scan", on)
+
+
+## Die Spielfigur grüßen (lächeln, nicken, mit wave winken) – z. B. an der Theke, wenn man den Gast bedient.
+func greet_player(wave: bool) -> void:
+	if _model and _model.has_method("greet_now"):
+		_model.call("greet_now", wave)
 
 
 func _attend(node: Node3D) -> void:

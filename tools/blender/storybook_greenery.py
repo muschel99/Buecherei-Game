@@ -365,8 +365,11 @@ def climber(p, width, height, kind="ivy", flower=None):
     schwingen zur Seite, manche verzweigen sich, manche hängen herab; oben fallen einzelne Ranken wieder
     nach unten. An allen Trieben sitzen pralle Blätter an kurzen Stielen in kleinen Büscheln (Efeu:
     Herzblätter; Rose: ovale Blätter und Rosen; Glyzinie: helle Blätter und hängende Trauben; Clematis:
-    große sternförmige Blüten). Alles bleibt vor der Wand (y < -0,1) und in der Breite."""
+    große sternförmige Blüten). Alles bleibt vor der Wand (y < -0,1) und in der Breite.
+    flower = Material der Blüten: ein Name ("bloom") oder mehrere zur Auswahl."""
     rnd = p.rnd
+    if isinstance(flower, str):
+        flower = (flower,)  # sonst wählte rnd.choice einzelne Buchstaben ("b", "l", "o", "m") als Materialnamen
     leaf_mat = {"ivy": "ivy", "rose": "leaf_dark", "wisteria": "ivy_young", "clematis": "leaf"}[kind]
     stem_mat = "bark" if kind in ("wisteria", "rose") else "stem"
     shape = "heart" if kind == "ivy" else "oval"

@@ -307,7 +307,7 @@ func _focus_point(look: String) -> Variant:
 			return box.global_position + out * 0.25 + Vector3.UP * 0.95 if box else null
 		"schild":
 			var signs := _room.find_children("*", "OpenSign", true, false)
-			return (signs[0] as Node3D).global_position if not signs.is_empty() else null
+			return (signs[0] as OpenSign).focus_point() if not signs.is_empty() else null
 	return null
 
 

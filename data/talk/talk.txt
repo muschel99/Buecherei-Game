@@ -1,7 +1,9 @@
 # Gespräche mit Passanten und Gästen (seit Etappe 8) – einfach hier ändern, ergänzen oder umsortieren.
 #
 # So ist diese Datei aufgebaut:
-#   == name             beginnt einen Abschnitt: gruss, plaudern, frage, tschuess, vertraut (Stammgäste, mit denen man
+#   == name             beginnt einen Abschnitt: gruss, wieder (Gruß, wenn man eben schon mit derselben Figur geredet hat),
+#                       plaudern, drinnen (Gäste in der Bücherei erzählen von Büchern und dem Laden), frage, tschuess,
+#                       vertraut (Stammgäste, mit denen man
 #                       befreundet ist, erzählen Persönlicheres); Wünsche der Gäste in der Bücherei: wunsch ({wunsch} wird
 #                       durch das ersetzt, was der Gast sucht – z. B. „einen spannenden Krimi“, je Genre in
 #                       data/talk/genre_wishes.txt; {genre} = nur der Name des Genres), wunsch_ja / wunsch_nein (Antwort des
@@ -9,6 +11,8 @@
 #   Text …              ein Satz (eine Zeile = eine Sprechblase)
 #   @morgen Text …      gilt nur zu dieser Tageszeit: @morgen (5–11 Uhr), @mittag (11–17), @abend (17–22), @nacht (22–5)
 #   > Antwort | Satz    nur bei „frage“: eine Antwort der Spielfigur (zum Anklicken) und was der Gast darauf sagt
+#   Satz // Satz        eine kleine Geschichte über mehrere Sprechblasen (geht in allen Abschnitten außer „frage“)
+# Was eben gesagt wurde, kommt eine Weile nicht wieder – je mehr Sätze ein Abschnitt hat, desto abwechslungsreicher.
 # Zeilen, die mit # beginnen, sind Notizen. Ein Gespräch: ein Gruß, ein bis zwei Sätze zum Plaudern, ab und zu eine Frage
 # mit zwei, drei Antworten (keine ist falsch), dann der Abschied.
 
@@ -17,12 +21,36 @@ Oh, hallo!
 Hallo, schön dich zu sehen!
 Ach, du bist es! Hallo!
 Hallöchen!
+Hallo, hallo!
+Na, du? Schön, dich zu treffen!
+Ach, wie schön – hallo!
+Hey! Wie geht es dir?
+Hallo! Was für ein schöner Zufall.
+Oh, du hast doch die Bücherei übernommen, oder? Hallo!
+Hallo! Ich wollte dich schon die ganze Zeit mal ansprechen.
+Huhu! Hast du kurz Zeit?
 @morgen Guten Morgen!
 @morgen Morgen! Schon wach?
+@morgen Guten Morgen! Hast du gut geschlafen?
+@morgen Oh, auch so früh unterwegs? Guten Morgen!
 @mittag Guten Tag!
+@mittag Hallo! Ist das nicht ein schöner Tag?
+@mittag Mahlzeit! Hast du schon gegessen?
 @abend Guten Abend!
 @abend Na, auch noch unterwegs?
+@abend Guten Abend! Was für ein schöner Abend.
 @nacht Oh – so spät noch wach?
+@nacht Psst … hallo! Alle anderen schlafen schon.
+
+== wieder
+Ach, da bist du ja wieder!
+Noch mal hallo!
+Oh, du schon wieder – wie schön!
+Wir sehen uns heute aber oft!
+Na, so schnell sehen wir uns wieder?
+Ich habe gerade noch an unser Gespräch gedacht.
+Hallo noch mal! Mir ist noch etwas eingefallen.
+Ach, du! Hast du noch etwas auf dem Herzen?
 
 == plaudern
 Die Luft ist heute so schön frisch.
@@ -37,13 +65,74 @@ Ich habe neulich ein Buch gelesen, das ich nicht weglegen konnte. Bis spät in d
 Deine Bücherei sieht so gemütlich aus. Man möchte gleich hineingehen.
 Wenn es regnet, gibt es nichts Schöneres als ein Buch und eine Tasse Tee.
 Die Tauben auf dem Dach haben mich heute angeschaut, als wüssten sie etwas.
+Der Bäcker hat mir heute einfach so ein Croissant extra eingepackt.
+Im Wolleladen gibt es so weiche Wolle. Ich stricke gerade einen Schal. // Er wird ein bisschen schief. Aber ich mag ihn trotzdem.
+Hast du schon das Torhaus gesehen? Da wächst so eine schöne Glyzinie hinauf.
+Im Hof hinter der Gasse steht ein riesiger Baum. Darunter sitze ich gern auf der runden Bank.
+Ich zähle manchmal die Tauben auf dem Dach. Heute waren es sieben.
+Ich habe meine Fensterbank neu bepflanzt. Jetzt blüht alles ganz bunt.
+Weißt du, was ich am liebsten mag? Wenn morgens die Läden aufmachen und alles nach frischem Brot riecht.
+Ich bin auf dem Weg zum Blumenladen. Meine Nachbarin hat heute Geburtstag.
+Im Teeladen haben sie mir eine Sorte empfohlen, die nach Apfelkuchen schmeckt. Stell dir vor!
+Ich dachte, ich hätte vorhin ein Eichhörnchen gesehen. // Es war dann doch eine Katze. Ich sollte meine Brille aufsetzen.
+Die Pflastersteine hier sind bestimmt hundert Jahre alt. Ich mag, wie sie in der Sonne glänzen.
+Mein Großvater hat früher immer hier in der Straße eingekauft. Er hat so viel davon erzählt.
+Ich versuche gerade, mehr zu lesen. Jeden Abend zehn Seiten!
+Ich habe Zimtkekse gebacken. // Sie sind mir ein kleines bisschen dunkel geworden. Geschmeckt haben sie trotzdem.
+Im Pub erzählen sie sich immer die lustigsten Geschichten.
+Die Glocke an deiner Tür klingt so hübsch. Ich höre sie manchmal bis auf die Straße.
+Ich habe heute dreimal meinen Schlüssel gesucht. // Er war in meiner Jackentasche. Wie immer.
+Ich mag den Geruch von alten Büchern. Ein bisschen wie Vanille, finde ich.
+Bei mir zu Hause stapeln sich die Bücher schon auf dem Fensterbrett.
+Heute ist so ein Tag, an dem man einfach langsam gehen möchte.
+Ich habe einen Brief geschrieben – mit Füller! Das mache ich viel zu selten.
+Meine Katze schläft am liebsten auf meinem Lieblingspullover.
+Die Leute auf den Fahrrädern klingeln hier immer so freundlich.
+Ich habe neulich ein Buch im Zug liegen lassen. // Ich hoffe, jemand liest es jetzt und freut sich.
+Kennst du das? Man kauft ein Buch nur wegen des schönen Umschlags.
+Die kleine Gasse gegenüber ist mein Lieblingsweg. Da ist es immer so still.
+Im Modegeschäft hängt ein Mantel, den ich mir schon ewig anschaue. // Vielleicht gönne ich ihn mir zum Geburtstag.
+Ich habe heute zum ersten Mal Brot gebacken. Es ist ein bisschen flach geworden, aber es duftet herrlich.
+Weißt du, wer die Blumenkästen hier alle gießt? Ich habe es noch nie gesehen. Ein kleines Rätsel!
+Ich habe mir vorgenommen, jede Woche einen neuen Laden in der Straße auszuprobieren.
+Manchmal setze ich mich einfach auf eine Bank und schaue den Leuten zu.
+Eine Katze ist mir heute ein ganzes Stück nachgelaufen. Ich glaube, sie wollte nur Gesellschaft.
 @morgen Ich hole mir gleich ein frisches Brötchen. Das gehört einfach zum Morgen.
 @morgen Die Sonne kommt gerade über die Dächer. Wie schön das aussieht.
+@morgen Der Bäcker hatte noch warme Brötchen. Ich bin extra früh aufgestanden.
+@morgen Am Morgen ist die Straße so still. Nur die Vögel singen.
 @mittag Ich mache gerade eine kleine Pause. Die Sonne tut gut.
+@mittag Ich esse gleich ein Butterbrot auf der Bank. Mit Blick auf die Blumen.
+@mittag Mittags liegen die Katzen alle in der Sonne. Die haben es gut.
 @abend Die Laternen machen die Straße so gemütlich.
 @abend Gleich gibt es Abendessen. Ich freue mich schon.
+@abend Die Fenster leuchten jetzt so warm. Wie lauter kleine Bilder.
+@abend Ich drehe noch eine Runde, bevor ich mir einen Tee mache.
 @nacht Die Sterne sind heute so klar.
 @nacht Ich konnte nicht schlafen. Ein kleiner Spaziergang hilft immer.
+@nacht Nachts sieht die Straße aus wie in einem Märchenbuch.
+
+== drinnen
+Hier drinnen riecht es so schön nach Papier.
+Ich könnte hier stundenlang stöbern.
+Deine Regale sind so gemütlich. Man weiß gar nicht, wo man anfangen soll.
+Ich habe gerade ein Buch entdeckt, von dem ich noch nie gehört hatte.
+Hier ist es so ruhig. Genau das, was ich heute gebraucht habe.
+Ich nehme heute nur ein Buch mit. // … Na ja. Vielleicht auch zwei.
+Weißt du, was ich an Büchereien liebe? Jedes Buch war schon einmal bei jemand anderem zu Hause.
+Ich lese am liebsten abends im Bett, mit einer kleinen Lampe.
+Hast du die Bücher alle selbst ausgesucht? Das muss so viel Arbeit gewesen sein.
+Als Kind war ich jede Woche in der Bücherei. Das Gefühl ist immer noch dasselbe.
+Ich mag es, wie das Licht durchs Fenster auf die Bücher fällt.
+Das letzte Buch habe ich in einem Rutsch gelesen. Ich brauche Nachschub!
+Ich schaue immer zuerst nach den Buchrücken. Die schönsten nehme ich in die Hand.
+Herr Quast hätte sich bestimmt gefreut, dass hier wieder Leben ist.
+Wie schön, dass es in unserer Straße wieder eine Bücherei gibt.
+Ich habe meinem Nachbarn erzählt, dass du jetzt hier bist. Er kommt bestimmt auch bald.
+Die Bücher hier sind so schön bunt. Mein Regal zu Hause sieht dagegen ganz traurig aus.
+Ich lese gern ein paar Seiten, bevor ich mich entscheide. Dann weiß ich, ob wir uns verstehen.
+@morgen Ein Buch am Morgen – besser als jeder Kaffee.
+@abend Ich hole mir noch etwas für den Abend. Mit Tee und Decke.
 
 == frage
 Liest du gerade etwas Schönes?
@@ -60,6 +149,46 @@ Magst du Katzen?
 Wie gefällt dir die Straße?
 > Wunderschön. | Nicht wahr? Ich möchte nirgendwo anders wohnen.
 > Sehr gemütlich. | Genau das Wort, das ich gesucht habe!
+Was war dein Lieblingsbuch, als du klein warst?
+> Ein Märchenbuch. | Märchen sind die besten. Ich lese sie heute noch manchmal.
+> Ein Pferdebuch! | Oh, die habe ich auch verschlungen! Jeden einzelnen Band.
+> Ein Abenteuerbuch. | Schatzkarten, Höhlen, Geheimnisse – herrlich!
+Bist du eher ein Morgenmensch oder ein Abendmensch?
+> Morgenmensch! | Dann hast du die schönste Zeit des Tages ganz für dich.
+> Abendmensch. | Ich auch. Abends ist alles so gemütlich.
+> Mittagsschläfer. | Ha! Das ist eigentlich das Allerbeste.
+Was machst du am liebsten an einem freien Tag?
+> Lesen. | Natürlich! Was auch sonst?
+> Spazieren gehen. | Durch die Gassen hier? Da entdeckt man immer etwas Neues.
+> Backen. | Mmh! Wenn du mal Kekse übrig hast, sag Bescheid.
+Welche Jahreszeit magst du am liebsten?
+> Den Frühling. | Wenn alles blüht … ja, das ist wunderschön.
+> Den Herbst. | Raschelnde Blätter und ein Buch am Fenster. Perfekt.
+> Den Winter. | Mit Schnee auf den Dächern sieht die Straße aus wie auf einer Postkarte.
+Warst du schon im Teeladen?
+> Ja! | Dann kennst du bestimmt den Honigtee. Einfach himmlisch.
+> Noch nicht. | Dann musst du unbedingt hin! Dort ist es so gemütlich.
+Liest du lieber dicke oder dünne Bücher?
+> Dicke! | Je dicker, desto gemütlicher. Da kann man richtig versinken.
+> Dünne. | Die passen in jede Tasche. Sehr praktisch!
+> Beides. | Ein dickes für zu Hause und ein dünnes für unterwegs. Schlau!
+Magst du lieber Geschichten, die gut ausgehen, oder spannende?
+> Gut ausgehen! | Ich auch. Ein schönes Ende macht mich immer ganz glücklich.
+> Spannende! | Aber bloß nicht zu spät am Abend, sonst kann man nicht schlafen!
+Kannst du eigentlich stricken?
+> Ja! | Dann sollten wir mal zusammen im Wolleladen stöbern.
+> Leider nicht. | Ich auch nicht. Aber die Wolle ist so weich, ich kaufe trotzdem welche.
+Magst du lieber Kuchen oder Kekse?
+> Kuchen! | Am liebsten Apfelkuchen, noch warm. Mmh.
+> Kekse! | Kekse kann man so schön beim Lesen knabbern.
+Welches Buch würdest du mir empfehlen?
+> Etwas Spannendes. | Gute Idee – ich lese so gern nachts unter der Decke weiter.
+> Etwas Lustiges. | Lachen kann man nie genug. Danke dir!
+> Etwas zum Träumen. | Oh ja. Genau das brauche ich gerade.
+Liest du Bücher lieber im Sessel oder im Bett?
+> Im Sessel. | Mit einer Decke über den Knien? Herrlich.
+> Im Bett. | Und dann schläft man mit dem Buch auf der Nase ein. Kenne ich!
+> Draußen auf einer Bank. | Mit Vogelgezwitscher dazu – das klingt wunderschön.
 
 == vertraut
 Weißt du, ich komme so gern hierher. Es fühlt sich ein bisschen an wie zu Hause.
@@ -68,6 +197,13 @@ Manchmal lese ich abends laut vor – für meine Katze. Ich glaube, sie mag Gedi
 Das letzte Buch von dir hat mich so berührt. Ich habe es gleich zweimal gelesen.
 Ich habe neulich einen alten Brief in einem Buch gefunden. Ich frage mich, wem er gehörte …
 Wenn ich traurig bin, gehe ich hier vorbei und schaue in dein Schaufenster. Dann geht es mir besser.
+Ich backe am Wochenende. Ich bringe dir ein Stück Kuchen vorbei!
+Weißt du noch, als ich zum ersten Mal hier war? Jetzt fühlt es sich an, als würde ich dich schon ewig kennen.
+Ich wollte dir etwas mitbringen … // … und habe es zu Hause liegen lassen. Nächstes Mal, versprochen!
+Meine Oma hatte auch eine kleine Bücherei. Du erinnerst mich ein bisschen an sie.
+Ich schreibe heimlich an einer Geschichte. // Vielleicht steht sie ja eines Tages bei dir im Regal.
+Danke, dass du immer so freundlich bist. Das tut mir richtig gut.
+Ich erzähle allen von dir. Deine Bücherei ist ein kleiner Lichtblick in dieser Straße.
 @abend Weißt du, was ich an Abenden wie diesem mag? Eine Decke, Tee und ein Buch von dir.
 
 == tschuess
@@ -75,8 +211,18 @@ Bis bald!
 Mach's gut!
 Schönen Tag noch!
 Bis zum nächsten Mal!
+Pass auf dich auf!
+Es war schön, mit dir zu plaudern!
+Bis demnächst – und viel Spaß beim Lesen!
+Ich muss weiter. Bis bald!
+Tschüss! Wir sehen uns!
+Danke fürs Plaudern!
+@morgen Einen schönen Tag dir!
+@mittag Genieß den Tag!
 @abend Schönen Abend noch!
+@abend Hab einen gemütlichen Abend!
 @nacht Gute Nacht!
+@nacht Schlaf gut – und träum was Schönes!
 
 == wunsch
 Sag mal … hast du vielleicht {wunsch} für mich? Ich hätte so Lust darauf.

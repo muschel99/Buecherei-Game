@@ -35,6 +35,7 @@ var _money_tween: Tween
 var _clock_label: Label
 ## Ganz ausgeblendet (z. B. auf dem Hauptmenü, TitleScreen)
 var suppressed := false
+var _todo_layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -45,8 +46,13 @@ func _ready() -> void:
 	_add_clock()
 	# Notizzettel am Morgen (seit Etappe 7)
 	add_child(MorningNote.new())
-	# To-do-Zettel am rechten Rand (seit dem Story-Anfang, Tutorial)
-	add_child(TodoNote.new())
+	# To-do-Zettel am rechten Rand (seit dem Story-Anfang, Tutorial) – auf einer eigenen Ebene über dem Theken-Tablet
+	# (Ebene 4), damit man die Aufgaben auch beim Bestellen lesen kann
+	_todo_layer = CanvasLayer.new()
+	_todo_layer.name = "TodoLayer"
+	_todo_layer.layer = 5
+	add_child(_todo_layer)
+	_todo_layer.add_child(TodoNote.new())
 	# Ring um die Bildmitte beim Gedrückthalten von E
 	_hold_ring = HoldRing.new()
 	_hold_ring.set_anchors_preset(Control.PRESET_CENTER)
@@ -97,6 +103,7 @@ func _update_clock() -> void:
 func _process(_delta: float) -> void:
 	# Im Pausenmenü ausblenden (dieser Knoten läuft auch bei Pause weiter), ebenso auf dem Hauptmenü (suppressed)
 	visible = not get_tree().paused and not suppressed
+	_todo_layer.visible = visible  # eigene Ebene: blendet sich nicht von selbst mit aus
 	# Laufend aktualisieren, da sich die Wörter ändern können (z. B. Licht an -> aus)
 	_key_hints.show_hints(_current_hints())
 	var carry := _get_carry_indicator()

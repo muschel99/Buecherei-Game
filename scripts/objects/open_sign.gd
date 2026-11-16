@@ -34,6 +34,12 @@ var _flip: Tween
 var _check := 0.0
 
 
+## Mitte des Bretts in der Welt (dorthin schaut die Kamera, wenn die Maklerin das Schild zeigt – der Knoten selbst liegt
+## unten am Scharnier, auf Höhe des Fußbodens).
+func focus_point() -> Vector3:
+	return _board.global_position if _board else global_position + Vector3.UP * CENTER_Y
+
+
 ## Hängt das Schild außen an die Ladentür.
 static func attach(the_door: Door) -> void:
 	var sign_node := OpenSign.new()

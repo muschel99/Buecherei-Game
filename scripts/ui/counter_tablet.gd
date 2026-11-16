@@ -63,7 +63,7 @@ var _side_view: Control
 
 func _ready() -> void:
 	add_to_group(GROUP)
-	layer = 5
+	layer = 4  # unter dem To-do-Zettel (HUD.TodoLayer, 5)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	thumbnails = ThumbnailRenderer.new()
 	thumbnails.name = "Thumbnails"
@@ -77,9 +77,29 @@ func _ready() -> void:
 	BookStock.changed.connect(_queue_refresh)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# Im Pausenmenü ausblenden (dieser Knoten läuft auch bei Pause weiter)
 	visible = is_open and not get_tree().paused
+	if is_open:
+		_make_room_for_todo(delta * 1600.0)
+
+
+## Liegt rechts ein To-do-Zettel (TodoNote), rückt der rechte Rand des Tablets weich so weit nach links, dass der Zettel
+## daneben Platz hat (Wunsch nach dem Test von 8b: die Aufgaben beim Bestellen lesen). Mit eigenem Bereich daneben
+## (Polaroids) tritt der Zettel zurück – dann nicht.
+func _make_room_for_todo(step: float = INF) -> void:
+	var room := 0.0
+	var note := get_tree().get_first_node_in_group(TodoNote.GROUP) as TodoNote
+	if note and _side_view == null:
+		room = note.room_needed()
+	var width := get_viewport().get_visible_rect().size.x
+	var target := -maxf(0.0, room - width * MARGIN_X)
+	_frame.offset_right = move_toward(_frame.offset_right, target, step)
+
+
+## Zeigt eine App gerade etwas neben dem Tablet (z. B. Polaroids)?
+func has_side_view() -> bool:
+	return _side_view != null
 
 
 ## Alle Apps aus data/tablet_apps/ (eingeschaltet, nach "order" sortiert).
@@ -121,6 +141,7 @@ func open_tablet() -> void:
 	_player.movement_enabled = false
 	_player.interaction_enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_make_room_for_todo()  # gleich mit Platz für den To-do-Zettel
 	go_home()
 	_refresh()
 

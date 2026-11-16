@@ -1,8 +1,9 @@
 class_name TalkLines
 extends RefCounted
-## Sätze für Gespräche (seit Etappe 8) aus data/talk/talk.txt (Aufbau steht oben in der Datei). Abschnitte gruss, plaudern,
-## frage, tschuess; Zeilen mit @morgen/@mittag/@abend/@nacht gelten nur zu dieser Tageszeit; bei „frage“ folgen Antworten
-## (> Antwort | Satz). Gelesen wird einmal beim ersten Gespräch.
+## Sätze für Gespräche (seit Etappe 8) aus data/talk/talk.txt (Aufbau steht oben in der Datei). Abschnitte gruss, wieder,
+## plaudern, drinnen, frage, vertraut, tschuess …; Zeilen mit @morgen/@mittag/@abend/@nacht gelten nur zu dieser Tageszeit; bei
+## „frage“ folgen Antworten (> Antwort | Satz); „ // “ teilt einen Satz in mehrere Sprechblasen (bubbles). Gelesen wird einmal
+## beim ersten Gespräch. Zuletzt Gesagtes kommt eine Weile nicht wieder (pick, RECENT_SHARE).
 
 const PATH := "res://data/talk/talk.txt"
 const TIMES := {"morgen": Vector2(5, 11), "mittag": Vector2(11, 17), "abend": Vector2(17, 22), "nacht": Vector2(22, 5)}
@@ -68,6 +69,12 @@ static func genre_wish(genre: GenreData, rng: RandomNumberGenerator) -> String:
 	return list[rng.randi() % list.size()]
 
 
+## Ein Satz, der zuletzt gesagt wurde, kommt so lange nicht wieder, bis dieser Anteil des Abschnitts dran war (seit dem
+## Test nach 8b: „nicht mehrmals hintereinander dasselbe Gespräch“).
+const RECENT_SHARE := 0.75
+static var _recent: Dictionary = {}  # Abschnitt → Array[String] (zuletzt gesagte Sätze, der neueste hinten)
+
+
 static func pick(section: String, hour: float, rng: RandomNumberGenerator) -> Dictionary:
 	_load()
 	var fitting: Array = []
@@ -77,7 +84,33 @@ static func pick(section: String, hour: float, rng: RandomNumberGenerator) -> Di
 			fitting.append(entry)
 	if fitting.is_empty():
 		return {}
-	return fitting[rng.randi() % fitting.size()]
+	# zuletzt Gesagtes auslassen (die letzten RECENT_SHARE der passenden Sätze)
+	var recent: Array = _recent.get(section, [])
+	var skip := recent.slice(maxi(0, recent.size() - floori(fitting.size() * RECENT_SHARE)))
+	var fresh := fitting.filter(func(entry: Dictionary) -> bool: return not skip.has(entry.text))
+	var pool := fresh if not fresh.is_empty() else fitting
+	var chosen: Dictionary = pool[rng.randi() % pool.size()]
+	recent.erase(chosen.text)
+	recent.append(chosen.text)
+	if recent.size() > 80:
+		recent.pop_front()
+	_recent[section] = recent
+	return chosen
+
+
+## Gibt es diesen Abschnitt (mit mindestens einem Satz)?
+static func has_section(section: String) -> bool:
+	_load()
+	return not (_sections.get(section, []) as Array).is_empty()
+
+
+## Ein Satz kann eine kleine Geschichte über mehrere Sprechblasen sein: „Satz eins // Satz zwei“.
+static func bubbles(text: String) -> PackedStringArray:
+	var parts := PackedStringArray()
+	for part in text.split("//", false):
+		if not part.strip_edges().is_empty():
+			parts.append(part.strip_edges())
+	return parts
 
 
 static func _in_time(time: String, hour: float) -> bool:
