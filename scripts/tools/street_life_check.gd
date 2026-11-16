@@ -44,6 +44,8 @@ var _spot_name := ""
 func _ready() -> void:
 	_args = _parse_args()
 	StreetHomes.debug = true
+	# Das Prüfwerkzeug rechnet die Schritte selbst (step) – weiche Zwischenschritte fürs Bild würden da nur stören
+	GameConfig.smooth_motion = false
 	if _args.has("no_animals"):
 		GameConfig.animals_enabled = false
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()

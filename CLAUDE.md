@@ -1537,6 +1537,17 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   in der Hand:** unten neben der linken Maustaste „Geben“ (`Interactable.place_text`, HUD `_carry_hints`).
   Neue Aufgabe = Zeile in todo.txt + `Tutorial.report` an der passenden Stelle (oder eine Prüfung in `_poll`). Prüfbild eines
   Zettels: `ui_probe.tscn -- todo:<n>`.
+- **Weiche Bewegung und Ruckel-Protokoll (seit der großen Überarbeitung, Plan `.scratch/ueberarbeitung/plan.md`):** Alles, was sich im
+  Physik-Takt bewegt, zeigt das Bild zwischen den letzten beiden Physik-Lagen (sonst Stottern bei 60–144 FPS): `MotionSmoother`
+  (StreetLife: `restore()` vor `step`, `capture(_smoothed_nodes())` danach, `apply(Engine.get_physics_interpolation_fraction())` in
+  `_process`; Passanten, Fahrzeuge, Vögel, Katzen, Figuren drinnen) und in `Player` (`_restore/_capture_physics_position`,
+  `_show_smooth_position`, Kopfwippen jetzt in `_process`). Die Logik rechnet immer mit der echten Lage; wer zwischendurch woanders
+  hingesetzt wird, springt (`TELEPORT_DISTANCE`). Neue bewegte Dinge in StreetLife in `_smoothed_nodes()` aufnehmen; ihre Lage nur im
+  Physik-Schritt setzen. `GameConfig.smooth_motion` (street_life_check schaltet es aus). **Ruckel-Protokoll** `HitchLog`
+  (main.gd, `hitch_log_*`): Bilder über 50 ms → `user://hitches.log` (Dauer, Ort, Shader-Vorbereitung, Scripts/Physik, neue Knoten,
+  Ereignisse kurz davor: `HitchLog.note(text)`, Dauer messen mit `HitchLog.begin()`/`end(start, "was")` – schon in Speichern,
+  Musik/Geräusch laden, Wege im Laden, Passant losschicken, Detailstufen, Möbelfotos, Buchrücken-Atlas). Musik: das nächste Stück
+  lädt im Hintergrund vor (`Audio._take_music`).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

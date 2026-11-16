@@ -230,6 +230,7 @@ func _atlas_cache_path() -> String:
 func _build_atlas() -> void:
 	if DisplayServer.get_name() == "headless":
 		return  # ohne Grafik (z. B. automatische Tests) gibt es nichts zu zeichnen
+	HitchLog.note("Buchrücken-Atlas")
 	var cache_path := _atlas_cache_path()
 	if FileAccess.file_exists(cache_path):
 		var stored := Image.load_from_file(cache_path)

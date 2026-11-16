@@ -65,6 +65,7 @@ func save_game() -> void:
 	_autosave_timer.stop()
 	if not saving_enabled:
 		return
+	var started := HitchLog.begin()
 	var nodes := {}
 	for node in get_tree().get_nodes_in_group(PERSIST_GROUP):
 		nodes[node.save_key] = node.get_save_data()
@@ -77,6 +78,8 @@ func save_game() -> void:
 		push_warning("Speichern fehlgeschlagen: %s" % error_string(FileAccess.get_open_error()))
 		return
 	file.store_string(JSON.stringify(save_data, "\t"))
+	file.close()
+	HitchLog.end(started, "Speichern")
 
 
 ## Lädt den Spielstand (falls vorhanden) in alle Knoten der Gruppe "persist".

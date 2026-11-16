@@ -820,6 +820,7 @@ func _ensure_grid() -> void:
 	if _grid != null and not _grid_dirty:
 		return
 	_grid_dirty = false
+	var started := HitchLog.begin()
 	var area := room.build_area
 	var step := GameConfig.visitor_grid_step
 	var size := Vector2i(ceili(area.size.x / step), ceili(area.size.y / step))
@@ -851,6 +852,7 @@ func _ensure_grid() -> void:
 						solid = true
 						break
 			_grid.set_point_solid(c, solid)
+	HitchLog.end(started, "Wege im Laden neu")
 
 
 func _cell_of(p: Vector2) -> Vector2i:

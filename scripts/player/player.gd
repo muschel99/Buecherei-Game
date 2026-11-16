@@ -220,6 +220,12 @@ func _shelf_holding_target() -> BookShelf:
 
 
 func _physics_process(delta: float) -> void:
+	_restore_physics_position()
+	_physics_step(delta)
+	_capture_physics_position()
+
+
+func _physics_step(delta: float) -> void:
 	if _seat or (_sit_tween and _sit_tween.is_running()):
 		# Im Sitzen (und während des Hinsetzens/Aufstehens) nicht laufen
 		if _seat and not (_sit_tween and _sit_tween.is_running()) and movement_enabled \
@@ -238,15 +244,50 @@ func _physics_process(delta: float) -> void:
 		# Landung nach einem Sprung (nicht auf Stufen): innen Holz, draußen Stein
 		var land := "footsteps/land_wood" if global_position.y > -0.25 else "footsteps/land_stone"
 		Audio.play_at(land, global_position, GameConfig.land_volume_db, Audio.vary(0.06))
-	_update_head_bob(delta)
 	_update_rustle(delta)
 	_update_interaction_target()
 
 
 func _process(delta: float) -> void:
+	_show_smooth_position()
+	if not _seat and not (_sit_tween and _sit_tween.is_running()):
+		_update_head_bob(delta)  # in jedem Bild (seit der Überarbeitung), nicht nur im Physik-Takt
 	_update_hold(delta)
 	_update_place_hold(delta)
 	_update_store_hold(delta)
+
+
+# --- Weiche Kamera zwischen den Physik-Schritten (seit der Überarbeitung, siehe MotionSmoother) ---
+# Die Spielfigur läuft im Physik-Takt (60/s); das Bild zeigt sie zwischen den letzten beiden Lagen, damit
+# die Kamera bei 60–144 Bildern pro Sekunde nicht stottert. Die Spiel-Logik rechnet immer mit der echten Lage.
+
+var _phys_position := Vector3.ZERO
+var _prev_phys_position := Vector3.ZERO
+var _shown_position := Vector3.INF  # zuletzt gezeigte Zwischenlage (INF = keine)
+
+
+func _restore_physics_position() -> void:
+	if _shown_position != Vector3.INF and position == _shown_position:
+		position = _phys_position
+	_shown_position = Vector3.INF
+
+
+func _capture_physics_position() -> void:
+	var now := position
+	var jumped := _phys_position.distance_to(now) > MotionSmoother.TELEPORT_DISTANCE
+	_prev_phys_position = now if jumped else _phys_position
+	_phys_position = now
+
+
+func _show_smooth_position() -> void:
+	if not GameConfig.smooth_motion or _seat or (_sit_tween and _sit_tween.is_running()):
+		return
+	# Nur, wenn niemand die Figur seit dem Physik-Schritt woanders hingesetzt hat
+	if position != _phys_position and position != _shown_position:
+		return
+	var shown := _prev_phys_position.lerp(_phys_position, clampf(Engine.get_physics_interpolation_fraction(), 0.0, 1.0))
+	position = shown
+	_shown_position = shown
 
 
 # --- Springen und Hocken ---

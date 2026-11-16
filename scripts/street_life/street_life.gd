@@ -100,6 +100,8 @@ var _seats: Array[SeatPoint] = []
 var _street_seats: Array[Dictionary] = []
 var _crossing := Vector2.ZERO
 var _lod_timer := 0.0
+## Weiche Zwischenschritte fürs Bild (seit der Überarbeitung, siehe MotionSmoother)
+var _smoother := MotionSmoother.new()
 var _started := false
 ## Tiere (seit Etappe 6g): Vögel und Katzen, beim Start angelegt (GameConfig.animals_enabled)
 var birds: BirdLife
@@ -204,7 +206,30 @@ static func time_activity() -> float:
 func _physics_process(delta: float) -> void:
 	if not _started or not GameConfig.street_life_enabled:
 		return
+	_smoother.restore()  # echte Lage zurück, bevor gerechnet wird
 	step(delta)
+	if GameConfig.smooth_motion:
+		_smoother.capture(_smoothed_nodes())
+
+
+## Weiche Bewegung zwischen den Physik-Schritten (MotionSmoother): in jedem Bild zeigen.
+func _process(_delta: float) -> void:
+	if _started and GameConfig.smooth_motion:
+		_smoother.apply(Engine.get_physics_interpolation_fraction())
+
+
+## Alles, was sich bewegt: Passanten (auch drinnen), Fahrzeuge, Vögel, Katzen.
+func _smoothed_nodes() -> Array:
+	var nodes: Array = []
+	nodes.append_array(_walkers)
+	nodes.append_array(_vehicles)
+	if homes:
+		nodes.append_array(homes.indoor)
+	if birds:
+		nodes.append_array(birds.get_birds())
+	if cats:
+		nodes.append_array(cats.get_cats())
+	return nodes
 
 
 ## Ein Schritt für alle (auch vom Prüfwerkzeug aufgerufen, um Zeit vorzuspulen).
@@ -1340,6 +1365,7 @@ func _crowded(spot: Vector2) -> bool:
 
 
 func _launch(plan: Dictionary) -> Passerby:
+	var started := HitchLog.begin()
 	var walker: Passerby = _idle_walkers.pop_at(_rng.randi() % _idle_walkers.size())
 	# Gangart und Tasche bei jedem Losgehen neu (seit der Nachbesserung von 6h). Wer mit Tasche auf eine Bank will, stellt
 	# sie im Sitzen neben sich ab (seit Etappe 6j, ChibiPasserbyModel._update_bag)
@@ -1369,6 +1395,7 @@ func _launch(plan: Dictionary) -> Passerby:
 	walker.begin(plan.start, actions, plan.face)
 	walker.set_shadows(0)
 	appeared.emit(walker, walker.pos)
+	HitchLog.end(started, "Passant losgeschickt")
 	return walker
 
 
@@ -1926,6 +1953,12 @@ func direction_free(dir: int, cruise: float) -> bool:
 # --- Detailstufe und Schatten ---
 
 func _update_detail() -> void:
+	var started := HitchLog.begin()
+	_update_detail_now()
+	HitchLog.end(started, "Detailstufen Straße")
+
+
+func _update_detail_now() -> void:
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return

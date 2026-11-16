@@ -256,6 +256,14 @@ var house_shadow_distance: float = 120.0
 ## Straßenleben ein- oder ausschalten (aus = leere Straße, die Kartons kommen wie früher ohne
 ## Lieferwagen).
 var street_life_enabled: bool = true
+## Weiche Bewegung zwischen den Physik-Schritten (seit der Überarbeitung, gegen Mikroruckler): Spielfigur,
+## Passanten, Fahrzeuge und Tiere werden in jedem Bild zwischen ihren letzten beiden Lagen gezeigt
+## (MotionSmoother). false = wie früher (alles springt im Physik-Takt).
+var smooth_motion: bool = true
+## Ruckel-Protokoll (HitchLog): Bilder, die länger dauern als so viele Sekunden, werden mit Ursache nach
+## user://hitches.log geschrieben (Fedora: ~/.local/share/godot/app_userdata/Cozy Bücherei/hitches.log).
+var hitch_log_enabled: bool = true
+var hitch_log_threshold: float = 0.05
 ## Wie belebt die Straße ist (1 = normal, 0.5 = halb so viele, 2 = doppelt so viele). Gilt für
 ## Passanten, Fahrräder und Autos. Später hängt das zusätzlich von der Tageszeit ab
 ## (StreetLife.activity()).

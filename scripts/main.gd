@@ -29,6 +29,11 @@ func _ready() -> void:
 		add_child(cycle)
 		cycle.setup(self, _sun, _sky_fill, _environment)
 	Settings.setting_changed.connect(_on_setting_changed)
+	# Ruckel-Protokoll (seit der Überarbeitung): lange Bilder mit Ursache nach user://hitches.log
+	if GameConfig.hitch_log_enabled:
+		var hitches := HitchLog.new()
+		hitches.name = "HitchLog"
+		add_child(hitches)
 	# Geräuschkulisse und Musik (Audio-System: Dateien in assets/audio/ambience und assets/audio/music)
 	Audio.start_ambience("ambience/outdoor")
 	Audio.start_music()

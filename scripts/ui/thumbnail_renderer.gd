@@ -167,6 +167,7 @@ func _work() -> void:
 				texture = ImageTexture.create_from_image(stored)
 				_cache[key] = texture
 		if texture == null:
+			HitchLog.note("Foto " + key)
 			texture = await _photograph(job[1].call(), job[3], job[4])
 			if not is_inside_tree():
 				return

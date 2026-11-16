@@ -65,6 +65,7 @@ func bus_for(sound_name: String) -> String:
 func streams(sound_name: String) -> Array:
 	if _cache.has(sound_name):
 		return _cache[sound_name]
+	var started := HitchLog.begin()
 	var found := []
 	var base := ROOT + sound_name
 	for ext in EXTENSIONS:
@@ -81,6 +82,7 @@ func streams(sound_name: String) -> Array:
 			break
 		k += 1
 	_cache[sound_name] = found
+	HitchLog.end(started, "Geräusch laden " + sound_name)
 	return found
 
 
@@ -199,7 +201,14 @@ func _next_track() -> void:
 		_music_tracks.shuffle()
 		if _music_tracks.size() > 1 and _music_tracks[0] == last:
 			_music_tracks.append(_music_tracks.pop_front())
-	player.stream = load(path)
+	var started := HitchLog.begin()
+	player.stream = _take_music(path)
+	HitchLog.end(started, "Musik laden")
+	# Das nächste Stück schon im Hintergrund laden (seit der Überarbeitung): sonst friert das Bild beim
+	# Wechsel kurz ein, weil eine Musikdatei (bis 5 MB) auf einmal geladen wird
+	var upcoming: String = _music_tracks[_music_index % _music_tracks.size()]
+	if upcoming != path and not ResourceLoader.has_cached(upcoming):
+		ResourceLoader.load_threaded_request(upcoming)
 	player.volume_db = -40.0
 	player.play()
 	var fade := GameConfig.music_crossfade
@@ -210,6 +219,16 @@ func _next_track() -> void:
 	if old.playing:
 		_music_tween.tween_property(old, "volume_db", -60.0, fade).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 		_music_tween.chain().tween_callback(old.stop)
+
+
+## Musikstück holen: im Hintergrund vorgeladen, wenn möglich (ResourceLoader), sonst jetzt laden.
+func _take_music(path: String) -> AudioStream:
+	var status := ResourceLoader.load_threaded_get_status(path)
+	if status == ResourceLoader.THREAD_LOAD_LOADED or status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		var stream := ResourceLoader.load_threaded_get(path) as AudioStream
+		if stream:
+			return stream
+	return load(path) as AudioStream
 
 
 func _process(_delta: float) -> void:
