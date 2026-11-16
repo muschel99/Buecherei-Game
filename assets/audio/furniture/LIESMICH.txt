@@ -5,3 +5,6 @@ Format: am besten .ogg (auch .wav und .mp3 gehen). Name ohne Endung wie unten; V
 Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds.py; mehr in docs/ASSET_GUIDE.md.
 
 - sit_down – Hinsetzen auf Sessel, Sofa, Stuhl, Bank (aus „sit-down-only-2.mp3“, sechs Varianten)
+- place – Möbel abstellen (Holz-„Tock“, große Möbel klingen tiefer), pick – Möbel aufheben („Plopp“),
+  paint – Wand streichen / Boden legen (Pinselstrich): seit der großen Überarbeitung, erzeugt mit
+  tools/make_feedback_sounds.py (vier bzw. drei Varianten). Eigene Aufnahme: Datei gleichen Namens ersetzen.

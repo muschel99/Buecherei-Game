@@ -263,7 +263,8 @@ func _on_primary_click() -> void:
 	match _tool:
 		Tool.PLACE_NEW:
 			if _placement_ok and Inventory.take_furniture(_selected_data.get_id(), 1, _selected_variant):
-				_room.add_furniture(_selected_data, _placement_transform, _placement_support, _selected_variant)
+				var placed := _room.add_furniture(_selected_data, _placement_transform, _placement_support, _selected_variant)
+				BuildFeedback.furniture_placed(placed, [], true)
 				Tutorial.report("furniture_placed")
 				var verb := "aufgehängt" if _selected_data.is_hanging() else "aufgestellt"
 				_flash_status("%s %s." % [_selected_data.display_name, verb])
@@ -276,7 +277,10 @@ func _on_primary_click() -> void:
 					Inventory.take_furniture(_moving_item.data.get_id(), 1, _moving_item.variant)  # aus der Hand wieder in den Raum
 				_room.move_furniture(_moving_item, _placement_transform, _placement_support)
 				_flash_status("%s umgestellt." % _moving_item.data.display_name)
+				var moved := _moving_item
+				var extras := _moving_extras.duplicate()
 				_finish_move()
+				BuildFeedback.furniture_placed(moved, extras, false)
 		Tool.PAINT:
 			_paint_held = true
 			_last_painted = ""
@@ -294,6 +298,7 @@ func _pick_up_target() -> void:
 		_flash_status("%s hängt an der offenen Tür." % item.data.display_name)
 		return
 	_cancel_tool()
+	BuildFeedback.furniture_picked(item)
 	_pick_up(item)
 
 
@@ -482,7 +487,10 @@ func _find_paint_target() -> Dictionary:
 		SurfaceData.Kind.WALL:
 			if absf(hit.normal.y) > 0.5:
 				return {}
-			return _room.find_wall_segment(hit.position)
+			var found := _room.find_wall_segment(hit.position)
+			if not found.is_empty():
+				found["point"] = hit.position
+			return found
 		SurfaceData.Kind.FLOOR:
 			if hit.normal.y < 0.7:
 				return {}
@@ -490,7 +498,7 @@ func _find_paint_target() -> Dictionary:
 			if hit.normal.y > -0.7:
 				return {}
 	var cell := _room.find_grid_cell(_selected_surface.kind, hit.position)
-	return {} if cell < 0 else {"cell": cell}
+	return {} if cell < 0 else {"cell": cell, "point": hit.position}
 
 
 ## Gestaltet die Stelle, auf die ich schaue. whole = ganze Wand bzw. bei Boden und Decke
@@ -503,18 +511,40 @@ func _paint_at_target(whole: bool) -> void:
 	if key == _last_painted:
 		return  # diese Stelle wurde gerade schon gestaltet
 	_last_painted = key
+	var point: Vector3 = target.get("point", Vector3.ZERO)
 	if target.has("wall"):
+		var wall: PaintableWall = target.wall
+		# Rückmeldung (seit der großen Überarbeitung): die neue Farbe breitet sich von der Pinselstelle aus
+		var indices: Array[int] = []
 		if whole:
-			_room.paint_wall(target.wall, _selected_surface)
+			for i in wall.get_segment_count():
+				indices.append(i)
+		else:
+			indices.append(target.index)
+		var before := {}
+		for i in indices:
+			if wall.segment_ids[i] != _selected_surface.get_id():
+				before[i] = Catalog.get_surface(wall.segment_ids[i])
+		if whole:
+			_room.paint_wall(wall, _selected_surface)
 			_paint_held = false
 		else:
-			_room.paint_wall_segment(target.wall, target.index, _selected_surface)
+			_room.paint_wall_segment(wall, target.index, _selected_surface)
+		for i: int in before:
+			var old_surface: SurfaceData = before[i]
+			if old_surface:
+				BuildFeedback.paint_wipe(wall.get_segment_parts(i), old_surface.material, point, whole)
+		if not before.is_empty():
+			BuildFeedback.painted(_room, point, _selected_surface, whole)
 	else:
+		var changed: bool = _room.grid_cell_surface(_selected_surface.kind, target.cell) != _selected_surface.get_id()
 		if whole:
 			_room.fill_grid(target.cell, _selected_surface)
 			_paint_held = false
 		else:
 			_room.paint_grid_cell(target.cell, _selected_surface)
+		if changed:
+			BuildFeedback.painted(_room, point, _selected_surface, whole)
 
 
 func _set_cursor_icon(icon: String) -> void:

@@ -288,10 +288,12 @@ vec4 weathering(vec3 p, vec2 brick_id, float px) {
 	}
 	vec3 q = vec3(p.x - p.z, p.y, p.x + p.z);
 	float fade = detail_fade(px, 30.0);
-	// Putzreste: große, ausgefranste Flächen, an den Rändern kleine abgeplatzte Stücke
-	float patch = fbm(q * vec3(0.55, 0.45, 0.55) + vec3(3.1, 7.7, 1.3), 4);
+	// Putzreste (seit der großen Überarbeitung „alt, aber liebenswert“): nur noch kleine, verstreute Inseln – vorher große
+	// ausgefranste Flächen wie ein Tarnmuster. Am meisten unten und unter dem Gesims, wo alter Putz am längsten hält.
+	float patch = fbm(q * vec3(0.95, 0.8, 0.95) + vec3(3.1, 7.7, 1.3), 4);
 	float edge = fbm(q * 7.0 + vec3(1.9), 2) * 0.1;
-	float plaster = smoothstep(0.575, 0.59, patch + edge + 0.02 * weather) * weather;
+	float keep = 0.035 * smoothstep(1.2, 0.0, p.y) + 0.03 * smoothstep(2.8, 3.6, p.y);
+	float plaster = smoothstep(0.645, 0.66, patch + edge + 0.01 * weather + keep) * weather;
 	// Risse: schmale, verzweigte Linien
 	float rn = fbm(q * vec3(1.6, 1.1, 1.6) + vec3(8.3, 2.2, 5.1), 4);
 	float crack = (1.0 - smoothstep(0.0, 0.006 + px * 0.5, abs(rn - 0.5))) * smoothstep(0.55, 0.62, fbm(q * 0.8 + vec3(4.4), 2));
@@ -304,9 +306,9 @@ vec4 weathering(vec3 p, vec2 brick_id, float px) {
 		float flake = fbm(q * vec3(7.0, 4.5, 7.0) + vec3(2.7), 3) + fbm(q * 26.0, 2) * 0.1 * fade;
 		missing = smoothstep(0.66, 0.672, flake + 0.03 * weather) * weather;
 	}
-	// Schmutz: senkrechte Streifen (Regen), unten etwas dunkler
+	// Schmutz: zarte senkrechte Streifen (Regen), unten etwas dunkler
 	float streak = fbm(vec3(q.x * 5.0, q.y * 0.35, q.z * 5.0), 3);
-	float dirt = (smoothstep(0.45, 0.8, streak) * 0.7 + smoothstep(0.6, -0.4, p.y) * 0.5) * weather;
+	float dirt = (smoothstep(0.5, 0.85, streak) * 0.45 + smoothstep(0.6, -0.4, p.y) * 0.4) * weather;
 	return vec4(plaster, crack, missing, dirt);
 }
 
@@ -498,6 +500,44 @@ float window_glow(float g, vec3 wpos, vec3 origin) {
 	return g * mix(1.0, mix(0.03, night_glow_boost, lit), night_glow);
 }
 
+// Herbst (seit der großen Überarbeitung, Autoload Season): season_autumn 0 = Sommer … 1 = Herbst. Nur grüne Blätter
+// (grain 5) draußen färben sich – Blüten, Früchte und Zimmerpflanzen (season_inside) bleiben. Flecken über die Krone
+// (Lage in der Welt) + jedes Blatt etwas anders (aus seinem Farbton); oben (Bäume, Efeu an Wänden) kräftig, unten in
+// Beeten und Töpfen nur ein Hauch. Ein paar Blätter bleiben grün.
+global uniform float season_autumn;
+global uniform float season_ground_y;
+global uniform vec3 season_inside_min;
+global uniform vec3 season_inside_max;
+
+vec3 autumn_leaf(vec3 col, vec3 wpos, vec3 tint) {
+	float mx = max(col.r, max(col.g, col.b));
+	float mn = min(col.r, min(col.g, col.b));
+	float sat = (mx - mn) / max(mx, 0.0001);
+	float green = smoothstep(0.0, 0.06, col.g - max(col.r, col.b)) * smoothstep(0.12, 0.3, sat);
+	if (green <= 0.0) {
+		return col;
+	}
+	if (season_inside_max.x > season_inside_min.x && all(greaterThan(wpos, season_inside_min))
+			&& all(lessThan(wpos, season_inside_max))) {
+		return col;
+	}
+	float leaf = fract(sin(dot(tint, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+	float n = clamp(value_noise(wpos * 0.42) * 0.6 + value_noise(wpos * 2.1 + vec3(5.3)) * 0.4 + leaf * 0.3 - 0.02, 0.0, 1.0);
+	vec3 olive = vec3(0.62, 0.58, 0.16);
+	vec3 gold = vec3(0.95, 0.66, 0.14);
+	vec3 orange = vec3(0.95, 0.38, 0.09);
+	vec3 red = vec3(0.78, 0.15, 0.09);
+	vec3 a = n < 0.22 ? mix(olive, gold, n / 0.22) : (n < 0.55 ? mix(gold, orange, (n - 0.22) / 0.33)
+		: mix(orange, red, clamp((n - 0.55) / 0.3, 0.0, 1.0)));
+	// Helligkeit des Blatts behalten (Schattierung und Licht der Bau-Scripts)
+	float l = dot(col, vec3(0.3, 0.59, 0.11));
+	a *= clamp(l / 0.3, 0.5, 1.3);
+	float height = smoothstep(0.3, 3.2, wpos.y - season_ground_y);
+	float stays_green = step(0.86, fract(leaf * 7.13));
+	float amount = season_autumn * green * mix(0.28, 1.0, height) * (1.0 - stays_green * 0.85);
+	return mix(col, a, amount);
+}
+
 void fragment() {
 	if (library_cut_max.x > library_cut_min.x) {
 		vec3 wpos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -593,8 +633,8 @@ void fragment() {
 			masonry_d(p, wid, wedges);
 		}
 		vec4 wt = weathering(p, wid, px);
-		// ausgeblichen und leicht grau
-		col = mix(col, vec3(dot(col, vec3(0.33))) * 1.05, 0.18 * weather);
+		// von der Sonne ausgeblichen: warm und etwas heller, nicht grau
+		col = mix(col, mix(vec3(dot(col, vec3(0.33))), weather_color.rgb, 0.35) * 1.06, 0.16 * weather);
 		if (masonry) {
 			vec3 plaster_col = weather_color.rgb * (0.9 + 0.14 * fbm(p * 5.0, 2));
 			col = mix(col, plaster_col, wt.x);
@@ -606,9 +646,13 @@ void fragment() {
 		}
 		col *= 1.0 - wt.y * 0.55;
 		col *= 1.0 - wt.w * 0.22;
-		// ein Hauch Moos ganz unten
-		float moss = smoothstep(0.2, -0.45, p.y) * smoothstep(0.45, 0.7, fbm(p * 3.0 + vec3(9.0), 3)) * weather;
-		col = mix(col, vec3(0.32, 0.38, 0.2), moss * 0.45);
+		// Moos unten an der Mauer, in den Fugen und an den Kanten (weich, sattgrün – liebenswert alt)
+		float moss_n = fbm(p * 3.0 + vec3(9.0), 3);
+		float moss = smoothstep(0.35, -0.45, p.y) * smoothstep(0.4, 0.62, moss_n) * weather;
+		if (masonry) {
+			moss += smoothstep(1.4, -0.2, p.y) * smoothstep(0.62, 0.72, moss_n) * 0.6 * weather;
+		}
+		col = mix(col, vec3(0.3, 0.4, 0.17) * (0.85 + 0.3 * fbm(p * 11.0, 2)), clamp(moss, 0.0, 1.0) * 0.6);
 	}
 	float blot = fbm(p * blot_scale, 3);
 	col *= mix(1.0 - vary, 1.0 + vary, smoothstep(0.3, 0.7, blot));
@@ -652,6 +696,11 @@ void fragment() {
 		vec3 g = (VIEW_MATRIX * (MODEL_MATRIX * vec4(grad, 0.0))).xyz;
 		NORMAL = normalize(NORMAL - g * bump_strength * 0.02);
 	}
+#ifndef REST_POSITION
+	if (grain == 5 && season_autumn > 0.001) {
+		col = autumn_leaf(col, (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, COLOR.rgb);
+	}
+#endif
 	ALBEDO = col;
 #ifdef REST_POSITION
 	ROUGHNESS = mix(rough, 0.18, gloss);

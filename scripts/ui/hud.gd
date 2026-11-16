@@ -166,11 +166,18 @@ func _get_carry_indicator() -> CarryIndicator:
 	return _carry_indicator
 
 
-## Kontostand aktualisieren; Einnahmen und Ausgaben erscheinen kurz darunter (+80 / −320).
+## Kontostand aktualisieren; Einnahmen und Ausgaben erscheinen kurz darunter (+80 / −320). Seit der großen Überarbeitung
+## zählt die Zahl weich hoch bzw. herunter, bei Einnahmen hüpft die Anzeige kurz und Münzen klimpern (außer an der Theke –
+## dort klingt schon das Kaching).
 func _on_money_changed(money: int, change: int) -> void:
-	_money_label.text = Wallet.format(money)
 	if change == 0:
+		_money_label.text = Wallet.format(money)
 		return
+	_count_money(money - change, money)
+	if change > 0:
+		_bounce_money()
+		if Wallet.last_reason != "Ausleihe":
+			Audio.play("ui/coins", GameConfig.coins_volume_db, Audio.vary(0.05))
 	_money_change_label.text = ("+" if change > 0 else "−") + Wallet.format(absi(change))
 	if _money_tween:
 		_money_tween.kill()
@@ -178,6 +185,38 @@ func _on_money_changed(money: int, change: int) -> void:
 	_money_tween = create_tween()
 	_money_tween.tween_interval(1.6)
 	_money_tween.tween_property(_money_change_label, "modulate:a", 0.0, 0.8)
+
+
+var _count_tween: Tween
+var _bounce_tween: Tween
+var _shown_money := -1
+
+
+## Kontostand zählt in GameConfig.money_count_time Sekunden zum neuen Wert.
+func _count_money(from: int, to: int) -> void:
+	if _count_tween:
+		_count_tween.kill()
+	if _shown_money >= 0:
+		from = _shown_money
+	_count_tween = create_tween()
+	_count_tween.tween_method(func(v: float) -> void:
+		_shown_money = roundi(v)
+		_money_label.text = Wallet.format(_shown_money), float(from), float(to), GameConfig.money_count_time) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_count_tween.tween_callback(func() -> void: _shown_money = -1)
+
+
+## Die Geld-Anzeige hüpft kurz (wächst federnd und kommt zurück).
+func _bounce_money() -> void:
+	var panel := _money_label.get_parent().get_parent() as Control
+	if panel == null:
+		return
+	panel.pivot_offset = panel.size / 2.0
+	if _bounce_tween:
+		_bounce_tween.kill()
+	_bounce_tween = create_tween()
+	_bounce_tween.tween_property(panel, "scale", Vector2.ONE * 1.12, 0.09).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_bounce_tween.tween_property(panel, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
 ## Fortschritt beim Gedrückthalten von E bzw. Q (-1 = Ring ausblenden). Der Ring liegt um

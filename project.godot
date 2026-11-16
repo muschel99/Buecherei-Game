@@ -36,6 +36,7 @@ DebugKeys="*res://scripts/autoload/debug_keys.gd"
 GameClock="*res://scripts/autoload/game_clock.gd"
 Lending="*res://scripts/autoload/lending.gd"
 Tutorial="*res://scripts/autoload/tutorial.gd"
+Season="*res://scripts/autoload/season.gd"
 
 [display]
 
@@ -270,6 +271,22 @@ library_area_min={
 "value": Vector3(0, 0, 0)
 }
 library_area_max={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+season_autumn={
+"type": "float",
+"value": 0.0
+}
+season_ground_y={
+"type": "float",
+"value": -0.2
+}
+season_inside_min={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+season_inside_max={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }

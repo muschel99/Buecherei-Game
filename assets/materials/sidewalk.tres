@@ -1,6 +1,6 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3]
 
-; Boden im Bilderbuch-Stil (Stil-Umbau, Etappe 4h): Shader assets/shaders/storybook_ground.gdshader,
+; Boden im Bilderbuch-Stil (Stil-Umbau, Etappe 4h; seit der großen Überarbeitung etwas dunkler und wärmer – vorher fast weiß im Sonnenlicht): Shader assets/shaders/storybook_ground.gdshader,
 ; Muster und Farben hier einstellbar (Inspektor → Shader Parameters).
 
 [ext_resource type="Shader" path="res://assets/shaders/storybook_ground.gdshader" id="1_shader"]
@@ -11,11 +11,11 @@ render_priority = 0
 shader = ExtResource("1_shader")
 shader_parameter/pattern = 1
 shader_parameter/stone_size = 0.620
-shader_parameter/color_a = Color(0.740, 0.680, 0.600, 1)
-shader_parameter/color_b = Color(0.800, 0.730, 0.640, 1)
-shader_parameter/color_c = Color(0.690, 0.650, 0.600, 1)
-shader_parameter/color_accent = Color(0.790, 0.660, 0.550, 1)
-shader_parameter/joint_color = Color(0.520, 0.460, 0.400, 1)
+shader_parameter/color_a = Color(0.660, 0.590, 0.515, 1)
+shader_parameter/color_b = Color(0.715, 0.640, 0.550, 1)
+shader_parameter/color_c = Color(0.615, 0.570, 0.525, 1)
+shader_parameter/color_accent = Color(0.720, 0.580, 0.470, 1)
+shader_parameter/joint_color = Color(0.450, 0.390, 0.340, 1)
 shader_parameter/joint = 0.018
 shader_parameter/roughness_value = 0.90
 shader_parameter/bump_strength = 0.90

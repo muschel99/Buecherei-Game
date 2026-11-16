@@ -50,7 +50,12 @@ func format(amount: int) -> String:
 	return "%s%s%s %s" % ["-" if amount < 0 else "", digits, grouped, GameConfig.currency_name]
 
 
-func _change(change: int, _reason: String) -> void:
+## Grund der letzten Buchung (z. B. "Ausleihe"; die Anzeige wählt danach ihr Geräusch).
+var last_reason: String = ""
+
+
+func _change(change: int, reason: String) -> void:
+	last_reason = reason
 	money += change
 	money_changed.emit(money, change)
 	SaveManager.request_save()

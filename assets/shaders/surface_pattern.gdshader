@@ -28,6 +28,12 @@ uniform float roughness_value : hint_range(0.0, 1.0) = 0.85;
 // Wie stark die Handarbeit zu sehen ist: Kellenstriche im Putz, Maserung im Holz, weiche Kanten (0 = glatt)
 uniform float handmade : hint_range(0.0, 2.0) = 1.0;
 
+// Frisch streichen (seit der großen Überarbeitung, BuildFeedback.paint_wipe): eine Kopie des ALTEN Belags liegt kurz als
+// Überzug auf der Wand; um die Pinselstelle reveal_center wächst ein Loch (reveal_radius, Rand unruhig wie gestrichen) –
+// so breitet sich die neue Farbe von dort aus. -1 = aus.
+uniform vec3 reveal_center = vec3(0.0);
+uniform float reveal_radius = -1.0;
+
 varying vec3 world_pos;
 varying vec3 world_normal;
 
@@ -113,6 +119,14 @@ float surface_height(vec2 uv, float px) {
 }
 
 void fragment() {
+	if (reveal_radius >= 0.0) {
+		vec3 d = world_pos - reveal_center;
+		// Pinselstriche: waagerecht etwas weiter, Rand ausgefranst
+		float wobble = 0.12 * sin(world_pos.y * 23.0 + world_pos.x * 7.0) + 0.08 * sin((world_pos.x + world_pos.z) * 31.0);
+		if (length(d * vec3(0.8, 1.15, 0.8)) < reveal_radius * (1.0 + wobble)) {
+			discard;
+		}
+	}
 	// Flächen-Koordinaten: Boden und Decke nach x/z, Wände entlang der Wand (auch die schräge) und nach oben
 	vec3 n_world = normalize(world_normal);
 	vec3 tangent;

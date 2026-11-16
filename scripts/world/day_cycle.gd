@@ -20,6 +20,7 @@ var _sky_material: ShaderMaterial
 var _cloud_offset := Vector2.ZERO
 var _lanterns_lit := -1
 var _night_cover := 0.0
+var _player: Node3D
 
 
 func setup(main_node: Node3D, sun_light: DirectionalLight3D, fill_light: DirectionalLight3D, env: Environment) -> void:
@@ -87,6 +88,7 @@ func apply(delta: float) -> void:
 	environment.tonemap_exposure = v.exposure
 	sky_fill.light_color = v.fill_color
 	sky_fill.light_energy = v.fill_energy
+	_update_haze(v, delta)
 	# Himmel
 	_cloud_offset += GameConfig.sky_cloud_wind * delta
 	var m := _sky_material
@@ -117,6 +119,22 @@ func apply(delta: float) -> void:
 	RenderingServer.global_shader_parameter_set(&"window_lit_share", _lit_share(hour))
 	if main.has_method("set_paint_night"):
 		main.call("set_paint_night", night)
+
+
+## Dunst in der Ferne (seit der Überarbeitung): in der Farbe des Horizonts (mit etwas Sonnenlicht), drinnen fast keiner.
+func _update_haze(v: Dictionary, delta: float) -> void:
+	if not environment.fog_enabled:
+		return
+	if not is_instance_valid(_player):
+		_player = get_tree().get_first_node_in_group(&"player") as Node3D
+	var inside := _player != null and _player.global_position.y > -0.25
+	var target := GameConfig.haze_density * (GameConfig.haze_inside_share if inside else 1.0)
+	if delta <= 0.0:
+		environment.fog_density = target
+	else:
+		environment.fog_density = move_toward(environment.fog_density, target,
+			GameConfig.haze_density * GameConfig.haze_blend_speed * delta)
+	environment.fog_light_color = (v.sky_horizon as Color).lerp(v.sun_color, 0.25)
 
 
 ## Anteil der Häuser/Stockwerke mit Licht im Fenster (GameConfig.window_lit_share_by_hour, zwischen den Stunden gemischt).

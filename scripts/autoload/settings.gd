@@ -54,6 +54,9 @@ const DEFINITIONS: Array[Dictionary] = [
 	# Tageslänge (seit Etappe 7): so viele Minuten echter Zeit dauert ein Spieltag (GameConfig.clock_day_length_options)
 	{"key": "gameplay/day_length", "section": "Spiel", "label": "Tageslänge (Minuten)",
 		"type": "choice", "options": ["16", "20", "24", "30", "40"], "default": 2},
+	# Jahreszeit (seit der großen Überarbeitung, Autoload „Season“; neue Jahreszeiten hinten anhängen)
+	{"key": "gameplay/season", "section": "Spiel", "label": "Jahreszeit",
+		"type": "choice", "options": ["Sommer", "Herbst"], "default": 1},
 ]
 
 ## Werte der Einstellung "Hinweise" (Tastensymbole unter der Bildmitte).

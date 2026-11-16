@@ -722,6 +722,81 @@ var sun_elevation: float = 42.0
 var sun_azimuth: float = 36.0
 ## Lichtstimmung (seit Etappe 6j, vorher fest in main.tscn; alte Werte jeweils dahinter): warme Nachmittagssonne
 ## (etwa 3500 K), kühleres Licht in den Schatten, blauerer Himmel, etwas kräftigere Farben, sanftes Leuchten.
+## Rückmeldung beim Gestalten (seit der großen Überarbeitung, BuildFeedback): Bewegungen und Teilchen an/aus, Fallhöhe
+## beim Abstellen (m), Stauchen (Anteil), Dauer des Streich-Effekts (s), Lautstärken (dB)
+var feedback_animations: bool = true
+var feedback_drop_height: float = 0.06
+var feedback_squash: float = 0.05
+var feedback_paint_time: float = 0.45
+var feedback_place_db: float = -4.0
+var feedback_pick_db: float = -8.0
+var feedback_paint_db: float = -9.0
+## Geld-Anzeige: so lange zählt sie zum neuen Kontostand (s); Lautstärke der Münzen bei Einnahmen (dB)
+var money_count_time: float = 0.6
+var coins_volume_db: float = -9.0
+## Regalfach voll: Lautstärke des zarten Glockenklangs (dB)
+var shelf_full_volume_db: float = -12.0
+## Knöpfe in den Tablets federn: so groß beim Drüberfahren, so klein beim Drücken (1 = aus)
+var ui_hover_scale: float = 1.035
+var ui_press_scale: float = 0.95
+
+## Farbabstimmung „Bilderbuch“ (seit der großen Überarbeitung, CozyGrade): Farbtabelle nach dem Tonemapping.
+var grade_enabled: bool = true
+## S-Kurve (0 = aus, 1 = stark): mehr Tiefe
+var grade_contrast: float = 0.42
+## Mitteltöne satter (Anteil), sehr helle Stellen ruhiger (Anteil)
+var grade_mid_saturation: float = 0.2
+var grade_highlight_calm: float = 0.35
+## Schatten Lavendel, Lichter Honig (Farbe + Stärke)
+var grade_shadow_tint: Color = Color(0.62, 0.6, 0.9)
+var grade_shadow_amount: float = 0.26
+var grade_highlight_tint: Color = Color(1.0, 0.84, 0.62)
+var grade_highlight_amount: float = 0.2
+## Schwarz wird zu dieser Farbe (weiche Tiefen wie Druckfarbe)
+var grade_black_lift: Color = Color(0.05, 0.035, 0.06)
+## Dunst in der Ferne (Luftperspektive, seit der Überarbeitung): Dichte draußen, Anteil drinnen (im Laden kaum Dunst),
+## wie stark der Himmel durchscheint (0–1), wie schnell beim Hinein-/Hinausgehen gewechselt wird
+var haze_density: float = 0.0045
+var haze_inside_share: float = 0.1
+var haze_aerial: float = 0.55
+var haze_blend_speed: float = 1.5
+## Feiner Staub im Laden, in dem man die Sonnenstrahlen durchs Fenster sieht (volumetrischer Nebel; 0 = aus)
+var room_haze_density: float = 0.03
+## Tiefenunschärfe in der Ferne: ab so vielen Metern, Übergang (m), Stärke (0 = aus)
+var dof_far_distance: float = 38.0
+var dof_far_transition: float = 30.0
+var dof_far_amount: float = 0.06
+
+## Jahreszeiten (seit der großen Überarbeitung, Autoload Season): so viele Sekunden dauert der Übergang beim Umschalten.
+var season_blend_time: float = 2.5
+## Herbstlaub (AutumnLeaves): fallende Blätter rund um die Spielfigur (Anzahl, Kasten-Halbmesser in m, Höhe der Mitte
+## über der Kamera, Lebensdauer in s, Fallgeschwindigkeit m/s, Wind m/s, Flattern), je Baum, Laub am Boden (Schritt
+## entlang der Straße in m, Dichte in der Rinne/an Wänden 0–1, vereinzelt 0–1)
+var autumn_fall_count: int = 320
+var autumn_fall_radius: float = 18.0
+var autumn_fall_height: float = 7.0
+var autumn_fall_lifetime: float = 24.0
+var autumn_fall_speed: float = 0.55
+var autumn_wind: Vector3 = Vector3(0.5, 0.0, 0.22)
+var autumn_flutter: float = 0.45
+var autumn_tree_count: int = 220
+var autumn_tree_lifetime: float = 40.0
+var autumn_litter_step: float = 0.1
+var autumn_litter_density: float = 0.85
+var autumn_litter_scatter: float = 0.1
+## Laub unter jedem Baum (Blätter je Baum) und Größe der Blätter (m, von–bis)
+var autumn_tree_litter: int = 260
+## Laub auf dem Rasen liegt so viel höher als der Boden (der Rasen ist ein flacher Körper ohne Kollision)
+var autumn_lawn_lift: float = 0.028
+var autumn_leaf_size: Vector2 = Vector2(0.075, 0.13)
+## Hauptmenü im Herbst: so viele Blätter segeln gleichzeitig aus dem Baum
+var title_leaf_count: int = 24
+## Durchs Laub gehen: Lautstärke des Raschelns (dB)
+var autumn_kick_volume_db: float = -14.0
+## Kürbis-Gruppen an den Hauswänden (AutumnDecor): Abstand der Prüfstellen entlang der Straße (m), Chance je Stelle
+var autumn_decor_step: float = 4.0
+var autumn_decor_chance: float = 0.38
+
 var light_sun_color: Color = Color(1.0, 0.82, 0.6)          # vorher (1, 0.85, 0.66)
 var light_sun_energy: float = 2.05                           # vorher 2.2
 var light_ambient_color: Color = Color(0.56, 0.54, 0.52)     # vorher (0.58, 0.52, 0.46)
@@ -1305,6 +1380,12 @@ var lantern_light_color: Color = Color(1.0, 0.7, 0.4)
 var lantern_light_energy: float = 1.4
 var lantern_light_range: float = 6.0
 var lantern_light_fade_distance: float = 32.0
+## Warmes Licht aus den Schaufenstern abends (ShopGlow): Farbe, Stärke, Reichweite (m), Höhe und Abstand vor der Front (m)
+var shop_glow_color: Color = Color(1.0, 0.72, 0.46)
+var shop_glow_energy: float = 1.5
+var shop_glow_range: float = 4.2
+var shop_glow_height: float = 1.3
+var shop_glow_out: float = 0.75
 ## Licht in den Fenstern nachts: so viel heller leuchten die bewohnten Fenster, Anteil der Häuser/Stockwerke mit Licht je
 ## Stunde (0 Uhr … 23 Uhr; tagsüber egal).
 var night_glow_boost: float = 1.7

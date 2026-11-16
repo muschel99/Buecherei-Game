@@ -87,6 +87,13 @@ func _ready() -> void:
 		var corner_b := to_global(Vector3(lit.end.x, GameConfig.room_height + 0.4, lit.end.y))
 		RenderingServer.global_shader_parameter_set(&"library_area_min", corner_a.min(corner_b))
 		RenderingServer.global_shader_parameter_set(&"library_area_max", corner_a.max(corner_b))
+		# Innenraum ohne Rand (seit der großen Überarbeitung): hier färbt sich im Herbst kein Laub (Zimmerpflanzen)
+		var inner := build_area.merge(BackRoom.back_area())
+		var inner_a := to_global(Vector3(inner.position.x, -0.2, inner.position.y))
+		var inner_b := to_global(Vector3(inner.end.x, GameConfig.room_height + 0.4, inner.end.y))
+		RenderingServer.global_shader_parameter_set(&"season_inside_min", inner_a.min(inner_b))
+		RenderingServer.global_shader_parameter_set(&"season_inside_max", inner_a.max(inner_b))
+		RenderingServer.global_shader_parameter_set(&"season_ground_y", StreetLayout.ground_y())
 		# Schild „Geöffnet/Geschlossen“ innen an der Ladentür
 		for door: Node in find_children("*", "Door", true, false):
 			OpenSign.attach(door as Door)
@@ -388,6 +395,12 @@ func find_wall_segment(world_point: Vector3) -> Dictionary:
 ## Welcher Boden- bzw. Deckenabschnitt liegt an diesem Punkt? (-1 = keiner)
 func find_grid_cell(kind: SurfaceData.Kind, world_point: Vector3) -> int:
 	return (_grids[kind] as PaintableGrid).get_cell_at(world_point)
+
+
+## Welcher Belag liegt in diesem Boden- bzw. Deckenabschnitt? ("" = keiner)
+func grid_cell_surface(kind: SurfaceData.Kind, index: int) -> String:
+	var grid := _grids[kind] as PaintableGrid
+	return grid.cell_ids[index] if index >= 0 and index < grid.cell_ids.size() else ""
 
 
 ## Streicht einen Wandabschnitt.

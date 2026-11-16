@@ -20,6 +20,7 @@ func _ready() -> void:
 	($Outside as Node3D).position.y = StreetLayout.ground_y()
 	_apply_sun_direction()
 	_setup_paint_filter()
+	_setup_grade()
 	_apply_graphics_quality()
 	_setup_sky_fill()
 	# Licht und Himmel über den Tag (seit Etappe 7)
@@ -39,6 +40,18 @@ func _ready() -> void:
 	Audio.start_music()
 	# Vögel und Katzen sind seit Etappe 6f still: Tiergeräusche kommen nur noch von sichtbaren Tieren (Vögel folgen)
 	_add_library_occluders()
+	_add_room_haze()
+	# Herbstlaub draußen (seit der großen Überarbeitung; nur im Herbst sichtbar)
+	var leaves := AutumnLeaves.new()
+	leaves.name = "AutumnLeaves"
+	$Outside.add_child(leaves)
+	var decor := AutumnDecor.new()
+	decor.name = "AutumnDecor"
+	$Outside.add_child(decor)
+	# Abends warmes Licht aus den Schaufenstern (seit der großen Überarbeitung)
+	var shop_glow := ShopGlow.new()
+	shop_glow.name = "ShopGlow"
+	$Outside.add_child(shop_glow)
 	# Alle Knoten der Szene sind jetzt bereit – also können sie ihre Daten übernehmen
 	SaveManager.load_game()
 	# Das Tablet mit dem Shop darf nie fehlen (auch nicht in älteren Spielständen)
@@ -121,6 +134,48 @@ func _on_setting_changed(key: String, _value: Variant) -> void:
 ## Malfilter nachts (seit Testrunde 7b): Tusche nachtblau statt braun (0 = Tag, 1 = Nacht; setzt DayCycle).
 func set_paint_night(amount: float) -> void:
 	_paint.night = amount
+
+
+## Farbabstimmung „Bilderbuch“ (seit der Überarbeitung, CozyGrade) und Dunst in der Ferne (Luftperspektive; Dichte und
+## Farbe stellt DayCycle je nach Tageszeit und drinnen/draußen ein).
+func _setup_grade() -> void:
+	if GameConfig.grade_enabled:
+		_environment.adjustment_enabled = true
+		_environment.adjustment_color_correction = CozyGrade.make_lut()
+	_environment.fog_enabled = GameConfig.haze_density > 0.0
+	_environment.fog_mode = Environment.FOG_MODE_EXPONENTIAL
+	_environment.fog_density = GameConfig.haze_density
+	_environment.fog_aerial_perspective = GameConfig.haze_aerial
+	_environment.fog_sky_affect = 0.0
+	_environment.fog_sun_scatter = 0.25
+	# Leichte Tiefenunschärfe in der Ferne (Bilderbuch/Miniatur: nahe scharf, das Ende der Straße weich)
+	if GameConfig.dof_far_amount > 0.0:
+		var attributes := CameraAttributesPractical.new()
+		attributes.dof_blur_far_enabled = true
+		attributes.dof_blur_far_distance = GameConfig.dof_far_distance
+		attributes.dof_blur_far_transition = GameConfig.dof_far_transition
+		attributes.dof_blur_amount = GameConfig.dof_far_amount
+		($WorldEnvironment as WorldEnvironment).camera_attributes = attributes
+
+
+## Feiner Staubschleier im Laden (seit der Überarbeitung): macht die Sonnenstrahlen durch die Fenster sichtbar (nur mit
+## volumetrischem Nebel, Grafikstufe Mittel/Hoch). Dichte GameConfig.room_haze_density.
+func _add_room_haze() -> void:
+	var room := get_node_or_null("GroundFloorRoom") as Room
+	if room == null or GameConfig.room_haze_density <= 0.0:
+		return
+	var area := room.build_area
+	var fog := FogVolume.new()
+	fog.name = "RoomHaze"
+	fog.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
+	fog.size = Vector3(area.size.x, GameConfig.room_height, area.size.y)
+	fog.position = Vector3(area.get_center().x, GameConfig.room_height / 2.0, area.get_center().y)
+	var material := FogMaterial.new()
+	material.density = GameConfig.room_haze_density
+	material.albedo = Color(1.0, 0.9, 0.76)
+	material.edge_fade = 0.3
+	fog.material = material
+	room.add_child(fog)
 
 
 ## Malfilter als Nachbearbeitung der Kamera-Bilder dieser Welt (Compositor der WorldEnvironment).

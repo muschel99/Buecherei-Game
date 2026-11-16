@@ -30,15 +30,23 @@ Vorher-Bilder: `screenshots/*-vorher.png`, `*-abend_vorher.png` (nicht in Git).
 1. [x] **Flüssiger:** Bewegungen zwischen den Physik-Schritten weich (Physik-Interpolation für Spielfigur,
    Passanten, Fahrzeuge, Tiere); „Ruckel-Protokoll“: Bilder über 100 ms werden mit Ursache in
    `user://hitches.log` notiert (Shader-Vorbereitung, Speichern, …), damit wir die Hänger finden.
-2. [ ] **Licht und Farbe:** eigene Farbabstimmung (Bilderbuch: warme Lichter, weiche, leicht kühle
+2. [x] **Licht und Farbe:** eigene Farbabstimmung (Bilderbuch: warme Lichter, weiche, leicht kühle
    Schatten), zarter warmer Dunst in der Ferne, goldeneres Licht; innen wärmeres Licht und Lichtstrahlen.
-3. [ ] **Herbst:** Autoload `Season` + Einstellung; Laub der Bäume/Büsche färbt sich, wilder Wein rot,
+3. [x] **Herbst:** Autoload `Season` + Einstellung; Laub der Bäume/Büsche färbt sich, wilder Wein rot,
    Blätter fallen und wehen über die Straße, Laub sammelt sich am Rand, Kürbisse und Astern vor den Läden.
-4. [ ] **Bücherei außen:** Startfassade alt, aber liebenswert (feine Verwitterung, Moos, verblasste Farbe),
+4. [~] **Bücherei außen:** Startfassade alt, aber liebenswert (feine Verwitterung, Moos, verblasste Farbe),
    warmes Licht im Schaufenster.
-5. [ ] **Befriedigende Rückmeldung:** Möbel ploppen weich hin (kleines Federn, Staubwölkchen, Holz-Ton je
+5. [x] **Befriedigende Rückmeldung:** Möbel ploppen weich hin (kleines Federn, Staubwölkchen, Holz-Ton je
    Größe), Aufheben hüpft, Streichen breitet sich als Welle aus (mit Ton), Geld zählt hoch (Münzklang), volles
    Regalfach funkelt kurz, Knöpfe federn.
 6. [ ] **Laden innen:** schönere Startflächen, warme Lichtinseln, Staub im Sonnenlicht.
 
 Danach: ROADMAP + Notion, CLAUDE.md-Notizen, Prüfung mit Godot 4.6.2.
+
+## Stand (16.11.2026, erste Runde)
+- Teil 1 committet (78180509). Teile 2, 3, 5 gebaut: CozyGrade, Dunst, Raum-Staub, Tiefenunschärfe, Gehweg; Season +
+  Herbstlaub-Shader, AutumnLeaves (fallend + am Boden), AutumnDecor (Kürbisse); BuildFeedback (plumpsen, Staub, Funken,
+  Streich-Welle, Farbtropfen), volles Fach funkelt, Geld zählt/hüpft, Knöpfe federn, neue Geräusche.
+- Teil 4 halb: Verwitterung liebenswert (kleine Putzinseln, Moos). Offen: warmes Schaufenster der Bücherei.
+- Teil 6 offen (Innenraum) – bisher nur Licht/Farbe/Staub.
+- Wunsch nach der ersten Runde: „noch Platz für schönere Grafik oder ein paar mehr Animationen“ → großzügiger bauen.

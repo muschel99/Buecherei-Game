@@ -44,6 +44,8 @@ var _parts := {}
 var _batches := {}
 var _instances: Array[MultiMeshInstance3D] = []
 var placed_count := 0
+## Gesetzte Bäume: Liste von {position (relativ zu Greenery), size} – für fallende Blätter im Herbst (AutumnLeaves)
+var trees: Array[Dictionary] = []
 ## Schon gesetzte Pflanzen: [Lage, id] (für die Vielfalt unter Nachbarn)
 var _placed_ids: Array = []
 ## Raschel-Pflanzen nach Gebiet (2 m): Zelle -> Array von [Lage, Halbmesser, Höhe]
@@ -303,6 +305,9 @@ func _pick(entries: Array, hint: String, rng: RandomNumberGenerator) -> Dictiona
 
 func _add_piece(entry: Dictionary, xform: Transform3D) -> void:
 	placed_count += 1
+	if entry.kind == "tree":
+		# Für den Herbst (AutumnLeaves): wo Bäume stehen und wie groß sie sind (Lage relativ zu Greenery)
+		trees.append({"position": xform.origin, "size": (entry.size as Vector3) * xform.basis.get_scale()})
 	if entry.kind in RUSTLE_KINDS:
 		var size: Vector3 = (entry.size as Vector3) * xform.basis.get_scale()
 		var cell := Vector2i(floori(xform.origin.x / RUSTLE_CELL), floori(xform.origin.z / RUSTLE_CELL))

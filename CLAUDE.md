@@ -1548,6 +1548,27 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Ereignisse kurz davor: `HitchLog.note(text)`, Dauer messen mit `HitchLog.begin()`/`end(start, "was")` – schon in Speichern,
   Musik/Geräusch laden, Wege im Laden, Passant losschicken, Detailstufen, Möbelfotos, Buchrücken-Atlas). Musik: das nächste Stück
   lädt im Hintergrund vor (`Audio._take_music`).
+- **Licht, Farbe, Herbst, Rückmeldung (große Überarbeitung, Plan `.scratch/ueberarbeitung/plan.md`):** **Farbabstimmung**
+  `CozyGrade` (3D-LUT nach dem Tonemapping: S-Kurve, Mitteltöne satter, Schatten Lavendel, Lichter Honig, weiche Tiefen; Werte
+  `grade_*`; main.gd `_setup_grade`), **Dunst** in der Ferne (Environment-Nebel, Farbe/Dichte je Tageszeit in DayCycle
+  `_update_haze`, drinnen fast keiner; `haze_*`), Staub im Laden für Lichtstrahlen (FogVolume `RoomHaze`, `room_haze_density`),
+  leichte **Tiefenunschärfe** in der Ferne (`dof_far_*`). Gehwegplatten etwas dunkler/wärmer (sidewalk.tres). **Jahreszeiten:**
+  Autoload `Season` (Einstellung „Spiel → Jahreszeit“: Sommer/Herbst, Standard Herbst; neue Jahreszeiten hinten an `NAMES` und
+  die Einstellung; `Season.autumn` 0–1 weich, Signal `changed`, globaler Shader-Wert `season_autumn`). Herbstlaub im Shader
+  (storybook.gdshaderinc `autumn_leaf`: nur grüne Blätter mit grain 5, oben kräftig, unten ein Hauch, nie in `season_inside_*` =
+  Laden). `AutumnLeaves` (unter Outside): fallende Blätter um die Kamera + unter Bäumen (`Greenery.trees`), Partikel-Shader
+  `autumn_leaf_fall.gdshader` (landen auf einem Höhenfeld aus Render-Ebene `AutumnLeaves.GROUND_LAYER` = 12: Boden, Häuser,
+  Treppe – nie Pflanzen/Passanten), Blatt-Shader `autumn_leaf.gdshader` (Umriss Ahorn/Eiche/Linde per Shader, schaukelt in der
+  Luft), Laub am Boden als MultiMesh (Rinne, Hauswände, vereinzelt, Laubteppich unter Bäumen; Strahl prüft, dass dort nichts
+  steht); Werte `autumn_*`. `AutumnDecor`: Kürbis-Gruppen an Hauswänden (Modelle `tools/blender/build_storybook_autumn.py` →
+  assets/models/props/autumn/, nie an Türen/Lieferplatz/Bänken, Kollision + StreetObstacle, `refresh_static_obstacles`). Startfassade
+  „alt, aber liebenswert“ (weathering: kleine Putzinseln, warm ausgeblichen, Moos unten). **Rückmeldung beim Gestalten**
+  `BuildFeedback`: Möbel plumpsen (Modell fällt kurz, staucht, federt; mit Daraufstehendem ohne Stauchen), Staubwölkchen,
+  goldene Funken bei Neuem, Aufheben „Plopp“, Streichen = neue Farbe breitet sich von der Pinselstelle aus (alter Belag kurz als
+  `material_overlay`, Shader surface_pattern `reveal_center/reveal_radius`) + Farbtropfen; Werte `feedback_*`. Volles Regalfach
+  funkelt + Glockenklang (`BookShelf._check_full_rows`, beim Laden still). Geld zählt weich (`money_count_time`), Anzeige hüpft,
+  Münzen bei Einnahmen außer „Ausleihe“ (`Wallet.last_reason`). Tablet-Knöpfe federn (`TabletSounds._spring`, `ui_*_scale`,
+  Markierung `NO_SPRING`). Geräusche: `tools/make_feedback_sounds.py` (furniture/place|pick|paint, ui/coins|sparkle).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

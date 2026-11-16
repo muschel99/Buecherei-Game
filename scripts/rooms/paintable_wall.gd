@@ -63,6 +63,11 @@ func paint_segment(index: int, surface: SurfaceData) -> void:
 
 
 ## Mitte eines Abschnitts auf halber Höhe (in Weltkoordinaten).
+## Die Flächen eines Abschnitts (z. B. für den Streich-Effekt, BuildFeedback).
+func get_segment_parts(index: int) -> Array:
+	return _segment_parts[index]
+
+
 func get_segment_center(index: int) -> Vector3:
 	return to_global(Vector3((index + 0.5) * _segment_width, height / 2.0, 0.0))
 

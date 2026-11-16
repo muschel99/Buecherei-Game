@@ -44,6 +44,10 @@ const SUN_FROM := Vector3(-7.0, 5.5, 8.0)
 @onready var _sun: DirectionalLight3D = $Sun
 var _time := 0.0
 var _paint := PaintFilterEffect.new()
+## Die kleine Welt liegt weit weg vom Ursprung (seit der großen Überarbeitung): dort ist im Spiel der Laden, in dem sich
+## im Herbst kein Laub färbt (season_inside) – so wird der Baum im Hauptmenü herbstlich wie draußen.
+const WORLD_OFFSET := Vector3(400.0, 0.0, 400.0)
+var _leaves: GPUParticles3D
 
 
 func _ready() -> void:
@@ -60,7 +64,8 @@ func _ready() -> void:
 		plant.scale = Vector3.ONE * float(entry[3])
 		plants.add_child(plant)
 	($Tree as Node3D).rotation_degrees.y = TREE_TURN
-	_sun.look_at_from_position(SUN_FROM, Vector3(0.0, 1.2, 0.0))
+	position = WORLD_OFFSET
+	_sun.look_at_from_position(SUN_FROM + WORLD_OFFSET, Vector3(0.0, 1.2, 0.0) + WORLD_OFFSET)
 	_camera.fov = GameConfig.title_camera_fov
 	_camera.global_transform = view(0.0)
 	_add_motes()
@@ -73,6 +78,46 @@ func _ready() -> void:
 	_paint.enabled = int(Settings.get_value("graphics/paint_style")) == 1
 	_environment.environment.ssao_enabled = bool(preset.get("ssao", true))
 	_sun.shadow_enabled = true
+	# Farbabstimmung wie im Spiel (CozyGrade)
+	if GameConfig.grade_enabled:
+		_environment.environment.adjustment_enabled = true
+		_environment.environment.adjustment_color_correction = CozyGrade.make_lut()
+	_add_falling_leaves()
+
+
+## Im Herbst segeln ab und zu Blätter aus der Krone und landen auf der Rasen-Insel (Höhenfeld nur aus Insel, Bank und
+## Steinen – Baum und Blumen kommen auf Render-Ebene 2, sonst landeten Blätter in der Krone).
+func _add_falling_leaves() -> void:
+	for node: Node in [$Tree, $Plants]:
+		_move_to_layer2(node)
+	_leaves = AutumnLeaves.make_falling(GameConfig.title_leaf_count, 16.0, Vector3(2.4, 1.2, 2.0),
+		Vector3(0.35, 0.0, 0.15), 0.42)
+	_leaves.name = "FallingLeaves"
+	_leaves.position = Vector3(-0.6, 5.4, 0.2)
+	_leaves.visibility_aabb = AABB(Vector3(-8, -12, -8), Vector3(16, 16, 16))
+	add_child(_leaves)
+	var ground := GPUParticlesCollisionHeightField3D.new()
+	ground.size = Vector3(12.0, 12.0, 12.0)
+	ground.position = Vector3(0.0, 3.0, 0.0)
+	ground.resolution = GPUParticlesCollisionHeightField3D.RESOLUTION_256
+	ground.update_mode = GPUParticlesCollisionHeightField3D.UPDATE_MODE_WHEN_MOVED
+	ground.heightfield_mask = 1
+	add_child(ground)
+	Season.changed.connect(_on_season_changed)
+	_on_season_changed(Season.current)
+
+
+func _on_season_changed(_season: String) -> void:
+	if _leaves:
+		_leaves.emitting = Season.is_autumn()
+		_leaves.visible = Season.is_autumn()
+
+
+func _move_to_layer2(node: Node) -> void:
+	if node is VisualInstance3D:
+		(node as VisualInstance3D).layers = 2
+	for child in node.get_children():
+		_move_to_layer2(child)
 
 
 func _process(delta: float) -> void:
@@ -82,8 +127,8 @@ func _process(delta: float) -> void:
 
 ## Blickpunkt der Kamera zur Zeit t: ganz sanftes Wiegen um GameConfig.title_camera_eye / _target.
 func view(t: float) -> Transform3D:
-	var eye := GameConfig.title_camera_eye + Vector3(sin(t * 0.21) * 0.12, sin(t * 0.33) * 0.05, 0.0)
-	var target := GameConfig.title_camera_target + Vector3(sin(t * 0.17) * 0.1, 0.0, cos(t * 0.13) * 0.06)
+	var eye := GameConfig.title_camera_eye + WORLD_OFFSET + Vector3(sin(t * 0.21) * 0.12, sin(t * 0.33) * 0.05, 0.0)
+	var target := GameConfig.title_camera_target + WORLD_OFFSET + Vector3(sin(t * 0.17) * 0.1, 0.0, cos(t * 0.13) * 0.06)
 	return Transform3D(Basis.looking_at(target - eye, Vector3.UP), eye)
 
 

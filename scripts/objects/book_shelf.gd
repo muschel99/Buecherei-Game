@@ -144,6 +144,7 @@ func _ready() -> void:
 		BookStock.carried_changed.connect(_on_carried_changed)
 		_create_row_surfaces()
 		_room = _find_room()
+		_check_full_rows.call_deferred()  # still merken, was schon voll ist
 		if _room:
 			# Deko aufgestellt, verschoben oder weggeräumt: Bereiche neu berechnen
 			_room.layout_changed.connect(_forget_blocked)
@@ -927,6 +928,7 @@ func get_contents_data() -> Dictionary:
 
 
 func load_contents_data(data: Dictionary) -> void:
+	_full_checked = false
 	# Genre je Fach – ältere Spielstände kennen nur ein Genre für das ganze Regal
 	var saved_rows = data.get("row_genres")
 	var saved_auto = data.get("row_auto")
@@ -980,6 +982,9 @@ func load_contents_data(data: Dictionary) -> void:
 	# andere freie Stelle – oder ins Lager
 	BookStock.store_books(add_books(overflow, false))
 	_update_prompt()
+	# volle Fächer still merken (beim Laden wird nicht gefeiert)
+	_full_checked = false
+	_check_full_rows()
 
 
 ## Das Regal wird weggeräumt (Taste X): Alle Bücher gehen zurück ins Lager.
@@ -1649,3 +1654,60 @@ func _changed() -> void:
 	contents_changed.emit()
 	if _is_live:
 		SaveManager.request_save()
+	_check_full_rows()
+
+
+# --- Fach voll (seit der großen Überarbeitung, „satisfying“): kurzes Funkeln entlang des Fachs und ein zarter Klang ---
+
+## Fächer, die gerade voll sind (Index -> true)
+var _full_rows := {}
+var _full_checked := false
+
+
+## Ein Fach ist voll, wenn nirgends mehr das dünnste Buch hineinpasst (und Bücher darin stehen).
+func _row_is_full(r: int) -> bool:
+	var has_books := false
+	for segment in _segments(r):
+		if not _books_in(r, segment).is_empty():
+			has_books = true
+	if not has_books:
+		return false
+	var thinnest := GameConfig.book_thickness_range.x + BOOK_GAP
+	for gap in _free_gaps(r):
+		if gap.y - gap.x >= thinnest:
+			return false
+	return true
+
+
+func _check_full_rows() -> void:
+	var newly: Array[int] = []
+	for r in _rows.size():
+		var full := _row_is_full(r)
+		if full and not _full_rows.has(r):
+			newly.append(r)
+		if full:
+			_full_rows[r] = true
+		else:
+			_full_rows.erase(r)
+	# Beim Laden und bei Vorschau/Foto nur merken, nicht feiern
+	if not _is_live or not _full_checked:
+		_full_checked = true
+		return
+	for i in newly.size():
+		_celebrate_row(newly[i], i * 0.25)
+
+
+func _celebrate_row(r: int, delay: float) -> void:
+	if delay > 0.0:
+		await get_tree().create_timer(delay).timeout
+	if not is_inside_tree() or r >= _rows.size():
+		return
+	var row := _rows[r]
+	var segments := _segments(r)
+	if segments.is_empty():
+		return
+	var x0 := segments[0].x
+	var x1 := segments[-1].y
+	var center := row.to_global(Vector3((x0 + x1) / 2.0, 0.14, 0.0))
+	BuildFeedback.row_sparkle(self, center, row.global_basis.x.normalized(), (x1 - x0) / 2.0)
+	Audio.play_at("ui/sparkle", center, GameConfig.shelf_full_volume_db, Audio.vary(0.04))
