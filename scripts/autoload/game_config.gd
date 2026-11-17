@@ -1515,7 +1515,7 @@ var loan_days: Vector2i = Vector2i(1, 3)
 ## Gespräche (seit Etappe 8): Tippgeschwindigkeit (Zeichen je Sekunde), Lautstärke des Tastaturklackerns, wie oft ein zweiter
 ## Satz zum Plaudern bzw. eine Frage mit Antworten kommt, wie schnell die Kamera der Figur folgt
 var talk_chars_per_second: float = 38.0
-var talk_clack_db: float = -18.0
+var talk_clack_db: float = -12.0
 ## Tippgeräusch (seit dem Nachtest von Etappe 8 aus der Aufnahme der Entwicklerin, ui/type_1 …): bei jedem n-ten Buchstaben
 ## ein Anschlag (größer = ruhiger)
 var talk_clack_every: int = 3
