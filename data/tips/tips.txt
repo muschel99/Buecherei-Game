@@ -106,7 +106,7 @@ Wo Deko steht, bleibt Platz frei – die Bücher rücken einfach daneben.
 == Der Gestaltungsmodus
 Mit <Tab> öffnest du den Gestaltungsmodus. Unten siehst du alles, was in deinem Inventar liegt.
 
-Mit <Y> und <X> wechselst du die Kategorie, mit <C> und <V> das Möbelstück. Ein <Linksklick> stellt es hin.
+Mit <Y> und <X> wechselst du die Kategorie, mit <C> und <V> (oder <Umschalt> + <Mausrad>) das Möbelstück. Ein <Linksklick> stellt es hin.
 
 == Aufnehmen und Drehen
 Schau ein Möbelstück an und nimm es mit einem <Rechtsklick> auf. Mit dem <Mausrad> drehst du es.

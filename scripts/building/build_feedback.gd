@@ -1,8 +1,10 @@
 class_name BuildFeedback
 extends RefCounted
 ## Rückmeldung beim Gestalten (seit der großen Überarbeitung, Wunsch: „mehr satisfying“). Alles kurz, weich und leise:
-## - Möbel abstellen: das Möbel plumpst sanft an seinen Platz (kurz fallen, leicht zusammendrücken, zurückfedern),
-##   ein Staubwölkchen am Boden, bei Neuem ein paar goldene Funken, Holz-„Tock“ (große Möbel tiefer)
+## - Möbel abstellen (seit dem Nachtest der Überarbeitung, Wunsch: schönere Bewegung, kein Leuchten): das Möbel schwebt
+##   herab und dreht sich dabei sanft in seine Lage, setzt weich auf (kurz gestaucht), ruckelt sich einmal zurecht (kleines,
+##   abklingendes Kippeln über die Unterkante) und kommt zur Ruhe; zartes Staubwölkchen, Holz-„Tock“ (große Möbel tiefer).
+##   Was darauf steht, macht dieselbe Bewegung mit. Wand-/Deckendinge schwingen sanft aus (wie ein Bild am Nagel).
 ## - Möbel aufheben: kleines „Plopp“ und ein Hauch Staub
 ## - Wand streichen: die neue Farbe breitet sich von der Pinselstelle aus (paint_wipe), Pinselstrich-Geräusch und ein
 ##   paar Farbtropfen in der neuen Farbe
@@ -11,11 +13,10 @@ extends RefCounted
 const PUFF_TEXTURE_SIZE := 64
 
 static var _puff_material: StandardMaterial3D
-static var _spark_material: StandardMaterial3D
 
 
-## Ein Möbel steht an seinem neuen Platz. dependents = was darauf steht (wandert mit, plumpst ohne Stauchen mit).
-static func furniture_placed(item: PlacedFurniture, dependents: Array, is_new: bool) -> void:
+## Ein Möbel steht an seinem neuen Platz. dependents = was darauf steht (macht die Bewegung mit).
+static func furniture_placed(item: PlacedFurniture, dependents: Array, _is_new: bool) -> void:
 	if item == null or not item.is_inside_tree():
 		return
 	var size := _size_of(item)
@@ -28,13 +29,17 @@ static func furniture_placed(item: PlacedFurniture, dependents: Array, is_new: b
 	var pieces: Array = [item]
 	pieces.append_array(dependents)
 	if hanging:
-		_pop(item)
+		_animate(item, pieces, GameConfig.feedback_swing_time, _swing_motion.bind(
+			item.data.allows(FurnitureData.PLACE_CEILING), randf() < 0.5))
 	else:
-		for piece: PlacedFurniture in pieces:
-			_plop(piece, piece == item and dependents.is_empty())
-		_puff(item, item.global_position + Vector3.UP * 0.02, maxf(0.2, size * 0.55), 10 + int(size * 10.0))
-	if is_new:
-		_sparks(item, item.global_position + Vector3.UP * (0.15 if hanging else maxf(0.25, size * 0.5)), maxf(0.25, size * 0.5))
+		var axis := Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0)).normalized()
+		var turn := deg_to_rad(GameConfig.feedback_turn) * (1.0 if randf() < 0.5 else -1.0)
+		_animate(item, pieces, GameConfig.feedback_settle_time, _settle_motion.bind(axis, size * 0.5, turn))
+		# Staub erst beim Aufsetzen
+		var delay := GameConfig.feedback_settle_time * SETTLE_CONTACT
+		item.get_tree().create_timer(delay).timeout.connect(func() -> void:
+			if is_instance_valid(item):
+				_puff(item, item.global_position + Vector3.UP * 0.02, maxf(0.2, size * 0.55), 8 + int(size * 8.0)))
 
 
 ## Ein Möbel wurde aufgehoben (ist jetzt „in der Hand“).
@@ -83,39 +88,71 @@ static func paint_wipe(parts: Array, old_material: Material, point: Vector3, who
 
 # --- Bewegungen ---
 
-## Plumpsen: kurz von etwas weiter oben fallen, beim Aufsetzen leicht stauchen, zurückfedern (nur das Modell).
-static func _plop(item: PlacedFurniture, squash: bool) -> void:
-	var model := item.get_model()
-	if model == null:
-		return
-	var rest := model.transform
-	var drop := GameConfig.feedback_drop_height
-	model.transform = Transform3D(rest.basis, rest.origin + Vector3.UP * drop)
-	var tween := model.create_tween()
-	tween.tween_property(model, "position:y", rest.origin.y, 0.13).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	if squash:
-		var s := GameConfig.feedback_squash
-		tween.tween_property(model, "scale", rest.basis.get_scale() * Vector3(1.0 + s, 1.0 - s * 1.4, 1.0 + s), 0.06) \
-			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_property(model, "scale", rest.basis.get_scale(), 0.32).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(func() -> void:
-		if is_instance_valid(model):
-			model.transform = rest)
+## Anteil der Zeit bis zum Aufsetzen (danach Stauchen und Kippeln).
+const SETTLE_CONTACT := 0.38
 
 
-## Aufploppen (Wand- und Deckendinge): kurz kleiner, dann federnd auf volle Größe.
-static func _pop(item: PlacedFurniture) -> void:
-	var model := item.get_model()
-	if model == null:
+## Spielt eine Bewegung „motion(t) → Transform3D im Raum des Hauptmöbels“ (t von 0 bis 1) auf den Modellen aller Teile ab
+## (Kollision und Lage bleiben wie sie sind – nur das Bild bewegt sich), am Ende genau zurück auf die Ruhelage.
+static func _animate(item: PlacedFurniture, pieces: Array, time: float, motion: Callable) -> void:
+	var rests := {}   # Modell -> Ruhelage (lokal)
+	var rel := {}     # Modell -> Lage seines Möbels relativ zum Hauptmöbel
+	var inverse := item.global_transform.affine_inverse()
+	for piece: PlacedFurniture in pieces:
+		if not is_instance_valid(piece):
+			continue
+		var model := piece.get_model()
+		if model == null:
+			continue
+		rests[model] = model.transform
+		rel[model] = inverse * piece.global_transform
+	if rests.is_empty():
 		return
-	var rest := model.transform
-	var scale := rest.basis.get_scale()
-	model.scale = scale * 0.82
-	var tween := model.create_tween()
-	tween.tween_property(model, "scale", scale, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var apply := func(t: float) -> void:
+		var m: Transform3D = motion.call(t)
+		for model: Node3D in rests:
+			if is_instance_valid(model):
+				var r: Transform3D = rel[model]
+				model.transform = r.affine_inverse() * m * r * (rests[model] as Transform3D)
+	apply.call(0.0)
+	var tween := item.create_tween()
+	tween.tween_method(apply, 0.0, 1.0, time)
 	tween.tween_callback(func() -> void:
-		if is_instance_valid(model):
-			model.transform = rest)
+		for model: Node3D in rests:
+			if is_instance_valid(model):
+				model.transform = rests[model])
+
+
+## Stehende Möbel: schweben herab und drehen sich dabei in ihre Lage, setzen auf (kurz gestaucht), kippeln einmal abklingend
+## über die Unterkante und stehen still. axis = Kipp-Achse (waagerecht), half = halbe Breite, turn = Drehung am Anfang.
+static func _settle_motion(t: float, axis: Vector3, half: float, turn: float) -> Transform3D:
+	var h := GameConfig.feedback_drop_height
+	var y := 0.0
+	var yaw := 0.0
+	var tilt := 0.0
+	var squash := 0.0
+	if t < SETTLE_CONTACT:
+		var u := t / SETTLE_CONTACT
+		y = h * (1.0 - u * u)                    # immer schneller hinunter, wie fallen
+		yaw = turn * pow(1.0 - u, 2.0)            # dreht sich dabei sanft in die Lage
+	else:
+		var u := (t - SETTLE_CONTACT) / (1.0 - SETTLE_CONTACT)
+		tilt = deg_to_rad(GameConfig.feedback_tilt) * exp(-4.5 * u) * sin(u * TAU * 1.5)
+		squash = GameConfig.feedback_squash * exp(-7.0 * u) * cos(u * TAU * 2.0)
+		y = half * sin(absf(tilt))                # über die Unterkante kippeln (nie in den Boden)
+	var basis := Basis(Vector3.UP, yaw) * Basis(axis, tilt)
+	basis = basis * Basis.from_scale(Vector3(1.0 + squash * 0.5, 1.0 - squash, 1.0 + squash * 0.5))
+	return Transform3D(basis, Vector3.UP * y)
+
+
+## Wand-/Deckendinge: kurz kleiner, federn auf volle Größe und schwingen sanft aus (Bild am Nagel: um die Achse von der Wand weg;
+## Deckenlampe: wie ein Pendel um den Aufhängepunkt).
+static func _swing_motion(t: float, ceiling: bool, left: bool) -> Transform3D:
+	var grow := minf(1.0, t / 0.35)
+	var scale := lerpf(0.86, 1.0, 1.0 - pow(1.0 - grow, 3.0)) + 0.05 * sin(grow * PI) * (1.0 - grow)
+	var swing := deg_to_rad(GameConfig.feedback_swing) * exp(-4.0 * t) * sin(t * TAU * 2.2) * (1.0 if left else -1.0)
+	var basis := Basis(Vector3.RIGHT if ceiling else Vector3.BACK, swing) * Basis.from_scale(Vector3.ONE * scale)
+	return Transform3D(basis, Vector3.ZERO)
 
 
 # --- Teilchen ---
@@ -145,54 +182,6 @@ static func _puff(parent: Node3D, at: Vector3, radius: float, count: int) -> voi
 	p.scale_amount_curve = _curve([Vector2(0, 0.5), Vector2(0.3, 1.0), Vector2(1, 1.25)])
 	p.color_ramp = _ramp([Color(1.0, 0.96, 0.88, 0.0), Color(1.0, 0.95, 0.86, 0.55), Color(1.0, 0.94, 0.84, 0.0)], [0.0, 0.15, 1.0])
 	p.mesh = _quad(_puff_mat())
-	p.emitting = true
-
-
-## Goldene Funken: ein paar kleine Lichtpunkte steigen auf und funkeln (nur bei Neuem).
-static func _sparks(parent: Node3D, at: Vector3, radius: float) -> void:
-	if parent == null or not parent.is_inside_tree():
-		return
-	var p := _one_shot(parent, at, 9, 1.1)
-	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	p.emission_sphere_radius = radius
-	p.direction = Vector3.UP
-	p.spread = 35.0
-	p.initial_velocity_min = 0.15
-	p.initial_velocity_max = 0.4
-	p.gravity = Vector3(0, 0.05, 0)
-	p.damping_min = 0.6
-	p.damping_max = 1.0
-	p.scale_amount_min = 0.025
-	p.scale_amount_max = 0.05
-	p.scale_amount_curve = _curve([Vector2(0, 0.0), Vector2(0.2, 1.0), Vector2(0.6, 0.7), Vector2(1, 0.0)])
-	p.color_ramp = _ramp([Color(1.0, 0.86, 0.5, 1.0), Color(1.0, 0.95, 0.8, 1.0), Color(1.0, 0.8, 0.45, 0.0)], [0.0, 0.5, 1.0])
-	p.mesh = _quad(_spark_mat())
-	p.emitting = true
-
-
-## Ein Regalfach ist voll: kleine goldene Funken steigen entlang des ganzen Fachs auf (along = Richtung des Bretts).
-static func row_sparkle(parent: Node3D, center: Vector3, along: Vector3, half_length: float) -> void:
-	if not GameConfig.feedback_animations or parent == null or not parent.is_inside_tree():
-		return
-	var p := _one_shot(parent, center, 10 + int(half_length * 16.0), 1.2)
-	p.explosiveness = 0.55
-	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_POINTS
-	var points := PackedVector3Array()
-	for k in 24:
-		points.append(along * lerpf(-half_length, half_length, k / 23.0))
-	p.emission_points = points
-	p.direction = Vector3.UP
-	p.spread = 25.0
-	p.initial_velocity_min = 0.08
-	p.initial_velocity_max = 0.22
-	p.gravity = Vector3(0, 0.04, 0)
-	p.damping_min = 0.4
-	p.damping_max = 0.8
-	p.scale_amount_min = 0.02
-	p.scale_amount_max = 0.04
-	p.scale_amount_curve = _curve([Vector2(0, 0.0), Vector2(0.2, 1.0), Vector2(0.65, 0.7), Vector2(1, 0.0)])
-	p.color_ramp = _ramp([Color(1.0, 0.86, 0.5, 1.0), Color(1.0, 0.96, 0.82, 1.0), Color(1.0, 0.82, 0.5, 0.0)], [0.0, 0.5, 1.0])
-	p.mesh = _quad(_spark_mat())
 	p.emitting = true
 
 
@@ -255,18 +244,6 @@ static func _puff_mat() -> StandardMaterial3D:
 		_puff_material.proximity_fade_enabled = true
 		_puff_material.proximity_fade_distance = 0.08
 	return _puff_material
-
-
-static func _spark_mat() -> StandardMaterial3D:
-	if _spark_material == null:
-		_spark_material = StandardMaterial3D.new()
-		_spark_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		_spark_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		_spark_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-		_spark_material.vertex_color_use_as_albedo = true
-		_spark_material.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
-		_spark_material.albedo_texture = _dot_texture()
-	return _spark_material
 
 
 static func _dot_texture() -> Texture2D:

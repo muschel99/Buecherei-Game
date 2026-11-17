@@ -1974,6 +1974,12 @@ Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitun
   Körperformen geprüft (Gehen, Sitzen, Arme, Gelenke)
 - [x] **Welt passt zu den Figuren:** Sitzhöhe jetzt 30 cm (vorher 25) – Parkbänke, Gartenbank, Bank und Stuhl vor der
   Bücherei, Pub-Stühle und -Bänke angehoben, Pub-Tische 5 cm höher; Möbel im Laden, Tische und Theke passten schon
+- [x] **Nachtest (Liste der Entwicklerin, 17.11.2026):** längere Hälse; kein Leuchten mehr beim vollen Regalfach, dafür schönere
+  Bewegungen beim Ablegen (Möbel schweben herab, setzen weich auf und ruckeln sich zurecht; Bücher kippen beim Einräumen leicht und
+  stellen sich gerade, frei abgelegt fallen sie kurz und legen sich flach); Gestaltungsmodus: Umschalt + Mausrad wählt Möbel; Theke
+  50 cm weiter vorn; erster Tag im Tutorial bleibt hell, bis „Schlafen gehen“ dran ist; keine Hervorhebung von Möbeln beim
+  Umschauen; Bedienen: „E Bedienen“ am Gast, Kamera schwenkt vom Gesicht hinunter, Gast lächelt nur, Korb fehlt nicht mehr, kein Gast
+  geht mehr mit Korb und Büchern hinaus, ganzer Bücherstapel anklickbar
 - [ ] Nächste Ideen: Innenraum gemütlicher (Startzustand), weitere Jahreszeiten (Winter, Frühling), Wetter
 
 ## Etappe 9 – Café

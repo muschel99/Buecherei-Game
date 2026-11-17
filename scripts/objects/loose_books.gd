@@ -316,7 +316,8 @@ func place_active_book(_interactor: Node = null) -> bool:
 	var plan := _plan
 	_set_plan({})
 	var book := BookStock.take_active()
-	place(book, plan.transform, plan.support_uid, plan.pose)
+	var entry := place(book, plan.transform, plan.support_uid, plan.pose)
+	_start_drop(entry)
 	Audio.play_at("books/place", global_transform * plan.transform.origin, 0.0, Audio.vary(0.07))
 	turn_degrees = 0.0  # das nächste Buch beginnt wieder gerade
 	return true
@@ -1157,10 +1158,63 @@ func _set_plan(plan: Dictionary) -> void:
 	_ghost.visible = true
 
 
+# --- Ablegen mit Bewegung (seit dem Nachtest der Überarbeitung, Wunsch: schönere Animation beim Platzieren) ---
+# Das Buch fällt aus wenigen Zentimetern herab (leicht schräg und gedreht), hüpft ganz kurz und legt sich flach – nur im Bild,
+# die gespeicherte Lage stimmt sofort.
+
+## Buch → {start, tilt_axis, tilt, turn}
+var _drops := {}
+var _drop_clock := 0.0
+
+
+func _start_drop(entry: LooseBook) -> void:
+	if entry == null or not GameConfig.feedback_animations:
+		return
+	var axis := Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0)).normalized()
+	_drops[entry] = {"start": _drop_clock, "axis": axis, "tilt": deg_to_rad(GameConfig.book_drop_tilt),
+		"turn": deg_to_rad(GameConfig.book_drop_turn) * (1.0 if randf() < 0.5 else -1.0)}
+	set_process(true)
+
+
+## Lage eines Buchs mitten in der Bewegung (Raum dieses Knotens).
+func _drop_transform(entry: LooseBook) -> Transform3D:
+	var t := entry.transform
+	var drop: Dictionary = _drops[entry]
+	var time := GameConfig.book_drop_time
+	var p := clampf((_drop_clock - float(drop.start)) / time, 0.0, 1.0)
+	var fall := 0.45  # Anteil bis zum Aufsetzen
+	var lift := 0.0
+	var tilt := 0.0
+	var turn := 0.0
+	if p < fall:
+		var u := p / fall
+		lift = GameConfig.book_drop_height * (1.0 - u * u)
+		tilt = float(drop.tilt) * (1.0 - u * 0.4)
+		turn = float(drop.turn) * pow(1.0 - u, 2.0)
+	else:
+		var u := (p - fall) / (1.0 - fall)
+		lift = 0.006 * sin(u * PI) * (1.0 - u)                    # ein ganz kleiner Hüpfer
+		tilt = float(drop.tilt) * 0.6 * exp(-5.0 * u) * cos(u * TAU)  # legt sich flach, wippt kurz nach
+	var center := t.origin
+	t.basis = Basis(Vector3.UP, turn) * Basis(drop.axis as Vector3, tilt) * t.basis
+	t.origin = center + Vector3.UP * lift
+	return t
+
+
 func _process(delta: float) -> void:
+	if not _drops.is_empty():
+		_drop_clock += delta
+		var done: Array = []
+		for entry: LooseBook in _drops:
+			if not _entries.has(entry) or _drop_clock - float((_drops[entry] as Dictionary).start) >= GameConfig.book_drop_time:
+				done.append(entry)
+		for entry: LooseBook in done:
+			_drops.erase(entry)
+		_refresh()
 	# Vorschau schüttelt sich kurz (Klick an einer Stelle, wo es nicht geht)
 	if _ghost_shake < 0.0:
-		set_process(false)
+		if _drops.is_empty():
+			set_process(false)
 		return
 	_ghost_shake += delta
 	var fade := clampf(1.0 - _ghost_shake / 0.35, 0.0, 1.0)
@@ -1189,6 +1243,8 @@ func _refresh() -> void:
 	for i in _entries.size():
 		var entry := _entries[i]
 		var t := entry.transform
+		if _drops.has(entry):
+			t = _drop_transform(entry)
 		if entry.hidden:
 			t = Transform3D(Basis.from_scale(Vector3.ZERO), t.origin)
 		_multimesh.set_instance_transform(i, t)

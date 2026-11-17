@@ -144,7 +144,6 @@ func _ready() -> void:
 		BookStock.carried_changed.connect(_on_carried_changed)
 		_create_row_surfaces()
 		_room = _find_room()
-		_check_full_rows.call_deferred()  # still merken, was schon voll ist
 		if _room:
 			# Deko aufgestellt, verschoben oder weggeräumt: Bereiche neu berechnen
 			_room.layout_changed.connect(_forget_blocked)
@@ -393,7 +392,8 @@ func _slide_in(book: Book, delay: float) -> void:
 	var start: Transform3D = _targets[book]
 	start.basis = start.basis * Basis.from_scale(Vector3.ONE * 0.7)
 	start.origin += Vector3(0.0, 0.03, SLIDE_DISTANCE)
-	_anims[book] = {"from": start, "start": _clock + delay, "time": GameConfig.book_slide_time, "appear": true}
+	_anims[book] = {"from": start, "start": _clock + delay, "time": GameConfig.book_slide_time, "appear": true,
+		"tilt": randf_range(-1.0, 1.0) * deg_to_rad(GameConfig.book_place_tilt) * 0.7}
 
 
 ## Nimmt Bücher aus dem Regal: Sie gleiten heraus, die übrigen bleiben stehen, wo sie sind.
@@ -895,7 +895,8 @@ func place_active_book() -> bool:
 		_x[other] = moves[other]
 		_layout_book(other, true)
 	_put(book, row, left)
-	_anims[book] = {"from": start, "start": _clock, "time": MOVE_TIME * 1.3, "appear": false}
+	_anims[book] = {"from": start, "start": _clock, "time": MOVE_TIME * 1.8, "appear": false,
+		"tilt": deg_to_rad(GameConfig.book_place_tilt) * (1.0 if randf() < 0.5 else -1.0)}
 	_refresh_instances()
 	_changed()
 	return true
@@ -928,7 +929,6 @@ func get_contents_data() -> Dictionary:
 
 
 func load_contents_data(data: Dictionary) -> void:
-	_full_checked = false
 	# Genre je Fach – ältere Spielstände kennen nur ein Genre für das ganze Regal
 	var saved_rows = data.get("row_genres")
 	var saved_auto = data.get("row_auto")
@@ -983,8 +983,6 @@ func load_contents_data(data: Dictionary) -> void:
 	BookStock.store_books(add_books(overflow, false))
 	_update_prompt()
 	# volle Fächer still merken (beim Laden wird nicht gefeiert)
-	_full_checked = false
-	_check_full_rows()
 
 
 ## Das Regal wird weggeräumt (Taste X): Alle Bücher gehen zurück ins Lager.
@@ -1505,8 +1503,18 @@ func _current_transform(book: Book) -> Transform3D:
 		# Noch nicht dran: unsichtbar (Größe 0) bzw. noch am alten Platz
 		return Transform3D(Basis.from_scale(Vector3.ZERO), target.origin) if anim.appear else anim.from
 	var progress := clampf((_clock - anim.start) / anim.time, 0.0, 1.0)
-	var eased := 1.0 - pow(1.0 - progress, 3.0)
-	return (anim.from as Transform3D).interpolate_with(target, eased)
+	# Weich mit einem kleinen Schubs über das Ziel hinaus und zurück (seit dem Nachtest der Überarbeitung: „schönere Animation“)
+	var c1 := 0.9
+	var eased := 1.0 + (c1 + 1.0) * pow(progress - 1.0, 3.0) + c1 * pow(progress - 1.0, 2.0)
+	var result := (anim.from as Transform3D).interpolate_with(target, eased)
+	var tilt: float = anim.get("tilt", 0.0)
+	if tilt != 0.0:
+		# kippt beim Hineingleiten leicht zur Seite und stellt sich mit kleinem Nachwippen gerade (Drehung um die Tiefe des Regals)
+		var wobble := tilt * pow(1.0 - progress, 1.6) * cos(progress * PI * 1.6)
+		var center := result.origin
+		result.basis = Basis(Vector3.BACK, wobble) * result.basis
+		result.origin = center
+	return result
 
 
 ## Überträgt alle Bücher ins MultiMesh (Anzahl, Lage, Farbe, Buchrücken).
@@ -1654,60 +1662,5 @@ func _changed() -> void:
 	contents_changed.emit()
 	if _is_live:
 		SaveManager.request_save()
-	_check_full_rows()
 
 
-# --- Fach voll (seit der großen Überarbeitung, „satisfying“): kurzes Funkeln entlang des Fachs und ein zarter Klang ---
-
-## Fächer, die gerade voll sind (Index -> true)
-var _full_rows := {}
-var _full_checked := false
-
-
-## Ein Fach ist voll, wenn nirgends mehr das dünnste Buch hineinpasst (und Bücher darin stehen).
-func _row_is_full(r: int) -> bool:
-	var has_books := false
-	for segment in _segments(r):
-		if not _books_in(r, segment).is_empty():
-			has_books = true
-	if not has_books:
-		return false
-	var thinnest := GameConfig.book_thickness_range.x + BOOK_GAP
-	for gap in _free_gaps(r):
-		if gap.y - gap.x >= thinnest:
-			return false
-	return true
-
-
-func _check_full_rows() -> void:
-	var newly: Array[int] = []
-	for r in _rows.size():
-		var full := _row_is_full(r)
-		if full and not _full_rows.has(r):
-			newly.append(r)
-		if full:
-			_full_rows[r] = true
-		else:
-			_full_rows.erase(r)
-	# Beim Laden und bei Vorschau/Foto nur merken, nicht feiern
-	if not _is_live or not _full_checked:
-		_full_checked = true
-		return
-	for i in newly.size():
-		_celebrate_row(newly[i], i * 0.25)
-
-
-func _celebrate_row(r: int, delay: float) -> void:
-	if delay > 0.0:
-		await get_tree().create_timer(delay).timeout
-	if not is_inside_tree() or r >= _rows.size():
-		return
-	var row := _rows[r]
-	var segments := _segments(r)
-	if segments.is_empty():
-		return
-	var x0 := segments[0].x
-	var x1 := segments[-1].y
-	var center := row.to_global(Vector3((x0 + x1) / 2.0, 0.14, 0.0))
-	BuildFeedback.row_sparkle(self, center, row.global_basis.x.normalized(), (x1 - x0) / 2.0)
-	Audio.play_at("ui/sparkle", center, GameConfig.shelf_full_volume_db, Audio.vary(0.04))

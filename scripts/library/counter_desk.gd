@@ -114,7 +114,7 @@ func open(guest: Passerby) -> void:
 	_look_at_guest_then_desk()
 
 
-## Kamera: Ist der Gast neu an der Reihe, erst zu ihm hoch (er grüßt), dann weich hinunter auf die Theke – sonst gleich
+## Kamera: Ist der Gast neu an der Reihe, erst zu ihm hoch (er lächelt), dann weich hinunter auf die Theke – sonst gleich
 ## auf die Theke (z. B. nach Esc und wieder „Bedienen“ beim selben Gast).
 func _look_at_guest_then_desk() -> void:
 	if _cam_tween and _cam_tween.is_valid():
@@ -125,10 +125,12 @@ func _look_at_guest_then_desk() -> void:
 	if walker and not bool(progress.get("greeted", false)):
 		progress["greeted"] = true
 		_greeting = true
+		# Der Gast lächelt gleich, während die Kamera auf seinem Gesicht ankommt (beim Öffnen schaut die Spielfigur ihn ohnehin
+		# schon an), dann schwenkt sie weich hinunter auf die Theke
 		var turn := GameConfig.desk_greet_turn_time
+		_greet_guest()
 		_cam_tween.tween_property(_camera, "global_transform", _guest_view_transform(), turn)
 		_cam_tween.tween_property(_camera, "fov", _guest_view_fov(), turn)
-		_cam_tween.chain().tween_callback(_greet_guest)
 		_cam_tween.chain().tween_interval(GameConfig.desk_greet_hold_time)
 		_cam_tween.chain().tween_callback(func() -> void: _greeting = false)
 		_cam_tween.chain().tween_property(_camera, "global_transform", _view_transform(), GameConfig.desk_camera_time)
@@ -153,7 +155,7 @@ func _guest_view_fov() -> float:
 
 func _greet_guest() -> void:
 	if walker and is_instance_valid(walker):
-		walker.greet_player(randf() < GameConfig.desk_greet_wave_chance)
+		walker.smile_at_player()  # nur lächeln (Wunsch der Entwicklerin: kein Nicken, kein Winken)
 
 
 ## Die kleine Anleitung „So bedienst du“ (bei den ersten Bedienungen).
@@ -417,9 +419,12 @@ func _hand_over_bag() -> void:
 			tablet.screen.show_done())
 	var basket := visits.counter_basket()
 	if basket:
+		# Der Korb gehört ab jetzt der Theken-Ansicht: kommt schon der nächste Gast, stellt er seinen eigenen Korb hin, ohne dass
+		# das Ende dieser Bewegung ihn wieder wegräumt (Fehler aus dem Nachtest: kein Korb, Ausweis allein auf der Theke)
+		visits.release_counter_basket()
 		var out := counter.global_transform * (BASKET_OUT + Vector3(0.0, Counter.TOP_HEIGHT, 0.0))
 		_tween.tween_property(basket, "global_position", out, GameConfig.desk_basket_time).set_ease(Tween.EASE_IN)
-		_tween.tween_callback(visits.clear_counter_basket)
+		_tween.tween_callback(basket.queue_free)
 	_tween.tween_interval(0.6)
 	_tween.tween_callback(_next_guest)
 
@@ -501,6 +506,17 @@ func _update_hover() -> void:
 			if d < best_d:
 				best_d = d
 				best = node
+		# Bücher (seit dem Nachtest der Überarbeitung, „Hitbox Bücher“): der ganze Stapel ist anklickbar – egal, auf welches
+		# Buch man zeigt, gescannt wird das oberste; dazu großzügig die ganze Fläche jedes Buchs auf dem Bildschirm
+		if best == null and _step == Step.SCAN:
+			var top := _top_book()
+			for entry in _books:
+				if entry.scanned:
+					continue
+				var rect := _screen_rect(entry.node as MeshInstance3D).grow(GameConfig.desk_pick_margin * radius / GameConfig.desk_pick_radius)
+				if rect.has_point(mouse):
+					best = top
+					break
 	for node in _all_props():
 		var on := node == best
 		var lift: Vector3 = node.get_meta("lift", Vector3.ZERO)
@@ -511,6 +527,25 @@ func _update_hover() -> void:
 	if best != _hover:
 		_hover = best
 		Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if best else Input.CURSOR_ARROW)
+
+
+## Rechteck, das ein Buch (Würfel der Größe 1, skaliert) auf dem Bildschirm bedeckt.
+func _screen_rect(node: MeshInstance3D) -> Rect2:
+	var rect := Rect2()
+	var first := true
+	for x in [-0.5, 0.5]:
+		for y in [-0.5, 0.5]:
+			for z in [-0.5, 0.5]:
+				var corner := node.global_transform * Vector3(x, y, z)
+				if _camera.is_position_behind(corner):
+					continue
+				var p := _camera.unproject_position(corner)
+				if first:
+					rect = Rect2(p, Vector2.ZERO)
+					first = false
+				else:
+					rect = rect.expand(p)
+	return rect
 
 
 func _all_props() -> Array[Node3D]:

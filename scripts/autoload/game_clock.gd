@@ -40,7 +40,16 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not running:
 		return
-	advance(delta * MINUTES_PER_DAY / (day_length_minutes() * 60.0))
+	var minutes := delta * MINUTES_PER_DAY / (day_length_minutes() * 60.0)
+	# Tutorial (seit dem Nachtest der Überarbeitung): Der erste Tag bleibt hell, bis „Schlafen gehen“ auf dem Zettel steht –
+	# sonst dreht man das Schild nachts um und niemand kommt. Die Uhr bleibt dann am Nachmittag stehen.
+	if Tutorial.holds_day():
+		var cap := GameConfig.tutorial_day_hold_hour * 60.0
+		if _minute < cap:
+			minutes = minf(minutes, cap - _minute)
+			if minutes <= 0.0001:
+				return
+	advance(minutes)
 
 
 ## Dauer eines Spieltags in Minuten echter Zeit (Einstellung „Tageslänge“).

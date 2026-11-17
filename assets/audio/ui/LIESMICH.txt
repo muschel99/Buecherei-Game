@@ -9,5 +9,5 @@ Aufbereitet aus „Game design/Sounds Cozy Bücherei“ mit tools/prepare_sounds
 - tab – Reiter und Kategorien wechseln
 
 Vorhanden: plop_1.ogg, plop_2.ogg, tab.ogg, tablet_open.ogg
-- coins – Münzen klimpern bei Einnahmen (außer an der Theke, dort klingt das Kaching), sparkle – Regalfach voll
-  (drei zarte Glockentöne): seit der großen Überarbeitung, erzeugt mit tools/make_feedback_sounds.py.
+- coins – Münzen klimpern bei Einnahmen (außer an der Theke, dort klingt das Kaching): seit der großen Überarbeitung,
+  erzeugt mit tools/make_feedback_sounds.py.

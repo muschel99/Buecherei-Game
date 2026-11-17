@@ -216,6 +216,10 @@ func _add_talk_interactable() -> void:
 	_talk_interactable.add_child(shape)
 	add_child(_talk_interactable)
 	_talk_interactable.interacted.connect(func(who: Node) -> void:
+		# Gast vorn an der Theke, Spielfigur dahinter: E = Bedienen (seit dem Nachtest der Überarbeitung am Gast, nicht an der Theke)
+		if life and life.library and life.library.can_serve(self):
+			life.library.serve(self)
+			return
 		if who is Node3D:
 			# Gäste in der Bücherei mit Wunsch erzählen davon (LibraryVisits.wish_steps), sonst das übliche Gespräch
 			var steps: Array = life.library.wish_steps(self) if life and life.library else []
@@ -479,7 +483,10 @@ func step(delta: float) -> void:
 	_talk_check -= delta
 	if _talk_check <= 0.0 and _talk_interactable:
 		_talk_check = 0.25
-		_talk_interactable.prompt_text = "Reden" if can_talk() else ""
+		if life and life.library and life.library.can_serve(self):
+			_talk_interactable.prompt_text = "Bedienen"
+		else:
+			_talk_interactable.prompt_text = "Reden" if can_talk() else ""
 		_talk_interactable.handles_placing = in_library and life != null and life.library != null \
 			and life.library.wants_book_from_player(self)
 		# unten neben der linken Maustaste „Geben“ (seit dem Wunsch nach Etappe 8b: wie man dem Gast das Buch überreicht)
@@ -1207,6 +1214,12 @@ func _set_road_scan(on: bool) -> void:
 func greet_player(wave: bool) -> void:
 	if _model and _model.has_method("greet_now"):
 		_model.call("greet_now", wave)
+
+
+## Nur freundlich lächeln (an der Theke, seit dem Nachtest der Überarbeitung: kein Nicken, kein Winken).
+func smile_at_player() -> void:
+	if _model and _model.has_method("trigger_face"):
+		_model.call("trigger_face", &"greet")
 
 
 func _attend(node: Node3D) -> void:

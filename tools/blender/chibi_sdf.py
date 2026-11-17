@@ -31,7 +31,7 @@ HEIGHTS = {
 }
 SHAPES = ("thin", "medium", "fat")
 EAR_TURN = 40.0   # Ohren um so viel Grad nach vorn gedreht
-HEAD_DROP = 0.018  # Kopf so viel tiefer gesetzt (kürzerer Hals)
+HEAD_DROP = -0.014  # Kopf so viel tiefer gesetzt (negativ = höher: seit dem Nachtest der Überarbeitung längerer Hals, vorher 0.018)
 NOSE_Z = 0.112    # Nasenspitze über dem Kinn (an der Unterkante der Augen, wie im Manga-Chibi-Stil)
 NOSE_R = (0.0105, 0.0072, 0.0085)  # kleine, flache Knopfnase (Halbmaße; nur ein Punkt im Gesicht)
 # Ohren auf Augenhöhe (Mitte der Augen 0,146 m über dem Kinn): Oberkante etwa an der Oberkante der

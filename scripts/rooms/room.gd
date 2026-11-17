@@ -281,6 +281,36 @@ func _migrate_tablet_spot() -> void:
 				move_furniture(item, support.global_transform * (spot.transform as Transform3D), support)
 
 
+## Theke 50 cm weiter vorn (seit dem Nachtest der Überarbeitung: dahinter war kaum Platz). Ältere Spielstände: steht sie noch
+## genau am alten Platz und ist vorn frei, rückt sie samt allem, was darauf steht oder liegt, an den neuen.
+const OLD_COUNTER_SPOT := Vector3(1.7, 0.0, 2.7)
+
+
+func _migrate_counter_spot() -> void:
+	var spot := essential_spot("counter_register")
+	var counter := _find_placed("counter_register")
+	if spot.is_empty() or counter == null:
+		return
+	var target: Transform3D = spot.transform
+	if counter.global_position.distance_to(to_global(OLD_COUNTER_SPOT)) > 0.03 \
+			or counter.global_basis.z.distance_to(target.basis.z) > 0.05:
+		return
+	# Ist am neuen Platz etwas anderes im Weg (z. B. ein Regal)? Dann bleibt sie, wo sie ist.
+	var shape := BoxShape3D.new()
+	var size := counter.data.get_footprint_size()
+	shape.size = Vector3(size.x - 0.06, 0.8, size.y - 0.06)
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(target.basis.orthonormalized(), target.origin + Vector3.UP * 0.45)
+	query.collision_mask = FurnitureUtils.FURNITURE_LAYER_BIT
+	var skip := [counter] + get_dependents(counter)
+	for hit in get_world_3d().direct_space_state.intersect_shape(query, 8):
+		var item := FurnitureUtils.find_placed_furniture(hit.collider as Node)
+		if item and not skip.has(item):
+			return
+	move_furniture(counter, target, null)
+
+
 ## Platz eines unverzichtbaren Möbelstücks aus der Szene ({support_id, transform}; leer = keiner).
 func essential_spot(id: String) -> Dictionary:
 	return _essential_spots.get(id, {})
@@ -525,6 +555,7 @@ func load_save_data(save_data: Dictionary) -> void:
 		Inventory.add_surface(id)
 	_settle_on_supports()
 	_migrate_tablet_spot()
+	_migrate_counter_spot()
 	var back := get_node_or_null("BackRoom") as BackRoom
 	if back:
 		back.migrate_old_area()

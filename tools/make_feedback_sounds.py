@@ -4,7 +4,6 @@
   assets/audio/furniture/pick_1..3.wav  – Möbel aufheben: kleines, weiches „Plopp“ nach oben
   assets/audio/furniture/paint_1..3.wav – Wand streichen / Boden legen: Pinsel- bzw. Rollenstrich (gefiltertes Rauschen)
   assets/audio/ui/coins_1..3.wav        – Geld bekommen: zwei, drei kleine Münzen klimpern
-  assets/audio/ui/sparkle.wav           – etwas ist fertig (z. B. Regalfach voll): drei zarte Glockentöne
 Eigene Aufnahme? Einfach die Datei ersetzen (auch .ogg mit gleichem Namen; Varianten _1, _2 …). Das Script schreibt nur,
 wenn die Datei fehlt (--force: neu). Braucht Python 3 mit numpy.
 
@@ -106,18 +105,6 @@ def coin(start, pitch):
     return shifted
 
 
-def chime(notes):
-    """Zarte Glockentöne nacheinander (Grundton + Oberton), lang ausklingend."""
-    total = np.zeros(int(RATE * 1.4))
-    for k, f in enumerate(notes):
-        t = t_axis(1.2)
-        tone = (np.sin(2 * np.pi * f * t) + 0.35 * np.sin(2 * np.pi * f * 2.0 * t) + 0.12 * np.sin(2 * np.pi * f * 3.01 * t))
-        tone *= np.exp(-t / 0.42) * (1 - np.exp(-t / 0.003))
-        i = int(RATE * 0.085 * k)
-        total[i:i + len(tone)] += tone[:len(total) - i] * (1.0 - 0.15 * k)
-    return total
-
-
 def main():
     for k, base in enumerate((185.0, 205.0, 170.0, 225.0)):
         write("furniture", "place_%d.wav" % (k + 1), wood_knock(base), peak=0.7)
@@ -130,8 +117,6 @@ def main():
         if k != 1:
             mix += coin(RNG.uniform(0.12, 0.17), RNG.uniform(2800, 3300)) * 0.6
         write("ui", "coins_%d.wav" % (k + 1), mix, peak=0.42)
-    # C6, E6, G6 – kurz und hell
-    write("ui", "sparkle.wav", chime([1046.5, 1318.5, 1568.0]), peak=0.38)
 
 
 if __name__ == "__main__":

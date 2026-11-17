@@ -339,6 +339,12 @@ func _after_stamp(walker: Passerby) -> Array:
 
 ## Zur Tür und hinaus, die Treppe hinunter und zurück auf den Gehweg (dort geht der alte Weg weiter).
 func _leave_actions(walker: Passerby) -> Array:
+	var visit: Dictionary = _visit.get(walker, {})
+	# Wer Bücher im Korb hat, die noch nicht ausgeliehen sind, geht erst zur Theke (seit dem Nachtest der Überarbeitung:
+	# vorher ging ein Gast mit Korb und Wunschbuch einfach hinaus – das Buch war verloren)
+	if not bool(visit.get("lent", false)) and not (visit.get("books", []) as Array).is_empty() and _counter_node() != null:
+		return [_call(_queue_step)]
+	visit["leaving"] = true
 	var p := _entrance_points()
 	var rejoin: Vector2 = (_visit.get(walker, {}) as Dictionary).get("rejoin", p.foot)
 	var steps: Array = [
@@ -556,11 +562,9 @@ func _update_counter() -> void:
 	if _counter_node() == null or _stamp_interactable == null:
 		return
 	var waiting := _waiting_at_counter()
-	var word := ""
-	if waiting and player_behind_counter() and not (_desk and _desk.is_open):
-		word = "Bedienen"
-	_stamp_interactable.prompt_text = word
-	_stamp_shape.disabled = word.is_empty()
+	# „Bedienen“ zeigt seit dem Nachtest der Überarbeitung der Gast selbst (Passerby, can_serve) – nicht mehr die Theke
+	_stamp_interactable.prompt_text = ""
+	_stamp_shape.disabled = true
 	if debug and not queue.is_empty():
 		_debug_wait -= get_physics_process_delta_time()
 		if _debug_wait <= 0.0:
@@ -573,6 +577,18 @@ func _update_counter() -> void:
 		if _auto_wait <= 0.0:
 			_auto_wait = 0.6
 			_desk.auto_serve(waiting)
+
+
+## Kann die Spielfigur diesen Gast jetzt bedienen? (er wartet vorn an der Theke, sie steht dahinter, die Ansicht ist zu)
+func can_serve(walker: Passerby) -> bool:
+	return walker != null and walker == _waiting_at_counter() and player_behind_counter() and _desk != null \
+		and not _desk.is_open
+
+
+## E am wartenden Gast: Theken-Ansicht öffnen (die Kamera schwenkt vom Gesicht des Gasts hinunter auf die Theke).
+func serve(walker: Passerby) -> void:
+	if can_serve(walker):
+		_desk.open(walker)
 
 
 func _on_stamp(_who: Node) -> void:
@@ -671,6 +687,11 @@ func counter_basket() -> Node3D:
 ## Korb weg (hinter die Theke geräumt).
 func clear_counter_basket() -> void:
 	_clear_counter()
+
+
+## Die Theken-Ansicht übernimmt den Korb (lässt ihn hinter die Theke gleiten und räumt ihn selbst weg).
+func release_counter_basket() -> void:
+	_counter_basket = null
 
 
 ## Korb nehmen (take): seit dem Nachtest von Etappe 8 ohne Stapel – er ist einfach in der Hand, sobald der Gast hereinkommt
@@ -1097,6 +1118,11 @@ func give_book(walker: Passerby) -> void:
 	(visit.books as Array).append(book)
 	walker.give_bag(true, BASKET_MODELS[mini(3, (visit.books as Array).size())])
 	wish.state = "fulfilled"
+	# War er schon auf dem Weg hinaus (nichts gefunden), geht er jetzt mit dem Buch zur Theke
+	if bool(visit.get("leaving", false)):
+		visit.leaving = false
+		var to_counter: Array[Dictionary] = [_call(_queue_step)]
+		walker.replace_actions(to_counter)
 	Wallet.earn(GameConfig.wish_tip, "Trinkgeld")
 	Tutorial.report("wish")
 	if not walker.regular_id.is_empty():

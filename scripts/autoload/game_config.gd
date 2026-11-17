@@ -501,6 +501,8 @@ var preview_color_valid: Color = Color(0.45, 0.65, 0.95)
 var preview_color_invalid: Color = Color(0.95, 0.4, 0.35)
 ## Hervorhebung von Objekten (im Gestaltungsmodus und bei allem, was man mit E benutzen kann):
 ## Aufhellung des ganzen Objekts (0 = keine, 0.3 = deutlich).
+## Möbel beim normalen Umschauen aufhellen? (seit dem Nachtest der Überarbeitung aus – Wunsch der Entwicklerin)
+var look_highlight_furniture: bool = false
 var highlight_brightness: float = 0.06
 ## Heller Schimmer am Rand des Objekts (0 = kein Rand, 1 = sehr hell).
 var highlight_rim_strength: float = 0.45
@@ -725,8 +727,22 @@ var sun_azimuth: float = 36.0
 ## Rückmeldung beim Gestalten (seit der großen Überarbeitung, BuildFeedback): Bewegungen und Teilchen an/aus, Fallhöhe
 ## beim Abstellen (m), Stauchen (Anteil), Dauer des Streich-Effekts (s), Lautstärken (dB)
 var feedback_animations: bool = true
-var feedback_drop_height: float = 0.06
-var feedback_squash: float = 0.05
+var feedback_drop_height: float = 0.1
+var feedback_squash: float = 0.035
+## Möbel abstellen (seit dem Nachtest der Überarbeitung): Dauer (s), Kippeln nach dem Aufsetzen (Grad), Drehung beim Herabschweben
+## (Grad); Wand-/Deckendinge: Dauer des Ausschwingens (s), Ausschlag (Grad)
+var feedback_settle_time: float = 0.62
+var feedback_tilt: float = 2.2
+var feedback_turn: float = 7.0
+var feedback_swing_time: float = 1.1
+var feedback_swing: float = 3.5
+## Bücher ablegen (seit dem Nachtest der Überarbeitung): im Regal kippen sie beim Hineingleiten so weit zur Seite (Grad) und
+## stellen sich gerade; frei abgelegt fallen sie aus dieser Höhe (m), schräg (Grad) und gedreht (Grad), in dieser Zeit (s)
+var book_place_tilt: float = 9.0
+var book_drop_height: float = 0.07
+var book_drop_tilt: float = 12.0
+var book_drop_turn: float = 10.0
+var book_drop_time: float = 0.42
 var feedback_paint_time: float = 0.45
 var feedback_place_db: float = -4.0
 var feedback_pick_db: float = -8.0
@@ -734,8 +750,6 @@ var feedback_paint_db: float = -9.0
 ## Geld-Anzeige: so lange zählt sie zum neuen Kontostand (s); Lautstärke der Münzen bei Einnahmen (dB)
 var money_count_time: float = 0.6
 var coins_volume_db: float = -9.0
-## Regalfach voll: Lautstärke des zarten Glockenklangs (dB)
-var shelf_full_volume_db: float = -12.0
 ## Sitzhöhe für die Chibi-Figuren (seit der großen Überarbeitung mit längeren Beinen: ihre Sitz-Animation sitzt auf
 ## 0,27–0,33 m; vorher 0,25). Bänke, Stühle im Pub, Gartenbank und Möbel im Laden sind so hoch gebaut.
 var chibi_seat_height: float = 0.3
@@ -1357,6 +1371,8 @@ var clock_day_length_options: Array[int] = [16, 20, 24, 30, 40]
 var clock_start_hour: float = 8.0
 ## Um diese Stunde erscheint der Notizzettel vom Vortag (und man wacht auf).
 var clock_morning_hour: int = 6
+## Tutorial: Bis der Zettel mit „Schlafen gehen“ dran ist, bleibt die Uhr um diese Stunde stehen (der erste Tag bleibt hell)
+var tutorial_day_hold_hour: float = 15.0
 ## Nacht von … bis … (Stunden; Sterne, Mond, schlafen erlaubt).
 var clock_night_start: float = 20.0
 var clock_night_end: float = 4.0
@@ -1561,7 +1577,7 @@ var passerby_read_tilt: float = -42.0
 var stamp_bonus_extra_days: int = 3
 ## Theken-Ansicht (Etappe 8): Kamera rückt in so vielen Sekunden heran; Bewegungen der Dinge auf der Theke (Ausweis, Buch über
 ## den Scanner, Tüte zum Gast, Korb hinter die Theke)
-var desk_camera_time: float = 0.7
+var desk_camera_time: float = 1.1
 var desk_card_time: float = 0.55
 var desk_book_time: float = 0.5
 var desk_push_time: float = 0.6
@@ -1569,7 +1585,7 @@ var desk_basket_time: float = 0.7
 ## Neuer Gast an der Theke (seit dem Test nach 8b): die Kamera schaut erst zu ihm hoch (so viele Sekunden hin), er grüßt
 ## (lächelt, nickt, winkt manchmal), so lange bleibt der Blick bei ihm; dann geht es hinunter auf die Theke
 var desk_greet_turn_time: float = 0.6
-var desk_greet_hold_time: float = 1.3
+var desk_greet_hold_time: float = 0.7
 var desk_greet_wave_chance: float = 0.6
 ## Blickpunkt der Theken-Ansicht (seit dem Nachtest von Etappe 8 mittig und gerade): Auge über der Mitte der Platte (x seitlich,
 ## y über der Platte, z = Abstand zur Spielfigur hin, Spielfigur auf -Z); die Neigung ergibt sich so, dass der untere Bildrand
@@ -1578,6 +1594,8 @@ var desk_camera_eye: Vector3 = Vector3(0.0, 0.6, -0.62)
 var desk_camera_hfov: float = 92.0
 ## So weit (Bildpunkte bei 900 Bildhöhe) um ein Ding auf der Theke zählt die Maus als „darauf“
 var desk_pick_radius: float = 70.0
+## Bücher an der Theke: so viele Bildpunkte rund um jedes Buch zählen noch als Treffer (bei 900 px Bildhöhe)
+var desk_pick_margin: float = 28.0
 ## Am Regal stöbern: so viele Regale (von … bis), Sekunden je Regal.
 var visitor_shelf_stops: Vector2i = Vector2i(1, 3)
 var visitor_browse_time: Vector2 = Vector2(4.0, 9.0)

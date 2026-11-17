@@ -125,17 +125,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_active or filter_open:
 		return  # Bei offenem Filter gehören die Klicks dem Filter
 
-	if event.is_action_pressed("build_toggle_grid"):
+	# Umschalt + Mausrad wählt das nächste/vorige Möbel (seit dem Nachtest der Überarbeitung; vorher wählte das Mausrad
+	# allein, wenn nichts in der Hand war – das fühlte sich komisch an). Das Mausrad allein dreht nur noch.
+	var wheel := event as InputEventMouseButton
+	if wheel and wheel.pressed and wheel.shift_pressed \
+			and wheel.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		item_step_requested.emit(1 if wheel.button_index == MOUSE_BUTTON_WHEEL_UP else -1)
+	elif event.is_action_pressed("build_toggle_grid"):
 		_set_grid_enabled(not grid_enabled)
 	elif event.is_action_pressed("build_rotate"):
-		if _tool == Tool.NONE:
-			item_step_requested.emit(1)  # nichts in der Hand: das Mausrad wählt ein Möbel (seit Testrunde 7b)
-		else:
+		if _tool != Tool.NONE:
 			_rotate(1.0)
 	elif event.is_action_pressed("build_rotate_back"):
-		if _tool == Tool.NONE:
-			item_step_requested.emit(-1)
-		else:
+		if _tool != Tool.NONE:
 			_rotate(-1.0)
 	elif event.is_action_pressed("build_place"):
 		_on_primary_click()

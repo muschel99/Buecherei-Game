@@ -39,7 +39,7 @@ shelved | Am Regal Linksklick – halten räumt alle Bücher aus der Hand ein | 
 == Die Tür auf!
 open_sign | Draußen das Türschild auf „Geöffnet“ drehen | interact
 guest_waiting | Warten, bis ein Gast an der Theke klingelt
-desk_open | Hinter die Theke gehen und „Bedienen“ | interact
+desk_open | Hinter die Theke gehen, den Gast anschauen und „Bedienen“ | interact
 guest_served | Ausweis, Bücher und Tüte nacheinander anklicken | book_place
 
 == Ankommen in der Straße

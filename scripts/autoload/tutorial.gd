@@ -81,6 +81,18 @@ func current_list() -> Dictionary:
 	return _lists[list_index]
 
 
+## Hält das Tutorial den Tag an? Solange der Zettel mit „Schlafen gehen“ noch nicht dran ist (und die Zettel an sind),
+## bleibt die Uhr am Nachmittag stehen (GameClock, GameConfig.tutorial_day_hold_hour).
+func holds_day() -> bool:
+	if not is_tracking() or not bool(Settings.get_value("interface/todo")):
+		return false
+	for index in range(0, list_index + 1):
+		for task: Dictionary in (_lists[index].tasks as Array):
+			if String(task.id) == "slept":
+				return false
+	return true
+
+
 func is_done(id: String) -> bool:
 	return events.has(id)
 

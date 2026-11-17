@@ -622,7 +622,8 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   hart vereinigt, sonst Beulen; Kopf für alle gleich, `HEAD_HEIGHT`; Maße `DIMS`, Formen
   `SHAPE_FACTORS`, `Body.parts` = einzelne Teile). **Proportionen seit der großen Überarbeitung** nach der Vorlage der Entwicklerin
   (`screenshots/chibi_reference.png`, Ansicht `--views=compare`): lange Beine (`crotch` 0,56/0,555 der Kinnhöhe), kurzer schmaler
-  Rumpf (`narrow` 0,9), lange schlanke Arme; Größen `HEIGHTS` je 2 cm größer, Kopf unverändert. **Netz** = Käfig `chibi_cage.build` (nur
+  Rumpf (`narrow` 0,9), lange schlanke Arme; Größen `HEIGHTS` je 2 cm größer, Kopf unverändert; längerer Hals (`HEAD_DROP` -0,014,
+  Kopf sitzt höher). **Netz** = Käfig `chibi_cage.build` (nur
   Vierecke: Rumpf 8 Ringe × 20 Ecken mit 5x5-Deckeln, Arm-/Bein-/Halsöffnungen; Arme/Beine/Hals
   10er-Ringe mit je einem Ring auf dem Gelenk; Hand 10er-Ringe 4-1-4-1, Finger/Daumen 4er-Ringe,
   Kanten zwischen Nachbarfingern vorn an der Schwimmhaut `WEB_X`/`WEB_Z`, Daumen direkt auf der
@@ -1566,12 +1567,22 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   steht); Werte `autumn_*`. `AutumnDecor`: Kürbis-Gruppen an Hauswänden (Modelle `tools/blender/build_storybook_autumn.py` →
   assets/models/props/autumn/, nie an Türen/Lieferplatz/Bänken, Kollision + StreetObstacle, `refresh_static_obstacles`). Startfassade
   „alt, aber liebenswert“ (weathering: kleine Putzinseln, warm ausgeblichen, Moos unten). **Rückmeldung beim Gestalten**
-  `BuildFeedback`: Möbel plumpsen (Modell fällt kurz, staucht, federt; mit Daraufstehendem ohne Stauchen), Staubwölkchen,
-  goldene Funken bei Neuem, Aufheben „Plopp“, Streichen = neue Farbe breitet sich von der Pinselstelle aus (alter Belag kurz als
-  `material_overlay`, Shader surface_pattern `reveal_center/reveal_radius`) + Farbtropfen; Werte `feedback_*`. Volles Regalfach
-  funkelt + Glockenklang (`BookShelf._check_full_rows`, beim Laden still). Geld zählt weich (`money_count_time`), Anzeige hüpft,
+  `BuildFeedback` (seit dem Nachtest ohne Funken/Leuchten – Wunsch der Entwicklerin): Möbel schweben herab und drehen sich in ihre
+  Lage, setzen gestaucht auf, kippeln abklingend über die Unterkante (`_animate` + `_settle_motion`, nur das Modell; Daraufstehendes
+  macht dieselbe Bewegung mit), Wand-/Deckendinge federn und schwingen aus (`_swing_motion`), Staubwölkchen beim Aufsetzen; Aufheben
+  „Plopp“, Streichen = neue Farbe breitet sich von der Pinselstelle aus (alter Belag kurz als `material_overlay`, Shader
+  surface_pattern `reveal_center/reveal_radius`) + Farbtropfen; Werte `feedback_*`. Bücher: im Regal mit kleinem Schubs über das Ziel
+  und seitlichem Kippen, das sich gerade stellt (`BookShelf._current_transform`, Anim-Feld `tilt`, `book_place_tilt`), frei abgelegt
+  fallen sie kurz herab und legen sich flach (`LooseBooks._start_drop`/`_drop_transform`, `book_drop_*`). Geld zählt weich (`money_count_time`), Anzeige hüpft,
   Münzen bei Einnahmen außer „Ausleihe“ (`Wallet.last_reason`). Tablet-Knöpfe federn (`TabletSounds._spring`, `ui_*_scale`,
-  Markierung `NO_SPRING`). Geräusche: `tools/make_feedback_sounds.py` (furniture/place|pick|paint, ui/coins|sparkle).
+  Markierung `NO_SPRING`). Geräusche: `tools/make_feedback_sounds.py` (furniture/place|pick|paint, ui/coins). **Nachtest der Überarbeitung:**
+  Gestaltungsmodus: Umschalt + Mausrad wählt Möbel, Mausrad allein dreht nur; Möbel werden beim normalen Umschauen nicht mehr
+  aufgehellt (`look_highlight_furniture`, `Player._highlight_on_look`); Theke 50 cm weiter vorn (z 2,2; alte Spielstände:
+  `Room._migrate_counter_spot`, nur wenn vorn frei); Tutorial hält den ersten Tag am Nachmittag (`Tutorial.holds_day`,
+  `tutorial_day_hold_hour`), bis der Zettel mit „slept“ dran ist; Bedienen: „E Bedienen“ am wartenden Gast (`LibraryVisits.can_serve`/
+  `serve`, Passerby-Interactable), Kamera vom Gesicht weich hinunter, Gast lächelt nur (`Passerby.smile_at_player`); Korb, der hinter
+  die Theke gleitet, gehört der Ansicht (`release_counter_basket`); ganzer Bücherstapel anklickbar (`_screen_rect`, `desk_pick_margin`);
+  Gäste mit unausgeliehenen Büchern gehen immer erst zur Theke (`_leave_actions`, `visit.leaving`).
 - Testtasten laufen über das Autoload `DebugKeys` und lassen sich alle auf einmal abschalten:
   `GameConfig.debug_keys_enabled = false`.
 

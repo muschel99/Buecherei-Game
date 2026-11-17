@@ -467,6 +467,14 @@ func _update_head_bob(delta: float) -> void:
 	camera.position.y = lerpf(camera.position.y, target_y, 10.0 * delta)
 
 
+## Wird das angeschaute Objekt aufgehellt? Möbel im normalen Spiel nicht (seit dem Nachtest der Überarbeitung, Wunsch der
+## Entwicklerin – das Tastensymbol unten reicht); im Gestaltungsmodus hebt BuildMode selbst hervor.
+func _highlight_on_look(target: Interactable) -> bool:
+	if GameConfig.look_highlight_furniture:
+		return true
+	return FurnitureUtils.find_placed_furniture(target) == null
+
+
 ## Prüft, ob in der Bildmitte ein interaktives Objekt ist.
 func _update_interaction_target() -> void:
 	# Wurde das anvisierte Objekt inzwischen gelöscht (z. B. weggeräumt), vergessen wir es
@@ -503,7 +511,7 @@ func _update_interaction_target() -> void:
 			_current_target.end_aim()
 			if _current_target.highlight_owner:
 				FurnitureUtils.set_interactable_highlighted(_current_target, false)
-		if new_target and new_target.highlight_owner:
+		if new_target and new_target.highlight_owner and _highlight_on_look(new_target):
 			FurnitureUtils.set_interactable_highlighted(new_target, true)
 		_current_target = new_target
 		interaction_target_changed.emit(_current_target)
