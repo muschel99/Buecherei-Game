@@ -482,18 +482,18 @@ def taproom(M, C):
     for sx in (-1, 1):
         for y in (1.4, 3.0):
             bx = sx * (xi - 0.3)
-            lb.box((bx, y, 0.27), (0.5, 1.1, 0.12), step=0.3, dent=0.006)
+            lb.box((bx, y, 0.32), (0.5, 1.1, 0.12), step=0.3, dent=0.006)
             lb.box((sx * (xi - 0.1), y, 0.72), (0.14, 1.1, 0.8), step=0.3, dent=0.006)
-            wood.box((bx, y, 0.15), (0.48, 1.06, 0.2), step=0.4, dent=0.003)
+            wood.box((bx, y, 0.175), (0.48, 1.06, 0.25), step=0.4, dent=0.003)
             tx = sx * (xi - 0.95)
-            wood.lathe([(0.0, 0.0), (0.22, 0.0), (0.22, 0.03), (0.04, 0.05), (0.035, 0.42), (0.3, 0.44), (0.3, 0.46), (0.0, 0.46)],
+            wood.lathe([(0.0, 0.0), (0.22, 0.0), (0.22, 0.03), (0.04, 0.05), (0.035, 0.47), (0.3, 0.49), (0.3, 0.51), (0.0, 0.51)],
                        (tx, y, 0.08), segs=24)
-            candles.lathe([(0.0, 0.0), (0.02, 0.0), (0.02, 0.09), (0.0, 0.1)], (tx, y, 0.54), segs=10)
+            candles.lathe([(0.0, 0.0), (0.02, 0.0), (0.02, 0.09), (0.0, 0.1)], (tx, y, 0.59), segs=10)
             for k, dy in enumerate((-0.28, 0.28)):
                 # Weg zum Sitz: am Tisch vorbei von der Seite (via)
                 via_y = y + dy * 2.6
-                SC.shop_spot("seat", seat_n, (bx, y + dy, 0.33), (-sx, 0), height=0.33, floor=0.08, backrest=0.13,
-                             via_x=sx * 1.72, via_y=via_y, table_x=tx + sx * 0.08, table_y=y + dy * 0.75, table_z=0.54)
+                SC.shop_spot("seat", seat_n, (bx, y + dy, 0.38), (-sx, 0), height=0.38, floor=0.08, backrest=0.13,
+                             via_x=sx * 1.72, via_y=via_y, table_x=tx + sx * 0.08, table_y=y + dy * 0.75, table_z=0.59)
                 seat_n += 1
     lb.build()
     wood.build()
@@ -542,8 +542,8 @@ def taproom(M, C):
 # --- Vor dem Pub: Tische, Stühle, Töpfe, Tafel, Hängeschild ---
 
 # Sitzhöhe der Stühle und Höhe der Tische, passend zu den Chibi-Figuren (seit Etappe 6c)
-CHAIR_SEAT = 0.25
-TABLE_TOP = 0.5
+CHAIR_SEAT = 0.30   # Chibi-Sitzhöhe (seit der großen Überarbeitung mit längeren Beinen; vorher 0,25)
+TABLE_TOP = 0.55
 
 
 def bistro_table(M, C, name, x, y, seed):

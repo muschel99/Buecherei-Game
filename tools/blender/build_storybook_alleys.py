@@ -189,7 +189,7 @@ def round_bench(M, C, x, z, rnd):
     """Runde Holzbank um den Baumstamm: Sitzring aus Latten (jede Latte ein Körper), Lehne aus
     senkrechten Latten mit Ring obenauf, Beine; daneben ein Hocker mit Tasse und Buch."""
     cx, cy = G(x, z)
-    r_in, r_out, seat = 0.42, 0.95, 0.25
+    r_in, r_out, seat = 0.42, 0.95, 0.30   # Sitz in Chibi-Höhe (seit der großen Überarbeitung 0,30 m)
     wd = Body("Bank Holz", M["h_join"], C["deco"], seed=301, vary=0.1, bevel=0.008)
     n = 26
     for k in range(n):

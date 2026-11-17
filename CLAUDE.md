@@ -620,7 +620,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `tools/blender/build_chibi.py` baut 6 Grundkörper in drei Stufen: **Form** = Abstandsfeld
   `chibi_sdf.Body` (Grundformen; Teile in einer Linie – Ober-/Unterarm, Schenkel, Fingerglieder –
   hart vereinigt, sonst Beulen; Kopf für alle gleich, `HEAD_HEIGHT`; Maße `DIMS`, Formen
-  `SHAPE_FACTORS`, `Body.parts` = einzelne Teile). **Netz** = Käfig `chibi_cage.build` (nur
+  `SHAPE_FACTORS`, `Body.parts` = einzelne Teile). **Proportionen seit der großen Überarbeitung** nach der Vorlage der Entwicklerin
+  (`screenshots/chibi_reference.png`, Ansicht `--views=compare`): lange Beine (`crotch` 0,56/0,555 der Kinnhöhe), kurzer schmaler
+  Rumpf (`narrow` 0,9), lange schlanke Arme; Größen `HEIGHTS` je 2 cm größer, Kopf unverändert. **Netz** = Käfig `chibi_cage.build` (nur
   Vierecke: Rumpf 8 Ringe × 20 Ecken mit 5x5-Deckeln, Arm-/Bein-/Halsöffnungen; Arme/Beine/Hals
   10er-Ringe mit je einem Ring auf dem Gelenk; Hand 10er-Ringe 4-1-4-1, Finger/Daumen 4er-Ringe,
   Kanten zwischen Nachbarfingern vorn an der Schwimmhaut `WEB_X`/`WEB_Z`, Daumen direkt auf der
@@ -724,8 +726,9 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   dass die rechte Hand über der Katze ist (`pet_hand`, `StreetLife.pet_spot_ok`), kleine/liegende Katze pet_reach
   (bücken, `PET_REACH_HOLD` hin und her, rückwärts aufrichten), große pet_cat (hinknien); `cat.wait_for`, dann
   `cat.pet(passant, …)`. Für Besucher (Etappe 8) liegen bereit: door_in/door_out, water, pick_up, lift.
-  **Sitzhöhe:** Bänke/Stühle 0,25 m (Sitz-Animation der Chibis 0,22–0,27 m; Modell hebt sich um
-  sit_height − sit_seat) – neue Sitzmöbel für Passanten genauso hoch, Marker auf 0,25.
+  **Sitzhöhe:** Bänke/Stühle 0,30 m (`GameConfig.chibi_seat_height`; seit der großen Überarbeitung mit längeren Beinen sitzt die
+  Sitz-Animation der Chibis auf 0,27–0,33 m, vorher 0,22–0,27; Modell hebt sich um sit_height − sit_seat) – neue Sitzmöbel für
+  Passanten genauso hoch, Marker auf 0,30 (Parkbank `BENCH_SEAT`, Pub `CHAIR_SEAT`, Gartenbank `round_bench`, Fassaden-Stuhl).
   **Blick:** Augen über `look`
   (Setter setzt nur den Shader-Wert); `_scan_focus` (alle 0,3 s): Kamera = Spielfigur hat Vorrang
   (Radius/Winkel, Sichtstrahl gegen world/sight_blocker, `see_through` zählt nicht), sonst andere
@@ -1305,7 +1308,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   (Punkt VOR dem Fenster – drinnen verdeckt die Hauskollision den Sichtstrahl). `indoor` = Figuren drinnen (Verkäufer, Gäste, Fenster): nicht in `_walkers`, außerhalb des Bilds `visible = false`
   (`_update_indoor_lod`). Gegenstände: `ChibiPasserbyModel.set_prop(&"can"…)` (BoneAttachment, `GameConfig.passerby_prop_hold`; `broom` setzt `sweep_points` zwischen die Hände),
   Modelle `build_storybook_chore_props.py`. Gesten per Zwei-Glieder-Rechnung `ChibiGestureModifier._reach`: SWEEP, HUG, DRINK; Finger greifen `_grip`. Im Pub und in Läden gilt die Höhe der
-  Figuren: Sitz 0,25 m über dem Boden, Tisch ca. 0,46 m, Theke 0,85 m (seit Etappe 8, wie in der Bücherei). Haltungen ohne ganze Straße prüfen: `scenes/tools/pose_probe.tscn -- water|doors|sweep|hug|drink`
+  Figuren: Sitz 0,30 m über dem Boden, Tisch ca. 0,51–0,55 m, Theke 0,85 m (seit der großen Überarbeitung; Theke wie in der Bücherei). Haltungen ohne ganze Straße prüfen: `scenes/tools/pose_probe.tscn -- water|doors|sweep|hug|drink`
   (Start siehe Kopf von `scripts/tools/pose_probe.gd`, 3 s statt Minuten). Testbilder: `--shop_view=<Haus> [--shop_only=vorn,innen]`, `--resident=water|sweep|errand|window`,
   `--focus=<m> --focus_action=door|chore|buy --clip_wait=<s>`. street_life_check zählt Anwohner, Läden, Begegnungen.
 - **Gesten-Hände (seit 6d):** `ChibiGestureModifier._orient_hand` – Hand-Achsen +Y Finger, +Z Handrücken,

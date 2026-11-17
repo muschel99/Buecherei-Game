@@ -1969,6 +1969,11 @@ Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitun
 - [x] **Bücherei alt, aber liebenswert:** kleine Putzreste und Moos statt großer heller Flecken
 - [x] **Befriedigende Rückmeldung:** Möbel plumpsen weich (Staub, Funken, Holz-Ton), Aufheben ploppt, Streichen breitet sich vom
   Pinsel aus, volles Regalfach funkelt, Geld zählt hoch und klimpert, Knöpfe federn; abends Licht aus den Schaufenstern
+- [x] **Figuren mit neuen Proportionen** (Vorlage der Entwicklerin): längere Beine und Arme, kürzerer und schmalerer
+  Oberkörper, höhere Schultern; alle sechs Grundkörper mit Kleidung, Frisuren und 45 Animationen neu gebaut, in allen
+  Körperformen geprüft (Gehen, Sitzen, Arme, Gelenke)
+- [x] **Welt passt zu den Figuren:** Sitzhöhe jetzt 30 cm (vorher 25) – Parkbänke, Gartenbank, Bank und Stuhl vor der
+  Bücherei, Pub-Stühle und -Bänke angehoben, Pub-Tische 5 cm höher; Möbel im Laden, Tische und Theke passten schon
 - [ ] Nächste Ideen: Innenraum gemütlicher (Startzustand), weitere Jahreszeiten (Winter, Frühling), Wetter
 
 ## Etappe 9 – Café

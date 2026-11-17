@@ -214,7 +214,7 @@ func _go():
 			if mode.size() > 8:
 				m.bottom = int(mode[8]) as ChibiCharacter.Bottom
 			m.give_bag(false)
-			m.sit_height = 0.25
+			m.sit_height = GameConfig.chibi_seat_height
 			await get_tree().process_frame
 			await get_tree().process_frame
 			m._player.play(StringName(mode[3]), 0.0); m._player.seek(float(mode[4]), true); m._player.speed_scale = 0.0
@@ -307,7 +307,7 @@ func _go():
 		"bagsit":
 			# Taschenträger setzt sich: Tasche wandert auf den Boden neben die Füße (seit 6j)
 			m.give_bag(true)
-			m.sit_height = 0.25
+			m.sit_height = GameConfig.chibi_seat_height
 			await get_tree().process_frame
 			var cb: Camera3D = get_node("Cam")
 			for step: Array in [["steht", &"idle", 1.0], ["sitzt", &"sit", 2.5], ["auf", &"idle", 2.0]]:
@@ -325,7 +325,7 @@ func _go():
 			m._gesture_modifier.body_scale = m._hip_height / 0.607
 			m._gesture_modifier.gesture = ChibiGestureModifier.Gesture.DRINK
 			m._gesture_modifier.weight = 1.0
-			m.sit_height = 0.25
+			m.sit_height = GameConfig.chibi_seat_height
 			m._player.play(&"sit_idle", 0.0); m._player.seek(1.0, true); m._player.speed_scale = 0.0
 			m._gesture_modifier.grip_right = 1.0
 			m._gesture_modifier.sip = 1.0

@@ -810,7 +810,7 @@ def _obstacle(C, matrix, radius):
 def facade_chair(M, C, name, m, seed=950):
     """Schlichter Holzstuhl (wie vor dem Pub): Sitzbrett auf vier geraden Beinen, die hinteren gehen in
     die Lehne über, drei Sprossen – keine Streben unter dem Sitz. m = Rahmen am Boden (Front -y)."""
-    seat, back = 0.25, 0.63
+    seat, back = 0.30, 0.68   # Sitz in Chibi-Höhe (seit der großen Überarbeitung 0,30 m)
     b = Body(name, M["chair"], C["deco"], seed=seed, vary=0.06, bevel=0.008)
     b.box((0, 0, seat - 0.02), (0.4, 0.38, 0.04), step=0.3, dent=0.002, matrix=m)
     for sx in (-0.16, 0.16):
@@ -852,9 +852,9 @@ def build_deco(kind):
         # niedriger als die Brüstung, verdeckt das Fenster also nie; Sitzplatz für Spielfigur und Passanten
         m = T.canon(*FRONT, 3.75, GROUND, WALL_CLEAR + 0.25, yaw=25)
         facade_chair(M, C, "Stuhl", m)
-        _collider(C, "Stuhl", world(m, (0, 0, 0.32)), (0.42, 0.42, 0.64))
+        _collider(C, "Stuhl", world(m, (0, 0, 0.345)), (0.42, 0.42, 0.69))
         _obstacle(C, m, 0.32)
-        anchor(C, "Seat_0", m @ Matrix.Translation((0.0, 0.0, 0.25)))
+        anchor(C, "Seat_0", m @ Matrix.Translation((0.0, 0.0, 0.30)))
     if "steps" in parts:
         # Töpfe auf dem Podest (vorn an den Ecken) und an den Seiten der Stufen
         for k, (side, out, z, r, h) in enumerate(((-1, 0.48, 0.0, 0.15, 0.3), (1, 0.48, 0.0, 0.15, 0.3),

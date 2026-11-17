@@ -47,7 +47,7 @@ def drain_grate(M, coll):
 
 # Parkbank (Godot-Maße: x entlang, z nach vorn): Länge, Sitzhöhe, Sitztiefe
 BENCH_LENGTH = 1.5
-BENCH_SEAT = 0.25   # passend zu den Chibi-Figuren (seit Etappe 6c; ihre Sitz-Animation sitzt auf 0,22–0,27 m)
+BENCH_SEAT = 0.30   # passend zu den Chibi-Figuren (seit der großen Überarbeitung mit längeren Beinen: Sitz-Animation 0,27–0,33 m)
 BENCH_DEPTH = 0.42
 
 
