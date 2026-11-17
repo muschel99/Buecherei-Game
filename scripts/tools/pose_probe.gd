@@ -132,7 +132,7 @@ func _go():
 			await get_tree().process_frame
 			other.position = Vector3(-0.62, 0.0, 0.0)
 			for f: ChibiPasserbyModel in [m, other]:
-				f.sit_height = 0.25
+				f.sit_height = GameConfig.chibi_seat_height
 				f._player_rest_until = 1e9
 				f.relaxed_sit = true
 			# Die fertige Haltung (mit Kopfdrehung) gibt es nur im Signal skeleton_updated
@@ -190,7 +190,7 @@ func _go():
 					if only != "" and only != String(pose[0]):
 						continue
 					for f in figs:
-						f.sit_height = 0.25
+						f.sit_height = GameConfig.chibi_seat_height
 						f._player.play(pose[0], 0.0); f._player.seek(pose[1], true); f._player.speed_scale = 0.0
 						f.set_skirt_sit(1.0 if pose[2] else 0.0)
 					for group in 2:

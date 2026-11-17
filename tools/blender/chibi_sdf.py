@@ -23,9 +23,11 @@ PAD = 0.11
 
 # Körpergrößen (m) und fester Kopf (Scheitel bis Kinn) – Frauen und Männer gleich großer Kopf
 HEAD_HEIGHT = 0.47
+# Seit der großen Überarbeitung (Vorlage der Entwicklerin: längere Beine und Arme, kürzerer, schmalerer
+# Oberkörper) je 2 cm größer – die Beine sind länger, der Kopf bleibt.
 HEIGHTS = {
-    "female": {"small": 1.50, "medium": 1.58, "tall": 1.66},
-    "male": {"small": 1.58, "medium": 1.67, "tall": 1.76},
+    "female": {"small": 1.52, "medium": 1.60, "tall": 1.68},
+    "male": {"small": 1.60, "medium": 1.69, "tall": 1.78},
 }
 SHAPES = ("thin", "medium", "fat")
 EAR_TURN = 40.0   # Ohren um so viel Grad nach vorn gedreht
@@ -388,23 +390,26 @@ def nose_shape(chin):
 
 # Maße je Geschlecht (mittlere Größe, mittlere Form). Längen in m; Höhen im Rumpf als Anteil
 # von T (Halsansatz bis Schritt). thin/fat: Faktoren für die Breiten.
+# Seit der großen Überarbeitung (Vorlage der Entwicklerin, screenshots/chibi_reference.png): Schritt höher (längere Beine),
+# Rumpf damit kürzer, Brust/Taille/Becken/Schultern etwa 10 % schmaler, Arme länger und schlanker, Beine schlanker.
+# narrow = Faktor für die festen Breiten oben am Rumpf (obere Brust, oberer Rücken, Po-Abstand).
 DIMS = {
     "female": dict(
-        crotch=0.493,          # Schritthöhe als Anteil der Kinnhöhe
-        shoulder=(0.140, 0.070),  # Schultergelenk: seitlich (x) und so tief unter dem Halsansatz
-        chest=(0.110, 0.096, 0.28), bust=(0.052, -0.074, 0.70, 0.052, 0.050, 0.047),
-        waist=(0.104, 0.080, 0.27), belly=(0.064, 0.052, 0.08), pelvis=(0.118, 0.100, 0.20),
-        butt=(0.064, 0.068, 0.078), neck=0.044,
-        arm=(0.041, 0.036, 0.021), upper_arm=0.20, fore_arm=0.165, hand=1.05,
-        hip_x=0.084, thigh=0.070, knee=0.050, calf=0.040, ankle=0.035, foot=0.88, thigh_top=0.80),
+        crotch=0.56,           # Schritthöhe als Anteil der Kinnhöhe (vorher 0.493)
+        shoulder=(0.128, 0.058),  # Schultergelenk: seitlich (x) und so tief unter dem Halsansatz
+        chest=(0.098, 0.090, 0.30), bust=(0.047, -0.070, 0.70, 0.050, 0.048, 0.045),
+        waist=(0.088, 0.072, 0.27), belly=(0.056, 0.047, 0.08), pelvis=(0.106, 0.094, 0.21),
+        butt=(0.058, 0.062, 0.072), neck=0.042, narrow=0.9,
+        arm=(0.038, 0.033, 0.0195), upper_arm=0.215, fore_arm=0.178, hand=1.05,
+        hip_x=0.077, thigh=0.067, knee=0.046, calf=0.038, ankle=0.033, foot=0.88, thigh_top=0.80),
     "male": dict(
-        crotch=0.49,
-        shoulder=(0.156, 0.072),
-        chest=(0.124, 0.100, 0.30), bust=None,
-        waist=(0.136, 0.088, 0.25), belly=(0.08, 0.064, 0.09), pelvis=(0.126, 0.094, 0.19),
-        butt=(0.050, 0.054, 0.064), neck=0.050,
-        arm=(0.047, 0.042, 0.024), upper_arm=0.21, fore_arm=0.175, hand=1.13,
-        hip_x=0.078, thigh=0.071, knee=0.050, calf=0.039, ankle=0.036, foot=0.95, thigh_top=0.80,
+        crotch=0.555,
+        shoulder=(0.144, 0.060),
+        chest=(0.112, 0.094, 0.31), bust=None,
+        waist=(0.120, 0.082, 0.26), belly=(0.072, 0.058, 0.09), pelvis=(0.114, 0.088, 0.20),
+        butt=(0.046, 0.050, 0.060), neck=0.048, narrow=0.9,
+        arm=(0.043, 0.038, 0.0225), upper_arm=0.225, fore_arm=0.188, hand=1.13,
+        hip_x=0.073, thigh=0.068, knee=0.048, calf=0.038, ankle=0.034, foot=0.95, thigh_top=0.80,
         thigh_start=0.84,
         # Becken so breit wie die Taille: seitlich eine gerade Linie von der Taille zur Hüfte (keine
         # Kerbe); dick: Bauch weniger rund, Hüfte wächst mit, Schultern schmaler
@@ -503,16 +508,17 @@ class Body:
         r_up = self.r_arm[0]
         # obere Brust unter den Schlüsselbeinen bis zu den Schultern: füllt die Mulde zwischen Hals, Brust
         # und Armansatz (glatter Übergang von der Schulter zum Brustkorb, die Brust sitzt nicht als Beule)
+        nw = D.get("narrow", 1.0)
         torso.append(("union", Ellipsoid("upper_chest", (0, -0.020, sz - 0.014),
-                                         (0.118 * ft, 0.060 * ws * (ft / ws) ** 0.5, 0.056)), 0.05))
+                                         (0.118 * nw * ft, 0.060 * ws * (ft / ws) ** 0.5, 0.056)), 0.05))
         # oberer Rücken: breit und glatt vom Nacken bis unter die Schulterblätter (früher einzelne
         # Schulterblätter: Knick quer über den Rücken)
-        torso.append(("union", Ellipsoid("upper_back", (0, 0.028, sz - 0.020), (0.108 * ft, 0.050 * ft, 0.080)), 0.06))
+        torso.append(("union", Ellipsoid("upper_back", (0, 0.028, sz - 0.020), (0.108 * nw * ft, 0.050 * ft, 0.080)), 0.06))
         for s in (1, -1):
             side = "Left" if s > 0 else "Right"
             u = fac("butt")
             b = D["butt"]
-            torso.append(("union", Ellipsoid("butt_" + side, (s * 0.054 * self.ws, 0.062, cr + 0.065),
+            torso.append(("union", Ellipsoid("butt_" + side, (s * 0.054 * nw * self.ws, 0.062, cr + 0.065),
                                              (b[0] * u, b[1] * u, b[2] * u)), 0.05))
             if D["bust"]:
                 bx_, by_, bz_, rx, ry, rz = D["bust"]
@@ -527,7 +533,7 @@ class Body:
         if not fem:
             # breite, flache Brust (keine Muskeln)
             torso.append(("union", Ellipsoid("chest_front", (0, -0.028, cr + 0.72 * T),
-                                             (0.110 * ft, 0.064 * ft, 0.10)), 0.08))
+                                             (0.110 * nw * ft, 0.064 * ft, 0.10)), 0.08))
         body = Group("torso", torso)
         nr = D["neck"] * fac("neck")
         self.neck_r = nr

@@ -736,6 +736,9 @@ var money_count_time: float = 0.6
 var coins_volume_db: float = -9.0
 ## Regalfach voll: Lautstärke des zarten Glockenklangs (dB)
 var shelf_full_volume_db: float = -12.0
+## Sitzhöhe für die Chibi-Figuren (seit der großen Überarbeitung mit längeren Beinen: ihre Sitz-Animation sitzt auf
+## 0,27–0,33 m; vorher 0,25). Bänke, Stühle im Pub, Gartenbank und Möbel im Laden sind so hoch gebaut.
+var chibi_seat_height: float = 0.3
 ## Knöpfe in den Tablets federn: so groß beim Drüberfahren, so klein beim Drücken (1 = aus)
 var ui_hover_scale: float = 1.035
 var ui_press_scale: float = 0.95
