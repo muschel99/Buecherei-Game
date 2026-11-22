@@ -366,7 +366,7 @@ func _go():
 				marker.material_override = red; add_child(marker)
 				var sk: Skeleton3D = m._skeleton
 				var neck := sk.get_bone_global_pose(sk.find_bone("Head")).origin
-				var lips: Vector3 = neck + ChibiGestureModifier.DRINK_LIPS * (m._hip_height / 0.607) + Vector3(0.02, -0.024, 0.01)
+				var lips: Vector3 = neck + ChibiGestureModifier.DRINK_LIPS * (m._hip_height / 0.607) + ChibiGestureModifier.FORK_TIP_AT_LIPS
 				marker.global_position = sk.global_transform * lips
 			for t: float in times:
 				m._sip_t = t
@@ -376,4 +376,10 @@ func _go():
 			m._update_sip()
 			await _shot(m, Vector3(-1, 0.25, 0.15), "%s_side" % which)
 			await _shot(m, Vector3(0.1, 0.25, 1), "%s_front" % which)
+			await _shot(m, Vector3(-0.7, 0.35, 1), "%s_right" % which)
+			if kind == &"cake":
+				# am Teller von rechts oben (Handfläche unten, Daumen zur Mitte?)
+				m._sip_t = 0.6
+				m._update_sip()
+				await _shot(m, Vector3(-0.8, 0.9, 0.7), "eat_plate_right")
 	get_tree().quit()

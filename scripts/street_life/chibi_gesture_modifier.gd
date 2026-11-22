@@ -58,11 +58,14 @@ var drink_fork := false
 ## Lage des Bechers in der Hand (GameConfig.passerby_prop_hold "mug"); Lippen vor dem großen Kopf (× body_scale)
 const MUG_AT_TABLE := Vector3(-0.02, 0.045, -0.12)
 const MUG_AT_MOUTH := Vector3(-0.12, -0.045, 0.055)
-## Gabel quer in der Faust, Zinken an der Kleinfinger-Seite (GameConfig.passerby_prop_hold "fork"): am Teller Daumen oben –
-## die Zinken zeigen in den Kuchen; am Mund Handfläche oben, Kleinfinger zum Gesicht – die Zinken zeigen zum Mund (seit dem
-## Nachtest: vorher ragte die Gabel aus der Handfläche, der Arm war gestreckt und die Spitze landete an der Nase)
-const FORK_AT_TABLE := Vector3(-0.04, 0.12, -0.09)
-const FORK_AT_MOUTH := Vector3(-0.1, -0.03, 0.085)
+## Gabel wie man sie hält (Beschreibung der Entwicklerin): Handfläche nach unten, Daumen zum Körper hin, die Finger biegen sich
+## nach unten um den Stiel; die Gabel liegt schräg in der Hand (GameConfig.passerby_prop_hold "fork"), die Zinken kommen vorn
+## zwischen Daumen und Zeigefinger heraus. Am Teller zeigen sie nach vorn-unten in den Kuchen, am Mund dreht sich das Handgelenk
+## (Finger zur Mitte, Handrücken nach oben-vorn) – die Zinken kommen vom rechten Mundwinkel her zum Mund.
+## Wohin die Gabelspitze am Mund kommt (gegenüber DRINK_LIPS: etwas tiefer, zur Mitte, vor die Lippen) und wie die Hand dort steht
+const FORK_TIP_AT_LIPS := Vector3(0.02, -0.024, 0.01)
+const FORK_FINGERS_AT_MOUTH := Vector3(1.0, 0.85, -0.25)
+const FORK_BACK_AT_MOUTH := Vector3(0.0, 0.8, 0.6)
 const DRINK_LIPS := Vector3(0.0, 0.05, 0.16)
 const DRINK_TILT_DEG := 55.0
 ## Hände greifen etwas (0…1; rechts: Gegenstand in der Hand, beide beim Fegen) – Finger krümmen sich
@@ -216,20 +219,32 @@ func _process_modification_with_delta(_delta: float) -> void:
 			var head := skeleton.find_bone("Head")
 			var neck := skeleton.get_bone_global_pose(head).origin if head >= 0 else Vector3(0.0, 1.1, 0.0)
 			var lips := neck + DRINK_LIPS * body_scale
-			var at_mouth := lips + (FORK_AT_MOUTH if drink_fork else MUG_AT_MOUTH)
-			var rest := drink_rest + (FORK_AT_TABLE if drink_fork else MUG_AT_TABLE) if drink_has_rest \
-				else Vector3(-0.16 * body_scale, neck.y - 0.42 * body_scale, 0.3 * body_scale)
 			var e := smoothstep(0.0, 1.0, sip)
-			var target := rest.lerp(at_mouth, e) + Vector3(0.0, 0.05 * sin(e * PI), 0.0)
-			_reach(skeleton, "Right", target, Vector3(-0.55, -0.85, 0.05), w)
 			# Daumen oben: am Tisch Finger nach vorn (Handfläche zum Becher), am Mund Finger zur Mitte (Handrücken nach vorn);
 			# beim Trinken kippt der Handrücken nach oben – der Becherrand geht an die Lippen
-			# (Gabel: am Mund Handrücken unten – die Faust liegt waagerecht, die Zinken zeigen zum Mund)
-			var fingers := Vector3(0.15, 0.0, 1.0).normalized().slerp(Vector3(1.0, 0.0, 0.3).normalized(), e)
-			var back_high := Vector3(0.0, -1.0, 0.2) if drink_fork else Vector3(0.0, 0.0, 1.0)
-			var back := Vector3(-1.0, 0.0, 0.1).normalized().slerp(back_high.normalized(), e)
+			# (Gabel: Handfläche immer unten, Daumen zur Körpermitte – am Teller Finger nach vorn-unten, am Mund schräg hinauf zur
+			# Mitte, die Hand bleibt rechts unterhalb des Munds)
+			var fingers_low := Vector3(0.0, -0.35, 1.0) if drink_fork else Vector3(0.15, 0.0, 1.0)
+			var back_low := Vector3(0.0, 1.0, 0.0) if drink_fork else Vector3(-1.0, 0.0, 0.1)
+			var fingers_high := FORK_FINGERS_AT_MOUTH if drink_fork else Vector3(1.0, 0.0, 0.3)
+			var back_high := FORK_BACK_AT_MOUTH if drink_fork else Vector3(0.0, 0.0, 1.0)
+			var fingers := fingers_low.normalized().slerp(fingers_high.normalized(), e)
+			var back := back_low.normalized().slerp(back_high.normalized(), e)
 			var a := deg_to_rad(DRINK_TILT_DEG) * drink_tilt
 			back = (back * cos(a) + Vector3.UP * sin(a)).normalized()
+			var target: Vector3
+			if drink_fork:
+				# Die Gabelspitze geht vom Kuchen zum Mund; das Handgelenk folgt aus der Handstellung (Lage der Spitze in der
+				# Hand aus GameConfig.passerby_prop_hold) – so trifft die Spitze den Mund, wie die Hand auch gedreht ist
+				var cake := drink_rest + Vector3(0.0, 0.02, 0.0) if drink_has_rest else Vector3(-0.1 * body_scale, neck.y - 0.35 * body_scale, 0.3 * body_scale)
+				var tip := cake.lerp(lips + FORK_TIP_AT_LIPS, e) + Vector3(0.0, 0.05 * sin(e * PI), 0.0)
+				target = tip - _hand_basis(fingers, back) * fork_tip_in_hand()
+			else:
+				var at_mouth := lips + MUG_AT_MOUTH
+				var rest := drink_rest + MUG_AT_TABLE if drink_has_rest \
+					else Vector3(-0.16 * body_scale, neck.y - 0.42 * body_scale, 0.3 * body_scale)
+				target = rest.lerp(at_mouth, e) + Vector3(0.0, 0.05 * sin(e * PI), 0.0)
+			_reach(skeleton, "Right", target, Vector3(-0.55, -0.85, 0.05), w)
 			_orient_hand_along(skeleton, skeleton.find_bone("RightHand"), fingers, back, w)
 		Gesture.TALK:
 			# erzählen: Unterarme vor dem Bauch, Hände bewegen sich ruhig
@@ -244,6 +259,19 @@ func _process_modification_with_delta(_delta: float) -> void:
 
 
 ## Finger krümmen (um einen Stiel oder Griff): die Fingerglieder gegenüber der Ruhehaltung einknicken, der Daumen weniger.
+## Achsen einer Hand aus Fingerrichtung und Handrücken (wie _orient_hand_along: +Y Finger, +Z Handrücken, X = Y × Z).
+static func _hand_basis(fingers: Vector3, back: Vector3) -> Basis:
+	var y := fingers.normalized()
+	var z := (back - y * y.dot(back)).normalized()
+	return Basis(y.cross(z), y, z)
+
+
+## Lage der Gabelspitze (Mitte der Zinken) im Raum der Hand – aus GameConfig.passerby_prop_hold "fork" und make_fork.
+static func fork_tip_in_hand() -> Vector3:
+	var hold: Dictionary = GameConfig.passerby_prop_hold.get("fork", {})
+	return Vector3(hold.get("pos", Vector3.ZERO)) + (hold.get("basis", Basis()) as Basis).y * 0.13
+
+
 func _grip(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
 	for finger: String in ["Index", "Middle", "Ring", "Little"]:
 		for joint: String in ["Proximal", "Intermediate", "Distal"]:

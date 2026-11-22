@@ -1572,7 +1572,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   `Skeleton3D.skeleton_updated` gesetzt (nach allen Modifikatoren). **Trinken/Essen** im Pub als Ablauf (`ChibiPasserbyModel.
   take_sip(table, table_prop, kind)`, `SIP_TIMES`/`BITE_TIMES`: greifen, Bogen zum Mund, Becher kippt `drink_tilt`, Kopf zurück,
   abstellen; Becher am Henkel `passerby_prop_hold`, Gabel `make_fork`; Daumen krümmt sich um -Z `thumb_axis`), Bilder
-  `pose_probe -- drink|eat|thumb`. **Ladenschilder** malt `scenes/tools/make_signs.tscn` (`scripts/tools/make_signs.gd`, xvfb,
+  `pose_probe -- drink|eat|thumb` (eat mit rotem Zielpunkt am Mund). **Gabel wie echt gehalten** (Beschreibung der Entwicklerin):
+  Handfläche unten, Daumen zur Körpermitte, Finger biegen sich nach unten um den Stiel, die Gabel liegt schräg in der Hand; die
+  Spitze wandert vom Kuchen zu `FORK_TIP_AT_LIPS`, das Handgelenk wird aus der Handstellung zurückgerechnet (`_hand_basis`,
+  `fork_tip_in_hand`), am Mund Finger schräg hinauf (`FORK_FINGERS_AT_MOUTH`) – die Faust bleibt rechts unterhalb des Munds. **Ladenschilder** malt `scenes/tools/make_signs.tscn` (`scripts/tools/make_signs.gd`, xvfb,
   `-- preview` = nur screenshots/signs/): Ale & Amber (Cinzel Decorative), Violetta's Flowers (Great Vibes + Cormorant), The Yarn
   Barn (Fraunces), Five O'Clock (Cormorant Italic + Cinzel), The Golden Crust (Bäckerei, Lobster, `BAKERY_NAME`) – auf
   ausdrücklichen Wunsch der Entwicklerin; Bilder, die sie selbst malt, nie überschreiben. **Hauptmenü:** fliegende Bücher um den
