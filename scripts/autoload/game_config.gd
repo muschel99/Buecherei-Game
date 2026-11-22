@@ -344,9 +344,9 @@ var passerby_prop_hold: Dictionary = {
 	"mug": {"pos": Vector3(0.045, 0.12, -0.02), "basis": Basis(Vector3(0, 0, 1), Vector3(-1, 0, 0), Vector3(0, -1, 0)), "scale": 1.0},
 	"cup": {"pos": Vector3(0.045, 0.12, -0.02), "basis": Basis(Vector3(0, 0, 1), Vector3(-1, 0, 0), Vector3(0, -1, 0)), "scale": 1.0},
 	"cake": {"pos": Vector3(-0.02, 0.05, -0.05), "basis": Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(-1, 0, 0)), "scale": 0.5},
-	# Kuchengabel (seit dem zweiten Nachtest der Überarbeitung, ChibiPasserbyModel.make_fork): Stiel in der Faust, Spitze zur
-	# Handfläche (-z) und etwas zum Daumen (-x) – am Mund zeigt sie zu den Lippen
-	"fork": {"pos": Vector3(-0.005, 0.045, -0.02), "basis": Basis(Vector3(0, 1, 0), Vector3(-0.42, 0, -0.91).normalized(), Vector3(-0.91, 0, 0.42).normalized()), "scale": 1.0},
+	# Kuchengabel (seit dem zweiten Nachtest der Überarbeitung, ChibiPasserbyModel.make_fork): quer durch die Faust, das Stielende
+	# schaut an der Daumenseite heraus, die Zinken an der Kleinfinger-Seite (+x), leicht in Fingerrichtung geneigt
+	"fork": {"pos": Vector3(-0.033, 0.055, -0.025), "basis": Basis(Vector3(0, 0, 1), Vector3(0.954, 0.301, 0), Vector3(-0.301, 0.954, 0)), "scale": 1.0},
 	# Bücherei (seit Etappe 7): Buch flach in der Hand, Leseausweis zwischen Daumen und Fingern
 	"book": {"pos": Vector3(0.0, 0.07, -0.035), "basis": Basis.IDENTITY, "scale": 1.0},
 	"card": {"pos": Vector3(0.0, 0.07, -0.022), "basis": Basis.IDENTITY, "scale": 1.0},

@@ -359,6 +359,15 @@ func _go():
 			m._gesture_modifier.gesture = ChibiGestureModifier.Gesture.DRINK
 			m._gesture_modifier.weight = 1.0
 			var times := [0.6, 1.0, 1.4, 1.9, 2.6] if kind == &"mug" else [0.6, 0.9, 1.3, 2.0, 2.8]
+			if kind == &"cake":
+				# roter Punkt: wohin die Gabelspitze am Mund soll (Lippen aus ChibiGestureModifier, etwas tiefer)
+				var marker := MeshInstance3D.new(); var ball := SphereMesh.new(); ball.radius = 0.006; ball.height = 0.012
+				marker.mesh = ball; var red := StandardMaterial3D.new(); red.albedo_color = Color.RED; red.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				marker.material_override = red; add_child(marker)
+				var sk: Skeleton3D = m._skeleton
+				var neck := sk.get_bone_global_pose(sk.find_bone("Head")).origin
+				var lips: Vector3 = neck + ChibiGestureModifier.DRINK_LIPS * (m._hip_height / 0.607) + Vector3(0.02, -0.024, 0.01)
+				marker.global_position = sk.global_transform * lips
 			for t: float in times:
 				m._sip_t = t
 				m._update_sip()

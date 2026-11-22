@@ -58,8 +58,11 @@ var drink_fork := false
 ## Lage des Bechers in der Hand (GameConfig.passerby_prop_hold "mug"); Lippen vor dem großen Kopf (× body_scale)
 const MUG_AT_TABLE := Vector3(-0.02, 0.045, -0.12)
 const MUG_AT_MOUTH := Vector3(-0.12, -0.045, 0.055)
-const FORK_AT_TABLE := Vector3(-0.064, 0.16, -0.045)
-const FORK_AT_MOUTH := Vector3(-0.045, -0.064, 0.157)
+## Gabel quer in der Faust, Zinken an der Kleinfinger-Seite (GameConfig.passerby_prop_hold "fork"): am Teller Daumen oben –
+## die Zinken zeigen in den Kuchen; am Mund Handfläche oben, Kleinfinger zum Gesicht – die Zinken zeigen zum Mund (seit dem
+## Nachtest: vorher ragte die Gabel aus der Handfläche, der Arm war gestreckt und die Spitze landete an der Nase)
+const FORK_AT_TABLE := Vector3(-0.04, 0.12, -0.09)
+const FORK_AT_MOUTH := Vector3(-0.1, -0.03, 0.085)
 const DRINK_LIPS := Vector3(0.0, 0.05, 0.16)
 const DRINK_TILT_DEG := 55.0
 ## Hände greifen etwas (0…1; rechts: Gegenstand in der Hand, beide beim Fegen) – Finger krümmen sich
@@ -221,11 +224,10 @@ func _process_modification_with_delta(_delta: float) -> void:
 			_reach(skeleton, "Right", target, Vector3(-0.55, -0.85, 0.05), w)
 			# Daumen oben: am Tisch Finger nach vorn (Handfläche zum Becher), am Mund Finger zur Mitte (Handrücken nach vorn);
 			# beim Trinken kippt der Handrücken nach oben – der Becherrand geht an die Lippen
-			# (Gabel: am Teller Handrücken oben – die Spitze zeigt hinunter auf den Kuchen)
-			var fingers_low := Vector3(0.1, -0.2, 1.0) if drink_fork else Vector3(0.15, 0.0, 1.0)
-			var back_low := Vector3(0.0, 1.0, 0.0) if drink_fork else Vector3(-1.0, 0.0, 0.1)
-			var fingers := fingers_low.normalized().slerp(Vector3(1.0, 0.0, 0.3).normalized(), e)
-			var back := back_low.normalized().slerp(Vector3(0.0, 0.0, 1.0), e)
+			# (Gabel: am Mund Handrücken unten – die Faust liegt waagerecht, die Zinken zeigen zum Mund)
+			var fingers := Vector3(0.15, 0.0, 1.0).normalized().slerp(Vector3(1.0, 0.0, 0.3).normalized(), e)
+			var back_high := Vector3(0.0, -1.0, 0.2) if drink_fork else Vector3(0.0, 0.0, 1.0)
+			var back := Vector3(-1.0, 0.0, 0.1).normalized().slerp(back_high.normalized(), e)
 			var a := deg_to_rad(DRINK_TILT_DEG) * drink_tilt
 			back = (back * cos(a) + Vector3.UP * sin(a)).normalized()
 			_orient_hand_along(skeleton, skeleton.find_bone("RightHand"), fingers, back, w)
