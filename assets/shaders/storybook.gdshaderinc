@@ -46,6 +46,10 @@ instance uniform vec4 wall_color : source_color = vec4(1.0);
 instance uniform vec4 door_color : source_color = vec4(1.0);
 instance uniform vec4 accent_color : source_color = vec4(1.0);
 instance uniform int wall_layer = -1;
+// Ladenlicht (seit dem zweiten Nachtest der Überarbeitung, ShopGlow): -1 = kein Laden; sonst 0 = Licht aus (Verkäufer nicht
+// da) … 1 = an. Gilt nur fürs Erdgeschoss (bis SHOP_FLOOR_TOP über dem Modell) – oben wohnen Leute (window_glow wie sonst).
+instance uniform float shop_lit = -1.0;
+const float SHOP_FLOOR_TOP = 3.0;
 #endif
 
 // Wind (Markisenstoff): so weit (m) schwingt der Stoff; wie stark jede Ecke mitgeht, steht im
@@ -488,6 +492,12 @@ global uniform vec3 library_area_min;
 global uniform vec3 library_area_max;
 
 float window_glow(float g, vec3 wpos, vec3 origin) {
+#ifndef REST_POSITION
+	if (shop_lit >= 0.0 && wpos.y - origin.y < SHOP_FLOOR_TOP) {
+		// Laden: an, solange jemand da ist (tagsüber etwas heller als sonst, nachts wie die hellen Fenster), sonst fast dunkel
+		return g * mix(0.04, mix(1.15, night_glow_boost * 1.1, night_glow), shop_lit);
+	}
+#endif
 	if (g <= 0.0 || night_glow <= 0.001) {
 		return g;
 	}

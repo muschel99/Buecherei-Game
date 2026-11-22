@@ -160,6 +160,10 @@ const SQUEEZE_TIME := 2.5
 var _why := ""
 ## > 0: feste Hindernisse (Laternen, Kübel) halten gerade nicht auf (Sekunden, siehe WEDGED_TIME).
 var ghost_static := 0.0
+## Stau-Wächter (StreetUnblock, seit dem zweiten Nachtest der Überarbeitung): an diesen Figuren/Katzen darf man gerade vorbei-
+## schlüpfen (Figur → Sekunden); making_way = tritt gerade beiseite und wartet, bis jemand vorbei ist.
+var pass_agents: Dictionary = {}
+var making_way := false
 ## Plaudern (seit Etappe 6c): laufende Runde (ChatSession) und Pause bis zum nächsten Plausch
 var chat: ChatSession
 var chat_cooldown := 0.0
@@ -420,6 +424,47 @@ func get_action() -> Dictionary:
 	return _action
 
 
+## Wohin ich gerade gehen will (Richtung auf dem Weg; ZERO = kein Weg) – für den Stau-Wächter.
+func wanted_dir() -> Vector2:
+	if _route == null:
+		return Vector2.ZERO
+	return (_route.direction_at(_s) * float(_dir)).normalized()
+
+
+## Beiseite treten (Stau-Wächter, seit dem zweiten Nachtest der Überarbeitung): zur Stelle aside, dort warten, bis for_agent
+## vorbei ist (oder höchstens MAKE_WAY_WAIT Sekunden), dann zurück an den alten Platz und weiter wie vorher.
+func make_way(aside: Vector2, for_agent: Node3D) -> void:
+	var back := pos
+	var current := _action.duplicate()
+	var passed_from := pos
+	var start := Time.get_ticks_msec()
+	making_way = true
+	var steps: Array[Dictionary] = [_short_walk(pos, aside)]
+	steps.append({"type": "wait", "anim": &"idle", "until": func(me: Passerby) -> bool:
+		if not is_instance_valid(for_agent) or (for_agent is Passerby and not (for_agent as Passerby).active):
+			return true
+		var there := life.to_local2(for_agent.global_position)
+		var waited := (Time.get_ticks_msec() - start) / 1000.0
+		return waited > MAKE_WAY_WAIT or there.distance_to(passed_from) > 1.1 or there.distance_to(me.pos) > 1.6})
+	steps.append(_short_walk(aside, back))
+	steps.append({"type": "call", "callable": func(me: Passerby) -> Array:
+		me.making_way = false
+		return []})
+	steps.append(current)
+	steps.append_array(_actions)
+	_actions = steps
+	_next_action()
+
+
+const MAKE_WAY_WAIT := 4.5
+
+
+## Ein kurzer, fester Weg von a nach b (beiseite treten und zurück).
+func _short_walk(a: Vector2, b: Vector2) -> Dictionary:
+	var route := StreetRoute.from_points(PackedVector2Array([a, b]), GameConfig.passerby_short_path_half_width)
+	return {"type": "walk", "route": route, "to": route.length(), "fixed_path": true, "make_way": true}
+
+
 ## Laufrichtung auf dem aktuellen Weg (1 = s wächst).
 func get_direction() -> int:
 	return _dir
@@ -480,6 +525,11 @@ func step(delta: float) -> void:
 		return
 	chat_cooldown = maxf(0.0, chat_cooldown - delta)
 	pet_cooldown = maxf(0.0, pet_cooldown - delta)
+	if not pass_agents.is_empty():
+		for agent: Variant in pass_agents.keys():
+			pass_agents[agent] = float(pass_agents[agent]) - delta
+			if float(pass_agents[agent]) <= 0.0 or not is_instance_valid(agent):
+				pass_agents.erase(agent)
 	_talk_check -= delta
 	if _talk_check <= 0.0 and _talk_interactable:
 		_talk_check = 0.25
@@ -1489,9 +1539,10 @@ func begin_seated(spot: Vector2, face: Vector2, height: float, start_floor: floa
 
 
 ## Im Sitzen einen Schluck trinken oder essen (StreetHomes).
-func take_sip() -> void:
+## Ein Schluck bzw. zwei Bissen am Tisch (table = wo Becher/Teller steht, table_prop = das Ding darauf, kind = mug/cup/cake).
+func take_sip(table := Vector3.INF, table_prop: Node3D = null, kind := &"mug") -> void:
 	if _model and _model.has_method("take_sip"):
-		_model.call("take_sip")
+		_model.call("take_sip", table, table_prop, kind)
 		_model.call("trigger_face", &"sip")
 
 
@@ -1621,7 +1672,9 @@ func _walk_along(delta: float, want: float) -> void:
 		# Schaufenster): beide drücken sich Schulter an Schulter aneinander vorbei (seit Etappe 6j – vorher standen
 		# sie sich bis zu 6 s gegenüber und einer drehte um)
 		_stand_off += delta
-		if _stand_off > SQUEEZE_AFTER:
+		# wer gerade durch eine Tür geht, sich setzt oder einkauft, ist gleich fertig: abwarten statt sich vorbeizudrücken
+		var front_busy := _front_walker.get_action_type() in StreetUnblock.BUSY_TYPES
+		if _stand_off > SQUEEZE_AFTER and not front_busy:
 			squeeze = SQUEEZE_TIME
 			_front_walker.squeeze = SQUEEZE_TIME
 			_stand_off = 0.0
@@ -1684,6 +1737,8 @@ func _avoid(want: float, band: Vector2) -> float:
 			continue  # mit dem Begleiter stimmt man sich selbst ab (nebeneinander)
 		if obstacle.kind == "static" and _action.get("fixed_path", false):
 			continue  # fester kurzer Weg zur Tür: er ist so gebaut, dass er passt (Kreise daneben bremsen nicht)
+		if not pass_agents.is_empty() and pass_agents.has(obstacle.get("agent")):
+			continue  # Stau-Wächter: an dieser Figur/Katze schlüpft man gerade vorbei
 		var lage := _route.project(obstacle.pos, _s - 2.0, _s + 2.0 + LOOK_AHEAD) if _dir > 0 \
 			else _route.project(obstacle.pos, _s - 2.0 - LOOK_AHEAD, _s + 2.0)
 		var along := (lage.x - _s) * _dir

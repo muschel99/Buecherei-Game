@@ -1963,7 +1963,7 @@ Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitun
   Stottern bei 60–144 Bildern pro Sekunde, z. B. beim Umkreisen eines Passanten); Musik lädt das nächste Stück im Hintergrund
 - [x] **Ruckel-Protokoll:** lange Bilder werden mit Ursache in `hitches.log` notiert (Hänger von ein paar Sekunden finden)
 - [x] **Licht und Farbe:** Bilderbuch-Farbabstimmung (warme Lichter, Lavendel-Schatten, weiche Tiefen), Dunst in der Ferne,
-  Lichtstrahlen im Laden, leichte Tiefenunschärfe, Gehwege weniger grell
+  Lichtstrahlen im Laden, Gehwege weniger grell (Tiefenunschärfe seit dem zweiten Nachtest wieder aus)
 - [x] **Herbst** (erste Jahreszeit, Einstellung „Jahreszeit“): Laub färbt sich, Efeu wie wilder Wein, fallende Blätter (landen
   auf Straße, Dächern, Rasen), Laub am Bordstein und an Hauswänden, wirbelt beim Durchlaufen auf, Kürbisse, Hauptmenü im Herbst
 - [x] **Bücherei alt, aber liebenswert:** kleine Putzreste und Moos statt großer heller Flecken
@@ -1980,6 +1980,23 @@ Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitun
   50 cm weiter vorn; erster Tag im Tutorial bleibt hell, bis „Schlafen gehen“ dran ist; keine Hervorhebung von Möbeln beim
   Umschauen; Bedienen: „E Bedienen“ am Gast, Kamera schwenkt vom Gesicht hinunter, Gast lächelt nur, Korb fehlt nicht mehr, kein Gast
   geht mehr mit Korb und Büchern hinaus, ganzer Bücherstapel anklickbar
+- [x] **Zweiter Nachtest (Liste der Entwicklerin, 22.11.2026):**
+  - [x] Ladebildschirm: lädt im Hintergrund, das Buch blättert durchgehend (auch wenn die Grafikkarte noch vorbereitet)
+  - [x] Hauptmenü mit Büchern: fliegende Bücher schlagen um den Baum mit den Deckeln, lose Seiten segeln, Zettel als Leihkarte
+    in einer Buchtasche mit Rückgabe-Stempeln
+  - [x] Nichts leuchtet mehr beim Anschauen (Türen, Rückgabekasten, Kartons …)
+  - [x] Kürbisse stehen an den Hauswänden, nie mitten auf dem Gehweg
+  - [x] Verkäufer gehen abends aus ihren Läden die Straße entlang nach Hause und kommen morgens wieder
+  - [x] Ladenlicht: an, solange jemand im Laden ist (tagsüber sanft, abends warm bis 22 Uhr), sonst aus
+  - [x] Trinken und Essen im Pub: zum Becher greifen, am Henkel zum Mund, trinken (Becher kippt), abstellen; Kuchen mit Gabel
+  - [x] Sonne schwächer; keine Tiefenunschärfe mehr (auch kein unscharfer Himmel)
+  - [x] Tragetaschen hängen fest an der Hand
+  - [x] Bedienen: frei umschauen, Aktionen mit dem Punkt in der Bildmitte, kein Kameraschwenk; Korb nie auf der Theke (steht
+    am Boden), Ausweis an der Stelle des Korbs
+  - [x] Stau-Wächter: wer feststeckt, dem tritt jemand aus dem Weg (Passanten und Katzen), sonst schlüpfen sie vorbei
+  - [x] Ladenschilder neu gemalt mit eigenen Schriften: Ale & Amber, Violetta's Flowers, The Yarn Barn, Five O'Clock, Bäckerei
+    (Name vorläufig „Rise & Shine“)
+  - [x] Kein Lichtfleck mehr vor den Fenstern der Bücherei
 - [ ] Nächste Ideen: Innenraum gemütlicher (Startzustand), weitere Jahreszeiten (Winter, Frühling), Wetter
 
 ## Etappe 9 – Café

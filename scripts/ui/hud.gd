@@ -119,6 +119,10 @@ func _current_hints() -> Array:
 	var player := get_tree().get_first_node_in_group(&"player") as Player
 	if player and is_instance_valid(player.held_toy):
 		return [{"input": "interact", "word": "Werfen"}]
+	# Beim Bedienen an der Theke (CounterDesk): was ein Linksklick auf das Ding in der Bildmitte tut
+	var desk := get_tree().get_first_node_in_group(CounterDesk.GROUP)
+	if desk:
+		return desk.current_hints()
 	if not is_instance_valid(_target):
 		return []
 	var hints := []

@@ -1,11 +1,13 @@
 class_name CounterDesk
 extends Node3D
-## Theken-Ansicht (seit Etappe 8; seit dem Nachtest von Etappe 8 neu aufgeteilt, Wünsche der Entwicklerin). E „Bedienen“ hinter
-## der Theke, wenn ein Gast wartet: Die Kamera rückt weich heran – mittig hinter der Theke, gerade nach vorn, der untere Bildrand
-## liegt an der Thekenkante (_view_transform). Die Maus ist frei, alles geht mit Klicks, jeder Handgriff mit Geräusch und Bewegung.
+## Bedienen an der Theke (seit Etappe 8; seit dem zweiten Nachtest der Überarbeitung ohne eigene Kamera, Wunsch der Entwicklerin:
+## „ich möchte mich beim Bedienen umschauen können“). E „Bedienen“ am wartenden Gast: Die Spielfigur rückt weich an ihren Platz
+## mittig hinter der Theke und bleibt dort stehen, umschauen geht frei mit der Maus. Was in der Bildmitte (Punkt) liegt und gerade
+## dran ist, hebt sich ein wenig – Linksklick führt den Handgriff aus (Tastensymbol unter dem Punkt, current_hints).
 ## Aufteilung der Theke aus Sicht der Spielfigur (rechts = -X im Raum der Theke):
 ##   rechts  Tablet auf dem Ständer, links daneben der Kartenleser (ShopTablet, verschiebbares Möbel – Standardplatz in der Szene)
-##           Korb des Gasts (LibraryVisits stellt ihn auf BASKET), davor seine Bücher als Stapel (BOOKS)
+##           Ausweis des Gasts auf der Kundenseite (CARD_START, wo früher der Korb stand), davor seine Bücher als Stapel (BOOKS);
+##           den Korb stellt der Gast vor der Theke auf den Boden (LibraryVisits) – nie auf die Theke
 ##   Mitte   Scanner, um 90° gedreht (SCANNER, Modell in counter.tscn)
 ##   links   offene Papiertüte (BAG), daneben ein Stapel gefalteter Tüten (counter.tscn)
 ## Ablauf:
@@ -14,9 +16,9 @@ extends Node3D
 ##   2. Bücher anklicken (immer das oberste): von rechts nach links über den Scanner (Piep), dann in die Tüte
 ##   3. Tüte anklicken: sie rutscht dem Gast hinüber (er trägt sie hinaus), der Korb gleitet unten rechts aus dem Bild –
 ##      hinter die Theke – und es macht „Kaching“
-## Danach rückt der nächste Gast nach oder die Ansicht endet. Esc oder eine Lauftaste (W A S D) verlässt sie vorher (der Gast
-## wartet, Erledigtes bleibt). Kommt ein Gast neu an die Reihe, schaut die Kamera erst zu ihm hoch und er grüßt (lächelt, nickt,
-## winkt manchmal), dann geht der Blick hinunter auf die Theke (_look_at_guest_then_desk; Wunsch nach dem Test von 8b).
+## Danach rückt der nächste Gast nach oder das Bedienen endet. Esc oder eine Lauftaste (W A S D) beendet es vorher (der Gast
+## wartet, Erledigtes bleibt). Kommt ein Gast neu an die Reihe, lächelt er; wohin man schaut, entscheidet man selbst (keine
+## Kameraschwenks mehr). Das Prüfwerkzeug desk_probe benutzt weiter eine feste Kamera (_view_transform).
 ## Hängt an der Theke (Lagen im Raum der Theke, Platte bei Counter.TOP_HEIGHT; Spielfigur -Z, Gäste +Z).
 
 enum Step { CARD, READING, SCAN, BAG, DONE }
@@ -26,15 +28,18 @@ const BAG_MODEL := "res://assets/models/characters/props/library_bag_empty.glb"
 ## Lagen auf der Platte (y = 0 ist die Oberkante der Platte)
 const SCANNER := Vector3(0.1, 0.0, -0.04)
 const BAG := Vector3(0.36, 0.0, -0.03)
-const BASKET := Vector3(-0.3, 0.0, 0.2)
 const BOOKS := Vector3(-0.12, 0.0, -0.06)
-const CARD_START := Vector3(-0.42, 0.0, 0.06)
+## Ausweis (seit dem zweiten Nachtest der Überarbeitung dort, wo früher der Korb stand)
+const CARD_START := Vector3(-0.3, 0.0, 0.17)
+## Von hier (Kundenseite, unter der Kante – aus dem Korb am Boden) heben sich die Bücher auf den Stapel
+const BOOKS_FROM := Vector3(-0.2, -0.35, 0.5)
 ## Griffpunkt der Tüte über ihrer Unterkante (build_storybook_bags.py: HANG + LIB_HEIGHT) und Innenmaße (quer zur Spielfigur, tief)
 const BAG_DROP := 0.335
 const BAG_INSIDE := Vector2(0.255, 0.175)
-## Wohin der Korb am Ende gleitet (unten rechts aus dem Bild, hinter die Theke) und wohin die Tüte zum Gast rutscht
-const BASKET_OUT := Vector3(-0.75, -0.5, -0.7)
+## Wohin die Tüte zum Gast rutscht
 const BAG_TO_GUEST := Vector3(0.3, 0.0, 0.46)
+## Gruppe, solange bedient wird (HUD fragt current_hints)
+const GROUP := &"counter_desk_open"
 ## Vordere Thekenkante auf der Seite der Spielfigur (z) – dort liegt der untere Bildrand
 const NEAR_EDGE := -0.32
 
@@ -57,9 +62,9 @@ var _books: Array[Dictionary] = []   # {node, book, scanned}
 var _hover: Node3D
 var _progress := {}                  # Gast → {"read": bool, "bonus": bool, "scanned": Array[Book]}
 var _tween: Tween
-var _cam_tween: Tween                # Kamera: zum Gast schauen, grüßen, hinunter auf die Theke
-var _greeting := false               # Kamera schaut gerade zum Gast (dann keine Klicks)
-var _moving := false                 # Kamera fährt gerade (dann nicht nachführen)
+var _walk_tween: Tween               # Spielfigur rückt an ihren Platz hinter der Theke
+var _unpacking := 0                  # laufende Bewegungen beim Hinlegen (Ausweis, Bücher) – solange keine Klicks
+var _unpack_tweens: Array[Tween] = []
 var _preview := false                # Prüfwerkzeug: ohne Gast (debug_preview)
 var _preview_books: Array[Book] = []
 
@@ -99,62 +104,37 @@ func open(guest: Passerby) -> void:
 	if _player:
 		_player.set("movement_enabled", false)
 		_player.set("interaction_enabled", false)
+		_step_to_service_spot()
+	add_to_group(GROUP)
 	MenuStack.open(self)
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	# weich heranrücken: von der Spielfigur-Kamera zur Theken-Ansicht
-	_camera.global_transform = _player_camera.global_transform if _player_camera else _view_transform()
-	_camera.fov = _player_camera.fov if _player_camera else _view_fov()
-	_camera.make_current()
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED  # umschauen wie sonst auch
 	_kill_tween()
 	if tablet:
 		tablet.show_loan(true)
 	Tutorial.report("desk_open")
 	_show_steps_note()
 	_begin_guest()
-	_look_at_guest_then_desk()
+	_greet_guest()
 
 
-## Kamera: Ist der Gast neu an der Reihe, erst zu ihm hoch (er lächelt), dann weich hinunter auf die Theke – sonst gleich
-## auf die Theke (z. B. nach Esc und wieder „Bedienen“ beim selben Gast).
-func _look_at_guest_then_desk() -> void:
-	if _cam_tween and _cam_tween.is_valid():
-		_cam_tween.kill()
-	_moving = true
-	_cam_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	var progress: Dictionary = _progress.get(walker, {})
-	if walker and not bool(progress.get("greeted", false)):
-		progress["greeted"] = true
-		_greeting = true
-		# Der Gast lächelt gleich, während die Kamera auf seinem Gesicht ankommt (beim Öffnen schaut die Spielfigur ihn ohnehin
-		# schon an), dann schwenkt sie weich hinunter auf die Theke
-		var turn := GameConfig.desk_greet_turn_time
-		_greet_guest()
-		_cam_tween.tween_property(_camera, "global_transform", _guest_view_transform(), turn)
-		_cam_tween.tween_property(_camera, "fov", _guest_view_fov(), turn)
-		_cam_tween.chain().tween_interval(GameConfig.desk_greet_hold_time)
-		_cam_tween.chain().tween_callback(func() -> void: _greeting = false)
-		_cam_tween.chain().tween_property(_camera, "global_transform", _view_transform(), GameConfig.desk_camera_time)
-	else:
-		_cam_tween.tween_property(_camera, "global_transform", _view_transform(), GameConfig.desk_camera_time)
-	_cam_tween.tween_property(_camera, "fov", _view_fov(), GameConfig.desk_camera_time)
-	_cam_tween.chain().tween_callback(func() -> void:
-		_moving = false
-		_greeting = false)
+## Die Spielfigur rückt weich an ihren Platz mittig hinter der Theke (nur die Lage – der Blick bleibt, wohin sie schaut).
+func _step_to_service_spot() -> void:
+	var body := _player as Node3D
+	var spot := counter.global_transform * Vector3(GameConfig.desk_camera_eye.x, 0.0, GameConfig.desk_camera_eye.z)
+	spot.y = body.global_position.y
+	if body.global_position.distance_to(spot) < 0.05:
+		return
+	if _walk_tween and _walk_tween.is_valid():
+		_walk_tween.kill()
+	_walk_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_walk_tween.tween_property(body, "global_position", spot, GameConfig.desk_step_time)
 
 
-## Blick vom Platz hinter der Theke zum Gesicht des Gasts (gleiche Augenhöhe wie die Theken-Ansicht).
-func _guest_view_transform() -> Transform3D:
-	var view := _view_transform()
-	var face: Vector3 = walker.talk_focus() if walker else view.origin + view.basis.z * -1.0
-	return Transform3D(Basis.looking_at(face - view.origin, Vector3.UP), view.origin)
-
-
-func _guest_view_fov() -> float:
-	return _player_camera.fov if _player_camera and is_instance_valid(_player_camera) else 60.0
-
-
+## Ist der Gast neu an der Reihe, lächelt er der Spielfigur zu (je Gast einmal).
 func _greet_guest() -> void:
-	if walker and is_instance_valid(walker):
+	var progress: Dictionary = _progress.get(walker, {})
+	if walker and is_instance_valid(walker) and not bool(progress.get("greeted", false)):
+		progress["greeted"] = true
 		walker.smile_at_player()  # nur lächeln (Wunsch der Entwicklerin: kein Nicken, kein Winken)
 
 
@@ -170,16 +150,14 @@ func close_from_escape() -> void:
 
 
 func restore_mouse_mode() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _close() -> void:
 	if not is_open:
 		return
 	is_open = false
-	_greeting = false
-	if _cam_tween and _cam_tween.is_valid():
-		_cam_tween.kill()
+	remove_from_group(GROUP)
 	MenuStack.close(self)
 	_clear_props()
 	if _steps_note:
@@ -188,18 +166,9 @@ func _close() -> void:
 	if tablet and is_instance_valid(tablet):
 		tablet.show_loan(false)
 	_kill_tween()
-	var back := _player_camera
-	if back and is_instance_valid(back):
-		_moving = true
-		_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		_tween.tween_property(_camera, "global_transform", back.global_transform, GameConfig.desk_camera_time * 0.8)
-		_tween.tween_property(_camera, "fov", back.fov, GameConfig.desk_camera_time * 0.8)
-		_tween.chain().tween_callback(func() -> void:
-			_moving = false
-			back.make_current()
-			_give_back_player())
-	else:
-		_give_back_player()
+	if _walk_tween and _walk_tween.is_valid():
+		_walk_tween.kill()
+	_give_back_player()
 	walker = null
 
 
@@ -210,7 +179,7 @@ func _give_back_player() -> void:
 	MenuStack.restore_mouse_mode()
 
 
-## Sichtfeld (oben/unten) so, dass links und rechts GameConfig.desk_camera_hfov Grad zu sehen sind – bei jedem Bildformat.
+## Prüfwerkzeug (desk_probe): Sichtfeld (oben/unten) so, dass links und rechts GameConfig.desk_camera_hfov Grad zu sehen sind.
 func _view_fov() -> float:
 	var view := get_viewport().get_visible_rect().size
 	var aspect := view.x / maxf(view.y, 1.0)
@@ -218,7 +187,8 @@ func _view_fov() -> float:
 	return rad_to_deg(2.0 * atan(tan(half_h) / aspect))
 
 
-## Mittig hinter der Theke, gerade nach vorn; so weit nach unten geneigt, dass der untere Bildrand genau an der Thekenkante liegt.
+## Prüfwerkzeug (desk_probe): mittig hinter der Theke, gerade nach vorn; so weit nach unten geneigt, dass der untere Bildrand
+## genau an der Thekenkante liegt.
 func _view_transform() -> Transform3D:
 	var top := Counter.TOP_HEIGHT
 	var eye_rel := GameConfig.desk_camera_eye
@@ -235,6 +205,7 @@ func _view_transform() -> Transform3D:
 func _begin_guest() -> void:
 	_clear_props()
 	_busy = false
+	_unpacking = 0
 	var progress: Dictionary = _progress.get(walker, {"read": false, "bonus": false, "scanned": [] as Array[Book]})
 	_progress[walker] = progress
 	if walker:
@@ -248,9 +219,28 @@ func _begin_guest() -> void:
 			tablet.screen.pop = 1.0
 	else:
 		_card = _spawn_card()
+		if not _preview:
+			# der Gast legt den Ausweis aus der Hand auf die Theke (er hielt ihn über der Kundenseite hoch)
+			var lay := _card.transform
+			_card.position = Vector3(-0.35, Counter.TOP_HEIGHT + GameConfig.counter_card_height, 0.38)
+			_busy = true  # erst klicken, wenn Ausweis und Bücher liegen
+			_unpacking += 1
+			var put := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			put.tween_property(_card, "transform", lay, 0.35)
+			put.tween_callback(Audio.play_at.bind("books/place", counter.global_transform * lay.origin, -18.0, 1.4))
+			put.tween_callback(_unpacked)
+			_unpack_tweens.append(put)
 	# Bücher: schon gescannte stehen in der Tüte, die übrigen liegen als Stapel vor dem Korb (das oberste zuerst)
 	var scanned: Array = progress.scanned
 	var pile := 0
+	var unscanned := 0
+	for book: Book in books:
+		if not scanned.has(book):
+			unscanned += 1
+	var rise := create_tween() if not _preview and not bool(progress.get("unpacked", false)) and unscanned > 0 else null
+	if rise:
+		_busy = true
+		_unpacking += 1
 	for book: Book in books:
 		var node := _spawn_book(book)
 		var is_scanned := scanned.has(book)
@@ -258,8 +248,22 @@ func _begin_guest() -> void:
 		if is_scanned:
 			_put_in_bag(node, book, scanned.find(book))
 		else:
-			node.transform = _pile_transform(book, pile)
+			var target := _pile_transform(book, pile)
+			node.transform = target
+			if rise:
+				# Der Gast hebt die Bücher aus seinem Korb (vor der Theke am Boden) auf die Theke, eins nach dem anderen
+				node.position = BOOKS_FROM + Vector3(0.0, Counter.TOP_HEIGHT, 0.0)
+				node.visible = false
+				rise.tween_callback(node.show)
+				rise.tween_property(node, "position", target.origin + Vector3.UP * 0.06, GameConfig.desk_unpack_time) \
+					.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+				rise.tween_property(node, "position", target.origin, 0.12).set_ease(Tween.EASE_IN)
+				rise.tween_callback(Audio.play_at.bind("books/place", counter.global_transform * target.origin, -12.0, Audio.vary(0.08)))
 			pile += 1
+	if rise:
+		rise.tween_callback(_unpacked)
+		_unpack_tweens.append(rise)
+	progress["unpacked"] = true
 	visits.show_basket_empty(true)
 	if not progress.read:
 		_step = Step.CARD
@@ -271,13 +275,21 @@ func _begin_guest() -> void:
 		_show_scan()
 
 
+## Ausweis und Bücher liegen auf der Theke: jetzt darf geklickt werden (beide Bewegungen melden sich hier ab).
+func _unpacked() -> void:
+	_unpacking -= 1
+	if _unpacking <= 0:
+		_unpacking = 0
+		_busy = false
+
+
 func _process(_delta: float) -> void:
 	if not is_open:
 		return
 	if not _preview and (walker == null or not is_instance_valid(walker)):
 		_close()
 		return
-	if not _moving:
+	if _preview:
 		_camera.global_transform = _view_transform()  # bleibt richtig, auch wenn sich die Fenstergröße ändert
 		_camera.fov = _view_fov()
 	_update_hover()
@@ -295,10 +307,22 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_close()
 			return
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if event.is_action_pressed(&"book_place"):
 		get_viewport().set_input_as_handled()
-		if _hover and not _busy and not _greeting:
+		if _hover and not _busy:
 			_click(_hover)
+
+
+## Tastensymbol unter dem Punkt in der Bildmitte (HUD): Linksklick und was dann passiert.
+func current_hints() -> Array:
+	if _hover == null or _busy:
+		return []
+	var word := "Einlesen"
+	if _step == Step.SCAN:
+		word = "Scannen"
+	elif _step == Step.BAG:
+		word = "Übergeben"
+	return [{"input": "place", "word": word}]
 
 
 func _click(target: Node3D) -> void:
@@ -417,14 +441,6 @@ func _hand_over_bag() -> void:
 			visits.complete_checkout(walker, bonus)  # Ausleihe, Kaching; der Gast nimmt die Tüte
 		if tablet:
 			tablet.screen.show_done())
-	var basket := visits.counter_basket()
-	if basket:
-		# Der Korb gehört ab jetzt der Theken-Ansicht: kommt schon der nächste Gast, stellt er seinen eigenen Korb hin, ohne dass
-		# das Ende dieser Bewegung ihn wieder wegräumt (Fehler aus dem Nachtest: kein Korb, Ausweis allein auf der Theke)
-		visits.release_counter_basket()
-		var out := counter.global_transform * (BASKET_OUT + Vector3(0.0, Counter.TOP_HEIGHT, 0.0))
-		_tween.tween_property(basket, "global_position", out, GameConfig.desk_basket_time).set_ease(Tween.EASE_IN)
-		_tween.tween_callback(basket.queue_free)
 	_tween.tween_interval(0.6)
 	_tween.tween_callback(_next_guest)
 
@@ -440,7 +456,7 @@ func _next_guest() -> void:
 		if tablet:
 			tablet.screen.show_wait()
 		_begin_guest()
-		_look_at_guest_then_desk()
+		_greet_guest()
 	else:
 		_close()
 
@@ -491,18 +507,20 @@ func _top_book() -> Node3D:
 
 
 func _update_hover() -> void:
-	var mouse := get_viewport().get_mouse_position()
+	# Gezielt wird mit dem Punkt in der Bildmitte (das Prüfwerkzeug nimmt die Maus)
+	var camera := _view_camera()
+	var mouse := get_viewport().get_mouse_position() if _preview else get_viewport().get_visible_rect().size / 2.0
 	var radius := GameConfig.desk_pick_radius * get_viewport().get_visible_rect().size.y / 900.0
 	var best: Node3D = null
 	var best_d := radius * (1.6 if _step == Step.BAG else 1.0)
-	if not _busy and not _greeting:
+	if not _busy and camera:
 		for node in _clickables():
 			var at := node.global_position
 			if node == _bag:
 				at -= Vector3.UP * (BAG_DROP - 0.13)  # Mitte der Tüte statt Griff
-			if _camera.is_position_behind(at):
+			if camera.is_position_behind(at):
 				continue
-			var d := _camera.unproject_position(at).distance_to(mouse)
+			var d := camera.unproject_position(at).distance_to(mouse)
 			if d < best_d:
 				best_d = d
 				best = node
@@ -513,7 +531,7 @@ func _update_hover() -> void:
 			for entry in _books:
 				if entry.scanned:
 					continue
-				var rect := _screen_rect(entry.node as MeshInstance3D).grow(GameConfig.desk_pick_margin * radius / GameConfig.desk_pick_radius)
+				var rect := _screen_rect(camera, entry.node as MeshInstance3D).grow(GameConfig.desk_pick_margin * radius / GameConfig.desk_pick_radius)
 				if rect.has_point(mouse):
 					best = top
 					break
@@ -526,20 +544,26 @@ func _update_hover() -> void:
 			node.set_meta("lift", want)
 	if best != _hover:
 		_hover = best
-		Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if best else Input.CURSOR_ARROW)
+		if _preview:
+			Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND if best else Input.CURSOR_ARROW)
+
+
+## Die Kamera, durch die man gerade schaut (Spielfigur; im Prüfwerkzeug die eigene).
+func _view_camera() -> Camera3D:
+	return _camera if _preview else get_viewport().get_camera_3d()
 
 
 ## Rechteck, das ein Buch (Würfel der Größe 1, skaliert) auf dem Bildschirm bedeckt.
-func _screen_rect(node: MeshInstance3D) -> Rect2:
+func _screen_rect(camera: Camera3D, node: MeshInstance3D) -> Rect2:
 	var rect := Rect2()
 	var first := true
 	for x in [-0.5, 0.5]:
 		for y in [-0.5, 0.5]:
 			for z in [-0.5, 0.5]:
 				var corner := node.global_transform * Vector3(x, y, z)
-				if _camera.is_position_behind(corner):
+				if camera.is_position_behind(corner):
 					continue
-				var p := _camera.unproject_position(corner)
+				var p := camera.unproject_position(corner)
 				if first:
 					rect = Rect2(p, Vector2.ZERO)
 					first = false
@@ -633,6 +657,10 @@ func _put_in_bag(node: Node3D, book: Book, index: int) -> void:
 
 
 func _clear_props() -> void:
+	for tween in _unpack_tweens:
+		if tween and tween.is_valid():
+			tween.kill()
+	_unpack_tweens.clear()
 	for node in _all_props():
 		if is_instance_valid(node):
 			node.queue_free()

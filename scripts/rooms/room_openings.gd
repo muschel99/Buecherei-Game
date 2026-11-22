@@ -111,10 +111,14 @@ static func _window_daylight(room: Node, openings: Array[Dictionary]) -> void:
 		light.light_energy = GameConfig.window_daylight_energy * sqrt(area)
 		light.light_specular = 0.0
 		light.omni_range = GameConfig.window_daylight_range
-		light.omni_attenuation = 1.3
+		light.omni_attenuation = 0.8
 		light.light_cull_mask = 1 << (GameConfig.INDOOR_RENDER_LAYER - 1)
+		# nicht im Staubschleier des Ladens leuchten (zweiter Nachtest: sonst ein heller Fleck in der Luft vor jedem Fenster)
+		light.light_volumetric_fog_energy = 0.0
 		light.add_to_group(DAYLIGHT_GROUP)
 		var center := box.get_center()
+		# Seit dem zweiten Nachtest außen vor der Scheibe (window_daylight_inset negativ = draußen): die Innenwände um das
+		# Fenster und der Boden direkt davor bekommen das Licht nur streifend – kein runder Fleck ohne Lichtquelle mehr
 		light.transform = FacadeLayout.opening_frame(o) * Transform3D(Basis.IDENTITY,
 			Vector3(center.x, center.y, -FacadeLayout.WALL_THICKNESS - GameConfig.window_daylight_inset))
 		holder.add_child(light)

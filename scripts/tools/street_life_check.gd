@@ -135,7 +135,8 @@ func _run() -> void:
 	if _args.has("hour"):
 		# Uhrzeit fest (seit Testrunde 7b), z. B. --hour=23 für die Nachtruhe
 		GameClock.load_save_data({"day": 1, "minute": float(_args.hour) * 60.0})
-		GameClock.running = false
+		# --run_clock: die Uhr läuft weiter (z. B. --hour=21.9 --run_clock: Verkäufer gehen nach Ladenschluss nach Hause)
+		GameClock.running = _args.has("run_clock")
 	if _args.has("day_test"):
 		# Tageswechsel prüfen (seit Etappe 7): Zahlen gehen in die Geschichte, um 6 Uhr erscheint der Notizzettel
 		GameClock.running = false
@@ -452,10 +453,19 @@ func _print_report() -> void:
 		var h := _life.homes
 		print("Anwohner (seit 6i): Häuser %d, Anwohner %d, durch die Tür %d, Wege %d, gegossen %d, gefegt %d, am Fenster %d, gerade draußen %d" % [
 			h.homes.size(), h.residents.size(), h.stat_doors_used, h.stat_errands, h.stat_water, h.stat_sweep, h.stat_windows, h.residents_outside()])
+	if _life.unblock:
+		print("Stau-Wächter (seit dem zweiten Nachtest der Überarbeitung): beiseite getreten %d, Katzen beiseite %d, aneinander vorbeigeschlüpft %d" % [
+			_life.unblock.stat_make_way, _life.unblock.stat_cat_make_way, _life.unblock.stat_pass])
 	print("Begegnungen (seit 6i): Umarmungen %d, zusammen weiter %d, über die Straße gewinkt %d" % [_life.stat_hugs, _life.stat_together, _life.stat_waves])
 	if _life.homes:
 		print("Läden (seit 6i): Läden %d, Besuche %d, Tüten %d, im Pub gesetzt %d, feste Gäste %d, Figuren drinnen %d" % [_life.homes.shops.size(),
 			_life.homes.stat_shop_visits, _life.homes.stat_bags, _life.homes.stat_pub_visits, _life.homes.guests.size(), _life.homes.indoor.size()])
+		var states := []
+		for shop: Dictionary in _life.homes.shops:
+			if shop.get("vendor"):
+				states.append(String((shop.vendor as Passerby).resident.get("state", "?")))
+		print("Verkäufer (seit dem zweiten Nachtest der Überarbeitung): Wege zur Arbeit/nach Hause %d, jetzt %s" % [
+			_life.homes.stat_vendor_trips, ", ".join(states)])
 	if _args.has("deliver"):
 		var dm := get_tree().get_first_node_in_group(DeliveryManager.GROUP) as DeliveryManager
 		print("Lieferung (seit 7b): Kartons %d, Plätze in der Deko gesperrt %s" % [dm.get_box_spots().size(), dm._deco_blocked()])

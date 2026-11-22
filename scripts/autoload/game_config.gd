@@ -339,9 +339,14 @@ var passerby_prop_models: Dictionary = {"can": "res://assets/models/characters/p
 ## Hand-Achsen: +y Finger, +z Handrücken (Handfläche -z), Daumen rechts -x: Kanne hängt unter der Hand, Tülle in Fingerrichtung.
 var passerby_prop_hold: Dictionary = {
 	"can": {"pos": Vector3(0.0, 0.07, -0.02), "basis": Basis(Vector3(0, 0, -1), Vector3(-1, 0, 0), Vector3(0, 1, 0)), "scale": 0.8},
-	"mug": {"pos": Vector3(0.06, 0.055, -0.06), "basis": Basis(Vector3.UP, deg_to_rad(-25.0)) * Basis(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), "scale": 1.0},
-	"cup": {"pos": Vector3(0.06, 0.055, -0.06), "basis": Basis(Vector3.UP, deg_to_rad(-25.0)) * Basis(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), "scale": 1.0},
+	# Becher/Tasse am Henkel (seit dem zweiten Nachtest der Überarbeitung): Henkel (+z des Modells) in den gekrümmten Fingern, zum
+	# Handgelenk hin; der Becher steht aufrecht (oben = Daumen, -x) jenseits der Finger. Vorher hing er neben der Faust.
+	"mug": {"pos": Vector3(0.045, 0.12, -0.02), "basis": Basis(Vector3(0, 0, 1), Vector3(-1, 0, 0), Vector3(0, -1, 0)), "scale": 1.0},
+	"cup": {"pos": Vector3(0.045, 0.12, -0.02), "basis": Basis(Vector3(0, 0, 1), Vector3(-1, 0, 0), Vector3(0, -1, 0)), "scale": 1.0},
 	"cake": {"pos": Vector3(-0.02, 0.05, -0.05), "basis": Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(-1, 0, 0)), "scale": 0.5},
+	# Kuchengabel (seit dem zweiten Nachtest der Überarbeitung, ChibiPasserbyModel.make_fork): Stiel in der Faust, Spitze zur
+	# Handfläche (-z) und etwas zum Daumen (-x) – am Mund zeigt sie zu den Lippen
+	"fork": {"pos": Vector3(-0.005, 0.045, -0.02), "basis": Basis(Vector3(0, 1, 0), Vector3(-0.42, 0, -0.91).normalized(), Vector3(-0.91, 0, 0.42).normalized()), "scale": 1.0},
 	# Bücherei (seit Etappe 7): Buch flach in der Hand, Leseausweis zwischen Daumen und Fingern
 	"book": {"pos": Vector3(0.0, 0.07, -0.035), "basis": Basis.IDENTITY, "scale": 1.0},
 	"card": {"pos": Vector3(0.0, 0.07, -0.022), "basis": Basis.IDENTITY, "scale": 1.0},
@@ -369,6 +374,18 @@ var shop_bag_models: Dictionary = {"bakery": "res://assets/models/characters/pro
 	"fashion": "res://assets/models/characters/props/shopping_bag_tote.glb",
 	"tea": "res://assets/models/characters/props/shopping_bag_paper.glb",
 	"wool": "res://assets/models/characters/props/shopping_bag_tote.glb"}
+## Verkäufer kommen morgens die Straße entlang und gehen abends wieder (seit dem zweiten Nachtest der Überarbeitung): Weg
+## hinter der Theke hervor (Punkte im Hausmodell, Blender-Koordinaten x/y – in Blender mit Sichtstrahlen als frei ausgemessen;
+## Schlüssel wie bei shop_bag_models) und wie viele Sekunden nach Ladenöffnung/-schluss jeder losgeht (von–bis).
+var shop_staff_ways: Dictionary = {
+	"bakery": [Vector2(1.1, 3.3), Vector2(1.1, 2.15)],
+	"flower": [Vector2(1.0, 3.45), Vector2(1.0, 2.2)],
+	"tea": [Vector2(-2.05, 2.5), Vector2(-0.75, 2.5)],
+	"wool": [Vector2(-0.8, 6.38), Vector2(-0.8, 5.05)],
+	"pub": [Vector2(-1.7, 5.02), Vector2(-1.7, 3.45)],
+	"fashion": [Vector2(0.35, 4.5), Vector2(0.35, 3.2)],
+}
+var shop_vendor_stagger: Vector2 = Vector2(2.0, 25.0)
 ## Verkäuferinnen und Verkäufer: Pause zwischen kleinen Bewegungen (Sekunden) und welche (Gewichte).
 var shop_vendor_pause: Vector2 = Vector2(8.0, 22.0)
 var shop_vendor_clips: Dictionary = {"look_around": 2.0, "nod_think": 1.0, "stretch_neck": 1.0, "idle_happy": 1.0}
@@ -501,8 +518,10 @@ var preview_color_valid: Color = Color(0.45, 0.65, 0.95)
 var preview_color_invalid: Color = Color(0.95, 0.4, 0.35)
 ## Hervorhebung von Objekten (im Gestaltungsmodus und bei allem, was man mit E benutzen kann):
 ## Aufhellung des ganzen Objekts (0 = keine, 0.3 = deutlich).
-## Möbel beim normalen Umschauen aufhellen? (seit dem Nachtest der Überarbeitung aus – Wunsch der Entwicklerin)
-var look_highlight_furniture: bool = false
+## Dinge beim normalen Umschauen aufhellen? Seit dem Nachtest der Überarbeitung aus, seit dem zweiten Nachtest für alles
+## (Türen, Rückgabekasten, Kartons …) – Wunsch der Entwicklerin; das Tastensymbol unten reicht. Der Gestaltungsmodus hebt
+## weiter selbst hervor.
+var look_highlight: bool = false
 var highlight_brightness: float = 0.06
 ## Heller Schimmer am Rand des Objekts (0 = kein Rand, 1 = sehr hell).
 var highlight_rim_strength: float = 0.45
@@ -779,10 +798,12 @@ var haze_aerial: float = 0.55
 var haze_blend_speed: float = 1.5
 ## Feiner Staub im Laden, in dem man die Sonnenstrahlen durchs Fenster sieht (volumetrischer Nebel; 0 = aus)
 var room_haze_density: float = 0.03
-## Tiefenunschärfe in der Ferne: ab so vielen Metern, Übergang (m), Stärke (0 = aus)
+## Tiefenunschärfe in der Ferne: ab so vielen Metern, Übergang (m), Stärke (0 = aus). Seit dem zweiten Nachtest der
+## Überarbeitung aus (Wunsch der Entwicklerin): sie machte auch den Himmel unscharf, und am Bildrand rechnet Godot die
+## Entfernung entlang der Blickrichtung – dort wurde dieselbe Straße plötzlich wieder scharf.
 var dof_far_distance: float = 38.0
 var dof_far_transition: float = 30.0
-var dof_far_amount: float = 0.06
+var dof_far_amount: float = 0.0
 
 ## Jahreszeiten (seit der großen Überarbeitung, Autoload Season): so viele Sekunden dauert der Übergang beim Umschalten.
 var season_blend_time: float = 2.5
@@ -812,10 +833,10 @@ var title_leaf_count: int = 24
 var autumn_kick_volume_db: float = -14.0
 ## Kürbis-Gruppen an den Hauswänden (AutumnDecor): Abstand der Prüfstellen entlang der Straße (m), Chance je Stelle
 var autumn_decor_step: float = 4.0
-var autumn_decor_chance: float = 0.38
+var autumn_decor_chance: float = 0.5
 
 var light_sun_color: Color = Color(1.0, 0.82, 0.6)          # vorher (1, 0.85, 0.66)
-var light_sun_energy: float = 2.05                           # vorher 2.2
+var light_sun_energy: float = 1.6                            # vorher 2.05 (zweiter Nachtest der Überarbeitung: zu hell)
 var light_ambient_color: Color = Color(0.56, 0.54, 0.52)     # vorher (0.58, 0.52, 0.46)
 var light_ambient_energy: float = 0.7                        # vorher 0.7
 var light_exposure: float = 1.0                              # vorher 1.1 (helle Gehwege waren fast weiß)
@@ -859,11 +880,12 @@ const OUTDOOR_RENDER_LAYER := 2
 ## Render-Ebene für alles im Raum (seit Etappe 6j; nur sie empfängt das Tageslicht der Fenster).
 const INDOOR_RENDER_LAYER := 3
 ## Tageslicht durch Fenster und Tür (seit Etappe 6j): weiches Licht ohne Schatten hinter jeder Scheibe. Stärke (mal
-## Wurzel der Fensterfläche; 0 = aus, wie vorher), Farbe, Reichweite in Metern und Abstand hinter der Wand.
-var window_daylight_energy: float = 0.38
+## Wurzel der Fensterfläche; 0 = aus, wie vorher), Farbe, Reichweite in Metern und Abstand hinter der Wand (negativ =
+## draußen vor der Scheibe – seit dem zweiten Nachtest: drinnen gab es einen hellen Fleck ohne Lichtquelle).
+var window_daylight_energy: float = 0.5
 var window_daylight_color: Color = Color(1.0, 0.95, 0.86)
-var window_daylight_range: float = 8.0
-var window_daylight_inset: float = 0.9
+var window_daylight_range: float = 8.5
+var window_daylight_inset: float = -0.45
 ## Höchstens so viele Bilder pro Sekunde, solange das Pausenmenü offen ist (spart Strom; nicht während seiner Bewegungen).
 var paused_max_fps: int = 30
 ## Notizbuch-Pausenmenü (seit Testrunde 7b langsam und weich, Wunsch der Entwicklerin): Hereingleiten, Aufklappen des Deckels,
@@ -1405,6 +1427,14 @@ var shop_glow_energy: float = 1.5
 var shop_glow_range: float = 4.2
 var shop_glow_height: float = 1.3
 var shop_glow_out: float = 0.75
+## Schein vor der Ladenfront tagsüber (Anteil von shop_glow_energy). Licht im Laden (seit dem zweiten Nachtest der Überarbeitung):
+## Stärke abends, Anteil tagsüber, Reichweite (m), Höhe über dem Ladenboden (m), so viele Sekunden dauert An/Aus.
+var shop_glow_day_share: float = 0.2
+var shop_light_energy: float = 1.1
+var shop_light_day_share: float = 0.55
+var shop_light_range: float = 4.5
+var shop_light_height: float = 2.1
+var shop_light_fade: float = 0.6
 ## Licht in den Fenstern nachts: so viel heller leuchten die bewohnten Fenster, Anteil der Häuser/Stockwerke mit Licht je
 ## Stunde (0 Uhr … 23 Uhr; tagsüber egal).
 var night_glow_boost: float = 1.7
@@ -1427,27 +1457,27 @@ var day_light_keys: Array[Dictionary] = [
 		"ambient_color": Color(0.24, 0.24, 0.36), "ambient_energy": 0.5, "sky_top": Color(0.03, 0.05, 0.13),
 		"sky_horizon": Color(0.12, 0.15, 0.27), "fill_color": Color(0.5, 0.6, 0.95), "fill_energy": 0.22, "exposure": 1.3,
 		"cloud_lit": Color(0.3, 0.33, 0.46), "cloud_shade": Color(0.11, 0.13, 0.22), "stars": 0.35, "window_light": 0.0},
-	{"hour": 6.0, "sun_color": Color(1.0, 0.62, 0.42), "sun_energy": 1.0, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.2,
+	{"hour": 6.0, "sun_color": Color(1.0, 0.62, 0.42), "sun_energy": 0.85, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.2,
 		"ambient_color": Color(0.5, 0.44, 0.5), "ambient_energy": 0.55, "sky_top": Color(0.34, 0.44, 0.7),
 		"sky_horizon": Color(1.0, 0.7, 0.55), "fill_color": Color(0.75, 0.75, 0.95), "fill_energy": 0.38, "exposure": 1.12,
 		"cloud_lit": Color(1.0, 0.76, 0.66), "cloud_shade": Color(0.55, 0.5, 0.62), "stars": 0.0, "window_light": 0.45},
-	{"hour": 8.0, "sun_color": Color(1.0, 0.87, 0.72), "sun_energy": 1.9, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
+	{"hour": 8.0, "sun_color": Color(1.0, 0.87, 0.72), "sun_energy": 1.5, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
 		"ambient_color": Color(0.55, 0.56, 0.58), "ambient_energy": 0.66, "sky_top": Color(0.32, 0.54, 0.86),
 		"sky_horizon": Color(0.86, 0.86, 0.85), "fill_color": Color(0.8, 0.86, 1.0), "fill_energy": 0.52, "exposure": 1.0,
 		"cloud_lit": Color(1.0, 0.98, 0.95), "cloud_shade": Color(0.72, 0.76, 0.86), "stars": 0.0, "window_light": 0.9},
-	{"hour": 13.0, "sun_color": Color(1.0, 0.93, 0.83), "sun_energy": 2.1, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
+	{"hour": 13.0, "sun_color": Color(1.0, 0.93, 0.83), "sun_energy": 1.65, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
 		"ambient_color": Color(0.56, 0.56, 0.56), "ambient_energy": 0.7, "sky_top": Color(0.28, 0.52, 0.88),
 		"sky_horizon": Color(0.86, 0.88, 0.9), "fill_color": Color(0.8, 0.86, 1.0), "fill_energy": 0.55, "exposure": 1.0,
 		"cloud_lit": Color(1.0, 1.0, 0.98), "cloud_shade": Color(0.74, 0.78, 0.88), "stars": 0.0, "window_light": 1.0},
-	{"hour": 16.5, "sun_color": Color(1.0, 0.82, 0.6), "sun_energy": 2.05, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
+	{"hour": 16.5, "sun_color": Color(1.0, 0.82, 0.6), "sun_energy": 1.6, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
 		"ambient_color": Color(0.56, 0.54, 0.52), "ambient_energy": 0.7, "sky_top": Color(0.3, 0.52, 0.84),
 		"sky_horizon": Color(0.96, 0.84, 0.68), "fill_color": Color(0.8, 0.86, 1.0), "fill_energy": 0.55, "exposure": 1.0,
 		"cloud_lit": Color(1.0, 0.95, 0.88), "cloud_shade": Color(0.72, 0.72, 0.82), "stars": 0.0, "window_light": 1.0},
-	{"hour": 19.0, "sun_color": Color(1.0, 0.62, 0.38), "sun_energy": 1.6, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
+	{"hour": 19.0, "sun_color": Color(1.0, 0.62, 0.38), "sun_energy": 1.3, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.0,
 		"ambient_color": Color(0.6, 0.48, 0.44), "ambient_energy": 0.6, "sky_top": Color(0.32, 0.42, 0.7),
 		"sky_horizon": Color(1.0, 0.62, 0.42), "fill_color": Color(0.85, 0.75, 0.85), "fill_energy": 0.45, "exposure": 1.05,
 		"cloud_lit": Color(1.0, 0.68, 0.5), "cloud_shade": Color(0.5, 0.42, 0.56), "stars": 0.0, "window_light": 0.75},
-	{"hour": 20.5, "sun_color": Color(1.0, 0.5, 0.35), "sun_energy": 0.6, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.15,
+	{"hour": 20.5, "sun_color": Color(1.0, 0.5, 0.35), "sun_energy": 0.5, "moon_color": Color(0.86, 0.8, 0.66), "moon_energy": 0.15,
 		"ambient_color": Color(0.32, 0.3, 0.44), "ambient_energy": 0.52, "sky_top": Color(0.12, 0.16, 0.36),
 		"sky_horizon": Color(0.66, 0.44, 0.44), "fill_color": Color(0.6, 0.62, 0.95), "fill_energy": 0.3, "exposure": 1.18,
 		"cloud_lit": Color(0.78, 0.52, 0.52), "cloud_shade": Color(0.25, 0.24, 0.35), "stars": 0.0, "window_light": 0.2},
@@ -1575,24 +1605,20 @@ var checkout_kaching_db: float = -3.0
 var passerby_read_offset: Vector3 = Vector3(0.0, -0.05, 0.28)
 var passerby_read_tilt: float = -42.0
 var stamp_bonus_extra_days: int = 3
-## Theken-Ansicht (Etappe 8): Kamera rückt in so vielen Sekunden heran; Bewegungen der Dinge auf der Theke (Ausweis, Buch über
-## den Scanner, Tüte zum Gast, Korb hinter die Theke)
-var desk_camera_time: float = 1.1
+## Bedienen an der Theke (Etappe 8): Bewegungen der Dinge auf der Theke (Ausweis, Buch über den Scanner, Tüte zum Gast), die
+## Spielfigur rückt in so vielen Sekunden an ihren Platz, je Buch so lange, bis der Gast es aus dem Korb auf die Theke gehoben hat
 var desk_card_time: float = 0.55
 var desk_book_time: float = 0.5
 var desk_push_time: float = 0.6
-var desk_basket_time: float = 0.7
-## Neuer Gast an der Theke (seit dem Test nach 8b): die Kamera schaut erst zu ihm hoch (so viele Sekunden hin), er grüßt
-## (lächelt, nickt, winkt manchmal), so lange bleibt der Blick bei ihm; dann geht es hinunter auf die Theke
-var desk_greet_turn_time: float = 0.6
-var desk_greet_hold_time: float = 0.7
-var desk_greet_wave_chance: float = 0.6
-## Blickpunkt der Theken-Ansicht (seit dem Nachtest von Etappe 8 mittig und gerade): Auge über der Mitte der Platte (x seitlich,
-## y über der Platte, z = Abstand zur Spielfigur hin, Spielfigur auf -Z); die Neigung ergibt sich so, dass der untere Bildrand
-## an der Thekenkante liegt. Sichtfeld links bis rechts (Grad) – bei jedem Bildformat ist die ganze Theke zu sehen.
+var desk_step_time: float = 0.45
+var desk_unpack_time: float = 0.32
+## Der Gast stellt seinen Korb so weit seitlich neben sich vor der Theke ab (m, im Raum der Theke)
+var counter_basket_side: float = 0.42
+## Platz der Spielfigur beim Bedienen: x seitlich, z = Abstand zur Thekenmitte (Spielfigur auf -Z; y = Augenhöhe über der
+## Platte, nur für das Prüfwerkzeug desk_probe mit fester Kamera und Sichtfeld links bis rechts in Grad).
 var desk_camera_eye: Vector3 = Vector3(0.0, 0.6, -0.62)
 var desk_camera_hfov: float = 92.0
-## So weit (Bildpunkte bei 900 Bildhöhe) um ein Ding auf der Theke zählt die Maus als „darauf“
+## So weit (Bildpunkte bei 900 Bildhöhe) um ein Ding auf der Theke zählt der Punkt in der Bildmitte als „darauf“
 var desk_pick_radius: float = 70.0
 ## Bücher an der Theke: so viele Bildpunkte rund um jedes Buch zählen noch als Treffer (bei 900 px Bildhöhe)
 var desk_pick_margin: float = 28.0

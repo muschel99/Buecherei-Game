@@ -153,6 +153,14 @@ var _chore := ""
 var _chore_time := 0.0
 var _hugging := false
 var _sip_t := -1.0
+## Trinken/Essen am Tisch (take_sip): was (mug/cup/cake), wo es steht, das Ding auf dem Tisch, ob es gerade in der Hand ist
+var _drink_kind := &"mug"
+var _drink_table := Vector3.INF
+var _drink_table_prop: Node3D
+var _drink_holding := false
+## Ablauf (Sekunden ab Beginn): greifen, am Mund, wieder am Tisch, loslassen, fertig. Kuchen: zwei Bissen.
+const SIP_TIMES := {"grasp": 0.55, "up": 1.35, "hold": 2.35, "down": 3.1, "end": 3.6}
+const BITE_TIMES := {"grasp": 0.5, "up1": 1.1, "hold1": 1.5, "down1": 2.0, "up2": 2.6, "hold2": 3.0, "down2": 3.6, "end": 4.1}
 ## Übergänge Hinsetzen/Aufstehen: welcher läuft gerade und seit wann
 var _transition: StringName = &""
 var _transition_t := 0.0
@@ -386,6 +394,8 @@ func _rebuild() -> void:
 	_legs_cross = false
 	_hand_bone = _skeleton.find_bone("RightHand") if _skeleton else -1
 	_hand_last = Vector3.INF
+	if _skeleton and not _skeleton.skeleton_updated.is_connected(_on_skeleton_updated):
+		_skeleton.skeleton_updated.connect(_on_skeleton_updated)
 	_prop = null
 	_prop_mount = null
 	_prop_kind = &""
@@ -640,6 +650,18 @@ func _update_shot(delta: float) -> float:
 ## Einkaufstasche: hängt am Griffpunkt der rechten Hand senkrecht nach unten (wie die Figur gedreht), pendelt
 ## mit den Bewegungen der Hand und wird vom Bein nach außen gedrückt.
 func _update_bag(delta: float) -> void:
+	# Seit dem zweiten Nachtest der Überarbeitung („Taschen nicht gut an den Händen verankert“): hier nur die Zeit sammeln – gesetzt
+	# wird die Tasche in _on_skeleton_updated, wenn das Skelett samt aller Modifikatoren (Körperform, Gesten, Kopf) fertig ist.
+	# Vorher las sie die Hand vor den Modifikatoren und ein Bild zu früh: sie hing ein paar Zentimeter neben der Hand.
+	_bag_delta += delta
+
+
+var _bag_delta := 0.0
+
+
+func _on_skeleton_updated() -> void:
+	var delta := _bag_delta
+	_bag_delta = 0.0
 	if _bag == null:
 		return
 	_bag.visible = is_visible_in_tree()
@@ -718,10 +740,13 @@ func set_prop(kind: StringName) -> void:
 	_prop_kind = kind
 	if kind == &"" or _skeleton == null:
 		return
-	var scene := load(String(GameConfig.passerby_prop_models.get(String(kind), ""))) as PackedScene
-	if scene == null:
-		return
-	_prop = scene.instantiate() as Node3D
+	if kind == &"fork":
+		_prop = make_fork()
+	else:
+		var scene := load(String(GameConfig.passerby_prop_models.get(String(kind), ""))) as PackedScene
+		if scene == null:
+			return
+		_prop = scene.instantiate() as Node3D
 	_prop.name = "Prop"
 	if kind == &"broom":
 		_skeleton.add_child(_prop)
@@ -788,14 +813,57 @@ func start_hug(side: float, seconds: float) -> void:
 
 
 ## Im Sitzen einen Schluck trinken bzw. ein Stück essen (rechte Hand mit dem Gegenstand zum Mund und zurück).
-func take_sip() -> void:
+## Ein Schluck bzw. zwei Bissen am Tisch (seit dem zweiten Nachtest der Überarbeitung): table = wo Becher/Teller steht (Welt),
+## table_prop = das Ding auf dem Tisch (Becher: wird beim Greifen unsichtbar und ist dann in der Hand), kind = mug/cup/cake.
+## Dauer: sip_duration(kind).
+func take_sip(table := Vector3.INF, table_prop: Node3D = null, kind := &"mug") -> void:
 	if _gesture_modifier == null or _prev_state != &"sit":
 		return
 	_gesture_modifier.body_scale = _hip_height / 0.607
 	_gesture = ChibiGestureModifier.Gesture.DRINK
-	_gesture_left = 2.6
+	_drink_kind = kind
+	_drink_table = table
+	_drink_table_prop = table_prop
+	_drink_holding = false
+	_gesture_left = sip_duration(kind)
 	_gesture_time = 0.0
 	_sip_t = 0.0
+
+
+static func sip_duration(kind: StringName) -> float:
+	return float(BITE_TIMES.end) if kind == &"cake" else float(SIP_TIMES.end)
+
+
+## Lage der Hand im Ablauf: x = 0 am Tisch … 1 am Mund, y = Kippen des Bechers (0–1).
+func _sip_pose(t: float) -> Vector2:
+	if _drink_kind == &"cake":
+		var b := BITE_TIMES
+		var up := 0.0
+		if t < b.grasp:
+			up = 0.0
+		elif t < b.up1:
+			up = smoothstep(b.grasp, b.up1, t)
+		elif t < b.hold1:
+			up = 1.0
+		elif t < b.down1:
+			up = 1.0 - 0.75 * smoothstep(b.hold1, b.down1, t)  # nur halb hinunter zum Teller, dann der zweite Bissen
+		elif t < b.up2:
+			up = 0.25 + 0.75 * smoothstep(b.down1, b.up2, t)
+		elif t < b.hold2:
+			up = 1.0
+		else:
+			up = 1.0 - smoothstep(b.hold2, b.down2, t)
+		return Vector2(up, 0.0)
+	var k := SIP_TIMES
+	if t < k.grasp:
+		return Vector2.ZERO
+	if t < k.up:
+		return Vector2(smoothstep(k.grasp, k.up, t), 0.0)
+	if t < k.hold:
+		# am Mund kippen: schnell hinauf, kurz halten, etwas zurück
+		var h: float = (t - float(k.up)) / (float(k.hold) - float(k.up))
+		return Vector2(1.0, sin(minf(h * 1.25, 1.0) * PI * 0.5) * (1.0 - 0.6 * smoothstep(0.7, 1.0, h)))
+	return Vector2(1.0 - smoothstep(k.hold, k.down, t), 0.4 * (1.0 - smoothstep(k.hold, k.hold + 0.3, t)))
 
 
 func _update_chore(delta: float) -> void:
@@ -815,11 +883,71 @@ func _update_chore(delta: float) -> void:
 			_prop.transform = Transform3D(Basis(), Vector3(-0.28 * _gesture_modifier.body_scale, 0.0, 0.05))
 	if _gesture_modifier and _gesture == ChibiGestureModifier.Gesture.DRINK and _sip_t >= 0.0:
 		_sip_t += delta
-		_gesture_modifier.sip = sin(clampf(_sip_t / 2.4, 0.0, 1.0) * PI)
-		if _sip_t >= 2.4:
-			_sip_t = -1.0
+		_update_sip()
 	if _hugging and _gesture != ChibiGestureModifier.Gesture.HUG:
 		_hugging = false
+
+
+## Trinken/Essen: Lage der Hand und Greifen/Loslassen zur Zeit _sip_t (siehe take_sip).
+func _update_sip() -> void:
+	var mod := _gesture_modifier
+	var times: Dictionary = BITE_TIMES if _drink_kind == &"cake" else SIP_TIMES
+	mod.drink_fork = _drink_kind == &"cake"
+	mod.drink_has_rest = _drink_table != Vector3.INF and _skeleton != null
+	if mod.drink_has_rest:
+		mod.drink_rest = _skeleton.global_transform.affine_inverse() * _drink_table
+	var pose := _sip_pose(_sip_t)
+	mod.sip = pose.x
+	mod.drink_tilt = pose.y
+	var release: float = times.get("down2", times.get("down", 0.0))
+	if not _drink_holding and _sip_t >= float(times.grasp) and _sip_t < release:
+		_drink_holding = true
+		if _drink_kind != &"cake" and is_instance_valid(_drink_table_prop):
+			_drink_table_prop.visible = false  # der Becher ist jetzt in der Hand
+		set_prop(&"fork" if _drink_kind == &"cake" else _drink_kind)
+		if _drink_kind == &"cake" and _prop:
+			_prop.set_meta(&"bite", true)
+	if _drink_holding and _drink_kind == &"cake" and _prop and _prop.has_node("Bite"):
+		# der Bissen auf der Gabel: am Mund weg, beim zweiten Mal wieder vom Teller geholt
+		(_prop.get_node("Bite") as Node3D).visible = pose.x < 0.95 and not (_sip_t > float(times.hold2) and pose.x > 0.3)
+	if _drink_holding and _sip_t >= release:
+		_drink_holding = false
+		set_prop(&"")
+		if is_instance_valid(_drink_table_prop):
+			_drink_table_prop.visible = true
+	if _sip_t >= float(times.end):
+		_sip_t = -1.0
+
+
+## Kleine Gabel (Kuchen essen): Stiel und Zinken aus Kästchen, mit einem Bissen Kuchen auf der Spitze (Knoten „Bite“). Lage in der
+## Hand: Spitze zur Handfläche hin und leicht nach oben (am Mund zeigt sie zu den Lippen).
+static func make_fork() -> Node3D:
+	var root := Node3D.new()
+	var metal := StandardMaterial3D.new()
+	metal.albedo_color = Color(0.78, 0.76, 0.72)
+	metal.metallic = 0.7
+	metal.roughness = 0.35
+	var cake := StandardMaterial3D.new()
+	cake.albedo_color = Color(0.93, 0.78, 0.55)
+	cake.roughness = 0.8
+	for part: Array in [[Vector3(0.007, 0.11, 0.004), Vector3(0.0, 0.055, 0.0), metal], [Vector3(0.018, 0.035, 0.003), Vector3(0.0, 0.125, 0.0), metal]]:
+		var box := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = part[0]
+		box.mesh = mesh
+		box.position = part[1]
+		box.material_override = part[2]
+		box.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(box)
+	var bite := MeshInstance3D.new()
+	bite.name = "Bite"
+	var piece := BoxMesh.new()
+	piece.size = Vector3(0.02, 0.016, 0.016)
+	bite.mesh = piece
+	bite.position = Vector3(0.0, 0.13, 0.01)
+	bite.material_override = cake
+	root.add_child(bite)
+	return root
 
 
 ## Radfahren: Haltung zur Kurbelstellung crank (Bogenmaß; 0 = Kurbel auf der Seite x < 0 vorn,
@@ -1189,10 +1317,16 @@ func _update_gesture(delta: float) -> void:
 	_gesture_modifier.talk_energy = clampf(0.6 + 0.6 * sin(_gesture_time * 0.7), 0.0, 1.0)
 
 
-## Beim Blick auf die Uhr schaut der Kopf nach unten.
+## Beim Blick auf die Uhr schaut der Kopf nach unten; beim Trinken neigt er sich mit dem Becher leicht zurück, beim Essen
+## ein wenig zum Teller und dem Bissen entgegen.
 func _gesture_head_pitch() -> float:
 	if _gesture_modifier and _gesture_modifier.gesture == ChibiGestureModifier.Gesture.WATCH:
 		return 24.0 * _gesture_modifier.weight
+	if _gesture_modifier and _gesture_modifier.gesture == ChibiGestureModifier.Gesture.DRINK:
+		var m := _gesture_modifier
+		if m.drink_fork:
+			return (8.0 - 4.0 * m.sip) * m.weight
+		return (6.0 * (1.0 - m.sip) - 12.0 * m.drink_tilt) * m.weight
 	return 0.0
 
 

@@ -48,6 +48,8 @@ var life: CatLife
 var look := 0
 var active := false
 var radius := 0.2
+## Stau-Wächter (StreetUnblock): an diesen Figuren/Katzen schlüpft die Katze gerade vorbei (Figur → Sekunden)
+var pass_agents: Dictionary = {}
 ## Tempo auf dem Boden (x, z unter "Outside") – für Passanten, die ausweichen
 var velocity2 := Vector2.ZERO
 var inside := false
@@ -319,6 +321,11 @@ func step(delta: float) -> void:
 	if not active:
 		return
 	_update_pet_shapes()
+	if not pass_agents.is_empty():
+		for agent: Variant in pass_agents.keys():
+			pass_agents[agent] = float(pass_agents[agent]) - delta
+			if float(pass_agents[agent]) <= 0.0 or not is_instance_valid(agent):
+				pass_agents.erase(agent)
 	_meow_wait -= delta
 	_update_voice(delta)
 	_update_purr_volume()

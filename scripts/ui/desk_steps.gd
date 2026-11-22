@@ -7,9 +7,9 @@ extends CanvasLayer
 ## ersten GameConfig.desk_help_servings Bedienungen (Tutorial.desk_help_wanted) und nur mit der Einstellung „To-do-Zettel“.
 
 const TEXTS := [
-	"Den Ausweis anklicken – er kommt in den Kartenleser",
-	"Die Bücher nacheinander anklicken – sie gehen über den Scanner in die Tüte",
-	"Die Tüte anklicken – der Gast bekommt sie",
+	"Den Ausweis anschauen und klicken – er kommt in den Kartenleser",
+	"Die Bücher anschauen und klicken – sie gehen über den Scanner in die Tüte",
+	"Die Tüte anschauen und klicken – der Gast bekommt sie",
 ]
 const ACTIVE := Color(0.78, 0.36, 0.4)
 const WIDTH := 330.0

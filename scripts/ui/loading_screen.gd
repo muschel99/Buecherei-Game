@@ -5,6 +5,10 @@ extends CanvasLayer
 ## bleibt darüber liegen, bis die ersten Bilder flüssig laufen – so lange bereitet die Grafikkarte ihre Malprogramme vor
 ## (nach einem Update dauert das am längsten). Dann blendet er weich aus. Am Ende schreibt er die Zeiten in die Ausgabe
 ## („Start: …“), damit man sehen kann, wo die Zeit bleibt.
+## Seit dem zweiten Nachtest der Überarbeitung („das Buch hängt einfach fest“): Die Hauptszene lädt in einem Hintergrund-Faden
+## (ohne Unter-Fäden – mit ihnen luden zwei Fäden dieselben Hausmodelle doppelt), das Buch blättert dabei flüssig weiter. Die
+## Seite blättert nach Bildern statt nach der Uhr (_flip): Auch wenn die Grafikkarte später für ein Bild eine Sekunde braucht,
+## bewegt sie sich in jedem Bild sichtbar ein Stück – man sieht, dass nichts hängt.
 ## Testbilder und Prüfwerkzeuge laden main.tscn weiter direkt.
 
 const MAIN_SCENE := "res://scenes/main.tscn"
@@ -26,6 +30,10 @@ const SMOOTH_FRAMES := 6
 const SMOOTH_TIME := 0.08
 const MAX_WARM_TIME := 45.0
 const FADE_TIME := 0.9
+## Eine Seite braucht so lange; je Bild blättert sie mindestens/höchstens so viele Sekunden weiter
+const FLIP_TIME := 1.6
+const FLIP_STEP_MIN := 1.0 / 60.0
+const FLIP_STEP_MAX := 0.13
 
 enum Phase { LOADING, PLACING, WARMING, FADING }
 
@@ -33,6 +41,8 @@ var _phase := Phase.LOADING
 var _progress := 0.0
 var _shown_progress := 0.0
 var _time := 0.0
+var _flip := 0.0             # Seiten-Fortschritt (1 = eine Seite)
+var _threaded := false       # lädt die Hauptszene im Hintergrund
 var _frames := 0
 var _recent: Array[float] = []
 var _warm_time := 0.0
@@ -58,17 +68,33 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	_flip += clampf(delta, FLIP_STEP_MIN, FLIP_STEP_MAX) / FLIP_TIME
 	_shown_progress = lerpf(_shown_progress, _progress, minf(1.0, delta * 4.0))
 	_canvas.queue_redraw()
 	match _phase:
 		Phase.LOADING:
-			# erst ein paar Bilder zeigen, dann laden (im Vordergrund: im Hintergrund-Faden scheitern manche @tool-Scripts
-			# der Häuser) – der Bildschirm steht dabei kurz still
+			# erst ein paar Bilder zeigen, dann im Hintergrund laden (klappt das nicht, im Vordergrund – dann steht das Bild kurz)
 			_frames += 1
+			if _frames == 3:
+				_threaded = ResourceLoader.load_threaded_request(MAIN_SCENE, "", false) == OK
 			if _frames >= 3:
-				var packed := load(MAIN_SCENE) as PackedScene
+				var packed: PackedScene = null
+				if _threaded:
+					var progress := []
+					var status := ResourceLoader.load_threaded_get_status(MAIN_SCENE, progress)
+					if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+						if not progress.is_empty():
+							_progress = maxf(_progress, 0.12 + 0.58 * float(progress[0]))
+						return
+					if status == ResourceLoader.THREAD_LOAD_LOADED:
+						packed = ResourceLoader.load_threaded_get(MAIN_SCENE) as PackedScene
+					else:
+						push_warning("Ladebildschirm: Laden im Hintergrund ging nicht – lade im Vordergrund.")
+				if packed == null:
+					packed = load(MAIN_SCENE) as PackedScene
 				if packed == null:
 					push_error("Ladebildschirm: Hauptszene konnte nicht geladen werden.")
+					set_process(false)
 					return
 				_loaded_scene = packed
 				_t_loaded = Time.get_ticks_msec()
@@ -132,8 +158,8 @@ class Painting extends Control:
 				var y := page.position.y + 34.0 + i * 18.0
 				SoftShapes.wavy_line(self, Vector2(page.position.x + 16, y), Vector2(page.end.x - 16, y),
 					Color(0.6, 0.68, 0.8, 0.3), 1.2, 0.7, i + int(side) * 3)
-		# umschwingende Seite (alle 1,6 s eine)
-		var phase := fmod(t, 1.6) / 1.6
+		# umschwingende Seite (nach Bildern, siehe _flip)
+		var phase := fmod(float(s._flip), 1.0)
 		var swing := cos(phase * PI)  # 1 = rechts, -1 = links
 		var turning := Rect2(c + Vector2(0.0 if swing >= 0.0 else swing * w, -h / 2), Vector2(absf(swing) * w, h))
 		if turning.size.x > 14.0:

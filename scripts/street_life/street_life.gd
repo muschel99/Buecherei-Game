@@ -106,6 +106,8 @@ var _started := false
 ## Tiere (seit Etappe 6g): Vögel und Katzen, beim Start angelegt (GameConfig.animals_enabled)
 var birds: BirdLife
 var cats: CatLife
+## Stau-Wächter (seit dem zweiten Nachtest der Überarbeitung): wer feststeckt, dem geht jemand aus dem Weg
+var unblock: StreetUnblock
 ## Anwohner, Türen und Läden (seit Etappe 6i), beim Start angelegt
 var homes: StreetHomes
 ## Besucher der Bücherei (seit Etappe 7)
@@ -140,6 +142,7 @@ func _start() -> void:
 	refresh_seats()
 	# noch einmal, wenn die ganze Szene bereit ist (Sitzplätze an der Bücherei entstehen mit der Fassade)
 	call_deferred("refresh_seats")
+	unblock = StreetUnblock.new(self)
 	homes = StreetHomes.new()
 	homes.name = "Homes"
 	add_child(homes)
@@ -250,6 +253,8 @@ func step(delta: float) -> void:
 		birds.step(delta)
 	if cats:
 		cats.step(delta)
+	if unblock:
+		unblock.step(delta)
 	_spawn_walkers(delta)
 	_spawn_vehicles(delta)
 	_lod_timer -= delta
@@ -957,6 +962,8 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 	for obstacle in _obstacles:
 		if obstacle.get("agent") == walker or (walker.ignore_agent != null and obstacle.get("agent") == walker.ignore_agent):
 			continue  # sich selbst und die Katze, die man gerade streicheln will
+		if not walker.pass_agents.is_empty() and walker.pass_agents.has(obstacle.get("agent")):
+			continue  # Stau-Wächter: an dieser Figur/Katze schlüpft man gerade vorbei (StreetUnblock)
 		if walker.ghost_static > 0.0 and obstacle.kind == "static":
 			continue  # Sicherheitsnetz: steckte fest, darf hindurch (siehe Passerby.WEDGED_TIME)
 		if obstacle.kind == "static" and walker.get_action_type() == "sit":
@@ -971,8 +978,11 @@ func blocks_move(walker: Passerby, new_pos: Vector2) -> bool:
 			limit = PAIR_MIN_GAP
 			if walker.get_action_type() == "sit":
 				continue  # beim Hinsetzen nebeneinander und Aufstehen stören sie sich nicht
-			if not walker.follows and walker.get_action_type() == "walk":
-				limit = 0.2  # der Vordere geht einfach los, der Begleiter ordnet sich ein (sonst hielten sie sich fest)
+			if not walker.follows and walker.get_action_type() == "walk" \
+					and (walker.companion.pos - walker.pos).dot(walker.wanted_dir()) <= 0.0:
+				# der Vordere geht einfach los, der Begleiter ordnet sich ein (sonst hielten sie sich fest) – aber nur, wenn der
+				# Begleiter wirklich hinter ihm ist (an der Bücherei-Tür stand er schon vorn in der Tür und wurde überlaufen)
+				limit = 0.2
 		elif obstacle.kind == "walker" and walker.in_library and (obstacle.agent as Passerby).in_library:
 			# In der Bücherei (seit Testrunde 7b): die Wege sind eng – man drückt sich aneinander vorbei, statt sich an der
 			# Theke oder zwischen Regalen gegenseitig festzuhalten

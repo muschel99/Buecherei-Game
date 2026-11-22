@@ -54,10 +54,14 @@ func _place_groups() -> void:
 				continue
 			var band := StreetPaths.sidewalk_band(part, side)
 			var wall := absf(band.y if side > 0 else band.x) + StreetPaths.WALL_CLEARANCE
-			var lat: float = (wall - WALL_GAP) * side
-			var p2 := route.point_at(s, lat)
-			var center := Vector3(p2.x, 0.0, p2.y)
-			if _near_any(center, avoid, 1.9):
+			var p2 := route.point_at(s, (wall - 1.3) * side)
+			var out2 := route.point_at(s, (wall + 1.0) * side) - p2
+			# Die echte Hauswand suchen (zweiter Nachtest: wo Häuser zurückspringen, standen Kürbisse sonst mitten
+			# auf dem Gehweg) – nur an einer Wand, die fast quer zum Strahl steht und nah an der erwarteten Lage ist
+			var center := _wall_spot(space, Vector3(p2.x, 0.0, p2.y), Vector3(out2.x, 0.0, out2.y).normalized())
+			if center == Vector3.INF:
+				continue
+			if _near_any(center, avoid, 1.3):
 				continue
 			if not _free(space, center, 0.22):
 				continue
@@ -68,6 +72,25 @@ func _place_groups() -> void:
 		s += GameConfig.autumn_decor_step * rng.randf_range(0.7, 1.5)
 	if life:
 		life.refresh_static_obstacles()
+
+
+## Mitte einer Gruppe vor der echten Hauswand: Strahl in Kniehöhe vom Gehweg nach außen (from = 1 m vor der erwarteten
+## Wand). Ohne Wand in der Nähe, an unsichtbaren Grenzen (see_through) oder an schrägen Ecken: Vector3.INF.
+func _wall_spot(space: PhysicsDirectSpaceState3D, from: Vector3, out: Vector3) -> Vector3:
+	var start := from + Vector3.UP * 0.35
+	var ray := PhysicsRayQueryParameters3D.create(to_global(start), to_global(start + out * 2.4), 1 | (1 << 7))
+	var hit := space.intersect_ray(ray)
+	if hit.is_empty():
+		return Vector3.INF
+	var collider := hit.collider as Object
+	if collider and collider.has_meta("see_through"):
+		return Vector3.INF
+	var normal := (global_basis.inverse() * Vector3(hit.normal)).normalized()
+	if normal.dot(-out) < 0.6:
+		return Vector3.INF
+	var point := to_local(hit.position)
+	var center := point - out * WALL_GAP
+	return Vector3(center.x, 0.0, center.z)
 
 
 ## Türen (alle Häuser und die Bücherei), Lieferplatz der Kartons, Bänke: dort keine Kürbisse.

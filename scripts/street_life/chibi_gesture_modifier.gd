@@ -48,6 +48,20 @@ var body_scale: float = 1.0
 var hug_side: float = 1.0
 ## Trinken/Essen im Sitzen (seit Etappe 6i): 0…1 = wie weit die Hand am Mund ist
 var sip: float = 0.0
+## Trinken/Essen am Tisch (seit dem zweiten Nachtest der Überarbeitung): wo Becher bzw. Teller steht (Raum des Skeletts),
+## wie weit der Becher am Mund gekippt ist (0–1), Gabel statt Becher
+var drink_rest := Vector3.ZERO
+var drink_has_rest := false
+var drink_tilt: float = 0.0
+var drink_fork := false
+## Handgelenk gegenüber Becher-Boden am Tisch bzw. gegenüber den Lippen (m, Raum der Figur: +x links, +z vorn) – passend zur
+## Lage des Bechers in der Hand (GameConfig.passerby_prop_hold "mug"); Lippen vor dem großen Kopf (× body_scale)
+const MUG_AT_TABLE := Vector3(-0.02, 0.045, -0.12)
+const MUG_AT_MOUTH := Vector3(-0.12, -0.045, 0.055)
+const FORK_AT_TABLE := Vector3(-0.064, 0.16, -0.045)
+const FORK_AT_MOUTH := Vector3(-0.045, -0.064, 0.157)
+const DRINK_LIPS := Vector3(0.0, 0.05, 0.16)
+const DRINK_TILT_DEG := 55.0
 ## Hände greifen etwas (0…1; rechts: Gegenstand in der Hand, beide beim Fegen) – Finger krümmen sich
 var grip_right: float = 0.0
 var grip_left: float = 0.0
@@ -193,15 +207,28 @@ func _process_modification_with_delta(_delta: float) -> void:
 			_turn(skeleton, skeleton.find_bone("Spine"), Vector3.BACK, -hug_side * 0.08 * w)
 			_turn(skeleton, skeleton.find_bone("Neck"), Vector3.BACK, -hug_side * 0.2 * w)
 		Gesture.DRINK:
-			# rechte Hand vom Tisch zum Mund und zurück (sip: 0 = Hand am Tisch, 1 = am Mund)
-			# Mund: vor dem großen Kopf, etwas über dem Halsansatz (Lage des Kopfknochens in dieser Haltung)
+			# Rechte Hand vom Tisch zum Mund und zurück (sip: 0 = am Becher/Teller auf dem Tisch, 1 = am Mund), in einem kleinen
+			# Bogen über die Tischkante; der Ellbogen bleibt unten. Seit dem zweiten Nachtest der Überarbeitung (vorher: Hand vom
+			# Knie zum Mund, Ellbogen weit seitlich, der Becher kippte nie).
 			var head := skeleton.find_bone("Head")
 			var neck := skeleton.get_bone_global_pose(head).origin if head >= 0 else Vector3(0.0, 1.1, 0.0)
-			var mouth := neck + Vector3(-0.06, 0.03 * body_scale, 0.29 * body_scale)
-			var rest := Vector3(-0.16 * body_scale, neck.y - 0.42 * body_scale, 0.3 * body_scale)
-			_reach(skeleton, "Right", rest.lerp(mouth, sip), Vector3(-0.9, -0.7, -0.3), w)
-			# Finger zeigen zur Körpermitte, Daumen oben, Handrücken nach vorn – so hält man eine Tasse
-			_orient_hand_along(skeleton, skeleton.find_bone("RightHand"), Vector3(0.9, 0.15, 0.2).normalized(), Vector3(-0.2, 0.2, 1.0), w)
+			var lips := neck + DRINK_LIPS * body_scale
+			var at_mouth := lips + (FORK_AT_MOUTH if drink_fork else MUG_AT_MOUTH)
+			var rest := drink_rest + (FORK_AT_TABLE if drink_fork else MUG_AT_TABLE) if drink_has_rest \
+				else Vector3(-0.16 * body_scale, neck.y - 0.42 * body_scale, 0.3 * body_scale)
+			var e := smoothstep(0.0, 1.0, sip)
+			var target := rest.lerp(at_mouth, e) + Vector3(0.0, 0.05 * sin(e * PI), 0.0)
+			_reach(skeleton, "Right", target, Vector3(-0.55, -0.85, 0.05), w)
+			# Daumen oben: am Tisch Finger nach vorn (Handfläche zum Becher), am Mund Finger zur Mitte (Handrücken nach vorn);
+			# beim Trinken kippt der Handrücken nach oben – der Becherrand geht an die Lippen
+			# (Gabel: am Teller Handrücken oben – die Spitze zeigt hinunter auf den Kuchen)
+			var fingers_low := Vector3(0.1, -0.2, 1.0) if drink_fork else Vector3(0.15, 0.0, 1.0)
+			var back_low := Vector3(0.0, 1.0, 0.0) if drink_fork else Vector3(-1.0, 0.0, 0.1)
+			var fingers := fingers_low.normalized().slerp(Vector3(1.0, 0.0, 0.3).normalized(), e)
+			var back := back_low.normalized().slerp(Vector3(0.0, 0.0, 1.0), e)
+			var a := deg_to_rad(DRINK_TILT_DEG) * drink_tilt
+			back = (back * cos(a) + Vector3.UP * sin(a)).normalized()
+			_orient_hand_along(skeleton, skeleton.find_bone("RightHand"), fingers, back, w)
 		Gesture.TALK:
 			# erzählen: Unterarme vor dem Bauch, Hände bewegen sich ruhig
 			var e := talk_energy
@@ -219,8 +246,22 @@ func _grip(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
 	for finger: String in ["Index", "Middle", "Ring", "Little"]:
 		for joint: String in ["Proximal", "Intermediate", "Distal"]:
 			_bend_joint(skeleton, prefix + finger + joint, GRIP_ANGLE, amount)
-	_bend_joint(skeleton, prefix + "ThumbProximal", GRIP_ANGLE * 0.4, amount)
-	_bend_joint(skeleton, prefix + "ThumbDistal", GRIP_ANGLE * 0.5, amount)
+	_bend_thumb(skeleton, prefix + "ThumbProximal", GRIP_ANGLE * 0.4, amount)
+	_bend_thumb(skeleton, prefix + "ThumbDistal", GRIP_ANGLE * 0.5, amount)
+
+
+## Achse, um die sich der Daumen beim Greifen krümmt (Raum des Daumenknochens; seit dem zweiten Nachtest der Überarbeitung -Z:
+## er legt sich über die Finger – um X stand er wie bei „Daumen hoch“ ab). Das Prüfwerkzeug (pose_probe thumb) probiert andere.
+var thumb_axis := Vector3.FORWARD
+
+
+func _bend_thumb(skeleton: Skeleton3D, bone_name: String, degrees: float, amount: float) -> void:
+	var bone := skeleton.find_bone(bone_name)
+	if bone < 0:
+		return
+	var rest := skeleton.get_bone_rest(bone).basis.get_rotation_quaternion()
+	var bent := rest * Quaternion(thumb_axis, deg_to_rad(degrees))
+	skeleton.set_bone_pose_rotation(bone, skeleton.get_bone_pose_rotation(bone).slerp(bent, clampf(amount, 0.0, 1.0)))
 
 
 func _bend_joint(skeleton: Skeleton3D, bone_name: String, degrees: float, amount: float) -> void:

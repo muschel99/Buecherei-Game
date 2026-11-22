@@ -13,7 +13,7 @@ uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 uniform vec3 sun_color : source_color = vec3(1.0, 0.9, 0.7);
 uniform float sun_visible = 1.0;
 uniform float sun_size = 0.9994;
-uniform float sun_glow = 0.35;
+uniform float sun_glow = 0.25;
 // Mond
 uniform vec3 moon_dir = vec3(0.0, -1.0, 0.0);
 uniform float moon_visible = 0.0;
@@ -107,7 +107,7 @@ void sky() {
 		}
 		// Sonnenscheibe (weich)
 		float disc = smoothstep(sun_size - 0.00025, sun_size + 0.00015, sun_cos);
-		col = mix(col, sun_color * 1.6, disc * sun_visible);
+		col = mix(col, sun_color * 1.25, disc * sun_visible);
 		// Mond: Scheibe mit sanftem Schein und ein paar weichen Flecken
 		vec3 md = normalize(moon_dir);
 		float moon_cos = dot(dir, md);

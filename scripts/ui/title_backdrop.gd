@@ -5,6 +5,9 @@ extends Node3D
 ## Hocker und Trittsteinen (assets/models/title/title_garden.glb, tools/blender/build_title_garden.py), der Gartenbaum
 ## (scenes/world/plants/tree_garden_big.tscn), Blumenbeete (PLANTS unten), weicher Abendhimmel (assets/shaders/
 ## title_sky.gdshader), warmes, tiefes Sonnenlicht, schwebende Lichtpünktchen und der Malstil wie im Spiel.
+## Seit dem zweiten Nachtest der Überarbeitung (Wunsch: „im Hauptmenü fehlt der Bezug zu den Büchern“): ein paar Bücher fliegen
+## wie Vögel um den Baum – sie schlagen ihre Deckel wie Flügel, gleiten, legen sich in die Kurve (FlyingBook) –, und zwischen dem
+## Herbstlaub segeln lose Buchseiten durch die Luft (_add_pages).
 ## Kamera: GameConfig.title_camera_* (wiegt sich sanft). Die Szene lässt sich auch allein starten (F6) zum Ausprobieren.
 
 const PLANT_DIR := "res://scenes/world/plants/"
@@ -69,6 +72,8 @@ func _ready() -> void:
 	_camera.fov = GameConfig.title_camera_fov
 	_camera.global_transform = view(0.0)
 	_add_motes()
+	_add_flying_books()
+	_add_pages()
 	# Malstil und Grafikstufe wie im Spiel
 	var compositor := Compositor.new()
 	compositor.compositor_effects = [_paint]
@@ -130,6 +135,164 @@ func view(t: float) -> Transform3D:
 	var eye := GameConfig.title_camera_eye + WORLD_OFFSET + Vector3(sin(t * 0.21) * 0.12, sin(t * 0.33) * 0.05, 0.0)
 	var target := GameConfig.title_camera_target + WORLD_OFFSET + Vector3(sin(t * 0.17) * 0.1, 0.0, cos(t * 0.13) * 0.06)
 	return Transform3D(Basis.looking_at(target - eye, Vector3.UP), eye)
+
+
+## Fliegende Bücher: [Einbandfarbe, Mitte der Bahn (m, Mitte der Bank = 0), Halbmesser quer/tief, Umlaufzeit (s), Phase].
+## Die Bahnen liegen vor der Krone und im freien Himmel rechts neben dem Notizzettel (von der Kamera aus gesehen).
+const FLYING_BOOKS := [
+	[Color(0.84, 0.5, 0.52), Vector3(-2.5, 5.4, 3.4), Vector2(3.6, 1.5), 24.0, 0.0],
+	[Color(0.47, 0.6, 0.5), Vector3(-3.2, 6.5, 2.6), Vector2(3.0, 1.3), 29.0, 2.4],
+	[Color(0.93, 0.76, 0.42), Vector3(-1.8, 4.5, 4.0), Vector2(2.8, 1.2), 21.0, 4.1],
+]
+## So viel größer als ein echtes Buch (aus der Ferne sonst kaum zu erkennen)
+const FLYING_BOOK_SCALE := 1.7
+
+
+func _add_flying_books() -> void:
+	for entry: Array in FLYING_BOOKS:
+		var book := FlyingBook.new()
+		book.cover_color = entry[0]
+		book.center = entry[1]
+		book.radii = entry[2]
+		book.period = float(entry[3])
+		book.phase = float(entry[4])
+		book.scale = Vector3.ONE * FLYING_BOOK_SCALE
+		add_child(book)
+
+
+## Lose Buchseiten, die langsam durch die Luft segeln (cremefarben, mit ein paar Zeilen), zwischen dem Herbstlaub.
+func _add_pages() -> void:
+	var pages := GPUParticles3D.new()
+	pages.name = "Pages"
+	pages.amount = 7
+	pages.lifetime = 22.0
+	pages.preprocess = 22.0
+	pages.visibility_aabb = AABB(Vector3(-10, -8, -8), Vector3(20, 18, 16))
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	process.emission_box_extents = Vector3(3.5, 1.5, 2.5)
+	process.gravity = Vector3(0.0, -0.05, 0.0)
+	process.direction = Vector3(1.0, 0.1, 0.25)
+	process.spread = 25.0
+	process.initial_velocity_min = 0.18
+	process.initial_velocity_max = 0.32
+	process.turbulence_enabled = true
+	process.turbulence_noise_strength = 0.9
+	process.turbulence_noise_scale = 4.0
+	process.turbulence_noise_speed = Vector3(0.05, 0.03, 0.05)
+	process.angular_velocity_min = -60.0
+	process.angular_velocity_max = 60.0
+	process.angle_min = -180.0
+	process.angle_max = 180.0
+	process.particle_flag_rotate_y = true
+	process.scale_min = 0.8
+	process.scale_max = 1.15
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0))
+	fade.set_color(1, Color(1, 1, 1, 0))
+	fade.add_point(0.1, Color(1, 1, 1, 1))
+	fade.add_point(0.9, Color(1, 1, 1, 1))
+	var ramp := GradientTexture1D.new()
+	ramp.gradient = fade
+	process.color_ramp = ramp
+	pages.process_material = process
+	pages.position = Vector3(-3.0, 5.0, 2.5)
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.3, 0.4)
+	var material := StandardMaterial3D.new()
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.vertex_color_use_as_albedo = true
+	material.albedo_texture = _page_texture()
+	material.roughness = 0.9
+	quad.material = material
+	pages.draw_pass_1 = quad
+	add_child(pages)
+
+
+## Kleines Bild einer Buchseite: Creme mit weichem Rand und ein paar grauen Zeilen.
+func _page_texture() -> ImageTexture:
+	var image := Image.create(48, 64, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.98, 0.95, 0.87))
+	for y in range(9, 58, 5):
+		var end := 40 if y < 52 else 26
+		for x in range(7, end):
+			image.set_pixel(x, y, Color(0.62, 0.58, 0.55))
+	for x in 48:
+		image.set_pixel(x, 0, Color(0.9, 0.85, 0.75))
+		image.set_pixel(x, 63, Color(0.9, 0.85, 0.75))
+	return ImageTexture.create_from_image(image)
+
+
+## Ein Buch, das wie ein Vogel fliegt: Rücken in Flugrichtung, die beiden Deckel (mit Seiten) schlagen wie Flügel, dazwischen
+## gleitet es mit fast offenen Deckeln; es folgt einer sanften, liegenden Acht und legt sich in die Kurve.
+class FlyingBook extends Node3D:
+	var cover_color := Color(0.84, 0.5, 0.52)
+	var center := Vector3.ZERO
+	var radii := Vector2(3.0, 2.0)
+	var period := 25.0
+	var phase := 0.0
+	var _wings: Array[Node3D] = []
+	var _t := 0.0
+
+	func _ready() -> void:
+		_t = phase
+		var cover := StandardMaterial3D.new()
+		cover.albedo_color = cover_color
+		cover.roughness = 0.75
+		var paper := StandardMaterial3D.new()
+		paper.albedo_color = Color(0.97, 0.93, 0.84)
+		paper.roughness = 0.95
+		var spine := MeshInstance3D.new()
+		var spine_mesh := BoxMesh.new()
+		spine_mesh.size = Vector3(0.03, 0.03, 0.27)
+		spine.mesh = spine_mesh
+		spine.material_override = cover
+		add_child(spine)
+		for side: float in [-1.0, 1.0]:
+			var wing := Node3D.new()
+			add_child(wing)
+			var board := MeshInstance3D.new()
+			var board_mesh := BoxMesh.new()
+			board_mesh.size = Vector3(0.19, 0.012, 0.27)
+			board.mesh = board_mesh
+			board.material_override = cover
+			board.position = Vector3(side * 0.095, 0.0, 0.0)
+			wing.add_child(board)
+			var pages := MeshInstance3D.new()
+			var pages_mesh := BoxMesh.new()
+			pages_mesh.size = Vector3(0.175, 0.024, 0.25)
+			pages.mesh = pages_mesh
+			pages.material_override = paper
+			pages.position = Vector3(side * 0.09, -0.017, 0.0)
+			wing.add_child(pages)
+			wing.set_meta(&"side", side)
+			_wings.append(wing)
+
+	func _process(delta: float) -> void:
+		_t += delta
+		var w := TAU / period
+		var a := _t * w
+		var here := _point(a)
+		var ahead := _point(a + 0.05)
+		var dir := (ahead - here).normalized()
+		# sanftes Auf und Ab mit dem Flügelschlag, zwischendurch gleiten (Deckel fast offen)
+		var glide := smoothstep(0.2, 0.8, 0.5 + 0.5 * sin(_t * 0.45 + phase))
+		var flap_rate := 5.5
+		var flap := sin(_t * flap_rate) * lerpf(0.55, 0.12, glide)
+		position = here + Vector3.UP * (0.08 * sin(_t * flap_rate - 0.6) * (1.0 - glide))
+		# in die Kurve legen: seitliche Beschleunigung aus der Bahn
+		var turn := (_point(a + 0.1) - here).normalized().cross(dir).y
+		var basis := Basis.looking_at(-dir, Vector3.UP)  # Rücken zeigt in Flugrichtung (+z des Buchs nach vorn)
+		basis = basis * Basis(Vector3.BACK, clampf(turn * 6.0, -0.5, 0.5))
+		transform.basis = basis.scaled(scale)
+		for wing in _wings:
+			var side := float(wing.get_meta(&"side"))
+			# beide Deckel leicht nach oben (V-Form), Flügelschlag gegengleich um den Rücken
+			wing.rotation = Vector3(0.0, 0.0, side * (0.35 + flap))
+
+	func _point(a: float) -> Vector3:
+		return center + Vector3(cos(a) * radii.x, sin(2.0 * a) * 0.5, sin(a) * radii.y)
 
 
 ## Schwebende Lichtpünktchen (Pollen im Abendlicht): weiche, warme Punkte, die langsam um den Baum treiben.

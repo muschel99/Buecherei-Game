@@ -50,6 +50,8 @@ var _checkout: Dictionary = {}
 ## Dinge auf der Theke beim Ausleihen (Korb, Ausweis, Stempel) und der Korbstapel an der Wand
 var _stamp_shape: CollisionShape3D
 var _counter_basket: Node3D
+var _floor_baskets: Array[Node3D] = []   # abgestellte Körbe vor der Theke (räumen sich ungesehen weg)
+var _basket_check := 0.0
 var _desk: CounterDesk
 ## Tüte, mit der Gäste nach der Ausleihe hinausgehen (seit dem Nachtest von Etappe 8, build_storybook_bags.py)
 const LIBRARY_BAG := "res://assets/models/characters/props/library_bag.glb"
@@ -94,6 +96,7 @@ func step(delta: float) -> void:
 		door_link.step(delta)
 	_update_counter()
 	_update_wish_bubbles(delta)
+	_tidy_floor_baskets(delta)
 
 
 # --- Vom Gehweg herein ---
@@ -307,7 +310,7 @@ func _queue_step(walker: Passerby) -> Array:
 	if index > 0:
 		return [{"type": "wait", "face": _counter_face(), "until": func(w: Passerby) -> bool: return queue.find(w) < index},
 			_call(_queue_step)]
-	# vorn an der Theke: Korb auf die Theke, einmal klingeln, Ausweis hochhalten
+	# vorn an der Theke: Korb vor der Theke auf den Boden, einmal klingeln, Ausweis hochhalten
 	Tutorial.report("guest_waiting")
 	Audio.play_at("ui/counter_bell", _counter_node().global_transform * Vector3(-0.3, Counter.TOP_HEIGHT, 0.25), GameConfig.counter_bell_volume_db,
 		Audio.vary(0.03))
@@ -623,7 +626,7 @@ func visit_card(walker: Passerby) -> String:
 	return str((_visit.get(walker, {}) as Dictionary).get("card", ""))
 
 
-## Korb auf der Theke leer (die Bücher liegen gerade vor der Spielfigur) oder wieder gefüllt.
+## Korb am Boden vor der Theke leer (die Bücher liegen gerade vor der Spielfigur) oder wieder gefüllt.
 func show_basket_empty(empty: bool) -> void:
 	if _counter_basket == null or not is_instance_valid(_counter_basket):
 		return
@@ -633,6 +636,7 @@ func show_basket_empty(empty: bool) -> void:
 	var count := 0 if empty or walker == null else _book_count(walker)
 	var model := load(BASKET_MODELS[mini(3, count)]) as PackedScene
 	_counter_basket = _place_on_counter(model.instantiate(), t.origin, t.basis)
+	_floor_baskets.append(_counter_basket)
 
 
 ## Ausgeliehen: Gebühren (das Geld ploppt beim Kontostand auf – kein Text), volle Stempelkarte = mehr Zeit; der Gast geht.
@@ -661,22 +665,45 @@ func _place_on_counter(node: Node3D, local: Vector3, basis: Basis) -> Node3D:
 	return node
 
 
-## Korb des Besuchers auf die Kundenseite der Theke stellen (aus der Hand).
+## Korb des Besuchers aus der Hand vor der Theke auf den Boden stellen, rechts neben ihn (seit dem zweiten Nachtest der
+## Überarbeitung – Wunsch der Entwicklerin: nie auf die Theke). Beim Bedienen heben sich die Bücher daraus auf die Theke.
 func _put_basket_on_counter(walker: Passerby) -> void:
 	_clear_counter()
 	walker.give_bag(false)
 	var model := load(BASKET_MODELS[mini(3, _book_count(walker))]) as PackedScene
 	if model == null:
 		return
-	_counter_basket = _place_on_counter(model.instantiate(), CounterDesk.BASKET + Vector3(0.0, Counter.TOP_HEIGHT + BASKET_DROP, 0.0),
-		Basis(Vector3.UP, 0.4))
-	Audio.play_at("books/place", _counter_basket.global_position, -6.0, Audio.vary(0.08))
+	var counter := _counter_node()
+	var guest := counter.to_local(walker.global_position)
+	var spot := Vector3(guest.x + GameConfig.counter_basket_side, BASKET_DROP, maxf(guest.z - 0.08, 0.52))
+	_counter_basket = _place_on_counter(model.instantiate(), spot, Basis(Vector3.UP, 0.4 + _rng.randf_range(-0.3, 0.3)))
+	_floor_baskets.append(_counter_basket)
+	Audio.play_at("books/place", _counter_basket.global_position, -8.0, Audio.vary(0.08) * 0.85)
 
 
+## Den Korb vergessen – er bleibt am Boden stehen, bis ihn niemand mehr sieht (_tidy_floor_baskets; nie sichtbar verschwinden).
 func _clear_counter() -> void:
-	if _counter_basket and is_instance_valid(_counter_basket):
-		_counter_basket.queue_free()
 	_counter_basket = null
+
+
+## Abgestellte Körbe vor der Theke räumen sich weg, sobald niemand hinschaut und kein Gast mehr davor steht.
+func _tidy_floor_baskets(delta: float) -> void:
+	_basket_check -= delta
+	if _basket_check > 0.0 or _floor_baskets.is_empty():
+		return
+	_basket_check = 0.5
+	var camera := get_viewport().get_camera_3d()
+	for basket: Node3D in _floor_baskets.duplicate():
+		if not is_instance_valid(basket):
+			_floor_baskets.erase(basket)
+			continue
+		if basket == _counter_basket:
+			continue
+		var seen := camera != null and camera.is_position_in_frustum(basket.global_position) \
+			and camera.global_position.distance_to(basket.global_position) < 30.0
+		if not seen:
+			_floor_baskets.erase(basket)
+			basket.queue_free()
 
 
 ## Der Korb des Gasts auf der Theke (oder null) – die Theken-Ansicht lässt ihn am Ende hinter die Theke gleiten.

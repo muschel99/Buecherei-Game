@@ -415,6 +415,11 @@ func _on_finished(cat: StreetCat) -> void:
 ## Jemand versperrt den Weg: draußen in einem kleinen Bogen zur Straße hin außen herum; klappt das nicht
 ## (oder ist auch der Bogen versperrt), umkehren zum nächsten verdeckten Ende. Drinnen weiter warten.
 func blocked(cat: StreetCat, dir: Vector3) -> void:
+	# Stau-Wächter (seit dem zweiten Nachtest der Überarbeitung): steht ein Passant oder eine Katze direkt davor, tritt der
+	# Passant beiseite oder die Katze schlüpft vorbei – sie wartet nur kurz, statt umzukehren
+	var who := blocker_ahead(cat, dir)
+	if who != null and street.unblock and street.unblock.cat_blocked(cat, who, dir):
+		return
 	# Auf dem Weg zum Warteplatz an der Tür steht jemand (seit Etappe 6j: z. B. jemand auf dem Stuhl neben der Treppe –
 	# vorher blieb die Katze dort stehen und die nächste dahinter auf der Treppe auch): gleich hier auf die Tür warten
 	var queued := cat.get_actions()
@@ -2406,19 +2411,24 @@ func is_visible_point(point: Vector3) -> bool:
 
 ## Steht jemand direkt vor der Katze (Spielfigur, Passant, andere Katze)?
 func blocked_ahead(cat: StreetCat, dir: Vector3) -> bool:
+	return blocker_ahead(cat, dir) != null
+
+
+## Wer steht direkt vor der Katze (Spielfigur, Passant, Katze) – oder null.
+func blocker_ahead(cat: StreetCat, dir: Vector3) -> Node3D:
 	var p := cat.global_position
 	var others: Array = []
 	var player := street.get_player()
 	if player:
-		others.append([player.global_position, StreetLife.PLAYER_RADIUS])
+		others.append([player.global_position, StreetLife.PLAYER_RADIUS, player])
 	if not cat.inside:
 		for walker in street.get_walkers():
-			if walker != cat._action.get("ignore"):
-				others.append([walker.global_position, walker.radius * walker.scale.x])
+			if walker != cat._action.get("ignore") and not cat.pass_agents.has(walker):
+				others.append([walker.global_position, walker.radius * walker.scale.x, walker])
 	if not cat._action.get("pass_cats", false):
 		for other in _cats:
-			if other != cat and other.on_ground() and other.inside == cat.inside:
-				others.append([other.global_position, other.radius])
+			if other != cat and other.on_ground() and other.inside == cat.inside and not cat.pass_agents.has(other):
+				others.append([other.global_position, other.radius, other])
 	for o: Array in others:
 		var q: Vector3 = o[0]
 		var d := Vector3(q.x - p.x, 0.0, q.z - p.z)
@@ -2428,8 +2438,25 @@ func blocked_ahead(cat: StreetCat, dir: Vector3) -> bool:
 		if along <= 0.05 or along > BLOCK_AHEAD + float(o[1]):
 			continue
 		if (d - dir * along).length() < BLOCK_SIDE + float(o[1]):
-			return true
-	return false
+			return o[2]
+	return null
+
+
+## Ruhende Katze geht für jemanden ein Stück beiseite (Stau-Wächter): aufstehen, zur Stelle spot (Straßen-Ebene, 2D), dort
+## kurz sitzen, dann weiter wie vorher (dieselbe Ruhe an der neuen Stelle). false = geht hier nicht (Treppe, Mauer …).
+func make_way(cat: StreetCat, spot: Vector2, _for_agent: Node3D) -> bool:
+	if not cat.is_resting() or cat.inside or on_stairs(cat.global_position):
+		return false
+	var target := street.to_global(Vector3(spot.x, 0.0, spot.y))
+	target.y = cat.global_position.y
+	var current: Dictionary = cat._action.duplicate()
+	var actions: Array[Dictionary] = [
+		{"type": "walk", "points": PackedVector3Array([cat.global_position, target]), "speed": GameConfig.cat_walk_speed},
+		{"type": "anim", "anim": "sit", "time": _rng.randf_range(1.5, 3.0)}]
+	actions.append(current)
+	actions.append_array(cat.get_actions())
+	cat.replace_actions(actions)
+	return true
 
 
 ## Fahrbahn frei zum Überqueren (kein Fahrzeug in der Nähe oder im Kommen)?

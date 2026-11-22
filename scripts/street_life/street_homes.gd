@@ -33,6 +33,7 @@ var stat_water := 0
 var stat_sweep := 0
 var stat_windows := 0
 var stat_errands := 0
+var stat_vendor_trips := 0   # Verkäufer, die zur Arbeit gekommen oder nach Hause gegangen sind
 
 
 func setup(owner_life: StreetLife, seed_value: int) -> void:
@@ -425,11 +426,12 @@ func _come_home(res: Dictionary) -> bool:
 		return p.kind == "walker" and p.place in ["east", "west"] and p.side == home.side)
 	ends.shuffle()
 	for start: Dictionary in ends:
-		if life.is_visible_spot(start.pos) or life.spot_crowded(start.pos) \
-				or life.player_pos().distance_to(start.pos) < GameConfig.passerby_spawn_player_distance:
-			continue
 		var from_s: float = 0.0 if start.place == "east" else life.centerline.length()
 		var start_pos: Vector2 = life._lane_point(home.side, from_s, 0.5)
+		# auch die Stelle prüfen, an der er wirklich anfängt (sonst tauchte er am Straßenende manchmal sichtbar auf)
+		if life.is_visible_spot(start.pos) or life.is_visible_spot(start_pos) or life.spot_crowded(start.pos) \
+				or life.player_pos().distance_to(start.pos) < GameConfig.passerby_spawn_player_distance:
+			continue
 		var lane := _lane_at(home.get("gate_out", home.front), home.side)
 		var actions: Array[Dictionary] = [{"type": "walk", "route": life.sidewalks[home.side], "to": float(home.s)}]
 		for step: Dictionary in _way_in(home, lane):
@@ -450,6 +452,11 @@ func _come_home(res: Dictionary) -> bool:
 func resident_finished(walker: Passerby) -> void:
 	var res := walker.resident
 	walker.set_prop(&"")
+	if res.get("vendor", false):
+		# Verkäufer am Straßenende angekommen (Feierabend) – morgens kommt er wieder (_update_vendor)
+		res.state = "away"
+		res.timer = _rng.randf_range(GameConfig.shop_vendor_stagger.x, GameConfig.shop_vendor_stagger.y)
+		return
 	if String(res.get("activity", "")) == "errand":
 		res.state = "away"
 		res.timer = _rng.randf_range(GameConfig.resident_away_time.x, GameConfig.resident_away_time.y)
@@ -534,12 +541,19 @@ func _add_shop(shop: Dictionary, house: Node3D) -> void:
 	(shop.door as HouseDoor).has_bell = true
 	shops.append(shop)
 	if not (shop.vendor_spot as Dictionary).is_empty():
-		shop.vendor = _make_indoor_figure("Vendor%d" % shops.size())
-		var spot: Dictionary = shop.vendor_spot
-		var actions: Array[Dictionary] = [{"type": "stand", "anim": &"idle", "face": spot.face, "time": INF}]
-		(shop.vendor as Passerby).begin(spot.pos, actions, spot.face, float(spot.floor))
-		(shop.vendor as Passerby).set_shadows(0)
-		indoor.append(shop.vendor)
+		var vendor := _make_indoor_figure("Vendor%d" % shops.size())
+		shop.vendor = vendor
+		shop.staff_way = _staff_way(house, (shop.vendor_spot as Dictionary).node as Node3D)
+		# Verkäufer kommen morgens die Straße entlang und gehen abends wieder (seit dem zweiten Nachtest der Überarbeitung):
+		# unterwegs sind sie wie Anwohner (Passerby.resident, Ende über resident_finished), im Laden Figuren drinnen
+		vendor.finished.connect(life._on_walker_finished)
+		vendor.resident = {"walker": vendor, "home": shop, "state": "work", "vendor": true, "timer": 0.0}
+		if shops_open():
+			_vendor_at_work(shop, vendor)
+		else:
+			vendor.set_active(false)
+			vendor.resident.state = "away"
+			shop.light_on = false
 		shop.vendor_wait = _rng.randf_range(3.0, 10.0)
 	var seats: Array = (shop.seats as Array).duplicate()
 	seats.shuffle()
@@ -554,7 +568,23 @@ func _spot_entry(spot: Node3D) -> Dictionary:
 	var parent := spot.get_parent() as Node3D
 	var dir := parent.global_basis * Vector3(float(extras.get("face_x", 0.0)), 0.0, -float(extras.get("face_y", 1.0)))
 	var face := life.to_local2(spot.global_position + dir) - pos
-	return {"pos": pos, "face": face.normalized(), "floor": life.to_local(spot.global_position).y}
+	return {"pos": pos, "face": face.normalized(), "floor": life.to_local(spot.global_position).y, "node": spot}
+
+
+## Weg des Verkäufers um die Theke herum (GameConfig.shop_staff_ways: Punkte im Modell, in Blender ausgemessen) als Punkte
+## auf der Straße (StreetLife-Ebene); leer = gerade vom Platz zur Theke.
+func _staff_way(house: Node3D, spot: Node3D) -> PackedVector2Array:
+	var way := PackedVector2Array()
+	if spot == null:
+		return way
+	var path := String(house.get("unique_model").resource_path) if house.get("unique_model") else house.scene_file_path
+	var parent := spot.get_parent() as Node3D
+	for key: String in GameConfig.shop_staff_ways:
+		if path.contains(key):
+			for p: Vector2 in GameConfig.shop_staff_ways[key]:
+				way.append(life.to_local2(parent.to_global(Vector3(p.x, 0.0, -p.y))))
+			break
+	return way
 
 
 func _bag_for(house: Node3D) -> String:
@@ -619,7 +649,7 @@ func _update_shops(delta: float) -> void:
 	_update_opening()
 	for shop in shops:
 		var vendor: Passerby = shop.get("vendor")
-		if vendor == null or not vendor.visible:
+		if vendor == null or not vendor.visible or String(vendor.resident.get("state", "")) != "work":
 			continue
 		shop.vendor_wait = float(shop.vendor_wait) - delta
 		if float(shop.vendor_wait) <= 0.0 and shop.at_counter == null:
@@ -629,8 +659,9 @@ func _update_shops(delta: float) -> void:
 		_update_guest(guest, delta)
 
 
-## Ladenschluss (seit Testrunde 7b): Nach GameConfig.shop_hours.y gehen Verkäufer und feste Gäste – aber erst, wenn gerade
-## niemand hinsieht (nie sichtbar verschwinden); morgens sind sie genauso unbemerkt wieder da.
+## Ladenschluss (seit Testrunde 7b): Nach GameConfig.shop_hours.y gehen die festen Gäste im Pub – aber erst, wenn gerade
+## niemand hinsieht (nie sichtbar verschwinden); morgens sind sie genauso unbemerkt wieder da. Verkäufer gehen seit dem zweiten
+## Nachtest der Überarbeitung richtig: hinter der Theke hervor, aus der Tür, die Straße entlang (_update_vendor).
 var _opening_check := 0.0
 
 
@@ -643,7 +674,7 @@ func _update_opening() -> void:
 	for shop in shops:
 		var figures: Array[Passerby] = []
 		if shop.get("vendor"):
-			figures.append(shop.vendor)
+			_update_vendor(shop, shop.vendor as Passerby, open)
 		for guest in guests:
 			if guest.get("shop") == shop:
 				figures.append(guest.walker)
@@ -663,6 +694,126 @@ func _update_opening() -> void:
 			(shop.customers as Array).clear()
 
 
+## Verkäufer: "work" (im Laden) → nach Ladenschluss "leaving" (auf dem Weg zum Straßenende) → "away" → morgens "coming"
+## (vom Straßenende bis an den Platz hinter der Theke) → "work". Jeder geht mit ein paar Sekunden Abstand (timer).
+func _update_vendor(shop: Dictionary, vendor: Passerby, open: bool) -> void:
+	var res: Dictionary = vendor.resident
+	match String(res.state):
+		"work":
+			if open:
+				res.timer = _rng.randf_range(GameConfig.shop_vendor_stagger.x, GameConfig.shop_vendor_stagger.y)
+				return
+			res.timer = float(res.timer) - 1.0
+			var door: HouseDoor = shop.door
+			if float(res.timer) > 0.0 or shop.at_counter != null or door.is_in_use() or life.door_blocked(shop.front):
+				return
+			_vendor_leave(shop, vendor)
+		"away":
+			if not open:
+				res.timer = _rng.randf_range(GameConfig.shop_vendor_stagger.x, GameConfig.shop_vendor_stagger.y)
+				return
+			res.timer = float(res.timer) - 1.0
+			if float(res.timer) <= 0.0 and not _vendor_come(shop, vendor):
+				res.timer = 1.5  # Straßenende gerade im Blick: kurz warten
+
+
+## Im Laden hinter der Theke stehen (Figur drinnen).
+func _vendor_at_work(shop: Dictionary, vendor: Passerby) -> void:
+	var spot: Dictionary = shop.vendor_spot
+	var actions: Array[Dictionary] = [{"type": "stand", "anim": &"idle", "face": spot.face, "time": INF}]
+	vendor.begin(spot.pos, actions, spot.face, float(spot.floor))
+	vendor.set_shadows(0)
+	vendor.resident.state = "work"
+	shop.light_on = true
+	if not indoor.has(vendor):
+		indoor.append(vendor)
+
+
+## Licht im Laden an/aus (Schritt "call" an der Tür: morgens an, abends aus – ShopGlow blendet über).
+func _shop_light(_walker: Passerby, shop: Dictionary, on: bool) -> Array:
+	shop.light_on = on
+	return []
+
+
+## Weg hinter der Theke hervor bis vor die Theke (bzw. zurück, reverse) – Schritte im Laden.
+func _staff_walk(shop: Dictionary, reverse: bool) -> Array[Dictionary]:
+	var points := PackedVector2Array([(shop.vendor_spot as Dictionary).pos])
+	points.append_array(shop.get("staff_way", PackedVector2Array()))
+	points.append((shop.counter as Dictionary).pos)
+	points.append(shop.inner)
+	if reverse:
+		points.reverse()
+	var route := StreetRoute.from_points(points, GameConfig.passerby_short_path_half_width)
+	return [{"type": "walk", "route": route, "to": route.length(), "from_here": true, "fixed_path": true}]
+
+
+## Feierabend: hinter der Theke hervor, aus der Tür, die Straße entlang zu einem Ende (dort verschwindet er wie jeder Passant).
+func _vendor_leave(shop: Dictionary, vendor: Passerby) -> void:
+	var side: int = shop.side
+	var lane := _lane_at(shop.front, side)
+	var actions: Array[Dictionary] = _staff_walk(shop, false)
+	actions.append({"type": "call", "callable": _shop_light.bind(shop, false)})
+	actions.append(door_step(shop, true))
+	actions.append(_route_to(shop.front, lane))
+	actions.append({"type": "walk", "route": life.sidewalks[side], "to": -0.5 if _rng.randf() < 0.5 else life.centerline.length() + 0.5})
+	actions.append({"type": "leave", "gate": false})
+	indoor.erase(vendor)
+	vendor.side = side
+	vendor.comfort_pref = _rng.randf_range(0.2, 0.8)
+	vendor.speed_pref = _rng.randf_range(GameConfig.passerby_speed_range.x, GameConfig.passerby_speed_range.y) * vendor.speed_factor()
+	vendor.resident.state = "leaving"
+	life.resident_goes_out(vendor)
+	var spot: Dictionary = shop.vendor_spot
+	vendor.begin(spot.pos, actions, spot.face, float(spot.floor))
+	vendor.set_shadows(0)
+	stat_vendor_trips += 1
+
+
+## Morgens: ungesehen am Straßenende los, auf dem Gehweg bis zum Laden, hinein und hinter die Theke (false = gerade kein
+## ungesehenes Straßenende frei).
+func _vendor_come(shop: Dictionary, vendor: Passerby) -> bool:
+	var side: int = shop.side
+	var ends := life.get_places().filter(func(p: Dictionary) -> bool:
+		return p.kind == "walker" and p.place in ["east", "west"] and p.side == side)
+	ends.shuffle()
+	for start: Dictionary in ends:
+		var from_s: float = 0.0 if start.place == "east" else life.centerline.length()
+		var start_pos: Vector2 = life._lane_point(side, from_s, 0.5)
+		if life.is_visible_spot(start.pos) or life.is_visible_spot(start_pos) or life.spot_crowded(start.pos) \
+				or life.player_pos().distance_to(start.pos) < GameConfig.passerby_spawn_player_distance:
+			continue
+		var lane := _lane_at(shop.front, side)
+		var actions: Array[Dictionary] = [{"type": "walk", "route": life.sidewalks[side], "to": float(shop.s)}]
+		actions.append(_route_to(lane, shop.front))
+		actions.append(door_step(shop, false))
+		actions.append({"type": "call", "callable": _shop_light.bind(shop, true)})
+		actions.append_array(_staff_walk(shop, true))
+		actions.append({"type": "call", "callable": _vendor_arrived.bind(shop)})
+		vendor.side = side
+		vendor.comfort_pref = _rng.randf_range(0.2, 0.8)
+		vendor.speed_pref = _rng.randf_range(GameConfig.passerby_speed_range.x, GameConfig.passerby_speed_range.y) * vendor.speed_factor()
+		vendor.resident.state = "coming"
+		life.resident_goes_out(vendor)
+		vendor.begin(start_pos, actions, life.centerline.direction_at(from_s) * (1.0 if from_s < 1.0 else -1.0))
+		vendor.set_shadows(0)
+		stat_vendor_trips += 1
+		return true
+	return false
+
+
+## Angekommen hinter der Theke: wieder eine Figur drinnen (nicht mehr unter den Passanten der Straße – umgehängt erst nach
+## diesem Bild, StreetLife geht gerade die Liste der Passanten durch).
+func _vendor_arrived(vendor: Passerby, shop: Dictionary) -> Array:
+	_vendor_at_work(shop, vendor)
+	_leave_street.call_deferred(vendor)
+	return []
+
+
+func _leave_street(vendor: Passerby) -> void:
+	life.release_seat(vendor)
+	life._walkers.erase(vendor)
+
+
 func _figure_seen(walker: Passerby) -> bool:
 	var camera := life.get_viewport().get_camera_3d()
 	if camera == null:
@@ -671,13 +822,7 @@ func _figure_seen(walker: Passerby) -> bool:
 	return near or life.in_view_point(walker.global_position + Vector3.UP)
 
 
-func _reopen(shop: Dictionary, walker: Passerby) -> void:
-	if walker == shop.get("vendor"):
-		var spot: Dictionary = shop.vendor_spot
-		var actions: Array[Dictionary] = [{"type": "stand", "anim": &"idle", "face": spot.face, "time": INF}]
-		walker.begin(spot.pos, actions, spot.face, float(spot.floor))
-		walker.set_shadows(0)
-		return
+func _reopen(_shop: Dictionary, walker: Passerby) -> void:
 	for guest in guests:
 		if guest.walker == walker:
 			var seat: Dictionary = guest.seat
@@ -694,23 +839,19 @@ func _update_guest(guest: Dictionary, delta: float) -> void:
 	var seat: Dictionary = guest.seat
 	if float(guest.sip_left) > 0.0:
 		guest.sip_left = float(guest.sip_left) - delta
-		if float(guest.sip_left) <= 0.0:
-			# wieder abgestellt
-			walker.set_prop(&"")
-			if seat.prop:
-				(seat.prop as Node3D).visible = true
+		if float(guest.sip_left) <= 0.0 and seat.prop:
+			(seat.prop as Node3D).visible = true  # zur Sicherheit wieder auf dem Tisch (die Figur stellt ihn selbst ab)
 		return
 	guest.next_sip = float(guest.next_sip) - delta
 	if float(guest.next_sip) > 0.0 or walker.chat != null or not walker.visible:
 		return
 	guest.next_sip = _rng.randf_range(GameConfig.pub_sip_interval.x, GameConfig.pub_sip_interval.y)
-	var kind := String(guest.kind)
-	if kind != "cake":
-		if seat.prop:
-			(seat.prop as Node3D).visible = false
-		walker.set_prop(StringName(kind))
-	walker.take_sip()
-	guest.sip_left = 2.8
+	# Die Figur greift selbst zum Becher (bzw. zur Gabel), hebt ihn zum Mund und stellt ihn zurück (seit dem zweiten Nachtest
+	# der Überarbeitung – vorher erschien der Becher sofort in der Hand)
+	var kind := StringName(String(guest.kind))
+	var table_point: Vector3 = (seat.prop as Node3D).global_position if seat.prop else seat.table
+	walker.take_sip(table_point, seat.prop, kind)
+	guest.sip_left = ChibiPasserbyModel.sip_duration(kind) + 0.3
 
 
 ## Frei, zum Laden hineinzugehen?

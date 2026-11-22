@@ -320,17 +320,51 @@ func _go():
 					await get_tree().process_frame
 					await RenderingServer.frame_post_draw
 					get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + "bagsit_%s_%s.png" % [step[0], view[0]]))
-		"drink":
+		"bag":
+			# Einkaufstasche an der Hand im Gehen (seit dem zweiten Nachtest der Überarbeitung: gesetzt in skeleton_updated)
+			m.give_bag(true, String(GameConfig.shop_bag_models["bakery"]))
+			for t: float in [0.2, 0.5, 0.8]:
+				m._player.play(&"walk_bag", 0.0); m._player.seek(t, true); m._player.speed_scale = 0.0
+				for k in 4:
+					m._bag_delta = 1.0 / 30.0
+					await get_tree().process_frame
+				await _shot(m, Vector3(-1, 0.1, 0.4), "bag_%.1f" % t)
+		"thumb":
+			# Daumen beim Greifen: dieselbe Haltung mit verschiedenen Achsen (Prüfung)
 			m.set_prop(&"mug")
-			m._gesture_modifier.body_scale = m._hip_height / 0.607
-			m._gesture_modifier.gesture = ChibiGestureModifier.Gesture.DRINK
-			m._gesture_modifier.weight = 1.0
 			m.sit_height = GameConfig.chibi_seat_height
 			m._player.play(&"sit_idle", 0.0); m._player.seek(1.0, true); m._player.speed_scale = 0.0
-			m._gesture_modifier.grip_right = 1.0
-			m._gesture_modifier.sip = 1.0
-			await _shot(m, Vector3(1, 0.3, 1), "drink_up")
-			await _shot(m, Vector3(-1, 0.3, 0.2), "drink_side")
-			m._gesture_modifier.sip = 0.0
-			await _shot(m, Vector3(1, 0.3, 1), "drink_low")
+			m._prev_state = &"sit"
+			m.take_sip(Vector3(-0.08, 0.53, 0.36), null, &"mug")
+			m._gesture_modifier.gesture = ChibiGestureModifier.Gesture.DRINK
+			m._gesture_modifier.weight = 1.0
+			m._gesture_modifier.sip = 0.6
+			var names := ["x", "z", "zneg", "y"]
+			var axes := [Vector3.RIGHT, Vector3.BACK, Vector3.FORWARD, Vector3.UP]
+			for i in axes.size():
+				m._gesture_modifier.thumb_axis = axes[i]
+				await _shot(m, Vector3(0.6, 0.15, 1), "thumb_" + names[i])
+		"drink", "eat":
+			# Trinken/Essen am Tisch (seit dem zweiten Nachtest der Überarbeitung): Tisch mit Becher bzw. Kuchenteller, Bilder an
+			# festen Zeitpunkten des Ablaufs (ChibiPasserbyModel._update_sip)
+			var kind := &"mug" if which == "drink" else &"cake"
+			m.sit_height = GameConfig.chibi_seat_height
+			m._player.play(&"sit_idle", 0.0); m._player.seek(1.0, true); m._player.speed_scale = 0.0
+			m._prev_state = &"sit"
+			var table := MeshInstance3D.new(); var top := BoxMesh.new(); top.size = Vector3(0.7, 0.04, 0.45); table.mesh = top
+			add_child(table); table.position = Vector3(0, 0.51, 0.5)
+			var cup := (load(String(GameConfig.passerby_prop_models[String(kind)])) as PackedScene).instantiate() as Node3D
+			add_child(cup); cup.position = Vector3(-0.08, 0.53, 0.36)
+			m.take_sip(cup.global_position, cup, kind)
+			m._gesture_modifier.gesture = ChibiGestureModifier.Gesture.DRINK
+			m._gesture_modifier.weight = 1.0
+			var times := [0.6, 1.0, 1.4, 1.9, 2.6] if kind == &"mug" else [0.6, 0.9, 1.3, 2.0, 2.8]
+			for t: float in times:
+				m._sip_t = t
+				m._update_sip()
+				await _shot(m, Vector3(1, 0.3, 1), "%s_%.1f" % [which, t])
+			m._sip_t = 1.9 if kind == &"mug" else 1.3
+			m._update_sip()
+			await _shot(m, Vector3(-1, 0.25, 0.15), "%s_side" % which)
+			await _shot(m, Vector3(0.1, 0.25, 1), "%s_front" % which)
 	get_tree().quit()

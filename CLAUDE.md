@@ -1434,20 +1434,22 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Nachtest nach 8b um 26° zur Bedien-Kamera gedreht, alte Spielstände dreht `Room._migrate_tablet_spot` mit):
   „Bücherei-Ausleihe“ (`LoanScreen` im SubViewport, unbeleuchtete Fläche vor dem Bildschirm) nur beim Bedienen
   (`show_loan`); die Liste aller Ausweise ist die App „Ausleihe“ (`loans`, LoansApp). Auf der Theke (counter.tscn `Modules`):
-  Scanner `counter_scanner` (Glasstreifen quer, um 90° gedreht) und Tütenstapel `paper_bag_stack`. **Theken-Ansicht**
-  `CounterDesk` (E „Bedienen“ hinter der Theke): Kamera mittig und gerade (`desk_camera_eye`, Sichtfeld links–rechts
-  `desk_camera_hfov`, Neigung so, dass der untere Bildrand an der Thekenkante `NEAR_EDGE` liegt), Maus frei, MenuStack (Esc
-  verlässt – seit dem zweiten Nachtest nach 8b auch W A S D –, Gast wartet weiter, Fortschritt je Gast bleibt). Neuer Gast an der
-  Reihe (Öffnen bzw. `_next_guest`): Kamera schaut erst zu seinem Gesicht hoch, er grüßt (`Passerby.greet_player` →
-  `ChibiPasserbyModel.greet_now`: lächeln, nicken, manchmal winken), dann hinunter auf die Theke (`_look_at_guest_then_desk`, eigener
-  Tween `_cam_tween`, solange `_greeting` keine Klicks; Werte `desk_greet_*`; je Gast nur einmal, `_progress[gast].greeted`).
+  Scanner `counter_scanner` (Glasstreifen quer, um 90° gedreht) und Tütenstapel `paper_bag_stack`. **Bedienen**
+  `CounterDesk` (E „Bedienen“ am wartenden Gast; seit dem zweiten Nachtest der Überarbeitung OHNE eigene Kamera): die Spielfigur
+  rückt weich an ihren Platz hinter der Theke (`desk_camera_eye` x/z, `desk_step_time`), Bewegung aus, umschauen frei (Maus
+  gefangen), gezielt wird mit dem Punkt in der Bildmitte (`_update_hover`, `_screen_rect`), Linksklick führt aus, das HUD zeigt das
+  Tastensymbol (`CounterDesk.current_hints`, Gruppe `CounterDesk.GROUP`); MenuStack (Esc oder W A S D beendet, Gast wartet weiter,
+  Fortschritt je Gast bleibt). Neuer Gast: er lächelt nur (`smile_at_player`), keine Kameraschwenks. Feste Kamera nur noch im
+  Prüfwerkzeug desk_probe (`_view_transform`, `desk_camera_hfov`, `NEAR_EDGE`). **Korb nie auf der Theke:** der Gast stellt ihn vor
+  der Theke neben sich auf den Boden (`LibraryVisits._put_basket_on_counter`, `counter_basket_side`; weg erst, wenn ihn niemand
+  sieht: `_tidy_floor_baskets`), beim Bedienen hebt er die Bücher daraus auf die Theke (`BOOKS_FROM`, `desk_unpack_time`) und legt
+  den Ausweis aus der Hand an die alte Stelle des Korbs (`CARD_START`).
   Aufteilung aus Sicht der Spielfigur (rechts = -X der Theke):
-  rechts Tablet + Kartenleser, Korb des Gasts (`BASKET`) mit dem Bücherstapel davor (`BOOKS`), Mitte Scanner (`SCANNER`), links
+  rechts Tablet + Kartenleser, Ausweis (`CARD_START`) mit dem Bücherstapel davor (`BOOKS`), Mitte Scanner (`SCANNER`), links
   offene Tüte (`BAG`, Modell `library_bag_empty.glb`, Griffpunkt `BAG_DROP` über der Unterkante). Ablauf: Ausweis → Kartenleser
   (`ui/card_insert`, `ui/card_beep`, Stempel auf dem Tablet `ui/stamp_pop`) → hüpft in die Tüte; Bücher (immer das oberste)
   von rechts nach links über den Scanner (`ui/scan`), dann senkrecht hoch und von oben in die Tüte; Tüte anklicken → rutscht zum
-  Gast (`complete_checkout`: Kaching `checkout_kaching_db`, der Gast trägt `LibraryVisits.LIBRARY_BAG` hinaus), der Korb gleitet
-  unten rechts aus dem Bild hinter die Theke (`BASKET_OUT`, `clear_counter_basket`). Körbe: kein Stapel mehr – sie sind beim
+  Gast (`complete_checkout`: Kaching `checkout_kaching_db`, der Gast trägt `LibraryVisits.LIBRARY_BAG` hinaus). Körbe: kein Stapel mehr – sie sind beim
   Hereinkommen in der Hand und verschwinden an der Theke (ohne Ausleihe an der Tür). Alte Spielstände: Tablet am alten
   Standardplatz rückt an den neuen (`Room._migrate_tablet_spot`).
   **Stempelkarte:** `Lending.readers` (Ausweis → Name, Stempel, Besuche, volle Karten, Freundschaft), `new_reader`/
@@ -1482,8 +1484,10 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   mit derselben Figur geredet hat (`Passerby.talked_recently`, `talk_again_time`). Mehr Gespräche = mehr Zeilen in talk.txt.
 - **Start und Ladebildschirm (seit Etappe 8, „das Spiel braucht ewig zum Starten“):** Startszene des Projekts ist
   `scenes/ui/loading_screen.tscn` (`LoadingScreen`: Papier, umblätterndes Buch, Sätze in Handschrift, Bleistiftstrich) – lädt
-  main.tscn im Vordergrund (im Hintergrund-Faden scheitern @tool-Scripts der Häuser – darum auch keine `preload`-Standardwerte in
-  `@export`, siehe HouseFacade `DEFAULT_*`), setzt sie als current_scene ein und liegt darüber, bis die Bilder ruhig kommen (die
+  main.tscn seit dem zweiten Nachtest der Überarbeitung im Hintergrund-Faden (`load_threaded_request` OHNE Unter-Fäden – mit ihnen
+  luden zwei Fäden dieselben Hausmodelle doppelt; keine `preload`-Standardwerte in `@export`, siehe HouseFacade `DEFAULT_*`; klappt
+  es nicht, im Vordergrund), das Buch blättert nach Bildern statt nach der Uhr (`_flip`, `FLIP_STEP_MIN/MAX`: auch bei langsamen
+  Bildern sichtbar weiter), setzt sie als current_scene ein und liegt darüber, bis die Bilder ruhig kommen (die
   Grafikkarte bereitet ~220 Pipelines vor, nach Updates am längsten), dann blendet er aus und schreibt „Start: Programm …, Laden
   …, Aufbauen …, erste Bilder …“ in die Ausgabe. Prüfwerkzeuge laden main.tscn weiter direkt. Messen: `scenes/tools/startup_probe.tscn`
   (Zeiten je Schritt, Pipelines, Zeichenaufrufe; mit xvfb inkl. Grafik). Buchrücken-Atlas: Zwischenspeicher
@@ -1552,6 +1556,28 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Ereignisse kurz davor: `HitchLog.note(text)`, Dauer messen mit `HitchLog.begin()`/`end(start, "was")` – schon in Speichern,
   Musik/Geräusch laden, Wege im Laden, Passant losschicken, Detailstufen, Möbelfotos, Buchrücken-Atlas). Musik: das nächste Stück
   lädt im Hintergrund vor (`Audio._take_music`).
+- **Zweiter Nachtest der Überarbeitung (Liste der Entwicklerin):** Sonne schwächer (`day_light_keys` sun_energy, Sonnenscheibe im
+  Himmel-Shader), **keine Tiefenunschärfe** mehr (`dof_far_amount` 0 – sie machte den Himmel unscharf und war am Bildrand
+  unlogisch), **nichts leuchtet beim Anschauen** (`look_highlight` false, auch Türen/Rückgabekasten). Tageslicht der Fenster außen
+  vor der Scheibe (`window_daylight_inset` negativ, `light_volumetric_fog_energy` 0 – vorher heller Fleck im Laden). Kürbisse suchen
+  die echte Hauswand (`AutumnDecor._wall_spot`). **Verkäufer** gehen nach Ladenschluss hinter der Theke hervor (`shop_staff_ways`:
+  Punkte im Hausmodell, in Blender per Sichtstrahl ausgemessen), aus der Tür und die Straße entlang, morgens genauso zurück
+  (`StreetHomes._update_vendor`, Zustände work/leaving/away/coming, `Passerby.resident` mit "vendor", `shop_vendor_stagger`);
+  **Ladenlicht** an, solange der Verkäufer da ist (`shop.light_on`, an der Tür geschaltet; `ShopGlow`: Licht innen
+  `shop_light_*`, Schein vor der Front `shop_glow_*`, Einrichtung über den Instanz-Wert `shop_lit` in storybook.gdshaderinc – nur
+  Erdgeschoss `SHOP_FLOOR_TOP`, nie bei Tier-Shadern). **Stau-Wächter** `StreetUnblock` (life.unblock): wer gehen will und
+  feststeckt, dem tritt ein stehender Passant aus dem Weg (`Passerby.make_way`: beiseite, warten, zurück), eine ruhende Katze geht
+  beiseite (`CatLife.make_way`), sonst schlüpfen beide vorbei (`pass_agents`, auch Katzen; `CatLife.blocked` → `cat_blocked`);
+  wer an Tür/Sitz/Theke beschäftigt ist, wird abgewartet (`BUSY_TYPES`, auch beim alten Vorbeidrücken). **Taschen** werden in
+  `Skeleton3D.skeleton_updated` gesetzt (nach allen Modifikatoren). **Trinken/Essen** im Pub als Ablauf (`ChibiPasserbyModel.
+  take_sip(table, table_prop, kind)`, `SIP_TIMES`/`BITE_TIMES`: greifen, Bogen zum Mund, Becher kippt `drink_tilt`, Kopf zurück,
+  abstellen; Becher am Henkel `passerby_prop_hold`, Gabel `make_fork`; Daumen krümmt sich um -Z `thumb_axis`), Bilder
+  `pose_probe -- drink|eat|thumb`. **Ladenschilder** malt `scenes/tools/make_signs.tscn` (`scripts/tools/make_signs.gd`, xvfb,
+  `-- preview` = nur screenshots/signs/): Ale & Amber (Cinzel Decorative), Violetta's Flowers (Great Vibes + Cormorant), The Yarn
+  Barn (Fraunces), Five O'Clock (Cormorant Italic + Cinzel), Bäckerei vorläufig „Rise & Shine“ (Lobster, `BAKERY_NAME`) – auf
+  ausdrücklichen Wunsch der Entwicklerin; Bilder, die sie selbst malt, nie überschreiben. **Hauptmenü:** fliegende Bücher um den
+  Baum (`TitleBackdrop.FlyingBook`, `FLYING_BOOKS`), lose Seiten (`_add_pages`), Zettel = Leihkarte in einer Buchtasche mit
+  Rückgabe-Stempeln (`NoteCard._stamp`).
 - **Licht, Farbe, Herbst, Rückmeldung (große Überarbeitung, Plan `.scratch/ueberarbeitung/plan.md`):** **Farbabstimmung**
   `CozyGrade` (3D-LUT nach dem Tonemapping: S-Kurve, Mitteltöne satter, Schatten Lavendel, Lichter Honig, weiche Tiefen; Werte
   `grade_*`; main.gd `_setup_grade`), **Dunst** in der Ferne (Environment-Nebel, Farbe/Dichte je Tageszeit in DayCycle
@@ -1577,7 +1603,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   Münzen bei Einnahmen außer „Ausleihe“ (`Wallet.last_reason`). Tablet-Knöpfe federn (`TabletSounds._spring`, `ui_*_scale`,
   Markierung `NO_SPRING`). Geräusche: `tools/make_feedback_sounds.py` (furniture/place|pick|paint, ui/coins). **Nachtest der Überarbeitung:**
   Gestaltungsmodus: Umschalt + Mausrad wählt Möbel, Mausrad allein dreht nur; Möbel werden beim normalen Umschauen nicht mehr
-  aufgehellt (`look_highlight_furniture`, `Player._highlight_on_look`); Theke 50 cm weiter vorn (z 2,2; alte Spielstände:
+  aufgehellt (seit dem zweiten Nachtest gar nichts mehr: `look_highlight`, `Player._highlight_on_look`); Theke 50 cm weiter vorn (z 2,2; alte Spielstände:
   `Room._migrate_counter_spot`, nur wenn vorn frei); Tutorial hält den ersten Tag am Nachmittag (`Tutorial.holds_day`,
   `tutorial_day_hold_hour`), bis der Zettel mit „slept“ dran ist; Bedienen: „E Bedienen“ am wartenden Gast (`LibraryVisits.can_serve`/
   `serve`, Passerby-Interactable), Kamera vom Gesicht weich hinunter, Gast lächelt nur (`Passerby.smile_at_player`); Korb, der hinter

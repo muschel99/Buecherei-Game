@@ -450,5 +450,6 @@ func _skylight(center: Vector3, size: Vector2) -> void:
 	light.omni_attenuation = 1.3
 	light.light_cull_mask = 1 << (GameConfig.INDOOR_RENDER_LAYER - 1)
 	light.position = center - Vector3.UP * 0.6
+	light.light_volumetric_fog_energy = 0.0
 	light.add_to_group(RoomOpenings.DAYLIGHT_GROUP)
 	add_child(light)

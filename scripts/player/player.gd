@@ -467,12 +467,10 @@ func _update_head_bob(delta: float) -> void:
 	camera.position.y = lerpf(camera.position.y, target_y, 10.0 * delta)
 
 
-## Wird das angeschaute Objekt aufgehellt? Möbel im normalen Spiel nicht (seit dem Nachtest der Überarbeitung, Wunsch der
-## Entwicklerin – das Tastensymbol unten reicht); im Gestaltungsmodus hebt BuildMode selbst hervor.
-func _highlight_on_look(target: Interactable) -> bool:
-	if GameConfig.look_highlight_furniture:
-		return true
-	return FurnitureUtils.find_placed_furniture(target) == null
+## Wird das angeschaute Objekt aufgehellt? Im normalen Spiel nicht mehr (Wunsch der Entwicklerin – das Tastensymbol unten
+## reicht, GameConfig.look_highlight); im Gestaltungsmodus hebt BuildMode selbst hervor.
+func _highlight_on_look(_target: Interactable) -> bool:
+	return GameConfig.look_highlight
 
 
 ## Prüft, ob in der Bildmitte ein interaktives Objekt ist.
