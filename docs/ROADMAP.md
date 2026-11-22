@@ -1994,8 +1994,8 @@ Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitun
   - [x] Bedienen: frei umschauen, Aktionen mit dem Punkt in der Bildmitte, kein Kameraschwenk; Korb nie auf der Theke (steht
     am Boden), Ausweis an der Stelle des Korbs
   - [x] Stau-Wächter: wer feststeckt, dem tritt jemand aus dem Weg (Passanten und Katzen), sonst schlüpfen sie vorbei
-  - [x] Ladenschilder neu gemalt mit eigenen Schriften: Ale & Amber, Violetta's Flowers, The Yarn Barn, Five O'Clock, Bäckerei
-    (Name vorläufig „Rise & Shine“)
+  - [x] Ladenschilder neu gemalt mit eigenen Schriften: Ale & Amber, Violetta's Flowers, The Yarn Barn, Five O'Clock, The
+    Golden Crust (Bäckerei)
   - [x] Kein Lichtfleck mehr vor den Fenstern der Bücherei
 - [ ] Nächste Ideen: Innenraum gemütlicher (Startzustand), weitere Jahreszeiten (Winter, Frühling), Wetter
 

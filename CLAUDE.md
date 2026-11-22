@@ -1574,7 +1574,7 @@ screenshots/       Testbilder von tools/screenshots.sh (nicht in Git)
   abstellen; Becher am Henkel `passerby_prop_hold`, Gabel `make_fork`; Daumen krümmt sich um -Z `thumb_axis`), Bilder
   `pose_probe -- drink|eat|thumb`. **Ladenschilder** malt `scenes/tools/make_signs.tscn` (`scripts/tools/make_signs.gd`, xvfb,
   `-- preview` = nur screenshots/signs/): Ale & Amber (Cinzel Decorative), Violetta's Flowers (Great Vibes + Cormorant), The Yarn
-  Barn (Fraunces), Five O'Clock (Cormorant Italic + Cinzel), Bäckerei vorläufig „Rise & Shine“ (Lobster, `BAKERY_NAME`) – auf
+  Barn (Fraunces), Five O'Clock (Cormorant Italic + Cinzel), The Golden Crust (Bäckerei, Lobster, `BAKERY_NAME`) – auf
   ausdrücklichen Wunsch der Entwicklerin; Bilder, die sie selbst malt, nie überschreiben. **Hauptmenü:** fliegende Bücher um den
   Baum (`TitleBackdrop.FlyingBook`, `FLYING_BOOKS`), lose Seiten (`_add_pages`); auf dem Zettel unten rechts der Stempel wie auf
   dem Tablet (rosa Kreis mit Herz, ploppt mit ui/stamp_pop auf: `NoteCard.stamp_pop`) – die Leihkarte mit Buchtasche gefiel der

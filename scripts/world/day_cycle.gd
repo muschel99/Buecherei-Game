@@ -12,6 +12,10 @@ const SKY_SHADER := preload("res://assets/shaders/storybook_sky.gdshader")
 const KEYS := ["sun_color", "sun_energy", "moon_color", "moon_energy", "ambient_color", "ambient_energy", "sky_top",
 	"sky_horizon", "fill_color", "fill_energy", "exposure", "cloud_lit", "cloud_shade", "stars", "window_light"]
 
+## Wie dunkel es gerade ist (0 = Tag … 1 = Nacht; derselbe Wert wie der Shader-Wert night_glow). Für Scripts, die ihn brauchen
+## (ShopGlow) – den Shader-Wert bei der Grafikkarte abzufragen bremst das Spiel (Godot: nur im Editor benutzen).
+static var night := 0.0
+
 var main: Node3D
 var sun: DirectionalLight3D
 var sky_fill: DirectionalLight3D
@@ -114,11 +118,12 @@ func apply(delta: float) -> void:
 			main.call("set_street_lanterns", lit == 1)
 	_update_window_light(float(v.window_light))
 	# Nacht (seit Testrunde 7b): Licht nur in manchen Fenstern, Tusche des Malfilters nachtblau
-	var night := clampf(1.0 - float(v.window_light), 0.0, 1.0)
-	RenderingServer.global_shader_parameter_set(&"night_glow", night)
+	var dark := clampf(1.0 - float(v.window_light), 0.0, 1.0)
+	night = dark
+	RenderingServer.global_shader_parameter_set(&"night_glow", dark)
 	RenderingServer.global_shader_parameter_set(&"window_lit_share", _lit_share(hour))
 	if main.has_method("set_paint_night"):
-		main.call("set_paint_night", night)
+		main.call("set_paint_night", dark)
 
 
 ## Dunst in der Ferne (seit der Überarbeitung): in der Farbe des Horizonts (mit etwas Sonnenlicht), drinnen fast keiner.

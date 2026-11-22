@@ -6,10 +6,10 @@ extends Node
 ## der Hausmodelle). Schriften: assets/ui/fonts/ (OFL).
 ## Start (braucht Grafik):  xvfb-run -a godot --path . res://scenes/tools/make_signs.tscn -- [namen …]
 ##   ohne Namen alle; Namen = Dateinamen ohne .png, z. B. pub_fascia corner_90_hanging; "preview" = nur nach screenshots/signs/
-## Die Bäckerei heißt vorläufig BAKERY_NAME (Vorschlag – die Entwicklerin sucht noch einen Namen).
+## Die Bäckerei heißt BAKERY_NAME (von der Entwicklerin gewählt).
 
 const OUT := "res://assets/textures/signs/"
-const BAKERY_NAME := "Rise & Shine"
+const BAKERY_NAME := "The Golden Crust"
 
 const F_CINZEL := preload("res://assets/ui/fonts/CinzelDecorative-Black.woff2")
 const F_CINZEL_BOLD := preload("res://assets/ui/fonts/CinzelDecorative-Bold.woff2")
@@ -479,7 +479,7 @@ class SignPainter extends Control:
 		lettering(F_CORMORANT_IT, "Five O'Clock", Vector2(size.x / 2.0, size.y * 0.88), 46, GOLD, Color(0.05, 0.1, 0.13), 2.5, 0,
 			Color.BLACK, Color(GOLD_LIGHT, 0.7))
 
-	# --- Bäckerei (Name vorläufig, BAKERY_NAME) ---
+	# --- The Golden Crust (Bäckerei, BAKERY_NAME) ---
 
 	func _paint_bakery_shop_fascia() -> void:
 		var cream := Color(0.94, 0.88, 0.74)
@@ -488,11 +488,15 @@ class SignPainter extends Control:
 		frame_line(12.0, 5.0, cocoa)
 		frame_line(24.0, 1.5, Color(cocoa, 0.6))
 		var c := size / 2.0
-		var big := fit(F_LOBSTER, BAKERY_NAME, size.x * 0.42, size.y * 0.66)
-		var w := lettering(F_LOBSTER, BAKERY_NAME, c + Vector2(-60, -2), big, cocoa, Color(0.75, 0.55, 0.32, 0.8), 4.0, 0, Color.BLACK,
-			Color(0.6, 0.38, 0.24, 0.5))
+		# Name und „Bakery“ zusammen mittig (Name groß in Lobster, „Bakery“ kleiner, schräg, honigfarben daneben)
+		var big := fit(F_LOBSTER, BAKERY_NAME, size.x * 0.5, size.y * 0.64)
 		var caps := int(size.y * 0.24)
-		lettering(F_FRAUNCES_IT, "Bakery", Vector2(c.x - 60 + w / 2.0 + 120, c.y + 14), caps, Color(0.72, 0.46, 0.2),
+		var name_w := F_LOBSTER.get_string_size(BAKERY_NAME, HORIZONTAL_ALIGNMENT_LEFT, -1, big).x
+		var caps_w := F_FRAUNCES_IT.get_string_size("Bakery", HORIZONTAL_ALIGNMENT_LEFT, -1, caps).x
+		var x0 := c.x - (name_w + 36.0 + caps_w) / 2.0
+		lettering(F_LOBSTER, BAKERY_NAME, Vector2(x0 + name_w / 2.0, c.y - 2), big, cocoa, Color(0.75, 0.55, 0.32, 0.8), 4.0, 0,
+			Color.BLACK, Color(0.6, 0.38, 0.24, 0.5))
+		lettering(F_FRAUNCES_IT, "Bakery", Vector2(x0 + name_w + 36.0 + caps_w / 2.0, c.y + 16), caps, Color(0.72, 0.46, 0.2),
 			Color(0.75, 0.55, 0.32, 0.6), 2.0)
 		for side: float in [-1.0, 1.0]:
 			var base := Vector2(c.x + side * size.x * 0.4, c.y + 70)

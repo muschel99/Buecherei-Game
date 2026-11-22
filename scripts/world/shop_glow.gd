@@ -75,8 +75,8 @@ func _process(delta: float) -> void:
 	_check -= delta
 	if _check <= 0.0:
 		_check = 0.5
-		var value: Variant = RenderingServer.global_shader_parameter_get(&"night_glow")
-		_night = smoothstep(0.15, 0.6, value if value is float else 0.0)
+		# (nicht RenderingServer.global_shader_parameter_get – das bremst außerhalb des Editors das ganze Spiel)
+		_night = smoothstep(0.15, 0.6, DayCycle.night)
 	for entry in _shops:
 		var target := 1.0 if bool((entry.shop as Dictionary).get("light_on", true)) else 0.0
 		var level := float(entry.level)
