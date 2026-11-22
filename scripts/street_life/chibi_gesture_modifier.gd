@@ -275,7 +275,8 @@ static func fork_tip_in_hand() -> Vector3:
 func _grip(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
 	for finger: String in ["Index", "Middle", "Ring", "Little"]:
 		for joint: String in ["Proximal", "Intermediate", "Distal"]:
-			_bend_joint(skeleton, prefix + finger + joint, GRIP_ANGLE, amount)
+			# negativ um X = zur Handfläche hin (+Z ist der Handrücken; vorher bogen sich die Finger zum Handrücken – Nachtest)
+			_bend_joint(skeleton, prefix + finger + joint, -GRIP_ANGLE, amount)
 	_bend_thumb(skeleton, prefix + "ThumbProximal", GRIP_ANGLE * 0.4, amount)
 	_bend_thumb(skeleton, prefix + "ThumbDistal", GRIP_ANGLE * 0.5, amount)
 

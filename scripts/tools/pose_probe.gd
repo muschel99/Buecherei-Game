@@ -28,6 +28,25 @@ func _shot(m, cam_dir, name_):
 	img.save_png(ProjectSettings.globalize_path(OUT + name_ + ".png"))
 	print("Bild: ", name_)
 
+## Nahaufnahme der rechten Hand (Kamera aus Richtung cam_dir, 0,35 m entfernt).
+func _hand_shot(m, cam_dir: Vector3, name_: String) -> void:
+	var cam: Camera3D = get_node("Cam")
+	var sk: Skeleton3D = m._skeleton
+	# die fertige Haltung (mit allen Modifikatoren) gibt es nur im Signal skeleton_updated
+	var seen := {}
+	var grab := func() -> void: seen["hand"] = sk.global_transform * sk.get_bone_global_pose(sk.find_bone("RightMiddleProximal")).origin
+	sk.skeleton_updated.connect(grab)
+	for i in 3:
+		await get_tree().process_frame
+	sk.skeleton_updated.disconnect(grab)
+	var hand: Vector3 = seen.get("hand", Vector3(0, 0.8, 0.3))
+	cam.fov = 30.0
+	cam.look_at_from_position(hand + cam_dir.normalized() * 0.35, hand, Vector3.UP)
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(OUT + name_ + ".png"))
+	cam.fov = 40.0
+	print("Bild: ", name_)
+
 func _go():
 	var l := DirectionalLight3D.new(); add_child(l); l.rotation_degrees = Vector3(-50, 30, 0)
 	var e := WorldEnvironment.new(); var env := Environment.new(); env.background_mode = Environment.BG_COLOR; env.background_color = Color(0.7, 0.8, 0.9); env.ambient_light_color = Color.WHITE; env.ambient_light_energy = 0.8; e.environment = env; add_child(e)
@@ -329,6 +348,25 @@ func _go():
 					m._bag_delta = 1.0 / 30.0
 					await get_tree().process_frame
 				await _shot(m, Vector3(-1, 0.1, 0.4), "bag_%.1f" % t)
+		"hand":
+			# Nahaufnahme der Hand mit Gabel am Teller und am Mund (Finger richtig herum gebogen?) und ohne Gegenstand
+			m.sit_height = GameConfig.chibi_seat_height
+			m._player.play(&"sit_idle", 0.0); m._player.seek(1.0, true); m._player.speed_scale = 0.0
+			m._prev_state = &"sit"
+			m.take_sip(Vector3(-0.08, 0.53, 0.36), null, &"cake")
+			m._gesture_modifier.gesture = ChibiGestureModifier.Gesture.DRINK
+			m._gesture_modifier.weight = 1.0
+			for t: float in [0.6, 1.3]:
+				m._sip_t = t
+				m._update_sip()
+				for d: Vector3 in [Vector3(0, 1, 0.4), Vector3(-1, 0.2, 0.3), Vector3(0.3, -0.6, 1.0)]:
+					await _hand_shot(m, d, "hand_%.1f_%d_%d_%d" % [t, d.x * 10, d.y * 10, d.z * 10])
+			# und der Becher am Mund
+			m.take_sip(Vector3(-0.08, 0.53, 0.36), null, &"mug")
+			m._sip_t = 1.9
+			m._update_sip()
+			for d: Vector3 in [Vector3(-1, 0.2, 0.3), Vector3(0.3, -0.6, 1.0)]:
+				await _hand_shot(m, d, "hand_mug_%d_%d_%d" % [d.x * 10, d.y * 10, d.z * 10])
 		"thumb":
 			# Daumen beim Greifen: dieselbe Haltung mit verschiedenen Achsen (Prüfung)
 			m.set_prop(&"mug")
