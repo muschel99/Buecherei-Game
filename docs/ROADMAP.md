@@ -1982,8 +1982,8 @@ Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitun
   geht mehr mit Korb und Büchern hinaus, ganzer Bücherstapel anklickbar
 - [x] **Zweiter Nachtest (Liste der Entwicklerin, 22.11.2026):**
   - [x] Ladebildschirm: lädt im Hintergrund, das Buch blättert durchgehend (auch wenn die Grafikkarte noch vorbereitet)
-  - [x] Hauptmenü mit Büchern: fliegende Bücher schlagen um den Baum mit den Deckeln, lose Seiten segeln, Zettel als Leihkarte
-    in einer Buchtasche mit Rückgabe-Stempeln
+  - [x] Hauptmenü mit Büchern: fliegende Bücher schlagen um den Baum mit den Deckeln, lose Seiten segeln, auf dem Zettel unten
+    rechts der Stempel wie auf dem Tablet (ploppt auf; die Leihkarte mit Buchtasche wieder entfernt – gefiel nicht)
   - [x] Nichts leuchtet mehr beim Anschauen (Türen, Rückgabekasten, Kartons …)
   - [x] Kürbisse stehen an den Hauswänden, nie mitten auf dem Gehweg
   - [x] Verkäufer gehen abends aus ihren Läden die Straße entlang nach Hause und kommen morgens wieder

@@ -22,10 +22,9 @@ const LINE := Color(0.6, 0.68, 0.8, 0.28)
 const MARGIN := Color(0.92, 0.6, 0.6, 0.4)
 const ROSE := Color(0.96, 0.72, 0.74)
 const BUTTER := Color(0.99, 0.88, 0.58)
-## Leihkarte (seit dem zweiten Nachtest der Überarbeitung): Buchtasche aus Packpapier, Stempeltinte und -schrift
-const KRAFT := Color(0.86, 0.74, 0.58)
-const STAMP_INK := Color(0.47, 0.36, 0.62, 0.62)
-const STAMP_FONT := preload("res://assets/ui/fonts/Nunito-ExtraBold.woff2")
+## Stempel unten rechts auf dem Zettel: Farben wie auf dem Tablet (LoanScreen.STAMP/SOFT)
+const STAMP := Color(0.86, 0.45, 0.48)
+const STAMP_SOFT := Color(0.5, 0.42, 0.38)
 
 ## Beim nächsten Laden der Hauptszene das Hauptmenü zeigen (LoadingScreen)
 static var show_on_start := false
@@ -163,6 +162,11 @@ func _build_note() -> void:
 	var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(_note, "modulate:a", 1.0, GameConfig.title_note_time)
 	tween.tween_property(_note, "rotation_degrees", -2.0, GameConfig.title_note_time).from(-6.0)
+	# danach ploppt der Stempel unten rechts auf (wie auf dem Tablet beim Bedienen)
+	var stamp := create_tween()
+	stamp.tween_interval(GameConfig.title_note_time + 0.25)
+	stamp.tween_callback(Audio.play.bind("ui/stamp_pop", -8.0, 1.0))
+	stamp.tween_property(_note, "stamp_pop", 1.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _show_menu() -> void:
@@ -296,6 +300,11 @@ func _set_hud_visible(on: bool) -> void:
 
 ## Der Notizzettel: abgerissenes, liniertes Papier mit rosa Rand, oben ein Stück Washi-Tape, unten ein Blümchen.
 class NoteCard extends Control:
+	var stamp_pop := 0.0:
+		set(value):
+			stamp_pop = value
+			queue_redraw()
+
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_PASS
 		resized.connect(queue_redraw)
@@ -319,52 +328,19 @@ class NoteCard extends Control:
 		while stripe < tape.end.x - 4.0:
 			draw_line(Vector2(stripe, tape.position.y + 2.0), Vector2(stripe + 8.0, tape.end.y - 2.0), Color(1, 1, 1, 0.35), 3.0, true)
 			stripe += 12.0
-		# Seit dem zweiten Nachtest der Überarbeitung (Wunsch: mehr Bezug zu den Büchern): der Zettel ist eine Leihkarte – oben
-		# rechts zwei Rückgabe-Stempel in Veilchentinte, unten steckt er in einer Buchtasche aus Packpapier
-		# (neben den kurzen Zeilen „Neues Spiel“ und „Beenden“ – nie über Titel oder Untertitel)
-		_stamp(Vector2(size.x - 78.0, size.y * 0.53), -8.0, "12. OKT")
-		_stamp(Vector2(size.x - 86.0, size.y * 0.75), 6.0, "3. NOV")
-		var pocket_top := size.y * 0.8
-		var pocket := PackedVector2Array()
-		var steps := 24
-		pocket.append(Vector2(8.0, size.y - 6.0))
-		pocket.append(Vector2(6.0, pocket_top))
-		for k in steps + 1:
-			# Daumenkerbe in der Mitte der Oberkante
-			var x := size.x / 2.0 - 46.0 + 92.0 * k / steps
-			var dip := sin(PI * k / steps) * 22.0
-			if k == 0:
-				pocket.append(Vector2(x, pocket_top))
-			pocket.append(Vector2(x, pocket_top + dip))
-		pocket.append(Vector2(size.x - 6.0, pocket_top))
-		pocket.append(Vector2(size.x - 8.0, size.y - 6.0))
-		SoftShapes.shadow(self, pocket, Vector2(0, -3), Color(0.25, 0.15, 0.05, 0.06), 3, 2.0)
-		draw_colored_polygon(pocket, KRAFT)
-		SoftShapes.wavy_line(self, Vector2(14.0, pocket_top + 8.0), Vector2(size.x / 2.0 - 52.0, pocket_top + 8.0), Color(KRAFT.darkened(0.25), 0.5), 1.2, 0.6, 3)
-		SoftShapes.wavy_line(self, Vector2(size.x / 2.0 + 52.0, pocket_top + 8.0), Vector2(size.x - 14.0, pocket_top + 8.0), Color(KRAFT.darkened(0.25), 0.5), 1.2, 0.6, 4)
-		var label := "Leihkarte · Cozy Bücherei"
-		var ls := NOTE_FONT.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 26)
-		draw_string(NOTE_FONT, Vector2(size.x / 2.0 - ls.x / 2.0, pocket_top + 60.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 26,
-			Color(INK, 0.75))
-		# kleines Buch-Zeichen auf der Tasche und das Blümchen daneben
-		var b := Vector2(42.0, pocket_top + 50.0)
-		draw_colored_polygon(SoftShapes.rounded_all(Rect2(b + Vector2(-16, -12), Vector2(15, 22)), 2.0, 0.3, 5), Color(ROSE, 0.9))
-		draw_colored_polygon(SoftShapes.rounded_all(Rect2(b + Vector2(1, -12), Vector2(15, 22)), 2.0, 0.3, 6), Color(ROSE.darkened(0.1), 0.9))
-		draw_line(b + Vector2(0, -12), b + Vector2(0, 10), Color(INK, 0.4), 1.5, true)
-		var c := Vector2(size.x - 44.0, pocket_top + 46.0)
-		SoftShapes.leaf(self, c + Vector2(-6, 8), Vector2(-1.0, 0.5), 18.0, Color(0.6, 0.74, 0.55, 0.8))
-		SoftShapes.leaf(self, c + Vector2(8, 10), Vector2(1.0, 0.6), 16.0, Color(0.6, 0.74, 0.55, 0.8))
-		SoftShapes.flower(self, c, 11.0, ROSE, BUTTER)
-
-	## Rückgabe-Stempel: Rahmen mit doppelter Linie und Datum, leicht schief, Tinte nicht ganz gleichmäßig.
-	func _stamp(center: Vector2, degrees: float, text: String) -> void:
-		draw_set_transform(center, deg_to_rad(degrees))
-		var box := Rect2(Vector2(-50, -17), Vector2(100, 34))
-		draw_rect(box, STAMP_INK, false, 2.5, true)
-		draw_rect(box.grow(-4.0), Color(STAMP_INK, 0.6), false, 1.2, true)
-		var ts := STAMP_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18)
-		draw_string(STAMP_FONT, Vector2(-ts.x / 2.0, 6.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, STAMP_INK)
-		draw_set_transform(Vector2.ZERO, 0.0)
+		# Stempel unten rechts wie auf dem Tablet beim Bedienen (rosa Kreis mit Herz; seit dem zweiten Nachtest der Überarbeitung –
+		# Wunsch der Entwicklerin): ploppt auf, wenn der Zettel hereingeglitten ist (stamp_pop 0 → 1)
+		var sc := Vector2(size.x - 64.0, size.y - 62.0)
+		draw_arc(sc, 27.0, 0.0, TAU, 32, Color(STAMP_SOFT, 0.45), 2.5, true)
+		if stamp_pop > 0.0:
+			var grow := lerpf(1.8, 1.0, stamp_pop)
+			draw_circle(sc, 22.0 * grow, Color(STAMP, 0.85 * stamp_pop))
+			SoftShapes.heart(self, sc + Vector2(0, -2) * grow, 10.0 * grow, Color(1.0, 0.95, 0.92, stamp_pop))
+		# Blümchen links daneben
+		var c := Vector2(size.x - 128.0, size.y - 46.0)
+		SoftShapes.leaf(self, c + Vector2(-6, 8), Vector2(-1.0, 0.5), 22.0, Color(0.6, 0.74, 0.55, 0.7))
+		SoftShapes.leaf(self, c + Vector2(8, 10), Vector2(1.0, 0.6), 20.0, Color(0.6, 0.74, 0.55, 0.7))
+		SoftShapes.flower(self, c, 13.0, ROSE, BUTTER)
 
 
 ## Weiches Überblenden über Papierfarbe, das ein Neuladen der Szene übersteht (hängt an der Wurzel, nicht an der Szene).
