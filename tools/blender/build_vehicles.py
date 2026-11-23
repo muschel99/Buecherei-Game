@@ -49,6 +49,13 @@ PLATE_F = Mat("plain", color=(0.94, 0.94, 0.9))
 PLATE_R = Mat("plain", color=(0.96, 0.8, 0.18))
 PLATE_TEXT = Mat("plain", color=(0.08, 0.08, 0.08))
 TIMBER = Mat("timber", color=(0.75, 0.55, 0.33))
+# Seit „Modelle schöner“: Weißwand an den Reifen (Mini, Kombi), Koffer und Picknickkorb auf dem Dach des Kombis
+WHITEWALL = Mat("rubber", color=(0.93, 0.91, 0.85))
+CASE_TAN = Mat("leather", color=(0.62, 0.42, 0.24))
+CASE_RED = Mat("leather", color=(0.56, 0.2, 0.17))
+STRAP = Mat("leather", color=(0.24, 0.16, 0.1))
+WICKER = Mat("timber", color=(0.78, 0.6, 0.36))
+GINGHAM = Mat("fabric", color=(0.86, 0.36, 0.36))
 
 
 def smoothstep(a, b, x):
@@ -419,7 +426,7 @@ def _lathe(b, profile, mat, seg, closed=False):
             b.face(q, mat, Vector((nx, math.cos(am) * nr, math.sin(am) * nr)))
 
 
-def wheel(name, radius, width, rim_mat=CHROME, hub="dish", spokes=0):
+def wheel(name, radius, width, rim_mat=CHROME, hub="dish", spokes=0, whitewall=False):
     """Ein Rad, Achse = x, Mitte im Ursprung, Außenseite nach +x (seit Etappe 6f ganz geschlossen): der Reifen
     ist ein Ring-Körper mit runden Flanken, Lauffläche mit Profil und Innenwand auf der Felge; die Felge ist ein
     eigener Drehkörper (Schüssel mit Rand, Nabe mit Radkappe, innen eine geschlossene Scheibe) – nirgends ein Loch."""
@@ -431,6 +438,11 @@ def wheel(name, radius, width, rim_mat=CHROME, hub="dish", spokes=0):
     tire = [(hwid, rin), (hwid + 0.004, radius * 0.8), (hwid - 0.004, radius * 0.95), (hwid - 0.03, radius),
             (-hwid + 0.03, radius), (-hwid + 0.004, radius * 0.95), (-hwid - 0.004, radius * 0.8), (-hwid, rin)]
     _lathe(b, tire, RUBBER, seg, closed=True)
+    if whitewall:
+        # weißer Ring auf der äußeren Flanke (liegt 2–9 mm vor ihr – kein Flimmern)
+        band = [(hwid + 0.002, radius * 0.71), (hwid + 0.009, radius * 0.71), (hwid + 0.009, radius * 0.86),
+                (hwid + 0.002, radius * 0.86)]
+        _lathe(b, band, WHITEWALL, seg, closed=True)
     # Profilrillen (Blöcke auf der Lauffläche)
     for k in range(seg):
         a = 2 * math.pi * (k + 0.5) / seg
@@ -981,7 +993,43 @@ def build_traveller():
     interior(b, body, 0.9, -1.8, 0.24, rows=2, seat_back=0.15)
     for sx in (-0.3, 0.22):
         b.beam(V(sx, 0.99, 0.92), V(sx + 0.3, 1.18, 0.82), 0.01, 0.01, DARK)
+    roof_rack(b, tree)
     return b, TRAVELLER
+
+
+def roof_rack(b, tree):
+    """Dachgepäckträger des Kombis (seit „Modelle schöner“): zwei Längsrohre auf vier Füßen, Querstreben, darauf zwei
+    Koffer mit Riemen und ein Picknickkorb mit kariertem Tuch – fest verzurrt (alles liegt auf den Streben auf)."""
+    loc, _ = hit(tree, (0, 4.0, -0.7), (0, -1, 0))
+    roof = loc.y if loc is not None else 1.6
+    rail_y = roof + 0.07
+    z0, z1 = -1.6, 0.15
+    for sx in (-0.5, 0.5):
+        b.tube([V(sx, rail_y, z0), V(sx, rail_y, z1)], 0.014, CHROME, segments=8)
+        for z in (z0 + 0.05, z1 - 0.05):
+            f, _ = hit(tree, (sx, 4.0, z), (0, -1, 0))
+            base = f.y if f is not None else roof
+            b.box((sx - 0.025, base - 0.01, z - 0.04), (sx + 0.025, rail_y, z + 0.04), DARK)
+    for z in (-1.45, -1.0, -0.55, -0.1):
+        b.tube([V(-0.52, rail_y, z), V(0.52, rail_y, z)], 0.011, CHROME, segments=6)
+    top = rail_y + 0.011
+    # Koffer: braun (groß, längs), rot (kleiner, quer daneben); Riemen und Griffe
+    for (x0, x1, za, zb, h, mat) in ((-0.42, 0.02, -1.5, -0.84, 0.2, CASE_TAN), (0.08, 0.44, -1.42, -0.98, 0.16, CASE_RED)):
+        b.box((x0, top, za), (x1, top + h, zb), mat)
+        for z in (za + (zb - za) * 0.3, za + (zb - za) * 0.7):
+            b.box((x0 - 0.004, top - 0.004, z - 0.016), (x1 + 0.004, top + h + 0.004, z + 0.016), STRAP)
+        b.tube([V((x0 + x1) / 2 - 0.06, top + h, zb - 0.06), V((x0 + x1) / 2, top + h + 0.04, zb - 0.06),
+                V((x0 + x1) / 2 + 0.06, top + h, zb - 0.06)], 0.012, STRAP, segments=6)
+    # Picknickkorb vorn mit Deckel, Tuch und Henkel
+    bx0, bx1, bz0, bz1, bh = -0.25, 0.25, -0.55, -0.15, 0.17
+    b.box((bx0, top, bz0), (bx1, top + bh, bz1), WICKER)
+    for k in range(1, 6):
+        y = top + bh * k / 6
+        b.box((bx0 - 0.004, y - 0.006, bz0 - 0.004), (bx1 + 0.004, y + 0.006, bz1 + 0.004), WICKER)
+    b.box((bx0 - 0.01, top + bh, bz0 - 0.01), (bx1 + 0.01, top + bh + 0.025, bz1 + 0.01), WICKER)
+    b.box((bx0 + 0.05, top + bh + 0.024, bz0 - 0.012), (bx0 + 0.2, top + bh + 0.034, bz1 + 0.012), GINGHAM)
+    b.tube([V(bx0 + 0.06, top + bh + 0.025, (bz0 + bz1) / 2), V(0, top + bh + 0.13, (bz0 + bz1) / 2),
+            V(bx1 - 0.06, top + bh + 0.025, (bz0 + bz1) / 2)], 0.012, WICKER, segments=6)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1292,8 +1340,9 @@ def render(name, b, spec):
 
 CARS = {"taxi": build_taxi, "mini": build_mini, "traveller": build_traveller, "delivery_van": build_van,
         "bicycle": build_bicycle}
-WHEELS = {"taxi": dict(radius=0.35, width=0.19, rim=CHROME), "mini": dict(radius=0.27, width=0.15, rim=CHROME),
-          "traveller": dict(radius=0.31, width=0.16, rim=PAINT2), "delivery_van": dict(radius=0.34, width=0.18, rim=PAINT2)}
+WHEELS = {"taxi": dict(radius=0.35, width=0.19, rim=CHROME), "mini": dict(radius=0.27, width=0.15, rim=CHROME, whitewall=True),
+          "traveller": dict(radius=0.31, width=0.16, rim=PAINT2, whitewall=True),
+          "delivery_van": dict(radius=0.34, width=0.18, rim=PAINT2)}
 
 
 def save(b, name, signs=None):
@@ -1326,7 +1375,7 @@ def export(name):
         b, spec = CARS[name]()
     save(b, name, signs)
     w = WHEELS[name]
-    save(wheel(name + "_wheel", w["radius"], w["width"], w["rim"]), name + "_wheel")
+    save(wheel(name + "_wheel", w["radius"], w["width"], w["rim"], whitewall=w.get("whitewall", False)), name + "_wheel")
     if name == "delivery_van":
         save(build_van_door(), "delivery_van_door")
 

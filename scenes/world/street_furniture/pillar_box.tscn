@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+; Roter Säulen-Briefkasten (seit „Modelle schöner“): Modell aus tools/blender/build_storybook_street_furniture.py
+; (assets/models/props/pillar_box.glb, feste Kollision „…-colonly“); Hindernis-Kreise (StreetObstacle), damit Passanten und
+; Katzen außen herum gehen. Ursprung am Boden in der Mitte, Vorderseite +Z. Aufgestellt in main.tscn unter
+; Outside/StreetFurniture – dort verschieben oder mit Strg+D verdoppeln.
+
+[ext_resource type="PackedScene" path="res://assets/models/props/pillar_box.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/street_life/street_obstacle.gd" id="2_obstacle"]
+
+[node name="PillarBox" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="Obstacle0" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+script = ExtResource("2_obstacle")
+radius = 0.36

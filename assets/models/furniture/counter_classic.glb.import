@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://likwn37pitub"
+uid="uid://bsfv2w4hg2yjy"
 path="res://.godot/imported/counter_classic.glb-8181922404579e6d8b112775626f9414.scn"
 
 [deps]
@@ -41,6 +41,26 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
+"cover": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/counter_classic/cover.tres",
+"use_external/path": "res://assets/materials/furniture/counter_classic/cover.tres"
+},
+"metal": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/counter_classic/metal.tres",
+"use_external/path": "res://assets/materials/furniture/counter_classic/metal.tres"
+},
+"pages": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/counter_classic/pages.tres",
+"use_external/path": "res://assets/materials/furniture/counter_classic/pages.tres"
+},
+"paper": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/counter_classic/paper.tres",
+"use_external/path": "res://assets/materials/furniture/counter_classic/paper.tres"
+},
 "wood": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/counter_classic/wood.tres",

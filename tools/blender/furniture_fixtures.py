@@ -51,7 +51,7 @@ def book_mats(k):
     k.mat("pages", (0.93, 0.88, 0.76), grain="paint", rough=0.85, vary=0.04)
 
 
-def carcass(k, slot, inner=None, cubes=True):
+def carcass(k, slot, inner=None, cubes=True, front=True):
     """Korpus mit offener Rückseite: Front, Seiten, Boden; hinten das Würfelregal für die Bücherkisten (cubes, seit
     Testrunde 7b). cubes=False = alte Einteilung: zwei Trennwände, Zwischenböden links und rechts, in der Mitte ein
     Schubkasten-Block (Schübe setzt drawers())."""
@@ -59,7 +59,8 @@ def carcass(k, slot, inner=None, cubes=True):
     c = k.part("Korpus", slot, bevel=0.004)
     h = UNDER_TOP - BASE_Z
     zc = (UNDER_TOP + BASE_Z) / 2
-    c.box((0, FRONT_Y + BOARD / 2, zc), (HALF_W * 2, BOARD, h), step=0.3, dent=0.0008)
+    if front:  # (front=False: die Theke baut ihre Vorderseite selbst, z. B. mit offenen Fächern)
+        c.box((0, FRONT_Y + BOARD / 2, zc), (HALF_W * 2, BOARD, h), step=0.3, dent=0.0008)
     for side in (-1, 1):
         c.box((side * (HALF_W - BOARD / 2), (FRONT_Y + BACK_Y) / 2, zc), (BOARD, BACK_Y - FRONT_Y, h), step=0.3, dent=0.0008)
     i = k.part("Innenleben", inner, bevel=0.003)
@@ -189,17 +190,134 @@ def framed_panels(k, frame_slot, field_slot, z0=0.16, z1=0.88, bar=0.045, raised
 
 # --- Schlichte Holztheke (stilneutral, Standard) ---
 
+# Bücher in den offenen Fächern vorn (süß und bunt wie die Bücher im Spiel, kaum Weiß)
+SWEET_BOOKS = [(0.86, 0.52, 0.56), (0.55, 0.7, 0.58), (0.52, 0.66, 0.84), (0.95, 0.8, 0.45), (0.72, 0.6, 0.86), (0.93, 0.6, 0.46),
+               (0.45, 0.6, 0.62)]
+# Offene Fächer vorn links und rechts (seit „Modelle schöner“): Öffnung x (innen, außen) und Höhe, Rückwand
+NICHE_X = (0.4, 0.845)
+NICHE_Z = (0.205, 0.835)
+NICHE_BACK_Y = -0.095
+NICHE_SHELF_Z = 0.52
+
+
+def _classic_front(k):
+    """Vorderseite der Standard-Theke: Rahmen um zwei offene Bücherfächer (links, rechts) und ein Mittelfeld."""
+    fr = k.part("Front", "wood", bevel=0.004)
+    # 3 mm vor den Seitenwänden und 3 mm schmaler (keine Flächen genau aufeinander – sonst flimmert es)
+    y = FRONT_Y + BOARD / 2 - 0.003
+    hw = HALF_W - 0.003
+    zb = (BASE_Z + NICHE_Z[0]) / 2
+    fr.box((0, y, zb), (hw * 2, BOARD, NICHE_Z[0] - BASE_Z), step=0.3, dent=0.0008)
+    fr.box((0, y, (NICHE_Z[1] + UNDER_TOP) / 2), (hw * 2, BOARD, UNDER_TOP - NICHE_Z[1]), step=0.3, dent=0.0008)
+    zc, zh = (NICHE_Z[0] + NICHE_Z[1]) / 2, NICHE_Z[1] - NICHE_Z[0] + 0.002
+    fr.box((0, y, zc), (NICHE_X[0] * 2, BOARD, zh), step=0.3, dent=0.0008)
+    for side in (-1, 1):
+        fr.box((side * (NICHE_X[1] + hw) / 2, y, zc), (hw - NICHE_X[1], BOARD, zh), step=0.3, dent=0.0008)
+
+
+def _book_niches(k, rnd):
+    """Zwei offene Fächer vorn mit Büchern für die Gäste (zwei Böden): aufrecht stehend, eins mit dem Cover nach vorn."""
+    n = k.part("Bücherfächer", "wood_dark", bevel=0.003)
+    # Rückwand der Fächer = Rückwand des Würfelregals (cube_back, bei y = BACK_Y - CUBE_DEPTH - 0,016)
+    back = BACK_Y - CUBE_DEPTH - 0.016
+    depth = back - (FRONT_Y + BOARD) - 0.002
+    yc = (back + FRONT_Y + BOARD) / 2 - 0.001
+    cover = k.part("Buchdeckel", "cover", bevel=0.0015, vary=0.0)
+    pages = k.part("Buchseiten", "pages", bevel=0.0008, vary=0.02)
+    for side in (-1, 1):
+        x0, x1 = sorted((side * NICHE_X[0], side * NICHE_X[1]))
+        xc, w = (x0 + x1) / 2, x1 - x0
+        for zz in (NICHE_Z[0] - 0.012, NICHE_SHELF_Z - 0.012, NICHE_Z[1] + 0.012):
+            n.box((xc, yc, zz), (w + 0.018, depth, 0.024), step=0.3, dent=0.0006)
+        for sx in (x0 - 0.006, x1 + 0.006):
+            n.box((sx, yc, (NICHE_Z[0] + NICHE_Z[1]) / 2), (0.012, depth - 0.003, NICHE_Z[1] - NICHE_Z[0] + 0.018), step=0.3,
+                  dent=0.0006)
+        for level, z in enumerate((NICHE_Z[0], NICHE_SHELF_Z)):
+            room = (NICHE_SHELF_Z - 0.024 if level == 0 else NICHE_Z[1]) - z - 0.03
+            # ein Buch mit dem Cover nach vorn, angelehnt an die Rückwand (Empfehlung) …
+            face_x = xc + side * w * 0.22 * (1 if level == 0 else -1)
+            col = SWEET_BOOKS[rnd.randrange(len(SWEET_BOOKS))]
+            bw, bh, bt = 0.15, min(room, 0.22), 0.028
+            m = Matrix.Translation((face_x, NICHE_BACK_Y - 0.038, z + bh / 2 * math.cos(math.radians(12)))) @ \
+                Matrix.Rotation(math.radians(-12), 4, "X")
+            cover.box((0, 0, 0), (bw, bt, bh), step=0.5, dent=0.0008, tint=F.lin(col), matrix=m)
+            pages.box((0, 0.0, -0.002), (bw * 0.95, bt * 0.8, bh * 0.94), step=0.5, dent=0.0, matrix=m @ Matrix.Translation((0.003, 0.002, 0)))
+            # … daneben eine Reihe aufrechter Bücher, Rücken nach vorn
+            xa, xb = (x0 + 0.015, face_x - bw / 2 - 0.02) if face_x > xc else (face_x + bw / 2 + 0.02, x1 - 0.015)
+            x = xa
+            while True:
+                t = rnd.uniform(0.024, 0.04)
+                if x + t > xb:
+                    break
+                col = SWEET_BOOKS[rnd.randrange(len(SWEET_BOOKS))]
+                F.book(cover, pages, (x + t / 2, (FRONT_Y + BOARD + NICHE_BACK_Y) / 2 + 0.01, z + 0.001),
+                       (t, 0.13, rnd.uniform(0.7, 0.95) * room), tint=tuple(c * rnd.uniform(0.9, 1.08) for c in col))
+                x += t + 0.0015
+
+
+def _medallion(k):
+    """Mittelfeld: gerahmte Füllung mit einem ovalen Medaillon, darauf ein aufgeschlagenes Buch (geschnitzt, Messing-Rand)."""
+    fr = k.part("Rahmen", "wood", bevel=0.004)
+    fi = k.part("Füllungen", "wood", bevel=0.006)
+    x0, x1 = -NICHE_X[0] + 0.03, NICHE_X[0] - 0.03
+    z0, z1 = NICHE_Z[0], NICHE_Z[1]
+    bar = 0.045
+    y = FRONT_Y - 0.005
+    xc, w = 0.0, x1 - x0
+    fr.box((xc, y, z1 - bar / 2), (w, 0.012, bar), step=0.3, dent=0.0006)
+    fr.box((xc, y, z0 + bar / 2), (w, 0.012, bar), step=0.3, dent=0.0006)
+    for sx in (x0 + bar / 2, x1 - bar / 2):
+        fr.box((sx, y + 0.0005, (z0 + z1) / 2), (bar, 0.0115, z1 - z0 - bar * 1.6), step=0.3, dent=0.0006)
+    fi.box((xc, FRONT_Y - 0.007, (z0 + z1) / 2), (w - bar * 2 + 0.004, 0.012, z1 - z0 - bar * 2 + 0.004), step=0.3, dent=0.0006)
+    zc = (z0 + z1) / 2
+    oval = [(math.cos(2 * math.pi * i / 40) * 0.2, math.sin(2 * math.pi * i / 40) * 0.15) for i in range(40)]
+    med = k.part("Medaillon", "wood_dark", bevel=0.004)
+    med.slab(oval, 0.012, Matrix.Translation((xc, FRONT_Y - 0.012, zc)) @ Matrix.Rotation(math.radians(90), 4, "X"), dent=0.0004)
+    rim = k.part("Messingrand", "metal", bevel=0.0)
+    ring = [(xc + math.cos(2 * math.pi * i / 48) * 0.203, FRONT_Y - 0.0255, zc + math.sin(2 * math.pi * i / 48) * 0.153) for i in range(49)]
+    rim.tube(ring, 0.006, segs=6)
+    # aufgeschlagenes Buch: zwei leicht gewölbte Seiten, dazwischen der Rücken
+    book = k.part("Medaillon Buch", "paper", bevel=0.003)
+    for side in (-1, 1):
+        pts = [(side * 0.004, 0.0), (side * 0.06, 0.012), (side * 0.11, 0.004), (side * 0.11, -0.07), (side * 0.06, -0.058),
+               (side * 0.004, -0.07)]
+        if side > 0:
+            pts.reverse()  # gegen den Uhrzeigersinn
+        book.slab(pts, 0.008, Matrix.Translation((xc, FRONT_Y - 0.022, zc + 0.032)) @ Matrix.Rotation(math.radians(90), 4, "X"),
+                  dent=0.0003)
+    lines = k.part("Medaillon Zeilen", "wood_dark", bevel=0.0)
+    for side in (-1, 1):
+        for r in range(4):
+            lines.box((xc + side * 0.058, FRONT_Y - 0.0325, zc + 0.012 - r * 0.014), (0.07, 0.002, 0.004), step=0.5, dent=0.0)
+
+
+def _corbels(k):
+    """Konsolen unter dem Überstand der Platte (vorn), über den Rahmenstücken zwischen den Feldern."""
+    c = k.part("Konsolen", "wood", bevel=0.004)
+    for x in (-HALF_W + 0.04, -NICHE_X[0] + 0.015, NICHE_X[0] - 0.015, HALF_W - 0.04):
+        prof = [(0.0, 0.0), (0.05, 0.0), (0.05, -0.012), (0.035, -0.03), (0.018, -0.06), (0.006, -0.085), (0.0, -0.09)]
+        pts = list(reversed(prof))  # gegen den Uhrzeigersinn
+        # lokales x → nach vorn (-y), lokales y → oben, Dicke (lokales z) → -x; etwas in Front und Platte hinein
+        turn = Matrix(((0, 0, -1, 0), (-1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+        c.slab(pts, 0.036, Matrix.Translation((x + 0.018, FRONT_Y + 0.003, UNDER_TOP + 0.002)) @ turn, dent=0.0004)
+
+
 def build_counter_classic(k):
     FN.wood(k, FN.OAK_MID)
     k.mat("wood_dark", FN.WALNUT, grain="wood", rough=0.62, vary=0.07, bump=0.1)
-    k.mat("metal", (0.25, 0.24, 0.22), grain="smooth", rough=0.45, metal=0.5, vary=0.04)
+    k.mat("metal", (0.8, 0.62, 0.32), grain="smooth", rough=0.36, metal=0.65, vary=0.05)
     k.mat("paper", (0.95, 0.93, 0.87), grain="paint", rough=0.85, vary=0.03)
     k.mat("box", (0.74, 0.6, 0.44), grain="paint", rough=0.85, vary=0.08)
     book_mats(k)
     rnd = random.Random(k.seed)
-    carcass(k, "wood")
+    # Seit „Modelle schöner“: zur Kundenseite zwei offene Bücherfächer und ein Mittelfeld mit Buch-Medaillon, Konsolen unter
+    # der Platte (vorher drei glatte Felder)
+    carcass(k, "wood", front=False)
+    _classic_front(k)
+    _book_niches(k, rnd)
+    _medallion(k)
+    _corbels(k)
     plinth(k, "wood_dark")
-    framed_panels(k, "wood", "wood")
     top = k.part("Platte", "wood", bevel=0.009)
     top.box((0, sum(TOP_Y) / 2, (UNDER_TOP + TOP_Z) / 2), (2.0, TOP_Y[1] - TOP_Y[0], TOP_Z - UNDER_TOP), step=0.3, dent=0.0008)
     # Hinten: Würfelregal mit den Bücherkisten (carcass), sonst nichts

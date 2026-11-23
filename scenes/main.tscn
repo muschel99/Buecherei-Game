@@ -46,6 +46,10 @@
 [ext_resource type="Script" path="res://scripts/world/greenery.gd" id="33_greenery"]
 [ext_resource type="Script" path="res://scripts/world/chimney_smoke.gd" id="60_smoke"]
 [ext_resource type="PackedScene" path="res://scenes/world/street_bench.tscn" id="34_bench"]
+[ext_resource type="PackedScene" path="res://scenes/world/street_furniture/pillar_box.tscn" id="70_pillar"]
+[ext_resource type="PackedScene" path="res://scenes/world/street_furniture/phone_box.tscn" id="71_phone"]
+[ext_resource type="PackedScene" path="res://scenes/world/street_furniture/street_clock.tscn" id="72_clock"]
+[ext_resource type="PackedScene" path="res://scenes/world/street_furniture/litter_bin.tscn" id="73_bin"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -133,6 +137,26 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.52, 0, -14.85)
 
 [node name="BenchOppositeEast" parent="Outside/Benches" instance=ExtResource("34_bench")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.6, 0, -14.84)
+
+[node name="StreetFurniture" type="Node3D" parent="Outside"]
+
+[node name="PillarBox" parent="Outside/StreetFurniture" instance=ExtResource("70_pillar")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 6.9, 0, -7.05)
+
+[node name="StreetClock" parent="Outside/StreetFurniture" instance=ExtResource("72_clock")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.1, 0, -13.15)
+
+[node name="PhoneBox" parent="Outside/StreetFurniture" instance=ExtResource("71_phone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.4, 0, -13.3)
+
+[node name="LitterBinLibrary" parent="Outside/StreetFurniture" instance=ExtResource("73_bin")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 11.4, 0, -7.05)
+
+[node name="LitterBinOppositeWest" parent="Outside/StreetFurniture" instance=ExtResource("73_bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, 0, -13.2)
+
+[node name="LitterBinOppositeEast" parent="Outside/StreetFurniture" instance=ExtResource("73_bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.4, 0, -13.2)
 
 [node name="StreetLife" type="Node3D" parent="Outside"]
 script = ExtResource("32_street_life")
