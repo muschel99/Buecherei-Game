@@ -8,6 +8,7 @@ den Bausteinen aus storybook_furniture.py arbeitet (Blender-Koordinaten, Vorders
 import math
 import random
 
+import bmesh
 from mathutils import Matrix, Vector
 
 import storybook_furniture as F
@@ -604,27 +605,129 @@ def build_wall_lamp(k):
 # --- Globen ---
 
 SEA = (0.22, 0.36, 0.5)
-LAND = (0.8, 0.66, 0.4)
+LAND = (0.96, 0.92, 0.8)
+
+# Kontinente (seit „Modelle schöner“; vorher runde Flecken): je Landmasse ein Pastellton wie auf alten Schulgloben und
+# überlappende Kreise (Breite, Länge, Radius in Grad), aus denen die Küstenlinie entsteht
+CONTINENTS = {
+    "Nordamerika": ((1.0, 0.84, 0.68), [(62, -112, 17), (52, -100, 15), (42, -98, 13), (36, -112, 10), (47, -78, 9),
+                                        (32, -86, 6), (27, -103, 8), (19, -99, 5), (14, -89, 4), (9, -81, 2.5),
+                                        (64, -152, 9), (57, -68, 7), (68, -88, 8), (72, -105, 6)]),
+    "Grönland": ((0.98, 0.97, 0.94), [(72, -42, 9), (79, -40, 7)]),
+    "Südamerika": ((0.86, 0.94, 0.72), [(-4, -60, 14), (-14, -52, 12), (-24, -60, 10), (-34, -65, 7), (-44, -70, 5),
+                                       (-51, -71, 3), (5, -68, 7), (-10, -74, 6)]),
+    "Europa": ((1.0, 0.78, 0.78), [(50, 12, 8), (46, 2, 6), (62, 15, 6), (66, 26, 5), (40, -4, 5), (42, 13, 3),
+                                   (54, -2, 3), (56, 32, 8), (48, 28, 7)]),
+    "Afrika": ((1.0, 0.93, 0.66), [(10, 20, 15), (16, 0, 12), (0, 24, 12), (-14, 26, 11), (-26, 25, 8), (6, 40, 6),
+                                   (25, 16, 12), (28, 30, 7), (-19, 47, 3)]),
+    "Asien": ((0.86, 0.93, 0.8), [(62, 92, 20), (56, 122, 14), (46, 82, 15), (36, 102, 13), (22, 78, 8), (25, 46, 9),
+                                  (16, 102, 7), (66, 142, 11), (40, 116, 10), (36, 137, 4), (-1, 113, 4), (0, 102, 3),
+                                  (40, 60, 9), (68, 60, 8)]),
+    "Australien": ((1.0, 0.8, 0.66), [(-25, 134, 12), (-19, 142, 6), (-32, 120, 5)]),
+}
 
 
-def _globe(k, center, r, axis_tilt=23.0, seed=0):
-    """Globus: Meer (globe_sea, einfärbbar), Kontinente als flache Flicken (globe_land), Meridian
-    aus Messing mit Achsstiften. Liefert die Drehmatrix der Achse."""
+SOFT = 5.0
+
+
+def _land_field(lat, lon, circles):
+    """Wie weit ein Punkt (Grad) im Land liegt (> 0 = Land) und zu welchem Kontinent er gehört."""
+    la, lo = math.radians(lat), math.radians(lon)
+    d = Vector((math.cos(la) * math.cos(lo), math.cos(la) * math.sin(lo), math.sin(la)))
+    best, who, total = -1.0, None, 0.0
+    for vec, rad, name in circles:
+        v = 1.0 - math.degrees(math.acos(max(-1.0, min(1.0, d.dot(vec))))) / rad
+        total += math.exp(SOFT * v)
+        if v > best:
+            best, who = v, name
+    # weich verschmolzene Kreise (sonst sieht man jeden Kreis als Beule in der Küste)
+    f = math.log(max(total, 1e-9)) / SOFT
+    # leicht wellige Küsten (wie von Hand gezeichnet)
+    f += 0.06 * math.sin(d.x * 13.0 + 1.3) * math.sin(d.y * 17.0 + 0.7) * math.sin(d.z * 11.0 + 2.1)
+    return f, who
+
+
+def _land_shell(b, c, r, rot, h, step):
+    """Kontinente als geschlossene, leicht erhabene Schale auf der Kugel: Gitter aus Breiten-/Längengraden, Küste per
+    Marching Squares zwischen den Gitterpunkten (weich statt treppig). Oben r + h, unten r - h (steckt in der Kugel)."""
+    circles = []
+    for name, (tint, blobs) in CONTINENTS.items():
+        for lat, lon, rad in blobs:
+            la, lo = math.radians(lat), math.radians(lon)
+            circles.append((Vector((math.cos(la) * math.cos(lo), math.cos(la) * math.sin(lo), math.sin(la))), rad, name))
+    lats = [-58.0 + i * step for i in range(int(144.0 / step) + 1)]
+    n_lon = int(round(360.0 / step))
+    field = {}
+    for i, lat in enumerate(lats):
+        for j in range(n_lon):
+            f, who = _land_field(lat, j * step - 180.0, circles)
+            if i == 0 or i == len(lats) - 1:
+                f = -1.0
+            field[(i, j)] = (f, who)
+    bm = b.bm
+    made = {}
+    verts, faces, tints = [], [], []
+
+    def point(key, lat, lon, who):
+        if key not in made:
+            la, lo = math.radians(lat), math.radians(lon)
+            d = rot @ Vector((math.cos(la) * math.cos(lo), math.cos(la) * math.sin(lo), math.sin(la)))
+            top = bm.verts.new(c + d * (r + h))
+            bot = bm.verts.new(c + d * (r - h))
+            made[key] = (top, bot)
+            verts.extend((top, bot))
+            tint = F.lin(CONTINENTS[who][0])
+            tints.extend(((top, tint), (bot, tint)))
+        return made[key]
+
+    for i in range(len(lats) - 1):
+        for j in range(n_lon):
+            corners = [(i, j), (i, j + 1), (i + 1, j + 1), (i + 1, j)]
+            vals = [field[(ci, cj % n_lon)] for ci, cj in corners]
+            if all(v[0] <= 0 for v in vals):
+                continue
+            poly, coast = [], []
+            for k in range(4):
+                a, bb = corners[k], corners[(k + 1) % 4]
+                fa, wa = vals[k]
+                fb, wb = vals[(k + 1) % 4]
+                if fa > 0:
+                    poly.append((("c", a[0], a[1] % n_lon), lats[a[0]], a[1] * step - 180.0, wa, False))
+                if (fa > 0) != (fb > 0):
+                    t = max(0.03, min(0.97, fa / (fa - fb)))
+                    lat = lats[a[0]] + (lats[bb[0]] - lats[a[0]]) * t
+                    lon = (a[1] + (bb[1] - a[1]) * t) * step - 180.0
+                    key = ("e",) + tuple(sorted([(a[0], a[1] % n_lon), (bb[0], bb[1] % n_lon)]))
+                    poly.append((key, lat, lon, wa if fa > 0 else wb, True))
+            pts = [point(key, lat, lon, who) for key, lat, lon, who, _ in poly]
+            faces.append(bm.faces.new([p[0] for p in pts]))
+            faces.append(bm.faces.new([p[1] for p in reversed(pts)]))
+            # Küste: zwischen zwei aufeinanderfolgenden Kreuzungspunkten eine Wand
+            for k in range(len(poly)):
+                k1 = (k + 1) % len(poly)
+                if poly[k][4] and poly[k1][4]:
+                    pa, pb = pts[k], pts[k1]
+                    faces.append(bm.faces.new((pa[0], pa[1], pb[1], pb[0])))
+    bmesh.ops.recalc_face_normals(bm, faces=faces)
+    for f in faces:
+        f.smooth = True
+    for v, tint in tints:
+        v[b.tint] = (*tint, 1.0)
+
+
+def _globe(k, center, r, axis_tilt=23.0, seed=0, step=3.0):
+    """Globus: Meer (globe_sea, einfärbbar), Kontinente mit Küstenlinien (globe_land, je Kontinent ein Pastellton),
+    Meridian aus Messing mit Achsstiften. Vorn (Blender -y) liegt der Atlantik mit Amerika, Europa und Afrika.
+    Liefert die Drehmatrix der Achse."""
     k.mat("globe_sea", SEA, grain="paint", rough=0.55, vary=0.08, scale=3.0)
-    k.mat("globe_land", LAND, grain="paint", rough=0.7, vary=0.1, scale=6.0)
+    k.mat("globe_land", LAND, grain="paint", rough=0.7, vary=0.05, scale=6.0)
     c = Vector(center)
     tilt = Matrix.Rotation(math.radians(axis_tilt), 4, "Y")
     ball = k.part("Globus", "globe_sea", bevel=0.0, vary=0.02)
-    F.sphere(ball, c, r, segs=36, rings=18)
-    land = k.part("Kontinente", "globe_land", bevel=0.0, vary=0.06)
-    rnd = random.Random(k.seed + seed)
-    # grobe Lage der Kontinente (Breite, Länge in Grad, Größe)
-    for lat, lon, size in ((48, -100, 0.55), (-15, -60, 0.45), (50, 20, 0.4), (5, 20, 0.5), (55, 90, 0.6), (-25, 135, 0.35),
-                           (75, -40, 0.25), (20, 78, 0.28)):
-        la, lo = math.radians(lat), math.radians(lon)
-        d = Vector((math.cos(la) * math.cos(lo), math.cos(la) * math.sin(lo), math.sin(la)))
-        d = (tilt.to_3x3() @ d).normalized()
-        F.patch(land, c + d * r * 0.995, d, r * size * 0.42, r * 0.025, rnd, wobble=0.45, segs=20)
+    F.sphere(ball, c, r, segs=48, rings=24)
+    land = k.part("Kontinente", "globe_land", bevel=0.0, vary=0.0)
+    spin = Matrix.Rotation(math.radians(-60.0), 3, "Z")
+    _land_shell(land, c, r, tilt.to_3x3() @ spin, r * 0.012, step)
     meridian = k.part("Meridian", "brass", bevel=0.0)
     ring_m = tilt @ Matrix.Rotation(math.radians(90), 4, "X")
     pts = [c + ring_m.to_3x3() @ Vector((math.cos(math.radians(a)) * r * 1.08, math.sin(math.radians(a)) * r * 1.08, 0)) for a in range(-100, 101, 8)]
@@ -663,7 +766,7 @@ def build_globe_small(k):
     base.lathe([(0.0, 0.0), (0.075, 0.0), (0.078, 0.012), (0.05, 0.022), (0.022, 0.03), (0.016, 0.05), (0.0, 0.05)], (0, 0, 0), segs=28)
     stem = k.part("Stiel", "brass", bevel=0.0)
     stem.tube([(0, 0, 0.045), (0, 0, 0.08)], 0.008, segs=8)
-    _globe(k, (0, 0, 0.18), 0.095)
+    _globe(k, (0, 0, 0.18), 0.095, step=4.5)
     stem.tube([(0, 0, 0.075), (-0.035, 0, 0.088)], 0.0045, segs=6, round_ends=True)
     k.collider((0, 0, 0.14), (0.2, 0.2, 0.28))
 
