@@ -53,6 +53,12 @@ const REVEAL_WALLS := {"Structure/WallFront": "Walls/Front", "Structure/WallLeft
 ## Wohin etwas gehängt werden kann (gleiche Werte wie FurnitureData.placement).
 enum HangKind { NONE = 0, WALL = 4, DOOR = 8, CEILING = 16 }
 
+## Draußen (seit „Draußen gestalten“): feste Ablageflächen außerhalb des Streifens, die der Draußen-Raum auch annimmt (Seiten
+## der Eingangstreppe, EntranceSteps) – dort darf nur stehen, was ganz auf die Fläche passt.
+const OUTDOOR_SURFACE_GROUP := &"outdoor_build_surfaces"
+## Kollisionen, durch die der Gestaltungsmodus beim Aufstellen auf solchen Flächen hindurchschaut (die Lauf-Rampe der Treppe).
+const PASS_THROUGH_GROUP := &"build_pass_through"
+
 ## Bücher, die in diesem Raum frei herumliegen (auf Tischen, dem Boden …), siehe LooseBooks.
 var loose_books: LooseBooks
 
@@ -168,7 +174,8 @@ func _update_street() -> void:
 			if old is StreetObstacle and String(old.name).begins_with("OutdoorObstacle"):
 				item.remove_child(old)
 				old.queue_free()
-		if item.support_uid > 0 or item.data == null:
+		# nur was auf dem Gehweg steht (nicht auf Möbeln und nicht auf den Stufen der Treppe)
+		if item.support_uid > 0 or item.data == null or item.global_position.y > floor_height + 0.05:
 			continue
 		var size := item.data.get_footprint_size()
 		var long_side := maxf(size.x, size.y)
@@ -448,6 +455,11 @@ func is_inside_build_area(world_position: Vector3) -> bool:
 	var along_x := local.x - build_area.position.x
 	var along_z := local.z - build_area.position.y
 	return along_x + along_z >= _corner_cut
+
+
+## Nimmt dieser Raum eine feste Ablagefläche außerhalb seiner Fläche an (draußen: die Seiten der Treppe)?
+func accepts_surface(surface: Object) -> bool:
+	return outdoor and surface is Node and (surface as Node).is_in_group(OUTDOOR_SURFACE_GROUP)
 
 
 ## Ist der getroffene Kollisionskörper eine Wand, die Tür oder die Decke dieses Raums?

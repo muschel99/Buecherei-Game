@@ -725,8 +725,13 @@ func _place_standing(hit: Dictionary) -> String:
 			point.y = ground.position.y
 	_placement_on_floor = not on_surface
 	_placement_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(yaw)), point)
+	# feste Ablageflächen draußen (Seiten der Eingangstreppe): gehören zum Raum, auch außerhalb seiner Fläche
+	var zone := on_surface and _room.accepts_surface(ground.collider)
 
-	if not _room.is_inside_build_area(point):
+	if not _room.is_inside_build_area(point) and not zone and hit.collider is Node \
+			and (hit.collider as Node).is_in_group(Room.PASS_THROUGH_GROUP):
+		return "Die Mitte der Treppe bleibt frei (Weg zur Tür) – an den Seiten geht es."
+	if not _room.is_inside_build_area(point) and not zone:
 		return "Draußen nur direkt am Haus der Bücherei." if _room.outdoor else "Das muss im Raum stehen."
 	if not on_surface and not data.allows(FurnitureData.PLACE_FLOOR):
 		return "Das gehört auf eine Ablage (Tisch, Regal, Sessel, Fensterbank)."
@@ -740,9 +745,26 @@ func _place_standing(hit: Dictionary) -> String:
 			_placement_transform.origin += shelf.bookend_snap_offset(ground.collider, _preview.get_world_corners())
 	if on_surface:
 		var problem := _check_surface_fit(ground.collider as PlacementSurface)
+		if problem.is_empty() and zone:
+			problem = _check_zone_fit(ground.collider as PlacementSurface)
 		if not problem.is_empty():
 			return problem
-	return _find_overlap(Vector3.UP, true)
+	return _find_overlap(Vector3.UP, true, zone)
+
+
+## Auf einer Stufe der Treppe muss es ganz auf die Stufe passen (sonst steckt es in der nächsten Stufe oder hängt über).
+func _check_zone_fit(surface: PlacementSurface) -> String:
+	var shape := surface.get_child(0) as CollisionShape3D
+	var box := shape.shape as BoxShape3D if shape else null
+	if box == null:
+		return ""
+	_preview.global_transform = _placement_transform
+	var half := box.size / 2.0 + Vector3(0.02, 0.0, 0.02)
+	for corner in _preview.get_world_corners():
+		var local := surface.to_local(corner)
+		if absf(local.x) > half.x or absf(local.z) > half.z:
+			return "Passt nicht ganz auf die Stufe."
+	return ""
 
 
 ## Passt es auf diese Ablage? Prüft die Höhe (z. B. bis zum nächsten Regalbrett) und im
@@ -856,9 +878,11 @@ func _door_is_open(collider: Object) -> bool:
 
 ## Prüft, ob die Vorschau etwas anderes berührt (leer = frei).
 ## lift: in diese Richtung wird etwas abgerückt, damit bloßes Anliegen erlaubt ist.
-func _find_overlap(lift: Vector3, check_entrance: bool) -> String:
+func _find_overlap(lift: Vector3, check_entrance: bool, pass_through: bool = false) -> String:
 	var space := _player.get_world_3d().direct_space_state
 	var query := PhysicsShapeQueryParameters3D.new()
+	if pass_through:
+		query.exclude = _pass_through_rids()
 	query.collision_mask = FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.PLAYER_LAYER_BIT \
 		| FurnitureUtils.FURNITURE_LAYER_BIT
 	# Teppiche liegen flach auf dem Boden: Sie dürfen unter Möbel und übereinander (Möbel stehen
@@ -898,7 +922,21 @@ func _find_ground(point: Vector3, start_height: float, data: FurnitureData) -> D
 	if data.allows(FurnitureData.PLACE_SURFACE):
 		mask |= FurnitureUtils.SURFACE_LAYER_BIT
 	var from := Vector3(point.x, start_height, point.z)
-	return _ray(from, Vector3(point.x, _room.floor_height - 1.0, point.z), mask)
+	# Dinge für Ablagen sehen durch die Lauf-Rampe der Treppe hindurch auf die Stufen
+	# (kein „… if … else []“: eine leere Liste ohne Typ passt nicht in Array[RID])
+	var skip: Array[RID] = []
+	if data.allows(FurnitureData.PLACE_SURFACE):
+		skip = _pass_through_rids()
+	return _ray(from, Vector3(point.x, _room.floor_height - 1.0, point.z), mask, skip)
+
+
+## Kollisionen, durch die man beim Aufstellen auf festen Draußen-Flächen hindurchschaut (Room.PASS_THROUGH_GROUP).
+func _pass_through_rids() -> Array[RID]:
+	var rids: Array[RID] = []
+	for node in get_tree().get_nodes_in_group(Room.PASS_THROUGH_GROUP):
+		if node is CollisionObject3D:
+			rids.append((node as CollisionObject3D).get_rid())
+	return rids
 
 
 # --- Raster ---
@@ -967,8 +1005,10 @@ func _ray_from_camera(mask: int, reach: float = GameConfig.build_reach) -> Dicti
 	return _ray(from, to, mask)
 
 
-func _ray(from: Vector3, to: Vector3, mask: int) -> Dictionary:
-	var query := PhysicsRayQueryParameters3D.create(from, to, mask, [_player.get_rid()])
+func _ray(from: Vector3, to: Vector3, mask: int, skip: Array[RID] = []) -> Dictionary:
+	var exclude: Array[RID] = [_player.get_rid()]
+	exclude.append_array(skip)
+	var query := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
 	# Ablageflächen sind Area3D-Knoten und werden nur so gefunden
 	query.collide_with_areas = (mask & FurnitureUtils.SURFACE_LAYER_BIT) != 0
 	return _player.get_world_3d().direct_space_state.intersect_ray(query)

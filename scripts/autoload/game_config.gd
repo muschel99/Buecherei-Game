@@ -554,6 +554,9 @@ var delivery_time: float = 2.0
 var unpack_time: float = 0.7
 ## Kartons am Bordstein vor der Bücherei (seit „Draußen gestalten“): so viele Stapel nebeneinander (danach eine Reihe dahinter).
 var delivery_stacks_per_row: int = 6
+## Eingangstreppe (seit „Draußen gestalten“): so weit (m) zu jeder Seite der Türmitte bleibt der Laufweg frei – nur außerhalb
+## davon darf man kleine Deko auf die Stufen und neben die Tür stellen
+var entrance_free_half: float = 0.7
 ## So viele Kartons höchstens übereinander (ist alles voll, wird trotzdem weiter gestapelt).
 var delivery_stack_height: int = 3
 ## Kartons stehen leicht schief, damit es natürlich aussieht: größte Drehung in Grad.

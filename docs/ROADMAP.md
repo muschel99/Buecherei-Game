@@ -2024,6 +2024,9 @@ Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
 - [x] **Lieferkartons** vorn am Bordstein (sechs Stapel nebeneinander), nie auf aufgestellten Sachen
 - [x] **Erste Draußen-Sachen** im Nest & Nook: Gartenbank, Bistrostuhl, Bistrotisch, Kreidetafel-Aufsteller, Lavendel,
   Buchsbaumkugel, Olivenbäumchen, Geranien, Hortensie im Kübel, Rosenstämmchen (alle in mehreren Farben)
+- [x] **Deko auf der Treppe:** kleine Töpfe und Laternen an den Seiten jeder Stufe und neben der Tür auf dem Podest; die
+  Laufmitte (70 cm zu jeder Seite der Türmitte) bleibt frei; nur was ganz auf eine Stufe passt. Neu dafür: kleiner
+  Lavendel-, Geranien- und Buchsbaumtopf, Heidekraut, Laterne mit Kerze, Sturmlaterne
 - [x] Stühle geprüft – sie sind gut so (die Entwicklerin hatte alte Bilder gesehen)
 - [ ] Viel mehr Draußen-Sachen: Sitzmöbel, Tischchen, sehr viele Pflanzen in allen Größen, Farben und Formen,
   Kundenstopper, kleine Regale für Bücher und Deko

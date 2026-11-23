@@ -9,6 +9,7 @@ import random
 
 from mathutils import Matrix, Vector
 
+import furniture_country as FC
 import storybook_furniture as F
 import storybook_greenery as G
 
@@ -257,10 +258,68 @@ def build_rose_standard(k):
     k.collider((0, 0, 0.45), (0.36, 0.36, 0.9))
 
 
+# --- Kleine Töpfe für die Treppe (passen auf eine Stufe: 28 cm tief, an den Seiten 20 cm breit) ---
+
+def build_small_lavender(k):
+    """Lavendel im kleinen Tontopf – passt auf eine Stufe."""
+    _potted(k, 0.09, 0.11, "classic", lambda p: G.lavender_bush(p, color="lilac", spikes=26, height=0.42))
+    k.collider((0, 0, 0.12), (0.2, 0.2, 0.24))
+
+
+def build_small_geranium(k):
+    """Geranie im kleinen Tontopf – passt auf eine Stufe."""
+    _potted(k, 0.09, 0.1, "classic", lambda p: G.geranium_bush(p, "red"))
+    k.collider((0, 0, 0.1), (0.2, 0.2, 0.2))
+
+
+def build_small_heather(k):
+    """Heidekraut im kleinen Topf – blüht bis in den Herbst."""
+    _potted(k, 0.09, 0.1, "bowl", lambda p: G.heather(p, "magenta_flower", n=110, height=0.22))
+    k.collider((0, 0, 0.1), (0.2, 0.2, 0.2))
+
+
+def build_small_boxball(k):
+    """Kleine Buchsbaumkugel im Topf – passt auf eine Stufe."""
+    _potted(k, 0.095, 0.12, "bowl", lambda p: G.boxball(p, radius=0.19))
+    k.collider((0, 0, 0.14), (0.2, 0.2, 0.28))
+
+
+# --- Laternen ---
+
+def build_storm_lantern(k):
+    """Sturmlaterne: Metallfuß mit Rand, Glaszylinder, gelochte Kappe, Drahtbügel und eine Kerze darin."""
+    k.mat("metal", IRON_BLACK, grain="smooth", rough=0.5, metal=0.45, vary=0.05)
+    k.mat("glass", (0.9, 0.95, 0.95), glass=True, rough=0.1, vary=0.0)
+    k.mat("wax", (0.95, 0.92, 0.84), grain="smooth", rough=0.55, vary=0.03)
+    m = k.part("Gestell", "metal", bevel=0.0)
+    # Fuß: flache Schale, in der das Glas steht
+    m.lathe([(0.0, 0.0), (0.085, 0.0), (0.088, 0.01), (0.075, 0.03), (0.07, 0.045), (0.064, 0.045), (0.064, 0.022), (0.0, 0.022)],
+            (0, 0, 0), segs=28)
+    # Kappe oben mit Rand und Knauf
+    m.lathe([(0.0, 0.0), (0.066, 0.0), (0.07, 0.012), (0.05, 0.04), (0.02, 0.055), (0.0, 0.06)], (0, 0, 0.255), segs=28)
+    # zwei Stangen vom Fuß zur Kappe (halten sie), Bügel oben
+    for sx in (-1, 1):
+        m.tube([(sx * 0.076, 0, 0.03), (sx * 0.076, 0, 0.262)], 0.004, segs=6, round_ends=True)
+    m.tube([(-0.076, 0, 0.262)] + [(math.cos(math.radians(a)) * 0.076, 0, 0.262 + math.sin(math.radians(a)) * 0.09)
+                                    for a in range(170, 9, -20)] + [(0.076, 0, 0.262)], 0.0035, segs=6, smooth=1)
+    # Glaszylinder (Wand mit Innenseite), sitzt im Fuß und unter der Kappe
+    glass = k.part("Glas", "glass", bevel=0.0)
+    glass.lathe([(0.0, 0.03), (0.062, 0.03), (0.068, 0.12), (0.06, 0.255), (0.055, 0.255), (0.063, 0.12), (0.057, 0.035),
+                 (0.0, 0.035)], (0, 0, 0), segs=28)
+    F.candle(k, "wax", (0, 0, 0.035), 0.09, 0.024, drips=2, segs=14)
+    k.light_kind = "flame"
+    k.shadow = "none"
+    k.light((0, 0, 0.15), energy=0.35, rng=2.2, shadow=False)
+    k.collider((0, 0, 0.16), (0.18, 0.18, 0.32))
+
+
 def flower_variants(slot):
     return [("red", "Rot", {slot: (0.86, 0.2, 0.17)}), ("pink", "Rosa", {slot: (0.93, 0.52, 0.62)}),
             ("white", "Weiß", {slot: (0.95, 0.94, 0.9)}), ("coral", "Koralle", {slot: (0.95, 0.45, 0.38)})]
 
+
+LANTERN_COLORS = [("black", "Schwarz", {"metal": IRON_BLACK}), ("green", "Altgrün", {"metal": (0.28, 0.3, 0.27)}),
+                  ("cream", "Creme", {"metal": CREAM}), ("brass", "Messing", {"metal": (0.72, 0.56, 0.3)})]
 
 ITEMS = [
     dict(id="out_garden_bench", name="Gartenbank", category="outdoor", sub="outdoor_seat", price=95,
@@ -302,4 +361,25 @@ ITEMS = [
     dict(id="out_rose_standard", name="Rosenstämmchen", category="outdoor", sub="outdoor_plant", price=32,
          desc="Ein Rosenstämmchen mit einer Krone voller Blüten.",
          styles=STYLE, place="floor", attach_feet=False, build=build_rose_standard, variants=variants("pot", POTS)),
+    dict(id="out_small_lavender", name="Kleiner Lavendeltopf", category="outdoor", sub="outdoor_plant", price=8,
+         desc="Ein kleiner Topf Lavendel – passt auch auf eine Stufe der Treppe.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_small_lavender, variants=variants("pot", POTS)),
+    dict(id="out_small_geranium", name="Kleiner Geranientopf", category="outdoor", sub="outdoor_plant", price=7,
+         desc="Eine Geranie im kleinen Tontopf – passt auch auf eine Stufe der Treppe.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_small_geranium,
+         variants=flower_variants("red")),
+    dict(id="out_small_heather", name="Heidekraut", category="outdoor", sub="outdoor_plant", price=7,
+         desc="Heidekraut im kleinen Topf – blüht bis tief in den Herbst.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_small_heather,
+         variants=[("magenta", "Pink", {"magenta_flower": (0.78, 0.24, 0.5)}), ("purple", "Lila", {"magenta_flower": (0.55, 0.32, 0.62)}),
+                   ("white", "Weiß", {"magenta_flower": (0.95, 0.94, 0.9)}), ("rose", "Rosa", {"magenta_flower": (0.93, 0.6, 0.7)})]),
+    dict(id="out_small_boxball", name="Kleine Buchsbaumkugel", category="outdoor", sub="outdoor_plant", price=10,
+         desc="Eine kleine Buchsbaumkugel im Topf – passt auch auf eine Stufe der Treppe.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_small_boxball, variants=variants("pot", POTS)),
+    dict(id="out_lantern_candle", name="Laterne mit Kerze", category="outdoor", sub="outdoor_light", price=22,
+         desc="Eine kleine Laterne mit Glasscheiben und Kerze – schön auf der Treppe, wenn es dunkel wird.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=FC.build_lantern, variants=LANTERN_COLORS),
+    dict(id="out_storm_lantern", name="Sturmlaterne", category="outdoor", sub="outdoor_light", price=18,
+         desc="Eine Sturmlaterne mit Glaszylinder und Drahtbügel – die Kerze flackert auch bei Wind.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_storm_lantern, variants=LANTERN_COLORS),
 ]

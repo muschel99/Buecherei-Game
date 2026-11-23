@@ -42,6 +42,7 @@ func _ready() -> void:
 		add_child(builder.make_instance("Steps", material))
 	_build_ramp(count, tread, side, total, half_width, depth)
 	_add_street_obstacles(half_width + count * side, depth + count * tread)
+	_add_deco_zones(count, tread, side, total, half_width, depth)
 
 
 ## Rundung der Stufenkanten in m.
@@ -115,9 +116,47 @@ func _build_ramp(count: int, tread: float, side: float, total: float, half_width
 	])
 	var body := StaticBody3D.new()
 	body.name = "Ramp"
+	# Deko auf den Stufen steht unter der Rampe – der Gestaltungsmodus schaut dort durch sie hindurch
+	body.add_to_group(Room.PASS_THROUGH_GROUP)
 	body.collision_layer = 1  # Ebene "world"
 	body.collision_mask = 0
 	var collision := CollisionShape3D.new()
 	collision.shape = shape
 	body.add_child(collision)
 	add_child(body)
+
+
+## Deko auf der Treppe (seit „Draußen gestalten“, Wunsch der Entwicklerin): An den Seiten jeder Stufe und neben der Tür auf
+## dem Podest darf man kleine Dinge aufstellen (Töpfe, Laternen) – Ablageflächen der Gruppe Room.OUTDOOR_SURFACE_GROUP, die
+## der Draußen-Raum annimmt. Die Laufmitte (GameConfig.entrance_free_half zu jeder Seite der Türmitte) bleibt frei, damit
+## Gäste hineinkommen. Je Stufe zwei Flächen pro Seite: der seitliche Streifen (samt Ecke) und der äußere Teil vorn.
+func _add_deco_zones(count: int, tread: float, side: float, total: float, half_width: float, depth: float) -> void:
+	var lane := GameConfig.entrance_free_half
+	var rise := total / float(count + 1)
+	for k in count + 1:
+		var w := half_width + (count - k) * side
+		var d := depth + (count - k) * tread
+		var top := -total + (k + 1) * rise
+		for sx: float in [-1.0, 1.0]:
+			if k == count:
+				_deco_zone(sx, lane, w, 0.03, d - 0.01, top)
+				continue
+			var w_next := half_width + (count - k - 1) * side
+			var d_next := depth + (count - k - 1) * tread
+			_deco_zone(sx, w_next, w, 0.03, d - 0.01, top)
+			_deco_zone(sx, lane, w_next, d_next, d - 0.01, top)
+
+
+func _deco_zone(sx: float, x0: float, x1: float, z0: float, z1: float, top: float) -> void:
+	if x1 - x0 < 0.12 or z1 - z0 < 0.12:
+		return
+	var surface := PlacementSurface.new()
+	surface.name = "DecoZone"
+	surface.position = Vector3(sx * (x0 + x1) / 2.0, top, (z0 + z1) / 2.0)
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(x1 - x0, 0.03, z1 - z0)
+	shape.shape = box
+	surface.add_child(shape)
+	surface.add_to_group(Room.OUTDOOR_SURFACE_GROUP)
+	add_child(surface, true)
