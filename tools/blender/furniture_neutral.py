@@ -417,10 +417,13 @@ def build_bed(k):
     Flicken, zwei Kissen, gefaltete Wolldecke am Fußende. Vorderseite (-y) = Fußende, Kopfteil an der Wand (+y)."""
     wood(k, OAK_MID)
     k.mat("linen", (0.95, 0.93, 0.88), grain="fabric", rough=0.95, vary=0.03, bump=0.2)
-    k.mat("quilt", (0.62, 0.72, 0.84), grain="fabric", rough=0.95, vary=0.05, bump=0.35)
-    k.mat("patch", (1, 1, 1), grain="fabric", rough=0.95, vary=0.02, bump=0.3, pattern="floral", pattern_size=0.03,
-          color2=(0.95, 0.95, 0.92), color3=(0.95, 0.85, 0.4))
-    k.mat("throw", (0.72, 0.36, 0.3), grain="fabric", rough=0.95, vary=0.05, bump=0.5, scale=2.0)
+    # Seit „Modelle schöner“: Steppdecke kariert (helle Felder folgen der gewölbten Decke – vorher lagen flache Flicken
+    # obenauf und standen an den Rändern über), Wolldecke im Schottenmuster, ein kleines Zierkissen
+    k.mat("quilt", (0.62, 0.72, 0.84), grain="fabric", rough=0.95, vary=0.05, bump=0.35, pattern="check", pattern_size=0.11,
+          color3=(0.97, 0.94, 0.88))
+    k.mat("throw", (0.72, 0.36, 0.3), grain="fabric", rough=0.95, vary=0.05, bump=0.5, scale=2.0, pattern="tartan",
+          pattern_size=0.06, color2=(0.48, 0.2, 0.17), color3=(0.95, 0.86, 0.6))
+    k.mat("cushion", (0.93, 0.78, 0.42), grain="fabric", rough=0.95, vary=0.04, bump=0.4)
     W, L = 1.0, 2.0
     head_y, foot_y = L / 2.0, -L / 2.0
     frame = k.part("Rahmen", "wood", bevel=0.008)
@@ -451,16 +454,12 @@ def build_bed(k):
     F.pillow(quilt, (0, -0.22, 0.53), (W + 0.04, 1.36, 0.07), roundness=5.0, puff=0.012, step=0.04)
     # umgeschlagener Rand oben
     F.pillow(quilt, (0, 0.45, 0.565), (W + 0.02, 0.16, 0.05), roundness=4.0, puff=0.006, step=0.03)
-    patches = k.part("Flicken", "patch", bevel=0.0)
-    cols = [(0.86, 0.56, 0.52), (0.94, 0.84, 0.6), (0.66, 0.76, 0.62), (0.7, 0.78, 0.9), (0.92, 0.72, 0.62)]
-    for ix in range(5):
-        for iy in range(6):
-            x = -0.4 + ix * 0.2
-            y = -0.8 + iy * 0.2
-            patches.box((x, y, 0.568), (0.17, 0.17, 0.004), step=0.5, dent=0.0004, tint=F.lin(cols[(ix * 2 + iy) % len(cols)]))
-    # gefaltete Wolldecke quer am Fußende
+    # gefaltete Wolldecke quer am Fußende, auf der Steppdecke (die oben bei z 0,565 liegt)
     throw = k.part("Wolldecke", "throw", bevel=0.0)
-    F.pillow(throw, (0, foot_y + 0.3, 0.6), (W - 0.06, 0.34, 0.05), roundness=4.0, puff=0.006, step=0.03)
+    F.pillow(throw, (0, foot_y + 0.3, 0.582), (W - 0.06, 0.34, 0.05), roundness=4.0, puff=0.006, step=0.03)
+    # kleines Zierkissen vor den Kopfkissen, leicht schräg
+    cushion = k.part("Zierkissen", "cushion", bevel=0.0)
+    F.pillow(cushion, (0.12, head_y - 0.47, 0.6), (0.3, 0.12, 0.22), roundness=2.4, puff=0.03, step=0.025, turn=-12.0)
     k.collider((0, 0, 0.3), (W + 0.1, L, 0.6))
     k.collider((0, head_y - 0.03, 0.5), (W + 0.1, 0.05, 1.0))
     k.surface((0, -0.1, 0.6), (W - 0.12, 1.4))

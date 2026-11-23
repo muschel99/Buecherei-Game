@@ -767,7 +767,7 @@ def bracket(M, C):
 # Der Aufsteller (Bereich „Schild“) ist seit Etappe 6f vorerst entfernt (Wunsch der Entwicklerin); sein Bild
 # assets/textures/signs/library_chalkboard.png bleibt erhalten.
 DECO_SETS = {"steps_pots": ("steps",), "steps_tree": ("steps_tree",),
-             "walk_tubs": ("tubs",), "walk_pots": ("window_pots",),
+             "walk_tubs": ("tubs",), "walk_pots": ("window_pots",), "walk_books": ("book_cart",),
              "seat_bench": ("bench", "bench_pot"), "seat_chair": ("chair",)}
 # So weit bleibt jedes Teil von der Wand weg (Rückseite) – vor Holzfront, Sockel und Fensterbänken
 WALL_CLEAR = 0.3
@@ -823,6 +823,91 @@ def facade_chair(M, C, name, m, seed=950):
     b.build()
 
 
+# Bücherwagen vor dem Schaufenster (seit „Modelle schöner“): Maße im Rahmen „Front -y“ (Breite, Tiefe, Höhe hinten)
+CART_W, CART_D, CART_H = 0.86, 0.42, 0.74
+CART_BOOKS = [(0.86, 0.52, 0.56), (0.55, 0.7, 0.58), (0.52, 0.66, 0.84), (0.95, 0.8, 0.45), (0.72, 0.6, 0.86), (0.93, 0.6, 0.46),
+              (0.45, 0.6, 0.62)]
+
+
+def book_cart(M, C, m, rnd):
+    """Bücherwagen „Zum Mitnehmen“: salbeigrün gestrichenes Holz auf vier Rollen; oben eine schräge Auslage (Bücher mit dem
+    Cover nach oben, unten an einer Leiste), darunter ein Fach mit aufrechten Büchern (Rücken zur Straße), an der Seite ein
+    Griff, vorn eine kleine Kreidetafel an zwei Haken. m = Rahmen am Boden, Vorderseite -y (zur Straße)."""
+    paint = SC.make_material("Lack Salbei Bücherwagen", (0.5, 0.62, 0.52), grain="paint", rough=0.75, vary=0.05, bump=0.1)
+    covers = SC.make_material("Bücher bunt", (0.95, 0.95, 0.95), grain="paint", rough=0.7, vary=0.0, bump=0.05)
+    pages = SC.make_material("Buchseiten", (0.93, 0.88, 0.76), grain="paint", rough=0.85, vary=0.03)
+    hw, hd = CART_W / 2, CART_D / 2
+    wood = Body("Bücherwagen", paint, C["deco"], seed=771, vary=0.05, bevel=0.006)
+    # Seitenteile: unten gerade, oben schräg (hinten höher)
+    for sx in (-1, 1):
+        x = sx * (hw - 0.012)
+        outline = [(-hd, 0.09), (hd, 0.09), (hd, CART_H), (-hd, CART_H - 0.16)]
+        wood.slab([(y, z) for y, z in outline], 0.024,
+                  m @ Matrix.Translation((x - 0.012, 0, 0)) @ Matrix.Rotation(math.radians(90), 4, "Z") @
+                  Matrix.Rotation(math.radians(90), 4, "X"), dent=0.0006)
+    # Boden, Zwischenboden, Rückwand, Leiste der schrägen Auslage
+    wood.box((0, 0, 0.1), (CART_W - 0.04, CART_D, 0.024), step=0.3, dent=0.0006, matrix=m)
+    wood.box((0, 0.01, 0.38), (CART_W - 0.04, CART_D - 0.02, 0.022), step=0.3, dent=0.0006, matrix=m)
+    wood.box((0, hd - 0.01, (0.1 + CART_H) / 2), (CART_W - 0.04, 0.018, CART_H - 0.1), step=0.3, dent=0.0006, matrix=m)
+    slope = math.atan2(0.16, CART_D)
+    tray = m @ Matrix.Translation((0, 0, CART_H - 0.08 - 0.012)) @ Matrix.Rotation(-slope, 4, "X")
+    wood.box((0, 0, 0), (CART_W - 0.04, CART_D / math.cos(slope), 0.02), step=0.3, dent=0.0006, matrix=tray)
+    wood.box((0, -hd / math.cos(slope) + 0.012, 0.03), (CART_W - 0.04, 0.02, 0.05), step=0.3, dent=0.0006, matrix=tray)
+    # Griff an der rechten Seite
+    wood.tube([m @ Vector((hw, -0.1, 0.55)), m @ Vector((hw + 0.09, -0.1, 0.55)), m @ Vector((hw + 0.09, 0.1, 0.55)),
+               m @ Vector((hw, 0.1, 0.55))], 0.014, segs=8, smooth=1, round_ends=True)
+    wood.build()
+    iron = Body("Bücherwagen Rollen", M["iron"], C["deco"], seed=772, vary=0.03, bevel=0.0)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            c = m @ Vector((sx * (hw - 0.07), sy * (hd - 0.07), 0.045))
+            iron.tube([c + m.to_3x3() @ Vector((-0.012, 0, 0)), c + m.to_3x3() @ Vector((0.012, 0, 0))], 0.045, segs=14)
+            iron.box((0, 0, 0), (0.035, 0.035, 0.05), step=1, dent=0.0,
+                     matrix=m @ Matrix.Translation((sx * (hw - 0.07), sy * (hd - 0.07), 0.08)))
+    iron.build()
+    cov = Body("Bücherwagen Bücher", covers, C["deco"], seed=773, vary=0.0, bevel=0.002)
+    pag = Body("Bücherwagen Seiten", pages, C["deco"], seed=774, vary=0.02, bevel=0.001)
+    # schräge Auslage: Bücher mit dem Cover nach oben, nebeneinander, leicht schief
+    x = -hw + 0.06
+    while x < hw - 0.2:
+        w, d, t = rnd.uniform(0.13, 0.17), rnd.uniform(0.19, 0.23), rnd.uniform(0.018, 0.03)
+        col = CART_BOOKS[rnd.randrange(len(CART_BOOKS))]
+        bm = tray @ Matrix.Translation((x + w / 2, -0.02, 0.01 + t / 2)) @ Matrix.Rotation(math.radians(rnd.uniform(-5, 5)), 4, "Z")
+        cov.box((0, 0, 0), (w, d, t), step=0.5, dent=0.0006, tint=tuple(c ** 2.2 for c in col), matrix=bm)
+        pag.box((0.004, 0, 0), (w * 0.95, d * 0.94, t * 0.8), step=0.5, dent=0.0, matrix=bm)
+        x += w + rnd.uniform(0.01, 0.025)
+    # Fach unten: aufrechte Bücher, Rücken zur Straße
+    x = -hw + 0.04
+    while True:
+        t = rnd.uniform(0.024, 0.042)
+        if x + t > hw - 0.04:
+            break
+        h = rnd.uniform(0.17, 0.24)
+        col = CART_BOOKS[rnd.randrange(len(CART_BOOKS))]
+        bm = m @ Matrix.Translation((x + t / 2, 0.0, 0.112 + h / 2))
+        cov.box((0, 0, 0), (t, 0.17, h), step=0.5, dent=0.0006, tint=tuple(c ** 2.2 for c in col), matrix=bm)
+        pag.box((0, 0.006, 0), (t * 0.84, 0.16, h * 0.94), step=0.5, dent=0.0, matrix=bm)
+        x += t + 0.0015
+    cov.build()
+    pag.build()
+    # Kreidetafel vorn an zwei Haken
+    board = Body("Bücherwagen Tafel", M["chalkboard"], C["deco"], seed=775, vary=0.03, bevel=0.004)
+    tm = m @ Matrix.Translation((0, -hd - 0.012, 0.27))
+    board.box((0, 0, 0), (0.36, 0.012, 0.15), step=0.3, dent=0.0004, matrix=tm)
+    board.build()
+    frame = Body("Bücherwagen Tafelrahmen", paint, C["deco"], seed=776, vary=0.03, bevel=0.003)
+    for (cx, cz, sx, sz) in ((0, 0.072, 0.38, 0.02), (0, -0.072, 0.38, 0.02), (0.18, 0, 0.02, 0.15), (-0.18, 0, 0.02, 0.15)):
+        frame.box((cx, -0.002, cz), (sx, 0.016, sz), step=0.3, dent=0.0003, matrix=tm)
+    for sx in (-0.12, 0.12):
+        frame.tube([tm @ Vector((sx, 0.0, 0.082)), tm @ Vector((sx, 0.008, 0.11)), tm @ Vector((sx, 0.012, 0.115))], 0.004, segs=5)
+    frame.build()
+    chalk = Body("Bücherwagen Kreide", M["chalk"], C["deco"], seed=777, vary=0.0)
+    chalk.text("Zum Mitnehmen", 0.038, 0.002, tm @ Matrix.Translation((0, -0.0065, -0.014)) @ Matrix.Rotation(math.radians(90), 4, "X"),
+               font="DejaVuSerif.ttf", jitter=0.06, resolution=3)
+    chalk.tube([tm @ Vector((-0.12, -0.0065, -0.042)), tm @ Vector((0.12, -0.0065, -0.038))], 0.0025, segs=4, round_ends=True)
+    chalk.build()
+
+
 def build_deco(kind):
     import build_storybook_props as PR
     M, C = fresh("Deko vor der Tür %s" % kind)
@@ -847,6 +932,14 @@ def build_deco(kind):
         m = T.canon(*LEFT, 0.1, GROUND, WALL_CLEAR + 0.16)
         SC.pot(M, C["pots"], "Bank Topf", world(m, (0, 0, 0)), 0.14, 0.3, 901, style="classic")
         _collider(C, "Bank Topf", world(m, (0, 0, 0.15)), (0.28, 0.28, 0.3))
+    if "book_cart" in parts:
+        # Bücherwagen vor dem vorderen Schaufenster (gleicher Platz wie die Töpfe, auch vor einem Erker frei)
+        import random
+        m = T.canon(*FRONT, 2.25, GROUND, BAY_CLEAR + CART_D / 2 + 0.04)
+        book_cart(M, C, m, random.Random(77))
+        _collider(C, "Bücherwagen", world(m, (0, 0, CART_H / 2)), (CART_W + 0.1, CART_D, CART_H))
+        _obstacle(C, m @ Matrix.Translation((-0.22, 0, 0)), 0.36)
+        _obstacle(C, m @ Matrix.Translation((0.22, 0, 0)), 0.36)
     if "chair" in parts:
         # Kleiner Stuhl leicht schräg zwischen vorderem Schaufenster (endet bei 3,4 m, auch als Erker) und Treppe –
         # niedriger als die Brüstung, verdeckt das Fenster also nie; Sitzplatz für Spielfigur und Passanten

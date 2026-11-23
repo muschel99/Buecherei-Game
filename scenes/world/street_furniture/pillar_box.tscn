@@ -16,3 +16,8 @@
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 script = ExtResource("2_obstacle")
 radius = 0.36
+
+; Sitzplätze für Vögel (BirdLife._collect_street_furniture)
+
+[node name="Perch_0" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 1.535, 0.0)

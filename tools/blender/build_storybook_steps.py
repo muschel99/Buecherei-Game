@@ -21,7 +21,7 @@ import random
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import storybook_common as SC  # noqa: E402
@@ -133,6 +133,32 @@ def moss(body, rnd):
                       scale=(1.3, 1.3, 0.45))
 
 
+def doormat(mat_body, ink_body):
+    """Kokos-Fußmatte vor der Tür (oben auf dem Podest, mittig, etwas schief): dunkler Rand, in der Mitte ein Herz."""
+    top = 0.0
+    w, d, t = 0.78, 0.46, 0.016
+    turn = 2.5
+    m = Matrix.Translation(G(0.04, top + t / 2 - 0.002, 0.34)) @ Matrix.Rotation(math.radians(turn), 4, "Z")
+    mat_body.box((0, 0, 0), (w, d, t), step=0.08, dent=0.0015, matrix=m)
+    # Rand (2 mm höher, gleiche Unterkante – liegt auf der Matte)
+    for (cx, cy, sx, sy) in ((0, d / 2 - 0.025, w - 0.01, 0.04), (0, -d / 2 + 0.025, w - 0.01, 0.04),
+                             (w / 2 - 0.025, 0, 0.04, d - 0.09), (-w / 2 + 0.025, 0, 0.04, d - 0.09)):
+        ink_body.box((cx, cy, 0.002), (sx, sy, t), step=0.08, dent=0.001, matrix=m)
+    # Herz aus zwei Kreisbögen und einer Spitze
+    pts = []
+    for k in range(24):
+        a = math.pi * k / 23
+        pts.append((-0.032 + math.cos(math.pi - a) * 0.032, 0.012 + math.sin(math.pi - a) * 0.032))
+    for k in range(24):
+        a = math.pi * k / 23
+        pts.append((0.032 + math.cos(math.pi - a) * 0.032, 0.012 + math.sin(math.pi - a) * 0.032))
+    pts.append((0.0, -0.075))
+    heart = [(x, y) for x, y in pts]
+    # gegen den Uhrzeigersinn
+    heart.reverse()
+    ink_body.slab(heart, 0.004, m @ Matrix.Translation((0, 0, t / 2 - 0.001)), dent=0.0005)
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     if os.path.exists(STAMP) and SC.edited_by_hand(BLEND, STAMP) and "--force" not in argv:
@@ -152,11 +178,16 @@ def main():
     edge = Body("Stufen", step_stone, coll, seed=232, vary=0.16, bevel=0.007)
     core = Body("Stufen Mörtel", M["curb"], coll, seed=233, vary=0.03, bevel=0.0)
     green = Body("Stufen Moos", M["box_leaf"], coll, seed=234, vary=0.12, bevel=0.0)
+    coir = SC.make_material("Kokosmatte", (0.66, 0.48, 0.27), grain="fabric", rough=1.0, vary=0.08, bump=0.5)
+    coir_dark = SC.make_material("Kokosmatte dunkel", (0.3, 0.19, 0.12), grain="fabric", rough=1.0, vary=0.06, bump=0.4)
+    mat = Body("Fußmatte", coir, coll, seed=235, vary=0.05, bevel=0.004)
+    mat_ink = Body("Fußmatte Rand", coir_dark, coll, seed=236, vary=0.04, bevel=0.002)
+    doormat(mat, mat_ink)
     for k in range(COUNT + 1):
         step_stones((worn, edge), k, rnd)
         mortar(core, k)
     moss(green, rnd)
-    for b in (worn, edge, core, green):
+    for b in (worn, edge, core, green, mat, mat_ink):
         b.build()
     objs = [o for o in coll.objects if o.type == "MESH"]
     bad = [(o.name, SB.non_manifold(o)) for o in objs if SB.non_manifold(o)]
@@ -168,7 +199,7 @@ def main():
     if "--render" in argv:
         SC.setup_render(True)
         SC.render("eingangstreppe", (2.6, -3.6, 1.0), (0, -0.6, -0.25), 35, (1200, 800))
-        SC.render("eingangstreppe_nah", (0.9, -1.9, 0.35), (0.2, -0.7, -0.2), 35, (1200, 800))
+        SC.render("eingangstreppe_nah", (0.9, -1.9, 0.55), (0.0, -0.4, -0.05), 35, (1200, 800))
     os.makedirs(os.path.dirname(BLEND), exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=BLEND, compress=True)
     with open(STAMP, "w") as f:

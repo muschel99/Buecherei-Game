@@ -87,6 +87,7 @@ func setup(life: StreetLife) -> void:
 	_rng.randomize()
 	_load_spots()
 	_collect_lamps()
+	_collect_street_furniture()
 	_setup_court()
 	_build_ceiling()
 	_build_pool("bird", GameConfig.bird_scene, GameConfig.bird_count + 2 + GameConfig.bird_sky_count)
@@ -156,6 +157,23 @@ func _place_birdhouse(wall: Vector3, out: Vector3) -> void:
 				face = along if _rng.randf() < 0.5 else -along
 		_feeder.append({"pos": node.global_position, "face": face, "out": out, "kind": "feed" if kind == "feed" else "birdhouse",
 			"house": "birdhouse", "taken": null})
+
+
+## Plätze auf den Straßenmöbeln (seit „Modelle schöner“): Marker „Perch_…“ in den Szenen unter Outside/StreetFurniture
+## (Briefkasten, Telefonzelle, Straßenuhr) – wie die Laternen-Plätze: Vögel fliegen dort nur auf, wenn die Spielfigur springt.
+func _collect_street_furniture() -> void:
+	var holder := _outside.get_node_or_null("StreetFurniture")
+	if holder == null:
+		return
+	var road := _outside.to_global(Vector3(0.0, 0.0, StreetLayout.road_center_z()))
+	for item: Node in holder.get_children():
+		if not item is Node3D:
+			continue
+		var out := Vector3(0.0, 0.0, signf(road.z - (item as Node3D).global_position.z))
+		for perch: Node in item.find_children("Perch_*", "Node3D", true, false):
+			var face := out if _rng.randf() < 0.5 else -out
+			_lamps.append({"pos": (perch as Node3D).global_position, "face": face, "out": out, "kind": "lamp",
+				"house": "furniture_%s" % item.name, "taken": null})
 
 
 ## Plätze auf den Querarmen der Straßenlaternen (Outside/Street/Lamps).

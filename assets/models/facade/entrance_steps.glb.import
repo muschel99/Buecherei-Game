@@ -50,6 +50,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_stein.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_stein.tres"
+},
+"Sammel Stoff": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_stoff.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_stoff.tres"
 }
 }
 }

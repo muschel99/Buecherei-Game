@@ -52,6 +52,10 @@ func _ready() -> void:
 	var shop_glow := ShopGlow.new()
 	shop_glow.name = "ShopGlow"
 	$Outside.add_child(shop_glow)
+	# Wimpelketten quer über die Straße (seit „Modelle schöner“)
+	var bunting := Bunting.new()
+	bunting.name = "Bunting"
+	$Outside.add_child(bunting)
 	# Alle Knoten der Szene sind jetzt bereit – also können sie ihre Daten übernehmen
 	SaveManager.load_game()
 	# Das Tablet mit dem Shop darf nie fehlen (auch nicht in älteren Spielständen)

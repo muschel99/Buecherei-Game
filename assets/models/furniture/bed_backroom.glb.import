@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cg78gmoin74on"
+uid="uid://bkkx8shbyxj0x"
 path="res://.godot/imported/bed_backroom.glb-593361a21d2536e5c0370dd47397da77.scn"
 
 [deps]
@@ -41,15 +41,15 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
+"cushion": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/bed_backroom/cushion.tres",
+"use_external/path": "res://assets/materials/furniture/bed_backroom/cushion.tres"
+},
 "linen": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/bed_backroom/linen.tres",
 "use_external/path": "res://assets/materials/furniture/bed_backroom/linen.tres"
-},
-"patch": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/bed_backroom/patch.tres",
-"use_external/path": "res://assets/materials/furniture/bed_backroom/patch.tres"
 },
 "quilt": {
 "use_external/enabled": true,

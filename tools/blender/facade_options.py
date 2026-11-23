@@ -131,6 +131,7 @@ DECO = [("deco_steps", "pots", "Töpfe auf der Treppe", "deco_steps_pots", 90),
         ("deco_steps", "tree", "Bäumchen und Töpfe", "deco_steps_tree", 160),
         ("deco_walk", "tubs", "Kübelpflanzen", "deco_walk_tubs", 140),
         ("deco_walk", "pots", "Töpfe vor dem Fenster", "deco_walk_pots", 80),
+        ("deco_walk", "books", "Bücherwagen", "deco_walk_books", 120),
         ("deco_seat", "bench", "Bank", "deco_seat_bench", 160),
         ("deco_seat", "chair", "Kleiner Stuhl", "deco_seat_chair", 70)]
 # (der Bereich „Schild“ mit dem Aufsteller ist seit Etappe 6f vorerst entfernt)

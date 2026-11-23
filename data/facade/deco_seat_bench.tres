@@ -11,6 +11,6 @@ id = "bench"
 display_name = "Bank"
 category = "deco_seat"
 unlocked = false
-order = 50
+order = 60
 price = 160
 scene_path = "res://assets/models/facade/deco_seat_bench.glb"

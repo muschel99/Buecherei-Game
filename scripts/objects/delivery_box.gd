@@ -27,6 +27,30 @@ var _move_tween: Tween
 func _ready() -> void:
 	_interactable.interacted.connect(_on_interacted)
 	_interactable.prompt_text = "Auspacken"
+	_apply_look()
+
+
+## Bücherpaket (nur Bücher drin): Karton mit Paketschnur und Anhänger statt mit Etikett (seit „Modelle schöner“).
+const BOOKS_MODEL := "res://assets/models/props/delivery_box_books.glb"
+
+
+func _apply_look() -> void:
+	if contents.is_empty():
+		return
+	for entry in contents:
+		if entry.get("kind") != "books":
+			return
+	var old := get_node_or_null("Model")
+	var scene := load(BOOKS_MODEL) as PackedScene
+	if old == null or scene == null:
+		return
+	var model := scene.instantiate() as Node3D
+	model.transform = (old as Node3D).transform
+	remove_child(old)
+	old.queue_free()
+	model.name = "Model"
+	add_child(model)
+	move_child(model, 0)
 
 
 func _on_interacted(_interactor: Node) -> void:

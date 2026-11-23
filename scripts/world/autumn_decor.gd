@@ -41,6 +41,7 @@ func _place_groups() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1031
 	var avoid := _avoid_points(life)
+	var obstacles := _obstacle_points()
 	var space := get_world_3d().direct_space_state
 	var s := rng.randf_range(1.0, 3.0)
 	var count := 0
@@ -61,7 +62,7 @@ func _place_groups() -> void:
 			var center := _wall_spot(space, Vector3(p2.x, 0.0, p2.y), Vector3(out2.x, 0.0, out2.y).normalized())
 			if center == Vector3.INF:
 				continue
-			if _near_any(center, avoid, 1.3):
+			if _near_any(center, avoid, 1.3) or _near_any(center, obstacles, OBSTACLE_GAP):
 				continue
 			if not _free(space, center, 0.22):
 				continue
@@ -109,6 +110,19 @@ func _avoid_points(life: StreetLife) -> Array[Vector3]:
 		if seat is Node3D:
 			points.append(to_local((seat as Node3D).global_position))
 	return points
+
+
+## Hindernisse auf dem Gehweg (Laternen, Telefonzelle, Briefkasten, Bänke …): neben ihnen würde der Gehweg mit Kürbissen
+## zu eng (seit „Modelle schöner“) – Abstand OBSTACLE_GAP.
+func _obstacle_points() -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	for obstacle: Node in get_tree().get_nodes_in_group(StreetLife.OBSTACLE_GROUP):
+		if obstacle is Node3D:
+			points.append(to_local((obstacle as Node3D).global_position))
+	return points
+
+
+const OBSTACLE_GAP := 2.6
 
 
 func _near_any(p: Vector3, points: Array[Vector3], distance: float) -> bool:

@@ -11,6 +11,6 @@ id = "chair"
 display_name = "Kleiner Stuhl"
 category = "deco_seat"
 unlocked = false
-order = 60
+order = 70
 price = 70
 scene_path = "res://assets/models/facade/deco_seat_chair.glb"

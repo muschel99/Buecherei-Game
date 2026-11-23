@@ -1422,6 +1422,11 @@ var lantern_light_energy: float = 1.4
 var lantern_light_range: float = 6.0
 var lantern_light_fade_distance: float = 32.0
 ## Warmes Licht aus den Schaufenstern abends (ShopGlow): Farbe, Stärke, Reichweite (m), Höhe und Abstand vor der Front (m)
+## Wimpelketten quer über die Straße (Bunting, seit „Modelle schöner“): an diesen Stellen entlang der Straße (x, m; nur wo auf
+## beiden Seiten eine Hauswand ist), so hoch über dem Gehweg (m), so viel Durchhang je 10 m (m)
+var bunting_x: Array[float] = [-11.5, 7.5, 19.0]
+var bunting_height: float = 5.0
+var bunting_sag: float = 0.55
 var shop_glow_color: Color = Color(1.0, 0.72, 0.46)
 var shop_glow_energy: float = 1.5
 var shop_glow_range: float = 4.2
