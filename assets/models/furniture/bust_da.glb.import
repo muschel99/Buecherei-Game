@@ -41,6 +41,11 @@ materials/extract_format=0
 materials/extract_path=""
 _subresources={
 "materials": {
+"brass": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/bust_da/brass.tres",
+"use_external/path": "res://assets/materials/furniture/bust_da/brass.tres"
+},
 "cover": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/bust_da/cover.tres",

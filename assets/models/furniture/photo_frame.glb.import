@@ -46,15 +46,10 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/photo_frame/passe.tres",
 "use_external/path": "res://assets/materials/furniture/photo_frame/passe.tres"
 },
-"photo_land": {
+"photo": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/photo_frame/photo_land.tres",
-"use_external/path": "res://assets/materials/furniture/photo_frame/photo_land.tres"
-},
-"photo_sky": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/photo_frame/photo_sky.tres",
-"use_external/path": "res://assets/materials/furniture/photo_frame/photo_sky.tres"
+"use_external/fallback_path": "res://assets/materials/furniture/photo_frame/photo.tres",
+"use_external/path": "res://assets/materials/furniture/photo_frame/photo.tres"
 },
 "wood": {
 "use_external/enabled": true,

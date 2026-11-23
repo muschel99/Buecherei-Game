@@ -785,21 +785,69 @@ def build_bust(k):
         cover.box((0, 0, t / 2), (w, d, t), step=0.5, dent=0.0008, tint=F.lin(col), matrix=m)
         pages.box((0.004, 0.0, t / 2), (w - 0.012, d - 0.01, t * 0.84), step=0.5, dent=0.0, matrix=m)
         z += t
+    # Seit „Modelle schöner“: richtige Gipsbüste (Gesicht mit Brauen, Nase, Mund, Ohren, Lockenkopf in Reihen, Gewand mit
+    # Falten) mit goldenem Lorbeerkranz – vorher ein Kopf aus zufälligen Knollen
+    brass(k)
     b = k.part("Büste", "plaster", bevel=0.0, vary=0.02)
-    b.lathe([(0.0, 0.0), (0.06, 0.0), (0.062, 0.012), (0.045, 0.02), (0.035, 0.035), (0.05, 0.045), (0.0, 0.05)], (0, 0, z), segs=24)
-    base = z + 0.048
-    F.pillow(b, (0, 0.0, base + 0.06), (0.2, 0.11, 0.13), roundness=2.6, step=0.02)
-    b.tube([(0, 0, base + 0.1), (0, -0.004, base + 0.17)], 0.027, segs=12)
-    head = Vector((0, -0.006, base + 0.215))
-    b.blob(head, 0.06, subdiv=3, lump=0.03, scale=(0.82, 0.92, 1.05))
-    b.blob(head + Vector((0, -0.057, -0.004)), 0.011, subdiv=1, lump=0.02, scale=(0.7, 1.0, 1.3))
-    b.blob(head + Vector((0, -0.048, -0.034)), 0.016, subdiv=1, lump=0.02, scale=(1.0, 0.8, 0.6))
-    rnd = random.Random(k.seed)
-    for i in range(16):
-        a = rnd.uniform(-2.4, 2.4)
-        el = rnd.uniform(0.15, 1.2)
-        d = Vector((math.sin(a) * math.cos(el), math.cos(a) * math.cos(el) * 0.9 + 0.1, math.sin(el)))
-        b.blob(head + Vector((d.x * 0.048, d.y * 0.054, d.z * 0.058)), 0.017, subdiv=1, lump=0.15)
+    # gedrechselter Sockel
+    b.lathe([(0.0, 0.0), (0.058, 0.0), (0.06, 0.01), (0.05, 0.016), (0.036, 0.024), (0.03, 0.04), (0.034, 0.05), (0.05, 0.056),
+             (0.052, 0.064), (0.0, 0.064)], (0, 0, z), segs=28)
+    base = z + 0.062
+    # Brust und abfallende Schultern
+    F.pillow(b, (0, 0.004, base + 0.052), (0.18, 0.095, 0.11), roundness=2.4, step=0.02)
+    for sx in (-1, 1):
+        b.blob((sx * 0.062, 0.006, base + 0.092), 0.032, subdiv=2, lump=0.03, scale=(1.25, 0.95, 0.62))
+    # Gewand: Bahn von der linken Schulter schräg über die Brust, mit Falten
+    for i in range(3):
+        off = Vector((0.0, 0.0, -0.016 * i))
+        b.tube([Vector((-0.075, -0.02, base + 0.1)) + off, Vector((-0.02, -0.044, base + 0.07)) + off,
+                Vector((0.05, -0.046, base + 0.03)) + off, Vector((0.078, -0.03, base + 0.008)) + off],
+               0.009 - i * 0.0015, segs=8, smooth=2, round_ends=True)
+    # Hals
+    b.tube([(0, 0.004, base + 0.09), (0, -0.002, base + 0.15)], 0.028, segs=14)
+    head = Vector((0, -0.006, base + 0.19))
+    RX, RY, RZ = 0.042, 0.048, 0.055
+    b.blob(head, 1.0, subdiv=3, lump=0.012, scale=(RX, RY, RZ))
+    # Kinn und Kiefer, Brauen, Nase, Lippen, Ohren
+    b.blob(head + Vector((0, -0.026, -0.036)), 0.022, subdiv=2, lump=0.02, scale=(1.05, 0.95, 0.85))
+    b.blob(head + Vector((0, -0.04, 0.012)), 0.018, subdiv=2, lump=0.01, scale=(1.55, 0.5, 0.4))
+    nose = [head + Vector((0, -0.045, 0.008)), head + Vector((0, -0.053, -0.006)), head + Vector((0, -0.052, -0.012))]
+    b.tube(nose, 0.0075, segs=8, smooth=1, round_ends=True)
+    b.blob(head + Vector((0, -0.046, -0.026)), 0.008, subdiv=1, lump=0.02, scale=(1.5, 0.6, 0.55))
+    for sx in (-1, 1):
+        b.blob(head + Vector((sx * 0.041, 0.002, -0.006)), 0.012, subdiv=1, lump=0.03, scale=(0.4, 0.85, 1.35))
+    # Locken in Reihen über Hinterkopf und Scheitel (vorn bleibt die Stirn frei)
+    curls = []
+    for el, az_free in ((-0.3, 110), (0.05, 72), (0.42, 52), (0.78, 28), (1.12, 0), (1.42, 0)):
+        n = max(3, int(round(26 * math.cos(el))))
+        for i in range(n):
+            az = 360.0 * (i + 0.5 * (len(curls) % 2)) / n
+            if abs((az + 180) % 360 - 180) < az_free:
+                continue
+            a = math.radians(az)
+            d = Vector((math.sin(a) * math.cos(el), -math.cos(a) * math.cos(el), math.sin(el)))   # az 0 = vorn (-y)
+            curls.append(head + Vector((d.x * RX, d.y * RY, d.z * RZ)) * 1.0 + d * 0.002)
+    for p in curls:
+        b.blob(p, 0.0115, subdiv=1, lump=0.18)
+    # goldener Lorbeerkranz: zwei Zweige von hinten nach vorn, auf den Locken liegend
+    wreath = k.part("Lorbeerkranz", "brass", bevel=0.0)
+    el = math.radians(28)
+    for side in (-1, 1):
+        pts = []
+        for az in range(176, 30, -12):
+            a = math.radians(az * side)
+            d = Vector((math.sin(a) * math.cos(el), -math.cos(a) * math.cos(el), math.sin(el)))
+            # hinten liegt der Zweig auf den Locken, vorn direkt auf der Stirn
+            pts.append(head + Vector((d.x * RX, d.y * RY, d.z * RZ)) + d * (0.0025 + 0.007 * min(1.0, (az - 30) / 50.0)))
+        wreath.tube(pts, 0.0022, segs=5, smooth=1, round_ends=True)
+        for j in range(1, len(pts)):
+            p0, p1 = pts[j - 1], pts[j]
+            along = (p1 - p0).normalized()
+            out = (p0 - head).normalized()
+            for lean in (-1, 1):
+                up = out.cross(along).normalized() * lean
+                wreath.leaf(p0.lerp(p1, 0.5), (along + up * 0.6 + out * 0.15).normalized(), out, 0.016, 0.0065, shape="oval",
+                            thick=0.0015, curl=0.1, segs=5)
     k.collider((0, 0, (base + 0.28) / 2), (0.24, 0.17, base + 0.28))
 
 

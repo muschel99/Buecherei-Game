@@ -51,6 +51,11 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/plant_cactus/cactus.tres",
 "use_external/path": "res://assets/materials/furniture/plant_cactus/cactus.tres"
 },
+"gravel": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_cactus/gravel.tres",
+"use_external/path": "res://assets/materials/furniture/plant_cactus/gravel.tres"
+},
 "pot": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/plant_cactus/pot.tres",
@@ -60,6 +65,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/furniture/plant_cactus/soil.tres",
 "use_external/path": "res://assets/materials/furniture/plant_cactus/soil.tres"
+},
+"spines": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/furniture/plant_cactus/spines.tres",
+"use_external/path": "res://assets/materials/furniture/plant_cactus/spines.tres"
 }
 }
 }

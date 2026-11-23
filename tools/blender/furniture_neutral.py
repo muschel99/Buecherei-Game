@@ -315,20 +315,73 @@ def build_citrus(k):
 # --- Kakteen im Tontopf ---
 
 def build_cacti(k):
+    """Kakteen im Tontopf (seit „Modelle schöner“ fein gerippt statt kantig): ein Säulenkaktus mit Arm, ein runder
+    Kugelkaktus mit Blütenkranz und ein Hasenohr-Kaktus aus flachen Polstern, dazu helle Dornenpolster und Kies."""
     k.mat("pot", TERRA, grain="plaster", rough=0.9, vary=0.08, scale=3.0)
     k.mat("cactus", (0.36, 0.55, 0.36), grain="leaf", rough=0.7, vary=0.1)
     k.mat("bloom", (0.95, 0.45, 0.55), grain="leaf", rough=0.7, vary=0.1)
+    k.mat("spines", (0.96, 0.93, 0.82), grain="smooth", rough=0.8, vary=0.03)
+    k.mat("gravel", (0.78, 0.74, 0.66), grain="stone", rough=0.95, vary=0.15)
     soil, rim = F.pot(k, (0, 0, 0), 0.075, 0.09, style="classic", slot="pot")
     rnd = random.Random(k.seed)
     c = k.part("Kaktus", "cactus", bevel=0.0)
-    for (dx, dy, h, r) in ((-0.025, 0.01, 0.16, 0.024), (0.03, -0.01, 0.1, 0.022), (0.0, 0.035, 0.06, 0.026)):
-        base = soil + Vector((dx, dy, -0.01))
-        c.lathe([(0.0, 0.0), (r * 0.9, 0.0), (r, h * 0.3), (r * 0.95, h * 0.8), (r * 0.6, h * 0.97), (0.0, h)], base, segs=16, wave=0.12, waves=8)
-    c.tube([soil + Vector((-0.025, 0.01, 0.09)), soil + Vector((-0.05, 0.01, 0.1)), soil + Vector((-0.055, 0.01, 0.14))], 0.013, segs=10,
-           smooth=1, round_ends=True)
+    dots = k.part("Dornenpolster", "spines", bevel=0.0, vary=0.02)
     fl = k.part("Blüte", "bloom", bevel=0.0)
-    fl.star(soil + Vector((-0.025, 0.01, 0.152)), Vector((0, 0, 1)), 0.02, 6, rnd, thick=0.003, cup=0.4)
-    fl.star(soil + Vector((0.0, 0.035, 0.052)), Vector((0, 0, 1)), 0.016, 6, rnd, thick=0.003, cup=0.4)
+
+    def ribbed(base, r, h, ribs, rounder=False):
+        if rounder:
+            prof = [(0.0, 0.0), (r * 0.7, 0.0), (r * 0.95, h * 0.2), (r, h * 0.45), (r * 0.88, h * 0.75), (r * 0.5, h * 0.95), (0.0, h)]
+        else:
+            prof = [(0.0, 0.0), (r * 0.9, 0.0), (r, h * 0.15), (r, h * 0.5), (r * 0.97, h * 0.8), (r * 0.8, h * 0.93),
+                    (r * 0.45, h * 0.99), (0.0, h)]
+        c.lathe(prof, base, segs=ribs * 4, wave=0.13, waves=ribs)
+        # Dornenpolster auf den Rippen (wo die Welle am weitesten außen ist)
+        for i in range(ribs):
+            a = (math.pi / 2 + 2 * math.pi * i) / ribs
+            for t in [x / 10.0 for x in range(1, 10, 2 if rounder else 1)]:
+                z = h * t
+                rr = r * (1.0 if not rounder else math.sin(math.pi * min(0.97, t * 0.9 + 0.05))) * 1.1
+                if rr < r * 0.3:
+                    continue
+                dots.blob(base + Vector((math.cos(a) * rr, math.sin(a) * rr, z)), 0.0022, subdiv=0, lump=0.1)
+
+    # 1) Säulenkaktus mit Arm, Blüte oben
+    col = soil + Vector((-0.03, 0.012, -0.012))
+    ribbed(col, 0.022, 0.17, 8)
+    arm = [col + Vector((-0.012, 0.0, 0.075)), col + Vector((-0.04, 0.0, 0.08)), col + Vector((-0.048, 0.0, 0.1)),
+           col + Vector((-0.049, 0.0, 0.13))]
+    c.tube(arm, 0.012, segs=12, smooth=1, round_ends=True)
+    fl.star(col + Vector((0.0, 0.0, 0.168)), Vector((0, 0, 1)), 0.02, 7, rnd, thick=0.003, cup=0.45)
+    # 2) Kugelkaktus mit Blütenkranz
+    ball = soil + Vector((0.032, -0.02, -0.008))
+    ribbed(ball, 0.032, 0.055, 12, rounder=True)
+    for i in range(4):
+        a = 2 * math.pi * i / 4 + 0.4
+        fl.star(ball + Vector((math.cos(a) * 0.012, math.sin(a) * 0.012, 0.053)), Vector((math.cos(a) * 0.4, math.sin(a) * 0.4, 1)),
+                0.011, 6, rnd, thick=0.0025, cup=0.5)
+    # 3) Hasenohr-Kaktus: flache, ovale Polster (unten eins, oben zwei schräg)
+    pads = [((0.022, 0.035, 0.03), 0.03, (0.75, 0.28, 1.1), 0.0),
+            ((0.0, 0.037, 0.075), 0.02, (0.7, 0.28, 1.15), 25.0),
+            ((0.044, 0.033, 0.07), 0.018, (0.7, 0.28, 1.15), -30.0)]
+    for (x, y, z), r, sc, lean in pads:
+        center = soil + Vector((x, y, z - 0.012))
+        m = Matrix.Translation(center) @ Matrix.Rotation(math.radians(lean), 4, "Y")
+        faces = c.blob((0, 0, 0), r, subdiv=2, lump=0.06, scale=sc, tint=F.lin((0.84, 1.0, 0.84)))
+        for v in {v for f in faces for v in f.verts}:
+            v.co = m @ v.co
+        for i in range(7):
+            u = rnd.uniform(-0.75, 0.75)
+            w = rnd.uniform(-0.8, 0.8)
+            for side in (-1, 1):
+                local = Vector((u * r * sc[0], side * r * sc[1] * math.sqrt(max(0.05, 1 - u * u - w * w * 0.6)), w * r * sc[2]))
+                dots.blob(m @ local, 0.0018, subdiv=0, lump=0.1)
+    # Kies auf der Erde
+    gravel = k.part("Kies", "gravel", bevel=0.0, vary=0.12)
+    for i in range(34):
+        a = rnd.uniform(0, 2 * math.pi)
+        d = math.sqrt(rnd.uniform(0.05, 1.0)) * (rim - 0.008)
+        gravel.blob(soil + Vector((math.cos(a) * d, math.sin(a) * d, 0.001)), rnd.uniform(0.004, 0.0065), subdiv=1, lump=0.25,
+                    scale=(1, 1, 0.6))
     k.collider((0, 0, 0.1), (0.17, 0.17, 0.2))
 
 
@@ -369,9 +422,10 @@ def build_watering_can(k):
 # --- Bilderrahmen zum Hinstellen ---
 
 def build_photo_frame(k):
+    """Bilderrahmen zum Hinstellen (seit „Modelle schöner“ mit gemalter Sommerwiese statt zwei Farbflächen): Rahmen mit
+    erhabener Innenkante, Passepartout, Bild aus Himmel, Sonne, Hügeln, einem Baum und Blumen, Stütze hinten."""
     wood(k)
-    k.mat("photo_sky", (0.7, 0.8, 0.86), grain="paint", rough=0.8, vary=0.06)
-    k.mat("photo_land", (0.5, 0.62, 0.4), grain="paint", rough=0.8, vary=0.08)
+    k.mat("photo", (1.0, 1.0, 1.0), grain="paint", rough=0.8, vary=0.03)
     k.mat("passe", (0.95, 0.93, 0.88), grain="paint", rough=0.8, vary=0.02)
     tilt = Matrix.Translation((0, 0.0, 0.0)) @ Matrix.Rotation(math.radians(-12), 4, "X")
     fr = k.part("Rahmen", "wood", bevel=0.002)
@@ -381,12 +435,45 @@ def build_photo_frame(k):
         fr.box((0, 0, z), (w, 0.016, h), step=0.5, dent=0.0004, matrix=m)
     for x in (-W / 2 + 0.009, W / 2 - 0.009):
         fr.box((x, 0, 0), (0.018, 0.0158, H - 0.03), step=0.5, dent=0.0004, matrix=m)
+    # erhabene Innenkante (Profilleiste) vorn am Rahmen, 2 mm in den Rahmen gesteckt
+    lip = 0.005
+    for z in (H / 2 - 0.018 - lip / 2, -H / 2 + 0.018 + lip / 2):
+        fr.box((0, -0.0085, z), (W - 0.036 + lip * 2, 0.005, lip), step=0.5, dent=0.0002, matrix=m)
+    for x in (-W / 2 + 0.018 + lip / 2, W / 2 - 0.018 - lip / 2):
+        fr.box((x, -0.0085, 0), (lip, 0.0048, H - 0.036), step=0.5, dent=0.0002, matrix=m)
     pp = k.part("Passepartout", "passe", bevel=0.0, settle=False)
     pp.box((0, 0.002, 0), (W - 0.02, 0.006, H - 0.02), step=0.5, dent=0.0, matrix=m)
-    sky = k.part("Foto Himmel", "photo_sky", bevel=0.0, settle=False)
-    sky.box((0, -0.0015, 0.02), (W - 0.06, 0.002, 0.08), step=0.5, dent=0.0, matrix=m)
-    land = k.part("Foto Wiese", "photo_land", bevel=0.0, settle=False)
-    land.box((0, -0.0015, -0.04), (W - 0.06, 0.002, 0.05), step=0.5, dent=0.0, matrix=m)
+    # Bild: Ebene vorn auf dem Passepartout; Schichten liegen je 0,8 mm weiter vorn (nie zwei Flächen in einer Ebene)
+    ph = k.part("Bild", "photo", bevel=0.0, vary=0.0, settle=False)
+    PW, PZ0, PZ1 = W - 0.06, -0.065, 0.06
+    ph.box((0, -0.0015, (PZ0 + PZ1) / 2), (PW, 0.002, PZ1 - PZ0), step=0.5, dent=0.0, matrix=m, tint=F.lin((0.72, 0.84, 0.92)))
+    up = m @ Matrix.Rotation(math.radians(90), 4, "X")
+
+    def layer(outline, depth, col):
+        ph.slab(outline, 0.0008, up @ Matrix.Translation((0, 0, 0.0027 + depth * 0.0008)), dent=0.0, tint=F.lin(col))
+
+    hw = PW / 2
+    # helles Band am Horizont, Sonne
+    layer([(-hw, -0.005), (hw, -0.005), (hw, 0.012), (-hw, 0.012)], 0, (0.93, 0.92, 0.84))
+    layer([(0.022 + math.cos(a) * 0.011, 0.036 + math.sin(a) * 0.011) for a in [2 * math.pi * i / 16 for i in range(16)]], 1,
+          (0.99, 0.9, 0.55))
+    # ferne Hügel (blaugrün), nahe Wiese (grün) mit welliger Oberkante
+    far = [(-hw, PZ0)] + [(x, 0.006 + 0.01 * math.sin(x * 60 + 1.0)) for x in [-hw + i * PW / 12 for i in range(13)]] + [(hw, PZ0)]
+    layer([far[0], far[-1]] + list(reversed(far[1:-1])), 2, (0.56, 0.68, 0.62))
+    near = [(x, -0.012 + 0.012 * math.sin(x * 40 - 0.6)) for x in [-hw + i * PW / 12 for i in range(13)]]
+    layer([(-hw, PZ0), (hw, PZ0)] + list(reversed(near)), 3, (0.55, 0.7, 0.4))
+    # Weg durch die Wiese
+    layer([(-0.004, PZ0), (0.02, PZ0), (0.006, -0.03), (-0.002, -0.022), (-0.006, -0.028)], 4, (0.9, 0.82, 0.62))
+    # Baum links: Stamm und runde Krone
+    layer([(-0.03, -0.02), (-0.026, -0.02), (-0.026, 0.008), (-0.03, 0.008)], 4, (0.45, 0.32, 0.22))
+    layer([(-0.028 + math.cos(a) * 0.016, 0.016 + math.sin(a) * 0.014 * (1 + 0.08 * math.sin(a * 5)))
+           for a in [2 * math.pi * i / 18 for i in range(18)]], 5, (0.32, 0.5, 0.32))
+    # Blumen in der Wiese
+    rnd = random.Random(k.seed + 3)
+    for i in range(9):
+        x, z = rnd.uniform(-hw + 0.006, hw - 0.006), rnd.uniform(PZ0 + 0.008, -0.03)
+        col = rnd.choice([(0.98, 0.95, 0.9), (0.98, 0.78, 0.4), (0.95, 0.6, 0.66)])
+        layer([(x + math.cos(a) * 0.0022, z + math.sin(a) * 0.0022) for a in [2 * math.pi * j / 6 for j in range(6)]], 6, col)
     # Stütze hinten: oben an der Rückseite des schrägen Rahmens, unten auf dem Tisch
     fr.box((0, 0.075, 0.075), (0.03, 0.012, 0.16), step=0.5, dent=0.0004, turn=(25, 0, 0))   # oben in die Rückseite des Rahmens
     k.collider((0, 0.02, 0.1), (W, 0.1, 0.2))
