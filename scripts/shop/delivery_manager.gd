@@ -331,7 +331,8 @@ func _deco_blocked() -> Array[Vector2i]:
 	var box := BoxShape3D.new()
 	box.size = Vector3(0.5, 0.4, 0.5)
 	query.shape = box
-	query.collision_mask = 1
+	# feste Dinge (world) und Möbel, die draußen aufgestellt sind (furniture, seit „Draußen gestalten“)
+	query.collision_mask = 1 | FurnitureUtils.FURNITURE_LAYER_BIT
 	for row in MAX_ROWS:
 		for column in maxi(1, GameConfig.delivery_stacks_per_row):
 			var key := Vector2i(column, row)

@@ -23,15 +23,16 @@ signal layout_changed
 var extra_build_areas: Array[Rect2] = []
 ## Höhe des Fußbodens.
 @export var floor_height: float = 0.0
+## Draußen (seit „Draußen gestalten“, Szene scenes/rooms/outdoor_area.tscn): ein Raum ohne Wände, Boden- und Deckenbelag –
+## nur Möbel (aus der Abteilung „Draußen“, siehe FurnitureData.is_outdoor), ausgelegte Bücher und Spielstand. Was auf dem
+## Boden steht, bekommt Hindernisse für Passanten (StreetObstacle), Sitzplätze für Passanten (StreetSeat).
+@export var outdoor: bool = false
 
 @onready var furniture_root: Node3D = $Furniture
-## Die Wände, die in Abschnitten gestrichen werden können (inkl. der schrägen Eingangswand).
-@onready var _walls: Array[PaintableWall] = [$Walls/Left, $Walls/Right, $Walls/Back, $Walls/Front, $Walls/Diagonal]
-## Boden und Decke, die in Abschnitten gestaltet werden können.
-@onready var _grids := {
-	SurfaceData.Kind.FLOOR: $FloorCovering as PaintableGrid,
-	SurfaceData.Kind.CEILING: $CeilingCovering as PaintableGrid,
-}
+## Die Wände, die in Abschnitten gestrichen werden können (inkl. der schrägen Eingangswand; draußen keine).
+@onready var _walls: Array[PaintableWall] = _existing_walls()
+## Boden und Decke, die in Abschnitten gestaltet werden können (draußen keine).
+@onready var _grids := _existing_grids()
 ## Fenster- und Türlaibung: bekommen die Farbe des Wandabschnitts, in dem sie liegen. Die Aussparungen
 ## (CSG) baut seit Etappe 6c die Fassade passend zur Form (RoomOpenings) – darum werden sie jedes Mal
 ## gesucht. CSG-Wand → Farbwand.
@@ -42,17 +43,12 @@ const SETTLE_MIN := 0.004
 const REVEAL_WALLS := {"Structure/WallFront": "Walls/Front", "Structure/WallLeft": "Walls/Left",
 	"Structure/WallDiagonal": "Walls/Diagonal"}
 ## Hier darf man etwas aufhängen (Wandbilder, Lichtschalter …).
-@onready var _hang_walls: Array[Node] = [
-	$Structure/WallLeft,
-	$Structure/WallRight,
-	$Structure/WallBack,
-	$Structure/WallFront,
-	$Structure/WallDiagonal,
-]
+@onready var _hang_walls: Array[Node] = _existing_nodes(["Structure/WallLeft", "Structure/WallRight", "Structure/WallBack",
+	"Structure/WallFront", "Structure/WallDiagonal"])
 ## Hier darf man etwas an die Tür hängen (z. B. einen Türkranz).
-@onready var _hang_doors: Array[Node] = [$Door/Hinge/DoorLeaf]
+@onready var _hang_doors: Array[Node] = _existing_nodes(["Door/Hinge/DoorLeaf"])
 ## Hier darf man etwas an die Decke hängen (z. B. Deckenlampen).
-@onready var _hang_ceilings: Array[Node] = [$Structure/Ceiling]
+@onready var _hang_ceilings: Array[Node] = _existing_nodes(["Structure/Ceiling"])
 
 ## Wohin etwas gehängt werden kann (gleiche Werte wie FurnitureData.placement).
 enum HangKind { NONE = 0, WALL = 4, DOOR = 8, CEILING = 16 }
@@ -72,6 +68,9 @@ func _ready() -> void:
 	loose_books = LooseBooks.new()
 	loose_books.name = "LooseBooks"
 	add_child(loose_books)
+	if outdoor:
+		_ready_outdoor()
+		return
 	_corner_cut = GameConfig.corner_cut
 	_apply_room_height(GameConfig.room_height)
 	if with_back_room:
@@ -106,6 +105,87 @@ func _ready() -> void:
 	_paint_everything(default_floor_id)
 	_paint_everything(default_ceiling_id)
 	layout_changed.connect(SaveManager.request_save)
+
+
+## Draußen: nur Möbel und Spielstand; Hindernisse und Sitzplätze für Passanten folgen den Möbeln.
+func _ready_outdoor() -> void:
+	add_to_group(SaveManager.PERSIST_GROUP)
+	for item in get_placed_furniture():
+		_assign_uid(item)
+	layout_changed.connect(SaveManager.request_save)
+	layout_changed.connect(_queue_street_update)
+
+
+## Vorhandene Wände (draußen gibt es keine).
+func _existing_walls() -> Array[PaintableWall]:
+	var result: Array[PaintableWall] = []
+	for path in ["Walls/Left", "Walls/Right", "Walls/Back", "Walls/Front", "Walls/Diagonal"]:
+		var wall := get_node_or_null(path) as PaintableWall
+		if wall:
+			result.append(wall)
+	return result
+
+
+## Vorhandene Boden- und Deckenbeläge (draußen keine).
+func _existing_grids() -> Dictionary:
+	var result := {}
+	for pair: Array in [[SurfaceData.Kind.FLOOR, "FloorCovering"], [SurfaceData.Kind.CEILING, "CeilingCovering"]]:
+		var grid := get_node_or_null(String(pair[1])) as PaintableGrid
+		if grid:
+			result[pair[0]] = grid
+	return result
+
+
+func _existing_nodes(paths: Array) -> Array[Node]:
+	var result: Array[Node] = []
+	for path: String in paths:
+		var node := get_node_or_null(path)
+		if node:
+			result.append(node)
+	return result
+
+
+# --- Draußen: Hindernisse und Sitzplätze für Passanten ---
+
+var _street_update_queued := false
+
+
+func _queue_street_update() -> void:
+	if _street_update_queued:
+		return
+	_street_update_queued = true
+	_update_street.call_deferred()
+
+
+## Jedes Möbelstück auf dem Boden bekommt Kreise (StreetObstacle), die seine Grundfläche abdecken: Passanten, Besucher und
+## Katzen gehen außen herum. Danach liest das Straßenleben Hindernisse und Sitzplätze neu ein.
+func _update_street() -> void:
+	_street_update_queued = false
+	if not is_inside_tree():
+		return
+	for item in get_placed_furniture():
+		for old in item.get_children():
+			if old is StreetObstacle and String(old.name).begins_with("OutdoorObstacle"):
+				item.remove_child(old)
+				old.queue_free()
+		if item.support_uid > 0 or item.data == null:
+			continue
+		var size := item.data.get_footprint_size()
+		var long_side := maxf(size.x, size.y)
+		var short_side := maxf(minf(size.x, size.y), 0.2)
+		var count := maxi(1, ceili(long_side / short_side))
+		var along := Vector3.RIGHT if size.x >= size.y else Vector3.BACK
+		for k in count:
+			var obstacle := StreetObstacle.new()
+			obstacle.name = "OutdoorObstacle%d" % k
+			obstacle.radius = short_side * 0.6 + 0.05
+			var t := 0.0 if count == 1 else (float(k) / (count - 1) - 0.5) * (long_side - short_side)
+			obstacle.position = along * t
+			item.add_child(obstacle)
+	var life := get_tree().get_first_node_in_group(StreetLife.GROUP)
+	if life and life.has_method("refresh_static_obstacles"):
+		life.refresh_static_obstacles()
+		life.refresh_seats()
 
 
 ## Passt Wände, Decke und Deckenbelag an die Raumhöhe an.
@@ -424,11 +504,15 @@ func find_wall_segment(world_point: Vector3) -> Dictionary:
 
 ## Welcher Boden- bzw. Deckenabschnitt liegt an diesem Punkt? (-1 = keiner)
 func find_grid_cell(kind: SurfaceData.Kind, world_point: Vector3) -> int:
+	if not _grids.has(kind):
+		return -1
 	return (_grids[kind] as PaintableGrid).get_cell_at(world_point)
 
 
 ## Welcher Belag liegt in diesem Boden- bzw. Deckenabschnitt? ("" = keiner)
 func grid_cell_surface(kind: SurfaceData.Kind, index: int) -> String:
+	if not _grids.has(kind):
+		return ""
 	var grid := _grids[kind] as PaintableGrid
 	return grid.cell_ids[index] if index >= 0 and index < grid.cell_ids.size() else ""
 
@@ -480,7 +564,7 @@ func _paint_everything(id: String) -> void:
 			for index in wall.get_segment_count():
 				wall.paint_segment(index, surface)
 		_update_reveals()
-	else:
+	elif _grids.has(surface.kind):
 		(_grids[surface.kind] as PaintableGrid).paint_all(surface)
 
 
@@ -521,6 +605,8 @@ func get_save_data() -> Dictionary:
 		if not contents.is_empty():
 			entry["contents"] = contents
 		furniture.append(entry)
+	if outdoor:
+		return {"furniture": furniture, "loose_books": loose_books.get_save_data()}
 	var walls := {}
 	for wall in _walls:
 		walls[wall.name] = wall.segment_ids.duplicate()
@@ -547,6 +633,10 @@ func load_save_data(save_data: Dictionary) -> void:
 
 	# Ausgelegte Bücher (ältere Spielstände haben keine)
 	loose_books.load_save_data(save_data.get("loose_books", []))
+	if outdoor:
+		_settle_on_supports()
+		layout_changed.emit()
+		return
 	_load_walls(save_data)
 	_load_grid(save_data.get("floor"), _grids[SurfaceData.Kind.FLOOR], default_floor_id)
 	_load_grid(save_data.get("ceiling"), _grids[SurfaceData.Kind.CEILING], default_ceiling_id)

@@ -10,7 +10,9 @@ extends Resource
 
 ## Kategorien im Katalog (Reihenfolge = Reihenfolge der Reiter).
 ## (Pflanzen sind seit "Fensterlicht und Filter" eine Unterkategorie von Deko.)
-enum Category { SHELF, SEATING, TABLE, COUNTER, LIGHTING, DECO, DIVIDER }
+## Seit „Draußen gestalten“: OUTDOOR = Dinge für vor die Bücherei (nur sie dürfen draußen stehen, siehe is_outdoor;
+## immer hinten anhängen – die Datenblätter speichern die Nummer).
+enum Category { SHELF, SEATING, TABLE, COUNTER, LIGHTING, DECO, DIVIDER, OUTDOOR }
 
 const _CATEGORY_NAMES := {
 	Category.SHELF: "Regale",
@@ -20,6 +22,7 @@ const _CATEGORY_NAMES := {
 	Category.LIGHTING: "Beleuchtung",
 	Category.DECO: "Deko",
 	Category.DIVIDER: "Raumteiler",
+	Category.OUTDOOR: "Draußen",
 }
 
 ## Unterkategorien je Kategorie – sie erscheinen als Filter über der Liste in Shop und
@@ -40,6 +43,9 @@ const SUBCATEGORIES := {
 		["figure", "Figuren und Kuriositäten"], ["textile", "Textilien"], ["tableware", "Geschirr"],
 		["storage", "Aufbewahrung und Organisation"], ["books", "Bücher"], ["bookend", "Buchstützen"], ["pet", "Für Katzen"]],
 	Category.DIVIDER: [],
+	Category.OUTDOOR: [["outdoor_seat", "Sitzplätze"], ["outdoor_table", "Tischchen"], ["outdoor_plant", "Pflanzen"],
+		["outdoor_sign", "Schilder und Aufsteller"], ["outdoor_shelf", "Regale und Auslagen"], ["outdoor_light", "Laternen"],
+		["outdoor_deco", "Deko"]],
 }
 
 ## Eindeutiger Name ohne Leer- und Sonderzeichen, z. B. "armchair_velvet".
@@ -125,6 +131,11 @@ func is_wall_mounted() -> bool:
 
 
 ## Wird es aufgehängt (an Wand, Tür, Decke oder Fenster)?
+## Darf es draußen vor der Bücherei stehen? (Nur Dinge aus der Abteilung „Draußen“; drinnen dürfen sie auch stehen.)
+func is_outdoor() -> bool:
+	return category == Category.OUTDOOR
+
+
 func is_hanging() -> bool:
 	return is_wall_mounted() or allows(PLACE_CEILING) or allows(PLACE_WINDOW)
 

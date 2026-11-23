@@ -552,8 +552,8 @@ var sell_price_share: float = 0.5
 var delivery_time: float = 2.0
 ## So lange dauert das Auspacken eines Kartons (die kleine Animation, in Sekunden).
 var unpack_time: float = 0.7
-## Kartons vor der Tür: so viele Stapel nebeneinander an der Hauswand (danach eine Reihe davor).
-var delivery_stacks_per_row: int = 4
+## Kartons am Bordstein vor der Bücherei (seit „Draußen gestalten“): so viele Stapel nebeneinander (danach eine Reihe dahinter).
+var delivery_stacks_per_row: int = 6
 ## So viele Kartons höchstens übereinander (ist alles voll, wird trotzdem weiter gestapelt).
 var delivery_stack_height: int = 3
 ## Kartons stehen leicht schief, damit es natürlich aussieht: größte Drehung in Grad.

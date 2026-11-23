@@ -32,7 +32,7 @@ import furniture_dark_academia  # noqa: E402
 STYLES = {
     "dark_academia": furniture_dark_academia.ITEMS,
 }
-for _name in ("minimalist", "country", "neutral", "fixtures"):
+for _name in ("minimalist", "country", "neutral", "fixtures", "outdoor"):
     try:
         STYLES[_name] = __import__("furniture_" + _name).ITEMS
     except ImportError:

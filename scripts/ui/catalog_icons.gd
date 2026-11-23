@@ -17,6 +17,7 @@ const CATEGORY_KEYS := {
 	FurnitureData.Category.LIGHTING: "cat_lighting",
 	FurnitureData.Category.DECO: "cat_deco",
 	FurnitureData.Category.DIVIDER: "cat_divider",
+	FurnitureData.Category.OUTDOOR: "cat_outdoor",
 }
 
 const SURFACE_KEYS := {
@@ -165,6 +166,55 @@ static func draw(canvas: CanvasItem, key: String, rect: Rect2, color: Color) -> 
 			p.rect(6, 4, 12, 16)
 			p.rect(10, 7, 4, 7)
 			p.line(10, 10.5, 14, 10.5)
+		# Draußen (seit „Draußen gestalten“): Sonne über einem Busch im Topf
+		"cat_outdoor":
+			p.circle(17.5, 6, 3)
+			p.line(17.5, 1, 17.5, 1.8)
+			p.line(22.5, 6, 21.7, 6)
+			p.line(21, 2.5, 20.4, 3.1)
+			p.poly([[5, 15], [15, 15], [13.8, 21], [6.2, 21]], true)
+			p.circle(10, 11, 4.5)
+		"outdoor_seat":
+			# Parkbank: Lehne, Sitz, Beine
+			p.line(4, 7, 20, 7)
+			p.line(4, 10, 20, 10)
+			p.line(3, 14, 21, 14)
+			p.line(5, 7, 5, 20)
+			p.line(19, 7, 19, 20)
+		"outdoor_table":
+			# Bistrotisch mit Fuß
+			p.ellipse(12, 8, 7.5, 2.5)
+			p.line(12, 10.5, 12, 19)
+			p.line(8, 20, 16, 20)
+		"outdoor_plant":
+			p.poly([[6, 14], [18, 14], [16.5, 21], [7.5, 21]], true)
+			p.circle(12, 9, 5)
+			p.circle(8, 11, 2.5)
+			p.circle(16, 11, 2.5)
+		"outdoor_sign":
+			# Kreidetafel-Aufsteller (von der Seite ein A)
+			p.poly([[7, 21], [10, 3], [14, 3], [17, 21]])
+			p.rect(9.5, 6, 5, 7)
+			p.line(8, 16, 16, 16)
+		"outdoor_shelf":
+			# Bücherwagen mit Rollen
+			p.rect(4, 6, 16, 11)
+			p.line(4, 11.5, 20, 11.5)
+			for x in [7.0, 9.0, 11.5, 14.0]:
+				p.line(x, 11.5, x, 8)
+			p.circle(7, 19.5, 1.6)
+			p.circle(17, 19.5, 1.6)
+		"outdoor_light":
+			# Laterne mit Ring
+			p.circle(12, 3.5, 1.5)
+			p.poly([[8, 7], [16, 7], [12, 5]], true)
+			p.rect(8.5, 7, 7, 10)
+			p.line(8, 17, 16, 17)
+			p.poly([[12, 10], [13.3, 12.5], [12, 14], [10.7, 12.5]], true)
+		"outdoor_deco":
+			# kleines Herz an einem Stab (Gartenstecker)
+			p.poly([[12, 13], [7, 8], [7.5, 4.5], [10.5, 4], [12, 6], [13.5, 4], [16.5, 4.5], [17, 8]], true)
+			p.line(12, 13, 12, 21)
 		"cat_deco", "plant":
 			p.poly([[7, 14], [17, 14], [15.5, 21], [8.5, 21]], true)
 			p.leaf(12, 14, 12, 3.5, 2.6)

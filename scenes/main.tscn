@@ -50,6 +50,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/street_furniture/phone_box.tscn" id="71_phone"]
 [ext_resource type="PackedScene" path="res://scenes/world/street_furniture/street_clock.tscn" id="72_clock"]
 [ext_resource type="PackedScene" path="res://scenes/world/street_furniture/litter_bin.tscn" id="73_bin"]
+[ext_resource type="PackedScene" path="res://scenes/rooms/outdoor_area.tscn" id="74_outdoor"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -168,14 +169,17 @@ player_path = NodePath("../../Player")
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1, 0, -4.95)
 
 [node name="Deliveries" type="Marker3D" parent="Outside"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0, -4.7)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, 0, -7.05)
 script = ExtResource("15_deliveries")
 stack_direction = Vector3(1, 0, 0)
+row_direction = Vector3(0, 0, 1)
 
 [node name="EntranceSteps" parent="." instance=ExtResource("25_steps")]
 transform = Transform3D(-0.7071068, 0, -0.7071068, 0, 1, 0, 0.7071068, 0, -0.7071068, -2.1414214, 0, -3.1414214)
 
 [node name="GroundFloorRoom" parent="." instance=ExtResource("1_room")]
+
+[node name="OutdoorArea" parent="." instance=ExtResource("74_outdoor")]
 
 [node name="UpperFloors" type="Node3D" parent="."]
 script = ExtResource("24_upper_floors")
@@ -188,6 +192,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0, 2.6)
 script = ExtResource("8_build_mode")
 player_path = NodePath("../Player")
 room_path = NodePath("../GroundFloorRoom")
+outdoor_room_path = NodePath("../OutdoorArea")
 
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
 

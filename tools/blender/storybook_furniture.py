@@ -70,7 +70,7 @@ def dirs(spec):
 # verschwindet die Zeile – dann überschreibt das Bau-Script die Datei nie wieder.
 MARK = "; Erzeugt von tools/blender/build_storybook_furniture.py"
 
-CATEGORIES = {"shelf": 0, "seating": 1, "table": 2, "counter": 3, "lighting": 4, "deco": 5, "divider": 6}
+CATEGORIES = {"shelf": 0, "seating": 1, "table": 2, "counter": 3, "lighting": 4, "deco": 5, "divider": 6, "outdoor": 7}
 PLACEMENT = {"floor": 1, "surface": 2, "wall": 4, "door": 8, "ceiling": 16}
 GRID = 1.0 / 9.0
 

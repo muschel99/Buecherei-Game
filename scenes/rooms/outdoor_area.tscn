@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+; Draußen vor der Bücherei (seit „Draußen gestalten“): ein Raum ohne Wände – hier stellt man im Gestaltungsmodus Dinge aus
+; der Abteilung „Draußen“ auf. build_area = der Streifen an der Hauswand (x/z unter Main); davor bleiben ein Durchgang für
+; Passanten und am Bordstein der Platz für die Lieferkartons frei.
+
+[ext_resource type="Script" path="res://scripts/rooms/room.gd" id="1_room"]
+
+[node name="OutdoorArea" type="Node3D"]
+script = ExtResource("1_room")
+save_key = "outdoor_area"
+default_wall_id = ""
+default_floor_id = ""
+default_ceiling_id = ""
+build_area = Rect2(-0.9, -5.35, 3.95, 1.15)
+floor_height = -0.5
+outdoor = true
+
+[node name="Furniture" type="Node3D" parent="."]

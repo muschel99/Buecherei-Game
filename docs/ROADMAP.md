@@ -51,6 +51,7 @@
 | 7b  | Testrunde nach Etappe 7: Nacht, Besucher, Anbau, Notizbuch, Bücherkisten, Möbel geprüft | fertig |
 | 8   | Besuchervielfalt: Ladebildschirm, Chibi-Größen, weiche Bücher, Theke mit PC, Gespräche, Stammgäste, Wünsche | fertig |
 | 8b  | Hauptmenü, Story-Anfang mit der Maklerin, To-do-Zettel, passende Namen | fertig |
+| 8c  | Draußen gestalten und verträumter Garten (Wunsch vom 23.11.2026) | in Arbeit |
 | 9   | Café                                     | offen         |
 | 10  | Erweiterungen und Freischaltungen        | offen         |
 | 10b | Fahrzeuge neu modellieren (vorgemerkt)   | offen         |
@@ -2013,6 +2014,24 @@ Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitun
 - [x] **Deko im Katalog:** Globen mit echten Kontinenten (Pastellfarben wie alte Schulgloben), Gipsbüste mit Gesicht, Locken und
   goldenem Lorbeerkranz, gerippte Kakteen mit Blüten und Kies, Bilderrahmen mit gemalter Sommerwiese
 - [x] **Garten hinter der Gasse:** steinernes Vogelbad mit Wasser und Moos – Vögel landen auf dem Rand und trinken
+
+## Etappe 8c – Draußen gestalten und verträumter Garten (Wunsch der Entwicklerin vom 23.11.2026)
+Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
+
+- [x] **Gestaltungsmodus auch draußen:** ein Streifen an der Hauswand vor der Bücherei (davor bleibt ein Durchgang frei),
+  nur Dinge aus der neuen Abteilung „Draußen“, die Leiste springt draußen gleich dorthin; Passanten, Besucher und Katzen
+  gehen außen herum; wird gespeichert (Draußen-Raum `OutdoorArea`)
+- [x] **Lieferkartons** vorn am Bordstein (sechs Stapel nebeneinander), nie auf aufgestellten Sachen
+- [x] **Erste Draußen-Sachen** im Nest & Nook: Gartenbank, Bistrostuhl, Bistrotisch, Kreidetafel-Aufsteller, Lavendel,
+  Buchsbaumkugel, Olivenbäumchen, Geranien, Hortensie im Kübel, Rosenstämmchen (alle in mehreren Farben)
+- [x] Stühle geprüft – sie sind gut so (die Entwicklerin hatte alte Bilder gesehen)
+- [ ] Viel mehr Draußen-Sachen: Sitzmöbel, Tischchen, sehr viele Pflanzen in allen Größen, Farben und Formen,
+  Kundenstopper, kleine Regale für Bücher und Deko
+- [ ] Deko aus der Fassaden-App nehmen (wer schon Deko hatte, bekommt sie als Draußen-Möbel ins Inventar)
+- [ ] Baumgasse: am Anfang von Mauerschutt versperrt, in der Story reparieren lassen – danach gehört der Garten zur
+  Bücherei und lässt sich gestalten; größer und verträumt (Lichterketten, Glühwürmchen, Feentür, Rosenbogen, Kiesweg),
+  Vogelbad in einer Ecke mit Kletterpflanzen
+- [ ] Später (Erweiterung): Hintertür der Bücherei zum Garten – Gäste lesen draußen
 
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)

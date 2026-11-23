@@ -81,7 +81,9 @@ func _ready() -> void:
 	# Anzahlen neu zeigen, wenn sich Inventar oder Einrichtung ändern
 	Inventory.changed.connect(_queue_refresh)
 	_filter_bar.changed.connect(_on_filter_changed)
-	_build_mode.get_room().layout_changed.connect(_queue_refresh)
+	for room in _build_mode.get_rooms():
+		room.layout_changed.connect(_queue_refresh)
+	_build_mode.room_changed.connect(_on_room_changed)
 	Settings.setting_changed.connect(_on_setting_changed)
 
 
@@ -412,9 +414,20 @@ func _small_label(text: String, font_size: int, color: Color) -> Label:
 
 # --- Rückmeldungen vom Gestaltungsmodus ---
 
+## Draußen (seit „Draußen gestalten“): gleich die Abteilung „Draußen“ zeigen – nur sie darf dort stehen.
+func _on_room_changed(room: Room) -> void:
+	if room.outdoor:
+		for i in _tabs.size():
+			var tab: Array = _tabs[i]
+			if tab[1] == "furniture" and tab[2] == FurnitureData.Category.OUTDOOR and i != _current_tab:
+				_choose_tab(i)
+				return
+
+
 func _on_active_changed(active: bool) -> void:
 	if active:
 		_status_label.text = ""
+		_on_room_changed(_build_mode.get_room())
 	else:
 		_filter_panel.visible = false
 

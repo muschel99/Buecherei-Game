@@ -29,15 +29,23 @@ signal filter_open_changed(open: bool)
 signal cursor_icon_changed(icon: String)
 ## Mausrad bei leerer Hand (seit Testrunde 7b): BuildUI wählt das nächste/vorige Möbel der Leiste
 signal item_step_requested(direction: int)
+## Der gestaltete Raum hat gewechselt (drinnen ↔ draußen, seit „Draußen gestalten“).
+signal room_changed(room: Room)
 
 enum Tool { NONE, PLACE_NEW, MOVE, PAINT }
 
 ## Pfade zu Spielfigur und Raum (im Inspektor der Hauptszene eingetragen).
 @export var player_path: NodePath
 @export var room_path: NodePath
+## Draußen vor der Bücherei (seit „Draußen gestalten“): zweiter Raum ohne Wände (Room.outdoor). Gestaltet wird immer der
+## Raum, in dem ich gerade stehe – drinnen der Laden samt Hinterzimmer, sonst draußen.
+@export var outdoor_room_path: NodePath
 
 @onready var _player: Player = get_node(player_path)
-@onready var _room: Room = get_node(room_path)
+@onready var _indoor_room: Room = get_node(room_path)
+@onready var _outdoor_room: Room = get_node_or_null(outdoor_room_path) as Room
+## Der Raum, der gerade gestaltet wird.
+var _room: Room
 
 var is_active: bool = false
 var grid_enabled: bool = false
@@ -61,6 +69,8 @@ var _hovered: PlacedFurniture = null
 var _preview: FurniturePreview
 var _grid: MeshInstance3D
 var _grid_material: ShaderMaterial
+## Raster je Raum (Room -> MeshInstance3D)
+var _grids_by_room := {}
 
 # Ergebnis der letzten Platzprüfung
 var _placement_ok := false
@@ -78,16 +88,51 @@ var _flash_until_msec := 0
 
 func _ready() -> void:
 	grid_enabled = GameConfig.grid_enabled_at_start
+	_room = _indoor_room
 	_preview = FurniturePreview.new()
 	_preview.name = "FurniturePreview"
 	_preview.visible = false
 	_room.add_child(_preview)
-	_create_grid()
+	_grid_material = ShaderMaterial.new()
+	_grid_material.shader = load("res://assets/shaders/build_grid.gdshader")
+	_grid_material.set_shader_parameter("cell_size", GameConfig.grid_cell_size)
+	for room in get_rooms():
+		_grids_by_room[room] = _create_grid(room)
+	_grid = _grids_by_room[_room]
 
 
 ## Der Raum, der gerade gestaltet wird.
 func get_room() -> Room:
 	return _room
+
+
+## Alle Räume, die man gestalten kann (drinnen und draußen).
+func get_rooms() -> Array[Room]:
+	var rooms: Array[Room] = [_indoor_room]
+	if _outdoor_room:
+		rooms.append(_outdoor_room)
+	return rooms
+
+
+## Stehe ich draußen? (Nicht im Laden und nicht im Hinterzimmer – auch auf der Treppe zählt als draußen.)
+func is_outside() -> bool:
+	return _outdoor_room != null and not _indoor_room.is_inside_build_area(_player.global_position)
+
+
+## Wechselt zum Raum, in dem ich stehe. Ein aufgenommenes Möbelstück bleibt in seinem Raum (es wird dort zurückgestellt
+## oder weggeräumt) – darum wird beim Umstellen nicht gewechselt.
+func _follow_player_room() -> void:
+	if _tool == Tool.MOVE:
+		return
+	var room := _outdoor_room if is_outside() else _indoor_room
+	if room == _room:
+		return
+	_set_hovered(null)
+	_grid.visible = false
+	_room = room
+	_preview.reparent(room, false)
+	_grid = _grids_by_room[room]
+	room_changed.emit(room)
 
 
 ## Farbe des gewählten Möbelstücks (leer = keine Auswahl oder Standardfarbe).
@@ -155,6 +200,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(_delta: float) -> void:
 	if not is_active:
 		return
+	_follow_player_room()
 	match _tool:
 		Tool.NONE:
 			_update_hover()
@@ -174,6 +220,7 @@ func set_active(active: bool) -> void:
 	if active:
 		if _player.is_seated():
 			_player.stand_up()  # Zum Gestalten erst aufstehen
+		_follow_player_room()
 		# Offene Türen bleiben offen, damit man weiter hinein- und hinausgehen kann
 		MenuStack.open(self)
 		_set_status("")
@@ -574,6 +621,12 @@ func _update_placement() -> void:
 	_placement_ok = false
 	_placement_support = null
 	_placement_on_floor = false
+	# Draußen nur Dinge aus der Abteilung „Draußen“ (kein Sofa auf dem Gehweg)
+	if _room.outdoor and not data.is_outdoor():
+		_preview.visible = false
+		_update_grid_visibility()
+		_set_status("%s – draußen nur Sachen aus „Draußen“" % data.display_name, true)
+		return
 
 	# Ablageflächen sind nur für Dinge sichtbar, die darauf stehen dürfen
 	var mask := FurnitureUtils.WORLD_LAYER_BIT | FurnitureUtils.FURNITURE_LAYER_BIT
@@ -674,7 +727,7 @@ func _place_standing(hit: Dictionary) -> String:
 	_placement_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(yaw)), point)
 
 	if not _room.is_inside_build_area(point):
-		return "Das muss im Raum stehen."
+		return "Draußen nur direkt am Haus der Bücherei." if _room.outdoor else "Das muss im Raum stehen."
 	if not on_surface and not data.allows(FurnitureData.PLACE_FLOOR):
 		return "Das gehört auf eine Ablage (Tisch, Regal, Sessel, Fensterbank)."
 	if surface_normal.y < 0.7:
@@ -881,21 +934,20 @@ func _snap_axis(value: float, cells: int) -> float:
 	return roundf(value / cell) * cell
 
 
-func _create_grid() -> void:
-	var area := _room.build_area
+func _create_grid(room: Room) -> MeshInstance3D:
+	var area := room.build_area
 	var plane := PlaneMesh.new()
 	plane.size = area.size
-	_grid_material = ShaderMaterial.new()
-	_grid_material.shader = load("res://assets/shaders/build_grid.gdshader")
-	_grid_material.set_shader_parameter("cell_size", GameConfig.grid_cell_size)
-	_grid = MeshInstance3D.new()
-	_grid.name = "BuildGrid"
-	_grid.mesh = plane
-	_grid.material_override = _grid_material
-	_grid.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_grid.position = Vector3(area.get_center().x, _room.floor_height + 0.004, area.get_center().y)
-	_grid.visible = false
-	_room.add_child(_grid)
+	var grid := MeshInstance3D.new()
+	grid.name = "BuildGrid"
+	grid.mesh = plane
+	grid.material_override = _grid_material
+	grid.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# draußen liegt der Gehweg etwas höher als floor_height an der Bordsteinkante – Raster knapp darüber
+	grid.position = Vector3(area.get_center().x, room.floor_height + (0.03 if room.outdoor else 0.004), area.get_center().y)
+	grid.visible = false
+	room.add_child(grid)
+	return grid
 
 
 func _update_grid_visibility() -> void:
