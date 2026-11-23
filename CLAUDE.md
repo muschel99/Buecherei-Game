@@ -150,7 +150,10 @@ screenshots/         Testbilder (nicht in Git)
   `build_storybook_alleys.py`, Straßenmöbel `build_storybook_props.py`, Laternen `build_storybook_lamps.py`, Eingangstreppe
   `build_storybook_steps.py`, Pflanzen `build_storybook_plants.py`, Herbst-Deko `build_storybook_autumn.py`, Taschen/Körbe
   `build_storybook_bags.py`, Autos `build_vehicles.py`, Fahrräder `build_storybook_vehicles.py`, Tiere `build_animals.py`,
-  Figuren `build_chibi.py`, Hauptmenü-Garten `build_title_garden.py`, Möbel `tools/build_furniture.sh [ids]`.
+  Figuren `build_chibi.py`, Hauptmenü-Garten `build_title_garden.py`, Möbel `tools/build_furniture.sh [ids]`, Briefkasten/
+  Telefonzelle/Straßenuhr/Mülleimer `build_storybook_street_furniture.py`, Lieferkartons `build_storybook_boxes.py`.
+- **Neu gebaute .glb:** Die Scripts schreiben die `.glb.import` ohne die bisherige `uid=` – alte Zeile aus Git zurückholen
+  (`git show HEAD:<datei>.import`), dann `godot --headless --path . --import`.
 - **Pflanzen** nie ins Haus-Modell (Pflanzplätze `PlantSpot_…`, gesetzt von `Greenery`), außer Efeu an Wänden.
 - **Prüfungen vor dem Hochladen:** Lochprüfung `storybook_gap_check.py`, Überschneidungen `storybook_overlap_check.py`,
   Möbelbeine `leg_check.py`, schwebende Teile `geo_check.py`. Nach Änderungen an Häusern Tier-Plätze neu ausmessen

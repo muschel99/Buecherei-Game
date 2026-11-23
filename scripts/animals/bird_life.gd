@@ -66,6 +66,8 @@ var _birds: Array[StreetBird] = []
 var _perches: Array[Dictionary] = []
 var _lamps: Array[Dictionary] = []
 var _feeder: Array[Dictionary] = []
+## Rand des Vogelbads im Gartenhof (gehört zum Hof: Anflug durch die Gasse, siehe _court_spots)
+var _bath: Array[Dictionary] = []
 ## Häuser: { front (Welt, Fußpunkt), out, along, width, depth, eaves, top (Welt-y) }
 var _houses: Array[Dictionary] = []
 ## Schwärme: { birds, timer, landed, kind }
@@ -88,6 +90,7 @@ func setup(life: StreetLife) -> void:
 	_load_spots()
 	_collect_lamps()
 	_collect_street_furniture()
+	_collect_bird_bath()
 	_setup_court()
 	_build_ceiling()
 	_build_pool("bird", GameConfig.bird_scene, GameConfig.bird_count + 2 + GameConfig.bird_sky_count)
@@ -174,6 +177,26 @@ func _collect_street_furniture() -> void:
 			var face := out if _rng.randf() < 0.5 else -out
 			_lamps.append({"pos": (perch as Node3D).global_position, "face": face, "out": out, "kind": "lamp",
 				"house": "furniture_%s" % item.name, "taken": null})
+
+
+## Plätze auf dem Rand des Vogelbads im Garten der Gasse (seit „Modelle schöner“; leere Objekte „BathPerch_…“ im
+## Gassen-Modell): Die Vögel schauen ins Wasser und trinken. Sie gehören zum Gartenhof (Anflug durch die Gasse, nie steil
+## über die Dächer; _court_spots wählt sie) und fliegen auf, sobald jemand näher kommt.
+func _collect_bird_bath() -> void:
+	var alley := _outside.get_node_or_null("Alley")
+	if alley == null:
+		return
+	var perches := alley.find_children("BathPerch_*", "Node3D", true, false)
+	if perches.is_empty():
+		return
+	var center := Vector3.ZERO
+	for perch: Node in perches:
+		center += (perch as Node3D).global_position
+	center /= perches.size()
+	for perch: Node in perches:
+		var pos := (perch as Node3D).global_position
+		var out := Vector3(pos.x - center.x, 0.0, pos.z - center.z).normalized()
+		_bath.append({"pos": pos, "face": -out, "out": out, "kind": "bath", "house": "birdbath", "court": true, "taken": null})
 
 
 ## Plätze auf den Querarmen der Straßenlaternen (Outside/Street/Lamps).
@@ -973,6 +996,11 @@ func _court_spots(size: int, own: Dictionary = {}) -> Array[Dictionary]:
 			return []
 	var threats := _threats()
 	var cats := _cat_positions()
+	# manchmal ans Vogelbad (kleine Schwärme, alle Plätze frei, niemand in der Nähe)
+	if size <= _bath.size() and _rng.randf() < GameConfig.bird_bath_share:
+		var bath := _bath_spots(size, threats, cats)
+		if not bath.is_empty():
+			return bath
 	var gap := GROUND_GAP * 1.4
 	var spread := 0.45
 	for attempt in 16:
@@ -1010,6 +1038,28 @@ func _court_spots(size: int, own: Dictionary = {}) -> Array[Dictionary]:
 				"house": "court", "center": center, "court": true, "taken": null})
 		return result
 	return []
+
+
+## size Plätze auf dem Rand des Vogelbads, wenn alle frei sind und keine Leute oder Katzen in der Nähe (sonst leer).
+func _bath_spots(size: int, threats: Array, cats: Array[Vector3]) -> Array[Dictionary]:
+	var center := Vector3.ZERO
+	for spot: Dictionary in _bath:
+		if spot.taken != null:
+			return []
+		center += spot.pos
+	center /= _bath.size()
+	for t: Dictionary in threats:
+		if Vector2(center.x - t.a.x, center.z - t.a.z).length() < float(t.radius) * 1.8:
+			return []
+	for cp in cats:
+		if cp.distance_to(center) < 3.5:
+			return []
+	var order: Array = _bath.duplicate()
+	order.shuffle()
+	var result: Array[Dictionary] = []
+	for i in size:
+		result.append(order[i])
+	return result
 
 
 # --- Flugwege ---

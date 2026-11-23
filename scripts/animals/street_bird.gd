@@ -118,7 +118,7 @@ func settle(new_spot: Dictionary) -> void:
 	_spread_target = 0.0
 	_act = randf_range(0.6, 2.0)
 	_chirp = randf_range(2.0, GameConfig.bird_chirp_interval.y)
-	play(&"peck" if spot.kind in ["ground", "feed"] and randf() < 0.6 else &"idle", 0.2)
+	play(&"peck" if spot.kind in ["ground", "feed", "bath"] and randf() < 0.6 else &"idle", 0.2)
 
 
 func hide_bird() -> void:
@@ -268,7 +268,8 @@ func _next_activity() -> void:
 		else:
 			_act = randf_range(0.8, 2.2)
 			play(&"idle", 0.2)
-	elif where == "feed":
+	elif where == "feed" or where == "bath":
+		# am Futterbrett picken, am Vogelbad trinken (gleiche Bewegung)
 		_act = randf_range(1.0, 3.0)
 		play(&"peck" if randf() < 0.7 else &"idle", 0.2)
 	else:

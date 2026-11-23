@@ -1206,6 +1206,8 @@ var bird_near_distance: float = 26.0
 ## (auch wenn die Spielfigur weiter weg ist; unter dem Blätterdach, nur durch die Gasse hinein und hinaus) – dort ist es
 ## ruhig (keine Fahrzeuge, selten Passanten), sie bleiben länger sitzen (× Sitzdauer) und ziehen danach eher im Hof um
 var bird_court_share: float = 0.4
+## Gartenhof: so oft landet ein kleiner Schwarm (bis 3 Vögel) auf dem Rand des Vogelbads statt im Gras (seit „Modelle schöner“)
+var bird_bath_share: float = 0.35
 var bird_court_stay_factor: float = 1.8
 var bird_court_stay_share: float = 0.5
 ## Fluggeschwindigkeit (m/s), beim Auffliegen schneller

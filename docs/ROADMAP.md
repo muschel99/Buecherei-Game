@@ -1999,6 +1999,21 @@ Backup vorher: Zweig `backup/vor-ueberarbeitung` + Tag `backup-vor-ueberarbeitun
   - [x] Kein Lichtfleck mehr vor den Fenstern der Bücherei
 - [ ] Nächste Ideen: Innenraum gemütlicher (Startzustand), weitere Jahreszeiten (Winter, Frühling), Wetter
 
+## Modelle schöner (Auftrag vom 23.11.2026: „Mach mein Spiel noch schöner. Konzentriere dich auf die Modelle.“)
+- [x] **CLAUDE.md gekürzt** (1639 → 182 Zeilen, nur noch das Wichtigste; die alte Fassung liegt in der Git-Geschichte)
+- [x] **Eingangstreppe** aus Sandstein (ausgetretene Kanten, Fugen, etwas Moos) mit Kokos-Fußmatte und Herz vor der Tür
+- [x] **Englische Straßenmöbel:** roter Briefkasten (Pillar Box), rote Telefonzelle, Straßenuhr, Mülleimer – Vögel setzen sich
+  auf Briefkasten, Telefonzelle und Uhr; Herbst-Kürbisse halten Abstand, damit der Gehweg frei bleibt
+- [x] **Wimpelketten** quer über die Straße (drei Ketten, Stoffwimpel schaukeln im Wind)
+- [x] **Theke „Klassisch“:** Fächer mit Büchern, Medaillon mit offenem Buch, Konsolen, Messing
+- [x] **Autos:** Weißwandreifen (Mini, Kombi), Dachgepäck mit Koffern und Picknickkorb (Kombi); Prüfwerkzeug `vehicle_showroom`
+- [x] **Fassade:** neue Deko-Option „Bücherwagen“ (salbeigrüner Wagen mit Büchern zum Mitnehmen und Kreidetafel)
+- [x] **Lieferkartons:** Pappkarton mit Klebeband, Etikett und Pfeilen; Bücherpakete mit Paketschnur, Schleife und Anhänger
+- [x] **Bett im Hinterzimmer:** karierte Steppdecke, Wolldecke im Schottenmuster, Zierkissen
+- [x] **Deko im Katalog:** Globen mit echten Kontinenten (Pastellfarben wie alte Schulgloben), Gipsbüste mit Gesicht, Locken und
+  goldenem Lorbeerkranz, gerippte Kakteen mit Blüten und Kies, Bilderrahmen mit gemalter Sommerwiese
+- [x] **Garten hinter der Gasse:** steinernes Vogelbad mit Wasser und Moos – Vögel landen auf dem Rand und trinken
+
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)
 

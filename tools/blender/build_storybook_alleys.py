@@ -53,6 +53,7 @@ def mats(M):
     M["brick_c"] = mk("Ziegel Honig", (0.72, 0.52, 0.36), grain="brick", rough=0.92, vary=0.07, bump=0.28, color2=(0.57, 0.5, 0.42))
     M["plaster_a"] = mk("Putz Creme", (0.93, 0.86, 0.72), grain="plaster", rough=0.92, vary=0.07, scale=1.6, bump=0.32)
     M["plaster_b"] = mk("Putz Pfirsich", (0.94, 0.79, 0.65), grain="plaster", rough=0.92, vary=0.07, scale=1.6, bump=0.32)
+    M["bath_water"] = mk("Wasser Vogelbad", (0.27, 0.35, 0.33), grain="smooth", rough=0.12, vary=0.04)
     M["sandstone"] = mk("Quader Warm", (0.86, 0.76, 0.6), grain="ashlar", rough=0.9, vary=0.07, bump=0.3, color2=(0.62, 0.56, 0.47))
     M["h_join"] = mk("Holz Eiche", (0.5, 0.32, 0.19), grain="wood", rough=0.78, vary=0.07, bump=0.2)
     M["h_join_dark"] = mk("Holz Nuss", (0.37, 0.24, 0.15), grain="wood", rough=0.78, vary=0.07, bump=0.2)
@@ -225,6 +226,44 @@ def round_bench(M, C, x, z, rnd):
             ((x, z), (0.6, 0.6), 2.0)]
 
 
+BIRD_BATH = (-6.65, 11.3)   # Godot (x, z): zwischen Beet hinten, Baumbank und der Gasse
+
+
+def bird_bath(M, C, x, z, rnd):
+    """Steinernes Vogelbad im Garten (seit „Modelle schöner“): gedrechselter Fuß auf runder Platte, flache Schale mit
+    Wasser, etwas Moos am Fuß. Drei Plätze „BathPerch_<n>“ auf dem Rand (BirdLife: Vögel trinken dort). Liefert die
+    Hindernisse für die Kollision."""
+    cx, cy = G(x, z)
+    st = Body("Vogelbad Stein", M["stone"], C["deco"], seed=340, vary=0.06, bevel=0.0)
+    st.lathe([(0.0, 0.0), (0.2, 0.0), (0.2, 0.035), (0.165, 0.055), (0.11, 0.08), (0.082, 0.13), (0.07, 0.3), (0.066, 0.46),
+              (0.078, 0.56), (0.1, 0.62), (0.12, 0.66), (0.0, 0.66)], (cx, cy, 0.0), segs=24, dent=0.004)
+    # Schale: außen von unten zum Rand, über den Rand, innen zurück zur Mitte (geschlossener Drehkörper)
+    st.lathe([(0.0, 0.64), (0.12, 0.645), (0.25, 0.695), (0.315, 0.75), (0.33, 0.775), (0.318, 0.79), (0.296, 0.785),
+              (0.265, 0.76), (0.12, 0.712), (0.0, 0.706)], (cx, cy, 0.0), segs=36, dent=0.003)
+    st.build()
+    water = Body("Vogelbad Wasser", M["bath_water"], C["deco"], seed=341, vary=0.0)
+    water.lathe([(0.0, 0.715), (0.13, 0.715), (0.229, 0.747), (0.0, 0.747)], (cx, cy, 0.0), segs=36)
+    water.build()
+    moss = Body("Vogelbad Moos", M["box_leaf"], C["deco"], seed=342, vary=0.15)
+    for k in range(7):
+        a = rnd.uniform(0, 2 * math.pi)
+        r = rnd.uniform(0.165, 0.2)
+        moss.blob((cx + math.cos(a) * r, cy + math.sin(a) * r, 0.035), rnd.uniform(0.018, 0.03), subdiv=1, lump=0.35,
+                  scale=(1.3, 1.0, 0.55))
+    for k in range(3):
+        a = rnd.uniform(0, 2 * math.pi)
+        moss.blob((cx + math.cos(a) * 0.075, cy + math.sin(a) * 0.075, rnd.uniform(0.12, 0.2)), 0.016, subdiv=1, lump=0.3,
+                  scale=(1.0, 1.0, 1.4))
+    moss.build()
+    # Plätze für Vögel auf dem Rand (gleichmäßig verteilt, etwas gedreht)
+    for k in range(3):
+        a = 2 * math.pi * k / 3 + 0.5
+        e = bpy.data.objects.new("BathPerch_%d" % k, None)
+        e.location = (cx + math.cos(a) * 0.31, cy + math.sin(a) * 0.31, 0.792)
+        C["plants"].objects.link(e)
+    return [((x, z), (0.66, 0.66), 0.8)]
+
+
 def climber_place(wins, length, along, width=1.4, height=4.2, blocks=()):
     """Stelle an einer Wand mit Fenstern wins (x, z0, w, h entlang der Wand) nahe along, an der eine
     Kletterpflanze kein Fenster verdeckt: sie wächst nur so hoch, wie die Wand über ihr frei ist, und
@@ -331,7 +370,7 @@ def library_alley(M, C, rnd):
         r = rnd.uniform(0.2, 0.26)
         tsb.lathe([(0.0, 0.0), (r, 0.0), (r * 1.02, 0.02), (r * 0.94, 0.04), (0.0, 0.042)], (px, py, 0.0), segs=12, dent=0.008)
     tsb.build()
-    obstacles = round_bench(M, C, tx, tz, rnd)
+    obstacles = round_bench(M, C, tx, tz, rnd) + bird_bath(M, C, BIRD_BATH[0], BIRD_BATH[1], rnd)
     p = G(tx, tz)
     # der große Baum (tree_garden_big): Krone passt genau in den Hof, darum fester Hinweis "garden"
     spots.append(("tree", (p[0], p[1], 0.0), (5.6, 7.4, 10.0), 0.0, "garden"))
