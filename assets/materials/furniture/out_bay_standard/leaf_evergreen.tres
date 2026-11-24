@@ -1,11 +1,11 @@
 [gd_resource type="ShaderMaterial" load_steps=2 format=3]
 
-; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Lorbeerstämmchen“, Material „leaf_dark“).
+; Erzeugt von tools/blender/build_storybook_furniture.py (Möbel „Lorbeerstämmchen“, Material „leaf_evergreen“).
 
 [ext_resource type="Shader" path="res://assets/shaders/storybook_plant.gdshader" id="1_shader"]
 
 [resource]
-resource_name = "leaf_dark"
+resource_name = "leaf_evergreen"
 render_priority = 0
 shader = ExtResource("1_shader")
 shader_parameter/base_color = Color(0.150, 0.300, 0.120, 1)
@@ -23,3 +23,4 @@ shader_parameter/emission_energy = 0.000
 shader_parameter/glow = 0.000
 shader_parameter/pattern = 0
 shader_parameter/pattern_size = 0.040
+shader_parameter/evergreen = true

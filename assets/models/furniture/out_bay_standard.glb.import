@@ -51,10 +51,10 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/out_bay_standard/leaf_core.tres",
 "use_external/path": "res://assets/materials/furniture/out_bay_standard/leaf_core.tres"
 },
-"leaf_dark": {
+"leaf_evergreen": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/out_bay_standard/leaf_dark.tres",
-"use_external/path": "res://assets/materials/furniture/out_bay_standard/leaf_dark.tres"
+"use_external/fallback_path": "res://assets/materials/furniture/out_bay_standard/leaf_evergreen.tres",
+"use_external/path": "res://assets/materials/furniture/out_bay_standard/leaf_evergreen.tres"
 },
 "pot": {
 "use_external/enabled": true,

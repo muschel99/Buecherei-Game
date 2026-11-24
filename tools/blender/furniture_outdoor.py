@@ -446,7 +446,7 @@ def build_box_cone(k):
 
 def build_bay_standard(k):
     """Lorbeerstämmchen: eine geschnittene Kugel aus dunklen Blättern auf einem geraden Stamm, im Kübel."""
-    _potted(k, 0.18, 0.26, "tub", lambda p: G.standard_ball(p, 0.6, 0.21, leaf_mat="leaf_dark"))
+    _potted(k, 0.18, 0.26, "tub", lambda p: G.standard_ball(p, 0.6, 0.21, leaf_mat="leaf_evergreen"))
     k.collider((0, 0, 0.5), (0.4, 0.4, 1.0))
 
 

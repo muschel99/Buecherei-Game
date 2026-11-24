@@ -45,7 +45,7 @@ def make_material(name, color, glow=0.0, plant=False, **kw):
     z. B. Innenräume, die in Blender von Lampen beleuchtet werden; plant = Blätter/Blüten, im
     Spiel beidseitig sichtbar). Gleicher Name = dasselbe Material."""
     GAME_MATERIALS[name] = dict(kw, color=color, glow=glow, plant=plant)
-    mat = SB.material(name, color, **{k: v for k, v in kw.items() if k not in ("wind", "own")})
+    mat = SB.material(name, color, **{k: v for k, v in kw.items() if k not in ("wind", "own", "evergreen")})
     mat["spiel_pflanze"] = plant   # export_storybook.py vereinfacht diese Teile fürs Spiel
     # Werte fürs Spiel in der .blend merken (export_storybook.py braucht sie für Sammel-Materialien)
     mat["spiel_werte"] = json.dumps(GAME_MATERIALS[name])
@@ -165,12 +165,14 @@ def materials():
                   emit_color=(1.0, 0.76, 0.48), vary=0.0, bump=0.0),
         "box": M("Holz Blumenkasten", (0.5, 0.32, 0.21), grain="wood", rough=0.85, vary=0.08),
         "soil": M("Erde", (0.25, 0.18, 0.12), rough=1.0, vary=0.1, scale=8),
-        "ivy": M("Blatt Efeu", (0.2, 0.34, 0.13), grain="leaf", rough=0.7, vary=0.1, plant=True),
+        "ivy": M("Blatt Efeu", (0.2, 0.34, 0.13), grain="leaf", rough=0.7, vary=0.1, plant=True, evergreen=True),
+        # junge Blätter am Efeu (Kletterrosen, Glyzinie und Clematis nehmen „ivy_young“ – sie verlieren im Winter ihr Laub)
+        "ivy_light": M("Blatt Efeu hell", (0.36, 0.5, 0.2), grain="leaf", rough=0.7, vary=0.1, plant=True, evergreen=True),
         "ivy_young": M("Blatt Efeu jung", (0.36, 0.5, 0.2), grain="leaf", rough=0.7, vary=0.1, plant=True),
         "leaf": M("Blatt Geranie", (0.28, 0.44, 0.17), grain="leaf", rough=0.75, vary=0.1, plant=True),
-        "box_leaf": M("Blatt Buchs", (0.22, 0.38, 0.14), grain="leaf", rough=0.72, vary=0.16, plant=True),
+        "box_leaf": M("Blatt Buchs", (0.22, 0.38, 0.14), grain="leaf", rough=0.72, vary=0.16, plant=True, evergreen=True),
         "box_core": M("Buchs Inneres", (0.08, 0.15, 0.06), grain="leaf", rough=0.9, vary=0.1),
-        "olive_leaf": M("Blatt Olive", (0.5, 0.56, 0.4), grain="leaf", rough=0.8, vary=0.1, plant=True),
+        "olive_leaf": M("Blatt Olive", (0.5, 0.56, 0.4), grain="leaf", rough=0.8, vary=0.1, plant=True, evergreen=True),
         "stem": M("Stiel", (0.34, 0.38, 0.2), rough=0.8, vary=0.08),
         "bark": M("Rinde", (0.42, 0.34, 0.26), grain="wood", rough=0.95, vary=0.1),
         "red": M("Blüte Geranienrot", (0.86, 0.2, 0.22), grain="fabric", rough=0.7, vary=0.1, plant=True),
@@ -618,10 +620,11 @@ def write_game_materials(only=None):
                     'shader_parameter/blot_scale = %.3f\nshader_parameter/bump_strength = %.3f\nshader_parameter/rough = %.3f\n'
                     'shader_parameter/metal = %.3f\nshader_parameter/emission_color = Color(%.3f, %.3f, %.3f, 1)\n'
                     'shader_parameter/emission_energy = %.3f\nshader_parameter/glow = %.3f\n'
-                    'shader_parameter/wind_strength = %.3f\n'
+                    'shader_parameter/wind_strength = %.3f\n%s'
                     % (head, "storybook_plant" if v["plant"] else "storybook", name, c[0], c[1], c[2], c2[0], c2[1], c2[2], GRAIN_ID[v.get("grain", "plaster")], v.get("stripes") or 0.0,
                        v.get("vary", 0.08), v.get("scale", 4.0), v.get("bump", 0.25), v.get("rough", 0.85), v.get("metal", 0.0),
-                       ec[0], ec[1], ec[2], emit * 0.45, v["glow"], v.get("wind", 0.0)))
+                       ec[0], ec[1], ec[2], emit * 0.45, v["glow"], v.get("wind", 0.0),
+                       "shader_parameter/evergreen = true\n" if v.get("evergreen") else ""))
         with open(path, "w") as f:
             f.write(text)
     return out
@@ -683,7 +686,8 @@ def palette_key(info):
         return None
     grain = info.get("grain", "plaster")
     if info.get("plant"):
-        return "Sammel Pflanze"
+        # immergrüne Blätter (Buchs, Efeu, Olive …) färben sich im Herbst nicht – eigenes Sammel-Material
+        return "Sammel Pflanze immergrün" if info.get("evergreen") else "Sammel Pflanze"
     if info.get("metal", 0.0) >= 0.2:
         return "Sammel Metall"
     name = "Sammel " + {"plaster": "Putz", "stone": "Stein", "wood": "Holz", "paint": "Lack", "brick": "Ziegel", "ashlar": "Quader",
@@ -693,13 +697,14 @@ def palette_key(info):
 
 def palette_material(key, info):
     """Blender-Material (weiß) und Godot-Werte für ein Sammel-Material."""
-    grain = "leaf" if key == "Sammel Pflanze" else "smooth" if key == "Sammel Metall" else info.get("grain", "plaster")
+    plant = key.startswith("Sammel Pflanze")
+    grain = "leaf" if plant else "smooth" if key == "Sammel Metall" else info.get("grain", "plaster")
     v = dict(PALETTE_GRAIN.get(grain, PALETTE_GRAIN["plaster"]))
     if key == "Sammel Metall":
         v.update(rough=0.55, metal=0.35)
     GAME_MATERIALS[key] = dict(v, grain=grain, color=(1.0, 1.0, 1.0), glow=0.27 if key.endswith(" innen") else 0.0,
-                               plant=key == "Sammel Pflanze")
-    if key == "Sammel Pflanze":
+                               plant=plant, evergreen=key == "Sammel Pflanze immergrün")
+    if plant:
         # Blätter und Blüten wiegen sich leicht im Wind (Alpha der Vertex-Farbe: 1 = fest am Fuß)
         GAME_MATERIALS[key]["wind"] = 0.014
     kw = {k: v[k] for k in ("rough", "vary", "scale", "bump", "metal", "color2") if k in v}

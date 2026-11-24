@@ -22,3 +22,4 @@ shader_parameter/emission_color = Color(0.520, 0.600, 0.400, 1)
 shader_parameter/emission_energy = 0.000
 shader_parameter/glow = 0.000
 shader_parameter/wind_strength = 0.000
+shader_parameter/evergreen = true

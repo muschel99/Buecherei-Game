@@ -22,17 +22,23 @@ Zauberhaft, cozy, einfach schön: Lichterketten und Laternen, Glühwürmchen in 
 eine kleine Feentür am Baum, Pusteblumen, Moos, Blumen überall. Dazu viel mehr Möbel und Gestaltung – vor allem fürs
 Wohnhaus und für den Garten.
 
-## Reihenfolge (Vorschlag)
-1. Mehr Draußen-Sachen (braucht auch der Garten) – Etappe 8c läuft.
-2. Gelände: großes Grundstück hinter Bücherei und Pub, Mauern ringsum, Bach mit Steinen und Schilf, Backsteinmauer dahinter;
-   am Anfang verwildert. Trümmer und zerbrochener Torbogen sperren die Gasse.
-3. Projekt Glasanbau: reparieren lassen → Tür hinten im Laden, Glasanbau gehört zum Laden (gestalten, Gäste lesen dort).
-4. Projekt Gasse und Torbogen: aufräumen lassen → der Garten gehört zur Bücherei, man kann ihn gestalten, Gäste kommen hinein.
-5. Projekt Holzhäuschen: reparieren → Zuhause einrichten (eigener Raum zum Gestalten).
+## Reihenfolge (seit 24.11.2026: „rückwärts“, Wunsch der Entwicklerin)
+Erst alles im **fertigen Zustand** bauen – als wären Gasse, Garten, Glasanbau und Holzhäuschen schon freigeschaltet und
+repariert. Die Sperren (Trümmer, zerbrochener Torbogen), das Verwilderte, die kaputten Zustände und die Freischaltungen in der
+Story kommen **ganz zum Schluss** (Zettel 07).
+1. Mehr Draußen-Sachen – fertig (Zettel 01, 41 Sachen).
+2. Gelände fertig: großes Grundstück hinter Bücherei und Pub (Rasen), Mauern ringsum, Bach mit Steinen und Schilf, der links
+   und rechts unter einem Mauerbogen verschwindet, Backsteinmauer dahinter; Baum mit runder Bank und Vogelbad bleiben; die Gasse
+   führt offen hinein.
+3. Glasanbau fertig: Tür hinten im Laden, gehört zum Laden (gestalten, Gäste lesen dort).
+4. Garten gehört zur Bücherei: gestalten wie vor der Tür, Gäste und Katzen kommen hinein.
+5. Holzhäuschen fertig: Zuhause einrichten (eigener Raum zum Gestalten, dort schlafen).
 6. Viele neue Möbel für Garten und Wohnhaus, dazu der Zauber (Lichter, Glühwürmchen, Nebel …).
+7. Zum Schluss rückwärts: Trümmer und zerbrochener Torbogen vorn an der Gasse, verwilderter Garten, kaputter Glasanbau,
+   morsches Holzhäuschen – und die Story-Projekte, die alles freischalten (Reihenfolge Glasanbau/Gasse frei wählbar).
 
 ## Zettel
-`issues/01` … `issues/06` (in dieser Reihenfolge). Die älteren Zettel `.scratch/outdoor-decor/issues/07`, `08`, `10` sind in
+`issues/01` … `issues/07` (in dieser Reihenfolge). Die älteren Zettel `.scratch/outdoor-decor/issues/07`, `08`, `10` sind in
 diesem Plan aufgegangen.
 
 ## Stand (24.11.2026) – zum Weitermachen in einem neuen Chat
@@ -43,6 +49,7 @@ diesem Plan aufgegangen.
 - 24.11.2026: `issues/01` Runde 1 fertig (Regale, Auslagen, Schilder – sieben Sachen, siehe Zettel), Runde 2 fertig
   (Sitzplätze und Tischchen – sieben Sachen), Runde 3 fertig (17 Pflanzen), Runde 4 fertig (zehn Deko-Sachen) – `issues/01`
   erledigt (41 neue Draußen-Sachen).
-- **Nächster Schritt:** `issues/02` – das Gelände (vorher kurz den Plan zeigen: großes Vorhaben).
-- Offene Frage an die Entwicklerin: Im Herbst färbt der Shader draußen jedes grüne Laub (auch Buchs, Lorbeer, Efeu, die in echt
-  grün bleiben) – sollen immergrüne Pflanzen grün bleiben?
+- 24.11.2026: Die Entwicklerin will „rückwärts“ bauen (siehe Reihenfolge); Zettel 02–05 beschreiben jetzt den fertigen Zustand,
+  Zettel 07 die Sperren und kaputten Zustände. Immergrüne Pflanzen (Buchs, Efeu, Olive, Lorbeer, Zitrus) färben sich im Herbst
+  nicht mehr (Shader-Schalter `evergreen`, Sammel-Material „Sammel Pflanze immergrün“).
+- **Nächster Schritt:** `issues/02` – das Gelände im fertigen Zustand (Plan steht in Zettel 02).

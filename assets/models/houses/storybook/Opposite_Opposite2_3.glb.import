@@ -63,8 +63,8 @@ _subresources={
 },
 "Sammel Pflanze": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/sammel_pflanze.tres",
-"use_external/path": "res://assets/materials/storybook/sammel_pflanze.tres"
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_pflanze_immergruen.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_pflanze_immergruen.tres"
 },
 "Sammel Putz": {
 "use_external/enabled": true,

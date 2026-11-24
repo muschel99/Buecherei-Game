@@ -21,7 +21,7 @@ UP = Vector((0, 0, 1))
 FRONT = Vector((0, -1, 0))
 
 # frischere, wärmere Grüntöne als die alten Pflanzen (Vorlagebilder: saftiges Gelbgrün)
-FRESH = {"ivy": (0.26, 0.42, 0.16), "ivy_young": (0.42, 0.58, 0.22), "leaf": (0.34, 0.52, 0.2), "box_leaf": (0.27, 0.45, 0.17),
+FRESH = {"ivy": (0.26, 0.42, 0.16), "ivy_young": (0.42, 0.58, 0.22), "ivy_light": (0.42, 0.58, 0.22), "leaf": (0.34, 0.52, 0.2), "box_leaf": (0.27, 0.45, 0.17),
          "olive_leaf": (0.52, 0.6, 0.4), "stem": (0.4, 0.42, 0.22), "bark": (0.45, 0.34, 0.24)}
 
 
@@ -453,7 +453,7 @@ def climber(p, width, height, kind="ivy", flower=None):
                 nrm = Vector((rnd.uniform(-0.4, 0.4), -1.0, rnd.uniform(0.0, 0.7))).normalized()
                 at = q + Vector((0, -0.012 - 0.02 * ((n_leaf + j) % 3), 0))
                 young = kind == "ivy" and (tip > 0.7 or rnd.random() < 0.15)
-                leaf_on(p, at, dirn, nrm, s_, shape=shape, mat="ivy_young" if young else leaf_mat, stem_mat="stem",
+                leaf_on(p, at, dirn, nrm, s_, shape=shape, mat=("ivy_light" if kind == "ivy" else "ivy_young") if young else leaf_mat, stem_mat="stem",
                         petiole=rnd.uniform(0.012, 0.024), width=leaf_w * rnd.uniform(0.92, 1.06), curl=rnd.uniform(0.06, 0.2))
             n_leaf += 1
     for pts, main in shoots:
@@ -630,6 +630,8 @@ def plant_materials(M):
                            ("leaf_lime", "Blatt Gelbgrün", (0.5, 0.63, 0.22)), ("leaf_silver", "Blatt Silbergrau", (0.56, 0.62, 0.52)),
                            ("leaf_bronze", "Blatt Bronze", (0.3, 0.14, 0.17)), ("grass_leaf", "Grashalm", (0.42, 0.56, 0.24))):
         M[key] = mk(name, col, **leaf)
+    # immergrünes Dunkelgrün (Lorbeer, Zitrusbäumchen): färbt sich im Herbst nicht
+    M["leaf_evergreen"] = mk("Blatt Dunkelgrün immergrün", (0.15, 0.3, 0.12), evergreen=True, **leaf)
     bloom = dict(grain="leaf", rough=0.7, vary=0.1, plant=True)
     for key, name, col in (("gold_flower", "Blüte Goldgelb", (0.93, 0.72, 0.25)), ("yellow_flower", "Blüte Zitronengelb", (0.97, 0.84, 0.36)),
                            ("orange_flower", "Blüte Orange", (0.95, 0.52, 0.2)), ("peach_flower", "Blüte Pfirsich", (0.98, 0.72, 0.58)),
@@ -980,8 +982,8 @@ def citrus(p, height=0.75, fruit="fruit_lemon"):
         lobes = [(c + Vector((0, 0, 0.16)), 0.13)] + [
             (c + Vector((math.cos(a) * 0.12, math.sin(a) * 0.12, 0.08 + rnd.uniform(-0.03, 0.05))), 0.11)
             for a in (rnd.uniform(0, 1) + 2 * math.pi * k / 4 for k in range(4))]
-        crown(p, c, lobes, rnd, leaf=0.075, mats=("leaf_dark", "leaf_dark", "leaf"), shape="oval", width=0.62, per_spray=7, density=1.3,
-              limb=0.012, fruit=fruit, flowers=("cream_flower",))
+        crown(p, c, lobes, rnd, leaf=0.075, mats=("leaf_evergreen", "leaf_evergreen", "box_leaf"), shape="oval", width=0.62, per_spray=7,
+              density=1.3, limb=0.012, fruit=fruit, flowers=("cream_flower",))
     standard(p, height, top, 0.02)
 
 
@@ -1282,7 +1284,7 @@ def standard_ball(p, stem_h=0.5, radius=0.2, leaf_mat="box_leaf"):
 
 def bay_tree(p):
     """Lorbeerbaum im Kübel (Platz): hoher Stamm, große geschnittene Kugel aus dunklen Blättern."""
-    standard(p, 1.65, lambda c: leaf_ball(p, c + UP * 0.4, 0.46, 700, 0.06, p.rnd, mat="leaf_dark", shape="oval", width=0.6,
+    standard(p, 1.65, lambda c: leaf_ball(p, c + UP * 0.4, 0.46, 700, 0.06, p.rnd, mat="leaf_evergreen", shape="oval", width=0.6,
                                           squash=(1.0, 1.0, 0.95), twig_from=c, stem_mat="bark", front_bias=0.0), stem_r=0.04)
 
 
@@ -1562,7 +1564,7 @@ def wall_ivy(p, length, height, holes, rnd, to3d, roots, reach=(0.35, 1.0), kind
                 d3 = (d3 + n3 * rnd.uniform(0.15, 0.5)).normalized()
                 nrm = (n3 + Vector((rnd.uniform(-0.3, 0.3), rnd.uniform(-0.3, 0.3), rnd.uniform(0.0, 0.5)))).normalized()
                 young = kind == "ivy" and (tip > 0.75 or rnd.random() < 0.15)
-                leaf_on(p, at, d3, nrm, s_, shape=shape, mat="ivy_young" if young else leaf_mat, stem_mat="stem",
+                leaf_on(p, at, d3, nrm, s_, shape=shape, mat=("ivy_light" if kind == "ivy" else "ivy_young") if young else leaf_mat, stem_mat="stem",
                         petiole=rnd.uniform(0.012, 0.024), width=(0.95 if kind == "ivy" else 0.62) * rnd.uniform(0.92, 1.06),
                         curl=rnd.uniform(0.06, 0.2), segs=11 if kind == "ivy" else 6, petiole_segs=3)
             if kind == "rose" and rnd.random() < 0.22:

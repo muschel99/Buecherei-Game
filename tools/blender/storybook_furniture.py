@@ -78,7 +78,8 @@ GRID = 1.0 / 9.0
 PLANT_COLORS = {
     "leaf": (0.34, 0.52, 0.2), "leaf_dark": (0.15, 0.3, 0.12), "leaf_blue": (0.3, 0.45, 0.37),
     "leaf_lime": (0.5, 0.63, 0.22), "leaf_silver": (0.56, 0.62, 0.52), "leaf_bronze": (0.3, 0.14, 0.17),
-    "box_leaf": (0.27, 0.45, 0.17), "ivy": (0.26, 0.42, 0.16), "ivy_young": (0.42, 0.58, 0.22),
+    "box_leaf": (0.27, 0.45, 0.17), "ivy": (0.26, 0.42, 0.16), "ivy_young": (0.42, 0.58, 0.22), "ivy_light": (0.42, 0.58, 0.22),
+    "leaf_evergreen": (0.15, 0.3, 0.12),
     "olive_leaf": (0.52, 0.6, 0.4), "grass_leaf": (0.42, 0.56, 0.24), "leaf_core": (0.12, 0.21, 0.08),
     "stem": (0.4, 0.42, 0.22), "bark": (0.45, 0.34, 0.24), "soil": (0.25, 0.17, 0.11),
     "red": (0.86, 0.2, 0.17), "pink": (0.93, 0.52, 0.62), "rose": (0.82, 0.32, 0.45), "coral": (0.95, 0.45, 0.38),
@@ -98,6 +99,10 @@ def lin(c):
     return SB.srgb(c)
 
 
+# Immergrüne Blätter: färben sich im Herbst draußen nicht (Shader-Schalter evergreen)
+EVERGREEN = {"box_leaf", "ivy", "ivy_light", "olive_leaf", "leaf_evergreen"}
+
+
 class Mats(dict):
     """Materialien eines Objekts: fehlt ein Name (z. B. eine Blütenfarbe aus den Pflanzen-
     Bausteinen), wird er mit passender Voreinstellung angelegt."""
@@ -106,7 +111,8 @@ class Mats(dict):
         plant = key in PLANT_COLORS and key not in ("soil", "bark")
         color = PLANT_COLORS.get(key, (0.75, 0.7, 0.62))
         grain = "leaf" if plant else ("wood" if key == "bark" else "plaster")
-        mat = SC.make_material(key, color, grain=grain, rough=0.72 if plant else 0.9, vary=0.1, plant=plant)
+        extra = {"evergreen": True} if key in EVERGREEN else {}
+        mat = SC.make_material(key, color, grain=grain, rough=0.72 if plant else 0.9, vary=0.1, plant=plant, **extra)
         self[key] = mat
         return mat
 
@@ -1146,6 +1152,8 @@ def write_materials(kit, names):
                        c3[0], c3[1], c3[2], SC.GRAIN_ID[v.get("grain", "plaster")], v.get("stripes") or 0.0,
                        v.get("vary", 0.08), v.get("scale", 4.0), v.get("bump", 0.25), v.get("rough", 0.85), v.get("metal", 0.0),
                        ec[0], ec[1], ec[2], emit * 0.45, v["glow"], pattern, v.get("pattern_size", 0.04)))
+            if v.get("evergreen"):
+                text += "shader_parameter/evergreen = true\n"
         with open(path, "w") as f:
             f.write(text)
     return result

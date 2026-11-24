@@ -1,6 +1,6 @@
-# 05 – Projekt Holzhäuschen
+# 05 – Holzhäuschen (fertiger Zustand)
 Status: ready-for-agent
-Blocked by: 04
+Blocked by: 02
 
-- Hinten links im Garten ein Holzhäuschen, am Anfang morsch und verfallen.
-- In der Story reparieren lassen → ein richtiges Zuhause: eigener Raum zum Einrichten (Gestaltungsmodus), dort schlafen.
+- Hinten links im Garten ein Holzhäuschen – ein richtiges Zuhause: eigener Raum zum Einrichten (Gestaltungsmodus), dort schlafen.
+- Der morsche Zustand und das Story-Projekt (reparieren lassen) kommen in Zettel 07.

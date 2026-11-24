@@ -56,6 +56,8 @@ const float SHOP_FLOOR_TOP = 3.0;
 // Alpha der Vertex-Farbe (1 = fest, z. B. am Kasten und an der Stange; 0 = frei, unten am Volant).
 // Feste Teile haben Alpha 1 und bewegen sich nie.
 uniform float wind_strength = 0.0;
+// Immergrün (seit Etappe 8d, Wunsch der Entwicklerin): Buchs, Efeu, Olive, Lorbeer … färben sich im Herbst nicht.
+uniform bool evergreen = false;
 
 varying vec3 model_pos;
 varying vec3 model_normal;
@@ -511,7 +513,7 @@ float window_glow(float g, vec3 wpos, vec3 origin) {
 }
 
 // Herbst (seit der großen Überarbeitung, Autoload Season): season_autumn 0 = Sommer … 1 = Herbst. Nur grüne Blätter
-// (grain 5) draußen färben sich – Blüten, Früchte und Zimmerpflanzen (season_inside) bleiben. Flecken über die Krone
+// (grain 5, nicht immergrün) draußen färben sich – Blüten, Früchte und Zimmerpflanzen (season_inside) bleiben. Flecken über die Krone
 // (Lage in der Welt) + jedes Blatt etwas anders (aus seinem Farbton); oben (Bäume, Efeu an Wänden) kräftig, unten in
 // Beeten und Töpfen nur ein Hauch. Ein paar Blätter bleiben grün.
 global uniform float season_autumn;
@@ -707,7 +709,7 @@ void fragment() {
 		NORMAL = normalize(NORMAL - g * bump_strength * 0.02);
 	}
 #ifndef REST_POSITION
-	if (grain == 5 && season_autumn > 0.001) {
+	if (grain == 5 && season_autumn > 0.001 && !evergreen) {
 		col = autumn_leaf(col, (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, COLOR.rgb);
 	}
 #endif

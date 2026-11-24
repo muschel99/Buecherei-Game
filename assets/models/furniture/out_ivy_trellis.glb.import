@@ -46,10 +46,10 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/furniture/out_ivy_trellis/ivy.tres",
 "use_external/path": "res://assets/materials/furniture/out_ivy_trellis/ivy.tres"
 },
-"ivy_young": {
+"ivy_light": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/furniture/out_ivy_trellis/ivy_young.tres",
-"use_external/path": "res://assets/materials/furniture/out_ivy_trellis/ivy_young.tres"
+"use_external/fallback_path": "res://assets/materials/furniture/out_ivy_trellis/ivy_light.tres",
+"use_external/path": "res://assets/materials/furniture/out_ivy_trellis/ivy_light.tres"
 },
 "paint": {
 "use_external/enabled": true,
