@@ -56,7 +56,7 @@ func _run() -> void:
 				if int(desk.get("_step")) != before or desk.get("_busy"):
 					clicks += 1
 					print("  Klick ", clicks, " Schritt ", before, " -> ", int(desk.get("_step")))
-		print("Bedienung fertig: offen=", desk.is_open, " Klicks=", clicks)
+		print("Bedienung fertig: offen=", desk.is_open, " Klicks=", clicks, " Dauer %.1f s" % t)
 		served += 1
 		Engine.time_scale = 4.0
 	print("Bedient: ", served)

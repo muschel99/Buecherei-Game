@@ -1628,12 +1628,14 @@ var passerby_read_offset: Vector3 = Vector3(0.0, -0.05, 0.28)
 var passerby_read_tilt: float = -42.0
 var stamp_bonus_extra_days: int = 3
 ## Bedienen an der Theke (Etappe 8): Bewegungen der Dinge auf der Theke (Ausweis, Buch über den Scanner, Tüte zum Gast), die
-## Spielfigur rückt in so vielen Sekunden an ihren Platz, je Buch so lange, bis der Gast es aus dem Korb auf die Theke gehoben hat
-var desk_card_time: float = 0.55
-var desk_book_time: float = 0.5
-var desk_push_time: float = 0.6
-var desk_step_time: float = 0.45
-var desk_unpack_time: float = 0.32
+## Spielfigur rückt in so vielen Sekunden an ihren Platz, je Buch so lange, bis der Gast es aus dem Korb auf die Theke gehoben hat.
+## Seit der Testrunde nach 8d schneller (Wunsch: „ich würde gern schneller bedienen“); so lange steckt der Ausweis im Leser.
+var desk_card_time: float = 0.4
+var desk_book_time: float = 0.36
+var desk_push_time: float = 0.45
+var desk_step_time: float = 0.4
+var desk_unpack_time: float = 0.26
+var desk_card_read_time: float = 0.45
 ## Der Gast stellt seinen Korb so weit seitlich neben sich vor der Theke ab (m, im Raum der Theke)
 var counter_basket_side: float = 0.42
 ## Platz der Spielfigur beim Bedienen: x seitlich, z = Abstand zur Thekenmitte (Spielfigur auf -Z; y = Augenhöhe über der

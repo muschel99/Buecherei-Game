@@ -62,6 +62,8 @@ var _books: Array[Dictionary] = []   # {node, book, scanned}
 var _hover: Node3D
 var _progress := {}                  # Gast → {"read": bool, "bonus": bool, "scanned": Array[Book]}
 var _tween: Tween
+var _card_tween: Tween               # Ausweis: Kartenleser und weiter in die Tüte (läuft neben dem Scannen)
+var _card_moving := false            # der Ausweis ist noch unterwegs in die Tüte – so lange bleibt die Tüte stehen
 var _walk_tween: Tween               # Spielfigur rückt an ihren Platz hinter der Theke
 var _unpacking := 0                  # laufende Bewegungen beim Hinlegen (Ausweis, Bücher) – solange keine Klicks
 var _unpack_tweens: Array[Tween] = []
@@ -336,12 +338,14 @@ func _click(target: Node3D) -> void:
 					_scan_book(entry)
 					return
 		Step.BAG:
-			if target == _bag:
+			if target == _bag and not _card_moving:
 				_hand_over_bag()
 
 
 ## 1. Ausweis in den Kartenleser: gleitet hinüber, stellt sich auf und rutscht in den Schlitz; dann Stempel auf dem Tablet, und
-## der Ausweis hüpft wieder heraus in die Tüte (der Gast bekommt ihn mit den Büchern zurück).
+## der Ausweis hüpft wieder heraus in die Tüte (der Gast bekommt ihn mit den Büchern zurück). Seit der Testrunde nach 8d (Wunsch
+## der Entwicklerin: schneller bedienen) darf man schon nach dem Piep die Bücher scannen – der Ausweis wandert nebenbei in die
+## Tüte (eigene Bewegung _card_tween); die Tüte geht erst hinüber, wenn auch der Ausweis darin liegt.
 func _read_card() -> void:
 	_busy = true
 	_step = Step.READING
@@ -349,11 +353,13 @@ func _read_card() -> void:
 	var slot := tablet.reader_slot_global() if tablet else counter.global_transform * Vector3(-0.4, Counter.TOP_HEIGHT + 0.04, -0.1)
 	var upright := (tablet.global_transform.basis if tablet else counter.global_transform.basis).orthonormalized()
 	Audio.play_at("ui/card_insert", slot, -4.0, Audio.vary(0.04))
-	_kill_tween()
-	_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_tween.tween_property(_card, "global_transform", Transform3D(upright, slot + Vector3.UP * 0.075), GameConfig.desk_card_time)
-	_tween.tween_property(_card, "global_position", slot + Vector3.UP * 0.035, 0.18)
-	_tween.tween_callback(func() -> void:
+	if _card_tween and _card_tween.is_valid():
+		_card_tween.kill()
+	_card_moving = true
+	_card_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_card_tween.tween_property(_card, "global_transform", Transform3D(upright, slot + Vector3.UP * 0.075), GameConfig.desk_card_time)
+	_card_tween.tween_property(_card, "global_position", slot + Vector3.UP * 0.035, 0.14)
+	_card_tween.tween_callback(func() -> void:
 		Audio.play_at("ui/card_beep", slot, -8.0)
 		var id := visits.visit_card(walker) if walker else ""
 		var bonus := Lending.add_stamp(id)
@@ -365,19 +371,21 @@ func _read_card() -> void:
 			tablet.screen.show_card(str(info.get("name", "Hattie Bramwell" if _preview else "")),
 				int(info.get("stamps", 3 if _preview else 0)), bonus)
 		if bonus:
-			Audio.play("ui/kaching", -16.0, 1.3))
-	_tween.tween_interval(0.9)
-	# wieder heraus und in die Tüte
-	var into_bag := _bag.global_transform * Vector3(0.0, -BAG_DROP + 0.1, 0.0)
-	_tween.tween_property(_card, "global_position", slot + Vector3.UP * 0.1, 0.2)
-	_tween.tween_property(_card, "global_position", into_bag + Vector3.UP * 0.18, GameConfig.desk_card_time)
-	_tween.tween_property(_card, "global_position", into_bag, 0.2).set_ease(Tween.EASE_IN)
-	_tween.tween_callback(func() -> void:
-		Audio.play_at("books/place", into_bag, -14.0, 1.3)
-		_card.visible = false
+			Audio.play("ui/kaching", -16.0, 1.3)
+		# ab jetzt dürfen die Bücher über den Scanner
 		_busy = false
 		_step = Step.SCAN if _scanned_count() < _books.size() else Step.BAG
 		_show_scan())
+	_card_tween.tween_interval(GameConfig.desk_card_read_time)
+	# wieder heraus und in die Tüte
+	var into_bag := _bag.global_transform * Vector3(0.0, -BAG_DROP + 0.1, 0.0)
+	_card_tween.tween_property(_card, "global_position", slot + Vector3.UP * 0.1, 0.16)
+	_card_tween.tween_property(_card, "global_position", into_bag + Vector3.UP * 0.18, GameConfig.desk_card_time)
+	_card_tween.tween_property(_card, "global_position", into_bag, 0.16).set_ease(Tween.EASE_IN)
+	_card_tween.tween_callback(func() -> void:
+		Audio.play_at("books/place", into_bag, -14.0, 1.3)
+		_card.visible = false
+		_card_moving = false)
 
 
 ## 2. Das oberste Buch: abheben, flach von rechts nach links über den Scanner (Piep), hoch und aufrecht von oben in die Tüte.
@@ -492,7 +500,7 @@ func _clickables() -> Array[Node3D]:
 			if top:
 				result.append(top)
 		Step.BAG:
-			if _bag:
+			if _bag and not _card_moving:
 				result.append(_bag)
 	return result
 
@@ -657,6 +665,9 @@ func _put_in_bag(node: Node3D, book: Book, index: int) -> void:
 
 
 func _clear_props() -> void:
+	if _card_tween and _card_tween.is_valid():
+		_card_tween.kill()
+	_card_moving = false
 	for tween in _unpack_tweens:
 		if tween and tween.is_valid():
 			tween.kill()
