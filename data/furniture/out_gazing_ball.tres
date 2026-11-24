@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "silver"
+display_name = "Silber"
+colors = Dictionary[String, Color]({"ball": Color(0.820, 0.840, 0.880, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "gold"
+display_name = "Gold"
+colors = Dictionary[String, Color]({"ball": Color(0.880, 0.700, 0.360, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "blue"
+display_name = "Blau"
+colors = Dictionary[String, Color]({"ball": Color(0.360, 0.500, 0.800, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "rose"
+display_name = "Rosé"
+colors = Dictionary[String, Color]({"ball": Color(0.880, 0.600, 0.660, 1)})
+
+[resource]
+script = ExtResource("1_data")
+id = "out_gazing_ball"
+display_name = "Rosenkugel"
+description = "Eine spiegelnde Glaskugel auf einer Steinsäule – wie in Großmutters Garten."
+category = 7
+subcategory = "outdoor_deco"
+price = 40
+style_ids = Array[String]([])
+scene_path = "res://scenes/furniture/out_gazing_ball.tscn"
+footprint = Vector2i(3, 3)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 1
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

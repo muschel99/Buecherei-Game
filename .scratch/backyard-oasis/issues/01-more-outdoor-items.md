@@ -1,5 +1,5 @@
 # 01 – Mehr Draußen-Sachen
-Status: ready-for-agent
+Status: resolved
 
 Viele weitere Dinge für die Abteilung „Draußen“ im Nest & Nook (Bau-Script `tools/blender/furniture_outdoor.py`,
 ids `out_…`): Sitzplätze, Tischchen, sehr viele Pflanzen in allen Größen, Farben und Formen, Kundenstopper, kleine Regale
@@ -28,3 +28,9 @@ Lorbeerstämmchen (`out_bay_standard`), Ziergras (`out_grass_pot`), Sonnenblumen
 (`out_hollyhock_pot`), Blumenkasten mit Geranien (`out_flower_box`), Kletterrose/Efeu/Glyzinie am Rankgitter
 (`out_rose_trellis`, `out_ivy_trellis`, `out_wisteria_trellis`). Eimer haben Seitengriffe statt Henkel (der ginge durch die
 Pflanze; `F.pot(handle=False)`). Neue Prüfung `tools/blender/plant_clip_check.py`.
+
+24.11.2026: Runde 4 fertig – Deko: Fahrrad mit Blumenkörben (`out_flower_bike`, Rad aus `storybook_town.bicycle` + Halter am
+Doppelständer), Schubkarre mit Blumen (`out_wheelbarrow`), Milchkanne mit Blumen (`out_milk_churn`), Zinkwanne mit
+Sommerblumen (`out_zinc_tub`), Gießkanne (`out_watering_can`), Vogelhäuschen (`out_birdhouse`), Vogeltränke (`out_birdbath`),
+Rosenkugel (`out_gazing_ball`), Igel aus Stein (`out_hedgehog`), Kürbisse (`out_pumpkins`). Zettel erledigt: zusammen 41 neue
+Draußen-Sachen.

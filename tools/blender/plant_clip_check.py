@@ -2,9 +2,10 @@
 Gittern oder Henkeln? (geo_check.py erkennt Pflanzen nur am Material „plant“ der Häuser – bei den Möbeln heißen sie „leaf“,
 „bloom“, „stem“ …, dort hält es jedes Blatt für ein festes Teil.)
 
-Fest sind die Teile mit den Materialien pot, crate, paint, metal, iron, wood; Erde (soil) zählt nicht – Wurzeln und tief
-hängende Triebe dürfen in der Erde liegen. Alles andere gilt als Pflanze. Gemeldet wird je Pflanzen-Material, wie viele
-Dreiecke feste Teile schneiden, und wo (Mitte, Höhe).
+Pflanze ist, was ein Pflanzen-Material hat (die Namen aus storybook_furniture.PLANT_COLORS, z. B. leaf, bloom, stem, bark);
+Erde und Wasser zählen nicht (Wurzeln und tief hängende Triebe dürfen in der Erde liegen); alles andere ist fest (Topf,
+Kasten, Gitter, Korb, Stein …). Gemeldet wird je Pflanzen-Material, wie viele Dreiecke feste Teile schneiden, und wo
+(Mitte, Höhe).
 
 Aufruf (im Projektordner):
     blender -b --factory-startup --python tools/blender/plant_clip_check.py -- out_fern_bucket out_flower_box
@@ -17,9 +18,13 @@ import bmesh
 import bpy
 from mathutils.bvhtree import BVHTree
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import storybook_furniture as F  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SOURCE = os.path.join(ROOT, "assets", "models", "source", "furniture")
-SOLID = {"pot", "crate", "paint", "metal", "iron", "wood"}
+IGNORE = {"soil", "water"}
+PLANT = (set(F.PLANT_COLORS) | {"bloom", "bloom2", "bloom_core"}) - IGNORE
 
 
 def material(o):
@@ -42,8 +47,8 @@ def tree(objs):
 def check(fid):
     bpy.ops.wm.open_mainfile(filepath=os.path.join(SOURCE, fid + ".blend"))
     meshes = [o for o in bpy.data.objects if o.type == "MESH"]
-    solid = [o for o in meshes if material(o) in SOLID]
-    plants = [o for o in meshes if material(o) not in SOLID | {"soil"}]
+    plants = [o for o in meshes if material(o) in PLANT]
+    solid = [o for o in meshes if material(o) not in PLANT | IGNORE]
     if not solid or not plants:
         print("PFLANZEN %s: nichts zu prüfen" % fid)
         return 0

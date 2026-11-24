@@ -866,6 +866,291 @@ def build_barrel_table(k):
     k.surface((0, 0, H + 0.055), (0.42, 0.42))
 
 
+# --- Deko (Runde 4) ---
+
+def stone(k, color=(0.7, 0.68, 0.63), slot="stone"):
+    return k.mat(slot, color, grain="plaster", rough=0.92, vary=0.06, bump=0.25, scale=2.5)
+
+
+STONES = [("grey", "Steingrau", (0.7, 0.68, 0.63)), ("sand", "Sandstein", (0.82, 0.74, 0.6)), ("terra", "Terrakotta", TERRA),
+          ("moss", "Moosgrün", (0.52, 0.58, 0.46))]
+
+
+def build_flower_bike(k):
+    """Fahrrad mit Blumenkörben: das Hollandrad aus der Straße (storybook_town.bicycle – Doppelständer, Vorderrad und
+    Ständerfüße auf dem Boden), vorn und hinten im Weidenkorb ein Strauß. Steht längs (Front nach +x), man sieht es von der
+    Seite."""
+    import storybook_town as T
+    k.mat("bike", SAGE, grain="smooth", rough=0.45, metal=0.15, vary=0.04)
+    k.mat("chrome", (0.72, 0.71, 0.68), grain="smooth", rough=0.35, metal=0.6, vary=0.03)
+    k.mat("rubber", (0.12, 0.11, 0.1), grain="smooth", rough=0.8, vary=0.03)
+    k.mat("saddle", (0.42, 0.25, 0.15), grain="fabric", rough=0.6, vary=0.06)
+    k.mat("wicker", (0.68, 0.5, 0.3), grain="fabric", rough=0.9, vary=0.1, bump=0.4)
+    before = set(k.coll.objects)
+    T.bicycle(k.M, {"deco": k.coll, "pots": k.coll}, "Fahrrad", 0.0, 0.0, seed=90)
+    k.objects += [o for o in k.coll.objects if o not in before and o.type == "MESH"]
+    # Halter vom oberen Ende des Doppelständers zur Kettenstrebe (in storybook_town endet der Ständer 8 mm daneben frei)
+    ra, bb = Vector((-0.56, 0, 0.36)), Vector((-0.12, 0, 0.29))
+    bracket = k.part("Ständerhalter", "chrome", bevel=0.0)
+    for sgn in (-1, 1):
+        stay = (ra + Vector((0, sgn * 0.055, 0))).lerp(bb + Vector((0, sgn * 0.0275, 0)), 0.15)
+        bracket.tube([ra + Vector((0.04, sgn * 0.06, -0.03)), stay], 0.008, segs=6, round_ends=True)
+    # Mitte der Korbränder (wie die Pflanzplätze in storybook_town.bicycle). Die Stiele eines Straußes reichen 0,15 unter den
+    # Ursprung; der Korbboden liegt 0,169 (vorn, Korb 19 cm hoch) bzw. 0,149 (hinten, 17 cm) unter dem Rand – so stehen die
+    # Stiele 2 mm im Boden. Der hintere Strauß sitzt 2 cm weiter hinten und schmaler (vor ihm der Sattel).
+    R = 0.34
+    front = Vector((0.56 + 0.04, 0, 2 * R + 0.035 + 0.05 + 0.19 + 0.0015))
+    rear = Vector((-0.56 - 0.07 - 0.02, 0, (R + 0.02) + R + 0.075 + 0.007 + 0.17 - 0.001))
+    for i, (at, head, colors, scale, spread) in enumerate(((front, G.head_tulip, ("pink", "white_flower", "peach_flower"), 1.15, 0.17),
+                                                          (rear, G.head_daisy, ("white_flower", "yellow_flower", "lilac"), 1.0, 0.1))):
+        p = k.plant("bucket", seed_offset=i * 13)
+        G.cut_bunch(p, head, colors, n=11, height=0.38, spread=spread, leaves=3 if i == 0 else 2)
+        k.add_plant(p, at, scale=scale)
+    k.collider((0.01, 0, 0.55), (1.9, 0.5, 1.1))
+
+
+def build_watering_can(k):
+    """Gießkanne aus Zink: bauchiger Körper mit Einfüllöffnung, Bügel oben, Griff hinten, langes Rohr mit Brause."""
+    k.mat("zinc", ZINC[0][2], grain="smooth", rough=0.4, metal=0.35, vary=0.05)
+    b = k.part("Kanne", "zinc", bevel=0.0)
+    r, h = 0.11, 0.24
+    b.lathe([(0.0, 0.0), (r * 0.95, 0.0), (r, 0.012), (r, h * 0.82), (r * 0.9, h * 0.92), (r * 0.55, h), (r * 0.5, h + 0.012),
+             (r * 0.44, h + 0.012), (r * 0.44, h - 0.01), (0.0, h - 0.01)], (0, 0, 0), segs=36)
+    F.ring(b, (0, 0, h * 0.5), r + 0.002, 0.004, n=48, segs=6)
+    # Rohr von unten vorn schräg nach oben, vorn die Brause
+    b.tube([(r - 0.01, 0, 0.04), (0.2, 0, 0.16), (0.3, 0, 0.29)], lambda t: 0.017 - 0.006 * t, segs=8, smooth=1, round_ends=True)
+    b.lathe([(0.0, 0.0), (0.014, 0.0), (0.032, 0.03), (0.034, 0.036), (0.0, 0.04)], (0.3, 0, 0.29), segs=18, turn=(0, 40))
+    # Bügel oben und Griff hinten (beide fest am Körper)
+    b.tube([(-r * 0.75, 0, h * 0.93), (-r * 0.5, 0, h + 0.1), (r * 0.4, 0, h + 0.1), (r * 0.7, 0, h * 0.95)], 0.008, segs=7, smooth=2,
+           round_ends=True)
+    b.tube([(-r + 0.002, 0, h * 0.8), (-r - 0.05, 0, h * 0.62), (-r + 0.002, 0, h * 0.25)], 0.008, segs=7, smooth=2, round_ends=True)
+    k.collider((0.07, 0, (h + 0.1) / 2), (0.46, 0.24, h + 0.1))
+
+
+def build_birdhouse(k):
+    """Vogelhäuschen auf einem Pfahl im Kreuzfuß: Häuschen mit Satteldach auf einer Platte, vorn das Einflugloch mit Rand
+    (innen dunkel) und eine Sitzstange."""
+    paint(k)
+    wood(k, OAK)
+    k.mat("roof", (0.55, 0.26, 0.2), grain="paint", rough=0.75, vary=0.08, bump=0.15)
+    k.mat("hole", (0.08, 0.06, 0.05), grain="smooth", rough=0.95, vary=0.0)
+    post = k.part("Pfahl", "wood", bevel=0.003)
+    cross_foot(post, 0.44, 0.05, 0.03, 0.2)
+    P = 1.25
+    post.box((0, 0, P / 2), (0.06, 0.06, P), step=0.3, dent=0.0006)
+    post.box((0, 0, P + 0.01), (0.24, 0.22, 0.02), step=0.3, dent=0.0006)
+    hb = k.part("Häuschen", "paint", bevel=0.003)
+    W, D, H = 0.18, 0.15, 0.17
+    z0 = P + 0.02
+    hb.box((0, 0, z0 + H / 2), (W, D, H), step=0.3, dent=0.0005)
+    pitch = math.radians(38)
+    apex = z0 + H + (W / 2) * math.tan(pitch)
+    for y0 in (-D / 2, D / 2 + 0.0):
+        hb.slab([(-W / 2 + 0.003, 0.0), (W / 2 - 0.003, 0.0), (0.0, apex - z0 - H - 0.003)], 0.015,
+                plane_xz(y0 if y0 > 0 else -D / 2 + 0.015, z0 + H), dent=0.0003)
+    roof = k.part("Dach", "roof", bevel=0.003)
+    run, t = W / 2 + 0.04, 0.015
+    for sx in (-1, 1):
+        n = Vector((sx * math.sin(pitch), 0, math.cos(pitch)))
+        a = Vector((0, 0, apex)) + n * t / 2
+        b = Vector((sx * run, 0, apex - run * math.tan(pitch))) + n * t / 2
+        roof.span(a, b, D + 0.07, t, step=0.3, dent=0.0004)
+    # Einflugloch: Holzrand, darin dunkel; Sitzstange darunter
+    hc = Vector((0, -D / 2, z0 + H * 0.62))
+    F.ring(hb, hc, 0.025, 0.005, matrix=Matrix.Rotation(math.pi / 2, 4, "X"), n=28, segs=8)
+    hole = k.part("Loch", "hole", bevel=0.0)
+    hole.lathe([(0.0, 0.0), (0.021, 0.0), (0.021, 0.0035), (0.0, 0.0035)], hc + Vector((0, 0.001, 0)), segs=24, turn=(90, 0))
+    post.tube([(0, -D / 2 + 0.02, z0 + H * 0.35), (0, -D / 2 - 0.06, z0 + H * 0.35)], 0.006, segs=8, round_ends=True)
+    k.collider((0, 0, P / 2), (0.08, 0.08, P))
+    k.collider((0, 0, 0.025), (0.44, 0.05, 0.05))
+    k.collider((0, 0, 0.025), (0.05, 0.44, 0.05))
+    k.collider((0, 0, (P + apex) / 2 + 0.01), (W + 0.1, D + 0.08, apex - P + 0.02))
+
+
+def build_milk_churn(k):
+    """Alte Milchkanne mit einem Strauß Wiesenblumen: Bauch, Schulter, weiter Hals mit Rand, zwei Griffe."""
+    k.mat("zinc", ZINC[0][2], grain="smooth", rough=0.4, metal=0.35, vary=0.05)
+    b = k.part("Kanne", "zinc", bevel=0.0)
+    r, neck = 0.15, 0.095
+    H = 0.5
+    b.lathe([(0.0, 0.0), (r * 0.96, 0.0), (r, 0.015), (r, 0.3), (r * 0.98, 0.33), (neck, 0.41), (neck, H - 0.02), (neck + 0.012, H - 0.01),
+             (neck + 0.012, H), (neck - 0.006, H), (neck - 0.006, H - 0.2), (0.0, H - 0.2)], (0, 0, 0), segs=36)
+    for z in (0.06, 0.26):
+        F.ring(b, (0, 0, z), r + 0.002, 0.005, n=48, segs=6)
+    for sx in (-1, 1):
+        b.tube([(sx * 0.13, 0, 0.36), (sx * 0.17, 0, 0.38), (sx * 0.175, 0, 0.42), (sx * 0.1, 0, 0.445)], 0.008, segs=7, smooth=2,
+               round_ends=True)
+    p = k.plant("bucket")
+    G.cut_bunch(p, G.head_daisy, ("white_flower", "yellow_flower", "lilac", "sky_flower"), n=12, height=0.42)
+    k.add_plant(p, (0, 0, H), scale=0.78)
+    k.collider((0, 0, 0.35), (0.36, 0.36, 0.7))
+
+
+def build_wheelbarrow(k):
+    """Alte Schubkarre aus Holz mit zwei Blumentöpfen darin: Kasten auf zwei Holmen, vorn das Rad in einer Gabel unter den
+    Holmen, hinten zwei Beine und die Griffe. Steht längs (Rad nach +x)."""
+    paint(k)
+    wood(k, OAK)
+    metal(k)
+    k.mat("soil", (0.25, 0.17, 0.11), grain="stone", rough=0.95, vary=0.12, bump=0.4)
+    zb = 0.3                         # Oberkante der Holme
+    frame = k.part("Holme", "wood", bevel=0.004)
+    straps = k.part("Gabel", "metal", bevel=0.0)
+    R = 0.17
+    ax = 0.5
+    for sy in (-1, 1):
+        y = sy * 0.16
+        frame.span((0.74, y, zb - 0.02), (-0.62, y, zb - 0.02), 0.04, 0.04, step=0.3, dent=0.0006)
+        frame.tube([(-0.6, y, zb - 0.02), (-0.75, y * 1.1, zb + 0.02), (-0.9, y * 1.15, zb + 0.06)], 0.018, segs=8, smooth=1,
+                   round_ends=True)
+        frame.box((-0.36, y, (zb - 0.04) / 2), (0.04, 0.04, zb - 0.04), step=0.3, dent=0.0006)
+        # Gabel: Eisenband schräg vom Holm hinunter zum Achsende (läuft außen am Rad vorbei)
+        straps.span((ax, y, zb - 0.035), (ax, sy * 0.085, R), 0.03, 0.006, step=0.3, dent=0.0)
+    frame.span((-0.36, -0.16, 0.08), (-0.36, 0.16, 0.08), 0.03, 0.03, step=0.3, dent=0.0005)
+    # vorderer Querbalken vor dem Rad (das Rad reicht bis x = 0,67)
+    frame.span((0.72, -0.18, zb - 0.02), (0.72, 0.18, zb - 0.02), 0.035, 0.035, step=0.3, dent=0.0005)
+    _wheel(k, (ax, 0, R + 0.001), R, hub_len=0.12, spokes=6)
+    axle = k.part("Achse", "metal", bevel=0.0)
+    axle.tube([(ax, -0.088, R + 0.001), (ax, 0.088, R + 0.001)], 0.01, segs=8, round_ends=True)
+    # Kasten: Boden, Wände (vorn schräg nach außen)
+    box = k.part("Kasten", "paint", bevel=0.004)
+    x0, x1, W = -0.34, 0.3, 0.46
+    box.box(((x0 + x1) / 2, 0, zb + 0.01), (x1 - x0, W - 0.04, 0.02), step=0.3, dent=0.0005)
+    top = zb + 0.22
+    for sy in (-1, 1):
+        box.slab([(x0, zb), (x1, zb), (x1 + 0.1, top), (x0 - 0.02, top)], 0.02,
+                 Matrix(((1, 0, 0, 0), (0, 0, -1, sy * W / 2 + (0.02 if sy < 0 else 0.0)), (0, 1, 0, 0), (0, 0, 0, 1))), dent=0.0005)
+    box.box((x0 - 0.01, 0, (zb + top) / 2), (0.02, W - 0.042, top - zb), step=0.3, dent=0.0005)
+    box.span((x1 + 0.006, 0, zb), (x1 + 0.096, 0, top), W - 0.042, 0.02, step=0.3, dent=0.0005)
+    # zwei Töpfe mit Blumen im Kasten
+    pot_mat(k, TERRA)
+    for i, (x, builder) in enumerate(((-0.16, lambda p: G.geranium_bush(p, "red")),
+                                      (0.1, lambda p: G.flower_bush(p, lambda q, c, at, up: G.daisy_head(q, at, up, 0.04, petal=c),
+                                                                    ("white_flower",), n=10, height=0.36, leaf_mat="leaf_blue",
+                                                                    leaf_shape="narrow", leaf=0.05)))):
+        soil, rim = F.pot(k, (x, 0, zb + 0.02), 0.1, 0.13, style="classic", slot="pot")
+        p = k.plant("potfill", seed_offset=i * 7)
+        builder(p)
+        k.add_plant(p, soil, scale=rim / 0.2)
+    k.collider((0.0, 0, (zb + top) / 2), (0.76, W, top - zb))
+    k.collider((ax, 0, R), (2 * R, 0.2, 2 * R))
+    k.collider((-0.36, 0, zb / 2), (0.05, 0.36, zb))
+    k.collider((0.72, 0, zb - 0.02), (0.06, 0.4, 0.04))
+    k.collider((-0.76, 0, zb), (0.3, 0.4, 0.1))
+
+
+def _pumpkin(k, part_slot, at, radius, height, ribs, seed):
+    """Kürbis wie die Herbst-Deko der Straße: rundlicher Drehkörper mit Rippen, oben eine Mulde mit gebogenem Stiel."""
+    rnd = random.Random(seed)
+    body = k.part("Kürbis", part_slot, bevel=0.0, vary=0.06)
+    n = 16
+    profile = [(0.0, height * 0.07)]
+    for i in range(1, n):
+        t = i / n
+        u = 2.0 * t - 1.0
+        profile.append((radius * (1.0 - abs(u) ** 2.3) ** (1.0 / 2.3), height * t))
+    dip = height * 0.9
+    profile += [(radius * 0.17, height * 0.985), (0.0, dip)]
+    # der unterste Ring des Profils liegt bei height/16 – so tief absenken, dass er 2 mm im Boden steht (sonst schwebt er)
+    body.lathe(profile, Vector(at) - Vector((0, 0, height / 16 + 0.002)), segs=ribs * 4, wave=0.1, waves=ribs, dent=radius * 0.03)
+    stem = k.part("Stiel", "pumpkin_stem", bevel=0.0)
+    lean = rnd.uniform(0.0, 2 * math.pi)
+    d = Vector((math.cos(lean), math.sin(lean), 0.0))
+    length = max(0.035, height * 0.32)
+    base = Vector(at) - Vector((0, 0, height / 16 + 0.002))
+    stem.tube([base + Vector((0, 0, dip - 0.01)), base + Vector((0, 0, dip + length * 0.45)) + d * length * 0.08,
+               base + Vector((0, 0, dip + length * 0.85)) + d * length * 0.32], max(0.008, radius * 0.1), segs=7, smooth=1,
+              round_ends=True, dome=True)
+
+
+def build_pumpkins(k):
+    """Kürbisse für den Herbst: ein großer, ein kleiner (beide in der Farbvariante), ein cremeweißer und ein dunkelgrüner,
+    nebeneinander, die Bäuche berühren sich fast."""
+    k.mat("pumpkin", (0.93, 0.5, 0.13), grain="smooth", rough=0.62, vary=0.08, bump=0.15)
+    k.mat("pumpkin_cream", (0.93, 0.88, 0.76), grain="smooth", rough=0.62, vary=0.08, bump=0.15)
+    k.mat("pumpkin_green", (0.36, 0.42, 0.27), grain="smooth", rough=0.62, vary=0.08, bump=0.15)
+    k.mat("pumpkin_stem", (0.42, 0.36, 0.2), grain="wood", rough=0.85, vary=0.08)
+    for slot, at, r, h, ribs, seed in (("pumpkin", (-0.14, 0.04, 0), 0.17, 0.27, 10, 1), ("pumpkin_cream", (0.21, 0.08, 0), 0.14, 0.185, 10, 2),
+                                       ("pumpkin", (0.09, -0.18, 0), 0.1, 0.155, 8, 3), ("pumpkin_green", (-0.45, -0.08, 0), 0.115, 0.16, 9, 4)):
+        _pumpkin(k, slot, at, r, h, ribs, k.seed + seed)
+    k.collider((-0.1, -0.02, 0.14), (0.95, 0.5, 0.28))
+
+
+def build_gazing_ball(k):
+    """Rosenkugel auf einer Steinsäule: Sockel, gedrehte Säule, oben eine Schale, darin die spiegelnde Glaskugel."""
+    stone(k)
+    # halb spiegelnd: zeigt den Himmel, behält aber seine Farbe (ganz spiegelnd wirkt sie ohne Umgebung schwarz)
+    k.mat("ball", (0.82, 0.84, 0.88), grain="smooth", rough=0.12, metal=0.55, vary=0.0)
+    s = k.part("Säule", "stone", bevel=0.0)
+    s.lathe([(0.0, 0.0), (0.14, 0.0), (0.14, 0.05), (0.11, 0.07), (0.075, 0.1), (0.06, 0.2), (0.055, 0.45), (0.07, 0.5),
+             (0.065, 0.52), (0.1, 0.56), (0.12, 0.6), (0.115, 0.61), (0.07, 0.6), (0.0, 0.59)], (0, 0, 0), segs=32, dent=0.002)
+    ball = k.part("Kugel", "ball", bevel=0.0)
+    F.sphere(ball, (0, 0, 0.59 + 0.12), 0.13, segs=32, rings=16)
+    k.collider((0, 0, 0.42), (0.28, 0.28, 0.84))
+
+
+def build_hedgehog(k):
+    """Igel aus Stein: rundlicher Körper, spitze Schnauze mit Nase, kleine Augen und Ohren, vier Füße; auf dem Rücken viele
+    kurze, nach hinten gerichtete Stacheln, die im Körper stecken."""
+    stone(k)
+    b = k.part("Igel", "stone", bevel=0.0)
+    rx, ry, rz = 0.1, 0.13, 0.075
+    c = Vector((0, 0.01, 0.07))
+    b.blob(c, 1.0, subdiv=3, lump=0.03, scale=(rx, ry, rz))
+    # Schnauze nach vorn (-y), Nase, Augen, Ohren, Füße
+    b.tube([c + Vector((0, -ry * 0.7, -0.012)), c + Vector((0, -ry - 0.022, -0.026))], lambda t: 0.038 * (1 - 0.55 * t), segs=12,
+           round_ends=True)
+    b.blob(c + Vector((0, -ry - 0.03, -0.026)), 0.012, subdiv=1, lump=0.0)
+    for sx in (-1, 1):
+        b.blob(c + Vector((sx * 0.032, -ry * 0.78, 0.018)), 0.007, subdiv=1, lump=0.0)
+        b.blob(c + Vector((sx * 0.05, -ry * 0.55, 0.045)), 0.013, subdiv=1, lump=0.05, scale=(1.0, 0.5, 1.0))
+        for fy in (-0.07, 0.07):
+            b.blob(Vector((sx * 0.055, c.y + fy, 0.016)), 0.018, subdiv=1, lump=0.05, scale=(1.0, 1.3, 0.85))
+    rnd = random.Random(k.seed)
+    rows, cols = 16, 15
+    for i in range(rows * cols):
+        u = -0.72 + 1.72 * (i // cols + 0.5 + rnd.uniform(-0.25, 0.25)) / rows      # entlang (Stirn … hinten)
+        v = -1.0 + 2.0 * (i % cols + 0.5 + rnd.uniform(-0.25, 0.25)) / cols         # quer
+        th = math.acos(max(-1.0, min(1.0, -u * 0.9)))
+        ph = v * 1.25
+        n = Vector((math.sin(th) * math.sin(ph), -math.cos(th), math.sin(th) * math.cos(ph)))
+        if n.z < 0.15:
+            continue
+        base = c + Vector((n.x * rx, n.y * ry, n.z * rz)) * 0.9
+        out = (Vector((n.x / rx, n.y / ry, n.z / rz)).normalized() + Vector((0, 0.6, 0.2))).normalized()
+        b.tube([base, base + out * rnd.uniform(0.024, 0.032)], lambda t: 0.0085 * (1 - 0.85 * t), segs=5, round_ends=True)
+    k.collider((0, -0.02, 0.07), (0.24, 0.36, 0.14))
+
+
+def build_birdbath(k):
+    """Vogeltränke aus Stein: Fuß, schlanke Säule und eine flache Schale mit Wasser."""
+    stone(k)
+    k.mat("water", (0.55, 0.68, 0.72), grain="smooth", rough=0.05, vary=0.02)
+    s = k.part("Tränke", "stone", bevel=0.0)
+    s.lathe([(0.0, 0.0), (0.16, 0.0), (0.16, 0.04), (0.12, 0.07), (0.07, 0.1), (0.055, 0.3), (0.065, 0.48), (0.1, 0.52), (0.22, 0.56),
+             (0.26, 0.6), (0.25, 0.615), (0.225, 0.605), (0.18, 0.575), (0.0, 0.565)], (0, 0, 0), segs=40, dent=0.002)
+    w = k.part("Wasser", "water", bevel=0.0, settle=False)
+    w.lathe([(0.0, 0.0), (0.205, 0.0), (0.205, 0.022), (0.0, 0.022)], (0, 0, 0.568), segs=40)
+    k.collider((0, 0, 0.31), (0.52, 0.52, 0.62))
+
+
+def build_zinc_tub(k):
+    """Zinkwanne mit Sommerblumen: runde Waschwanne mit Rippen und zwei Griffen, voller bunter Margeriten."""
+    zinc(k)
+    soil, rim = F.pot(k, (0, 0, 0), 0.28, 0.24, style="bucket", slot="pot", handle=False)
+    b = k.part("Rippen und Griffe", "pot", bevel=0.0)
+    for z in (0.06, 0.15):
+        F.ring(b, (0, 0, z), 0.28 * (0.82 + 0.16 * z / 0.24) + 0.002, 0.006, n=56, segs=6)
+    for sx in (-1, 1):
+        b.tube([(sx * 0.26, -0.06, 0.2), (sx * 0.32, -0.04, 0.205), (sx * 0.33, 0.0, 0.205), (sx * 0.32, 0.04, 0.205), (sx * 0.26, 0.06, 0.2)],
+               0.006, segs=6, smooth=2, round_ends=True)
+    p = k.plant("tub")
+    G.flower_bush(p, lambda q, c, at, up: G.daisy_head(q, at, up, 0.045, petal=c), ("white_flower", "yellow_flower", "pink", "lilac"),
+                  n=24, height=0.55, leaf_mat="leaf", leaf_shape="narrow", leaf=0.06, leaves=80)
+    k.add_plant(p, soil, scale=rim / 0.31)
+    k.collider((0, 0, 0.25), (0.66, 0.6, 0.5))
+
+
 # --- Regale und Auslagen ---
 
 def _crate(k, b, x, z, W=0.5, D=0.3, H=0.3, t=0.015):
@@ -1305,6 +1590,43 @@ ITEMS = [
     dict(id="out_storm_lantern", name="Sturmlaterne", category="outdoor", sub="outdoor_light", price=18,
          desc="Eine Sturmlaterne mit Glaszylinder und Drahtbügel – die Kerze flackert auch bei Wind.",
          styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_storm_lantern, variants=LANTERN_COLORS),
+    # Deko (Runde 4)
+    dict(id="out_flower_bike", name="Fahrrad mit Blumenkörben", category="outdoor", sub="outdoor_deco", price=120,
+         desc="Ein Hollandrad auf dem Ständer, vorn und hinten ein Weidenkorb voller Blumen.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_flower_bike,
+         variants=[("sage", "Salbei", {"bike": SAGE}), ("cream", "Creme", {"bike": CREAM}), ("blue", "Taubenblau", {"bike": BLUE}),
+                   ("red", "Kirschrot", {"bike": (0.66, 0.2, 0.18)})]),
+    dict(id="out_wheelbarrow", name="Schubkarre mit Blumen", category="outdoor", sub="outdoor_deco", price=70,
+         desc="Eine alte Holzschubkarre mit zwei Blumentöpfen darin.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_wheelbarrow, variants=variants("paint", PAINTS)),
+    dict(id="out_milk_churn", name="Milchkanne mit Blumen", category="outdoor", sub="outdoor_deco", price=28,
+         desc="Eine alte Milchkanne mit einem Strauß Wiesenblumen.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_milk_churn, variants=variants("zinc", ZINC)),
+    dict(id="out_zinc_tub", name="Zinkwanne mit Sommerblumen", category="outdoor", sub="outdoor_plant", price=36,
+         desc="Eine runde Zinkwanne voller bunter Margeriten.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_zinc_tub, variants=variants("pot", ZINC)),
+    dict(id="out_watering_can", name="Gießkanne", category="outdoor", sub="outdoor_deco", price=14,
+         desc="Eine Gießkanne mit Brause – für die Blumen vor der Tür.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_watering_can, variants=variants("zinc", ZINC)),
+    dict(id="out_birdhouse", name="Vogelhäuschen", category="outdoor", sub="outdoor_deco", price=34,
+         desc="Ein kleines Vogelhaus mit Satteldach auf einem Pfahl.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_birdhouse, variants=variants("paint", PAINTS)),
+    dict(id="out_birdbath", name="Vogeltränke", category="outdoor", sub="outdoor_deco", price=45,
+         desc="Eine Steinschale mit Wasser auf einer schlanken Säule.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_birdbath, variants=variants("stone", STONES)),
+    dict(id="out_gazing_ball", name="Rosenkugel", category="outdoor", sub="outdoor_deco", price=40,
+         desc="Eine spiegelnde Glaskugel auf einer Steinsäule – wie in Großmutters Garten.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_gazing_ball,
+         variants=[("silver", "Silber", {"ball": (0.82, 0.84, 0.88)}), ("gold", "Gold", {"ball": (0.88, 0.7, 0.36)}),
+                   ("blue", "Blau", {"ball": (0.36, 0.5, 0.8)}), ("rose", "Rosé", {"ball": (0.88, 0.6, 0.66)})]),
+    dict(id="out_hedgehog", name="Igel aus Stein", category="outdoor", sub="outdoor_deco", price=16,
+         desc="Ein kleiner Igel aus Stein – er wohnt jetzt bei den Blumentöpfen.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_hedgehog, variants=variants("stone", STONES)),
+    dict(id="out_pumpkins", name="Kürbisse", category="outdoor", sub="outdoor_deco", price=18,
+         desc="Vier Kürbisse für den Herbst: zwei orange, ein cremeweißer und ein grüner.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_pumpkins,
+         variants=[("orange", "Orange", {"pumpkin": (0.93, 0.5, 0.13)}), ("red", "Hokkaido-Rot", {"pumpkin": (0.85, 0.33, 0.12)}),
+                   ("yellow", "Gelb", {"pumpkin": (0.95, 0.75, 0.22)}), ("white", "Weiß", {"pumpkin": (0.93, 0.9, 0.82)})]),
     # Pflanzen (Runde 3)
     dict(id="out_tulip_pot", name="Tulpen im Topf", category="outdoor", sub="outdoor_plant", price=9,
          desc="Ein kleiner Topf voller Tulpen – passt auch auf eine Stufe der Treppe.",

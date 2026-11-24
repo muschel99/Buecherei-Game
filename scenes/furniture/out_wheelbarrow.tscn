@@ -1,0 +1,49 @@
+[gd_scene format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Modell, Kollision, Ablageflächen, Fächer und Licht. Wird beim Neubau
+; überschrieben, solange die Datei unverändert ist (speichert Godot sie, bleibt sie, wie sie ist).
+
+[ext_resource type="PackedScene" path="res://assets/models/furniture/out_wheelbarrow.glb" id="1_model"]
+
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(0.7600, 0.2200, 0.4600)
+
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(0.3400, 0.3400, 0.2000)
+
+[sub_resource type="BoxShape3D" id="Shape_2"]
+size = Vector3(0.0500, 0.3000, 0.3600)
+
+[sub_resource type="BoxShape3D" id="Shape_3"]
+size = Vector3(0.0600, 0.0400, 0.4000)
+
+[sub_resource type="BoxShape3D" id="Shape_4"]
+size = Vector3(0.3000, 0.1000, 0.4000)
+
+[node name="OutWheelbarrow" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="Shape0" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.4100, -0.0000)
+shape = SubResource("Shape_0")
+
+[node name="Shape1" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.5000, 0.1700, -0.0000)
+shape = SubResource("Shape_1")
+
+[node name="Shape2" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.3600, 0.1500, -0.0000)
+shape = SubResource("Shape_2")
+
+[node name="Shape3" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.7200, 0.2800, -0.0000)
+shape = SubResource("Shape_3")
+
+[node name="Shape4" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -0.7600, 0.3000, -0.0000)
+shape = SubResource("Shape_4")
+
+

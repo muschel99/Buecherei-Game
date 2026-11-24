@@ -2029,15 +2029,15 @@ Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
   Laufmitte (70 cm zu jeder Seite der Türmitte) bleibt frei; nur was ganz auf eine Stufe passt. Neu dafür: kleiner
   Lavendel-, Geranien- und Buchsbaumtopf, Heidekraut, Laterne mit Kerze, Sturmlaterne
 - [x] Stühle geprüft – sie sind gut so (die Entwicklerin hatte alte Bilder gesehen)
-- [ ] Viel mehr Draußen-Sachen: läuft in Etappe 8d (Zettel 01, Runden 1 bis 3 fertig)
+- [x] Viel mehr Draußen-Sachen: erledigt in Etappe 8d (Zettel 01, 41 neue Sachen)
 - [ ] Deko aus der Fassaden-App nehmen (wer schon Deko hatte, bekommt sie als Draußen-Möbel ins Inventar)
 - [ ] Baumgasse, Garten und Hintertür: aufgegangen in Etappe 8d (Die Oase hinter der Bücherei)
 
 ## Etappe 8d – Die Oase hinter der Bücherei (Skizze der Entwicklerin vom 24.11.2026)
 „Eine cozy Oase. Eine zauberhafte Welt mitten in der Stadt.“ Plan, Skizze und Zettel: `.scratch/backyard-oasis/`.
-**Nächster Schritt:** Zettel 01, Runde 4 (kleine Deko), dann Zettel 02 (das Gelände).
+**Nächster Schritt:** Zettel 02 (das Gelände hinter Bücherei und Pub).
 
-- [ ] Mehr Draußen-Sachen (Zettel 01), in vier Runden:
+- [x] Mehr Draußen-Sachen (Zettel 01), in vier Runden – zusammen 41 neue Sachen:
   - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
     Bücherschrank zum Tauschen (Häuschen auf einem Pfosten, zwei Glastüren), Pflanzentreppe, Blumen-Etagere,
     Wegweiser (Bücherei, Lesegarten, Teestube), Schild am Ständer („Willkommen in der Bücherei“) – je vier Farben
@@ -2047,7 +2047,8 @@ Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
     Funkie in der Schale, Farn im Zinkeimer, Kräuterkiste, Rosenbusch, Buchskegel, Lorbeerstämmchen, Ziergras, Sonnenblumen,
     Stockrosen, Blumenkasten mit Geranien, Kletterrose, Efeu und Glyzinie am Rankgitter (je vier Farben); neue Prüfung
     `plant_clip_check.py` (Pflanzen in Töpfen, Kästen, Gittern)
-  - [ ] Runde 4 – kleine Deko
+  - [x] Runde 4 – Deko: Fahrrad mit Blumenkörben, Schubkarre mit Blumen, Milchkanne mit Blumen, Zinkwanne mit Sommerblumen,
+    Gießkanne, Vogelhäuschen, Vogeltränke, Rosenkugel, Igel aus Stein, Kürbisse
 - [ ] Das Gelände: großes Grundstück hinter Bücherei und Pub, Mauern ringsum, ganz hinten ein Bach zwischen den Hausmauern
   und eine Backsteinmauer; am Anfang verwildert; Trümmerhaufen und zerbrochener Torbogen sperren die Gasse
 - [ ] Projekt Glasanbau (Story): reparieren lassen → Tür hinten im Laden, Gäste lesen dort, gestalten
