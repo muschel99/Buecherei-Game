@@ -1037,6 +1037,24 @@ steht kurz sein Name.
   Version 2): Ein alter Spielstand (Version 1) passt nicht mehr und wird beim Laden ignoriert –
   es beginnt automatisch ein frisches Spiel, ohne dass ich etwas löschen muss.
 
+## Draußen gestalten und die Oase hinter der Bücherei (seit Etappe 8c, Plan vom 24.11.2026)
+- **Vor der Bücherei gestalten (fertig, Etappe 8c):** Im Gestaltungsmodus (Tab) stelle ich auch draußen auf – auf einem
+  Streifen an der Hauswand und klein an den Seiten der Eingangstreppe (die Mitte bleibt als Weg frei). Dafür gibt es im
+  Nest & Nook die Abteilung „Draußen“ (Sitzplätze, Tischchen, Pflanzen, Kundenstopper, Laternen, kleine Regale). Passanten
+  gehen um meine Sachen herum, die Lieferkartons landen vorn am Bordstein.
+- **Die Oase (geplant, Skizze `.scratch/backyard-oasis/sketch.jpg`):** Hinter Bücherei und Pub liegt ein verwildertes
+  Grundstück – eine zauberhafte, gemütliche Welt mitten in der Stadt:
+  - Die Gasse zwischen Bücherei und Pub ist zuerst von einem Trümmerhaufen und einem zerbrochenen Torbogen versperrt.
+  - Hinter der Bücherei steht ein kaputter Glasanbau mit Türen in den Garten; dahinter ein großer Park/Garten mit dem großen
+    Baum hinter dem Pub; hinten links ein morsches Holzhäuschen; ganz hinten ein Bach zwischen den Hausmauern, dahinter eine
+    Backsteinmauer.
+  - In der Story lasse ich nach und nach reparieren: den Glasanbau (gehört dann zum Laden, Gäste lesen dort) und die Gasse mit
+    dem Torbogen (dann gehört der Garten zur Bücherei und ich gestalte ihn) – in beliebiger Reihenfolge; danach das
+    Holzhäuschen, in dem ich mir ein richtiges Zuhause einrichte.
+  - Stimmung: Lichterketten, Laternen, Glühwürmchen in der Dämmerung, Nebel über dem Bach, eine Feentür am Baum, Blumen und
+    Moos überall. Viele neue Möbel für Garten und Wohnhaus.
+  - Plan und Zettel: `.scratch/backyard-oasis/`.
+
 ## Die Welt im Bilderbuch-Stil (seit Etappe 4h)
 Die ganze Straße sieht aus wie eine lebendig gewordene Kinderbuch-Illustration: süß, weich und
 gemütlich, leicht stilisiert statt streng realistisch (Vorbild: die Bildersammlung in „Game design“).

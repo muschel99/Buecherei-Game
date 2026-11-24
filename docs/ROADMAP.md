@@ -52,6 +52,7 @@
 | 8   | Besuchervielfalt: Ladebildschirm, Chibi-Größen, weiche Bücher, Theke mit PC, Gespräche, Stammgäste, Wünsche | fertig |
 | 8b  | Hauptmenü, Story-Anfang mit der Maklerin, To-do-Zettel, passende Namen | fertig |
 | 8c  | Draußen gestalten und verträumter Garten (Wunsch vom 23.11.2026) | in Arbeit |
+| 8d  | Die Oase hinter der Bücherei: Glasanbau, Garten, Bach, Holzhäuschen (Skizze vom 24.11.2026) | offen |
 | 9   | Café                                     | offen         |
 | 10  | Erweiterungen und Freischaltungen        | offen         |
 | 10b | Fahrzeuge neu modellieren (vorgemerkt)   | offen         |
@@ -2031,10 +2032,20 @@ Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
 - [ ] Viel mehr Draußen-Sachen: Sitzmöbel, Tischchen, sehr viele Pflanzen in allen Größen, Farben und Formen,
   Kundenstopper, kleine Regale für Bücher und Deko
 - [ ] Deko aus der Fassaden-App nehmen (wer schon Deko hatte, bekommt sie als Draußen-Möbel ins Inventar)
-- [ ] Baumgasse: am Anfang von Mauerschutt versperrt, in der Story reparieren lassen – danach gehört der Garten zur
-  Bücherei und lässt sich gestalten; größer und verträumt (Lichterketten, Glühwürmchen, Feentür, Rosenbogen, Kiesweg),
-  Vogelbad in einer Ecke mit Kletterpflanzen
-- [ ] Später (Erweiterung): Hintertür der Bücherei zum Garten – Gäste lesen draußen
+- [ ] Baumgasse, Garten und Hintertür: aufgegangen in Etappe 8d (Die Oase hinter der Bücherei)
+
+## Etappe 8d – Die Oase hinter der Bücherei (Skizze der Entwicklerin vom 24.11.2026)
+„Eine cozy Oase. Eine zauberhafte Welt mitten in der Stadt.“ Plan, Skizze und Zettel: `.scratch/backyard-oasis/`.
+**Nächster Schritt:** Zettel 01 (mehr Draußen-Sachen), danach 02 (das Gelände).
+
+- [ ] Mehr Draußen-Sachen: Sitzplätze, Tischchen, sehr viele Pflanzen, Kundenstopper, kleine Regale für Bücher und Deko
+- [ ] Das Gelände: großes Grundstück hinter Bücherei und Pub, Mauern ringsum, ganz hinten ein Bach zwischen den Hausmauern
+  und eine Backsteinmauer; am Anfang verwildert; Trümmerhaufen und zerbrochener Torbogen sperren die Gasse
+- [ ] Projekt Glasanbau (Story): reparieren lassen → Tür hinten im Laden, Gäste lesen dort, gestalten
+- [ ] Projekt Gasse und Torbogen (Story): aufräumen lassen → der Garten gehört zur Bücherei, gestalten, Gäste kommen hinein
+  (Reihenfolge mit dem Glasanbau frei wählbar)
+- [ ] Projekt Holzhäuschen (Story): reparieren lassen → ein richtiges Zuhause einrichten
+- [ ] Viele Möbel für Garten und Wohnhaus; Zauber: Lichterketten, Laternen, Glühwürmchen, Nebel über dem Bach, Feentür
 
 ## Etappe 9 – Café
 - Café-Module an der Theke anbauen (die Theke ist seit Etappe 4a dafür vorbereitet)
