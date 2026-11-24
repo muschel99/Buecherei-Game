@@ -52,4 +52,8 @@ diesem Plan aufgegangen.
 - 24.11.2026: Die Entwicklerin will „rückwärts“ bauen (siehe Reihenfolge); Zettel 02–05 beschreiben jetzt den fertigen Zustand,
   Zettel 07 die Sperren und kaputten Zustände. Immergrüne Pflanzen (Buchs, Efeu, Olive, Lorbeer, Zitrus) färben sich im Herbst
   nicht mehr (Shader-Schalter `evergreen`, Sammel-Material „Sammel Pflanze immergrün“).
-- **Nächster Schritt:** `issues/02` – das Gelände im fertigen Zustand (Plan steht in Zettel 02).
+- 24.11.2026: Fehler „Spiel stoppt beim Bedienen an der Theke“ behoben (gelöschter Korb in typisierter Schleife, Godot 4.6.2);
+  Prüfwerkzeug `serve_probe`.
+- 24.11.2026: `issues/02` Schritt 1 fertig – großer Garten (`tools/blender/build_storybook_backyard.py` → `backyard.glb`, die Gasse
+  setzt es ein; Maße in GameConfig `backyard_*`; `alley_library.glb` gibt es nicht mehr).
+- **Nächster Schritt:** `issues/02` Schritt 2 – Leben im großen Garten (Katzen, Vögel, Tier-Plätze), Wasser in Bewegung, Schilf.

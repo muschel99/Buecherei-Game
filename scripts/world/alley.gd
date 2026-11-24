@@ -33,7 +33,9 @@ const BENCH_APPROACH := 1.45
 ## Stil-Modell der Gasse (seit Etappe 4g, tools/blender/build_alleys.py): hohe Hauswände und der
 ## Garten mit Baum am Ende. Ist es da, ersetzt es Hofmauern und Abschluss (die Kollisionen baut
 ## dieses Script weiter selbst).
-@export var model_scene: PackedScene = preload("res://assets/models/world/alley_library.glb")
+## Seit Etappe 8d der große Garten hinter Bücherei und Pub (tools/blender/build_storybook_backyard.py): die Gasse führt offen
+## hinein; Baum mit Bank und Vogelbad stehen wie zuvor im kleinen Garten.
+@export var model_scene: PackedScene = preload("res://assets/models/world/backyard.glb")
 @export var paving_material: Material = preload("res://assets/materials/sidewalk.tres")
 @export var wall_material: Material = preload("res://assets/materials/outdoor_colors.tres")
 @export var yard_wall_color: Color = Color(0.52, 0.31, 0.25)
@@ -45,8 +47,10 @@ func _ready() -> void:
 	var start := StreetLayout.recess_z()
 	var end := StreetLayout.alley_end_z()
 	var paving := WorldMesh.new()
+	# Pflaster bis hinter das Pub – dahinter liegen Rasen und Kiesweg des Gartens (im Modell)
+	var paving_end := _neighbor_back() if model_scene else end
 	paving.add_quad(Vector3(far_x, 0.0, start), Vector3(library_x, 0.0, start),
-		Vector3(library_x, 0.0, end), Vector3(far_x, 0.0, end), Vector3.UP, Color.WHITE)
+		Vector3(library_x, 0.0, paving_end), Vector3(far_x, 0.0, paving_end), Vector3.UP, Color.WHITE)
 	add_child(paving.make_instance("Paving", paving_material, false))
 	if model_scene:
 		var model := model_scene.instantiate()
@@ -54,7 +58,7 @@ func _ready() -> void:
 		add_child(model)
 		# Die Wände sind nur von innen gebaut: Schatten trotzdem von beiden Seiten
 		WorldMesh.cast_shadows_both_sides(model)
-		_build_garden_walls(library_x, far_x, end)
+		_build_backyard_walls()
 		_build_bench()
 	else:
 		_build_yard_walls(library_x, far_x, end)
@@ -117,26 +121,35 @@ func _build_bench() -> void:
 	add_child(bench)
 
 
-## Feste, unsichtbare Wände zum Modell: hohe Hauswände an beiden Seiten, der Garten am Ende
-## (seitlich breiter) und der Zaun hinten. So hoch, dass man auch springend nicht darüber sieht.
-func _build_garden_walls(library_x: float, far_x: float, end: float) -> void:
+## Feste, unsichtbare Wände zum Garten (seit Etappe 8d): an den Gartenmauern ringsum und über dem Bach (man kommt weder ins Wasser
+## noch ans andere Ufer). So hoch, dass man auch springend nicht darüber kommt. Rückseiten von Bücherei, Hinterzimmer, Pub und
+## Modeladen haben eigene Kollisionen.
+func _build_backyard_walls() -> void:
 	var body := StaticBody3D.new()
 	body.name = "Walls"
 	body.collision_layer = 1  # Ebene "world"
 	body.collision_mask = 0
 	add_child(body)
-	var first_house: String = GameConfig.alley_house_types[0] if not GameConfig.alley_house_types.is_empty() else ""
-	var neighbor_back := StreetLayout.recess_z() + (HouseTypes.depth_of(first_house) if first_house != "" else 0.0)
-	var garden_z := end - GameConfig.alley_garden_depth
-	var garden_x := far_x - GameConfig.alley_garden_extra_width
 	var h := GameConfig.alley_wall_height
 	var t := YARD_WALL_THICKNESS
-	_add_collider(body, Vector3(library_x, 0.0, StreetLayout.HOUSE_BACK), Vector3(library_x + t, h, end + t))
-	_add_collider(body, Vector3(far_x - t, 0.0, neighbor_back), Vector3(far_x, h, garden_z))
-	_add_collider(body, Vector3(garden_x, 0.0, garden_z - t), Vector3(far_x, h, garden_z))
-	_add_collider(body, Vector3(garden_x - t, 0.0, garden_z - t), Vector3(garden_x, h, end + t))
-	# Hinten: Zaun (die Häuser dahinter sind nur Kulisse)
-	_add_collider(body, Vector3(garden_x - t, 0.0, end + 0.1), Vector3(library_x + t, h, end + 0.1 + t))
+	var right := StreetLayout.backyard_right_x()
+	var left := GameConfig.backyard_left_x
+	var garden_left := GameConfig.backyard_garden_left_x
+	var cottage := GameConfig.backyard_cottage_front_z
+	var back := GameConfig.backyard_back_wall_z
+	var room_back := BackRoom.back_area().end.y + BackRoom.WALL
+	_add_collider(body, Vector3(right - t, 0.0, _neighbor_back()), Vector3(right, h, back + t))
+	_add_collider(body, Vector3(garden_left, 0.0, room_back - 0.05), Vector3(garden_left + t, h, cottage))
+	_add_collider(body, Vector3(garden_left, 0.0, cottage - t), Vector3(left + t, h, cottage))
+	_add_collider(body, Vector3(left, 0.0, cottage - t), Vector3(left + t, h, back + t))
+	# Bach und das schmale Ufer dahinter
+	_add_collider(body, Vector3(right, 0.0, GameConfig.backyard_stream_z - 0.05), Vector3(left, h, back + t))
+
+
+## Rückseite des Hauses hinter der Gasse (Pub), z unter "Outside".
+func _neighbor_back() -> float:
+	var first_house: String = GameConfig.alley_house_types[0] if not GameConfig.alley_house_types.is_empty() else ""
+	return StreetLayout.recess_z() + (HouseTypes.depth_of(first_house) if first_house != "" else 0.0)
 
 
 func _add_collider(body: StaticBody3D, low: Vector3, high: Vector3) -> void:

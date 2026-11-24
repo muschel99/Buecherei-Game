@@ -18,3 +18,11 @@ Schritte:
 2. Leben im Garten: Katzen und Vögel (bisher Gartenhof in `bird_life.gd`, `cat_life.gd`) nutzen den großen Garten; Tier-Plätze
    neu ausmessen (`scenes/tools/bake_animal_spots.tscn`).
 Gebaut mit `tools/blender/build_storybook_alleys.py` (Gassen, Garten) bzw. einem neuen Bau-Script; Maße in GameConfig.
+
+## Comments
+
+24.11.2026: Schritt 1 fertig. `tools/blender/build_storybook_backyard.py` baut `assets/models/world/backyard.glb` (Rasen, Kiesweg,
+Trittsteine, Gartenmauern mit Steinkrone und Efeu, Bach mit Ufersteinen und Bögen samt dunklem Tunnel, Giebelhäuser hinter dem
+Bach, Häute mit Fenstern auf den glatten Rückseiten der Nachbarhäuser, zwei Fenster oben an der Bücherei, Bank, Vogelbad). Die Gasse
+(`scripts/world/alley.gd`) setzt es ein, Kollision an Mauern und über dem Bach. Der Boden ist überall flach – das Wasser liegt
+4,5 cm hoch zwischen Ufersteinen. Noch offen (Schritt 2): Katzen/Vögel im ganzen Garten, Tier-Plätze, Wasser in Bewegung, Schilf.

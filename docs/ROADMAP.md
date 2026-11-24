@@ -2035,7 +2035,9 @@ Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
 
 ## Etappe 8d – Die Oase hinter der Bücherei (Skizze der Entwicklerin vom 24.11.2026)
 „Eine cozy Oase. Eine zauberhafte Welt mitten in der Stadt.“ Plan, Skizze und Zettel: `.scratch/backyard-oasis/`.
-**Nächster Schritt:** Zettel 02 (das Gelände hinter Bücherei und Pub).
+Seit dem 24.11.2026 „rückwärts“ (Wunsch der Entwicklerin): erst alles im fertigen Zustand bauen, Sperren, Trümmer, Verwilderung
+und Freischaltungen in der Story zum Schluss (Zettel 07).
+**Nächster Schritt:** Zettel 02, Schritt 2 (Leben im großen Garten: Katzen, Vögel, Tier-Plätze; Wasser und Schilf am Bach).
 
 - [x] Mehr Draußen-Sachen (Zettel 01), in vier Runden – zusammen 41 neue Sachen:
   - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
@@ -2049,8 +2051,14 @@ Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
     `plant_clip_check.py` (Pflanzen in Töpfen, Kästen, Gittern)
   - [x] Runde 4 – Deko: Fahrrad mit Blumenkörben, Schubkarre mit Blumen, Milchkanne mit Blumen, Zinkwanne mit Sommerblumen,
     Gießkanne, Vogelhäuschen, Vogeltränke, Rosenkugel, Igel aus Stein, Kürbisse
-- [ ] Das Gelände: großes Grundstück hinter Bücherei und Pub, Mauern ringsum, ganz hinten ein Bach zwischen den Hausmauern
-  und eine Backsteinmauer; am Anfang verwildert; Trümmerhaufen und zerbrochener Torbogen sperren die Gasse
+- [x] Immergrün: Buchs, Efeu, Olive, Lorbeer und Zitrus färben sich im Herbst nicht mehr (Shader-Schalter `evergreen`)
+- [x] Fehler behoben: Das Spiel hielt beim Bedienen an der Theke an (Godot 4.6.2); neues Prüfwerkzeug `serve_probe`
+- [ ] Das Gelände im fertigen Zustand (Zettel 02):
+  - [x] Schritt 1 – großer Garten hinter Bücherei und Pub (`build_storybook_backyard.py`, `backyard.glb`): Rasen, Kiesweg aus
+    der Gasse, Gartenmauern mit Efeu, Grundstück fürs Holzhäuschen, Bach mit Steinrand, der links und rechts unter einem
+    Mauerbogen verschwindet, Giebelhäuser dahinter; Rückseiten von Pub (mit Hintertür und Laterne), Modeladen und Nachbarn
+    mit Fenstern; Baum mit Bank und Vogelbad wie zuvor; Kollision an Mauern und Bach
+  - [ ] Schritt 2 – Leben im Garten (Katzen, Vögel, Tier-Plätze), Wasser in Bewegung, Schilf am Bach
 - [ ] Projekt Glasanbau (Story): reparieren lassen → Tür hinten im Laden, Gäste lesen dort, gestalten
 - [ ] Projekt Gasse und Torbogen (Story): aufräumen lassen → der Garten gehört zur Bücherei, gestalten, Gäste kommen hinein
   (Reihenfolge mit dem Glasanbau frei wählbar)

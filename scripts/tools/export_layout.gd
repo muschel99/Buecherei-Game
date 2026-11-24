@@ -23,9 +23,37 @@ func _ready() -> void:
 		"opposite_end_z": StreetLayout.opposite_alley_end_z(),
 		"opposite_back_depth": GameConfig.opposite_alley_back_depth,
 		"garden_tree": [StreetLayout.garden_tree().x, StreetLayout.garden_tree().y],
+		# großer Garten (seit Etappe 8d) und die Häuser ringsum (Rückseiten mit Fenstern im Modell)
+		"backyard_right_x": StreetLayout.backyard_right_x(),
+		"backyard_left_x": GameConfig.backyard_left_x,
+		"backyard_garden_left_x": GameConfig.backyard_garden_left_x,
+		"backyard_cottage_front_z": GameConfig.backyard_cottage_front_z,
+		"backyard_stream_z": GameConfig.backyard_stream_z,
+		"backyard_stream_width": GameConfig.backyard_stream_width,
+		"backyard_back_wall_z": GameConfig.backyard_back_wall_z,
+		"backyard_wall_height": GameConfig.backyard_wall_height,
+		"back_room": [BackRoom.back_area().position.x, BackRoom.back_area().position.y, BackRoom.back_area().size.x,
+			BackRoom.back_area().size.y],
+		"house_backs": _house_backs(),
 	}
 	var file := FileAccess.open("res://assets/models/source/layout.json", FileAccess.WRITE)
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
 	print("Lage gespeichert: ", data)
 	get_tree().quit()
+
+
+## Rückseiten der Nachbarhäuser in der Bücherei-Reihe: [x0, x1, Rückseite z, Traufhöhe] (von der Bücherei nach außen).
+func _house_backs() -> Array:
+	var result := []
+	var x := StreetLayout.HOUSE_RIGHT
+	for id: String in GameConfig.neighbor_house_types:
+		var w := HouseTypes.width_of(id)
+		result.append([x, x + w, StreetLayout.HOUSE_FRONT + HouseTypes.depth_of(id), float(HouseTypes.value_of(id, "eaves_height", 6.6))])
+		x += w
+	x = StreetLayout.alley_far_x()
+	for id: String in GameConfig.alley_house_types:
+		var w := HouseTypes.width_of(id)
+		result.append([x - w, x, StreetLayout.recess_z() + HouseTypes.depth_of(id), float(HouseTypes.value_of(id, "eaves_height", 6.6))])
+		x -= w
+	return result

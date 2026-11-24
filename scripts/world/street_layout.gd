@@ -102,6 +102,12 @@ static func alley_end_z() -> float:
 
 
 ## Mitte des Baums mit der runden Bank im Garten am Ende der Gasse (x, z; seit Etappe 4g).
+## Rechte Kante des großen Gartens (seit Etappe 8d): rechte Seite des Hauses hinter der Gasse (Pub).
+static func backyard_right_x() -> float:
+	var first: String = GameConfig.alley_house_types[0] if not GameConfig.alley_house_types.is_empty() else ""
+	return alley_far_x() - (HouseTypes.width_of(first) if first != "" else 5.6)
+
+
 static func garden_tree() -> Vector2:
 	var far_x := alley_far_x()
 	var garden_x := far_x - GameConfig.alley_garden_extra_width

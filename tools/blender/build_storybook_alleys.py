@@ -5,11 +5,9 @@ Aufruf (Terminal, im Projektordner):
     blender -b --factory-startup --python tools/blender/build_storybook_alleys.py [-- --render [--quick]] [--force]
 
 Ergebnis (Koordinaten wie unter "Outside" im Spiel, y = 0 = Gehweg; Blender: x, -z, y):
-    assets/models/world/alley_library.glb   Gasse neben der Bücherei: Rückwände der Häuser (Ziegel,
-                                            Putz) mit Fenstern, Feldsteinsockeln und Dachansätzen aus
-                                            Ziegelreihen, Hofmauern, am Ende ein kleiner Garten mit
-                                            runder Holzbank um den Baum, Lattenzaun, dahinter Giebel-
-                                            häuser
+    (seit Etappe 8d baut build_storybook_backyard.py statt der Gasse neben der Bücherei den großen Garten
+     hinter Bücherei und Pub – es benutzt die Bausteine von hier: Rückwände, Giebelhäuser, Bank, Vogelbad, Efeu;
+     library_alley bleibt nur als Vorlage)
     assets/models/world/alley_opposite.glb  kleine Gasse gegenüber: Mauern aus warmem Sandstein,
                                             drei Steinbögen, hinten eine Wand mit Tür und Laterne
     assets/models/source/alleys_storybook.blend
@@ -540,11 +538,6 @@ def main():
     SB.BEVEL_SEGMENTS = (2, 1)
     M = SC.materials()
     mats(M)
-    rnd = random.Random(31)
-    C1 = collections("Gasse Bücherei")
-    SC.SPOTS["coll"] = C1["plants"]
-    obstacles, spots = library_alley(M, C1, rnd)
-    export(C1, "alley_library", {"Bank %d" % i: o for i, o in enumerate(obstacles)}, spots)
     C2 = collections("Gasse gegenüber")
     SC.SPOTS["coll"] = C2["plants"]
     spots2 = opposite_alley(M, C2, random.Random(47))

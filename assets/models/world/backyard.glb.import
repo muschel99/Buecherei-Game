@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cjtvmiavyqxy7"
-path="res://.godot/imported/alley_library.glb-3f3ca9628af0f23f5b9e82cb4b303d8e.scn"
+uid="uid://dpgmiy0ece5pg"
+path="res://.godot/imported/backyard.glb-a913ef4e4fc3f30ab98544148e1b3ad0.scn"
 
 [deps]
 
-source_file="res://assets/models/world/alley_library.glb"
-dest_files=["res://.godot/imported/alley_library.glb-3f3ca9628af0f23f5b9e82cb4b303d8e.scn"]
+source_file="res://assets/models/world/backyard.glb"
+dest_files=["res://.godot/imported/backyard.glb-a913ef4e4fc3f30ab98544148e1b3ad0.scn"]
 
 [params]
 
@@ -81,7 +81,7 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
 },
-"Sammel Pflanze": {
+"Sammel Pflanze immergrün": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_pflanze_immergruen.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_pflanze_immergruen.tres"
@@ -95,6 +95,11 @@ _subresources={
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_putz_innen.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_putz_innen.tres"
+},
+"Sammel Quader": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/storybook/sammel_quader.tres",
+"use_external/path": "res://assets/materials/storybook/sammel_quader.tres"
 },
 "Sammel Stein": {
 "use_external/enabled": true,

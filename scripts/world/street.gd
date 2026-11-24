@@ -254,6 +254,9 @@ func _build_ground_collision() -> void:
 		Vector2(StreetLayout.straight_bound_x(), StreetLayout.HOUSE_FRONT),
 		Vector2(StreetLayout.alley_far_x(), StreetLayout.alley_end_z()),
 		Vector2(StreetLayout.HOUSE_RIGHT, StreetLayout.alley_end_z()),
+		# großer Garten hinter Bücherei und Pub (seit Etappe 8d)
+		Vector2(StreetLayout.backyard_right_x(), GameConfig.backyard_back_wall_z),
+		Vector2(GameConfig.backyard_left_x, GameConfig.backyard_back_wall_z),
 	])
 	var alley := StreetLayout.opposite_alley()
 	if alley != Vector2.ZERO:
