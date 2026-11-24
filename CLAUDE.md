@@ -169,8 +169,8 @@ screenshots/         Testbilder (nicht in Git)
 - Testbilder: `tools/screenshots.sh <gruppe>` (`--list`, `--only=`, `--cam=x,y,z:tx,ty,tz`, `--time=<h>`, `--tag=`,
   `--scene=res://…`, `--ui=…`).
 - Probe-Szenen in `scenes/tools/` (Start und Optionen stehen oben im jeweiligen Script): `pose_probe` (Haltungen der Figuren,
-  `-- hand|drink|eat|bag …`), `furniture_probe`, `catalog_showroom`, `vehicle_showroom`, `desk_probe`, `talk_probe`,
-  `title_probe`, `ui_probe`, `startup_probe`, `facade_probe`, `make_signs`.
+  `-- hand|drink|eat|bag …`), `furniture_probe`, `catalog_showroom`, `vehicle_showroom`, `desk_probe`, `serve_probe` (echte
+  Gäste an der Theke bedienen, ohne Bilder), `talk_probe`, `title_probe`, `ui_probe`, `startup_probe`, `facade_probe`, `make_signs`.
 - Draufsicht und Sichtprüfung der Straßenenden: `python3 tools/plan_check.py plan|bound|gate|unseen`.
 
 ## Agent skills

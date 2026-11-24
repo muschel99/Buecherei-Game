@@ -59,7 +59,9 @@ func request(who: Object) -> void:
 
 ## Geht gerade jemand anderes durch die Tür? (Dann wartet man daneben, statt sich im Türrahmen zu begegnen.)
 func busy_for(who: Object) -> bool:
-	for user: Object in _users:
+	for user_any in _users:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „user: Object“ hält Godot 4.6 an)
+		var user: Object = user_any if is_instance_valid(user_any) else null
 		if user != who and is_instance_valid(user):
 			return true
 	return false

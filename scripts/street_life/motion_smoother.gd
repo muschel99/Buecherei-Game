@@ -26,7 +26,9 @@ var _applied: Dictionary = {}
 
 ## Vor dem Physik-Schritt: echte Lage zurück (nur, wenn seit apply() niemand sonst etwas verändert hat).
 func restore() -> void:
-	for node: Node3D in _applied:
+	for node_any in _applied:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „node: Node3D“ hält Godot 4.6 an)
+		var node: Node3D = node_any if is_instance_valid(node_any) else null
 		if is_instance_valid(node) and node.transform == _applied[node]:
 			node.transform = _curr[node]
 	_applied.clear()
@@ -37,7 +39,9 @@ func capture(nodes: Array) -> void:
 	var limit := TELEPORT_DISTANCE * TELEPORT_DISTANCE
 	var prev := {}
 	var curr := {}
-	for node: Node3D in nodes:
+	for node_any in nodes:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „node: Node3D“ hält Godot 4.6 an)
+		var node: Node3D = node_any if is_instance_valid(node_any) else null
 		if not is_instance_valid(node):
 			continue
 		var now := node.transform
@@ -54,7 +58,9 @@ func capture(nodes: Array) -> void:
 ## In jedem Bild: zwischen voriger und neuer Lage zeigen (nur sichtbare Knoten).
 func apply(fraction: float) -> void:
 	fraction = clampf(fraction, 0.0, 1.0)
-	for node: Node3D in _curr:
+	for node_any in _curr:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „node: Node3D“ hält Godot 4.6 an)
+		var node: Node3D = node_any if is_instance_valid(node_any) else null
 		if not is_instance_valid(node) or not node.visible:
 			continue
 		var from: Transform3D = _prev[node]

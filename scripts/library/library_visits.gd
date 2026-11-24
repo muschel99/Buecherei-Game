@@ -631,6 +631,8 @@ func show_basket_empty(empty: bool) -> void:
 	if _counter_basket == null or not is_instance_valid(_counter_basket):
 		return
 	var t := _counter_basket.transform
+	# der alte Korb kommt sofort aus der Liste (gelöschte Körbe darin hielten Godot 4.6 beim Aufräumen an)
+	_floor_baskets.erase(_counter_basket)
 	_counter_basket.queue_free()
 	var walker := _waiting_at_counter()
 	var count := 0 if empty or walker == null else _book_count(walker)
@@ -693,10 +695,14 @@ func _tidy_floor_baskets(delta: float) -> void:
 		return
 	_basket_check = 0.5
 	var camera := get_viewport().get_camera_3d()
+	# Gelöschte Körbe zuerst ohne Typ aussortieren: eine Schleifenvariable „basket: Node3D“ mit einem gelöschten Korb hält
+	# Godot 4.6 an („Trying to assign invalid previously freed instance“), noch bevor is_instance_valid prüfen kann.
+	var alive: Array[Node3D] = []
+	for item in _floor_baskets:
+		if is_instance_valid(item):
+			alive.append(item)
+	_floor_baskets = alive
 	for basket: Node3D in _floor_baskets.duplicate():
-		if not is_instance_valid(basket):
-			_floor_baskets.erase(basket)
-			continue
 		if basket == _counter_basket:
 			continue
 		var seen := camera != null and camera.is_position_in_frustum(basket.global_position) \

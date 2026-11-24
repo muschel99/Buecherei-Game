@@ -19,7 +19,9 @@ func _init(the_door: Door = null) -> void:
 ## jemanden, der schon mitten in der Tür steht.
 func busy_for(who: Object) -> bool:
 	var leaving := _is_leaving(who)
-	for user: Object in _users:
+	for user_any in _users:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „user: Object“ hält Godot 4.6 an)
+		var user: Object = user_any if is_instance_valid(user_any) else null
 		if user == who or not is_instance_valid(user):
 			continue
 		if not leaving or _is_leaving(user) or _in_doorway(user):

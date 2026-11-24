@@ -69,7 +69,9 @@ static func paint_wipe(parts: Array, old_material: Material, point: Vector3, who
 	overlay.set_shader_parameter("reveal_center", point)
 	overlay.set_shader_parameter("reveal_radius", 0.0)
 	var holder: MeshInstance3D = null
-	for part: MeshInstance3D in parts:
+	for part_any in parts:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „part: MeshInstance3D“ hält Godot 4.6 an)
+		var part: MeshInstance3D = part_any if is_instance_valid(part_any) else null
 		if is_instance_valid(part):
 			part.material_overlay = overlay
 			holder = part
@@ -81,7 +83,9 @@ static func paint_wipe(parts: Array, old_material: Material, point: Vector3, who
 	tween.tween_method(func(r: float) -> void: overlay.set_shader_parameter("reveal_radius", r), 0.0, reach, time) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func() -> void:
-		for part: MeshInstance3D in parts:
+		for part_any in parts:
+			# erst prüfen, dann typisieren (ein gelöschtes Objekt in „part: MeshInstance3D“ hält Godot 4.6 an)
+			var part: MeshInstance3D = part_any if is_instance_valid(part_any) else null
 			if is_instance_valid(part) and part.material_overlay == overlay:
 				part.material_overlay = null)
 
@@ -98,7 +102,9 @@ static func _animate(item: PlacedFurniture, pieces: Array, time: float, motion: 
 	var rests := {}   # Modell -> Ruhelage (lokal)
 	var rel := {}     # Modell -> Lage seines Möbels relativ zum Hauptmöbel
 	var inverse := item.global_transform.affine_inverse()
-	for piece: PlacedFurniture in pieces:
+	for piece_any in pieces:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „piece: PlacedFurniture“ hält Godot 4.6 an)
+		var piece: PlacedFurniture = piece_any if is_instance_valid(piece_any) else null
 		if not is_instance_valid(piece):
 			continue
 		var model := piece.get_model()
@@ -110,7 +116,9 @@ static func _animate(item: PlacedFurniture, pieces: Array, time: float, motion: 
 		return
 	var apply := func(t: float) -> void:
 		var m: Transform3D = motion.call(t)
-		for model: Node3D in rests:
+		for model_any in rests:
+			# erst prüfen, dann typisieren (ein gelöschtes Objekt in „model: Node3D“ hält Godot 4.6 an)
+			var model: Node3D = model_any if is_instance_valid(model_any) else null
 			if is_instance_valid(model):
 				var r: Transform3D = rel[model]
 				model.transform = r.affine_inverse() * m * r * (rests[model] as Transform3D)
@@ -118,7 +126,9 @@ static func _animate(item: PlacedFurniture, pieces: Array, time: float, motion: 
 	var tween := item.create_tween()
 	tween.tween_method(apply, 0.0, 1.0, time)
 	tween.tween_callback(func() -> void:
-		for model: Node3D in rests:
+		for model_any in rests:
+			# erst prüfen, dann typisieren (ein gelöschtes Objekt in „model: Node3D“ hält Godot 4.6 an)
+			var model: Node3D = model_any if is_instance_valid(model_any) else null
 			if is_instance_valid(model):
 				model.transform = rests[model])
 

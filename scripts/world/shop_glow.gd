@@ -97,6 +97,8 @@ func _apply(entry: Dictionary, level: float) -> void:
 	if inside:
 		inside.light_energy = level * GameConfig.shop_light_energy * lerpf(GameConfig.shop_light_day_share, 1.0, _night)
 		inside.visible = inside.light_energy > 0.01
-	for mesh: GeometryInstance3D in entry.meshes:
+	for mesh_any in entry.meshes:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „mesh: GeometryInstance3D“ hält Godot 4.6 an)
+		var mesh: GeometryInstance3D = mesh_any if is_instance_valid(mesh_any) else null
 		if is_instance_valid(mesh):
 			mesh.set_instance_shader_parameter(&"shop_lit", level)

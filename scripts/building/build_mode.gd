@@ -404,7 +404,9 @@ func _pick_up(item: PlacedFurniture) -> void:
 
 ## Stellt ein aufgehobenes Möbelstück wieder sichtbar hin.
 func _finish_move() -> void:
-	for piece: PlacedFurniture in [_moving_item] + _moving_extras:
+	for piece_any in [_moving_item] + _moving_extras:
+		# erst prüfen, dann typisieren (ein gelöschtes Objekt in „piece: PlacedFurniture“ hält Godot 4.6 an)
+		var piece: PlacedFurniture = piece_any if is_instance_valid(piece_any) else null
 		if is_instance_valid(piece):
 			piece.set_collision_enabled(true)
 			piece.visible = true
