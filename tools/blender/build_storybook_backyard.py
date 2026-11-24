@@ -283,8 +283,12 @@ def house_skin(M, C, name, x0, x1, back_z, eaves, rnd, kind="brick", wall="brick
         x += rnd.uniform(2.0, 2.6)
     if door is not None:
         back_door(M, C, name + " Hintertür", T.wall_matrix(p0, p1, door, 0.0, 0.0), rnd)
-    # Fallrohr an einem Ende, mit Schellen
-    px = length - 0.25 if rnd.random() < 0.5 else 0.25
+    # Fallrohr an einem Ende, mit Schellen – nur an Häuten, die am Boden beginnen (eine Haut über dem Hinterzimmer hat keins:
+    # es ginge sonst durch dessen Dach bis in den Raum)
+    side = rnd.random() < 0.5
+    if from_y > 0.1:
+        return
+    px = length - 0.25 if side else 0.25
     m = T.wall_matrix(p0, p1, px, 0.0, 0.0)
     pipe = Body(name + " Fallrohr", M["zinc"], C["walls"], seed=rnd.randrange(999), vary=0.03)
     pipe.tube([m @ Vector((0, 0.05, 0.08)), m @ Vector((0, eaves - 0.15, 0.08))], 0.04, segs=10, round_ends=True)
@@ -319,7 +323,7 @@ def back_door(M, C, name, m, rnd):
 
 def house_backs(M, C, rnd):
     """Rückseiten der Häuser, die an den Garten grenzen (aus layout.json): Modeladen (über dem Hinterzimmer), sein Nachbar,
-    Pub (mit Hintertür zum Garten) und dessen Nachbar; dazu zwei Fenster oben an der Rückwand der Bücherei."""
+    Pub und dessen Nachbar; dazu zwei Fenster oben an der Rückwand der Bücherei."""
     for i, (x0, x1, back_z, eaves) in enumerate(L["house_backs"]):
         pub = abs(x1 - FAR_X) < 0.01
         if x0 >= BR_X0 - 0.01 and x0 < BR_X1:
@@ -328,7 +332,8 @@ def house_backs(M, C, rnd):
                        from_y=3.55, plinth=False)
             house_skin(M, C, "Rückseite Modeladen", BR_X1 + 0.05, x1, back_z, eaves, rnd, wall="plaster_b", kind="plaster")
         elif pub:
-            house_skin(M, C, "Rückseite Pub", x0, x1, back_z, eaves, rnd, wall="plaster_a", kind="plaster", door=(x1 - x0) * 0.62)
+            # keine Hintertür: der Garten ist ganz für sich (Wunsch der Entwicklerin)
+            house_skin(M, C, "Rückseite Pub", x0, x1, back_z, eaves, rnd, wall="plaster_a", kind="plaster")
         else:
             house_skin(M, C, "Rückseite Nachbar %d" % i, x0, x1, back_z, eaves, rnd, wall=("brick_a", "brick_b")[i % 2])
     # Bücherei oben: zwei Fenster mit Vorhängen auf der Ziegelwand (das Erdgeschoss bekommt später den Glasanbau)
