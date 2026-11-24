@@ -215,17 +215,28 @@ var alley_garden_depth: float = 6.0
 ## Höhe der Hauswände entlang der Gassen (Rückseiten der Häuser, seit Etappe 4g).
 var alley_wall_height: float = 7.0
 ## Der große Garten hinter Bücherei und Pub (seit Etappe 8d, „Die Oase hinter der Bücherei“, Skizze der Entwicklerin; x/z
-## unter "Outside", + x = Richtung Modeladen). Die Gasse führt offen hinein. Rechts endet er an der Gartenmauer hinter dem
-## Pub-Nachbarn (Kante = rechte Seite des Pubs), links an einer Gartenmauer (backyard_garden_left_x) bis zum Grundstück des
-## Holzhäuschens (vorn bei backyard_cottage_front_z, außen bei backyard_left_x). Hinten fließt ein Bach (vordere Uferkante,
-## Breite), dahinter steht eine hohe Backsteinmauer. Gartenmauern so hoch (m).
+## unter "Outside", + x = Richtung Modeladen). Nur durch die Gasse erreichbar (keine Türen anderer Häuser). Rechts endet er an der
+## Gartenmauer hinter dem Pub-Nachbarn (Kante = rechte Seite des Pubs), links an einer Mauer bei backyard_left_x, hinten bei
+## backyard_back_wall_z; vorn liegen die Rückseiten der Häuser. Gartenmauern so hoch (m).
 var backyard_left_x: float = 10.2
-var backyard_garden_left_x: float = 5.1
-var backyard_cottage_front_z: float = 10.3
-var backyard_stream_z: float = 16.5
-var backyard_stream_width: float = 1.3
-var backyard_back_wall_z: float = 18.4
+var backyard_back_wall_z: float = 24.0
 var backyard_wall_height: float = 2.6
+## Bach (seit der Testrunde nach 8d im Bogen): Mittellinie von links vorn (Tunnel in der linken Mauer) nach rechts hinten (Tunnel
+## in der rechten Mauer) – die ersten und letzten Punkte liegen in den Tunneln; das Modell rundet die Linie. Breite (m).
+var backyard_stream: PackedVector2Array = PackedVector2Array([Vector2(12.6, 6.7), Vector2(10.2, 6.7), Vector2(7.4, 7.0),
+	Vector2(4.8, 8.6), Vector2(2.4, 11.4), Vector2(-0.6, 14.2), Vector2(-4.2, 16.5), Vector2(-8.2, 18.2), Vector2(-11.6, 19.0),
+	Vector2(-14.0, 19.2)])
+var backyard_stream_width: float = 1.3
+## Holzbrücke über den Bach: Mitte (x/z), Richtung über den Bach (Grad um die Hochachse, 0 = nach +z), Länge, Breite, Höhe der
+## Wölbung in der Mitte (m).
+var backyard_bridge_center: Vector2 = Vector2(1.3, 12.5)
+var backyard_bridge_turn: float = 42.0
+var backyard_bridge_size: Vector3 = Vector3(3.2, 1.1, 0.32)
+## Platz für das Holzhäuschen (Zettel 05): hinten links jenseits des Bachs, frei stehend und schräg – Mitte (x/z), Grundfläche
+## (Breite, Tiefe), Drehung (Grad um die Hochachse).
+var backyard_cottage_center: Vector2 = Vector2(5.6, 19.4)
+var backyard_cottage_size: Vector2 = Vector2(4.6, 3.6)
+var backyard_cottage_turn: float = -22.0
 ## Kleine Gasse in der Häuserreihe gegenüber (seit Etappe 4f), damit die lange Front nicht so
 ## einheitlich wirkt: Mitte (x, 0 = Mitte der Bücherei, + = Richtung gerades Straßenende),
 ## Breite und Tiefe (8 m = bis zur Rückseite der Häuser; dort Mauer mit Tor). Breite 0 = keine.

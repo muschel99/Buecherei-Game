@@ -2037,7 +2037,9 @@ Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
 „Eine cozy Oase. Eine zauberhafte Welt mitten in der Stadt.“ Plan, Skizze und Zettel: `.scratch/backyard-oasis/`.
 Seit dem 24.11.2026 „rückwärts“ (Wunsch der Entwicklerin): erst alles im fertigen Zustand bauen, Sperren, Trümmer, Verwilderung
 und Freischaltungen in der Story zum Schluss (Zettel 07).
-**Nächster Schritt:** Zettel 02, Schritt 2 (Leben im großen Garten: Katzen, Vögel, Tier-Plätze; Wasser und Schilf am Bach).
+Wünsche aus der Testrunde: `.scratch/testrunde-8d/` (Garten-Umbau, Theke, Haltungen, Hauptmenü, Deko in der Gasse, Häuser und
+Bäume rund um den Garten).
+**Nächster Schritt:** Deko in der Gasse (Testrunde 06), dann Haltungen und Karte hinhalten (04/03), Hauptmenü (05), Holzhäuschen.
 
 - [x] Mehr Draußen-Sachen (Zettel 01), in vier Runden – zusammen 41 neue Sachen:
   - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
@@ -2053,12 +2055,17 @@ und Freischaltungen in der Story zum Schluss (Zettel 07).
     Gießkanne, Vogelhäuschen, Vogeltränke, Rosenkugel, Igel aus Stein, Kürbisse
 - [x] Immergrün: Buchs, Efeu, Olive, Lorbeer und Zitrus färben sich im Herbst nicht mehr (Shader-Schalter `evergreen`)
 - [x] Fehler behoben: Das Spiel hielt beim Bedienen an der Theke an (Godot 4.6.2); neues Prüfwerkzeug `serve_probe`
+- [x] Theke schneller: Bücher scannen, während der Ausweis liest; Bewegungen etwa ein Drittel schneller
 - [ ] Das Gelände im fertigen Zustand (Zettel 02):
   - [x] Schritt 1 – großer Garten hinter Bücherei und Pub (`build_storybook_backyard.py`, `backyard.glb`): Rasen, Kiesweg aus
     der Gasse, Gartenmauern mit Efeu, Grundstück fürs Holzhäuschen, Bach mit Steinrand, der links und rechts unter einem
     Mauerbogen verschwindet, Giebelhäuser dahinter; Rückseiten von Pub (mit Hintertür und Laterne), Modeladen und Nachbarn
     mit Fenstern; Baum mit Bank und Vogelbad wie zuvor; Kollision an Mauern und Bach
-  - [ ] Schritt 2 – Leben im Garten (Katzen, Vögel, Tier-Plätze), Wasser in Bewegung, Schilf am Bach
+  - [x] Umbau nach der Testrunde: Garten größer (etwa 22 × 20 m), Bach im Bogen von links vorn nach rechts hinten aus gewölbten
+    Tunneln (kein zugemauerter Tunnel mehr), Holzbrücke, Platz fürs Holzhäuschen hinten links, Wasser mit fließenden Wellen
+    (eigener Shader), Schilf und Rohrkolben, Bäume hinter den Mauern, Häuserreihe hinten mit Lücken (viel Himmel), keine Tür
+    hinter dem Pub
+  - [ ] Leben im ganzen Garten (Katzen, Vögel, Tier-Plätze)
 - [ ] Projekt Glasanbau (Story): reparieren lassen → Tür hinten im Laden, Gäste lesen dort, gestalten
 - [ ] Projekt Gasse und Torbogen (Story): aufräumen lassen → der Garten gehört zur Bücherei, gestalten, Gäste kommen hinein
   (Reihenfolge mit dem Glasanbau frei wählbar)

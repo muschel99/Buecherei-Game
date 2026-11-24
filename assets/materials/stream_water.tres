@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+; Bachwasser im Garten (seit der Testrunde nach Etappe 8d) – die Gasse setzt es auf das Wasser im Garten-Modell („Wasser Bach“).
+
+[ext_resource type="Shader" path="res://assets/shaders/stream_water.gdshader" id="1_shader"]
+
+[resource]
+resource_name = "Bachwasser"
+shader = ExtResource("1_shader")

@@ -4,9 +4,17 @@ Die Entwicklerin hat den großen Garten und die Theke getestet. Reihenfolge frei
 zwischendurch immer hochladen“). Vorlagen-Fotos: `fork_grip.jpg` (Gabel, mit Stift gezeigt), `card_hold.jpg` (Karte, aus Sicht
 des Kunden).
 
+## Entscheidungen (Antworten der Entwicklerin)
+- Garten nach der Skizze in `issues/01` (Bach von links vorn nach rechts hinten, Brücke, Häuschen hinten links).
+- „Abgekapselt“: von der Straße nur durch die Gasse (später der Torbogen), keine Türen anderer Häuser.
+- Deko „rechts von der Bücherei“ = in der Gasse an der Seitenwand der Bücherei.
+
 ## Erledigt
 - Dachrinne im Hinterzimmer weg (Fallrohr der neuen Modeladen-Rückseite ging durch das Hinterzimmer).
 - Tür hinter dem Pub im Garten weg (der Garten soll ganz für sich sein).
+- Theke schneller (Teil von `issues/03`): nach dem Piep gleich scannen, Bewegungen schneller (3 Bücher: 9,6 s → 6,0 s).
+- Garten-Umbau (`issues/01`, ohne das Häuschen selbst): größer, Bach im Bogen aus gewölbten Tunneln, Brücke, Schilf, Wasser-Shader,
+  Bäume hinter den Mauern, Häuserreihe hinten mit Lücken.
 
 ## Zettel
 - `issues/01` Garten neu planen: größer, Bach kurvig (Tunnel links vorn in der Mauer), Brücke, Tunnel nicht zugemauert,

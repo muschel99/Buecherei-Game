@@ -56,4 +56,6 @@ diesem Plan aufgegangen.
   Prüfwerkzeug `serve_probe`.
 - 24.11.2026: `issues/02` Schritt 1 fertig – großer Garten (`tools/blender/build_storybook_backyard.py` → `backyard.glb`, die Gasse
   setzt es ein; Maße in GameConfig `backyard_*`; `alley_library.glb` gibt es nicht mehr).
-- **Nächster Schritt:** `issues/02` Schritt 2 – Leben im großen Garten (Katzen, Vögel, Tier-Plätze), Wasser in Bewegung, Schilf.
+- 24.11.2026: Testrunde der Entwicklerin – Garten umgebaut nach ihren Wünschen (siehe `.scratch/testrunde-8d/`): größer, Bach im
+  Bogen, Brücke, Holzhäuschen hinten links jenseits des Bachs (frei stehend, schräg, Tiny House mit Gauben – Zettel 05).
+- **Nächster Schritt:** die übrigen Wünsche der Testrunde (`.scratch/testrunde-8d/spec.md`), danach Holzhäuschen (Zettel 05).

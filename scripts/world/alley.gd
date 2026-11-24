@@ -37,6 +37,8 @@ const BENCH_APPROACH := 1.45
 ## hinein; Baum mit Bank und Vogelbad stehen wie zuvor im kleinen Garten.
 @export var model_scene: PackedScene = preload("res://assets/models/world/backyard.glb")
 @export var paving_material: Material = preload("res://assets/materials/sidewalk.tres")
+## Bachwasser im Garten (bewegte Wellen, seit der Testrunde nach 8d) – ersetzt das Material „Wasser Bach“ des Modells
+@export var stream_material: Material = preload("res://assets/materials/stream_water.tres")
 @export var wall_material: Material = preload("res://assets/materials/outdoor_colors.tres")
 @export var yard_wall_color: Color = Color(0.52, 0.31, 0.25)
 
@@ -58,6 +60,10 @@ func _ready() -> void:
 		add_child(model)
 		# Die Wände sind nur von innen gebaut: Schatten trotzdem von beiden Seiten
 		WorldMesh.cast_shadows_both_sides(model)
+		var water := model.find_child("Wasser*", true, false) as MeshInstance3D
+		if water and stream_material:
+			water.material_override = stream_material
+			water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_build_backyard_walls()
 		_build_bench()
 	else:
@@ -121,9 +127,9 @@ func _build_bench() -> void:
 	add_child(bench)
 
 
-## Feste, unsichtbare Wände zum Garten (seit Etappe 8d): an den Gartenmauern ringsum und über dem Bach (man kommt weder ins Wasser
-## noch ans andere Ufer). So hoch, dass man auch springend nicht darüber kommt. Rückseiten von Bücherei, Hinterzimmer, Pub und
-## Modeladen haben eigene Kollisionen.
+## Feste, unsichtbare Wände zum Garten (seit Etappe 8d): an den Gartenmauern ringsum und entlang des Bachs (man kommt nicht ins
+## Wasser und springt nicht hinüber) – außer an der Brücke: Sie hat einen gewölbten Steg mit sanften Rampen an den Enden und
+## hohe, unsichtbare Geländer. Rückseiten von Bücherei, Hinterzimmer, Pub und Nachbarn haben eigene Kollisionen.
 func _build_backyard_walls() -> void:
 	var body := StaticBody3D.new()
 	body.name = "Walls"
@@ -134,16 +140,72 @@ func _build_backyard_walls() -> void:
 	var t := YARD_WALL_THICKNESS
 	var right := StreetLayout.backyard_right_x()
 	var left := GameConfig.backyard_left_x
-	var garden_left := GameConfig.backyard_garden_left_x
-	var cottage := GameConfig.backyard_cottage_front_z
 	var back := GameConfig.backyard_back_wall_z
-	var room_back := BackRoom.back_area().end.y + BackRoom.WALL
+	var front_left := StreetLayout.HOUSE_FRONT + HouseTypes.depth_of(GameConfig.neighbor_house_types[0])
 	_add_collider(body, Vector3(right - t, 0.0, _neighbor_back()), Vector3(right, h, back + t))
-	_add_collider(body, Vector3(garden_left, 0.0, room_back - 0.05), Vector3(garden_left + t, h, cottage))
-	_add_collider(body, Vector3(garden_left, 0.0, cottage - t), Vector3(left + t, h, cottage))
-	_add_collider(body, Vector3(left, 0.0, cottage - t), Vector3(left + t, h, back + t))
-	# Bach und das schmale Ufer dahinter
-	_add_collider(body, Vector3(right, 0.0, GameConfig.backyard_stream_z - 0.05), Vector3(left, h, back + t))
+	_add_collider(body, Vector3(left, 0.0, front_left), Vector3(left + t, h, back + t))
+	_add_collider(body, Vector3(right - t, 0.0, back), Vector3(left + t, h, back + t))
+	# Bach: Kästen entlang der Mittellinie (nicht unter der Brücke)
+	var line := StreetLayout.backyard_stream_line()
+	var width := GameConfig.backyard_stream_width
+	for i in range(1, line.size()):
+		var a := line[i - 1]
+		var b := line[i]
+		var mid := (a + b) / 2.0
+		if mid.x < right or mid.x > left or _on_bridge(mid, 0.15):
+			continue
+		_add_turned_collider(body, Vector3(mid.x, h / 2.0, mid.y), Vector3(width - 0.1, h, a.distance_to(b) + 0.08),
+			atan2(b.x - a.x, b.y - a.y), 0.0)
+	_build_bridge(body)
+
+
+## Liegt ein Punkt (x/z unter "Outside") auf der Brücke (quer gesehen innerhalb ihrer Breite, längs innerhalb ihrer Länge)?
+func _on_bridge(p: Vector2, margin: float) -> bool:
+	var turn := deg_to_rad(GameConfig.backyard_bridge_turn)
+	var along := Vector2(sin(turn), cos(turn))
+	var rel := p - GameConfig.backyard_bridge_center
+	return absf(rel.dot(along)) < GameConfig.backyard_bridge_size.x / 2.0 \
+		and absf(rel.dot(Vector2(along.y, -along.x))) < GameConfig.backyard_bridge_size.y / 2.0 + margin
+
+
+## Brücke: gewölbter Steg (Bogen wie im Modell: Höhe rise·(1 - t²) + 0,1, an den Enden etwas weiter bis in den Boden – die Rampen),
+## dazu zwei hohe, unsichtbare Geländer.
+func _build_bridge(body: StaticBody3D) -> void:
+	var center := GameConfig.backyard_bridge_center
+	var size := GameConfig.backyard_bridge_size
+	var turn := deg_to_rad(GameConfig.backyard_bridge_turn)
+	var along := Vector2(sin(turn), cos(turn))
+	var half := size.x / 2.0
+	var steps := 12
+	var t0 := -1.15
+	for i in steps:
+		var ta := t0 + 2.0 * absf(t0) * i / steps
+		var tb := t0 + 2.0 * absf(t0) * (i + 1) / steps
+		var pa := center + along * ta * half
+		var pb := center + along * tb * half
+		var ya := maxf(size.z * (1.0 - ta * ta) + 0.1, 0.0)
+		var yb := maxf(size.z * (1.0 - tb * tb) + 0.1, 0.0)
+		var mid := (pa + pb) / 2.0
+		var run := pa.distance_to(pb)
+		var pitch := atan2(yb - ya, run)
+		var thick := 0.12
+		# Mitte des Kastens: unter der Lauffläche (Oberkante = Lauffläche)
+		_add_turned_collider(body, Vector3(mid.x, (ya + yb) / 2.0 - thick / 2.0, mid.y), Vector3(size.y, thick, run / cos(pitch) + 0.02),
+			turn, pitch)
+	for side: float in [-1.0, 1.0]:
+		var offset := Vector2(along.y, -along.x) * side * (size.y / 2.0 + 0.02)
+		var c := center + offset
+		_add_turned_collider(body, Vector3(c.x, 1.1, c.y), Vector3(0.08, 2.2, size.x * 0.95), turn, 0.0)
+
+
+## Kasten um die Hochachse gedreht (yaw, Richtung der Länge = +z gedreht) und um die eigene Querachse geneigt (pitch, steigt nach vorn).
+func _add_turned_collider(body: StaticBody3D, center: Vector3, size: Vector3, yaw: float, pitch: float) -> void:
+	var shape := BoxShape3D.new()
+	shape.size = size
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	collision.transform = Transform3D(Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -pitch), center)
+	body.add_child(collision)
 
 
 ## Rückseite des Hauses hinter der Gasse (Pub), z unter "Outside".

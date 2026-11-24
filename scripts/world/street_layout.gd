@@ -108,6 +108,20 @@ static func backyard_right_x() -> float:
 	return alley_far_x() - (HouseTypes.width_of(first) if first != "" else 5.6)
 
 
+## Mittellinie des Bachs im Garten (seit der Testrunde nach 8d), geglättet wie im Modell (build_storybook_backyard.py: Chaikin,
+## drei Runden).
+static func backyard_stream_line() -> PackedVector2Array:
+	var pts := GameConfig.backyard_stream
+	for round in 3:
+		var smooth := PackedVector2Array([pts[0]])
+		for i in range(1, pts.size()):
+			smooth.append(pts[i - 1].lerp(pts[i], 0.25))
+			smooth.append(pts[i - 1].lerp(pts[i], 0.75))
+		smooth.append(pts[pts.size() - 1])
+		pts = smooth
+	return pts
+
+
 static func garden_tree() -> Vector2:
 	var far_x := alley_far_x()
 	var garden_x := far_x - GameConfig.alley_garden_extra_width

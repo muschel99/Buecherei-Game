@@ -26,12 +26,14 @@ func _ready() -> void:
 		# großer Garten (seit Etappe 8d) und die Häuser ringsum (Rückseiten mit Fenstern im Modell)
 		"backyard_right_x": StreetLayout.backyard_right_x(),
 		"backyard_left_x": GameConfig.backyard_left_x,
-		"backyard_garden_left_x": GameConfig.backyard_garden_left_x,
-		"backyard_cottage_front_z": GameConfig.backyard_cottage_front_z,
-		"backyard_stream_z": GameConfig.backyard_stream_z,
-		"backyard_stream_width": GameConfig.backyard_stream_width,
 		"backyard_back_wall_z": GameConfig.backyard_back_wall_z,
 		"backyard_wall_height": GameConfig.backyard_wall_height,
+		"backyard_stream": _points(GameConfig.backyard_stream),
+		"backyard_stream_width": GameConfig.backyard_stream_width,
+		"backyard_bridge": [GameConfig.backyard_bridge_center.x, GameConfig.backyard_bridge_center.y, GameConfig.backyard_bridge_turn,
+			GameConfig.backyard_bridge_size.x, GameConfig.backyard_bridge_size.y, GameConfig.backyard_bridge_size.z],
+		"backyard_cottage": [GameConfig.backyard_cottage_center.x, GameConfig.backyard_cottage_center.y,
+			GameConfig.backyard_cottage_size.x, GameConfig.backyard_cottage_size.y, GameConfig.backyard_cottage_turn],
 		"back_room": [BackRoom.back_area().position.x, BackRoom.back_area().position.y, BackRoom.back_area().size.x,
 			BackRoom.back_area().size.y],
 		"house_backs": _house_backs(),
@@ -56,4 +58,11 @@ func _house_backs() -> Array:
 		var w := HouseTypes.width_of(id)
 		result.append([x - w, x, StreetLayout.recess_z() + HouseTypes.depth_of(id), float(HouseTypes.value_of(id, "eaves_height", 6.6))])
 		x -= w
+	return result
+
+
+func _points(points: PackedVector2Array) -> Array:
+	var result := []
+	for p in points:
+		result.append([p.x, p.y])
 	return result
