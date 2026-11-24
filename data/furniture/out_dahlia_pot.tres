@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="FurnitureData" load_steps=7 format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Werte gern im Inspektor ändern: Speichert Godot das
+; Datenblatt, überschreibt das Bau-Script es nicht mehr.
+
+[ext_resource type="Script" path="res://scripts/data/furniture_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/data/color_variant.gd" id="2_variant"]
+
+[sub_resource type="Resource" id="Variant_0"]
+script = ExtResource("2_variant")
+id = "burgundy"
+display_name = "Weinrot"
+colors = Dictionary[String, Color]({"bloom": Color(0.480, 0.100, 0.170, 1)})
+
+[sub_resource type="Resource" id="Variant_1"]
+script = ExtResource("2_variant")
+id = "orange"
+display_name = "Orange"
+colors = Dictionary[String, Color]({"bloom": Color(0.950, 0.520, 0.200, 1)})
+
+[sub_resource type="Resource" id="Variant_2"]
+script = ExtResource("2_variant")
+id = "pink"
+display_name = "Rosa"
+colors = Dictionary[String, Color]({"bloom": Color(0.930, 0.520, 0.620, 1)})
+
+[sub_resource type="Resource" id="Variant_3"]
+script = ExtResource("2_variant")
+id = "yellow"
+display_name = "Gelb"
+colors = Dictionary[String, Color]({"bloom": Color(0.970, 0.840, 0.360, 1)})
+
+[resource]
+script = ExtResource("1_data")
+id = "out_dahlia_pot"
+display_name = "Dahlien"
+description = "Dahlien mit runden, gefüllten Blüten im Tontopf."
+category = 7
+subcategory = "outdoor_plant"
+price = 20
+style_ids = Array[String]([])
+scene_path = "res://scenes/furniture/out_dahlia_pot.tscn"
+footprint = Vector2i(3, 3)
+is_unlocked = true
+is_essential = false
+is_fixed = false
+placement = 1
+books_can_lean = false
+books_can_lie = false
+color_variants = Array[ExtResource("2_variant")]([SubResource("Variant_0"), SubResource("Variant_1"), SubResource("Variant_2"), SubResource("Variant_3")])

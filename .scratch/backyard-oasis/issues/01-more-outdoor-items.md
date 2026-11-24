@@ -20,3 +20,11 @@ jetzt je Objekt „Offene Kanten“.
 Gartenbank: `_garden_seat`), Klappstuhl (`out_folding_chair`), Holzhocker (`out_wood_stool`), Klapptisch
 (`out_folding_table`), kleiner Holztisch (`out_wood_table`), Fass als Tisch (`out_barrel_table`). Nebenbei: Gartenbank
 neu gebaut (hinteres Bein endete genau auf Höhe der Sitzlatten → Flimmern).
+
+24.11.2026: Runde 3 fertig – 17 Pflanzen: Tulpen (`out_tulip_pot`), Rosmarin (`out_rosemary_pot`), Margeriten im
+Emailleeimer (`out_marguerite_bucket`), Dahlien (`out_dahlia_pot`), Funkie (`out_hosta_bowl`), Farn im Zinkeimer
+(`out_fern_bucket`), Kräuterkiste (`out_herb_crate`), Rosenbusch (`out_rose_bush`), Buchskegel (`out_box_cone`),
+Lorbeerstämmchen (`out_bay_standard`), Ziergras (`out_grass_pot`), Sonnenblumen (`out_sunflower_bucket`), Stockrosen
+(`out_hollyhock_pot`), Blumenkasten mit Geranien (`out_flower_box`), Kletterrose/Efeu/Glyzinie am Rankgitter
+(`out_rose_trellis`, `out_ivy_trellis`, `out_wisteria_trellis`). Eimer haben Seitengriffe statt Henkel (der ginge durch die
+Pflanze; `F.pot(handle=False)`). Neue Prüfung `tools/blender/plant_clip_check.py`.

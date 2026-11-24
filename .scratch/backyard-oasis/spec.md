@@ -41,5 +41,7 @@ diesem Plan aufgegangen.
   Bordstein, 16 Draußen-Sachen (Gartenbank, Bistrostuhl/-tisch, Kreidetafel, Pflanzen, Laternen).
 - Die Entwicklerin hat den Plan mit der Skizze bestätigt und will in einem neuen Chat weitermachen.
 - 24.11.2026: `issues/01` Runde 1 fertig (Regale, Auslagen, Schilder – sieben Sachen, siehe Zettel), Runde 2 fertig
-  (Sitzplätze und Tischchen – sieben Sachen).
-- **Nächster Schritt:** `issues/01` Runde 3 – sehr viele Pflanzen; dann Runde 4 (Deko); danach `issues/02` – das Gelände.
+  (Sitzplätze und Tischchen – sieben Sachen), Runde 3 fertig (17 Pflanzen).
+- **Nächster Schritt:** `issues/01` Runde 4 – kleine Deko; danach `issues/02` – das Gelände.
+- Offene Frage an die Entwicklerin: Im Herbst färbt der Shader draußen jedes grüne Laub (auch Buchs, Lorbeer, Efeu, die in echt
+  grün bleiben) – sollen immergrüne Pflanzen grün bleiben?

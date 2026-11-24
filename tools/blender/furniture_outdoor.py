@@ -35,6 +35,21 @@ SIGNS = [("green", "Tannengrün", (0.22, 0.36, 0.28)), ("blue", "Nachtblau", (0.
 LETTERS = (0.95, 0.92, 0.84)
 SLATS = [("oak", "Eiche natur", OAK), ("teak", "Teak", (0.5, 0.32, 0.2)), ("green", "Parkgrün", (0.3, 0.45, 0.32)),
          ("white", "Weiß", (0.9, 0.88, 0.82))]
+ZINC = [("zinc", "Zink", (0.62, 0.64, 0.64)), ("white", "Emaille weiß", (0.92, 0.91, 0.88)),
+        ("blue", "Emaille blau", (0.36, 0.5, 0.68)), ("cream", "Emaille creme", (0.9, 0.85, 0.72))]
+# Blütenfarben (Material "bloom")
+TULIPS = [("red", "Rot", (0.86, 0.2, 0.17)), ("yellow", "Gelb", (0.97, 0.84, 0.36)), ("pink", "Rosa", (0.93, 0.52, 0.62)),
+          ("white", "Weiß", (0.95, 0.94, 0.9))]
+DAHLIAS = [("burgundy", "Weinrot", (0.48, 0.1, 0.17)), ("orange", "Orange", (0.95, 0.52, 0.2)), ("pink", "Rosa", (0.93, 0.52, 0.62)),
+           ("yellow", "Gelb", (0.97, 0.84, 0.36))]
+ROSES = [("pink", "Rosa", (0.93, 0.52, 0.62)), ("red", "Rot", (0.75, 0.12, 0.16)), ("cream", "Creme", (0.97, 0.93, 0.8)),
+         ("apricot", "Apricot", (0.98, 0.72, 0.58))]
+PLUMES = [("peach", "Pfirsich", (0.98, 0.78, 0.62)), ("silver", "Silber", (0.86, 0.85, 0.8)), ("rust", "Rotbraun", (0.62, 0.34, 0.26)),
+          ("gold", "Gold", (0.9, 0.76, 0.45))]
+HOLLYHOCKS = [("pink", "Rosa", (0.93, 0.52, 0.62)), ("burgundy", "Weinrot", (0.48, 0.1, 0.17)), ("white", "Weiß", (0.95, 0.94, 0.9)),
+              ("apricot", "Apricot", (0.98, 0.72, 0.58))]
+WISTERIA = [("lilac", "Flieder", (0.7, 0.58, 0.82)), ("white", "Weiß", (0.95, 0.94, 0.9)), ("pink", "Rosa", (0.93, 0.7, 0.8)),
+            ("violet", "Blauviolett", (0.55, 0.55, 0.85))]
 WOODS = [("oak", "Eiche", OAK), ("dark", "Dunkle Eiche", (0.42, 0.28, 0.17)), ("grey", "Verwittert", (0.62, 0.58, 0.52)),
          ("honey", "Honig", (0.78, 0.58, 0.32))]
 
@@ -273,13 +288,40 @@ def build_chalk_sign(k):
 
 # --- Pflanzen ---
 
-def _potted(k, radius, height, style, builder, scale_ref=0.2, container="potfill"):
+def _potted(k, radius, height, style, builder, scale_ref=0.2, container="potfill", scale=None):
+    """Topf mit Pflanze; die Pflanze wird in Topfgröße der Bausteine gebaut (Rand scale_ref) und passend verkleinert –
+    oder mit fester Größe scale. Ein vorher angelegtes Material "pot" (z. B. Zink) bleibt."""
     pot_mat(k, k.spec.get("pot_color", TERRA))
-    soil, rim = F.pot(k, (0, 0, 0), radius, height, style=style, slot="pot")
+    soil, rim = F.pot(k, (0, 0, 0), radius, height, style=style, slot="pot", handle=False)
+    if style == "bucket":
+        _side_handles(k, radius, height)
     p = k.plant(container)
     builder(p)
-    k.add_plant(p, soil, scale=rim / scale_ref)
+    k.add_plant(p, soil, scale=scale if scale is not None else rim / scale_ref)
     return soil, rim
+
+
+def bloom(k, table_or_color):
+    """Blütenmaterial "bloom" in der ersten Farbe der Variantentabelle (oder einer Farbe)."""
+    color = table_or_color[0][2] if isinstance(table_or_color, list) else table_or_color
+    return k.mat("bloom", color, grain="leaf", rough=0.72, vary=0.1, plant=True)
+
+
+def _side_handles(k, r, h):
+    """Zwei kleine Griffe außen an den Seiten eines Eimers (statt des hohen Henkels, der durch die Pflanze ginge); sie
+    sitzen kurz unter dem Rand an der Wand (Eimerwand dort: Radius 0,98·r)."""
+    metal(k, (0.6, 0.6, 0.58))
+    g = k.part("Griffe", "metal", bevel=0.0)
+    z = h * 0.86
+    w = r * 0.97
+    for sx in (-1, 1):
+        g.tube([(sx * w, -0.03, z), (sx * (w + 0.022), -0.024, z + 0.004), (sx * (w + 0.03), 0.0, z + 0.006),
+                (sx * (w + 0.022), 0.024, z + 0.004), (sx * w, 0.03, z)], 0.004, segs=6, smooth=2, round_ends=True)
+
+
+def zinc(k):
+    """Zink- oder Emaille-Gefäß (Farbvarianten ZINC)."""
+    return k.mat("pot", ZINC[0][2], grain="smooth", rough=0.4, metal=0.3, vary=0.05)
 
 
 def build_lavender_pot(k):
@@ -342,6 +384,220 @@ def build_small_boxball(k):
     """Kleine Buchsbaumkugel im Topf – passt auf eine Stufe."""
     _potted(k, 0.095, 0.12, "bowl", lambda p: G.boxball(p, radius=0.19))
     k.collider((0, 0, 0.14), (0.2, 0.2, 0.28))
+
+
+# --- Pflanzen, Runde 3: viele Größen, Farben und Formen ---
+
+def build_tulip_pot(k):
+    """Tulpen im kleinen Tontopf – passt auch auf eine Stufe."""
+    bloom(k, TULIPS)
+    _potted(k, 0.1, 0.12, "classic", lambda p: G.tulip_pot(p, "bloom", n=9))
+    k.collider((0, 0, 0.15), (0.22, 0.22, 0.3))
+
+
+def build_rosemary_pot(k):
+    """Rosmarin im kleinen Topf – duftet, wenn man vorbeistreift."""
+    _potted(k, 0.1, 0.12, "classic", lambda p: G.rosemary(p))
+    k.collider((0, 0, 0.14), (0.22, 0.22, 0.28))
+
+
+def build_marguerite_bucket(k):
+    """Margeriten im Emailleeimer mit Henkel."""
+    zinc(k)
+    _potted(k, 0.15, 0.2, "bucket", lambda p: G.flower_bush(
+        p, lambda q, c, at, up: G.daisy_head(q, at, up, 0.04, petal=c), ("white_flower",), n=13, height=0.4, leaf_mat="leaf_blue",
+        leaf_shape="narrow", leaf=0.05))
+    k.collider((0, 0, 0.22), (0.34, 0.34, 0.44))
+
+
+def build_dahlia_pot(k):
+    """Dahlien im Tontopf: runde, gefüllte Blüten über dunklem Laub."""
+    bloom(k, DAHLIAS)
+    _potted(k, 0.16, 0.2, "classic", lambda p: G.flower_bush(
+        p, lambda q, c, at, up: G.pompon(q, c, at, up, 0.05), ("bloom",), n=8, height=0.42, leaf_mat="leaf_dark"))
+    k.collider((0, 0, 0.24), (0.36, 0.36, 0.48))
+
+
+def build_hosta_bowl(k):
+    """Funkie in einer flachen Schale: große, blaugrüne Herzblätter."""
+    _potted(k, 0.18, 0.16, "bowl", lambda p: G.hosta(p, 1.25, mats=("leaf_blue", "leaf_blue", "leaf")))
+    k.collider((0, 0, 0.18), (0.42, 0.42, 0.36))
+
+
+def build_fern_bucket(k):
+    """Farn im Zinkeimer – mag den Schatten an der Hauswand."""
+    zinc(k)
+    _potted(k, 0.15, 0.2, "bucket", lambda p: F.lush_fern(p, 1.0, fronds=24))
+    k.collider((0, 0, 0.22), (0.4, 0.4, 0.44))
+
+
+def build_rose_bush(k):
+    """Rosenbusch im Holzkübel."""
+    bloom(k, ROSES)
+    _potted(k, 0.2, 0.28, "tub", lambda p: G.rose_bush(p, ("bloom", "bloom"), height=0.5))
+    k.collider((0, 0, 0.32), (0.44, 0.44, 0.64))
+
+
+def build_box_cone(k):
+    """Buchskegel im bauchigen Topf – streng geschnitten, sehr ordentlich."""
+    _potted(k, 0.17, 0.22, "bowl", lambda p: G.cone_topiary(p, 0.85, 0.24))
+    k.collider((0, 0, 0.45), (0.36, 0.36, 0.9))
+
+
+def build_bay_standard(k):
+    """Lorbeerstämmchen: eine geschnittene Kugel aus dunklen Blättern auf einem geraden Stamm, im Kübel."""
+    _potted(k, 0.18, 0.26, "tub", lambda p: G.standard_ball(p, 0.6, 0.21, leaf_mat="leaf_dark"))
+    k.collider((0, 0, 0.5), (0.4, 0.4, 1.0))
+
+
+def build_grass_pot(k):
+    """Ziergras im hohen Topf: lange, überhängende Halme mit weichen Rispen."""
+    bloom(k, PLUMES)
+    _potted(k, 0.14, 0.42, "cylinder", lambda p: G.grass_tuft(p, blades=64, height=0.55, mats=("grass_leaf", "leaf_blue", "grass_leaf"),
+                                                                plume="bloom"))
+    k.collider((0, 0, 0.42), (0.36, 0.36, 0.84))
+
+
+def _sunflowers(p, stems=4, height=1.0):
+    """Sonnenblumen: kräftige Stängel, große Herzblätter, die Köpfe schauen nach vorn und zur Sonne."""
+    rnd = p.rnd
+    up = Vector((0, 0, 1))
+    for i in range(stems):
+        a = 2 * math.pi * i / stems + rnd.uniform(-0.4, 0.4)
+        out = Vector((math.cos(a), math.sin(a), 0.0))
+        base = out * 0.03
+        top = base + out * rnd.uniform(0.03, 0.08) + up * height * rnd.uniform(0.72, 1.0)
+        p.body("stem", vary=0.06).tube([base, base.lerp(top, 0.5) + out * 0.012, top], lambda t: 0.011 * (1 - 0.4 * t), segs=6, smooth=1,
+                                       round_ends=True)
+        for j in range(3):
+            q = base.lerp(top, 0.3 + 0.18 * j)
+            side = Vector((-out.y, out.x, 0.0)) * (1 if (i + j) % 2 else -1)
+            G.leaf_on(p, q, (side + up * 0.35).normalized(), up, rnd.uniform(0.13, 0.16) * (1.1 - 0.2 * j), shape="heart", width=0.9,
+                      petiole=0.025, mat="leaf")
+        face = (out * 0.35 + Vector((0, -0.65, 0)) + up * 0.55).normalized()
+        G.head_sunflower(p, "bloom", top + face * 0.012, face)
+
+
+def build_sunflower_bucket(k):
+    """Fünf Sonnenblumen im Zinkeimer."""
+    zinc(k)
+    bloom(k, (0.97, 0.78, 0.2))
+    _potted(k, 0.16, 0.24, "bucket", lambda p: _sunflowers(p, 5, 1.0), container=None)
+    k.collider((0, 0, 0.45), (0.4, 0.4, 0.9))
+
+
+def build_hollyhock_pot(k):
+    """Stockrosen im großen Tontopf: hohe Stängel voller Blüten – schön an der Hauswand."""
+    bloom(k, HOLLYHOCKS)
+    _potted(k, 0.2, 0.28, "classic", lambda p: G.hollyhock(p, ("bloom",), stems=4, height=1.4))
+    k.collider((0, 0, 0.75), (0.5, 0.5, 1.5))
+
+
+def _planter_box(k, builders, slot="crate", seg=0.28, ends=0.0):
+    """Pflanzkasten aus Brettern (Boden, vier Wände auf zwei Füßen), innen Erde bis 4 cm unter den Rand; je Abschnitt
+    (seg breit) eine Pflanze aus den Kasten-Bausteinen (Behälter „box“: innen 15,6 cm tief)."""
+    n = len(builders)
+    L, D, H, t = n * seg + 0.05 + 2 * ends, 0.206, 0.2, 0.025
+    b = k.part("Kasten", slot, bevel=0.003)
+    for x in (-(L / 2 - 0.08), L / 2 - 0.08):
+        b.box((x, 0, 0.01), (0.04, D - 0.03, 0.02), step=0.3, dent=0.0005)
+    b.box((0, 0, 0.0325), (L - 0.004, D - 0.004, 0.025), step=0.3, dent=0.0005)
+    for sy in (-1, 1):
+        b.box((0, sy * (D / 2 - t / 2), (0.045 + H) / 2), (L, t, H - 0.045), step=0.3, dent=0.0005)
+    for sx in (-1, 1):
+        b.box((sx * (L / 2 - t / 2), 0, (0.045 + H) / 2), (t, D - 2 * t - 0.002, H - 0.045), step=0.3, dent=0.0005)
+    k.mat("soil", (0.25, 0.17, 0.11), grain="stone", rough=0.95, vary=0.12, bump=0.4)
+    soil_z = H - 0.04          # Rand 4 cm über der Erde (Blätter, die über den Rand fallen, liegen nicht auf der Kante)
+    e = k.part("Erde", "soil", bevel=0.0, settle=False)
+    e.box((0, 0, (0.045 + soil_z) / 2), (L - 2 * t - 0.004, D - 2 * t - 0.004, soil_z - 0.045), step=0.1, dent=0.003)
+    for i, builder in enumerate(builders):
+        p = k.plant("box", seed_offset=i * 17)
+        builder(p)
+        k.add_plant(p, ((i - (n - 1) / 2) * seg, 0, soil_z))
+    k.collider((0, 0, H / 2), (L, D, H))
+    return L
+
+
+def build_herb_crate(k):
+    """Kräuterkiste: ein Holzkasten mit Rosmarin, Thymian und Basilikum."""
+    wood(k, PINE, slot="crate")
+    _planter_box(k, [G.herb_box], seg=0.31)
+
+
+def build_flower_box(k):
+    """Langer Blumenkasten am Boden mit drei Geranienpolstern – wie unter einem Fenster, nur auf dem Gehweg."""
+    wood(k, OAK, slot="crate")
+    bloom(k, (0.86, 0.2, 0.17))
+    # die äußeren Polster wachsen breiter als ihr Abschnitt – an den Enden 4 cm mehr Platz
+    _planter_box(k, [lambda p: G.box_geranium(p, "bloom")] * 3, ends=0.04)
+
+
+def _lattice(b, x0, x1, z0, z1, y, step=0.15):
+    """Rautengitter: Latten unter ±45°, auf das Rechteck zugeschnitten; die beiden Lagen liegen aufeinander (y ± 6 mm)."""
+    for sign, yy in ((1, y - 0.006), (-1, y + 0.006)):
+        c = (z0 - x1) if sign > 0 else (z0 + x0)
+        end = (z1 - x0) if sign > 0 else (z1 + x1)
+        c += step / 2
+        while c < end:
+            if sign > 0:   # z = x + c
+                xa, xb = max(x0, z0 - c), min(x1, z1 - c)
+            else:          # z = c - x
+                xa, xb = max(x0, c - z1), min(x1, c - z0)
+            if xb - xa > 0.03:
+                pa = Vector((xa, yy, c + sign * xa))
+                pb = Vector((xb, yy, c + sign * xb))
+                b.span(pa, pb, 0.012, 0.022, step=0.3, dent=0.0004)
+            c += step
+
+
+def _trellis(k, kind, flower=None, plants=2):
+    """Pflanzkasten mit Rankgitter: ein Holzkasten voll Erde (Rand ringsum), hinten zwei Pfosten mit Querleisten oben und
+    unten, dazwischen ein Rautengitter; davor wächst die Kletterpflanze aus der Erde am Gitter hoch."""
+    paint(k)
+    k.mat("soil", (0.25, 0.17, 0.11), grain="stone", rough=0.95, vary=0.12, bump=0.4)
+    W, D, H = 0.8, 0.4, 0.34
+    box = k.part("Pflanzkasten", "paint", bevel=0.005)
+    # Kasten wie in echt: Boden und vier Wände, innen bis 2 cm unter den Rand voll Erde (tief hängende Triebe liegen darin)
+    box.box((0, 0, 0.02), (W - 0.03, D - 0.054, 0.04), step=0.3, dent=0.0006)
+    for sy in (-1, 1):
+        box.box((0, sy * (D / 2 - 0.0125), (H + 0.01) / 2), (W + 0.02, 0.025, H + 0.01), step=0.3, dent=0.0006)
+    for sx in (-1, 1):
+        box.box((sx * (W / 2 - 0.0025), 0, (H + 0.01) / 2), (0.025, D - 0.052, H + 0.01), step=0.3, dent=0.0006)
+    soil = k.part("Erde", "soil", bevel=0.0, settle=False)
+    soil.box((0, 0, (0.04 + H - 0.01) / 2), (W - 0.03, D - 0.054, H - 0.05), step=0.1, dent=0.003)
+    ly, top = 0.12, 1.75
+    lat = k.part("Rankgitter", "paint", bevel=0.003)
+    for sx in (-1, 1):
+        lat.box((sx * 0.37, ly, (H - 0.03 + top + 0.04) / 2), (0.04, 0.04, top + 0.04 - (H - 0.03)), step=0.3, dent=0.0006)
+    lat.box((0, ly, top + 0.02), (W - 0.02, 0.05, 0.04), step=0.3, dent=0.0006)
+    lat.box((0, ly, H + 0.06), (0.7, 0.03, 0.03), step=0.3, dent=0.0006)
+    _lattice(lat, -0.35, 0.35, H + 0.075, top, ly)
+    # zwei Pflanzen (links und rechts), damit das Gitter voll wird (die Kletterrose ist mit einer schon üppig); eine Ranke bleibt 10 cm vor ihrem Ursprung: so wächst
+    # sie dicht vor dem Gitter, nicht durch die Latten
+    spots = [(-0.17, 0.42), (0.17, 0.42)] if plants == 2 else [(0.0, W - 0.14)]
+    for i, (x, width) in enumerate(spots):
+        p = k.plant(None, seed_offset=i * 31)
+        G.climber(p, width, 1.3, kind=kind, flower=flower)
+        k.add_plant(p, (x, ly + 0.07, H - 0.01))
+    k.collider((0, 0, H / 2), (W + 0.02, D, H))
+    k.collider((0, ly, (H + top + 0.04) / 2), (W, 0.06, top + 0.04 - H))
+
+
+def build_rose_trellis_box(k):
+    """Kletterrose am Rankgitter im Pflanzkasten."""
+    bloom(k, ROSES)
+    _trellis(k, "rose", "bloom", plants=1)
+
+
+def build_ivy_trellis(k):
+    """Efeu am Rankgitter im Pflanzkasten – das ganze Jahr grün."""
+    _trellis(k, "ivy")
+
+
+def build_wisteria_trellis(k):
+    """Glyzinie am Rankgitter im Pflanzkasten: helle Blätter und lange, hängende Blütentrauben."""
+    bloom(k, WISTERIA)
+    _trellis(k, "wisteria", "bloom")
 
 
 # --- Laternen ---
@@ -1049,6 +1305,58 @@ ITEMS = [
     dict(id="out_storm_lantern", name="Sturmlaterne", category="outdoor", sub="outdoor_light", price=18,
          desc="Eine Sturmlaterne mit Glaszylinder und Drahtbügel – die Kerze flackert auch bei Wind.",
          styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_storm_lantern, variants=LANTERN_COLORS),
+    # Pflanzen (Runde 3)
+    dict(id="out_tulip_pot", name="Tulpen im Topf", category="outdoor", sub="outdoor_plant", price=9,
+         desc="Ein kleiner Topf voller Tulpen – passt auch auf eine Stufe der Treppe.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_tulip_pot, variants=variants("bloom", TULIPS)),
+    dict(id="out_rosemary_pot", name="Rosmarin", category="outdoor", sub="outdoor_plant", price=8,
+         desc="Rosmarin im kleinen Tontopf – duftet, wenn man vorbeistreift.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_rosemary_pot, variants=variants("pot", POTS)),
+    dict(id="out_marguerite_bucket", name="Margeriten im Eimer", category="outdoor", sub="outdoor_plant", price=18,
+         desc="Weiße Margeriten in einem Emailleeimer mit Henkel.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_marguerite_bucket, variants=variants("pot", ZINC)),
+    dict(id="out_dahlia_pot", name="Dahlien", category="outdoor", sub="outdoor_plant", price=20,
+         desc="Dahlien mit runden, gefüllten Blüten im Tontopf.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_dahlia_pot, variants=variants("bloom", DAHLIAS)),
+    dict(id="out_hosta_bowl", name="Funkie in der Schale", category="outdoor", sub="outdoor_plant", price=19,
+         desc="Große, blaugrüne Herzblätter in einer flachen Schale – mag den Schatten.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_hosta_bowl, variants=variants("pot", POTS)),
+    dict(id="out_fern_bucket", name="Farn im Zinkeimer", category="outdoor", sub="outdoor_plant", price=17,
+         desc="Ein üppiger Farn in einem alten Zinkeimer.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_fern_bucket, variants=variants("pot", ZINC)),
+    dict(id="out_herb_crate", name="Kräuterkiste", category="outdoor", sub="outdoor_plant", price=24,
+         desc="Ein Holzkasten mit Rosmarin, Thymian und Basilikum.",
+         styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_herb_crate, variants=variants("crate", CRATES)),
+    dict(id="out_rose_bush", name="Rosenbusch", category="outdoor", sub="outdoor_plant", price=34,
+         desc="Ein Rosenbusch im Holzkübel – blüht den ganzen Sommer.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_rose_bush, variants=variants("bloom", ROSES)),
+    dict(id="out_box_cone", name="Buchskegel", category="outdoor", sub="outdoor_plant", price=30,
+         desc="Ein streng geschnittener Buchs in Kegelform im bauchigen Topf.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_box_cone, variants=variants("pot", POTS)),
+    dict(id="out_bay_standard", name="Lorbeerstämmchen", category="outdoor", sub="outdoor_plant", price=42,
+         desc="Eine dunkelgrüne Lorbeerkugel auf einem geraden Stamm – rechts und links der Tür sehr elegant.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_bay_standard, variants=variants("pot", POTS)),
+    dict(id="out_grass_pot", name="Ziergras", category="outdoor", sub="outdoor_plant", price=26,
+         desc="Ein hohes Ziergras mit weichen Rispen, das sich im Wind wiegt.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_grass_pot, variants=variants("bloom", PLUMES)),
+    dict(id="out_sunflower_bucket", name="Sonnenblumen", category="outdoor", sub="outdoor_plant", price=22,
+         desc="Fünf Sonnenblumen im Zinkeimer – sie schauen zur Sonne.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_sunflower_bucket, variants=variants("pot", ZINC)),
+    dict(id="out_hollyhock_pot", name="Stockrosen", category="outdoor", sub="outdoor_plant", price=28,
+         desc="Hohe Stockrosen voller Blüten im großen Tontopf – am schönsten an der Hauswand.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_hollyhock_pot, variants=variants("bloom", HOLLYHOCKS)),
+    dict(id="out_flower_box", name="Blumenkasten mit Geranien", category="outdoor", sub="outdoor_plant", price=38,
+         desc="Ein langer Holzkasten mit drei Geranienpolstern.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_flower_box, variants=flower_variants("bloom")),
+    dict(id="out_rose_trellis", name="Kletterrose am Rankgitter", category="outdoor", sub="outdoor_plant", price=85,
+         desc="Ein Pflanzkasten mit Rankgitter, an dem eine Kletterrose hochwächst.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_rose_trellis_box, variants=variants("bloom", ROSES)),
+    dict(id="out_ivy_trellis", name="Efeu am Rankgitter", category="outdoor", sub="outdoor_plant", price=70,
+         desc="Ein Pflanzkasten mit Rankgitter voller Efeu – das ganze Jahr grün.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_ivy_trellis, variants=variants("paint", PAINTS)),
+    dict(id="out_wisteria_trellis", name="Glyzinie am Rankgitter", category="outdoor", sub="outdoor_plant", price=90,
+         desc="Ein Pflanzkasten mit Rankgitter und einer Glyzinie mit langen, hängenden Blütentrauben.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_wisteria_trellis, variants=variants("bloom", WISTERIA)),
     # Sitzplätze und Tischchen (Runde 2)
     dict(id="out_park_bench", name="Parkbank", category="outdoor", sub="outdoor_seat", price=120,
          desc="Eine Bank wie im Stadtpark: Seitenteile aus Gusseisen mit Schnecken, dazu Holzlatten.",

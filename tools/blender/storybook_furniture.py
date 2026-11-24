@@ -862,11 +862,11 @@ def arc_shell(b, matrix, length, radius, wall, a0, a1, seg_a=20, seg_l=10):
     return faces
 
 
-def pot(kit, base, radius, height, style="classic", slot="pot", soil=True, segs=None, feet=False):
+def pot(kit, base, radius, height, style="classic", slot="pot", soil=True, segs=None, feet=False, handle=True):
     """Blumentopf als Körper mit Wandstärke und Rand, innen Erde. Liefert die Höhe der Erde
     (Pflanzen setzen dort an) und den Innenradius. style: classic (Terrakotta mit Wulst), cylinder
     (gerade, weich gerundet), bowl (bauchig), urn (Fuß und Bauch), tub (Kübel mit Ringen),
-    bucket (Emaille-/Zinkeimer mit Henkel), basket (geflochtener Korb)."""
+    bucket (Emaille-/Zinkeimer mit Henkel; handle=False: ohne Henkel), basket (geflochtener Korb)."""
     r, h = radius, height
     b = kit.part("Topf", slot, bevel=0.003, vary=0.04)
     wall = max(0.006, r * 0.08)
@@ -898,7 +898,7 @@ def pot(kit, base, radius, height, style="classic", slot="pot", soil=True, segs=
             rr = r * (0.88 + 0.1 * zz / h)
             b.lathe([(0.0, 0.0), (rr + 0.004, 0.0), (rr + 0.008, 0.007), (rr + 0.004, 0.014), (0.0, 0.014)],
                     c + Vector((0, 0, zz)), segs=segs)
-    if style == "bucket":
+    if style == "bucket" and handle:
         hb = kit.part("Henkel", slot if slot.startswith("metal") else "metal", bevel=0.0)
         if "metal" not in kit.M:
             kit.mat("metal", (0.6, 0.6, 0.58), grain="smooth", rough=0.5, metal=0.5)

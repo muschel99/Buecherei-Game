@@ -158,8 +158,9 @@ screenshots/         Testbilder (nicht in Git)
   (`git show HEAD:<datei>.import`), dann `godot --headless --path . --import`.
 - **Pflanzen** nie ins Haus-Modell (Pflanzplätze `PlantSpot_…`, gesetzt von `Greenery`), außer Efeu an Wänden.
 - **Prüfungen vor dem Hochladen:** Lochprüfung `storybook_gap_check.py`, Überschneidungen `storybook_overlap_check.py`,
-  Möbelbeine `leg_check.py`, schwebende Teile `geo_check.py`. Nach Änderungen an Häusern Tier-Plätze neu ausmessen
-  (`scenes/tools/bake_animal_spots.tscn`).
+  Möbelbeine `leg_check.py`, schwebende Teile `geo_check.py` (bei Möbel-Pflanzen nicht aussagekräftig), Pflanzen in Töpfen,
+  Kästen und Gittern der Möbel `plant_clip_check.py`; das Möbel-Bau-Script meldet „Offene Kanten“ je Objekt. Nach
+  Änderungen an Häusern Tier-Plätze neu ausmessen (`scenes/tools/bake_animal_spots.tscn`).
 
 ## Prüf- und Bildwerkzeuge
 - Straßenleben ohne Bilder: `godot --headless --path . res://scenes/tools/street_life_check.tscn -- --seconds=60 --seed=1`
