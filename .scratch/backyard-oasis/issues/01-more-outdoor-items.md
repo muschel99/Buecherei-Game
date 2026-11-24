@@ -15,3 +15,8 @@ In vier Runden (je ein Commit): 1. Regale, Auslagen, Schilder · 2. Sitzplätze 
 (`out_etagere`), Wegweiser (`out_signpost`), Schild am Ständer (`out_hanging_sign`). Draußen aufgestellte Regale sind
 Deko mit Büchern – Besucher stöbern nur drinnen (`library_visits.gd`, `room.is_ancestor_of`). Das Möbel-Bau-Script meldet
 jetzt je Objekt „Offene Kanten“.
+
+24.11.2026: Runde 2 fertig: Parkbank (`out_park_bench`), Gartenstuhl (`out_garden_chair`, gleiche Bauart wie die
+Gartenbank: `_garden_seat`), Klappstuhl (`out_folding_chair`), Holzhocker (`out_wood_stool`), Klapptisch
+(`out_folding_table`), kleiner Holztisch (`out_wood_table`), Fass als Tisch (`out_barrel_table`). Nebenbei: Gartenbank
+neu gebaut (hinteres Bein endete genau auf Höhe der Sitzlatten → Flimmern).

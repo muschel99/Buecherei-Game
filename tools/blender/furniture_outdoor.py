@@ -33,6 +33,10 @@ CRATES = [("pine", "Kiefer natur", PINE), ("sage", "Salbei", SAGE), ("cream", "C
 SIGNS = [("green", "Tannengrün", (0.22, 0.36, 0.28)), ("blue", "Nachtblau", (0.2, 0.28, 0.42)),
          ("brown", "Nussbraun", (0.4, 0.27, 0.16)), ("red", "Ochsenblut", (0.48, 0.18, 0.15))]
 LETTERS = (0.95, 0.92, 0.84)
+SLATS = [("oak", "Eiche natur", OAK), ("teak", "Teak", (0.5, 0.32, 0.2)), ("green", "Parkgrün", (0.3, 0.45, 0.32)),
+         ("white", "Weiß", (0.9, 0.88, 0.82))]
+WOODS = [("oak", "Eiche", OAK), ("dark", "Dunkle Eiche", (0.42, 0.28, 0.17)), ("grey", "Verwittert", (0.62, 0.58, 0.52)),
+         ("honey", "Honig", (0.78, 0.58, 0.32))]
 
 
 def paint(k, color=SAGE, slot="paint"):
@@ -98,8 +102,18 @@ def cross_foot(b, length, size, post, brace_top):
 def build_garden_bench(k):
     """Gartenbank aus gestrichenem Holz: zwei Seitenrahmen (Vorderbein bis zur Armlehne, hinteres Bein geht schräg in die
     Lehne über), fünf Sitzlatten, drei Lehnlatten, Armlehnen, eine Strebe unten. Alles verzapft (steckt ineinander)."""
+    _garden_seat(k, 1.2, (-0.27, 0.27))
+
+
+def build_garden_chair(k):
+    """Gartenstuhl: dieselbe Bauart wie die Gartenbank, nur für eine Person."""
+    _garden_seat(k, 0.62, (0.0,))
+
+
+def _garden_seat(k, W, seat_xs):
+    """Gartenbank/-stuhl der Breite W mit Sitzplätzen bei seat_xs."""
     paint(k)
-    W, SEAT = 1.2, 0.3
+    SEAT = 0.3
     hw = W / 2 - 0.03
     b = k.part("Bank", "paint", bevel=0.006)
     for sx in (-1, 1):
@@ -107,7 +121,7 @@ def build_garden_bench(k):
         # Vorderbein bis unter die Armlehne
         b.box((x, -0.18, 0.25), (0.05, 0.05, 0.5), step=0.3, dent=0.0008)
         # hinteres Bein: senkrecht bis zum Sitz, dann schräg nach hinten hinauf (Lehnpfosten)
-        b.span((x, 0.16, 0.0), (x, 0.16, SEAT), 0.05, 0.05, step=0.3, dent=0.0008)
+        b.span((x, 0.16, 0.0), (x, 0.16, SEAT - 0.016), 0.05, 0.05, step=0.3, dent=0.0008)
         b.span((x, 0.16, SEAT - 0.02), (x, 0.24, 0.74), 0.05, 0.05, step=0.3, dent=0.0008)
         # Sitzzarge seitlich und Armlehne
         b.span((x, -0.2, SEAT - 0.04), (x, 0.18, SEAT - 0.04), 0.045, 0.06, step=0.3, dent=0.0008)
@@ -126,8 +140,8 @@ def build_garden_bench(k):
     b.span((-hw, 0.0, 0.08), (hw, 0.0, 0.08), 0.03, 0.035, step=0.3, dent=0.0006)
     k.collider((0, -0.01, SEAT / 2), (W, 0.44, SEAT))
     k.collider((0, 0.2, 0.52), (W, 0.12, 0.44))
-    for sx in (-1, 1):
-        k.seat((sx * 0.27, -0.04, SEAT), 0.0)
+    for x in seat_xs:
+        k.seat((x, -0.04, SEAT), 0.0)
     k.surface((0, -0.04, SEAT), (W - 0.2, 0.3))
     k.interact = (Vector((0, -0.04, 0.42)), Vector((W, 0.44, 0.4)))
 
@@ -357,6 +371,243 @@ def build_storm_lantern(k):
     k.shadow = "none"
     k.light((0, 0, 0.15), energy=0.35, rng=2.2, shadow=False)
     k.collider((0, 0, 0.16), (0.18, 0.18, 0.32))
+
+
+# --- Sitzplätze und Tischchen (Runde 2) ---
+
+def bend(points, cut=0.04, n=4):
+    """Polylinie mit runden Ecken: an jedem inneren Punkt ein kleiner Bogen (Länge cut zu jeder Seite), die geraden Stücke
+    bleiben genau auf der Linie (Latten und Bretter, die daran sitzen, passen)."""
+    pts = [Vector(p) for p in points]
+    out = [pts[0]]
+    for i in range(1, len(pts) - 1):
+        a, c, b = pts[i - 1], pts[i], pts[i + 1]
+        p0 = c + (a - c).normalized() * min(cut, (a - c).length * 0.45)
+        p1 = c + (b - c).normalized() * min(cut, (b - c).length * 0.45)
+        for j in range(n + 1):
+            t = j / n
+            out.append(p0 * (1 - t) ** 2 + c * 2 * t * (1 - t) + p1 * t * t)
+    out.append(pts[-1])
+    return out
+
+
+def round_slats(b, radius, z0, thick, n, gap, step=0.3):
+    """Runde Tischplatte aus n Latten (entlang x) mit schmalen Fugen; jede Latte ist ein eigener Körper (Umriss = Streifen
+    im Kreis). radius = Kreis, z0 = Unterkante."""
+    width = (2 * radius * 0.97 - (n - 1) * gap) / n
+    y = -radius * 0.97
+    for _ in range(n):
+        y0, y1 = y, y + width
+        y = y1 + gap
+
+        def half(yy):
+            return math.sqrt(max(radius * radius - yy * yy, 0.0))
+        right = [(half(y0 + (y1 - y0) * j / 4), y0 + (y1 - y0) * j / 4) for j in range(5)]
+        left = [(-x, yy) for x, yy in reversed(right)]
+        b.slab(right + left, thick, Matrix.Translation((0, 0, z0)), dent=0.0005)
+
+
+def build_park_bench(k):
+    """Parkbank wie im Stadtpark: zwei Seitenteile aus Gusseisen (Vorderbein, das hintere Bein geht in die Lehne über,
+    Armlehne mit Schnecke vorn, Bogen unter dem Sitz), dazu eine Zugstange; fünf Sitzlatten auf flachen Eisenschienen und
+    vier Lehnlatten, die vorn auf den Lehnstützen sitzen."""
+    wood(k, OAK, slot="slats")
+    iron(k, (0.14, 0.16, 0.14))
+    W, SEAT = 1.4, 0.3
+    hw = W / 2 - 0.03
+    r = 0.016
+    fr = k.part("Gusseisen", "iron", bevel=0.0)
+    back = bend([(0.2, r), (0.17, 0.15), (0.152, 0.28), (0.17, 0.45), (0.21, 0.6), (0.26, 0.75)], cut=0.03)
+    for sx in (-1, 1):
+        x = sx * hw
+        fr.tube([(x, -0.19, r), (x, -0.205, 0.15), (x, -0.228, 0.3), (x, -0.235, 0.44), (x, -0.24, 0.484)], r, segs=10, smooth=2,
+                round_ends=True)
+        fr.tube([(x, y, z) for y, z in back], r, segs=10, round_ends=True)
+        for y in (-0.19, 0.2):
+            fr.lathe([(0.0, 0.0), (0.03, 0.0), (0.03, 0.008), (0.018, 0.02), (0.0, 0.024)], (x, y, 0), segs=12)
+        # flache Schiene unter den Sitzlatten (vom Vorderbein bis zur Lehnstütze)
+        fr.span((x, -0.215, SEAT - 0.0375), (x, 0.158, SEAT - 0.0375), 0.024, 0.025, step=0.3, dent=0.0)
+        # Armlehne von der Lehnstütze nach vorn, vorn rollt sie sich nach unten ein
+        fr.tube([(x, 0.19, 0.53), (x, -0.1, 0.515), (x, -0.25, 0.5), (x, -0.29, 0.475), (x, -0.295, 0.44), (x, -0.265, 0.425),
+                 (x, -0.25, 0.445)], 0.014, segs=10, smooth=2, round_ends=True)
+        # Bogen unter dem Sitz
+        fr.tube([(x, -0.205, 0.1), (x, -0.1, 0.14), (x, 0.0, 0.152), (x, 0.1, 0.14), (x, 0.172, 0.1)], 0.011, segs=8, smooth=2,
+                round_ends=True)
+    fr.tube([(-hw, 0.0, 0.152), (hw, 0.0, 0.152)], 0.009, segs=8, round_ends=True)
+    slats = k.part("Latten", "slats", bevel=0.005)
+    for i in range(5):
+        slats.box((0, -0.173 + i * 0.072, SEAT - 0.0125), (W, 0.062, 0.025), step=0.3, dent=0.0008)
+    # Lehnlatten: vor der Lehnstütze, gekippt wie sie (über und unter der Armlehne, die hinten an der Stütze sitzt)
+    for z in (0.38, 0.455, 0.6, 0.68):
+        j = next(i for i in range(len(back) - 1) if back[i][1] <= z <= back[i + 1][1])
+        (y0, z0), (y1, z1) = back[j], back[j + 1]
+        y = y0 + (y1 - y0) * (z - z0) / (z1 - z0)
+        phi = math.atan2(y1 - y0, z1 - z0)
+        n = Vector((0, -math.cos(phi), math.sin(phi)))
+        c = Vector((0, y, z)) + n * (r + 0.011)
+        slats.box(c, (W, 0.022, 0.07), step=0.3, dent=0.0008, turn=(-math.degrees(phi), 0, 0))
+    k.collider((0, -0.03, SEAT / 2), (W, 0.42, SEAT))
+    k.collider((0, 0.2, 0.53), (W, 0.12, 0.46))
+    for x in (-0.33, 0.33):
+        k.seat((x, -0.05, SEAT), 0.0)
+    k.surface((0, -0.04, SEAT), (W - 0.3, 0.3))
+    k.interact = (Vector((0, -0.04, 0.42)), Vector((W, 0.44, 0.4)))
+
+
+def build_folding_chair(k):
+    """Klappstuhl (Bistro-Art): von der Seite ein X – außen geht das Bein vom Vorderfuß schräg nach hinten bis unter die
+    Sitzkante und weiter als Lehne nach oben, innen das Bein vom Hinterfuß schräg nach vorn bis unter die Sitzvorderkante.
+    Am Kreuz eine Niete (Drehpunkt), der Sitzrahmen liegt vorn auf, hinten ist er am Lehnbein. Holzlatten für Sitz und
+    Lehne, je eine Querstange unten vorn und hinten."""
+    iron(k)
+    wood(k, OAK)
+    SEAT = 0.3
+    r = 0.011
+    xa, xb = 0.205, 0.182
+    zs = SEAT - 0.017 - r            # Mitte der Sitzrahmen-Rohre
+    fr = k.part("Gestell", "iron", bevel=0.0)
+    a_pts = [(-0.19, r), (0.13, zs), (0.2, 0.76)]
+    b_pts = [(0.19, r), (-0.165, zs)]
+    for sx in (-1, 1):
+        fr.tube([(sx * xa, y, z) for y, z in bend(a_pts, cut=0.03)], r, segs=8, round_ends=True)
+        fr.tube([(sx * xb, y, z) for y, z in b_pts], r, segs=8, round_ends=True)
+        # Sitzrahmen seitlich (zwischen den beiden Beinen, berührt beide)
+        fr.tube([(sx * 0.193, -0.172, zs), (sx * 0.193, 0.135, zs)], r, segs=8, round_ends=True)
+    # Kreuzungspunkt der beiden Beine
+    t = (0.19 + 0.19) / (0.32 + 0.355)
+    py, pz = -0.19 + 0.32 * t, r + (zs - r) * t
+    for sx in (-1, 1):
+        fr.tube([(sx * (xb - 0.006), py, pz), (sx * (xa + 0.012), py, pz)], 0.0055, segs=8, round_ends=True)
+    fr.tube([(-0.193, -0.172, zs), (0.193, -0.172, zs)], r, segs=8, round_ends=True)
+    for (y0, z0), (y1, z1), x in ((a_pts[0], a_pts[1], xa), (b_pts[0], b_pts[1], xb)):
+        u = 0.18
+        fr.tube([(-x, y0 + (y1 - y0) * u, z0 + (z1 - z0) * u), (x, y0 + (y1 - y0) * u, z0 + (z1 - z0) * u)], 0.008, segs=8,
+                round_ends=True)
+    slats = k.part("Latten", "wood", bevel=0.004)
+    for i in range(4):
+        slats.box((0, -0.154 + i * 0.086, SEAT - 0.0085), (0.37, 0.072, 0.017), step=0.3, dent=0.0006)
+    (y0, z0), (y1, z1) = a_pts[1], a_pts[2]
+    phi = math.atan2(y1 - y0, z1 - z0)
+    n = Vector((0, -math.cos(phi), math.sin(phi)))
+    for z in (0.52, 0.64):
+        y = y0 + (y1 - y0) * (z - z0) / (z1 - z0)
+        slats.box(Vector((0, y, z)) + n * (r + 0.0085), (0.45, 0.017, 0.085), step=0.3, dent=0.0006,
+                  turn=(-math.degrees(phi), 0, 0))
+    k.collider((0, 0, SEAT / 2), (0.44, 0.4, SEAT))
+    k.collider((0, 0.17, 0.53), (0.46, 0.08, 0.46))
+    k.seat((0, -0.03, SEAT), 0.0)
+    k.surface((0, -0.03, SEAT), (0.28, 0.2))
+    k.interact = (Vector((0, 0, 0.42)), Vector((0.44, 0.4, 0.4)))
+
+
+def build_folding_table(k):
+    """Klapptisch passend zum Klappstuhl: zwei U-förmige Beingestelle, die sich von der Seite gesehen kreuzen (Nieten am
+    Kreuz), oben je eine Querstange; darauf zwei Leisten und eine runde Platte aus sechs Holzlatten."""
+    iron(k)
+    wood(k, OAK)
+    H, R = 0.5, 0.33
+    r = 0.011
+    zt = H - 0.024 - 0.02 - r         # Mitte der oberen Querstangen
+    fr = k.part("Gestell", "iron", bevel=0.0)
+    for x, (fy, ty) in ((0.215, (-0.24, 0.17)), (0.19, (0.24, -0.17))):
+        for sx in (-1, 1):
+            fr.tube([(sx * x, fy, r), (sx * x, ty, zt)], r, segs=8, round_ends=True)
+        fr.tube([(-x - r * 0.5, ty, zt), (x + r * 0.5, ty, zt)], r, segs=8, round_ends=True)
+    t = (0.24 + 0.24) / (0.41 + 0.41)     # dort kreuzen sich die Beine (y = 0)
+    for sx in (-1, 1):
+        fr.tube([(sx * (0.19 - 0.006), 0.0, r + (zt - r) * t), (sx * (0.215 + 0.012), 0.0, r + (zt - r) * t)], 0.0055, segs=8,
+                round_ends=True)
+    top = k.part("Platte", "wood", bevel=0.004)
+    for x in (-0.13, 0.13):
+        top.box((x, 0, zt + r + 0.01), (0.035, 0.52, 0.02), step=0.3, dent=0.0005)
+    round_slats(top, R, H - 0.024, 0.024, 6, 0.008)
+    k.collider((0, 0, H / 2), (2 * R, 2 * R, H))
+    k.surface((0, 0, H), (1.35 * R, 1.35 * R))
+
+
+def build_wood_stool(k):
+    """Holzhocker: runde, an der Kante gerundete Sitzscheibe, drei gespreizte Beine (oben in der Scheibe verzapft) und drei
+    Sprossen dazwischen."""
+    paint(k)
+    SEAT = 0.3
+    b = k.part("Hocker", "paint", bevel=0.0)
+    b.lathe([(0.0, SEAT - 0.035), (0.15, SEAT - 0.035), (0.16, SEAT - 0.025), (0.162, SEAT - 0.012), (0.155, SEAT - 0.002),
+             (0.0, SEAT)], (0, 0, 0), segs=36, dent=0.0006)
+    tops, feet = [], []
+    for i in range(3):
+        a = math.radians(90 + 120 * i)
+        d = Vector((math.cos(a), math.sin(a), 0))
+        top = d * 0.085 + Vector((0, 0, SEAT - 0.025))
+        foot = d * 0.15 + Vector((0, 0, 0.0))
+        F.tapered_leg(b, top, foot + Vector((0, 0, 0.014)), 0.018, 0.014)
+        tops.append(top)
+        feet.append(foot + Vector((0, 0, 0.014)))
+    # Sprossen in drei Höhen (so treffen sich die Bohrungen im Bein nicht)
+    for i in range(3):
+        u = 0.62 + 0.08 * i
+        b.tube([tops[i].lerp(feet[i], u), tops[(i + 1) % 3].lerp(feet[(i + 1) % 3], u)], 0.009, segs=8, round_ends=True)
+    k.collider((0, 0, SEAT / 2), (0.32, 0.32, SEAT))
+    k.seat((0, 0, SEAT), 0.0)
+    k.surface((0, 0, SEAT), (0.2, 0.2))
+    k.interact = (Vector((0, 0, 0.36)), Vector((0.34, 0.34, 0.3)))
+
+
+def build_wood_table(k):
+    """Kleiner Holztisch (passt zur Gartenbank): vier kantige Beine, Zargen ringsum (2 mm hinter den Beinkanten), oben sieben
+    Latten mit schmalen Fugen."""
+    paint(k)
+    H, S = 0.5, 0.7
+    b = k.part("Tisch", "paint", bevel=0.005)
+    leg = 0.05
+    lc = S / 2 - 0.065                 # Beinmitte
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            b.box((sx * lc, sy * lc, (H - 0.024) / 2), (leg, leg, H - 0.024), step=0.3, dent=0.0006)
+    ac = lc + leg / 2 - 0.011 - 0.004   # Zarge: Außenseite 4 mm hinter der Beinkante
+    span_in = 2 * (lc - leg / 2)
+    for sy in (-1, 1):
+        b.box((0, sy * ac, H - 0.024 - 0.03), (span_in, 0.022, 0.06), step=0.3, dent=0.0006)
+        b.box((sy * ac, 0, H - 0.024 - 0.03), (0.022, span_in, 0.06), step=0.3, dent=0.0006)
+    n, gap = 7, 0.008
+    w = (S - (n - 1) * gap) / n
+    for i in range(n):
+        b.box((0, -S / 2 + w / 2 + i * (w + gap), H - 0.012), (S, w, 0.024), step=0.3, dent=0.0006)
+    k.collider((0, 0, H / 2), (S, S, H))
+    k.surface((0, 0, H), (S - 0.04, S - 0.04))
+
+
+def build_barrel_table(k):
+    """Fass als Tisch: ein kleines Eichenfass aus 18 gewölbten Dauben (innen ein Kern, oben der eingelassene Boden), vier
+    Eisenreifen; obenauf zwei Leisten und eine runde Platte aus vier Brettern."""
+    wood(k, OAK)
+    metal(k, (0.22, 0.22, 0.21))
+    H, R0, bulge, t = 0.44, 0.2, 0.028, 0.02
+    n = 18
+    fass = k.part("Fass", "wood", bevel=0.002)
+
+    def radius(z):
+        return R0 + bulge * math.sin(math.pi * min(max(z / H, 0.0), 1.0))
+    for i in range(n):
+        faces = fass.box((0, R0 - t / 2, H / 2), (2 * math.pi * R0 / n - 0.0015, t, H), step=0.04, dent=0.0005)
+        rot = Matrix.Rotation(2 * math.pi * i / n, 3, "Z")
+        for v in {v for f in faces for v in f.verts}:
+            x, y, z = v.co
+            s = radius(z) / R0
+            v.co = rot @ Vector((x * s, y * s, z))
+    # Kern innen (oben der Fassboden, 2,5 cm unter dem Rand)
+    prof = [(0.0, 0.012)] + [(radius(z) - t - 0.002, z) for z in (0.012, 0.1, H / 2, H - 0.1, H - 0.025)] + [(0.0, H - 0.025)]
+    fass.lathe(prof, (0, 0, 0), segs=36)
+    hoops = k.part("Reifen", "metal", bevel=0.0)
+    for z in (0.04, 0.13, H - 0.13, H - 0.04):
+        # Naht des Reifens mitten auf einer Daube (nicht an einer Fuge)
+        F.ring(hoops, (0, 0, z), radius(z) + 0.001, 0.006, matrix=Matrix.Rotation(math.radians(10), 4, "Z"), n=48, segs=6)
+    top = k.part("Platte", "wood", bevel=0.004)
+    for x in (-0.12, 0.12):
+        top.box((x, 0, H + 0.0125), (0.04, 0.4, 0.025), step=0.3, dent=0.0005)
+    round_slats(top, 0.3, H + 0.025, 0.03, 4, 0.005)
+    k.collider((0, 0, H / 2), (2 * (R0 + bulge), 2 * (R0 + bulge), H))
+    k.collider((0, 0, H + 0.0275), (0.6, 0.6, 0.055))
+    k.surface((0, 0, H + 0.055), (0.42, 0.42))
 
 
 # --- Regale und Auslagen ---
@@ -798,6 +1049,32 @@ ITEMS = [
     dict(id="out_storm_lantern", name="Sturmlaterne", category="outdoor", sub="outdoor_light", price=18,
          desc="Eine Sturmlaterne mit Glaszylinder und Drahtbügel – die Kerze flackert auch bei Wind.",
          styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_storm_lantern, variants=LANTERN_COLORS),
+    # Sitzplätze und Tischchen (Runde 2)
+    dict(id="out_park_bench", name="Parkbank", category="outdoor", sub="outdoor_seat", price=120,
+         desc="Eine Bank wie im Stadtpark: Seitenteile aus Gusseisen mit Schnecken, dazu Holzlatten.",
+         styles=STYLE, place="floor", low_seat=False, attach_feet=False, build=build_park_bench,
+         variants=variants("slats", SLATS)),
+    dict(id="out_garden_chair", name="Gartenstuhl", category="outdoor", sub="outdoor_seat", price=55,
+         desc="Ein gestrichener Holzstuhl mit Armlehnen – passt zur Gartenbank.",
+         styles=STYLE, place="floor", low_seat=False, attach_feet=False, build=build_garden_chair,
+         variants=variants("paint", PAINTS)),
+    dict(id="out_folding_chair", name="Klappstuhl", category="outdoor", sub="outdoor_seat", price=32,
+         desc="Ein Bistro-Klappstuhl aus Metall mit Holzlatten – schnell aufgestellt, wenn die Sonne scheint.",
+         styles=STYLE, place="floor", low_seat=False, attach_feet=False, build=build_folding_chair,
+         variants=variants("iron", IRONS)),
+    dict(id="out_wood_stool", name="Holzhocker", category="outdoor", sub="outdoor_seat", price=22,
+         desc="Ein kleiner Hocker mit drei Beinen – zum Sitzen oder als Platz für einen Topf.",
+         styles=STYLE, place="floor", low_seat=False, attach_feet=False, build=build_wood_stool,
+         variants=variants("paint", PAINTS)),
+    dict(id="out_folding_table", name="Klapptisch", category="outdoor", sub="outdoor_table", price=40,
+         desc="Ein runder Klapptisch mit Holzlatten – passt zum Klappstuhl.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_folding_table, variants=variants("iron", IRONS)),
+    dict(id="out_wood_table", name="Kleiner Holztisch", category="outdoor", sub="outdoor_table", price=60,
+         desc="Ein quadratischer Gartentisch aus gestrichenem Holz – passt zur Gartenbank.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_wood_table, variants=variants("paint", PAINTS)),
+    dict(id="out_barrel_table", name="Fass als Tisch", category="outdoor", sub="outdoor_table", price=50,
+         desc="Ein altes Eichenfass mit Eisenreifen und einer runden Holzplatte obendrauf.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_barrel_table, variants=variants("wood", WOODS)),
     # Regale und Auslagen (Bücher stehen in den Fächern, Deko und Töpfe auf den Flächen)
     dict(id="out_book_crates", name="Bücherkisten", category="outdoor", sub="outdoor_shelf", price=40,
          desc="Drei alte Obstkisten, auf die Seite gelegt und gestapelt – ein Regal für Bücher, oben Platz für Töpfe.",
