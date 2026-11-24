@@ -27,6 +27,12 @@ IRONS = [("green", "Flaschengrün", IRON_GREEN), ("cream", "Creme", CREAM), ("bl
          ("rose", "Altrosa", ROSE)]
 POTS = [("terra", "Terrakotta", TERRA), ("cream", "Creme glasiert", (0.9, 0.86, 0.76)), ("sage", "Salbei glasiert", SAGE),
         ("blue", "Blau glasiert", (0.38, 0.5, 0.66))]
+PINE = (0.8, 0.64, 0.44)
+CRATES = [("pine", "Kiefer natur", PINE), ("sage", "Salbei", SAGE), ("cream", "Creme", CREAM), ("blue", "Taubenblau", BLUE)]
+# Schilder: dunkle Grundfarben, die Schrift ist immer cremeweiß
+SIGNS = [("green", "Tannengrün", (0.22, 0.36, 0.28)), ("blue", "Nachtblau", (0.2, 0.28, 0.42)),
+         ("brown", "Nussbraun", (0.4, 0.27, 0.16)), ("red", "Ochsenblut", (0.48, 0.18, 0.15))]
+LETTERS = (0.95, 0.92, 0.84)
 
 
 def paint(k, color=SAGE, slot="paint"):
@@ -43,8 +49,48 @@ def pot_mat(k, color=TERRA):
     return k.mat("pot", color, grain="smooth", rough=0.35, vary=0.05)
 
 
+def wood(k, color=OAK, slot="wood"):
+    return k.mat(slot, color, grain="wood", rough=0.65, vary=0.08, bump=0.1)
+
+
+def metal(k, color=IRON_BLACK, slot="metal"):
+    return k.mat(slot, color, grain="smooth", rough=0.5, metal=0.45, vary=0.05)
+
+
 def variants(slot, table):
     return [(vid, name, {slot: col}) for vid, name, col in table]
+
+
+def plane_yz(x0, z0=0.0):
+    """Ebene für Seitenbretter: Umriss in (Welt-y, Welt-z), Dicke nach +x ab x0."""
+    return Matrix(((0, 0, 1, x0), (1, 0, 0, 0), (0, 1, 0, z0), (0, 0, 0, 1)))
+
+
+def plane_xz(y0, z0=0.0, x0=0.0):
+    """Ebene für Schilder (von vorn gesehen): Umriss in (Welt-x, Welt-z), Dicke nach -y (nach vorn) ab y0."""
+    return Matrix(((1, 0, 0, x0), (0, 0, -1, y0), (0, 1, 0, z0), (0, 0, 0, 1)))
+
+
+def front_text(part, string, size, x, y_face, z, back=False, jitter=0.03):
+    """Schrift auf einer Fläche, die nach vorn (-y) zeigt (back=True: nach hinten, +y); y_face = Lage der Fläche,
+    die Buchstaben stecken 0,2 mm darin. z = Grundlinie."""
+    if back:
+        face = Matrix.Translation((x, y_face - 0.0002, z)) @ Matrix.Rotation(math.pi, 4, "Z") @ Matrix.Rotation(math.pi / 2, 4, "X")
+    else:
+        face = Matrix.Translation((x, y_face + 0.0002, z)) @ Matrix.Rotation(math.pi / 2, 4, "X")
+    return part.text(string, size, 0.0025, face, jitter=jitter, resolution=4, spacing=1.6)
+
+
+def cross_foot(b, length, size, post, brace_top):
+    """Kreuzfuß aus zwei überblatteten Balken (für Pfosten, die nicht eingegraben sind) mit vier Streben zum Pfosten.
+    post = halbe Pfostenbreite, brace_top = Höhe, an der die Streben am Pfosten enden."""
+    for sx, sy in ((length, size), (size, length)):
+        b.box((0, 0, size / 2), (sx, sy, size), step=0.3, dent=0.0006)
+    s = size * 0.55
+    for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        foot = Vector((d[0] * length * 0.36, d[1] * length * 0.36, size + s * 0.35))
+        top = Vector((d[0] * (post + s * 0.3), d[1] * (post + s * 0.3), brace_top))
+        b.span(foot, top, s, s, step=0.3, dent=0.0005)
 
 
 # --- Gartenbank ---
@@ -313,6 +359,376 @@ def build_storm_lantern(k):
     k.collider((0, 0, 0.16), (0.18, 0.18, 0.32))
 
 
+# --- Regale und Auslagen ---
+
+def _crate(k, b, x, z, W=0.5, D=0.3, H=0.3, t=0.015):
+    """Alte Obstkiste, auf die Seite gelegt (offen nach vorn, -y); x/z = Mitte der Unterkante. Je zwei Latten unten und
+    oben (über die ganze Breite, auf die Kopfbretter genagelt), zwei dicke Kopfbretter, drei Latten als Rückwand.
+    Kollision nur für die Bretter – innen bleibt frei, damit man die Bücher trifft."""
+    e = 0.02
+    for zz in (z + t / 2, z + H - t / 2):
+        for y0, y1 in ((-D / 2, -0.012), (0.012, D / 2)):
+            b.box((x, (y0 + y1) / 2, zz), (W, y1 - y0, t), step=0.3, dent=0.0008)
+        k.collider((x, 0, zz), (W, D, t))
+    # Rückwand: drei Latten (2 mm hinter den Enden der Bodenlatten)
+    inner = H - 2 * t
+    gap = 0.015
+    h = (inner - 2 * gap) / 3
+    yb = D / 2 - t / 2 - 0.002
+    for i in range(3):
+        b.box((x, yb, z + t + h / 2 + i * (h + gap)), (W - 0.004, t, h), step=0.3, dent=0.0008)
+    k.collider((x, yb, z + H / 2), (W, t, inner))
+    # Kopfbretter zwischen den Latten (2 mm nach innen versetzt)
+    y0, y1 = -D / 2 + 0.002, yb - t / 2
+    for sx in (-1, 1):
+        b.box((x + sx * (W / 2 - e / 2 - 0.002), (y0 + y1) / 2, z + H / 2), (e, y1 - y0, inner), step=0.3, dent=0.0008)
+        k.collider((x + sx * (W / 2 - e / 2), 0, z + H / 2), (e, D, inner))
+    # Fach für Bücher (zwischen den Kopfbrettern, vor der Rückwand)
+    k.row((x, (y0 + y1) / 2 - 0.004, z + t), W - 2 * e - 0.02, inner - 0.006, y1 - y0 - 0.02)
+
+
+def build_book_crates(k):
+    """Bücherkisten: drei alte Obstkisten auf der Seite, zwei unten, eine etwas versetzt obendrauf – offen nach vorn, die
+    Bücher stehen darin. Oben und neben der oberen Kiste ist Platz für Töpfe und Deko."""
+    wood(k, PINE, slot="crate")
+    W, D, H = 0.5, 0.3, 0.3
+    b = k.part("Kisten", "crate", bevel=0.003)
+    top_x = 0.03
+    for x, z in ((-0.255, 0.0), (0.255, 0.0), (top_x, H)):
+        _crate(k, b, x, z, W, D, H)
+    k.surface((top_x, 0, 2 * H), (W - 0.04, D - 0.04))
+    # neben der oberen Kiste: links von -0,505 bis -0,22, rechts von 0,28 bis 0,505
+    left = (-0.255 - W / 2, top_x - W / 2)
+    right = (top_x + W / 2, 0.255 + W / 2)
+    for a, c in (left, right):
+        k.surface(((a + c) / 2, 0, H), (c - a - 0.04, D - 0.04))
+
+
+def _wheel(k, center, radius, hub_len=0.09, spokes=8):
+    """Holzrad mit Nabe, Speichen, Felge und Eisenreifen; die Achse läuft entlang y."""
+    c = Vector(center)
+    upright = Matrix.Rotation(math.pi / 2, 4, "X")   # Ring-Ebene x/z
+    w = k.part("Rad", "wood", bevel=0.0)
+    F.ring(w, c, radius - 0.024, 0.018, matrix=upright, n=40, segs=8)
+    h = hub_len / 2
+    w.lathe([(0.0, -h), (0.03, -h), (0.042, -h * 0.5), (0.042, h * 0.5), (0.03, h), (0.0, h)], c, segs=16, turn=(90, 0))
+    for i in range(spokes):
+        a = 2 * math.pi * i / spokes + 0.2
+        d = Vector((math.cos(a), 0, math.sin(a)))
+        w.tube([c + d * 0.034, c + d * (radius - 0.032)], 0.009, segs=6)
+    # Reifen um eine halbe Teilung gedreht, damit seine Flächen nie genau auf denen der Felge liegen (Flimmern)
+    tire = k.part("Reifen", "metal", bevel=0.0)
+    F.ring(tire, c, radius - 0.007, 0.007, matrix=upright @ Matrix.Rotation(math.pi / 48, 4, "Z"), n=48, segs=6)
+
+
+def build_book_barrow(k):
+    """Bücherkarren wie bei den Bücherständen am Fluss: ein Holzkasten auf zwei Holmen, rechts zwei Speichenräder auf einer
+    Eisenachse (in zwei Lagerklötzen), links zwei Beine (an die Holme geschraubt) und zwei Griffe. Im Kasten zwei Reihen
+    Bücher, die hintere auf einer Stufe; die Vorderwand ist niedrig, damit man die Buchrücken sieht."""
+    paint(k)
+    wood(k, OAK)
+    metal(k)
+    R = 0.27
+    ax = 0.3
+    floor_z = 0.39            # Unterkante Kastenboden = Oberkante Holme
+    L, D = 0.9, 0.42
+    # Räder, Achse, Lagerklötze
+    for sy in (-1, 1):
+        _wheel(k, (ax, sy * 0.29, R + 0.001), R)
+    m = k.part("Achse", "metal", bevel=0.0)
+    m.tube([(ax, -0.345, R + 0.001), (ax, 0.345, R + 0.001)], 0.013, segs=10, round_ends=True)
+    frame = k.part("Gestell", "wood", bevel=0.004)
+    for sy in (-1, 1):
+        y = sy * 0.15
+        frame.box((ax, y, (R - 0.035 + floor_z - 0.05) / 2), (0.09, 0.06, floor_z - 0.05 - (R - 0.035)), step=0.3, dent=0.0006)
+        # Holm unter dem Kasten, links als runder Griff weiter
+        frame.span((0.47, y, floor_z - 0.025), (-0.53, y, floor_z - 0.025), 0.05, 0.05, step=0.3, dent=0.0006)
+        frame.tube([(-0.51, y, floor_z - 0.025), (-0.7, y, floor_z - 0.012), (-0.86, y, floor_z - 0.005)], 0.021, segs=10,
+                   smooth=1, round_ends=True)
+        # Bein außen am Holm, oben unter dem Kastenboden
+        frame.box((-0.38, sy * 0.195, floor_z / 2), (0.045, 0.04, floor_z), step=0.3, dent=0.0006)
+    frame.span((-0.38, -0.175, 0.12), (-0.38, 0.175, 0.12), 0.035, 0.04, step=0.3, dent=0.0005)
+    # Kasten: Boden, schräge Seitenwände, niedrige Vorderwand, hohe Rückwand, Stufe für die hintere Reihe
+    box = k.part("Kasten", "paint", bevel=0.004)
+    top_front, top_back = floor_z + 0.12, floor_z + 0.36
+    box.box((0, 0, floor_z + 0.01), (L, D, 0.02), step=0.3, dent=0.0006)
+    inner_z = floor_z + 0.02
+    for x0 in (-L / 2, L / 2 - 0.02):
+        box.slab([(-D / 2, inner_z), (D / 2, inner_z), (D / 2, top_back), (-D / 2, top_front)], 0.02, plane_yz(x0), dent=0.0006)
+    iw = L - 0.042
+    box.box((0, -D / 2 + 0.01, (inner_z + top_front) / 2), (iw, 0.02, top_front - inner_z), step=0.3, dent=0.0006)
+    box.box((0, D / 2 - 0.01, (inner_z + top_back) / 2), (iw, 0.02, top_back - inner_z), step=0.3, dent=0.0006)
+    step_z = inner_z + 0.1
+    box.box((0, 0.1, step_z - 0.01), (iw, 0.18, 0.02), step=0.3, dent=0.0006)
+    box.box((0, 0.0, (inner_z + step_z - 0.02) / 2), (iw, 0.02, step_z - 0.02 - inner_z), step=0.3, dent=0.0006)
+    k.row((0, -0.1, inner_z), iw - 0.02, 0.3, 0.16)
+    k.row((0, 0.1, step_z), iw - 0.02, 0.3, 0.16)
+    # Kollision: Wände, Boden, Stufe, Räder, Beine und Griffe – innen frei für die Bücher
+    k.collider((0, 0, floor_z + 0.01), (L, D, 0.02))
+    k.collider((0, -D / 2 + 0.01, (inner_z + top_front) / 2), (L, 0.02, top_front - inner_z))
+    k.collider((0, D / 2 - 0.01, (inner_z + top_back) / 2), (L, 0.02, top_back - inner_z))
+    for sx in (-1, 1):
+        k.collider((sx * (L / 2 - 0.01), 0, (inner_z + top_back) / 2), (0.02, D, top_back - inner_z))
+    k.collider((0, 0.1, (inner_z + step_z) / 2), (iw, 0.2, step_z - inner_z))
+    k.collider((ax, 0, R), (2 * R, 0.66, 2 * R))
+    k.collider((-0.38, 0, floor_z / 2), (0.05, 0.43, floor_z))
+    k.collider((-0.68, 0, floor_z - 0.02), (0.36, 0.35, 0.06))
+
+
+def build_swap_library(k):
+    """Bücherschrank zum Tauschen: ein Holzhäuschen mit Satteldach auf einem Pfosten. Der Pfosten steht in einem Kreuzfuß
+    mit vier Streben (so braucht er kein Loch im Pflaster), oben trägt eine Platte den Kasten. Zwei Fächer, zwei
+    Glastüren (stehen offen), unter dem Giebel ein Schild „Bücher zum Tauschen“."""
+    paint(k)
+    wood(k, OAK)
+    metal(k)
+    k.mat("roof", (0.55, 0.26, 0.2), grain="paint", rough=0.75, vary=0.08, bump=0.15)
+    k.mat("glass", (0.9, 0.95, 0.95), glass=True, rough=0.1, vary=0.0)
+    k.mat("sign", CREAM, grain="paint", rough=0.7, vary=0.04)
+    k.mat("letters", (0.25, 0.2, 0.16), grain="smooth", rough=0.6, vary=0.02)
+    W, D = 0.54, 0.34
+    z0 = 0.86                       # Unterkante Kasten
+    zi = z0 + 0.025                 # Oberkante Boden
+    zt = 1.42                       # Unterkante Deckel
+    zr = zt + 0.025                 # Oberkante Deckel = Traufe
+    post = k.part("Pfosten", "wood", bevel=0.004)
+    cross_foot(post, 0.56, 0.07, 0.04, 0.26)
+    post.box((0, 0, z0 / 2), (0.08, 0.08, z0 - 0.03), step=0.3, dent=0.0006)
+    post.box((0, 0, z0 - 0.015), (0.2, 0.2, 0.03), step=0.3, dent=0.0006)
+    c = k.part("Häuschen", "paint", bevel=0.004)
+    c.box((0, 0, z0 + 0.0125), (W, D, 0.025), step=0.3, dent=0.0006)
+    for sx in (-1, 1):
+        c.box((sx * (W / 2 - 0.01), 0, (zi + zt) / 2), (0.02, D, zt - zi), step=0.3, dent=0.0006)
+    iw = W - 0.042
+    c.box((0, D / 2 - 0.01, (zi + zt) / 2), (iw, 0.02, zt - zi), step=0.3, dent=0.0006)
+    c.box((0, 0, zt + 0.0125), (W, D, 0.025), step=0.3, dent=0.0006)
+    shelf_z = (zi + zt) / 2
+    c.box((0, -0.008, shelf_z), (iw, D - 0.036, 0.02), step=0.3, dent=0.0006)
+    # Giebel vorn und hinten, darüber das Dach (zwei Bretter, First-Leiste)
+    pitch = math.radians(40)
+    apex = zr + (W / 2) * math.tan(pitch)
+    for y0 in (-D / 2 + 0.02, D / 2):
+        c.slab([(-W / 2 + 0.004, 0.0), (W / 2 - 0.004, 0.0), (0.0, apex - zr - 0.004)], 0.02, plane_xz(y0, zr), dent=0.0004)
+    roof = k.part("Dach", "roof", bevel=0.004)
+    over = 0.06
+    run = W / 2 + over
+    ry = (-D / 2 - 0.06 + D / 2 + 0.03) / 2
+    rd = D + 0.09
+    t = 0.02
+    for sx in (-1, 1):
+        n = Vector((sx * math.sin(pitch), 0, math.cos(pitch)))
+        a = Vector((0, ry, apex)) + n * t / 2
+        b = Vector((sx * run, ry, apex - run * math.tan(pitch))) + n * t / 2
+        roof.span(a, b, rd, t, step=0.3, dent=0.0006)
+    roof.tube([(0, ry - rd / 2 - 0.004, apex + 0.02), (0, ry + rd / 2 + 0.004, apex + 0.02)], 0.022, segs=10, round_ends=True)
+    # Schild unter dem Giebel
+    sign = k.part("Schild", "sign", bevel=0.003)
+    sz0, sz1 = zr + 0.006, zr + 0.08
+    sign.box((0, -D / 2 - 0.006, (sz0 + sz1) / 2), (0.3, 0.012, sz1 - sz0), step=0.3, dent=0.0004)
+    letters = k.part("Schrift", "letters", bevel=0.0)
+    front_text(letters, "Bücher", 0.03, 0, -D / 2 - 0.012, sz0 + 0.04)
+    front_text(letters, "zum Tauschen", 0.02, 0, -D / 2 - 0.012, sz0 + 0.012)
+    # Zwei Flügeltüren: Rahmen mit Glas, außen angeschlagen, je 100° offen (so steht der Schrank nur gut 70 cm tief);
+    # die Scharniere bleiben am Drehpunkt, ein Lappen sitzt auf der Seitenwand
+    open_deg = 100.0
+    dz0, dz1 = z0 + 0.005, zt - 0.01
+    yd = -D / 2 - 0.011
+    dw, bar = W / 2 - 0.001, 0.04
+    door = k.part("Türen", "paint", bevel=0.003)
+    glass = k.part("Glas", "glass", bevel=0.0)
+    hw = k.part("Beschläge", "metal", bevel=0.0)
+    doors = []
+    for sx in (-1, 1):
+        hinge = Vector((sx * W / 2, yd, 0))
+        turn = Matrix.Translation(hinge) @ Matrix.Rotation(math.radians(sx * open_deg), 4, "Z") @ Matrix.Translation(-hinge)
+        mid = sx * (W / 4 + 0.0005)
+        for x in (sx * (0.001 + bar / 2), sx * (W / 2 - bar / 2)):
+            door.box((x, yd, (dz0 + dz1) / 2), (bar, 0.022, dz1 - dz0), step=0.3, dent=0.0004, matrix=turn)
+        for z in (dz0 + bar / 2, dz1 - bar / 2):
+            door.box((mid, yd, z), (dw - 2 * bar - 0.002, 0.022, bar), step=0.3, dent=0.0004, matrix=turn)
+        door.box((mid, yd, (dz0 + dz1) / 2), (dw - 2 * bar - 0.002, 0.014, 0.02), step=0.3, dent=0.0004, matrix=turn)
+        for z0_, z1_ in ((dz0 + bar - 0.006, (dz0 + dz1) / 2 - 0.004), ((dz0 + dz1) / 2 + 0.004, dz1 - bar + 0.006)):
+            glass.box((mid, yd, (z0_ + z1_) / 2), (dw - 2 * bar + 0.01, 0.004, z1_ - z0_), step=0.5, dent=0.0, matrix=turn)
+        F.knob(hw, turn @ Vector((sx * 0.024, yd - 0.011, (dz0 + dz1) / 2)), r=0.01, normal=(turn.to_3x3() @ Vector((0, -1, 0))))
+        for z in (dz0 + 0.07, dz1 - 0.07):
+            hw.tube([(sx * (W / 2 + 0.004), yd, z - 0.03), (sx * (W / 2 + 0.004), yd, z + 0.03)], 0.006, segs=8, round_ends=True)
+            hw.box((sx * (W / 2 + 0.0015), (yd - D / 2 + 0.025) / 2, z), (0.003, -D / 2 + 0.025 - yd, 0.05), step=0.5, dent=0.0)
+        doors.append((turn @ Vector((mid, yd, (dz0 + dz1) / 2)), sx * open_deg))
+    # Fächer, Kollision
+    k.row((0, -0.012, zi), iw - 0.02, shelf_z - 0.01 - zi - 0.005, D - 0.06)
+    k.row((0, -0.012, shelf_z + 0.01), iw - 0.02, zt - shelf_z - 0.01 - 0.005, D - 0.06)
+    k.collider((0, 0, z0 / 2), (0.1, 0.1, z0))
+    k.collider((0, 0, 0.035), (0.56, 0.07, 0.07))
+    k.collider((0, 0, 0.035), (0.07, 0.56, 0.07))
+    k.collider((0, 0, z0 + 0.0125), (W, D, 0.025))
+    for sx in (-1, 1):
+        k.collider((sx * (W / 2 - 0.01), 0, (zi + zt) / 2), (0.02, D, zt - zi))
+    k.collider((0, D / 2 - 0.01, (zi + zt) / 2), (iw, 0.02, zt - zi))
+    k.collider((0, 0, shelf_z), (iw, D - 0.036, 0.02))
+    k.collider((0, -0.015, (zt + apex) / 2 + 0.02), (W + 2 * over, D + 0.09, apex - zt + 0.04))
+    for center, deg in doors:
+        k.collider(center, (dw, 0.022, dz1 - dz0), turn=deg)
+
+
+def build_plant_stairs(k):
+    """Pflanzentreppe: zwei ausgesägte Seitenbretter in Treppenform (unten mit Bogen, so steht sie auf vier Füßen), drei
+    Trittbretter darauf, hinten und vorn je eine Querleiste. Für Töpfe, Laternen und ein paar Bücher."""
+    paint(k)
+    b = k.part("Seiten", "paint", bevel=0.003)
+    side = [(-0.27, 0.0), (-0.19, 0.0), (-0.165, 0.055), (-0.1, 0.095), (0.0, 0.11), (0.08, 0.095), (0.135, 0.055),
+            (0.16, 0.0), (0.24, 0.0), (0.24, 0.64), (0.07, 0.64), (0.07, 0.42), (-0.1, 0.42), (-0.1, 0.2), (-0.27, 0.2)]
+    for x0 in (-0.375, 0.35):
+        b.slab(side, 0.025, plane_yz(x0), dent=0.0005)
+    t = k.part("Bretter", "paint", bevel=0.004)
+    steps = [(-0.29, -0.1, 0.2), (-0.12, 0.07, 0.42), (0.05, 0.238, 0.64)]
+    for y0, y1, z in steps:
+        t.box((0, (y0 + y1) / 2, z + 0.011), (0.746, y1 - y0, 0.022), step=0.3, dent=0.0006)
+        k.collider((0, (y0 + y1) / 2, (z + 0.022) / 2), (0.75, y1 - y0, z + 0.022))
+    t.box((0, 0.226, 0.3), (0.7, 0.024, 0.08), step=0.3, dent=0.0006)
+    t.box((0, -0.25, 0.14), (0.7, 0.02, 0.06), step=0.3, dent=0.0006)
+    k.surface((0, -0.2, 0.222), (0.7, 0.16))
+    k.surface((0, -0.035, 0.442), (0.7, 0.15))
+    k.surface((0, 0.145, 0.662), (0.7, 0.17))
+
+
+def build_etagere(k):
+    """Blumen-Etagere aus Metall: drei Beine, die nach oben zusammenlaufen, mit drei runden Schalen (unten groß, oben klein),
+    an deren Rand die Beine angeschweißt sind; oben enden die Beine mit Kugeln, unten stehen sie auf kleinen Füßen."""
+    iron(k)
+    b = k.part("Etagere", "iron", bevel=0.0)
+    top = 0.82
+    r0, r1 = 0.26, 0.12
+    leg_r = 0.009
+
+    def radius(z):
+        return r0 + (r1 - r0) * z / top
+    for i in range(3):
+        a = math.radians(90 + 120 * i)
+        d = Vector((math.cos(a), math.sin(a), 0))
+        b.tube([d * radius(0.012) + Vector((0, 0, 0.012)), d * radius(top) + Vector((0, 0, top))], leg_r, segs=8, round_ends=True)
+        b.lathe([(0.0, 0.0), (0.014, 0.0), (0.016, 0.01), (0.011, 0.022), (0.0, 0.026)], d * radius(0.012), segs=12)
+        b.lathe([(0.0, -0.004), (0.012, 0.004), (0.015, 0.016), (0.01, 0.028), (0.0, 0.031)], d * radius(top) + Vector((0, 0, top)), segs=12)
+    for z in (0.1, 0.4, 0.7):
+        rim = radius(z + 0.03) - leg_r
+        b.lathe([(0.0, z), (rim * 0.94, z), (rim, z + 0.03), (rim - 0.005, z + 0.03), (rim * 0.94 - 0.005, z + 0.006), (0.0, z + 0.006)],
+                (0, 0, 0), segs=40)
+        F.ring(b, (0, 0, z + 0.03), rim - 0.002, 0.005, n=48, segs=6)
+        side = rim * 1.25
+        k.surface((0, 0, z + 0.006), (side, side), max_height=0.28 if z < 0.6 else 0.0)
+        k.collider((0, 0, z + 0.015), (2 * rim, 2 * rim, 0.03))
+    k.collider((0, 0, top / 2), (0.06, 0.06, top))
+
+
+# --- Schilder und Aufsteller ---
+
+def _arrow(length, height, tail, left=True):
+    """Umriss eines Pfeilschilds (Spitze, gerade Kanten, Schwalbenschwanz am Ende), gegen den Uhrzeigersinn."""
+    h = height / 2
+    head = h * 1.3
+    pts = [(-length + tail, 0.0), (-length + tail + head, -h), (tail, -h), (tail - h * 0.6, 0.0), (tail, h), (-length + tail + head, h)]
+    if not left:
+        pts = [(-x, y) for x, y in reversed(pts)]
+    return pts
+
+
+def build_signpost(k):
+    """Wegweiser: ein Holzpfosten mit Kappe im Kreuzfuß, vorn drei Pfeilschilder (angeschraubt, die Schrauben sieht man):
+    „Bücherei“, „Lesegarten“, „Teestube“."""
+    k.mat("sign", SIGNS[0][2], grain="paint", rough=0.7, vary=0.06, bump=0.1)
+    wood(k, OAK)
+    metal(k)
+    k.mat("letters", LETTERS, grain="smooth", rough=0.6, vary=0.02)
+    post = k.part("Pfosten", "wood", bevel=0.004)
+    cross_foot(post, 0.5, 0.06, 0.035, 0.24)
+    H = 1.36
+    post.box((0, 0, H / 2), (0.07, 0.07, H), step=0.3, dent=0.0006)
+    post.lathe([(0.0, 0.0), (0.055, 0.0), (0.055, 0.012), (0.0, 0.07)], (0, 0, H), segs=4, spin=45)
+    s = k.part("Schilder", "sign", bevel=0.003)
+    letters = k.part("Schrift", "letters", bevel=0.0)
+    screws = k.part("Schrauben", "metal", bevel=0.0)
+    y_front = -0.035 - 0.02
+    for z, text, left in ((1.22, "Bücherei", True), (1.06, "Lesegarten", False), (0.9, "Teestube", True)):
+        s.slab(_arrow(0.5, 0.1, 0.1, left), 0.02, plane_xz(-0.035, z), dent=0.0004)
+        mid = -0.15 if left else 0.15
+        front_text(letters, text, 0.042, mid, y_front, z - 0.016)
+        for dz in (-0.025, 0.025):
+            screws.lathe([(0.0, 0.0), (0.008, 0.0), (0.006, 0.003), (0.0, 0.004)], (0, y_front + 0.001, z + dz), segs=8, turn=(90, 0))
+        k.collider((mid, -0.045, z), (0.5, 0.02, 0.1))
+    k.collider((0, 0, H / 2), (0.08, 0.08, H))
+    k.collider((0, 0, 0.03), (0.5, 0.06, 0.06))
+    k.collider((0, 0, 0.03), (0.06, 0.5, 0.06))
+
+
+def build_hanging_sign(k):
+    """Schild am Ständer: ein Eisenständer auf vier geschwungenen Füßen (einer unter dem Schild) mit Kugel oben, ein Ausleger mit Schnecke und
+    kleiner Strebe; daran hängt an zwei kurzen Ketten (drei Glieder, das unterste durch ein Loch im Brett) ein Holzschild
+    „Willkommen – in der Bücherei“, beidseitig beschriftet."""
+    metal(k)
+    k.mat("sign", SIGNS[0][2], grain="paint", rough=0.7, vary=0.06, bump=0.1)
+    k.mat("letters", LETTERS, grain="smooth", rough=0.6, vary=0.02)
+    st = k.part("Ständer", "metal", bevel=0.0)
+    # ein Fuß zeigt unter das Schild (sonst würde der Ständer in echt nach rechts kippen)
+    for i in range(4):
+        a = math.radians(90 * i)
+        d = Vector((math.cos(a), math.sin(a), 0))
+        st.tube([d * 0.015 + Vector((0, 0, 0.1)), d * 0.14 + Vector((0, 0, 0.065)), d * 0.29 + Vector((0, 0, 0.012))], 0.012, segs=8,
+                smooth=2, round_ends=True)
+    st.lathe([(0.0, 0.05), (0.03, 0.05), (0.034, 0.09), (0.022, 0.14), (0.0, 0.14)], (0, 0, 0), segs=16)
+    top = 1.34
+    st.tube([(0, 0, 0.12), (0, 0, top)], 0.016, segs=10)
+    st.lathe([(0.0, -0.004), (0.02, 0.006), (0.026, 0.026), (0.016, 0.046), (0.0, 0.05)], (0, 0, top), segs=14)
+    arm_z, arm_r = 1.22, 0.011
+    arm_end = 0.66
+    # Ausleger mit Schnecke am Ende (rollt sich nach unten ein) – ein einziger Stab, damit sich nichts doppelt
+    curl = [(0.0, 0, arm_z), (arm_end * 0.5, 0, arm_z)]
+    for i in range(29):
+        u = i / 28
+        a = u * 2 * math.pi * 1.15
+        rr = 0.04 * (1 - 0.6 * u)
+        curl.append((arm_end + rr * math.sin(a), 0, arm_z - 0.04 + rr * math.cos(a)))
+    st.tube(curl, arm_r, segs=8, smooth=1, round_ends=True)
+    # Strebe vom Pfosten zum Ausleger (sanfter Bogen)
+    brace = [Vector((0.012, 0, arm_z - 0.17)), Vector((0.05, 0, arm_z - 0.09)), Vector((0.1, 0, arm_z - 0.035)),
+             Vector((0.15, 0, arm_z))]
+    st.tube(brace, 0.008, segs=8, smooth=2, round_ends=True)
+    # Ketten: je drei Glieder (oben um den Ausleger, unten durch das Schild)
+    chain = k.part("Ketten", "metal", bevel=0.0)
+    lr, wr = 0.016, 0.0035
+    in_yz = Matrix.Rotation(math.pi / 2, 4, "Y")
+    in_xz = Matrix.Rotation(math.pi / 2, 4, "X")
+    z1 = arm_z + arm_r + wr - lr - 0.003     # oberes Glied liegt auf dem Ausleger (3 mm hinein, nie fast tangential)
+    link = 2 * lr - 2 * wr + 0.001            # Abstand der Glieder: jedes liegt auf dem nächsten (1 mm hinein)
+    zs = [z1, z1 - link, z1 - 2 * link]
+    sign_x0, sign_x1 = 0.16, 0.6
+    for x in (sign_x0 + 0.05, sign_x1 - 0.05):
+        for i, z in enumerate(zs):
+            F.ring(chain, (x, 0, z), lr, wr, matrix=in_xz if i == 1 else in_yz, n=24, segs=8)
+    hole_z = zs[2] - lr + wr
+    top_z = hole_z + 0.014
+    h = 0.27
+    # Schild: Brett mit abgerundeten Ecken, beidseitig beschriftet
+    sign = k.part("Schild", "sign", bevel=0.004)
+    w = sign_x1 - sign_x0
+    cr = 0.04
+    outline = []
+    for cx, cz, a0 in ((w / 2 - cr, -h / 2 + cr, -90), (w / 2 - cr, h / 2 - cr, 0), (-w / 2 + cr, h / 2 - cr, 90), (-w / 2 + cr, -h / 2 + cr, 180)):
+        for j in range(7):
+            a = math.radians(a0 + 90 * j / 6)
+            outline.append((cx + cr * math.cos(a), cz + cr * math.sin(a)))
+    t = 0.024
+    mid_x, mid_z = (sign_x0 + sign_x1) / 2, top_z - h / 2
+    sign.slab(outline, t, plane_xz(t / 2, mid_z, mid_x), dent=0.0004)
+    letters = k.part("Schrift", "letters", bevel=0.0)
+    for back in (False, True):
+        y_face = t / 2 if back else -t / 2
+        front_text(letters, "Willkommen", 0.052, mid_x, y_face, mid_z + 0.0, back=back)
+        front_text(letters, "in der Bücherei", 0.03, mid_x, y_face, mid_z - 0.065, back=back)
+    k.collider((0, 0, top / 2), (0.05, 0.05, top))
+    k.collider((0, 0, 0.05), (0.6, 0.6, 0.1))
+    k.collider((arm_end / 2, 0, arm_z), (arm_end + 0.06, 0.03, 0.1))
+    k.collider((mid_x, 0, mid_z), (w, t, h))
+
+
 def flower_variants(slot):
     return [("red", "Rot", {slot: (0.86, 0.2, 0.17)}), ("pink", "Rosa", {slot: (0.93, 0.52, 0.62)}),
             ("white", "Weiß", {slot: (0.95, 0.94, 0.9)}), ("coral", "Koralle", {slot: (0.95, 0.45, 0.38)})]
@@ -382,4 +798,27 @@ ITEMS = [
     dict(id="out_storm_lantern", name="Sturmlaterne", category="outdoor", sub="outdoor_light", price=18,
          desc="Eine Sturmlaterne mit Glaszylinder und Drahtbügel – die Kerze flackert auch bei Wind.",
          styles=STYLE, place=["floor", "surface"], attach_feet=False, build=build_storm_lantern, variants=LANTERN_COLORS),
+    # Regale und Auslagen (Bücher stehen in den Fächern, Deko und Töpfe auf den Flächen)
+    dict(id="out_book_crates", name="Bücherkisten", category="outdoor", sub="outdoor_shelf", price=40,
+         desc="Drei alte Obstkisten, auf die Seite gelegt und gestapelt – ein Regal für Bücher, oben Platz für Töpfe.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_book_crates, variants=variants("crate", CRATES)),
+    dict(id="out_book_barrow", name="Bücherkarren", category="outdoor", sub="outdoor_shelf", price=110,
+         desc="Ein Holzkarren mit Speichenrädern wie bei den Bücherständen am Fluss – zwei Reihen Bücher zum Stöbern.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_book_barrow, variants=variants("paint", PAINTS)),
+    dict(id="out_swap_library", name="Bücherschrank zum Tauschen", category="outdoor", sub="outdoor_shelf", price=90,
+         desc="Ein Holzhäuschen auf einem Pfosten mit Glastür: Nimm ein Buch, bring ein Buch.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_swap_library, variants=variants("paint", PAINTS)),
+    dict(id="out_plant_stairs", name="Pflanzentreppe", category="outdoor", sub="outdoor_shelf", price=55,
+         desc="Drei Stufen aus Holz für Töpfe, Laternen und ein paar Bücher.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_plant_stairs, variants=variants("paint", PAINTS)),
+    dict(id="out_etagere", name="Blumen-Etagere", category="outdoor", sub="outdoor_shelf", price=48,
+         desc="Drei runde Schalen übereinander an einem Eisengestell – für kleine Töpfe und Laternen.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_etagere, variants=variants("iron", IRONS)),
+    # Schilder
+    dict(id="out_signpost", name="Wegweiser", category="outdoor", sub="outdoor_sign", price=45,
+         desc="Ein Holzpfosten mit drei Pfeilen: Bücherei, Lesegarten, Teestube.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_signpost, variants=variants("sign", SIGNS)),
+    dict(id="out_hanging_sign", name="Schild am Ständer", category="outdoor", sub="outdoor_sign", price=50,
+         desc="Ein Eisenständer mit einem Holzschild an kurzen Ketten: „Willkommen in der Bücherei“.",
+         styles=STYLE, place="floor", attach_feet=False, build=build_hanging_sign, variants=variants("sign", SIGNS)),
 ]

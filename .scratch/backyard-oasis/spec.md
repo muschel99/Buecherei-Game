@@ -40,4 +40,6 @@ diesem Plan aufgegangen.
   Kategorie „Draußen“, Ausweich-Kreise für Passanten, Spielstand), Deko auf den Seiten der Eingangstreppe, Lieferkartons am
   Bordstein, 16 Draußen-Sachen (Gartenbank, Bistrostuhl/-tisch, Kreidetafel, Pflanzen, Laternen).
 - Die Entwicklerin hat den Plan mit der Skizze bestätigt und will in einem neuen Chat weitermachen.
-- **Nächster Schritt:** `issues/01` – mehr Draußen-Sachen; danach `issues/02` – das Gelände.
+- 24.11.2026: `issues/01` Runde 1 fertig (Regale, Auslagen, Schilder – sieben Sachen, siehe Zettel).
+- **Nächster Schritt:** `issues/01` Runde 2 – Sitzplätze und Tischchen; dann Runde 3 (Pflanzen), Runde 4 (Deko);
+  danach `issues/02` – das Gelände.

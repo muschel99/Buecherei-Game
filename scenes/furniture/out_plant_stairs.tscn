@@ -1,0 +1,77 @@
+[gd_scene format=3]
+
+; Erzeugt von tools/blender/build_storybook_furniture.py – Modell, Kollision, Ablageflächen, Fächer und Licht. Wird beim Neubau
+; überschrieben, solange die Datei unverändert ist (speichert Godot sie, bleibt sie, wie sie ist).
+
+[ext_resource type="PackedScene" path="res://assets/models/furniture/out_plant_stairs.glb" id="1_model"]
+[ext_resource type="Script" path="res://scripts/building/placement_surface.gd" id="2_surface"]
+
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(0.7500, 0.2220, 0.1900)
+
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(0.7500, 0.4420, 0.1900)
+
+[sub_resource type="BoxShape3D" id="Shape_2"]
+size = Vector3(0.7500, 0.6620, 0.1880)
+
+[sub_resource type="BoxShape3D" id="Shape_3"]
+size = Vector3(0.7000, 0.0300, 0.1600)
+
+[sub_resource type="BoxShape3D" id="Shape_4"]
+size = Vector3(0.7000, 0.0300, 0.1500)
+
+[sub_resource type="BoxShape3D" id="Shape_5"]
+size = Vector3(0.7000, 0.0300, 0.1700)
+
+[node name="OutPlantStairs" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="Shape0" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.1110, 0.1950)
+shape = SubResource("Shape_0")
+
+[node name="Shape1" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.2210, 0.0250)
+shape = SubResource("Shape_1")
+
+[node name="Shape2" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.3310, -0.1440)
+shape = SubResource("Shape_2")
+
+[node name="Surfaces" type="Node3D" parent="."]
+
+[node name="Surface0" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.2220, 0.2000)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_surface")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Surface0"]
+shape = SubResource("Shape_3")
+
+[node name="Surface1" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.4420, 0.0350)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_surface")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Surface1"]
+shape = SubResource("Shape_4")
+
+[node name="Surface2" type="Area3D" parent="Surfaces"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.0000, 0.6620, -0.1450)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_surface")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Surfaces/Surface2"]
+shape = SubResource("Shape_5")
+
+

@@ -2029,16 +2029,21 @@ Zettel: `.scratch/outdoor-decor/` (Plan `spec.md`, Aufgaben `issues/`).
   Laufmitte (70 cm zu jeder Seite der Türmitte) bleibt frei; nur was ganz auf eine Stufe passt. Neu dafür: kleiner
   Lavendel-, Geranien- und Buchsbaumtopf, Heidekraut, Laterne mit Kerze, Sturmlaterne
 - [x] Stühle geprüft – sie sind gut so (die Entwicklerin hatte alte Bilder gesehen)
-- [ ] Viel mehr Draußen-Sachen: Sitzmöbel, Tischchen, sehr viele Pflanzen in allen Größen, Farben und Formen,
-  Kundenstopper, kleine Regale für Bücher und Deko
+- [ ] Viel mehr Draußen-Sachen: läuft in Etappe 8d (Zettel 01, Runde 1 fertig)
 - [ ] Deko aus der Fassaden-App nehmen (wer schon Deko hatte, bekommt sie als Draußen-Möbel ins Inventar)
 - [ ] Baumgasse, Garten und Hintertür: aufgegangen in Etappe 8d (Die Oase hinter der Bücherei)
 
 ## Etappe 8d – Die Oase hinter der Bücherei (Skizze der Entwicklerin vom 24.11.2026)
 „Eine cozy Oase. Eine zauberhafte Welt mitten in der Stadt.“ Plan, Skizze und Zettel: `.scratch/backyard-oasis/`.
-**Nächster Schritt:** Zettel 01 (mehr Draußen-Sachen), danach 02 (das Gelände).
+**Nächster Schritt:** Zettel 01, Runde 2 (Sitzplätze und Tischchen), danach Runden 3–4, dann Zettel 02 (das Gelände).
 
-- [ ] Mehr Draußen-Sachen: Sitzplätze, Tischchen, sehr viele Pflanzen, Kundenstopper, kleine Regale für Bücher und Deko
+- [ ] Mehr Draußen-Sachen (Zettel 01), in vier Runden:
+  - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
+    Bücherschrank zum Tauschen (Häuschen auf einem Pfosten, zwei Glastüren), Pflanzentreppe, Blumen-Etagere,
+    Wegweiser (Bücherei, Lesegarten, Teestube), Schild am Ständer („Willkommen in der Bücherei“) – je vier Farben
+  - [ ] Runde 2 – Sitzplätze und Tischchen
+  - [ ] Runde 3 – sehr viele Pflanzen in allen Größen, Farben und Formen
+  - [ ] Runde 4 – kleine Deko
 - [ ] Das Gelände: großes Grundstück hinter Bücherei und Pub, Mauern ringsum, ganz hinten ein Bach zwischen den Hausmauern
   und eine Backsteinmauer; am Anfang verwildert; Trümmerhaufen und zerbrochener Torbogen sperren die Gasse
 - [ ] Projekt Glasanbau (Story): reparieren lassen → Tür hinten im Laden, Gäste lesen dort, gestalten

@@ -1422,6 +1422,8 @@ def export(kit, force_data=False, render=False):
     objs = kit.objects
     flames = kit.flames
     bounds = bounds_of(objs + flames)
+    # Offene Kanten (jedes Teil muss ein geschlossener Körper sein)
+    bad = [(o.name, SB.non_manifold(o)) for o in objs + flames if SB.non_manifold(o)]
     os.makedirs(kit.dirs["model"], exist_ok=True)
     os.makedirs(kit.dirs["source"], exist_ok=True)
     blend = os.path.join(kit.dirs["source"], kit.id + ".blend")
@@ -1441,5 +1443,6 @@ def export(kit, force_data=False, render=False):
     shutil.copyfile(glb, os.path.join(kit.dirs["template"], kit.id + ".glb"))
     bpy.ops.wm.save_as_mainfile(filepath=blend, compress=True)
     size = bounds[1] - bounds[0]
-    print("  %-26s %6d Dreiecke, %2d Teile, %.2f x %.2f x %.2f m" % (kit.id, tris, parts + len(flames), size.x, size.y, size.z))
+    print("  %-26s %6d Dreiecke, %2d Teile, %.2f x %.2f x %.2f m, Offene Kanten: %s"
+          % (kit.id, tris, parts + len(flames), size.x, size.y, size.z, bad if bad else "keine"))
     return tris
