@@ -219,6 +219,10 @@ var alley_wall_height: float = 7.0
 ## Gartenmauer hinter dem Pub-Nachbarn (Kante = rechte Seite des Pubs), links an einer Mauer bei backyard_left_x, hinten bei
 ## backyard_back_wall_z; vorn liegen die Rückseiten der Häuser. Gartenmauern so hoch (m).
 var backyard_left_x: float = 10.2
+## Deko auch in der Gasse (seit der Testrunde nach 8d, Wunsch der Entwicklerin): ein Streifen entlang der rechten Seitenwand der
+## Bücherei (x/z unter Main: x ab der Wand nach außen, z von kurz hinter der Mündung bis vor den Blumentopf an der hinteren Ecke);
+## daneben bleibt der Weg in den Garten frei (Gasse 2,8 m breit).
+var outdoor_alley_strip: Rect2 = Rect2(-4.05, -1.6, 0.85, 4.9)
 var backyard_back_wall_z: float = 24.0
 var backyard_wall_height: float = 2.6
 ## Bach (seit der Testrunde nach 8d im Bogen): Mittellinie von links vorn (Tunnel in der linken Mauer) nach rechts hinten (Tunnel

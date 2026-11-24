@@ -15,6 +15,7 @@ des Kunden).
 - Theke schneller (Teil von `issues/03`): nach dem Piep gleich scannen, Bewegungen schneller (3 Bücher: 9,6 s → 6,0 s).
 - Garten-Umbau (`issues/01`, ohne das Häuschen selbst): größer, Bach im Bogen aus gewölbten Tunneln, Brücke, Schilf, Wasser-Shader,
   Bäume hinter den Mauern, Häuserreihe hinten mit Lücken.
+- Deko in der Gasse (`issues/06`): Streifen an der Seitenwand der Bücherei.
 
 ## Zettel
 - `issues/01` Garten neu planen: größer, Bach kurvig (Tunnel links vorn in der Mauer), Brücke, Tunnel nicht zugemauert,

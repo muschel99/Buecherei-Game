@@ -1422,7 +1422,9 @@ func in_alley(point: Vector3) -> bool:
 func _alley_walkable(p: Vector2) -> bool:
 	if p.distance_to(_garden.tree) < 1.15:
 		return false
-	var lane := p.x >= float(_garden.fx) + 0.25 and p.x <= float(_garden.lx) - 0.7 and p.y >= float(_garden.mouth_z) - 0.5 \
+	# an der Bücherei-Wand steht vielleicht Deko (Streifen in der Gasse) – Katzen laufen daneben
+	var lane := p.x >= float(_garden.fx) + 0.25 and p.x <= float(_garden.lx) - 0.25 - GameConfig.outdoor_alley_strip.size.x \
+		and p.y >= float(_garden.mouth_z) - 0.5 \
 		and p.y <= float(_garden.end) - 0.3
 	var yard := p.x >= float(_garden.gx) + 1.0 and p.x <= float(_garden.fx) + 0.3 and p.y >= float(_garden.gz) + 1.0 \
 		and p.y <= float(_garden.end) - 0.3

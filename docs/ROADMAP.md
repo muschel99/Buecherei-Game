@@ -2039,7 +2039,7 @@ Seit dem 24.11.2026 „rückwärts“ (Wunsch der Entwicklerin): erst alles im f
 und Freischaltungen in der Story zum Schluss (Zettel 07).
 Wünsche aus der Testrunde: `.scratch/testrunde-8d/` (Garten-Umbau, Theke, Haltungen, Hauptmenü, Deko in der Gasse, Häuser und
 Bäume rund um den Garten).
-**Nächster Schritt:** Deko in der Gasse (Testrunde 06), dann Haltungen und Karte hinhalten (04/03), Hauptmenü (05), Holzhäuschen.
+**Nächster Schritt:** Haltungen nach den Fotos der Entwicklerin und Karte hinhalten (Testrunde 04/03), dann Hauptmenü (05), Holzhäuschen.
 
 - [x] Mehr Draußen-Sachen (Zettel 01), in vier Runden – zusammen 41 neue Sachen:
   - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
@@ -2056,6 +2056,7 @@ Bäume rund um den Garten).
 - [x] Immergrün: Buchs, Efeu, Olive, Lorbeer und Zitrus färben sich im Herbst nicht mehr (Shader-Schalter `evergreen`)
 - [x] Fehler behoben: Das Spiel hielt beim Bedienen an der Theke an (Godot 4.6.2); neues Prüfwerkzeug `serve_probe`
 - [x] Theke schneller: Bücher scannen, während der Ausweis liest; Bewegungen etwa ein Drittel schneller
+- [x] Deko auch in der Gasse: Streifen an der Seitenwand der Bücherei (0,85 m breit), daneben bleibt der Weg in den Garten frei
 - [ ] Das Gelände im fertigen Zustand (Zettel 02):
   - [x] Schritt 1 – großer Garten hinter Bücherei und Pub (`build_storybook_backyard.py`, `backyard.glb`): Rasen, Kiesweg aus
     der Gasse, Gartenmauern mit Efeu, Grundstück fürs Holzhäuschen, Bach mit Steinrand, der links und rechts unter einem

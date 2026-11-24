@@ -121,7 +121,8 @@ screenshots/         Testbilder (nicht in Git)
   Couchtisch 0,3 m, Theke 0,85 m.
 - **Geld** nur über `Wallet.spend/earn`. **Speichern:** Knoten in Gruppe `persist` mit `save_key`, `get_save_data()`,
   `load_save_data()`. Draußen wird nichts gespeichert – außer dem Draußen-Raum vor der Bücherei (`OutdoorArea`,
-  `Room.outdoor`): Dort stellt man im Gestaltungsmodus nur Dinge der Kategorie `OUTDOOR` auf (Bau-Script
+  `Room.outdoor`, dazu ein Streifen an der Seitenwand in der Gasse, `GameConfig.outdoor_alley_strip`): Dort stellt man im
+  Gestaltungsmodus nur Dinge der Kategorie `OUTDOOR` auf (Bau-Script
   `furniture_outdoor.py`, ids `out_…`); sie bekommen automatisch Ausweich-Kreise für Passanten.
 - **Tablets/Apps:** gemeinsame Vorlage `TabletFrame`; neue App = Szene in `scenes/ui/tablet_apps/` (erbt `TabletApp`) +
   Datenblatt `data/tablet_apps/<id>.tres`; Apps nie mit festen Farben, sondern `style.…` und den Bausteinen von `TabletApp`.

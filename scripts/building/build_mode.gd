@@ -987,6 +987,16 @@ func _create_grid(room: Room) -> MeshInstance3D:
 	grid.position = Vector3(area.get_center().x, room.floor_height + (0.03 if room.outdoor else 0.004), area.get_center().y)
 	grid.visible = false
 	room.add_child(grid)
+	# weitere Flächen (Hinterzimmer, Streifen in der Gasse) bekommen ihr eigenes Raster, es zeigt sich mit dem Hauptraster
+	for extra in room.extra_build_areas:
+		var piece := MeshInstance3D.new()
+		var extra_plane := PlaneMesh.new()
+		extra_plane.size = extra.size
+		piece.mesh = extra_plane
+		piece.material_override = _grid_material
+		piece.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		piece.position = Vector3(extra.get_center().x - area.get_center().x, 0.0, extra.get_center().y - area.get_center().y)
+		grid.add_child(piece)
 	return grid
 
 

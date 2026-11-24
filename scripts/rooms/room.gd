@@ -116,6 +116,9 @@ func _ready() -> void:
 ## Draußen: nur Möbel und Spielstand; Hindernisse und Sitzplätze für Passanten folgen den Möbeln.
 func _ready_outdoor() -> void:
 	add_to_group(SaveManager.PERSIST_GROUP)
+	# zweiter Streifen: in der Gasse an der Seitenwand der Bücherei (seit der Testrunde nach 8d)
+	if GameConfig.outdoor_alley_strip.has_area():
+		extra_build_areas.append(GameConfig.outdoor_alley_strip)
 	for item in get_placed_furniture():
 		_assign_uid(item)
 	layout_changed.connect(SaveManager.request_save)
