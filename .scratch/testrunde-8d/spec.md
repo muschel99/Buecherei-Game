@@ -17,6 +17,7 @@ des Kunden).
   Bäume hinter den Mauern, Häuserreihe hinten mit Lücken.
 - Deko in der Gasse (`issues/06`): Streifen an der Seitenwand der Bücherei.
 - Karte hinhalten (`issues/03`, Haltung aus `issues/04`): flach zwischen Daumen und Zeigefinger, Arm vom Körper weg.
+- Gabel halten (`issues/04`): quer zwischen Daumen und Zeigefinger wie auf dem Foto.
 
 ## Zettel
 - `issues/01` Garten neu planen: größer, Bach kurvig (Tunnel links vorn in der Mauer), Brücke, Tunnel nicht zugemauert,

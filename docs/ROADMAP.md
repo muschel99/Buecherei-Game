@@ -2039,7 +2039,7 @@ Seit dem 24.11.2026 „rückwärts“ (Wunsch der Entwicklerin): erst alles im f
 und Freischaltungen in der Story zum Schluss (Zettel 07).
 Wünsche aus der Testrunde: `.scratch/testrunde-8d/` (Garten-Umbau, Theke, Haltungen, Hauptmenü, Deko in der Gasse, Häuser und
 Bäume rund um den Garten).
-**Nächster Schritt:** Gabel-Haltung nach dem Foto der Entwicklerin (Testrunde 04), dann Hauptmenü (05), Holzhäuschen.
+**Nächster Schritt:** Hauptmenü als aufgeschlagenes Buch (Testrunde 05), dann Holzhäuschen, Häuser und Bäume rund um den Garten.
 
 - [x] Mehr Draußen-Sachen (Zettel 01), in vier Runden – zusammen 41 neue Sachen:
   - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
@@ -2058,6 +2058,7 @@ Bäume rund um den Garten).
 - [x] Theke schneller: Bücher scannen, während der Ausweis liest; Bewegungen etwa ein Drittel schneller
 - [x] Deko auch in der Gasse: Streifen an der Seitenwand der Bücherei (0,85 m breit), daneben bleibt der Weg in den Garten frei
 - [x] Gäste halten den Ausweis über die Theke hin (flach zwischen Daumen und Zeigefinger, Arm vom Körper weg), bis man ihn anklickt
+- [x] Gabel wie auf dem Foto der Entwicklerin: quer zwischen Daumen und Zeigefinger, Daumen oben, Finger darunter
 - [ ] Das Gelände im fertigen Zustand (Zettel 02):
   - [x] Schritt 1 – großer Garten hinter Bücherei und Pub (`build_storybook_backyard.py`, `backyard.glb`): Rasen, Kiesweg aus
     der Gasse, Gartenmauern mit Efeu, Grundstück fürs Holzhäuschen, Bach mit Steinrand, der links und rechts unter einem

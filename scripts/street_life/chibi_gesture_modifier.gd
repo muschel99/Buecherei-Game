@@ -58,14 +58,16 @@ var drink_fork := false
 ## Lage des Bechers in der Hand (GameConfig.passerby_prop_hold "mug"); Lippen vor dem großen Kopf (× body_scale)
 const MUG_AT_TABLE := Vector3(-0.02, 0.045, -0.12)
 const MUG_AT_MOUTH := Vector3(-0.12, -0.045, 0.055)
-## Gabel wie man sie hält (Beschreibung der Entwicklerin): Handfläche nach unten, Daumen zum Körper hin, die Finger biegen sich
-## nach unten um den Stiel; die Gabel liegt schräg in der Hand (GameConfig.passerby_prop_hold "fork"), die Zinken kommen vorn
-## zwischen Daumen und Zeigefinger heraus. Am Teller zeigen sie nach vorn-unten in den Kuchen, am Mund dreht sich das Handgelenk
-## (Finger zur Mitte, Handrücken nach oben-vorn) – die Zinken kommen vom rechten Mundwinkel her zum Mund.
-## Wohin die Gabelspitze am Mund kommt (gegenüber DRINK_LIPS: etwas tiefer, zur Mitte, vor die Lippen) und wie die Hand dort steht
+## Gabel wie man sie hält (seit der Testrunde nach 8d nach dem Foto der Entwicklerin): quer in der Mulde zwischen Daumen und
+## Zeigefinger (GameConfig.passerby_prop_hold "fork"), Daumen oben drauf, Zeigefinger darunter eingerollt (_key_pinch). Die Hand
+## dreht sich so, dass die Gabel in die gewünschte Richtung zeigt (fork_hand_basis): am Teller nach vorn-unten in den Kuchen (Finger
+## nach vorn, Handfläche unten), am Mund vom rechten Mundwinkel her zu den Lippen (Finger zur Mitte).
+## Wohin die Gabelspitze am Mund kommt (gegenüber DRINK_LIPS: etwas tiefer, zur Mitte, vor die Lippen)
 const FORK_TIP_AT_LIPS := Vector3(0.02, -0.024, 0.01)
-const FORK_FINGERS_AT_MOUTH := Vector3(1.0, 0.85, -0.25)
-const FORK_BACK_AT_MOUTH := Vector3(0.0, 0.8, 0.6)
+const FORK_DIR_AT_PLATE := Vector3(0.1, -0.75, 0.66)
+const FORK_FINGERS_AT_PLATE := Vector3(0.0, 0.0, 1.0)
+const FORK_DIR_AT_MOUTH := Vector3(0.6, 0.35, -0.72)
+const FORK_FINGERS_AT_MOUTH := Vector3(0.8, 0.0, 0.6)
 const DRINK_LIPS := Vector3(0.0, 0.05, 0.16)
 const DRINK_TILT_DEG := 55.0
 ## Hände greifen etwas (0…1; rechts: Gegenstand in der Hand, beide beim Fegen) – Finger krümmen sich
@@ -92,8 +94,8 @@ var pet_weight: float = 0.0
 ## Handgelenk geht zu diesem Punkt (Raum des Skeletts) – der Arm streckt sich vom Körper weg, das Handgelenk bleibt gerade
 var show_point: Vector3 = Vector3.ZERO
 var show_weight: float = 0.0
-## Die Karte steckt zwischen Daumen und Zeigefinger (statt in der Faust): andere Fingerhaltung (_pinch_card)
-var card_pinch := false
+## Karte bzw. Gabel stecken zwischen Daumen und Zeigefinger (statt in der Faust): andere Fingerhaltung (_key_pinch)
+var key_pinch := false
 ## Lesen (seit Testrunde 7b): beide Hände halten ein aufgeschlagenes Buch an read_point (Mitte des Buchs, Raum des Skeletts)
 var read_point: Vector3 = Vector3.ZERO
 var read_weight: float = 0.0
@@ -133,8 +135,8 @@ func _process_modification_with_delta(_delta: float) -> void:
 	if hands_on_thighs > 0.001:
 		_apply_hands(skeleton)
 	if grip_right > 0.001:
-		if card_pinch:
-			_pinch_card(skeleton, "Right", grip_right)
+		if key_pinch:
+			_key_pinch(skeleton, "Right", grip_right)
 		else:
 			_grip(skeleton, "Right", grip_right)
 	if grip_left > 0.001:
@@ -229,12 +231,15 @@ func _process_modification_with_delta(_delta: float) -> void:
 			# beim Trinken kippt der Handrücken nach oben – der Becherrand geht an die Lippen
 			# (Gabel: Handfläche immer unten, Daumen zur Körpermitte – am Teller Finger nach vorn-unten, am Mund schräg hinauf zur
 			# Mitte, die Hand bleibt rechts unterhalb des Munds)
-			var fingers_low := Vector3(0.0, -0.35, 1.0) if drink_fork else Vector3(0.15, 0.0, 1.0)
-			var back_low := Vector3(0.0, 1.0, 0.0) if drink_fork else Vector3(-1.0, 0.0, 0.1)
-			var fingers_high := FORK_FINGERS_AT_MOUTH if drink_fork else Vector3(1.0, 0.0, 0.3)
-			var back_high := FORK_BACK_AT_MOUTH if drink_fork else Vector3(0.0, 0.0, 1.0)
-			var fingers := fingers_low.normalized().slerp(fingers_high.normalized(), e)
-			var back := back_low.normalized().slerp(back_high.normalized(), e)
+			var fingers := Vector3(0.15, 0.0, 1.0).normalized().slerp(Vector3(1.0, 0.0, 0.3).normalized(), e)
+			var back := Vector3(-1.0, 0.0, 0.1).normalized().slerp(Vector3.BACK, e)
+			var fork_hand := Basis()
+			if drink_fork:
+				var dir := FORK_DIR_AT_PLATE.normalized().slerp(FORK_DIR_AT_MOUTH.normalized(), e)
+				var hint := FORK_FINGERS_AT_PLATE.normalized().slerp(FORK_FINGERS_AT_MOUTH.normalized(), e)
+				fork_hand = fork_hand_basis(dir, hint)
+				fingers = fork_hand.y
+				back = fork_hand.z
 			var a := deg_to_rad(DRINK_TILT_DEG) * drink_tilt
 			back = (back * cos(a) + Vector3.UP * sin(a)).normalized()
 			var target: Vector3
@@ -243,7 +248,7 @@ func _process_modification_with_delta(_delta: float) -> void:
 				# Hand aus GameConfig.passerby_prop_hold) – so trifft die Spitze den Mund, wie die Hand auch gedreht ist
 				var cake := drink_rest + Vector3(0.0, 0.02, 0.0) if drink_has_rest else Vector3(-0.1 * body_scale, neck.y - 0.35 * body_scale, 0.3 * body_scale)
 				var tip := cake.lerp(lips + FORK_TIP_AT_LIPS, e) + Vector3(0.0, 0.05 * sin(e * PI), 0.0)
-				target = tip - _hand_basis(fingers, back) * fork_tip_in_hand()
+				target = tip - fork_hand * fork_tip_in_hand()
 			else:
 				var at_mouth := lips + MUG_AT_MOUTH
 				var rest := drink_rest + MUG_AT_TABLE if drink_has_rest \
@@ -264,11 +269,18 @@ func _process_modification_with_delta(_delta: float) -> void:
 
 
 ## Finger krümmen (um einen Stiel oder Griff): die Fingerglieder gegenüber der Ruhehaltung einknicken, der Daumen weniger.
-## Achsen einer Hand aus Fingerrichtung und Handrücken (wie _orient_hand_along: +Y Finger, +Z Handrücken, X = Y × Z).
-static func _hand_basis(fingers: Vector3, back: Vector3) -> Basis:
-	var y := fingers.normalized()
-	var z := (back - y * y.dot(back)).normalized()
-	return Basis(y.cross(z), y, z)
+## Lage der Hand (Raum der Figur), wenn die Gabel in Richtung dir zeigt und die Finger möglichst in Richtung fingers.
+static func fork_hand_basis(dir: Vector3, fingers: Vector3) -> Basis:
+	var hold: Dictionary = GameConfig.passerby_prop_hold.get("fork", {})
+	var in_hand := _frame((hold.get("basis", Basis()) as Basis).y, Vector3.UP)
+	return _frame(dir, fingers) * in_hand.transposed()
+
+
+## Rechtwinklige Achsen: x = main, y = second (senkrecht zu main gemacht), z = x × y.
+static func _frame(main: Vector3, second: Vector3) -> Basis:
+	var x := main.normalized()
+	var y := (second - x * x.dot(second)).normalized()
+	return Basis(x, y, x.cross(y))
 
 
 ## Lage der Gabelspitze (Mitte der Zinken) im Raum der Hand – aus GameConfig.passerby_prop_hold "fork" und make_fork.
@@ -286,14 +298,14 @@ func _grip(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
 	_bend_thumb(skeleton, prefix + "ThumbDistal", GRIP_ANGLE * 0.5, amount)
 
 
-## Karte halten wie einen Schlüssel: Zeigefinger locker gekrümmt (die Karte liegt an seiner Seite), die anderen Finger
-## eingerollt, der Daumen drückt von der anderen Seite gegen die Karte (Winkel je Glied in Grad, negativ = zur Handfläche).
+## Halten wie einen Schlüssel (Karte, Gabel): Zeigefinger locker gekrümmt (das Ding liegt an seiner Seite), die anderen Finger
+## eingerollt, der Daumen drückt von der anderen Seite dagegen (Winkel je Glied in Grad, negativ = zur Handfläche).
 const PINCH_FINGERS := {"Index": [-40.0, -55.0, -30.0], "Middle": [-65.0, -70.0, -45.0], "Ring": [-75.0, -75.0, -45.0],
 	"Little": [-80.0, -75.0, -45.0]}
 const PINCH_THUMB := [15.0, 10.0]
 
 
-func _pinch_card(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
+func _key_pinch(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
 	for finger: String in PINCH_FINGERS:
 		var angles: Array = PINCH_FINGERS[finger]
 		var joints := ["Proximal", "Intermediate", "Distal"]

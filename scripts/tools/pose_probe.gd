@@ -2,7 +2,9 @@ extends Node3D
 ## Prüfbilder einzelner Haltungen der Chibi-Figuren (seit Etappe 6i): Animation an festen Zeitpunkten, Gesten (Fegen, Umarmen,
 ## Trinken) und Gegenstände in der Hand – viel schneller als Bilder der ganzen Straße.
 ## Start: xvfb-run -a -s "-screen 0 700x700x24" godot --path . --rendering-method gl_compatibility --rendering-driver opengl3
-##   --resolution 700x700 --audio-driver Dummy res://scenes/tools/pose_probe.tscn -- <water|doors|sweep|hug|drink>
+##   --resolution 700x700 --audio-driver Dummy res://scenes/tools/pose_probe.tscn -- <water|doors|sweep|hug|drink|eat|card|…>
+## drink und eat ohne die beiden --rendering-…-Angaben starten (Forward+): Im Container übersetzt die Software-Grafik im
+## Kompatibilitätsmodus den Shader von Becher und Kuchenteller endlos (die Probe hängt dann vor dem ersten Bild).
 ## Bilder: screenshots/poses/
 const OUT := "res://screenshots/poses/"
 var shots := []

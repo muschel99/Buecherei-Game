@@ -737,7 +737,7 @@ func set_prop(kind: StringName) -> void:
 		_prop_mount = null
 	if _gesture_modifier:
 		_gesture_modifier.grip_right = 0.0
-		_gesture_modifier.card_pinch = kind == &"card"
+		_gesture_modifier.key_pinch = kind == &"card" or kind == &"fork"
 	_prop_kind = kind
 	if kind == &"" or _skeleton == null:
 		return
