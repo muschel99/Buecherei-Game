@@ -1630,8 +1630,8 @@ var title_fly_time: float = 1.6
 ## (Grad, links tiefer – Wunsch der Entwicklerin), wie stark es schwebt (m) und sich wiegt (Grad). Das lebendige Bild auf der rechten Seite: Kamera auf Baum und
 ## Bank (Welt TitleBackdrop, hochkant; von weit weg mit engem Sichtfeld, damit nichts verzerrt – wie eine Zeichnung) und
 ## Auflösung des Bilds (Pixel, Breite).
-var title_book_eye: Vector3 = Vector3(0.0, -0.05, 3.35)
-var title_book_target: Vector3 = Vector3(0.0, -0.05, 0.0)
+var title_book_eye: Vector3 = Vector3(0.0, 0.0, 2.3)
+var title_book_target: Vector3 = Vector3(0.0, 0.0, 0.0)
 var title_book_fov: float = 34.0
 var title_book_tilt: float = 90.0
 var title_book_roll: float = 7.0
