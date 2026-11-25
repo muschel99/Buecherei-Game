@@ -34,6 +34,8 @@ func _ready() -> void:
 			GameConfig.backyard_bridge_size.x, GameConfig.backyard_bridge_size.y, GameConfig.backyard_bridge_size.z],
 		"backyard_cottage": [GameConfig.backyard_cottage_center.x, GameConfig.backyard_cottage_center.y,
 			GameConfig.backyard_cottage_size.x, GameConfig.backyard_cottage_size.y, GameConfig.backyard_cottage_turn],
+		"backyard_wall_ends": [StreetLayout.backyard_wall_ends().x, StreetLayout.backyard_wall_ends().y],
+		"backyard_cottage_corners": _points(StreetLayout.backyard_cottage_corners()),
 		"back_room": [BackRoom.back_area().position.x, BackRoom.back_area().position.y, BackRoom.back_area().size.x,
 			BackRoom.back_area().size.y],
 		"house_backs": _house_backs(),

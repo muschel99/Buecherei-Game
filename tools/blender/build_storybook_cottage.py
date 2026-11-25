@@ -1,7 +1,8 @@
 """Holzhäuschen im großen Garten (Etappe 8d, Zettel 05 der Oase; Wünsche der Entwicklerin nach der Testrunde): klein, frei
 stehend, schräg gestellt, eine Etage, wie ein Tiny House mit Gauben (Fenster im Dach mit eigenem kleinen Satteldach).
 Innen ein offener Raum bis unters schräge Dach mit sichtbaren Balken; durch die Gauben fällt Licht von oben (Wunsch: „ein
-offener Raum“). Außen waagerechte Bretter als „ästhetische Mischung“ (Beispielbilder der Entwicklerin): türkis- und himmelblau
+offener Raum“). Seit dem Lageplan der Entwicklerin größer (5,8 × 4,4 m) und übers Eck in der Gartenecke: die Gartenmauern stoßen
+an die Seitenwände, die Veranda zeigt zum Bach, die Brücke führt direkt auf sie. Außen waagerechte Bretter als „ästhetische Mischung“ (Beispielbilder der Entwicklerin): türkis- und himmelblau
 gestrichene Bretter, deren Farbe abblättert (helles Holz schaut durch – storybook.gdshaderinc weather/peel), dazwischen nacktes
 Holz in Honig, Rotbraun, Silbergrau und ein paar dunkle Bretter, einzelne moosgrün gestrichene. Vor der Tür eine kleine
 überdachte Veranda (zwei Pfosten, eigenes Satteldach) – Wunsch der Entwicklerin.
@@ -56,14 +57,14 @@ RIDGE = ROOF_EAVES + SPAN * TAN
 DOOR_W, DOOR_H = 0.9, 1.95
 WIN_W, WIN_H, WIN_SILL = 0.7, 0.95, 0.9
 ## Veranda vor der Tür: Tiefe (ab der Wand), Pfosten bei x = ±PORCH_X, Traufhöhe und Neigung des Vordachs
-PORCH_DEPTH = 1.0
-PORCH_X = 0.82
+PORCH_DEPTH = 1.15
+PORCH_X = 0.95
 PORCH_EAVES = 2.3
 PORCH_PITCH = 40.0
 ## Bretter: Arten (Material, Anteil); jede Reihe ist aus 1–3 Brettern zusammengesetzt, jedes Brett bekommt eine Art
 BOARD_KINDS = (("b_turq", 24), ("b_sky", 18), ("b_honey", 17), ("b_red", 12), ("b_grey", 11), ("b_dark", 8), ("b_moss", 10))
 ## Gauben vorn: Mitte x, Vorderwand bei y = DY0, äußere halbe Breite, Fenster (Breite, Höhe)
-DORMER_X = (-1.12, 1.12)
+DORMER_X = (-(W / 2 - 1.55), W / 2 - 1.55)
 DY0 = -1.55
 DORMER_HW = 0.5
 DORMER_WIN = (0.56, 0.6)
@@ -133,14 +134,20 @@ def walls_list():
     return {"front": (a, b), "right": (b, c), "back": (c, d), "left": (d, a)}
 
 
+## Seitenfenster so weit hinter der Vorderkante (m): im Garten steht das Häuschen übers Eck, die Gartenmauern treffen die
+## Seitenwände etwa 2,7 m hinter der Vorderkante – die Fenster liegen davor, im Garten
+SIDE_WIN = 1.5
+
+
 def openings():
-    """Öffnungen je Wand: (Mitte entlang der Wand, Unterkante, Breite, Höhe) – z ab Boden des Modells."""
-    win = lambda x: (x, FLOOR + WIN_SILL, WIN_W, WIN_H)  # noqa: E731
+    """Öffnungen je Wand: (Mitte entlang der Wand ab ihrem Anfang, Unterkante, Breite, Höhe) – z ab Boden des Modells. Die
+    rechte Wand beginnt vorn, die linke hinten (walls_list). Hinten ein Fenster mit Blick auf die Wiese hinter der Mauer."""
+    win = lambda x, w=WIN_W: (x, FLOOR + WIN_SILL, w, WIN_H)  # noqa: E731
     return {
-        "front": [(W / 2, FLOOR, DOOR_W, DOOR_H), win(W / 2 - 1.5), win(W / 2 + 1.5)],
-        "right": [win(D / 2)],
-        "back": [win(W / 2 - 1.05)],
-        "left": [win(D / 2), (D / 2, EAVES + 0.55, 0.42, 0.42)],   # Fensterchen im Giebel (der Raum ist bis unters Dach offen)
+        "front": [(W / 2, FLOOR, DOOR_W, DOOR_H), win(W / 2 - (W / 2 - 1.1)), win(W / 2 + (W / 2 - 1.1))],
+        "right": [win(SIDE_WIN)],
+        "back": [win(W / 2, 0.9)],
+        "left": [win(D - SIDE_WIN), (D / 2, EAVES + 0.55, 0.42, 0.42)],   # Fensterchen im Giebel (Raum offen bis unters Dach)
     }
 
 
@@ -443,7 +450,7 @@ def interior(M, C):
                for cx in DORMER_X]
     SB.boolean_cut(lo_obj, cutters)
     # Zangen quer durch den Raum (über Kopfhöhe) und Firstbalken
-    for x in (-1.55, 0.0, 1.55):
+    for x in (-(W / 2 - 1.0), 0.0, W / 2 - 1.0):
         beams.box((x, 0.0, EAVES - 0.07), (0.1, D - 2 * WALL_T, 0.14), step=0.8, dent=0.002)
     beams.box((0.0, 0.0, roof_under(0.0) - 0.1), (W - 2 * WALL_T, 0.12, 0.16), step=0.8, dent=0.002)
     beams.build()

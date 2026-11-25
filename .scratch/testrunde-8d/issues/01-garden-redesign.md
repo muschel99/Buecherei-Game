@@ -15,3 +15,11 @@ Status: ready-for-agent
 fürs Häuschen in GameConfig (`backyard_stream`, `backyard_bridge_*`, `backyard_cottage_*`); gewölbte Tunnel, die nach hinten dunkel
 werden; Lauftest über die Brücke (0,42 m hoch, kommt drüben an) und quer zum Bach (bleibt am Ufer). Das Häuschen baut Zettel 05
 der Oase.
+
+25.11.2026: **Lageplan der Entwicklerin** (`../garden_plan.jpg`, maßstäblich – die hintere Mauer liegt genau bei z = 24).
+Umgesetzt: Bach vorn links aus dem Tunnel, im Bogen nach hinten, genau vor der Haustür des Häuschens vorbei und hinten rechts
+in der Ecke in den Tunnel; Brücke direkt auf die Veranda; Häuschen größer (5,8 × 4,4 m), übers Eck (45°) in der hinteren
+linken Ecke, die Gartenmauern stoßen an seine Seitenwände (`StreetLayout.backyard_wall_ends`); auf der Bücherei-Seite eine große
+freie Wiese (Platz für Deko, Glasanbau und die bepflanzte Ecke). Hinter dem Häuschen (man kommt nicht hin, sieht es aber aus
+dem hinteren Fenster): kleine wilde Wiese, Blumen, Bäume, Hecken, alter Holzzaun; das Haus der hinteren Reihe dort ist weg.
+Noch offen: Baum mit Bank näher ans Pub (mit „Leben im ganzen Garten“ – Katzen, Vögel und Bank hängen an ihm).

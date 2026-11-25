@@ -122,6 +122,37 @@ static func backyard_stream_line() -> PackedVector2Array:
 	return pts
 
 
+## Ecken des Holzhäuschens im Garten (x/z unter „Outside“): vorn rechts, vorn links, hinten links, hinten rechts (vom Garten aus).
+## Vorderseite zeigt nach (-sin, -cos) der Drehung (GameConfig.backyard_cottage_turn).
+static func backyard_cottage_corners() -> PackedVector2Array:
+	var a := deg_to_rad(GameConfig.backyard_cottage_turn)
+	var front := Vector2(-sin(a), -cos(a))
+	var along := Vector2(cos(a), -sin(a))
+	var c := GameConfig.backyard_cottage_center
+	var half := GameConfig.backyard_cottage_size / 2.0
+	return PackedVector2Array([c + front * half.y + along * half.x, c + front * half.y - along * half.x,
+		c - front * half.y - along * half.x, c - front * half.y + along * half.x])
+
+
+## Wo die Gartenmauern am Häuschen enden: x = Ende der linken Mauer (z), y = Ende der hinteren Mauer (x) – dort, wo die Mauerlinie
+## die Seitenwand trifft, plus GameConfig.backyard_wall_into_cottage (die Mauer steckt etwas in der Wand, keine Fuge).
+static func backyard_wall_ends() -> Vector2:
+	var corners := backyard_cottage_corners()
+	var left := GameConfig.backyard_left_x
+	var back := GameConfig.backyard_back_wall_z
+	var z_end := back
+	var x_end := left
+	for i in corners.size():
+		var a := corners[i]
+		var b := corners[(i + 1) % corners.size()]
+		if (a.x - left) * (b.x - left) < 0.0:
+			z_end = minf(z_end, a.y + (b.y - a.y) * (left - a.x) / (b.x - a.x))
+		if (a.y - back) * (b.y - back) < 0.0:
+			x_end = minf(x_end, a.x + (b.x - a.x) * (back - a.y) / (b.y - a.y))
+	var into := GameConfig.backyard_wall_into_cottage
+	return Vector2(minf(z_end + into, back), minf(x_end + into, left))
+
+
 static func garden_tree() -> Vector2:
 	var far_x := alley_far_x()
 	var garden_x := far_x - GameConfig.alley_garden_extra_width

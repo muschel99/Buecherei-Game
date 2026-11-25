@@ -148,8 +148,10 @@ func _build_backyard_walls() -> void:
 	var back := GameConfig.backyard_back_wall_z
 	var front_left := StreetLayout.HOUSE_FRONT + HouseTypes.depth_of(GameConfig.neighbor_house_types[0])
 	_add_collider(body, Vector3(right - t, 0.0, _neighbor_back()), Vector3(right, h, back + t))
-	_add_collider(body, Vector3(left, 0.0, front_left), Vector3(left + t, h, back + t))
-	_add_collider(body, Vector3(right - t, 0.0, back), Vector3(left + t, h, back + t))
+	# linke und hintere Mauer enden am Holzhäuschen (es steht übers Eck in der Ecke; seine Wände bringt das Modell mit)
+	var ends := StreetLayout.backyard_wall_ends()
+	_add_collider(body, Vector3(left, 0.0, front_left), Vector3(left + t, h, ends.x))
+	_add_collider(body, Vector3(right - t, 0.0, back), Vector3(ends.y, h, back + t))
 	# Bach: Kästen entlang der Mittellinie (nicht unter der Brücke)
 	var line := StreetLayout.backyard_stream_line()
 	var width := GameConfig.backyard_stream_width

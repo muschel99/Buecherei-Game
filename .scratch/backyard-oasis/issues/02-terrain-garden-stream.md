@@ -26,3 +26,8 @@ Trittsteine, Gartenmauern mit Steinkrone und Efeu, Bach mit Ufersteinen und Bög
 Bach, Häute mit Fenstern auf den glatten Rückseiten der Nachbarhäuser, zwei Fenster oben an der Bücherei, Bank, Vogelbad). Die Gasse
 (`scripts/world/alley.gd`) setzt es ein, Kollision an Mauern und über dem Bach. Der Boden ist überall flach – das Wasser liegt
 4,5 cm hoch zwischen Ufersteinen. Noch offen (Schritt 2): Katzen/Vögel im ganzen Garten, Tier-Plätze, Wasser in Bewegung, Schilf.
+
+25.11.2026: Hinweis für „Leben im ganzen Garten“: street_life_check --garden meldet manchmal „solid“ an der Vogeltränke
+(„Garten 4“ bei x −6,65, z 11,3) – Spaziergänger gehen von der Gasse zu einem Sitzplatz der Bank, der direkt daneben liegt, und
+laufen hindurch. Zufällig (gleicher Stand und Startwert: mal 0, mal 4), nicht durch den Garten-Umbau. Beim Verlegen von Baum und
+Bank (näher ans Pub) die Vogeltränke als Hindernis für die Wege berücksichtigen.

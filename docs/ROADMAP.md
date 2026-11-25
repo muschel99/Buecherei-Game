@@ -2071,7 +2071,10 @@ Bäume rund um den Garten).
     Tunneln (kein zugemauerter Tunnel mehr), Holzbrücke, Platz fürs Holzhäuschen hinten links, Wasser mit fließenden Wellen
     (eigener Shader), Schilf und Rohrkolben, Bäume hinter den Mauern, Häuserreihe hinten mit Lücken (viel Himmel), keine Tür
     hinter dem Pub
-  - [ ] Leben im ganzen Garten (Katzen, Vögel, Tier-Plätze)
+  - [x] Nach dem Lageplan der Entwicklerin: Bach im Bogen genau vor der Haustür des Häuschens vorbei, Brücke direkt auf die
+    Veranda, Häuschen größer und übers Eck in der hinteren linken Ecke (die Mauern stoßen an seine Seitenwände), große freie
+    Wiese auf der Bücherei-Seite; hinter dem Häuschen eine kleine wilde Wiese mit Bäumen (Blick aus dem hinteren Fenster)
+  - [ ] Leben im ganzen Garten (Katzen, Vögel, Tier-Plätze; Baum mit Bank näher ans Pub)
 - [ ] Holzhäuschen hinten links im Garten (Zettel 05), im fertigen Zustand:
   - [x] Schritt 1 – Haus von außen und innen (`build_storybook_cottage.py`, `garden_cottage.glb`): Tiny House mit zwei Gauben
     (eigene kleine Dächer), Bretter als „ästhetische Mischung“ nach den Bildern der Entwicklerin (Türkis und Himmelblau mit

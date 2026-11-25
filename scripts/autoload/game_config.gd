@@ -227,20 +227,27 @@ var backyard_back_wall_z: float = 24.0
 var backyard_wall_height: float = 2.6
 ## Bach (seit der Testrunde nach 8d im Bogen): Mittellinie von links vorn (Tunnel in der linken Mauer) nach rechts hinten (Tunnel
 ## in der rechten Mauer) – die ersten und letzten Punkte liegen in den Tunneln; das Modell rundet die Linie. Breite (m).
-var backyard_stream: PackedVector2Array = PackedVector2Array([Vector2(12.6, 6.7), Vector2(10.2, 6.7), Vector2(7.4, 7.0),
-	Vector2(4.8, 8.6), Vector2(2.4, 11.4), Vector2(-0.6, 14.2), Vector2(-4.2, 16.5), Vector2(-8.2, 18.2), Vector2(-11.6, 19.0),
-	Vector2(-14.0, 19.2)])
+## Bach (seit dem Lageplan der Entwicklerin nach der Testrunde 8d): kommt vorn links aus dem Tunnel, läuft im Bogen nach hinten,
+## genau vor der Haustür des Häuschens vorbei (parallel zu seiner Vorderseite, unter der Brücke hindurch) und hinten rechts in der
+## Ecke in den Tunnel – auf der Bücherei-Seite bleibt eine große Wiese für Deko und den Glasanbau.
+var backyard_stream: PackedVector2Array = PackedVector2Array([Vector2(12.6, 7.6), Vector2(10.2, 7.6), Vector2(8.6, 8.6),
+	Vector2(7.6, 10.6), Vector2(7.0, 13.0), Vector2(6.3, 15.2), Vector2(5.2, 16.74), Vector2(4.07, 17.87), Vector2(2.95, 19.0),
+	Vector2(1.2, 20.2), Vector2(-1.5, 21.1), Vector2(-4.5, 21.7), Vector2(-8.0, 22.3), Vector2(-11.6, 22.6), Vector2(-14.0, 22.7)])
 var backyard_stream_width: float = 1.3
 ## Holzbrücke über den Bach: Mitte (x/z), Richtung über den Bach (Grad um die Hochachse, 0 = nach +z), Länge, Breite, Höhe der
 ## Wölbung in der Mitte (m).
-var backyard_bridge_center: Vector2 = Vector2(1.3, 12.5)
-var backyard_bridge_turn: float = 42.0
+## Brücke: führt direkt auf die Veranda des Häuschens (ihr Ende liegt vor der Steinstufe)
+var backyard_bridge_center: Vector2 = Vector2(4.07, 17.87)
+var backyard_bridge_turn: float = 45.0
 var backyard_bridge_size: Vector3 = Vector3(3.2, 1.1, 0.32)
-## Platz für das Holzhäuschen (Zettel 05): hinten links jenseits des Bachs, frei stehend und schräg – Mitte (x/z), Grundfläche
-## (Breite, Tiefe), Drehung (Grad um die Hochachse).
-var backyard_cottage_center: Vector2 = Vector2(5.6, 19.4)
-var backyard_cottage_size: Vector2 = Vector2(4.6, 3.6)
-var backyard_cottage_turn: float = -22.0
+## Holzhäuschen (Zettel 05; nach dem Lageplan der Entwicklerin): übers Eck in der hinteren linken Gartenecke, die Gartenmauern
+## stoßen an seine Seitenwände (keine Lücken), die Veranda zeigt zum Bach – Mitte (x/z), Grundfläche (Breite, Tiefe; größer, damit
+## man genug Platz zum Einrichten hat), Drehung (Grad um die Hochachse; 45 = Vorderseite schräg zum Garten). Mauern ragen so weit
+## (m) in die Seitenwand hinein, dass keine Fuge bleibt.
+var backyard_cottage_center: Vector2 = Vector2(7.8, 21.6)
+var backyard_cottage_size: Vector2 = Vector2(5.8, 4.4)
+var backyard_cottage_turn: float = 45.0
+var backyard_wall_into_cottage: float = 0.25
 ## Kleine Gasse in der Häuserreihe gegenüber (seit Etappe 4f), damit die lange Front nicht so
 ## einheitlich wirkt: Mitte (x, 0 = Mitte der Bücherei, + = Richtung gerades Straßenende),
 ## Breite und Tiefe (8 m = bis zur Rückseite der Häuser; dort Mauer mit Tor). Breite 0 = keine.

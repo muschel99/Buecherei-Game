@@ -49,6 +49,9 @@ WALL_H = L["backyard_wall_height"]
 STREAM_W = L["backyard_stream_width"]
 BRIDGE = L["backyard_bridge"]          # Mitte x, z, Richtung (Grad, 0 = +z), Länge, Breite, Wölbung
 COTTAGE = L["backyard_cottage"]        # Mitte x, z, Breite, Tiefe, Drehung
+## Das Häuschen steht übers Eck in der hinteren linken Ecke (Lageplan der Entwicklerin): die linke Mauer endet bei z, die hintere
+## bei x – dort stecken sie ein Stück in seinen Seitenwänden (StreetLayout.backyard_wall_ends)
+LEFT_END_Z, BACK_END_X = L["backyard_wall_ends"]
 LIB_X, FAR_X = L["library_x"], L["far_x"]
 LIB_BACK, PUB_BACK = L["library_back_z"], L["neighbor_back_z"]
 BR_X0, BR_Z0, BR_W, BR_D = L["back_room"]
@@ -172,17 +175,12 @@ def bridge_ends():
 
 
 def gravel_path(M, C, rnd):
-    """Kiesweg aus der Gasse in den Garten bis an die Brücke, jenseits davon weiter bis vor das Holzhäuschen."""
+    """Kiesweg aus der Gasse in den Garten bis an die Brücke (sie führt direkt auf die Veranda des Häuschens)."""
     mid = (LIB_X + FAR_X) / 2
     start, end, d = bridge_ends()
-    cx, cz, cw, cd, turn = COTTAGE
-    # Platz vor der Tür des Häuschens (Vorderseite zeigt zum Garten, -z gedreht um turn)
-    a = math.radians(turn)
-    front = Vector((cx, cz)) + Vector((-math.sin(a), -math.cos(a))) * (cd / 2 + 0.7)
     parts = [
         [Vector((mid, PUB_BACK - 0.2)), Vector((mid + 0.4, PUB_BACK + 1.6)), Vector((mid + 2.0, PUB_BACK + 3.2)),
-         start - d * 1.4, start + d * 0.05],
-        [end - d * 0.05, end + d * 1.2, front - (front - end).normalized() * 0.6, front],
+         Vector((mid + 3.6, PUB_BACK + 6.2)), start - d * 1.4, start + d * 0.05],
     ]
     for k, raw in enumerate(parts):
         pts = smooth(raw)
@@ -270,13 +268,13 @@ def garden_wall(M, C, name, p0, p1, rnd, kind="brick_c", gap=None):
 
 def walls(M, C, rnd):
     """Gartenmauern ringsum: rechts (hinter dem Pub-Nachbarn, mit dem Tunnel, in dem der Bach verschwindet), links (vorn der
-    Tunnel, aus dem er kommt) und hinten."""
+    Tunnel, aus dem er kommt) und hinten; links und hinten enden sie am Holzhäuschen in der Ecke."""
     inside = G((RIGHT_X + LEFT_X) / 2, (PUB_BACK + BACK_Z) / 2)
     walls_out = []
     for name, (x0, z0), (x1, z1), cross in (
             ("Gartenmauer rechts", (RIGHT_X, PUB_BACK), (RIGHT_X, BACK_Z), RIGHT_X),
-            ("Gartenmauer links", (LEFT_X, ROW_BACK), (LEFT_X, BACK_Z), LEFT_X),
-            ("Gartenmauer hinten", (RIGHT_X - 0.3, BACK_Z), (LEFT_X + 0.3, BACK_Z), None)):
+            ("Gartenmauer links", (LEFT_X, ROW_BACK), (LEFT_X, LEFT_END_Z), LEFT_X),
+            ("Gartenmauer hinten", (RIGHT_X - 0.3, BACK_Z), (BACK_END_X, BACK_Z), None)):
         p0, p1 = facing(G(x0, z0), G(x1, z1), inside)
         gap = None
         if cross is not None:
@@ -429,8 +427,8 @@ def back_row(M, C, rnd):
     z = BACK_Z + 2.2
     for k, (x0, x1, wall, roof, h) in enumerate(((RIGHT_X - 5.4, RIGHT_X - 0.6, "brick_b", "slate_roof", 7.0),
                                                  (RIGHT_X + 2.4, RIGHT_X + 8.0, "plaster_a", "h_roof", 6.6),
-                                                 (RIGHT_X + 11.2, RIGHT_X + 16.4, "plaster_b", "slate_roof", 6.9),
-                                                 (LEFT_X + 0.8, LEFT_X + 6.2, "brick_a", "h_roof", 7.4))):
+                                                 (RIGHT_X + 11.2, RIGHT_X + 16.4, "plaster_b", "slate_roof", 6.9))):
+        # (hinter der linken Ecke kein Haus mehr: dort schaut man aus dem hinteren Fenster des Häuschens auf Wiese und Bäume)
         A.gable_house(M, C, "Haus hinter dem Garten %d" % (k + 1), x0, x1, z, h, wall, rnd, roof_mat=roof)
 
 
@@ -571,6 +569,43 @@ def bridge(M, C, rnd):
 
 # --- Ganzes Modell ---
 
+def beyond_cottage(M, C, rnd):
+    """Hinter dem Häuschen (außerhalb der Mauern – dort kommt man nicht hin, man sieht es aus seinen Fenstern): eine kleine
+    wilde Wiese mit Blumenbeeten, ein paar Bäume und Hecken, ein alter Holzzaun am Rand. Liefert Pflanzplätze."""
+    spots = []
+    for i, (x0, z0, x1, z1) in enumerate(((LEFT_X, LEFT_END_Z - 5.0, LEFT_X + 6.6, BACK_Z + 3.6),
+                                          (BACK_END_X - 4.0, BACK_Z, LEFT_X, BACK_Z + 3.6))):
+        (ax, ay), (bx, by) = G(x0, z0), G(x1, z1)
+        lw = Body("Wiese hinter dem Häuschen %d" % i, M["lawn"], C["deco"], seed=470 + i, vary=0.12)
+        lw.box(((ax + bx) / 2, (ay + by) / 2, 0.011), (abs(bx - ax) - 0.004, abs(by - ay) - 0.004, 0.022), step=1.0, dent=0.004)
+        lw.build()
+    # Wildblumen (Beete ohne Rand), Bäume, Hecken am Zaun
+    for (x, z, w, d, face) in ((LEFT_X + 1.6, BACK_Z - 1.2, 2.6, 1.3, 225.0), (BACK_END_X + 1.6, BACK_Z + 1.7, 2.4, 1.2, 180.0),
+                               (LEFT_X + 2.6, LEFT_END_Z - 3.0, 2.2, 1.2, 270.0)):
+        q = G(x, z)
+        spots.append(("bed", (q[0], q[1], 0.02), (w, d, 1.0), face))
+    for x, z in ((LEFT_X + 4.0, LEFT_END_Z - 2.5), (BACK_END_X + 2.3, BACK_Z + 4.0), (LEFT_X + 5.0, BACK_Z + 1.2),
+                 (LEFT_X + 2.4, BACK_Z + 5.6), (LEFT_X + 7.4, BACK_Z + 4.4)):
+        q = G(x, z)
+        spots.append(("tree", (q[0], q[1], 0.0), (4.6, 4.6, 8.0), 0.0))
+    for (x, z, length, face) in ((LEFT_X + 6.2, LEFT_END_Z - 1.0, 5.0, 270.0), (LEFT_X + 3.0, BACK_Z + 3.2, 4.4, 180.0)):
+        q = G(x, z)
+        spots.append(("hedge", (q[0], q[1], 0.02), (length, 1.0, 1.5), face))
+    # alter Holzzaun am äußeren Rand der Wiese (Pfosten mit zwei Riegeln)
+    fz = Body("Zaun hinter dem Häuschen", M["wood"], C["deco"], seed=480, vary=0.1, bevel=0.006)
+    x_f = LEFT_X + 6.6
+    z = LEFT_END_Z - 5.0
+    while z < BACK_Z + 3.5:
+        p = G(x_f, z)
+        fz.box((p[0], p[1], 0.5), (0.09, 0.09, 1.0), step=0.5, dent=0.004)
+        z += 1.6
+    for h in (0.38, 0.82):
+        a, b = G(x_f, LEFT_END_Z - 5.0), G(x_f, BACK_Z + 3.5)
+        fz.box(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, h), (0.05, abs(b[1] - a[1]), 0.08), step=0.8, dent=0.003)
+    fz.build()
+    return spots
+
+
 def backyard(M, C, rnd):
     lawn(M, C)
     gravel_path(M, C, rnd)
@@ -588,18 +623,20 @@ def backyard(M, C, rnd):
     spots.append(("tree", (p[0], p[1], 0.0), (5.6, 7.4, 10.0), 0.0, "garden"))
     # Bäume hinter den Mauern (die Natur kommt mehr heraus; Gartenbäume aus der Pflanzen-Bibliothek)
     for x, z in ((RIGHT_X - 2.6, PUB_BACK + 4.5), (RIGHT_X - 3.0, BACK_Z - 3.0), (RIGHT_X + 0.9, BACK_Z + 2.4),
-                 (RIGHT_X + 9.6, BACK_Z + 2.2), (LEFT_X - 0.6, BACK_Z + 2.6), (LEFT_X + 2.8, BACK_Z - 5.0), (LEFT_X + 2.6, PUB_BACK + 6.0)):
+                 (RIGHT_X + 9.6, BACK_Z + 2.2), (LEFT_X + 2.6, PUB_BACK + 6.0)):
         q = G(x, z)
         spots.append(("tree", (q[0], q[1], 0.0), (4.6, 4.6, 8.0), 0.0))
-    # Beete an den Mauern (die Pflanzen setzt Greenery ein): rechts vor dem Tunnel, hinten links und rechts vom Häuschen
+    # Beete an den Mauern (die Pflanzen setzt Greenery ein): rechts vor dem Tunnel, hinten zwischen Bach und Mauer bis zum
+    # Häuschen, links zwischen Tunnel und Häuschen
     zr = stream_z_at(RIGHT_X)
     for (x0, z0, x1, z1, face) in (
             (RIGHT_X + 0.25, PUB_BACK + 0.6, RIGHT_X + 0.85, zr - STREAM_W - 0.6, 90.0),
-            (RIGHT_X + 1.0, BACK_Z - 0.85, COTTAGE[0] - 4.2, BACK_Z - 0.25, 180.0),
-            (LEFT_X - 0.85, stream_z_at(LEFT_X) + STREAM_W + 0.8, LEFT_X - 0.25, COTTAGE[1] - 2.8, -90.0)):
+            (RIGHT_X + 3.6, BACK_Z - 0.85, BACK_END_X - 1.4, BACK_Z - 0.25, 180.0),
+            (LEFT_X - 0.85, stream_z_at(LEFT_X) + STREAM_W + 0.8, LEFT_X - 0.25, LEFT_END_Z - 1.4, -90.0)):
         (ax, ay), (bx, by) = G(x0, z0), G(x1, z1)
         spots.append(("bed", ((ax + bx) / 2, (ay + by) / 2, 0.02), (max(abs(bx - ax), abs(by - ay)), min(abs(bx - ax), abs(by - ay)), 1.0),
                       face))
+    spots += beyond_cottage(M, C, rnd)
     # Efeu wächst an den Gartenmauern (nicht über den Tunnelbögen)
     for (p0, p1, gap) in garden_walls:
         length = T.seg_len(p0, p1)
