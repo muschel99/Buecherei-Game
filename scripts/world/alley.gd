@@ -39,6 +39,10 @@ const BENCH_APPROACH := 1.45
 @export var paving_material: Material = preload("res://assets/materials/sidewalk.tres")
 ## Bachwasser im Garten (bewegte Wellen, seit der Testrunde nach 8d) – ersetzt das Material „Wasser Bach“ des Modells
 @export var stream_material: Material = preload("res://assets/materials/stream_water.tres")
+## Holzhäuschen hinten links im Garten (seit Etappe 8d, Zettel 05 der Oase): Modell (tools/blender/build_storybook_cottage.py)
+## und Tür (E öffnet); Platz und Drehung in GameConfig.backyard_cottage_*
+@export var cottage_scene: PackedScene = preload("res://assets/models/world/garden_cottage.glb")
+@export var cottage_door_scene: PackedScene = preload("res://scenes/objects/cottage_door.tscn")
 @export var wall_material: Material = preload("res://assets/materials/outdoor_colors.tres")
 @export var yard_wall_color: Color = Color(0.52, 0.31, 0.25)
 
@@ -66,6 +70,7 @@ func _ready() -> void:
 			water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_build_backyard_walls()
 		_build_bench()
+		_build_cottage()
 	else:
 		_build_yard_walls(library_x, far_x, end)
 	if end_scene and model_scene == null:
@@ -206,6 +211,51 @@ func _add_turned_collider(body: StaticBody3D, center: Vector3, size: Vector3, ya
 	collision.shape = shape
 	collision.transform = Transform3D(Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -pitch), center)
 	body.add_child(collision)
+
+
+## Holzhäuschen an seinen Platz (Vorderseite mit Tür zum Garten): Modell, Boden innen und Veranda als Kollision auf Höhe des
+## Fußbodens, davor eine flache Rampe über die Steinstufe, die Tür in die Öffnung (Punkt „GameSpot_cottage_door“ im Modell:
+## Lage, Maße, Tiefe und Breite der Veranda). Die Wände und Verandapfosten bringt das Modell als Kollision mit.
+func _build_cottage() -> void:
+	if cottage_scene == null:
+		return
+	var cottage := Node3D.new()
+	cottage.name = "Cottage"
+	var center := GameConfig.backyard_cottage_center
+	# das Modell schaut nach +z (Blender -y); zum Garten soll es nach (-sin, -cos) der Drehung schauen
+	cottage.transform = Transform3D(Basis(Vector3.UP, deg_to_rad(GameConfig.backyard_cottage_turn) + PI), Vector3(center.x, 0.0, center.y))
+	add_child(cottage)
+	var model := cottage_scene.instantiate() as Node3D
+	model.name = "Model"
+	cottage.add_child(model)
+	var spot := model.find_child("GameSpot_cottage_door", true, false) as Node3D
+	if spot == null:
+		return
+	var extras: Dictionary = spot.get_meta("extras", {})
+	var at := spot.position
+	var floor_y := at.y
+	var front := at.z                                   # Außenkante der Vorderwand
+	var wall := float(extras.get("wall", 0.14))
+	var porch := float(extras.get("porch", 1.0))
+	var porch_x := float(extras.get("porch_x", 0.82))
+	var size := GameConfig.backyard_cottage_size
+	var body := StaticBody3D.new()
+	body.name = "CottageFloor"
+	cottage.add_child(body)
+	_add_turned_collider(body, Vector3(0.0, floor_y / 2.0, 0.0), Vector3(size.x - 2.0 * wall, floor_y, size.y - 2.0 * wall), 0.0, 0.0)
+	_add_turned_collider(body, Vector3(0.0, floor_y / 2.0, front - wall / 2.0), Vector3(1.0, floor_y, wall), 0.0, 0.0)  # Schwelle
+	_add_turned_collider(body, Vector3(0.0, floor_y / 2.0, front + porch / 2.0), Vector3(2.0 * porch_x + 0.2, floor_y, porch), 0.0, 0.0)
+	# Rampe von der Wiese auf die Veranda (über die Stufe hinweg)
+	var run := 0.6
+	var pitch := atan2(floor_y, run)
+	var length := Vector2(run, floor_y).length()
+	_add_turned_collider(body, Vector3(0.0, floor_y / 2.0 - 0.02 * cos(pitch), front + porch + run / 2.0), Vector3(1.4, 0.04, length),
+		0.0, -pitch)
+	var door := cottage_door_scene.instantiate() as Node3D
+	door.name = "Door"
+	# die Tür geht nach +z ihres Knotens auf (ins Häuschen, Modell -z), draußen ist ihr -z: um 180° gedreht
+	door.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(at.x, floor_y, front - wall / 2.0))
+	cottage.add_child(door)
 
 
 ## Rückseite des Hauses hinter der Gasse (Pub), z unter "Outside".

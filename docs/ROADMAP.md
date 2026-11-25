@@ -2039,7 +2039,7 @@ Seit dem 24.11.2026 „rückwärts“ (Wunsch der Entwicklerin): erst alles im f
 und Freischaltungen in der Story zum Schluss (Zettel 07).
 Wünsche aus der Testrunde: `.scratch/testrunde-8d/` (Garten-Umbau, Theke, Haltungen, Hauptmenü, Deko in der Gasse, Häuser und
 Bäume rund um den Garten).
-**Nächster Schritt:** Holzhäuschen im Garten (Zettel 05 der Oase), dann Häuser und Bäume rund um den Garten (Testrunde 02).
+**Nächster Schritt:** Holzhäuschen Schritt 2 (eigener Raum zum Einrichten), dann Häuser und Bäume rund um den Garten (Testrunde 02).
 
 - [x] Mehr Draußen-Sachen (Zettel 01), in vier Runden – zusammen 41 neue Sachen:
   - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
@@ -2072,6 +2072,14 @@ Bäume rund um den Garten).
     (eigener Shader), Schilf und Rohrkolben, Bäume hinter den Mauern, Häuserreihe hinten mit Lücken (viel Himmel), keine Tür
     hinter dem Pub
   - [ ] Leben im ganzen Garten (Katzen, Vögel, Tier-Plätze)
+- [ ] Holzhäuschen hinten links im Garten (Zettel 05), im fertigen Zustand:
+  - [x] Schritt 1 – Haus von außen und innen (`build_storybook_cottage.py`, `garden_cottage.glb`): Tiny House mit zwei Gauben
+    (eigene kleine Dächer), Bretter als „ästhetische Mischung“ nach den Bildern der Entwicklerin (Türkis und Himmelblau mit
+    abblätternder Farbe – neuer Regler `peel` im Bilderbuch-Shader –, Honig, Rotbraun, Silbergrau, Dunkel, Moosgrün), überdachte
+    Veranda mit Pfosten, Fensterläden und Blumenkästen; innen ein offener Raum bis unters Dach mit Balken, Licht von den Gauben;
+    Brettertür mit Z-Strebe (E öffnet), Rampe auf die Veranda
+  - [ ] Schritt 2 – eigener Raum zum Einrichten im Gestaltungsmodus
+  - [ ] Schritt 3 – dort schlafen
 - [ ] Projekt Glasanbau (Story): reparieren lassen → Tür hinten im Laden, Gäste lesen dort, gestalten
 - [ ] Projekt Gasse und Torbogen (Story): aufräumen lassen → der Garten gehört zur Bücherei, gestalten, Gäste kommen hinein
   (Reihenfolge mit dem Glasanbau frei wählbar)

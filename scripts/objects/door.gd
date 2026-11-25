@@ -22,6 +22,8 @@ const BUILTIN_LEAF_PARTS: Array[String] = ["DoorLeaf", "LeafGlass", "LeafMuntinV
 
 ## Öffnungsrichtung: 1 = Klinkenseite schwingt nach +Z (in den Raum), -1 = nach -Z.
 @export var open_direction: float = 1.0
+## Ladenglocke über der Tür (Bücherei); das Holzhäuschen im Garten hat keine.
+@export var bell: bool = true
 
 @onready var _hinge: Node3D = $Hinge
 @onready var _leaf: Node3D = $Hinge/DoorLeaf
@@ -91,7 +93,8 @@ func set_open(open: bool) -> void:
 	# Geräusche (Audio-System; fehlt die Datei, bleibt es still): Tür auf/zu, dazu die Ladenglocke über der
 	# Tür – wie in echt bimmelt sie bei jeder Bewegung, beim Schließen etwas leiser
 	Audio.play_at("doors/door_open" if open else "doors/door_close", _hinge.global_position, -2.0, Audio.vary(0.05))
-	Audio.play_at("doors/shop_bell", _hinge.global_position + Vector3.UP * 1.9, -3.0 if open else -7.0, Audio.vary(0.04))
+	if bell:
+		Audio.play_at("doors/shop_bell", _hinge.global_position + Vector3.UP * 1.9, -3.0 if open else -7.0, Audio.vary(0.04))
 	_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_tween.tween_method(_set_angle, _hinge.rotation.y, target, GameConfig.door_open_time)
 	_update_prompt()

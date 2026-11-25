@@ -19,6 +19,7 @@ des Kunden).
 - Karte hinhalten (`issues/03`, Haltung aus `issues/04`): flach zwischen Daumen und Zeigefinger, Arm vom Körper weg.
 - Gabel halten (`issues/04`): quer zwischen Daumen und Zeigefinger wie auf dem Foto.
 - Hauptmenü als aufgeschlagenes Buch (`issues/05`): Garten als lebendiges Bild, Zettel mit Büroklammer, Buch frontal und schief.
+- Holzhäuschen hinten links (Teil von `issues/01`): frei, schräg, Tiny House mit Gauben, Veranda – innen offener Raum.
 
 ## Zettel
 - `issues/01` Garten neu planen: größer, Bach kurvig (Tunnel links vorn in der Mauer), Brücke, Tunnel nicht zugemauert,

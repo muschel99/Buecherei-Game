@@ -39,6 +39,9 @@ uniform float weather = 0.0;
 // und Türblatt der Bücherei (drinnen regnet es nicht; vorher blätterte die Farbe auch innen ab). xyz = 0: aus.
 uniform vec4 weather_clean_side = vec4(0.0);
 uniform vec4 weather_color : source_color = vec4(0.84, 0.78, 0.68, 1.0);
+// Wie viel Farbe abgeblättert ist (seit Etappe 8d, Holzhäuschen im Garten: „abgekratztes Blau, helles Holz schaut durch“):
+// 0 = wie bei der Bücherei-Fassade (nur einzelne Stellen) … 1 = gut die Hälfte; nur Anstrich (grain 7) mit weather > 0.
+uniform float peel = 0.0;
 
 // Die Häuser bekommen von HouseFacade immer diese Werte – hier ohne Wirkung
 #ifndef REST_POSITION
@@ -310,7 +313,8 @@ vec4 weathering(vec3 p, vec2 brick_id, float px) {
 		missing = step(hash(vec3(brick_id, 13.0)), 0.022 * weather) * (1.0 - plaster);
 	} else if (grain == 7) {
 		float flake = fbm(q * vec3(7.0, 4.5, 7.0) + vec3(2.7), 3) + fbm(q * 26.0, 2) * 0.1 * fade;
-		missing = smoothstep(0.66, 0.672, flake + 0.03 * weather) * weather;
+		float edge0 = 0.66 - 0.17 * peel;
+		missing = smoothstep(edge0, edge0 + 0.012, flake + 0.03 * weather) * weather;
 	}
 	// Schmutz: zarte senkrechte Streifen (Regen), unten etwas dunkler
 	float streak = fbm(vec3(q.x * 5.0, q.y * 0.35, q.z * 5.0), 3);

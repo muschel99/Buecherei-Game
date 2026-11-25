@@ -1,0 +1,106 @@
+[gd_scene load_steps=12 format=3]
+
+; Tür des Holzhäuschens im Garten (seit Etappe 8d, Zettel 05 der Oase): Brettertür mit Z-Strebe (außen), kleinem Fenster und
+; Messingknauf, in abblätterndem Türkis wie die Bretter des Häuschens (Material aus build_storybook_cottage.py). Öffnet mit E
+; (Door, ohne Ladenglocke). Scharnier bei x = 0,44, Blatt nach -x, draußen -z, öffnet nach +z (ins Häuschen).
+; Gesetzt von scripts/world/alley.gd an den Punkt „GameSpot_cottage_door“ des Modells.
+
+[ext_resource type="Script" path="res://scripts/objects/door.gd" id="1_door"]
+[ext_resource type="Script" path="res://scripts/interaction/interactable.gd" id="2_interactable"]
+[ext_resource type="Material" path="res://assets/materials/storybook/bretter_tuerkis_abgeblaettert.tres" id="3_leaf"]
+[ext_resource type="Material" path="res://assets/materials/storybook/lack_rahmen_haeuschen.tres" id="4_trim"]
+[ext_resource type="Material" path="res://assets/materials/glass.tres" id="5_glass"]
+[ext_resource type="Material" path="res://assets/materials/brass.tres" id="6_brass"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_glass"]
+size = Vector3(0.32, 0.32, 0.01)
+
+[sub_resource type="BoxMesh" id="BoxMesh_muntin_v"]
+size = Vector3(0.03, 0.32, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_muntin_h"]
+size = Vector3(0.32, 0.03, 0.03)
+
+[sub_resource type="SphereMesh" id="SphereMesh_knob"]
+radius = 0.035
+height = 0.07
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
+size = Vector3(0.9, 1.95, 0.2)
+
+[node name="CottageDoor" type="Node3D"]
+script = ExtResource("1_door")
+bell = false
+
+[node name="Hinge" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.44, 0, 0)
+
+[node name="DoorLeaf" type="CSGCombiner3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.44, 0.975, 0)
+use_collision = true
+
+[node name="Panel" type="CSGBox3D" parent="Hinge/DoorLeaf"]
+size = Vector3(0.88, 1.93, 0.05)
+material = ExtResource("3_leaf")
+
+[node name="BattenTop" type="CSGBox3D" parent="Hinge/DoorLeaf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.82, -0.039)
+size = Vector3(0.8, 0.12, 0.03)
+material = ExtResource("4_trim")
+
+[node name="BattenMiddle" type="CSGBox3D" parent="Hinge/DoorLeaf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, -0.039)
+size = Vector3(0.8, 0.12, 0.03)
+material = ExtResource("4_trim")
+
+[node name="BattenBottom" type="CSGBox3D" parent="Hinge/DoorLeaf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.78, -0.039)
+size = Vector3(0.8, 0.12, 0.03)
+material = ExtResource("4_trim")
+
+[node name="BattenBrace" type="CSGBox3D" parent="Hinge/DoorLeaf"]
+transform = Transform3D(-0.6247, -0.7809, 0, 0.7809, -0.6247, 0, 0, 0, 1, 0, -0.3, -0.039)
+size = Vector3(0.92, 0.1, 0.028)
+material = ExtResource("4_trim")
+
+[node name="WindowHole" type="CSGBox3D" parent="Hinge/DoorLeaf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0)
+operation = 2
+size = Vector3(0.32, 0.32, 0.12)
+
+[node name="LeafGlass" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.44, 1.455, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_glass")
+material_override = ExtResource("5_glass")
+
+[node name="LeafMuntinV" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.44, 1.455, 0.0)
+mesh = SubResource("BoxMesh_muntin_v")
+material_override = ExtResource("4_trim")
+
+[node name="LeafMuntinH" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.44, 1.455, 0.0)
+mesh = SubResource("BoxMesh_muntin_h")
+material_override = ExtResource("4_trim")
+
+[node name="Knob" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.98, 0.045)
+mesh = SubResource("SphereMesh_knob")
+material_override = ExtResource("6_brass")
+
+[node name="KnobOutside" type="MeshInstance3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.98, -0.075)
+mesh = SubResource("SphereMesh_knob")
+material_override = ExtResource("6_brass")
+
+[node name="Interactable" type="Area3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.44, 0.975, 0)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_interactable")
+prompt_text = "Öffnen"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hinge/Interactable"]
+shape = SubResource("BoxShape3D_interact")

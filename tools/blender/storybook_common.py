@@ -45,7 +45,8 @@ def make_material(name, color, glow=0.0, plant=False, **kw):
     z. B. Innenräume, die in Blender von Lampen beleuchtet werden; plant = Blätter/Blüten, im
     Spiel beidseitig sichtbar). Gleicher Name = dasselbe Material."""
     GAME_MATERIALS[name] = dict(kw, color=color, glow=glow, plant=plant)
-    mat = SB.material(name, color, **{k: v for k, v in kw.items() if k not in ("wind", "own", "evergreen")})
+    mat = SB.material(name, color, **{k: v for k, v in kw.items() if k not in ("wind", "own", "evergreen", "weather", "weather_color",
+                                                                             "peel")})
     mat["spiel_pflanze"] = plant   # export_storybook.py vereinfacht diese Teile fürs Spiel
     # Werte fürs Spiel in der .blend merken (export_storybook.py braucht sie für Sammel-Materialien)
     mat["spiel_werte"] = json.dumps(GAME_MATERIALS[name])
@@ -61,7 +62,8 @@ SPOTS = {"coll": None, "n": 0}
 # Türblätter (seit Etappe 6i): Teile mit dieser Eigenschaft kommen beim Export in eigene Knoten „DoorLeaf …“ – die Tür
 # dreht sich im Spiel um den Punkt „DoorHinge_…“ (HouseDoor). Leere Knoten mit diesen Namen gehen mit in die .glb.
 DOOR_LEAF = "cozy_door_leaf"
-GAME_SPOTS = ("PlantSpot_", "DoorHinge_", "ShopSpot_", "WindowSpot_")
+## GameSpot_… (seit Etappe 8d): sonstige Punkte für einzelne Spiel-Scripts (z. B. die Tür des Holzhäuschens)
+GAME_SPOTS = ("PlantSpot_", "DoorHinge_", "ShopSpot_", "WindowSpot_", "GameSpot_")
 
 
 def door_leaf(obj, group="DoorLeaf"):
@@ -620,14 +622,25 @@ def write_game_materials(only=None):
                     'shader_parameter/blot_scale = %.3f\nshader_parameter/bump_strength = %.3f\nshader_parameter/rough = %.3f\n'
                     'shader_parameter/metal = %.3f\nshader_parameter/emission_color = Color(%.3f, %.3f, %.3f, 1)\n'
                     'shader_parameter/emission_energy = %.3f\nshader_parameter/glow = %.3f\n'
-                    'shader_parameter/wind_strength = %.3f\n%s'
+                    'shader_parameter/wind_strength = %.3f\n%s%s'
                     % (head, "storybook_plant" if v["plant"] else "storybook", name, c[0], c[1], c[2], c2[0], c2[1], c2[2], GRAIN_ID[v.get("grain", "plaster")], v.get("stripes") or 0.0,
                        v.get("vary", 0.08), v.get("scale", 4.0), v.get("bump", 0.25), v.get("rough", 0.85), v.get("metal", 0.0),
                        ec[0], ec[1], ec[2], emit * 0.45, v["glow"], v.get("wind", 0.0),
-                       "shader_parameter/evergreen = true\n" if v.get("evergreen") else ""))
+                       "shader_parameter/evergreen = true\n" if v.get("evergreen") else "", _weather_lines(v)))
         with open(path, "w") as f:
             f.write(text)
     return out
+
+
+def _weather_lines(v):
+    """Verwitterung fürs Spiel (seit Etappe 8d, Holzhäuschen): weather = 0 … 1, weather_color = was darunter zum Vorschein kommt,
+    peel = wie viel Farbe abgeblättert ist (storybook.gdshaderinc). Nur bei eigenen Materialien (own=True) wirksam – Sammel-
+    Materialien der Palette tragen sie nicht."""
+    if not v.get("weather"):
+        return ""
+    wc = v.get("weather_color") or (0.84, 0.78, 0.68)
+    return ("shader_parameter/weather = %.3f\nshader_parameter/weather_color = Color(%.3f, %.3f, %.3f, 1)\n"
+            "shader_parameter/peel = %.3f\n" % (v["weather"], wc[0], wc[1], wc[2], v.get("peel", 0.0)))
 
 
 def leaf_tops(me):
