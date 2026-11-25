@@ -324,6 +324,11 @@ func _build_cottage_room(cottage: Node3D, model: Node3D) -> void:
 	room.add_child(floor_cover)
 	cottage.add_child(room)
 	room.add_hang_walls(hang_bodies)
+	# Bett zum Schlafen (wie im Hinterzimmer): Kopfteil an der Rückwand neben dem Fenster. Ein Spielstand ersetzt die Möbel
+	# danach durch seine eigenen (dort steht es, wo man es hingestellt hat).
+	var bed := Catalog.get_furniture("bed_cottage")
+	if bed:
+		room.add_furniture(bed, cottage.global_transform * Transform3D(Basis(), Vector3(x1 - 0.9, floor_y, z0 + 1.02)), null)
 
 
 ## Dünne Wand zum Aufhängen (Bilder, Lampen …) genau auf der Innenfläche, Fenster und Tür ausgespart.

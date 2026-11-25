@@ -27,6 +27,10 @@ var cell_ids: Array[String] = []
 var columns: int = 1
 var rows: int = 1
 var _cell_size: float = 1.0 / 3.0
+## Tatsächliche Feldgröße quer und tief: so gedehnt, dass die Felder die Fläche genau füllen (seit Etappe 8d – das Holzhäuschen
+## ist kein Vielfaches der Feldgröße; in der Bücherei gehen sie genau auf, dort bleibt alles gleich)
+var _cell_w: float = 1.0 / 3.0
+var _cell_d: float = 1.0 / 3.0
 ## Mass der abgeschrägten Ecke (0 = keine Schräge).
 var _corner_cut: float = 0.0
 
@@ -35,6 +39,8 @@ func _ready() -> void:
 	_cell_size = GameConfig.grid_cell_size * GameConfig.floor_section_cells
 	columns = maxi(1, roundi(size.x / _cell_size))
 	rows = maxi(1, roundi(size.y / _cell_size))
+	_cell_w = size.x / columns
+	_cell_d = size.y / rows
 	cell_ids.resize(columns * rows)
 	cell_ids.fill("")
 	if cut_corner:
@@ -62,8 +68,8 @@ func get_cell_at(world_point: Vector3) -> int:
 	var local := to_local(world_point)
 	if absf(local.y) > 0.05:
 		return -1
-	var column := int(floorf(local.x / _cell_size))
-	var row := int(floorf(local.z / _cell_size))
+	var column := int(floorf(local.x / _cell_w))
+	var row := int(floorf(local.z / _cell_d))
 	if column < 0 or column >= columns or row < 0 or row >= rows:
 		return -1
 	if _is_cut(column, row) or local.x + local.z < _corner_cut:
@@ -75,7 +81,7 @@ func get_cell_at(world_point: Vector3) -> int:
 func get_cell_center(index: int) -> Vector3:
 	var column := index % columns
 	var row := index / columns
-	return to_global(Vector3((column + 0.5) * _cell_size, 0.0, (row + 0.5) * _cell_size))
+	return to_global(Vector3((column + 0.5) * _cell_w, 0.0, (row + 0.5) * _cell_d))
 
 
 ## Übernimmt Felder aus einem Spielstand mit anderer Feldeinteilung: Jeder neue
@@ -171,10 +177,10 @@ func rebuild() -> void:
 
 ## Fügt einen Streifen aus Feldern hinzu (an der Schräge abgeschnitten, falls nötig).
 func _add_strip(tool: SurfaceTool, start: int, end: int, row: int) -> void:
-	var x0 := start * _cell_size
-	var x1 := end * _cell_size
-	var z0 := row * _cell_size
-	var z1 := (row + 1) * _cell_size
+	var x0 := start * _cell_w
+	var x1 := end * _cell_w
+	var z0 := row * _cell_d
+	var z1 := (row + 1) * _cell_d
 	var outline: Array[Vector2] = [Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)]
 	if _corner_cut > 0.0:
 		outline = _clip_at_corner(outline)

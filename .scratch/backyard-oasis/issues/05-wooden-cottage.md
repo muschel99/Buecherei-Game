@@ -1,5 +1,5 @@
 # 05 – Holzhäuschen (fertiger Zustand)
-Status: ready-for-agent
+Status: done
 Blocked by: 02
 
 - Hinten links im Garten ein Holzhäuschen – ein richtiges Zuhause: eigener Raum zum Einrichten (Gestaltungsmodus), dort schlafen.
@@ -24,3 +24,8 @@ Wänden aufhängen (dünne Körper auf der Verkleidung); Wände nur bis zur Trau
 Gestalten. Veranda: gedrehte Fläche des Draußen-Raums (`Room.extra_build_frames`), nur Draußen-Deko. Gestaltungsmodus wechselt
 in den Raum, in dem man steht (`BuildMode._room_at`). Maße und Öffnungen bringt das Modell mit (`GameSpot_cottage_room`).
 Weiter: Schritt 3 – dort schlafen.
+
+25.11.2026: Schritt 3 erledigt – Bett fürs Häuschen (`data/furniture/bed_cottage.tres`: Modell und Schlafen wie im Hinterzimmer,
+frei aufstellbar, 180 Taler), steht beim ersten Start an der Rückwand neben dem Fenster (`alley.gd`); E = schlafen (wie bisher nur
+nachts und wenn niemand mehr in der Bücherei ist). Bodenbelag füllt jetzt jede Fläche genau (Felder gedehnt, `PaintableGrid`).
+Der morsche Zustand und das Story-Projekt kommen mit Zettel 07.
