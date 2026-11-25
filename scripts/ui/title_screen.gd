@@ -396,11 +396,12 @@ class NoteCard extends Control:
 		_wire(wire)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-	## Ein Stück Draht: dunkler Rand, silbriger Kern, feines Glanzlicht.
+	## Ein Stück Draht, beschichtet in der Rosa-Farbe des Stempels (passend zum Spiel, Wunsch der Entwicklerin): dunklerer Rand,
+	## Kern, feines Glanzlicht.
 	func _wire(points: PackedVector2Array) -> void:
-		draw_polyline(points, Color(0.4, 0.42, 0.46), 4.6, true)
-		draw_polyline(points, Color(0.78, 0.8, 0.84), 2.8, true)
-		draw_polyline(_shifted(points, Vector2(-0.8, -0.8)), Color(1.0, 1.0, 1.0, 0.55), 1.0, true)
+		draw_polyline(points, STAMP.darkened(0.35), 4.6, true)
+		draw_polyline(points, STAMP.lightened(0.12), 2.8, true)
+		draw_polyline(_shifted(points, Vector2(-0.8, -0.8)), Color(1.0, 0.95, 0.94, 0.6), 1.0, true)
 
 	func _arc(center: Vector2, radius: float, from: float, to: float) -> PackedVector2Array:
 		var points := PackedVector2Array()
