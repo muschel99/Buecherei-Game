@@ -7,7 +7,9 @@ extends Node3D
 ## title_sky.gdshader), warmes, tiefes Sonnenlicht, schwebende Lichtpünktchen und der Malstil wie im Spiel.
 ## Seit dem zweiten Nachtest der Überarbeitung (Wunsch: „im Hauptmenü fehlt der Bezug zu den Büchern“): ein paar Bücher fliegen
 ## wie Vögel um den Baum – sie schlagen ihre Deckel wie Flügel, gleiten, legen sich in die Kurve (FlyingBook) –, und zwischen dem
-## Herbstlaub segeln lose Buchseiten durch die Luft (_add_pages).
+## Herbstlaub segeln lose Buchseiten durch die Luft (_add_pages, LoosePage). Seit der Testrunde nach 8d (Wunsch der Entwicklerin)
+## schlagen die Deckel nach unten wie ein Dach über den Seiten (vorher bog sich das Buch rückwärts über den Rücken), und die
+## Seiten fallen wie echtes Papier: pendeln, kippen in den Schwung und drehen sich (vorher standen sie immer hochkant).
 ## Kamera: GameConfig.title_camera_* (wiegt sich sanft). Die Szene lässt sich auch allein starten (F6) zum Ausprobieren.
 
 const PLANT_DIR := "res://scenes/world/plants/"
@@ -146,6 +148,8 @@ const FLYING_BOOKS := [
 ]
 ## So viel größer als ein echtes Buch (aus der Ferne sonst kaum zu erkennen)
 const FLYING_BOOK_SCALE := 1.7
+## So viele lose Seiten segeln gleichzeitig durch die Luft
+const PAGE_COUNT := 7
 
 
 func _add_flying_books() -> void:
@@ -162,52 +166,20 @@ func _add_flying_books() -> void:
 
 ## Lose Buchseiten, die langsam durch die Luft segeln (cremefarben, mit ein paar Zeilen), zwischen dem Herbstlaub.
 func _add_pages() -> void:
-	var pages := GPUParticles3D.new()
-	pages.name = "Pages"
-	pages.amount = 7
-	pages.lifetime = 22.0
-	pages.preprocess = 22.0
-	pages.visibility_aabb = AABB(Vector3(-10, -8, -8), Vector3(20, 18, 16))
-	var process := ParticleProcessMaterial.new()
-	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
-	process.emission_box_extents = Vector3(3.5, 1.5, 2.5)
-	process.gravity = Vector3(0.0, -0.05, 0.0)
-	process.direction = Vector3(1.0, 0.1, 0.25)
-	process.spread = 25.0
-	process.initial_velocity_min = 0.18
-	process.initial_velocity_max = 0.32
-	process.turbulence_enabled = true
-	process.turbulence_noise_strength = 0.9
-	process.turbulence_noise_scale = 4.0
-	process.turbulence_noise_speed = Vector3(0.05, 0.03, 0.05)
-	process.angular_velocity_min = -60.0
-	process.angular_velocity_max = 60.0
-	process.angle_min = -180.0
-	process.angle_max = 180.0
-	process.particle_flag_rotate_y = true
-	process.scale_min = 0.8
-	process.scale_max = 1.15
-	var fade := Gradient.new()
-	fade.set_color(0, Color(1, 1, 1, 0))
-	fade.set_color(1, Color(1, 1, 1, 0))
-	fade.add_point(0.1, Color(1, 1, 1, 1))
-	fade.add_point(0.9, Color(1, 1, 1, 1))
-	var ramp := GradientTexture1D.new()
-	ramp.gradient = fade
-	process.color_ramp = ramp
-	pages.process_material = process
-	pages.position = Vector3(-3.0, 5.0, 2.5)
-	var quad := QuadMesh.new()
-	quad.size = Vector2(0.3, 0.4)
 	var material := StandardMaterial3D.new()
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.vertex_color_use_as_albedo = true
 	material.albedo_texture = _page_texture()
 	material.roughness = 0.9
-	quad.material = material
-	pages.draw_pass_1 = quad
-	add_child(pages)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for i in PAGE_COUNT:
+		var page := LoosePage.new()
+		page.name = "Page%d" % i
+		page.material_override = material
+		page.rng_seed = rng.randi()
+		# gleich zu Beginn über die ganze Höhe verteilt
+		page.start_fraction = float(i) / float(PAGE_COUNT)
+		add_child(page)
 
 
 ## Kleines Bild einer Buchseite: Creme mit weichem Rand und ein paar grauen Zeilen.
@@ -224,8 +196,9 @@ func _page_texture() -> ImageTexture:
 	return ImageTexture.create_from_image(image)
 
 
-## Ein Buch, das wie ein Vogel fliegt: Rücken in Flugrichtung, die beiden Deckel (mit Seiten) schlagen wie Flügel, dazwischen
-## gleitet es mit fast offenen Deckeln; es folgt einer sanften, liegenden Acht und legt sich in die Kurve.
+## Ein Buch, das wie ein Vogel fliegt: Rücken oben in Flugrichtung, die Seiten unten; die beiden Deckel (mit Seiten) schlagen
+## wie Flügel nach unten – wie ein Dach über den Seiten, höchstens bis ganz flach auf (weiter ginge ein echter Buchrücken nicht) –,
+## dazwischen gleitet es fast flach offen; es folgt einer sanften, liegenden Acht und legt sich in die Kurve.
 class FlyingBook extends Node3D:
 	var cover_color := Color(0.84, 0.5, 0.52)
 	var center := Vector3.ZERO
@@ -279,7 +252,10 @@ class FlyingBook extends Node3D:
 		# sanftes Auf und Ab mit dem Flügelschlag, zwischendurch gleiten (Deckel fast offen)
 		var glide := smoothstep(0.2, 0.8, 0.5 + 0.5 * sin(_t * 0.45 + phase))
 		var flap_rate := 5.5
-		var flap := sin(_t * flap_rate) * lerpf(0.55, 0.12, glide)
+		# Deckel hängen 0 (flach offen) bis gut 1 (weit nach unten): beim Schlagen kräftig, beim Gleiten nur ein wenig
+		var beat := 0.5 + 0.5 * sin(_t * flap_rate)
+		var droop := lerpf(0.12 + 0.95 * beat, 0.14 + 0.08 * beat, glide)
+		# der Abschlag (Deckel gehen nach unten) hebt das Buch ein wenig
 		position = here + Vector3.UP * (0.08 * sin(_t * flap_rate - 0.6) * (1.0 - glide))
 		# in die Kurve legen: seitliche Beschleunigung aus der Bahn
 		var turn := (_point(a + 0.1) - here).normalized().cross(dir).y
@@ -288,8 +264,8 @@ class FlyingBook extends Node3D:
 		transform.basis = basis.scaled(scale)
 		for wing in _wings:
 			var side := float(wing.get_meta(&"side"))
-			# beide Deckel leicht nach oben (V-Form), Flügelschlag gegengleich um den Rücken
-			wing.rotation = Vector3(0.0, 0.0, side * (0.35 + flap))
+			# beide Deckel nach unten (Dach-Form über den Seiten), Flügelschlag gegengleich um den Rücken
+			wing.rotation = Vector3(0.0, 0.0, -side * droop)
 
 	func _point(a: float) -> Vector3:
 		return center + Vector3(cos(a) * radii.x, sin(2.0 * a) * 0.5, sin(a) * radii.y)
@@ -350,3 +326,62 @@ func _add_motes() -> void:
 	quad.material = material
 	motes.draw_pass_1 = quad
 	add_child(motes)
+
+
+## Eine lose Buchseite, die wie echtes Papier fällt: Sie pendelt hin und her, kippt dabei in den Schwung (am Umkehrpunkt steil,
+## in der Mitte flach), dreht sich langsam um sich selbst und treibt mit dem Wind. Unten (oder weit rechts) blendet sie aus und
+## beginnt oben neu; dort blendet sie wieder ein.
+class LoosePage extends MeshInstance3D:
+	## Bereich, in dem die Seiten fallen (Raum der kleinen Welt): links oben beginnen, nach rechts treiben
+	const AREA_MIN := Vector3(-6.5, 1.0, -0.5)
+	const AREA_MAX := Vector3(1.0, 6.5, 5.0)
+	const WIND := Vector3(0.12, 0.0, 0.03)
+	var rng_seed := 0
+	## wie weit die Seite beim Start schon gefallen ist (0 = oben, 1 = unten)
+	var start_fraction := 0.0
+	var _rng := RandomNumberGenerator.new()
+	var _origin := Vector3.ZERO
+	var _t := 0.0
+	var _fall := 0.2
+	var _swing := 0.5
+	var _rate := 1.4
+	var _yaw := 0.0
+	var _spin := 0.3
+	var _phase := 0.0
+
+	func _ready() -> void:
+		var plane := PlaneMesh.new()
+		plane.size = Vector2(0.3, 0.4)
+		mesh = plane
+		cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_rng.seed = rng_seed
+		_restart()
+		_t = start_fraction * (AREA_MAX.y - AREA_MIN.y) / _fall
+
+	func _restart() -> void:
+		_origin = Vector3(_rng.randf_range(AREA_MIN.x, AREA_MAX.x - 2.5), AREA_MAX.y, _rng.randf_range(AREA_MIN.z, AREA_MAX.z))
+		_t = 0.0
+		_fall = _rng.randf_range(0.16, 0.26)
+		_swing = _rng.randf_range(0.35, 0.6)
+		_rate = _rng.randf_range(1.1, 1.6)
+		_yaw = _rng.randf_range(0.0, TAU)
+		_spin = _rng.randf_range(-0.35, 0.35)
+		_phase = _rng.randf_range(0.0, TAU)
+
+	func _process(delta: float) -> void:
+		_t += delta
+		var a := _t * _rate + _phase
+		# Pendel quer zur Blattrichtung; am Umkehrpunkt bremst das Blatt und fällt kurz schneller
+		var yaw := _yaw + _t * _spin
+		var across := Basis(Vector3.UP, yaw) * Vector3.RIGHT
+		var drop := _t * _fall + 0.04 * (1.0 - cos(2.0 * a))
+		position = _origin + WIND * _t + across * (_swing * sin(a)) + Vector3.DOWN * drop
+		# kippen in den Schwung (die Kante zeigt in die Bewegung), dazu ein leichtes Nicken
+		var bank := -0.75 * cos(a)
+		var pitch := 0.18 * sin(2.0 * a + 0.7)
+		basis = Basis(Vector3.UP, yaw) * Basis(Vector3.FORWARD, bank) * Basis(Vector3.RIGHT, pitch)
+		# weich ein- und ausblenden (oben und unten im Bereich)
+		var height := (position.y - AREA_MIN.y) / (AREA_MAX.y - AREA_MIN.y)
+		transparency = 1.0 - clampf(minf((1.0 - height) * 8.0, height * 6.0), 0.0, 1.0)
+		if position.y < AREA_MIN.y or position.x > AREA_MAX.x + 3.0:
+			_restart()
