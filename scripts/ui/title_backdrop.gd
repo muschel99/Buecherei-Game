@@ -41,8 +41,15 @@ const PLANTS := [
 ## Der Baum wird um seinen Stamm gedreht, damit sich die Krone nach links zum Notizzettel neigt (Wunsch der Entwicklerin;
 ## in 45°-Schritten, so laufen die Wurzeln weiter zwischen den acht Beinen der Rundbank hindurch)
 const TREE_TURN := -135.0
+## Als Bild im Buch (as_picture): so gedreht, dass sich der leicht schiefe Stamm zur Kamera hin neigt statt zur Seite – der Baum
+## wirkt gerade (Wunsch der Entwicklerin)
+const PICTURE_TREE_TURN := -45.0
 ## Woher die Sonne scheint (Punkt, von dem aus sie auf die Bank schaut – tief und von vorn links: warmes Abendlicht)
 const SUN_FROM := Vector3(-7.0, 5.5, 8.0)
+
+## Als lebendiges Bild im Buch des Hauptmenüs (TitleBook, seit der Testrunde nach 8d): Kamera hochkant auf Baum und Bank
+## (GameConfig.title_picture_*), ohne fliegende Bücher und Seiten (die fliegen dort um das Buch)
+@export var as_picture := false
 
 @onready var _camera: Camera3D = $Camera3D
 @onready var _environment: WorldEnvironment = $WorldEnvironment
@@ -68,14 +75,15 @@ func _ready() -> void:
 		plant.rotation_degrees.y = float(entry[2])
 		plant.scale = Vector3.ONE * float(entry[3])
 		plants.add_child(plant)
-	($Tree as Node3D).rotation_degrees.y = TREE_TURN
+	($Tree as Node3D).rotation_degrees.y = PICTURE_TREE_TURN if as_picture else TREE_TURN
 	position = WORLD_OFFSET
 	_sun.look_at_from_position(SUN_FROM + WORLD_OFFSET, Vector3(0.0, 1.2, 0.0) + WORLD_OFFSET)
-	_camera.fov = GameConfig.title_camera_fov
+	_camera.fov = GameConfig.title_picture_fov if as_picture else GameConfig.title_camera_fov
 	_camera.global_transform = view(0.0)
 	_add_motes()
-	_add_flying_books()
-	_add_pages()
+	if not as_picture:
+		_add_flying_books()
+		_add_pages()
 	# Malstil und Grafikstufe wie im Spiel
 	var compositor := Compositor.new()
 	compositor.compositor_effects = [_paint]
@@ -132,10 +140,13 @@ func _process(delta: float) -> void:
 	_camera.global_transform = view(_time)
 
 
-## Blickpunkt der Kamera zur Zeit t: ganz sanftes Wiegen um GameConfig.title_camera_eye / _target.
+## Blickpunkt der Kamera zur Zeit t: ganz sanftes Wiegen um GameConfig.title_camera_eye / _target (als Bild im Buch:
+## title_picture_eye / _target).
 func view(t: float) -> Transform3D:
-	var eye := GameConfig.title_camera_eye + WORLD_OFFSET + Vector3(sin(t * 0.21) * 0.12, sin(t * 0.33) * 0.05, 0.0)
-	var target := GameConfig.title_camera_target + WORLD_OFFSET + Vector3(sin(t * 0.17) * 0.1, 0.0, cos(t * 0.13) * 0.06)
+	var base_eye := GameConfig.title_picture_eye if as_picture else GameConfig.title_camera_eye
+	var base_target := GameConfig.title_picture_target if as_picture else GameConfig.title_camera_target
+	var eye := base_eye + WORLD_OFFSET + Vector3(sin(t * 0.21) * 0.12, sin(t * 0.33) * 0.05, 0.0)
+	var target := base_target + WORLD_OFFSET + Vector3(sin(t * 0.17) * 0.1, 0.0, cos(t * 0.13) * 0.06)
 	return Transform3D(Basis.looking_at(target - eye, Vector3.UP), eye)
 
 
@@ -166,24 +177,32 @@ func _add_flying_books() -> void:
 
 ## Lose Buchseiten, die langsam durch die Luft segeln (cremefarben, mit ein paar Zeilen), zwischen dem Herbstlaub.
 func _add_pages() -> void:
+	for page in make_pages(PAGE_COUNT, 7):
+		add_child(page)
+
+
+## Lose Seiten (auch für TitleBook): gemeinsames Material, fester Zufall, über die Höhe verteilt.
+static func make_pages(count: int, seed_value: int) -> Array[LoosePage]:
+	var result: Array[LoosePage] = []
 	var material := StandardMaterial3D.new()
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material.albedo_texture = _page_texture()
 	material.roughness = 0.9
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
-	for i in PAGE_COUNT:
+	rng.seed = seed_value
+	for i in count:
 		var page := LoosePage.new()
 		page.name = "Page%d" % i
 		page.material_override = material
 		page.rng_seed = rng.randi()
 		# gleich zu Beginn über die ganze Höhe verteilt
-		page.start_fraction = float(i) / float(PAGE_COUNT)
-		add_child(page)
+		page.start_fraction = float(i) / float(count)
+		result.append(page)
+	return result
 
 
 ## Kleines Bild einer Buchseite: Creme mit weichem Rand und ein paar grauen Zeilen.
-func _page_texture() -> ImageTexture:
+static func _page_texture() -> ImageTexture:
 	var image := Image.create(48, 64, false, Image.FORMAT_RGBA8)
 	image.fill(Color(0.98, 0.95, 0.87))
 	for y in range(9, 58, 5):
@@ -332,10 +351,11 @@ func _add_motes() -> void:
 ## in der Mitte flach), dreht sich langsam um sich selbst und treibt mit dem Wind. Unten (oder weit rechts) blendet sie aus und
 ## beginnt oben neu; dort blendet sie wieder ein.
 class LoosePage extends MeshInstance3D:
-	## Bereich, in dem die Seiten fallen (Raum der kleinen Welt): links oben beginnen, nach rechts treiben
-	const AREA_MIN := Vector3(-6.5, 1.0, -0.5)
-	const AREA_MAX := Vector3(1.0, 6.5, 5.0)
-	const WIND := Vector3(0.12, 0.0, 0.03)
+	## Bereich, in dem die Seiten fallen (Raum der kleinen Welt): links oben beginnen, nach rechts treiben; Größe der Seite
+	var area_min := Vector3(-6.5, 1.0, -0.5)
+	var area_max := Vector3(1.0, 6.5, 5.0)
+	var wind := Vector3(0.12, 0.0, 0.03)
+	var page_size := Vector2(0.3, 0.4)
 	var rng_seed := 0
 	## wie weit die Seite beim Start schon gefallen ist (0 = oben, 1 = unten)
 	var start_fraction := 0.0
@@ -351,15 +371,15 @@ class LoosePage extends MeshInstance3D:
 
 	func _ready() -> void:
 		var plane := PlaneMesh.new()
-		plane.size = Vector2(0.3, 0.4)
+		plane.size = page_size
 		mesh = plane
 		cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_rng.seed = rng_seed
 		_restart()
-		_t = start_fraction * (AREA_MAX.y - AREA_MIN.y) / _fall
+		_t = start_fraction * (area_max.y - area_min.y) / _fall
 
 	func _restart() -> void:
-		_origin = Vector3(_rng.randf_range(AREA_MIN.x, AREA_MAX.x - 2.5), AREA_MAX.y, _rng.randf_range(AREA_MIN.z, AREA_MAX.z))
+		_origin = Vector3(_rng.randf_range(area_min.x, area_max.x - 2.5), area_max.y, _rng.randf_range(area_min.z, area_max.z))
 		_t = 0.0
 		_fall = _rng.randf_range(0.16, 0.26)
 		_swing = _rng.randf_range(0.35, 0.6)
@@ -375,13 +395,13 @@ class LoosePage extends MeshInstance3D:
 		var yaw := _yaw + _t * _spin
 		var across := Basis(Vector3.UP, yaw) * Vector3.RIGHT
 		var drop := _t * _fall + 0.04 * (1.0 - cos(2.0 * a))
-		position = _origin + WIND * _t + across * (_swing * sin(a)) + Vector3.DOWN * drop
+		position = _origin + wind * _t + across * (_swing * sin(a)) + Vector3.DOWN * drop
 		# kippen in den Schwung (die Kante zeigt in die Bewegung), dazu ein leichtes Nicken
 		var bank := -0.75 * cos(a)
 		var pitch := 0.18 * sin(2.0 * a + 0.7)
 		basis = Basis(Vector3.UP, yaw) * Basis(Vector3.FORWARD, bank) * Basis(Vector3.RIGHT, pitch)
 		# weich ein- und ausblenden (oben und unten im Bereich)
-		var height := (position.y - AREA_MIN.y) / (AREA_MAX.y - AREA_MIN.y)
+		var height := (position.y - area_min.y) / (area_max.y - area_min.y)
 		transparency = 1.0 - clampf(minf((1.0 - height) * 8.0, height * 6.0), 0.0, 1.0)
-		if position.y < AREA_MIN.y or position.x > AREA_MAX.x + 3.0:
+		if position.y < area_min.y or position.x > area_max.x + 3.0:
 			_restart()

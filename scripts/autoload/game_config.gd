@@ -1625,6 +1625,28 @@ var title_camera_target: Vector3 = Vector3(-4.4, 3.9, 0.0)
 var title_camera_fov: float = 48.0
 var title_note_time: float = 0.9
 var title_fly_time: float = 1.6
+## Hauptmenü als aufgeschlagenes Buch (TitleBook, seit der Testrunde nach 8d): Kamera (Auge, Ziel – Mitte des Falzes = Ursprung –,
+## Sichtfeld), wie weit das Buch zur Kamera gekippt ist (Grad; 90 = genau frontal, Wunsch der Entwicklerin), wie schief es liegt
+## (Grad, links tiefer – Wunsch der Entwicklerin), wie stark es schwebt (m) und sich wiegt (Grad). Das lebendige Bild auf der rechten Seite: Kamera auf Baum und
+## Bank (Welt TitleBackdrop, hochkant; von weit weg mit engem Sichtfeld, damit nichts verzerrt – wie eine Zeichnung) und
+## Auflösung des Bilds (Pixel, Breite).
+var title_book_eye: Vector3 = Vector3(0.0, -0.05, 3.35)
+var title_book_target: Vector3 = Vector3(0.0, -0.05, 0.0)
+var title_book_fov: float = 34.0
+var title_book_tilt: float = 90.0
+var title_book_roll: float = 7.0
+var title_book_bob: float = 0.012
+var title_book_sway: float = 0.5
+var title_picture_eye: Vector3 = Vector3(0.6, 5.8, 27.0)
+var title_picture_target: Vector3 = Vector3(0.0, 3.45, 0.0)
+var title_picture_fov: float = 25.0
+var title_picture_width: int = 900
+## Menü-Zettel: Größe (Pixel bei 1600 x 900) – er wird als Ganzes so verkleinert, dass er höchstens diesen Anteil der linken
+## Buchseite bedeckt (Breite, Höhe)
+var title_note_size: Vector2 = Vector2(448.0, 660.0)
+var title_note_on_page: Vector2 = Vector2(0.84, 0.86)
+## … und so viel Grad mehr gedreht als die Seite (liegt ein wenig verrutscht)
+var title_note_turn: float = -2.0
 ## Story-Anfang (StoryIntro, neues Spiel): Maklerin (Name, fester Zufallswert fürs Aussehen; immer eine Frau), ihr Gehtempo
 ## (m/s), ab welchem Abstand zur Spielfigur sie an einer Station zu reden beginnt (m), Start der Spielfigur draußen (Abstand
 ## vor der Treppe, m) und so lange wartet sie nach dem letzten Satz, bevor sie geht (s). Texte: data/story/intro.txt

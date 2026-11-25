@@ -7,6 +7,7 @@ extends Node
 ##   Story:          … -- story  (dazu den Story-Anfang durchspielen: Spielfigur folgt der Maklerin, Gespräche klicken sich
 ##                   weiter; danach die To-do-Zettel über die echten Wege des Spiels abarbeiten)
 ##   To-do-Zettel:   xvfb wie oben, … -- todo   → screenshots/title_probe/todo.png, todo_tick.png
+##   Weiterspielen:  xvfb wie oben, … -- fly    → fly_1.png, fly_2.png, fly_3.png (die Kamera fährt ins Bild im Buch)
 
 const OUT := "res://screenshots/title_probe/"
 
@@ -20,7 +21,7 @@ func _ready() -> void:
 	# dieser Knoten verschwindet mit dem Szenenwechsel – die Prüfung läuft in einem Knoten an der Wurzel weiter
 	var runner := Runner.new()
 	runner.mode = "shot"
-	for mode in ["story", "new", "todo"]:
+	for mode in ["story", "new", "todo", "fly"]:
 		if mode in args:
 			runner.mode = mode
 	get_tree().root.add_child.call_deferred(runner)
@@ -47,6 +48,18 @@ class Runner extends Node:
 			for i in 40:
 				await get_tree().process_frame
 			await _shot("todo_tick")
+			get_tree().quit()
+			return
+		if mode == "fly":
+			# Weiterspielen: Bilder während der Fahrt ins Bild (Anteile der Zeit GameConfig.title_fly_time)
+			title.call("_continue")
+			var waited := 0.0
+			for k in 3:
+				var at: float = GameConfig.title_fly_time * float([0.3, 0.55, 0.8][k])
+				while waited < at:
+					await get_tree().process_frame
+					waited += get_process_delta_time()
+				await _shot("fly_%d" % (k + 1))
 			get_tree().quit()
 			return
 		if mode == "shot":
