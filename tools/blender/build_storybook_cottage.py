@@ -482,10 +482,25 @@ def build_scene():
     roof(M, C)
     interior(M, C)
     cols = colliders(C)
-    # Leere Knoten fürs Spiel: Mitte der Türöffnung (unten, außen), Boden innen
+    # Leere Knoten fürs Spiel: Mitte der Türöffnung (unten, außen); der Innenraum (Maße und Öffnungen, room_info)
     SC.game_spot("GameSpot_cottage_door", (0.0, -D / 2, FLOOR), width=DOOR_W, height=DOOR_H, wall=WALL_T, porch=PORCH_DEPTH,
                  porch_x=PORCH_X)
+    SC.game_spot("GameSpot_cottage_room", (0.0, 0.0, FLOOR), room=json.dumps(room_info()))
     return M, C, cols
+
+
+def room_info():
+    """Innenraum fürs Spiel (Godot-Koordinaten des Modells: x, z = -Blender y): Innenflächen der Verkleidung (dort liegen die
+    Wandfarben), Höhe bis zur Traufe, Fußboden, Öffnungen je Wand (Mitte x/z auf der Außenlinie, Unterkante über dem Boden,
+    Breite, Höhe) – daraus baut scripts/world/alley.gd den Raum zum Einrichten (Room.home)."""
+    inset = WALL_T + 0.02
+    out = []
+    for key, (p0, p1) in walls_list().items():
+        for x, z0, w, h in openings().get(key, []):
+            c = T.wall_matrix(p0, p1) @ Vector((x, 0.0, 0.0))
+            out.append([key, round(c.x, 4), round(-c.y, 4), round(z0 - FLOOR, 4), w, h])
+    return {"x0": -W / 2 + inset, "x1": W / 2 - inset, "z0": -(D / 2 - inset), "z1": D / 2 - inset, "floor": FLOOR,
+            "height": EAVES - FLOOR, "openings": out}
 
 
 VIEWS = {

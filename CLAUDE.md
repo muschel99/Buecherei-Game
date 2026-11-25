@@ -123,7 +123,9 @@ screenshots/         Testbilder (nicht in Git)
   `load_save_data()`. Draußen wird nichts gespeichert – außer dem Draußen-Raum vor der Bücherei (`OutdoorArea`,
   `Room.outdoor`, dazu ein Streifen an der Seitenwand in der Gasse, `GameConfig.outdoor_alley_strip`): Dort stellt man im
   Gestaltungsmodus nur Dinge der Kategorie `OUTDOOR` auf (Bau-Script
-  `furniture_outdoor.py`, ids `out_…`); sie bekommen automatisch Ausweich-Kreise für Passanten.
+  `furniture_outdoor.py`, ids `out_…`); sie bekommen automatisch Ausweich-Kreise für Passanten. Das Holzhäuschen im Garten ist
+  ein eigener Raum „Zuhause“ (`Room.home`, `scenes/rooms/cottage_room.tscn`, Wände/Boden baut `alley.gd` aus den Maßen des
+  Modells); seine Veranda gehört als gedrehte Fläche zum Draußen-Raum (`Room.OUTDOOR_AREA_GROUP`).
 - **Tablets/Apps:** gemeinsame Vorlage `TabletFrame`; neue App = Szene in `scenes/ui/tablet_apps/` (erbt `TabletApp`) +
   Datenblatt `data/tablet_apps/<id>.tres`; Apps nie mit festen Farben, sondern `style.…` und den Bausteinen von `TabletApp`.
 - **Menüs/Oberflächen** immer mit Anchors und Containern (Stretch `canvas_items` + `expand`, Basis 1600 x 900); was wachsen

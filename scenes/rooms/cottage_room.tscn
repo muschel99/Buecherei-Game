@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+; Innenraum des Holzhäuschens im Garten (seit Etappe 8d): ein Zuhause zum Einrichten (Room.home). Wände zum Streichen
+; (Walls/…), Boden (FloorCovering) und Wände zum Aufhängen legt scripts/world/alley.gd aus den Maßen des Modells an
+; (Punkt „GameSpot_cottage_room“, tools/blender/build_storybook_cottage.py). Zu Beginn: Holzverkleidung und Eichendielen.
+
+[ext_resource type="Script" path="res://scripts/rooms/room.gd" id="1_room"]
+
+[node name="CottageRoom" type="Node3D"]
+script = ExtResource("1_room")
+save_key = "cottage_room"
+default_wall_id = "wall_wood_paneling"
+default_floor_id = "floor_oak_planks"
+default_ceiling_id = ""
+home = true
+
+[node name="Furniture" type="Node3D" parent="."]

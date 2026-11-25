@@ -43,6 +43,8 @@ const BENCH_APPROACH := 1.45
 ## und Tür (E öffnet); Platz und Drehung in GameConfig.backyard_cottage_*
 @export var cottage_scene: PackedScene = preload("res://assets/models/world/garden_cottage.glb")
 @export var cottage_door_scene: PackedScene = preload("res://scenes/objects/cottage_door.tscn")
+## Innenraum des Häuschens zum Einrichten (Room.home)
+@export var cottage_room_scene: PackedScene = preload("res://scenes/rooms/cottage_room.tscn")
 @export var wall_material: Material = preload("res://assets/materials/outdoor_colors.tres")
 @export var yard_wall_color: Color = Color(0.52, 0.31, 0.25)
 
@@ -258,6 +260,113 @@ func _build_cottage() -> void:
 	# die Tür geht nach +z ihres Knotens auf (ins Häuschen, Modell -z), draußen ist ihr -z: um 180° gedreht
 	door.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(at.x, floor_y, front - wall / 2.0))
 	cottage.add_child(door)
+	# Veranda: gehört zum Draußen-Raum (nur Draußen-Deko), meldet sich als gedrehte Fläche an (Room.OUTDOOR_AREA_GROUP)
+	var porch_area := Node3D.new()
+	porch_area.name = "PorchBuildArea"
+	porch_area.position = Vector3(0.0, floor_y, front + porch / 2.0)
+	porch_area.set_meta("size", Vector2(2.0 * porch_x + 0.12, porch - 0.06))
+	porch_area.add_to_group(Room.OUTDOOR_AREA_GROUP)
+	cottage.add_child(porch_area)
+	_build_cottage_room(cottage, model)
+
+
+## Innenraum zum Einrichten (seit Etappe 8d, Wunsch der Entwicklerin: Möbel, Wandfarben, Boden): Raum „Zuhause“ mit vier Wänden
+## zum Streichen an den Innenflächen der Holzverkleidung (bis zur Traufe; Giebel und Dach bleiben Holz), Boden zum Belegen und
+## dünnen Wänden zum Aufhängen (ohne Fenster und Tür). Maße und Öffnungen bringt das Modell mit (Punkt „GameSpot_cottage_room“).
+func _build_cottage_room(cottage: Node3D, model: Node3D) -> void:
+	var spot := model.find_child("GameSpot_cottage_room", true, false) as Node3D
+	if spot == null or cottage_room_scene == null:
+		return
+	var info: Variant = JSON.parse_string(str((spot.get_meta("extras", {}) as Dictionary).get("room", "")))
+	if not info is Dictionary:
+		return
+	var x0 := float(info.x0)
+	var x1 := float(info.x1)
+	var z0 := float(info.z0)
+	var z1 := float(info.z1)
+	var floor_y := float(info.floor)
+	var height := float(info.height)
+	var room := cottage_room_scene.instantiate() as Room
+	room.name = "Room"
+	room.build_area = Rect2(x0, z0, x1 - x0, z1 - z0)
+	room.floor_height = floor_y
+	var walls := Node3D.new()
+	walls.name = "Walls"
+	room.add_child(walls)
+	# je Wand: Name, Ecke unten am Wandanfang, Richtung entlang der Wand, Länge (+Z der Wand zeigt in den Raum)
+	var defs := [["front", "Front", Vector3(x1, floor_y, z1), Vector3.LEFT, x1 - x0],
+		["back", "Back", Vector3(x0, floor_y, z0), Vector3.RIGHT, x1 - x0],
+		["left", "Left", Vector3(x0, floor_y, z1), Vector3.FORWARD, z1 - z0],
+		["right", "Right", Vector3(x1, floor_y, z0), Vector3.BACK, z1 - z0]]
+	var hang_bodies: Array[Node] = []
+	for d: Array in defs:
+		var origin: Vector3 = d[2]
+		var along: Vector3 = d[3]
+		var into := along.cross(Vector3.UP)
+		var holes: Array[Rect2] = []
+		for op: Array in info.openings:
+			if String(op[0]) != String(d[0]) or float(op[3]) >= height:
+				continue
+			var a := (Vector3(float(op[1]), 0.0, float(op[2])) - origin).dot(along)
+			holes.append(Rect2(a - float(op[4]) / 2.0, float(op[3]), float(op[4]), minf(float(op[5]), height - float(op[3]))))
+		var wall := PaintableWall.new()
+		wall.name = String(d[1])
+		wall.length = float(d[4])
+		wall.height = height
+		wall.openings = holes
+		wall.transform = Transform3D(Basis(along, Vector3.UP, into), origin)
+		walls.add_child(wall)
+		hang_bodies.append(_hang_wall(cottage, "HangWall" + String(d[1]), wall.transform, float(d[4]), height, holes))
+	var floor_cover := PaintableGrid.new()
+	floor_cover.name = "FloorCovering"
+	floor_cover.size = Vector2(x1 - x0, z1 - z0)
+	floor_cover.position = Vector3(x0, floor_y, z0)
+	room.add_child(floor_cover)
+	cottage.add_child(room)
+	room.add_hang_walls(hang_bodies)
+
+
+## Dünne Wand zum Aufhängen (Bilder, Lampen …) genau auf der Innenfläche, Fenster und Tür ausgespart.
+func _hang_wall(parent: Node3D, node_name: String, frame: Transform3D, length: float, height: float, holes: Array[Rect2]) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.collision_layer = 1
+	body.collision_mask = 0
+	body.transform = frame
+	parent.add_child(body)
+	var pieces: Array[Rect2] = [Rect2(0.0, 0.0, length, height)]
+	for hole in holes:
+		var rest: Array[Rect2] = []
+		for piece in pieces:
+			rest.append_array(_rect_minus(piece, hole))
+		pieces = rest
+	for piece in pieces:
+		if piece.size.x < 0.02 or piece.size.y < 0.02:
+			continue
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(piece.size.x, piece.size.y, 0.02)
+		var collision := CollisionShape3D.new()
+		collision.shape = shape
+		collision.position = Vector3(piece.get_center().x, piece.get_center().y, -0.01)
+		body.add_child(collision)
+	return body
+
+
+## Rechteck ohne das Loch (höchstens vier Reststücke: links, rechts, unten, oben).
+func _rect_minus(piece: Rect2, hole: Rect2) -> Array[Rect2]:
+	if not piece.intersects(hole):
+		return [piece]
+	var cut := piece.intersection(hole)
+	var result: Array[Rect2] = []
+	if cut.position.x > piece.position.x:
+		result.append(Rect2(piece.position, Vector2(cut.position.x - piece.position.x, piece.size.y)))
+	if cut.end.x < piece.end.x:
+		result.append(Rect2(Vector2(cut.end.x, piece.position.y), Vector2(piece.end.x - cut.end.x, piece.size.y)))
+	if cut.position.y > piece.position.y:
+		result.append(Rect2(Vector2(cut.position.x, piece.position.y), Vector2(cut.size.x, cut.position.y - piece.position.y)))
+	if cut.end.y < piece.end.y:
+		result.append(Rect2(Vector2(cut.position.x, cut.end.y), Vector2(cut.size.x, piece.end.y - cut.end.y)))
+	return result
 
 
 ## Rückseite des Hauses hinter der Gasse (Pub), z unter "Outside".

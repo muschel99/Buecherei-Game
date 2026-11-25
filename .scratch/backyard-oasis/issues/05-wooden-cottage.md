@@ -16,3 +16,11 @@ im Spiel `alley.gd` (`_build_cottage`: Lage aus GameConfig, Boden, Veranda und R
 `scenes/objects/cottage_door.tscn` – Brettertür mit Z-Strebe, E öffnet, ohne Ladenglocke). Abblätternde Farbe: neuer Regler
 `peel` in `storybook.gdshaderinc`; Bau-Scripts geben jetzt `weather`, `weather_color` und `peel` ans Spiel (nur eigene Materialien).
 Weiter: Schritt 2 eigener Raum zum Einrichten (Gestaltungsmodus mit allen Möbeln), Schritt 3 schlafen.
+
+25.11.2026: Nach dem Lageplan der Entwicklerin größer (5,8 × 4,4 m) und übers Eck in der Gartenecke (Mauern an den Seitenwänden),
+Veranda zum Bach, Brücke direkt auf die Veranda. Schritt 2 erledigt: Raum „Zuhause“ (`Room.home`, `scenes/rooms/cottage_room.tscn`)
+– alle Innen-Möbel, Wände streichen (neues Datenblatt `wall_wood_paneling`, gehört von Anfang an), Boden belegen (Eiche), an den
+Wänden aufhängen (dünne Körper auf der Verkleidung); Wände nur bis zur Traufe (Giebel und Dach bleiben Holz), keine Decke zum
+Gestalten. Veranda: gedrehte Fläche des Draußen-Raums (`Room.extra_build_frames`), nur Draußen-Deko. Gestaltungsmodus wechselt
+in den Raum, in dem man steht (`BuildMode._room_at`). Maße und Öffnungen bringt das Modell mit (`GameSpot_cottage_room`).
+Weiter: Schritt 3 – dort schlafen.

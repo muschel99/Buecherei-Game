@@ -106,17 +106,37 @@ func get_room() -> Room:
 	return _room
 
 
-## Alle Räume, die man gestalten kann (drinnen und draußen).
+## Alle Räume, die man gestalten kann (drinnen, Zuhause wie das Holzhäuschen im Garten, draußen).
 func get_rooms() -> Array[Room]:
 	var rooms: Array[Room] = [_indoor_room]
+	rooms.append_array(_home_rooms())
 	if _outdoor_room:
 		rooms.append(_outdoor_room)
 	return rooms
 
 
-## Stehe ich draußen? (Nicht im Laden und nicht im Hinterzimmer – auch auf der Treppe zählt als draußen.)
+## Räume „Zuhause“ (Room.home, seit Etappe 8d: das Holzhäuschen im Garten).
+func _home_rooms() -> Array[Room]:
+	var rooms: Array[Room] = []
+	for node in get_tree().get_nodes_in_group(Room.HOME_GROUP):
+		if node is Room:
+			rooms.append(node as Room)
+	return rooms
+
+
+## Der Raum an dieser Stelle: der Laden (mit Hinterzimmer) oder ein Zuhause, wenn ich darin stehe, sonst draußen.
+func _room_at(point: Vector3) -> Room:
+	var inner: Array[Room] = [_indoor_room]
+	inner.append_array(_home_rooms())
+	for room in inner:
+		if room.is_inside_build_area(point):
+			return room
+	return _outdoor_room if _outdoor_room else _indoor_room
+
+
+## Stehe ich draußen? (Nicht im Laden, im Hinterzimmer oder in einem Zuhause – auch auf der Treppe zählt als draußen.)
 func is_outside() -> bool:
-	return _outdoor_room != null and not _indoor_room.is_inside_build_area(_player.global_position)
+	return _outdoor_room != null and _room_at(_player.global_position) == _outdoor_room
 
 
 ## Wechselt zum Raum, in dem ich stehe. Ein aufgenommenes Möbelstück bleibt in seinem Raum (es wird dort zurückgestellt
@@ -124,7 +144,7 @@ func is_outside() -> bool:
 func _follow_player_room() -> void:
 	if _tool == Tool.MOVE:
 		return
-	var room := _outdoor_room if is_outside() else _indoor_room
+	var room := _room_at(_player.global_position)
 	if room == _room:
 		return
 	_set_hovered(null)
@@ -987,6 +1007,17 @@ func _create_grid(room: Room) -> MeshInstance3D:
 	grid.position = Vector3(area.get_center().x, room.floor_height + (0.03 if room.outdoor else 0.004), area.get_center().y)
 	grid.visible = false
 	room.add_child(grid)
+	# gedrehte Flächen (Veranda des Holzhäuschens): eigenes Raster in ihrer Lage und Höhe
+	for frame in room.extra_build_frames:
+		var turned := MeshInstance3D.new()
+		var turned_plane := PlaneMesh.new()
+		turned_plane.size = (frame.rect as Rect2).size
+		turned.mesh = turned_plane
+		turned.material_override = _grid_material
+		turned.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		turned.transform = grid.transform.affine_inverse() * (frame.xform as Transform3D) * Transform3D(Basis(),
+			Vector3((frame.rect as Rect2).get_center().x, 0.03, (frame.rect as Rect2).get_center().y))
+		grid.add_child(turned)
 	# weitere Flächen (Hinterzimmer, Streifen in der Gasse) bekommen ihr eigenes Raster, es zeigt sich mit dem Hauptraster
 	for extra in room.extra_build_areas:
 		var piece := MeshInstance3D.new()

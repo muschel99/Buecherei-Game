@@ -27,6 +27,16 @@ var extra_build_areas: Array[Rect2] = []
 ## nur Möbel (aus der Abteilung „Draußen“, siehe FurnitureData.is_outdoor), ausgelegte Bücher und Spielstand. Was auf dem
 ## Boden steht, bekommt Hindernisse für Passanten (StreetObstacle), Sitzplätze für Passanten (StreetSeat).
 @export var outdoor: bool = false
+## Zuhause (seit Etappe 8d, Holzhäuschen im Garten): ein Innenraum ohne die Besonderheiten der Bücherei (keine abgeschrägte Ecke,
+## kein Laden, keine Bauteile „Structure“) – Wände (Walls/…) und Boden (FloorCovering) legt das Spiel selbst an, alle Innen-Möbel
+## sind erlaubt. Der Gestaltungsmodus findet ihn über die Gruppe HOME_GROUP.
+@export var home: bool = false
+const HOME_GROUP := &"home_rooms"
+## Weitere, gedrehte Flächen zum Bauen (seit Etappe 8d, Veranda des Häuschens): je {"xform": Transform3D (Lage der Fläche im
+## Raum: Mitte, x/z wie die Fläche), "rect": Rect2 (x/z in dieser Lage)}. Knoten der Gruppe OUTDOOR_AREA_GROUP (Metadaten
+## "size" = Vector2) melden sich so beim Draußen-Raum an.
+var extra_build_frames: Array[Dictionary] = []
+const OUTDOOR_AREA_GROUP := &"outdoor_build_areas"
 
 @onready var furniture_root: Node3D = $Furniture
 ## Die Wände, die in Abschnitten gestrichen werden können (inkl. der schrägen Eingangswand; draußen keine).
@@ -77,6 +87,9 @@ func _ready() -> void:
 	if outdoor:
 		_ready_outdoor()
 		return
+	if home:
+		_ready_home()
+		return
 	_corner_cut = GameConfig.corner_cut
 	_apply_room_height(GameConfig.room_height)
 	if with_back_room:
@@ -113,12 +126,30 @@ func _ready() -> void:
 	layout_changed.connect(SaveManager.request_save)
 
 
+## Zuhause: Möbel, Wandfarben, Boden und Spielstand – ohne die Bauteile und Einstellungen des Ladens.
+func _ready_home() -> void:
+	add_to_group(SaveManager.PERSIST_GROUP)
+	add_to_group(HOME_GROUP)
+	for item in get_placed_furniture():
+		_assign_uid(item)
+	_paint_everything(default_wall_id)
+	_paint_everything(default_floor_id)
+	layout_changed.connect(SaveManager.request_save)
+
+
 ## Draußen: nur Möbel und Spielstand; Hindernisse und Sitzplätze für Passanten folgen den Möbeln.
 func _ready_outdoor() -> void:
 	add_to_group(SaveManager.PERSIST_GROUP)
 	# zweiter Streifen: in der Gasse an der Seitenwand der Bücherei (seit der Testrunde nach 8d)
 	if GameConfig.outdoor_alley_strip.has_area():
 		extra_build_areas.append(GameConfig.outdoor_alley_strip)
+	# gedrehte Flächen, z. B. die Veranda des Holzhäuschens (der Garten ist schon bereit: er steht vorher im Baum)
+	for node in get_tree().get_nodes_in_group(OUTDOOR_AREA_GROUP):
+		var area := node as Node3D
+		var size: Vector2 = area.get_meta("size", Vector2.ZERO)
+		if area and size != Vector2.ZERO:
+			extra_build_frames.append({"xform": global_transform.affine_inverse() * area.global_transform,
+				"rect": Rect2(-size / 2.0, size)})
 	for item in get_placed_furniture():
 		_assign_uid(item)
 	layout_changed.connect(SaveManager.request_save)
@@ -452,6 +483,10 @@ func is_inside_build_area(world_position: Vector3) -> bool:
 	for extra in extra_build_areas:
 		if extra.has_point(Vector2(local.x, local.z)):
 			return true
+	for frame in extra_build_frames:
+		var in_frame := (frame.xform as Transform3D).affine_inverse() * local
+		if (frame.rect as Rect2).has_point(Vector2(in_frame.x, in_frame.z)) and absf(in_frame.y) < 0.6:
+			return true
 	if not build_area.has_point(Vector2(local.x, local.z)):
 		return false
 	# Abgeschnittene Ecke: der Dreiecks-Bereich an der Ecke mit den kleinsten x/z bleibt frei.
@@ -549,6 +584,8 @@ func paint_wall(wall: PaintableWall, surface: SurfaceData) -> void:
 
 ## Gestaltet einen Boden- bzw. Deckenabschnitt (je nach Art der Oberfläche).
 func paint_grid_cell(index: int, surface: SurfaceData) -> void:
+	if not _grids.has(surface.kind):
+		return  # kein solcher Belag in diesem Raum (das Häuschen hat keine flache Decke)
 	(_grids[surface.kind] as PaintableGrid).paint_cells([index], surface)
 	layout_changed.emit()
 
@@ -556,6 +593,8 @@ func paint_grid_cell(index: int, surface: SurfaceData) -> void:
 ## Füllwerkzeug für Boden und Decke: füllt alle zusammenhängenden Abschnitte mit
 ## demselben Belag wie der angeklickte (siehe PaintableGrid.get_connected_cells).
 func fill_grid(start_index: int, surface: SurfaceData) -> void:
+	if not _grids.has(surface.kind):
+		return  # kein solcher Belag in diesem Raum (das Häuschen hat keine flache Decke)
 	var grid := _grids[surface.kind] as PaintableGrid
 	grid.paint_cells(grid.get_connected_cells(start_index), surface)
 	layout_changed.emit()
@@ -563,6 +602,8 @@ func fill_grid(start_index: int, surface: SurfaceData) -> void:
 
 ## Gestaltet den ganzen Boden bzw. die ganze Decke.
 func paint_grid(surface: SurfaceData) -> void:
+	if not _grids.has(surface.kind):
+		return  # kein solcher Belag in diesem Raum (das Häuschen hat keine flache Decke)
 	(_grids[surface.kind] as PaintableGrid).paint_all(surface)
 	layout_changed.emit()
 
@@ -625,13 +666,13 @@ func get_save_data() -> Dictionary:
 	var walls := {}
 	for wall in _walls:
 		walls[wall.name] = wall.segment_ids.duplicate()
-	return {
-		"walls": walls,
-		"floor": _grid_save_data(_grids[SurfaceData.Kind.FLOOR]),
-		"ceiling": _grid_save_data(_grids[SurfaceData.Kind.CEILING]),
-		"furniture": furniture,
-		"loose_books": loose_books.get_save_data(),
-	}
+	var result := {"walls": walls, "furniture": furniture, "loose_books": loose_books.get_save_data()}
+	# Boden und Decke, soweit vorhanden (das Holzhäuschen hat keine flache Decke, nur das schräge Dach)
+	if _grids.has(SurfaceData.Kind.FLOOR):
+		result["floor"] = _grid_save_data(_grids[SurfaceData.Kind.FLOOR])
+	if _grids.has(SurfaceData.Kind.CEILING):
+		result["ceiling"] = _grid_save_data(_grids[SurfaceData.Kind.CEILING])
+	return result
 
 
 func load_save_data(save_data: Dictionary) -> void:
@@ -653,8 +694,10 @@ func load_save_data(save_data: Dictionary) -> void:
 		layout_changed.emit()
 		return
 	_load_walls(save_data)
-	_load_grid(save_data.get("floor"), _grids[SurfaceData.Kind.FLOOR], default_floor_id)
-	_load_grid(save_data.get("ceiling"), _grids[SurfaceData.Kind.CEILING], default_ceiling_id)
+	if _grids.has(SurfaceData.Kind.FLOOR):
+		_load_grid(save_data.get("floor"), _grids[SurfaceData.Kind.FLOOR], default_floor_id)
+	if _grids.has(SurfaceData.Kind.CEILING):
+		_load_grid(save_data.get("ceiling"), _grids[SurfaceData.Kind.CEILING], default_ceiling_id)
 	# Was im Raum zu sehen ist, gehört mir (wichtig für Spielstände von vor dem Inventar)
 	for id in _get_used_surface_ids():
 		Inventory.add_surface(id)

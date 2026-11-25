@@ -2039,7 +2039,7 @@ Seit dem 24.11.2026 „rückwärts“ (Wunsch der Entwicklerin): erst alles im f
 und Freischaltungen in der Story zum Schluss (Zettel 07).
 Wünsche aus der Testrunde: `.scratch/testrunde-8d/` (Garten-Umbau, Theke, Haltungen, Hauptmenü, Deko in der Gasse, Häuser und
 Bäume rund um den Garten).
-**Nächster Schritt:** Holzhäuschen Schritt 2 (eigener Raum zum Einrichten), dann Häuser und Bäume rund um den Garten (Testrunde 02).
+**Nächster Schritt:** Holzhäuschen Schritt 3 (dort schlafen), dann Leben im ganzen Garten (Baum mit Bank ans Pub) und Häuser und Bäume rund um den Garten (Testrunde 02).
 
 - [x] Mehr Draußen-Sachen (Zettel 01), in vier Runden – zusammen 41 neue Sachen:
   - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
@@ -2081,7 +2081,9 @@ Bäume rund um den Garten).
     abblätternder Farbe – neuer Regler `peel` im Bilderbuch-Shader –, Honig, Rotbraun, Silbergrau, Dunkel, Moosgrün), überdachte
     Veranda mit Pfosten, Fensterläden und Blumenkästen; innen ein offener Raum bis unters Dach mit Balken, Licht von den Gauben;
     Brettertür mit Z-Strebe (E öffnet), Rampe auf die Veranda
-  - [ ] Schritt 2 – eigener Raum zum Einrichten im Gestaltungsmodus
+  - [x] Schritt 2 – eigener Raum zum Einrichten im Gestaltungsmodus: alle Innen-Möbel, Wände streichen (neue „Holzverkleidung“
+    als Grundeinstellung), Boden belegen, an den Wänden aufhängen; auf der Veranda Draußen-Deko (gedrehte Fläche des
+    Draußen-Raums); der Gestaltungsmodus wechselt in den Raum, in dem man steht
   - [ ] Schritt 3 – dort schlafen
 - [ ] Projekt Glasanbau (Story): reparieren lassen → Tür hinten im Laden, Gäste lesen dort, gestalten
 - [ ] Projekt Gasse und Torbogen (Story): aufräumen lassen → der Garten gehört zur Bücherei, gestalten, Gäste kommen hinein
