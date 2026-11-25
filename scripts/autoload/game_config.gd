@@ -376,7 +376,10 @@ var passerby_prop_hold: Dictionary = {
 	"fork": {"pos": Vector3(0.023, 0.017, -0.017), "basis": Basis(Vector3(0.884, 0.468, 0.0), Vector3(-0.453, 0.855, -0.252), Vector3(-0.118, 0.222, 0.968)), "scale": 1.0},
 	# Bücherei (seit Etappe 7): Buch flach in der Hand, Leseausweis zwischen Daumen und Fingern
 	"book": {"pos": Vector3(0.0, 0.07, -0.035), "basis": Basis.IDENTITY, "scale": 1.0},
-	"card": {"pos": Vector3(0.0, 0.07, -0.022), "basis": Basis.IDENTITY, "scale": 1.0},
+	# Leseausweis hinhalten (seit der Testrunde nach 8d, Foto und Beschreibung der Entwicklerin): wie ein Schlüssel zwischen Daumen
+	# und der Seite des Zeigefingers, die Karte liegt in Fingerrichtung und ragt zur Handfläche (Hand-Z negativ) heraus. Beim
+	# Hinhalten steht der Daumen oben (ChibiGestureModifier._apply_show) – dann liegt die Karte flach, Daumen oben, Finger darunter.
+	"card": {"pos": Vector3(-0.031, 0.093, -0.023), "basis": Basis(Vector3(0, 0, -1), Vector3(0, 1, 0), Vector3(1, 0, 0)), "scale": 1.0},
 }
 
 ## --- Begegnungen (seit Etappe 6i) ---
@@ -1672,9 +1675,10 @@ var visitor_read_time: Vector2 = Vector2(40.0, 90.0)
 ## Wegnetz im Laden: Rastergröße (m) und Abstand zu Möbeln/Wänden (Radius einer Figur, m).
 var visitor_grid_step: float = 0.15
 var visitor_clearance: float = 0.26
-## Theke: Glocke (Lautstärke dB), Ausweis so hoch über der Platte zeigen, Spielfigur zählt bis so weit hinter der Theke.
+## Theke: Glocke (Lautstärke dB), Handgelenk beim Hinhalten des Ausweises so hoch über der Platte, Spielfigur zählt bis so weit
+## hinter der Theke.
 var counter_bell_volume_db: float = -4.0
-var counter_card_height: float = 0.12
+var counter_card_height: float = 0.08
 var counter_staff_reach: float = 1.6
 ## Besucher gehen in der Bücherei mindestens/höchstens so schnell (m/s; seit Testrunde 7b – manche schlenderten sehr langsam).
 var visitor_speed_range: Vector2 = Vector2(1.05, 1.35)

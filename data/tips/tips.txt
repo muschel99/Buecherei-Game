@@ -179,7 +179,7 @@ Steht es auf „Geöffnet“, kommen von 7 bis 20 Uhr Besucher herein. Je mehr B
 == Besucher an der Theke
 Besucher stöbern in den Regalen, manche setzen sich zum Lesen. Mit ihren Büchern stellen sie sich an die Theke – eine kleine Glocke klingelt.
 
-Geh hinter die Theke und drücke <E>: Die Kamera rückt an die Theke. Klicke den Ausweis an – er gleitet in den Kartenleser neben dem Tablet, und auf dem Tablet ploppt ein Stempel auf. Dann klickst du die Bücher an, eins nach dem anderen: Sie wandern von rechts nach links über den Scanner in die Papiertüte. Zum Schluss klickst du die Tüte an – sie rutscht dem Gast hinüber, und der Korb wandert hinter die Theke. Niemand hat es eilig – sie warten geduldig.
+Geh hinter die Theke und drücke <E>: Die Kamera rückt an die Theke. Der Gast hält dir seinen Ausweis hin – klicke ihn an, und er gleitet in den Kartenleser neben dem Tablet, und auf dem Tablet ploppt ein Stempel auf. Dann klickst du die Bücher an, eins nach dem anderen: Sie wandern von rechts nach links über den Scanner in die Papiertüte. Zum Schluss klickst du die Tüte an – sie rutscht dem Gast hinüber, und der Korb wandert hinter die Theke. Niemand hat es eilig – sie warten geduldig.
 
 == Reden
 Mit allen auf der Straße und in der Bücherei kannst du reden: Schau jemanden an und drücke <E>.

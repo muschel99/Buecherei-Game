@@ -88,10 +88,12 @@ var _clip_positions: Dictionary = {}
 ## in kleinen. Nur in der Nähe (PET_CATCH) und nur, solange die Hand ohnehin unten ist.
 var pet_point: Vector3 = Vector3.ZERO
 var pet_weight: float = 0.0
-## Etwas zeigen (seit Etappe 7: Leseausweis über die Theke): rechtes Handgelenk zu diesem Punkt (Raum des Skeletts),
-## Handfläche nach vorn, Finger nach oben
+## Leseausweis hinhalten (seit Etappe 7; seit der Testrunde nach 8d nach Foto und Beschreibung der Entwicklerin): das rechte
+## Handgelenk geht zu diesem Punkt (Raum des Skeletts) – der Arm streckt sich vom Körper weg, das Handgelenk bleibt gerade
 var show_point: Vector3 = Vector3.ZERO
 var show_weight: float = 0.0
+## Die Karte steckt zwischen Daumen und Zeigefinger (statt in der Faust): andere Fingerhaltung (_pinch_card)
+var card_pinch := false
 ## Lesen (seit Testrunde 7b): beide Hände halten ein aufgeschlagenes Buch an read_point (Mitte des Buchs, Raum des Skeletts)
 var read_point: Vector3 = Vector3.ZERO
 var read_weight: float = 0.0
@@ -131,7 +133,10 @@ func _process_modification_with_delta(_delta: float) -> void:
 	if hands_on_thighs > 0.001:
 		_apply_hands(skeleton)
 	if grip_right > 0.001:
-		_grip(skeleton, "Right", grip_right)
+		if card_pinch:
+			_pinch_card(skeleton, "Right", grip_right)
+		else:
+			_grip(skeleton, "Right", grip_right)
 	if grip_left > 0.001:
 		_grip(skeleton, "Left", grip_left)
 	if pet_weight > 0.001:
@@ -281,6 +286,23 @@ func _grip(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
 	_bend_thumb(skeleton, prefix + "ThumbDistal", GRIP_ANGLE * 0.5, amount)
 
 
+## Karte halten wie einen Schlüssel: Zeigefinger locker gekrümmt (die Karte liegt an seiner Seite), die anderen Finger
+## eingerollt, der Daumen drückt von der anderen Seite gegen die Karte (Winkel je Glied in Grad, negativ = zur Handfläche).
+const PINCH_FINGERS := {"Index": [-40.0, -55.0, -30.0], "Middle": [-65.0, -70.0, -45.0], "Ring": [-75.0, -75.0, -45.0],
+	"Little": [-80.0, -75.0, -45.0]}
+const PINCH_THUMB := [15.0, 10.0]
+
+
+func _pinch_card(skeleton: Skeleton3D, prefix: String, amount: float) -> void:
+	for finger: String in PINCH_FINGERS:
+		var angles: Array = PINCH_FINGERS[finger]
+		var joints := ["Proximal", "Intermediate", "Distal"]
+		for i in joints.size():
+			_bend_joint(skeleton, prefix + finger + joints[i], float(angles[i]), amount)
+	_bend_thumb(skeleton, prefix + "ThumbProximal", float(PINCH_THUMB[0]), amount)
+	_bend_thumb(skeleton, prefix + "ThumbDistal", float(PINCH_THUMB[1]), amount)
+
+
 ## Achse, um die sich der Daumen beim Greifen krümmt (Raum des Daumenknochens; seit dem zweiten Nachtest der Überarbeitung -Z:
 ## er legt sich über die Finger – um X stand er wie bei „Daumen hoch“ ab). Das Prüfwerkzeug (pose_probe thumb) probiert andere.
 var thumb_axis := Vector3.FORWARD
@@ -340,13 +362,14 @@ func _apply_pet(skeleton: Skeleton3D) -> void:
 	_orient_hand_along(skeleton, hand, fingers.normalized(), Vector3.UP, pet_weight * 0.7)
 
 
-## Rechte Hand zeigt etwas vor: Handgelenk zu show_point, Ellbogen hängt nach unten außen, Handfläche nach vorn.
+## Rechte Hand hält den Leseausweis hin: Arm vom Körper weg nach vorn (Handgelenk zu show_point, der Ellbogen hängt nach unten
+## außen), das Handgelenk gerade – die Finger setzen den Unterarm fort –, der Daumen oben (Handrücken nach außen). So liegt die
+## Karte (GameConfig.passerby_prop_hold "card") flach zwischen Daumen und Zeigefinger, vorn leicht nach unten wie der Unterarm.
 func _apply_show(skeleton: Skeleton3D) -> void:
-	var hand := skeleton.find_bone("RightHand")
-	if hand < 0:
+	if skeleton.find_bone("RightHand") < 0:
 		return
-	_reach(skeleton, "Right", show_point, Vector3(-0.6, -1.0, -0.2), show_weight)
-	_orient_hand_along(skeleton, hand, Vector3(0.0, 1.0, 0.3).normalized(), Vector3(0.0, 0.0, -1.0), show_weight)
+	_reach(skeleton, "Right", show_point, Vector3(-0.5, -1.0, -0.1), show_weight)
+	_orient_hand(skeleton, "RightHand", "RightLowerArm", Vector3(-1.0, 0.0, 0.0), show_weight)
 
 
 ## Lesen: beide Handgelenke links und rechts unter die Ränder des Buchs, Ellbogen hängen nach unten außen, Handflächen

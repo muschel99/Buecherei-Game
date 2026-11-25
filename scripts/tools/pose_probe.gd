@@ -104,20 +104,28 @@ func _go():
 		"card", "book":
 			# Bücherei (seit Etappe 7): Leseausweis über die Theke halten bzw. Buch in der Hand (stehend und sitzend)
 			var counter := MeshInstance3D.new()
-			var box := BoxMesh.new(); box.size = Vector3(1.2, 1.0, 0.65); counter.mesh = box
-			counter.position = Vector3(0.0, 0.5, 0.625)
+			var box := BoxMesh.new(); box.size = Vector3(1.2, Counter.TOP_HEIGHT, 0.65); counter.mesh = box
+			counter.position = Vector3(0.0, Counter.TOP_HEIGHT / 2.0, 0.625)
 			if which == "card":
 				add_child(counter)
 				m.set_prop(&"card")
+				# die Figur soll der Kamera nicht zuwinken (das überdeckte das Hinhalten)
+				GameConfig.chibi_greet_chance_player = 0.0
+				GameConfig.chibi_greet_chance_others = 0.0
 			else:
 				m.set_prop(&"book")
 			for i in 40:
 				if which == "card":
-					m.show_hand_at(m.global_transform * Vector3(-0.1, 1.0 + GameConfig.counter_card_height, 0.245))
+					m.show_hand_at(m.global_transform * Vector3(-0.07, Counter.TOP_HEIGHT + GameConfig.counter_card_height, 0.375))
 				m.animate(&"idle", 0.0, 1.0 / 30.0)
 				await get_tree().process_frame
 			await _shot(m, Vector3(1, 0.3, 1.2), which + "_front")
 			await _shot(m, Vector3(-1.2, 0.25, 0.2), which + "_side")
+			if which == "card":
+				# Nahaufnahmen der Hand: aus Sicht der Spielfigur und aus Sicht des Gasts (über die Schulter)
+				await _hand_shot(m, Vector3(0.0, 0.8, 1.0), "card_hand_player")
+				await _hand_shot(m, Vector3(-0.25, 0.9, -0.6), "card_hand_guest")
+				await _hand_shot(m, Vector3(-1.0, 0.1, 0.0), "card_hand_side")
 			if which == "book":
 				m.sit_height = 0.45
 				for i in 60:
@@ -420,4 +428,10 @@ func _go():
 				m._sip_t = 0.6
 				m._update_sip()
 				await _shot(m, Vector3(-0.8, 0.9, 0.7), "eat_plate_right")
+				# Nahaufnahmen der Hand mit der Gabel (am Teller und am Mund)
+				await _hand_shot(m, Vector3(-0.9, 0.6, 0.6), "eat_hand_plate")
+				await _hand_shot(m, Vector3(0.2, 0.9, 0.8), "eat_hand_plate_top")
+				m._sip_t = 1.3
+				m._update_sip()
+				await _hand_shot(m, Vector3(-0.9, 0.2, 0.8), "eat_hand_mouth")
 	get_tree().quit()

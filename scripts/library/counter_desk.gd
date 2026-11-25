@@ -6,12 +6,13 @@ extends Node3D
 ## dran ist, hebt sich ein wenig – Linksklick führt den Handgriff aus (Tastensymbol unter dem Punkt, current_hints).
 ## Aufteilung der Theke aus Sicht der Spielfigur (rechts = -X im Raum der Theke):
 ##   rechts  Tablet auf dem Ständer, links daneben der Kartenleser (ShopTablet, verschiebbares Möbel – Standardplatz in der Szene)
-##           Ausweis des Gasts auf der Kundenseite (CARD_START, wo früher der Korb stand), davor seine Bücher als Stapel (BOOKS);
+##           den Ausweis hält der Gast über der Kundenseite hin (seit der Testrunde nach 8d; nur im Prüfwerkzeug liegt er bei
+##           CARD_START), davor seine Bücher als Stapel (BOOKS);
 ##           den Korb stellt der Gast vor der Theke auf den Boden (LibraryVisits) – nie auf die Theke
 ##   Mitte   Scanner, um 90° gedreht (SCANNER, Modell in counter.tscn)
 ##   links   offene Papiertüte (BAG), daneben ein Stapel gefalteter Tüten (counter.tscn)
 ## Ablauf:
-##   1. Ausweis anklicken: er gleitet in den Kartenleser (Schaben, Piep), das Tablet zeigt „Bücherei-Ausleihe“ mit Name und
+##   1. Ausweis in der Hand des Gasts anklicken: er gleitet in den Kartenleser (Schaben, Piep), das Tablet zeigt „Bücherei-Ausleihe“ mit Name und
 ##      Stempelkarte, der neue Stempel ploppt auf (volle Karte: Lesezeichen und mehr Zeit); dann hüpft der Ausweis in die Tüte
 ##   2. Bücher anklicken (immer das oberste): von rechts nach links über den Scanner (Piep), dann in die Tüte
 ##   3. Tüte anklicken: sie rutscht dem Gast hinüber (er trägt sie hinaus), der Korb gleitet unten rechts aus dem Bild –
@@ -210,8 +211,6 @@ func _begin_guest() -> void:
 	_unpacking = 0
 	var progress: Dictionary = _progress.get(walker, {"read": false, "bonus": false, "scanned": [] as Array[Book]})
 	_progress[walker] = progress
-	if walker:
-		visits.hand_over_card(walker)
 	var books := _preview_books if _preview else visits.visit_books(walker)
 	var info := Lending.reader_info(visits.visit_card(walker) if walker else "")
 	_bag = _spawn_bag()
@@ -222,16 +221,9 @@ func _begin_guest() -> void:
 	else:
 		_card = _spawn_card()
 		if not _preview:
-			# der Gast legt den Ausweis aus der Hand auf die Theke (er hielt ihn über der Kundenseite hoch)
-			var lay := _card.transform
-			_card.position = Vector3(-0.35, Counter.TOP_HEIGHT + GameConfig.counter_card_height, 0.38)
-			_busy = true  # erst klicken, wenn Ausweis und Bücher liegen
-			_unpacking += 1
-			var put := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-			put.tween_property(_card, "transform", lay, 0.35)
-			put.tween_callback(Audio.play_at.bind("books/place", counter.global_transform * lay.origin, -18.0, 1.4))
-			put.tween_callback(_unpacked)
-			_unpack_tweens.append(put)
+			# Der Gast hält den Ausweis hin (seit der Testrunde nach 8d, Wunsch der Entwicklerin – vorher legte er ihn auf die
+			# Theke): Die Karte der Theke liegt genau in seiner Hand, bis man sie anklickt
+			_follow_held_card()
 	# Bücher: schon gescannte stehen in der Tüte, die übrigen liegen als Stapel vor dem Korb (das oberste zuerst)
 	var scanned: Array = progress.scanned
 	var pile := 0
@@ -294,6 +286,8 @@ func _process(_delta: float) -> void:
 	if _preview:
 		_camera.global_transform = _view_transform()  # bleibt richtig, auch wenn sich die Fenstergröße ändert
 		_camera.fov = _view_fov()
+	elif _step == Step.CARD:
+		_follow_held_card()
 	_update_hover()
 	if _steps_note:
 		var index: int = {Step.CARD: 0, Step.READING: 1, Step.SCAN: 1, Step.BAG: 2, Step.DONE: 3}[_step]
@@ -349,6 +343,9 @@ func _click(target: Node3D) -> void:
 func _read_card() -> void:
 	_busy = true
 	_step = Step.READING
+	# der Gast lässt los (seine eigene Karte verschwindet, die Hand sinkt) – die Karte der Theke fliegt aus seiner Hand weiter
+	if walker:
+		visits.hand_over_card(walker)
 	Tutorial.report("card_read")
 	var slot := tablet.reader_slot_global() if tablet else counter.global_transform * Vector3(-0.4, Counter.TOP_HEIGHT + 0.04, -0.1)
 	var upright := (tablet.global_transform.basis if tablet else counter.global_transform.basis).orthonormalized()
@@ -594,6 +591,24 @@ func _all_props() -> Array[Node3D]:
 
 # --- Dinge auf der Theke ---
 
+## Der Ausweis in der Hand des wartenden Gasts (null, wenn er keinen hinhält).
+func _held_card() -> Node3D:
+	if walker == null or not is_instance_valid(walker) or walker._model == null \
+			or not walker._model.has_method("get_prop_node") or walker._model.call("get_prop") != &"card":
+		return null
+	return walker._model.call("get_prop_node") as Node3D
+
+
+## Die Karte der Theke liegt genau dort, wo der Gast seinen Ausweis hinhält (seine eigene ist so lange unsichtbar); hebt sie
+## sich unter dem Punkt in der Bildmitte (_update_hover, Meta "lift"), bleibt das erhalten.
+func _follow_held_card() -> void:
+	var held := _held_card()
+	if held == null or _card == null:
+		return
+	held.visible = false
+	_card.global_transform = held.global_transform
+	_card.global_position += _card.get_meta("lift", Vector3.ZERO)
+
 func _spawn_card() -> Node3D:
 	var card := (load(CARD_SCENE) as PackedScene).instantiate() as Node3D
 	counter.add_child(card)
@@ -665,6 +680,10 @@ func _put_in_bag(node: Node3D, book: Book, index: int) -> void:
 
 
 func _clear_props() -> void:
+	# hielt der Gast seinen Ausweis noch hin, sieht man wieder seine eigene Karte
+	var held := _held_card()
+	if held:
+		held.visible = true
 	if _card_tween and _card_tween.is_valid():
 		_card_tween.kill()
 	_card_moving = false

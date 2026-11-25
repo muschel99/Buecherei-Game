@@ -508,9 +508,10 @@ func _counter_face() -> Vector2:
 	return Vector2(z.x, z.z).normalized()
 
 
-## Wo der Ausweis über der Theke gezeigt wird (Welt).
+## Wohin das Handgelenk beim Hinhalten des Ausweises geht (Welt): knapp über die Kante der Theke auf der Seite des Gasts, etwas zu
+## seiner rechten Hand hin (der Gast steht bei x = -0,35, Thekenkante bei z = 0,325) – der Arm ist dann fast gestreckt.
 func _card_point() -> Vector3:
-	return _counter_node().global_transform * Vector3(-0.35, Counter.TOP_HEIGHT + GameConfig.counter_card_height, 0.38)
+	return _counter_node().global_transform * Vector3(-0.28, Counter.TOP_HEIGHT + GameConfig.counter_card_height, 0.25)
 
 
 ## E-Bereich auf der Theke („Bedienen“, nur wenn jemand wartet und man hinter der Theke steht) – öffnet die Theken-Ansicht.
@@ -608,7 +609,7 @@ func waiting_guest() -> Passerby:
 	return _waiting_at_counter()
 
 
-## Der Gast gibt seinen Ausweis ab (er hält ihn nicht mehr hoch – er liegt jetzt auf der Theke).
+## Der Gast gibt seinen Ausweis ab (er hält ihn nicht mehr hin – die Spielfigur zieht ihn durch den Kartenleser).
 func hand_over_card(walker: Passerby) -> void:
 	if int(_checkout.get(walker, 0)) == 0:
 		_checkout[walker] = 1

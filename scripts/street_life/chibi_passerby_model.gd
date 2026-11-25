@@ -737,6 +737,7 @@ func set_prop(kind: StringName) -> void:
 		_prop_mount = null
 	if _gesture_modifier:
 		_gesture_modifier.grip_right = 0.0
+		_gesture_modifier.card_pinch = kind == &"card"
 	_prop_kind = kind
 	if kind == &"" or _skeleton == null:
 		return
@@ -765,6 +766,11 @@ func set_prop(kind: StringName) -> void:
 
 func get_prop() -> StringName:
 	return _prop_kind
+
+
+## Der Gegenstand in der Hand (Knoten; null = nichts), z. B. für die Theke: Der Ausweis folgt der Hand.
+func get_prop_node() -> Node3D:
+	return _prop
 
 
 ## Sitzt sofort (feste Gäste beim Start), ohne Hinsetz-Bewegung.
@@ -1482,7 +1488,8 @@ func _scan_focus() -> void:
 		# und Lachen (Augen zu) – und dafür meist kurz stehen bleiben und sich zu ihr drehen (nie beim Winken wegdrehen)
 		var to_player := best == camera
 		var wave_chance := GameConfig.chibi_wave_chance_player if to_player else GameConfig.chibi_wave_chance
-		var wave := randf() < wave_chance and not carries_bag
+		# wer gerade etwas hinhält (Leseausweis an der Theke), nickt nur – sonst winkte er mit der Karte in der Hand
+		var wave := randf() < wave_chance and not carries_bag and not (_show_at is Vector3)
 		# Nicken geht im Vorbeigehen; wer winkt, bleibt dafür stehen und dreht sich zu dem Gegrüßten (seit der Nachbesserung
 		# von 6h) – geht das gerade nicht (über die Straße, Gedränge), wird genickt statt gewinkt
 		if wave and _prev_state == &"walk":
