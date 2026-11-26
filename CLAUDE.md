@@ -157,7 +157,8 @@ screenshots/         Testbilder (nicht in Git)
   `build_storybook_bags.py`, Autos `build_vehicles.py`, Fahrräder `build_storybook_vehicles.py`, Tiere `build_animals.py`,
   Figuren `build_chibi.py`, Hauptmenü-Garten `build_title_garden.py`, Hauptmenü-Buch `build_title_book.py`, Möbel
   `tools/build_furniture.sh [ids]`, Briefkasten/Telefonzelle/Straßenuhr/Mülleimer `build_storybook_street_furniture.py`,
-  Lieferkartons `build_storybook_boxes.py`, Garten `build_storybook_backyard.py`, Holzhäuschen `build_storybook_cottage.py`.
+  Lieferkartons `build_storybook_boxes.py`, Garten `build_storybook_backyard.py`, Holzhäuschen `build_storybook_cottage.py`,
+  Park hinter dem Torhaus `build_storybook_park.py` (Plätze: `GameConfig.street_parks`).
 - **Neu gebaute .glb:** Die Scripts schreiben die `.glb.import` ohne die bisherige `uid=` – alte Zeile aus Git zurückholen
   (`git show HEAD:<datei>.import`), dann `godot --headless --path . --import`.
 - **Pflanzen** nie ins Haus-Modell (Pflanzplätze `PlantSpot_…`, gesetzt von `Greenery`), außer Efeu an Wänden.

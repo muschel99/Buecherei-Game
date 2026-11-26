@@ -62,4 +62,5 @@ diesem Plan aufgegangen.
   der Gasse), Holzhäuschen Schritte 1–3 (Modell, eigener Raum zum Einrichten, Veranda-Deko, Bett), Leben im ganzen Garten
   (Baum mit Bank nahe am Pub, Katzen und Vögel auf der großen Wiese).
 - 26.11.2026: Häuser und Bäume rund um den Garten (Testrunde 02, Teil 1), Sockel an den Tunneln unterbrochen.
-- **Nächster Schritt:** Park hinter dem Torhaus (`.scratch/testrunde-8d/issues/02`, Rest), danach Glasanbau (Zettel 03).
+- 26.11.2026: Park hinter dem Torhaus (Testrunde 02 erledigt) – alle Wünsche der Testrunde 8d sind umgesetzt.
+- **Nächster Schritt:** Glasanbau (Zettel 03).

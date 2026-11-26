@@ -46,15 +46,28 @@ const DOOR_COLORS: Array[Color] = [
 ## keep (seit der Nachbesserung 3 von 6h): "Gruppe/Name" → Haustyp der vorhandenen Häuser – dann behalten alle Reihen
 ## ihre Typen in derselben Reihenfolge (jedes Haus hat sein eigenes Modell), nur die Lage wird neu berechnet (Verschieben
 ## nach geänderten Maßen, Erzeuger mit --move).
-static func plan(keep: Dictionary = {}) -> Array[Dictionary]:
-	_keep = keep
+## Plätze mit kleinem Park (GameConfig.street_parks) fehlen im Ergebnis – außer mit with_parks (für den Park selbst: Lage
+## seiner Plätze und der Nachbarn). Geplant werden sie immer mit ihrem alten Typ, damit die Reihe gleich bleibt.
+static func plan(keep: Dictionary = {}, with_parks: bool = false) -> Array[Dictionary]:
+	_keep = keep.duplicate()
+	if not keep.is_empty():
+		for key: String in GameConfig.street_parks:
+			if not _keep.has(key):
+				_keep[key] = GameConfig.street_parks[key]
 	var houses: Array[Dictionary] = []
 	_library_row(houses)
 	_opposite_row(houses)
 	_straight_end(houses, StreetLayout.straight_side())
 	_gate_end(houses, StreetLayout.turning_side())
 	_keep = {}
-	return houses
+	if with_parks:
+		return houses
+	var built: Array[Dictionary] = []
+	for house in houses:
+		if not GameConfig.street_parks.has("%s/%s" % [house.group, house.name]):
+			built.append(house)
+	return built
+
 
 
 static var _keep := {}

@@ -26,6 +26,8 @@ const HEADER := """; Alle Nachbarhäuser (seit Etappe 4e jedes Haus ein eigener 
 ; Gruppen: LibraryRow = Nachbarn der Bücherei, Opposite = gegenüber, StraightEnd = bis zur
 ; Grenze und um die runde Kurve am geraden Straßenende, GateStreet = sanfte Kurve, Torhaus und die
 ; Häuser dahinter am anderen Ende (seit Etappe 4f).
+; Plätze mit kleinem Park statt Haus (GameConfig.street_parks, seit der Testrunde nach Etappe 8d) bleiben frei – den Park
+; setzt die Hauptszene ein (scenes/world/gate_park.tscn).
 """
 
 

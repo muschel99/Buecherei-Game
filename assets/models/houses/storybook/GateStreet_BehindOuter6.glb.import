@@ -56,7 +56,7 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_metall.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_metall.tres"
 },
-"Sammel Pflanze": {
+"Sammel Pflanze immergrün": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_pflanze_immergruen.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_pflanze_immergruen.tres"

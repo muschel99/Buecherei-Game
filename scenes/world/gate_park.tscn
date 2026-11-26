@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+; Kleiner Park hinter dem Torhaus (Testrunde nach Etappe 8d, Wunsch der Entwicklerin): steht dort, wo vorher die Häuser
+; GateStreet/BehindOuter4 und BehindOuter5 standen (GameConfig.street_parks – houses.tscn lässt die Plätze frei). Man sieht ihn
+; nur durch den Torbogen (dahinter kommt man nicht), darum ohne Kollision. Modell (Koordinaten wie unter "Outside"):
+; tools/blender/build_storybook_park.py; die Bäume und Beete setzt Greenery auf die Pflanzplätze im Modell.
+
+[ext_resource type="PackedScene" path="res://assets/models/world/gate_park.glb" id="1_model"]
+
+[node name="GatePark" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]

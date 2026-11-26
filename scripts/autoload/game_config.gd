@@ -204,6 +204,11 @@ var gate_curve_radius: float = 9.0
 var gate_curve_angle: float = 90.0
 var gate_road_after_curve: float = 6.0
 var gate_sidewalk_width: float = 1.6
+## Kleiner Park statt Häusern (Testrunde nach Etappe 8d, Wunsch der Entwicklerin: „in der Stadt ist kein Platz für Bäume –
+## hinter dem Torhaus ein oder zwei Häuser durch einen kleinen Park ersetzen“). Haus (Gruppe/Name wie in houses.tscn) → sein
+## bisheriger Haustyp: Dort steht kein Haus mehr, geplant wird der Platz aber weiter mit diesem Typ (HousesLayout), damit die
+## Nachbarn bleiben, wo sie sind. Den Park baut tools/blender/build_storybook_park.py (Lage aus export_layout).
+var street_parks: Dictionary = {"GateStreet/BehindOuter4": "terrace_45", "GateStreet/BehindOuter5": "terrace_45"}
 
 ## Gasse neben der Bücherei (an der Seite mit der Schräge): Breite und begehbare Tiefe.
 var alley_width: float = 2.8

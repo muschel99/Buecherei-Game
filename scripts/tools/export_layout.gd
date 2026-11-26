@@ -39,6 +39,8 @@ func _ready() -> void:
 		"back_room": [BackRoom.back_area().position.x, BackRoom.back_area().position.y, BackRoom.back_area().size.x,
 			BackRoom.back_area().size.y],
 		"house_backs": _house_backs(),
+		# kleiner Park statt Häusern (GameConfig.street_parks): die Plätze seiner Häuserreihe
+		"street_parks": _street_parks(),
 	}
 	var file := FileAccess.open("res://assets/models/source/layout.json", FileAccess.WRITE)
 	file.store_string(JSON.stringify(data, "\t"))
@@ -60,6 +62,30 @@ func _house_backs() -> Array:
 		var w := HouseTypes.width_of(id)
 		result.append([x - w, x, StreetLayout.recess_z() + HouseTypes.depth_of(id), float(HouseTypes.value_of(id, "eaves_height", 6.6))])
 		x -= w
+	return result
+
+
+## Plätze der Häuserreihen, in denen ein kleiner Park liegt (GameConfig.street_parks): [Gruppe/Name, x, z, Drehung (Bogenmaß
+## um die Hochachse, wie im Spiel), Breite, Tiefe, Park ja/nein] – der Reihe nach. Die Haustypen kommen aus houses.tscn (wie beim
+## Verschieben mit dem Erzeuger), die Park-Plätze behalten ihren alten Typ.
+func _street_parks() -> Array:
+	var keep := {}
+	var scene := (load("res://scenes/world/houses.tscn") as PackedScene).instantiate()
+	for group in scene.get_children():
+		for house in group.get_children():
+			keep["%s/%s" % [group.name, house.name]] = house.scene_file_path.get_file().get_basename()
+	scene.free()
+	var rows := {}
+	for key: String in GameConfig.street_parks:
+		rows[key.rstrip("0123456789")] = true
+	var result := []
+	for house: Dictionary in HousesLayout.plan(keep, true):
+		var key := "%s/%s" % [house.group, house.name]
+		if not rows.has(key.rstrip("0123456789")):
+			continue
+		var pos: Vector3 = house.position
+		result.append([key, pos.x, pos.z, house.yaw, HouseTypes.width_of(house.type), HouseTypes.depth_of(house.type),
+			GameConfig.street_parks.has(key)])
 	return result
 
 

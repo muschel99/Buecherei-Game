@@ -7,6 +7,8 @@
 ; Gruppen: LibraryRow = Nachbarn der Bücherei, Opposite = gegenüber, StraightEnd = bis zur
 ; Grenze und um die runde Kurve am geraden Straßenende, GateStreet = sanfte Kurve, Torhaus und die
 ; Häuser dahinter am anderen Ende (seit Etappe 4f).
+; Plätze mit kleinem Park statt Haus (GameConfig.street_parks, seit der Testrunde nach Etappe 8d) bleiben frei – den Park
+; setzt die Hauptszene ein (scenes/world/gate_park.tscn).
 
 [ext_resource type="PackedScene" path="res://scenes/world/houses/fashion_shop.tscn" id="1_b4vo6"]
 [ext_resource type="PackedScene" path="res://scenes/world/houses/terrace_55.tscn" id="2_8miuw"]
@@ -49,8 +51,6 @@
 [ext_resource type="PackedScene" path="res://assets/models/houses/storybook/GateStreet_BehindOuter1.glb" id="u_GateStreet_BehindOuter1"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/storybook/GateStreet_BehindOuter2.glb" id="u_GateStreet_BehindOuter2"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/storybook/GateStreet_BehindOuter3.glb" id="u_GateStreet_BehindOuter3"]
-[ext_resource type="PackedScene" path="res://assets/models/houses/storybook/GateStreet_BehindOuter4.glb" id="u_GateStreet_BehindOuter4"]
-[ext_resource type="PackedScene" path="res://assets/models/houses/storybook/GateStreet_BehindOuter5.glb" id="u_GateStreet_BehindOuter5"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/storybook/GateStreet_BehindOuter6.glb" id="u_GateStreet_BehindOuter6"]
 [ext_resource type="PackedScene" path="res://assets/models/houses/storybook/StraightEnd_Outer6.glb" id="u_StraightEnd_Outer6"]
 
@@ -318,22 +318,6 @@ lanterns = PackedVector3Array(-1.960, 2.880, -0.000)
 wall_color = Color(0.900, 0.860, 0.760, 1)
 door_color = Color(0.160, 0.270, 0.200, 1)
 accent_color = Color(0.160, 0.270, 0.200, 1)
-solid = false
-[node name="BehindOuter4" parent="GateStreet" unique_id=1467725213 instance=ExtResource("6_t0cuk")]
-transform = Transform3D(0.14106151, 0, 0.99000084, 0, 1, 0, -0.99000084, 0, 0.14106151, -49.99656, 0, -27.008736)
-unique_model = ExtResource("u_GateStreet_BehindOuter4")
-wall_material = 1
-wall_color = Color(0.700, 0.580, 0.420, 1)
-door_color = Color(0.100, 0.140, 0.230, 1)
-accent_color = Color(0.100, 0.140, 0.230, 1)
-solid = false
-[node name="BehindOuter5" parent="GateStreet" unique_id=1153962939 instance=ExtResource("6_t0cuk")]
-transform = Transform3D(0.44039848, 0, 0.8978024, 0, 1, 0, -0.8978024, 0, 0.44039848, -48.707466, 0, -31.189)
-unique_model = ExtResource("u_GateStreet_BehindOuter5")
-wall_material = 1
-wall_color = Color(0.840, 0.860, 0.760, 1)
-door_color = Color(0.330, 0.400, 0.340, 1)
-accent_color = Color(0.330, 0.400, 0.340, 1)
 solid = false
 [node name="BehindOuter6" parent="GateStreet" unique_id=1085650306 instance=ExtResource("6_t0cuk")]
 transform = Transform3D(0.49999905, 0, 0.866026, 0, 1, 0, -0.866026, 0, 0.49999905, -46.62977, 0, -35.09945)

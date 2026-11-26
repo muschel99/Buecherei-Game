@@ -1,5 +1,5 @@
 # 02 – Häuser und Bäume rund um den Garten, Wäldchen hinter dem Torhaus
-Status: ready-for-agent
+Status: done
 
 - Ein paar Häuser, die man vom Garten aus sieht, damit es nicht aussieht, als wäre die Stadt dort zu Ende.
 - Mehr Bäume rund um den Garten hinter den Mauern (Natur). Viel Himmel soll bleiben, die Sicht nicht verbaut.
@@ -19,3 +19,14 @@ Status: ready-for-agent
 - Greenery: Bäume mit Hinweis stehen nur noch bei "garden" fest (`FIXED_TREE_HINTS`), "far" wird gedreht und skaliert.
 Dazu (Wunsch der Entwicklerin): der Feldsteinsockel der Mauer ist an den Bachtunneln unterbrochen.
 Noch offen: Park/Wäldchen hinter dem Torhaus.
+
+26.11.2026: Teil 2 fertig – kleiner Park hinter dem Torhaus an Stelle von GateStreet/BehindOuter4 und BehindOuter5 (das Haus, das
+man genau geradeaus durch den Bogen sah, und sein Nachbar). `GameConfig.street_parks` (Platz → alter Haustyp): HousesLayout
+plant die Plätze weiter mit ihrem Typ (die Nachbarn bleiben, wo sie sind), lässt sie aber im Ergebnis weg; export_layout schreibt
+die Plätze der Reihe nach layout.json („street_parks“); `tools/blender/build_storybook_park.py` baut `gate_park.glb` (Mauer mit
+Gitter und offenem Tor mit Angeln, Rasen, Kiesweg, runder Platz mit Parkbank und Straßenlaterne, Beete, drei sparsame Bäume,
+Efeumauer hinten); `scenes/world/gate_park.tscn` steht in der Hauptszene unter „Outside“ (keine Kollision – man kommt nicht hin).
+BehindOuter3 und BehindOuter6 neu gebaut (freie Seitenwand mit Fenstern), Tier-Plätze neu ausgemessen. Nebenbei:
+build_storybook_lamps.py baute beim bloßen Einbinden alle Laternen neu (main() ohne `if __name__`) – behoben.
+Die alten Modelle der zwei Häuser liegen noch in assets/models/houses/storybook/ (falls sie zurück sollen: Eintrag aus
+street_parks nehmen, mit dem Erzeuger `--move --add=…` wieder anlegen).

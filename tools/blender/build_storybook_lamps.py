@@ -149,4 +149,6 @@ def main():
     print("Gespeichert:", BLEND)
 
 
-main()
+# (nur als eigenes Script bauen – build_storybook_park.py nutzt street_lamp, ohne die Laternen neu zu bauen)
+if __name__ == "__main__":
+    main()

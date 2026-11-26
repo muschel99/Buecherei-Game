@@ -46077,9 +46077,9 @@
 		},
 		{
 			"pos": [
-				-48.965,
-				6.329,
-				-20.434
+				-48.94,
+				4.029,
+				-20.07
 			],
 			"out": [
 				0.972,
@@ -46090,74 +46090,37 @@
 		},
 		{
 			"pos": [
-				-49.045,
-				4.024,
-				-20.507
+				-48.982,
+				4.029,
+				-20.245
 			],
 			"out": [
 				0.972,
 				-0.233
 			],
+			"wide": true,
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.007,
-				6.327,
-				-20.609
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.049,
-				6.326,
-				-20.784
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.129,
-				4.025,
-				-20.857
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.091,
-				6.325,
-				-20.959
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.133,
+				-48.915,
 				6.324,
-				-21.134
+				-20.353
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"edge": "along_u",
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.024,
+				4.028,
+				-20.42
 			],
 			"out": [
 				0.972,
@@ -46168,35 +46131,132 @@
 		},
 		{
 			"pos": [
-				-49.175,
+				-48.957,
 				6.322,
-				-21.309
+				-20.528
 			],
 			"out": [
 				0.972,
 				-0.233
 			],
+			"edge": "along_u",
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.217,
-				6.321,
-				-21.484
+				-49.066,
+				4.028,
+				-20.595
 			],
 			"out": [
 				0.972,
 				-0.233
 			],
+			"wide": true,
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.259,
+				-48.999,
 				6.32,
-				-21.659
+				-20.703
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"edge": "along_u",
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.108,
+				4.027,
+				-20.77
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"wide": true,
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.041,
+				6.319,
+				-20.878
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"edge": "along_u",
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.083,
+				6.319,
+				-21.053
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"edge": "along_u",
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.154,
+				6.319,
+				-21.221
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.196,
+				6.319,
+				-21.396
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.238,
+				6.318,
+				-21.571
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.28,
+				6.316,
+				-21.746
 			],
 			"out": [
 				0.972,
@@ -46208,7 +46268,7 @@
 		{
 			"pos": [
 				-49.36,
-				4.028,
+				4.024,
 				-21.82
 			],
 			"out": [
@@ -46220,9 +46280,9 @@
 		},
 		{
 			"pos": [
-				-49.301,
-				6.319,
-				-21.834
+				-49.322,
+				6.315,
+				-21.921
 			],
 			"out": [
 				0.972,
@@ -46233,23 +46293,9 @@
 		},
 		{
 			"pos": [
-				-49.402,
-				6.648,
-				-21.995
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"edge": "along_u",
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.343,
-				6.319,
-				-22.009
+				-49.452,
+				6.646,
+				-22.076
 			],
 			"out": [
 				0.972,
@@ -46260,9 +46306,36 @@
 		},
 		{
 			"pos": [
-				-49.385,
-				6.319,
-				-22.184
+				-49.423,
+				4.025,
+				-22.083
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"wide": true,
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.364,
+				6.315,
+				-22.097
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.494,
+				6.647,
+				-22.251
 			],
 			"out": [
 				0.972,
@@ -46274,22 +46347,34 @@
 		{
 			"pos": [
 				-49.465,
-				6.648,
+				4.025,
 				-22.258
 			],
 			"out": [
 				0.972,
 				-0.233
 			],
-			"edge": "along_u",
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.427,
-				6.32,
-				-22.359
+				-49.406,
+				6.316,
+				-22.272
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.536,
+				6.647,
+				-22.426
 			],
 			"out": [
 				0.972,
@@ -46301,35 +46386,34 @@
 		{
 			"pos": [
 				-49.507,
-				6.649,
+				4.026,
 				-22.433
 			],
 			"out": [
 				0.972,
 				-0.233
 			],
-			"edge": "along_u",
+			"wide": true,
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.44,
-				6.321,
-				-22.541
+				-49.448,
+				6.316,
+				-22.447
 			],
 			"out": [
 				0.972,
 				-0.233
 			],
-			"edge": "along_u",
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
 				-49.549,
-				4.03,
+				4.026,
 				-22.608
 			],
 			"out": [
@@ -46341,9 +46425,9 @@
 		},
 		{
 			"pos": [
-				-49.511,
-				6.321,
-				-22.709
+				-49.49,
+				6.316,
+				-22.622
 			],
 			"out": [
 				0.972,
@@ -46354,9 +46438,9 @@
 		},
 		{
 			"pos": [
-				-49.553,
-				6.321,
-				-22.884
+				-49.532,
+				6.317,
+				-22.797
 			],
 			"out": [
 				0.972,
@@ -46367,9 +46451,9 @@
 		},
 		{
 			"pos": [
-				-49.595,
-				6.321,
-				-23.059
+				-49.574,
+				6.318,
+				-22.972
 			],
 			"out": [
 				0.972,
@@ -46380,9 +46464,9 @@
 		},
 		{
 			"pos": [
-				-49.637,
-				6.321,
-				-23.234
+				-49.616,
+				6.319,
+				-23.147
 			],
 			"out": [
 				0.972,
@@ -46393,9 +46477,9 @@
 		},
 		{
 			"pos": [
-				-49.679,
+				-49.658,
 				6.321,
-				-23.409
+				-23.322
 			],
 			"out": [
 				0.972,
@@ -46406,9 +46490,9 @@
 		},
 		{
 			"pos": [
-				-49.721,
-				6.322,
-				-23.584
+				-49.7,
+				6.323,
+				-23.497
 			],
 			"out": [
 				0.972,
@@ -46420,21 +46504,22 @@
 		{
 			"pos": [
 				-49.801,
-				4.025,
+				4.033,
 				-23.658
 			],
 			"out": [
 				0.972,
 				-0.233
 			],
+			"wide": true,
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.763,
-				6.323,
-				-23.759
+				-49.742,
+				6.325,
+				-23.672
 			],
 			"out": [
 				0.972,
@@ -46446,7 +46531,7 @@
 		{
 			"pos": [
 				-49.843,
-				4.024,
+				4.034,
 				-23.833
 			],
 			"out": [
@@ -46459,9 +46544,9 @@
 		},
 		{
 			"pos": [
-				-49.805,
-				6.325,
-				-23.934
+				-49.784,
+				6.328,
+				-23.847
 			],
 			"out": [
 				0.972,
@@ -46472,9 +46557,9 @@
 		},
 		{
 			"pos": [
-				-49.885,
-				4.023,
-				-24.008
+				-49.826,
+				6.331,
+				-24.022
 			],
 			"out": [
 				0.972,
@@ -46485,49 +46570,21 @@
 		},
 		{
 			"pos": [
-				-49.847,
-				6.327,
-				-24.109
+				-49.977,
+				4.035,
+				-24.263
 			],
 			"out": [
 				0.972,
 				-0.233
 			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.927,
-				4.021,
-				-24.183
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"wide": true,
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.969,
-				4.02,
-				-24.358
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"wide": true,
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
 				-53.957,
-				9.65,
+				9.657,
 				-21.18
 			],
 			"out": [
@@ -46541,7 +46598,7 @@
 		{
 			"pos": [
 				-53.782,
-				9.65,
+				9.658,
 				-21.222
 			],
 			"out": [
@@ -46555,7 +46612,7 @@
 		{
 			"pos": [
 				-53.607,
-				9.651,
+				9.658,
 				-21.264
 			],
 			"out": [
@@ -46569,7 +46626,7 @@
 		{
 			"pos": [
 				-53.432,
-				9.652,
+				9.659,
 				-21.306
 			],
 			"out": [
@@ -46583,7 +46640,7 @@
 		{
 			"pos": [
 				-53.257,
-				9.652,
+				9.659,
 				-21.348
 			],
 			"out": [
@@ -46597,7 +46654,7 @@
 		{
 			"pos": [
 				-53.082,
-				9.652,
+				9.658,
 				-21.39
 			],
 			"out": [
@@ -46611,7 +46668,7 @@
 		{
 			"pos": [
 				-52.907,
-				9.651,
+				9.656,
 				-21.432
 			],
 			"out": [
@@ -46625,7 +46682,7 @@
 		{
 			"pos": [
 				-52.732,
-				9.651,
+				9.655,
 				-21.474
 			],
 			"out": [
@@ -46639,7 +46696,7 @@
 		{
 			"pos": [
 				-52.557,
-				9.65,
+				9.654,
 				-21.516
 			],
 			"out": [
@@ -46653,7 +46710,7 @@
 		{
 			"pos": [
 				-52.382,
-				9.65,
+				9.652,
 				-21.558
 			],
 			"out": [
@@ -46667,7 +46724,7 @@
 		{
 			"pos": [
 				-52.207,
-				9.649,
+				9.651,
 				-21.6
 			],
 			"out": [
@@ -46681,7 +46738,7 @@
 		{
 			"pos": [
 				-52.032,
-				9.649,
+				9.65,
 				-21.642
 			],
 			"out": [
@@ -46723,7 +46780,7 @@
 		{
 			"pos": [
 				-51.507,
-				9.647,
+				9.646,
 				-21.768
 			],
 			"out": [
@@ -46737,7 +46794,7 @@
 		{
 			"pos": [
 				-51.332,
-				9.646,
+				9.645,
 				-21.81
 			],
 			"out": [
@@ -46751,7 +46808,7 @@
 		{
 			"pos": [
 				-51.157,
-				9.646,
+				9.643,
 				-21.852
 			],
 			"out": [
@@ -46765,7 +46822,7 @@
 		{
 			"pos": [
 				-50.982,
-				9.645,
+				9.642,
 				-21.894
 			],
 			"out": [
@@ -46779,7 +46836,7 @@
 		{
 			"pos": [
 				-50.807,
-				9.645,
+				9.641,
 				-21.936
 			],
 			"out": [
@@ -46793,7 +46850,7 @@
 		{
 			"pos": [
 				-50.632,
-				9.644,
+				9.639,
 				-21.978
 			],
 			"out": [
@@ -46807,7 +46864,7 @@
 		{
 			"pos": [
 				-50.457,
-				9.643,
+				9.638,
 				-22.02
 			],
 			"out": [
@@ -46821,7 +46878,7 @@
 		{
 			"pos": [
 				-50.282,
-				9.643,
+				9.637,
 				-22.062
 			],
 			"out": [
@@ -46835,7 +46892,7 @@
 		{
 			"pos": [
 				-50.107,
-				9.642,
+				9.635,
 				-22.104
 			],
 			"out": [
@@ -46849,7 +46906,7 @@
 		{
 			"pos": [
 				-49.931,
-				9.642,
+				9.634,
 				-22.146
 			],
 			"out": [
@@ -46863,7 +46920,7 @@
 		{
 			"pos": [
 				-49.756,
-				9.641,
+				9.633,
 				-22.188
 			],
 			"out": [
@@ -46877,7 +46934,7 @@
 		{
 			"pos": [
 				-49.581,
-				9.641,
+				9.631,
 				-22.23
 			],
 			"out": [
@@ -46891,7 +46948,7 @@
 		{
 			"pos": [
 				-49.406,
-				9.64,
+				9.63,
 				-22.272
 			],
 			"out": [
@@ -46905,7 +46962,7 @@
 		{
 			"pos": [
 				-49.231,
-				9.64,
+				9.629,
 				-22.314
 			],
 			"out": [
@@ -46918,22 +46975,9 @@
 		},
 		{
 			"pos": [
-				-49.928,
-				9.33,
-				-24.831
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-48.757,
-				0.982,
-				-20.043
+				-48.764,
+				0.989,
+				-20.041
 			],
 			"out": [
 				0.972,
@@ -46944,9 +46988,9 @@
 		},
 		{
 			"pos": [
-				-48.828,
-				0.975,
-				-20.339
+				-48.835,
+				0.984,
+				-20.337
 			],
 			"out": [
 				0.972,
@@ -46957,9 +47001,9 @@
 		},
 		{
 			"pos": [
-				-48.899,
-				0.969,
-				-20.636
+				-48.907,
+				0.98,
+				-20.634
 			],
 			"out": [
 				0.972,
@@ -46970,35 +47014,9 @@
 		},
 		{
 			"pos": [
-				-48.97,
-				0.963,
-				-20.932
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.2,
-				0.975,
-				-21.892
-			],
-			"out": [
-				0.972,
-				-0.233
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter3"
-		},
-		{
-			"pos": [
-				-49.273,
+				-48.978,
 				0.974,
-				-22.194
+				-20.931
 			],
 			"out": [
 				0.972,
@@ -47009,9 +47027,35 @@
 		},
 		{
 			"pos": [
-				-49.345,
-				0.973,
-				-22.496
+				-49.208,
+				0.984,
+				-21.89
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.28,
+				0.981,
+				-22.192
+			],
+			"out": [
+				0.972,
+				-0.233
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter3"
+		},
+		{
+			"pos": [
+				-49.353,
+				0.977,
+				-22.494
 			],
 			"out": [
 				0.972,
@@ -47023,7 +47067,7 @@
 		{
 			"pos": [
 				-48.541,
-				4.18,
+				4.185,
 				-20.182
 			],
 			"out": [
@@ -47036,7 +47080,7 @@
 		{
 			"pos": [
 				-48.61,
-				4.183,
+				4.186,
 				-20.469
 			],
 			"out": [
@@ -47049,7 +47093,7 @@
 		{
 			"pos": [
 				-48.679,
-				4.186,
+				4.187,
 				-20.757
 			],
 			"out": [
@@ -47062,7 +47106,7 @@
 		{
 			"pos": [
 				-48.969,
-				4.184,
+				4.178,
 				-21.965
 			],
 			"out": [
@@ -47075,7 +47119,7 @@
 		{
 			"pos": [
 				-49.038,
-				4.187,
+				4.181,
 				-22.252
 			],
 			"out": [
@@ -47088,7 +47132,7 @@
 		{
 			"pos": [
 				-49.107,
-				4.19,
+				4.184,
 				-22.54
 			],
 			"out": [
@@ -47101,7 +47145,7 @@
 		{
 			"pos": [
 				-49.397,
-				4.189,
+				4.2,
 				-23.75
 			],
 			"out": [
@@ -47114,7 +47158,7 @@
 		{
 			"pos": [
 				-49.466,
-				4.184,
+				4.198,
 				-24.038
 			],
 			"out": [
@@ -47127,7 +47171,7 @@
 		{
 			"pos": [
 				-49.535,
-				4.178,
+				4.194,
 				-24.325
 			],
 			"out": [
@@ -47139,9 +47183,9 @@
 		},
 		{
 			"pos": [
-				-55.46,
-				4.191,
-				-24.011
+				-51.52,
+				4.189,
+				-24.957
 			],
 			"out": [
 				-0.233,
@@ -47152,2538 +47196,68 @@
 		},
 		{
 			"pos": [
-				-54.302,
-				13.311,
-				-25.43
+				-51.813,
+				4.189,
+				-24.886
 			],
 			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.633,
-				14.005,
-				-25.659
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.455,
-				14.007,
-				-25.634
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.277,
-				14.009,
-				-25.609
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.116,
-				14.006,
-				-25.676
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-50.225,
-				6.346,
-				-25.122
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.898,
-				9.328,
-				-25.076
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.37,
-				13.996,
-				-25.804
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.536,
-				14.32,
-				-25.918
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.209,
-				13.993,
-				-25.872
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-50.2,
-				6.345,
-				-25.3
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.873,
-				9.326,
-				-25.254
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.57,
-				13.977,
-				-26.105
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.392,
-				13.98,
-				-26.079
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.213,
-				13.983,
-				-26.054
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.847,
-				9.324,
-				-25.432
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.052,
-				13.98,
-				-26.122
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-50.251,
-				7.043,
-				-25.58
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.175,
-				13.279,
-				-26.321
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-50.225,
-				7.043,
-				-25.758
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.797,
-				9.319,
-				-25.788
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.15,
-				13.273,
-				-26.5
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-50.2,
-				7.042,
-				-25.937
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.771,
-				9.317,
-				-25.967
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.125,
-				13.266,
-				-26.678
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-50.174,
-				7.041,
-				-26.115
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.746,
-				9.314,
-				-26.145
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.099,
-				13.26,
-				-26.856
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-50.149,
-				7.04,
-				-26.293
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.721,
-				9.312,
-				-26.323
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.074,
-				13.254,
-				-27.034
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-50.022,
-				6.347,
-				-26.548
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.695,
-				9.309,
-				-26.501
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.048,
-				13.247,
-				-27.212
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.996,
-				6.348,
-				-26.726
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-54.023,
-				13.241,
-				-27.391
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.971,
-				6.349,
-				-26.904
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.644,
-				9.305,
-				-26.858
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.998,
-				13.234,
-				-27.569
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.619,
-				9.304,
-				-27.036
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.972,
-				13.236,
-				-27.747
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.933,
-				6.349,
-				-27.171
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.594,
-				9.307,
-				-27.214
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.947,
-				13.239,
-				-27.925
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.908,
-				6.349,
-				-27.35
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.568,
-				9.31,
-				-27.392
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.921,
-				13.242,
-				-28.103
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.543,
-				9.312,
-				-27.57
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.896,
-				13.244,
-				-28.282
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.904,
-				7.04,
-				-27.804
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.517,
-				9.315,
-				-27.749
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.871,
-				13.247,
-				-28.46
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.908,
-				7.04,
-				-27.986
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.845,
-				13.25,
-				-28.638
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.882,
-				7.04,
-				-28.164
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.467,
-				9.32,
-				-28.105
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.82,
-				13.252,
-				-28.816
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.857,
-				7.039,
-				-28.342
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.441,
-				9.323,
-				-28.283
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.794,
-				13.255,
-				-28.994
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.832,
-				7.038,
-				-28.521
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.416,
-				9.326,
-				-28.461
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.769,
-				13.258,
-				-29.173
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.39,
-				9.329,
-				-28.64
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.744,
-				13.26,
-				-29.351
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.704,
-				6.344,
-				-28.775
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.365,
-				9.331,
-				-28.818
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.718,
-				13.263,
-				-29.529
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.34,
-				9.334,
-				-28.996
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.693,
-				13.266,
-				-29.707
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.675,
-				3.343,
-				-28.135
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_v",
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.467,
-				3.344,
-				-28.105
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_v",
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.288,
-				3.335,
-				-28.08
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"edge": "along_v",
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.832,
-				4.246,
-				-25.438
-			],
-			"out": [
-				0.99,
-				0.141
+				-0.233,
+				-0.972
 			],
 			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
+			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.81,
-				4.246,
-				-25.599
+				-52.105,
+				4.189,
+				-24.816
 			],
 			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.787,
-				4.246,
-				-25.761
-			],
-			"out": [
-				0.99,
-				0.141
+				-0.233,
+				-0.972
 			],
 			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
+			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.764,
-				4.245,
-				-25.922
+				-55.021,
+				4.189,
+				-24.117
 			],
 			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.741,
-				4.245,
-				-26.083
-			],
-			"out": [
-				0.99,
-				0.141
+				-0.233,
+				-0.972
 			],
 			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
+			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.718,
-				4.246,
-				-26.244
+				-55.313,
+				4.187,
+				-24.047
 			],
 			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.515,
-				4.246,
-				-27.664
-			],
-			"out": [
-				0.99,
-				0.141
+				-0.233,
+				-0.972
 			],
 			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
+			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
-				-49.492,
-				4.246,
-				-27.825
+				-55.606,
+				4.185,
+				-23.976
 			],
 			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.469,
-				4.247,
-				-27.987
-			],
-			"out": [
-				0.99,
-				0.141
+				-0.233,
+				-0.972
 			],
 			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.446,
-				4.247,
-				-28.148
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.423,
-				4.247,
-				-28.309
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.4,
-				4.248,
-				-28.47
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.787,
-				7.2,
-				-25.758
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.764,
-				7.202,
-				-25.92
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.741,
-				7.204,
-				-26.081
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.718,
-				7.206,
-				-26.242
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.515,
-				7.201,
-				-27.665
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.492,
-				7.201,
-				-27.826
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.469,
-				7.202,
-				-27.988
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.446,
-				7.202,
-				-28.149
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.423,
-				7.202,
-				-28.31
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-49.4,
-				7.201,
-				-28.471
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter4"
-		},
-		{
-			"pos": [
-				-53.29,
-				10.425,
-				-31.02
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-53.211,
-				10.418,
-				-31.182
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.252,
-				6.244,
-				-29.239
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-53.132,
-				10.412,
-				-31.343
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.172,
-				6.241,
-				-29.401
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-53.052,
-				10.405,
-				-31.505
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.093,
-				6.238,
-				-29.563
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.973,
-				10.398,
-				-31.666
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.014,
-				6.236,
-				-29.724
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.894,
-				10.391,
-				-31.828
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.935,
-				6.232,
-				-29.886
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.815,
-				10.384,
-				-31.99
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.855,
-				6.229,
-				-30.047
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.735,
-				10.377,
-				-32.151
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.776,
-				6.226,
-				-30.209
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.656,
-				10.37,
-				-32.313
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.697,
-				6.223,
-				-30.371
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.577,
-				10.363,
-				-32.474
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.617,
-				6.219,
-				-30.532
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.498,
-				10.356,
-				-32.636
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.538,
-				6.216,
-				-30.694
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.418,
-				10.349,
-				-32.798
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.459,
-				6.213,
-				-30.855
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.339,
-				10.342,
-				-32.959
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-50.992,
-				9.001,
-				-32.299
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-50.831,
-				9.004,
-				-32.219
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-50.669,
-				9.007,
-				-32.14
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-50.507,
-				9.01,
-				-32.061
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-50.346,
-				9.013,
-				-31.982
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-50.184,
-				9.016,
-				-31.902
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-50.023,
-				9.016,
-				-31.823
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.861,
-				9.014,
-				-31.744
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.699,
-				9.012,
-				-31.664
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.538,
-				9.01,
-				-31.585
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.376,
-				9.008,
-				-31.506
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.215,
-				9.006,
-				-31.427
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.38,
-				6.21,
-				-31.017
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.26,
-				10.345,
-				-33.121
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.273,
-				6.208,
-				-31.165
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.18,
-				10.349,
-				-33.282
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.221,
-				6.216,
-				-31.34
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.101,
-				10.352,
-				-33.444
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.142,
-				6.219,
-				-31.502
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.022,
-				10.356,
-				-33.606
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.063,
-				6.223,
-				-31.663
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.943,
-				10.359,
-				-33.767
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.983,
-				6.226,
-				-31.825
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.863,
-				10.363,
-				-33.929
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.904,
-				6.229,
-				-31.987
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.784,
-				10.366,
-				-34.09
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.825,
-				6.233,
-				-32.148
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-52.028,
-				11.05,
-				-34.411
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.866,
-				11.051,
-				-34.331
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.705,
-				11.053,
-				-34.252
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.746,
-				6.236,
-				-32.31
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.531,
-				11.059,
-				-34.267
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.841,
-				11.395,
-				-34.519
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.706,
-				11.06,
-				-34.453
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.666,
-				6.239,
-				-32.472
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.532,
-				11.066,
-				-34.468
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.762,
-				11.397,
-				-34.681
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_v",
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.627,
-				11.069,
-				-34.615
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.587,
-				6.242,
-				-32.633
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.83,
-				11.069,
-				-34.815
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.453,
-				11.076,
-				-34.63
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"wide": true,
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.656,
-				11.076,
-				-34.829
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-51.427,
-				10.382,
-				-34.818
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.389,
-				3.966,
-				-29.708
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.391,
-				3.959,
-				-29.909
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.312,
-				3.96,
-				-30.071
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.232,
-				3.96,
-				-30.232
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.153,
-				3.961,
-				-30.394
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.074,
-				3.961,
-				-30.556
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.399,
-				3.962,
-				-31.728
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.4,
-				3.964,
-				-31.929
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.321,
-				3.963,
-				-32.091
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.241,
-				3.963,
-				-32.252
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.162,
-				3.962,
-				-32.414
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.083,
-				3.961,
-				-32.576
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "ledge",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.856,
-				0.437,
-				-32.765
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"edge": "along_u",
-			"kind": "low",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.062,
-				0.965,
-				-29.577
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.922,
-				0.968,
-				-29.862
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.782,
-				0.973,
-				-30.148
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.642,
-				0.978,
-				-30.433
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-49.05,
-				4.124,
-				-29.618
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.922,
-				4.121,
-				-29.88
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.793,
-				4.117,
-				-30.142
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.665,
-				4.115,
-				-30.405
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-48.06,
-				4.12,
-				-31.636
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.932,
-				4.12,
-				-31.899
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.803,
-				4.12,
-				-32.161
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
-		},
-		{
-			"pos": [
-				-47.674,
-				4.119,
-				-32.423
-			],
-			"out": [
-				0.898,
-				0.44
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter5"
+			"house": "GateStreet/BehindOuter3"
 		},
 		{
 			"pos": [
@@ -49702,13 +47276,14 @@
 		{
 			"pos": [
 				-47.368,
-				6.3,
+				6.306,
 				-33.02
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
@@ -49729,20 +47304,21 @@
 		{
 			"pos": [
 				-47.278,
-				6.299,
+				6.304,
 				-33.176
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-51.008,
-				9.845,
+				9.846,
 				-35.537
 			],
 			"out": [
@@ -49756,7 +47332,7 @@
 		{
 			"pos": [
 				-47.188,
-				6.298,
+				6.302,
 				-33.332
 			],
 			"out": [
@@ -49770,7 +47346,7 @@
 		{
 			"pos": [
 				-50.918,
-				9.841,
+				9.842,
 				-35.693
 			],
 			"out": [
@@ -49784,7 +47360,7 @@
 		{
 			"pos": [
 				-47.098,
-				6.296,
+				6.3,
 				-33.488
 			],
 			"out": [
@@ -49798,7 +47374,7 @@
 		{
 			"pos": [
 				-50.828,
-				9.837,
+				9.839,
 				-35.849
 			],
 			"out": [
@@ -49812,7 +47388,7 @@
 		{
 			"pos": [
 				-47.008,
-				6.295,
+				6.298,
 				-33.644
 			],
 			"out": [
@@ -49826,7 +47402,7 @@
 		{
 			"pos": [
 				-50.738,
-				9.833,
+				9.835,
 				-36.005
 			],
 			"out": [
@@ -49840,7 +47416,7 @@
 		{
 			"pos": [
 				-46.918,
-				6.294,
+				6.296,
 				-33.8
 			],
 			"out": [
@@ -49854,7 +47430,7 @@
 		{
 			"pos": [
 				-50.648,
-				9.829,
+				9.831,
 				-36.16
 			],
 			"out": [
@@ -49868,7 +47444,7 @@
 		{
 			"pos": [
 				-46.828,
-				6.292,
+				6.294,
 				-33.955
 			],
 			"out": [
@@ -49882,21 +47458,8 @@
 		{
 			"pos": [
 				-50.558,
-				9.825,
+				9.828,
 				-36.316
-			],
-			"out": [
-				0.866,
-				0.5
-			],
-			"kind": "roof",
-			"house": "GateStreet/BehindOuter6"
-		},
-		{
-			"pos": [
-				-46.738,
-				6.291,
-				-34.111
 			],
 			"out": [
 				0.866,
@@ -49908,14 +47471,28 @@
 		},
 		{
 			"pos": [
+				-46.738,
+				6.292,
+				-34.111
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"kind": "roof",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
 				-50.468,
-				9.821,
+				9.824,
 				-36.472
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
@@ -49936,13 +47513,14 @@
 		{
 			"pos": [
 				-50.378,
-				9.817,
+				9.821,
 				-36.628
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
@@ -49956,27 +47534,28 @@
 				0.866,
 				0.5
 			],
-			"wide": true,
+			"edge": "along_u",
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-50.288,
-				9.813,
+				9.817,
 				-36.784
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-46.468,
-				6.287,
+				6.285,
 				-34.579
 			],
 			"out": [
@@ -49990,20 +47569,21 @@
 		{
 			"pos": [
 				-50.198,
-				9.809,
+				9.814,
 				-36.94
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-46.378,
-				6.286,
+				6.282,
 				-34.735
 			],
 			"out": [
@@ -50017,20 +47597,21 @@
 		{
 			"pos": [
 				-50.108,
-				9.805,
+				9.81,
 				-37.096
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-46.288,
-				6.284,
+				6.28,
 				-34.891
 			],
 			"out": [
@@ -50044,20 +47625,21 @@
 		{
 			"pos": [
 				-50.018,
-				9.81,
+				9.816,
 				-37.252
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-46.198,
-				6.286,
+				6.283,
 				-35.047
 			],
 			"out": [
@@ -50071,20 +47653,21 @@
 		{
 			"pos": [
 				-49.928,
-				9.815,
+				9.821,
 				-37.408
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-46.108,
-				6.288,
+				6.287,
 				-35.203
 			],
 			"out": [
@@ -50098,13 +47681,14 @@
 		{
 			"pos": [
 				-49.838,
-				9.821,
+				9.827,
 				-37.563
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
@@ -50118,27 +47702,27 @@
 				0.866,
 				0.5
 			],
-			"edge": "along_u",
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-49.748,
-				9.826,
+				9.833,
 				-37.719
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-45.928,
-				6.291,
+				6.292,
 				-35.514
 			],
 			"out": [
@@ -50152,46 +47736,49 @@
 		{
 			"pos": [
 				-49.658,
-				9.832,
+				9.839,
 				-37.875
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-45.838,
-				6.292,
+				6.294,
 				-35.67
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-49.568,
-				9.837,
+				9.844,
 				-38.031
 			],
 			"out": [
 				0.866,
 				0.5
 			],
+			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-45.748,
-				6.294,
+				6.297,
 				-35.826
 			],
 			"out": [
@@ -50205,7 +47792,7 @@
 		{
 			"pos": [
 				-49.478,
-				9.843,
+				9.85,
 				-38.187
 			],
 			"out": [
@@ -50219,7 +47806,7 @@
 		{
 			"pos": [
 				-45.658,
-				6.296,
+				6.299,
 				-35.982
 			],
 			"out": [
@@ -50233,7 +47820,7 @@
 		{
 			"pos": [
 				-49.725,
-				10.531,
+				10.547,
 				-38.538
 			],
 			"out": [
@@ -50247,7 +47834,7 @@
 		{
 			"pos": [
 				-49.569,
-				10.532,
+				10.55,
 				-38.448
 			],
 			"out": [
@@ -50261,7 +47848,7 @@
 		{
 			"pos": [
 				-49.414,
-				10.533,
+				10.552,
 				-38.358
 			],
 			"out": [
@@ -50275,7 +47862,7 @@
 		{
 			"pos": [
 				-49.258,
-				10.535,
+				10.554,
 				-38.268
 			],
 			"out": [
@@ -50289,7 +47876,7 @@
 		{
 			"pos": [
 				-45.568,
-				6.297,
+				6.302,
 				-36.138
 			],
 			"out": [
@@ -50303,7 +47890,7 @@
 		{
 			"pos": [
 				-49.505,
-				10.879,
+				10.896,
 				-38.619
 			],
 			"out": [
@@ -50317,7 +47904,7 @@
 		{
 			"pos": [
 				-49.375,
-				10.542,
+				10.559,
 				-38.544
 			],
 			"out": [
@@ -50330,7 +47917,7 @@
 		{
 			"pos": [
 				-49.22,
-				10.544,
+				10.561,
 				-38.454
 			],
 			"out": [
@@ -50344,7 +47931,7 @@
 		{
 			"pos": [
 				-45.478,
-				6.299,
+				6.304,
 				-36.294
 			],
 			"out": [
@@ -50358,7 +47945,7 @@
 		{
 			"pos": [
 				-49.415,
-				10.882,
+				10.899,
 				-38.775
 			],
 			"out": [
@@ -50371,9 +47958,9 @@
 		},
 		{
 			"pos": [
-				-49.285,
-				10.553,
-				-38.7
+				-49.311,
+				10.568,
+				-38.715
 			],
 			"out": [
 				0.866,
@@ -50384,9 +47971,9 @@
 		},
 		{
 			"pos": [
-				-49.13,
-				10.555,
-				-38.61
+				-49.156,
+				10.57,
+				-38.625
 			],
 			"out": [
 				0.866,
@@ -50399,7 +47986,7 @@
 		{
 			"pos": [
 				-45.388,
-				6.301,
+				6.307,
 				-36.45
 			],
 			"out": [
@@ -50413,7 +48000,7 @@
 		{
 			"pos": [
 				-49.5,
-				10.554,
+				10.57,
 				-38.928
 			],
 			"out": [
@@ -50427,7 +48014,7 @@
 		{
 			"pos": [
 				-49.325,
-				10.562,
+				10.577,
 				-38.931
 			],
 			"out": [
@@ -50440,7 +48027,7 @@
 		{
 			"pos": [
 				-49.169,
-				10.565,
+				10.578,
 				-38.841
 			],
 			"out": [
@@ -50453,7 +48040,7 @@
 		{
 			"pos": [
 				-49.014,
-				10.566,
+				10.581,
 				-38.751
 			],
 			"out": [
@@ -50466,21 +48053,20 @@
 		{
 			"pos": [
 				-45.298,
-				6.302,
+				6.309,
 				-36.606
 			],
 			"out": [
 				0.866,
 				0.5
 			],
-			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-49.073,
-				9.867,
+				9.876,
 				-38.888
 			],
 			"out": [
@@ -50493,14 +48079,13 @@
 		{
 			"pos": [
 				-45.208,
-				6.304,
+				6.312,
 				-36.761
 			],
 			"out": [
 				0.866,
 				0.5
 			],
-			"wide": true,
 			"kind": "roof",
 			"house": "GateStreet/BehindOuter6"
 		},
@@ -50514,43 +48099,69 @@
 				0.866,
 				0.5
 			],
-			"edge": "along_u",
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-47.327,
-				3.999,
+				3.998,
 				-33.932
 			],
 			"out": [
 				0.866,
 				0.5
 			],
-			"edge": "along_u",
+			"wide": true,
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-47.237,
-				3.999,
+				3.997,
 				-34.088
 			],
 			"out": [
 				0.866,
 				0.5
 			],
-			"edge": "along_u",
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-47.147,
-				4.0,
+				3.997,
 				-34.243
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"wide": true,
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-47.057,
+				3.996,
+				-34.399
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"wide": true,
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-46.619,
+				3.31,
+				-34.978
 			],
 			"out": [
 				0.866,
@@ -50562,9 +48173,23 @@
 		},
 		{
 			"pos": [
-				-47.057,
-				4.0,
-				-34.399
+				-46.529,
+				3.31,
+				-35.134
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"edge": "along_u",
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-46.439,
+				3.31,
+				-35.29
 			],
 			"out": [
 				0.866,
@@ -50577,50 +48202,48 @@
 		{
 			"pos": [
 				-46.292,
-				4.005,
+				3.999,
 				-35.724
 			],
 			"out": [
 				0.866,
 				0.5
 			],
-			"edge": "along_u",
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-46.202,
-				4.005,
+				4.0,
 				-35.88
 			],
 			"out": [
 				0.866,
 				0.5
 			],
-			"edge": "along_u",
+			"wide": true,
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-46.112,
-				4.005,
+				4.001,
 				-36.036
 			],
 			"out": [
 				0.866,
 				0.5
 			],
-			"edge": "along_u",
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
-				-45.755,
+				-45.807,
 				3.35,
-				-35.934
+				-35.964
 			],
 			"out": [
 				0.866,
@@ -50632,9 +48255,23 @@
 		},
 		{
 			"pos": [
-				-45.599,
-				3.342,
-				-35.844
+				-45.651,
+				3.345,
+				-35.874
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"edge": "along_v",
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-45.496,
+				3.338,
+				-35.784
 			],
 			"out": [
 				0.866,
@@ -50647,22 +48284,34 @@
 		{
 			"pos": [
 				-46.022,
-				4.004,
+				4.002,
 				-36.192
 			],
 			"out": [
 				0.866,
 				0.5
 			],
-			"edge": "along_u",
 			"kind": "ledge",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
 				-45.932,
-				4.003,
+				4.002,
 				-36.348
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"kind": "ledge",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-45.674,
+				3.317,
+				-36.615
 			],
 			"out": [
 				0.866,
@@ -50674,9 +48323,9 @@
 		},
 		{
 			"pos": [
-				-47.081,
-				0.97,
-				-33.534
+				-47.088,
+				0.982,
+				-33.538
 			],
 			"out": [
 				0.866,
@@ -50687,8 +48336,60 @@
 		},
 		{
 			"pos": [
-				-46.929,
-				0.969,
+				-46.936,
+				0.981,
+				-33.802
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-46.783,
+				0.98,
+				-34.066
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-46.631,
+				0.977,
+				-34.33
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-47.063,
+				4.16,
+				-33.545
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-46.917,
+				4.158,
 				-33.798
 			],
 			"out": [
@@ -50700,9 +48401,9 @@
 		},
 		{
 			"pos": [
-				-46.776,
-				0.969,
-				-34.062
+				-46.771,
+				4.155,
+				-34.051
 			],
 			"out": [
 				0.866,
@@ -50713,9 +48414,9 @@
 		},
 		{
 			"pos": [
-				-46.624,
-				0.968,
-				-34.326
+				-46.625,
+				4.153,
+				-34.304
 			],
 			"out": [
 				0.866,
@@ -50726,9 +48427,22 @@
 		},
 		{
 			"pos": [
-				-47.079,
+				-45.938,
+				4.159,
+				-35.493
+			],
+			"out": [
+				0.866,
+				0.5
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-45.792,
 				4.16,
-				-33.554
+				-35.746
 			],
 			"out": [
 				0.866,
@@ -50739,9 +48453,9 @@
 		},
 		{
 			"pos": [
-				-46.933,
-				4.159,
-				-33.807
+				-45.646,
+				4.162,
+				-35.999
 			],
 			"out": [
 				0.866,
@@ -50752,9 +48466,9 @@
 		},
 		{
 			"pos": [
-				-46.786,
-				4.158,
-				-34.06
+				-45.5,
+				4.164,
+				-36.252
 			],
 			"out": [
 				0.866,
@@ -50765,65 +48479,78 @@
 		},
 		{
 			"pos": [
-				-46.64,
-				4.158,
-				-34.313
-			],
-			"out": [
-				0.866,
-				0.5
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter6"
-		},
-		{
-			"pos": [
-				-45.947,
-				4.163,
-				-35.498
-			],
-			"out": [
-				0.866,
-				0.5
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter6"
-		},
-		{
-			"pos": [
-				-45.801,
-				4.163,
-				-35.751
-			],
-			"out": [
-				0.866,
-				0.5
-			],
-			"kind": "rim",
-			"house": "GateStreet/BehindOuter6"
-		},
-		{
-			"pos": [
-				-45.655,
+				-49.739,
 				4.161,
-				-36.004
+				-33.853
 			],
 			"out": [
-				0.866,
-				0.5
+				-0.5,
+				0.866
 			],
 			"kind": "rim",
 			"house": "GateStreet/BehindOuter6"
 		},
 		{
 			"pos": [
-				-45.516,
-				4.159,
-				-36.261
+				-49.483,
+				4.161,
+				-33.705
 			],
 			"out": [
-				0.866,
-				0.5
+				-0.5,
+				0.866
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-49.227,
+				4.16,
+				-33.557
+			],
+			"out": [
+				-0.5,
+				0.866
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-52.857,
+				4.157,
+				-35.653
+			],
+			"out": [
+				-0.5,
+				0.866
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-52.601,
+				4.159,
+				-35.505
+			],
+			"out": [
+				-0.5,
+				0.866
+			],
+			"kind": "rim",
+			"house": "GateStreet/BehindOuter6"
+		},
+		{
+			"pos": [
+				-52.345,
+				4.16,
+				-35.357
+			],
+			"out": [
+				-0.5,
+				0.866
 			],
 			"kind": "rim",
 			"house": "GateStreet/BehindOuter6"
@@ -50831,7 +48558,7 @@
 		{
 			"pos": [
 				-46.465,
-				4.163,
+				4.157,
 				-38.046
 			],
 			"out": [
@@ -50844,7 +48571,7 @@
 		{
 			"pos": [
 				-46.721,
-				4.163,
+				4.155,
 				-38.194
 			],
 			"out": [
@@ -50857,7 +48584,7 @@
 		{
 			"pos": [
 				-46.977,
-				4.162,
+				4.153,
 				-38.341
 			],
 			"out": [
@@ -50870,7 +48597,7 @@
 		{
 			"pos": [
 				-49.582,
-				4.167,
+				4.159,
 				-39.846
 			],
 			"out": [
@@ -50883,7 +48610,7 @@
 		{
 			"pos": [
 				-49.839,
-				4.168,
+				4.161,
 				-39.994
 			],
 			"out": [
@@ -50896,7 +48623,7 @@
 		{
 			"pos": [
 				-50.095,
-				4.168,
+				4.162,
 				-40.141
 			],
 			"out": [
@@ -51450,39 +49177,7 @@
 			"width": 5.5,
 			"depth": 8.0,
 			"eaves": 7.2,
-			"top": 9.66
-		},
-		{
-			"name": "GateStreet/BehindOuter4",
-			"front": [
-				-49.997,
-				0.0,
-				-27.009
-			],
-			"out": [
-				0.99000084400177,
-				0.141061514616013
-			],
-			"width": 4.5,
-			"depth": 8.0,
-			"eaves": 6.4,
-			"top": 13.96
-		},
-		{
-			"name": "GateStreet/BehindOuter5",
-			"front": [
-				-48.707,
-				0.0,
-				-31.189
-			],
-			"out": [
-				0.897802412509918,
-				0.44039848446846
-			],
-			"width": 4.5,
-			"depth": 8.0,
-			"eaves": 6.4,
-			"top": 11.05
+			"top": 9.67
 		},
 		{
 			"name": "GateStreet/BehindOuter6",
@@ -51498,7 +49193,7 @@
 			"width": 4.5,
 			"depth": 8.0,
 			"eaves": 6.4,
-			"top": 10.52
+			"top": 10.55
 		}
 	],
 	"birdhouse": {
@@ -51922,20 +49617,6 @@
 			"length": 1.08,
 			"depth": 0.1,
 			"house": "GateStreet/BehindInner2"
-		},
-		{
-			"pos": [
-				-50.078,
-				0.804,
-				-25.889
-			],
-			"out": [
-				0.99,
-				0.141
-			],
-			"length": 1.08,
-			"depth": 0.12,
-			"house": "GateStreet/BehindOuter4"
 		}
 	]
 }
