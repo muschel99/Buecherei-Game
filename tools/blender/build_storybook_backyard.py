@@ -5,8 +5,9 @@ Straße in den Garten (keine Türen anderer Häuser). Rechts endet er an einer G
 einer Mauer hinter dem Nachbarn des Modegeschäfts, hinten an einer Mauer; vorn liegen die Rückseiten der Häuser. Ein Bach kommt
 links vorn aus einem gewölbten Tunnel, fließt in einem Bogen durch den Garten und verschwindet rechts hinten im zweiten Tunnel;
 eine gewölbte Holzbrücke führt hinüber zum Platz des Holzhäuschens (hinten links, Zettel 05). Am Ufer Steine, Schilf und
-Rohrkolben. Der Baum mit der runden Bank und das Vogelbad bleiben, wo sie im kleinen Garten waren. Hinter den Mauern Bäume
-(Pflanzplätze) und eine Häuserreihe mit Lücken (viel Himmel). Die Rückseiten der Häuser ringsum bekommen eine Haut mit Fenstern,
+Rohrkolben. Der Baum mit der runden Bank steht nahe am Pub, die Vogeltränke schräg dahinter. Rund um den Garten (Testrunde 02:
+die Stadt geht weiter, viel Himmel bleibt) Wohnhäuser hinter den Mauern – hinten eine Reihe mit Lücken und weiter weg noch ein
+paar Dächer, rechts und links je zwei Häuser –, Bäume dazwischen (Pflanzplätze) und Wiese unter allem. Die Rückseiten der Häuser ringsum bekommen eine Haut mit Fenstern,
 die auf der Wand sitzen (Rahmen, Scheibe, zugezogene Vorhänge, manchmal Fensterläden) – die Häuser haben hinten nur glatte Wände.
 
 Aufruf (Terminal, im Projektordner):
@@ -263,7 +264,13 @@ def garden_wall(M, C, name, p0, p1, rnd, kind="brick_c", gap=None):
             ring.slab(pts, 0.32, T.wall_matrix(p0, p1) @ Matrix.Translation((0, 0, -0.31)), dent=0.002)
         ring.build()
         tunnel(M, C, name + " Tunnel", p0, p1, a0, a1, spring, rise, rnd)
-    A.plinth_run(M, C, name + " Sockel", p0, p1, rnd, z_top=0.32)
+    # Feldsteinsockel – an der Tunnelöffnung unterbrochen (dort fließt der Bach hindurch; Wunsch der Entwicklerin)
+    for i, (a0, a1) in enumerate(pieces):
+        if a1 - a0 < 0.1:
+            continue
+        q0 = (p0[0] + (p1[0] - p0[0]) * a0 / length, p0[1] + (p1[1] - p0[1]) * a0 / length)
+        q1 = (p0[0] + (p1[0] - p0[0]) * a1 / length, p0[1] + (p1[1] - p0[1]) * a1 / length)
+        A.plinth_run(M, C, "%s Sockel %d" % (name, i), q0, q1, rnd, z_top=0.32)
 
 
 def walls(M, C, rnd):
@@ -368,8 +375,11 @@ def house_skin(M, C, name, x0, x1, back_z, eaves, rnd, kind="brick", wall="brick
     side = rnd.random() < 0.5
     if from_y > 0.1:
         return
-    px = length - 0.25 if side else 0.25
-    m = T.wall_matrix(p0, p1, px, 0.0, 0.0)
+    drain_pipe(M, C, name, T.wall_matrix(p0, p1, length - 0.25 if side else 0.25, 0.0, 0.0), eaves, rnd)
+
+
+def drain_pipe(M, C, name, m, eaves, rnd):
+    """Fallrohr aus Zink von der Traufe bis zum Boden, mit Schellen (m = Wandebene an der Stelle des Rohrs, unten)."""
     pipe = Body(name + " Fallrohr", M["zinc"], C["walls"], seed=rnd.randrange(999), vary=0.03)
     pipe.tube([m @ Vector((0, 0.05, 0.08)), m @ Vector((0, eaves - 0.15, 0.08))], 0.04, segs=10, round_ends=True)
     pipe.tube([m @ Vector((0, 0.18, 0.08)), m @ Vector((0, 0.05, 0.2))], 0.04, segs=10, round_ends=True)
@@ -422,14 +432,159 @@ def house_backs(M, C, rnd):
         surface_window(M, C, "Bücherei hinten Fenster %d" % k, T.wall_matrix(p0, p1, x, 4.0, 0.0), 0.9, 1.35, rnd, curtain="curtain_b")
 
 
-def back_row(M, C, rnd):
-    """Hinter der hinteren Mauer: Rückseiten von Häusern der nächsten Straße – mit Lücken (dort viel Himmel und Bäume)."""
-    z = BACK_Z + 2.2
-    for k, (x0, x1, wall, roof, h) in enumerate(((RIGHT_X - 5.4, RIGHT_X - 0.6, "brick_b", "slate_roof", 7.0),
-                                                 (RIGHT_X + 2.4, RIGHT_X + 8.0, "plaster_a", "h_roof", 6.6),
-                                                 (RIGHT_X + 11.2, RIGHT_X + 16.4, "plaster_b", "slate_roof", 6.9))):
-        # (hinter der linken Ecke kein Haus mehr: dort schaut man aus dem hinteren Fenster des Häuschens auf Wiese und Bäume)
-        A.gable_house(M, C, "Haus hinter dem Garten %d" % (k + 1), x0, x1, z, h, wall, rnd, roof_mat=roof)
+def town_house(M, C, name, a, b, depth, eaves, wall, roof, rnd, gable=False, garden=None, sides=True, attic=True):
+    """Wohnhaus hinter der Gartenmauer (Testrunde 02: die Stadt geht weiter). Man kommt nicht hin, sieht es aber über die Mauer
+    und aus den Fenstern des Häuschens – darum rundum ein geschlossener Hauskörper. a, b = Ecken der Seite zum Garten (Godot
+    x/z), das Haus reicht depth nach hinten. Satteldach: Traufe zum Garten oder (gable) Giebel zum Garten. Fenster mit
+    Vorhängen auf der Gartenseite (zwei Geschosse) und auf den Seiten, Fallrohr, Schornstein (kein Sockel: den verdeckt die
+    Gartenmauer).
+    garden = Punkt (Godot x/z), zu dem die Gartenseite zeigt."""
+    gx, gz = garden if garden else ((RIGHT_X + LEFT_X) / 2, (PUB_BACK + BACK_Z) / 2)
+    p0, p1 = facing(G(*a), G(*b), G(gx, gz))
+    length = T.seg_len(p0, p1)
+    fm = T.wall_matrix(p0, p1)
+    d = Vector((p1[0] - p0[0], p1[1] - p0[1], 0.0)).normalized()
+    n = Vector((d.y, -d.x, 0.0))                       # zum Garten
+    q0 = (p0[0] - n.x * depth, p0[1] - n.y * depth)
+    q1 = (p1[0] - n.x * depth, p1[1] - n.y * depth)
+    pitch = rnd.uniform(44.0, 50.0)
+    over = 0.25                                         # Dachüberstand
+    kind = "plaster" if wall.startswith("plaster") else "brick"
+    # Hauskörper: ein geschlossener Kasten bis knapp unter die Dachfläche
+    body = Body(name, M[wall], C["walls"], seed=rnd.randrange(999), vary=0.03, bevel=0.012)
+    body.box((length / 2, (eaves + 0.1) / 2, -depth / 2), (length, eaves + 0.1, depth), step=0.8, dent=0.004, dent_scale=1.5,
+             matrix=fm)
+    body.build()
+    # Giebel (Fünfeck, folgt der Dachunterseite, 2 mm hinter der Wand) und Dach
+    span = (depth if not gable else length) / 2 + over
+    ridge = eaves + span * math.tan(math.radians(pitch))
+    rise_at_wall = eaves + over * math.tan(math.radians(pitch)) - 0.12
+    if gable:
+        ends = ((p0, p1), (q1, q0))
+        width = length
+        center = Vector(((p0[0] + q1[0]) / 2, (p0[1] + q1[1]) / 2, 0.0))
+        frame = Matrix(((-n.x, -d.x, 0, center.x), (-n.y, -d.y, 0, center.y), (0, 0, 1, 0), (0, 0, 0, 1)))
+        roof_len = depth
+    else:
+        ends = ((p1, q1), (q0, p0))
+        width = depth
+        center = Vector(((p0[0] + q1[0]) / 2, (p0[1] + q1[1]) / 2, 0.0))
+        frame = Matrix(((d.x, -n.x, 0, center.x), (d.y, -n.y, 0, center.y), (0, 0, 1, 0), (0, 0, 0, 1)))
+        roof_len = length
+    gb = Body(name + " Giebel", M[wall], C["walls"], seed=rnd.randrange(999), vary=0.03)
+    for e0, e1 in ends:
+        gb.slab([(0.0, eaves - 0.05), (width, eaves - 0.05), (width, rise_at_wall), (width / 2, ridge - 0.12), (0.0, rise_at_wall)],
+                0.3, T.wall_matrix(e0, e1) @ Matrix.Translation((0, 0, -0.302)), dent=0.003)
+    gb.build()
+    # schlichte, etwas größere Ziegelreihen: die Häuser stehen 8–25 m weit weg (spart viele Dreiecke)
+    T.cozy_roof(M, C, name + " Dach", frame, roof_len, span, eaves, pitch, roof, cap_mat="h_roof_cap", ends=(over, over),
+                seed=rnd.randrange(999), verge=True, front_simple=True, tile_w=0.42, row=0.32)
+    # Schornstein auf dem First (etwas aus der Mitte)
+    along = rnd.choice((-1, 1)) * roof_len * rnd.uniform(0.18, 0.3)
+    ax = frame @ Vector((along, 0.25, 0.0))
+    T.chimney(M, C, name + " Schornstein", (ax.x, ax.y, ridge - 0.8), (0.55, 0.45), ridge + 0.9, "brick_a", pots=rnd.choice((1, 2)),
+              seed=rnd.randrange(999))
+    # Fenster: Gartenseite zwei Geschosse, beim Giebel eins oben im Dreieck; die Seiten etwas weniger
+    shutter = rnd.choice(("shutter_a", "shutter_b", None))
+    curtain = rnd.choice(("curtain", "curtain_b", "curtain_c"))
+    walls_out = [(p0, p1, 1.0)] + ([(p1, q1, 0.55), (q0, p0, 0.55)] if sides else [])
+    k = 0
+    for w0, w1, chance in walls_out:
+        wl = T.seg_len(w0, w1)
+        count = max(1, int((wl - 0.8) / 2.3))
+        for i in range(count):
+            x = wl * (i + 0.5) / count + rnd.uniform(-0.15, 0.15)
+            for y0 in (0.95, 3.85):
+                if y0 + 1.25 > eaves - 0.3 or rnd.random() > chance:
+                    continue
+                surface_window(M, C, "%s Fenster %d" % (name, k), T.wall_matrix(w0, w1, x, y0, 0.0), 0.8, 1.25, rnd,
+                               shutters=shutter if y0 < 2.0 else None, curtain=curtain)
+                k += 1
+    if gable and attic:
+        surface_window(M, C, name + " Giebelfenster", T.wall_matrix(p0, p1, length / 2, eaves + 0.3, 0.0), 0.6, 0.85, rnd,
+                       curtain=curtain)
+    drain_pipe(M, C, name, T.wall_matrix(p0, p1, length - 0.22 if rnd.random() < 0.5 else 0.22, 0.0, 0.0), eaves, rnd)
+
+
+def town_around(M, C, rnd):
+    """Häuser rund um den Garten (Testrunde 02: man soll sehen, dass die Stadt weitergeht; viel Himmel bleibt): hinter der
+    hinteren Mauer die Rückseiten der nächsten Straße (mit Lücken), dahinter weiter weg noch ein paar Dächer; rechts hinter der
+    Mauer (neben dem Pub) und links hinter der Mauer (hinter dem Modeladen) je zwei Häuser mit Gärten. Hinter der linken Ecke
+    bleibt Wiese (Blick aus dem hinteren Fenster des Häuschens). Liefert Pflanzplätze für Bäume dazwischen."""
+    bz = BACK_Z + 2.2
+    # hinten: wie bisher drei Häuser mit Lücken, jetzt rundum geschlossen und belebter
+    # (die Lücken sind 4 m breit: dort stehen Bäume, deren Kronen – etwa 3,5 m – nicht an die Häuser stoßen)
+    for k, (x0, x1, wall, roof, h, gable) in enumerate(((RIGHT_X - 5.8, RIGHT_X - 1.2, "brick_b", "slate_roof", 7.0, True),
+                                                        (RIGHT_X + 2.8, RIGHT_X + 7.6, "plaster_a", "h_roof", 6.6, False),
+                                                        (RIGHT_X + 11.6, RIGHT_X + 16.6, "plaster_b", "slate_roof", 6.9, True))):
+        town_house(M, C, "Haus hinter dem Garten %d" % (k + 1), (x0, bz), (x1, bz), 6.0, h, wall, roof, rnd, gable=gable)
+    # weiter hinten: Dächer der übernächsten Häuser (man sieht sie in den Lücken)
+    for k, (x0, x1, z, wall, roof, h, gable) in enumerate(((-27.0, -21.4, 35.5, "brick_c", "slate_roof", 7.4, False),
+                                                           (-14.2, -8.8, 37.0, "plaster_a", "h_roof", 8.0, True),
+                                                           (-5.6, 0.6, 36.2, "brick_a", "h_roof", 7.2, False))):
+        town_house(M, C, "Haus weiter hinten %d" % (k + 1), (x0, z), (x1, z), 6.5, h, wall, roof, rnd, gable=gable, sides=False,
+                   garden=((x0 + x1) / 2, z - 10.0))
+    # rechts (neben dem Pub) und links (hinter dem Modeladen): Gartenseite zum Garten
+    for name, a, b, depth, h, wall, roof, gable in (
+            ("Haus rechts 1", (-19.0, 14.2), (-19.0, 8.4), 7.0, 6.8, "plaster_b", "slate_roof", False),
+            ("Haus rechts 2", (-20.2, 21.8), (-20.2, 17.0), 6.5, 6.2, "brick_a", "h_roof", True),
+            ("Haus links 1", (18.6, 6.8), (18.6, 12.4), 6.5, 7.2, "brick_c", "slate_roof", False),
+            ("Haus links 2", (20.0, 14.2), (20.0, 18.6), 6.0, 5.4, "plaster_a", "h_roof", True)):
+        town_house(M, C, name, a, b, depth, h, wall, roof, rnd, gable=gable)
+    # quer am Ende der Seitenstraße (gerades Ende, sie endet bei z = 9,9): von der Straße sieht man sie nie, aber vom Häuschen
+    # aus schließen sie den Blick nach links (die Rückseite mit Fenstern zeigt zum Häuschen)
+    cottage = (COTTAGE[0], COTTAGE[1])
+    # (mit einem Durchgang dazwischen: die Dächer stoßen nicht aneinander)
+    for name, a, b, h, wall, roof, gable in (("Haus am Ende der Seitenstraße 1", (29.6, 18.0), (35.0, 18.0), 7.0, "plaster_b", "h_roof", False),
+                                             ("Haus am Ende der Seitenstraße 2", (36.0, 18.0), (41.4, 18.0), 7.6, "brick_b", "slate_roof", True)):
+        town_house(M, C, name, a, b, 6.8, h, wall, roof, rnd, gable=gable, garden=cottage)
+    spots = []
+    # (Kronen etwa 3,5 m breit: so gesetzt, dass sie an kein Haus stoßen). Alles hinter den Mauern sind sparsame Bäume
+    # (Hinweis "far": tree_far, ein Bruchteil der Dreiecke). Die zweite Gruppe steht locker weiter draußen auf der Wiese – vor
+    # allem im Blick aus dem hinteren Fenster des Häuschens, dort sieht man so kein Ende der Wiese
+    for x, z, h in ((-16.6, 15.8, 7.0), (-22.6, 25.4, 8.0), (7.4, 33.4, 7.0), (15.8, 8.2, 7.0), (16.0, 13.6, 6.5),
+                    (23.6, 21.0, 8.0),
+                    (24.5, 33.0, 8.0), (29.0, 27.5, 7.0), (19.5, 39.5, 8.0), (31.5, 38.0, 8.0), (26.0, 46.0, 7.0), (37.0, 31.0, 8.0),
+                    (12.0, 44.0, 7.5), (-6.0, 45.5, 8.0), (-31.0, 26.0, 8.0)):
+        q = G(x, z)
+        spots.append(("tree", (q[0], q[1], 0.0), (4.6, 4.6, h), 0.0, "far"))
+    return spots
+
+
+def outside_ground(M, C):
+    """Wiese hinter den Mauern unter den Häusern und Bäumen ringsum (vom Garten sieht man sie nicht, aus den Fenstern des
+    Häuschens schon). Lässt die Mauern (0,34 m dick mit Krone), die Tunnel des Bachs und die Wiese hinter dem Häuschen frei."""
+    m = 0.36
+    zl = stream_z_at(LEFT_X)
+    # (weit hinaus, damit man aus den Fenstern des Häuschens kein Ende sieht; links vorn nur bis x = 29: dahinter liegt die
+    # Seitenstraße am geraden Ende)
+    far = 90.0
+    rects = [
+        (-40.0, PUB_BACK + 0.1, RIGHT_X - m, BACK_Z + m),                   # rechts (vor dem Tunnel)
+        (-40.0, BACK_Z + m, BACK_END_X - 4.0, far),                          # hinten
+        (BACK_END_X - 4.0, BACK_Z + 3.6, LEFT_X + 6.6, far),                # hinter der Wiese am Häuschen
+        (LEFT_X + 6.6, ROW_BACK + 0.3, 29.0, far),                           # links, hinter dem Zaun
+        (29.0, 12.0, far, far),                                              # (die Seitenstraße endet bei z = 9,9)
+        (LEFT_X + m, ROW_BACK + 0.3, LEFT_X + 6.6, zl - STREAM_W / 2 - 0.6),  # links vorn, vor dem Tunnel
+        (LEFT_X + 3.0, zl - STREAM_W / 2 - 0.6, LEFT_X + 6.6, zl + STREAM_W / 2 + 0.6),
+        (LEFT_X + m, zl + STREAM_W / 2 + 0.6, LEFT_X + 6.6, LEFT_END_Z - 5.0),
+    ]
+    zr = stream_z_at(RIGHT_X)
+    tunnel_r = (RIGHT_X - 3.0, zr - STREAM_W / 2 - 0.6, RIGHT_X, zr + STREAM_W / 2 + 0.6)
+    pieces = []
+    for (x0, z0, x1, z1) in rects:
+        # der rechte Tunnel ragt in das erste Stück: dort aussparen
+        if x1 > tunnel_r[0] and x0 < tunnel_r[2] and z1 > tunnel_r[1] and z0 < tunnel_r[3]:
+            pieces += [(x0, z0, x1, tunnel_r[1]), (x0, tunnel_r[1], tunnel_r[0], tunnel_r[3]), (x0, tunnel_r[3], x1, z1)]
+        else:
+            pieces.append((x0, z0, x1, z1))
+    for i, (x0, z0, x1, z1) in enumerate(pieces):
+        if x1 - x0 < 0.05 or z1 - z0 < 0.05:
+            continue
+        (ax, ay), (bx, by) = G(x0, z0), G(x1, z1)
+        lw = Body("Wiese ringsum %d" % i, M["lawn"], C["deco"], seed=490 + i, vary=0.12)
+        lw.box(((ax + bx) / 2, (ay + by) / 2, 0.011), (abs(bx - ax) - 0.004, abs(by - ay) - 0.004, 0.022), step=4.0, dent=0.004)
+        lw.build()
 
 
 # --- Bach ---
@@ -587,6 +742,7 @@ def beyond_cottage(M, C, rnd):
     for x, z in ((LEFT_X + 4.0, LEFT_END_Z - 2.5), (BACK_END_X + 2.3, BACK_Z + 4.0), (LEFT_X + 5.0, BACK_Z + 1.2),
                  (LEFT_X + 2.4, BACK_Z + 5.6), (LEFT_X + 7.4, BACK_Z + 4.4)):
         q = G(x, z)
+        # (normale Gartenbäume: sie stehen nah vor dem hinteren Fenster, die sparsamen hätten dort zu große Blätter)
         spots.append(("tree", (q[0], q[1], 0.0), (4.6, 4.6, 8.0), 0.0))
     for (x, z, length, face) in ((LEFT_X + 6.2, LEFT_END_Z - 1.0, 5.0, 270.0), (LEFT_X + 3.0, BACK_Z + 3.2, 4.4, 180.0)):
         q = G(x, z)
@@ -612,7 +768,8 @@ def backyard(M, C, rnd):
     stepping_stones(M, C, rnd)
     garden_walls = walls(M, C, rnd)
     house_backs(M, C, rnd)
-    back_row(M, C, rnd)
+    spots_town = town_around(M, C, rnd)
+    outside_ground(M, C)
     stream(M, C, rnd)
     reeds(M, C, rnd)
     bridge(M, C, rnd)
@@ -624,10 +781,10 @@ def backyard(M, C, rnd):
     p = G(tx, tz)
     spots.append(("tree", (p[0], p[1], 0.0), (5.6, 7.4, 10.0), 0.0, "garden"))
     # Bäume hinter den Mauern (die Natur kommt mehr heraus; Gartenbäume aus der Pflanzen-Bibliothek)
-    for x, z in ((RIGHT_X - 2.6, PUB_BACK + 4.5), (RIGHT_X - 3.0, BACK_Z - 3.0), (RIGHT_X + 0.9, BACK_Z + 2.4),
-                 (RIGHT_X + 9.6, BACK_Z + 2.2), (LEFT_X + 2.6, PUB_BACK + 6.0)):
+    for x, z in ((RIGHT_X - 2.6, PUB_BACK + 4.5), (RIGHT_X - 3.0, BACK_Z - 3.0), (RIGHT_X + 0.8, BACK_Z + 2.4),
+                 (RIGHT_X + 9.6, BACK_Z + 2.4), (LEFT_X + 2.6, PUB_BACK + 6.0)):
         q = G(x, z)
-        spots.append(("tree", (q[0], q[1], 0.0), (4.6, 4.6, 8.0), 0.0))
+        spots.append(("tree", (q[0], q[1], 0.0), (4.6, 4.6, 8.0), 0.0, "far"))
     # Beete an den Mauern (die Pflanzen setzt Greenery ein): rechts vor dem Tunnel, hinten zwischen Bach und Mauer bis zum
     # Häuschen, links zwischen Tunnel und Häuschen
     zr = stream_z_at(RIGHT_X)
@@ -639,6 +796,7 @@ def backyard(M, C, rnd):
         spots.append(("bed", ((ax + bx) / 2, (ay + by) / 2, 0.02), (max(abs(bx - ax), abs(by - ay)), min(abs(bx - ax), abs(by - ay)), 1.0),
                       face))
     spots += beyond_cottage(M, C, rnd)
+    spots += spots_town
     # Efeu wächst an den Gartenmauern (nicht über den Tunnelbögen)
     for (p0, p1, gap) in garden_walls:
         length = T.seg_len(p0, p1)

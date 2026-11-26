@@ -2039,7 +2039,7 @@ Seit dem 24.11.2026 „rückwärts“ (Wunsch der Entwicklerin): erst alles im f
 und Freischaltungen in der Story zum Schluss (Zettel 07).
 Wünsche aus der Testrunde: `.scratch/testrunde-8d/` (Garten-Umbau, Theke, Haltungen, Hauptmenü, Deko in der Gasse, Häuser und
 Bäume rund um den Garten).
-**Nächster Schritt:** Häuser und Bäume rund um den Garten, Wäldchen hinter dem Torhaus (Testrunde 02).
+**Nächster Schritt:** kleiner Park hinter dem Torhaus statt eines Hauses (Testrunde 02, Rest).
 
 - [x] Mehr Draußen-Sachen (Zettel 01), in vier Runden – zusammen 41 neue Sachen:
   - [x] Runde 1 – Regale, Auslagen und Schilder: Bücherkisten (drei Obstkisten), Bücherkarren mit Speichenrädern,
@@ -2077,6 +2077,12 @@ Bäume rund um den Garten).
   - [x] Leben im ganzen Garten: Baum mit Rundbank nahe an der Rückseite des Pubs (wie im Lageplan), Vogeltränke schräg hinter
     der Bank (die Spaziergänger liefen vorher hindurch), Katzen streifen auch über die große Wiese und sitzen auf der neuen Bank,
     Vögel picken auf der großen Wiese; Tier-Plätze neu ausgemessen
+  - [x] Häuser und Bäume rund um den Garten (Testrunde 02): hinten eine Häuserreihe mit Lücken und weiter weg noch ein paar
+    Dächer, rechts und links hinter den Mauern je zwei Wohnhäuser, zwei Häuser am Ende der Seitenstraße (rundum geschlossen,
+    Fenster mit Vorhängen, Schornsteine); Bäume dazwischen, Wiese ringsum bis weit hinaus (aus den Fenstern des Häuschens sieht
+    man kein Ende); viel Himmel bleibt frei, von der Straße aus sieht man nichts davon. Neuer sparsamer Baum `tree_far`
+    (40 000 statt 101 000 Dreiecke) für alles hinter den Mauern
+  - [x] Mauersockel an den Bachtunneln unterbrochen (die Steine lagen vor der Öffnung im Wasser, Wunsch der Entwicklerin)
 - [ ] Holzhäuschen hinten links im Garten (Zettel 05), im fertigen Zustand:
   - [x] Schritt 1 – Haus von außen und innen (`build_storybook_cottage.py`, `garden_cottage.glb`): Tiny House mit zwei Gauben
     (eigene kleine Dächer), Bretter als „ästhetische Mischung“ nach den Bildern der Entwicklerin (Türkis und Himmelblau mit

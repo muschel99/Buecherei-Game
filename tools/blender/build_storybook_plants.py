@@ -209,6 +209,8 @@ PLANTS = {
     "hedge_shrub_rose": ("hedge", (0.8, 0.8, 1.2), 0.7, 0.0, "", lambda p: G.shrub(p, 0.8, 1.2, "rose")),
     "hedge_hydrangea": ("hedge", (0.8, 0.8, 1.1), 0.6, 0.0, "", lambda p: G.shrub(p, 0.8, 1.1, "hydrangea_blue", mats=("leaf", "leaf_lime"))),
     "tree_garden": ("tree", (3.0, 3.0, 5.0), 1.0, 0.0, "", lambda p: G.tree(p, 5.0, 1.45)),
+    # derselbe Baum für die Ferne (hinter den Gartenmauern, Hinweis "far"): größere, weniger Blätter – ein Bruchteil der Dreiecke
+    "tree_far": ("tree", (3.0, 3.0, 5.0), 1.0, 0.0, "far", lambda p: G.tree(p, 5.0, 1.45, leaf=0.34, per_spray=7)),
     "tree_garden_big": ("tree", (5.6, 7.4, 10.0), 1.0, 0.0, "garden", G.garden_tree),
     "tubtree_bay": ("tubtree", (0.9, 0.9, 3.0), 1.0, 0.36, "", "tub:tree"),
     # Grasbüschel aus der Ecke zwischen Hauswand und Gehweg (nach vorn gefächert), mal mit Wildblumen

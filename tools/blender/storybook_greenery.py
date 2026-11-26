@@ -561,9 +561,10 @@ def shrub(p, width=0.8, height=1.2, blossoms=None, mats=("leaf", "box_leaf")):
                     floret(p, blossoms, c + d * cl * 1.02, d, 0.03, 5, cup=0.4)
 
 
-def tree(p, height=5.0, crown_r=1.45, mats=("leaf", "leaf", "leaf_dark")):
+def tree(p, height=5.0, crown_r=1.45, mats=("leaf", "leaf", "leaf_dark"), leaf=0.21, per_spray=9):
     """Laubbaum (für Platz und Beete): kräftiger, leicht geschwungener Stamm mit Wurzelanläufen, Äste
-    in eine runde, wolkige Krone aus vielen Blattbüscheln – ohne Kugelkern."""
+    in eine runde, wolkige Krone aus vielen Blattbüscheln – ohne Kugelkern. Größere Blätter (leaf) und
+    weniger je Büschel (per_spray) = derselbe Baum mit viel weniger Dreiecken (für die Ferne)."""
     rnd = p.rnd
     fz = height - crown_r * 1.7
     t = [Vector((0, 0, -0.05)), Vector((0.04, 0.02, fz * 0.4)), Vector((-0.04, 0.0, fz * 0.75)), Vector((0.0, 0.01, fz))]
@@ -575,7 +576,7 @@ def tree(p, height=5.0, crown_r=1.45, mats=("leaf", "leaf", "leaf_dark")):
         a = 2 * math.pi * k / 6 + rnd.uniform(-0.3, 0.3)
         lobes.append((Vector((math.cos(a) * crown_r * 0.55, math.sin(a) * crown_r * 0.55, cz - crown_r * 0.1 + rnd.uniform(-0.2, 0.25))),
                       crown_r * rnd.uniform(0.5, 0.62)))
-    crown(p, fork, lobes, rnd, leaf=0.21, mats=mats, limb=0.07, density=1.6)
+    crown(p, fork, lobes, rnd, leaf=leaf, mats=mats, limb=0.07, density=1.6, per_spray=per_spray)
 
 
 # Gartenhof hinter der Bücherei: erlaubter Raum der Krone in Pflanzen-Koordinaten (Ursprung = Stamm,

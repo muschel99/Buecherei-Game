@@ -61,4 +61,5 @@ diesem Plan aufgegangen.
 - 25./26.11.2026: Wünsche der Testrunde erledigt (Garten nach ihrem Lageplan, Theke, Haltungen, Hauptmenü als Buch, Deko in
   der Gasse), Holzhäuschen Schritte 1–3 (Modell, eigener Raum zum Einrichten, Veranda-Deko, Bett), Leben im ganzen Garten
   (Baum mit Bank nahe am Pub, Katzen und Vögel auf der großen Wiese).
-- **Nächster Schritt:** Häuser und Bäume rund um den Garten (`.scratch/testrunde-8d/issues/02`), danach Glasanbau (Zettel 03).
+- 26.11.2026: Häuser und Bäume rund um den Garten (Testrunde 02, Teil 1), Sockel an den Tunneln unterbrochen.
+- **Nächster Schritt:** Park hinter dem Torhaus (`.scratch/testrunde-8d/issues/02`, Rest), danach Glasanbau (Zettel 03).

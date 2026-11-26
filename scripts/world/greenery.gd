@@ -18,6 +18,8 @@ const GROUP := "greenery"
 ## Pflanzen, an denen es raschelt, wenn man dicht vorbeigeht (Bäume, Ampeln und Ranken hoch oben nicht)
 const RUSTLE_KINDS := ["bed", "hedge", "walltuft", "tuft", "pot", "potfill", "rim", "bucket", "box", "climber"]
 const RUSTLE_CELL := 2.0
+## Bäume mit diesen Hinweisen stehen genau so wie ihr Pflanzplatz (ohne Drehung und Größenänderung)
+const FIXED_TREE_HINTS: Array[String] = ["garden"]
 const IVY_SPOTS := "res://data/animals/spots.json"
 
 ## Ordner mit den Pflanzen-Szenen.
@@ -226,14 +228,15 @@ func _pieces_for(extras: Dictionary, base: Transform3D) -> Array:
 				_placed_ids.append([base * p, e.id])
 				out.append([e, Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * rng.randf_range(0.85, 1.1)), p)])
 		"tree":
-			# Bäume mit Hinweis (z. B. "garden") gehören genau an ihren Platz: feste Lage, keine Drehung
+			# Bäume mit Hinweis wählen nur Bäume mit diesem Hinweis (z. B. "far" = sparsame Bäume hinter den Gartenmauern);
+			# mit Hinweis "garden" gehören sie genau an ihren Platz (die Krone passt in den Hof): feste Lage, keine Drehung
 			var pool := entries.filter(func(x: Dictionary) -> bool: return x.hint == hint)
 			if pool.is_empty():
 				pool = entries.filter(func(x: Dictionary) -> bool: return x.hint == "")
 			if pool.is_empty():
 				return out
 			var e: Dictionary = _pick(pool, "", rng)
-			if hint != "":
+			if hint in FIXED_TREE_HINTS:
 				out.append([e, Transform3D.IDENTITY])
 			else:
 				var s := clampf(size.y / (e.size as Vector3).y, 0.8, 1.2)

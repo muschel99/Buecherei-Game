@@ -96,11 +96,6 @@ _subresources={
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_putz.tres",
 "use_external/path": "res://assets/materials/storybook/sammel_putz.tres"
 },
-"Sammel Putz innen": {
-"use_external/enabled": true,
-"use_external/fallback_path": "res://assets/materials/storybook/sammel_putz_innen.tres",
-"use_external/path": "res://assets/materials/storybook/sammel_putz_innen.tres"
-},
 "Sammel Quader": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/materials/storybook/sammel_quader.tres",
