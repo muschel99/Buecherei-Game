@@ -901,6 +901,8 @@ func _setup_court() -> void:
 		"areas": [Rect2(fx + 0.7, gz - 2.0, (lx - 1.15) - (fx + 0.7), (end - 0.6) - (gz - 2.0)),
 			Rect2(gx + 1.5, tree.y + 2.0, (fx - 0.6) - (gx + 1.5), (end - 0.6) - (tree.y + 2.0))],
 		"lawn": Rect2(gx, gz, fx - gx, end - gz),
+		# große Wiese vor dem Bach (Leben im ganzen Garten)
+		"open_lawn": GameConfig.backyard_open_lawn,
 		"tree": tree,
 		# Trittsteine zur Bank: quer von der Gasse (fx + 0,2) zum Baum, um tree.y + 0,9
 		"stones": Rect2(gx, tree.y + 0.9 - 1.1, fx + 1.05 - gx, 2.2),
@@ -1004,11 +1006,13 @@ func _court_spots(size: int, own: Dictionary = {}) -> Array[Dictionary]:
 	var gap := GROUND_GAP * 1.4
 	var spread := 0.45
 	for attempt in 16:
-		var area: Rect2 = _court.areas[0 if _rng.randf() < 0.65 else 1]
+		var pick := _rng.randf()
+		var area: Rect2 = _court.areas[0] if pick < 0.4 else (_court.areas[1] if pick < 0.65 else _court.open_lawn)
 		var c := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
 		if not _court_center_ok(c):
 			continue
-		var y := 0.024 if (_court.lawn as Rect2).has_point(c) else 0.0   # Rasen liegt 2,4 cm hoch
+		var on_lawn := (_court.lawn as Rect2).has_point(c) or (_court.open_lawn as Rect2).has_point(c)
+		var y := 0.024 if on_lawn else 0.0   # Rasen liegt 2,4 cm hoch
 		var center := _outside.to_global(Vector3(c.x, y, c.y))
 		var far := true
 		for t: Dictionary in threats:

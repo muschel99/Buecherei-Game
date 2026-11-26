@@ -1398,7 +1398,8 @@ func _setup_garden() -> void:
 	var fx := StreetLayout.alley_far_x()
 	var end := StreetLayout.alley_end_z()
 	var gz := end - GameConfig.alley_garden_depth
-	var gx := fx - GameConfig.alley_garden_extra_width
+	# der Hof reicht seitlich bis über den Baum hinaus (er steht seit dem Lageplan näher am Pub)
+	var gx := minf(fx - GameConfig.alley_garden_extra_width, StreetLayout.garden_tree().x - 1.6)
 	var points := StreetPaths.library_alley_points()
 	_garden = {
 		"lx": lx, "fx": fx, "end": end, "gz": gz, "gx": gx, "tree": StreetLayout.garden_tree(),
@@ -1428,7 +1429,9 @@ func _alley_walkable(p: Vector2) -> bool:
 		and p.y <= float(_garden.end) - 0.3
 	var yard := p.x >= float(_garden.gx) + 1.0 and p.x <= float(_garden.fx) + 0.3 and p.y >= float(_garden.gz) + 1.0 \
 		and p.y <= float(_garden.end) - 0.3
-	return lane or yard
+	# große Wiese vor dem Bach (Leben im ganzen Garten)
+	var lawn := GameConfig.backyard_open_lawn.grow(0.2).has_point(p)
+	return lane or yard or lawn
 
 
 ## Ist der gerade Weg von a nach b (Welt) überall begehbar (alle 0,2 m geprüft)?
@@ -1508,9 +1511,14 @@ func _garden_actions(back: Vector3) -> Array[Dictionary]:
 		a.append(_walk([lane, look]))
 	else:
 		var spot: Vector3
-		if roll < 0.7:
+		var lawn := GameConfig.backyard_open_lawn
+		if roll < 0.55:
 			# ins Gras hinter dem Baum
 			spot = _ground(Vector2(_rng.randf_range(float(_garden.gx) + 1.6, fx - 0.7), _rng.randf_range(tree.y + 1.9, end - 0.5)))
+		elif roll < 0.8:
+			# auf die große Wiese vor dem Bach (von der Gasse aus quer hinüber)
+			spot = _ground(Vector2(_rng.randf_range(lawn.position.x + 0.4, lawn.end.x - 0.4),
+				_rng.randf_range(lawn.position.y + 0.4, lawn.end.y - 0.4)))
 		else:
 			spot = _ground(Vector2(_rng.randf_range(fx + 0.6, lx - 0.9), _rng.randf_range(gz + 1.5, end - 0.8)))
 		var way := _alley_path(look, spot)

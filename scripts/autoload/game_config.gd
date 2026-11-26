@@ -234,6 +234,11 @@ var backyard_stream: PackedVector2Array = PackedVector2Array([Vector2(12.6, 7.6)
 	Vector2(7.6, 10.6), Vector2(7.0, 13.0), Vector2(6.3, 15.2), Vector2(5.2, 16.74), Vector2(4.07, 17.87), Vector2(2.95, 19.0),
 	Vector2(1.2, 20.2), Vector2(-1.5, 21.1), Vector2(-4.5, 21.7), Vector2(-8.0, 22.3), Vector2(-11.6, 22.6), Vector2(-14.0, 22.7)])
 var backyard_stream_width: float = 1.3
+## Großer Gartenbaum mit der Rundbank (x/z unter „Outside“; seit dem Lageplan der Entwicklerin nahe an der Rückseite des Pubs –
+## vorher in der Mitte des alten Hofs am Ende der Gasse)
+var backyard_tree: Vector2 = Vector2(-9.4, 9.4)
+## Große Wiese vor dem Bach (x/z): dort picken auch Vögel und streifen Katzen umher (Leben im ganzen Garten)
+var backyard_open_lawn: Rect2 = Rect2(-5.0, 8.0, 8.5, 4.6)
 ## Holzbrücke über den Bach: Mitte (x/z), Richtung über den Bach (Grad um die Hochachse, 0 = nach +z), Länge, Breite, Höhe der
 ## Wölbung in der Mitte (m).
 ## Brücke: führt direkt auf die Veranda des Häuschens (ihr Ende liegt vor der Steinstufe)

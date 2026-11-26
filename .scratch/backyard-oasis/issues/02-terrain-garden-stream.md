@@ -1,5 +1,5 @@
 # 02 – Das Gelände hinter Bücherei und Pub (fertiger Zustand)
-Status: ready-for-agent
+Status: done
 
 Gebaut wird zuerst der **fertige Zustand** (Gasse offen, Garten gepflegt); Verwilderung und Sperren kommen in Zettel 07.
 
@@ -31,3 +31,11 @@ Bach, Häute mit Fenstern auf den glatten Rückseiten der Nachbarhäuser, zwei F
 („Garten 4“ bei x −6,65, z 11,3) – Spaziergänger gehen von der Gasse zu einem Sitzplatz der Bank, der direkt daneben liegt, und
 laufen hindurch. Zufällig (gleicher Stand und Startwert: mal 0, mal 4), nicht durch den Garten-Umbau. Beim Verlegen von Baum und
 Bank (näher ans Pub) die Vogeltränke als Hindernis für die Wege berücksichtigen.
+
+26.11.2026: Schritt 2 („Leben im ganzen Garten“) fertig. Baum mit Rundbank steht fest bei `GameConfig.backyard_tree` (−9,4 / 9,4,
+nahe an der Rückseite des Pubs, wie im Lageplan; `StreetLayout.garden_tree()` liest ihn), die Vogeltränke schräg hinter der Bank
+(`build_storybook_backyard.py`, Baum + (1,8 / 3,2)) – die Wege der Spaziergänger zu den Sitzplätzen kreuzen sie nicht mehr.
+Neue große Wiese `GameConfig.backyard_open_lawn` (vor dem Bach): Katzen laufen auch dorthin (`cat_life.gd`, Hof reicht bis über
+den Baum), Vögel picken dort (`bird_life.gd`, Bereich `open_lawn`). Tier-Plätze neu ausgemessen (`data/animals/spots.json`).
+Geprüft mit Godot 4.6.2 (street_life_check, Startwerte 1–3): keine Script-Fehler, im Garten weder „solid“ noch Stau; die
+gelegentlichen Rempler an der Bücherei-Tür und am Fahrrad gegenüber gab es vorher genauso (zufällig).

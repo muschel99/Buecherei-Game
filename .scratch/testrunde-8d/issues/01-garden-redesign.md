@@ -1,5 +1,5 @@
 # 01 – Garten neu planen: größer, Bach kurvig, Brücke, Tunnel, Holzhäuschen hinten links
-Status: ready-for-agent
+Status: done
 
 - Garten etwas größer.
 - Bach etwas kurvig; der Tunnel in der linken Mauer vorn an der Mauer (der Bach kommt dort herein).
@@ -23,3 +23,6 @@ linken Ecke, die Gartenmauern stoßen an seine Seitenwände (`StreetLayout.backy
 freie Wiese (Platz für Deko, Glasanbau und die bepflanzte Ecke). Hinter dem Häuschen (man kommt nicht hin, sieht es aber aus
 dem hinteren Fenster): kleine wilde Wiese, Blumen, Bäume, Hecken, alter Holzzaun; das Haus der hinteren Reihe dort ist weg.
 Noch offen: Baum mit Bank näher ans Pub (mit „Leben im ganzen Garten“ – Katzen, Vögel und Bank hängen an ihm).
+
+26.11.2026: Baum mit Bank steht jetzt nahe am Pub, Katzen und Vögel nutzen den ganzen Garten (siehe Oase, Zettel 02). Damit ist
+der Garten-Umbau fertig; die Häuser und Bäume rundherum kommen mit Zettel 02 dieser Testrunde.

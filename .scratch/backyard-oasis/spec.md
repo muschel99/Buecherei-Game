@@ -58,4 +58,7 @@ diesem Plan aufgegangen.
   setzt es ein; Maße in GameConfig `backyard_*`; `alley_library.glb` gibt es nicht mehr).
 - 24.11.2026: Testrunde der Entwicklerin – Garten umgebaut nach ihren Wünschen (siehe `.scratch/testrunde-8d/`): größer, Bach im
   Bogen, Brücke, Holzhäuschen hinten links jenseits des Bachs (frei stehend, schräg, Tiny House mit Gauben – Zettel 05).
-- **Nächster Schritt:** die übrigen Wünsche der Testrunde (`.scratch/testrunde-8d/spec.md`), danach Holzhäuschen (Zettel 05).
+- 25./26.11.2026: Wünsche der Testrunde erledigt (Garten nach ihrem Lageplan, Theke, Haltungen, Hauptmenü als Buch, Deko in
+  der Gasse), Holzhäuschen Schritte 1–3 (Modell, eigener Raum zum Einrichten, Veranda-Deko, Bett), Leben im ganzen Garten
+  (Baum mit Bank nahe am Pub, Katzen und Vögel auf der großen Wiese).
+- **Nächster Schritt:** Häuser und Bäume rund um den Garten (`.scratch/testrunde-8d/issues/02`), danach Glasanbau (Zettel 03).

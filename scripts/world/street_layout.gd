@@ -153,11 +153,9 @@ static func backyard_wall_ends() -> Vector2:
 	return Vector2(minf(z_end + into, back), minf(x_end + into, left))
 
 
+## Großer Gartenbaum mit der Rundbank (seit dem Lageplan der Entwicklerin fest: GameConfig.backyard_tree).
 static func garden_tree() -> Vector2:
-	var far_x := alley_far_x()
-	var garden_x := far_x - GameConfig.alley_garden_extra_width
-	var garden_z := alley_end_z() - GameConfig.alley_garden_depth
-	return Vector2((garden_x + far_x) / 2.0 - 0.1, garden_z + GameConfig.alley_garden_depth * 0.5)
+	return GameConfig.backyard_tree
 
 
 ## Wo die Nachbarhäuser neben der Bücherei enden (x): rechts (+X) bündig, links (-X)

@@ -617,7 +617,9 @@ def backyard(M, C, rnd):
     reeds(M, C, rnd)
     bridge(M, C, rnd)
     tx, tz = L["garden_tree"]
-    obstacles = A.round_bench(M, C, tx, tz, rnd) + A.bird_bath(M, C, A.BIRD_BATH[0], A.BIRD_BATH[1], rnd)
+    # Vogeltränke schräg hinter der Bank (seit dem Lageplan: Baum näher am Pub) – weg von den Wegen der Spaziergänger, die aus der
+    # Gasse quer zu den Sitzplätzen gehen
+    obstacles = A.round_bench(M, C, tx, tz, rnd) + A.bird_bath(M, C, tx + 1.8, tz + 3.2, rnd)
     spots = []
     p = G(tx, tz)
     spots.append(("tree", (p[0], p[1], 0.0), (5.6, 7.4, 10.0), 0.0, "garden"))
